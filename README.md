@@ -40,6 +40,8 @@ How the agent was built, evaluated and improved (a timeline, an experiment card 
 evaluation, the method and the improvement loop): the site's "How it was built" page, source `site/story/story.yaml`, with the
 measured lessons in [docs/agent_lessons.md](docs/agent_lessons.md).
 
+What makes this agent different, as a one-page summary in drawers (each a claim that opens to what it means, an example from this project with its numbers read from committed records, what it does not do yet, and a link to the deeper page): the site's "Why" page, linked first in the navigation and from the top of the home page, source `site/why/why.yaml` ([why.py](site/why.py) -> `site/data/why.json`, [why_page.py](site/why_page.py)); a deep link such as `why.html#verification` opens that drawer.
+
 How the designs are verified (simulation, hidden tests, coverage, mutation testing, protocol checkers, formal proofs, clock-crossing checks, static checks, the board and traceability, each with what it cannot find and its measured evidence): the site's "Verification" page, source `site/verification/verification.yaml`.
 
 More boards (brief 95): the agent has a board file for 20 boards, each with a trust label (`documented`, `built` or `hardware`) computed from the evidence on
@@ -442,6 +444,8 @@ site/        the showcase site (static, Vercel): export.py (results -> data), bu
              home page's feedback loop (brief 47): [loop.py](site/loop.py) (stations, labels from run records, the replayed
              tour -> data/loop.json), [loop_page.py](site/loop_page.py) (the SVG), [data/loop_legs.yaml](site/data/loop_legs.yaml)
              (each leg of the loop: automated, being built, or needs a person, with evidence; "legs automated: N of M")
+             "Why this agent" page (brief 193): [why.py](site/why.py) reads [why/why.yaml](site/why/why.yaml) (prose with {name} placeholders,
+             each value read from a committed file; the build fails on a typed number) -> data/why.json; [why_page.py](site/why_page.py) draws it
              story pages (brief 117): the home page leads with who specifies, who implements and who judges, a flow figure with
              hardware verification as its own layer, and an evidence matrix; [worked.py](site/worked.py) reads
              [worked/worked.yaml](site/worked/worked.yaml) and the committed records (each fact is a JSON locator or a quote that
