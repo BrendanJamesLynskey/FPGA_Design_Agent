@@ -2,7 +2,9 @@
 
 Recorded 2026-11-23 on the build PC, with the navigator code of this branch (`b182-navigator-s3`). Design note and every route: [navigator/README.md](../../navigator/README.md), "Stage 3".
 
-## What was recorded
+## Records
+
+### What was recorded
 
 Two real agent runs on one **development** course task (`benchmark/course/tasks/c9_median3x3`, a dev task in `benchmark/course/split_c9_c12.yaml`; no hidden spec, so the run is not scored),
 Claude Code on the subscription, model `claude-sonnet-5-5` for every role, harness arm H1, `--review off`, no Vivado at all (the runs stop before synthesis). In each run, while the agent was working,
@@ -20,6 +22,8 @@ one **design request** was queued with `python -m agent request` and one **quest
 Files: `demo_*/requests.jsonl` (every event of each request), `qa.jsonl` (question, answer, records read and cited, model, plan-estimate cost), `who_did_what.json` (the user interventions beside the agent's own rows),
 `trace_events.jsonl` (the `kind: "event"` rows of the run's trace: stage start and end, console pointers, request outcomes; no model or tool rows), `request_cli.txt` and `ask_cli.txt` (the commands' output). demo_short also has `summary_extract.json` (stop reason, stages, the `user_requests` counts), `status_final.txt` (`python -m agent status`) and `console_steps.txt` (`python -m agent status --console`: the step list only); demo_long has none of those three (the run was stopped, so it has no summary).
 
+## Known gaps and limits
+
 What the records show, and what they do not:
 - The request waited for a safe point (4 s in the short run, 19 s in the long one), was acknowledged, applied and recorded with its reason. In the short run the model's own output (console step `002_clarify_clarify`)
   says it rewrote `spec.yaml` "to follow the owner's preference for a sorting network". That is one observation that the note reached the writer and was read; it is **not** evidence the request changed the design, because a median-of-nine
@@ -31,11 +35,11 @@ What the records show, and what they do not:
   are streamed through the local runner they use; the one container run that was live in demo_long ran before that change and wrote its log at the end.
 - Console files hold the model's streamed output and are **not committed** (they can quote the private prompts); only the step list is.
 
-## Tests
+## Reproduce
 
-`python -m pytest navigator/tests agent/tests/test_182_requests.py agent/tests/test_182_console.py`; the full suite result is under Screenshots below.
+Tests: `FDA_PROMPTS_DIR=<pinned prompts> python -m pytest navigator/tests agent/tests/test_182_requests.py agent/tests/test_182_console.py` (the full-suite result is under Screenshots). Demo: `python -m agent run benchmark/course/tasks/c9_median3x3/spec.md --board nexys_a7_100t --name c9_median3x3 --harness claude_code --cc-model claude-sonnet-5-5 --harness-arm H1 --max-usd 2 --stop-after 1 --verif-level V1 --review off`, then `python -m agent request <run_dir> --design "..."` and `python -m agent ask <run_dir> "..."` while it runs. Screenshots: `NODE_PATH=<node_modules> node navigator/shoot_stage3.js <url> <dir> <run id>` against `python -m navigator.tests.demo_stage2 --runs <runs dir>`.
 
-## Screenshots
+## Screenshots (records)
 
 `screenshots/` holds the Live page of the short run at 1280 and 390 px (`live_status_panels_*` with the console drawer shut, `live_console_open_*` with it open), `shoot.log` and `shoot_report.json`, taken 2026-11-23 03:15 under a heavy slot (`navigator/shoot_stage3.js`).
 Result: zero page errors, no request outside the navigator, no horizontal overflow at 390 px; 12 console requests in all (6 per viewport), all after the drawer was opened, and none in the 5 s after it was shut again.
