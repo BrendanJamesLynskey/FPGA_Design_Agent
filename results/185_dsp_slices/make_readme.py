@@ -86,6 +86,7 @@ out += ["", "The SIMD coding was **not** mapped to a slice on either part (fabri
         "- `data/a7.json`, `data/k26.json`: one entry per point (status, parameters, latency, slices, LUT, FF, carry cells, WNS, WHS, WPWS, setup Fmax, slice minimum period, Fmax and what bound it, logic levels, path delay, per-level delay, DSP cell properties, DSP/DRC lines). Tool: Vivado 2026.1 (build 6511674), date in each file.",
         "- `raw/<part>/<point>/`: `dsp_cells.txt`, `synth_dsp_report.txt` (the synthesis log's DSP Report for the point), `dsp_lines_methodology_drc.txt`, `timing_worst_setup.rpt`, `pulse_width_checks.txt`.", "",
         "## Reproduce", "",
+        "Each command is run from the repository root with Vivado 2026.1 on the path the flow pins (`python3 flow/version_pin.py --vivado`); a run holds one heavy slot and one thread.", "",
         "```",
         "python3 results/185_dsp_slices/run_dsp.py list --part a7          # the points",
         "python3 results/185_dsp_slices/run_dsp.py run --part a7 --group mul   # groups: mul dot feat wide; takes a heavy slot (prefix 185), about an hour for wide",

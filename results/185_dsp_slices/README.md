@@ -121,6 +121,8 @@ The SIMD coding was **not** mapped to a slice on either part (fabric adders inst
 
 ## Reproduce
 
+Each command is run from the repository root with Vivado 2026.1 on the path the flow pins (`python3 flow/version_pin.py --vivado`); a run holds one heavy slot and one thread.
+
 ```
 python3 results/185_dsp_slices/run_dsp.py list --part a7          # the points
 python3 results/185_dsp_slices/run_dsp.py run --part a7 --group mul   # groups: mul dot feat wide; takes a heavy slot (prefix 185), about an hour for wide
