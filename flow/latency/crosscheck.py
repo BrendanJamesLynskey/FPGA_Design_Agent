@@ -73,6 +73,8 @@ def scan_file(p: Path, root: Path = ROOT) -> list[dict[str, Any]]:
         if not isinstance(r, dict):
             continue
         where = rel + (f"[{i}]" if isinstance(obj, list) else "")
+        if "enforced" in r:                      # one of the advisory records this module and its siblings write
+            continue
         if "methods" in r:
             out += check_record(r, where)
         elif "latency_clocks" in r or "latency" in p.name.lower():

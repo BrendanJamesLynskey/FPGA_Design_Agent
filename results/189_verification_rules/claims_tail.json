@@ -1,7 +1,7 @@
 {
  "enforced": false,
  "rule": "a tail percentile (>= p90) needs at least 100 observations beyond it",
- "files_scanned": 2590,
+ "files_scanned": 2605,
  "findings": [
   {
    "code": "TAIL-N-02",
@@ -92,6 +92,46 @@
    "required": 100000,
    "message": "p99.9 quoted with no sample count; it needs at least 100,000 observations",
    "text": "**Stop and abort rules**: calibration not complete within a stated time, a read-back mismatch on any arm (stop, do not average), XADC temperature above 70 C (th"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "docs/verification_measurement_rules.md:37",
+   "percentile": 99.9,
+   "samples": 10000,
+   "required": 100000,
+   "beyond": 10.0,
+   "message": "p99.9 quoted from 10,000 observations: 10.0 lie beyond it (need 100, i.e. 100,000 observations)",
+   "text": "**Rule.** At least 100 observations lie beyond a quoted percentile: p99 needs 10,000 samples, p99.9 100,000, p99.99 one million (`required_samples`). A percenti"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "docs/verification_measurement_rules.md:37",
+   "percentile": 99.99,
+   "samples": 10000,
+   "required": 1000000,
+   "beyond": 1.0,
+   "message": "p99.99 quoted from 10,000 observations: 1.0 lie beyond it (need 100, i.e. 1,000,000 observations)",
+   "text": "**Rule.** At least 100 observations lie beyond a quoted percentile: p99 needs 10,000 samples, p99.9 100,000, p99.99 one million (`required_samples`). A percenti"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "docs/verification_measurement_rules.md:42",
+   "percentile": 99.0,
+   "samples": 3000,
+   "required": 10000,
+   "beyond": 30.0,
+   "message": "p99 quoted from 3,000 observations: 30.0 lie beyond it (need 100, i.e. 10,000 observations)",
+   "text": "p99 and p99.9 quoted from 2,115 to 3,000 reads, so about 21 to 30 observations lie beyond the p99 and 2 to 3 beyond the p99.9) and its results table. The next b"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "docs/verification_measurement_rules.md:42",
+   "percentile": 99.9,
+   "samples": 3000,
+   "required": 100000,
+   "beyond": 3.0,
+   "message": "p99.9 quoted from 3,000 observations: 3.0 lie beyond it (need 100, i.e. 100,000 observations)",
+   "text": "p99 and p99.9 quoted from 2,115 to 3,000 reads, so about 21 to 30 observations lie beyond the p99 and 2 to 3 beyond the p99.9) and its results table. The next b"
   },
   {
    "code": "TAIL-N-02",
