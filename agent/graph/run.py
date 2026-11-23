@@ -1821,8 +1821,6 @@ def summary(rt: Runtime, state: dict) -> dict:
             "turn_trace": usage_trace(usage),
             "per_role": usage_by(usage, "role"), "per_stage": usage_by(usage, "stage"),
             "interview": rt.cfg.interview,
-            "verification_profile": {**_profile_record(rt.cfg), "policy_breaches": __import__("agent.graph.profiles", fromlist=["x"]).check_pin(
-                rt.run_dir, rt.cfg.verif_profile, rt.cfg.verif_sets, rt.design)},
             "review": rt.cfg.review, "stages_visited": [h["n"] for h in hist],
             "loops": sum(1 for a, b in zip(hist, hist[1:]) if b["n"] <= a["n"] and not a.get("rewind")),
             "rewinds": [h["rewind"] for h in hist if h.get("rewind")],
@@ -1830,6 +1828,8 @@ def summary(rt: Runtime, state: dict) -> dict:
             "turns": rt.meter.run["turns"], "wall_s": rt.meter.run["seconds"],
             "questions": (state.get("interview") or {}), "stop": state.get("stop"),
             "clean_stop": state.get("stop") == "done",
+            "verification_profile": {**_profile_record(rt.cfg), "policy_breaches": __import__("agent.graph.profiles", fromlist=["x"]).check_pin(
+                rt.run_dir, rt.cfg.verif_profile, rt.cfg.verif_sets, rt.design)},
             "constants": constants_summary(rt),
             "gates_last": {h["stage"]: h["passed"] for h in hist if h.get("gated", True)},   # 68F: not an entry that ran no gate
             "approvals": [{"n": h["n"], **h["approval"]} for h in hist],
