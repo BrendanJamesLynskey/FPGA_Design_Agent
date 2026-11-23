@@ -75,37 +75,37 @@ files:
   sha256: 43c7f717f13f703a1bf8869f6294aee6a8eed737b8435d733a78ec87af52ec8d
 - path: designs/b110_itch_ouch/rtl/book_core.sv
   what: order table, ladders, top of book
-  sha256: 4f9ea037d5b1a77ba56e87e340987d1155212593ceea0b1ff24cc02d4dddaf74
+  sha256: 4a0079c759ee8af3d31d3e0dbc41d8c85146f9c79bae8fef4e8e8116b62adef4
 - path: designs/b110_itch_ouch/rtl/risk_glue.sv
   what: decision, risk checks, kill switch, order queue
-  sha256: 2cde343aec11afbddb108c4728157b83e11533644da80c2a7bd8bc13ffdc23f1
+  sha256: ac0ec4a28891a55f71faf34576cffed64f516d065e58306d6469304163bf0200
 - path: designs/b110_itch_ouch/rtl/ouch_enter.sv
   what: OUCH 5.0 Enter Order in SoupBinTCP framing
   sha256: 95066c0f3caaf67b87eb40baf88d5704b6eec8387384d00014cbe93f3f64addd
 - path: designs/b110_itch_ouch/rtl/itch_ouch_top.sv
   what: top level
-  sha256: 6f9da0506556e3e4e8a37d2e1a77fa78ee5cffe2ad37132a318c6b12f9eacde5
+  sha256: d6752760670f155e678afeee59b19a248f3838e0f1932e269afd6b267f60c224
 - path: designs/b110_itch_ouch/model/proto.py
   what: packers for the four protocols, from the specifications
   sha256: ae43fca45e818890658887462b96017b34b4bb436834f0100aaaf5496eee0c70
 - path: designs/b110_itch_ouch/model/ref.py
   what: reference model (untimed, exact)
-  sha256: 92ebceb812f4203d0872849c5ff5b6855b36ff95875e6527537f3f10a29c0df9
+  sha256: 92a8678e8acfbe88df10262f3a69ad29c71c8c16d7e58bb125cb96e5db8680bb
 - path: designs/b110_itch_ouch/model/gen.py
   what: seeded synthetic ITCH over MoldUDP64 generator
   sha256: 7a5ed6f04b10ad587e3a0d3cfb7d8ec64d986ead15e5df3f37bfd8ff0ef1e305
 - path: designs/b110_itch_ouch/tests/b110_cocotb.py
   what: cocotb bench
-  sha256: e8b7915b02e750725f206af70bf84d1d0cf471f818fea566a0982e5a671545ad
+  sha256: 918fb78f8e41695ca2c7427cbd1937ae014b3c9c82f6bee0e17a33f397cdad67
 - path: designs/b110_itch_ouch/tests/run_mutants.py
   what: seeded-fault runner
-  sha256: d7d017acd50cadfe86ccb2c189feaa3cc4e69ca8851095bc08fa54dc767e3fdb
+  sha256: 78d77ec4c8085d961c0c1b729afe8b06f6a49b813fe02bea625127094c10189d
 - path: designs/b110_itch_ouch/ooc/ooc.py
   what: out-of-context build driver
-  sha256: 13550cc38a0d6f45591830a089d0c1ed83d8a93b6d2990cd0cc6341dab411f85
+  sha256: c3214a1a04a3ece8081a7d48f37b87e3ef77fe9950203fa3be576726dc273d5d
 - path: designs/b110_itch_ouch/docs/itch_ouch.md
   what: datasheet
-  sha256: 1213229009eca19160f257392d75dbd2f2d579d49192780979e163acee417287
+  sha256: da55ddf9feb213b35067839592608686f707b07ae2de54f278c3753733b1745f
 - path: designs/b110_itch_ouch/docs/spec_notes.md
   what: field layouts and where each comes from
   sha256: 5ce86ae4a2f406348508f42a54939b0b3f9c8bb52c3bd1a6d730e4d1c0c2ecf9
@@ -145,7 +145,7 @@ evidence:
   what: the whole path against the Python reference over seeded sessions, hand-built corner cases, impairments, a stress
     run and other parameters - events, every top-of-book update, every order frame bit for bit, every counter and flag
   record: designs/b110_itch_ouch/tests/test_b110_rtl.py
-  sha256: ed9179dc6eab910eff6b4e26fb3204e5c2e181f3d0ce232d5b691d42bced781a
+  sha256: 4626a5e0fa94adb27b1c15d2b9b4fa634d4c7570d807f62b936a3a3cbfebe261
 - id: E2
   activity: model
   result: pass
@@ -153,7 +153,7 @@ evidence:
   what: the packers against the field tables of the specifications and the reference model against hand-computed behaviour
     of the protocol layer, the book and the risk checks
   record: designs/b110_itch_ouch/tests/test_b110_model.py
-  sha256: 0ac06f1af3eeeb85af07a4b941809f63e3567a0488cec4aa94bdd1b5e3e3c70c
+  sha256: 248e0832139deea80b0ef66e6e4648a387d301c2956386c131efe751ba96c44b
 - id: E3
   activity: lint
   result: pass
