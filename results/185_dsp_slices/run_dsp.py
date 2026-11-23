@@ -230,6 +230,17 @@ def parse(pk: str, group: str | None = None) -> None:
                 r["path_source"], r["path_dest"] = (sr.group(1), sr.group(2)) if sr else (None, None)
                 r["path_per_level_ns"] = round(r["path_delay_ns"] / r["logic_levels"], 3) if r["path_delay_ns"] and r["logic_levels"] else None
                 r["runtime_s"] = int((wd / "done.txt").read_text().strip())
+                # The slice's own limit is a "Min Period" check (DSP48E1/CLK required 2.154 ns at -1), an absolute period, not a half-period pulse
+                # width: flow.ipchar.parse's 2 x shortfall rule over-penalises it, so Fmax is recomputed here (the slice limit is 1000 / required).
+                ts = (wd / "timing_summary.rpt").read_text()
+                mp = [(m.group(1), float(m.group(2))) for m in re.finditer(r"^Min Period\s+\S+\s+(\S+)\s+\S+\s+([\d.]+)\s+[\d.]+\s+-?[\d.]+", ts, re.M)]
+                r["min_period_required_ns"] = max((v for _, v in mp), default=None)
+                r["min_period_cell"] = max(mp, key=lambda x: x[1])[0] if mp else None
+                r["fmax_ipchar_mhz"] = r.get("fmax_mhz")
+                r["fmax_min_period_mhz"] = round(1000.0 / r["min_period_required_ns"], 1) if r["min_period_required_ns"] else None
+                cand = [x for x in (r.get("fmax_setup_mhz"), r["fmax_min_period_mhz"]) if x]
+                r["fmax_mhz"] = round(min(cand), 1) if cand else None
+                r["fmax_bound"] = "slice minimum period" if r["fmax_min_period_mhz"] and r["fmax_mhz"] == r["fmax_min_period_mhz"] else "setup slack at the target clock"
                 r["dsp_cells"] = dsp_cells(wd)
                 r["methodology_dsp"] = methodology_dsp(wd)
                 for k in ("power_w",):
@@ -241,6 +252,7 @@ def parse(pk: str, group: str | None = None) -> None:
                 (dst / "dsp_lines_methodology_drc.txt").write_text("\n".join(r["methodology_dsp"]) + "\n")
                 (dst / "synth_dsp_report.txt").write_text(dsp_report(log_section(batch_logs[g], f"{pk}/{j['id']}")) + "\n")
                 shutil.copy(wd / "timing_worst_setup.rpt", dst / "timing_worst_setup.rpt")
+                (dst / "pulse_width_checks.txt").write_text(ts.split("Pulse Width Checks", 1)[-1][:1800] if "Pulse Width Checks" in ts else "")
             rows.append(r)
     f = HERE / "data" / f"{pk}.json"
     f.parent.mkdir(parents=True, exist_ok=True)
@@ -258,7 +270,7 @@ def parse(pk: str, group: str | None = None) -> None:
            "date": datetime.date.today().isoformat(), "brief": 185,
            "flow": "out-of-context synth_design, opt_design, place_design, route_design; one thread; clock on port clk only; kept (DONT_TOUCH) registers on "
                    "every port of the wrapper, so the timed path is register to register through the module under test; I/O paths unconstrained; "
-                   "Fmax = 1000 / (clock_ns - WNS) after routing, one run at that clock (an estimate), also limited by the pulse-width slack",
+                   "Fmax = min(1000 / (clock_ns - WNS), 1000 / the largest 'Min Period' required in the timing summary) after routing, one run at that clock (an estimate); a setup-limited Fmax above the slice's own minimum period is not reachable",
            "points": sorted(merged.values(), key=lambda r: r["id"])}
     f.write_text(json.dumps(out, indent=1) + "\n")
     print("wrote", f.relative_to(ROOT), len(out["points"]), "points")
