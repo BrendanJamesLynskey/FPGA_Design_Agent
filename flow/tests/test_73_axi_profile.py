@@ -201,7 +201,8 @@ def test_the_axi_amd_ip_note_check_reports_ip_it_finds(tmp_path: Path) -> None:
 def test_the_tool_schema_lists_the_check() -> None:
     from agent.core import tools
     assert "axi_profile" in tools.CHECK_NAMES
-    assert all(n in tools.CHECK_NAMES for n in C.CHECKS) or set(C.CHECKS) - set(tools.CHECK_NAMES) == set()
+    suite_only = {"dsp_regs"}          # brief 185: advisory, not offered to the Designer (the tool's schema is pinned by the golden requests and the MCP snapshot)
+    assert all(n in tools.CHECK_NAMES for n in C.CHECKS if n not in suite_only)
 
 
 def test_the_committed_example_block_checks_clean_in_a_house_design(tmp_path: Path) -> None:
