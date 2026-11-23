@@ -93,6 +93,7 @@ module tb_func;
         if (!$value$plusargs("seed=%d", seed)) seed = 1;
         if (!$value$plusargs("bursts=%d", bursts)) bursts = 40;
         seed0 = seed; rs = seed;
+        #200;                                  // a netlist simulation holds every register in its global set/reset for the first 100 ns (glbl)
         repeat (4) @(negedge aclk);
         aresetn = 1;
         repeat (3) @(negedge aclk);
