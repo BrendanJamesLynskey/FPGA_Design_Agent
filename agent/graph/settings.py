@@ -1,19 +1,22 @@
-"""Proposed settings: the agent reads an input folder and proposes the variable levers it can read, each with its source; the user confirms
-or edits every value before the real run starts (brief 194, docs/agent_levers.md).
+"""Proposed settings: the agent reads an input folder and proposes the variable levers it can read, each with its source. The user confirms or edits
+every value **in the spec interview** (brief 194, docs/agent_levers.md): there is no separate confirmation screen.
 
-``propose(folder)`` writes ``proposed_settings.yaml``. Every setting has ``value``, ``sources`` (file and where), ``conflicts`` (another source
-that says something else), ``confidence`` and ``status``: ``proposed`` (read from a source, waiting for the user), ``ask`` (nothing readable:
-the value is empty and the user must give it; nothing is guessed) or ``confirmed`` (the user, by ``agent settings confirm`` or the Navigator).
-``load_confirmed(file)`` is what ``agent run --settings`` calls: it refuses a file with any setting that is not confirmed, or that is
-confirmed with an empty value.
+``propose(folder)`` writes ``proposed_settings.yaml``, which is the interview's input (``agent run --settings <file>``). Every setting has ``value``,
+``sources`` (file and where), ``conflicts`` (another source that says something else), ``confidence`` and ``status`` (``proposed``: read from a
+source; ``ask``: nothing readable, the value is empty and nothing is guessed). ``questions(doc)`` turns each setting into one interview question
+whose default is the proposed value and whose reason names its source and any conflict; ``resolve(doc, answers)`` turns the answers into the
+confirmed settings (the interview's output, ``confirmed_settings.yaml`` in the design) and lists what is still unconfirmed: a setting with no
+value (a person must give it), or a setting with an open conflict that only the default decided. The run cannot leave the interview while that
+list is not empty.
 
 Sources, in the order they are read: ``board_facts.yaml`` (the design-package ingest of brief 174, ``python -m flow.package ingest``, each fact
-with its source), a ``board.yaml`` or Xilinx constraint files in the folder, the board catalogue under ``boards/``, and the spec in the folder
-for the suggested profile. An ingest that is not there is no error: the settings it would have given are asked.
+with its source), a ``board.yaml`` in the folder, the board catalogue under ``boards/``, and the spec in the folder for the suggested profile. An
+ingest that is not there is no error: the settings it would have given are asked.
 """
 
 from __future__ import annotations
 
+import json
 import re
 from pathlib import Path
 from typing import Any
@@ -140,47 +143,90 @@ def write(folder: Path, out: dict[str, Any], dest: Path | None = None) -> Path:
     return dest
 
 
-def confirm(path: Path, keys: list[str] | None = None) -> list[str]:
-    """What ``agent settings confirm`` does: mark the named settings (or every one that has a value and no conflict) as confirmed. A value
-    that is empty or has an open conflict cannot be confirmed by this call; the user edits the file."""
-    d = yaml.safe_load(Path(path).read_text())
-    done = []
-    for k, e in d["settings"].items():
-        if keys and k not in keys:
-            continue
-        if e["value"] in (None, "", []) or e.get("conflicts"):
-            continue
-        e["status"] = "confirmed"
-        done.append(k)
-    Path(path).write_text(yaml.safe_dump(d, sort_keys=False))
-    return done
+SENTINEL = "(not given: please give a value)"
 
 
-def load_confirmed(path: Path) -> dict[str, Any]:
-    """The values of a fully confirmed settings file, or SettingsError naming every setting that is not."""
+def load_proposals(path: Path) -> dict[str, Any]:
     d = yaml.safe_load(Path(path).read_text())
-    if not isinstance(d, dict) or d.get("schema") != "fpga-design-agent/settings/v1":
+    if not isinstance(d, dict) or d.get("schema") != "fpga-design-agent/settings/v1" or not isinstance(d.get("settings"), dict):
         raise SettingsError(f"{path} is not a settings file")
-    bad = []
-    for k, e in d["settings"].items():
-        if e.get("status") != "confirmed":
-            bad.append(f"{k}: {e.get('status')}")
-        elif e["value"] in (None, "", []):
-            bad.append(f"{k}: confirmed with an empty value")
-        elif e.get("conflicts"):
-            bad.append(f"{k}: confirmed with an open conflict (remove the other source's value once you have chosen)")
-    if bad:
-        raise SettingsError("settings not confirmed, the run does not start: " + "; ".join(bad))
-    return {k: e["value"] for k, e in d["settings"].items()}
+    return d
 
 
-def apply_to_args(values: dict[str, Any], board: str | None, verif_profile: str | None) -> tuple[str, str]:
-    """(board, profile) the run uses. A command-line flag that disagrees with a confirmed value is refused, not silently overridden."""
-    b, p = values.get("board"), values.get("profile")
-    if board and b and board != b:
-        raise SettingsError(f"--board {board} disagrees with the confirmed board {b}")
-    if verif_profile and p and verif_profile != p:
-        raise SettingsError(f"--verif-profile {verif_profile} disagrees with the confirmed profile {p}")
-    if p and p not in profiles.PROFILES:
-        raise SettingsError(f"unknown profile {p!r}")
-    return b or board, p or verif_profile
+def apply_flags(doc: dict[str, Any], board: str | None, profile: str | None) -> dict[str, Any]:
+    """An explicit ``--board`` or ``--verif-profile`` is the user's own choice: it becomes the proposed value, with the command line as its source."""
+    for key, v in (("board", board), ("profile", profile)):
+        if v:
+            e = doc["settings"][key]
+            if e["value"] != v:
+                e["sources"] = [*e.get("sources", []), "the command line"]
+                e["value"], e["status"], e["conflicts"] = v, "proposed", []
+    return doc
+
+
+def questions(doc: dict[str, Any]) -> list[tuple[str, str, str, str]]:
+    """(key, text, default, reason) for every setting: the default is the proposed value (a sentinel when there is none)."""
+    out = []
+    for k in KEYS:
+        e = doc["settings"].get(k)
+        if e is None:
+            continue
+        has = e["value"] not in (None, "", [])
+        default = json.dumps(e["value"]) if has else SENTINEL
+        if has:
+            reason = "read from: " + ("; ".join(e.get("sources") or ["(no source recorded)"]))
+            if e.get("conflicts"):
+                reason += ". CONFLICT, please choose: " + "; ".join(f"{json.dumps(c['value'])} from {c['source']}" for c in e["conflicts"])
+        else:
+            reason = "nothing in the folder gives this value, and nothing is guessed: it must come from you"
+        out.append((k, f"Confirm the setting '{k}'. Answer with the value to use (JSON; a plain word is taken as text).", default, reason))
+    return out
+
+
+def _parse(text: str, proposed: Any) -> Any:
+    t = (text or "").strip()
+    try:
+        v = json.loads(t)
+    except ValueError:
+        return t
+    if isinstance(proposed, str) and not isinstance(v, str):
+        return t                              # "-1" for a speed grade is text, not a number
+    return v
+
+
+def resolve(doc: dict[str, Any], answers: dict[str, tuple[str | None, str]]) -> tuple[dict[str, Any], list[str]]:
+    """The confirmed values and the unconfirmed list. ``answers``: key -> (answer text, status) with status ``answered`` (a person or the oracle
+    gave it) or ``defaulted``. A default decides only a setting that has a value and no conflict."""
+    values: dict[str, Any] = {}
+    bad: list[str] = []
+    for k in KEYS:
+        e = doc["settings"].get(k)
+        if e is None:
+            continue
+        text, status = answers.get(k, (None, "defaulted"))
+        if status == "defaulted" or text in (None, "", SENTINEL, "not specified"):
+            v = e["value"]
+            if v in (None, "", []):
+                bad.append(f"{k}: nothing was proposed and nobody gave a value")
+                continue
+            if e.get("conflicts"):
+                bad.append(f"{k}: the sources disagree and only the default decided; choose one")
+                continue
+            values[k] = v
+        else:
+            v = _parse(text, e["value"])
+            if v in (None, "", []):
+                bad.append(f"{k}: the answer is empty")
+                continue
+            values[k] = v
+    return values, bad
+
+
+def confirmed_document(doc: dict[str, Any], values: dict[str, Any], answers: dict[str, tuple[str | None, str]]) -> dict[str, Any]:
+    out = {"schema": "fpga-design-agent/settings/v1", "folder": doc.get("folder"), "settings": {}}
+    for k, v in values.items():
+        e = dict(doc["settings"][k])
+        by = answers.get(k, (None, "defaulted"))[1]
+        e.update(value=v, status="confirmed", conflicts=[], confirmed_by="interview: " + by + (" (value edited)" if v != doc["settings"][k]["value"] else ""))
+        out["settings"][k] = e
+    return out

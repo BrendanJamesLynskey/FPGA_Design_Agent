@@ -77,3 +77,55 @@ def test_the_pin_holds_and_a_role_cannot_move_it(rt):
     # a second pin call (a resume) keeps the first
     assert P.write_pin(rt.run_dir, "prototype", None)["new"] is False
     assert yaml.safe_load((rt.run_dir / "policy.json").read_text())["profile"] == "standard"
+
+
+def _proposals(tmp_path, board):
+    import shutil
+    from pathlib import Path
+    from agent.graph import settings as S
+    d = tmp_path / f"{board}_pkg"
+    d.mkdir()
+    shutil.copy(ROOT / "boards" / board / "board.yaml", d / "board.yaml")
+    return d, S.write(d, S.propose(d))
+
+
+def test_settings_are_confirmed_inside_the_interview(rt, tmp_path):
+    from agent.graph import settings as S
+    d, f = _proposals(tmp_path, "nexys_a7_100t")
+    rt.cfg.verif_ask = False
+    rt.cfg.settings_file = f
+    rt.cfg.board = "nexys_a7_100t"
+    spec = dict(SPEC, open_questions=[], requirements=[{"id": "R1", "text": "Counts presses", "proof": ["simulation"]}])
+    spec, summary = gr._interview(rt, spec, {})
+    keys = {q["text"].rsplit("[", 1)[1][:-1]: q for q in summary["questions"] if q["text"].endswith("]")}
+    assert set(keys) == set(S.KEYS) and all(q["reason"] for q in keys.values())
+    assert keys["part"]["default"] == '"xc7a100tcsg324-1"' and keys["part"]["status"] == "defaulted"
+    assert keys["phys"]["default"] == S.SENTINEL
+    assert "phys: nothing was proposed" in "; ".join(summary["unconfirmed"])            # a gap stays open: the run cannot leave the interview
+    assert not (rt.design / "confirmed_settings.yaml").exists()
+
+
+def test_answered_gap_lets_the_run_leave_with_a_confirmed_file(rt, tmp_path, monkeypatch):
+    from agent.graph import settings as S
+    d, f = _proposals(tmp_path, "nexys_a7_100t")
+    doc = yaml.safe_load(f.read_text())
+    doc["settings"]["phys"].update(value=["none"], status="proposed")      # as if the human had been asked and the value read back
+    f.write_text(yaml.safe_dump(doc))
+    rt.cfg.verif_ask, rt.cfg.settings_file, rt.cfg.board = False, f, "nexys_a7_100t"
+    spec = dict(SPEC, open_questions=[], requirements=[{"id": "R1", "text": "Counts presses", "proof": ["simulation"]}])
+    spec, summary = gr._interview(rt, spec, {})
+    assert "unconfirmed" not in summary
+    conf = yaml.safe_load((rt.design / "confirmed_settings.yaml").read_text())
+    assert conf["settings"]["board"]["status"] == "confirmed" and conf["settings"]["board"]["confirmed_by"].startswith("interview: defaulted")
+    assert spec["settings"]["part"] == "xc7a100tcsg324-1" and spec["verif_profile"] == "standard"
+
+
+def test_a_confirmed_board_that_is_not_the_runs_board_stays_open(rt, tmp_path):
+    d, f = _proposals(tmp_path, "kr260")
+    doc = yaml.safe_load(f.read_text())
+    for k in ("io_standards", "phys", "interfaces", "speed_grade"):
+        doc["settings"][k].update(value=["x"] if k != "speed_grade" else "-2L", status="proposed")
+    f.write_text(yaml.safe_dump(doc))
+    rt.cfg.verif_ask, rt.cfg.settings_file, rt.cfg.board = False, f, "nexys_a7_100t"
+    spec, summary = gr._interview(rt, dict(SPEC, open_questions=[], requirements=[{"id": "R1", "text": "t", "proof": ["simulation"]}]), {})
+    assert any(u.startswith("board: the confirmed board kr260") for u in summary["unconfirmed"])

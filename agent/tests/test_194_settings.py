@@ -46,45 +46,47 @@ def test_an_ingest_that_disagrees_is_a_conflict(tmp_path):
     assert e["conflicts"] == [{"value": "xc7a100tcsg324-1", "source": "boards/nexys_a7_100t/board.yaml"}]
 
 
-def test_a_run_refuses_unconfirmed_settings_and_a_flag_that_disagrees(tmp_path):
-    d = _pkg(tmp_path, "nexys_a7_100t")
-    f = S.write(d, S.propose(d))
-    with pytest.raises(S.SettingsError, match="not confirmed"):
-        S.load_confirmed(f)
-    done = S.confirm(f)
-    assert "board" in done and "phys" not in done                                             # empty values cannot be confirmed by the call
-    with pytest.raises(S.SettingsError, match="phys: ask"):
-        S.load_confirmed(f)
-    doc = yaml.safe_load(f.read_text())
-    doc["settings"]["phys"].update(value=["none"], status="confirmed")
-    f.write_text(yaml.safe_dump(doc))
-    vals = S.load_confirmed(f)
-    assert vals["board"] == "nexys_a7_100t"
-    assert S.apply_to_args(vals, None, None) == ("nexys_a7_100t", "standard")
-    with pytest.raises(S.SettingsError, match="disagrees"):
-        S.apply_to_args(vals, "kr260", None)
-    with pytest.raises(S.SettingsError, match="disagrees"):
-        S.apply_to_args(vals, None, "prototype")
+def test_every_setting_is_an_interview_question_with_its_source_as_the_reason(tmp_path):
+    out = S.propose(_pkg(tmp_path, "kr260"))
+    qs = {k: (t, d, r) for k, t, d, r in S.questions(out)}
+    assert set(qs) == set(S.KEYS)
+    assert qs["part"][1] == '"xck26-sfvc784-2LV-c"' and "boards/kr260/board.yaml" in qs["part"][2]
+    assert qs["phys"][1] == S.SENTINEL and "nothing is guessed" in qs["phys"][2]
 
 
-def test_a_conflict_cannot_be_confirmed_by_the_call(tmp_path):
+def test_a_default_confirms_only_what_has_a_value_and_no_conflict(tmp_path):
     d = _pkg(tmp_path, "nexys_a7_100t", {"facts": {"part": "xc7a35tcpg236-1"}})
-    f = S.write(d, S.propose(d))
-    assert "part" not in S.confirm(f)
+    doc = S.propose(d)
+    values, bad = S.resolve(doc, {})                               # everything defaulted
+    assert values["board"] == "nexys_a7_100t" and "part" not in values
+    assert any(b.startswith("part: the sources disagree") for b in bad) and any(b.startswith("phys: nothing was proposed") for b in bad)
+    values, bad = S.resolve(doc, {"part": ("xc7a100tcsg324-1", "answered"), "phys": ('["none"]', "answered")})
+    assert values["part"] == "xc7a100tcsg324-1" and values["phys"] == ["none"] and not bad       # a person's answer settles a conflict and fills a gap
 
 
-def test_the_cli_commands(tmp_path, capsys):
+def test_an_answer_that_is_a_number_stays_text_where_the_proposal_is_text(tmp_path):
+    doc = S.propose(_pkg(tmp_path, "nexys_a7_100t"))
+    values, _ = S.resolve(doc, {"speed_grade": ("-2", "answered"), "reference_clocks": ('[{"port": "clk", "freq_mhz": 50}]', "answered")})
+    assert values["speed_grade"] == "-2" and values["reference_clocks"][0]["freq_mhz"] == 50
+
+
+def test_flags_become_the_proposed_value(tmp_path):
+    doc = S.apply_flags(S.propose(_pkg(tmp_path, "nexys_a7_100t")), "kr260", "ip_release")
+    assert doc["settings"]["board"]["value"] == "kr260" and doc["settings"]["board"]["sources"][-1] == "the command line"
+    assert doc["settings"]["profile"]["value"] == "ip_release"
+
+
+def test_the_cli_propose_command_writes_the_interviews_input(tmp_path):
     from agent.__main__ import main
     d = _pkg(tmp_path, "kr260")
-    assert main(["propose", str(d)]) == 0 and (d / "proposed_settings.yaml").is_file()
-    assert main(["settings", "confirm", str(d / "proposed_settings.yaml")]) == 1          # io_standards, phys, interfaces still asked
-    assert "ask" in capsys.readouterr().out
+    assert main(["propose", str(d)]) == 0
+    assert S.load_proposals(d / "proposed_settings.yaml")["settings"]["board"]["value"] == "kr260"
 
 
-def test_agent_run_refuses_an_unconfirmed_settings_file(tmp_path, capsys):
+def test_agent_run_refuses_a_file_that_is_not_a_settings_file(tmp_path, capsys):
     from agent.__main__ import main
-    d = _pkg(tmp_path, "nexys_a7_100t")
-    f = S.write(d, S.propose(d))
+    f = tmp_path / "x.yaml"
+    f.write_text("a: 1\n")
     with pytest.raises(SystemExit) as e:
         main(["run", str(ROOT / "designs/t1_dimmer_counter/spec.md"), "--settings", str(f)])
-    assert e.value.code == 2 and "not confirmed" in capsys.readouterr().err
+    assert e.value.code == 2 and "not a settings file" in capsys.readouterr().err
