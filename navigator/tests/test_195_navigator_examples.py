@@ -94,7 +94,7 @@ def test_the_examples_route_lists_examples_pins_limits_and_the_preflight(web, mo
     monkeypatch.setattr(EXM, "preflight", lambda: {"ok": False, "checks": [{"name": "claude_cli", "ok": False, "detail": "no pinned copy", "hard": True}]})
     st, _, body = web.get("/api/examples")
     j = json.loads(body)
-    assert st == 200 and [e["name"] for e in j["examples"]] == ["gray_stepper", "elevator_fsm", "median3x3"]
+    assert st == 200 and [e["name"] for e in j["examples"]] == ["gray_stepper", "elevator_fsm", "median3x3", "pattern_sequencer"]
     assert j["pins"]["cc_model"] == "claude-sonnet-5-5" and j["preflight"]["ok"] is False and any("no temperature and no seed" in x for x in j["limits"])
     assert web.req("GET", "/api/examples", {})[0] == 401
 
