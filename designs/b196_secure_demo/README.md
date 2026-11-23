@@ -11,7 +11,7 @@ Not in scope:
 - a board design; it was never programmed and no hardware measurement exists
 - bitstream encryption or authentication, which on a Zynq MPSoC are boot-image steps that belong to the owner
 
-Kind: demonstration; written by hand. State: built. For an agent: [AGENT.md](AGENT.md).
+Kind: demonstration; written by a Claude Code session. State: built. For an agent: [AGENT.md](AGENT.md).
 
 <!-- prose:what -->
 <!-- /prose:what -->

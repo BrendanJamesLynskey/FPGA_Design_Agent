@@ -2,7 +2,7 @@
 source: designs/b196_secure_demo/handover.yaml; human view: README.md; refresh: python -m flow.handover fresh designs/b196_secure_demo
 
 ## identity
-kind=demonstration produced_by=human part=xck26-sfvc784-2LV-c board=kr260 top=b196_top tool=Vivado 2026.1
+kind=demonstration produced_by=session part=xck26-sfvc784-2LV-c board=kr260 top=b196_top tool=Vivado 2026.1
 
 ## summary
 A 25 MHz design for the Kria KR260 part that runs the brief-194 stream core and drives two LEDs, with a SYSMONE4 whose alarm thresholds come from the board's operating limits and feed a latched safe shutdown. It is built with the production_secure switch on, and the same design with one ILA added is built to show the check failing. Built only; never programmed and never on a board.
