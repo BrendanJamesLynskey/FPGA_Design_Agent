@@ -353,9 +353,13 @@ if {[info exists build_id] && $build_id ne ""} {
 }
 # brief 196: production_secure. The settings (flow/security.py via prepare.py) go on the design just before write_bitstream; the properties are read back
 # after it, with the debug inventory and the system monitor, for the gates of flow/security.py. Off: nothing here runs and the build is unchanged.
-if {[info exists security_on] && $security_on} { fda_security_apply $out $security_props }
-write_bitstream -force $out/$top.bit
-if {[info exists security_on] && $security_on} { fda_security_dump $out }
+if {[info exists security_on] && $security_on} {
+    fda_security_apply $out $security_props $security_switches
+    write_bitstream -force -verbose $out/$top.bit      ;# -verbose prints the options applied to the bitstream: the log is evidence for flow/security.py
+    fda_security_dump $out
+} else {
+    write_bitstream -force $out/$top.bit
+}
 if {$ila} {
     write_debug_probes -force $out/$top.ltx
     # brief 48: an ILA that is an IP can get a .ltx the hardware manager calls inconsistent; repair what is safe, fail the build on

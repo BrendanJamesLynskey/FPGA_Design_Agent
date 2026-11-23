@@ -48,6 +48,10 @@ The README's sections, in this order (the generator writes them; you add narrati
 4. **Verified**: each activity (simulation, formal, seeded faults, CDC, lint, build, board, review) with its result,
    its evidence and, for hardware, its operating conditions; a verification matrix graphic; the gates at handover.
 5. **Measured**: each number with its record, the field it was read from, the number of runs and its conditions.
+5a. **Security** (brief 196; only for a design built with `production_secure`, which is a `security_profile_met` gate in `state.gates` or a `security:`
+   request in `build.yaml`, where it is required): what is enabled, each with the Vivado output that shows it (`security.enabled[].proof`); what is
+   not enabled and why (`not_enabled`); what a user could get wrong (`could_get_wrong`); who owns the key (`key_handling`). Never a certification or
+   side-channel claim. Prose block `security`.
 6. **Known gaps and limits**: everything not verified or measured, nulls, failing or waived gates, assumptions, and
    behaviour a user could guess wrong.
 7. **Next steps**: what the next engineer should do first; open questions.
@@ -74,6 +78,7 @@ under 2,000 tokens (characters / 4) for a typical design; it is measured and rep
 - any of resources, timing, power, latency, throughput with neither a measurement nor a gap `about` it;
 - an evidence entry that did not pass, or a gate in `state.gates` that did not pass, with no gap `about` its id;
 - hardware evidence without conditions; evidence marked `how: ci` that CI does not run;
+- a design built with `production_secure` and no `security` section, a section with no enabled item, a proof or reason under four words, or a certification claim (FIPS, Common Criteria, side-channel resistance) that does not say it is not made;
 - a number in a README prose block or in a free-text field of `handover.yaml` (summary, notes, `what`, conditions,
   gaps, next steps, history notes) that is not vouched for: it must occur in a cited record, a listed design file, a
   local interface document, a structured field (parameters, clocks, measured values, history dates, paths, commands),

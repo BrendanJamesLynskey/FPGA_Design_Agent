@@ -140,6 +140,8 @@ structures, not a certification.
 | **Safety** (absence of catastrophic consequences) | a fault leads to a defined safe state | `fsm_safe_state`, fail-safe defaults, and for the trading designs the kill switch and the risk gate | `fsm_safe_state` costs +7 LUT; its effect is a netlist property and was not injected (gap); the trading kill switch and risk gate are brief 188's, not measured here |
 | **Maintainability** (ability to undergo repairs and modifications) | a fault can be found and the design changed | build identity (`BUILD_STAMP`, build ID in every record), partial reconfiguration | not measured in this brief; listed so the profile does not claim it |
 
+| **Security** (Avizienis et al.: availability, confidentiality and integrity against *unauthorised* actions) | the design and its bitstream resist copying, readback, tampering and debug access | the `production_secure` switch (brief 196): bitstream encryption and authentication settings, readback and JTAG-to-SYSMON off, no debug cores or ports, SYSMON alarms wired to a latched safe shutdown; keys and eFUSE or BBRAM programming are the owner's | [docs/security.md](security.md): a KR260-part build checked against Vivado's own outputs; the same design with a debug core fails the gate. Nothing is measured against an attacker, and no certification or side-channel claim is made |
+
 The four **means** map onto the rest of the profile switches:
 
 | Means | Meaning | Where it is in the profiles |

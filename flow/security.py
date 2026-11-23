@@ -208,12 +208,201 @@ def tcl_assignments(sw: dict[str, bool], family: str) -> list[tuple[str, str]]:
     return out
 
 
+# ---- the check ------------------------------------------------------------------------------------------------------------------------
+
+DEBUG_PORT = re.compile(r"(?i)(^|[_\[./])(jtag|tck|tms|tdi|tdo|trst|swd|swclk|swdio|trace|dbg|debug|probe)([_\[\]./0-9]|$)")
+APPLY_FILE, DUMP_FILE = "security_apply.txt", "security_design.txt"
+
+
+def parse_dump(text: str) -> dict[str, Any]:
+    """``security_design.txt`` (flow/security.tcl ``fda_security_dump``) as data."""
+    d: dict[str, Any] = {"props": {}, "debug_cores": [], "debug_cells": [], "bscan": [], "mark_debug": [], "ports": [], "sysmon": {}, "sysmon_cells": []}
+    cur = None
+    for line in text.splitlines():
+        k, _, rest = line.partition(" ")
+        if k == "PART":
+            d["part"] = rest.strip()
+        elif k == "PROP":
+            name, _, val = rest.partition(" ")
+            d["props"][name] = val.strip()
+        elif k == "DEBUG_CORES":
+            n, _, names = rest.partition(" ")
+            d["n_debug_cores"] = int(n)
+            d["debug_cores"] = names.split()
+        elif k == "DEBUG_CELL":
+            d["debug_cells"].append(rest.strip())
+        elif k == "DEBUG_CELL_COUNT":
+            d["n_debug_cells"] = int(rest)
+        elif k == "BSCAN_CELL":
+            d["bscan"].append(rest.strip())
+        elif k == "BSCAN_COUNT":
+            d["n_bscan"] = int(rest)
+        elif k == "MARK_DEBUG_NETS":
+            d["n_mark_debug"] = int(rest)
+        elif k == "MARK_DEBUG_NET":
+            d["mark_debug"].append(rest.strip())
+        elif k == "PORT":
+            dr, _, name = rest.partition(" ")
+            d["ports"].append((dr, name.strip()))
+        elif k == "SYSMON_CELL":
+            cur = rest.strip()
+            d["sysmon_cells"].append(cur)
+            d["sysmon"][cur] = {"attrs": {}, "pins": {}}
+        elif k == "SYSMON_ATTR" and cur:
+            name, _, val = rest.partition(" ")
+            d["sysmon"][cur]["attrs"][name] = val.strip()
+        elif k == "SYSMON_PIN" and cur:
+            pn, _, r = rest.partition(" ")
+            toks = r.split()
+            d["sysmon"][cur]["pins"][pn] = {"loads": (int(toks[0]) if toks and toks[0].isdigit() else 0), "load_cells": toks[1:]}
+    return d
+
+
+def parse_apply(text: str) -> tuple[list[str], list[str]]:
+    ok, bad = [], []
+    for line in text.splitlines():
+        if line.startswith("APPLY ok "):
+            ok.append(line[len("APPLY ok "):].strip())
+        elif line.startswith("APPLY ERROR "):
+            bad.append(line[len("APPLY ERROR "):].strip())
+    return ok, bad
+
+
+def attr_value(s: str) -> int | None:
+    """A SYSMONE4 INIT attribute as Vivado prints it (``16'hB740``, ``16'b1011..``, ``0xB740`` or plain hex) as an integer."""
+    s = s.strip()
+    m = re.match(r"^\d+'([hbdo])([0-9a-fA-F_xXzZ]+)$", s)
+    try:
+        if m:
+            return int(m.group(2).replace("_", ""), {"h": 16, "b": 2, "d": 10, "o": 8}[m.group(1)])
+        if s.lower().startswith("0x"):
+            return int(s, 16)
+        return int(s, 16)
+    except ValueError:
+        return None
+
+
+def debug_findings(dump: dict[str, Any], waive: list[dict[str, str]], variant_files: list[str]) -> list[dict[str, str]]:
+    """What a production build must not contain, from the dump of the implemented design. A finding is waived only by name, with a reason."""
+    waived = {w["rule"] for w in waive}
+    out: list[dict[str, str]] = []
+
+    def add(rule: str, what: str) -> None:
+        if rule not in waived:
+            out.append({"rule": rule, "what": what})
+    if dump.get("n_debug_cores", 0):
+        add("debug_core", f"{dump['n_debug_cores']} debug core(s) in the design: {' '.join(dump['debug_cores'])}")
+    if dump.get("n_debug_cells", 0):
+        names = ", ".join(sorted({c.split()[0] for c in dump["debug_cells"]})[:6])
+        add("debug_cell", f"{dump['n_debug_cells']} cell(s) of a debug core, hub or bridge (reference names: {names})")
+    if dump.get("n_bscan", 0):
+        add("bscan", f"{dump['n_bscan']} BSCAN primitive(s): a JTAG user-register path into the design")
+    if dump.get("n_mark_debug", 0):
+        add("mark_debug", f"{dump['n_mark_debug']} net(s) marked MARK_DEBUG")
+    bad_ports = [n for _d, n in dump.get("ports", []) if DEBUG_PORT.search(n)]
+    if bad_ports:
+        add("debug_port", "top-level port(s) with a debug-class name: " + ", ".join(bad_ports[:6]))
+    for f in variant_files:
+        add("debug_file", f"the build wrote {f}, the probe file of a debug build")
+    return out
+
+
+def sysmon_findings(dump: dict[str, Any], expected: dict[str, int]) -> list[str]:
+    cells = dump.get("sysmon_cells", [])
+    if not cells:
+        return ["no SYSMONE4 cell in the design"]
+    out: list[str] = []
+    for c in cells:
+        got = dump["sysmon"][c]
+        for reg, want in expected.items():
+            v = attr_value(got["attrs"].get(reg, ""))
+            if v != want:
+                out.append(f"{c}: {reg} is {got['attrs'].get(reg, 'missing')}, the board's limits give 16'h{want:04X}")
+        for pn in ("OT", "ALM[0]", "ALM[1]", "ALM[2]", "ALM[3]"):
+            pin = got["pins"].get(pn)
+            if not pin or pin["loads"] < 1:
+                out.append(f"{c}: output {pn} drives nothing")
+            elif not any(re.match(r"^(FD|LD)", lc.split(":", 1)[0]) for lc in pin["load_cells"]):
+                out.append(f"{c}: output {pn} reaches no register in the first loads ({' '.join(pin['load_cells'][:3])})")
+    return out
+
+
+def evaluate(build_dir: Path, board: str | None = None) -> dict[str, Any] | None:
+    """The gates of one build, or None when the build has no security request. Reads only files Vivado or the flow wrote in the build directory."""
+    d = Path(build_dir)
+    rq = d / "security_request.json"
+    if not rq.is_file():
+        return None
+    req = json.loads(rq.read_text())
+    gates: dict[str, bool] = {}
+    out: dict[str, Any] = {"source": req["source"], "request": req["request"], "switches": req["switches"], "policy_conflict": req["policy_conflict"],
+                           "gates": gates, "findings": [], "evidence": {}}
+    if req["policy_conflict"]:
+        gates["security_policy_pin"] = False
+        out["findings"] += [{"rule": "policy_conflict", "what": c} for c in req["policy_conflict"]]
+    if not req["request"]["production_secure"]:
+        return out
+    sw = req["switches"]
+    prep = json.loads((d / "prepare.json").read_text()) if (d / "prepare.json").is_file() else {}
+    top = prep.get("top") or next((p.stem for p in d.glob("*.bit")), "")
+    ap, du = d / APPLY_FILE, d / DUMP_FILE
+    ok, bad = parse_apply(ap.read_text()) if ap.is_file() else ([], ["security_apply.txt is missing"])
+    gates["security_settings_applied"] = ap.is_file() and not bad and len(ok) >= len(req["properties"])
+    if bad:
+        out["findings"] += [{"rule": "apply", "what": b} for b in bad]
+    if not du.is_file():
+        out["findings"].append({"rule": "evidence", "what": "security_design.txt is missing: the build did not reach write_bitstream"})
+        for k in SUBSWITCHES:
+            if sw[k]:
+                gates[f"security_{k}"] = False
+        gates["security_profile_met"] = False
+        return out
+    dump = parse_dump(du.read_text())
+    out["evidence"]["properties"] = {k: v for k, v in dump["props"].items() if re.match(r"BITSTREAM\.(ENCRYPTION|AUTHENTICATION|CONFIG\.SECURITY|GENERAL\.JTAG)", k)}
+    pr = dump["props"]
+    log = d / "vivado.log"
+    wb = ""
+    if log.is_file():
+        txt = log.read_text(errors="replace")
+        i = txt.find("Command: write_bitstream")
+        wb = txt[i:] if i >= 0 else ""
+    out["evidence"]["write_bitstream_log_lines"] = [ln.strip() for ln in wb.splitlines() if re.search(r"(?i)encrypt|authent|readback|security|jtag|key", ln)][:12]
+    bit = d / f"{top}.bit"
+    out["evidence"]["bit_bytes"] = bit.stat().st_size if bit.is_file() else 0
+    out["evidence"]["key_file_present"] = (d / f"{top}.nky").is_file()          # existence only: the file is never read
+    if sw["encrypt"]:
+        gates["security_encrypt"] = (pr.get("BITSTREAM.ENCRYPTION.ENCRYPT") == "YES" and pr.get("BITSTREAM.ENCRYPTION.ENCRYPTKEYSELECT") in ("BBRAM", "EFUSE")
+                                     and bit.is_file() and any(re.search(r"(?i)encrypt", ln) for ln in out["evidence"]["write_bitstream_log_lines"]))
+    if sw["authenticate"]:
+        gates["security_authenticate"] = pr.get("BITSTREAM.AUTHENTICATION.AUTHENTICATE") == "YES"
+    if sw["readback_off"]:
+        gates["security_readback_off"] = (pr.get("BITSTREAM.CONFIG.SECURITY") in ("LEVEL1", "LEVEL2") and pr.get("BITSTREAM.GENERAL.JTAG_SYSMON") == "DISABLE")
+    if sw["strip_debug"]:
+        fl = debug_findings(dump, req["request"].get("waive", []), [p.name for p in d.glob("*.ltx")])
+        gates["security_strip_debug"] = not fl
+        out["findings"] += [{"rule": f["rule"], "what": f["what"]} for f in fl]
+    if sw["sysmon_shutdown"]:
+        b = board or prep.get("board")
+        try:
+            exp = sysmon_init(limits_of(b)) if b else None
+        except SecurityError as e:
+            exp, out["findings"] = None, out["findings"] + [{"rule": "sysmon_limits", "what": str(e)}]
+        fl = sysmon_findings(dump, exp) if exp else ["no board operating_limits to compare the thresholds with"]
+        gates["security_sysmon_shutdown"] = not fl
+        out["findings"] += [{"rule": "sysmon_shutdown", "what": x} for x in fl]
+    gates["security_profile_met"] = all(v for k, v in gates.items() if k != "security_profile_met")
+    return out
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     sub = ap.add_subparsers(dest="cmd", required=True)
     s = sub.add_parser("sysmon-init")
     s.add_argument("board")
     s.add_argument("--write")
+    for name in ("show", "check"):
+        c = sub.add_parser(name)
+        c.add_argument("build_dir")
     a = ap.parse_args(argv)
     if a.cmd == "sysmon-init":
         text = sysmon_header(a.board)
@@ -222,7 +411,12 @@ def main(argv: list[str] | None = None) -> int:
         else:
             sys.stdout.write(text)
         return 0
-    return 2
+    r = evaluate(Path(a.build_dir))
+    if r is None:
+        print("no security request in this build")
+        return 0
+    print(json.dumps(r, indent=1, sort_keys=True))
+    return 0 if a.cmd == "show" or all(r["gates"].values()) else 1
 
 
 if __name__ == "__main__":

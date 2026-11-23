@@ -43,6 +43,7 @@ V = variable, J = LLM judgement, H = hybrid.
 | `--max-usd`, `RUN_LIMITS`, per-stage limits, `visits_per_stage` | V | the budget and loop limits protect the user's plan; the model must not extend them | exist |
 | `--stop-after`, `--from-stage`, `--rewind`, `--review`, `--interview` | V | how much the user wants to be asked and where to stop | exist |
 | `--verif-profile`, `--set`, `--verif-level`, `--spec-tests` | V | the confidence the user asks for; the model cannot lower its own bar | this brief |
+| `--set production_secure=on` and the sub-switches `sec_encrypt`, `sec_authenticate`, `sec_readback_off`, `sec_strip_debug`, `sec_sysmon_shutdown` | V | the security the user asks of a production build; the model cannot lower it: the pin reaches the flow as `FDA_SECURITY` and beats a `security:` key in `build.yaml` (a disagreement is the gate `security_policy_pin`). Keys and eFUSE or BBRAM programming are not levers: they are the owner's | brief 196 |
 | `--hdl`, `--no-shell`, `--data-dir` | V | the design language and the task's shape | exist |
 | `--design-plan`, `--closure`, `--docs`, `--skill-routing`, `--router-model`, `--router-k`, `--harness`, `--harness-arm` | V | which agent features run: user policy, measured separately | exist |
 | `--deterministic`, `--record`, `--replay`, `--tape` | V | reproducibility settings | exist |
@@ -82,6 +83,7 @@ V = variable, J = LLM judgement, H = hybrid.
 | whether a failure is the design or the test | J | needs the evidence | the triage record of the spec-test role |
 | interpreting an ambiguous spec | H | never silent: an interview question with a default | `resolved_questions` in `spec.yaml` and the run summary |
 | which blocks get TMR or ECC when the spec does not say | H | the profile decides *whether* the structures are offered (V); the interview decides *where* | `spec.yaml` `dependability`, the interview record |
+| whether this is a production build (`production_secure`) | H | the interview asks, with a default from the spec's words ("production", "secure", "tamper", ...) and the measured cost; once answered it is a variable in the pin. With `--interview off` it stays off unless set with `--set` | the interview record, `spec.yaml` `production_secure`, `policy.json` |
 | profile choice for a new block | H | the interview proposes one from the spec's words, with its measured extra time | the interview record and `policy.json` |
 | request a change to an LLM-judgement value | *proposal* | a Navigator control that files a change request for the next visit of the stage | not built |
 

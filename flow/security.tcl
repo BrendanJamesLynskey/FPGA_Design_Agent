@@ -1,6 +1,6 @@
 # security.tcl: the Tcl of the production_secure build (brief 196). Definitions only; flow/build.tcl calls them.
 #
-#   fda_security_apply <out> <props>   sets each {property value} pair on the design, before write_bitstream, and records every result in
+#   fda_security_apply <out> <props> <switches>   sets each {property value} pair on the design, before write_bitstream, and records every result in
 #                                      <out>/security_apply.txt (APPLY ok / APPLY ERROR ...), never stopping the build: a setting Vivado refuses
 #                                      is a failed gate (flow/security.py), not a crash
 #   fda_security_dump <out>            after write_bitstream: every BITSTREAM.* property read back from the design, the debug inventory, the
@@ -9,13 +9,29 @@
 # No command here reads, writes, loads or programs a key, an eFUSE or a BBRAM, and none touches hardware. Vivado itself makes the .nky beside
 # the bitstream when encryption is on (a key for a build that is never programmed; flow/security.py documents the handling).
 
-proc fda_security_apply {out props} {
+proc fda_security_apply {out props switches} {
     set f [open $out/security_apply.txt w]
     foreach {p v} $props {
         if {[catch {set_property $p $v [current_design]} err]} {
             puts $f "APPLY ERROR $p $v :: [string map {\n { }} $err]"
         } else {
             puts $f "APPLY ok $p $v"
+        }
+    }
+    # Key FILES are the owner's (or a throw-away file made by hand for a build that is never programmed). The flow never makes or reads one: an
+    # environment variable names the file, Vivado reads it, and neither its path nor its content goes into a record.
+    #   FDA_SECURITY_KEYFILE      an .nky for the encryption key (without it Vivado makes its own key and writes an .nky beside the bitstream)
+    #   FDA_SECURITY_RSAKEYFILE   the RSA private key file that bitstream authentication needs
+    array set sw $switches
+    foreach {var prop need} {FDA_SECURITY_KEYFILE BITSTREAM.ENCRYPTION.KEYFILE encrypt FDA_SECURITY_RSAKEYFILE BITSTREAM.AUTHENTICATION.RSAPRIVATEKEYFILE authenticate} {
+        if {[info exists sw($need)] && $sw($need) && [info exists ::env($var)] && $::env($var) ne ""} {
+            if {![file isfile $::env($var)]} {
+                puts $f "APPLY ERROR $prop <file> :: the file named by $var does not exist"
+            } elseif {[catch {set_property $prop $::env($var) [current_design]} err]} {
+                puts $f "APPLY ERROR $prop <file> :: [string map {\n { }} $err]"
+            } else {
+                puts $f "APPLY ok $prop <file given by $var>"
+            }
         }
     }
     close $f

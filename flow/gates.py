@@ -494,6 +494,24 @@ def _oss_netlist(d: Path, g: dict[str, bool]) -> dict[str, Any] | None:
     return r
 
 
+def _security(d: Path, g: dict[str, bool]) -> dict[str, Any] | None:
+    """Brief 196: flow/security.py's gates (``security_*``, with ``security_profile_met`` for the whole request) for a build that had a
+    production_secure request, and ``security_policy_pin`` where a build.yaml request disagreed with the run's pin. None for a build with no request."""
+    try:
+        from flow import security
+    except ImportError:      # run as a script: flow/ is on sys.path, not the repo
+        sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+        from flow import security
+    try:
+        r = security.evaluate(d)
+    except (OSError, ValueError, KeyError) as e:
+        g["security_profile_met"] = False
+        return {"error": f"{type(e).__name__}: {e}"}
+    if r is not None:
+        g.update(r["gates"])
+    return r
+
+
 def _resets(d: Path, g: dict[str, bool]) -> dict[str, Any] | None:
     """Brief 71: the check suite's ``resets`` check (flow/checks/resets.py: AMD's reset rows and our netlist scan) as gate
     ``post_synth_resets_clean``, the same function the agent's ``check`` tool runs. Only for a build that ran the scan
@@ -841,6 +859,9 @@ def evaluate(build_dir: Path, architecture: Path | None = None) -> dict[str, Any
         if variant == "ila":
             bit_gates["debug_probes_present"] = ltx.exists() and ltx.stat().st_size > 0
         stages["bitstream"] = {"ran": True, "gates": bit_gates}
+        sec = _security(d, bit_gates)             # brief 196: production_secure, from what Vivado wrote (None for an ordinary build)
+        if sec is not None:
+            stages["bitstream"]["security"] = sec
 
     gates: dict[str, bool] = {}
     warnings: list[dict[str, Any]] = []
