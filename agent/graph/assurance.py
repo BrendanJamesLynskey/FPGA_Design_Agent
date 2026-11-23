@@ -1,4 +1,4 @@
-"""The interview side of the verification profile and the reliability structures (brief 194): which profile to propose, which structures
+"""The interview side of the verification profile and the dependability structures (brief 194): which profile to propose, which structures
 to ask about, what each costs (from the measured records), and the advisory line of the run summary. Pure functions, tested without a model.
 
 The measured records are ``results/b194/costs.json`` (area, Fmax and latency of each structure on the development design) and
@@ -27,7 +27,7 @@ CLASSES = {
 }
 
 _TRIGGERS = (
-    ("high_reliability", r"\b(radiation|single[- ]event|seu|soft error|safety|fault[- ]tolerant|must recover|ecc|redundan|rad-hard|space)\b"),
+    ("high_dependability", r"\b(radiation|single[- ]event|seu|soft error|safety|fault[- ]tolerant|must recover|ecc|redundan|rad-hard|space)\b"),
     ("ip_release", r"\b(library|ip core|reusable ip|ip block|release|verified ip|for reuse)\b"),
     ("low_latency", r"\b(low[- ]latency|tick[- ]to[- ]trade|latency[- ]critical|latency budget|nanosecond)\b"),
     ("prototype", r"\b(prototype|quick look|throwaway|proof of concept|sketch)\b"),
@@ -100,9 +100,9 @@ def structure_cost_text(structure: str) -> str:
 
 
 def structure_questions(spec: dict[str, Any], eff: dict[str, Any]) -> list[tuple[str, str, str]]:
-    """One question per block class the spec seems to contain, only when the profile asks for reliability structures. The default is to
+    """One question per block class the spec seems to contain, only when the profile asks for dependability structures. The default is to
     protect memories and state machines (the structure with the best measured protection per cost) and to leave the rest alone."""
-    if eff.get("reliability") != "interview":
+    if eff.get("dependability") != "interview":
         return []
     out = []
     for cls in candidate_classes(spec):

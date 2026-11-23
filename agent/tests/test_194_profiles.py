@@ -26,7 +26,7 @@ def test_standard_is_today_and_prototype_stops_at_v1():
 
 
 def test_profiles_are_cumulative_where_the_names_say_so():
-    for lower, higher in (("standard", "thorough"), ("thorough", "ip_release"), ("thorough", "high_reliability")):
+    for lower, higher in (("standard", "thorough"), ("thorough", "ip_release"), ("thorough", "high_dependability")):
         lo, hi = P.PROFILES[lower], P.PROFILES[higher]
         for k, v in lo.items():
             if isinstance(v, bool) and v:
@@ -87,7 +87,7 @@ def test_the_method_groups_the_policy_names_exist():
 
 def test_the_proposed_profile_follows_the_spec_and_gives_a_reason():
     assert A.propose_profile({"requirements": [{"text": "A reusable IP block for the library"}]})[0] == "ip_release"
-    assert A.propose_profile({"requirements": [{"text": "The FIFO must recover from a single event upset"}]})[0] == "high_reliability"
+    assert A.propose_profile({"requirements": [{"text": "The FIFO must recover from a single event upset"}]})[0] == "high_dependability"
     assert A.propose_profile({"requirements": [{"text": "tick-to-trade latency under 100 ns"}]})[0] == "low_latency"
     assert A.propose_profile({"requirements": [{"text": "A quick look prototype"}]})[0] == "prototype"
     assert A.propose_profile({"requirements": [{"text": "A counter"}]})[0] == "standard"
@@ -97,10 +97,10 @@ def test_the_proposed_profile_follows_the_spec_and_gives_a_reason():
     assert A.profile_from_answer("ip_release please", "standard") == "ip_release" and A.profile_from_answer("dunno", "standard") == "standard"
 
 
-def test_structure_questions_only_for_high_reliability_and_name_the_cost():
+def test_structure_questions_only_for_high_dependability_and_name_the_cost():
     spec = {"requirements": [{"text": "A FIFO feeds a state machine and a counter"}]}
     assert A.structure_questions(spec, P.PROFILES["standard"]) == []
-    qs = A.structure_questions(spec, P.PROFILES["high_reliability"])
+    qs = A.structure_questions(spec, P.PROFILES["high_dependability"])
     assert len(qs) == 3 and all(q[1] and q[2] for q in qs)
     assert "protect with ecc" == qs[0][1] and "cost:" in qs[0][2] or "measured" in qs[0][2]
 

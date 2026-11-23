@@ -58,7 +58,7 @@ V = variable, J = LLM judgement, H = hybrid.
 | `verif_profile`, `timing_sim` | V | see above | this brief |
 | `requirements[].proof` (the method that will prove each) | H | the agent proposes a method with a reason (`propose_proof`); the interview records the answer | exists |
 | `parameters` given as rates (converted to cycle counts) | H | the agent computes the integer and asks | exists |
-| `reliability` (which blocks get which structure) | H | the agent lists candidate blocks and the measured cost; the user names the blocks | this brief |
+| `dependability` (which blocks get which structure) | H | the agent lists candidate blocks and the measured cost; the user names the blocks | this brief |
 | pipeline depth, FIFO depth, buffer sizes the spec does not give | H | the agent proposes with a reason inside the latency budget; once accepted it is pinned | exists as `open_questions`; *proposal*: a pin per value in `spec.yaml` |
 | reset policy (synchronous, except in synchronisers), AXI as the default interface | V | house rules (owner, 2026-11-13 and 2026-11-21): the agent may depart only where meeting them is impossible, and says so | rules in the house file and lint rules; *proposal*: `--set reset_policy` |
 
@@ -81,7 +81,7 @@ V = variable, J = LLM judgement, H = hybrid.
 | where pipelining goes inside the latency budget | J | depends on the timing report | closure loop records; the budget itself is V |
 | whether a failure is the design or the test | J | needs the evidence | the triage record of the spec-test role |
 | interpreting an ambiguous spec | H | never silent: an interview question with a default | `resolved_questions` in `spec.yaml` and the run summary |
-| which blocks get TMR or ECC when the spec does not say | H | the profile decides *whether* the structures are offered (V); the interview decides *where* | `spec.yaml` `reliability`, the interview record |
+| which blocks get TMR or ECC when the spec does not say | H | the profile decides *whether* the structures are offered (V); the interview decides *where* | `spec.yaml` `dependability`, the interview record |
 | profile choice for a new block | H | the interview proposes one from the spec's words, with its measured extra time | the interview record and `policy.json` |
 | request a change to an LLM-judgement value | *proposal* | a Navigator control that files a change request for the next visit of the stage | not built |
 
