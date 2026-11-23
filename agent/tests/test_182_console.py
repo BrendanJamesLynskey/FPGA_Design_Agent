@@ -145,3 +145,26 @@ def test_a_container_runner_streams_through_its_inner_local_runner(tmp_path):
     console.install(o, tmp_path)
     res = o.run("simulate", [sys.executable, "-c", "print('4 passed')"], tmp_path)
     assert res.stdout == "4 passed\n" and (tmp_path / "console" / "001_simulate.log").read_text() == "4 passed\n" and o.inner._tee_to is None
+
+
+def test_a_run_that_pauses_for_an_answer_leaves_pending_json_for_the_navigator(tmp_path, capsys):
+    from types import SimpleNamespace
+
+    from agent.__main__ import _drive
+    q = {"kind": "question", "id": "q1", "question": "Reset polarity?", "default": "active low", "reason": "the spec is silent"}
+
+    class G:
+        def invoke(self, inp, cfg):
+            pass
+
+        def get_state(self, cfg):
+            return SimpleNamespace(tasks=[SimpleNamespace(interrupts=[SimpleNamespace(value=q)])], values={})
+    rt = SimpleNamespace(run_id="r1", run_dir=tmp_path)
+    out = _drive(G(), rt, {}, None, [])
+    assert out == {"paused": q} and json.loads((tmp_path / "pending.json").read_text())["paused"]["default"] == "active low"
+    from navigator import summary as NS
+    from navigator.tests.test_182_navigator_s3 import fake_run
+    rd = fake_run(tmp_path / "runs", events=[])
+    (rd / "pending.json").write_text((tmp_path / "pending.json").read_text())
+    s = NS.summarise(tmp_path / "runs", rd.name)
+    assert s["pending"]["ask"] == "Reset polarity?" and s["pending"]["default"] == "active low" and any("waiting for your answer" in b for b in s["blocked"])

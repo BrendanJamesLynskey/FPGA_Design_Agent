@@ -8,7 +8,8 @@ What keeps it local and private:
   keeps it in an HttpOnly, SameSite=Strict cookie. A request without it gets 401;
 - every request first calls the access gate (``agent.access.require``), so a revoked or expired key stops the service answering;
 - a POST (an action) additionally needs ``Content-Type: application/json`` and an ``Origin`` that is the service's own, and only runs one of the
-  fixed actions of ``health.Health.ACTIONS``;
+  fixed actions of ``health.Health.ACTIONS`` or the fixed run and board routes (stage 2) and, for stage 3, ``/api/run/ask``, ``/api/run/request`` and ``/api/run/answer``, each
+  with a confirmation field and only the keys the route takes;
 - it never serves a file named by the request: ids are looked up in lists the service built itself;
 - every JSON response passes ``redact.scrub``; every response carries a Content-Security-Policy that allows no external host, so a page cannot
   load a font, script or image from the network.
