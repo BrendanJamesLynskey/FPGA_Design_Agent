@@ -146,7 +146,7 @@ Tool: Vivado 2026.1. Build ID of the inputs at handover: `cc21fb7f` (`python flo
 <!-- prose:build -->
 ### Build notes (Vivado 2026.1, xck26-sfvc784-2LV-c)
 
-Routed and written to a bitstream (`results/b58a/build/`, `summary.json`): the sizes and power are in the Measured section. **One gate fails: post-route setup, by 0.003 ns**
+Routed and written to a bitstream (`results/b58a/build/`, `summary.json`): the sizes and power are in the Measured section. **One gate fails: post-route `setup`, by 0.003 ns**
 (`summary.json`, generated from `gates.json`): worst setup slack -0.003 ns (port B transmit, `b_txd[0]`), worst hold slack +0.012 ns. Every other gate passes. The bitstream
 was written; it has not been loaded on a board.
 
