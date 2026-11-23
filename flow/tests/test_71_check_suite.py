@@ -299,7 +299,8 @@ def test_agent_check_tool_is_registered_and_offered_to_the_designer() -> None:
     import agent.core.tools  # noqa: F401
     from agent.core.registry import TOOLS
     from agent.graph import run as RUN
-    assert "check" in TOOLS and set(TOOLS["check"].input_schema["properties"]["names"]["items"]["enum"]) == {"all", *C.CHECKS}
+    # suite-only advisory checks (brief 185: dsp_regs) are not offered to the Designer: the tool's schema is pinned by the golden requests and the MCP snapshot
+    assert "check" in TOOLS and set(TOOLS["check"].input_schema["properties"]["names"]["items"]["enum"]) == {"all", *C.CHECKS} - {"dsp_regs"}
     for n in range(1, 10):
         assert "check" in RUN.effective_tools("rtl", n, "V3")
     assert "check" not in RUN.effective_tools("tests", 2, "V3") and "check" not in RUN.effective_tools("model", 2, "V3")

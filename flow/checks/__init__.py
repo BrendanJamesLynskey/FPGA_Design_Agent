@@ -604,6 +604,13 @@ def _dsp_ram(ctx: Ctx) -> dict[str, Any]:
     return _result(fs, parts, recs)
 
 
+def _dsp_regs_applies(design: Path) -> str | None:
+    """Only builds that recorded their DSP cells (flow/build.tcl since brief 185): an older build, or no build, has nothing to read."""
+    if not any(design.glob("build/*/dsp_cells*.txt")):
+        return "no dsp_cells*.txt in the build (made by flow/build.tcl since brief 185)"
+    return None
+
+
 def _dsp_regs(ctx: Ctx) -> dict[str, Any]:
     """Advisory (brief 185): a DSP slice without the multiplier or output register at a period the measurements say it cannot meet, and Vivado's own
     DPIP/DPOP rows. The limits are flow/dsp_regs_limits.json (regenerated from results/185_dsp_slices by tools/dsp_regs_limits.py)."""
@@ -829,7 +836,7 @@ register(Check("dsp_ram_mapping", "records", POST, {"vivado": ("DPIP-*", "DPOP-*
                reports=("methodology", "drc", "utilization"), amd=True))
 register(Check("dsp_regs", "records", POST, {"dsp_regs": ("DSPREG-01", "DSPREG-02", "DSPREG-03", "DSPREG-04")},
                "advisory (brief 185): a DSP slice with no multiplier or output register at a period the measured limits say it cannot meet, a period "
-               "below the slice's own minimum, and AMD's DPIP/DPOP rows (flow/dsp_regs_check.py)", _dsp_regs, reports=("timing_summary", "drc")))   # dsp_cells is written by flow/build.tcl, never by the Vivado session
+               "below the slice's own minimum, and AMD's DPIP/DPOP rows (flow/dsp_regs_check.py)", _dsp_regs, reports=("timing_summary", "drc"), applies=_dsp_regs_applies))   # dsp_cells is written by flow/build.tcl, never by the Vivado session
 register(Check("control_sets", "vivado", POST, {"vivado": ("ULMTCS-*",)},
                "report_control_sets (count of unique control sets) and AMD's ULMTCS rows", _control_sets,
                reports=("control_sets", "methodology"), amd=True))

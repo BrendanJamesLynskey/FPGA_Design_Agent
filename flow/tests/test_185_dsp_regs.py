@@ -71,6 +71,7 @@ def test_suite_check_reads_the_build_files(tmp_path: Path) -> None:
     (b / "timing_summary.rpt").write_text("Clock      Waveform(ns)         Period(ns)      Frequency(MHz)\n-----      ------------         ----------      --------------\n"
                                           "clk        {0.000 2.000}        4.000           250.000\n")
     (b / "run.json").write_text("{}")
+    assert C.CHECKS["dsp_regs"].applies(tmp_path / "d") is None and C.CHECKS["dsp_regs"].applies(tmp_path / "none") is not None
     ctx = C.Ctx(design=tmp_path / "d", scope="route")
     res = C.CHECKS["dsp_regs"].run(ctx)
     assert [f["code"] for f in res["findings"]] == ["DSPREG-01"] and not res["findings"][0]["blocking"]
