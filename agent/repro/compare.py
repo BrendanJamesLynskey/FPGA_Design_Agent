@@ -35,7 +35,7 @@ LIMITS = (
     "Claude Code on a subscription takes no temperature and no seed, so the model's output cannot be pinned: the RTL, the number of repair loops, tokens, cost and wall time differ from run to run, and this page does not hide that.",
     "The model name is pinned (claude-sonnet-5-5) but the provider can update what that name serves; each result records the model id the calls reported, and a reference older than a provider update may be out of date.",
     "The cost is the plan's estimate (Claude Code reports a figure for the subscription), not a bill. Wall time includes waiting for a heavy slot only if the run waited inside it; it is recorded from the run's own start.",
-    "Tool results repeat only for the same RTL: the same Vivado version and sources give the same build ID, resources and slack (docs/reproducibility.md); a different RTL gives different numbers and that is not a failure.",
+    "Tool results repeat only for the same RTL: the same Vivado version and sources give the same build stamp, resources and slack (docs/reproducibility.md); a different RTL gives different numbers and that is not a failure.",
 )
 
 
