@@ -126,7 +126,7 @@ drawers:
     title: Vivado is the referee
     claim: Code reads the tools' reports and decides every stage exit; a model cannot argue a failed gate into a pass.
     means:
-      - "A language model writes and repairs designs, but it never judges them. Each stage ends in a gate that reads Vivado's reports, the simulators' results or a checker's output, and the controller moves on only when the gate says so. A failure goes back to the role that owns the fix, with a limit on visits so a run cannot loop for ever."
+      - "A language model writes and repairs designs, but it never judges them. Each stage ends in a gate that reads Vivado 2026.1's reports, the simulators' results or a checker's output, and the controller moves on only when the gate says so. A failure goes back to the role that owns the fix, with a limit on visits so a run cannot loop for ever."
       - "A failed gate stays a failed gate in the record. A variant that fails is reported as failed, not repaired in the write-up."
     example:
       text: "Two builds of the project's own elastic buffer for the KR260 differ in how its pointers cross between clock domains. The one that reads them directly met timing (worst setup slack +{direct_wns} ns) and was faster in simulation, but report_cdc listed {direct_cdc1} critical rows, its clock-crossing gates failed and it was rejected. The build that was kept has every one of its {gp_gates} flow gates true, worst setup slack +{gp_wns} ns, and no waiver."
