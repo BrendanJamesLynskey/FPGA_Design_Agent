@@ -1,6 +1,8 @@
 # Brief 189: verification and measurement rules (records)
 
-Advisory records (`enforced: false`) written by the tools in `docs/verification_measurement_rules.md`; each is reproduced by the command shown. Simulations: Icarus Verilog 12.0, cocotb 2.0.1.
+What it is: advisory records (`enforced: false`) written by the tools in `docs/verification_measurement_rules.md`; each is reproduced by the command shown. Simulations: Icarus Verilog 12.0, cocotb 2.0.1.
+
+## Records
 
 | File | Command | What it shows |
 |---|---|---|
@@ -14,3 +16,11 @@ Advisory records (`enforced: false`) written by the tools in `docs/verification_
 | `tb_xcheck.json` | `python3 -m flow.tb_xcheck --json ...` | `!=` compares that raise errors in testbenches |
 | `mtbf_k26_survey.json`, `mtbf_kr260_b96.json`, `mtbf_a7_no_report.json` | `python3 -m flow.mtbf <rpt> --out ...` | per-crossing MTBF from the brief-105 reports; 7-series has none |
 | `level_delay.json` | `python3 -m flow.level_delay results/b89/ooc/{a7,k26}/reports/*/timing_summary.rpt --out ...` | delay per logic level and per register stage |
+
+## Reproduce
+
+Each command is in the table above; run from the repository root. The simulations need Icarus Verilog 12.0 (the CDC skew table also cocotb 2.0.1); `flow.level_delay` and `flow.mtbf` read reports already committed under `results/b89` and `results/105_constraints_survey` (Vivado 2026.1), so no Vivado run is needed. Tests: `python3 -m pytest -q flow/tests/test_189_*.py`.
+
+## Known gaps and limits
+
+Nothing here is a gate. The ratchet demo is two clock targets of one design (illustrative, not a regression); conservation, the racy counter, the X-blind compare and the torn-pointer FIFO are small development fixtures; per-level delays are from near-critical paths of LUT networks. The full list is in `docs/verification_measurement_rules.md` (Known gaps).
