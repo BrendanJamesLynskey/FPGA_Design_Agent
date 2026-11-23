@@ -6,7 +6,7 @@ The human specifies the requirements and checks that the verification is thoroug
 
 | Design | Summary | Matrix |
 |---|---|---|
-| `b110_itch_ouch` | 14 requirements (9 functional, 5 safety); 13 verified; 1 failing; 0 of 14 requirements agreed by a human, 0 human review(s) recorded. | [matrix](../designs/b110_itch_ouch/verif/matrix.md) ([html](../designs/b110_itch_ouch/verif/matrix.html)) |
+| `b110_itch_ouch` | 14 requirements (9 functional, 5 safety); 5 verified; 8 stale; 1 failing; 0 of 14 requirements agreed by a human, 0 human review(s) recorded. | [matrix](../designs/b110_itch_ouch/verif/matrix.md) ([html](../designs/b110_itch_ouch/verif/matrix.html)) |
 | `b119_tcp_fast` | 27 requirements (10 functional, 10 performance, 2 interface, 5 safety); 9 verified, of which 3 rest on delegated acceptances (the planner accepted the Lean statement on the owner's delegation; not human approvals); 16 stale; 2 with no passing evidence; 0 of 2 requirements that depend on an external element closed by hardware; 0 of 27 requirements agreed by a human, 0 human review(s) recorded; 6 Lean proof item(s) (all widths): 0 with a human-approved statement, 6 with a statement accepted on the owner's delegation (not a human approval), 0 with statement not approved; 3 kernel only, 3 using a compiled decision procedure; build status from: recorded build (not re-run). | [matrix](../designs/b119_tcp_fast/verif/matrix.md) ([html](../designs/b119_tcp_fast/verif/matrix.html)) |
 | `b96_kr260_10g` | 28 requirements (12 functional, 9 performance, 1 interface, 6 safety); 23 verified, of which 2 rest on delegated acceptances (the planner accepted the Lean statement on the owner's delegation; not human approvals); 1 stale; 2 failing; 2 with no passing evidence; 0 of 3 requirements that depend on an external element closed by hardware; performance verified: 5 on the board, 2 by post-route timing, 0 in simulation only; 0 of 28 requirements agreed by a human, 0 human review(s) recorded; 4 Lean proof item(s) (all widths): 0 with a human-approved statement, 4 with a statement accepted on the owner's delegation (not a human approval), 0 with statement not approved; 4 kernel only, 0 using a compiled decision procedure; build status from: recorded build (not re-run). | [matrix](../designs/b96_kr260_10g/verif/matrix.md) ([html](../designs/b96_kr260_10g/verif/matrix.html)) |
 | `t1_dimmer_counter` | 21 requirements (21 functional); 0 verified; 21 stale; 0 of 21 requirements agreed by a human, 0 human review(s) recorded. | [matrix](../designs/t1_dimmer_counter/verif/matrix.md) ([html](../designs/t1_dimmer_counter/verif/matrix.html)) |
@@ -43,7 +43,7 @@ The human specifies the requirements and checks that the verification is thoroug
 
 ## Gaps by design
 
-- `b110_itch_ouch`: 1 no passing evidence
+- `b110_itch_ouch`: 9 no passing evidence, 9 stale evidence
 - `b119_tcp_fast`: 2 hardware open, 18 no passing evidence, 22 stale evidence
 - `b96_kr260_10g`: 1 external not hardware verified, 3 hardware open, 5 no passing evidence, 15 stale evidence
 - `t1_dimmer_counter`: 21 no passing evidence, 96 stale evidence
