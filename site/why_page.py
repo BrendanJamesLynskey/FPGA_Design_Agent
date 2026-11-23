@@ -31,8 +31,8 @@ def _box(x, y, w, h, label, sub, who):
 
 
 def diagram_wide() -> str:
-    w, h, gap, y = 170, 58, 32, 38
-    xs = [10 + i * (w + gap) for i in range(len(STEPS))]
+    w, h, gap, y = 176, 58, 30, 58
+    xs = [5 + i * (w + gap) for i in range(len(STEPS))]
     out = []
     for i, (_, lab, sub, who) in enumerate(STEPS):
         out.append(_box(xs[i], y, w, h, lab, sub, who))
@@ -42,13 +42,13 @@ def diagram_wide() -> str:
     gx, ax = xs[2] + w / 2, xs[1] + w / 2
     out.append(f'<path class="ink" d="M{gx} {y} C{gx} {y - 30}, {ax} {y - 30}, {ax} {y - 4}" fill="none" stroke-dasharray="5 4"/>')
     out.append(_arrow(ax, y - 10, ax, y - 1))
-    out.append(f'<text x="{(gx + ax) / 2}" y="{y - 22}" text-anchor="middle">a failed gate goes back to the agent</text>')
+    out.append(f'<text x="{(gx + ax) / 2}" y="{y - 36}" text-anchor="middle">a failed gate goes back to the agent</text>')
     jx, sx = xs[4] + w / 2, xs[0] + w / 2
     by = y + h
     out.append(f'<path class="ink" d="M{jx} {by} C{jx} {by + 40}, {sx} {by + 40}, {sx} {by + 4}" fill="none" stroke-dasharray="5 4"/>')
     out.append(_arrow(sx, by + 10, sx, by + 1))
     out.append(f'<text x="{(jx + sx) / 2}" y="{by + 50}" text-anchor="middle">a gap in the evidence, or a wrong specification, goes back to you</text>')
-    return (f'<svg viewBox="0 0 1000 {y + h + 62}" role="img" aria-labelledby="whyw1 whyw2"><title id="whyw1">Who does what</title>'
+    return (f'<svg viewBox="0 0 1010 {y + h + 62}" role="img" aria-labelledby="whyw1 whyw2"><title id="whyw1">Who does what</title>'
             f'<desc id="whyw2">You specify; the agent implements; gates decide; the board measures; you judge the evidence. A failed gate goes back to the agent. '
             f'A gap in the evidence or a wrong specification goes back to you.</desc>{"".join(out)}</svg>')
 
