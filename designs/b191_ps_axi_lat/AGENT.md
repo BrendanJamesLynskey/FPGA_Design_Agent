@@ -2,8 +2,7 @@
 source: designs/b191_ps_axi_lat/handover.yaml; human view: README.md; refresh: python -m flow.handover fresh designs/b191_ps_axi_lat
 
 ## identity
-kind=demonstration produced_by=agent part=xck26-sfvc784-2LV-c board=Kria KR260 (K26 SOM) top=ps_axi_lat_top (the PL image); axi_lat_probe (simulated alone) tool=Vivado 2026.1
-agent_run=brief-191-session record=designs/__init__.py
+kind=demonstration produced_by=session part=xck26-sfvc784-2LV-c board=Kria KR260 (K26 SOM) top=ps_axi_lat_top (the PL image); axi_lat_probe (simulated alone) tool=Vivado 2026.1
 
 ## summary
 A register block with a free-running counter that timestamps every AXI read request and every write it accepts, one on each of the Zynq UltraScale+ processor system's two AXI masters towards the fabric (M_AXI_HPM0_FPD and M_AXI_HPM0_LPD), and a host program that times 32-bit reads and writes of it from the Arm Cortex-A53 with the processor's own timer and with the fabric's counter. The probe is simulated against an edge-counting AXI master and seeded faults are caught; the host program and its judging script are tested without a board against a software stand-in. The board row (B-R8) is pre-registered; the programmable-logic image's build recipe is written and was not built, and nothing has run on a board.
@@ -22,18 +21,18 @@ param LOG_DEPTH=256 legal=a power of two, at most 256
 param CLK_HZ=100,000,000 legal=the fabric clock in Hz
 param BUILD_STAMP=0xB1910F01 legal=any 32-bit stamp (the flow sets it from the sources' hash)
 
-## files (paths under the design directory are relative to it)
-rtl/axi_lat_probe.sv dbe358452d: the AXI4 slave register block with the counter, the timestamps and the log
-rtl/ps_axi_lat_top.sv c0dd014072: the PL image's top, the processor system with both masters and one probe each
-ip/amd_ip_lat.tcl d11b2c8067: the Zynq UltraScale+ processor system IP of the image
-host/ps_axi_lat.c 6314d9e390: the host program (aarch64, static) that measures, with a software stand-in for the registers under -DMOCK
-scripts/ps_axi_lat_verdict.py 2ccf918349: judges a board session's files against the pre-registration
-board/ps_axi_lat_session.sh 503a52a626: the board session script (written, not run)
-board/pl-ps-axi-lat.dtsi 90a8819a25: the device-tree overlay source for the generic-uio route
-tests/b191_cocotb.py 8be45da32e: cocotb bench of the probe with an edge-counting AXI master
-tests/test_b191_host.py 4f426b3360: the host program and verdict script without a board
-tests/run_mutants.py 70274ea6e0: seeded-fault runner for the probe
-docs/ps_axi_lat.md 3416762880: datasheet, register map and the pre-registration of board row B-R8
+## files
+designs/b191_ps_axi_lat/rtl/axi_lat_probe.sv dbe358452d: the AXI4 slave register block with the counter, the timestamps and the log
+designs/b191_ps_axi_lat/rtl/ps_axi_lat_top.sv c0dd014072: the PL image's top, the processor system with both masters and one probe each
+designs/b191_ps_axi_lat/ip/amd_ip_lat.tcl d11b2c8067: the Zynq UltraScale+ processor system IP of the image
+designs/b191_ps_axi_lat/host/ps_axi_lat.c 6314d9e390: the host program (aarch64, static) that measures, with a software stand-in for the registers under -DMOCK
+designs/b191_ps_axi_lat/scripts/ps_axi_lat_verdict.py 2ccf918349: judges a board session's files against the pre-registration
+designs/b191_ps_axi_lat/board/ps_axi_lat_session.sh 503a52a626: the board session script (written, not run)
+designs/b191_ps_axi_lat/board/pl-ps-axi-lat.dtsi 90a8819a25: the device-tree overlay source for the generic-uio route
+designs/b191_ps_axi_lat/tests/b191_cocotb.py 8be45da32e: cocotb bench of the probe with an edge-counting AXI master
+designs/b191_ps_axi_lat/tests/test_b191_host.py 4f426b3360: the host program and verdict script without a board
+designs/b191_ps_axi_lat/tests/run_mutants.py 70274ea6e0: seeded-fault runner for the probe
+designs/b191_ps_axi_lat/docs/ps_axi_lat.md 3416762880: datasheet, register map and the pre-registration of board row B-R8
 
 ## commands
 the probe bench and the host tests (no board) (~1min): python3 -m pytest -q designs/b191_ps_axi_lat/tests
@@ -43,7 +42,7 @@ the board session (planner gives it at the board; not run) (~60min): designs/b19
 ## records (path sha256-prefix; claims below cite R<n>)
 R1 results/191_trading_variants/pytest_junit.xml be267a11ab
 R2 results/191_trading_variants/mutation_probe.json 0f01fea1ee
-R3 build.yaml 96b26afc0d
+R3 designs/b191_ps_axi_lat/build.yaml 96b26afc0d
 R4 results/191_trading_variants/sim/probe_sim.json d68ea794c7
 
 ## evidence

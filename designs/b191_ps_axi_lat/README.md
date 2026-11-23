@@ -11,7 +11,7 @@ Not in scope:
 - the latency of the ACP or HP ports, DMA, cached accesses, wider accesses or a faster fabric clock than 100 MHz
 - a design that does anything else; the image has no I/O pins and no function besides the two probes
 
-Kind: demonstration; produced by the agent (agent run `brief-191-session`, [record](../__init__.py)). State: simulated. For an agent: [AGENT.md](AGENT.md).
+Kind: demonstration; written by a Claude Code session. State: simulated. For an agent: [AGENT.md](AGENT.md).
 
 <!-- prose:what -->
 <!-- /prose:what -->
