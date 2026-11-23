@@ -10,7 +10,7 @@ Not in scope:
 - a board design; it has no pins, no constraints and was only built out of context
 - a failure-rate figure; the fault injection is seeded single bit flips in simulation
 
-Kind: demonstration; written by hand. State: simulated. For an agent: [AGENT.md](AGENT.md).
+Kind: demonstration; written by a Claude Code session. State: simulated. For an agent: [AGENT.md](AGENT.md).
 
 <!-- prose:what -->
 <!-- /prose:what -->

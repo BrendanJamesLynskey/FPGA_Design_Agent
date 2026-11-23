@@ -2,7 +2,7 @@
 source: designs/b194_assurance/handover.yaml; human view: README.md; refresh: python -m flow.handover fresh designs/b194_assurance
 
 ## identity
-kind=demonstration produced_by=human part=xc7a100tcsg324-1 board=none (out of context) top=a194_core tool=Vivado 2026.1
+kind=demonstration produced_by=session part=xc7a100tcsg324-1 board=none (out of context) top=a194_core tool=Vivado 2026.1
 
 ## summary
 A burst sequencer in front of a 512 x 64 FIFO with an accumulating checksum, AXI4-Stream handshakes. Each reliability structure is a parameter (ECC 0/1/2, parity, safe-state FSM, TMR on the remaining-words counter, watchdog) so that its area, Fmax, latency and what it catches in a seeded single-event-upset simulation are measured against the plain design. It is the demonstration design of the verification profiles and is not a held-out benchmark task.
