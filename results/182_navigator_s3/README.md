@@ -18,8 +18,7 @@ one **design request** was queued with `python -m agent request` and one **quest
 | how the run ended | `stop: done`, stages visited 0, 0, 1, 1; wall 93.6 s of model time; plan estimate $0.38 | **stopped by me** (SIGTERM to its own process) in stage 2, third visit, while the Icarus simulation of the agent's own bench had run 15 minutes; no summary.json |
 
 Files: `demo_*/requests.jsonl` (every event of each request), `qa.jsonl` (question, answer, records read and cited, model, plan-estimate cost), `who_did_what.json` (the user interventions beside the agent's own rows),
-`trace_events.jsonl` (the `kind: "event"` rows of the run's trace: stage start and end, console pointers, request outcomes; no model or tool rows), `summary_extract.json` (stop reason, stages, the `user_requests` counts),
-`status_final.txt` (`python -m agent status`), `console_steps.txt` (`python -m agent status --console`: the step list only), `request_cli.txt` and `ask_cli.txt` (the commands' output).
+`trace_events.jsonl` (the `kind: "event"` rows of the run's trace: stage start and end, console pointers, request outcomes; no model or tool rows), `request_cli.txt` and `ask_cli.txt` (the commands' output). demo_short also has `summary_extract.json` (stop reason, stages, the `user_requests` counts), `status_final.txt` (`python -m agent status`) and `console_steps.txt` (`python -m agent status --console`: the step list only); demo_long has none of those three (the run was stopped, so it has no summary).
 
 What the records show, and what they do not:
 - The request waited for a safe point (4 s in the short run, 19 s in the long one), was acknowledged, applied and recorded with its reason. In the short run the model's own output (console step `002_clarify_clarify`)
@@ -34,9 +33,13 @@ What the records show, and what they do not:
 
 ## Tests
 
-`python -m pytest navigator/tests agent/tests/test_182_requests.py agent/tests/test_182_console.py`: see `full_tests.log` for the full agent and navigator suite at the last commit (`pytest -q`, `--ignore-glob='*_rtl.py'`).
+`python -m pytest navigator/tests agent/tests/test_182_requests.py agent/tests/test_182_console.py`; the full suite result is under Screenshots below.
 
 ## Screenshots
 
-`screenshots/` holds the Live page of the short run at 1280 and 390 px, with the console drawer shut and open, and `shoot_report.json`: page errors, requests to any host but the navigator's own, horizontal overflow at 390 px, and
-whether the shut drawer made any console request. Read them in the report's verification section.
+`screenshots/` holds the Live page of the short run at 1280 and 390 px (`live_status_panels_*` with the console drawer shut, `live_console_open_*` with it open), `shoot.log` and `shoot_report.json`, taken 2026-11-23 03:15 under a heavy slot (`navigator/shoot_stage3.js`).
+Result: zero page errors, no request outside the navigator, no horizontal overflow at 390 px; 12 console requests in all (6 per viewport), all after the drawer was opened, and none in the 5 s after it was shut again.
+The script exited 1 only because its "requests while shut" counter was not reset between the two viewports (it counted the wide viewport's 6 requests in the phone pass); the counter is fixed in the script, the per-viewport counts above are read from the recorded request list, and the shots were not repeated.
+Read by eye: sober black and white, status panel, requests, question and console panels as intended. On the phone, the wide tables (runs, audit log, requests) wrap into narrow columns but do not overflow. One defect seen and fixed after the shoot: the status footnote showed "built 0.0128... s ago" (now rounded).
+
+`full_tests.log`: the full agent and navigator suite (`--ignore-glob='*_rtl.py'`) under the same slot, at the commit before the last two edits: 1170 passed, 8 skipped.

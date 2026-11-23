@@ -503,7 +503,7 @@
     var rows = [["Done", s.done], ["Doing now", s.doing], ["Next", s.next], ["Blocked or waiting", s.blocked.length ? s.blocked.join("; ") : "nothing"], ["Cost", s.cost_line]];
     add(box, [h("h3", null, "What is happening"),
       h("dl", null, rows.map(function (r) { return [h("dt", null, r[0]), h("dd", null, r[1])]; })),
-      h("p", { class: "src" }, "Written from the run's records by code, not by a model. Sentence built " + age(Math.max(0, Date.now() / 1000 - s.built_at)) + "; it changes when a stage ends or a request changes, and at least every " + s.refresh_min + " min.")]);
+      h("p", { class: "src" }, "Written from the run's records by code, not by a model. Sentence built " + age(Math.round(Math.max(0, Date.now() / 1000 - s.built_at))) + "; it changes when a stage ends or a request changes, and at least every " + s.refresh_min + " min.")]);
     if (s.pending && s.pending.kind === "question") {
       var inp = h("input", { type: "text", value: s.pending.default || "", "aria-label": "Your answer", class: "fullw" }), out = h("div", { "aria-live": "polite" });
       add(box, h("div", { class: "banner" }, h("strong", null, "The agent asks: "), s.pending.ask, h("p", { class: "mute" }, "Default: " + (s.pending.default || "(none)") + (s.pending.why ? ". Why it asks: " + s.pending.why : "")), inp,
@@ -570,7 +570,7 @@
     var offset = null, cur = null, timer = null, started = false;
     add(det, [sum, h("p", { class: "mute" }, "The model's streamed output and tool calls (arguments summarised), Vivado's log, the simulator's and the formal tool's output, test runs. Prompts are never shown. Secrets are redacted. Scored or held-out runs show tool names and progress lines only."), h("div", { class: "toolbar" }, pick), lab, pre]);
     function poll() {
-      if (!det.open) return;
+      if (!det.open || !document.body.contains(det)) return;                 // shut, or the page moved to another run: stop reading
       api("/api/console/steps?id=" + encodeURIComponent(runId)).then(function (d) {
         var keep = pick.value; pick.textContent = "";
         d.steps.slice().reverse().forEach(function (x) { pick.appendChild(h("option", { value: x.id }, (x.active ? "running: " : "") + x.label + "  [" + x.id + "]")); });
@@ -588,7 +588,7 @@
     }
     pick.addEventListener("change", poll);
     det.addEventListener("toggle", function () { if (det.open) poll(); });
-    every(2000, function () { if (det.open && !document.hidden) poll(); });
+    every(2000, function () { if (det.open && !document.hidden && document.body.contains(det)) poll(); });
     return { el: det, refresh: function () {} };
   }
   function pageLive() {

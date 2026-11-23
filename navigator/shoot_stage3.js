@@ -19,6 +19,7 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
     page.on('pageerror', (e) => report.errors.push(tag + ' pageerror: ' + e.message));
     page.on('console', (m) => { if (m.type() === 'error') report.errors.push(tag + ' console: ' + m.text()); });
     page.on('dialog', async (d) => { report.dialogs.push(d.message().slice(0, 80)); await d.dismiss(); });
+    report.requestsBefore = report.requests.length;                              // console requests are counted per viewport
     await page.goto(url, { waitUntil: 'networkidle0' });
     const shot = async (name) => {
       const f = `${out}/${name}_${tag}.png`;
@@ -29,9 +30,9 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
     };
     await page.evaluate(() => { location.hash = '#/live'; }); await sleep(1500);
     await page.evaluate((id) => { const r = [...document.querySelectorAll('tr.click')].find((x) => x.textContent.includes(id)); if (!r) throw new Error('no run ' + id); r.click(); }, runId); await sleep(2500);
-    const before = report.requests.length;
+    const before = report.requests.length - (report.requestsBefore || 0);
     await shot('live_status_panels');                                            // the console drawer is closed: no console request may have been made yet
-    report.consoleRequestsWhileClosed = before;
+    report.consoleRequestsWhileClosed = (report.consoleRequestsWhileClosed || 0) + before;
     await page.evaluate(() => { document.querySelector('details.console summary').click(); }); await sleep(3500);
     await shot('live_console_open');
     await page.evaluate(() => { document.querySelector('details.console summary').click(); }); await sleep(300);
