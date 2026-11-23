@@ -74,7 +74,7 @@ def scan_file(p: Path, root: Path = ROOT) -> list[dict[str, Any]]:
 def default_paths(root: Path = ROOT) -> list[Path]:
     out: list[Path] = []
     for g in ("designs/*/verif/**/*.sv", "designs/*/tests/**/*.sv", "designs/*/tb/**/*.sv", "flow/tests/fixtures/**/*.sv", "arith/**/tb/*.sv", "axi_tx/**/*.sv"):
-        out += [p for p in sorted(root.glob(g)) if "/rtl/" not in p.as_posix()]
+        out += [p for p in sorted(root.glob(g)) if "/rtl/" not in p.as_posix() and "/xcompare/" not in p.as_posix()]   # xcompare holds the seeded defect
     return sorted(set(out))
 
 

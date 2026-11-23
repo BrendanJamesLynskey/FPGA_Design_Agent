@@ -59,6 +59,7 @@ BUILD_FILES = {
     # written by flow/build.tcl after synthesis since brief 71; the route scope reads the same post-synthesis scan
     "reset_scan": {"synth": "reset_scan_synth.tsv", "route": "reset_scan_synth.tsv"},
     "control_sets": {"synth": "control_sets_synth.rpt"},
+    "mtbf": {"route": "mtbf.rpt"},               # brief 189: flow/mtbf.py parses it (advisory; UltraScale+ only)
 }
 DCP = {"synth": "post_synth.dcp", "route": "post_route.dcp"}
 GATE_STAGE = {"rtl": "rtl", "synth": "post_synth", "route": "post_route"}

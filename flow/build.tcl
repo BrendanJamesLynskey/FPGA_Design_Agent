@@ -307,6 +307,9 @@ if {$resume_from ne "route"} {
     report_utilization    -hierarchical -file $out/utilization_hier.rpt
     report_methodology    -file $out/methodology.rpt
     report_cdc -details   -file $out/cdc.rpt
+    # brief 189: MTBF of every identified synchroniser chain, parsed by flow/mtbf.py. UltraScale+ gives numbers; 7-series prints a warning and
+    # none. Advisory: a failure of the command never fails the build.
+    if {[catch {report_synchronizer_mtbf -file $out/mtbf.rpt} mtbf_err]} { puts "FDA: report_synchronizer_mtbf not written: $mtbf_err" }
     report_drc            -file $out/drc.rpt
     fda_qor $out route
     exception_reports $out route
