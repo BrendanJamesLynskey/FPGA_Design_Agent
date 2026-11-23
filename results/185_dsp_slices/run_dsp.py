@@ -221,6 +221,12 @@ def parse(pk: str, group: str | None = None) -> None:
                 rt = (wd / "timing_worst_setup.rpt").read_text()
                 m = re.search(r"Logic Levels:\s+(\d+)", rt)
                 r["logic_levels"] = int(m.group(1)) if m else None
+                # planner note 2026-11-23: our own per-level and per-register delay numbers, from the worst setup path
+                d = re.search(r"Data Path Delay:\s+([\d.]+)ns\s+\(logic ([\d.]+)ns \(([\d.]+)%\)\s+route ([\d.]+)ns", rt)
+                r["path_delay_ns"], r["path_logic_ns"], r["path_route_ns"] = (float(d.group(1)), float(d.group(2)), float(d.group(4))) if d else (None, None, None)
+                sr = re.search(r"Source:\s+(\S+).*?Destination:\s+(\S+)", rt, re.S)
+                r["path_source"], r["path_dest"] = (sr.group(1), sr.group(2)) if sr else (None, None)
+                r["path_per_level_ns"] = round(r["path_delay_ns"] / r["logic_levels"], 3) if r["path_delay_ns"] and r["logic_levels"] else None
                 r["runtime_s"] = int((wd / "done.txt").read_text().strip())
                 r["dsp_cells"] = dsp_cells(wd)
                 r["methodology_dsp"] = methodology_dsp(wd)
