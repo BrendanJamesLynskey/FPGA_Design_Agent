@@ -136,7 +136,9 @@ def check_architecture(data: Any) -> list[str]:
                                 "(why a clock enable or a data mux does not do)")
                     continue
                 for d in [*m["inputs"], m["output"]]:
-                    if dnames and d not in dnames:
+                    if not isinstance(d, str):
+                        errs.append(f"clock_muxes[{i}] ({m['instance']}): {d!r} must be a clock-domain name")
+                    elif dnames and d not in dnames:
                         errs.append(f"clock_muxes[{i}] ({m['instance']}): {d!r} is not a declared clock domain "
                                     f"({', '.join(sorted(dnames))})")
     pr = data.get("predicted_resources")
