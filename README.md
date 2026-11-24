@@ -71,12 +71,14 @@ A portfolio pack (title, facts with their sources, stills and a short animation)
 
 ## Start here: which command for which job
 
-Every `python -m agent ...` command needs the access key ([Access key](#access-key)); the `flow` and `project` commands below
-do not, apart from `project spec`. "Read-only" means nothing in the design directory is changed.
+Most `python -m agent ...` commands need the access key ([Access key](#access-key)); the rows below marked "no key" do not.
+Nothing on this table is checked by a model: `--help`, `--dry-run`, `models show` and `doctor` print text and call nothing.
 
 | You want to | Command | Know first |
 |---|---|---|
-| a new block from a plain-English request | `python -m agent run <spec.md> --board <board>` | stops for a person before the board; `--stop-after 2` ends after RTL and verification ([docs/agent.md](docs/agent.md)) |
+| to know what this machine is missing before a first run | `python -m agent doctor` (no key) | names each missing prerequisite with the command that fixes it (agent and graph extras, the access key, the private prompts path and its pin, the `fda-sim:2` image, Vivado, tool versions) and exits 1 while something the agent cannot run without is missing; never prints the key; the prompt manifest is compared with the pin only when a valid key is present ([agent/newcomer.py](agent/newcomer.py)) |
+| to see which models a run would spend on | `python -m agent models show` (no key) | prints the table and where each value came from; makes no call (`models check`, and `--probe`, need the key) |
+| a command's options | `python -m agent <command> --help` (no key) | on an install without the agent extras the help is a short command table, with the install line |
 | find a block in the IP library | `python -m agent ip search "<what you need, in words>"`, then `python -m agent ip show <entry>` (also `python3 -m flow.iplookup search ...`, no key) | matches by meaning, needs two matching words, and answers "nothing fits" with the near misses labelled as such; costs are measured on the Artix-7 only; SystemVerilog only, no FIFO (use AMD's XPM); `ip use` is the owner's command and adds a frozen component to an existing `project.yaml` ([docs/ip_lookup.md](docs/ip_lookup.md)) |
 | compare the measured variants of an IP block | `python3 -m flow.ipvariants --search <words>`, then `python3 -m flow.ipvariants <entry> --budget dsp=0` | plain Python, no Vivado; costs are measured on the Artix-7 only ([docs/ip_variants.md](docs/ip_variants.md)) |
 | a review of RTL you wrote | `python -m agent review <design-dir>` (`--no-judge`: the check suite alone) | read-only; no synthesis or simulation is run, so it reasons about the tests rather than running them ([docs/review.md](docs/review.md)) |
@@ -87,6 +89,7 @@ do not, apart from `project spec`. "Read-only" means nothing in the design direc
 | know which checks read a VHDL design | `python -m flow.sources <design-dir>` (`--help` lists the traps) | plain Python, read-only; a check that cannot read VHDL is PARTIAL or NOT RUN with "no reader for .vhd", never a clean pass; the CDC injection run fails closed on a VHDL crossing ([docs/vhdl.md](docs/vhdl.md); measured in [results/153_vhdl_parity](results/153_vhdl_parity/README.md)) |
 | a Vivado build of a design directory | `flow/run_vivado.sh designs/<name> base` | local Vivado 2026.1 only; then `python -m flow inspect designs/<name>` opens the checkpoints ([flow/README.md](flow/README.md)) |
 | the project in a browser | `python -m navigator` | needs the access key; local only (127.0.0.1); prints a one-time address ([navigator/README.md](navigator/README.md)) |
+| everything else (`run`, `resume`, `document`, `review`, `models check`, `latency`, `improve`, including `improve --choose --dry-run`) | the same commands | exit status 2 with one line naming `FDA_ACCESS_KEY`; measured in [results/157_newcomer_cli](results/157_newcomer_cli/README.md) |
 
 ## The flow
 

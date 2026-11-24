@@ -74,7 +74,7 @@ def test_every_entry_has_a_readable_instantiation_snippet() -> None:
     for b in iv.entries():
         sn = il.snippet(b)
         top = iv._yaml(b)["top"]
-        assert sn.lstrip().startswith(top) and ".clk(clk)" in sn.replace(" ", ""), b
+        assert sn.lstrip().startswith(top) and (".clk(clk)" in sn.replace(" ", "") or ".aclk(aclk)" in sn.replace(" ", "")), b      # AXI entries name their clock aclk
         assert "could not be read" not in sn, b
 
 
