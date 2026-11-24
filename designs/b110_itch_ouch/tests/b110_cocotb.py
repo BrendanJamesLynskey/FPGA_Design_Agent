@@ -22,6 +22,7 @@ PERIOD_PS = 6206
 KIND = {"A": 0, "F": 0, "E": 1, "C": 1, "X": 2, "D": 3, "U": 4, "R": 5, "S": 6}
 TIMING_DEPENDENT = ("spec", "abort", "late_abort", "rej_busy")
 REC: dict = {}
+NOTIONAL = int(os.environ.get("B110_NOTIONAL", "0"))
 COVER: dict = {"start_off": set(), "end_off": set(), "keep": set(), "counters": set(), "lengths": set(), "tests": []}
 
 
@@ -37,7 +38,7 @@ class Bench:
     async def start(self):
         d = self.dut
         cocotb.start_soon(Clock(d.clk, PERIOD_PS, unit="ps").start())
-        for n in ("s_v", "s_sof", "s_eof", "s_err", "clr_cnt", "clr_flags", "clr_book", "clr_pos", "clr_ref"):
+        for n in ("s_v", "s_sof", "s_eof", "s_err", "clr_cnt", "clr_flags", "clr_book", "clr_pos", "clr_ref", "ref_load"):
             getattr(d, n).value = 0
         d.s_d.value = 0
         d.s_keep.value = 0
@@ -63,6 +64,10 @@ class Bench:
         d.cfg_tif.value, d.cfg_display.value, d.cfg_capacity.value = ord(c.tif), ord(c.display), ord(c.capacity)
         d.cfg_ise.value, d.cfg_cross.value, d.cfg_custtype.value = ord(c.ise), ord(c.cross), ord(c.custtype)
         d.cfg_arm.value, d.cfg_kill.value, d.cfg_halt_on_gap.value, d.cfg_spec.value = int(c.arm), int(c.kill), int(c.halt_on_gap), int(self.spec)
+        # brief 188: hold-off, software band reference (its age is not modelled: the limit is the largest value), notional check
+        d.cfg_holdoff.value, d.cfg_ref_sw.value, d.cfg_ref_px.value, d.cfg_ref_age.value = c.holdoff, int(c.ref_sw), c.ref_px, 0xFFFFFFFE
+        d.cfg_max_notional.value, d.cfg_nt_shift.value = c.max_notional, c.nt_shift
+        d.cfg_nt_tbl.value = sum(v << (32 * i) for i, v in enumerate(c.nt_tbl))
 
     async def wait_ready(self):
         for _ in range(2000):
@@ -653,7 +658,7 @@ async def latency(dut):
     px = MID
     out = {}
     for spec in (False, True):
-        cfg = small_cfg()
+        cfg = small_cfg(**nt_pass())
         b, m = await fresh(dut, cfg, spec=spec)
         d = Day(b, m)
         await d.open()
@@ -905,3 +910,140 @@ async def zz_coverage(dut):
             "last_word_keep_masks": sorted(COVER["keep"]), "distinct_message_lengths": len(COVER["lengths"]),
             "counters_non_zero_somewhere": sorted(COVER["counters"]), "counters_never_non_zero": sorted(missing),
             "excluded": {"late_abort": "a cancel that finds no frame in flight cannot happen with this pipeline (verdict 3 clocks before the frame's last word)"}}, indent=2) + "\n")
+
+
+# ============================================================================== brief 188: software band reference, hold-off, price wrap, notional check
+
+
+def nt_pass() -> dict:
+    """The configuration of a build with a notional check that lets the bench's orders through (brief 188; empty for mode 0, which has no check)."""
+    return dict(notional_mode=NOTIONAL, max_notional=1 << 62, nt_shift=0, nt_tbl=(1_000_000,) * 16) if NOTIONAL else {}
+
+
+def nt_table(max_notional: int, shift: int) -> tuple:
+    """Entry i = the notional limit divided by the highest price of bucket i, rounded down (the last bucket: by the largest price); so the table never admits more than the multiply."""
+    return tuple(max_notional // (((i + 1) << shift) if i < 15 else 0xFFFFFFFF) for i in range(16))
+
+
+async def day_with_bid(dut, cfg, spec=False):
+    b, m = await fresh(dut, cfg, spec=spec)
+    d = Day(b, m)
+    await d.open()
+    return b, m, d
+
+
+@cocotb.test()
+async def soft_reference(dut):
+    """Brief 188 #3: the band reference is the price software wrote, not the strategy's own book. The own book has a bid that would let the candidates through; the software reference
+    does not, so they are refused. Without a bid in the book at all, the software reference still decides. Every verdict equals the model's."""
+    px = MID
+    for name, kw, bid, want_fire in (("book_bid_would_pass", dict(ref_sw=True, ref_px=px - 5000, band=200), px - 100, 0),
+                                     ("software_passes", dict(ref_sw=True, ref_px=px - 100, band=200), px - 5000, 4),
+                                     ("no_bid_at_all", dict(ref_sw=True, ref_px=px - 100, band=200), None, 4),
+                                     ("legacy_own_book", dict(ref_sw=False, ref_px=px - 5000, band=200), px - 100, 4)):
+        cfg = small_cfg(**kw)
+        b, m, d = await day_with_bid(dut, cfg)
+        await b.pulse("ref_load")
+        if bid is not None:
+            await d.send([d.A(0, 1, "B", 100, bid)])
+        for k in range(4):
+            await d.send([d.A(0, 10 + k, "S", 100, px + 100)], idle=20)
+        await settle(b)
+        compare_all(b, m)
+        assert m.cnt["fire"] == want_fire, (name, m.cnt["fire"])
+        assert b.counters()["fire"] == want_fire, name
+
+
+@cocotb.test()
+async def soft_reference_age(dut):
+    """Brief 188 #3: a software reference older than cfg_ref_age clocks is refused as band, and loading it again makes it good again; one never loaded is refused."""
+    px = MID
+    cfg = small_cfg(ref_sw=True, ref_px=px - 100, band=200)
+    b, m, d = await day_with_bid(dut, cfg)
+    dut.cfg_ref_age.value = 700
+    await d.send([d.A(0, 10, "S", 100, px + 100)], idle=20)               # never loaded: refused
+    await settle(b)
+    assert (b.counters()["fire"], b.counters()["rej_band"]) == (0, 1), b.counters()
+    await b.pulse("ref_load")
+    await d.send([d.A(0, 11, "S", 100, px + 100)], idle=20)               # fresh: passes
+    await settle(b)
+    assert b.counters()["fire"] == 1, b.counters()
+    await settle(b, 900)
+    await d.send([d.A(0, 12, "S", 100, px + 100)], idle=20)               # older than 700 clocks: refused
+    await settle(b)
+    c = b.counters()
+    assert (c["fire"], c["rej_band"], c["cand"]) == (1, 2, 3), c
+    await b.pulse("ref_load")
+    await d.send([d.A(0, 13, "S", 100, px + 100)], idle=20)               # loaded again: passes
+    await settle(b)
+    c = b.counters()
+    assert (c["fire"], c["rej_band"]) == (2, 2), c
+    dut.cfg_ref_age.value = 0xFFFFFFFE
+
+
+@cocotb.test()
+async def holdoff(dut):
+    """Brief 188 #19: after an accepted order an instrument is refused for cfg_holdoff clocks (counted as rej_busy), then accepted again; another instrument is not held; zero turns it off.
+    Without and with speculation (speculation is not started while an instrument is in hold-off, so no order frame leaves for a refused candidate)."""
+    px = MID
+    for spec in (False, True):
+        cfg = small_cfg(holdoff=900, max_pos=100_000)
+        b, m, d = await day_with_bid(dut, cfg, spec=spec)
+        await d.send([d.A(0, 1, "B", 100, px - 100), d.A(1, 2, "B", 100, px - 100)])
+        await d.send([d.A(0, 10, "S", 100, px + 100)], idle=20)               # accepted, hold-off starts
+        await d.send([d.A(0, 11, "S", 100, px + 100)], idle=20)               # about 100 clocks later: held
+        await d.send([d.A(1, 12, "S", 100, px + 100)], idle=20)               # another instrument: accepted
+        await settle(b, 1000)
+        await d.send([d.A(0, 13, "S", 100, px + 100)], idle=20)               # more than 900 clocks later: accepted
+        await settle(b, 100)
+        c = b.counters()
+        assert (c["cand"], c["fire"], c["rej_busy"]) == (4, 3, 1), (spec, c)
+        assert len(b.frames_bytes()) == 3, (spec, len(b.frames_bytes()))
+    cfg = small_cfg(holdoff=0, max_pos=100_000)
+    b, m, d = await day_with_bid(dut, cfg)
+    await d.send([d.A(0, 1, "B", 100, px - 100)])
+    for k in range(3):
+        await d.send([d.A(0, 10 + k, "S", 100, px + 100)], idle=20)
+    await settle(b)
+    compare_all(b, m)
+    assert b.counters()["fire"] == 3 and b.counters()["rej_busy"] == 0
+
+
+@cocotb.test()
+async def price_wrap(dut):
+    """Brief 188 #1: an order price (candidate price plus the offset) that passes 2^32 - 1 is refused as band; it used to wrap to a small number and pass the band check."""
+    px = MID
+    cfg = small_cfg(px_off=0xFFFFFFFF, band=0x7FFFFFFF)
+    b, m, d = await day_with_bid(dut, cfg)
+    await d.send([d.A(0, 1, "B", 100, px - 100)])
+    for k in range(3):
+        await d.send([d.A(0, 10 + k, "S", 100, px + 100)], idle=20)
+    await settle(b)
+    compare_all(b, m)
+    assert m.cnt["rej_band"] == 3 and m.cnt["fire"] == 0 and b.counters()["rej_band"] == 3
+
+
+@cocotb.test()
+async def notional(dut):
+    """Brief 188 #14 (the build under test has NOTIONAL_MODE B110_NOTIONAL: 1 multiply, 2 table): a notional at the limit passes, one tick over is refused as rej_size, a larger quantity is refused;
+    every verdict equals the model's. Mode 0 (the default build) has no check and passes everything."""
+    px = MID
+    qty = 100
+    limit = (px + 100) * qty                         # exactly the notional of a candidate at px + 100
+    shift = 17                                       # prices of 100.0000 fall in bucket 7 (1,000,000 >> 17)
+    for name, kw in (("at_limit", dict(qty=qty)), ("qty_over", dict(qty=qty + 1)), ("limit_minus_1", dict(qty=qty, max_notional=limit - 1)), ("zero_limit", dict(qty=qty, max_notional=0)),
+                     ("last_bucket", dict(qty=qty, nt_shift=15))):         # prices of 100.0000 are in bucket 30 >> 15 = the last one (index 15), whose entry is the limit divided by 2^32 - 1: refuses in mode 2
+        k = {**dict(notional_mode=NOTIONAL, max_notional=limit, nt_shift=shift), **kw}
+        k["nt_tbl"] = nt_table(k["max_notional"], k["nt_shift"])
+        cfg = small_cfg(max_qty=500, **k)
+        b, m, d = await day_with_bid(dut, cfg)
+        await d.send([d.A(0, 1, "B", 100, px - 100)])
+        for i in range(3):
+            await d.send([d.A(0, 10 + i, "S", 100, px + 100 + 10 * i)], idle=20)      # notionals (px + 100 + 10 i) * qty: only i = 0 can be at the limit
+        await settle(b)
+        compare_all(b, m)
+        dut._log.info("notional mode %d %s: fire %d rej_size %d", NOTIONAL, name, m.cnt["fire"], m.cnt["rej_size"])
+        if NOTIONAL == 0:
+            assert m.cnt["rej_size"] == 0 and m.cnt["fire"] == 3
+        elif name == "at_limit" and NOTIONAL == 1:
+            assert m.cnt["fire"] == 1 and m.cnt["rej_size"] == 2

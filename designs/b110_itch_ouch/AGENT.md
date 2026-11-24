@@ -26,17 +26,17 @@ param ORD_AW=8 legal=4 to 16 (tested at 5, 6, 8 and 10)
 ## files
 designs/b110_itch_ouch/rtl/mold_rx.sv 2439cc5a50: MoldUDP64 receiver
 designs/b110_itch_ouch/rtl/itch_dec.sv 43c7f717f1: ITCH 5.0 decoder
-designs/b110_itch_ouch/rtl/book_core.sv 4f9ea037d5: order table, ladders, top of book
-designs/b110_itch_ouch/rtl/risk_glue.sv 2cde343aec: decision, risk checks, kill switch, order queue
+designs/b110_itch_ouch/rtl/book_core.sv 624b55e0ff: order table, ladders, top of book
+designs/b110_itch_ouch/rtl/risk_glue.sv 003f48109b: decision, risk checks, kill switch, order queue
 designs/b110_itch_ouch/rtl/ouch_enter.sv 95066c0f3c: OUCH 5.0 Enter Order in SoupBinTCP framing
-designs/b110_itch_ouch/rtl/itch_ouch_top.sv 6f9da05065: top level
+designs/b110_itch_ouch/rtl/itch_ouch_top.sv cd25998361: top level
 designs/b110_itch_ouch/model/proto.py ae43fca45e: packers for the four protocols, from the specifications
-designs/b110_itch_ouch/model/ref.py 92ebceb812: reference model (untimed, exact)
+designs/b110_itch_ouch/model/ref.py 92a8678e8a: reference model (untimed, exact)
 designs/b110_itch_ouch/model/gen.py 7a5ed6f04b: seeded synthetic ITCH over MoldUDP64 generator
-designs/b110_itch_ouch/tests/b110_cocotb.py e8b7915b02: cocotb bench
-designs/b110_itch_ouch/tests/run_mutants.py d7d017acd5: seeded-fault runner
-designs/b110_itch_ouch/ooc/ooc.py 13550cc38a: out-of-context build driver
-designs/b110_itch_ouch/docs/itch_ouch.md 1213229009: datasheet
+designs/b110_itch_ouch/tests/b110_cocotb.py 918fb78f8e: cocotb bench
+designs/b110_itch_ouch/tests/run_mutants.py 78d77ec4c8: seeded-fault runner
+designs/b110_itch_ouch/ooc/ooc.py c3214a1a04: out-of-context build driver
+designs/b110_itch_ouch/docs/itch_ouch.md 34d3addc8b: datasheet
 designs/b110_itch_ouch/docs/spec_notes.md 5ce86ae4a2: field layouts and where each comes from
 designs/b110_itch_ouch/docs/tcp_plan.md 95463d9cfc: TCP options and the phase 2 recommendation
 designs/b110_itch_ouch/docs/phase2_integration.md a15fee8877: integration plan for the KR260 design, the host bench and the board test
@@ -48,8 +48,8 @@ the seeded faults (every mutant of verif/mutants.yaml against the bench) (~25min
 [heavy] the out-of-context builds (three clocks) (~30min): python3 -m designs.b110_itch_ouch.ooc.ooc --clocks 6.2061 5.0 4.4
 
 ## records (path sha256-prefix; claims below cite R<n>)
-R1 designs/b110_itch_ouch/tests/test_b110_rtl.py ed9179dc6e
-R2 designs/b110_itch_ouch/tests/test_b110_model.py 0ac06f1af3
+R1 designs/b110_itch_ouch/tests/test_b110_rtl.py 4626a5e0fa
+R2 designs/b110_itch_ouch/tests/test_b110_model.py 248e083213
 R3 designs/b110_itch_ouch/tests/test_b110_lint.py 3028d8b5b4
 R4 results/b110/mutation.json 2c13eb56b0
 R5 results/b110/coverage_sim.json 69836756e5

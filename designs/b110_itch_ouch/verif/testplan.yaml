@@ -10,13 +10,13 @@
 schema: fpga-design-agent/testplan/v1
 design: b110_itch_ouch
 notes: >-
-  Simulation only (xsim 2026.1, UVM 1.2; Icarus is not used by this bench). One recorded regression (results/176_seq_poison/summary.json) and one mutation record
+  Simulation only (xsim 2026.1, UVM 1.2; Icarus is not used by this bench). One recorded regression (results/188_trading_safety/uvm/summary.json) and one mutation record
   (results/170_itch_uvm/mutation_seed*.json). No board, no real feed, every message synthetic.
 
 x-rtl: &rtl [designs/b110_itch_ouch/rtl/mold_rx.sv, designs/b110_itch_ouch/rtl/itch_dec.sv, designs/b110_itch_ouch/rtl/book_core.sv, designs/b110_itch_ouch/rtl/risk_glue.sv,
   designs/b110_itch_ouch/rtl/ouch_enter.sv, designs/b96_kr260_10g/rm_gp_itch/rtl/udp_strip.sv, designs/b96_kr260_10g/rm_gp_itch/rtl/order_seg.sv, designs/b96_kr260_10g/rm_gp_itch/rtl/itch_top.sv,
   designs/b96_kr260_10g/rm_gp_itch/rtl/itch_path.sv, designs/b96_kr260_10g/rm_gp_itch/rtl/tx_mux.sv]
-x-rec: &rec {file: results/176_seq_poison/summary.json, reader: json}
+x-rec: &rec {file: results/188_trading_safety/uvm/summary.json, reader: json}
 
 requirements:
   - id: B110-F-ORDER-BYTES
@@ -74,6 +74,36 @@ requirements:
     source: designs/b96_kr260_10g/rm_gp_itch/verif/uvm/README.md#mutation-score
     spec_status: draft
     mutation_floor: {score_pct: 90, worst_case_pct: 90, min_mutants: 30, max_undecided: 3}
+  - id: B110-S-QTY
+    kind: safety
+    title: No quantity or price accumulator wraps, and no live book entry has zero size
+    text: A level size that would pass 2^32 - 1 saturates and makes the instrument inexact (counted as lvovf); an Add of zero shares is never entered; an order price (candidate price plus offset) that passes 2^32 - 1 is refused as band; no ladder level or order-table entry is ever written live with zero size (brief 188, bounded proof from reset).
+    source: designs/b110_itch_ouch/docs/itch_ouch.md#14-observation-and-counters
+    spec_status: draft
+  - id: B110-S-BANDREF
+    kind: safety
+    title: The price-band reference can come from software, independent of the strategy's own book, and is refused when too old
+    text: With the software reference selected, the band is measured from the price software wrote and the book's bid is not consulted; a reference never loaded, or older than the age limit in core clocks, refuses every candidate as rej_band (brief 188).
+    source: designs/b110_itch_ouch/docs/itch_ouch.md#13-configuration-static
+    spec_status: draft
+  - id: B110-F-HOLDOFF
+    kind: functional
+    title: After an accepted order an instrument is refused for the hold-off, other instruments are not
+    text: With a hold-off of N clocks, the next candidate of the same instrument inside N clocks is refused and counted as rej_busy, one after it is accepted, another instrument is unaffected, and speculation is not started during a hold-off (brief 188).
+    source: designs/b110_itch_ouch/docs/itch_ouch.md#13-configuration-static
+    spec_status: draft
+  - id: B110-F-NOTIONAL
+    kind: functional
+    title: The notional check (multiply or software price-band table) refuses as the model says, at no extra clock, and the table is never weaker than the multiply
+    text: With NOTIONAL_MODE 1 an order whose price times quantity passes the limit is refused as rej_size; with mode 2 a table filled by software from the limit gives verdicts equal to the model's, never admits an order the multiply would refuse, and both add no clock between the book update and the first order word (brief 188).
+    source: designs/b110_itch_ouch/docs/itch_ouch.md#13-configuration-static
+    spec_status: draft
+  - id: B110-S-LIMITS-ATOMIC
+    kind: safety
+    title: A half-written set of risk limits never takes effect (rm_gp_itch registers)
+    text: The risk limits are staged; a write fills a holding register and the live set changes only on COMMIT, in one clock, so the core never runs on a mix of old and new limits (brief 188, whole core in xsim).
+    source: designs/b96_kr260_10g/rm_gp_itch/docs/itch_integration.md#5-registers-and-what-a-user-could-guess-wrong
+    spec_status: draft
 
 verification:
   - id: V-UVM-ORDERS
@@ -128,9 +158,9 @@ verification:
     requirements: [B110-F-SEQ-POISON]
     method: uvm_test
     written_by: independent_bench
-    title: UVM sequence-number check on the datasheet's rule; t_seq_poison (run with +SEQ_STRICT) is the minimal failing test, the other sequences run under a counted waiver
+    title: UVM sequence-number check on the datasheet's rule, exact and without a waiver in every run (brief 176 fixed the finding t_seq_poison made; the item still read the pre-fix fields until brief 188)
     evidence: *rec
-    pass_when: [{field: seq_waived, op: eq, value: 0}, {field: finding_seq_poison.failed, op: false}]
+    pass_when: [{field: checks.SEQ.mismatches, op: eq, value: 0}, {field: checks.SEQ.compared, op: ge, value: 400}, {field: failed, op: eq, value: 0}]
     checks: *rtl
   - id: V-UVM-SVA
     requirements: [B110-S-STRICT, B110-F-ORDER-BYTES]
@@ -155,3 +185,37 @@ verification:
     title: "Blind mutation sweep with the fixed tool (flow/mutation_score.py): score, worst case and undecided against the floor"
     evidence: {file: results/170_itch_uvm/mutation_seed1.json, reader: mutation}
     checks: *rtl
+
+  # ---- brief 188 (written by the RTL's own brief: directed tests, not independent) -------------------------------------------------
+  - id: V-FORMAL-BOOK-QTY
+    requirements: [B110-S-QTY]
+    method: formal
+    title: SymbiYosys bounded proof (BMC from reset, depth 12) of the book's quantity invariants Q1-Q6 and the cover that saturation is reachable; no k-induction
+    evidence: {file: results/188_trading_safety/pytest_junit.xml, reader: junit, tests: ["test_b110_formal::*"]}
+    bounded: {depth: 12}
+    checks: [designs/b110_itch_ouch/rtl/book_core.sv, designs/b110_itch_ouch/verif/formal/book_props.sv]
+  - id: V-SIM-QTY
+    requirements: [B110-S-QTY]
+    method: sim_test
+    title: Saturating level size, zero-share Add and wrapping order price, against the model (the saturation test fails on the RTL before brief 188)
+    evidence: {file: results/188_trading_safety/pytest_junit.xml, reader: junit, tests: ["test_b110_rtl::test_all_benches", "test_b110_rtl::test_book_core_queue"]}
+    checks: [designs/b110_itch_ouch/rtl/book_core.sv, designs/b110_itch_ouch/rtl/risk_glue.sv]
+  - id: V-SIM-BANDREF
+    requirements: [B110-S-BANDREF, B110-F-HOLDOFF]
+    method: sim_test
+    title: Software band reference, its age limit and the hold-off (cocotb bench soft_reference, soft_reference_age, holdoff)
+    evidence: {file: results/188_trading_safety/pytest_junit.xml, reader: junit, tests: ["test_b110_rtl::test_all_benches"]}
+    checks: [designs/b110_itch_ouch/rtl/risk_glue.sv]
+  - id: V-SIM-NOTIONAL
+    requirements: [B110-F-NOTIONAL]
+    method: sim_test
+    title: Notional check in both builds against the model, the table-versus-multiply property, and equal latency in the three NOTIONAL_MODE builds
+    evidence: {file: results/188_trading_safety/pytest_junit.xml, reader: junit, tests: ["test_b110_rtl::test_notional_modes", "test_b110_rtl::test_notional_latency", "test_b110_model::test_notional_table_never_weaker_than_multiply"]}
+    checks: [designs/b110_itch_ouch/rtl/risk_glue.sv]
+  - id: V-XSIM-LIMITS
+    requirements: [B110-S-LIMITS-ATOMIC]
+    method: sim_measurement
+    title: Whole core in xsim 2026.1; limit lowered but not committed leaves the old limits in force, COMMIT applies it
+    evidence: {file: results/188_trading_safety/staged_limits_sim.json, reader: json}
+    pass_when: [{field: orders_b_uncommitted, op: eq, value: 4}, {field: orders_c_committed, op: eq, value: 1}, {field: rej_pos_b, op: eq, value: 0}, {field: rej_pos_c, op: eq, value: 3}]
+    checks: [designs/b96_kr260_10g/rm_gp_itch/rtl/b96_core.sv, designs/b96_kr260_10g/rm_gp_itch/rtl/itch_path.sv]

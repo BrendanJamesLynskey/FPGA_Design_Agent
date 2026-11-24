@@ -3,11 +3,11 @@
 package itch_pkg2;
     localparam int NCW = 32;       // words of CFG2
     localparam int C_CTRL = 0, C_THR = 1, C_QTY = 2, C_MAXQTY = 3, C_MAXPOS = 4, C_BAND = 5, C_PXOFF = 6, C_MINQTY = 7, C_ORDF0 = 8, C_ORDF1 = 9, C_WATCH = 10,
-                   C_FEEDIP = 18, C_FEEDPORT = 19, C_TCPSEQ = 20, C_TCPACK = 21, C_CMD = 22, C_RPW = 23, C_RPWLO = 24, C_RPWHI = 25, C_CAPADDR = 26, C_TCPFA = 27, C_TCPFD = 28, C_RPCFG = 29;
+                   C_FEEDIP = 18, C_FEEDPORT = 19, C_TCPSEQ = 20, C_TCPACK = 21, C_CMD = 22, C_RPW = 23, C_RPWLO = 24, C_RPWHI = 25, C_CAPADDR = 26, C_TCPFA = 27, C_TCPFD = 28, C_RPCFG = 29, C_REFPX = 30, C_REFAGE = 31;
     // CTRL bits
-    localparam int K_EN = 0, K_ARM = 1, K_KILL = 2, K_SPEC = 3, K_HALT = 4, K_STRICT = 5;
+    localparam int K_EN = 0, K_ARM = 1, K_KILL = 2, K_SPEC = 3, K_HALT = 4, K_STRICT = 5, K_REFSW = 6;                   // CTRL bits 31:16 are HOLDOFF (clocks)
     // CMD bits (a command is executed once when CMD[23:16] changes)
-    localparam int M_CLR_CNT = 0, M_CLR_FLAGS = 1, M_CLR_BOOK = 2, M_CLR_POS = 3, M_CLR_REF = 4, M_RP_START = 5, M_TCP_LOAD = 6, M_LAT_CLR = 7, M_CAP_CLR = 8, M_RP_STOP = 9;
+    localparam int M_CLR_CNT = 0, M_CLR_FLAGS = 1, M_CLR_BOOK = 2, M_CLR_POS = 3, M_CLR_REF = 4, M_RP_START = 5, M_TCP_LOAD = 6, M_LAT_CLR = 7, M_CAP_CLR = 8, M_RP_STOP = 9, M_COMMIT = 10;
 
     localparam int NSW = 96;       // words of STAT2
     localparam int S_ITCH = 0;     // 45 counters of brief 110, in the order of itch_pkg

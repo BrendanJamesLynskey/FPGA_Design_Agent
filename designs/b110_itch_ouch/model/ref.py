@@ -43,6 +43,14 @@ class Cfg:
     arm: bool = True
     kill: bool = False
     halt_on_gap: bool = True
+    # brief 188 (the untimed model assumes a software reference is always fresh and has no hold-off; both are clock-based and are tested in the bench)
+    ref_sw: bool = False          # band reference: False the best bid of the own book, True the software reference ref_px
+    ref_px: int = 0
+    holdoff: int = 0              # clocks; not modelled (timing), the bench tests it
+    notional_mode: int = 0        # 0 none, 1 price * qty <= max_notional, 2 price-band table (nt_shift, nt_tbl: 16 entries)
+    max_notional: int = 0
+    nt_shift: int = 0
+    nt_tbl: tuple = (0,) * 16
 
 
 @dataclass
@@ -202,7 +210,13 @@ class Model:
         d = self.lv[inst][side]
         if add:
             if px in d:
-                d[px] = (d[px] + amt) & M32
+                tot = d[px] + amt
+                if tot > M32:                       # the level size saturates (brief 188): counted as lvovf, the instrument is inexact
+                    d[px] = M32
+                    cnt["lvovf"] += 1
+                    self.inexact[inst] = True
+                else:
+                    d[px] = tot
             elif len(d) < c.levels:
                 d[px] = amt & M32
             else:
@@ -231,6 +245,10 @@ class Model:
         c, cnt = self.cfg, self.cnt
         idx = ref & ((1 << c.ord_aw) - 1)
         e = self.table.get(idx)
+        if shares == 0:                             # a live entry of no size is never made (brief 188): counted as oovf, the instrument is inexact
+            cnt["oovf"] += 1
+            self.inexact[inst] = True
+            return False
         if e is not None:
             if e["ref"] == ref:
                 cnt["odup"] += 1
@@ -297,8 +315,17 @@ class Model:
         if side != ASK or px == 0 or px > c.thr:
             return None
         cnt["cand"] += 1
-        price = (px + c.px_off) & M32
+        price33 = px + c.px_off
+        price = price33 & M32
+        carry = price33 > M32                    # the order price wrapped past 2^32 - 1: refused as band (brief 188)
         bid = self.tob[inst][BID]
+        ref_ok, ref_px = (True, c.ref_px) if c.ref_sw else (bid[2], bid[0])
+        if c.notional_mode == 1:
+            nt_bad = price * c.qty > c.max_notional
+        elif c.notional_mode == 2:
+            nt_bad = c.qty > c.nt_tbl[min(price >> c.nt_shift, 15)]
+        else:
+            nt_bad = False
         if not c.arm:
             cnt["rej_arm"] += 1
         elif c.kill:
@@ -307,11 +334,11 @@ class Model:
             cnt["rej_gap"] += 1
         elif self.inexact[inst]:
             cnt["rej_stale"] += 1
-        elif c.qty == 0 or c.qty > c.max_qty or c.qty >= 1_000_000:
+        elif c.qty == 0 or c.qty > c.max_qty or c.qty >= 1_000_000 or nt_bad:
             cnt["rej_size"] += 1
         elif self.pos[inst] + c.qty > c.max_pos:
             cnt["rej_pos"] += 1
-        elif not (bid[2] and price <= bid[0] + c.band):
+        elif not (ref_ok and not carry and price <= ref_px + c.band):
             cnt["rej_band"] += 1
         else:
             ref = self.next_ref

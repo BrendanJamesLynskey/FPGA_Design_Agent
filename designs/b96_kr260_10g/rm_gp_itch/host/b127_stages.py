@@ -276,7 +276,7 @@ def stage_risk(run: Runner, *, passes=60) -> dict:
     B.read_stats(p, "b.")
     p.w(B.ADDR["IT_CTRL"], 1 | 2 | 16).d(B.HS_NS)               # KILL off
     p.w(B.ADDR["IT_MAXPOS"], 150).d(B.HS_NS)                    # room for one order of 100 only
-    p.w(B.ADDR["IT_CMD"], B.CMD["clr_flags"] | B.CMD["clr_book"] | B.CMD["clr_ref"] | B.CMD["clr_pos"]).d(B.HS_NS * 4)
+    p.w(B.ADDR["IT_CMD"], B.CMD["clr_flags"] | B.CMD["clr_book"] | B.CMD["clr_ref"] | B.CMD["clr_pos"] | B.CMD["commit"]).d(B.HS_NS * 4)
     B.start_replay(p, wait_ms=run.wait_ms(300), frames=len(frames))
     p.d(len(frames) * 400 * 7 + 20_000)
     B.read_stats(p, "c.")

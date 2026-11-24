@@ -1,0 +1,75 @@
+// book_props.sv (brief 188): quantity invariants of book_core.sv, attached by bind (book_bind.sv); the RTL is not edited.
+//
+// Form: yosys-slang reads only clocked Boolean concurrent assertions, so each property is the Boolean form of the SVA written beside it (the same convention as designs/b96_kr260_10g/verif/formal/rm_gp_props.sv).
+
+//   Q1  no level is ever written live with zero size                     SVA: @(posedge clk) (|lv_we && !sweep) |-> !(lv_wd[64] && lv_wd[31:0] == 0)
+//   Q2  an add to a level never lowers its size (no wrap)                 SVA: @(posedge clk) (d3_v && d3_add && any_hit) |-> (lv_wd[31:0] >= sz_hit && lv_wd[31:0] >= d3_amt)
+//   Q3  a size that would pass 2^32 - 1 is flagged inexact in that clock SVA: @(posedge clk) (d3_v && d3_add && any_hit && sz_sum[32]) |-> inx_set[d3_inst]
+//   Q4  an order-table entry is never written live with zero remaining    SVA: @(posedge clk) (we2 && !sweep) |-> !(wd2[EW-1] && wd2[31:0] == 0)
+//   Q5  a live level read from either ladder port never has zero size     SVA: @(posedge clk) !sweep |-> no read level has valid set and size 0  (the state invariant: reachable states only, so BMC from reset)
+//   Q6  a reduce never raises an order's remaining size                   SVA: @(posedge clk) (b2_v && b2_op == OP_RED && hit2 && we2 && wd2[EW-1]) |-> (wd2[31:0] <= e2_rem)
+module book_props #(
+    parameter int N_INST = 2,
+    parameter int LEVELS = 4,
+    parameter int ORD_AW = 2,
+    parameter int EW     = 1 + 64 + $clog2(N_INST > 1 ? N_INST : 2) + 1 + 32 + 32
+) (
+    input logic clk,
+    input logic rst,
+    input logic sweep,
+    input logic [LEVELS-1:0] lv_we,
+    input logic [64:0] lv_wd,
+    input logic d3_v, d3_add, any_hit,
+    input logic [31:0] sz_hit, d3_amt,
+    input logic [32:0] sz_sum,
+    input logic [N_INST-1:0] inx_set,
+    input logic [$clog2(N_INST > 1 ? N_INST : 2)-1:0] d3_inst,
+    input logic we2,
+    input logic [EW-1:0] wd2,
+    input logic b2_v,
+    input logic [2:0] b2_op,
+    input logic hit2,
+    input logic [31:0] e2_rem,
+    input logic [64:0] rda [0:LEVELS-1],
+    input logic [64:0] rdb [0:LEVELS-1]
+);
+    // A1: the first clock is a reset (every register of book_core is defined by it; the table and ladders are cleared by the sweep that follows, 2^ORD_AW + 1 clocks).
+    // `started`: a reset has been seen and the sweep has finished; every property is stated from then on (before it the registers and memories hold power-up values).
+    logic init_q, started;
+    initial begin init_q = 1'b1; started = 1'b0; end
+    always_ff @(posedge clk) begin
+        init_q <= 1'b0;
+        if (rst) started <= 1'b0;
+        else if (!sweep && !init_q) started <= 1'b1;
+    end
+    always_comb a1_reset_first: assume (!init_q || rst);
+    logic rd_ok;
+    always_comb begin
+        rd_ok = 1'b1;
+        for (int l = 0; l < LEVELS; l++) begin
+            if (rda[l][64] && rda[l][31:0] == 32'd0) rd_ok = 1'b0;
+            if (rdb[l][64] && rdb[l][31:0] == 32'd0) rd_ok = 1'b0;
+        end
+    end
+    always_comb begin
+        q1_no_zero_level:      assert (!started || !(|lv_we) || !(lv_wd[64] && lv_wd[31:0] == 32'd0));
+        q2_no_wrap:            assert (!started || !(d3_v && d3_add && any_hit) || (lv_wd[31:0] >= sz_hit && lv_wd[31:0] >= d3_amt));
+        q3_saturation_flagged: assert (!started || !(d3_v && d3_add && any_hit && sz_sum[32]) || inx_set[d3_inst]);
+        q4_no_zero_entry:      assert (!started || !we2 || !(wd2[EW-1] && wd2[31:0] == 32'd0));
+        q6_reduce_lowers:      assert (!started || !(b2_v && b2_op == 3'd1 && hit2 && we2 && wd2[EW-1]) || (wd2[31:0] <= e2_rem));
+    end
+    // Q5 is a state invariant over memory contents: only reachable states count, so it is asserted from the first clock after the sweep has finished (the memories hold power-up values before it).
+    always_comb q5_levels_never_zero_live: assert (!started || rd_ok);
+    // not vacuous: a saturation and a level that is live both happen
+    always_comb begin
+        c_saturates:  cover (started && d3_v && d3_add && any_hit && sz_sum[32]);
+        c_live_level: cover (started && rdb[0][64]);
+        // brief 143c: each assertion's antecedent (the state in which it could be broken), paired by name (NAME__ante)
+        q1_no_zero_level__ante:      cover (started && |lv_we);
+        q2_no_wrap__ante:            cover (started && d3_v && d3_add && any_hit);
+        q3_saturation_flagged__ante: cover (started && d3_v && d3_add && any_hit && sz_sum[32]);
+        q4_no_zero_entry__ante:      cover (started && we2);
+        q6_reduce_lowers__ante:      cover (started && b2_v && b2_op == 3'd1 && hit2 && we2 && wd2[EW-1]);
+        q5_levels_never_zero_live__ante: cover (started);
+    end
+endmodule
