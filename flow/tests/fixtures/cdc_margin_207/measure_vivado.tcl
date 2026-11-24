@@ -137,6 +137,16 @@ proc measure {fh} {
         puts $fh [format "CROSS|%s|npaths=%d|ignored=%d|dmax=%.3f|dmin=%.3f|spread=%.3f|slack=%s|unc=%s|req=%s" $n [llength $ds] $ign \
             [lindex $ds end] [lindex $ds 0] [expr {[lindex $ds end] - [lindex $ds 0]}] $slack $unc $req]
     }
+    # settling slack out of each synchroniser stage (the 7-series MTBF input; on UltraScale+ report_synchronizer_mtbf sums these)
+    foreach {n pat} {lvl lvl_s1_reg tgl tg_s1_reg wptr wq1_b_reg* rptr rq1_a_reg* hsreq rq1_b_reg hsack aq1_a_reg cfgt ct1_b_reg rst rb1_b_reg} {
+        set s1 [get_cells -quiet -hierarchical -filter "IS_SEQUENTIAL && NAME =~ $pat"]
+        if {[llength $s1] == 0} { continue }
+        set p1 [get_timing_paths -quiet -from $s1 -setup -max_paths 1]
+        set s2pat [string map {_s1_ _s2_ q1_ q2_ 1_b 2_b 1_a 2_a} $pat]
+        set s2 [get_cells -quiet -hierarchical -filter "IS_SEQUENTIAL && NAME =~ $s2pat"]
+        set p2 [expr {[llength $s2] ? [get_timing_paths -quiet -from $s2 -setup -max_paths 1] : ""}]
+        puts $fh "SETTLE|$n|stage1_slack=[expr {$p1 ne {} ? [get_property SLACK $p1] : {}}]|stage2_slack=[expr {$p2 ne {} ? [get_property SLACK $p2] : {}}]"
+    }
     foreach c {a b} {
         set p [get_timing_paths -quiet -from [get_clocks clk_$c] -to [get_clocks clk_$c] -setup]
         set h [get_timing_paths -quiet -from [get_clocks clk_$c] -to [get_clocks clk_$c] -hold]

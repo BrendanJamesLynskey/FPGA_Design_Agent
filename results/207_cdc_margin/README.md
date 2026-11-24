@@ -154,6 +154,29 @@ Run time and peak memory.
 Stopping rules: each variant runs once per seed. A tool error is fixed and rerun once. A part missing from the install
 is replaced by the fallback and recorded. No variant is dropped because its result is inconvenient.
 
+## 3a. Deviations from the pre-registration (recorded as they happened, 2026-11-24 evening)
+
+- **Clocks and sizes.** C2 uses 8-bit pointers, so the FIFO is 128 deep, not 16 (an 8-bit Gray pointer needs 2^7 words). The filler
+  is a fixed multiply-accumulate per domain; it was not tuned to sit within 0.5 ns of the period. The filler WNS shift still measures
+  what a variant costs, but the filler is not near-critical.
+- **B3** (pulled-apart bus) is applied to the Gray write pointer (C2), not to C4. The C4 tolerance (2 destination periods, 12.8 ns)
+  cannot be exceeded by placement on these parts. B3 also runs clk_b at 2.5 ns (400 MHz), so the Gray bound, min(10, 2.5) = 2.5 ns,
+  can be exceeded by LOC-ing four first-stage flops into the lowest slices and four into the highest. Vivado only; Quartus B3 was not
+  run (a known gap).
+- **U_pair** for the M variant is read from the "Clock Uncertainty" line of `report_timing` on the crossing paths of the N run, not
+  from the `report_bus_skew` header: brief 105's recorded bus-skew report has no uncertainty line.
+- **Quartus D** uses `set_max_delay` / `set_min_delay` (clock skew included) plus `set_net_delay -max` and `set_max_skew`.
+  `set_data_delay` exists as a command in 25.1std, but its Timing Analyzer rejects it: "The set_data_delay constraint is not
+  supported in the Legacy Timing Analyzer" (q_cv_good_D_s1, first DD attempt). DD (an added analysis-only variant: clock groups
+  plus `set_max_skew`) tests E5 without it.
+- **Quartus RAM crossing.** Quartus does not time through the M10K memory array (no clk_a to clk_b path through the RAM exists in
+  its timing netlist), so the FIFO memory read has no crossing path there; Vivado's distributed RAM does have one.
+- **Quartus skew on the N and U fits** is measured by running the D analysis (set_max_skew as an analysis-only assertion) on those
+  fits (`run_quartus_sta.sh`), so the routed skew of a fit made without the constraint can be compared (E6).
+- **First Quartus pass discarded** (before any result was read for the method): the `hsdat` and `cfgd` patterns missed Quartus's
+  `<port>~reg0` register names and the RAM pattern matched nothing, so variant D left those paths timed as synchronous. The
+  patterns were fixed and every Quartus fit was rerun.
+
 ## 4. Agent output planned
 
 - `docs/cdc_margin_method.md`: the method (vendor said / measured / inferred / house rule).

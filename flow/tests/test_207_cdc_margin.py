@@ -141,7 +141,7 @@ def test_build_tcl_writes_the_reports() -> None:
 
 
 # ---- brief 207's own records (skipped until they are committed) ------------------------------------------------------------
-@pytest.mark.skipif(not REC.is_dir(), reason="brief 207 records not present")
+@pytest.mark.skipif(not (REC / "expect.json").is_file(), reason="brief 207 Vivado records not present")
 def test_records_seeded_bad_crossings_are_caught_as_the_method_says() -> None:
     import json
     exp = json.loads((REC / "expect.json").read_text())
@@ -154,3 +154,42 @@ def test_records_seeded_bad_crossings_are_caught_as_the_method_says() -> None:
             assert c in codes, (case, codes)
         for c in case.get("not_codes", []):
             assert c not in codes, (case, codes)
+
+
+# ---- Quartus records (brief 207: Quartus Prime Lite 25.1std; trimmed to the summary tables the parser reads) ----------------
+CV, M10 = "6_slow_1100mv_85c", "7_slow_1200mv_85c"
+
+
+def test_quartus_bounds_met_on_cyclone_v() -> None:
+    r = CM.evaluate_quartus(REC / "qcv_D", CV)
+    assert r["pass"] and r["findings"] == []
+    assert r["max_skew"]["paths"] == 96 and len(r["max_skew"]["constraints"]) == 4
+    assert r["metastability"]["n_chains"] == 22 and r["metastability"]["shortest"] == 2
+
+
+def test_quartus_clock_group_silently_removes_the_skew_check() -> None:
+    """E5: the same fit, analysed with set_clock_groups -asynchronous plus the same set_max_skew lines: no skew path is analysed."""
+    r = CM.evaluate_quartus(REC / "qcv_DD", CV)
+    assert r["max_skew"]["paths"] == 0
+    assert [f["code"] for f in r["findings"]] == ["QCDCM-SKEW-NONE"]
+
+
+def test_quartus_uncertainty_tightens_max_skew_and_settling_time() -> None:
+    """E4: Altera-style 12.5 % uncertainty (DU) against none (D), same fit: skew slack and settling time both fall."""
+    d, du = CM.evaluate_quartus(REC / "qcv_D", CV), CM.evaluate_quartus(REC / "qcv_DU", CV)
+    assert du["max_skew"]["worst_slack"] < d["max_skew"]["worst_slack"] - 1.0
+    assert du["metastability"]["settling_ns"] == pytest.approx(d["metastability"]["settling_ns"] - 1.6, abs=0.01)
+    m = CM.evaluate_quartus(REC / "qm10_DU", M10)
+    assert "QCDCM-MTBF-LOW" in {f["code"] for f in m["findings"]}         # MAX 10: worst-case design MTBF 69.1 years
+
+
+def test_quartus_missing_stage_is_caught_by_chain_length_not_by_mtbf() -> None:
+    r = CM.evaluate_quartus(REC / "qcv_b2_D", CV)
+    assert [f["code"] for f in r["findings"]] == ["QCDCM-CHAIN-SHORT"]
+    assert r["metastability"]["worst_mtbf"].startswith("1e+09")           # the MTBF figure alone looks fine
+
+
+def test_quartus_binary_bus_is_invisible_to_timing() -> None:
+    """B1: binary pointers crossed bit by bit pass every constraint and report: coding is a simulation/structure question."""
+    r = CM.evaluate_quartus(REC / "qcv_b1_D", CV)
+    assert r["pass"] and r["findings"] == []

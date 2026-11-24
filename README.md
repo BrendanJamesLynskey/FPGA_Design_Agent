@@ -203,6 +203,9 @@ per-stage procedures the agent reads (exact Tcl, thresholds, common failures) ar
 knowledge bank. T1 built through the staged flow on Vivado 2026.1 passes every stage
 ([results/f0a_2026_1](results/f0a_2026_1/t1_dimmer_counter.md)); the post-route QoR-assessment gate is absent on the free
 Basic licence tier, not passed.
+Clock-domain crossings follow one method for Vivado and Quartus (brief 207): each crossing has a latency bound, a skew bound and an
+MTBF target, set as per-crossing bounds rather than as a clock uncertainty margin; `flow/cdc_margin.py` checks that they are present and
+met ([docs/cdc_margin_method.md](docs/cdc_margin_method.md), measured in [results/207_cdc_margin](results/207_cdc_margin/README.md)).
 
 ## Knowledge packs
 The agent's know-how is a set of frozen, hashed knowledge layers in Agent Skills format: generic RTL skills, an AMD
