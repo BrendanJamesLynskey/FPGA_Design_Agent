@@ -30,10 +30,28 @@ proc xpm_dst_period {pins} {
     return [get_property PERIOD [lindex $c 0]]
 }
 
+# Brief 140: in some designs Vivado applies AMD's scoped XPM constraint files itself ("Project 1-1714: 48 XPM XDC files have been applied",
+# measured in the debug build dbg_xvc, which holds a Debug Bridge, an ILA and a PS8; the eyescan build and the default build get no such
+# message). Applying the same exceptions again here made the flow's copy override AMD's (37 "totally overridden" rows in report_exceptions,
+# which the exception gate fails) and AMD's CDC-15 waiver for the handshake hid the Max Delay Datapath Only exception from report_cdc.
+# So: when AMD's own rows are already in the exception list (the unscoped patterns AMD's files use, which this file never writes), the kind
+# they cover is left to AMD; every other kind, and a design where AMD's files were not applied, gets the rules below exactly as before.
+proc xpm_amd_applied {} {
+    set res [dict create single 0 hs 0 gray 0]
+    if {[catch {report_exceptions -return_string} rep]} { return $res }
+    regsub -all {\s+} $rep {} rep
+    if {[regexp {get_cells.syncstages_ff_reg\[0\]} $rep]} { dict set res single 1 }
+    if {[regexp {get_cellssrc_hsdata_ff_reg\*} $rep]}      { dict set res hs 1 }
+    if {[regexp {get_cellssrc_gray_ff_reg\*} $rep]}        { dict set res gray 1 }
+    return $res
+}
+
 proc apply_xpm_cdc_constraints {} {
+    set amd [xpm_amd_applied]
     # xpm_cdc_single, xpm_cdc_sync_rst: false path to the first synchroniser stage
     set xs [xpm_cells_like *syncstages_ff_reg?0?*]
-    if {[llength $xs]} { set_false_path -to [xpm_pins_of $xs] }
+    set nxs 0
+    if {[llength $xs] && ![dict get $amd single]} { set_false_path -to [xpm_pins_of $xs]; set nxs [llength $xs] }
     # xpm_cdc_gray: per instance, max_delay -datapath_only (source period) and bus skew (smaller period)
     set nxg 0
     set xg [dict create]
@@ -42,6 +60,7 @@ proc apply_xpm_cdc_constraints {} {
         dict lappend xg $key $c
     }
     dict for {key cs} $xg {
+        if {[dict get $amd gray]} { break }
         set ends [xpm_pins_of $cs]
         set starts [get_cells -quiet -of_objects [all_fanin -quiet -startpoints_only -flat $ends]]
         if {[llength $starts] == 0} { continue }
@@ -59,6 +78,7 @@ proc apply_xpm_cdc_constraints {} {
         dict lappend xh $key $c
     }
     dict for {key cs} $xh {
+        if {[dict get $amd hs]} { break }
         set ends [xpm_pins_of $cs]
         set starts [get_cells -quiet -of_objects [all_fanin -quiet -startpoints_only -flat $ends] -filter {NAME =~ *src_hsdata_ff_reg*}]
         if {[llength $starts] == 0} { continue }
@@ -93,5 +113,6 @@ proc apply_xpm_cdc_constraints {} {
         set_max_delay -datapath_only -from $clkpins -to $endpins $per
         incr nxf
     }
-    puts "xpm_cdc: false path to [llength $xs] first stages, $nxg Gray instances, $nxh handshake data buses, $nxf FIFO memories"
+    puts "xpm_cdc: false path to $nxs first stages, $nxg Gray instances, $nxh handshake data buses, $nxf FIFO memories"
+    puts "xpm_cdc: AMD's own scoped XPM exceptions already present (flow rule skipped for these kinds): $amd"
 }
