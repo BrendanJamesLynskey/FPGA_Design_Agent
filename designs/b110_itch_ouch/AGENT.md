@@ -2,14 +2,14 @@
 source: designs/b110_itch_ouch/handover.yaml; human view: README.md; refresh: python -m flow.handover fresh designs/b110_itch_ouch
 
 ## identity
-kind=showcase produced_by=human part=xck26-sfvc784-2LV-c board=Kria KR260 (K26 SOM) top=itch_ouch_top (wrapped with input registers in ooc_wrap for the out-of-context build) tool=Vivado 2026.1
+kind=showcase produced_by=session part=xck26-sfvc784-2LV-c board=Kria KR260 (K26 SOM) top=itch_ouch_top (wrapped with input registers in ooc_wrap for the out-of-context build) tool=Vivado 2026.1
 
 ## summary
 A trading path in the formats a real venue speaks, in simulation. UDP payload words carrying MoldUDP64 and Nasdaq TotalView-ITCH 5.0 are decoded, a small top-of-book is kept for a few instruments, a pre-trade risk check with a kill switch decides, and an OUCH 5.0 Enter Order is built in a SoupBinTCP 3.00 packet and handed to a stub port, optionally started before the risk verdict and cancelled if it fails. A Python reference model and a seeded synthetic generator check the RTL bit for bit, seeded faults in the RTL are all caught, and the block is built out of context for the KR260's part at the 10G core clock.
 not: real market data or a real exchange; every message comes from our own seeded generator and no order is ever sent anywhere; TCP, SoupBinTCP login, heartbeats or order responses; the frame goes to a stub port (docs/tcp_plan.md is a plan); Ethernet, IP or UDP handling and the FCS check; the path starts at the UDP payload (docs/phase2_integration.md is a plan); a full-depth book or every instrument; a few instruments with a bounded number of price levels, and a stated way to fail; a board run, power, or timing inside the 10G core; the numbers are simulation and an out-of-context Vivado 2026.1 build
 
 ## state
-stage=built vivado=2026.1 kb_pin=93d158c build_id=None
+stage=built vivado=2026.1 kb_pin=5e2eab8 build_id=None
 gates: rtl_equals_model=pass lint=pass seeded_faults=pass ooc_build_2026_1=pass board_run=not-run
 
 ## interface

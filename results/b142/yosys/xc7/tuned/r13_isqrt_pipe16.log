@@ -1,0 +1,2424 @@
+
+ /----------------------------------------------------------------------------\
+ |  yosys -- Yosys Open SYnthesis Suite                                       |
+ |  Copyright (C) 2012 - 2026  Claire Xenia Wolf <claire@yosyshq.com>         |
+ |  Distributed under an ISC-like license, type "license" to see terms        |
+ \----------------------------------------------------------------------------/
+ Yosys 0.70+385 (git sha1 098e46a36, Release, Clang /usr/bin/clang++ 21.1.8)
+
+-- Running command `plugin -i slang; read_slang --top isqrt_ooc -G VARIANT=1 -G W=16 -G PIPE=1 /home/brendan/Claude_sandbox/_worktrees/142-yosys/results/b142/rtl/real/arith_139b/isqrt_nonrestoring_pipe.sv /home/brendan/Claude_sandbox/_worktrees/142-yosys/results/b142/rtl/real/arith_139b/isqrt_ooc.sv /home/brendan/Claude_sandbox/_worktrees/142-yosys/results/b142/rtl/real/arith_139b/isqrt_restoring_iter.sv /home/brendan/Claude_sandbox/_worktrees/142-yosys/results/b142/rtl/real/arith_139b/isqrt_restoring_pipe.sv /home/brendan/Claude_sandbox/_worktrees/142-yosys/results/b142/rtl/real/arith_139b/isqrt_sel.sv; synth_xilinx -family xc7 -top isqrt_ooc -noiopad -noclkbuf -flatten -widemux 5; tee -q -o /home/brendan/Claude_sandbox/_worktrees/142-yosys/results/b142/yosys/xc7/tuned/r13_isqrt_pipe16.stat.json stat -json -tech xilinx' --
+
+1. Executing SLANG frontend.
+Top level design units:
+    isqrt_ooc
+
+
+Build succeeded: 0 errors, 0 warnings
+
+1.1. Executing PROC_CLEAN pass (remove empty switches from decision trees).
+Removing empty process `isqrt_ooc.$206'.
+Found and cleaned up 1 empty switch in `\isqrt_ooc.$182'.
+Found and cleaned up 1 empty switch in `\isqrt_ooc.$175'.
+Removing empty process `isqrt_ooc.$168'.
+Found and cleaned up 1 empty switch in `\isqrt_ooc.$158'.
+Found and cleaned up 1 empty switch in `\isqrt_ooc.$151'.
+Removing empty process `isqrt_ooc.$150'.
+Removing empty process `isqrt_ooc.$145'.
+Found and cleaned up 1 empty switch in `\isqrt_ooc.$135'.
+Found and cleaned up 1 empty switch in `\isqrt_ooc.$128'.
+Removing empty process `isqrt_ooc.$127'.
+Removing empty process `isqrt_ooc.$122'.
+Found and cleaned up 1 empty switch in `\isqrt_ooc.$112'.
+Found and cleaned up 1 empty switch in `\isqrt_ooc.$105'.
+Removing empty process `isqrt_ooc.$104'.
+Removing empty process `isqrt_ooc.$99'.
+Found and cleaned up 1 empty switch in `\isqrt_ooc.$89'.
+Found and cleaned up 1 empty switch in `\isqrt_ooc.$82'.
+Removing empty process `isqrt_ooc.$81'.
+Removing empty process `isqrt_ooc.$76'.
+Found and cleaned up 1 empty switch in `\isqrt_ooc.$66'.
+Found and cleaned up 1 empty switch in `\isqrt_ooc.$59'.
+Removing empty process `isqrt_ooc.$58'.
+Removing empty process `isqrt_ooc.$53'.
+Found and cleaned up 1 empty switch in `\isqrt_ooc.$43'.
+Found and cleaned up 1 empty switch in `\isqrt_ooc.$36'.
+Removing empty process `isqrt_ooc.$35'.
+Removing empty process `isqrt_ooc.$30'.
+Found and cleaned up 1 empty switch in `\isqrt_ooc.$20'.
+Found and cleaned up 1 empty switch in `\isqrt_ooc.$13'.
+Removing empty process `isqrt_ooc.$12'.
+Removing empty process `isqrt_ooc.$7'.
+Removing empty process `isqrt_ooc.$0'.
+Cleaned up 16 empty switches.
+
+1.2. Executing PROC_RMDEAD pass (remove dead branches from decision trees).
+Marked 1 switch rules as full_case in process $135 in module isqrt_ooc.
+Marked 1 switch rules as full_case in process $66 in module isqrt_ooc.
+Marked 1 switch rules as full_case in process $158 in module isqrt_ooc.
+Marked 1 switch rules as full_case in process $43 in module isqrt_ooc.
+Marked 1 switch rules as full_case in process $112 in module isqrt_ooc.
+Marked 1 switch rules as full_case in process $20 in module isqrt_ooc.
+Marked 1 switch rules as full_case in process $182 in module isqrt_ooc.
+Marked 1 switch rules as full_case in process $89 in module isqrt_ooc.
+Removed a total of 0 dead cases.
+
+1.3. Executing PROC_PRUNE pass (remove redundant assignments in processes).
+Removed 24 redundant assignments.
+Promoted 16 assignments to connections.
+
+1.4. Executing PROC_INIT pass (extract init attributes).
+
+1.5. Executing PROC_ROM pass (convert switches to ROMs).
+Converted 0 switches.
+<suppressed ~8 debug messages>
+
+1.6. Executing PROC_MUX pass (convert decision trees to multiplexers).
+Creating decoders for process `\isqrt_ooc.$82'.
+Creating decoders for process `\isqrt_ooc.$135'.
+     1/1: $u_core.g_v.u.v_q[5]$136
+Creating decoders for process `\isqrt_ooc.$128'.
+Creating decoders for process `\isqrt_ooc.$66'.
+     1/1: $u_core.g_v.u.v_q[2]$67
+Creating decoders for process `\isqrt_ooc.$59'.
+Creating decoders for process `\isqrt_ooc.$158'.
+     1/1: $u_core.g_v.u.v_q[6]$159
+Creating decoders for process `\isqrt_ooc.$151'.
+Creating decoders for process `\isqrt_ooc.$43'.
+     1/1: $u_core.g_v.u.v_q[1]$44
+Creating decoders for process `\isqrt_ooc.$36'.
+Creating decoders for process `\isqrt_ooc.$112'.
+     1/1: $u_core.g_v.u.v_q[4]$113
+Creating decoders for process `\isqrt_ooc.$105'.
+Creating decoders for process `\isqrt_ooc.$20'.
+     1/1: $u_core.g_v.u.v_q[0]$21
+Creating decoders for process `\isqrt_ooc.$13'.
+Creating decoders for process `\isqrt_ooc.$175'.
+Creating decoders for process `\isqrt_ooc.$182'.
+     1/1: $u_core.g_v.u.v_q[7]$183
+Creating decoders for process `\isqrt_ooc.$89'.
+     1/1: $u_core.g_v.u.v_q[3]$90
+
+1.7. Executing PROC_CLEAN pass (remove empty switches from decision trees).
+Removing empty process `isqrt_ooc.$82'.
+Found and cleaned up 1 empty switch in `\isqrt_ooc.$135'.
+Removing empty process `isqrt_ooc.$135'.
+Removing empty process `isqrt_ooc.$128'.
+Found and cleaned up 1 empty switch in `\isqrt_ooc.$66'.
+Removing empty process `isqrt_ooc.$66'.
+Removing empty process `isqrt_ooc.$59'.
+Found and cleaned up 1 empty switch in `\isqrt_ooc.$158'.
+Removing empty process `isqrt_ooc.$158'.
+Removing empty process `isqrt_ooc.$151'.
+Found and cleaned up 1 empty switch in `\isqrt_ooc.$43'.
+Removing empty process `isqrt_ooc.$43'.
+Removing empty process `isqrt_ooc.$36'.
+Found and cleaned up 1 empty switch in `\isqrt_ooc.$112'.
+Removing empty process `isqrt_ooc.$112'.
+Removing empty process `isqrt_ooc.$105'.
+Found and cleaned up 1 empty switch in `\isqrt_ooc.$20'.
+Removing empty process `isqrt_ooc.$20'.
+Removing empty process `isqrt_ooc.$13'.
+Removing empty process `isqrt_ooc.$175'.
+Found and cleaned up 1 empty switch in `\isqrt_ooc.$182'.
+Removing empty process `isqrt_ooc.$182'.
+Found and cleaned up 1 empty switch in `\isqrt_ooc.$89'.
+Removing empty process `isqrt_ooc.$89'.
+Cleaned up 8 empty switches.
+
+1.8. Executing OPT_EXPR pass (perform const folding).
+Optimizing module isqrt_ooc.
+<suppressed ~17 debug messages>
+
+2. Executing SYNTH_XILINX pass.
+
+2.1. Executing Verilog-2005 frontend: /home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/xilinx/cells_sim.v
+Parsing Verilog input from `/home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/xilinx/cells_sim.v' to AST representation.
+Generating RTLIL representation for module `\VCC'.
+Generating RTLIL representation for module `\GND'.
+Generating RTLIL representation for module `\IBUF'.
+Generating RTLIL representation for module `\IBUFG'.
+Generating RTLIL representation for module `\OBUF'.
+Generating RTLIL representation for module `\IOBUF'.
+Generating RTLIL representation for module `\OBUFT'.
+Generating RTLIL representation for module `\BUFG'.
+Generating RTLIL representation for module `\BUFGCTRL'.
+Generating RTLIL representation for module `\BUFHCE'.
+Generating RTLIL representation for module `\INV'.
+Generating RTLIL representation for module `\LUT1'.
+Generating RTLIL representation for module `\LUT2'.
+Generating RTLIL representation for module `\LUT3'.
+Generating RTLIL representation for module `\LUT4'.
+Generating RTLIL representation for module `\LUT5'.
+Generating RTLIL representation for module `\LUT6'.
+Generating RTLIL representation for module `\LUT6_2'.
+Generating RTLIL representation for module `\$__ABC9_LUT7'.
+Generating RTLIL representation for module `\$__ABC9_LUT8'.
+Generating RTLIL representation for module `\MUXCY'.
+Generating RTLIL representation for module `\MUXF5'.
+Generating RTLIL representation for module `\MUXF6'.
+Generating RTLIL representation for module `\MUXF7'.
+Generating RTLIL representation for module `\MUXF8'.
+Generating RTLIL representation for module `\MUXF9'.
+Generating RTLIL representation for module `\XORCY'.
+Generating RTLIL representation for module `\CARRY4'.
+Generating RTLIL representation for module `\CARRY8'.
+Generating RTLIL representation for module `\ORCY'.
+Generating RTLIL representation for module `\MULT_AND'.
+Generating RTLIL representation for module `\FDRE'.
+Generating RTLIL representation for module `\FDRE_1'.
+Generating RTLIL representation for module `\FDSE'.
+Generating RTLIL representation for module `\FDSE_1'.
+Generating RTLIL representation for module `\FDRSE'.
+Generating RTLIL representation for module `\FDRSE_1'.
+Generating RTLIL representation for module `\FDCE'.
+Generating RTLIL representation for module `\FDCE_1'.
+Generating RTLIL representation for module `\FDPE'.
+Generating RTLIL representation for module `\FDPE_1'.
+Generating RTLIL representation for module `\FDCPE'.
+Generating RTLIL representation for module `\FDCPE_1'.
+Generating RTLIL representation for module `\LDCE'.
+Generating RTLIL representation for module `\LDPE'.
+Generating RTLIL representation for module `\LDCPE'.
+Generating RTLIL representation for module `\AND2B1L'.
+Generating RTLIL representation for module `\OR2L'.
+Generating RTLIL representation for module `\RAM16X1S'.
+Generating RTLIL representation for module `\RAM16X1S_1'.
+Generating RTLIL representation for module `\RAM32X1S'.
+Generating RTLIL representation for module `\RAM32X1S_1'.
+Generating RTLIL representation for module `\RAM64X1S'.
+Generating RTLIL representation for module `\RAM64X1S_1'.
+Generating RTLIL representation for module `\RAM128X1S'.
+Generating RTLIL representation for module `\RAM128X1S_1'.
+Generating RTLIL representation for module `\RAM256X1S'.
+Generating RTLIL representation for module `\RAM512X1S'.
+Generating RTLIL representation for module `\RAM16X2S'.
+Generating RTLIL representation for module `\RAM32X2S'.
+Generating RTLIL representation for module `\RAM64X2S'.
+Generating RTLIL representation for module `\RAM16X4S'.
+Generating RTLIL representation for module `\RAM32X4S'.
+Generating RTLIL representation for module `\RAM16X8S'.
+Generating RTLIL representation for module `\RAM32X8S'.
+Generating RTLIL representation for module `\RAM16X1D'.
+Generating RTLIL representation for module `\RAM16X1D_1'.
+Generating RTLIL representation for module `\RAM32X1D'.
+Generating RTLIL representation for module `\RAM32X1D_1'.
+Generating RTLIL representation for module `\RAM64X1D'.
+Generating RTLIL representation for module `\RAM64X1D_1'.
+Generating RTLIL representation for module `\RAM128X1D'.
+Generating RTLIL representation for module `\RAM256X1D'.
+Generating RTLIL representation for module `\RAM32M'.
+Generating RTLIL representation for module `\RAM32M16'.
+Generating RTLIL representation for module `\RAM64M'.
+Generating RTLIL representation for module `\RAM64M8'.
+Generating RTLIL representation for module `\RAM32X16DR8'.
+Generating RTLIL representation for module `\RAM64X8SW'.
+Generating RTLIL representation for module `\ROM16X1'.
+Generating RTLIL representation for module `\ROM32X1'.
+Generating RTLIL representation for module `\ROM64X1'.
+Generating RTLIL representation for module `\ROM128X1'.
+Generating RTLIL representation for module `\ROM256X1'.
+Generating RTLIL representation for module `\SRL16'.
+Generating RTLIL representation for module `\SRL16E'.
+Generating RTLIL representation for module `\SRLC16'.
+Generating RTLIL representation for module `\SRLC16E'.
+Generating RTLIL representation for module `\SRLC32E'.
+Generating RTLIL representation for module `\CFGLUT5'.
+Generating RTLIL representation for module `\MULT18X18'.
+Generating RTLIL representation for module `\MULT18X18S'.
+Generating RTLIL representation for module `\MULT18X18SIO'.
+Generating RTLIL representation for module `\DSP48A'.
+Generating RTLIL representation for module `\DSP48A1'.
+Generating RTLIL representation for module `\DSP48'.
+Generating RTLIL representation for module `\DSP48E1'.
+Generating RTLIL representation for module `\RAMB18E1'.
+Generating RTLIL representation for module `\RAMB36E1'.
+Successfully finished Verilog frontend.
+
+2.2. Executing Verilog-2005 frontend: /home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/xilinx/cells_xtra.v
+Parsing Verilog input from `/home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/xilinx/cells_xtra.v' to AST representation.
+Generating RTLIL representation for module `\RAMB4_S1'.
+Generating RTLIL representation for module `\RAMB4_S2'.
+Generating RTLIL representation for module `\RAMB4_S4'.
+Generating RTLIL representation for module `\RAMB4_S8'.
+Generating RTLIL representation for module `\RAMB4_S16'.
+Generating RTLIL representation for module `\RAMB4_S1_S1'.
+Generating RTLIL representation for module `\RAMB4_S1_S2'.
+Generating RTLIL representation for module `\RAMB4_S1_S4'.
+Generating RTLIL representation for module `\RAMB4_S1_S8'.
+Generating RTLIL representation for module `\RAMB4_S1_S16'.
+Generating RTLIL representation for module `\RAMB4_S2_S2'.
+Generating RTLIL representation for module `\RAMB4_S2_S4'.
+Generating RTLIL representation for module `\RAMB4_S2_S8'.
+Generating RTLIL representation for module `\RAMB4_S2_S16'.
+Generating RTLIL representation for module `\RAMB4_S4_S4'.
+Generating RTLIL representation for module `\RAMB4_S4_S8'.
+Generating RTLIL representation for module `\RAMB4_S4_S16'.
+Generating RTLIL representation for module `\RAMB4_S8_S8'.
+Generating RTLIL representation for module `\RAMB4_S8_S16'.
+Generating RTLIL representation for module `\RAMB4_S16_S16'.
+Generating RTLIL representation for module `\RAMB16_S1'.
+Generating RTLIL representation for module `\RAMB16_S2'.
+Generating RTLIL representation for module `\RAMB16_S4'.
+Generating RTLIL representation for module `\RAMB16_S9'.
+Generating RTLIL representation for module `\RAMB16_S18'.
+Generating RTLIL representation for module `\RAMB16_S36'.
+Generating RTLIL representation for module `\RAMB16_S1_S1'.
+Generating RTLIL representation for module `\RAMB16_S1_S2'.
+Generating RTLIL representation for module `\RAMB16_S1_S4'.
+Generating RTLIL representation for module `\RAMB16_S1_S9'.
+Generating RTLIL representation for module `\RAMB16_S1_S18'.
+Generating RTLIL representation for module `\RAMB16_S1_S36'.
+Generating RTLIL representation for module `\RAMB16_S2_S2'.
+Generating RTLIL representation for module `\RAMB16_S2_S4'.
+Generating RTLIL representation for module `\RAMB16_S2_S9'.
+Generating RTLIL representation for module `\RAMB16_S2_S18'.
+Generating RTLIL representation for module `\RAMB16_S2_S36'.
+Generating RTLIL representation for module `\RAMB16_S4_S4'.
+Generating RTLIL representation for module `\RAMB16_S4_S9'.
+Generating RTLIL representation for module `\RAMB16_S4_S18'.
+Generating RTLIL representation for module `\RAMB16_S4_S36'.
+Generating RTLIL representation for module `\RAMB16_S9_S9'.
+Generating RTLIL representation for module `\RAMB16_S9_S18'.
+Generating RTLIL representation for module `\RAMB16_S9_S36'.
+Generating RTLIL representation for module `\RAMB16_S18_S18'.
+Generating RTLIL representation for module `\RAMB16_S18_S36'.
+Generating RTLIL representation for module `\RAMB16_S36_S36'.
+Generating RTLIL representation for module `\RAMB16BWE_S18'.
+Generating RTLIL representation for module `\RAMB16BWE_S36'.
+Generating RTLIL representation for module `\RAMB16BWE_S18_S9'.
+Generating RTLIL representation for module `\RAMB16BWE_S18_S18'.
+Generating RTLIL representation for module `\RAMB16BWE_S36_S9'.
+Generating RTLIL representation for module `\RAMB16BWE_S36_S18'.
+Generating RTLIL representation for module `\RAMB16BWE_S36_S36'.
+Generating RTLIL representation for module `\RAMB16BWER'.
+Generating RTLIL representation for module `\RAMB8BWER'.
+Generating RTLIL representation for module `\FIFO16'.
+Generating RTLIL representation for module `\RAMB16'.
+Generating RTLIL representation for module `\RAMB32_S64_ECC'.
+Generating RTLIL representation for module `\FIFO18'.
+Generating RTLIL representation for module `\FIFO18_36'.
+Generating RTLIL representation for module `\FIFO36'.
+Generating RTLIL representation for module `\FIFO36_72'.
+Generating RTLIL representation for module `\RAMB18'.
+Generating RTLIL representation for module `\RAMB36'.
+Generating RTLIL representation for module `\RAMB18SDP'.
+Generating RTLIL representation for module `\RAMB36SDP'.
+Generating RTLIL representation for module `\FIFO18E1'.
+Generating RTLIL representation for module `\FIFO36E1'.
+Generating RTLIL representation for module `\FIFO18E2'.
+Generating RTLIL representation for module `\FIFO36E2'.
+Generating RTLIL representation for module `\RAMB18E2'.
+Generating RTLIL representation for module `\RAMB36E2'.
+Generating RTLIL representation for module `\URAM288'.
+Generating RTLIL representation for module `\URAM288_BASE'.
+Generating RTLIL representation for module `\DSP48E'.
+Generating RTLIL representation for module `\DSP48E2'.
+Generating RTLIL representation for module `\FDDRCPE'.
+Generating RTLIL representation for module `\FDDRRSE'.
+Generating RTLIL representation for module `\IFDDRCPE'.
+Generating RTLIL representation for module `\IFDDRRSE'.
+Generating RTLIL representation for module `\OFDDRCPE'.
+Generating RTLIL representation for module `\OFDDRRSE'.
+Generating RTLIL representation for module `\OFDDRTCPE'.
+Generating RTLIL representation for module `\OFDDRTRSE'.
+Generating RTLIL representation for module `\IDDR2'.
+Generating RTLIL representation for module `\ODDR2'.
+Generating RTLIL representation for module `\IDDR'.
+Generating RTLIL representation for module `\IDDR_2CLK'.
+Generating RTLIL representation for module `\ODDR'.
+Generating RTLIL representation for module `\IDELAYCTRL'.
+Generating RTLIL representation for module `\IDELAY'.
+Generating RTLIL representation for module `\ISERDES'.
+Generating RTLIL representation for module `\OSERDES'.
+Generating RTLIL representation for module `\IODELAY'.
+Generating RTLIL representation for module `\ISERDES_NODELAY'.
+Generating RTLIL representation for module `\IODELAYE1'.
+Generating RTLIL representation for module `\ISERDESE1'.
+Generating RTLIL representation for module `\OSERDESE1'.
+Generating RTLIL representation for module `\IDELAYE2'.
+Generating RTLIL representation for module `\ODELAYE2'.
+Generating RTLIL representation for module `\ISERDESE2'.
+Generating RTLIL representation for module `\OSERDESE2'.
+Generating RTLIL representation for module `\PHASER_IN'.
+Generating RTLIL representation for module `\PHASER_IN_PHY'.
+Generating RTLIL representation for module `\PHASER_OUT'.
+Generating RTLIL representation for module `\PHASER_OUT_PHY'.
+Generating RTLIL representation for module `\PHASER_REF'.
+Generating RTLIL representation for module `\PHY_CONTROL'.
+Generating RTLIL representation for module `\IDDRE1'.
+Generating RTLIL representation for module `\ODDRE1'.
+Generating RTLIL representation for module `\IDELAYE3'.
+Generating RTLIL representation for module `\ODELAYE3'.
+Generating RTLIL representation for module `\ISERDESE3'.
+Generating RTLIL representation for module `\OSERDESE3'.
+Generating RTLIL representation for module `\BITSLICE_CONTROL'.
+Generating RTLIL representation for module `\RIU_OR'.
+Generating RTLIL representation for module `\RX_BITSLICE'.
+Generating RTLIL representation for module `\RXTX_BITSLICE'.
+Generating RTLIL representation for module `\TX_BITSLICE'.
+Generating RTLIL representation for module `\TX_BITSLICE_TRI'.
+Generating RTLIL representation for module `\IODELAY2'.
+Generating RTLIL representation for module `\IODRP2'.
+Generating RTLIL representation for module `\IODRP2_MCB'.
+Generating RTLIL representation for module `\ISERDES2'.
+Generating RTLIL representation for module `\OSERDES2'.
+Generating RTLIL representation for module `\IBUF_DLY_ADJ'.
+Generating RTLIL representation for module `\IBUF_IBUFDISABLE'.
+Generating RTLIL representation for module `\IBUF_INTERMDISABLE'.
+Generating RTLIL representation for module `\IBUF_ANALOG'.
+Generating RTLIL representation for module `\IBUFE3'.
+Generating RTLIL representation for module `\IBUFDS'.
+Generating RTLIL representation for module `\IBUFDS_DLY_ADJ'.
+Generating RTLIL representation for module `\IBUFDS_IBUFDISABLE'.
+Generating RTLIL representation for module `\IBUFDS_INTERMDISABLE'.
+Generating RTLIL representation for module `\IBUFDS_DIFF_OUT'.
+Generating RTLIL representation for module `\IBUFDS_DIFF_OUT_IBUFDISABLE'.
+Generating RTLIL representation for module `\IBUFDS_DIFF_OUT_INTERMDISABLE'.
+Generating RTLIL representation for module `\IBUFDSE3'.
+Generating RTLIL representation for module `\IBUFDS_DPHY'.
+Generating RTLIL representation for module `\IBUFGDS'.
+Generating RTLIL representation for module `\IBUFGDS_DIFF_OUT'.
+Generating RTLIL representation for module `\IOBUF_DCIEN'.
+Generating RTLIL representation for module `\IOBUF_INTERMDISABLE'.
+Generating RTLIL representation for module `\IOBUFE3'.
+Generating RTLIL representation for module `\IOBUFDS'.
+Generating RTLIL representation for module `\IOBUFDS_DCIEN'.
+Generating RTLIL representation for module `\IOBUFDS_INTERMDISABLE'.
+Generating RTLIL representation for module `\IOBUFDS_DIFF_OUT'.
+Generating RTLIL representation for module `\IOBUFDS_DIFF_OUT_DCIEN'.
+Generating RTLIL representation for module `\IOBUFDS_DIFF_OUT_INTERMDISABLE'.
+Generating RTLIL representation for module `\IOBUFDSE3'.
+Generating RTLIL representation for module `\OBUFDS'.
+Generating RTLIL representation for module `\OBUFDS_DPHY'.
+Generating RTLIL representation for module `\OBUFTDS'.
+Generating RTLIL representation for module `\KEEPER'.
+Generating RTLIL representation for module `\PULLDOWN'.
+Generating RTLIL representation for module `\PULLUP'.
+Generating RTLIL representation for module `\DCIRESET'.
+Generating RTLIL representation for module `\HPIO_VREF'.
+Generating RTLIL representation for module `\BUFGCE'.
+Generating RTLIL representation for module `\BUFGCE_1'.
+Generating RTLIL representation for module `\BUFGMUX'.
+Generating RTLIL representation for module `\BUFGMUX_1'.
+Generating RTLIL representation for module `\BUFGMUX_CTRL'.
+Generating RTLIL representation for module `\BUFGMUX_VIRTEX4'.
+Generating RTLIL representation for module `\BUFG_GT'.
+Generating RTLIL representation for module `\BUFG_GT_SYNC'.
+Generating RTLIL representation for module `\BUFG_PS'.
+Generating RTLIL representation for module `\BUFGCE_DIV'.
+Generating RTLIL representation for module `\BUFH'.
+Generating RTLIL representation for module `\BUFIO2'.
+Generating RTLIL representation for module `\BUFIO2_2CLK'.
+Generating RTLIL representation for module `\BUFIO2FB'.
+Generating RTLIL representation for module `\BUFPLL'.
+Generating RTLIL representation for module `\BUFPLL_MCB'.
+Generating RTLIL representation for module `\BUFIO'.
+Generating RTLIL representation for module `\BUFIODQS'.
+Generating RTLIL representation for module `\BUFR'.
+Generating RTLIL representation for module `\BUFMR'.
+Generating RTLIL representation for module `\BUFMRCE'.
+Generating RTLIL representation for module `\DCM'.
+Generating RTLIL representation for module `\DCM_SP'.
+Generating RTLIL representation for module `\DCM_CLKGEN'.
+Generating RTLIL representation for module `\DCM_ADV'.
+Generating RTLIL representation for module `\DCM_BASE'.
+Generating RTLIL representation for module `\DCM_PS'.
+Generating RTLIL representation for module `\PMCD'.
+Generating RTLIL representation for module `\PLL_ADV'.
+Generating RTLIL representation for module `\PLL_BASE'.
+Generating RTLIL representation for module `\MMCM_ADV'.
+Generating RTLIL representation for module `\MMCM_BASE'.
+Generating RTLIL representation for module `\MMCME2_ADV'.
+Generating RTLIL representation for module `\MMCME2_BASE'.
+Generating RTLIL representation for module `\PLLE2_ADV'.
+Generating RTLIL representation for module `\PLLE2_BASE'.
+Generating RTLIL representation for module `\MMCME3_ADV'.
+Generating RTLIL representation for module `\MMCME3_BASE'.
+Generating RTLIL representation for module `\PLLE3_ADV'.
+Generating RTLIL representation for module `\PLLE3_BASE'.
+Generating RTLIL representation for module `\MMCME4_ADV'.
+Generating RTLIL representation for module `\MMCME4_BASE'.
+Generating RTLIL representation for module `\PLLE4_ADV'.
+Generating RTLIL representation for module `\PLLE4_BASE'.
+Generating RTLIL representation for module `\BUFT'.
+Generating RTLIL representation for module `\IN_FIFO'.
+Generating RTLIL representation for module `\OUT_FIFO'.
+Generating RTLIL representation for module `\HARD_SYNC'.
+Generating RTLIL representation for module `\STARTUP_SPARTAN3'.
+Generating RTLIL representation for module `\STARTUP_SPARTAN3E'.
+Generating RTLIL representation for module `\STARTUP_SPARTAN3A'.
+Generating RTLIL representation for module `\STARTUP_SPARTAN6'.
+Generating RTLIL representation for module `\STARTUP_VIRTEX4'.
+Generating RTLIL representation for module `\STARTUP_VIRTEX5'.
+Generating RTLIL representation for module `\STARTUP_VIRTEX6'.
+Generating RTLIL representation for module `\STARTUPE2'.
+Generating RTLIL representation for module `\STARTUPE3'.
+Generating RTLIL representation for module `\CAPTURE_SPARTAN3'.
+Generating RTLIL representation for module `\CAPTURE_SPARTAN3A'.
+Generating RTLIL representation for module `\CAPTURE_VIRTEX4'.
+Generating RTLIL representation for module `\CAPTURE_VIRTEX5'.
+Generating RTLIL representation for module `\CAPTURE_VIRTEX6'.
+Generating RTLIL representation for module `\CAPTUREE2'.
+Generating RTLIL representation for module `\ICAP_SPARTAN3A'.
+Generating RTLIL representation for module `\ICAP_SPARTAN6'.
+Generating RTLIL representation for module `\ICAP_VIRTEX4'.
+Generating RTLIL representation for module `\ICAP_VIRTEX5'.
+Generating RTLIL representation for module `\ICAP_VIRTEX6'.
+Generating RTLIL representation for module `\ICAPE2'.
+Generating RTLIL representation for module `\ICAPE3'.
+Generating RTLIL representation for module `\BSCAN_SPARTAN3'.
+Generating RTLIL representation for module `\BSCAN_SPARTAN3A'.
+Generating RTLIL representation for module `\BSCAN_SPARTAN6'.
+Generating RTLIL representation for module `\BSCAN_VIRTEX4'.
+Generating RTLIL representation for module `\BSCAN_VIRTEX5'.
+Generating RTLIL representation for module `\BSCAN_VIRTEX6'.
+Generating RTLIL representation for module `\BSCANE2'.
+Generating RTLIL representation for module `\DNA_PORT'.
+Generating RTLIL representation for module `\DNA_PORTE2'.
+Generating RTLIL representation for module `\FRAME_ECC_VIRTEX4'.
+Generating RTLIL representation for module `\FRAME_ECC_VIRTEX5'.
+Generating RTLIL representation for module `\FRAME_ECC_VIRTEX6'.
+Generating RTLIL representation for module `\FRAME_ECCE2'.
+Generating RTLIL representation for module `\FRAME_ECCE3'.
+Generating RTLIL representation for module `\FRAME_ECCE4'.
+Generating RTLIL representation for module `\USR_ACCESS_VIRTEX4'.
+Generating RTLIL representation for module `\USR_ACCESS_VIRTEX5'.
+Generating RTLIL representation for module `\USR_ACCESS_VIRTEX6'.
+Generating RTLIL representation for module `\USR_ACCESSE2'.
+Generating RTLIL representation for module `\POST_CRC_INTERNAL'.
+Generating RTLIL representation for module `\SUSPEND_SYNC'.
+Generating RTLIL representation for module `\KEY_CLEAR'.
+Generating RTLIL representation for module `\MASTER_JTAG'.
+Generating RTLIL representation for module `\SPI_ACCESS'.
+Generating RTLIL representation for module `\EFUSE_USR'.
+Generating RTLIL representation for module `\SYSMON'.
+Generating RTLIL representation for module `\XADC'.
+Generating RTLIL representation for module `\SYSMONE1'.
+Generating RTLIL representation for module `\SYSMONE4'.
+Generating RTLIL representation for module `\GTPA1_DUAL'.
+Generating RTLIL representation for module `\GT11_CUSTOM'.
+Generating RTLIL representation for module `\GT11_DUAL'.
+Generating RTLIL representation for module `\GT11CLK'.
+Generating RTLIL representation for module `\GT11CLK_MGT'.
+Generating RTLIL representation for module `\GTP_DUAL'.
+Generating RTLIL representation for module `\GTX_DUAL'.
+Generating RTLIL representation for module `\CRC32'.
+Generating RTLIL representation for module `\CRC64'.
+Generating RTLIL representation for module `\GTHE1_QUAD'.
+Generating RTLIL representation for module `\GTXE1'.
+Generating RTLIL representation for module `\IBUFDS_GTXE1'.
+Generating RTLIL representation for module `\IBUFDS_GTHE1'.
+Generating RTLIL representation for module `\GTHE2_CHANNEL'.
+Generating RTLIL representation for module `\GTHE2_COMMON'.
+Generating RTLIL representation for module `\GTPE2_CHANNEL'.
+Generating RTLIL representation for module `\GTPE2_COMMON'.
+Generating RTLIL representation for module `\GTXE2_CHANNEL'.
+Generating RTLIL representation for module `\GTXE2_COMMON'.
+Generating RTLIL representation for module `\IBUFDS_GTE2'.
+Generating RTLIL representation for module `\GTHE3_CHANNEL'.
+Generating RTLIL representation for module `\GTHE3_COMMON'.
+Generating RTLIL representation for module `\GTYE3_CHANNEL'.
+Generating RTLIL representation for module `\GTYE3_COMMON'.
+Generating RTLIL representation for module `\IBUFDS_GTE3'.
+Generating RTLIL representation for module `\OBUFDS_GTE3'.
+Generating RTLIL representation for module `\OBUFDS_GTE3_ADV'.
+Generating RTLIL representation for module `\GTHE4_CHANNEL'.
+Generating RTLIL representation for module `\GTHE4_COMMON'.
+Generating RTLIL representation for module `\GTYE4_CHANNEL'.
+Generating RTLIL representation for module `\GTYE4_COMMON'.
+Generating RTLIL representation for module `\IBUFDS_GTE4'.
+Generating RTLIL representation for module `\OBUFDS_GTE4'.
+Generating RTLIL representation for module `\OBUFDS_GTE4_ADV'.
+Generating RTLIL representation for module `\GTM_DUAL'.
+Generating RTLIL representation for module `\IBUFDS_GTM'.
+Generating RTLIL representation for module `\OBUFDS_GTM'.
+Generating RTLIL representation for module `\OBUFDS_GTM_ADV'.
+Generating RTLIL representation for module `\HSDAC'.
+Generating RTLIL representation for module `\HSADC'.
+Generating RTLIL representation for module `\RFDAC'.
+Generating RTLIL representation for module `\RFADC'.
+Generating RTLIL representation for module `\PCIE_A1'.
+Generating RTLIL representation for module `\PCIE_EP'.
+Generating RTLIL representation for module `\PCIE_2_0'.
+Generating RTLIL representation for module `\PCIE_2_1'.
+Generating RTLIL representation for module `\PCIE_3_0'.
+Generating RTLIL representation for module `\PCIE_3_1'.
+Generating RTLIL representation for module `\PCIE40E4'.
+Generating RTLIL representation for module `\PCIE4CE4'.
+Generating RTLIL representation for module `\EMAC'.
+Generating RTLIL representation for module `\TEMAC'.
+Generating RTLIL representation for module `\TEMAC_SINGLE'.
+Generating RTLIL representation for module `\CMAC'.
+Generating RTLIL representation for module `\CMACE4'.
+Generating RTLIL representation for module `\MCB'.
+Generating RTLIL representation for module `\HBM_REF_CLK'.
+Generating RTLIL representation for module `\HBM_SNGLBLI_INTF_APB'.
+Generating RTLIL representation for module `\HBM_SNGLBLI_INTF_AXI'.
+Generating RTLIL representation for module `\HBM_ONE_STACK_INTF'.
+Generating RTLIL representation for module `\HBM_TWO_STACK_INTF'.
+Generating RTLIL representation for module `\PPC405_ADV'.
+Generating RTLIL representation for module `\PPC440'.
+Generating RTLIL representation for module `\PS7'.
+Generating RTLIL representation for module `\PS8'.
+Generating RTLIL representation for module `\ILKN'.
+Generating RTLIL representation for module `\ILKNE4'.
+Generating RTLIL representation for module `\VCU'.
+Generating RTLIL representation for module `\FE'.
+Successfully finished Verilog frontend.
+
+2.3. Executing HIERARCHY pass (managing design hierarchy).
+
+2.3.1. Analyzing design hierarchy..
+Top module:  \isqrt_ooc
+
+2.3.2. Analyzing design hierarchy..
+Top module:  \isqrt_ooc
+Removed 0 unused modules.
+
+2.4. Executing PROC pass (convert processes to netlists).
+
+2.4.1. Executing PROC_CLEAN pass (remove empty switches from decision trees).
+Cleaned up 0 empty switches.
+
+2.4.2. Executing PROC_RMDEAD pass (remove dead branches from decision trees).
+Removed a total of 0 dead cases.
+
+2.4.3. Executing PROC_PRUNE pass (remove redundant assignments in processes).
+Removed 0 redundant assignments.
+Promoted 0 assignments to connections.
+
+2.4.4. Executing PROC_INIT pass (extract init attributes).
+
+2.4.5. Executing PROC_ARST pass (detect async resets in processes).
+
+2.4.6. Executing PROC_ROM pass (convert switches to ROMs).
+Converted 0 switches.
+
+2.4.7. Executing PROC_MUX pass (convert decision trees to multiplexers).
+
+2.4.8. Executing PROC_DLATCH pass (convert process syncs to latches).
+
+2.4.9. Executing PROC_DFF pass (convert process syncs to FFs).
+
+2.4.10. Executing PROC_MEMWR pass (convert process memory writes to cells).
+
+2.4.11. Executing PROC_CLEAN pass (remove empty switches from decision trees).
+Cleaned up 0 empty switches.
+
+2.4.12. Executing OPT_EXPR pass (perform const folding).
+Optimizing module isqrt_ooc.
+
+2.5. Executing CHECK pass (checking for obvious problems).
+Checking module isqrt_ooc...
+Found and reported 0 problems.
+
+2.6. Executing FLATTEN pass (flatten design).
+
+2.7. Executing TRIBUF pass.
+
+2.8. Executing DEMINOUT pass (demote inout ports to input or output).
+
+2.9. Executing OPT_EXPR pass (perform const folding).
+Optimizing module isqrt_ooc.
+
+2.10. Executing CHECK pass (checking for obvious problems).
+Checking module isqrt_ooc...
+Found and reported 0 problems.
+
+2.11. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \isqrt_ooc..
+Removed 0 unused cells and 89 unused wires.
+<suppressed ~62 debug messages>
+
+2.12. Executing OPT pass (performing simple optimizations).
+
+2.12.1. Executing OPT_EXPR pass (perform const folding).
+Optimizing module isqrt_ooc.
+
+2.12.2. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\isqrt_ooc'.
+Computing hashes of 85 cells of `\isqrt_ooc'.
+Finding duplicate cells in `\isqrt_ooc'.
+Removed a total of 0 cells.
+
+2.12.3. Executing OPT_MUXTREE pass (detect dead branches in mux trees).
+Running muxtree optimizer on module \isqrt_ooc..
+  Creating internal representation of mux trees.
+  Evaluating internal representation of mux trees.
+  Analyzing evaluation results.
+Removed 0 multiplexer ports.
+<suppressed ~32 debug messages>
+
+2.12.4. Executing OPT_REDUCE pass (consolidate $*mux and $reduce_* inputs).
+  Optimizing cells in module \isqrt_ooc.
+Performed a total of 0 changes.
+
+2.12.5. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\isqrt_ooc'.
+Computing hashes of 85 cells of `\isqrt_ooc'.
+Finding duplicate cells in `\isqrt_ooc'.
+Removed a total of 0 cells.
+
+2.12.6. Executing OPT_DFF pass (perform DFF optimizations).
+Setting constant 0-bit at position 0 on $driver$u_core.g_v.u.g_stage[4].g_x.xs_q ($dff) from module isqrt_ooc.
+Setting constant 0-bit at position 1 on $driver$u_core.g_v.u.g_stage[4].g_x.xs_q ($dff) from module isqrt_ooc.
+Setting constant 0-bit at position 0 on $driver$u_core.g_v.u.g_stage[6].g_x.xs_q ($dff) from module isqrt_ooc.
+Setting constant 0-bit at position 1 on $driver$u_core.g_v.u.g_stage[6].g_x.xs_q ($dff) from module isqrt_ooc.
+Setting constant 0-bit at position 0 on $driver$u_core.g_v.u.g_stage[3].g_x.xs_q ($dff) from module isqrt_ooc.
+Setting constant 0-bit at position 1 on $driver$u_core.g_v.u.g_stage[3].g_x.xs_q ($dff) from module isqrt_ooc.
+Setting constant 0-bit at position 0 on $driver$u_core.g_v.u.g_stage[2].g_x.xs_q ($dff) from module isqrt_ooc.
+Setting constant 0-bit at position 1 on $driver$u_core.g_v.u.g_stage[2].g_x.xs_q ($dff) from module isqrt_ooc.
+Setting constant 0-bit at position 0 on $driver$u_core.g_v.u.g_stage[1].g_x.xs_q ($dff) from module isqrt_ooc.
+Setting constant 0-bit at position 1 on $driver$u_core.g_v.u.g_stage[1].g_x.xs_q ($dff) from module isqrt_ooc.
+Setting constant 1-bit at position 0 on $driver$in_ready ($dff) from module isqrt_ooc.
+Setting constant 0-bit at position 0 on $driver$u_core.g_v.u.g_stage[5].g_x.xs_q ($dff) from module isqrt_ooc.
+Setting constant 0-bit at position 1 on $driver$u_core.g_v.u.g_stage[5].g_x.xs_q ($dff) from module isqrt_ooc.
+Setting constant 0-bit at position 0 on $driver$u_core.g_v.u.g_stage[0].g_x.xs_q ($dff) from module isqrt_ooc.
+Setting constant 0-bit at position 1 on $driver$u_core.g_v.u.g_stage[0].g_x.xs_q ($dff) from module isqrt_ooc.
+
+2.12.7. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \isqrt_ooc..
+
+2.12.8. Executing OPT_EXPR pass (perform const folding).
+Optimizing module isqrt_ooc.
+
+2.12.9. Rerunning OPT passes. (Maybe there is more to do..)
+
+2.12.10. Executing OPT_MUXTREE pass (detect dead branches in mux trees).
+Running muxtree optimizer on module \isqrt_ooc..
+  Creating internal representation of mux trees.
+  Evaluating internal representation of mux trees.
+  Analyzing evaluation results.
+Removed 0 multiplexer ports.
+<suppressed ~32 debug messages>
+
+2.12.11. Executing OPT_REDUCE pass (consolidate $*mux and $reduce_* inputs).
+  Optimizing cells in module \isqrt_ooc.
+Performed a total of 0 changes.
+
+2.12.12. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\isqrt_ooc'.
+Computing hashes of 84 cells of `\isqrt_ooc'.
+Finding duplicate cells in `\isqrt_ooc'.
+Removed a total of 0 cells.
+
+2.12.13. Executing OPT_DFF pass (perform DFF optimizations).
+Setting constant 0-bit at position 0 on $auto$ff.cc:337:slice$1128 ($dff) from module isqrt_ooc.
+Setting constant 0-bit at position 1 on $auto$ff.cc:337:slice$1128 ($dff) from module isqrt_ooc.
+Setting constant 0-bit at position 0 on $auto$ff.cc:337:slice$1127 ($dff) from module isqrt_ooc.
+Setting constant 0-bit at position 1 on $auto$ff.cc:337:slice$1127 ($dff) from module isqrt_ooc.
+Setting constant 0-bit at position 0 on $auto$ff.cc:337:slice$1126 ($dff) from module isqrt_ooc.
+Setting constant 0-bit at position 1 on $auto$ff.cc:337:slice$1126 ($dff) from module isqrt_ooc.
+Setting constant 0-bit at position 0 on $auto$ff.cc:337:slice$1125 ($dff) from module isqrt_ooc.
+Setting constant 0-bit at position 1 on $auto$ff.cc:337:slice$1125 ($dff) from module isqrt_ooc.
+Setting constant 0-bit at position 0 on $auto$ff.cc:337:slice$1124 ($dff) from module isqrt_ooc.
+Setting constant 0-bit at position 1 on $auto$ff.cc:337:slice$1124 ($dff) from module isqrt_ooc.
+Setting constant 0-bit at position 0 on $auto$ff.cc:337:slice$1122 ($dff) from module isqrt_ooc.
+Setting constant 0-bit at position 1 on $auto$ff.cc:337:slice$1122 ($dff) from module isqrt_ooc.
+
+2.12.14. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \isqrt_ooc..
+
+2.12.15. Executing OPT_EXPR pass (perform const folding).
+Optimizing module isqrt_ooc.
+
+2.12.16. Rerunning OPT passes. (Maybe there is more to do..)
+
+2.12.17. Executing OPT_MUXTREE pass (detect dead branches in mux trees).
+Running muxtree optimizer on module \isqrt_ooc..
+  Creating internal representation of mux trees.
+  Evaluating internal representation of mux trees.
+  Analyzing evaluation results.
+Removed 0 multiplexer ports.
+<suppressed ~32 debug messages>
+
+2.12.18. Executing OPT_REDUCE pass (consolidate $*mux and $reduce_* inputs).
+  Optimizing cells in module \isqrt_ooc.
+Performed a total of 0 changes.
+
+2.12.19. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\isqrt_ooc'.
+Computing hashes of 84 cells of `\isqrt_ooc'.
+Finding duplicate cells in `\isqrt_ooc'.
+Removed a total of 0 cells.
+
+2.12.20. Executing OPT_DFF pass (perform DFF optimizations).
+Setting constant 0-bit at position 0 on $auto$ff.cc:337:slice$1134 ($dff) from module isqrt_ooc.
+Setting constant 0-bit at position 1 on $auto$ff.cc:337:slice$1134 ($dff) from module isqrt_ooc.
+Setting constant 0-bit at position 0 on $auto$ff.cc:337:slice$1132 ($dff) from module isqrt_ooc.
+Setting constant 0-bit at position 1 on $auto$ff.cc:337:slice$1132 ($dff) from module isqrt_ooc.
+Setting constant 0-bit at position 0 on $auto$ff.cc:337:slice$1131 ($dff) from module isqrt_ooc.
+Setting constant 0-bit at position 1 on $auto$ff.cc:337:slice$1131 ($dff) from module isqrt_ooc.
+Setting constant 0-bit at position 0 on $auto$ff.cc:337:slice$1129 ($dff) from module isqrt_ooc.
+Setting constant 0-bit at position 1 on $auto$ff.cc:337:slice$1129 ($dff) from module isqrt_ooc.
+Setting constant 0-bit at position 0 on $auto$ff.cc:337:slice$1133 ($dff) from module isqrt_ooc.
+Setting constant 0-bit at position 1 on $auto$ff.cc:337:slice$1133 ($dff) from module isqrt_ooc.
+
+2.12.21. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \isqrt_ooc..
+
+2.12.22. Executing OPT_EXPR pass (perform const folding).
+Optimizing module isqrt_ooc.
+
+2.12.23. Rerunning OPT passes. (Maybe there is more to do..)
+
+2.12.24. Executing OPT_MUXTREE pass (detect dead branches in mux trees).
+Running muxtree optimizer on module \isqrt_ooc..
+  Creating internal representation of mux trees.
+  Evaluating internal representation of mux trees.
+  Analyzing evaluation results.
+Removed 0 multiplexer ports.
+<suppressed ~32 debug messages>
+
+2.12.25. Executing OPT_REDUCE pass (consolidate $*mux and $reduce_* inputs).
+  Optimizing cells in module \isqrt_ooc.
+Performed a total of 0 changes.
+
+2.12.26. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\isqrt_ooc'.
+Computing hashes of 84 cells of `\isqrt_ooc'.
+Finding duplicate cells in `\isqrt_ooc'.
+Removed a total of 0 cells.
+
+2.12.27. Executing OPT_DFF pass (perform DFF optimizations).
+Setting constant 0-bit at position 0 on $auto$ff.cc:337:slice$1139 ($dff) from module isqrt_ooc.
+Setting constant 0-bit at position 1 on $auto$ff.cc:337:slice$1139 ($dff) from module isqrt_ooc.
+Setting constant 0-bit at position 0 on $auto$ff.cc:337:slice$1136 ($dff) from module isqrt_ooc.
+Setting constant 0-bit at position 1 on $auto$ff.cc:337:slice$1136 ($dff) from module isqrt_ooc.
+Setting constant 0-bit at position 0 on $auto$ff.cc:337:slice$1135 ($dff) from module isqrt_ooc.
+Setting constant 0-bit at position 1 on $auto$ff.cc:337:slice$1135 ($dff) from module isqrt_ooc.
+Setting constant 0-bit at position 0 on $auto$ff.cc:337:slice$1138 ($dff) from module isqrt_ooc.
+Setting constant 0-bit at position 1 on $auto$ff.cc:337:slice$1138 ($dff) from module isqrt_ooc.
+
+2.12.28. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \isqrt_ooc..
+
+2.12.29. Executing OPT_EXPR pass (perform const folding).
+Optimizing module isqrt_ooc.
+
+2.12.30. Rerunning OPT passes. (Maybe there is more to do..)
+
+2.12.31. Executing OPT_MUXTREE pass (detect dead branches in mux trees).
+Running muxtree optimizer on module \isqrt_ooc..
+  Creating internal representation of mux trees.
+  Evaluating internal representation of mux trees.
+  Analyzing evaluation results.
+Removed 0 multiplexer ports.
+<suppressed ~32 debug messages>
+
+2.12.32. Executing OPT_REDUCE pass (consolidate $*mux and $reduce_* inputs).
+  Optimizing cells in module \isqrt_ooc.
+Performed a total of 0 changes.
+
+2.12.33. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\isqrt_ooc'.
+Computing hashes of 84 cells of `\isqrt_ooc'.
+Finding duplicate cells in `\isqrt_ooc'.
+Removed a total of 0 cells.
+
+2.12.34. Executing OPT_DFF pass (perform DFF optimizations).
+Setting constant 0-bit at position 0 on $auto$ff.cc:337:slice$1143 ($dff) from module isqrt_ooc.
+Setting constant 0-bit at position 1 on $auto$ff.cc:337:slice$1143 ($dff) from module isqrt_ooc.
+Setting constant 0-bit at position 0 on $auto$ff.cc:337:slice$1141 ($dff) from module isqrt_ooc.
+Setting constant 0-bit at position 1 on $auto$ff.cc:337:slice$1141 ($dff) from module isqrt_ooc.
+Setting constant 0-bit at position 0 on $auto$ff.cc:337:slice$1142 ($dff) from module isqrt_ooc.
+Setting constant 0-bit at position 1 on $auto$ff.cc:337:slice$1142 ($dff) from module isqrt_ooc.
+
+2.12.35. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \isqrt_ooc..
+
+2.12.36. Executing OPT_EXPR pass (perform const folding).
+Optimizing module isqrt_ooc.
+
+2.12.37. Rerunning OPT passes. (Maybe there is more to do..)
+
+2.12.38. Executing OPT_MUXTREE pass (detect dead branches in mux trees).
+Running muxtree optimizer on module \isqrt_ooc..
+  Creating internal representation of mux trees.
+  Evaluating internal representation of mux trees.
+  Analyzing evaluation results.
+Removed 0 multiplexer ports.
+<suppressed ~32 debug messages>
+
+2.12.39. Executing OPT_REDUCE pass (consolidate $*mux and $reduce_* inputs).
+  Optimizing cells in module \isqrt_ooc.
+Performed a total of 0 changes.
+
+2.12.40. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\isqrt_ooc'.
+Computing hashes of 84 cells of `\isqrt_ooc'.
+Finding duplicate cells in `\isqrt_ooc'.
+Removed a total of 0 cells.
+
+2.12.41. Executing OPT_DFF pass (perform DFF optimizations).
+Setting constant 0-bit at position 0 on $auto$ff.cc:337:slice$1144 ($dff) from module isqrt_ooc.
+Setting constant 0-bit at position 1 on $auto$ff.cc:337:slice$1144 ($dff) from module isqrt_ooc.
+Setting constant 0-bit at position 0 on $auto$ff.cc:337:slice$1145 ($dff) from module isqrt_ooc.
+Setting constant 0-bit at position 1 on $auto$ff.cc:337:slice$1145 ($dff) from module isqrt_ooc.
+
+2.12.42. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \isqrt_ooc..
+
+2.12.43. Executing OPT_EXPR pass (perform const folding).
+Optimizing module isqrt_ooc.
+
+2.12.44. Rerunning OPT passes. (Maybe there is more to do..)
+
+2.12.45. Executing OPT_MUXTREE pass (detect dead branches in mux trees).
+Running muxtree optimizer on module \isqrt_ooc..
+  Creating internal representation of mux trees.
+  Evaluating internal representation of mux trees.
+  Analyzing evaluation results.
+Removed 0 multiplexer ports.
+<suppressed ~32 debug messages>
+
+2.12.46. Executing OPT_REDUCE pass (consolidate $*mux and $reduce_* inputs).
+  Optimizing cells in module \isqrt_ooc.
+Performed a total of 0 changes.
+
+2.12.47. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\isqrt_ooc'.
+Computing hashes of 84 cells of `\isqrt_ooc'.
+Finding duplicate cells in `\isqrt_ooc'.
+Removed a total of 0 cells.
+
+2.12.48. Executing OPT_DFF pass (perform DFF optimizations).
+Setting constant 0-bit at position 0 on $auto$ff.cc:337:slice$1147 ($dff) from module isqrt_ooc.
+Setting constant 0-bit at position 1 on $auto$ff.cc:337:slice$1147 ($dff) from module isqrt_ooc.
+
+2.12.49. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \isqrt_ooc..
+
+2.12.50. Executing OPT_EXPR pass (perform const folding).
+Optimizing module isqrt_ooc.
+
+2.12.51. Rerunning OPT passes. (Maybe there is more to do..)
+
+2.12.52. Executing OPT_MUXTREE pass (detect dead branches in mux trees).
+Running muxtree optimizer on module \isqrt_ooc..
+  Creating internal representation of mux trees.
+  Evaluating internal representation of mux trees.
+  Analyzing evaluation results.
+Removed 0 multiplexer ports.
+<suppressed ~32 debug messages>
+
+2.12.53. Executing OPT_REDUCE pass (consolidate $*mux and $reduce_* inputs).
+  Optimizing cells in module \isqrt_ooc.
+Performed a total of 0 changes.
+
+2.12.54. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\isqrt_ooc'.
+Computing hashes of 84 cells of `\isqrt_ooc'.
+Finding duplicate cells in `\isqrt_ooc'.
+Removed a total of 0 cells.
+
+2.12.55. Executing OPT_DFF pass (perform DFF optimizations).
+
+2.12.56. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \isqrt_ooc..
+
+2.12.57. Executing OPT_EXPR pass (perform const folding).
+Optimizing module isqrt_ooc.
+
+2.12.58. Finished fast OPT passes. (There is nothing left to do.)
+
+2.13. Executing FSM pass (extract and optimize FSM).
+
+2.13.1. Executing FSM_DETECT pass (finding FSMs in design).
+
+2.13.2. Executing FSM_EXTRACT pass (extracting FSM from design).
+
+2.13.3. Executing FSM_OPT pass (simple optimizations of FSMs).
+
+2.13.4. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \isqrt_ooc..
+
+2.13.5. Executing FSM_OPT pass (simple optimizations of FSMs).
+
+2.13.6. Executing FSM_RECODE pass (re-assigning FSM state encoding).
+
+2.13.7. Executing FSM_INFO pass (dumping all available information on FSM cells).
+
+2.13.8. Executing FSM_MAP pass (mapping FSMs to basic logic).
+
+2.14. Executing OPT pass (performing simple optimizations).
+
+2.14.1. Executing OPT_EXPR pass (perform const folding).
+Optimizing module isqrt_ooc.
+
+2.14.2. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\isqrt_ooc'.
+Computing hashes of 84 cells of `\isqrt_ooc'.
+Finding duplicate cells in `\isqrt_ooc'.
+Removed a total of 0 cells.
+
+2.14.3. Executing OPT_MUXTREE pass (detect dead branches in mux trees).
+Running muxtree optimizer on module \isqrt_ooc..
+  Creating internal representation of mux trees.
+  Evaluating internal representation of mux trees.
+  Analyzing evaluation results.
+Removed 0 multiplexer ports.
+<suppressed ~32 debug messages>
+
+2.14.4. Executing OPT_REDUCE pass (consolidate $*mux and $reduce_* inputs).
+  Optimizing cells in module \isqrt_ooc.
+Performed a total of 0 changes.
+
+2.14.5. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\isqrt_ooc'.
+Computing hashes of 84 cells of `\isqrt_ooc'.
+Finding duplicate cells in `\isqrt_ooc'.
+Removed a total of 0 cells.
+
+2.14.6. Executing OPT_DFF pass (perform DFF optimizations).
+Adding SRST signal on $driver$u_core.g_v.u.v_q[6:6] ($dff) from module isqrt_ooc (D = \u_core.g_v.u.v_q [5], Q = \u_core.g_v.u.v_q [6], rval = 1'0).
+Adding SRST signal on $driver$u_core.g_v.u.v_q[0:0] ($dff) from module isqrt_ooc (D = \v_q, Q = \u_core.g_v.u.v_q [0], rval = 1'0).
+Adding SRST signal on $driver$u_core.g_v.u.v_q[7:7] ($dff) from module isqrt_ooc (D = \u_core.g_v.u.v_q [6], Q = \u_core.g_v.u.v_q [7], rval = 1'0).
+Adding SRST signal on $driver$u_core.g_v.u.v_q[1:1] ($dff) from module isqrt_ooc (D = \u_core.g_v.u.v_q [0], Q = \u_core.g_v.u.v_q [1], rval = 1'0).
+Adding SRST signal on $driver$u_core.g_v.u.v_q[5:5] ($dff) from module isqrt_ooc (D = \u_core.g_v.u.v_q [4], Q = \u_core.g_v.u.v_q [5], rval = 1'0).
+Adding SRST signal on $driver$u_core.g_v.u.v_q[2:2] ($dff) from module isqrt_ooc (D = \u_core.g_v.u.v_q [1], Q = \u_core.g_v.u.v_q [2], rval = 1'0).
+Adding SRST signal on $driver$u_core.g_v.u.v_q[3:3] ($dff) from module isqrt_ooc (D = \u_core.g_v.u.v_q [2], Q = \u_core.g_v.u.v_q [3], rval = 1'0).
+Adding SRST signal on $driver$u_core.g_v.u.v_q[4:4] ($dff) from module isqrt_ooc (D = \u_core.g_v.u.v_q [3], Q = \u_core.g_v.u.v_q [4], rval = 1'0).
+
+2.14.7. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \isqrt_ooc..
+Removed 8 unused cells and 8 unused wires.
+<suppressed ~9 debug messages>
+
+2.14.8. Executing OPT_EXPR pass (perform const folding).
+Optimizing module isqrt_ooc.
+
+2.14.9. Rerunning OPT passes. (Maybe there is more to do..)
+
+2.14.10. Executing OPT_MUXTREE pass (detect dead branches in mux trees).
+Running muxtree optimizer on module \isqrt_ooc..
+  Creating internal representation of mux trees.
+  Evaluating internal representation of mux trees.
+  Analyzing evaluation results.
+Removed 0 multiplexer ports.
+<suppressed ~16 debug messages>
+
+2.14.11. Executing OPT_REDUCE pass (consolidate $*mux and $reduce_* inputs).
+  Optimizing cells in module \isqrt_ooc.
+Performed a total of 0 changes.
+
+2.14.12. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\isqrt_ooc'.
+Computing hashes of 76 cells of `\isqrt_ooc'.
+Finding duplicate cells in `\isqrt_ooc'.
+Removed a total of 0 cells.
+
+2.14.13. Executing OPT_DFF pass (perform DFF optimizations).
+
+2.14.14. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \isqrt_ooc..
+
+2.14.15. Executing OPT_EXPR pass (perform const folding).
+Optimizing module isqrt_ooc.
+
+2.14.16. Finished fast OPT passes. (There is nothing left to do.)
+
+2.15. Executing WREDUCE pass (reducing word size of cells).
+Removed top 29 address bits (of 32) from memory init port isqrt_ooc.$96 (u_core.g_v.u.rm_q).
+Removed top 29 address bits (of 32) from memory init port isqrt_ooc.$93 (u_core.g_v.u.rt_q).
+Removed top 29 address bits (of 32) from memory init port isqrt_ooc.$88 (u_core.g_v.u.rm_q).
+Removed top 29 address bits (of 32) from memory init port isqrt_ooc.$85 (u_core.g_v.u.rt_q).
+Removed top 29 address bits (of 32) from memory init port isqrt_ooc.$73 (u_core.g_v.u.rm_q).
+Removed top 29 address bits (of 32) from memory init port isqrt_ooc.$178 (u_core.g_v.u.rt_q).
+Removed top 29 address bits (of 32) from memory init port isqrt_ooc.$70 (u_core.g_v.u.rt_q).
+Removed top 29 address bits (of 32) from memory init port isqrt_ooc.$142 (u_core.g_v.u.rm_q).
+Removed top 29 address bits (of 32) from memory init port isqrt_ooc.$65 (u_core.g_v.u.rm_q).
+Removed top 29 address bits (of 32) from memory init port isqrt_ooc.$111 (u_core.g_v.u.rm_q).
+Removed top 29 address bits (of 32) from memory init port isqrt_ooc.$62 (u_core.g_v.u.rt_q).
+Removed top 29 address bits (of 32) from memory init port isqrt_ooc.$189 (u_core.g_v.u.rm_q).
+Removed top 29 address bits (of 32) from memory init port isqrt_ooc.$139 (u_core.g_v.u.rt_q).
+Removed top 29 address bits (of 32) from memory init port isqrt_ooc.$165 (u_core.g_v.u.rm_q).
+Removed top 29 address bits (of 32) from memory init port isqrt_ooc.$50 (u_core.g_v.u.rm_q).
+Removed top 29 address bits (of 32) from memory init port isqrt_ooc.$47 (u_core.g_v.u.rt_q).
+Removed top 29 address bits (of 32) from memory init port isqrt_ooc.$134 (u_core.g_v.u.rm_q).
+Removed top 29 address bits (of 32) from memory init port isqrt_ooc.$42 (u_core.g_v.u.rm_q).
+Removed top 29 address bits (of 32) from memory init port isqrt_ooc.$108 (u_core.g_v.u.rt_q).
+Removed top 29 address bits (of 32) from memory init port isqrt_ooc.$39 (u_core.g_v.u.rt_q).
+Removed top 29 address bits (of 32) from memory init port isqrt_ooc.$186 (u_core.g_v.u.rt_q).
+Removed top 29 address bits (of 32) from memory init port isqrt_ooc.$131 (u_core.g_v.u.rt_q).
+Removed top 29 address bits (of 32) from memory init port isqrt_ooc.$27 (u_core.g_v.u.rm_q).
+Removed top 29 address bits (of 32) from memory init port isqrt_ooc.$24 (u_core.g_v.u.rt_q).
+Removed top 29 address bits (of 32) from memory init port isqrt_ooc.$162 (u_core.g_v.u.rt_q).
+Removed top 29 address bits (of 32) from memory init port isqrt_ooc.$19 (u_core.g_v.u.rm_q).
+Removed top 29 address bits (of 32) from memory init port isqrt_ooc.$16 (u_core.g_v.u.rt_q).
+Removed top 29 address bits (of 32) from memory init port isqrt_ooc.$154 (u_core.g_v.u.rt_q).
+Removed top 29 address bits (of 32) from memory init port isqrt_ooc.$116 (u_core.g_v.u.rt_q).
+Removed top 29 address bits (of 32) from memory init port isqrt_ooc.$181 (u_core.g_v.u.rm_q).
+Removed top 29 address bits (of 32) from memory init port isqrt_ooc.$119 (u_core.g_v.u.rm_q).
+Removed top 29 address bits (of 32) from memory init port isqrt_ooc.$157 (u_core.g_v.u.rm_q).
+Removed top 9 bits (of 11) from port A of cell isqrt_ooc.$8 ($sub).
+Removed top 10 bits (of 11) from port B of cell isqrt_ooc.$8 ($sub).
+Removed top 8 bits (of 11) from port Y of cell isqrt_ooc.$8 ($sub).
+Removed top 1 bits (of 11) from port A of cell isqrt_ooc.$31 ($sub).
+Removed top 2 bits (of 11) from port B of cell isqrt_ooc.$31 ($sub).
+Removed top 1 bits (of 11) from port A of cell isqrt_ooc.$54 ($sub).
+Removed top 2 bits (of 11) from port B of cell isqrt_ooc.$54 ($sub).
+Removed top 1 bits (of 11) from port A of cell isqrt_ooc.$77 ($sub).
+Removed top 2 bits (of 11) from port B of cell isqrt_ooc.$77 ($sub).
+Removed top 1 bits (of 11) from port A of cell isqrt_ooc.$100 ($sub).
+Removed top 2 bits (of 11) from port B of cell isqrt_ooc.$100 ($sub).
+Removed top 1 bits (of 11) from port A of cell isqrt_ooc.$123 ($sub).
+Removed top 2 bits (of 11) from port B of cell isqrt_ooc.$123 ($sub).
+Removed top 1 bits (of 11) from port A of cell isqrt_ooc.$146 ($sub).
+Removed top 2 bits (of 11) from port B of cell isqrt_ooc.$146 ($sub).
+Removed top 1 bits (of 11) from port A of cell isqrt_ooc.$169 ($sub).
+Removed top 2 bits (of 11) from port B of cell isqrt_ooc.$169 ($sub).
+
+2.16. Executing PEEPOPT pass (run peephole optimizers).
+
+2.17. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \isqrt_ooc..
+
+2.18. Executing MUXPACK pass ($mux cell cascades to $pmux).
+Converted 0 (p)mux cells into 0 pmux cells.
+
+2.19. Executing PMUX2SHIFTX pass.
+
+2.20. Executing SORT pass.
+
+2.21. Executing MEMORY_DFF pass (merging $dff cells to $memrd).
+Checking read port `\u_core.g_v.u.rm_q'[0] in module `\isqrt_ooc':
+    no output FF found.
+Checking read port `\u_core.g_v.u.rm_q'[1] in module `\isqrt_ooc':
+    no output FF found.
+Checking read port `\u_core.g_v.u.rm_q'[2] in module `\isqrt_ooc':
+    no output FF found.
+Checking read port `\u_core.g_v.u.rm_q'[3] in module `\isqrt_ooc':
+    no output FF found.
+Checking read port `\u_core.g_v.u.rm_q'[4] in module `\isqrt_ooc':
+    merging output FF to cell.
+    Write port 0: don't care on collision.
+    Write port 1: don't care on collision.
+    Write port 2: don't care on collision.
+    Write port 3: don't care on collision.
+    Write port 4: don't care on collision.
+    Write port 5: don't care on collision.
+    Write port 6: don't care on collision.
+    Write port 7: non-transparent.
+Checking read port `\u_core.g_v.u.rm_q'[5] in module `\isqrt_ooc':
+    no output FF found.
+Checking read port `\u_core.g_v.u.rm_q'[6] in module `\isqrt_ooc':
+    no output FF found.
+Checking read port `\u_core.g_v.u.rm_q'[7] in module `\isqrt_ooc':
+    no output FF found.
+Checking read port `\u_core.g_v.u.rt_q'[0] in module `\isqrt_ooc':
+    no output FF found.
+Checking read port `\u_core.g_v.u.rt_q'[1] in module `\isqrt_ooc':
+    no output FF found.
+Checking read port `\u_core.g_v.u.rt_q'[2] in module `\isqrt_ooc':
+    no output FF found.
+Checking read port `\u_core.g_v.u.rt_q'[3] in module `\isqrt_ooc':
+    no output FF found.
+Checking read port `\u_core.g_v.u.rt_q'[4] in module `\isqrt_ooc':
+    merging output FF to cell.
+    Write port 0: don't care on collision.
+    Write port 1: don't care on collision.
+    Write port 2: don't care on collision.
+    Write port 3: don't care on collision.
+    Write port 4: don't care on collision.
+    Write port 5: don't care on collision.
+    Write port 6: don't care on collision.
+    Write port 7: non-transparent.
+Checking read port `\u_core.g_v.u.rt_q'[5] in module `\isqrt_ooc':
+    no output FF found.
+Checking read port `\u_core.g_v.u.rt_q'[6] in module `\isqrt_ooc':
+    no output FF found.
+Checking read port `\u_core.g_v.u.rt_q'[7] in module `\isqrt_ooc':
+    no output FF found.
+Checking read port address `\u_core.g_v.u.rm_q'[0] in module `\isqrt_ooc':
+    no address FF found.
+Checking read port address `\u_core.g_v.u.rm_q'[1] in module `\isqrt_ooc':
+    no address FF found.
+Checking read port address `\u_core.g_v.u.rm_q'[2] in module `\isqrt_ooc':
+    no address FF found.
+Checking read port address `\u_core.g_v.u.rm_q'[3] in module `\isqrt_ooc':
+    no address FF found.
+Checking read port address `\u_core.g_v.u.rm_q'[5] in module `\isqrt_ooc':
+    no address FF found.
+Checking read port address `\u_core.g_v.u.rm_q'[6] in module `\isqrt_ooc':
+    no address FF found.
+Checking read port address `\u_core.g_v.u.rm_q'[7] in module `\isqrt_ooc':
+    no address FF found.
+Checking read port address `\u_core.g_v.u.rt_q'[0] in module `\isqrt_ooc':
+    no address FF found.
+Checking read port address `\u_core.g_v.u.rt_q'[1] in module `\isqrt_ooc':
+    no address FF found.
+Checking read port address `\u_core.g_v.u.rt_q'[2] in module `\isqrt_ooc':
+    no address FF found.
+Checking read port address `\u_core.g_v.u.rt_q'[3] in module `\isqrt_ooc':
+    no address FF found.
+Checking read port address `\u_core.g_v.u.rt_q'[5] in module `\isqrt_ooc':
+    no address FF found.
+Checking read port address `\u_core.g_v.u.rt_q'[6] in module `\isqrt_ooc':
+    no address FF found.
+Checking read port address `\u_core.g_v.u.rt_q'[7] in module `\isqrt_ooc':
+    no address FF found.
+
+2.22. Executing ALUMACC pass (create $alu and $macc cells).
+Extracting $alu and $macc cells in module isqrt_ooc:
+  creating $macc model for $100 ($sub).
+  creating $macc model for $123 ($sub).
+  creating $macc model for $146 ($sub).
+  creating $macc model for $169 ($sub).
+  creating $macc model for $31 ($sub).
+  creating $macc model for $54 ($sub).
+  creating $macc model for $77 ($sub).
+  creating $macc model for $8 ($sub).
+  created 0 $alu and 0 $macc cells.
+
+2.23. Executing MACCMAP pass (map $macc cells).
+
+2.24. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \isqrt_ooc..
+Removed 1 unused cells and 23 unused wires.
+<suppressed ~8 debug messages>
+
+2.25. Executing TECHMAP pass (map to technology primitives).
+
+2.25.1. Executing Verilog-2005 frontend: /home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/mul2dsp.v
+Parsing Verilog input from `/home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/mul2dsp.v' to AST representation.
+Generating RTLIL representation for module `\_80_mul'.
+Generating RTLIL representation for module `\_90_soft_mul'.
+Successfully finished Verilog frontend.
+
+2.25.2. Executing Verilog-2005 frontend: /home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/xilinx/xc7_dsp_map.v
+Parsing Verilog input from `/home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/xilinx/xc7_dsp_map.v' to AST representation.
+Generating RTLIL representation for module `$__MUL25X18'.
+Successfully finished Verilog frontend.
+
+2.25.3. Continuing TECHMAP pass.
+No more expansions possible.
+<suppressed ~5 debug messages>
+
+2.26. Executing OPT_EXPR pass (perform const folding).
+
+2.27. Executing WREDUCE pass (reducing word size of cells).
+
+2.28. Executing XILINX_DSP pass (pack resources into DSPs).
+
+2.29. Executing TECHMAP pass (map to technology primitives).
+
+2.29.1. Executing Verilog-2005 frontend: /home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/cmp2lut.v
+Parsing Verilog input from `/home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/cmp2lut.v' to AST representation.
+Generating RTLIL representation for module `\_90_lut_cmp_'.
+Successfully finished Verilog frontend.
+
+2.29.2. Executing Verilog-2005 frontend: /home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/cmp2lcu.v
+Parsing Verilog input from `/home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/cmp2lcu.v' to AST representation.
+Generating RTLIL representation for module `\_80_lcu_cmp_'.
+Generating RTLIL representation for module `$__CMP2LCU'.
+Successfully finished Verilog frontend.
+
+2.29.3. Continuing TECHMAP pass.
+No more expansions possible.
+<suppressed ~7 debug messages>
+
+2.30. Executing ALUMACC pass (create $alu and $macc cells).
+Extracting $alu and $macc cells in module isqrt_ooc:
+  creating $macc model for $100 ($sub).
+  creating $macc model for $123 ($sub).
+  creating $macc model for $146 ($sub).
+  creating $macc model for $169 ($sub).
+  creating $macc model for $31 ($sub).
+  creating $macc model for $54 ($sub).
+  creating $macc model for $77 ($sub).
+  creating $macc model for $8 ($sub).
+  creating $alu model for $macc $8.
+  creating $alu model for $macc $77.
+  creating $alu model for $macc $54.
+  creating $alu model for $macc $31.
+  creating $alu model for $macc $169.
+  creating $alu model for $macc $146.
+  creating $alu model for $macc $123.
+  creating $alu model for $macc $100.
+  creating $alu cell for $100: $auto$alumacc.cc:578:replace_alu$1205
+  creating $alu cell for $123: $auto$alumacc.cc:578:replace_alu$1208
+  creating $alu cell for $146: $auto$alumacc.cc:578:replace_alu$1211
+  creating $alu cell for $169: $auto$alumacc.cc:578:replace_alu$1214
+  creating $alu cell for $31: $auto$alumacc.cc:578:replace_alu$1217
+  creating $alu cell for $54: $auto$alumacc.cc:578:replace_alu$1220
+  creating $alu cell for $77: $auto$alumacc.cc:578:replace_alu$1223
+  creating $alu cell for $8: $auto$alumacc.cc:578:replace_alu$1226
+  created 8 $alu and 0 $macc cells.
+
+2.31. Executing SHARE pass (SAT-based resource sharing).
+
+2.32. Executing OPT pass (performing simple optimizations).
+
+2.32.1. Executing OPT_EXPR pass (perform const folding).
+Optimizing module isqrt_ooc.
+
+2.32.2. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\isqrt_ooc'.
+Computing hashes of 75 cells of `\isqrt_ooc'.
+Finding duplicate cells in `\isqrt_ooc'.
+Removed a total of 0 cells.
+
+2.32.3. Executing OPT_MUXTREE pass (detect dead branches in mux trees).
+Running muxtree optimizer on module \isqrt_ooc..
+  Creating internal representation of mux trees.
+  Evaluating internal representation of mux trees.
+      Replacing known input bits on port A of cell $9: { \u_core.g_v.u.g_stage[0].iterate.t_v [2] \u_core.g_v.u.g_stage[0].iterate.t_v [2] \u_core.g_v.u.g_stage[0].iterate.t_v [2] \u_core.g_v.u.g_stage[0].iterate.t_v [2] \u_core.g_v.u.g_stage[0].iterate.t_v [2] \u_core.g_v.u.g_stage[0].iterate.t_v [2] \u_core.g_v.u.g_stage[0].iterate.t_v [2:0] } -> { 7'0000000 \u_core.g_v.u.g_stage[0].iterate.t_v [1:0] }
+  Analyzing evaluation results.
+Removed 0 multiplexer ports.
+<suppressed ~16 debug messages>
+
+2.32.4. Executing OPT_REDUCE pass (consolidate $*mux and $reduce_* inputs).
+  Optimizing cells in module \isqrt_ooc.
+Performed a total of 0 changes.
+
+2.32.5. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\isqrt_ooc'.
+Computing hashes of 75 cells of `\isqrt_ooc'.
+Finding duplicate cells in `\isqrt_ooc'.
+Removed a total of 0 cells.
+
+2.32.6. Executing OPT_DFF pass (perform DFF optimizations).
+
+2.32.7. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \isqrt_ooc..
+
+2.32.8. Executing OPT_EXPR pass (perform const folding).
+Optimizing module isqrt_ooc.
+
+2.32.9. Finished fast OPT passes. (There is nothing left to do.)
+
+2.33. Executing MEMORY pass.
+
+2.33.1. Executing OPT_MEM pass (optimize memories).
+Performed a total of 0 transformations.
+
+2.33.2. Executing OPT_MEM_PRIORITY pass (removing unnecessary memory write priority relations).
+Performed a total of 0 transformations.
+
+2.33.3. Executing OPT_MEM_FEEDBACK pass (finding memory read-to-write feedback paths).
+  Analyzing isqrt_ooc.u_core.g_v.u.rm_q write port 0.
+  Analyzing isqrt_ooc.u_core.g_v.u.rm_q write port 1.
+  Analyzing isqrt_ooc.u_core.g_v.u.rm_q write port 2.
+  Analyzing isqrt_ooc.u_core.g_v.u.rm_q write port 3.
+  Analyzing isqrt_ooc.u_core.g_v.u.rm_q write port 4.
+  Analyzing isqrt_ooc.u_core.g_v.u.rm_q write port 5.
+  Analyzing isqrt_ooc.u_core.g_v.u.rm_q write port 6.
+  Analyzing isqrt_ooc.u_core.g_v.u.rm_q write port 7.
+  Analyzing isqrt_ooc.u_core.g_v.u.rt_q write port 0.
+  Analyzing isqrt_ooc.u_core.g_v.u.rt_q write port 1.
+  Analyzing isqrt_ooc.u_core.g_v.u.rt_q write port 2.
+  Analyzing isqrt_ooc.u_core.g_v.u.rt_q write port 3.
+  Analyzing isqrt_ooc.u_core.g_v.u.rt_q write port 4.
+  Analyzing isqrt_ooc.u_core.g_v.u.rt_q write port 5.
+  Analyzing isqrt_ooc.u_core.g_v.u.rt_q write port 6.
+  Analyzing isqrt_ooc.u_core.g_v.u.rt_q write port 7.
+
+2.33.4. Executing MEMORY_BMUX2ROM pass (converting muxes to ROMs).
+
+2.33.5. Executing MEMORY_DFF pass (merging $dff cells to $memrd).
+Checking read port `\u_core.g_v.u.rm_q'[0] in module `\isqrt_ooc':
+    no output FF found.
+Checking read port `\u_core.g_v.u.rm_q'[1] in module `\isqrt_ooc':
+    no output FF found.
+Checking read port `\u_core.g_v.u.rm_q'[2] in module `\isqrt_ooc':
+    no output FF found.
+Checking read port `\u_core.g_v.u.rm_q'[3] in module `\isqrt_ooc':
+    no output FF found.
+Checking read port `\u_core.g_v.u.rm_q'[5] in module `\isqrt_ooc':
+    no output FF found.
+Checking read port `\u_core.g_v.u.rm_q'[6] in module `\isqrt_ooc':
+    no output FF found.
+Checking read port `\u_core.g_v.u.rm_q'[7] in module `\isqrt_ooc':
+    no output FF found.
+Checking read port `\u_core.g_v.u.rt_q'[0] in module `\isqrt_ooc':
+    no output FF found.
+Checking read port `\u_core.g_v.u.rt_q'[1] in module `\isqrt_ooc':
+    no output FF found.
+Checking read port `\u_core.g_v.u.rt_q'[2] in module `\isqrt_ooc':
+    no output FF found.
+Checking read port `\u_core.g_v.u.rt_q'[3] in module `\isqrt_ooc':
+    no output FF found.
+Checking read port `\u_core.g_v.u.rt_q'[5] in module `\isqrt_ooc':
+    no output FF found.
+Checking read port `\u_core.g_v.u.rt_q'[6] in module `\isqrt_ooc':
+    no output FF found.
+Checking read port `\u_core.g_v.u.rt_q'[7] in module `\isqrt_ooc':
+    no output FF found.
+Checking read port address `\u_core.g_v.u.rm_q'[0] in module `\isqrt_ooc':
+    no address FF found.
+Checking read port address `\u_core.g_v.u.rm_q'[1] in module `\isqrt_ooc':
+    no address FF found.
+Checking read port address `\u_core.g_v.u.rm_q'[2] in module `\isqrt_ooc':
+    no address FF found.
+Checking read port address `\u_core.g_v.u.rm_q'[3] in module `\isqrt_ooc':
+    no address FF found.
+Checking read port address `\u_core.g_v.u.rm_q'[5] in module `\isqrt_ooc':
+    no address FF found.
+Checking read port address `\u_core.g_v.u.rm_q'[6] in module `\isqrt_ooc':
+    no address FF found.
+Checking read port address `\u_core.g_v.u.rm_q'[7] in module `\isqrt_ooc':
+    no address FF found.
+Checking read port address `\u_core.g_v.u.rt_q'[0] in module `\isqrt_ooc':
+    no address FF found.
+Checking read port address `\u_core.g_v.u.rt_q'[1] in module `\isqrt_ooc':
+    no address FF found.
+Checking read port address `\u_core.g_v.u.rt_q'[2] in module `\isqrt_ooc':
+    no address FF found.
+Checking read port address `\u_core.g_v.u.rt_q'[3] in module `\isqrt_ooc':
+    no address FF found.
+Checking read port address `\u_core.g_v.u.rt_q'[5] in module `\isqrt_ooc':
+    no address FF found.
+Checking read port address `\u_core.g_v.u.rt_q'[6] in module `\isqrt_ooc':
+    no address FF found.
+Checking read port address `\u_core.g_v.u.rt_q'[7] in module `\isqrt_ooc':
+    no address FF found.
+
+2.33.6. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \isqrt_ooc..
+
+2.33.7. Executing MEMORY_SHARE pass (consolidating $memrd/$memwr cells).
+Consolidating read ports of memory isqrt_ooc.u_core.g_v.u.rm_q by address:
+  Merging ports 0, 1 (address 3'011).
+  Merging ports 0, 2 (address 3'010).
+  Merging ports 0, 3 (address 3'000).
+  Merging ports 0, 5 (address 3'000).
+  Merging ports 6, 7 (address 3'101).
+Consolidating read ports of memory isqrt_ooc.u_core.g_v.u.rm_q by address:
+Consolidating write ports of memory isqrt_ooc.u_core.g_v.u.rm_q by address:
+  Merging ports 0, 1 (address 3'000).
+  Merging ports 0, 2 (address 3'000).
+  Merging ports 0, 3 (address 3'000).
+  Merging ports 0, 4 (address 3'000).
+  Merging ports 6, 7 (address 3'110).
+Consolidating write ports of memory isqrt_ooc.u_core.g_v.u.rm_q by address:
+  Merging ports 1, 2 (address 3'101).
+Consolidating write ports of memory isqrt_ooc.u_core.g_v.u.rm_q by address:
+Consolidating read ports of memory isqrt_ooc.u_core.g_v.u.rt_q by address:
+  Merging ports 0, 1 (address 3'011).
+  Merging ports 0, 2 (address 3'010).
+  Merging ports 0, 3 (address 3'000).
+  Merging ports 0, 5 (address 3'000).
+  Merging ports 6, 7 (address 3'101).
+Consolidating read ports of memory isqrt_ooc.u_core.g_v.u.rt_q by address:
+Consolidating write ports of memory isqrt_ooc.u_core.g_v.u.rt_q by address:
+  Merging ports 0, 1 (address 3'000).
+  Merging ports 0, 2 (address 3'000).
+  Merging ports 0, 3 (address 3'000).
+  Merging ports 0, 4 (address 3'000).
+  Merging ports 6, 7 (address 3'110).
+Consolidating write ports of memory isqrt_ooc.u_core.g_v.u.rt_q by address:
+  Merging ports 1, 2 (address 3'101).
+Consolidating write ports of memory isqrt_ooc.u_core.g_v.u.rt_q by address:
+
+2.33.8. Executing OPT_MEM_WIDEN pass (optimize memories where all ports are wide).
+Performed a total of 0 transformations.
+
+2.33.9. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \isqrt_ooc..
+Removed 0 unused cells and 8 unused wires.
+<suppressed ~1 debug messages>
+
+2.33.10. Executing MEMORY_COLLECT pass (generating $mem cells).
+
+2.34. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \isqrt_ooc..
+
+2.35. Executing MEMORY_LIBMAP pass (mapping memories to cells).
+using FF mapping for memory isqrt_ooc.u_core.g_v.u.rt_q
+using FF mapping for memory isqrt_ooc.u_core.g_v.u.rm_q
+<suppressed ~242 debug messages>
+
+2.36. Executing TECHMAP pass (map to technology primitives).
+
+2.36.1. Executing Verilog-2005 frontend: /home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/xilinx/lutrams_xc5v_map.v
+Parsing Verilog input from `/home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/xilinx/lutrams_xc5v_map.v' to AST representation.
+Generating RTLIL representation for module `$__XILINX_LUTRAM_SP_'.
+Generating RTLIL representation for module `$__XILINX_LUTRAM_DP_'.
+Generating RTLIL representation for module `$__XILINX_LUTRAM_QP_'.
+Generating RTLIL representation for module `$__XILINX_LUTRAM_OP_'.
+Generating RTLIL representation for module `$__XILINX_LUTRAM_SDP_'.
+Generating RTLIL representation for module `$__XILINX_LUTRAM_64X8SW_'.
+Generating RTLIL representation for module `$__XILINX_LUTRAM_32X16DR8_'.
+Successfully finished Verilog frontend.
+
+2.36.2. Continuing TECHMAP pass.
+No more expansions possible.
+<suppressed ~9 debug messages>
+
+2.37. Executing TECHMAP pass (map to technology primitives).
+
+2.37.1. Executing Verilog-2005 frontend: /home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/xilinx/brams_xc6v_map.v
+Parsing Verilog input from `/home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/xilinx/brams_xc6v_map.v' to AST representation.
+Generating RTLIL representation for module `$__XILINX_BLOCKRAM_TDP_'.
+Generating RTLIL representation for module `$__XILINX_BLOCKRAM_SDP_'.
+Successfully finished Verilog frontend.
+
+2.37.2. Continuing TECHMAP pass.
+No more expansions possible.
+<suppressed ~4 debug messages>
+
+2.38. Executing OPT pass (performing simple optimizations).
+
+2.38.1. Executing OPT_EXPR pass (perform const folding).
+Optimizing module isqrt_ooc.
+
+2.38.2. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\isqrt_ooc'.
+Computing hashes of 45 cells of `\isqrt_ooc'.
+Finding duplicate cells in `\isqrt_ooc'.
+Removed a total of 0 cells.
+
+2.38.3. Executing OPT_DFF pass (perform DFF optimizations).
+
+2.38.4. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \isqrt_ooc..
+
+2.38.5. Finished fast OPT passes.
+
+2.39. Executing MEMORY_MAP pass (converting memories to logic and flip-flops).
+Mapping memory \u_core.g_v.u.rt_q in module \isqrt_ooc:
+  created 8 $dff cells and 0 static cells of width 8.
+Extracted data FF from read port 2 of isqrt_ooc.u_core.g_v.u.rt_q: $\u_core.g_v.u.rt_q$rdreg[2]
+  read interface: 1 $dff and 10 $mux cells.
+  write interface: 16 write mux blocks.
+Mapping memory \u_core.g_v.u.rm_q in module \isqrt_ooc:
+  created 8 $dff cells and 0 static cells of width 9.
+Extracted data FF from read port 2 of isqrt_ooc.u_core.g_v.u.rm_q: $\u_core.g_v.u.rm_q$rdreg[2]
+  read interface: 1 $dff and 10 $mux cells.
+  write interface: 16 write mux blocks.
+
+2.40. Executing SIMPLEMAP pass (map simple cells to gate primitives).
+Mapping isqrt_ooc.$memory\u_core.g_v.u.rm_q$wrmux[7][0][0]$1489 ($mux).
+Mapping isqrt_ooc.$memory\u_core.g_v.u.rm_q$wrmux[6][1][0]$1485 ($mux).
+Mapping isqrt_ooc.$memory\u_core.g_v.u.rm_q$wrmux[6][0][0]$1483 ($mux).
+Mapping isqrt_ooc.$memory\u_core.g_v.u.rm_q$wrmux[5][1][0]$1479 ($mux).
+Mapping isqrt_ooc.$memory\u_core.g_v.u.rm_q$wrmux[5][0][0]$1477 ($mux).
+Mapping isqrt_ooc.$memory\u_core.g_v.u.rm_q$wrmux[4][1][0]$1473 ($mux).
+Mapping isqrt_ooc.$memory\u_core.g_v.u.rm_q$wrmux[4][0][0]$1469 ($mux).
+Mapping isqrt_ooc.$memory\u_core.g_v.u.rm_q$wrmux[3][1][0]$1467 ($mux).
+Mapping isqrt_ooc.$memory\u_core.g_v.u.rm_q$wrmux[3][0][0]$1465 ($mux).
+Mapping isqrt_ooc.$memory\u_core.g_v.u.rm_q$wrmux[2][1][0]$1463 ($mux).
+Mapping isqrt_ooc.$memory\u_core.g_v.u.rm_q$wrmux[2][0][0]$1461 ($mux).
+Mapping isqrt_ooc.$memory\u_core.g_v.u.rm_q$wrmux[1][1][0]$1459 ($mux).
+Mapping isqrt_ooc.$memory\u_core.g_v.u.rm_q$wrmux[1][0][0]$1457 ($mux).
+Mapping isqrt_ooc.$memory\u_core.g_v.u.rm_q$wrmux[0][1][0]$1455 ($mux).
+Mapping isqrt_ooc.$memory\u_core.g_v.u.rm_q$wrmux[0][0][0]$1451 ($mux).
+Mapping isqrt_ooc.$memory\u_core.g_v.u.rm_q$rdmux[2][2][3]$1448 ($mux).
+Mapping isqrt_ooc.$memory\u_core.g_v.u.rm_q$rdmux[2][2][2]$1445 ($mux).
+Mapping isqrt_ooc.$memory\u_core.g_v.u.rm_q$rdmux[2][2][1]$1442 ($mux).
+Mapping isqrt_ooc.$memory\u_core.g_v.u.rm_q$rdmux[2][2][0]$1439 ($mux).
+Mapping isqrt_ooc.$memory\u_core.g_v.u.rm_q$rdmux[2][1][1]$1436 ($mux).
+Mapping isqrt_ooc.$memory\u_core.g_v.u.rm_q$rdmux[2][1][0]$1433 ($mux).
+Mapping isqrt_ooc.$memory\u_core.g_v.u.rm_q$rdmux[2][0][0]$1430 ($mux).
+Mapping isqrt_ooc.$\u_core.g_v.u.rm_q$rdtransmux[2][0][7][0]$d ($mux).
+Mapping isqrt_ooc.$\u_core.g_v.u.rm_q$rdtransmux[2][0][6][0]$d ($mux).
+Mapping isqrt_ooc.$\u_core.g_v.u.rm_q$rdtransmux[2][0][5][0]$d ($mux).
+Mapping isqrt_ooc.$\u_core.g_v.u.rm_q$rdtransmux[2][0][4][0]$d ($mux).
+Mapping isqrt_ooc.$\u_core.g_v.u.rm_q$rdtransmux[2][0][3][0]$d ($mux).
+Mapping isqrt_ooc.$\u_core.g_v.u.rm_q$rdtransmux[2][0][2][0]$d ($mux).
+Mapping isqrt_ooc.$\u_core.g_v.u.rm_q$rdtransmux[2][0][1][0]$d ($mux).
+Mapping isqrt_ooc.$\u_core.g_v.u.rm_q$rdtransmux[2][0][0][0]$d ($mux).
+Mapping isqrt_ooc.$memory\u_core.g_v.u.rm_q$rdmux[1][1][1]$1405 ($mux).
+Mapping isqrt_ooc.$memory\u_core.g_v.u.rm_q$rdmux[1][1][0]$1402 ($mux).
+Mapping isqrt_ooc.$memory\u_core.g_v.u.rm_q$rdmux[1][0][0]$1399 ($mux).
+Mapping isqrt_ooc.$memory\u_core.g_v.u.rt_q$wrmux[7][0][0]$1379 ($mux).
+Mapping isqrt_ooc.$memory\u_core.g_v.u.rt_q$wrmux[6][1][0]$1375 ($mux).
+Mapping isqrt_ooc.$memory\u_core.g_v.u.rt_q$wrmux[6][0][0]$1373 ($mux).
+Mapping isqrt_ooc.$memory\u_core.g_v.u.rt_q$wrmux[5][1][0]$1369 ($mux).
+Mapping isqrt_ooc.$memory\u_core.g_v.u.rt_q$wrmux[5][0][0]$1367 ($mux).
+Mapping isqrt_ooc.$memory\u_core.g_v.u.rt_q$wrmux[4][1][0]$1363 ($mux).
+Mapping isqrt_ooc.$memory\u_core.g_v.u.rt_q$wrmux[4][0][0]$1357 ($mux).
+Mapping isqrt_ooc.$memory\u_core.g_v.u.rt_q$wrmux[3][1][0]$1355 ($mux).
+Mapping isqrt_ooc.$memory\u_core.g_v.u.rt_q$wrmux[3][0][0]$1353 ($mux).
+Mapping isqrt_ooc.$memory\u_core.g_v.u.rt_q$wrmux[2][1][0]$1351 ($mux).
+Mapping isqrt_ooc.$memory\u_core.g_v.u.rt_q$wrmux[2][0][0]$1349 ($mux).
+Mapping isqrt_ooc.$memory\u_core.g_v.u.rt_q$wrmux[1][1][0]$1347 ($mux).
+Mapping isqrt_ooc.$memory\u_core.g_v.u.rt_q$wrmux[1][0][0]$1345 ($mux).
+Mapping isqrt_ooc.$memory\u_core.g_v.u.rt_q$wrmux[0][1][0]$1343 ($mux).
+Mapping isqrt_ooc.$memory\u_core.g_v.u.rt_q$wrmux[0][0][0]$1337 ($mux).
+Mapping isqrt_ooc.$memory\u_core.g_v.u.rt_q$rdmux[2][2][3]$1332 ($mux).
+Mapping isqrt_ooc.$memory\u_core.g_v.u.rt_q$rdmux[2][2][2]$1329 ($mux).
+Mapping isqrt_ooc.$memory\u_core.g_v.u.rt_q$rdmux[2][2][1]$1326 ($mux).
+Mapping isqrt_ooc.$memory\u_core.g_v.u.rt_q$rdmux[2][2][0]$1323 ($mux).
+Mapping isqrt_ooc.$memory\u_core.g_v.u.rt_q$rdmux[2][1][1]$1320 ($mux).
+Mapping isqrt_ooc.$memory\u_core.g_v.u.rt_q$rdmux[2][1][0]$1317 ($mux).
+Mapping isqrt_ooc.$memory\u_core.g_v.u.rt_q$rdmux[2][0][0]$1314 ($mux).
+Mapping isqrt_ooc.$\u_core.g_v.u.rt_q$rdtransmux[2][0][7][0]$d ($mux).
+Mapping isqrt_ooc.$\u_core.g_v.u.rt_q$rdtransmux[2][0][6][0]$d ($mux).
+Mapping isqrt_ooc.$\u_core.g_v.u.rt_q$rdtransmux[2][0][5][0]$d ($mux).
+Mapping isqrt_ooc.$\u_core.g_v.u.rt_q$rdtransmux[2][0][4][0]$d ($mux).
+Mapping isqrt_ooc.$\u_core.g_v.u.rt_q$rdtransmux[2][0][3][0]$d ($mux).
+Mapping isqrt_ooc.$\u_core.g_v.u.rt_q$rdtransmux[2][0][2][0]$d ($mux).
+Mapping isqrt_ooc.$\u_core.g_v.u.rt_q$rdtransmux[2][0][1][0]$d ($mux).
+Mapping isqrt_ooc.$\u_core.g_v.u.rt_q$rdtransmux[2][0][0][0]$d ($mux).
+Mapping isqrt_ooc.$memory\u_core.g_v.u.rt_q$rdmux[1][1][1]$1289 ($mux).
+Mapping isqrt_ooc.$memory\u_core.g_v.u.rt_q$rdmux[1][1][0]$1286 ($mux).
+Mapping isqrt_ooc.$memory\u_core.g_v.u.rt_q$rdmux[1][0][0]$1283 ($mux).
+Mapping isqrt_ooc.$32 ($mux).
+Mapping isqrt_ooc.$147 ($mux).
+Mapping isqrt_ooc.$101 ($mux).
+Mapping isqrt_ooc.$55 ($mux).
+Mapping isqrt_ooc.$170 ($mux).
+Mapping isqrt_ooc.$124 ($mux).
+Mapping isqrt_ooc.$78 ($mux).
+Mapping isqrt_ooc.$9 ($mux).
+Mapping isqrt_ooc.$memory\u_core.g_v.u.rt_q$wrmux[7][1][0]$1381 ($mux).
+Mapping isqrt_ooc.$memory\u_core.g_v.u.rm_q$wrmux[7][1][0]$1491 ($mux).
+
+2.41. Executing MUXCOVER pass (mapping to wider MUXes).
+Covering MUX trees in module isqrt_ooc..
+  Treeifying 701 MUXes:
+    Found tree with 3 MUXes at root \u_core.g_v.u.g_stage[5].rt_i [0].
+    Found tree with 3 MUXes at root \u_core.g_v.u.g_stage[5].rt_i [1].
+    Found tree with 3 MUXes at root \u_core.g_v.u.g_stage[5].rt_i [2].
+    Found tree with 3 MUXes at root \u_core.g_v.u.g_stage[5].rt_i [3].
+    Found tree with 3 MUXes at root \u_core.g_v.u.g_stage[5].rt_i [4].
+    Found tree with 3 MUXes at root \u_core.g_v.u.g_stage[5].rt_i [5].
+    Found tree with 3 MUXes at root \u_core.g_v.u.g_stage[5].rt_i [6].
+    Found tree with 3 MUXes at root \u_core.g_v.u.g_stage[5].rm_i [0].
+    Found tree with 3 MUXes at root \u_core.g_v.u.g_stage[5].rm_i [1].
+    Found tree with 3 MUXes at root \u_core.g_v.u.g_stage[5].rm_i [2].
+    Found tree with 3 MUXes at root \u_core.g_v.u.g_stage[5].rm_i [3].
+    Found tree with 3 MUXes at root \u_core.g_v.u.g_stage[5].rm_i [4].
+    Found tree with 3 MUXes at root \u_core.g_v.u.g_stage[5].rm_i [5].
+    Found tree with 3 MUXes at root \u_core.g_v.u.g_stage[5].rm_i [6].
+    Found tree with 3 MUXes at root \u_core.g_v.u.g_stage[5].rm_i [7].
+    Found tree with 1 MUXes at root \u_core.g_v.u.g_stage[5].rm_c [0].
+    Found tree with 1 MUXes at root \u_core.g_v.u.g_stage[5].rm_c [1].
+    Found tree with 1 MUXes at root \u_core.g_v.u.g_stage[5].rm_c [2].
+    Found tree with 1 MUXes at root \u_core.g_v.u.g_stage[5].rm_c [3].
+    Found tree with 1 MUXes at root \u_core.g_v.u.g_stage[5].rm_c [4].
+    Found tree with 1 MUXes at root \u_core.g_v.u.g_stage[5].rm_c [5].
+    Found tree with 1 MUXes at root \u_core.g_v.u.g_stage[5].rm_c [6].
+    Found tree with 1 MUXes at root \u_core.g_v.u.g_stage[5].rm_c [7].
+    Found tree with 1 MUXes at root \u_core.g_v.u.g_stage[5].rm_c [8].
+    Found tree with 3 MUXes at root \u_core.g_v.u.g_stage[6].rt_i [0].
+    Found tree with 3 MUXes at root \u_core.g_v.u.g_stage[6].rt_i [1].
+    Found tree with 3 MUXes at root \u_core.g_v.u.g_stage[6].rt_i [2].
+    Found tree with 3 MUXes at root \u_core.g_v.u.g_stage[6].rt_i [3].
+    Found tree with 3 MUXes at root \u_core.g_v.u.g_stage[6].rt_i [4].
+    Found tree with 3 MUXes at root \u_core.g_v.u.g_stage[6].rt_i [5].
+    Found tree with 3 MUXes at root \u_core.g_v.u.g_stage[6].rt_i [6].
+    Found tree with 3 MUXes at root \u_core.g_v.u.g_stage[6].rm_i [0].
+    Found tree with 3 MUXes at root \u_core.g_v.u.g_stage[6].rm_i [1].
+    Found tree with 3 MUXes at root \u_core.g_v.u.g_stage[6].rm_i [2].
+    Found tree with 3 MUXes at root \u_core.g_v.u.g_stage[6].rm_i [3].
+    Found tree with 3 MUXes at root \u_core.g_v.u.g_stage[6].rm_i [4].
+    Found tree with 3 MUXes at root \u_core.g_v.u.g_stage[6].rm_i [5].
+    Found tree with 3 MUXes at root \u_core.g_v.u.g_stage[6].rm_i [6].
+    Found tree with 3 MUXes at root \u_core.g_v.u.g_stage[6].rm_i [7].
+    Found tree with 1 MUXes at root \u_core.g_v.u.g_stage[6].rm_c [0].
+    Found tree with 1 MUXes at root \u_core.g_v.u.g_stage[6].rm_c [1].
+    Found tree with 1 MUXes at root \u_core.g_v.u.g_stage[6].rm_c [2].
+    Found tree with 1 MUXes at root \u_core.g_v.u.g_stage[6].rm_c [3].
+    Found tree with 1 MUXes at root \u_core.g_v.u.g_stage[6].rm_c [4].
+    Found tree with 1 MUXes at root \u_core.g_v.u.g_stage[6].rm_c [5].
+    Found tree with 1 MUXes at root \u_core.g_v.u.g_stage[6].rm_c [6].
+    Found tree with 1 MUXes at root \u_core.g_v.u.g_stage[6].rm_c [7].
+    Found tree with 1 MUXes at root \u_core.g_v.u.g_stage[6].rm_c [8].
+    Found tree with 1 MUXes at root \u_core.g_v.u.g_stage[7].rm_c [0].
+    Found tree with 1 MUXes at root \u_core.g_v.u.g_stage[7].rm_c [1].
+    Found tree with 1 MUXes at root \u_core.g_v.u.g_stage[7].rm_c [2].
+    Found tree with 1 MUXes at root \u_core.g_v.u.g_stage[7].rm_c [3].
+    Found tree with 1 MUXes at root \u_core.g_v.u.g_stage[7].rm_c [4].
+    Found tree with 1 MUXes at root \u_core.g_v.u.g_stage[7].rm_c [5].
+    Found tree with 1 MUXes at root \u_core.g_v.u.g_stage[7].rm_c [6].
+    Found tree with 1 MUXes at root \u_core.g_v.u.g_stage[7].rm_c [7].
+    Found tree with 1 MUXes at root \u_core.g_v.u.g_stage[7].rm_c [8].
+    Found tree with 15 MUXes at root $auto$rtlil.cc:3333:Mux$1313 [0].
+    Found tree with 15 MUXes at root $auto$rtlil.cc:3333:Mux$1313 [1].
+    Found tree with 15 MUXes at root $auto$rtlil.cc:3333:Mux$1313 [2].
+    Found tree with 15 MUXes at root $auto$rtlil.cc:3333:Mux$1313 [3].
+    Found tree with 15 MUXes at root $auto$rtlil.cc:3333:Mux$1313 [4].
+    Found tree with 15 MUXes at root $auto$rtlil.cc:3333:Mux$1313 [5].
+    Found tree with 15 MUXes at root $auto$rtlil.cc:3333:Mux$1313 [6].
+    Found tree with 15 MUXes at root $auto$rtlil.cc:3333:Mux$1313 [7].
+    Found tree with 2 MUXes at root $memory\u_core.g_v.u.rt_q$wrmux[0][1][0]$y$1344 [0].
+    Found tree with 2 MUXes at root $memory\u_core.g_v.u.rt_q$wrmux[0][1][0]$y$1344 [1].
+    Found tree with 2 MUXes at root $memory\u_core.g_v.u.rt_q$wrmux[0][1][0]$y$1344 [2].
+    Found tree with 2 MUXes at root $memory\u_core.g_v.u.rt_q$wrmux[0][1][0]$y$1344 [3].
+    Found tree with 2 MUXes at root $memory\u_core.g_v.u.rt_q$wrmux[0][1][0]$y$1344 [4].
+    Found tree with 2 MUXes at root $memory\u_core.g_v.u.rt_q$wrmux[0][1][0]$y$1344 [5].
+    Found tree with 2 MUXes at root $memory\u_core.g_v.u.rt_q$wrmux[0][1][0]$y$1344 [6].
+    Found tree with 2 MUXes at root $memory\u_core.g_v.u.rt_q$wrmux[0][1][0]$y$1344 [7].
+    Found tree with 2 MUXes at root $memory\u_core.g_v.u.rt_q$wrmux[1][1][0]$y$1348 [0].
+    Found tree with 2 MUXes at root $memory\u_core.g_v.u.rt_q$wrmux[1][1][0]$y$1348 [1].
+    Found tree with 2 MUXes at root $memory\u_core.g_v.u.rt_q$wrmux[1][1][0]$y$1348 [2].
+    Found tree with 2 MUXes at root $memory\u_core.g_v.u.rt_q$wrmux[1][1][0]$y$1348 [3].
+    Found tree with 2 MUXes at root $memory\u_core.g_v.u.rt_q$wrmux[1][1][0]$y$1348 [4].
+    Found tree with 2 MUXes at root $memory\u_core.g_v.u.rt_q$wrmux[1][1][0]$y$1348 [5].
+    Found tree with 2 MUXes at root $memory\u_core.g_v.u.rt_q$wrmux[1][1][0]$y$1348 [6].
+    Found tree with 2 MUXes at root $memory\u_core.g_v.u.rt_q$wrmux[1][1][0]$y$1348 [7].
+    Found tree with 2 MUXes at root $memory\u_core.g_v.u.rt_q$wrmux[2][1][0]$y$1352 [0].
+    Found tree with 2 MUXes at root $memory\u_core.g_v.u.rt_q$wrmux[2][1][0]$y$1352 [1].
+    Found tree with 2 MUXes at root $memory\u_core.g_v.u.rt_q$wrmux[2][1][0]$y$1352 [2].
+    Found tree with 2 MUXes at root $memory\u_core.g_v.u.rt_q$wrmux[2][1][0]$y$1352 [3].
+    Found tree with 2 MUXes at root $memory\u_core.g_v.u.rt_q$wrmux[2][1][0]$y$1352 [4].
+    Found tree with 2 MUXes at root $memory\u_core.g_v.u.rt_q$wrmux[2][1][0]$y$1352 [5].
+    Found tree with 2 MUXes at root $memory\u_core.g_v.u.rt_q$wrmux[2][1][0]$y$1352 [6].
+    Found tree with 2 MUXes at root $memory\u_core.g_v.u.rt_q$wrmux[2][1][0]$y$1352 [7].
+    Found tree with 2 MUXes at root $memory\u_core.g_v.u.rt_q$wrmux[3][1][0]$y$1356 [0].
+    Found tree with 2 MUXes at root $memory\u_core.g_v.u.rt_q$wrmux[3][1][0]$y$1356 [1].
+    Found tree with 2 MUXes at root $memory\u_core.g_v.u.rt_q$wrmux[3][1][0]$y$1356 [2].
+    Found tree with 2 MUXes at root $memory\u_core.g_v.u.rt_q$wrmux[3][1][0]$y$1356 [3].
+    Found tree with 2 MUXes at root $memory\u_core.g_v.u.rt_q$wrmux[3][1][0]$y$1356 [4].
+    Found tree with 2 MUXes at root $memory\u_core.g_v.u.rt_q$wrmux[3][1][0]$y$1356 [5].
+    Found tree with 2 MUXes at root $memory\u_core.g_v.u.rt_q$wrmux[3][1][0]$y$1356 [6].
+    Found tree with 2 MUXes at root $memory\u_core.g_v.u.rt_q$wrmux[3][1][0]$y$1356 [7].
+    Found tree with 2 MUXes at root $memory\u_core.g_v.u.rt_q$wrmux[4][1][0]$y$1364 [0].
+    Found tree with 2 MUXes at root $memory\u_core.g_v.u.rt_q$wrmux[4][1][0]$y$1364 [1].
+    Found tree with 2 MUXes at root $memory\u_core.g_v.u.rt_q$wrmux[4][1][0]$y$1364 [2].
+    Found tree with 2 MUXes at root $memory\u_core.g_v.u.rt_q$wrmux[4][1][0]$y$1364 [3].
+    Found tree with 2 MUXes at root $memory\u_core.g_v.u.rt_q$wrmux[4][1][0]$y$1364 [4].
+    Found tree with 2 MUXes at root $memory\u_core.g_v.u.rt_q$wrmux[4][1][0]$y$1364 [5].
+    Found tree with 2 MUXes at root $memory\u_core.g_v.u.rt_q$wrmux[4][1][0]$y$1364 [6].
+    Found tree with 2 MUXes at root $memory\u_core.g_v.u.rt_q$wrmux[4][1][0]$y$1364 [7].
+    Found tree with 2 MUXes at root $memory\u_core.g_v.u.rt_q$wrmux[5][1][0]$y$1370 [0].
+    Found tree with 2 MUXes at root $memory\u_core.g_v.u.rt_q$wrmux[5][1][0]$y$1370 [1].
+    Found tree with 2 MUXes at root $memory\u_core.g_v.u.rt_q$wrmux[5][1][0]$y$1370 [2].
+    Found tree with 2 MUXes at root $memory\u_core.g_v.u.rt_q$wrmux[5][1][0]$y$1370 [3].
+    Found tree with 2 MUXes at root $memory\u_core.g_v.u.rt_q$wrmux[5][1][0]$y$1370 [4].
+    Found tree with 2 MUXes at root $memory\u_core.g_v.u.rt_q$wrmux[5][1][0]$y$1370 [5].
+    Found tree with 2 MUXes at root $memory\u_core.g_v.u.rt_q$wrmux[5][1][0]$y$1370 [6].
+    Found tree with 2 MUXes at root $memory\u_core.g_v.u.rt_q$wrmux[5][1][0]$y$1370 [7].
+    Found tree with 2 MUXes at root $memory\u_core.g_v.u.rt_q$wrmux[6][1][0]$y$1376 [0].
+    Found tree with 2 MUXes at root $memory\u_core.g_v.u.rt_q$wrmux[6][1][0]$y$1376 [1].
+    Found tree with 2 MUXes at root $memory\u_core.g_v.u.rt_q$wrmux[6][1][0]$y$1376 [2].
+    Found tree with 2 MUXes at root $memory\u_core.g_v.u.rt_q$wrmux[6][1][0]$y$1376 [3].
+    Found tree with 2 MUXes at root $memory\u_core.g_v.u.rt_q$wrmux[6][1][0]$y$1376 [4].
+    Found tree with 2 MUXes at root $memory\u_core.g_v.u.rt_q$wrmux[6][1][0]$y$1376 [5].
+    Found tree with 2 MUXes at root $memory\u_core.g_v.u.rt_q$wrmux[6][1][0]$y$1376 [6].
+    Found tree with 2 MUXes at root $memory\u_core.g_v.u.rt_q$wrmux[6][1][0]$y$1376 [7].
+    Found tree with 2 MUXes at root $memory\u_core.g_v.u.rt_q$wrmux[7][1][0]$y$1382 [0].
+    Found tree with 2 MUXes at root $memory\u_core.g_v.u.rt_q$wrmux[7][1][0]$y$1382 [1].
+    Found tree with 2 MUXes at root $memory\u_core.g_v.u.rt_q$wrmux[7][1][0]$y$1382 [2].
+    Found tree with 2 MUXes at root $memory\u_core.g_v.u.rt_q$wrmux[7][1][0]$y$1382 [3].
+    Found tree with 2 MUXes at root $memory\u_core.g_v.u.rt_q$wrmux[7][1][0]$y$1382 [4].
+    Found tree with 2 MUXes at root $memory\u_core.g_v.u.rt_q$wrmux[7][1][0]$y$1382 [5].
+    Found tree with 2 MUXes at root $memory\u_core.g_v.u.rt_q$wrmux[7][1][0]$y$1382 [6].
+    Found tree with 2 MUXes at root $memory\u_core.g_v.u.rt_q$wrmux[7][1][0]$y$1382 [7].
+    Found tree with 15 MUXes at root $auto$rtlil.cc:3333:Mux$1429 [0].
+    Found tree with 15 MUXes at root $auto$rtlil.cc:3333:Mux$1429 [1].
+    Found tree with 15 MUXes at root $auto$rtlil.cc:3333:Mux$1429 [2].
+    Found tree with 15 MUXes at root $auto$rtlil.cc:3333:Mux$1429 [3].
+    Found tree with 15 MUXes at root $auto$rtlil.cc:3333:Mux$1429 [4].
+    Found tree with 15 MUXes at root $auto$rtlil.cc:3333:Mux$1429 [5].
+    Found tree with 15 MUXes at root $auto$rtlil.cc:3333:Mux$1429 [6].
+    Found tree with 15 MUXes at root $auto$rtlil.cc:3333:Mux$1429 [7].
+    Found tree with 15 MUXes at root $auto$rtlil.cc:3333:Mux$1429 [8].
+    Found tree with 3 MUXes at root $memory\u_core.g_v.u.rm_q$wrmux[0][1][0]$y$1456 [0].
+    Found tree with 3 MUXes at root $memory\u_core.g_v.u.rm_q$wrmux[0][1][0]$y$1456 [1].
+    Found tree with 3 MUXes at root $memory\u_core.g_v.u.rm_q$wrmux[0][1][0]$y$1456 [2].
+    Found tree with 3 MUXes at root $memory\u_core.g_v.u.rm_q$wrmux[0][1][0]$y$1456 [3].
+    Found tree with 3 MUXes at root $memory\u_core.g_v.u.rm_q$wrmux[0][1][0]$y$1456 [4].
+    Found tree with 3 MUXes at root $memory\u_core.g_v.u.rm_q$wrmux[0][1][0]$y$1456 [5].
+    Found tree with 3 MUXes at root $memory\u_core.g_v.u.rm_q$wrmux[0][1][0]$y$1456 [6].
+    Found tree with 3 MUXes at root $memory\u_core.g_v.u.rm_q$wrmux[0][1][0]$y$1456 [7].
+    Found tree with 3 MUXes at root $memory\u_core.g_v.u.rm_q$wrmux[0][1][0]$y$1456 [8].
+    Found tree with 3 MUXes at root $memory\u_core.g_v.u.rm_q$wrmux[1][1][0]$y$1460 [0].
+    Found tree with 3 MUXes at root $memory\u_core.g_v.u.rm_q$wrmux[1][1][0]$y$1460 [1].
+    Found tree with 3 MUXes at root $memory\u_core.g_v.u.rm_q$wrmux[1][1][0]$y$1460 [2].
+    Found tree with 3 MUXes at root $memory\u_core.g_v.u.rm_q$wrmux[1][1][0]$y$1460 [3].
+    Found tree with 3 MUXes at root $memory\u_core.g_v.u.rm_q$wrmux[1][1][0]$y$1460 [4].
+    Found tree with 3 MUXes at root $memory\u_core.g_v.u.rm_q$wrmux[1][1][0]$y$1460 [5].
+    Found tree with 3 MUXes at root $memory\u_core.g_v.u.rm_q$wrmux[1][1][0]$y$1460 [6].
+    Found tree with 3 MUXes at root $memory\u_core.g_v.u.rm_q$wrmux[1][1][0]$y$1460 [7].
+    Found tree with 3 MUXes at root $memory\u_core.g_v.u.rm_q$wrmux[1][1][0]$y$1460 [8].
+    Found tree with 3 MUXes at root $memory\u_core.g_v.u.rm_q$wrmux[2][1][0]$y$1464 [0].
+    Found tree with 3 MUXes at root $memory\u_core.g_v.u.rm_q$wrmux[2][1][0]$y$1464 [1].
+    Found tree with 3 MUXes at root $memory\u_core.g_v.u.rm_q$wrmux[2][1][0]$y$1464 [2].
+    Found tree with 3 MUXes at root $memory\u_core.g_v.u.rm_q$wrmux[2][1][0]$y$1464 [3].
+    Found tree with 3 MUXes at root $memory\u_core.g_v.u.rm_q$wrmux[2][1][0]$y$1464 [4].
+    Found tree with 3 MUXes at root $memory\u_core.g_v.u.rm_q$wrmux[2][1][0]$y$1464 [5].
+    Found tree with 3 MUXes at root $memory\u_core.g_v.u.rm_q$wrmux[2][1][0]$y$1464 [6].
+    Found tree with 3 MUXes at root $memory\u_core.g_v.u.rm_q$wrmux[2][1][0]$y$1464 [7].
+    Found tree with 3 MUXes at root $memory\u_core.g_v.u.rm_q$wrmux[2][1][0]$y$1464 [8].
+    Found tree with 3 MUXes at root $memory\u_core.g_v.u.rm_q$wrmux[3][1][0]$y$1468 [0].
+    Found tree with 3 MUXes at root $memory\u_core.g_v.u.rm_q$wrmux[3][1][0]$y$1468 [1].
+    Found tree with 3 MUXes at root $memory\u_core.g_v.u.rm_q$wrmux[3][1][0]$y$1468 [2].
+    Found tree with 3 MUXes at root $memory\u_core.g_v.u.rm_q$wrmux[3][1][0]$y$1468 [3].
+    Found tree with 3 MUXes at root $memory\u_core.g_v.u.rm_q$wrmux[3][1][0]$y$1468 [4].
+    Found tree with 3 MUXes at root $memory\u_core.g_v.u.rm_q$wrmux[3][1][0]$y$1468 [5].
+    Found tree with 3 MUXes at root $memory\u_core.g_v.u.rm_q$wrmux[3][1][0]$y$1468 [6].
+    Found tree with 3 MUXes at root $memory\u_core.g_v.u.rm_q$wrmux[3][1][0]$y$1468 [7].
+    Found tree with 3 MUXes at root $memory\u_core.g_v.u.rm_q$wrmux[3][1][0]$y$1468 [8].
+    Found tree with 3 MUXes at root $memory\u_core.g_v.u.rm_q$wrmux[4][1][0]$y$1474 [0].
+    Found tree with 3 MUXes at root $memory\u_core.g_v.u.rm_q$wrmux[4][1][0]$y$1474 [1].
+    Found tree with 3 MUXes at root $memory\u_core.g_v.u.rm_q$wrmux[4][1][0]$y$1474 [2].
+    Found tree with 3 MUXes at root $memory\u_core.g_v.u.rm_q$wrmux[4][1][0]$y$1474 [3].
+    Found tree with 3 MUXes at root $memory\u_core.g_v.u.rm_q$wrmux[4][1][0]$y$1474 [4].
+    Found tree with 3 MUXes at root $memory\u_core.g_v.u.rm_q$wrmux[4][1][0]$y$1474 [5].
+    Found tree with 3 MUXes at root $memory\u_core.g_v.u.rm_q$wrmux[4][1][0]$y$1474 [6].
+    Found tree with 3 MUXes at root $memory\u_core.g_v.u.rm_q$wrmux[4][1][0]$y$1474 [7].
+    Found tree with 3 MUXes at root $memory\u_core.g_v.u.rm_q$wrmux[4][1][0]$y$1474 [8].
+    Found tree with 2 MUXes at root $memory\u_core.g_v.u.rm_q$wrmux[5][1][0]$y$1480 [0].
+    Found tree with 2 MUXes at root $memory\u_core.g_v.u.rm_q$wrmux[5][1][0]$y$1480 [1].
+    Found tree with 2 MUXes at root $memory\u_core.g_v.u.rm_q$wrmux[5][1][0]$y$1480 [2].
+    Found tree with 2 MUXes at root $memory\u_core.g_v.u.rm_q$wrmux[5][1][0]$y$1480 [3].
+    Found tree with 2 MUXes at root $memory\u_core.g_v.u.rm_q$wrmux[5][1][0]$y$1480 [4].
+    Found tree with 2 MUXes at root $memory\u_core.g_v.u.rm_q$wrmux[5][1][0]$y$1480 [5].
+    Found tree with 2 MUXes at root $memory\u_core.g_v.u.rm_q$wrmux[5][1][0]$y$1480 [6].
+    Found tree with 2 MUXes at root $memory\u_core.g_v.u.rm_q$wrmux[5][1][0]$y$1480 [7].
+    Found tree with 2 MUXes at root $memory\u_core.g_v.u.rm_q$wrmux[5][1][0]$y$1480 [8].
+    Found tree with 2 MUXes at root $memory\u_core.g_v.u.rm_q$wrmux[6][1][0]$y$1486 [0].
+    Found tree with 2 MUXes at root $memory\u_core.g_v.u.rm_q$wrmux[6][1][0]$y$1486 [1].
+    Found tree with 2 MUXes at root $memory\u_core.g_v.u.rm_q$wrmux[6][1][0]$y$1486 [2].
+    Found tree with 2 MUXes at root $memory\u_core.g_v.u.rm_q$wrmux[6][1][0]$y$1486 [3].
+    Found tree with 2 MUXes at root $memory\u_core.g_v.u.rm_q$wrmux[6][1][0]$y$1486 [4].
+    Found tree with 2 MUXes at root $memory\u_core.g_v.u.rm_q$wrmux[6][1][0]$y$1486 [5].
+    Found tree with 2 MUXes at root $memory\u_core.g_v.u.rm_q$wrmux[6][1][0]$y$1486 [6].
+    Found tree with 2 MUXes at root $memory\u_core.g_v.u.rm_q$wrmux[6][1][0]$y$1486 [7].
+    Found tree with 2 MUXes at root $memory\u_core.g_v.u.rm_q$wrmux[6][1][0]$y$1486 [8].
+    Found tree with 2 MUXes at root $memory\u_core.g_v.u.rm_q$wrmux[7][1][0]$y$1492 [0].
+    Found tree with 2 MUXes at root $memory\u_core.g_v.u.rm_q$wrmux[7][1][0]$y$1492 [1].
+    Found tree with 2 MUXes at root $memory\u_core.g_v.u.rm_q$wrmux[7][1][0]$y$1492 [2].
+    Found tree with 2 MUXes at root $memory\u_core.g_v.u.rm_q$wrmux[7][1][0]$y$1492 [3].
+    Found tree with 2 MUXes at root $memory\u_core.g_v.u.rm_q$wrmux[7][1][0]$y$1492 [4].
+    Found tree with 2 MUXes at root $memory\u_core.g_v.u.rm_q$wrmux[7][1][0]$y$1492 [5].
+    Found tree with 2 MUXes at root $memory\u_core.g_v.u.rm_q$wrmux[7][1][0]$y$1492 [6].
+    Found tree with 2 MUXes at root $memory\u_core.g_v.u.rm_q$wrmux[7][1][0]$y$1492 [7].
+    Found tree with 2 MUXes at root $memory\u_core.g_v.u.rm_q$wrmux[7][1][0]$y$1492 [8].
+    Finished treeification: Found 210 trees.
+  Covering trees:
+    Replaced tree at \u_core.g_v.u.g_stage[5].rt_i [0]: 3 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at \u_core.g_v.u.g_stage[5].rt_i [1]: 3 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at \u_core.g_v.u.g_stage[5].rt_i [2]: 3 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at \u_core.g_v.u.g_stage[5].rt_i [3]: 3 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at \u_core.g_v.u.g_stage[5].rt_i [4]: 3 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at \u_core.g_v.u.g_stage[5].rt_i [5]: 3 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at \u_core.g_v.u.g_stage[5].rt_i [6]: 3 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at \u_core.g_v.u.g_stage[5].rm_i [0]: 3 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at \u_core.g_v.u.g_stage[5].rm_i [1]: 3 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at \u_core.g_v.u.g_stage[5].rm_i [2]: 3 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at \u_core.g_v.u.g_stage[5].rm_i [3]: 3 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at \u_core.g_v.u.g_stage[5].rm_i [4]: 3 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at \u_core.g_v.u.g_stage[5].rm_i [5]: 3 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at \u_core.g_v.u.g_stage[5].rm_i [6]: 3 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at \u_core.g_v.u.g_stage[5].rm_i [7]: 3 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at \u_core.g_v.u.g_stage[5].rm_c [0]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at \u_core.g_v.u.g_stage[5].rm_c [1]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at \u_core.g_v.u.g_stage[5].rm_c [2]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at \u_core.g_v.u.g_stage[5].rm_c [3]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at \u_core.g_v.u.g_stage[5].rm_c [4]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at \u_core.g_v.u.g_stage[5].rm_c [5]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at \u_core.g_v.u.g_stage[5].rm_c [6]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at \u_core.g_v.u.g_stage[5].rm_c [7]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at \u_core.g_v.u.g_stage[5].rm_c [8]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at \u_core.g_v.u.g_stage[6].rt_i [0]: 3 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at \u_core.g_v.u.g_stage[6].rt_i [1]: 3 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at \u_core.g_v.u.g_stage[6].rt_i [2]: 3 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at \u_core.g_v.u.g_stage[6].rt_i [3]: 3 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at \u_core.g_v.u.g_stage[6].rt_i [4]: 3 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at \u_core.g_v.u.g_stage[6].rt_i [5]: 3 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at \u_core.g_v.u.g_stage[6].rt_i [6]: 3 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at \u_core.g_v.u.g_stage[6].rm_i [0]: 3 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at \u_core.g_v.u.g_stage[6].rm_i [1]: 3 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at \u_core.g_v.u.g_stage[6].rm_i [2]: 3 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at \u_core.g_v.u.g_stage[6].rm_i [3]: 3 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at \u_core.g_v.u.g_stage[6].rm_i [4]: 3 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at \u_core.g_v.u.g_stage[6].rm_i [5]: 3 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at \u_core.g_v.u.g_stage[6].rm_i [6]: 3 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at \u_core.g_v.u.g_stage[6].rm_i [7]: 3 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at \u_core.g_v.u.g_stage[6].rm_c [0]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at \u_core.g_v.u.g_stage[6].rm_c [1]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at \u_core.g_v.u.g_stage[6].rm_c [2]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at \u_core.g_v.u.g_stage[6].rm_c [3]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at \u_core.g_v.u.g_stage[6].rm_c [4]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at \u_core.g_v.u.g_stage[6].rm_c [5]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at \u_core.g_v.u.g_stage[6].rm_c [6]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at \u_core.g_v.u.g_stage[6].rm_c [7]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at \u_core.g_v.u.g_stage[6].rm_c [8]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at \u_core.g_v.u.g_stage[7].rm_c [0]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at \u_core.g_v.u.g_stage[7].rm_c [1]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at \u_core.g_v.u.g_stage[7].rm_c [2]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at \u_core.g_v.u.g_stage[7].rm_c [3]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at \u_core.g_v.u.g_stage[7].rm_c [4]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at \u_core.g_v.u.g_stage[7].rm_c [5]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at \u_core.g_v.u.g_stage[7].rm_c [6]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at \u_core.g_v.u.g_stage[7].rm_c [7]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at \u_core.g_v.u.g_stage[7].rm_c [8]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $auto$rtlil.cc:3333:Mux$1313 [0]: 3 MUX2, 0 MUX4, 0 MUX8, 2 MUX16
+    Replaced tree at $auto$rtlil.cc:3333:Mux$1313 [1]: 3 MUX2, 0 MUX4, 0 MUX8, 2 MUX16
+    Replaced tree at $auto$rtlil.cc:3333:Mux$1313 [2]: 3 MUX2, 0 MUX4, 0 MUX8, 2 MUX16
+    Replaced tree at $auto$rtlil.cc:3333:Mux$1313 [3]: 3 MUX2, 0 MUX4, 0 MUX8, 2 MUX16
+    Replaced tree at $auto$rtlil.cc:3333:Mux$1313 [4]: 3 MUX2, 0 MUX4, 0 MUX8, 2 MUX16
+    Replaced tree at $auto$rtlil.cc:3333:Mux$1313 [5]: 3 MUX2, 0 MUX4, 0 MUX8, 2 MUX16
+    Replaced tree at $auto$rtlil.cc:3333:Mux$1313 [6]: 3 MUX2, 0 MUX4, 0 MUX8, 2 MUX16
+    Replaced tree at $auto$rtlil.cc:3333:Mux$1313 [7]: 3 MUX2, 0 MUX4, 0 MUX8, 2 MUX16
+    Replaced tree at $memory\u_core.g_v.u.rt_q$wrmux[0][1][0]$y$1344 [0]: 2 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_core.g_v.u.rt_q$wrmux[0][1][0]$y$1344 [1]: 2 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_core.g_v.u.rt_q$wrmux[0][1][0]$y$1344 [2]: 2 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_core.g_v.u.rt_q$wrmux[0][1][0]$y$1344 [3]: 2 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_core.g_v.u.rt_q$wrmux[0][1][0]$y$1344 [4]: 2 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_core.g_v.u.rt_q$wrmux[0][1][0]$y$1344 [5]: 2 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_core.g_v.u.rt_q$wrmux[0][1][0]$y$1344 [6]: 2 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_core.g_v.u.rt_q$wrmux[0][1][0]$y$1344 [7]: 2 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_core.g_v.u.rt_q$wrmux[1][1][0]$y$1348 [0]: 2 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_core.g_v.u.rt_q$wrmux[1][1][0]$y$1348 [1]: 2 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_core.g_v.u.rt_q$wrmux[1][1][0]$y$1348 [2]: 2 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_core.g_v.u.rt_q$wrmux[1][1][0]$y$1348 [3]: 2 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_core.g_v.u.rt_q$wrmux[1][1][0]$y$1348 [4]: 2 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_core.g_v.u.rt_q$wrmux[1][1][0]$y$1348 [5]: 2 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_core.g_v.u.rt_q$wrmux[1][1][0]$y$1348 [6]: 2 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_core.g_v.u.rt_q$wrmux[1][1][0]$y$1348 [7]: 2 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_core.g_v.u.rt_q$wrmux[2][1][0]$y$1352 [0]: 2 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_core.g_v.u.rt_q$wrmux[2][1][0]$y$1352 [1]: 2 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_core.g_v.u.rt_q$wrmux[2][1][0]$y$1352 [2]: 2 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_core.g_v.u.rt_q$wrmux[2][1][0]$y$1352 [3]: 2 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_core.g_v.u.rt_q$wrmux[2][1][0]$y$1352 [4]: 2 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_core.g_v.u.rt_q$wrmux[2][1][0]$y$1352 [5]: 2 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_core.g_v.u.rt_q$wrmux[2][1][0]$y$1352 [6]: 2 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_core.g_v.u.rt_q$wrmux[2][1][0]$y$1352 [7]: 2 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_core.g_v.u.rt_q$wrmux[3][1][0]$y$1356 [0]: 2 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_core.g_v.u.rt_q$wrmux[3][1][0]$y$1356 [1]: 2 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_core.g_v.u.rt_q$wrmux[3][1][0]$y$1356 [2]: 2 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_core.g_v.u.rt_q$wrmux[3][1][0]$y$1356 [3]: 2 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_core.g_v.u.rt_q$wrmux[3][1][0]$y$1356 [4]: 2 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_core.g_v.u.rt_q$wrmux[3][1][0]$y$1356 [5]: 2 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_core.g_v.u.rt_q$wrmux[3][1][0]$y$1356 [6]: 2 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_core.g_v.u.rt_q$wrmux[3][1][0]$y$1356 [7]: 2 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_core.g_v.u.rt_q$wrmux[4][1][0]$y$1364 [0]: 2 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_core.g_v.u.rt_q$wrmux[4][1][0]$y$1364 [1]: 2 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_core.g_v.u.rt_q$wrmux[4][1][0]$y$1364 [2]: 2 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_core.g_v.u.rt_q$wrmux[4][1][0]$y$1364 [3]: 2 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_core.g_v.u.rt_q$wrmux[4][1][0]$y$1364 [4]: 2 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_core.g_v.u.rt_q$wrmux[4][1][0]$y$1364 [5]: 2 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_core.g_v.u.rt_q$wrmux[4][1][0]$y$1364 [6]: 2 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_core.g_v.u.rt_q$wrmux[4][1][0]$y$1364 [7]: 2 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_core.g_v.u.rt_q$wrmux[5][1][0]$y$1370 [0]: 2 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_core.g_v.u.rt_q$wrmux[5][1][0]$y$1370 [1]: 2 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_core.g_v.u.rt_q$wrmux[5][1][0]$y$1370 [2]: 2 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_core.g_v.u.rt_q$wrmux[5][1][0]$y$1370 [3]: 2 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_core.g_v.u.rt_q$wrmux[5][1][0]$y$1370 [4]: 2 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_core.g_v.u.rt_q$wrmux[5][1][0]$y$1370 [5]: 2 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_core.g_v.u.rt_q$wrmux[5][1][0]$y$1370 [6]: 2 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_core.g_v.u.rt_q$wrmux[5][1][0]$y$1370 [7]: 2 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_core.g_v.u.rt_q$wrmux[6][1][0]$y$1376 [0]: 2 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_core.g_v.u.rt_q$wrmux[6][1][0]$y$1376 [1]: 2 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_core.g_v.u.rt_q$wrmux[6][1][0]$y$1376 [2]: 2 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_core.g_v.u.rt_q$wrmux[6][1][0]$y$1376 [3]: 2 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_core.g_v.u.rt_q$wrmux[6][1][0]$y$1376 [4]: 2 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_core.g_v.u.rt_q$wrmux[6][1][0]$y$1376 [5]: 2 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_core.g_v.u.rt_q$wrmux[6][1][0]$y$1376 [6]: 2 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_core.g_v.u.rt_q$wrmux[6][1][0]$y$1376 [7]: 2 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_core.g_v.u.rt_q$wrmux[7][1][0]$y$1382 [0]: 2 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_core.g_v.u.rt_q$wrmux[7][1][0]$y$1382 [1]: 2 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_core.g_v.u.rt_q$wrmux[7][1][0]$y$1382 [2]: 2 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_core.g_v.u.rt_q$wrmux[7][1][0]$y$1382 [3]: 2 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_core.g_v.u.rt_q$wrmux[7][1][0]$y$1382 [4]: 2 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_core.g_v.u.rt_q$wrmux[7][1][0]$y$1382 [5]: 2 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_core.g_v.u.rt_q$wrmux[7][1][0]$y$1382 [6]: 2 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_core.g_v.u.rt_q$wrmux[7][1][0]$y$1382 [7]: 2 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $auto$rtlil.cc:3333:Mux$1429 [0]: 3 MUX2, 0 MUX4, 0 MUX8, 2 MUX16
+    Replaced tree at $auto$rtlil.cc:3333:Mux$1429 [1]: 3 MUX2, 0 MUX4, 0 MUX8, 2 MUX16
+    Replaced tree at $auto$rtlil.cc:3333:Mux$1429 [2]: 3 MUX2, 0 MUX4, 0 MUX8, 2 MUX16
+    Replaced tree at $auto$rtlil.cc:3333:Mux$1429 [3]: 3 MUX2, 0 MUX4, 0 MUX8, 2 MUX16
+    Replaced tree at $auto$rtlil.cc:3333:Mux$1429 [4]: 3 MUX2, 0 MUX4, 0 MUX8, 2 MUX16
+    Replaced tree at $auto$rtlil.cc:3333:Mux$1429 [5]: 3 MUX2, 0 MUX4, 0 MUX8, 2 MUX16
+    Replaced tree at $auto$rtlil.cc:3333:Mux$1429 [6]: 3 MUX2, 0 MUX4, 0 MUX8, 2 MUX16
+    Replaced tree at $auto$rtlil.cc:3333:Mux$1429 [7]: 3 MUX2, 0 MUX4, 0 MUX8, 2 MUX16
+    Replaced tree at $auto$rtlil.cc:3333:Mux$1429 [8]: 3 MUX2, 0 MUX4, 0 MUX8, 2 MUX16
+    Replaced tree at $memory\u_core.g_v.u.rm_q$wrmux[0][1][0]$y$1456 [0]: 3 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_core.g_v.u.rm_q$wrmux[0][1][0]$y$1456 [1]: 3 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_core.g_v.u.rm_q$wrmux[0][1][0]$y$1456 [2]: 3 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_core.g_v.u.rm_q$wrmux[0][1][0]$y$1456 [3]: 3 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_core.g_v.u.rm_q$wrmux[0][1][0]$y$1456 [4]: 3 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_core.g_v.u.rm_q$wrmux[0][1][0]$y$1456 [5]: 3 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_core.g_v.u.rm_q$wrmux[0][1][0]$y$1456 [6]: 3 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_core.g_v.u.rm_q$wrmux[0][1][0]$y$1456 [7]: 3 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_core.g_v.u.rm_q$wrmux[0][1][0]$y$1456 [8]: 3 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_core.g_v.u.rm_q$wrmux[1][1][0]$y$1460 [0]: 3 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_core.g_v.u.rm_q$wrmux[1][1][0]$y$1460 [1]: 3 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_core.g_v.u.rm_q$wrmux[1][1][0]$y$1460 [2]: 3 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_core.g_v.u.rm_q$wrmux[1][1][0]$y$1460 [3]: 3 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_core.g_v.u.rm_q$wrmux[1][1][0]$y$1460 [4]: 3 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_core.g_v.u.rm_q$wrmux[1][1][0]$y$1460 [5]: 3 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_core.g_v.u.rm_q$wrmux[1][1][0]$y$1460 [6]: 3 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_core.g_v.u.rm_q$wrmux[1][1][0]$y$1460 [7]: 3 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_core.g_v.u.rm_q$wrmux[1][1][0]$y$1460 [8]: 3 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_core.g_v.u.rm_q$wrmux[2][1][0]$y$1464 [0]: 3 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_core.g_v.u.rm_q$wrmux[2][1][0]$y$1464 [1]: 3 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_core.g_v.u.rm_q$wrmux[2][1][0]$y$1464 [2]: 3 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_core.g_v.u.rm_q$wrmux[2][1][0]$y$1464 [3]: 3 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_core.g_v.u.rm_q$wrmux[2][1][0]$y$1464 [4]: 3 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_core.g_v.u.rm_q$wrmux[2][1][0]$y$1464 [5]: 3 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_core.g_v.u.rm_q$wrmux[2][1][0]$y$1464 [6]: 3 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_core.g_v.u.rm_q$wrmux[2][1][0]$y$1464 [7]: 3 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_core.g_v.u.rm_q$wrmux[2][1][0]$y$1464 [8]: 3 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_core.g_v.u.rm_q$wrmux[3][1][0]$y$1468 [0]: 3 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_core.g_v.u.rm_q$wrmux[3][1][0]$y$1468 [1]: 3 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_core.g_v.u.rm_q$wrmux[3][1][0]$y$1468 [2]: 3 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_core.g_v.u.rm_q$wrmux[3][1][0]$y$1468 [3]: 3 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_core.g_v.u.rm_q$wrmux[3][1][0]$y$1468 [4]: 3 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_core.g_v.u.rm_q$wrmux[3][1][0]$y$1468 [5]: 3 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_core.g_v.u.rm_q$wrmux[3][1][0]$y$1468 [6]: 3 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_core.g_v.u.rm_q$wrmux[3][1][0]$y$1468 [7]: 3 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_core.g_v.u.rm_q$wrmux[3][1][0]$y$1468 [8]: 3 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_core.g_v.u.rm_q$wrmux[4][1][0]$y$1474 [0]: 3 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_core.g_v.u.rm_q$wrmux[4][1][0]$y$1474 [1]: 3 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_core.g_v.u.rm_q$wrmux[4][1][0]$y$1474 [2]: 3 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_core.g_v.u.rm_q$wrmux[4][1][0]$y$1474 [3]: 3 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_core.g_v.u.rm_q$wrmux[4][1][0]$y$1474 [4]: 3 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_core.g_v.u.rm_q$wrmux[4][1][0]$y$1474 [5]: 3 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_core.g_v.u.rm_q$wrmux[4][1][0]$y$1474 [6]: 3 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_core.g_v.u.rm_q$wrmux[4][1][0]$y$1474 [7]: 3 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_core.g_v.u.rm_q$wrmux[4][1][0]$y$1474 [8]: 3 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_core.g_v.u.rm_q$wrmux[5][1][0]$y$1480 [0]: 2 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_core.g_v.u.rm_q$wrmux[5][1][0]$y$1480 [1]: 2 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_core.g_v.u.rm_q$wrmux[5][1][0]$y$1480 [2]: 2 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_core.g_v.u.rm_q$wrmux[5][1][0]$y$1480 [3]: 2 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_core.g_v.u.rm_q$wrmux[5][1][0]$y$1480 [4]: 2 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_core.g_v.u.rm_q$wrmux[5][1][0]$y$1480 [5]: 2 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_core.g_v.u.rm_q$wrmux[5][1][0]$y$1480 [6]: 2 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_core.g_v.u.rm_q$wrmux[5][1][0]$y$1480 [7]: 2 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_core.g_v.u.rm_q$wrmux[5][1][0]$y$1480 [8]: 2 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_core.g_v.u.rm_q$wrmux[6][1][0]$y$1486 [0]: 2 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_core.g_v.u.rm_q$wrmux[6][1][0]$y$1486 [1]: 2 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_core.g_v.u.rm_q$wrmux[6][1][0]$y$1486 [2]: 2 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_core.g_v.u.rm_q$wrmux[6][1][0]$y$1486 [3]: 2 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_core.g_v.u.rm_q$wrmux[6][1][0]$y$1486 [4]: 2 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_core.g_v.u.rm_q$wrmux[6][1][0]$y$1486 [5]: 2 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_core.g_v.u.rm_q$wrmux[6][1][0]$y$1486 [6]: 2 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_core.g_v.u.rm_q$wrmux[6][1][0]$y$1486 [7]: 2 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_core.g_v.u.rm_q$wrmux[6][1][0]$y$1486 [8]: 2 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_core.g_v.u.rm_q$wrmux[7][1][0]$y$1492 [0]: 2 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_core.g_v.u.rm_q$wrmux[7][1][0]$y$1492 [1]: 2 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_core.g_v.u.rm_q$wrmux[7][1][0]$y$1492 [2]: 2 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_core.g_v.u.rm_q$wrmux[7][1][0]$y$1492 [3]: 2 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_core.g_v.u.rm_q$wrmux[7][1][0]$y$1492 [4]: 2 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_core.g_v.u.rm_q$wrmux[7][1][0]$y$1492 [5]: 2 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_core.g_v.u.rm_q$wrmux[7][1][0]$y$1492 [6]: 2 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_core.g_v.u.rm_q$wrmux[7][1][0]$y$1492 [7]: 2 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_core.g_v.u.rm_q$wrmux[7][1][0]$y$1492 [8]: 2 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+<suppressed ~9596 debug messages>
+
+2.42. Executing OPT pass (performing simple optimizations).
+
+2.42.1. Executing OPT_EXPR pass (perform const folding).
+Optimizing module isqrt_ooc.
+<suppressed ~473 debug messages>
+
+2.42.2. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\isqrt_ooc'.
+Computing hashes of 152 cells of `\isqrt_ooc'.
+Finding duplicate cells in `\isqrt_ooc'.
+Removed a total of 0 cells.
+
+2.42.3. Executing OPT_MUXTREE pass (detect dead branches in mux trees).
+Running muxtree optimizer on module \isqrt_ooc..
+  Creating internal representation of mux trees.
+  No muxes found in this module.
+Removed 0 multiplexer ports.
+
+2.42.4. Executing OPT_REDUCE pass (consolidate $*mux and $reduce_* inputs).
+  Optimizing cells in module \isqrt_ooc.
+Performed a total of 0 changes.
+
+2.42.5. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\isqrt_ooc'.
+Computing hashes of 152 cells of `\isqrt_ooc'.
+Finding duplicate cells in `\isqrt_ooc'.
+Removed a total of 0 cells.
+
+2.42.6. Executing OPT_SHARE pass.
+
+2.42.7. Executing OPT_DFF pass (perform DFF optimizations).
+Setting constant 0-bit at position 2 on $memory\u_core.g_v.u.rm_q[0]$1383 ($dff) from module isqrt_ooc.
+Setting constant 0-bit at position 3 on $memory\u_core.g_v.u.rm_q[0]$1383 ($dff) from module isqrt_ooc.
+Setting constant 0-bit at position 4 on $memory\u_core.g_v.u.rm_q[0]$1383 ($dff) from module isqrt_ooc.
+Setting constant 0-bit at position 5 on $memory\u_core.g_v.u.rm_q[0]$1383 ($dff) from module isqrt_ooc.
+Setting constant 0-bit at position 6 on $memory\u_core.g_v.u.rm_q[0]$1383 ($dff) from module isqrt_ooc.
+Setting constant 0-bit at position 7 on $memory\u_core.g_v.u.rm_q[0]$1383 ($dff) from module isqrt_ooc.
+Setting constant 0-bit at position 8 on $memory\u_core.g_v.u.rm_q[0]$1383 ($dff) from module isqrt_ooc.
+Setting constant 0-bit at position 1 on $memory\u_core.g_v.u.rt_q[0]$1267 ($dff) from module isqrt_ooc.
+Setting constant 0-bit at position 2 on $memory\u_core.g_v.u.rt_q[0]$1267 ($dff) from module isqrt_ooc.
+Setting constant 0-bit at position 3 on $memory\u_core.g_v.u.rt_q[0]$1267 ($dff) from module isqrt_ooc.
+Setting constant 0-bit at position 4 on $memory\u_core.g_v.u.rt_q[0]$1267 ($dff) from module isqrt_ooc.
+Setting constant 0-bit at position 5 on $memory\u_core.g_v.u.rt_q[0]$1267 ($dff) from module isqrt_ooc.
+Setting constant 0-bit at position 6 on $memory\u_core.g_v.u.rt_q[0]$1267 ($dff) from module isqrt_ooc.
+Setting constant 0-bit at position 7 on $memory\u_core.g_v.u.rt_q[0]$1267 ($dff) from module isqrt_ooc.
+
+2.42.8. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \isqrt_ooc..
+Removed 0 unused cells and 145 unused wires.
+<suppressed ~1 debug messages>
+
+2.42.9. Executing OPT_EXPR pass (perform const folding).
+Optimizing module isqrt_ooc.
+
+2.42.10. Rerunning OPT passes. (Maybe there is more to do..)
+
+2.42.11. Executing OPT_MUXTREE pass (detect dead branches in mux trees).
+Running muxtree optimizer on module \isqrt_ooc..
+  Creating internal representation of mux trees.
+  No muxes found in this module.
+Removed 0 multiplexer ports.
+
+2.42.12. Executing OPT_REDUCE pass (consolidate $*mux and $reduce_* inputs).
+  Optimizing cells in module \isqrt_ooc.
+Performed a total of 0 changes.
+
+2.42.13. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\isqrt_ooc'.
+Computing hashes of 152 cells of `\isqrt_ooc'.
+Finding duplicate cells in `\isqrt_ooc'.
+Removed a total of 0 cells.
+
+2.42.14. Executing OPT_SHARE pass.
+
+2.42.15. Executing OPT_DFF pass (perform DFF optimizations).
+Adding SRST signal on $memory\u_core.g_v.u.rm_q[1]$1385 ($dff) from module isqrt_ooc (D = \u_core.g_v.u.g_stage[1].iterate.t_v [8:4], Q = \u_core.g_v.u.rm_q[1] [8:4], rval = 5'00000).
+Setting constant 0-bit at position 2 on $memory\u_core.g_v.u.rt_q[1]$1269 ($dff) from module isqrt_ooc.
+Setting constant 0-bit at position 3 on $memory\u_core.g_v.u.rt_q[1]$1269 ($dff) from module isqrt_ooc.
+Setting constant 0-bit at position 4 on $memory\u_core.g_v.u.rt_q[1]$1269 ($dff) from module isqrt_ooc.
+Setting constant 0-bit at position 5 on $memory\u_core.g_v.u.rt_q[1]$1269 ($dff) from module isqrt_ooc.
+Setting constant 0-bit at position 6 on $memory\u_core.g_v.u.rt_q[1]$1269 ($dff) from module isqrt_ooc.
+Setting constant 0-bit at position 7 on $memory\u_core.g_v.u.rt_q[1]$1269 ($dff) from module isqrt_ooc.
+
+2.42.16. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \isqrt_ooc..
+Removed 5 unused cells and 0 unused wires.
+<suppressed ~5 debug messages>
+
+2.42.17. Executing OPT_EXPR pass (perform const folding).
+Optimizing module isqrt_ooc.
+<suppressed ~4 debug messages>
+
+2.42.18. Rerunning OPT passes. (Maybe there is more to do..)
+
+2.42.19. Executing OPT_MUXTREE pass (detect dead branches in mux trees).
+Running muxtree optimizer on module \isqrt_ooc..
+  Creating internal representation of mux trees.
+  No muxes found in this module.
+Removed 0 multiplexer ports.
+
+2.42.20. Executing OPT_REDUCE pass (consolidate $*mux and $reduce_* inputs).
+  Optimizing cells in module \isqrt_ooc.
+Performed a total of 0 changes.
+
+2.42.21. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\isqrt_ooc'.
+Computing hashes of 148 cells of `\isqrt_ooc'.
+Finding duplicate cells in `\isqrt_ooc'.
+Removed a total of 0 cells.
+
+2.42.22. Executing OPT_SHARE pass.
+
+2.42.23. Executing OPT_DFF pass (perform DFF optimizations).
+Setting constant 0-bit at position 3 on $memory\u_core.g_v.u.rt_q[2]$1271 ($dff) from module isqrt_ooc.
+Setting constant 0-bit at position 4 on $memory\u_core.g_v.u.rt_q[2]$1271 ($dff) from module isqrt_ooc.
+Setting constant 0-bit at position 5 on $memory\u_core.g_v.u.rt_q[2]$1271 ($dff) from module isqrt_ooc.
+Setting constant 0-bit at position 6 on $memory\u_core.g_v.u.rt_q[2]$1271 ($dff) from module isqrt_ooc.
+Setting constant 0-bit at position 7 on $memory\u_core.g_v.u.rt_q[2]$1271 ($dff) from module isqrt_ooc.
+
+2.42.24. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \isqrt_ooc..
+
+2.42.25. Executing OPT_EXPR pass (perform const folding).
+Optimizing module isqrt_ooc.
+
+2.42.26. Rerunning OPT passes. (Maybe there is more to do..)
+
+2.42.27. Executing OPT_MUXTREE pass (detect dead branches in mux trees).
+Running muxtree optimizer on module \isqrt_ooc..
+  Creating internal representation of mux trees.
+  No muxes found in this module.
+Removed 0 multiplexer ports.
+
+2.42.28. Executing OPT_REDUCE pass (consolidate $*mux and $reduce_* inputs).
+  Optimizing cells in module \isqrt_ooc.
+Performed a total of 0 changes.
+
+2.42.29. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\isqrt_ooc'.
+Computing hashes of 148 cells of `\isqrt_ooc'.
+Finding duplicate cells in `\isqrt_ooc'.
+Removed a total of 0 cells.
+
+2.42.30. Executing OPT_SHARE pass.
+
+2.42.31. Executing OPT_DFF pass (perform DFF optimizations).
+Setting constant 0-bit at position 4 on $memory\u_core.g_v.u.rt_q[3]$1273 ($dff) from module isqrt_ooc.
+Setting constant 0-bit at position 5 on $memory\u_core.g_v.u.rt_q[3]$1273 ($dff) from module isqrt_ooc.
+Setting constant 0-bit at position 6 on $memory\u_core.g_v.u.rt_q[3]$1273 ($dff) from module isqrt_ooc.
+Setting constant 0-bit at position 7 on $memory\u_core.g_v.u.rt_q[3]$1273 ($dff) from module isqrt_ooc.
+
+2.42.32. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \isqrt_ooc..
+
+2.42.33. Executing OPT_EXPR pass (perform const folding).
+Optimizing module isqrt_ooc.
+
+2.42.34. Rerunning OPT passes. (Maybe there is more to do..)
+
+2.42.35. Executing OPT_MUXTREE pass (detect dead branches in mux trees).
+Running muxtree optimizer on module \isqrt_ooc..
+  Creating internal representation of mux trees.
+  No muxes found in this module.
+Removed 0 multiplexer ports.
+
+2.42.36. Executing OPT_REDUCE pass (consolidate $*mux and $reduce_* inputs).
+  Optimizing cells in module \isqrt_ooc.
+Performed a total of 0 changes.
+
+2.42.37. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\isqrt_ooc'.
+Computing hashes of 148 cells of `\isqrt_ooc'.
+Finding duplicate cells in `\isqrt_ooc'.
+Removed a total of 0 cells.
+
+2.42.38. Executing OPT_SHARE pass.
+
+2.42.39. Executing OPT_DFF pass (perform DFF optimizations).
+Setting constant 0-bit at position 5 on $memory\u_core.g_v.u.rt_q[4]$1275 ($dff) from module isqrt_ooc.
+Setting constant 0-bit at position 6 on $memory\u_core.g_v.u.rt_q[4]$1275 ($dff) from module isqrt_ooc.
+Setting constant 0-bit at position 7 on $memory\u_core.g_v.u.rt_q[4]$1275 ($dff) from module isqrt_ooc.
+
+2.42.40. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \isqrt_ooc..
+
+2.42.41. Executing OPT_EXPR pass (perform const folding).
+Optimizing module isqrt_ooc.
+
+2.42.42. Rerunning OPT passes. (Maybe there is more to do..)
+
+2.42.43. Executing OPT_MUXTREE pass (detect dead branches in mux trees).
+Running muxtree optimizer on module \isqrt_ooc..
+  Creating internal representation of mux trees.
+  No muxes found in this module.
+Removed 0 multiplexer ports.
+
+2.42.44. Executing OPT_REDUCE pass (consolidate $*mux and $reduce_* inputs).
+  Optimizing cells in module \isqrt_ooc.
+Performed a total of 0 changes.
+
+2.42.45. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\isqrt_ooc'.
+Computing hashes of 148 cells of `\isqrt_ooc'.
+Finding duplicate cells in `\isqrt_ooc'.
+Removed a total of 0 cells.
+
+2.42.46. Executing OPT_SHARE pass.
+
+2.42.47. Executing OPT_DFF pass (perform DFF optimizations).
+Setting constant 0-bit at position 6 on $memory\u_core.g_v.u.rt_q[5]$1277 ($dff) from module isqrt_ooc.
+Setting constant 0-bit at position 7 on $memory\u_core.g_v.u.rt_q[5]$1277 ($dff) from module isqrt_ooc.
+
+2.42.48. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \isqrt_ooc..
+
+2.42.49. Executing OPT_EXPR pass (perform const folding).
+Optimizing module isqrt_ooc.
+
+2.42.50. Rerunning OPT passes. (Maybe there is more to do..)
+
+2.42.51. Executing OPT_MUXTREE pass (detect dead branches in mux trees).
+Running muxtree optimizer on module \isqrt_ooc..
+  Creating internal representation of mux trees.
+  No muxes found in this module.
+Removed 0 multiplexer ports.
+
+2.42.52. Executing OPT_REDUCE pass (consolidate $*mux and $reduce_* inputs).
+  Optimizing cells in module \isqrt_ooc.
+Performed a total of 0 changes.
+
+2.42.53. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\isqrt_ooc'.
+Computing hashes of 148 cells of `\isqrt_ooc'.
+Finding duplicate cells in `\isqrt_ooc'.
+Removed a total of 0 cells.
+
+2.42.54. Executing OPT_SHARE pass.
+
+2.42.55. Executing OPT_DFF pass (perform DFF optimizations).
+Setting constant 0-bit at position 7 on $memory\u_core.g_v.u.rt_q[6]$1279 ($dff) from module isqrt_ooc.
+
+2.42.56. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \isqrt_ooc..
+
+2.42.57. Executing OPT_EXPR pass (perform const folding).
+Optimizing module isqrt_ooc.
+
+2.42.58. Rerunning OPT passes. (Maybe there is more to do..)
+
+2.42.59. Executing OPT_MUXTREE pass (detect dead branches in mux trees).
+Running muxtree optimizer on module \isqrt_ooc..
+  Creating internal representation of mux trees.
+  No muxes found in this module.
+Removed 0 multiplexer ports.
+
+2.42.60. Executing OPT_REDUCE pass (consolidate $*mux and $reduce_* inputs).
+  Optimizing cells in module \isqrt_ooc.
+Performed a total of 0 changes.
+
+2.42.61. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\isqrt_ooc'.
+Computing hashes of 148 cells of `\isqrt_ooc'.
+Finding duplicate cells in `\isqrt_ooc'.
+Removed a total of 0 cells.
+
+2.42.62. Executing OPT_SHARE pass.
+
+2.42.63. Executing OPT_DFF pass (perform DFF optimizations).
+
+2.42.64. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \isqrt_ooc..
+
+2.42.65. Executing OPT_EXPR pass (perform const folding).
+Optimizing module isqrt_ooc.
+
+2.42.66. Finished fast OPT passes. (There is nothing left to do.)
+
+2.43. Executing XILINX_SRL pass (Xilinx shift register extraction).
+
+2.44. Executing TECHMAP pass (map to technology primitives).
+
+2.44.1. Executing Verilog-2005 frontend: /home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/techmap.v
+Parsing Verilog input from `/home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/techmap.v' to AST representation.
+Generating RTLIL representation for module `\_90_simplemap_bool_ops'.
+Generating RTLIL representation for module `\_90_simplemap_reduce_ops'.
+Generating RTLIL representation for module `\_90_simplemap_logic_ops'.
+Generating RTLIL representation for module `\_90_simplemap_compare_ops'.
+Generating RTLIL representation for module `\_90_simplemap_various'.
+Generating RTLIL representation for module `\_90_simplemap_registers'.
+Generating RTLIL representation for module `\_90_shift_ops_shr_shl_sshl_sshr'.
+Generating RTLIL representation for module `\_90_shift_shiftx'.
+Generating RTLIL representation for module `\_90_fa'.
+Generating RTLIL representation for module `\_90_lcu_brent_kung'.
+Generating RTLIL representation for module `\_90_alu'.
+Generating RTLIL representation for module `\_90_macc'.
+Generating RTLIL representation for module `\_90_alumacc'.
+Generating RTLIL representation for module `$__div_mod_u'.
+Generating RTLIL representation for module `$__div_mod_trunc'.
+Generating RTLIL representation for module `\_90_div'.
+Generating RTLIL representation for module `\_90_mod'.
+Generating RTLIL representation for module `$__div_mod_floor'.
+Generating RTLIL representation for module `\_90_divfloor'.
+Generating RTLIL representation for module `\_90_modfloor'.
+Generating RTLIL representation for module `\_90_pow'.
+Generating RTLIL representation for module `\_90_demux'.
+Generating RTLIL representation for module `\_90_lut'.
+Generating RTLIL representation for module `$connect'.
+Generating RTLIL representation for module `$input_port'.
+Successfully finished Verilog frontend.
+
+2.44.2. Executing Verilog-2005 frontend: /home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/xilinx/mux_map.v
+Parsing Verilog input from `/home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/xilinx/mux_map.v' to AST representation.
+Generating RTLIL representation for module `$shiftx'.
+Successfully finished Verilog frontend.
+
+2.44.3. Executing Verilog-2005 frontend: /home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/xilinx/arith_map.v
+Parsing Verilog input from `/home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/xilinx/arith_map.v' to AST representation.
+Generating RTLIL representation for module `\_80_xilinx_lcu'.
+Generating RTLIL representation for module `\_80_xilinx_alu'.
+Successfully finished Verilog frontend.
+
+2.44.4. Continuing TECHMAP pass.
+Using template $paramod$60d4afd7b16e3447445b6220c7c7782c8f41c9d3\_80_xilinx_alu for cells of type $alu.
+Using extmapper simplemap for cells of type $dff.
+Using extmapper simplemap for cells of type $sdff.
+Using extmapper simplemap for cells of type $not.
+Using template $paramod$a2141772013f7d768f94aaa43c92c6391933001b\_80_xilinx_alu for cells of type $alu.
+Using extmapper simplemap for cells of type $xor.
+Using extmapper simplemap for cells of type $mux.
+Using extmapper simplemap for cells of type $pos.
+No more expansions possible.
+<suppressed ~213 debug messages>
+
+2.45. Executing OPT pass (performing simple optimizations).
+
+2.45.1. Executing OPT_EXPR pass (perform const folding).
+Optimizing module isqrt_ooc.
+<suppressed ~184 debug messages>
+
+2.45.2. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\isqrt_ooc'.
+Computing hashes of 411 cells of `\isqrt_ooc'.
+Finding duplicate cells in `\isqrt_ooc'.
+Removed a total of 0 cells.
+
+2.45.3. Executing OPT_DFF pass (perform DFF optimizations).
+
+2.45.4. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \isqrt_ooc..
+Removed 0 unused cells and 159 unused wires.
+<suppressed ~1 debug messages>
+
+2.45.5. Finished fast OPT passes.
+
+2.46. Executing TECHMAP pass (map to technology primitives).
+
+2.46.1. Executing Verilog-2005 frontend: /home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/techmap.v
+Parsing Verilog input from `/home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/techmap.v' to AST representation.
+Generating RTLIL representation for module `\_90_simplemap_bool_ops'.
+Generating RTLIL representation for module `\_90_simplemap_reduce_ops'.
+Generating RTLIL representation for module `\_90_simplemap_logic_ops'.
+Generating RTLIL representation for module `\_90_simplemap_compare_ops'.
+Generating RTLIL representation for module `\_90_simplemap_various'.
+Generating RTLIL representation for module `\_90_simplemap_registers'.
+Generating RTLIL representation for module `\_90_shift_ops_shr_shl_sshl_sshr'.
+Generating RTLIL representation for module `\_90_shift_shiftx'.
+Generating RTLIL representation for module `\_90_fa'.
+Generating RTLIL representation for module `\_90_lcu_brent_kung'.
+Generating RTLIL representation for module `\_90_alu'.
+Generating RTLIL representation for module `\_90_macc'.
+Generating RTLIL representation for module `\_90_alumacc'.
+Generating RTLIL representation for module `$__div_mod_u'.
+Generating RTLIL representation for module `$__div_mod_trunc'.
+Generating RTLIL representation for module `\_90_div'.
+Generating RTLIL representation for module `\_90_mod'.
+Generating RTLIL representation for module `$__div_mod_floor'.
+Generating RTLIL representation for module `\_90_divfloor'.
+Generating RTLIL representation for module `\_90_modfloor'.
+Generating RTLIL representation for module `\_90_pow'.
+Generating RTLIL representation for module `\_90_demux'.
+Generating RTLIL representation for module `\_90_lut'.
+Generating RTLIL representation for module `$connect'.
+Generating RTLIL representation for module `$input_port'.
+Successfully finished Verilog frontend.
+
+2.46.2. Executing Verilog-2005 frontend: /home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/xilinx/cells_map.v
+Parsing Verilog input from `/home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/xilinx/cells_map.v' to AST representation.
+Generating RTLIL representation for module `$__SHREG_'.
+Generating RTLIL representation for module `$__XILINX_SHREG_'.
+Generating RTLIL representation for module `$__XILINX_SHIFTX'.
+Generating RTLIL representation for module `\_90__XILINX_SHIFTX'.
+Generating RTLIL representation for module `$_MUX_'.
+Generating RTLIL representation for module `$_MUX4_'.
+Generating RTLIL representation for module `$_MUX8_'.
+Generating RTLIL representation for module `$_MUX16_'.
+Generating RTLIL representation for module `$__XILINX_MUXF78'.
+Successfully finished Verilog frontend.
+
+2.46.3. Continuing TECHMAP pass.
+Not using module `$_MUX_' from techmap as it contains a genblk1._TECHMAP_FAIL_ marker wire with non-zero value 1'1.
+Using template $_MUX16_ for cells of type $_MUX16_.
+Using template $paramod$bd3485320c53865f01cf3da7de38f4e3da7b75b8$__XILINX_SHIFTX for cells of type $__XILINX_SHIFTX.
+Using template $paramod$c222b638cf6006c93b62adfd5f4966c25123990f$__XILINX_SHIFTX for cells of type $__XILINX_SHIFTX.
+Using template $paramod$30dd896cbbdcc27e9808ef6fec7c2975ae001f94$__XILINX_SHIFTX for cells of type $__XILINX_SHIFTX.
+Using template $paramod$c9bdef9210cac06af338042548842d7d89c4d104$__XILINX_SHIFTX for cells of type $__XILINX_SHIFTX.
+Using template $paramod$b3d04482b1607a35169c01fd4f86fb51a021150e$__XILINX_SHIFTX for cells of type $__XILINX_SHIFTX.
+Using template $paramod$bebf0e2cda3da047c310fbf265fd5c6a44421353$__XILINX_SHIFTX for cells of type $__XILINX_SHIFTX.
+Using template $paramod$68fbbfa53d8375a135469833432df36e3b3b6fbe$__XILINX_SHIFTX for cells of type $__XILINX_SHIFTX.
+Using template $paramod$3bdb402d4b27aa53b9fc64e2311f46189bf33948$__XILINX_SHIFTX for cells of type $__XILINX_SHIFTX.
+Using template $paramod$c3bbb0885f2e39f31592e1fc0a2065dc90bbef4b$__XILINX_SHIFTX for cells of type $__XILINX_SHIFTX.
+Using template $paramod$7b12febe4fb2f7ec022ea5e3b2ec543f8699a30e$__XILINX_SHIFTX for cells of type $__XILINX_SHIFTX.
+Using template $paramod$7bd766a464991b3704ea9dd9fa695146d6373823$__XILINX_SHIFTX for cells of type $__XILINX_SHIFTX.
+Using template $paramod$5c910a0e2fc1526ec4c66808911b6de298263afb$__XILINX_SHIFTX for cells of type $__XILINX_SHIFTX.
+Using template $paramod$093b38d1b622ba5d5c6863de99b4cfd14e30bc54$__XILINX_SHIFTX for cells of type $__XILINX_SHIFTX.
+Using template $paramod$5ffaf536e6cba41afb47552458e555fd7ab70234$__XILINX_SHIFTX for cells of type $__XILINX_SHIFTX.
+Using template $paramod$f8bfa1272d9f5f17c82e70cb6f4f48d8e983bb30$__XILINX_SHIFTX for cells of type $__XILINX_SHIFTX.
+Using template $paramod$cbf0263c870c32b274beef849627c05a1e15a17e$__XILINX_SHIFTX for cells of type $__XILINX_SHIFTX.
+Using template $paramod$fb0f8859a5f173199c3a192b4721e6dc3b62700c$__XILINX_SHIFTX for cells of type $__XILINX_SHIFTX.
+Using template $paramod$e28f81af7800d5733b8219f8d5f5bb1727d750e8$__XILINX_SHIFTX for cells of type $__XILINX_SHIFTX.
+Using template $paramod$c9d54245e8896bf7b674752e67912ab95bb9b0d6$__XILINX_MUXF78 for cells of type $__XILINX_MUXF78.
+Using template $paramod$0b02dc2e02740806a3c56ed58203b13e86b28738$__XILINX_SHIFTX for cells of type $__XILINX_SHIFTX.
+Using extmapper simplemap for cells of type $mux.
+/home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/xilinx/cells_map.v:185: Warning: Range [1:0] select out of bounds on signal `\B': Setting 1 MSB bits to undef.
+Using template $paramod$d9a48f3156c823d7b51db1ba7be3c4c78ec725a1$__XILINX_SHIFTX for cells of type $__XILINX_SHIFTX.
+/home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/xilinx/cells_map.v:185: Warning: Range [1:-1] select out of bounds on signal `\B': Setting 1 LSB bits to undef.
+/home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/xilinx/cells_map.v:185: Warning: Range [1:-1] select out of bounds on signal `\B': Setting 2 MSB bits to undef.
+Using template $paramod$cbda05eb27de556ebd6cb15f67a3e3b5502ce186$__XILINX_SHIFTX for cells of type $__XILINX_SHIFTX.
+<suppressed ~895 debug messages>
+/home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/xilinx/cells_map.v:153: ERROR:Signal `\B' with invalid width range -1!

@@ -1,0 +1,84 @@
+# Machine-readable specification of the WA x WB multiplier (arith brief 139a). The prose is spec.md; the two agree (tests/test_multiplier_package.py).
+schema: fda-arith/spec/1
+function: multiplier
+title: Integer multiplier, full-width product
+model: arith/multiplier/model.py
+summary: "A WA x WB integer multiplier returning the exact WA + WB bit product, signed or unsigned. Three implementations trade DSP blocks against LUTs and carry chains: a DSP-mapped multiply with 0 to 3 pipeline registers, a LUT array of shifted partial products, and a radix-4 Booth array with half as many rows."
+semantics:
+  - "SIGNED = 0: p = a * b, both read as unsigned numbers (a below 2**WA, b below 2**WB)"
+  - "SIGNED = 1: p = a * b with a and b read as two's complement numbers, p as a (WA + WB)-bit two's complement number"
+  - "p is never truncated: the full product of any two inputs fits in WA + WB bits"
+  - "Booth recoding: b is cut into radix-4 digits d_i = -2 b[2i+1] + b[2i] + b[2i-1]; the digit sum equals b's value for every width (Lean: ArithBooth.booth_correct)"
+ports:
+  - {name: clk, dir: in, width: 1, text: "clock; unused (and kept for a common port list) by the combinational configurations"}
+  - {name: a, dir: in, width: WA, text: "multiplicand, a bit pattern"}
+  - {name: b, dir: in, width: WB, text: "multiplier, a bit pattern"}
+  - {name: p, dir: out, width: "WA+WB", text: "the exact product, WA + WB bits (never truncated or rounded)"}
+parameters:
+  WA: {min: 1, text: "width of a"}
+  WB: {min: 1, text: "width of b"}
+  SIGNED: {values: [0, 1], text: "1: a, b and p are two's complement; 0: all unsigned. One setting for both operands: a mixed signed-by-unsigned multiplier is not offered"}
+signedness: "SIGNED chooses the reading of a, b and p; the same RTL file serves both"
+exactness: "exact: p equals the integer product for every input; the full WA + WB bit result is returned, so nothing overflows (the one signed corner, -2**(WA-1) times -2**(WB-1), is 2**(WA+WB-2) and fits)"
+latency_definition: "clocks from the operands being presented to p being valid; 0 means combinational; throughput is one product per clock in every variant"
+contract:
+  protocol: "plain registered-or-combinational ports, no handshake: operands are sampled every clock and one product per clock leaves, with no valid, ready or backpressure. A caller that needs a valid bit delays its own valid by the variant's latency"
+  throughput: "one product per clock in every variant (initiation interval 1)"
+  latency: "per variant, in clocks: dsp STAGES (0 to 3), lut_array REG (0 or 1), booth_r4 REG (0 or 1)"
+  reset: "none: no control state; registered variants hold data only and their outputs are meaningless for latency clocks after power-up"
+  clock: "one clock, rising edge, no clock-enable and no gating; clk is present but unused when the latency is 0"
+  stall: "none: the pipeline cannot be frozen (no enable); DSP registers are inferred without a clock-enable"
+integration:
+  port_timing: "dsp with STAGES 3: operands are registered inside the block (AREG/BREG) and the product leaves a register (PREG), so the block can sit between ordinary registers with a full clock of slack on both sides; STAGES 0 to 2 leave a combinational path to or from the DSP that the caller must budget (about the DSP delay: it dominates). lut_array and booth_r4 with REG 0 are combinational from a/b to p (a long chain of adders: register both sides and expect a multi-ns path); with REG 1 the output is registered but the input path to it is still the whole array"
+  constraints: "no multicycle or false paths, one clock. DSP variants: use the DSP block's registers (STAGES 3) for the highest clock; placing the surrounding registers next to the DSP column helps. Keep the three DSP register stages un-merged (no keep or retiming that moves them). LUT variants: nothing to carry beyond the clock; their cost is the carry-chain columns, so a floorplan that keeps the array in one region helps timing"
+guess_wrong:
+  - "p is the full WA + WB bit product, not truncated to the wider operand's width"
+  - "with SIGNED = 1 both operands are signed: a signed times unsigned product needs one more operand bit (sign-extend the unsigned one by a zero) and is not a parameter"
+  - "an unsigned operand costs one extra multiplier bit on a DSP (the DSP multiplier is signed), so a 17 x 17 unsigned product needs the same DSP as 18 x 18 signed"
+  - "the pipelined configurations have no reset and no valid: for STAGES clocks after power-up the output is not meaningful"
+  - "STAGES (dsp) and REG (lut_array, booth_r4) are register stages in the variant, not retiming requests: Vivado does not move them unless retiming is enabled"
+  - "STAGES above 3 behaves as 3 and REG other than 0 behaves as 1; SIGNED other than 0 or 1 behaves as 1; none of this is rejected by an assertion"
+
+variants:
+  dsp:
+    file: rtl/mult_dsp.sv
+    module: mult_dsp
+    params: {WA: 18, WB: 18, SIGNED: 1, STAGES: 3}
+    throughput: "1 per clock"
+    latency: "STAGES"
+    tradeoff: "DSP blocks and no LUTs; the fastest and the smallest in fabric, at the price of scarce DSPs; STAGES 3 uses the DSP's own registers"
+    exhaustive_points: [{WA: 1, WB: 1, SIGNED: 1, STAGES: 0}, {WA: 4, WB: 4, SIGNED: 1, STAGES: 0}, {WA: 4, WB: 4, SIGNED: 0, STAGES: 1}, {WA: 5, WB: 3, SIGNED: 1, STAGES: 2}, {WA: 3, WB: 5, SIGNED: 0, STAGES: 3}, {WA: 6, WB: 6, SIGNED: 1, STAGES: 3}, {WA: 6, WB: 6, SIGNED: 0, STAGES: 2}]
+    random_points: [{WA: 18, WB: 18, SIGNED: 1, STAGES: 3}, {WA: 25, WB: 18, SIGNED: 1, STAGES: 2}, {WA: 24, WB: 17, SIGNED: 0, STAGES: 3}, {WA: 32, WB: 32, SIGNED: 1, STAGES: 1}, {WA: 40, WB: 36, SIGNED: 0, STAGES: 0}]
+    expected_primitives:
+      a7: "DSP48E1: 1 for WA <= 25 and WB <= 18 signed (24 and 17 unsigned); about ceil((WA+1)/25)*ceil((WB+1)/18) tiled; LUTs and FFs only for the tiling adders and any register not absorbed"
+      k26: "DSP48E2 (27 x 18 signed): 1 for WA <= 27 and WB <= 18 signed; ceil((WA+1)/27)*ceil((WB+1)/18) tiled"
+    ooc_points: [{WA: 18, WB: 18, SIGNED: 1, STAGES: 3}, {WA: 25, WB: 18, SIGNED: 1, STAGES: 3}, {WA: 32, WB: 32, SIGNED: 1, STAGES: 3}, {WA: 32, WB: 32, SIGNED: 1, STAGES: 1}]
+    mutant_run: [{mode: exhaustive, params: {WA: 4, WB: 4, SIGNED: 1, STAGES: 0}}, {mode: exhaustive, params: {WA: 4, WB: 4, SIGNED: 1, STAGES: 2}}, {mode: exhaustive, params: {WA: 4, WB: 3, SIGNED: 0, STAGES: 3}}, {mode: randomised, params: {WA: 20, WB: 17, SIGNED: 1, STAGES: 3}, n: 500}]
+  lut_array:
+    file: rtl/mult_lut_array.sv
+    module: mult_lut_array
+    params: {WA: 18, WB: 18, SIGNED: 1, REG: 0}
+    throughput: "1 per clock"
+    latency: "REG"
+    tradeoff: "no DSP; about one LUT per partial-product bit and WB - 1 adders in series, so the longest combinational path and the most LUTs of the three"
+    exhaustive_points: [{WA: 1, WB: 1, SIGNED: 1, REG: 0}, {WA: 1, WB: 4, SIGNED: 0, REG: 0}, {WA: 4, WB: 4, SIGNED: 1, REG: 0}, {WA: 4, WB: 4, SIGNED: 0, REG: 1}, {WA: 5, WB: 3, SIGNED: 1, REG: 1}, {WA: 3, WB: 6, SIGNED: 0, REG: 0}, {WA: 6, WB: 6, SIGNED: 1, REG: 0}, {WA: 6, WB: 6, SIGNED: 0, REG: 0}]
+    random_points: [{WA: 16, WB: 16, SIGNED: 1, REG: 0}, {WA: 24, WB: 17, SIGNED: 0, REG: 1}, {WA: 32, WB: 32, SIGNED: 1, REG: 0}, {WA: 33, WB: 7, SIGNED: 0, REG: 0}]
+    expected_primitives:
+      a7: "0 DSP; about WA*WB/2 to WA*WB LUTs; WB - 1 carry chains of up to WA+WB bits (CARRY4); REG FFs of WA+WB"
+      k26: "0 DSP; as a7 with CARRY8 cells"
+    ooc_points: [{WA: 16, WB: 16, SIGNED: 1, REG: 1}, {WA: 18, WB: 18, SIGNED: 1, REG: 1}, {WA: 32, WB: 32, SIGNED: 1, REG: 1}]
+    mutant_run: [{mode: exhaustive, params: {WA: 4, WB: 4, SIGNED: 1, REG: 0}}, {mode: exhaustive, params: {WA: 3, WB: 5, SIGNED: 0, REG: 1}}, {mode: randomised, params: {WA: 20, WB: 17, SIGNED: 1, REG: 0}, n: 500}]
+  booth_r4:
+    file: rtl/mult_booth_r4.sv
+    module: mult_booth_r4
+    params: {WA: 18, WB: 18, SIGNED: 1, REG: 0}
+    throughput: "1 per clock"
+    latency: "REG"
+    tradeoff: "no DSP; about half the adder rows of lut_array (shorter carry path) for a select-and-negate stage per row; the usual hardware-multiplier area/delay trade"
+    exhaustive_points: [{WA: 1, WB: 1, SIGNED: 1, REG: 0}, {WA: 1, WB: 4, SIGNED: 0, REG: 0}, {WA: 4, WB: 4, SIGNED: 1, REG: 0}, {WA: 4, WB: 4, SIGNED: 0, REG: 1}, {WA: 5, WB: 3, SIGNED: 1, REG: 1}, {WA: 3, WB: 5, SIGNED: 0, REG: 0}, {WA: 3, WB: 6, SIGNED: 1, REG: 0}, {WA: 6, WB: 6, SIGNED: 0, REG: 0}, {WA: 5, WB: 7, SIGNED: 1, REG: 0}]
+    random_points: [{WA: 16, WB: 16, SIGNED: 1, REG: 0}, {WA: 24, WB: 17, SIGNED: 0, REG: 1}, {WA: 32, WB: 32, SIGNED: 1, REG: 0}, {WA: 33, WB: 7, SIGNED: 0, REG: 0}, {WA: 9, WB: 31, SIGNED: 1, REG: 0}]
+    expected_primitives:
+      a7: "0 DSP; about NP - 1 carry chains of up to WA+WB bits with NP = ceil((WB + 1 - SIGNED)/2); about one LUT per partial-product bit for the selector"
+      k26: "0 DSP; as a7 with CARRY8 cells"
+    ooc_points: [{WA: 16, WB: 16, SIGNED: 1, REG: 1}, {WA: 18, WB: 18, SIGNED: 1, REG: 1}, {WA: 32, WB: 32, SIGNED: 1, REG: 1}]
+    mutant_run: [{mode: exhaustive, params: {WA: 4, WB: 4, SIGNED: 1, REG: 0}}, {mode: exhaustive, params: {WA: 4, WB: 4, SIGNED: 0, REG: 1}}, {mode: randomised, params: {WA: 20, WB: 17, SIGNED: 1, REG: 0}, n: 500}]

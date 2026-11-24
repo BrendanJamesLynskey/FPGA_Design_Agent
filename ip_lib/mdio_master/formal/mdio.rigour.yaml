@@ -1,0 +1,7 @@
+schema: fpga-design-agent/formal_rigour/v1
+scope: "mdio_master.sv with DIV = 2 (the shipped value is a parameter; the frame sequence and the bit-time structure are the same), every input free after one reset clock"
+antecedents:
+  "a_counters_in_range": a_busy__ante
+  "a_output_enable_mask": a_busy__ante
+  "a_mdc_phase": a_busy__ante
+sanity: [c_read_frame_done, c_write_frame_done]

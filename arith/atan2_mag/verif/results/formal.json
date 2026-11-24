@@ -1,0 +1,180 @@
+{
+ "function": "atan2_mag",
+ "tool": "Yosys 0.70+385 (git sha1 098e46a36, Release, Clang /usr/bin/clang++ 21.1.8)",
+ "jobs": 7,
+ "ok": 7,
+ "results": [
+  {
+   "name": "cordic_ph8_nit8",
+   "top": "atan2_fv",
+   "params": {
+    "SEL": 1,
+    "PH": 8,
+    "NIT": 8,
+    "G": 6,
+    "GRP": 2,
+    "BA": 62744,
+    "BM": 33734
+   },
+   "mode": "prove",
+   "depth": 12,
+   "engine": "boolector",
+   "claim": "cordic at W = 4, PH = 8, 8 iterations, 6 guard bits: angle and length within their stated errors of the exact atan2 and hypot (the atan2_ref ROM): proved for all inputs (k-induction)",
+   "mutant": null,
+   "expected": "PASS",
+   "status": "PASS",
+   "ok": true,
+   "seconds": 12.6,
+   "failed_assertions": [],
+   "tail": ""
+  },
+  {
+   "name": "g2_ph8_nit8_grp2",
+   "top": "atan2_fv",
+   "params": {
+    "SEL": 2,
+    "PH": 8,
+    "NIT": 8,
+    "G": 6,
+    "GRP": 2,
+    "BA": 62744,
+    "BM": 33734
+   },
+   "mode": "prove",
+   "depth": 8,
+   "engine": "boolector",
+   "claim": "cordic_g2 with GRP = 2 at the same point: proved for all inputs",
+   "mutant": null,
+   "expected": "PASS",
+   "status": "PASS",
+   "ok": true,
+   "seconds": 8.8,
+   "failed_assertions": [],
+   "tail": ""
+  },
+  {
+   "name": "g2_ph8_nit8_grp3",
+   "top": "atan2_fv",
+   "params": {
+    "SEL": 2,
+    "PH": 8,
+    "NIT": 8,
+    "G": 6,
+    "GRP": 3,
+    "BA": 62744,
+    "BM": 33734
+   },
+   "mode": "prove",
+   "depth": 8,
+   "engine": "boolector",
+   "claim": "cordic_g2 with GRP = 3 (8 iterations are not a multiple of 3): proved for all inputs",
+   "mutant": null,
+   "expected": "PASS",
+   "status": "PASS",
+   "ok": true,
+   "seconds": 7.8,
+   "failed_assertions": [],
+   "tail": ""
+  },
+  {
+   "name": "same_grp2",
+   "top": "atan2_fv",
+   "params": {
+    "SEL": 4,
+    "PH": 8,
+    "NIT": 8,
+    "G": 6,
+    "GRP": 2,
+    "BA": 62744,
+    "BM": 33734
+   },
+   "mode": "prove",
+   "depth": 12,
+   "engine": "boolector",
+   "claim": "cordic_g2 (GRP = 2) is bit-identical to cordic, delayed to meet it: proved for all inputs",
+   "mutant": null,
+   "expected": "PASS",
+   "status": "PASS",
+   "ok": true,
+   "seconds": 15.0,
+   "failed_assertions": [],
+   "tail": ""
+  },
+  {
+   "name": "same_grp3",
+   "top": "atan2_fv",
+   "params": {
+    "SEL": 4,
+    "PH": 8,
+    "NIT": 8,
+    "G": 6,
+    "GRP": 3,
+    "BA": 62744,
+    "BM": 33734
+   },
+   "mode": "prove",
+   "depth": 12,
+   "engine": "boolector",
+   "claim": "cordic_g2 (GRP = 3, a partial last group) is bit-identical to cordic: proved for all inputs",
+   "mutant": null,
+   "expected": "PASS",
+   "status": "PASS",
+   "ok": true,
+   "seconds": 9.2,
+   "failed_assertions": [],
+   "tail": ""
+  },
+  {
+   "name": "mutant_reflection",
+   "top": "atan2_fv",
+   "params": {
+    "SEL": 1,
+    "PH": 8,
+    "NIT": 6,
+    "G": 6,
+    "GRP": 2,
+    "BA": 98517,
+    "BM": 31805
+   },
+   "mode": "bmc",
+   "depth": 10,
+   "engine": "boolector",
+   "claim": "a CORDIC that does not negate y in the reflection is refuted",
+   "mutant": "ac_y_not_reflected",
+   "expected": "FAIL",
+   "status": "FAIL",
+   "ok": true,
+   "seconds": 5.2,
+   "failed_assertions": [
+    "g_c.P_CORDIC_ANG"
+   ],
+   "tail": ""
+  },
+  {
+   "name": "mutant_g2_extra_iteration",
+   "top": "atan2_fv",
+   "params": {
+    "SEL": 4,
+    "PH": 8,
+    "NIT": 7,
+    "G": 6,
+    "GRP": 3,
+    "BA": 65537,
+    "BM": 33734
+   },
+   "mode": "bmc",
+   "depth": 10,
+   "engine": "boolector",
+   "claim": "a grouped CORDIC that runs one iteration too many when NIT is not a multiple of GRP is no longer the same function as cordic: refuted",
+   "mutant": "ag_extra_iteration",
+   "expected": "FAIL",
+   "status": "FAIL",
+   "ok": true,
+   "seconds": 2.7,
+   "failed_assertions": [
+    "g_s.P_SAME"
+   ],
+   "tail": ""
+  }
+ ]
+}

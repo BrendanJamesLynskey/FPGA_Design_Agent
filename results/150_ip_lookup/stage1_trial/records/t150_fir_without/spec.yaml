@@ -1,0 +1,253 @@
+name: fir_lowpass32
+title: 32-tap low-pass FIR filter with UART test shell
+board: nexys_a7_100t
+part: xc7a100tcsg324-1
+top: fir_top
+clocks:
+- name: clk
+  frequency: 100 MHz
+  period_ns: 10
+  pin: E3
+  role: board 100 MHz oscillator, single clock domain
+reset:
+  name: cpu_resetn
+  polarity: active_low
+  synchronous: true
+  pin: C12
+  role: CPU RESET pushbutton, synchronised to clk before use
+parameters:
+  TAPS: 32
+  DATA_WIDTH: 16
+  COEF_WIDTH: 16
+  BAUD_DIVIDER: 868
+ports:
+- name: clk
+  direction: input
+  width: 1
+  pin_role: E3 100 MHz clock
+- name: cpu_resetn
+  direction: input
+  width: 1
+  pin_role: C12 CPU RESET button, active low
+- name: uart_rx
+  direction: input
+  width: 1
+  pin_role: C4 USB-UART RX, data from host
+- name: uart_tx
+  direction: output
+  width: 1
+  pin_role: D4 USB-UART TX, data to host
+behaviour:
+  uart_shell:
+  - Serial frames are 8N1 at BAUD_DIVIDER clk cycles per bit, LSB first.
+  - Host writes and reads registers over the USB-UART link using the framing chosen
+    in the UART framing open question.
+  - Writes to SAMPLE_IN, COEF_ADDR and COEF_DATA take effect on the cycle the last
+    data byte is received.
+  filter:
+  - Each accepted SAMPLE_IN write shifts the 16-bit signed sample into a 32-entry
+    delay line, newest sample at index 0.
+  - Each accepted SAMPLE_IN write starts one run that computes y[n] as the sum over
+    k of c[k] times x[n-k] for k from 0 to 31.
+  - One DSP48E1 performs the multiply-accumulate, one tap per clk cycle, so one run
+    takes 32 tap cycles plus pipeline cycles.
+  - The accumulator is arithmetically shifted right by 15 bits (Q1.15 coefficients)
+    and saturated to the signed 16-bit range.
+  - RESULT holds the last completed output and STATUS bit 1 is set when a new output
+    is stored.
+  coefficients:
+  - COEF_ADDR selects one of 32 coefficient slots, index 0 to 31.
+  - A COEF_DATA write stores the 16-bit signed value in the slot selected by COEF_ADDR.
+  - A COEF_DATA read returns the 16-bit value in the slot selected by COEF_ADDR.
+  - Coefficient writes are accepted at any time and apply from the next filter run.
+  status:
+  - STATUS bit 0 is set while a filter run is in progress.
+  - A SAMPLE_IN write while STATUS bit 0 is set is ignored.
+  reset:
+  - On cpu_resetn low, the delay line, all 32 coefficients, RESULT, COEF_ADDR and
+    STATUS return to zero.
+  - The ID register is constant and is not affected by reset.
+registers:
+  map:
+  - offset: '0x00'
+    name: ID
+    access: RO
+    reset: '0x46494C54'
+    bits: 31:0 ASCII 'FILT'
+  - offset: '0x04'
+    name: SAMPLE_IN
+    access: WO
+    reset: '0x00000000'
+    bits: 15:0 signed input sample, write starts one filter run
+  - offset: '0x08'
+    name: RESULT
+    access: RO
+    reset: '0x00000000'
+    bits: 15:0 signed filtered sample, last completed run
+  - offset: '0x0C'
+    name: STATUS
+    access: RO
+    reset: '0x00000000'
+    bits: bit 0 busy, bit 1 result_valid
+  - offset: '0x10'
+    name: COEF_ADDR
+    access: RW
+    reset: '0x00000000'
+    bits: 4:0 coefficient index 0 to 31, bits 31:5 read as zero
+  - offset: '0x14'
+    name: COEF_DATA
+    access: RW
+    reset: '0x00000000'
+    bits: 15:0 signed coefficient at COEF_ADDR, bits 31:16 read as zero
+timing:
+  clock: 10 ns period at 100 MHz
+  latency:
+    sample_to_result: TAPS + 3 = 35 clk cycles from SAMPLE_IN write to STATUS bit
+      1 set
+    coef_write_to_apply: next filter run, at most 35 clk cycles
+    uart_bit: BAUD_DIVIDER = 868 clk cycles per bit
+resources_expected:
+  DSP48E1: 1
+  RAMB36: 0
+  LUT: under 400 estimated
+  FF: about 700 estimated, 512 of them the delay line
+requirements:
+- id: REQ-01
+  text: Register ID at offset 0x00 reads 0x46494C54 after cpu_resetn is released.
+  proof:
+  - simulation
+  - hardware
+- id: REQ-02
+  text: Each accepted SAMPLE_IN write shifts the 16-bit signed sample into a 32-entry
+    delay line.
+  proof:
+  - simulation
+- id: REQ-03
+  text: RESULT equals the sum over k from 0 to 31 of c[k] times x[n-k] in signed arithmetic.
+  proof:
+  - simulation
+- id: REQ-04
+  text: RESULT equals the accumulator shifted right by 15 bits and saturated to the
+    range -32768 to 32767.
+  proof:
+  - simulation
+  - formal
+- id: REQ-05
+  text: STATUS bit 1 is set no later than 35 clk cycles after an accepted SAMPLE_IN
+    write.
+  proof:
+  - simulation
+- id: REQ-06
+  text: A SAMPLE_IN write while STATUS bit 0 is set leaves the delay line and RESULT
+    unchanged.
+  proof:
+  - simulation
+  - formal
+- id: REQ-07
+  text: A COEF_DATA write stores the 16-bit value at the index held in COEF_ADDR.
+  proof:
+  - simulation
+- id: REQ-08
+  text: A COEF_DATA read returns the 16-bit value stored at the index held in COEF_ADDR.
+  proof:
+  - simulation
+- id: REQ-09
+  text: While cpu_resetn is low the delay line and all 32 coefficients are zero.
+  proof:
+  - simulation
+  - formal
+- id: REQ-10
+  text: The design instantiates exactly one DSP48E1 primitive.
+  proof:
+  - analysis
+- id: REQ-11
+  text: The UART bit period is 868 clk cycles.
+  proof:
+  - simulation
+- id: REQ-12
+  text: Post-route setup slack at 100 MHz is 0 ns or greater.
+  proof:
+  - analysis
+assumptions:
+- assumption: Coefficients and samples are Q1.15 signed 16-bit values.
+  reason: Spec gives 16-bit signed samples and no coefficient format, and Q1.15 keeps
+    the output in 16 bits.
+- assumption: One time-multiplexed MAC is used, one tap per clk cycle, so the design
+    fits one DSP48E1.
+  reason: The request asks for as few DSP slices as practical and the rest of the
+    design needs them.
+- assumption: The filter processes at most one sample per 35 clk cycles.
+  reason: A single MAC needs 32 tap cycles plus pipeline, so faster input is not computed.
+- assumption: The delay line and coefficients are built from flip-flops, with no block
+    RAM.
+  reason: 32 by 16 bits is small and a shift register avoids BRAM and extra latency.
+- assumption: The UART pins C4 and D4 are the USB-UART pins on the Nexys A7-100T.
+  reason: These are the board's fixed USB-UART pins, so the pin plan does not need
+    a user choice.
+open_questions: []
+resolved_questions:
+- question: 'Give the register map: offset, width, reset value and access of every
+    register.'
+  answer: 0x00 ID RO 0x46494C54; 0x04 SAMPLE_IN WO 0x0; 0x08 RESULT RO 0x0; 0x0C STATUS
+    RO 0x0 bit0 busy bit1 result_valid; 0x10 COEF_ADDR RW 0x0 bits 4:0; 0x14 COEF_DATA
+    RW 0x0 bits 15:0
+  status: defaulted
+  by: default
+  default_reason: The request names registers and reads back values but gives no offsets,
+    so the proposed map is a default until answered.
+- question: What coefficient word format and scaling should the filter use?
+  answer: Q1.15 signed 16-bit coefficients, output is accumulator >>> 15
+  status: defaulted
+  by: default
+  default_reason: Keeps coefficients and output in 16 bits with full scale near 1.0,
+    and the request does not give a format.
+- question: How should the accumulator be rounded before it is cut to 16 bits?
+  answer: Truncate (arithmetic shift, no rounding bias added)
+  status: defaulted
+  by: default
+  default_reason: Truncation needs no extra adder and is the simplest bit-exact model
+    for the reference model.
+- question: What happens on overflow beyond the 16-bit output range?
+  answer: Saturate to -32768 or 32767
+  status: defaulted
+  by: default
+  default_reason: Saturation avoids wrap-around spikes in a low-pass output and is
+    cheap in logic.
+- question: What are the coefficient values after CPU reset?
+  answer: All 32 coefficients zero, so RESULT is zero until the host loads them
+  status: defaulted
+  by: default
+  default_reason: The request does not give a filter response, and zero is a known
+    safe state that the host overwrites.
+- question: What UART baud rate and framing should the test shell use?
+  answer: 115200 baud, 8 data bits, no parity, 1 stop bit (BAUD_DIVIDER 868)
+  status: defaulted
+  by: default
+  default_reason: 115200 8N1 is the usual USB-UART setting and 868 cycles at 100 MHz
+    gives under 0.2 percent error.
+- question: How does the host frame register writes and reads over UART?
+  answer: 'Write: byte ''W'' (0x57), 1 byte offset, 4 bytes big-endian data. Read:
+    byte ''R'' (0x52), 1 byte offset, device returns 4 bytes big-endian'
+  status: defaulted
+  by: default
+  default_reason: The request does not give the shell framing, and a fixed-length
+    frame is simple to test.
+- question: What happens when SAMPLE_IN is written while a run is in progress?
+  answer: The write is ignored and STATUS bit 0 stays set
+  status: defaulted
+  by: default
+  default_reason: A single MAC cannot take a second sample mid-run, and ignoring keeps
+    the delay line consistent.
+- question: When do coefficient writes take effect during a run?
+  answer: Coefficient writes are accepted at any time and apply from the next filter
+    run
+  status: defaulted
+  by: default
+  default_reason: Avoids mixing old and new coefficients inside one output sample.
+- question: Is the reset button active low and should it be synchronised?
+  answer: CPU RESET (C12) is active low and passes through a two-flop synchroniser
+    before use
+  status: defaulted
+  by: default
+  default_reason: The Nexys A7 CPU reset is active low and asynchronous to clk, so
+    synchronising avoids metastability.
