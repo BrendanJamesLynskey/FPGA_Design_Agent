@@ -87,7 +87,7 @@ Interfaces:
 | RTL against the twins, lint; needs Icarus Verilog 12, Verilator 5 (lint test skips without it) | `B89_RECORD=results/b89 python3 -m pytest -q designs/b89_lutnet_gen/tests/test_b89_rtl.py` | no | about 2 min |
 | out-of-context builds and clock search on both parts; needs Vivado 2026.1 and a heavy slot; repeat with --part xc7a100tcsg324-1 | `python3 -m designs.b89_lutnet_gen.ooc.ooc --part xck26-sfvc784-2LV-c --arms lg_add_comb lg_add_layer lg_small_comb lg_small_layer lg_b87_comb lg_b87_layer treelut_arm` | yes | about 90 min |
 
-Tool: Vivado 2026.1. Build ID of the inputs at handover: none (no Vivado build of this directory). Knowledge-bank pin: `2338b83`.
+Tool: Vivado 2026.1. Build ID of the inputs at handover: none (no Vivado build of this directory). Knowledge-bank pin: `5e2eab8`.
 
 | File | What |
 |---|---|

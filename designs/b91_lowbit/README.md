@@ -66,7 +66,7 @@ Interfaces:
 | out-of-context builds and clock search on both parts; needs Vivado 2026.1 and a heavy slot; repeat with --part xc7a100tcsg324-1 --start 12.0 --passes 3 | `python3 -m designs.b91_lowbit.ooc.ooc --part xck26-sfvc784-2LV-c --arms <modules> --start 3.0` | yes | about 480 min |
 | summary, figures and tables; needs python 3.12 | `python3 results/b91/summary.py && python3 results/b91/tables.py` | no | about 1 min |
 
-Tool: Vivado 2026.1. Build ID of the inputs at handover: none (no Vivado build of this directory). Knowledge-bank pin: `2338b83`.
+Tool: Vivado 2026.1. Build ID of the inputs at handover: none (no Vivado build of this directory). Knowledge-bank pin: `5e2eab8`.
 
 | File | What |
 |---|---|

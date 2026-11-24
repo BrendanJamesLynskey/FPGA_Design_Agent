@@ -32,3 +32,7 @@ whole test split, and one of them placed behind the 58A rule table in simulation
 - Out-of-context results: no I/O, no placement against the rest of a design; the 58A integration is simulation only.
 - The back-test's fill model is an assumption; its differences are within noise and it is not a decision criterion.
 - Only seed 0 of each model is built in hardware.
+
+## Change log
+
+- 2026-11-24 (brief 201): the out-of-context runs have no clock buffer; on the K26 (-2LV) a BUFGCE limits a real clock to 725.2 MHz ([flow/fmax_cap.py](../../flow/fmax_cap.py), [results/201_fmax_cap](../201_fmax_cap/README.md)). The trivial rule `imb_rule` closed at 0.55 ns (`closed_at_mhz` 1818.2, a pulse-width-limited point of a two-LUT block); `summary.json` rows now also carry `fmax_capped_mhz` (725.2 for that arm), `fmax_bound` and `fmax_clock_buffer_mhz`, and `closed_at_mhz` stays the raw figure. `gbt_pipe` (645.2) and `lutnet` (512.8) are below the limit. No latency changes: latency was already quoted at no faster than 2.0 ns (500 MHz).

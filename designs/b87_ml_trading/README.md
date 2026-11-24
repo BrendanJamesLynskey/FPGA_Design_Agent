@@ -72,7 +72,7 @@ Interfaces:
 | hls4ml conversion, C simulation and Vitis HLS; needs hls4ml 1.3.0 and Vitis 2026.1 (vitis-run on PATH), a heavy slot | `python3 -m designs.b87_ml_trading.model.hls4ml_arm --synth --clock 2.0` | yes | about 3 min |
 | out-of-context builds and the clock search; needs Vivado 2026.1 and a heavy slot | `python3 -m designs.b87_ml_trading.ooc.ooc` | yes | about 60 min |
 
-Tool: Vivado 2026.1. Build ID of the inputs at handover: none (no Vivado build of this directory). Knowledge-bank pin: `2338b83`.
+Tool: Vivado 2026.1. Build ID of the inputs at handover: none (no Vivado build of this directory). Knowledge-bank pin: `5e2eab8`.
 
 | File | What |
 |---|---|
