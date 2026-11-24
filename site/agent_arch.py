@@ -91,7 +91,7 @@ ROLE_WORDS = {
 }
 TOOL_GROUPS = [
     ("Files", ["read_file", "write_file", "list_files"]),
-    ("Knowledge", ["search_docs", "load_skill"]),
+    ("Knowledge", ["search_docs", "load_skill", "ip_lookup"]),
     ("Verification", ["lint", "simulate", "formal", "spec_items"]),
     ("Vivado", ["board_constraints", "check_constraints", "build", "gates", "report"]),
     ("Checks", ["check", "gt_plan"]),
@@ -100,6 +100,7 @@ TOOL_GROUPS = [
 TOOL_WORDS = {
     "read_file": "read a file in the design", "write_file": "write a file the role owns", "list_files": "list the design",
     "search_docs": "search the frozen documents", "load_skill": "load know-how from the bank",
+    "ip_lookup": "look in the IP library before writing a block",
     "lint": "Verilator lint", "simulate": "cocotb tests on a simulator", "formal": "SymbiYosys proofs",
     "spec_items": "the spec items to trace", "board_constraints": "pins from the board file",
     "check_constraints": "check the XDC", "build": "run Vivado to a stage", "gates": "parse reports into gates",

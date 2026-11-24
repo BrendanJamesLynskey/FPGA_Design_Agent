@@ -10,7 +10,7 @@ Not in scope:
 - a board run or a full-design build of ML_PRE 1 to 3; every hardware number is an out-of-context, post-route Vivado 2026.1 block build
 - a model that uses the message's own price; none exists in this programme, and every arm must equal the 87 integer model
 
-Kind: showcase; written by hand. State: built. For an agent: [AGENT.md](AGENT.md).
+Kind: showcase; written by a Claude Code session. State: built. For an agent: [AGENT.md](AGENT.md).
 
 <!-- prose:what -->
 **Purpose:** find out how much of the decision model can be done before the last byte arrives, and what it costs.

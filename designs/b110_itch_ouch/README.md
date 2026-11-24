@@ -12,7 +12,7 @@ Not in scope:
 - a full-depth book or every instrument; a few instruments with a bounded number of price levels, and a stated way to fail
 - a board run, power, or timing inside the 10G core; the numbers are simulation and an out-of-context Vivado 2026.1 build
 
-Kind: showcase; written by hand. State: built. For an agent: [AGENT.md](AGENT.md).
+Kind: showcase; written by a Claude Code session. State: built. For an agent: [AGENT.md](AGENT.md).
 
 ![Block diagram: the design's blocks and the links between them](docs/handover/architecture.svg)
 

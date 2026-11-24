@@ -78,5 +78,14 @@ module book_props #(
     always_comb begin
         c_saturates:  cover (live && d3_v && d3_add && any_hit && sz_sum[32]);
         c_live_level: cover (live && rdb[0][64]);
+        // brief 143c: each assertion's antecedent (the state in which it could be broken), paired by name (NAME__ante)
+        q1_no_zero_level__ante:      cover (live && |lv_we);
+        q2_no_wrap__ante:            cover (live && d3_v && d3_add && any_hit);
+        q3_saturation_flagged__ante: cover (live && d3_v && d3_add && any_hit && sz_sum[32]);
+        q4_no_zero_entry__ante:      cover (live && we2);
+        q6_reduce_lowers__ante:      cover (live && b2_v && b2_op == 3'd1 && hit2 && we2 && wd2[EW-1]);
+        q5_levels_never_zero_live__ante: cover (live);
+        n1_swept_is_zero__ante:      cover (defined && sweep);
+        n2_no_zero_live__ante:       cover (live);
     end
 endmodule

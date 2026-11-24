@@ -1,0 +1,449 @@
+{
+ "n": 10,
+ "summary": {
+  "full": {
+   "stages_rerun": 100,
+   "builds": 10,
+   "unsound": 0,
+   "exact": 0
+  },
+  "F1": {
+   "stages_rerun": 84,
+   "builds": 10,
+   "unsound": 0,
+   "exact": 6
+  },
+  "F5": {
+   "stages_rerun": 57,
+   "builds": 7,
+   "unsound": 0,
+   "exact": 10
+  },
+  "F5_vs_F1_stages_saved_pct": 32.1,
+  "F5_vs_full_stages_saved_pct": 43.0,
+  "pass": {
+   "unsound_0": true,
+   "at_least_15pct_below_F1": true,
+   "every_plan_equals_its_label": true
+  }
+ },
+ "rows": [
+  {
+   "id": "C01",
+   "design": "t1_dimmer_counter",
+   "goals": [
+    "lut<=700"
+   ],
+   "retarget": null,
+   "required": "met",
+   "arms": {
+    "full": {
+     "entry_stage": 0,
+     "stages_rerun": 10,
+     "builds": 1,
+     "sound": true,
+     "exact": false
+    },
+    "F1": {
+     "entry_stage": 1,
+     "stages_rerun": 9,
+     "builds": 1,
+     "kind": "area",
+     "matched": [
+      "lut"
+     ],
+     "sound": true,
+     "exact": false
+    },
+    "F5": {
+     "entry_stage": null,
+     "stages_rerun": 0,
+     "builds": 0,
+     "verdicts": [
+      "met_by_evidence"
+     ],
+     "sound": true,
+     "exact": true,
+     "entry_stage_with_worktree_noise": 2,
+     "evidence_used": [
+      "M1"
+     ]
+    }
+   }
+  },
+  {
+   "id": "C02",
+   "design": "t1_dimmer_counter",
+   "goals": [
+    "lut<=400"
+   ],
+   "retarget": null,
+   "required": 1,
+   "arms": {
+    "full": {
+     "entry_stage": 0,
+     "stages_rerun": 10,
+     "builds": 1,
+     "sound": true,
+     "exact": false
+    },
+    "F1": {
+     "entry_stage": 1,
+     "stages_rerun": 9,
+     "builds": 1,
+     "kind": "area",
+     "matched": [
+      "lut"
+     ],
+     "sound": true,
+     "exact": true
+    },
+    "F5": {
+     "entry_stage": 1,
+     "stages_rerun": 9,
+     "builds": 1,
+     "verdicts": [
+      "not_met"
+     ],
+     "sound": true,
+     "exact": true,
+     "entry_stage_with_worktree_noise": 1,
+     "evidence_used": []
+    }
+   }
+  },
+  {
+   "id": "C03",
+   "design": "t1_dimmer_counter",
+   "goals": [
+    "fmax>=150MHz"
+   ],
+   "retarget": null,
+   "required": 3,
+   "arms": {
+    "full": {
+     "entry_stage": 0,
+     "stages_rerun": 10,
+     "builds": 1,
+     "sound": true,
+     "exact": false
+    },
+    "F1": {
+     "entry_stage": 3,
+     "stages_rerun": 7,
+     "builds": 1,
+     "kind": "fmax",
+     "matched": [
+      "fmax",
+      "150mhz"
+     ],
+     "sound": true,
+     "exact": true
+    },
+    "F5": {
+     "entry_stage": 3,
+     "stages_rerun": 7,
+     "builds": 1,
+     "verdicts": [
+      "not_met"
+     ],
+     "sound": true,
+     "exact": true,
+     "entry_stage_with_worktree_noise": 2,
+     "evidence_used": []
+    }
+   }
+  },
+  {
+   "id": "C04",
+   "design": "t1_dimmer_counter",
+   "goals": [
+    "power<=0.1W"
+   ],
+   "retarget": null,
+   "required": 3,
+   "arms": {
+    "full": {
+     "entry_stage": 0,
+     "stages_rerun": 10,
+     "builds": 1,
+     "sound": true,
+     "exact": false
+    },
+    "F1": {
+     "entry_stage": 3,
+     "stages_rerun": 7,
+     "builds": 1,
+     "kind": "power",
+     "matched": [
+      "power",
+      "1w"
+     ],
+     "sound": true,
+     "exact": true
+    },
+    "F5": {
+     "entry_stage": 3,
+     "stages_rerun": 7,
+     "builds": 1,
+     "verdicts": [
+      "not_met"
+     ],
+     "sound": true,
+     "exact": true,
+     "entry_stage_with_worktree_noise": 2,
+     "evidence_used": []
+    }
+   }
+  },
+  {
+   "id": "C05",
+   "design": "t1_dimmer_counter",
+   "goals": [],
+   "retarget": "xc7a200tfbg484-1",
+   "required": 3,
+   "arms": {
+    "full": {
+     "entry_stage": 0,
+     "stages_rerun": 10,
+     "builds": 1,
+     "sound": true,
+     "exact": false
+    },
+    "F1": {
+     "entry_stage": 1,
+     "stages_rerun": 9,
+     "builds": 1,
+     "kind": "retarget",
+     "matched": [
+      "retarget",
+      "xc7a200tfbg484"
+     ],
+     "sound": true,
+     "exact": false
+    },
+    "F5": {
+     "entry_stage": 3,
+     "stages_rerun": 7,
+     "builds": 1,
+     "verdicts": [
+      "same_family"
+     ],
+     "sound": true,
+     "exact": true,
+     "entry_stage_with_worktree_noise": 2,
+     "evidence_used": []
+    }
+   }
+  },
+  {
+   "id": "C06",
+   "design": "b58a_trigger",
+   "goals": [
+    "latency.decision_clocks_speculative<=10clk"
+   ],
+   "retarget": null,
+   "required": "met",
+   "arms": {
+    "full": {
+     "entry_stage": 0,
+     "stages_rerun": 10,
+     "builds": 1,
+     "sound": true,
+     "exact": false
+    },
+    "F1": {
+     "entry_stage": 1,
+     "stages_rerun": 9,
+     "builds": 1,
+     "kind": "latency",
+     "matched": [
+      "latency"
+     ],
+     "sound": true,
+     "exact": false
+    },
+    "F5": {
+     "entry_stage": null,
+     "stages_rerun": 0,
+     "builds": 0,
+     "verdicts": [
+      "met_by_evidence"
+     ],
+     "sound": true,
+     "exact": true,
+     "entry_stage_with_worktree_noise": 2,
+     "evidence_used": [
+      "M7"
+     ]
+    }
+   }
+  },
+  {
+   "id": "C07",
+   "design": "b58a_trigger",
+   "goals": [
+    "latency.decision_clocks_speculative<=6clk"
+   ],
+   "retarget": null,
+   "required": 1,
+   "arms": {
+    "full": {
+     "entry_stage": 0,
+     "stages_rerun": 10,
+     "builds": 1,
+     "sound": true,
+     "exact": false
+    },
+    "F1": {
+     "entry_stage": 1,
+     "stages_rerun": 9,
+     "builds": 1,
+     "kind": "latency",
+     "matched": [
+      "latency"
+     ],
+     "sound": true,
+     "exact": true
+    },
+    "F5": {
+     "entry_stage": 1,
+     "stages_rerun": 9,
+     "builds": 1,
+     "verdicts": [
+      "not_met"
+     ],
+     "sound": true,
+     "exact": true,
+     "entry_stage_with_worktree_noise": 1,
+     "evidence_used": []
+    }
+   }
+  },
+  {
+   "id": "C08",
+   "design": "b58a_trigger",
+   "goals": [],
+   "retarget": "xc7a200tfbg484-1",
+   "required": 1,
+   "arms": {
+    "full": {
+     "entry_stage": 0,
+     "stages_rerun": 10,
+     "builds": 1,
+     "sound": true,
+     "exact": false
+    },
+    "F1": {
+     "entry_stage": 1,
+     "stages_rerun": 9,
+     "builds": 1,
+     "kind": "retarget",
+     "matched": [
+      "retarget",
+      "xc7a200tfbg484"
+     ],
+     "sound": true,
+     "exact": true
+    },
+    "F5": {
+     "entry_stage": 1,
+     "stages_rerun": 9,
+     "builds": 1,
+     "verdicts": [
+      "other_family"
+     ],
+     "sound": true,
+     "exact": true,
+     "entry_stage_with_worktree_noise": 1,
+     "evidence_used": []
+    }
+   }
+  },
+  {
+   "id": "C09",
+   "design": "b96_kr260_10g",
+   "goals": [
+    "power<=1.5W"
+   ],
+   "retarget": null,
+   "required": "met",
+   "arms": {
+    "full": {
+     "entry_stage": 0,
+     "stages_rerun": 10,
+     "builds": 1,
+     "sound": true,
+     "exact": false
+    },
+    "F1": {
+     "entry_stage": 3,
+     "stages_rerun": 7,
+     "builds": 1,
+     "kind": "power",
+     "matched": [
+      "power",
+      "5w"
+     ],
+     "sound": true,
+     "exact": false
+    },
+    "F5": {
+     "entry_stage": null,
+     "stages_rerun": 0,
+     "builds": 0,
+     "verdicts": [
+      "met_by_evidence"
+     ],
+     "sound": true,
+     "exact": true,
+     "entry_stage_with_worktree_noise": 1,
+     "evidence_used": [
+      "M5"
+     ]
+    }
+   }
+  },
+  {
+   "id": "C10",
+   "design": "b96_kr260_10g",
+   "goals": [
+    "lut<=5000"
+   ],
+   "retarget": null,
+   "required": 1,
+   "arms": {
+    "full": {
+     "entry_stage": 0,
+     "stages_rerun": 10,
+     "builds": 1,
+     "sound": true,
+     "exact": false
+    },
+    "F1": {
+     "entry_stage": 1,
+     "stages_rerun": 9,
+     "builds": 1,
+     "kind": "area",
+     "matched": [
+      "lut"
+     ],
+     "sound": true,
+     "exact": true
+    },
+    "F5": {
+     "entry_stage": 1,
+     "stages_rerun": 9,
+     "builds": 1,
+     "verdicts": [
+      "not_met"
+     ],
+     "sound": true,
+     "exact": true,
+     "entry_stage_with_worktree_noise": 1,
+     "evidence_used": []
+    }
+   }
+  }
+ ]
+}
