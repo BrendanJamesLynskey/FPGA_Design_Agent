@@ -293,6 +293,12 @@ def _standards(ctx: Ctx) -> dict[str, Any]:
                 where = f"{f.get('file')}:{f.get('line')}"
                 fs.append({"tool": "standards", "code": r["id"], "severity": r["status"], "where": where,
                            "key": f"standards:{r['id']} {where}", "message": f.get("message", ""), "blocking": True})
+    for r in rep.get("rules") or []:        # rtl.initial_values: warn (brief 205): shown, never blocking
+        if r.get("status") == "warn" and (ctx.scope != "rtl" or r.get("stage") in ("rtl", None)):
+            for f in r.get("warnings") or []:
+                where = f"{f.get('file')}:{f.get('line')}"
+                fs.append({"tool": "standards", "code": r["id"], "severity": "warning", "where": where,
+                           "key": f"standards:{r['id']} {where}", "message": f.get("message", ""), "blocking": False})
     return _result(fs, records=[out])
 
 
