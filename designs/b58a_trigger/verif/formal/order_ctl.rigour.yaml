@@ -1,0 +1,12 @@
+schema: fpga-design-agent/formal_rigour/v1
+scope: "order_ctl.sv with WDOG 8, a 3-clock abstract MAC frame and a 2-bit frame counter (GEN_W = 2, so its wrap is inside the bound); one order, chosen by the solver (`watch`), is followed by ghost logic; every input free, soft reset free"
+sanity: [c_poisoned_on_wire, c_cancel_after_clean, c_dropped_before_start, c_watchdog_reach, c_soft_reset_on_wire, c_request_after_wrap]
+depth:
+  bmc:
+    enough: false
+    why: >-
+      Bounded, not claimed exhaustive. Measured in the cover task: the watchdog's reach (act_run == WDOG + 2) is at step 13, a cancel after a clean send at step 12, a request
+      after the frame counter wrapped at step 7; depth 30 is more than twice the deepest of them, so each path (poisoned on the wire, cancelled, dropped before start, soft
+      reset on the wire, watchdog) is visited once. a_b2_drains claims the slot is free within WDOG + 16 = 24 busy clocks, so it can first be violated at step 25 or later and depth 30 leaves at most 5 clocks of margin;
+      the ghost logic follows one order at a time (the solver's `watch`), not two in a row. A k-induction `prove` was tried on 2026-11-21 and did not close (the run ended UNKNOWN after 153 s: induction step fails on the
+      ghost state), so there is no unbounded result. The run takes 2757 s on the shared machine (z3, slowest step last).

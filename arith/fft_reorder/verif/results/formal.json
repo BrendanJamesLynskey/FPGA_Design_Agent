@@ -1,0 +1,120 @@
+{
+ "function": "fft_reorder",
+ "tool": "Yosys 0.70+385 (git sha1 098e46a36, Release, Clang /usr/bin/clang++ 21.1.8)",
+ "jobs": 6,
+ "ok": 6,
+ "results": [
+  {
+   "name": "bitrev_n8",
+   "top": "fft_bitrev_fv",
+   "params": {
+    "LOGN": 3
+   },
+   "mode": "prove",
+   "depth": 2,
+   "engine": "boolector",
+   "claim": "bit reversal is a permutation and an involution of all 8 addresses (proved for all inputs)",
+   "mutant": null,
+   "expected": "PASS",
+   "status": "PASS",
+   "ok": true,
+   "seconds": 0.3,
+   "failed_assertions": [],
+   "tail": ""
+  },
+  {
+   "name": "bitrev_n64",
+   "top": "fft_bitrev_fv",
+   "params": {
+    "LOGN": 6
+   },
+   "mode": "prove",
+   "depth": 2,
+   "engine": "boolector",
+   "claim": "the same for all 64 addresses (proved for all inputs)",
+   "mutant": null,
+   "expected": "PASS",
+   "status": "PASS",
+   "ok": true,
+   "seconds": 0.3,
+   "failed_assertions": [],
+   "tail": ""
+  },
+  {
+   "name": "bitrev_n256",
+   "top": "fft_bitrev_fv",
+   "params": {
+    "LOGN": 8
+   },
+   "mode": "prove",
+   "depth": 2,
+   "engine": "boolector",
+   "claim": "the same for all 256 addresses (proved for all inputs)",
+   "mutant": null,
+   "expected": "PASS",
+   "status": "PASS",
+   "ok": true,
+   "seconds": 0.4,
+   "failed_assertions": [],
+   "tail": ""
+  },
+  {
+   "name": "bitrev_n4096",
+   "top": "fft_bitrev_fv",
+   "params": {
+    "LOGN": 12
+   },
+   "mode": "prove",
+   "depth": 2,
+   "engine": "boolector",
+   "claim": "the same for all 4096 addresses (proved for all inputs)",
+   "mutant": null,
+   "expected": "PASS",
+   "status": "PASS",
+   "ok": true,
+   "seconds": 0.3,
+   "failed_assertions": [],
+   "tail": ""
+  },
+  {
+   "name": "mutant_identity",
+   "top": "fft_bitrev_fv",
+   "params": {
+    "LOGN": 6
+   },
+   "mode": "bmc",
+   "depth": 2,
+   "engine": "boolector",
+   "claim": "a bit reversal that does nothing is refuted (the one-set-bit property), although it is an involution and a permutation",
+   "mutant": "bitrev_identity",
+   "expected": "FAIL",
+   "status": "FAIL",
+   "ok": true,
+   "seconds": 0.3,
+   "failed_assertions": [
+    "g_onehot[5].ONEHOT"
+   ],
+   "tail": ""
+  },
+  {
+   "name": "mutant_drop_bit",
+   "top": "fft_bitrev_fv",
+   "params": {
+    "LOGN": 6
+   },
+   "mode": "bmc",
+   "depth": 2,
+   "engine": "boolector",
+   "claim": "a bit reversal that leaves the top bit undriven is refuted",
+   "mutant": "bitrev_off",
+   "expected": "FAIL",
+   "status": "FAIL",
+   "ok": true,
+   "seconds": 0.3,
+   "failed_assertions": [
+    "g_onehot[5].ONEHOT"
+   ],
+   "tail": ""
+  }
+ ]
+}

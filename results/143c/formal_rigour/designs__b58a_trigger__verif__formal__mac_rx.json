@@ -1,0 +1,348 @@
+{
+ "sby": "designs/b58a_trigger/verif/formal/mac_rx.sby",
+ "schema": "fpga-design-agent/formal_rigour/v1",
+ "sources": {
+  "designs/b58a_trigger/verif/formal/eth_crc32_free.sv": "59303c95f0c5de66bd25979b2d9081133945e1b3e672933bbf95fa7a85ee650c",
+  "designs/b58a_trigger/verif/formal/formal_mac_rx.sv": "8813ceb61322b871d5305eab801c252e340f44f0e325da2bccd028d6415762c2",
+  "designs/b58a_trigger/verif/formal/mac_rx.sby": "c788bbb6f78cd6e9beddf54adb931cf941b7d6d46511f480bddb2808eff04333",
+  "ip_lib/eth_mac_rgmii/rtl/mac_rx.sv": "7de3e76fe89bb41ef3824c817a264a429b975013206548a43f1b4555428a093f"
+ },
+ "tasks": {
+  "bmc": {
+   "checks": [
+    {
+     "flavor": "cover",
+     "id": "c_runt",
+     "label": "c_runt",
+     "src": "formal_mac_rx.sv:61",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "c_good_frame",
+     "label": "c_good_frame",
+     "src": "formal_mac_rx.sv:65",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "c_giant",
+     "label": "c_giant",
+     "src": "formal_mac_rx.sv:62",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "c_er",
+     "label": "c_er",
+     "src": "formal_mac_rx.sv:63",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "c_bad_pre",
+     "label": "c_bad_pre",
+     "src": "formal_mac_rx.sv:64",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "a_sof_no_data__ante",
+     "label": "a_sof_no_data__ante",
+     "src": "formal_mac_rx.sv:58",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "a_sof_no_data",
+     "label": "a_sof_no_data",
+     "src": "formal_mac_rx.sv:51",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "a_out_sof",
+     "label": "a_out_sof",
+     "src": "formal_mac_rx.sv:39",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "a_out_is_input",
+     "label": "a_out_is_input",
+     "src": "formal_mac_rx.sv:40",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "a_out_index",
+     "label": "a_out_index",
+     "src": "formal_mac_rx.sv:38",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "a_out_in_frame",
+     "label": "a_out_in_frame",
+     "src": "formal_mac_rx.sv:37",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "a_out__ante",
+     "label": "a_out__ante",
+     "src": "formal_mac_rx.sv:55",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "a_end_runt",
+     "label": "a_end_runt",
+     "src": "formal_mac_rx.sv:46",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "a_end_len",
+     "label": "a_end_len",
+     "src": "formal_mac_rx.sv:45",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "a_end_in_frame",
+     "label": "a_end_in_frame",
+     "src": "formal_mac_rx.sv:44",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "a_end_good_clean__ante",
+     "label": "a_end_good_clean__ante",
+     "src": "formal_mac_rx.sv:57",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "a_end_good_clean",
+     "label": "a_end_good_clean",
+     "src": "formal_mac_rx.sv:48",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "a_end_giant",
+     "label": "a_end_giant",
+     "src": "formal_mac_rx.sv:47",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "a_end_from_eof",
+     "label": "a_end_from_eof",
+     "src": "formal_mac_rx.sv:49",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "a_end__ante",
+     "label": "a_end__ante",
+     "src": "formal_mac_rx.sv:56",
+     "tautology": false
+    }
+   ],
+   "covers": {},
+   "depth": 20,
+   "mode": "bmc",
+   "seconds": 13.5,
+   "status": "PASS"
+  },
+  "cover": {
+   "checks": [
+    {
+     "flavor": "cover",
+     "id": "c_runt",
+     "label": "c_runt",
+     "src": "formal_mac_rx.sv:61",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "c_good_frame",
+     "label": "c_good_frame",
+     "src": "formal_mac_rx.sv:65",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "c_giant",
+     "label": "c_giant",
+     "src": "formal_mac_rx.sv:62",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "c_er",
+     "label": "c_er",
+     "src": "formal_mac_rx.sv:63",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "c_bad_pre",
+     "label": "c_bad_pre",
+     "src": "formal_mac_rx.sv:64",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "a_sof_no_data__ante",
+     "label": "a_sof_no_data__ante",
+     "src": "formal_mac_rx.sv:58",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "a_sof_no_data",
+     "label": "a_sof_no_data",
+     "src": "formal_mac_rx.sv:51",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "a_out_sof",
+     "label": "a_out_sof",
+     "src": "formal_mac_rx.sv:39",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "a_out_is_input",
+     "label": "a_out_is_input",
+     "src": "formal_mac_rx.sv:40",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "a_out_index",
+     "label": "a_out_index",
+     "src": "formal_mac_rx.sv:38",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "a_out_in_frame",
+     "label": "a_out_in_frame",
+     "src": "formal_mac_rx.sv:37",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "a_out__ante",
+     "label": "a_out__ante",
+     "src": "formal_mac_rx.sv:55",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "a_end_runt",
+     "label": "a_end_runt",
+     "src": "formal_mac_rx.sv:46",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "a_end_len",
+     "label": "a_end_len",
+     "src": "formal_mac_rx.sv:45",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "a_end_in_frame",
+     "label": "a_end_in_frame",
+     "src": "formal_mac_rx.sv:44",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "a_end_good_clean__ante",
+     "label": "a_end_good_clean__ante",
+     "src": "formal_mac_rx.sv:57",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "a_end_good_clean",
+     "label": "a_end_good_clean",
+     "src": "formal_mac_rx.sv:48",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "a_end_giant",
+     "label": "a_end_giant",
+     "src": "formal_mac_rx.sv:47",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "a_end_from_eof",
+     "label": "a_end_from_eof",
+     "src": "formal_mac_rx.sv:49",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "a_end__ante",
+     "label": "a_end__ante",
+     "src": "formal_mac_rx.sv:56",
+     "tautology": false
+    }
+   ],
+   "covers": {
+    "a_end__ante": {
+     "reached": true,
+     "step": 4
+    },
+    "a_end_good_clean__ante": {
+     "reached": true,
+     "step": 9
+    },
+    "a_out__ante": {
+     "reached": true,
+     "step": 5
+    },
+    "a_sof_no_data__ante": {
+     "reached": true,
+     "step": 3
+    },
+    "c_bad_pre": {
+     "reached": true,
+     "step": 3
+    },
+    "c_er": {
+     "reached": true,
+     "step": 4
+    },
+    "c_giant": {
+     "reached": true,
+     "step": 13
+    },
+    "c_good_frame": {
+     "reached": true,
+     "step": 9
+    },
+    "c_runt": {
+     "reached": true,
+     "step": 4
+    }
+   },
+   "depth": 14,
+   "mode": "cover",
+   "seconds": 1.5,
+   "status": "PASS"
+  }
+ },
+ "tool": "Yosys 0.70+385 (git sha1 098e46a36, Release, Clang /usr/bin/clang++ 21.1.8)"
+}

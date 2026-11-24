@@ -1,0 +1,9 @@
+schema: fpga-design-agent/formal_rigour/v1
+scope: "sevenseg_scan.sv with REFRESH_BITS = 1 (two clocks a digit; the shipped design uses 17: the divider is a parameter, the digit rotation does not depend on it)"
+sanity: [C_SC_DIGIT_0_LIT, C_SC_DIGIT_7_LIT, C_SC_ALL_DARK_ENABLED]
+depth:
+  bmc:
+    enough: true
+    why: >-
+      Cross-check only: the `prove` task (k-induction, depth 12) proves every assertion for every depth. One full rotation of the eight digits
+      is 8 x 2 = 16 clocks plus the registered anode lag, and the covers show every digit lit inside the depth; depth 40 is two rotations.
