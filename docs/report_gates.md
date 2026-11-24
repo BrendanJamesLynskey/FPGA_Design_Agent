@@ -1,7 +1,7 @@
 # Report-driven checks (brief 204a)
 
 Seven checks that read reports the build already writes (or one Vivado session can write from a checkpoint) against thresholds in AMD's
-UltraFast Design Methodology Guide (UG949 v2025.2) and the Timing Closure Quick Reference (UG1292 v2025.1). They come from the gap study of
+UltraFast Design Methodology Guide (UG949) and the Timing Closure Quick Reference (UG1292); page numbers are the PDF pages of the editions kept in the machine's `_amd_docs` folder. They come from the gap study of
 brief 204 (ranks 1, 2, 5, 11, 12, 13, 14). Code: `flow/report_gates.py`, wired into the [check suite](check_suite.md) as the checks
 `logic_levels`, `clock_tree`, `fanout`, `synth_log`, `congestion`, `ip_status` and `control_sets` (extended). Rules: FDA-HDL v1.7
 (HDL-TIM-01, HDL-CLK-03, HDL-FO-01, HDL-LOG-01, HDL-CONG-01, HDL-IP-01, HDL-CS-01). Measured on the recorded builds:
