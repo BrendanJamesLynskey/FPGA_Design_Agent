@@ -252,18 +252,26 @@ module credit_core #(
     wire [31:0] f_fwd = f_fsum[LF*32 +: 32];
     wire [31:0] f_ret = f_rsum[LB*32 +: 32];
     always_ff @(posedge clk) if (!f_init && !rst) begin
-        assert (32'(credits) + f_fwd + 32'(cnt) + f_ret == 32'(CREDITS));
-        assert (credits <= CW'(CREDITS));
-        assert (cnt <= CW'(CREDITS));
-        assert (s_ready == (credits != '0));
-        assert (m_valid == (cnt != '0));
-        assert (!(f_valid && cnt == CW'(CREDITS) && !pop));
-        assert (32'(rp) < CREDITS && 32'(wp) < CREDITS);
-        assert (32'(wp) == (32'(rp) + 32'(cnt)) % CREDITS);
-        assert (W'(f_in - f_out) == W'(f_fwd + 32'(cnt)));
+        cc_conserve: assert (32'(credits) + f_fwd + 32'(cnt) + f_ret == 32'(CREDITS));
+        cc_credits_max: assert (credits <= CW'(CREDITS));
+        cc_cnt_max: assert (cnt <= CW'(CREDITS));
+        cc_ready: assert (s_ready == (credits != '0));
+        cc_valid: assert (m_valid == (cnt != '0));
+        cc_no_overflow: assert (!(f_valid && cnt == CW'(CREDITS) && !pop));
+        cc_ptr_range: assert (32'(rp) < CREDITS && 32'(wp) < CREDITS);
+        cc_ptr_gap: assert (32'(wp) == (32'(rp) + 32'(cnt)) % CREDITS);
+        cc_count: assert (W'(f_in - f_out) == W'(f_fwd + 32'(cnt)));
+        cc_flight__ante: cover (f_fwd != 32'd0 || f_ret != 32'd0);        // credits or beats are in flight: the conservation sum has more than one term
+        cc_buffered__ante: cover (cnt != '0);
+        cc_spent__ante: cover (credits == '0);                           // the sender has spent every credit: s_ready is low for want of one
+        cc_full__ante: cover (cnt == CW'(CREDITS));                       // the receiver buffer is full: the overflow check is at its limit
+        cc_wrap__ante: cover (cnt != '0 && 32'(rp) + 32'(cnt) >= CREDITS); // the stored beats wrap round the end of the buffer
     end
     // forward stages: stage k's beat has `cnt` beats in the buffer and the valid stages above it ahead of it
     wire [(LF+1)*W-1:0] f_ab;
+    wire [LF:0] f_fwd_ok;
+    wire [CREDITS-1:0] f_buf_ok;
+    assign f_fwd_ok[0] = 1'b1;
     assign f_ab[LF*W +: W] = '0;
     genvar gi;
     generate
@@ -271,13 +279,20 @@ module credit_core #(
             assign f_ab[gi*W +: W] = f_ab[(gi+1)*W +: W] + W'(fv[gi+1]);
         end
         for (gi = 1; gi <= LF; gi++) begin : g_fwd_inv
-            always_ff @(posedge clk) if (!f_init && !rst && fv[gi]) assert (fd[gi*W +: W] == f_out + W'(cnt) + f_ab[gi*W +: W]);
+            assign f_fwd_ok[gi] = !fv[gi] || (fd[gi*W +: W] == f_out + W'(cnt) + f_ab[gi*W +: W]);
         end
         // the j-th beat in the buffer, counting from the read pointer, holds beat number f_out + j
         for (gi = 0; gi < CREDITS; gi++) begin : g_buf_inv
             wire [31:0] f_idx = (32'(rp) + gi >= CREDITS) ? (32'(rp) + gi - CREDITS) : (32'(rp) + gi);
-            always_ff @(posedge clk) if (!f_init && !rst && gi < 32'(cnt)) assert (mem[f_idx] == f_out + W'(gi));
+            assign f_buf_ok[gi] = !(gi < 32'(cnt)) || (mem[f_idx] == f_out + W'(gi));
         end
     endgenerate
+    // one assertion over every stage and every buffer entry (a label inside a generate loop would be created once per iteration and clash)
+    always_ff @(posedge clk) if (!f_init && !rst) begin
+        cc_fwd_data: assert (&f_fwd_ok);
+        cc_buf_data: assert (&f_buf_ok);
+        cc_fwd_data__ante: cover (|(fv >> 1));
+        cc_buf_data__ante: cover (cnt != '0);
+    end
 `endif
 endmodule

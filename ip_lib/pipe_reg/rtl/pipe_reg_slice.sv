@@ -53,8 +53,9 @@ module pipe_slice_comb #(
         end
     end
     always_ff @(posedge clk) if (!f_init && !rst) begin
-        assert (W'(f_in - f_out) == W'(m_valid));
-        if (m_valid) assert (m_data == f_out);
+        comb_count: assert (W'(f_in - f_out) == W'(m_valid));
+        if (m_valid) comb_data: assert (m_data == f_out);
+        comb_holds__ante: cover (m_valid);
     end
 `endif
 endmodule
@@ -111,9 +112,11 @@ module pipe_slice_half #(
         end
     end
     always_ff @(posedge clk) if (!f_init && !rst) begin
-        assert (W'(f_in - f_out) == W'(m_valid));
-        if (m_valid) assert (m_data == f_out);
-        if (s_ready) assert (!m_valid);
+        half_count: assert (W'(f_in - f_out) == W'(m_valid));
+        if (m_valid) half_data: assert (m_data == f_out);
+        if (s_ready) half_ready_empty: assert (!m_valid);
+        half_holds__ante: cover (m_valid);
+        half_ready__ante: cover (s_ready);
     end
 `endif
 endmodule
@@ -180,13 +183,15 @@ module pipe_slice_skid #(
         end
     end
     always_ff @(posedge clk) if (!f_init && !rst) begin
-        assert (W'(f_in - f_out) == W'(m_valid) + W'(t_valid));
-        if (m_valid) assert (m_data == f_out);
+        skid_count: assert (W'(f_in - f_out) == W'(m_valid) + W'(t_valid));
+        if (m_valid) skid_data: assert (m_data == f_out);
         if (t_valid) begin
-            assert (m_valid);
-            assert (!s_ready);
-            assert (t_data == f_out + W'(1));
+            skid_t_main: assert (m_valid);
+            skid_t_stall: assert (!s_ready);
+            skid_t_data: assert (t_data == f_out + W'(1));
         end
+        skid_holds__ante: cover (m_valid);
+        skid_spill__ante: cover (t_valid);
     end
 `endif
 endmodule
@@ -259,13 +264,16 @@ module pipe_slice_full #(
         end
     end
     always_ff @(posedge clk) if (!f_init && !rst) begin
-        assert (W'(f_in - f_out) == W'(cnt));
-        assert (cnt <= 2'd2);
-        assert (m_valid == (cnt != 2'd0));
-        assert (wp == (rp ^ (cnt == 2'd1)));
-        if (s_ready) assert (cnt != 2'd2);
-        if (cnt != 2'd0) assert (m_data == f_out);
-        if (cnt == 2'd2) assert ((rp ? e0 : e1) == f_out + W'(1));
+        full_count: assert (W'(f_in - f_out) == W'(cnt));
+        full_cnt_max: assert (cnt <= 2'd2);
+        full_valid: assert (m_valid == (cnt != 2'd0));
+        full_wp: assert (wp == (rp ^ (cnt == 2'd1)));
+        if (s_ready) full_ready_room: assert (cnt != 2'd2);
+        if (cnt != 2'd0) full_data: assert (m_data == f_out);
+        if (cnt == 2'd2) full_second: assert ((rp ? e0 : e1) == f_out + W'(1));
+        full_holds__ante: cover (cnt != 2'd0);
+        full_ready__ante: cover (s_ready);
+        full_two__ante: cover (cnt == 2'd2);
     end
 `endif
 endmodule
@@ -332,6 +340,7 @@ module pipe_fwd #(
     end
     // stage k holds the beat that has f_ab[k] beats ahead of it in the pipeline (the valid stages above it)
     wire [NS*W-1:0] f_ab;
+    wire [NS-1:0] f_stage_ok;
     assign f_ab[(NS-1)*W +: W] = '0;
     genvar gi;
     generate
@@ -339,9 +348,15 @@ module pipe_fwd #(
             assign f_ab[gi*W +: W] = f_ab[(gi+1)*W +: W] + W'(v[gi+1]);
         end
         for (gi = 0; gi < NS; gi++) begin : g_inv
-            always_ff @(posedge clk) if (!f_init && !rst && v[gi]) assert (d[gi*W +: W] == f_out + f_ab[gi*W +: W]);
+            assign f_stage_ok[gi] = !v[gi] || (d[gi*W +: W] == f_out + f_ab[gi*W +: W]);
         end
     endgenerate
-    always_ff @(posedge clk) if (!f_init && !rst) assert (f_in - f_out == f_ab[0 +: W] + W'(v[0]));
+    // one assertion over every stage (a label inside a generate loop would be created once per stage and clash)
+    always_ff @(posedge clk) if (!f_init && !rst) begin
+        fwd_stage_data: assert (&f_stage_ok);
+        fwd_count: assert (f_in - f_out == f_ab[0 +: W] + W'(v[0]));
+        fwd_stage_data__ante: cover (|v);
+        fwd_count__ante: cover (f_in != f_out);
+    end
 `endif
 endmodule

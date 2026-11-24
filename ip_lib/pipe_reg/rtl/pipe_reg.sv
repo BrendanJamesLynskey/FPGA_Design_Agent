@@ -159,8 +159,16 @@ module pipe_reg_core #(
             logic f_init = 1'b1;
             always_ff @(posedge clk) f_init <= rst;
             genvar q;
+            wire [N-1:0] f_link_ok, f_link_moved;           // one assertion over every link (a label inside a generate loop would clash)
             for (q = 0; q + 1 < N; q++) begin : g_link
-                always_ff @(posedge clk) if (!f_init && !rst) assert (fo[q*W +: W] == fi[(q+1)*W +: W]);
+                assign f_link_ok[q] = (fo[q*W +: W] == fi[(q+1)*W +: W]);
+                assign f_link_moved[q] = (fo[q*W +: W] != '0);
+            end
+            assign f_link_ok[N-1] = 1'b1;
+            assign f_link_moved[N-1] = 1'b0;
+            always_ff @(posedge clk) if (!f_init && !rst) begin
+                chain_link: assert (&f_link_ok);
+                chain_link__ante: cover (|f_link_moved);
             end
 `endif
             assign lv[0] = s_valid;

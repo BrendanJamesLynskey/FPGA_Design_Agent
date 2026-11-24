@@ -1,4 +1,4 @@
-# SymbiYosys: pipe_reg, one task per (MODE, N) at W = 4. prove: k-induction (all behaviours); cover: a beat reaches the output.
+# SymbiYosys: pipe_reg, one task per (MODE, N) at W = 4. prove: k-induction (all behaviours); cover: a beat reaches the output and every assertion's antecedent is reached (one cover task per mode; see pipe.rigour.yaml).
 # MODE 0 FWD, 1 SKID, 2 FULL, 3 HALF, 4 COMB. Run: python3 ip_lib/pipe_reg/formal/run_formal.py
 [tasks]
 fwd1 prove
@@ -16,6 +16,11 @@ comb2 prove
 comb3 prove
 wire0 prove
 skid2c cover
+fwd3c cover
+full2c cover
+half2c cover
+comb2c cover
+wire0c cover
 
 [options]
 prove: mode prove
@@ -34,6 +39,11 @@ skid1: chparam -set MODE 1 -set N 1 formal_pipe
 skid2: chparam -set MODE 1 -set N 2 formal_pipe
 skid3: chparam -set MODE 1 -set N 3 formal_pipe
 skid2c: chparam -set MODE 1 -set N 2 formal_pipe
+fwd3c: chparam -set MODE 0 -set N 3 formal_pipe
+full2c: chparam -set MODE 2 -set N 2 formal_pipe
+half2c: chparam -set MODE 3 -set N 2 formal_pipe
+comb2c: chparam -set MODE 4 -set N 2 formal_pipe
+wire0c: chparam -set MODE 1 -set N 0 formal_pipe
 full1: chparam -set MODE 2 -set N 1 formal_pipe
 full2: chparam -set MODE 2 -set N 2 formal_pipe
 full3: chparam -set MODE 2 -set N 3 formal_pipe

@@ -24,8 +24,8 @@ import yaml
 
 HERE = Path(__file__).resolve().parent
 ENTRY = HERE.parent
-SVA_TASKS = ["sva_c3f1b1", "sva_c5f2b2", "sva_c1f0b0"]
-TASKS = ["c1f0b0", "c2f0b0", "c1f1b1", "c2f1b1", "c3f1b1", "c4f1b1", "c2f2b1", "c3f0b2", "c5f2b2", "c4f3b0", "c3f1b1c"]
+SVA_TASKS = ["sva_c3f1b1", "sva_c5f2b2", "sva_c1f0b0", "sva_c3f1b1c"]
+TASKS = ["c1f0b0", "c2f0b0", "c1f1b1", "c2f1b1", "c3f1b1", "c4f1b1", "c2f2b1", "c3f0b2", "c5f2b2", "c4f3b0", "c3f1b1c", "c5f2b2c", "c4f3b0c"]
 FAULT_TASK = {"forward_stage_skips": "c5f2b2", "return_stage_drops": "c5f2b2"}      # these need two stages; every other fault runs at c3f1b1 (a depth that is not a power of two)
 
 
@@ -72,7 +72,7 @@ def main() -> int:
             exp = "PASS"
             ok = st == exp
             bad += not ok
-            out["proofs"].append({"task": t, "status": st, "seconds": sec, "kind": "cover" if t.endswith("c") and not t.startswith("sva") else ("k-induction proof of the AXI4-Stream rules as SVA (slang)" if t.startswith("sva_") else "k-induction proof")})
+            out["proofs"].append({"task": t, "status": st, "seconds": sec, "kind": "cover" if t.endswith("c") else ("k-induction proof of the AXI4-Stream rules as SVA (slang)" if t.startswith("sva_") else "k-induction proof")})
             print(f"{'ok ' if ok else 'BAD'} {t:8s} {st} {sec}s", flush=True)
         if not a.no_faults:
             fy = yaml.safe_load((ENTRY / "faults.yaml").read_text())["faults"]

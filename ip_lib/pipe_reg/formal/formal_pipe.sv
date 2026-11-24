@@ -46,19 +46,23 @@ module formal_pipe #(
     always_ff @(posedge clk) if (!f_init && !rst) assume (!f_src_stall || s_valid);
     always_ff @(posedge clk) if (!f_init && !rst) begin
         // order and loss: what leaves is the next beat in the stream
-        if (m_valid && m_ready) assert (m_data == out_cnt);
+        if (m_valid && m_ready) h_order: assert (m_data == out_cnt);
         // nothing leaves that was not accepted, and the chain's holding is the difference (N = 0 passes the beat straight through)
         if (N == 0) begin
-            if (m_valid && m_ready) assert (s_valid && s_ready);
+            if (m_valid && m_ready) h_wire: assert (s_valid && s_ready);
+            h_wire__ante: cover (m_valid && m_ready);
         end else begin
-            assert (W'(in_cnt - out_cnt) <= W'(2 * N));
+            h_bound: assert (W'(in_cnt - out_cnt) <= W'(2 * N));
+            h_bound__ante: cover (W'(in_cnt - out_cnt) >= W'(N));
         end
         // AXI-Stream: a stalled output stays valid with the same data
         if (f_stall) begin
-            assert (m_valid);
-            assert (m_data == f_data_q);
+            h_stall_valid: assert (m_valid);
+            h_stall_data: assert (m_data == f_data_q);
         end
+        h_order__ante: cover (m_valid && m_ready);
+        h_stall__ante: cover (f_stall);
     end
     // reachability: every mode can pass a beat all the way through
-    always_ff @(posedge clk) if (!f_init && !rst) cover (m_valid && m_ready && out_cnt == W'(3));
+    always_ff @(posedge clk) if (!f_init && !rst) c_through: cover (m_valid && m_ready && out_cnt == W'(3));
 endmodule

@@ -9,10 +9,18 @@ sva_full2 prove
 sva_half2 prove
 sva_comb2 prove
 sva_wire0 prove
+sva_fwd3c cover
+sva_skid2c cover
+sva_full2c cover
+sva_half2c cover
+sva_comb2c cover
+sva_wire0c cover
 
 [options]
 prove: mode prove
 prove: depth 14
+cover: mode cover
+cover: depth 20
 
 [engines]
 smtbmc boolector
@@ -26,6 +34,12 @@ sva_full2: read_slang -DFORMAL -DSVA pipe_reg.sv pipe_reg_slice.sv formal_pipe.s
 sva_half2: read_slang -DFORMAL -DSVA pipe_reg.sv pipe_reg_slice.sv formal_pipe.sv axis_sva.sv --top formal_pipe -G MODE=3 -G N=2
 sva_comb2: read_slang -DFORMAL -DSVA pipe_reg.sv pipe_reg_slice.sv formal_pipe.sv axis_sva.sv --top formal_pipe -G MODE=4 -G N=2
 sva_wire0: read_slang -DFORMAL -DSVA pipe_reg.sv pipe_reg_slice.sv formal_pipe.sv axis_sva.sv --top formal_pipe -G MODE=1 -G N=0
+sva_fwd3c: read_slang -DFORMAL -DSVA pipe_reg.sv pipe_reg_slice.sv formal_pipe.sv axis_sva.sv --top formal_pipe -G MODE=0 -G N=3
+sva_skid2c: read_slang -DFORMAL -DSVA pipe_reg.sv pipe_reg_slice.sv formal_pipe.sv axis_sva.sv --top formal_pipe -G MODE=1 -G N=2
+sva_full2c: read_slang -DFORMAL -DSVA pipe_reg.sv pipe_reg_slice.sv formal_pipe.sv axis_sva.sv --top formal_pipe -G MODE=2 -G N=2
+sva_half2c: read_slang -DFORMAL -DSVA pipe_reg.sv pipe_reg_slice.sv formal_pipe.sv axis_sva.sv --top formal_pipe -G MODE=3 -G N=2
+sva_comb2c: read_slang -DFORMAL -DSVA pipe_reg.sv pipe_reg_slice.sv formal_pipe.sv axis_sva.sv --top formal_pipe -G MODE=4 -G N=2
+sva_wire0c: read_slang -DFORMAL -DSVA pipe_reg.sv pipe_reg_slice.sv formal_pipe.sv axis_sva.sv --top formal_pipe -G MODE=1 -G N=0
 prep -top formal_pipe
 
 [files]

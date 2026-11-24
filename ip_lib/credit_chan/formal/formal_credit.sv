@@ -40,11 +40,13 @@ module formal_credit #(
     end
     always_ff @(posedge clk) if (!f_init && !rst) assume (!f_src_stall || s_valid);
     always_ff @(posedge clk) if (!f_init && !rst) begin
-        if (m_valid && m_ready) assert (m_data == out_cnt);
+        if (m_valid && m_ready) h_order: assert (m_data == out_cnt);
         if (f_stall) begin
-            assert (m_valid);
-            assert (m_data == f_data_q);
+            h_stall_valid: assert (m_valid);
+            h_stall_data: assert (m_data == f_data_q);
         end
+        h_order__ante: cover (m_valid && m_ready);
+        h_stall__ante: cover (f_stall);
     end
-    always_ff @(posedge clk) if (!f_init && !rst) cover (m_valid && m_ready && out_cnt == W'(3));
+    always_ff @(posedge clk) if (!f_init && !rst) c_through: cover (m_valid && m_ready && out_cnt == W'(3));
 endmodule

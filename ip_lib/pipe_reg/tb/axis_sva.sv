@@ -35,6 +35,12 @@ module axis_sva #(
     logic prev_rst_low = 1'b1;
     always_ff @(posedge aclk) prev_rst_low <= !aresetn;
     a_reset: assert property (@(posedge aclk) (!prev_rst_low || !aresetn || !tvalid));
+    // the antecedents of the two assertions, so that a proof of them is not vacuous (brief 143c): a stalled beat is held by the clock
+    // after, and the first clock after reset release is reached
+    always @(posedge aclk) begin
+        a_hold__ante:  cover (aresetn && held);
+        a_reset__ante: cover (aresetn && prev_rst_low);
+    end
     // reachability: a beat is accepted, and a stall happens
     always @(posedge aclk) begin
         c_xfer:  cover (aresetn && tvalid && tready);
