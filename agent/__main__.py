@@ -254,7 +254,7 @@ def pickup_cmd(a) -> int:
         print(json.dumps({**report, "resume": "refused: the handover has errors; fix them first"}, indent=1))
         return 2
     try:
-        entry = pickup.entry_stage(ld["handover"], fresh, a.change, a.kind, a.from_stage)
+        entry = getattr(a, "entry_override", None) or pickup.entry_stage(ld["handover"], fresh, a.change, a.kind, a.from_stage)   # brief 159: revise gives its own
     except pickup.PickupError as e:
         print(f"resume: {e}", file=sys.stderr)
         return 2
@@ -292,6 +292,10 @@ def pickup_cmd(a) -> int:
     rt = new_runtime(cfg, None, replay=a.replay, record=a.record)
     try:
         state = pickup.prepare(ddir, rt, entry, a.change)
+        if getattr(a, "revise_goals", None) is not None:           # brief 159: the typed goals (and a retarget) go into the run's copy, never the source
+            from agent.graph import revise as _rv
+            report["revise_written"] = _rv.write_goals(Path(rt.design), a.revise_goals, getattr(a, "revise_retarget", None),
+                                                       (ld["handover"].get("target") or {}).get("part"))
     except pickup.PickupError as e:
         print(f"resume: {e}", file=sys.stderr)
         return 2
@@ -317,6 +321,41 @@ def pickup_cmd(a) -> int:
     graph = build_graph(checkpointer_for(rt.run_dir), routing=cfg.skill_routing != "off")
     _drive(graph, rt, {"configurable": {"thread_id": rt.run_id}}, state, replies)
     return 0
+
+
+def revise_cmd(a) -> int:
+    """Brief 159: ``agent revise <design> --goal ... [--retarget ...]``: the plan (agent.graph.revise), then, unless --dry-run, the run."""
+    from agent.graph import goals as G
+    from agent.graph import pickup
+    from agent.graph import revise as R
+    ddir = Path(a.design).resolve()
+    try:
+        goals = [G.parse_goal(t, source=a.source) for t in a.goal]
+        ld = pickup.load(ddir)
+        pl = R.plan(ddir, ld, goals, a.retarget)
+    except (G.GoalError, R.ReviseError, pickup.PickupError) as e:
+        print(f"revise: {e}", file=sys.stderr)
+        return 2
+    if ld["fresh"]["errors"]:
+        print(json.dumps({"revise": "refused: the handover has errors; fix them first", "errors": ld["fresh"]["errors"]}, indent=1))
+        return 2
+    out = R.public(pl)
+    if a.dry_run or pl["entry"]["stage"] >= pickup.DOC_ONLY:
+        out["revise"] = "dry run" if a.dry_run else "nothing to re-run: the committed evidence already meets every goal and the handover is current"
+        print(json.dumps(out, indent=1, default=str))
+        return 0
+    print(json.dumps(out, indent=1, default=str))
+    text = "; ".join([c["goal"] for c in out["changes"]] + ([f"retarget to {a.retarget}"] if a.retarget else []))
+    b = argparse.Namespace(**vars(a))
+    b.run_id, b.change, b.kind, b.from_stage, b.scope, b.strategy_file, b.rewind, b.stop_after = (
+        str(ddir), "revise: " + text, None, None, None, None, None, getattr(a, "stop_after", None))
+    b.entry_override = {"stage": pl["entry"]["stage"], "kind": pl["entry"]["kind"],
+                        "reasons": [(r["stage"], r["why"]) for r in pl["entry"]["reasons"]], "notes": pl["entry"]["notes"]}
+    b.revise_goals = pl["_after"]
+    b.revise_retarget = (pl["retarget"] or {}).get("to") if pl["retarget"] and pl["retarget"].get("stage") is not None else None
+    if b.revise_retarget and b.revise_retarget.get("board") and not getattr(a, "board", None):
+        b.board = b.revise_retarget["board"]
+    return pickup_cmd(b)
 
 
 def review_cmd(a) -> int:
@@ -453,6 +492,16 @@ def main(argv: list[str] | None = None) -> int:
     rs.add_argument("--model-config", help="design resume: JSON command-line layer of the model table")
     rs.add_argument("--allow-fable", action="store_true", help="the owner's flag: permits Fable on a claude_code endpoint")
     rs.add_argument("--allow-model-change", action="store_true", help="resume a run although its model table hash has changed")
+    from agent.graph.revise import add_parser as _revise_parser         # brief 159
+    _revise_parser(sub)
+    rvp = sub._name_parser_map["revise"]
+    for act in rs._actions:                                             # the run options are the resume command's, shared
+        if act.dest in ("max_usd", "board", "stop_after", "model", "harness", "cc_model", "cc_effort", "profile", "roles", "verif_level", "docs",
+                        "models_file", "model_config", "allow_fable", "allow_model_change"):
+            rvp._add_action(act)
+    for act in sub._name_parser_map["resume"]._actions:
+        if act.dest in ("replies", "reply", "replay", "record", "deterministic", "tape", "record_tape", "replay_tape"):
+            rvp._add_action(act)
     dc = sub.add_parser("document", help="brief 68 C: the DOC step on a finished run directory")
     dc.add_argument("run_dir", type=Path)
     dc.add_argument("--board", default="nexys_a7_100t", type=board_name)
@@ -493,6 +542,8 @@ def main(argv: list[str] | None = None) -> int:
         return review_cmd(a)
     if a.cmd == "document":
         return document_cmd(a)
+    if a.cmd == "revise":
+        return revise_cmd(a)
     if a.cmd == "resume" and (Path(a.run_id) / "handover.yaml").is_file():
         return pickup_cmd(a)
     replies = json.loads(a.replies.read_text()) if a.replies else []

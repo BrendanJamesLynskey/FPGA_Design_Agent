@@ -46,6 +46,21 @@ Vivado builds are reused when the sources are unchanged and the earlier build we
   note and, for stage-2 roles, as a repair reason. Only designs in the agent's layout (`spec.md` and `spec.yaml`) can be
   resumed. A changed knowledge-bank pin is reported, not re-run. The minimal stage entry is the initial graph state
   (`stage`, `owners`, `note`, `note_role`, `resumed_from`); brief 62B's closure loop should reuse it.
+- `python -m agent revise <design-dir> --goal "latency<=10clk" [--goal ...] [--retarget <part|board>] [--dry-run]` (brief 159,
+  `agent/graph/revise.py`) takes goals as data (`agent/graph/goals.py`). The same `goals:` block of `spec.yaml` (a list of
+  `{metric, op, bound, unit, name?, priority, source}`; metrics lut, ff, bram_tile, dsp, fmax_mhz, power_w, latency_clk; priority
+  `must` or `should`) is read by the closure loop (a `must` goal wins over `budget:` and `clocks:`, and the reason says so; a
+  `should` goal and a latency goal are listed only, because the loop judges no latency), by the latency loop (`agent latency
+  --goal latency<=N clk`, or the design's own goal: the loop stops at the target) and by the trace matrix (each goal is a `performance`
+  requirement `GOAL-<metric>[-<name>]` that a verification item must still trace to). The plan compares each new goal with the
+  handover's committed measurements: a goal the fresh evidence already meets re-runs nothing (stale evidence counts as none; fmax is
+  met only when the committed build was timed at that clock and met timing); otherwise area and latency enter at stage 1, fmax and
+  power at 3. A retarget inside one device family enters at 3, to another family (or an unknown one) at 1. Whatever the handover
+  already reports stale is added as for `resume`, and the entry is the earliest reason. `--dry-run` prints the plan (per goal the
+  verdict and why, per stage kept or re-run, the goal vector before and after with a SHA-256 of each) and exits 0; a goal that cannot
+  be read exits 2 with the form to write. A run starts through `resume`'s path with the goals (and, for a retarget, the new part in
+  `spec.yaml` and `build.yaml`) written into the RUN's copy; the source design is never edited. Not built: per-stage input hashes.
+  Measured on ten scripted changes: [results/159_typed_goals](../results/159_typed_goals/README.md).
 
 ## The check suite (`flow/checks`, brief 71)
 
