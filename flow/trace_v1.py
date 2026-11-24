@@ -68,7 +68,10 @@ from typing import Any
 
 import yaml
 
-from flow import trace_records as TR
+try:
+    from flow import trace_records as TR
+except ModuleNotFoundError:  # run as `python flow/trace_v1.py` with only flow/ on sys.path (brief 153's guard test)
+    import trace_records as TR  # type: ignore[no-redef]
 
 ROOT = Path(__file__).resolve().parents[1]
 SCHEMA_V1 = "fpga-design-agent/testplan/v1"
