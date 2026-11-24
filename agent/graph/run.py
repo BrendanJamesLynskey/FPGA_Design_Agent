@@ -761,10 +761,11 @@ def _rt(state: State) -> Runtime:
 def stage2_plan(rt: Runtime, state: State) -> dict[str, list[str] | None]:
     """Which stage-2 roles run this visit, in order. ``None``: a fresh write (the artefact does not exist yet); a list:
     a repair of that role's own output, with the failures that role owns. Roles not listed are frozen."""
+    from flow import sources
     d = rt.design
     have = {"model": (d / "model.py").is_file(),
             "tests": bool(list((d / "tests").glob("test_*_rtl.py"))) if (d / "tests").is_dir() else False,
-            "rtl": bool(list((d / "rtl").glob("*.sv"))) if (d / "rtl").is_dir() else False}
+            "rtl": bool(sources.design_rtl(d))}                # every language: a VHDL design's RTL exists too (brief 153)
     owners = dict(state.get("owners") or {})
     plan: dict[str, list[str] | None] = {}
     for role in ("model", "tests", "rtl"):

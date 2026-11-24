@@ -68,7 +68,10 @@ from typing import Any
 
 import yaml
 
-from flow import trace_records as TR
+try:
+    from flow import trace_records as TR
+except ModuleNotFoundError:  # run as `python flow/trace_v1.py` with only flow/ on sys.path (brief 153's guard test)
+    import trace_records as TR  # type: ignore[no-redef]
 
 ROOT = Path(__file__).resolve().parents[1]
 SCHEMA_V1 = "fpga-design-agent/testplan/v1"
@@ -157,7 +160,11 @@ def _add_goal_requirements(design: Path, plan: dict[str, Any]) -> None:
 
 def legacy_items(design: Path, raw: dict) -> list[dict]:
     rec = raw.get("evidence_record") or f"results/04f/{design.name}_verif_gates.json"
-    rtl = sorted(str(p.relative_to(ROOT)) for p in (design / "rtl").glob("*.sv"))
+    try:
+        from flow import sources
+    except ImportError:                       # run as a script: flow/ itself is on sys.path
+        import sources                     # type: ignore[no-redef]
+    rtl = [str(p.relative_to(ROOT)) for p in sources.design_rtl(design)]       # every language (brief 153)
     items = []
     for r in raw.get("requirements") or []:
         for method, key, rd in (("sim_test", "tests", "v0_test"), ("assertion", "assertions", "v0_assertion"),

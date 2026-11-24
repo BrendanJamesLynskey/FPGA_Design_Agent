@@ -382,8 +382,9 @@ class Workspace:
         return self.root / "rtl"
 
     def read(self) -> dict[str, str]:
-        """rtl/*.sv, and the design's own XDC files (a constraints fix changes them; restored like the RTL)."""
-        out = {f"rtl/{p.name}": p.read_text() for p in sorted(self.rtl.glob("*.sv"))}
+        """The RTL (SystemVerilog, Verilog and VHDL: brief 153), and the design's own XDC files (a constraints fix changes them; restored like the RTL)."""
+        from flow import sources
+        out = {f"rtl/{p.name}": p.read_text() for p in sources.design_rtl(self.root)}
         out.update({p.name: p.read_text() for p in sorted(self.root.glob("*.xdc"))})
         return out
 
@@ -392,7 +393,8 @@ class Workspace:
             (self.root / rel).write_text(text)
 
     def restore(self, snap: dict[str, str]) -> None:
-        for p in self.rtl.glob("*.sv"):
+        from flow import sources
+        for p in sources.design_rtl(self.root):
             if f"rtl/{p.name}" not in snap:
                 p.unlink()
         self.write(snap)

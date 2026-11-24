@@ -68,6 +68,10 @@ python3 -m flow.checks designs/<d> [--names all|resets,cdc,...] [--scope auto|rt
 - **`pass`** means every part of the check that ran found nothing blocking. **`PARTIAL`** in the digest (`incomplete`
   in the JSON) means a part could not run, for example the reset netlist scan with no Vivado; the suite's overall verdict
   is then not a pass. **`not run`** always carries its reason.
+- **A check that cannot read a language says so (brief 153).** On a design with VHDL, a part that has no VHDL reader is `PARTIAL` or
+  `not run` with "no reader for .vhd (...)", never a clean pass. The lint of a VHDL design is GHDL's, listed under the tool name
+  `verilator` with the code `GHDL` (rule HDL-LINT-00); the `constants` check is `PARTIAL` when it cannot read the quoted design ID's binding.
+  Which check reads what: `python3 -m flow.sources --help`, and [vhdl.md](vhdl.md).
 - **Advisory findings never fail a check**: in the checks that mirror a stage gate (methodology, drc, cdc), Warnings
   are advisory because the gates fail only on Critical Warnings (or Errors); Advisory and Info rows and the `axi` notes
   are advisory everywhere. **The `resets` check is stricter**: AMD's reset rows at Warning (LUTAR-1, DPIR, DPOR, CDC-8)

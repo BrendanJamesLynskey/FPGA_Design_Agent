@@ -9,7 +9,7 @@ A Kria KR260 design that carries our own 10GBASE-R PCS (64B/66B, scrambler, gear
 not: an interoperability proof: a PCS talking to itself accepts its own symmetric mistakes, only a network card proves it; the full 58A trading core (book, rule table, interlocks, ARP) at 64 bits: trade64 is a small stand-in with one rule; the reconciliation sublayer link-fault state machine, the BER monitor, an ARP or ICMP responder
 
 ## state
-stage=built vivado=2026.1 kb_pin=5e2eab8 build_id=ae9764f8
+stage=built vivado=2026.1 kb_pin=5e2eab8 build_id=4d5f6d14
 gates: build_2026_1=pass
 
 ## interface
