@@ -634,6 +634,32 @@ def _dsp_ram(ctx: Ctx) -> dict[str, Any]:
     return _result(fs, parts, recs)
 
 
+def _init_values(ctx: Ctx) -> dict[str, Any]:
+    """Initial values that cost a hard block's register (brief 206, flow/checks/init_values.py): the session's netlist scan
+    (init_scan) for INIT = 1 registers wired to a DSP, RAM or FIFO, and the build log for UltraRAM refused for initial
+    contents (Synth 8-12183). Advisory only."""
+    if ctx.scope == "rtl":
+        return _not_run("needs a synthesised design (scope synth or route)")
+    from flow.checks import init_values as I
+    fs, parts, recs = [], {}, []
+    scan = ctx.report("init_scan")
+    if scan:
+        fs += [{**f, "key": f"init_values:{f['code']} {f['where']}", "blocking": False} for f in I.scan_findings(I.read_scan(scan))]
+        parts["netlist"] = "ran"
+        recs.append(scan)
+    else:
+        parts["netlist"] = "not run: " + ctx.not_run_reason("init_scan")
+    log = ctx.build / "vivado.log"
+    if log.is_file():
+        fs += [{**f, "key": f"init_values:{f['code']} {f['where']}", "blocking": False}
+               for f in I.log_findings(log.read_text(errors="replace"))]
+        parts["log"] = "ran"
+        recs.append(log)
+    else:
+        parts["log"] = "not run: no build/<variant>/vivado.log"
+    return _result(fs, parts, recs)
+
+
 def _control_sets(ctx: Ctx) -> dict[str, Any]:
     """report_control_sets (AMD): the number of unique control sets, and AMD's ULMTCS rows from report_methodology."""
     if ctx.scope == "rtl":
@@ -839,6 +865,10 @@ register(Check("dsp_ram_mapping", "records", POST, {"vivado": ("DPIP-*", "DPOP-*
                                                               "RMIR-*", "RMOR-*", "RROR-*")},
                "DSP and block-RAM mapping advice (AMD DPIP/DPOP/SYNTH/RBOR rows) and their utilisation", _dsp_ram,
                reports=("methodology", "drc", "utilization"), amd=True))
+register(Check("init_values", "vivado", POST, {"init_values": ("INIT-HB-01", "INIT-URAM-01")},
+               "initial values that cost a hard block's register on AMD parts (brief 206): INIT = 1 registers wired to a DSP, "
+               "RAM or FIFO (our netlist scan) and UltraRAM refused for initial contents (Synth 8-12183); advisory "
+               "(flow/checks/init_values.py)", _init_values, reports=("init_scan",)))
 register(Check("control_sets", "vivado", POST, {"vivado": ("ULMTCS-*",)},
                "report_control_sets (count of unique control sets) and AMD's ULMTCS rows", _control_sets,
                reports=("control_sets", "methodology"), amd=True))
@@ -866,7 +896,7 @@ register(Check("doc", "records", ALL, {"doc": ("DOC-PROBLEM",)},
                waivable=False))
 
 #: the Vivado-session reports each check may need (the ones the build does not write)
-SESSION_ONLY = ("reset_scan", "cmt", "control_sets", "qor_suggestions")
+SESSION_ONLY = ("reset_scan", "cmt", "control_sets", "qor_suggestions", "init_scan")
 
 
 # ---- the runner ----------------------------------------------------------------------------------------------------
