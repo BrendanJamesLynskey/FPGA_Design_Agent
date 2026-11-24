@@ -1,0 +1,178 @@
+{
+ "sby": "ip_lib/icmp_echo/formal/icmp.sby",
+ "schema": "fpga-design-agent/formal_rigour/v1",
+ "sources": {
+  "axi_tx/rtl/axis_rules.sv": "e3e7974734f0560b8a40eba4a9e383b0b61ef3f5e90e196995295f77280c313f",
+  "ip_lib/icmp_echo/formal/formal_icmp.sv": "f37f5528bd95165f1d2862ba3b1eeaa617b32e4444b88a51fa9b7186dad8b2a5",
+  "ip_lib/icmp_echo/formal/icmp.sby": "ce24c41836f216a1f698d97076690495ffad4a0eaa0ce36e3e1c1ce280c333d4",
+  "ip_lib/icmp_echo/rtl/icmp_echo.sv": "330b54b4a1260f1ea3ad6191ed82fb6c3009d5a239571e3b4c5a5e3d8627032e"
+ },
+ "tasks": {
+  "bmc": {
+   "checks": [
+    {
+     "flavor": "cover",
+     "id": "c_reply",
+     "label": "c_reply",
+     "src": "formal_icmp.sv:68",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "a_request_has_byte13__ante",
+     "label": "a_request_has_byte13__ante",
+     "src": "formal_icmp.sv:65",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "a_request_has_byte13",
+     "label": "a_request_has_byte13",
+     "src": "formal_icmp.sv:56",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "a_reply_needs_request__ante",
+     "label": "a_reply_needs_request__ante",
+     "src": "formal_icmp.sv:67",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "a_reply_needs_request",
+     "label": "a_reply_needs_request",
+     "src": "formal_icmp.sv:58",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "a_reply_carries_request__ante",
+     "label": "a_reply_carries_request__ante",
+     "src": "formal_icmp.sv:64",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "a_reply_carries_request",
+     "label": "a_reply_carries_request",
+     "src": "formal_icmp.sv:55",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "a_axis_rules__ante",
+     "label": "a_axis_rules__ante",
+     "src": "formal_icmp.sv:66",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "a_axis_rules",
+     "label": "a_axis_rules",
+     "src": "formal_icmp.sv:57",
+     "tautology": false
+    }
+   ],
+   "covers": {},
+   "depth": 62,
+   "mode": "bmc",
+   "seconds": 415.7,
+   "status": "PASS"
+  },
+  "cover": {
+   "checks": [
+    {
+     "flavor": "cover",
+     "id": "c_reply",
+     "label": "c_reply",
+     "src": "formal_icmp.sv:68",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "a_request_has_byte13__ante",
+     "label": "a_request_has_byte13__ante",
+     "src": "formal_icmp.sv:65",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "a_request_has_byte13",
+     "label": "a_request_has_byte13",
+     "src": "formal_icmp.sv:56",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "a_reply_needs_request__ante",
+     "label": "a_reply_needs_request__ante",
+     "src": "formal_icmp.sv:67",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "a_reply_needs_request",
+     "label": "a_reply_needs_request",
+     "src": "formal_icmp.sv:58",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "a_reply_carries_request__ante",
+     "label": "a_reply_carries_request__ante",
+     "src": "formal_icmp.sv:64",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "a_reply_carries_request",
+     "label": "a_reply_carries_request",
+     "src": "formal_icmp.sv:55",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "a_axis_rules__ante",
+     "label": "a_axis_rules__ante",
+     "src": "formal_icmp.sv:66",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "a_axis_rules",
+     "label": "a_axis_rules",
+     "src": "formal_icmp.sv:57",
+     "tautology": false
+    }
+   ],
+   "covers": {
+    "a_axis_rules__ante": {
+     "reached": true,
+     "step": 48
+    },
+    "a_reply_carries_request__ante": {
+     "reached": true,
+     "step": 61
+    },
+    "a_reply_needs_request__ante": {
+     "reached": true,
+     "step": 48
+    },
+    "a_request_has_byte13__ante": {
+     "reached": true,
+     "step": 46
+    },
+    "c_reply": {
+     "reached": true,
+     "step": 90
+    }
+   },
+   "depth": 96,
+   "mode": "cover",
+   "seconds": 699.7,
+   "status": "PASS"
+  }
+ },
+ "tool": "Yosys 0.70+385 (git sha1 098e46a36, Release, Clang /usr/bin/clang++ 21.1.8)"
+}

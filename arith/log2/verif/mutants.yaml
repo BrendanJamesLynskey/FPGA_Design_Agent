@@ -1,0 +1,31 @@
+# Mutation set for the log2 variants (arith brief 139d; tools/run_mutants.py): each mutant replaces `old` (exactly once) by `new` in a copy of the variant's file.
+# Not mutated: the clamps of the exp2/log2 variants (unreachable for these functions: the result is inside [0, 2**OW - 1] by construction), reported as a gap in the spec's report.
+mutants:
+- {name: "t_round_half", variant: "table", class: "constant", old: "assign sum = {1'b0, r} + (21'(1) << (SH - 1));", new: "assign sum = {1'b0, r} + (21'(1) << (SH - 2));", why: "the rounding constant is a quarter of a place instead of half"}
+- {name: "t_no_scale_index", variant: "table", class: "operator", old: "assign idx = 8'(x) << (8 - IW);", new: "assign idx = 8'(x);", why: "a narrower input is not scaled to the 256-entry table's index"}
+- {name: "t_reg_shifted", variant: "table", class: "connection", old: "always_ff @(posedge clk) y <= y_n;", new: "always_ff @(posedge clk) y <= {y_n[OW-2:0], 1'b0};", why: "the output register shifts the result left"}
+- {name: "t_sh_off", variant: "table", class: "constant", old: "localparam int SH = 20 - OW;", new: "localparam int SH = 19 - OW;", why: "the table is read with one fractional bit too many"}
+- {name: "t_low_bits_cut", variant: "table", class: "operator", old: "assign r   = rom_d(idx);", new: "assign r   = rom_d(idx) & 20'hFFF00;", why: "the table output loses its low 8 bits"}
+- {name: "l_no_round", variant: "lerp", class: "operator", old: "assign sh_y   = (acc_y + HALF) >>> RS;", new: "assign sh_y   = acc_y >>> RS;", why: "the interpolated value is truncated, not rounded"}
+- {name: "l_slope_zero", variant: "lerp", class: "connection", old: "s1_y <= rom_s1({3'(SB), 6'(idx)});", new: "s1_y <= '0;", why: "the slope register loses the slope"}
+- {name: "l_c0_shift", variant: "lerp", class: "constant", old: "assign acc_y  = (ACCW'(c0_y) <<< DB) + ACCW'(prod_y);", new: "assign acc_y  = (ACCW'(c0_y) <<< (DB - 1)) + ACCW'(prod_y);", why: "the break-point value is aligned one place low"}
+- {name: "l_d_halved", variant: "lerp", class: "operator", old: "d_q <= d;", new: "d_q <= d >> 1;", why: "the position inside the segment is halved"}
+- {name: "l_prod_sign", variant: "lerp", class: "operator", old: "assign prod_y = s1_y * $signed({1'b0, d_q});", new: "assign prod_y = s1_y * $signed({d_q[DB-1], d_q});", why: "the position is read as a signed number"}
+- {name: "l_wrong_segment", variant: "lerp", class: "connection", old: "c0_y <= rom_c0({3'(SB), 6'(idx)});", new: "c0_y <= rom_c0({3'(SB), 6'(idx) ^ 6'd1});", why: "the break-point value comes from the neighbouring segment"}
+- {name: "l_rs_off", variant: "lerp", class: "constant", old: "localparam int RS   = 20 + DB - OW;", new: "localparam int RS   = 19 + DB - OW;", why: "the final shift drops one bit too few"}
+- {name: "p_floor_lost", variant: "poly2", class: "constant", old: "assign q_y  = 24'(a1_y) + 24'(m1_y >>> DB);", new: "assign q_y  = 24'(a1_y) + 24'(m1_y >>> (DB + 1));", why: "the first Horner product is shifted one place too far"}
+- {name: "p_a1_lost", variant: "poly2", class: "connection", old: "a1_y <= rom_a1({3'(SB), 6'(idx)});", new: "a1_y <= '0;", why: "the linear coefficient is lost"}
+- {name: "p_a2_lost", variant: "poly2", class: "connection", old: "a2_y <= rom_a2({3'(SB), 6'(idx)});", new: "a2_y <= '0;", why: "the quadratic coefficient is lost"}
+- {name: "p_d_misaligned", variant: "poly2", class: "connection", old: "d_r <= d_q;", new: "d_r <= d;", why: "the second multiply uses the position of the input now, not of the one in the pipeline"}
+- {name: "p_a0_halved", variant: "poly2", class: "operator", old: "a0_y_r <= a0_y;", new: "a0_y_r <= a0_y >>> 1;", why: "the constant coefficient is halved in the second register"}
+- {name: "p_acc_shift", variant: "poly2", class: "constant", old: "assign acc_y = (ACCW'(a0_y_r) <<< DB) + ACCW'(m2_y);", new: "assign acc_y = (ACCW'(a0_y_r) <<< (DB - 1)) + ACCW'(m2_y);", why: "the constant coefficient is aligned one place low"}
+- {name: "p_q_halved", variant: "poly2", class: "operator", old: "q_y_r  <= q_y;", new: "q_y_r  <= q_y >>> 1;", why: "the first Horner result is halved"}
+- {name: "c_no_repeat", variant: "cordic", class: "operator", old: "localparam int SHI = int'(hshift(5'(k)));", new: "localparam int SHI = k + 1;", why: "the iterations at shifts 4 and 13 are not repeated"}
+- {name: "c_dir_flip", variant: "cordic", class: "operator", old: "wire dpos = yi[DW-1];", new: "wire dpos = ~yi[DW-1];", why: "the rotation direction is inverted"}
+- {name: "c_z_update", variant: "cordic", class: "operator", old: "zr <= dpos ? zi - ang : zi + ang;", new: "zr <= dpos ? zi + ang : zi - ang;", why: "the angle accumulates with the wrong sign"}
+- {name: "c_xs_plain", variant: "cordic", class: "constant", old: "assign xs = (DW'(2) <<< DF) + ys;", new: "assign xs = (DW'(1) <<< DF) + ys;", why: "the start x is m, not m + 1"}
+- {name: "c_ys_shift", variant: "cordic", class: "constant", old: "assign ys = DW'(x) <<< (DF - IW);", new: "assign ys = DW'(x) <<< (DF - IW + 1);", why: "the start y (m - 1) is doubled"}
+- {name: "c_no_round", variant: "cordic", class: "operator", old: "(zp + ((ZW+23)'(1) <<< (20 + G - 1)))", new: "(zp)", why: "the output is truncated, not rounded"}
+- {name: "c_const", variant: "cordic", class: "constant", old: "localparam int C2Q = 3025551;", new: "localparam int C2Q = 3020551;", why: "the constant 2 / ln 2 is wrong in its third decimal"}
+- {name: "c_x_stage", variant: "cordic", class: "operator", old: "xr <= dpos ? xi + (yi >>> SHI) : xi - (yi >>> SHI);", new: "xr <= dpos ? xi + (yi >>> SHI) : xi + (yi >>> SHI);", why: "x ignores the direction"}
+- {name: "c_y_stage", variant: "cordic", class: "operator", old: "yr <= dpos ? yi + (xi >>> SHI) : yi - (xi >>> SHI);", new: "yr <= dpos ? yi + (xi >>> SHI) : yi + (xi >>> SHI);", why: "y ignores the direction"}

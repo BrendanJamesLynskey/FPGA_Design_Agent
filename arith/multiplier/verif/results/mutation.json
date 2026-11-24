@@ -1,0 +1,161 @@
+{
+ "function": "multiplier",
+ "mutants": 17,
+ "valid": 17,
+ "killed": 17,
+ "survived": [],
+ "invalid": [],
+ "score_pct": 100.0,
+ "per_variant": {
+  "dsp": {
+   "valid": 6,
+   "killed": 6
+  },
+  "lut_array": {
+   "valid": 5,
+   "killed": 5
+  },
+  "booth_r4": {
+   "valid": 6,
+   "killed": 6
+  }
+ },
+ "results": [
+  {
+   "name": "dsp_a_unsigned",
+   "variant": "dsp",
+   "class": "operator",
+   "status": "killed",
+   "detail": "exhaustive {'WA': 4, 'WB': 4, 'SIGNED': 1, 'STAGES': 0}",
+   "why": "the multiplicand is never sign-extended"
+  },
+  {
+   "name": "dsp_b_unsigned",
+   "variant": "dsp",
+   "class": "operator",
+   "status": "killed",
+   "detail": "exhaustive {'WA': 4, 'WB': 4, 'SIGNED': 1, 'STAGES': 0}",
+   "why": "the multiplier is never sign-extended"
+  },
+  {
+   "name": "dsp_add_not_mul",
+   "variant": "dsp",
+   "class": "operator",
+   "status": "killed",
+   "detail": "exhaustive {'WA': 4, 'WB': 4, 'SIGNED': 1, 'STAGES': 0}",
+   "why": "an adder where the multiplier is"
+  },
+  {
+   "name": "dsp_a_reg_zero",
+   "variant": "dsp",
+   "class": "connection",
+   "status": "killed",
+   "detail": "exhaustive {'WA': 4, 'WB': 3, 'SIGNED': 0, 'STAGES': 3}",
+   "why": "the operand register loses the multiplicand"
+  },
+  {
+   "name": "dsp_p_shifted",
+   "variant": "dsp",
+   "class": "constant",
+   "status": "killed",
+   "detail": "exhaustive {'WA': 4, 'WB': 4, 'SIGNED': 1, 'STAGES': 0}",
+   "why": "the unregistered product is shifted by one bit"
+  },
+  {
+   "name": "dsp_m_reg_stale",
+   "variant": "dsp",
+   "class": "connection",
+   "status": "killed",
+   "detail": "exhaustive {'WA': 4, 'WB': 4, 'SIGNED': 1, 'STAGES': 2}",
+   "why": "the multiplier-output register accumulates instead of loading"
+  },
+  {
+   "name": "la_sign_row",
+   "variant": "lut_array",
+   "class": "condition",
+   "status": "killed",
+   "detail": "exhaustive {'WA': 4, 'WB': 4, 'SIGNED': 1, 'REG': 0}",
+   "why": "the wrong row is subtracted for a signed multiplier"
+  },
+  {
+   "name": "la_zero_ext",
+   "variant": "lut_array",
+   "class": "operator",
+   "status": "killed",
+   "detail": "exhaustive {'WA': 4, 'WB': 4, 'SIGNED': 1, 'REG': 0}",
+   "why": "the multiplicand is never sign-extended"
+  },
+  {
+   "name": "la_row_shift",
+   "variant": "lut_array",
+   "class": "operator",
+   "status": "killed",
+   "detail": "exhaustive {'WA': 4, 'WB': 4, 'SIGNED': 1, 'REG': 0}",
+   "why": "every row is shifted one place too far"
+  },
+  {
+   "name": "la_top_row_lost",
+   "variant": "lut_array",
+   "class": "condition",
+   "status": "killed",
+   "detail": "exhaustive {'WA': 4, 'WB': 4, 'SIGNED': 1, 'REG': 0}",
+   "why": "the last row is not added"
+  },
+  {
+   "name": "la_reg_or",
+   "variant": "lut_array",
+   "class": "operator",
+   "status": "killed",
+   "detail": "exhaustive {'WA': 3, 'WB': 5, 'SIGNED': 0, 'REG': 1}",
+   "why": "the output register accumulates instead of loading"
+  },
+  {
+   "name": "bo_double_is_single",
+   "variant": "booth_r4",
+   "class": "operator",
+   "status": "killed",
+   "detail": "exhaustive {'WA': 4, 'WB': 4, 'SIGNED': 1, 'REG': 0}",
+   "why": "digit +2 adds a"
+  },
+  {
+   "name": "bo_minus_double_is_single",
+   "variant": "booth_r4",
+   "class": "operator",
+   "status": "killed",
+   "detail": "exhaustive {'WA': 4, 'WB': 4, 'SIGNED': 1, 'REG': 0}",
+   "why": "digit -2 subtracts a"
+  },
+  {
+   "name": "bo_minus_one_case_missing",
+   "variant": "booth_r4",
+   "class": "condition",
+   "status": "killed",
+   "detail": "exhaustive {'WA': 4, 'WB': 4, 'SIGNED': 1, 'REG': 0}",
+   "why": "the recoding 110 (digit -1) is treated as 0"
+  },
+  {
+   "name": "bo_unsigned_digit_count",
+   "variant": "booth_r4",
+   "class": "constant",
+   "status": "killed",
+   "detail": "exhaustive {'WA': 4, 'WB': 4, 'SIGNED': 0, 'REG': 1}",
+   "why": "an unsigned multiplier is not given the extra zero bit, so its top digit can be negative"
+  },
+  {
+   "name": "bo_lsb_one",
+   "variant": "booth_r4",
+   "class": "constant",
+   "status": "killed",
+   "detail": "exhaustive {'WA': 4, 'WB': 4, 'SIGNED': 1, 'REG': 0}",
+   "why": "the bit below the first digit group is 1"
+  },
+  {
+   "name": "bo_zero_ext",
+   "variant": "booth_r4",
+   "class": "operator",
+   "status": "killed",
+   "detail": "exhaustive {'WA': 4, 'WB': 4, 'SIGNED': 1, 'REG': 0}",
+   "why": "the multiplicand is never sign-extended"
+  }
+ ]
+}

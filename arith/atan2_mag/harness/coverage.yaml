@@ -1,0 +1,18 @@
+# Coverage targets of the atan2_mag harness (arith brief 139d). Each bin is a Python expression over v (the inputs of one vector), r (the model's outputs) and
+# p (the parameters); a bin is hit when it is true for at least `min` vectors. run_harness.py fails if a target is not met (in randomised mode).
+bins:
+  - {name: origin, expr: "v['x'] == 0 and v['y'] == 0", min: 1}
+  - {name: quadrant_1, expr: "v['x'] >> (p['W'] - 1) == 0 and v['y'] >> (p['W'] - 1) == 0 and v['x'] != 0 and v['y'] != 0", min: 20}
+  - {name: quadrant_2, expr: "v['x'] >> (p['W'] - 1) == 1 and v['y'] >> (p['W'] - 1) == 0 and v['y'] != 0", min: 20}
+  - {name: quadrant_3, expr: "v['x'] >> (p['W'] - 1) == 1 and v['y'] >> (p['W'] - 1) == 1", min: 20}
+  - {name: quadrant_4, expr: "v['x'] >> (p['W'] - 1) == 0 and v['y'] >> (p['W'] - 1) == 1 and v['x'] != 0", min: 20}
+  - {name: positive_x_axis, expr: "v['y'] == 0 and v['x'] != 0 and v['x'] >> (p['W'] - 1) == 0", min: 2}
+  - {name: negative_x_axis, expr: "v['y'] == 0 and v['x'] >> (p['W'] - 1) == 1", min: 2}
+  - {name: positive_y_axis, expr: "v['x'] == 0 and v['y'] != 0 and v['y'] >> (p['W'] - 1) == 0", min: 1}
+  - {name: negative_y_axis, expr: "v['x'] == 0 and v['y'] >> (p['W'] - 1) == 1", min: 1}
+  - {name: most_negative_x, expr: "v['x'] == 1 << (p['W'] - 1)", min: 1}
+  - {name: diagonal, expr: "v['x'] == v['y'] and v['x'] != 0", min: 2}
+  - {name: small_vector, expr: "(v['x'] + 8) % (1 << p['W']) < 17 and (v['y'] + 8) % (1 << p['W']) < 17", min: 50}
+  - {name: angle_low_octant, expr: "r['ang'] < 1 << (p['PH'] - 3)", min: 5}
+  - {name: angle_wrapped_top, expr: "r['ang'] >= 7 << (p['PH'] - 3)", min: 5}
+  - {name: mag_near_zero, expr: "r['mag'] <= 1", min: 1}

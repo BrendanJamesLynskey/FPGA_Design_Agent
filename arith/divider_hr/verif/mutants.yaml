@@ -1,0 +1,73 @@
+# Seeded mutants of the high-radix divider RTL (brief 139c): one text change each, run under `config` with every normalised pair of that width.
+mutants:
+  - {id: M01, file: divider_hr_digit.sv, what: "digit 2 threshold for the largest divisor interval moved far up", config: {variant: 0, w: 8, k: 4, pipe: 1},
+     find: "default: begin m_n1 = -7'sd25; m_0 = -7'sd10; m_1 = 7'sd6; m_2 = 7'sd22; end", replace: "default: begin m_n1 = -7'sd25; m_0 = -7'sd10; m_1 = 7'sd6; m_2 = 7'sd40; end"}
+  - {id: M02, file: divider_hr_digit.sv, what: "digit 1 threshold for the smallest divisor interval moved far up", config: {variant: 0, w: 8, k: 4, pipe: 1},
+     find: "3'd0:    begin m_n1 = -7'sd13; m_0 = -7'sd5;  m_1 = 7'sd3; m_2 = 7'sd12; end", replace: "3'd0:    begin m_n1 = -7'sd13; m_0 = -7'sd5;  m_1 = 7'sd20; m_2 = 7'sd30; end"}
+  - {id: M03, file: divider_hr_digit.sv, what: "digit -1 is encoded as -2", config: {variant: 0, w: 8, k: 4, pipe: 1},
+     find: "else if (k >= m_n1) q = 3'b111;       // -1", replace: "else if (k >= m_n1) q = 3'b110;       // -1"}
+  - {id: M04, file: divider_hr_digit.sv, what: "digit 0 threshold of divisor interval 4 moved far down (digit 0 chosen for large negative estimates)", config: {variant: 0, w: 8, k: 4, pipe: 1},
+     find: "3'd4:    begin m_n1 = -7'sd20; m_0 = -7'sd8;  m_1 = 7'sd5; m_2 = 7'sd18; end", replace: "3'd4:    begin m_n1 = -7'sd20; m_0 = -7'sd19; m_1 = 7'sd5; m_2 = 7'sd18; end"}
+  - {id: M05, file: divider_hr_cs_step.sv, what: "divisor index taken one bit too high", config: {variant: 0, w: 8, k: 4, pipe: 1},
+     find: ".i(b[W-2:W-4])", replace: ".i(b[W-1:W-3])"}
+  - {id: M06, file: divider_hr_cs_step.sv, what: "estimate uses the sum word only (the carry word's top bits ignored)", config: {variant: 0, w: 8, k: 4, pipe: 1},
+     find: "(us[W:W-6] + uc[W:W-6]);", replace: "(us[W:W-6]);"}
+  - {id: M07, file: divider_hr_cs_step.sv, what: "carry-in of the digit +1 dropped (two's complement not completed)", config: {variant: 0, w: 8, k: 4, pipe: 1},
+     find: "3'b001:  begin z = ~m1; cin = 1'b1; end", replace: "3'b001:  begin z = ~m1; cin = 1'b0; end"}
+  - {id: M08, file: divider_hr_cs_step.sv, what: "digit +2 subtracts b, not 2b", config: {variant: 0, w: 8, k: 4, pipe: 1},
+     find: "3'b010:  begin z = ~m2; cin = 1'b1; end", replace: "3'b010:  begin z = ~m1; cin = 1'b1; end"}
+  - {id: M09, file: divider_hr_cs_step.sv, what: "digit -1 adds 2b, not b", config: {variant: 0, w: 8, k: 4, pipe: 1},
+     find: "3'b111:  begin z = m1;  cin = 1'b0; end", replace: "3'b111:  begin z = m2;  cin = 1'b0; end"}
+  - {id: M10, file: divider_hr_cs_step.sv, what: "carry word loses the xc & z term of the majority", config: {variant: 0, w: 8, k: 4, pipe: 1},
+     find: "| (xc[WW-2:0] & z[WW-2:0]), cin};", replace: ", cin};"}
+  - {id: M11, file: divider_hr_cs_step.sv, what: "carry word shifted by one bit, not two", config: {variant: 0, w: 8, k: 4, pipe: 1},
+     find: "{uc[WW-3:0], 2'b00};", replace: "{uc[WW-2:0], 1'b0};"}
+  - {id: M12, file: divider_hr_cs_step.sv, what: "first step uses twice the dividend", config: {variant: 0, w: 8, k: 4, pipe: 1},
+     find: "first ? {3'b000, us[W-1:0]} :", replace: "first ? {2'b00, us[W-1:0], 1'b0} :"}
+  - {id: M13, file: divider_hr_otf.sv, what: "Q-1 after digit +1 ends in 01 instead of 00", config: {variant: 0, w: 8, k: 4, pipe: 1},
+     find: "qmo = {qi[QW-3:0], 2'b00};  end   // +1", replace: "qmo = {qi[QW-3:0], 2'b01};  end   // +1"}
+  - {id: M14, file: divider_hr_otf.sv, what: "Q-1 after digit 0 ends in 10 instead of 11", config: {variant: 0, w: 8, k: 4, pipe: 1},
+     find: "qmo = {qmi[QW-3:0], 2'b11}; end   //  0", replace: "qmo = {qmi[QW-3:0], 2'b10}; end   //  0"}
+  - {id: M15, file: divider_hr_otf.sv, what: "Q after digit -1 ends in 10 instead of 11", config: {variant: 0, w: 8, k: 4, pipe: 1},
+     find: "qo = {qmi[QW-3:0], 2'b11}; qmo = {qmi[QW-3:0], 2'b10}; end   // -1", replace: "qo = {qmi[QW-3:0], 2'b10}; qmo = {qmi[QW-3:0], 2'b10}; end   // -1"}
+  - {id: M16, file: divider_hr_fix.sv, what: "the add-back subtracts b", config: {variant: 0, w: 8, k: 4, pipe: 1},
+     find: "assign ua  = u + {3'b000, b};", replace: "assign ua  = u - {3'b000, b};"}
+  - {id: M17, file: divider_hr_fix.sv, what: "quotient choice inverted", config: {variant: 0, w: 8, k: 4, pipe: 1},
+     find: "assign quo = neg ? qm : qq;", replace: "assign quo = neg ? qq : qm;"}
+  - {id: M18, file: divider_hr_fix.sv, what: "remainder choice inverted", config: {variant: 0, w: 8, k: 4, pipe: 1},
+     find: "assign rem = neg ? ua[W-1:0] : u[W-1:0];", replace: "assign rem = neg ? u[W-1:0] : ua[W-1:0];"}
+  - {id: M19, file: divider_hr_fix.sv, what: "carry-propagate add of the two words dropped (sum word only)", config: {variant: 0, w: 8, k: 4, pipe: 1},
+     find: "assign u = us + uc;", replace: "assign u = us;"}
+  - {id: M20, file: divider_hr_iter.sv, what: "one step too few", config: {variant: 0, w: 8, k: 4, pipe: 1},
+     find: "if (cnt == CW'(K)) fin <= 1'b1;", replace: "if (cnt == CW'(K - 1)) fin <= 1'b1;"}
+  - {id: M21, file: divider_hr_iter.sv, what: "dividend register loaded with the divisor", config: {variant: 0, w: 8, k: 4, pipe: 1},
+     find: "us <= {{3{1'b0}}, a};", replace: "us <= {{3{1'b0}}, b};"}
+  - {id: M23, file: divider_hr_iter.sv, what: "first flag never cleared after the first step", config: {variant: 0, w: 8, k: 4, pipe: 1},
+     find: "                first <= 1'b0;\n                cnt   <= cnt + 1'b1;", replace: "                cnt   <= cnt + 1'b1;"}
+  - {id: M24, file: divider_hr_iter.sv, what: "the divisor register is not loaded (stale divisor)", config: {variant: 0, w: 8, k: 4, pipe: 1},
+     find: "            bb <= b;\n", replace: ""}
+  - {id: M25, file: divider_hr_cpa_step.sv, what: "remainder shifted by one bit, not two", config: {variant: 1, w: 8, k: 4, pipe: 1},
+     find: "first ? {3'b000, u[W-1:0]} : {u, 2'b00};", replace: "first ? {3'b000, u[W-1:0]} : {1'b0, u, 1'b0};"}
+  - {id: M26, file: divider_hr_cpa_step.sv, what: "estimate taken from bits one too low", config: {variant: 1, w: 8, k: 4, pipe: 1},
+     find: ": u[W:W-6];", replace: ": u[W-1:W-7];"}
+  - {id: M27, file: divider_hr_cpa_step.sv, what: "carry-in of the two's complement dropped", config: {variant: 1, w: 8, k: 4, pipe: 1},
+     find: "assign s   = x + z + (WW)'(cin);", replace: "assign s   = x + z;"}
+  - {id: M28, file: divider_hr_cpa.sv, what: "sign-extension of the remainder into the fix stage lost", config: {variant: 1, w: 8, k: 4, pipe: 1},
+     find: ".us({2'b00, ur})", replace: ".us({2'b00, 1'b0, ur[W-1:0]})"}
+  - {id: M29, file: divider_hr_pipe.sv, what: "last stage runs PIPE steps even when fewer remain", config: {variant: 2, w: 8, k: 4, pipe: 2},
+     find: "localparam int IT = (NS - s * PIPE < PIPE) ? (NS - s * PIPE) : PIPE;", replace: "localparam int IT = PIPE;"}
+  - {id: M30, file: divider_hr_pipe.sv, what: "divisor taken from the pipeline input at every stage", config: {variant: 2, w: 8, k: 4, pipe: 1},
+     find: "b_q[s]  <= b_i;", replace: "b_q[s]  <= b;"}
+  - {id: M31, file: divider_hr_pipe.sv, what: "every stage's first step treated as the first division step", config: {variant: 2, w: 8, k: 4, pipe: 2},
+     find: ".first(1'(s * PIPE + n == 0))", replace: ".first(1'(n == 0))"}
+  - {id: M32, file: divider_hr_pipe.sv, what: "output valid taken after one stage (latency too short)", config: {variant: 2, w: 8, k: 4, pipe: 1},
+     find: "else     v_q[S] <= v_q[S-1];", replace: "else     v_q[S] <= v_q[0];"}
+  - {id: M33, file: divider_hr_pipe.sv, what: "the fix stage registers the uncorrected quotient", config: {variant: 2, w: 8, k: 4, pipe: 1},
+     find: "quo <= quo_f;", replace: "quo <= qq_q[S-1];"}
+equivalent:
+  - {id: E01, file: divider_hr_fix.sv, what: "sign taken from bit W instead of bit W + 2 of the sum: the true remainder has |u| <= 2b/3 < 2**W, so bits W to W+2 of the (W+3)-bit sum are all copies of the sign",
+     config: {variant: 0, w: 8, k: 4, pipe: 1},
+     find: "assign neg = u[WW-1];", replace: "assign neg = u[W];"}
+  - {id: E02, file: divider_hr_iter.sv, what: "Q-1 register initialised to zero, not all ones: its initial value is read only by a step whose digit is <= 0 while Q is still 0, and Q is 0 only after a first digit of 0, after which the second digit is always >= 1 (4u >= 2b; checked for every normalised pair in test_divider_hr_model) and a digit >= 1 forms Q-1 from Q, not from the old Q-1",
+     config: {variant: 0, w: 8, k: 4, pipe: 1},
+     find: "qm <= '1;", replace: "qm <= '0;"}

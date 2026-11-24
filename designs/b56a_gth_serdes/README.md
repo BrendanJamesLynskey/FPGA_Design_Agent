@@ -9,7 +9,7 @@ Not in scope:
 - a protocol or a link layer (RAW data, PRBS only); no Aurora or Ethernet core (10G/25G Ethernet is refused by the Basic licence)
 - multi-lane work, meaning channel bonding, lane deskew, PCIe x4 and 40G are simulation-only on this one-lane board
 
-Kind: example; written by hand. State: built. For an agent: [AGENT.md](AGENT.md).
+Kind: example; written by a Claude Code session. State: built. For an agent: [AGENT.md](AGENT.md).
 
 ![Block diagram: the design's blocks and the links between them](docs/handover/architecture.svg)
 
@@ -66,7 +66,7 @@ Interfaces:
 | simulate the PRBS blocks and the core against the Wizard stand-in; needs Icarus Verilog and cocotb 2.0.1 | `python -m pytest -q designs/b56a_gth_serdes/tests` | no | about 1 min |
 | build the design and run all gates; needs local Vivado 2026.1 (Basic tier) and a heavy slot (take_heavy_slot.sh), MEM_MAX=8G | `flow/run_vivado.sh designs/b56a_gth_serdes base` | yes | about 7 min |
 
-Tool: Vivado 2026.1. Build ID of the inputs at handover: `cef3b1f4` (`python flow/manifest.py show designs/b56a_gth_serdes`: what a rebuild of today's sources and flow would carry; it changes when any build input or the flow changes, so it can differ from the build ID in an older evidence record). Knowledge-bank pin: `93d158c`.
+Tool: Vivado 2026.1. Build ID of the inputs at handover: `31ad5ca1` (`python flow/manifest.py show designs/b56a_gth_serdes`: what a rebuild of today's sources and flow would carry; it changes when any build input or the flow changes, so it can differ from the build ID in an older evidence record). Knowledge-bank pin: `5e2eab8`.
 
 | File | What |
 |---|---|
