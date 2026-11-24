@@ -318,7 +318,8 @@ without it, for that reason (ignore any sentence that says the design's subject 
 registers through the JTAG register bus, the BSCANE2 USER4 module `jtag_bus` (designs/b58a_trigger/rtl/jtag_bus.sv). If the request supplies it as
 data/jtag_bus.sv, leave it there (read-only, byte-identical) and add `{design_rel}/data/jtag_bus.sv` to the build.yaml sources; do NOT copy it into rtl/: the
 mutation and CDC-injection checks work on rtl/ and the supplied bus is not yours to mutate. Structure the design as a register core (a module with the
-register port below, which you simulate and test directly) and a top that instantiates `jtag_bus` and the core. Verilator lint and Icarus elaboration of the top still
+register port below, which you simulate and test directly) and a thin top that only instantiates `jtag_bus`, the reset generator and the core. Put the LEDs, the blink and every register
+behaviour in the core (its ports carry them), so the core is the one simulated toplevel and one bench covers the request. Verilator lint and Icarus elaboration of the top still
 need BSCANE2, USR_ACCESSE2 and the xpm_cdc_* macros: write simulation-only stand-ins in rtl/xilinx_sim_stubs.sv between `ifndef SYNTHESIS` and `endif` (Vivado supplies the real
 ones in synthesis), and never name a stand-in in the build's synthesis sources. Its register port, in the clock domain of the clk
 you give it: `h_we`, `h_re` pulses, `h_addr[11:0]` (byte addresses), `h_wdata[31:0]`, `h_rdata[31:0]`; a write takes effect the clock after `h_we`;
@@ -1220,11 +1221,17 @@ def report_gates_eval(rt: Runtime) -> dict | None:
             "checks": {c["check"]: c["status"] for c in rep["checks"]}, "report": rep.get("report_path")}
 
 
-def report_gates_detail(ev: dict, detail: list) -> None:
-    """The failure text of a blocking report finding, for the repair visit's Designer (the gate's own wording)."""
+def report_gates_detail(ev: dict, detail: list, rt: Runtime | None = None) -> None:
+    """The failure text of a blocking report finding, for the repair visit's Designer (the gate's own wording). With ``rt`` the
+    decision is also recorded in the run's routing events (the repair prompt itself is private and not logged)."""
     from agent.graph.stages import report_gates_stage
     from agent.graph.repair import report_advisory_text
     ok, why = report_gates_stage(ev.get("report_gates"))
+    if rt is not None and ev.get("report_gates") is not None:
+        r = ev["report_gates"]
+        log_routing_event(rt, "report_gates_checked", blocked=not ok, codes=sorted({f["code"] for f in r.get("findings") or []}),
+                          advisories=sorted({a["code"] for a in r.get("advisories") or []}), where=[f.get("where", "")[:120] for f in (r.get("findings") or [])[:3]],
+                          text=why[:2] and why[0][:300])
     if not ok:
         detail.append("[report gates] " + "\n".join(why)[:1800] + report_advisory_text(ev.get("report_gates")))
 
@@ -1361,6 +1368,7 @@ def node_gate(state: State) -> dict:
         if ev["lint"]["ok"] and ev["simulate"]["ok"] and not spec_blocks and not constants_blocks(ev):   # no Vivado time on a design that fails its tests
             ev["gates_base"] = _build(rt, "synth")["gates"]
             ev["report_gates"] = report_gates_eval(rt)           # brief 209a: the synthesis report is the first the build writes
+            report_gates_detail(ev, detail, rt)
     elif n in (3, 4):
         if n == 3:
             ev["constants"] = constants_gate(rt)                 # brief 82P4: the board clock period against the XDC
@@ -1368,7 +1376,7 @@ def node_gate(state: State) -> dict:
                 detail.append("[constants] " + "\n".join(f["message"] for f in ev["constants"]["findings"] if f.get("blocking"))[:1800])
         ev["gates_base"] = _build(rt, "synth")["gates"]
         ev["report_gates"] = report_gates_eval(rt)               # brief 209a
-        report_gates_detail(ev, detail)
+        report_gates_detail(ev, detail, rt)
         if n == 4 and rt.cfg.design_plan:                        # closure-loop hook: inferred primitives against the plan
             from flow import timing_plan as _tp
             ev["plan_fails"] = _tp.post_synth_failures(rt.design, ev["gates_base"])
