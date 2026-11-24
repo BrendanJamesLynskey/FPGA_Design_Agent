@@ -42,6 +42,8 @@ LANG = {
 def ask(prompt: str) -> tuple[str, dict]:
     """One tool-less Sonnet call through the 108 model table (agent.models), logged to CWD/claude_code_calls.jsonl."""
     sys.path.insert(0, str(Path(__file__).resolve().parents[3]))
+    from agent.access import require_or_exit
+    require_or_exit("tools/hardcaml/probe/probe.py")
     from agent.models import resolver_for
     log = CWD / "claude_code_calls.jsonl"
     n0 = len(log.read_text().splitlines()) if log.exists() else 0
