@@ -41,6 +41,12 @@ CDC_PRIMITIVES = ("sync_2ff", "sync2", "pulse_cdc", "reset_sync", "gray_pointer"
                   "xpm_cdc_async_rst", "xpm_fifo_async")
 #: ``rtl.initial_values`` (brief 205, owner decision 38); flow/standards_check.py STD-INIT-01 reads it
 INITIAL_VALUES_MODES = ("allow", "warn", "deny")
+#: ``clock_muxes`` (brief 208): the clock-buffer primitives a declared clock mux may use (BUFGMUX, which switches on its CE
+#: pins, is not one: a select that misses CE setup can glitch, UG472 ch. 2), and the reasons a run-time clock mux is
+#: acceptable (Altera Design Recommendations 18.1, 1.2.2.4: fixed after configuration, test only, the clocked logic is
+#: reset on every switch, or a wrong response just after a switch is harmless)
+CLOCK_MUX_PRIMITIVES = ("BUFGMUX_CTRL", "BUFGCTRL")
+CLOCK_MUX_CONDITIONS = ("static", "test_only", "reset_on_switch", "tolerant")
 GATES_YAML = Path(__file__).with_name("gates.yaml")
 APPROVAL = Path("build") / "approvals" / "architecture.json"
 FILES = ("architecture.yaml", "ARCHITECTURE.md")
@@ -114,6 +120,25 @@ def check_architecture(data: Any) -> list[str]:
             if x["primitive"] not in CDC_PRIMITIVES:
                 errs.append(f"crossings[{i}].primitive = {x['primitive']!r} is not a bank CDC primitive "
                             f"({', '.join(CDC_PRIMITIVES)})")
+    cm = data.get("clock_muxes")
+    if cm is not None:
+        if not isinstance(cm, list):
+            errs.append("'clock_muxes' must be a list (brief 208): each {instance, primitive, inputs: [domain, ...], output, "
+                        f"condition, reason}}, primitive one of {', '.join(CLOCK_MUX_PRIMITIVES)}")
+        else:
+            for i, m in enumerate(cm):
+                if not (isinstance(m, dict) and m.get("instance") and m.get("reason")
+                        and m.get("primitive") in CLOCK_MUX_PRIMITIVES and m.get("condition") in CLOCK_MUX_CONDITIONS
+                        and isinstance(m.get("inputs"), list) and len(m["inputs"]) >= 2 and m.get("output")):
+                    errs.append(f"clock_muxes[{i}] must be a mapping with 'instance', 'primitive' in "
+                                f"{', '.join(CLOCK_MUX_PRIMITIVES)}, 'inputs' (two or more clock domains), 'output' (the "
+                                f"muxed clock's domain), 'condition' in {', '.join(CLOCK_MUX_CONDITIONS)} and a 'reason' "
+                                "(why a clock enable or a data mux does not do)")
+                    continue
+                for d in [*m["inputs"], m["output"]]:
+                    if dnames and d not in dnames:
+                        errs.append(f"clock_muxes[{i}] ({m['instance']}): {d!r} is not a declared clock domain "
+                                    f"({', '.join(sorted(dnames))})")
     pr = data.get("predicted_resources")
     if not isinstance(pr, dict):
         errs.append("'predicted_resources' must be a mapping with a [low, high] range for each of "
