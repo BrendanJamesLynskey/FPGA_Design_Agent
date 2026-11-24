@@ -71,10 +71,12 @@ A portfolio pack (title, facts with their sources, stills and a short animation)
 
 ## Start here: which command for which job
 
-Every `python -m agent ...` command needs the access key ([Access key](#access-key)). "Read-only" means nothing in the design directory is changed. (Brief 149 adds this row; PR #275 holds the full table, so the planner reconciles the two.)
+Every `python -m agent ...` command needs the access key ([Access key](#access-key)); the `flow` and `project` commands below
+do not, apart from `project spec`. "Read-only" means nothing in the design directory is changed.
 
 | You want to | Command | Know first |
 |---|---|---|
+| find a block in the IP library | `python -m agent ip search "<what you need, in words>"`, then `python -m agent ip show <entry>` (also `python3 -m flow.iplookup search ...`, no key) | matches by meaning, needs two matching words, and answers "nothing fits" with the near misses labelled as such; costs are measured on the Artix-7 only; SystemVerilog only, no FIFO (use AMD's XPM); `ip use` is the owner's command and adds a frozen component to an existing `project.yaml` ([docs/ip_lookup.md](docs/ip_lookup.md)) |
 | a change to a design the agent made | `python -m agent resume <design-dir> "<change>" --dry-run` | the dry run prints the class, the entry stage and the words that matched. Classes and entry stages: area, latency, retarget 1; language, mapping 2; fmax, power 3; plus spec 0, arch 1, rtl 2, constraints 3, timing 6, board 9. A request that matches no class is a question, not stage 0 (`resume` exits 2 and asks); a documentation-only request is never guessed, so pass `--kind docs`. The earliest match wins, so "lower the latency but keep the interface" goes back to the spec (stage 0): split it or pass `--kind latency`. A bare "200 MHz" is a clock change (stage 3), but with a closure word ("close timing at 200 MHz") it is stage 6. `--kind` and `--from-stage` override ([agent/graph/pickup.py](agent/graph/pickup.py), [results/149_goal_kinds](results/149_goal_kinds/README.md)) |
 
 ## The flow
@@ -396,7 +398,7 @@ arith/       the arithmetic library (brief 139b; [arith/README.md](arith/README.
 ip_lib/      the project's own IP library ([ip_lib/README.md](ip_lib/README.md)); first entries: the brief-40 networking
              blocks (RMII MAC, parser, exact/LPM/ternary tables, rewrite, queues and schedulers, L2 switch); entries can hold
              several implementations, each with a measured cost ([docs/ip_variants.md](docs/ip_variants.md),
-             flow/ipvariants.py, flow/ipchar.py) and a FIR entry with four variants; the
+             flow/ipvariants.py, flow/ipchar.py; find an entry by plain words with `python -m agent ip search`, [docs/ip_lookup.md](docs/ip_lookup.md), flow/iplookup.py) and a FIR entry with four variants; the
              tri-mode RGMII MAC ([ip_lib/eth_mac_rgmii](ip_lib/eth_mac_rgmii/README.md)) with its 0.2 filter, VLAN,
              pause, statistics and jumbo frames, and the network blocks (MDIO, ARP, ICMP echo, IPv4/UDP
              receive and transmit, IGMPv2), run together in [designs/b63d_nexys_net](designs/b63d_nexys_net/README.md)

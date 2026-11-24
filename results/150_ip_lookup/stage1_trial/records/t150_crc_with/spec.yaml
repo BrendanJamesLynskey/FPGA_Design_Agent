@@ -1,0 +1,250 @@
+name: crc32_checker
+title: CRC-32 checker
+board: nexys_a7_100t
+part: xc7a100tcsg324-1
+top: crc32_top
+clocks:
+- name: clk
+  pin: E3 (CLK100MHZ)
+  role: 100 MHz board oscillator, period 10 ns, single clock domain, no MMCM
+reset:
+  name: rst_n
+  pin: C12 (CPU_RESETN)
+  polarity: active low
+  style: 'synchronous: state clears on the clock edge while rst_n is low'
+parameters:
+  DATA_WIDTH: 32
+  CRC_WIDTH: 32
+ports:
+- name: clk
+  direction: in
+  width: 1
+  role: CLK100MHZ pin E3
+- name: rst_n
+  direction: in
+  width: 1
+  role: CPU_RESETN pin C12, active low
+- name: shell_wr_en
+  direction: in
+  width: 1
+  role: test shell bus write strobe (internal, no board pin)
+- name: shell_rd_en
+  direction: in
+  width: 1
+  role: test shell bus read strobe (internal, no board pin)
+- name: shell_addr
+  direction: in
+  width: 8
+  role: test shell bus byte offset (internal, no board pin)
+- name: shell_wdata
+  direction: in
+  width: 32
+  role: test shell bus write data (internal, no board pin)
+- name: shell_rd_valid
+  direction: out
+  width: 1
+  role: test shell bus read data valid, one clock after shell_rd_en (internal)
+- name: shell_rdata
+  direction: out
+  width: 32
+  role: test shell bus read data (internal, no board pin)
+- name: led
+  direction: out
+  width: 16
+  role: LED[15:0] on pins H17 K15 J13 N14 R18 V17 U17 U16 V16 T15 U14 T16 V15 V14
+    V12 V11, led[0] is LED0
+behaviour:
+  crc_engine:
+  - crc_state is the 32-bit internal running state, reflected CRC-32 with polynomial
+    0xEDB88320
+  - crc_state resets to 0xFFFFFFFF
+  - 'A DATA write (shell_wr_en with shell_addr 0x04) updates crc_state once, one clock
+    after the write strobe, by absorbing the 4 bytes of shell_wdata in one clock:
+    byte 0 is shell_wdata[7:0] and is processed first, each byte LSB first'
+  - The CRC readback value is ~crc_state, the final XOR with 0xFFFFFFFF applied
+  - A CTRL write (shell_wr_en with shell_addr 0x0C) with bit 0 set returns crc_state
+    to 0xFFFFFFFF one clock after the write strobe
+  - No counter of words or bytes is kept; the readback covers the whole stream since
+    the last clear or reset
+  registers:
+  - A read strobe (shell_rd_en) returns the addressed register on shell_rdata with
+    shell_rd_valid high one clock later
+  - Reads of DATA (0x04) return 0x00000000
+  - Reads of CTRL (0x0C) return 0x00000000
+  - Writes to undefined offsets leave crc_state and every register unchanged
+  - Reads of undefined offsets return 0x00000000
+  leds:
+  - led[15:0] shows the CRC readback value bits [15:0] in every clock, active high,
+    led[k] lit when bit k is 1
+  reset:
+  - While rst_n is low, crc_state is 0xFFFFFFFF and shell_rd_valid is 0 on every clock
+    edge
+registers:
+  map:
+  - offset: '0x00'
+    name: ID
+    access: RO
+    reset: '0x43524333'
+    bits: 31:0 ASCII CRC3, C in bits 31:24, 3 in bits 7:0
+  - offset: '0x04'
+    name: DATA
+    access: WO
+    reset: '0x00000000'
+    bits: 31:0 word absorbed into the CRC, one update per write, reads return 0
+  - offset: '0x08'
+    name: CRC
+    access: RO
+    reset: '0x00000000'
+    bits: 31:0 ~crc_state, the running CRC-32 readback
+  - offset: '0x0C'
+    name: CTRL
+    access: WO
+    reset: '0x00000000'
+    bits: 0 CLEAR, write 1 sets crc_state to 0xFFFFFFFF, self-clearing, reads 0; 31:1
+      reserved, write ignored, read 0
+timing:
+  latency:
+    data_absorb: crc_state updated 1 clock after the DATA write strobe (10 ns at 100
+      MHz)
+    clear: crc_state set to 0xFFFFFFFF 1 clock after the CTRL write strobe
+    read: shell_rd_valid and shell_rdata valid 1 clock after shell_rd_en
+    led: led follows the CRC readback 1 clock after crc_state changes
+  closure: meets 100 MHz (10 ns) with non-negative setup and hold slack on all paths
+resources_expected:
+  luts: 220
+  ffs: 80
+  brams: 0
+  dsps: 0
+  bufgs: 1
+  note: 'estimates: 32-bit parallel CRC XOR network plus shell decode and LED register'
+assumptions:
+- assumption: The 100 MHz oscillator on E3 drives clk directly with no MMCM
+  reason: Board oscillator is 100 MHz and the design runs at that rate without a clock
+    generator
+- assumption: The UART test shell provides the shell_* bus with at most one write
+    or read strobe per clock
+  reason: The shell is not described in spec.md; one strobe per clock is the simplest
+    bus that matches one word per clock
+- assumption: The UART link is slower than the core, so the one-word-per-clock rate
+    is a core capability and not a link throughput
+  reason: A UART moves bytes far slower than 100 MHz; the rate claim applies to the
+    core's input interface
+- assumption: LEDs are driven straight from a register with no debounce or synchronizer
+  reason: LED outputs are display-only and the value is internal to the same clock
+    domain
+open_questions: []
+requirements:
+- id: REQ-01
+  text: After reset the CRC readback at offset 0x08 reads 0x00000000.
+  proof:
+  - simulation
+  - hardware
+- id: REQ-02
+  text: Each DATA write to offset 0x04 changes crc_state exactly once, one clock after
+    the write strobe.
+  proof:
+  - simulation
+  - formal
+- id: REQ-03
+  text: The CRC readback equals the reflected CRC-32 with polynomial 0xEDB88320 and
+    init 0xFFFFFFFF of all bytes written so far.
+  proof:
+  - simulation
+- id: REQ-04
+  text: The CRC readback equals the final XOR of crc_state with 0xFFFFFFFF.
+  proof:
+  - simulation
+- id: REQ-05
+  text: A CTRL write with bit 0 set returns crc_state to 0xFFFFFFFF one clock after
+    the write strobe.
+  proof:
+  - simulation
+  - formal
+- id: REQ-06
+  text: Reads of CTRL at offset 0x0C return 0x00000000.
+  proof:
+  - simulation
+- id: REQ-07
+  text: The ID register at offset 0x00 reads 0x43524333.
+  proof:
+  - simulation
+  - hardware
+- id: REQ-08
+  text: led[15:0] equals the CRC readback bits [15:0] in every clock.
+  proof:
+  - simulation
+  - hardware
+- id: REQ-09
+  text: Driving rst_n low for one clock sets crc_state to 0xFFFFFFFF.
+  proof:
+  - simulation
+  - formal
+- id: REQ-10
+  text: Writes to undefined offsets leave crc_state and every register unchanged.
+  proof:
+  - simulation
+- id: REQ-11
+  text: A read of DATA at offset 0x04 returns 0x00000000.
+  proof:
+  - simulation
+- id: REQ-12
+  text: The design meets timing at 100 MHz with no failing setup or hold path.
+  proof:
+  - analysis
+- id: REQ-13
+  text: The design uses no block RAM and no DSP slice.
+  proof:
+  - analysis
+resolved_questions:
+- question: 'Give the register map: offset, width, reset value and access of every
+    register (ID, DATA, CRC, CTRL), and the read value of an undefined offset.'
+  answer: 0x00 ID RO 0x43524333; 0x04 DATA WO 0x00000000 (write absorbs a word, read
+    0); 0x08 CRC RO 0x00000000 (readback of ~crc_state); 0x0C CTRL WO 0x00000000 (bit
+    0 clears, self-clearing); undefined offsets read 0 and ignore writes
+  status: defaulted
+  by: default
+  default_reason: spec.md names registers and reading back but gives no offsets; this
+    map is the simplest layout that fits the four named functions
+- question: Should the readback be the finalized CRC (final XOR 0xFFFFFFFF applied)
+    or the raw internal state?
+  answer: 'Finalized CRC: an empty stream reads 0x00000000 and the result matches
+    the standard CRC-32 used by Ethernet'
+  status: defaulted
+  by: default
+  default_reason: spec.md asks for the standard Ethernet CRC-32, which includes the
+    final XOR
+- question: In what order are the bytes of each 32-bit word absorbed?
+  answer: Byte 0 is wdata[7:0], processed first, each byte LSB first (little-endian,
+    reflected order as in Ethernet)
+  status: defaulted
+  by: default
+  default_reason: spec.md gives no byte order; little-endian LSB-first matches the
+    reflected CRC-32 byte stream definition
+- question: Should the CRC be reset by the CPU reset button only, or also by CTRL
+    clear?
+  answer: 'Both: CPU reset (C12) and CTRL bit 0 set crc_state to 0xFFFFFFFF'
+  status: defaulted
+  by: default
+  default_reason: spec.md asks for a clear command and a reset with the CPU button;
+    both are named, so both are kept
+- question: Is the reset synchronous (state clears on a clock edge while rst_n is
+    low) or asynchronous?
+  answer: Synchronous, with the reset pin C12 as the only reset source
+  status: defaulted
+  by: default
+  default_reason: Synchronous reset is the usual choice for a single-clock design
+    and gives clean timing on the reset path
+- question: Is the LED polarity active high, with led[k] lit when CRC bit k is 1?
+  answer: Active high, led[k] = CRC readback bit k
+  status: defaulted
+  by: default
+  default_reason: spec.md says the LEDs show the low 16 bits of the CRC, which reads
+    most directly with active high
+- question: Is the test shell bus signal set (strobes, address, data, read valid)
+    as listed in the ports, with no board pins?
+  answer: 'Yes: shell_wr_en, shell_rd_en, shell_addr[7:0], shell_wdata[31:0], shell_rd_valid,
+    shell_rdata[31:0], all internal to the test shell'
+  status: defaulted
+  by: default
+  default_reason: The shell is not described in spec.md; the bus is the minimum needed
+    to write words and read registers
