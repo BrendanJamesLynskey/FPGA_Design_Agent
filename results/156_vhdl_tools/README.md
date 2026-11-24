@@ -171,6 +171,13 @@ violates, or a cover. A simulator is scored on whether the text is accepted and 
 `bmc` (depth 20) and `cover` through the GHDL Yosys plugin. Two formal toolchains: Yosys 0.33 with the Ubuntu GHDL 4.1.0 plugin (the one
 `flow/formal.sh` uses) and Yosys 0.70+385 with the GHDL 7.0.0-dev plugin (OSS CAD Suite).
 
+The two Gray-stepper jobs ([psl/vhdl/gray.sby](psl/vhdl/gray.sby), [psl/sv/gray.sby](psl/sv/gray.sby)) are shipped proofs and carry a rigour sidecar
+(`gray.rigour.yaml` beside each) and a record in [results/143c](../143c/README.md) (brief 202): each also has a `prove` task (k-induction, depth 8), under
+which all four PSL assertions and both SystemVerilog assertions are proved for every depth, with the shrunk time constants; the `bmc` task stays for the fault
+runs. The SystemVerilog job reads [psl/sv/gray_stepper.sv](psl/sv/gray_stepper.sv), the benchmark reference file with the two assertions labelled and their antecedent covers
+added (a test checks that nothing else differs). The PSL antecedent covers are the `<label>.cover` cells the GHDL plugin adds beside each implication, and one written
+cover for the invariant; the tool reads a model with no source attributes by label. PSL assertions cannot be checked for a constant-true term (the text match reads source lines).
+
 | Construct | expected | GHDL 4.1.0 sim | GHDL 7.0.0-dev sim | NVC 1.23.1 sim | Yosys 0.33 + plugin 4.1.0 | Yosys 0.70 + plugin 7.0.0-dev |
 |---|---|---|---|---|---|---|
 | `always_next_impl` | true | pass | pass | pass | pass | pass |

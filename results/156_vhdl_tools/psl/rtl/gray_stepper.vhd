@@ -218,6 +218,9 @@ begin
     -- psl reset_values : assert always ((rst = '1') -> next (bin = 0 and steps = 0 and auto_on = '0' and rate = 250));
     -- Every step that is not a BIN write counts: STEPS advances by one (modulo 2**16) (SV twin: no such assertion; added here for both).
     -- psl steps_count : assert always ((rst = '0' and step = '1' and wr_bin = '0') -> next (steps = steps_q + 1));
+    -- Brief 202 (143c rigour): the GHDL plugin adds `<label>.cover` beside each implication (the cover of its left side); the invariant has no
+    -- left side, so its antecedent is written out: the state in which it could be broken is outside reset.
+    -- psl inv_gray_of_bin_ante : cover {rst = '0'};
     -- Cover: a step happens, and the binary count wraps from 1023 to 0 going up.
     -- psl cov_step : cover {rst = '0' and step = '1' and wr_bin = '0'};
     -- psl cov_wrap : cover {bin = 1023 and step = '1' and dir = '0' and wr_bin = '0' and rst = '0'; bin = 0};

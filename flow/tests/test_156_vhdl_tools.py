@@ -64,3 +64,15 @@ def test_one_bench_passes_and_its_fault_is_caught(tmp_path):
     assert ok["build_ok"] and ok["work_xml"]["fail"] == 0 and ok["work_xml"]["tests"] == 1
     bad = R.one(sim, "sync_fifo_regs", R.mutated("sync_fifo_regs", d, tmp_path), 300, tmp_path, tag="__m")
     assert bad["work_xml"]["fail"] == 1
+
+
+def test_the_labelled_sv_twin_is_the_reference_file_with_labels_and_covers_added():
+    """results/156_vhdl_tools/psl/sv/gray_stepper.sv is what the SymbiYosys job reads (brief 202: the assertions need labels and antecedent covers for the
+    143c rigour check); nothing else may differ from the benchmark reference file it twins."""
+    import re
+    ref = (ROOT / "benchmark/tasks/t1_gray_stepper/ref/rtl/gray_stepper.sv").read_text()
+    mine = (D / "psl/sv/gray_stepper.sv").read_text()
+    mine = re.sub(r"    // brief 202:.*?\n    end\n", "", mine, flags=re.S)
+    for label in ("req01_one_bit", "inv_gray_of_bin"):
+        mine = mine.replace(f" {label}: assert", " assert")
+    assert mine == ref

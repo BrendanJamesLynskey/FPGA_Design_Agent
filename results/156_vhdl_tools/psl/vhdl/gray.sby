@@ -1,11 +1,14 @@
 # Brief 156: the same properties in PSL on the VHDL translation (brief 55, arm A), through the GHDL Yosys plugin
-# `ghdl -fpsl` reads the `-- psl` comments. TOOLCHAIN picks the plugin; run_psl_formal.py substitutes it.
+# `ghdl -fpsl` reads the `-- psl` comments. As shipped it uses the OSS CAD Suite's own GHDL plugin; psl_gray.py swaps the plugin line (Yosys 0.33 + plugin 4.1.0) and the design file (the fault) in its copies.
 [tasks]
 bmc
+prove
 cover
 
 [options]
 bmc: mode bmc
+prove: mode prove
+prove: depth 8
 cover: mode cover
 depth 20
 
@@ -13,11 +16,11 @@ depth 20
 smtbmc z3
 
 [script]
-@PLUGIN@
+plugin -i ghdl
 ghdl --std=08 -fpsl -gDEBOUNCE_CYCLES=2 -gTICK_CYCLES=2 sync2.vhd bm_debounce.vhd gray_stepper.vhd -e gray_stepper
 prep -top gray_stepper
 
 [files]
 ../rtl/sync2.vhd
 ../rtl/bm_debounce.vhd
-@GRAY@
+../rtl/gray_stepper.vhd

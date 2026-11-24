@@ -71,7 +71,7 @@ def build_formal(work: Path) -> dict:
     for tag, fault in (("clean", None), ("fault", SV_FAULT)):
         d = work / "sv" / tag
         d.mkdir()
-        t = (SVREF / "gray_stepper.sv").read_text()
+        t = (PSL / "sv" / "gray_stepper.sv").read_text()          # the reference file with labels and antecedent covers added (brief 202; a test checks nothing else differs)
         if fault:
             assert t.count(fault[0]) == 1
             t = t.replace(*fault)
@@ -97,8 +97,8 @@ def build_formal(work: Path) -> dict:
         base = (PSL / "vhdl" / "gray.sby").read_text()
         for kind in ("debformal", "oss"):
             plug = "plugin -i ghdl" if kind == "oss" else f"plugin -i {Path.home()}/.local/opt/formal-deb/root/usr/lib/yosys/plugins/ghdl.so"
-            txt = base.replace("@PLUGIN@", plug)
-            txt = re.sub(r"(?m)^\.\./rtl/(\w+\.vhd)$", r"\1", txt).replace("@GRAY@", "gray_stepper.vhd")
+            txt = base.replace("plugin -i ghdl", plug)
+            txt = re.sub(r"(?m)^\.\./rtl/(\w+\.vhd)$", r"\1", txt)
             (d / f"gray_{kind}.sby").write_text(txt)
     return {}
 

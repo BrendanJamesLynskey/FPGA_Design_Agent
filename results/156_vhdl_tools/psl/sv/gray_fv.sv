@@ -19,5 +19,5 @@ module gray_fv (
     always_comb if (first) assume (rst);
     logic [9:0] led_q;
     always_ff @(posedge clk) led_q <= led[9:0];
-    always_ff @(posedge clk) cover (!first && led[9:0] != led_q);      // the Gray register changed (a step or a BIN write)
+    always_ff @(posedge clk) cover_gray_changed: cover (!first && led[9:0] != led_q);      // the Gray register changed (a step or a BIN write)
 endmodule
