@@ -2,14 +2,14 @@
 source: designs/b64b_zedboard/handover.yaml; human view: README.md; refresh: python -m flow.handover fresh designs/b64b_zedboard
 
 ## identity
-kind=demonstration produced_by=human part=xc7z020clg484-1 board=ZedBoard top=zb_hwsw_wrapper tool=Vivado 2026.1
+kind=demonstration produced_by=session part=xc7z020clg484-1 board=ZedBoard top=zb_hwsw_wrapper tool=Vivado 2026.1
 
 ## summary
 Measures what a Cortex-A9 and the fabric of a Zynq-7000 cost each other, bare metal, on the ZedBoard. A PS7 with GP0, HP0 and ACP ports drives two AXI DMA to accelerator chains (CRC-32 or a 16-tap FIR) and a register plane with a latency probe and three bus-error blocks. Software against the HP path with cache maintenance against the coherent ACP path is swept over buffer sizes, and the A9's reaction to AXI SLVERR and DECERR responses is recorded for each memory mapping.
 not: Linux, UIO, device-tree or kernel-driver measurements; bare metal only; the KR260 and the Cortex-A53; this folder is Zynq-7000 only; a power or energy measurement; the only power figure is the tool's estimate
 
 ## state
-stage=board-verified vivado=2026.1 kb_pin=0959c27 build_id=None
+stage=board-verified vivado=2026.1 kb_pin=5e2eab8 build_id=None
 gates: build_2026_1=pass board_run=pass
 
 ## interface

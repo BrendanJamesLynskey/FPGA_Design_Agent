@@ -1,0 +1,3131 @@
+
+ /----------------------------------------------------------------------------\
+ |  yosys -- Yosys Open SYnthesis Suite                                       |
+ |  Copyright (C) 2012 - 2026  Claire Xenia Wolf <claire@yosyshq.com>         |
+ |  Distributed under an ISC-like license, type "license" to see terms        |
+ \----------------------------------------------------------------------------/
+ Yosys 0.70+385 (git sha1 098e46a36, Release, Clang /usr/bin/clang++ 21.1.8)
+
+-- Running command `plugin -i slang; read_slang --top ooc_wrap  /home/brendan/Claude_sandbox/_worktrees/142-yosys/results/b142/rtl/real/k26_b96/lg_small_comb.sv /home/brendan/Claude_sandbox/_worktrees/142-yosys/results/b142/rtl/real/k26_b96/wrap_lg_small_comb.sv; synth_xilinx -family xcup -top ooc_wrap -noiopad -noclkbuf -flatten -run begin:fine; opt -full; xilinx_srl -variable -minlen 3; techmap -map +/techmap.v -D LUT_SIZE=6 -D HAS_CARRY8 -map /home/brendan/Claude_sandbox/_worktrees/142-yosys/results/b142/drafts/pr_1/arith_map_carry8.v; opt -fast; synth_xilinx -family xcup -top ooc_wrap -noiopad -noclkbuf -flatten -run map_cells:; tee -q -o /home/brendan/Claude_sandbox/_worktrees/142-yosys/results/b142/yosys/xcup/c8/k03_lg_small_comb.stat.json stat -json -tech xilinx' --
+
+1. Executing SLANG frontend.
+Top level design units:
+    ooc_wrap
+
+
+Build succeeded: 0 errors, 0 warnings
+
+1.1. Executing PROC_CLEAN pass (remove empty switches from decision trees).
+Found and cleaned up 1 empty switch in `\ooc_wrap.$362'.
+Removing empty process `ooc_wrap.$0'.
+Cleaned up 1 empty switch.
+
+1.2. Executing PROC_RMDEAD pass (remove dead branches from decision trees).
+Marked 1 switch rules as full_case in process $362 in module ooc_wrap.
+Removed a total of 0 dead cases.
+
+1.3. Executing PROC_PRUNE pass (remove redundant assignments in processes).
+Removed 1 redundant assignment.
+Promoted 0 assignments to connections.
+
+1.4. Executing PROC_INIT pass (extract init attributes).
+
+1.5. Executing PROC_ROM pass (convert switches to ROMs).
+Converted 0 switches.
+<suppressed ~1 debug messages>
+
+1.6. Executing PROC_MUX pass (convert decision trees to multiplexers).
+Creating decoders for process `\ooc_wrap.$362'.
+     1/1: $u_blk.vpipe$363
+
+1.7. Executing PROC_CLEAN pass (remove empty switches from decision trees).
+Found and cleaned up 1 empty switch in `\ooc_wrap.$362'.
+Removing empty process `ooc_wrap.$362'.
+Cleaned up 1 empty switch.
+
+1.8. Executing OPT_EXPR pass (perform const folding).
+Optimizing module ooc_wrap.
+
+2. Executing SYNTH_XILINX pass.
+
+2.1. Executing Verilog-2005 frontend: /home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/xilinx/cells_sim.v
+Parsing Verilog input from `/home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/xilinx/cells_sim.v' to AST representation.
+Generating RTLIL representation for module `\VCC'.
+Generating RTLIL representation for module `\GND'.
+Generating RTLIL representation for module `\IBUF'.
+Generating RTLIL representation for module `\IBUFG'.
+Generating RTLIL representation for module `\OBUF'.
+Generating RTLIL representation for module `\IOBUF'.
+Generating RTLIL representation for module `\OBUFT'.
+Generating RTLIL representation for module `\BUFG'.
+Generating RTLIL representation for module `\BUFGCTRL'.
+Generating RTLIL representation for module `\BUFHCE'.
+Generating RTLIL representation for module `\INV'.
+Generating RTLIL representation for module `\LUT1'.
+Generating RTLIL representation for module `\LUT2'.
+Generating RTLIL representation for module `\LUT3'.
+Generating RTLIL representation for module `\LUT4'.
+Generating RTLIL representation for module `\LUT5'.
+Generating RTLIL representation for module `\LUT6'.
+Generating RTLIL representation for module `\LUT6_2'.
+Generating RTLIL representation for module `\$__ABC9_LUT7'.
+Generating RTLIL representation for module `\$__ABC9_LUT8'.
+Generating RTLIL representation for module `\MUXCY'.
+Generating RTLIL representation for module `\MUXF5'.
+Generating RTLIL representation for module `\MUXF6'.
+Generating RTLIL representation for module `\MUXF7'.
+Generating RTLIL representation for module `\MUXF8'.
+Generating RTLIL representation for module `\MUXF9'.
+Generating RTLIL representation for module `\XORCY'.
+Generating RTLIL representation for module `\CARRY4'.
+Generating RTLIL representation for module `\CARRY8'.
+Generating RTLIL representation for module `\ORCY'.
+Generating RTLIL representation for module `\MULT_AND'.
+Generating RTLIL representation for module `\FDRE'.
+Generating RTLIL representation for module `\FDRE_1'.
+Generating RTLIL representation for module `\FDSE'.
+Generating RTLIL representation for module `\FDSE_1'.
+Generating RTLIL representation for module `\FDRSE'.
+Generating RTLIL representation for module `\FDRSE_1'.
+Generating RTLIL representation for module `\FDCE'.
+Generating RTLIL representation for module `\FDCE_1'.
+Generating RTLIL representation for module `\FDPE'.
+Generating RTLIL representation for module `\FDPE_1'.
+Generating RTLIL representation for module `\FDCPE'.
+Generating RTLIL representation for module `\FDCPE_1'.
+Generating RTLIL representation for module `\LDCE'.
+Generating RTLIL representation for module `\LDPE'.
+Generating RTLIL representation for module `\LDCPE'.
+Generating RTLIL representation for module `\AND2B1L'.
+Generating RTLIL representation for module `\OR2L'.
+Generating RTLIL representation for module `\RAM16X1S'.
+Generating RTLIL representation for module `\RAM16X1S_1'.
+Generating RTLIL representation for module `\RAM32X1S'.
+Generating RTLIL representation for module `\RAM32X1S_1'.
+Generating RTLIL representation for module `\RAM64X1S'.
+Generating RTLIL representation for module `\RAM64X1S_1'.
+Generating RTLIL representation for module `\RAM128X1S'.
+Generating RTLIL representation for module `\RAM128X1S_1'.
+Generating RTLIL representation for module `\RAM256X1S'.
+Generating RTLIL representation for module `\RAM512X1S'.
+Generating RTLIL representation for module `\RAM16X2S'.
+Generating RTLIL representation for module `\RAM32X2S'.
+Generating RTLIL representation for module `\RAM64X2S'.
+Generating RTLIL representation for module `\RAM16X4S'.
+Generating RTLIL representation for module `\RAM32X4S'.
+Generating RTLIL representation for module `\RAM16X8S'.
+Generating RTLIL representation for module `\RAM32X8S'.
+Generating RTLIL representation for module `\RAM16X1D'.
+Generating RTLIL representation for module `\RAM16X1D_1'.
+Generating RTLIL representation for module `\RAM32X1D'.
+Generating RTLIL representation for module `\RAM32X1D_1'.
+Generating RTLIL representation for module `\RAM64X1D'.
+Generating RTLIL representation for module `\RAM64X1D_1'.
+Generating RTLIL representation for module `\RAM128X1D'.
+Generating RTLIL representation for module `\RAM256X1D'.
+Generating RTLIL representation for module `\RAM32M'.
+Generating RTLIL representation for module `\RAM32M16'.
+Generating RTLIL representation for module `\RAM64M'.
+Generating RTLIL representation for module `\RAM64M8'.
+Generating RTLIL representation for module `\RAM32X16DR8'.
+Generating RTLIL representation for module `\RAM64X8SW'.
+Generating RTLIL representation for module `\ROM16X1'.
+Generating RTLIL representation for module `\ROM32X1'.
+Generating RTLIL representation for module `\ROM64X1'.
+Generating RTLIL representation for module `\ROM128X1'.
+Generating RTLIL representation for module `\ROM256X1'.
+Generating RTLIL representation for module `\SRL16'.
+Generating RTLIL representation for module `\SRL16E'.
+Generating RTLIL representation for module `\SRLC16'.
+Generating RTLIL representation for module `\SRLC16E'.
+Generating RTLIL representation for module `\SRLC32E'.
+Generating RTLIL representation for module `\CFGLUT5'.
+Generating RTLIL representation for module `\MULT18X18'.
+Generating RTLIL representation for module `\MULT18X18S'.
+Generating RTLIL representation for module `\MULT18X18SIO'.
+Generating RTLIL representation for module `\DSP48A'.
+Generating RTLIL representation for module `\DSP48A1'.
+Generating RTLIL representation for module `\DSP48'.
+Generating RTLIL representation for module `\DSP48E1'.
+Generating RTLIL representation for module `\RAMB18E1'.
+Generating RTLIL representation for module `\RAMB36E1'.
+Successfully finished Verilog frontend.
+
+2.2. Executing Verilog-2005 frontend: /home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/xilinx/cells_xtra.v
+Parsing Verilog input from `/home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/xilinx/cells_xtra.v' to AST representation.
+Generating RTLIL representation for module `\RAMB4_S1'.
+Generating RTLIL representation for module `\RAMB4_S2'.
+Generating RTLIL representation for module `\RAMB4_S4'.
+Generating RTLIL representation for module `\RAMB4_S8'.
+Generating RTLIL representation for module `\RAMB4_S16'.
+Generating RTLIL representation for module `\RAMB4_S1_S1'.
+Generating RTLIL representation for module `\RAMB4_S1_S2'.
+Generating RTLIL representation for module `\RAMB4_S1_S4'.
+Generating RTLIL representation for module `\RAMB4_S1_S8'.
+Generating RTLIL representation for module `\RAMB4_S1_S16'.
+Generating RTLIL representation for module `\RAMB4_S2_S2'.
+Generating RTLIL representation for module `\RAMB4_S2_S4'.
+Generating RTLIL representation for module `\RAMB4_S2_S8'.
+Generating RTLIL representation for module `\RAMB4_S2_S16'.
+Generating RTLIL representation for module `\RAMB4_S4_S4'.
+Generating RTLIL representation for module `\RAMB4_S4_S8'.
+Generating RTLIL representation for module `\RAMB4_S4_S16'.
+Generating RTLIL representation for module `\RAMB4_S8_S8'.
+Generating RTLIL representation for module `\RAMB4_S8_S16'.
+Generating RTLIL representation for module `\RAMB4_S16_S16'.
+Generating RTLIL representation for module `\RAMB16_S1'.
+Generating RTLIL representation for module `\RAMB16_S2'.
+Generating RTLIL representation for module `\RAMB16_S4'.
+Generating RTLIL representation for module `\RAMB16_S9'.
+Generating RTLIL representation for module `\RAMB16_S18'.
+Generating RTLIL representation for module `\RAMB16_S36'.
+Generating RTLIL representation for module `\RAMB16_S1_S1'.
+Generating RTLIL representation for module `\RAMB16_S1_S2'.
+Generating RTLIL representation for module `\RAMB16_S1_S4'.
+Generating RTLIL representation for module `\RAMB16_S1_S9'.
+Generating RTLIL representation for module `\RAMB16_S1_S18'.
+Generating RTLIL representation for module `\RAMB16_S1_S36'.
+Generating RTLIL representation for module `\RAMB16_S2_S2'.
+Generating RTLIL representation for module `\RAMB16_S2_S4'.
+Generating RTLIL representation for module `\RAMB16_S2_S9'.
+Generating RTLIL representation for module `\RAMB16_S2_S18'.
+Generating RTLIL representation for module `\RAMB16_S2_S36'.
+Generating RTLIL representation for module `\RAMB16_S4_S4'.
+Generating RTLIL representation for module `\RAMB16_S4_S9'.
+Generating RTLIL representation for module `\RAMB16_S4_S18'.
+Generating RTLIL representation for module `\RAMB16_S4_S36'.
+Generating RTLIL representation for module `\RAMB16_S9_S9'.
+Generating RTLIL representation for module `\RAMB16_S9_S18'.
+Generating RTLIL representation for module `\RAMB16_S9_S36'.
+Generating RTLIL representation for module `\RAMB16_S18_S18'.
+Generating RTLIL representation for module `\RAMB16_S18_S36'.
+Generating RTLIL representation for module `\RAMB16_S36_S36'.
+Generating RTLIL representation for module `\RAMB16BWE_S18'.
+Generating RTLIL representation for module `\RAMB16BWE_S36'.
+Generating RTLIL representation for module `\RAMB16BWE_S18_S9'.
+Generating RTLIL representation for module `\RAMB16BWE_S18_S18'.
+Generating RTLIL representation for module `\RAMB16BWE_S36_S9'.
+Generating RTLIL representation for module `\RAMB16BWE_S36_S18'.
+Generating RTLIL representation for module `\RAMB16BWE_S36_S36'.
+Generating RTLIL representation for module `\RAMB16BWER'.
+Generating RTLIL representation for module `\RAMB8BWER'.
+Generating RTLIL representation for module `\FIFO16'.
+Generating RTLIL representation for module `\RAMB16'.
+Generating RTLIL representation for module `\RAMB32_S64_ECC'.
+Generating RTLIL representation for module `\FIFO18'.
+Generating RTLIL representation for module `\FIFO18_36'.
+Generating RTLIL representation for module `\FIFO36'.
+Generating RTLIL representation for module `\FIFO36_72'.
+Generating RTLIL representation for module `\RAMB18'.
+Generating RTLIL representation for module `\RAMB36'.
+Generating RTLIL representation for module `\RAMB18SDP'.
+Generating RTLIL representation for module `\RAMB36SDP'.
+Generating RTLIL representation for module `\FIFO18E1'.
+Generating RTLIL representation for module `\FIFO36E1'.
+Generating RTLIL representation for module `\FIFO18E2'.
+Generating RTLIL representation for module `\FIFO36E2'.
+Generating RTLIL representation for module `\RAMB18E2'.
+Generating RTLIL representation for module `\RAMB36E2'.
+Generating RTLIL representation for module `\URAM288'.
+Generating RTLIL representation for module `\URAM288_BASE'.
+Generating RTLIL representation for module `\DSP48E'.
+Generating RTLIL representation for module `\DSP48E2'.
+Generating RTLIL representation for module `\FDDRCPE'.
+Generating RTLIL representation for module `\FDDRRSE'.
+Generating RTLIL representation for module `\IFDDRCPE'.
+Generating RTLIL representation for module `\IFDDRRSE'.
+Generating RTLIL representation for module `\OFDDRCPE'.
+Generating RTLIL representation for module `\OFDDRRSE'.
+Generating RTLIL representation for module `\OFDDRTCPE'.
+Generating RTLIL representation for module `\OFDDRTRSE'.
+Generating RTLIL representation for module `\IDDR2'.
+Generating RTLIL representation for module `\ODDR2'.
+Generating RTLIL representation for module `\IDDR'.
+Generating RTLIL representation for module `\IDDR_2CLK'.
+Generating RTLIL representation for module `\ODDR'.
+Generating RTLIL representation for module `\IDELAYCTRL'.
+Generating RTLIL representation for module `\IDELAY'.
+Generating RTLIL representation for module `\ISERDES'.
+Generating RTLIL representation for module `\OSERDES'.
+Generating RTLIL representation for module `\IODELAY'.
+Generating RTLIL representation for module `\ISERDES_NODELAY'.
+Generating RTLIL representation for module `\IODELAYE1'.
+Generating RTLIL representation for module `\ISERDESE1'.
+Generating RTLIL representation for module `\OSERDESE1'.
+Generating RTLIL representation for module `\IDELAYE2'.
+Generating RTLIL representation for module `\ODELAYE2'.
+Generating RTLIL representation for module `\ISERDESE2'.
+Generating RTLIL representation for module `\OSERDESE2'.
+Generating RTLIL representation for module `\PHASER_IN'.
+Generating RTLIL representation for module `\PHASER_IN_PHY'.
+Generating RTLIL representation for module `\PHASER_OUT'.
+Generating RTLIL representation for module `\PHASER_OUT_PHY'.
+Generating RTLIL representation for module `\PHASER_REF'.
+Generating RTLIL representation for module `\PHY_CONTROL'.
+Generating RTLIL representation for module `\IDDRE1'.
+Generating RTLIL representation for module `\ODDRE1'.
+Generating RTLIL representation for module `\IDELAYE3'.
+Generating RTLIL representation for module `\ODELAYE3'.
+Generating RTLIL representation for module `\ISERDESE3'.
+Generating RTLIL representation for module `\OSERDESE3'.
+Generating RTLIL representation for module `\BITSLICE_CONTROL'.
+Generating RTLIL representation for module `\RIU_OR'.
+Generating RTLIL representation for module `\RX_BITSLICE'.
+Generating RTLIL representation for module `\RXTX_BITSLICE'.
+Generating RTLIL representation for module `\TX_BITSLICE'.
+Generating RTLIL representation for module `\TX_BITSLICE_TRI'.
+Generating RTLIL representation for module `\IODELAY2'.
+Generating RTLIL representation for module `\IODRP2'.
+Generating RTLIL representation for module `\IODRP2_MCB'.
+Generating RTLIL representation for module `\ISERDES2'.
+Generating RTLIL representation for module `\OSERDES2'.
+Generating RTLIL representation for module `\IBUF_DLY_ADJ'.
+Generating RTLIL representation for module `\IBUF_IBUFDISABLE'.
+Generating RTLIL representation for module `\IBUF_INTERMDISABLE'.
+Generating RTLIL representation for module `\IBUF_ANALOG'.
+Generating RTLIL representation for module `\IBUFE3'.
+Generating RTLIL representation for module `\IBUFDS'.
+Generating RTLIL representation for module `\IBUFDS_DLY_ADJ'.
+Generating RTLIL representation for module `\IBUFDS_IBUFDISABLE'.
+Generating RTLIL representation for module `\IBUFDS_INTERMDISABLE'.
+Generating RTLIL representation for module `\IBUFDS_DIFF_OUT'.
+Generating RTLIL representation for module `\IBUFDS_DIFF_OUT_IBUFDISABLE'.
+Generating RTLIL representation for module `\IBUFDS_DIFF_OUT_INTERMDISABLE'.
+Generating RTLIL representation for module `\IBUFDSE3'.
+Generating RTLIL representation for module `\IBUFDS_DPHY'.
+Generating RTLIL representation for module `\IBUFGDS'.
+Generating RTLIL representation for module `\IBUFGDS_DIFF_OUT'.
+Generating RTLIL representation for module `\IOBUF_DCIEN'.
+Generating RTLIL representation for module `\IOBUF_INTERMDISABLE'.
+Generating RTLIL representation for module `\IOBUFE3'.
+Generating RTLIL representation for module `\IOBUFDS'.
+Generating RTLIL representation for module `\IOBUFDS_DCIEN'.
+Generating RTLIL representation for module `\IOBUFDS_INTERMDISABLE'.
+Generating RTLIL representation for module `\IOBUFDS_DIFF_OUT'.
+Generating RTLIL representation for module `\IOBUFDS_DIFF_OUT_DCIEN'.
+Generating RTLIL representation for module `\IOBUFDS_DIFF_OUT_INTERMDISABLE'.
+Generating RTLIL representation for module `\IOBUFDSE3'.
+Generating RTLIL representation for module `\OBUFDS'.
+Generating RTLIL representation for module `\OBUFDS_DPHY'.
+Generating RTLIL representation for module `\OBUFTDS'.
+Generating RTLIL representation for module `\KEEPER'.
+Generating RTLIL representation for module `\PULLDOWN'.
+Generating RTLIL representation for module `\PULLUP'.
+Generating RTLIL representation for module `\DCIRESET'.
+Generating RTLIL representation for module `\HPIO_VREF'.
+Generating RTLIL representation for module `\BUFGCE'.
+Generating RTLIL representation for module `\BUFGCE_1'.
+Generating RTLIL representation for module `\BUFGMUX'.
+Generating RTLIL representation for module `\BUFGMUX_1'.
+Generating RTLIL representation for module `\BUFGMUX_CTRL'.
+Generating RTLIL representation for module `\BUFGMUX_VIRTEX4'.
+Generating RTLIL representation for module `\BUFG_GT'.
+Generating RTLIL representation for module `\BUFG_GT_SYNC'.
+Generating RTLIL representation for module `\BUFG_PS'.
+Generating RTLIL representation for module `\BUFGCE_DIV'.
+Generating RTLIL representation for module `\BUFH'.
+Generating RTLIL representation for module `\BUFIO2'.
+Generating RTLIL representation for module `\BUFIO2_2CLK'.
+Generating RTLIL representation for module `\BUFIO2FB'.
+Generating RTLIL representation for module `\BUFPLL'.
+Generating RTLIL representation for module `\BUFPLL_MCB'.
+Generating RTLIL representation for module `\BUFIO'.
+Generating RTLIL representation for module `\BUFIODQS'.
+Generating RTLIL representation for module `\BUFR'.
+Generating RTLIL representation for module `\BUFMR'.
+Generating RTLIL representation for module `\BUFMRCE'.
+Generating RTLIL representation for module `\DCM'.
+Generating RTLIL representation for module `\DCM_SP'.
+Generating RTLIL representation for module `\DCM_CLKGEN'.
+Generating RTLIL representation for module `\DCM_ADV'.
+Generating RTLIL representation for module `\DCM_BASE'.
+Generating RTLIL representation for module `\DCM_PS'.
+Generating RTLIL representation for module `\PMCD'.
+Generating RTLIL representation for module `\PLL_ADV'.
+Generating RTLIL representation for module `\PLL_BASE'.
+Generating RTLIL representation for module `\MMCM_ADV'.
+Generating RTLIL representation for module `\MMCM_BASE'.
+Generating RTLIL representation for module `\MMCME2_ADV'.
+Generating RTLIL representation for module `\MMCME2_BASE'.
+Generating RTLIL representation for module `\PLLE2_ADV'.
+Generating RTLIL representation for module `\PLLE2_BASE'.
+Generating RTLIL representation for module `\MMCME3_ADV'.
+Generating RTLIL representation for module `\MMCME3_BASE'.
+Generating RTLIL representation for module `\PLLE3_ADV'.
+Generating RTLIL representation for module `\PLLE3_BASE'.
+Generating RTLIL representation for module `\MMCME4_ADV'.
+Generating RTLIL representation for module `\MMCME4_BASE'.
+Generating RTLIL representation for module `\PLLE4_ADV'.
+Generating RTLIL representation for module `\PLLE4_BASE'.
+Generating RTLIL representation for module `\BUFT'.
+Generating RTLIL representation for module `\IN_FIFO'.
+Generating RTLIL representation for module `\OUT_FIFO'.
+Generating RTLIL representation for module `\HARD_SYNC'.
+Generating RTLIL representation for module `\STARTUP_SPARTAN3'.
+Generating RTLIL representation for module `\STARTUP_SPARTAN3E'.
+Generating RTLIL representation for module `\STARTUP_SPARTAN3A'.
+Generating RTLIL representation for module `\STARTUP_SPARTAN6'.
+Generating RTLIL representation for module `\STARTUP_VIRTEX4'.
+Generating RTLIL representation for module `\STARTUP_VIRTEX5'.
+Generating RTLIL representation for module `\STARTUP_VIRTEX6'.
+Generating RTLIL representation for module `\STARTUPE2'.
+Generating RTLIL representation for module `\STARTUPE3'.
+Generating RTLIL representation for module `\CAPTURE_SPARTAN3'.
+Generating RTLIL representation for module `\CAPTURE_SPARTAN3A'.
+Generating RTLIL representation for module `\CAPTURE_VIRTEX4'.
+Generating RTLIL representation for module `\CAPTURE_VIRTEX5'.
+Generating RTLIL representation for module `\CAPTURE_VIRTEX6'.
+Generating RTLIL representation for module `\CAPTUREE2'.
+Generating RTLIL representation for module `\ICAP_SPARTAN3A'.
+Generating RTLIL representation for module `\ICAP_SPARTAN6'.
+Generating RTLIL representation for module `\ICAP_VIRTEX4'.
+Generating RTLIL representation for module `\ICAP_VIRTEX5'.
+Generating RTLIL representation for module `\ICAP_VIRTEX6'.
+Generating RTLIL representation for module `\ICAPE2'.
+Generating RTLIL representation for module `\ICAPE3'.
+Generating RTLIL representation for module `\BSCAN_SPARTAN3'.
+Generating RTLIL representation for module `\BSCAN_SPARTAN3A'.
+Generating RTLIL representation for module `\BSCAN_SPARTAN6'.
+Generating RTLIL representation for module `\BSCAN_VIRTEX4'.
+Generating RTLIL representation for module `\BSCAN_VIRTEX5'.
+Generating RTLIL representation for module `\BSCAN_VIRTEX6'.
+Generating RTLIL representation for module `\BSCANE2'.
+Generating RTLIL representation for module `\DNA_PORT'.
+Generating RTLIL representation for module `\DNA_PORTE2'.
+Generating RTLIL representation for module `\FRAME_ECC_VIRTEX4'.
+Generating RTLIL representation for module `\FRAME_ECC_VIRTEX5'.
+Generating RTLIL representation for module `\FRAME_ECC_VIRTEX6'.
+Generating RTLIL representation for module `\FRAME_ECCE2'.
+Generating RTLIL representation for module `\FRAME_ECCE3'.
+Generating RTLIL representation for module `\FRAME_ECCE4'.
+Generating RTLIL representation for module `\USR_ACCESS_VIRTEX4'.
+Generating RTLIL representation for module `\USR_ACCESS_VIRTEX5'.
+Generating RTLIL representation for module `\USR_ACCESS_VIRTEX6'.
+Generating RTLIL representation for module `\USR_ACCESSE2'.
+Generating RTLIL representation for module `\POST_CRC_INTERNAL'.
+Generating RTLIL representation for module `\SUSPEND_SYNC'.
+Generating RTLIL representation for module `\KEY_CLEAR'.
+Generating RTLIL representation for module `\MASTER_JTAG'.
+Generating RTLIL representation for module `\SPI_ACCESS'.
+Generating RTLIL representation for module `\EFUSE_USR'.
+Generating RTLIL representation for module `\SYSMON'.
+Generating RTLIL representation for module `\XADC'.
+Generating RTLIL representation for module `\SYSMONE1'.
+Generating RTLIL representation for module `\SYSMONE4'.
+Generating RTLIL representation for module `\GTPA1_DUAL'.
+Generating RTLIL representation for module `\GT11_CUSTOM'.
+Generating RTLIL representation for module `\GT11_DUAL'.
+Generating RTLIL representation for module `\GT11CLK'.
+Generating RTLIL representation for module `\GT11CLK_MGT'.
+Generating RTLIL representation for module `\GTP_DUAL'.
+Generating RTLIL representation for module `\GTX_DUAL'.
+Generating RTLIL representation for module `\CRC32'.
+Generating RTLIL representation for module `\CRC64'.
+Generating RTLIL representation for module `\GTHE1_QUAD'.
+Generating RTLIL representation for module `\GTXE1'.
+Generating RTLIL representation for module `\IBUFDS_GTXE1'.
+Generating RTLIL representation for module `\IBUFDS_GTHE1'.
+Generating RTLIL representation for module `\GTHE2_CHANNEL'.
+Generating RTLIL representation for module `\GTHE2_COMMON'.
+Generating RTLIL representation for module `\GTPE2_CHANNEL'.
+Generating RTLIL representation for module `\GTPE2_COMMON'.
+Generating RTLIL representation for module `\GTXE2_CHANNEL'.
+Generating RTLIL representation for module `\GTXE2_COMMON'.
+Generating RTLIL representation for module `\IBUFDS_GTE2'.
+Generating RTLIL representation for module `\GTHE3_CHANNEL'.
+Generating RTLIL representation for module `\GTHE3_COMMON'.
+Generating RTLIL representation for module `\GTYE3_CHANNEL'.
+Generating RTLIL representation for module `\GTYE3_COMMON'.
+Generating RTLIL representation for module `\IBUFDS_GTE3'.
+Generating RTLIL representation for module `\OBUFDS_GTE3'.
+Generating RTLIL representation for module `\OBUFDS_GTE3_ADV'.
+Generating RTLIL representation for module `\GTHE4_CHANNEL'.
+Generating RTLIL representation for module `\GTHE4_COMMON'.
+Generating RTLIL representation for module `\GTYE4_CHANNEL'.
+Generating RTLIL representation for module `\GTYE4_COMMON'.
+Generating RTLIL representation for module `\IBUFDS_GTE4'.
+Generating RTLIL representation for module `\OBUFDS_GTE4'.
+Generating RTLIL representation for module `\OBUFDS_GTE4_ADV'.
+Generating RTLIL representation for module `\GTM_DUAL'.
+Generating RTLIL representation for module `\IBUFDS_GTM'.
+Generating RTLIL representation for module `\OBUFDS_GTM'.
+Generating RTLIL representation for module `\OBUFDS_GTM_ADV'.
+Generating RTLIL representation for module `\HSDAC'.
+Generating RTLIL representation for module `\HSADC'.
+Generating RTLIL representation for module `\RFDAC'.
+Generating RTLIL representation for module `\RFADC'.
+Generating RTLIL representation for module `\PCIE_A1'.
+Generating RTLIL representation for module `\PCIE_EP'.
+Generating RTLIL representation for module `\PCIE_2_0'.
+Generating RTLIL representation for module `\PCIE_2_1'.
+Generating RTLIL representation for module `\PCIE_3_0'.
+Generating RTLIL representation for module `\PCIE_3_1'.
+Generating RTLIL representation for module `\PCIE40E4'.
+Generating RTLIL representation for module `\PCIE4CE4'.
+Generating RTLIL representation for module `\EMAC'.
+Generating RTLIL representation for module `\TEMAC'.
+Generating RTLIL representation for module `\TEMAC_SINGLE'.
+Generating RTLIL representation for module `\CMAC'.
+Generating RTLIL representation for module `\CMACE4'.
+Generating RTLIL representation for module `\MCB'.
+Generating RTLIL representation for module `\HBM_REF_CLK'.
+Generating RTLIL representation for module `\HBM_SNGLBLI_INTF_APB'.
+Generating RTLIL representation for module `\HBM_SNGLBLI_INTF_AXI'.
+Generating RTLIL representation for module `\HBM_ONE_STACK_INTF'.
+Generating RTLIL representation for module `\HBM_TWO_STACK_INTF'.
+Generating RTLIL representation for module `\PPC405_ADV'.
+Generating RTLIL representation for module `\PPC440'.
+Generating RTLIL representation for module `\PS7'.
+Generating RTLIL representation for module `\PS8'.
+Generating RTLIL representation for module `\ILKN'.
+Generating RTLIL representation for module `\ILKNE4'.
+Generating RTLIL representation for module `\VCU'.
+Generating RTLIL representation for module `\FE'.
+Successfully finished Verilog frontend.
+
+2.3. Executing HIERARCHY pass (managing design hierarchy).
+
+2.3.1. Analyzing design hierarchy..
+Top module:  \ooc_wrap
+
+2.3.2. Analyzing design hierarchy..
+Top module:  \ooc_wrap
+Removed 0 unused modules.
+
+2.4. Executing PROC pass (convert processes to netlists).
+
+2.4.1. Executing PROC_CLEAN pass (remove empty switches from decision trees).
+Cleaned up 0 empty switches.
+
+2.4.2. Executing PROC_RMDEAD pass (remove dead branches from decision trees).
+Removed a total of 0 dead cases.
+
+2.4.3. Executing PROC_PRUNE pass (remove redundant assignments in processes).
+Removed 0 redundant assignments.
+Promoted 0 assignments to connections.
+
+2.4.4. Executing PROC_INIT pass (extract init attributes).
+
+2.4.5. Executing PROC_ARST pass (detect async resets in processes).
+
+2.4.6. Executing PROC_ROM pass (convert switches to ROMs).
+Converted 0 switches.
+
+2.4.7. Executing PROC_MUX pass (convert decision trees to multiplexers).
+
+2.4.8. Executing PROC_DLATCH pass (convert process syncs to latches).
+
+2.4.9. Executing PROC_DFF pass (convert process syncs to FFs).
+
+2.4.10. Executing PROC_MEMWR pass (convert process memory writes to cells).
+
+2.4.11. Executing PROC_CLEAN pass (remove empty switches from decision trees).
+Cleaned up 0 empty switches.
+
+2.4.12. Executing OPT_EXPR pass (perform const folding).
+Optimizing module ooc_wrap.
+
+2.5. Executing CHECK pass (checking for obvious problems).
+Checking module ooc_wrap...
+Found and reported 0 problems.
+
+2.6. Executing FLATTEN pass (flatten design).
+
+2.7. Executing TRIBUF pass.
+
+2.8. Executing DEMINOUT pass (demote inout ports to input or output).
+
+2.9. Executing OPT_EXPR pass (perform const folding).
+Optimizing module ooc_wrap.
+
+2.10. Executing CHECK pass (checking for obvious problems).
+Checking module ooc_wrap...
+Found and reported 0 problems.
+
+2.11. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \ooc_wrap..
+Removed 0 unused cells and 112 unused wires.
+<suppressed ~166 debug messages>
+
+2.12. Executing OPT pass (performing simple optimizations).
+
+2.12.1. Executing OPT_EXPR pass (perform const folding).
+Optimizing module ooc_wrap.
+
+2.12.2. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\ooc_wrap'.
+Computing hashes of 208 cells of `\ooc_wrap'.
+Finding duplicate cells in `\ooc_wrap'.
+Computing hashes of 207 cells of `\ooc_wrap'.
+Finding duplicate cells in `\ooc_wrap'.
+<suppressed ~3 debug messages>
+Removed a total of 1 cells.
+
+2.12.3. Executing OPT_MUXTREE pass (detect dead branches in mux trees).
+Running muxtree optimizer on module \ooc_wrap..
+  Creating internal representation of mux trees.
+  Evaluating internal representation of mux trees.
+  Analyzing evaluation results.
+Removed 0 multiplexer ports.
+<suppressed ~7 debug messages>
+
+2.12.4. Executing OPT_REDUCE pass (consolidate $*mux and $reduce_* inputs).
+  Optimizing cells in module \ooc_wrap.
+Performed a total of 0 changes.
+
+2.12.5. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\ooc_wrap'.
+Computing hashes of 207 cells of `\ooc_wrap'.
+Finding duplicate cells in `\ooc_wrap'.
+Removed a total of 0 cells.
+
+2.12.6. Executing OPT_DFF pass (perform DFF optimizations).
+
+2.12.7. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \ooc_wrap..
+
+2.12.8. Executing OPT_EXPR pass (perform const folding).
+Optimizing module ooc_wrap.
+
+2.12.9. Finished fast OPT passes. (There is nothing left to do.)
+
+2.13. Executing FSM pass (extract and optimize FSM).
+
+2.13.1. Executing FSM_DETECT pass (finding FSMs in design).
+Not marking ooc_wrap.u_blk.out_cls as FSM state register:
+    Register is connected to module port.
+    Users of register don't seem to benefit from recoding.
+
+2.13.2. Executing FSM_EXTRACT pass (extracting FSM from design).
+
+2.13.3. Executing FSM_OPT pass (simple optimizations of FSMs).
+
+2.13.4. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \ooc_wrap..
+
+2.13.5. Executing FSM_OPT pass (simple optimizations of FSMs).
+
+2.13.6. Executing FSM_RECODE pass (re-assigning FSM state encoding).
+
+2.13.7. Executing FSM_INFO pass (dumping all available information on FSM cells).
+
+2.13.8. Executing FSM_MAP pass (mapping FSMs to basic logic).
+
+2.14. Executing OPT pass (performing simple optimizations).
+
+2.14.1. Executing OPT_EXPR pass (perform const folding).
+Optimizing module ooc_wrap.
+
+2.14.2. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\ooc_wrap'.
+Computing hashes of 207 cells of `\ooc_wrap'.
+Finding duplicate cells in `\ooc_wrap'.
+Removed a total of 0 cells.
+
+2.14.3. Executing OPT_MUXTREE pass (detect dead branches in mux trees).
+Running muxtree optimizer on module \ooc_wrap..
+  Creating internal representation of mux trees.
+  Evaluating internal representation of mux trees.
+  Analyzing evaluation results.
+Removed 0 multiplexer ports.
+<suppressed ~7 debug messages>
+
+2.14.4. Executing OPT_REDUCE pass (consolidate $*mux and $reduce_* inputs).
+  Optimizing cells in module \ooc_wrap.
+Performed a total of 0 changes.
+
+2.14.5. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\ooc_wrap'.
+Computing hashes of 207 cells of `\ooc_wrap'.
+Finding duplicate cells in `\ooc_wrap'.
+Removed a total of 0 cells.
+
+2.14.6. Executing OPT_DFF pass (perform DFF optimizations).
+Adding SRST signal on $driver$u_blk.vpipe ($dff) from module ooc_wrap (D = \v_q, Q = \u_blk.vpipe, rval = 1'0).
+Adding SRST signal on $driver$u_blk.out_cls ($dff) from module ooc_wrap (D = \u_blk.c01, Q = \u_blk.out_cls, rval = 2'10).
+
+2.14.7. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \ooc_wrap..
+Removed 2 unused cells and 2 unused wires.
+<suppressed ~4 debug messages>
+
+2.14.8. Executing OPT_EXPR pass (perform const folding).
+Optimizing module ooc_wrap.
+
+2.14.9. Rerunning OPT passes. (Maybe there is more to do..)
+
+2.14.10. Executing OPT_MUXTREE pass (detect dead branches in mux trees).
+Running muxtree optimizer on module \ooc_wrap..
+  Creating internal representation of mux trees.
+  Evaluating internal representation of mux trees.
+  Analyzing evaluation results.
+Removed 0 multiplexer ports.
+<suppressed ~4 debug messages>
+
+2.14.11. Executing OPT_REDUCE pass (consolidate $*mux and $reduce_* inputs).
+  Optimizing cells in module \ooc_wrap.
+Performed a total of 0 changes.
+
+2.14.12. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\ooc_wrap'.
+Computing hashes of 205 cells of `\ooc_wrap'.
+Finding duplicate cells in `\ooc_wrap'.
+Removed a total of 0 cells.
+
+2.14.13. Executing OPT_DFF pass (perform DFF optimizations).
+
+2.14.14. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \ooc_wrap..
+
+2.14.15. Executing OPT_EXPR pass (perform const folding).
+Optimizing module ooc_wrap.
+
+2.14.16. Finished fast OPT passes. (There is nothing left to do.)
+
+2.15. Executing WREDUCE pass (reducing word size of cells).
+Removed top 6 bits (of 8) from port B of cell ooc_wrap.$1 ($gt).
+Removed top 5 bits (of 8) from port B of cell ooc_wrap.$2 ($gt).
+Removed top 2 bits (of 3) from port A of cell ooc_wrap.$3 ($add).
+Removed top 2 bits (of 3) from port B of cell ooc_wrap.$3 ($add).
+Removed top 1 bits (of 3) from port Y of cell ooc_wrap.$3 ($add).
+Removed top 5 bits (of 8) from port B of cell ooc_wrap.$4 ($gt).
+Removed top 1 bits (of 3) from port A of cell ooc_wrap.$5 ($add).
+Removed top 2 bits (of 3) from port B of cell ooc_wrap.$5 ($add).
+Removed top 4 bits (of 8) from port B of cell ooc_wrap.$6 ($gt).
+Removed top 2 bits (of 3) from port B of cell ooc_wrap.$7 ($add).
+Removed top 4 bits (of 8) from port B of cell ooc_wrap.$8 ($gt).
+Removed top 2 bits (of 3) from port B of cell ooc_wrap.$9 ($add).
+Removed top 3 bits (of 8) from port B of cell ooc_wrap.$10 ($gt).
+Removed top 2 bits (of 3) from port B of cell ooc_wrap.$11 ($add).
+Removed top 3 bits (of 8) from port B of cell ooc_wrap.$12 ($gt).
+Removed top 2 bits (of 3) from port B of cell ooc_wrap.$13 ($add).
+Removed top 6 bits (of 8) from port B of cell ooc_wrap.$15 ($gt).
+Removed top 5 bits (of 8) from port B of cell ooc_wrap.$16 ($gt).
+Removed top 2 bits (of 3) from port A of cell ooc_wrap.$17 ($add).
+Removed top 2 bits (of 3) from port B of cell ooc_wrap.$17 ($add).
+Removed top 1 bits (of 3) from port Y of cell ooc_wrap.$17 ($add).
+Removed top 5 bits (of 8) from port B of cell ooc_wrap.$18 ($gt).
+Removed top 1 bits (of 3) from port A of cell ooc_wrap.$19 ($add).
+Removed top 2 bits (of 3) from port B of cell ooc_wrap.$19 ($add).
+Removed top 4 bits (of 8) from port B of cell ooc_wrap.$20 ($gt).
+Removed top 2 bits (of 3) from port B of cell ooc_wrap.$21 ($add).
+Removed top 4 bits (of 8) from port B of cell ooc_wrap.$22 ($gt).
+Removed top 2 bits (of 3) from port B of cell ooc_wrap.$23 ($add).
+Removed top 2 bits (of 8) from port B of cell ooc_wrap.$24 ($gt).
+Removed top 2 bits (of 3) from port B of cell ooc_wrap.$25 ($add).
+Removed top 1 bits (of 8) from port B of cell ooc_wrap.$26 ($gt).
+Removed top 2 bits (of 3) from port B of cell ooc_wrap.$27 ($add).
+Removed top 3 bits (of 4) from port B of cell ooc_wrap.$29 ($gt).
+Removed top 2 bits (of 4) from port B of cell ooc_wrap.$30 ($gt).
+Removed top 2 bits (of 3) from port A of cell ooc_wrap.$31 ($add).
+Removed top 2 bits (of 3) from port B of cell ooc_wrap.$31 ($add).
+Removed top 1 bits (of 3) from port Y of cell ooc_wrap.$31 ($add).
+Removed top 2 bits (of 4) from port B of cell ooc_wrap.$32 ($gt).
+Removed top 1 bits (of 3) from port A of cell ooc_wrap.$33 ($add).
+Removed top 2 bits (of 3) from port B of cell ooc_wrap.$33 ($add).
+Removed top 1 bits (of 4) from port B of cell ooc_wrap.$34 ($gt).
+Removed top 2 bits (of 3) from port B of cell ooc_wrap.$35 ($add).
+Removed top 1 bits (of 4) from port B of cell ooc_wrap.$36 ($gt).
+Removed top 2 bits (of 3) from port B of cell ooc_wrap.$37 ($add).
+Removed top 1 bits (of 4) from port B of cell ooc_wrap.$38 ($gt).
+Removed top 2 bits (of 3) from port B of cell ooc_wrap.$39 ($add).
+Removed top 2 bits (of 3) from port B of cell ooc_wrap.$41 ($add).
+Removed top 2 bits (of 3) from port B of cell ooc_wrap.$43 ($gt).
+Removed top 2 bits (of 3) from port B of cell ooc_wrap.$44 ($gt).
+Removed top 2 bits (of 3) from port A of cell ooc_wrap.$45 ($add).
+Removed top 2 bits (of 3) from port B of cell ooc_wrap.$45 ($add).
+Removed top 1 bits (of 3) from port Y of cell ooc_wrap.$45 ($add).
+Removed top 1 bits (of 3) from port B of cell ooc_wrap.$46 ($gt).
+Removed top 1 bits (of 3) from port A of cell ooc_wrap.$47 ($add).
+Removed top 2 bits (of 3) from port B of cell ooc_wrap.$47 ($add).
+Removed top 1 bits (of 3) from port B of cell ooc_wrap.$48 ($gt).
+Removed top 2 bits (of 3) from port B of cell ooc_wrap.$49 ($add).
+Removed top 2 bits (of 3) from port B of cell ooc_wrap.$51 ($add).
+Removed top 2 bits (of 3) from port B of cell ooc_wrap.$53 ($add).
+Removed top 2 bits (of 3) from port B of cell ooc_wrap.$55 ($add).
+Removed top 2 bits (of 5) from port B of cell ooc_wrap.$57 ($gt).
+Removed top 2 bits (of 5) from port B of cell ooc_wrap.$58 ($gt).
+Removed top 2 bits (of 3) from port A of cell ooc_wrap.$59 ($add).
+Removed top 2 bits (of 3) from port B of cell ooc_wrap.$59 ($add).
+Removed top 1 bits (of 3) from port Y of cell ooc_wrap.$59 ($add).
+Removed top 2 bits (of 5) from port B of cell ooc_wrap.$60 ($gt).
+Removed top 1 bits (of 3) from port A of cell ooc_wrap.$61 ($add).
+Removed top 2 bits (of 3) from port B of cell ooc_wrap.$61 ($add).
+Removed top 1 bits (of 5) from port B of cell ooc_wrap.$62 ($gt).
+Removed top 2 bits (of 3) from port B of cell ooc_wrap.$63 ($add).
+Removed top 1 bits (of 5) from port B of cell ooc_wrap.$64 ($gt).
+Removed top 2 bits (of 3) from port B of cell ooc_wrap.$65 ($add).
+Removed top 1 bits (of 5) from port B of cell ooc_wrap.$66 ($gt).
+Removed top 2 bits (of 3) from port B of cell ooc_wrap.$67 ($add).
+Removed top 1 bits (of 5) from port B of cell ooc_wrap.$68 ($gt).
+Removed top 2 bits (of 3) from port B of cell ooc_wrap.$69 ($add).
+Removed top 1 bits (of 8) from port B of cell ooc_wrap.$71 ($gt).
+Removed top 1 bits (of 8) from port B of cell ooc_wrap.$72 ($gt).
+Removed top 2 bits (of 3) from port A of cell ooc_wrap.$73 ($add).
+Removed top 2 bits (of 3) from port B of cell ooc_wrap.$73 ($add).
+Removed top 1 bits (of 3) from port Y of cell ooc_wrap.$73 ($add).
+Removed top 1 bits (of 8) from port B of cell ooc_wrap.$74 ($gt).
+Removed top 1 bits (of 3) from port A of cell ooc_wrap.$75 ($add).
+Removed top 2 bits (of 3) from port B of cell ooc_wrap.$75 ($add).
+Removed top 2 bits (of 3) from port B of cell ooc_wrap.$77 ($add).
+Removed top 2 bits (of 3) from port B of cell ooc_wrap.$79 ($add).
+Removed top 2 bits (of 3) from port B of cell ooc_wrap.$81 ($add).
+Removed top 2 bits (of 3) from port B of cell ooc_wrap.$83 ($add).
+Removed top 1 bits (of 2) from port B of cell ooc_wrap.$85 ($gt).
+Removed top 1 bits (of 2) from port B of cell ooc_wrap.$86 ($gt).
+Removed top 1 bits (of 2) from port A of cell ooc_wrap.$87 ($add).
+Removed top 1 bits (of 2) from port B of cell ooc_wrap.$87 ($add).
+Converting cell ooc_wrap.$313 ($add) from unsigned to signed.
+Removed top 3 bits (of 7) from port A of cell ooc_wrap.$313 ($add).
+Removed top 3 bits (of 7) from port B of cell ooc_wrap.$313 ($add).
+Removed top 2 bits (of 7) from port Y of cell ooc_wrap.$313 ($add).
+Converting cell ooc_wrap.$314 ($add) from unsigned to signed.
+Removed top 2 bits (of 7) from port A of cell ooc_wrap.$314 ($add).
+Removed top 3 bits (of 7) from port B of cell ooc_wrap.$314 ($add).
+Removed top 1 bits (of 7) from port Y of cell ooc_wrap.$314 ($add).
+Converting cell ooc_wrap.$315 ($add) from unsigned to signed.
+Removed top 1 bits (of 7) from port A of cell ooc_wrap.$315 ($add).
+Removed top 3 bits (of 7) from port B of cell ooc_wrap.$315 ($add).
+Removed top 3 bits (of 7) from port B of cell ooc_wrap.$316 ($add).
+Removed top 3 bits (of 7) from port B of cell ooc_wrap.$317 ($add).
+Removed top 3 bits (of 7) from port B of cell ooc_wrap.$318 ($add).
+Removed top 3 bits (of 7) from port B of cell ooc_wrap.$319 ($add).
+Converting cell ooc_wrap.$329 ($add) from unsigned to signed.
+Removed top 3 bits (of 7) from port A of cell ooc_wrap.$329 ($add).
+Removed top 3 bits (of 7) from port B of cell ooc_wrap.$329 ($add).
+Removed top 2 bits (of 7) from port Y of cell ooc_wrap.$329 ($add).
+Converting cell ooc_wrap.$330 ($add) from unsigned to signed.
+Removed top 2 bits (of 7) from port A of cell ooc_wrap.$330 ($add).
+Removed top 3 bits (of 7) from port B of cell ooc_wrap.$330 ($add).
+Removed top 1 bits (of 7) from port Y of cell ooc_wrap.$330 ($add).
+Converting cell ooc_wrap.$331 ($add) from unsigned to signed.
+Removed top 1 bits (of 7) from port A of cell ooc_wrap.$331 ($add).
+Removed top 3 bits (of 7) from port B of cell ooc_wrap.$331 ($add).
+Removed top 3 bits (of 7) from port B of cell ooc_wrap.$332 ($add).
+Removed top 3 bits (of 7) from port B of cell ooc_wrap.$333 ($add).
+Removed top 3 bits (of 7) from port B of cell ooc_wrap.$334 ($add).
+Removed top 3 bits (of 7) from port B of cell ooc_wrap.$335 ($add).
+Converting cell ooc_wrap.$345 ($add) from unsigned to signed.
+Removed top 3 bits (of 7) from port A of cell ooc_wrap.$345 ($add).
+Removed top 3 bits (of 7) from port B of cell ooc_wrap.$345 ($add).
+Removed top 2 bits (of 7) from port Y of cell ooc_wrap.$345 ($add).
+Converting cell ooc_wrap.$346 ($add) from unsigned to signed.
+Removed top 2 bits (of 7) from port A of cell ooc_wrap.$346 ($add).
+Removed top 3 bits (of 7) from port B of cell ooc_wrap.$346 ($add).
+Removed top 1 bits (of 7) from port Y of cell ooc_wrap.$346 ($add).
+Converting cell ooc_wrap.$347 ($add) from unsigned to signed.
+Removed top 1 bits (of 7) from port A of cell ooc_wrap.$347 ($add).
+Removed top 3 bits (of 7) from port B of cell ooc_wrap.$347 ($add).
+Removed top 3 bits (of 7) from port B of cell ooc_wrap.$348 ($add).
+Removed top 4 bits (of 7) from port B of cell ooc_wrap.$349 ($add).
+Removed top 3 bits (of 7) from port B of cell ooc_wrap.$350 ($add).
+Removed top 3 bits (of 7) from port B of cell ooc_wrap.$351 ($add).
+Removed top 1 bits (of 2) from mux cell ooc_wrap.$357 ($mux).
+Removed top 1 bits (of 3) from wire ooc_wrap.$73y.
+Removed top 1 bits (of 3) from wire ooc_wrap.$59y.
+Removed top 1 bits (of 3) from wire ooc_wrap.$45y.
+Removed top 1 bits (of 3) from wire ooc_wrap.$31y.
+Removed top 1 bits (of 3) from wire ooc_wrap.$17y.
+Removed top 1 bits (of 3) from wire ooc_wrap.$3y.
+
+2.16. Executing PEEPOPT pass (run peephole optimizers).
+
+2.17. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \ooc_wrap..
+Removed 0 unused cells and 6 unused wires.
+<suppressed ~1 debug messages>
+
+2.18. Executing PMUX2SHIFTX pass.
+
+2.19. Executing SORT pass.
+
+2.20. Executing MEMORY_DFF pass (merging $dff cells to $memrd).
+
+2.21. Executing ALUMACC pass (create $alu and $macc cells).
+Extracting $alu and $macc cells in module ooc_wrap:
+  creating $macc model for $11 ($add).
+  creating $macc model for $13 ($add).
+  creating $macc model for $17 ($add).
+  creating $macc model for $19 ($add).
+  creating $macc model for $21 ($add).
+  creating $macc model for $23 ($add).
+  creating $macc model for $25 ($add).
+  creating $macc model for $27 ($add).
+  creating $macc model for $3 ($add).
+  creating $macc model for $31 ($add).
+  creating $macc model for $313 ($add).
+  creating $macc model for $314 ($add).
+  creating $macc model for $315 ($add).
+  creating $macc model for $316 ($add).
+  creating $macc model for $317 ($add).
+  creating $macc model for $318 ($add).
+  creating $macc model for $319 ($add).
+  creating $macc model for $329 ($add).
+  creating $macc model for $33 ($add).
+  creating $macc model for $330 ($add).
+  creating $macc model for $331 ($add).
+  creating $macc model for $332 ($add).
+  creating $macc model for $333 ($add).
+  creating $macc model for $334 ($add).
+  creating $macc model for $335 ($add).
+  creating $macc model for $345 ($add).
+  creating $macc model for $346 ($add).
+  creating $macc model for $347 ($add).
+  creating $macc model for $348 ($add).
+  creating $macc model for $349 ($add).
+  creating $macc model for $35 ($add).
+  creating $macc model for $350 ($add).
+  creating $macc model for $351 ($add).
+  creating $macc model for $37 ($add).
+  creating $macc model for $39 ($add).
+  creating $macc model for $41 ($add).
+  creating $macc model for $45 ($add).
+  creating $macc model for $47 ($add).
+  creating $macc model for $49 ($add).
+  creating $macc model for $5 ($add).
+  creating $macc model for $51 ($add).
+  creating $macc model for $53 ($add).
+  creating $macc model for $55 ($add).
+  creating $macc model for $59 ($add).
+  creating $macc model for $61 ($add).
+  creating $macc model for $63 ($add).
+  creating $macc model for $65 ($add).
+  creating $macc model for $67 ($add).
+  creating $macc model for $69 ($add).
+  creating $macc model for $7 ($add).
+  creating $macc model for $73 ($add).
+  creating $macc model for $75 ($add).
+  creating $macc model for $77 ($add).
+  creating $macc model for $79 ($add).
+  creating $macc model for $81 ($add).
+  creating $macc model for $83 ($add).
+  creating $macc model for $87 ($add).
+  creating $macc model for $9 ($add).
+  merging $macc model for $7 into $9.
+  merging $macc model for $5 into $9.
+  merging $macc model for $3 into $9.
+  merging $macc model for $81 into $83.
+  merging $macc model for $79 into $83.
+  merging $macc model for $77 into $83.
+  merging $macc model for $75 into $83.
+  merging $macc model for $73 into $83.
+  merging $macc model for $67 into $69.
+  merging $macc model for $65 into $69.
+  merging $macc model for $63 into $69.
+  merging $macc model for $61 into $69.
+  merging $macc model for $59 into $69.
+  merging $macc model for $53 into $55.
+  merging $macc model for $51 into $55.
+  merging $macc model for $49 into $55.
+  merging $macc model for $47 into $55.
+  merging $macc model for $45 into $55.
+  merging $macc model for $39 into $41.
+  merging $macc model for $37 into $41.
+  merging $macc model for $35 into $41.
+  merging $macc model for $33 into $41.
+  merging $macc model for $31 into $41.
+  merging $macc model for $350 into $351.
+  merging $macc model for $349 into $351.
+  merging $macc model for $348 into $351.
+  merging $macc model for $347 into $351.
+  merging $macc model for $346 into $351.
+  merging $macc model for $345 into $351.
+  merging $macc model for $334 into $335.
+  merging $macc model for $333 into $335.
+  merging $macc model for $332 into $335.
+  merging $macc model for $331 into $335.
+  merging $macc model for $330 into $335.
+  merging $macc model for $329 into $335.
+  merging $macc model for $318 into $319.
+  merging $macc model for $317 into $319.
+  merging $macc model for $316 into $319.
+  merging $macc model for $315 into $319.
+  merging $macc model for $314 into $319.
+  merging $macc model for $313 into $319.
+  merging $macc model for $25 into $27.
+  merging $macc model for $23 into $27.
+  merging $macc model for $21 into $27.
+  merging $macc model for $19 into $27.
+  merging $macc model for $17 into $27.
+  merging $macc model for $11 into $13.
+  merging $macc model for $9 into $13.
+  created 0 $alu and 0 $macc cells.
+
+2.22. Executing MACCMAP pass (map $macc cells).
+
+2.23. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \ooc_wrap..
+
+2.24. Executing TECHMAP pass (map to technology primitives).
+
+2.24.1. Executing Verilog-2005 frontend: /home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/mul2dsp.v
+Parsing Verilog input from `/home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/mul2dsp.v' to AST representation.
+Generating RTLIL representation for module `\_80_mul'.
+Generating RTLIL representation for module `\_90_soft_mul'.
+Successfully finished Verilog frontend.
+
+2.24.2. Executing Verilog-2005 frontend: /home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/xilinx/xcu_dsp_map.v
+Parsing Verilog input from `/home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/xilinx/xcu_dsp_map.v' to AST representation.
+Generating RTLIL representation for module `$__MUL27X18'.
+Successfully finished Verilog frontend.
+
+2.24.3. Continuing TECHMAP pass.
+No more expansions possible.
+<suppressed ~5 debug messages>
+
+2.25. Executing OPT_EXPR pass (perform const folding).
+
+2.26. Executing WREDUCE pass (reducing word size of cells).
+
+2.27. Executing XILINX_DSP pass (pack resources into DSPs).
+
+2.28. Executing TECHMAP pass (map to technology primitives).
+
+2.28.1. Executing Verilog-2005 frontend: /home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/cmp2lut.v
+Parsing Verilog input from `/home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/cmp2lut.v' to AST representation.
+Generating RTLIL representation for module `\_90_lut_cmp_'.
+Successfully finished Verilog frontend.
+
+2.28.2. Executing Verilog-2005 frontend: /home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/cmp2lcu.v
+Parsing Verilog input from `/home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/cmp2lcu.v' to AST representation.
+Generating RTLIL representation for module `\_80_lcu_cmp_'.
+Generating RTLIL representation for module `$__CMP2LCU'.
+Successfully finished Verilog frontend.
+
+2.28.3. Continuing TECHMAP pass.
+Using template $paramod$ebafef09a004bf81232e4d9ee3acc45182d79f6b\_80_lcu_cmp_ for cells of type $gt.
+Using template $paramod$7162b12c72f5dd0d362fd1124e905f1a0b8998d3\_80_lcu_cmp_ for cells of type $gt.
+Using template $paramod$5d7af7ea7cf8d343568798f550cad82f004fe06e\_80_lcu_cmp_ for cells of type $gt.
+Using template $paramod$fcaa37c02dfbb7ccd7304d392a3a7d83197403ad\_80_lcu_cmp_ for cells of type $gt.
+Using template $paramod$c47a00036caa346efb5c00bef9df3a25ea840c56\_80_lcu_cmp_ for cells of type $gt.
+Using template $paramod$d74a17d0c6915de1dbb5717c5dfae782dada575e\_80_lcu_cmp_ for cells of type $gt.
+Using template $paramod$ffea6fcf71c55e73d616e2f2a6d8f20e1b6a6b75\_80_lcu_cmp_ for cells of type $gt.
+Using template $paramod$b069500f76e8ff354c3477cae80aa4d10df36025\_80_lcu_cmp_ for cells of type $gt.
+Using template $paramod$d77b82abec82f1876518e3d3ae52899fa76ad8e6\_80_lcu_cmp_ for cells of type $gt.
+Using template $paramod$51c3f858cbd57f5e7357fcbdbed8cec97fb3da61\_80_lcu_cmp_ for cells of type $gt.
+Using template $paramod$dac3354b7c8730d76980bd5976b2dd44b50254ff\_80_lcu_cmp_ for cells of type $gt.
+Using template $paramod$eb7bca8ed5fd582ab8cf1212649f4dac1652df04\_80_lcu_cmp_ for cells of type $gt.
+Using template $paramod$8fe3ca3db95aed989e20304ebf4349dcbdcb5f4e\_80_lcu_cmp_ for cells of type $gt.
+Using template $paramod$4a966d1fed6449cc775f7888040bdc30e7069811\_80_lcu_cmp_ for cells of type $gt.
+Using template $paramod$c2ef085fffb70471af87031ac6cfe1e3bff210fc\_80_lcu_cmp_ for cells of type $gt.
+Using template $paramod$cf90b866369198bde670e455171bc4a6ccc82456\_80_lcu_cmp_ for cells of type $gt.
+Using template $paramod$fea555ee303bf77b8f61c4c54c4aaa194a1d060c\_80_lcu_cmp_ for cells of type $gt.
+Using template $paramod$9e492dc0f2f0b8f60285da755117233a37514087\_80_lcu_cmp_ for cells of type $gt.
+Using template $paramod$9609b3b9653f0d67ddf5e1085db2a4c7f610aacd$__CMP2LCU for cells of type $__CMP2LCU.
+Using template $paramod$ddbfdb760fa0fd6afaef7561bb1d51d9137ed9c2$__CMP2LCU for cells of type $__CMP2LCU.
+Using template $paramod$a8c1a5683b51767da389f10d7fcc0af325998966$__CMP2LCU for cells of type $__CMP2LCU.
+Using template $paramod$246f884b2e1ab62cf5d89b8aa5ef0d905a1780e2$__CMP2LCU for cells of type $__CMP2LCU.
+Using template $paramod$62c2b90f01c01453c74591b3704d2b2bcbe28b2a$__CMP2LCU for cells of type $__CMP2LCU.
+Using template $paramod$cc4939e9988496927420180ee203bbd4de94018f$__CMP2LCU for cells of type $__CMP2LCU.
+Using template $paramod$3c175b017d97b266e84fc10f88aa7858c65f51c9$__CMP2LCU for cells of type $__CMP2LCU.
+Using template $paramod$ea81996710a58f277fd9ffb4c56bcac5180d6b50$__CMP2LCU for cells of type $__CMP2LCU.
+Using template $paramod$cca0d77c5de2148981e4f7dfad0d8aa6764be034$__CMP2LCU for cells of type $__CMP2LCU.
+Using template $paramod$3f2cc11054430a88c9a423ccadbcc76b36f66b38$__CMP2LCU for cells of type $__CMP2LCU.
+Using template $paramod$e2996d471398f2908ed82ddfdd9650875444e767$__CMP2LCU for cells of type $__CMP2LCU.
+Using template $paramod$cb27dd27b4b0d5f59809afbc7ea4e17de4a28b81$__CMP2LCU for cells of type $__CMP2LCU.
+Using template $paramod$74efe3fc9003fc7dbf03d21a8a515e83293271f5$__CMP2LCU for cells of type $__CMP2LCU.
+Using template $paramod$0431fa1196a75fb71c76b9de25680c8c080dd97c$__CMP2LCU for cells of type $__CMP2LCU.
+Using template $paramod$1bc2efb89c082e5679a27a130348fec6526d62a5$__CMP2LCU for cells of type $__CMP2LCU.
+Using template $paramod$29d564a0a0c515fb566e1af0b6ef6f96cdd69c3a$__CMP2LCU for cells of type $__CMP2LCU.
+Using template $paramod$3da4f1d0595021d112300887aae0736dd290a626$__CMP2LCU for cells of type $__CMP2LCU.
+Using template $paramod$e8fcc88f10df165bdfd8dfb5a422a7973b463d23$__CMP2LCU for cells of type $__CMP2LCU.
+Using template $paramod$9296f1a0dd036e9511ebda0879ba6d414b2b4622$__CMP2LCU for cells of type $__CMP2LCU.
+Using template $paramod$ee73684c578fdcccab2bf851e1385f3340e27d3c$__CMP2LCU for cells of type $__CMP2LCU.
+Using template $paramod$e227b8d4038e1fcd135fe9869ce53934ebf1cc89$__CMP2LCU for cells of type $__CMP2LCU.
+Using template $paramod$bf8d58dc31e3f3becdf6c52bf5c93628c3a29217$__CMP2LCU for cells of type $__CMP2LCU.
+Using template $paramod$1156d1d3ac8da81138ade6be0f294021f06bab6d$__CMP2LCU for cells of type $__CMP2LCU.
+Using template $paramod$2f64d96f802a4240ed23b52bd148ee6d6f448469$__CMP2LCU for cells of type $__CMP2LCU.
+Using template $paramod$db02a46a286ea895edb5c4502c36f849ae1fd15a$__CMP2LCU for cells of type $__CMP2LCU.
+Using template $paramod$cf27e61fb1ab4a51173cf119c70676b54341ec60$__CMP2LCU for cells of type $__CMP2LCU.
+Using template $paramod$5d204d6c7f93c73498c942841e68c6a4a47cc3b1$__CMP2LCU for cells of type $__CMP2LCU.
+Using template $paramod$711a330d94164b6716151413325e8d96df890d9c$__CMP2LCU for cells of type $__CMP2LCU.
+Using template $paramod$ec991cf227cbd275fcae82fcef557cac53ebe998$__CMP2LCU for cells of type $__CMP2LCU.
+Using template $paramod$62c71c0ec7e23e328c65750cba32d2e2f0ec48b9$__CMP2LCU for cells of type $__CMP2LCU.
+Using template $paramod$90616fe88c30596ac903e5914ac4d27be8ae4dee$__CMP2LCU for cells of type $__CMP2LCU.
+Using template $paramod$f691be97ac9b8a6cb477a0774cf7965926e38f3c$__CMP2LCU for cells of type $__CMP2LCU.
+Using template $paramod$225a293387a4c42e28643f59f61c4b5744bb6e9e$__CMP2LCU for cells of type $__CMP2LCU.
+Using template $paramod$c6d3527e393c21f9c1bb978278c59f0645f4a850$__CMP2LCU for cells of type $__CMP2LCU.
+Using template $paramod$99d794b5fda89645f197e03fe719d0672d53d52e$__CMP2LCU for cells of type $__CMP2LCU.
+Using template $paramod$36dc62e826f4afacad5d9887b769bc071422e6c6$__CMP2LCU for cells of type $__CMP2LCU.
+Using template $paramod$450c268c12fc6efbfb4aeeb63d5fb4806d4fba29$__CMP2LCU for cells of type $__CMP2LCU.
+Using template $paramod$f0a7389ae002486becb5c3590dd498e83ef8c1d8$__CMP2LCU for cells of type $__CMP2LCU.
+No more expansions possible.
+<suppressed ~1610 debug messages>
+
+2.29. Executing ALUMACC pass (create $alu and $macc cells).
+Extracting $alu and $macc cells in module ooc_wrap:
+  creating $macc model for $11 ($add).
+  creating $macc model for $13 ($add).
+  creating $macc model for $17 ($add).
+  creating $macc model for $19 ($add).
+  creating $macc model for $21 ($add).
+  creating $macc model for $23 ($add).
+  creating $macc model for $25 ($add).
+  creating $macc model for $27 ($add).
+  creating $macc model for $3 ($add).
+  creating $macc model for $31 ($add).
+  creating $macc model for $313 ($add).
+  creating $macc model for $314 ($add).
+  creating $macc model for $315 ($add).
+  creating $macc model for $316 ($add).
+  creating $macc model for $317 ($add).
+  creating $macc model for $318 ($add).
+  creating $macc model for $319 ($add).
+  creating $macc model for $329 ($add).
+  creating $macc model for $33 ($add).
+  creating $macc model for $330 ($add).
+  creating $macc model for $331 ($add).
+  creating $macc model for $332 ($add).
+  creating $macc model for $333 ($add).
+  creating $macc model for $334 ($add).
+  creating $macc model for $335 ($add).
+  creating $macc model for $345 ($add).
+  creating $macc model for $346 ($add).
+  creating $macc model for $347 ($add).
+  creating $macc model for $348 ($add).
+  creating $macc model for $349 ($add).
+  creating $macc model for $35 ($add).
+  creating $macc model for $350 ($add).
+  creating $macc model for $351 ($add).
+  creating $macc model for $37 ($add).
+  creating $macc model for $39 ($add).
+  creating $macc model for $41 ($add).
+  creating $macc model for $45 ($add).
+  creating $macc model for $47 ($add).
+  creating $macc model for $49 ($add).
+  creating $macc model for $5 ($add).
+  creating $macc model for $51 ($add).
+  creating $macc model for $53 ($add).
+  creating $macc model for $55 ($add).
+  creating $macc model for $59 ($add).
+  creating $macc model for $61 ($add).
+  creating $macc model for $63 ($add).
+  creating $macc model for $65 ($add).
+  creating $macc model for $67 ($add).
+  creating $macc model for $69 ($add).
+  creating $macc model for $7 ($add).
+  creating $macc model for $73 ($add).
+  creating $macc model for $75 ($add).
+  creating $macc model for $77 ($add).
+  creating $macc model for $79 ($add).
+  creating $macc model for $81 ($add).
+  creating $macc model for $83 ($add).
+  creating $macc model for $87 ($add).
+  creating $macc model for $9 ($add).
+  merging $macc model for $7 into $9.
+  merging $macc model for $5 into $9.
+  merging $macc model for $3 into $9.
+  merging $macc model for $81 into $83.
+  merging $macc model for $79 into $83.
+  merging $macc model for $77 into $83.
+  merging $macc model for $75 into $83.
+  merging $macc model for $73 into $83.
+  merging $macc model for $67 into $69.
+  merging $macc model for $65 into $69.
+  merging $macc model for $63 into $69.
+  merging $macc model for $61 into $69.
+  merging $macc model for $59 into $69.
+  merging $macc model for $53 into $55.
+  merging $macc model for $51 into $55.
+  merging $macc model for $49 into $55.
+  merging $macc model for $47 into $55.
+  merging $macc model for $45 into $55.
+  merging $macc model for $39 into $41.
+  merging $macc model for $37 into $41.
+  merging $macc model for $35 into $41.
+  merging $macc model for $33 into $41.
+  merging $macc model for $31 into $41.
+  merging $macc model for $350 into $351.
+  merging $macc model for $349 into $351.
+  merging $macc model for $348 into $351.
+  merging $macc model for $347 into $351.
+  merging $macc model for $346 into $351.
+  merging $macc model for $345 into $351.
+  merging $macc model for $334 into $335.
+  merging $macc model for $333 into $335.
+  merging $macc model for $332 into $335.
+  merging $macc model for $331 into $335.
+  merging $macc model for $330 into $335.
+  merging $macc model for $329 into $335.
+  merging $macc model for $318 into $319.
+  merging $macc model for $317 into $319.
+  merging $macc model for $316 into $319.
+  merging $macc model for $315 into $319.
+  merging $macc model for $314 into $319.
+  merging $macc model for $313 into $319.
+  merging $macc model for $25 into $27.
+  merging $macc model for $23 into $27.
+  merging $macc model for $21 into $27.
+  merging $macc model for $19 into $27.
+  merging $macc model for $17 into $27.
+  merging $macc model for $11 into $13.
+  merging $macc model for $9 into $13.
+  creating $alu model for $macc $87.
+  creating $macc cell for $69: $auto$alumacc.cc:427:replace_macc$1634
+  creating $macc cell for $27: $auto$alumacc.cc:427:replace_macc$1635
+  creating $macc cell for $319: $auto$alumacc.cc:427:replace_macc$1636
+  creating $macc cell for $55: $auto$alumacc.cc:427:replace_macc$1637
+  creating $macc cell for $335: $auto$alumacc.cc:427:replace_macc$1638
+  creating $macc cell for $41: $auto$alumacc.cc:427:replace_macc$1639
+  creating $macc cell for $83: $auto$alumacc.cc:427:replace_macc$1640
+  creating $macc cell for $13: $auto$alumacc.cc:427:replace_macc$1641
+  creating $macc cell for $351: $auto$alumacc.cc:427:replace_macc$1642
+  creating $alu cell for $87: $auto$alumacc.cc:578:replace_alu$1643
+  created 1 $alu and 9 $macc cells.
+
+2.30. Executing SHARE pass (SAT-based resource sharing).
+
+2.31. Executing OPT pass (performing simple optimizations).
+
+2.31.1. Executing OPT_EXPR pass (perform const folding).
+Optimizing module ooc_wrap.
+<suppressed ~1096 debug messages>
+
+2.31.2. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\ooc_wrap'.
+Computing hashes of 848 cells of `\ooc_wrap'.
+Finding duplicate cells in `\ooc_wrap'.
+Computing hashes of 710 cells of `\ooc_wrap'.
+Finding duplicate cells in `\ooc_wrap'.
+Computing hashes of 644 cells of `\ooc_wrap'.
+Finding duplicate cells in `\ooc_wrap'.
+Computing hashes of 580 cells of `\ooc_wrap'.
+Finding duplicate cells in `\ooc_wrap'.
+Computing hashes of 534 cells of `\ooc_wrap'.
+Finding duplicate cells in `\ooc_wrap'.
+Computing hashes of 506 cells of `\ooc_wrap'.
+Finding duplicate cells in `\ooc_wrap'.
+Computing hashes of 491 cells of `\ooc_wrap'.
+Finding duplicate cells in `\ooc_wrap'.
+Computing hashes of 490 cells of `\ooc_wrap'.
+Finding duplicate cells in `\ooc_wrap'.
+<suppressed ~1074 debug messages>
+Removed a total of 358 cells.
+
+2.31.3. Executing OPT_MUXTREE pass (detect dead branches in mux trees).
+Running muxtree optimizer on module \ooc_wrap..
+  Creating internal representation of mux trees.
+  Evaluating internal representation of mux trees.
+  Analyzing evaluation results.
+Removed 0 multiplexer ports.
+<suppressed ~4 debug messages>
+
+2.31.4. Executing OPT_REDUCE pass (consolidate $*mux and $reduce_* inputs).
+  Optimizing cells in module \ooc_wrap.
+Performed a total of 0 changes.
+
+2.31.5. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\ooc_wrap'.
+Computing hashes of 490 cells of `\ooc_wrap'.
+Finding duplicate cells in `\ooc_wrap'.
+Removed a total of 0 cells.
+
+2.31.6. Executing OPT_DFF pass (perform DFF optimizations).
+
+2.31.7. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \ooc_wrap..
+Removed 48 unused cells and 4540 unused wires.
+<suppressed ~49 debug messages>
+
+2.31.8. Executing OPT_EXPR pass (perform const folding).
+Optimizing module ooc_wrap.
+
+2.31.9. Rerunning OPT passes. (Maybe there is more to do..)
+
+2.31.10. Executing OPT_MUXTREE pass (detect dead branches in mux trees).
+Running muxtree optimizer on module \ooc_wrap..
+  Creating internal representation of mux trees.
+  Evaluating internal representation of mux trees.
+  Analyzing evaluation results.
+Removed 0 multiplexer ports.
+<suppressed ~4 debug messages>
+
+2.31.11. Executing OPT_REDUCE pass (consolidate $*mux and $reduce_* inputs).
+  Optimizing cells in module \ooc_wrap.
+Performed a total of 0 changes.
+
+2.31.12. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\ooc_wrap'.
+Computing hashes of 442 cells of `\ooc_wrap'.
+Finding duplicate cells in `\ooc_wrap'.
+Removed a total of 0 cells.
+
+2.31.13. Executing OPT_DFF pass (perform DFF optimizations).
+
+2.31.14. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \ooc_wrap..
+
+2.31.15. Executing OPT_EXPR pass (perform const folding).
+Optimizing module ooc_wrap.
+
+2.31.16. Finished fast OPT passes. (There is nothing left to do.)
+
+2.32. Executing MEMORY pass.
+
+2.32.1. Executing OPT_MEM pass (optimize memories).
+Performed a total of 0 transformations.
+
+2.32.2. Executing OPT_MEM_PRIORITY pass (removing unnecessary memory write priority relations).
+Performed a total of 0 transformations.
+
+2.32.3. Executing OPT_MEM_FEEDBACK pass (finding memory read-to-write feedback paths).
+
+2.32.4. Executing MEMORY_BMUX2ROM pass (converting muxes to ROMs).
+
+2.32.5. Executing MEMORY_DFF pass (merging $dff cells to $memrd).
+Checking read port `$auto$memory_bmux2rom.cc:63:execute$2258'[0] in module `\ooc_wrap':
+    no output FF found.
+Checking read port `$auto$memory_bmux2rom.cc:63:execute$2255'[0] in module `\ooc_wrap':
+    no output FF found.
+Checking read port `$auto$memory_bmux2rom.cc:63:execute$2252'[0] in module `\ooc_wrap':
+    no output FF found.
+Checking read port `$auto$memory_bmux2rom.cc:63:execute$2249'[0] in module `\ooc_wrap':
+    no output FF found.
+Checking read port `$auto$memory_bmux2rom.cc:63:execute$2246'[0] in module `\ooc_wrap':
+    no output FF found.
+Checking read port `$auto$memory_bmux2rom.cc:63:execute$2243'[0] in module `\ooc_wrap':
+    no output FF found.
+Checking read port `$auto$memory_bmux2rom.cc:63:execute$2240'[0] in module `\ooc_wrap':
+    no output FF found.
+Checking read port `$auto$memory_bmux2rom.cc:63:execute$2237'[0] in module `\ooc_wrap':
+    no output FF found.
+Checking read port `$auto$memory_bmux2rom.cc:63:execute$2234'[0] in module `\ooc_wrap':
+    no output FF found.
+Checking read port `$auto$memory_bmux2rom.cc:63:execute$2231'[0] in module `\ooc_wrap':
+    no output FF found.
+Checking read port `$auto$memory_bmux2rom.cc:63:execute$2228'[0] in module `\ooc_wrap':
+    no output FF found.
+Checking read port `$auto$memory_bmux2rom.cc:63:execute$2225'[0] in module `\ooc_wrap':
+    no output FF found.
+Checking read port `$auto$memory_bmux2rom.cc:63:execute$2222'[0] in module `\ooc_wrap':
+    no output FF found.
+Checking read port `$auto$memory_bmux2rom.cc:63:execute$2219'[0] in module `\ooc_wrap':
+    no output FF found.
+Checking read port `$auto$memory_bmux2rom.cc:63:execute$2216'[0] in module `\ooc_wrap':
+    no output FF found.
+Checking read port `$auto$memory_bmux2rom.cc:63:execute$2213'[0] in module `\ooc_wrap':
+    no output FF found.
+Checking read port `$auto$memory_bmux2rom.cc:63:execute$2210'[0] in module `\ooc_wrap':
+    no output FF found.
+Checking read port `$auto$memory_bmux2rom.cc:63:execute$2207'[0] in module `\ooc_wrap':
+    no output FF found.
+Checking read port `$auto$memory_bmux2rom.cc:63:execute$2204'[0] in module `\ooc_wrap':
+    no output FF found.
+Checking read port `$auto$memory_bmux2rom.cc:63:execute$2201'[0] in module `\ooc_wrap':
+    no output FF found.
+Checking read port `$auto$memory_bmux2rom.cc:63:execute$2198'[0] in module `\ooc_wrap':
+    no output FF found.
+Checking read port `$auto$memory_bmux2rom.cc:63:execute$2195'[0] in module `\ooc_wrap':
+    no output FF found.
+Checking read port `$auto$memory_bmux2rom.cc:63:execute$2192'[0] in module `\ooc_wrap':
+    no output FF found.
+Checking read port `$auto$memory_bmux2rom.cc:63:execute$2189'[0] in module `\ooc_wrap':
+    no output FF found.
+Checking read port `$auto$memory_bmux2rom.cc:63:execute$2186'[0] in module `\ooc_wrap':
+    no output FF found.
+Checking read port `$auto$memory_bmux2rom.cc:63:execute$2183'[0] in module `\ooc_wrap':
+    no output FF found.
+Checking read port `$auto$memory_bmux2rom.cc:63:execute$2180'[0] in module `\ooc_wrap':
+    no output FF found.
+Checking read port `$auto$memory_bmux2rom.cc:63:execute$2177'[0] in module `\ooc_wrap':
+    no output FF found.
+Checking read port `$auto$memory_bmux2rom.cc:63:execute$2174'[0] in module `\ooc_wrap':
+    no output FF found.
+Checking read port `$auto$memory_bmux2rom.cc:63:execute$2171'[0] in module `\ooc_wrap':
+    no output FF found.
+Checking read port `$auto$memory_bmux2rom.cc:63:execute$2168'[0] in module `\ooc_wrap':
+    no output FF found.
+Checking read port `$auto$memory_bmux2rom.cc:63:execute$2165'[0] in module `\ooc_wrap':
+    no output FF found.
+Checking read port `$auto$memory_bmux2rom.cc:63:execute$2162'[0] in module `\ooc_wrap':
+    no output FF found.
+Checking read port `$auto$memory_bmux2rom.cc:63:execute$2159'[0] in module `\ooc_wrap':
+    no output FF found.
+Checking read port `$auto$memory_bmux2rom.cc:63:execute$2156'[0] in module `\ooc_wrap':
+    no output FF found.
+Checking read port `$auto$memory_bmux2rom.cc:63:execute$2153'[0] in module `\ooc_wrap':
+    no output FF found.
+Checking read port `$auto$memory_bmux2rom.cc:63:execute$2150'[0] in module `\ooc_wrap':
+    no output FF found.
+Checking read port `$auto$memory_bmux2rom.cc:63:execute$2147'[0] in module `\ooc_wrap':
+    no output FF found.
+Checking read port `$auto$memory_bmux2rom.cc:63:execute$2144'[0] in module `\ooc_wrap':
+    no output FF found.
+Checking read port `$auto$memory_bmux2rom.cc:63:execute$2141'[0] in module `\ooc_wrap':
+    no output FF found.
+Checking read port `$auto$memory_bmux2rom.cc:63:execute$2138'[0] in module `\ooc_wrap':
+    no output FF found.
+Checking read port `$auto$memory_bmux2rom.cc:63:execute$2135'[0] in module `\ooc_wrap':
+    no output FF found.
+Checking read port `$auto$memory_bmux2rom.cc:63:execute$2132'[0] in module `\ooc_wrap':
+    no output FF found.
+Checking read port `$auto$memory_bmux2rom.cc:63:execute$2129'[0] in module `\ooc_wrap':
+    no output FF found.
+Checking read port `$auto$memory_bmux2rom.cc:63:execute$2126'[0] in module `\ooc_wrap':
+    no output FF found.
+Checking read port `$auto$memory_bmux2rom.cc:63:execute$2123'[0] in module `\ooc_wrap':
+    no output FF found.
+Checking read port `$auto$memory_bmux2rom.cc:63:execute$2120'[0] in module `\ooc_wrap':
+    no output FF found.
+Checking read port `$auto$memory_bmux2rom.cc:63:execute$2117'[0] in module `\ooc_wrap':
+    no output FF found.
+Checking read port `$auto$memory_bmux2rom.cc:63:execute$2114'[0] in module `\ooc_wrap':
+    no output FF found.
+Checking read port `$auto$memory_bmux2rom.cc:63:execute$2111'[0] in module `\ooc_wrap':
+    no output FF found.
+Checking read port `$auto$memory_bmux2rom.cc:63:execute$2108'[0] in module `\ooc_wrap':
+    no output FF found.
+Checking read port `$auto$memory_bmux2rom.cc:63:execute$2105'[0] in module `\ooc_wrap':
+    no output FF found.
+Checking read port `$auto$memory_bmux2rom.cc:63:execute$2102'[0] in module `\ooc_wrap':
+    no output FF found.
+Checking read port `$auto$memory_bmux2rom.cc:63:execute$2099'[0] in module `\ooc_wrap':
+    no output FF found.
+Checking read port `$auto$memory_bmux2rom.cc:63:execute$2096'[0] in module `\ooc_wrap':
+    no output FF found.
+Checking read port `$auto$memory_bmux2rom.cc:63:execute$2093'[0] in module `\ooc_wrap':
+    no output FF found.
+Checking read port `$auto$memory_bmux2rom.cc:63:execute$2090'[0] in module `\ooc_wrap':
+    no output FF found.
+Checking read port `$auto$memory_bmux2rom.cc:63:execute$2087'[0] in module `\ooc_wrap':
+    no output FF found.
+Checking read port `$auto$memory_bmux2rom.cc:63:execute$2084'[0] in module `\ooc_wrap':
+    no output FF found.
+Checking read port `$auto$memory_bmux2rom.cc:63:execute$2081'[0] in module `\ooc_wrap':
+    no output FF found.
+Checking read port `$auto$memory_bmux2rom.cc:63:execute$2078'[0] in module `\ooc_wrap':
+    no output FF found.
+Checking read port `$auto$memory_bmux2rom.cc:63:execute$2075'[0] in module `\ooc_wrap':
+    no output FF found.
+Checking read port `$auto$memory_bmux2rom.cc:63:execute$2072'[0] in module `\ooc_wrap':
+    no output FF found.
+Checking read port `$auto$memory_bmux2rom.cc:63:execute$2069'[0] in module `\ooc_wrap':
+    no output FF found.
+Checking read port `$auto$memory_bmux2rom.cc:63:execute$2066'[0] in module `\ooc_wrap':
+    no output FF found.
+Checking read port `$auto$memory_bmux2rom.cc:63:execute$2063'[0] in module `\ooc_wrap':
+    no output FF found.
+Checking read port `$auto$memory_bmux2rom.cc:63:execute$2060'[0] in module `\ooc_wrap':
+    no output FF found.
+Checking read port `$auto$memory_bmux2rom.cc:63:execute$2057'[0] in module `\ooc_wrap':
+    no output FF found.
+Checking read port `$auto$memory_bmux2rom.cc:63:execute$2054'[0] in module `\ooc_wrap':
+    no output FF found.
+Checking read port `$auto$memory_bmux2rom.cc:63:execute$2051'[0] in module `\ooc_wrap':
+    no output FF found.
+Checking read port `$auto$memory_bmux2rom.cc:63:execute$2048'[0] in module `\ooc_wrap':
+    no output FF found.
+Checking read port `$auto$memory_bmux2rom.cc:63:execute$2045'[0] in module `\ooc_wrap':
+    no output FF found.
+Checking read port `$auto$memory_bmux2rom.cc:63:execute$2042'[0] in module `\ooc_wrap':
+    no output FF found.
+Checking read port `$auto$memory_bmux2rom.cc:63:execute$2039'[0] in module `\ooc_wrap':
+    no output FF found.
+Checking read port `$auto$memory_bmux2rom.cc:63:execute$2036'[0] in module `\ooc_wrap':
+    no output FF found.
+Checking read port `$auto$memory_bmux2rom.cc:63:execute$2033'[0] in module `\ooc_wrap':
+    no output FF found.
+Checking read port `$auto$memory_bmux2rom.cc:63:execute$2030'[0] in module `\ooc_wrap':
+    no output FF found.
+Checking read port `$auto$memory_bmux2rom.cc:63:execute$2027'[0] in module `\ooc_wrap':
+    no output FF found.
+Checking read port `$auto$memory_bmux2rom.cc:63:execute$2024'[0] in module `\ooc_wrap':
+    no output FF found.
+Checking read port `$auto$memory_bmux2rom.cc:63:execute$2021'[0] in module `\ooc_wrap':
+    no output FF found.
+Checking read port `$auto$memory_bmux2rom.cc:63:execute$2018'[0] in module `\ooc_wrap':
+    no output FF found.
+Checking read port `$auto$memory_bmux2rom.cc:63:execute$2015'[0] in module `\ooc_wrap':
+    no output FF found.
+Checking read port `$auto$memory_bmux2rom.cc:63:execute$2012'[0] in module `\ooc_wrap':
+    no output FF found.
+Checking read port `$auto$memory_bmux2rom.cc:63:execute$2009'[0] in module `\ooc_wrap':
+    no output FF found.
+Checking read port `$auto$memory_bmux2rom.cc:63:execute$2006'[0] in module `\ooc_wrap':
+    no output FF found.
+Checking read port `$auto$memory_bmux2rom.cc:63:execute$2003'[0] in module `\ooc_wrap':
+    no output FF found.
+Checking read port `$auto$memory_bmux2rom.cc:63:execute$2000'[0] in module `\ooc_wrap':
+    no output FF found.
+Checking read port `$auto$memory_bmux2rom.cc:63:execute$1997'[0] in module `\ooc_wrap':
+    no output FF found.
+Checking read port `$auto$memory_bmux2rom.cc:63:execute$1994'[0] in module `\ooc_wrap':
+    no output FF found.
+Checking read port `$auto$memory_bmux2rom.cc:63:execute$1991'[0] in module `\ooc_wrap':
+    no output FF found.
+Checking read port `$auto$memory_bmux2rom.cc:63:execute$1988'[0] in module `\ooc_wrap':
+    no output FF found.
+Checking read port `$auto$memory_bmux2rom.cc:63:execute$1985'[0] in module `\ooc_wrap':
+    no output FF found.
+Checking read port `$auto$memory_bmux2rom.cc:63:execute$1982'[0] in module `\ooc_wrap':
+    no output FF found.
+Checking read port `$auto$memory_bmux2rom.cc:63:execute$1979'[0] in module `\ooc_wrap':
+    no output FF found.
+Checking read port `$auto$memory_bmux2rom.cc:63:execute$1976'[0] in module `\ooc_wrap':
+    no output FF found.
+Checking read port address `$auto$memory_bmux2rom.cc:63:execute$2258'[0] in module `\ooc_wrap':
+    no address FF found.
+Checking read port address `$auto$memory_bmux2rom.cc:63:execute$2255'[0] in module `\ooc_wrap':
+    no address FF found.
+Checking read port address `$auto$memory_bmux2rom.cc:63:execute$2252'[0] in module `\ooc_wrap':
+    no address FF found.
+Checking read port address `$auto$memory_bmux2rom.cc:63:execute$2249'[0] in module `\ooc_wrap':
+    no address FF found.
+Checking read port address `$auto$memory_bmux2rom.cc:63:execute$2246'[0] in module `\ooc_wrap':
+    no address FF found.
+Checking read port address `$auto$memory_bmux2rom.cc:63:execute$2243'[0] in module `\ooc_wrap':
+    no address FF found.
+Checking read port address `$auto$memory_bmux2rom.cc:63:execute$2240'[0] in module `\ooc_wrap':
+    no address FF found.
+Checking read port address `$auto$memory_bmux2rom.cc:63:execute$2237'[0] in module `\ooc_wrap':
+    no address FF found.
+Checking read port address `$auto$memory_bmux2rom.cc:63:execute$2234'[0] in module `\ooc_wrap':
+    no address FF found.
+Checking read port address `$auto$memory_bmux2rom.cc:63:execute$2231'[0] in module `\ooc_wrap':
+    no address FF found.
+Checking read port address `$auto$memory_bmux2rom.cc:63:execute$2228'[0] in module `\ooc_wrap':
+    no address FF found.
+Checking read port address `$auto$memory_bmux2rom.cc:63:execute$2225'[0] in module `\ooc_wrap':
+    no address FF found.
+Checking read port address `$auto$memory_bmux2rom.cc:63:execute$2222'[0] in module `\ooc_wrap':
+    no address FF found.
+Checking read port address `$auto$memory_bmux2rom.cc:63:execute$2219'[0] in module `\ooc_wrap':
+    no address FF found.
+Checking read port address `$auto$memory_bmux2rom.cc:63:execute$2216'[0] in module `\ooc_wrap':
+    no address FF found.
+Checking read port address `$auto$memory_bmux2rom.cc:63:execute$2213'[0] in module `\ooc_wrap':
+    no address FF found.
+Checking read port address `$auto$memory_bmux2rom.cc:63:execute$2210'[0] in module `\ooc_wrap':
+    no address FF found.
+Checking read port address `$auto$memory_bmux2rom.cc:63:execute$2207'[0] in module `\ooc_wrap':
+    no address FF found.
+Checking read port address `$auto$memory_bmux2rom.cc:63:execute$2204'[0] in module `\ooc_wrap':
+    no address FF found.
+Checking read port address `$auto$memory_bmux2rom.cc:63:execute$2201'[0] in module `\ooc_wrap':
+    no address FF found.
+Checking read port address `$auto$memory_bmux2rom.cc:63:execute$2198'[0] in module `\ooc_wrap':
+    no address FF found.
+Checking read port address `$auto$memory_bmux2rom.cc:63:execute$2195'[0] in module `\ooc_wrap':
+    no address FF found.
+Checking read port address `$auto$memory_bmux2rom.cc:63:execute$2192'[0] in module `\ooc_wrap':
+    no address FF found.
+Checking read port address `$auto$memory_bmux2rom.cc:63:execute$2189'[0] in module `\ooc_wrap':
+    no address FF found.
+Checking read port address `$auto$memory_bmux2rom.cc:63:execute$2186'[0] in module `\ooc_wrap':
+    no address FF found.
+Checking read port address `$auto$memory_bmux2rom.cc:63:execute$2183'[0] in module `\ooc_wrap':
+    no address FF found.
+Checking read port address `$auto$memory_bmux2rom.cc:63:execute$2180'[0] in module `\ooc_wrap':
+    no address FF found.
+Checking read port address `$auto$memory_bmux2rom.cc:63:execute$2177'[0] in module `\ooc_wrap':
+    no address FF found.
+Checking read port address `$auto$memory_bmux2rom.cc:63:execute$2174'[0] in module `\ooc_wrap':
+    no address FF found.
+Checking read port address `$auto$memory_bmux2rom.cc:63:execute$2171'[0] in module `\ooc_wrap':
+    no address FF found.
+Checking read port address `$auto$memory_bmux2rom.cc:63:execute$2168'[0] in module `\ooc_wrap':
+    no address FF found.
+Checking read port address `$auto$memory_bmux2rom.cc:63:execute$2165'[0] in module `\ooc_wrap':
+    no address FF found.
+Checking read port address `$auto$memory_bmux2rom.cc:63:execute$2162'[0] in module `\ooc_wrap':
+    no address FF found.
+Checking read port address `$auto$memory_bmux2rom.cc:63:execute$2159'[0] in module `\ooc_wrap':
+    no address FF found.
+Checking read port address `$auto$memory_bmux2rom.cc:63:execute$2156'[0] in module `\ooc_wrap':
+    no address FF found.
+Checking read port address `$auto$memory_bmux2rom.cc:63:execute$2153'[0] in module `\ooc_wrap':
+    no address FF found.
+Checking read port address `$auto$memory_bmux2rom.cc:63:execute$2150'[0] in module `\ooc_wrap':
+    no address FF found.
+Checking read port address `$auto$memory_bmux2rom.cc:63:execute$2147'[0] in module `\ooc_wrap':
+    no address FF found.
+Checking read port address `$auto$memory_bmux2rom.cc:63:execute$2144'[0] in module `\ooc_wrap':
+    no address FF found.
+Checking read port address `$auto$memory_bmux2rom.cc:63:execute$2141'[0] in module `\ooc_wrap':
+    no address FF found.
+Checking read port address `$auto$memory_bmux2rom.cc:63:execute$2138'[0] in module `\ooc_wrap':
+    no address FF found.
+Checking read port address `$auto$memory_bmux2rom.cc:63:execute$2135'[0] in module `\ooc_wrap':
+    no address FF found.
+Checking read port address `$auto$memory_bmux2rom.cc:63:execute$2132'[0] in module `\ooc_wrap':
+    no address FF found.
+Checking read port address `$auto$memory_bmux2rom.cc:63:execute$2129'[0] in module `\ooc_wrap':
+    no address FF found.
+Checking read port address `$auto$memory_bmux2rom.cc:63:execute$2126'[0] in module `\ooc_wrap':
+    no address FF found.
+Checking read port address `$auto$memory_bmux2rom.cc:63:execute$2123'[0] in module `\ooc_wrap':
+    no address FF found.
+Checking read port address `$auto$memory_bmux2rom.cc:63:execute$2120'[0] in module `\ooc_wrap':
+    no address FF found.
+Checking read port address `$auto$memory_bmux2rom.cc:63:execute$2117'[0] in module `\ooc_wrap':
+    no address FF found.
+Checking read port address `$auto$memory_bmux2rom.cc:63:execute$2114'[0] in module `\ooc_wrap':
+    no address FF found.
+Checking read port address `$auto$memory_bmux2rom.cc:63:execute$2111'[0] in module `\ooc_wrap':
+    no address FF found.
+Checking read port address `$auto$memory_bmux2rom.cc:63:execute$2108'[0] in module `\ooc_wrap':
+    no address FF found.
+Checking read port address `$auto$memory_bmux2rom.cc:63:execute$2105'[0] in module `\ooc_wrap':
+    no address FF found.
+Checking read port address `$auto$memory_bmux2rom.cc:63:execute$2102'[0] in module `\ooc_wrap':
+    no address FF found.
+Checking read port address `$auto$memory_bmux2rom.cc:63:execute$2099'[0] in module `\ooc_wrap':
+    no address FF found.
+Checking read port address `$auto$memory_bmux2rom.cc:63:execute$2096'[0] in module `\ooc_wrap':
+    no address FF found.
+Checking read port address `$auto$memory_bmux2rom.cc:63:execute$2093'[0] in module `\ooc_wrap':
+    no address FF found.
+Checking read port address `$auto$memory_bmux2rom.cc:63:execute$2090'[0] in module `\ooc_wrap':
+    no address FF found.
+Checking read port address `$auto$memory_bmux2rom.cc:63:execute$2087'[0] in module `\ooc_wrap':
+    no address FF found.
+Checking read port address `$auto$memory_bmux2rom.cc:63:execute$2084'[0] in module `\ooc_wrap':
+    no address FF found.
+Checking read port address `$auto$memory_bmux2rom.cc:63:execute$2081'[0] in module `\ooc_wrap':
+    no address FF found.
+Checking read port address `$auto$memory_bmux2rom.cc:63:execute$2078'[0] in module `\ooc_wrap':
+    no address FF found.
+Checking read port address `$auto$memory_bmux2rom.cc:63:execute$2075'[0] in module `\ooc_wrap':
+    no address FF found.
+Checking read port address `$auto$memory_bmux2rom.cc:63:execute$2072'[0] in module `\ooc_wrap':
+    no address FF found.
+Checking read port address `$auto$memory_bmux2rom.cc:63:execute$2069'[0] in module `\ooc_wrap':
+    no address FF found.
+Checking read port address `$auto$memory_bmux2rom.cc:63:execute$2066'[0] in module `\ooc_wrap':
+    no address FF found.
+Checking read port address `$auto$memory_bmux2rom.cc:63:execute$2063'[0] in module `\ooc_wrap':
+    no address FF found.
+Checking read port address `$auto$memory_bmux2rom.cc:63:execute$2060'[0] in module `\ooc_wrap':
+    no address FF found.
+Checking read port address `$auto$memory_bmux2rom.cc:63:execute$2057'[0] in module `\ooc_wrap':
+    no address FF found.
+Checking read port address `$auto$memory_bmux2rom.cc:63:execute$2054'[0] in module `\ooc_wrap':
+    no address FF found.
+Checking read port address `$auto$memory_bmux2rom.cc:63:execute$2051'[0] in module `\ooc_wrap':
+    no address FF found.
+Checking read port address `$auto$memory_bmux2rom.cc:63:execute$2048'[0] in module `\ooc_wrap':
+    no address FF found.
+Checking read port address `$auto$memory_bmux2rom.cc:63:execute$2045'[0] in module `\ooc_wrap':
+    no address FF found.
+Checking read port address `$auto$memory_bmux2rom.cc:63:execute$2042'[0] in module `\ooc_wrap':
+    no address FF found.
+Checking read port address `$auto$memory_bmux2rom.cc:63:execute$2039'[0] in module `\ooc_wrap':
+    no address FF found.
+Checking read port address `$auto$memory_bmux2rom.cc:63:execute$2036'[0] in module `\ooc_wrap':
+    no address FF found.
+Checking read port address `$auto$memory_bmux2rom.cc:63:execute$2033'[0] in module `\ooc_wrap':
+    no address FF found.
+Checking read port address `$auto$memory_bmux2rom.cc:63:execute$2030'[0] in module `\ooc_wrap':
+    no address FF found.
+Checking read port address `$auto$memory_bmux2rom.cc:63:execute$2027'[0] in module `\ooc_wrap':
+    no address FF found.
+Checking read port address `$auto$memory_bmux2rom.cc:63:execute$2024'[0] in module `\ooc_wrap':
+    no address FF found.
+Checking read port address `$auto$memory_bmux2rom.cc:63:execute$2021'[0] in module `\ooc_wrap':
+    no address FF found.
+Checking read port address `$auto$memory_bmux2rom.cc:63:execute$2018'[0] in module `\ooc_wrap':
+    no address FF found.
+Checking read port address `$auto$memory_bmux2rom.cc:63:execute$2015'[0] in module `\ooc_wrap':
+    no address FF found.
+Checking read port address `$auto$memory_bmux2rom.cc:63:execute$2012'[0] in module `\ooc_wrap':
+    no address FF found.
+Checking read port address `$auto$memory_bmux2rom.cc:63:execute$2009'[0] in module `\ooc_wrap':
+    no address FF found.
+Checking read port address `$auto$memory_bmux2rom.cc:63:execute$2006'[0] in module `\ooc_wrap':
+    no address FF found.
+Checking read port address `$auto$memory_bmux2rom.cc:63:execute$2003'[0] in module `\ooc_wrap':
+    no address FF found.
+Checking read port address `$auto$memory_bmux2rom.cc:63:execute$2000'[0] in module `\ooc_wrap':
+    no address FF found.
+Checking read port address `$auto$memory_bmux2rom.cc:63:execute$1997'[0] in module `\ooc_wrap':
+    no address FF found.
+Checking read port address `$auto$memory_bmux2rom.cc:63:execute$1994'[0] in module `\ooc_wrap':
+    no address FF found.
+Checking read port address `$auto$memory_bmux2rom.cc:63:execute$1991'[0] in module `\ooc_wrap':
+    no address FF found.
+Checking read port address `$auto$memory_bmux2rom.cc:63:execute$1988'[0] in module `\ooc_wrap':
+    no address FF found.
+Checking read port address `$auto$memory_bmux2rom.cc:63:execute$1985'[0] in module `\ooc_wrap':
+    no address FF found.
+Checking read port address `$auto$memory_bmux2rom.cc:63:execute$1982'[0] in module `\ooc_wrap':
+    no address FF found.
+Checking read port address `$auto$memory_bmux2rom.cc:63:execute$1979'[0] in module `\ooc_wrap':
+    no address FF found.
+Checking read port address `$auto$memory_bmux2rom.cc:63:execute$1976'[0] in module `\ooc_wrap':
+    no address FF found.
+
+2.32.6. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \ooc_wrap..
+
+2.32.7. Executing MEMORY_SHARE pass (consolidating $memrd/$memwr cells).
+
+2.32.8. Executing OPT_MEM_WIDEN pass (optimize memories where all ports are wide).
+Performed a total of 0 transformations.
+
+2.32.9. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \ooc_wrap..
+
+2.32.10. Executing MEMORY_COLLECT pass (generating $mem cells).
+
+2.33. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \ooc_wrap..
+
+2.34. Executing MEMORY_LIBMAP pass (mapping memories to cells).
+using FF mapping for memory ooc_wrap.$auto$memory_bmux2rom.cc:63:execute$1976
+using FF mapping for memory ooc_wrap.$auto$memory_bmux2rom.cc:63:execute$1979
+using FF mapping for memory ooc_wrap.$auto$memory_bmux2rom.cc:63:execute$1982
+using FF mapping for memory ooc_wrap.$auto$memory_bmux2rom.cc:63:execute$1985
+using FF mapping for memory ooc_wrap.$auto$memory_bmux2rom.cc:63:execute$1988
+using FF mapping for memory ooc_wrap.$auto$memory_bmux2rom.cc:63:execute$1991
+using FF mapping for memory ooc_wrap.$auto$memory_bmux2rom.cc:63:execute$1994
+using FF mapping for memory ooc_wrap.$auto$memory_bmux2rom.cc:63:execute$1997
+using FF mapping for memory ooc_wrap.$auto$memory_bmux2rom.cc:63:execute$2000
+using FF mapping for memory ooc_wrap.$auto$memory_bmux2rom.cc:63:execute$2003
+using FF mapping for memory ooc_wrap.$auto$memory_bmux2rom.cc:63:execute$2006
+using FF mapping for memory ooc_wrap.$auto$memory_bmux2rom.cc:63:execute$2009
+using FF mapping for memory ooc_wrap.$auto$memory_bmux2rom.cc:63:execute$2012
+using FF mapping for memory ooc_wrap.$auto$memory_bmux2rom.cc:63:execute$2015
+using FF mapping for memory ooc_wrap.$auto$memory_bmux2rom.cc:63:execute$2018
+using FF mapping for memory ooc_wrap.$auto$memory_bmux2rom.cc:63:execute$2021
+using FF mapping for memory ooc_wrap.$auto$memory_bmux2rom.cc:63:execute$2024
+using FF mapping for memory ooc_wrap.$auto$memory_bmux2rom.cc:63:execute$2027
+using FF mapping for memory ooc_wrap.$auto$memory_bmux2rom.cc:63:execute$2030
+using FF mapping for memory ooc_wrap.$auto$memory_bmux2rom.cc:63:execute$2033
+using FF mapping for memory ooc_wrap.$auto$memory_bmux2rom.cc:63:execute$2036
+using FF mapping for memory ooc_wrap.$auto$memory_bmux2rom.cc:63:execute$2039
+using FF mapping for memory ooc_wrap.$auto$memory_bmux2rom.cc:63:execute$2042
+using FF mapping for memory ooc_wrap.$auto$memory_bmux2rom.cc:63:execute$2045
+using FF mapping for memory ooc_wrap.$auto$memory_bmux2rom.cc:63:execute$2048
+using FF mapping for memory ooc_wrap.$auto$memory_bmux2rom.cc:63:execute$2051
+using FF mapping for memory ooc_wrap.$auto$memory_bmux2rom.cc:63:execute$2054
+using FF mapping for memory ooc_wrap.$auto$memory_bmux2rom.cc:63:execute$2057
+using FF mapping for memory ooc_wrap.$auto$memory_bmux2rom.cc:63:execute$2060
+using FF mapping for memory ooc_wrap.$auto$memory_bmux2rom.cc:63:execute$2063
+using FF mapping for memory ooc_wrap.$auto$memory_bmux2rom.cc:63:execute$2066
+using FF mapping for memory ooc_wrap.$auto$memory_bmux2rom.cc:63:execute$2069
+using FF mapping for memory ooc_wrap.$auto$memory_bmux2rom.cc:63:execute$2072
+using FF mapping for memory ooc_wrap.$auto$memory_bmux2rom.cc:63:execute$2075
+using FF mapping for memory ooc_wrap.$auto$memory_bmux2rom.cc:63:execute$2078
+using FF mapping for memory ooc_wrap.$auto$memory_bmux2rom.cc:63:execute$2081
+using FF mapping for memory ooc_wrap.$auto$memory_bmux2rom.cc:63:execute$2084
+using FF mapping for memory ooc_wrap.$auto$memory_bmux2rom.cc:63:execute$2087
+using FF mapping for memory ooc_wrap.$auto$memory_bmux2rom.cc:63:execute$2090
+using FF mapping for memory ooc_wrap.$auto$memory_bmux2rom.cc:63:execute$2093
+using FF mapping for memory ooc_wrap.$auto$memory_bmux2rom.cc:63:execute$2096
+using FF mapping for memory ooc_wrap.$auto$memory_bmux2rom.cc:63:execute$2099
+using FF mapping for memory ooc_wrap.$auto$memory_bmux2rom.cc:63:execute$2102
+using FF mapping for memory ooc_wrap.$auto$memory_bmux2rom.cc:63:execute$2105
+using FF mapping for memory ooc_wrap.$auto$memory_bmux2rom.cc:63:execute$2108
+using FF mapping for memory ooc_wrap.$auto$memory_bmux2rom.cc:63:execute$2111
+using FF mapping for memory ooc_wrap.$auto$memory_bmux2rom.cc:63:execute$2114
+using FF mapping for memory ooc_wrap.$auto$memory_bmux2rom.cc:63:execute$2117
+using FF mapping for memory ooc_wrap.$auto$memory_bmux2rom.cc:63:execute$2120
+using FF mapping for memory ooc_wrap.$auto$memory_bmux2rom.cc:63:execute$2123
+using FF mapping for memory ooc_wrap.$auto$memory_bmux2rom.cc:63:execute$2126
+using FF mapping for memory ooc_wrap.$auto$memory_bmux2rom.cc:63:execute$2129
+using FF mapping for memory ooc_wrap.$auto$memory_bmux2rom.cc:63:execute$2132
+using FF mapping for memory ooc_wrap.$auto$memory_bmux2rom.cc:63:execute$2135
+using FF mapping for memory ooc_wrap.$auto$memory_bmux2rom.cc:63:execute$2138
+using FF mapping for memory ooc_wrap.$auto$memory_bmux2rom.cc:63:execute$2141
+using FF mapping for memory ooc_wrap.$auto$memory_bmux2rom.cc:63:execute$2144
+using FF mapping for memory ooc_wrap.$auto$memory_bmux2rom.cc:63:execute$2147
+using FF mapping for memory ooc_wrap.$auto$memory_bmux2rom.cc:63:execute$2150
+using FF mapping for memory ooc_wrap.$auto$memory_bmux2rom.cc:63:execute$2153
+using FF mapping for memory ooc_wrap.$auto$memory_bmux2rom.cc:63:execute$2156
+using FF mapping for memory ooc_wrap.$auto$memory_bmux2rom.cc:63:execute$2159
+using FF mapping for memory ooc_wrap.$auto$memory_bmux2rom.cc:63:execute$2162
+using FF mapping for memory ooc_wrap.$auto$memory_bmux2rom.cc:63:execute$2165
+using FF mapping for memory ooc_wrap.$auto$memory_bmux2rom.cc:63:execute$2168
+using FF mapping for memory ooc_wrap.$auto$memory_bmux2rom.cc:63:execute$2171
+using FF mapping for memory ooc_wrap.$auto$memory_bmux2rom.cc:63:execute$2174
+using FF mapping for memory ooc_wrap.$auto$memory_bmux2rom.cc:63:execute$2177
+using FF mapping for memory ooc_wrap.$auto$memory_bmux2rom.cc:63:execute$2180
+using FF mapping for memory ooc_wrap.$auto$memory_bmux2rom.cc:63:execute$2183
+using FF mapping for memory ooc_wrap.$auto$memory_bmux2rom.cc:63:execute$2186
+using FF mapping for memory ooc_wrap.$auto$memory_bmux2rom.cc:63:execute$2189
+using FF mapping for memory ooc_wrap.$auto$memory_bmux2rom.cc:63:execute$2192
+using FF mapping for memory ooc_wrap.$auto$memory_bmux2rom.cc:63:execute$2195
+using FF mapping for memory ooc_wrap.$auto$memory_bmux2rom.cc:63:execute$2198
+using FF mapping for memory ooc_wrap.$auto$memory_bmux2rom.cc:63:execute$2201
+using FF mapping for memory ooc_wrap.$auto$memory_bmux2rom.cc:63:execute$2204
+using FF mapping for memory ooc_wrap.$auto$memory_bmux2rom.cc:63:execute$2207
+using FF mapping for memory ooc_wrap.$auto$memory_bmux2rom.cc:63:execute$2210
+using FF mapping for memory ooc_wrap.$auto$memory_bmux2rom.cc:63:execute$2213
+using FF mapping for memory ooc_wrap.$auto$memory_bmux2rom.cc:63:execute$2216
+using FF mapping for memory ooc_wrap.$auto$memory_bmux2rom.cc:63:execute$2219
+using FF mapping for memory ooc_wrap.$auto$memory_bmux2rom.cc:63:execute$2222
+using FF mapping for memory ooc_wrap.$auto$memory_bmux2rom.cc:63:execute$2225
+using FF mapping for memory ooc_wrap.$auto$memory_bmux2rom.cc:63:execute$2228
+using FF mapping for memory ooc_wrap.$auto$memory_bmux2rom.cc:63:execute$2231
+using FF mapping for memory ooc_wrap.$auto$memory_bmux2rom.cc:63:execute$2234
+using FF mapping for memory ooc_wrap.$auto$memory_bmux2rom.cc:63:execute$2237
+using FF mapping for memory ooc_wrap.$auto$memory_bmux2rom.cc:63:execute$2240
+using FF mapping for memory ooc_wrap.$auto$memory_bmux2rom.cc:63:execute$2243
+using FF mapping for memory ooc_wrap.$auto$memory_bmux2rom.cc:63:execute$2246
+using FF mapping for memory ooc_wrap.$auto$memory_bmux2rom.cc:63:execute$2249
+using FF mapping for memory ooc_wrap.$auto$memory_bmux2rom.cc:63:execute$2252
+using FF mapping for memory ooc_wrap.$auto$memory_bmux2rom.cc:63:execute$2255
+using FF mapping for memory ooc_wrap.$auto$memory_bmux2rom.cc:63:execute$2258
+<suppressed ~3800 debug messages>
+
+2.35. Executing TECHMAP pass (map to technology primitives).
+
+2.35.1. Executing Verilog-2005 frontend: /home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/xilinx/lutrams_xc5v_map.v
+Parsing Verilog input from `/home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/xilinx/lutrams_xc5v_map.v' to AST representation.
+Generating RTLIL representation for module `$__XILINX_LUTRAM_SP_'.
+Generating RTLIL representation for module `$__XILINX_LUTRAM_DP_'.
+Generating RTLIL representation for module `$__XILINX_LUTRAM_QP_'.
+Generating RTLIL representation for module `$__XILINX_LUTRAM_OP_'.
+Generating RTLIL representation for module `$__XILINX_LUTRAM_SDP_'.
+Generating RTLIL representation for module `$__XILINX_LUTRAM_64X8SW_'.
+Generating RTLIL representation for module `$__XILINX_LUTRAM_32X16DR8_'.
+Successfully finished Verilog frontend.
+
+2.35.2. Continuing TECHMAP pass.
+No more expansions possible.
+<suppressed ~9 debug messages>
+
+2.36. Executing TECHMAP pass (map to technology primitives).
+
+2.36.1. Executing Verilog-2005 frontend: /home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/xilinx/brams_xcu_map.v
+Parsing Verilog input from `/home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/xilinx/brams_xcu_map.v' to AST representation.
+Generating RTLIL representation for module `$__XILINX_BLOCKRAM_TDP_'.
+Generating RTLIL representation for module `$__XILINX_BLOCKRAM_SDP_'.
+Successfully finished Verilog frontend.
+
+2.36.2. Continuing TECHMAP pass.
+No more expansions possible.
+<suppressed ~4 debug messages>
+
+2.37. Executing TECHMAP pass (map to technology primitives).
+
+2.37.1. Executing Verilog-2005 frontend: /home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/xilinx/urams_map.v
+Parsing Verilog input from `/home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/xilinx/urams_map.v' to AST representation.
+Generating RTLIL representation for module `$__XILINX_URAM_'.
+Generating RTLIL representation for module `$__XILINX_URAM_SP_'.
+Successfully finished Verilog frontend.
+
+2.37.2. Continuing TECHMAP pass.
+No more expansions possible.
+<suppressed ~4 debug messages>
+
+2.38. Executing OPT pass (performing simple optimizations).
+
+2.38.1. Executing OPT_EXPR pass (perform const folding).
+Optimizing module ooc_wrap.
+<suppressed ~1 debug messages>
+
+2.38.2. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\ooc_wrap'.
+Computing hashes of 441 cells of `\ooc_wrap'.
+Finding duplicate cells in `\ooc_wrap'.
+Removed a total of 0 cells.
+
+2.38.3. Executing OPT_DFF pass (perform DFF optimizations).
+
+2.38.4. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \ooc_wrap..
+
+2.38.5. Finished fast OPT passes.
+
+2.39. Executing MEMORY_MAP pass (converting memories to logic and flip-flops).
+Mapping memory $auto$memory_bmux2rom.cc:63:execute$1976 in module \ooc_wrap:
+  created 64 $dff cells and 0 static cells of width 1.
+  read interface: 0 $dff and 63 $mux cells.
+  write interface: 0 write mux blocks.
+Mapping memory $auto$memory_bmux2rom.cc:63:execute$1979 in module \ooc_wrap:
+  created 64 $dff cells and 0 static cells of width 1.
+  read interface: 0 $dff and 63 $mux cells.
+  write interface: 0 write mux blocks.
+Mapping memory $auto$memory_bmux2rom.cc:63:execute$1982 in module \ooc_wrap:
+  created 64 $dff cells and 0 static cells of width 1.
+  read interface: 0 $dff and 63 $mux cells.
+  write interface: 0 write mux blocks.
+Mapping memory $auto$memory_bmux2rom.cc:63:execute$1985 in module \ooc_wrap:
+  created 64 $dff cells and 0 static cells of width 1.
+  read interface: 0 $dff and 63 $mux cells.
+  write interface: 0 write mux blocks.
+Mapping memory $auto$memory_bmux2rom.cc:63:execute$1988 in module \ooc_wrap:
+  created 64 $dff cells and 0 static cells of width 1.
+  read interface: 0 $dff and 63 $mux cells.
+  write interface: 0 write mux blocks.
+Mapping memory $auto$memory_bmux2rom.cc:63:execute$1991 in module \ooc_wrap:
+  created 64 $dff cells and 0 static cells of width 1.
+  read interface: 0 $dff and 63 $mux cells.
+  write interface: 0 write mux blocks.
+Mapping memory $auto$memory_bmux2rom.cc:63:execute$1994 in module \ooc_wrap:
+  created 64 $dff cells and 0 static cells of width 1.
+  read interface: 0 $dff and 63 $mux cells.
+  write interface: 0 write mux blocks.
+Mapping memory $auto$memory_bmux2rom.cc:63:execute$1997 in module \ooc_wrap:
+  created 64 $dff cells and 0 static cells of width 1.
+  read interface: 0 $dff and 63 $mux cells.
+  write interface: 0 write mux blocks.
+Mapping memory $auto$memory_bmux2rom.cc:63:execute$2000 in module \ooc_wrap:
+  created 64 $dff cells and 0 static cells of width 1.
+  read interface: 0 $dff and 63 $mux cells.
+  write interface: 0 write mux blocks.
+Mapping memory $auto$memory_bmux2rom.cc:63:execute$2003 in module \ooc_wrap:
+  created 64 $dff cells and 0 static cells of width 1.
+  read interface: 0 $dff and 63 $mux cells.
+  write interface: 0 write mux blocks.
+Mapping memory $auto$memory_bmux2rom.cc:63:execute$2006 in module \ooc_wrap:
+  created 64 $dff cells and 0 static cells of width 1.
+  read interface: 0 $dff and 63 $mux cells.
+  write interface: 0 write mux blocks.
+Mapping memory $auto$memory_bmux2rom.cc:63:execute$2009 in module \ooc_wrap:
+  created 64 $dff cells and 0 static cells of width 1.
+  read interface: 0 $dff and 63 $mux cells.
+  write interface: 0 write mux blocks.
+Mapping memory $auto$memory_bmux2rom.cc:63:execute$2012 in module \ooc_wrap:
+  created 64 $dff cells and 0 static cells of width 1.
+  read interface: 0 $dff and 63 $mux cells.
+  write interface: 0 write mux blocks.
+Mapping memory $auto$memory_bmux2rom.cc:63:execute$2015 in module \ooc_wrap:
+  created 64 $dff cells and 0 static cells of width 1.
+  read interface: 0 $dff and 63 $mux cells.
+  write interface: 0 write mux blocks.
+Mapping memory $auto$memory_bmux2rom.cc:63:execute$2018 in module \ooc_wrap:
+  created 64 $dff cells and 0 static cells of width 1.
+  read interface: 0 $dff and 63 $mux cells.
+  write interface: 0 write mux blocks.
+Mapping memory $auto$memory_bmux2rom.cc:63:execute$2021 in module \ooc_wrap:
+  created 64 $dff cells and 0 static cells of width 1.
+  read interface: 0 $dff and 63 $mux cells.
+  write interface: 0 write mux blocks.
+Mapping memory $auto$memory_bmux2rom.cc:63:execute$2024 in module \ooc_wrap:
+  created 64 $dff cells and 0 static cells of width 1.
+  read interface: 0 $dff and 63 $mux cells.
+  write interface: 0 write mux blocks.
+Mapping memory $auto$memory_bmux2rom.cc:63:execute$2027 in module \ooc_wrap:
+  created 64 $dff cells and 0 static cells of width 1.
+  read interface: 0 $dff and 63 $mux cells.
+  write interface: 0 write mux blocks.
+Mapping memory $auto$memory_bmux2rom.cc:63:execute$2030 in module \ooc_wrap:
+  created 64 $dff cells and 0 static cells of width 1.
+  read interface: 0 $dff and 63 $mux cells.
+  write interface: 0 write mux blocks.
+Mapping memory $auto$memory_bmux2rom.cc:63:execute$2033 in module \ooc_wrap:
+  created 32 $dff cells and 0 static cells of width 1.
+  read interface: 0 $dff and 31 $mux cells.
+  write interface: 0 write mux blocks.
+Mapping memory $auto$memory_bmux2rom.cc:63:execute$2036 in module \ooc_wrap:
+  created 32 $dff cells and 0 static cells of width 1.
+  read interface: 0 $dff and 31 $mux cells.
+  write interface: 0 write mux blocks.
+Mapping memory $auto$memory_bmux2rom.cc:63:execute$2039 in module \ooc_wrap:
+  created 32 $dff cells and 0 static cells of width 1.
+  read interface: 0 $dff and 31 $mux cells.
+  write interface: 0 write mux blocks.
+Mapping memory $auto$memory_bmux2rom.cc:63:execute$2042 in module \ooc_wrap:
+  created 32 $dff cells and 0 static cells of width 1.
+  read interface: 0 $dff and 31 $mux cells.
+  write interface: 0 write mux blocks.
+Mapping memory $auto$memory_bmux2rom.cc:63:execute$2045 in module \ooc_wrap:
+  created 32 $dff cells and 0 static cells of width 1.
+  read interface: 0 $dff and 31 $mux cells.
+  write interface: 0 write mux blocks.
+Mapping memory $auto$memory_bmux2rom.cc:63:execute$2048 in module \ooc_wrap:
+  created 32 $dff cells and 0 static cells of width 1.
+  read interface: 0 $dff and 31 $mux cells.
+  write interface: 0 write mux blocks.
+Mapping memory $auto$memory_bmux2rom.cc:63:execute$2051 in module \ooc_wrap:
+  created 32 $dff cells and 0 static cells of width 1.
+  read interface: 0 $dff and 31 $mux cells.
+  write interface: 0 write mux blocks.
+Mapping memory $auto$memory_bmux2rom.cc:63:execute$2054 in module \ooc_wrap:
+  created 32 $dff cells and 0 static cells of width 1.
+  read interface: 0 $dff and 31 $mux cells.
+  write interface: 0 write mux blocks.
+Mapping memory $auto$memory_bmux2rom.cc:63:execute$2057 in module \ooc_wrap:
+  created 64 $dff cells and 0 static cells of width 1.
+  read interface: 0 $dff and 63 $mux cells.
+  write interface: 0 write mux blocks.
+Mapping memory $auto$memory_bmux2rom.cc:63:execute$2060 in module \ooc_wrap:
+  created 64 $dff cells and 0 static cells of width 1.
+  read interface: 0 $dff and 63 $mux cells.
+  write interface: 0 write mux blocks.
+Mapping memory $auto$memory_bmux2rom.cc:63:execute$2063 in module \ooc_wrap:
+  created 64 $dff cells and 0 static cells of width 1.
+  read interface: 0 $dff and 63 $mux cells.
+  write interface: 0 write mux blocks.
+Mapping memory $auto$memory_bmux2rom.cc:63:execute$2066 in module \ooc_wrap:
+  created 64 $dff cells and 0 static cells of width 1.
+  read interface: 0 $dff and 63 $mux cells.
+  write interface: 0 write mux blocks.
+Mapping memory $auto$memory_bmux2rom.cc:63:execute$2069 in module \ooc_wrap:
+  created 64 $dff cells and 0 static cells of width 1.
+  read interface: 0 $dff and 63 $mux cells.
+  write interface: 0 write mux blocks.
+Mapping memory $auto$memory_bmux2rom.cc:63:execute$2072 in module \ooc_wrap:
+  created 64 $dff cells and 0 static cells of width 1.
+  read interface: 0 $dff and 63 $mux cells.
+  write interface: 0 write mux blocks.
+Mapping memory $auto$memory_bmux2rom.cc:63:execute$2075 in module \ooc_wrap:
+  created 64 $dff cells and 0 static cells of width 1.
+  read interface: 0 $dff and 63 $mux cells.
+  write interface: 0 write mux blocks.
+Mapping memory $auto$memory_bmux2rom.cc:63:execute$2078 in module \ooc_wrap:
+  created 64 $dff cells and 0 static cells of width 1.
+  read interface: 0 $dff and 63 $mux cells.
+  write interface: 0 write mux blocks.
+Mapping memory $auto$memory_bmux2rom.cc:63:execute$2081 in module \ooc_wrap:
+  created 64 $dff cells and 0 static cells of width 1.
+  read interface: 0 $dff and 63 $mux cells.
+  write interface: 0 write mux blocks.
+Mapping memory $auto$memory_bmux2rom.cc:63:execute$2084 in module \ooc_wrap:
+  created 64 $dff cells and 0 static cells of width 1.
+  read interface: 0 $dff and 63 $mux cells.
+  write interface: 0 write mux blocks.
+Mapping memory $auto$memory_bmux2rom.cc:63:execute$2087 in module \ooc_wrap:
+  created 64 $dff cells and 0 static cells of width 1.
+  read interface: 0 $dff and 63 $mux cells.
+  write interface: 0 write mux blocks.
+Mapping memory $auto$memory_bmux2rom.cc:63:execute$2090 in module \ooc_wrap:
+  created 64 $dff cells and 0 static cells of width 1.
+  read interface: 0 $dff and 63 $mux cells.
+  write interface: 0 write mux blocks.
+Mapping memory $auto$memory_bmux2rom.cc:63:execute$2093 in module \ooc_wrap:
+  created 64 $dff cells and 0 static cells of width 1.
+  read interface: 0 $dff and 63 $mux cells.
+  write interface: 0 write mux blocks.
+Mapping memory $auto$memory_bmux2rom.cc:63:execute$2096 in module \ooc_wrap:
+  created 64 $dff cells and 0 static cells of width 1.
+  read interface: 0 $dff and 63 $mux cells.
+  write interface: 0 write mux blocks.
+Mapping memory $auto$memory_bmux2rom.cc:63:execute$2099 in module \ooc_wrap:
+  created 64 $dff cells and 0 static cells of width 1.
+  read interface: 0 $dff and 63 $mux cells.
+  write interface: 0 write mux blocks.
+Mapping memory $auto$memory_bmux2rom.cc:63:execute$2102 in module \ooc_wrap:
+  created 64 $dff cells and 0 static cells of width 1.
+  read interface: 0 $dff and 63 $mux cells.
+  write interface: 0 write mux blocks.
+Mapping memory $auto$memory_bmux2rom.cc:63:execute$2105 in module \ooc_wrap:
+  created 64 $dff cells and 0 static cells of width 1.
+  read interface: 0 $dff and 63 $mux cells.
+  write interface: 0 write mux blocks.
+Mapping memory $auto$memory_bmux2rom.cc:63:execute$2108 in module \ooc_wrap:
+  created 64 $dff cells and 0 static cells of width 1.
+  read interface: 0 $dff and 63 $mux cells.
+  write interface: 0 write mux blocks.
+Mapping memory $auto$memory_bmux2rom.cc:63:execute$2111 in module \ooc_wrap:
+  created 64 $dff cells and 0 static cells of width 1.
+  read interface: 0 $dff and 63 $mux cells.
+  write interface: 0 write mux blocks.
+Mapping memory $auto$memory_bmux2rom.cc:63:execute$2114 in module \ooc_wrap:
+  created 64 $dff cells and 0 static cells of width 1.
+  read interface: 0 $dff and 63 $mux cells.
+  write interface: 0 write mux blocks.
+Mapping memory $auto$memory_bmux2rom.cc:63:execute$2117 in module \ooc_wrap:
+  created 32 $dff cells and 0 static cells of width 1.
+  read interface: 0 $dff and 31 $mux cells.
+  write interface: 0 write mux blocks.
+Mapping memory $auto$memory_bmux2rom.cc:63:execute$2120 in module \ooc_wrap:
+  created 32 $dff cells and 0 static cells of width 1.
+  read interface: 0 $dff and 31 $mux cells.
+  write interface: 0 write mux blocks.
+Mapping memory $auto$memory_bmux2rom.cc:63:execute$2123 in module \ooc_wrap:
+  created 32 $dff cells and 0 static cells of width 1.
+  read interface: 0 $dff and 31 $mux cells.
+  write interface: 0 write mux blocks.
+Mapping memory $auto$memory_bmux2rom.cc:63:execute$2126 in module \ooc_wrap:
+  created 32 $dff cells and 0 static cells of width 1.
+  read interface: 0 $dff and 31 $mux cells.
+  write interface: 0 write mux blocks.
+Mapping memory $auto$memory_bmux2rom.cc:63:execute$2129 in module \ooc_wrap:
+  created 64 $dff cells and 0 static cells of width 1.
+  read interface: 0 $dff and 63 $mux cells.
+  write interface: 0 write mux blocks.
+Mapping memory $auto$memory_bmux2rom.cc:63:execute$2132 in module \ooc_wrap:
+  created 64 $dff cells and 0 static cells of width 1.
+  read interface: 0 $dff and 63 $mux cells.
+  write interface: 0 write mux blocks.
+Mapping memory $auto$memory_bmux2rom.cc:63:execute$2135 in module \ooc_wrap:
+  created 64 $dff cells and 0 static cells of width 1.
+  read interface: 0 $dff and 63 $mux cells.
+  write interface: 0 write mux blocks.
+Mapping memory $auto$memory_bmux2rom.cc:63:execute$2138 in module \ooc_wrap:
+  created 64 $dff cells and 0 static cells of width 1.
+  read interface: 0 $dff and 63 $mux cells.
+  write interface: 0 write mux blocks.
+Mapping memory $auto$memory_bmux2rom.cc:63:execute$2141 in module \ooc_wrap:
+  created 32 $dff cells and 0 static cells of width 1.
+  read interface: 0 $dff and 31 $mux cells.
+  write interface: 0 write mux blocks.
+Mapping memory $auto$memory_bmux2rom.cc:63:execute$2144 in module \ooc_wrap:
+  created 32 $dff cells and 0 static cells of width 1.
+  read interface: 0 $dff and 31 $mux cells.
+  write interface: 0 write mux blocks.
+Mapping memory $auto$memory_bmux2rom.cc:63:execute$2147 in module \ooc_wrap:
+  created 32 $dff cells and 0 static cells of width 1.
+  read interface: 0 $dff and 31 $mux cells.
+  write interface: 0 write mux blocks.
+Mapping memory $auto$memory_bmux2rom.cc:63:execute$2150 in module \ooc_wrap:
+  created 32 $dff cells and 0 static cells of width 1.
+  read interface: 0 $dff and 31 $mux cells.
+  write interface: 0 write mux blocks.
+Mapping memory $auto$memory_bmux2rom.cc:63:execute$2153 in module \ooc_wrap:
+  created 32 $dff cells and 0 static cells of width 1.
+  read interface: 0 $dff and 31 $mux cells.
+  write interface: 0 write mux blocks.
+Mapping memory $auto$memory_bmux2rom.cc:63:execute$2156 in module \ooc_wrap:
+  created 32 $dff cells and 0 static cells of width 1.
+  read interface: 0 $dff and 31 $mux cells.
+  write interface: 0 write mux blocks.
+Mapping memory $auto$memory_bmux2rom.cc:63:execute$2159 in module \ooc_wrap:
+  created 32 $dff cells and 0 static cells of width 1.
+  read interface: 0 $dff and 31 $mux cells.
+  write interface: 0 write mux blocks.
+Mapping memory $auto$memory_bmux2rom.cc:63:execute$2162 in module \ooc_wrap:
+  created 32 $dff cells and 0 static cells of width 1.
+  read interface: 0 $dff and 31 $mux cells.
+  write interface: 0 write mux blocks.
+Mapping memory $auto$memory_bmux2rom.cc:63:execute$2165 in module \ooc_wrap:
+  created 64 $dff cells and 0 static cells of width 1.
+  read interface: 0 $dff and 63 $mux cells.
+  write interface: 0 write mux blocks.
+Mapping memory $auto$memory_bmux2rom.cc:63:execute$2168 in module \ooc_wrap:
+  created 64 $dff cells and 0 static cells of width 1.
+  read interface: 0 $dff and 63 $mux cells.
+  write interface: 0 write mux blocks.
+Mapping memory $auto$memory_bmux2rom.cc:63:execute$2171 in module \ooc_wrap:
+  created 64 $dff cells and 0 static cells of width 1.
+  read interface: 0 $dff and 63 $mux cells.
+  write interface: 0 write mux blocks.
+Mapping memory $auto$memory_bmux2rom.cc:63:execute$2174 in module \ooc_wrap:
+  created 64 $dff cells and 0 static cells of width 1.
+  read interface: 0 $dff and 63 $mux cells.
+  write interface: 0 write mux blocks.
+Mapping memory $auto$memory_bmux2rom.cc:63:execute$2177 in module \ooc_wrap:
+  created 64 $dff cells and 0 static cells of width 1.
+  read interface: 0 $dff and 63 $mux cells.
+  write interface: 0 write mux blocks.
+Mapping memory $auto$memory_bmux2rom.cc:63:execute$2180 in module \ooc_wrap:
+  created 64 $dff cells and 0 static cells of width 1.
+  read interface: 0 $dff and 63 $mux cells.
+  write interface: 0 write mux blocks.
+Mapping memory $auto$memory_bmux2rom.cc:63:execute$2183 in module \ooc_wrap:
+  created 64 $dff cells and 0 static cells of width 1.
+  read interface: 0 $dff and 63 $mux cells.
+  write interface: 0 write mux blocks.
+Mapping memory $auto$memory_bmux2rom.cc:63:execute$2186 in module \ooc_wrap:
+  created 64 $dff cells and 0 static cells of width 1.
+  read interface: 0 $dff and 63 $mux cells.
+  write interface: 0 write mux blocks.
+Mapping memory $auto$memory_bmux2rom.cc:63:execute$2189 in module \ooc_wrap:
+  created 64 $dff cells and 0 static cells of width 1.
+  read interface: 0 $dff and 63 $mux cells.
+  write interface: 0 write mux blocks.
+Mapping memory $auto$memory_bmux2rom.cc:63:execute$2192 in module \ooc_wrap:
+  created 64 $dff cells and 0 static cells of width 1.
+  read interface: 0 $dff and 63 $mux cells.
+  write interface: 0 write mux blocks.
+Mapping memory $auto$memory_bmux2rom.cc:63:execute$2195 in module \ooc_wrap:
+  created 64 $dff cells and 0 static cells of width 1.
+  read interface: 0 $dff and 63 $mux cells.
+  write interface: 0 write mux blocks.
+Mapping memory $auto$memory_bmux2rom.cc:63:execute$2198 in module \ooc_wrap:
+  created 64 $dff cells and 0 static cells of width 1.
+  read interface: 0 $dff and 63 $mux cells.
+  write interface: 0 write mux blocks.
+Mapping memory $auto$memory_bmux2rom.cc:63:execute$2201 in module \ooc_wrap:
+  created 64 $dff cells and 0 static cells of width 1.
+  read interface: 0 $dff and 63 $mux cells.
+  write interface: 0 write mux blocks.
+Mapping memory $auto$memory_bmux2rom.cc:63:execute$2204 in module \ooc_wrap:
+  created 64 $dff cells and 0 static cells of width 1.
+  read interface: 0 $dff and 63 $mux cells.
+  write interface: 0 write mux blocks.
+Mapping memory $auto$memory_bmux2rom.cc:63:execute$2207 in module \ooc_wrap:
+  created 64 $dff cells and 0 static cells of width 1.
+  read interface: 0 $dff and 63 $mux cells.
+  write interface: 0 write mux blocks.
+Mapping memory $auto$memory_bmux2rom.cc:63:execute$2210 in module \ooc_wrap:
+  created 64 $dff cells and 0 static cells of width 1.
+  read interface: 0 $dff and 63 $mux cells.
+  write interface: 0 write mux blocks.
+Mapping memory $auto$memory_bmux2rom.cc:63:execute$2213 in module \ooc_wrap:
+  created 32 $dff cells and 0 static cells of width 1.
+  read interface: 0 $dff and 31 $mux cells.
+  write interface: 0 write mux blocks.
+Mapping memory $auto$memory_bmux2rom.cc:63:execute$2216 in module \ooc_wrap:
+  created 32 $dff cells and 0 static cells of width 1.
+  read interface: 0 $dff and 31 $mux cells.
+  write interface: 0 write mux blocks.
+Mapping memory $auto$memory_bmux2rom.cc:63:execute$2219 in module \ooc_wrap:
+  created 32 $dff cells and 0 static cells of width 1.
+  read interface: 0 $dff and 31 $mux cells.
+  write interface: 0 write mux blocks.
+Mapping memory $auto$memory_bmux2rom.cc:63:execute$2222 in module \ooc_wrap:
+  created 32 $dff cells and 0 static cells of width 1.
+  read interface: 0 $dff and 31 $mux cells.
+  write interface: 0 write mux blocks.
+Mapping memory $auto$memory_bmux2rom.cc:63:execute$2225 in module \ooc_wrap:
+  created 32 $dff cells and 0 static cells of width 1.
+  read interface: 0 $dff and 31 $mux cells.
+  write interface: 0 write mux blocks.
+Mapping memory $auto$memory_bmux2rom.cc:63:execute$2228 in module \ooc_wrap:
+  created 32 $dff cells and 0 static cells of width 1.
+  read interface: 0 $dff and 31 $mux cells.
+  write interface: 0 write mux blocks.
+Mapping memory $auto$memory_bmux2rom.cc:63:execute$2231 in module \ooc_wrap:
+  created 32 $dff cells and 0 static cells of width 1.
+  read interface: 0 $dff and 31 $mux cells.
+  write interface: 0 write mux blocks.
+Mapping memory $auto$memory_bmux2rom.cc:63:execute$2234 in module \ooc_wrap:
+  created 32 $dff cells and 0 static cells of width 1.
+  read interface: 0 $dff and 31 $mux cells.
+  write interface: 0 write mux blocks.
+Mapping memory $auto$memory_bmux2rom.cc:63:execute$2237 in module \ooc_wrap:
+  created 32 $dff cells and 0 static cells of width 1.
+  read interface: 0 $dff and 31 $mux cells.
+  write interface: 0 write mux blocks.
+Mapping memory $auto$memory_bmux2rom.cc:63:execute$2240 in module \ooc_wrap:
+  created 32 $dff cells and 0 static cells of width 1.
+  read interface: 0 $dff and 31 $mux cells.
+  write interface: 0 write mux blocks.
+Mapping memory $auto$memory_bmux2rom.cc:63:execute$2243 in module \ooc_wrap:
+  created 32 $dff cells and 0 static cells of width 1.
+  read interface: 0 $dff and 31 $mux cells.
+  write interface: 0 write mux blocks.
+Mapping memory $auto$memory_bmux2rom.cc:63:execute$2246 in module \ooc_wrap:
+  created 32 $dff cells and 0 static cells of width 1.
+  read interface: 0 $dff and 31 $mux cells.
+  write interface: 0 write mux blocks.
+Mapping memory $auto$memory_bmux2rom.cc:63:execute$2249 in module \ooc_wrap:
+  created 32 $dff cells and 0 static cells of width 1.
+  read interface: 0 $dff and 31 $mux cells.
+  write interface: 0 write mux blocks.
+Mapping memory $auto$memory_bmux2rom.cc:63:execute$2252 in module \ooc_wrap:
+  created 32 $dff cells and 0 static cells of width 1.
+  read interface: 0 $dff and 31 $mux cells.
+  write interface: 0 write mux blocks.
+Mapping memory $auto$memory_bmux2rom.cc:63:execute$2255 in module \ooc_wrap:
+  created 32 $dff cells and 0 static cells of width 1.
+  read interface: 0 $dff and 31 $mux cells.
+  write interface: 0 write mux blocks.
+Mapping memory $auto$memory_bmux2rom.cc:63:execute$2258 in module \ooc_wrap:
+  created 64 $dff cells and 0 static cells of width 1.
+  read interface: 0 $dff and 63 $mux cells.
+  write interface: 0 write mux blocks.
+
+3. Executing OPT pass (performing simple optimizations).
+
+3.1. Executing OPT_EXPR pass (perform const folding).
+Optimizing module ooc_wrap.
+<suppressed ~2029 debug messages>
+
+3.2. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\ooc_wrap'.
+Computing hashes of 3182 cells of `\ooc_wrap'.
+Finding duplicate cells in `\ooc_wrap'.
+Removed a total of 0 cells.
+
+3.3. Executing OPT_MUXTREE pass (detect dead branches in mux trees).
+Running muxtree optimizer on module \ooc_wrap..
+  Creating internal representation of mux trees.
+  Evaluating internal representation of mux trees.
+  Analyzing evaluation results.
+Removed 0 multiplexer ports.
+<suppressed ~2933 debug messages>
+
+3.4. Executing OPT_REDUCE pass (consolidate $*mux and $reduce_* inputs).
+  Optimizing cells in module \ooc_wrap.
+Performed a total of 0 changes.
+
+3.5. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\ooc_wrap'.
+Computing hashes of 3182 cells of `\ooc_wrap'.
+Finding duplicate cells in `\ooc_wrap'.
+Computing hashes of 2101 cells of `\ooc_wrap'.
+Finding duplicate cells in `\ooc_wrap'.
+Computing hashes of 1425 cells of `\ooc_wrap'.
+Finding duplicate cells in `\ooc_wrap'.
+Computing hashes of 1269 cells of `\ooc_wrap'.
+Finding duplicate cells in `\ooc_wrap'.
+Computing hashes of 1243 cells of `\ooc_wrap'.
+Finding duplicate cells in `\ooc_wrap'.
+Computing hashes of 1237 cells of `\ooc_wrap'.
+Finding duplicate cells in `\ooc_wrap'.
+<suppressed ~5835 debug messages>
+Removed a total of 1945 cells.
+
+3.6. Executing OPT_SHARE pass.
+
+3.7. Executing OPT_DFF pass (perform DFF optimizations).
+
+3.8. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \ooc_wrap..
+Removed 0 unused cells and 8934 unused wires.
+<suppressed ~1 debug messages>
+
+3.9. Executing OPT_EXPR pass (perform const folding).
+Optimizing module ooc_wrap.
+<suppressed ~208 debug messages>
+
+3.10. Rerunning OPT passes. (Maybe there is more to do..)
+
+3.11. Executing OPT_MUXTREE pass (detect dead branches in mux trees).
+Running muxtree optimizer on module \ooc_wrap..
+  Creating internal representation of mux trees.
+  Evaluating internal representation of mux trees.
+  Analyzing evaluation results.
+Removed 0 multiplexer ports.
+<suppressed ~1085 debug messages>
+
+3.12. Executing OPT_REDUCE pass (consolidate $*mux and $reduce_* inputs).
+  Optimizing cells in module \ooc_wrap.
+Performed a total of 0 changes.
+
+3.13. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\ooc_wrap'.
+Computing hashes of 1133 cells of `\ooc_wrap'.
+Finding duplicate cells in `\ooc_wrap'.
+Removed a total of 0 cells.
+
+3.14. Executing OPT_SHARE pass.
+    Found cells that share an operand and can be merged by moving the $mux $memory$auto$memory_bmux2rom.cc:63:execute$2168$rdmux[0][2][0]$12636 in front of them:
+        $memory$auto$memory_bmux2rom.cc:63:execute$2168$rdmux[0][3][1]$12651
+        $memory$auto$memory_bmux2rom.cc:63:execute$2168$rdmux[0][3][0]$12648
+
+    Found cells that share an operand and can be merged by moving the $mux $memory$auto$memory_bmux2rom.cc:63:execute$2192$rdmux[0][2][3]$14157 in front of them:
+        $memory$auto$memory_bmux2rom.cc:63:execute$2192$rdmux[0][3][7]$14181
+        $memory$auto$memory_bmux2rom.cc:63:execute$2192$rdmux[0][3][6]$14178
+
+3.15. Executing OPT_DFF pass (perform DFF optimizations).
+
+3.16. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \ooc_wrap..
+Removed 0 unused cells and 106 unused wires.
+<suppressed ~1 debug messages>
+
+3.17. Executing OPT_EXPR pass (perform const folding).
+Optimizing module ooc_wrap.
+<suppressed ~2 debug messages>
+
+3.18. Rerunning OPT passes. (Maybe there is more to do..)
+
+3.19. Executing OPT_MUXTREE pass (detect dead branches in mux trees).
+Running muxtree optimizer on module \ooc_wrap..
+  Creating internal representation of mux trees.
+  Evaluating internal representation of mux trees.
+  Analyzing evaluation results.
+Removed 0 multiplexer ports.
+<suppressed ~1099 debug messages>
+
+3.20. Executing OPT_REDUCE pass (consolidate $*mux and $reduce_* inputs).
+  Optimizing cells in module \ooc_wrap.
+Performed a total of 0 changes.
+
+3.21. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\ooc_wrap'.
+Computing hashes of 1131 cells of `\ooc_wrap'.
+Finding duplicate cells in `\ooc_wrap'.
+Removed a total of 0 cells.
+
+3.22. Executing OPT_SHARE pass.
+
+3.23. Executing OPT_DFF pass (perform DFF optimizations).
+
+3.24. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \ooc_wrap..
+Removed 0 unused cells and 2 unused wires.
+<suppressed ~1 debug messages>
+
+3.25. Executing OPT_EXPR pass (perform const folding).
+Optimizing module ooc_wrap.
+
+3.26. Rerunning OPT passes. (Maybe there is more to do..)
+
+3.27. Executing OPT_MUXTREE pass (detect dead branches in mux trees).
+Running muxtree optimizer on module \ooc_wrap..
+  Creating internal representation of mux trees.
+  Evaluating internal representation of mux trees.
+  Analyzing evaluation results.
+Removed 0 multiplexer ports.
+<suppressed ~1099 debug messages>
+
+3.28. Executing OPT_REDUCE pass (consolidate $*mux and $reduce_* inputs).
+  Optimizing cells in module \ooc_wrap.
+Performed a total of 0 changes.
+
+3.29. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\ooc_wrap'.
+Computing hashes of 1131 cells of `\ooc_wrap'.
+Finding duplicate cells in `\ooc_wrap'.
+Removed a total of 0 cells.
+
+3.30. Executing OPT_SHARE pass.
+
+3.31. Executing OPT_DFF pass (perform DFF optimizations).
+
+3.32. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \ooc_wrap..
+
+3.33. Executing OPT_EXPR pass (perform const folding).
+Optimizing module ooc_wrap.
+
+3.34. Finished fast OPT passes. (There is nothing left to do.)
+
+4. Executing XILINX_SRL pass (Xilinx shift register extraction).
+
+5. Executing TECHMAP pass (map to technology primitives).
+
+5.1. Executing Verilog-2005 frontend: /home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/techmap.v
+Parsing Verilog input from `/home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/techmap.v' to AST representation.
+Generating RTLIL representation for module `\_90_simplemap_bool_ops'.
+Generating RTLIL representation for module `\_90_simplemap_reduce_ops'.
+Generating RTLIL representation for module `\_90_simplemap_logic_ops'.
+Generating RTLIL representation for module `\_90_simplemap_compare_ops'.
+Generating RTLIL representation for module `\_90_simplemap_various'.
+Generating RTLIL representation for module `\_90_simplemap_registers'.
+Generating RTLIL representation for module `\_90_shift_ops_shr_shl_sshl_sshr'.
+Generating RTLIL representation for module `\_90_shift_shiftx'.
+Generating RTLIL representation for module `\_90_fa'.
+Generating RTLIL representation for module `\_90_lcu_brent_kung'.
+Generating RTLIL representation for module `\_90_alu'.
+Generating RTLIL representation for module `\_90_macc'.
+Generating RTLIL representation for module `\_90_alumacc'.
+Generating RTLIL representation for module `$__div_mod_u'.
+Generating RTLIL representation for module `$__div_mod_trunc'.
+Generating RTLIL representation for module `\_90_div'.
+Generating RTLIL representation for module `\_90_mod'.
+Generating RTLIL representation for module `$__div_mod_floor'.
+Generating RTLIL representation for module `\_90_divfloor'.
+Generating RTLIL representation for module `\_90_modfloor'.
+Generating RTLIL representation for module `\_90_pow'.
+Generating RTLIL representation for module `\_90_demux'.
+Generating RTLIL representation for module `\_90_lut'.
+Generating RTLIL representation for module `$connect'.
+Generating RTLIL representation for module `$input_port'.
+Successfully finished Verilog frontend.
+
+5.2. Executing Verilog-2005 frontend: /home/brendan/Claude_sandbox/_worktrees/142-yosys/results/b142/drafts/pr_1/arith_map_carry8.v
+Parsing Verilog input from `/home/brendan/Claude_sandbox/_worktrees/142-yosys/results/b142/drafts/pr_1/arith_map_carry8.v' to AST representation.
+Generating RTLIL representation for module `\_80_xilinx_lcu'.
+Generating RTLIL representation for module `\_80_xilinx_alu'.
+Successfully finished Verilog frontend.
+
+5.3. Continuing TECHMAP pass.
+Using extmapper simplemap for cells of type $dff.
+Using template $paramod\_90_lcu_brent_kung\WIDTH=s32'00000000000000000000000000000010 for cells of type $lcu.
+Using extmapper simplemap for cells of type $mux.
+Using extmapper simplemap for cells of type $or.
+Using extmapper simplemap for cells of type $sdff.
+Using template $paramod\_90_lcu_brent_kung\WIDTH=s32'00000000000000000000000000000001 for cells of type $lcu.
+Using template $paramod\_80_xilinx_lcu\WIDTH=s32'00000000000000000000000000000011 for cells of type $lcu.
+Using extmapper simplemap for cells of type $and.
+Using extmapper simplemap for cells of type $not.
+Using extmapper simplemap for cells of type $xnor.
+Using extmapper maccmap for cells of type $macc_v2.
+  add $techmap1136$57.Y (1 bits, unsigned)
+  add $techmap1137$58.Y (1 bits, unsigned)
+  add $techmap1138$60.Y (1 bits, unsigned)
+  add $techmap1139$62.Y (1 bits, unsigned)
+  add $techmap1140$64.Y (1 bits, unsigned)
+  add $techmap1141$66.Y (1 bits, unsigned)
+  add $techmap1142$68.Y (1 bits, unsigned)
+  packed 3 (3) bits / 3 words into adder tree
+  add $techmap1115$15.Y (1 bits, unsigned)
+  add $techmap1116$16.Y (1 bits, unsigned)
+  add $techmap1117$18.Y (1 bits, unsigned)
+  add $techmap1118$20.Y (1 bits, unsigned)
+  add $techmap1119$22.Y (1 bits, unsigned)
+  add $techmap1120$24.Y (1 bits, unsigned)
+  add $techmap1121$26.Y (1 bits, unsigned)
+  packed 3 (3) bits / 3 words into adder tree
+  add \u_blk.x0_0 [3:0] (4 bits, signed)
+  add \u_blk.x0_1 [3:0] (4 bits, signed)
+  add \u_blk.x0_2 [3:0] (4 bits, signed)
+  add \u_blk.x0_3 [3:0] (4 bits, signed)
+  add \u_blk.x0_4 [3:0] (4 bits, signed)
+  add \u_blk.x0_5 [3:0] (4 bits, signed)
+  add \u_blk.x0_6 [3:0] (4 bits, signed)
+  add \u_blk.x0_7 [3:0] (4 bits, signed)
+  add $techmap1129$43.Y (1 bits, unsigned)
+  add $techmap1130$44.Y (1 bits, unsigned)
+  add $techmap1131$46.Y (1 bits, unsigned)
+  add $techmap1132$48.Y (1 bits, unsigned)
+  add $techmap1133$50.Y (1 bits, unsigned)
+  add $techmap1134$52.Y (1 bits, unsigned)
+  add $techmap1135$54.Y (1 bits, unsigned)
+  packed 3 (3) bits / 3 words into adder tree
+  add \u_blk.x1_0 [3:0] (4 bits, signed)
+  add \u_blk.x1_1 [3:0] (4 bits, signed)
+  add \u_blk.x1_2 [3:0] (4 bits, signed)
+  add \u_blk.x1_3 [3:0] (4 bits, signed)
+  add \u_blk.x1_4 [3:0] (4 bits, signed)
+  add { \u_blk.x0_7 [3] \u_blk.x1_5 [2:0] } (4 bits, signed)
+  add \u_blk.x1_6 [3:0] (4 bits, signed)
+  add \u_blk.x1_7 [3:0] (4 bits, signed)
+  add $techmap1122$29.Y (1 bits, unsigned)
+  add $techmap1123$30.Y (1 bits, unsigned)
+  add $techmap1124$32.Y (1 bits, unsigned)
+  add $techmap1125$34.Y (1 bits, unsigned)
+  add $techmap1126$36.Y (1 bits, unsigned)
+  add $techmap1127$38.Y (1 bits, unsigned)
+  add $techmap1128$40.Y (1 bits, unsigned)
+  packed 3 (3) bits / 3 words into adder tree
+  add $techmap1143$71.Y (1 bits, unsigned)
+  add $techmap1144$72.Y (1 bits, unsigned)
+  add $techmap1145$74.Y (1 bits, unsigned)
+  add $techmap1146$76.Y (1 bits, unsigned)
+  add $techmap1147$78.Y (1 bits, unsigned)
+  add $techmap1148$80.Y (1 bits, unsigned)
+  add $techmap1149$82.Y (1 bits, unsigned)
+  packed 3 (3) bits / 3 words into adder tree
+  add $techmap1108$1.Y (1 bits, unsigned)
+  add $techmap1109$2.Y (1 bits, unsigned)
+  add $techmap1110$4.Y (1 bits, unsigned)
+  add $techmap1111$6.Y (1 bits, unsigned)
+  add $techmap1112$8.Y (1 bits, unsigned)
+  add $techmap1113$10.Y (1 bits, unsigned)
+  add $techmap1114$12.Y (1 bits, unsigned)
+  packed 3 (3) bits / 3 words into adder tree
+  add \u_blk.x2_0 [3:0] (4 bits, signed)
+  add \u_blk.x2_1 [3:0] (4 bits, signed)
+  add \u_blk.x2_2 [3:0] (4 bits, signed)
+  add \u_blk.x2_3 [3:0] (4 bits, signed)
+  add \u_blk.x2_4 [3:0] (4 bits, signed)
+  add { \u_blk.x0_7 [3] \u_blk.x2_5 [1:0] } (3 bits, signed)
+  add \u_blk.x2_6 [3:0] (4 bits, signed)
+  add \u_blk.x2_7 [3:0] (4 bits, signed)
+Using template $paramod$1d1e68f77481583066c6d429218f48ea9d5739b3\_90_alu for cells of type $alu.
+Using template $paramod\_90_fa\WIDTH=32'00000000000000000000000000000001 for cells of type $fa.
+Using template $paramod\_90_fa\WIDTH=32'00000000000000000000000000000010 for cells of type $fa.
+Using template $paramod$23f56ea6b7973c54155f3568210a97985d342365\_80_xilinx_alu for cells of type $alu.
+Using template $paramod\_90_fa\WIDTH=32'00000000000000000000000000000111 for cells of type $fa.
+Using template $paramod$fc42a7fc01e887180a9a7b1f7235e60024fe9970\_80_xilinx_alu for cells of type $alu.
+Using extmapper simplemap for cells of type $xor.
+Using extmapper simplemap for cells of type $pos.
+No more expansions possible.
+<suppressed ~1895 debug messages>
+
+6. Executing OPT pass (performing simple optimizations).
+
+6.1. Executing OPT_EXPR pass (perform const folding).
+Optimizing module ooc_wrap.
+<suppressed ~249 debug messages>
+
+6.2. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\ooc_wrap'.
+Computing hashes of 1881 cells of `\ooc_wrap'.
+Finding duplicate cells in `\ooc_wrap'.
+Computing hashes of 1844 cells of `\ooc_wrap'.
+Finding duplicate cells in `\ooc_wrap'.
+Computing hashes of 1808 cells of `\ooc_wrap'.
+Finding duplicate cells in `\ooc_wrap'.
+Computing hashes of 1790 cells of `\ooc_wrap'.
+Finding duplicate cells in `\ooc_wrap'.
+Computing hashes of 1766 cells of `\ooc_wrap'.
+Finding duplicate cells in `\ooc_wrap'.
+Computing hashes of 1742 cells of `\ooc_wrap'.
+Finding duplicate cells in `\ooc_wrap'.
+Computing hashes of 1730 cells of `\ooc_wrap'.
+Finding duplicate cells in `\ooc_wrap'.
+Computing hashes of 1724 cells of `\ooc_wrap'.
+Finding duplicate cells in `\ooc_wrap'.
+Computing hashes of 1718 cells of `\ooc_wrap'.
+Finding duplicate cells in `\ooc_wrap'.
+Computing hashes of 1715 cells of `\ooc_wrap'.
+Finding duplicate cells in `\ooc_wrap'.
+<suppressed ~498 debug messages>
+Removed a total of 166 cells.
+
+6.3. Executing OPT_DFF pass (perform DFF optimizations).
+
+6.4. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \ooc_wrap..
+Removed 70 unused cells and 1026 unused wires.
+<suppressed ~71 debug messages>
+
+6.5. Finished fast OPT passes.
+
+7. Executing SYNTH_XILINX pass.
+
+7.1. Executing TECHMAP pass (map to technology primitives).
+
+7.1.1. Executing Verilog-2005 frontend: /home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/techmap.v
+Parsing Verilog input from `/home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/techmap.v' to AST representation.
+Generating RTLIL representation for module `\_90_simplemap_bool_ops'.
+Generating RTLIL representation for module `\_90_simplemap_reduce_ops'.
+Generating RTLIL representation for module `\_90_simplemap_logic_ops'.
+Generating RTLIL representation for module `\_90_simplemap_compare_ops'.
+Generating RTLIL representation for module `\_90_simplemap_various'.
+Generating RTLIL representation for module `\_90_simplemap_registers'.
+Generating RTLIL representation for module `\_90_shift_ops_shr_shl_sshl_sshr'.
+Generating RTLIL representation for module `\_90_shift_shiftx'.
+Generating RTLIL representation for module `\_90_fa'.
+Generating RTLIL representation for module `\_90_lcu_brent_kung'.
+Generating RTLIL representation for module `\_90_alu'.
+Generating RTLIL representation for module `\_90_macc'.
+Generating RTLIL representation for module `\_90_alumacc'.
+Generating RTLIL representation for module `$__div_mod_u'.
+Generating RTLIL representation for module `$__div_mod_trunc'.
+Generating RTLIL representation for module `\_90_div'.
+Generating RTLIL representation for module `\_90_mod'.
+Generating RTLIL representation for module `$__div_mod_floor'.
+Generating RTLIL representation for module `\_90_divfloor'.
+Generating RTLIL representation for module `\_90_modfloor'.
+Generating RTLIL representation for module `\_90_pow'.
+Generating RTLIL representation for module `\_90_demux'.
+Generating RTLIL representation for module `\_90_lut'.
+Generating RTLIL representation for module `$connect'.
+Generating RTLIL representation for module `$input_port'.
+Successfully finished Verilog frontend.
+
+7.1.2. Executing Verilog-2005 frontend: /home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/xilinx/cells_map.v
+Parsing Verilog input from `/home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/xilinx/cells_map.v' to AST representation.
+Generating RTLIL representation for module `$__SHREG_'.
+Generating RTLIL representation for module `$__XILINX_SHREG_'.
+Generating RTLIL representation for module `$__XILINX_MUXF78'.
+Successfully finished Verilog frontend.
+
+7.1.3. Continuing TECHMAP pass.
+No more expansions possible.
+<suppressed ~80 debug messages>
+
+7.2. Executing DFFLEGALIZE pass (convert FFs and LATCHes to types supported by the target).
+
+7.3. Executing TECHMAP pass (map to technology primitives).
+
+7.3.1. Executing Verilog-2005 frontend: /home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/xilinx/ff_map.v
+Parsing Verilog input from `/home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/xilinx/ff_map.v' to AST representation.
+Generating RTLIL representation for module `$_DFFE_NP0P_'.
+Generating RTLIL representation for module `$_DFFE_PP0P_'.
+Generating RTLIL representation for module `$_DFFE_NP1P_'.
+Generating RTLIL representation for module `$_DFFE_PP1P_'.
+Generating RTLIL representation for module `$_DFFSRE_NPPP_'.
+Generating RTLIL representation for module `$_DFFSRE_PPPP_'.
+Generating RTLIL representation for module `$_SDFFE_NP0P_'.
+Generating RTLIL representation for module `$_SDFFE_PP0P_'.
+Generating RTLIL representation for module `$_SDFFE_NP1P_'.
+Generating RTLIL representation for module `$_SDFFE_PP1P_'.
+Generating RTLIL representation for module `$_DLATCH_NP0_'.
+Generating RTLIL representation for module `$_DLATCH_PP0_'.
+Generating RTLIL representation for module `$_DLATCH_NP1_'.
+Generating RTLIL representation for module `$_DLATCH_PP1_'.
+Generating RTLIL representation for module `$_DLATCH_NPP_'.
+Generating RTLIL representation for module `$_DLATCH_PPP_'.
+Successfully finished Verilog frontend.
+
+7.3.2. Continuing TECHMAP pass.
+Using template $paramod$_SDFFE_PP0P_\_TECHMAP_WIREINIT_Q_=1'x for cells of type $_SDFFE_PP0P_.
+Using template $paramod$_SDFFE_PP1P_\_TECHMAP_WIREINIT_Q_=1'x for cells of type $_SDFFE_PP1P_.
+No more expansions possible.
+<suppressed ~78 debug messages>
+
+7.4. Executing OPT_EXPR pass (perform const folding).
+Optimizing module ooc_wrap.
+
+7.5. Executing Verilog-2005 frontend: /home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/xilinx/abc9_model.v
+Parsing Verilog input from `/home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/xilinx/abc9_model.v' to AST representation.
+Generating RTLIL representation for module `$__XILINX_MUXF78'.
+Successfully finished Verilog frontend.
+
+7.6. Executing ABC9 pass.
+
+7.6.1. Executing ABC9_OPS pass (helper functions for ABC9).
+
+7.6.2. Executing ABC9_OPS pass (helper functions for ABC9).
+
+7.6.3. Executing SCC pass (detecting logic loops).
+Found 0 SCCs in module ooc_wrap.
+Found 0 SCCs.
+
+7.6.4. Executing ABC9_OPS pass (helper functions for ABC9).
+
+7.6.5. Executing TECHMAP pass (map to technology primitives).
+
+7.6.5.1. Executing Verilog-2005 frontend: /home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/techmap.v
+Parsing Verilog input from `/home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/techmap.v' to AST representation.
+Generating RTLIL representation for module `\_90_simplemap_bool_ops'.
+Generating RTLIL representation for module `\_90_simplemap_reduce_ops'.
+Generating RTLIL representation for module `\_90_simplemap_logic_ops'.
+Generating RTLIL representation for module `\_90_simplemap_compare_ops'.
+Generating RTLIL representation for module `\_90_simplemap_various'.
+Generating RTLIL representation for module `\_90_simplemap_registers'.
+Generating RTLIL representation for module `\_90_shift_ops_shr_shl_sshl_sshr'.
+Generating RTLIL representation for module `\_90_shift_shiftx'.
+Generating RTLIL representation for module `\_90_fa'.
+Generating RTLIL representation for module `\_90_lcu_brent_kung'.
+Generating RTLIL representation for module `\_90_alu'.
+Generating RTLIL representation for module `\_90_macc'.
+Generating RTLIL representation for module `\_90_alumacc'.
+Generating RTLIL representation for module `$__div_mod_u'.
+Generating RTLIL representation for module `$__div_mod_trunc'.
+Generating RTLIL representation for module `\_90_div'.
+Generating RTLIL representation for module `\_90_mod'.
+Generating RTLIL representation for module `$__div_mod_floor'.
+Generating RTLIL representation for module `\_90_divfloor'.
+Generating RTLIL representation for module `\_90_modfloor'.
+Generating RTLIL representation for module `\_90_pow'.
+Generating RTLIL representation for module `\_90_demux'.
+Generating RTLIL representation for module `\_90_lut'.
+Generating RTLIL representation for module `$connect'.
+Generating RTLIL representation for module `$input_port'.
+Successfully finished Verilog frontend.
+
+7.6.5.2. Continuing TECHMAP pass.
+No more expansions possible.
+<suppressed ~506 debug messages>
+
+7.6.6. Executing OPT pass (performing simple optimizations).
+
+7.6.6.1. Executing OPT_EXPR pass (perform const folding).
+
+7.6.6.2. Executing OPT_MERGE pass (detect identical cells).
+Removed a total of 0 cells.
+
+7.6.6.3. Executing OPT_MUXTREE pass (detect dead branches in mux trees).
+Removed 0 multiplexer ports.
+
+7.6.6.4. Executing OPT_REDUCE pass (consolidate $*mux and $reduce_* inputs).
+Performed a total of 0 changes.
+
+7.6.6.5. Executing OPT_MERGE pass (detect identical cells).
+Removed a total of 0 cells.
+
+7.6.6.6. Executing OPT_DFF pass (perform DFF optimizations).
+
+7.6.6.7. Executing OPT_CLEAN pass (remove unused cells and wires).
+
+7.6.6.8. Executing OPT_EXPR pass (perform const folding).
+
+7.6.6.9. Finished fast OPT passes. (There is nothing left to do.)
+
+7.6.7. Executing TECHMAP pass (map to technology primitives).
+
+7.6.7.1. Executing Verilog-2005 frontend: /home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/abc9_map.v
+Parsing Verilog input from `/home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/abc9_map.v' to AST representation.
+Lexer warning: The SystemVerilog keyword `bit' (at /home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/abc9_map.v:35) is not recognized unless read_verilog is called with -sv!
+Generating RTLIL representation for module `$__ABC9_BARRIER_MAP'.
+Successfully finished Verilog frontend.
+
+7.6.7.2. Continuing TECHMAP pass.
+No more expansions possible.
+<suppressed ~3 debug messages>
+
+7.6.8. Executing Verilog-2005 frontend: /home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/abc9_model.v
+Parsing Verilog input from `/home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/abc9_model.v' to AST representation.
+Generating RTLIL representation for module `$__ABC9_DELAY'.
+Generating RTLIL representation for module `$__ABC9_BARRIER'.
+Generating RTLIL representation for module `$__ABC9_SCC_BREAKER'.
+Generating RTLIL representation for module `$__DFF_N__$abc9_flop'.
+Generating RTLIL representation for module `$__DFF_P__$abc9_flop'.
+Successfully finished Verilog frontend.
+
+7.6.9. Executing ABC9_OPS pass (helper functions for ABC9).
+
+7.6.10. Executing ABC9_OPS pass (helper functions for ABC9).
+
+7.6.11. Executing ABC9_OPS pass (helper functions for ABC9).
+<suppressed ~2 debug messages>
+
+7.6.12. Executing AIGMAP pass (map logic to AIG).
+Module ooc_wrap: replaced 1140 cells with 7355 new cells, skipped 505 cells.
+  replaced 4 cell types:
+     690 $_MUX_
+     213 $_OR_
+      14 $_XNOR_
+     223 $_XOR_
+  not replaced 5 cell types:
+     388 $_AND_
+      64 $_NOT_
+      41 FDRE
+       1 FDSE
+      11 CARRY8
+
+7.6.12.1. Executing ABC9_OPS pass (helper functions for ABC9).
+
+7.6.12.2. Executing ABC9_OPS pass (helper functions for ABC9).
+
+7.6.12.3. Executing XAIGER2 backend.
+<suppressed ~63 debug messages>
+Extracted 3509 AND gates and 0 wires from module `ooc_wrap' to a netlist network with 243 inputs and 173 outputs.
+
+7.6.12.4. Executing ABC9_EXE pass (technology mapping using ABC9).
+
+7.6.12.5. Executing ABC9.
+Running ABC command: "<yosys-exe-dir>/yosys-abc" -s -f <abc-temp-dir>/abc.script 2>&1
+ABC: ======== ABC command line "source <abc-temp-dir>/abc.script"
+ABC: + read_lut <abc-temp-dir>/input.lut 
+ABC: + read_box <abc-temp-dir>/input.box 
+ABC: + &read <abc-temp-dir>/input.xaig 
+ABC: + &ps 
+ABC: <abc-temp-dir>/input : i/o =    243/    173  and =    2685  lev =   30 (8.82)  mem = 0.04 MB  box = 0  bb = 0
+ABC: + &scorr 
+ABC: Warning: The network is combinational.
+ABC: + &sweep 
+ABC: + &dc2 
+ABC: + &dch -f -r 
+ABC: + &ps 
+ABC: <abc-temp-dir>/input : i/o =    243/    173  and =    2917  lev =   26 (6.65)  mem = 0.04 MB  ch =  409  box = 0  bb = 0
+ABC: cst =       0  cls =    362  lit =     409  unused =    2389  proof =     0
+ABC: + &if -W 300 -v 
+ABC: K = 8. Memory (bytes): Truth =    0. Cut =   80. Obj =  160. Set =  816. CutMin = no
+ABC: Node =    2917.  Ch =   362.  Total mem =    0.56 MB. Peak cut mem =    0.13 MB.
+ABC: P:  Del = 3257.00.  Ar =    1422.0.  Edge =     1659.  Cut =    70147.  T =     0.03 sec
+ABC: P:  Del = 3226.00.  Ar =    1393.0.  Edge =     1655.  Cut =    70091.  T =     0.02 sec
+ABC: P:  Del = 3226.00.  Ar =    1296.0.  Edge =     1621.  Cut =    86282.  T =     0.03 sec
+ABC: F:  Del = 3199.00.  Ar =    1154.0.  Edge =     1484.  Cut =    70971.  T =     0.02 sec
+ABC: A:  Del = 3199.00.  Ar =    1093.0.  Edge =     1409.  Cut =    72221.  T =     0.03 sec
+ABC: A:  Del = 3199.00.  Ar =    1091.0.  Edge =     1405.  Cut =    72426.  T =     0.03 sec
+ABC: Total time =     0.17 sec
+ABC: + &write -n <abc-temp-dir>/output.aig 
+ABC: + &mfs 
+ABC: + &ps -l 
+ABC: <abc-temp-dir>/input : i/o =    243/    173  and =    4162  lev =   32 (6.79)  mem = 0.06 MB  box = 0  bb = 0
+ABC: Mapping (K=6)  :  lut =    301  edge =    1369  lev =    6 (1.58)  mem = 0.02 MB
+ABC: LUT = 301 : 2=33 11.0 %  3=44 14.6 %  4=45 15.0 %  5=83 27.6 %  6=96 31.9 %  Ave = 4.55
+ABC: + &write -n <abc-temp-dir>/output.aig 
+ABC: + &verify 
+ABC: Networks are equivalent.  Time =     0.15 sec
+ABC: + time 
+ABC: elapse: 1.00 seconds, total: 1.00 seconds
+
+7.6.12.6. Executing AIGER frontend.
+<suppressed ~10 debug messages>
+Removed 7302 unused cells and 7622 unused wires.
+
+7.6.12.7. Executing ABC_OPS_REINTEGRATE pass (reintegrate ABC mapped design into module).
+ABC RESULTS:              $lut cells:      301
+ABC RESULTS:           input signals:       37
+ABC RESULTS:          output signals:        2
+<suppressed ~416 debug messages>
+Removing temp directory.
+
+7.6.13. Executing TECHMAP pass (map to technology primitives).
+
+7.6.13.1. Executing Verilog-2005 frontend: /home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/abc9_unmap.v
+Parsing Verilog input from `/home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/abc9_unmap.v' to AST representation.
+Generating RTLIL representation for module `$__DFF_x__$abc9_flop'.
+Generating RTLIL representation for module `$__ABC9_SCC_BREAKER'.
+Generating RTLIL representation for module `$__ABC9_BARRIER'.
+Successfully finished Verilog frontend.
+
+7.6.13.2. Continuing TECHMAP pass.
+No more expansions possible.
+<suppressed ~6 debug messages>
+Removed 54 unused cells and 464 unused wires.
+
+7.7. Executing XILINX_SRL pass (Xilinx shift register extraction).
+
+7.8. Executing TECHMAP pass (map to technology primitives).
+
+7.8.1. Executing Verilog-2005 frontend: /home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/xilinx/lut_map.v
+Parsing Verilog input from `/home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/xilinx/lut_map.v' to AST representation.
+Generating RTLIL representation for module `$lut'.
+Successfully finished Verilog frontend.
+
+7.8.2. Executing Verilog-2005 frontend: /home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/xilinx/cells_map.v
+Parsing Verilog input from `/home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/xilinx/cells_map.v' to AST representation.
+Generating RTLIL representation for module `$__SHREG_'.
+Generating RTLIL representation for module `$__XILINX_SHREG_'.
+Generating RTLIL representation for module `$__XILINX_MUXF78'.
+Successfully finished Verilog frontend.
+
+7.8.3. Continuing TECHMAP pass.
+Using template $paramod$c421a313465d59f6fae78fe792756c2bd338e712$lut for cells of type $lut.
+Using template $paramod$a370aec449674136859e464f61a0ade26622c22d$lut for cells of type $lut.
+Using template $paramod$5a3a63f1c8f48b2f618559598289c18457847ca8$lut for cells of type $lut.
+Using template $paramod$lut\WIDTH=32'00000000000000000000000000000010\LUT=4'0001 for cells of type $lut.
+Using template $paramod$e996f509689aa46af24b77199e7530b6f91c6833$lut for cells of type $lut.
+Using template $paramod$b4fac9319ebf174b1cc9d2955599fdb7578184ce$lut for cells of type $lut.
+Using template $paramod$c74b883628b775ce8249e73074fbc7cbf32cb117$lut for cells of type $lut.
+Using template $paramod$d25ec5f38498808c7a785cdfa4cd588dbeb372ee$lut for cells of type $lut.
+Using template $paramod$ece066613291ac0b9b49a606ce1b2c75915d25a1$lut for cells of type $lut.
+Using template $paramod$lut\WIDTH=32'00000000000000000000000000000011\LUT=8'01101001 for cells of type $lut.
+Using template $paramod$060faf73dac3f0f5b3b871ccd746377595a4bb9b$lut for cells of type $lut.
+Using template $paramod$e51a8a571bee774247b38f52d6e85fd62ae52cea$lut for cells of type $lut.
+Using template $paramod$bc297165cf261ff5479fcf02956cdb5a1237a0f0$lut for cells of type $lut.
+Using template $paramod$1a0529405c7cbebe0369cbfe9437b53a214a2aa3$lut for cells of type $lut.
+Using template $paramod$3d975a15b4e3893f59948f1bfa34b529ffd8e174$lut for cells of type $lut.
+Using template $paramod$91acec2d1df05f87fb9117f6f279d147cbcb1737$lut for cells of type $lut.
+Using template $paramod$lut\WIDTH=32'00000000000000000000000000000010\LUT=4'0100 for cells of type $lut.
+Using template $paramod$31105cccbeaf82345d326a6d71daafcf4b0483f9$lut for cells of type $lut.
+Using template $paramod$469aecdb32e45931e489bac12ffaf2198d246aca$lut for cells of type $lut.
+Using template $paramod$57668a15e1f34bc4bb3145c527aeaee0c879c1cf$lut for cells of type $lut.
+Using template $paramod$d39a4d9c36b25e1a7b6252d60a75d29e1ffd479a$lut for cells of type $lut.
+Using template $paramod$bb554bf389425341cf04830be11674603aad0b25$lut for cells of type $lut.
+Using template $paramod$53f24c3ff349da3555c8cb7a31e4eecfd8c0f63d$lut for cells of type $lut.
+Using template $paramod$lut\WIDTH=32'00000000000000000000000000000010\LUT=4'0110 for cells of type $lut.
+Using template $paramod$cbeafb1cf5baaeba7e03d6d2a6e5bc2575285c3e$lut for cells of type $lut.
+Using template $paramod$58672e32fb5e832ee36438fb6e57fa85955b2c0a$lut for cells of type $lut.
+Using template $paramod$ac23c59b616c6ce9db5f5d21eb3d038f842ba449$lut for cells of type $lut.
+Using template $paramod$87e31409c564e47a9b7cfc192aa94a8d4d56db8d$lut for cells of type $lut.
+Using template $paramod$lut\WIDTH=32'00000000000000000000000000000011\LUT=8'00000001 for cells of type $lut.
+Using template $paramod$lut\WIDTH=32'00000000000000000000000000000011\LUT=8'01111110 for cells of type $lut.
+Using template $paramod$2649632427059f17a6997e51dd7f224fd1802b32$lut for cells of type $lut.
+Using template $paramod$03d9cc1b778408e5eb599d70a22f637fe8b8eb8f$lut for cells of type $lut.
+Using template $paramod$4fe6a3281eb1350c28c8b8aa49651464ca813f1e$lut for cells of type $lut.
+Using template $paramod$0f7c70b824a636f00afefd9a747e78b08a7e6775$lut for cells of type $lut.
+Using template $paramod$bc7aa9c0fee98463479a947b7c6ed3fed0771acc$lut for cells of type $lut.
+Using template $paramod$47d0edfe341fe046c72eef700ede50c917cdee7d$lut for cells of type $lut.
+Using template $paramod$1aef76f57bd052f9b4b2062e0acd2de3f636453b$lut for cells of type $lut.
+Using template $paramod$e31880c90c8bf16199ef029cf88f0dc71ddb120d$lut for cells of type $lut.
+Using template $paramod$lut\WIDTH=32'00000000000000000000000000000010\LUT=4'1001 for cells of type $lut.
+Using template $paramod$768f64741f5478189ad92aeee66f925aa7debdcc$lut for cells of type $lut.
+Using template $paramod$b54a550305ff0b16babf0da83c332e44f20946ce$lut for cells of type $lut.
+Using template $paramod$0496591785358d34b1e400d8a9d714a7140a7efb$lut for cells of type $lut.
+Using template $paramod$64331ed58cda792625610c3d747dc0bf21c31750$lut for cells of type $lut.
+Using template $paramod$59fef476587681a978a6c2236ffcd178f550d09d$lut for cells of type $lut.
+Using template $paramod$e14d792672a5771204a91a0b293f53ac96f2e4c3$lut for cells of type $lut.
+Using template $paramod$30dc676e2187515a38efcb26c48b36f8d7fc88c5$lut for cells of type $lut.
+Using template $paramod$c9d3b8bf9c20bc6b5d89660bfa9ef2ffce5b11f5$lut for cells of type $lut.
+Using template $paramod$51107dce1fd678fcc2620069ba81c036993154c7$lut for cells of type $lut.
+Using template $paramod$0529cc0147a35893cbbe43fc9de4a9c70a7d8f88$lut for cells of type $lut.
+Using template $paramod$658b9ed803f0d3d335616d3858b53e0a2522f1e8$lut for cells of type $lut.
+Using template $paramod$984a9399219ce76d8ba4b41dda104bf115d67de9$lut for cells of type $lut.
+Using template $paramod$00073666503cbc2cacf345135752673df48b9b6c$lut for cells of type $lut.
+Using template $paramod$lut\WIDTH=32'00000000000000000000000000000011\LUT=8'10001110 for cells of type $lut.
+Using template $paramod$e13bd59cee6c4a0e91d22054d0fc8166b5871d87$lut for cells of type $lut.
+Using template $paramod$lut\WIDTH=32'00000000000000000000000000000011\LUT=8'10010110 for cells of type $lut.
+Using template $paramod$7d165cb728657c349faa0bb1315e239687975a17$lut for cells of type $lut.
+Using template $paramod$b95081d61c9071f1fafce2e6a4c9e1b7697e9b8b$lut for cells of type $lut.
+Using template $paramod$lut\WIDTH=32'00000000000000000000000000000011\LUT=8'10101100 for cells of type $lut.
+Using template $paramod$bdf82a72818ac21130294251d23a0380778fdd9e$lut for cells of type $lut.
+Using template $paramod$d2eecb6932e2856b736b944e7bb586c7a5b1cc7d$lut for cells of type $lut.
+Using template $paramod$437a3d81382e1cff7cce6b0e37ef6c1f64b4b168$lut for cells of type $lut.
+Using template $paramod$49ed91a980d2defd1bc035780d520d21372765d9$lut for cells of type $lut.
+Using template $paramod$8466aae7f3132f822e70bbd8738850d820750479$lut for cells of type $lut.
+Using template $paramod$604bb7075b94c470b4d44995e226109e8d7d7b4e$lut for cells of type $lut.
+Using template $paramod$c3df6995b04aeddccc3101af143f31d83f23e19b$lut for cells of type $lut.
+Using template $paramod$ec44f171e50a074412e7ae834666f5e09ce4759e$lut for cells of type $lut.
+Using template $paramod$abfb320359a163eca0118d6636d6bbabd6bb9f78$lut for cells of type $lut.
+Using template $paramod$718208d0d7c444e4924e09c40d40e7ac2bd4dfe6$lut for cells of type $lut.
+Using template $paramod$f7c86032a4a1be6bee51b1b7d2a46c9e81b3e9de$lut for cells of type $lut.
+Using template $paramod$795af7307056814f67bf1fcb998bf50d946c6449$lut for cells of type $lut.
+Using template $paramod$4a770911a2c1ee57f5c1bd77e6647148be6fb6c6$lut for cells of type $lut.
+Using template $paramod$0b7484a915039adad62bbff7270aad64a6dffc4e$lut for cells of type $lut.
+Using template $paramod$1465ac7546c619413eaef8c368f2eec3ad4a0fba$lut for cells of type $lut.
+Using template $paramod$6be11d311165ee0a20d81bbcf5137507b129d985$lut for cells of type $lut.
+Using template $paramod$14d3d27007296ca557f517d286d45427d04ae535$lut for cells of type $lut.
+Using template $paramod$e85c5329c43944a397beb923ab738d78ef960248$lut for cells of type $lut.
+Using template $paramod$f5d1c5d5f77f45ffe17befc28ba399e703b6f0a5$lut for cells of type $lut.
+Using template $paramod$fd904e9e35cfd343a9df248824bd3f1408724879$lut for cells of type $lut.
+Using template $paramod$689c7d5ae2b619a2a66a6251d3d3fee581752a4e$lut for cells of type $lut.
+Using template $paramod$7fc0bb54be9f68a138c3c9d47e2a0a81c08e4a4d$lut for cells of type $lut.
+Using template $paramod$b4bb10c8f9bc0647e88af26d01f43b821af9e5b4$lut for cells of type $lut.
+Using template $paramod$97ac0fac8d60fb0cc473b96894022771aab4b39f$lut for cells of type $lut.
+Using template $paramod$91257ba0df26286447d0e01745433dc099075f0b$lut for cells of type $lut.
+Using template $paramod$f618a5a913b02ebcad38592debc46e7def9bfaa9$lut for cells of type $lut.
+Using template $paramod$4948914169249c3d46720856e75fb9759d00c818$lut for cells of type $lut.
+Using template $paramod$4ae885916e01f4745aeb5a64c842966434ea4ad4$lut for cells of type $lut.
+Using template $paramod$4b91c767832c01a9476f9b9c5b7e10244519aa96$lut for cells of type $lut.
+Using template $paramod$0d67db4510d7f12334b0bfee9d6825e582cfb014$lut for cells of type $lut.
+Using template $paramod$d421ac8a7cdaff1677b4f8d7b72295fd5e9e8bf7$lut for cells of type $lut.
+Using template $paramod$9c22ae69fe7154d872b54c4f98b9ac143f79a3b0$lut for cells of type $lut.
+Using template $paramod$0de1ef8680f68890c26b919044c82ee88f5f20cd$lut for cells of type $lut.
+Using template $paramod$e7b0817cc70d4987a9cdb2b2a36c7ed6235222fe$lut for cells of type $lut.
+Using template $paramod$bbd43a1ad9eee435dce9dcf8189afe809d039cf4$lut for cells of type $lut.
+Using template $paramod$lut\WIDTH=32'00000000000000000000000000000011\LUT=8'01110001 for cells of type $lut.
+Using template $paramod$086937f2e69afb7c662e45e33f5a7616aa818da8$lut for cells of type $lut.
+Using template $paramod$7214be581bb52fd975e00178baea49ae29e3daac$lut for cells of type $lut.
+Using template $paramod$a07f47a4fba5d34b25212dbb40e80f06766b1059$lut for cells of type $lut.
+Using template $paramod$c3e1dc7b9e539f115f21c9fa61c94c4df05b91c1$lut for cells of type $lut.
+Using template $paramod$704cad882e2bedddf5c55ef18de55c67afe1e0ec$lut for cells of type $lut.
+Using template $paramod$fffc8a4fa772fcb0b4ac17f4ad88a8e547dc3dee$lut for cells of type $lut.
+Using template $paramod$lut\WIDTH=32'00000000000000000000000000000011\LUT=8'11101000 for cells of type $lut.
+Using template $paramod$893ee5085fccd6d491bf5b3e5b8bf04480b430c7$lut for cells of type $lut.
+Using template $paramod$378ecbde00f4117788636662253c3013c23b0149$lut for cells of type $lut.
+Using template $paramod$e5cde5e04722a3934a98eaf0207e0774a670d088$lut for cells of type $lut.
+Using template $paramod$8bda1f127fa4e8e6a0aed4b4606bbca88d5cdc73$lut for cells of type $lut.
+Using template $paramod$20798777255c214e32de3304ce8faa1fdfa2f474$lut for cells of type $lut.
+Using template $paramod$332b3896547ce22d18f42a851955304d9840b692$lut for cells of type $lut.
+Using template $paramod$8252e6939c51c1688d997d8bc432cb864757ecca$lut for cells of type $lut.
+Using template $paramod$1d34d71a8ecd2e48edbb2d02c2e9bb7bd13fbace$lut for cells of type $lut.
+Using template $paramod$af790ee775a1bab358411564928ccd664e2aca67$lut for cells of type $lut.
+Using template $paramod$5bbb4471b193f8470fda400f32a1ccf4647df878$lut for cells of type $lut.
+Using template $paramod$cb5c892dc9a8ded2f17b9413b8f827ae36e4608d$lut for cells of type $lut.
+Using template $paramod$004c2ee6d6e26aac15a4fb87ff67d034fe56cd46$lut for cells of type $lut.
+Using template $paramod$90ad97a58e4429e7a495ecb140ced5a53d9d3753$lut for cells of type $lut.
+Using template $paramod$1238e7f409f926ad07f95ebbb49b37cc74c3e513$lut for cells of type $lut.
+Using template $paramod$1907847012eafb29f9047146ccb3ab4e4e5ed7e7$lut for cells of type $lut.
+Using template $paramod$13d108afe4363c510a9d5233e28b78da592eac62$lut for cells of type $lut.
+Using template $paramod$bc0681f5205e60533682e8f398e63c6eb2fbd1fe$lut for cells of type $lut.
+Using template $paramod$0dd26dc33db10671dd5dbd19fcd0df2680097d6e$lut for cells of type $lut.
+Using template $paramod$lut\WIDTH=32'00000000000000000000000000000010\LUT=4'1000 for cells of type $lut.
+Using template $paramod$3378b27a4d9a8fc7c653cbac227c32aaef56549d$lut for cells of type $lut.
+Using template $paramod$5212b1aa5874c059f9a080952f67ef32ad4da89f$lut for cells of type $lut.
+Using template $paramod$6bd94dd097da3589e3ce5a7c3c95fe36e572da2f$lut for cells of type $lut.
+Using template $paramod$d37cdb3cd49da58bce17c576a4b88d8e4b5d2a0a$lut for cells of type $lut.
+Using template $paramod$69c5f2b3c820a1c6b442ed83300947871cb9733c$lut for cells of type $lut.
+Using template $paramod$e6842f3a141b597b07cb8aa15777b1d9ca3baa10$lut for cells of type $lut.
+Using template $paramod$lut\WIDTH=32'00000000000000000000000000000011\LUT=8'01001101 for cells of type $lut.
+Using template $paramod$lut\WIDTH=32'00000000000000000000000000000011\LUT=8'00001000 for cells of type $lut.
+Using template $paramod$23e15d191c2470dee751240fd8b7b9042fc605b7$lut for cells of type $lut.
+Using template $paramod$32434e309d031a098db03449cde576260aab8500$lut for cells of type $lut.
+Using template $paramod$84f32a028b506c480772a48b6ee7eea5fe2414c1$lut for cells of type $lut.
+Using template $paramod$50d2b6d11a891b53f6db397c9fe773bbe22e0c6d$lut for cells of type $lut.
+Using template $paramod$e2e5b001b6b97af9a189dcdead49aaa9fc6a7d92$lut for cells of type $lut.
+Using template $paramod$2f2b9b736b3ea0a0b958cef6434418c8f6a25d02$lut for cells of type $lut.
+Using template $paramod$c508ffccf3cb0d44491eb1a488b3e92b1375f011$lut for cells of type $lut.
+Using template $paramod$c6adf03dee385438f32eea49effa227a59d9f2e8$lut for cells of type $lut.
+Using template $paramod$499371954fded9c091fdcaac21aa4945f2725c09$lut for cells of type $lut.
+Using template $paramod$b559ffca04a6d3d941b41f8666fc6822fec62db1$lut for cells of type $lut.
+Using template $paramod$4282def8dbd6df3d1248ad282c629bee684502c2$lut for cells of type $lut.
+Using template $paramod$011998c9bc40e79d3b9378981668ce5683b7cfe4$lut for cells of type $lut.
+Using template $paramod$9c5f0852c8ff4ca4df3ebcced9191fdcf33247ac$lut for cells of type $lut.
+Using template $paramod$1791eb567e05f33460288b473e5ebb393b0dde22$lut for cells of type $lut.
+Using template $paramod$eab8c2e20ad6848564bec45c7148558972138f5b$lut for cells of type $lut.
+Using template $paramod$7a7a6f06db59d75c186fabd7eee6af458a3ea02b$lut for cells of type $lut.
+Using template $paramod$040d3b085581682ce6d2d3f00a50b12eb1334e21$lut for cells of type $lut.
+Using template $paramod$045f74f008d807ee443a221e16b355979e3f3b40$lut for cells of type $lut.
+Using template $paramod$06dc9b79beb9f219cca83b20f5804b3d2e6d875d$lut for cells of type $lut.
+Using template $paramod$f8058de7cc5ee0da83b2dc25bf8abb8e0c33b395$lut for cells of type $lut.
+Using template $paramod$lut\WIDTH=32'00000000000000000000000000000011\LUT=8'10110010 for cells of type $lut.
+Using template $paramod$fbd3b3a5b872ff9ffa74cfd9354b81bd330d83f4$lut for cells of type $lut.
+Using template $paramod$01c2ba0d5fa454e49f20c5667ef7cfab937f9ed6$lut for cells of type $lut.
+Using template $paramod$48858a0cdda2de6934604a272e0a7e64a67fda48$lut for cells of type $lut.
+Using template $paramod$83dabd59c68abf1e122a937262ad80be13ed95ee$lut for cells of type $lut.
+Using template $paramod$lut\WIDTH=32'00000000000000000000000000000011\LUT=8'10111101 for cells of type $lut.
+Using template $paramod$lut\WIDTH=32'00000000000000000000000000000011\LUT=8'10001010 for cells of type $lut.
+Using template $paramod$ad9025ab34c9fd2fd77e8fb373d219ca9ef3a3ef$lut for cells of type $lut.
+Using template $paramod$9468d8256ce8791d915308c01883ef78c3d8bc5c$lut for cells of type $lut.
+Using template $paramod$f5c97e291c8b48d9f1b4239d871ab7639e5a24ac$lut for cells of type $lut.
+Using template $paramod$39e0dd7f2b68c7aff80d202179adc21353613c3b$lut for cells of type $lut.
+Using template $paramod$a1cfcd4cfde4f87ededabb98eed64a2f87b397a8$lut for cells of type $lut.
+Using template $paramod$b284c41ca4fa8bf8a0de658ade1bae827b5954b8$lut for cells of type $lut.
+Using template $paramod$0a3213834bc7c5e845703037354c6e911cc7ecbf$lut for cells of type $lut.
+Using template $paramod$cbc28ae8c2876fb22de6bccbf9bc0b5cf6c25284$lut for cells of type $lut.
+Using template $paramod$9cc51547ab44a72dd506ee5bb84a864365a103da$lut for cells of type $lut.
+Using template $paramod$039a9092c02ec45f7a0f867c2ff5145b2440efdf$lut for cells of type $lut.
+Using template $paramod$b065511d7fbb564c1b6f7fa3d82eb7be0fe89ba2$lut for cells of type $lut.
+Using template $paramod$f85f1073c412d406200a6a72283f918c8b751314$lut for cells of type $lut.
+Using template $paramod$3ea3d429d118d4edd4c811b101578fcb8af50f3e$lut for cells of type $lut.
+Using template $paramod$lut\WIDTH=32'00000000000000000000000000000011\LUT=8'00001101 for cells of type $lut.
+Using template $paramod$55be522c0752d4f7a7de8051cb5089df2bf00873$lut for cells of type $lut.
+Using template $paramod$3c2da501aadd0ccd552be6e0ba1a020ffdd978ee$lut for cells of type $lut.
+Using template $paramod$9f1dd8e020bc96b582b31a2911d15e45c9915f56$lut for cells of type $lut.
+Using template $paramod$660a72f63d46a844bb0ddab189b65027c878fc6b$lut for cells of type $lut.
+Using template $paramod$4f4d1680d54db3516bbcea568e33ff376c9eaa95$lut for cells of type $lut.
+Using template $paramod$68051d0fd4ed1ac31f92447f982401d8dca70f02$lut for cells of type $lut.
+Using template $paramod$582348604f17b85e062f7e6252d1de551a95dda9$lut for cells of type $lut.
+Using template $paramod$ac17a778f63217deddb25c57d3034a90deda1fd9$lut for cells of type $lut.
+Using template $paramod$5a5fb2534773216f1938236ae2d4b9c1595c94cd$lut for cells of type $lut.
+Using template $paramod$c829e5b372049b4458e7cd58eec50ea6d071d522$lut for cells of type $lut.
+Using template $paramod$5a227c0464c902f97910ba1170f5327bc4499578$lut for cells of type $lut.
+Using template $paramod$lut\WIDTH=32'00000000000000000000000000000010\LUT=4'0010 for cells of type $lut.
+Using template $paramod$24cd413af0e0683bfa3b56f15cab7c1d4450bc4f$lut for cells of type $lut.
+Using template $paramod$9c7062d08d05cc814ed819aeedec3ea0e21746ec$lut for cells of type $lut.
+Using template $paramod$5e7f06e422b6135409f1c419de23f855b2eee641$lut for cells of type $lut.
+Using template $paramod$d286364d4211b33966cdeb0f90676aae8bca0c6b$lut for cells of type $lut.
+Using template $paramod$53e3462453d571d93686de391da8175710cf9197$lut for cells of type $lut.
+Using template $paramod$753539fb7362110e550ee31653173999ffd8d894$lut for cells of type $lut.
+Using template $paramod$0c434f9c5fb3cd51a1875441260afdcdbdd4a2b7$lut for cells of type $lut.
+Using template $paramod$7d0b80935f128b11302b34dca62317fa56453c48$lut for cells of type $lut.
+Using template $paramod$8ef71f8116fb0652bf4f3441e39ede020070de7a$lut for cells of type $lut.
+Using template $paramod$fb6c80dbeba729bfb8de5f0111ac74e6985d3091$lut for cells of type $lut.
+Using template $paramod$64218f23bfe942d9d88a9d438fb4f2339f461bf5$lut for cells of type $lut.
+Using template $paramod$54712204045869cefccec1703442c955c61881e8$lut for cells of type $lut.
+Using template $paramod$8538cdb9ceba630a1ccbf144613e8f11ee5c8b77$lut for cells of type $lut.
+Using template $paramod$lut\WIDTH=32'00000000000000000000000000000011\LUT=8'11111110 for cells of type $lut.
+Using template $paramod$5b13d2ee598c87cdbe912286a35c6fd102e2087c$lut for cells of type $lut.
+Using template $paramod$f1233391454a86d4fb54770514703e3e207d82bf$lut for cells of type $lut.
+Using template $paramod$lut\WIDTH=32'00000000000000000000000000000010\LUT=4'1110 for cells of type $lut.
+Using template $paramod$bb4fff1cc3b827238aa40993cafede1c5beecbe3$lut for cells of type $lut.
+Using template $paramod$130f5045b6e528b5c232efc6055156367402a4c4$lut for cells of type $lut.
+Using template $paramod$205dc366d9c4ea72174d7f893965d8da6790b5e9$lut for cells of type $lut.
+Using template $paramod$21a9cf1c7cffed4ea7970972274e8bcced7c7005$lut for cells of type $lut.
+Using template $paramod$9b6739e3d73ed6fe86a0cede7c571a014ba58e00$lut for cells of type $lut.
+Using template $paramod$41a9017c3cf386202f51048036dec79f710305a2$lut for cells of type $lut.
+Using template $paramod$f129f3a3b0ff9d33f65ca71643a88d93387ab6d8$lut for cells of type $lut.
+Using template $paramod$lut\WIDTH=32'00000000000000000000000000000011\LUT=8'11111000 for cells of type $lut.
+Using template $paramod$563ee6d29cc26d771cb216b26387790427cb8af8$lut for cells of type $lut.
+Using template $paramod$dbc2e2a63c1bfb6a50442b3084dc819d09cb188d$lut for cells of type $lut.
+Using template $paramod$cad3ab7c17c8558bab788a7b2a0350e201b887ee$lut for cells of type $lut.
+Using template $paramod$9640380942618015231dc80e07fe9e6281ac216a$lut for cells of type $lut.
+Using template $paramod$a5c066b4559019fef2ae02f2bf745a22023ed13a$lut for cells of type $lut.
+Using template $paramod$2aecb9eda3cbdb5d86b5387bb67a5b722cd5e1d3$lut for cells of type $lut.
+Using template $paramod$e5c20cfae6959d87de0a72f975593ff9bc61c729$lut for cells of type $lut.
+Using template $paramod$lut\WIDTH=32'00000000000000000000000000000011\LUT=8'11101010 for cells of type $lut.
+Using template $paramod$lut\WIDTH=32'00000000000000000000000000000011\LUT=8'00011010 for cells of type $lut.
+Using template $paramod$b86f5186f962353d2f0053dda25fbff0ac6595bd$lut for cells of type $lut.
+Using template $paramod$613d9d5d11aecb44458d1618a25bee2bff1db96b$lut for cells of type $lut.
+Using template $paramod$250b2f64a6982f4d09e91c7356d5ce717ff4d752$lut for cells of type $lut.
+Using template $paramod$2591adc31fb3174c7e1b0b4245ef11f4a70b66d6$lut for cells of type $lut.
+Using template $paramod$c70a1903c8f8afd45929a06a1a54552d774ce785$lut for cells of type $lut.
+Using template $paramod$f05d4b8888c79762c43743d193b4196209b4613e$lut for cells of type $lut.
+No more expansions possible.
+<suppressed ~2738 debug messages>
+
+7.9. Executing XILINX_DFFOPT pass (optimize FF control signal usage).
+Optimizing FFs in ooc_wrap.
+
+7.10. Executing OPT_LUT_INS pass (discard unused LUT inputs).
+Optimizing LUTs in ooc_wrap.
+Removed 0 unused cells and 743 unused wires.
+
+7.11. Executing HIERARCHY pass (managing design hierarchy).
+Attribute `top' found on module `ooc_wrap'. Setting top module to ooc_wrap.
+
+7.11.1. Analyzing design hierarchy..
+Top module:  \ooc_wrap
+
+7.11.2. Analyzing design hierarchy..
+Top module:  \ooc_wrap
+Removed 0 unused modules.
+
+7.12. Printing statistics.
+
+=== ooc_wrap ===
+
+        +----------Local Count, excluding submodules.
+        | 
+      204 wires
+      734 wire bits
+       23 public wires
+      142 public wire bits
+        6 ports
+       44 port bits
+      312 cells
+       11   CARRY8
+       33   LUT2
+       44   LUT3
+       45   LUT4
+       83   LUT5
+       96   LUT6
+       42 submodules
+       41   FDRE
+        1   FDSE
+
+   Estimated number of LCs:        268
+
+=== design hierarchy ===
+
+        +----------Count including submodules.
+        | 
+      312 ooc_wrap
+
+        +----------Count including submodules.
+        | 
+      204 wires
+      734 wire bits
+       23 public wires
+      142 public wire bits
+        6 ports
+       44 port bits
+        - memories
+        - memory bits
+        - processes
+      312 cells
+       11   CARRY8
+       33   LUT2
+       44   LUT3
+       45   LUT4
+       83   LUT5
+       96   LUT6
+       42 submodules
+       41   FDRE
+        1   FDSE
+
+   Estimated number of LCs:        268
+
+7.13. Executing CHECK pass (checking for obvious problems).
+Checking module ooc_wrap...
+Found and reported 0 problems.
+End of script. Logfile hash: 795f381781, time: 10.83s, user: 7.97s, system: 0.83s, MEM: 159.28 MB peak
+Yosys 0.70+385 (git sha1 098e46a36, Release, Clang /usr/bin/clang++ 21.1.8)
+Time spent: 46% 25x read_verilog (4 sec), 9% 1x abc9_exe (0 sec), ...

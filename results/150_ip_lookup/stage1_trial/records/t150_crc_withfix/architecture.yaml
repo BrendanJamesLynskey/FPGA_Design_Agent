@@ -1,0 +1,45 @@
+schema: fpga-design-agent/architecture/v1
+design: t150_crc_withfix
+top: crc32_checker_top
+blocks:
+  - name: crc32_checker_top
+    function: board top; instantiates the reset synchroniser, fpga_shell and crc32_engine; drives LED pins from crc32_engine
+  - name: fpga_shell
+    function: provided UART test shell (115200 8N1); parses request frames and maps ADDR 0x80-0xFF to the design window
+  - name: crc32_engine
+    function: CRC-32 (reflected, poly 0xEDB88320) datapath folding one 32-bit DATA word per clock; ID/CRC/CTRL/DATA register decode; leds readback
+  - name: reset_sync
+    function: two-flop asynchronous-assert, synchronous-release reset synchroniser for CPU_RESETN (xpm_cdc_async_rst)
+interfaces:
+  - name: host_uart
+    between: [host, fpga_shell]
+    protocol: uart
+    prefix: uart
+    module: fpga_shell
+  - name: design_window
+    between: [fpga_shell, crc32_engine]
+    protocol: simple
+    prefix: bus
+    module: crc32_engine
+  - name: leds_out
+    between: [crc32_engine, crc32_checker_top]
+    protocol: gpio
+    prefix: leds
+    module: crc32_engine
+clock_domains:
+  - name: clk
+    clock: CLK100MHZ
+    freq_mhz: 100
+reset:
+  synchronisers: [xpm_cdc_async_rst]
+crossings:
+  - from: async
+    to: clk
+    signal: CPU_RESETN
+    primitive: xpm_cdc_async_rst
+    inline_in: crc32_checker_top
+predicted_resources:
+  lut: [150, 600]
+  ff: [150, 500]
+  bram_tile: 0
+  dsp: 0

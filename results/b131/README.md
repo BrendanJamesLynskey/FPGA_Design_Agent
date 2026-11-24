@@ -20,6 +20,6 @@ Take a heavy slot (the dbg_xvc and eyescan builds peak at about 9.7 and 8.1 GiB,
 
 ## Known gaps and limits
 - No board run: the board test is pre-registered (`designs/b96_kr260_10g/dbg_xvc/docs/xvc_board_test.md`) and not run; the ILA, bridge and Linux XVC server have never been loaded or connected.
-- Six flow gates fail for dbg_xvc (listed above); the causes of the CDC structure and exception failures are not found.
+- Six flow gates failed for dbg_xvc in this run (listed above). Brief 140 found their causes and fixed the flow: `results/b140/` holds the rebuilt build, which passes every gate with the same timing; the records here are those of the original run.
 - One run of each build: the 0.111 ns drop of the receive path's setup slack is not separated from run-to-run variation.
 - The LUT-type cell count changes (25 more under `u_core`) are not explained.

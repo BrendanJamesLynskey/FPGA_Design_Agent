@@ -1,0 +1,241 @@
+name: seg_counter
+title: Seven-segment counter
+board: nexys_a7_100t
+part: xc7a100tcsg324-1
+top: seg_counter_top
+clocks:
+- name: clk
+  frequency: 100 MHz oscillator (E3), period 10 ns
+  drives: all sequential logic, the tick counter, the display multiplexer and the
+    UART shell
+reset:
+  name: cpu_resetn
+  polarity: active_low
+  type: synchronous
+  note: CPU RESET button C12, passed through a 2-flop synchroniser on clk before use
+parameters:
+  TICK_CYCLES: 100000000
+  DIGIT_REFRESH_CYCLES: 100000
+  DEBOUNCE_CYCLES: 1000000
+  BAUD_DIV_CYCLES: 868
+ports:
+- name: clk
+  direction: input
+  width: 1
+  pin_role: E3, 100 MHz board oscillator
+- name: cpu_resetn
+  direction: input
+  width: 1
+  pin_role: C12, CPU RESET button, active low
+- name: btnc
+  direction: input
+  width: 1
+  pin_role: P17, centre button, active high, clears the count
+- name: uart_rxd
+  direction: input
+  width: 1
+  pin_role: C4, USB-UART receive into the test shell
+- name: uart_txd
+  direction: output
+  width: 1
+  pin_role: D4, USB-UART transmit from the test shell
+- name: seg
+  direction: output
+  width: 7
+  pin_role: T10 R10 K16 K13 P15 T11 L18 for segments CA to CG, active low
+- name: dp
+  direction: output
+  width: 1
+  pin_role: H15, decimal point, active low, held off
+- name: an
+  direction: output
+  width: 8
+  pin_role: J17 J18 T9 J14 P14 T14 K2 U13 for digit anodes AN0 to AN7, active low
+behaviour:
+  tick:
+  - A tick counter counts clk cycles and returns to 0 after TICK_CYCLES cycles
+  - On each tick the 8-digit BCD count increments by 1 and wraps from 99999999 to
+    00000000
+  clear:
+  - A debounced rising edge of btnc sets all 8 BCD digits of the count to 0
+  - A clear does not reset the tick counter
+  reset:
+  - While cpu_resetn is low the count is held at 0 and the tick counter is held at
+    0
+  - The count and tick counter start counting on the first clk cycle after cpu_resetn
+    returns high
+  display:
+  - The count is shown as 8 decimal digits on AN0 to AN7 with AN0 the least significant
+    digit
+  - Digits are multiplexed one at a time, each digit lit for DIGIT_REFRESH_CYCLES
+    cycles, in order AN0 to AN7
+  - Leading zeros on AN7 down to AN1 are blanked
+  - AN0 always shows its digit
+  - seg is active low and encodes digits 0 to 9 in the standard CA to CG order
+  - dp is held inactive
+  shell:
+  - The ID register at offset 0x00 returns 0x53454731, the ASCII text SEG1
+  - The COUNT register at offset 0x04 returns the current 8-digit BCD count
+registers:
+  map:
+  - offset: '0x00'
+    name: ID
+    access: RO
+    reset: '0x53454731'
+    bits: '[31:0] ASCII SEG1'
+  - offset: '0x04'
+    name: COUNT
+    access: RO
+    reset: '0x00000000'
+    bits: '[31:0] 8 BCD digits, digit 0 in bits [3:0], digit 7 in bits [31:28]'
+timing:
+  clock_period: 10 ns on clk, must close timing with no violations
+  latency:
+    count_update: TICK_CYCLES clk cycles between count increments
+    clear_latency: DEBOUNCE_CYCLES plus 2 clk cycles from btnc press to count 0
+    reset_latency: 2 clk cycles from cpu_resetn low to count 0
+    digit_refresh: DIGIT_REFRESH_CYCLES clk cycles per digit
+resources_expected:
+  luts: 150
+  ffs: 150
+  brams: 0
+  dsps: 0
+  note: 'Estimate: 27-bit tick counter, 32-bit BCD count, debounce, 8-way digit mux,
+    UART shell, no DSP or BRAM'
+assumptions:
+- text: Pins follow the Digilent Nexys A7-100T master XDC
+  reason: Board pin roles are taken from the Digilent master constraints file and
+    must be checked against it at bring-up
+- text: The UART test shell runs on the same clk and uses BAUD_DIV_CYCLES for 115200
+    8N1
+  reason: The request names a UART test shell but gives no baud rate, so the usual
+    board rate is assumed
+- text: Seven-segment and anode outputs are active low and common anode
+  reason: The Nexys A7 display is driven active low by the board design
+- text: The debounce uses a counter of DEBOUNCE_CYCLES cycles on btnc
+  reason: Mechanical bounce on a push button lasts a few milliseconds and must not
+    cause multiple clears
+- text: The design fits the XC7A100T with no timing violation at 100 MHz
+  reason: The logic is small and has no DSP or BRAM, so the 10 ns budget is ample
+open_questions: []
+requirements:
+- id: REQ-01
+  text: The count increases by 1 every TICK_CYCLES clk cycles after cpu_resetn is
+    released
+  proof:
+  - simulation
+  - hardware
+- id: REQ-02
+  text: The count wraps from 99999999 to 00000000 on the tick after 99999999
+  proof:
+  - simulation
+- id: REQ-03
+  text: A debounced press of btnc sets the count to 00000000
+  proof:
+  - simulation
+  - hardware
+- id: REQ-04
+  text: A btnc press does not change the tick counter phase
+  proof:
+  - simulation
+- id: REQ-05
+  text: While cpu_resetn is low the count is 00000000 within 2 clk cycles
+  proof:
+  - simulation
+  - hardware
+- id: REQ-06
+  text: Each digit is lit for DIGIT_REFRESH_CYCLES clk cycles in turn from AN0 to
+    AN7
+  proof:
+  - simulation
+  - hardware
+- id: REQ-07
+  text: The seg output encodes digits 0 to 9 active low in the CA to CG order
+  proof:
+  - simulation
+- id: REQ-08
+  text: Leading zeros on AN7 to AN1 are blanked
+  proof:
+  - simulation
+  - hardware
+- id: REQ-13
+  text: AN0 always shows its digit, including when the count is 0
+  proof:
+  - simulation
+  - hardware
+- id: REQ-09
+  text: The ID register at offset 0x00 reads 0x53454731
+  proof:
+  - simulation
+  - hardware
+- id: REQ-10
+  text: The COUNT register at offset 0x04 reads the current 8-digit BCD count
+  proof:
+  - simulation
+  - hardware
+- id: REQ-11
+  text: Timing closes at a 10 ns clock period with no setup violation
+  proof:
+  - analysis
+- id: REQ-12
+  text: Utilisation stays within the resources_expected estimate with zero BRAM and
+    zero DSP used
+  proof:
+  - analysis
+resolved_questions:
+- question: 'Register map: give offset, width, reset value and access of every register,
+    including whether the shell can read anything besides ID and COUNT'
+  answer: ID at 0x00 RO reset 0x53454731 (SEG1 in ASCII); COUNT at 0x04 RO reset 0x00000000
+    holding 8 BCD digits; no other registers
+  status: defaulted
+  by: default
+  default_reason: The request says the count is readable over the UART shell but gives
+    no offsets, so the proposed two-register map is used until answered
+- question: Is the UART test shell part of this design or provided by the harness?
+  answer: Provided by the harness; this design only exposes the ID and COUNT registers
+    to it
+  status: defaulted
+  by: default
+  default_reason: The request names the shell but does not say who builds it
+- question: Is COUNT read as 8 BCD digits or as a plain binary value?
+  answer: 8 BCD digits, one nibble per digit, so the display needs no conversion and
+    12345 reads as 0x00012345
+  status: defaulted
+  by: default
+  default_reason: The request says decimal display but does not give the register
+    encoding, and BCD avoids a divider
+- question: What happens when the count passes its maximum?
+  answer: Wraps from 99999999 to 00000000 on the next tick
+  status: defaulted
+  by: default
+  default_reason: Eight decimal digits is the most the display can show, so a wrap
+    is the simplest defined behaviour
+- question: Are leading zeros shown or blanked?
+  answer: Blanked on AN7 to AN1, AN0 always shown
+  status: defaulted
+  by: default
+  default_reason: Blanking leading zeros is the usual counter look and keeps 0 visible
+- question: Does the centre button clear on press or while held?
+  answer: Clears once on each debounced press edge; the count stays at 0 while held
+    and then counts on from 0
+  status: defaulted
+  by: default
+  default_reason: An edge clear avoids repeated clears from a held button
+- question: Is the CPU reset synchronous or asynchronous?
+  answer: Synchronous to clk after a 2-flop synchroniser
+  status: defaulted
+  by: default
+  default_reason: A synchronous reset keeps all state on one clock and the synchroniser
+    removes metastability from the button
+- question: Can the shell clear the count?
+  answer: No, only btnc and cpu_resetn clear it
+  status: defaulted
+  by: default
+  default_reason: The request names the centre button as the clear and says nothing
+    about the shell writing
+- question: UART format and baud rate
+  answer: 115200 baud, 8 data bits, no parity, 1 stop bit
+  status: defaulted
+  by: default
+  default_reason: The request does not state a baud rate and 115200 is the usual default
+    for the board USB-UART

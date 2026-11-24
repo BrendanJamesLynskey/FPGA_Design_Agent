@@ -1,0 +1,86 @@
+# Machine-readable specification of the floating-point multiply-add (arith brief 139e). The prose is spec.md; the two agree (tests/test_fp_fma_package.py).
+schema: fda-arith/spec/1
+function: fp_fma
+title: Floating-point multiply-add (IEEE-754-style binary formats)
+model: arith/fp_fma/model.py
+summary: "y = a * b + c for a binary floating-point format of EXP exponent and MAN fraction bits (binary32 is 8/23, bfloat16 8/7, binary16 5/10; any EXP >= 2 and MAN >= 1 works), one result per clock. Two variants differ in ACCURACY as well as in area: fused rounds the exact a * b + c once (IEEE 754 fusedMultiplyAdd), and cascade is a multiplier followed by an adder with a rounding after each (what a tool builds from a * b + c written as two operators), smaller but not the same function. Each takes register ranks and a SUBNORM switch between full subnormal support and flush-to-zero."
+semantics:
+  - "format: sign (1 bit), exponent (EXP bits, bias 2**(EXP-1) - 1), fraction (MAN bits); y has the same format. An exponent field of all ones is infinity (fraction 0) or NaN (fraction nonzero); a field of 0 is zero (fraction 0) or subnormal"
+  - "fused: y is the exact a * b + c rounded ONCE to nearest, ties to even (IEEE 754-2019 fusedMultiplyAdd); the product is never rounded alone, so a * b + c with cancellation keeps the bits that a rounded product would lose"
+  - "cascade: y = round(round(a * b) + c), the product rounded to the format (to nearest, ties to even) and then the sum rounded again. It is bit-identical to a multiplier (fp_mul) feeding an adder (fp_add). NOT equal to fused: see 'exactness'"
+  - "NaN: any NaN input, infinity * 0 (even when c is a NaN or an infinity), and infinity - infinity (an infinite product plus an opposite infinite c) give the canonical quiet NaN (sign 0, exponent all ones, fraction msb 1, rest 0); NaN payloads and signs are not propagated"
+  - "infinity: an infinite product (infinity times a nonzero number) plus a finite c, or plus c of the same sign, is that infinity; a finite c = infinity is that infinity; a finite result too large to round to a finite number is an infinity of its sign"
+  - "zeros (fused): if the exact a * b + c is not zero the result takes its sign, also when it rounds or flushes to zero. If it is zero: a product and a c that are both zero give the common sign if equal and +0 if different; a cancellation of nonzero terms gives +0"
+  - "SUBNORM = 1: subnormal inputs and outputs follow IEEE 754 (gradual underflow)"
+  - "SUBNORM = 0 (flush to zero): a subnormal input is read as a zero of its own sign (denormals-are-zero) and a result smaller in magnitude than the smallest normal number, after rounding with an unbounded exponent range, is replaced by a zero of the result's sign. For cascade each of the two roundings flushes in that way"
+  - "the model (fp_common/fp_ref.py) computes the exact value as a rational number and rounds once (fused), or composes its exact multiplier and adder (cascade). The fused RTL forms the exact 2 * (MAN+1) bit product, aligns the addend in a window of 3 * (MAN+1) + 3 bits with a sticky bit, adds, normalises and rounds, and equals the model for every input (exhaustive at tiny formats, proved by SymbiYosys at tiny formats, random elsewhere)"
+ports:
+  - {name: clk, dir: in, width: 1, text: "clock; unused (kept for a common port list) when the latency is 0"}
+  - {name: a, dir: in, width: "EXP+MAN+1", text: "multiplicand, an IEEE-style bit pattern {sign, exponent, fraction}"}
+  - {name: b, dir: in, width: "EXP+MAN+1", text: "multiplier"}
+  - {name: c, dir: in, width: "EXP+MAN+1", text: "addend"}
+  - {name: y, dir: out, width: "EXP+MAN+1", text: "a * b + c, same format; one latency after the operands"}
+parameters:
+  EXP: {min: 2, text: "exponent bits (8 for binary32 and bfloat16, 5 for binary16)"}
+  MAN: {min: 1, text: "stored fraction bits (23 for binary32, 7 for bfloat16, 10 for binary16)"}
+  SUBNORM: {values: [0, 1], text: "1: subnormal numbers supported (IEEE 754); 0: flush to zero, smaller and faster"}
+  STAGES: {min: 0, text: "fused only: register ranks, 0 to 4, the latency in clocks (above 4 behaves as 4)"}
+  STAGES_M: {min: 0, text: "cascade only: register ranks of the multiplier, 0 to 3; c is delayed by this many clocks"}
+  STAGES_A: {min: 0, text: "cascade only: register ranks of the adder, 0 to 3; the cascade's latency is STAGES_M + STAGES_A"}
+signedness: "sign-magnitude as IEEE 754: the top bit of a, b, c and y is the sign; there is no two's complement reading"
+exactness: "fused: exact in the sense of IEEE 754 (the correctly rounded value of the exact a * b + c, error at most 0.5 ulp except where flushed or overflowing). cascade: NOT the correctly rounded a * b + c: the error against the exact value is at most 0.5 ulp of the rounded product plus 0.5 ulp of the result, which is a quarter to one and a half ulp of the result when |y| is at least about |a * b| and unbounded in units of the result's ulp under cancellation (a * b nearly equal to -c), where the product's own rounding error is all that is left; measured on tiny formats in tests/test_fp_fma_model.py"
+latency_definition: "clocks from the operands being presented to y being valid; 0 means combinational; throughput is one result per clock in every variant"
+contract:
+  protocol: "plain registered-or-combinational ports, no handshake: operands are sampled every clock and one result leaves, with no valid, ready or backpressure. A caller that needs a valid bit delays its own valid by the latency"
+  throughput: "one result per clock in every variant (initiation interval 1)"
+  latency: "per variant, in clocks: fused STAGES (0 to 4), cascade STAGES_M + STAGES_A (each 0 to 3)"
+  reset: "none: no control state; the rank registers hold data only and y is meaningless for the latency in clocks after power-up"
+  clock: "one clock, rising edge, no clock-enable and no gating; clk is present but unused when the latency is 0"
+  stall: "none: the pipeline cannot be frozen (no enable); DSP registers are inferred without a clock-enable"
+integration:
+  port_timing: "fused: the chain is unpack and input normalise, multiply, align, add, normalise, round: STAGES 4 puts a rank after each of the first three (the DSP's operand and product registers are the first two) and on y; fewer ranks leave the unregistered stages in series (the aligner, adder and normaliser are each a barrel shifter or carry chain of about 75 bits at binary32 and are the long part). cascade: the multiplier and the adder are separate blocks with their own ranks; c is delayed to meet the product. A rank is not retimed by the tools unless asked"
+  constraints: "no multicycle or false paths, one clock. Use the DSP block registers (fused STAGES 4 and 3, cascade STAGES_M 3) for the highest clock; keep the register stages as written (no keep or retiming that moves them); floorplan fused in one region at binary32, its window is 75 bits wide. fused with SUBNORM = 1 has three input normalisers and a denormalising shifter that the flush-to-zero build omits"
+guess_wrong:
+  - "fused and cascade are DIFFERENT functions: for some inputs cascade is one unit in the last place away from the correctly rounded a * b + c (the product's rounding), and under cancellation it can lose all the bits of the result. Choose cascade only when that is acceptable, for the area"
+  - "the result is correctly rounded to nearest, ties to even (fused); there is no rounding-mode input, no exception flag output"
+  - "every NaN result is the canonical quiet NaN (sign 0, fraction 0x400000 for binary32): payloads and signs of input NaNs are not propagated; a NaN c does not make 0 * infinity anything but NaN either"
+  - "infinity * 0 + c is NaN for every c; and with SUBNORM = 0 a subnormal operand is zero, so infinity * (a subnormal) is NaN"
+  - "with SUBNORM = 0 a subnormal INPUT (a, b or c) is treated as zero; a result flushes when it is below the smallest normal number after rounding with an unbounded exponent range, a result that rounds up to exactly the smallest normal number is NOT flushed"
+  - "(+0) * x + (-0) style zero sums follow the sign rule above: both addends zero and of different sign gives +0; the product's zero has the xor of the signs of a and b"
+  - "there is no valid, ready or reset: for the latency in clocks after power-up y is not meaningful, and a change of EXP, MAN or SUBNORM is a different block, not a mode"
+  - "STAGES and STAGES_M, STAGES_A are numbers of register ranks and the latency, not retiming requests; fused above 4 and the cascade's halves above 3 behave as the maximum; out-of-range parameters are not rejected by an assertion"
+  - "EXP = 8, MAN = 7 is bfloat16 (NOT binary16, which is EXP = 5, MAN = 10); formats other than these two and binary32 are not checked against any external library"
+
+lean_note: "Core Lean (4.36, no Mathlib) has no IEEE-754 library (Flocq is a Coq library). The rounding and special-case rules are stated in \"Function\" above and written as a program in fp_common/fp_ref.py (exact rational arithmetic, one rounding); they are checked against NumPy's float32 and float16, against an enumeration of every value of a tiny format, by simulation of every variant, and by SymbiYosys proofs against a wide-integer specification at tiny formats. None of that is a Lean proof. Lean (formal/lean/Arith/Float.lean) states only three small integer facts that the RTL relies on: that the rounding increment added to the packed {exponent, fraction} pattern carries into the exponent, that left-normalising by the leading-zero count puts the leading one at the top, and that the guard-and-sticky rule is round-to-nearest with ties to even. They are proved for all widths; the statements are NOT approved (verif/lean_approvals.yaml is empty), so the matrix shows \"statement not approved\". Marked research and not attempted: that fp_ref.py's rounding is IEEE roundTiesToEven for every format and exponent range (it needs a real-number or rational model of the format, as Flocq gives in Coq), and the window argument of the fused unit (the 3 * SP + 3 bit window with the fixed operand's leading bit at the top: that the operand shifted right loses only bits far enough below the rounding position that a sticky bit in the last place gives the correct rounding, and that cancellation deep enough to expose them cannot happen when they exist). Those are covered by simulation and by the proofs at the tiny formats only."
+
+variants:
+  fused:
+    file: rtl/fp_fma_fused.sv
+    module: fp_fma_fused
+    deps: [fp_common/fp_pack.sv, fp_common/fp_norm.sv]
+    params: {EXP: 8, MAN: 23, SUBNORM: 1, STAGES: 4}
+    throughput: "1 per clock"
+    latency: "STAGES"
+    tradeoff: "one rounding: the correctly rounded a * b + c; the product is exact (on DSP blocks) and the addend is aligned against it in a 3 * SP + 3 bit window, so the datapath is about twice as wide as an adder's and the leading-zero normaliser is the widest block: the most LUTs of the two, for an accuracy the cascade cannot reach"
+    exhaustive_points: [{EXP: 2, MAN: 1, SUBNORM: 1, STAGES: 0}, {EXP: 2, MAN: 1, SUBNORM: 0, STAGES: 4}, {EXP: 2, MAN: 2, SUBNORM: 1, STAGES: 2}, {EXP: 2, MAN: 2, SUBNORM: 0, STAGES: 3}, {EXP: 3, MAN: 1, SUBNORM: 1, STAGES: 1}, {EXP: 3, MAN: 2, SUBNORM: 1, STAGES: 4}]
+    random_points: [{EXP: 8, MAN: 23, SUBNORM: 1, STAGES: 4}, {EXP: 8, MAN: 23, SUBNORM: 0, STAGES: 3}, {EXP: 8, MAN: 7, SUBNORM: 1, STAGES: 2}, {EXP: 5, MAN: 10, SUBNORM: 1, STAGES: 1}, {EXP: 5, MAN: 10, SUBNORM: 0, STAGES: 0}, {EXP: 6, MAN: 12, SUBNORM: 1, STAGES: 4}]
+    expected_primitives:
+      a7: "binary32: about 4 DSP48E1 (a 24 x 24 unsigned product) and about 1200 to 1800 LUT6 (75-bit aligner, 75-bit adder and negation, 75-bit leading-zero normaliser, three 24-bit input normalisers when SUBNORM = 1); bfloat16 and binary16: 1 DSP48E1 and a few hundred LUT6; 0 BRAM"
+      k26: "binary32: about 2 DSP48E2 (27 x 18 signed) and LUT use as a7 with CARRY8 cells; bfloat16 and binary16: 1 DSP48E2; 0 BRAM"
+    ooc_points: [{EXP: 8, MAN: 23, SUBNORM: 1, STAGES: 4}, {EXP: 8, MAN: 23, SUBNORM: 0, STAGES: 4}, {EXP: 8, MAN: 7, SUBNORM: 1, STAGES: 4}, {EXP: 5, MAN: 10, SUBNORM: 1, STAGES: 4}, {EXP: 8, MAN: 23, SUBNORM: 1, STAGES: 2}]
+    mutant_run: [{mode: exhaustive, params: {EXP: 2, MAN: 2, SUBNORM: 1, STAGES: 0}}, {mode: exhaustive, params: {EXP: 2, MAN: 2, SUBNORM: 0, STAGES: 3}}, {mode: randomised, params: {EXP: 8, MAN: 23, SUBNORM: 1, STAGES: 4}, n: 3000}, {mode: randomised, params: {EXP: 5, MAN: 10, SUBNORM: 0, STAGES: 1}, n: 3000}]
+  cascade:
+    file: rtl/fp_fma_cascade.sv
+    module: fp_fma_cascade
+    deps: [fp_mul/rtl/fp_mul_dsp.sv, fp_add/rtl/fp_add_single.sv, fp_common/fp_pack.sv, fp_common/fp_norm.sv]
+    params: {EXP: 8, MAN: 23, SUBNORM: 1, STAGES_M: 3, STAGES_A: 3}
+    throughput: "1 per clock"
+    latency: "STAGES_M + STAGES_A"
+    tradeoff: "a multiplier then an adder, each rounding: no wide window or normaliser (its blocks are the plain multiplier and adder), the fewest LUTs and the simplest timing, but two roundings, so not the correctly rounded a * b + c (up to a unit in the last place away, and unbounded in the result's own units under cancellation), and a longer latency (STAGES_M + STAGES_A, up to 6) plus a delay line for c"
+    exhaustive_points: [{EXP: 2, MAN: 1, SUBNORM: 1, STAGES_M: 0, STAGES_A: 0}, {EXP: 2, MAN: 1, SUBNORM: 0, STAGES_M: 1, STAGES_A: 2}, {EXP: 2, MAN: 2, SUBNORM: 1, STAGES_M: 2, STAGES_A: 1}, {EXP: 2, MAN: 2, SUBNORM: 0, STAGES_M: 3, STAGES_A: 3}, {EXP: 3, MAN: 1, SUBNORM: 1, STAGES_M: 1, STAGES_A: 0}]
+    random_points: [{EXP: 8, MAN: 23, SUBNORM: 1, STAGES_M: 3, STAGES_A: 3}, {EXP: 8, MAN: 23, SUBNORM: 0, STAGES_M: 2, STAGES_A: 2}, {EXP: 8, MAN: 7, SUBNORM: 1, STAGES_M: 1, STAGES_A: 1}, {EXP: 5, MAN: 10, SUBNORM: 1, STAGES_M: 0, STAGES_A: 0}, {EXP: 5, MAN: 10, SUBNORM: 0, STAGES_M: 3, STAGES_A: 1}]
+    expected_primitives:
+      a7: "binary32: about 4 DSP48E1 (the multiplier's) and about 600 to 850 LUT6 (the adder's 450 to 600 plus the multiplier's normaliser and rounding) plus STAGES_M * 32 flip-flops for c; bfloat16 and binary16: 1 DSP48E1; 0 BRAM"
+      k26: "binary32: about 2 DSP48E2; LUT use as a7 with CARRY8 cells; bfloat16 and binary16: 1 DSP48E2; 0 BRAM"
+    ooc_points: [{EXP: 8, MAN: 23, SUBNORM: 1, STAGES_M: 3, STAGES_A: 3}, {EXP: 8, MAN: 23, SUBNORM: 0, STAGES_M: 3, STAGES_A: 3}, {EXP: 8, MAN: 7, SUBNORM: 1, STAGES_M: 3, STAGES_A: 3}, {EXP: 5, MAN: 10, SUBNORM: 1, STAGES_M: 3, STAGES_A: 3}, {EXP: 8, MAN: 23, SUBNORM: 1, STAGES_M: 1, STAGES_A: 1}]
+    mutant_run: [{mode: exhaustive, params: {EXP: 2, MAN: 2, SUBNORM: 1, STAGES_M: 1, STAGES_A: 1}}, {mode: exhaustive, params: {EXP: 2, MAN: 2, SUBNORM: 0, STAGES_M: 2, STAGES_A: 0}}, {mode: randomised, params: {EXP: 8, MAN: 23, SUBNORM: 1, STAGES_M: 3, STAGES_A: 3}, n: 3000}]

@@ -1,8 +1,8 @@
 """Run the closure loop on an ip_lib block's RTL (brief 88: the network blocks to 125 MHz).
 
     python3 -m agent.graph.ip_closure_task <block> --case <name> [--part xc7a100tcsg324-1] [--clock-mhz 125]
-           [--extra-latency 4] [--max-iter 6] [--max-usd 1.0] [--model openai/gpt-6-luna] [--replay calls.json]
-           [--out results/b88_net125/<case>] [--no-lock]
+           --extra-latency 4 [--max-iter 6] [--max-usd 1.0] [--model openai/gpt-6-luna] [--replay calls.json]
+           [--out results/b88_net125/<case>] [--rtl DIR] [--point N] [--scan-multiply] [--build-only]
 
 The task is "meet <clock> MHz on <part>, keep the behaviour bit-exact, and add at most <extra-latency> clocks of latency".
 It is stated to the writer in the contract, and the same budget is what the block's bench accepts (``NET_LAT_EXTRA``,

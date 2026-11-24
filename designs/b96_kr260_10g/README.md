@@ -10,7 +10,7 @@ Not in scope:
 - the full 58A trading core (book, rule table, interlocks, ARP) at 64 bits: trade64 is a small stand-in with one rule
 - the reconciliation sublayer link-fault state machine, the BER monitor, an ARP or ICMP responder
 
-Kind: example; written by hand. State: built. For an agent: [AGENT.md](AGENT.md).
+Kind: example; written by a Claude Code session. State: built. For an agent: [AGENT.md](AGENT.md).
 
 ![Block diagram: the design's blocks and the links between them](docs/handover/architecture.svg)
 
@@ -76,7 +76,7 @@ Interfaces:
 | the pyuvm regression of the PCS and MAC in Icarus (every test over its seeds, coverage merge, seeded bugs); needs pyuvm 5.0.0 and cocotb-coverage in a venv that sees cocotb 2.0.1; needs Icarus Verilog 12, cocotb 2.0.1, pyuvm 5.0.0, cocotb-coverage; a simulation-only run, no heavy slot while the load is under 6 and more than 12 GB is free | `PYTHONPATH=. python designs/b96_kr260_10g/verif/pyuvm/scripts/run_regress.py --mutants --record results/123_pyuvm_pcs_mac` | no | about 15 min |
 | the pyuvm regression of the PCS and MAC on Verilator with line, branch, expression and toggle coverage, merged and reported per module (brief 146); needs Verilator 5.036 or newer (cocotb 2.0.1 refuses the 5.020 of Ubuntu), so it is not in CI; needs Verilator 5.048 (source ~/.local/opt/verilator-5048/env.sh), cocotb 2.0.1, pyuvm 5.0.0, cocotb-coverage; the Verilator build takes a heavy slot (systemd-run MemoryMax=8G), the runs are simulation only; then verilator_coverage --write and scripts/cov_report.py (results/146_verilator_cov/README.md) | `SIM=verilator PYUVM_COV=1 PYTHONPATH=. python designs/b96_kr260_10g/verif/pyuvm/scripts/run_regress.py --out /tmp/v146 --record results/146_verilator_cov` | yes | about 6 min |
 
-Tool: Vivado 2026.1. Build ID of the inputs at handover: `f387f9e5` (`python flow/manifest.py show designs/b96_kr260_10g`: what a rebuild of today's sources and flow would carry; it changes when any build input or the flow changes, so it can differ from the build ID in an older evidence record). Knowledge-bank pin: `5e2eab8`.
+Tool: Vivado 2026.1. Build ID of the inputs at handover: `4d5f6d14` (`python flow/manifest.py show designs/b96_kr260_10g`: what a rebuild of today's sources and flow would carry; it changes when any build input or the flow changes, so it can differ from the build ID in an older evidence record). Knowledge-bank pin: `5e2eab8`.
 
 | File | What |
 |---|---|

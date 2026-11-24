@@ -1,0 +1,10 @@
+# Coverage targets of the packaged harness (brief 139c): each bin is a Python expression over one input vector; every bin must be hit at least once.
+bins:
+  x_min: "x == 1 << (w - 2)"
+  x_max: "x == (1 << w) - 1"
+  table_first_interval: "idx == 0"
+  table_last_interval: "idx == na"
+  table_middle_interval: "idx == (na + 1) // 2"
+  binade_one_to_two: "x < (1 << (w - 1))"
+  binade_two_to_four: "x >= (1 << (w - 1))"
+  binade_edge: "x == (1 << (w - 1)) or x == (1 << (w - 1)) - 1"

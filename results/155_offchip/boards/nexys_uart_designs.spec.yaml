@@ -1,0 +1,18 @@
+# The Nexys A7 designs b2_acl_adxl362, b2_mic_pdm, b2_qspi_jedec, b2_tmp_adt7420 (brief 155). Each design.xdc constrains only UART_RXD_OUT (FPGA to the FTDI chip).
+design: designs/b2_tmp_adt7420
+xdc: designs/b2_tmp_adt7420/design.xdc
+board: nexys_a7_100t
+family: artix7
+part: xc7a100tcsg324-1
+bank_type: HR
+off_chip:
+  - name: uart_tx
+    ports: [UART_RXD_OUT]
+    direction: output
+    iostandard: LVCMOS33
+    vcco: 3.3
+    line: short                              # ASSUMED: FTDI FT2232HQ a few cm away, 115200 baud
+    load: {c_pf: 8.0}
+    priority: emi
+    ui_ns: 8680.0                              # a static or slow signal: a long unit interval (UART 115200 baud = 8680 ns)
+    min_drive_ma: 4                        # ASSUMED: the output must source or sink at least this much DC current
