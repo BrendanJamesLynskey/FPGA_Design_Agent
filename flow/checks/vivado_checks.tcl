@@ -168,6 +168,54 @@ proc fda_reset_scan {fname} {
     file rename -force $fname.part $fname
 }
 
+proc fda_init_block {pin} {
+    # {block block_ref pin} when a leaf pin belongs to a hard block, else "". UltraScale+ DSP48E2 is a macro of DSP_*
+    # leaf cells: report the macro (its name and DSP48E2), not the leaf.
+    set b [get_cells -quiet -of_objects $pin]
+    set r [get_property REF_NAME $b]
+    if {![regexp {^(DSP|RAMB|URAM|FIFO)} $r]} { return "" }
+    set bn [get_property NAME $b]
+    if {[regexp {^(.*)/DSP_[A-Z_]+_INST$} $bn -> top]} {
+        set m [get_cells -quiet $top]
+        if {$m ne ""} { set bn $top; set r [get_property REF_NAME $m] }
+    }
+    return [list $bn $r [get_property REF_PIN_NAME $pin]]
+}
+
+proc fda_init_scan {fname} {
+    # brief 206: one TSV row per flip-flop with INIT = 1 that connects straight (no logic between) to a hard block (DSP,
+    # block RAM, UltraRAM, FIFO): its D driven by the block's output, or its Q loading the block's input. Measured on
+    # Vivado 2026.1 (results/206_power_up): such a register is never absorbed into the block's pipeline or output
+    # register, because those registers power up 0 (DSP, UltraRAM) or hold one INIT per port (block RAM); it stays in the
+    # fabric with no warning. flow/checks/init_values.py classifies the rows. Written to .part and renamed at the end.
+    set f [open $fname.part w]
+    puts $f [join {cell ref init dir block block_ref block_pin} "\t"]
+    foreach c [get_cells -hier -quiet -filter {IS_PRIMITIVE && REF_NAME =~ FD*}] {
+        if {[get_property INIT $c] ne "1'b1"} continue
+        set rows {}
+        set dnet [get_nets -quiet -of_objects [get_pins -quiet $c/D]]
+        if {$dnet ne ""} {
+            foreach p [get_pins -quiet -leaf -of_objects $dnet -filter {DIRECTION == OUT}] {
+                set x [fda_init_block $p]
+                if {$x ne ""} { lappend rows [concat from $x] }
+            }
+        }
+        set qnet [get_nets -quiet -of_objects [get_pins -quiet $c/Q]]
+        if {$qnet ne ""} {
+            foreach p [get_pins -quiet -leaf -of_objects $qnet -filter {DIRECTION == IN}] {
+                set x [fda_init_block $p]
+                if {$x ne ""} { lappend rows [concat to $x] }
+            }
+        }
+        foreach x $rows {
+            lassign $x dir b r pn
+            puts $f [join [list $c [get_property REF_NAME $c] 1 $dir $b $r $pn] "\t"]
+        }
+    }
+    close $f
+    file rename -force $fname.part $fname
+}
+
 proc fda_rule_catalogue {fname} {
     # every methodology and DRC rule this Vivado release knows: id, severity, description (verifies the rule ids we map)
     set f [open $fname w]
@@ -194,6 +242,8 @@ proc fda_report {name out} {
         utilization       [list report_utilization -file $out/utilization.rpt]]
     if {$name eq "reset_scan"} {
         set cmd [list fda_reset_scan $out/reset_scan.tsv]
+    } elseif {$name eq "init_scan"} {
+        set cmd [list fda_init_scan $out/init_scan.tsv]
     } elseif {$name eq "cmt"} {
         # flow/cmt_check.tcl (brief 18): VCO and PFD legality of hand-instantiated MMCME2/PLLE2 (7-series)
         source [file join $::fda_checks_dir .. cmt_check.tcl]

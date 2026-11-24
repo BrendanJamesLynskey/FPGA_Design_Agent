@@ -175,4 +175,16 @@ register feeding a hard block or I/O, and a register with a conflicting reset.
 
 ## Amendments
 
-(none yet)
+- 2026-11-24 18:53 GMT, after seeing X8 and X9 on xc7a35t (INITV=1): a non-zero initial value kept every register out of the
+  DSP48E1 (AREG/BREG/MREG/PREG all 0, 108 FDRE in fabric, no warning) and kept the block-RAM output register out of the RAM
+  (DOB_REG=0; the read register's value went to INIT_B; 32 FDRE in fabric). Added follow-up arms, expectations written before
+  they run: **X8b** only the P register non-zero (expect A/B/M absorbed, P in fabric); **X8c** only A/B non-zero (expect M and
+  P absorbed, A/B in fabric); **X9b** read register and output register given the *same* non-zero value (expect DOB_REG=1 with
+  INIT_B = that value, nothing in fabric, since the primitive has one INIT per port); **X9c** only the output register
+  non-zero (expect DOB_REG=1, INIT_B = its value, since with DOB_REG=1 INIT_B belongs to the output register). These run as a
+  second batch (`tcl/arms_b.tcl`) on both parts.
+- 2026-11-24 18:56 GMT, after X7 and X12 on xc7a35t: the IOB registers kept INIT=1 in ILOGICE2.IFF and OLOGICE2.OUTFF with
+  a sync or async reset of the opposite sense; X12's integer register got INIT=1 on its top bit only (power-up -8). Added
+  **X12b** (the same counter with an explicit `:= 0`; expect all INIT 0 and the same LUTs, so X12 costs nothing on AMD
+  but starts at -8) and **X7 DRC** (report_drc after placement for the opposite-sense IOB arms; expect no violation that
+  mentions INIT). Same batch as X8b to X9c.
