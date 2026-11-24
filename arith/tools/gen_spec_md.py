@@ -47,7 +47,7 @@ def render(fn: str) -> str:
           "", "| Variant | Latency (clocks) | Throughput |", "|---|---|---|"]
     L += [f"| `{v}` | `{vd['latency']}` | {vd['throughput']} |" for v, vd in s["variants"].items()]
     L += ["", "## Integration", "", f"- Port timing: {s['integration']['port_timing']}", f"- Constraints to carry: {s['integration']['constraints']}",
-          ("- Verification after integration: this function has no packaged harness (brief 148 left it out; see the report): rerun its bench (tests/) against your instance, which needs the repository's arith/tools and fft_common helpers." if fn in ac.FFT_FUNCTIONS and fn not in ac.HARNESS_FFT_FUNCTIONS
+          ("- Verification after integration: this function has no packaged harness (brief 168 left it out; a later brief can package it as brief 161 did for fft_bfp, fft_mdc2, fft_real_axis and fft_fastconv): rerun its bench (tests/) against your instance, which needs the repository's arith/tools and fft_common helpers." if fn in ac.AXIS168 else "- Verification after integration: this function has no packaged harness (brief 148 left it out; see the report): rerun its bench (tests/) against your instance, which needs the repository's arith/tools and fft_common helpers." if fn in ac.FFT_FUNCTIONS and fn not in ac.HARNESS_FFT_FUNCTIONS
            else "- Verification after integration: rerun the packaged harness against your instance ([harness/README.md](harness/README.md)); it needs no other file of this repository."),
           "", "## What a user could guess wrong", ""]
     L += [f"- {g}" for g in s["guess_wrong"]]
