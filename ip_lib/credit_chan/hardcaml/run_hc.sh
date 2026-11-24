@@ -21,7 +21,7 @@ case "${1:-gen}" in
 gen)
   (cd "$HERE" && dune build 2>&1)
   (cd "$HERE" && dune exec src/gen.exe -- build/rtl/credit_chan.sv $POINTS)
-  (cd "$HERE" && dune exec src/gen.exe -- build/credit_chan_formal.sv -formal 4,1,0,0,0,0,0 4,2,0,0,0,0,0 4,1,1,1,0,0,0 4,2,1,1,0,0,0 4,3,1,1,0,0,0 4,4,1,1,0,0,0 4,2,2,1,0,0,0 4,3,0,2,0,0,0 4,5,2,2,0,0,0 4,4,3,0,0,0,0) ;;
+  (cd "$HERE" && dune exec src/gen.exe -- formal/credit_chan_formal.sv -formal 4,1,0,0,0,0,0 4,2,0,0,0,0,0 4,1,1,1,0,0,0 4,2,1,1,0,0,0 4,3,1,1,0,0,0 4,4,1,1,0,0,0 4,2,2,1,0,0,0 4,3,0,2,0,0,0 4,5,2,2,0,0,0 4,4,3,0,0,0,0) ;;
 sim)  "$0" gen
   cd "$ROOT" && NET_RTL_CREDIT_CHAN="$HERE/build/rtl" python3 -m pytest -q ip_lib/credit_chan/tb/test_credit_chan_rtl.py -p no:cacheprovider ;;
 formal) "$0" gen

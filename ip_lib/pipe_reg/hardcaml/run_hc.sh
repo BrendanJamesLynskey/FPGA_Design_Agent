@@ -20,7 +20,7 @@ case "${1:-gen}" in
 gen)
   (cd "$HERE" && dune build 2>&1)
   (cd "$HERE" && dune exec src/gen.exe -- build/rtl/pipe_reg.sv $POINTS)
-  (cd "$HERE" && dune exec src/gen.exe -- build/pipe_reg_formal.sv -formal 4,1,0,0,0,0 4,3,0,0,0,0 4,1,1,0,0,0 4,2,1,0,0,0 4,3,1,0,0,0 4,1,2,0,0,0 4,2,2,0,0,0 4,3,2,0,0,0 4,1,3,0,0,0 4,2,3,0,0,0 4,1,4,0,0,0 4,2,4,0,0,0 4,3,4,0,0,0 4,0,1,0,0,0) ;;
+  (cd "$HERE" && dune exec src/gen.exe -- formal/pipe_reg_formal.sv -formal 4,1,0,0,0,0 4,3,0,0,0,0 4,1,1,0,0,0 4,2,1,0,0,0 4,3,1,0,0,0 4,1,2,0,0,0 4,2,2,0,0,0 4,3,2,0,0,0 4,1,3,0,0,0 4,2,3,0,0,0 4,1,4,0,0,0 4,2,4,0,0,0 4,3,4,0,0,0 4,0,1,0,0,0) ;;
 sim)  "$0" gen
   cd "$ROOT" && NET_RTL_PIPE_REG="$HERE/build/rtl" python3 -m pytest -q ip_lib/pipe_reg/tb/test_pipe_reg_rtl.py -p no:cacheprovider ;;
 formal) "$0" gen
