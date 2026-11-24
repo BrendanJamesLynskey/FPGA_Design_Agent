@@ -6,7 +6,8 @@
 arith/<function>/formal/jobs.yaml lists jobs: ``name``, ``top``, ``params`` (top-level parameters, -G), ``mode`` (prove: k-induction, or bmc), ``depth``,
 ``engine``, ``sources`` and ``claim`` (what a pass means, in words: "proved for all inputs" or "bounded to N clocks from reset"). A job with
 ``mutant`` (a name in verif/mutants.yaml) runs on a copy of the RTL with that one change and EXPECTS a failure (the counterexample): it shows the
-check can fail. Writes verif/results/formal.json (status, seconds, tool versions). Needs the OSS CAD Suite (FDA_OSS_CAD, ~/.local/opt/oss-cad-suite or PATH)."""
+check can fail. A constant table written as a case statement becomes a read-only memory with initial contents; in a k-induction step the memory would be free (initial values constrain only the first step), so every
+job script maps memories to logic (``memory_map``) and the table stays a constant (brief 139d; the earlier functions have no tables, so it changes nothing for them). Writes verif/results/formal.json (status, seconds, tool versions). Needs the OSS CAD Suite (FDA_OSS_CAD, ~/.local/opt/oss-cad-suite or PATH)."""
 from __future__ import annotations
 
 import argparse
@@ -31,7 +32,7 @@ def sby_text(job: dict, files: list[Path], top: str) -> str:
     return "\n".join([
         "[options]", f"mode {mode}", f"depth {job['depth']}", "",
         "[engines]", f"smtbmc {job.get('engine', 'boolector')}", "",
-        "[script]", "plugin -i slang", f"read_slang --top {top} {gs} " + " ".join(f.name for f in files), f"prep -top {top}", "",
+        "[script]", "plugin -i slang", f"read_slang --top {top} {gs} " + " ".join(f.name for f in files), f"prep -top {top}", "memory_map", "",
         "[files]", *[str(f) for f in files], ""])
 
 
@@ -45,7 +46,7 @@ def run_job(fn: str, job: dict, work: Path, mutants: dict) -> dict:
         src = (d / s).read_text()
         if job.get("mutant"):
             m = mutants[job["mutant"]]
-            if (d / spec["variants"][m["variant"]]["file"]).name == Path(s).name:
+            if ((d / m["file"]) if m.get("file") else (d / spec["variants"][m["variant"]]["file"])).resolve() == (d / s).resolve():
                 assert src.count(m["old"]) == 1, f"mutant {job['mutant']} does not apply once"
                 src = src.replace(m["old"], m["new"])
         (jd / "src").mkdir(exist_ok=True)

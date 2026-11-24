@@ -59,7 +59,7 @@ from flow import srcorder
 RUNS = ROOT / "runs"
 FLOW_TOOLS = ("read_file", "list_files", "lint", "simulate", "formal", "mutate", "build", "gates", "report", "check_constraints", "search_docs",
               "load_skill", "board_constraints", "spec_items", "skill_index", "skill_excerpt", "report_digest",
-              "check", "gt_plan")                         # brief 71: the check suite; the 56A link planner
+              "check", "gt_plan", "ip_lookup")           # brief 71; brief 150: the IP-library query (stage 1): the check suite; the 56A link planner
 
 
 class ArmBlocked(Exception):
@@ -465,6 +465,24 @@ SKILL_TOOLS = ("skill_index", "skill_excerpt")      # brief 36: given beside loa
 FILE_TOOLS = ("read_file", "write_file", "list_files")
 
 
+def ip_lookup_allowed(cfg) -> bool:
+    """Brief 150, planner decision (delegated, 2026-11-22): a scored run measures the agent, not the library, so ``ip_lookup`` is
+    offered only when the run is known not to be scored. Fail closed: any sign of a scored or benchmark run, or anything
+    that cannot be read, withholds it. Scored means: a hidden spec (the oracle interview), the spec-only bench gate
+    (``spec_tests``), a spec under ``benchmark/``, a data dir of a task, or ``FDA_SCORED_RUN`` set in the environment."""
+    try:
+        if cfg.hidden_spec is not None or cfg.spec_tests or getattr(cfg, "interview", "off") == "oracle":
+            return False
+        if os.environ.get("FDA_SCORED_RUN"):
+            return False
+        for q in (cfg.spec_md, getattr(cfg, "data_dir", None)):
+            if q is not None and "benchmark" in Path(q).resolve().parts:
+                return False
+        return True
+    except Exception:                                  # noqa: BLE001 (cannot tell: not offered)
+        return False
+
+
 def subagent_plan(rt: Runtime, role: str, prompt: str, allowed: tuple[str, ...] = (), repair: bool = False) -> dict:
     """What one sub-agent turn is given, harness-neutral: the system prompt, the first user message, the core
     tools and the limits. Both the Deep Agents run and the Claude Code arm (05c) are built from this, and the
@@ -475,7 +493,7 @@ def subagent_plan(rt: Runtime, role: str, prompt: str, allowed: tuple[str, ...] 
     if role != "rtl":
         prompt += (_p("graph/run/subagent_plan_1"))
     msg = prompt + "\n\nFiles you have:\n" + "\n".join(f"--- {k} ---\n{v}" for k, v in inputs.items())
-    core = tuple(n for n in allowed if n in FLOW_TOOLS and n in TOOLS)
+    core = tuple(n for n in allowed if n in FLOW_TOOLS and n in TOOLS and (n != "ip_lookup" or ip_lookup_allowed(rt.cfg)))
     role_files = ROLE_TOOLS[role]
     files = tuple(n for n in FILE_TOOLS if role_files is None or n in role_files)
     return {"role": role, "system_prompt": prompt, "user_message": msg, "inputs": inputs, "core_tools": core,
@@ -783,6 +801,9 @@ def node_work(state: State) -> dict:
     if rt.cfg.design_plan:                   # closure-loop hook: the datapaths bullet (stage 1) and the computed plan (later stages)
         from flow import timing_plan as _tp
         conv0 += _tp.DATAPATHS_CONVENTION + (("\n" + (rt.design / _tp.PLAN_MD).read_text()) if (rt.design / _tp.PLAN_MD).is_file() else "")
+    if n == 1 and "ip_lookup" in st.tools and ip_lookup_allowed(rt.cfg):   # brief 150: the library is consulted before a block is invented, and the choice is recorded
+        from flow import iplookup as _ipl
+        conv0 += _ipl.IP_LOOKUP_CONVENTION
     conv_tests = tests_conventions_text(fmt)
     conv = conv0 + ("\nLast gate output:\n" + state["detail"][:3000] if state.get("detail") else "")
     # the owner's edit prompt (brief 05d, addition 6) goes to the role it names, default the stage's writer

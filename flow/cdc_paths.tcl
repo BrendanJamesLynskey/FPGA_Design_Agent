@@ -100,6 +100,25 @@ proc cdc_dump_paths {file} {
             if {$rc == 1} { puts $f "ERROR|[get_property NAME $c]|$pn|[string map {\n { }} $err]" }
         }
     }
+    # brief 140: the exception each XPM handshake and Gray instance really has, read from the timing exceptions (report_exceptions -from its
+    # first launch cell), one line per instance: XEXC|<instance>|<exception as report_cdc names it>. When AMD's own scoped XPM constraint
+    # files are applied (dbg_xvc) AMD's CDC-15 waiver for the macro removes its rows from report_cdc, so the exception cannot be read there;
+    # flow/cdc_structure.py takes it from these lines when report_cdc has no row for the crossing.
+    foreach pat {*dest_hsdata_ff_reg?0? *dest_graysync_ff_reg?0?*} {
+        foreach c [get_cells -quiet -hierarchical -filter "IS_PRIMITIVE && NAME =~ $pat"] {
+            set nm [get_property NAME $c]
+            set inst [string range $nm 0 [expr {[string first /dest_ $nm] - 1}]]
+            if {[info exists seen_x($inst)]} { continue }
+            set seen_x($inst) 1
+            set dp [lindex [get_pins -quiet -of_objects $c -filter {REF_PIN_NAME == D}] 0]
+            if {$dp eq ""} { continue }
+            # by the launch cell: AMD's scoped rows are listed for report_exceptions -from, not for -to (measured on dbg_xvc, Vivado 2026.1)
+            set sp [get_cells -quiet -of_objects [all_fanin -quiet -startpoints_only -flat $dp]]
+            if {[llength $sp] == 0} { continue }
+            if {[catch {report_exceptions -from [lindex $sp 0] -return_string} rep]} { continue }
+            if {[regexp {max_dpo=} $rep]} { puts $f "XEXC|$inst|Max Delay Datapath Only" }
+        }
+    }
     puts $f "# end"
     close $f
 }

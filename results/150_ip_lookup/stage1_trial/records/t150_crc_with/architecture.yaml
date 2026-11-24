@@ -1,0 +1,38 @@
+schema: fpga-design-agent/architecture/v1
+design: crc32_checker
+top: crc32_top
+blocks:
+  - name: crc32_top
+    function: board top; instantiates fpga_shell (UART test shell) and crc32_core; maps CLK100MHZ, CPU_RESETN, LED and the USB-UART pair to ports; inverts rst_n once into the active-high reset used inside
+  - name: fpga_shell
+    function: test shell (shell/rtl/fpga_shell.sv) - UART 115200 8N1 line, request/response framing, shell registers 0x00-0x05, window 0x80-0xFF to the design
+  - name: crc32_core
+    function: reflected CRC-32 engine (poly 0xEDB88320, init 0xFFFFFFFF, final XOR) absorbing one 32-bit word per clock; decodes ID/DATA/CRC/CTRL window registers; registers the read data one clock after the read strobe
+interfaces:
+  - name: host_uart
+    between: [host, fpga_shell]
+    protocol: uart
+    prefix: uart
+    module: fpga_shell
+  - name: shell_window
+    between: [fpga_shell, crc32_core]
+    protocol: simple
+    prefix: shell
+    module: crc32_core
+  - name: led_out
+    between: [crc32_core, board]
+    protocol: gpio
+    prefix: led
+    module: crc32_top
+clock_domains:
+  - name: clk
+    clock: clk
+    freq_mhz: 100
+reset:
+  synchronisers: []
+crossings: []
+predicted_resources:
+  lut: [150, 700]
+  ff: [80, 400]
+  bram_tile: 0
+  dsp: 0

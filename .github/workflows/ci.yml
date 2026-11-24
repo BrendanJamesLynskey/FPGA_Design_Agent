@@ -160,16 +160,18 @@ jobs:
           tar -xzf oss.tgz
           rm oss.tgz
       - name: Install
-        run: pip install pytest
+        run: pip install pytest pyyaml
       - name: Safety by k-induction (AW 4, 2, 1; one bit of each class of the entry), bounded progress, covers, and one mutant per key property
         run: |
           $FDA_OSS_CAD/bin/yosys -V
           python -m pytest -q designs/b96_kr260_10g/tests/test_b115_formal.py
+      - name: Formal rigour (brief 143c) - the judge, an end-to-end vacuity check, the mutation tool, and every shipped proof's record against its files
+        run: python -m pytest -q flow/tests/test_143c_formal_rigour.py
 
   arith-library:
-    name: Arithmetic library (brief 139b) - models, RTL against models (Icarus), Verilator lint, seeded mutants, SymbiYosys proofs, traceability gate - OSS CAD Suite 20261112
+    name: Arithmetic library (briefs 139b, 139c) - models, RTL against models (Icarus), Verilator lint, seeded mutants, SymbiYosys proofs, traceability gate - OSS CAD Suite 20261112
     runs-on: ubuntu-24.04
-    timeout-minutes: 45
+    timeout-minutes: 90
     env:
       FDA_OSS_CAD: ${{ github.workspace }}/oss-cad-suite
       FDA_REQUIRE_FORMAL: "1"      # a test that needs a tool and does not find it fails instead of skipping (the same rule as brief 81)
@@ -197,14 +199,46 @@ jobs:
         run: |
           python -m arith.tools.gen_spec --check
           python -m arith.tools.gen_build --check
-      - name: Divider, rounding, square root, leading-zero/normaliser - model tests, RTL against the models, lint, mutants, formal proofs, build descriptions
+      - name: Divider, rounding, square root, leading-zero/normaliser (139b); radix-4 square root, SRT divider, reciprocal, reciprocal square root, reciprocal-multiply divider (139c) - model tests, RTL against the models, lint, mutants, formal proofs, build descriptions
         run: |
           $FDA_OSS_CAD/bin/yosys -V
           $FDA_OSS_CAD/bin/iverilog -V | head -1
           $FDA_OSS_CAD/bin/verilator --version
-          python -m pytest -q arith/divider arith/fxp_round arith/isqrt arith/lzc_norm arith/common
-      - name: Traceability gate (testplan schema v1, the orphan gate) for the four functions
-        run: python -m flow.trace_v1 check arith/divider arith/fxp_round arith/isqrt arith/lzc_norm
+          python -m pytest -q arith/divider arith/fxp_round arith/isqrt arith/lzc_norm arith/sqrt_r4 arith/divider_hr arith/recip arith/rsqrt arith/div_nr arith/common
+      - name: Traceability gate (testplan schema v1, the orphan gate) for the nine functions
+        run: python -m flow.trace_v1 check arith/divider arith/fxp_round arith/isqrt arith/lzc_norm arith/sqrt_r4 arith/divider_hr arith/recip arith/rsqrt arith/div_nr
+
+  formal-ddr2-sched:
+    name: Formal proofs of the DDR2 command scheduler (brief 141) - SymbiYosys, slang front end, OSS CAD Suite 20261112
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    env:
+      FDA_OSS_CAD: ${{ github.workspace }}/oss-cad-suite
+      FDA_REQUIRE_FORMAL: "1"      # a formal test that skips for a missing tool fails (brief 81)
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Cache the OSS CAD Suite
+        id: oss
+        uses: actions/cache@v4
+        with:
+          path: oss-cad-suite
+          key: oss-cad-suite-20261112
+      - name: Download the pinned OSS CAD Suite (release 2026-11-12, build 20261112)
+        if: steps.oss.outputs.cache-hit != 'true'
+        run: |
+          curl -fsSL -o oss.tgz https://github.com/YosysHQ/oss-cad-suite-build/releases/download/2026-11-12/oss-cad-suite-linux-x64-20261112.tgz
+          echo "346499255e3e5e6e9bf67e1d378a4e6bc249abd3de3b0caf5b57604bc8ba1752  oss.tgz" | sha256sum -c -
+          tar -xzf oss.tgz
+          rm oss.tgz
+      - name: Install
+        run: pip install pytest
+      - name: Timing rules, request order and refresh debt (unbounded), bounded response, covers, and one mutant per rule
+        run: |
+          $FDA_OSS_CAD/bin/yosys -V
+          python -m pytest -q designs/m141_ddr2_sched/tests/test_m141_formal.py
 
   rtl-sim:
     name: RTL tests (cocotb + Icarus) and mutants
@@ -257,6 +291,8 @@ jobs:
         run: python -m pytest -q designs/b96_kr260_10g/tests/test_b96_pcs_rtl.py
       - name: ITCH/OUCH path inside the 10G core, build rm_gp_itch - the new blocks with the real MACs against brief 110's model (brief 127)
         run: python -m pytest -q designs/b96_kr260_10g/rm_gp_itch/tests/test_b127_unit_rtl.py
+      - name: DDR2 command scheduler (brief 141) - against a behavioural DDR2 timing model written from the data sheet, both policies, seeded faults, Verilator lint
+        run: python -m pytest -q designs/m141_ddr2_sched/tests/test_m141_clean_rtl.py designs/m141_ddr2_sched/tests/test_m141_faults_rtl.py designs/m141_ddr2_sched/tests/test_m141_lint_rtl.py
       - name: pyuvm bench of the 10G PCS and MAC (brief 123) - reference models and channel in plain Python, t_smoke in Icarus, seeded bug M01 killed (the full regression is run by hand, see its README)
         run: python -m pytest -q designs/b96_kr260_10g/tests/test_b96_pyuvm.py
       - name: CDC soak rig (brief 11b) - checkers, host reader, the rig with metastability injection and reset storms (one copy a variant)
@@ -538,7 +574,7 @@ jobs:
             build/64a/cfu/*/marks.txt
 
   arith-library-139a:
-    name: Arithmetic library (brief 139a) - adders, multipliers, MAC - models, cocotb + Icarus against the models, seeded faults, SymbiYosys equivalence, Verilator -Wall, build files, traceability gate
+    name: Arithmetic library (briefs 139a, 139d, 139e) - adders, multipliers, MAC, exp2, log2, sincos, atan2/magnitude, floating point - models, cocotb + Icarus against the models, seeded faults, SymbiYosys equivalence and error bounds, Verilator -Wall, build files, traceability gate
     runs-on: ubuntu-24.04
     timeout-minutes: 90
     env:
@@ -565,25 +601,75 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y iverilog
-          pip install pyyaml pytest cocotb==2.0.1
+          pip install pyyaml pytest cocotb==2.0.1 numpy==2.4.3   # numpy: the floating-point models are checked against float32 and float16 (brief 139e)
       - name: Generated files are current (wrappers, build.yaml, spec.md, testplans); the traceability gate (every test named by an item, every requirement traced)
         run: |
           python -m arith.tools.gen_build --check
+          python -m arith.tools.gen_rtl --check
           python -m arith.tools.gen_spec_md --check
           python -m arith.tools.gen_harness --check
           python -m arith.tools.gen_testplan --check
-          python -m flow.trace_v1 check arith/adder arith/multiplier arith/mac
+          python -m flow.trace_v1 check arith/adder arith/multiplier arith/mac arith/exp2 arith/log2 arith/sincos arith/atan2_mag arith/fp_add arith/fp_mul arith/fp_fma
       - name: Models against independent formulations; spec against the RTL headers; Verilator -Wall at every point (OSS CAD Suite 20261112); wrappers and build.yaml
-        run: python -m pytest -q arith/adder/tests/test_adder_model.py arith/adder/tests/test_adder_package.py arith/multiplier/tests/test_multiplier_model.py arith/multiplier/tests/test_multiplier_package.py arith/mac/tests/test_mac_model.py arith/mac/tests/test_mac_package.py
+        run: python -m pytest -q arith/adder/tests/test_adder_model.py arith/adder/tests/test_adder_package.py arith/multiplier/tests/test_multiplier_model.py arith/multiplier/tests/test_multiplier_package.py arith/mac/tests/test_mac_model.py arith/mac/tests/test_mac_package.py arith/exp2/tests/test_exp2_model.py arith/exp2/tests/test_exp2_package.py arith/exp2/tests/test_exp2_accuracy.py arith/log2/tests/test_log2_model.py arith/log2/tests/test_log2_package.py arith/log2/tests/test_log2_accuracy.py arith/sincos/tests/test_sincos_model.py arith/sincos/tests/test_sincos_package.py arith/sincos/tests/test_sincos_accuracy.py arith/atan2_mag/tests/test_atan2_mag_model.py arith/atan2_mag/tests/test_atan2_mag_package.py arith/atan2_mag/tests/test_atan2_mag_accuracy.py arith/fp_add/tests/test_fp_add_model.py arith/fp_add/tests/test_fp_add_package.py arith/fp_mul/tests/test_fp_mul_model.py arith/fp_mul/tests/test_fp_mul_package.py arith/fp_fma/tests/test_fp_fma_model.py arith/fp_fma/tests/test_fp_fma_package.py
       - name: Every variant against its model (exhaustive small points, random large points) and the bench's sensitivity to the latency (Icarus + cocotb)
-        run: python -m pytest -q arith/*/tests/test_*_exhaustive_rtl.py arith/*/tests/test_*_random_rtl.py arith/*/tests/test_*_latency_rtl.py arith/*/tests/test_*_harness_rtl.py
+        run: python -m pytest -q arith/{adder,multiplier,mac,fp_add,fp_mul,fp_fma}/tests/test_*_exhaustive_rtl.py arith/{adder,multiplier,mac,fp_add,fp_mul,fp_fma}/tests/test_*_random_rtl.py arith/{adder,multiplier,mac,fp_add,fp_mul,fp_fma}/tests/test_*_latency_rtl.py arith/{adder,multiplier,mac,fp_add,fp_mul,fp_fma}/tests/test_*_harness_rtl.py
       - name: Seeded faults - every mutant killed by the bench
-        run: python -m pytest -q arith/*/tests/test_*_mutants_rtl.py
+        run: python -m pytest -q arith/{adder,multiplier,mac,fp_add,fp_mul,fp_fma}/tests/test_*_mutants_rtl.py
       - name: SymbiYosys - variants against each other and a plain reference (k-induction, bounded), and a planted fault refuted by each check
         run: |
           export PATH=$FDA_OSS_CAD/bin:$PATH
           yosys -V
-          python -m pytest -q arith/*/tests/test_*_formal_*_rtl.py
+          python -m pytest -q arith/{adder,multiplier,mac,fp_add,fp_mul,fp_fma}/tests/test_*_formal_*_rtl.py
+
+  arith-fft-suite:
+    name: Frequency-domain suite (briefs 148, 161) - FFT, block floating point, 2-parallel, real-input, fast convolution, complex multiplier, twiddle generator, reorder buffer, window multiplier - models against NumPy, cocotb + Icarus, packaged harnesses, seeded faults, SymbiYosys, Verilator -Wall, build files, traceability gate
+    runs-on: ubuntu-24.04
+    timeout-minutes: 150
+    env:
+      FDA_OSS_CAD: ${{ github.workspace }}/oss-cad-suite
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Cache the OSS CAD Suite
+        id: oss
+        uses: actions/cache@v4
+        with:
+          path: oss-cad-suite
+          key: oss-cad-suite-20261112
+      - name: Download the pinned OSS CAD Suite (release 2026-11-12, build 20261112)
+        if: steps.oss.outputs.cache-hit != 'true'
+        run: |
+          curl -fsSL -o oss.tgz https://github.com/YosysHQ/oss-cad-suite-build/releases/download/2026-11-12/oss-cad-suite-linux-x64-20261112.tgz
+          echo "346499255e3e5e6e9bf67e1d378a4e6bc249abd3de3b0caf5b57604bc8ba1752  oss.tgz" | sha256sum -c -
+          tar -xzf oss.tgz
+          rm oss.tgz
+      - name: Install
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y iverilog
+          pip install pyyaml pytest cocotb==2.0.1 numpy==2.4.3   # numpy: the floating-point models are checked against float32 and float16 (brief 139e)
+      - name: Generated files are current (wrappers, build.yaml, spec.md, testplans, mutants, the cosine ROM); the traceability gate
+        run: |
+          python -m arith.tools.gen_build --check
+          python -m arith.tools.gen_spec_md --check
+          python -m arith.tools.gen_testplan --check
+          python -m arith.tools.gen_harness_fft --check
+          python -m arith.fft_common.gen_cos_rom --check
+          python -m flow.trace_v1 check arith/fft arith/fft_real arith/fft_axis arith/fft_cmul arith/fft_twiddle arith/fft_reorder arith/fft_window arith/fft_bfp arith/fft_mdc2 arith/fft_real_axis arith/fft_fastconv
+      - name: Models against NumPy and independent formulations, fast convolution, spec against the RTL headers, Verilator -Wall at every point, wrappers and build.yaml
+        run: python -m pytest -q arith/fft*/tests/test_*_model.py arith/fft*/tests/test_*_package.py arith/fft/tests/test_fft_fastconv.py
+      - name: Every variant against its model (directed and random points), latency sensitivity, forward-then-inverse (Icarus + cocotb)
+        run: python -m pytest -q arith/fft*/tests/test_*_{directed,random,latency,roundtrip,levels,gaps,axil,saturate,backpressure,checker,harness}_rtl.py
+      - name: Seeded faults - every mutant killed by the bench
+        run: python -m pytest -q arith/fft*/tests/test_*_mutants_rtl.py
+      - name: SymbiYosys - properties of the parts (proved or bounded) and a planted fault refuted by each
+        run: |
+          export PATH=$FDA_OSS_CAD/bin:$PATH
+          yosys -V
+          python -m pytest -q arith/fft*/tests/test_*_formal_*_rtl.py
 
   lint:
     name: Verilator lint

@@ -8,6 +8,7 @@
     python -m agent review <design-dir> [--out DIR] [--intent FILE] [--improvements FILE] [--no-judge]   (brief 84: review an existing design, read-only)
     python -m agent document <run-dir> [--cc-model M] [--replay doc_calls.jsonl]   (brief 68 C: the DOC step on a finished run)
     python -m agent project check|status|hash|gen-tests <dir> ...     (the project layer, project/cli.py)
+    python -m agent ip search|rank|show|use ...                  (brief 150: the IP library, `python -m agent ip --help`)
     python -m agent improve <design-dir> "<request>" [--more | --edit N "<change>" | --choose N]   (brief 104: analysis, then strategy options; --choose runs one)
 
 A paused run (an interview question or a stage review) prints what it waits for; answer with ``resume --reply``
@@ -377,6 +378,9 @@ def main(argv: list[str] | None = None) -> int:
         return project_main(args[1:])
     from agent.access import require_or_exit      # brief 94: run, resume and document all start here
     require_or_exit("python -m agent")
+    if args[:1] == ["ip"]:                           # brief 150: the IP-library retriever (plain Python: no model, no Vivado)
+        from agent.ip_cmd import main as ip_main
+        return ip_main(args[1:])
     from agent.graph.role_models import parse_roles
     from agent.graph.run import Config, build_graph, checkpointer_for, new_runtime
     ap = argparse.ArgumentParser(prog="python -m agent")

@@ -2,14 +2,14 @@
 source: designs/b102_managed_ext/handover.yaml; human view: README.md; refresh: python -m flow.handover fresh designs/b102_managed_ext
 
 ## identity
-kind=demonstration produced_by=human part=xck26-sfvc784-2LV-c board=Kria KR260 top=fcs_top tool=Vivado 2026.1
+kind=demonstration produced_by=session part=xck26-sfvc784-2LV-c board=Kria KR260 top=fcs_top tool=Vivado 2026.1
 
 ## summary
 A KR260 self-test of an Ethernet FCS stage that integrates one real third-party block under a managed project (brief 102, stage 3). Alex Forencich's parallel CRC/LFSR (verilog-ethernet, MIT, commit 77320a9471d1) is vendored unmodified and frozen; our adapter (owned) adds the register, the restart and the enable around it; an owned sequencer sends a fixed sixteen-word frame and shows the verdict on an LED. project.yaml records the licence, the commit and the hash of every file of theirs, and the agent's tools refuse every route to edit them.
 not: a 10G Ethernet FCS check; the block is instantiated at 16 data bits a clock, not the 64-bit word of the 96 design; a board design; it was not programmed, and the 161 MHz clock constraint is on the 25 MHz oscillator pin for a timing study
 
 ## state
-stage=built vivado=2026.1 kb_pin=93d158c build_id=19e88489
+stage=built vivado=2026.1 kb_pin=5e2eab8 build_id=0c08e7c4
 gates: import_checks=pass build_2026_1=pass boundary_checks=pass
 
 ## interface

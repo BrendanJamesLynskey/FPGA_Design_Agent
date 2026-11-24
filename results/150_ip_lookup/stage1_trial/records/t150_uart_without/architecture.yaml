@@ -1,0 +1,58 @@
+schema: fpga-design-agent/architecture/v1
+design: seg_counter
+top: seg_counter_top
+blocks:
+  - name: seg_counter_top
+    function: top level; instantiates reset_sync, seg_debounce, seg_tick, seg_bcd_count, seg_display, seg_regs and fpga_shell
+  - name: reset_sync
+    function: 2-flop synchroniser on cpu_resetn, inverted once to active-high rst on clk
+  - name: seg_debounce
+    function: 2-flop synchroniser plus DEBOUNCE_CYCLES counter on btnc; emits one clr_pulse per debounced rising edge
+  - name: seg_tick
+    function: 27-bit tick counter, returns to 0 after TICK_CYCLES clk cycles; not cleared by clr_pulse
+  - name: seg_bcd_count
+    function: 8-digit BCD counter, increments on tick, wraps 99999999 to 00000000, cleared by clr_pulse and rst
+  - name: seg_display
+    function: refresh counter (DIGIT_REFRESH_CYCLES), digit mux AN0..AN7, BCD to 7-segment decode, leading-zero blanking, dp held off
+  - name: seg_regs
+    function: window register block; win 0x00 ID (RO 0x53454731), win 0x01 COUNT (RO 8 BCD digits)
+  - name: fpga_shell
+    function: provided test shell; USB-UART 115200 8N1 frame FSM and register window
+interfaces:
+  - name: uart_host
+    between: [host, fpga_shell]
+    protocol: uart
+    prefix: uart
+    module: fpga_shell
+  - name: reg_window
+    between: [fpga_shell, seg_regs]
+    protocol: simple
+    prefix: win
+    module: seg_regs
+clock_domains:
+  - name: clk
+    clock: clk
+    freq_mhz: 100
+reset:
+  synchronisers: [reset_sync]
+crossings:
+  - from: async
+    to: clk
+    signal: cpu_resetn
+    primitive: sync_2ff
+    inline_in: reset_sync
+  - from: async
+    to: clk
+    signal: btnc
+    primitive: sync_2ff
+    inline_in: seg_debounce
+  - from: async
+    to: clk
+    signal: uart_rxd
+    primitive: sync_2ff
+    inline_in: fpga_shell
+predicted_resources:
+  lut: [60, 300]
+  ff: [100, 300]
+  bram_tile: 0
+  dsp: 0
