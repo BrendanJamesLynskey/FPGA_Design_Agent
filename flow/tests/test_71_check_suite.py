@@ -300,7 +300,10 @@ def test_agent_check_tool_is_registered_and_offered_to_the_designer() -> None:
     import agent.core.tools  # noqa: F401
     from agent.core.registry import TOOLS
     from agent.graph import run as RUN
-    assert "check" in TOOLS and set(TOOLS["check"].input_schema["properties"]["names"]["items"]["enum"]) == {"all", *C.CHECKS}
+    # brief 204a: the report-driven checks are run by the CLI and the sign-off, but are not yet offered to the Designer: the tool schema is part of
+    # the frozen request golden (agent/tests/test_08f_golden_requests.py), so offering them is a new evaluation and the planner's decision
+    not_offered = {"logic_levels", "clock_tree", "fanout", "synth_log", "congestion", "ip_status"}
+    assert "check" in TOOLS and set(TOOLS["check"].input_schema["properties"]["names"]["items"]["enum"]) == {"all", *C.CHECKS} - not_offered
     for n in range(1, 10):
         assert "check" in RUN.effective_tools("rtl", n, "V3")
     assert "check" not in RUN.effective_tools("tests", 2, "V3") and "check" not in RUN.effective_tools("model", 2, "V3")
