@@ -1,0 +1,12 @@
+schema: fpga-design-agent/formal_rigour/v1
+scope: "icmp_echo with BUF_BYTES 128 and TTL 64, any input bytes and back-pressure; the reply is checked against the request it answers on byte 13 only"
+sanity: [c_reply]
+depth:
+  bmc:
+    enough: false
+    why: >-
+      Bounded, not claimed exhaustive, and as deep as the solver goes: boolector did not finish step 61 in an hour and yices (the engine here) finished depth 62 in 273 s on the
+      shared machine (icmp.sby). Measured in the cover task: an echo request is accepted at step 46, the reply's first beat is on the output at step 48 and its byte 13 at step 61, so
+      depth 62 reaches byte 13 of the first reply with one step to spare. The reply's later bytes (14 to 41; a seeded fault covers them in simulation) and the reply's end (ev_reply
+      first happens at step 90) are beyond the bound: the assertion `ev_reply |-> f_req` never had an antecedent in 62 steps and was removed (brief 143c), c_reply covers that the
+      end is reachable. No k-induction proof was attempted.

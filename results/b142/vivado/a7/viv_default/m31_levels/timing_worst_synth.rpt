@@ -1,0 +1,68 @@
+Copyright 1986-2022 Xilinx, Inc. All Rights Reserved. Copyright 2022-2026 Advanced Micro Devices, Inc. All Rights Reserved.
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+| Tool Version : Vivado v.2026.1 (lin64) Build 6511674 Tue Jun 16 11:01:26 MDT 2026
+| Date         : Sat Nov 21 22:32:48 2026
+| Host         : bren-ubuntu24-04 running 64-bit Ubuntu 24.04.4 LTS
+| Command      : report_timing -max_paths 1 -setup -file /tmp/claude-1000/-home-brendan-Claude-sandbox/a54cc85c-2645-4343-9056-2e450c5dac3c/scratchpad/viv/a7/viv_default/m31_levels/timing_worst_synth.rpt
+| Design       : m31_levels
+| Device       : 7a100t-csg324
+| Speed File   : -1  PRODUCTION 1.23 2018-06-13
+| Design State : Synthesized
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Timing Report
+
+Slack (MET) :             0.282ns  (required time - arrival time)
+  Source:                 xq_reg[33]/C
+                            (rising edge-triggered cell FDRE clocked by clk  {rise@0.000ns fall@1.750ns period=3.500ns})
+  Destination:            y_reg/D
+                            (rising edge-triggered cell FDRE clocked by clk  {rise@0.000ns fall@1.750ns period=3.500ns})
+  Path Group:             clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            3.500ns  (clk rise@3.500ns - clk rise@0.000ns)
+  Data Path Delay:        3.178ns  (logic 1.021ns (32.127%)  route 2.157ns (67.873%))
+  Logic Levels:           3  (LUT5=2 LUT6=1)
+  Clock Path Skew:        -0.049ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    0.924ns = ( 4.424 - 3.500 ) 
+    Source Clock Delay      (SCD):    0.973ns
+    Clock Pessimism Removal (CPR):    0.000ns
+  Clock Uncertainty:      0.035ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock clk rise edge)        0.000     0.000 r  <hidden>
+                                                      0.000     0.000 r  clk
+                         net (fo=40, unset)           0.973     0.973    clk
+                         FDRE                                         r  xq_reg[33]/C
+  -------------------------------------------------------------------    -------------------
+                         FDRE (Prop_fdre_C_Q)         0.478     1.451 r  xq_reg[33]/Q
+                         net (fo=2, unplaced)         0.976     2.427    xq_reg_n_0_[33]
+                         LUT6 (Prop_lut6_I0_O)        0.295     2.722 r  y_i_9/O
+                         net (fo=1, unplaced)         0.449     3.171    y_i_9_n_0
+                         LUT5 (Prop_lut5_I4_O)        0.124     3.295 r  y_i_3/O
+                         net (fo=1, unplaced)         0.732     4.027    y_i_3_n_0
+                         LUT5 (Prop_lut5_I1_O)        0.124     4.151 r  y_i_1/O
+                         net (fo=1, unplaced)         0.000     4.151    y_i_1_n_0
+                         FDRE                                         r  y_reg/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock clk rise edge)        3.500     3.500 r  <hidden>
+                                                      0.000     3.500 r  clk
+                         net (fo=40, unset)           0.924     4.424    clk
+                         FDRE                                         r  y_reg/C
+                         clock pessimism              0.000     4.424    <hidden>
+                         clock uncertainty           -0.035     4.389    <hidden>
+                         FDRE (Setup_fdre_C_D)        0.044     4.433    y_reg
+  -------------------------------------------------------------------
+                         required time                          4.433    <hidden>
+                         arrival time                          -4.151    <hidden>
+  -------------------------------------------------------------------
+                         slack                                  0.282    <hidden>
+
+
+
+

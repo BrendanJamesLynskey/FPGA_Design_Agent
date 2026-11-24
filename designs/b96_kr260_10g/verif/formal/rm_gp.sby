@@ -1,7 +1,8 @@
 # SymbiYosys: rate_match_gp (brief 115), two free clocks (multiclock on), properties bound from rm_gp_props.sv.
 #   safety_bmc / safety_prove : P1..P9 (overflow, underflow, pointer views, gray, idle policy, integrity of the symbolic entry); prove = k-induction
 #   progress_bmc / progress_prove : P10, bounded response, lock high and no reset
-#   cover : the proofs are not vacuous
+#   cover / progress_cover / cover_del : the proofs are not vacuous: every assertion's antecedent (NAME__ante in rm_gp_props.sv) and the assumption-sanity covers are reached
+#     (cover_del is deeper: an idle deletion needs the one non-slot clock in 33). Rigour: rm_gp.rigour.yaml (flow/formal_rigour.py).
 # Run: sby -f rm_gp.sby <task>      (OSS CAD Suite 2026-11-12; see run_formal.py, which also runs the mutants)
 [tasks]
 safety_bmc safety bmc
@@ -9,6 +10,8 @@ safety_prove safety prove
 progress_bmc progress bmc
 progress_prove progress prove
 cover safety cover
+progress_cover progress cover
+cover_del del cover
 
 [options]
 multiclock on
@@ -18,6 +21,7 @@ prove: mode prove
 prove: depth 24
 cover: mode cover
 cover: depth 60
+cover_del: depth 110
 
 [engines]
 smtbmc boolector
@@ -26,6 +30,7 @@ smtbmc boolector
 plugin -i slang
 safety: read_slang --top rm_gp_fv_top -G AW=2 -D FV_KB=0 xpm_formal.sv rate_match_gp.sv rm_gp_props.sv rm_gp_bind.sv rm_gp_fv_top.sv
 progress: read_slang --top rm_gp_fv_top -G AW=2 -D FV_KB=0 -D FV_PROGRESS xpm_formal.sv rate_match_gp.sv rm_gp_props.sv rm_gp_bind.sv rm_gp_fv_top.sv
+del: read_slang --top rm_gp_fv_top -G AW=2 -D FV_KB=0 -D FV_COVER_DEL xpm_formal.sv rate_match_gp.sv rm_gp_props.sv rm_gp_bind.sv rm_gp_fv_top.sv
 prep -top rm_gp_fv_top
 
 [files]

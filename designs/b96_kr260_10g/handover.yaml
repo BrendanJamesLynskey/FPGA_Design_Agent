@@ -5,7 +5,7 @@ schema: fda-handover/1
 id: b96_kr260_10g
 title: 'A 10GBASE-R link on the KR260 SFP+ cage: our own PCS and 64-bit MAC with a mock trading path'
 kind: example
-produced_by: human
+produced_by: session
 summary: A Kria KR260 design that carries our own 10GBASE-R PCS (64B/66B, scrambler, gearbox, block lock) and a 64-bit Ethernet
   MAC on one GTH lane at 10.3125 Gb/s, with the mock trading path of brief 58A behind it (a one-rule 64-bit decision in
   the same message format), because the AMD 10G Ethernet core is refused on the free Basic licence. Verified against an
@@ -107,7 +107,7 @@ files:
 - path: designs/b96_kr260_10g/dbg_xvc/docs/dbg_xvc.md
   what: what build dbg_xvc is, what the ILA watches and why, what the debug logic changes, measured against the parent build
     (brief 131)
-  sha256: afd7cf480ec0b195bc44d6fd338fbf4e40eab49e8a9de90256ebb79284531321
+  sha256: 8c015b2a814e32e3a85afa502f37029d7c3eb8e05d934190519ffb370d3c67cc
 - path: designs/b96_kr260_10g/dbg_xvc/docs/xvc_board_side.md
   what: 'how XVC would run on the KR260''s Ubuntu: which variant fits, the overlay, the Vivado connection; written, not
     run (brief 131)'
@@ -131,9 +131,9 @@ files:
   what: dumps a routed build's core cells and slacks so the debug build can be compared with its parent (brief 131)
   sha256: d2746b1b03f939855174233b2e73c6d3fd65fa8079e3ef8a2e9d4c10e6e32944
 - path: designs/b96_kr260_10g/verif/pyuvm/README.md
-  what: how the pyuvm (Python UVM on cocotb and Icarus) bench for the PCS and MAC is built, run and limited; the same job
-    as the SystemVerilog UVM bench (brief 123)
-  sha256: 0b5695e70dafc64b756dee23fde5f9a36a4a6ccfe472cc24667dca7445ddb6dc
+  what: how the pyuvm (Python UVM on cocotb, Icarus or Verilator) bench for the PCS and MAC is built, run and limited, with
+    its code coverage on Verilator; the same job as the SystemVerilog UVM bench (briefs 123 and 146)
+  sha256: 3ba3fe7b62d5e5d9eb7555274589907aaf124dc0172c3bfe5b9e1563d3bc7d6c
 - path: designs/b96_kr260_10g/verif/pyuvm/COMPARISON.md
   what: the measured comparison of the pyuvm and the SystemVerilog UVM bench, where each fits the project, and a section
     for the verification course (brief 123)
@@ -378,6 +378,16 @@ commands:
   minutes: 15
   needs: Icarus Verilog 12, cocotb 2.0.1, pyuvm 5.0.0, cocotb-coverage; a simulation-only run, no heavy slot while the load
     is under 6 and more than 12 GB is free
+- what: the pyuvm regression of the PCS and MAC on Verilator with line, branch, expression and toggle coverage, merged and
+    reported per module (brief 146); needs Verilator 5.036 or newer (cocotb 2.0.1 refuses the 5.020 of Ubuntu), so it is
+    not in CI
+  cmd: SIM=verilator PYUVM_COV=1 PYTHONPATH=. python designs/b96_kr260_10g/verif/pyuvm/scripts/run_regress.py --out /tmp/v146
+    --record results/146_verilator_cov
+  heavy: true
+  minutes: 6
+  needs: Verilator 5.048 (source ~/.local/opt/verilator-5048/env.sh), cocotb 2.0.1, pyuvm 5.0.0, cocotb-coverage; the Verilator
+    build takes a heavy slot (systemd-run MemoryMax=8G), the runs are simulation only; then verilator_coverage --write and
+    scripts/cov_report.py (results/146_verilator_cov/README.md)
 evidence:
 - id: E1
   activity: simulation
@@ -770,6 +780,10 @@ next_steps:
 open_questions:
 - Does the PL load over JTAG with the PS idle on the KR260 (flow/program.py has no KR260 board entry yet)?
 history:
+- date: '2026-11-22'
+  note: 'brief 146: RTL code coverage of the PCS and MAC from the pyuvm bench on Verilator 5.048 (81.25 % line, 85.34 %
+    branch, 92.47 % expression, 96.33 % toggle design-wide, every open point explained; same results as Icarus, 2.9 times
+    faster to run); three additions of stimulus; testplan items V-COV-FUNC and V-COV-CODE; no RTL change'
 - date: '2026-11-21'
   note: 'brief 127: build rm_gp_itch, brief 110''s MoldUDP64/ITCH/book/risk/OUCH path inside the 10G design (udp_strip adapter
     with a late FCS verdict, transmit multiplexer, replay memory and capture ring, stand-in for tcp_fast with a hook); bit-exact
@@ -809,6 +823,14 @@ history:
 - date: '2026-11-17'
   note: 'brief 96 stages 0 to 2: board facts, design note, PCS, MAC, trading path, host code, builds; one review round'
 numbers_allow:
+- token: '81.25'
+  reason: brief 146 design-wide line coverage of the PCS and MAC on Verilator, results/146_verilator_cov/coverage_summary.json
+- token: '85.34'
+  reason: brief 146 design-wide branch coverage of the PCS and MAC on Verilator, results/146_verilator_cov/coverage_summary.json
+- token: '92.47'
+  reason: brief 146 design-wide expression coverage of the PCS and MAC on Verilator, results/146_verilator_cov/coverage_summary.json
+- token: '96.33'
+  reason: brief 146 design-wide toggle coverage of the PCS and MAC on Verilator, results/146_verilator_cov/coverage_summary.json
 - token: '245'
   reason: the number of brief 119's pull request
 - token: '10.3125'
@@ -843,4 +865,4 @@ state:
     build_2026_1: pass
   vivado: '2026.1'
   kb_pin: 5e2eab8
-  build_id: f387f9e5
+  build_id: 4d5f6d14

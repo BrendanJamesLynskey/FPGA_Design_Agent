@@ -4,27 +4,32 @@
 
 The human specifies the requirements and checks that the verification is thorough enough. The agent holds the knowledge to implement and to verify. You can open any of the implementation or the evidence, and you do not have to. Hardware on the board, with attached instruments, is a verification layer of its own: where a requirement depends on something outside the design (an optical link, a network card, a data source) it may be the only way to close it.
 
-**Summary.** 9 requirements (7 functional, 2 safety); 7 verified; 2 failing; 0 of 9 requirements agreed by a human, 0 human review(s) recorded.
+**Summary.** 9 requirements (7 functional, 2 safety); 5 verified; 2 partially verified (the required mix of methods is not met); 2 failing; 0 of 9 requirements agreed by a human, 0 agreed on the owner's delegation (not human), 9 draft; 0 human and 0 delegated review(s) recorded.
 
 Simulation only (xsim 2026.1, UVM 1.2; Icarus is not used by this bench). One recorded regression (results/176_seq_poison/summary.json) and one mutation record (results/170_itch_uvm/mutation_seed*.json). No board, no real feed, every message synthetic.
 
 ## Matrix
 
-Rows are requirements, columns are verification methods. A cell lists each item with its computed status and links to its evidence. Status is read from the evidence by code; it is never typed. `stale` means a file the evidence is about changed after the evidence was recorded; `bounded` means a formal bounded model check only.
+Rows are requirements, columns are verification methods. A cell lists each item with its computed status and links to its evidence. Status is read from the evidence by code; it is never typed. `stale` means a file the evidence is about changed after the evidence was recorded; `bounded` means a formal bounded model check only. A requirement is verified only when its passing items meet the method mix for its kind (`flow/method_mix_policy.yaml`); a test is marked with who wrote it, and a test whose author is not recorded counts as the implementing agent's own. Agreement comes only from `verif/agreements.yaml`, never from the testplan.
 
-| Requirement | Kind | State | sim test | UVM | SVA | formal | Lean | coverage | timing | sim measure | board | review |
-|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| **B110-F-ORDER-BYTES** Every order that leaves with a good frame check sequence is byte exact | functional | verified |  | pass: [V-UVM-ORDERS](../../../results/176_seq_poison/summary.json) | pass: [V-UVM-SVA](../../../results/176_seq_poison/summary.json) |  |  |  |  |  |  |  |
-| **B110-F-MOLD** MoldUDP64 sessions, sequence gaps, duplicates, overlaps, heartbeats and broken packets are counted and delivered as the reference says | functional | verified |  | pass: [V-UVM-MOLD](../../../results/176_seq_poison/summary.json) |  |  |  |  |  |  |  |  |
-| **B110-F-BOOK** The ITCH decoder and the book keep the counters, the inexact flags and the candidates the reference model computes | functional | verified |  | pass: [V-UVM-BOOK](../../../results/176_seq_poison/summary.json) |  |  |  |  |  |  |  |  |
-| **B110-F-RISK** Every risk refusal is the first failing check, counted once, and no order starts on a refused candidate | safety | verified |  | pass: [V-UVM-RISK](../../../results/176_seq_poison/summary.json) |  |  |  |  |  |  |  |  |
-| **B110-F-UDP** Frames are forwarded or dropped by the first failing header check, and each drop is counted | functional | verified |  | pass: [V-UVM-UDP](../../../results/176_seq_poison/summary.json) |  |  |  |  |  |  |  |  |
-| **B110-S-STRICT** Under STRICT an order is never sent on an unverified or bad frame | safety | verified |  | pass: [V-UVM-STRICT](../../../results/176_seq_poison/summary.json) | pass: [V-UVM-SVA](../../../results/176_seq_poison/summary.json) |  |  |  |  |  |  |  |
-| **B110-F-SEQ-POISON** A poisoned order frame consumes no TCP sequence number | functional | FAILS |  | FAIL: [V-UVM-SEQ](../../../results/176_seq_poison/summary.json) |  |  |  |  |  |  |  |  |
-| **B110-V-COVERAGE** The bench's functional coverage plan is closed | functional | verified |  |  |  |  |  | pass: [V-UVM-COV](../../../results/176_seq_poison/summary.json) |  |  |  |  |
-| **B110-V-MUTATION** The bench kills at least 90 % of blind mutants of the path (worst case, over at least 30) | functional | FAILS |  |  |  |  |  |  |  | FAIL: [V-UVM-MUT](../../../results/170_itch_uvm/mutation_seed1.json) |  |  |
+| Requirement | Kind | Agreement | State | sim test | UVM | SVA | formal | Lean | coverage | timing | sim measure | board | review |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| **B110-F-ORDER-BYTES** Every order that leaves with a good frame check sequence is byte exact | functional | draft | verified |  | pass [independent bench]: [V-UVM-ORDERS](../../../results/176_seq_poison/summary.json) | pass [independent bench]: [V-UVM-SVA](../../../results/176_seq_poison/summary.json) |  |  |  |  |  |  |  |
+| **B110-F-MOLD** MoldUDP64 sessions, sequence gaps, duplicates, overlaps, heartbeats and broken packets are counted and delivered as the reference says | functional | draft | verified |  | pass [independent bench]: [V-UVM-MOLD](../../../results/176_seq_poison/summary.json) |  |  |  |  |  |  |  |  |
+| **B110-F-BOOK** The ITCH decoder and the book keep the counters, the inexact flags and the candidates the reference model computes | functional | draft | verified |  | pass [independent bench]: [V-UVM-BOOK](../../../results/176_seq_poison/summary.json) |  |  |  |  |  |  |  |  |
+| **B110-F-RISK** Every risk refusal is the first failing check, counted once, and no order starts on a refused candidate | safety | draft | partially verified; lacks a formal proof (SymbiYosys or Lean) |  | pass [independent bench]: [V-UVM-RISK](../../../results/176_seq_poison/summary.json) |  |  |  |  |  |  |  |  |
+| **B110-F-UDP** Frames are forwarded or dropped by the first failing header check, and each drop is counted | functional | draft | verified |  | pass [independent bench]: [V-UVM-UDP](../../../results/176_seq_poison/summary.json) |  |  |  |  |  |  |  |  |
+| **B110-S-STRICT** Under STRICT an order is never sent on an unverified or bad frame | safety | draft | partially verified; lacks a formal proof (SymbiYosys or Lean) |  | pass [independent bench]: [V-UVM-STRICT](../../../results/176_seq_poison/summary.json) | pass [independent bench]: [V-UVM-SVA](../../../results/176_seq_poison/summary.json) |  |  |  |  |  |  |  |
+| **B110-F-SEQ-POISON** A poisoned order frame consumes no TCP sequence number | functional | draft | FAILS |  | FAIL [independent bench]: [V-UVM-SEQ](../../../results/176_seq_poison/summary.json) |  |  |  |  |  |  |  |  |
+| **B110-V-COVERAGE** The bench's functional coverage plan is closed | functional | draft | verified |  |  |  |  |  | pass [independent bench]: [V-UVM-COV](../../../results/176_seq_poison/summary.json) |  |  |  |  |
+| **B110-V-MUTATION** The bench kills at least 90 % of blind mutants of the path (worst case, over at least 30) | functional | draft | FAILS |  |  |  |  |  |  |  | FAIL [independent bench]: [V-UVM-MUT](../../../results/170_itch_uvm/mutation_seed1.json) |  |  |
 
 ## Gaps
+
+### Requirements whose passing items do not meet the required method mix
+
+- `B110-F-RISK`: safety requirement: passes, but the required mix of methods is not met; lacks a formal proof (SymbiYosys or Lean)
+- `B110-S-STRICT`: safety requirement: passes, but the required mix of methods is not met; lacks a formal proof (SymbiYosys or Lean)
 
 ### Requirements with no passing evidence
 
@@ -35,7 +40,7 @@ Rows are requirements, columns are verification methods. A cell lists each item 
 
 ### B110-F-ORDER-BYTES: Every order that leaves with a good frame check sequence is byte exact
 
-- Kind: functional; state: verified; specification status: draft.
+- Kind: functional; state: verified; agreement: draft.
 - Source: `designs/b110_itch_ouch/docs/spec_notes.md#3-ouch-50-hardware-rtlouch_entersv-section-21-type-o-enter-order`
 - Each order frame with a good FCS equals the reference frame byte for byte (Ethernet, IPv4, TCP headers, SoupBinTCP 3.00 length and type, OUCH 5.0 Enter Order fields, ClOrdID, appendage), the orders come in order with UserRefNum rising by one per accepted candidate, and a frame with a wrong FCS is never an order.
   - UVM test: **pass**, UVM scoreboard ORDERS check, every order frame byte for byte against the SV reference model (all sequences, all seeds): checks.ORDERS.mismatches = 0; checks.ORDERS.compared = 3128; failed = 0. [evidence](../../../results/176_seq_poison/summary.json)
@@ -43,35 +48,35 @@ Rows are requirements, columns are verification methods. A cell lists each item 
 
 ### B110-F-MOLD: MoldUDP64 sessions, sequence gaps, duplicates, overlaps, heartbeats and broken packets are counted and delivered as the reference says
 
-- Kind: functional; state: verified; specification status: draft.
+- Kind: functional; state: verified; agreement: draft.
 - Source: `designs/b110_itch_ouch/docs/itch_ouch.md#2-behaviour-in-detail`
 - For every packet the packet, message, gap, missing, duplicate, overlap, session, heartbeat, end-of-session, short, truncated and bad-length counters and the gap, session-lock and end-of-session flags equal the reference model's at every checkpoint, with 1, 3 and 6 messages a packet and at every frame alignment.
   - UVM test: **pass**, UVM scoreboard COUNTERS and FLAGS at every checkpoint (Mold counters and flags, gaps, duplicates, overlaps, heartbeats, truncation): checks.COUNTERS.mismatches = 0; checks.FLAGS.mismatches = 0; checks.COUNTERS.compared = 8938. [evidence](../../../results/176_seq_poison/summary.json)
 
 ### B110-F-BOOK: The ITCH decoder and the book keep the counters, the inexact flags and the candidates the reference model computes
 
-- Kind: functional; state: verified; specification status: draft.
+- Kind: functional; state: verified; agreement: draft.
 - Source: `designs/b110_itch_ouch/docs/itch_ouch.md#2-behaviour-in-detail`
 - Message-type counters, malformed and skipped messages, unwatched locates, missing/duplicate/overflowing orders, ladder overflow and over-execution counters, the candidate count and the per-instrument inexact flags equal the reference model's, including the edge cases of an empty book, a full ladder, a table-index collision and a replace.
   - UVM test: **pass**, UVM book edge-case sequence and random mix, counters and inexact flags against the reference model: checks.COUNTERS.mismatches = 0; checks.FLAGS.mismatches = 0; failed = 0. [evidence](../../../results/176_seq_poison/summary.json)
 
 ### B110-F-RISK: Every risk refusal is the first failing check, counted once, and no order starts on a refused candidate
 
-- Kind: safety; state: verified; specification status: draft.
+- Kind: safety; state: partially verified; lacks a formal proof (SymbiYosys or Lean); agreement: draft.
 - Source: `designs/b110_itch_ouch/docs/itch_ouch.md#2-behaviour-in-detail`
 - Not armed, kill switch, untrusted or gap-halted, inexact book, quantity, position limit per instrument, price band and missing bid refuse a candidate exactly as the reference does; the position and the order number advance only for an accepted candidate.
   - UVM test: **pass**, UVM risk sequence, every refusal counter and the orders that follow: checks.COUNTERS.mismatches = 0; checks.ORDERS.mismatches = 0; failed = 0. [evidence](../../../results/176_seq_poison/summary.json)
 
 ### B110-F-UDP: Frames are forwarded or dropped by the first failing header check, and each drop is counted
 
-- Kind: functional; state: verified; specification status: draft.
+- Kind: functional; state: verified; agreement: draft.
 - Source: `designs/b96_kr260_10g/rm_gp_itch/docs/itch_integration.md#2-the-path-block-by-block`
 - Destination MAC (unicast or the group's multicast address), EtherType, IPv4 version and header length, fragments, protocol, destination address and port, UDP length against the IP length, and the IPv4 header checksum; EN = 0 drops everything.
   - UVM test: **pass**, UVM header sequence, every drop reason, the multicast address and EN = 0, udp_strip counters against the reference model: checks.US.mismatches = 0; checks.US.compared = 2616. [evidence](../../../results/176_seq_poison/summary.json)
 
 ### B110-S-STRICT: Under STRICT an order is never sent on an unverified or bad frame
 
-- Kind: safety; state: verified; specification status: draft.
+- Kind: safety; state: partially verified; lacks a formal proof (SymbiYosys or Lean); agreement: draft.
 - Source: `designs/b96_kr260_10g/rm_gp_itch/docs/itch_integration.md#4-the-late-frame-check-and-what-happens-to-an-order-on-a-bad-frame`
 - With STRICT set (the default, owner decision 31) no order leaves with a good FCS when the frame that carried its message has a bad FCS, or when that frame's verdict is not yet known at the order's last word; such an order leaves with a wrong FCS. Cut-through is a documented option with a measured window.
   - UVM test: **pass**, UVM bad-FCS and tail-distance sequences, STRICT and cut-through, orders classed must, may and must-not against the measured window: checks.ORDERS.mismatches = 0; checks.ORDERCNT.mismatches = 0; failed = 0. [evidence](../../../results/176_seq_poison/summary.json)
@@ -79,21 +84,21 @@ Rows are requirements, columns are verification methods. A cell lists each item 
 
 ### B110-F-SEQ-POISON: A poisoned order frame consumes no TCP sequence number
 
-- Kind: functional; state: FAILS; specification status: draft.
+- Kind: functional; state: FAILS; agreement: draft.
 - Source: `designs/b96_kr260_10g/rm_gp_itch/docs/itch_integration.md#5-registers-and-what-a-user-could-guess-wrong`
 - The TCP sequence number of an order is the loaded number plus 59 for every segment that left with a good FCS; a frame poisoned (wrong FCS) by the multiplexer, because its trigger frame was bad or unverified, does not advance it.
   - UVM test: **FAIL**, UVM sequence-number check on the datasheet's rule; t_seq_poison (run with +SEQ_STRICT) is the minimal failing test, the other sequences run under a counted waiver: seq_waived unreadable; finding_seq_poison.failed unreadable. [evidence](../../../results/176_seq_poison/summary.json)
 
 ### B110-V-COVERAGE: The bench's functional coverage plan is closed
 
-- Kind: functional; state: verified; specification status: draft.
+- Kind: functional; state: verified; agreement: draft.
 - Source: `designs/b96_kr260_10g/rm_gp_itch/verif/uvm/README.md#functional-coverage`
 - Every bin of the bench's coverage plan (message types, messages a packet, Mold events, header drops, book edge cases, risk refusals, order outcomes, bad-FCS crosses, frame alignments, backpressure) is hit by the recorded regression.
   - coverage: **pass**, Closure of the bench's functional coverage plan over the recorded regression: coverage.holes = []. [evidence](../../../results/176_seq_poison/summary.json)
 
 ### B110-V-MUTATION: The bench kills at least 90 % of blind mutants of the path (worst case, over at least 30)
 
-- Kind: functional; state: FAILS; specification status: draft.
+- Kind: functional; state: FAILS; agreement: draft.
 - Source: `designs/b96_kr260_10g/rm_gp_itch/verif/uvm/README.md#mutation-score`
 - A blind mutation sweep (mutants made from the RTL text and a seed only, equivalent mutants decided by a formal miter) scores at least 90 % even if every undecided mutant counted as a survivor.
   - simulation measurement: **FAIL**, Blind mutation sweep with the fixed tool (flow/mutation_score.py): score, worst case and undecided against the floor: mutation score 100.0% (floor 90%): 18 killed, 0 real survivors, 0 equivalent dropped, 12 undecided; worst case 60.0%; seed 1; worst-case score 60.0% is below the floor 90%; 12 undecided (limit 3). [evidence](../../../results/170_itch_uvm/mutation_seed1.json)
