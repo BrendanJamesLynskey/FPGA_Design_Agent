@@ -40,13 +40,16 @@ LANG = {
 
 
 def ask(prompt: str) -> tuple[str, dict]:
-    r = subprocess.run(["claude", "-p", "--model", "sonnet", "--tools", "", "--disable-slash-commands", "--strict-mcp-config",
-                        "--no-session-persistence", "--system-prompt", SYSTEM, "--output-format", "json"], input=prompt,
-                       capture_output=True, text=True, cwd=CWD, timeout=600)
-    j = json.loads(r.stdout)
-    u = j.get("usage", {})
-    return j.get("result", ""), {"cost_usd": j.get("total_cost_usd"), "input_tokens": u.get("input_tokens", 0) + u.get("cache_creation_input_tokens", 0) + u.get("cache_read_input_tokens", 0),
-                                 "output_tokens": u.get("output_tokens"), "model": list(j.get("modelUsage", {}))}
+    """One tool-less Sonnet call through the 108 model table (agent.models), logged to CWD/claude_code_calls.jsonl."""
+    sys.path.insert(0, str(Path(__file__).resolve().parents[3]))
+    from agent.models import resolver_for
+    log = CWD / "claude_code_calls.jsonl"
+    n0 = len(log.read_text().splitlines()) if log.exists() else 0
+    rs = resolver_for("rtl", model="sonnet", endpoint="claude_code", options={"timeout_s": 600})
+    text = rs.text("rtl", label="hardcaml_probe", claude_log=log)(SYSTEM, prompt)
+    rec = json.loads(log.read_text().splitlines()[n0])
+    return text, {"cost_usd": rec.get("plan_cost_estimate_usd"), "input_tokens": None, "output_tokens": None, "tokens": rec.get("tokens"),
+                  "model": [rec.get("model_requested")]}
 
 
 def code_of(text: str) -> str:
