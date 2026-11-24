@@ -1,0 +1,90 @@
+# Machine-readable specification of the AXI4-Stream FFT wrappers (arith brief 148). The prose is spec.md; the two agree (tests/test_fft_axis_package.py).
+schema: fda-arith/spec/1
+function: fft_axis
+title: AXI4-Stream FFT (wrappers of the two FFT architectures)
+model: arith/fft_axis/model.py
+summary: "The configurable FFT (arith/fft) behind AMBA AXI4-Stream ports, as the owner asked (favour AXI where appropriate): a slave stream of input frames and a master stream of output frames, tdata = {imaginary, real}, tlast on the last beat of every frame, per-frame forward or inverse on tuser (read on the first beat), an active-low synchronous reset aresetn. Two variants with different, stated back-pressure: sdf has NO back-pressure (a pure streaming interface: s_axis_tready is always 1, m_axis_tready must be tied high), burst has FULL back-pressure on both streams. The arithmetic is the wrapped FFT variant's, bit for bit; the wrapper adds a start-of-frame flag, an output beat counter for tlast and, for simulation only, AXI4-Stream protocol checkers (fft_common/axis_checker.sv)."
+semantics:
+  - "input: beats of s_axis_tdata = {imaginary part (W bits), real part (W bits)}, two's complement, W bits each (not padded to a byte boundary, so s_axis_tdata is 2 * W bits); a frame is N = 2**LOGN beats, tlast high on the N-th; s_axis_tuser[0] = 1 selects the inverse transform for the frame and is read on the FIRST beat only"
+  - "a beat is transferred when s_axis_tvalid and s_axis_tready are both high in a clock (AXI4-Stream handshake); the wrapper's tready does not depend on tvalid, and the wrapped core never sees a beat that was not transferred"
+  - "output: beats of m_axis_tdata = {imaginary, real}, each WO bits (W when SCALE = 1, W + LOGN when SCALE = 0), N beats per frame, tlast on the N-th; natural or bit-reversed order (ORDER) and every other result as arith/fft/spec.md; m_axis_tvalid comes from registers and never depends on m_axis_tready"
+  - "sdf, back-pressure NONE: s_axis_tready = 1 always; m_axis_tready is ignored and must be 1 whenever m_axis_tvalid is 1 (the checker flags a violation); s_axis_tvalid must stay high from the first to the last beat of every frame; frames follow with no gap or after at least N/4 idle beats; m_axis_tvalid is high for N consecutive clocks per frame, so tdata and tlast may change in a clock in which tready is low only because the interface forbids tready low"
+  - "burst, back-pressure FULL: s_axis_tready is high when idle and during a load, low while computing and unloading; the source may pause (tvalid low) inside a frame and between frames; the sink may stall (m_axis_tready low) at any time and m_axis_tvalid, tdata and tlast are then held (AXI4-Stream stability rule)"
+  - "AXI4-Lite: none. There are no run-time configuration registers: the per-frame option (the direction) rides on tuser, and every other option is a compile-time parameter. A run-time scaling schedule, run-time N or a cyclic prefix would need registers and are not provided"
+  - "optional AXI4-Stream signals not used: tkeep, tstrb (all beats are data), tid, tdest"
+ports:
+  - {name: clk, dir: in, width: 1, text: "ACLK, rising edge"}
+  - {name: aresetn, dir: in, width: 1, text: "ARESETN, active low, synchronous"}
+  - {name: s_axis_tvalid, dir: in, width: 1, text: "slave stream: a beat is offered"}
+  - {name: s_axis_tdata, dir: in, width: "2*W", text: "slave stream: {imaginary, real}, W bits each"}
+  - {name: s_axis_tlast, dir: in, width: 1, text: "slave stream: the last (N-th) beat of the frame"}
+  - {name: s_axis_tuser, dir: in, width: 1, text: "slave stream: tuser[0] = 1 for an inverse transform, read on the first beat of the frame"}
+  - {name: s_axis_tready, dir: out, width: 1, text: "slave stream: the beat is accepted in this clock (sdf: always 1)"}
+  - {name: m_axis_tready, dir: in, width: 1, text: "master stream: the sink takes the beat in this clock (sdf: must be 1, ignored)"}
+  - {name: m_axis_tvalid, dir: out, width: 1, text: "master stream: a beat is offered"}
+  - {name: m_axis_tdata, dir: out, width: "2*((SCALE != 0) ? W : W + LOGN)", text: "master stream: {imaginary, real}, WO bits each"}
+  - {name: m_axis_tlast, dir: out, width: 1, text: "master stream: the last (N-th) beat of the output frame"}
+parameters:
+  LOGN: {min: 3, text: "log2 of the frame length N (3 to 12)"}
+  W: {min: 4, text: "input sample part width"}
+  TW: {min: 4, text: "twiddle width, 4 to 28"}
+  SCALE: {values: [0, 1], text: "1: scaled (output W bits, X / N); 0: growing (W + LOGN bits)"}
+  RND: {values: [0, 1], text: "1: round half up; 0: truncate"}
+  ORDER: {values: [0, 1], text: "0: natural order out; 1: bit-reversed"}
+  CMUL: {values: [3, 4], text: "twiddle multiplier form"}
+  TWSTAGES: {values: [1, 2], text: "twiddle ROM latency"}
+  MULSTAGES: {min: 0, text: "register ranks per complex multiplier, 0 to 3"}
+signedness: "two's complement parts inside tdata"
+exactness: "bit-exact against the model of the wrapped variant (arith/fft/model.py); the accuracy against NumPy is that of arith/fft"
+latency_definition: "clocks from the clock in which the first beat of a frame is transferred on s_axis to the clock in which the first beat of the output frame is offered on m_axis (m_axis_tvalid and the first tdata); equal to the wrapped variant's in_sof to out_sof latency, the wrapper adds none. With pauses or a stalled sink the first output beat can only be later"
+contract:
+  protocol: "AMBA AXI4-Stream on both interfaces, with the back-pressure stated per variant: sdf none (a pure streaming interface), burst full. tlast marks the last beat of each frame; tuser[0] on the first beat selects the direction; there is no AXI4-Lite interface because there are no run-time configuration registers"
+  throughput: "sdf: one beat per clock in and out, frames back to back or after N/4 idle beats; burst: one frame per N + LOGN * (N/2 + MULSTAGES + 3) + N clocks (no overlap) when neither side stalls"
+  latency: "as the wrapped variant: sdf, bit-reversed: N - 1 + LOGN + ((LOGN - 1) // 2) * (TWSTAGES + MULSTAGES + 1), natural adds N + 1; burst: N + LOGN * (N/2 + MULSTAGES + 3) + 1"
+  reset: "aresetn low for at least one clock clears the control state of the wrapper and the core (the data memories are not cleared); a frame in flight is lost; the first frame after reset starts with its first beat"
+  clock: "one clock, rising edge, no clock enable"
+  stall: "sdf: neither stream can be stalled (s_axis_tready 1, m_axis_tready must be 1, tvalid must stay high inside a frame); burst: both can"
+integration:
+  port_timing: "m_axis_* come from registers (through the output swap mux and, in natural order, the bank select); s_axis_tready is a register decode (burst) or a constant (sdf); the first stage's input muxes see s_axis_tdata and s_axis_tuser directly. No combinational path from m_axis_tready to m_axis_tvalid or from s_axis_tvalid to s_axis_tready"
+  constraints: "one clock; the protocol checkers sit between `ifndef SYNTHESIS lines and are not part of the design. A sdf instance must be connected to a sink that never stalls (an AXI4-Stream FIFO or a DMA with a deep enough buffer; a DMA that can deassert tready breaks it)"
+guess_wrong:
+  - "the sdf variant has NO back-pressure: tie m_axis_tready high; if the sink lowers it while m_axis_tvalid is high the beat is lost, and nothing downstream is told; this is the price of the one-beat-per-clock pipeline"
+  - "sdf also requires s_axis_tvalid high for all N beats of a frame once the first beat is sent (no pause inside a frame) and a gap of 0 or at least N/4 beats between frames: an AXI4-Stream source that may pause (a DMA reading memory) needs a frame buffer in front of it, or the burst variant"
+  - "tdata is {imaginary, real} with the REAL part in the LOW bits, W bits each and not rounded up to a multiple of 8: byte-oriented AXI4-Stream infrastructure (a width converter, a DMA) needs the widths padded by the integrator"
+  - "tuser is read on the first beat only; tuser on the other beats is ignored, and tuser of the output beats does not exist (AMD's FFT carries the bin index on the output tuser: this one does not)"
+  - "tlast on the input is used only to find where the next frame starts; a frame of other than N beats is outside the contract and neither flagged nor recovered from (AMD's FFT raises tlast_missing and tlast_unexpected events: this one has no status stream)"
+  - "m_axis_tlast is generated by counting output beats, so with a stalled sink (burst) it stays with its beat, as AXI4-Stream requires"
+  - "there is no AXI4-Lite interface and no run-time scaling schedule, run-time N or cyclic-prefix option: they are compile-time parameters, or absent"
+  - "the SystemVerilog protocol checkers (axis_checker.sv) are simulation-only: they use immediate assertions on the clock edge (no concurrent SVA properties, which the open-source simulators of this repository do not run); they are not in the synthesised design"
+lean_note: "Not attempted: the wrapper is control logic around a verified core; the handshake rules are checked by the simulation checkers under random stalls and by a deliberate-violation test, not proved."
+variants:
+  sdf:
+    file: rtl/fft_axis_sdf.sv
+    module: fft_axis_sdf
+    deps: [fft_common/axis_checker.sv, fft/rtl/fft_sdf_r22.sv, fft_common/fft_sdf_stage.sv, fft_common/fft_sdf_twmul.sv, fft_common/fft_bitrev.sv, fft_common/fft_cos_rom.sv, fft_reorder/rtl/fft_reorder_pingpong.sv, fft_twiddle/rtl/fft_twiddle_quarter.sv, fft_cmul/rtl/fft_cmul_m4.sv, fft_cmul/rtl/fft_cmul_m3.sv]
+    params: {LOGN: 6, W: 16, TW: 16, SCALE: 1, RND: 1, ORDER: 0, CMUL: 4, TWSTAGES: 1, MULSTAGES: 2}
+    throughput: "one beat per clock in and out; no back-pressure (tready fixed)"
+    latency: "(1<<LOGN)-1+LOGN+((LOGN-1)//2)*(TWSTAGES+MULSTAGES+1)+(0 if ORDER else (1<<LOGN)+1)"
+    tradeoff: "AXI4-Stream without back-pressure: the highest throughput and the least logic, but the sink must never stall and the source must not pause inside a frame"
+    exhaustive_points: [{LOGN: 3, W: 8, TW: 8, SCALE: 1, RND: 1, ORDER: 1, CMUL: 4, TWSTAGES: 1, MULSTAGES: 1}, {LOGN: 5, W: 16, TW: 16, SCALE: 1, RND: 1, ORDER: 0, CMUL: 4, TWSTAGES: 1, MULSTAGES: 2}, {LOGN: 6, W: 16, TW: 18, SCALE: 0, RND: 1, ORDER: 0, CMUL: 3, TWSTAGES: 2, MULSTAGES: 0}]
+    random_points: [{LOGN: 6, W: 16, TW: 16, SCALE: 1, RND: 1, ORDER: 0, CMUL: 4, TWSTAGES: 1, MULSTAGES: 2}, {LOGN: 8, W: 12, TW: 14, SCALE: 0, RND: 0, ORDER: 1, CMUL: 3, TWSTAGES: 1, MULSTAGES: 3}]
+    expected_primitives:
+      a7: "the wrapped sdf core's (arith/fft/spec.md) plus under 20 LUT and about 3 * LOGN flip-flops; no added DSP or RAM; Fmax as the core"
+      k26: "as a7"
+    ooc_points: [{LOGN: 10, W: 16, TW: 16, SCALE: 1, RND: 1, ORDER: 0, CMUL: 4, TWSTAGES: 2, MULSTAGES: 3}, {LOGN: 8, W: 16, TW: 16, SCALE: 0, RND: 1, ORDER: 1, CMUL: 4, TWSTAGES: 2, MULSTAGES: 3}]
+    mutant_run: [{mode: directed, params: {LOGN: 4, W: 8, TW: 10, SCALE: 1, RND: 1, ORDER: 0, CMUL: 4, TWSTAGES: 1, MULSTAGES: 2}}, {mode: randomised, params: {LOGN: 5, W: 8, TW: 10, SCALE: 0, RND: 0, ORDER: 1, CMUL: 3, TWSTAGES: 2, MULSTAGES: 0}, n: 256}]
+  burst:
+    file: rtl/fft_axis_burst.sv
+    module: fft_axis_burst
+    deps: [fft_common/axis_checker.sv, fft/rtl/fft_burst_r2.sv, fft_common/fft_bitrev.sv, fft_common/fft_cos_rom.sv, fft_twiddle/rtl/fft_twiddle_quarter.sv, fft_cmul/rtl/fft_cmul_m4.sv, fft_cmul/rtl/fft_cmul_m3.sv]
+    params: {LOGN: 6, W: 16, TW: 16, SCALE: 1, RND: 1, ORDER: 0, CMUL: 4, TWSTAGES: 1, MULSTAGES: 2}
+    throughput: "one frame per N + LOGN * (N/2 + MULSTAGES + 3) + N clocks when neither side stalls; both streams support back-pressure"
+    latency: "(1<<LOGN)+LOGN*((1<<LOGN)//2+MULSTAGES+3)+1"
+    tradeoff: "AXI4-Stream with full back-pressure: standard handshakes on both sides, so it connects to a DMA or an AXI4-Stream FIFO without a frame buffer, at the burst core's lower throughput"
+    exhaustive_points: [{LOGN: 3, W: 8, TW: 8, SCALE: 1, RND: 1, ORDER: 1, CMUL: 4, TWSTAGES: 1, MULSTAGES: 1}, {LOGN: 5, W: 16, TW: 16, SCALE: 1, RND: 1, ORDER: 0, CMUL: 4, TWSTAGES: 1, MULSTAGES: 2}, {LOGN: 6, W: 16, TW: 18, SCALE: 0, RND: 1, ORDER: 0, CMUL: 3, TWSTAGES: 2, MULSTAGES: 0}]
+    random_points: [{LOGN: 6, W: 16, TW: 16, SCALE: 1, RND: 1, ORDER: 0, CMUL: 4, TWSTAGES: 1, MULSTAGES: 2}, {LOGN: 8, W: 12, TW: 14, SCALE: 0, RND: 0, ORDER: 1, CMUL: 3, TWSTAGES: 1, MULSTAGES: 3}]
+    expected_primitives:
+      a7: "the wrapped burst core's (arith/fft/spec.md) plus under 20 LUT and about 3 * LOGN flip-flops"
+      k26: "as a7"
+    ooc_points: [{LOGN: 10, W: 16, TW: 16, SCALE: 1, RND: 1, ORDER: 0, CMUL: 4, TWSTAGES: 2, MULSTAGES: 3}, {LOGN: 8, W: 16, TW: 16, SCALE: 0, RND: 1, ORDER: 1, CMUL: 4, TWSTAGES: 2, MULSTAGES: 3}]
+    mutant_run: [{mode: directed, params: {LOGN: 4, W: 8, TW: 10, SCALE: 1, RND: 1, ORDER: 0, CMUL: 4, TWSTAGES: 1, MULSTAGES: 2}}, {mode: randomised, params: {LOGN: 5, W: 8, TW: 10, SCALE: 0, RND: 0, ORDER: 1, CMUL: 3, TWSTAGES: 2, MULSTAGES: 0}, n: 256}]

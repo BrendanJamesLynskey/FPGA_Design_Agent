@@ -1,0 +1,72 @@
+# Machine-readable specification of the AXI4-Stream real-input FFT wrapper (arith brief 161). The prose is spec.md; the two agree (tests/test_fft_real_axis_package.py).
+schema: fda-arith/spec/1
+function: fft_real_axis
+title: AXI4-Stream real-input FFT (wrapper of fft_real, N REAL samples, N/2 + 1 bins)
+model: arith/fft_real_axis/model.py
+summary: "The real-input FFT (arith/fft_real: N real samples through an N/2-point complex transform plus post-processing) behind AMBA AXI4-Stream ports (owner decision 28): a slave stream of frames of N real samples, two per beat, and a master stream of the N/2 + 1 distinct bins X[0] .. X[N/2], one bin per beat in natural order, tlast on the last beat of each frame. The transform needs at least N/8 idle clocks between the last beat of a frame and the first beat of the next (measured in arith/fft_real); the wrapper enforces that rule by AXI4-Stream back-pressure: after every beat with tlast it holds s_axis_tready low for N/8 clocks, so a source that streams frames back to back is held off and the rule cannot be broken. Inside a frame the stream cannot be paused and the output cannot be stalled (stated): the same no-back-pressure pipeline as the sdf variant of fft_axis, with the gap handled for the user."
+semantics:
+  - "input: beats of s_axis_tdata = {x[2m + 1] (W bits), x[2m] (W bits)}, two's complement, W bits each (not padded to a byte boundary, so s_axis_tdata is 2 * W bits): the EVEN-indexed real sample is in the LOW half; a frame is N/2 beats, tlast high on the N/2-th; there is no tuser (the transform is forward only), no tkeep and no tstrb (every beat is data)"
+  - "a beat is transferred when s_axis_tvalid and s_axis_tready are both high in a clock (AXI4-Stream handshake); the wrapper's tready depends only on registers (the gap counter), never on tvalid, and the wrapped core never sees a beat that was not transferred"
+  - "gap: after a beat with tlast is transferred, s_axis_tready is low for N/8 clocks and then high again; a source that presents the next frame at once simply waits (tvalid held, data stable, as AXI4-Stream requires of a source). Between the last transferred beat of a frame and the first of the next there are therefore at least N/8 clocks; the bench measures exactly N/8 for a source that never pauses"
+  - "output: beats of m_axis_tdata = {imaginary (WX bits), real (WX bits)}, WX = W + 1 (SCALE = 1) or W + LOGN + 1 (SCALE = 0), N/2 + 1 beats per frame in natural bin order X[0] .. X[N/2], tlast on the last; values, scaling (SCALE = 1: X / N like the complex FFT), rounding and every other result as arith/fft_real/spec.md; m_axis_tvalid comes from the core's registers"
+  - "no back-pressure inside a frame and none on the output: s_axis_tready is high inside a frame and s_axis_tvalid must stay high from the first to the last beat of every frame (the checker flags a pause); m_axis_tready is ignored and must be 1 whenever m_axis_tvalid is 1 (a beat that is not taken in its clock is lost; the checker flags it)"
+  - "AXI4-Lite: none: there are no run-time registers (the forward-only transform has no per-frame option; every other option is a compile-time parameter). Optional AXI4-Stream signals not used: tkeep, tstrb, tid, tdest, tuser"
+ports:
+  - {name: clk, dir: in, width: 1, text: "ACLK, rising edge"}
+  - {name: aresetn, dir: in, width: 1, text: "ARESETN, active low, synchronous"}
+  - {name: s_axis_tvalid, dir: in, width: 1, text: "slave stream: a beat is offered"}
+  - {name: s_axis_tdata, dir: in, width: "2*W", text: "slave stream: {odd-indexed sample, even-indexed sample}, W bits each"}
+  - {name: s_axis_tlast, dir: in, width: 1, text: "slave stream: the last (N/2-th) beat of the frame"}
+  - {name: s_axis_tready, dir: out, width: 1, text: "slave stream: the beat is accepted in this clock; low for N/8 clocks after every tlast beat (the gap)"}
+  - {name: m_axis_tready, dir: in, width: 1, text: "master stream: the sink takes the beat in this clock (must be 1, ignored)"}
+  - {name: m_axis_tvalid, dir: out, width: 1, text: "master stream: a beat is offered"}
+  - {name: m_axis_tdata, dir: out, width: "2*((SCALE != 0) ? W + 1 : W + LOGN + 1)", text: "master stream: {imaginary, real}, WX bits each"}
+  - {name: m_axis_tlast, dir: out, width: 1, text: "master stream: the last (N/2 + 1-th) beat of the output frame"}
+parameters:
+  LOGN: {min: 4, text: "log2 of the number of REAL samples per frame N: 4 to 13 (the core has N/2 points)"}
+  W: {min: 4, text: "input sample width"}
+  TW: {min: 4, text: "twiddle width, 4 to 28"}
+  SCALE: {values: [0, 1], text: "1: scaled (output W + 1 bits, X / N); 0: growing (W + LOGN + 1 bits)"}
+  RND: {values: [0, 1], text: "1: round half up; 0: truncate"}
+  CMUL: {values: [3, 4], text: "twiddle multiplier form"}
+  TWSTAGES: {values: [1, 2], text: "twiddle ROM latency"}
+  MULSTAGES: {min: 0, text: "register ranks per complex multiplier, 0 to 3"}
+signedness: "two's complement parts inside tdata"
+exactness: "bit-exact against the model of the wrapped core (arith/fft_real/model.py); the accuracy against NumPy is that of arith/fft_real"
+latency_definition: "clocks from the clock in which the first beat of a frame is transferred on s_axis to the clock in which the first beat of the output frame (bin 0) is offered on m_axis; equal to the core's in_sof to out_sof latency (no register is added)"
+contract:
+  protocol: "AMBA AXI4-Stream on both interfaces. Slave: frames of N/2 beats, tlast on the last, tvalid held high through a frame; the wrapper provides back-pressure only between frames (N/8 clocks of tready low after each frame). Master: frames of N/2 + 1 beats, tlast on the last, no back-pressure (the sink's tready must be 1). No AXI4-Lite"
+  throughput: "2 real samples per clock inside a frame; N real samples per N/2 + N/8 clocks at the fastest legal frame spacing (the output frame takes N/2 + 1 clocks, so output frames never overlap)"
+  latency: "(N/2) - 1 + (LOGN - 1) + ((LOGN - 2) // 2) * (TWSTAGES + MULSTAGES + 1) + N/2 + MULSTAGES + 3, as the wrapped core"
+  reset: "aresetn low for at least one clock clears the control state of the wrapper (start flag, gap counter, output beat counter) and of the core (the data memories are not cleared); a frame in flight is lost; the first frame after reset starts with its first beat, and there is no gap after reset"
+  clock: "one clock, rising edge, no clock enable"
+  stall: "the input is back-pressured between frames only; neither stream can be stalled inside a frame or at the output"
+integration:
+  port_timing: "m_axis_* come from registers (the core's output stage); s_axis_tready is a register decode of the gap counter (a LOGN-bit zero detect), never combinational from tvalid; s_axis_tdata goes straight into the core's two input ports"
+  constraints: "one clock; the protocol checkers sit between `ifndef SYNTHESIS lines and are not part of the design. The sink must never stall (an AXI4-Stream FIFO or a DMA with a deep enough buffer: a DMA that can deassert tready for a moment needs a FIFO in front); the source must keep tvalid high through a frame (a DMA reading memory without gaps, or a FIFO that is full of the frame before the first beat is sent)"
+guess_wrong:
+  - "the INPUT has two real samples per beat, not one complex sample: tdata = {x[2m+1], x[2m]}, the even-indexed sample in the LOW half (the opposite of the output, where the real part is in the low half and the imaginary part in the high half); a source that sends one real sample per beat needs a 2:1 gearbox in front"
+  - "tready is LOW for N/8 clocks after every tlast beat by design: it does not mean the block is busy or broken, and a source must not time out on it. Throughput is N real samples per N/2 + N/8 clocks at best, not N/2"
+  - "inside a frame there is NO back-pressure: a source that lowers tvalid in the middle of a frame corrupts that frame and the next (nothing flags it in the hardware; the simulation checker does), and a sink that lowers tready while tvalid is high loses beats. An AXI4-Stream source that can pause (a DMA reading memory) needs a frame buffer in front, a sink that can stall needs a FIFO behind"
+  - "only the N/2 + 1 distinct bins are output (X[0] .. X[N/2]); the other bins are their conjugates and are not sent. Bins 0 and N/2 are real in exact arithmetic but their imaginary parts are rounding noise of a few LSB (arith/fft_real)"
+  - "SCALE = 1 divides by N (like the complex FFT) even though the core has N/2 points; the output word is W + 1 bits (one more than the input), SCALE = 0 gives W + LOGN + 1 bits; tdata is not padded to a multiple of 8 bits, so byte-oriented AXI4-Stream infrastructure (a width converter, a DMA) needs padding by the integrator"
+  - "tlast on the input is used only to find where the next frame starts and to start the gap; a frame of other than N/2 beats is outside the contract (not flagged, not recovered from). There is no status stream and no tlast_missing or tlast_unexpected event (AMD's FFT has them); tuser does not exist on either stream"
+  - "there is no AXI4-Lite interface and nothing to configure at run time; the transform is forward only (there is no inverse real transform in this block)"
+  - "the SystemVerilog protocol checkers (axis_checker.sv) are simulation-only immediate assertions, not concurrent SVA, and not in the synthesised design"
+lean_note: "Not attempted: the wrapper is control logic around a verified core; the handshake rules and the measured gap are checked by simulation (including a test that the gap is exactly N/8 for a source that never pauses) and by the checkers under random idle times, not proved."
+variants:
+  post:
+    file: rtl/fft_real_axis_post.sv
+    module: fft_real_axis_post
+    deps: [fft_common/axis_checker.sv, fft_real/rtl/fft_real_post.sv, fft/rtl/fft_sdf_r22.sv, fft_common/fft_sdf_stage.sv, fft_common/fft_sdf_twmul.sv, fft_common/fft_bitrev.sv, fft_common/fft_cos_rom.sv, fft_reorder/rtl/fft_reorder_pingpong.sv, fft_twiddle/rtl/fft_twiddle_quarter.sv, fft_cmul/rtl/fft_cmul_m4.sv, fft_cmul/rtl/fft_cmul_m3.sv]
+    params: {LOGN: 7, W: 16, TW: 16, SCALE: 1, RND: 1, CMUL: 4, TWSTAGES: 1, MULSTAGES: 2}
+    throughput: "2 real samples per clock inside a frame; N real samples per N/2 + N/8 clocks (tready low for N/8 after each frame)"
+    latency: "(1<<(LOGN-1))-1+(LOGN-1)+((LOGN-2)//2)*(TWSTAGES+MULSTAGES+1)+(1<<(LOGN-1))+MULSTAGES+3"
+    tradeoff: "the real-input core (an N/2-point streaming transform, one post-processing multiplier, two banks of N/2 words) with AXI4-Stream ports and the frame-gap rule handled by back-pressure: about 2 * LOGN extra flip-flops"
+    exhaustive_points: [{LOGN: 4, W: 8, TW: 10, SCALE: 1, RND: 1, CMUL: 4, TWSTAGES: 1, MULSTAGES: 1}, {LOGN: 5, W: 16, TW: 16, SCALE: 1, RND: 1, CMUL: 4, TWSTAGES: 1, MULSTAGES: 2}, {LOGN: 6, W: 16, TW: 18, SCALE: 0, RND: 1, CMUL: 3, TWSTAGES: 2, MULSTAGES: 0}, {LOGN: 7, W: 12, TW: 14, SCALE: 1, RND: 0, CMUL: 4, TWSTAGES: 1, MULSTAGES: 3}]
+    random_points: [{LOGN: 6, W: 16, TW: 16, SCALE: 1, RND: 1, CMUL: 4, TWSTAGES: 1, MULSTAGES: 2}, {LOGN: 9, W: 16, TW: 18, SCALE: 0, RND: 1, CMUL: 4, TWSTAGES: 1, MULSTAGES: 3}, {LOGN: 11, W: 18, TW: 18, SCALE: 1, RND: 1, CMUL: 3, TWSTAGES: 2, MULSTAGES: 2}]
+    expected_primitives:
+      a7: "as arith/fft_real (N = 1024, W = TW = 16, CMUL 4, MULSTAGES 3: 20 DSP48E1, 3 to 5 k LUT, about 8 RAMB18 for the post-processing memory plus the core's) plus about 2 * LOGN = 20 flip-flops and under 20 LUT; expected Fmax 250 to 350 MHz"
+      k26: "as a7 with DSP48E2; Fmax 400 to 550 MHz expected"
+    ooc_points: [{LOGN: 10, W: 16, TW: 16, SCALE: 1, RND: 1, CMUL: 4, TWSTAGES: 2, MULSTAGES: 3}, {LOGN: 12, W: 16, TW: 18, SCALE: 1, RND: 1, CMUL: 4, TWSTAGES: 2, MULSTAGES: 3}]
+    mutant_run: [{mode: directed, params: {LOGN: 5, W: 8, TW: 10, SCALE: 1, RND: 1, CMUL: 4, TWSTAGES: 1, MULSTAGES: 2}}, {mode: randomised, params: {LOGN: 6, W: 16, TW: 16, SCALE: 1, RND: 1, CMUL: 4, TWSTAGES: 1, MULSTAGES: 2}, n: 400}, {mode: checker, params: {LOGN: 5, W: 8, TW: 10, SCALE: 1, RND: 1, CMUL: 4, TWSTAGES: 1, MULSTAGES: 2}}]

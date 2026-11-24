@@ -113,30 +113,41 @@ module formal_order_ctl (
     // ---- properties --------------------------------------------------------------------------------------------------
     logic [7:0] act_run;                // consecutive clocks the slot has been busy
     always_ff @(posedge clk) act_run <= (rst || !s_act) ? 8'd0 : act_run + 8'd1;
+    // Every assertion is labelled (a_*) and paired with a cover of its own antecedent (a_*__ante, below; brief 143c).
     always_ff @(posedge clk) if (f_past && !rst && !$past(rst)) begin
         // B1: an order whose frame was bad is never started once that is known (the start decision is the clock
         // before the order shows on tx_kind; a verdict arriving in that clock is already in g_bad_now here) ...
-        if (tx_kind == 2'd1 && cur_order_id[7:0] == watch && g_mine && !g_started) assert (!g_bad_now);
+        if (tx_kind == 2'd1 && cur_order_id[7:0] == watch && g_mine && !g_started) a_b1_no_start_on_bad: assert (!g_bad_now);
         // ... and if it left with a good FCS, a cancel for it starts within 12 clocks (two 3-clock frames and gaps)
         // (N1: with soft resets free, so no order from a bad frame leaves unpoisoned and uncancelled across one)
-        assert (g_wait <= 8'd12);
+        a_n1_cancel_in_time: assert (g_wait <= 8'd12);
         // N2: a trigger in a frame that has not asked, with the slot free, always makes a request (whatever the
         // frame counter's value: it wraps every 4 frames here), and never more than one per frame
-        if (fire_v && fire_order && !s_act && !soft_rst && !g_asked) assert (req_v);
-        if (req_v) assert (!g_asked);
+        if (fire_v && fire_order && !s_act && !soft_rst && !g_asked) a_n2_request_made: assert (req_v);
+        if (req_v) a_n2_one_request: assert (!g_asked);
         // a cancel only ever follows a bad frame (or no verdict within the watchdog's time)
-        if (g_cancel) assert (g_vk && g_bad);
+        if (g_cancel) a_cancel_only_if_bad: assert (g_vk && g_bad);
         // safe mode: an order never starts before its frame is known good
-        if (!spec_en && g_started) assert (g_vk && !g_bad);
+        if (!spec_en && g_started) a_safe_mode_good_only: assert (g_vk && !g_bad);
         // B2: the slot always drains (watchdog WDOG, then at most a frame, a cancel and their gaps on the wire)
-        assert (act_run <= 8'(WDOG + 16));
+        a_b2_drains: assert (act_run <= 8'(WDOG + 16));
+    end
+    // antecedents (same guard): the condition of each `if`; for the invariants, the state in which they could break
+    always_ff @(posedge clk) if (f_past && !rst && !$past(rst)) begin
+        a_b1_no_start_on_bad__ante: cover (tx_kind == 2'd1 && cur_order_id[7:0] == watch && g_mine && !g_started);
+        a_n1_cancel_in_time__ante: cover (g_wait != 8'd0);       // an order from a bad frame left clean and the wait is running
+        a_n2_request_made__ante: cover (fire_v && fire_order && !s_act && !soft_rst && !g_asked);
+        a_n2_one_request__ante: cover (req_v);
+        a_cancel_only_if_bad__ante: cover (g_cancel);
+        a_safe_mode_good_only__ante: cover (!spec_en && g_started);
+        a_b2_drains__ante: cover (act_run != 8'd0);
     end
     always_ff @(posedge clk) if (f_past && !rst) begin
-        cover (g_sent && g_bad && !g_clean);            // poisoned on the wire
-        cover (g_cancel);                                // cancelled after a clean send
-        cover (g_mine && g_bad && !g_started && !s_act); // dropped before it started
-        cover (act_run == 8'(WDOG + 2));                 // the watchdog's reach
-        cover (sr_seen && g_sent && g_bad && !g_clean);  // soft reset with the order on the wire, still poisoned
-        cover (req_v && n_v >= 3'd5);                    // a request after the frame counter wrapped
+        c_poisoned_on_wire: cover (g_sent && g_bad && !g_clean);            // poisoned on the wire
+        c_cancel_after_clean: cover (g_cancel);                              // cancelled after a clean send
+        c_dropped_before_start: cover (g_mine && g_bad && !g_started && !s_act); // dropped before it started
+        c_watchdog_reach: cover (act_run == 8'(WDOG + 2));                   // the watchdog's reach
+        c_soft_reset_on_wire: cover (sr_seen && g_sent && g_bad && !g_clean);   // soft reset with the order on the wire, still poisoned
+        c_request_after_wrap: cover (req_v && n_v >= 3'd5);                  // a request after the frame counter wrapped
     end
 endmodule

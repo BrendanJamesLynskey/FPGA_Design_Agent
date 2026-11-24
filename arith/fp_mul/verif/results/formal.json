@@ -1,0 +1,287 @@
+{
+ "function": "fp_mul",
+ "tool": "Yosys 0.70+385 (git sha1 098e46a36, Release, Clang /usr/bin/clang++ 21.1.8)",
+ "jobs": 12,
+ "ok": 12,
+ "results": [
+  {
+   "name": "eq_e2m1_s1_r33",
+   "top": "fp_mul_fv",
+   "params": {
+    "EXP": 2,
+    "MAN": 1,
+    "SUBNORM": 1,
+    "ST_D": 3,
+    "ST_L": 3
+   },
+   "mode": "prove",
+   "depth": 5,
+   "engine": "boolector",
+   "claim": "dsp (3 ranks) and lut (3 ranks) == the exact product rounded once, EXP 2 MAN 1, subnormals: proved for all inputs (k-induction)",
+   "mutant": null,
+   "expected": "PASS",
+   "status": "PASS",
+   "ok": true,
+   "seconds": 6.4,
+   "failed_assertions": [],
+   "tail": ""
+  },
+  {
+   "name": "eq_e2m2_s1_r32",
+   "top": "fp_mul_fv",
+   "params": {
+    "EXP": 2,
+    "MAN": 2,
+    "SUBNORM": 1,
+    "ST_D": 3,
+    "ST_L": 2
+   },
+   "mode": "prove",
+   "depth": 5,
+   "engine": "boolector",
+   "claim": "dsp (3 ranks) and lut (2 ranks) == the exact product rounded once, EXP 2 MAN 2, subnormals: proved for all inputs (k-induction)",
+   "mutant": null,
+   "expected": "PASS",
+   "status": "PASS",
+   "ok": true,
+   "seconds": 9.9,
+   "failed_assertions": [],
+   "tail": ""
+  },
+  {
+   "name": "eq_e2m2_s0_r10",
+   "top": "fp_mul_fv",
+   "params": {
+    "EXP": 2,
+    "MAN": 2,
+    "SUBNORM": 0,
+    "ST_D": 1,
+    "ST_L": 0
+   },
+   "mode": "prove",
+   "depth": 5,
+   "engine": "boolector",
+   "claim": "dsp (1 ranks) and lut (0 ranks) == the exact product rounded once, EXP 2 MAN 2, flush to zero: proved for all inputs (k-induction)",
+   "mutant": null,
+   "expected": "PASS",
+   "status": "PASS",
+   "ok": true,
+   "seconds": 6.0,
+   "failed_assertions": [],
+   "tail": ""
+  },
+  {
+   "name": "eq_e3m2_s1_r23",
+   "top": "fp_mul_fv",
+   "params": {
+    "EXP": 3,
+    "MAN": 2,
+    "SUBNORM": 1,
+    "ST_D": 2,
+    "ST_L": 3
+   },
+   "mode": "prove",
+   "depth": 5,
+   "engine": "boolector",
+   "claim": "dsp (2 ranks) and lut (3 ranks) == the exact product rounded once, EXP 3 MAN 2, subnormals: proved for all inputs (k-induction)",
+   "mutant": null,
+   "expected": "PASS",
+   "status": "PASS",
+   "ok": true,
+   "seconds": 5.8,
+   "failed_assertions": [],
+   "tail": ""
+  },
+  {
+   "name": "eq_e3m2_s0_r31",
+   "top": "fp_mul_fv",
+   "params": {
+    "EXP": 3,
+    "MAN": 2,
+    "SUBNORM": 0,
+    "ST_D": 3,
+    "ST_L": 1
+   },
+   "mode": "prove",
+   "depth": 5,
+   "engine": "boolector",
+   "claim": "dsp (3 ranks) and lut (1 ranks) == the exact product rounded once, EXP 3 MAN 2, flush to zero: proved for all inputs (k-induction)",
+   "mutant": null,
+   "expected": "PASS",
+   "status": "PASS",
+   "ok": true,
+   "seconds": 7.2,
+   "failed_assertions": [],
+   "tail": ""
+  },
+  {
+   "name": "eq_e3m3_s1_r00",
+   "top": "fp_mul_fv",
+   "params": {
+    "EXP": 3,
+    "MAN": 3,
+    "SUBNORM": 1,
+    "ST_D": 0,
+    "ST_L": 0
+   },
+   "mode": "prove",
+   "depth": 5,
+   "engine": "boolector",
+   "claim": "dsp (0 ranks) and lut (0 ranks) == the exact product rounded once, EXP 3 MAN 3, subnormals: proved for all inputs (k-induction)",
+   "mutant": null,
+   "expected": "PASS",
+   "status": "PASS",
+   "ok": true,
+   "seconds": 23.3,
+   "failed_assertions": [],
+   "tail": ""
+  },
+  {
+   "name": "mutant_add_not_mul",
+   "top": "fp_mul_fv",
+   "params": {
+    "EXP": 3,
+    "MAN": 2,
+    "SUBNORM": 1,
+    "ST_D": 0,
+    "ST_L": 0
+   },
+   "mode": "bmc",
+   "depth": 3,
+   "engine": "boolector",
+   "claim": "a build with the seeded fault dsp_add_not_mul is refuted",
+   "mutant": "dsp_add_not_mul",
+   "expected": "FAIL",
+   "status": "FAIL",
+   "ok": true,
+   "seconds": 1.5,
+   "failed_assertions": [
+    "P_DSP"
+   ],
+   "tail": ""
+  },
+  {
+   "name": "mutant_lut_shift",
+   "top": "fp_mul_fv",
+   "params": {
+    "EXP": 3,
+    "MAN": 2,
+    "SUBNORM": 1,
+    "ST_D": 0,
+    "ST_L": 0
+   },
+   "mode": "bmc",
+   "depth": 3,
+   "engine": "boolector",
+   "claim": "a build with the seeded fault lut_shift is refuted",
+   "mutant": "lut_shift",
+   "expected": "FAIL",
+   "status": "FAIL",
+   "ok": true,
+   "seconds": 2.2,
+   "failed_assertions": [
+    "P_LUT"
+   ],
+   "tail": ""
+  },
+  {
+   "name": "mutant_zero_sign",
+   "top": "fp_mul_fv",
+   "params": {
+    "EXP": 3,
+    "MAN": 2,
+    "SUBNORM": 1,
+    "ST_D": 0,
+    "ST_L": 0
+   },
+   "mode": "bmc",
+   "depth": 3,
+   "engine": "boolector",
+   "claim": "a build with the seeded fault dsp_zero_sign is refuted",
+   "mutant": "dsp_zero_sign",
+   "expected": "FAIL",
+   "status": "FAIL",
+   "ok": true,
+   "seconds": 3.0,
+   "failed_assertions": [
+    "P_DSP"
+   ],
+   "tail": ""
+  },
+  {
+   "name": "mutant_ties_down",
+   "top": "fp_mul_fv",
+   "params": {
+    "EXP": 3,
+    "MAN": 2,
+    "SUBNORM": 1,
+    "ST_D": 0,
+    "ST_L": 0
+   },
+   "mode": "bmc",
+   "depth": 3,
+   "engine": "boolector",
+   "claim": "a build with the seeded fault pk_ties_down is refuted",
+   "mutant": "pk_ties_down",
+   "expected": "FAIL",
+   "status": "FAIL",
+   "ok": true,
+   "seconds": 5.5,
+   "failed_assertions": [
+    "P_DSP",
+    "P_LUT"
+   ],
+   "tail": ""
+  },
+  {
+   "name": "mutant_denorm_sticky",
+   "top": "fp_mul_fv",
+   "params": {
+    "EXP": 3,
+    "MAN": 2,
+    "SUBNORM": 1,
+    "ST_D": 0,
+    "ST_L": 0
+   },
+   "mode": "bmc",
+   "depth": 3,
+   "engine": "boolector",
+   "claim": "a build with the seeded fault pk_denorm_sticky is refuted",
+   "mutant": "pk_denorm_sticky",
+   "expected": "FAIL",
+   "status": "FAIL",
+   "ok": true,
+   "seconds": 3.5,
+   "failed_assertions": [
+    "P_DSP",
+    "P_LUT"
+   ],
+   "tail": ""
+  },
+  {
+   "name": "mutant_overflow_compare",
+   "top": "fp_mul_fv",
+   "params": {
+    "EXP": 3,
+    "MAN": 2,
+    "SUBNORM": 1,
+    "ST_D": 0,
+    "ST_L": 0
+   },
+   "mode": "bmc",
+   "depth": 3,
+   "engine": "boolector",
+   "claim": "a build with the seeded fault pk_overflow_compare is refuted",
+   "mutant": "pk_overflow_compare",
+   "expected": "FAIL",
+   "status": "FAIL",
+   "ok": true,
+   "seconds": 3.6,
+   "failed_assertions": [
+    "P_DSP",
+    "P_LUT"
+   ],
+   "tail": ""
+  }
+ ]
+}

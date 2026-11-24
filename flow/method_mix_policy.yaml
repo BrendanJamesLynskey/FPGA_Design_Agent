@@ -1,0 +1,51 @@
+# Required method mix per requirement kind (brief 143a, owner decision 25). Read by flow/trace_v1.py; see docs/traceability_v1.md.
+#
+# A requirement is `verified` only when its PASSING items satisfy one of the alternatives listed for its kind. An alternative is a list of
+# groups, and a group is satisfied by one passing item whose method is in the group (and that meets the group's other conditions). If no
+# alternative is satisfied but something passes, the requirement is `partially verified` (a performance requirement keeps its state name
+# `no_measurement`) and the matrix names the groups the closest alternative still lacks.
+#
+# `not_written_by` is the house rule that the implementing agent's own tests never count alone: an item whose `written_by` is
+# `implementing_agent`, or is not recorded, does not satisfy a group that lists `implementing_agent` here. Mark an item `written_by:
+# independent_bench` or `human` in the testplan only where that is true; the gate rejects any other value.
+#
+# A design without a testplan entry for a kind (or a checkout with no policy file) falls back to the earlier rule: one passing item verifies.
+# Changing this file changes every matrix; regenerate them (python -m flow.trace_v1 write) and say so in the pull request.
+schema: fpga-design-agent/method-mix/v1
+groups:
+  simulation:
+    label: a simulation check
+    methods: [sim_test, uvm_test, assertion, coverage_bin, sim_measurement]
+  independent_simulation:
+    label: a simulation check from a bench the implementing agent did not write
+    methods: [sim_test, uvm_test, assertion, coverage_bin, sim_measurement]
+    not_written_by: [implementing_agent]
+  formal:
+    label: a formal proof (SymbiYosys or Lean)
+    methods: [formal, formal_lean]
+  board:
+    label: a board measurement
+    methods: [board_measurement]
+  measurement:
+    label: a measured value inside the bound (post-route timing, simulation measurement or board measurement)
+    methods: [timing, sim_measurement, board_measurement]
+    judged_by_bound: true
+kinds:
+  # safety: simulation plus a formal proof or the board
+  safety:
+    - [simulation, formal]
+    - [simulation, board]
+  # performance: a measurement inside the bound (this is the rule the matrix applied before; a passing test alone is `no_measurement`)
+  performance:
+    - [measurement]
+  # functional: a simulation check from a bench the implementing agent did not write, or a formal proof, or the board (hardware is a
+  # verification layer of its own and is not the implementing agent's testbench)
+  functional:
+    - [independent_simulation]
+    - [formal]
+    - [board]
+  # interface: an independent simulation check, a formal proof, or the board
+  interface:
+    - [independent_simulation]
+    - [formal]
+    - [board]

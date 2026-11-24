@@ -1,0 +1,8 @@
+# Formal jobs of the reorder buffer (arith brief 148; tools/run_formal.py). The address map is combinational, so each proof is exhaustive at its size.
+jobs:
+- {name: bitrev_n8, top: fft_bitrev_fv, params: {LOGN: 3}, mode: prove, depth: 2, sources: [formal/fft_bitrev_fv.sv, ../fft_common/fft_bitrev.sv], claim: "bit reversal is a permutation and an involution of all 8 addresses (proved for all inputs)"}
+- {name: bitrev_n64, top: fft_bitrev_fv, params: {LOGN: 6}, mode: prove, depth: 2, sources: [formal/fft_bitrev_fv.sv, ../fft_common/fft_bitrev.sv], claim: "the same for all 64 addresses (proved for all inputs)"}
+- {name: bitrev_n256, top: fft_bitrev_fv, params: {LOGN: 8}, mode: prove, depth: 2, sources: [formal/fft_bitrev_fv.sv, ../fft_common/fft_bitrev.sv], claim: "the same for all 256 addresses (proved for all inputs)"}
+- {name: bitrev_n4096, top: fft_bitrev_fv, params: {LOGN: 12}, mode: prove, depth: 2, sources: [formal/fft_bitrev_fv.sv, ../fft_common/fft_bitrev.sv], claim: "the same for all 4096 addresses (proved for all inputs)"}
+- {name: mutant_identity, top: fft_bitrev_fv, params: {LOGN: 6}, mode: bmc, depth: 2, sources: [formal/fft_bitrev_fv.sv, ../fft_common/fft_bitrev.sv], claim: "a bit reversal that does nothing is refuted (the one-set-bit property), although it is an involution and a permutation", mutant: bitrev_identity}
+- {name: mutant_drop_bit, top: fft_bitrev_fv, params: {LOGN: 6}, mode: bmc, depth: 2, sources: [formal/fft_bitrev_fv.sv, ../fft_common/fft_bitrev.sv], claim: "a bit reversal that leaves the top bit undriven is refuted", mutant: bitrev_off}

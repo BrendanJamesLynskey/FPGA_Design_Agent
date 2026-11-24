@@ -1,0 +1,18 @@
+# PROPOSED, NOT ENABLED (brief 143d): the local fresh-evidence run (xsim UVM, full formal set, b119 Vivado out-of-context build).
+# To adopt it, the owner or planner copies both files to ~/.config/systemd/user/, edits the checkout path, then
+#   systemctl --user daemon-reload && systemctl --user enable --now fda-fresh-evidence.timer
+# It uses no model tokens; heavy jobs wait for a heavy slot (up to two hours each) and run under a memory cap.
+[Unit]
+Description=FPGA Design Agent: re-run the expensive evidence from the current main and compare it with the committed records
+
+[Service]
+Type=oneshot
+Nice=15
+IOSchedulingClass=idle
+WorkingDirectory=/home/brendan/Claude_sandbox/FPGA_Design_Agent
+Environment=FDA_PYTHON=/home/brendan/Claude_sandbox/FPGA_Design_Agent/.venv/bin/python
+# Runs the checkout as it is: point WorkingDirectory at a clean checkout of origin/main (a worktree that is only ever fast-forwarded), not at a branch in use.
+ExecStart=/home/brendan/Claude_sandbox/FPGA_Design_Agent/tools/fresh_evidence_local.sh
+TimeoutStartSec=12h
+StandardOutput=append:/home/brendan/Claude_sandbox/FPGA_Design_Agent/build/fresh_evidence/timer.log
+StandardError=append:/home/brendan/Claude_sandbox/FPGA_Design_Agent/build/fresh_evidence/timer.log

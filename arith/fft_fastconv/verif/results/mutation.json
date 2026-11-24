@@ -1,0 +1,313 @@
+{
+ "function": "fft_fastconv",
+ "mutants": 37,
+ "valid": 37,
+ "killed": 37,
+ "survived": [],
+ "invalid": [],
+ "score_pct": 100.0,
+ "per_variant": {
+  "os": {
+   "valid": 37,
+   "killed": 37
+  }
+ },
+ "results": [
+  {
+   "name": "feed_start_address",
+   "variant": "os",
+   "class": "connection",
+   "status": "killed",
+   "detail": "directed {'LOGN': 5, 'L': 9, 'W': 8, 'TW': 10, 'WH': 12, 'FH': 8, 'GB': 1, 'RND': 1, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 1}",
+   "why": "the block is fed from ring position 0, not from its start"
+  },
+  {
+   "name": "collect_one_more",
+   "variant": "os",
+   "class": "constant",
+   "status": "killed",
+   "detail": "directed {'LOGN': 5, 'L': 9, 'W': 8, 'TW': 10, 'WH': 12, 'FH': 8, 'GB': 1, 'RND': 1, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 1}",
+   "why": "a block collects B + 1 samples"
+  },
+  {
+   "name": "credit_ignored",
+   "variant": "os",
+   "class": "connection",
+   "status": "killed",
+   "detail": "randomised {'LOGN': 6, 'L': 17, 'W': 16, 'TW': 16, 'WH': 20, 'FH': 12, 'GB': 1, 'RND': 1, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 2}",
+   "why": "a block starts although the output FIFO may lack room for its results"
+  },
+  {
+   "name": "credit_n_words",
+   "variant": "os",
+   "class": "constant",
+   "status": "killed",
+   "detail": "randomised {'LOGN': 6, 'L': 17, 'W': 16, 'TW': 16, 'WH': 20, 'FH': 12, 'GB': 1, 'RND': 1, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 2}",
+   "why": "only N words of output room are credited: a block with B above N/2 waits for the previous block's results to drain, so the block period is no longer B + N + 1"
+  },
+  {
+   "name": "sof_always",
+   "variant": "os",
+   "class": "connection",
+   "status": "killed",
+   "detail": "directed {'LOGN': 5, 'L': 9, 'W': 8, 'TW': 10, 'WH': 12, 'FH': 8, 'GB': 1, 'RND': 1, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 1}",
+   "why": "every fed word is a start of frame"
+  },
+  {
+   "name": "ring_write_swapped",
+   "variant": "os",
+   "class": "connection",
+   "status": "killed",
+   "detail": "directed {'LOGN': 5, 'L': 9, 'W': 8, 'TW': 10, 'WH': 12, 'FH': 8, 'GB': 1, 'RND': 1, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 1}",
+   "why": "real and imaginary parts exchanged on the way into the ring"
+  },
+  {
+   "name": "inverse_is_forward",
+   "variant": "os",
+   "class": "connection",
+   "status": "killed",
+   "detail": "directed {'LOGN': 5, 'L': 9, 'W': 8, 'TW': 10, 'WH': 12, 'FH': 8, 'GB': 1, 'RND': 1, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 1}",
+   "why": "the second transform is a forward one"
+  },
+  {
+   "name": "forward_bit_reversed",
+   "variant": "os",
+   "class": "constant",
+   "status": "killed",
+   "detail": "directed {'LOGN': 5, 'L': 9, 'W': 8, 'TW': 10, 'WH': 12, 'FH': 8, 'GB': 1, 'RND': 1, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 1}",
+   "why": "the forward transform emits bit-reversed order but the filter is in natural order"
+  },
+  {
+   "name": "inverse_unscaled",
+   "variant": "os",
+   "class": "constant",
+   "status": "killed",
+   "detail": "directed {'LOGN': 5, 'L': 9, 'W': 8, 'TW': 10, 'WH': 12, 'FH': 8, 'GB': 1, 'RND': 1, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 1}",
+   "why": "the inverse transform is not scaled by 1/N"
+  },
+  {
+   "name": "product_round_quarter",
+   "variant": "os",
+   "class": "constant",
+   "status": "killed",
+   "detail": "directed {'LOGN': 5, 'L': 9, 'W': 8, 'TW': 10, 'WH': 12, 'FH': 8, 'GB': 1, 'RND': 1, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 1}",
+   "why": "the spectral product's rounding constant is a quarter instead of a half"
+  },
+  {
+   "name": "filter_swapped_m4",
+   "variant": "os",
+   "class": "connection",
+   "status": "killed",
+   "detail": "directed {'LOGN': 5, 'L': 9, 'W': 8, 'TW': 10, 'WH': 12, 'FH': 8, 'GB': 1, 'RND': 1, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 1}",
+   "why": "the four-multiplier product has the filter's real and imaginary parts exchanged"
+  },
+  {
+   "name": "filter_swapped_m3",
+   "variant": "os",
+   "class": "connection",
+   "status": "killed",
+   "detail": "directed {'LOGN': 5, 'L': 9, 'W': 8, 'TW': 10, 'WH': 12, 'FH': 8, 'GB': 1, 'RND': 1, 'CMUL': 3, 'TWSTAGES': 2, 'MULSTAGES': 0}",
+   "why": "the three-multiplier product has the filter's real and imaginary parts exchanged"
+  },
+  {
+   "name": "filter_halves_read_swapped",
+   "variant": "os",
+   "class": "connection",
+   "status": "killed",
+   "detail": "directed {'LOGN': 5, 'L': 9, 'W': 8, 'TW': 10, 'WH': 12, 'FH': 8, 'GB': 1, 'RND': 1, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 1}",
+   "why": "the real part of the filter word is read from the imaginary half"
+  },
+  {
+   "name": "spectrum_real_swapped",
+   "variant": "os",
+   "class": "connection",
+   "status": "killed",
+   "detail": "directed {'LOGN': 5, 'L': 9, 'W': 8, 'TW': 10, 'WH': 12, 'FH': 8, 'GB': 1, 'RND': 1, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 1}",
+   "why": "the spectral product takes the imaginary part as the real one"
+  },
+  {
+   "name": "drop_count_off",
+   "variant": "os",
+   "class": "constant",
+   "status": "killed",
+   "detail": "directed {'LOGN': 5, 'L': 9, 'W': 8, 'TW': 10, 'WH': 12, 'FH': 8, 'GB': 1, 'RND': 1, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 1}",
+   "why": "one valid output too many is dropped"
+  },
+  {
+   "name": "sat_real_only",
+   "variant": "os",
+   "class": "connection",
+   "status": "killed",
+   "detail": "saturate {'LOGN': 5, 'L': 9, 'W': 8, 'TW': 10, 'WH': 12, 'FH': 8, 'GB': 1, 'RND': 1, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 1}",
+   "why": "an imaginary part that saturates is not flagged"
+  },
+  {
+   "name": "clamp_low_to_high",
+   "variant": "os",
+   "class": "constant",
+   "status": "killed",
+   "detail": "saturate {'LOGN': 5, 'L': 9, 'W': 8, 'TW': 10, 'WH': 12, 'FH': 8, 'GB': 1, 'RND': 1, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 1}",
+   "why": "a part below the range saturates to the positive end"
+  },
+  {
+   "name": "imag_from_real",
+   "variant": "os",
+   "class": "connection",
+   "status": "killed",
+   "detail": "directed {'LOGN': 5, 'L': 9, 'W': 8, 'TW': 10, 'WH': 12, 'FH': 8, 'GB': 1, 'RND': 1, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 1}",
+   "why": "the imaginary output part is the real one"
+  },
+  {
+   "name": "busy_ignores_blocks",
+   "variant": "os",
+   "class": "connection",
+   "status": "killed",
+   "detail": "axil {'LOGN': 5, 'L': 9, 'W': 8, 'TW': 10, 'WH': 12, 'FH': 8, 'GB': 1, 'RND': 1, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 1}",
+   "why": "BUSY is 0 while a block is in flight: coefficient commits are accepted"
+  },
+  {
+   "name": "busy_ignores_clear",
+   "variant": "os",
+   "class": "connection",
+   "status": "killed",
+   "detail": "directed {'LOGN': 5, 'L': 9, 'W': 8, 'TW': 10, 'WH': 12, 'FH': 8, 'GB': 1, 'RND': 1, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 1}",
+   "why": "BUSY is 0 while the memories are cleared"
+  },
+  {
+   "name": "blocks_counter",
+   "variant": "os",
+   "class": "constant",
+   "status": "killed",
+   "detail": "directed {'LOGN': 5, 'L': 9, 'W': 8, 'TW': 10, 'WH': 12, 'FH': 8, 'GB': 1, 'RND': 1, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 1}",
+   "why": "the block counter counts in twos"
+  },
+  {
+   "name": "fifo_reads_empty",
+   "variant": "os",
+   "class": "connection",
+   "status": "killed",
+   "detail": "directed {'LOGN': 5, 'L': 9, 'W': 8, 'TW': 10, 'WH': 12, 'FH': 8, 'GB': 1, 'RND': 1, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 1}",
+   "why": "the FIFO is read although it may be empty"
+  },
+  {
+   "name": "fifo_no_hold",
+   "variant": "os",
+   "class": "connection",
+   "status": "killed",
+   "detail": "directed {'LOGN': 5, 'L': 9, 'W': 8, 'TW': 10, 'WH': 12, 'FH': 8, 'GB': 1, 'RND': 1, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 1}",
+   "why": "the output register is not held while the sink stalls: words are lost"
+  },
+  {
+   "name": "fifo_data_not_held",
+   "variant": "os",
+   "class": "connection",
+   "status": "killed",
+   "detail": "directed {'LOGN': 5, 'L': 9, 'W': 8, 'TW': 10, 'WH': 12, 'FH': 8, 'GB': 1, 'RND': 1, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 1}",
+   "why": "the output data changes while the sink stalls"
+  },
+  {
+   "name": "out_valid_follows_ready",
+   "variant": "os",
+   "class": "operator",
+   "status": "killed",
+   "detail": "directed {'LOGN': 5, 'L': 9, 'W': 8, 'TW': 10, 'WH': 12, 'FH': 8, 'GB': 1, 'RND': 1, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 1}",
+   "why": "tvalid depends on tready (an AXI4-Stream rule violation)"
+  },
+  {
+   "name": "axil_partial_strobes",
+   "variant": "os",
+   "class": "operator",
+   "status": "killed",
+   "detail": "axil {'LOGN': 5, 'L': 9, 'W': 8, 'TW': 10, 'WH': 12, 'FH': 8, 'GB': 1, 'RND': 1, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 1}",
+   "why": "writes with partial strobes are accepted"
+  },
+  {
+   "name": "axil_status_bit",
+   "variant": "os",
+   "class": "constant",
+   "status": "killed",
+   "detail": "axil {'LOGN': 5, 'L': 9, 'W': 8, 'TW': 10, 'WH': 12, 'FH': 8, 'GB': 1, 'RND': 1, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 1}",
+   "why": "DROPPED is cleared by bit 0"
+  },
+  {
+   "name": "axil_caddr_plus_one",
+   "variant": "os",
+   "class": "constant",
+   "status": "killed",
+   "detail": "directed {'LOGN': 5, 'L': 9, 'W': 8, 'TW': 10, 'WH': 12, 'FH': 8, 'GB': 1, 'RND': 1, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 1}",
+   "why": "COEF_ADDR is written with the value plus one"
+  },
+  {
+   "name": "axil_no_autoincrement",
+   "variant": "os",
+   "class": "connection",
+   "status": "killed",
+   "detail": "directed {'LOGN': 5, 'L': 9, 'W': 8, 'TW': 10, 'WH': 12, 'FH': 8, 'GB': 1, 'RND': 1, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 1}",
+   "why": "COEF_ADDR does not advance after a commit"
+  },
+  {
+   "name": "axil_refusal_ok",
+   "variant": "os",
+   "class": "connection",
+   "status": "killed",
+   "detail": "axil {'LOGN': 5, 'L': 9, 'W': 8, 'TW': 10, 'WH': 12, 'FH': 8, 'GB': 1, 'RND': 1, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 1}",
+   "why": "a refused commit answers OKAY"
+  },
+  {
+   "name": "axil_commit_register",
+   "variant": "os",
+   "class": "constant",
+   "status": "killed",
+   "detail": "directed {'LOGN': 5, 'L': 9, 'W': 8, 'TW': 10, 'WH': 12, 'FH': 8, 'GB': 1, 'RND': 1, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 1}",
+   "why": "the commit fires on the COEF_RE write instead of the COEF_IM write"
+  },
+  {
+   "name": "axil_stage_register",
+   "variant": "os",
+   "class": "constant",
+   "status": "killed",
+   "detail": "directed {'LOGN': 5, 'L': 9, 'W': 8, 'TW': 10, 'WH': 12, 'FH': 8, 'GB': 1, 'RND': 1, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 1}",
+   "why": "COEF_RE is staged by a write to COEF_ADDR"
+  },
+  {
+   "name": "axil_unmapped_read_ok",
+   "variant": "os",
+   "class": "constant",
+   "status": "killed",
+   "detail": "axil {'LOGN': 5, 'L': 9, 'W': 8, 'TW': 10, 'WH': 12, 'FH': 8, 'GB': 1, 'RND': 1, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 1}",
+   "why": "an unmapped read answers OKAY"
+  },
+  {
+   "name": "axil_readback_register",
+   "variant": "os",
+   "class": "connection",
+   "status": "killed",
+   "detail": "directed {'LOGN': 5, 'L': 9, 'W': 8, 'TW': 10, 'WH': 12, 'FH': 8, 'GB': 1, 'RND': 1, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 1}",
+   "why": "COEF_ADDR reads back the staged real part"
+  },
+  {
+   "name": "axil_cfg_swapped",
+   "variant": "os",
+   "class": "connection",
+   "status": "killed",
+   "detail": "directed {'LOGN': 5, 'L': 9, 'W': 8, 'TW': 10, 'WH': 12, 'FH': 8, 'GB': 1, 'RND': 1, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 1}",
+   "why": "CFG0 has W and LOGN exchanged"
+  },
+  {
+   "name": "axil_ro_write_ok",
+   "variant": "os",
+   "class": "constant",
+   "status": "killed",
+   "detail": "axil {'LOGN': 5, 'L': 9, 'W': 8, 'TW': 10, 'WH': 12, 'FH': 8, 'GB': 1, 'RND': 1, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 1}",
+   "why": "a write to a read-only or unmapped register answers OKAY"
+  },
+  {
+   "name": "axil_address_bits",
+   "variant": "os",
+   "class": "constant",
+   "status": "killed",
+   "detail": "directed {'LOGN': 5, 'L': 9, 'W': 8, 'TW': 10, 'WH': 12, 'FH': 8, 'GB': 1, 'RND': 1, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 1}",
+   "why": "the write address decode uses the wrong bits"
+  }
+ ]
+}
