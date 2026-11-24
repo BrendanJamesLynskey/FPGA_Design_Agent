@@ -307,6 +307,12 @@ if {$resume_from ne "route"} {
     report_utilization    -hierarchical -file $out/utilization_hier.rpt
     report_methodology    -file $out/methodology.rpt
     report_cdc -details   -file $out/cdc.rpt
+    # brief 207 (docs/cdc_margin_method.md, flow/cdc_margin.py): every set_bus_skew after routing (report_timing_summary leaves bus
+    # skew out, UG906 p. 161), and on UltraScale+ the synchroniser MTBF (UG835: not supported on 7 series)
+    report_bus_skew -max_paths 50 -nworst 1 -file $out/bus_skew_route.rpt
+    if {[regexp {^(xck|xczu|xcvu|xcku|xcau)} $part]} {
+        if {[catch { report_synchronizer_mtbf -file $out/mtbf_route.rpt } mtbf_err]} { puts "FLOW-MTBF report_synchronizer_mtbf failed: $mtbf_err" }
+    }
     report_drc            -file $out/drc.rpt
     fda_qor $out route
     exception_reports $out route

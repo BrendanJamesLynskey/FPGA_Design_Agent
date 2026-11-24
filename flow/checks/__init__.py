@@ -472,6 +472,27 @@ def _xpm_sim(ctx: Ctx) -> dict[str, Any]:
     return _result(fs, records=srcs)
 
 
+def _cdc_margin(ctx: Ctx) -> dict[str, Any]:
+    """Brief 207: clock-crossing intent constrained and met (flow/cdc_margin.py, the same function as the gate post_route_bus_skew_met):
+    a bus-skew violation blocks; missing bus-skew coverage, a loose datapath-only value, a missing or low MTBF (UltraScale+) and high
+    user clock uncertainty are advisory."""
+    if ctx.scope != "route":
+        return _not_run("needs the routed design's report_bus_skew (scope route)")
+    if not (ctx.build / "bus_skew_route.rpt").is_file():
+        return _not_run("the build has no bus_skew_route.rpt (made before brief 207)")
+    from flow import gates as G
+    try:
+        prep = json.loads((ctx.build / "prepare.json").read_text()) if (ctx.build / "prepare.json").is_file() else {}
+        r = G._cdc_margin(ctx.build, None, prep)
+    except (OSError, ValueError, KeyError) as e:
+        return _not_run(f"{type(e).__name__}: {e}")
+    fs = [{"tool": "cdc_margin", "code": f["code"], "severity": "error" if f["level"] == "gate" else "advisory",
+           "where": str(f.get("cell") or f.get("net") or f.get("position") or f.get("id") or "bus_skew_route.rpt"),
+           "key": f"cdc_margin:{f['code']} {f.get('cell') or f.get('net') or f.get('position') or f.get('id') or ''}".strip(),
+           "message": str(f.get("text") or f)[:240], "blocking": f["level"] == "gate"} for f in (r or {}).get("findings", [])]
+    return _result(fs, records=[ctx.build / "bus_skew_route.rpt"])
+
+
 def _owned(code: str, by: str) -> str | None:
     """The dedicated check that reads this AMD rule id (resets, cdc, clocking, ...), other than the pass-through ``by``."""
     import fnmatch
@@ -829,6 +850,11 @@ register(Check("xpm_sim", "source", ALL, {"xpm_sim": ("XPM-SIM-01",)},
 register(Check("constraint_scope", "records", ("route",), {"constraint_scope": ("XDC-ASYNC-PATHS", "XDC-ASYNC-ALL")},
                "advisory flag for owner review: set_clock_groups -asynchronous over clock pairs with paths between them, or over every clock "
                "(flow/constraint_gates.py, brief 105A); never blocks", _async_groups, reports=("clock_interaction",)))
+register(Check("cdc_margin", "records", ("route",), {"cdc_margin": ("CDCM-SKEW-VIOL", "CDCM-SKEW-MISSING", "CDCM-DPO-LOOSE",
+                                                                  "CDCM-MTBF-MISSING", "CDCM-MTBF-LOW", "CDCM-UNC-HIGH")},
+               "clock-crossing intent constrained and met (flow/cdc_margin.py, brief 207): a set_bus_skew violation blocks (gate "
+               "post_route_bus_skew_met); missing bus skew, a loose datapath-only value, MTBF (UltraScale+) and user uncertainty are advisory",
+               _cdc_margin, gate_mirror=True))
 register(Check("dsp_ram_mapping", "records", POST, {"vivado": ("DPIP-*", "DPOP-*", "SYNTH-*", "RBOR-*", "DPIR-*", "DPOR-*",
                                                               "RMIR-*", "RMOR-*", "RROR-*")},
                "DSP and block-RAM mapping advice (AMD DPIP/DPOP/SYNTH/RBOR rows) and their utilisation", _dsp_ram,
