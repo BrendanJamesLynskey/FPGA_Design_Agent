@@ -3,6 +3,8 @@ MUX	g_bufgmux.u_mux	BUFGCTRL	BUFGCTRL	2
 MUXIN	g_bufgmux.u_mux	I0	g_rel.g_us.u_mmcm	MMCME4_ADV	clk0
 MUXIN	g_bufgmux.u_mux	I1	g_rel.g_us.u_mmcm	MMCME4_ADV	clk1
 MUXOUT	g_bufgmux.u_mux	clk0,clk1
+MUXOCLK	g_bufgmux.u_mux	clk0	clkref
+MUXOCLK	g_bufgmux.u_mux	clk1	clkref
 MUXCTL	g_bufgmux.u_mux	CE0	-	sel_r_reg	FDRE
 MUXCTL	g_bufgmux.u_mux	CE1	-	sel_r_reg	FDRE
 MUXCTL	g_bufgmux.u_mux	IGNORE0	0	GND_1	GND
@@ -10,5 +12,8 @@ MUXCTL	g_bufgmux.u_mux	IGNORE1	0	GND_1	GND
 MUXCTL	g_bufgmux.u_mux	S0	1	VCC_1	VCC
 MUXCTL	g_bufgmux.u_mux	S1	1	VCC_1	VCC
 FANOUT	g_bufgmux.u_mux	33
-INTER	g_bufgmux.u_mux	A	1056	r0_reg[0] -> g_int.rm_reg[0]
-INTER	g_bufgmux.u_mux	C	32	g_int.rm_reg[0] -> g_int.back_reg[0]
+INTER	g_bufgmux.u_mux	A	64	r0_reg[0]
+INTERCLK	g_bufgmux.u_mux	A	clk0	32	r0_reg[0]
+INTERCLK	g_bufgmux.u_mux	A	clk1	32	r1_reg[0]
+INTER	g_bufgmux.u_mux	C	32	g_int.back_reg[0]
+INTERCLK	g_bufgmux.u_mux	C	clk0	32	g_int.back_reg[0]

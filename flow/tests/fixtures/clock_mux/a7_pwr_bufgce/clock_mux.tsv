@@ -1,7 +1,9 @@
+PART	xc7a35tcpg236-1	artix7	7
 MUX	g_bufgce.u_bufgce	BUFGCTRL	BUFGCTRL	2
 MUXIN	g_bufgce.u_bufgce	I0	clk_IBUF_inst	IBUF	clk
 MUXIN	g_bufgce.u_bufgce	I1	VCC_1	VCC	-
 MUXOUT	g_bufgce.u_bufgce	clk
+MUXOCLK	g_bufgce.u_bufgce	clk	-
 MUXCTL	g_bufgce.u_bufgce	CE0	-	en_r_reg	FDRE
 MUXCTL	g_bufgce.u_bufgce	CE1	0	GND_1	GND
 MUXCTL	g_bufgce.u_bufgce	IGNORE0	0	GND_1	GND
@@ -10,4 +12,5 @@ MUXCTL	g_bufgce.u_bufgce	S0	1	VCC_1	VCC
 MUXCTL	g_bufgce.u_bufgce	S1	0	GND_1	GND
 FANOUT	g_bufgce.u_bufgce	512
 INTER	g_bufgce.u_bufgce	A	0	-
-INTER	g_bufgce.u_bufgce	C	512	g_bufgce.r_reg[0] -> dout_reg
+INTER	g_bufgce.u_bufgce	C	1	dout_reg
+INTERCLK	g_bufgce.u_bufgce	C	clk	1	dout_reg

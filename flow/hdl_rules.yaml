@@ -96,7 +96,7 @@ rules:
       against each other until they are grouped (UG903 ch. 3). Grouping the SOURCE clocks also removes every real path
       between a source clock's own registers and the mux fanout; measured, it hid a -6.63 ns setup failure and every
       report_cdc row (brief 208 b1), so with such paths the groups go on generated clocks on the mux output (UG949 ch. 4).
-    checks: {clock_mux: [CLKMUX-LUT, CLKMUX-NO-GROUPS, CLKMUX-SRC-GROUPED, CLKMUX-CASE, CLKMUX-CE-SELECT, CLKMUX-STOP, CLKMUX-CASCADE]}
+    checks: {clock_mux: [CLKMUX-LUT, CLKMUX-NO-GROUPS, CLKMUX-SRC-GROUPED, CLKMUX-CASE, CLKMUX-CE-SELECT, CLKMUX-STOP, CLKMUX-CASCADE, CLKMUX-UNTRACED]}
     fix: use BUFGMUX_CTRL (or BUFGCTRL on S) with the select from a register; create_generated_clock -divide_by 1 on the mux
       output for each input (-add -master_clock for the second) and set_clock_groups -physically_exclusive on those
       generated clocks; group the source clocks directly only when they meet nowhere but the mux fanout

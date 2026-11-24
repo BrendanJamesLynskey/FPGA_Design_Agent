@@ -21,10 +21,13 @@ Rules (codes map to FDA-HDL rule HDL-CLK-03 in flow/hdl_rules.yaml):
     CLKMUX-NO-GROUPS    (blocking) two or more clocks reach a mux output and some pair of them is still timed against the
                         other (report_clock_interaction "Timed"): the timer checks paths between modes that cannot exist
                         at the same time in hardware (UG903 ch. 3; UG949 ch. 4 "Constraining Exclusive Clock Groups").
-    CLKMUX-SRC-GROUPED  (blocking) the mux's SOURCE clocks are put in clock groups (exclusive or asynchronous) while a
-                        register on a source clock's own tree exchanges data with a register on the mux fanout (paths A/C).
-                        The group then also removes those real paths from timing and from report_cdc (brief 208 b1/b8).
-                        Constrain generated clocks on the mux output instead (UG949 p.174 template).
+    CLKMUX-SRC-GROUPED  (blocking) a register on one of the mux's input clocks (outside the fanout) exchanges data with the
+                        mux fanout (UG949 Fig. 101 paths A/C), and the pair between that clock and ANOTHER mode on the mux
+                        output is in a clock group (exclusive or asynchronous), a false path or "ignored". That is the
+                        crossing taken when the other input is selected; the constraint removes it from timing and, for
+                        groups, from report_cdc (brief 208 b1/b8). Typical cause: groups on the source clocks, or
+                        -include_generated_clocks groups over the generated mux clocks. Constrain generated clocks on the
+                        mux output and group only those (UG949 p.174 template).
     CLKMUX-CASE         (advisory) a mux whose select is not a constant in the netlist propagates fewer clocks than it
                         has distinct input clocks: a set_case_analysis (or a missing clock) leaves a mode untimed.
     CLKMUX-CE-SELECT    (advisory) a BUFGMUX (or a BUFGCTRL switched on CE0/CE1): its select must meet setup and hold to
@@ -32,11 +35,14 @@ Rules (codes map to FDA-HDL rule HDL-CLK-03 in flow/hdl_rules.yaml):
     CLKMUX-STOP         (advisory) a mux input comes straight from a device pin (an external clock that can stop) and the
                         buffer has no driven IGNORE pin: if the selected clock stops, the switch never completes (brief
                         208 e2: locked up with the old clock stopped low or high). Use the safe-switch protocol.
+    CLKMUX-UNTRACED     (advisory) no register was found on the mux output (it feeds an MMCM, a PLL or a black box), so
+                        the two group rules could not be applied.
     CLKMUX-CASCADE      (blocking) a chain of BUFGCTRLs longer than CASCADE_LIMIT, the dedicated cascade ring (UG472: 16 per
                         device half on 7 series; UG572: 8 on UltraScale): brief 208 d3 measured placement failing (Place
                         30-120, "Sub-optimal placement for a BUFG-BUFG cascade pair") for a chain of 17 on xc7a35t and of 9
-                        on xck26, while chains of 7 placed. (advisory) more than two levels for a mux of four inputs or
-                        fewer (UG949 ch. 3 "Clock Multiplexing": a balanced two-level tree).
+                        on xck26, while chains of 8 (xck26) and 14 (xc7a35t) placed. (advisory) on 7 series a chain of 15
+                        or 16: both failed placement when one MMCM fed every stage (an MMCM's BUFGs must sit in its half);
+                        and more than two levels for a mux of four inputs or fewer (UG949 ch. 3: a balanced two-level tree).
 
 Raw facts only in the messages; the house rule and the fixes live in hdl_rules.yaml and the KB skill.
 """
@@ -48,9 +54,18 @@ import sys
 from pathlib import Path
 from typing import Any
 
+#: the dedicated cascade ring (UG472: 16 BUFGCTRLs per device half on 7 series; UG572: 8 on UltraScale): a longer chain
+#: cannot be placed (blocking). On 7 series, brief 208 also measured chains of 15 and 16 failing placement (and 14 placing)
+#: when one MMCM fed every stage (its outputs must use BUFGs in its own half): advisory from CASCADE_SOFT up to the ring.
 CASCADE_LIMIT = {"7": 16, "us": 8}
+CASCADE_SOFT = {"7": 15, "us": 9}
+#: driver refs that mean "not a clock input": tied to a constant, or no net at all ("-"); "?" (a net whose driver the dump
+#: cannot see) counts as a real input
 CONST_REFS = ("VCC", "GND", "-")
-GROUPED = ("Clock Group", "Asynchronous Groups", "Exclusive", "Logically Exclusive", "Physically Exclusive")
+#: report_clock_interaction "Inter-Clock Constraints" text that removes the regular timing of a pair (substring match).
+#: For CLKMUX-NO-GROUPS a "Partial ..." row still leaves paths timed, so it does not count as handled there; for
+#: CLKMUX-SRC-GROUPED any of these, partial or not, hides some real paths.
+GROUPED = ("Clock Group", "Asynchronous Groups", "Exclusive", "False Path", "Ignored")
 
 
 def parse_dump(text: str) -> dict[str, Any]:
@@ -70,7 +85,8 @@ def parse_dump(text: str) -> dict[str, Any]:
             part = {"part": f[1], "arch": f[2], "family": f[3]}
         elif kind == "MUX" and len(f) >= 5:
             muxes[f[1]] = {"cell": f[1], "ref": f[2], "orig_ref": f[3], "inputs": [], "out_clocks": [], "ctl": {},
-                           "fanout": 0, "inter": {"A": 0, "C": 0}, "inter_example": {}}
+                           "fanout": 0, "inter": {"A": 0, "C": 0}, "inter_example": {}, "interclk": {"A": {}, "C": {}},
+                           "master": {}}
         elif kind == "MUXIN" and f[1] in muxes:
             muxes[f[1]]["inputs"].append({"pin": f[2], "driver": f[3], "driver_ref": f[4], "clocks": clocks(f[5])})
         elif kind == "MUXOUT" and f[1] in muxes:
@@ -82,6 +98,10 @@ def parse_dump(text: str) -> dict[str, Any]:
         elif kind == "INTER" and f[1] in muxes:
             muxes[f[1]]["inter"][f[2]] = int(f[3])
             muxes[f[1]]["inter_example"][f[2]] = f[4]
+        elif kind == "MUXOCLK" and f[1] in muxes and len(f) >= 4:
+            muxes[f[1]]["master"][f[2]] = f[3]
+        elif kind == "INTERCLK" and f[1] in muxes and len(f) >= 5:
+            muxes[f[1]]["interclk"][f[2]][f[3]] = int(f[4])
         elif kind == "LUTCLK":
             luts.append({"cell": f[1], "ref": f[2], "clock_pins": int(f[3]), "clocks": clocks(f[4])})
     return {"muxes": muxes, "luts": luts, "part": part}
@@ -93,6 +113,16 @@ def _pair_constraints(pairs: list[dict[str, Any]]) -> dict[tuple[str, str], str]
 
 def _grouped(c: str) -> bool:
     return any(g.lower() in c.lower() for g in GROUPED)
+
+
+def _fully_grouped(c: str) -> bool:
+    return _grouped(c) and "partial" not in c.lower()
+
+
+def _is_mux(m: dict[str, Any]) -> bool:
+    """Two or more real clock inputs. A BUFGCTRL with one input tied to a constant is a BUFGCE or BUFG preset (7 series
+    retargets BUFGCE to BUFGCTRL with I1 tied to VCC, measured in brief 208 f1): not a mux."""
+    return len([i for i in m["inputs"] if i["driver_ref"] not in CONST_REFS]) >= 2
 
 
 def _is_buf(ref: str) -> bool:
@@ -119,6 +149,13 @@ def _leaves(cell: str, muxes: dict[str, Any], seen: frozenset[str] = frozenset()
     return n
 
 
+def _same_mode(src: str, out: str, m: dict[str, Any]) -> bool:
+    """True when the output clock ``out`` is the mode that carries ``src``: the source clock itself propagated through the
+    mux, or a clock generated on the output whose master is ``src`` (the dump's MUXOCLK lines). Such a pair is an ordinary
+    same-clock path, not a hidden crossing."""
+    return out == src or m["master"].get(out) == src
+
+
 def findings(dump: dict[str, Any], pairs: list[dict[str, Any]] | None = None, family: str | None = None) -> list[dict[str, Any]]:
     """The findings for one design. ``family`` ("7" or "us") defaults to the dump's PART line, else "7"."""
     family = family or dump.get("part", {}).get("family") or "7"
@@ -133,11 +170,10 @@ def findings(dump: dict[str, Any], pairs: list[dict[str, Any]] | None = None, fa
         add("CLKMUX-LUT", lut["cell"], f"{lut['ref']} output reaches {lut['clock_pins']} clock pin(s); clocks on it: "
             f"{', '.join(lut['clocks']) or 'none'}", True)
 
-    fed = {i["driver"] for m in muxes.values() for i in m["inputs"]}        # muxes that feed another mux (inner levels)
+    # muxes that feed another real mux are inner levels; a preset buffer after a mux does not hide the mux (review fix)
+    fed = {i["driver"] for m in muxes.values() if _is_mux(m) for i in m["inputs"]}
     for name, m in muxes.items():
-        # a BUFGCTRL with one input tied to a constant is a BUFGCE or BUFG preset (7 series retargets BUFGCE to BUFGCTRL with
-        # I1 tied to VCC, measured in brief 208 f1): not a mux
-        if len([i for i in m["inputs"] if i["driver_ref"] not in CONST_REFS]) < 2:
+        if not _is_mux(m):
             continue
         outc = m["out_clocks"]
         inc = sorted({c for i in m["inputs"] for c in i["clocks"]})
@@ -146,21 +182,39 @@ def findings(dump: dict[str, Any], pairs: list[dict[str, Any]] | None = None, fa
         # where every mode meets, and only when the clock-interaction report is given)
         if top and pairs is not None and len(outc) >= 2:
             timed = sorted({f"{a} -> {b}" for (a, b), c in cons.items()
-                            if a != b and a in outc and b in outc and not _grouped(c)})
+                            if a != b and a in outc and b in outc and not _fully_grouped(c)})
             if timed:
                 add("CLKMUX-NO-GROUPS", name, f"clocks {', '.join(outc)} all reach the mux output; still timed against each "
                     f"other: {'; '.join(timed[:6])}", True)
-        # CLKMUX-SRC-GROUPED: the source clocks grouped while paths join a source tree and the mux fanout
-        nA, nC = m["inter"].get("A", 0), m["inter"].get("C", 0)
-        if top and pairs is not None and (nA or nC):
-            src = [c for c in inc if c in outc]                 # source clocks that still propagate through the mux
-            hit = sorted({f"{a} -> {b} ({c})" for (a, b), c in cons.items()
-                          if a != b and a in src and b in src and _grouped(c)})
+        # CLKMUX-SRC-GROUPED: a register on one of the mux's INPUT clocks (outside the fanout) exchanges data with the mux
+        # fanout, and the pair between that clock and another mode's clock on the output is grouped, false-pathed or
+        # ignored: the real crossing taken when the other input is selected is then neither timed nor in report_cdc.
+        # The same-clock pair (clk0 -> clk0 or clk0mux) is a timed path and is not judged here.
+        if top and pairs is not None:
+            hit: set[str] = set()
+            for d in ("A", "C"):
+                for ckset, n in m["interclk"][d].items():
+                    for s_ in ckset.split(","):
+                        if s_ not in inc:
+                            continue                        # an unrelated clock's crossing: a CDC question, not this rule
+                        for f_ in outc:
+                            if _same_mode(s_, f_, m):
+                                continue
+                            pair = (s_, f_) if d == "A" else (f_, s_)
+                            c = cons.get(pair)
+                            if c and _grouped(c):
+                                hit.add(f"{pair[0]} -> {pair[1]} ({c})")
             if hit:
+                nA, nC = m["inter"].get("A", 0), m["inter"].get("C", 0)
                 ex = m["inter_example"].get("A") if nA else m["inter_example"].get("C")
-                add("CLKMUX-SRC-GROUPED", name, f"source clocks grouped: {'; '.join(hit[:4])}; yet {nA} register pair(s) run from "
-                    f"other clock trees into the mux fanout and {nC} run out of it (e.g. {ex}); the group removes them from "
-                    f"timing and report_cdc", True)
+                add("CLKMUX-SRC-GROUPED", name, f"pairs between an input clock's own registers and another mode on the mux output "
+                    f"are not timed: {'; '.join(sorted(hit)[:4])}; {nA} register(s) outside the fanout feed it and {nC} are fed "
+                    f"by it (e.g. {ex}); the constraint removes those real crossings from timing (and, for clock groups, from "
+                    f"report_cdc)", True)
+        # CLKMUX-UNTRACED: the fanout could not be traced to registers, so the two group rules saw nothing
+        if top and m["fanout"] == 0:
+            add("CLKMUX-UNTRACED", name, "no register found on the mux output (it may feed an MMCM or PLL, or a black box): "
+                "the crossing rules could not be applied", False)
         # CLKMUX-CASE: fewer clocks propagate than come in, with a select that is not constant in the netlist
         sel_pins = {p: v for p, v in m["ctl"].items() if p.startswith(("S", "CE"))}
         driven = any(v["const"] == "-" for v in sel_pins.values())
@@ -186,6 +240,9 @@ def findings(dump: dict[str, Any], pairs: list[dict[str, Any]] | None = None, fa
             if lv > limit:
                 add("CLKMUX-CASCADE", name, f"{lv} BUFGCTRL levels for {nl} inputs: longer than the cascade ring ({limit} on "
                     f"family {family})", True)
+            elif lv >= CASCADE_SOFT.get(family, limit + 1):
+                add("CLKMUX-CASCADE", name, f"{lv} BUFGCTRL levels for {nl} inputs: chains of {CASCADE_SOFT[family]} to {limit} "
+                    f"failed placement in brief 208 when one MMCM fed every stage", False)
             elif nl <= 4 and lv > 2:
                 add("CLKMUX-CASCADE", name, f"{lv} BUFGCTRL levels for {nl} inputs (a balanced tree needs 2)", False)
     return out

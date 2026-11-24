@@ -23,6 +23,7 @@ Parts: `xc7a35tcpg236-1` (7 series, "a7") and `xck26-sfvc784-2LV-c` (Zynq UltraS
 | `tcl/run_jobs.tcl`, `tcl/jobs_*.txt` | the runner (one Vivado session per list) and the job lists actually run |
 | `tcl/clock_mux_dump.tcl` | the netlist dump the check reads (copied to `flow/clock_mux_dump.tcl`) |
 | `tcl/analyse.tcl` | second pass on the checkpoints: BUFGCTRL sites, per-input insertion delay, power with activity on the enable |
+| `tcl/jobs_review*.txt`, `tcl/redump.tcl` | after the correctness review: three more constraint arms, the cascade bisection, and the re-dump of every checkpoint with the revised `clock_mux_dump.tcl` (the dumps under `runs/` and the check's fixtures are from that revision) |
 | `sim/` | xsim benches: `tb_bufgctrl.v` (e1 to e3), `tb_safe_switch.v` (protocol), `tb_lutmux.v` (c3) |
 | `quartus/` | the Quartus arms: designs, SDC, `sta.tcl`, `run_quartus.sh` |
 | `runs/a7/<arm>/`, `runs/k26/<arm>/` | every text report of every arm (check_timing, clocks, clock_interaction, methodology, cdc, timing_summary, exceptions, utilization, power, the dump). Reports over 300 kB keep their first 400 lines (they say so) |
@@ -63,6 +64,9 @@ that the constraint removes from timing.
 | a7 r_srclog [route] | 0 | **+0.295, 0** | 0 | none | CLKMUX-SRC-GROUPED |
 | a7 r_genphys [route] | 0 | -6.609, 32 | 0 | TIMING-16 x32 | pass |
 | a7 r_noint_srclog [route] | 0 | +0.688, 0 | 0 | none | pass |
+| a7 u_fp [synth] (`set_false_path` both ways between the sources) | 0 | -0.113, 2 (clk0 to clk0 only) | 2 | | CLKMUX-SRC-GROUPED |
+| a7 u_inclgen [synth] (generated clocks, then groups over `-include_generated_clocks` of each source) | 0 | -0.113, 2 | **0** | | CLKMUX-SRC-GROUPED |
+| a7 r_inclgen [synth] | 0 | -0.155, 2 | 0 | | CLKMUX-SRC-GROUPED |
 | k26 u_none [route] | 33 | -6.030, 32 | 2 | TIMING-6, -7, -16 x32 | CLKMUX-NO-GROUPS |
 | k26 u_srclog [route] | 0 | **+0.010, 0** | **0** | none | CLKMUX-SRC-GROUPED |
 | k26 u_genphys [route] | 0 | -7.754, 32 | 4 | TIMING-6, -7, -16 x32 | pass |
@@ -81,7 +85,10 @@ passes (+0.419 ns), report_cdc lists nothing, and the methodology report loses T
 same mistake turns a -6.61 ns failure (r_genphys) into a pass (r_srclog, +0.295 ns). Every gate the flow had before
 this brief passes the srclog arms: `multiple_clock` is 0, there is no Critical Warning, and report_cdc is empty.
 `-asynchronous` removes the same paths from timing but report_cdc still lists the crossings, and the flow's advisory
-`async_clock_groups_review` (brief 105A) fires.
+`async_clock_groups_review` (brief 105A) fires. A `set_false_path` between the sources (report_clock_interaction:
+"False Path", "Ignored") hides the same timing and also keeps report_cdc. The UG949 p. 173 form that groups
+`-include_generated_clocks` of each source, added on top of the generated-clock template, groups clk0 with clk1mux:
+the crossing taken when clk1 is selected is "Ignored" and report_cdc goes empty, as with the source groups.
 
 **What the select is timed against.** Vivado times the select (f2). For a BUFGMUX, which Vivado retargets to a
 BUFGCTRL driving CE0/CE1 with S0/S1 tied high, `sel_r` to `CE1` is a clk0-to-clk1 setup check with a 3.333 ns
@@ -106,14 +113,25 @@ only signals are TIMING-14 in report_methodology and the glitch in simulation.
 
 | Arm | Result |
 |---|---|
-| a7 bal4, bal3, chain7 [route] | placed and routed |
-| **a7 chain17** | **placement failed**: `Place 30-120 Sub-optimal placement for a BUFG-BUFG cascade pair`, then `Place 30-99 IO Clock Placer failed` |
-| k26 bal4, bal3, chain7 [place] | placed |
+| a7 bal4, bal3, chain7 [route]; chain8, chain12, chain13, chain14 [place] | placed |
+| **a7 chain15, chain16, chain17** | **placement failed**: `Place 30-120 Sub-optimal placement for a BUFG-BUFG cascade pair` (rule `rule_cascaded_bufg`: cascaded BUFGs must be adjacent and cyclic), then `Place 30-99 IO Clock Placer failed`; chain15 also listed `rule_mmcm_bufg` (an MMCM driving a BUFG must be in the same half of the device) |
+| k26 bal4, bal3, chain7, chain8 [place] | placed |
 | **k26 chain9** | **placement failed**: the same Place 30-120, with 15 x `Place 30-1161 Could not place all instances for rule` |
 
-The measured limit matches the cascade ring of each family: 16 BUFGCTRLs per device half on 7 series (UG472) and 8 on
-UltraScale (UG572). A chain of one more fails placement. Site and insertion-delay figures per input are in
-`runs/analyse/analyse.tsv` (section below).
+On UltraScale+ the limit is the cascade ring of eight (UG572): 8 placed, 9 failed. On 7 series the ring is 16 per
+half (UG472), but in this design, where one MMCM feeds every stage, 14 placed and 15 failed. The likely reason is that
+the MMCM's BUFGs must share its half. So the ring is an upper bound, and a design can fail earlier. The check blocks a
+chain longer than the ring and gives an advisory for 15 or 16 on 7 series. Messages: `runs/*/a7_chain1[5-7]/` and
+`runs/k26/k26_chain9/placer_messages.txt`.
+
+Second pass (`runs/analyse/analyse.tsv`, source clock delay of each input's same-clock path on the mux fanout):
+
+| Design | BUFGCTRL sites | Delay spread across inputs |
+|---|---|---|
+| a7 bal4 [route] | first level X0Y0, X0Y2; last X0Y1 (UG949 Fig. 67) | 0 (all four 5.897 ns) |
+| a7 chain7 [route] | X0Y0 to X0Y6, consecutive | 5.897 to 7.077 ns: 1.18 ns |
+| k26 bal4 [place] | first level X0Y25, X0Y31; last X0Y24 (adjacent in the ring of eight) | 2.713 to 2.728 ns: 15 ps |
+| k26 chain7 [place] | X0Y25, Y24, Y31, Y30, ..., Y27 (round the ring) | 2.731 to 3.760 ns: 1.03 ns |
 
 ### (e) Switching in simulation (unisim models, xsim 2026.1)
 
@@ -143,7 +161,26 @@ The safe-switch protocol (`designs/clk_switch_safe.v`, bench `tb_safe_switch.v`)
 The vectorless estimate does not carry the enable's probability through a BUFGCE. The gated registers and the gated
 clock tree are estimated as if always enabled, so on both parts the BUFGCE design reports **more** power than the
 fabric enable at every duty. The power saving of a BUFGCE is real in silicon (the tree stops), but report_power shows
-it only with switching activity from simulation (SAIF) or set on the gated nets; see the second pass below.
+it only with switching activity from simulation (SAIF). The second pass also set activity on the gated clock net
+itself (static probability 0.1, toggle rate 20 %): the dynamic power stayed at 0.033 W (a7) and 0.014 W (k26). A SAIF
+run was not made.
+
+### (q) Altera: clock control block in Quartus Prime Lite 25.1std
+
+| Arm | Cyclone V 5CEBA4F23C7 | MAX 10 10M50DAF484C7G |
+|---|---|---|
+| q1 `altclkctrl`, glitch-free OFF, no group | clkctrl logic 0 ALUT, 0 registers; worst setup slack -2.680 ns (timing not met) | 0, 0; -2.655 ns |
+| groups on the source clocks (`set_clock_groups -logically_exclusive`) | clk0/clk1 transfers become "false path"; worst slack **+6.956** ns (met) | "false path"; **+6.827** ns |
+| generated clocks on the block's output, grouped (UG949 form) | clk1mux to clk0 (path C) still timed: clk0 worst slack -2.244 ns | timed: -1.414 ns |
+| q2 glitch-free ON | **1 ALUT and 1 register** added in the clkctrl entity; a Critical Warning that the ENA port "should not be connected" when ENA register mode is "always enabled" | **2 and 2** added |
+| q3 RTL clock mux | **Warning 19016 "Clock multiplexers are found and protected"** and 19017 naming `clkm` (mux_lut.v line 9) | the same two warnings |
+
+- The output node of the block differs by family: `...|sd<n>|outclk` on Cyclone V, `...|clkctrl1|outclk` on MAX 10.
+  The first MAX 10 generated-clock attempt used the Cyclone V name and was ignored (Critical Warning 332049, "empty
+  collection"); it was rerun with `gen_m10.sdc`.
+- The mistake carries over to Altera unchanged: grouping the sources hid the crossing; generated clocks kept it.
+- Unlike Vivado, Quartus names an RTL clock mux at synthesis.
+- Design Assistant was not run.
 
 ## Pre-registered expectations against what happened
 
@@ -166,13 +203,16 @@ it only with switching activity from simulation (SAIF) or set on the gated nets;
 | E-c2 | constant select removes the LUT | yes |
 | E-c3 | runt pulses | yes, 40 of 40 |
 | E-d1, E-d2 | balanced trees place on adjacent sites | placed; sites and delays in the second pass |
-| E-d3 | a chain one longer than the ring fails or degrades | **failed placement** on both parts |
+| E-d3 | a chain one longer than the ring fails or degrades | **failed placement** on both parts; on 7 series it failed earlier than the ring (15 of 16) in this design |
 | E-d4 | chain of 7 places | yes on both |
 | E-e1 | glitch-free switch with both running | yes |
 | E-e2 | a clock stopped low lets the switch complete; stopped high locks up | **wrong for the S select**: BUFGCTRL and BUFGMUX_CTRL lock up in both cases; only the CE-select BUFGMUX completed when the old clock stopped low. IGNORE releases it, as UG472 says |
 | E-e3 | CE setup violation may glitch or warn (uncertain) | no runt and no message: the unisim functional model has no timing; the CE glitch is a silicon timing effect the model cannot show |
 | E-f1 | BUFGCE power falls with the enable duty | **wrong as an estimate**: the vectorless report does not respond to the enable at all |
 | E-f2 | the select is timed | yes: CE on the rising edge, S on the falling edge, against each input clock |
+| E-q1 | no logic beyond the block; both clocks timed until grouped | yes |
+| E-q2 | glitch-free ON adds a few registers | yes: 1 (Cyclone V), 2 (MAX 10) |
+| E-q3 | Quartus warns on an RTL clock mux (uncertain) | yes: 19016/19017; Design Assistant not run |
 
 ## Reproduce
 
@@ -182,7 +222,9 @@ From the worktree root (each Vivado list is one heavy job: take a slot with `_ha
     vivado -mode batch -source results/208/tcl/run_jobs.tcl -tclargs results/208/tcl/jobs_a7.txt build/208/a7      # 24 jobs, about 35 min
     vivado -mode batch -source results/208/tcl/run_jobs.tcl -tclargs results/208/tcl/jobs_k26_rest.txt build/208/k26
     vivado -mode batch -source results/208/tcl/analyse.tcl -tclargs build/208 results/208/runs/analyse/analyse.tsv
-    results/208/quartus/run_quartus.sh build/208/quartus
+    results/208/quartus/run_quartus.sh build/208/quartus             # ARMS=gen, ARMS=gen_m10: the generated-clock arms
+    vivado -mode batch -source results/208/tcl/run_jobs.tcl -tclargs results/208/tcl/jobs_review.txt build/208/a7   # and jobs_review2/3, jobs_review_k26
+    vivado -mode batch -source results/208/tcl/redump.tcl -tclargs build/208      # the revised dump on every checkpoint
     results/208/collect_runs.sh build/208/a7 results/208/runs/a7      # and k26
     python3 results/208/summarise.py
 
@@ -208,5 +250,15 @@ ran to `k26_u_ctrl_genphys` with routing and the rest ran as `jobs_k26_rest.txt`
   it sooner.
 - **report_clock_networks segfaulted** (Vivado 2026.1) on the post-synthesis MMCM design `a7_r_none`, inside
   `HASTClockSniffer::isForwardedClock` (stack in `runs/gotchas/`). The runner stopped calling it, and no arm uses it.
-- Altera: see `runs/quartus/` and the Altera section of the report; whether Design Assistant runs on these devices
-  was not probed.
+- Altera: Design Assistant was not run. The Quartus arms are one small design per family, compiled once.
+- **The check was tuned on these arms.** Its verdicts on the recorded designs (`measured.json` `check`) are a record,
+  not a validation on held-out designs. The correctness review found five false-pass or false-fail cases in the first
+  version, and they were fixed:
+  - source groups via `-include_generated_clocks`;
+  - a mux behind a BUFGCE preset;
+  - paths from unrelated clocks;
+  - false paths;
+  - unconnected pins.
+
+  The fixes are covered by real arms (u_fp, u_inclgen) or hand-made dumps. They were not reviewed again (one review
+  per brief).

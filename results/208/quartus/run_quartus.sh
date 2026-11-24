@@ -26,7 +26,10 @@ EOT
 ARMS=${ARMS:-all}
 for fam in "Cyclone V:5CEBA4F23C7:cv" "MAX 10:10M50DAF484C7G:m10"; do
   IFS=: read -r F D S <<< "$fam"
-  if [ "$ARMS" = gen ]; then arm ${S}_ctrl_gfoff_gen "$F" $D q_clkctrl $H/q_clkctrl.v '"OFF"' $H/gen.sdc; continue; fi
+  # the clock control block's output node differs: Cyclone V ...|sd<n>|outclk, MAX 10 ...|clkctrl1|outclk (fit report)
+  G=$H/gen.sdc; [ "$S" = m10 ] && G=$H/gen_m10.sdc
+  if [ "$ARMS" = gen ] || [ "$ARMS" = "gen_$S" ]; then arm ${S}_ctrl_gfoff_gen "$F" $D q_clkctrl $H/q_clkctrl.v '"OFF"' $G; continue; fi
+  case "$ARMS" in gen*) continue;; esac
   arm ${S}_ctrl_gfoff "$F" $D q_clkctrl $H/q_clkctrl.v '"OFF"' $H/base.sdc
   arm ${S}_ctrl_gfoff_groups "$F" $D q_clkctrl $H/q_clkctrl.v '"OFF"' $H/groups.sdc
   arm ${S}_ctrl_gfon "$F" $D q_clkctrl $H/q_clkctrl.v '"ON"' $H/base.sdc

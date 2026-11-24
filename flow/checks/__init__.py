@@ -846,7 +846,7 @@ register(Check("clocking", "vivado", POST, {"vivado": ("CLKC-*",), "clocking": (
                "AMD's CLKC methodology rows and the MMCM/PLL VCO and PFD range check (flow/cmt_check.tcl)", _clocking,
                reports=("methodology", "cmt")))
 register(Check("clock_mux", "vivado", POST, {"clock_mux": ("CLKMUX-LUT", "CLKMUX-NO-GROUPS", "CLKMUX-SRC-GROUPED", "CLKMUX-CASE",
-                                                       "CLKMUX-CE-SELECT", "CLKMUX-STOP", "CLKMUX-CASCADE")},
+                                                       "CLKMUX-CE-SELECT", "CLKMUX-STOP", "CLKMUX-CASCADE", "CLKMUX-UNTRACED")},
                "clock multiplexers (brief 208, flow/clock_mux_check.py): a LUT on a clock path, mux modes timed against each other, "
                "clock groups on the source clocks that hide real paths, and advisories (case-analysed select, CE select, stoppable "
                "input with IGNORE tied, deep cascade)", _clock_mux, reports=("clock_mux", "clock_interaction")))

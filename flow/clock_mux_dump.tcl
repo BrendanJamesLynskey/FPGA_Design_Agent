@@ -5,10 +5,15 @@
 #   MUX     <cell> <ref> <orig_ref> <n_inputs>
 #   MUXIN   <cell> <pin> <driver cell> <driver ref> <clocks on pin, comma list>
 #   MUXOUT  <cell> <clocks on O, comma list>
+#   MUXOCLK <cell> <clock on O> <its master clock, or - for a clock propagated through the mux>
 #   MUXCTL  <cell> <pin> <constant 0|1|-> <driver cell> <driver ref>
 #   LUTCLK  <lut cell> <ref> <number of clock pins it drives, through buffers> <clocks on its output, comma list>
 #   FANOUT  <mux cell> <registers whose clock comes through the mux>
-#   INTER   <mux cell> <A|C> <count> <example start> <example end>   (structural, constraint-independent)
+#   INTER   <mux cell> <A|C> <count> <example>   registers outside the fanout that feed it (A) or that it feeds (C)
+#   INTERCLK <mux cell> <A|C> <clocks of those registers, comma list> <count> <example register>
+#   (structural, constraint-independent; one all_fanin and one all_fanout per mux, review fix of brief 208)
+# Driver fields: "-" when the pin has no net (unconnected), "?" when the net has no driver the dump can see (a black box
+# or a hierarchical boundary); MUXCTL constant field: 0, 1, "-" (driven by logic) or "x" (no net).
 proc _cm_clocks {pin} {
   set c [get_clocks -quiet -of_objects $pin]
   if {[llength $c] == 0} { return "-" }
@@ -21,14 +26,14 @@ proc _cm_driver {pin} {
   if {$drv eq ""} {
     set p [get_ports -quiet -of_objects $net]
     if {$p ne ""} { return [list $p PORT] }
-    return [list "-" "-"]
+    return [list "?" "?"]
   }
   set c [get_cells -of_objects [lindex $drv 0]]
   return [list [get_property NAME $c] [get_property REF_NAME $c]]
 }
 proc _cm_const {pin} {
   set net [get_nets -quiet -of_objects $pin]
-  if {$net eq ""} { return "-" }
+  if {$net eq ""} { return "x" }
   set t [get_property TYPE $net]
   if {$t eq "GROUND"} { return 0 }
   if {$t eq "POWER"} { return 1 }
@@ -51,7 +56,13 @@ proc clock_mux_dump {out} {
       lassign [_cm_driver $p] dc dr
       puts $fh [join [list MUXIN $name [get_property REF_PIN_NAME $p] $dc $dr [_cm_clocks $p]] "\t"]
     }
-    puts $fh [join [list MUXOUT $name [_cm_clocks [get_pins -of_objects $m -filter {REF_PIN_NAME == O}]]] "\t"]
+    set opin0 [get_pins -of_objects $m -filter {REF_PIN_NAME == O}]
+    puts $fh [join [list MUXOUT $name [_cm_clocks $opin0]] "\t"]
+    foreach ck [get_clocks -quiet -of_objects $opin0] {
+      set mc [get_property -quiet MASTER_CLOCK $ck]
+      if {$mc eq ""} { set mc "-" }
+      puts $fh [join [list MUXOCLK $name [get_property NAME $ck] $mc] "\t"]
+    }
     foreach p [get_pins -of_objects $m -filter {DIRECTION == IN && REF_PIN_NAME != I0 && REF_PIN_NAME != I1}] {
       lassign [_cm_driver $p] dc dr
       puts $fh [join [list MUXCTL $name [get_property REF_PIN_NAME $p] [_cm_const $p] $dc $dr] "\t"]
@@ -62,21 +73,30 @@ proc clock_mux_dump {out} {
     puts $fh [join [list FANOUT $name [llength $fo]] "\t"]
     set foset [dict create]
     foreach c $fo { dict set foset [get_property NAME $c] 1 }
-    set nA 0; set exA "-"; set nC 0; set exC "-"
-    foreach c $fo {
-      set d [get_pins -quiet -of_objects $c -filter {DIRECTION == IN && !IS_CLOCK}]
-      if {$d eq ""} continue
-      foreach s [get_cells -quiet [all_fanin -quiet -flat -startpoints_only -only_cells $d] -filter {IS_SEQUENTIAL}] {
-        if {![dict exists $foset [get_property NAME $s]]} { incr nA; if {$exA eq "-"} { set exA "[get_property NAME $s] -> [get_property NAME $c]" } }
+    # registers outside the fanout feeding it (A) and fed by it (C), grouped by their own clocks
+    foreach dir {A C} {
+      if {$dir eq "A"} {
+        set pins [get_pins -quiet -of_objects $fo -filter {DIRECTION == IN && !IS_CLOCK}]
+        set other {}
+        if {[llength $pins]} { set other [get_cells -quiet [all_fanin -quiet -flat -startpoints_only -only_cells $pins] -filter {IS_SEQUENTIAL}] }
+      } else {
+        set pins [get_pins -quiet -of_objects $fo -filter {DIRECTION == OUT}]
+        set other {}
+        if {[llength $pins]} { set other [get_cells -quiet [all_fanout -quiet -flat -endpoints_only -only_cells $pins] -filter {IS_SEQUENTIAL}] }
       }
-      set q [get_pins -quiet -of_objects $c -filter {DIRECTION == OUT}]
-      if {$q eq ""} continue
-      foreach e [get_cells -quiet [all_fanout -quiet -flat -endpoints_only -only_cells $q] -filter {IS_SEQUENTIAL}] {
-        if {![dict exists $foset [get_property NAME $e]]} { incr nC; if {$exC eq "-"} { set exC "[get_property NAME $c] -> [get_property NAME $e]" } }
+      set n 0; set ex "-"; set byclk [dict create]
+      foreach c $other {
+        set cn [get_property NAME $c]
+        if {[dict exists $foset $cn]} continue
+        incr n
+        if {$ex eq "-"} { set ex $cn }
+        set ck [_cm_clocks [get_pins -quiet -of_objects $c -filter {IS_CLOCK}]]
+        if {![dict exists $byclk $ck]} { dict set byclk $ck [list 0 $cn] }
+        dict set byclk $ck [list [expr {[lindex [dict get $byclk $ck] 0] + 1}] [lindex [dict get $byclk $ck] 1]]
       }
+      puts $fh [join [list INTER $name $dir $n $ex] "\t"]
+      dict for {ck v} $byclk { puts $fh [join [list INTERCLK $name $dir $ck [lindex $v 0] [lindex $v 1]] "\t"] }
     }
-    puts $fh [join [list INTER $name A $nA $exA] "\t"]
-    puts $fh [join [list INTER $name C $nC $exC] "\t"]
   }
   # LUTs whose output reaches a clock pin (directly or through clock buffers)
   foreach l [get_cells -quiet -hier -filter {IS_PRIMITIVE && REF_NAME =~ LUT*}] {
