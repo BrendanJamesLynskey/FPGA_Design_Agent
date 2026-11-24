@@ -1,0 +1,50 @@
+schema: fpga-design-agent/architecture/v1
+blocks:
+  - name: top
+    function: board top; resets, instantiates fpga_shell and the blocks below, drives SEG, AN and the UART pair
+  - name: btn_debounce
+    function: synchronises BTNC with sync2 and gives one clr pulse after DEBOUNCE_CYCLES consecutive high cycles
+  - name: seg1_counter
+    function: one-second tick counter (ONE_SEC_CYCLES) and 14-bit binary count 0..9999; clears on clr; window registers ID and COUNT
+  - name: seg_display
+    function: binary to four BCD digits, 1 ms digit scan (SCAN_CYCLES), registered SEG and AN outputs
+  - name: fpga_shell
+    function: UART test shell (115200 8N1), frame protocol and register window, reused from shell/rtl
+interfaces:
+  - name: uart_host
+    between: [host, fpga_shell]
+    protocol: uart
+    prefix: uart
+    module: fpga_shell
+  - name: win
+    between: [fpga_shell, seg1_counter]
+    protocol: simple
+    prefix: win
+    module: seg1_counter
+clock_domains:
+  - name: clk
+    clock: CLK100MHZ
+    freq_mhz: 100
+reset:
+  synchronisers: [reset_sync]
+crossings:
+  - from: async
+    to: clk
+    signal: rst
+    primitive: reset_sync
+    inline_in: top
+  - from: async
+    to: clk
+    signal: btnc
+    primitive: sync2
+    inline_in: btn_debounce
+  - from: async
+    to: clk
+    signal: uart_line
+    primitive: sync2
+    inline_in: uart_rx
+predicted_resources:
+  lut: [120, 450]
+  ff: [100, 350]
+  bram_tile: 0
+  dsp: 0

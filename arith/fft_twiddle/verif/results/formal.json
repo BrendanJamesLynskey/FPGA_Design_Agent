@@ -1,0 +1,177 @@
+{
+ "function": "fft_twiddle",
+ "tool": "Yosys 0.70+385 (git sha1 098e46a36, Release, Clang /usr/bin/clang++ 21.1.8)",
+ "jobs": 8,
+ "ok": 8,
+ "results": [
+  {
+   "name": "quarter_turn_c12_tw18_s1",
+   "top": "fft_twiddle_fv",
+   "params": {
+    "LOGC": 12,
+    "TW": 18,
+    "ST": 1
+   },
+   "mode": "bmc",
+   "depth": 5,
+   "engine": "boolector",
+   "claim": "wr(m + N/4) = wi(m) and wi(m + N/4) = -wr(m) for every index m (circle of 2^12, 18-bit twiddles, STAGES 1), bounded to 5 clocks from an arbitrary state, for all inputs (k-induction was inconclusive: bounded only)",
+   "mutant": null,
+   "expected": "PASS",
+   "status": "PASS",
+   "ok": true,
+   "seconds": 382.2,
+   "failed_assertions": [],
+   "tail": ""
+  },
+  {
+   "name": "quarter_turn_c12_tw28_s2",
+   "top": "fft_twiddle_fv",
+   "params": {
+    "LOGC": 12,
+    "TW": 28,
+    "ST": 2
+   },
+   "mode": "bmc",
+   "depth": 5,
+   "engine": "boolector",
+   "claim": "wr(m + N/4) = wi(m) and wi(m + N/4) = -wr(m) for every index m (circle of 2^12, 28-bit twiddles, STAGES 2), bounded to 5 clocks from an arbitrary state, for all inputs (k-induction was inconclusive: bounded only)",
+   "mutant": null,
+   "expected": "PASS",
+   "status": "PASS",
+   "ok": true,
+   "seconds": 306.4,
+   "failed_assertions": [],
+   "tail": ""
+  },
+  {
+   "name": "quarter_turn_c6_tw8_s1",
+   "top": "fft_twiddle_fv",
+   "params": {
+    "LOGC": 6,
+    "TW": 8,
+    "ST": 1
+   },
+   "mode": "bmc",
+   "depth": 5,
+   "engine": "boolector",
+   "claim": "wr(m + N/4) = wi(m) and wi(m + N/4) = -wr(m) for every index m (circle of 2^6, 8-bit twiddles, STAGES 1), bounded to 5 clocks from an arbitrary state, for all inputs (k-induction was inconclusive: bounded only)",
+   "mutant": null,
+   "expected": "PASS",
+   "status": "PASS",
+   "ok": true,
+   "seconds": 150.2,
+   "failed_assertions": [],
+   "tail": ""
+  },
+  {
+   "name": "quarter_turn_c4_tw16_s2",
+   "top": "fft_twiddle_fv",
+   "params": {
+    "LOGC": 4,
+    "TW": 16,
+    "ST": 2
+   },
+   "mode": "bmc",
+   "depth": 5,
+   "engine": "boolector",
+   "claim": "wr(m + N/4) = wi(m) and wi(m + N/4) = -wr(m) for every index m (circle of 2^4, 16-bit twiddles, STAGES 2), bounded to 5 clocks from an arbitrary state, for all inputs (k-induction was inconclusive: bounded only)",
+   "mutant": null,
+   "expected": "PASS",
+   "status": "PASS",
+   "ok": true,
+   "seconds": 188.7,
+   "failed_assertions": [],
+   "tail": ""
+  },
+  {
+   "name": "mutant_q1_cos_sign",
+   "top": "fft_twiddle_fv",
+   "params": {
+    "LOGC": 6,
+    "TW": 16,
+    "ST": 1
+   },
+   "mode": "bmc",
+   "depth": 5,
+   "engine": "boolector",
+   "claim": "a build with the seeded fault q1_cos_sign is refuted",
+   "mutant": "q1_cos_sign",
+   "expected": "FAIL",
+   "status": "FAIL",
+   "ok": true,
+   "seconds": 123.4,
+   "failed_assertions": [
+    "SYM_SIN"
+   ],
+   "tail": ""
+  },
+  {
+   "name": "mutant_q2_sin_sign",
+   "top": "fft_twiddle_fv",
+   "params": {
+    "LOGC": 6,
+    "TW": 16,
+    "ST": 1
+   },
+   "mode": "bmc",
+   "depth": 5,
+   "engine": "boolector",
+   "claim": "a build with the seeded fault q2_sin_sign is refuted",
+   "mutant": "q2_sin_sign",
+   "expected": "FAIL",
+   "status": "FAIL",
+   "ok": true,
+   "seconds": 145.1,
+   "failed_assertions": [
+    "SYM_COS"
+   ],
+   "tail": ""
+  },
+  {
+   "name": "mutant_q3_swap",
+   "top": "fft_twiddle_fv",
+   "params": {
+    "LOGC": 6,
+    "TW": 16,
+    "ST": 1
+   },
+   "mode": "bmc",
+   "depth": 5,
+   "engine": "boolector",
+   "claim": "a build with the seeded fault q3_swap is refuted",
+   "mutant": "q3_swap",
+   "expected": "FAIL",
+   "status": "FAIL",
+   "ok": true,
+   "seconds": 88.8,
+   "failed_assertions": [
+    "SYM_COS"
+   ],
+   "tail": ""
+  },
+  {
+   "name": "mutant_sign_of_wi",
+   "top": "fft_twiddle_fv",
+   "params": {
+    "LOGC": 6,
+    "TW": 16,
+    "ST": 1
+   },
+   "mode": "bmc",
+   "depth": 5,
+   "engine": "boolector",
+   "claim": "a build with the seeded fault sign_of_wi is refuted",
+   "mutant": "sign_of_wi",
+   "expected": "FAIL",
+   "status": "FAIL",
+   "ok": true,
+   "seconds": 77.3,
+   "failed_assertions": [
+    "SYM_COS",
+    "SYM_SIN"
+   ],
+   "tail": ""
+  }
+ ]
+}

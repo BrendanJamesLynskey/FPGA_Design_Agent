@@ -1,0 +1,133 @@
+{
+ "function": "fft_cmul",
+ "mutants": 14,
+ "valid": 14,
+ "killed": 14,
+ "survived": [],
+ "invalid": [],
+ "score_pct": 100.0,
+ "per_variant": {
+  "m4": {
+   "valid": 7,
+   "killed": 7
+  },
+  "m3": {
+   "valid": 7,
+   "killed": 7
+  }
+ },
+ "results": [
+  {
+   "name": "m4_im_minus",
+   "variant": "m4",
+   "class": "operator",
+   "status": "killed",
+   "detail": "exhaustive {'WA': 3, 'WB': 3, 'STAGES': 0}",
+   "why": "the imaginary part subtracts its cross terms"
+  },
+  {
+   "name": "m4_re_plus",
+   "variant": "m4",
+   "class": "operator",
+   "status": "killed",
+   "detail": "exhaustive {'WA': 3, 'WB': 3, 'STAGES': 0}",
+   "why": "the real part adds ai*bi instead of subtracting it"
+  },
+  {
+   "name": "m4_cross",
+   "variant": "m4",
+   "class": "connection",
+   "status": "killed",
+   "detail": "exhaustive {'WA': 3, 'WB': 3, 'STAGES': 0}",
+   "why": "a cross product uses the wrong operand"
+  },
+  {
+   "name": "m4_ii",
+   "variant": "m4",
+   "class": "connection",
+   "status": "killed",
+   "detail": "exhaustive {'WA': 3, 'WB': 3, 'STAGES': 0}",
+   "why": "the ai*bi product uses br"
+  },
+  {
+   "name": "m4_operand_rank",
+   "variant": "m4",
+   "class": "latency",
+   "status": "killed",
+   "detail": "exhaustive {'WA': 3, 'WB': 2, 'STAGES': 2}",
+   "why": "one operand skips its rank, so it is a clock early"
+  },
+  {
+   "name": "m4_product_rank",
+   "variant": "m4",
+   "class": "latency",
+   "status": "killed",
+   "detail": "randomised {'WA': 16, 'WB': 16, 'STAGES': 3}",
+   "why": "one product skips its rank"
+  },
+  {
+   "name": "m4_output_rank",
+   "variant": "m4",
+   "class": "latency",
+   "status": "killed",
+   "detail": "exhaustive {'WA': 3, 'WB': 2, 'STAGES': 2}",
+   "why": "the real output is not registered"
+  },
+  {
+   "name": "m3_re_plus",
+   "variant": "m3",
+   "class": "operator",
+   "status": "killed",
+   "detail": "exhaustive {'WA': 3, 'WB': 3, 'STAGES': 0}",
+   "why": "the real part adds the second product"
+  },
+  {
+   "name": "m3_pre_dif",
+   "variant": "m3",
+   "class": "operator",
+   "status": "killed",
+   "detail": "exhaustive {'WA': 3, 'WB': 3, 'STAGES': 0}",
+   "why": "the difference pre-adder adds"
+  },
+  {
+   "name": "m3_pre_sum",
+   "variant": "m3",
+   "class": "operator",
+   "status": "killed",
+   "detail": "exhaustive {'WA': 3, 'WB': 3, 'STAGES': 0}",
+   "why": "the operand pre-adder subtracts"
+  },
+  {
+   "name": "m3_k3",
+   "variant": "m3",
+   "class": "connection",
+   "status": "killed",
+   "detail": "exhaustive {'WA': 3, 'WB': 3, 'STAGES': 0}",
+   "why": "the third product uses ai"
+  },
+  {
+   "name": "m3_zero_ext",
+   "variant": "m3",
+   "class": "width",
+   "status": "killed",
+   "detail": "exhaustive {'WA': 3, 'WB': 3, 'STAGES': 0}",
+   "why": "ar is zero-extended instead of sign-extended in the pre-adder"
+  },
+  {
+   "name": "m3_operand_rank",
+   "variant": "m3",
+   "class": "latency",
+   "status": "killed",
+   "detail": "exhaustive {'WA': 3, 'WB': 2, 'STAGES': 2}",
+   "why": "the pre-added operand skips its rank"
+  },
+  {
+   "name": "m3_k1",
+   "variant": "m3",
+   "class": "connection",
+   "status": "killed",
+   "detail": "exhaustive {'WA': 3, 'WB': 3, 'STAGES': 0}",
+   "why": "the shared product uses the difference"
+  }
+ ]
+}

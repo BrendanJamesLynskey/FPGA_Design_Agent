@@ -1,0 +1,33 @@
+# Mutation set for the sincos variants (arith brief 139d; tools/run_mutants.py): each mutant replaces `old` (exactly once) by `new` in a copy of the variant's file.
+mutants:
+- {name: "sl_slope_lost", variant: "lerp", class: "connection", old: "s1_s <= rom_s1_s({3'(SB), 6'(idx)});", new: "s1_s <= '0;", why: "the sine slope is lost"}
+- {name: "sl_cos_from_sine", variant: "lerp", class: "connection", old: "c0_c <= rom_c0_c({3'(SB), 6'(idx)});", new: "c0_c <= rom_c0_s({3'(SB), 6'(idx)});", why: "the cosine uses the sine's break-point table"}
+- {name: "sl_cos_sign", variant: "lerp", class: "operator", old: "assign acc_c  = (ACCW'(c0_c) <<< DB) + ACCW'(prod_c);", new: "assign acc_c  = (ACCW'(c0_c) <<< DB) - ACCW'(prod_c);", why: "the cosine slope is subtracted instead of added"}
+- {name: "sl_q_misaligned", variant: "lerp", class: "connection", old: "q_o <= q_1;", new: "q_o <= q;", why: "the quadrant is one clock early"}
+- {name: "sl_no_round", variant: "lerp", class: "operator", old: "assign sh_s   = (acc_s + HALF) >>> RS;", new: "assign sh_s   = acc_s >>> RS;", why: "the sine is truncated, not rounded"}
+- {name: "sl_no_clamp", variant: "lerp", class: "operator", old: "(sh_c > MAXV) ? MAXV[FB-1:0] : sh_c[FB-1:0]", new: "sh_c[FB-1:0]", why: "the cosine of phase 0 (exactly 1.0) is not limited and wraps to 0"}
+- {name: "sl_d_halved", variant: "lerp", class: "operator", old: "d_q <= d;", new: "d_q <= d >> 1;", why: "the position inside the segment is halved"}
+- {name: "le_quadrant1", variant: "lerp", class: "operator", old: "2'd1:    begin s = cp;        c = OW'(-sp);  end", new: "2'd1:    begin s = cp;        c = sp;        end", why: "quadrant 1 does not negate the cosine"}
+- {name: "le_quadrant2", variant: "lerp", class: "operator", old: "2'd2:    begin s = OW'(-sp);  c = OW'(-cp);  end", new: "2'd2:    begin s = sp;        c = OW'(-cp);  end", why: "quadrant 2 does not negate the sine"}
+- {name: "le_quadrant3", variant: "lerp", class: "operator", old: "default: begin s = OW'(-cp);  c = sp;        end", new: "default: begin s = OW'(-cp);  c = cp;        end", why: "quadrant 3 returns the cosine twice"}
+- {name: "sp_a2_lost", variant: "poly2", class: "connection", old: "a2_s <= rom_a2_s({3'(SB), 6'(idx)});", new: "a2_s <= '0;", why: "the sine's quadratic coefficient is lost"}
+- {name: "sp_cos_from_sine", variant: "poly2", class: "connection", old: "a0_c <= rom_a0_c({3'(SB), 6'(idx)});", new: "a0_c <= rom_a0_s({3'(SB), 6'(idx)});", why: "the cosine's constant coefficient comes from the sine table"}
+- {name: "sp_d_misaligned", variant: "poly2", class: "connection", old: "d_r <= d_q;", new: "d_r <= d;", why: "the second multiply uses the position of the input now"}
+- {name: "sp_floor_lost", variant: "poly2", class: "constant", old: "assign q_c  = 24'(a1_c) + 24'(m1_c >>> DB);", new: "assign q_c  = 24'(a1_c) + 24'(m1_c >>> (DB + 1));", why: "the first Horner product is shifted one place too far"}
+- {name: "sp_q_misaligned", variant: "poly2", class: "connection", old: "q_o <= q_2;", new: "q_o <= q_1;", why: "the quadrant is one clock early"}
+- {name: "sp_acc_sign", variant: "poly2", class: "operator", old: "assign acc_s = (ACCW'(a0_s_r) <<< DB) + ACCW'(m2_s);", new: "assign acc_s = (ACCW'(a0_s_r) <<< DB) - ACCW'(m2_s);", why: "the quadratic term is subtracted"}
+- {name: "sp_no_clamp", variant: "poly2", class: "operator", old: "(sh_c > MAXV) ? MAXV[FB-1:0] : sh_c[FB-1:0]", new: "sh_c[FB-1:0]", why: "the cosine of phase 0 is not limited and wraps"}
+- {name: "po_quadrant1", variant: "poly2", class: "operator", old: "2'd1:    begin s = cp;        c = OW'(-sp);  end", new: "2'd1:    begin s = cp;        c = sp;        end", why: "quadrant 1 does not negate the cosine"}
+- {name: "po_quadrant2", variant: "poly2", class: "operator", old: "2'd2:    begin s = OW'(-sp);  c = OW'(-cp);  end", new: "2'd2:    begin s = sp;        c = OW'(-cp);  end", why: "quadrant 2 does not negate the sine"}
+- {name: "po_quadrant3", variant: "poly2", class: "operator", old: "default: begin s = OW'(-cp);  c = sp;        end", new: "default: begin s = OW'(-cp);  c = cp;        end", why: "quadrant 3 returns the cosine twice"}
+- {name: "sc_dir_flip", variant: "cordic", class: "operator", old: "wire dpos = ~zi[ZW-1];", new: "wire dpos = zi[ZW-1];", why: "the rotation direction is inverted"}
+- {name: "sc_x_stage", variant: "cordic", class: "operator", old: "xr <= dpos ? xi - (yi >>> k) : xi + (yi >>> k);", new: "xr <= dpos ? xi - (yi >>> k) : xi - (yi >>> k);", why: "x ignores the direction"}
+- {name: "sc_y_stage", variant: "cordic", class: "operator", old: "yr <= dpos ? yi + (xi >>> k) : yi - (xi >>> k);", new: "yr <= dpos ? yi + (xi >>> k) : yi + (xi >>> k);", why: "y ignores the direction"}
+- {name: "sc_z_update", variant: "cordic", class: "operator", old: "zr <= dpos ? zi - ang : zi + ang;", new: "zr <= dpos ? zi + ang : zi - ang;", why: "the angle accumulates with the wrong sign"}
+- {name: "sc_q_misaligned", variant: "cordic", class: "connection", old: "qr <= qi;", new: "qr <= q;", why: "the quadrant is not delayed with the data"}
+- {name: "sc_no_round", variant: "cordic", class: "operator", old: "assign xs  = (xo + (DW'(1) <<< (HG - 1))) >>> G;", new: "assign xs  = xo >>> G;", why: "the cosine is truncated, not rounded"}
+- {name: "sc_z0_shift", variant: "cordic", class: "constant", old: "assign z0 = ZW'(signed'({1'b0, o})) <<< (ZF - PH);", new: "assign z0 = ZW'(signed'({1'b0, o})) <<< (ZF - PH + 1);", why: "the start angle is doubled"}
+- {name: "sc_clamp_value", variant: "cordic", class: "constant", old: "(xs > DW'((1 << FB) - 1)) ? FB'((1 << FB) - 1)", new: "(xs > DW'((1 << FB) - 1)) ? FB'((1 << FB) - 2)", why: "the cosine's limit is one place too low"}
+- {name: "cx_quadrant1", variant: "cordic", class: "operator", old: "2'd1:    begin s = cp;        c = OW'(-sp);  end", new: "2'd1:    begin s = cp;        c = sp;        end", why: "quadrant 1 does not negate the cosine"}
+- {name: "cx_quadrant2", variant: "cordic", class: "operator", old: "2'd2:    begin s = OW'(-sp);  c = OW'(-cp);  end", new: "2'd2:    begin s = sp;        c = OW'(-cp);  end", why: "quadrant 2 does not negate the sine"}
+- {name: "cx_quadrant3", variant: "cordic", class: "operator", old: "default: begin s = OW'(-cp);  c = sp;        end", new: "default: begin s = OW'(-cp);  c = cp;        end", why: "quadrant 3 returns the cosine twice"}

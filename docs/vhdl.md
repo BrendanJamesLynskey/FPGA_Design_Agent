@@ -80,6 +80,24 @@ image). Locally also VUnit 4.7.1, OSVVM 2026.09, and the GHDL Yosys plugin (Ubun
 `$FDA_GHDL_PLUGIN` for a job's `plugin -i ghdl` when the plugin is not in Yosys's own plugin directory. CI runs the formal test
 only where SymbiYosys is installed (it is not in the CI image), so VHDL formal is checked locally.
 
+## What the checks do with VHDL
+
+Before brief 153 several checks and gates found their RTL with a `*.sv` glob, so a VHDL design had no files to read and passed
+([results/153_vhdl_parity](../results/153_vhdl_parity/README.md): 12 of 17 readers did this). Now every reader asks
+[flow/sources.py](../flow/sources.py) for the design's files by language, and a reader that cannot read VHDL says so: the check is
+PARTIAL or NOT RUN with `no reader for .vhd (...)`, never a clean pass. `python -m flow.sources [design]` prints the table (and the
+design's files by language); its `--help` lists what a user could guess wrong. In short:
+
+- **Read in VHDL:** the lint (GHDL, when the build's top is a VHDL entity), the design standards, the reset check, the XPM
+  `SIM_ASSERT_CHK` check, the derived constants (the shell's `DESIGN_ID` in the `generic map`, as a literal or a literal constant), the
+  CDC detection, the spec-test role (through the GHDL netlist), the evidence keys, the trace matrix (`-- req:` tags and
+  `-- std-waive:` waivers), the build-stamp check and the review's top.
+- **No reader, said so:** the AXI profile check (it compares generated SystemVerilog blocks; the generator writes no VHDL), the FSM
+  coverage (the state table is a SystemVerilog `typedef enum`), the managed RTL import, and the schematic pages.
+- **Fails closed:** the CDC injection run. A VHDL design with a clock-domain crossing fails it, because there is no injector for VHDL;
+  this is not a defect in the design.
+- **A SystemVerilog top over VHDL entities** has no lint that reads both languages: the lint is NOT RUN.
+
 ## Measured
 
 - First translations by a model (openai/gpt-6-luna, given the spec and the SystemVerilog): 0 of 5 board tasks, all on the

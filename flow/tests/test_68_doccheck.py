@@ -138,6 +138,12 @@ def test_agent_needs_agent_run(h):
     assert has(errs(h), r"needs agent_run")
 
 
+def test_session_needs_no_agent_run(h):
+    h["produced_by"] = "session"
+    h.pop("agent_run", None)
+    assert not has(errs(h), r"needs agent_run")
+
+
 @pytest.mark.parametrize("spelling", ["vivado 2025.2", "Vivado v2025.2", "Vivado-2025.2"])
 def test_vivado_spellings(h, spelling):
     h["summary"] += f" Once built with {spelling} here."

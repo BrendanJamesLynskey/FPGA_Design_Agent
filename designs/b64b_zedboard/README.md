@@ -10,7 +10,7 @@ Not in scope:
 - the KR260 and the Cortex-A53; this folder is Zynq-7000 only
 - a power or energy measurement; the only power figure is the tool's estimate
 
-Kind: demonstration; written by hand. State: board-verified. For an agent: [AGENT.md](AGENT.md).
+Kind: demonstration; written by a Claude Code session. State: board-verified. For an agent: [AGENT.md](AGENT.md).
 
 <!-- prose:what -->
 <!-- /prose:what -->
@@ -65,7 +65,7 @@ Interfaces:
 | run one program on the board (first load after a power cycle, then ZB_LIGHT=1); needs the ZedBoard on its own supply with the JTAG boot straps, hw_server running, the board lock; read the board rules in the house rules first | `ZB_SERIAL=<cable serial> XSA_DIR=<unzipped XSA> ZB_FIRST=1 designs/b64b_zedboard/run_elf.sh designs/b64b_zedboard/sw/hello.elf out.log 60` | no | about 1 min |
 | rebuild the summary record and the sweep tables | `python3 designs/b64b_zedboard/make_summary.py && python3 designs/b64b_zedboard/summarise_sweeps.py results/64b_zedboard/sweeps/crc32_sweep.log results/64b_zedboard/sweeps/fir16_sweep.log` | no | about 1 min |
 
-Tool: Vivado 2026.1. Build ID of the inputs at handover: none (no Vivado build of this directory). Knowledge-bank pin: `0959c27`.
+Tool: Vivado 2026.1. Build ID of the inputs at handover: none (no Vivado build of this directory). Knowledge-bank pin: `5e2eab8`.
 
 | File | What |
 |---|---|

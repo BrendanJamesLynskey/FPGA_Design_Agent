@@ -203,14 +203,14 @@ for _p in [DESIGN_DIR, *DESIGN_DIR.parents]:
 sys.path.insert(0, str(Path(__file__).resolve().parent))        # spec_bench, spec_ref: this directory only, never the design's model.py
 
 import yaml  # noqa: E402
-from flow import cocotb_run, srcorder  # noqa: E402
+from flow import cocotb_run, srcorder, vhdl  # noqa: E402
 
 import spec_bench  # noqa: E402
 
 
 def test_spec_bench():
     top = yaml.safe_load((DESIGN_DIR / "build.yaml").read_text())["top"]
-    own = sorted((DESIGN_DIR / "rtl").glob("*.sv"))
+    own = vhdl.own_sources(DESIGN_DIR, dict(getattr(spec_bench, "PARAMS", {}) or {}))   # .sv/.v as they are; VHDL as its GHDL netlist
     sources = own if srcorder.no_shell(DESIGN_DIR) else cocotb_run.SHELL_RTL + own
     for seed in getattr(spec_bench, "SEEDS", (1,)):
         cocotb_run.run("spectest", top, sources, "spec_bench", DESIGN_DIR / "spectest",
@@ -323,8 +323,9 @@ def save_state(design: Path, st: dict[str, Any]) -> None:
 
 
 def rtl_hash(design: Path) -> str:
+    from flow import sources
     h = hashlib.sha256()
-    for p in sorted((design / "rtl").glob("*.sv")):
+    for p in sources.design_rtl(design):                  # every language: an edit to a VHDL file changes the key (brief 153)
         h.update(p.name.encode() + b"\0" + p.read_bytes())
     for n in ("build.yaml",):
         if (design / n).is_file():

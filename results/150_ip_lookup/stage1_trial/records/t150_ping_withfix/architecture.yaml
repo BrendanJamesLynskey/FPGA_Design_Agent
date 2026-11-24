@@ -1,0 +1,111 @@
+schema: fpga-design-agent/architecture/v1
+design: t150_ping_withfix
+top: ping_top
+
+blocks:
+  - name: ping_top
+    function: Board top. Instantiates fpga_shell, clock_gen, reset_sync, led_ctrl, id_reg, rgmii_rx, rx_frame, frame_buf, responder, tx_frame and rgmii_tx; drives eth_rst_n and eth_mdc/eth_mdio.
+  - name: clock_gen
+    function: MMCM from clk100mhz giving tx_clk (125 MHz, 0 deg) and tx_clk90 (125 MHz, 90 deg) through BUFGs.
+  - name: reset_sync
+    function: Synchronises active-high cpu_reset into clk100, rx_clk and tx_clk with xpm_cdc_async_rst (async assert, sync release).
+  - name: led_ctrl
+    function: clk100 LED stretch counter (LED_STRETCH_CYCLES); restarts on each reply-start pulse; drives led.
+  - name: id_reg
+    function: Read-only ID register (window address 0x00 = design offset 0x00, value 0x50494E47) behind the fpga_shell window; writes ignored.
+  - name: rgmii_rx
+    function: rx_clk domain. Captures RGMII nibbles on both clock edges (IDDR) and rebuilds bytes and the RX control flag.
+  - name: rx_frame
+    function: rx_clk domain. Destination MAC filter, length limit 1518, CRC-32 check, IPv4 header checksum check, on-the-fly ICMP ones-complement sum, writes bytes to frame_buf, drops frames while the transmitter is busy, hands a good frame to the responder.
+  - name: frame_buf
+    function: 2048-byte frame buffer, dual-clock simple dual-port RAM (write port rx_clk, read port tx_clk). Read only after the frame_ready handshake.
+  - name: responder
+    function: tx_clk domain. Decodes ARP and ICMP echo requests from frame_buf, builds the reply header fields (swapped MAC/IP, type 0, IPv4 and ICMP checksums from precomputed sums), and sequences the payload.
+  - name: tx_frame
+    function: tx_clk domain. Preamble and SFD, 12-byte inter-frame gap, zero padding to 60 bytes, CRC-32 generation and FCS append.
+  - name: rgmii_tx
+    function: tx_clk domain. ODDR output of data and control on tx_clk; eth_txc is an ODDR output of tx_clk90.
+
+interfaces:
+  - name: host_window
+    between: [host, ping_top]
+    protocol: simple
+    prefix: win_
+    module: fpga_shell
+  - name: host_uart
+    between: [host, ping_top]
+    protocol: uart
+    prefix: UART_
+    module: fpga_shell
+  - name: rgmii_rx
+    between: [phy, ping_top]
+    protocol: other
+    prefix: eth_rx
+    module: rgmii_rx
+  - name: rgmii_tx
+    between: [ping_top, phy]
+    protocol: other
+    prefix: eth_tx
+    module: rgmii_tx
+  - name: phy_control
+    between: [ping_top, phy]
+    protocol: gpio
+    prefix: eth_
+    module: ping_top
+
+clock_domains:
+  - name: clk100
+    clock: clk100mhz
+    freq_mhz: 100
+  - name: rx_clk
+    clock: eth_rxc
+    freq_mhz: 125
+  - name: tx_clk
+    clock: tx_clk
+    freq_mhz: 125
+
+reset:
+  synchronisers: [reset_sync]
+
+crossings:
+  - from: async
+    to: clk100
+    signal: cpu_reset
+    primitive: xpm_cdc_async_rst
+    inline_in: reset_sync
+  - from: async
+    to: rx_clk
+    signal: cpu_reset
+    primitive: xpm_cdc_async_rst
+    inline_in: reset_sync
+  - from: async
+    to: tx_clk
+    signal: cpu_reset
+    primitive: xpm_cdc_async_rst
+    inline_in: reset_sync
+  - from: tx_clk
+    to: clk100
+    signal: reply_start
+    primitive: xpm_cdc_pulse
+    inline_in: led_ctrl
+  - from: rx_clk
+    to: tx_clk
+    signal: frame_ready and frame metadata (length, ICMP sum, header fields)
+    primitive: xpm_cdc_handshake
+    inline_in: rx_frame
+  - from: tx_clk
+    to: rx_clk
+    signal: tx_busy
+    primitive: xpm_cdc_single
+    inline_in: rx_frame
+  - from: tx_clk
+    to: rx_clk
+    signal: buffer_release
+    primitive: xpm_cdc_handshake
+    inline_in: responder
+
+predicted_resources:
+  lut: [1500, 3500]
+  ff: [1200, 2800]
+  bram_tile: [1, 2]
+  dsp: 0

@@ -210,3 +210,23 @@ The cost model of brief 137 (HW_Design_Space_Agent `FpgaCostModel`) is a model o
 | lzc_norm | a7 | FF beyond the wrapper | 14 | 0.973 | 0.027 | 0.2 |
 | lzc_norm | k26 | carry cells | 14 | None | None | None |
 | lzc_norm | k26 | FF beyond the wrapper | 14 | 0.973 | 0.027 | 0.2 |
+
+## Records
+
+- One record per point and part: `arith/<function>/verif/results/vivado_ooc_<variant>_<part>.json` (written by `python -m arith.tools.run_vivado_ooc`).
+- One roll-up per function: `arith/<function>/verif/results/vivado_surface.json`; all functions together: [surface.json](surface.json) (this folder).
+- The testplan of each function (`arith/<function>/verif/testplan.yaml`) has one performance requirement saying that every prepared point has a routed result; the Measured table of each `spec.md` shows the values.
+
+## Reproduce
+
+1. Take a heavy slot with `_handoff/take_heavy_slot.sh` (a Vivado run takes memory; one thread: `general.maxThreads 1`).
+2. `python -m arith.tools.run_vivado_ooc` runs every point of the build files (`arith/<function>/build/<variant>/build.yaml`) through out-of-context synthesis, placement and routing and writes the records.
+3. `python -m arith.tools.gen_surface` rebuilds [surface.json](surface.json), this README and the per-function roll-ups; `python -m arith.tools.gen_surface --check` fails when they are out of date.
+4. `python -m arith.tools.gen_spec_md` and `python -m arith.tools.gen_testplan` carry the numbers into each `spec.md` and testplan.
+
+## Known gaps and limits
+
+- One run per point: no run-to-run spread is measured, and Fmax is read from WNS at the stated clock, so it is only a lower bound (marked `>=`) when WNS is positive.
+- Out-of-context results with every port registered by a wrapper: no in-design placement, no neighbouring logic, no board. Power is vectorless.
+- The planning check compares the specs' own expected primitive use with the measurement, not a cost model (see above); functions added after brief 160 (floating point, elementary functions, FFT) are not run here.
+- Only the clocks named in each `build.yaml` were run; the results say nothing about other clocks, speed grades or tool versions.
