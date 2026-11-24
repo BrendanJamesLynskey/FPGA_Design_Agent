@@ -315,8 +315,12 @@ def surviving_mutants_note(design: Path, limit: int = 30) -> str:
 JTAG_NOTE = """
 HOST ACCESS ON THIS BOARD (board.yaml host_access): there is NO PL UART. The test shell (fpga_shell, shell/) is not used: the design is built
 without it, for that reason (ignore any sentence that says the design's subject is the UART). The host reads and writes the design's
-registers through the JTAG register bus, the BSCANE2 USER4 module `jtag_bus` (designs/b58a_trigger/rtl/jtag_bus.sv; ip_lib/jtag_regs wraps it
-with the common register map; copy the file or entry unchanged with `python -m agent ip use` or from the design's data/ directory). Its register port, in the clock domain of the clk
+registers through the JTAG register bus, the BSCANE2 USER4 module `jtag_bus` (designs/b58a_trigger/rtl/jtag_bus.sv). If the request supplies it as
+data/jtag_bus.sv, leave it there (read-only, byte-identical) and add `{design_rel}/data/jtag_bus.sv` to the build.yaml sources; do NOT copy it into rtl/: the
+mutation and CDC-injection checks work on rtl/ and the supplied bus is not yours to mutate. Structure the design as a register core (a module with the
+register port below, which you simulate and test directly) and a top that instantiates `jtag_bus` and the core. Verilator lint and Icarus elaboration of the top still
+need BSCANE2, USR_ACCESSE2 and the xpm_cdc_* macros: write simulation-only stand-ins in rtl/xilinx_sim_stubs.sv between `ifndef SYNTHESIS` and `endif` (Vivado supplies the real
+ones in synthesis), and never name a stand-in in the build's synthesis sources. Its register port, in the clock domain of the clk
 you give it: `h_we`, `h_re` pulses, `h_addr[11:0]` (byte addresses), `h_wdata[31:0]`, `h_rdata[31:0]`; a write takes effect the clock after `h_we`;
 after `h_re`, `h_rdata` shows the addressed register within 2 clocks and holds it; unmapped addresses read 0 and ignore writes.
 Every design has the common map: 0x000 ID (RO, the design ID), 0x004 BUILD (RO, the bitstream's USR_ACCESS word, the build stamp, read with the
@@ -868,14 +872,14 @@ def node_work(state: State) -> dict:
     conv0 = conventions_text(fmt)
     jtag = transport_of(rt) == "jtag_bus"
     if jtag:
-        conv0 += JTAG_NOTE
+        conv0 += JTAG_NOTE.replace("{design_rel}", fmt["design_rel"])
     if rt.cfg.design_plan:                   # closure-loop hook: the datapaths bullet (stage 1) and the computed plan (later stages)
         from flow import timing_plan as _tp
         conv0 += _tp.DATAPATHS_CONVENTION + (("\n" + (rt.design / _tp.PLAN_MD).read_text()) if (rt.design / _tp.PLAN_MD).is_file() else "")
     if n == 1 and "ip_lookup" in st.tools and ip_lookup_allowed(rt.cfg):   # brief 150: the library is consulted before a block is invented, and the choice is recorded
         from flow import iplookup as _ipl
         conv0 += _ipl.IP_LOOKUP_CONVENTION
-    conv_tests = tests_conventions_text(fmt) + (JTAG_NOTE if jtag else "")
+    conv_tests = tests_conventions_text(fmt) + (JTAG_NOTE.replace("{design_rel}", fmt["design_rel"]) if jtag else "")
     conv = conv0 + ("\nLast gate output:\n" + state["detail"][:3000] if state.get("detail") else "")
     # the owner's edit prompt (brief 05d, addition 6) goes to the role it names, default the stage's writer
     note_for = state.get("note_role") or ("clarify" if n == 0 else "rtl")
