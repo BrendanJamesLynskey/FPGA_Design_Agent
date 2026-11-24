@@ -191,15 +191,9 @@ def _not_run(why: str) -> dict[str, Any]:
 
 
 def build_sources(design: Path, root: Path = ROOT) -> list[Path]:
-    """The build's own source list: flow/prepare.py's expansion (pathlib glob, so ``**`` recurses), no duplicates."""
-    try:
-        b = yaml.safe_load((design / "build.yaml").read_text()) or {}
-    except (OSError, yaml.YAMLError):
-        return sorted(design.glob("rtl/**/*.sv")) + sorted(design.glob("rtl/**/*.v"))
-    out: list[Path] = []
-    for g in b.get("sources") or []:
-        out += [p for p in sorted(root.glob(g)) if p not in out]
-    return out
+    """The build's own source list, every language (flow/sources.py, brief 153)."""
+    from flow import sources
+    return sources.build_sources(design, root)
 
 
 def build_top(design: Path) -> str | None:
@@ -220,13 +214,41 @@ def _lint(ctx: Ctx) -> dict[str, Any]:
             fs = [{"tool": "verilator", "code": "ERROR", "severity": "error", "where": "lint",
                    "message": out.strip()[-400:] or "lint failed", "blocking": True}]
         return {**_result(fs), "verdict": bool(r.get("ok"))}
+    from flow import sources
     from flow.lint_ruleset import verilator_findings
+    g = sources.by_language(build_sources(ctx.design, ctx.root))
+    if g["vhdl"]:
+        return _lint_vhdl(ctx, g)
     vf, note = verilator_findings(ctx.design)
     if vf is None:
+        return _not_run(note)
+    if note and not vf:                                  # Verilator itself failed (a crash, a bad VERILATOR_ROOT): that is not a clean lint
         return _not_run(note)
     fs = [{"tool": "verilator", "code": f["code"], "severity": f["severity"], "where": f["key"].split(" ", 1)[-1],
            "key": f["key"], "message": f["message"], "blocking": True} for f in vf]
     return _result(fs)
+
+
+def _lint_vhdl(ctx: Ctx, g: dict[str, list[Path]]) -> dict[str, Any]:
+    """The lint of a design with VHDL in its build list (brief 153): the VHDL tool's own lint, as the agent's lint tool runs it
+    (``flow.vhdl.lint``: GHDL analysis with -Wall, then synthesis of the top; latches and double drivers refused; the shell's modules
+    may stay unbound components). A VHDL top with SystemVerilog beside it (the test shell) is linted as VHDL. A SystemVerilog top over
+    VHDL entities has no lint that reads both languages: it is not run, and says so. The findings carry the tool key ``verilator``
+    (the lint tool's key in the rule set) with the code ``GHDL``, so they map to the lint catch-all rule HDL-LINT-00."""
+    from flow import vhdl
+    top = build_top(ctx.design)
+    vh = [f for f in g["vhdl"] if f.is_file()]
+    own_vhdl_top = bool(top) and any(re.search(rf"(?im)^\s*entity\s+{re.escape(top)}\s+is\b", f.read_text(errors="replace")) for f in vh)
+    if not own_vhdl_top:
+        return _not_run(f"no reader: the build's top {top!r} is not a VHDL entity but the build has VHDL files "
+                        f"({', '.join(f.name for f in vh[:3])}): no lint reads SystemVerilog and VHDL together")
+    r = vhdl.lint(vh, vhdl.top_entity(vh, top))
+    if r["ok"]:
+        return {**_result([]), "verdict": True}
+    text = str(r.get("output", "")).strip()
+    where = next((m.group(1) for m in re.finditer(r"([\w./-]+\.vhdl?):\d+", text)), "lint")
+    return {**_result([{"tool": "verilator", "code": "GHDL", "severity": "error", "where": where, "key": f"verilator:GHDL {where}",
+                        "message": text[-400:] or "GHDL lint failed", "blocking": True}]), "verdict": False}
 
 
 def _verilator_lines(text: str, ctx: Ctx) -> list[dict[str, Any]]:
@@ -433,7 +455,10 @@ def _xpm_sim(ctx: Ctx) -> dict[str, Any]:
     """Brief 105A, advisory: an xpm_cdc instance (of a macro that has the parameter) whose SIM_ASSERT_CHK is not 1 (flow/constraint_gates.py).
     Reads the build's own source list; only text of the design's RTL, never a vendor file."""
     from flow import constraint_gates as CG
-    srcs = [f for f in build_sources(ctx.design, ctx.root) if f.suffix in (".sv", ".v", ".svh", ".vh")]
+    from flow import sources
+    srcs = [f for f in build_sources(ctx.design, ctx.root) if sources.language(f)]
+    if not srcs:
+        return _not_run("no HDL source file in the build list")
     fs = []
     for f in srcs:
         try:
@@ -441,7 +466,7 @@ def _xpm_sim(ctx: Ctx) -> dict[str, Any]:
         except OSError:
             continue
         rel = str(f.relative_to(ctx.root)) if f.is_relative_to(ctx.root) else str(f)
-        for x in CG.xpm_sim_findings(text, rel):
+        for x in (CG.xpm_sim_findings_vhdl if sources.language(f) == "vhdl" else CG.xpm_sim_findings)(text, rel):
             fs.append({"tool": "xpm_sim", "code": x["code"], "severity": "advisory", "where": x["where"],
                        "key": f"xpm_sim:{x['code']} {x['where']}", "message": x["message"], "blocking": False})
     return _result(fs, records=srcs)
@@ -669,8 +694,14 @@ def _axi_profile(ctx: Ctx) -> dict[str, Any]:
     (flow/checks/axi_profile.py, brief 73): the block's source map is resolved under the design's `interfaces:`, the RTL
     regenerated and compared with the file."""
     from flow.checks import axi_profile as AP
+    from flow import sources
     fs = AP.run_checks(ctx.design, ctx.root)
-    return _result(fs, records=[p for p in (ctx.design / "spec.yaml",) if p.is_file()])
+    parts: dict[str, str] = {}
+    ifs, _ = AP.interfaces(ctx.design)
+    unread = sources.no_reader(sources.vhdl_files(build_sources(ctx.design, ctx.root)), {"sv"}, "axi_profile (generated register blocks)") if ifs is not None else None
+    if unread:                                          # the generator emits SystemVerilog only, so a VHDL register block has no claim to compare
+        parts = {"generated_sv_blocks": "ran", "vhdl_register_logic": "not run: " + unread}
+    return _result(fs, parts, records=[p for p in (ctx.design / "spec.yaml",) if p.is_file()])
 
 
 def _axi_profile_applies(design: Path) -> str | None:
@@ -745,7 +776,10 @@ def _constants(ctx: Ctx) -> dict[str, Any]:
     out.write_text(json.dumps(t, indent=1) + "\n")
     fs = [{"tool": "constants", "code": f["code"], "severity": f["severity"], "where": f["where"], "key": f"constants:{f['code']} {f['where']}",
            "message": f["message"], "blocking": f["blocking"]} for f in t["findings"]]
-    return _result(fs, records=[out])
+    parts = {"design_id": "not run: " + "; ".join(t["not_read"][:2])} if t.get("not_read") else {}
+    if parts:
+        parts["spec_literals_and_clock"] = "ran"
+    return _result(fs, parts, records=[out])
 
 
 def _stale(ctx: Ctx) -> dict[str, Any]:

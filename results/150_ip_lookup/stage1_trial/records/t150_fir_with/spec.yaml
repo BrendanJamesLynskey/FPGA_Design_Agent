@@ -1,0 +1,303 @@
+name: low_pass_fir
+title: 32-tap low-pass FIR filter with run-time coefficients over the UART test shell
+board: nexys_a7_100t
+part: xc7a100tcsg324-1
+top: filt_top
+clocks:
+- name: clk
+  period_ns: 10
+  pin: E3
+  role: CLK100MHZ oscillator, 100 MHz
+reset:
+  name: cpu_resetn
+  pin: C12
+  polarity: active low
+  synchronous: true
+  note: CPU RESET button; assertion clears all state synchronously to clk, release
+    is synchronised to clk
+parameters:
+  TAPS: 32
+  DATA_WIDTH: 16
+  COEF_WIDTH: 16
+  FRAC_BITS: 15
+  ACC_WIDTH: 48
+  BAUD_DIV_CYCLES: 868
+ports:
+- name: clk
+  direction: in
+  width: 1
+  role: E3 CLK100MHZ
+- name: cpu_resetn
+  direction: in
+  width: 1
+  role: C12 CPU_RESETN button, active low
+- name: uart_rx
+  direction: in
+  width: 1
+  role: C4 UART from host (uart_txd_in)
+- name: uart_tx
+  direction: out
+  width: 1
+  role: D4 UART to host (uart_rxd_out)
+behaviour:
+  reset:
+  - cpu_resetn asserted clears the busy flag, the 32-entry sample history, SAMPLE_OUT
+    and all COEF_k
+  - COEF_k resets to 0x0000 for k = 0 to 31, so the filter outputs 0 until coefficients
+    are written
+  - SAMPLE_OUT resets to 0x0000
+  host_interface:
+  - UART 8 data bits, no parity, 1 stop bit, one bit every BAUD_DIV_CYCLES clk cycles
+  - The test shell reads and writes the registers in the register map; no other host
+    access exists
+  sample_path:
+  - An accepted SAMPLE_IN write shifts the 16-bit signed sample into the history with
+    the new sample at tap 0
+  - An accepted SAMPLE_IN write sets busy for exactly 34 clk cycles
+  - While busy, one DSP48E1 multiply-accumulate runs per clk cycle for k = 0 to 31,
+    multiplying COEF_k by history tap k
+  - When the accumulation completes, SAMPLE_OUT takes the 48-bit sum shifted right
+    arithmetically by FRAC_BITS and saturated to signed 16 bits
+  - A SAMPLE_IN write while busy is ignored and leaves the history unchanged
+  coefficient_path:
+  - A write to COEF_k stores the 16-bit signed value in coefficient k when busy is
+    0
+  - A write to COEF_k while busy is 1 is ignored and leaves COEF_k unchanged
+  - Coefficients use Q1.15 signed format, so 0x7FFF represents about 1.0 and 0x8000
+    represents -1.0
+registers:
+  map:
+  - offset: '0x00'
+    name: ID
+    access: RO
+    reset: '0x46494C54'
+    bits: '[31:0] ASCII FILT'
+  - offset: '0x04'
+    name: SAMPLE_IN
+    access: WO
+    reset: '0x0000'
+    bits: '[15:0] signed input sample; a write starts a filter pass'
+  - offset: '0x08'
+    name: SAMPLE_OUT
+    access: RO
+    reset: '0x0000'
+    bits: '[15:0] signed filtered sample'
+  - offset: '0x0C'
+    name: STATUS
+    access: RO
+    reset: '0x00000000'
+    bits: '[0] busy; [31:1] reserved read as 0'
+  - offset: 0x10 + 4*k
+    name: COEF_k (k = 0 to 31)
+    access: RW
+    reset: '0x0000'
+    bits: '[15:0] signed Q1.15 coefficient for tap k'
+timing:
+  clock: 10 ns period, 100 MHz
+  latency:
+    sample_to_output: 34 clk cycles from an accepted SAMPLE_IN write to the SAMPLE_OUT
+      update
+    sample_rate: one accepted sample every 34 clk cycles at most, about 2.9 million
+      samples per second
+    uart_bit: BAUD_DIV_CYCLES clk cycles per bit
+resources_expected:
+  DSP48E1: 1
+  BRAM36: 0
+  LUT: about 400 (estimate)
+  FF: about 400 (estimate)
+assumptions:
+- assumption: The design runs from the 100 MHz board oscillator on pin E3 with no
+    clock management block
+  reason: The request names no clock and the board oscillator is the only clock source
+    on the board
+- assumption: One DSP48E1 slice performs all 32 multiplications in sequence
+  reason: The request asks for as few DSP slices as practical, and 34 cycles per sample
+    is acceptable at the test shell rate
+- assumption: Samples and coefficients are 16-bit signed two's complement values
+  reason: The request states 16-bit signed samples and a 16-bit coefficient width
+    is the smallest that fits the 25x18 DSP multiplier
+- assumption: The 48-bit accumulator never overflows for 32 taps of 16-bit by 16-bit
+    products
+  reason: The worst-case sum is 32 times 2^30, which needs 36 bits, so 48 bits leaves
+    margin
+- assumption: The UART host link is the only input path and the test shell provides
+    the read and write transactions
+  reason: The request says coefficients and results go over the same UART test shell
+    link
+open_questions: []
+requirements:
+- id: REQ-01
+  text: After a cpu_resetn assertion followed by release, a read of ID returns 0x46494C54
+  proof:
+  - simulation
+  - hardware
+- id: REQ-02
+  text: After reset, a read of STATUS returns 0x00000000
+  proof:
+  - simulation
+- id: REQ-03
+  text: After reset, each COEF_k reads 0x0000 for k from 0 to 31
+  proof:
+  - simulation
+- id: REQ-04
+  text: After reset, a read of SAMPLE_OUT returns 0x0000
+  proof:
+  - simulation
+- id: REQ-05
+  text: A write to COEF_k followed by a read of COEF_k returns the written 16-bit
+    value
+  proof:
+  - simulation
+- id: REQ-06
+  text: A write to COEF_k while busy is 1 leaves COEF_k unchanged
+  proof:
+  - simulation
+- id: REQ-07
+  text: Each accepted sample sets busy to 1 for exactly 34 clk cycles
+  proof:
+  - simulation
+  - formal
+- id: REQ-08
+  text: SAMPLE_OUT equals the reference model output for every accepted sample
+  proof:
+  - simulation
+- id: REQ-09
+  text: SAMPLE_OUT saturates to 0x7FFF when the shifted sum exceeds 32767
+  proof:
+  - simulation
+- id: REQ-10
+  text: SAMPLE_OUT saturates to 0x8000 when the shifted sum is below -32768
+  proof:
+  - simulation
+- id: REQ-11
+  text: With COEF_0 written after reset, the first SAMPLE_OUT equals COEF_0 times
+    the first sample shifted right arithmetically by FRAC_BITS
+  proof:
+  - simulation
+- id: REQ-12
+  text: A SAMPLE_IN write while busy is 1 leaves SAMPLE_OUT unchanged
+  proof:
+  - simulation
+  - formal
+- id: REQ-13
+  text: A SAMPLE_IN write while busy is 1 leaves the sample history unchanged
+  proof:
+  - simulation
+  - formal
+- id: REQ-14
+  text: A write to ID, STATUS or SAMPLE_OUT leaves the register value unchanged
+  proof:
+  - simulation
+- id: REQ-15
+  text: The design instantiates at most 1 DSP48E1 slice
+  proof:
+  - analysis
+- id: REQ-16
+  text: Timing closes at 100 MHz with worst setup slack at or above 0 ns
+  proof:
+  - analysis
+- id: REQ-17
+  text: The UART baud rate is 115200
+  proof:
+  - simulation
+  - hardware
+- id: REQ-18
+  text: The UART frame has 8 data bits
+  proof:
+  - simulation
+  - hardware
+- id: REQ-19
+  text: The UART frame has no parity bit
+  proof:
+  - simulation
+  - hardware
+- id: REQ-20
+  text: The UART frame has 1 stop bit
+  proof:
+  - simulation
+  - hardware
+- id: REQ-21
+  text: On the board, a SAMPLE_IN write followed by a SAMPLE_OUT read returns the
+    reference output over the test shell
+  proof:
+  - hardware
+- id: REQ-22
+  text: Asserting cpu_resetn sets every COEF_k to 0x0000
+  proof:
+  - simulation
+  - hardware
+- id: REQ-23
+  text: Asserting cpu_resetn sets every sample history entry to 0
+  proof:
+  - simulation
+resolved_questions:
+- question: 'Give the register map for the test shell: offset, width, reset value
+    and access of every register'
+  answer: ID 0x00 RO 0x46494C54; SAMPLE_IN 0x04 WO 0x0000; SAMPLE_OUT 0x08 RO 0x0000;
+    STATUS 0x0C RO bit 0 busy; COEF_k 0x10 + 4*k RW 0x0000 for k 0 to 31
+  status: defaulted
+  by: default
+  default_reason: The request names registers and read-back over the shell but gives
+    no offsets; the user answered with this map, which is copied into registers.map
+- question: What command framing does the UART test shell use for register reads and
+    writes, and how is a 16-bit value packed into the 32-bit data word?
+  answer: The shell's standard read and write framing, with the 16-bit value in the
+    low half of the 32-bit data word and the upper half read as 0
+  status: defaulted
+  by: default
+  default_reason: The shell protocol document was not available in this session, so
+    the framing must be confirmed against the shell
+- question: What UART baud rate and framing does the host link use?
+  answer: 115200 baud, 8 data bits, no parity, 1 stop bit, giving BAUD_DIV_CYCLES
+    868
+  status: defaulted
+  by: default
+  default_reason: The request gives no baud rate and 115200 8N1 is the usual test
+    shell setting
+- question: What is the coefficient number format?
+  answer: Q1.15 signed 16-bit, with FRAC_BITS 15
+  status: defaulted
+  by: default
+  default_reason: The request gives no format and Q1.15 matches the 16-bit width and
+    the DSP multiplier
+- question: How is the accumulator rounded when shifted to 16-bit output?
+  answer: Truncate toward negative infinity with an arithmetic shift by FRAC_BITS,
+    with no rounding offset
+  status: defaulted
+  by: default
+  default_reason: The request does not say and truncation needs no extra adder
+- question: What happens when the sum exceeds the signed 16-bit output range?
+  answer: Saturate to 0x7FFF or 0x8000
+  status: defaulted
+  by: default
+  default_reason: The request does not say and saturation avoids wrap-around spikes
+    on the output
+- question: What are the reset coefficient values?
+  answer: All 32 coefficients reset to 0x0000, so the output is 0 until the host loads
+    coefficients
+  status: defaulted
+  by: default
+  default_reason: The request says the coefficients are loaded at run time and gives
+    no default filter taps
+- question: What happens to a SAMPLE_IN or COEF_k write that arrives while the filter
+    is busy?
+  answer: The write is ignored and the host polls STATUS bit 0 before writing again
+  status: defaulted
+  by: default
+  default_reason: A single shared MAC cannot take new coefficients or samples mid-pass
+    without shadow storage that costs area
+- question: Is the filter cutoff and tap design done by the host, with no tap design
+    in hardware?
+  answer: Yes, the host computes and loads all 32 taps; the hardware is a generic
+    32-tap FIR
+  status: defaulted
+  by: default
+  default_reason: The request gives no cutoff frequency, sample rate or filter design
+    method
+- question: Is one sample every 34 clk cycles (about 2.9 million samples per second)
+    fast enough?
+  answer: Yes, a single shared DSP slice is accepted for the lowest DSP use
+  status: defaulted
+  by: default
+  default_reason: The request asks for as few DSP slices as practical and gives no
+    sample rate
