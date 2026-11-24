@@ -123,12 +123,19 @@ TWO_STEP_SYNTH = ["default", "retime"]
 SLR_ONLY = ("Performance_BalanceSLLs", "Performance_BalanceSLRs", "Performance_HighUtilSLRs", "Performance_SpreadSLLs")
 
 
+#: step 2's walk order for the stop-at-first-pass rule: cheapest first, by the median run time over the five 178e designs (tools/qor/run_178e_two_step.py).
+#: A set not listed here (a new AMD release may add some) is appended after these, in the strategy file's order.
+PERF_ORDER = ["Explore", "WLBlockPlacementFanoutOpt", "ExploreWithRemap", "WLBlockPlacement", "ExplorePostRoutePhysOpt", "ExtraTimingOpt", "Auto_1",
+              "RefinePlacement", "Retiming", "EarlyBlockPlacement", "Auto_3", "NetDelay_low", "Auto_2", "NetDelay_high"]
+
+
 def performance_menu() -> list[str]:
-    """Step 2's menu for ``--mode two-step``: the default, then every measured ``Performance_*`` strategy except the SLR-only ones, in the order of
-    the strategy file (the order a stop-at-first-pass rule walks). Empty list of strategies until ``strategies`` has been run."""
+    """Step 2's menu for ``--mode two-step``: the default first, then every measured ``Performance_*`` strategy except the SLR-only ones, cheapest first
+    (``PERF_ORDER``), which is the order a stop-at-first-pass rule walks. Just ``["default"]`` until ``strategies`` has been run."""
     if not STRATEGIES.exists():
         return ["default"]
     names = [n for n in json.loads(STRATEGIES.read_text()).get("impl", {}) if n.startswith("Performance_") and n not in SLR_ONLY]
+    names.sort(key=lambda n: (PERF_ORDER.index(n[len("Performance_"):]) if n[len("Performance_"):] in PERF_ORDER else len(PERF_ORDER)))
     return ["default"] + ["amd:" + n for n in names]
 
 

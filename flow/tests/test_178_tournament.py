@@ -187,13 +187,15 @@ def _strategies(tmp_path, monkeypatch):
     p = tmp_path / "vs.json"
     p.write_text(json.dumps({"impl": {"Area_Explore": {"opt": "ExploreArea"}, "Performance_Explore": {"opt": "Explore", "place": "Explore", "route": "Explore"},
                                       "Performance_BalanceSLLs": {"place": "SSI_BalanceSLLs"}, "Performance_NetDelay_high": {"opt": "Default", "place": "ExtraNetDelay_high"},
+                                      "Performance_Brandnew": {"place": "X"}, "Performance_Auto_1": {"place": "Auto_1"},
                                       "Congestion_SpreadLogic_high": {"place": "AltSpreadLogic_high"}}}))
     monkeypatch.setattr(t, "STRATEGIES", p)
 
 
 def test_performance_menu_is_default_plus_performance_sets_without_slr_only(tmp_path, monkeypatch):
     _strategies(tmp_path, monkeypatch)
-    assert t.performance_menu() == ["default", "amd:Performance_Explore", "amd:Performance_NetDelay_high"]
+    # cheapest first (PERF_ORDER), a set the order does not know goes last, SLR-only and non-Performance sets are left out
+    assert t.performance_menu() == ["default", "amd:Performance_Explore", "amd:Performance_Auto_1", "amd:Performance_NetDelay_high", "amd:Performance_Brandnew"]
     monkeypatch.setattr(t, "STRATEGIES", tmp_path / "missing.json")
     assert t.performance_menu() == ["default"]
 
