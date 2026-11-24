@@ -76,9 +76,16 @@ do not, apart from `project spec`. "Read-only" means nothing in the design direc
 
 | You want to | Command | Know first |
 |---|---|---|
+| a new block from a plain-English request | `python -m agent run <spec.md> --board <board>` | stops for a person before the board; `--stop-after 2` ends after RTL and verification ([docs/agent.md](docs/agent.md)) |
 | find a block in the IP library | `python -m agent ip search "<what you need, in words>"`, then `python -m agent ip show <entry>` (also `python3 -m flow.iplookup search ...`, no key) | matches by meaning, needs two matching words, and answers "nothing fits" with the near misses labelled as such; costs are measured on the Artix-7 only; SystemVerilog only, no FIFO (use AMD's XPM); `ip use` is the owner's command and adds a frozen component to an existing `project.yaml` ([docs/ip_lookup.md](docs/ip_lookup.md)) |
+| compare the measured variants of an IP block | `python3 -m flow.ipvariants --search <words>`, then `python3 -m flow.ipvariants <entry> --budget dsp=0` | plain Python, no Vivado; costs are measured on the Artix-7 only ([docs/ip_variants.md](docs/ip_variants.md)) |
+| a review of RTL you wrote | `python -m agent review <design-dir>` (`--no-judge`: the check suite alone) | read-only; no synthesis or simulation is run, so it reasons about the tests rather than running them ([docs/review.md](docs/review.md)) |
+| options to improve an existing design | `python -m agent improve <design> "<request>"`, `--analyse-only` first | reads existing reports only: with no `build/base` or `evidence` reports it has no timing or resource facts ([docs/strategy_options.md](docs/strategy_options.md)) |
 | a change to a design the agent made | `python -m agent resume <design-dir> "<change>" --dry-run` | the dry run prints the class, the entry stage and the words that matched. Classes and entry stages: area, latency, retarget 1; language, mapping 2; fmax, power 3; plus spec 0, arch 1, rtl 2, constraints 3, timing 6, board 9. A request that matches no class is a question, not stage 0 (`resume` exits 2 and asks); a documentation-only request is never guessed, so pass `--kind docs`. The earliest match wins, so "lower the latency but keep the interface" goes back to the spec (stage 0): split it or pass `--kind latency`. A bare "200 MHz" is a clock change (stage 3), but with a closure word ("close timing at 200 MHz") it is stage 6. `--kind` and `--from-stage` override ([agent/graph/pickup.py](agent/graph/pickup.py), [results/149_goal_kinds](results/149_goal_kinds/README.md)) |
 | a goal with a number (LUTs, Fmax, power, latency) or a new part, on a design the agent made | `python -m agent revise <design-dir> --goal "lut<=700" [--retarget <part\|board>] --dry-run` | a goal is `<metric>[.<name>]<op><number><unit>`: the direction is fixed by the metric (`lut`, `ff`, `bram`, `dsp`, `power`, `latency` take `<=`; `fmax` takes `>=`), `=` is refused, and a bare number is an error where a unit is needed (`fmax` MHz or GHz, `power` W or mW, `latency` clk). A goal the committed, fresh measurement already meets re-runs nothing ("met by evidence": one build's number, not a promise for another seed; power is Vivado's estimate; fmax only if the build was timed at that clock). Otherwise area and latency enter at stage 1, fmax and power at 3; a retarget inside one device family at 3, to another family at 1 (planned in dry runs only, no live retarget run yet). The goals go into the run's copy of `spec.yaml` (`goals:`), never the source design; the closure loop, the latency loop (`--goal`) and the trace matrix read the same block ([agent/graph/goals.py](agent/graph/goals.py), [agent/graph/revise.py](agent/graph/revise.py), [results/159_typed_goals](results/159_typed_goals/README.md)) |
+| a VHDL design | `python -m agent run <spec.md> --hdl vhdl`, or `python -m flow.vhdl lint rtl --top <top>` | VHDL-2008 through GHDL; the test shell stays SystemVerilog ([docs/vhdl.md](docs/vhdl.md)) |
+| a Vivado build of a design directory | `flow/run_vivado.sh designs/<name> base` | local Vivado 2026.1 only; then `python -m flow inspect designs/<name>` opens the checkpoints ([flow/README.md](flow/README.md)) |
+| the project in a browser | `python -m navigator` | needs the access key; local only (127.0.0.1); prints a one-time address ([navigator/README.md](navigator/README.md)) |
 
 ## The flow
 
@@ -339,7 +346,6 @@ standard.
   transcription tested, is shown as different from a proof about the RTL) are always printed, and the build status comes from `lake build` where Lean is installed and from a committed hash-pinned record
   (shown as "recorded build") in CI. Also a `proof` purpose in the [model table](docs/model_config.md) and a [proof driver](formal/lean/tools/prove.py); the gray-code lemma for every width
   ([formal/lean/Gray](formal/lean/Gray/Spec.lean), proved by a model in two rounds, statements for the owner's approval; records in [results/125_lean](results/125_lean/README.md)).
-  hardware proofs in ITPs and of LLM-plus-Lean work on RTL, and a proposed `formal_lean` evidence method; the experiment is [formal/lean](formal/lean/README.md)
 - **Tool-assessment notes** for Vivado 2026.1, Icarus, Verilator, SymbiYosys, cocotb and our gates:
   [docs/tool_assessment/](docs/tool_assessment/README.md).
 - **Specification to evidence, schema v1 (brief 116).** The human specifies the requirements (functional, performance, interface, safety) and checks that
@@ -368,6 +374,14 @@ python3 -m venv .venv && .venv/bin/pip install pyyaml pyserial pytest cocotb==2.
 designs/t1_dimmer_counter/tests/run_mutants.sh                  # every deliberate bug must be caught
 flow/lint.sh                                                    # needs Verilator
 ```
+
+Running the agent itself needs more than the tests do: the `agent` and `graph` extras of [pyproject.toml](pyproject.toml) (`.venv/bin/pip install mcp==2.3.0 jsonschema langgraph==1.2.19
+langgraph-checkpoint-sqlite==3.1.3 deepagents==0.7.32 langchain-openai==1.7.3`), an
+access key in `.env` ([Access key](#access-key)), the bench sandbox image (`docker build -t fda-sim:2 agent/container`; agent-written
+benches run in it without network), the private prompts and knowledge packs (owner access only, see [Private prompts](#private-prompts-brief-99)),
+and model access: in the built-in model table a plain `run` (the default `--harness deepagents`) uses OpenRouter only, while
+`review`, `improve`, `--spec-tests`, Lean proofs and the document cross-read use a signed-in Claude Code CLI.
+`python -m agent models show` prints which endpoint and model each purpose will use before anything is spent.
 
 The bitstream (local only: **Vivado 2026.1** at `/opt/Xilinx/2026.1`, at least 7 GB of available memory (the runner checks), Linux
 with `systemd-run --user`):
@@ -481,6 +495,10 @@ docs/        methodology.md (UG949 -> flow stages, gates, deviations, the agent'
 
 ## Status
 
+The Status column records each brief's state when its row was written and is not updated on merge: many rows that say
+`PR open` or `in review` have since merged (for example 59A #139, 62A #140, 103 #214, 114 #239, 115 #247, 118 #242). The pull
+request list is the record.
+
 | Milestone | What | Status |
 |---|---|---|
 | F0A | Repo, CI, runner, flow, gates, ILA, test shell, T1 by hand | done |
@@ -582,8 +600,8 @@ with its licence alongside). The notice is plain words, not legal advice.
 
 While the agent is developed it refuses to start without an access key (see [agent/access/README.md](agent/access/README.md)).
 The key keeps casual users of a checkout from running the agent; it does not stop anyone who edits the code, and the
-licence is what forbids that. The gate is **off until the owner commits `agent/access/keys.json`**. To set up your own
-key: copy [.env.example](.env.example) to `.env` (git-ignored) and put the key you were given after `FDA_ACCESS_KEY=`.
+licence is what forbids that. The gate is **armed**: `agent/access/keys.json` is committed (since 2026-11-17), so even
+`python -m agent --help` exits with status 2 until a key is set. To set up your own key: copy [.env.example](.env.example) to `.env` (git-ignored) and put the key you were given after `FDA_ACCESS_KEY=`.
 
 ### Private prompts (brief 99)
 
