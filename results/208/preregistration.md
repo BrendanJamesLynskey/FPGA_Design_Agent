@@ -86,3 +86,19 @@ Each arm: synthesis, `opt`, place, route, then `check_timing`, `report_clock_int
   is moved to the other part if possible; never edited to pass.
 - If usage reaches 90% weekly, stop with `BLOCKED:`.
 - Each arm runs once (deterministic tool); a surprise is re-run once with a fresh build directory to confirm.
+
+## Amendment 1, 2026-11-24 17:45 GMT (still before any run): Altera arms
+
+Source added (read locally, body): the Quartus Lite 25.1std `altclkctrl` IP files
+(`ip/altera/megafunctions/altclkctrl/parameters.csv`, `altclkctrl_hw.tcl`). The clock control block takes 1 to 4
+inputs; `USE_GLITCH_FREE_SWITCH_OVER_IMPLEMENTATION` ("Ensure glitch-free switchover implementation") **defaults to
+FALSE**, and the IP refuses it with one input; the supported families include Cyclone IV E, Cyclone V and MAX 10.
+Snippet-only (web search, not body; Altera pages redirect): the switchover needs the currently selected clock running
+before a switch; on Cyclone V the dynamically selectable inputs are PLL outputs plus a dedicated clock pin (a forum
+post, unverified).
+
+| Exp | Arm | Expectation (before the run) |
+|---|---|---|
+| q1 | Cyclone V (5CEBA4F23C7) and MAX 10 (10M50DAF484C7G): `altclkctrl`, 2 inputs, glitch-free OFF, `clkselect` from a register | E-q1: fits; no logic added on the select path besides the clock control block; Timing Analyzer shows both clocks on the fanout and times them against each other until `set_clock_groups -exclusive` is added. |
+| q2 | as q1, glitch-free ON | E-q2: the generated clearbox adds registers (a per-clock enable handshake) between `clkselect` and the block: the logic count rises by a few registers. |
+| q3 | RTL `assign clkm = sel ? clk1 : clk0;` | E-q3: Quartus places the mux in a LUT, promotes its output to a global clock, and warns; the Timing Analyzer's `report_clocks` shows both clocks propagate; Design Assistant (if it runs on the device) flags C101/C105 or similar: **uncertain**. |
