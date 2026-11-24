@@ -310,6 +310,43 @@ def surviving_mutants_note(design: Path, limit: int = 30) -> str:
 
 
 
+#: brief 209a: what a board with no UART changes in the Designer's and Verifier's instructions (the board file's ``host_access``
+#: decides: flow/host_transport.py). Code, not a private prompt: added only for such boards, so every UART board's request is unchanged.
+JTAG_NOTE = """
+HOST ACCESS ON THIS BOARD (board.yaml host_access): there is NO PL UART. The test shell (fpga_shell, shell/) is not used: the design is built
+without it, for that reason (ignore any sentence that says the design's subject is the UART). The host reads and writes the design's
+registers through the JTAG register bus, the BSCANE2 USER4 module `jtag_bus` (designs/b58a_trigger/rtl/jtag_bus.sv; ip_lib/jtag_regs wraps it
+with the common register map; copy the file or entry unchanged with `python -m agent ip use` or from the design's data/ directory). Its register port, in the clock domain of the clk
+you give it: `h_we`, `h_re` pulses, `h_addr[11:0]` (byte addresses), `h_wdata[31:0]`, `h_rdata[31:0]`; a write takes effect the clock after `h_we`;
+after `h_re`, `h_rdata` shows the addressed register within 2 clocks and holds it; unmapped addresses read 0 and ignore writes.
+Every design has the common map: 0x000 ID (RO, the design ID), 0x004 BUILD (RO, the bitstream's USR_ACCESS word, the build stamp, read with the
+USR_ACCESSE2 primitive), 0x008 SCRATCH (RW, reads back what was written, resets to 0). Your own registers start at 0x010. jtag_bus contains Xilinx
+primitives (BSCANE2, xpm_cdc), so simulate and test the register port directly (drive h_we/h_re/h_addr/h_wdata), never jtag_bus itself.
+"""
+
+JTAG_HW_FORMAT = """
+Bring-up files for THIS board (no UART, no ILA build; this format replaces any UART or ILA format described above; flow/bringup.py runs them
+over the JTAG register bus once the owner approves programming):
+- hw_checks.py: `DESIGN_ID = 0x...` (what register 0x000 reads); `make_mock()` returning an instance of a subclass of
+  `flow.host_transport.MockBus` (set ID, override `read(addr)` and `write(addr, value)` for YOUR registers from 0x010, written from spec.yaml and
+  model.py: it is the register behaviour a correct design shows; the common map 0x000-0x008 is done by MockBus); and
+  `run(bus) -> list[(name, ok, detail)]` which checks the design through `bus.rd(addr)` / `bus.wr(addr, value)` against expected values
+  computed in Python (from model.py or plain Python), leaves the design at its reset values and keeps LED duty and any soak short.
+  The same run(bus) runs in CI on make_mock() and on the board on the real bus (flow.host_transport.run_checks adds the ID, build-stamp and
+  scratch checks). hw_checks.py may import only the standard library, `flow.host_transport` and `model`. No tests/test_*_hw.py and no probes.yaml.
+- BRINGUP.md for a tester who did not design it, with the sections Setup, Testing (step by step, pass/fail), Debug aids and If it fails.
+Call gates(kind="bringup_ready") to check these files and to run every check against the mock; the stage cannot ask the owner to approve
+programming until that passes.
+"""
+
+
+def transport_of(rt_or_cfg: Any) -> str:
+    """``uart`` or ``jtag_bus``: from the run's board file (flow/host_transport.py)."""
+    from flow import host_transport
+    cfg = getattr(rt_or_cfg, "cfg", rt_or_cfg)
+    return host_transport.board_transport(cfg.board, ROOT)
+
+
 def no_shell_conventions(t: str) -> str:
     """CONVENTIONS for a design without the test shell: no shell source in build.yaml, no fpga_shell bullet, no shell in the test sources."""
     t = t.replace(_p("graph/run/no_shell_conventions_1"), "sources: [{design_rel}/rtl/*.sv]")
@@ -829,13 +866,16 @@ def node_work(state: State) -> dict:
            "note": state.get("note") or "none",
            "design_rel": str(rt.design.relative_to(ROOT)), "no_shell": rt.cfg.no_shell, "hdl": rt.cfg.hdl}
     conv0 = conventions_text(fmt)
+    jtag = transport_of(rt) == "jtag_bus"
+    if jtag:
+        conv0 += JTAG_NOTE
     if rt.cfg.design_plan:                   # closure-loop hook: the datapaths bullet (stage 1) and the computed plan (later stages)
         from flow import timing_plan as _tp
         conv0 += _tp.DATAPATHS_CONVENTION + (("\n" + (rt.design / _tp.PLAN_MD).read_text()) if (rt.design / _tp.PLAN_MD).is_file() else "")
     if n == 1 and "ip_lookup" in st.tools and ip_lookup_allowed(rt.cfg):   # brief 150: the library is consulted before a block is invented, and the choice is recorded
         from flow import iplookup as _ipl
         conv0 += _ipl.IP_LOOKUP_CONVENTION
-    conv_tests = tests_conventions_text(fmt)
+    conv_tests = tests_conventions_text(fmt) + (JTAG_NOTE if jtag else "")
     conv = conv0 + ("\nLast gate output:\n" + state["detail"][:3000] if state.get("detail") else "")
     # the owner's edit prompt (brief 05d, addition 6) goes to the role it names, default the stage's writer
     note_for = state.get("note_role") or ("clarify" if n == 0 else "rtl")
@@ -873,15 +913,18 @@ def node_work(state: State) -> dict:
                     run_role(rt, "rtl", PROMPTS["rtl"].format(**{**fmt, "fails": own})
                                  + (note if repair else "") + prompt_note("rtl") + conv0, role_allowed("rtl", 2), repair)
         else:           # stage 9 too: the model writes probes.yaml and BRINGUP.md BEFORE the builds and the hardware pause
-            run_role(rt, "rtl", PROMPTS["rtl"].format(**fmt) + conv + (_p("graph/run/hw_format").format(**fmt) if n == 9 else ""),
+            run_role(rt, "rtl", PROMPTS["rtl"].format(**fmt) + conv + ((JTAG_HW_FORMAT if jtag else _p("graph/run/hw_format").format(**fmt)) if n == 9 else ""),
                          role_allowed("rtl", n))
             if n == 9:                                  # then the bring-up tests, which need the probe names (planner item, 05d)
                 from flow import hw_dry_check
-                dry = hw_dry_check.check_design(rt.design)
+                dry = hw_dry_check.check_design(rt.design, "jtag_bus" if jtag else "uart")
                 own = [q for q in dry["problems"] if not q.startswith(("BRINGUP.md", "probes.yaml"))]
+                if jtag and not own:                              # brief 209a: every check against the mock bus, in the sandbox
+                    mk = hw_mock_gate(rt)
+                    own = [] if mk["ok"] else ["the checks fail against the mock bus: " + mk["error"]]
                 if own:
                     run_role(rt, "tests", PROMPTS["hwtests"].format(**{**fmt, "fails": "; ".join(own)})
-                                 + tests_checklist(rt, 9, True) + _p("graph/run/hw_format").format(**fmt) + _p("graph/contract/model_contract"), role_allowed("tests", 9),
+                                 + tests_checklist(rt, 9, True) + (JTAG_HW_FORMAT if jtag else _p("graph/run/hw_format").format(**fmt)) + _p("graph/contract/model_contract"), role_allowed("tests", 9),
                                  repair=True)        # never "fresh": a fresh tests write deletes the stage-2 benches
         files = [p for p in rt.design.rglob("*") if p.is_file() and "build" not in p.relative_to(rt.design).parts
                  and "__pycache__" not in p.parts]
@@ -1166,7 +1209,7 @@ def report_gates_eval(rt: Runtime) -> dict | None:
         rep = checks.run(rt.design, list(REPORT_GATE_CHECKS), scope="synth", level="standard")
     except Exception as e:                                       # noqa: BLE001
         return {"findings": [], "advisories": [], "error": f"{type(e).__name__}: {str(e)[:200]}"}
-    fs = [f for c in rep["checks"] for f in (c.get("findings") or []) if "waived" not in f or f.get("blocking") and False]
+    fs = [f for c in rep["checks"] for f in (c.get("findings") or []) if "waived" not in f]            # a waived finding (lint/waivers.yaml) is the owner's decision
     from agent.graph.stages import REPORT_GATE_CODES
     return {"findings": [f for f in fs if f["blocking"] and f["code"] in REPORT_GATE_CODES],
             "advisories": [f for f in fs if not f["blocking"] or f["code"] not in REPORT_GATE_CODES],
@@ -1180,6 +1223,24 @@ def report_gates_detail(ev: dict, detail: list) -> None:
     ok, why = report_gates_stage(ev.get("report_gates"))
     if not ok:
         detail.append("[report gates] " + "\n".join(why)[:1800] + report_advisory_text(ev.get("report_gates")))
+
+
+HW_MOCK_SNIPPET = ("import sys, json; sys.path.insert(0, sys.argv[2]); from flow import host_transport as H; "
+                   "r = H.run_mock(__import__('pathlib').Path(sys.argv[1])); print(json.dumps(r))")
+
+
+def hw_mock_gate(rt: Runtime) -> dict:
+    """Brief 209a: the design's hw_checks.py ``run(bus)`` against its own ``make_mock()`` bus plus the common-map checks, run by the
+    session's runner (the container for agent-written code). ``ok`` False carries the failing checks, or the traceback."""
+    r = rt.session.runner.run("contract", [sys.executable, "-I", "-c", HW_MOCK_SNIPPET, str(rt.design), str(ROOT)], ROOT, None, 120)
+    for line in reversed((r.stdout or "").splitlines()):
+        try:
+            x = json.loads(line)
+            if isinstance(x, dict) and "ok" in x:
+                return x
+        except ValueError:
+            continue
+    return {"ok": False, "error": ((r.stderr or r.stdout or f"exit {r.returncode}")[-1200:])}
 
 
 def constants_blocks(ev: dict) -> bool:
@@ -1319,9 +1380,16 @@ def node_gate(state: State) -> dict:
             _tp.record_calibration(rt.design, rt.run_dir / "plan_calibration.jsonl")
     elif n == 9:
         from flow import hw_dry_check
-        ev["bringup_ready"] = hw_dry_check.check_design(rt.design)     # before the approval pause, not after it
+        jtag9 = transport_of(rt) == "jtag_bus"
+        ev["bringup_ready"] = hw_dry_check.check_design(rt.design, "jtag_bus" if jtag9 else "uart")     # before the approval pause, not after it
+        if jtag9 and ev["bringup_ready"]["ok"]:                        # brief 209a: and every check against the mock bus
+            mk = hw_mock_gate(rt)
+            ev["hw_mock"] = mk
+            if not mk["ok"]:
+                ev["bringup_ready"] = {"ok": False, "problems": ["the checks fail against the mock bus: " + mk["error"]]}
         ev["gates_base"] = _build(rt, "bitstream")["gates"]
-        ev["gates_ila"] = _build(rt, "bitstream", "ila")["gates"]
+        if not jtag9:                                                  # a JTAG-bus design has no ILA build
+            ev["gates_ila"] = _build(rt, "bitstream", "ila")["gates"]
         if state.get("hw_approved"):
             rt.session.stage = st.name
             br = dispatch(rt.session, "bringup", {}) or {}
@@ -1334,11 +1402,13 @@ def node_gate(state: State) -> dict:
         rt.last_build_output = ""
     if n == 9 and not state.get("hw_approved"):
         from dataclasses import replace as _replace
-        ok, fails = exit_check(_replace(st, gates=tuple(g for g in st.gates if g not in ("bringup", "signoff"))), ev)
+        ok, fails = exit_check(_replace(st, gates=tuple(g for g in st.gates if g not in ("bringup", "signoff")
+                                                        and not (g == "bitstream_ila" and transport_of(rt) == "jtag_bus"))), ev)
         if ok:                                   # everything but the board passes: ask before programming
             ok, fails = False, ["hardware: awaiting approval before programming"]
     else:
-        ok, fails = exit_check(st, ev)
+        ok, fails = exit_check(dataclasses.replace(st, gates=tuple(g for g in st.gates if g != "bitstream_ila")) if (n == 9 and transport_of(rt) == "jtag_bus")
+                               else st, ev)
     if n == 2 and ok and (ev.get("spec_test") or {}).get("blocks"):      # 08f: the independent bench failed and triage blamed the design
         ok, fails = False, ["spec test: an independent bench written from the request alone fails against the design"]
     if n == 2:                                   # 05c2 fix 1: the roles that own this visit's failures, and the repeat count
@@ -1681,6 +1751,8 @@ def new_runtime(cfg: Config, client: Callable | None = None, run_id: str | None 
                 tape_spec: dict | None = None) -> Runtime:
     from agent.access import require_or_exit      # brief 94: every run is created here
     require_or_exit("new_runtime")
+    if not cfg.no_shell and transport_of(cfg) == "jtag_bus":     # brief 209a: a board with no UART has no test shell to build in
+        cfg.no_shell = True
     run_id = run_id or time.strftime("%Y%m%d-%H%M%S-") + uuid.uuid4().hex[:4]
     run_dir = RUNS / run_id
     design = run_dir / cfg.name
