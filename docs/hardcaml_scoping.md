@@ -98,12 +98,15 @@ Raw data: `results/b171/ooc_compare.json`.
 | pipe_reg_comb_w16_n5 | a7 | 11 / 11 | 85 / 85 | 0.385 / 0.028 | 382 / 336 |
 | pipe_reg_full_w64_n2 | a7 | 83 / 90 | 268 / 268 | 0.176 / 0.152 | 354 / 351 |
 | pipe_reg_skid_w64_n2_tlast_tkeep | a7 | 81 / 81 | 298 / 298 | 0.465 / 0.355 | 394 / 378 |
-| credit_chan_w16_c8_f1_b1 | k26 | 23 / 25 | 34 / 34 | 0.940 / 0.954 | 943 / 956 |
-| credit_chan_w64_c5_f2_b1 | k26 | 52 / 54 | 145 / 145 | 1.028 / 0.868 | 1029 / 883 |
-| credit_chan_w8_c16_f4_b4 | k26 | 41 / 40 | 47 / 43 | 0.913 / 0.619 | 920 / 724 |
-| pipe_reg_comb_w16_n5 | k26 | 10 / 9 | 85 / 85 | 0.878 / 0.807 | 891 / 838 |
-| pipe_reg_full_w64_n2 | k26 | 77 / 78 | 268 / 268 | 0.745 / 0.838 | 797 / 861 |
-| pipe_reg_skid_w64_n2_tlast_tkeep | k26 | 80 / 80 | 298 / 298 | 0.750 / 0.677 | 800 / 756 |
+| credit_chan_w16_c8_f1_b1 | k26 | 23 / 25 | 34 / 34 | 0.940 / 0.954 | 943* / 956* |
+| credit_chan_w64_c5_f2_b1 | k26 | 52 / 54 | 145 / 145 | 1.028 / 0.868 | 1029* / 883* |
+| credit_chan_w8_c16_f4_b4 | k26 | 41 / 40 | 47 / 43 | 0.913 / 0.619 | 920* / 724 |
+| pipe_reg_comb_w16_n5 | k26 | 10 / 9 | 85 / 85 | 0.878 / 0.807 | 891* / 838* |
+| pipe_reg_full_w64_n2 | k26 | 77 / 78 | 268 / 268 | 0.745 / 0.838 | 797* / 861* |
+| pipe_reg_skid_w64_n2_tlast_tkeep | k26 | 80 / 80 | 298 / 298 | 0.750 / 0.677 | 800* / 756* |
+
+
+**K26 Fmax caveat (brief 199).** Out-of-context, without a BUFG, the setup-derived Fmax can exceed the clock-buffer limit. On the xck26 -2LV the BUFGCE/I Min Period is 1.379 ns = 725.2 MHz (results/199_dsp_fmax, branch b199-dsp-fmax). The K26 Fmax cells above (marked *) over 725 MHz are therefore setup-derived figures only; a real K26 clock is capped at 725 MHz by the BUFG. The SV versus Hardcaml comparison on K26 rests on WNS, LUT and FF, not on Fmax, and no K26 Fmax above 725 is a headline.
 
 **Reading.**
 - FF are identical in 10 of 12 pairs and 4 lower for Hardcaml in the `w8_c16_f4_b4` credit channel on both parts (43 vs 47). LUT differ by at most
