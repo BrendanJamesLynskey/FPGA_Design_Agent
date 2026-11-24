@@ -153,3 +153,17 @@ def test_bringup_refuses_without_a_cable_serial(tmp_path, monkeypatch):
 def test_ip_lib_entry_files_exist_and_the_bus_is_the_b58a_one():
     a = (ROOT / "ip_lib/jtag_regs/rtl/jtag_bus.sv").read_text()
     assert a == (ROOT / "designs/b58a_trigger/rtl/jtag_bus.sv").read_text()
+
+
+def test_mutation_compiles_with_the_supplied_bus_kept_outside_rtl(tmp_path, monkeypatch):
+    """A mutant of rtl/ is compiled with the build's other sources (data/jtag_bus.sv), or every mutant looks invalid (found in the 209a toy run)."""
+    from flow import mutate
+    monkeypatch.setattr(mutate, "ROOT", tmp_path)
+    d = tmp_path / "runs" / "r" / "toy"
+    (d / "rtl").mkdir(parents=True)
+    (d / "data").mkdir()
+    (d / "rtl" / "top.sv").write_text("module top; endmodule\n")
+    (d / "data" / "jtag_bus.sv").write_text("module jtag_bus; endmodule\n")
+    (d / "data" / "rom.hex").write_text("00\n")
+    (d / "build.yaml").write_text("top: top\nsources:\n- runs/r/toy/rtl/*.sv\n- runs/r/toy/data/jtag_bus.sv\n")
+    assert [p.name for p in mutate.vendored_sources(d)] == ["jtag_bus.sv"]
