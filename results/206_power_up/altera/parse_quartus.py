@@ -97,7 +97,7 @@ def main(case: Path) -> dict:
             if MSG_KEEP.search(text) or m.group(2) in ("18010", "18061", "13000", "13003", "276007"):
                 msgs.append({"report": rpt.suffixes[0][1:], "severity": m.group(1), "id": m.group(2), "text": text[:240]})
     rec["messages"] = msgs
-    vo = sorted((case / "simulation").rglob("*85c_slow.vo"))
+    vo = sorted((case / "simulation").rglob("*85c_slow.vo")) or sorted((case / "simulation").rglob("*.vo"))
     rec["netlist_power_up"] = {}
     if vo:
         txt = vo[0].read_text(errors="replace")

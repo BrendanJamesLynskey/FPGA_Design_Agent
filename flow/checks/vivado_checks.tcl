@@ -5,9 +5,10 @@
 # Opens ONE checkpoint (post_synth.dcp or post_route.dcp) once and runs every requested report in it, in sequence,
 # writing <out_dir>/<name>.rpt (or reset_scan.tsv). A report the licence tier or the tool refuses writes
 # <out_dir>/<name>.not_run.txt with Vivado's message instead, so the Python side can say why it did not run.
-# AMD's own reports come first (report_methodology, report_drc, report_cdc, report_control_sets, ...); the only
-# report of ours is reset_scan: one row per register whose reset pin is not tied to a constant, with the reset's
-# root driver traced through buffers and LUT1 inverters (flow/checks/resets.py classifies the rows).
+# AMD's own reports come first (report_methodology, report_drc, report_cdc, report_control_sets, ...); our own
+# reports are reset_scan (one row per register whose reset pin is not tied to a constant, with the reset's root driver
+# traced through buffers and LUT1 inverters; flow/checks/resets.py classifies the rows) and init_scan (brief 206: one
+# row per INIT = 1 register wired straight to a DSP, RAM or FIFO; flow/checks/init_values.py classifies them).
 #
 # Sourced with ::fda_checks_lib set (the seeded-fault runner), it only defines the procs.
 

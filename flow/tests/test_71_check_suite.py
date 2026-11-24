@@ -48,7 +48,7 @@ def test_every_rule_is_covered_by_a_check_or_marked_manual() -> None:
 def test_rule_set_shape_fix_and_skill() -> None:
     rs = LR.load_rules()
     assert not LR.rule_problems(rs)
-    assert rs["version"] == "1.7"
+    assert rs["version"] == "1.8"
     for r in rs["rules"]:
         assert str(r.get("fix") or "").strip(), f"{r['id']}: no fix"
         sk = str(r.get("skill") or "")
@@ -263,7 +263,7 @@ def test_vivado_session_is_one_call_for_all_missing_reports(tmp_path: Path) -> N
         (out / "cmt.not_run.txt").write_text("cmt not run: test")
         return 0, "ok"
     rep = C.run(d, "all", "synth", vivado=fake)
-    assert calls == [["cmt", "control_sets", "reset_scan"]]
+    assert calls == [["cmt", "control_sets", "init_scan", "reset_scan"]]      # init_scan: brief 206
     st = {c["check"]: c for c in rep["checks"]}
     assert st["resets"]["status"] == "pass" and not st["resets"]["incomplete"]
     assert st["clocking"]["parts"]["cmt"].startswith("not run: cmt not run")

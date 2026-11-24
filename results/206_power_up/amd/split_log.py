@@ -2,12 +2,13 @@
 """Brief 206: split a Vivado arms log into per-arm WARNING / CRITICAL WARNING / INFO lines that mention initial values.
 
 Usage: split_log.py <vivado.log> <part>  -> TSV on stdout: part, arm, initv, severity, message id, text (first 200 chars).
-Every WARNING and CRITICAL WARNING is kept; INFO lines are kept only when they mention INIT, initial, power or SRVAL.
+Every WARNING and CRITICAL WARNING is kept; INFO lines are kept only when they mention INIT, initial, power, SRVAL, GSR,
+or are Synth 8-7052 (a RAM output register not merged).
 """
 import re
 import sys
 
-KEEP_INFO = re.compile(r"INIT|initial|power|SRVAL|GSR", re.I)
+KEEP_INFO = re.compile(r"INIT|initial|power|SRVAL|GSR|Synth 8-7052|output register could be merged", re.I)
 arm = initv = None
 for line in open(sys.argv[1], errors="replace"):
     m = re.match(r"### ARM (\S+) (\d)", line)
