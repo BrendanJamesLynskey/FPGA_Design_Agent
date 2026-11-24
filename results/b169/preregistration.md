@@ -1,6 +1,6 @@
 # Brief 169: board pre-registration for the build `lat_cuts169` (EARLY_MAC = 1, FAST_PRE = 1). Written 2026-11-22 before any board time; NOTHING HAS RUN ON A BOARD.
 
-Status: queued, not run. No board script is written (the brief says write no board commands); the planner or the owner writes one by copying `run_126_stage1.sh` once timing has closed (below) and this page has been read. Bitstream: build `lat_cuts169`, stamp **5a45b3bd**, `designs/b96_kr260_10g/lat_cuts169/build/base/kr260_10g_top.bit` (local, git-ignored); timing met (WNS +0.116 ns, WHS +0.011 ns, 29 of 29 gates, `report_cdc` 0 critical; README section Timing). Check the stamp before any board time.
+Status: queued, not run. No board script is written (the brief says write no board commands); the planner or the owner writes one by copying `run_126_stage1.sh` once timing has closed (below) and this page has been read. Bitstream: build `lat_cuts169`, stamp **1d030035** (corrected 2026-11-24, brief 203: the first build, stamp 5a45b3bd, had both cuts OFF because the shared top did not forward the parameters; do not use its bitstream), `designs/b96_kr260_10g/lat_cuts169/build/base/kr260_10g_top.bit` (local, git-ignored); timing met (WNS +0.154 ns, WHS +0.010 ns, 29 of 29 gates, `report_cdc` 0 critical; README section Timing; 6,734 LUT). Check the stamp before any board time.
 
 ## What is predicted, and from what
 Baseline: the board result of run A on 2026-11-22 for `lat_all3_bypass` (stamp 9641284d), `results/b126/hw/20261122_145404/lat_all3_bypass/stage3.json` (read, not copied), per-link means over 100 restarts computed by `board_per_link.py`:
@@ -27,6 +27,6 @@ Per-link D takes values 6 to 8 (run A: 7 to 9) because the clock phase differs p
 - The result is judged on the per-link means; the median-based L - E is quoted beside it.
 
 ## Risk written down before the run
-1. FAST_PRE adds the go pulse to a path ending in the PCS registers: timing closed in the one build made (+0.116 ns); one seed only.
+1. FAST_PRE adds the go pulse to a path ending in the PCS registers: timing closed in the one build made with the cuts on (+0.154 ns; the build's cost is 528 LUT over the parent, README section Timing); one seed only.
 2. The live-field bus margin shrinks from 3 to 2 clocks after the go pulse (README, section FAST_PRE); `stale` is the detector (it is checked later in the frame for FAST frames, so it still sees the sample the frame carries).
 3. D depends on the clock phase per lock (the skew experiment in README): a few links may differ by a clock either way; the mean over 100 links is the test.

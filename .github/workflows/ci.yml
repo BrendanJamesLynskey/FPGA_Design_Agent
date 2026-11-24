@@ -342,6 +342,27 @@ jobs:
           name: sim-logs
           path: build/sim/*/sim.log
 
+  b169-cuts:
+    name: Prototype latency cuts (brief 169) - the 97C core bench in one parameter combination (cocotb + Icarus; split from the RTL job, about 10 minutes per combination)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        combo: [base, early, fast, both]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y iverilog
+          pip install pyyaml pyserial pytest cocotb==2.0.1 numpy==2.4.3
+      - name: Core bench with EARLY_MAC / FAST_PRE (combination ${{ matrix.combo }})
+        run: python -m pytest -q "designs/b96_kr260_10g/tests/test_169_cuts_rtl.py" -k "${{ matrix.combo }}"
+
   bench-v1:
     name: Benchmark v1 development tasks - reference RTL, every mutant killed, every trap fires (split from the RTL job, 2026-11-16)
     runs-on: ubuntu-24.04

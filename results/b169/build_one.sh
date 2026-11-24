@@ -8,16 +8,16 @@ ROOT=/home/brendan/Claude_sandbox/_worktrees/169-next-cuts
 H=/home/brendan/Claude_sandbox/_handoff
 cd "$ROOT"
 D=designs/b96_kr260_10g/$V
-TEXT="169: Vivado impl $V peak 6G, $(date +%H:%M), expected end $(date -d '+50 min' +%H:%M)"
+TEXT="203: Vivado impl $V peak 8G, $(date +%H:%M), expected end $(date -d "+55 min" +%H:%M)"
 n=0
 while true; do
   out="$("$H/take_heavy_slot.sh" --env "$TEXT" 2>/dev/null)" && [ -n "$out" ] && { eval "$out"; break; }
   n=$((n+1)); [ "$n" -ge "$WAIT" ] && { echo "no heavy slot within $WAIT minutes"; exit 1; }
   sleep 5
 done
-release() { case "$(cat "$HEAVY_LOCK" 2>/dev/null)" in "169:"*) rm -f "$HEAVY_LOCK";; esac; }
+release() { case "$(cat "$HEAVY_LOCK" 2>/dev/null)" in "203:"*) rm -f "$HEAVY_LOCK";; esac; }
 trap release EXIT
-export FDA_VIVADO_THREADS=1 FDA_VIVADO_MAX=3
+export FDA_VIVADO_THREADS=1 FDA_VIVADO_MAX=3 MEM_MAX=9G   # 203: the first build hit the 6G cap 142 times
 OUT="$ROOT/results/b169/builds/$V"; mkdir -p "$OUT"
 echo "slot $HEAVY_LOCK taken: $(cat "$HEAVY_LOCK"); threads $FDA_VIVADO_THREADS"
 T0=$(date +%s); date -Is > "$OUT/started.txt"; git rev-parse HEAD > "$OUT/commit.txt"; git status --porcelain -- designs flow ip > "$OUT/dirty.txt"

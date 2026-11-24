@@ -260,7 +260,7 @@ Rows are requirements, columns are verification methods. A cell lists each item 
 - Source: `designs/b96_kr260_10g/handover.yaml`
 - The build files set parameters the core has, the base build keeps the 97C defaults, and each variant differs from the base only where documented.
   - simulation test: **pass**, Build lat_all3_bypass composes 97C's cuts with the bypass build's files, and its board driver's verdicts, references and lock prefix (brief 126): 6 test(s) passed in the recorded run. [evidence](../../../results/116_traceability/b96_kr260_10g/pytest_junit.xml)
-  - simulation test: **not in the recorded run**, Prototype latency cuts EARLY_MAC and FAST_PRE (lat_cuts169) keep their defaults off, are copies, and pass the 97C core bench in all four parameter combinations (brief 169): not in the recorded run: test_169_cuts::*. [evidence](../../../results/116_traceability/b96_kr260_10g/pytest_junit.xml)
+  - simulation test: **not in the recorded run**, Prototype latency cuts EARLY_MAC and FAST_PRE (lat_cuts169) keep their defaults off, are copies, and pass the 97C core bench in all four parameter combinations (brief 169): not in the recorded run: test_169_cuts::*, test_169_cuts_rtl::*. [evidence](../../../results/116_traceability/b96_kr260_10g/pytest_junit.xml)
   - simulation test: **pass**, Build parameter consistency: 5 test(s) passed in the recorded run. [evidence](../../../results/116_traceability/b96_kr260_10g/pytest_junit.xml)
 
 ### B96-F-EYESCAN: The eye-scan sequencer drives the GT's DRP as its Python twin does
