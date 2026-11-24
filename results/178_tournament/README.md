@@ -53,10 +53,9 @@ Method: synthesis tournament (16 options) per design; the top two synthesis cand
 * **Against AMD's own strategies:** the best AMD `-strategy` equalled the best result on 4 of 5 designs (and the tournament's implementation menu includes them); the mac design
   was the one clear win (+0.208 versus +0.129, from the congestion directive set). Nothing here shows our menu beating the AMD sets by a margin.
 * **Where the gain came from:** on lzc and mac most of it is the synthesis choice (`retime`: +0.119 and +0.057 with default P&R, versus -0.486 and -0.161 baseline), the rest is place and route.
-  `retime` costs flip-flops (mac 116 to 197, lzc 112 to 137). Synthesis ranking alone was right about which synthesis wins, and wrong about the final order inside place and route
-  (the best P&R set differed per design), which agrees with part 1.
+  `retime` costs flip-flops (mac 116 to 197, lzc 112 to 137). On the adder the synthesis rank was wrong for default place and route (altroute -0.628 against area_high -0.524, though altroute won once the best P&R set was applied), and the best P&R set differed per design, which agrees with part 1.
 * **Carrying the top two:** on 4 of 5 designs the two best synthesis candidates were identical netlists (same LUT, FF and WNS: altroute = carry, retime = perf_retime), so the second
-  slot added nothing. Only the adder's two differed (altroute -0.129 against area_high, which was worse). The top-k step should pick the top two *distinct* results; this is a fix to make.
+  slot added nothing. Only the adder's two differed (altroute -0.129 against area_high, which was worse). The top-k step should pick the top two *distinct* results; the driver now picks them by distinct (WNS, LUT, FF) (178b follow-up commit; not re-run).
 * **Cost:** synthesis 1160 to 1632 CPU-s per design (16 runs); place and route 6056 to 7814 CPU-s (20 runs) against 76 to 236 CPU-s for the baseline: about 30 to 90 times the CPU of one default run.
   Wall time (3500 s synthesis, 8700 to 21900 s place and route) includes waiting for slots behind other jobs, so it is not a speed measurement.
 * **Winner choice:** the score's 0.05 ns bucket plus area tie-break picked a smaller netlist over the highest WNS on divider (+0.009 against +0.017) and lzc (+0.165 against +0.196). Intended, and documented.

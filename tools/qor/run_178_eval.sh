@@ -13,7 +13,11 @@ for f in $S/*.yaml; do
   n=$(basename "$f" .yaml)
   B=build/tournament/$n
   [ -f $B/synth/tournament.json ] || python3 -m flow.tournament run "$f" --stage synth --k 2 --jobs 3 || { echo "driver: synthesis failed for $n"; continue; }
-  top2=$(python3 -c "import json;c=[c['id'] for c in json.load(open('$B/synth/tournament.json'))['candidates'] if c['status']=='ok'];print(','.join(c[:2]))")
+  top2=$(python3 -c "import json;seen=[];ids=[]
+for c in json.load(open('$B/synth/tournament.json'))['candidates']:
+    k=(c.get('wns_ns'),c.get('lut'),c.get('ff'))
+    if c['status']=='ok' and k not in seen: seen.append(k);ids.append(c['id'])
+print(','.join(ids[:2]))")
   [ -n "$top2" ] || { echo "driver: no synthesis candidate for $n"; continue; }
   [ -f $B/impl_top2/tournament.json ] || python3 -m flow.tournament run "$f" --stage impl --from "$top2" --menu "$IMPL_MENU" --tag top2 --k 2
   case ",$top2," in
