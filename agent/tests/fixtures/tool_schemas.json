@@ -1,5 +1,5 @@
 {
- "schema_version": "1.19.0",
+ "schema_version": "1.20.0",
  "tools": [
   {
    "name": "axi_board_run",
@@ -20,7 +20,7 @@
     ],
     "additionalProperties": false
    },
-   "version": "1.19.0"
+   "version": "1.20.0"
   },
   {
    "name": "axi_program_check",
@@ -41,7 +41,7 @@
     ],
     "additionalProperties": false
    },
-   "version": "1.19.0"
+   "version": "1.20.0"
   },
   {
    "name": "axi_simulate",
@@ -62,7 +62,7 @@
     ],
     "additionalProperties": false
    },
-   "version": "1.19.0"
+   "version": "1.20.0"
   },
   {
    "name": "board_constraints",
@@ -99,7 +99,7 @@
     "required": [],
     "additionalProperties": false
    },
-   "version": "1.19.0"
+   "version": "1.20.0"
   },
   {
    "name": "bringup",
@@ -110,7 +110,7 @@
     "required": [],
     "additionalProperties": false
    },
-   "version": "1.19.0"
+   "version": "1.20.0"
   },
   {
    "name": "build",
@@ -138,7 +138,7 @@
     "required": [],
     "additionalProperties": false
    },
-   "version": "1.19.0"
+   "version": "1.20.0"
   },
   {
    "name": "check",
@@ -204,7 +204,7 @@
     "required": [],
     "additionalProperties": false
    },
-   "version": "1.19.0"
+   "version": "1.20.0"
   },
   {
    "name": "check_constraints",
@@ -215,7 +215,7 @@
     "required": [],
     "additionalProperties": false
    },
-   "version": "1.19.0"
+   "version": "1.20.0"
   },
   {
    "name": "debug_capture",
@@ -237,7 +237,7 @@
     ],
     "additionalProperties": false
    },
-   "version": "1.19.0"
+   "version": "1.20.0"
   },
   {
    "name": "debug_plan",
@@ -259,7 +259,7 @@
     ],
     "additionalProperties": false
    },
-   "version": "1.19.0"
+   "version": "1.20.0"
   },
   {
    "name": "debug_query",
@@ -285,7 +285,7 @@
     ],
     "additionalProperties": false
    },
-   "version": "1.19.0"
+   "version": "1.20.0"
   },
   {
    "name": "design_analysis",
@@ -296,7 +296,7 @@
     "required": [],
     "additionalProperties": false
    },
-   "version": "1.19.0"
+   "version": "1.20.0"
   },
   {
    "name": "doc_crossread",
@@ -338,7 +338,7 @@
     ],
     "additionalProperties": false
    },
-   "version": "1.19.0"
+   "version": "1.20.0"
   },
   {
    "name": "eqy_check",
@@ -379,7 +379,7 @@
     ],
     "additionalProperties": false
    },
-   "version": "1.19.0"
+   "version": "1.20.0"
   },
   {
    "name": "eye_scan",
@@ -411,7 +411,7 @@
     "required": [],
     "additionalProperties": false
    },
-   "version": "1.19.0"
+   "version": "1.20.0"
   },
   {
    "name": "formal",
@@ -422,7 +422,7 @@
     "required": [],
     "additionalProperties": false
    },
-   "version": "1.19.0"
+   "version": "1.20.0"
   },
   {
    "name": "gates",
@@ -451,7 +451,7 @@
     "required": [],
     "additionalProperties": false
    },
-   "version": "1.19.0"
+   "version": "1.20.0"
   },
   {
    "name": "gt_plan",
@@ -462,7 +462,109 @@
     "required": [],
     "additionalProperties": false
    },
-   "version": "1.19.0"
+   "version": "1.20.0"
+  },
+  {
+   "name": "ip_lookup",
+   "description": "Look in the IP library (ip_lib, 24 verified-by-simulation entries, SystemVerilog only) before writing a block. action=search: find entries for a plain-English request (words, a function name) and rank their variants (fits / does not fit / unknown: a figure never measured) against an optional part, clock, budget and II; the answer is 'nothing fits' when no entry does, with the nearest misses marked as such. action=show: the contract, variants, measured costs, verification label and an instantiation snippet of one entry. Costs are Artix-7 measurements unless a row names another part. Read-only; it never copies files (the owner's `python -m agent ip use` does). Each call is logged to build/ip_lookup.jsonl.",
+   "inputSchema": {
+    "type": "object",
+    "properties": {
+     "action": {
+      "type": "string",
+      "enum": [
+       "search",
+       "show"
+      ]
+     },
+     "query": {
+      "type": "string",
+      "maxLength": 300
+     },
+     "block": {
+      "type": "string",
+      "pattern": "^[a-z0-9_]{1,40}$"
+     },
+     "part": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9_-]{1,40}$"
+     },
+     "clock_ns": {
+      "type": "number",
+      "exclusiveMinimum": 0
+     },
+     "budget": {
+      "type": "object",
+      "properties": {
+       "lut": {
+        "type": "integer",
+        "minimum": 0
+       },
+       "ff": {
+        "type": "integer",
+        "minimum": 0
+       },
+       "lutram": {
+        "type": "integer",
+        "minimum": 0
+       },
+       "bram_tiles": {
+        "type": "integer",
+        "minimum": 0
+       },
+       "dsp": {
+        "type": "integer",
+        "minimum": 0
+       }
+      },
+      "additionalProperties": false
+     },
+     "need_ii": {
+      "type": "integer",
+      "minimum": 1
+     },
+     "objective": {
+      "type": "string",
+      "enum": [
+       "area",
+       "fabric",
+       "throughput",
+       "fmax"
+      ]
+     },
+     "language": {
+      "type": "string",
+      "enum": [
+       "sv",
+       "v",
+       "vhdl"
+      ]
+     },
+     "params": {
+      "type": "object",
+      "additionalProperties": {
+       "type": [
+        "integer",
+        "string"
+       ]
+      }
+     },
+     "variant": {
+      "type": "string",
+      "pattern": "^[a-z0-9_]{1,40}$"
+     },
+     "k": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 5
+     }
+    },
+    "required": [
+     "action"
+    ],
+    "additionalProperties": false
+   },
+   "version": "1.20.0"
   },
   {
    "name": "latency_budget",
@@ -486,7 +588,7 @@
     "required": [],
     "additionalProperties": false
    },
-   "version": "1.19.0"
+   "version": "1.20.0"
   },
   {
    "name": "latency_path",
@@ -510,7 +612,7 @@
     "required": [],
     "additionalProperties": false
    },
-   "version": "1.19.0"
+   "version": "1.20.0"
   },
   {
    "name": "lint",
@@ -521,7 +623,7 @@
     "required": [],
     "additionalProperties": false
    },
-   "version": "1.19.0"
+   "version": "1.20.0"
   },
   {
    "name": "list_files",
@@ -537,7 +639,7 @@
     "required": [],
     "additionalProperties": false
    },
-   "version": "1.19.0"
+   "version": "1.20.0"
   },
   {
    "name": "load_skill",
@@ -565,7 +667,7 @@
     "required": [],
     "additionalProperties": false
    },
-   "version": "1.19.0"
+   "version": "1.20.0"
   },
   {
    "name": "mutate",
@@ -592,7 +694,7 @@
     "required": [],
     "additionalProperties": false
    },
-   "version": "1.19.0"
+   "version": "1.20.0"
   },
   {
    "name": "oss_synth",
@@ -649,7 +751,7 @@
     ],
     "additionalProperties": false
    },
-   "version": "1.19.0"
+   "version": "1.20.0"
   },
   {
    "name": "program",
@@ -671,7 +773,7 @@
     "required": [],
     "additionalProperties": false
    },
-   "version": "1.19.0"
+   "version": "1.20.0"
   },
   {
    "name": "read_file",
@@ -698,7 +800,7 @@
     ],
     "additionalProperties": false
    },
-   "version": "1.19.0"
+   "version": "1.20.0"
   },
   {
    "name": "report",
@@ -732,7 +834,7 @@
     ],
     "additionalProperties": false
    },
-   "version": "1.19.0"
+   "version": "1.20.0"
   },
   {
    "name": "report_digest",
@@ -769,7 +871,7 @@
     ],
     "additionalProperties": false
    },
-   "version": "1.19.0"
+   "version": "1.20.0"
   },
   {
    "name": "search_docs",
@@ -800,7 +902,7 @@
     ],
     "additionalProperties": false
    },
-   "version": "1.19.0"
+   "version": "1.20.0"
   },
   {
    "name": "simulate",
@@ -823,7 +925,7 @@
     "required": [],
     "additionalProperties": false
    },
-   "version": "1.19.0"
+   "version": "1.20.0"
   },
   {
    "name": "skill_excerpt",
@@ -846,7 +948,7 @@
     ],
     "additionalProperties": false
    },
-   "version": "1.19.0"
+   "version": "1.20.0"
   },
   {
    "name": "skill_index",
@@ -869,7 +971,7 @@
     ],
     "additionalProperties": false
    },
-   "version": "1.19.0"
+   "version": "1.20.0"
   },
   {
    "name": "spec_items",
@@ -880,7 +982,7 @@
     "required": [],
     "additionalProperties": false
    },
-   "version": "1.19.0"
+   "version": "1.20.0"
   },
   {
    "name": "stage_note",
@@ -914,7 +1016,7 @@
     ],
     "additionalProperties": false
    },
-   "version": "1.19.0"
+   "version": "1.20.0"
   },
   {
    "name": "write_file",
@@ -937,7 +1039,7 @@
     ],
     "additionalProperties": false
    },
-   "version": "1.19.0"
+   "version": "1.20.0"
   }
  ]
 }

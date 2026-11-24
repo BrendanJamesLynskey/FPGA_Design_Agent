@@ -1,0 +1,14 @@
+# Coverage targets of the adder harness (arith brief 139a). Each bin is a Python expression over v (the inputs of one vector), r (the model's outputs for it)
+# and p (the parameters, WIDTH included); a bin is hit when it is true for at least `min` vectors. run_harness.py fails if a target is not met.
+bins:
+  - {name: add_no_carry_in, expr: "not v['sub'] and not v['cin']", min: 20}
+  - {name: add_with_carry_in, expr: "not v['sub'] and v['cin']", min: 20}
+  - {name: sub_no_borrow_in, expr: "v['sub'] and not v['cin']", min: 20}
+  - {name: sub_with_borrow_in, expr: "v['sub'] and v['cin']", min: 20}
+  - {name: carry_out_set, expr: "r['co'] == 1", min: 20}
+  - {name: carry_out_clear, expr: "r['co'] == 0", min: 20}
+  - {name: signed_overflow, expr: "r['ovf'] == 1", min: 5}
+  - {name: no_signed_overflow, expr: "r['ovf'] == 0", min: 20}
+  - {name: full_length_carry_chain, expr: "not v['sub'] and v['a'] == (1 << p['WIDTH']) - 1 and v['b'] == 0 and v['cin'] == 1", min: 1}
+  - {name: result_zero, expr: "r['s'] == 0", min: 3}
+  - {name: result_all_ones, expr: "r['s'] == (1 << p['WIDTH']) - 1", min: 3}

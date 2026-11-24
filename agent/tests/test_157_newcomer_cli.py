@@ -79,7 +79,7 @@ def test_design_dry_run_exits_0_without_a_key_and_writes_nothing():
     d = ROOT / DESIGN
     before = tree(d)
     runs = (ROOT / "runs").exists() and sorted(p.name for p in (ROOT / "runs").iterdir())
-    r = cli("resume", DESIGN, "widen the price field", "--dry-run")
+    r = cli("resume", DESIGN, "lower the latency", "--dry-run")
     assert r.returncode == 0, r.stderr
     rep = json.loads(r.stdout)
     assert rep["resume"] == "dry run" and "entry" in rep and rep["design"].endswith("b110_itch_ouch")
@@ -100,7 +100,7 @@ GATED = [
     ["run", "spec.md"], ["run", "spec.md", "--stop-after", "0"], ["run", "spec.md", "--interview", "oracle", "--hidden-spec", "h.md"],
     ["resume", "someid"], ["resume", "someid", "--dry-run"], ["resume", "someid", "change", "--dry-run"], ["resume", "someid", "--rewind", "2"],
     ["resume", "no_such_dir/handover.yaml", "--dry-run"],                       # a name that is not a design directory is a run id
-    ["resume", DESIGN, "widen the price field"], ["resume", DESIGN], ["resume", DESIGN, "x", "--stop-after", "2"],
+    ["resume", DESIGN, "lower the latency"], ["resume", DESIGN], ["resume", DESIGN, "x", "--stop-after", "2"],
     ["document", "rundir"], ["review", DESIGN], ["review", DESIGN, "--no-judge"],
     ["models", "check"], ["models", "check", "--probe"],
     ["latency", "--arm", "A0", "some_checkout"], ["improve", DESIGN, "use fewer LUTs"], ["improve", DESIGN, "use fewer LUTs", "--analyse-only"],
@@ -144,7 +144,7 @@ def test_defence_in_depth_if_the_exemption_were_wrong():
             "from agent.__main__ import main\n"
             "sys.exit(main(sys.argv[1:]))\n")
     env = {k: v for k, v in os.environ.items() if k != "FDA_ACCESS_KEY"}
-    for argv in (["resume", DESIGN, "widen the price field"], ["models", "check", "--probe"]):
+    for argv in (["resume", DESIGN, "lower the latency"], ["models", "check", "--probe"]):
         r = subprocess.run([sys.executable, "-c", code, *argv], cwd=ROOT, env=env, capture_output=True, text=True, timeout=300)
         assert r.returncode == 2 and GATE_MSG in r.stderr, (argv, r.stderr[-300:])
 

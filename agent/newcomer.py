@@ -96,7 +96,7 @@ needs the access key and the private prompts (`python -m agent doctor` says what
 """
 
 RESUME_EPILOG = """examples:
-  python -m agent resume designs/b110_itch_ouch "widen the price field to 64 bits" --dry-run   # which stage would it re-enter; no key
+  python -m agent resume designs/b110_itch_ouch "lower the latency by one clock" --dry-run   # which stage would it re-enter; no key
   python -m agent resume <run-id> --reply '{"answer": "yes"}'                        # continue a paused run (key)
 
 `--dry-run` is for a design directory only. A request with no keyword the classifier knows (for example "use fewer LUTs") re-enters at

@@ -1,0 +1,153 @@
+{
+ "function": "adder",
+ "mutants": 16,
+ "valid": 16,
+ "killed": 16,
+ "survived": [],
+ "invalid": [],
+ "score_pct": 100.0,
+ "per_variant": {
+  "ripple": {
+   "valid": 5,
+   "killed": 5
+  },
+  "carry_select": {
+   "valid": 5,
+   "killed": 5
+  },
+  "pipelined": {
+   "valid": 6,
+   "killed": 6
+  }
+ },
+ "results": [
+  {
+   "name": "rip_cin_not_inverted",
+   "variant": "ripple",
+   "class": "operator",
+   "status": "killed",
+   "detail": "exhaustive {'WIDTH': 4}",
+   "why": "the borrow in is used as a carry in when subtracting"
+  },
+  {
+   "name": "rip_sub_ignored",
+   "variant": "ripple",
+   "class": "operator",
+   "status": "killed",
+   "detail": "exhaustive {'WIDTH': 4}",
+   "why": "the subtract input does nothing"
+  },
+  {
+   "name": "rip_ovf_sign_test",
+   "variant": "ripple",
+   "class": "condition",
+   "status": "killed",
+   "detail": "exhaustive {'WIDTH': 4}",
+   "why": "the overflow flag tests operands of opposite sign"
+  },
+  {
+   "name": "rip_ovf_or",
+   "variant": "ripple",
+   "class": "operator",
+   "status": "killed",
+   "detail": "exhaustive {'WIDTH': 4}",
+   "why": "the overflow flag is set when either condition holds"
+  },
+  {
+   "name": "rip_cin_dropped",
+   "variant": "ripple",
+   "class": "connection",
+   "status": "killed",
+   "detail": "exhaustive {'WIDTH': 4}",
+   "why": "the carry or borrow in is ignored"
+  },
+  {
+   "name": "cs_select_swapped",
+   "variant": "carry_select",
+   "class": "condition",
+   "status": "killed",
+   "detail": "exhaustive {'WIDTH': 6, 'BLOCK': 2}",
+   "why": "the block carry out is selected with the wrong polarity"
+  },
+  {
+   "name": "cs_sum_select_swapped",
+   "variant": "carry_select",
+   "class": "condition",
+   "status": "killed",
+   "detail": "exhaustive {'WIDTH': 6, 'BLOCK': 2}",
+   "why": "the block sum is selected with the wrong polarity"
+  },
+  {
+   "name": "cs_carry1_is_carry0",
+   "variant": "carry_select",
+   "class": "constant",
+   "status": "killed",
+   "detail": "exhaustive {'WIDTH': 6, 'BLOCK': 2}",
+   "why": "the carry-in-1 chain is really a carry-in-0 chain"
+  },
+  {
+   "name": "cs_cin_unused",
+   "variant": "carry_select",
+   "class": "connection",
+   "status": "killed",
+   "detail": "exhaustive {'WIDTH': 6, 'BLOCK': 2}",
+   "why": "the subtract's inverted carry in is not used"
+  },
+  {
+   "name": "cs_first_block_cin",
+   "variant": "carry_select",
+   "class": "constant",
+   "status": "killed",
+   "detail": "exhaustive {'WIDTH': 6, 'BLOCK': 2}",
+   "why": "the first block ignores the carry in"
+  },
+  {
+   "name": "pl_carry_dropped",
+   "variant": "pipelined",
+   "class": "connection",
+   "status": "killed",
+   "detail": "exhaustive {'WIDTH': 5, 'STAGES': 3}",
+   "why": "the chunk carry is not passed on"
+  },
+  {
+   "name": "pl_b_not_skewed",
+   "variant": "pipelined",
+   "class": "connection",
+   "status": "killed",
+   "detail": "exhaustive {'WIDTH': 5, 'STAGES': 3}",
+   "why": "the second operand's higher chunks are lost on the way"
+  },
+  {
+   "name": "pl_a_not_skewed",
+   "variant": "pipelined",
+   "class": "connection",
+   "status": "killed",
+   "detail": "exhaustive {'WIDTH': 5, 'STAGES': 3}",
+   "why": "the first operand's higher chunks are not delayed with the carry"
+  },
+  {
+   "name": "pl_sum_not_kept",
+   "variant": "pipelined",
+   "class": "connection",
+   "status": "killed",
+   "detail": "exhaustive {'WIDTH': 5, 'STAGES': 3}",
+   "why": "a finished chunk is not stored"
+  },
+  {
+   "name": "pl_ovf_sign_test",
+   "variant": "pipelined",
+   "class": "condition",
+   "status": "killed",
+   "detail": "exhaustive {'WIDTH': 5, 'STAGES': 3}",
+   "why": "the overflow flag tests operands of opposite sign"
+  },
+  {
+   "name": "pl_cin_unused",
+   "variant": "pipelined",
+   "class": "connection",
+   "status": "killed",
+   "detail": "exhaustive {'WIDTH': 5, 'STAGES': 3}",
+   "why": "the subtract's inverted carry in is not used"
+  }
+ ]
+}

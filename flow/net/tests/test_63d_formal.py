@@ -26,7 +26,7 @@ JOBS = [
     ("arp_responder", "arp.sby", "cover", "a reply and a request leave"),
     ("icmp_echo", "icmp.sby", "bmc", "AXI-Stream rules, no reply without a request, and the reply carries the request it answers (byte 13 equal) whatever frame follows it: bounded, 64 clocks; fails at step 60 with the round-1 back-to-back bug restored. Byte 13 only: a solver-chosen byte (anyconst over the copied bytes 12-41) found a tail-byte overwrite in 41 s but the passing run did not finish in 35 min at depth 90, so the tail bytes are covered by simulation (seeded fault icmp_tail_bytes_overwritten)"),
     ("icmp_echo", "icmp.sby", "cover", "a whole reply to a minimal echo request"),
-    ("ipv4_udp_rx", "udp_rx.sby", "bmc", "AXI-Stream rules with tuser, tdest and header fields; input held after a frame: bounded, 30 clocks"),
+    ("ipv4_udp_rx", "udp_rx.sby", "bmc", "AXI-Stream rules with tuser, tdest and header fields; input held after a frame: bounded, 52 clocks (30 before brief 143c: the first output beat is at step 46)"),
     ("ipv4_udp_rx", "udp_rx.sby", "cover", "a whole datagram parsed and passed on"),
     ("ipv4_udp_tx", "udp_tx.sby", "bmc", "frames of 42 bytes plus the payload, AXI-Stream rules, input held while sending: bounded, 60 clocks"),
     ("ipv4_udp_tx", "udp_tx.sby", "cover", "a two-byte datagram leaves"),

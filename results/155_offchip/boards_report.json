@@ -1,0 +1,861 @@
+[
+ {
+  "spec": "kr260_b58a_trigger.spec.yaml",
+  "design": "designs/b58a_trigger",
+  "board": "kr260",
+  "master_xdc": {
+   "file": "boards/kr260/kr260-pins.xdc",
+   "port_lines": 39,
+   "with_drive": 0,
+   "with_slew": 0,
+   "iostandards": [
+    "LVCMOS18",
+    "LVCMOS33"
+   ]
+  },
+  "schema_errors": [],
+  "findings": [
+   {
+    "code": "OFFCHIP-OVERSHOOT",
+    "severity": "contradicts-model",
+    "group": "rgmii_a_tx",
+    "text": "rgmii_a_tx: a_tx_ctl, a_txc, a_txd[0]... (LVCMOS18 DRIVE 12 SLEW FAST): receiver overshoot +1.06 V beyond the rail at the worst IBIS corner (recommended limit 0.20 V); it spends 1.35 ns beyond 0.20 V (33.8 % of a 4 ns UI) against 2 % allowed at that peak (DS925 v1.30 Tables 1, 2 and 7 (HP banks))",
+    "numbers": {
+     "source": {
+      "file": "zynquplus/public/ibis/zynquplus.ibs",
+      "ibis_ver": "5.1",
+      "file_rev": "2.11",
+      "date": "10-FEB-2022",
+      "model": "HP_LVCMOS18_F_12"
+     },
+     "worst_over_v": 1.059,
+     "worst_under_v": 0.971,
+     "first_incident_margin_v": 1.0226233095777406,
+     "ringback_margin_v": 0.0010679416775225548,
+     "r_pu_ohm": {
+      "typ": 24.0,
+      "min": 28.0,
+      "max": 20.7
+     },
+     "r_pd_ohm": {
+      "typ": 26.0,
+      "min": 30.8,
+      "max": 22.4
+     },
+     "defaulted_ports": []
+    }
+   },
+   {
+    "code": "OFFCHIP-OVERSHOOT",
+    "severity": "contradicts-model",
+    "group": "rgmii_a_tx",
+    "text": "rgmii_a_tx: a_tx_ctl, a_txc, a_txd[0]... (LVCMOS18 DRIVE 12 SLEW FAST): receiver undershoot +0.97 V beyond the rail at the worst IBIS corner (recommended limit 0.20 V); it spends 1.32 ns beyond 0.20 V (33.0 % of a 4 ns UI) against 2 % allowed at that peak (DS925 v1.30 Tables 1, 2 and 7 (HP banks))",
+    "numbers": {
+     "source": {
+      "file": "zynquplus/public/ibis/zynquplus.ibs",
+      "ibis_ver": "5.1",
+      "file_rev": "2.11",
+      "date": "10-FEB-2022",
+      "model": "HP_LVCMOS18_F_12"
+     },
+     "worst_over_v": 1.059,
+     "worst_under_v": 0.971,
+     "first_incident_margin_v": 1.0226233095777406,
+     "ringback_margin_v": 0.0010679416775225548,
+     "r_pu_ohm": {
+      "typ": 24.0,
+      "min": 28.0,
+      "max": 20.7
+     },
+     "r_pd_ohm": {
+      "typ": 26.0,
+      "min": 30.8,
+      "max": 22.4
+     },
+     "defaulted_ports": []
+    }
+   },
+   {
+    "code": "OFFCHIP-DRIVE-MATCH",
+    "severity": "advisory",
+    "group": "rgmii_a_tx",
+    "text": "rgmii_a_tx: a_tx_ctl, a_txc, a_txd[0]... (LVCMOS18 DRIVE 12 SLEW FAST): output resistance plus series resistor is 24 ohm (pull-up) and 26 ohm (pull-down) against Z0 50 ohm (typical corner; worst corner mismatch 59 %)",
+    "numbers": {
+     "source": {
+      "file": "zynquplus/public/ibis/zynquplus.ibs",
+      "ibis_ver": "5.1",
+      "file_rev": "2.11",
+      "date": "10-FEB-2022",
+      "model": "HP_LVCMOS18_F_12"
+     },
+     "worst_over_v": 1.059,
+     "worst_under_v": 0.971,
+     "first_incident_margin_v": 1.0226233095777406,
+     "ringback_margin_v": 0.0010679416775225548,
+     "r_pu_ohm": {
+      "typ": 24.0,
+      "min": 28.0,
+      "max": 20.7
+     },
+     "r_pd_ohm": {
+      "typ": 26.0,
+      "min": 30.8,
+      "max": 22.4
+     },
+     "defaulted_ports": []
+    }
+   },
+   {
+    "code": "OFFCHIP-NO-TERM",
+    "severity": "advisory",
+    "group": "rgmii_a_tx",
+    "text": "rgmii_a_tx: a_tx_ctl, a_txc, a_txd[0]... (LVCMOS18 DRIVE 12 SLEW FAST): unterminated line 4 in long; receiver ringing 1.50 V peak to peak (> a quarter of VCCO 1.8 V): add a series resistor at the source or a termination at the receiver",
+    "numbers": {
+     "source": {
+      "file": "zynquplus/public/ibis/zynquplus.ibs",
+      "ibis_ver": "5.1",
+      "file_rev": "2.11",
+      "date": "10-FEB-2022",
+      "model": "HP_LVCMOS18_F_12"
+     },
+     "worst_over_v": 1.059,
+     "worst_under_v": 0.971,
+     "first_incident_margin_v": 1.0226233095777406,
+     "ringback_margin_v": 0.0010679416775225548,
+     "r_pu_ohm": {
+      "typ": 24.0,
+      "min": 28.0,
+      "max": 20.7
+     },
+     "r_pd_ohm": {
+      "typ": 26.0,
+      "min": 30.8,
+      "max": 22.4
+     },
+     "defaulted_ports": []
+    }
+   },
+   {
+    "code": "OFFCHIP-OVERSHOOT",
+    "severity": "contradicts-model",
+    "group": "rgmii_b_tx",
+    "text": "rgmii_b_tx: b_tx_ctl, b_txc, b_txd[0]... (LVCMOS18 DRIVE 12 SLEW FAST): receiver overshoot +1.06 V beyond the rail at the worst IBIS corner (recommended limit 0.20 V); it spends 1.35 ns beyond 0.20 V (33.8 % of a 4 ns UI) against 2 % allowed at that peak (DS925 v1.30 Tables 1, 2 and 7 (HP banks))",
+    "numbers": {
+     "source": {
+      "file": "zynquplus/public/ibis/zynquplus.ibs",
+      "ibis_ver": "5.1",
+      "file_rev": "2.11",
+      "date": "10-FEB-2022",
+      "model": "HP_LVCMOS18_F_12"
+     },
+     "worst_over_v": 1.059,
+     "worst_under_v": 0.971,
+     "first_incident_margin_v": 1.0226233095777406,
+     "ringback_margin_v": 0.0010679416775225548,
+     "r_pu_ohm": {
+      "typ": 24.0,
+      "min": 28.0,
+      "max": 20.7
+     },
+     "r_pd_ohm": {
+      "typ": 26.0,
+      "min": 30.8,
+      "max": 22.4
+     },
+     "defaulted_ports": []
+    }
+   },
+   {
+    "code": "OFFCHIP-OVERSHOOT",
+    "severity": "contradicts-model",
+    "group": "rgmii_b_tx",
+    "text": "rgmii_b_tx: b_tx_ctl, b_txc, b_txd[0]... (LVCMOS18 DRIVE 12 SLEW FAST): receiver undershoot +0.97 V beyond the rail at the worst IBIS corner (recommended limit 0.20 V); it spends 1.32 ns beyond 0.20 V (33.0 % of a 4 ns UI) against 2 % allowed at that peak (DS925 v1.30 Tables 1, 2 and 7 (HP banks))",
+    "numbers": {
+     "source": {
+      "file": "zynquplus/public/ibis/zynquplus.ibs",
+      "ibis_ver": "5.1",
+      "file_rev": "2.11",
+      "date": "10-FEB-2022",
+      "model": "HP_LVCMOS18_F_12"
+     },
+     "worst_over_v": 1.059,
+     "worst_under_v": 0.971,
+     "first_incident_margin_v": 1.0226233095777406,
+     "ringback_margin_v": 0.0010679416775225548,
+     "r_pu_ohm": {
+      "typ": 24.0,
+      "min": 28.0,
+      "max": 20.7
+     },
+     "r_pd_ohm": {
+      "typ": 26.0,
+      "min": 30.8,
+      "max": 22.4
+     },
+     "defaulted_ports": []
+    }
+   },
+   {
+    "code": "OFFCHIP-DRIVE-MATCH",
+    "severity": "advisory",
+    "group": "rgmii_b_tx",
+    "text": "rgmii_b_tx: b_tx_ctl, b_txc, b_txd[0]... (LVCMOS18 DRIVE 12 SLEW FAST): output resistance plus series resistor is 24 ohm (pull-up) and 26 ohm (pull-down) against Z0 50 ohm (typical corner; worst corner mismatch 59 %)",
+    "numbers": {
+     "source": {
+      "file": "zynquplus/public/ibis/zynquplus.ibs",
+      "ibis_ver": "5.1",
+      "file_rev": "2.11",
+      "date": "10-FEB-2022",
+      "model": "HP_LVCMOS18_F_12"
+     },
+     "worst_over_v": 1.059,
+     "worst_under_v": 0.971,
+     "first_incident_margin_v": 1.0226233095777406,
+     "ringback_margin_v": 0.0010679416775225548,
+     "r_pu_ohm": {
+      "typ": 24.0,
+      "min": 28.0,
+      "max": 20.7
+     },
+     "r_pd_ohm": {
+      "typ": 26.0,
+      "min": 30.8,
+      "max": 22.4
+     },
+     "defaulted_ports": []
+    }
+   },
+   {
+    "code": "OFFCHIP-NO-TERM",
+    "severity": "advisory",
+    "group": "rgmii_b_tx",
+    "text": "rgmii_b_tx: b_tx_ctl, b_txc, b_txd[0]... (LVCMOS18 DRIVE 12 SLEW FAST): unterminated line 4 in long; receiver ringing 1.50 V peak to peak (> a quarter of VCCO 1.8 V): add a series resistor at the source or a termination at the receiver",
+    "numbers": {
+     "source": {
+      "file": "zynquplus/public/ibis/zynquplus.ibs",
+      "ibis_ver": "5.1",
+      "file_rev": "2.11",
+      "date": "10-FEB-2022",
+      "model": "HP_LVCMOS18_F_12"
+     },
+     "worst_over_v": 1.059,
+     "worst_under_v": 0.971,
+     "first_incident_margin_v": 1.0226233095777406,
+     "ringback_margin_v": 0.0010679416775225548,
+     "r_pu_ohm": {
+      "typ": 24.0,
+      "min": 28.0,
+      "max": 20.7
+     },
+     "r_pd_ohm": {
+      "typ": 26.0,
+      "min": 30.8,
+      "max": 22.4
+     },
+     "defaulted_ports": []
+    }
+   }
+  ],
+  "groups": [
+   {
+    "what_if_series_resistor": [
+     {
+      "series_ohm_on_board": 22.0,
+      "drive": 12,
+      "slew": "FAST",
+      "worst_overshoot_v": 0.21,
+      "worst_undershoot_v": 0.17,
+      "first_incident_margin_v": 0.54,
+      "flags": [
+       "OFFCHIP-OVERSHOOT"
+      ]
+     },
+     {
+      "series_ohm_on_board": 33.0,
+      "drive": 12,
+      "slew": "FAST",
+      "worst_overshoot_v": 0.0,
+      "worst_undershoot_v": -0.0,
+      "first_incident_margin_v": 0.37,
+      "flags": []
+     }
+    ],
+    "group": "rgmii_a_tx",
+    "ports": [
+     "a_tx_ctl",
+     "a_txc",
+     "a_txd[0]",
+     "a_txd[1]",
+     "a_txd[2]",
+     "a_txd[3]"
+    ],
+    "line": {
+     "z0_ohm": 50,
+     "length_in": 4.0
+    },
+    "c_pf": 4.0,
+    "priority": "edge_rate",
+    "xdc_now": [
+     {
+      "iostandard": "LVCMOS18",
+      "drive": 12,
+      "slew": "FAST",
+      "explicit_in_xdc": true,
+      "worst_overshoot_v": 1.06,
+      "worst_undershoot_v": 0.97,
+      "first_incident_margin_v": 1.02,
+      "ringback_margin_v": 0.0,
+      "lumped": false,
+      "model": "HP_LVCMOS18_F_12"
+     }
+    ],
+    "proposal": {
+     "drive": 12,
+     "slew": "FAST",
+     "rs_ohm": 27.0,
+     "static_mismatch": 0.154,
+     "worst_over_v": 0.082,
+     "worst_under_v": 0.045,
+     "first_incident_margin_v": 0.45914667875161785,
+     "ringback_margin_v": 0.00012914419217369133,
+     "settle_ns": 2.58
+    },
+    "no_proposal_reason": null,
+    "n_passing": 7
+   },
+   {
+    "what_if_series_resistor": [
+     {
+      "series_ohm_on_board": 22.0,
+      "drive": 12,
+      "slew": "FAST",
+      "worst_overshoot_v": 0.21,
+      "worst_undershoot_v": 0.17,
+      "first_incident_margin_v": 0.54,
+      "flags": [
+       "OFFCHIP-OVERSHOOT"
+      ]
+     },
+     {
+      "series_ohm_on_board": 33.0,
+      "drive": 12,
+      "slew": "FAST",
+      "worst_overshoot_v": 0.0,
+      "worst_undershoot_v": -0.0,
+      "first_incident_margin_v": 0.37,
+      "flags": []
+     }
+    ],
+    "group": "rgmii_b_tx",
+    "ports": [
+     "b_tx_ctl",
+     "b_txc",
+     "b_txd[0]",
+     "b_txd[1]",
+     "b_txd[2]",
+     "b_txd[3]"
+    ],
+    "line": {
+     "z0_ohm": 50,
+     "length_in": 4.0
+    },
+    "c_pf": 4.0,
+    "priority": "edge_rate",
+    "xdc_now": [
+     {
+      "iostandard": "LVCMOS18",
+      "drive": 12,
+      "slew": "FAST",
+      "explicit_in_xdc": true,
+      "worst_overshoot_v": 1.06,
+      "worst_undershoot_v": 0.97,
+      "first_incident_margin_v": 1.02,
+      "ringback_margin_v": 0.0,
+      "lumped": false,
+      "model": "HP_LVCMOS18_F_12"
+     }
+    ],
+    "proposal": {
+     "drive": 12,
+     "slew": "FAST",
+     "rs_ohm": 27.0,
+     "static_mismatch": 0.154,
+     "worst_over_v": 0.082,
+     "worst_under_v": 0.045,
+     "first_incident_margin_v": 0.45914667875161785,
+     "ringback_margin_v": 0.00012914419217369133,
+     "settle_ns": 2.58
+    },
+    "no_proposal_reason": null,
+    "n_passing": 7
+   },
+   {
+    "what_if_series_resistor": [],
+    "group": "leds",
+    "ports": [
+     "led[0]",
+     "led[1]"
+    ],
+    "line": "short",
+    "c_pf": 5.0,
+    "priority": "emi",
+    "xdc_now": [
+     {
+      "iostandard": "LVCMOS18",
+      "drive": 8,
+      "slew": "SLOW",
+      "explicit_in_xdc": true,
+      "worst_overshoot_v": 0.0,
+      "worst_undershoot_v": -0.0,
+      "first_incident_margin_v": null,
+      "ringback_margin_v": 0.0,
+      "lumped": true,
+      "model": "HP_LVCMOS18_S_8"
+     }
+    ],
+    "proposal": {
+     "drive": 4,
+     "slew": "SLOW",
+     "rs_ohm": 0.0,
+     "static_mismatch": 0.749,
+     "worst_over_v": 0.0,
+     "worst_under_v": -0.0,
+     "first_incident_margin_v": null,
+     "ringback_margin_v": 0.006337734726617361,
+     "settle_ns": 2.5
+    },
+    "no_proposal_reason": null,
+    "n_passing": 12
+   }
+  ]
+ },
+ {
+  "spec": "kr260_b96_10g.spec.yaml",
+  "design": "designs/b96_kr260_10g",
+  "board": "kr260",
+  "master_xdc": {
+   "file": "boards/kr260/kr260-pins.xdc",
+   "port_lines": 39,
+   "with_drive": 0,
+   "with_slew": 0,
+   "iostandards": [
+    "LVCMOS18",
+    "LVCMOS33"
+   ]
+  },
+  "schema_errors": [],
+  "findings": [
+   {
+    "code": "OFFCHIP-NO-LOAD-DATA",
+    "severity": "advisory",
+    "group": "-",
+    "text": "led[0]: the XDC sets DRIVE/SLEW (8/SLOW) but no off_chip group gives the load, so the value is not checked",
+    "numbers": {}
+   },
+   {
+    "code": "OFFCHIP-NO-LOAD-DATA",
+    "severity": "advisory",
+    "group": "-",
+    "text": "led[1]: the XDC sets DRIVE/SLEW (8/SLOW) but no off_chip group gives the load, so the value is not checked",
+    "numbers": {}
+   }
+  ],
+  "groups": [
+   {
+    "what_if_series_resistor": [],
+    "group": "sfp_control",
+    "ports": [
+     "sfp_i2c_scl",
+     "sfp_i2c_sda",
+     "sfp_tx_disable"
+    ],
+    "line": "short",
+    "c_pf": 10.0,
+    "priority": "emi",
+    "xdc_now": [
+     {
+      "iostandard": "LVCMOS33",
+      "drive": 8,
+      "slew": "SLOW",
+      "explicit_in_xdc": true,
+      "worst_overshoot_v": 0.0,
+      "worst_undershoot_v": -0.0,
+      "first_incident_margin_v": null,
+      "ringback_margin_v": 0.01,
+      "lumped": true,
+      "model": "HD_LVCMOS33_S_8"
+     }
+    ],
+    "proposal": {
+     "drive": 4,
+     "slew": "SLOW",
+     "rs_ohm": 0.0,
+     "static_mismatch": 1.105,
+     "worst_over_v": -0.0,
+     "worst_under_v": -0.0,
+     "first_incident_margin_v": null,
+     "ringback_margin_v": 0.000927512960860355,
+     "settle_ns": 4.44
+    },
+    "no_proposal_reason": null,
+    "n_passing": 7
+   }
+  ]
+ },
+ {
+  "spec": "nexys_b63d_nexys_net.spec.yaml",
+  "design": "designs/b63d_nexys_net",
+  "board": "nexys_a7_100t",
+  "master_xdc": {
+   "file": "boards/nexys_a7_100t/Nexys-A7-100T-Master.xdc",
+   "port_lines": 161,
+   "with_drive": 0,
+   "with_slew": 0,
+   "iostandards": [
+    "LVCMOS18",
+    "LVCMOS33"
+   ]
+  },
+  "schema_errors": [],
+  "findings": [
+   {
+    "code": "OFFCHIP-OVERSHOOT",
+    "severity": "contradicts-model",
+    "group": "rmii_out",
+    "text": "rmii_out: ETH_MDC, ETH_REFCLK, ETH_TXD[*]... (LVCMOS33 DRIVE 12 SLEW SLOW): receiver overshoot +1.16 V beyond the rail at the worst IBIS corner (recommended limit 0.20 V); it spends 1.89 ns beyond 0.20 V (9.5 % of a 20 ns UI) against 0.24 % allowed at that peak (DS181 v1.27.1 Tables 1, 2, 4 (HR banks); DS187 Table 4 gives the same overshoot table for Zynq-7000 HR)",
+    "numbers": {
+     "source": {
+      "file": "artix7/public/ibis/artix7.ibs",
+      "ibis_ver": "4.2",
+      "file_rev": "2.8",
+      "date": "28-AUG-2017",
+      "model": "LVCMOS33_S_12_HR"
+     },
+     "worst_over_v": 1.165,
+     "worst_under_v": 1.286,
+     "first_incident_margin_v": null,
+     "ringback_margin_v": -0.07286895317017372,
+     "r_pu_ohm": {
+      "typ": 22.1,
+      "min": 31.9,
+      "max": 17.4
+     },
+     "r_pd_ohm": {
+      "typ": 17.0,
+      "min": 32.1,
+      "max": 12.4
+     },
+     "defaulted_ports": [
+      "ETH_MDC",
+      "ETH_REFCLK",
+      "ETH_TXD[*]",
+      "ETH_TXD[0]",
+      "ETH_TXD[1]",
+      "ETH_TXEN"
+     ]
+    }
+   },
+   {
+    "code": "OFFCHIP-OVERSHOOT",
+    "severity": "contradicts-model",
+    "group": "rmii_out",
+    "text": "rmii_out: ETH_MDC, ETH_REFCLK, ETH_TXD[*]... (LVCMOS33 DRIVE 12 SLEW SLOW): receiver undershoot +1.29 V beyond the rail at the worst IBIS corner (recommended limit 0.20 V); it spends 2.61 ns beyond 0.20 V (13.1 % of a 20 ns UI) against 0.02 % allowed at that peak (DS181 v1.27.1 Tables 1, 2, 4 (HR banks); DS187 Table 4 gives the same overshoot table for Zynq-7000 HR)",
+    "numbers": {
+     "source": {
+      "file": "artix7/public/ibis/artix7.ibs",
+      "ibis_ver": "4.2",
+      "file_rev": "2.8",
+      "date": "28-AUG-2017",
+      "model": "LVCMOS33_S_12_HR"
+     },
+     "worst_over_v": 1.165,
+     "worst_under_v": 1.286,
+     "first_incident_margin_v": null,
+     "ringback_margin_v": -0.07286895317017372,
+     "r_pu_ohm": {
+      "typ": 22.1,
+      "min": 31.9,
+      "max": 17.4
+     },
+     "r_pd_ohm": {
+      "typ": 17.0,
+      "min": 32.1,
+      "max": 12.4
+     },
+     "defaulted_ports": [
+      "ETH_MDC",
+      "ETH_REFCLK",
+      "ETH_TXD[*]",
+      "ETH_TXD[0]",
+      "ETH_TXD[1]",
+      "ETH_TXEN"
+     ]
+    }
+   },
+   {
+    "code": "OFFCHIP-RINGBACK",
+    "severity": "contradicts-model",
+    "group": "rmii_out",
+    "text": "rmii_out: ETH_MDC, ETH_REFCLK, ETH_TXD[*]... (LVCMOS33 DRIVE 12 SLEW SLOW): the edge rings back through the receiver threshold by 0.07 V (a double edge or glitch on a clock or strobe)",
+    "numbers": {
+     "source": {
+      "file": "artix7/public/ibis/artix7.ibs",
+      "ibis_ver": "4.2",
+      "file_rev": "2.8",
+      "date": "28-AUG-2017",
+      "model": "LVCMOS33_S_12_HR"
+     },
+     "worst_over_v": 1.165,
+     "worst_under_v": 1.286,
+     "first_incident_margin_v": null,
+     "ringback_margin_v": -0.07286895317017372,
+     "r_pu_ohm": {
+      "typ": 22.1,
+      "min": 31.9,
+      "max": 17.4
+     },
+     "r_pd_ohm": {
+      "typ": 17.0,
+      "min": 32.1,
+      "max": 12.4
+     },
+     "defaulted_ports": [
+      "ETH_MDC",
+      "ETH_REFCLK",
+      "ETH_TXD[*]",
+      "ETH_TXD[0]",
+      "ETH_TXD[1]",
+      "ETH_TXEN"
+     ]
+    }
+   }
+  ],
+  "groups": [
+   {
+    "what_if_series_resistor": [
+     {
+      "series_ohm_on_board": 22.0,
+      "drive": 12,
+      "slew": "SLOW",
+      "worst_overshoot_v": 0.28,
+      "worst_undershoot_v": 0.41,
+      "first_incident_margin_v": 0.97,
+      "flags": [
+       "OFFCHIP-OVERSHOOT"
+      ]
+     },
+     {
+      "series_ohm_on_board": 33.0,
+      "drive": 12,
+      "slew": "SLOW",
+      "worst_overshoot_v": 0.01,
+      "worst_undershoot_v": 0.08,
+      "first_incident_margin_v": 0.69,
+      "flags": []
+     }
+    ],
+    "group": "rmii_out",
+    "ports": [
+     "ETH_MDC",
+     "ETH_REFCLK",
+     "ETH_TXD[*]",
+     "ETH_TXD[0]",
+     "ETH_TXD[1]",
+     "ETH_TXEN"
+    ],
+    "line": {
+     "z0_ohm": 50,
+     "length_in": 2.5
+    },
+    "c_pf": 6.0,
+    "priority": "balanced",
+    "xdc_now": [
+     {
+      "iostandard": "LVCMOS33",
+      "drive": 12,
+      "slew": "SLOW",
+      "explicit_in_xdc": false,
+      "worst_overshoot_v": 1.16,
+      "worst_undershoot_v": 1.29,
+      "first_incident_margin_v": null,
+      "ringback_margin_v": -0.07,
+      "lumped": true,
+      "model": "LVCMOS33_S_12_HR"
+     }
+    ],
+    "proposal": {
+     "drive": 12,
+     "slew": "SLOW",
+     "rs_ohm": 33.0,
+     "static_mismatch": 0.153,
+     "worst_over_v": 0.01,
+     "worst_under_v": 0.083,
+     "first_incident_margin_v": null,
+     "ringback_margin_v": 0.016529033175964436,
+     "settle_ns": 7.88
+    },
+    "no_proposal_reason": null,
+    "n_passing": 6
+   },
+   {
+    "what_if_series_resistor": [],
+    "group": "leds",
+    "ports": [
+     "LED[0]",
+     "LED[1]",
+     "LED[2]",
+     "LED[3]"
+    ],
+    "line": "short",
+    "c_pf": 5.0,
+    "priority": "emi",
+    "xdc_now": [
+     {
+      "iostandard": "LVCMOS33",
+      "drive": 12,
+      "slew": "SLOW",
+      "explicit_in_xdc": false,
+      "worst_overshoot_v": 0.03,
+      "worst_undershoot_v": 0.09,
+      "first_incident_margin_v": null,
+      "ringback_margin_v": 0.01,
+      "lumped": true,
+      "model": "LVCMOS33_S_12_HR"
+     }
+    ],
+    "proposal": {
+     "drive": 4,
+     "slew": "SLOW",
+     "rs_ohm": 0.0,
+     "static_mismatch": 1.926,
+     "worst_over_v": -0.0,
+     "worst_under_v": 0.0,
+     "first_incident_margin_v": null,
+     "ringback_margin_v": 0.00843589779234244,
+     "settle_ns": 7.41
+    },
+    "no_proposal_reason": null,
+    "n_passing": 5
+   }
+  ]
+ },
+ {
+  "spec": "nexys_uart_designs.spec.yaml",
+  "design": "designs/b2_tmp_adt7420",
+  "board": "nexys_a7_100t",
+  "master_xdc": {
+   "file": "boards/nexys_a7_100t/Nexys-A7-100T-Master.xdc",
+   "port_lines": 161,
+   "with_drive": 0,
+   "with_slew": 0,
+   "iostandards": [
+    "LVCMOS18",
+    "LVCMOS33"
+   ]
+  },
+  "schema_errors": [],
+  "findings": [],
+  "groups": [
+   {
+    "what_if_series_resistor": [],
+    "group": "uart_tx",
+    "ports": [
+     "UART_RXD_OUT"
+    ],
+    "line": "short",
+    "c_pf": 8.0,
+    "priority": "emi",
+    "xdc_now": [
+     {
+      "iostandard": "LVCMOS33",
+      "drive": 12,
+      "slew": "SLOW",
+      "explicit_in_xdc": false,
+      "worst_overshoot_v": 0.01,
+      "worst_undershoot_v": 0.13,
+      "first_incident_margin_v": null,
+      "ringback_margin_v": 0.0,
+      "lumped": true,
+      "model": "LVCMOS33_S_12_HR"
+     }
+    ],
+    "proposal": {
+     "drive": 4,
+     "slew": "SLOW",
+     "rs_ohm": 0.0,
+     "static_mismatch": 1.926,
+     "worst_over_v": -0.0,
+     "worst_under_v": 0.0,
+     "first_incident_margin_v": null,
+     "ringback_margin_v": 0.004419482958317733,
+     "settle_ns": 7.96
+    },
+    "no_proposal_reason": null,
+    "n_passing": 7
+   }
+  ]
+ },
+ {
+  "spec": "zedboard_smoke.spec.yaml",
+  "design": "boards/zedboard/smoke",
+  "board": "zedboard",
+  "master_xdc": {
+   "file": "boards/zedboard/zedboard-pins.xdc",
+   "port_lines": 54,
+   "with_drive": 0,
+   "with_slew": 0,
+   "iostandards": [
+    "LVCMOS18",
+    "LVCMOS33"
+   ]
+  },
+  "schema_errors": [],
+  "findings": [],
+  "groups": [
+   {
+    "what_if_series_resistor": [],
+    "group": "leds",
+    "ports": [
+     "led[0]",
+     "led[1]",
+     "led[2]",
+     "led[3]",
+     "led[4]",
+     "led[5]",
+     "led[6]",
+     "led[7]"
+    ],
+    "line": "short",
+    "c_pf": 5.0,
+    "priority": "emi",
+    "xdc_now": [
+     {
+      "iostandard": "LVCMOS33",
+      "drive": 12,
+      "slew": "SLOW",
+      "explicit_in_xdc": false,
+      "worst_overshoot_v": 0.03,
+      "worst_undershoot_v": 0.09,
+      "first_incident_margin_v": null,
+      "ringback_margin_v": 0.01,
+      "lumped": true,
+      "model": "LVCMOS33_S_12_HR"
+     }
+    ],
+    "proposal": {
+     "drive": 4,
+     "slew": "SLOW",
+     "rs_ohm": 0.0,
+     "static_mismatch": 1.926,
+     "worst_over_v": -0.0,
+     "worst_under_v": 0.0,
+     "first_incident_margin_v": null,
+     "ringback_margin_v": 0.00843589779234244,
+     "settle_ns": 7.41
+    },
+    "no_proposal_reason": null,
+    "n_passing": 5
+   }
+  ]
+ }
+]

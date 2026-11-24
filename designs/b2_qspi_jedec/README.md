@@ -9,7 +9,7 @@ Not in scope:
 - a flash memory test: it reads only the ID, so it says nothing about the flash contents, erase, program or quad-mode operation
 - an agent benchmark task; it was written by hand to prove the board inventory on hardware
 
-Kind: board-selfcheck; written by hand. State: board-verified. For an agent: [AGENT.md](AGENT.md).
+Kind: board-selfcheck; written by a Claude Code session. State: board-verified. For an agent: [AGENT.md](AGENT.md).
 
 <!-- prose:what -->
 A board self-check, not an agent benchmark task: it was written by hand to prove the board inventory (`boards/nexys_a7_100t/inventory.yaml`) on hardware. The test shell (`shell/`) carries its registers; the register map is in the header of `rtl/qspi_regs.sv`.
@@ -68,7 +68,7 @@ Interfaces:
 | build and run the gates; needs local Vivado 2026.1 and a heavy slot (take_heavy_slot.sh) | `flow/run_vivado.sh designs/b2_qspi_jedec base` | yes | about 4 min |
 | power gate, program SRAM, self-check, three times; needs the Nexys A7 on wall power and the board lock | `python3 flow/board_check.py designs/b2_qspi_jedec --runs 3` | no | about 2 min |
 
-Tool: Vivado 2026.1. Build ID of the inputs at handover: `ac857e6b` (`python flow/manifest.py show designs/b2_qspi_jedec`: what a rebuild of today's sources and flow would carry; it changes when any build input or the flow changes, so it can differ from the build ID in an older evidence record). Knowledge-bank pin: `1fc7ed8`.
+Tool: Vivado 2026.1. Build ID of the inputs at handover: `2d3dea12` (`python flow/manifest.py show designs/b2_qspi_jedec`: what a rebuild of today's sources and flow would carry; it changes when any build input or the flow changes, so it can differ from the build ID in an older evidence record). Knowledge-bank pin: `5e2eab8`.
 
 | File | What |
 |---|---|
