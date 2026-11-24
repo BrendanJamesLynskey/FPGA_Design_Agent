@@ -7,7 +7,7 @@
 #   vivado:    rule-ID patterns (fnmatch) from report_methodology, report_drc and report_cdc in the build's gates.json;
 #              severities Error, Critical Warning and Warning count, Info and Advisory do not
 #   standards: rule ids of flow/standards_check.py (docs/design_standards.md), status fail or not_run
-#   resets, cdc_structure, exceptions, io, clocking, fsm, axi, gt, doc, constraint_scope, xpm_sim: the codes the check suite's checks raise
+#   resets, cdc_structure, exceptions, io, clocking, fsm, axi, gt, doc, constraint_scope, xpm_sim, init_values: the codes the check suite's checks raise
 #              (flow/checks, brief 71; `python3 -m flow.checks`); axi_checker: a simulation monitor's rule (axi_tx/rtl)
 # Each rule also names `fix` (one line, shown in the check digest) and `skill` (the KB skill with the background and the
 # fix). Every code a check can raise maps to a rule here, and every rule is covered by a check or marked `manual: true`
@@ -15,14 +15,17 @@
 # A finding that no rule maps lands in the catch-all rule of its tool (HDL-LINT-00, HDL-VIV-00, HDL-STD-00), so nothing is lost.
 # Waivers: designs/<d>/lint/waivers.yaml, {rule, match (a glob over the finding key), reason, owner, date}.
 standard: FDA-HDL
-version: "1.7"            # 1.0 2026-11-12 (first release); 1.1 2026-11-14 (brief 71: reset rules split into HDL-RST-01..05,
+version: "1.9"            # 1.0 2026-11-12 (first release); 1.1 2026-11-14 (brief 71: reset rules split into HDL-RST-01..05,
                           # HDL-CLK-02, HDL-VER-01, HDL-IF-02/03, HDL-GT-01, HDL-DOC-01; check-suite tool keys; fix and skill);
                           # 1.2 2026-11-14 (brief 73: HDL-IF-04..06, the axi_profile check);
                           # 1.3 2026-11-14 (brief 70: REQP-1840 in HDL-RST-03, HDL-RST-06 AMD IP resets);
                           # 1.4 2026-11-19 (brief 106: HDL-ORC-01 derived constants, HDL-ORC-02 stale evidence);
                           # 1.5 2026-11-19 (brief 105A: HDL-DRC-01 CFGBVS gate on confirmed boards, HDL-XDC-02 blanket asynchronous
                           #     clock groups (advisory), HDL-CDC-02 XPM SIM_ASSERT_CHK = 1 (advisory));
-                          # 1.7 2026-11-24 (brief 204a: HDL-TIM-01, HDL-CLK-03, HDL-FO-01, HDL-LOG-01, HDL-CONG-01, HDL-IP-01, HDL-CS-01; the report-driven checks)
+                          # 1.7 2026-11-24 (brief 205, owner decision 38: HDL-SYN-06 follows the setting rtl.initial_values,
+                          #     default allow; STD-INIT-01 version 1.1);
+                          # 1.8 2026-11-24 (brief 206: HDL-INIT-01 initial values that cost a hard block's register, advisory)
+                          # 1.9 2026-11-24 (brief 204a: HDL-TIM-01, HDL-CLK-03, HDL-FO-01, HDL-LOG-01, HDL-CONG-01, HDL-IP-01, HDL-CS-01; the report-driven checks)
 date: 2026-11-24
 rules:
   - id: HDL-SYN-01
@@ -58,11 +61,25 @@ rules:
     fix: drive each signal from one always block or one assign
     skill: sequential-and-combinational-coding
   - id: HDL-SYN-06
-    title: No initial blocks except ROM initialisation
-    rationale: Initial values are not a reset; a design that relies on them cannot be reset back to a known state.
+    title: Initial values follow the setting rtl.initial_values (default allow); ROM initialisation always passes
+    rationale: AMD (UG949) and Altera recommend defined power-up values, so initial values on registers and memories are allowed
+      by default (setting rtl.initial_values - allow, warn or deny). They are a power-up state, not a reset, and the reset rules
+      do not change. An initial block that does more than give power-up values (delays, $display, if or case sequences) is
+      flagged in synthesisable RTL, and deny restores the earlier ban.
     checks: {standards: [STD-INIT-01]}
-    fix: set start values with the reset, not an initial block (ROM contents excepted)
+    fix: keep initial blocks to constant power-up values (or $readmem for ROM), or set rtl.initial_values to match the project's choice
     skill: synthesisable-subset-and-parameters
+  - id: HDL-INIT-01
+    title: An initial value of 1 does not sit on a register that belongs in a DSP or RAM block (advisory)
+    rationale: On AMD parts an initial value is free on fabric and IOB flip-flops, but the DSP48 pipeline registers and
+      UltraRAM power up 0 and a block-RAM port holds one INIT value, so synthesis leaves an INIT = 1 register next to such a
+      block in the fabric, with no warning for the DSP (brief 206, Vivado 2026.1, xc7a35t and xck26 - an 18 x 18 multiply
+      with all four register stages at INIT 1 kept 108 flip-flops out of the DSP48), and refuses UltraRAM for initial
+      contents (Synth 8-12183). Advisory, since the design is still correct, only bigger and slower than it looks.
+    checks: {init_values: [INIT-HB-01, INIT-URAM-01]}
+    fix: drop the initial value (or make it 0) on registers around a DSP or RAM unless their power-up value matters; give the
+      block RAM's read and output registers the same value; load UltraRAM contents after configuration
+    skill: power-up-values-amd-and-altera
   - id: HDL-WID-01
     title: Widths match
     rationale: A silent extension or truncation is the commonest arithmetic bug; the reader of the code cannot see it.

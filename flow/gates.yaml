@@ -7,3 +7,12 @@
 resource_sanity:
   factor: 2.0
   resources: [lut, ff, bram_tile, dsp]
+
+# rtl.initial_values (brief 205, owner decision 38 of 2026-11-24): how STD-INIT-01 / HDL-SYN-06 treat initial values in
+# synthesisable RTL. allow (the default): initial values on registers and memories pass, an initial block that does more
+# than give power-up values (delays, $display, procedural sequences) is flagged. warn: reported, never fails. deny: no
+# initial blocks or register initial values. ROM initialisation ($readmemh/$readmemb) passes in every mode. A design may
+# set its own in architecture.yaml (rtl: {initial_values: ...}); a run may override both with --set rtl.initial_values=....
+# Initial values are a power-up state, not a reset: the reset rules do not change.
+rtl:
+  initial_values: allow

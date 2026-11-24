@@ -2930,6 +2930,13 @@
     },
     {
      "enforced": false,
+     "file": "flow/checks/init_values.py",
+     "gate": null,
+     "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/flow/checks/init_values.py",
+     "what": "Advice after synthesis: a register whose non-zero initial value keeps it out of a DSP or block RAM, and an UltraRAM refused because of initial contents."
+    },
+    {
+     "enforced": false,
      "file": "flow/report_gates.py",
      "gate": "RPT-LL-02",
      "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/flow/report_gates.py",
@@ -2951,13 +2958,33 @@
     }
    ],
    "counts": {
-    "checks": 6,
+    "checks": 7,
     "enforced": 2,
-    "evidence": 2,
+    "evidence": 4,
     "sections": 13,
     "skills": 24
    },
    "evidence": [
+    {
+     "kind": "measured",
+     "sources": [
+      {
+       "path": "results/206_power_up/records/summary.json",
+       "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/results/206_power_up/records/summary.json"
+      }
+     ],
+     "text": "In 2 Vivado 2026.1 syntheses of a multiply whose registers all start non-zero (two families), every one of those registers stayed out of the DSP block, with no warning; in 2 with them at zero, all went into it."
+    },
+    {
+     "kind": "measured",
+     "sources": [
+      {
+       "path": "results/206_power_up/records/summary.json",
+       "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/results/206_power_up/records/summary.json"
+      }
+     ],
+     "text": "On Altera parts every core register starts at zero: in 6 Quartus Lite compiles (three families, NOT-gate push-back on and off) a RAM whose read register was to start non-zero was built from logic instead of a block RAM; in 3 with it at zero, a block RAM was used."
+    },
     {
      "kind": "agent",
      "sources": [

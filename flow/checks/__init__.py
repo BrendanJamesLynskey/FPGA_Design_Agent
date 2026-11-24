@@ -301,6 +301,12 @@ def _standards(ctx: Ctx) -> dict[str, Any]:
                 where = f"{f.get('file')}:{f.get('line')}"
                 fs.append({"tool": "standards", "code": r["id"], "severity": r["status"], "where": where,
                            "key": f"standards:{r['id']} {where}", "message": f.get("message", ""), "blocking": True})
+    for r in rep.get("rules") or []:        # rtl.initial_values: warn (brief 205): shown, never blocking
+        if r.get("status") == "warn" and (ctx.scope != "rtl" or r.get("stage") in ("rtl", None)):
+            for f in r.get("warnings") or []:
+                where = f"{f.get('file')}:{f.get('line')}"
+                fs.append({"tool": "standards", "code": r["id"], "severity": "warning", "where": where,
+                           "key": f"standards:{r['id']} {where}", "message": f.get("message", ""), "blocking": False})
     return _result(fs, records=[out])
 
 
@@ -633,6 +639,32 @@ def _dsp_ram(ctx: Ctx) -> dict[str, Any]:
         used = parse_utilization(u.read_text(errors="replace"))
         ctx.cache["dsp_ram_util"] = {k: v for k, v in used.items() if any(x in k.upper() for x in ("DSP", "RAMB", "BLOCK RAM"))}
         recs.append(u)
+    return _result(fs, parts, recs)
+
+
+def _init_values(ctx: Ctx) -> dict[str, Any]:
+    """Initial values that cost a hard block's register (brief 206, flow/checks/init_values.py): the session's netlist scan
+    (init_scan) for INIT = 1 registers wired to a DSP, RAM or FIFO, and the build log for UltraRAM refused for initial
+    contents (Synth 8-12183). Advisory only."""
+    if ctx.scope == "rtl":
+        return _not_run("needs a synthesised design (scope synth or route)")
+    from flow.checks import init_values as I
+    fs, parts, recs = [], {}, []
+    scan = ctx.report("init_scan")
+    if scan:
+        fs += [{**f, "key": f"init_values:{f['code']} {f['where']}", "blocking": False} for f in I.scan_findings(I.read_scan(scan))]
+        parts["netlist"] = "ran"
+        recs.append(scan)
+    else:
+        parts["netlist"] = "not run: " + ctx.not_run_reason("init_scan")
+    log = ctx.build / "vivado.log"
+    if log.is_file():
+        fs += [{**f, "key": f"init_values:{f['code']} {f['where']}", "blocking": False}
+               for f in I.log_findings(log.read_text(errors="replace"))]
+        parts["log"] = "ran"
+        recs.append(log)
+    else:
+        parts["log"] = "not run: no build/<variant>/vivado.log"
     return _result(fs, parts, recs)
 
 
@@ -984,6 +1016,10 @@ register(Check("dsp_ram_mapping", "records", POST, {"vivado": ("DPIP-*", "DPOP-*
                                                               "RMIR-*", "RMOR-*", "RROR-*")},
                "DSP and block-RAM mapping advice (AMD DPIP/DPOP/SYNTH/RBOR rows) and their utilisation", _dsp_ram,
                reports=("methodology", "drc", "utilization"), amd=True))
+register(Check("init_values", "vivado", POST, {"init_values": ("INIT-HB-01", "INIT-URAM-01")},
+               "initial values that cost a hard block's register on AMD parts (brief 206): INIT = 1 registers wired to a DSP, "
+               "RAM or FIFO (our netlist scan) and UltraRAM refused for initial contents (Synth 8-12183); advisory "
+               "(flow/checks/init_values.py)", _init_values, reports=("init_scan",)))
 register(Check("control_sets", "vivado", POST, {"vivado": ("ULMTCS-*",), "control_sets": ("RPT-CS-01", "RPT-CS-02")},
                "report_control_sets (count of unique control sets), AMD's ULMTCS rows and the three bands of UG949 Table 17 (7.5 % and 15 % of "
                "CLB registers / 8: reduction recommended, then required; brief 204a)", _control_sets,
@@ -1029,7 +1065,7 @@ register(Check("doc", "records", ALL, {"doc": ("DOC-PROBLEM",)},
                waivable=False))
 
 #: the Vivado-session reports each check may need (the ones the build does not write)
-SESSION_ONLY = ("reset_scan", "cmt", "control_sets", "qor_suggestions", "logic_levels", "clock_utilization", "clock_networks", "congestion")
+SESSION_ONLY = ("reset_scan", "cmt", "control_sets", "qor_suggestions", "init_scan", "logic_levels", "clock_utilization", "clock_networks", "congestion")
 
 
 # ---- the runner ----------------------------------------------------------------------------------------------------

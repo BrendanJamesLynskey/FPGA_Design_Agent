@@ -249,6 +249,19 @@
     "what": "DSP and block-RAM mapping advice (AMD DPIP/DPOP/SYNTH/RBOR rows) and their utilisation"
    },
    {
+    "by": "ours",
+    "kind": "vivado",
+    "name": "init_values",
+    "rules": [
+     "HDL-INIT-01"
+    ],
+    "scopes": [
+     "synth",
+     "route"
+    ],
+    "what": "initial values that cost a hard block's register on AMD parts (brief 206): INIT = 1 registers wired to a DSP, RAM or FIFO (our netlist scan) and UltraRAM refused for initial contents (Synth 8-12183); advisory (flow/checks/init_values.py)"
+   },
+   {
     "by": "AMD report",
     "kind": "vivado",
     "name": "control_sets",
@@ -440,7 +453,7 @@
     "what": "the DOC gate (brief 68: flow/handover.py problems, required gaps, over-claims)"
    }
   ],
-  "standard": "FDA-HDL v1.7"
+  "standard": "FDA-HDL v1.9"
  },
  "closure": {
   "by_goal": {

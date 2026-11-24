@@ -291,10 +291,19 @@ areas:
   - {file: agent/graph/stages.py, gate: standards_rtl, enforced: true, what: "Design standards on the RTL: no latches, no combinational loops, no gated clocks, synchronous resets, declared crossings."}
   - {file: flow/gates.py, gate: rtl_methodology_no_critical, enforced: true, what: "Methodology checks on the elaborated design, then after synthesis: no Critical Warning."}
   - {file: flow/lint.sh, enforced: false, what: "Verilator lint, run before the stage can end."}
+  - {file: flow/checks/init_values.py, enforced: false, what: "Advice after synthesis: a register whose non-zero initial value keeps it out of a DSP or block RAM, and an UltraRAM refused because of initial contents."}
   - {file: flow/report_gates.py, gate: RPT-LL-02, enforced: false, what: "Check-suite gate (Brief 204a): a post-synthesis setup path that still fails with its net delay taken out cannot be closed by placement. Advisory RPT-LL-01 compares the logic-level distribution with the clock period."}
   - {file: flow/report_gates.py, gate: RPT-FO-01, enforced: false, what: "Advisory (Brief 204a): a net with too many loads for its clock, with the guide's fixes (balanced tree with KEEP, a driver register, no MAX_FANOUT on global nets)."}
   - {file: flow/report_gates.py, gate: RPT-CS-02, enforced: false, what: "Check-suite gate (Brief 204a): control sets above the guide's required-reduction share of the device's capacity; the recommended-reduction band is an advisory."}
   evidence:
+  - kind: measured
+    source: results/206_power_up/records/summary.json
+    values: ["count@amd:arm=x8,initv=1,ff_total>0", "count@amd:arm=x8,initv=0,ff_total=0"]
+    text: "In {0} Vivado 2026.1 syntheses of a multiply whose registers all start non-zero (two families), every one of those registers stayed out of the DSP block, with no warning; in {1} with them at zero, all went into it."
+  - kind: measured
+    source: results/206_power_up/records/summary.json
+    values: ["count@altera:arm=q6_ram,initv=1,mem_bits=0", "count@altera:arm=q6_ram,initv=0,mem_bits>0"]
+    text: "On Altera parts every core register starts at zero: in {0} Quartus Lite compiles (three families, NOT-gate push-back on and off) a RAM whose read register was to start non-zero was built from logic instead of a block RAM; in {1} with it at zero, a block RAM was used."
   - kind: agent
     source: results/course/*/run_*.json
     where: split=dev
