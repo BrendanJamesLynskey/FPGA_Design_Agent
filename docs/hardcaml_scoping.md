@@ -16,7 +16,8 @@ probe asked Sonnet for three small blocks in each language. This page is the res
   `credit_chan` points pass. The unbounded k-induction proofs do **not** close (UNKNOWN at every point): the SV proofs lean on invariants written
   inside the slices (`ifdef FORMAL`), and Hardcaml's Verilog has no place for them. So formal assurance of generated code is weaker than for the
   hand-written code until invariants can be bound from outside (next steps).
-- **Quality of results:** the Vivado comparison is written and **not yet run** (no heavy slot became free); no area or timing claim is made.
+- **Quality of results:** 24 out-of-context synthesis builds (2 blocks, 6 points, a7 and k26): FF equal or lower for Hardcaml, LUT within 7 either way,
+  all timing met; Hardcaml has the lower WNS in 8 of 12 pairs (gaps up to 0.4 ns). Synthesis only, single runs (section 4).
 - **Agent fluency (a probe, not an eval):** Sonnet wrote all three small blocks in both languages; SV passed first time 9 of 9, Hardcaml 8 of 9
   (9 of 9 after one repair round). Ceiling effect: the tasks were too easy to separate the languages.
 - **Recommendation:** do not make Hardcaml a first-class agent input language now. Offer it as an optional, human-driven source for generated
@@ -84,11 +85,35 @@ The slices' own invariants are the missing part (see summary). Run: `ip_lib/<blo
 
 ## 4. Vivado comparison (out of context)
 
-**Not run yet.** The comparison is written (`tools/hardcaml/ooc_compare.py`, `tools/hardcaml/ooc_compare.tcl`: 24 builds, six parameter
-points of the two blocks, SV and Hardcaml, on the Artix-7 `xc7a100tcsg324-1` and the Kria K26 `xck26-sfvc784-2LV-c`, one Vivado 2026.1 session, one
-thread) but no heavy slot was free for 90 minutes (both held by Vivado and xsim jobs of other briefs). No LUT, FF, Fmax or WNS number is claimed
-here. To run it: take a slot, then `python3 tools/hardcaml/ooc_compare.py run`; it writes `results/b171/ooc_compare.json` and the reports under
-`build/hc_ooc/`. Until it runs, nothing in this page says whether the generated Verilog costs more area or timing than the SV.
+Run 2026-11-24 (`python3 tools/hardcaml/ooc_compare.py run`, 24 builds, Vivado 2026.1, one thread, out-of-context synthesis only, no place and route).
+Clocks: 3.0 ns on the Artix-7 `xc7a100tcsg324-1` (a7), 2.0 ns on the Kria K26 `xck26-sfvc784-2LV-c` (k26). Each cell is SV / Hardcaml.
+WNS is the post-synthesis estimate in ns; Fmax is 1000 / (clock - WNS), the flow's own estimate, so it is not a routed figure.
+Raw data: `results/b171/ooc_compare.json`.
+
+| point | part | LUT | FF | WNS ns | Fmax MHz |
+|---|---|---|---|---|---|
+| credit_chan_w16_c8_f1_b1 | a7 | 26 / 27 | 34 / 34 | 0.964 / 1.176 | 491 / 548 |
+| credit_chan_w64_c5_f2_b1 | a7 | 56 / 58 | 145 / 145 | 0.883 / 0.748 | 472 / 444 |
+| credit_chan_w8_c16_f4_b4 | a7 | 45 / 40 | 47 / 43 | 0.866 / 0.423 | 469 / 388 |
+| pipe_reg_comb_w16_n5 | a7 | 11 / 11 | 85 / 85 | 0.385 / 0.028 | 382 / 336 |
+| pipe_reg_full_w64_n2 | a7 | 83 / 90 | 268 / 268 | 0.176 / 0.152 | 354 / 351 |
+| pipe_reg_skid_w64_n2_tlast_tkeep | a7 | 81 / 81 | 298 / 298 | 0.465 / 0.355 | 394 / 378 |
+| credit_chan_w16_c8_f1_b1 | k26 | 23 / 25 | 34 / 34 | 0.940 / 0.954 | 943 / 956 |
+| credit_chan_w64_c5_f2_b1 | k26 | 52 / 54 | 145 / 145 | 1.028 / 0.868 | 1029 / 883 |
+| credit_chan_w8_c16_f4_b4 | k26 | 41 / 40 | 47 / 43 | 0.913 / 0.619 | 920 / 724 |
+| pipe_reg_comb_w16_n5 | k26 | 10 / 9 | 85 / 85 | 0.878 / 0.807 | 891 / 838 |
+| pipe_reg_full_w64_n2 | k26 | 77 / 78 | 268 / 268 | 0.745 / 0.838 | 797 / 861 |
+| pipe_reg_skid_w64_n2_tlast_tkeep | k26 | 80 / 80 | 298 / 298 | 0.750 / 0.677 | 800 / 756 |
+
+**Reading.**
+- FF are identical in 10 of 12 pairs and 4 lower for Hardcaml in the `w8_c16_f4_b4` credit channel on both parts (43 vs 47). LUT differ by at most
+  7 (`pipe_reg_full` on a7, 83 vs 90) and by 1 to 2 elsewhere; neither language is consistently smaller.
+- Timing differs by more, in both directions: Hardcaml is worse in 8 of 12 pairs (largest on a7: `pipe_reg_comb` 0.385 vs 0.028 ns, `w8_c16_f4_b4`
+  0.866 vs 0.423 ns), better in 4. These are synthesis-only estimates with single runs and no repeats, so differences below about 0.1 ns are
+  inside the noise we have not measured; the larger gaps (0.3 to 0.4 ns) are probably real but not explained (likely different net structure
+  and flattened names changing what the synthesiser retimes or shares; not investigated).
+- Every run met timing (WNS positive) and no build failed. Area cost of the generated Verilog is small; timing cost is not zero.
+- Limits: two blocks, six points, synthesis only. Nothing here says what place and route would give.
 
 ## 5. Readability of the generated Verilog
 
@@ -135,6 +160,8 @@ For:
 - Functional parity is cheap to reach: both blocks passed every existing check first time after the gen step; the OCaml is shorter than the SV once
   formal logic is excluded, and parameter-dependent structure (N slices, LF/LB stages) is ordinary list code instead of `generate`.
 - Sonnet writes small Hardcaml correctly (probe).
+
+Quality of results (section 4): area is a wash and timing is slightly worse more often than not, so this is a cost to watch, not a reason to refuse.
 
 Against, at what cost:
 1. **Flow changes.** Generated Verilog must become a build step: install (opam, 25 min, two system packages), `dune build`, `gen.exe`; the
