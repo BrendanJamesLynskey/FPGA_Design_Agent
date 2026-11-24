@@ -61,7 +61,11 @@ Goldens, oldest first:
 - ``b150_request_golden.json`` (brief 150, 2026-11-21): the registry gained ``ip_lookup`` (schema 1.20.0; the read-only IP-library query) and it is offered at
   stage 1 (the board-and-device-planning stage), so ``tool_registry``, ``tools_rtl_1`` and ``tools_clarify_1`` (the stage-1 tool lists) differ from the brief 114
   golden's and nothing else does. The stage-1 conventions bullet that tells the Designer about it is appended in ``agent/graph/run.py`` (like the design-plan
-  bullet), not in the hashed prompts."""
+  bullet), not in the hashed prompts.
+- ``b205_request_golden.json`` (brief 205, 2026-11-24, owner decision 38): the Designer's conventions list the design-standards rules
+  (``agent/graph/run.py`` ``_standards_summary`` from ``flow/standards_check.py`` ``RULES``), and the STD-INIT-01 text changed from "no initial blocks" to
+  "initial values follow the setting rtl.initial_values (default allow)". Only ``conventions_text_noshell_False`` and ``conventions_text_noshell_True``
+  differ from the brief 150 golden. Runs before this change belong to the earlier goldens."""
 
 from __future__ import annotations
 
@@ -72,7 +76,7 @@ from agent.tests.request_golden import collect
 
 FIXTURES = Path(__file__).parent / "fixtures"
 EVAL1 = FIXTURES / "eval1_request_golden.json"
-GOLDEN = FIXTURES / "b150_request_golden.json"          # the newest golden
+GOLDEN = FIXTURES / "b205_request_golden.json"          # the newest golden
 #: the hashes that differ from eval-1's, and the brief that changed each (an intended change is listed here, with why)
 CHANGED_SINCE_EVAL1 = {"arm_constants": "brief 80: Claude Code 2.1.321 accepted (ACCEPTED_CLI; the tool-text check passed)",
                        "tool_registry": "brief 36: skill_index, skill_excerpt, load_skill(name=); brief 42 H9: report_digest; "
@@ -83,8 +87,8 @@ CHANGED_SINCE_EVAL1 = {"arm_constants": "brief 80: Claude Code 2.1.321 accepted 
                                   "brief 71: the check tool (rtl); brief 73: the interface profile (clarify, rtl); "
                                   "brief 70: the Designer's reset paragraph (rtl)",
                        "conventions": "brief 68: role names (Tests (Verifier))",
-                       "conventions_text_noshell_False": "brief 68: as conventions",
-                       "conventions_text_noshell_True": "brief 68: as conventions",
+                       "conventions_text_noshell_False": "brief 68: as conventions; brief 205: the STD-INIT-01 rule text (rtl.initial_values)",
+                       "conventions_text_noshell_True": "brief 68: as conventions; brief 205: the STD-INIT-01 rule text (rtl.initial_values)",
                        "tests_conventions_text_noshell_False": "brief 68: as conventions",
                        "tests_conventions_text_noshell_True": "brief 68: as conventions",
                        "hw_format": "brief 68: reference model for blind model",

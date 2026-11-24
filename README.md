@@ -482,7 +482,7 @@ site/        the showcase site (static, Vercel): export.py (results -> data), bu
 knowledge/   PACKS.md: names, sizes and hashes of the private knowledge packs (no pack content)
 docs/        methodology.md (UG949 -> flow stages, gates, deviations, the agent's stage machine);
              verification.md (V-stages, proof methods, the simulator-portable stack, gates, mutation);
-             design_standards.md (v1.0: the rule table and how each rule is checked);
+             design_standards.md (v1.1: the rule table and how each rule is checked);
              traceability.md (the requirements matrix, tags, gates, change record); hdl_coding_standard.md (FDA-HDL v1.2); check_suite.md (the check tool and its registry); oss_synth_eqy.md (Yosys + ABC into Vivado, and the eqy equivalence gate); eye scan: [flow/eyescan/README.md](flow/eyescan/README.md);
              tool_assessment/ (one page per tool: used for, independent checks, limits);
              agent_core.md (tools, MCP server, security rules, traces); agent.md (the 05b agent graph; benchmark tasks as agent runs, 07a2-prep); claude_code_arm.md (the 05c Claude Code arm); role_models.md (the 05f per-role model routing); doc_crossread.md (brief 114: the blind document cross-read); model_config.md (brief 108: one table of endpoint, model and options for every model call, `python -m agent models show`); deterministic_mode.md (brief 107: the model-call tape, `--deterministic`, levels 1 to 3); test_writer.md (the 05g Verifier diagnosis, turn trace, formal re-plan, QoR gate);
