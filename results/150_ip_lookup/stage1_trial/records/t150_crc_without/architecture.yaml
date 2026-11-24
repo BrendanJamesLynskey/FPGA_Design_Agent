@@ -1,0 +1,57 @@
+schema: fpga-design-agent/architecture/v1
+design: crc32_checker
+top: crc32_top
+blocks:
+  - name: crc32_top
+    function: board top; instantiates fpga_shell, reset_sync, crc32_regs and crc_engine; drives led from the CRC register
+  - name: reset_sync
+    function: synchroniser for cpu_resetn (asynchronous assert, synchronous release on clk); produces the active-high rst used inside the design
+  - name: fpga_shell
+    function: test shell (shell/rtl) - UART 8N1 at 115200, frame parser, shell registers; window 0x80-0xFF to the design
+  - name: crc32_regs
+    function: window decode for the CRC design registers - ID (0x00), CRC (0x04), CTRL (0x08, CLEAR), DATA (0x0C); issues engine strobes
+  - name: crc_engine
+    function: 32-bit parallel reflected CRC-32 (POLY 0xEDB88320) state register; one data word per clock as a combinational XOR network; CLEAR wins over DATA
+interfaces:
+  - name: host_uart
+    between: [host, fpga_shell]
+    protocol: uart
+    prefix: uart
+    module: fpga_shell
+  - name: shell_window
+    between: [fpga_shell, crc32_regs]
+    protocol: simple
+    prefix: win
+    module: crc32_regs
+  - name: engine_strobes
+    between: [crc32_regs, crc_engine]
+    protocol: simple
+    prefix: eng
+    module: crc_engine
+  - name: board_leds
+    between: [crc_engine, board]
+    protocol: gpio
+    prefix: led
+    module: crc32_top
+clock_domains:
+  - name: clk
+    clock: clk
+    freq_mhz: 100
+reset:
+  synchronisers: [reset_sync]
+crossings:
+  - from: async
+    to: clk
+    signal: cpu_resetn
+    primitive: reset_sync
+    inline_in: reset_sync
+  - from: async
+    to: clk
+    signal: uart_rxd
+    primitive: sync2
+    inline_in: uart_rx
+predicted_resources:
+  lut: [150, 500]
+  ff: [200, 400]
+  bram_tile: 0
+  dsp: 0

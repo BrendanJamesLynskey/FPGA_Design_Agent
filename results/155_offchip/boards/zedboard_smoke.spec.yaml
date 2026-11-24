@@ -1,0 +1,18 @@
+# boards/zedboard/smoke (brief 155): the user LEDs (LVCMOS33, bank 33) and the Vadj-bank push button (LVCMOS18). The smoke design sets no DRIVE or SLEW.
+design: boards/zedboard/smoke
+xdc: boards/zedboard/smoke/design.xdc
+board: zedboard
+family: zynq7000
+part: xc7z020clg484-1
+bank_type: HR
+off_chip:
+  - name: leds
+    ports: [led*]
+    direction: output
+    iostandard: LVCMOS33
+    vcco: 3.3
+    line: short
+    load: {c_pf: 5.0}                        # LED with a series resistor (ZedBoard guide: not re-read for this run; ASSUMED)
+    priority: emi
+    ui_ns: 1000.0                              # a static or slow signal: a long unit interval (UART 115200 baud = 8680 ns)
+    min_drive_ma: 4                        # ASSUMED: the output must source or sink at least this much DC current

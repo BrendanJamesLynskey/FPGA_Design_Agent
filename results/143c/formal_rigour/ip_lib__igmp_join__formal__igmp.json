@@ -1,0 +1,164 @@
+{
+ "sby": "ip_lib/igmp_join/formal/igmp.sby",
+ "schema": "fpga-design-agent/formal_rigour/v1",
+ "sources": {
+  "axi_tx/rtl/axis_rules.sv": "e3e7974734f0560b8a40eba4a9e383b0b61ef3f5e90e196995295f77280c313f",
+  "ip_lib/igmp_join/formal/formal_igmp.sv": "125d55c123a933c656c1940c41c54a3135a358e73235f920c2bfe9cc4406b868",
+  "ip_lib/igmp_join/formal/igmp.sby": "d74f1c02d9076a3d6b77993de2092afbbdb7d276be787f0056968e22a0f09355",
+  "ip_lib/igmp_join/rtl/igmp_join.sv": "388149a85d55650bb93b363dc6595ed3d36f9e33a7d4c7e709b8fbd059036a51"
+ },
+ "tasks": {
+  "bmc": {
+   "checks": [
+    {
+     "flavor": "cover",
+     "id": "c_report",
+     "label": "c_report",
+     "src": "formal_igmp.sv:40",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "c_leave",
+     "label": "c_leave",
+     "src": "formal_igmp.sv:41",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "a_frame_mid_beat__ante",
+     "label": "a_frame_mid_beat__ante",
+     "src": "formal_igmp.sv:39",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "a_frame_mid_beat",
+     "label": "a_frame_mid_beat",
+     "src": "formal_igmp.sv:33",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "a_frame_last_beat__ante",
+     "label": "a_frame_last_beat__ante",
+     "src": "formal_igmp.sv:38",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "a_frame_last_beat",
+     "label": "a_frame_last_beat",
+     "src": "formal_igmp.sv:32",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "a_axis_rules__ante",
+     "label": "a_axis_rules__ante",
+     "src": "formal_igmp.sv:37",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "a_axis_rules",
+     "label": "a_axis_rules",
+     "src": "formal_igmp.sv:31",
+     "tautology": false
+    }
+   ],
+   "covers": {},
+   "depth": 60,
+   "mode": "bmc",
+   "seconds": 41.6,
+   "status": "PASS"
+  },
+  "cover": {
+   "checks": [
+    {
+     "flavor": "cover",
+     "id": "c_report",
+     "label": "c_report",
+     "src": "formal_igmp.sv:40",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "c_leave",
+     "label": "c_leave",
+     "src": "formal_igmp.sv:41",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "a_frame_mid_beat__ante",
+     "label": "a_frame_mid_beat__ante",
+     "src": "formal_igmp.sv:39",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "a_frame_mid_beat",
+     "label": "a_frame_mid_beat",
+     "src": "formal_igmp.sv:33",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "a_frame_last_beat__ante",
+     "label": "a_frame_last_beat__ante",
+     "src": "formal_igmp.sv:38",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "a_frame_last_beat",
+     "label": "a_frame_last_beat",
+     "src": "formal_igmp.sv:32",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "a_axis_rules__ante",
+     "label": "a_axis_rules__ante",
+     "src": "formal_igmp.sv:37",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "a_axis_rules",
+     "label": "a_axis_rules",
+     "src": "formal_igmp.sv:31",
+     "tautology": false
+    }
+   ],
+   "covers": {
+    "a_axis_rules__ante": {
+     "reached": true,
+     "step": 7
+    },
+    "a_frame_last_beat__ante": {
+     "reached": true,
+     "step": 52
+    },
+    "a_frame_mid_beat__ante": {
+     "reached": true,
+     "step": 7
+    },
+    "c_leave": {
+     "reached": true,
+     "step": 105
+    },
+    "c_report": {
+     "reached": true,
+     "step": 53
+    }
+   },
+   "depth": 110,
+   "mode": "cover",
+   "seconds": 27.9,
+   "status": "PASS"
+  }
+ },
+ "tool": "Yosys 0.70+385 (git sha1 098e46a36, Release, Clang /usr/bin/clang++ 21.1.8)"
+}

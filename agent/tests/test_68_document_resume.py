@@ -181,8 +181,8 @@ def test_graph_ends_through_the_document_node() -> None:
     ("Move the LED pins in the XDC", "constraints", 3),
     ("Improve the setup slack", "timing", 6),
     ("Timing fails: add a pipeline stage to the multiplier", "rtl", 2),          # a change verb under a late class
-    ("Update the README wording", "spec", 0),                                    # docs-only is never guessed (--kind docs)
-    ("Make it better", "spec", 0),                              # nothing matched: re-read the request
+    ("Update the README wording", None, None),                                   # docs-only is never guessed (--kind docs): a question (brief 149)
+    ("Make it better", None, None),                             # nothing matched: a question, not stage 0 (brief 149)
     (None, None, None),
 ])
 def test_change_classifier(text, kind, stage) -> None:

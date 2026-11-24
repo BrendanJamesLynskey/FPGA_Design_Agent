@@ -2,14 +2,14 @@
 source: designs/b2_acl_adxl362/handover.yaml; human view: README.md; refresh: python -m flow.handover fresh designs/b2_acl_adxl362
 
 ## identity
-kind=board-selfcheck produced_by=human part=xc7a100tcsg324-1 board=Nexys A7-100T top=b2_acl_adxl362_top tool=Vivado 2026.1
+kind=board-selfcheck produced_by=session part=xc7a100tcsg324-1 board=Nexys A7-100T top=b2_acl_adxl362_top tool=Vivado 2026.1
 
 ## summary
 Drives the Nexys A7's ADXL362 accelerometer over SPI mode 0 at 1 MHz from a small register block in the test shell. The host reads the three ID registers, switches the part to measurement mode, reads one X/Y/Z sample at rest, returns it to standby and reads POWER_CTL back. `selfcheck.py` holds the on-board pass rule, written before any board run.
 not: an accelerometer application: it takes one sample per check, so it says nothing about noise, offsets, other ranges or interrupts; an agent benchmark task; it was written by hand to prove the board inventory on hardware
 
 ## state
-stage=board-verified vivado=2026.1 kb_pin=1fc7ed8 build_id=97949768
+stage=board-verified vivado=2026.1 kb_pin=5e2eab8 build_id=d92aae13
 gates: build_2026_1=pass board_selfcheck=pass
 
 ## interface

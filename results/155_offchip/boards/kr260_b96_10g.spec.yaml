@@ -1,0 +1,19 @@
+# designs/b96_kr260_10g on the KR260 (brief 155): SFP+ cage J24 control and I2C pins, LVCMOS33 in HD banks (slow signals; lumped).
+design: designs/b96_kr260_10g
+xdc: designs/b96_kr260_10g/design.xdc
+board: kr260
+family: zynquplus
+part: xck26-sfvc784-2LV-c
+bank_type: HD
+off_chip:
+  - name: sfp_control
+    ports: [sfp_tx_disable, sfp_i2c_scl, sfp_i2c_sda]
+    direction: output
+    iostandard: LVCMOS33
+    vcco: 3.3
+    bank_type: HD
+    line: short
+    load: {c_pf: 10.0}                       # ASSUMED: SFP module connector and pull-ups
+    priority: emi
+    ui_ns: 1000.0                              # a static or slow signal: a long unit interval (UART 115200 baud = 8680 ns)
+    min_drive_ma: 4                        # ASSUMED: the output must source or sink at least this much DC current

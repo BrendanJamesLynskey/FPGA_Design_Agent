@@ -2,14 +2,14 @@
 source: designs/b102_managed_fcs/handover.yaml; human view: README.md; refresh: python -m flow.handover fresh designs/b102_managed_fcs
 
 ## identity
-kind=demonstration produced_by=human part=xck26-sfvc784-2LV-c board=Kria KR260 top=fcs_top tool=Vivado 2026.1
+kind=demonstration produced_by=session part=xck26-sfvc784-2LV-c board=Kria KR260 top=fcs_top tool=Vivado 2026.1
 
 ## summary
 A KR260 self-test of an Ethernet FCS stage that exists to demonstrate a managed project (brief 102). An owned sequencer sends a fixed sixteen-word frame through a CRC-32 block that was made outside the project as an EDIF netlist and is frozen, and shows the verdict on an LED; a heartbeat divider is excluded from the agent's view but built with the rest. project.yaml marks each part, and the agent's tools enforce it.
 not: a 10G Ethernet FCS check; the CRC block takes sixteen bits a clock, not the 64-bit word of the 96 design, because the open equivalence engines could not prove 64 bits; a board design; it was not programmed, and the 161 MHz clock constraint is on the 25 MHz oscillator pin for a timing study
 
 ## state
-stage=built vivado=2026.1 kb_pin=93d158c build_id=fd07818d
+stage=built vivado=2026.1 kb_pin=5e2eab8 build_id=bc167df5
 gates: import_checks=pass build_2026_1=pass boundary_checks=pass
 
 ## interface
