@@ -28,7 +28,6 @@ from typing import Any, Protocol
 
 
 ROOT = Path(__file__).resolve().parents[1]
-VIVADO = os.environ.get("FDA_VIVADO", "/opt/Xilinx/2025.2/Vivado/bin/vivado")
 REG_ID, REG_BUILD, REG_SCRATCH = 0x000, 0x004, 0x008
 M32 = 0xFFFFFFFF
 TRANSPORTS = ("uart", "jtag_bus")
@@ -94,7 +93,8 @@ class VivadoBus:
     target"), through designs/b58a_trigger/host/jtag_regs.tcl. Needs the board; never used in CI."""
 
     def __init__(self, cable_serial: str) -> None:
-        self.p = subprocess.Popen([VIVADO, "-mode", "tcl", "-nojournal", "-nolog"], stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+        from flow import version_pin
+        self.p = subprocess.Popen([version_pin.vivado_path(dict(os.environ)), "-mode", "tcl", "-nojournal", "-nolog"], stdin=subprocess.PIPE, stdout=subprocess.PIPE,
                                   text=True, bufsize=1)
         self.cmd(f"source {ROOT}/designs/b58a_trigger/host/jtag_regs.tcl")
         self.cmd(f"b58a_open {cable_serial}")
