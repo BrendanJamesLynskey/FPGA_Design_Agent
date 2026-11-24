@@ -1,0 +1,423 @@
+{
+ "schema": "fpga-design-agent/mutation-score/v1",
+ "target": "b119_tcp_fast",
+ "design": "designs/b119_tcp_fast",
+ "what": "the TCP fast path (software owns the connection, hardware emits the order segment)",
+ "date": "2026-11-21",
+ "generator": {
+  "name": "flow/mutation_blind.py",
+  "blind_to_tests": true,
+  "seed": 1,
+  "requested": 30,
+  "candidates": 451,
+  "sampled": 30,
+  "operators": [
+   "and_to_or",
+   "band_to_bor",
+   "bit0_to_1",
+   "bit1_to_0",
+   "bor_to_band",
+   "const_minus1",
+   "const_plus1",
+   "eq_to_ne",
+   "ge_to_gt",
+   "ge_to_lt",
+   "gt_to_ge",
+   "gt_to_le",
+   "lt_to_le",
+   "minus_to_plus",
+   "ne_to_eq",
+   "not_removed",
+   "or_to_and",
+   "plus_to_minus",
+   "shl_to_shr",
+   "shr_to_shl",
+   "ternary_swap",
+   "tilde_removed",
+   "xor_to_or"
+  ],
+  "llm_proposals_valid": 0,
+  "llm_proposals_dropped": 0,
+  "rtl_sha256": "017c553900617d99802addc3f13ecf214f9d27b3c6ce439fef379e70fda952d2"
+ },
+ "rtl": {
+  "tcp_fast.sv": "dec57d4bb14ef4ec6326e78450d0caec09ef74128277be5b727bf179136359aa"
+ },
+ "rtl_source": null,
+ "bench": {
+  "description": "test_all_benches: every cocotb test of the b119 bench in one Icarus run, against the Python reference (checksums, timing, aborts, refusals, register semantics, end-to-end)",
+  "baseline_seconds": 18.3,
+  "mutant_timeout_s": 109,
+  "jobs": 1
+ },
+ "timeout_policy": "A bench run that exceeds its time limit is `timed_out`: it is not counted as killed and not as a survivor; it is listed, and the worst-case score counts it as a survivor. A formal run that exceeds its limit is `undecided`, handled the same way. Neither is ever counted as a kill.",
+ "filter": {
+  "method": "miter: BMC, then register-matched induction (yosys equiv_induct), then an unbounded proof (sby)",
+  "bmc_depth": 30,
+  "bmc_limit_s": 60,
+  "prove_limit_s": 240,
+  "configs": [
+   "default parameters"
+  ],
+  "assumptions": [],
+  "compared": "every output, every clock",
+  "reset": {
+   "port": "rst",
+   "clock": "clk",
+   "cycles": 3,
+   "active": 1
+  },
+  "start_state": "registers without an initial value start at 0 in both versions"
+ },
+ "evaluated": 30,
+ "invalid": 0,
+ "bench_timed_out": 0,
+ "killed_by_simulation": 29,
+ "killed_by_formal_bench": 0,
+ "killed": 29,
+ "survived_after_bench": 1,
+ "equivalent": 0,
+ "real_survivors": 0,
+ "undecided": 1,
+ "score_pct": 100.0,
+ "score_simulation_only_pct": 100.0,
+ "score_worst_case_pct": 96.67,
+ "score_before_filter_pct": 96.67,
+ "formal_bench_bound": false,
+ "invalid_listed": [],
+ "timed_out_listed": [],
+ "survivors": [
+  {
+   "name": "tcp_fast_L244_bit0_to_1_22",
+   "change": "tcp_fast.sv line 244: `spec_c <= 1'b0; committed <= 1'b0;` became `spec_c <= 1'b1; committed <= 1'b0;` (constant 1'b0 replaced by 1'b1)",
+   "verdict": "undecided",
+   "note": "BMC to 30 clocks timed out after 60 s; BMC clean to 30 clocks; the unbounded proof (abc pdr) ended TIMEOUT within 240 s"
+  }
+ ],
+ "rows": [
+  {
+   "name": "tcp_fast_L91_plus_to_minus_35",
+   "file": "tcp_fast.sv",
+   "line": 91,
+   "class": "plus_to_minus",
+   "why": "'+' replaced by '-'",
+   "change": "tcp_fast.sv line 91: `hexa = (n < 4'd10) ? (8'h30 + {4'd0, n}) : (8'h41 + {4'd0, n} - 8'd10);` became `hexa = (n < 4'd10) ? (8'h30 - {4'd0, n}) : (8'h41 + {4'd0, n} - 8'd10);` ('+' replaced by '-')",
+   "status": "killed",
+   "seconds": 8.7
+  },
+  {
+   "name": "tcp_fast_L91_ternary_swap_29",
+   "file": "tcp_fast.sv",
+   "line": 91,
+   "class": "ternary_swap",
+   "why": "the two arms of a ?: swapped",
+   "change": "tcp_fast.sv line 91: `hexa = (n < 4'd10) ? (8'h30 + {4'd0, n}) : (8'h41 + {4'd0, n} - 8'd10);` became `hexa = (n < 4'd10) ? (8'h41 + {4'd0, n} - 8'd10) : (8'h30 + {4'd0, n});` (the two arms of a ?: swapped)",
+   "status": "killed",
+   "seconds": 10.0
+  },
+  {
+   "name": "tcp_fast_L115_plus_to_minus_43",
+   "file": "tcp_fast.sv",
+   "line": 115,
+   "class": "plus_to_minus",
+   "why": "'+' replaced by '-'",
+   "change": "tcp_fast.sv line 115: `for (int j = lo; j < hi; j++) s = s + {5'd0, v[8*(2*j) +: 8], v[8*(2*j+1) +: 8]};` became `for (int j = lo; j < hi; j++) s = s - {5'd0, v[8*(2*j) +: 8], v[8*(2*j+1) +: 8]};` ('+' replaced by '-')",
+   "status": "killed",
+   "seconds": 7.8
+  },
+  {
+   "name": "tcp_fast_L132_const_minus1_45",
+   "file": "tcp_fast.sv",
+   "line": 132,
+   "class": "const_minus1",
+   "why": "constant 8'h06 changed to 8'h5",
+   "change": "tcp_fast.sv line 132: `hb[8*22 +: 8] = ttl; hb[8*23 +: 8] = 8'h06;` became `hb[8*22 +: 8] = ttl; hb[8*23 +: 8] = 8'h5;` (constant 8'h06 changed to 8'h5)",
+   "status": "killed",
+   "seconds": 7.6
+  },
+  {
+   "name": "tcp_fast_L152_and_to_or_29",
+   "file": "tcp_fast.sv",
+   "line": 152,
+   "class": "and_to_or",
+   "why": "'&&' replaced by '||'",
+   "change": "tcp_fast.sv line 152: `assign abort_now = abort && busy;` became `assign abort_now = abort || busy;` ('&&' replaced by '||')",
+   "status": "killed",
+   "seconds": 8.0
+  },
+  {
+   "name": "tcp_fast_L161_minus_to_plus_28",
+   "file": "tcp_fast.sv",
+   "line": 161,
+   "class": "minus_to_plus",
+   "why": "'-' replaced by '+'",
+   "change": "tcp_fast.sv line 161: `assign flight  = snd_nxt - snd_una;` became `assign flight  = snd_nxt + snd_una;` ('-' replaced by '+')",
+   "status": "killed",
+   "seconds": 9.4
+  },
+  {
+   "name": "tcp_fast_L185_const_minus1_36",
+   "file": "tcp_fast.sv",
+   "line": 185,
+   "class": "const_minus1",
+   "why": "constant 4'd5 changed to 4'd4",
+   "change": "tcp_fast.sv line 185: `4'd1, 4'd2, 4'd3, 4'd4, 4'd5: nw = hb[64*ph +: 64];` became `4'd1, 4'd2, 4'd3, 4'd4, 4'd4: nw = hb[64*ph +: 64];` (constant 4'd5 changed to 4'd4)",
+   "status": "killed",
+   "seconds": 7.2
+  },
+  {
+   "name": "tcp_fast_L202_const_minus1_12",
+   "file": "tcp_fast.sv",
+   "line": 202,
+   "class": "const_minus1",
+   "why": "constant 5'd4 changed to 5'd3",
+   "change": "tcp_fast.sv line 202: `5'd4:  rd = smac[31:0];` became `5'd3:  rd = smac[31:0];` (constant 5'd4 changed to 5'd3)",
+   "status": "killed",
+   "seconds": 16.3
+  },
+  {
+   "name": "tcp_fast_L205_const_minus1_12",
+   "file": "tcp_fast.sv",
+   "line": 205,
+   "class": "const_minus1",
+   "why": "constant 5'd7 changed to 5'd6",
+   "change": "tcp_fast.sv line 205: `5'd7:  rd = {sport, dport};` became `5'd6:  rd = {sport, dport};` (constant 5'd7 changed to 5'd6)",
+   "status": "killed",
+   "seconds": 15.5
+  },
+  {
+   "name": "tcp_fast_L237_bit0_to_1_110",
+   "file": "tcp_fast.sv",
+   "line": 237,
+   "class": "bit0_to_1",
+   "why": "constant 1'b0 replaced by 1'b1",
+   "change": "tcp_fast.sv line 237: `o_v <= 1'b0; o_sof <= 1'b0; o_eof <= 1'b0; o_poison <= 1'b0; rec_v <= 1'b0; late <= 1'b0; refuse_v <= 1'b0;` became `o_v <= 1'b0; o_sof <= 1'b0; o_eof <= 1'b0; o_poison <= 1'b0; rec_v <= 1'b0; late <= 1'b0; refuse_v <= 1'b1;` (constant 1'b0 replaced by 1'b1)",
+   "status": "killed",
+   "seconds": 10.9
+  },
+  {
+   "name": "tcp_fast_L244_bit0_to_1_22",
+   "file": "tcp_fast.sv",
+   "line": 244,
+   "class": "bit0_to_1",
+   "why": "constant 1'b0 replaced by 1'b1",
+   "change": "tcp_fast.sv line 244: `spec_c <= 1'b0; committed <= 1'b0;` became `spec_c <= 1'b1; committed <= 1'b0;` (constant 1'b0 replaced by 1'b1)",
+   "status": "survived",
+   "seconds": 15.1,
+   "formal": {
+    "verdict": "undecided",
+    "per_config": [
+     {
+      "config": "default parameters",
+      "bmc_depth": 30,
+      "bmc_status": "TIMEOUT",
+      "note": "BMC to 30 clocks timed out after 60 s; BMC clean to 30 clocks; the unbounded proof (abc pdr) ended TIMEOUT within 240 s",
+      "register_matched_proof": "not_proved",
+      "prove_status": "TIMEOUT",
+      "prove_engine": "abc pdr",
+      "verdict": "undecided",
+      "seconds": 358.9
+     }
+    ],
+    "seconds": 358.9
+   }
+  },
+  {
+   "name": "tcp_fast_L256_const_plus1_89",
+   "file": "tcp_fast.sv",
+   "line": 256,
+   "class": "const_plus1",
+   "why": "constant 8'h06 changed to 8'h7",
+   "change": "tcp_fast.sv line 256: `ip_raw  <= 20'(16'h4500) + 20'(16'h0063) + 20'(16'h4000) + 20'({ttl, 8'h06}) + 20'(sip[31:16]) + 20'(sip[15:0]) + 20'(dip[31:16]) + 20'(dip[15:0]);` became `ip_raw  <= 20'(16'h4500) + 20'(16'h0063) + 20'(16'h4000) + 20'({ttl, 8'h7}) + 20'(sip[31:16]) + 20'(sip[15:0]) + 20'(dip[31:16]) + 20'(dip[15:0]);` (constant 8'h06 changed to 8'h7)",
+   "status": "killed",
+   "seconds": 6.9
+  },
+  {
+   "name": "tcp_fast_L257_plus_to_minus_130",
+   "file": "tcp_fast.sv",
+   "line": 257,
+   "class": "plus_to_minus",
+   "why": "'+' replaced by '-'",
+   "change": "tcp_fast.sv line 257: `tcp_raw <= 20'(sip[31:16]) + 20'(sip[15:0]) + 20'(dip[31:16]) + 20'(dip[15:0]) + 20'(16'h0006) + 20'(16'h004F) + 20'(sport) + 20'(dport) + 20'(16'h5018);` became `tcp_raw <= 20'(sip[31:16]) + 20'(sip[15:0]) + 20'(dip[31:16]) + 20'(dip[15:0]) + 20'(16'h0006) + 20'(16'h004F) - 20'(sport) + 20'(dport) + 20'(16'h5018);` ('+' replaced by '-')",
+   "status": "killed",
+   "seconds": 7.7
+  },
+  {
+   "name": "tcp_fast_L257_plus_to_minus_156",
+   "file": "tcp_fast.sv",
+   "line": 257,
+   "class": "plus_to_minus",
+   "why": "'+' replaced by '-'",
+   "change": "tcp_fast.sv line 257: `tcp_raw <= 20'(sip[31:16]) + 20'(sip[15:0]) + 20'(dip[31:16]) + 20'(dip[15:0]) + 20'(16'h0006) + 20'(16'h004F) + 20'(sport) + 20'(dport) + 20'(16'h5018);` became `tcp_raw <= 20'(sip[31:16]) + 20'(sip[15:0]) + 20'(dip[31:16]) + 20'(dip[15:0]) + 20'(16'h0006) + 20'(16'h004F) + 20'(sport) + 20'(dport) - 20'(16'h5018);` ('+' replaced by '-')",
+   "status": "killed",
+   "seconds": 10.4
+  },
+  {
+   "name": "tcp_fast_L261_bit1_to_0_29",
+   "file": "tcp_fast.sv",
+   "line": 261,
+   "class": "bit1_to_0",
+   "why": "constant 1'b1 replaced by 1'b0",
+   "change": "tcp_fast.sv line 261: `valid <= 1'b1; bld <= 1'b0; c_build <= c_build + 32'd1;` became `valid <= 1'b0; bld <= 1'b0; c_build <= c_build + 32'd1;` (constant 1'b1 replaced by 1'b0)",
+   "status": "killed",
+   "seconds": 5.9
+  },
+  {
+   "name": "tcp_fast_L271_bit1_to_0_50",
+   "file": "tcp_fast.sv",
+   "line": 271,
+   "class": "bit1_to_0",
+   "why": "constant 1'b1 replaced by 1'b0",
+   "change": "tcp_fast.sv line 271: `else begin arm_req <= 1'b1; valid <= 1'b0; bld <= 1'b1; bph <= 2'd0; age <= '0; end` became `else begin arm_req <= 1'b0; valid <= 1'b0; bld <= 1'b1; bph <= 2'd0; age <= '0; end` (constant 1'b1 replaced by 1'b0)",
+   "status": "killed",
+   "seconds": 10.1
+  },
+  {
+   "name": "tcp_fast_L274_const_plus1_20",
+   "file": "tcp_fast.sv",
+   "line": 274,
+   "class": "const_plus1",
+   "why": "constant 5'd1 changed to 5'd2",
+   "change": "tcp_fast.sv line 274: `5'd1, 5'd2, 5'd3, 5'd4, 5'd5, 5'd6, 5'd7, 5'd8: begin` became `5'd2, 5'd2, 5'd3, 5'd4, 5'd5, 5'd6, 5'd7, 5'd8: begin` (constant 5'd1 changed to 5'd2)",
+   "status": "killed",
+   "seconds": 8.8
+  },
+  {
+   "name": "tcp_fast_L290_const_minus1_61",
+   "file": "tcp_fast.sv",
+   "line": 290,
+   "class": "const_minus1",
+   "why": "constant 32'd1 changed to 32'd0",
+   "change": "tcp_fast.sv line 290: `5'd9:  if (wr_lock) c_wrign <= c_wrign + 32'd1; else snd_nxt <= sw_wdata;` became `5'd9:  if (wr_lock) c_wrign <= c_wrign + 32'd0; else snd_nxt <= sw_wdata;` (constant 32'd1 changed to 32'd0)",
+   "status": "killed",
+   "seconds": 18.1
+  },
+  {
+   "name": "tcp_fast_L303_const_plus1_41",
+   "file": "tcp_fast.sv",
+   "line": 303,
+   "class": "const_plus1",
+   "why": "constant 32'd1 changed to 32'd2",
+   "change": "tcp_fast.sv line 303: `c_cancel0 <= c_cancel0 + 32'd1;` became `c_cancel0 <= c_cancel0 + 32'd2;` (constant 32'd1 changed to 32'd2)",
+   "status": "killed",
+   "seconds": 19.5
+  },
+  {
+   "name": "tcp_fast_L309_const_minus1_67",
+   "file": "tcp_fast.sv",
+   "line": 309,
+   "class": "const_minus1",
+   "why": "constant 3'd2 changed to 3'd1",
+   "change": "tcp_fast.sv line 309: `else if (!valid || stale)     begin refuse_code <= 3'd2; c_ref_stale <= c_ref_stale + 32'd1; end` became `else if (!valid || stale)     begin refuse_code <= 3'd1; c_ref_stale <= c_ref_stale + 32'd1; end` (constant 3'd2 changed to 3'd1)",
+   "status": "killed",
+   "seconds": 14.2
+  },
+  {
+   "name": "tcp_fast_L320_bit1_to_0_23",
+   "file": "tcp_fast.sv",
+   "line": 320,
+   "class": "bit1_to_0",
+   "why": "constant 1'b1 replaced by 1'b0",
+   "change": "tcp_fast.sv line 320: `o_v <= 1'b1; o_sof <= 1'b1; o_d <= hb[63:0]; o_keep <= 8'hFF;` became `o_v <= 1'b0; o_sof <= 1'b1; o_d <= hb[63:0]; o_keep <= 8'hFF;` (constant 1'b1 replaced by 1'b0)",
+   "status": "killed",
+   "seconds": 4.2
+  },
+  {
+   "name": "tcp_fast_L328_plus_to_minus_41",
+   "file": "tcp_fast.sv",
+   "line": 328,
+   "class": "plus_to_minus",
+   "why": "'+' replaced by '-'",
+   "change": "tcp_fast.sv line 328: `hdr1 <= 19'(tcp_tmpl) + 19'(seq_c[31:16]) + 19'(seq_c[15:0]) + 19'(ack_c[31:16]) + 19'(ack_c[15:0]) + 19'(win_c);` became `hdr1 <= 19'(tcp_tmpl) - 19'(seq_c[31:16]) + 19'(seq_c[15:0]) + 19'(ack_c[31:16]) + 19'(ack_c[15:0]) + 19'(win_c);` ('+' replaced by '-')",
+   "status": "killed",
+   "seconds": 14.7
+  },
+  {
+   "name": "tcp_fast_L335_eq_to_ne_23",
+   "file": "tcp_fast.sv",
+   "line": 335,
+   "class": "eq_to_ne",
+   "why": "'==' replaced by '!='",
+   "change": "tcp_fast.sv line 335: `if (ph == 4'd4) f1  <= {1'b0, tot[15:0]} + {10'd0, tot[22:16]};` became `if (ph != 4'd4) f1  <= {1'b0, tot[15:0]} + {10'd0, tot[22:16]};` ('==' replaced by '!=')",
+   "status": "killed",
+   "seconds": 11.9
+  },
+  {
+   "name": "tcp_fast_L335_plus_to_minus_56",
+   "file": "tcp_fast.sv",
+   "line": 335,
+   "class": "plus_to_minus",
+   "why": "'+' replaced by '-'",
+   "change": "tcp_fast.sv line 335: `if (ph == 4'd4) f1  <= {1'b0, tot[15:0]} + {10'd0, tot[22:16]};` became `if (ph == 4'd4) f1  <= {1'b0, tot[15:0]} - {10'd0, tot[22:16]};` ('+' replaced by '-')",
+   "status": "killed",
+   "seconds": 11.9
+  },
+  {
+   "name": "tcp_fast_L335_bit0_to_1_40",
+   "file": "tcp_fast.sv",
+   "line": 335,
+   "class": "bit0_to_1",
+   "why": "constant 1'b0 replaced by 1'b1",
+   "change": "tcp_fast.sv line 335: `if (ph == 4'd4) f1  <= {1'b0, tot[15:0]} + {10'd0, tot[22:16]};` became `if (ph == 4'd4) f1  <= {1'b1, tot[15:0]} + {10'd0, tot[22:16]};` (constant 1'b0 replaced by 1'b1)",
+   "status": "killed",
+   "seconds": 11.6
+  },
+  {
+   "name": "tcp_fast_L335_const_plus1_26",
+   "file": "tcp_fast.sv",
+   "line": 335,
+   "class": "const_plus1",
+   "why": "constant 4'd4 changed to 4'd5",
+   "change": "tcp_fast.sv line 335: `if (ph == 4'd4) f1  <= {1'b0, tot[15:0]} + {10'd0, tot[22:16]};` became `if (ph == 4'd5) f1  <= {1'b0, tot[15:0]} + {10'd0, tot[22:16]};` (constant 4'd4 changed to 4'd5)",
+   "status": "killed",
+   "seconds": 13.4
+  },
+  {
+   "name": "tcp_fast_L339_and_to_or_31",
+   "file": "tcp_fast.sv",
+   "line": 339,
+   "class": "and_to_or",
+   "why": "'&&' replaced by '||'",
+   "change": "tcp_fast.sv line 339: `if (ph >= 4'd6 && ph <= 4'd13) begin` became `if (ph >= 4'd6 || ph <= 4'd13) begin` ('&&' replaced by '||')",
+   "status": "killed",
+   "seconds": 11.0
+  },
+  {
+   "name": "tcp_fast_L340_plus_to_minus_101",
+   "file": "tcp_fast.sv",
+   "line": 340,
+   "class": "plus_to_minus",
+   "why": "'+' replaced by '-'",
+   "change": "tcp_fast.sv line 340: `acc <= acc + {5'd0, w_cur[7:0], w_cur[15:8]} + {5'd0, w_cur[23:16], w_cur[31:24]} + {5'd0, w_cur[39:32], w_cur[47:40]} + {5'd0, w_cur[55:48], w_cur[63:56]};` became `acc <= acc + {5'd0, w_cur[7:0], w_cur[15:8]} + {5'd0, w_cur[23:16], w_cur[31:24]} - {5'd0, w_cur[39:32], w_cur[47:40]} + {5'd0, w_cur[55:48], w_cur[63:56]};` ('+' replaced by '-')",
+   "status": "killed",
+   "seconds": 9.8
+  },
+  {
+   "name": "tcp_fast_L348_const_minus1_65",
+   "file": "tcp_fast.sv",
+   "line": 348,
+   "class": "const_minus1",
+   "why": "constant 32'd1 changed to 32'd0",
+   "change": "tcp_fast.sv line 348: `o_poison <= 1'b1; c_poison <= c_poison + 32'd1;` became `o_poison <= 1'b1; c_poison <= c_poison + 32'd0;` (constant 32'd1 changed to 32'd0)",
+   "status": "killed",
+   "seconds": 21.0
+  },
+  {
+   "name": "tcp_fast_L350_const_minus1_64",
+   "file": "tcp_fast.sv",
+   "line": 350,
+   "class": "const_minus1",
+   "why": "constant 32'd1 changed to 32'd0",
+   "change": "tcp_fast.sv line 350: `else if (sumerr) c_sumerr <= c_sumerr + 32'd1;` became `else if (sumerr) c_sumerr <= c_sumerr + 32'd0;` (constant 32'd1 changed to 32'd0)",
+   "status": "killed",
+   "seconds": 19.3
+  }
+ ],
+ "wall_seconds": 724.2,
+ "tools": {
+  "yosys": "Yosys 0.70+385 (git sha1 098e46a36, Release, Clang /usr/bin/clang++ 21.1.8)",
+  "sby": "SBY v0.70-9-g79fc9ed",
+  "iverilog": "Icarus Verilog version 14.0 (devel) (s20260301-966-g3992ea6a3-dirty)"
+ },
+ "rtl_dir": "designs/b119_tcp_fast/rtl"
+}

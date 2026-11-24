@@ -1,0 +1,14 @@
+schema: fpga-design-agent/formal_rigour/v1
+scope: "mac_tx.sv with MIN_DATA 4 and IFG 3 (the shipped design uses the 802.3 values: the thresholds are parameters, the frame FSM is the same); input length 1..6, a byte every clock"
+antecedents:
+  "a_frame_len": a_frame_end__ante
+  "a_frame_end_after_last": a_frame_end__ante
+sanity: [c_poisoned, c_ifg_exact]
+depth:
+  bmc:
+    enough: false
+    why: >-
+      Bounded, not claimed exhaustive. Measured in the cover task: a frame ends at step 20 (preamble, SFD, at least MIN_DATA bytes and the FCS) and the second
+      frame's first byte, where the interframe gap is checked, comes at step 24; depth 40 holds one whole frame, the gap and the start of the next, not two whole frames
+      back to back (about 48 steps). A k-induction `prove` was tried on 2026-11-21 and fails (the induction step has a counterexample at the frame-length assertion, which depends on the ghost counter f_k),
+      so there is no unbounded result. The one assertion removed in brief 143c (`ready |-> (... || 1'b1)`) was constant true and checked nothing.

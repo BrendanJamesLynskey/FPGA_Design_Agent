@@ -1,0 +1,82 @@
+# Machine-readable specification of atan2 and vector magnitude by CORDIC (arith brief 139d). The prose is spec.md; the two agree (tests/test_atan2_mag_package.py).
+schema: fda-arith/spec/1
+function: atan2_mag
+title: atan2 and vector magnitude (CORDIC, vectoring mode)
+model: arith/atan2_mag/model.py
+summary: "For a vector (x, y) of two signed W-bit numbers: ang = atan2(y, x) as an unsigned PH-bit fraction of a turn, and mag = sqrt(x**2 + y**2) as an unsigned W-bit number, both from one CORDIC in vectoring mode (the iterations rotate the vector onto the x axis, accumulating the angle and the gain-scaled length). Two variants compute the same numbers and trade latency and flip-flops against the combinational depth between registers: a register after every iteration (cordic), or after every GRP iterations (cordic_g2)."
+semantics:
+  - "x and y are read as two's complement W-bit numbers; ang / 2**PH is the angle of the vector from the positive x axis, counter-clockwise, in turns, taken modulo 1 (so the negative y half plane is 0.5 to 1), rounded to nearest, ties upward; mag is the Euclidean length rounded to nearest and clamped to [0, 2**W - 1]"
+  - "a vector with x < 0 is first reflected into the half plane x >= 0 by negating both coordinates (the width becomes W + 1 bits: -(-2**(W-1)) is representable) and half a turn is added to the angle at the end; then NIT iterations i = 0, 1, ...: sigma = +1 if y >= 0 else -1; x' = x + sigma (y >> i); y' = y - sigma (x >> i); z' = z + sigma atan(2**-i) / 2 pi, on values scaled by 2**G (the shifts are arithmetic, floor)"
+  - "after the iterations z is the angle (in units of 2**-(PH + G) turns) and x is the length times the CORDIC gain; ang = (round(z / 2**G) + (0.5 turn if reflected)) mod 2**PH; mag = round(x * K / 2**(18 + G)) with K = round(2**18 / gain), clamped"
+  - "the origin (x = y = 0) gives mag = 0 and an angle that the model pins (the iterations alternate) but that is not a defined angle: a caller that can see the origin must ignore ang there"
+  - "the two variants are bit-identical to each other (they run the same iterations; GRP only moves the registers); each is bit-exact against model.py and within the stated error of the exact atan2 and hypot"
+ports:
+  - {name: clk, dir: in, width: 1, text: "clock"}
+  - {name: x, dir: in, width: W, text: "x coordinate, two's complement"}
+  - {name: y, dir: in, width: W, text: "y coordinate, two's complement"}
+  - {name: ang, dir: out, width: PH, text: "atan2(y, x) / 2 pi modulo 1, unsigned, in units of 2**-PH turns"}
+  - {name: mag, dir: out, width: W, text: "sqrt(x**2 + y**2), unsigned"}
+parameters:
+  W: {min: 3, max: 16, text: "bits of x and y (two's complement); mag has W bits too (the longest vector, (-2**(W-1), -2**(W-1)), has length 0.707 * 2**W)"}
+  PH: {min: 3, max: 16, text: "bits of the angle (turns); PH + G <= 24"}
+  NIT: {min: 4, max: 24, text: "iterations; the angle resolution is about 2**-NIT turns times 2 pi, so NIT near PH + 2 matches PH bits"}
+  G: {min: 1, max: 16, text: "guard bits below the last place of the coordinates and the angle; about PH + 2 for the stated angle error at small vectors (a vector of length 1 needs 2**-G below 2**-PH)"}
+  GRP: {min: 1, max: 24, text: "cordic_g2 only: iterations per register stage (GRP = 1 is the cordic variant)"}
+signedness: "x and y are signed (two's complement); ang and mag are unsigned"
+exactness: "not exact: every variant is within the error stated in 'Accuracy' of the exact atan2 and hypot, which includes the final roundings; the two variants are bit-identical to each other"
+latency_definition: "clocks from x and y being presented to ang and mag being valid: cordic NIT + 2 (one register for the reflection, one per iteration, one for the output stage), cordic_g2 ceil(NIT / GRP) + 2; throughput is one result per clock in both"
+accuracy: "Two errors, each in units of the last place of its output (2**-PH turns for ang, one count for mag), the ideal taken in real arithmetic (atan2 and hypot of the integer inputs, unrounded), the angle error circular. The bound of each listed point is a measured maximum over every (x, y) of that point except the origin (python -m pytest arith/atan2_mag/tests/test_atan2_mag_accuracy.py), rounded up to 0.01. A perfectly rounded result has error 0.5; the CORDIC reaches about 0.6 for the angle and 0.5 for the magnitude when G is about PH. Too few guard bits ruin the angle of small vectors first (W = 6, PH = 10, NIT = 12, G = 4 gives 13 last places). A point not listed has no stated bound: measure it with model.max_error (exhaustive in (x, y): keep W small)."
+contract:
+  protocol: "plain registered ports, no handshake: x and y are sampled every clock and one (ang, mag) pair leaves, with no valid, ready or backpressure. A caller that needs a valid bit delays its own valid by the variant's latency"
+  throughput: "one result per clock in both variants (initiation interval 1)"
+  latency: "cordic NIT + 2; cordic_g2 ceil(NIT / GRP) + 2"
+  reset: "none: no control state; the pipelines hold data only and their outputs are meaningless for latency clocks after power-up"
+  clock: "one clock, rising edge, no clock-enable and no gating"
+  stall: "none: the pipeline cannot be frozen (no enable)"
+integration:
+  port_timing: "x and y go through a conditional negation (the reflection) into the first register: register them in the caller if they come from logic. ang and mag leave registers. The magnitude constant multiplier sits in the output stage (one DSP, or LUT adders): it is the longest path of cordic_g2 with small GRP, so check it first"
+  constraints: "no multicycle or false paths, one clock. For the magnitude alone, a smaller NIT shortens the pipeline (the gain constant follows NIT, so mag stays correct) but spoils the angle. For a complex number in (re, im): ang is the phase in turns, mag the modulus; ang feeds sincos (arith/sincos) directly, since both count turns. The (x, y) pair is symmetric in sign: the vector (-x, -y) differs by half a turn. For a magnitude without the angle at lower cost, the abs-max-plus-beta-min approximations are cheaper and coarser and are not provided here"
+guess_wrong:
+  - "the angle is in turns (a fraction of one, wrapped), not radians and not degrees: a quarter turn is 2**(PH - 2); atan2(1, 0) is 2**(PH - 2), atan2(0, -1) is 2**(PH - 1), atan2(-1, 0) is 3 * 2**(PH - 2)"
+  - "ang is unsigned and wraps: the negative y half plane is the upper half of the range, not a negative number; read it modulo 2**PH, and a difference of two angles is modulo too"
+  - "the origin has no angle: ang is whatever the alternation of the iterations gives (the model pins it); only mag = 0 is defined there"
+  - "mag has W bits and is not scaled by the CORDIC gain 1.6468: the gain is corrected inside, with a constant good to 2**-18, which adds up to about 2**-18 of the magnitude of error (0.25 count at W = 16)"
+  - "G is not optional precision: with G below about PH the angle of vectors much shorter than 2**(W - 1) is wrong by many last places, because the shifted terms underflow"
+  - "the two variants give identical numbers: pick by latency, flip-flops and the length of the combinational path"
+  - "the parameter ranges (PH + G <= 24, NIT 4 to 24, W 3 to 16) are documented, not enforced by assertions: a value outside them gives wrong results without a message"
+  - "no reset and no valid: for latency clocks after power-up the outputs are not meaningful; there is no clock-enable"
+
+variants:
+  cordic:
+    file: rtl/atan2_cordic.sv
+    module: atan2_cordic
+    params: {W: 12, PH: 12, NIT: 14, G: 12}
+    throughput: "1 per clock"
+    latency: "NIT + 2"
+    tradeoff: "a register after every iteration: the shortest combinational path (one add/subtract and a sign test) and the highest clock, at the price of NIT + 2 clocks of latency and about 2 x (W + G + 3) + PH + G + 3 flip-flops per stage"
+    exhaustive_points: [{W: 3, PH: 6, NIT: 6, G: 4}, {W: 4, PH: 8, NIT: 8, G: 6}, {W: 5, PH: 8, NIT: 9, G: 6}, {W: 6, PH: 10, NIT: 12, G: 8}, {W: 6, PH: 8, NIT: 10, G: 5}]
+    random_points: [{W: 12, PH: 12, NIT: 14, G: 12}, {W: 16, PH: 12, NIT: 16, G: 12}, {W: 10, PH: 14, NIT: 16, G: 10}, {W: 8, PH: 10, NIT: 12, G: 12}]
+    accuracy_points:
+      - {params: {W: 6, PH: 10, NIT: 12, G: 8}, bound_ulp: {ang: 0.61, mag: 0.5}}
+      - {params: {W: 8, PH: 12, NIT: 14, G: 10}, bound_ulp: {ang: 0.59, mag: 0.51}}
+    expected_primitives:
+      a7: "1 DSP48E1 for the magnitude's constant multiplier (about 21 x 19 bits; or LUT adders), no BRAM; per stage 3 add/subtract in carry chains (W + G + 3, W + G + 3 and PH + G + 2 bits) and as many registers plus 1; about 3 x NIT x (W + G + 3) LUTs; the angle constants and the gain are constant LUT logic"
+      k26: "1 DSP48E2; as a7 with CARRY8 chains"
+    ooc_points: [{W: 12, PH: 12, NIT: 14, G: 12}, {W: 16, PH: 12, NIT: 16, G: 12}, {W: 16, PH: 14, NIT: 16, G: 10}]
+    mutant_run: [{mode: exhaustive, params: {W: 5, PH: 8, NIT: 9, G: 6}}, {mode: exhaustive, params: {W: 6, PH: 10, NIT: 12, G: 8}}, {mode: randomised, params: {W: 12, PH: 12, NIT: 14, G: 12}, n: 400}]
+  cordic_g2:
+    file: rtl/atan2_cordic_g2.sv
+    module: atan2_cordic_g2
+    params: {W: 12, PH: 12, NIT: 14, G: 12, GRP: 2}
+    throughput: "1 per clock"
+    latency: "-(-NIT // GRP) + 2"
+    tradeoff: "a register after every GRP iterations: about GRP times fewer flip-flops and clocks of latency, a combinational path of GRP chained add/subtracts (so a lower clock); GRP = 1 is the cordic variant"
+    exhaustive_points: [{W: 3, PH: 6, NIT: 6, G: 4, GRP: 2}, {W: 4, PH: 8, NIT: 8, G: 6, GRP: 3}, {W: 5, PH: 8, NIT: 9, G: 6, GRP: 4}, {W: 6, PH: 10, NIT: 12, G: 8, GRP: 2}, {W: 6, PH: 8, NIT: 10, G: 5, GRP: 1}]
+    random_points: [{W: 12, PH: 12, NIT: 14, G: 12, GRP: 2}, {W: 16, PH: 12, NIT: 16, G: 12, GRP: 3}, {W: 10, PH: 14, NIT: 16, G: 10, GRP: 4}]
+    accuracy_points:
+      - {params: {W: 6, PH: 10, NIT: 12, G: 8, GRP: 2}, bound_ulp: {ang: 0.61, mag: 0.5}}
+    expected_primitives:
+      a7: "1 DSP48E1 for the magnitude's constant multiplier (or LUT adders), no BRAM; ceil(NIT / GRP) stages each with GRP chained add/subtract triples (the chain of GRP carry chains is the critical path); registers only at the stage boundaries: about 2 x (W + G + 3) + PH + G + 3 per stage"
+      k26: "1 DSP48E2; as a7 with CARRY8 chains"
+    ooc_points: [{W: 12, PH: 12, NIT: 14, G: 12, GRP: 2}, {W: 16, PH: 12, NIT: 16, G: 12, GRP: 3}, {W: 16, PH: 12, NIT: 16, G: 12, GRP: 6}]
+    mutant_run: [{mode: exhaustive, params: {W: 5, PH: 8, NIT: 9, G: 6, GRP: 2}}, {mode: exhaustive, params: {W: 6, PH: 10, NIT: 12, G: 8, GRP: 3}}, {mode: randomised, params: {W: 12, PH: 12, NIT: 14, G: 12, GRP: 2}, n: 400}]

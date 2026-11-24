@@ -4,35 +4,35 @@
 
 The human specifies the requirements and checks that the verification is thorough enough. The agent holds the knowledge to implement and to verify. You can open any of the implementation or the evidence, and you do not have to. Hardware on the board, with attached instruments, is a verification layer of its own: where a requirement depends on something outside the design (an optical link, a network card, a data source) it may be the only way to close it.
 
-**Summary.** 21 requirements (21 functional); 0 verified; 21 stale; 0 of 21 requirements agreed by a human, 0 human review(s) recorded.
+**Summary.** 21 requirements (21 functional); 0 verified; 21 stale; 0 of 21 requirements agreed by a human, 0 agreed on the owner's delegation (not human), 21 draft; 0 human and 0 delegated review(s) recorded.
 
 ## Matrix
 
-Rows are requirements, columns are verification methods. A cell lists each item with its computed status and links to its evidence. Status is read from the evidence by code; it is never typed. `stale` means a file the evidence is about changed after the evidence was recorded; `bounded` means a formal bounded model check only.
+Rows are requirements, columns are verification methods. A cell lists each item with its computed status and links to its evidence. Status is read from the evidence by code; it is never typed. `stale` means a file the evidence is about changed after the evidence was recorded; `bounded` means a formal bounded model check only. A requirement is verified only when its passing items meet the method mix for its kind (`flow/method_mix_policy.yaml`); a test is marked with who wrote it, and a test whose author is not recorded counts as the implementing agent's own. Agreement comes only from `verif/agreements.yaml`, never from the testplan.
 
-| Requirement | Kind | State | sim test | UVM | SVA | formal | Lean | coverage | timing | sim measure | board | review |
-|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| **R01** behaviour.counter[0] | functional | stale | stale: [t1_cocotb.count_wraps_both_w](../../../results/04f/t1_verif_gates.json)<br>stale: [t1_verif.directed_closure_sw](../../../results/04f/t1_verif_gates.json) |  | stale: [A_CT_UP](../../../results/04f/t1_verif_gates.json)<br>stale: [A_CT_DOWN](../../../results/04f/t1_verif_gates.json)<br>stale: [C_CT_WRAP_UP](../../../results/04f/t1_verif_gates.json)<br>stale: [C_CT_WRAP_DOWN](../../../results/04f/t1_verif_gates.json) |  |  | stale: [t1.op.kind_x_count](../../../results/04f/t1_verif_gates.json) |  |  |  |  |
-| **R02** behaviour.counter[1] | functional | stale | stale: [t1_cocotb.bouncy_buttons_mat](../../../results/04f/t1_verif_gates.json)<br>stale: [t1_cocotb.random_operations_](../../../results/04f/t1_verif_gates.json)<br>stale: [t1_verif.constrained_random_](../../../results/04f/t1_verif_gates.json) |  | stale: [A_CT_CLEAR](../../../results/04f/t1_verif_gates.json)<br>stale: [A_CT_UP](../../../results/04f/t1_verif_gates.json)<br>stale: [A_CT_DOWN](../../../results/04f/t1_verif_gates.json)<br>stale: [A_CT_HOLD](../../../results/04f/t1_verif_gates.json) |  |  | stale: [t1.op.kind](../../../results/04f/t1_verif_gates.json) |  |  |  |  |
-| **R03** behaviour.counter[2] | functional | stale | stale: [t1_verif.simultaneous_presse](../../../results/04f/t1_verif_gates.json) |  | stale: [A_CT_CLEAR](../../../results/04f/t1_verif_gates.json)<br>stale: [A_CT_UP](../../../results/04f/t1_verif_gates.json)<br>stale: [A_CT_DOWN](../../../results/04f/t1_verif_gates.json)<br>stale: [C_CT_SAME_CLOCK_PRESSES](../../../results/04f/t1_verif_gates.json) |  |  | stale: [t1.clock.mix](../../../results/04f/t1_verif_gates.json) |  |  |  |  |
-| **R04** behaviour.counter[3] | functional | stale | stale: [t1_cocotb.register_write_and](../../../results/04f/t1_verif_gates.json) |  | stale: [A_CT_WRITE_WINS](../../../results/04f/t1_verif_gates.json)<br>stale: [A_CT_PRESS_COUNTED_UP](../../../results/04f/t1_verif_gates.json)<br>stale: [A_CT_PRESS_COUNTED_DOWN](../../../results/04f/t1_verif_gates.json)<br>stale: [A_CT_PRESS_COUNTED_CLEAR](../../../results/04f/t1_verif_gates.json)<br>stale: [C_CT_WRITE_AND_PRESS](../../../results/04f/t1_verif_gates.json) |  |  | stale: [t1.clock.mix](../../../results/04f/t1_verif_gates.json) |  |  |  |  |
-| **R05** behaviour.debounce[0], timing.latency.button_to_count | functional | stale | stale: [t1_cocotb.debounce_boundary_](../../../results/04f/t1_verif_gates.json)<br>stale: [t1_verif.short_glitches_are_](../../../results/04f/t1_verif_gates.json)<br>stale: [t1_cocotb.bouncy_buttons_mat](../../../results/04f/t1_verif_gates.json) |  | stale: [A_DB_HOLD](../../../results/04f/t1_verif_gates.json)<br>stale: [A_DB_FLIP](../../../results/04f/t1_verif_gates.json)<br>stale: [C_DB_GLITCH_IGNORED](../../../results/04f/t1_verif_gates.json) | stale: [debounce](../../../results/04f/t1_verif_gates.json) |  | stale: [t1.press.button_x_kind](../../../results/04f/t1_verif_gates.json) |  |  |  |  |
-| **R06** behaviour.debounce[1] | functional | stale | stale: [t1_cocotb.inputs_register_sh](../../../results/04f/t1_verif_gates.json)<br>stale: [t1_cocotb.debounce_boundary_](../../../results/04f/t1_verif_gates.json) |  | stale: [A_DB_PULSE](../../../results/04f/t1_verif_gates.json)<br>stale: [A_DB_RISE](../../../results/04f/t1_verif_gates.json)<br>stale: [A_DB_RISE_ONLY](../../../results/04f/t1_verif_gates.json)<br>stale: [A_DB_FALL_NO_PRESS](../../../results/04f/t1_verif_gates.json)<br>stale: [C_DB_PRESS](../../../results/04f/t1_verif_gates.json)<br>stale: [C_DB_RELEASE](../../../results/04f/t1_verif_gates.json) | stale: [debounce](../../../results/04f/t1_verif_gates.json) |  |  |  |  |  |  |
-| **R07** behaviour.pwm[0] | functional | stale | stale: [t1_cocotb.pwm_on_time_matche](../../../results/04f/t1_verif_gates.json) |  |  |  |  | stale: [t1.duty.class_x_source](../../../results/04f/t1_verif_gates.json) |  |  |  |  |
-| **R08** behaviour.pwm[1], behaviour.pwm[2], timing.latency.register_write_to_led | functional | stale | stale: [t1_cocotb.pwm_on_time_matche](../../../results/04f/t1_verif_gates.json) |  | stale: [A_PWM_SUBSET](../../../results/04f/t1_verif_gates.json) |  |  |  |  |  |  |  |
-| **R09** behaviour.pwm[3] | functional | stale | stale: [t1_cocotb.pwm_on_time_matche](../../../results/04f/t1_verif_gates.json) |  | stale: [A_PWM_ZERO_OFF](../../../results/04f/t1_verif_gates.json)<br>stale: [C_CT_DUTY_FULL](../../../results/04f/t1_verif_gates.json) |  |  | stale: [t1.duty.class](../../../results/04f/t1_verif_gates.json) |  |  |  |  |
-| **R10** behaviour.display[0] | functional | stale | stale: [t1_cocotb.display_shows_coun](../../../results/04f/t1_verif_gates.json) |  | stale: [A_SC_ONE_DIGIT](../../../results/04f/t1_verif_gates.json)<br>stale: [C_SC_DIGIT_0_LIT](../../../results/04f/t1_verif_gates.json)<br>stale: [C_SC_DIGIT_1_LIT](../../../results/04f/t1_verif_gates.json)<br>stale: [C_SC_DIGIT_2_LIT](../../../results/04f/t1_verif_gates.json)<br>stale: [C_SC_DIGIT_3_LIT](../../../results/04f/t1_verif_gates.json)<br>stale: [C_SC_DIGIT_6_LIT](../../../results/04f/t1_verif_gates.json)<br>stale: [C_SC_DIGIT_7_LIT](../../../results/04f/t1_verif_gates.json) | stale: [scan](../../../results/04f/t1_verif_gates.json) |  |  |  |  |  |  |
-| **R11** behaviour.display[1], behaviour.display[2] | functional | stale | stale: [t1_cocotb.display_shows_coun](../../../results/04f/t1_verif_gates.json) |  |  |  |  |  |  |  |  |  |
-| **R12** behaviour.display[3] | functional | stale | stale: [t1_cocotb.display_shows_coun](../../../results/04f/t1_verif_gates.json) |  | stale: [A_SC_BLANK](../../../results/04f/t1_verif_gates.json) | stale: [scan](../../../results/04f/t1_verif_gates.json) |  |  |  |  |  |  |
-| **R13** behaviour.display[4] | functional | stale | stale: [t1_cocotb.display_shows_coun](../../../results/04f/t1_verif_gates.json) |  | stale: [A_SC_DISABLED](../../../results/04f/t1_verif_gates.json) | stale: [scan](../../../results/04f/t1_verif_gates.json) |  | stale: [t1.display.enable](../../../results/04f/t1_verif_gates.json) |  |  |  |  |
-| **R14** behaviour.display[5], behaviour.display[6] | functional | stale | stale: [t1_cocotb.display_shows_coun](../../../results/04f/t1_verif_gates.json)<br>stale: [t1_verif.directed_closure_sw](../../../results/04f/t1_verif_gates.json) |  |  |  |  | stale: [t1.display.glyph](../../../results/04f/t1_verif_gates.json) |  |  |  |  |
-| **R15** reset | functional | stale | stale: [t1_cocotb.identity_and_reset](../../../results/04f/t1_verif_gates.json)<br>stale: [t1_verif.reset_state_of_outp](../../../results/04f/t1_verif_gates.json) |  | stale: [A_CT_RESET](../../../results/04f/t1_verif_gates.json) |  |  |  |  |  |  |  |
-| **R16** registers.map.COUNT | functional | stale | stale: [t1_cocotb.identity_and_reset](../../../results/04f/t1_verif_gates.json)<br>stale: [t1_cocotb.count_wraps_both_w](../../../results/04f/t1_verif_gates.json)<br>stale: [t1_verif.directed_closure_sw](../../../results/04f/t1_verif_gates.json) |  | stale: [A_CT_WRITE_WINS](../../../results/04f/t1_verif_gates.json) |  |  | stale: [t1.reg.name_x_dir](../../../results/04f/t1_verif_gates.json) |  |  |  |  |
-| **R17** registers.map.DUTY | functional | stale | stale: [t1_cocotb.identity_and_reset](../../../results/04f/t1_verif_gates.json)<br>stale: [t1_cocotb.pwm_on_time_matche](../../../results/04f/t1_verif_gates.json) |  | stale: [A_CT_DUTY_WRITE](../../../results/04f/t1_verif_gates.json) |  |  |  |  |  |  |  |
-| **R18** registers.map.CTRL | functional | stale | stale: [t1_cocotb.identity_and_reset](../../../results/04f/t1_verif_gates.json)<br>stale: [t1_verif.directed_closure_sw](../../../results/04f/t1_verif_gates.json) |  | stale: [A_CT_CTRL_WRITE](../../../results/04f/t1_verif_gates.json) |  |  |  |  |  |  |  |
-| **R19** registers.map.INPUTS | functional | stale | stale: [t1_cocotb.inputs_register_sh](../../../results/04f/t1_verif_gates.json) |  |  |  |  |  |  |  |  |  |
-| **R20** registers.map.PRESSES | functional | stale | stale: [t1_cocotb.debounce_boundary_](../../../results/04f/t1_verif_gates.json)<br>stale: [t1_verif.simultaneous_presse](../../../results/04f/t1_verif_gates.json) |  | stale: [A_CT_PRESS_COUNTED_UP](../../../results/04f/t1_verif_gates.json)<br>stale: [A_CT_PRESS_COUNTED_DOWN](../../../results/04f/t1_verif_gates.json)<br>stale: [A_CT_PRESS_COUNTED_CLEAR](../../../results/04f/t1_verif_gates.json) |  |  |  |  |  |  |  |
-| **R21** registers.unmapped | functional | stale | stale: [t1_verif.directed_closure_sw](../../../results/04f/t1_verif_gates.json)<br>stale: [t1_cocotb.random_operations_](../../../results/04f/t1_verif_gates.json) |  | stale: [A_CT_RO_IGNORED](../../../results/04f/t1_verif_gates.json) |  |  |  |  |  |  |  |
+| Requirement | Kind | Agreement | State | sim test | UVM | SVA | formal | Lean | coverage | timing | sim measure | board | review |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| **R01** behaviour.counter[0] | functional | draft | stale | stale [author not recorded]: [t1_cocotb.count_wraps_both_w](../../../results/04f/t1_verif_gates.json)<br>stale [author not recorded]: [t1_verif.directed_closure_sw](../../../results/04f/t1_verif_gates.json) |  | stale [author not recorded]: [A_CT_UP](../../../results/04f/t1_verif_gates.json)<br>stale [author not recorded]: [A_CT_DOWN](../../../results/04f/t1_verif_gates.json)<br>stale [author not recorded]: [C_CT_WRAP_UP](../../../results/04f/t1_verif_gates.json)<br>stale [author not recorded]: [C_CT_WRAP_DOWN](../../../results/04f/t1_verif_gates.json) |  |  | stale [author not recorded]: [t1.op.kind_x_count](../../../results/04f/t1_verif_gates.json) |  |  |  |  |
+| **R02** behaviour.counter[1] | functional | draft | stale | stale [author not recorded]: [t1_cocotb.bouncy_buttons_mat](../../../results/04f/t1_verif_gates.json)<br>stale [author not recorded]: [t1_cocotb.random_operations_](../../../results/04f/t1_verif_gates.json)<br>stale [author not recorded]: [t1_verif.constrained_random_](../../../results/04f/t1_verif_gates.json) |  | stale [author not recorded]: [A_CT_CLEAR](../../../results/04f/t1_verif_gates.json)<br>stale [author not recorded]: [A_CT_UP](../../../results/04f/t1_verif_gates.json)<br>stale [author not recorded]: [A_CT_DOWN](../../../results/04f/t1_verif_gates.json)<br>stale [author not recorded]: [A_CT_HOLD](../../../results/04f/t1_verif_gates.json) |  |  | stale [author not recorded]: [t1.op.kind](../../../results/04f/t1_verif_gates.json) |  |  |  |  |
+| **R03** behaviour.counter[2] | functional | draft | stale | stale [author not recorded]: [t1_verif.simultaneous_presse](../../../results/04f/t1_verif_gates.json) |  | stale [author not recorded]: [A_CT_CLEAR](../../../results/04f/t1_verif_gates.json)<br>stale [author not recorded]: [A_CT_UP](../../../results/04f/t1_verif_gates.json)<br>stale [author not recorded]: [A_CT_DOWN](../../../results/04f/t1_verif_gates.json)<br>stale [author not recorded]: [C_CT_SAME_CLOCK_PRESSES](../../../results/04f/t1_verif_gates.json) |  |  | stale [author not recorded]: [t1.clock.mix](../../../results/04f/t1_verif_gates.json) |  |  |  |  |
+| **R04** behaviour.counter[3] | functional | draft | stale | stale [author not recorded]: [t1_cocotb.register_write_and](../../../results/04f/t1_verif_gates.json) |  | stale [author not recorded]: [A_CT_WRITE_WINS](../../../results/04f/t1_verif_gates.json)<br>stale [author not recorded]: [A_CT_PRESS_COUNTED_UP](../../../results/04f/t1_verif_gates.json)<br>stale [author not recorded]: [A_CT_PRESS_COUNTED_DOWN](../../../results/04f/t1_verif_gates.json)<br>stale [author not recorded]: [A_CT_PRESS_COUNTED_CLEAR](../../../results/04f/t1_verif_gates.json)<br>stale [author not recorded]: [C_CT_WRITE_AND_PRESS](../../../results/04f/t1_verif_gates.json) |  |  | stale [author not recorded]: [t1.clock.mix](../../../results/04f/t1_verif_gates.json) |  |  |  |  |
+| **R05** behaviour.debounce[0], timing.latency.button_to_count | functional | draft | stale | stale [author not recorded]: [t1_cocotb.debounce_boundary_](../../../results/04f/t1_verif_gates.json)<br>stale [author not recorded]: [t1_verif.short_glitches_are_](../../../results/04f/t1_verif_gates.json)<br>stale [author not recorded]: [t1_cocotb.bouncy_buttons_mat](../../../results/04f/t1_verif_gates.json) |  | stale [author not recorded]: [A_DB_HOLD](../../../results/04f/t1_verif_gates.json)<br>stale [author not recorded]: [A_DB_FLIP](../../../results/04f/t1_verif_gates.json)<br>stale [author not recorded]: [C_DB_GLITCH_IGNORED](../../../results/04f/t1_verif_gates.json) | stale: [debounce](../../../results/04f/t1_verif_gates.json) |  | stale [author not recorded]: [t1.press.button_x_kind](../../../results/04f/t1_verif_gates.json) |  |  |  |  |
+| **R06** behaviour.debounce[1] | functional | draft | stale | stale [author not recorded]: [t1_cocotb.inputs_register_sh](../../../results/04f/t1_verif_gates.json)<br>stale [author not recorded]: [t1_cocotb.debounce_boundary_](../../../results/04f/t1_verif_gates.json) |  | stale [author not recorded]: [A_DB_PULSE](../../../results/04f/t1_verif_gates.json)<br>stale [author not recorded]: [A_DB_RISE](../../../results/04f/t1_verif_gates.json)<br>stale [author not recorded]: [A_DB_RISE_ONLY](../../../results/04f/t1_verif_gates.json)<br>stale [author not recorded]: [A_DB_FALL_NO_PRESS](../../../results/04f/t1_verif_gates.json)<br>stale [author not recorded]: [C_DB_PRESS](../../../results/04f/t1_verif_gates.json)<br>stale [author not recorded]: [C_DB_RELEASE](../../../results/04f/t1_verif_gates.json) | stale: [debounce](../../../results/04f/t1_verif_gates.json) |  |  |  |  |  |  |
+| **R07** behaviour.pwm[0] | functional | draft | stale | stale [author not recorded]: [t1_cocotb.pwm_on_time_matche](../../../results/04f/t1_verif_gates.json) |  |  |  |  | stale [author not recorded]: [t1.duty.class_x_source](../../../results/04f/t1_verif_gates.json) |  |  |  |  |
+| **R08** behaviour.pwm[1], behaviour.pwm[2], timing.latency.register_write_to_led | functional | draft | stale | stale [author not recorded]: [t1_cocotb.pwm_on_time_matche](../../../results/04f/t1_verif_gates.json) |  | stale [author not recorded]: [A_PWM_SUBSET](../../../results/04f/t1_verif_gates.json) |  |  |  |  |  |  |  |
+| **R09** behaviour.pwm[3] | functional | draft | stale | stale [author not recorded]: [t1_cocotb.pwm_on_time_matche](../../../results/04f/t1_verif_gates.json) |  | stale [author not recorded]: [A_PWM_ZERO_OFF](../../../results/04f/t1_verif_gates.json)<br>stale [author not recorded]: [C_CT_DUTY_FULL](../../../results/04f/t1_verif_gates.json) |  |  | stale [author not recorded]: [t1.duty.class](../../../results/04f/t1_verif_gates.json) |  |  |  |  |
+| **R10** behaviour.display[0] | functional | draft | stale | stale [author not recorded]: [t1_cocotb.display_shows_coun](../../../results/04f/t1_verif_gates.json) |  | stale [author not recorded]: [A_SC_ONE_DIGIT](../../../results/04f/t1_verif_gates.json)<br>stale [author not recorded]: [C_SC_DIGIT_0_LIT](../../../results/04f/t1_verif_gates.json)<br>stale [author not recorded]: [C_SC_DIGIT_1_LIT](../../../results/04f/t1_verif_gates.json)<br>stale [author not recorded]: [C_SC_DIGIT_2_LIT](../../../results/04f/t1_verif_gates.json)<br>stale [author not recorded]: [C_SC_DIGIT_3_LIT](../../../results/04f/t1_verif_gates.json)<br>stale [author not recorded]: [C_SC_DIGIT_6_LIT](../../../results/04f/t1_verif_gates.json)<br>stale [author not recorded]: [C_SC_DIGIT_7_LIT](../../../results/04f/t1_verif_gates.json) | stale: [scan](../../../results/04f/t1_verif_gates.json) |  |  |  |  |  |  |
+| **R11** behaviour.display[1], behaviour.display[2] | functional | draft | stale | stale [author not recorded]: [t1_cocotb.display_shows_coun](../../../results/04f/t1_verif_gates.json) |  |  |  |  |  |  |  |  |  |
+| **R12** behaviour.display[3] | functional | draft | stale | stale [author not recorded]: [t1_cocotb.display_shows_coun](../../../results/04f/t1_verif_gates.json) |  | stale [author not recorded]: [A_SC_BLANK](../../../results/04f/t1_verif_gates.json) | stale: [scan](../../../results/04f/t1_verif_gates.json) |  |  |  |  |  |  |
+| **R13** behaviour.display[4] | functional | draft | stale | stale [author not recorded]: [t1_cocotb.display_shows_coun](../../../results/04f/t1_verif_gates.json) |  | stale [author not recorded]: [A_SC_DISABLED](../../../results/04f/t1_verif_gates.json) | stale: [scan](../../../results/04f/t1_verif_gates.json) |  | stale [author not recorded]: [t1.display.enable](../../../results/04f/t1_verif_gates.json) |  |  |  |  |
+| **R14** behaviour.display[5], behaviour.display[6] | functional | draft | stale | stale [author not recorded]: [t1_cocotb.display_shows_coun](../../../results/04f/t1_verif_gates.json)<br>stale [author not recorded]: [t1_verif.directed_closure_sw](../../../results/04f/t1_verif_gates.json) |  |  |  |  | stale [author not recorded]: [t1.display.glyph](../../../results/04f/t1_verif_gates.json) |  |  |  |  |
+| **R15** reset | functional | draft | stale | stale [author not recorded]: [t1_cocotb.identity_and_reset](../../../results/04f/t1_verif_gates.json)<br>stale [author not recorded]: [t1_verif.reset_state_of_outp](../../../results/04f/t1_verif_gates.json) |  | stale [author not recorded]: [A_CT_RESET](../../../results/04f/t1_verif_gates.json) |  |  |  |  |  |  |  |
+| **R16** registers.map.COUNT | functional | draft | stale | stale [author not recorded]: [t1_cocotb.identity_and_reset](../../../results/04f/t1_verif_gates.json)<br>stale [author not recorded]: [t1_cocotb.count_wraps_both_w](../../../results/04f/t1_verif_gates.json)<br>stale [author not recorded]: [t1_verif.directed_closure_sw](../../../results/04f/t1_verif_gates.json) |  | stale [author not recorded]: [A_CT_WRITE_WINS](../../../results/04f/t1_verif_gates.json) |  |  | stale [author not recorded]: [t1.reg.name_x_dir](../../../results/04f/t1_verif_gates.json) |  |  |  |  |
+| **R17** registers.map.DUTY | functional | draft | stale | stale [author not recorded]: [t1_cocotb.identity_and_reset](../../../results/04f/t1_verif_gates.json)<br>stale [author not recorded]: [t1_cocotb.pwm_on_time_matche](../../../results/04f/t1_verif_gates.json) |  | stale [author not recorded]: [A_CT_DUTY_WRITE](../../../results/04f/t1_verif_gates.json) |  |  |  |  |  |  |  |
+| **R18** registers.map.CTRL | functional | draft | stale | stale [author not recorded]: [t1_cocotb.identity_and_reset](../../../results/04f/t1_verif_gates.json)<br>stale [author not recorded]: [t1_verif.directed_closure_sw](../../../results/04f/t1_verif_gates.json) |  | stale [author not recorded]: [A_CT_CTRL_WRITE](../../../results/04f/t1_verif_gates.json) |  |  |  |  |  |  |  |
+| **R19** registers.map.INPUTS | functional | draft | stale | stale [author not recorded]: [t1_cocotb.inputs_register_sh](../../../results/04f/t1_verif_gates.json) |  |  |  |  |  |  |  |  |  |
+| **R20** registers.map.PRESSES | functional | draft | stale | stale [author not recorded]: [t1_cocotb.debounce_boundary_](../../../results/04f/t1_verif_gates.json)<br>stale [author not recorded]: [t1_verif.simultaneous_presse](../../../results/04f/t1_verif_gates.json) |  | stale [author not recorded]: [A_CT_PRESS_COUNTED_UP](../../../results/04f/t1_verif_gates.json)<br>stale [author not recorded]: [A_CT_PRESS_COUNTED_DOWN](../../../results/04f/t1_verif_gates.json)<br>stale [author not recorded]: [A_CT_PRESS_COUNTED_CLEAR](../../../results/04f/t1_verif_gates.json) |  |  |  |  |  |  |  |
+| **R21** registers.unmapped | functional | draft | stale | stale [author not recorded]: [t1_verif.directed_closure_sw](../../../results/04f/t1_verif_gates.json)<br>stale [author not recorded]: [t1_cocotb.random_operations_](../../../results/04f/t1_verif_gates.json) |  | stale [author not recorded]: [A_CT_RO_IGNORED](../../../results/04f/t1_verif_gates.json) |  |  |  |  |  |  |  |
 
 ## Gaps
 
@@ -163,7 +163,7 @@ Rows are requirements, columns are verification methods. A cell lists each item 
 
 ### R01: behaviour.counter[0]
 
-- Kind: functional; state: stale; specification status: unspecified.
+- Kind: functional; state: stale; agreement: draft.
 - Source: `designs/t1_dimmer_counter/spec.yaml`
   - simulation test: **stale**, t1_cocotb.count_wraps_both_ways: seeds [1, 2, 3]: not missing, not failing (changed since the evidence was recorded: designs/t1_dimmer_counter/rtl/debounce.sv, designs/t1_dimmer_counter/rtl/dimmer_counter.sv, designs/t1_dimmer_counter/rtl/sevenseg_scan.sv, designs/t1_dimmer_counter/rtl/t1_dimmer_counter_top.sv). [evidence](../../../results/04f/t1_verif_gates.json)
   - simulation test: **stale**, t1_verif.directed_closure_sweep: seeds [1, 2, 3]: not missing, not failing (changed since the evidence was recorded: designs/t1_dimmer_counter/rtl/debounce.sv, designs/t1_dimmer_counter/rtl/dimmer_counter.sv, designs/t1_dimmer_counter/rtl/sevenseg_scan.sv, designs/t1_dimmer_counter/rtl/t1_dimmer_counter_top.sv). [evidence](../../../results/04f/t1_verif_gates.json)
@@ -175,7 +175,7 @@ Rows are requirements, columns are verification methods. A cell lists each item 
 
 ### R02: behaviour.counter[1]
 
-- Kind: functional; state: stale; specification status: unspecified.
+- Kind: functional; state: stale; agreement: draft.
 - Source: `designs/t1_dimmer_counter/spec.yaml`
   - simulation test: **stale**, t1_cocotb.bouncy_buttons_match_the_model: seeds [1, 2, 3]: not missing, not failing (changed since the evidence was recorded: designs/t1_dimmer_counter/rtl/debounce.sv, designs/t1_dimmer_counter/rtl/dimmer_counter.sv, designs/t1_dimmer_counter/rtl/sevenseg_scan.sv, designs/t1_dimmer_counter/rtl/t1_dimmer_counter_top.sv). [evidence](../../../results/04f/t1_verif_gates.json)
   - simulation test: **stale**, t1_cocotb.random_operations_match_the_model: seeds [1, 2, 3]: not missing, not failing (changed since the evidence was recorded: designs/t1_dimmer_counter/rtl/debounce.sv, designs/t1_dimmer_counter/rtl/dimmer_counter.sv, designs/t1_dimmer_counter/rtl/sevenseg_scan.sv, designs/t1_dimmer_counter/rtl/t1_dimmer_counter_top.sv). [evidence](../../../results/04f/t1_verif_gates.json)
@@ -188,7 +188,7 @@ Rows are requirements, columns are verification methods. A cell lists each item 
 
 ### R03: behaviour.counter[2]
 
-- Kind: functional; state: stale; specification status: unspecified.
+- Kind: functional; state: stale; agreement: draft.
 - Source: `designs/t1_dimmer_counter/spec.yaml`
   - simulation test: **stale**, t1_verif.simultaneous_presses_priority: seeds [1, 2, 3]: not missing, not failing (changed since the evidence was recorded: designs/t1_dimmer_counter/rtl/debounce.sv, designs/t1_dimmer_counter/rtl/dimmer_counter.sv, designs/t1_dimmer_counter/rtl/sevenseg_scan.sv, designs/t1_dimmer_counter/rtl/t1_dimmer_counter_top.sv). [evidence](../../../results/04f/t1_verif_gates.json)
   - assertion (SVA): **stale**, A_CT_CLEAR: bound, zero failures (changed since the evidence was recorded: designs/t1_dimmer_counter/rtl/debounce.sv, designs/t1_dimmer_counter/rtl/dimmer_counter.sv, designs/t1_dimmer_counter/rtl/sevenseg_scan.sv, designs/t1_dimmer_counter/rtl/t1_dimmer_counter_top.sv). [evidence](../../../results/04f/t1_verif_gates.json)
@@ -199,7 +199,7 @@ Rows are requirements, columns are verification methods. A cell lists each item 
 
 ### R04: behaviour.counter[3]
 
-- Kind: functional; state: stale; specification status: unspecified.
+- Kind: functional; state: stale; agreement: draft.
 - Source: `designs/t1_dimmer_counter/spec.yaml`
   - simulation test: **stale**, t1_cocotb.register_write_and_press_on_the_same_clock: seeds [1, 2, 3]: not missing, not failing (changed since the evidence was recorded: designs/t1_dimmer_counter/rtl/debounce.sv, designs/t1_dimmer_counter/rtl/dimmer_counter.sv, designs/t1_dimmer_counter/rtl/sevenseg_scan.sv, designs/t1_dimmer_counter/rtl/t1_dimmer_counter_top.sv). [evidence](../../../results/04f/t1_verif_gates.json)
   - assertion (SVA): **stale**, A_CT_WRITE_WINS: bound, zero failures (changed since the evidence was recorded: designs/t1_dimmer_counter/rtl/debounce.sv, designs/t1_dimmer_counter/rtl/dimmer_counter.sv, designs/t1_dimmer_counter/rtl/sevenseg_scan.sv, designs/t1_dimmer_counter/rtl/t1_dimmer_counter_top.sv). [evidence](../../../results/04f/t1_verif_gates.json)
@@ -211,7 +211,7 @@ Rows are requirements, columns are verification methods. A cell lists each item 
 
 ### R05: behaviour.debounce[0], timing.latency.button_to_count
 
-- Kind: functional; state: stale; specification status: unspecified.
+- Kind: functional; state: stale; agreement: draft.
 - Source: `designs/t1_dimmer_counter/spec.yaml`
   - simulation test: **stale**, t1_cocotb.debounce_boundary_is_exact: seeds [1, 2, 3]: not missing, not failing (changed since the evidence was recorded: designs/t1_dimmer_counter/rtl/debounce.sv, designs/t1_dimmer_counter/rtl/dimmer_counter.sv, designs/t1_dimmer_counter/rtl/sevenseg_scan.sv, designs/t1_dimmer_counter/rtl/t1_dimmer_counter_top.sv). [evidence](../../../results/04f/t1_verif_gates.json)
   - simulation test: **stale**, t1_verif.short_glitches_are_ignored: seeds [1, 2, 3]: not missing, not failing (changed since the evidence was recorded: designs/t1_dimmer_counter/rtl/debounce.sv, designs/t1_dimmer_counter/rtl/dimmer_counter.sv, designs/t1_dimmer_counter/rtl/sevenseg_scan.sv, designs/t1_dimmer_counter/rtl/t1_dimmer_counter_top.sv). [evidence](../../../results/04f/t1_verif_gates.json)
@@ -224,7 +224,7 @@ Rows are requirements, columns are verification methods. A cell lists each item 
 
 ### R06: behaviour.debounce[1]
 
-- Kind: functional; state: stale; specification status: unspecified.
+- Kind: functional; state: stale; agreement: draft.
 - Source: `designs/t1_dimmer_counter/spec.yaml`
   - simulation test: **stale**, t1_cocotb.inputs_register_shows_levels: seeds [1, 2, 3]: not missing, not failing (changed since the evidence was recorded: designs/t1_dimmer_counter/rtl/debounce.sv, designs/t1_dimmer_counter/rtl/dimmer_counter.sv, designs/t1_dimmer_counter/rtl/sevenseg_scan.sv, designs/t1_dimmer_counter/rtl/t1_dimmer_counter_top.sv). [evidence](../../../results/04f/t1_verif_gates.json)
   - simulation test: **stale**, t1_cocotb.debounce_boundary_is_exact: seeds [1, 2, 3]: not missing, not failing (changed since the evidence was recorded: designs/t1_dimmer_counter/rtl/debounce.sv, designs/t1_dimmer_counter/rtl/dimmer_counter.sv, designs/t1_dimmer_counter/rtl/sevenseg_scan.sv, designs/t1_dimmer_counter/rtl/t1_dimmer_counter_top.sv). [evidence](../../../results/04f/t1_verif_gates.json)
@@ -238,21 +238,21 @@ Rows are requirements, columns are verification methods. A cell lists each item 
 
 ### R07: behaviour.pwm[0]
 
-- Kind: functional; state: stale; specification status: unspecified.
+- Kind: functional; state: stale; agreement: draft.
 - Source: `designs/t1_dimmer_counter/spec.yaml`
   - simulation test: **stale**, t1_cocotb.pwm_on_time_matches_duty: seeds [1, 2, 3]: not missing, not failing (changed since the evidence was recorded: designs/t1_dimmer_counter/rtl/debounce.sv, designs/t1_dimmer_counter/rtl/dimmer_counter.sv, designs/t1_dimmer_counter/rtl/sevenseg_scan.sv, designs/t1_dimmer_counter/rtl/t1_dimmer_counter_top.sv). [evidence](../../../results/04f/t1_verif_gates.json)
   - coverage: **stale**, t1.duty.class_x_source: every bin hit (changed since the evidence was recorded: designs/t1_dimmer_counter/rtl/debounce.sv, designs/t1_dimmer_counter/rtl/dimmer_counter.sv, designs/t1_dimmer_counter/rtl/sevenseg_scan.sv, designs/t1_dimmer_counter/rtl/t1_dimmer_counter_top.sv). [evidence](../../../results/04f/t1_verif_gates.json)
 
 ### R08: behaviour.pwm[1], behaviour.pwm[2], timing.latency.register_write_to_led
 
-- Kind: functional; state: stale; specification status: unspecified.
+- Kind: functional; state: stale; agreement: draft.
 - Source: `designs/t1_dimmer_counter/spec.yaml`
   - simulation test: **stale**, t1_cocotb.pwm_on_time_matches_duty: seeds [1, 2, 3]: not missing, not failing (changed since the evidence was recorded: designs/t1_dimmer_counter/rtl/debounce.sv, designs/t1_dimmer_counter/rtl/dimmer_counter.sv, designs/t1_dimmer_counter/rtl/sevenseg_scan.sv, designs/t1_dimmer_counter/rtl/t1_dimmer_counter_top.sv). [evidence](../../../results/04f/t1_verif_gates.json)
   - assertion (SVA): **stale**, A_PWM_SUBSET: bound, zero failures (changed since the evidence was recorded: designs/t1_dimmer_counter/rtl/debounce.sv, designs/t1_dimmer_counter/rtl/dimmer_counter.sv, designs/t1_dimmer_counter/rtl/sevenseg_scan.sv, designs/t1_dimmer_counter/rtl/t1_dimmer_counter_top.sv). [evidence](../../../results/04f/t1_verif_gates.json)
 
 ### R09: behaviour.pwm[3]
 
-- Kind: functional; state: stale; specification status: unspecified.
+- Kind: functional; state: stale; agreement: draft.
 - Source: `designs/t1_dimmer_counter/spec.yaml`
   - simulation test: **stale**, t1_cocotb.pwm_on_time_matches_duty: seeds [1, 2, 3]: not missing, not failing (changed since the evidence was recorded: designs/t1_dimmer_counter/rtl/debounce.sv, designs/t1_dimmer_counter/rtl/dimmer_counter.sv, designs/t1_dimmer_counter/rtl/sevenseg_scan.sv, designs/t1_dimmer_counter/rtl/t1_dimmer_counter_top.sv). [evidence](../../../results/04f/t1_verif_gates.json)
   - assertion (SVA): **stale**, A_PWM_ZERO_OFF: bound, zero failures (changed since the evidence was recorded: designs/t1_dimmer_counter/rtl/debounce.sv, designs/t1_dimmer_counter/rtl/dimmer_counter.sv, designs/t1_dimmer_counter/rtl/sevenseg_scan.sv, designs/t1_dimmer_counter/rtl/t1_dimmer_counter_top.sv). [evidence](../../../results/04f/t1_verif_gates.json)
@@ -261,7 +261,7 @@ Rows are requirements, columns are verification methods. A cell lists each item 
 
 ### R10: behaviour.display[0]
 
-- Kind: functional; state: stale; specification status: unspecified.
+- Kind: functional; state: stale; agreement: draft.
 - Source: `designs/t1_dimmer_counter/spec.yaml`
   - simulation test: **stale**, t1_cocotb.display_shows_count_and_duty: seeds [1, 2, 3]: not missing, not failing (changed since the evidence was recorded: designs/t1_dimmer_counter/rtl/debounce.sv, designs/t1_dimmer_counter/rtl/dimmer_counter.sv, designs/t1_dimmer_counter/rtl/sevenseg_scan.sv, designs/t1_dimmer_counter/rtl/t1_dimmer_counter_top.sv). [evidence](../../../results/04f/t1_verif_gates.json)
   - assertion (SVA): **stale**, A_SC_ONE_DIGIT: bound, zero failures (changed since the evidence was recorded: designs/t1_dimmer_counter/rtl/debounce.sv, designs/t1_dimmer_counter/rtl/dimmer_counter.sv, designs/t1_dimmer_counter/rtl/sevenseg_scan.sv, designs/t1_dimmer_counter/rtl/t1_dimmer_counter_top.sv). [evidence](../../../results/04f/t1_verif_gates.json)
@@ -275,13 +275,13 @@ Rows are requirements, columns are verification methods. A cell lists each item 
 
 ### R11: behaviour.display[1], behaviour.display[2]
 
-- Kind: functional; state: stale; specification status: unspecified.
+- Kind: functional; state: stale; agreement: draft.
 - Source: `designs/t1_dimmer_counter/spec.yaml`
   - simulation test: **stale**, t1_cocotb.display_shows_count_and_duty: seeds [1, 2, 3]: not missing, not failing (changed since the evidence was recorded: designs/t1_dimmer_counter/rtl/debounce.sv, designs/t1_dimmer_counter/rtl/dimmer_counter.sv, designs/t1_dimmer_counter/rtl/sevenseg_scan.sv, designs/t1_dimmer_counter/rtl/t1_dimmer_counter_top.sv). [evidence](../../../results/04f/t1_verif_gates.json)
 
 ### R12: behaviour.display[3]
 
-- Kind: functional; state: stale; specification status: unspecified.
+- Kind: functional; state: stale; agreement: draft.
 - Source: `designs/t1_dimmer_counter/spec.yaml`
   - simulation test: **stale**, t1_cocotb.display_shows_count_and_duty: seeds [1, 2, 3]: not missing, not failing (changed since the evidence was recorded: designs/t1_dimmer_counter/rtl/debounce.sv, designs/t1_dimmer_counter/rtl/dimmer_counter.sv, designs/t1_dimmer_counter/rtl/sevenseg_scan.sv, designs/t1_dimmer_counter/rtl/t1_dimmer_counter_top.sv). [evidence](../../../results/04f/t1_verif_gates.json)
   - assertion (SVA): **stale**, A_SC_BLANK: bound, zero failures (changed since the evidence was recorded: designs/t1_dimmer_counter/rtl/debounce.sv, designs/t1_dimmer_counter/rtl/dimmer_counter.sv, designs/t1_dimmer_counter/rtl/sevenseg_scan.sv, designs/t1_dimmer_counter/rtl/t1_dimmer_counter_top.sv). [evidence](../../../results/04f/t1_verif_gates.json)
@@ -289,7 +289,7 @@ Rows are requirements, columns are verification methods. A cell lists each item 
 
 ### R13: behaviour.display[4]
 
-- Kind: functional; state: stale; specification status: unspecified.
+- Kind: functional; state: stale; agreement: draft.
 - Source: `designs/t1_dimmer_counter/spec.yaml`
   - simulation test: **stale**, t1_cocotb.display_shows_count_and_duty: seeds [1, 2, 3]: not missing, not failing (changed since the evidence was recorded: designs/t1_dimmer_counter/rtl/debounce.sv, designs/t1_dimmer_counter/rtl/dimmer_counter.sv, designs/t1_dimmer_counter/rtl/sevenseg_scan.sv, designs/t1_dimmer_counter/rtl/t1_dimmer_counter_top.sv). [evidence](../../../results/04f/t1_verif_gates.json)
   - assertion (SVA): **stale**, A_SC_DISABLED: bound, zero failures (changed since the evidence was recorded: designs/t1_dimmer_counter/rtl/debounce.sv, designs/t1_dimmer_counter/rtl/dimmer_counter.sv, designs/t1_dimmer_counter/rtl/sevenseg_scan.sv, designs/t1_dimmer_counter/rtl/t1_dimmer_counter_top.sv). [evidence](../../../results/04f/t1_verif_gates.json)
@@ -298,7 +298,7 @@ Rows are requirements, columns are verification methods. A cell lists each item 
 
 ### R14: behaviour.display[5], behaviour.display[6]
 
-- Kind: functional; state: stale; specification status: unspecified.
+- Kind: functional; state: stale; agreement: draft.
 - Source: `designs/t1_dimmer_counter/spec.yaml`
   - simulation test: **stale**, t1_cocotb.display_shows_count_and_duty: seeds [1, 2, 3]: not missing, not failing (changed since the evidence was recorded: designs/t1_dimmer_counter/rtl/debounce.sv, designs/t1_dimmer_counter/rtl/dimmer_counter.sv, designs/t1_dimmer_counter/rtl/sevenseg_scan.sv, designs/t1_dimmer_counter/rtl/t1_dimmer_counter_top.sv). [evidence](../../../results/04f/t1_verif_gates.json)
   - simulation test: **stale**, t1_verif.directed_closure_sweep: seeds [1, 2, 3]: not missing, not failing (changed since the evidence was recorded: designs/t1_dimmer_counter/rtl/debounce.sv, designs/t1_dimmer_counter/rtl/dimmer_counter.sv, designs/t1_dimmer_counter/rtl/sevenseg_scan.sv, designs/t1_dimmer_counter/rtl/t1_dimmer_counter_top.sv). [evidence](../../../results/04f/t1_verif_gates.json)
@@ -306,7 +306,7 @@ Rows are requirements, columns are verification methods. A cell lists each item 
 
 ### R15: reset
 
-- Kind: functional; state: stale; specification status: unspecified.
+- Kind: functional; state: stale; agreement: draft.
 - Source: `designs/t1_dimmer_counter/spec.yaml`
   - simulation test: **stale**, t1_cocotb.identity_and_reset_values: seeds [1, 2, 3]: not missing, not failing (changed since the evidence was recorded: designs/t1_dimmer_counter/rtl/debounce.sv, designs/t1_dimmer_counter/rtl/dimmer_counter.sv, designs/t1_dimmer_counter/rtl/sevenseg_scan.sv, designs/t1_dimmer_counter/rtl/t1_dimmer_counter_top.sv). [evidence](../../../results/04f/t1_verif_gates.json)
   - simulation test: **stale**, t1_verif.reset_state_of_outputs: seeds [1, 2, 3]: not missing, not failing (changed since the evidence was recorded: designs/t1_dimmer_counter/rtl/debounce.sv, designs/t1_dimmer_counter/rtl/dimmer_counter.sv, designs/t1_dimmer_counter/rtl/sevenseg_scan.sv, designs/t1_dimmer_counter/rtl/t1_dimmer_counter_top.sv). [evidence](../../../results/04f/t1_verif_gates.json)
@@ -314,7 +314,7 @@ Rows are requirements, columns are verification methods. A cell lists each item 
 
 ### R16: registers.map.COUNT
 
-- Kind: functional; state: stale; specification status: unspecified.
+- Kind: functional; state: stale; agreement: draft.
 - Source: `designs/t1_dimmer_counter/spec.yaml`
   - simulation test: **stale**, t1_cocotb.identity_and_reset_values: seeds [1, 2, 3]: not missing, not failing (changed since the evidence was recorded: designs/t1_dimmer_counter/rtl/debounce.sv, designs/t1_dimmer_counter/rtl/dimmer_counter.sv, designs/t1_dimmer_counter/rtl/sevenseg_scan.sv, designs/t1_dimmer_counter/rtl/t1_dimmer_counter_top.sv). [evidence](../../../results/04f/t1_verif_gates.json)
   - simulation test: **stale**, t1_cocotb.count_wraps_both_ways: seeds [1, 2, 3]: not missing, not failing (changed since the evidence was recorded: designs/t1_dimmer_counter/rtl/debounce.sv, designs/t1_dimmer_counter/rtl/dimmer_counter.sv, designs/t1_dimmer_counter/rtl/sevenseg_scan.sv, designs/t1_dimmer_counter/rtl/t1_dimmer_counter_top.sv). [evidence](../../../results/04f/t1_verif_gates.json)
@@ -324,7 +324,7 @@ Rows are requirements, columns are verification methods. A cell lists each item 
 
 ### R17: registers.map.DUTY
 
-- Kind: functional; state: stale; specification status: unspecified.
+- Kind: functional; state: stale; agreement: draft.
 - Source: `designs/t1_dimmer_counter/spec.yaml`
   - simulation test: **stale**, t1_cocotb.identity_and_reset_values: seeds [1, 2, 3]: not missing, not failing (changed since the evidence was recorded: designs/t1_dimmer_counter/rtl/debounce.sv, designs/t1_dimmer_counter/rtl/dimmer_counter.sv, designs/t1_dimmer_counter/rtl/sevenseg_scan.sv, designs/t1_dimmer_counter/rtl/t1_dimmer_counter_top.sv). [evidence](../../../results/04f/t1_verif_gates.json)
   - simulation test: **stale**, t1_cocotb.pwm_on_time_matches_duty: seeds [1, 2, 3]: not missing, not failing (changed since the evidence was recorded: designs/t1_dimmer_counter/rtl/debounce.sv, designs/t1_dimmer_counter/rtl/dimmer_counter.sv, designs/t1_dimmer_counter/rtl/sevenseg_scan.sv, designs/t1_dimmer_counter/rtl/t1_dimmer_counter_top.sv). [evidence](../../../results/04f/t1_verif_gates.json)
@@ -332,7 +332,7 @@ Rows are requirements, columns are verification methods. A cell lists each item 
 
 ### R18: registers.map.CTRL
 
-- Kind: functional; state: stale; specification status: unspecified.
+- Kind: functional; state: stale; agreement: draft.
 - Source: `designs/t1_dimmer_counter/spec.yaml`
   - simulation test: **stale**, t1_cocotb.identity_and_reset_values: seeds [1, 2, 3]: not missing, not failing (changed since the evidence was recorded: designs/t1_dimmer_counter/rtl/debounce.sv, designs/t1_dimmer_counter/rtl/dimmer_counter.sv, designs/t1_dimmer_counter/rtl/sevenseg_scan.sv, designs/t1_dimmer_counter/rtl/t1_dimmer_counter_top.sv). [evidence](../../../results/04f/t1_verif_gates.json)
   - simulation test: **stale**, t1_verif.directed_closure_sweep: seeds [1, 2, 3]: not missing, not failing (changed since the evidence was recorded: designs/t1_dimmer_counter/rtl/debounce.sv, designs/t1_dimmer_counter/rtl/dimmer_counter.sv, designs/t1_dimmer_counter/rtl/sevenseg_scan.sv, designs/t1_dimmer_counter/rtl/t1_dimmer_counter_top.sv). [evidence](../../../results/04f/t1_verif_gates.json)
@@ -340,13 +340,13 @@ Rows are requirements, columns are verification methods. A cell lists each item 
 
 ### R19: registers.map.INPUTS
 
-- Kind: functional; state: stale; specification status: unspecified.
+- Kind: functional; state: stale; agreement: draft.
 - Source: `designs/t1_dimmer_counter/spec.yaml`
   - simulation test: **stale**, t1_cocotb.inputs_register_shows_levels: seeds [1, 2, 3]: not missing, not failing (changed since the evidence was recorded: designs/t1_dimmer_counter/rtl/debounce.sv, designs/t1_dimmer_counter/rtl/dimmer_counter.sv, designs/t1_dimmer_counter/rtl/sevenseg_scan.sv, designs/t1_dimmer_counter/rtl/t1_dimmer_counter_top.sv). [evidence](../../../results/04f/t1_verif_gates.json)
 
 ### R20: registers.map.PRESSES
 
-- Kind: functional; state: stale; specification status: unspecified.
+- Kind: functional; state: stale; agreement: draft.
 - Source: `designs/t1_dimmer_counter/spec.yaml`
   - simulation test: **stale**, t1_cocotb.debounce_boundary_is_exact: seeds [1, 2, 3]: not missing, not failing (changed since the evidence was recorded: designs/t1_dimmer_counter/rtl/debounce.sv, designs/t1_dimmer_counter/rtl/dimmer_counter.sv, designs/t1_dimmer_counter/rtl/sevenseg_scan.sv, designs/t1_dimmer_counter/rtl/t1_dimmer_counter_top.sv). [evidence](../../../results/04f/t1_verif_gates.json)
   - simulation test: **stale**, t1_verif.simultaneous_presses_priority: seeds [1, 2, 3]: not missing, not failing (changed since the evidence was recorded: designs/t1_dimmer_counter/rtl/debounce.sv, designs/t1_dimmer_counter/rtl/dimmer_counter.sv, designs/t1_dimmer_counter/rtl/sevenseg_scan.sv, designs/t1_dimmer_counter/rtl/t1_dimmer_counter_top.sv). [evidence](../../../results/04f/t1_verif_gates.json)
@@ -356,7 +356,7 @@ Rows are requirements, columns are verification methods. A cell lists each item 
 
 ### R21: registers.unmapped
 
-- Kind: functional; state: stale; specification status: unspecified.
+- Kind: functional; state: stale; agreement: draft.
 - Source: `designs/t1_dimmer_counter/spec.yaml`
   - simulation test: **stale**, t1_verif.directed_closure_sweep: seeds [1, 2, 3]: not missing, not failing (changed since the evidence was recorded: designs/t1_dimmer_counter/rtl/debounce.sv, designs/t1_dimmer_counter/rtl/dimmer_counter.sv, designs/t1_dimmer_counter/rtl/sevenseg_scan.sv, designs/t1_dimmer_counter/rtl/t1_dimmer_counter_top.sv). [evidence](../../../results/04f/t1_verif_gates.json)
   - simulation test: **stale**, t1_cocotb.random_operations_match_the_model: seeds [1, 2, 3]: not missing, not failing (changed since the evidence was recorded: designs/t1_dimmer_counter/rtl/debounce.sv, designs/t1_dimmer_counter/rtl/dimmer_counter.sv, designs/t1_dimmer_counter/rtl/sevenseg_scan.sv, designs/t1_dimmer_counter/rtl/t1_dimmer_counter_top.sv). [evidence](../../../results/04f/t1_verif_gates.json)

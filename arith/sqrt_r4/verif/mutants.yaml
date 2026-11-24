@@ -1,0 +1,38 @@
+# Seeded mutants of the radix-4 square-root RTL (brief 139c): one text change each, run under `config` with every radicand of that width.
+mutants:
+  - {id: M01, file: sqrt_r4_iter.sv, what: "trial value for digit 1 is 8q (the +1 dropped)", config: {variant: 0, w: 10, pipe: 1},
+     find: "assign t1 = {2'b00, qq, 3'b001};", replace: "assign t1 = {2'b00, qq, 3'b000};"}
+  - {id: M02, file: sqrt_r4_iter.sv, what: "trial value for digit 2 is 16q + 5", config: {variant: 0, w: 10, pipe: 1},
+     find: "assign t2 = {1'b0, qq, 4'b0100};", replace: "assign t2 = {1'b0, qq, 4'b0101};"}
+  - {id: M03, file: sqrt_r4_iter.sv, what: "trial value for digit 3 is 24q + 8", config: {variant: 0, w: 10, pipe: 1},
+     find: "(QW+3)'(9);   // 24*q + 9", replace: "(QW+3)'(8);   // 24*q + 9"}
+  - {id: M04, file: sqrt_r4_iter.sv, what: "trial value for digit 3 is 20q + 9 (4q added, not 8q)", config: {variant: 0, w: 10, pipe: 1},
+     find: "(QW+3)'({qq, 3'b000}) + (QW+3)'(9);", replace: "(QW+3)'({qq, 2'b00}) + (QW+3)'(9);"}
+  - {id: M05, file: sqrt_r4_iter.sv, what: "digit 3 keeps the digit 2 remainder", config: {variant: 0, w: 10, pipe: 1},
+     find: "if (!d3[QW+3])      begin r_n = d3[QW:0];", replace: "if (!d3[QW+3])      begin r_n = d2[QW:0];"}
+  - {id: M06, file: sqrt_r4_iter.sv, what: "digit 2 appended as 01", config: {variant: 0, w: 10, pipe: 1},
+     find: "q_n = {q[QW-3:0], 2'b10}; end", replace: "q_n = {q[QW-3:0], 2'b01}; end"}
+  - {id: M07, file: sqrt_r4_iter.sv, what: "radicand register shifts by two bits, not four", config: {variant: 0, w: 10, pipe: 1},
+     find: "xs <= {xs[4*RP-5:0], 4'b0000};", replace: "xs <= {xs[4*RP-3:0], 2'b00};"}
+  - {id: M08, file: sqrt_r4_iter.sv, what: "one step too few", config: {variant: 0, w: 10, pipe: 1},
+     find: "if (cnt == CW'(RP - 1)) begin", replace: "if (cnt == CW'(RP - 2)) begin"}
+  - {id: M09, file: sqrt_r4_iter.sv, what: "nibble taken from the wrong bits of the radicand", config: {variant: 0, w: 10, pipe: 1},
+     find: "assign sh = {r[QW-2:0], xs[4*RP-1:4*RP-4]};", replace: "assign sh = {r[QW-2:0], xs[4*RP-2:4*RP-5]};"}
+  - {id: M10, file: sqrt_r4_iter.sv, what: "digit 2's trial subtraction uses the digit 1 value", config: {variant: 0, w: 10, pipe: 1},
+     find: "assign d2 = {1'b0, sh} - {1'b0, t2};", replace: "assign d2 = {1'b0, sh} - {1'b0, t1};"}
+  - {id: M11, file: sqrt_r4_iter.sv, what: "remainder loaded with 1 instead of 0", config: {variant: 0, w: 9, pipe: 1},
+     find: "            r  <= '0;", replace: "            r  <= (QW+1)'(1);"}
+  - {id: M12, file: sqrt_r4_iter.sv, what: "odd radicand width not zero-extended (loaded x placed at the top)", config: {variant: 0, w: 9, pipe: 1},
+     find: "xs <= (4*RP)'(x);", replace: "xs <= {x, {(4*RP-W){1'b0}}};"}
+  - {id: M13, file: sqrt_r4_pipe.sv, what: "stage result registered from the stage input (a stage's steps skipped)", config: {variant: 1, w: 10, pipe: 2},
+     find: "r_q[s] <= r_c;", replace: "r_q[s] <= r_i;"}
+  - {id: M14, file: sqrt_r4_pipe.sv, what: "last stage runs PIPE steps even when fewer remain", config: {variant: 1, w: 13, pipe: 3},
+     find: "localparam int IT = (RP - s * PIPE < PIPE) ? (RP - s * PIPE) : PIPE;", replace: "localparam int IT = PIPE;"}
+  - {id: M15, file: sqrt_r4_pipe.sv, what: "radicand not passed between stages", config: {variant: 1, w: 10, pipe: 1},
+     find: "always_ff @(posedge clk) xs_q <= xs_c;", replace: "always_ff @(posedge clk) xs_q <= '0;"}
+  - {id: M16, file: sqrt_r4_pipe.sv, what: "valid taken from the pipeline input (latency 1)", config: {variant: 1, w: 12, pipe: 1},
+     find: "else     v_q[s] <= v_i;", replace: "else     v_q[s] <= in_valid;"}
+  - {id: M17, file: sqrt_r4_pipe.sv, what: "trial value for digit 3 is 24q + 8", config: {variant: 1, w: 10, pipe: 2},
+     find: "(QW+3)'(9);\n                d1_v", replace: "(QW+3)'(8);\n                d1_v"}
+  - {id: M18, file: sqrt_r4_pipe.sv, what: "digit 1 appended as 10", config: {variant: 1, w: 10, pipe: 2},
+     find: "q_v = {qq_v, 2'b01}; end", replace: "q_v = {qq_v, 2'b10}; end"}
