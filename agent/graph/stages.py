@@ -34,10 +34,10 @@ MACHINE: tuple[Stage, ...] = (
     Stage(1, "board-and-device-planning", (*FILES, "board_constraints", "check_constraints", "gates", "check", "gt_plan", "ip_lookup"),
           ("arch_note", "arch_yaml", "inventory"), (0,), _L),
     Stage(2, "rtl-design-creation", (*FILES, "lint", "simulate", "formal", "gates", "check", "gt_plan"),
-          ("arch_approved", "lint", "model_contract", "simulate", "standards_rtl", "constants", "verif_v3", "stage_rtl"), (0, 1),
+          ("arch_approved", "lint", "model_contract", "simulate", "standards_rtl", "constants", "verif_v3", "stage_rtl", "report_gates"), (0, 1),
           {"turns": 80, "seconds": 3600, "usd": 0.80}),      # 05g: 60 -> 80, the tests role keeps a reserve (run.ROLE_TURN_RESERVE)
-    Stage(3, "constraints", (*FILES, "board_constraints", "check_constraints", "build", "gates", "report", "check", "gt_plan"), ("constants", "constraints_post_synth"), (2,), _L),   # f2-stage3-io: + report
-    Stage(4, "synthesis", (*FILES, "build", "gates", "report", "check"), ("stage_post_synth", "standards_post_synth"), (1, 2, 3), _L),
+    Stage(3, "constraints", (*FILES, "board_constraints", "check_constraints", "build", "gates", "report", "check", "gt_plan"), ("constants", "constraints_post_synth", "report_gates"), (2,), _L),   # f2-stage3-io: + report
+    Stage(4, "synthesis", (*FILES, "build", "gates", "report", "check"), ("stage_post_synth", "standards_post_synth", "report_gates"), (1, 2, 3), _L),
     Stage(5, "implementation", (*FILES, "build", "gates", "report", "check"), ("stage_post_place", "stage_post_route"), (6,), _L),
     Stage(6, "timing-closure", (*FILES, "build", "gates", "report", "check"), ("timing",), (3, 2, 5), _L),
     Stage(7, "power-closure", (*FILES, "build", "gates", "report", "check"), ("power",), (2, 0), _L),
@@ -188,6 +188,24 @@ def _spec_holder_tag(c: dict, f: dict) -> str:
     return ""
 
 
+#: brief 209a: the report checks (brief 204a) that block. Their findings are the check suite's own (``flow.checks``); every other
+#: finding of those checks is an advisory and never blocks.
+REPORT_GATE_CODES = ("RPT-LL-02", "RPT-CS-02", "RPT-LOG-03")
+
+
+def report_gates_stage(r: dict | None) -> tuple[bool, list[str]]:
+    """The report gate (brief 209a): a blocking RPT-LL-02 (a setup path that fails even with no net delay: the design cannot close at
+    this clock), RPT-CS-02 (control sets over 15 % of capacity) or RPT-LOG-03 (a generic the build sets that the top lacks) sends
+    the run back to the Designer, with the finding's own text as the failure. ``r`` is ``agent.graph.run.report_gates_eval``'s
+    record; ``None`` (the checks did not run, or the build wrote no synthesis report) is not a failure: like the constants gate it
+    is a gate on a finding, not on its own availability. Advisories are in ``r['advisories']`` for the Designer's feedback only."""
+    if not r:
+        return True, []
+    fs = [f for f in (r.get("findings") or []) if f.get("blocking") and f.get("code") in REPORT_GATE_CODES]
+    return not fs, [f"report gate {f['code']} {f.get('where', '')}: {f.get('message', '')}" + (f" Fix: {f['fix']}" if f.get("fix") else "")
+                    for f in fs]
+
+
 def exit_check(stage: Stage, ev: dict[str, Any]) -> tuple[bool, list[str]]:
     """``ev`` holds the latest tool results the graph collected in this stage: ``spec`` (parsed spec.yaml),
     ``signed_off`` (bool, from the review/interview), ``lint``/``simulate`` (tool results), ``gates_base`` /
@@ -215,6 +233,8 @@ def exit_check(stage: Stage, ev: dict[str, Any]) -> tuple[bool, list[str]]:
             ok, why = signoff_failures(ev.get("signoff"))
         elif g == "constants":
             ok, why = constants_stage(ev.get("constants"))
+        elif g == "report_gates":
+            ok, why = report_gates_stage(ev.get("report_gates"))
         elif g == "inventory":
             r = ev.get("inventory") or {}
             ok, why = bool(r.get("ok")), ["check_constraints failed"]
@@ -287,6 +307,8 @@ _HARNESS_MARKERS = ("ModuleNotFoundError", "ImportError", "SyntaxError", "NameEr
 def classify(stage: Stage, fails: list[str]) -> str | None:
     """Map gate failures to the owning cause, following methodology.md's "Loops back to" column."""
     text = " ".join(fails)
+    if "report gate RPT-" in text:
+        return "rtl"                     # brief 209a: a path that cannot close, too many control sets or an unused generic is the RTL's
     if "constants CONST-CLK" in text:
         return "constraints"             # a clock period against the board file is the constraints' to fix
     if "constants CONST-ID-01" in text and "held by spec.yaml" in text:
