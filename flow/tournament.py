@@ -314,7 +314,14 @@ def run_children(jobs: list[dict[str, Any]], peak_g: float, max_children: int = 
             raise SystemExit("tournament: memory never allowed a child to start within an hour")
         running = [(p, j) for p, j in running if p.poll() is None]
         while pending:
-            ok, why = may_launch([peak_g] * len(running), peak_g, avail(), max_children)
+            if max_children == 1:
+                # one child at a time (K26 synthesis, every place-and-route run): the slot we hold admits it, so only the child's own peak
+                # plus 1 GiB must be free. Brief 178c: the old code asked the light-class gate (peak <= 2 G, plus 8 G reserve) and waited for the fallback.
+                ok = not running and avail() >= peak_g + FALLBACK_FLOOR_G
+                if not ok:
+                    break
+            else:
+                ok, why = may_launch([peak_g] * len(running), peak_g, avail(), max_children)
             if not ok and not running and time.time() - t_idle >= fallback_after_s and avail() >= peak_g + FALLBACK_FLOOR_G:
                 ok = True
                 log(f"tournament: gate refused ({why}); running one child alone inside the slot (MemAvailable {avail():.1f} G)")
@@ -372,8 +379,7 @@ def run(spec: dict[str, Any], stage: str, menu: list[str] | None, k: int, jobs: 
                 wd = Path(c["wd"])
                 wd.mkdir(parents=True, exist_ok=True)
                 (wd / "run.tcl").write_text(impl_tcl(WORK / spec["name"] / "synth" / c["synth"] / "post_synth.dcp", c, wd))
-                run_children([{"tcl": wd / "run.tcl", "log": wd / "vivado.log"}], float(os.environ.get("TOURNAMENT_IMPL_PEAK", "4")), 1,
-                             avail=lambda: 99.0)
+                run_children([{"tcl": wd / "run.tcl", "log": wd / "vivado.log"}], float(os.environ.get("TOURNAMENT_IMPL_PEAK", "4")), 1)
         finally:
             if lock:
                 release_slot(lock, prefix)
@@ -384,7 +390,7 @@ def run(spec: dict[str, Any], stage: str, menu: list[str] | None, k: int, jobs: 
         (out / "tournament_failed.txt").write_text("no candidate completed: " + "; ".join(sorted({str(c.get("status")) for c in cands})) + "\n")
         raise SystemExit(f"tournament: no candidate completed for {spec['name']} {stage} (see {out}/*/vivado.log)")
     ranked = rank(cands, k)
-    ref = next((c for c in ranked if c["id"] == "default"), None)
+    ref = next((c for c in ranked if c["id"] in ("default", "default/default")), None)   # impl ids are "<synth>/<impl>" (null before brief 178c)
     rec = {"schema": "fda-tournament/1", "date": datetime.date.today().isoformat(), "design": spec["name"], "stage": stage, "part": spec["part"],
            "clock_ns": spec["clock_ns"], "k": k, "vivado": Path(vivado()).parts[-3] if len(Path(vivado()).parts) > 3 else vivado(),
            "wall_s": round(time.time() - t_wall), "cpu_s": sum(c.get("runtime_s") or 0 for c in cands), "skipped": spec.get("_skipped", []),

@@ -149,3 +149,33 @@ def test_synth_peak_by_part():
     assert t.synth_peak_g({"part": "xc7a100tcsg324-1"}) == 2.0
     assert t.synth_peak_g({"part": "xck26-sfvc784-2LV-c"}) == 4.0
     assert t.synth_peak_g({"part": "xck26-sfvc784-2LV-c", "synth_peak_g": 3}) == 3.0
+
+
+def test_single_child_stage_uses_the_real_memory_reading_and_no_light_gate():
+    """Brief 178c: place and route passed avail=lambda: 99.0 (a stub, logged as 'MemAvailable 99.0 G') and a 4 G child was refused by the light-class gate."""
+    live, msgs = [], []
+
+    class P:
+        def __init__(self, cmd, **k):
+            live.append(self)
+
+        def poll(self):
+            return 0
+
+    jobs = [{"tcl": Path("/y.tcl"), "log": Path("/y.log")}]
+    t.run_children(jobs, 4.0, 1, poll_s=0, launch=P, avail=lambda: 5.5, log=msgs.append)
+    assert len(live) == 1 and not msgs                      # admitted at once, no 'gate refused' message
+    live.clear()
+    clock = iter(range(0, 10**7, 4000))                     # the clock jumps over an hour per call: with 2 G free the one-hour error fires
+    orig = t.time.time
+    t.time.time = lambda: next(clock)
+    try:
+        try:
+            t.run_children(jobs, 4.0, 1, poll_s=0, launch=P, avail=lambda: 2.0, log=msgs.append)
+            raised = False
+        except SystemExit:
+            raised = True
+    finally:
+        t.time.time = orig
+    assert raised and not live
+

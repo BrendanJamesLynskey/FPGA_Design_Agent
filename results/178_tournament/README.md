@@ -69,3 +69,38 @@ Method: synthesis tournament (16 options) per design; the top two synthesis cand
 * The memory gate (free memory must cover running peaks plus 8 GiB) cannot admit a child while other jobs hold memory; with nothing running, the driver now falls back to one child alone
   after 120 s when MemAvailable covers the child's peak plus 1 GiB. The log line "gate refused ... running one child alone" in `build/178b_eval.log` is that fallback working (it appears for every 4 GiB child, by design).
 * The strategy probe stored only IS_ENABLED flags, never the directives, so all 33 AMD strategies were empty and identical to default. It now reads each step's directive.
+
+## Scoring (brief 178c, 2026-11-24, from the stored reports only, no new Vivado)
+
+Fmax = 1000 / (clock period - routed WNS), out of context. **K26 caps at 725.2 MHz** (clock buffer BUFGCE minimum period 1.379 ns at -2LV, brief 199), so K26 rows
+are compared on WNS; an Fmax above the cap is shown as "over cap" and must not be quoted.
+
+| design | clock | baseline WNS / Fmax | winner WNS / Fmax | gain WNS | CPU s: tournament vs baseline | wall s (incl. slot waits) |
+|---|---|---|---|---|---|---|
+| adder csel w64 (A7) | 5.0 ns | -0.426 / 184.3 MHz | -0.129 / 195.0 MHz | +0.297 | 8974 vs 76 (118x) | 10967 |
+| divider w16 (K26) | 1.4 ns | -0.031 / 698.8 MHz | +0.009 / 718.9 MHz (cap 725.2) | +0.040 | 7638 vs 177 (43x) | 12292 |
+| isqrt w32 (K26) | 1.4 ns | +0.002 / 715.3 MHz | +0.016 / 722.5 MHz (cap 725.2) | +0.014 (inside noise) | 8277 vs 194 (43x) | 25428 |
+| lzc w32 (K26) | 1.4 ns | -0.486 / 530.2 MHz | +0.165 / over cap | +0.651 (WNS only) | 8247 vs 218 (38x) | 12947 |
+| mac fabric (K26) | 3.0 ns | -0.161 / 316.4 MHz | +0.208 / 358.2 MHz | +0.369 | 8195 vs 236 (35x) | 12872 |
+
+CPU = synthesis (16 runs) + place and route (20 runs), summed per-run runtimes from `runs/*/synth.json`, `impl_top2.json`, `impl_base.json`; wall includes waiting for other jobs' slots.
+(The 178b text above quotes "30 to 90 times" for the P&R part alone; the totals above are per whole tournament.) Single runs, no repeats: gains under ~0.03 ns are not shown to be real.
+
+**Did the synthesis ranking predict the routed winner?** Only partly testable: only the top two synthesis candidates went to place and route, and on 4 of 5 designs they were
+identical netlists, so those four give no ranking information. Findings:
+* Adder (the one design with two different candidates): synthesis ranked altroute (-0.519) above area_high (-0.893). With *default* P&R the order reversed (-0.628 vs -0.524); with the best
+  P&R set altroute won (-0.129 vs -0.306). So the synthesis rank-1 was the routed winner only after P&R was also searched; as a prediction for a fixed flow it was wrong. This agrees with part 1 (close candidates: synthesis ranking unreliable).
+* On the other four the rank-1 synthesis result (retime, or altroute = carry) was the routed winner, but nothing else was routed, so "rank 1 won" is not evidence that the ranking works.
+  What is measured is that the default synthesis ranked 3rd to 5th of 16 on every design (`default_rank` 3, 5, 3, 4, 5), i.e. the default synthesis was never the best by its own post-synthesis WNS.
+* `default_rank` is null in the impl records because the reference id there is `default/default`, not `default` (a bug in the lookup, fixed in 178c; stored records are unchanged). For the baseline file (one candidate) it is trivially 1.
+
+**Recommendation for the agent:** a tournament is worth running only when the design is failing or near zero slack at its target (three of five here went fail to pass, lzc and mac by large margins);
+it costs 35 to 120 times the CPU of one default run, so it is opt-in after triage, never default. Most of the gain on lzc and mac is the `retime` synthesis option; a cheaper
+two-step (default vs `retime` synthesis, then the AMD `-strategy` sets and the congestion set on the better one) captures that gain at a fraction of the cost, but that cheaper variant is **not measured** here. No gain is claimed beyond these five designs; K26 Fmax values are capped, so quote WNS.
+
+## Memory gate bug (brief 178c)
+
+The log line `MemAvailable 99.0 G` was not a fallback: `run()` called `run_children(..., avail=lambda: 99.0)` for place and route, a hard-coded stub (the intent: one Vivado at a time inside the held slot, memory
+is policed by the slot). The 4 GiB P&R child also failed the light-class gate (declared peak above 2 GiB), so every P&R run logged "gate refused" and then ran via the 120 s fallback (about 2 minutes of idle slot per run, 20+ runs per design), with a
+fake reading. Fix: single-child stages (`max_children == 1`: K26 synthesis, all P&R) use the real `MemAvailable` and admit at once when it covers the peak plus 1 GiB, with no light-class limit and no stub; the one-hour error still fires if memory never frees.
+Test `test_single_child_stage_uses_the_real_memory_reading_and_no_light_gate` (14 tests pass in total). The multi-child light class path is unchanged.
