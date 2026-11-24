@@ -1,0 +1,13 @@
+# Coverage targets of the multiplier harness (arith brief 139a). Each bin is a Python expression over v (the inputs of one vector), r (the model's outputs) and
+# p (the parameters); a bin is hit when it is true for at least `min` vectors. run_harness.py fails if a target is not met.
+bins:
+  - {name: a_zero, expr: "v['a'] == 0", min: 3}
+  - {name: b_zero, expr: "v['b'] == 0", min: 3}
+  - {name: a_all_ones, expr: "v['a'] == (1 << p['WA']) - 1", min: 3}
+  - {name: b_all_ones, expr: "v['b'] == (1 << p['WB']) - 1", min: 3}
+  - {name: a_msb_only, expr: "v['a'] == 1 << (p['WA'] - 1)", min: 1}
+  - {name: b_msb_only, expr: "v['b'] == 1 << (p['WB'] - 1)", min: 1}
+  - {name: most_negative_squared, expr: "p['SIGNED'] == 1 and v['a'] == 1 << (p['WA'] - 1) and v['b'] == 1 << (p['WB'] - 1)", min_if: "p['SIGNED'] == 1", min: 1}
+  - {name: product_msb_set, expr: "r['p'] >> (p['WA'] + p['WB'] - 1) == 1", min: 10}
+  - {name: product_zero, expr: "r['p'] == 0", min: 3}
+  - {name: both_msb_set, expr: "(v['a'] >> (p['WA'] - 1)) == 1 and (v['b'] >> (p['WB'] - 1)) == 1", min: 5}

@@ -1,0 +1,273 @@
+{
+ "function": "sincos",
+ "mutants": 31,
+ "valid": 31,
+ "killed": 31,
+ "survived": [],
+ "invalid": [],
+ "score_pct": 100.0,
+ "per_variant": {
+  "lerp": {
+   "valid": 10,
+   "killed": 10
+  },
+  "poly2": {
+   "valid": 10,
+   "killed": 10
+  },
+  "cordic": {
+   "valid": 11,
+   "killed": 11
+  }
+ },
+ "results": [
+  {
+   "name": "sl_slope_lost",
+   "variant": "lerp",
+   "class": "connection",
+   "status": "killed",
+   "detail": "exhaustive {'PH': 10, 'OW': 10, 'SB': 5}",
+   "why": "the sine slope is lost"
+  },
+  {
+   "name": "sl_cos_from_sine",
+   "variant": "lerp",
+   "class": "connection",
+   "status": "killed",
+   "detail": "exhaustive {'PH': 10, 'OW': 10, 'SB': 5}",
+   "why": "the cosine uses the sine's break-point table"
+  },
+  {
+   "name": "sl_cos_sign",
+   "variant": "lerp",
+   "class": "operator",
+   "status": "killed",
+   "detail": "exhaustive {'PH': 10, 'OW': 10, 'SB': 5}",
+   "why": "the cosine slope is subtracted instead of added"
+  },
+  {
+   "name": "sl_q_misaligned",
+   "variant": "lerp",
+   "class": "connection",
+   "status": "killed",
+   "detail": "exhaustive {'PH': 10, 'OW': 10, 'SB': 5}",
+   "why": "the quadrant is one clock early"
+  },
+  {
+   "name": "sl_no_round",
+   "variant": "lerp",
+   "class": "operator",
+   "status": "killed",
+   "detail": "exhaustive {'PH': 10, 'OW': 10, 'SB': 5}",
+   "why": "the sine is truncated, not rounded"
+  },
+  {
+   "name": "sl_no_clamp",
+   "variant": "lerp",
+   "class": "operator",
+   "status": "killed",
+   "detail": "exhaustive {'PH': 10, 'OW': 10, 'SB': 5}",
+   "why": "the cosine of phase 0 (exactly 1.0) is not limited and wraps to 0"
+  },
+  {
+   "name": "sl_d_halved",
+   "variant": "lerp",
+   "class": "operator",
+   "status": "killed",
+   "detail": "exhaustive {'PH': 10, 'OW': 10, 'SB': 5}",
+   "why": "the position inside the segment is halved"
+  },
+  {
+   "name": "le_quadrant1",
+   "variant": "lerp",
+   "class": "operator",
+   "status": "killed",
+   "detail": "exhaustive {'PH': 10, 'OW': 10, 'SB': 5}",
+   "why": "quadrant 1 does not negate the cosine"
+  },
+  {
+   "name": "le_quadrant2",
+   "variant": "lerp",
+   "class": "operator",
+   "status": "killed",
+   "detail": "exhaustive {'PH': 10, 'OW': 10, 'SB': 5}",
+   "why": "quadrant 2 does not negate the sine"
+  },
+  {
+   "name": "le_quadrant3",
+   "variant": "lerp",
+   "class": "operator",
+   "status": "killed",
+   "detail": "exhaustive {'PH': 10, 'OW': 10, 'SB': 5}",
+   "why": "quadrant 3 returns the cosine twice"
+  },
+  {
+   "name": "sp_a2_lost",
+   "variant": "poly2",
+   "class": "connection",
+   "status": "killed",
+   "detail": "exhaustive {'PH': 10, 'OW': 10, 'SB': 4}",
+   "why": "the sine's quadratic coefficient is lost"
+  },
+  {
+   "name": "sp_cos_from_sine",
+   "variant": "poly2",
+   "class": "connection",
+   "status": "killed",
+   "detail": "exhaustive {'PH': 10, 'OW': 10, 'SB': 4}",
+   "why": "the cosine's constant coefficient comes from the sine table"
+  },
+  {
+   "name": "sp_d_misaligned",
+   "variant": "poly2",
+   "class": "connection",
+   "status": "killed",
+   "detail": "exhaustive {'PH': 10, 'OW': 10, 'SB': 4}",
+   "why": "the second multiply uses the position of the input now"
+  },
+  {
+   "name": "sp_floor_lost",
+   "variant": "poly2",
+   "class": "constant",
+   "status": "killed",
+   "detail": "exhaustive {'PH': 10, 'OW': 10, 'SB': 4}",
+   "why": "the first Horner product is shifted one place too far"
+  },
+  {
+   "name": "sp_q_misaligned",
+   "variant": "poly2",
+   "class": "connection",
+   "status": "killed",
+   "detail": "exhaustive {'PH': 10, 'OW': 10, 'SB': 4}",
+   "why": "the quadrant is one clock early"
+  },
+  {
+   "name": "sp_acc_sign",
+   "variant": "poly2",
+   "class": "operator",
+   "status": "killed",
+   "detail": "exhaustive {'PH': 10, 'OW': 10, 'SB': 4}",
+   "why": "the quadratic term is subtracted"
+  },
+  {
+   "name": "sp_no_clamp",
+   "variant": "poly2",
+   "class": "operator",
+   "status": "killed",
+   "detail": "exhaustive {'PH': 10, 'OW': 10, 'SB': 4}",
+   "why": "the cosine of phase 0 is not limited and wraps"
+  },
+  {
+   "name": "po_quadrant1",
+   "variant": "poly2",
+   "class": "operator",
+   "status": "killed",
+   "detail": "exhaustive {'PH': 10, 'OW': 10, 'SB': 4}",
+   "why": "quadrant 1 does not negate the cosine"
+  },
+  {
+   "name": "po_quadrant2",
+   "variant": "poly2",
+   "class": "operator",
+   "status": "killed",
+   "detail": "exhaustive {'PH': 10, 'OW': 10, 'SB': 4}",
+   "why": "quadrant 2 does not negate the sine"
+  },
+  {
+   "name": "po_quadrant3",
+   "variant": "poly2",
+   "class": "operator",
+   "status": "killed",
+   "detail": "exhaustive {'PH': 10, 'OW': 10, 'SB': 4}",
+   "why": "quadrant 3 returns the cosine twice"
+  },
+  {
+   "name": "sc_dir_flip",
+   "variant": "cordic",
+   "class": "operator",
+   "status": "killed",
+   "detail": "exhaustive {'PH': 10, 'OW': 10, 'NIT': 10, 'G': 3}",
+   "why": "the rotation direction is inverted"
+  },
+  {
+   "name": "sc_x_stage",
+   "variant": "cordic",
+   "class": "operator",
+   "status": "killed",
+   "detail": "exhaustive {'PH': 10, 'OW': 10, 'NIT': 10, 'G': 3}",
+   "why": "x ignores the direction"
+  },
+  {
+   "name": "sc_y_stage",
+   "variant": "cordic",
+   "class": "operator",
+   "status": "killed",
+   "detail": "exhaustive {'PH': 10, 'OW': 10, 'NIT': 10, 'G': 3}",
+   "why": "y ignores the direction"
+  },
+  {
+   "name": "sc_z_update",
+   "variant": "cordic",
+   "class": "operator",
+   "status": "killed",
+   "detail": "exhaustive {'PH': 10, 'OW': 10, 'NIT': 10, 'G': 3}",
+   "why": "the angle accumulates with the wrong sign"
+  },
+  {
+   "name": "sc_q_misaligned",
+   "variant": "cordic",
+   "class": "connection",
+   "status": "killed",
+   "detail": "exhaustive {'PH': 10, 'OW': 10, 'NIT': 10, 'G': 3}",
+   "why": "the quadrant is not delayed with the data"
+  },
+  {
+   "name": "sc_no_round",
+   "variant": "cordic",
+   "class": "operator",
+   "status": "killed",
+   "detail": "exhaustive {'PH': 10, 'OW': 10, 'NIT': 10, 'G': 3}",
+   "why": "the cosine is truncated, not rounded"
+  },
+  {
+   "name": "sc_z0_shift",
+   "variant": "cordic",
+   "class": "constant",
+   "status": "killed",
+   "detail": "exhaustive {'PH': 10, 'OW': 10, 'NIT': 10, 'G': 3}",
+   "why": "the start angle is doubled"
+  },
+  {
+   "name": "sc_clamp_value",
+   "variant": "cordic",
+   "class": "constant",
+   "status": "killed",
+   "detail": "exhaustive {'PH': 10, 'OW': 10, 'NIT': 10, 'G': 3}",
+   "why": "the cosine's limit is one place too low"
+  },
+  {
+   "name": "cx_quadrant1",
+   "variant": "cordic",
+   "class": "operator",
+   "status": "killed",
+   "detail": "exhaustive {'PH': 10, 'OW': 10, 'NIT': 10, 'G': 3}",
+   "why": "quadrant 1 does not negate the cosine"
+  },
+  {
+   "name": "cx_quadrant2",
+   "variant": "cordic",
+   "class": "operator",
+   "status": "killed",
+   "detail": "exhaustive {'PH': 10, 'OW': 10, 'NIT': 10, 'G': 3}",
+   "why": "quadrant 2 does not negate the sine"
+  },
+  {
+   "name": "cx_quadrant3",
+   "variant": "cordic",
+   "class": "operator",
+   "status": "killed",
+   "detail": "exhaustive {'PH': 10, 'OW': 10, 'NIT': 10, 'G': 3}",
+   "why": "quadrant 3 returns the cosine twice"
+  }
+ ]
+}

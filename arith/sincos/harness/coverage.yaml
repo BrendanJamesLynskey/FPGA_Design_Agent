@@ -1,0 +1,17 @@
+# Coverage targets of the sincos harness (arith brief 139d). Each bin is a Python expression over v (the inputs of one vector), r (the model's outputs) and
+# p (the parameters); a bin is hit when it is true for at least `min` vectors. run_harness.py fails if a target is not met (in randomised mode).
+bins:
+  - {name: phase_zero, expr: "v['phase'] == 0", min: 1}
+  - {name: phase_half_turn, expr: "v['phase'] == 1 << (p['PH'] - 1)", min: 1}
+  - {name: phase_max, expr: "v['phase'] == (1 << p['PH']) - 1", min: 1}
+  - {name: quadrant_0, expr: "v['phase'] >> (p['PH'] - 2) == 0", min: 30}
+  - {name: quadrant_1, expr: "v['phase'] >> (p['PH'] - 2) == 1", min: 30}
+  - {name: quadrant_2, expr: "v['phase'] >> (p['PH'] - 2) == 2", min: 30}
+  - {name: quadrant_3, expr: "v['phase'] >> (p['PH'] - 2) == 3", min: 30}
+  - {name: quadrant_start, expr: "v['phase'] & ((1 << (p['PH'] - 2)) - 1) == 0", min: 4}
+  - {name: quadrant_last, expr: "v['phase'] & ((1 << (p['PH'] - 2)) - 1) == (1 << (p['PH'] - 2)) - 1", min: 4}
+  - {name: sin_positive_peak, expr: "r['s'] == (1 << (p['OW'] - 1)) - 1", min: 1}
+  - {name: cos_positive_peak, expr: "r['c'] == (1 << (p['OW'] - 1)) - 1", min: 1}
+  - {name: sin_near_zero, expr: "(r['s'] + 1) % (1 << p['OW']) <= 2", min: 1}
+  - {name: sin_negative, expr: "r['s'] >> (p['OW'] - 1) == 1", min: 30}
+  - {name: cos_negative, expr: "r['c'] >> (p['OW'] - 1) == 1", min: 30}

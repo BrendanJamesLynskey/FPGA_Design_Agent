@@ -12,7 +12,7 @@ points are written and queued (`partition/sweep.py`). The study that uses them i
 | `credit_chan_measure.jsonl` | one line per point of `credit_chan`: latency, throughput over a long window, the clock of each of the first sends, the gap after the credits are spent, capacity |
 | `part_sys_sim.jsonl` | end-to-end latency, throughput and data checks of the synthetic system at every boundary kind and depth (8 sub-modules cut the system into 9 boundaries; the simulated copy has 4 sub-modules and 5 boundaries) |
 | `faults.json` | the 33 seeded faults of the three entries and whether the tests caught each |
-| `pipe_reg_formal.json`, `credit_chan_formal.json` | the SymbiYosys jobs (k-induction proofs, covers, the stream rules as SVA) and the planted faults each proof refutes; seconds per job |
+| `pipe_reg_formal.json`, `credit_chan_formal.json` | the SymbiYosys jobs (k-induction proofs, covers, the stream rules as SVA) and the planted faults each proof refutes; seconds per job. Brief 202 added cover tasks that reach every assertion's antecedent (the 143c rigour records are in [results/143c](../143c/README.md)) |
 | `partition_queue_rows.md` | the Vivado queue rows written by `partition/sweep.py --queue` (appended to `vivado_later_queue.md`), one per sweep group and part |
 | `ssi_parts_query.txt` | which parts of the installed Vivado 2026.1 device support have more than one SLR: none (all 1689 have one) |
 | `part_sys_yosys.json` | Yosys `synth_xilinx` cell counts of the synthetic system (flattened, no placement) per boundary kind and depth |

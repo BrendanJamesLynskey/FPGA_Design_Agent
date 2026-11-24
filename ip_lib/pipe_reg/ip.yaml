@@ -149,7 +149,8 @@ evidence:
     of axi_tx/rtl/axis_rules.sv on both ports, and a check that tvalid does not move when tready is flipped within a clock; the
     declared latency, throughput, capacity and ready response checked against measured ones. Formal: SymbiYosys k-induction proofs
     of order and loss (a beat number carried in the data), stability while stalled and the stream rules as SVA (tb/axis_sva.sv,
-    slang front end)'
+    slang front end). Every assertion is labelled and paired with a cover of its own antecedent (a cover task per mode); sidecars formal/pipe.rigour.yaml
+    and formal/pipe_sva.rigour.yaml and records in results/143c (brief 202)'
   tests:
   - ip_lib/pipe_reg/tb/test_pipe_reg_rtl.py
   - ip_lib/pipe_reg/tb/test_pipe_reg_formal.py

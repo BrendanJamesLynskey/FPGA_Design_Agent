@@ -24,8 +24,8 @@ import yaml
 
 HERE = Path(__file__).resolve().parent
 ENTRY = HERE.parent
-TASKS = ["fwd1", "fwd3", "skid1", "skid2", "skid3", "full1", "full2", "full3", "half1", "half2", "comb1", "comb2", "comb3", "wire0", "skid2c"]
-SVA_TASKS = ["sva_fwd3", "sva_skid1", "sva_skid2", "sva_full2", "sva_half2", "sva_comb2", "sva_wire0"]
+TASKS = ["fwd1", "fwd3", "skid1", "skid2", "skid3", "full1", "full2", "full3", "half1", "half2", "comb1", "comb2", "comb3", "wire0", "skid2c", "fwd3c", "full2c", "half2c", "comb2c", "wire0c"]
+SVA_TASKS = ["sva_fwd3", "sva_skid1", "sva_skid2", "sva_full2", "sva_half2", "sva_comb2", "sva_wire0", "sva_fwd3c", "sva_skid2c", "sva_full2c", "sva_half2c", "sva_comb2c", "sva_wire0c"]
 FAULT_TASK = {"comb": "comb2", "half": "half2", "skid": "skid2", "full": "full2", "fwd": "fwd3", "chain": "skid2", "wire": "wire0"}
 NOT_SAFETY = {"fwd_valid_gated_by_ready": "tvalid depending on tready: caught by the bench (tready flipped within a clock), not by the port rules, because a gated valid never looks withdrawn",
               "comb_ready_ignores_take": "a throughput bug: the slice is correct but slower", "fwd_enable_needs_ready": "a liveness bug: a sink that waits for valid before ready waits for ever; no safety property is broken"}

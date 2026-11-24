@@ -3,7 +3,7 @@
 Library modules that pass the library's reuse checks: a declared parameter space (`ip.yaml`), elaboration guards,
 tests at several points of that space, standard interfaces at the boundary, no hidden clock crossing, nothing tied to a
 part or a pin. Each entry holds `rtl/`, `tb/`, `ip.yaml`, a generated `README.md` and a `CHANGELOG.md`. All of it is our
-own code under the repository's MIT licence.
+own code under the repository's licence ([LICENSE](../LICENSE): all rights reserved since 2026-11-16; MIT before).
 
 ## Implementation variants
 
@@ -113,8 +113,8 @@ Run: `pip install scapy==2.8.0 pytest pyyaml`, Icarus Verilog 12, then `python3 
 
 **scapy's licence.** scapy is GPL-2.0-only. It is used here as a test-time tool only: the tests import it to build
 and dissect frames; it is not imported by, copied into or shipped with any RTL, generated design or library entry, and
-the repository does not redistribute it (CI installs it from PyPI). The library and its tests stay MIT. (Decided
-2026-11-11.)
+the repository does not redistribute it (CI installs it from PyPI). The library and its tests are under the repository's licence
+([LICENSE](../LICENSE)). (Decided 2026-11-11, when that licence was MIT.)
 
 ## Instruments for hardware-in-the-loop
 

@@ -1,0 +1,24 @@
+# Mutation set for the multiply-accumulate variants (arith brief 139a; tools/run_mutants.py): each mutant replaces `old` (exactly once) by `new` in a copy of the variant's file.
+mutants:
+- {name: dsp_en_stuck, variant: dsp, class: connection, old: "else     en_r <= en;", new: "else     en_r <= 1'b1;", why: "the sample's enable is ignored: a held accumulator keeps adding"}
+- {name: dsp_clr_dropped, variant: dsp, class: connection, old: "clr_r <= clr;", new: "clr_r <= 1'b0;", why: "a new sum never starts"}
+- {name: dsp_clr_ignored_at_acc, variant: dsp, class: operator, old: "else if (en_m) acc <= (clr_m ? '0 : acc) + sum;", new: "else if (en_m) acc <= acc + sum;", why: "the accumulator is not restarted by clr"}
+- {name: dsp_rst_acc, variant: dsp, class: condition, old: "if (rst)       acc <= '0;", new: "if (1'b0)      acc <= '0;", why: "reset does not clear the accumulator"}
+- {name: dsp_rst_in_flight, variant: dsp, class: condition, old: "if (rst) en_r <= 1'b0;", new: "if (1'b0) en_r <= 1'b0;", why: "reset does not discard the samples already in the pipeline"}
+- {name: dsp_no_sign_ext, variant: dsp, class: operator, old: "sum = sum + ACCW'(SIGNED != 0 ? $signed(pat_s[k]) : $signed({1'b0, pat_s[k]}));", new: "sum = sum + ACCW'($signed({1'b0, pat_s[k]}));", why: "a negative product is zero-extended into the accumulator"}
+- {name: dsp_lane_broadcast, variant: dsp, class: connection, old: "m_r[k] <= pat[k];", new: "m_r[k] <= pat[0];", why: "every lane's product register takes lane 0's product"}
+- {name: dsp_b_lane_index, variant: dsp, class: connection, old: ": {1'b0, b_s[k*WB +: WB]};", new: ": {1'b0, b_s[0 +: WB]};", why: "an unsigned lane multiplies by lane 0's b"}
+- {name: cas_chain_broken, variant: dsp_cascade, class: operator, old: "always_ff @(posedge clk) q <= prod + prev;", new: "always_ff @(posedge clk) q <= prod;", why: "the lanes are not added into the chain"}
+- {name: cas_chain_sub, variant: dsp_cascade, class: operator, old: "always_ff @(posedge clk) q <= prod + prev;", new: "always_ff @(posedge clk) q <= prod - prev;", why: "the lane sum subtracts the previous lane"}
+- {name: cas_skew_short, variant: dsp_cascade, class: connection, old: "assign a_d = sra[k-1];", new: "assign a_d = sra[0];", why: "a lane's multiplicand is delayed one clock whatever the lane number"}
+- {name: cas_en_stuck, variant: dsp_cascade, class: connection, old: "en_sr[0] <= en;", new: "en_sr[0] <= 1'b1;", why: "the sample's enable is ignored"}
+- {name: cas_clr_dropped, variant: dsp_cascade, class: connection, old: "clr_sr[0] <= clr;", new: "clr_sr[0] <= 1'b0;", why: "a new sum never starts"}
+- {name: cas_clr_wrong_tap, variant: dsp_cascade, class: condition, old: "(clr_sr[LANES-1] ? '0 : acc)", new: "(clr_sr[0] ? '0 : acc)", why: "clr is read before it has travelled with its sample"}
+- {name: cas_rst_in_flight, variant: dsp_cascade, class: condition, old: "en_sr <= '0;", new: "en_sr <= en_sr;", why: "reset does not discard the samples in the chain"}
+- {name: cas_no_sign_ext, variant: dsp_cascade, class: operator, old: "assign prod = ACCW'(SIGNED != 0 ? $signed(full[PW-1:0]) : $signed({1'b0, full[PW-1:0]}));", new: "assign prod = ACCW'($signed({1'b0, full[PW-1:0]}));", why: "a negative product is zero-extended into the sum"}
+- {name: fab_sign_row, variant: fabric, class: condition, old: "if (SIGNED != 0 && i == WB - 1) sum", new: "if (SIGNED != 0 && i == WB - 2) sum", why: "the wrong row is subtracted for a signed lane"}
+- {name: fab_no_sign_ext, variant: fabric, class: operator, old: "else if (SIGNED != 0)           sum = sum + (b[k*WB+i] ? ((ACCW'($signed(a[k*WA +: WA]))) << i) : '0);", new: "else if (SIGNED != 0)           sum = sum + (b[k*WB+i] ? ((ACCW'(a[k*WA +: WA])) << i) : '0);", why: "a signed multiplicand is zero-extended"}
+- {name: fab_b_lane_index, variant: fabric, class: connection, old: "else                            sum = sum + (b[k*WB+i] ?", new: "else                            sum = sum + (b[i] ?", why: "an unsigned lane is gated by lane 0's b bits"}
+- {name: fab_sum_reg_or, variant: fabric, class: operator, old: "sum_r <= sum;", new: "sum_r <= sum_r | sum;", why: "the lane-sum register accumulates instead of loading"}
+- {name: fab_clr_ignored, variant: fabric, class: operator, old: "else if (en_s) acc <= (clr_s ? '0 : acc) + sum_s;", new: "else if (en_s) acc <= acc + sum_s;", why: "the accumulator is not restarted by clr"}
+- {name: fab_rst_in_flight, variant: fabric, class: condition, old: "if (rst) en_r <= 1'b0;", new: "if (1'b0) en_r <= 1'b0;", why: "reset does not discard the sample already registered"}

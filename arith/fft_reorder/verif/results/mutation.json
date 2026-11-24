@@ -1,0 +1,89 @@
+{
+ "function": "fft_reorder",
+ "mutants": 9,
+ "valid": 9,
+ "killed": 9,
+ "survived": [],
+ "invalid": [],
+ "score_pct": 100.0,
+ "per_variant": {
+  "pingpong": {
+   "valid": 9,
+   "killed": 9
+  }
+ },
+ "results": [
+  {
+   "name": "read_bank",
+   "variant": "pingpong",
+   "class": "connection",
+   "status": "killed",
+   "detail": "directed {'LOGN': 4, 'WD': 8}",
+   "why": "the bank just written is not the one read"
+  },
+  {
+   "name": "bank_toggle",
+   "variant": "pingpong",
+   "class": "connection",
+   "status": "killed",
+   "detail": "directed {'LOGN': 4, 'WD': 8}",
+   "why": "the write bank never toggles"
+  },
+  {
+   "name": "read_end",
+   "variant": "pingpong",
+   "class": "constant",
+   "status": "killed",
+   "detail": "directed {'LOGN': 4, 'WD': 8}",
+   "why": "the read stops one word early"
+  },
+  {
+   "name": "sof_pos",
+   "variant": "pingpong",
+   "class": "constant",
+   "status": "killed",
+   "detail": "directed {'LOGN': 4, 'WD': 8}",
+   "why": "out_sof marks the second word"
+  },
+  {
+   "name": "bitrev_identity",
+   "variant": "pingpong",
+   "class": "operator",
+   "status": "killed",
+   "detail": "directed {'LOGN': 4, 'WD': 8}",
+   "why": "no reversal"
+  },
+  {
+   "name": "bank_select",
+   "variant": "pingpong",
+   "class": "connection",
+   "status": "killed",
+   "detail": "directed {'LOGN': 4, 'WD': 8}",
+   "why": "the output select follows the write bank"
+  },
+  {
+   "name": "out_mux",
+   "variant": "pingpong",
+   "class": "connection",
+   "status": "killed",
+   "detail": "directed {'LOGN': 4, 'WD': 8}",
+   "why": "the banks are swapped at the output"
+  },
+  {
+   "name": "write_bank",
+   "variant": "pingpong",
+   "class": "connection",
+   "status": "killed",
+   "detail": "directed {'LOGN': 4, 'WD': 8}",
+   "why": "both banks are written to bank 0"
+  },
+  {
+   "name": "bitrev_off",
+   "variant": "pingpong",
+   "class": "operator",
+   "status": "killed",
+   "detail": "directed {'LOGN': 4, 'WD': 8}",
+   "why": "the top bit of the address is dropped (left X)"
+  }
+ ]
+}

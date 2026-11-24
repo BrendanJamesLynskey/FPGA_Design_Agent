@@ -8,6 +8,7 @@
     python -m agent review <design-dir> [--out DIR] [--intent FILE] [--improvements FILE] [--no-judge]   (brief 84: review an existing design, read-only)
     python -m agent document <run-dir> [--cc-model M] [--replay doc_calls.jsonl]   (brief 68 C: the DOC step on a finished run)
     python -m agent project check|status|hash|gen-tests <dir> ...     (the project layer, project/cli.py)
+    python -m agent ip search|rank|show|use ...                  (brief 150: the IP library, `python -m agent ip --help`)
     python -m agent improve <design-dir> "<request>" [--more | --edit N "<change>" | --choose N]   (brief 104: analysis, then strategy options; --choose runs one)
 
 A paused run (an interview question or a stage review) prints what it waits for; answer with ``resume --reply``
@@ -253,9 +254,12 @@ def pickup_cmd(a) -> int:
         print(json.dumps({**report, "resume": "refused: the handover has errors; fix them first"}, indent=1))
         return 2
     try:
-        entry = pickup.entry_stage(ld["handover"], fresh, a.change, a.kind, a.from_stage)
+        entry = getattr(a, "entry_override", None) or pickup.entry_stage(ld["handover"], fresh, a.change, a.kind, a.from_stage)   # brief 159: revise gives its own
     except pickup.PickupError as e:
         print(f"resume: {e}", file=sys.stderr)
+        return 2
+    if entry.get("question"):                        # brief 149: nothing matched; a question, not stage 0
+        print(json.dumps({**report, "resume": "no entry stage: a question", "question": entry["question"]}, indent=1))
         return 2
     report["entry"] = {"stage": entry["stage"], "kind": entry["kind"], "notes": entry.get("notes") or [],
                        "reasons": [{"stage": s, "why": w} for s, w in entry["reasons"]]}
@@ -288,6 +292,10 @@ def pickup_cmd(a) -> int:
     rt = new_runtime(cfg, None, replay=a.replay, record=a.record)
     try:
         state = pickup.prepare(ddir, rt, entry, a.change)
+        if getattr(a, "revise_goals", None) is not None:           # brief 159: the typed goals (and a retarget) go into the run's copy, never the source
+            from agent.graph import revise as _rv
+            report["revise_written"] = _rv.write_goals(Path(rt.design), a.revise_goals, getattr(a, "revise_retarget", None),
+                                                       (ld["handover"].get("target") or {}).get("part"))
     except pickup.PickupError as e:
         print(f"resume: {e}", file=sys.stderr)
         return 2
@@ -315,6 +323,41 @@ def pickup_cmd(a) -> int:
     return 0
 
 
+def revise_cmd(a) -> int:
+    """Brief 159: ``agent revise <design> --goal ... [--retarget ...]``: the plan (agent.graph.revise), then, unless --dry-run, the run."""
+    from agent.graph import goals as G
+    from agent.graph import pickup
+    from agent.graph import revise as R
+    ddir = Path(a.design).resolve()
+    try:
+        goals = [G.parse_goal(t, source=a.source) for t in a.goal]
+        ld = pickup.load(ddir)
+        pl = R.plan(ddir, ld, goals, a.retarget)
+    except (G.GoalError, R.ReviseError, pickup.PickupError) as e:
+        print(f"revise: {e}", file=sys.stderr)
+        return 2
+    if ld["fresh"]["errors"]:
+        print(json.dumps({"revise": "refused: the handover has errors; fix them first", "errors": ld["fresh"]["errors"]}, indent=1))
+        return 2
+    out = R.public(pl)
+    if a.dry_run or pl["entry"]["stage"] >= pickup.DOC_ONLY:
+        out["revise"] = "dry run" if a.dry_run else "nothing to re-run: the committed evidence already meets every goal and the handover is current"
+        print(json.dumps(out, indent=1, default=str))
+        return 0
+    print(json.dumps(out, indent=1, default=str))
+    text = "; ".join([c["goal"] for c in out["changes"]] + ([f"retarget to {a.retarget}"] if a.retarget else []))
+    b = argparse.Namespace(**vars(a))
+    b.run_id, b.change, b.kind, b.from_stage, b.scope, b.strategy_file, b.rewind, b.stop_after = (
+        str(ddir), "revise: " + text, None, None, None, None, None, getattr(a, "stop_after", None))
+    b.entry_override = {"stage": pl["entry"]["stage"], "kind": pl["entry"]["kind"],
+                        "reasons": [(r["stage"], r["why"]) for r in pl["entry"]["reasons"]], "notes": pl["entry"]["notes"]}
+    b.revise_goals = pl["_after"]
+    b.revise_retarget = (pl["retarget"] or {}).get("to") if pl["retarget"] and pl["retarget"].get("stage") is not None else None
+    if b.revise_retarget and b.revise_retarget.get("board") and not getattr(a, "board", None):
+        b.board = b.revise_retarget["board"]
+    return pickup_cmd(b)
+
+
 def review_cmd(a) -> int:
     from flow.review import review
     from flow.review.judge import UNSET as J_UNSET
@@ -335,20 +378,30 @@ def main(argv: list[str] | None = None) -> int:
         return project_main(args[1:])
     from agent.access import require_or_exit      # brief 94: run, resume and document all start here
     require_or_exit("python -m agent")
+    if args[:1] == ["ip"]:                           # brief 150: the IP-library retriever (plain Python: no model, no Vivado)
+        from agent.ip_cmd import main as ip_main
+        return ip_main(args[1:])
     from agent.graph.role_models import parse_roles
     from agent.graph.run import Config, build_graph, checkpointer_for, new_runtime
-    ap = argparse.ArgumentParser(prog="python -m agent")
+    ap = argparse.ArgumentParser(prog="python -m agent",
+                                 epilog="also: python -m agent project check|status|hash|gen-tests|spec <dir> (the project layer; python -m project --help). Which command for which job: README.md, 'Start here'.")
     sub = ap.add_subparsers(dest="cmd", required=True)
-    r = sub.add_parser("run")
-    r.add_argument("spec", type=Path)
+    r = sub.add_parser("run", help="a new design from a plain-English spec.md, stage by stage (docs/agent.md)")
+    r.add_argument("spec", type=Path, help="the plain-English request, a spec.md file")
     r.add_argument("--board", default="nexys_a7_100t", type=board_arg,
                    help="a board id or the words of a request (boards/catalogue.yaml; docs/board_catalogue.md)")
-    r.add_argument("--name")
-    r.add_argument("--interview", choices=["on", "oracle", "off"], default="off")
-    r.add_argument("--review", choices=["on", "off"], default="off")
-    r.add_argument("--model", default="openai/gpt-6-luna")
-    r.add_argument("--hidden-spec", type=Path)
-    r.add_argument("--stop-after", type=int)
+    r.add_argument("--name", help="the design name (default: the name of the directory holding the spec)")
+    r.add_argument("--interview", choices=["on", "oracle", "off"], default="off",
+                   help="the spec interview: on = you answer the questions, oracle = a model answers from --hidden-spec, "
+                        "off = none (default)")
+    r.add_argument("--review", choices=["on", "off"], default="off",
+                   help="on = pause at every stage end for approve, edit or rewind (answer with resume --reply); default off")
+    r.add_argument("--model", default="openai/gpt-6-luna",
+                   help="the OpenRouter model of the deepagents harness and, with --oracle openrouter, of the interview oracle (default %(default)s)")
+    r.add_argument("--hidden-spec", type=Path, help="the full spec the interview oracle answers from (--interview oracle)")
+    r.add_argument("--stop-after", type=int,
+                   help="stop after this stage passes: 0 clarify, 1 planning, 2 RTL and verification, 3 constraints, "
+                        "4 synthesis, 5 implementation, 6 timing, 7 power, 8 DRC, 9 configuration and debug")
     r.add_argument("--harness", choices=["deepagents", "claude_code"], default="deepagents",
                    help="claude_code: each sub-agent turn is a headless `claude -p` on the Max plan (05c)")
     r.add_argument("--cc-model", default="claude-haiku-5-5", help="Claude Code model id (--harness claude_code)")
@@ -404,7 +457,7 @@ def main(argv: list[str] | None = None) -> int:
     r.add_argument("--hdl", choices=["sv", "vhdl"], default="sv",
                    help="the design language; vhdl = VHDL-2008 RTL (GHDL lint, GHDL netlist or GHDL simulation, "
                         "read_vhdl -vhdl2008 in Vivado); the test shell stays SystemVerilog")
-    for p in (r, sub.add_parser("resume")):
+    for p in (r, sub.add_parser("resume", help="continue a paused run, or pick up a design from its handover.yaml with a change request")):
         p.add_argument("--replies", type=Path)
         p.add_argument("--reply")
         p.add_argument("--replay", help="LLM replay fixture (no network)")
@@ -417,11 +470,16 @@ def main(argv: list[str] | None = None) -> int:
         p.add_argument("--replay-tape", help="brief 107: serve every model call from this tape directory (level 2); a missing call is an error")
     rs = sub._name_parser_map["resume"]
     rs.add_argument("run_id", help="a run id under runs/, or a design directory with handover.yaml (brief 68 D)")
-    rs.add_argument("change", nargs="?", help="design resume: the change request")
+    rs.add_argument("change", nargs="?", help="design resume: the change request. Its class sets the entry stage (earliest match wins): "
+                    "spec 0; area, latency, retarget, arch 1; language, mapping, rtl 2; fmax, power, constraints 3; timing 6; board 9. "
+                    "A request that matches no class is a question (exit 2), not stage 0; documentation-only is never guessed (use --kind docs). "
+                    "'lower the latency but keep the interface' goes back to the spec (the word 'interface'); a bare '200 MHz' is a clock change "
+                    "(stage 3), 'close timing at 200 MHz' is stage 6. --dry-run shows the class, the stage and the matched words")
     rs.add_argument("--rewind", type=int)
     rs.add_argument("--max-usd", type=float, help="cost cap for this resumed process (the meter starts at 0)")
     rs.add_argument("--kind", choices=sorted(__import__("agent.graph.pickup", fromlist=["x"]).STAGE_OF_KIND),
-                    help="design resume: the change's class, instead of the keyword classifier")
+                    help="design resume: the change's class, instead of the keyword classifier (each class has a fixed entry stage; "
+                         "`resume ... --dry-run` prints the class, the stage and the matched words)")
     rs.add_argument("--from-stage", type=int, help="design resume: enter at this stage, overriding the rule")
     rs.add_argument("--dry-run", action="store_true", help="design resume: report the freshness and the entry stage only")
     rs.add_argument("--scope", help="design resume of a managed project: the components or hierarchy paths this request may touch "
@@ -441,6 +499,16 @@ def main(argv: list[str] | None = None) -> int:
     rs.add_argument("--model-config", help="design resume: JSON command-line layer of the model table")
     rs.add_argument("--allow-fable", action="store_true", help="the owner's flag: permits Fable on a claude_code endpoint")
     rs.add_argument("--allow-model-change", action="store_true", help="resume a run although its model table hash has changed")
+    from agent.graph.revise import add_parser as _revise_parser         # brief 159
+    _revise_parser(sub)
+    rvp = sub._name_parser_map["revise"]
+    for act in rs._actions:                                             # the run options are the resume command's, shared
+        if act.dest in ("max_usd", "board", "stop_after", "model", "harness", "cc_model", "cc_effort", "profile", "roles", "verif_level", "docs",
+                        "models_file", "model_config", "allow_fable", "allow_model_change"):
+            rvp._add_action(act)
+    for act in sub._name_parser_map["resume"]._actions:
+        if act.dest in ("replies", "reply", "replay", "record", "deterministic", "tape", "record_tape", "replay_tape"):
+            rvp._add_action(act)
     dc = sub.add_parser("document", help="brief 68 C: the DOC step on a finished run directory")
     dc.add_argument("run_dir", type=Path)
     dc.add_argument("--board", default="nexys_a7_100t", type=board_name)
@@ -481,6 +549,8 @@ def main(argv: list[str] | None = None) -> int:
         return review_cmd(a)
     if a.cmd == "document":
         return document_cmd(a)
+    if a.cmd == "revise":
+        return revise_cmd(a)
     if a.cmd == "resume" and (Path(a.run_id) / "handover.yaml").is_file():
         return pickup_cmd(a)
     replies = json.loads(a.replies.read_text()) if a.replies else []

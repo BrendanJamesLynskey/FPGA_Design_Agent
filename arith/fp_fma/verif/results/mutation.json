@@ -1,0 +1,189 @@
+{
+ "function": "fp_fma",
+ "mutants": 21,
+ "valid": 21,
+ "killed": 21,
+ "survived": [],
+ "invalid": [],
+ "score_pct": 100.0,
+ "per_variant": {
+  "fused": {
+   "valid": 18,
+   "killed": 18
+  },
+  "cascade": {
+   "valid": 3,
+   "killed": 3
+  }
+ },
+ "results": [
+  {
+   "name": "fu_no_sticky",
+   "variant": "fused",
+   "class": "connection",
+   "status": "killed",
+   "detail": "randomised {'EXP': 8, 'MAN': 23, 'SUBNORM': 1, 'STAGES': 4}",
+   "why": "the bits shifted out of the aligner are not kept as a sticky bit"
+  },
+  {
+   "name": "fu_anchor",
+   "variant": "fused",
+   "class": "condition",
+   "status": "killed",
+   "detail": "exhaustive {'EXP': 2, 'MAN': 2, 'SUBNORM': 1, 'STAGES': 0}",
+   "why": "the product is not the fixed operand when the exponents differ by one"
+  },
+  {
+   "name": "fu_product_place",
+   "variant": "fused",
+   "class": "constant",
+   "status": "killed",
+   "detail": "exhaustive {'EXP': 2, 'MAN': 2, 'SUBNORM': 1, 'STAGES': 0}",
+   "why": "the product is placed one bit too low in the window"
+  },
+  {
+   "name": "fu_addend_sign",
+   "variant": "fused",
+   "class": "operator",
+   "status": "killed",
+   "detail": "exhaustive {'EXP': 2, 'MAN': 2, 'SUBNORM': 1, 'STAGES': 0}",
+   "why": "the addend's sign is inverted"
+  },
+  {
+   "name": "fu_zero_sign",
+   "variant": "fused",
+   "class": "condition",
+   "status": "killed",
+   "detail": "exhaustive {'EXP': 2, 'MAN': 2, 'SUBNORM': 1, 'STAGES': 0}",
+   "why": "a sum of zeros of different sign gives -0"
+  },
+  {
+   "name": "fu_no_input_norm",
+   "variant": "fused",
+   "class": "connection",
+   "status": "killed",
+   "detail": "exhaustive {'EXP': 2, 'MAN': 2, 'SUBNORM': 1, 'STAGES': 0}",
+   "why": "a subnormal multiplicand is normalised but its exponent is not corrected"
+  },
+  {
+   "name": "fu_product_exp",
+   "variant": "fused",
+   "class": "constant",
+   "status": "killed",
+   "detail": "exhaustive {'EXP': 2, 'MAN': 2, 'SUBNORM': 1, 'STAGES': 0}",
+   "why": "the product's nominal leading-bit exponent is one too small"
+  },
+  {
+   "name": "fu_inf_c_sign",
+   "variant": "fused",
+   "class": "connection",
+   "status": "killed",
+   "detail": "exhaustive {'EXP': 2, 'MAN': 2, 'SUBNORM': 1, 'STAGES': 0}",
+   "why": "an infinite addend takes the product's sign"
+  },
+  {
+   "name": "fu_inf_minus_inf",
+   "variant": "fused",
+   "class": "condition",
+   "status": "killed",
+   "detail": "exhaustive {'EXP': 2, 'MAN': 2, 'SUBNORM': 1, 'STAGES': 0}",
+   "why": "infinity plus infinity of the same sign is NaN"
+  },
+  {
+   "name": "fu_c_zero_flag",
+   "variant": "fused",
+   "class": "connection",
+   "status": "killed",
+   "detail": "exhaustive {'EXP': 2, 'MAN': 2, 'SUBNORM': 1, 'STAGES': 0}",
+   "why": "a zero addend is not recognised"
+  },
+  {
+   "name": "fu_clamp",
+   "variant": "fused",
+   "class": "constant",
+   "status": "killed",
+   "detail": "randomised {'EXP': 8, 'MAN': 23, 'SUBNORM': 1, 'STAGES': 4}",
+   "why": "an operand far below the window is shifted only SP places, so its leading bits land at the guard position instead of in the sticky bit"
+  },
+  {
+   "name": "fu_rank3_mag",
+   "variant": "fused",
+   "class": "connection",
+   "status": "killed",
+   "detail": "exhaustive {'EXP': 2, 'MAN': 2, 'SUBNORM': 0, 'STAGES': 3}",
+   "why": "the rank between the adder and the normaliser never loads the magnitude"
+  },
+  {
+   "name": "fu_exponent",
+   "variant": "fused",
+   "class": "constant",
+   "status": "killed",
+   "detail": "exhaustive {'EXP': 2, 'MAN': 2, 'SUBNORM': 1, 'STAGES': 0}",
+   "why": "the result exponent is one too small"
+  },
+  {
+   "name": "fu_no_daz",
+   "variant": "fused",
+   "class": "condition",
+   "status": "killed",
+   "detail": "exhaustive {'EXP': 2, 'MAN': 2, 'SUBNORM': 0, 'STAGES': 3}",
+   "why": "flush-to-zero does not flush a subnormal addend"
+  },
+  {
+   "name": "fu_out_reg_or",
+   "variant": "fused",
+   "class": "operator",
+   "status": "killed",
+   "detail": "exhaustive {'EXP': 2, 'MAN': 2, 'SUBNORM': 0, 'STAGES': 3}",
+   "why": "the output register accumulates instead of loading"
+  },
+  {
+   "name": "ca_delay_tap",
+   "variant": "cascade",
+   "class": "connection",
+   "status": "killed",
+   "detail": "exhaustive {'EXP': 2, 'MAN': 2, 'SUBNORM': 0, 'STAGES_M': 2, 'STAGES_A': 0}",
+   "why": "c is taken from the first delay register whatever the multiplier's latency"
+  },
+  {
+   "name": "ca_no_delay",
+   "variant": "cascade",
+   "class": "connection",
+   "status": "killed",
+   "detail": "exhaustive {'EXP': 2, 'MAN': 2, 'SUBNORM': 1, 'STAGES_M': 1, 'STAGES_A': 1}",
+   "why": "c is not delayed to meet the product"
+  },
+  {
+   "name": "ca_swap_stages",
+   "variant": "cascade",
+   "class": "connection",
+   "status": "killed",
+   "detail": "exhaustive {'EXP': 2, 'MAN': 2, 'SUBNORM': 0, 'STAGES_M': 2, 'STAGES_A': 0}",
+   "why": "the adder gets the multiplier's rank count"
+  },
+  {
+   "name": "pk_ties_down",
+   "variant": "fused",
+   "class": "condition",
+   "status": "killed",
+   "detail": "exhaustive {'EXP': 2, 'MAN': 2, 'SUBNORM': 1, 'STAGES': 0}",
+   "why": "a tie always rounds down instead of to even"
+  },
+  {
+   "name": "pk_denorm_shift",
+   "variant": "fused",
+   "class": "constant",
+   "status": "killed",
+   "detail": "exhaustive {'EXP': 2, 'MAN': 2, 'SUBNORM': 1, 'STAGES': 0}",
+   "why": "a subnormal result is shifted one place too far"
+  },
+  {
+   "name": "nm_first_one",
+   "variant": "fused",
+   "class": "condition",
+   "status": "killed",
+   "detail": "exhaustive {'EXP': 2, 'MAN': 2, 'SUBNORM': 1, 'STAGES': 0}",
+   "why": "the leading-zero count takes the lowest set bit instead of the highest"
+  }
+ ]
+}

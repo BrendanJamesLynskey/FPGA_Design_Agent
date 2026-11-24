@@ -54,6 +54,8 @@ The README's sections, in this order (the generator writes them; you add narrati
 8. **History**: dates, briefs, PRs, and the agent run when the agent produced the design (`agent_run`).
    `produced_by: agent` (or `human+agent`) means this repository's agent produced it and needs `agent_run`; a design
    written by an engineer in a planned brief session is `human`.
+   `produced_by: session` means written by a Claude Code session or sub-agent, checked by the planner; not human-written.
+   It needs no `agent_run` (the repository's agent did not produce it). Never use `human` for Claude-written work.
 
 `AGENT.md` has the same facts without prose: `identity`, `summary`, `state` (stage, gates, Vivado version,
 knowledge-bank pin, build ID), `interface`, `files` (with hash prefixes), `commands`, `records` (path and hash prefix,
