@@ -1,0 +1,164 @@
+{
+ "sby": "ip_lib/ipv4_udp_rx/formal/udp_rx.sby",
+ "schema": "fpga-design-agent/formal_rigour/v1",
+ "sources": {
+  "axi_tx/rtl/axis_rules.sv": "e3e7974734f0560b8a40eba4a9e383b0b61ef3f5e90e196995295f77280c313f",
+  "ip_lib/ipv4_udp_rx/formal/formal_udp_rx.sv": "95947e9c4d2afd1bff1c9fbca92e83179bf7a4d09afc1ceb4cfd789437e16569",
+  "ip_lib/ipv4_udp_rx/formal/udp_rx.sby": "eaa9d221cfac48552cbccf04e0ee8927c40667c160b2b2aeb376e253047865f1",
+  "ip_lib/ipv4_udp_rx/rtl/ipv4_udp_rx.sv": "5f1be5e24a154dd1b00164a513db610f01eb6f39d116fdb6ff9fa072b0433f94"
+ },
+ "tasks": {
+  "bmc": {
+   "checks": [
+    {
+     "flavor": "cover",
+     "id": "c_late_final_beat",
+     "label": "c_late_final_beat",
+     "src": "formal_udp_rx.sv:47",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "c_datagram_out",
+     "label": "c_datagram_out",
+     "src": "formal_udp_rx.sv:48",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "a_output_follows_input__ante",
+     "label": "a_output_follows_input__ante",
+     "src": "formal_udp_rx.sv:46",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "a_output_follows_input",
+     "label": "a_output_follows_input",
+     "src": "formal_udp_rx.sv:40",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "a_no_input_after_last__ante",
+     "label": "a_no_input_after_last__ante",
+     "src": "formal_udp_rx.sv:45",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "a_no_input_after_last",
+     "label": "a_no_input_after_last",
+     "src": "formal_udp_rx.sv:39",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "a_axis_rules__ante",
+     "label": "a_axis_rules__ante",
+     "src": "formal_udp_rx.sv:44",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "a_axis_rules",
+     "label": "a_axis_rules",
+     "src": "formal_udp_rx.sv:38",
+     "tautology": false
+    }
+   ],
+   "covers": {},
+   "depth": 52,
+   "mode": "bmc",
+   "seconds": 28.2,
+   "status": "PASS"
+  },
+  "cover": {
+   "checks": [
+    {
+     "flavor": "cover",
+     "id": "c_late_final_beat",
+     "label": "c_late_final_beat",
+     "src": "formal_udp_rx.sv:47",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "c_datagram_out",
+     "label": "c_datagram_out",
+     "src": "formal_udp_rx.sv:48",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "a_output_follows_input__ante",
+     "label": "a_output_follows_input__ante",
+     "src": "formal_udp_rx.sv:46",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "a_output_follows_input",
+     "label": "a_output_follows_input",
+     "src": "formal_udp_rx.sv:40",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "a_no_input_after_last__ante",
+     "label": "a_no_input_after_last__ante",
+     "src": "formal_udp_rx.sv:45",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "a_no_input_after_last",
+     "label": "a_no_input_after_last",
+     "src": "formal_udp_rx.sv:39",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "a_axis_rules__ante",
+     "label": "a_axis_rules__ante",
+     "src": "formal_udp_rx.sv:44",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "a_axis_rules",
+     "label": "a_axis_rules",
+     "src": "formal_udp_rx.sv:38",
+     "tautology": false
+    }
+   ],
+   "covers": {
+    "a_axis_rules__ante": {
+     "reached": true,
+     "step": 46
+    },
+    "a_no_input_after_last__ante": {
+     "reached": true,
+     "step": 3
+    },
+    "a_output_follows_input__ante": {
+     "reached": true,
+     "step": 46
+    },
+    "c_datagram_out": {
+     "reached": true,
+     "step": 50
+    },
+    "c_late_final_beat": {
+     "reached": true,
+     "step": 50
+    }
+   },
+   "depth": 52,
+   "mode": "cover",
+   "seconds": 14.6,
+   "status": "PASS"
+  }
+ },
+ "tool": "Yosys 0.70+385 (git sha1 098e46a36, Release, Clang /usr/bin/clang++ 21.1.8)"
+}

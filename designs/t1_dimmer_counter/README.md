@@ -10,7 +10,7 @@ Not in scope:
 - a gamma-corrected or auto-repeating dimmer; brightness is linear in the duty and one press is one step
 - a claim of compliance with any standard; the traceability record is DO-254-style evidence only
 
-Kind: example; written by hand. State: board-verified. For an agent: [AGENT.md](AGENT.md).
+Kind: example; written by a Claude Code session. State: board-verified. For an agent: [AGENT.md](AGENT.md).
 
 ![Block diagram: the design's blocks and the links between them](docs/handover/architecture.svg)
 
@@ -73,7 +73,7 @@ Interfaces:
 | build the base and the ILA bitstreams; needs local Vivado 2026.1 and a heavy slot (take_heavy_slot.sh) | `flow/run_vivado.sh designs/t1_dimmer_counter both` | yes | about 10 min |
 | board bring-up, UART tests and ILA captures against the model; needs the Nexys A7-100T on wall power, both builds present and the board lock | `python3 flow/bringup.py designs/t1_dimmer_counter` | no | about 3 min |
 
-Tool: Vivado 2026.1. Build ID of the inputs at handover: `7eeb3bf5` (`python flow/manifest.py show designs/t1_dimmer_counter`: what a rebuild of today's sources and flow would carry; it changes when any build input or the flow changes, so it can differ from the build ID in an older evidence record). Knowledge-bank pin: `0959c27`.
+Tool: Vivado 2026.1. Build ID of the inputs at handover: `10a1806a` (`python flow/manifest.py show designs/t1_dimmer_counter`: what a rebuild of today's sources and flow would carry; it changes when any build input or the flow changes, so it can differ from the build ID in an older evidence record). Knowledge-bank pin: `5e2eab8`.
 
 | File | What |
 |---|---|

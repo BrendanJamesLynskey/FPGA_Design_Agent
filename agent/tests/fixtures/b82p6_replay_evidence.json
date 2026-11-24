@@ -1,0 +1,141 @@
+{
+ "B_r2": {
+  "run_id": "20261120-072336-553a",
+  "verif": {
+   "reached": "V1",
+   "first_failed": "V2",
+   "V2": {
+    "seeds_run": {
+     "value": [
+      1
+     ],
+     "threshold": ">=1",
+     "pass": true
+    },
+    "planned_tests_missing": {
+     "value": [],
+     "threshold": [],
+     "pass": true
+    },
+    "failing_tests": {
+     "value": [
+      "seed1:v2_e_udp_endpoint_bench.test_judging_order",
+      "seed1:v2_e_udp_endpoint_bench.test_led_and_stat",
+      "seed1:v2_e_udp_endpoint_bench.test_random_traffic",
+      "seed1:v2_e_udp_endpoint_bench.test_refusal_counters",
+      "seed1:v2_e_udp_endpoint_bench.test_register_access",
+      "seed1:v2_e_udp_endpoint_bench.test_reset_and_register_map",
+      "seed1:v2_e_udp_endpoint_bench.test_reset_clears_state",
+      "seed1:v2_e_udp_endpoint_bench.test_sequence_rules",
+      "seed1:v2_e_udp_endpoint_bench.test_status_command",
+      "seed1:v2_e_udp_endpoint_bench.test_telemetry_flow",
+      "seed1:v2_e_udp_endpoint_bench.test_tick_register",
+      "seed1:v2_e_udp_endpoint_bench.test_uart_baud",
+      "seed1:v2_e_udp_endpoint_random.test_random_register_traffic"
+     ],
+     "threshold": [],
+     "pass": false
+    },
+    "constrained_random_test_ran": {
+     "value": false,
+     "threshold": true,
+     "pass": false,
+     "why": "no passing test with 'random' in its name in seed1: name the constrained-random test so (for example test_random_traffic) and run it"
+    },
+    "assertions_bound_zero_failures": {
+     "value": [],
+     "threshold": "bound in the run; no failure",
+     "pass": false,
+     "why": "a test failed in some seed: see failing_tests"
+    },
+    "other_simulators_failing": {
+     "value": [],
+     "threshold": [],
+     "pass": true
+    },
+    "formal_tasks_not_passing": {
+     "value": [],
+     "threshold": [],
+     "pass": true
+    }
+   }
+  },
+  "sim_failures": [
+   "[first failure] test_rtl_bench[1]\n  AssertionError: v2_e_udp_endpoint: the cocotb run failed. From <path>\n  Traceback (most recent call last):\n  File \"<path>\", line 271, in test_reset_and_register_map\n  assert await b.read_reg_pkt(0, seq=0x0001) == 0x55445031\n  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"<path>\", line 191, in read_reg_pkt\n  r = await self.send_pkt(rd_pkt(self.nxt() if seq is None else seq, reg), expect=0)\n  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"<path>\", line 182, in send_pkt\n  reply = await self.check_reply(data, expect, beyond)\n  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"<path>\", line 177, in check_reply\n  assert rlen and reply[1] == expect, f\"status {reply[1] if rlen else None} expected {expect}\"\n  AssertionError: status 2 expected 0\n  assert (9 and 2 == 0)\n  454410.00ns WARNING  cocotb.regression                  v2_e_udp_endpoint_bench.test_reset_and_register_map failed\n  454410.00ns INFO     cocotb.regression                  running v2_e_udp_endpoint_bench.test_register_access (2/13)\n  626750.00ns WARNING  ..ster_access.test_register_access status 2 expected 0\n  File \"<path>",
+   "[first failure] test_rtl_bench[1]\n  AssertionError: v2_e_udp_endpoint: the cocotb run failed. From <path>\n  Traceback (most recent call last):\n  File \"<path>\", line 271, in test_reset_and_register_map\n  assert await b.read_reg_pkt(0, seq=0x0001) == 0x55445031\n  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"<path>\", line 191, in read_reg_pkt\n  r = await self.send_pkt(rd_pkt(self.nxt() if seq is None else seq, reg), expect=0)\n  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"<path>\", line 182, in send_pkt\n  reply = await self.check_reply(data, expect, beyond)\n  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"<path>\", line 177, in check_reply\n  assert rlen and reply[1] == expect, f\"status {reply[1] if rlen else None} expected {expect}\"\n  AssertionError: status 2 expected 0\n  assert (9 and 2 == 0)\n  454410.00ns WARNING  cocotb.regression                  v2_e_udp_endpoint_bench.test_reset_and_register_map failed\n  454410.00ns INFO     cocotb.regression                  running v2_e_udp_endpoint_bench.test_register_access (2/13)\n  626750.00ns WARNING  ..ster_access.test_register_access status 2 expected 0\n  File \"<path>",
+   "[first failure] test_rtl_bench[1]\n  AssertionError: v2_e_udp_endpoint: the cocotb run failed. From <path>\n  Traceback (most recent call last):\n  File \"<path>\", line 271, in test_reset_and_register_map\n  assert await b.read_reg_pkt(0, seq=0x0001) == 0x55445031\n  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"<path>\", line 191, in read_reg_pkt\n  r = await self.send_pkt(rd_pkt(self.nxt() if seq is None else seq, reg), expect=0)\n  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"<path>\", line 182, in send_pkt\n  reply = await self.check_reply(data, expect, beyond)\n  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"<path>\", line 177, in check_reply\n  assert rlen and reply[1] == expect, f\"status {reply[1] if rlen else None} expected {expect}\"\n  AssertionError: status 2 expected 0\n  assert (9 and 2 == 0)\n  454410.00ns WARNING  cocotb.regression                  v2_e_udp_endpoint_bench.test_reset_and_register_map failed\n  454410.00ns INFO     cocotb.regression                  running v2_e_udp_endpoint_bench.test_register_access (2/14)\n  626750.00ns WARNING  ..ster_access.test_register_access status 2 expected 0\n  File \"<path>"
+  ]
+ },
+ "B_r3": {
+  "run_id": "20261120-104735-68eb",
+  "verif": {
+   "reached": "V1",
+   "first_failed": "V2",
+   "V2": {
+    "seeds_run": {
+     "value": [
+      1
+     ],
+     "threshold": ">=1",
+     "pass": true
+    },
+    "planned_tests_missing": {
+     "value": [
+      "seed1:bench_random_v2_e_udp_endpoint.test_random_traffic"
+     ],
+     "threshold": [],
+     "pass": false
+    },
+    "failing_tests": {
+     "value": [
+      "seed1:bench_v2_e_udp_endpoint.test_counter_wrap",
+      "seed1:bench_v2_e_udp_endpoint.test_counters_status",
+      "seed1:bench_v2_e_udp_endpoint.test_drops_no_reply",
+      "seed1:bench_v2_e_udp_endpoint.test_led",
+      "seed1:bench_v2_e_udp_endpoint.test_priority_order",
+      "seed1:bench_v2_e_udp_endpoint.test_random_traffic",
+      "seed1:bench_v2_e_udp_endpoint.test_refused_changes_nothing",
+      "seed1:bench_v2_e_udp_endpoint.test_reply_format",
+      "seed1:bench_v2_e_udp_endpoint.test_reset_and_scratch",
+      "seed1:bench_v2_e_udp_endpoint.test_reset_clears_state",
+      "seed1:bench_v2_e_udp_endpoint.test_sequence",
+      "seed1:bench_v2_e_udp_endpoint.test_shell_window",
+      "seed1:bench_v2_e_udp_endpoint.test_status_codes",
+      "seed1:bench_v2_e_udp_endpoint.test_telemetry",
+      "seed1:bench_v2_e_udp_endpoint.test_tick_register"
+     ],
+     "threshold": [],
+     "pass": false
+    },
+    "constrained_random_test_ran": {
+     "value": false,
+     "threshold": true,
+     "pass": false,
+     "why": "no passing test with 'random' in its name in seed1: name the constrained-random test so (for example test_random_traffic) and run it"
+    },
+    "assertions_bound_zero_failures": {
+     "value": [],
+     "threshold": "bound in the run; no failure",
+     "pass": false,
+     "why": "a test failed in some seed: see failing_tests"
+    },
+    "other_simulators_failing": {
+     "value": [],
+     "threshold": [],
+     "pass": true
+    },
+    "formal_tasks_not_passing": {
+     "value": [],
+     "threshold": [],
+     "pass": true
+    }
+   }
+  },
+  "sim_failures": [
+   "[first failure] test_v2_e_udp_endpoint_rtl\n  AssertionError: v2_e_udp_endpoint: the cocotb run failed. From <path>\n  Traceback (most recent call last):\n  File \"<path>\", line 262, in test_reset_and_scratch\n  expect(rep, 1, 0, e.seq, [0x55, 0x44, 0x50, 0x31])\n  File \"<path>\", line 45, in expect\n  assert rep[1] == status, f\"status {rep[1]} expected {status}\"\n  AssertionError: status 2 expected 0\n  assert 2 == 0\n  273270.00ns WARNING  cocotb.regression                  bench_v2_e_udp_endpoint.test_reset_and_scratch failed\n  273270.00ns INFO     cocotb.regression                  running bench_v2_e_udp_endpoint.test_shell_window (2/17)\n  794750.00ns WARNING  ..t_shell_window.test_shell_window assert 9 == 13\n  File \"<path>\", line 315, in test_shell_window\n  assert n == 13\n  AssertionError: assert 9 == 13\n  794750.00ns WARNING  cocotb.regression                  bench_v2_e_udp_endpoint.test_shell_window failed\n  794750.00ns INFO     cocotb.regression                  running bench_v2_e_udp_endpoint.test_reply_format (3/17)\n  981160.00ns WARNING  ..t_reply_format.test_reply_format status 2 expected 0\n  File \"<path>\", line 335, in test_reply_format\n  expect(rep, 1, 0, s, [0x55, 0x44, 0x50, 0x31])\n  981160.00ns WARNING  ",
+   "[first failure] test_v2_e_udp_endpoint_rtl\n  AssertionError: v2_e_udp_endpoint: the cocotb run failed. From <path>\n  Traceback (most recent call last):\n  File \"<path>\", line 77, in test_random_traffic\n  expect(rep, 1, 0, e.seq)\n  File \"<path>\", line 45, in expect\n  assert rep[1] == status, f\"status {rep[1]} expected {status}\"\n  AssertionError: status 2 expected 0\n  assert 2 == 0\n  2134770.00ns WARNING  cocotb.regression                  bench_random_v2_e_udp_endpoint.test_random_traffic failed\n  2134770.00ns INFO     cocotb.regression                  running bench_v2_e_udp_endpoint.test_reset_and_scratch (2/18)\n  2408050.00ns WARNING  ..d_scratch.test_reset_and_scratch status 2 expected 0\n  File \"<path>\", line 262, in test_reset_and_scratch\n  expect(rep, 1, 0, e.seq, [0x55, 0x44, 0x50, 0x31])\n  2408050.00ns WARNING  cocotb.regression                  bench_v2_e_udp_endpoint.test_reset_and_scratch failed\n  2408050.00ns INFO     cocotb.regression                  running bench_v2_e_udp_endpoint.test_shell_window (3/18)\n  2929530.00ns WARNING  ..t_shell_window.test_shell_window assert 9 == 13\n  File \"<path>\", line 315, in test_shell_window\n  assert n == 13\n  AssertionError: assert 9 == 13\n  2929530.00ns WA",
+   "[first failure] test_v2_e_udp_endpoint_rtl\n  AssertionError: v2_e_udp_endpoint: the cocotb run failed. From <path>\n  Traceback (most recent call last):\n  File \"<path>\", line 68, in test_random_traffic\n  rep = await e.send_pkt(pk)\n  ^^^^^^^^^^^^^^^^^^^^\n  File \"<path>\", line 221, in send_pkt\n  rep = await self.get_buf()\n  File \"<path>\", line 202, in get_buf\n  w = await self.rd(wo)\n  ^^^^^^^^^^^^^^^^^\n  File \"<path>\", line 188, in rd\n  assert d == exp, f\"read offset {off}: dut {d:#x} model {exp:#x}\"\n  AssertionError: read offset 4: dut 0x820044e4 model 0x820244e4\n  assert 2181055716 == 2181186788\n  471830.00ns WARNING  cocotb.regression                  bench_random_v2_e_udp_endpoint.test_random_traffic failed\n  471830.00ns INFO     cocotb.regression                  running bench_v2_e_udp_endpoint.test_reset_and_scratch (2/18)\n  683060.00ns WARNING  ..d_scratch.test_reset_and_scratch read offset 2: dut 0xd model 0x9\n  assert 13 == 9\n  File \"<path>\", line 261, in test_reset_and_scratch\n  rep = await e.cmd(1, [0])\n  ^^^^^^^^^^^^^^^^^^^\n  File \"<path>",
+   "[first failure] test_v2_e_udp_endpoint_rtl\n  AssertionError: v2_e_udp_endpoint: the cocotb run failed. From <path>\n  Traceback (most recent call last):\n  File \"<path>\", line 261, in test_reset_and_scratch\n  rep = await e.cmd(1, [0])\n  ^^^^^^^^^^^^^^^^^^^\n  File \"<path>\", line 228, in cmd\n  return await self.send_pkt(mk(typ, seq, payload, **kw))\n  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"<path>\", line 221, in send_pkt\n  rep = await self.get_buf()\n  ^^^^^^^^^^^^^^^^^^^^\n  File \"<path>\", line 196, in get_buf\n  n = await self.rd(lo)\n  ^^^^^^^^^^^^^^^^^\n  File \"<path>\", line 188, in rd\n  AssertionError: read offset 2: dut 0xd model 0x9\n  assert 13 == 9\n  211220.00ns WARNING  cocotb.regression                  bench_v2_e_udp_endpoint.test_reset_and_scratch failed\n  211220.00ns INFO     cocotb.regression                  running bench_v2_e_udp_endpoint.test_shell_window (2/17)\n  658240.00ns WARNING  ..t_shell_window.test_shell_window read offset 2: dut 0xd model 0x9\n  File \"<path>"
+  ]
+ }
+}

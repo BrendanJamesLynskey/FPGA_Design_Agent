@@ -9,7 +9,7 @@ Not in scope:
 - a temperature measurement: the pass range (10 to 40 C) only shows the sensor answers with a plausible value, not that it is accurate
 - an agent benchmark task; it was written by hand to prove the board inventory on hardware
 
-Kind: board-selfcheck; written by hand. State: board-verified. For an agent: [AGENT.md](AGENT.md).
+Kind: board-selfcheck; written by a Claude Code session. State: board-verified. For an agent: [AGENT.md](AGENT.md).
 
 <!-- prose:what -->
 A board self-check, not an agent benchmark task: it was written by hand to prove the board inventory (`boards/nexys_a7_100t/inventory.yaml`) on hardware. The test shell (`shell/`) carries its registers; the register map is in the header of `rtl/tmp_regs.sv`.
@@ -68,7 +68,7 @@ Interfaces:
 | build and run the gates; needs local Vivado 2026.1 and a heavy slot (take_heavy_slot.sh) | `flow/run_vivado.sh designs/b2_tmp_adt7420 base` | yes | about 4 min |
 | power gate, program SRAM, self-check, three times; needs the Nexys A7 on wall power and the board lock | `python3 flow/board_check.py designs/b2_tmp_adt7420 --runs 3` | no | about 2 min |
 
-Tool: Vivado 2026.1. Build ID of the inputs at handover: `75af5be3` (`python flow/manifest.py show designs/b2_tmp_adt7420`: what a rebuild of today's sources and flow would carry; it changes when any build input or the flow changes, so it can differ from the build ID in an older evidence record). Knowledge-bank pin: `1fc7ed8`.
+Tool: Vivado 2026.1. Build ID of the inputs at handover: `180de593` (`python flow/manifest.py show designs/b2_tmp_adt7420`: what a rebuild of today's sources and flow would carry; it changes when any build input or the flow changes, so it can differ from the build ID in an older evidence record). Knowledge-bank pin: `5e2eab8`.
 
 | File | What |
 |---|---|
