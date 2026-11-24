@@ -334,7 +334,7 @@ over the JTAG register bus once the owner approves programming):
   computed in Python (from model.py or plain Python), leaves the design at its reset values and keeps LED duty and any soak short.
   The same run(bus) runs in CI on make_mock() and on the board on the real bus (flow.host_transport.run_checks adds the ID, build-stamp and
   scratch checks). hw_checks.py may import only the standard library, `flow.host_transport` and `model`. No tests/test_*_hw.py and no probes.yaml.
-- BRINGUP.md for a tester who did not design it, with the sections Setup, Testing (step by step, pass/fail), Debug aids and If it fails.
+- BRINGUP.md written for someone who has not seen the design: sections Setup, Testing (numbered steps, each with its pass or fail rule), Debug aids, If it fails.
 Call gates(kind="bringup_ready") to check these files and to run every check against the mock; the stage cannot ask the owner to approve
 programming until that passes.
 """
