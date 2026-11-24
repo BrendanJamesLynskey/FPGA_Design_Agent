@@ -1,8 +1,7 @@
 # Brief 178: candidate tournaments, results so far
 
-Status (2026-11-22): part 1 (measurement from existing data) is done; the tool, triage, tests and docs are done; **the new Vivado runs have not run**:
-no heavy slot was free for about 50 minutes (176 low-latency work and the board build 175 held both, and ranked ahead). The driver
-`tools/qor/run_178_eval.sh` is written and waits for slots; every number below is from `results/177_qor/dataset.csv`, no new Vivado run.
+Status (2026-11-24, brief 178b): part 1, the tool, triage, tests, docs and the Vivado evaluation (five designs) are done. Numbers below are from
+`runs/<design>/{synth,impl_top2,impl_base}.json` and `gain_summary.json` (Vivado 2026.1, out of context, one run per candidate, no repeats).
 
 ## Part 1: does the early ranking predict the routed ranking? (49 full-design rows with post-synthesis, post-place and routed WNS)
 
@@ -36,11 +35,38 @@ so noise-level differences are decided by area and then the default. Post-place 
 `flow/tournament.py` (plan, run, score, triage, strategies), `flow/tests/test_178_tournament.py` (11 pass), `docs/tournament.md`, specs for five arith points
 near their clock limit (`specs/`, made by `tools/qor/make_tournament_specs.py`), the evaluation driver `tools/qor/run_178_eval.sh`.
 
-## Not yet done (needs slots)
+## Evaluation results (brief 178b, 2026-11-23 to 24)
 
-* AMD `-strategy` reference measured from Vivado (`python3 -m flow.tournament strategies`).
-* Five synthesis tournaments (15 candidates each, light class), a rank study (every synthesis candidate through default place and route), an implementation tournament
-  on the best candidate; gain against default and against the best AMD strategy; CPU-hours and wall time; seed/noise repeat.
-* Triage measurement: missed gain on `easy`, wasted cost on `hard`; thresholds in `TRIAGE` are initial values, from the dataset's Fmax spread, not yet tuned.
-* One full design (a K26 or Artix design cannot run in the 2 GiB light class; it would be an implementation-stage-only tournament).
-Run: `tools/qor/run_178_eval.sh` (resumable), then `python3 -m flow.tournament score <tournament.json> --routed <id>=<wns> ...`.
+Method: synthesis tournament (16 options) per design; the top two synthesis candidates each go through 10 place-and-route sets (6 directive sets and 4 AMD
+`-strategy` sets, read from Vivado by the probe); baseline = default synthesis then default place and route. Routed WNS in ns, single run each.
+
+| design (part, clock) | baseline routed WNS | tournament winner (routed WNS) | best of all 20 | best AMD strategy | best synthesis, default P&R |
+|---|---|---|---|---|---|
+| adder csel w64 (xc7a100t, 5.0 ns) | -0.426 | altroute + Performance_NetDelay_high (-0.129) | -0.129 | -0.129 | -0.524 |
+| divider w16 (K26, 1.4 ns) | -0.031 | altroute + aggressive (+0.009) | +0.017 | +0.017 | -0.003 |
+| isqrt w32 (K26, 1.4 ns) | +0.002 | altroute + aggressive (+0.016) | +0.016 | +0.016 | -0.014 |
+| lzc w32 (K26, 1.4 ns) | -0.486 | retime + Performance_RefinePlacement (+0.165) | +0.196 | +0.196 | +0.119 |
+| mac fabric (K26, 3.0 ns) | -0.161 | retime + congestion (+0.208) | +0.208 | +0.129 | +0.057 |
+
+* **Gain over the default flow:** 0.03 to 0.69 ns of routed WNS. Three designs went from failing to meeting timing (divider, lzc, mac); the adder improved by 0.30 ns
+  and still fails at 5.0 ns; isqrt met timing either way (+0.002 to +0.016, inside run noise). Single runs, no seed repeats: differences under about 0.03 ns are not shown to be real.
+* **Against AMD's own strategies:** the best AMD `-strategy` equalled the best result on 4 of 5 designs (and the tournament's implementation menu includes them); the mac design
+  was the one clear win (+0.208 versus +0.129, from the congestion directive set). Nothing here shows our menu beating the AMD sets by a margin.
+* **Where the gain came from:** on lzc and mac most of it is the synthesis choice (`retime`: +0.119 and +0.057 with default P&R, versus -0.486 and -0.161 baseline), the rest is place and route.
+  `retime` costs flip-flops (mac 116 to 197, lzc 112 to 137). Synthesis ranking alone was right about which synthesis wins, and wrong about the final order inside place and route
+  (the best P&R set differed per design), which agrees with part 1.
+* **Carrying the top two:** on 4 of 5 designs the two best synthesis candidates were identical netlists (same LUT, FF and WNS: altroute = carry, retime = perf_retime), so the second
+  slot added nothing. Only the adder's two differed (altroute -0.129 against area_high, which was worse). The top-k step should pick the top two *distinct* results; this is a fix to make.
+* **Cost:** synthesis 1160 to 1632 CPU-s per design (16 runs); place and route 6056 to 7814 CPU-s (20 runs) against 76 to 236 CPU-s for the baseline: about 30 to 90 times the CPU of one default run.
+  Wall time (3500 s synthesis, 8700 to 21900 s place and route) includes waiting for slots behind other jobs, so it is not a speed measurement.
+* **Winner choice:** the score's 0.05 ns bucket plus area tie-break picked a smaller netlist over the highest WNS on divider (+0.009 against +0.017) and lzc (+0.165 against +0.196). Intended, and documented.
+* **Not measured:** seed or run-to-run noise, triage thresholds against these outcomes, a full design (needs the implementation stage only).
+
+## What 178b found and fixed
+
+* Four of the five original tournaments recorded no winner because every synthesis child was killed at the 2 GiB cap: UltraScale+ synthesis reached about 3.07 GB (the Vivado-reported
+  peak in the logs). The tool then wrote an all-"not run" record that the driver treated as finished. Now K26 synthesis is declared at 4 GiB (one child at a time, not light class),
+  a stage in which nothing completes writes `tournament_failed.txt` and raises, and the driver feeds place and route the top two ids.
+* The memory gate (free memory must cover running peaks plus 8 GiB) cannot admit a child while other jobs hold memory; with nothing running, the driver now falls back to one child alone
+  after 120 s when MemAvailable covers the child's peak plus 1 GiB. The log line "gate refused ... running one child alone" in `build/178b_eval.log` is that fallback working (it appears for every 4 GiB child, by design).
+* The strategy probe stored only IS_ENABLED flags, never the directives, so all 33 AMD strategies were empty and identical to default. It now reads each step's directive.
