@@ -1,0 +1,13 @@
+schema: fpga-design-agent/formal_rigour/v1
+scope: "ipv4_udp_rx with two ports, CHECK_UDP 1, any input bytes, gaps and back-pressure"
+sanity: [c_datagram_out, c_late_final_beat]
+depth:
+  bmc:
+    enough: false
+    why: >-
+      Bounded, not claimed exhaustive. Measured in the cover task: the first output beat appears at step 46 and a whole datagram has been passed on by step 50, so depth 52
+      holds one parsed datagram and two clocks more. Before brief 143c the depth was 30, which is before step 46: the output-rule assertions never had an output beat to check
+      (their antecedent is unreachable in 30 steps), and the tool flags that as unreachable-cover. At depth 52 the old form of `a_output_follows_input` (a beat leaves
+      only in the clock after an input beat) failed at step 50: the RTL finishes a frame in five phases after tlast, so the final beat leaves up to 7 clocks later; the
+      property is now "within 8 clocks of an input beat". A second datagram behind the first is not covered. No k-induction proof
+      was attempted.

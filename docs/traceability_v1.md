@@ -145,6 +145,14 @@ and a transcription source whose lines cannot be read.
 hashes; it is not a re-run. The approver's check is the human's: this repository cannot tell who typed the entry, so the rule is procedural, and the gate only checks the entry's form and
 that the hashes still match.
 
+## Formal rigour (`rigour:`, brief 143c)
+
+A `formal` item may name the SymbiYosys jobs behind it: `rigour: [designs/x/verif/formal/a.sby]`. `flow/formal_rigour.py` judges each job from its committed record
+(`results/143c/formal_rigour/`) and its sidecar (`a.rigour.yaml`): every assertion needs a reached antecedent cover (else it is `vacuous` or `unreachable-cover`), every job needs
+reached assumption-sanity covers, and every `bmc` task needs a written reason for its depth. An item whose evidence passes becomes **`fail`** if any assertion is vacuous,
+unreachable-cover, failed or bounded without a justification, or if the record is stale; **`bounded`** if every assertion is proved or justified-bounded and some are bounded; and stays `pass`
+only when every assertion is proved. Details, the sidecar format and the limits: [formal_rigour.md](formal_rigour.md).
+
 ## Status rules (computed, never typed)
 
 Per item: `fail` if a condition does not hold, a measured value is outside the bound, or a named test is present in the recorded JUnit run and failed; `not_in_run` (shown "not in the recorded run") if a named test is absent from the recorded JUnit or a `stem::*` matches nothing, i.e. the evidence predates the test, with the missing names listed; `skipped` if a named test was skipped in the recorded run; `not_run` if the evidence file or field is missing (a `planned:` hook

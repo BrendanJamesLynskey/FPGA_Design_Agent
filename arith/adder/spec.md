@@ -88,11 +88,38 @@ Written without knowing the design the block will sit in (brief 139a, owner deci
 - WIDTH 1 is legal; its signed range is -1..0, so ovf is set for 0+0+1 and for -1+-1 (a + b + cin outside -1..0)
 - STAGES must be between 1 and WIDTH and BLOCK at least 1; other values are not rejected by an assertion (they fail to elaborate or give the wrong widths)
 
+## Measured (Vivado out-of-context, brief 160)
+
+Vivado 2026.1 (build 6511674), out-of-context synthesis, placement and routing on one thread, one run per point, at the clock shown. LUT, FF and carry cells are as reported after routing for the wrapper (which registers every port, so the FF column includes the wrapper's register bits); WNS at the target clock gives Fmax = 1000 / (clock - WNS), a lower bound (marked `>=`) when WNS is positive; latency is the spec's, in clocks, without the wrapper's two. `F` marks a point on the area-against-Fmax front of its group, `L` on the area-against-latency front (see [../../results/160_arith_vivado/README.md](../../results/160_arith_vivado/README.md)). Records: [verif/results/](verif/results/), the pre-stated expectation and its verdict per point: [verif/results/vivado_surface.json](verif/results/vivado_surface.json).
+
+| Variant | Part | Point | Clock ns | LUT | FF | SRL | Carry | DSP | BRAM | WNS ns | Fmax MHz | Logic levels | Latency | Fronts | Expectation |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| carry_select | a7 | WIDTH=32, BLOCK=8 | 5.0 | 67 | 100 | 0 | 12 | 0 | 0 | 0.461 | >=220.3 | 6 | 0 |  | met |
+| carry_select | a7 | WIDTH=64, BLOCK=8 | 5.0 | 145 | 196 | 0 | 24 | 0 | 0 | -0.656 | 176.8 | 8 | 0 |  | met |
+| carry_select | a7 | WIDTH=64, BLOCK=16 | 5.0 | 114 | 196 | 0 | 32 | 0 | 0 | -0.426 | 184.3 | 8 | 0 |  | met |
+| carry_select | k26 | WIDTH=32, BLOCK=8 | 3.0 | 65 | 100 | 0 | 1 | 0 | 0 | 0.824 | >=459.6 | 6 | 0 |  | missed |
+| carry_select | k26 | WIDTH=64, BLOCK=8 | 3.0 | 141 | 196 | 0 | 1 | 0 | 0 | 0.573 | >=412.0 | 8 | 0 |  | missed |
+| carry_select | k26 | WIDTH=64, BLOCK=16 | 3.0 | 108 | 196 | 0 | 14 | 0 | 0 | 0.225 | >=360.4 | 7 | 0 |  | met |
+| pipelined | a7 | WIDTH=64, STAGES=2 | 5.0 | 82 | 359 | 0 | 18 | 0 | 0 | 1.357 | >=274.5 | 10 | 2 | F | met |
+| pipelined | a7 | WIDTH=64, STAGES=4 | 5.0 | 122 | 409 | 32 | 20 | 0 | 0 | 1.776 | >=310.2 | 5 | 4 | F | missed |
+| pipelined | a7 | WIDTH=64, STAGES=8 | 5.0 | 158 | 405 | 64 | 24 | 0 | 0 | 1.533 | >=288.4 | 1 | 8 |  | missed |
+| pipelined | a7 | WIDTH=128, STAGES=4 | 5.0 | 242 | 809 | 64 | 36 | 0 | 0 | 1.238 | >=265.8 | 1 | 4 |  | missed |
+| pipelined | k26 | WIDTH=64, STAGES=2 | 3.0 | 82 | 359 | 0 | 8 | 0 | 0 | 1.304 | >=589.6 | 5 | 2 | F | met |
+| pipelined | k26 | WIDTH=64, STAGES=4 | 3.0 | 122 | 409 | 32 | 8 | 0 | 0 | 1.494 | >=664.0 | 0 | 4 | F | missed |
+| pipelined | k26 | WIDTH=64, STAGES=8 | 3.0 | 222 | 405 | 128 | 8 | 0 | 0 | 1.542 | >=685.9 | 1 | 8 | F | missed |
+| pipelined | k26 | WIDTH=128, STAGES=4 | 3.0 | 242 | 809 | 64 | 16 | 0 | 0 | 1.304 | >=589.6 | 1 | 4 |  | missed |
+| ripple | a7 | WIDTH=16 | 5.0 | 18 | 52 | 0 | 5 | 0 | 0 | 1.243 | >=266.2 | 6 | 0 |  | met |
+| ripple | a7 | WIDTH=32 | 5.0 | 34 | 100 | 0 | 9 | 0 | 0 | 0.471 | >=220.8 | 10 | 0 | FL | met |
+| ripple | a7 | WIDTH=64 | 5.0 | 66 | 196 | 0 | 17 | 0 | 0 | 0.545 | >=224.5 | 17 | 0 | FL | met |
+| ripple | k26 | WIDTH=16 | 3.0 | 18 | 52 | 0 | 2 | 0 | 0 | 1.459 | >=648.9 | 4 | 0 |  | met |
+| ripple | k26 | WIDTH=32 | 3.0 | 34 | 100 | 0 | 4 | 0 | 0 | 1.47 | >=653.6 | 6 | 0 | FL | met |
+| ripple | k26 | WIDTH=64 | 3.0 | 66 | 196 | 0 | 8 | 0 | 0 | 1.072 | >=518.7 | 10 | 0 | FL | met |
+
 ## Files
 
 - [model.py](model.py): the bit-exact model; tests/test_*_model.py check it against independent formulations
 - [harness/](harness/): the packaged verification harness a user reruns against their own instance (model, bench, SystemVerilog checker, coverage targets, standalone runner)
 - [tests/](tests/): the cocotb bench, exhaustive and random points, mutation and formal tests; [verif/testplan.yaml](verif/testplan.yaml) names each
 - [verif/mutants.yaml](verif/mutants.yaml), [formal/jobs.yaml](formal/jobs.yaml): the seeded faults and the formal jobs; results in [verif/results/](verif/results/)
-- [build/](build/): one `build.yaml` per variant for an out-of-context Vivado run on Artix-7 and K26 (prepared, not run); [ooc/](ooc/): the generated register wrappers
+- [build/](build/): one `build.yaml` per variant for an out-of-context Vivado run on Artix-7 and K26 (prepared in brief 139a, run in brief 160); [ooc/](ooc/): the generated register wrappers
 - [../../formal/lean/Arith/](../../formal/lean/Arith/): Lean statements (not approved by a human)

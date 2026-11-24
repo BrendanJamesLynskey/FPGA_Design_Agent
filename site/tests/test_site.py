@@ -353,7 +353,7 @@ def test_replays_follow_their_records():
 
 def test_agent_page_is_second_and_linked():
     names = [p[0] for p in build.PAGES]
-    assert names[1] == "agent.html"
+    assert names[1] == "why.html" and names[2] == "agent.html"       # brief 193: the one-page summary comes first in the nav
     for f in ("index.html", "how.html"):
         assert 'href="agent.html"' in re.sub(r"(?s)<header.*?</header>", "", (SITE / "public" / f).read_text()), f
 
