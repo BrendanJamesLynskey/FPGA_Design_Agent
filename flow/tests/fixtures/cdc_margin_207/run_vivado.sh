@@ -42,7 +42,7 @@ for j in "${jobs[@]}"; do
   done
   eval "$envs"
   echo "$(date +%H:%M) $j on $HEAVY_LOCK threads $FDA_VIVADO_THREADS"
-  ( cd "$out" && FDA_FLOW="$flow/flow" systemd-run --user --scope -q -p MemoryMax=5G nice -n 15 \
+  ( cd "$out" && FDA_FLOW="$flow" systemd-run --user --scope -q -p MemoryMax=5G nice -n 15 \
       "$V" -mode batch -nojournal -log "$out/$j.log" "${cmd[@]}" > /dev/null 2>&1 ) || echo "FAILED $j (see $out/$j.log)"
   case "$(cat "$HEAVY_LOCK" 2>/dev/null)" in "207:"*) rm -f "$HEAVY_LOCK";; esac
   echo "$(date +%H:%M) $j done"

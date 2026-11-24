@@ -193,3 +193,39 @@ def test_quartus_binary_bus_is_invisible_to_timing() -> None:
     """B1: binary pointers crossed bit by bit pass every constraint and report: coding is a simulation/structure question."""
     r = CM.evaluate_quartus(REC / "qcv_b1_D", CV)
     assert r["pass"] and r["findings"] == []
+
+
+# ---- the method's values, derived by code ---------------------------------------------------------------------------------
+def test_bounds_follow_the_crossing_type() -> None:
+    assert CM.bounds({"type": "gray"}, 10.0, 6.4) == {"L": 10.0, "S": 6.4, "margin": 0.0}
+    assert CM.bounds({"type": "handshake", "sync_stages": 3}, 10.0, 6.4) == {"L": 19.2, "S": 19.2, "margin": 0.0}
+    assert CM.bounds({"type": "level"}, 10.0, 6.4) == {"L": 6.4, "S": None, "margin": 0.0}
+    assert CM.bounds({"type": "reset"}, 10.0, 6.4)["L"] is None
+    with pytest.raises(ValueError):
+        CM.bounds({"type": "binary"}, 10.0, 6.4)
+
+
+def test_uncertainty_margin_is_taken_off_for_vivado_only() -> None:
+    assert CM.bounds({"type": "gray"}, 10.0, 6.4, u_pair=0.2, vendor="amd")["S"] == pytest.approx(6.2)
+    assert CM.bounds({"type": "gray"}, 10.0, 6.4, u_pair=0.2, vendor="altera")["S"] == pytest.approx(6.4)
+
+
+def test_constraint_lines_never_use_groups_false_paths_or_uncertainty() -> None:
+    cr = {"type": "gray", "from": "[get_cells {wgray_a_reg[*]}]", "to": "[get_cells {wq1_b_reg[*]}]"}
+    x = CM.constraint_lines(cr, 10.0, 6.4)
+    assert x == ["set_max_delay -datapath_only -from [get_cells {wgray_a_reg[*]}] -to [get_cells {wq1_b_reg[*]}] 10.000",
+                 "set_bus_skew -from [get_cells {wgray_a_reg[*]}] -to [get_cells {wq1_b_reg[*]}] 6.400"]
+    q = CM.constraint_lines({**cr, "from": "[get_keepers {wgray_a[*]}]", "to": "[get_keepers {wq1_b[*]}]"}, 10.0, 6.4, vendor="altera")
+    assert [ln.split()[0] for ln in q] == ["set_max_delay", "set_min_delay", "set_net_delay", "set_max_skew"]
+    for ln in x + q:
+        assert not any(k in ln for k in ("set_clock_groups", "set_false_path", "set_clock_uncertainty"))
+
+
+def test_one_stage_synchroniser_with_a_datapath_only_bound_is_still_u2() -> None:
+    """B2 under D (brief 207): before the fix the lone ASYNC_REG flop was classed as a handshake data path and passed."""
+    from flow import cdc_structure as S
+    d = REC / "vv_a7_b2_D"
+    r = S.evaluate(d / "cdc_paths_synth.rpt", d / "cdc_synth.rpt")
+    assert {(u["rule"], u["cell"]) for u in r["unsafe"]} == {("U2", "lvl_s1_reg")}
+    good = S.evaluate(REC / "vv_a7_D" / "cdc_paths_synth.rpt", REC / "vv_a7_D" / "cdc_synth.rpt")
+    assert good["pass"]

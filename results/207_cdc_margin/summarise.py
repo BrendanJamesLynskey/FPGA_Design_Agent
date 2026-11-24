@@ -49,14 +49,21 @@ def vivado_variant(d: Path) -> dict:
     bs = CM.parse_bus_skew((d / "bus_skew.rpt").read_text(errors="replace")) if (d / "bus_skew.rpt").exists() else []
     # per crossing: the routed skew (actual) from the post-route assertion, and the slack of the constraint used in routing
     r["skew"] = {}
-    for c in bs:
+    # bus_skew.rpt: the post-route measurement assertions (1000 ns, the same -from/-to as the routing constraint, which they replace,
+    # last one wins; routing was already done); bus_skew_constraint.rpt: the constraints routing saw (D, DU, M), before the assertions
+    def cname(c):
         txt = c["command"] + " " + c["from_to"]
-        name = next((n for n, pat in (("wptr", "wq1_b"), ("rptr", "rq1_a"), ("hsdat", "hs_data_b"), ("cfgd", "cfg_b")) if pat in txt), None)
-        if name is None:
-            continue
-        e = r["skew"].setdefault(name, {"actual": c["actual"], "routed_slack": None, "routed_req": None})
-        e["actual"] = max(e["actual"], c["actual"])
-        if c["requirement"] < 999:
+        return next((n for n, pat in (("wptr", "wq1_b"), ("rptr", "rq1_a"), ("hsdat", "hs_data_b"), ("cfgd", "cfg_b")) if pat in txt), None)
+    for c in bs:
+        name = cname(c)
+        if name is not None:
+            e = r["skew"].setdefault(name, {"actual": c["actual"], "routed_slack": None, "routed_req": None})
+            e["actual"] = max(e["actual"], c["actual"])
+    bc = CM.parse_bus_skew((d / "bus_skew_constraint.rpt").read_text(errors="replace")) if (d / "bus_skew_constraint.rpt").exists() else []
+    for c in bc:
+        name = cname(c)
+        if name is not None:
+            e = r["skew"].setdefault(name, {"actual": c["actual"], "routed_slack": None, "routed_req": None})
             e["routed_slack"], e["routed_req"] = c["slack"], c["requirement"]
     mt = d / "mtbf.rpt"
     r["mtbf"] = CM.parse_mtbf(mt.read_text(errors="replace")) if mt.exists() else None

@@ -11,7 +11,10 @@ module tb_cdc207;
     reg [7:0] din_a = 0; reg [15:0] hs_data_a = 0, cfg_in_a = 0;
     wire [7:0] lvl_cnt_b, pls_cnt_b, dout_b, rcnt_b; wire full_a, empty_b, hs_busy_a, hs_valid_b;
     wire [15:0] hs_data_b, cfg_b; wire [31:0] fa_acc, fb_acc;
-    cdc207_top #(.BAD(0)) dut (.clk_a(clk_a), .clk_b(clk_b), .rst_a(rst_a), .rst_b(rst_b), .arst_n(arst_n),
+    `ifndef BADV
+    `define BADV 0
+    `endif
+    cdc207_top #(.BAD(`BADV)) dut (.clk_a(clk_a), .clk_b(clk_b), .rst_a(rst_a), .rst_b(rst_b), .arst_n(arst_n),
         .lvl_in_a(lvl_in_a), .pls_in_a(pls_in_a), .lvl_cnt_b(lvl_cnt_b), .pls_cnt_b(pls_cnt_b),
         .din_a(din_a), .wr_a(wr_a), .full_a(full_a), .rd_b(rd_b), .dout_b(dout_b), .empty_b(empty_b),
         .hs_data_a(hs_data_a), .hs_go_a(hs_go_a), .hs_busy_a(hs_busy_a), .hs_data_b(hs_data_b), .hs_valid_b(hs_valid_b),
@@ -28,6 +31,12 @@ module tb_cdc207;
             expect_rd <= expect_rd + 1; nr = nr + 1;
         end
     end
+    // pointer safety (brief 207): a synchronised FIFO pointer must always be a value its source pointer has held, never ahead of it.
+    // A data check alone misses a pointer seen ahead for one cycle unless the FIFO is truly empty at that moment (measured: B1 passed the
+    // data check in 5 of 5 injected seeds while this check counted 25 to 40 cycles ahead per run).
+    integer ahead_w = 0, ahead_r = 0;
+    always @(posedge clk_b) if (((dut.wseen_b - dut.wbin_a) & 8'hFF) != 0 && ((dut.wseen_b - dut.wbin_a) & 8'hFF) < 128) ahead_w = ahead_w + 1;
+    always @(posedge clk_a) if (((dut.rseen_a - dut.rbin_b) & 8'hFF) != 0 && ((dut.rseen_a - dut.rbin_b) & 8'hFF) < 128) ahead_r = ahead_r + 1;
     always @(posedge clk_b) if (hs_valid_b) begin
         if (hs_data_b !== 16'hA000 + nhs) begin errors = errors + 1; $display("HS: got %h", hs_data_b); end
         nhs = nhs + 1;
@@ -63,6 +72,7 @@ module tb_cdc207;
         if (cfg_b !== 16'hBEEF) begin errors = errors + 1; $display("CFG: %h", cfg_b); end
         if (pls_cnt_b !== 8'd10) begin errors = errors + 1; $display("PULSE: %0d of 10", pls_cnt_b); end
         if (rcnt_b == 0) begin errors = errors + 1; $display("RESET: not released"); end
+        if (ahead_w != 0 || ahead_r != 0) begin errors = errors + 1; $display("POINTER: seen ahead of its source: write %0d cycles, read %0d cycles", ahead_w, ahead_r); end
         if (errors == 0) $display("PASS tb_cdc207: 300 FIFO words, 6 handshake words, config, 10 pulses, reset release");
         else $display("FAIL tb_cdc207: %0d errors", errors);
         $finish;

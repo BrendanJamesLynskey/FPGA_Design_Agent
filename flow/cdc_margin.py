@@ -19,12 +19,15 @@ Findings (``level`` gate = fails the gate ``post_route_bus_skew_met``; advisory 
 
     CDCM-SKEW-VIOL     gate      a set_bus_skew constraint has negative slack after routing (UG906 v2025.2 p. 162: no bus-skew
                                  violation may remain)
-    CDCM-SKEW-MISSING  advisory  a hand-built multi-bit crossing (cdc_structure class gray / handshake / fifo, not an XPM macro) whose
+    CDCM-SKEW-MISSING  advisory  a hand-built multi-bit crossing (cdc_structure class gray / handshake, not an XPM macro; a FIFO memory read
+                                 needs only its latency bound) whose
                                  capture registers no set_bus_skew constraint names (survey rank 1; UG903 v2025.2 p. 142-144)
-    CDCM-DPO-LOOSE     advisory  a max_dpo value above the crossing's latency bound: the source period, or N x the destination
-                                 period for a crossing the architecture declares as a handshake / CE capture with N sync stages
-                                 (survey rank 2; AMD's XPM templates, Vivado 2026.1)
-    CDCM-MTBF-MISSING  advisory  UltraScale+: no MTBF report, or a synchroniser chain (cdc_structure class synchroniser) missing from it
+    CDCM-DPO-LOOSE     advisory  a max_dpo value above the crossing's latency bound (survey rank 2; AMD's XPM templates, Vivado
+                                 2026.1): a declared crossing's own bound (bounds()); otherwise by structural class: Gray bus and FIFO
+                                 the source period, handshake data path 4 x the destination period, single-bit synchroniser the larger
+                                 period
+    CDCM-MTBF-MISSING  advisory  UltraScale+: no MTBF report, or fewer chains in it than the netlist's synchroniser chain endpoints
+                                 (cdc_structure classes synchroniser and gray)
     CDCM-MTBF-LOW      advisory  UltraScale+: a chain or the overall MTBF below the target (default 1e9 years; architecture
                                  ``mtbf_target_years``) or UNDEFINED (UG835 v2025.2 p. 1529)
     CDCM-UNC-HIGH      advisory  TIMING-44/45: a user clock uncertainty that Vivado calls unreasonable (UG949 p. 283: never beyond
@@ -44,6 +47,55 @@ from typing import Any
 
 MTBF_TARGET_YEARS = 1e9
 
+# ---------------------------------------------------------------- the method: bounds from a crossing record
+
+#: crossing type -> (latency kind, skew kind); kinds: src = source period, dst = destination period, min = the smaller,
+#: dstN = sync_stages x destination period, None = no bound of that kind
+BOUNDS = {"level": ("dst", None), "pulse": ("dst", None), "gray": ("src", "min"), "handshake": ("dstN", "dstN"),
+          "ce": ("dstN", "dstN"), "fifo": ("src", None), "reset": (None, None), "static": (None, None)}
+
+
+def bounds(cr: dict[str, Any], src_period: float, dst_period: float, u_pair: float = 0.0, vendor: str = "amd") -> dict[str, Any]:
+    """The latency bound L and skew bound S (ns) for one crossing record (docs/cdc_margin_method.md 3.1, 3.3). ``u_pair`` is the
+    tool's computed clock uncertainty for the pair: taken off both bounds for Vivado (its bus skew excludes uncertainty), never
+    for Quartus (its max skew includes it)."""
+    t = cr.get("type")
+    if t not in BOUNDS:
+        raise ValueError(f"crossing type {t!r} is not one of {sorted(BOUNDS)}")
+    n = int(cr.get("sync_stages", 2))
+    m = u_pair if vendor == "amd" else 0.0
+
+    def val(kind: str | None) -> float | None:
+        if kind is None:
+            return None
+        v = {"src": src_period, "dst": dst_period, "min": min(src_period, dst_period), "dstN": n * dst_period}[kind]
+        return round(v - m, 3)
+    lk, sk = BOUNDS[t]
+    return {"L": val(lk), "S": val(sk), "margin": m}
+
+
+def constraint_lines(cr: dict[str, Any], src_period: float, dst_period: float, u_pair: float = 0.0, vendor: str = "amd") -> list[str]:
+    """XDC (vendor "amd") or SDC (vendor "altera", Quartus Prime Standard) lines for one crossing record with ``from`` and ``to``
+    object expressions (``[get_cells ...]`` / ``[get_keepers ...]``). Never a clock group, a false path over the pair or a clock
+    uncertainty."""
+    b = bounds(cr, src_period, dst_period, u_pair, vendor)
+    f, t = cr["from"], cr["to_obj"] if "to_obj" in cr else cr["to"]
+    out: list[str] = []
+    if cr.get("type") == "static":
+        return [f"# {cr.get('name', t)}: quasi-static, waived ({cr.get('reason', 'reason required')})"]
+    if cr.get("type") == "reset":
+        return [f"# {cr.get('name', t)}: reset release: assertion is asynchronous; the release is timed by recovery/removal"]
+    if b["L"] is not None:
+        if vendor == "amd":
+            out.append(f"set_max_delay -datapath_only -from {f} -to {t} {b['L']:.3f}")
+        else:
+            out += [f"set_max_delay -from {f} -to {t} {b['L']:.3f}", f"set_min_delay -from {f} -to {t} {-b['L']:.3f}",
+                    f"set_net_delay -max -from {f} -to {t} {b['L']:.3f}"]
+    if b["S"] is not None:
+        out.append(f"{'set_bus_skew' if vendor == 'amd' else 'set_max_skew'} -from {f} -to {t} {b['S']:.3f}")
+    return out
+
+
 # ---------------------------------------------------------------- Vivado parsers
 
 
@@ -55,13 +107,28 @@ def parse_bus_skew(text: str) -> list[dict[str, Any]]:
         return out
     # the section titles also appear in the table of contents: take the text after the LAST occurrence
     summ = text.rsplit("Bus Skew Report Summary", 1)[1].split("Bus Skew Report Per Constraint", 1)[0]
-    row = re.compile(r"^(\d+)\s+(\d+)\s+(.+?)\s+(Slow|Fast)\s+(-?[\d.]+)\s+(-?[\d.]+)\s+(-?[\d.]+)\s*$")
+    # a row may wrap: long -from/-to object lists put the corner and numbers on a later line
+    start = re.compile(r"^(\d+)\s+(\d+)\s+(.*)$")
+    tail = re.compile(r"(?:^|\s)(Slow|Fast)\s+(-?[\d.]+)\s+(-?[\d.]+)\s+(-?[\d.]+)\s*$")
+    cur: dict[str, Any] | None = None
     for line in summ.splitlines():
-        m = row.match(line.strip())
-        if m:
-            out.append({"id": int(m.group(1)), "position": int(m.group(2)), "from_to": m.group(3), "corner": m.group(4),
-                        "requirement": float(m.group(5)), "actual": float(m.group(6)), "slack": float(m.group(7)),
-                        "endpoints": [], "uncertainty": None, "command": ""})
+        t = line.strip()
+        m = start.match(t)
+        if m and cur is None:
+            cur = {"id": int(m.group(1)), "position": int(m.group(2)), "from_to": m.group(3), "endpoints": [], "uncertainty": None,
+                   "command": ""}
+            rest = m.group(3)
+        elif cur is not None:
+            cur["from_to"] += " " + t
+            rest = t
+        else:
+            continue
+        k = tail.search(rest)
+        if k:
+            cur["from_to"] = cur["from_to"][: len(cur["from_to"]) - len(k.group(0))].strip()
+            cur.update(corner=k.group(1), requirement=float(k.group(2)), actual=float(k.group(3)), slack=float(k.group(4)))
+            out.append(cur)
+            cur = None
     by_id = {c["id"]: c for c in out}
     if "Bus Skew Report Per Constraint" in text:
         per = text.rsplit("Bus Skew Report Per Constraint", 1)[1]
@@ -229,7 +296,7 @@ def evaluate(build_dir: Path, crossings: list[dict[str, Any]] | None = None, mtb
     if struct is not None:
         buses: dict[str, dict[str, Any]] = {}
         for x in struct["crossings"]:
-            if x["class"] in ("gray", "handshake", "fifo") and not (x.get("why", "").startswith("xpm") or "xpm_" in x.get("why", "")):
+            if x["class"] in ("gray", "handshake") and not (x.get("why", "").startswith("xpm") or "xpm_" in x.get("why", "")):
                 b = _base(x["cell"])
                 e = buses.setdefault(b, {"cell": b, "src_clock": x["src_clock"], "dst_clock": x["dst_clock"], "n": 0})
                 e["n"] += 1
@@ -246,18 +313,25 @@ def evaluate(build_dir: Path, crossings: list[dict[str, Any]] | None = None, mtb
     if ex_file.exists() and struct is not None:
         pairs = {}
         for x in struct["crossings"]:
-            pairs.setdefault(_base(x["cell"]).split("/")[-1], (x["src_clock"], x["dst_clock"], x["cell"]))
+            pairs.setdefault(_base(x["cell"]).split("/")[-1], (x["src_clock"], x["dst_clock"], x["cell"], x["class"]))
         for r in parse_exceptions_dpo(ex_file.read_text(errors="replace")):
             hit = next(((k, v) for k, v in pairs.items() if k and k in r["text"]), None)
             if hit is None:
                 continue
-            src, dst, cell = hit[1]
+            src, dst, cell, cls = hit[1]
             ps, pd = clocks.get(src), clocks.get(dst)
             if ps is None or pd is None:
                 continue
             dc = declared(cell)
-            if dc and dc.get("type") in ("handshake", "ce"):
-                bound, why = int(dc.get("sync_stages", 2)) * pd, f"{dc.get('sync_stages', 2)} x destination period"
+            if dc and dc.get("type") in BOUNDS:
+                b = bounds(dc, ps, pd)
+                if b["L"] is None:
+                    continue
+                bound, why = b["L"], f"the declared {dc['type']} bound"
+            elif cls == "handshake":           # CE-captured data path: undeclared, allow XPM's default 4 request stages
+                bound, why = 4 * pd, "4 x destination period (handshake data path, sync_stages not declared)"
+            elif cls == "synchroniser":        # a single-bit synchroniser needs no bound for correctness (AMD's XPM sets none)
+                bound, why = max(ps, pd), "the larger period (single-bit synchroniser)"
             else:
                 bound, why = ps, "source period"
             if r["value"] > bound + 1e-6:
@@ -272,14 +346,16 @@ def evaluate(build_dir: Path, crossings: list[dict[str, Any]] | None = None, mtb
             findings.append({"code": "CDCM-MTBF-MISSING", "level": "advisory", "text": "UltraScale+ build without mtbf_route.rpt"})
         else:
             mtbf = parse_mtbf(mf.read_text(errors="replace"))
-            nets = {c["net"] for c in mtbf["chains"]}
             if struct is not None:
-                for x in struct["crossings"]:
-                    if x["class"] == "synchroniser":
-                        src = _base(x["src"]).split("/")[-1]
-                        if not any(src.replace("_reg", "") == _base(n).split("/")[-1] for n in nets):
-                            findings.append({"code": "CDCM-MTBF-MISSING", "level": "advisory", "cell": x["cell"],
-                                             "text": "synchroniser chain not in report_synchronizer_mtbf (ASYNC_REG on every stage?)"})
+                # the report names each chain by the net it samples (often a wire alias, measured: wsend_a[7] for wq1_b_reg[7]), not by a
+                # register, so chains are compared by count: every ASYNC_REG chain endpoint the structural check found (classes synchroniser
+                # and gray, hand-built or XPM single; reset bridges are on CLR pins and are not in the report) must be counted in it
+                want = sum(1 for x in struct["crossings"] if x["class"] in ("synchroniser", "gray") and x["pin"] == "D")
+                have = len(mtbf["chains"])
+                if have < want:
+                    findings.append({"code": "CDCM-MTBF-MISSING", "level": "advisory", "chains_reported": have, "chains_found": want,
+                                     "text": f"report_synchronizer_mtbf lists {have} chains, the netlist has {want} synchroniser chain endpoints "
+                                             "(ASYNC_REG on every stage?)"})
             low = [c for c in mtbf["chains"] if c["mtbf_years"] is None or c["mtbf_years"] < target]
             for c in low:
                 findings.append({"code": "CDCM-MTBF-LOW", "level": "advisory", "net": c["net"], "mtbf": c["mtbf_text"],
