@@ -43,5 +43,9 @@ module mac64_tx_ifg_props (
     R_N4:       cover property (@(posedge clk) at_last && n == 4);
     R_N5:       cover property (@(posedge clk) at_last && n == 5);
     R_N8:       cover property (@(posedge clk) at_last && n == 8);
+    // brief 202 (143c rigour): the antecedent of each assertion of the proof task, so that a proof is not vacuous: the situation in which each could be broken
+    P_RANGE__ante: cover property (@(posedge clk) at_last);
+    P_ARM_A__ante: cover property (@(posedge clk) spill);
+    P_ARM_B__ante: cover property (@(posedge clk) fits);
 `endif
 endmodule

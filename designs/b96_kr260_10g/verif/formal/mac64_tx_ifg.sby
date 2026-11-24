@@ -2,6 +2,7 @@
 #   unreach_cover : cover of the two conditions; sby must report both as unreached (a reachable one would print a trace)
 #   unreach_prove : the same two conditions as assertions, proved by k-induction (and n in 1..8)
 #   reach_cover   : control; the neighbouring arms and each n are reachable, so the unreached ones are not unreached for a wrong reason
+#                   it also covers the situation guarding each assertion of unreach_prove (P_*__ante), so that the proof is not vacuous (mac64_tx_ifg.rigour.yaml)
 # Run: sby -f mac64_tx_ifg.sby <task>      (OSS CAD Suite 2026-11-12, the version the repo's CI pins; see run_ifg_formal.sh)
 [tasks]
 unreach_cover cover unreachc

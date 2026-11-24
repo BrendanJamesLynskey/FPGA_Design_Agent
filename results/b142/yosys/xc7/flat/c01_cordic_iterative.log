@@ -1,0 +1,2113 @@
+
+ /----------------------------------------------------------------------------\
+ |  yosys -- Yosys Open SYnthesis Suite                                       |
+ |  Copyright (C) 2012 - 2026  Claire Xenia Wolf <claire@yosyshq.com>         |
+ |  Distributed under an ISC-like license, type "license" to see terms        |
+ \----------------------------------------------------------------------------/
+ Yosys 0.70+385 (git sha1 098e46a36, Release, Clang /usr/bin/clang++ 21.1.8)
+
+-- Running command `plugin -i slang; read_slang --top cordic_iterative_w14_n12_ap0_g0_trunc  /home/brendan/Claude_sandbox/_worktrees/142-yosys/results/b142/rtl/real/cordic/cordic_iterative_w14_n12_ap0_g0_trunc.sv; synth_xilinx -family xc7 -top cordic_iterative_w14_n12_ap0_g0_trunc -noiopad -noclkbuf -flatten; tee -q -o /home/brendan/Claude_sandbox/_worktrees/142-yosys/results/b142/yosys/xc7/flat/c01_cordic_iterative.stat.json stat -json -tech xilinx' --
+
+1. Executing SLANG frontend.
+Top level design units:
+    cordic_iterative_w14_n12_ap0_g0_trunc
+
+
+Build succeeded: 0 errors, 0 warnings
+
+1.1. Executing PROC_CLEAN pass (remove empty switches from decision trees).
+Found and cleaned up 1 empty switch in `\cordic_iterative_w14_n12_ap0_g0_trunc.$27'.
+Found and cleaned up 1 empty switch in `\cordic_iterative_w14_n12_ap0_g0_trunc.$4'.
+Cleaned up 2 empty switches.
+
+1.2. Executing PROC_RMDEAD pass (remove dead branches from decision trees).
+Marked 8 switch rules as full_case in process $27 in module cordic_iterative_w14_n12_ap0_g0_trunc.
+Marked 1 switch rules as full_case in process $4 in module cordic_iterative_w14_n12_ap0_g0_trunc.
+Removed a total of 0 dead cases.
+
+1.3. Executing PROC_PRUNE pass (remove redundant assignments in processes).
+Removed 4 redundant assignments.
+Promoted 0 assignments to connections.
+
+1.4. Executing PROC_INIT pass (extract init attributes).
+
+1.5. Executing PROC_ROM pass (convert switches to ROMs).
+Converted 1 switch.
+<suppressed ~11 debug messages>
+
+1.6. Executing PROC_MUX pass (convert decision trees to multiplexers).
+Creating decoders for process `\cordic_iterative_w14_n12_ap0_g0_trunc.$27'.
+     1/30: $base$47
+     2/30: $state$46
+     3/30: $z$43
+     4/30: $x$42
+     5/30: $z$38
+     6/30: $x$37
+     7/30: $state$51
+     8/30: $z$33
+     9/30: $y$32
+    10/30: $x$31
+    11/30: $base$30
+    12/30: $quadrant$29
+    13/30: $state$28
+    14/30: $z$56
+    15/30: $y$55
+    16/30: $x$54
+    17/30: $base$53
+    18/30: $quadrant$52
+    19/30: $sin_out$50
+    20/30: $cos_out$49
+    21/30: $valid_out$48
+    22/30: $state$60
+    23/30: $valid_out$57
+    24/30: $z$65
+    25/30: $y$64
+    26/30: $x$63
+    27/30: $base$62
+    28/30: $quadrant$61
+    29/30: $sin_out$59
+    30/30: $cos_out$58
+Creating decoders for process `\cordic_iterative_w14_n12_ap0_g0_trunc.$4'.
+     1/1: $atan0$5
+
+1.7. Executing PROC_CLEAN pass (remove empty switches from decision trees).
+Found and cleaned up 11 empty switches in `\cordic_iterative_w14_n12_ap0_g0_trunc.$27'.
+Removing empty process `cordic_iterative_w14_n12_ap0_g0_trunc.$27'.
+Found and cleaned up 1 empty switch in `\cordic_iterative_w14_n12_ap0_g0_trunc.$4'.
+Removing empty process `cordic_iterative_w14_n12_ap0_g0_trunc.$4'.
+Cleaned up 12 empty switches.
+
+1.8. Executing OPT_EXPR pass (perform const folding).
+Optimizing module cordic_iterative_w14_n12_ap0_g0_trunc.
+<suppressed ~16 debug messages>
+
+2. Executing SYNTH_XILINX pass.
+
+2.1. Executing Verilog-2005 frontend: /home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/xilinx/cells_sim.v
+Parsing Verilog input from `/home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/xilinx/cells_sim.v' to AST representation.
+Generating RTLIL representation for module `\VCC'.
+Generating RTLIL representation for module `\GND'.
+Generating RTLIL representation for module `\IBUF'.
+Generating RTLIL representation for module `\IBUFG'.
+Generating RTLIL representation for module `\OBUF'.
+Generating RTLIL representation for module `\IOBUF'.
+Generating RTLIL representation for module `\OBUFT'.
+Generating RTLIL representation for module `\BUFG'.
+Generating RTLIL representation for module `\BUFGCTRL'.
+Generating RTLIL representation for module `\BUFHCE'.
+Generating RTLIL representation for module `\INV'.
+Generating RTLIL representation for module `\LUT1'.
+Generating RTLIL representation for module `\LUT2'.
+Generating RTLIL representation for module `\LUT3'.
+Generating RTLIL representation for module `\LUT4'.
+Generating RTLIL representation for module `\LUT5'.
+Generating RTLIL representation for module `\LUT6'.
+Generating RTLIL representation for module `\LUT6_2'.
+Generating RTLIL representation for module `\$__ABC9_LUT7'.
+Generating RTLIL representation for module `\$__ABC9_LUT8'.
+Generating RTLIL representation for module `\MUXCY'.
+Generating RTLIL representation for module `\MUXF5'.
+Generating RTLIL representation for module `\MUXF6'.
+Generating RTLIL representation for module `\MUXF7'.
+Generating RTLIL representation for module `\MUXF8'.
+Generating RTLIL representation for module `\MUXF9'.
+Generating RTLIL representation for module `\XORCY'.
+Generating RTLIL representation for module `\CARRY4'.
+Generating RTLIL representation for module `\CARRY8'.
+Generating RTLIL representation for module `\ORCY'.
+Generating RTLIL representation for module `\MULT_AND'.
+Generating RTLIL representation for module `\FDRE'.
+Generating RTLIL representation for module `\FDRE_1'.
+Generating RTLIL representation for module `\FDSE'.
+Generating RTLIL representation for module `\FDSE_1'.
+Generating RTLIL representation for module `\FDRSE'.
+Generating RTLIL representation for module `\FDRSE_1'.
+Generating RTLIL representation for module `\FDCE'.
+Generating RTLIL representation for module `\FDCE_1'.
+Generating RTLIL representation for module `\FDPE'.
+Generating RTLIL representation for module `\FDPE_1'.
+Generating RTLIL representation for module `\FDCPE'.
+Generating RTLIL representation for module `\FDCPE_1'.
+Generating RTLIL representation for module `\LDCE'.
+Generating RTLIL representation for module `\LDPE'.
+Generating RTLIL representation for module `\LDCPE'.
+Generating RTLIL representation for module `\AND2B1L'.
+Generating RTLIL representation for module `\OR2L'.
+Generating RTLIL representation for module `\RAM16X1S'.
+Generating RTLIL representation for module `\RAM16X1S_1'.
+Generating RTLIL representation for module `\RAM32X1S'.
+Generating RTLIL representation for module `\RAM32X1S_1'.
+Generating RTLIL representation for module `\RAM64X1S'.
+Generating RTLIL representation for module `\RAM64X1S_1'.
+Generating RTLIL representation for module `\RAM128X1S'.
+Generating RTLIL representation for module `\RAM128X1S_1'.
+Generating RTLIL representation for module `\RAM256X1S'.
+Generating RTLIL representation for module `\RAM512X1S'.
+Generating RTLIL representation for module `\RAM16X2S'.
+Generating RTLIL representation for module `\RAM32X2S'.
+Generating RTLIL representation for module `\RAM64X2S'.
+Generating RTLIL representation for module `\RAM16X4S'.
+Generating RTLIL representation for module `\RAM32X4S'.
+Generating RTLIL representation for module `\RAM16X8S'.
+Generating RTLIL representation for module `\RAM32X8S'.
+Generating RTLIL representation for module `\RAM16X1D'.
+Generating RTLIL representation for module `\RAM16X1D_1'.
+Generating RTLIL representation for module `\RAM32X1D'.
+Generating RTLIL representation for module `\RAM32X1D_1'.
+Generating RTLIL representation for module `\RAM64X1D'.
+Generating RTLIL representation for module `\RAM64X1D_1'.
+Generating RTLIL representation for module `\RAM128X1D'.
+Generating RTLIL representation for module `\RAM256X1D'.
+Generating RTLIL representation for module `\RAM32M'.
+Generating RTLIL representation for module `\RAM32M16'.
+Generating RTLIL representation for module `\RAM64M'.
+Generating RTLIL representation for module `\RAM64M8'.
+Generating RTLIL representation for module `\RAM32X16DR8'.
+Generating RTLIL representation for module `\RAM64X8SW'.
+Generating RTLIL representation for module `\ROM16X1'.
+Generating RTLIL representation for module `\ROM32X1'.
+Generating RTLIL representation for module `\ROM64X1'.
+Generating RTLIL representation for module `\ROM128X1'.
+Generating RTLIL representation for module `\ROM256X1'.
+Generating RTLIL representation for module `\SRL16'.
+Generating RTLIL representation for module `\SRL16E'.
+Generating RTLIL representation for module `\SRLC16'.
+Generating RTLIL representation for module `\SRLC16E'.
+Generating RTLIL representation for module `\SRLC32E'.
+Generating RTLIL representation for module `\CFGLUT5'.
+Generating RTLIL representation for module `\MULT18X18'.
+Generating RTLIL representation for module `\MULT18X18S'.
+Generating RTLIL representation for module `\MULT18X18SIO'.
+Generating RTLIL representation for module `\DSP48A'.
+Generating RTLIL representation for module `\DSP48A1'.
+Generating RTLIL representation for module `\DSP48'.
+Generating RTLIL representation for module `\DSP48E1'.
+Generating RTLIL representation for module `\RAMB18E1'.
+Generating RTLIL representation for module `\RAMB36E1'.
+Successfully finished Verilog frontend.
+
+2.2. Executing Verilog-2005 frontend: /home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/xilinx/cells_xtra.v
+Parsing Verilog input from `/home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/xilinx/cells_xtra.v' to AST representation.
+Generating RTLIL representation for module `\RAMB4_S1'.
+Generating RTLIL representation for module `\RAMB4_S2'.
+Generating RTLIL representation for module `\RAMB4_S4'.
+Generating RTLIL representation for module `\RAMB4_S8'.
+Generating RTLIL representation for module `\RAMB4_S16'.
+Generating RTLIL representation for module `\RAMB4_S1_S1'.
+Generating RTLIL representation for module `\RAMB4_S1_S2'.
+Generating RTLIL representation for module `\RAMB4_S1_S4'.
+Generating RTLIL representation for module `\RAMB4_S1_S8'.
+Generating RTLIL representation for module `\RAMB4_S1_S16'.
+Generating RTLIL representation for module `\RAMB4_S2_S2'.
+Generating RTLIL representation for module `\RAMB4_S2_S4'.
+Generating RTLIL representation for module `\RAMB4_S2_S8'.
+Generating RTLIL representation for module `\RAMB4_S2_S16'.
+Generating RTLIL representation for module `\RAMB4_S4_S4'.
+Generating RTLIL representation for module `\RAMB4_S4_S8'.
+Generating RTLIL representation for module `\RAMB4_S4_S16'.
+Generating RTLIL representation for module `\RAMB4_S8_S8'.
+Generating RTLIL representation for module `\RAMB4_S8_S16'.
+Generating RTLIL representation for module `\RAMB4_S16_S16'.
+Generating RTLIL representation for module `\RAMB16_S1'.
+Generating RTLIL representation for module `\RAMB16_S2'.
+Generating RTLIL representation for module `\RAMB16_S4'.
+Generating RTLIL representation for module `\RAMB16_S9'.
+Generating RTLIL representation for module `\RAMB16_S18'.
+Generating RTLIL representation for module `\RAMB16_S36'.
+Generating RTLIL representation for module `\RAMB16_S1_S1'.
+Generating RTLIL representation for module `\RAMB16_S1_S2'.
+Generating RTLIL representation for module `\RAMB16_S1_S4'.
+Generating RTLIL representation for module `\RAMB16_S1_S9'.
+Generating RTLIL representation for module `\RAMB16_S1_S18'.
+Generating RTLIL representation for module `\RAMB16_S1_S36'.
+Generating RTLIL representation for module `\RAMB16_S2_S2'.
+Generating RTLIL representation for module `\RAMB16_S2_S4'.
+Generating RTLIL representation for module `\RAMB16_S2_S9'.
+Generating RTLIL representation for module `\RAMB16_S2_S18'.
+Generating RTLIL representation for module `\RAMB16_S2_S36'.
+Generating RTLIL representation for module `\RAMB16_S4_S4'.
+Generating RTLIL representation for module `\RAMB16_S4_S9'.
+Generating RTLIL representation for module `\RAMB16_S4_S18'.
+Generating RTLIL representation for module `\RAMB16_S4_S36'.
+Generating RTLIL representation for module `\RAMB16_S9_S9'.
+Generating RTLIL representation for module `\RAMB16_S9_S18'.
+Generating RTLIL representation for module `\RAMB16_S9_S36'.
+Generating RTLIL representation for module `\RAMB16_S18_S18'.
+Generating RTLIL representation for module `\RAMB16_S18_S36'.
+Generating RTLIL representation for module `\RAMB16_S36_S36'.
+Generating RTLIL representation for module `\RAMB16BWE_S18'.
+Generating RTLIL representation for module `\RAMB16BWE_S36'.
+Generating RTLIL representation for module `\RAMB16BWE_S18_S9'.
+Generating RTLIL representation for module `\RAMB16BWE_S18_S18'.
+Generating RTLIL representation for module `\RAMB16BWE_S36_S9'.
+Generating RTLIL representation for module `\RAMB16BWE_S36_S18'.
+Generating RTLIL representation for module `\RAMB16BWE_S36_S36'.
+Generating RTLIL representation for module `\RAMB16BWER'.
+Generating RTLIL representation for module `\RAMB8BWER'.
+Generating RTLIL representation for module `\FIFO16'.
+Generating RTLIL representation for module `\RAMB16'.
+Generating RTLIL representation for module `\RAMB32_S64_ECC'.
+Generating RTLIL representation for module `\FIFO18'.
+Generating RTLIL representation for module `\FIFO18_36'.
+Generating RTLIL representation for module `\FIFO36'.
+Generating RTLIL representation for module `\FIFO36_72'.
+Generating RTLIL representation for module `\RAMB18'.
+Generating RTLIL representation for module `\RAMB36'.
+Generating RTLIL representation for module `\RAMB18SDP'.
+Generating RTLIL representation for module `\RAMB36SDP'.
+Generating RTLIL representation for module `\FIFO18E1'.
+Generating RTLIL representation for module `\FIFO36E1'.
+Generating RTLIL representation for module `\FIFO18E2'.
+Generating RTLIL representation for module `\FIFO36E2'.
+Generating RTLIL representation for module `\RAMB18E2'.
+Generating RTLIL representation for module `\RAMB36E2'.
+Generating RTLIL representation for module `\URAM288'.
+Generating RTLIL representation for module `\URAM288_BASE'.
+Generating RTLIL representation for module `\DSP48E'.
+Generating RTLIL representation for module `\DSP48E2'.
+Generating RTLIL representation for module `\FDDRCPE'.
+Generating RTLIL representation for module `\FDDRRSE'.
+Generating RTLIL representation for module `\IFDDRCPE'.
+Generating RTLIL representation for module `\IFDDRRSE'.
+Generating RTLIL representation for module `\OFDDRCPE'.
+Generating RTLIL representation for module `\OFDDRRSE'.
+Generating RTLIL representation for module `\OFDDRTCPE'.
+Generating RTLIL representation for module `\OFDDRTRSE'.
+Generating RTLIL representation for module `\IDDR2'.
+Generating RTLIL representation for module `\ODDR2'.
+Generating RTLIL representation for module `\IDDR'.
+Generating RTLIL representation for module `\IDDR_2CLK'.
+Generating RTLIL representation for module `\ODDR'.
+Generating RTLIL representation for module `\IDELAYCTRL'.
+Generating RTLIL representation for module `\IDELAY'.
+Generating RTLIL representation for module `\ISERDES'.
+Generating RTLIL representation for module `\OSERDES'.
+Generating RTLIL representation for module `\IODELAY'.
+Generating RTLIL representation for module `\ISERDES_NODELAY'.
+Generating RTLIL representation for module `\IODELAYE1'.
+Generating RTLIL representation for module `\ISERDESE1'.
+Generating RTLIL representation for module `\OSERDESE1'.
+Generating RTLIL representation for module `\IDELAYE2'.
+Generating RTLIL representation for module `\ODELAYE2'.
+Generating RTLIL representation for module `\ISERDESE2'.
+Generating RTLIL representation for module `\OSERDESE2'.
+Generating RTLIL representation for module `\PHASER_IN'.
+Generating RTLIL representation for module `\PHASER_IN_PHY'.
+Generating RTLIL representation for module `\PHASER_OUT'.
+Generating RTLIL representation for module `\PHASER_OUT_PHY'.
+Generating RTLIL representation for module `\PHASER_REF'.
+Generating RTLIL representation for module `\PHY_CONTROL'.
+Generating RTLIL representation for module `\IDDRE1'.
+Generating RTLIL representation for module `\ODDRE1'.
+Generating RTLIL representation for module `\IDELAYE3'.
+Generating RTLIL representation for module `\ODELAYE3'.
+Generating RTLIL representation for module `\ISERDESE3'.
+Generating RTLIL representation for module `\OSERDESE3'.
+Generating RTLIL representation for module `\BITSLICE_CONTROL'.
+Generating RTLIL representation for module `\RIU_OR'.
+Generating RTLIL representation for module `\RX_BITSLICE'.
+Generating RTLIL representation for module `\RXTX_BITSLICE'.
+Generating RTLIL representation for module `\TX_BITSLICE'.
+Generating RTLIL representation for module `\TX_BITSLICE_TRI'.
+Generating RTLIL representation for module `\IODELAY2'.
+Generating RTLIL representation for module `\IODRP2'.
+Generating RTLIL representation for module `\IODRP2_MCB'.
+Generating RTLIL representation for module `\ISERDES2'.
+Generating RTLIL representation for module `\OSERDES2'.
+Generating RTLIL representation for module `\IBUF_DLY_ADJ'.
+Generating RTLIL representation for module `\IBUF_IBUFDISABLE'.
+Generating RTLIL representation for module `\IBUF_INTERMDISABLE'.
+Generating RTLIL representation for module `\IBUF_ANALOG'.
+Generating RTLIL representation for module `\IBUFE3'.
+Generating RTLIL representation for module `\IBUFDS'.
+Generating RTLIL representation for module `\IBUFDS_DLY_ADJ'.
+Generating RTLIL representation for module `\IBUFDS_IBUFDISABLE'.
+Generating RTLIL representation for module `\IBUFDS_INTERMDISABLE'.
+Generating RTLIL representation for module `\IBUFDS_DIFF_OUT'.
+Generating RTLIL representation for module `\IBUFDS_DIFF_OUT_IBUFDISABLE'.
+Generating RTLIL representation for module `\IBUFDS_DIFF_OUT_INTERMDISABLE'.
+Generating RTLIL representation for module `\IBUFDSE3'.
+Generating RTLIL representation for module `\IBUFDS_DPHY'.
+Generating RTLIL representation for module `\IBUFGDS'.
+Generating RTLIL representation for module `\IBUFGDS_DIFF_OUT'.
+Generating RTLIL representation for module `\IOBUF_DCIEN'.
+Generating RTLIL representation for module `\IOBUF_INTERMDISABLE'.
+Generating RTLIL representation for module `\IOBUFE3'.
+Generating RTLIL representation for module `\IOBUFDS'.
+Generating RTLIL representation for module `\IOBUFDS_DCIEN'.
+Generating RTLIL representation for module `\IOBUFDS_INTERMDISABLE'.
+Generating RTLIL representation for module `\IOBUFDS_DIFF_OUT'.
+Generating RTLIL representation for module `\IOBUFDS_DIFF_OUT_DCIEN'.
+Generating RTLIL representation for module `\IOBUFDS_DIFF_OUT_INTERMDISABLE'.
+Generating RTLIL representation for module `\IOBUFDSE3'.
+Generating RTLIL representation for module `\OBUFDS'.
+Generating RTLIL representation for module `\OBUFDS_DPHY'.
+Generating RTLIL representation for module `\OBUFTDS'.
+Generating RTLIL representation for module `\KEEPER'.
+Generating RTLIL representation for module `\PULLDOWN'.
+Generating RTLIL representation for module `\PULLUP'.
+Generating RTLIL representation for module `\DCIRESET'.
+Generating RTLIL representation for module `\HPIO_VREF'.
+Generating RTLIL representation for module `\BUFGCE'.
+Generating RTLIL representation for module `\BUFGCE_1'.
+Generating RTLIL representation for module `\BUFGMUX'.
+Generating RTLIL representation for module `\BUFGMUX_1'.
+Generating RTLIL representation for module `\BUFGMUX_CTRL'.
+Generating RTLIL representation for module `\BUFGMUX_VIRTEX4'.
+Generating RTLIL representation for module `\BUFG_GT'.
+Generating RTLIL representation for module `\BUFG_GT_SYNC'.
+Generating RTLIL representation for module `\BUFG_PS'.
+Generating RTLIL representation for module `\BUFGCE_DIV'.
+Generating RTLIL representation for module `\BUFH'.
+Generating RTLIL representation for module `\BUFIO2'.
+Generating RTLIL representation for module `\BUFIO2_2CLK'.
+Generating RTLIL representation for module `\BUFIO2FB'.
+Generating RTLIL representation for module `\BUFPLL'.
+Generating RTLIL representation for module `\BUFPLL_MCB'.
+Generating RTLIL representation for module `\BUFIO'.
+Generating RTLIL representation for module `\BUFIODQS'.
+Generating RTLIL representation for module `\BUFR'.
+Generating RTLIL representation for module `\BUFMR'.
+Generating RTLIL representation for module `\BUFMRCE'.
+Generating RTLIL representation for module `\DCM'.
+Generating RTLIL representation for module `\DCM_SP'.
+Generating RTLIL representation for module `\DCM_CLKGEN'.
+Generating RTLIL representation for module `\DCM_ADV'.
+Generating RTLIL representation for module `\DCM_BASE'.
+Generating RTLIL representation for module `\DCM_PS'.
+Generating RTLIL representation for module `\PMCD'.
+Generating RTLIL representation for module `\PLL_ADV'.
+Generating RTLIL representation for module `\PLL_BASE'.
+Generating RTLIL representation for module `\MMCM_ADV'.
+Generating RTLIL representation for module `\MMCM_BASE'.
+Generating RTLIL representation for module `\MMCME2_ADV'.
+Generating RTLIL representation for module `\MMCME2_BASE'.
+Generating RTLIL representation for module `\PLLE2_ADV'.
+Generating RTLIL representation for module `\PLLE2_BASE'.
+Generating RTLIL representation for module `\MMCME3_ADV'.
+Generating RTLIL representation for module `\MMCME3_BASE'.
+Generating RTLIL representation for module `\PLLE3_ADV'.
+Generating RTLIL representation for module `\PLLE3_BASE'.
+Generating RTLIL representation for module `\MMCME4_ADV'.
+Generating RTLIL representation for module `\MMCME4_BASE'.
+Generating RTLIL representation for module `\PLLE4_ADV'.
+Generating RTLIL representation for module `\PLLE4_BASE'.
+Generating RTLIL representation for module `\BUFT'.
+Generating RTLIL representation for module `\IN_FIFO'.
+Generating RTLIL representation for module `\OUT_FIFO'.
+Generating RTLIL representation for module `\HARD_SYNC'.
+Generating RTLIL representation for module `\STARTUP_SPARTAN3'.
+Generating RTLIL representation for module `\STARTUP_SPARTAN3E'.
+Generating RTLIL representation for module `\STARTUP_SPARTAN3A'.
+Generating RTLIL representation for module `\STARTUP_SPARTAN6'.
+Generating RTLIL representation for module `\STARTUP_VIRTEX4'.
+Generating RTLIL representation for module `\STARTUP_VIRTEX5'.
+Generating RTLIL representation for module `\STARTUP_VIRTEX6'.
+Generating RTLIL representation for module `\STARTUPE2'.
+Generating RTLIL representation for module `\STARTUPE3'.
+Generating RTLIL representation for module `\CAPTURE_SPARTAN3'.
+Generating RTLIL representation for module `\CAPTURE_SPARTAN3A'.
+Generating RTLIL representation for module `\CAPTURE_VIRTEX4'.
+Generating RTLIL representation for module `\CAPTURE_VIRTEX5'.
+Generating RTLIL representation for module `\CAPTURE_VIRTEX6'.
+Generating RTLIL representation for module `\CAPTUREE2'.
+Generating RTLIL representation for module `\ICAP_SPARTAN3A'.
+Generating RTLIL representation for module `\ICAP_SPARTAN6'.
+Generating RTLIL representation for module `\ICAP_VIRTEX4'.
+Generating RTLIL representation for module `\ICAP_VIRTEX5'.
+Generating RTLIL representation for module `\ICAP_VIRTEX6'.
+Generating RTLIL representation for module `\ICAPE2'.
+Generating RTLIL representation for module `\ICAPE3'.
+Generating RTLIL representation for module `\BSCAN_SPARTAN3'.
+Generating RTLIL representation for module `\BSCAN_SPARTAN3A'.
+Generating RTLIL representation for module `\BSCAN_SPARTAN6'.
+Generating RTLIL representation for module `\BSCAN_VIRTEX4'.
+Generating RTLIL representation for module `\BSCAN_VIRTEX5'.
+Generating RTLIL representation for module `\BSCAN_VIRTEX6'.
+Generating RTLIL representation for module `\BSCANE2'.
+Generating RTLIL representation for module `\DNA_PORT'.
+Generating RTLIL representation for module `\DNA_PORTE2'.
+Generating RTLIL representation for module `\FRAME_ECC_VIRTEX4'.
+Generating RTLIL representation for module `\FRAME_ECC_VIRTEX5'.
+Generating RTLIL representation for module `\FRAME_ECC_VIRTEX6'.
+Generating RTLIL representation for module `\FRAME_ECCE2'.
+Generating RTLIL representation for module `\FRAME_ECCE3'.
+Generating RTLIL representation for module `\FRAME_ECCE4'.
+Generating RTLIL representation for module `\USR_ACCESS_VIRTEX4'.
+Generating RTLIL representation for module `\USR_ACCESS_VIRTEX5'.
+Generating RTLIL representation for module `\USR_ACCESS_VIRTEX6'.
+Generating RTLIL representation for module `\USR_ACCESSE2'.
+Generating RTLIL representation for module `\POST_CRC_INTERNAL'.
+Generating RTLIL representation for module `\SUSPEND_SYNC'.
+Generating RTLIL representation for module `\KEY_CLEAR'.
+Generating RTLIL representation for module `\MASTER_JTAG'.
+Generating RTLIL representation for module `\SPI_ACCESS'.
+Generating RTLIL representation for module `\EFUSE_USR'.
+Generating RTLIL representation for module `\SYSMON'.
+Generating RTLIL representation for module `\XADC'.
+Generating RTLIL representation for module `\SYSMONE1'.
+Generating RTLIL representation for module `\SYSMONE4'.
+Generating RTLIL representation for module `\GTPA1_DUAL'.
+Generating RTLIL representation for module `\GT11_CUSTOM'.
+Generating RTLIL representation for module `\GT11_DUAL'.
+Generating RTLIL representation for module `\GT11CLK'.
+Generating RTLIL representation for module `\GT11CLK_MGT'.
+Generating RTLIL representation for module `\GTP_DUAL'.
+Generating RTLIL representation for module `\GTX_DUAL'.
+Generating RTLIL representation for module `\CRC32'.
+Generating RTLIL representation for module `\CRC64'.
+Generating RTLIL representation for module `\GTHE1_QUAD'.
+Generating RTLIL representation for module `\GTXE1'.
+Generating RTLIL representation for module `\IBUFDS_GTXE1'.
+Generating RTLIL representation for module `\IBUFDS_GTHE1'.
+Generating RTLIL representation for module `\GTHE2_CHANNEL'.
+Generating RTLIL representation for module `\GTHE2_COMMON'.
+Generating RTLIL representation for module `\GTPE2_CHANNEL'.
+Generating RTLIL representation for module `\GTPE2_COMMON'.
+Generating RTLIL representation for module `\GTXE2_CHANNEL'.
+Generating RTLIL representation for module `\GTXE2_COMMON'.
+Generating RTLIL representation for module `\IBUFDS_GTE2'.
+Generating RTLIL representation for module `\GTHE3_CHANNEL'.
+Generating RTLIL representation for module `\GTHE3_COMMON'.
+Generating RTLIL representation for module `\GTYE3_CHANNEL'.
+Generating RTLIL representation for module `\GTYE3_COMMON'.
+Generating RTLIL representation for module `\IBUFDS_GTE3'.
+Generating RTLIL representation for module `\OBUFDS_GTE3'.
+Generating RTLIL representation for module `\OBUFDS_GTE3_ADV'.
+Generating RTLIL representation for module `\GTHE4_CHANNEL'.
+Generating RTLIL representation for module `\GTHE4_COMMON'.
+Generating RTLIL representation for module `\GTYE4_CHANNEL'.
+Generating RTLIL representation for module `\GTYE4_COMMON'.
+Generating RTLIL representation for module `\IBUFDS_GTE4'.
+Generating RTLIL representation for module `\OBUFDS_GTE4'.
+Generating RTLIL representation for module `\OBUFDS_GTE4_ADV'.
+Generating RTLIL representation for module `\GTM_DUAL'.
+Generating RTLIL representation for module `\IBUFDS_GTM'.
+Generating RTLIL representation for module `\OBUFDS_GTM'.
+Generating RTLIL representation for module `\OBUFDS_GTM_ADV'.
+Generating RTLIL representation for module `\HSDAC'.
+Generating RTLIL representation for module `\HSADC'.
+Generating RTLIL representation for module `\RFDAC'.
+Generating RTLIL representation for module `\RFADC'.
+Generating RTLIL representation for module `\PCIE_A1'.
+Generating RTLIL representation for module `\PCIE_EP'.
+Generating RTLIL representation for module `\PCIE_2_0'.
+Generating RTLIL representation for module `\PCIE_2_1'.
+Generating RTLIL representation for module `\PCIE_3_0'.
+Generating RTLIL representation for module `\PCIE_3_1'.
+Generating RTLIL representation for module `\PCIE40E4'.
+Generating RTLIL representation for module `\PCIE4CE4'.
+Generating RTLIL representation for module `\EMAC'.
+Generating RTLIL representation for module `\TEMAC'.
+Generating RTLIL representation for module `\TEMAC_SINGLE'.
+Generating RTLIL representation for module `\CMAC'.
+Generating RTLIL representation for module `\CMACE4'.
+Generating RTLIL representation for module `\MCB'.
+Generating RTLIL representation for module `\HBM_REF_CLK'.
+Generating RTLIL representation for module `\HBM_SNGLBLI_INTF_APB'.
+Generating RTLIL representation for module `\HBM_SNGLBLI_INTF_AXI'.
+Generating RTLIL representation for module `\HBM_ONE_STACK_INTF'.
+Generating RTLIL representation for module `\HBM_TWO_STACK_INTF'.
+Generating RTLIL representation for module `\PPC405_ADV'.
+Generating RTLIL representation for module `\PPC440'.
+Generating RTLIL representation for module `\PS7'.
+Generating RTLIL representation for module `\PS8'.
+Generating RTLIL representation for module `\ILKN'.
+Generating RTLIL representation for module `\ILKNE4'.
+Generating RTLIL representation for module `\VCU'.
+Generating RTLIL representation for module `\FE'.
+Successfully finished Verilog frontend.
+
+2.3. Executing HIERARCHY pass (managing design hierarchy).
+
+2.3.1. Analyzing design hierarchy..
+Top module:  \cordic_iterative_w14_n12_ap0_g0_trunc
+
+2.3.2. Analyzing design hierarchy..
+Top module:  \cordic_iterative_w14_n12_ap0_g0_trunc
+Removed 0 unused modules.
+
+2.4. Executing PROC pass (convert processes to netlists).
+
+2.4.1. Executing PROC_CLEAN pass (remove empty switches from decision trees).
+Cleaned up 0 empty switches.
+
+2.4.2. Executing PROC_RMDEAD pass (remove dead branches from decision trees).
+Removed a total of 0 dead cases.
+
+2.4.3. Executing PROC_PRUNE pass (remove redundant assignments in processes).
+Removed 0 redundant assignments.
+Promoted 0 assignments to connections.
+
+2.4.4. Executing PROC_INIT pass (extract init attributes).
+
+2.4.5. Executing PROC_ARST pass (detect async resets in processes).
+
+2.4.6. Executing PROC_ROM pass (convert switches to ROMs).
+Converted 0 switches.
+
+2.4.7. Executing PROC_MUX pass (convert decision trees to multiplexers).
+
+2.4.8. Executing PROC_DLATCH pass (convert process syncs to latches).
+
+2.4.9. Executing PROC_DFF pass (convert process syncs to FFs).
+
+2.4.10. Executing PROC_MEMWR pass (convert process memory writes to cells).
+
+2.4.11. Executing PROC_CLEAN pass (remove empty switches from decision trees).
+Cleaned up 0 empty switches.
+
+2.4.12. Executing OPT_EXPR pass (perform const folding).
+Optimizing module cordic_iterative_w14_n12_ap0_g0_trunc.
+
+2.5. Executing CHECK pass (checking for obvious problems).
+Checking module cordic_iterative_w14_n12_ap0_g0_trunc...
+Found and reported 0 problems.
+
+2.6. Executing FLATTEN pass (flatten design).
+
+2.7. Executing TRIBUF pass.
+
+2.8. Executing DEMINOUT pass (demote inout ports to input or output).
+
+2.9. Executing OPT_EXPR pass (perform const folding).
+Optimizing module cordic_iterative_w14_n12_ap0_g0_trunc.
+<suppressed ~1 debug messages>
+
+2.10. Executing CHECK pass (checking for obvious problems).
+Checking module cordic_iterative_w14_n12_ap0_g0_trunc...
+Found and reported 0 problems.
+
+2.11. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \cordic_iterative_w14_n12_ap0_g0_trunc..
+Removed 0 unused cells and 82 unused wires.
+<suppressed ~11 debug messages>
+
+2.12. Executing OPT pass (performing simple optimizations).
+
+2.12.1. Executing OPT_EXPR pass (perform const folding).
+Optimizing module cordic_iterative_w14_n12_ap0_g0_trunc.
+<suppressed ~2 debug messages>
+
+2.12.2. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\cordic_iterative_w14_n12_ap0_g0_trunc'.
+Computing hashes of 130 cells of `\cordic_iterative_w14_n12_ap0_g0_trunc'.
+Finding duplicate cells in `\cordic_iterative_w14_n12_ap0_g0_trunc'.
+Computing hashes of 96 cells of `\cordic_iterative_w14_n12_ap0_g0_trunc'.
+Finding duplicate cells in `\cordic_iterative_w14_n12_ap0_g0_trunc'.
+<suppressed ~102 debug messages>
+Removed a total of 34 cells.
+
+2.12.3. Executing OPT_MUXTREE pass (detect dead branches in mux trees).
+Running muxtree optimizer on module \cordic_iterative_w14_n12_ap0_g0_trunc..
+  Creating internal representation of mux trees.
+  Evaluating internal representation of mux trees.
+  Analyzing evaluation results.
+    dead port 2/2 on $mux $procmux$127.
+    dead port 1/2 on $mux $procmux$170.
+    dead port 1/2 on $mux $procmux$120.
+    dead port 2/2 on $mux $procmux$117.
+    dead port 1/2 on $mux $procmux$110.
+    dead port 2/2 on $mux $procmux$107.
+    dead port 1/2 on $mux $procmux$100.
+    dead port 2/2 on $mux $procmux$97.
+    dead port 1/2 on $mux $procmux$90.
+    dead port 2/2 on $mux $procmux$87.
+    dead port 1/2 on $mux $procmux$161.
+    dead port 1/2 on $mux $procmux$80.
+    dead port 2/2 on $mux $procmux$77.
+    dead port 1/2 on $mux $procmux$187.
+    dead port 1/2 on $mux $procmux$70.
+    dead port 1/2 on $mux $procmux$195.
+    dead port 1/2 on $mux $procmux$59.
+    dead port 2/2 on $mux $procmux$56.
+    dead port 1/2 on $mux $procmux$150.
+    dead port 1/2 on $mux $procmux$50.
+    dead port 2/2 on $mux $procmux$47.
+    dead port 1/2 on $mux $procmux$41.
+    dead port 2/2 on $mux $procmux$38.
+    dead port 1/2 on $mux $procmux$31.
+    dead port 2/2 on $mux $procmux$28.
+    dead port 1/2 on $mux $procmux$21.
+    dead port 2/2 on $mux $procmux$18.
+    dead port 1/2 on $mux $procmux$141.
+    dead port 1/2 on $mux $procmux$12.
+    dead port 2/2 on $mux $procmux$9.
+    dead port 1/2 on $mux $procmux$179.
+    dead port 1/2 on $mux $procmux$203.
+    dead port 1/2 on $mux $procmux$130.
+Removed 33 multiplexer ports.
+<suppressed ~72 debug messages>
+
+2.12.4. Executing OPT_REDUCE pass (consolidate $*mux and $reduce_* inputs).
+  Optimizing cells in module \cordic_iterative_w14_n12_ap0_g0_trunc.
+    New ctrl vector for $pmux cell $procmux$182: $auto$opt_reduce.cc:137:opt_pmux$1339
+    New ctrl vector for $pmux cell $procmux$198: $auto$opt_reduce.cc:137:opt_pmux$1341
+    New ctrl vector for $pmux cell $procmux$190: $auto$opt_reduce.cc:137:opt_pmux$1343
+  Optimizing cells in module \cordic_iterative_w14_n12_ap0_g0_trunc.
+Performed a total of 3 changes.
+
+2.12.5. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\cordic_iterative_w14_n12_ap0_g0_trunc'.
+Computing hashes of 66 cells of `\cordic_iterative_w14_n12_ap0_g0_trunc'.
+Finding duplicate cells in `\cordic_iterative_w14_n12_ap0_g0_trunc'.
+Computing hashes of 64 cells of `\cordic_iterative_w14_n12_ap0_g0_trunc'.
+Finding duplicate cells in `\cordic_iterative_w14_n12_ap0_g0_trunc'.
+<suppressed ~6 debug messages>
+Removed a total of 2 cells.
+
+2.12.6. Executing OPT_DFF pass (perform DFF optimizations).
+
+2.12.7. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \cordic_iterative_w14_n12_ap0_g0_trunc..
+Removed 0 unused cells and 71 unused wires.
+<suppressed ~1 debug messages>
+
+2.12.8. Executing OPT_EXPR pass (perform const folding).
+Optimizing module cordic_iterative_w14_n12_ap0_g0_trunc.
+
+2.12.9. Rerunning OPT passes. (Maybe there is more to do..)
+
+2.12.10. Executing OPT_MUXTREE pass (detect dead branches in mux trees).
+Running muxtree optimizer on module \cordic_iterative_w14_n12_ap0_g0_trunc..
+  Creating internal representation of mux trees.
+  Evaluating internal representation of mux trees.
+  Analyzing evaluation results.
+Removed 0 multiplexer ports.
+<suppressed ~39 debug messages>
+
+2.12.11. Executing OPT_REDUCE pass (consolidate $*mux and $reduce_* inputs).
+  Optimizing cells in module \cordic_iterative_w14_n12_ap0_g0_trunc.
+Performed a total of 0 changes.
+
+2.12.12. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\cordic_iterative_w14_n12_ap0_g0_trunc'.
+Computing hashes of 64 cells of `\cordic_iterative_w14_n12_ap0_g0_trunc'.
+Finding duplicate cells in `\cordic_iterative_w14_n12_ap0_g0_trunc'.
+Removed a total of 0 cells.
+
+2.12.13. Executing OPT_DFF pass (perform DFF optimizations).
+
+2.12.14. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \cordic_iterative_w14_n12_ap0_g0_trunc..
+
+2.12.15. Executing OPT_EXPR pass (perform const folding).
+Optimizing module cordic_iterative_w14_n12_ap0_g0_trunc.
+
+2.12.16. Finished fast OPT passes. (There is nothing left to do.)
+
+2.13. Executing FSM pass (extract and optimize FSM).
+
+2.13.1. Executing FSM_DETECT pass (finding FSMs in design).
+Found FSM state register cordic_iterative_w14_n12_ap0_g0_trunc.state.
+
+2.13.2. Executing FSM_EXTRACT pass (extracting FSM from design).
+Extracting FSM `\state' from module `\cordic_iterative_w14_n12_ap0_g0_trunc'.
+  found $dff cell for state register: $driver$state
+  root of input selection tree: $procmux$207_Y
+  found reset state: 2'00 (guessed from mux tree)
+  found ctrl input: \rst
+  found ctrl input: $procmux$10_CMP
+  found ctrl input: $procmux$137_CMP
+  found ctrl input: \ready
+  found state code: 2'00
+  found ctrl input: $44y
+  found state code: 2'11
+  found state code: 2'10
+  found ctrl input: \valid_in
+  found state code: 2'01
+  found ctrl output: $procmux$137_CMP
+  found ctrl output: \ready
+  found ctrl output: $procmux$10_CMP
+  ctrl inputs: { $44y \valid_in \rst }
+  ctrl outputs: { $procmux$207_Y $procmux$137_CMP $procmux$10_CMP \ready }
+  transition:       2'00 3'-00 ->       2'00 5'00001
+  transition:       2'00 3'-10 ->       2'01 5'01001
+  transition:       2'00 3'--1 ->       2'00 5'00001
+  transition:       2'10 3'0-0 ->       2'10 5'10010
+  transition:       2'10 3'1-0 ->       2'11 5'11010
+  transition:       2'10 3'--1 ->       2'00 5'00010
+  transition:       2'01 3'--0 ->       2'10 5'10100
+  transition:       2'01 3'--1 ->       2'00 5'00100
+  transition:       2'11 3'--0 ->       2'00 5'00000
+  transition:       2'11 3'--1 ->       2'00 5'00000
+
+2.13.3. Executing FSM_OPT pass (simple optimizations of FSMs).
+Optimizing FSM `$fsm$\state$1344' from module `\cordic_iterative_w14_n12_ap0_g0_trunc'.
+  Merging pattern 3'--0 and 3'--1 from group (3 0 5'00000).
+  Merging pattern 3'--1 and 3'--0 from group (3 0 5'00000).
+
+2.13.4. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \cordic_iterative_w14_n12_ap0_g0_trunc..
+Removed 8 unused cells and 8 unused wires.
+<suppressed ~9 debug messages>
+
+2.13.5. Executing FSM_OPT pass (simple optimizations of FSMs).
+Optimizing FSM `$fsm$\state$1344' from module `\cordic_iterative_w14_n12_ap0_g0_trunc'.
+  Removing unused output signal $procmux$207_Y [0].
+  Removing unused output signal $procmux$207_Y [1].
+
+2.13.6. Executing FSM_RECODE pass (re-assigning FSM state encoding).
+Recoding FSM `$fsm$\state$1344' from module `\cordic_iterative_w14_n12_ap0_g0_trunc' using `auto' encoding:
+  mapping auto encoding to `one-hot` for this FSM.
+  00 -> ---1
+  10 -> --1-
+  01 -> -1--
+  11 -> 1---
+
+2.13.7. Executing FSM_INFO pass (dumping all available information on FSM cells).
+
+FSM `$fsm$\state$1344' from module `cordic_iterative_w14_n12_ap0_g0_trunc':
+-------------------------------------
+
+  Information on FSM $fsm$\state$1344 (\state):
+
+  Number of input signals:    3
+  Number of output signals:   3
+  Number of state bits:       4
+
+  Input signals:
+    0: \rst
+    1: \valid_in
+    2: $44y
+
+  Output signals:
+    0: \ready
+    1: $procmux$10_CMP
+    2: $procmux$137_CMP
+
+  State encoding:
+    0:     4'---1  <RESET STATE>
+    1:     4'--1-
+    2:     4'-1--
+    3:     4'1---
+
+  Transition Table (state_in, ctrl_in, state_out, ctrl_out):
+      0:     0 3'-00   ->     0 3'001
+      1:     0 3'--1   ->     0 3'001
+      2:     0 3'-10   ->     2 3'001
+      3:     1 3'--1   ->     0 3'010
+      4:     1 3'0-0   ->     1 3'010
+      5:     1 3'1-0   ->     3 3'010
+      6:     2 3'--1   ->     0 3'100
+      7:     2 3'--0   ->     1 3'100
+      8:     3 3'---   ->     0 3'000
+
+-------------------------------------
+
+2.13.8. Executing FSM_MAP pass (mapping FSMs to basic logic).
+Mapping FSM `$fsm$\state$1344' from module `\cordic_iterative_w14_n12_ap0_g0_trunc'.
+
+2.14. Executing OPT pass (performing simple optimizations).
+
+2.14.1. Executing OPT_EXPR pass (perform const folding).
+Optimizing module cordic_iterative_w14_n12_ap0_g0_trunc.
+<suppressed ~4 debug messages>
+
+2.14.2. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\cordic_iterative_w14_n12_ap0_g0_trunc'.
+Computing hashes of 69 cells of `\cordic_iterative_w14_n12_ap0_g0_trunc'.
+Finding duplicate cells in `\cordic_iterative_w14_n12_ap0_g0_trunc'.
+Removed a total of 0 cells.
+
+2.14.3. Executing OPT_MUXTREE pass (detect dead branches in mux trees).
+Running muxtree optimizer on module \cordic_iterative_w14_n12_ap0_g0_trunc..
+  Creating internal representation of mux trees.
+  Evaluating internal representation of mux trees.
+  Analyzing evaluation results.
+Removed 0 multiplexer ports.
+<suppressed ~34 debug messages>
+
+2.14.4. Executing OPT_REDUCE pass (consolidate $*mux and $reduce_* inputs).
+  Optimizing cells in module \cordic_iterative_w14_n12_ap0_g0_trunc.
+Performed a total of 0 changes.
+
+2.14.5. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\cordic_iterative_w14_n12_ap0_g0_trunc'.
+Computing hashes of 69 cells of `\cordic_iterative_w14_n12_ap0_g0_trunc'.
+Finding duplicate cells in `\cordic_iterative_w14_n12_ap0_g0_trunc'.
+Removed a total of 0 cells.
+
+2.14.6. Executing OPT_DFF pass (perform DFF optimizations).
+Adding SRST signal on $driver$valid_out ($dff) from module cordic_iterative_w14_n12_ap0_g0_trunc (D = $procmux$198_Y, Q = \valid_out, rval = 1'0).
+Adding EN signal on $driver$cos_out ($dff) from module cordic_iterative_w14_n12_ap0_g0_trunc (D = \x [13:0], Q = \cos_out).
+Adding EN signal on $driver$sin_out ($dff) from module cordic_iterative_w14_n12_ap0_g0_trunc (D = \y [13:0], Q = \sin_out).
+Adding EN signal on $driver$quadrant ($dff) from module cordic_iterative_w14_n12_ap0_g0_trunc (D = \theta_in [13:12], Q = \quadrant).
+Adding EN signal on $driver$base ($dff) from module cordic_iterative_w14_n12_ap0_g0_trunc (D = $base$53, Q = \base).
+Adding EN signal on $driver$x ($dff) from module cordic_iterative_w14_n12_ap0_g0_trunc (D = $procmux$154_Y, Q = \x).
+Adding EN signal on $driver$y ($dff) from module cordic_iterative_w14_n12_ap0_g0_trunc (D = $procmux$145_Y, Q = \y).
+Adding EN signal on $driver$z ($dff) from module cordic_iterative_w14_n12_ap0_g0_trunc (D = $procmux$134_Y, Q = \z).
+
+2.14.7. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \cordic_iterative_w14_n12_ap0_g0_trunc..
+Removed 12 unused cells and 18 unused wires.
+<suppressed ~13 debug messages>
+
+2.14.8. Executing OPT_EXPR pass (perform const folding).
+Optimizing module cordic_iterative_w14_n12_ap0_g0_trunc.
+<suppressed ~4 debug messages>
+
+2.14.9. Rerunning OPT passes. (Maybe there is more to do..)
+
+2.14.10. Executing OPT_MUXTREE pass (detect dead branches in mux trees).
+Running muxtree optimizer on module \cordic_iterative_w14_n12_ap0_g0_trunc..
+  Creating internal representation of mux trees.
+  Evaluating internal representation of mux trees.
+  Analyzing evaluation results.
+Removed 0 multiplexer ports.
+<suppressed ~19 debug messages>
+
+2.14.11. Executing OPT_REDUCE pass (consolidate $*mux and $reduce_* inputs).
+  Optimizing cells in module \cordic_iterative_w14_n12_ap0_g0_trunc.
+Performed a total of 0 changes.
+
+2.14.12. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\cordic_iterative_w14_n12_ap0_g0_trunc'.
+Computing hashes of 84 cells of `\cordic_iterative_w14_n12_ap0_g0_trunc'.
+Finding duplicate cells in `\cordic_iterative_w14_n12_ap0_g0_trunc'.
+Computing hashes of 70 cells of `\cordic_iterative_w14_n12_ap0_g0_trunc'.
+Finding duplicate cells in `\cordic_iterative_w14_n12_ap0_g0_trunc'.
+Computing hashes of 68 cells of `\cordic_iterative_w14_n12_ap0_g0_trunc'.
+Finding duplicate cells in `\cordic_iterative_w14_n12_ap0_g0_trunc'.
+<suppressed ~48 debug messages>
+Removed a total of 16 cells.
+
+2.14.13. Executing OPT_DFF pass (perform DFF optimizations).
+
+2.14.14. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \cordic_iterative_w14_n12_ap0_g0_trunc..
+Removed 0 unused cells and 16 unused wires.
+<suppressed ~1 debug messages>
+
+2.14.15. Executing OPT_EXPR pass (perform const folding).
+Optimizing module cordic_iterative_w14_n12_ap0_g0_trunc.
+
+2.14.16. Rerunning OPT passes. (Maybe there is more to do..)
+
+2.14.17. Executing OPT_MUXTREE pass (detect dead branches in mux trees).
+Running muxtree optimizer on module \cordic_iterative_w14_n12_ap0_g0_trunc..
+  Creating internal representation of mux trees.
+  Evaluating internal representation of mux trees.
+  Analyzing evaluation results.
+Removed 0 multiplexer ports.
+<suppressed ~19 debug messages>
+
+2.14.18. Executing OPT_REDUCE pass (consolidate $*mux and $reduce_* inputs).
+  Optimizing cells in module \cordic_iterative_w14_n12_ap0_g0_trunc.
+Performed a total of 0 changes.
+
+2.14.19. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\cordic_iterative_w14_n12_ap0_g0_trunc'.
+Computing hashes of 68 cells of `\cordic_iterative_w14_n12_ap0_g0_trunc'.
+Finding duplicate cells in `\cordic_iterative_w14_n12_ap0_g0_trunc'.
+Removed a total of 0 cells.
+
+2.14.20. Executing OPT_DFF pass (perform DFF optimizations).
+
+2.14.21. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \cordic_iterative_w14_n12_ap0_g0_trunc..
+
+2.14.22. Executing OPT_EXPR pass (perform const folding).
+Optimizing module cordic_iterative_w14_n12_ap0_g0_trunc.
+
+2.14.23. Finished fast OPT passes. (There is nothing left to do.)
+
+2.15. Executing WREDUCE pass (reducing word size of cells).
+Removed top 28 address bits (of 32) from memory init port cordic_iterative_w14_n12_ap0_g0_trunc.$auto$mem.cc:349:emit$4 ($auto$proc_rom.cc:155:do_switch$2).
+Removed top 15 bits (of 16) from port B of cell cordic_iterative_w14_n12_ap0_g0_trunc.$15 ($add).
+Removed top 15 bits (of 16) from port B of cell cordic_iterative_w14_n12_ap0_g0_trunc.$21 ($add).
+Removed top 15 bits (of 16) from port B of cell cordic_iterative_w14_n12_ap0_g0_trunc.$25 ($add).
+Removed top 1 bits (of 2) from port B of cell cordic_iterative_w14_n12_ap0_g0_trunc.$34 ($eq).
+Removed top 2 bits (of 16) from port B of cell cordic_iterative_w14_n12_ap0_g0_trunc.$36 ($sub).
+Removed top 2 bits (of 16) from port B of cell cordic_iterative_w14_n12_ap0_g0_trunc.$41 ($add).
+Removed top 3 bits (of 4) from port B of cell cordic_iterative_w14_n12_ap0_g0_trunc.$45 ($add).
+Removed top 2 bits (of 3) from port B of cell cordic_iterative_w14_n12_ap0_g0_trunc.$auto$simple.cc:214:make_patterns_logic$1434 ($ne).
+
+2.16. Executing PEEPOPT pass (run peephole optimizers).
+
+2.17. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \cordic_iterative_w14_n12_ap0_g0_trunc..
+
+2.18. Executing PMUX2SHIFTX pass.
+
+2.19. Executing SORT pass.
+
+2.20. Executing MEMORY_DFF pass (merging $dff cells to $memrd).
+Checking read port `$auto$proc_rom.cc:155:do_switch$2'[0] in module `\cordic_iterative_w14_n12_ap0_g0_trunc':
+    no output FF found.
+Checking read port address `$auto$proc_rom.cc:155:do_switch$2'[0] in module `\cordic_iterative_w14_n12_ap0_g0_trunc':
+    merged address FF to cell.
+
+2.21. Executing ALUMACC pass (create $alu and $macc cells).
+Extracting $alu and $macc cells in module cordic_iterative_w14_n12_ap0_g0_trunc:
+  creating $macc model for $14 ($add).
+  creating $macc model for $15 ($add).
+  creating $macc model for $19 ($add).
+  creating $macc model for $21 ($add).
+  creating $macc model for $24 ($add).
+  creating $macc model for $25 ($add).
+  creating $macc model for $36 ($sub).
+  creating $macc model for $40 ($neg).
+  creating $macc model for $41 ($add).
+  creating $macc model for $45 ($add).
+  merging $macc model for $24 into $25.
+  merging $macc model for $19 into $21.
+  merging $macc model for $14 into $15.
+  created 0 $alu and 0 $macc cells.
+
+2.22. Executing MACCMAP pass (map $macc cells).
+
+2.23. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \cordic_iterative_w14_n12_ap0_g0_trunc..
+
+2.24. Executing TECHMAP pass (map to technology primitives).
+
+2.24.1. Executing Verilog-2005 frontend: /home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/mul2dsp.v
+Parsing Verilog input from `/home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/mul2dsp.v' to AST representation.
+Generating RTLIL representation for module `\_80_mul'.
+Generating RTLIL representation for module `\_90_soft_mul'.
+Successfully finished Verilog frontend.
+
+2.24.2. Executing Verilog-2005 frontend: /home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/xilinx/xc7_dsp_map.v
+Parsing Verilog input from `/home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/xilinx/xc7_dsp_map.v' to AST representation.
+Generating RTLIL representation for module `$__MUL25X18'.
+Successfully finished Verilog frontend.
+
+2.24.3. Continuing TECHMAP pass.
+No more expansions possible.
+<suppressed ~5 debug messages>
+
+2.25. Executing OPT_EXPR pass (perform const folding).
+
+2.26. Executing WREDUCE pass (reducing word size of cells).
+
+2.27. Executing XILINX_DSP pass (pack resources into DSPs).
+
+2.28. Executing TECHMAP pass (map to technology primitives).
+
+2.28.1. Executing Verilog-2005 frontend: /home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/cmp2lut.v
+Parsing Verilog input from `/home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/cmp2lut.v' to AST representation.
+Generating RTLIL representation for module `\_90_lut_cmp_'.
+Successfully finished Verilog frontend.
+
+2.28.2. Executing Verilog-2005 frontend: /home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/cmp2lcu.v
+Parsing Verilog input from `/home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/cmp2lcu.v' to AST representation.
+Generating RTLIL representation for module `\_80_lcu_cmp_'.
+Generating RTLIL representation for module `$__CMP2LCU'.
+Successfully finished Verilog frontend.
+
+2.28.3. Continuing TECHMAP pass.
+No more expansions possible.
+<suppressed ~7 debug messages>
+
+2.29. Executing ALUMACC pass (create $alu and $macc cells).
+Extracting $alu and $macc cells in module cordic_iterative_w14_n12_ap0_g0_trunc:
+  creating $macc model for $14 ($add).
+  creating $macc model for $15 ($add).
+  creating $macc model for $19 ($add).
+  creating $macc model for $21 ($add).
+  creating $macc model for $24 ($add).
+  creating $macc model for $25 ($add).
+  creating $macc model for $36 ($sub).
+  creating $macc model for $40 ($neg).
+  creating $macc model for $41 ($add).
+  creating $macc model for $45 ($add).
+  merging $macc model for $24 into $25.
+  merging $macc model for $19 into $21.
+  merging $macc model for $14 into $15.
+  creating $alu model for $macc $36.
+  creating $alu model for $macc $25.
+  creating $alu model for $macc $40.
+  creating $alu model for $macc $21.
+  creating $alu model for $macc $41.
+  creating $alu model for $macc $15.
+  creating $alu model for $macc $45.
+  creating $alu cell for $45: $auto$alumacc.cc:578:replace_alu$1443
+  creating $alu cell for $15: $auto$alumacc.cc:578:replace_alu$1446
+  creating $alu cell for $41: $auto$alumacc.cc:578:replace_alu$1449
+  creating $alu cell for $21: $auto$alumacc.cc:578:replace_alu$1452
+  creating $alu cell for $40: $auto$alumacc.cc:578:replace_alu$1455
+  creating $alu cell for $25: $auto$alumacc.cc:578:replace_alu$1458
+  creating $alu cell for $36: $auto$alumacc.cc:578:replace_alu$1461
+  created 7 $alu and 0 $macc cells.
+
+2.30. Executing SHARE pass (SAT-based resource sharing).
+Found 2 cells in module cordic_iterative_w14_n12_ap0_g0_trunc that may be considered for resource sharing.
+  Analyzing resource sharing options for $9 ($sshr):
+    Found cell that is never activated: $14
+    Found 1 activation_patterns using ctrl signal \state [1].
+    Found 1 candidates: $11
+    Analyzing resource sharing with $11 ($sshr):
+      Found cell that is never activated: $19
+      Found 1 activation_patterns using ctrl signal \state [1].
+      Activation pattern for cell $9: \state [1] = 1'1
+      Activation pattern for cell $11: \state [1] = 1'1
+      Size of SAT problem: 0 cells, 8 variables, 21 clauses
+      According to the SAT solver this pair of cells can not be shared.
+      Model from SAT solver: \state [1] = 1'1
+  Analyzing resource sharing options for $11 ($sshr):
+    Found 1 activation_patterns using ctrl signal \state [1].
+    No candidates found.
+Removing 2 cells in module cordic_iterative_w14_n12_ap0_g0_trunc:
+  Removing cell $19 ($add).
+  Removing cell $14 ($add).
+
+2.31. Executing OPT pass (performing simple optimizations).
+
+2.31.1. Executing OPT_EXPR pass (perform const folding).
+Optimizing module cordic_iterative_w14_n12_ap0_g0_trunc.
+
+2.31.2. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\cordic_iterative_w14_n12_ap0_g0_trunc'.
+Computing hashes of 67 cells of `\cordic_iterative_w14_n12_ap0_g0_trunc'.
+Finding duplicate cells in `\cordic_iterative_w14_n12_ap0_g0_trunc'.
+Removed a total of 0 cells.
+
+2.31.3. Executing OPT_MUXTREE pass (detect dead branches in mux trees).
+Running muxtree optimizer on module \cordic_iterative_w14_n12_ap0_g0_trunc..
+  Creating internal representation of mux trees.
+  Evaluating internal representation of mux trees.
+  Analyzing evaluation results.
+Removed 0 multiplexer ports.
+<suppressed ~21 debug messages>
+
+2.31.4. Executing OPT_REDUCE pass (consolidate $*mux and $reduce_* inputs).
+  Optimizing cells in module \cordic_iterative_w14_n12_ap0_g0_trunc.
+Performed a total of 0 changes.
+
+2.31.5. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\cordic_iterative_w14_n12_ap0_g0_trunc'.
+Computing hashes of 67 cells of `\cordic_iterative_w14_n12_ap0_g0_trunc'.
+Finding duplicate cells in `\cordic_iterative_w14_n12_ap0_g0_trunc'.
+Removed a total of 0 cells.
+
+2.31.6. Executing OPT_DFF pass (perform DFF optimizations).
+
+2.31.7. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \cordic_iterative_w14_n12_ap0_g0_trunc..
+Removed 1 unused cells and 3 unused wires.
+<suppressed ~2 debug messages>
+
+2.31.8. Executing OPT_EXPR pass (perform const folding).
+Optimizing module cordic_iterative_w14_n12_ap0_g0_trunc.
+
+2.31.9. Rerunning OPT passes. (Maybe there is more to do..)
+
+2.31.10. Executing OPT_MUXTREE pass (detect dead branches in mux trees).
+Running muxtree optimizer on module \cordic_iterative_w14_n12_ap0_g0_trunc..
+  Creating internal representation of mux trees.
+  Evaluating internal representation of mux trees.
+  Analyzing evaluation results.
+Removed 0 multiplexer ports.
+<suppressed ~21 debug messages>
+
+2.31.11. Executing OPT_REDUCE pass (consolidate $*mux and $reduce_* inputs).
+  Optimizing cells in module \cordic_iterative_w14_n12_ap0_g0_trunc.
+Performed a total of 0 changes.
+
+2.31.12. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\cordic_iterative_w14_n12_ap0_g0_trunc'.
+Computing hashes of 66 cells of `\cordic_iterative_w14_n12_ap0_g0_trunc'.
+Finding duplicate cells in `\cordic_iterative_w14_n12_ap0_g0_trunc'.
+Removed a total of 0 cells.
+
+2.31.13. Executing OPT_DFF pass (perform DFF optimizations).
+
+2.31.14. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \cordic_iterative_w14_n12_ap0_g0_trunc..
+
+2.31.15. Executing OPT_EXPR pass (perform const folding).
+Optimizing module cordic_iterative_w14_n12_ap0_g0_trunc.
+
+2.31.16. Finished fast OPT passes. (There is nothing left to do.)
+
+2.32. Executing MEMORY pass.
+
+2.32.1. Executing OPT_MEM pass (optimize memories).
+cordic_iterative_w14_n12_ap0_g0_trunc.$auto$proc_rom.cc:155:do_switch$2: removing const-0 lane 12
+cordic_iterative_w14_n12_ap0_g0_trunc.$auto$proc_rom.cc:155:do_switch$2: removing const-0 lane 13
+cordic_iterative_w14_n12_ap0_g0_trunc.$auto$proc_rom.cc:155:do_switch$2: removing const-0 lane 14
+cordic_iterative_w14_n12_ap0_g0_trunc.$auto$proc_rom.cc:155:do_switch$2: removing const-0 lane 15
+Performed a total of 1 transformations.
+
+2.32.2. Executing OPT_MEM_PRIORITY pass (removing unnecessary memory write priority relations).
+Performed a total of 0 transformations.
+
+2.32.3. Executing OPT_MEM_FEEDBACK pass (finding memory read-to-write feedback paths).
+
+2.32.4. Executing MEMORY_BMUX2ROM pass (converting muxes to ROMs).
+
+2.32.5. Executing MEMORY_DFF pass (merging $dff cells to $memrd).
+
+2.32.6. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \cordic_iterative_w14_n12_ap0_g0_trunc..
+
+2.32.7. Executing MEMORY_SHARE pass (consolidating $memrd/$memwr cells).
+
+2.32.8. Executing OPT_MEM_WIDEN pass (optimize memories where all ports are wide).
+Performed a total of 0 transformations.
+
+2.32.9. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \cordic_iterative_w14_n12_ap0_g0_trunc..
+
+2.32.10. Executing MEMORY_COLLECT pass (generating $mem cells).
+
+2.33. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \cordic_iterative_w14_n12_ap0_g0_trunc..
+
+2.34. Executing MEMORY_LIBMAP pass (mapping memories to cells).
+using FF mapping for memory cordic_iterative_w14_n12_ap0_g0_trunc.$auto$proc_rom.cc:155:do_switch$2
+<suppressed ~202 debug messages>
+
+2.35. Executing TECHMAP pass (map to technology primitives).
+
+2.35.1. Executing Verilog-2005 frontend: /home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/xilinx/lutrams_xc5v_map.v
+Parsing Verilog input from `/home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/xilinx/lutrams_xc5v_map.v' to AST representation.
+Generating RTLIL representation for module `$__XILINX_LUTRAM_SP_'.
+Generating RTLIL representation for module `$__XILINX_LUTRAM_DP_'.
+Generating RTLIL representation for module `$__XILINX_LUTRAM_QP_'.
+Generating RTLIL representation for module `$__XILINX_LUTRAM_OP_'.
+Generating RTLIL representation for module `$__XILINX_LUTRAM_SDP_'.
+Generating RTLIL representation for module `$__XILINX_LUTRAM_64X8SW_'.
+Generating RTLIL representation for module `$__XILINX_LUTRAM_32X16DR8_'.
+Successfully finished Verilog frontend.
+
+2.35.2. Continuing TECHMAP pass.
+No more expansions possible.
+<suppressed ~9 debug messages>
+
+2.36. Executing TECHMAP pass (map to technology primitives).
+
+2.36.1. Executing Verilog-2005 frontend: /home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/xilinx/brams_xc6v_map.v
+Parsing Verilog input from `/home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/xilinx/brams_xc6v_map.v' to AST representation.
+Generating RTLIL representation for module `$__XILINX_BLOCKRAM_TDP_'.
+Generating RTLIL representation for module `$__XILINX_BLOCKRAM_SDP_'.
+Successfully finished Verilog frontend.
+
+2.36.2. Continuing TECHMAP pass.
+No more expansions possible.
+<suppressed ~4 debug messages>
+
+2.37. Executing OPT pass (performing simple optimizations).
+
+2.37.1. Executing OPT_EXPR pass (perform const folding).
+Optimizing module cordic_iterative_w14_n12_ap0_g0_trunc.
+<suppressed ~15 debug messages>
+
+2.37.2. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\cordic_iterative_w14_n12_ap0_g0_trunc'.
+Computing hashes of 74 cells of `\cordic_iterative_w14_n12_ap0_g0_trunc'.
+Finding duplicate cells in `\cordic_iterative_w14_n12_ap0_g0_trunc'.
+Computing hashes of 70 cells of `\cordic_iterative_w14_n12_ap0_g0_trunc'.
+Finding duplicate cells in `\cordic_iterative_w14_n12_ap0_g0_trunc'.
+<suppressed ~12 debug messages>
+Removed a total of 4 cells.
+
+2.37.3. Executing OPT_DFF pass (perform DFF optimizations).
+Adding EN signal on $auto$ff.cc:337:slice$1428 ($dffe) from module cordic_iterative_w14_n12_ap0_g0_trunc (D = $procmux$134_Y [12:0], Q = \z [12:0]).
+Adding SRST signal on $auto$ff.cc:337:slice$1419 ($dffe) from module cordic_iterative_w14_n12_ap0_g0_trunc (D = \y_c0, Q = \y, rval = 16'0000000000000000).
+Setting constant 0-bit at position 0 on $auto$opt_mem.cc:128:execute$1464 ($dff) from module cordic_iterative_w14_n12_ap0_g0_trunc.
+
+2.37.4. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \cordic_iterative_w14_n12_ap0_g0_trunc..
+Removed 14 unused cells and 23 unused wires.
+<suppressed ~15 debug messages>
+
+2.37.5. Rerunning OPT passes. (Removed registers in this run.)
+
+2.37.6. Executing OPT_EXPR pass (perform const folding).
+Optimizing module cordic_iterative_w14_n12_ap0_g0_trunc.
+<suppressed ~4 debug messages>
+
+2.37.7. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\cordic_iterative_w14_n12_ap0_g0_trunc'.
+Computing hashes of 58 cells of `\cordic_iterative_w14_n12_ap0_g0_trunc'.
+Finding duplicate cells in `\cordic_iterative_w14_n12_ap0_g0_trunc'.
+Removed a total of 0 cells.
+
+2.37.8. Executing OPT_DFF pass (perform DFF optimizations).
+
+2.37.9. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \cordic_iterative_w14_n12_ap0_g0_trunc..
+Removed 0 unused cells and 2 unused wires.
+<suppressed ~1 debug messages>
+
+2.37.10. Finished fast OPT passes.
+
+2.38. Executing MEMORY_MAP pass (converting memories to logic and flip-flops).
+Mapping memory $auto$proc_rom.cc:155:do_switch$2 in module \cordic_iterative_w14_n12_ap0_g0_trunc:
+  created 16 $dff cells and 0 static cells of width 12.
+Extracted data FF from read port 0 of cordic_iterative_w14_n12_ap0_g0_trunc.$auto$proc_rom.cc:155:do_switch$2: $$auto$proc_rom.cc:155:do_switch$2$rdreg[0]
+  read interface: 1 $dff and 15 $mux cells.
+  write interface: 0 write mux blocks.
+
+2.39. Executing OPT pass (performing simple optimizations).
+
+2.39.1. Executing OPT_EXPR pass (perform const folding).
+Optimizing module cordic_iterative_w14_n12_ap0_g0_trunc.
+<suppressed ~3 debug messages>
+
+2.39.2. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\cordic_iterative_w14_n12_ap0_g0_trunc'.
+Computing hashes of 70 cells of `\cordic_iterative_w14_n12_ap0_g0_trunc'.
+Finding duplicate cells in `\cordic_iterative_w14_n12_ap0_g0_trunc'.
+Removed a total of 0 cells.
+
+2.39.3. Executing OPT_MUXTREE pass (detect dead branches in mux trees).
+Running muxtree optimizer on module \cordic_iterative_w14_n12_ap0_g0_trunc..
+  Creating internal representation of mux trees.
+  Evaluating internal representation of mux trees.
+  Analyzing evaluation results.
+Removed 0 multiplexer ports.
+<suppressed ~22 debug messages>
+
+2.39.4. Executing OPT_REDUCE pass (consolidate $*mux and $reduce_* inputs).
+  Optimizing cells in module \cordic_iterative_w14_n12_ap0_g0_trunc.
+    New input vector for $reduce_and cell $auto$simple.cc:231:make_patterns_logic$1498: { $auto$simple.cc:213:make_patterns_logic$1495 $auto$simple.cc:213:make_patterns_logic$1413 $auto$simple.cc:213:make_patterns_logic$1411 $auto$simple.cc:213:make_patterns_logic$1398 $auto$fsm_map.cc:74:implement_pattern_cache$1364 }
+    Consolidated identical input bits for $mux cell $memory$auto$proc_rom.cc:155:do_switch$2$rdmux[0][3][3]$1535:
+      Old ports: A=12'000000101001, B=12'000000010100, Y=$memory$auto$proc_rom.cc:155:do_switch$2$rdmux[0][2][1]$b$1519
+      New ports: A=2'01, B=2'10, Y={ $memory$auto$proc_rom.cc:155:do_switch$2$rdmux[0][2][1]$b$1519 [2] $memory$auto$proc_rom.cc:155:do_switch$2$rdmux[0][2][1]$b$1519 [0] }
+      New connections: { $memory$auto$proc_rom.cc:155:do_switch$2$rdmux[0][2][1]$b$1519 [11:3] $memory$auto$proc_rom.cc:155:do_switch$2$rdmux[0][2][1]$b$1519 [1] } = { 6'000000 $memory$auto$proc_rom.cc:155:do_switch$2$rdmux[0][2][1]$b$1519 [0] $memory$auto$proc_rom.cc:155:do_switch$2$rdmux[0][2][1]$b$1519 [2] $memory$auto$proc_rom.cc:155:do_switch$2$rdmux[0][2][1]$b$1519 [0] 1'0 }
+    Consolidated identical input bits for $mux cell $memory$auto$proc_rom.cc:155:do_switch$2$rdmux[0][3][2]$1532:
+      Old ports: A=12'000010100011, B=12'000001010001, Y=$memory$auto$proc_rom.cc:155:do_switch$2$rdmux[0][2][1]$a$1518
+      New ports: A=2'01, B=2'10, Y={ $memory$auto$proc_rom.cc:155:do_switch$2$rdmux[0][2][1]$a$1518 [4] $memory$auto$proc_rom.cc:155:do_switch$2$rdmux[0][2][1]$a$1518 [1] }
+      New connections: { $memory$auto$proc_rom.cc:155:do_switch$2$rdmux[0][2][1]$a$1518 [11:5] $memory$auto$proc_rom.cc:155:do_switch$2$rdmux[0][2][1]$a$1518 [3:2] $memory$auto$proc_rom.cc:155:do_switch$2$rdmux[0][2][1]$a$1518 [0] } = { 4'0000 $memory$auto$proc_rom.cc:155:do_switch$2$rdmux[0][2][1]$a$1518 [1] $memory$auto$proc_rom.cc:155:do_switch$2$rdmux[0][2][1]$a$1518 [4] $memory$auto$proc_rom.cc:155:do_switch$2$rdmux[0][2][1]$a$1518 [1] 3'001 }
+    Consolidated identical input bits for $mux cell $memory$auto$proc_rom.cc:155:do_switch$2$rdmux[0][3][1]$1529:
+      Old ports: A=12'001001111111, B=12'000101000100, Y=$memory$auto$proc_rom.cc:155:do_switch$2$rdmux[0][2][0]$b$1516
+      New ports: A=2'01, B=2'10, Y={ $memory$auto$proc_rom.cc:155:do_switch$2$rdmux[0][2][0]$b$1516 [8] $memory$auto$proc_rom.cc:155:do_switch$2$rdmux[0][2][0]$b$1516 [0] }
+      New connections: { $memory$auto$proc_rom.cc:155:do_switch$2$rdmux[0][2][0]$b$1516 [11:9] $memory$auto$proc_rom.cc:155:do_switch$2$rdmux[0][2][0]$b$1516 [7:1] } = { 2'00 $memory$auto$proc_rom.cc:155:do_switch$2$rdmux[0][2][0]$b$1516 [0] 2'01 $memory$auto$proc_rom.cc:155:do_switch$2$rdmux[0][2][0]$b$1516 [0] $memory$auto$proc_rom.cc:155:do_switch$2$rdmux[0][2][0]$b$1516 [0] $memory$auto$proc_rom.cc:155:do_switch$2$rdmux[0][2][0]$b$1516 [0] 1'1 $memory$auto$proc_rom.cc:155:do_switch$2$rdmux[0][2][0]$b$1516 [0] }
+    Consolidated identical input bits for $mux cell $memory$auto$proc_rom.cc:155:do_switch$2$rdmux[0][3][0]$1526:
+      Old ports: A=12'100000000000, B=12'010010111001, Y=$memory$auto$proc_rom.cc:155:do_switch$2$rdmux[0][2][0]$a$1515
+      New ports: A=2'10, B=2'01, Y={ $memory$auto$proc_rom.cc:155:do_switch$2$rdmux[0][2][0]$a$1515 [11] $memory$auto$proc_rom.cc:155:do_switch$2$rdmux[0][2][0]$a$1515 [0] }
+      New connections: $memory$auto$proc_rom.cc:155:do_switch$2$rdmux[0][2][0]$a$1515 [10:1] = { $memory$auto$proc_rom.cc:155:do_switch$2$rdmux[0][2][0]$a$1515 [0] 2'00 $memory$auto$proc_rom.cc:155:do_switch$2$rdmux[0][2][0]$a$1515 [0] 1'0 $memory$auto$proc_rom.cc:155:do_switch$2$rdmux[0][2][0]$a$1515 [0] $memory$auto$proc_rom.cc:155:do_switch$2$rdmux[0][2][0]$a$1515 [0] $memory$auto$proc_rom.cc:155:do_switch$2$rdmux[0][2][0]$a$1515 [0] 2'00 }
+    Consolidated identical input bits for $mux cell $memory$auto$proc_rom.cc:155:do_switch$2$rdmux[0][3][4]$1538:
+      Old ports: A=12'000000001010, B=12'000000000101, Y=$memory$auto$proc_rom.cc:155:do_switch$2$rdmux[0][2][2]$a$1521
+      New ports: A=2'10, B=2'01, Y=$memory$auto$proc_rom.cc:155:do_switch$2$rdmux[0][2][2]$a$1521 [1:0]
+      New connections: $memory$auto$proc_rom.cc:155:do_switch$2$rdmux[0][2][2]$a$1521 [11:2] = { 8'00000000 $memory$auto$proc_rom.cc:155:do_switch$2$rdmux[0][2][2]$a$1521 [1:0] }
+    Consolidated identical input bits for $mux cell $memory$auto$proc_rom.cc:155:do_switch$2$rdmux[0][3][5]$1541:
+      Old ports: A=12'000000000011, B=12'000000000001, Y=$memory$auto$proc_rom.cc:155:do_switch$2$rdmux[0][2][2]$b$1522
+      New ports: A=1'1, B=1'0, Y=$memory$auto$proc_rom.cc:155:do_switch$2$rdmux[0][2][2]$b$1522 [1]
+      New connections: { $memory$auto$proc_rom.cc:155:do_switch$2$rdmux[0][2][2]$b$1522 [11:2] $memory$auto$proc_rom.cc:155:do_switch$2$rdmux[0][2][2]$b$1522 [0] } = 11'00000000001
+    Consolidated identical input bits for $mux cell $procmux$26:
+      Old ports: A={ $36y [15:13] 13'x }, B={ $41y [15:13] 13'x }, Y=$procmux$26_Y
+      New ports: A=$36y [15:13], B=$41y [15:13], Y=$procmux$26_Y [15:13]
+      New connections: $procmux$26_Y [12:0] = 13'x
+  Optimizing cells in module \cordic_iterative_w14_n12_ap0_g0_trunc.
+    Consolidated identical input bits for $mux cell $memory$auto$proc_rom.cc:155:do_switch$2$rdmux[0][2][2]$1520:
+      Old ports: A=$memory$auto$proc_rom.cc:155:do_switch$2$rdmux[0][2][2]$a$1521, B=$memory$auto$proc_rom.cc:155:do_switch$2$rdmux[0][2][2]$b$1522, Y=$memory$auto$proc_rom.cc:155:do_switch$2$rdmux[0][1][1]$a$1512
+      New ports: A={ $memory$auto$proc_rom.cc:155:do_switch$2$rdmux[0][2][2]$a$1521 [1:0] $memory$auto$proc_rom.cc:155:do_switch$2$rdmux[0][2][2]$a$1521 [1:0] }, B={ 2'00 $memory$auto$proc_rom.cc:155:do_switch$2$rdmux[0][2][2]$b$1522 [1] 1'1 }, Y=$memory$auto$proc_rom.cc:155:do_switch$2$rdmux[0][1][1]$a$1512 [3:0]
+      New connections: $memory$auto$proc_rom.cc:155:do_switch$2$rdmux[0][1][1]$a$1512 [11:4] = 8'00000000
+    Consolidated identical input bits for $mux cell $memory$auto$proc_rom.cc:155:do_switch$2$rdmux[0][2][1]$1517:
+      Old ports: A=$memory$auto$proc_rom.cc:155:do_switch$2$rdmux[0][2][1]$a$1518, B=$memory$auto$proc_rom.cc:155:do_switch$2$rdmux[0][2][1]$b$1519, Y=$memory$auto$proc_rom.cc:155:do_switch$2$rdmux[0][1][0]$b$1510
+      New ports: A={ $memory$auto$proc_rom.cc:155:do_switch$2$rdmux[0][2][1]$a$1518 [4] $memory$auto$proc_rom.cc:155:do_switch$2$rdmux[0][2][1]$a$1518 [1] $memory$auto$proc_rom.cc:155:do_switch$2$rdmux[0][2][1]$a$1518 [4] 2'00 $memory$auto$proc_rom.cc:155:do_switch$2$rdmux[0][2][1]$a$1518 [1] 1'1 }, B={ 1'0 $memory$auto$proc_rom.cc:155:do_switch$2$rdmux[0][2][1]$b$1519 [0] $memory$auto$proc_rom.cc:155:do_switch$2$rdmux[0][2][1]$b$1519 [2] $memory$auto$proc_rom.cc:155:do_switch$2$rdmux[0][2][1]$b$1519 [0] $memory$auto$proc_rom.cc:155:do_switch$2$rdmux[0][2][1]$b$1519 [2] 1'0 $memory$auto$proc_rom.cc:155:do_switch$2$rdmux[0][2][1]$b$1519 [0] }, Y=$memory$auto$proc_rom.cc:155:do_switch$2$rdmux[0][1][0]$b$1510 [6:0]
+      New connections: $memory$auto$proc_rom.cc:155:do_switch$2$rdmux[0][1][0]$b$1510 [11:7] = { 4'0000 $memory$auto$proc_rom.cc:155:do_switch$2$rdmux[0][1][0]$b$1510 [1] }
+    Consolidated identical input bits for $mux cell $memory$auto$proc_rom.cc:155:do_switch$2$rdmux[0][2][0]$1514:
+      Old ports: A=$memory$auto$proc_rom.cc:155:do_switch$2$rdmux[0][2][0]$a$1515, B=$memory$auto$proc_rom.cc:155:do_switch$2$rdmux[0][2][0]$b$1516, Y=$memory$auto$proc_rom.cc:155:do_switch$2$rdmux[0][1][0]$a$1509
+      New ports: A={ $memory$auto$proc_rom.cc:155:do_switch$2$rdmux[0][2][0]$a$1515 [11] 1'0 $memory$auto$proc_rom.cc:155:do_switch$2$rdmux[0][2][0]$a$1515 [0] 2'00 $memory$auto$proc_rom.cc:155:do_switch$2$rdmux[0][2][0]$a$1515 [0] }, B={ 1'0 $memory$auto$proc_rom.cc:155:do_switch$2$rdmux[0][2][0]$b$1516 [8] 2'01 $memory$auto$proc_rom.cc:155:do_switch$2$rdmux[0][2][0]$b$1516 [0] $memory$auto$proc_rom.cc:155:do_switch$2$rdmux[0][2][0]$b$1516 [0] }, Y={ $memory$auto$proc_rom.cc:155:do_switch$2$rdmux[0][1][0]$a$1509 [11] $memory$auto$proc_rom.cc:155:do_switch$2$rdmux[0][1][0]$a$1509 [8:7] $memory$auto$proc_rom.cc:155:do_switch$2$rdmux[0][1][0]$a$1509 [2:0] }
+      New connections: { $memory$auto$proc_rom.cc:155:do_switch$2$rdmux[0][1][0]$a$1509 [10:9] $memory$auto$proc_rom.cc:155:do_switch$2$rdmux[0][1][0]$a$1509 [6:3] } = { $memory$auto$proc_rom.cc:155:do_switch$2$rdmux[0][1][0]$a$1509 [7] $memory$auto$proc_rom.cc:155:do_switch$2$rdmux[0][1][0]$a$1509 [1] $memory$auto$proc_rom.cc:155:do_switch$2$rdmux[0][1][0]$a$1509 [2] $memory$auto$proc_rom.cc:155:do_switch$2$rdmux[0][1][0]$a$1509 [0] $memory$auto$proc_rom.cc:155:do_switch$2$rdmux[0][1][0]$a$1509 [0] $memory$auto$proc_rom.cc:155:do_switch$2$rdmux[0][1][0]$a$1509 [0] }
+  Optimizing cells in module \cordic_iterative_w14_n12_ap0_g0_trunc.
+    Consolidated identical input bits for $mux cell $memory$auto$proc_rom.cc:155:do_switch$2$rdmux[0][1][1]$1511:
+      Old ports: A=$memory$auto$proc_rom.cc:155:do_switch$2$rdmux[0][1][1]$a$1512, B=12'000000000000, Y=$memory$auto$proc_rom.cc:155:do_switch$2$rdmux[0][0][0]$b$1507
+      New ports: A=$memory$auto$proc_rom.cc:155:do_switch$2$rdmux[0][1][1]$a$1512 [3:0], B=4'0000, Y=$memory$auto$proc_rom.cc:155:do_switch$2$rdmux[0][0][0]$b$1507 [3:0]
+      New connections: $memory$auto$proc_rom.cc:155:do_switch$2$rdmux[0][0][0]$b$1507 [11:4] = 8'00000000
+  Optimizing cells in module \cordic_iterative_w14_n12_ap0_g0_trunc.
+Performed a total of 12 changes.
+
+2.39.5. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\cordic_iterative_w14_n12_ap0_g0_trunc'.
+Computing hashes of 70 cells of `\cordic_iterative_w14_n12_ap0_g0_trunc'.
+Finding duplicate cells in `\cordic_iterative_w14_n12_ap0_g0_trunc'.
+Computing hashes of 67 cells of `\cordic_iterative_w14_n12_ap0_g0_trunc'.
+Finding duplicate cells in `\cordic_iterative_w14_n12_ap0_g0_trunc'.
+<suppressed ~9 debug messages>
+Removed a total of 3 cells.
+
+2.39.6. Executing OPT_SHARE pass.
+    Found cells that share an operand and can be merged by moving the $mux $procmux$26 in front of them:
+        $auto$alumacc.cc:578:replace_alu$1449
+        $auto$alumacc.cc:578:replace_alu$1461
+
+2.39.7. Executing OPT_DFF pass (perform DFF optimizations).
+
+2.39.8. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \cordic_iterative_w14_n12_ap0_g0_trunc..
+Removed 0 unused cells and 28 unused wires.
+<suppressed ~1 debug messages>
+
+2.39.9. Executing OPT_EXPR pass (perform const folding).
+Optimizing module cordic_iterative_w14_n12_ap0_g0_trunc.
+<suppressed ~3 debug messages>
+
+2.39.10. Rerunning OPT passes. (Maybe there is more to do..)
+
+2.39.11. Executing OPT_MUXTREE pass (detect dead branches in mux trees).
+Running muxtree optimizer on module \cordic_iterative_w14_n12_ap0_g0_trunc..
+  Creating internal representation of mux trees.
+  Evaluating internal representation of mux trees.
+  Analyzing evaluation results.
+Removed 0 multiplexer ports.
+<suppressed ~26 debug messages>
+
+2.39.12. Executing OPT_REDUCE pass (consolidate $*mux and $reduce_* inputs).
+  Optimizing cells in module \cordic_iterative_w14_n12_ap0_g0_trunc.
+    Consolidated identical input bits for $mux cell $memory$auto$proc_rom.cc:155:do_switch$2$rdmux[0][2][1]$1517:
+      Old ports: A={ $memory$auto$proc_rom.cc:155:do_switch$2$rdmux[0][2][0]$b$1516 [8] $memory$auto$proc_rom.cc:155:do_switch$2$rdmux[0][2][0]$b$1516 [0] $memory$auto$proc_rom.cc:155:do_switch$2$rdmux[0][2][0]$b$1516 [8] 2'00 $memory$auto$proc_rom.cc:155:do_switch$2$rdmux[0][2][0]$b$1516 [0] 1'1 }, B={ 1'0 $memory$auto$proc_rom.cc:155:do_switch$2$rdmux[0][2][0]$b$1516 [0] $memory$auto$proc_rom.cc:155:do_switch$2$rdmux[0][2][0]$b$1516 [8] $memory$auto$proc_rom.cc:155:do_switch$2$rdmux[0][2][0]$b$1516 [0] $memory$auto$proc_rom.cc:155:do_switch$2$rdmux[0][2][0]$b$1516 [8] 1'0 $memory$auto$proc_rom.cc:155:do_switch$2$rdmux[0][2][0]$b$1516 [0] }, Y=$memory$auto$proc_rom.cc:155:do_switch$2$rdmux[0][1][0]$b$1510 [6:0]
+      New ports: A={ $memory$auto$proc_rom.cc:155:do_switch$2$rdmux[0][2][0]$b$1516 [8] 2'00 $memory$auto$proc_rom.cc:155:do_switch$2$rdmux[0][2][0]$b$1516 [0] 1'1 }, B={ 1'0 $memory$auto$proc_rom.cc:155:do_switch$2$rdmux[0][2][0]$b$1516 [0] $memory$auto$proc_rom.cc:155:do_switch$2$rdmux[0][2][0]$b$1516 [8] 1'0 $memory$auto$proc_rom.cc:155:do_switch$2$rdmux[0][2][0]$b$1516 [0] }, Y={ $memory$auto$proc_rom.cc:155:do_switch$2$rdmux[0][1][0]$b$1510 [6] $memory$auto$proc_rom.cc:155:do_switch$2$rdmux[0][1][0]$b$1510 [3:0] }
+      New connections: $memory$auto$proc_rom.cc:155:do_switch$2$rdmux[0][1][0]$b$1510 [5:4] = { $memory$auto$proc_rom.cc:155:do_switch$2$rdmux[0][2][0]$b$1516 [0] $memory$auto$proc_rom.cc:155:do_switch$2$rdmux[0][2][0]$b$1516 [8] }
+    Consolidated identical input bits for $mux cell $auto$opt_share.cc:245:merge_operators$1553:
+      Old ports: A=3'111, B=3'001, Y=$auto$rtlil.cc:3333:Mux$1554
+      New ports: A=1'1, B=1'0, Y=$auto$rtlil.cc:3333:Mux$1554 [1]
+      New connections: { $auto$rtlil.cc:3333:Mux$1554 [2] $auto$rtlil.cc:3333:Mux$1554 [0] } = { $auto$rtlil.cc:3333:Mux$1554 [1] 1'1 }
+  Optimizing cells in module \cordic_iterative_w14_n12_ap0_g0_trunc.
+Performed a total of 2 changes.
+
+2.39.13. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\cordic_iterative_w14_n12_ap0_g0_trunc'.
+Computing hashes of 66 cells of `\cordic_iterative_w14_n12_ap0_g0_trunc'.
+Finding duplicate cells in `\cordic_iterative_w14_n12_ap0_g0_trunc'.
+Removed a total of 0 cells.
+
+2.39.14. Executing OPT_SHARE pass.
+
+2.39.15. Executing OPT_DFF pass (perform DFF optimizations).
+Adding SRST signal on $$auto$proc_rom.cc:155:do_switch$2$rdreg[0] ($dff) from module cordic_iterative_w14_n12_ap0_g0_trunc (D = $memory$auto$proc_rom.cc:155:do_switch$2$rdmux[0][2][0]$b$1516 [8], Q = \atan0 [8], rval = 1'0).
+Adding SRST signal on $$auto$proc_rom.cc:155:do_switch$2$rdreg[0] ($dff) from module cordic_iterative_w14_n12_ap0_g0_trunc (D = $memory$auto$proc_rom.cc:155:do_switch$2$rdmux[0][2][0]$a$1515 [11], Q = \atan0 [11], rval = 1'0).
+Adding SRST signal on $$auto$proc_rom.cc:155:do_switch$2$rdreg[0] ($dff) from module cordic_iterative_w14_n12_ap0_g0_trunc (D = { $memory$auto$proc_rom.cc:155:do_switch$2$rdmux[0][1][0]$a$1509 [7] $memory$auto$proc_rom.cc:155:do_switch$2$rdmux[0][1][0]$a$1509 [1] }, Q = \atan0 [10:9], rval = 2'00).
+Adding SRST signal on $$auto$proc_rom.cc:155:do_switch$2$rdreg[0] ($dff) from module cordic_iterative_w14_n12_ap0_g0_trunc (D = $memory$auto$proc_rom.cc:155:do_switch$2$rdmux[0][0][0]$a$1506 [7:4], Q = \atan0 [7:4], rval = 4'0000).
+
+2.39.16. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \cordic_iterative_w14_n12_ap0_g0_trunc..
+Removed 0 unused cells and 3 unused wires.
+<suppressed ~1 debug messages>
+
+2.39.17. Executing OPT_EXPR pass (perform const folding).
+Optimizing module cordic_iterative_w14_n12_ap0_g0_trunc.
+<suppressed ~1 debug messages>
+
+2.39.18. Rerunning OPT passes. (Maybe there is more to do..)
+
+2.39.19. Executing OPT_MUXTREE pass (detect dead branches in mux trees).
+Running muxtree optimizer on module \cordic_iterative_w14_n12_ap0_g0_trunc..
+  Creating internal representation of mux trees.
+  Evaluating internal representation of mux trees.
+  Analyzing evaluation results.
+Removed 0 multiplexer ports.
+<suppressed ~21 debug messages>
+
+2.39.20. Executing OPT_REDUCE pass (consolidate $*mux and $reduce_* inputs).
+  Optimizing cells in module \cordic_iterative_w14_n12_ap0_g0_trunc.
+Performed a total of 0 changes.
+
+2.39.21. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\cordic_iterative_w14_n12_ap0_g0_trunc'.
+Computing hashes of 74 cells of `\cordic_iterative_w14_n12_ap0_g0_trunc'.
+Finding duplicate cells in `\cordic_iterative_w14_n12_ap0_g0_trunc'.
+Removed a total of 0 cells.
+
+2.39.22. Executing OPT_SHARE pass.
+
+2.39.23. Executing OPT_DFF pass (perform DFF optimizations).
+
+2.39.24. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \cordic_iterative_w14_n12_ap0_g0_trunc..
+
+2.39.25. Executing OPT_EXPR pass (perform const folding).
+Optimizing module cordic_iterative_w14_n12_ap0_g0_trunc.
+
+2.39.26. Finished fast OPT passes. (There is nothing left to do.)
+
+2.40. Executing XILINX_SRL pass (Xilinx shift register extraction).
+
+2.41. Executing TECHMAP pass (map to technology primitives).
+
+2.41.1. Executing Verilog-2005 frontend: /home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/techmap.v
+Parsing Verilog input from `/home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/techmap.v' to AST representation.
+Generating RTLIL representation for module `\_90_simplemap_bool_ops'.
+Generating RTLIL representation for module `\_90_simplemap_reduce_ops'.
+Generating RTLIL representation for module `\_90_simplemap_logic_ops'.
+Generating RTLIL representation for module `\_90_simplemap_compare_ops'.
+Generating RTLIL representation for module `\_90_simplemap_various'.
+Generating RTLIL representation for module `\_90_simplemap_registers'.
+Generating RTLIL representation for module `\_90_shift_ops_shr_shl_sshl_sshr'.
+Generating RTLIL representation for module `\_90_shift_shiftx'.
+Generating RTLIL representation for module `\_90_fa'.
+Generating RTLIL representation for module `\_90_lcu_brent_kung'.
+Generating RTLIL representation for module `\_90_alu'.
+Generating RTLIL representation for module `\_90_macc'.
+Generating RTLIL representation for module `\_90_alumacc'.
+Generating RTLIL representation for module `$__div_mod_u'.
+Generating RTLIL representation for module `$__div_mod_trunc'.
+Generating RTLIL representation for module `\_90_div'.
+Generating RTLIL representation for module `\_90_mod'.
+Generating RTLIL representation for module `$__div_mod_floor'.
+Generating RTLIL representation for module `\_90_divfloor'.
+Generating RTLIL representation for module `\_90_modfloor'.
+Generating RTLIL representation for module `\_90_pow'.
+Generating RTLIL representation for module `\_90_demux'.
+Generating RTLIL representation for module `\_90_lut'.
+Generating RTLIL representation for module `$connect'.
+Generating RTLIL representation for module `$input_port'.
+Successfully finished Verilog frontend.
+
+2.41.2. Executing Verilog-2005 frontend: /home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/xilinx/arith_map.v
+Parsing Verilog input from `/home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/xilinx/arith_map.v' to AST representation.
+Generating RTLIL representation for module `\_80_xilinx_lcu'.
+Generating RTLIL representation for module `\_80_xilinx_alu'.
+Successfully finished Verilog frontend.
+
+2.41.3. Continuing TECHMAP pass.
+Using extmapper simplemap for cells of type $sdff.
+Using extmapper simplemap for cells of type $dffe.
+Using extmapper simplemap for cells of type $reduce_or.
+Using extmapper simplemap for cells of type $not.
+Using template $paramod$constmap:00a5b8c078faac2d9dcf7d1311e85cfd31359fcf$paramod$8a12a9b73c8be786cf67ebac28abcbbf644a3888\_90_shift_ops_shr_shl_sshl_sshr for cells of type $sshr.
+Using extmapper simplemap for cells of type $dff.
+Using extmapper simplemap for cells of type $xor.
+Using extmapper simplemap for cells of type $logic_not.
+Using extmapper simplemap for cells of type $and.
+Using extmapper simplemap for cells of type $eq.
+Using template $paramod$674141544fade965cf052b5e9d5b65813fc4e151\_80_xilinx_alu for cells of type $alu.
+Using template $paramod$faf74cdb8e9ae1cdae34c548c2052e4fba0b741d\_80_xilinx_alu for cells of type $alu.
+Using template $paramod$191acc1d2d42689ebb1ca5cb5fde8a2ce46b029d\_80_xilinx_alu for cells of type $alu.
+Using template $paramod$44619cfd3b1bb121a30965f0b8cf50541577ab9a\_80_xilinx_alu for cells of type $alu.
+Using extmapper simplemap for cells of type $reduce_and.
+Using extmapper simplemap for cells of type $reduce_bool.
+Using extmapper simplemap for cells of type $ne.
+Using extmapper simplemap for cells of type $sdffce.
+Using extmapper simplemap for cells of type $pmux.
+Using extmapper simplemap for cells of type $pos.
+No more expansions possible.
+<suppressed ~514 debug messages>
+
+2.42. Executing OPT pass (performing simple optimizations).
+
+2.42.1. Executing OPT_EXPR pass (perform const folding).
+Optimizing module cordic_iterative_w14_n12_ap0_g0_trunc.
+<suppressed ~147 debug messages>
+
+2.42.2. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\cordic_iterative_w14_n12_ap0_g0_trunc'.
+Computing hashes of 624 cells of `\cordic_iterative_w14_n12_ap0_g0_trunc'.
+Finding duplicate cells in `\cordic_iterative_w14_n12_ap0_g0_trunc'.
+Computing hashes of 602 cells of `\cordic_iterative_w14_n12_ap0_g0_trunc'.
+Finding duplicate cells in `\cordic_iterative_w14_n12_ap0_g0_trunc'.
+Computing hashes of 597 cells of `\cordic_iterative_w14_n12_ap0_g0_trunc'.
+Finding duplicate cells in `\cordic_iterative_w14_n12_ap0_g0_trunc'.
+<suppressed ~81 debug messages>
+Removed a total of 27 cells.
+
+2.42.3. Executing OPT_DFF pass (perform DFF optimizations).
+Adding SRST signal on $auto$ff.cc:337:slice$2045 ($_DFFE_PP_) from module cordic_iterative_w14_n12_ap0_g0_trunc (D = $auto$simplemap.cc:189:logic_reduce$2382, Q = \x [15], rval = 1'0).
+Adding SRST signal on $auto$ff.cc:337:slice$2030 ($_DFFE_PP_) from module cordic_iterative_w14_n12_ap0_g0_trunc (D = $auto$simplemap.cc:189:logic_reduce$2277, Q = \x [0], rval = 1'1).
+Adding SRST signal on $auto$ff.cc:337:slice$2031 ($_DFFE_PP_) from module cordic_iterative_w14_n12_ap0_g0_trunc (D = $auto$simplemap.cc:189:logic_reduce$2284, Q = \x [1], rval = 1'1).
+Adding SRST signal on $auto$ff.cc:337:slice$2032 ($_DFFE_PP_) from module cordic_iterative_w14_n12_ap0_g0_trunc (D = $auto$simplemap.cc:189:logic_reduce$2291, Q = \x [2], rval = 1'1).
+Adding SRST signal on $auto$ff.cc:337:slice$2033 ($_DFFE_PP_) from module cordic_iterative_w14_n12_ap0_g0_trunc (D = $auto$simplemap.cc:189:logic_reduce$2298, Q = \x [3], rval = 1'0).
+Adding SRST signal on $auto$ff.cc:337:slice$2034 ($_DFFE_PP_) from module cordic_iterative_w14_n12_ap0_g0_trunc (D = $auto$simplemap.cc:189:logic_reduce$2305, Q = \x [4], rval = 1'1).
+Adding SRST signal on $auto$ff.cc:337:slice$2035 ($_DFFE_PP_) from module cordic_iterative_w14_n12_ap0_g0_trunc (D = $auto$simplemap.cc:189:logic_reduce$2312, Q = \x [5], rval = 1'1).
+Adding SRST signal on $auto$ff.cc:337:slice$2036 ($_DFFE_PP_) from module cordic_iterative_w14_n12_ap0_g0_trunc (D = $auto$simplemap.cc:189:logic_reduce$2319, Q = \x [6], rval = 1'0).
+Adding SRST signal on $auto$ff.cc:337:slice$2037 ($_DFFE_PP_) from module cordic_iterative_w14_n12_ap0_g0_trunc (D = $auto$simplemap.cc:189:logic_reduce$2326, Q = \x [7], rval = 1'1).
+Adding SRST signal on $auto$ff.cc:337:slice$2038 ($_DFFE_PP_) from module cordic_iterative_w14_n12_ap0_g0_trunc (D = $auto$simplemap.cc:189:logic_reduce$2333, Q = \x [8], rval = 1'1).
+Adding SRST signal on $auto$ff.cc:337:slice$2039 ($_DFFE_PP_) from module cordic_iterative_w14_n12_ap0_g0_trunc (D = $auto$simplemap.cc:189:logic_reduce$2340, Q = \x [9], rval = 1'0).
+Adding SRST signal on $auto$ff.cc:337:slice$2040 ($_DFFE_PP_) from module cordic_iterative_w14_n12_ap0_g0_trunc (D = $auto$simplemap.cc:189:logic_reduce$2347, Q = \x [10], rval = 1'0).
+Adding SRST signal on $auto$ff.cc:337:slice$2041 ($_DFFE_PP_) from module cordic_iterative_w14_n12_ap0_g0_trunc (D = $auto$simplemap.cc:189:logic_reduce$2354, Q = \x [11], rval = 1'1).
+Adding SRST signal on $auto$ff.cc:337:slice$2042 ($_DFFE_PP_) from module cordic_iterative_w14_n12_ap0_g0_trunc (D = $auto$simplemap.cc:189:logic_reduce$2361, Q = \x [12], rval = 1'0).
+Adding SRST signal on $auto$ff.cc:337:slice$2043 ($_DFFE_PP_) from module cordic_iterative_w14_n12_ap0_g0_trunc (D = $auto$simplemap.cc:189:logic_reduce$2368, Q = \x [13], rval = 1'0).
+Adding SRST signal on $auto$ff.cc:337:slice$2044 ($_DFFE_PP_) from module cordic_iterative_w14_n12_ap0_g0_trunc (D = $auto$simplemap.cc:189:logic_reduce$2375, Q = \x [14], rval = 1'0).
+
+2.42.4. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \cordic_iterative_w14_n12_ap0_g0_trunc..
+Removed 72 unused cells and 196 unused wires.
+<suppressed ~73 debug messages>
+
+2.42.5. Rerunning OPT passes. (Removed registers in this run.)
+
+2.42.6. Executing OPT_EXPR pass (perform const folding).
+Optimizing module cordic_iterative_w14_n12_ap0_g0_trunc.
+<suppressed ~1 debug messages>
+
+2.42.7. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\cordic_iterative_w14_n12_ap0_g0_trunc'.
+Computing hashes of 524 cells of `\cordic_iterative_w14_n12_ap0_g0_trunc'.
+Finding duplicate cells in `\cordic_iterative_w14_n12_ap0_g0_trunc'.
+Removed a total of 0 cells.
+
+2.42.8. Executing OPT_DFF pass (perform DFF optimizations).
+
+2.42.9. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \cordic_iterative_w14_n12_ap0_g0_trunc..
+
+2.42.10. Finished fast OPT passes.
+
+2.43. Executing TECHMAP pass (map to technology primitives).
+
+2.43.1. Executing Verilog-2005 frontend: /home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/techmap.v
+Parsing Verilog input from `/home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/techmap.v' to AST representation.
+Generating RTLIL representation for module `\_90_simplemap_bool_ops'.
+Generating RTLIL representation for module `\_90_simplemap_reduce_ops'.
+Generating RTLIL representation for module `\_90_simplemap_logic_ops'.
+Generating RTLIL representation for module `\_90_simplemap_compare_ops'.
+Generating RTLIL representation for module `\_90_simplemap_various'.
+Generating RTLIL representation for module `\_90_simplemap_registers'.
+Generating RTLIL representation for module `\_90_shift_ops_shr_shl_sshl_sshr'.
+Generating RTLIL representation for module `\_90_shift_shiftx'.
+Generating RTLIL representation for module `\_90_fa'.
+Generating RTLIL representation for module `\_90_lcu_brent_kung'.
+Generating RTLIL representation for module `\_90_alu'.
+Generating RTLIL representation for module `\_90_macc'.
+Generating RTLIL representation for module `\_90_alumacc'.
+Generating RTLIL representation for module `$__div_mod_u'.
+Generating RTLIL representation for module `$__div_mod_trunc'.
+Generating RTLIL representation for module `\_90_div'.
+Generating RTLIL representation for module `\_90_mod'.
+Generating RTLIL representation for module `$__div_mod_floor'.
+Generating RTLIL representation for module `\_90_divfloor'.
+Generating RTLIL representation for module `\_90_modfloor'.
+Generating RTLIL representation for module `\_90_pow'.
+Generating RTLIL representation for module `\_90_demux'.
+Generating RTLIL representation for module `\_90_lut'.
+Generating RTLIL representation for module `$connect'.
+Generating RTLIL representation for module `$input_port'.
+Successfully finished Verilog frontend.
+
+2.43.2. Executing Verilog-2005 frontend: /home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/xilinx/cells_map.v
+Parsing Verilog input from `/home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/xilinx/cells_map.v' to AST representation.
+Generating RTLIL representation for module `$__SHREG_'.
+Generating RTLIL representation for module `$__XILINX_SHREG_'.
+Generating RTLIL representation for module `$__XILINX_MUXF78'.
+Successfully finished Verilog frontend.
+
+2.43.3. Continuing TECHMAP pass.
+No more expansions possible.
+<suppressed ~80 debug messages>
+
+2.44. Executing DFFLEGALIZE pass (convert FFs and LATCHes to types supported by the target).
+
+2.45. Executing TECHMAP pass (map to technology primitives).
+
+2.45.1. Executing Verilog-2005 frontend: /home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/xilinx/ff_map.v
+Parsing Verilog input from `/home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/xilinx/ff_map.v' to AST representation.
+Generating RTLIL representation for module `$_DFFE_NP0P_'.
+Generating RTLIL representation for module `$_DFFE_PP0P_'.
+Generating RTLIL representation for module `$_DFFE_NP1P_'.
+Generating RTLIL representation for module `$_DFFE_PP1P_'.
+Generating RTLIL representation for module `$_DFFSRE_NPPP_'.
+Generating RTLIL representation for module `$_DFFSRE_PPPP_'.
+Generating RTLIL representation for module `$_SDFFE_NP0P_'.
+Generating RTLIL representation for module `$_SDFFE_PP0P_'.
+Generating RTLIL representation for module `$_SDFFE_NP1P_'.
+Generating RTLIL representation for module `$_SDFFE_PP1P_'.
+Generating RTLIL representation for module `$_DLATCH_NP0_'.
+Generating RTLIL representation for module `$_DLATCH_PP0_'.
+Generating RTLIL representation for module `$_DLATCH_NP1_'.
+Generating RTLIL representation for module `$_DLATCH_PP1_'.
+Generating RTLIL representation for module `$_DLATCH_NPP_'.
+Generating RTLIL representation for module `$_DLATCH_PPP_'.
+Successfully finished Verilog frontend.
+
+2.45.2. Continuing TECHMAP pass.
+Using template $paramod$_SDFFE_PP0P_\_TECHMAP_WIREINIT_Q_=1'x for cells of type $_SDFFE_PP0P_.
+Using template $paramod$_SDFFE_PP1P_\_TECHMAP_WIREINIT_Q_=1'x for cells of type $_SDFFE_PP1P_.
+No more expansions possible.
+<suppressed ~135 debug messages>
+
+2.46. Executing OPT_EXPR pass (perform const folding).
+Optimizing module cordic_iterative_w14_n12_ap0_g0_trunc.
+
+2.47. Executing Verilog-2005 frontend: /home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/xilinx/abc9_model.v
+Parsing Verilog input from `/home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/xilinx/abc9_model.v' to AST representation.
+Generating RTLIL representation for module `$__XILINX_MUXF78'.
+Successfully finished Verilog frontend.
+
+2.48. Executing ABC9 pass.
+
+2.48.1. Executing ABC9_OPS pass (helper functions for ABC9).
+
+2.48.2. Executing ABC9_OPS pass (helper functions for ABC9).
+
+2.48.3. Executing SCC pass (detecting logic loops).
+Found 0 SCCs in module cordic_iterative_w14_n12_ap0_g0_trunc.
+Found 0 SCCs.
+
+2.48.4. Executing ABC9_OPS pass (helper functions for ABC9).
+
+2.48.5. Executing TECHMAP pass (map to technology primitives).
+
+2.48.5.1. Executing Verilog-2005 frontend: /home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/techmap.v
+Parsing Verilog input from `/home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/techmap.v' to AST representation.
+Generating RTLIL representation for module `\_90_simplemap_bool_ops'.
+Generating RTLIL representation for module `\_90_simplemap_reduce_ops'.
+Generating RTLIL representation for module `\_90_simplemap_logic_ops'.
+Generating RTLIL representation for module `\_90_simplemap_compare_ops'.
+Generating RTLIL representation for module `\_90_simplemap_various'.
+Generating RTLIL representation for module `\_90_simplemap_registers'.
+Generating RTLIL representation for module `\_90_shift_ops_shr_shl_sshl_sshr'.
+Generating RTLIL representation for module `\_90_shift_shiftx'.
+Generating RTLIL representation for module `\_90_fa'.
+Generating RTLIL representation for module `\_90_lcu_brent_kung'.
+Generating RTLIL representation for module `\_90_alu'.
+Generating RTLIL representation for module `\_90_macc'.
+Generating RTLIL representation for module `\_90_alumacc'.
+Generating RTLIL representation for module `$__div_mod_u'.
+Generating RTLIL representation for module `$__div_mod_trunc'.
+Generating RTLIL representation for module `\_90_div'.
+Generating RTLIL representation for module `\_90_mod'.
+Generating RTLIL representation for module `$__div_mod_floor'.
+Generating RTLIL representation for module `\_90_divfloor'.
+Generating RTLIL representation for module `\_90_modfloor'.
+Generating RTLIL representation for module `\_90_pow'.
+Generating RTLIL representation for module `\_90_demux'.
+Generating RTLIL representation for module `\_90_lut'.
+Generating RTLIL representation for module `$connect'.
+Generating RTLIL representation for module `$input_port'.
+Successfully finished Verilog frontend.
+
+2.48.5.2. Continuing TECHMAP pass.
+No more expansions possible.
+<suppressed ~506 debug messages>
+
+2.48.6. Executing OPT pass (performing simple optimizations).
+
+2.48.6.1. Executing OPT_EXPR pass (perform const folding).
+
+2.48.6.2. Executing OPT_MERGE pass (detect identical cells).
+Removed a total of 0 cells.
+
+2.48.6.3. Executing OPT_MUXTREE pass (detect dead branches in mux trees).
+Removed 0 multiplexer ports.
+
+2.48.6.4. Executing OPT_REDUCE pass (consolidate $*mux and $reduce_* inputs).
+Performed a total of 0 changes.
+
+2.48.6.5. Executing OPT_MERGE pass (detect identical cells).
+Removed a total of 0 cells.
+
+2.48.6.6. Executing OPT_DFF pass (perform DFF optimizations).
+
+2.48.6.7. Executing OPT_CLEAN pass (remove unused cells and wires).
+
+2.48.6.8. Executing OPT_EXPR pass (perform const folding).
+
+2.48.6.9. Finished fast OPT passes. (There is nothing left to do.)
+
+2.48.7. Executing TECHMAP pass (map to technology primitives).
+
+2.48.7.1. Executing Verilog-2005 frontend: /home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/abc9_map.v
+Parsing Verilog input from `/home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/abc9_map.v' to AST representation.
+Lexer warning: The SystemVerilog keyword `bit' (at /home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/abc9_map.v:35) is not recognized unless read_verilog is called with -sv!
+Generating RTLIL representation for module `$__ABC9_BARRIER_MAP'.
+Successfully finished Verilog frontend.
+
+2.48.7.2. Continuing TECHMAP pass.
+No more expansions possible.
+<suppressed ~3 debug messages>
+
+2.48.8. Executing Verilog-2005 frontend: /home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/abc9_model.v
+Parsing Verilog input from `/home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/abc9_model.v' to AST representation.
+Generating RTLIL representation for module `$__ABC9_DELAY'.
+Generating RTLIL representation for module `$__ABC9_BARRIER'.
+Generating RTLIL representation for module `$__ABC9_SCC_BREAKER'.
+Generating RTLIL representation for module `$__DFF_N__$abc9_flop'.
+Generating RTLIL representation for module `$__DFF_P__$abc9_flop'.
+Successfully finished Verilog frontend.
+
+2.48.9. Executing ABC9_OPS pass (helper functions for ABC9).
+<suppressed ~2 debug messages>
+
+2.48.10. Executing ABC9_OPS pass (helper functions for ABC9).
+
+2.48.11. Executing ABC9_OPS pass (helper functions for ABC9).
+<suppressed ~2 debug messages>
+
+2.48.12. Executing TECHMAP pass (map to technology primitives).
+
+2.48.12.1. Executing Verilog-2005 frontend: /home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/techmap.v
+Parsing Verilog input from `/home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/techmap.v' to AST representation.
+Generating RTLIL representation for module `\_90_simplemap_bool_ops'.
+Generating RTLIL representation for module `\_90_simplemap_reduce_ops'.
+Generating RTLIL representation for module `\_90_simplemap_logic_ops'.
+Generating RTLIL representation for module `\_90_simplemap_compare_ops'.
+Generating RTLIL representation for module `\_90_simplemap_various'.
+Generating RTLIL representation for module `\_90_simplemap_registers'.
+Generating RTLIL representation for module `\_90_shift_ops_shr_shl_sshl_sshr'.
+Generating RTLIL representation for module `\_90_shift_shiftx'.
+Generating RTLIL representation for module `\_90_fa'.
+Generating RTLIL representation for module `\_90_lcu_brent_kung'.
+Generating RTLIL representation for module `\_90_alu'.
+Generating RTLIL representation for module `\_90_macc'.
+Generating RTLIL representation for module `\_90_alumacc'.
+Generating RTLIL representation for module `$__div_mod_u'.
+Generating RTLIL representation for module `$__div_mod_trunc'.
+Generating RTLIL representation for module `\_90_div'.
+Generating RTLIL representation for module `\_90_mod'.
+Generating RTLIL representation for module `$__div_mod_floor'.
+Generating RTLIL representation for module `\_90_divfloor'.
+Generating RTLIL representation for module `\_90_modfloor'.
+Generating RTLIL representation for module `\_90_pow'.
+Generating RTLIL representation for module `\_90_demux'.
+Generating RTLIL representation for module `\_90_lut'.
+Generating RTLIL representation for module `$connect'.
+Generating RTLIL representation for module `$input_port'.
+Successfully finished Verilog frontend.
+
+2.48.12.2. Continuing TECHMAP pass.
+Using template CARRY4 for cells of type CARRY4.
+Using extmapper simplemap for cells of type $or.
+Using extmapper simplemap for cells of type $xor.
+Using extmapper simplemap for cells of type $mux.
+No more expansions possible.
+<suppressed ~519 debug messages>
+
+2.48.13. Executing OPT pass (performing simple optimizations).
+
+2.48.13.1. Executing OPT_EXPR pass (perform const folding).
+Optimizing module cordic_iterative_w14_n12_ap0_g0_trunc.
+
+2.48.13.2. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\cordic_iterative_w14_n12_ap0_g0_trunc'.
+Computing hashes of 62 cells of `\cordic_iterative_w14_n12_ap0_g0_trunc'.
+Finding duplicate cells in `\cordic_iterative_w14_n12_ap0_g0_trunc'.
+Computing hashes of 61 cells of `\cordic_iterative_w14_n12_ap0_g0_trunc'.
+Finding duplicate cells in `\cordic_iterative_w14_n12_ap0_g0_trunc'.
+<suppressed ~3 debug messages>
+Removed a total of 1 cells.
+
+2.48.13.3. Executing OPT_MUXTREE pass (detect dead branches in mux trees).
+Running muxtree optimizer on module \cordic_iterative_w14_n12_ap0_g0_trunc..
+  Creating internal representation of mux trees.
+  No muxes found in this module.
+Removed 0 multiplexer ports.
+
+2.48.13.4. Executing OPT_REDUCE pass (consolidate $*mux and $reduce_* inputs).
+  Optimizing cells in module \cordic_iterative_w14_n12_ap0_g0_trunc.
+Performed a total of 0 changes.
+
+2.48.13.5. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\cordic_iterative_w14_n12_ap0_g0_trunc'.
+Computing hashes of 61 cells of `\cordic_iterative_w14_n12_ap0_g0_trunc'.
+Finding duplicate cells in `\cordic_iterative_w14_n12_ap0_g0_trunc'.
+Removed a total of 0 cells.
+
+2.48.13.6. Executing OPT_DFF pass (perform DFF optimizations).
+
+2.48.13.7. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \cordic_iterative_w14_n12_ap0_g0_trunc..
+Removed 0 unused cells and 14 unused wires.
+<suppressed ~3 debug messages>
+
+2.48.13.8. Executing OPT_EXPR pass (perform const folding).
+Optimizing module cordic_iterative_w14_n12_ap0_g0_trunc.
+
+2.48.13.9. Rerunning OPT passes. (Maybe there is more to do..)
+
+2.48.13.10. Executing OPT_MUXTREE pass (detect dead branches in mux trees).
+Running muxtree optimizer on module \cordic_iterative_w14_n12_ap0_g0_trunc..
+  Creating internal representation of mux trees.
+  No muxes found in this module.
+Removed 0 multiplexer ports.
+
+2.48.13.11. Executing OPT_REDUCE pass (consolidate $*mux and $reduce_* inputs).
+  Optimizing cells in module \cordic_iterative_w14_n12_ap0_g0_trunc.
+Performed a total of 0 changes.
+
+2.48.13.12. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\cordic_iterative_w14_n12_ap0_g0_trunc'.
+Computing hashes of 61 cells of `\cordic_iterative_w14_n12_ap0_g0_trunc'.
+Finding duplicate cells in `\cordic_iterative_w14_n12_ap0_g0_trunc'.
+Removed a total of 0 cells.
+
+2.48.13.13. Executing OPT_DFF pass (perform DFF optimizations).
+
+2.48.13.14. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \cordic_iterative_w14_n12_ap0_g0_trunc..
+
+2.48.13.15. Executing OPT_EXPR pass (perform const folding).
+Optimizing module cordic_iterative_w14_n12_ap0_g0_trunc.
+
+2.48.13.16. Finished fast OPT passes. (There is nothing left to do.)
+
+2.48.14. Executing AIGMAP pass (map logic to AIG).
+Module cordic_iterative_w14_n12_ap0_g0_trunc: replaced 335 cells with 2091 new cells, skipped 253 cells.
+  replaced 4 cell types:
+     167 $_MUX_
+      32 $_ORNOT_
+      42 $_OR_
+      94 $_XOR_
+  not replaced 5 cell types:
+      66 $_AND_
+      70 $_NOT_
+      91 FDRE
+       8 FDSE
+      18 CARRY4
+
+2.48.14.1. Executing ABC9_OPS pass (helper functions for ABC9).
+
+2.48.14.2. Executing ABC9_OPS pass (helper functions for ABC9).
+
+2.48.14.3. Executing XAIGER2 backend.
+<suppressed ~127 debug messages>
+Extracted 1158 AND gates and 0 wires from module `cordic_iterative_w14_n12_ap0_g0_trunc' to a netlist network with 260 inputs and 531 outputs.
+
+2.48.14.4. Executing ABC9_EXE pass (technology mapping using ABC9).
+
+2.48.14.5. Executing ABC9.
+Running ABC command: "<yosys-exe-dir>/yosys-abc" -s -f <abc-temp-dir>/abc.script 2>&1
+ABC: ======== ABC command line "source <abc-temp-dir>/abc.script"
+ABC: + read_lut <abc-temp-dir>/input.lut 
+ABC: + read_box <abc-temp-dir>/input.box 
+ABC: + &read <abc-temp-dir>/input.xaig 
+ABC: + &ps 
+ABC: <abc-temp-dir>/input : i/o =    116/    351  and =     830  lev =   13 (2.27)  mem = 0.02 MB  box = 18  bb = 0
+ABC: + &scorr 
+ABC: Warning: The network is combinational.
+ABC: + &sweep 
+ABC: + &dc2 
+ABC: + &dch -f -r 
+ABC: + &ps 
+ABC: <abc-temp-dir>/input : i/o =    116/    351  and =    1393  lev =   11 (1.92)  mem = 0.03 MB  ch =  196  box = 18  bb = 0
+ABC: cst =       0  cls =    193  lit =     196  unused =    1264  proof =     0
+ABC: + &if -W 300 -v 
+ABC: K = 8. Memory (bytes): Truth =    0. Cut =   80. Obj =  160. Set =  816. CutMin = no
+ABC: Node =    1393.  Ch =   193.  Total mem =    0.37 MB. Peak cut mem =    0.02 MB.
+ABC: P:  Del = 3651.00.  Ar =    1167.0.  Edge =     1034.  Cut =    19155.  T =     0.01 sec
+ABC: P:  Del = 3651.00.  Ar =    1008.0.  Edge =      961.  Cut =    19199.  T =     0.01 sec
+ABC: P:  Del = 3651.00.  Ar =     694.0.  Edge =      848.  Cut =    25549.  T =     0.01 sec
+ABC: F:  Del = 3651.00.  Ar =     564.0.  Edge =      730.  Cut =    20911.  T =     0.01 sec
+ABC: A:  Del = 3651.00.  Ar =     552.0.  Edge =      708.  Cut =    23739.  T =     0.01 sec
+ABC: A:  Del = 3651.00.  Ar =     551.0.  Edge =      708.  Cut =    23629.  T =     0.01 sec
+ABC: Total time =     0.05 sec
+ABC: + &write -n <abc-temp-dir>/output.aig 
+ABC: + &mfs 
+ABC: + &ps -l 
+ABC: <abc-temp-dir>/input : i/o =    116/    351  and =    1108  lev =   11 (1.97)  mem = 0.03 MB  box = 18  bb = 0
+ABC: Mapping (K=6)  :  lut =    181  edge =     707  lev =    6 (1.03)  levB =    9  mem = 0.01 MB
+ABC: LUT = 181 : 2=22 12.2 %  3=57 31.5 %  4=33 18.2 %  5=54 29.8 %  6=15 8.3 %  Ave = 3.91
+ABC: + &write -n <abc-temp-dir>/output.aig 
+ABC: + &verify 
+ABC: Networks are equivalent.  Time =     0.04 sec
+ABC: + time 
+ABC: elapse: 0.28 seconds, total: 0.28 seconds
+
+2.48.14.6. Executing AIGER frontend.
+<suppressed ~10 debug messages>
+Removed 1921 unused cells and 2442 unused wires.
+
+2.48.14.7. Executing ABC_OPS_REINTEGRATE pass (reintegrate ABC mapped design into module).
+ABC RESULTS:              $lut cells:      200
+ABC RESULTS:           \CARRY4 cells:       18
+ABC RESULTS:           input signals:       39
+ABC RESULTS:          output signals:        4
+<suppressed ~467 debug messages>
+Removing temp directory.
+
+2.48.15. Executing TECHMAP pass (map to technology primitives).
+
+2.48.15.1. Executing Verilog-2005 frontend: /home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/abc9_unmap.v
+Parsing Verilog input from `/home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/abc9_unmap.v' to AST representation.
+Generating RTLIL representation for module `$__DFF_x__$abc9_flop'.
+Generating RTLIL representation for module `$__ABC9_SCC_BREAKER'.
+Generating RTLIL representation for module `$__ABC9_BARRIER'.
+Successfully finished Verilog frontend.
+
+2.48.15.2. Continuing TECHMAP pass.
+No more expansions possible.
+<suppressed ~6 debug messages>
+Removed 58 unused cells and 591 unused wires.
+
+2.49. Executing XILINX_SRL pass (Xilinx shift register extraction).
+
+2.50. Executing TECHMAP pass (map to technology primitives).
+
+2.50.1. Executing Verilog-2005 frontend: /home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/xilinx/lut_map.v
+Parsing Verilog input from `/home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/xilinx/lut_map.v' to AST representation.
+Generating RTLIL representation for module `$lut'.
+Successfully finished Verilog frontend.
+
+2.50.2. Executing Verilog-2005 frontend: /home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/xilinx/cells_map.v
+Parsing Verilog input from `/home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/xilinx/cells_map.v' to AST representation.
+Generating RTLIL representation for module `$__SHREG_'.
+Generating RTLIL representation for module `$__XILINX_SHREG_'.
+Generating RTLIL representation for module `$__XILINX_MUXF78'.
+Successfully finished Verilog frontend.
+
+2.50.3. Continuing TECHMAP pass.
+Using template $paramod$lut\WIDTH=32'00000000000000000000000000000011\LUT=8'11011000 for cells of type $lut.
+Using template $paramod$lut\WIDTH=32'00000000000000000000000000000011\LUT=8'00000001 for cells of type $lut.
+Using template $paramod$34d8179c3f4e5c9b014184678126740a73fec819$lut for cells of type $lut.
+Using template $paramod$fa90e6b4ff54c9a3f6bea754646eebea90c24aad$lut for cells of type $lut.
+Using template $paramod$6d05ee5be4fbc817e6482b590e1831ddde15ffbe$lut for cells of type $lut.
+Using template $paramod$085cb83d0db09780ae5aa544a0f286ba9445143f$lut for cells of type $lut.
+Using template $paramod$lut\WIDTH=32'00000000000000000000000000000011\LUT=8'00001101 for cells of type $lut.
+Using template $paramod$lut\WIDTH=32'00000000000000000000000000000011\LUT=8'11100000 for cells of type $lut.
+Using template $paramod$e6a4aac14b366f7770f6afc50867b3b8176ebb96$lut for cells of type $lut.
+Using template $paramod$lut\WIDTH=32'00000000000000000000000000000010\LUT=4'1000 for cells of type $lut.
+Using template $paramod$lut\WIDTH=32'00000000000000000000000000000011\LUT=8'11001010 for cells of type $lut.
+Using template $paramod$lut\WIDTH=32'00000000000000000000000000000010\LUT=4'0001 for cells of type $lut.
+Using template $paramod$lut\WIDTH=32'00000000000000000000000000000011\LUT=8'01101001 for cells of type $lut.
+Using template $paramod$56e6d8a28a52006bb4e50e077743f0a2163235af$lut for cells of type $lut.
+Using template $paramod$37cf57c4332e9b0179de4e30edd4d0c5838b1bf9$lut for cells of type $lut.
+Using template $paramod$lut\WIDTH=32'00000000000000000000000000000011\LUT=8'11100010 for cells of type $lut.
+Using template $paramod$fa45f28daf300aaa781ee4b9baa5ce968b1d8c66$lut for cells of type $lut.
+Using template $paramod$0d5a2e56e3bd65e0afa1a6ded8c65554b2d699b6$lut for cells of type $lut.
+Using template $paramod$c64f96936f4007e799b181d63e60a3a41095cfbc$lut for cells of type $lut.
+Using template $paramod$864cc76b1c3e987fd848951f4359046220bf6914$lut for cells of type $lut.
+Using template $paramod$1ad9ca75a5e52e69f39f16c0b8ffb14773a0b7f2$lut for cells of type $lut.
+Using template $paramod$lut\WIDTH=32'00000000000000000000000000000011\LUT=8'00110101 for cells of type $lut.
+Using template $paramod$lut\WIDTH=32'00000000000000000000000000000011\LUT=8'01001010 for cells of type $lut.
+Using template $paramod$5b5755730b9a53f6c50cca29ba2f99d7e0bc0fe6$lut for cells of type $lut.
+Using template $paramod$a73e5affe093cbfcf0d2b43eb8fbeac4ea474b24$lut for cells of type $lut.
+Using template $paramod$lut\WIDTH=32'00000000000000000000000000000011\LUT=8'01001110 for cells of type $lut.
+Using template $paramod$ce7dc711c01ca474db83ec17346fa61b69c9571e$lut for cells of type $lut.
+Using template $paramod$5ed65b6731a0dc5ad3cb086c1bac6d89fb77ef3f$lut for cells of type $lut.
+Using template $paramod$a781d0c6cc59e17666b6710a361269390e958e3c$lut for cells of type $lut.
+Using template $paramod$bd82686c101d7c51c792000633effe287dd276f4$lut for cells of type $lut.
+Using template $paramod$lut\WIDTH=32'00000000000000000000000000000010\LUT=4'1001 for cells of type $lut.
+Using template $paramod$4a329090568037723b93923773f3b41ae85ef442$lut for cells of type $lut.
+Using template $paramod$ede69574f5a1b0d9b57cc1e7173d572281698270$lut for cells of type $lut.
+Using template $paramod$lut\WIDTH=32'00000000000000000000000000000011\LUT=8'11100100 for cells of type $lut.
+Using template $paramod$5b53d5fcf9e47a65c98e2e9e6df85cc41d58311c$lut for cells of type $lut.
+Using template $paramod$81018019865ce3c4ae4ecb45a20b7a601d39d0c8$lut for cells of type $lut.
+Using template $paramod$be4e35e40e01a8256e87ff48bcd1d9d9dce0e9b2$lut for cells of type $lut.
+Using template $paramod$27ded2c02f07622603d449c37eb9188591865bda$lut for cells of type $lut.
+Using template $paramod$1d8da67e55226ee6f849b82c7c3ba5690a649089$lut for cells of type $lut.
+Using template $paramod$c581f6382c881129fac55eec32fe31b4c289a2e5$lut for cells of type $lut.
+Using template $paramod$11e00f989fb518f6978b72004a900a8bc09826e6$lut for cells of type $lut.
+Using template $paramod$a53bb0b2ca9f43f26f7e3c254b4ae8150a9c4858$lut for cells of type $lut.
+Using template $paramod$lut\WIDTH=32'00000000000000000000000000000011\LUT=8'10110101 for cells of type $lut.
+Using template $paramod$182d63a1d187cd10f5bbd0c045f67443230236ce$lut for cells of type $lut.
+Using template $paramod$a9ba23df824f693c44e722629fd8c1fae157385c$lut for cells of type $lut.
+Using template $paramod$2b9d3dbeb86a44b6dd7c3a691f2942ed8a93f5cb$lut for cells of type $lut.
+Using template $paramod$lut\WIDTH=32'00000000000000000000000000000011\LUT=8'11001001 for cells of type $lut.
+Using template $paramod$lut\WIDTH=32'00000000000000000000000000000011\LUT=8'00001000 for cells of type $lut.
+Using template $paramod$lut\WIDTH=32'00000000000000000000000000000010\LUT=4'0100 for cells of type $lut.
+Using template $paramod$lut\WIDTH=32'00000000000000000000000000000011\LUT=8'00111001 for cells of type $lut.
+Using template $paramod$4f750cb34540bad7e8d277dd5bc5ea63e403d272$lut for cells of type $lut.
+Using template $paramod$lut\WIDTH=32'00000000000000000000000000000011\LUT=8'10010110 for cells of type $lut.
+Using template $paramod$b687dc07959af1fa40c448af298b5a8ef545da15$lut for cells of type $lut.
+Using template $paramod$lut\WIDTH=32'00000000000000000000000000000011\LUT=8'00101000 for cells of type $lut.
+Using template $paramod$12ef30de9e1b8f315b731518b39356d53f308924$lut for cells of type $lut.
+Using template $paramod$58656dc3156cc22efd081c45e0f04c3b1153af06$lut for cells of type $lut.
+Using template $paramod$cba251fae32d1b5b71e4e6eba6193563d03a1b67$lut for cells of type $lut.
+Using template $paramod$4688ff8beeb2c2f657a899019662ffc4b9cc0580$lut for cells of type $lut.
+Using template $paramod$5e3b5c48743bd2d2a9efee476ac6b2db9905bc40$lut for cells of type $lut.
+Using template $paramod$lut\WIDTH=32'00000000000000000000000000000001\LUT=2'01 for cells of type $lut.
+Using template $paramod$945272feab89b3d3d850c7e04a0df9ac421e0672$lut for cells of type $lut.
+Using template $paramod$lut\WIDTH=32'00000000000000000000000000000010\LUT=4'1110 for cells of type $lut.
+Using template $paramod$lut\WIDTH=32'00000000000000000000000000000011\LUT=8'10000101 for cells of type $lut.
+Using template $paramod$0ccaf02f75920637d357258be296ba59759b746e$lut for cells of type $lut.
+Using template $paramod$06550d6c519ab79588222cb0584f4c59d4b3dba3$lut for cells of type $lut.
+Using template $paramod$412b1a43999c7598eddbdd3a6f61379fec4750cb$lut for cells of type $lut.
+Using template $paramod$5dc745bb48e2cf535179547ba13f0fe5364d6d54$lut for cells of type $lut.
+Using template $paramod$lut\WIDTH=32'00000000000000000000000000000010\LUT=4'0111 for cells of type $lut.
+Using template $paramod$ef40a8446ebea8b8baa4a35fc9c40d23ff19d67a$lut for cells of type $lut.
+Using template $paramod$lut\WIDTH=32'00000000000000000000000000000010\LUT=4'1011 for cells of type $lut.
+Using template $paramod$92f9882e5e3a3e2f7d721e9422928bee8bfe0ddb$lut for cells of type $lut.
+Using template $paramod$a706ab98353d4e550d768e98d50f1841cfbc72f8$lut for cells of type $lut.
+Using template $paramod$lut\WIDTH=32'00000000000000000000000000000010\LUT=4'1101 for cells of type $lut.
+Using template $paramod$lut\WIDTH=32'00000000000000000000000000000010\LUT=4'0110 for cells of type $lut.
+Using template $paramod$ed822494ed01ae34f5d2fb1bcce373a5181dc035$lut for cells of type $lut.
+Using template $paramod$aa03cb897c1b2aa3096c3dd95a65716e611153ed$lut for cells of type $lut.
+Using template $paramod$64be9006e88fdd3912192884766dcac419e07fff$lut for cells of type $lut.
+Using template $paramod$19432416dbaf370233ee6057e2e4443129c01db3$lut for cells of type $lut.
+No more expansions possible.
+<suppressed ~1068 debug messages>
+
+2.51. Executing XILINX_DFFOPT pass (optimize FF control signal usage).
+Optimizing FFs in cordic_iterative_w14_n12_ap0_g0_trunc.
+  Merging D + CE LUTs for $auto$ff.cc:337:slice$2093/z (4 -> 6)
+  Merging D + CE LUTs for $auto$ff.cc:337:slice$2091/z (4 -> 6)
+  Merging D + CE LUTs for $auto$ff.cc:337:slice$2090/z (4 -> 6)
+  Merging D + CE LUTs for $auto$ff.cc:337:slice$2089/z (4 -> 6)
+  Merging D + CE LUTs for $auto$ff.cc:337:slice$2088/z (4 -> 6)
+  Merging D + CE LUTs for $auto$ff.cc:337:slice$2087/z (4 -> 6)
+  Merging D + CE LUTs for $auto$ff.cc:337:slice$2086/z (4 -> 6)
+  Merging D + CE LUTs for $auto$ff.cc:337:slice$2085/z (4 -> 6)
+  Merging D + CE LUTs for $auto$ff.cc:337:slice$2084/z (4 -> 6)
+  Merging D + CE LUTs for $auto$ff.cc:337:slice$2083/z (4 -> 6)
+  Merging D + CE LUTs for $auto$ff.cc:337:slice$2082/z (4 -> 6)
+  Merging D + CE LUTs for $auto$ff.cc:337:slice$2081/z (4 -> 6)
+  Merging D + R LUTs for $auto$ff.cc:337:slice$2152/atan0 (3 -> 6)
+  Merging D + R LUTs for $auto$ff.cc:337:slice$2150/atan0 (3 -> 6)
+  Merging D + R LUTs for $auto$ff.cc:337:slice$2149/atan0 (3 -> 6)
+  Merging D + R LUTs for $auto$ff.cc:337:slice$2146/atan0 (2 -> 4)
+  Merging D + R LUTs for $auto$ff.cc:337:slice$2145/atan0 (2 -> 4)
+  Merging D + R LUTs for $auto$ff.cc:337:slice$2151/atan0 (3 -> 6)
+  Merging D + CE LUTs for $auto$ff.cc:337:slice$2011/base (2 -> 6)
+  Merging D + CE LUTs for $auto$ff.cc:337:slice$2092/z (4 -> 6)
+
+2.52. Executing OPT_LUT_INS pass (discard unused LUT inputs).
+Optimizing LUTs in cordic_iterative_w14_n12_ap0_g0_trunc.
+Removed 20 unused cells and 468 unused wires.
+
+2.53. Executing HIERARCHY pass (managing design hierarchy).
+Attribute `top' found on module `cordic_iterative_w14_n12_ap0_g0_trunc'. Setting top module to cordic_iterative_w14_n12_ap0_g0_trunc.
+
+2.53.1. Analyzing design hierarchy..
+Top module:  \cordic_iterative_w14_n12_ap0_g0_trunc
+
+2.53.2. Analyzing design hierarchy..
+Top module:  \cordic_iterative_w14_n12_ap0_g0_trunc
+Removed 0 unused modules.
+
+2.54. Printing statistics.
+
+=== cordic_iterative_w14_n12_ap0_g0_trunc ===
+
+        +----------Local Count, excluding submodules.
+        | 
+      323 wires
+      721 wire bits
+       15 public wires
+      121 public wire bits
+        8 ports
+       47 port bits
+      204 cells
+       19   INV
+       20   LUT2
+       56   LUT3
+       22   LUT4
+       54   LUT5
+       33   LUT6
+      117 submodules
+       18   CARRY4
+       91   FDRE
+        8   FDSE
+
+   Estimated number of LCs:        165
+
+=== design hierarchy ===
+
+        +----------Count including submodules.
+        | 
+      204 cordic_iterative_w14_n12_ap0_g0_trunc
+
+        +----------Count including submodules.
+        | 
+      323 wires
+      721 wire bits
+       15 public wires
+      121 public wire bits
+        8 ports
+       47 port bits
+        - memories
+        - memory bits
+        - processes
+      204 cells
+       19   INV
+       20   LUT2
+       56   LUT3
+       22   LUT4
+       54   LUT5
+       33   LUT6
+      117 submodules
+       18   CARRY4
+       91   FDRE
+        8   FDSE
+
+   Estimated number of LCs:        165
+
+2.55. Executing CHECK pass (checking for obvious problems).
+Checking module cordic_iterative_w14_n12_ap0_g0_trunc...
+Found and reported 0 problems.
+End of script. Logfile hash: 4b58064857, time: 9.89s, user: 7.07s, system: 0.93s, MEM: 156.85 MB peak
+Yosys 0.70+385 (git sha1 098e46a36, Release, Clang /usr/bin/clang++ 21.1.8)
+Time spent: 56% 25x read_verilog (4 sec), 10% 1x synth_xilinx (0 sec), ...

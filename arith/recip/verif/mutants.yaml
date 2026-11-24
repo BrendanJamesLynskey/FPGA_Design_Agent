@@ -1,0 +1,35 @@
+# Seeded mutants of the reciprocal RTL (brief 139c): one text change each, run under `config` with every normalised input of that width.
+mutants:
+  - {id: M01, file: recip_seed.sv, what: "table index taken from the leading one and the bits below it minus one", config: {variant: 1, w: 8, a: 3},
+     find: "assign idx = b[W-2 -: A];", replace: "assign idx = b[W-1 -: A];"}
+  - {id: M02, file: recip_seed.sv, what: "table entries rounded down instead of to nearest", config: {variant: 1, w: 8, a: 3},
+     find: "F'(((64'd1 << (F + A + 2)) + num) / (64'd2 * num));", replace: "F'(((64'd1 << (F + A + 2))) / (64'd2 * num));"}
+  - {id: M03, file: recip_seed.sv, what: "table entry for the low edge of the interval, not the midpoint", config: {variant: 1, w: 8, a: 3},
+     find: "+ 64'(2 * i) + 64'd1;", replace: "+ 64'(2 * i);"}
+  - {id: M04, file: recip_iter.sv, what: "first multiplier takes the previous estimate (one stage misaligned)", config: {variant: 1, w: 8, a: 3},
+     find: "t_q <= b * y;", replace: "t_q <= b * y1;"}
+  - {id: M05, file: recip_iter.sv, what: "second multiplier takes the previous stage's estimate", config: {variant: 1, w: 8, a: 3},
+     find: "p_q <= $signed({1'b0, y2}) * d_q;", replace: "p_q <= $signed({1'b0, y1}) * d_q;"}
+  - {id: M06, file: recip_iter.sv, what: "correction shifted by F - 1", config: {variant: 1, w: 8, a: 3},
+     find: "p_q >>> F", replace: "p_q >>> (F - 1)"}
+  - {id: M07, file: recip_iter.sv, what: "correction subtracted instead of added", config: {variant: 1, w: 8, a: 3},
+     find: "y_o <= YW'(y3 + ", replace: "y_o <= YW'(y3 - "}
+  - {id: M08, file: recip_iter.sv, what: "divisor passed on one stage early (the second iteration sees a misaligned b)", config: {variant: 2, w: 8, a: 3},
+     find: "b_o <= b3;", replace: "b_o <= b2;"}
+  - {id: M09, file: recip_nr.sv, what: "output taken from the estimate shifted one bit", config: {variant: 1, w: 8, a: 3},
+     find: "assign y = y_fin[YW-1:2];", replace: "assign y = y_fin[YW-2:1];"}
+  - {id: M10, file: recip_nr.sv, what: "valid pipeline fed a constant one", config: {variant: 1, w: 8, a: 3},
+     find: "else     v_q <= {v_q[NV-2:0], in_valid};", replace: "else     v_q <= {v_q[NV-2:0], 1'b1};"}
+  - {id: M11, file: recip_nr.sv, what: "seed stage register cleared", config: {variant: 1, w: 8, a: 3},
+     find: "y_s0 <= {1'b0, y0};", replace: "y_s0 <= '0;"}
+  - {id: M12, file: recip_table.sv, what: "table value one low", config: {variant: 0, w: 8, a: 3},
+     find: "always_ff @(posedge clk) y <= {1'b0, y0};", replace: "always_ff @(posedge clk) y <= {1'b0, y0 - W'(1)};"}
+  - {id: M13, file: recip_table.sv, what: "valid held high after reset release", config: {variant: 0, w: 8, a: 3},
+     find: "else     out_valid <= in_valid;", replace: "else     out_valid <= 1'b1;"}
+equivalent:
+  - {id: E01, file: recip_iter.sv, what: "residual reference value is 2 ** (W + F), not 2 ** (W - 1 + F): the difference, 2 ** (W + F), is shifted down by W - 1 to 2 ** (F + 1), a multiple of 2 ** DW, and only the low DW bits of the shifted residual are kept, so the stored word is unchanged",
+     config: {variant: 1, w: 8, a: 3},
+     find: "<< (W - 1 + F)) - $signed", replace: "<< (W + F)) - $signed"}
+  - {id: E02, file: recip_iter.sv, what: "residual shifted logically, not arithmetically: the bits that differ are the ones shifted in at the top, above bit RW - W, and only the low DW bits (DW < RW - W + 1) are kept",
+     config: {variant: 1, w: 8, a: 3},
+     find: "d_full = r_w >>> (W - 1);", replace: "d_full = r_w >> (W - 1);"}

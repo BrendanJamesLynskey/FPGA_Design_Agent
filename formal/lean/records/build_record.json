@@ -1,16 +1,23 @@
 {
- "build_log_sha256": "f665162ab454103e1e4432a82faafda301b87ecbe472b0651322e0c3be19a34a",
+ "build_log_sha256": "05fe58434190298e1e86efe9724d9c98f712812bc1f2f8d826d5287e43afd73d",
  "build_ok": true,
  "files": {
-  "Arith.lean": "4cb4662354ef4a99e61505350b6a8971371190608f8cea4d5f8e64ef9c02bd24",
+  "Arith.lean": "64508cefbfffd7dd9983ea4592532572a31646c2d583b30599621c3960a8b5bf",
   "Arith/Adder.lean": "843fecb41430d6029bb632f7aa6ab731ef9400db774c70ed5c84f8f36aab25ce",
   "Arith/Booth.lean": "e0f4e895e69a2678c580a12d3477a664aa80649fd39a4b951f57d9f3acae2303",
-  "Arith/CrossCheck.lean": "46e8f8e6bee82f7f936229a6ff9b3349e10effeb482e6b67b5d85880012263cc",
+  "Arith/Cordic.lean": "600bada5c70ae145cb021234befa388b0a3b2ea4fae3333771f6e8d30d50a070",
+  "Arith/CrossCheck.lean": "4488790c33bccf8308b483f967277ffc70db8fa2534f507866b40e0a8419badb",
   "Arith/Divide.lean": "5544ff0e1742fd7733b7284583bba21cb78f20c7eda8099374d209920682de3f",
+  "Arith/DividerHr.lean": "fd2e6bb1a628fc0ae1a45874a9f7d17008a00fdcc2058b8f4c32cfef0b6fea1b",
+  "Arith/Float.lean": "662242742c5de1b6f489331a9af894203d88c07e2d3ed9fd34071557d23f6967",
   "Arith/Isqrt.lean": "63b3a8ef084d36e7bb605d2782c3ffbad2d51f0a40b75f67a2b683b223629ae8",
+  "Arith/Lerp.lean": "68df8c2358aabddbc79b03ca1341f1a783bd4071f6e8928db0e6481ca4ea1dd0",
   "Arith/Lzc.lean": "24660877fcf28bd7a6bc6700ac0959cd5c89bd39d9d92fe3d85f8d3c279f6d53",
   "Arith/Mac.lean": "b6b6def9b20250bceb2da2da2780663d324b9522023dc6d629ba03668e41bfc7",
+  "Arith/Newton.lean": "8dd060851610a514cb755a1709eac8dc3002a81ff00c03f378a6c4ab490dc282",
+  "Arith/Quadrant.lean": "6b563f79a455c472b896bf4417de44ac05d8825fad249ad5efde451c691c592f",
   "Arith/Rounding.lean": "b5a22dc15c253f758d21a2889c0887e074bcc23210c82431a8db7e3269f93429",
+  "Arith/SqrtR4.lean": "8b9a2d9c23d7f1719c98f5d96420260ad013d14c75ac610624fd436e92d422c5",
   "Cksum.lean": "aa6990c7c4cc33b524f81c7b633240613fe2a0393ca904ab2164447fb424307c",
   "Cksum/CrossCheck.lean": "08436e62554b56e55fd65f0989c957c15bd962ad288b3f4ae847729dc51278b7",
   "Cksum/Spec.lean": "8527b638b4716d4d70fd1a9ab57e0e029b1fa3b3e05fd6945b716782005d3d7a",
@@ -27,16 +34,28 @@
  "rtl_sources": {
   "arith/adder/rtl/adder_carry_select.sv:39-47": "edfd0c914d857f445269613384bb5ee196f7bf86b780373086e8230e65800e88",
   "arith/adder/rtl/adder_ripple.sv:26-28": "dce2678218b049ad133281b015e24d473f6bb2108de61241c71f292b1eb92db7",
+  "arith/atan2_mag/rtl/atan2_cordic.sv:126-127": "48fe8d0ac39fe43475fa90d8b413ece092fdaafdcc58203be2e1204837e783d6",
   "arith/divider/rtl/div_nonrestoring_iter.sv:32-33": "a489abf4ec6f7f65d3a98cac3521d40b4fe37b5ecccbdb0eb507aa638317f1df",
   "arith/divider/rtl/div_nonrestoring_iter.sv:63-67": "3b2ecd110a95b9a1c160644daec5548c53c1cb4f342310d2a35237604d11ba7a",
   "arith/divider/rtl/div_restoring_iter.sv:30-31": "f732d38a11456f1226b3962158f1439d25d15392c87d77779516d29f5ab6516b",
   "arith/divider/rtl/div_restoring_iter.sv:61-62": "8fc57376ed856c545c8492514fac92a551c068f28ee1256021a30715dfcef8c9",
+  "arith/exp2/rtl/exp2_cordic.sv:132-133": "7bfa9345d0637349e1de3010644affccfa32c2273ac8ac595aa86e1fd992642a",
+  "arith/exp2/rtl/exp2_lerp.sv:283-285": "34fe7deda62cc0602a1cf9ef991fd739567bc08ce90c8d56974f4ad1afabb550",
+  "arith/fp_common/fp_norm.sv:24-24": "f6aa64577ea1d8f1013031acf58ed3cb6ec0186d9e153ac1f59793622466e256",
+  "arith/fp_common/fp_pack.sv:54-54": "9e0c81af7548fdf2ba919d391399d5faadfd98174be3af3898dc03bb10c03e4f",
+  "arith/fp_common/fp_pack.sv:57-57": "5ff1a896a3dbb0ea4a420e645537efc7f961ab654e98d181b4bd739f9de1046b",
   "arith/fxp_round/rtl/fxp_round_fold.sv:32-35": "d752a0e45970531b240709de31aff9fdb8455949846ccea0ff343a0347bae856",
   "arith/isqrt/rtl/isqrt_restoring_iter.sv:33-35": "995ae9135f40c1b68b796fe46d26423162ea475a010f7efa1c94fff5c9a8c167",
   "arith/isqrt/rtl/isqrt_restoring_iter.sv:67-68": "b3d59a9b790f4e197bd36036d3f1c16e668b510766b1585f7b21a460f480280e",
+  "arith/log2/rtl/log2_cordic.sv:100-101": "7bfa9345d0637349e1de3010644affccfa32c2273ac8ac595aa86e1fd992642a",
+  "arith/log2/rtl/log2_lerp.sv:283-285": "34fe7deda62cc0602a1cf9ef991fd739567bc08ce90c8d56974f4ad1afabb550",
   "arith/lzc_norm/rtl/lzc_tree.sv:12-23": "f292359796ab33cb4a03d3acf34b00830aba1284fe6fe03b54c691ab0ab8fab2",
   "arith/mac/rtl/mac_dsp.sv:108-109": "cc78a75c3fee29679b946eb44847730e92d99154de9b3e46a82b1dc65aba697e",
   "arith/multiplier/rtl/mult_booth_r4.sv:26-39": "bf32ab1b15df0714032d18afe3b34a368391178f74b0262f2f2e6cb897d4ea8e",
+  "arith/sincos/rtl/sincos_cordic.sv:105-106": "a4b7734cc2432485e537f0e406870bda2a7c90b27ff52c1d0fc8a512701e898b",
+  "arith/sincos/rtl/sincos_lerp.sv:527-527": "dc019fb32cef78a2ab15075ed22cccea4b398a90998c96b5a64a49caa858f7db",
+  "arith/sincos/rtl/sincos_lerp.sv:540-542": "6489e71d1cdd2697ff831e63cb60086093f30126a054dada9c92899ca7c52ad7",
+  "arith/sqrt_r4/rtl/sqrt_r4_iter.sv:41-57": "e2d3f157df6037839fd9dbefb23dd68dc9d0a2499bb3b99a1d23256be2406f73",
   "designs/b119_tcp_fast/rtl/tcp_fast.sv:256-260": "9a9272bbf1eab0aa07f2b150d662fe0f98f075cd2c162e116cd941e181e726bc",
   "designs/b119_tcp_fast/rtl/tcp_fast.sv:326-336": "ddeb015f9e9c7a7c0f837e7c2e89dd40803dfb629fbd96ba5d2e2fb52fea19ad",
   "designs/b96_kr260_10g/rtl/rate_match_gp.sv:78-82": "4437715e5ac7150d752a88436fc28046cc1d5b5181325a674c20d6d89ba7a93c",
@@ -79,6 +98,39 @@
    "statement_sha256": "4ec3f22c5625a14afda66899f21c1b53801d5c6a962f025e06668039e37179a9",
    "tier": "kernel_only"
   },
+  "Arith.DividerHr.divide_correct": {
+   "axioms": [
+    "Quot.sound",
+    "propext"
+   ],
+   "build_ok": true,
+   "definitions_sha256": "4bb284194d6fdc2f3926cbe3cab3d77274743aaaf8a5a20366d6dd9c2695d3b4",
+   "module": "Arith.DividerHr",
+   "statement_sha256": "530a9720bfc68807108053694fbf4a404cb3c910c3373f4c7ecafa266b66e575",
+   "tier": "kernel_only"
+  },
+  "Arith.DividerHr.fix_correct": {
+   "axioms": [
+    "Quot.sound",
+    "propext"
+   ],
+   "build_ok": true,
+   "definitions_sha256": "4bb284194d6fdc2f3926cbe3cab3d77274743aaaf8a5a20366d6dd9c2695d3b4",
+   "module": "Arith.DividerHr",
+   "statement_sha256": "aaa23fb280ee03bffb2762b936b2c2e1ce6b8e926a57a1bbea49d6aefc38922e",
+   "tier": "kernel_only"
+  },
+  "Arith.DividerHr.run_spec": {
+   "axioms": [
+    "Quot.sound",
+    "propext"
+   ],
+   "build_ok": true,
+   "definitions_sha256": "4bb284194d6fdc2f3926cbe3cab3d77274743aaaf8a5a20366d6dd9c2695d3b4",
+   "module": "Arith.DividerHr",
+   "statement_sha256": "45df35c1e566d345a065502bf8ee4acdb79670cdf71e579ed9b84e084f0d5928",
+   "tier": "kernel_only"
+  },
   "Arith.Isqrt.rsqrt_correct": {
    "axioms": [
     "Quot.sound",
@@ -100,6 +152,73 @@
    "definitions_sha256": "82db7c6983d183092601b8482dd4ead9d9c0c9b131545338064a01c3422ee882",
    "module": "Arith.Lzc",
    "statement_sha256": "ed9c02765010bc410ca92d44a9a415b18670178f2a7665c99c89c2125938f27c",
+   "tier": "kernel_only"
+  },
+  "Arith.Newton.gs_denominator_residual": {
+   "axioms": [
+    "Quot.sound",
+    "propext"
+   ],
+   "build_ok": true,
+   "definitions_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "module": "Arith.Newton",
+   "statement_sha256": "ad4ad83959e2c393c91d24d8c1bfceb2a3c899b840e3ca913221db58a04d3eeb",
+   "tier": "kernel_only"
+  },
+  "Arith.Newton.gs_ratio_invariant": {
+   "axioms": [
+    "propext"
+   ],
+   "build_ok": true,
+   "definitions_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "module": "Arith.Newton",
+   "statement_sha256": "7a21d32a7da1b2e364d3f47e55d5d379a80d9341542f8d1cbfd7a2b943969426",
+   "tier": "kernel_only"
+  },
+  "Arith.Newton.recip_step_one_sided": {
+   "axioms": [
+    "Quot.sound",
+    "propext"
+   ],
+   "build_ok": true,
+   "definitions_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "module": "Arith.Newton",
+   "statement_sha256": "15638d9ccafc8b8622070bb416a93ddf00b92fde48e04f7dbd467ded0b66ea5f",
+   "tier": "kernel_only"
+  },
+  "Arith.Newton.recip_step_residual": {
+   "axioms": [
+    "Quot.sound",
+    "propext"
+   ],
+   "build_ok": true,
+   "definitions_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "module": "Arith.Newton",
+   "statement_sha256": "6aa794362334289a8a75259ef903d3725c59cf9eeb38959fcaf4c74a70d509e1",
+   "tier": "kernel_only"
+  },
+  "Arith.Newton.rsqrt_step_one_sided": {
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "build_ok": true,
+   "definitions_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "module": "Arith.Newton",
+   "statement_sha256": "6bf7d9a039afad00864da47b0e55256c47a66426ccd7191e2110edd07fb48390",
+   "tier": "kernel_only"
+  },
+  "Arith.Newton.rsqrt_step_residual": {
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "build_ok": true,
+   "definitions_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "module": "Arith.Newton",
+   "statement_sha256": "c89d234fbe82735a0c78831583442a1e186a102ed63a1fc2a00901a8225fe732",
    "tier": "kernel_only"
   },
   "Arith.Rounding.convFold_eq": {
@@ -173,6 +292,17 @@
    "statement_sha256": "dbc9e241e29daa544cdf25b47de83a59d7a3aab0b4f266d3f4affc844b6d8c3e",
    "tier": "kernel_only"
   },
+  "Arith.SqrtR4.r4sqrt_correct": {
+   "axioms": [
+    "Quot.sound",
+    "propext"
+   ],
+   "build_ok": true,
+   "definitions_sha256": "f80c384b399ec05cac5305ae822f0d2c2eda3919202a03c54ed6d80c31545584",
+   "module": "Arith.SqrtR4",
+   "statement_sha256": "96e4f8d0542d08c793998c20e9d27443c1f85b7ac243dd4b7175b227db71996e",
+   "tier": "kernel_only"
+  },
   "ArithAdder.cs_correct": {
    "axioms": [
     "Classical.choice",
@@ -218,6 +348,86 @@
    "statement_sha256": "96db3186959b8cf4c2f3cb10f06c81573c0ac1fd8d923d08c2c76547e438448b",
    "tier": "kernel_only"
   },
+  "ArithCordic.circ_step_norm": {
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "build_ok": true,
+   "definitions_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "module": "Arith.Cordic",
+   "statement_sha256": "082fad8e899ec8638b226fa785b1716bbe855e62d9d2aff8714f542f7464d370",
+   "tier": "kernel_only"
+  },
+  "ArithCordic.hyp_step_invariant": {
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "build_ok": true,
+   "definitions_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "module": "Arith.Cordic",
+   "statement_sha256": "cc3f5edf7f81e19fdac6a74d53a98d628360b0076a0efff28de182070505edc2",
+   "tier": "kernel_only"
+  },
+  "ArithFloat.norm_shift": {
+   "axioms": [
+    "Quot.sound",
+    "propext"
+   ],
+   "build_ok": true,
+   "definitions_sha256": "72cef58252f3ff662355a565e97cc4b75715d3702d71b98d173fe5fc4dae8ab2",
+   "module": "Arith.Float",
+   "statement_sha256": "700f80677f865f81b51396aa4daea8a674f275d90ca307041b28ce1efccfd3cf",
+   "tier": "kernel_only"
+  },
+  "ArithFloat.pack_inc_carry": {
+   "axioms": [
+    "Quot.sound",
+    "propext"
+   ],
+   "build_ok": true,
+   "definitions_sha256": "72cef58252f3ff662355a565e97cc4b75715d3702d71b98d173fe5fc4dae8ab2",
+   "module": "Arith.Float",
+   "statement_sha256": "8b1d9ffba70ef2838957c9b433c957e9756418797da9f39cbb77d32d61d62c60",
+   "tier": "kernel_only"
+  },
+  "ArithFloat.rne_nearest_even": {
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "build_ok": true,
+   "definitions_sha256": "72cef58252f3ff662355a565e97cc4b75715d3702d71b98d173fe5fc4dae8ab2",
+   "module": "Arith.Float",
+   "statement_sha256": "5c119f89efc9a86c566e4b07f1b405e20c03cecb2ee75faf032273cd78f5428c",
+   "tier": "kernel_only"
+  },
+  "ArithLerp.lerp_between": {
+   "axioms": [
+    "Quot.sound",
+    "propext"
+   ],
+   "build_ok": true,
+   "definitions_sha256": "b5e065ae40a1607d70d1128924d3c909a0c91c0277e85019e6526f117348231a",
+   "module": "Arith.Lerp",
+   "statement_sha256": "d976638313466cf44cc385027f511e5ebb4d8dbddd1c763e7c944bc49472a9c3",
+   "tier": "kernel_only"
+  },
+  "ArithLerp.lerp_mono": {
+   "axioms": [
+    "Quot.sound",
+    "propext"
+   ],
+   "build_ok": true,
+   "definitions_sha256": "b5e065ae40a1607d70d1128924d3c909a0c91c0277e85019e6526f117348231a",
+   "module": "Arith.Lerp",
+   "statement_sha256": "b999545f625f1baf05ca6cbb7d793a1074c229e1b5590f64979a8ad6b30c21e7",
+   "tier": "kernel_only"
+  },
   "ArithMac.run_after_clr": {
    "axioms": [
     "propext"
@@ -236,6 +446,27 @@
    "definitions_sha256": "728a209082942fc3b4737ef182713748557c5b5f42ac37707dfc2170599ebe98",
    "module": "Arith.Mac",
    "statement_sha256": "26ba95f62b5f4c0a32eb9e90a5c5de1b93e58ae6f98457ecd0e512aeee467a29",
+   "tier": "kernel_only"
+  },
+  "ArithQuadrant.quadrant_join": {
+   "axioms": [
+    "Quot.sound",
+    "propext"
+   ],
+   "build_ok": true,
+   "definitions_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "module": "Arith.Quadrant",
+   "statement_sha256": "6a6c4fffce2bb506f2c4587372fb8ef941a2263a5ac0801392002073452bd339",
+   "tier": "kernel_only"
+  },
+  "ArithQuadrant.quadrant_split": {
+   "axioms": [
+    "propext"
+   ],
+   "build_ok": true,
+   "definitions_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "module": "Arith.Quadrant",
+   "statement_sha256": "4e391e92e8817baa9acda5a2b66275d8f6a7d6c98bb6c4051839092d6fd6674e",
    "tier": "kernel_only"
   },
   "Cksum.incUpdate_correct": {

@@ -80,7 +80,17 @@ def modules(files: list[Path]) -> dict[str, dict[str, Any]]:
 
 
 def infer_top(files: list[Path]) -> str | None:
+    """The top module of the files: the SystemVerilog module nothing instantiates (the largest hierarchy), else (brief 153) the one VHDL
+    entity no other VHDL file instantiates; None when there is no unique answer."""
     mods = modules(files)
+    if not mods:
+        from flow import sources, vhdl
+        vh = sources.vhdl_files(files)
+        if vh:
+            try:
+                return vhdl.top_entity(vh, "")
+            except RuntimeError:
+                return None
     inst = {c for m in mods.values() for c, _ in m["instances"]}
     tops = sorted(n for n in mods if n not in inst)
     if not tops:
@@ -123,7 +133,7 @@ def prepare(design: Path, name: str | None = None, top: str | None = None) -> di
         t = t or infer_top([dst / r for r in rtl])
         rel = dst.relative_to(ROOT).as_posix()
         pats = sorted({f"{rel}/{r.parent.as_posix()}/*{r.suffix}" if r.parent.as_posix() != "." else f"{rel}/*{r.suffix}" for r in rtl
-                       if r.suffix.lower() in (".sv", ".v")})
+                       if r.suffix.lower() in (".sv", ".v", ".vhd", ".vhdl")})
         pats = [p for p in pats if "*" in p]
         (dst / "build.yaml").write_text(yaml.safe_dump({"top": t, "sources": pats, "made_by": "review (flow/review/prepare.py)"}))
     return {"work": work, "src": dst, "top": t, "rtl": [r.as_posix() for r in rtl], "tb": [r.as_posix() for r in tb],
