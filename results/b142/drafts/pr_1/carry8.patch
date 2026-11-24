@@ -1,0 +1,117 @@
+diff --git a/techlibs/xilinx/arith_map.v b/techlibs/xilinx/arith_map.v
+index 6796b93..d9b5ad8 100644
+--- a/techlibs/xilinx/arith_map.v
++++ b/techlibs/xilinx/arith_map.v
+@@ -53,6 +53,31 @@ generate if (`LUT_SIZE == 4) begin
+ 
+ end else begin
+ 
++`ifdef HAS_CARRY8
++	// UltraScale and UltraScale+: eight carry bits per CARRY8, not four per CARRY4
++	localparam CARRY8_COUNT = (WIDTH + 7) / 8;
++	localparam MAX_WIDTH    = CARRY8_COUNT * 8;
++	localparam PAD_WIDTH    = MAX_WIDTH - WIDTH;
++
++	(* force_downto *)
++	wire [MAX_WIDTH-1:0] S =  {{PAD_WIDTH{1'b0}}, P & ~G};
++	(* force_downto *)
++	wire [MAX_WIDTH-1:0] GG = {{PAD_WIDTH{1'b0}}, G};
++	(* force_downto *)
++	wire [MAX_WIDTH-1:0] C;
++	assign CO = C;
++
++	generate for (i = 0; i < CARRY8_COUNT; i = i + 1) begin:slice
++		CARRY8 carry8
++		(
++		.CI    (i == 0 ? CI : C[i*8 - 1]),
++		.CI_TOP(1'd0),
++		.DI    (GG[i*8 +: 8]),
++		.S     (S [i*8 +: 8]),
++		.CO    (C [i*8 +: 8])
++		);
++	end endgenerate
++`else
+ 	localparam CARRY4_COUNT = (WIDTH + 3) / 4;
+ 	localparam MAX_WIDTH    = CARRY4_COUNT * 4;
+ 	localparam PAD_WIDTH    = MAX_WIDTH - WIDTH;
+@@ -86,6 +111,8 @@ end else begin
+ 			);
+ 		end
+ 	end endgenerate
++`endif
++
+ end endgenerate
+ 
+ endmodule
+@@ -155,6 +182,38 @@ generate if (`LUT_SIZE == 4) begin
+ 
+ end else begin
+ 
++`ifdef HAS_CARRY8
++	// UltraScale and UltraScale+: eight carry bits per CARRY8, not four per CARRY4
++	localparam CARRY8_COUNT = (Y_WIDTH + 7) / 8;
++	localparam MAX_WIDTH    = CARRY8_COUNT * 8;
++	localparam PAD_WIDTH    = MAX_WIDTH - Y_WIDTH;
++
++	(* force_downto *)
++	wire [MAX_WIDTH-1:0] S  = {{PAD_WIDTH{1'b0}}, AA ^ BB};
++	(* force_downto *)
++	wire [MAX_WIDTH-1:0] DI = {{PAD_WIDTH{1'b0}}, AA};
++
++	(* force_downto *)
++	wire [MAX_WIDTH-1:0] O;
++	(* force_downto *)
++	wire [MAX_WIDTH-1:0] C;
++	assign Y = O, CO = C;
++
++	genvar i;
++	generate for (i = 0; i < CARRY8_COUNT; i = i + 1) begin:slice
++		CARRY8 carry8
++		(
++		.CI    (i == 0 ? CI : C[i*8 - 1]),
++		.CI_TOP(1'd0),
++		.DI    (DI[i*8 +: 8]),
++		.S     (S [i*8 +: 8]),
++		.O     (O [i*8 +: 8]),
++		.CO    (C [i*8 +: 8])
++		);
++	end endgenerate
++
++	assign X = S;
++`else
+ 	localparam CARRY4_COUNT = (Y_WIDTH + 3) / 4;
+ 	localparam MAX_WIDTH    = CARRY4_COUNT * 4;
+ 	localparam PAD_WIDTH    = MAX_WIDTH - Y_WIDTH;
+@@ -197,5 +256,7 @@ end else begin
+ 
+ 	assign X = S;
+ 
++`endif
++
+ end endgenerate
+ endmodule
+diff --git a/techlibs/xilinx/synth_xilinx.cc b/techlibs/xilinx/synth_xilinx.cc
+index 0c53d27..6e04272 100644
+--- a/techlibs/xilinx/synth_xilinx.cc
++++ b/techlibs/xilinx/synth_xilinx.cc
+@@ -99,7 +99,7 @@ struct SynthXilinxPass : public ScriptPass
+ 		log("        do not use distributed SRL cells in output netlist\n");
+ 		log("\n");
+ 		log("    -nocarry\n");
+-		log("        do not use XORCY/MUXCY/CARRY4 cells in output netlist\n");
++		log("        do not use XORCY/MUXCY/CARRY4/CARRY8 cells in output netlist\n");
+ 		log("\n");
+ 		log("    -nowidelut\n");
+ 		log("        do not use MUXF[5-9] resources to implement LUTs larger than native for\n");
+@@ -608,6 +608,11 @@ struct SynthXilinxPass : public ScriptPass
+ 				techmap_args += stringf(" -D MIN_MUX_INPUTS=%d -map +/xilinx/mux_map.v", widemux);
+ 			if (!nocarry) {
+ 				techmap_args += " -map +/xilinx/arith_map.v";
++				// UltraScale and UltraScale+ carry chains are CARRY8 (eight bits per cell), not CARRY4
++				if (help_mode)
++					techmap_args += " [-D HAS_CARRY8]";
++				else if (family == "xcu" || family == "xcup")
++					techmap_args += " -D HAS_CARRY8";
+ 			}
+ 			run("techmap " + techmap_args);
+ 			run("opt -fast");

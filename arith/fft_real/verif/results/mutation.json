@@ -1,0 +1,121 @@
+{
+ "function": "fft_real",
+ "mutants": 13,
+ "valid": 13,
+ "killed": 13,
+ "survived": [],
+ "invalid": [],
+ "score_pct": 100.0,
+ "per_variant": {
+  "post": {
+   "valid": 13,
+   "killed": 13
+  }
+ },
+ "results": [
+  {
+   "name": "r_e_sign",
+   "variant": "post",
+   "class": "operator",
+   "status": "killed",
+   "detail": "directed {'LOGN': 5, 'W': 8, 'TW': 10, 'SCALE': 1, 'RND': 1, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 2}",
+   "why": "E uses Z[N/2-k] instead of its conjugate (imaginary part)"
+  },
+  {
+   "name": "r_o_real",
+   "variant": "post",
+   "class": "operator",
+   "status": "killed",
+   "detail": "directed {'LOGN': 5, 'W': 8, 'TW': 10, 'SCALE': 1, 'RND': 1, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 2}",
+   "why": "O adds the real parts"
+  },
+  {
+   "name": "r_o_imag",
+   "variant": "post",
+   "class": "operator",
+   "status": "killed",
+   "detail": "directed {'LOGN': 5, 'W': 8, 'TW': 10, 'SCALE': 1, 'RND': 1, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 2}",
+   "why": "O subtracts the imaginary parts"
+  },
+  {
+   "name": "r_minus_j",
+   "variant": "post",
+   "class": "operator",
+   "status": "killed",
+   "detail": "directed {'LOGN': 5, 'W': 8, 'TW': 10, 'SCALE': 1, 'RND': 1, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 2}",
+   "why": "the quarter turn has the wrong sign"
+  },
+  {
+   "name": "r_shift",
+   "variant": "post",
+   "class": "constant",
+   "status": "killed",
+   "detail": "directed {'LOGN': 5, 'W': 8, 'TW': 10, 'SCALE': 1, 'RND': 1, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 2}",
+   "why": "the scaled mode shifts once instead of twice"
+  },
+  {
+   "name": "r_mirror",
+   "variant": "post",
+   "class": "operator",
+   "status": "killed",
+   "detail": "directed {'LOGN': 5, 'W': 8, 'TW': 10, 'SCALE': 1, 'RND': 1, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 2}",
+   "why": "the mirrored index is N/2 - 1 - k"
+  },
+  {
+   "name": "r_bank",
+   "variant": "post",
+   "class": "connection",
+   "status": "killed",
+   "detail": "directed {'LOGN': 5, 'W': 8, 'TW': 10, 'SCALE': 1, 'RND': 1, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 2}",
+   "why": "the bank being written is read"
+  },
+  {
+   "name": "r_wr_order",
+   "variant": "post",
+   "class": "connection",
+   "status": "killed",
+   "detail": "directed {'LOGN': 5, 'W': 8, 'TW': 10, 'SCALE': 1, 'RND': 1, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 2}",
+   "why": "the second memory copy stores Z in arrival order instead of at bit-reversed addresses"
+  },
+  {
+   "name": "r_twiddle_k",
+   "variant": "post",
+   "class": "connection",
+   "status": "killed",
+   "detail": "directed {'LOGN': 5, 'W': 8, 'TW': 10, 'SCALE': 1, 'RND': 1, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 2}",
+   "why": "the twiddle index is k + 1"
+  },
+  {
+   "name": "r_core_width",
+   "variant": "post",
+   "class": "width",
+   "status": "killed",
+   "detail": "directed {'LOGN': 5, 'W': 8, 'TW': 10, 'SCALE': 1, 'RND': 1, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 2}",
+   "why": "the even sample is zero-extended into the core (negative samples wrong)"
+  },
+  {
+   "name": "r_last",
+   "variant": "post",
+   "class": "constant",
+   "status": "killed",
+   "detail": "directed {'LOGN': 5, 'W': 8, 'TW': 10, 'SCALE': 1, 'RND': 1, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 2}",
+   "why": "the read-out stops one bin early"
+  },
+  {
+   "name": "r_align",
+   "variant": "post",
+   "class": "latency",
+   "status": "killed",
+   "detail": "directed {'LOGN': 5, 'W': 8, 'TW': 10, 'SCALE': 1, 'RND': 1, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 2}",
+   "why": "the twiddle is a clock early"
+  },
+  {
+   "name": "r_round_p",
+   "variant": "post",
+   "class": "constant",
+   "status": "killed",
+   "detail": "directed {'LOGN': 5, 'W': 8, 'TW': 10, 'SCALE': 1, 'RND': 1, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 2}",
+   "why": "the product's rounding constant is a quarter"
+  }
+ ]
+}

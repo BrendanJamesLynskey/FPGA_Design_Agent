@@ -72,25 +72,38 @@ module mdio_master #(
     logic f_init = 1'b1;
     logic f_busy_q = 1'b0;
     always_ff @(posedge clk) begin f_init <= rst; f_busy_q <= busy; end
+    // Every assertion is labelled (a_*) and paired with a cover of its own antecedent (a_*__ante; brief 143c, flow/formal_rigour.py).
     always_ff @(posedge clk) if (!f_init && !rst) begin
         if (busy) begin
-            assert (t <= 11'(2 * DIV - 1) && nb >= 7'd1 && nb <= 7'd64);
-            assert (oe == ((r ? {46'h3FFF_FFFF_FFFF, 18'h0} : 64'hFFFF_FFFF_FFFF_FFFF) << (7'd64 - nb)));
+            a_counters_in_range: assert (t <= 11'(2 * DIV - 1) && nb >= 7'd1 && nb <= 7'd64);
+            a_output_enable_mask: assert (oe == ((r ? {46'h3FFF_FFFF_FFFF, 18'h0} : 64'hFFFF_FFFF_FFFF_FFFF) << (7'd64 - nb)));
             // MDC low for the first DIV clocks of a bit time, high for the rest
-            assert (mdc == (t > 11'(DIV) || (t == 11'd0 && nb != 7'd64)));
+            a_mdc_phase: assert (mdc == (t > 11'(DIV) || (t == 11'd0 && nb != 7'd64)));
             // what is on the line is the current bit (from t = 1)
-            if (t != 11'd0) assert (mdio_t == !oe[63] && (mdio_t || mdio_o == sh[63]));
+            if (t != 11'd0) a_line_is_current_bit: assert (mdio_t == !oe[63] && (mdio_t || mdio_o == sh[63]));
             // a read releases the line from the turnaround on; a write drives it throughout
-            if (t != 11'd0 && r && nb <= 7'd18) assert (mdio_t);
-            if (t != 11'd0 && !r) assert (!mdio_t);
+            if (t != 11'd0 && r && nb <= 7'd18) a_read_releases_line: assert (mdio_t);
+            if (t != 11'd0 && !r) a_write_drives_line: assert (!mdio_t);
         end else begin
-            assert (!mdc);
-            if (!f_busy_q) assert (mdio_t && mdio_o);
+            a_idle_mdc_low: assert (!mdc);
+            if (!f_busy_q) a_idle_line_released: assert (mdio_t && mdio_o);
         end
         // setup and hold: the line is steady at a rising edge of MDC and one clock after it
-        if ($rose(mdc)) assert ($stable(mdio_o) && $stable(mdio_t));
-        if (busy && mdc && $past(mdc) && t == 11'(DIV + 2) % 11'(2 * DIV)) assert ($stable(mdio_o) && $stable(mdio_t));
-        cover (f_busy_q && !busy && r);
+        if ($rose(mdc)) a_setup_at_rise: assert ($stable(mdio_o) && $stable(mdio_t));
+        if (busy && mdc && $past(mdc) && t == 11'(DIV + 2) % 11'(2 * DIV)) a_hold_after_rise: assert ($stable(mdio_o) && $stable(mdio_t));
+    end
+    // antecedents (same guard): the condition each assertion sits under
+    always_ff @(posedge clk) if (!f_init && !rst) begin
+        a_busy__ante: cover (busy && nb == 7'd1);                       // a_counters_in_range, a_output_enable_mask, a_mdc_phase: the last bit of a frame is reached
+        a_line_is_current_bit__ante: cover (busy && t != 11'd0);
+        a_read_releases_line__ante: cover (busy && t != 11'd0 && r && nb <= 7'd18);
+        a_write_drives_line__ante: cover (busy && t != 11'd0 && !r);
+        a_idle_mdc_low__ante: cover (!busy);
+        a_idle_line_released__ante: cover (!busy && !f_busy_q);
+        a_setup_at_rise__ante: cover ($rose(mdc));
+        a_hold_after_rise__ante: cover (busy && mdc && $past(mdc) && t == 11'(DIV + 2) % 11'(2 * DIV));
+        c_read_frame_done: cover (f_busy_q && !busy && r);
+        c_write_frame_done: cover (f_busy_q && !busy && !r);
     end
 `endif
 endmodule

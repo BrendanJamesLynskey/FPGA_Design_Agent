@@ -39,8 +39,15 @@ def block_stream(rng: random.Random, frames, gaps, os_every=0, err_every=0):
     return blocks
 
 
-def to_entries(blocks, phase=0, gap_every=33, pad=600):
-    """Write-clock entries: a block per clock except one clock in `gap_every` (phase picks which); `pad` idle blocks follow the stream."""
+def is_start(d, c):
+    """True for a block that starts a frame: Start (0xFB) in lane 0 (control mask 0x01) or in lane 4 (mask 0x1F), the two the receive PCS produces."""
+    return (c == 0x01 and d & 0xFF == 0xFB) or (c == 0x1F and (d >> 32) & 0xFF == 0xFB)
+
+
+def to_entries(blocks, phase=0, gap_every=33, pad=600, pause_after_start=0):
+    """Write-clock entries: a block per clock except one clock in `gap_every` (phase picks which); `pad` idle blocks follow the stream.
+    ``pause_after_start`` (brief 152): after every frame-start block, that many clocks with nothing to write (v = 0), so that the elastic buffer drains
+    right after the start block is read and the reader has to stall inside the frame."""
     blocks = list(blocks) + [(IDLE[0], IDLE[1], 0)] * pad
     ent = []
     k = 0
@@ -52,6 +59,9 @@ def to_entries(blocks, phase=0, gap_every=33, pad=600):
             d, c, os = blocks[i]
             ent.append((1, d, c, os))
             i += 1
+            if pause_after_start and not os and is_start(d, c):
+                ent.extend([(0, 0, 0, 0)] * pause_after_start)
+                k += pause_after_start
         k += 1
     return ent
 
