@@ -1,0 +1,63 @@
+| Design Timing Summary
+| ---------------------
+------------------------------------------------------------------------------------------------
+
+    WNS(ns)      TNS(ns)  TNS Failing Endpoints  TNS Total Endpoints      WHS(ns)      THS(ns)  THS Failing Endpoints  THS Total Endpoints     WPWS(ns)     TPWS(ns)  TPWS Failing Endpoints  TPWS Total Endpoints  
+    -------      -------  ---------------------  -------------------      -------      -------  ---------------------  -------------------     --------     --------  ----------------------  --------------------  
+      0.521        0.000                      0                38827       -2.723     -370.409                    370                36883        0.428        0.000                       0                 17707  
+
+
+Timing constraints are not met.
+
+
+| Intra Clock Table
+| -----------------
+------------------------------------------------------------------------------------------------
+
+Clock                                                            WNS(ns)      TNS(ns)  TNS Failing Endpoints  TNS Total Endpoints      WHS(ns)      THS(ns)  THS Failing Endpoints  THS Total Endpoints     WPWS(ns)     TPWS(ns)  TPWS Failing Endpoints  TPWS Total Endpoints  
+-----                                                            -------      -------  ---------------------  -------------------      -------      -------  ---------------------  -------------------     --------     --------  ----------------------  --------------------  
+clk_25                                                                                                                                                                                                        10.000        0.000                       0                     1  
+  clk_u                                                            3.817        0.000                      0                16618       -0.222       -2.003                     61                16618        3.200        0.000                       0                  8488  
+clk_pl_0                                                           7.768        0.000                      0                 2049       -0.038       -0.073                      4                 2049        3.656        0.000                       0                   901  
+  u_dbg/u_bridge/inst/axi_jtag/inst/u_jtag_proc/tck_i_reg/Q       35.758        0.000                      0                 1124       -2.576     -361.429                    183                 1124       40.486        0.000                       0                   538  
+    gen_gtwizard_gthe4.rxoutclkpcs_int[0]                          2.164        0.000                      0                   34        0.072        0.000                      0                   34        1.277        0.000                       0                    16  
+    gtwiz_userclk_rx_srcclk_out[0]                                                                                                                                                                             0.481        0.000                       0                     3  
+      rxusr2                                                       0.521        0.000                      0                 7074       -0.027       -0.151                     15                 7074        0.626        0.000                       0                  3045  
+    gtwiz_userclk_tx_srcclk_out[0]                                 2.630        0.000                      0                   14        0.118        0.000                      0                   14        0.450        0.000                       0                    24  
+      txusr2                                                       0.530        0.000                      0                 9474       -0.140       -4.709                    107                 9474        0.428        0.000                       0                  4500  
+  tck_out                                                         31.182        0.000                      0                  195        0.029        0.000                      0                  195       16.391        0.000                       0                   191  
+
+
+------------------------------------------------------------------------------------------------
+| Inter Clock Table
+| -----------------
+------------------------------------------------------------------------------------------------
+
+From Clock                                                                                To Clock                                                                                      WNS(ns)      TNS(ns)  TNS Failing Endpoints  TNS Total Endpoints      WHS(ns)      THS(ns)  THS Failing Endpoints  THS Total Endpoints  
+----------                                                                                --------                                                                                      -------      -------  ---------------------  -------------------      -------      -------  ---------------------  -------------------  
+u_dbg/u_bridge/inst/axi_jtag/inst/u_jtag_proc/tck_i_reg/Q                                 clk_u                                                                                          82.097        0.000                      0                    8                                                                        
+rxusr2                                                                                    clk_u                                                                                           5.242        0.000                      0                  529                                                                        
+txusr2                                                                                    clk_u                                                                                           5.140        0.000                      0                  832                                                                        
+u_dbg/u_bridge/inst/axi_jtag/inst/u_jtag_proc/tck_i_reg/Q                                 clk_pl_0                                                                                        9.625        0.000                      0                   33        0.221        0.000                      0                    1  
+clk_u                                                                                     u_dbg/u_bridge/inst/axi_jtag/inst/u_jtag_proc/tck_i_reg/Q                                       9.543        0.000                      0                    8                                                                        
+clk_pl_0                                                                                  u_dbg/u_bridge/inst/axi_jtag/inst/u_jtag_proc/tck_i_reg/Q                                      39.050        0.000                      0                   11                                                                        
+u_dbg/u_bridge/inst/bsip/inst/USE_SOFTBSCAN.U_BSCAN_TAP/U_BASETAP/U_TAP/UPDATEDR_O_reg/Q  u_dbg/u_bridge/inst/axi_jtag/inst/u_jtag_proc/tck_i_reg/Q                                      41.697        0.000                      0                   10       -2.723      -25.045                     10                   10  
+clk_u                                                                                     rxusr2                                                                                          5.297        0.000                      0                  211                                                                        
+clk_u                                                                                     txusr2                                                                                          5.352        0.000                      0                  354                                                                        
+tck_out                                                                                   tck                                                                                             4.320        0.000                      0                    1       18.827        0.000                      0                    1  
+tck                                                                                       tck_out                                                                                        11.193        0.000                      0                  174        7.293        0.000                      0                  174  
+
+
+------------------------------------------------------------------------------------------------
+| Other Path Groups Table
+| -----------------------
+------------------------------------------------------------------------------------------------
+
+Path Group                                                 From Clock                                                 To Clock                                                       WNS(ns)      TNS(ns)  TNS Failing Endpoints  TNS Total Endpoints      WHS(ns)      THS(ns)  THS Failing Endpoints  THS Total Endpoints  
+----------                                                 ----------                                                 --------                                                       -------      -------  ---------------------  -------------------      -------      -------  ---------------------  -------------------  
+**async_default**                                          clk_u                                                      clk_u                                                            8.816        0.000                      0                  105        0.166        0.000                      0                  105  
+**async_default**                                          u_dbg/u_bridge/inst/axi_jtag/inst/u_jtag_proc/tck_i_reg/Q  u_dbg/u_bridge/inst/axi_jtag/inst/u_jtag_proc/tck_i_reg/Q       40.000        0.000                      0                  107        0.159        0.000                      0                  107  
+
+
+------------------------------------------------------------------------------------------------
+| Timing Details

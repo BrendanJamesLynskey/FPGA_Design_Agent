@@ -1,0 +1,35 @@
+schema: fpga-design-agent/formal_rigour/v1
+scope: "ddr2_sched at the tiny configuration of run_formal.py (one bank bit, shortened timings, POLICY = 0), all property groups at once, bounded. The unbounded proofs of the rules, the refresh debt and the ordering, and the real-timing configurations, are the jobs of run_formal.py recorded in results/b141/formal_full.json; this file is the one SymbiYosys job the repository ships beside them and is judged as a bounded check."
+# the antecedent of each assertion is the command or state in which it could be broken; one cover serves a group (read by a person, not proved)
+antecedents:
+  "r_act_*": cov_act
+  "r_col_*": cov_col
+  "r_rd_*": cov_rd
+  "r_wr_*": cov_wr
+  "r_pre_*": cov_pre
+  "r_prea_*": cov_prea
+  "r_ref_*": cov_ref
+  "r_any_trfc": cov_ref
+  "r_op_legal": cov_act
+  "i_col_trcd": cov_col
+  "i_rc_trc": cov_act
+  "i_pre_*": cov_pre
+  "i_rp_trp": cov_pre
+  "i_open_state": cov_act
+  "i_faw*": cov_act
+  "i_rrd": cov_act
+  "i_rd_*": cov_rd
+  "i_wr_*": cov_wr
+  "i_rfc": cov_ref
+  "i_rfc_closed": cov_ref
+  "i_latched_debt": cov_debt_any
+  "l_debt_bound": cov_debt_any
+  "l_ref_has_debt": cov_debt_any
+  "i_ord_*": cov_order_pending
+  "o_no_overtake": cov_order_pending
+  "l_bounded": cov_tracked_served
+sanity: [cov_act, cov_rd, cov_wr, cov_pre, cov_ref]
+depth:
+  bmc:
+    enough: false
+    why: "A bound, not a proof: depth 70 covers the tiny part's command sequences (an ACTIVATE, a column command and a PRECHARGE of one bank take about 12 clocks with the shortened timings) but not every state of the refresh and ordering monitors, which is why those are proved unbounded by run_formal.py in their own jobs."
