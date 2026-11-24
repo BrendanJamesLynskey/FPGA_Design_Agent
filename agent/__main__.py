@@ -432,7 +432,8 @@ def build_parser() -> argparse.ArgumentParser:
                                    "roles (record keys): clarify (Clarifier), model (Modeller), tests (Verifier), rtl (Designer)")
     r.add_argument("--no-shell", action="store_true",
                    help="the subject is the USB-UART itself: build, lint and simulate without the test shell "
-                        "(07a2-prep; also set when --hidden-spec sits next to a bench.yaml with no_shell: true)")
+                        "(07a2-prep; also set when --hidden-spec sits next to a bench.yaml with no_shell: true, and for a board "
+                        "with no UART such as the KR260, from its board file: brief 209a)")
     r.add_argument("--data-dir", type=Path,
                    help="the task's data/ files (weights, images ...), copied to <design>/data (07a2-prep; default: "
                         "data/ next to spec.md, when it exists)")
