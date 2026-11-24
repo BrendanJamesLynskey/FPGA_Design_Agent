@@ -1151,6 +1151,37 @@ def mark_persisted(prev: dict | None, new: dict) -> dict:
     return new
 
 
+REPORT_GATE_CHECKS = ("logic_levels", "control_sets", "synth_log")
+
+
+def report_gates_eval(rt: Runtime) -> dict | None:
+    """Brief 209a: the report checks of brief 204a on the post-synthesis reports the build just wrote (``logic_levels``: RPT-LL-02,
+    ``control_sets``: RPT-CS-02, ``synth_log``: RPT-LOG-03; the rest of what these checks find is an advisory). Reads records only
+    (no Vivado session). ``None`` when the build wrote no synthesis timing report (nothing to judge) or the checks could not run:
+    the gate never fails a design by being unavailable. Blocking findings are routed to the Designer by ``stages.report_gates_stage``."""
+    from flow import checks
+    try:
+        if not (rt.design / "build" / "base" / "timing_summary_synth.rpt").is_file():
+            return None
+        rep = checks.run(rt.design, list(REPORT_GATE_CHECKS), scope="synth", level="standard")
+    except Exception as e:                                       # noqa: BLE001
+        return {"findings": [], "advisories": [], "error": f"{type(e).__name__}: {str(e)[:200]}"}
+    fs = [f for c in rep["checks"] for f in (c.get("findings") or []) if "waived" not in f or f.get("blocking") and False]
+    from agent.graph.stages import REPORT_GATE_CODES
+    return {"findings": [f for f in fs if f["blocking"] and f["code"] in REPORT_GATE_CODES],
+            "advisories": [f for f in fs if not f["blocking"] or f["code"] not in REPORT_GATE_CODES],
+            "checks": {c["check"]: c["status"] for c in rep["checks"]}, "report": rep.get("report_path")}
+
+
+def report_gates_detail(ev: dict, detail: list) -> None:
+    """The failure text of a blocking report finding, for the repair visit's Designer (the gate's own wording)."""
+    from agent.graph.stages import report_gates_stage
+    from agent.graph.repair import report_advisory_text
+    ok, why = report_gates_stage(ev.get("report_gates"))
+    if not ok:
+        detail.append("[report gates] " + "\n".join(why)[:1800] + report_advisory_text(ev.get("report_gates")))
+
+
 def constants_blocks(ev: dict) -> bool:
     return any(f.get("blocking") for f in ((ev.get("constants") or {}).get("findings") or []))
 
@@ -1264,12 +1295,15 @@ def node_gate(state: State) -> dict:
                 detail.append(ev["spec_test"]["evidence"][:3000])
         if ev["lint"]["ok"] and ev["simulate"]["ok"] and not spec_blocks and not constants_blocks(ev):   # no Vivado time on a design that fails its tests
             ev["gates_base"] = _build(rt, "synth")["gates"]
+            ev["report_gates"] = report_gates_eval(rt)           # brief 209a: the synthesis report is the first the build writes
     elif n in (3, 4):
         if n == 3:
             ev["constants"] = constants_gate(rt)                 # brief 82P4: the board clock period against the XDC
             if constants_blocks(ev):
                 detail.append("[constants] " + "\n".join(f["message"] for f in ev["constants"]["findings"] if f.get("blocking"))[:1800])
         ev["gates_base"] = _build(rt, "synth")["gates"]
+        ev["report_gates"] = report_gates_eval(rt)               # brief 209a
+        report_gates_detail(ev, detail)
         if n == 4 and rt.cfg.design_plan:                        # closure-loop hook: inferred primitives against the plan
             from flow import timing_plan as _tp
             ev["plan_fails"] = _tp.post_synth_failures(rt.design, ev["gates_base"])
