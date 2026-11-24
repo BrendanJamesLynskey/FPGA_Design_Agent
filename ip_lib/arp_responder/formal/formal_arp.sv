@@ -29,13 +29,22 @@ module formal_arp (
         if (rst) beats <= '0;
         else if (m_axis_tvalid && m_axis_tready) beats <= m_axis_tlast ? 7'd0 : beats + 7'd1;
     end
+    // Every assertion is labelled (a_*) and paired with a cover of its own antecedent (a_*__ante; brief 143c, flow/formal_rigour.py).
     always_ff @(posedge clk) if (f_past && !rst) begin
-        assert (viol[2:0] == 3'b000 && !viol[3]);
-        if (m_axis_tvalid && m_axis_tlast) assert (beats == 7'd41);
-        if (m_axis_tvalid && !m_axis_tlast) assert (beats < 7'd41);
-        assert (s_axis_tready && lk_ready);
-        if (lk_done) assert ($past(lk_valid));
-        cover (ev_tx_reply);
-        cover (ev_tx_request);
+        a_axis_rules: assert (viol[2:0] == 3'b000 && !viol[3]);
+        if (m_axis_tvalid && m_axis_tlast) a_frame_last_beat: assert (beats == 7'd41);
+        if (m_axis_tvalid && !m_axis_tlast) a_frame_mid_beat: assert (beats < 7'd41);
+        a_inputs_ready: assert (s_axis_tready && lk_ready);
+        if (lk_done) a_answer_follows_lookup: assert ($past(lk_valid));
+    end
+    // antecedents (same guard): the AXI rules matter while a beat is on the output; a ready flag, while input is offered
+    always_ff @(posedge clk) if (f_past && !rst) begin
+        a_axis_rules__ante: cover (m_axis_tvalid && m_axis_tready);
+        a_frame_last_beat__ante: cover (m_axis_tvalid && m_axis_tlast);
+        a_frame_mid_beat__ante: cover (m_axis_tvalid && !m_axis_tlast);
+        a_inputs_ready__ante: cover (s_axis_tvalid && lk_valid);
+        a_answer_follows_lookup__ante: cover (lk_done);
+        c_reply: cover (ev_tx_reply);
+        c_request: cover (ev_tx_request);
     end
 endmodule

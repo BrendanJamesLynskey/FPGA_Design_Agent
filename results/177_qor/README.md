@@ -47,6 +47,8 @@ What this is not: a gate. The model sees no timing from the synthesis run (the d
 
 ## Reproduce
 
+The three commands below rebuild the dataset from the committed records, evaluate the predictors with numpy only, and run the unit tests; none needs Vivado.
+
 ```
 python3 tools/qor/build_dataset.py      # reads the brief-160 and 166 worktrees and the committed gates.json files; no Vivado
 python3 tools/qor/evaluate.py           # numpy only

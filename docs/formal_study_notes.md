@@ -161,7 +161,7 @@ fairness assumption: a trace on which the read clock stops forever never consume
   counter. Counting edges since the last write edge exactly (`rn`, two single-domain counters and a snapshot) fixed it. The second version assumed "the late bit has been used, so the next clock is sure to take the new value"
   for any held bit; BMC found a run where the held bit belonged to an older pointer step. The late bit that matters is the one the pointer flips over this item (`ibit`).
 
-Status: R1 and R2 are checked by BMC to the depth in section 10 (`progress_bmc`) and the mutant that removes all slot clocks is caught. They are not closed by k-induction: the induction step still has counterexamples whose start states have inconsistent
+Status (updated by brief 191): R1 and R2 are checked by BMC to the depth in section 10 (`progress_bmc`) and the mutant that removes all slot clocks is caught. **They are now closed unbounded by IC3/PDR** (`abc pdr`, `progress_pdr`: proved at AW = 2 in 447 s and at AW = 1; the same engine catches the slot-clock mutant; section 10). PDR strengthens the property by itself, so the two or three hand-written invariants below were not needed. They are still not closed by k-induction: the induction step still has counterexamples whose start states have inconsistent
 synchroniser stages (a lock chain with a 1 behind a 0 was one, and was cured by H10; the next one is a ranking value inconsistent with the stored previous rank) and the depth-4 induction run did not finish in several minutes. So the progress result is
 "no violation of the bounded response within the BMC depth" and not a proof. Closing it needs two or three more invariants relating the stored previous rank to the chain stages; it is left as the first follow-up.
 
@@ -222,6 +222,9 @@ Records: `results/b115/formal_ci.json` (the 23 jobs CI runs, 5.5 minutes of solv
 | covers: pop of the tracked item, idle insert, full buffer, stall, pointer wrap | AW = 2 | cover, depth 60 | all reached |
 | cover: deletion of the tracked item | AW = 2 | cover, depth 110 | reached (full set; needs the one non-slot clock in 33) |
 | ten mutants | AW = 2 (deletion mutants with pace period 4) | prove job, depth 32 (progress mutant: BMC) | all ten caught by a named assertion, 1 to 8 s each |
+| P10: R1, R2, the same ranking function (brief 191) | AW = 2 and AW = 1, ratio band 3:1, lock high | IC3/PDR (`abc pdr`, task `progress_pdr`) | **proved unbounded**, 447 s at AW = 2, 45 s at AW = 1 (`results/191_trading_variants/formal_rm_gp_pdr.json`); no hand-written invariant: PDR finds its own |
+| the progress mutant with no slot clock, same engine | AW = 2 | `progress_pdr` | caught by `r2_rank_decreases`, 42 s |
+| P1 to P9, helpers H1 to H8, same engine | AW = 2, bit 0 | `safety_pdr` | proved, 17 s (agrees with the k-induction result) |
 
 Bound for progress: `RMAX = RATIO + 4 + 3 + DEPTH + 1`, which is 11 + DEPTH read clocks (15 at AW = 2, 27 at the shipped AW = 4), under assumptions A1 to A3. The bound is not tight and was not minimised.
 
@@ -230,7 +233,7 @@ Assumptions in force: A1, A2 in every job; A3 in the progress jobs. RTL bugs fou
 ## 11. Known gaps
 
 * Properties are the Boolean forms; the SVA text beside them was not run (the free front end cannot read it).
-* Progress (R1, R2) is bounded model checking to a stated depth, not an unbounded proof (section 7).
+* Progress (R1, R2): unbounded proof by IC3/PDR at AW = 1 and 2 (brief 191); by k-induction it is still open, and BMC is bounded. The proof is of the model the tool builds for two free clocks (`clk2fflogic`), within the 3:1 band and under A1 to A3, at AW 1 and 2 (the shipped AW = 4 was not run with PDR).
 * Parameters: `AW` 1, 2, 4; `ENT_SYNC = 1`, `HI = 1`, `MIN_KEEP = 0` (defaults). The `ENT_SYNC = 0` variant (direct read of entry flops) and the other `MIN_KEEP` and `HI` values are not proved.
 * The clock band is 3:1; skew above one source clock and metastability beyond one destination clock are outside the model (report_cdc and the constraint files are the evidence there).
 * The data-integrity proof follows one bit position at a time; the 8 representative bits are proved in CI, all 74 once by the full set.

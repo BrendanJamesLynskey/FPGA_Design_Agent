@@ -1,0 +1,204 @@
+# Brief 68 handover: the facts behind README.md and AGENT.md (docs/documentation_standard.md).
+# Measurement values and every sha256 are filled from the records by `python -m flow.handover fill`;
+# do not type them. Render with `python -m flow.handover write <this directory>`.
+schema: fda-handover/1
+id: b191_ps_axi_lat
+title: Cortex-A53 to programmable-logic AXI latency probe (KR260, board row B-R8, prepared)
+kind: demonstration
+produced_by: session
+summary: A register block with a free-running counter that timestamps every AXI read request and every write it accepts,
+  one on each of the Zynq UltraScale+ processor system's two AXI masters towards the fabric (M_AXI_HPM0_FPD and M_AXI_HPM0_LPD),
+  and a host program that times 32-bit reads and writes of it from the Arm Cortex-A53 with the processor's own timer and
+  with the fabric's counter. The probe is simulated against an edge-counting AXI master and seeded faults are caught; the
+  host program and its judging script are tested without a board against a software stand-in. The board row (B-R8) is pre-registered;
+  the programmable-logic image's build recipe is written and was not built, and nothing has run on a board.
+scope_not:
+- a measured result; no latency figure for the processor-to-fabric path exists yet, only the means of measuring it
+- a built bitstream; the image's recipe (build.yaml, the processor-system IP script) is untested, so its clock constraint,
+  address assignment and the flow's gates are unchecked
+- the latency of the ACP or HP ports, DMA, cached accesses, wider accesses or a faster fabric clock than 100 MHz
+- a design that does anything else; the image has no I/O pins and no function besides the two probes
+target:
+  part: xck26-sfvc784-2LV-c
+  board: Kria KR260 (K26 SOM)
+  top: ps_axi_lat_top (the PL image); axi_lat_probe (simulated alone)
+  tool: Vivado 2026.1
+  note: the image was not built; the probe is simulated with Icarus Verilog and cocotb
+clocks:
+- name: pl_clk0
+  mhz: 100
+  source: designs/b191_ps_axi_lat/design.xdc
+  note: the processor system's PL clock 0 (the IP script sets 100 MHz); the XDC constraint on the PS clock pin is untested
+    because the image was not built; a fabric clock of 10 ns, so fabric-side figures have a resolution of 10 ns
+resets:
+- name: aresetn
+  active: low
+  note: the processor system's pl_resetn0 through a 4-flop reset synchroniser (asynchronous assert, synchronous release);
+    clears the counter, the registers and the counts, not the log memory
+interfaces:
+- name: AXI4 slave (one per processor master)
+  type: awid, awaddr, awlen, awsize, awvalid/awready, wdata, wstrb, wlast, wvalid/wready, bid, bresp, bvalid/bready, arid,
+    araddr, arlen, arsize, arvalid/arready, rid, rdata, rresp, rlast, rvalid/rready (32-bit data, 16-bit ids)
+  doc: designs/b191_ps_axi_lat/docs/ps_axi_lat.md
+  note: single-beat 32-bit accesses only; anything else is answered SLVERR and counted; unmapped reads return 0 with SLVERR;
+    partial write strobes are refused
+- name: register window
+  type: 4 KiB at the PS addresses 0xA0000000 (FPD) and 0x80000000 (LPD); ID, BUILD, CLK_HZ, SCRATCH, CNT, WR_TS, WR_N, LOG_N,
+    TRIG, CTRL, BAD and the write-clock log
+  doc: designs/b191_ps_axi_lat/docs/ps_axi_lat.md
+  note: the counter is 32 bits and wraps in 42.9 s at 100 MHz; software uses differences modulo 2^32
+parameters:
+- name: LOG_DEPTH
+  value: 256
+  legal: a power of two, at most 256
+  note: entries of the write-clock log (window 0x400 to 0x7FC)
+- name: CLK_HZ
+  value: 100000000
+  legal: the fabric clock in Hz
+  note: only reported in the CLK_HZ register; the clock itself is set in the IP script
+- name: BUILD_STAMP
+  value: '0xB1910F01'
+  legal: any 32-bit stamp (the flow sets it from the sources' hash)
+  note: read from the BUILD register; the host program refuses to run if it differs from the one it is told to expect
+files:
+- path: designs/b191_ps_axi_lat/rtl/axi_lat_probe.sv
+  what: the AXI4 slave register block with the counter, the timestamps and the log
+  sha256: dbe358452d62676cc8327688b1c4b2ae4cd83002f9507f2945d2e5c81bfe1436
+- path: designs/b191_ps_axi_lat/rtl/ps_axi_lat_top.sv
+  what: the PL image's top, the processor system with both masters and one probe each
+  sha256: c0dd014072f17cc4d267b5bc345933aeb8cbdbcc16a98f496d43c453f788f733
+- path: designs/b191_ps_axi_lat/ip/amd_ip_lat.tcl
+  what: the Zynq UltraScale+ processor system IP of the image
+  sha256: d11b2c806756ae6b68b264306c9157e92ed73342e584b64b5829b514514b44dd
+- path: designs/b191_ps_axi_lat/host/ps_axi_lat.c
+  what: the host program (aarch64, static) that measures, with a software stand-in for the registers under -DMOCK
+  sha256: 6314d9e3902b4b7d1ada82daed9fa677268912357e1bb3c887b7500c55b09365
+- path: designs/b191_ps_axi_lat/scripts/ps_axi_lat_verdict.py
+  what: judges a board session's files against the pre-registration
+  sha256: 2ccf918349c355826b0c1a59ecd7fa627065e3404e56372ea0fd59365d620038
+- path: designs/b191_ps_axi_lat/board/ps_axi_lat_session.sh
+  what: the board session script (written, not run)
+  sha256: 503a52a626e52cdce4d0351ecf147b2eb710dccedae6d86dc35f383bc56f2330
+- path: designs/b191_ps_axi_lat/board/pl-ps-axi-lat.dtsi
+  what: the device-tree overlay source for the generic-uio route
+  sha256: 90a8819a259f3b4d65fc27299655cbfa904fae6caab4f865c8d1af475c714960
+- path: designs/b191_ps_axi_lat/tests/b191_cocotb.py
+  what: cocotb bench of the probe with an edge-counting AXI master
+  sha256: 8be45da32e13fdaf16c66f45bd1a0fdd7cfa0644c86d84786f45154a0f7212f9
+- path: designs/b191_ps_axi_lat/tests/test_b191_host.py
+  what: the host program and verdict script without a board
+  sha256: 4f426b336008ea84889fc68685ccf612c650eda14802ec3fda2c3948cf540ffd
+- path: designs/b191_ps_axi_lat/tests/run_mutants.py
+  what: seeded-fault runner for the probe
+  sha256: 70274ea6e06adf78321f68059b659d75975dc7ba6fe0386185275c9e6f520489
+- path: designs/b191_ps_axi_lat/docs/ps_axi_lat.md
+  what: datasheet, register map and the pre-registration of board row B-R8
+  sha256: 34167628802d230ebefb9db9cabf7a6ea3594a01a518ec4f5dd36286d7df2eda
+commands:
+- what: the probe bench and the host tests (no board)
+  cmd: python3 -m pytest -q designs/b191_ps_axi_lat/tests
+  heavy: false
+  minutes: 1
+  needs: Icarus Verilog, cocotb, gcc, and for the last test aarch64-linux-gnu-gcc
+- what: the seeded faults in the probe
+  cmd: python3 designs/b191_ps_axi_lat/tests/run_mutants.py --json results/191_trading_variants/mutation_probe.json
+  heavy: false
+  minutes: 1
+  needs: as above
+- what: the board session (planner gives it at the board; not run)
+  cmd: designs/b191_ps_axi_lat/board/ps_axi_lat_session.sh <board ssh target> <results dir> <built .bit> <build stamp>
+  heavy: false
+  minutes: 60
+  needs: a built bitstream, bootgen, dtc, the board lock and the owner's board visit
+evidence:
+- id: E1
+  activity: simulation
+  result: pass
+  how: record
+  what: the probe against an AXI master that counts clock edges, so every timestamp is checked against the edge in which
+    the access was accepted - identity, scratch, read and write timestamps with AW and W in either order, the log and its
+    saturation, bad accesses, back pressure and a random mix against a model
+  record: results/191_trading_variants/pytest_junit.xml
+  sha256: be267a11ab78090653eabcbd05cd0c4bc429fcf9edac9ab3c7ab631befba15da
+- id: E2
+  activity: faults
+  result: pass
+  how: record
+  what: twelve seeded faults in the probe (stamps one clock late, the log, strobes, ids, the clear, unmapped writes) all
+    fail the bench
+  record: results/191_trading_variants/mutation_probe.json
+  sha256: 0f01fea1eea10358d595a18c7db8722ab71ba3ffeac5e685c0bf02ec0fe6adb2
+- id: E3
+  activity: model
+  result: pass
+  how: record
+  what: the host program built with a software stand-in for the registers, its JSON judged by the verdict script (valid
+    and invalid sets), and the aarch64 static build
+  record: results/191_trading_variants/pytest_junit.xml
+  sha256: be267a11ab78090653eabcbd05cd0c4bc429fcf9edac9ab3c7ab631befba15da
+- id: E4
+  activity: build
+  result: not-run
+  how: record
+  what: the PL image was not built; the board row waits for it
+  record: designs/b191_ps_axi_lat/build.yaml
+  sha256: 96b26afc0d2437aebd89f3bb57d8852199794b653b85caa0c4d3049e4f89faf7
+measurements:
+- id: M1
+  what: the smallest interval between two read requests at the probe's port from a master that takes each response in one
+    clock
+  category: latency
+  key: read_to_read_clocks_min
+  unit: clocks
+  record: results/191_trading_variants/sim/probe_sim.json
+  field: min_read_to_read_clocks
+  conditions: simulation, one clock; a property of the probe (request, response, next request), not of the processor
+  value: 2
+  sha256: d68ea794c7bcbb2631349f98c5b7db2e99ac33957565ab4b6d859c28dbef0dd5
+gaps:
+- about: E4
+  text: The PL image was not built, so there is no build record; the board row waits for it.
+- about: resources
+  text: Not measured; the image was not built, so there is no utilisation. The probe is a few hundred LUTs and one block
+    of memory by construction, not by measurement.
+- about: timing
+  text: Not measured; no implementation was run. The probe is one clock domain of 10 ns with a counter, so closure is expected,
+    not shown.
+- about: power
+  text: Not measured; nothing was built or run on a board.
+- about: throughput
+  text: Not applicable to a probe; the figures it measures are latencies, and the board has not run.
+- about: build
+  text: The PL image was not built. The recipe is written, and the properties it sets exist in the IP definition of Vivado
+    2026.1, but the PS clock constraint, the address assignment and the flow's gates are unchecked.
+- about: board_run
+  text: Not run on a board. Whether /dev/mem accepts the mapping on the board's Ubuntu kernel, the PS base addresses and
+    the timer frequency are unconfirmed (docs/ps_axi_lat.md lists them).
+- about: values
+  text: No latency value is measured; the pre-registration judges the validity of the measurement and records three hypotheses.
+- about: clock
+  text: Only a 100 MHz fabric clock is prepared; the processor-to-fabric crossing's cost depends on that clock.
+next_steps:
+- Build the image (about 15 minutes, small), fix whatever the flow's gates report, and record the build ID.
+- Run board row B-R8 in the next board visit and use the figures to fix what a fast and slow loop split may ask of software.
+- A 250 MHz row (a one-line change in the IP script) to see how much of the latency is the fabric clock.
+open_questions:
+- Does the board's Ubuntu kernel allow /dev/mem for the PS-PL windows, or does the generic-uio overlay have to be used?
+history:
+- date: '2026-11-23'
+  brief: '191'
+  pr: null
+  note: Probe, host program, verdict script and pre-registration written and tested without a board; the image's recipe
+    written, not built.
+numbers_allow: []
+state:
+  stage: simulated
+  gates:
+    rtl_equals_model: pass
+    lint: pass
+    seeded_faults: pass
+    build: not-run
+    board_run: not-run
+  vivado: '2026.1'
+  kb_pin: 5e2eab8
+  build_id: fbc74516

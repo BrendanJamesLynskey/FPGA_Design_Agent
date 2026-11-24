@@ -45,6 +45,19 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 # ---- the RTL's enum ----------------------------------------------------------------------------------------------------
+def read_states(path: Path, enum: str) -> dict[str, int]:
+    """The state table of the enum ``enum`` in the RTL file ``path``. Only SystemVerilog is read (brief 153): a VHDL file raises a
+    ValueError that says so, so the check is NOT RUN with that reason (a VHDL ``type st_t is (A, B)`` has no values, and the trace of a
+    VHDL state register is not read here); it never reports "no typedef enum" for a file it cannot read."""
+    try:
+        from flow.sources import language, no_reader
+    except ImportError:                       # run as a script: flow/ itself is on sys.path
+        from sources import language, no_reader          # type: ignore[no-redef]
+    if language(path) == "vhdl":
+        raise ValueError(no_reader([path], {"sv"}, "fsm_coverage (state table from a `typedef enum`)") or "no reader for VHDL")
+    return parse_enum(Path(path).read_text(), enum)
+
+
 def parse_enum(sv: str, enum: str) -> dict[str, int]:
     """``typedef enum [logic [N:0]] {A, B = 3, C} <enum>;`` -> {name: value} (an unvalued name is the previous value + 1)."""
     sv = re.sub(r"//[^\n]*|/\*.*?\*/", "", sv, flags=re.S)
@@ -189,7 +202,7 @@ def evaluate(design: Path, vcds: list[Path], vivado_log: Path | None = None) -> 
             runs[n].append(trace_to_sequence(ch[n]))
     out_f = []
     for f in fsms:
-        states = parse_enum((design / f["file"]).read_text(), f["enum"])
+        states = read_states(design / f["file"], f["enum"])
         by_val = {v: n for n, v in states.items()}
         seen, taken = set(), set()                         # covered if any run covered it
         for r in runs[f["signal"]]:
@@ -203,7 +216,7 @@ def evaluate(design: Path, vcds: list[Path], vivado_log: Path | None = None) -> 
 def _check_union(cfg: dict, seen: set[str], taken: set[tuple[str, str]], design: Path, runs: list[list[int]],
                  viv: dict[str, dict]) -> dict[str, Any]:
     """check_fsm's verdicts for the union of several runs."""
-    states = parse_enum((design / cfg["file"]).read_text(), cfg["enum"])
+    states = read_states(design / cfg["file"], cfg["enum"])
     by_val = {v: n for n, v in states.items()}
     legal = {(a, b) for a, b in (cfg.get("transitions") or [])}
     bad_names = sorted({n for pair in legal for n in pair if n not in states})

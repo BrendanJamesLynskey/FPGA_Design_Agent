@@ -21,7 +21,7 @@ ADDR = {n: R.CFG_BASE + 4 * i for i, n, *_ in R.CFG}
 STAT = {n: R.STAT_BASE + 4 * i for i, n in enumerate(R.STAT_NAMES)}
 CMD_BASE = 0x018                           # base map CMD register: bit 2 takes the snapshot (also of the ITCH counter window)
 CTRL = dict(en=1, arm=2, kill=4, spec=8, halt=16, strict=32)
-CMD = dict(clr_cnt=1, clr_flags=2, clr_book=4, clr_pos=8, clr_ref=16, rp_start=32, tcp_load=64, lat_clr=128, cap_clr=256, rp_stop=512)
+CMD = dict(clr_cnt=1, clr_flags=2, clr_book=4, clr_pos=8, clr_ref=16, rp_start=32, tcp_load=64, lat_clr=128, cap_clr=256, rp_stop=512, commit=1024)
 TIMING_DEPENDENT = ("spec", "abort", "late_abort", "rej_busy")
 HS_NS = 1000                               # time for a register write to cross to the core clock and a counter snapshot to cross back, with margin
 
@@ -104,7 +104,7 @@ def decode_log(plan: Plan, log: str) -> dict:
 
 # ---------------------------------------------------------------------------------------------------- building blocks of a plan
 def configure(p: Plan, cfg: Cfg, *, spec=False, strict=False, feed_ip="192.168.58.10", feed_port=5810, tcp_seq=1, tcp_ack=1, en=True, rp_loops=0) -> Plan:
-    """Write the configuration registers (the order is not significant: they cross to the core as one coherent vector), then the clears and TCP_LOAD."""
+    """Write the configuration registers (the order is not significant: the limits are staged and the IT_CMD at the end commits them in one clock, brief 188), then the clears and TCP_LOAD."""
     ctrl = (CTRL["en"] if en else 0) | (CTRL["arm"] if cfg.arm else 0) | (CTRL["kill"] if cfg.kill else 0) | (CTRL["spec"] if spec else 0) | (CTRL["halt"] if cfg.halt_on_gap else 0) | (CTRL["strict"] if strict else 0)
     p.w(ADDR["IT_CTRL"], ctrl)
     for n, v in (("IT_THR", cfg.thr), ("IT_QTY", cfg.qty), ("IT_MAXQTY", cfg.max_qty), ("IT_MAXPOS", cfg.max_pos), ("IT_BAND", cfg.band), ("IT_PXOFF", cfg.px_off), ("IT_MINQTY", cfg.minqty)):
@@ -117,7 +117,7 @@ def configure(p: Plan, cfg: Cfg, *, spec=False, strict=False, feed_ip="192.168.5
     p.w(ADDR["IT_FEED_IP"], int.from_bytes(H.ip_bytes(feed_ip), "big")).w(ADDR["IT_FEED_PORT"], feed_port)
     p.w(ADDR["IT_TCP_SEQ"], tcp_seq).w(ADDR["IT_TCP_ACK"], tcp_ack).w(ADDR["RP_CFG"], rp_loops)
     p.d(HS_NS)
-    p.w(ADDR["IT_CMD"], CMD["tcp_load"] | CMD["clr_cnt"] | CMD["clr_flags"] | CMD["clr_book"] | CMD["clr_pos"] | CMD["clr_ref"] | CMD["cap_clr"])
+    p.w(ADDR["IT_CMD"], CMD["tcp_load"] | CMD["clr_cnt"] | CMD["clr_flags"] | CMD["clr_book"] | CMD["clr_pos"] | CMD["clr_ref"] | CMD["cap_clr"] | CMD["commit"])
     p.d(HS_NS * 4)             # the book is ready again some 300 clocks after CLR_BOOK
     return p
 

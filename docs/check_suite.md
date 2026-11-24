@@ -49,7 +49,7 @@ python3 -m flow.checks designs/<d> [--names all|resets,cdc,...] [--scope auto|rt
 | `axi` | ours | rtl, synth, route | `flow/amd_ip_notes.py` (brief 69): AMD AXI4-Lite IP next to our register blocks; advice only |
 | `axi_profile` | ours | rtl, synth, route | `flow/checks/axi_profile.py` (brief 73): each generated AXI4-Lite register block regenerated from its map under the design's `interfaces:` profile and compared with the file; mixed profiles, old blocks and AMD IP beside a strict block flagged; see [hwsw.md](hwsw.md#interface-profiles-brief-73) |
 | `gt_plan` | ours | rtl, synth, route | `flow/gt_plan.py` (brief 56A): every reason the spec's link cannot be built |
-| `constants` | ours | rtl, synth, route | `flow/derived_constants.py` (brief 106): the shell design ID derived from the spec's quoted string, spec identity words, and the board clock period, checked against the RTL and XDC; writes `build/derived_constants.json`. **Also an exit gate (brief 82P4):** stages 2 and 3 run it and `exit_check` fails on a blocking finding (`CONST-ID-01`, `CONST-CLK-01`), sending the RTL role (the constraints for the clock) the finding and skipping Vivado that visit; advice findings never fail the stage |
+| `constants` | ours | rtl, synth, route | `flow/derived_constants.py` (brief 106): the shell design ID derived from the spec's quoted string, spec identity words, and the board clock period, checked against the RTL and XDC; writes `build/derived_constants.json`. **Also an exit gate (brief 82P4):** stages 2 and 3 run it and `exit_check` fails on a blocking finding (`CONST-ID-01`, `CONST-CLK-01`), sending the RTL role (the constraints for the clock) the finding and skipping Vivado that visit; advice findings never fail the stage. **Brief 82P6:** at the clarify exit `spec_yaml_findings` compares spec.yaml's `parameters.DESIGN_ID` (`CONST-ID-03`) and a `clocks` entry on the board oscillator port (`CONST-CLK-02`) with the same derivations and fails the clarify stage on a mismatch; a `CONST-ID-01` still present at the next stage-2 visit is also routed to the Modeller and the Verifier when their files write the wrong value as a design ID (a heuristic: a line with the value and a design-ID word), and to the clarify stage when spec.yaml does |
 | `stale` | ours | synth, route | `flow/stale_check.py` (brief 106): build and simulation evidence whose inputs changed since it was made (`build/lineage.json`, the build manifest), and a README or handover that cites a build that is not current; takes no waivers |
 | `doc` | ours | rtl, synth, route | the DOC gate (`agent/graph/document.py` `doc_gate`, brief 68) |
 
@@ -68,6 +68,10 @@ python3 -m flow.checks designs/<d> [--names all|resets,cdc,...] [--scope auto|rt
 - **`pass`** means every part of the check that ran found nothing blocking. **`PARTIAL`** in the digest (`incomplete`
   in the JSON) means a part could not run, for example the reset netlist scan with no Vivado; the suite's overall verdict
   is then not a pass. **`not run`** always carries its reason.
+- **A check that cannot read a language says so (brief 153).** On a design with VHDL, a part that has no VHDL reader is `PARTIAL` or
+  `not run` with "no reader for .vhd (...)", never a clean pass. The lint of a VHDL design is GHDL's, listed under the tool name
+  `verilator` with the code `GHDL` (rule HDL-LINT-00); the `constants` check is `PARTIAL` when it cannot read the quoted design ID's binding.
+  Which check reads what: `python3 -m flow.sources --help`, and [vhdl.md](vhdl.md).
 - **Advisory findings never fail a check**: in the checks that mirror a stage gate (methodology, drc, cdc), Warnings
   are advisory because the gates fail only on Critical Warnings (or Errors); Advisory and Info rows and the `axi` notes
   are advisory everywhere. **The `resets` check is stricter**: AMD's reset rows at Warning (LUTAR-1, DPIR, DPOR, CDC-8)

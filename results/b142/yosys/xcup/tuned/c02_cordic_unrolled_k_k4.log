@@ -1,0 +1,2789 @@
+
+ /----------------------------------------------------------------------------\
+ |  yosys -- Yosys Open SYnthesis Suite                                       |
+ |  Copyright (C) 2012 - 2026  Claire Xenia Wolf <claire@yosyshq.com>         |
+ |  Distributed under an ISC-like license, type "license" to see terms        |
+ \----------------------------------------------------------------------------/
+ Yosys 0.70+385 (git sha1 098e46a36, Release, Clang /usr/bin/clang++ 21.1.8)
+
+-- Running command `plugin -i slang; read_slang --top cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc  /home/brendan/Claude_sandbox/_worktrees/142-yosys/results/b142/rtl/real/cordic/cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc.sv; synth_xilinx -family xcup -top cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc -noiopad -noclkbuf -flatten -widemux 5 -uram; tee -q -o /home/brendan/Claude_sandbox/_worktrees/142-yosys/results/b142/yosys/xcup/tuned/c02_cordic_unrolled_k_k4.stat.json stat -json -tech xilinx' --
+
+1. Executing SLANG frontend.
+Top level design units:
+    cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc
+
+
+Build succeeded: 0 errors, 0 warnings
+
+1.1. Executing PROC_CLEAN pass (remove empty switches from decision trees).
+Found and cleaned up 1 empty switch in `\cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc.$102'.
+Found and cleaned up 1 empty switch in `\cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc.$79'.
+Found and cleaned up 1 empty switch in `\cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc.$54'.
+Found and cleaned up 1 empty switch in `\cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc.$29'.
+Found and cleaned up 1 empty switch in `\cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc.$4'.
+Cleaned up 5 empty switches.
+
+1.2. Executing PROC_RMDEAD pass (remove dead branches from decision trees).
+Marked 8 switch rules as full_case in process $102 in module cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc.
+Marked 1 switch rules as full_case in process $79 in module cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc.
+Marked 1 switch rules as full_case in process $54 in module cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc.
+Marked 1 switch rules as full_case in process $29 in module cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc.
+Marked 1 switch rules as full_case in process $4 in module cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc.
+Removed a total of 0 dead cases.
+
+1.3. Executing PROC_PRUNE pass (remove redundant assignments in processes).
+Removed 7 redundant assignments.
+Promoted 0 assignments to connections.
+
+1.4. Executing PROC_INIT pass (extract init attributes).
+
+1.5. Executing PROC_ROM pass (convert switches to ROMs).
+Converted 0 switches.
+<suppressed ~15 debug messages>
+
+1.6. Executing PROC_MUX pass (convert decision trees to multiplexers).
+Creating decoders for process `\cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc.$102'.
+     1/30: $base$122
+     2/30: $state$121
+     3/30: $z$118
+     4/30: $x$117
+     5/30: $z$113
+     6/30: $x$112
+     7/30: $state$126
+     8/30: $z$108
+     9/30: $y$107
+    10/30: $x$106
+    11/30: $base$105
+    12/30: $quadrant$104
+    13/30: $state$103
+    14/30: $z$131
+    15/30: $y$130
+    16/30: $x$129
+    17/30: $base$128
+    18/30: $quadrant$127
+    19/30: $sin_out$125
+    20/30: $cos_out$124
+    21/30: $valid_out$123
+    22/30: $state$135
+    23/30: $valid_out$132
+    24/30: $z$140
+    25/30: $y$139
+    26/30: $x$138
+    27/30: $base$137
+    28/30: $quadrant$136
+    29/30: $sin_out$134
+    30/30: $cos_out$133
+Creating decoders for process `\cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc.$79'.
+     1/1: $atan3$80
+Creating decoders for process `\cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc.$54'.
+     1/1: $atan2$55
+Creating decoders for process `\cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc.$29'.
+     1/1: $atan1$30
+Creating decoders for process `\cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc.$4'.
+     1/1: $atan0$5
+
+1.7. Executing PROC_CLEAN pass (remove empty switches from decision trees).
+Found and cleaned up 11 empty switches in `\cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc.$102'.
+Removing empty process `cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc.$102'.
+Found and cleaned up 1 empty switch in `\cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc.$79'.
+Removing empty process `cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc.$79'.
+Found and cleaned up 1 empty switch in `\cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc.$54'.
+Removing empty process `cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc.$54'.
+Found and cleaned up 1 empty switch in `\cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc.$29'.
+Removing empty process `cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc.$29'.
+Found and cleaned up 1 empty switch in `\cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc.$4'.
+Removing empty process `cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc.$4'.
+Cleaned up 15 empty switches.
+
+1.8. Executing OPT_EXPR pass (perform const folding).
+Optimizing module cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc.
+<suppressed ~17 debug messages>
+
+2. Executing SYNTH_XILINX pass.
+
+2.1. Executing Verilog-2005 frontend: /home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/xilinx/cells_sim.v
+Parsing Verilog input from `/home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/xilinx/cells_sim.v' to AST representation.
+Generating RTLIL representation for module `\VCC'.
+Generating RTLIL representation for module `\GND'.
+Generating RTLIL representation for module `\IBUF'.
+Generating RTLIL representation for module `\IBUFG'.
+Generating RTLIL representation for module `\OBUF'.
+Generating RTLIL representation for module `\IOBUF'.
+Generating RTLIL representation for module `\OBUFT'.
+Generating RTLIL representation for module `\BUFG'.
+Generating RTLIL representation for module `\BUFGCTRL'.
+Generating RTLIL representation for module `\BUFHCE'.
+Generating RTLIL representation for module `\INV'.
+Generating RTLIL representation for module `\LUT1'.
+Generating RTLIL representation for module `\LUT2'.
+Generating RTLIL representation for module `\LUT3'.
+Generating RTLIL representation for module `\LUT4'.
+Generating RTLIL representation for module `\LUT5'.
+Generating RTLIL representation for module `\LUT6'.
+Generating RTLIL representation for module `\LUT6_2'.
+Generating RTLIL representation for module `\$__ABC9_LUT7'.
+Generating RTLIL representation for module `\$__ABC9_LUT8'.
+Generating RTLIL representation for module `\MUXCY'.
+Generating RTLIL representation for module `\MUXF5'.
+Generating RTLIL representation for module `\MUXF6'.
+Generating RTLIL representation for module `\MUXF7'.
+Generating RTLIL representation for module `\MUXF8'.
+Generating RTLIL representation for module `\MUXF9'.
+Generating RTLIL representation for module `\XORCY'.
+Generating RTLIL representation for module `\CARRY4'.
+Generating RTLIL representation for module `\CARRY8'.
+Generating RTLIL representation for module `\ORCY'.
+Generating RTLIL representation for module `\MULT_AND'.
+Generating RTLIL representation for module `\FDRE'.
+Generating RTLIL representation for module `\FDRE_1'.
+Generating RTLIL representation for module `\FDSE'.
+Generating RTLIL representation for module `\FDSE_1'.
+Generating RTLIL representation for module `\FDRSE'.
+Generating RTLIL representation for module `\FDRSE_1'.
+Generating RTLIL representation for module `\FDCE'.
+Generating RTLIL representation for module `\FDCE_1'.
+Generating RTLIL representation for module `\FDPE'.
+Generating RTLIL representation for module `\FDPE_1'.
+Generating RTLIL representation for module `\FDCPE'.
+Generating RTLIL representation for module `\FDCPE_1'.
+Generating RTLIL representation for module `\LDCE'.
+Generating RTLIL representation for module `\LDPE'.
+Generating RTLIL representation for module `\LDCPE'.
+Generating RTLIL representation for module `\AND2B1L'.
+Generating RTLIL representation for module `\OR2L'.
+Generating RTLIL representation for module `\RAM16X1S'.
+Generating RTLIL representation for module `\RAM16X1S_1'.
+Generating RTLIL representation for module `\RAM32X1S'.
+Generating RTLIL representation for module `\RAM32X1S_1'.
+Generating RTLIL representation for module `\RAM64X1S'.
+Generating RTLIL representation for module `\RAM64X1S_1'.
+Generating RTLIL representation for module `\RAM128X1S'.
+Generating RTLIL representation for module `\RAM128X1S_1'.
+Generating RTLIL representation for module `\RAM256X1S'.
+Generating RTLIL representation for module `\RAM512X1S'.
+Generating RTLIL representation for module `\RAM16X2S'.
+Generating RTLIL representation for module `\RAM32X2S'.
+Generating RTLIL representation for module `\RAM64X2S'.
+Generating RTLIL representation for module `\RAM16X4S'.
+Generating RTLIL representation for module `\RAM32X4S'.
+Generating RTLIL representation for module `\RAM16X8S'.
+Generating RTLIL representation for module `\RAM32X8S'.
+Generating RTLIL representation for module `\RAM16X1D'.
+Generating RTLIL representation for module `\RAM16X1D_1'.
+Generating RTLIL representation for module `\RAM32X1D'.
+Generating RTLIL representation for module `\RAM32X1D_1'.
+Generating RTLIL representation for module `\RAM64X1D'.
+Generating RTLIL representation for module `\RAM64X1D_1'.
+Generating RTLIL representation for module `\RAM128X1D'.
+Generating RTLIL representation for module `\RAM256X1D'.
+Generating RTLIL representation for module `\RAM32M'.
+Generating RTLIL representation for module `\RAM32M16'.
+Generating RTLIL representation for module `\RAM64M'.
+Generating RTLIL representation for module `\RAM64M8'.
+Generating RTLIL representation for module `\RAM32X16DR8'.
+Generating RTLIL representation for module `\RAM64X8SW'.
+Generating RTLIL representation for module `\ROM16X1'.
+Generating RTLIL representation for module `\ROM32X1'.
+Generating RTLIL representation for module `\ROM64X1'.
+Generating RTLIL representation for module `\ROM128X1'.
+Generating RTLIL representation for module `\ROM256X1'.
+Generating RTLIL representation for module `\SRL16'.
+Generating RTLIL representation for module `\SRL16E'.
+Generating RTLIL representation for module `\SRLC16'.
+Generating RTLIL representation for module `\SRLC16E'.
+Generating RTLIL representation for module `\SRLC32E'.
+Generating RTLIL representation for module `\CFGLUT5'.
+Generating RTLIL representation for module `\MULT18X18'.
+Generating RTLIL representation for module `\MULT18X18S'.
+Generating RTLIL representation for module `\MULT18X18SIO'.
+Generating RTLIL representation for module `\DSP48A'.
+Generating RTLIL representation for module `\DSP48A1'.
+Generating RTLIL representation for module `\DSP48'.
+Generating RTLIL representation for module `\DSP48E1'.
+Generating RTLIL representation for module `\RAMB18E1'.
+Generating RTLIL representation for module `\RAMB36E1'.
+Successfully finished Verilog frontend.
+
+2.2. Executing Verilog-2005 frontend: /home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/xilinx/cells_xtra.v
+Parsing Verilog input from `/home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/xilinx/cells_xtra.v' to AST representation.
+Generating RTLIL representation for module `\RAMB4_S1'.
+Generating RTLIL representation for module `\RAMB4_S2'.
+Generating RTLIL representation for module `\RAMB4_S4'.
+Generating RTLIL representation for module `\RAMB4_S8'.
+Generating RTLIL representation for module `\RAMB4_S16'.
+Generating RTLIL representation for module `\RAMB4_S1_S1'.
+Generating RTLIL representation for module `\RAMB4_S1_S2'.
+Generating RTLIL representation for module `\RAMB4_S1_S4'.
+Generating RTLIL representation for module `\RAMB4_S1_S8'.
+Generating RTLIL representation for module `\RAMB4_S1_S16'.
+Generating RTLIL representation for module `\RAMB4_S2_S2'.
+Generating RTLIL representation for module `\RAMB4_S2_S4'.
+Generating RTLIL representation for module `\RAMB4_S2_S8'.
+Generating RTLIL representation for module `\RAMB4_S2_S16'.
+Generating RTLIL representation for module `\RAMB4_S4_S4'.
+Generating RTLIL representation for module `\RAMB4_S4_S8'.
+Generating RTLIL representation for module `\RAMB4_S4_S16'.
+Generating RTLIL representation for module `\RAMB4_S8_S8'.
+Generating RTLIL representation for module `\RAMB4_S8_S16'.
+Generating RTLIL representation for module `\RAMB4_S16_S16'.
+Generating RTLIL representation for module `\RAMB16_S1'.
+Generating RTLIL representation for module `\RAMB16_S2'.
+Generating RTLIL representation for module `\RAMB16_S4'.
+Generating RTLIL representation for module `\RAMB16_S9'.
+Generating RTLIL representation for module `\RAMB16_S18'.
+Generating RTLIL representation for module `\RAMB16_S36'.
+Generating RTLIL representation for module `\RAMB16_S1_S1'.
+Generating RTLIL representation for module `\RAMB16_S1_S2'.
+Generating RTLIL representation for module `\RAMB16_S1_S4'.
+Generating RTLIL representation for module `\RAMB16_S1_S9'.
+Generating RTLIL representation for module `\RAMB16_S1_S18'.
+Generating RTLIL representation for module `\RAMB16_S1_S36'.
+Generating RTLIL representation for module `\RAMB16_S2_S2'.
+Generating RTLIL representation for module `\RAMB16_S2_S4'.
+Generating RTLIL representation for module `\RAMB16_S2_S9'.
+Generating RTLIL representation for module `\RAMB16_S2_S18'.
+Generating RTLIL representation for module `\RAMB16_S2_S36'.
+Generating RTLIL representation for module `\RAMB16_S4_S4'.
+Generating RTLIL representation for module `\RAMB16_S4_S9'.
+Generating RTLIL representation for module `\RAMB16_S4_S18'.
+Generating RTLIL representation for module `\RAMB16_S4_S36'.
+Generating RTLIL representation for module `\RAMB16_S9_S9'.
+Generating RTLIL representation for module `\RAMB16_S9_S18'.
+Generating RTLIL representation for module `\RAMB16_S9_S36'.
+Generating RTLIL representation for module `\RAMB16_S18_S18'.
+Generating RTLIL representation for module `\RAMB16_S18_S36'.
+Generating RTLIL representation for module `\RAMB16_S36_S36'.
+Generating RTLIL representation for module `\RAMB16BWE_S18'.
+Generating RTLIL representation for module `\RAMB16BWE_S36'.
+Generating RTLIL representation for module `\RAMB16BWE_S18_S9'.
+Generating RTLIL representation for module `\RAMB16BWE_S18_S18'.
+Generating RTLIL representation for module `\RAMB16BWE_S36_S9'.
+Generating RTLIL representation for module `\RAMB16BWE_S36_S18'.
+Generating RTLIL representation for module `\RAMB16BWE_S36_S36'.
+Generating RTLIL representation for module `\RAMB16BWER'.
+Generating RTLIL representation for module `\RAMB8BWER'.
+Generating RTLIL representation for module `\FIFO16'.
+Generating RTLIL representation for module `\RAMB16'.
+Generating RTLIL representation for module `\RAMB32_S64_ECC'.
+Generating RTLIL representation for module `\FIFO18'.
+Generating RTLIL representation for module `\FIFO18_36'.
+Generating RTLIL representation for module `\FIFO36'.
+Generating RTLIL representation for module `\FIFO36_72'.
+Generating RTLIL representation for module `\RAMB18'.
+Generating RTLIL representation for module `\RAMB36'.
+Generating RTLIL representation for module `\RAMB18SDP'.
+Generating RTLIL representation for module `\RAMB36SDP'.
+Generating RTLIL representation for module `\FIFO18E1'.
+Generating RTLIL representation for module `\FIFO36E1'.
+Generating RTLIL representation for module `\FIFO18E2'.
+Generating RTLIL representation for module `\FIFO36E2'.
+Generating RTLIL representation for module `\RAMB18E2'.
+Generating RTLIL representation for module `\RAMB36E2'.
+Generating RTLIL representation for module `\URAM288'.
+Generating RTLIL representation for module `\URAM288_BASE'.
+Generating RTLIL representation for module `\DSP48E'.
+Generating RTLIL representation for module `\DSP48E2'.
+Generating RTLIL representation for module `\FDDRCPE'.
+Generating RTLIL representation for module `\FDDRRSE'.
+Generating RTLIL representation for module `\IFDDRCPE'.
+Generating RTLIL representation for module `\IFDDRRSE'.
+Generating RTLIL representation for module `\OFDDRCPE'.
+Generating RTLIL representation for module `\OFDDRRSE'.
+Generating RTLIL representation for module `\OFDDRTCPE'.
+Generating RTLIL representation for module `\OFDDRTRSE'.
+Generating RTLIL representation for module `\IDDR2'.
+Generating RTLIL representation for module `\ODDR2'.
+Generating RTLIL representation for module `\IDDR'.
+Generating RTLIL representation for module `\IDDR_2CLK'.
+Generating RTLIL representation for module `\ODDR'.
+Generating RTLIL representation for module `\IDELAYCTRL'.
+Generating RTLIL representation for module `\IDELAY'.
+Generating RTLIL representation for module `\ISERDES'.
+Generating RTLIL representation for module `\OSERDES'.
+Generating RTLIL representation for module `\IODELAY'.
+Generating RTLIL representation for module `\ISERDES_NODELAY'.
+Generating RTLIL representation for module `\IODELAYE1'.
+Generating RTLIL representation for module `\ISERDESE1'.
+Generating RTLIL representation for module `\OSERDESE1'.
+Generating RTLIL representation for module `\IDELAYE2'.
+Generating RTLIL representation for module `\ODELAYE2'.
+Generating RTLIL representation for module `\ISERDESE2'.
+Generating RTLIL representation for module `\OSERDESE2'.
+Generating RTLIL representation for module `\PHASER_IN'.
+Generating RTLIL representation for module `\PHASER_IN_PHY'.
+Generating RTLIL representation for module `\PHASER_OUT'.
+Generating RTLIL representation for module `\PHASER_OUT_PHY'.
+Generating RTLIL representation for module `\PHASER_REF'.
+Generating RTLIL representation for module `\PHY_CONTROL'.
+Generating RTLIL representation for module `\IDDRE1'.
+Generating RTLIL representation for module `\ODDRE1'.
+Generating RTLIL representation for module `\IDELAYE3'.
+Generating RTLIL representation for module `\ODELAYE3'.
+Generating RTLIL representation for module `\ISERDESE3'.
+Generating RTLIL representation for module `\OSERDESE3'.
+Generating RTLIL representation for module `\BITSLICE_CONTROL'.
+Generating RTLIL representation for module `\RIU_OR'.
+Generating RTLIL representation for module `\RX_BITSLICE'.
+Generating RTLIL representation for module `\RXTX_BITSLICE'.
+Generating RTLIL representation for module `\TX_BITSLICE'.
+Generating RTLIL representation for module `\TX_BITSLICE_TRI'.
+Generating RTLIL representation for module `\IODELAY2'.
+Generating RTLIL representation for module `\IODRP2'.
+Generating RTLIL representation for module `\IODRP2_MCB'.
+Generating RTLIL representation for module `\ISERDES2'.
+Generating RTLIL representation for module `\OSERDES2'.
+Generating RTLIL representation for module `\IBUF_DLY_ADJ'.
+Generating RTLIL representation for module `\IBUF_IBUFDISABLE'.
+Generating RTLIL representation for module `\IBUF_INTERMDISABLE'.
+Generating RTLIL representation for module `\IBUF_ANALOG'.
+Generating RTLIL representation for module `\IBUFE3'.
+Generating RTLIL representation for module `\IBUFDS'.
+Generating RTLIL representation for module `\IBUFDS_DLY_ADJ'.
+Generating RTLIL representation for module `\IBUFDS_IBUFDISABLE'.
+Generating RTLIL representation for module `\IBUFDS_INTERMDISABLE'.
+Generating RTLIL representation for module `\IBUFDS_DIFF_OUT'.
+Generating RTLIL representation for module `\IBUFDS_DIFF_OUT_IBUFDISABLE'.
+Generating RTLIL representation for module `\IBUFDS_DIFF_OUT_INTERMDISABLE'.
+Generating RTLIL representation for module `\IBUFDSE3'.
+Generating RTLIL representation for module `\IBUFDS_DPHY'.
+Generating RTLIL representation for module `\IBUFGDS'.
+Generating RTLIL representation for module `\IBUFGDS_DIFF_OUT'.
+Generating RTLIL representation for module `\IOBUF_DCIEN'.
+Generating RTLIL representation for module `\IOBUF_INTERMDISABLE'.
+Generating RTLIL representation for module `\IOBUFE3'.
+Generating RTLIL representation for module `\IOBUFDS'.
+Generating RTLIL representation for module `\IOBUFDS_DCIEN'.
+Generating RTLIL representation for module `\IOBUFDS_INTERMDISABLE'.
+Generating RTLIL representation for module `\IOBUFDS_DIFF_OUT'.
+Generating RTLIL representation for module `\IOBUFDS_DIFF_OUT_DCIEN'.
+Generating RTLIL representation for module `\IOBUFDS_DIFF_OUT_INTERMDISABLE'.
+Generating RTLIL representation for module `\IOBUFDSE3'.
+Generating RTLIL representation for module `\OBUFDS'.
+Generating RTLIL representation for module `\OBUFDS_DPHY'.
+Generating RTLIL representation for module `\OBUFTDS'.
+Generating RTLIL representation for module `\KEEPER'.
+Generating RTLIL representation for module `\PULLDOWN'.
+Generating RTLIL representation for module `\PULLUP'.
+Generating RTLIL representation for module `\DCIRESET'.
+Generating RTLIL representation for module `\HPIO_VREF'.
+Generating RTLIL representation for module `\BUFGCE'.
+Generating RTLIL representation for module `\BUFGCE_1'.
+Generating RTLIL representation for module `\BUFGMUX'.
+Generating RTLIL representation for module `\BUFGMUX_1'.
+Generating RTLIL representation for module `\BUFGMUX_CTRL'.
+Generating RTLIL representation for module `\BUFGMUX_VIRTEX4'.
+Generating RTLIL representation for module `\BUFG_GT'.
+Generating RTLIL representation for module `\BUFG_GT_SYNC'.
+Generating RTLIL representation for module `\BUFG_PS'.
+Generating RTLIL representation for module `\BUFGCE_DIV'.
+Generating RTLIL representation for module `\BUFH'.
+Generating RTLIL representation for module `\BUFIO2'.
+Generating RTLIL representation for module `\BUFIO2_2CLK'.
+Generating RTLIL representation for module `\BUFIO2FB'.
+Generating RTLIL representation for module `\BUFPLL'.
+Generating RTLIL representation for module `\BUFPLL_MCB'.
+Generating RTLIL representation for module `\BUFIO'.
+Generating RTLIL representation for module `\BUFIODQS'.
+Generating RTLIL representation for module `\BUFR'.
+Generating RTLIL representation for module `\BUFMR'.
+Generating RTLIL representation for module `\BUFMRCE'.
+Generating RTLIL representation for module `\DCM'.
+Generating RTLIL representation for module `\DCM_SP'.
+Generating RTLIL representation for module `\DCM_CLKGEN'.
+Generating RTLIL representation for module `\DCM_ADV'.
+Generating RTLIL representation for module `\DCM_BASE'.
+Generating RTLIL representation for module `\DCM_PS'.
+Generating RTLIL representation for module `\PMCD'.
+Generating RTLIL representation for module `\PLL_ADV'.
+Generating RTLIL representation for module `\PLL_BASE'.
+Generating RTLIL representation for module `\MMCM_ADV'.
+Generating RTLIL representation for module `\MMCM_BASE'.
+Generating RTLIL representation for module `\MMCME2_ADV'.
+Generating RTLIL representation for module `\MMCME2_BASE'.
+Generating RTLIL representation for module `\PLLE2_ADV'.
+Generating RTLIL representation for module `\PLLE2_BASE'.
+Generating RTLIL representation for module `\MMCME3_ADV'.
+Generating RTLIL representation for module `\MMCME3_BASE'.
+Generating RTLIL representation for module `\PLLE3_ADV'.
+Generating RTLIL representation for module `\PLLE3_BASE'.
+Generating RTLIL representation for module `\MMCME4_ADV'.
+Generating RTLIL representation for module `\MMCME4_BASE'.
+Generating RTLIL representation for module `\PLLE4_ADV'.
+Generating RTLIL representation for module `\PLLE4_BASE'.
+Generating RTLIL representation for module `\BUFT'.
+Generating RTLIL representation for module `\IN_FIFO'.
+Generating RTLIL representation for module `\OUT_FIFO'.
+Generating RTLIL representation for module `\HARD_SYNC'.
+Generating RTLIL representation for module `\STARTUP_SPARTAN3'.
+Generating RTLIL representation for module `\STARTUP_SPARTAN3E'.
+Generating RTLIL representation for module `\STARTUP_SPARTAN3A'.
+Generating RTLIL representation for module `\STARTUP_SPARTAN6'.
+Generating RTLIL representation for module `\STARTUP_VIRTEX4'.
+Generating RTLIL representation for module `\STARTUP_VIRTEX5'.
+Generating RTLIL representation for module `\STARTUP_VIRTEX6'.
+Generating RTLIL representation for module `\STARTUPE2'.
+Generating RTLIL representation for module `\STARTUPE3'.
+Generating RTLIL representation for module `\CAPTURE_SPARTAN3'.
+Generating RTLIL representation for module `\CAPTURE_SPARTAN3A'.
+Generating RTLIL representation for module `\CAPTURE_VIRTEX4'.
+Generating RTLIL representation for module `\CAPTURE_VIRTEX5'.
+Generating RTLIL representation for module `\CAPTURE_VIRTEX6'.
+Generating RTLIL representation for module `\CAPTUREE2'.
+Generating RTLIL representation for module `\ICAP_SPARTAN3A'.
+Generating RTLIL representation for module `\ICAP_SPARTAN6'.
+Generating RTLIL representation for module `\ICAP_VIRTEX4'.
+Generating RTLIL representation for module `\ICAP_VIRTEX5'.
+Generating RTLIL representation for module `\ICAP_VIRTEX6'.
+Generating RTLIL representation for module `\ICAPE2'.
+Generating RTLIL representation for module `\ICAPE3'.
+Generating RTLIL representation for module `\BSCAN_SPARTAN3'.
+Generating RTLIL representation for module `\BSCAN_SPARTAN3A'.
+Generating RTLIL representation for module `\BSCAN_SPARTAN6'.
+Generating RTLIL representation for module `\BSCAN_VIRTEX4'.
+Generating RTLIL representation for module `\BSCAN_VIRTEX5'.
+Generating RTLIL representation for module `\BSCAN_VIRTEX6'.
+Generating RTLIL representation for module `\BSCANE2'.
+Generating RTLIL representation for module `\DNA_PORT'.
+Generating RTLIL representation for module `\DNA_PORTE2'.
+Generating RTLIL representation for module `\FRAME_ECC_VIRTEX4'.
+Generating RTLIL representation for module `\FRAME_ECC_VIRTEX5'.
+Generating RTLIL representation for module `\FRAME_ECC_VIRTEX6'.
+Generating RTLIL representation for module `\FRAME_ECCE2'.
+Generating RTLIL representation for module `\FRAME_ECCE3'.
+Generating RTLIL representation for module `\FRAME_ECCE4'.
+Generating RTLIL representation for module `\USR_ACCESS_VIRTEX4'.
+Generating RTLIL representation for module `\USR_ACCESS_VIRTEX5'.
+Generating RTLIL representation for module `\USR_ACCESS_VIRTEX6'.
+Generating RTLIL representation for module `\USR_ACCESSE2'.
+Generating RTLIL representation for module `\POST_CRC_INTERNAL'.
+Generating RTLIL representation for module `\SUSPEND_SYNC'.
+Generating RTLIL representation for module `\KEY_CLEAR'.
+Generating RTLIL representation for module `\MASTER_JTAG'.
+Generating RTLIL representation for module `\SPI_ACCESS'.
+Generating RTLIL representation for module `\EFUSE_USR'.
+Generating RTLIL representation for module `\SYSMON'.
+Generating RTLIL representation for module `\XADC'.
+Generating RTLIL representation for module `\SYSMONE1'.
+Generating RTLIL representation for module `\SYSMONE4'.
+Generating RTLIL representation for module `\GTPA1_DUAL'.
+Generating RTLIL representation for module `\GT11_CUSTOM'.
+Generating RTLIL representation for module `\GT11_DUAL'.
+Generating RTLIL representation for module `\GT11CLK'.
+Generating RTLIL representation for module `\GT11CLK_MGT'.
+Generating RTLIL representation for module `\GTP_DUAL'.
+Generating RTLIL representation for module `\GTX_DUAL'.
+Generating RTLIL representation for module `\CRC32'.
+Generating RTLIL representation for module `\CRC64'.
+Generating RTLIL representation for module `\GTHE1_QUAD'.
+Generating RTLIL representation for module `\GTXE1'.
+Generating RTLIL representation for module `\IBUFDS_GTXE1'.
+Generating RTLIL representation for module `\IBUFDS_GTHE1'.
+Generating RTLIL representation for module `\GTHE2_CHANNEL'.
+Generating RTLIL representation for module `\GTHE2_COMMON'.
+Generating RTLIL representation for module `\GTPE2_CHANNEL'.
+Generating RTLIL representation for module `\GTPE2_COMMON'.
+Generating RTLIL representation for module `\GTXE2_CHANNEL'.
+Generating RTLIL representation for module `\GTXE2_COMMON'.
+Generating RTLIL representation for module `\IBUFDS_GTE2'.
+Generating RTLIL representation for module `\GTHE3_CHANNEL'.
+Generating RTLIL representation for module `\GTHE3_COMMON'.
+Generating RTLIL representation for module `\GTYE3_CHANNEL'.
+Generating RTLIL representation for module `\GTYE3_COMMON'.
+Generating RTLIL representation for module `\IBUFDS_GTE3'.
+Generating RTLIL representation for module `\OBUFDS_GTE3'.
+Generating RTLIL representation for module `\OBUFDS_GTE3_ADV'.
+Generating RTLIL representation for module `\GTHE4_CHANNEL'.
+Generating RTLIL representation for module `\GTHE4_COMMON'.
+Generating RTLIL representation for module `\GTYE4_CHANNEL'.
+Generating RTLIL representation for module `\GTYE4_COMMON'.
+Generating RTLIL representation for module `\IBUFDS_GTE4'.
+Generating RTLIL representation for module `\OBUFDS_GTE4'.
+Generating RTLIL representation for module `\OBUFDS_GTE4_ADV'.
+Generating RTLIL representation for module `\GTM_DUAL'.
+Generating RTLIL representation for module `\IBUFDS_GTM'.
+Generating RTLIL representation for module `\OBUFDS_GTM'.
+Generating RTLIL representation for module `\OBUFDS_GTM_ADV'.
+Generating RTLIL representation for module `\HSDAC'.
+Generating RTLIL representation for module `\HSADC'.
+Generating RTLIL representation for module `\RFDAC'.
+Generating RTLIL representation for module `\RFADC'.
+Generating RTLIL representation for module `\PCIE_A1'.
+Generating RTLIL representation for module `\PCIE_EP'.
+Generating RTLIL representation for module `\PCIE_2_0'.
+Generating RTLIL representation for module `\PCIE_2_1'.
+Generating RTLIL representation for module `\PCIE_3_0'.
+Generating RTLIL representation for module `\PCIE_3_1'.
+Generating RTLIL representation for module `\PCIE40E4'.
+Generating RTLIL representation for module `\PCIE4CE4'.
+Generating RTLIL representation for module `\EMAC'.
+Generating RTLIL representation for module `\TEMAC'.
+Generating RTLIL representation for module `\TEMAC_SINGLE'.
+Generating RTLIL representation for module `\CMAC'.
+Generating RTLIL representation for module `\CMACE4'.
+Generating RTLIL representation for module `\MCB'.
+Generating RTLIL representation for module `\HBM_REF_CLK'.
+Generating RTLIL representation for module `\HBM_SNGLBLI_INTF_APB'.
+Generating RTLIL representation for module `\HBM_SNGLBLI_INTF_AXI'.
+Generating RTLIL representation for module `\HBM_ONE_STACK_INTF'.
+Generating RTLIL representation for module `\HBM_TWO_STACK_INTF'.
+Generating RTLIL representation for module `\PPC405_ADV'.
+Generating RTLIL representation for module `\PPC440'.
+Generating RTLIL representation for module `\PS7'.
+Generating RTLIL representation for module `\PS8'.
+Generating RTLIL representation for module `\ILKN'.
+Generating RTLIL representation for module `\ILKNE4'.
+Generating RTLIL representation for module `\VCU'.
+Generating RTLIL representation for module `\FE'.
+Successfully finished Verilog frontend.
+
+2.3. Executing HIERARCHY pass (managing design hierarchy).
+
+2.3.1. Analyzing design hierarchy..
+Top module:  \cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc
+
+2.3.2. Analyzing design hierarchy..
+Top module:  \cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc
+Removed 0 unused modules.
+
+2.4. Executing PROC pass (convert processes to netlists).
+
+2.4.1. Executing PROC_CLEAN pass (remove empty switches from decision trees).
+Cleaned up 0 empty switches.
+
+2.4.2. Executing PROC_RMDEAD pass (remove dead branches from decision trees).
+Removed a total of 0 dead cases.
+
+2.4.3. Executing PROC_PRUNE pass (remove redundant assignments in processes).
+Removed 0 redundant assignments.
+Promoted 0 assignments to connections.
+
+2.4.4. Executing PROC_INIT pass (extract init attributes).
+
+2.4.5. Executing PROC_ARST pass (detect async resets in processes).
+
+2.4.6. Executing PROC_ROM pass (convert switches to ROMs).
+Converted 0 switches.
+
+2.4.7. Executing PROC_MUX pass (convert decision trees to multiplexers).
+
+2.4.8. Executing PROC_DLATCH pass (convert process syncs to latches).
+
+2.4.9. Executing PROC_DFF pass (convert process syncs to FFs).
+
+2.4.10. Executing PROC_MEMWR pass (convert process memory writes to cells).
+
+2.4.11. Executing PROC_CLEAN pass (remove empty switches from decision trees).
+Cleaned up 0 empty switches.
+
+2.4.12. Executing OPT_EXPR pass (perform const folding).
+Optimizing module cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc.
+
+2.5. Executing CHECK pass (checking for obvious problems).
+Checking module cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc...
+Found and reported 0 problems.
+
+2.6. Executing FLATTEN pass (flatten design).
+
+2.7. Executing TRIBUF pass.
+
+2.8. Executing DEMINOUT pass (demote inout ports to input or output).
+
+2.9. Executing OPT_EXPR pass (perform const folding).
+Optimizing module cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc.
+<suppressed ~1 debug messages>
+
+2.10. Executing CHECK pass (checking for obvious problems).
+Checking module cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc...
+Found and reported 0 problems.
+
+2.11. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc..
+Removed 0 unused cells and 109 unused wires.
+<suppressed ~35 debug messages>
+
+2.12. Executing OPT pass (performing simple optimizations).
+
+2.12.1. Executing OPT_EXPR pass (perform const folding).
+Optimizing module cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc.
+<suppressed ~8 debug messages>
+
+2.12.2. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc'.
+Computing hashes of 182 cells of `\cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc'.
+Finding duplicate cells in `\cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc'.
+Computing hashes of 147 cells of `\cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc'.
+Finding duplicate cells in `\cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc'.
+<suppressed ~105 debug messages>
+Removed a total of 35 cells.
+
+2.12.3. Executing OPT_MUXTREE pass (detect dead branches in mux trees).
+Running muxtree optimizer on module \cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc..
+  Creating internal representation of mux trees.
+  Evaluating internal representation of mux trees.
+  Analyzing evaluation results.
+    dead port 2/2 on $mux $procmux$83.
+    dead port 1/2 on $mux $procmux$76.
+    dead port 2/2 on $mux $procmux$73.
+    dead port 1/2 on $mux $procmux$66.
+    dead port 1/2 on $mux $procmux$137.
+    dead port 1/2 on $mux $procmux$157.
+    dead port 1/2 on $mux $procmux$166.
+    dead port 1/2 on $mux $procmux$55.
+    dead port 2/2 on $mux $procmux$52.
+    dead port 1/2 on $mux $procmux$46.
+    dead port 2/2 on $mux $procmux$43.
+    dead port 1/2 on $mux $procmux$37.
+    dead port 2/2 on $mux $procmux$34.
+    dead port 1/2 on $mux $procmux$126.
+    dead port 1/2 on $mux $procmux$27.
+    dead port 2/2 on $mux $procmux$24.
+    dead port 2/2 on $mux $procmux$123.
+    dead port 1/2 on $mux $procmux$17.
+    dead port 2/2 on $mux $procmux$14.
+    dead port 1/2 on $mux $procmux$8.
+    dead port 2/2 on $mux $procmux$5.
+    dead port 1/2 on $mux $procmux$116.
+    dead port 2/2 on $mux $procmux$113.
+    dead port 1/2 on $mux $procmux$175.
+    dead port 1/2 on $mux $procmux$106.
+    dead port 1/2 on $mux $procmux$199.
+    dead port 2/2 on $mux $procmux$103.
+    dead port 1/2 on $mux $procmux$146.
+    dead port 1/2 on $mux $procmux$183.
+    dead port 1/2 on $mux $procmux$96.
+    dead port 1/2 on $mux $procmux$191.
+    dead port 2/2 on $mux $procmux$93.
+    dead port 1/2 on $mux $procmux$86.
+Removed 33 multiplexer ports.
+<suppressed ~80 debug messages>
+
+2.12.4. Executing OPT_REDUCE pass (consolidate $*mux and $reduce_* inputs).
+  Optimizing cells in module \cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc.
+    New ctrl vector for $pmux cell $procmux$178: $auto$opt_reduce.cc:137:opt_pmux$1354
+    New ctrl vector for $pmux cell $procmux$194: $auto$opt_reduce.cc:137:opt_pmux$1356
+    New ctrl vector for $pmux cell $procmux$186: $auto$opt_reduce.cc:137:opt_pmux$1358
+  Optimizing cells in module \cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc.
+Performed a total of 3 changes.
+
+2.12.5. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc'.
+Computing hashes of 117 cells of `\cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc'.
+Finding duplicate cells in `\cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc'.
+Computing hashes of 115 cells of `\cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc'.
+Finding duplicate cells in `\cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc'.
+<suppressed ~6 debug messages>
+Removed a total of 2 cells.
+
+2.12.6. Executing OPT_DFF pass (perform DFF optimizations).
+
+2.12.7. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc..
+Removed 0 unused cells and 78 unused wires.
+<suppressed ~1 debug messages>
+
+2.12.8. Executing OPT_EXPR pass (perform const folding).
+Optimizing module cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc.
+
+2.12.9. Rerunning OPT passes. (Maybe there is more to do..)
+
+2.12.10. Executing OPT_MUXTREE pass (detect dead branches in mux trees).
+Running muxtree optimizer on module \cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc..
+  Creating internal representation of mux trees.
+  Evaluating internal representation of mux trees.
+  Analyzing evaluation results.
+Removed 0 multiplexer ports.
+<suppressed ~47 debug messages>
+
+2.12.11. Executing OPT_REDUCE pass (consolidate $*mux and $reduce_* inputs).
+  Optimizing cells in module \cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc.
+Performed a total of 0 changes.
+
+2.12.12. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc'.
+Computing hashes of 115 cells of `\cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc'.
+Finding duplicate cells in `\cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc'.
+Removed a total of 0 cells.
+
+2.12.13. Executing OPT_DFF pass (perform DFF optimizations).
+
+2.12.14. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc..
+
+2.12.15. Executing OPT_EXPR pass (perform const folding).
+Optimizing module cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc.
+
+2.12.16. Finished fast OPT passes. (There is nothing left to do.)
+
+2.13. Executing FSM pass (extract and optimize FSM).
+
+2.13.1. Executing FSM_DETECT pass (finding FSMs in design).
+Found FSM state register cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc.state.
+
+2.13.2. Executing FSM_EXTRACT pass (extracting FSM from design).
+Extracting FSM `\state' from module `\cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc'.
+  found $dff cell for state register: $driver$state
+  root of input selection tree: $procmux$203_Y
+  found reset state: 2'00 (guessed from mux tree)
+  found ctrl input: \rst
+  found ctrl input: $procmux$131_CMP
+  found ctrl input: $procmux$133_CMP
+  found ctrl input: \ready
+  found state code: 2'00
+  found ctrl input: $119y
+  found state code: 2'11
+  found state code: 2'10
+  found ctrl input: \valid_in
+  found state code: 2'01
+  found ctrl output: $procmux$133_CMP
+  found ctrl output: $procmux$131_CMP
+  found ctrl output: \ready
+  ctrl inputs: { $119y \valid_in \rst }
+  ctrl outputs: { $procmux$203_Y $procmux$133_CMP $procmux$131_CMP \ready }
+  transition:       2'00 3'-00 ->       2'00 5'00001
+  transition:       2'00 3'-10 ->       2'01 5'01001
+  transition:       2'00 3'--1 ->       2'00 5'00001
+  transition:       2'10 3'0-0 ->       2'10 5'10010
+  transition:       2'10 3'1-0 ->       2'11 5'11010
+  transition:       2'10 3'--1 ->       2'00 5'00010
+  transition:       2'01 3'--0 ->       2'10 5'10100
+  transition:       2'01 3'--1 ->       2'00 5'00100
+  transition:       2'11 3'--0 ->       2'00 5'00000
+  transition:       2'11 3'--1 ->       2'00 5'00000
+
+2.13.3. Executing FSM_OPT pass (simple optimizations of FSMs).
+Optimizing FSM `$fsm$\state$1359' from module `\cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc'.
+  Merging pattern 3'--0 and 3'--1 from group (3 0 5'00000).
+  Merging pattern 3'--1 and 3'--0 from group (3 0 5'00000).
+
+2.13.4. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc..
+Removed 8 unused cells and 8 unused wires.
+<suppressed ~9 debug messages>
+
+2.13.5. Executing FSM_OPT pass (simple optimizations of FSMs).
+Optimizing FSM `$fsm$\state$1359' from module `\cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc'.
+  Removing unused output signal $procmux$203_Y [0].
+  Removing unused output signal $procmux$203_Y [1].
+
+2.13.6. Executing FSM_RECODE pass (re-assigning FSM state encoding).
+Recoding FSM `$fsm$\state$1359' from module `\cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc' using `auto' encoding:
+  mapping auto encoding to `one-hot` for this FSM.
+  00 -> ---1
+  10 -> --1-
+  01 -> -1--
+  11 -> 1---
+
+2.13.7. Executing FSM_INFO pass (dumping all available information on FSM cells).
+
+FSM `$fsm$\state$1359' from module `cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc':
+-------------------------------------
+
+  Information on FSM $fsm$\state$1359 (\state):
+
+  Number of input signals:    3
+  Number of output signals:   3
+  Number of state bits:       4
+
+  Input signals:
+    0: \rst
+    1: \valid_in
+    2: $119y
+
+  Output signals:
+    0: \ready
+    1: $procmux$131_CMP
+    2: $procmux$133_CMP
+
+  State encoding:
+    0:     4'---1  <RESET STATE>
+    1:     4'--1-
+    2:     4'-1--
+    3:     4'1---
+
+  Transition Table (state_in, ctrl_in, state_out, ctrl_out):
+      0:     0 3'-00   ->     0 3'001
+      1:     0 3'--1   ->     0 3'001
+      2:     0 3'-10   ->     2 3'001
+      3:     1 3'--1   ->     0 3'010
+      4:     1 3'0-0   ->     1 3'010
+      5:     1 3'1-0   ->     3 3'010
+      6:     2 3'--1   ->     0 3'100
+      7:     2 3'--0   ->     1 3'100
+      8:     3 3'---   ->     0 3'000
+
+-------------------------------------
+
+2.13.8. Executing FSM_MAP pass (mapping FSMs to basic logic).
+Mapping FSM `$fsm$\state$1359' from module `\cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc'.
+
+2.14. Executing OPT pass (performing simple optimizations).
+
+2.14.1. Executing OPT_EXPR pass (perform const folding).
+Optimizing module cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc.
+<suppressed ~4 debug messages>
+
+2.14.2. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc'.
+Computing hashes of 120 cells of `\cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc'.
+Finding duplicate cells in `\cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc'.
+Removed a total of 0 cells.
+
+2.14.3. Executing OPT_MUXTREE pass (detect dead branches in mux trees).
+Running muxtree optimizer on module \cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc..
+  Creating internal representation of mux trees.
+  Evaluating internal representation of mux trees.
+  Analyzing evaluation results.
+Removed 0 multiplexer ports.
+<suppressed ~42 debug messages>
+
+2.14.4. Executing OPT_REDUCE pass (consolidate $*mux and $reduce_* inputs).
+  Optimizing cells in module \cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc.
+Performed a total of 0 changes.
+
+2.14.5. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc'.
+Computing hashes of 120 cells of `\cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc'.
+Finding duplicate cells in `\cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc'.
+Removed a total of 0 cells.
+
+2.14.6. Executing OPT_DFF pass (perform DFF optimizations).
+Adding EN signal on $driver$z ($dff) from module cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc (D = $procmux$130_Y, Q = \z).
+Adding EN signal on $driver$x ($dff) from module cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc (D = $procmux$150_Y, Q = \x).
+Adding EN signal on $driver$y ($dff) from module cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc (D = $procmux$141_Y, Q = \y).
+Adding SRST signal on $driver$valid_out ($dff) from module cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc (D = $procmux$194_Y, Q = \valid_out, rval = 1'0).
+Adding EN signal on $driver$cos_out ($dff) from module cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc (D = \x [11:0], Q = \cos_out).
+Adding EN signal on $driver$sin_out ($dff) from module cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc (D = \y [11:0], Q = \sin_out).
+Adding EN signal on $driver$quadrant ($dff) from module cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc (D = \theta_in [11:10], Q = \quadrant).
+Adding EN signal on $driver$base ($dff) from module cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc (D = $base$128, Q = \base).
+
+2.14.7. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc..
+Removed 12 unused cells and 18 unused wires.
+<suppressed ~13 debug messages>
+
+2.14.8. Executing OPT_EXPR pass (perform const folding).
+Optimizing module cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc.
+<suppressed ~4 debug messages>
+
+2.14.9. Rerunning OPT passes. (Maybe there is more to do..)
+
+2.14.10. Executing OPT_MUXTREE pass (detect dead branches in mux trees).
+Running muxtree optimizer on module \cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc..
+  Creating internal representation of mux trees.
+  Evaluating internal representation of mux trees.
+  Analyzing evaluation results.
+Removed 0 multiplexer ports.
+<suppressed ~27 debug messages>
+
+2.14.11. Executing OPT_REDUCE pass (consolidate $*mux and $reduce_* inputs).
+  Optimizing cells in module \cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc.
+Performed a total of 0 changes.
+
+2.14.12. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc'.
+Computing hashes of 135 cells of `\cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc'.
+Finding duplicate cells in `\cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc'.
+Computing hashes of 121 cells of `\cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc'.
+Finding duplicate cells in `\cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc'.
+Computing hashes of 119 cells of `\cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc'.
+Finding duplicate cells in `\cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc'.
+<suppressed ~48 debug messages>
+Removed a total of 16 cells.
+
+2.14.13. Executing OPT_DFF pass (perform DFF optimizations).
+
+2.14.14. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc..
+Removed 0 unused cells and 16 unused wires.
+<suppressed ~1 debug messages>
+
+2.14.15. Executing OPT_EXPR pass (perform const folding).
+Optimizing module cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc.
+
+2.14.16. Rerunning OPT passes. (Maybe there is more to do..)
+
+2.14.17. Executing OPT_MUXTREE pass (detect dead branches in mux trees).
+Running muxtree optimizer on module \cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc..
+  Creating internal representation of mux trees.
+  Evaluating internal representation of mux trees.
+  Analyzing evaluation results.
+Removed 0 multiplexer ports.
+<suppressed ~27 debug messages>
+
+2.14.18. Executing OPT_REDUCE pass (consolidate $*mux and $reduce_* inputs).
+  Optimizing cells in module \cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc.
+Performed a total of 0 changes.
+
+2.14.19. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc'.
+Computing hashes of 119 cells of `\cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc'.
+Finding duplicate cells in `\cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc'.
+Removed a total of 0 cells.
+
+2.14.20. Executing OPT_DFF pass (perform DFF optimizations).
+
+2.14.21. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc..
+
+2.14.22. Executing OPT_EXPR pass (perform const folding).
+Optimizing module cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc.
+
+2.14.23. Finished fast OPT passes. (There is nothing left to do.)
+
+2.15. Executing WREDUCE pass (reducing word size of cells).
+Removed top 13 bits (of 14) from port B of cell cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc.$15 ($add).
+Removed top 13 bits (of 14) from port B of cell cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc.$21 ($add).
+Removed top 13 bits (of 14) from port B of cell cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc.$25 ($add).
+Removed top 3 bits (of 4) from port B of cell cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc.$27 ($add).
+Removed top 13 bits (of 14) from port B of cell cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc.$40 ($add).
+Removed top 13 bits (of 14) from port B of cell cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc.$46 ($add).
+Removed top 13 bits (of 14) from port B of cell cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc.$50 ($add).
+Removed top 2 bits (of 4) from port B of cell cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc.$52 ($add).
+Removed top 13 bits (of 14) from port B of cell cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc.$65 ($add).
+Removed top 13 bits (of 14) from port B of cell cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc.$71 ($add).
+Removed top 2 bits (of 3) from port B of cell cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc.$auto$simple.cc:214:make_patterns_logic$1409 ($ne).
+Removed top 13 bits (of 14) from port B of cell cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc.$75 ($add).
+Removed top 2 bits (of 4) from port B of cell cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc.$77 ($add).
+Removed top 13 bits (of 14) from port B of cell cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc.$90 ($add).
+Removed top 13 bits (of 14) from port B of cell cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc.$96 ($add).
+Removed top 13 bits (of 14) from port B of cell cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc.$100 ($add).
+Removed top 1 bits (of 2) from port B of cell cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc.$109 ($eq).
+Removed top 2 bits (of 14) from port B of cell cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc.$111 ($sub).
+Removed top 2 bits (of 14) from port B of cell cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc.$116 ($add).
+Removed top 1 bits (of 4) from port B of cell cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc.$120 ($add).
+Removed top 1 bits (of 4) from port B of cell cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc.$procmux$240_CMP0 ($eq).
+Removed top 7 bits (of 14) from mux cell cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc.$procmux$239 ($pmux).
+Removed top 2 bits (of 4) from port B of cell cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc.$procmux$241_CMP0 ($eq).
+Removed top 6 bits (of 14) from mux cell cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc.$procmux$243 ($pmux).
+Removed top 1 bits (of 4) from port B of cell cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc.$procmux$245_CMP0 ($eq).
+Removed top 2 bits (of 4) from port B of cell cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc.$procmux$246_CMP0 ($eq).
+Removed top 5 bits (of 14) from mux cell cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc.$procmux$248 ($pmux).
+Removed top 1 bits (of 4) from port B of cell cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc.$procmux$250_CMP0 ($eq).
+Removed top 3 bits (of 4) from port B of cell cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc.$procmux$251_CMP0 ($eq).
+Removed top 4 bits (of 14) from mux cell cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc.$procmux$253 ($pmux).
+Removed top 1 bits (of 4) from port B of cell cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc.$procmux$255_CMP0 ($eq).
+
+2.16. Executing PEEPOPT pass (run peephole optimizers).
+
+2.17. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc..
+
+2.18. Executing MUXPACK pass ($mux cell cascades to $pmux).
+Converting cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc.$procmux$41 ... cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc.$procmux$22 to a pmux with 2 cases.
+Converted 2 (p)mux cells into 1 pmux cells.
+
+2.19. Executing PMUX2SHIFTX pass.
+Inspecting $pmux cell cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc/$procmux$253.
+  data width: 10 (next power-of-2 = 16, log2 = 4)
+  checking ctrl signal \base
+    table of choices:
+      0: 4'1000: 10'0000000011
+      1: 4'0100: 10'0000101001
+      2: 4'0000: 10'1000000000
+    failed to detect onehot driver. do not optimize.
+Inspecting $pmux cell cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc/$procmux$248.
+  data width: 9 (next power-of-2 = 16, log2 = 4)
+  checking ctrl signal \sh1
+    best permutation: { \sh1 [1:0] \sh1 [3:2] }
+    best xor mask: 4'0100
+      0: 4'1001 -> 4'0110 -> 4'0010: 9'000000001
+      1: 4'0101 -> 4'0101 -> 4'0001: 9'000010100
+      2: 4'0001 -> 4'0100 -> 4'0000: 9'100101110
+    choices: 3
+    min choice: 0
+    max choice: 2
+    range density: 100%
+    absolute density: 100%
+    full density: 18%
+    full case: false
+    created $shiftx cell $auto$pmux2shiftx.cc:714:execute$1459.
+Inspecting $pmux cell cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc/$procmux$243.
+  data width: 8 (next power-of-2 = 8, log2 = 3)
+  checking ctrl signal \sh2
+    best permutation: { \sh2 [1:0] \sh2 [3:2] }
+    best xor mask: 4'1000
+      0: 4'1010 -> 4'1010 -> 4'0010: 8'00000001
+      1: 4'0110 -> 4'1001 -> 4'0001: 8'00001010
+      2: 4'0010 -> 4'1000 -> 4'0000: 8'10100000
+    choices: 3
+    min choice: 0
+    max choice: 2
+    range density: 100%
+    absolute density: 100%
+    full density: 18%
+    full case: false
+    created $shiftx cell $auto$pmux2shiftx.cc:714:execute$1465.
+Removed 6 unused cells and 7 unused wires.
+
+2.20. Executing SORT pass.
+
+2.21. Executing MEMORY_DFF pass (merging $dff cells to $memrd).
+
+2.22. Executing ALUMACC pass (create $alu and $macc cells).
+Extracting $alu and $macc cells in module cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc:
+  creating $macc model for $100 ($add).
+  creating $macc model for $111 ($sub).
+  creating $macc model for $115 ($neg).
+  creating $macc model for $116 ($add).
+  creating $macc model for $120 ($add).
+  creating $macc model for $14 ($add).
+  creating $macc model for $15 ($add).
+  creating $macc model for $19 ($add).
+  creating $macc model for $21 ($add).
+  creating $macc model for $24 ($add).
+  creating $macc model for $25 ($add).
+  creating $macc model for $27 ($add).
+  creating $macc model for $39 ($add).
+  creating $macc model for $40 ($add).
+  creating $macc model for $44 ($add).
+  creating $macc model for $46 ($add).
+  creating $macc model for $49 ($add).
+  creating $macc model for $50 ($add).
+  creating $macc model for $52 ($add).
+  creating $macc model for $64 ($add).
+  creating $macc model for $65 ($add).
+  creating $macc model for $69 ($add).
+  creating $macc model for $71 ($add).
+  creating $macc model for $74 ($add).
+  creating $macc model for $75 ($add).
+  creating $macc model for $77 ($add).
+  creating $macc model for $89 ($add).
+  creating $macc model for $90 ($add).
+  creating $macc model for $94 ($add).
+  creating $macc model for $96 ($add).
+  creating $macc model for $99 ($add).
+  merging $macc model for $94 into $96.
+  merging $macc model for $89 into $90.
+  merging $macc model for $74 into $75.
+  merging $macc model for $69 into $71.
+  merging $macc model for $64 into $65.
+  merging $macc model for $49 into $50.
+  merging $macc model for $44 into $46.
+  merging $macc model for $39 into $40.
+  merging $macc model for $24 into $25.
+  merging $macc model for $19 into $21.
+  merging $macc model for $14 into $15.
+  merging $macc model for $99 into $100.
+  created 0 $alu and 0 $macc cells.
+
+2.23. Executing MACCMAP pass (map $macc cells).
+
+2.24. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc..
+
+2.25. Executing TECHMAP pass (map to technology primitives).
+
+2.25.1. Executing Verilog-2005 frontend: /home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/mul2dsp.v
+Parsing Verilog input from `/home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/mul2dsp.v' to AST representation.
+Generating RTLIL representation for module `\_80_mul'.
+Generating RTLIL representation for module `\_90_soft_mul'.
+Successfully finished Verilog frontend.
+
+2.25.2. Executing Verilog-2005 frontend: /home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/xilinx/xcu_dsp_map.v
+Parsing Verilog input from `/home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/xilinx/xcu_dsp_map.v' to AST representation.
+Generating RTLIL representation for module `$__MUL27X18'.
+Successfully finished Verilog frontend.
+
+2.25.3. Continuing TECHMAP pass.
+No more expansions possible.
+<suppressed ~5 debug messages>
+
+2.26. Executing OPT_EXPR pass (perform const folding).
+
+2.27. Executing WREDUCE pass (reducing word size of cells).
+
+2.28. Executing XILINX_DSP pass (pack resources into DSPs).
+
+2.29. Executing TECHMAP pass (map to technology primitives).
+
+2.29.1. Executing Verilog-2005 frontend: /home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/cmp2lut.v
+Parsing Verilog input from `/home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/cmp2lut.v' to AST representation.
+Generating RTLIL representation for module `\_90_lut_cmp_'.
+Successfully finished Verilog frontend.
+
+2.29.2. Executing Verilog-2005 frontend: /home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/cmp2lcu.v
+Parsing Verilog input from `/home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/cmp2lcu.v' to AST representation.
+Generating RTLIL representation for module `\_80_lcu_cmp_'.
+Generating RTLIL representation for module `$__CMP2LCU'.
+Successfully finished Verilog frontend.
+
+2.29.3. Continuing TECHMAP pass.
+No more expansions possible.
+<suppressed ~7 debug messages>
+
+2.30. Executing ALUMACC pass (create $alu and $macc cells).
+Extracting $alu and $macc cells in module cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc:
+  creating $macc model for $100 ($add).
+  creating $macc model for $111 ($sub).
+  creating $macc model for $115 ($neg).
+  creating $macc model for $116 ($add).
+  creating $macc model for $120 ($add).
+  creating $macc model for $14 ($add).
+  creating $macc model for $15 ($add).
+  creating $macc model for $19 ($add).
+  creating $macc model for $21 ($add).
+  creating $macc model for $24 ($add).
+  creating $macc model for $25 ($add).
+  creating $macc model for $27 ($add).
+  creating $macc model for $39 ($add).
+  creating $macc model for $40 ($add).
+  creating $macc model for $44 ($add).
+  creating $macc model for $46 ($add).
+  creating $macc model for $49 ($add).
+  creating $macc model for $50 ($add).
+  creating $macc model for $52 ($add).
+  creating $macc model for $64 ($add).
+  creating $macc model for $65 ($add).
+  creating $macc model for $69 ($add).
+  creating $macc model for $71 ($add).
+  creating $macc model for $74 ($add).
+  creating $macc model for $75 ($add).
+  creating $macc model for $77 ($add).
+  creating $macc model for $89 ($add).
+  creating $macc model for $90 ($add).
+  creating $macc model for $94 ($add).
+  creating $macc model for $96 ($add).
+  creating $macc model for $99 ($add).
+  merging $macc model for $94 into $96.
+  merging $macc model for $89 into $90.
+  merging $macc model for $74 into $75.
+  merging $macc model for $69 into $71.
+  merging $macc model for $64 into $65.
+  merging $macc model for $49 into $50.
+  merging $macc model for $44 into $46.
+  merging $macc model for $39 into $40.
+  merging $macc model for $24 into $25.
+  merging $macc model for $19 into $21.
+  merging $macc model for $14 into $15.
+  merging $macc model for $99 into $100.
+  creating $alu model for $macc $52.
+  creating $alu model for $macc $50.
+  creating $alu model for $macc $75.
+  creating $alu model for $macc $46.
+  creating $alu model for $macc $77.
+  creating $alu model for $macc $40.
+  creating $alu model for $macc $65.
+  creating $alu model for $macc $27.
+  creating $alu model for $macc $25.
+  creating $alu model for $macc $90.
+  creating $alu model for $macc $21.
+  creating $alu model for $macc $71.
+  creating $alu model for $macc $15.
+  creating $alu model for $macc $96.
+  creating $alu model for $macc $120.
+  creating $alu model for $macc $116.
+  creating $alu model for $macc $115.
+  creating $alu model for $macc $111.
+  creating $alu model for $macc $100.
+  creating $alu cell for $100: $auto$alumacc.cc:578:replace_alu$1466
+  creating $alu cell for $111: $auto$alumacc.cc:578:replace_alu$1469
+  creating $alu cell for $115: $auto$alumacc.cc:578:replace_alu$1472
+  creating $alu cell for $116: $auto$alumacc.cc:578:replace_alu$1475
+  creating $alu cell for $120: $auto$alumacc.cc:578:replace_alu$1478
+  creating $alu cell for $96: $auto$alumacc.cc:578:replace_alu$1481
+  creating $alu cell for $15: $auto$alumacc.cc:578:replace_alu$1484
+  creating $alu cell for $71: $auto$alumacc.cc:578:replace_alu$1487
+  creating $alu cell for $21: $auto$alumacc.cc:578:replace_alu$1490
+  creating $alu cell for $90: $auto$alumacc.cc:578:replace_alu$1493
+  creating $alu cell for $25: $auto$alumacc.cc:578:replace_alu$1496
+  creating $alu cell for $27: $auto$alumacc.cc:578:replace_alu$1499
+  creating $alu cell for $65: $auto$alumacc.cc:578:replace_alu$1502
+  creating $alu cell for $40: $auto$alumacc.cc:578:replace_alu$1505
+  creating $alu cell for $77: $auto$alumacc.cc:578:replace_alu$1508
+  creating $alu cell for $46: $auto$alumacc.cc:578:replace_alu$1511
+  creating $alu cell for $75: $auto$alumacc.cc:578:replace_alu$1514
+  creating $alu cell for $50: $auto$alumacc.cc:578:replace_alu$1517
+  creating $alu cell for $52: $auto$alumacc.cc:578:replace_alu$1520
+  created 19 $alu and 0 $macc cells.
+
+2.31. Executing SHARE pass (SAT-based resource sharing).
+Found 8 cells in module cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc that may be considered for resource sharing.
+  Analyzing resource sharing options for $9 ($sshr):
+    Found cell that is never activated: $14
+    Found cell that is never activated: $44
+    Found cell that is never activated: $64
+    Found cell that is never activated: $94
+    Found cell that is never activated: $89
+    Found cell that is never activated: $69
+    Found cell that is never activated: $39
+    Found 1 activation_patterns using ctrl signal \state [1].
+    Found 7 candidates: $86 $84 $61 $59 $36 $34 $11
+    Analyzing resource sharing with $86 ($sshr):
+      Found 1 activation_patterns using ctrl signal \state [1].
+      Activation pattern for cell $9: \state [1] = 1'1
+      Activation pattern for cell $86: \state [1] = 1'1
+      Size of SAT problem: 0 cells, 8 variables, 21 clauses
+      According to the SAT solver this pair of cells can not be shared.
+      Model from SAT solver: \state [1] = 1'1
+    Analyzing resource sharing with $84 ($sshr):
+      Found 1 activation_patterns using ctrl signal \state [1].
+      Activation pattern for cell $9: \state [1] = 1'1
+      Activation pattern for cell $84: \state [1] = 1'1
+      Size of SAT problem: 0 cells, 8 variables, 21 clauses
+      According to the SAT solver this pair of cells can not be shared.
+      Model from SAT solver: \state [1] = 1'1
+    Analyzing resource sharing with $61 ($sshr):
+      Found 1 activation_patterns using ctrl signal \state [1].
+      Activation pattern for cell $9: \state [1] = 1'1
+      Activation pattern for cell $61: \state [1] = 1'1
+      Size of SAT problem: 0 cells, 8 variables, 21 clauses
+      According to the SAT solver this pair of cells can not be shared.
+      Model from SAT solver: \state [1] = 1'1
+    Analyzing resource sharing with $59 ($sshr):
+      Found 1 activation_patterns using ctrl signal \state [1].
+      Activation pattern for cell $9: \state [1] = 1'1
+      Activation pattern for cell $59: \state [1] = 1'1
+      Size of SAT problem: 0 cells, 8 variables, 21 clauses
+      According to the SAT solver this pair of cells can not be shared.
+      Model from SAT solver: \state [1] = 1'1
+    Analyzing resource sharing with $36 ($sshr):
+      Found 1 activation_patterns using ctrl signal \state [1].
+      Activation pattern for cell $9: \state [1] = 1'1
+      Activation pattern for cell $36: \state [1] = 1'1
+      Size of SAT problem: 0 cells, 8 variables, 21 clauses
+      According to the SAT solver this pair of cells can not be shared.
+      Model from SAT solver: \state [1] = 1'1
+    Analyzing resource sharing with $34 ($sshr):
+      Found 1 activation_patterns using ctrl signal \state [1].
+      Activation pattern for cell $9: \state [1] = 1'1
+      Activation pattern for cell $34: \state [1] = 1'1
+      Size of SAT problem: 0 cells, 8 variables, 21 clauses
+      According to the SAT solver this pair of cells can not be shared.
+      Model from SAT solver: \state [1] = 1'1
+    Analyzing resource sharing with $11 ($sshr):
+      Found cell that is never activated: $19
+      Found 1 activation_patterns using ctrl signal \state [1].
+      Activation pattern for cell $9: \state [1] = 1'1
+      Activation pattern for cell $11: \state [1] = 1'1
+      Size of SAT problem: 0 cells, 8 variables, 21 clauses
+      According to the SAT solver this pair of cells can not be shared.
+      Model from SAT solver: \state [1] = 1'1
+  Analyzing resource sharing options for $86 ($sshr):
+    Found 1 activation_patterns using ctrl signal \state [1].
+    Found 6 candidates: $84 $61 $59 $36 $34 $11
+    Analyzing resource sharing with $84 ($sshr):
+      Found 1 activation_patterns using ctrl signal \state [1].
+      Activation pattern for cell $86: \state [1] = 1'1
+      Activation pattern for cell $84: \state [1] = 1'1
+      Size of SAT problem: 0 cells, 8 variables, 21 clauses
+      According to the SAT solver this pair of cells can not be shared.
+      Model from SAT solver: \state [1] = 1'1
+    Analyzing resource sharing with $61 ($sshr):
+      Found 1 activation_patterns using ctrl signal \state [1].
+      Activation pattern for cell $86: \state [1] = 1'1
+      Activation pattern for cell $61: \state [1] = 1'1
+      Size of SAT problem: 0 cells, 8 variables, 21 clauses
+      According to the SAT solver this pair of cells can not be shared.
+      Model from SAT solver: \state [1] = 1'1
+    Analyzing resource sharing with $59 ($sshr):
+      Found 1 activation_patterns using ctrl signal \state [1].
+      Activation pattern for cell $86: \state [1] = 1'1
+      Activation pattern for cell $59: \state [1] = 1'1
+      Size of SAT problem: 0 cells, 8 variables, 21 clauses
+      According to the SAT solver this pair of cells can not be shared.
+      Model from SAT solver: \state [1] = 1'1
+    Analyzing resource sharing with $36 ($sshr):
+      Found 1 activation_patterns using ctrl signal \state [1].
+      Activation pattern for cell $86: \state [1] = 1'1
+      Activation pattern for cell $36: \state [1] = 1'1
+      Size of SAT problem: 0 cells, 8 variables, 21 clauses
+      According to the SAT solver this pair of cells can not be shared.
+      Model from SAT solver: \state [1] = 1'1
+    Analyzing resource sharing with $34 ($sshr):
+      Found 1 activation_patterns using ctrl signal \state [1].
+      Activation pattern for cell $86: \state [1] = 1'1
+      Activation pattern for cell $34: \state [1] = 1'1
+      Size of SAT problem: 0 cells, 8 variables, 21 clauses
+      According to the SAT solver this pair of cells can not be shared.
+      Model from SAT solver: \state [1] = 1'1
+    Analyzing resource sharing with $11 ($sshr):
+      Found 1 activation_patterns using ctrl signal \state [1].
+      Activation pattern for cell $86: \state [1] = 1'1
+      Activation pattern for cell $11: \state [1] = 1'1
+      Size of SAT problem: 0 cells, 8 variables, 21 clauses
+      According to the SAT solver this pair of cells can not be shared.
+      Model from SAT solver: \state [1] = 1'1
+  Analyzing resource sharing options for $84 ($sshr):
+    Found 1 activation_patterns using ctrl signal \state [1].
+    Found 5 candidates: $61 $59 $36 $34 $11
+    Analyzing resource sharing with $61 ($sshr):
+      Found 1 activation_patterns using ctrl signal \state [1].
+      Activation pattern for cell $84: \state [1] = 1'1
+      Activation pattern for cell $61: \state [1] = 1'1
+      Size of SAT problem: 0 cells, 8 variables, 21 clauses
+      According to the SAT solver this pair of cells can not be shared.
+      Model from SAT solver: \state [1] = 1'1
+    Analyzing resource sharing with $59 ($sshr):
+      Found 1 activation_patterns using ctrl signal \state [1].
+      Activation pattern for cell $84: \state [1] = 1'1
+      Activation pattern for cell $59: \state [1] = 1'1
+      Size of SAT problem: 0 cells, 8 variables, 21 clauses
+      According to the SAT solver this pair of cells can not be shared.
+      Model from SAT solver: \state [1] = 1'1
+    Analyzing resource sharing with $36 ($sshr):
+      Found 1 activation_patterns using ctrl signal \state [1].
+      Activation pattern for cell $84: \state [1] = 1'1
+      Activation pattern for cell $36: \state [1] = 1'1
+      Size of SAT problem: 0 cells, 8 variables, 21 clauses
+      According to the SAT solver this pair of cells can not be shared.
+      Model from SAT solver: \state [1] = 1'1
+    Analyzing resource sharing with $34 ($sshr):
+      Found 1 activation_patterns using ctrl signal \state [1].
+      Activation pattern for cell $84: \state [1] = 1'1
+      Activation pattern for cell $34: \state [1] = 1'1
+      Size of SAT problem: 0 cells, 8 variables, 21 clauses
+      According to the SAT solver this pair of cells can not be shared.
+      Model from SAT solver: \state [1] = 1'1
+    Analyzing resource sharing with $11 ($sshr):
+      Found 1 activation_patterns using ctrl signal \state [1].
+      Activation pattern for cell $84: \state [1] = 1'1
+      Activation pattern for cell $11: \state [1] = 1'1
+      Size of SAT problem: 0 cells, 8 variables, 21 clauses
+      According to the SAT solver this pair of cells can not be shared.
+      Model from SAT solver: \state [1] = 1'1
+  Analyzing resource sharing options for $61 ($sshr):
+    Found 1 activation_patterns using ctrl signal \state [1].
+    Found 4 candidates: $59 $36 $34 $11
+    Analyzing resource sharing with $59 ($sshr):
+      Found 1 activation_patterns using ctrl signal \state [1].
+      Activation pattern for cell $61: \state [1] = 1'1
+      Activation pattern for cell $59: \state [1] = 1'1
+      Size of SAT problem: 0 cells, 8 variables, 21 clauses
+      According to the SAT solver this pair of cells can not be shared.
+      Model from SAT solver: \state [1] = 1'1
+    Analyzing resource sharing with $36 ($sshr):
+      Found 1 activation_patterns using ctrl signal \state [1].
+      Activation pattern for cell $61: \state [1] = 1'1
+      Activation pattern for cell $36: \state [1] = 1'1
+      Size of SAT problem: 0 cells, 8 variables, 21 clauses
+      According to the SAT solver this pair of cells can not be shared.
+      Model from SAT solver: \state [1] = 1'1
+    Analyzing resource sharing with $34 ($sshr):
+      Found 1 activation_patterns using ctrl signal \state [1].
+      Activation pattern for cell $61: \state [1] = 1'1
+      Activation pattern for cell $34: \state [1] = 1'1
+      Size of SAT problem: 0 cells, 8 variables, 21 clauses
+      According to the SAT solver this pair of cells can not be shared.
+      Model from SAT solver: \state [1] = 1'1
+    Analyzing resource sharing with $11 ($sshr):
+      Found 1 activation_patterns using ctrl signal \state [1].
+      Activation pattern for cell $61: \state [1] = 1'1
+      Activation pattern for cell $11: \state [1] = 1'1
+      Size of SAT problem: 0 cells, 8 variables, 21 clauses
+      According to the SAT solver this pair of cells can not be shared.
+      Model from SAT solver: \state [1] = 1'1
+  Analyzing resource sharing options for $59 ($sshr):
+    Found 1 activation_patterns using ctrl signal \state [1].
+    Found 3 candidates: $36 $34 $11
+    Analyzing resource sharing with $36 ($sshr):
+      Found 1 activation_patterns using ctrl signal \state [1].
+      Activation pattern for cell $59: \state [1] = 1'1
+      Activation pattern for cell $36: \state [1] = 1'1
+      Size of SAT problem: 0 cells, 8 variables, 21 clauses
+      According to the SAT solver this pair of cells can not be shared.
+      Model from SAT solver: \state [1] = 1'1
+    Analyzing resource sharing with $34 ($sshr):
+      Found 1 activation_patterns using ctrl signal \state [1].
+      Activation pattern for cell $59: \state [1] = 1'1
+      Activation pattern for cell $34: \state [1] = 1'1
+      Size of SAT problem: 0 cells, 8 variables, 21 clauses
+      According to the SAT solver this pair of cells can not be shared.
+      Model from SAT solver: \state [1] = 1'1
+    Analyzing resource sharing with $11 ($sshr):
+      Found 1 activation_patterns using ctrl signal \state [1].
+      Activation pattern for cell $59: \state [1] = 1'1
+      Activation pattern for cell $11: \state [1] = 1'1
+      Size of SAT problem: 0 cells, 8 variables, 21 clauses
+      According to the SAT solver this pair of cells can not be shared.
+      Model from SAT solver: \state [1] = 1'1
+  Analyzing resource sharing options for $36 ($sshr):
+    Found 1 activation_patterns using ctrl signal \state [1].
+    Found 2 candidates: $34 $11
+    Analyzing resource sharing with $34 ($sshr):
+      Found 1 activation_patterns using ctrl signal \state [1].
+      Activation pattern for cell $36: \state [1] = 1'1
+      Activation pattern for cell $34: \state [1] = 1'1
+      Size of SAT problem: 0 cells, 8 variables, 21 clauses
+      According to the SAT solver this pair of cells can not be shared.
+      Model from SAT solver: \state [1] = 1'1
+    Analyzing resource sharing with $11 ($sshr):
+      Found 1 activation_patterns using ctrl signal \state [1].
+      Activation pattern for cell $36: \state [1] = 1'1
+      Activation pattern for cell $11: \state [1] = 1'1
+      Size of SAT problem: 0 cells, 8 variables, 21 clauses
+      According to the SAT solver this pair of cells can not be shared.
+      Model from SAT solver: \state [1] = 1'1
+  Analyzing resource sharing options for $34 ($sshr):
+    Found 1 activation_patterns using ctrl signal \state [1].
+    Found 1 candidates: $11
+    Analyzing resource sharing with $11 ($sshr):
+      Found 1 activation_patterns using ctrl signal \state [1].
+      Activation pattern for cell $34: \state [1] = 1'1
+      Activation pattern for cell $11: \state [1] = 1'1
+      Size of SAT problem: 0 cells, 8 variables, 21 clauses
+      According to the SAT solver this pair of cells can not be shared.
+      Model from SAT solver: \state [1] = 1'1
+  Analyzing resource sharing options for $11 ($sshr):
+    Found 1 activation_patterns using ctrl signal \state [1].
+    No candidates found.
+Removing 8 cells in module cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc:
+  Removing cell $19 ($add).
+  Removing cell $39 ($add).
+  Removing cell $69 ($add).
+  Removing cell $89 ($add).
+  Removing cell $94 ($add).
+  Removing cell $64 ($add).
+  Removing cell $44 ($add).
+  Removing cell $14 ($add).
+
+2.32. Executing OPT pass (performing simple optimizations).
+
+2.32.1. Executing OPT_EXPR pass (perform const folding).
+Optimizing module cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc.
+<suppressed ~2 debug messages>
+
+2.32.2. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc'.
+Computing hashes of 110 cells of `\cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc'.
+Finding duplicate cells in `\cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc'.
+Removed a total of 0 cells.
+
+2.32.3. Executing OPT_MUXTREE pass (detect dead branches in mux trees).
+Running muxtree optimizer on module \cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc..
+  Creating internal representation of mux trees.
+  Evaluating internal representation of mux trees.
+  Analyzing evaluation results.
+    dead port 1/5 on $pmux $procmux$243.
+    dead port 2/5 on $pmux $procmux$243.
+    dead port 3/5 on $pmux $procmux$243.
+    dead port 1/5 on $pmux $procmux$248.
+    dead port 2/5 on $pmux $procmux$248.
+    dead port 3/5 on $pmux $procmux$248.
+Removed 6 multiplexer ports.
+<suppressed ~26 debug messages>
+
+2.32.4. Executing OPT_REDUCE pass (consolidate $*mux and $reduce_* inputs).
+  Optimizing cells in module \cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc.
+Performed a total of 0 changes.
+
+2.32.5. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc'.
+Computing hashes of 110 cells of `\cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc'.
+Finding duplicate cells in `\cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc'.
+Removed a total of 0 cells.
+
+2.32.6. Executing OPT_DFF pass (perform DFF optimizations).
+
+2.32.7. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc..
+Removed 4 unused cells and 14 unused wires.
+<suppressed ~5 debug messages>
+
+2.32.8. Executing OPT_EXPR pass (perform const folding).
+Optimizing module cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc.
+
+2.32.9. Rerunning OPT passes. (Maybe there is more to do..)
+
+2.32.10. Executing OPT_MUXTREE pass (detect dead branches in mux trees).
+Running muxtree optimizer on module \cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc..
+  Creating internal representation of mux trees.
+  Evaluating internal representation of mux trees.
+  Analyzing evaluation results.
+Removed 0 multiplexer ports.
+<suppressed ~26 debug messages>
+
+2.32.11. Executing OPT_REDUCE pass (consolidate $*mux and $reduce_* inputs).
+  Optimizing cells in module \cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc.
+Performed a total of 0 changes.
+
+2.32.12. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc'.
+Computing hashes of 106 cells of `\cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc'.
+Finding duplicate cells in `\cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc'.
+Removed a total of 0 cells.
+
+2.32.13. Executing OPT_DFF pass (perform DFF optimizations).
+
+2.32.14. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc..
+
+2.32.15. Executing OPT_EXPR pass (perform const folding).
+Optimizing module cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc.
+
+2.32.16. Finished fast OPT passes. (There is nothing left to do.)
+
+2.33. Executing MEMORY pass.
+
+2.33.1. Executing OPT_MEM pass (optimize memories).
+Performed a total of 0 transformations.
+
+2.33.2. Executing OPT_MEM_PRIORITY pass (removing unnecessary memory write priority relations).
+Performed a total of 0 transformations.
+
+2.33.3. Executing OPT_MEM_FEEDBACK pass (finding memory read-to-write feedback paths).
+
+2.33.4. Executing MEMORY_BMUX2ROM pass (converting muxes to ROMs).
+
+2.33.5. Executing MEMORY_DFF pass (merging $dff cells to $memrd).
+
+2.33.6. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc..
+
+2.33.7. Executing MEMORY_SHARE pass (consolidating $memrd/$memwr cells).
+
+2.33.8. Executing OPT_MEM_WIDEN pass (optimize memories where all ports are wide).
+Performed a total of 0 transformations.
+
+2.33.9. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc..
+
+2.33.10. Executing MEMORY_COLLECT pass (generating $mem cells).
+
+2.34. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc..
+
+2.35. Executing MEMORY_LIBMAP pass (mapping memories to cells).
+
+2.36. Executing TECHMAP pass (map to technology primitives).
+
+2.36.1. Executing Verilog-2005 frontend: /home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/xilinx/lutrams_xc5v_map.v
+Parsing Verilog input from `/home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/xilinx/lutrams_xc5v_map.v' to AST representation.
+Generating RTLIL representation for module `$__XILINX_LUTRAM_SP_'.
+Generating RTLIL representation for module `$__XILINX_LUTRAM_DP_'.
+Generating RTLIL representation for module `$__XILINX_LUTRAM_QP_'.
+Generating RTLIL representation for module `$__XILINX_LUTRAM_OP_'.
+Generating RTLIL representation for module `$__XILINX_LUTRAM_SDP_'.
+Generating RTLIL representation for module `$__XILINX_LUTRAM_64X8SW_'.
+Generating RTLIL representation for module `$__XILINX_LUTRAM_32X16DR8_'.
+Successfully finished Verilog frontend.
+
+2.36.2. Continuing TECHMAP pass.
+No more expansions possible.
+<suppressed ~9 debug messages>
+
+2.37. Executing TECHMAP pass (map to technology primitives).
+
+2.37.1. Executing Verilog-2005 frontend: /home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/xilinx/brams_xcu_map.v
+Parsing Verilog input from `/home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/xilinx/brams_xcu_map.v' to AST representation.
+Generating RTLIL representation for module `$__XILINX_BLOCKRAM_TDP_'.
+Generating RTLIL representation for module `$__XILINX_BLOCKRAM_SDP_'.
+Successfully finished Verilog frontend.
+
+2.37.2. Continuing TECHMAP pass.
+No more expansions possible.
+<suppressed ~4 debug messages>
+
+2.38. Executing TECHMAP pass (map to technology primitives).
+
+2.38.1. Executing Verilog-2005 frontend: /home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/xilinx/urams_map.v
+Parsing Verilog input from `/home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/xilinx/urams_map.v' to AST representation.
+Generating RTLIL representation for module `$__XILINX_URAM_'.
+Generating RTLIL representation for module `$__XILINX_URAM_SP_'.
+Successfully finished Verilog frontend.
+
+2.38.2. Continuing TECHMAP pass.
+No more expansions possible.
+<suppressed ~4 debug messages>
+
+2.39. Executing OPT pass (performing simple optimizations).
+
+2.39.1. Executing OPT_EXPR pass (perform const folding).
+Optimizing module cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc.
+<suppressed ~17 debug messages>
+
+2.39.2. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc'.
+Computing hashes of 117 cells of `\cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc'.
+Finding duplicate cells in `\cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc'.
+Computing hashes of 116 cells of `\cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc'.
+Finding duplicate cells in `\cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc'.
+<suppressed ~3 debug messages>
+Removed a total of 1 cells.
+
+2.39.3. Executing OPT_DFF pass (perform DFF optimizations).
+Adding EN signal on $auto$ff.cc:337:slice$1443 ($dffe) from module cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc (D = $base$128 [1:0], Q = \base [1:0]).
+Adding EN signal on $auto$ff.cc:337:slice$1392 ($dffe) from module cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc (D = $procmux$130_Y [10:0], Q = \z [10:0]).
+
+2.39.4. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc..
+Removed 11 unused cells and 20 unused wires.
+<suppressed ~12 debug messages>
+
+2.39.5. Rerunning OPT passes. (Removed registers in this run.)
+
+2.39.6. Executing OPT_EXPR pass (perform const folding).
+Optimizing module cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc.
+
+2.39.7. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc'.
+Computing hashes of 112 cells of `\cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc'.
+Finding duplicate cells in `\cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc'.
+Removed a total of 0 cells.
+
+2.39.8. Executing OPT_DFF pass (perform DFF optimizations).
+
+2.39.9. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc..
+
+2.39.10. Finished fast OPT passes.
+
+2.40. Executing MEMORY_MAP pass (converting memories to logic and flip-flops).
+
+2.41. Executing SIMPLEMAP pass (map simple cells to gate primitives).
+Mapping cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc.$procmux$101 ($mux).
+Mapping cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc.$procmux$243 ($mux).
+Mapping cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc.$procmux$248 ($mux).
+Mapping cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc.$procmux$3 ($mux).
+Mapping cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc.$procmux$32 ($mux).
+Mapping cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc.$procmux$50 ($mux).
+Mapping cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc.$procmux$71 ($mux).
+Mapping cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc.$procmux$81 ($mux).
+Mapping cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc.$procmux$91 ($mux).
+
+2.42. Executing MUXCOVER pass (mapping to wider MUXes).
+Covering MUX trees in module cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc..
+  Treeifying 95 MUXes:
+    Found tree with 1 MUXes at root \atan1 [0].
+    Found tree with 1 MUXes at root \atan1 [1].
+    Found tree with 1 MUXes at root \atan1 [2].
+    Found tree with 1 MUXes at root \atan1 [3].
+    Found tree with 1 MUXes at root \atan1 [4].
+    Found tree with 1 MUXes at root \atan1 [5].
+    Found tree with 1 MUXes at root \atan1 [6].
+    Found tree with 1 MUXes at root \atan1 [7].
+    Found tree with 1 MUXes at root \atan1 [8].
+    Found tree with 1 MUXes at root \atan2 [0].
+    Found tree with 1 MUXes at root \atan2 [1].
+    Found tree with 1 MUXes at root \atan2 [2].
+    Found tree with 1 MUXes at root \atan2 [3].
+    Found tree with 1 MUXes at root \atan2 [4].
+    Found tree with 1 MUXes at root \atan2 [5].
+    Found tree with 1 MUXes at root \atan2 [6].
+    Found tree with 1 MUXes at root \atan2 [7].
+    Found tree with 1 MUXes at root $base$105 [0].
+    Found tree with 1 MUXes at root $base$105 [1].
+    Found tree with 1 MUXes at root $base$105 [2].
+    Found tree with 1 MUXes at root $base$105 [3].
+    Found tree with 1 MUXes at root $base$122 [0].
+    Found tree with 1 MUXes at root $base$122 [1].
+    Found tree with 1 MUXes at root $base$122 [2].
+    Found tree with 1 MUXes at root $base$122 [3].
+    Found tree with 2 MUXes at root $procmux$32_Y [0].
+    Found tree with 2 MUXes at root $procmux$32_Y [1].
+    Found tree with 2 MUXes at root $procmux$32_Y [2].
+    Found tree with 2 MUXes at root $procmux$32_Y [3].
+    Found tree with 2 MUXes at root $procmux$32_Y [4].
+    Found tree with 2 MUXes at root $procmux$32_Y [5].
+    Found tree with 2 MUXes at root $procmux$32_Y [6].
+    Found tree with 2 MUXes at root $procmux$32_Y [7].
+    Found tree with 2 MUXes at root $procmux$32_Y [8].
+    Found tree with 2 MUXes at root $procmux$32_Y [9].
+    Found tree with 2 MUXes at root $procmux$32_Y [10].
+    Found tree with 2 MUXes at root $procmux$32_Y [11].
+    Found tree with 2 MUXes at root $procmux$32_Y [12].
+    Found tree with 2 MUXes at root $procmux$32_Y [13].
+    Found tree with 1 MUXes at root $procmux$71_Y [0].
+    Found tree with 1 MUXes at root $procmux$71_Y [1].
+    Found tree with 1 MUXes at root $procmux$71_Y [2].
+    Found tree with 1 MUXes at root $procmux$71_Y [3].
+    Found tree with 1 MUXes at root $procmux$71_Y [4].
+    Found tree with 1 MUXes at root $procmux$71_Y [5].
+    Found tree with 1 MUXes at root $procmux$71_Y [6].
+    Found tree with 1 MUXes at root $procmux$71_Y [7].
+    Found tree with 1 MUXes at root $procmux$71_Y [8].
+    Found tree with 1 MUXes at root $procmux$71_Y [9].
+    Found tree with 1 MUXes at root $procmux$71_Y [10].
+    Found tree with 1 MUXes at root $procmux$71_Y [11].
+    Found tree with 1 MUXes at root $procmux$71_Y [12].
+    Found tree with 1 MUXes at root $procmux$71_Y [13].
+    Found tree with 1 MUXes at root $procmux$81_Y [0].
+    Found tree with 1 MUXes at root $procmux$81_Y [1].
+    Found tree with 1 MUXes at root $procmux$81_Y [2].
+    Found tree with 1 MUXes at root $procmux$81_Y [3].
+    Found tree with 1 MUXes at root $procmux$81_Y [4].
+    Found tree with 1 MUXes at root $procmux$81_Y [5].
+    Found tree with 1 MUXes at root $procmux$81_Y [6].
+    Found tree with 1 MUXes at root $procmux$81_Y [7].
+    Found tree with 1 MUXes at root $procmux$81_Y [8].
+    Found tree with 1 MUXes at root $procmux$81_Y [9].
+    Found tree with 1 MUXes at root $procmux$81_Y [10].
+    Found tree with 1 MUXes at root $procmux$81_Y [11].
+    Found tree with 1 MUXes at root $procmux$81_Y [12].
+    Found tree with 1 MUXes at root $procmux$81_Y [13].
+    Found tree with 1 MUXes at root $procmux$91_Y [0].
+    Found tree with 1 MUXes at root $procmux$91_Y [1].
+    Found tree with 1 MUXes at root $procmux$91_Y [2].
+    Found tree with 1 MUXes at root $procmux$91_Y [3].
+    Found tree with 1 MUXes at root $procmux$91_Y [4].
+    Found tree with 1 MUXes at root $procmux$91_Y [5].
+    Found tree with 1 MUXes at root $procmux$91_Y [6].
+    Found tree with 1 MUXes at root $procmux$91_Y [7].
+    Found tree with 1 MUXes at root $procmux$91_Y [8].
+    Found tree with 1 MUXes at root $procmux$91_Y [9].
+    Found tree with 1 MUXes at root $procmux$91_Y [10].
+    Found tree with 1 MUXes at root $procmux$91_Y [11].
+    Found tree with 1 MUXes at root $procmux$91_Y [12].
+    Found tree with 1 MUXes at root $procmux$91_Y [13].
+    Finished treeification: Found 81 trees.
+  Covering trees:
+    Replaced tree at \atan1 [0]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at \atan1 [1]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at \atan1 [2]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at \atan1 [3]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at \atan1 [4]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at \atan1 [5]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at \atan1 [6]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at \atan1 [7]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at \atan1 [8]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at \atan2 [0]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at \atan2 [1]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at \atan2 [2]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at \atan2 [3]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at \atan2 [4]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at \atan2 [5]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at \atan2 [6]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at \atan2 [7]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $base$105 [0]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $base$105 [1]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $base$105 [2]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $base$105 [3]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $base$122 [0]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $base$122 [1]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $base$122 [2]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $base$122 [3]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $procmux$32_Y [0]: 2 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $procmux$32_Y [1]: 2 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $procmux$32_Y [2]: 2 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $procmux$32_Y [3]: 2 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $procmux$32_Y [4]: 2 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $procmux$32_Y [5]: 2 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $procmux$32_Y [6]: 2 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $procmux$32_Y [7]: 2 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $procmux$32_Y [8]: 2 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $procmux$32_Y [9]: 2 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $procmux$32_Y [10]: 2 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $procmux$32_Y [11]: 2 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $procmux$32_Y [12]: 2 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $procmux$32_Y [13]: 2 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $procmux$71_Y [0]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $procmux$71_Y [1]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $procmux$71_Y [2]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $procmux$71_Y [3]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $procmux$71_Y [4]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $procmux$71_Y [5]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $procmux$71_Y [6]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $procmux$71_Y [7]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $procmux$71_Y [8]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $procmux$71_Y [9]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $procmux$71_Y [10]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $procmux$71_Y [11]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $procmux$71_Y [12]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $procmux$71_Y [13]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $procmux$81_Y [0]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $procmux$81_Y [1]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $procmux$81_Y [2]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $procmux$81_Y [3]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $procmux$81_Y [4]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $procmux$81_Y [5]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $procmux$81_Y [6]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $procmux$81_Y [7]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $procmux$81_Y [8]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $procmux$81_Y [9]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $procmux$81_Y [10]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $procmux$81_Y [11]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $procmux$81_Y [12]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $procmux$81_Y [13]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $procmux$91_Y [0]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $procmux$91_Y [1]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $procmux$91_Y [2]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $procmux$91_Y [3]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $procmux$91_Y [4]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $procmux$91_Y [5]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $procmux$91_Y [6]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $procmux$91_Y [7]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $procmux$91_Y [8]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $procmux$91_Y [9]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $procmux$91_Y [10]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $procmux$91_Y [11]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $procmux$91_Y [12]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $procmux$91_Y [13]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+<suppressed ~1215 debug messages>
+
+2.43. Executing OPT pass (performing simple optimizations).
+
+2.43.1. Executing OPT_EXPR pass (perform const folding).
+Optimizing module cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc.
+<suppressed ~100 debug messages>
+
+2.43.2. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc'.
+Computing hashes of 120 cells of `\cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc'.
+Finding duplicate cells in `\cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc'.
+Removed a total of 0 cells.
+
+2.43.3. Executing OPT_MUXTREE pass (detect dead branches in mux trees).
+Running muxtree optimizer on module \cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc..
+  Creating internal representation of mux trees.
+  Evaluating internal representation of mux trees.
+  Analyzing evaluation results.
+Removed 0 multiplexer ports.
+<suppressed ~13 debug messages>
+
+2.43.4. Executing OPT_REDUCE pass (consolidate $*mux and $reduce_* inputs).
+  Optimizing cells in module \cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc.
+    New input vector for $reduce_and cell $auto$simple.cc:231:make_patterns_logic$1573: { $auto$simple.cc:213:make_patterns_logic$1570 $auto$simple.cc:213:make_patterns_logic$1568 $auto$simple.cc:213:make_patterns_logic$1397 $auto$simple.cc:213:make_patterns_logic$1395 $auto$fsm_map.cc:74:implement_pattern_cache$1379 $auto$simple.cc:213:make_patterns_logic$1393 }
+    New input vector for $reduce_and cell $auto$simple.cc:231:make_patterns_logic$1565: { $auto$simple.cc:213:make_patterns_logic$1448 $auto$simple.cc:213:make_patterns_logic$1562 $auto$simple.cc:213:make_patterns_logic$1417 $auto$fsm_map.cc:74:implement_pattern_cache$1379 $auto$simple.cc:213:make_patterns_logic$1393 }
+    Consolidated identical input bits for $mux cell $procmux$161:
+      Old ports: A=4'0000, B=$base$122, Y=$base$128
+      New ports: A=3'000, B={ $120y [3:2] 1'x }, Y={ $base$128 [3:2] $base$128 [0] }
+      New connections: $base$128 [1] = $base$128 [0]
+    Consolidated identical input bits for $pmux cell $procmux$239:
+      Old ports: A=7'0000000, B=14'10100010000101, Y=\atan3 [6:0]
+      New ports: A=3'000, B=6'101011, Y={ \atan3 [4] \atan3 [2] \atan3 [0] }
+      New connections: { \atan3 [6:5] \atan3 [3] \atan3 [1] } = { \atan3 [4] 3'000 }
+    Consolidated identical input bits for $pmux cell $procmux$253:
+      Old ports: A=10'0000000000, B=30'100000000000001010010000000011, Y=\atan0 [9:0]
+      New ports: A=4'0000, B=12'100001010011, Y={ \atan0 [9] \atan0 [3] \atan0 [1:0] }
+      New connections: { \atan0 [8:4] \atan0 [2] } = { 3'000 \atan0 [3] 2'00 }
+    Consolidated identical input bits for $mux cell $procmux$41:
+      Old ports: A={ $116y [13:11] 11'x }, B={ $111y [13:11] 11'x }, Y=$procmux$22_Y
+      New ports: A=$116y [13:11], B=$111y [13:11], Y=$procmux$22_Y [13:11]
+      New connections: $procmux$22_Y [10:0] = 11'x
+  Optimizing cells in module \cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc.
+Performed a total of 6 changes.
+
+2.43.5. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc'.
+Computing hashes of 120 cells of `\cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc'.
+Finding duplicate cells in `\cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc'.
+Removed a total of 0 cells.
+
+2.43.6. Executing OPT_SHARE pass.
+    Found cells that share an operand and can be merged by moving the $mux $procmux$41 in front of them:
+        $auto$alumacc.cc:578:replace_alu$1469
+        $auto$alumacc.cc:578:replace_alu$1475
+
+2.43.7. Executing OPT_DFF pass (perform DFF optimizations).
+Adding SRST signal on $auto$ff.cc:337:slice$1414 ($dffe) from module cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc (D = \y_c3, Q = \y, rval = 14'00000000000000).
+Adding SRST signal on $auto$ff.cc:337:slice$1566 ($dffe) from module cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc (D = $120y [3:2], Q = \base [3:2], rval = 2'00).
+
+2.43.8. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc..
+Removed 1 unused cells and 14 unused wires.
+<suppressed ~2 debug messages>
+
+2.43.9. Executing OPT_EXPR pass (perform const folding).
+Optimizing module cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc.
+<suppressed ~8 debug messages>
+
+2.43.10. Rerunning OPT passes. (Maybe there is more to do..)
+
+2.43.11. Executing OPT_MUXTREE pass (detect dead branches in mux trees).
+Running muxtree optimizer on module \cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc..
+  Creating internal representation of mux trees.
+  Evaluating internal representation of mux trees.
+  Analyzing evaluation results.
+Removed 0 multiplexer ports.
+<suppressed ~12 debug messages>
+
+2.43.12. Executing OPT_REDUCE pass (consolidate $*mux and $reduce_* inputs).
+  Optimizing cells in module \cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc.
+    Consolidated identical input bits for $mux cell $auto$opt_share.cc:245:merge_operators$1768:
+      Old ports: A=3'111, B=3'001, Y=$auto$rtlil.cc:3333:Mux$1769
+      New ports: A=1'1, B=1'0, Y=$auto$rtlil.cc:3333:Mux$1769 [1]
+      New connections: { $auto$rtlil.cc:3333:Mux$1769 [2] $auto$rtlil.cc:3333:Mux$1769 [0] } = { $auto$rtlil.cc:3333:Mux$1769 [1] 1'1 }
+  Optimizing cells in module \cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc.
+Performed a total of 1 changes.
+
+2.43.13. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc'.
+Computing hashes of 118 cells of `\cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc'.
+Finding duplicate cells in `\cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc'.
+Removed a total of 0 cells.
+
+2.43.14. Executing OPT_SHARE pass.
+
+2.43.15. Executing OPT_DFF pass (perform DFF optimizations).
+
+2.43.16. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc..
+Removed 0 unused cells and 6 unused wires.
+<suppressed ~1 debug messages>
+
+2.43.17. Executing OPT_EXPR pass (perform const folding).
+Optimizing module cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc.
+<suppressed ~1 debug messages>
+
+2.43.18. Rerunning OPT passes. (Maybe there is more to do..)
+
+2.43.19. Executing OPT_MUXTREE pass (detect dead branches in mux trees).
+Running muxtree optimizer on module \cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc..
+  Creating internal representation of mux trees.
+  Evaluating internal representation of mux trees.
+  Analyzing evaluation results.
+Removed 0 multiplexer ports.
+<suppressed ~10 debug messages>
+
+2.43.20. Executing OPT_REDUCE pass (consolidate $*mux and $reduce_* inputs).
+  Optimizing cells in module \cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc.
+Performed a total of 0 changes.
+
+2.43.21. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc'.
+Computing hashes of 118 cells of `\cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc'.
+Finding duplicate cells in `\cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc'.
+Removed a total of 0 cells.
+
+2.43.22. Executing OPT_SHARE pass.
+
+2.43.23. Executing OPT_DFF pass (perform DFF optimizations).
+
+2.43.24. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc..
+
+2.43.25. Executing OPT_EXPR pass (perform const folding).
+Optimizing module cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc.
+
+2.43.26. Finished fast OPT passes. (There is nothing left to do.)
+
+2.44. Executing XILINX_SRL pass (Xilinx shift register extraction).
+
+2.45. Executing TECHMAP pass (map to technology primitives).
+
+2.45.1. Executing Verilog-2005 frontend: /home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/techmap.v
+Parsing Verilog input from `/home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/techmap.v' to AST representation.
+Generating RTLIL representation for module `\_90_simplemap_bool_ops'.
+Generating RTLIL representation for module `\_90_simplemap_reduce_ops'.
+Generating RTLIL representation for module `\_90_simplemap_logic_ops'.
+Generating RTLIL representation for module `\_90_simplemap_compare_ops'.
+Generating RTLIL representation for module `\_90_simplemap_various'.
+Generating RTLIL representation for module `\_90_simplemap_registers'.
+Generating RTLIL representation for module `\_90_shift_ops_shr_shl_sshl_sshr'.
+Generating RTLIL representation for module `\_90_shift_shiftx'.
+Generating RTLIL representation for module `\_90_fa'.
+Generating RTLIL representation for module `\_90_lcu_brent_kung'.
+Generating RTLIL representation for module `\_90_alu'.
+Generating RTLIL representation for module `\_90_macc'.
+Generating RTLIL representation for module `\_90_alumacc'.
+Generating RTLIL representation for module `$__div_mod_u'.
+Generating RTLIL representation for module `$__div_mod_trunc'.
+Generating RTLIL representation for module `\_90_div'.
+Generating RTLIL representation for module `\_90_mod'.
+Generating RTLIL representation for module `$__div_mod_floor'.
+Generating RTLIL representation for module `\_90_divfloor'.
+Generating RTLIL representation for module `\_90_modfloor'.
+Generating RTLIL representation for module `\_90_pow'.
+Generating RTLIL representation for module `\_90_demux'.
+Generating RTLIL representation for module `\_90_lut'.
+Generating RTLIL representation for module `$connect'.
+Generating RTLIL representation for module `$input_port'.
+Successfully finished Verilog frontend.
+
+2.45.2. Executing Verilog-2005 frontend: /home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/xilinx/mux_map.v
+Parsing Verilog input from `/home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/xilinx/mux_map.v' to AST representation.
+Generating RTLIL representation for module `$shiftx'.
+Successfully finished Verilog frontend.
+
+2.45.3. Executing Verilog-2005 frontend: /home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/xilinx/arith_map.v
+Parsing Verilog input from `/home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/xilinx/arith_map.v' to AST representation.
+Generating RTLIL representation for module `\_80_xilinx_lcu'.
+Generating RTLIL representation for module `\_80_xilinx_alu'.
+Successfully finished Verilog frontend.
+
+2.45.4. Continuing TECHMAP pass.
+Using extmapper simplemap for cells of type $reduce_or.
+Using extmapper simplemap for cells of type $not.
+Using template $paramod$constmap:d24eafdb77dd6da9512567590ede618306988d4b$paramod$b146703a3c3ca8d47f53f1c6f41b49c0d6906e47\_90_shift_ops_shr_shl_sshl_sshr for cells of type $sshr.
+Using extmapper simplemap for cells of type $dff.
+Using extmapper simplemap for cells of type $xor.
+Using extmapper simplemap for cells of type $logic_not.
+Using extmapper simplemap for cells of type $and.
+Using template $paramod$1d6b03303b0e5d4607b13b885fc181a4d086cf2d\_80_xilinx_alu for cells of type $alu.
+Using template $paramod$674141544fade965cf052b5e9d5b65813fc4e151\_80_xilinx_alu for cells of type $alu.
+Using extmapper simplemap for cells of type $eq.
+Using template $paramod$constmap:72762b5bc0becd7588304604ebff3aacd3ef9113$paramod$93787937762a102659394bb0f15479810f38cc75\_90_shift_shiftx for cells of type $shift.
+Using template $paramod$db8e6ecc9d55e30ac39e4a71c23a85841d46f485\_80_xilinx_alu for cells of type $alu.
+Using extmapper simplemap for cells of type $reduce_and.
+Using extmapper simplemap for cells of type $dffe.
+Using template $paramod$e2a3a3c3dbb6848abb0ccd6e447c8a6dc6c1855b$shiftx for cells of type $shiftx.
+Using extmapper simplemap for cells of type $reduce_bool.
+Using extmapper simplemap for cells of type $ne.
+Using template $paramod$constmap:c4989a4ee06031d00bf9ae8cb59fcfd3ef9c94cb$paramod$7323454a007ce3b478a67ea9879c36ae0525fe51\_90_shift_shiftx for cells of type $shiftx.
+Using template $paramod$3fdddd4e05093070a7bb0927352a42d480ba78cb\_80_xilinx_alu for cells of type $alu.
+Using extmapper simplemap for cells of type $sdff.
+Using template $paramod$6fd347745078726cb769a8b87a2d361e4cf2488c\_80_xilinx_alu for cells of type $alu.
+Using template $paramod$1daf1ded30cee0ed5a5b944affcab4e5f65aa603\_80_xilinx_alu for cells of type $alu.
+Using template $paramod$175e67c02b86e96b1288b9dc100122520d7240d8\_90_alu for cells of type $alu.
+Using extmapper simplemap for cells of type $pmux.
+Using extmapper simplemap for cells of type $sdffce.
+Using extmapper simplemap for cells of type $pos.
+Using template $paramod\_90_fa\WIDTH=32'00000000000000000000000000000010 for cells of type $fa.
+Using template $paramod\_90_lcu_brent_kung\WIDTH=32'00000000000000000000000000000010 for cells of type $lcu.
+Using extmapper simplemap for cells of type $or.
+No more expansions possible.
+<suppressed ~1180 debug messages>
+
+2.46. Executing OPT pass (performing simple optimizations).
+
+2.46.1. Executing OPT_EXPR pass (perform const folding).
+Optimizing module cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc.
+<suppressed ~384 debug messages>
+
+2.46.2. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc'.
+Computing hashes of 1305 cells of `\cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc'.
+Finding duplicate cells in `\cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc'.
+Computing hashes of 1252 cells of `\cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc'.
+Finding duplicate cells in `\cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc'.
+Computing hashes of 1236 cells of `\cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc'.
+Finding duplicate cells in `\cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc'.
+Computing hashes of 1232 cells of `\cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc'.
+Finding duplicate cells in `\cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc'.
+Computing hashes of 1228 cells of `\cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc'.
+Finding duplicate cells in `\cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc'.
+Computing hashes of 1224 cells of `\cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc'.
+Finding duplicate cells in `\cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc'.
+<suppressed ~243 debug messages>
+Removed a total of 81 cells.
+
+2.46.3. Executing OPT_DFF pass (perform DFF optimizations).
+Adding SRST signal on $auto$ff.cc:337:slice$2178 ($_DFFE_PP_) from module cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc (D = $auto$simplemap.cc:189:logic_reduce$2644, Q = \x [13], rval = 1'0).
+Adding SRST signal on $auto$ff.cc:337:slice$2165 ($_DFFE_PP_) from module cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc (D = $auto$simplemap.cc:189:logic_reduce$2553, Q = \x [0], rval = 1'0).
+Adding SRST signal on $auto$ff.cc:337:slice$2166 ($_DFFE_PP_) from module cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc (D = $auto$simplemap.cc:189:logic_reduce$2560, Q = \x [1], rval = 1'1).
+Adding SRST signal on $auto$ff.cc:337:slice$2167 ($_DFFE_PP_) from module cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc (D = $auto$simplemap.cc:189:logic_reduce$2567, Q = \x [2], rval = 1'1).
+Adding SRST signal on $auto$ff.cc:337:slice$2168 ($_DFFE_PP_) from module cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc (D = $auto$simplemap.cc:189:logic_reduce$2574, Q = \x [3], rval = 1'1).
+Adding SRST signal on $auto$ff.cc:337:slice$2169 ($_DFFE_PP_) from module cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc (D = $auto$simplemap.cc:189:logic_reduce$2581, Q = \x [4], rval = 1'0).
+Adding SRST signal on $auto$ff.cc:337:slice$2170 ($_DFFE_PP_) from module cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc (D = $auto$simplemap.cc:189:logic_reduce$2588, Q = \x [5], rval = 1'1).
+Adding SRST signal on $auto$ff.cc:337:slice$2171 ($_DFFE_PP_) from module cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc (D = $auto$simplemap.cc:189:logic_reduce$2595, Q = \x [6], rval = 1'1).
+Adding SRST signal on $auto$ff.cc:337:slice$2172 ($_DFFE_PP_) from module cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc (D = $auto$simplemap.cc:189:logic_reduce$2602, Q = \x [7], rval = 1'0).
+Adding SRST signal on $auto$ff.cc:337:slice$2173 ($_DFFE_PP_) from module cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc (D = $auto$simplemap.cc:189:logic_reduce$2609, Q = \x [8], rval = 1'0).
+Adding SRST signal on $auto$ff.cc:337:slice$2174 ($_DFFE_PP_) from module cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc (D = $auto$simplemap.cc:189:logic_reduce$2616, Q = \x [9], rval = 1'1).
+Adding SRST signal on $auto$ff.cc:337:slice$2175 ($_DFFE_PP_) from module cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc (D = $auto$simplemap.cc:189:logic_reduce$2623, Q = \x [10], rval = 1'0).
+Adding SRST signal on $auto$ff.cc:337:slice$2176 ($_DFFE_PP_) from module cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc (D = $auto$simplemap.cc:189:logic_reduce$2630, Q = \x [11], rval = 1'0).
+Adding SRST signal on $auto$ff.cc:337:slice$2177 ($_DFFE_PP_) from module cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc (D = $auto$simplemap.cc:189:logic_reduce$2637, Q = \x [12], rval = 1'0).
+Adding SRST signal on $auto$ff.cc:337:slice$2353 ($_DFFE_PP_) from module cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc (D = 1'x, Q = \base [0], rval = 1'0).
+Setting constant 0-bit at position 0 on $auto$ff.cc:337:slice$3554 ($_SDFFCE_PN0P_) from module cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc.
+
+2.46.4. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc..
+Removed 168 unused cells and 519 unused wires.
+<suppressed ~169 debug messages>
+
+2.46.5. Rerunning OPT passes. (Removed registers in this run.)
+
+2.46.6. Executing OPT_EXPR pass (perform const folding).
+Optimizing module cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc.
+<suppressed ~85 debug messages>
+
+2.46.7. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc'.
+Computing hashes of 970 cells of `\cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc'.
+Finding duplicate cells in `\cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc'.
+Removed a total of 0 cells.
+
+2.46.8. Executing OPT_DFF pass (perform DFF optimizations).
+
+2.46.9. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc..
+Removed 0 unused cells and 11 unused wires.
+<suppressed ~1 debug messages>
+
+2.46.10. Finished fast OPT passes.
+
+2.47. Executing TECHMAP pass (map to technology primitives).
+
+2.47.1. Executing Verilog-2005 frontend: /home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/techmap.v
+Parsing Verilog input from `/home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/techmap.v' to AST representation.
+Generating RTLIL representation for module `\_90_simplemap_bool_ops'.
+Generating RTLIL representation for module `\_90_simplemap_reduce_ops'.
+Generating RTLIL representation for module `\_90_simplemap_logic_ops'.
+Generating RTLIL representation for module `\_90_simplemap_compare_ops'.
+Generating RTLIL representation for module `\_90_simplemap_various'.
+Generating RTLIL representation for module `\_90_simplemap_registers'.
+Generating RTLIL representation for module `\_90_shift_ops_shr_shl_sshl_sshr'.
+Generating RTLIL representation for module `\_90_shift_shiftx'.
+Generating RTLIL representation for module `\_90_fa'.
+Generating RTLIL representation for module `\_90_lcu_brent_kung'.
+Generating RTLIL representation for module `\_90_alu'.
+Generating RTLIL representation for module `\_90_macc'.
+Generating RTLIL representation for module `\_90_alumacc'.
+Generating RTLIL representation for module `$__div_mod_u'.
+Generating RTLIL representation for module `$__div_mod_trunc'.
+Generating RTLIL representation for module `\_90_div'.
+Generating RTLIL representation for module `\_90_mod'.
+Generating RTLIL representation for module `$__div_mod_floor'.
+Generating RTLIL representation for module `\_90_divfloor'.
+Generating RTLIL representation for module `\_90_modfloor'.
+Generating RTLIL representation for module `\_90_pow'.
+Generating RTLIL representation for module `\_90_demux'.
+Generating RTLIL representation for module `\_90_lut'.
+Generating RTLIL representation for module `$connect'.
+Generating RTLIL representation for module `$input_port'.
+Successfully finished Verilog frontend.
+
+2.47.2. Executing Verilog-2005 frontend: /home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/xilinx/cells_map.v
+Parsing Verilog input from `/home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/xilinx/cells_map.v' to AST representation.
+Generating RTLIL representation for module `$__SHREG_'.
+Generating RTLIL representation for module `$__XILINX_SHREG_'.
+Generating RTLIL representation for module `$__XILINX_SHIFTX'.
+Generating RTLIL representation for module `\_90__XILINX_SHIFTX'.
+Generating RTLIL representation for module `$_MUX_'.
+Generating RTLIL representation for module `$_MUX4_'.
+Generating RTLIL representation for module `$_MUX8_'.
+Generating RTLIL representation for module `$_MUX16_'.
+Generating RTLIL representation for module `$__XILINX_MUXF78'.
+Successfully finished Verilog frontend.
+
+2.47.3. Continuing TECHMAP pass.
+Using template $paramod$6f72052efc4149bb93179be4ce8dd88c866d260b$__XILINX_SHIFTX for cells of type $__XILINX_SHIFTX.
+Not using module `$_MUX_' from techmap as it contains a genblk1._TECHMAP_FAIL_ marker wire with non-zero value 1'1.
+Using template $paramod$7a9235f1d9965667141434ba7feebfc6986130ec$__XILINX_SHIFTX for cells of type $__XILINX_SHIFTX.
+Using template $paramod$494d97d43377616db2d8811c8eaaf52c96a155a6$__XILINX_SHIFTX for cells of type $__XILINX_SHIFTX.
+Using template $paramod$86b2f14d392938cc74b642873eab367a2e3c9646$__XILINX_SHIFTX for cells of type $__XILINX_SHIFTX.
+Using template $paramod$e7b9290894e16aa1579b2537633d46d60839fd27$__XILINX_SHIFTX for cells of type $__XILINX_SHIFTX.
+Using template $paramod$ed35a0ebcf2b277f554f6f59c9d9ba32e2ce15c5$__XILINX_SHIFTX for cells of type $__XILINX_SHIFTX.
+Using template $paramod$8e4758bff5ad546e9e68edf7acfbf0a2e50a572f$__XILINX_SHIFTX for cells of type $__XILINX_SHIFTX.
+Using template $paramod$8d6351bf6dd883b13e8150821007c58611c848b5$__XILINX_SHIFTX for cells of type $__XILINX_SHIFTX.
+Using template $paramod$a9b781be11dca2b7a57d4cfcc96ec59bc48a0b1c$__XILINX_SHIFTX for cells of type $__XILINX_SHIFTX.
+Using template $paramod$11913e6b96f95d0cbcb641a9ba8a57f507c55bb8$__XILINX_SHIFTX for cells of type $__XILINX_SHIFTX.
+Using template $paramod$ce643ec95566c9a4063a4f42332df634ffc8e61b$__XILINX_SHIFTX for cells of type $__XILINX_SHIFTX.
+Using template $paramod$d6958fbdf9d82feb3874e05d119cf6d5ad66f889$__XILINX_SHIFTX for cells of type $__XILINX_SHIFTX.
+Using template $paramod$6e390a46803dc8aa9457ee523243b8de3c9a0e09$__XILINX_SHIFTX for cells of type $__XILINX_SHIFTX.
+Using template $paramod$638f64158e8ac02fbfbcff50410440a87d90aefa$__XILINX_SHIFTX for cells of type $__XILINX_SHIFTX.
+Using template $paramod$c44b67f0870e57432c973af176004d7632f311f9$__XILINX_SHIFTX for cells of type $__XILINX_SHIFTX.
+Using template $paramod$e162b126af74a60e9bcc729fe1020d360a28caea$__XILINX_SHIFTX for cells of type $__XILINX_SHIFTX.
+Using template $paramod$ea82a28e8a61333e06dd8f070dd9418c0b057671$__XILINX_SHIFTX for cells of type $__XILINX_SHIFTX.
+Using template $paramod$6b5a3c13b5ecf932553dcd2bbf5c6dbfb884337f$__XILINX_SHIFTX for cells of type $__XILINX_SHIFTX.
+Using template $paramod$82f4e54d4bcb18344310f1647c5220a065e4ce96$__XILINX_SHIFTX for cells of type $__XILINX_SHIFTX.
+Using template $paramod$ef210781e13ba0402d45f09389308ac3907b0cac$__XILINX_SHIFTX for cells of type $__XILINX_SHIFTX.
+Using template $paramod$b9a074af35df578a8693d7c2368cc1f4ec6a9be4$__XILINX_SHIFTX for cells of type $__XILINX_SHIFTX.
+Using template $paramod$fdab753b1b537615c85ab02b841dc563680965c2$__XILINX_SHIFTX for cells of type $__XILINX_SHIFTX.
+Using template $paramod$043e0af0f4df2cfcfa96702369d209eb4631d955$__XILINX_SHIFTX for cells of type $__XILINX_SHIFTX.
+Using template $paramod$bcb472ae65d11d8c2a9bbe91cb4d26a03453c4ba$__XILINX_SHIFTX for cells of type $__XILINX_SHIFTX.
+Using template $paramod$b02d1e72f03c9b79cafad2631b21427383722364$__XILINX_SHIFTX for cells of type $__XILINX_SHIFTX.
+Using template $paramod$17101918c04497cd36530a208cf2c7c54855eccd$__XILINX_SHIFTX for cells of type $__XILINX_SHIFTX.
+Using template $paramod$7fc2506d28164a765c2cc151bdd8d130815b8e86$__XILINX_SHIFTX for cells of type $__XILINX_SHIFTX.
+Using template $paramod$bf2cc684efa5b3760715ed2b6e53f5a37d6b7fe1$__XILINX_SHIFTX for cells of type $__XILINX_SHIFTX.
+Using template $paramod$7d5a91d5370ad0f1964654d4b2701dfd24de551f$__XILINX_SHIFTX for cells of type $__XILINX_SHIFTX.
+Using template $paramod$ae459e8f15a799f4546d74d7a584e96da85b62c8$__XILINX_SHIFTX for cells of type $__XILINX_SHIFTX.
+Using template $paramod$8f91f8d0c8ea504a25fd49f14c9c8c0adc20d3cc$__XILINX_SHIFTX for cells of type $__XILINX_SHIFTX.
+Using template $paramod$e9fa53d2b7d7db0360742b1720b23f45bc5bf1fc$__XILINX_SHIFTX for cells of type $__XILINX_SHIFTX.
+Using template $paramod$66a4d4e31b91e1dd6b48c8426c5b387e1f3c18c2$__XILINX_SHIFTX for cells of type $__XILINX_SHIFTX.
+Using template $paramod$90455b20a347223264b0ad40e818004c9ec58ad5$__XILINX_SHIFTX for cells of type $__XILINX_SHIFTX.
+Using template $paramod$2e92cefce4efc4e741a098232fb276c4f3fc5432\_90__XILINX_SHIFTX for cells of type $__XILINX_SHIFTX.
+Using template $paramod$constmap:558bef3fd08f84e2a6c0ad02d74288f4be363f86$paramod$54a318cd9b06640875480aeb0359fe59dcd0f4aa\_90_shift_shiftx for cells of type $shiftx.
+Analyzing pattern of constant bits for this cell:
+  Constant input on bit 0 of port A: 1'0
+  Constant input on bit 1 of port A: 1'0
+  Constant input on bit 2 of port A: 1'0
+Creating constmapped module `$paramod$constmap:93a131b72f1303e960587f3ad51baf7009d90fdb$paramod$54a318cd9b06640875480aeb0359fe59dcd0f4aa\_90_shift_shiftx'.
+
+2.47.88. Executing OPT_MUXTREE pass (detect dead branches in mux trees).
+Running muxtree optimizer on module $paramod$constmap:93a131b72f1303e960587f3ad51baf7009d90fdb$paramod$54a318cd9b06640875480aeb0359fe59dcd0f4aa\_90_shift_shiftx..
+  Creating internal representation of mux trees.
+  Evaluating internal representation of mux trees.
+  Analyzing evaluation results.
+    dead port 2/2 on $mux $procmux$3616.
+    dead port 2/2 on $mux $procmux$3610.
+Removed 2 multiplexer ports.
+<suppressed ~1295 debug messages>
+
+2.47.89. Executing OPT_EXPR pass (perform const folding).
+Optimizing module $paramod$constmap:93a131b72f1303e960587f3ad51baf7009d90fdb$paramod$54a318cd9b06640875480aeb0359fe59dcd0f4aa\_90_shift_shiftx.
+<suppressed ~5 debug messages>
+Removed 0 unused cells and 11 unused wires.
+Using template $paramod$constmap:93a131b72f1303e960587f3ad51baf7009d90fdb$paramod$54a318cd9b06640875480aeb0359fe59dcd0f4aa\_90_shift_shiftx for cells of type $shiftx.
+Analyzing pattern of constant bits for this cell:
+  Constant input on bit 0 of port A: 1'0
+  Constant input on bit 1 of port A: 1'1
+  Constant input on bit 2 of port A: 1'0
+Creating constmapped module `$paramod$constmap:75c0e430d61a65630c27edd534255f4bf0e1f011$paramod$54a318cd9b06640875480aeb0359fe59dcd0f4aa\_90_shift_shiftx'.
+
+2.47.90. Executing OPT_MUXTREE pass (detect dead branches in mux trees).
+Running muxtree optimizer on module $paramod$constmap:75c0e430d61a65630c27edd534255f4bf0e1f011$paramod$54a318cd9b06640875480aeb0359fe59dcd0f4aa\_90_shift_shiftx..
+  Creating internal representation of mux trees.
+  Evaluating internal representation of mux trees.
+  Analyzing evaluation results.
+    dead port 2/2 on $mux $procmux$3616.
+    dead port 2/2 on $mux $procmux$3610.
+Removed 2 multiplexer ports.
+<suppressed ~29 debug messages>
+
+2.47.91. Executing OPT_EXPR pass (perform const folding).
+Optimizing module $paramod$constmap:75c0e430d61a65630c27edd534255f4bf0e1f011$paramod$54a318cd9b06640875480aeb0359fe59dcd0f4aa\_90_shift_shiftx.
+<suppressed ~5 debug messages>
+Removed 0 unused cells and 11 unused wires.
+Using template $paramod$constmap:75c0e430d61a65630c27edd534255f4bf0e1f011$paramod$54a318cd9b06640875480aeb0359fe59dcd0f4aa\_90_shift_shiftx for cells of type $shiftx.
+Analyzing pattern of constant bits for this cell:
+  Constant input on bit 0 of port A: 1'1
+  Constant input on bit 1 of port A: 1'1
+  Constant input on bit 2 of port A: 1'0
+Creating constmapped module `$paramod$constmap:db4d9253c528efb6bd198b63f5dbb3215adf3d6c$paramod$54a318cd9b06640875480aeb0359fe59dcd0f4aa\_90_shift_shiftx'.
+
+2.47.92. Executing OPT_MUXTREE pass (detect dead branches in mux trees).
+Running muxtree optimizer on module $paramod$constmap:db4d9253c528efb6bd198b63f5dbb3215adf3d6c$paramod$54a318cd9b06640875480aeb0359fe59dcd0f4aa\_90_shift_shiftx..
+  Creating internal representation of mux trees.
+  Evaluating internal representation of mux trees.
+  Analyzing evaluation results.
+    dead port 2/2 on $mux $procmux$3616.
+    dead port 2/2 on $mux $procmux$3610.
+Removed 2 multiplexer ports.
+<suppressed ~28 debug messages>
+
+2.47.93. Executing OPT_EXPR pass (perform const folding).
+Optimizing module $paramod$constmap:db4d9253c528efb6bd198b63f5dbb3215adf3d6c$paramod$54a318cd9b06640875480aeb0359fe59dcd0f4aa\_90_shift_shiftx.
+<suppressed ~5 debug messages>
+Removed 0 unused cells and 11 unused wires.
+Using template $paramod$constmap:db4d9253c528efb6bd198b63f5dbb3215adf3d6c$paramod$54a318cd9b06640875480aeb0359fe59dcd0f4aa\_90_shift_shiftx for cells of type $shiftx.
+Analyzing pattern of constant bits for this cell:
+  Constant input on bit 0 of port A: 1'0
+  Constant input on bit 1 of port A: 1'0
+  Constant input on bit 2 of port A: 1'1
+Creating constmapped module `$paramod$constmap:643bf505b2484d41a92303fb50eeec131393a432$paramod$54a318cd9b06640875480aeb0359fe59dcd0f4aa\_90_shift_shiftx'.
+
+2.47.94. Executing OPT_MUXTREE pass (detect dead branches in mux trees).
+Running muxtree optimizer on module $paramod$constmap:643bf505b2484d41a92303fb50eeec131393a432$paramod$54a318cd9b06640875480aeb0359fe59dcd0f4aa\_90_shift_shiftx..
+  Creating internal representation of mux trees.
+  Evaluating internal representation of mux trees.
+  Analyzing evaluation results.
+    dead port 2/2 on $mux $procmux$3616.
+    dead port 2/2 on $mux $procmux$3610.
+Removed 2 multiplexer ports.
+<suppressed ~28 debug messages>
+
+2.47.95. Executing OPT_EXPR pass (perform const folding).
+Optimizing module $paramod$constmap:643bf505b2484d41a92303fb50eeec131393a432$paramod$54a318cd9b06640875480aeb0359fe59dcd0f4aa\_90_shift_shiftx.
+<suppressed ~5 debug messages>
+Removed 0 unused cells and 11 unused wires.
+Using template $paramod$constmap:643bf505b2484d41a92303fb50eeec131393a432$paramod$54a318cd9b06640875480aeb0359fe59dcd0f4aa\_90_shift_shiftx for cells of type $shiftx.
+Using extmapper simplemap for cells of type $mux.
+No more expansions possible.
+<suppressed ~19 debug messages>
+Removed 28 unused cells and 221 unused wires.
+
+2.48. Executing DFFLEGALIZE pass (convert FFs and LATCHes to types supported by the target).
+
+2.49. Executing TECHMAP pass (map to technology primitives).
+
+2.49.1. Executing Verilog-2005 frontend: /home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/xilinx/ff_map.v
+Parsing Verilog input from `/home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/xilinx/ff_map.v' to AST representation.
+Generating RTLIL representation for module `$_DFFE_NP0P_'.
+Generating RTLIL representation for module `$_DFFE_PP0P_'.
+Generating RTLIL representation for module `$_DFFE_NP1P_'.
+Generating RTLIL representation for module `$_DFFE_PP1P_'.
+Generating RTLIL representation for module `$_DFFSRE_NPPP_'.
+Generating RTLIL representation for module `$_DFFSRE_PPPP_'.
+Generating RTLIL representation for module `$_SDFFE_NP0P_'.
+Generating RTLIL representation for module `$_SDFFE_PP0P_'.
+Generating RTLIL representation for module `$_SDFFE_NP1P_'.
+Generating RTLIL representation for module `$_SDFFE_PP1P_'.
+Generating RTLIL representation for module `$_DLATCH_NP0_'.
+Generating RTLIL representation for module `$_DLATCH_PP0_'.
+Generating RTLIL representation for module `$_DLATCH_NP1_'.
+Generating RTLIL representation for module `$_DLATCH_PP1_'.
+Generating RTLIL representation for module `$_DLATCH_NPP_'.
+Generating RTLIL representation for module `$_DLATCH_PPP_'.
+Successfully finished Verilog frontend.
+
+2.49.2. Continuing TECHMAP pass.
+Using template $paramod$_SDFFE_PP0P_\_TECHMAP_WIREINIT_Q_=1'x for cells of type $_SDFFE_PP0P_.
+Using template $paramod$_SDFFE_PP1P_\_TECHMAP_WIREINIT_Q_=1'x for cells of type $_SDFFE_PP1P_.
+No more expansions possible.
+<suppressed ~111 debug messages>
+
+2.50. Executing OPT_EXPR pass (perform const folding).
+Optimizing module cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc.
+<suppressed ~27 debug messages>
+
+2.51. Executing Verilog-2005 frontend: /home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/xilinx/abc9_model.v
+Parsing Verilog input from `/home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/xilinx/abc9_model.v' to AST representation.
+Generating RTLIL representation for module `$__XILINX_MUXF78'.
+Successfully finished Verilog frontend.
+
+2.52. Executing ABC9 pass.
+
+2.52.1. Executing ABC9_OPS pass (helper functions for ABC9).
+
+2.52.2. Executing ABC9_OPS pass (helper functions for ABC9).
+
+2.52.3. Executing SCC pass (detecting logic loops).
+Found 0 SCCs in module cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc.
+Found 0 SCCs.
+
+2.52.4. Executing ABC9_OPS pass (helper functions for ABC9).
+
+2.52.5. Executing TECHMAP pass (map to technology primitives).
+
+2.52.5.1. Executing Verilog-2005 frontend: /home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/techmap.v
+Parsing Verilog input from `/home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/techmap.v' to AST representation.
+Generating RTLIL representation for module `\_90_simplemap_bool_ops'.
+Generating RTLIL representation for module `\_90_simplemap_reduce_ops'.
+Generating RTLIL representation for module `\_90_simplemap_logic_ops'.
+Generating RTLIL representation for module `\_90_simplemap_compare_ops'.
+Generating RTLIL representation for module `\_90_simplemap_various'.
+Generating RTLIL representation for module `\_90_simplemap_registers'.
+Generating RTLIL representation for module `\_90_shift_ops_shr_shl_sshl_sshr'.
+Generating RTLIL representation for module `\_90_shift_shiftx'.
+Generating RTLIL representation for module `\_90_fa'.
+Generating RTLIL representation for module `\_90_lcu_brent_kung'.
+Generating RTLIL representation for module `\_90_alu'.
+Generating RTLIL representation for module `\_90_macc'.
+Generating RTLIL representation for module `\_90_alumacc'.
+Generating RTLIL representation for module `$__div_mod_u'.
+Generating RTLIL representation for module `$__div_mod_trunc'.
+Generating RTLIL representation for module `\_90_div'.
+Generating RTLIL representation for module `\_90_mod'.
+Generating RTLIL representation for module `$__div_mod_floor'.
+Generating RTLIL representation for module `\_90_divfloor'.
+Generating RTLIL representation for module `\_90_modfloor'.
+Generating RTLIL representation for module `\_90_pow'.
+Generating RTLIL representation for module `\_90_demux'.
+Generating RTLIL representation for module `\_90_lut'.
+Generating RTLIL representation for module `$connect'.
+Generating RTLIL representation for module `$input_port'.
+Successfully finished Verilog frontend.
+
+2.52.5.2. Continuing TECHMAP pass.
+No more expansions possible.
+<suppressed ~506 debug messages>
+
+2.52.6. Executing OPT pass (performing simple optimizations).
+
+2.52.6.1. Executing OPT_EXPR pass (perform const folding).
+
+2.52.6.2. Executing OPT_MERGE pass (detect identical cells).
+Removed a total of 0 cells.
+
+2.52.6.3. Executing OPT_MUXTREE pass (detect dead branches in mux trees).
+Removed 0 multiplexer ports.
+
+2.52.6.4. Executing OPT_REDUCE pass (consolidate $*mux and $reduce_* inputs).
+Performed a total of 0 changes.
+
+2.52.6.5. Executing OPT_MERGE pass (detect identical cells).
+Removed a total of 0 cells.
+
+2.52.6.6. Executing OPT_DFF pass (perform DFF optimizations).
+
+2.52.6.7. Executing OPT_CLEAN pass (remove unused cells and wires).
+
+2.52.6.8. Executing OPT_EXPR pass (perform const folding).
+
+2.52.6.9. Finished fast OPT passes. (There is nothing left to do.)
+
+2.52.7. Executing TECHMAP pass (map to technology primitives).
+
+2.52.7.1. Executing Verilog-2005 frontend: /home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/abc9_map.v
+Parsing Verilog input from `/home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/abc9_map.v' to AST representation.
+Lexer warning: The SystemVerilog keyword `bit' (at /home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/abc9_map.v:35) is not recognized unless read_verilog is called with -sv!
+Generating RTLIL representation for module `$__ABC9_BARRIER_MAP'.
+Successfully finished Verilog frontend.
+
+2.52.7.2. Continuing TECHMAP pass.
+No more expansions possible.
+<suppressed ~3 debug messages>
+
+2.52.8. Executing Verilog-2005 frontend: /home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/abc9_model.v
+Parsing Verilog input from `/home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/abc9_model.v' to AST representation.
+Generating RTLIL representation for module `$__ABC9_DELAY'.
+Generating RTLIL representation for module `$__ABC9_BARRIER'.
+Generating RTLIL representation for module `$__ABC9_SCC_BREAKER'.
+Generating RTLIL representation for module `$__DFF_N__$abc9_flop'.
+Generating RTLIL representation for module `$__DFF_P__$abc9_flop'.
+Successfully finished Verilog frontend.
+
+2.52.9. Executing ABC9_OPS pass (helper functions for ABC9).
+<suppressed ~2 debug messages>
+
+2.52.10. Executing ABC9_OPS pass (helper functions for ABC9).
+
+2.52.11. Executing ABC9_OPS pass (helper functions for ABC9).
+<suppressed ~2 debug messages>
+
+2.52.12. Executing TECHMAP pass (map to technology primitives).
+
+2.52.12.1. Executing Verilog-2005 frontend: /home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/techmap.v
+Parsing Verilog input from `/home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/techmap.v' to AST representation.
+Generating RTLIL representation for module `\_90_simplemap_bool_ops'.
+Generating RTLIL representation for module `\_90_simplemap_reduce_ops'.
+Generating RTLIL representation for module `\_90_simplemap_logic_ops'.
+Generating RTLIL representation for module `\_90_simplemap_compare_ops'.
+Generating RTLIL representation for module `\_90_simplemap_various'.
+Generating RTLIL representation for module `\_90_simplemap_registers'.
+Generating RTLIL representation for module `\_90_shift_ops_shr_shl_sshl_sshr'.
+Generating RTLIL representation for module `\_90_shift_shiftx'.
+Generating RTLIL representation for module `\_90_fa'.
+Generating RTLIL representation for module `\_90_lcu_brent_kung'.
+Generating RTLIL representation for module `\_90_alu'.
+Generating RTLIL representation for module `\_90_macc'.
+Generating RTLIL representation for module `\_90_alumacc'.
+Generating RTLIL representation for module `$__div_mod_u'.
+Generating RTLIL representation for module `$__div_mod_trunc'.
+Generating RTLIL representation for module `\_90_div'.
+Generating RTLIL representation for module `\_90_mod'.
+Generating RTLIL representation for module `$__div_mod_floor'.
+Generating RTLIL representation for module `\_90_divfloor'.
+Generating RTLIL representation for module `\_90_modfloor'.
+Generating RTLIL representation for module `\_90_pow'.
+Generating RTLIL representation for module `\_90_demux'.
+Generating RTLIL representation for module `\_90_lut'.
+Generating RTLIL representation for module `$connect'.
+Generating RTLIL representation for module `$input_port'.
+Successfully finished Verilog frontend.
+
+2.52.12.2. Continuing TECHMAP pass.
+Using template CARRY4 for cells of type CARRY4.
+Using extmapper simplemap for cells of type $or.
+Using extmapper simplemap for cells of type $xor.
+Using extmapper simplemap for cells of type $mux.
+No more expansions possible.
+<suppressed ~519 debug messages>
+
+2.52.13. Executing OPT pass (performing simple optimizations).
+
+2.52.13.1. Executing OPT_EXPR pass (perform const folding).
+Optimizing module cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc.
+
+2.52.13.2. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc'.
+Computing hashes of 62 cells of `\cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc'.
+Finding duplicate cells in `\cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc'.
+Computing hashes of 61 cells of `\cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc'.
+Finding duplicate cells in `\cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc'.
+<suppressed ~3 debug messages>
+Removed a total of 1 cells.
+
+2.52.13.3. Executing OPT_MUXTREE pass (detect dead branches in mux trees).
+Running muxtree optimizer on module \cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc..
+  Creating internal representation of mux trees.
+  No muxes found in this module.
+Removed 0 multiplexer ports.
+
+2.52.13.4. Executing OPT_REDUCE pass (consolidate $*mux and $reduce_* inputs).
+  Optimizing cells in module \cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc.
+Performed a total of 0 changes.
+
+2.52.13.5. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc'.
+Computing hashes of 61 cells of `\cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc'.
+Finding duplicate cells in `\cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc'.
+Removed a total of 0 cells.
+
+2.52.13.6. Executing OPT_DFF pass (perform DFF optimizations).
+
+2.52.13.7. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc..
+Removed 0 unused cells and 14 unused wires.
+<suppressed ~3 debug messages>
+
+2.52.13.8. Executing OPT_EXPR pass (perform const folding).
+Optimizing module cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc.
+
+2.52.13.9. Rerunning OPT passes. (Maybe there is more to do..)
+
+2.52.13.10. Executing OPT_MUXTREE pass (detect dead branches in mux trees).
+Running muxtree optimizer on module \cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc..
+  Creating internal representation of mux trees.
+  No muxes found in this module.
+Removed 0 multiplexer ports.
+
+2.52.13.11. Executing OPT_REDUCE pass (consolidate $*mux and $reduce_* inputs).
+  Optimizing cells in module \cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc.
+Performed a total of 0 changes.
+
+2.52.13.12. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc'.
+Computing hashes of 61 cells of `\cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc'.
+Finding duplicate cells in `\cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc'.
+Removed a total of 0 cells.
+
+2.52.13.13. Executing OPT_DFF pass (perform DFF optimizations).
+
+2.52.13.14. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc..
+
+2.52.13.15. Executing OPT_EXPR pass (perform const folding).
+Optimizing module cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc.
+
+2.52.13.16. Finished fast OPT passes. (There is nothing left to do.)
+
+2.52.14. Executing AIGMAP pass (map logic to AIG).
+Module cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc: replaced 747 cells with 4971 new cells, skipped 281 cells.
+  replaced 4 cell types:
+     371 $_MUX_
+      30 $_ORNOT_
+      46 $_OR_
+     300 $_XOR_
+  not replaced 5 cell types:
+      71 $_AND_
+      79 $_NOT_
+      69 FDRE
+       6 FDSE
+      56 CARRY4
+
+2.52.14.1. Executing ABC9_OPS pass (helper functions for ABC9).
+
+2.52.14.2. Executing ABC9_OPS pass (helper functions for ABC9).
+
+2.52.14.3. Executing XAIGER2 backend.
+<suppressed ~141 debug messages>
+Extracted 2665 AND gates and 0 wires from module `cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc' to a netlist network with 538 inputs and 837 outputs.
+
+2.52.14.4. Executing ABC9_EXE pass (technology mapping using ABC9).
+
+2.52.14.5. Executing ABC9.
+Running ABC command: "<yosys-exe-dir>/yosys-abc" -s -f <abc-temp-dir>/abc.script 2>&1
+ABC: ======== ABC command line "source <abc-temp-dir>/abc.script"
+ABC: + read_lut <abc-temp-dir>/input.lut 
+ABC: + read_box <abc-temp-dir>/input.box 
+ABC: + &read <abc-temp-dir>/input.xaig 
+ABC: + &ps 
+ABC: <abc-temp-dir>/input : i/o =     90/    277  and =    1982  lev =   12 (2.25)  mem = 0.04 MB  box = 56  bb = 0
+ABC: + &scorr 
+ABC: Warning: The network is combinational.
+ABC: + &sweep 
+ABC: + &dc2 
+ABC: + &dch -f -r 
+ABC: + &ps 
+ABC: <abc-temp-dir>/input : i/o =     90/    277  and =    2367  lev =    6 (1.50)  mem = 0.05 MB  ch =  361  box = 53  bb = 0
+ABC: cst =       0  cls =    324  lit =     361  unused =    2196  proof =     0
+ABC: + &if -W 300 -v 
+ABC: K = 8. Memory (bytes): Truth =    0. Cut =   80. Obj =  160. Set =  816. CutMin = no
+ABC: Node =    2367.  Ch =   324.  Total mem =    0.62 MB. Peak cut mem =    0.01 MB.
+ABC: P:  Del = 7876.00.  Ar =    1029.0.  Edge =     1174.  Cut =    36792.  T =     0.01 sec
+ABC: P:  Del = 7876.00.  Ar =     948.0.  Edge =     1135.  Cut =    36716.  T =     0.01 sec
+ABC: P:  Del = 7876.00.  Ar =     980.0.  Edge =     1178.  Cut =    37542.  T =     0.01 sec
+ABC: F:  Del = 7876.00.  Ar =     903.0.  Edge =     1102.  Cut =    26811.  T =     0.00 sec
+ABC: A:  Del = 7876.00.  Ar =     871.0.  Edge =     1106.  Cut =    31797.  T =     0.01 sec
+ABC: A:  Del = 7876.00.  Ar =     871.0.  Edge =     1106.  Cut =    32766.  T =     0.01 sec
+ABC: Total time =     0.04 sec
+ABC: + &write -n <abc-temp-dir>/output.aig 
+ABC: + &mfs 
+ABC: The network is not changed by "&mfs".
+ABC: + &ps -l 
+ABC: <abc-temp-dir>/input : i/o =     90/    277  and =    1641  lev =    7 (1.52)  mem = 0.04 MB  box = 53  bb = 0
+ABC: Mapping (K=6)  :  lut =    295  edge =    1106  lev =    4 (0.68)  levB =   24  mem = 0.02 MB
+ABC: LUT = 295 : 2=80 27.1 %  3=45 15.3 %  4=72 24.4 %  5=65 22.0 %  6=33 11.2 %  Ave = 3.75
+ABC: + &write -n <abc-temp-dir>/output.aig 
+ABC: + &verify 
+ABC: Networks are equivalent.  Time =     0.06 sec
+ABC: + time 
+ABC: elapse: 3.26 seconds, total: 3.26 seconds
+
+2.52.14.6. Executing AIGER frontend.
+<suppressed ~10 debug messages>
+Removed 2714 unused cells and 3815 unused wires.
+
+2.52.14.7. Executing ABC_OPS_REINTEGRATE pass (reintegrate ABC mapped design into module).
+ABC RESULTS:              $lut cells:      314
+ABC RESULTS:           \CARRY4 cells:       53
+ABC RESULTS:           input signals:       34
+ABC RESULTS:          output signals:        4
+<suppressed ~370 debug messages>
+Removing temp directory.
+
+2.52.15. Executing TECHMAP pass (map to technology primitives).
+
+2.52.15.1. Executing Verilog-2005 frontend: /home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/abc9_unmap.v
+Parsing Verilog input from `/home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/abc9_unmap.v' to AST representation.
+Generating RTLIL representation for module `$__DFF_x__$abc9_flop'.
+Generating RTLIL representation for module `$__ABC9_SCC_BREAKER'.
+Generating RTLIL representation for module `$__ABC9_BARRIER'.
+Successfully finished Verilog frontend.
+
+2.52.15.2. Continuing TECHMAP pass.
+No more expansions possible.
+<suppressed ~6 debug messages>
+Removed 101 unused cells and 609 unused wires.
+
+2.53. Executing XILINX_SRL pass (Xilinx shift register extraction).
+
+2.54. Executing TECHMAP pass (map to technology primitives).
+
+2.54.1. Executing Verilog-2005 frontend: /home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/xilinx/lut_map.v
+Parsing Verilog input from `/home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/xilinx/lut_map.v' to AST representation.
+Generating RTLIL representation for module `$lut'.
+Successfully finished Verilog frontend.
+
+2.54.2. Executing Verilog-2005 frontend: /home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/xilinx/cells_map.v
+Parsing Verilog input from `/home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/xilinx/cells_map.v' to AST representation.
+Generating RTLIL representation for module `$__SHREG_'.
+Generating RTLIL representation for module `$__XILINX_SHREG_'.
+Generating RTLIL representation for module `$__XILINX_MUXF78'.
+Successfully finished Verilog frontend.
+
+2.54.3. Continuing TECHMAP pass.
+Using template $paramod$1ad9ca75a5e52e69f39f16c0b8ffb14773a0b7f2$lut for cells of type $lut.
+Using template $paramod$lut\WIDTH=32'00000000000000000000000000000010\LUT=4'1001 for cells of type $lut.
+Using template $paramod$lut\WIDTH=32'00000000000000000000000000000010\LUT=4'0110 for cells of type $lut.
+Using template $paramod$8dd40deea49581a838ff870c116d34036dccb2e5$lut for cells of type $lut.
+Using template $paramod$193e71440366705e308014a17007621ab52157e4$lut for cells of type $lut.
+Using template $paramod$e5125c248d23aacbf488fa2acf83b0ec334a813d$lut for cells of type $lut.
+Using template $paramod$1e444c3819457cc184068e6c643e4a7094b6c51a$lut for cells of type $lut.
+Using template $paramod$lut\WIDTH=32'00000000000000000000000000000011\LUT=8'10010110 for cells of type $lut.
+Using template $paramod$lut\WIDTH=32'00000000000000000000000000000011\LUT=8'00110101 for cells of type $lut.
+Using template $paramod$58df2c605746858c7e53492c8f57d6f1fafa12d2$lut for cells of type $lut.
+Using template $paramod$lut\WIDTH=32'00000000000000000000000000000011\LUT=8'00011101 for cells of type $lut.
+Using template $paramod$4c012e8e6a8a478e8dc9ce0b3b3422b89bd80521$lut for cells of type $lut.
+Using template $paramod$lut\WIDTH=32'00000000000000000000000000000010\LUT=4'0001 for cells of type $lut.
+Using template $paramod$ed822494ed01ae34f5d2fb1bcce373a5181dc035$lut for cells of type $lut.
+Using template $paramod$c259e6cb26e71a41c374d475989f5fb22485f300$lut for cells of type $lut.
+Using template $paramod$061e7a3a2ef0803a5333c13f9bd12636621f38c4$lut for cells of type $lut.
+Using template $paramod$lut\WIDTH=32'00000000000000000000000000000010\LUT=4'0100 for cells of type $lut.
+Using template $paramod$0a94662b0161fc067fc2a1123fd5ac94da2ec1db$lut for cells of type $lut.
+Using template $paramod$lut\WIDTH=32'00000000000000000000000000000011\LUT=8'00011011 for cells of type $lut.
+Using template $paramod$fd6e67b7d2f1e43af4cf0ab9bac943289b4f931f$lut for cells of type $lut.
+Using template $paramod$lut\WIDTH=32'00000000000000000000000000000011\LUT=8'00000001 for cells of type $lut.
+Using template $paramod$lut\WIDTH=32'00000000000000000000000000000011\LUT=8'00001000 for cells of type $lut.
+Using template $paramod$682dcf7a44e09cdf417bc55247ac658426f4c8e6$lut for cells of type $lut.
+Using template $paramod$lut\WIDTH=32'00000000000000000000000000000011\LUT=8'00001101 for cells of type $lut.
+Using template $paramod$lut\WIDTH=32'00000000000000000000000000000011\LUT=8'11100000 for cells of type $lut.
+Using template $paramod$44a604c0d69f8ed15fa91058093f3b266705e96c$lut for cells of type $lut.
+Using template $paramod$30ccc2d02d561628bd3e8ba21431cf11015685a5$lut for cells of type $lut.
+Using template $paramod$c20e9cdb8ce0b0008600da6cf3b4e69036652cf2$lut for cells of type $lut.
+Using template $paramod$fca1981e2528916ce15402f80f7eb0dddff987a9$lut for cells of type $lut.
+Using template $paramod$6c15da6150ce36eeff7fb8c09f7ef22f5448d679$lut for cells of type $lut.
+Using template $paramod$5ab65cc6b1ed6b61d3c73a0398359624d6732b8c$lut for cells of type $lut.
+Using template $paramod$b2c30fe2061ba5decbeb0dcedf10c245e3592dd6$lut for cells of type $lut.
+Using template $paramod$lut\WIDTH=32'00000000000000000000000000000011\LUT=8'01000111 for cells of type $lut.
+Using template $paramod$lut\WIDTH=32'00000000000000000000000000000011\LUT=8'01010011 for cells of type $lut.
+Using template $paramod$8339df71718b807a28fb1f9f35f2be40f33c4b34$lut for cells of type $lut.
+Using template $paramod$5c53f86af0d626b2281c1bb804bf830dd81456b4$lut for cells of type $lut.
+Using template $paramod$2e5f2b763dc1b5f802b59fb495cf80b64c98ee01$lut for cells of type $lut.
+Using template $paramod$fbed19fb84ee7c8a884778d28a96daea96245184$lut for cells of type $lut.
+Using template $paramod$abf17cf492f7ecbb1c7144c038c248243a541ded$lut for cells of type $lut.
+Using template $paramod$9731a072a742f430c4d78d3335adb08a98b80f3d$lut for cells of type $lut.
+Using template $paramod$0fdae664ef47ccb976df3555917380c3c52321a4$lut for cells of type $lut.
+Using template $paramod$adcbfb11a084835d3480dd19237ba4931ccc2680$lut for cells of type $lut.
+Using template $paramod$897a037441faddda2eef259e3752044ff306323d$lut for cells of type $lut.
+Using template $paramod$d415add6747e92391cfb3f64064994106c35f6ed$lut for cells of type $lut.
+Using template $paramod$7dca9f8a3e3d13833f0e6f1f02c05f0cba7a9a17$lut for cells of type $lut.
+Using template $paramod$82218b102949274cdf8937888adfca2e6296df83$lut for cells of type $lut.
+Using template $paramod$966a4a310eb0806407b34b10bde8e41620f58410$lut for cells of type $lut.
+Using template $paramod$8bfb5118fdb385dcf14fe274ee37039279ec596f$lut for cells of type $lut.
+Using template $paramod$lut\WIDTH=32'00000000000000000000000000000011\LUT=8'01101001 for cells of type $lut.
+Using template $paramod$eaa84d4640b59b2a00fbd9b8cc90c16e26f4fceb$lut for cells of type $lut.
+Using template $paramod$ce7dc711c01ca474db83ec17346fa61b69c9571e$lut for cells of type $lut.
+Using template $paramod$1ed5ce8be33237d155837219b251ca32d7cc24af$lut for cells of type $lut.
+Using template $paramod$61c387311e0b7b1481f282cf3d339bc22e86cf60$lut for cells of type $lut.
+Using template $paramod$9f884b89fbee2d8d982a84eba51b1f72993d97da$lut for cells of type $lut.
+Using template $paramod$e51a8a571bee774247b38f52d6e85fd62ae52cea$lut for cells of type $lut.
+Using template $paramod$fe6b3a4e4abaaaba1324679b00c4c43d5759e704$lut for cells of type $lut.
+Using template $paramod$639c509a08db4c6e911ebf58330e5e8fef486538$lut for cells of type $lut.
+Using template $paramod$lut\WIDTH=32'00000000000000000000000000000001\LUT=2'01 for cells of type $lut.
+Using template $paramod$0d3ac82cf5b8a192d5ff4c23e3143360366ae882$lut for cells of type $lut.
+Using template $paramod$b4f15f202f50520dbc381cd0880ac94f830f05a8$lut for cells of type $lut.
+Using template $paramod$c98bc997f65d2b33b30b656dfa2ccb330a9b6fca$lut for cells of type $lut.
+Using template $paramod$8a10a67809a4c226e7b6ed397585f1b2ade29b11$lut for cells of type $lut.
+Using template $paramod$b8a924862f2747e446fd1318ab6ba012767bf5a0$lut for cells of type $lut.
+Using template $paramod$lut\WIDTH=32'00000000000000000000000000000010\LUT=4'1011 for cells of type $lut.
+Using template $paramod$b7b85980a27038fba5439de86709417d48a6b147$lut for cells of type $lut.
+Using template $paramod$5b53d5fcf9e47a65c98e2e9e6df85cc41d58311c$lut for cells of type $lut.
+Using template $paramod$e517594e14eecbbc2af5982d5e4f4e12b60e690d$lut for cells of type $lut.
+Using template $paramod$739ba3ac22c013608dccf8237e1d95d51e731a52$lut for cells of type $lut.
+Using template $paramod$27b4268d000b1e7bb8f7a22db6a34a023d940069$lut for cells of type $lut.
+Using template $paramod$5dd67730b53636962555ed41340dee4d21580e05$lut for cells of type $lut.
+Using template $paramod$bfa811a3621bf4b22e9b4490882d628d4081fbd6$lut for cells of type $lut.
+Using template $paramod$9c9b92fe7b08660b5ece3fd503c12df9d617575c$lut for cells of type $lut.
+Using template $paramod$d0c4e0f89dd29fd25a3eb7f9302f4a86712e941c$lut for cells of type $lut.
+Using template $paramod$1f3b67373a23476b64a6ed61bde9dbe9df1086de$lut for cells of type $lut.
+Using template $paramod$c6705c2d9a5ca1e5236b47844e83005fc173deff$lut for cells of type $lut.
+Using template $paramod$8a94e7524777a0b4753b783db2e99d719294f40f$lut for cells of type $lut.
+Using template $paramod$be5308abcd11e5d87888ef8da44ef0b0d06a59e3$lut for cells of type $lut.
+Using template $paramod$4282def8dbd6df3d1248ad282c629bee684502c2$lut for cells of type $lut.
+No more expansions possible.
+<suppressed ~1182 debug messages>
+
+2.55. Executing XILINX_DFFOPT pass (optimize FF control signal usage).
+Optimizing FFs in cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc.
+  Merging D + R + CE LUTs for $auto$ff.cc:337:slice$2666/base (2 -> 5)
+  Merging D + CE LUTs for $auto$ff.cc:337:slice$2420/z (4 -> 6)
+  Merging D + R + CE LUTs for $auto$ff.cc:337:slice$2665/base (1 -> 5)
+  Merging D + CE LUTs for $auto$ff.cc:337:slice$2421/z (4 -> 6)
+  Merging D + CE LUTs for $auto$ff.cc:337:slice$2419/z (4 -> 6)
+  Merging D + CE LUTs for $auto$ff.cc:337:slice$2418/z (4 -> 6)
+  Merging D + CE LUTs for $auto$ff.cc:337:slice$2417/z (4 -> 6)
+  Merging D + CE LUTs for $auto$ff.cc:337:slice$2416/z (4 -> 6)
+  Merging D + CE LUTs for $auto$ff.cc:337:slice$2415/z (4 -> 6)
+  Merging D + CE LUTs for $auto$ff.cc:337:slice$2414/z (4 -> 6)
+  Merging D + CE LUTs for $auto$ff.cc:337:slice$2413/z (4 -> 6)
+  Merging D + CE LUTs for $auto$ff.cc:337:slice$2412/z (4 -> 6)
+  Merging D + CE LUTs for $auto$ff.cc:337:slice$2411/z (4 -> 6)
+
+2.56. Executing OPT_LUT_INS pass (discard unused LUT inputs).
+Optimizing LUTs in cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc.
+Removed 14 unused cells and 718 unused wires.
+
+2.57. Executing HIERARCHY pass (managing design hierarchy).
+Attribute `top' found on module `cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc'. Setting top module to cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc.
+
+2.57.1. Analyzing design hierarchy..
+Top module:  \cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc
+
+2.57.2. Analyzing design hierarchy..
+Top module:  \cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc
+Removed 0 unused modules.
+
+2.58. Printing statistics.
+
+=== cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc ===
+
+        +----------Local Count, excluding submodules.
+        | 
+      687 wires
+     1315 wire bits
+       14 public wires
+       93 public wire bits
+        8 ports
+       41 port bits
+      317 cells
+       18   INV
+       82   LUT2
+       46   LUT3
+       60   LUT4
+       67   LUT5
+       44   LUT6
+      128 submodules
+       53   CARRY4
+       69   FDRE
+        6   FDSE
+
+   Estimated number of LCs:        217
+
+=== design hierarchy ===
+
+        +----------Count including submodules.
+        | 
+      317 cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc
+
+        +----------Count including submodules.
+        | 
+      687 wires
+     1315 wire bits
+       14 public wires
+       93 public wire bits
+        8 ports
+       41 port bits
+        - memories
+        - memory bits
+        - processes
+      317 cells
+       18   INV
+       82   LUT2
+       46   LUT3
+       60   LUT4
+       67   LUT5
+       44   LUT6
+      128 submodules
+       53   CARRY4
+       69   FDRE
+        6   FDSE
+
+   Estimated number of LCs:        217
+
+2.59. Executing CHECK pass (checking for obvious problems).
+Checking module cordic_unrolled_k_k4_w12_n12_ap0_g0_trunc...
+Found and reported 0 problems.
+End of script. Logfile hash: cb1bd5b105, time: 11.77s, user: 7.54s, system: 0.86s, MEM: 157.78 MB peak
+Yosys 0.70+385 (git sha1 098e46a36, Release, Clang /usr/bin/clang++ 21.1.8)
+Time spent: 38% 27x read_verilog (4 sec), 27% 1x abc9_exe (3 sec), ...
