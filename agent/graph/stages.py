@@ -176,7 +176,16 @@ def constants_stage(c: dict | None) -> tuple[bool, list[str]]:
     if not c:
         return True, []
     fs = [f for f in (c.get("findings") or []) if f.get("blocking")]
-    return not fs, [f"constants {f['code']} {f.get('where', '')}: {f['message']}" for f in fs]
+    return not fs, [f"constants {f['code']} {f.get('where', '')}: {f['message']}" + _spec_holder_tag(c, f) for f in fs]
+
+
+def _spec_holder_tag(c: dict, f: dict) -> str:
+    """Brief 82P6: a CONST-ID-01 that persisted into a later visit, whose wrong value is also in spec.yaml, is the clarify stage's
+    to fix (spec.yaml is its output): the failure text says so and ``classify`` routes it to stage 0."""
+    if (f.get("code") == "CONST-ID-01" and c.get("persisted")
+            and any(h.get("role") == "spec" for h in (f.get("holders") or []))):
+        return " [the wrong value is also held by spec.yaml, which the clarify stage owns]"
+    return ""
 
 
 def exit_check(stage: Stage, ev: dict[str, Any]) -> tuple[bool, list[str]]:
@@ -280,6 +289,8 @@ def classify(stage: Stage, fails: list[str]) -> str | None:
     text = " ".join(fails)
     if "constants CONST-CLK" in text:
         return "constraints"             # a clock period against the board file is the constraints' to fix
+    if "constants CONST-ID-01" in text and "held by spec.yaml" in text:
+        return "spec"                    # 82P6: the wrong value persisted and spec.yaml carries it: the clarify stage's to correct
     if "constants CONST-" in text:
         return "rtl"                     # a constant the RTL binds against the spec: the RTL's (the spec text is not at fault)
     if "architecture not approved" in text:

@@ -46,7 +46,7 @@ from agent.graph.interview import (Interview, Question, SpecOracle, apply_regist
 from agent.graph.llm import BudgetExceeded, Meter, chat_model
 from agent.graph.roles import ROLES, RoleJail, role_inputs, role_session
 from agent.core.artefacts import check_artefact
-from agent.graph.repair import stage2_owners
+from agent.graph.repair import stage2_owners, stop_diagnosis
 from flow.verif_gates import MACROS_REL
 from agent.graph import ownership
 from agent.graph.snapshot import Snapshots
@@ -76,6 +76,7 @@ class State(TypedDict, total=False):
     note: str
     history: list
     stop: str
+    stop_detail: dict   # brief 82P6 (P3): the facts behind a visit-limit stop (gates, roles, last failing assertion)
     interview: dict
     hw_approved: bool
     owners: dict        # stage 2: role -> the failure text that role owns (05c2: repair, do not regenerate)
@@ -193,6 +194,7 @@ class Runtime:
     client_for: Callable[[str], Callable] | None = None     # OpenRouter client for a deepagents role on another model
     offload_seq: int = 0                                    # brief 42 H1: numbers the offloaded tool results
     visit: int = 0                                          # the current stage's visit number (for the turn trace)
+    last_role_message: dict = field(default_factory=dict)   # brief 82P6 (P3): role -> {stage, visit, text} of its last final message
     budget_notes: list = field(default_factory=list)        # roles whose turn budget ended this visit (05g)
     spectest_llm: Callable[[str, str], str] | None = None   # 08f: the spec-test role's model call (None: a Claude Code call per cfg)
     spectest_triage_llm: Callable[[str, str], str] | None = None
@@ -538,6 +540,32 @@ def _design_mtimes(design: Path) -> dict[str, float]:
             if p.is_file() and "build" not in p.relative_to(design).parts and "__pycache__" not in p.parts}
 
 
+ROLE_MESSAGE_KEEP = 2000
+
+
+def record_role_message(rt: Runtime, role: str, text: str) -> None:
+    """Brief 82P6 (P3): keep the role's last final message (model output, never a prompt) for ``summary.json``: whole when it
+    is at most ROLE_MESSAGE_KEEP characters, else its first 300 and last (KEEP - 300) with a marker for what was cut."""
+    text = str(text or "").strip()
+    if not text:
+        return
+    if len(text) > ROLE_MESSAGE_KEEP:
+        text = text[:300] + f"\n[... {len(text) - ROLE_MESSAGE_KEEP} characters cut ...]\n" + text[-(ROLE_MESSAGE_KEEP - 300):]
+    rt.last_role_message[role] = {"stage": rt.session.stage, "visit": rt.visit, "text": text}
+
+
+def _last_ai_text(out: Any) -> str:
+    """The last message's text of a Deep Agents result (best effort: any shape that does not fit gives '')."""
+    try:
+        m = (out.get("messages") or [])[-1]
+        c = getattr(m, "content", None) if not isinstance(m, dict) else m.get("content")
+        if isinstance(c, list):
+            c = " ".join(str(b.get("text", "")) if isinstance(b, dict) else str(b) for b in c)
+        return str(c or "")
+    except Exception:                                              # noqa: BLE001
+        return ""
+
+
 def run_subagent(rt: Runtime, role: str, prompt: str, allowed: tuple[str, ...] = (), repair: bool = False) -> dict[str, str]:
     """Run one sub-agent through the harness and model its role is routed to (05f), and account for it per role
     and stage (``role_usage.jsonl``): turns, tokens, wall time, reported cost / plan estimate. Brief 05g adds the turn
@@ -684,7 +712,8 @@ def _run_subagent(rt: Runtime, role: str, prompt: str, allowed: tuple[str, ...],
     if role == "rtl":
         agent = create_deep_agent(model=model, tools=_core_tools(rt, sess, allowed), system_prompt=prompt,
                                   backend=_jail_backend(rt, role), **({"middleware": mw} if mw else {}))
-        agent.invoke({"messages": [{"role": "user", "content": msg}]}, {"recursion_limit": 200})
+        out = agent.invoke({"messages": [{"role": "user", "content": msg}]}, {"recursion_limit": 200})
+        record_role_message(rt, role, _last_ai_text(out))
         return {}
     agent = create_deep_agent(model=model, tools=_core_tools(rt, sess, allowed), system_prompt=prompt,
                               backend=_validating_state_backend(rt), **({"middleware": mw} if mw else {}))
@@ -789,7 +818,8 @@ def node_work(state: State) -> dict:
     visits[str(n)] = visits.get(str(n), 0) + 1
     limit = visit_limit(n, rt.cfg.run_limits)
     if visits[str(n)] > limit:
-        return {"visits": visits, "stop": f"stage {n} visited more than {limit} times"}
+        why, detail = stop_diagnosis(n, limit, state)         # brief 82P6 (P3): say which gate, which role, which assertion
+        return {"visits": visits, "stop": why, "stop_detail": detail}
     rt.meter.start_stage(st.limits)
     rt.session.stage = st.name
     rt.visit, rt.budget_notes = visits[str(n)], []
@@ -1100,6 +1130,27 @@ def constants_gate(rt: Runtime) -> dict:
         return {"findings": [], "error": f"{type(e).__name__}: {str(e)[:300]}"}
 
 
+def spec_constants_findings(rt: Runtime) -> list[dict]:
+    """Brief 82P6: the blocking findings of ``flow.derived_constants.spec_yaml_findings`` for the design's spec.yaml (the clarify
+    stage's output) against its spec.md and the board file. A fault in the check is recorded in the audit-free way (no finding):
+    like the stage-2 gate it never fails a design by being unavailable."""
+    from flow import derived_constants as DC
+    try:
+        return [f for f in DC.spec_yaml_findings(rt.design, rt.session.root, board=rt.cfg.board) if f.get("blocking")]
+    except Exception:                                            # noqa: BLE001
+        return []
+
+
+def mark_persisted(prev: dict | None, new: dict) -> dict:
+    """Brief 82P6: ``new`` (this visit's constants table) gets ``persisted: true`` when a blocking ``CONST-ID-01`` with the same
+    bound value was also in ``prev`` (the earlier visit's table): the repair of that visit did not remove it."""
+    def ids(t):
+        return {f.get("bound") for f in ((t or {}).get("findings") or []) if f.get("code") == "CONST-ID-01" and f.get("blocking")}
+    if ids(prev) & ids(new):
+        new = {**new, "persisted": True}
+    return new
+
+
 def constants_blocks(ev: dict) -> bool:
     return any(f.get("blocking") for f in ((ev.get("constants") or {}).get("findings") or []))
 
@@ -1153,6 +1204,10 @@ def node_gate(state: State) -> dict:
                 spec, summary = _interview(rt, spec, state)
                 out["interview"] = summary
                 errs = validate(spec) + requirement_quality_errors(spec) + register_map_errors(req, spec)   # brief 53
+                cf = spec_constants_findings(rt)                   # brief 82P6: spec.yaml against the derived constants, at the clarify exit
+                errs += ["constants " + f"{f['code']} {f['where']}: {f['message']}" for f in cf]
+                ev["spec_constants"] = {"findings": cf}
+                log_routing_event(rt, "clarify_constants_check", findings=[f["code"] for f in cf], failed=bool(cf))
                 ev["spec"], ev["signed_off"], ev["spec_errors"] = spec, not spec.get("open_questions"), errs
                 if errs:
                     detail.append("[spec.yaml] " + "; ".join(errs))
@@ -1194,9 +1249,12 @@ def node_gate(state: State) -> dict:
         ev["standards_fails"] = standards_stage(ev["standards"], "rtl")[1]
         if ev["standards_fails"]:
             detail.append("[standards] " + "\n".join(ev["standards_fails"])[:1800])
-        ev["constants"] = constants_gate(rt)                       # brief 82P4: the derived-constants gate (HDL-ORC-01)
+        ev["constants"] = mark_persisted(ev.get("constants"), constants_gate(rt))   # brief 82P4: the derived-constants gate (HDL-ORC-01);
+        # ev still holds the earlier visit's table here (82P6: a wrong ID that survived a visit is routed to every holder)
         if constants_blocks(ev):
-            detail.append("[constants] " + "\n".join(f["message"] for f in ev["constants"]["findings"] if f.get("blocking"))[:1800])
+            from agent.graph.stages import _spec_holder_tag
+            detail.append("[constants] " + "\n".join(f["message"] + _spec_holder_tag(ev["constants"], f)
+                                                    for f in ev["constants"]["findings"] if f.get("blocking"))[:1800])
         spec_blocks = False
         if (rt.cfg.spec_tests and ev["lint"]["ok"] and ev["simulate"]["ok"] and not ev["standards_fails"] and not constants_blocks(ev)
                 and (ev["verif"].get("reached") or "") >= rt.cfg.verif_level):
@@ -1256,7 +1314,10 @@ def node_gate(state: State) -> dict:
             prev, rep = state.get("sig") or "", state.get("repeat") or 0
             _, sig = stage2_owners(ev)                       # this failure's signature
             rep = rep + 1 if (prev and sig == prev) else 0   # unchanged since the last visit: the repair did not work
-            owners, sig = stage2_owners(ev, repeat=rep)
+            events: list[dict] = []
+            owners, sig = stage2_owners(ev, repeat=rep, events=events)
+            for e in events:
+                log_routing_event(rt, e.pop("event"), repeat=rep, **e)
             out.update(owners=owners, sig=sig, repeat=rep)
     return {**out, "evidence": ev, "fails": [] if ok else fails, "detail": "\n".join(detail)}
 
@@ -1449,7 +1510,10 @@ def node_advance(state: State) -> dict:
     if fails:
         if fails == ["reviewer asked for changes"]:
             return {"stage": n}
-        return {"stage": route_failure(MACHINE[n], classify(MACHINE[n], fails))}
+        target = route_failure(MACHINE[n], classify(MACHINE[n], fails))
+        if n == 2 and target == 0 and any("held by spec.yaml" in f for f in fails):
+            log_routing_event(rt, "const_id_routed_to_spec_yaml_owner", to_stage=0)       # brief 82P6
+        return {"stage": target}
     if n == 9 or (rt.cfg.stop_after is not None and n >= rt.cfg.stop_after):
         return {"stop": stop_status(rt)}
     return {"stage": n + 1}
@@ -1767,6 +1831,27 @@ def oracle_model_name(cfg: Config) -> str:
     return cfg.model_table().entry("oracle").model
 
 
+ROUTING_EVENTS = "routing_events.jsonl"
+
+
+def log_routing_event(rt: Runtime, event: str, **kw: Any) -> None:
+    """Brief 82P6: one line per routing decision of the new repair paths (P1 hint sent, consequence checks covered, clarify-exit constants
+    check, owner routing of a persisting CONST-ID-01), so a run record says whether each change fired. Facts only; never raises."""
+    try:
+        with (rt.run_dir / ROUTING_EVENTS).open("a") as f:
+            f.write(json.dumps({"event": event, "stage": getattr(rt.session, "stage", None), "visit": rt.visit, **kw}) + "\n")
+    except OSError:
+        pass
+
+
+def routing_events(rt: Runtime) -> list[dict]:
+    f = rt.run_dir / ROUTING_EVENTS
+    try:
+        return [json.loads(x) for x in f.read_text().splitlines() if x.strip()]
+    except (OSError, ValueError):
+        return []
+
+
 def constants_summary(rt: Runtime) -> dict:
     """The run record's view of the derived-constants gate: its last table (build/derived_constants.json), or not run."""
     f = rt.design / "build" / "derived_constants.json"
@@ -1806,7 +1891,9 @@ def summary(rt: Runtime, state: dict) -> dict:
             "rewinds": [h["rewind"] for h in hist if h.get("rewind")],
             "tokens": rt.meter.run["tokens"], "cost_usd": rt.meter.run["usd"], "unreported_cost_calls": rt.meter.unreported,
             "turns": rt.meter.run["turns"], "wall_s": rt.meter.run["seconds"],
-            "questions": (state.get("interview") or {}), "stop": state.get("stop"),
+            "questions": (state.get("interview") or {}), "stop": state.get("stop"), "stop_detail": state.get("stop_detail"),
+            "last_rtl_message": (getattr(rt, "last_role_message", None) or {}).get("rtl"),
+            "routing_events": routing_events(rt),
             "clean_stop": state.get("stop") == "done",
             "constants": constants_summary(rt),
             "gates_last": {h["stage"]: h["passed"] for h in hist if h.get("gated", True)},   # 68F: not an entry that ran no gate
