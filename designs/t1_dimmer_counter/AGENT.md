@@ -2,14 +2,14 @@
 source: designs/t1_dimmer_counter/handover.yaml; human view: README.md; refresh: python -m flow.handover fresh designs/t1_dimmer_counter
 
 ## identity
-kind=example produced_by=human part=xc7a100tcsg324-1 board=Nexys A7-100T top=t1_dimmer_counter_top tool=Vivado 2026.1
+kind=example produced_by=session part=xc7a100tcsg324-1 board=Nexys A7-100T top=t1_dimmer_counter_top tool=Vivado 2026.1
 
 ## summary
 A 16-bit up/down/clear counter on the Nexys A7-100T. Debounced buttons step it, the LEDs show it under PWM brightness (register or switches), the 7-segment display shows count and brightness in hex, and every register is reachable over the USB-UART through the test shell. The hand-written reference design for task T1.
 not: an agent run; the RTL, model and tests were written by hand; a gamma-corrected or auto-repeating dimmer; brightness is linear in the duty and one press is one step; a claim of compliance with any standard; the traceability record is DO-254-style evidence only
 
 ## state
-stage=board-verified vivado=2026.1 kb_pin=0959c27 build_id=7eeb3bf5
+stage=board-verified vivado=2026.1 kb_pin=5e2eab8 build_id=10a1806a
 gates: build_2026_1=pass board_bringup=pass
 
 ## interface
@@ -44,7 +44,7 @@ designs/t1_dimmer_counter/tests/test_t1_hw.py 45ade63537: on-board UART tests
 designs/t1_dimmer_counter/tests/run_mutants.sh 578c194e3d: sed mutants the tests must fail
 designs/t1_dimmer_counter/verif/testplan.yaml 0a5bd04595: requirements traced to checks
 designs/t1_dimmer_counter/verif/checkers/t1_bind.sv 817eaeab2b: bound assertion checkers
-designs/t1_dimmer_counter/verif/formal/debounce.sby f866b08ab4: SymbiYosys proof of the debouncer (scan.sby does the display scanner)
+designs/t1_dimmer_counter/verif/formal/debounce.sby b4a4738ebe: SymbiYosys proof of the debouncer (scan.sby does the display scanner)
 
 ## commands
 simulate the RTL against the model (~2min): python3 -m pytest -q shell/tests/test_shell_rtl.py designs/t1_dimmer_counter/tests/test_t1_rtl.py

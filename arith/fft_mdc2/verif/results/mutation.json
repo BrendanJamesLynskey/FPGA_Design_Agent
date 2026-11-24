@@ -1,0 +1,161 @@
+{
+ "function": "fft_mdc2",
+ "mutants": 18,
+ "valid": 18,
+ "killed": 18,
+ "survived": [],
+ "invalid": [],
+ "score_pct": 100.0,
+ "per_variant": {
+  "par2": {
+   "valid": 18,
+   "killed": 18
+  }
+ },
+ "results": [
+  {
+   "name": "odd_not_swapped",
+   "variant": "par2",
+   "class": "connection",
+   "status": "killed",
+   "detail": "directed {'LOGN': 5, 'W': 8, 'TW': 10, 'SCALE': 1, 'RND': 1, 'ORDER': 0, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 2}",
+   "why": "the odd sample's real part is not swapped for an inverse transform"
+  },
+  {
+   "name": "odd_ports_exchanged",
+   "variant": "par2",
+   "class": "connection",
+   "status": "killed",
+   "detail": "directed {'LOGN': 5, 'W': 8, 'TW': 10, 'SCALE': 1, 'RND': 1, 'ORDER': 0, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 2}",
+   "why": "the odd pipeline gets real and imaginary parts exchanged"
+  },
+  {
+   "name": "upper_not_swapped",
+   "variant": "par2",
+   "class": "connection",
+   "status": "killed",
+   "detail": "directed {'LOGN': 5, 'W': 8, 'TW': 10, 'SCALE': 1, 'RND': 1, 'ORDER': 0, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 2}",
+   "why": "the upper half is not swapped back for an inverse transform"
+  },
+  {
+   "name": "lower_not_swapped",
+   "variant": "par2",
+   "class": "connection",
+   "status": "killed",
+   "detail": "directed {'LOGN': 5, 'W': 8, 'TW': 10, 'SCALE': 1, 'RND': 1, 'ORDER': 0, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 2}",
+   "why": "the lower half is not swapped back for an inverse transform"
+  },
+  {
+   "name": "diff_adds",
+   "variant": "par2",
+   "class": "operator",
+   "status": "killed",
+   "detail": "directed {'LOGN': 5, 'W': 8, 'TW': 10, 'SCALE': 1, 'RND': 1, 'ORDER': 0, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 2}",
+   "why": "the upper half adds the product"
+  },
+  {
+   "name": "sum_subtracts",
+   "variant": "par2",
+   "class": "operator",
+   "status": "killed",
+   "detail": "directed {'LOGN': 5, 'W': 8, 'TW': 10, 'SCALE': 1, 'RND': 1, 'ORDER': 0, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 2}",
+   "why": "the lower half's imaginary part subtracts the product"
+  },
+  {
+   "name": "twiddle_index_order",
+   "variant": "par2",
+   "class": "connection",
+   "status": "killed",
+   "detail": "directed {'LOGN': 5, 'W': 8, 'TW': 10, 'SCALE': 0, 'RND': 0, 'ORDER': 1, 'CMUL': 3, 'TWSTAGES': 2, 'MULSTAGES': 0}",
+   "why": "the twiddle index ignores the bit-reversed output order"
+  },
+  {
+   "name": "twiddle_index_doubled",
+   "variant": "par2",
+   "class": "operator",
+   "status": "killed",
+   "detail": "directed {'LOGN': 5, 'W': 8, 'TW': 10, 'SCALE': 1, 'RND': 1, 'ORDER': 0, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 2}",
+   "why": "the twiddle exponent is 2k, not k"
+  },
+  {
+   "name": "counter_stuck",
+   "variant": "par2",
+   "class": "connection",
+   "status": "killed",
+   "detail": "directed {'LOGN': 5, 'W': 8, 'TW': 10, 'SCALE': 1, 'RND': 1, 'ORDER': 0, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 2}",
+   "why": "the position counter never advances"
+  },
+  {
+   "name": "round_quarter",
+   "variant": "par2",
+   "class": "constant",
+   "status": "killed",
+   "detail": "directed {'LOGN': 5, 'W': 8, 'TW': 10, 'SCALE': 1, 'RND': 1, 'ORDER': 0, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 2}",
+   "why": "the product's rounding constant is a quarter instead of a half"
+  },
+  {
+   "name": "halve_without_rounding",
+   "variant": "par2",
+   "class": "operator",
+   "status": "killed",
+   "detail": "directed {'LOGN': 5, 'W': 8, 'TW': 10, 'SCALE': 1, 'RND': 1, 'ORDER': 0, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 2}",
+   "why": "the scaled sum is floored although RND asks for rounding"
+  },
+  {
+   "name": "even_path_takes_odd",
+   "variant": "par2",
+   "class": "connection",
+   "status": "killed",
+   "detail": "directed {'LOGN': 5, 'W': 8, 'TW': 10, 'SCALE': 1, 'RND': 1, 'ORDER': 0, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 2}",
+   "why": "the even path's real part is the odd pipeline's output"
+  },
+  {
+   "name": "odd_path_takes_even",
+   "variant": "par2",
+   "class": "connection",
+   "status": "killed",
+   "detail": "directed {'LOGN': 5, 'W': 8, 'TW': 10, 'SCALE': 1, 'RND': 1, 'ORDER': 0, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 2}",
+   "why": "the odd path's real part into the multiplier is the even pipeline's output"
+  },
+  {
+   "name": "even_path_early",
+   "variant": "par2",
+   "class": "latency",
+   "status": "killed",
+   "detail": "directed {'LOGN': 5, 'W': 8, 'TW': 10, 'SCALE': 1, 'RND': 1, 'ORDER': 0, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 2}",
+   "why": "the even path skips its last delay rank: one clock early against the product"
+  },
+  {
+   "name": "multiplier_m4_conjugate",
+   "variant": "par2",
+   "class": "connection",
+   "status": "killed",
+   "detail": "directed {'LOGN': 5, 'W': 8, 'TW': 10, 'SCALE': 0, 'RND': 0, 'ORDER': 1, 'CMUL': 3, 'TWSTAGES': 2, 'MULSTAGES': 0}",
+   "why": "the three-multiplier form gets the twiddle's parts exchanged"
+  },
+  {
+   "name": "odd_pipeline_order",
+   "variant": "par2",
+   "class": "constant",
+   "status": "killed",
+   "detail": "directed {'LOGN': 5, 'W': 8, 'TW': 10, 'SCALE': 1, 'RND': 1, 'ORDER': 0, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 2}",
+   "why": "the odd pipeline is always bit-reversed: it does not match the even one in natural order"
+  },
+  {
+   "name": "flag_a_clock_early",
+   "variant": "par2",
+   "class": "latency",
+   "status": "killed",
+   "detail": "directed {'LOGN': 5, 'W': 8, 'TW': 10, 'SCALE': 1, 'RND': 1, 'ORDER': 0, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 2}",
+   "why": "the direction flag is taken one clock early"
+  },
+  {
+   "name": "flag_update_late",
+   "variant": "par2",
+   "class": "latency",
+   "status": "killed",
+   "detail": "directed {'LOGN': 5, 'W': 8, 'TW': 10, 'SCALE': 1, 'RND': 1, 'ORDER': 0, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 2}",
+   "why": "the held direction flag is updated one clock late"
+  }
+ ]
+}

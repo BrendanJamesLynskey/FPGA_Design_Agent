@@ -1,0 +1,19 @@
+# Mutation set for the multiplier variants (arith brief 139a; tools/run_mutants.py): each mutant replaces `old` (exactly once) by `new` in a copy of the variant's file.
+mutants:
+- {name: dsp_a_unsigned, variant: dsp, class: operator, old: "assign ea = SIGNED != 0 ? {a_s[WA-1], a_s} : {1'b0, a_s};", new: "assign ea = {1'b0, a_s};", why: "the multiplicand is never sign-extended"}
+- {name: dsp_b_unsigned, variant: dsp, class: operator, old: "assign eb = SIGNED != 0 ? {b_s[WB-1], b_s} : {1'b0, b_s};", new: "assign eb = {1'b0, b_s};", why: "the multiplier is never sign-extended"}
+- {name: dsp_add_not_mul, variant: dsp, class: operator, old: "assign full = ea * eb;", new: "assign full = ea + eb;", why: "an adder where the multiplier is"}
+- {name: dsp_a_reg_zero, variant: dsp, class: connection, old: "a_r <= a;", new: "a_r <= '0;", why: "the operand register loses the multiplicand"}
+- {name: dsp_p_shifted, variant: dsp, class: constant, old: "assign m_s = full[WA+WB-1:0];", new: "assign m_s = full[WA+WB:1];", why: "the unregistered product is shifted by one bit"}
+- {name: dsp_m_reg_stale, variant: dsp, class: connection, old: "always_ff @(posedge clk) m_r <= full[WA+WB-1:0];", new: "always_ff @(posedge clk) m_r <= m_r | full[WA+WB-1:0];", why: "the multiplier-output register accumulates instead of loading"}
+- {name: la_sign_row, variant: lut_array, class: condition, old: "if (SIGNED != 0 && i == WB - 1) acc", new: "if (SIGNED != 0 && i == WB - 2) acc", why: "the wrong row is subtracted for a signed multiplier"}
+- {name: la_zero_ext, variant: lut_array, class: operator, old: "assign ea = SIGNED != 0 ? {{WB{a[WA-1]}}, a} : {{WB{1'b0}}, a};", new: "assign ea = {{WB{1'b0}}, a};", why: "the multiplicand is never sign-extended"}
+- {name: la_row_shift, variant: lut_array, class: operator, old: "else                            acc = acc + (b[i] ? (ea << i) : '0);", new: "else                            acc = acc + (b[i] ? (ea << (i + 1)) : '0);", why: "every row is shifted one place too far"}
+- {name: la_top_row_lost, variant: lut_array, class: condition, old: "for (int i = 0; i < WB; i++) begin", new: "for (int i = 0; i < WB - 1; i++) begin", why: "the last row is not added"}
+- {name: la_reg_or, variant: lut_array, class: operator, old: "always_ff @(posedge clk) p_r <= acc;", new: "always_ff @(posedge clk) p_r <= p_r | acc;", why: "the output register accumulates instead of loading"}
+- {name: bo_double_is_single, variant: booth_r4, class: operator, old: "3'b011:         acc = acc + (ea2 << (2 * i));", new: "3'b011:         acc = acc + (ea << (2 * i));", why: "digit +2 adds a"}
+- {name: bo_minus_double_is_single, variant: booth_r4, class: operator, old: "3'b100:         acc = acc - (ea2 << (2 * i));", new: "3'b100:         acc = acc - (ea << (2 * i));", why: "digit -2 subtracts a"}
+- {name: bo_minus_one_case_missing, variant: booth_r4, class: condition, old: "3'b101, 3'b110: acc = acc - (ea << (2 * i));", new: "3'b101:         acc = acc - (ea << (2 * i));", why: "the recoding 110 (digit -1) is treated as 0"}
+- {name: bo_unsigned_digit_count, variant: booth_r4, class: constant, old: "localparam int WBX = WB + (SIGNED != 0 ? 0 : 1);", new: "localparam int WBX = WB;", why: "an unsigned multiplier is not given the extra zero bit, so its top digit can be negative"}
+- {name: bo_lsb_one, variant: booth_r4, class: constant, old: "assign bxe   = {bwide[2*NP-1:0], 1'b0};", new: "assign bxe   = {bwide[2*NP-1:0], 1'b1};", why: "the bit below the first digit group is 1"}
+- {name: bo_zero_ext, variant: booth_r4, class: operator, old: "assign ea  = SIGNED != 0 ? {{WB{a[WA-1]}}, a} : {{WB{1'b0}}, a};", new: "assign ea  = {{WB{1'b0}}, a};", why: "the multiplicand is never sign-extended"}

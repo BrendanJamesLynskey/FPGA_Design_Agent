@@ -2,14 +2,14 @@
 source: designs/b93_precompute/handover.yaml; human view: README.md; refresh: python -m flow.handover fresh designs/b93_precompute
 
 ## identity
-kind=showcase produced_by=human part=xck26-sfvc784-2LV-c board=Kria KR260 (K26 SOM); also xc7a100tcsg324-1 (Nexys A7) out of context top=ooc_wrap (one block with input registers), out of context; the integration is trigger_core in simulation tool=Vivado 2026.1
+kind=showcase produced_by=session part=xck26-sfvc784-2LV-c board=Kria KR260 (K26 SOM); also xc7a100tcsg324-1 (Nexys A7) out of context top=ooc_wrap (one block with input registers), out of context; the integration is trigger_core in simulation tool=Vivado 2026.1
 
 ## summary
 Measures how much of the brief 87 decision model can be done while a message is still arriving. The model's inputs turn out to be known three clocks before the price field, so computing the features early removes the one or three clocks the model added to the 58A path, at no LUT cost. A table of the model's class per interval of its deepest feature (partial evaluation) is built for the 87 trees and the 89 lg_small network and measured, and it saves nothing in clocks in this design.
 not: real market data or a real exchange feed; the data are brief 87's seeded synthetic order flow and our own Bench Feed v1 format; a board run or a full-design build of ML_PRE 1 to 3; every hardware number is an out-of-context, post-route Vivado 2026.1 block build; a model that uses the message's own price; none exists in this programme, and every arm must equal the 87 integer model
 
 ## state
-stage=built vivado=2026.1 kb_pin=5c10d51 build_id=None
+stage=built vivado=2026.1 kb_pin=5e2eab8 build_id=None
 gates: rtl_equals_twin=pass ooc_build_2026_1=pass board_run=not-run
 
 ## interface

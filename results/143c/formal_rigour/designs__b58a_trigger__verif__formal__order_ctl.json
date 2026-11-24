@@ -1,0 +1,391 @@
+{
+ "sby": "designs/b58a_trigger/verif/formal/order_ctl.sby",
+ "schema": "fpga-design-agent/formal_rigour/v1",
+ "sources": {
+  "designs/b58a_trigger/rtl/order_ctl.sv": "db91763b3f836681d93ae5c57c9722a51b07fd6d20c36e391c901aa97578ef44",
+  "designs/b58a_trigger/verif/formal/formal_order_ctl.sv": "f8871da74bb2458e0f29f07c27f334ca5f771281636ea18b3290b57e6be6fa14",
+  "designs/b58a_trigger/verif/formal/order_ctl.sby": "644c35a40ac291d985c31eb201f280b835bf8f1a8379f7f747c6ead32e2e3c2a"
+ },
+ "tasks": {
+  "bmc": {
+   "checks": [
+    {
+     "flavor": "cover",
+     "id": "c_watchdog_reach",
+     "label": "c_watchdog_reach",
+     "src": "formal_order_ctl.sv:149",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "c_soft_reset_on_wire",
+     "label": "c_soft_reset_on_wire",
+     "src": "formal_order_ctl.sv:150",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "c_request_after_wrap",
+     "label": "c_request_after_wrap",
+     "src": "formal_order_ctl.sv:151",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "c_poisoned_on_wire",
+     "label": "c_poisoned_on_wire",
+     "src": "formal_order_ctl.sv:146",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "c_dropped_before_start",
+     "label": "c_dropped_before_start",
+     "src": "formal_order_ctl.sv:148",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "c_cancel_after_clean",
+     "label": "c_cancel_after_clean",
+     "src": "formal_order_ctl.sv:147",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "a_safe_mode_good_only__ante",
+     "label": "a_safe_mode_good_only__ante",
+     "src": "formal_order_ctl.sv:142",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "a_safe_mode_good_only",
+     "label": "a_safe_mode_good_only",
+     "src": "formal_order_ctl.sv:131",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "a_n2_request_made__ante",
+     "label": "a_n2_request_made__ante",
+     "src": "formal_order_ctl.sv:139",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "a_n2_request_made",
+     "label": "a_n2_request_made",
+     "src": "formal_order_ctl.sv:126",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "a_n2_one_request__ante",
+     "label": "a_n2_one_request__ante",
+     "src": "formal_order_ctl.sv:140",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "a_n2_one_request",
+     "label": "a_n2_one_request",
+     "src": "formal_order_ctl.sv:127",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "a_n1_cancel_in_time__ante",
+     "label": "a_n1_cancel_in_time__ante",
+     "src": "formal_order_ctl.sv:138",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "a_n1_cancel_in_time",
+     "label": "a_n1_cancel_in_time",
+     "src": "formal_order_ctl.sv:123",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "a_cancel_only_if_bad__ante",
+     "label": "a_cancel_only_if_bad__ante",
+     "src": "formal_order_ctl.sv:141",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "a_cancel_only_if_bad",
+     "label": "a_cancel_only_if_bad",
+     "src": "formal_order_ctl.sv:129",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "a_b2_drains__ante",
+     "label": "a_b2_drains__ante",
+     "src": "formal_order_ctl.sv:143",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "a_b2_drains",
+     "label": "a_b2_drains",
+     "src": "formal_order_ctl.sv:133",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "a_b1_no_start_on_bad__ante",
+     "label": "a_b1_no_start_on_bad__ante",
+     "src": "formal_order_ctl.sv:137",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "a_b1_no_start_on_bad",
+     "label": "a_b1_no_start_on_bad",
+     "src": "formal_order_ctl.sv:120",
+     "tautology": false
+    },
+    {
+     "flavor": "assume",
+     "id": "formal_order_ctl.sv:23",
+     "label": null,
+     "src": "formal_order_ctl.sv:23",
+     "tautology": false
+    },
+    {
+     "flavor": "assume",
+     "id": "formal_order_ctl.sv:22",
+     "label": null,
+     "src": "formal_order_ctl.sv:22",
+     "tautology": false
+    }
+   ],
+   "covers": {},
+   "depth": 30,
+   "mode": "bmc",
+   "seconds": 2757.3,
+   "status": "PASS"
+  },
+  "cover": {
+   "checks": [
+    {
+     "flavor": "cover",
+     "id": "c_watchdog_reach",
+     "label": "c_watchdog_reach",
+     "src": "formal_order_ctl.sv:149",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "c_soft_reset_on_wire",
+     "label": "c_soft_reset_on_wire",
+     "src": "formal_order_ctl.sv:150",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "c_request_after_wrap",
+     "label": "c_request_after_wrap",
+     "src": "formal_order_ctl.sv:151",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "c_poisoned_on_wire",
+     "label": "c_poisoned_on_wire",
+     "src": "formal_order_ctl.sv:146",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "c_dropped_before_start",
+     "label": "c_dropped_before_start",
+     "src": "formal_order_ctl.sv:148",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "c_cancel_after_clean",
+     "label": "c_cancel_after_clean",
+     "src": "formal_order_ctl.sv:147",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "a_safe_mode_good_only__ante",
+     "label": "a_safe_mode_good_only__ante",
+     "src": "formal_order_ctl.sv:142",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "a_safe_mode_good_only",
+     "label": "a_safe_mode_good_only",
+     "src": "formal_order_ctl.sv:131",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "a_n2_request_made__ante",
+     "label": "a_n2_request_made__ante",
+     "src": "formal_order_ctl.sv:139",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "a_n2_request_made",
+     "label": "a_n2_request_made",
+     "src": "formal_order_ctl.sv:126",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "a_n2_one_request__ante",
+     "label": "a_n2_one_request__ante",
+     "src": "formal_order_ctl.sv:140",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "a_n2_one_request",
+     "label": "a_n2_one_request",
+     "src": "formal_order_ctl.sv:127",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "a_n1_cancel_in_time__ante",
+     "label": "a_n1_cancel_in_time__ante",
+     "src": "formal_order_ctl.sv:138",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "a_n1_cancel_in_time",
+     "label": "a_n1_cancel_in_time",
+     "src": "formal_order_ctl.sv:123",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "a_cancel_only_if_bad__ante",
+     "label": "a_cancel_only_if_bad__ante",
+     "src": "formal_order_ctl.sv:141",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "a_cancel_only_if_bad",
+     "label": "a_cancel_only_if_bad",
+     "src": "formal_order_ctl.sv:129",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "a_b2_drains__ante",
+     "label": "a_b2_drains__ante",
+     "src": "formal_order_ctl.sv:143",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "a_b2_drains",
+     "label": "a_b2_drains",
+     "src": "formal_order_ctl.sv:133",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "a_b1_no_start_on_bad__ante",
+     "label": "a_b1_no_start_on_bad__ante",
+     "src": "formal_order_ctl.sv:137",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "a_b1_no_start_on_bad",
+     "label": "a_b1_no_start_on_bad",
+     "src": "formal_order_ctl.sv:120",
+     "tautology": false
+    },
+    {
+     "flavor": "assume",
+     "id": "formal_order_ctl.sv:23",
+     "label": null,
+     "src": "formal_order_ctl.sv:23",
+     "tautology": false
+    },
+    {
+     "flavor": "assume",
+     "id": "formal_order_ctl.sv:22",
+     "label": null,
+     "src": "formal_order_ctl.sv:22",
+     "tautology": false
+    }
+   ],
+   "covers": {
+    "a_b1_no_start_on_bad__ante": {
+     "reached": true,
+     "step": 5
+    },
+    "a_b2_drains__ante": {
+     "reached": true,
+     "step": 4
+    },
+    "a_cancel_only_if_bad__ante": {
+     "reached": true,
+     "step": 12
+    },
+    "a_n1_cancel_in_time__ante": {
+     "reached": true,
+     "step": 10
+    },
+    "a_n2_one_request__ante": {
+     "reached": true,
+     "step": 3
+    },
+    "a_n2_request_made__ante": {
+     "reached": true,
+     "step": 3
+    },
+    "a_safe_mode_good_only__ante": {
+     "reached": true,
+     "step": 6
+    },
+    "c_cancel_after_clean": {
+     "reached": true,
+     "step": 12
+    },
+    "c_dropped_before_start": {
+     "reached": true,
+     "step": 4
+    },
+    "c_poisoned_on_wire": {
+     "reached": true,
+     "step": 9
+    },
+    "c_request_after_wrap": {
+     "reached": true,
+     "step": 7
+    },
+    "c_soft_reset_on_wire": {
+     "reached": true,
+     "step": 9
+    },
+    "c_watchdog_reach": {
+     "reached": true,
+     "step": 13
+    }
+   },
+   "depth": 30,
+   "mode": "cover",
+   "seconds": 5.6,
+   "status": "PASS"
+  }
+ },
+ "tool": "Yosys 0.70+385 (git sha1 098e46a36, Release, Clang /usr/bin/clang++ 21.1.8)"
+}

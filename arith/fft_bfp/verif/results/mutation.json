@@ -1,0 +1,205 @@
+{
+ "function": "fft_bfp",
+ "mutants": 23,
+ "valid": 23,
+ "killed": 23,
+ "survived": [],
+ "invalid": [],
+ "score_pct": 100.0,
+ "per_variant": {
+  "sdf": {
+   "valid": 18,
+   "killed": 18
+  },
+  "burst": {
+   "valid": 5,
+   "killed": 5
+  }
+ },
+ "results": [
+  {
+   "name": "exp_off",
+   "variant": "sdf",
+   "class": "constant",
+   "status": "killed",
+   "detail": "directed {'LOGN': 4, 'W': 8, 'TW': 10, 'RND': 1, 'ORDER': 0, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 2}",
+   "why": "the exponent is one too small: the largest part does not fit"
+  },
+  {
+   "name": "bl_off",
+   "variant": "sdf",
+   "class": "constant",
+   "status": "killed",
+   "detail": "directed {'LOGN': 4, 'W': 8, 'TW': 10, 'RND': 1, 'ORDER': 0, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 2}",
+   "why": "the bit length is one too small"
+  },
+  {
+   "name": "mag_not_xored",
+   "variant": "sdf",
+   "class": "operator",
+   "status": "killed",
+   "detail": "directed {'LOGN': 4, 'W': 8, 'TW': 10, 'RND': 1, 'ORDER': 0, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 2}",
+   "why": "negative real parts are not turned into their ones-complement magnitude: the OR sees the sign bits"
+  },
+  {
+   "name": "imag_ignored",
+   "variant": "sdf",
+   "class": "connection",
+   "status": "killed",
+   "detail": "directed {'LOGN': 4, 'W': 8, 'TW': 10, 'RND': 1, 'ORDER': 0, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 2}",
+   "why": "the imaginary parts do not enter the exponent"
+  },
+  {
+   "name": "acc_not_restarted",
+   "variant": "sdf",
+   "class": "connection",
+   "status": "killed",
+   "detail": "directed {'LOGN': 4, 'W': 8, 'TW': 10, 'RND': 1, 'ORDER': 0, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 2}",
+   "why": "the OR is not cleared at a frame start: the largest earlier frame sets this one's exponent"
+  },
+  {
+   "name": "round_inverted",
+   "variant": "sdf",
+   "class": "operator",
+   "status": "killed",
+   "detail": "directed {'LOGN': 4, 'W': 8, 'TW': 10, 'RND': 1, 'ORDER': 0, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 2}",
+   "why": "the rounding constant is added in the truncating mode and not in the rounding mode"
+  },
+  {
+   "name": "round_half_off",
+   "variant": "sdf",
+   "class": "constant",
+   "status": "killed",
+   "detail": "directed {'LOGN': 4, 'W': 8, 'TW': 10, 'RND': 1, 'ORDER': 0, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 2}",
+   "why": "the rounding constant is a whole unit, not a half"
+  },
+  {
+   "name": "saturation_to_zero",
+   "variant": "sdf",
+   "class": "constant",
+   "status": "killed",
+   "detail": "levels {'LOGN': 5, 'W': 8, 'TW': 10, 'RND': 1, 'ORDER': 1, 'CMUL': 3, 'TWSTAGES': 2, 'MULSTAGES': 0}",
+   "why": "a part that the rounding carries to 2**(W-1) becomes zero instead of saturating"
+  },
+  {
+   "name": "left_shift_zero_ext",
+   "variant": "sdf",
+   "class": "width",
+   "status": "killed",
+   "detail": "directed {'LOGN': 4, 'W': 8, 'TW': 10, 'RND': 1, 'ORDER': 0, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 2}",
+   "why": "a negative word is zero-extended before the shift"
+  },
+  {
+   "name": "acc_bank",
+   "variant": "sdf",
+   "class": "connection",
+   "status": "killed",
+   "detail": "directed {'LOGN': 4, 'W': 8, 'TW': 10, 'RND': 1, 'ORDER': 0, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 2}",
+   "why": "the exponent is taken from the other bank's OR"
+  },
+  {
+   "name": "bank_not_toggled",
+   "variant": "sdf",
+   "class": "connection",
+   "status": "killed",
+   "detail": "directed {'LOGN': 4, 'W': 8, 'TW': 10, 'RND': 1, 'ORDER': 0, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 2}",
+   "why": "the write bank never changes: a frame overwrites the one before it"
+  },
+  {
+   "name": "full_clear_other",
+   "variant": "sdf",
+   "class": "connection",
+   "status": "killed",
+   "detail": "directed {'LOGN': 4, 'W': 8, 'TW': 10, 'RND': 1, 'ORDER': 0, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 2}",
+   "why": "the wrong bank is released"
+  },
+  {
+   "name": "order_swapped",
+   "variant": "sdf",
+   "class": "connection",
+   "status": "killed",
+   "detail": "directed {'LOGN': 4, 'W': 8, 'TW': 10, 'RND': 1, 'ORDER': 0, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 2}",
+   "why": "natural and bit-reversed output order exchanged"
+  },
+  {
+   "name": "sof_on_last",
+   "variant": "sdf",
+   "class": "constant",
+   "status": "killed",
+   "detail": "directed {'LOGN': 4, 'W': 8, 'TW': 10, 'RND': 1, 'ORDER': 0, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 2}",
+   "why": "out_sof marks the last word"
+  },
+  {
+   "name": "exp_not_aligned",
+   "variant": "sdf",
+   "class": "latency",
+   "status": "killed",
+   "detail": "directed {'LOGN': 4, 'W': 8, 'TW': 10, 'RND': 1, 'ORDER': 0, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 2}",
+   "why": "the exponent is two clocks ahead of the data (visible when frames follow each other with different levels)"
+  },
+  {
+   "name": "exp_zero",
+   "variant": "sdf",
+   "class": "connection",
+   "status": "killed",
+   "detail": "directed {'LOGN': 4, 'W': 8, 'TW': 10, 'RND': 1, 'ORDER': 0, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 2}",
+   "why": "the exponent output is not driven"
+  },
+  {
+   "name": "core_scaled",
+   "variant": "sdf",
+   "class": "constant",
+   "status": "killed",
+   "detail": "directed {'LOGN': 4, 'W': 8, 'TW': 10, 'RND': 1, 'ORDER': 0, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 2}",
+   "why": "the core runs scaled: the output is 1/N of the unscaled transform in the wide words"
+  },
+  {
+   "name": "core_natural",
+   "variant": "sdf",
+   "class": "constant",
+   "status": "killed",
+   "detail": "directed {'LOGN': 4, 'W': 8, 'TW': 10, 'RND': 1, 'ORDER': 0, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 2}",
+   "why": "the core reorders to natural order and the store reads bit-reversed: the order is scrambled"
+  },
+  {
+   "name": "hold_missing",
+   "variant": "burst",
+   "class": "connection",
+   "status": "killed",
+   "detail": "stalled {'LOGN': 4, 'W': 8, 'TW': 10, 'RND': 1, 'ORDER': 0, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 2}",
+   "why": "the read-out does not stall: words are lost while the sink is not ready"
+  },
+  {
+   "name": "rd_not_held",
+   "variant": "burst",
+   "class": "connection",
+   "status": "killed",
+   "detail": "stalled {'LOGN': 4, 'W': 8, 'TW': 10, 'RND': 1, 'ORDER': 0, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 2}",
+   "why": "the memory output register is not held while the output is stalled"
+  },
+  {
+   "name": "exp_not_held",
+   "variant": "burst",
+   "class": "connection",
+   "status": "killed",
+   "detail": "stalled {'LOGN': 4, 'W': 8, 'TW': 10, 'RND': 1, 'ORDER': 0, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 2}",
+   "why": "the exponent pipeline register is not held while the output is stalled"
+  },
+  {
+   "name": "wr_always_ready",
+   "variant": "burst",
+   "class": "connection",
+   "status": "killed",
+   "detail": "stalled_hard {'LOGN': 4, 'W': 8, 'TW': 10, 'RND': 1, 'ORDER': 0, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 2}",
+   "why": "the core is never held back: a frame overwrites a bank that is still being read"
+  },
+  {
+   "name": "core_not_stalled",
+   "variant": "burst",
+   "class": "connection",
+   "status": "killed",
+   "detail": "stalled_hard {'LOGN': 4, 'W': 8, 'TW': 10, 'RND': 1, 'ORDER': 0, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 2}",
+   "why": "the core's output is never stalled by the full frame store"
+  }
+ ]
+}

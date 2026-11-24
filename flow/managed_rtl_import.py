@@ -110,6 +110,10 @@ def upstream_problems(comp: M.Component, project: M.Project, clone: Path) -> lis
 
 
 def contract_problems(project: M.Project, comp: M.Component) -> list[str]:
+    from flow import sources
+    unread = sources.no_reader(M.component_files(project, comp), {"sv"}, "the managed RTL import (it reads a Verilog port list and simulates under Icarus)")
+    if unread:                                           # brief 153: a VHDL component is not "a module with no port list": say what was not read
+        return [unread]
     srcs = [p for p in M.component_files(project, comp) if p.suffix in (".v", ".sv")]
     for f in srcs:
         got = M.parse_module_ports(f.read_text(), comp.module or "", {k: int(v) for k, v in (comp.interface.get("parameters") or {}).items()})
@@ -121,8 +125,13 @@ def contract_problems(project: M.Project, comp: M.Component) -> list[str]:
 def build_files(project: M.Project, comp: M.Component) -> list[Path]:
     """The component's source files as the build compiles them (build_sources, repo-relative), not its reference or licence files;
     resolved under the project's own design directory (so a copy of the design in a scratch folder is read, not the original)."""
+    from flow import sources
     pre = f"designs/{project.design.name}/"
-    return [project.design / b[len(pre):] if b.startswith(pre) else ROOT / b for b in comp.build_sources if b.endswith((".v", ".sv"))]
+    files = [project.design / b[len(pre):] if b.startswith(pre) else ROOT / b for b in comp.build_sources if sources.language(b) in ("sv", "vhdl")]
+    unread = sources.no_reader(files, {"sv"}, "the managed RTL import")
+    if unread:                                           # never drop a VHDL source silently from a component's build files
+        raise ValueError(unread)
+    return [f for f in files if f.suffix in (".v", ".sv")]
 
 
 def adapter_of(project: M.Project) -> M.Component | None:
@@ -149,7 +158,11 @@ def import_check(design: Path, only: str | None = None, upstream: Path | None = 
                              "interface": contract_problems(project, c)}
         if upstream is not None:
             r["upstream"] = upstream_problems(c, project, upstream)
-        block = next(iter(build_files(project, c)), None)
+        try:
+            block = next(iter(build_files(project, c)), None)
+        except ValueError as e:                          # a VHDL source: not read, so not simulated and not passed (brief 153)
+            block = None
+            r["not_run"] = str(e)
         sims = []
         if block is not None:
             sims = [simulate_block(block, c.module or "", work / c.name / f"step{w}", w) for w in STEP_WIDTHS]
