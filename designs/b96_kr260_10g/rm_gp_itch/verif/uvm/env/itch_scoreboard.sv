@@ -27,15 +27,13 @@ class itch_scoreboard extends uvm_scoreboard;
   int unsigned tcp_k, obs_good, obs_bad, last_num;
   bit          seen [exp_order];
   int unsigned n_checkpoints = 0;
-  int unsigned pz_since_load = 0, seq_resyncs = 0;
-  bit          seq_strict = 0;           // +SEQ_STRICT: a good order whose TCP sequence number is not exactly 59 more than the previous good one is an error (the datasheet's rule)
+  int unsigned pz_since_load = 0, pz_since_good = 0;      // poisoned frames seen since TCP_LOAD / since the last good order frame
   localparam int S_ITCH_BASE = 0, S_US_BASE = 45;
 
   function new(string name, uvm_component parent); super.new(name, parent); endfunction
   function void build_phase(uvm_phase phase);
     in_imp = new("in_imp", this); out_imp = new("out_imp", this); cfg_imp = new("cfg_imp", this); stat_imp = new("stat_imp", this);
     m = new();
-    seq_strict = $test$plusargs("SEQ_STRICT");
   endfunction
 
   function void write_in(in_frame_t f);   in_q.push_back(f); endfunction
@@ -65,7 +63,7 @@ class itch_scoreboard extends uvm_scoreboard;
     chk("ORDERS", o.data.size() == 113, $sformatf("an order frame of %0d bytes, expected 113 (before the FCS)", o.data.size()));
     if (o.data.size() != 113) return;
     cov.hit("order_lane0_only");
-    if (!o.fcs_ok) begin obs_bad++; pz_since_load++; cov.hit("obs_poisoned"); return; end
+    if (!o.fcs_ok) begin obs_bad++; pz_since_load++; pz_since_good++; cov.hit("obs_poisoned"); return; end
     obs_good++; cov.hit("obs_good");
     num = be32(o.data, 58);
     found = 0;
@@ -82,19 +80,12 @@ class itch_scoreboard extends uvm_scoreboard;
     chk("ORDERS", bad_at < 0, (bad_at < 0) ? "" : $sformatf("order %0d differs at byte %0d: expected %02x, got %02x (frame byte 0 = destination MAC)", num, bad_at, want[bad_at], o.data[bad_at]));
     // the TCP sequence number: 59 more for every segment that left with a good FCS (docs/itch_integration.md sections 4 and 5: a poisoned frame consumes none)
     begin
-      bit [31:0] got, exp_s; int j; bit ok_rtl;
+      bit [31:0] got, exp_s;
       got = be32(o.data, 38); exp_s = tcp_base + 59 * tcp_k;
-      if (got == exp_s) chk("SEQ", 1, "");
-      else begin
-        ok_rtl = 0;
-        if (!seq_strict) for (j = 1; j <= pz_since_load; j++) if (got == exp_s + 59 * j) ok_rtl = 1;
-        if (ok_rtl) begin
-          // KNOWN RTL BUG (README, "Finding"): the order frame builder advances its sequence number for a frame that the multiplexer later poisons (bad FCS of the trigger frame, or STRICT
-          // with the verdict still missing); the waiver lets the rest of the regression run and counts every occurrence.
-          cov.hit("seq_consumed_by_poison"); seq_resyncs++;
-          tcp_base = got - 59 * tcp_k;
-        end else chk("SEQ", 0, $sformatf("order %0d: TCP sequence number %0d, expected %0d (%0d good segments since TCP_LOAD, %0d poisoned frames seen)", num, got, exp_s, tcp_k, pz_since_load));
-      end
+      // exactly 59 more than the previous good one; a poisoned frame consumes none (brief 176 fixed the builder, which used to advance for a frame the multiplexer poisoned)
+      chk("SEQ", got == exp_s, $sformatf("order %0d: TCP sequence number %0d, expected %0d (%0d good segments since TCP_LOAD, %0d poisoned frames seen)", num, got, exp_s, tcp_k, pz_since_load));
+      if (got == exp_s && pz_since_good > 0) cov.hit("seq_after_poison");
+      pz_since_good = 0;
     end
     tcp_k++;
   endfunction
@@ -200,7 +191,6 @@ class itch_scoreboard extends uvm_scoreboard;
 
   function void report_phase(uvm_phase phase);
     foreach (cmp[k]) `uvm_info("SB_SUMMARY", $sformatf("check=%s compared=%0d mismatches=%0d", k, cmp[k], mis[k]), UVM_NONE)
-    `uvm_info("SB_SUMMARY", $sformatf("check=SEQ_WAIVED compared=%0d mismatches=0", seq_resyncs), UVM_NONE)
     `uvm_info("SB_SUMMARY", $sformatf("check=CHECKPOINTS compared=%0d mismatches=0", n_checkpoints), UVM_NONE)
     if (in_q.size() > 0 || out_q.size() > 0) `uvm_info("SB_SUMMARY", $sformatf("unprocessed after the last checkpoint: %0d frames in, %0d frames out", in_q.size(), out_q.size()), UVM_NONE)
   endfunction

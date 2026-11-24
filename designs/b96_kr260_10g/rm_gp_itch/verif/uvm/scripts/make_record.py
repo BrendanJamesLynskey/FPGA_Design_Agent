@@ -23,15 +23,14 @@ for lg in sorted((out / "runs").glob("*/run.log")):
         continue
     sva_fail += len(re.findall(r"^UVM_ERROR .*\[SVA\]", lg.read_text(errors="replace"), re.M))
 poison = (out / "runs" / "t_seq_poison_1" / "run.log").read_text(errors="replace")
-m = re.search(r"\[SEQ\] (order \d+: TCP sequence number \d+, expected \d+[^\n]*)", poison)
 rec.mkdir(parents=True, exist_ok=True)
 S = {
     "schema": "fpga-design-agent/uvm-regression/v1", "bench": "designs/b96_kr260_10g/rm_gp_itch/verif/uvm", "simulator": "xsim 2026.1, UVM 1.2",
     "runs": len(rows), "failed": sum(1 for r in rows if r[3] != "PASS"), "tests": sorted({r[0] for r in rows}),
     "checks": chk, "sva_failures": sva_fail,
     "coverage": {"bins": len(bins), "hit": sum(1 for b in bins if int(b[1]) > 0), "holes": [b[0] for b in bins if int(b[1]) == 0]},
-    "seq_waived": chk.get("SEQ_WAIVED", {}).get("compared", 0),
-    "finding_seq_poison": {"test": "t_seq_poison", "plusarg": "+SEQ_STRICT", "failed": "TCP sequence number" in poison, "message": m.group(1) if m else ""},
+    "seq_check": chk.get("SEQ", {"compared": 0, "mismatches": 0}),
+    "seq_poison_test": {"test": "t_seq_poison", "passed": "[RESULT] PASS" in poison and "TCP sequence number" not in poison},
 }
 (rec / "summary.json").write_text(json.dumps(S, indent=1) + "\n")
-print(json.dumps({k: S[k] for k in ("runs", "failed", "sva_failures", "seq_waived")}), S["coverage"]["hit"], "of", S["coverage"]["bins"])
+print(json.dumps({k: S[k] for k in ("runs", "failed", "sva_failures", "seq_check")}), S["coverage"]["hit"], "of", S["coverage"]["bins"])

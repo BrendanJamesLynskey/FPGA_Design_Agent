@@ -76,7 +76,7 @@ module itch_ouch_tcp_top
         .spec_allow, .go, .go_spec, .f_sym, .f_px, .f_qty, .f_ref, .commit, .abort, .b_busy, .b_late, .cnt(cnt_r));
     logic [15:0] rec_len, rec_id;
     logic [511:0] rec_pay;
-    tcp_fast u_tcp (.clk, .rst, .go, .go_spec, .f_sym, .f_px, .f_qty, .f_ref, .commit, .abort, .cfg_tif, .cfg_display, .cfg_capacity, .cfg_ise, .cfg_cross,
+    tcp_fast u_tcp (.clk, .rst, .go, .go_spec, .f_sym, .f_px, .f_qty, .f_ref, .commit, .abort, .tx_unsent(1'b0), .tx_drop(1'b0), .cfg_tif, .cfg_display, .cfg_capacity, .cfg_ise, .cfg_cross,
                     .cfg_custtype, .cfg_minqty, .busy(b_busy), .late(b_late), .refuse_v, .refuse_code, .o_v, .o_d, .o_sof, .o_eof, .o_keep, .o_poison,
                     .rec_v, .rec_seq, .rec_len, .rec_id, .rec_pay, .sw_we, .sw_waddr, .sw_wdata, .sw_raddr, .sw_rdata);
 

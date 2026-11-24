@@ -23,19 +23,19 @@ param PAYLEN=59 legal=fixed
 param segment bytes=113 legal=fixed
 
 ## files
-designs/b119_tcp_fast/rtl/tcp_fast.sv dec57d4bb1: the TCP fast path
-designs/b119_tcp_fast/rtl/itch_ouch_tcp_top.sv 34ce2effbb: brief 110's trading path with tcp_fast in place of its stub port (simulation)
+designs/b119_tcp_fast/rtl/tcp_fast.sv 0a9b9e0de8: the TCP fast path
+designs/b119_tcp_fast/rtl/itch_ouch_tcp_top.sv d6556c50a2: brief 110's trading path with tcp_fast in place of its stub port (simulation)
 designs/b119_tcp_fast/model/tcpref.py f6ca3aecbc: segment, checksum and decision reference
 designs/b119_tcp_fast/model/softtcp.py 1f6b650e44: TCP endpoint, owner and software exchange
 designs/b119_tcp_fast/model/soup.py fb5ab8e196: SoupBinTCP and OUCH response packers and parsers
 designs/b119_tcp_fast/model/hwmodel.py 5bdd61efa5: untimed stand-in for the block's register file
 designs/b119_tcp_fast/model/orders.py f2009e9338: order payload builder from brief 110's packers
-designs/b119_tcp_fast/tests/b119_cocotb.py 8ddaee11af: cocotb bench of the block
+designs/b119_tcp_fast/tests/b119_cocotb.py 6e94d3d68c: cocotb bench of the block
 designs/b119_tcp_fast/tests/b119_top_cocotb.py cb47428981: cocotb bench behind brief 110's risk logic
 designs/b119_tcp_fast/tests/netsim.py 3632074a28: the pure-Python network of owner, exchange and stand-in
 designs/b119_tcp_fast/tests/run_mutants.py c4a57bf19d: seeded-fault runner
 designs/b119_tcp_fast/ooc/ooc.py 48962fa558: out-of-context build driver
-designs/b119_tcp_fast/docs/tcp_fast.md 5c1937bbba: datasheet
+designs/b119_tcp_fast/docs/tcp_fast.md 3aa68a6167: datasheet
 designs/b119_tcp_fast/docs/software_side.md 340d510d39: the Python TCP owner and exchange
 designs/b119_tcp_fast/docs/phase2_integration.md e58721f2a6: integration notes for the 10G MAC and open points
 

@@ -90,10 +90,10 @@ the index list is `rtl/itch_pkg.sv`, generated from the model's list, and every 
 | `odup` | an Add whose reference is already live (ignored) |
 | `oovf` | an Add (or the new half of a Replace) whose table index holds a different live order: **not stored**, the instrument becomes inexact |
 | `oover` | an execution of more shares than remain (the order is removed) |
-| `lvovf` | an Add whose price has no level and the ladder is full: not added, the instrument becomes inexact |
+| `lvovf` | an Add whose price has no level and the ladder is full: **the ladder is not updated, but the order is still stored in the order table** (a later removal at that price finds no level and counts `lvmiss`); the instrument becomes inexact, and a candidate Add is counted in `cand` and refused as stale |
 | `lvmiss` | a removal at a price that has no level |
 | `evdrop` | events dropped during a sweep, or because the two-entry queue was full |
-| `cand` | candidates reaching the verdict (the Add was stored) |
+| `cand` | candidates reaching the verdict (the Add was stored in the order table; this includes an Add that the full ladder could not hold, `lvovf`) |
 | `fire` | orders accepted and started or queued |
 | `rej_arm rej_kill rej_gap rej_stale rej_size rej_pos rej_band` | candidates refused, the first failing check in that order |
 | `rej_busy` | a passing candidate with the frame busy and the queue full: **timing dependent** |
@@ -160,7 +160,7 @@ the MAC, the UDP/IP header (the payload starts 42 bytes into the frame), nor the
 
 **Speculation.** With `cfg_spec` set, the frame starts when the candidate is decoded, **if** the frame is idle, the order queue is empty and
 no earlier candidate is still in flight (otherwise it starts at the verdict, as without `cfg_spec`). The verdict then arrives while the frame is
-still being emitted: pass = commit, the frame continues; refuse, or the Add turned out a duplicate or an overflow = `o_abort`. The orders that
+still being emitted: pass = commit, the frame continues; refuse, or the Add turned out a duplicate or an order-table overflow, or a stale book (including a ladder overflow, which makes the instrument inexact) = `o_abort`. The orders that
 leave, their content and their numbers are **the same with and without speculation**; only the start time differs, and aborted frames are extra output.
 A frame that is aborted cannot have already left: the verdict (clock 7) comes 3 clocks before the frame's last word (clock 10).
 

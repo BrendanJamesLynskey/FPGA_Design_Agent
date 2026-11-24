@@ -5,8 +5,8 @@
 #     --seeds N      seeds per directed test (default 2); --rand N seeds for each constrained-random test (default 10); --rounds N: packets per random run (default 40)
 #     --quick        1 seed, 3 random seeds
 #     --record DIR   copy the compact records (results.tsv, summary.txt, coverage report, scoreboard totals) into DIR
-# t_bp runs on both snapshots (the transmit MAC paused one clock in 33, and never paused). t_seq_poison is the minimal failing test of the finding in README.md: it runs with
-# +SEQ_STRICT and is EXPECTED to fail; the regression passes only if it fails with the sequence-number message. Simulation-only: no heavy slot while load < 6 and more than 12 GB free,
+# t_bp runs on both snapshots (the transmit MAC paused one clock in 33, and never paused). t_seq_poison is the minimal test of the sequence-number finding of brief 170 (fixed by brief 176): a poisoned
+# frame consumes no TCP sequence number; it is an ordinary directed test now and every run checks SEQ exactly (no waiver). Simulation-only: no heavy slot while load < 6 and more than 12 GB free,
 # which this script waits for before every run (up to 30 minutes).
 set -uo pipefail
 HERE="$(cd "$(dirname "$0")/.." && pwd)"
@@ -20,7 +20,7 @@ done
 mkdir -p "$OUT"; OUT="$(cd "$OUT" && pwd)"
 SETTINGS="${XSIM_SETTINGS:-$HOME/Xilinx/2026.1/Vivado/settings64.sh}"; [ -f "$SETTINGS" ] || SETTINGS=/opt/Xilinx/2026.1/Vivado/settings64.sh
 set +u; source "$SETTINGS" >/dev/null 2>&1; set -u
-DIRECTED="t_smoke t_mold t_tail t_badfcs t_bp t_book t_risk t_hdr"
+DIRECTED="t_smoke t_mold t_tail t_badfcs t_bp t_book t_risk t_hdr t_seq_poison"
 RANDOMT="t_mix t_rand"
 SCOPE=""; systemd-run --user --scope -p MemoryMax=3G true >/dev/null 2>&1 && SCOPE="systemd-run --user --scope -q -p MemoryMax=3G nice -n 15"
 
@@ -63,22 +63,18 @@ for t in $RANDOMT; do for s in $(seq 1 "$RAND"); do
   r=$(run_one "$OUT/build_clean" "$t" "$s" "$OUT/runs/${t}_$s" $snap); printf "%s\t%s\t%s\t%s\n" "$t" "$snap" "$s" "${r// /	}" >> "$OUT/results.tsv"; echo "  $t seed $s ($snap): $r"
 done; done
 NRUN=$(($(wc -l < "$OUT/results.tsv") - 1)); NFAIL=$(awk -F'\t' 'NR>1 && $4!="PASS"' "$OUT/results.tsv" | wc -l)
-# the expected failure: the finding
-r=$(run_one "$OUT/build_clean" t_seq_poison 1 "$OUT/runs/t_seq_poison_1" itch_uvm "-testplusarg SEQ_STRICT")
-if grep -aq "TCP sequence number" "$OUT/runs/t_seq_poison_1/run.log" && [ "${r%% *}" = FAIL ]; then EXPECT="t_seq_poison fails as expected (the finding): $(grep -a 'TCP sequence number' "$OUT/runs/t_seq_poison_1/run.log" | head -1 | sed -E 's/.*\[SEQ\] //')"; else EXPECT="t_seq_poison DID NOT FAIL AS EXPECTED: $r"; NFAIL=$((NFAIL+1)); fi
 echo "== coverage merge"
 python3 "$HERE/scripts/cov_merge.py" "$OUT" "$OUT"/runs/*/run.log | tee "$OUT/cov_merge.txt"
 grep -ah "SB_SUMMARY\] check=" "$OUT"/runs/*/run.log | sed -n -E 's/.*check=([A-Z0-9_]+) compared=([0-9]+) mismatches=([0-9]+).*/\1 \2 \3/p' \
   | awk '{c[$1]+=$2; m[$1]+=$3} END{for(k in c) printf "%s\t%d\t%d\n", k, c[k], m[k]}' | sort > "$OUT/scoreboard_totals.tsv"
 {
-  echo "regression: $NRUN runs, $NFAIL failed (t_seq_poison, the expected failure, is not in the count above: $EXPECT)"
-  echo "scoreboard checks (check, comparisons, mismatches; SEQ_WAIVED = TCP sequence numbers accepted under the waiver of the finding):"; sed 's/^/  /' "$OUT/scoreboard_totals.tsv"
+  echo "regression: $NRUN runs, $NFAIL failed"
+  echo "scoreboard checks (check, comparisons, mismatches; SEQ = TCP sequence numbers, exact, no waiver):"; sed 's/^/  /' "$OUT/scoreboard_totals.tsv"
   cat "$OUT/cov_merge.txt"
 } | tee "$OUT/summary.txt"
 if [ -n "$REC" ]; then
   mkdir -p "$REC"
   cp "$OUT/results.tsv" "$OUT/summary.txt" "$OUT/coverage_report.md" "$OUT/coverage_merged.tsv" "$OUT/sva_cover.tsv" "$OUT/scoreboard_totals.tsv" "$REC/"
-  cp "$OUT/runs/t_seq_poison_1/run.log" "$REC/t_seq_poison_expected_failure.log"
   python3 "$HERE/scripts/make_record.py" "$OUT" "$REC"
 fi
 [ "$NFAIL" = 0 ]
