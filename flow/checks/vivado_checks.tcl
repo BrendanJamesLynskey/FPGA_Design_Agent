@@ -239,6 +239,10 @@ proc fda_report {name out} {
         control_sets      [list report_control_sets -verbose -file $out/control_sets.rpt] \
         high_fanout       [list report_high_fanout_nets -timing -load_types -max_nets 25 -file $out/high_fanout.rpt] \
         qor_suggestions   [list report_qor_suggestions -file $out/qor_suggestions.rpt] \
+        logic_levels      [list report_design_analysis -logic_level_distribution -logic_level_dist_paths 5000 -file $out/logic_levels.rpt] \
+        clock_utilization [list report_clock_utilization -file $out/clock_utilization.rpt] \
+        clock_networks    [list report_clock_networks -file $out/clock_networks.rpt] \
+        congestion        [list report_design_analysis -congestion -file $out/congestion.rpt] \
         clock_interaction [list report_clock_interaction -delay_type min_max -file $out/clock_interaction.rpt] \
         timing_summary    [list report_timing_summary -max_paths 10 -report_unconstrained -file $out/timing_summary.rpt] \
         utilization       [list report_utilization -file $out/utilization.rpt]]

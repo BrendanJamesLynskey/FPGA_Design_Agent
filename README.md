@@ -336,6 +336,7 @@ standard.
   CDC, methodology, DRC, exceptions, I/O, clocking, DSP/RAM mapping, control sets, FSM coverage, AMD IP notes, link plan,
   DOC gate, AXI4-Lite interface profiles), returning a short digest; the sign-off gates call the same registry: [docs/check_suite.md](docs/check_suite.md),
   [flow/checks](flow/checks), results in [results/71_check_suite](results/71_check_suite/README.md).
+  Brief 204a adds seven report-driven checks (logic levels, clock tree, fan-out, synthesis log, congestion, IP status, control-set bands): [docs/report_gates.md](docs/report_gates.md), results in [results/204a_report_gates](results/204a_report_gates/README.md).
 - **Reset conventions (brief 70).** Measured costs of reset polarity and style on Artix-7 and UltraScale+, a survey of how AMD's own IP
   and generated block designs use resets, an audit of our RTL, and the `resets` check's cost notes: [results/70_resets](results/70_resets/README.md).
 - **HDL coding standard FDA-HDL v1.2.** [docs/hdl_coding_standard.md](docs/hdl_coding_standard.md),

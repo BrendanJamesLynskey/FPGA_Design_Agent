@@ -33,6 +33,8 @@ if {[info exists ::env(FDA_VIVADO_THREADS)] && $::env(FDA_VIVADO_THREADS) ne ""}
 set_param general.maxThreads $fda_threads
 set_param synth.maxThreads   $fda_threads
 set_param chipscope.maxJobs  1
+# brief 204a (UG949 p.198): the tool writes only the first 100 occurrences of a message; raise the limit so the log review sees them all
+catch {set_param messaging.defaultLimit 100000}
 puts "FLOW-THREADS $fda_threads"
 
 source [lindex $argv 0]
@@ -228,6 +230,11 @@ if {$resume_from eq ""} {
     report_clock_networks -file $out/clock_networks_synth.rpt
     report_clock_interaction -delay_type min_max -file $out/clock_interaction_synth.rpt
     report_high_fanout_nets -timing -load_types -max_nets 25 -file $out/high_fanout_synth.rpt
+    # brief 204a (flow/report_gates.py): logic levels against the period and the global clocks, before placement (UG949 p.200, p.234);
+    # report_ip_status only when the session holds IP (a debug core); none of them can fail the build
+    catch {report_design_analysis -logic_level_distribution -logic_level_dist_paths 5000 -file $out/logic_levels_synth.rpt}
+    catch {report_clock_utilization -file $out/clock_utilization_synth.rpt}
+    if {[llength [get_ips -quiet]]} { catch {report_ip_status -file $out/ip_status_synth.rpt} }
     # brief 20: every timing exception, the ones Vivado drops (overridden or no path) and the endpoints each covers, for
     # flow/exceptions_check.py (gates post_synth_exceptions_clean and exceptions_clean; UG906 ch. 5 "Report Exceptions")
     exception_reports $out synth
@@ -315,6 +322,9 @@ if {$resume_from ne "route"} {
     iob_dump $out/iob_route.txt
     report_timing -delay_type max -max_paths 1 -file $out/timing_worst_setup.rpt
     report_timing -delay_type min -max_paths 1 -file $out/timing_worst_hold.rpt
+    # brief 204a: congestion windows and the routed clock buffers (UG949 p.240, p.244, p.200); never fatal
+    catch {report_design_analysis -congestion -file $out/congestion_route.rpt}
+    catch {report_clock_utilization -file $out/clock_utilization_route.rpt}
     # the board's thermal environment (boards/<board>/board.yaml, via prepare.py) so that the
     # junction temperature is the board's, not Vivado's default heat sink and 250 LFM airflow
     if {[info exists power_env] && $power_env ne ""} { set_operating_conditions {*}$power_env }
