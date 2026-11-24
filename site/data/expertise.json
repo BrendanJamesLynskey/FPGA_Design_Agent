@@ -626,12 +626,19 @@
      "gate": null,
      "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/flow/cmt_check.tcl",
      "what": "A VCO and phase-detector range checker, written and measured but not wired into a gate."
+    },
+    {
+     "enforced": false,
+     "file": "flow/clock_mux_check.py",
+     "gate": null,
+     "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/flow/clock_mux_check.py",
+     "what": "The clock_mux check: a LUT on a clock path, a clock mux whose modes are still timed against each other, clock groups on the source clocks that hide real paths into or out of the mux fanout, and a BUFGCTRL chain longer than the cascade ring; advice for a case-analysed select, a CE-pin select, an external clock with IGNORE tied, and a needlessly deep tree. It runs in the check suite, not as a stage gate."
     }
    ],
    "counts": {
-    "checks": 3,
+    "checks": 4,
     "enforced": 1,
-    "evidence": 1,
+    "evidence": 4,
     "sections": 7,
     "skills": 12
    },
@@ -645,6 +652,36 @@
       }
      ],
      "text": "Of 4 probe designs (one legal, three with an MMCM setting outside its range), Vivado's design-rule check after synthesis flagged the setting as out of range on 3."
+    },
+    {
+     "kind": "measured",
+     "sources": [
+      {
+       "path": "results/208/measured.json",
+       "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/results/208/measured.json"
+      }
+     ],
+     "text": "Two clocks through a BUFGMUX, with paths between one clock's own registers and the mux fanout: setup slack was -6.63 ns unconstrained and 0.419 ns once the source clocks were declared exclusive on xc7a35t (-6.03 and 0.01 ns on xck26), because the clock group also removed the real crossing (Vivado 2026.1, routed)."
+    },
+    {
+     "kind": "measured",
+     "sources": [
+      {
+       "path": "results/208/measured.json",
+       "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/results/208/measured.json"
+      }
+     ],
+     "text": "The clock_mux check on the recorded clock-mux designs (xc7a35t and xck26) blocked 26 and passed 22; every design whose clock groups hid a path was among those blocked."
+    },
+    {
+     "kind": "measured",
+     "sources": [
+      {
+       "path": "results/208/runs/sim/tb_lutmux.log",
+       "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/results/208/runs/sim/tb_lutmux.log"
+      }
+     ],
+     "text": "An RTL clock mux (a LUT) switched 40 times at times unrelated to its clocks gave 40 runt pulses in simulation; Vivado reports it only as TIMING-14."
     }
    ],
    "family": {
@@ -753,6 +790,7 @@
    },
    "gaps": [
     "The Clocking Wizard's own settings were compared with the flow's search on only a few target frequencies.",
+    "The clock-mux check reads a netlist dump made in the check suite's Vivado session; it is not a stage gate, and the CE-select glitch it warns about was not shown in simulation (the unisim model has no timing).",
     "No agent run has been graded on a clocking task yet."
    ],
    "id": "clocking",

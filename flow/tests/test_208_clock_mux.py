@@ -44,6 +44,22 @@ BLOCKING = {
     "a7_bal4": {"CLKMUX-NO-GROUPS"},              # the cascade designs carry no clock groups
     "a7_bal3": {"CLKMUX-NO-GROUPS"},
     "a7_chain7": {"CLKMUX-NO-GROUPS"},
+    "a7_chain17": {"CLKMUX-CASCADE"},             # dump only (synthesis): placement then failed
+    # the same arms on xck26-sfvc784-2LV-c (UltraScale+): the same verdicts
+    "k26_u_none": {"CLKMUX-NO-GROUPS"},
+    "k26_u_srclog": {"CLKMUX-SRC-GROUPED"},       # routed: summary WNS +0.010 while the unconstrained arm shows -6.03 ns
+    "k26_u_async": {"CLKMUX-SRC-GROUPED"},
+    "k26_u_genphys": set(),
+    "k26_u_gennog": {"CLKMUX-NO-GROUPS"},
+    "k26_u_case": set(),
+    "k26_u_noint_srclog": set(),
+    "k26_r_srclog": {"CLKMUX-SRC-GROUPED"},
+    "k26_r_genphys": set(),
+    "k26_lut": {"CLKMUX-LUT"},
+    "k26_lut_tied": set(),
+    "k26_bal4": {"CLKMUX-NO-GROUPS"},
+    "k26_chain7": {"CLKMUX-NO-GROUPS"},
+    "k26_chain9": {"CLKMUX-NO-GROUPS", "CLKMUX-CASCADE"},
 }
 
 
@@ -63,7 +79,15 @@ def test_advisories_on_recorded_arms():
     assert "CLKMUX-STOP" not in run("a7_r_genphys")                     # inputs from an MMCM
     assert "CLKMUX-CASCADE" not in run("a7_bal4")                       # two levels for four inputs (UG949 Fig. 67)
     assert "CLKMUX-CASCADE" not in run("a7_chain7")                     # UG949 Fig. 69: a chain of 7 for 8:1
-    assert run("a7_chain17").get("CLKMUX-CASCADE") is False             # 17 levels: placement failed (Place 30-120)
+    assert run("a7_chain17").get("CLKMUX-CASCADE") is True              # 17 levels: placement failed (Place 30-120)
+    assert run("k26_chain9").get("CLKMUX-CASCADE") is True              # 9 levels on UltraScale+: placement failed too
+    assert "CLKMUX-CASCADE" not in run("k26_chain7")
+
+
+def test_bufgce_is_not_a_mux():
+    """7 series retargets BUFGCE to a BUFGCTRL with I1 tied to VCC and CE0 driven (a7_pwr_bufgce): no finding of any kind."""
+    assert run("a7_pwr_bufgce") == {}
+    assert run("k26_pwr_bufgce") == {}
 
 
 def test_srcgrouped_needs_interaction():
@@ -112,7 +136,7 @@ def test_cascade_limit_by_family():
         lines += _mux(f"s{k}", [("I0", *i0), ("I1", "mmcm", "MMCME4_ADV", "y")], "x,y")
         prev = f"s{k}"
     d = CM.parse_dump("\n".join(lines))
-    assert any(f["code"] == "CLKMUX-CASCADE" for f in CM.findings(d, None))            # 9 > 8 on UltraScale
+    assert any(f["code"] == "CLKMUX-CASCADE" and f["blocking"] for f in CM.findings(d, None))   # 9 > 8 on UltraScale
     assert not any(f["code"] == "CLKMUX-CASCADE" for f in CM.findings(d, None, family="7"))  # 9 <= 16 on 7 series
 
 

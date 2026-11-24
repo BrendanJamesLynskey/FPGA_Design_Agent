@@ -1,6 +1,8 @@
 # Brief 208: run a list of jobs in one Vivado session (one heavy job; jobs run one after another).
 #   vivado -mode batch -source run_jobs.tcl -tclargs <jobs file> <out root>
-# A jobs file line: <name> <part> <rtl file> <top> <generics, k=v comma list or -> <xdc files, comma list> <stage: synth|route>
+# A jobs file line: <name> <part> <rtl file> <top> <generics, k=v comma list or -> <xdc files, comma list> <stage: synth|place|route>
+# place: opt_design and place_design only; the reports carry the tag "place" (used on xck26, where route_design took 25 to 59 min
+# per arm on these deliberately failing cross-clock paths)
 set_param general.maxThreads 1
 set_param synth.maxThreads 1
 set here [file dirname [file normalize [info script]]]
@@ -42,14 +44,15 @@ foreach line $lines {
     reports $d synth
     write_checkpoint -force $d/post_synth.dcp
     catch {report_utilization -file $d/utilization_synth.rpt}
-    if {$stage eq "route"} {
+    if {$stage eq "route" || $stage eq "place"} {
       opt_design
       place_design
-      route_design
-      reports $d route
-      catch {report_utilization -file $d/utilization_route.rpt}
-      catch {report_power -file $d/power_route.rpt}
-      catch {report_clock_utilization -file $d/clock_utilization_route.rpt}
+      if {$stage eq "route"} { route_design }
+      set tag $stage
+      reports $d $tag
+      catch {report_utilization -file $d/utilization_$tag.rpt}
+      catch {report_power -file $d/power_$tag.rpt}
+      catch {report_clock_utilization -file $d/clock_utilization_$tag.rpt}
       if {$top eq "pwr"} {
         # f1: vectorless power with the enable's static probability set; toggle rate 2 % of the clock
         foreach p {0.1 0.5 0.9} {
@@ -57,7 +60,7 @@ foreach line $lines {
           report_power -file $d/power_en$p.rpt
         }
       }
-      catch {write_checkpoint -force $d/post_route.dcp}
+      catch {write_checkpoint -force $d/post_$tag.dcp}
     }
   } err]} {
     puts "JOBERROR $name: $err"

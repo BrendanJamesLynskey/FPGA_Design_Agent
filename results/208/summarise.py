@@ -15,6 +15,7 @@ HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE.parents[1]))
 from flow.constraint_gates import parse_clock_pairs   # noqa: E402
 from flow.gates import parse_rule_table              # noqa: E402
+from flow import clock_mux_check as CM               # noqa: E402
 
 
 def _read(p: Path) -> str:
@@ -40,7 +41,7 @@ def arm(d: Path) -> dict:
     err = d / "JOBERROR.txt"
     if err.is_file():
         out["error"] = _read(err).strip()
-    for st in ("synth", "route"):
+    for st in ("synth", "place", "route"):
         ci = d / f"clock_interaction_{st}.rpt"
         if not ci.is_file():
             continue
@@ -68,10 +69,10 @@ def arm(d: Path) -> dict:
         s["lut_on_clock"] = [ln.split("\t")[2] for ln in dump.splitlines() if ln.startswith("LUTCLK")]
         out[st] = s
     pw = {}
-    for p in sorted(d.glob("power_en*.rpt")):
+    for p in sorted(d.glob("power_en*.rpt")):   # the f1 arms only
         t = _read(p)
-        g = lambda k: float(re.search(r"^\| " + re.escape(k) + r"\s*\|\s*([0-9.]+)", t, re.M).group(1))  # noqa: E731
-        pw[p.stem.replace("power_en", "")] = {"total_w": float(re.search(r"Total On-Chip Power \(W\)\s*\|\s*([0-9.]+)", t).group(1)),
+        g = lambda k: re.search(r"^\| " + re.escape(k) + r"\s*\|\s*(<?[0-9.]+)", t, re.M).group(1)  # noqa: E731 ("<0.001" kept as text)
+        pw[p.stem.replace("power_en", "")] = {"total_w": re.search(r"Total On-Chip Power \(W\)\s*\|\s*(<?[0-9.]+)", t).group(1),
                                               "dynamic_w": g("Dynamic (W)"), "clocks_w": g("Clocks"), "signals_w": g("Signals")}
     if pw:
         out["power_by_enable_probability"] = pw
@@ -91,20 +92,42 @@ def main() -> int:
             if ln.startswith("SCEN "):
                 f = ln.split()
                 res["sim"][f[1]] = " ".join(f[2:])
+    # the clock_mux check on every recorded arm (the dump and clock-interaction report of the latest stage it reached)
+    res["check"] = []
+    for part in ("a7", "k26"):
+        for d in sorted((HERE / "runs" / part).glob("*")):
+            st = next((x for x in ("route", "place", "synth") if (d / f"clock_mux_dump_{x}.txt").is_file()), None)
+            if st is None:
+                continue
+            ci = d / f"clock_interaction_{st}.rpt"
+            fs = CM.findings(CM.parse_dump(_read(d / f"clock_mux_dump_{st}.txt")),
+                             parse_clock_pairs(_read(ci)) if ci.is_file() else None)
+            res["check"].append({"arm": d.name, "stage": st, "blocking": sorted({f["code"] for f in fs if f["blocking"]}),
+                                 "advisory": sorted({f["code"] for f in fs if not f["blocking"]}),
+                                 "pass": not any(f["blocking"] for f in fs)})
     a = HERE / "runs" / "analyse" / "analyse.tsv"
     for ln in _read(a).splitlines():
         res["analyse"].append(ln.split("\t"))
     for d in sorted((HERE / "runs" / "quartus").glob("*")):
-        if d.is_dir():
-            q = {}
-            fs = _read(d / "fit_summary.txt")
-            for k in ("Total logic elements", "Logic utilization (in ALMs)", "Total registers", "Global clocks", "Clock control block"):
-                m = re.search(re.escape(k) + r"\s*:\s*(.+)", fs)
-                if m:
-                    q[k] = m.group(1).strip()
-            q["messages"] = _read(d / "messages.txt").splitlines()
-            q["clock_transfers"] = _read(d / "sta_clock_transfers.rpt").count("\n")
-            res["quartus"][d.name] = q
+        if not d.is_dir():
+            continue
+        q: dict = {}
+        fs = _read(d / "fit_summary.txt")
+        for k in ("Total logic elements", "Logic utilization (in ALMs)", "Total registers"):
+            m = re.search(re.escape(k) + r"\s*:\s*(.+)", fs)
+            if m:
+                q[k] = m.group(1).strip()
+        q["clock_mux_warnings"] = [ln for ln in _read(d / "messages.txt").splitlines() if "(19016)" in ln or "(19017)" in ln]
+        q["timing_not_met"] = "(332148)" in _read(d / "messages.txt")
+        m = re.search(r"altclkctrl_\w+:auto_generated\|\s*;\s*(\d+) \(\d+\)\s*;\s*(\d+) \(\d+\)", _read(d / "map_entities.txt"))
+        if m:
+            q["clkctrl_luts"], q["clkctrl_registers"] = int(m.group(1)), int(m.group(2))
+        q["worst_setup_slack"] = {c: float(v) for c, v in re.findall(r"^; (\w+)\s+;\s+(-?[0-9.]+)\s+;\s+-?[0-9.]+\s+;",
+                                                                     _read(d / "sta_summary_setup.rpt"), re.M)}
+        q["transfers"] = {f"{a} -> {b}": n.strip() for a, b, n in re.findall(r"^; (\w+)\s+; (\w+)\s+; ([^;]+);",
+                                                                            _read(d / "sta_clock_transfers.rpt"), re.M)
+                          if a != "From"}
+        res["quartus"][d.name] = q
     (HERE / "measured.json").write_text(json.dumps(res, indent=1, sort_keys=True) + "\n")
     print("wrote", HERE / "measured.json", len(res["vivado"]), "Vivado arms")
     return 0

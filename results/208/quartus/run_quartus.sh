@@ -23,8 +23,10 @@ EOT
   $Q/quartus_sta -t $H/sta.tcl $n "$d" > sta.log 2>&1; echo "sta rc=$?"
   cd "$root"
 }
+ARMS=${ARMS:-all}
 for fam in "Cyclone V:5CEBA4F23C7:cv" "MAX 10:10M50DAF484C7G:m10"; do
   IFS=: read -r F D S <<< "$fam"
+  if [ "$ARMS" = gen ]; then arm ${S}_ctrl_gfoff_gen "$F" $D q_clkctrl $H/q_clkctrl.v '"OFF"' $H/gen.sdc; continue; fi
   arm ${S}_ctrl_gfoff "$F" $D q_clkctrl $H/q_clkctrl.v '"OFF"' $H/base.sdc
   arm ${S}_ctrl_gfoff_groups "$F" $D q_clkctrl $H/q_clkctrl.v '"OFF"' $H/groups.sdc
   arm ${S}_ctrl_gfon "$F" $D q_clkctrl $H/q_clkctrl.v '"ON"' $H/base.sdc

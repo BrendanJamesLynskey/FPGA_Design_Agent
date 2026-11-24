@@ -32,10 +32,11 @@ Rules (codes map to FDA-HDL rule HDL-CLK-03 in flow/hdl_rules.yaml):
     CLKMUX-STOP         (advisory) a mux input comes straight from a device pin (an external clock that can stop) and the
                         buffer has no driven IGNORE pin: if the selected clock stops, the switch never completes (brief
                         208 e2: locked up with the old clock stopped low or high). Use the safe-switch protocol.
-    CLKMUX-CASCADE      (advisory) more than two levels of BUFGCTRL between a clock input and the mux output for a mux of
-                        four inputs or fewer (UG949 ch. 3 "Clock Multiplexing": a balanced two-level tree), or a chain
-                        longer than CASCADE_LIMIT (the dedicated cascade ring: 16 per half on 7 series, 8 per region on
-                        UltraScale; brief 208 d3).
+    CLKMUX-CASCADE      (blocking) a chain of BUFGCTRLs longer than CASCADE_LIMIT, the dedicated cascade ring (UG472: 16 per
+                        device half on 7 series; UG572: 8 on UltraScale): brief 208 d3 measured placement failing (Place
+                        30-120, "Sub-optimal placement for a BUFG-BUFG cascade pair") for a chain of 17 on xc7a35t and of 9
+                        on xck26, while chains of 7 placed. (advisory) more than two levels for a mux of four inputs or
+                        fewer (UG949 ch. 3 "Clock Multiplexing": a balanced two-level tree).
 
 Raw facts only in the messages; the house rule and the fixes live in hdl_rules.yaml and the KB skill.
 """
@@ -48,6 +49,7 @@ from pathlib import Path
 from typing import Any
 
 CASCADE_LIMIT = {"7": 16, "us": 8}
+CONST_REFS = ("VCC", "GND", "-")
 GROUPED = ("Clock Group", "Asynchronous Groups", "Exclusive", "Logically Exclusive", "Physically Exclusive")
 
 
@@ -111,6 +113,8 @@ def _leaves(cell: str, muxes: dict[str, Any], seen: frozenset[str] = frozenset()
         return 0
     n = 0
     for i in muxes[cell]["inputs"]:
+        if i["driver_ref"] in CONST_REFS:
+            continue
         n += _leaves(i["driver"], muxes, seen | {cell}) if i["driver"] in muxes else 1
     return n
 
@@ -131,8 +135,9 @@ def findings(dump: dict[str, Any], pairs: list[dict[str, Any]] | None = None, fa
 
     fed = {i["driver"] for m in muxes.values() for i in m["inputs"]}        # muxes that feed another mux (inner levels)
     for name, m in muxes.items():
-        is_mux = len(m["inputs"]) >= 2
-        if not is_mux:
+        # a BUFGCTRL with one input tied to a constant is a BUFGCE or BUFG preset (7 series retargets BUFGCE to BUFGCTRL with
+        # I1 tied to VCC, measured in brief 208 f1): not a mux
+        if len([i for i in m["inputs"] if i["driver_ref"] not in CONST_REFS]) < 2:
             continue
         outc = m["out_clocks"]
         inc = sorted({c for i in m["inputs"] for c in i["clocks"]})
@@ -178,8 +183,11 @@ def findings(dump: dict[str, Any], pairs: list[dict[str, Any]] | None = None, fa
         if top:
             lv, nl = _levels(name, muxes), _leaves(name, muxes)
             limit = CASCADE_LIMIT.get(family, 16)
-            if (nl <= 4 and lv > 2) or lv > limit:
-                add("CLKMUX-CASCADE", name, f"{lv} BUFGCTRL levels for {nl} inputs (limit {limit} on family {family})", False)
+            if lv > limit:
+                add("CLKMUX-CASCADE", name, f"{lv} BUFGCTRL levels for {nl} inputs: longer than the cascade ring ({limit} on "
+                    f"family {family})", True)
+            elif nl <= 4 and lv > 2:
+                add("CLKMUX-CASCADE", name, f"{lv} BUFGCTRL levels for {nl} inputs (a balanced tree needs 2)", False)
     return out
 
 

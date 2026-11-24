@@ -6,8 +6,14 @@
 set_param general.maxThreads 1
 lassign $argv root outf
 set fh [open $outf w]
-foreach dcp [lsort [glob -nocomplain $root/*/*_bal4/post_route.dcp $root/*/*_bal3/post_route.dcp $root/*/*_chain7/post_route.dcp $root/*/*_chain9/post_route.dcp]] {
-  set name [file tail [file dirname $dcp]]
+proc best_dcp {dir} {
+  # the routed checkpoint if the arm was routed, else the placed one
+  foreach f {post_route.dcp post_place.dcp} { if {[file exists $dir/$f]} { return $dir/$f } }
+  return ""
+}
+foreach dir [lsort [glob -nocomplain -type d $root/*/*_bal4 $root/*/*_bal3 $root/*/*_chain7 $root/*/*_chain9]] {
+  set dcp [best_dcp $dir]; if {$dcp eq ""} continue
+  set name "[file tail $dir]:[file rootname [file tail $dcp]]"
   open_checkpoint $dcp
   foreach b [lsort [get_cells -hier -filter {REF_NAME == BUFGCTRL}]] {
     puts $fh [join [list D_SITE $name $b [get_property LOC $b]] "\t"]
@@ -25,8 +31,9 @@ foreach dcp [lsort [glob -nocomplain $root/*/*_bal4/post_route.dcp $root/*/*_bal
   }
   close_design
 }
-foreach dcp [lsort [glob -nocomplain $root/*/*_pwr_bufgce/post_route.dcp]] {
-  set name [file tail [file dirname $dcp]]
+foreach dir [lsort [glob -nocomplain -type d $root/*/*_pwr_bufgce]] {
+  set dcp [best_dcp $dir]; if {$dcp eq ""} continue
+  set name "[file tail $dir]:[file rootname [file tail $dcp]]"
   open_checkpoint $dcp
   set g [get_nets -of_objects [get_pins -hier -filter {NAME =~ *u_bufgce/O}]]
   set en [get_nets -hier -filter {NAME =~ *en_r}]
