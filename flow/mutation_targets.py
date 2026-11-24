@@ -82,20 +82,57 @@ def pytest_bench(test_id, result_xml: str, swap_env) -> "callable":
 
 
 B96_TESTS = ["same_clocks", "partner_faster", "ordered_sets_and_errors_pass", "lock_loss_discards", "clear_wins_over_a_count"]
+#: the two cases brief 143b left out (partner_slower: 700 frames at -400 ppm; minimum_gap_partner_faster: 5000 frames, one idle between frames, +300 ppm); brief 152 runs them
+B96_LONG_TESTS = ["partner_slower", "minimum_gap_partner_faster"]
+#: the cases brief 152 added after the survivors of its first run: a pause right after a frame-start block (the buffer is empty when the reader must stall inside a frame), and a write side
+#: that outruns a reader held in reset (the buffer fills and the full flag must work)
+B96_DIRECTED_TESTS = ["pause_right_after_a_frame_start", "writer_outruns_a_reader_held_in_reset"]
+#: $FDA_B96_CASES picks the cases one run of the bench executes: ``reduced`` (143b's five), ``long`` (the two left out), ``directed`` (brief 152's), ``full`` (all nine =
+#: test_rate_match_gp_cocotb), or a comma list of case names
+B96_CASE_SETS = {"reduced": B96_TESTS, "long": B96_LONG_TESTS, "directed": B96_DIRECTED_TESTS, "full": B96_TESTS + B96_LONG_TESTS + B96_DIRECTED_TESTS}
+
+
+def b96_cases() -> list[str]:
+    v = os.environ.get("FDA_B96_CASES", "reduced")
+    return B96_CASE_SETS.get(v) or [c for c in v.split(",") if c]
 
 
 def _b96_run(mdir: Path) -> None:
-    """The bench of test_rate_match_gp_cocotb (same sources, parameters and Python twin) with the two 5000-frame/400 ppm cases left out
-    (partner_slower, minimum_gap_partner_faster): the full bench takes over 40 minutes a run, too long for a sweep. Run inside the swap environment."""
+    """The bench of test_rate_match_gp_cocotb (same sources, parameters and Python twin): the cases named by $FDA_B96_CASES (default ``reduced``: the two longest,
+    partner_slower and minimum_gap_partner_faster, left out, as in brief 143b). Run inside the swap environment."""
     from flow import cocotb_run
     D = ROOT / "designs" / "b96_kr260_10g"
     srcs = [D / "rtl" / "rate_match.sv", D / "rtl" / "rate_match_gp.sv", D / "sim" / "tb_rate_match.sv"]
-    cocotb_run.run("b96_rate_match_gp", "tb_rate_match", srcs, "ratematch_cocotb", D / "tests", parameters={"IMPL": 1, "HI": 1}, testcase=[rf"\.{t}$" for t in B96_TESTS],
+    cocotb_run.run("b96_rate_match_gp", "tb_rate_match", srcs, "ratematch_cocotb", D / "tests", parameters={"IMPL": 1, "HI": 1}, testcase=[rf"\.{t}$" for t in b96_cases()],
                    extra_env={"PYTHONPATH": str(ROOT), "B96_RM_IMPL": "gp", "B96_RM_HI": "1"})
 
 
 def _b96_swap(d: Path) -> dict:
     return {"FDA_MUTANT_ORIG": str((ROOT / "designs/b96_kr260_10g/rtl").resolve()), "FDA_MUTANT_DIR": str(d.resolve())}
+
+
+def _b96_staged() -> tuple["callable", "callable", dict]:
+    """Brief 152: the whole of test_rate_match_gp_cocotb as three runs. Stage ``reduced`` runs 143b's five cases; a mutant that survives them is then run on the two long cases
+    (partner_slower, minimum_gap_partner_faster) and on brief 152's two directed cases, each set in its own run. A mutant is killed when any case fails, so this is the same verdict as
+    the nine cases in one run, at the cost of the long cases only for the survivors; and it records which cases killed it. Returns (bench, stage_of, stage_benches): stage_of(dir) is
+    ``reduced``, ``long``, ``directed``, ``long+directed``, or ``none`` (survived every case)."""
+    stages: dict[str, str] = {}
+    one = {k: pytest_bench([python(), "-m", "flow.mutation_targets", "b96-bench"], "b96_rate_match_gp/results.xml", lambda d, k=k: _b96_swap(d) | {"FDA_B96_CASES": k})
+           for k in ("reduced", "long", "directed")}
+
+    def bench(d: Path, timeout_s: float) -> str:
+        st = one["reduced"](d, timeout_s)
+        if st != "pass":
+            stages[d.name] = "reduced"
+            return st
+        res = {k: one[k](d, timeout_s) for k in ("directed", "long")}
+        killers = [k for k in ("long", "directed") if res[k] == "fail"]
+        stages[d.name] = "+".join(killers) or "none"
+        for bad in ("fail", "invalid", "timeout"):
+            if bad in res.values():
+                return bad
+        return "pass"
+    return bench, lambda d: stages.get(Path(d).name, ""), one
 
 
 def _b119_swap(d: Path) -> dict:
@@ -215,10 +252,12 @@ def _arith_target(fn: str, top: str, text: str) -> dict:
 
 def _b96() -> dict:
     D = ROOT / "designs" / "b96_kr260_10g"
+    bench, stage_of, stage_benches = _b96_staged()
     return {"name": "b96_rate_match_gp", "design": "designs/b96_kr260_10g", "what": "the receive elastic buffer rate_match_gp (own gray-pointer FIFO, two clock domains)",
             "rtl_dir": D / "rtl", "rtl_dir_rel": "designs/b96_kr260_10g/rtl", "rtl_files": ["rate_match_gp.sv"], "copy_files": ["rate_match_gp.sv"],
-            "bench": pytest_bench([python(), "-m", "flow.mutation_targets", "b96-bench"], "b96_rate_match_gp/results.xml", _b96_swap),
-            "bench_text": f"test_rate_match_gp_cocotb's bench without its two longest cases: {', '.join(B96_TESTS)} (cocotb + Icarus, output for output against the Python twin, frame checks, 300 frames at 0 and +400 ppm)",
+            "bench": bench, "stage_of": stage_of, "stage_benches": stage_benches,
+            "bench_text": (f"every case of test_rate_match_gp_cocotb (cocotb + Icarus, output for output against the Python twin, frame checks), run in two stages: {', '.join(B96_TESTS)}; "
+                           f"then, for a mutant that survives those, {', '.join(B96_LONG_TESTS)} and (added by brief 152) {', '.join(B96_DIRECTED_TESTS)}"),
             "top": "rate_match_gp", "clocks": ["wclk", "rclk"], "reset": None, "assume": [], "qualifiers": {},
             "extra_sources": [str(D / "verif/formal/xpm_formal.sv")], "compared_text": "every output of the block, at every step (both clocks free)",
             "formal_bench": b96_formal_bench,
