@@ -119,6 +119,28 @@ def test_clk_01_clock_mux_brief_208(tmp_path):
     assert "STD-ARCH-00" in failing(bad_decl)
 
 
+def test_clk_01_clock_mux_review_cases(tmp_path):
+    """Review fixes: positional connections are refused; a declaration names the module when given; declared inputs must
+    match the connected clocks; '0 and 1'sb0 are constants; a malformed inputs list is a schema error, not a crash."""
+    pos = MUX_RTL.replace("BUFGMUX_CTRL u_mux (.I0(clk0), .I1(clk1), .S(sel_r), .O(clkm));",
+                          "BUFGMUX_CTRL u_mux (clkm, clk0, clk1, sel_r);")
+    res = run(tmp_path / "p", pos, {**MUX_ARCH, "clock_muxes": [MUX_DECL]})
+    assert any("by position" in f["message"] for f in res["STD-CLK-01"]["findings"])
+    other_mod = run(tmp_path / "o", MUX_RTL, {**MUX_ARCH, "clock_muxes": [{**MUX_DECL, "module": "elsewhere"}]})
+    assert "STD-CLK-01" in failing(other_mod)
+    same_mod = run(tmp_path / "s", MUX_RTL, {**MUX_ARCH, "clock_muxes": [{**MUX_DECL, "module": "m"}]})
+    assert "STD-CLK-01" not in failing(same_mod)
+    wrong_in = run(tmp_path / "i", MUX_RTL, {**MUX_ARCH, "clock_muxes": [{**MUX_DECL, "inputs": ["a", "m"]}]})
+    assert any("not the declared input" in f["message"] for f in wrong_in["STD-CLK-01"]["findings"])
+    for k, tie in enumerate(("'0", "1'sb0")):
+        buf = MUX_RTL.replace("BUFGMUX_CTRL u_mux (.I0(clk0), .I1(clk1), .S(sel_r), .O(clkm));",
+                              f"BUFGCTRL u_mux (.I0(clk0), .I1({tie}), .S0(1'b1), .S1(1'b0), .CE0(1'b1), .CE1(1'b0), "
+                              ".IGNORE0(1'b0), .IGNORE1(1'b0), .O(clkm));")
+        assert not [f for f in run(tmp_path / f"c{k}", buf, MUX_ARCH)["STD-CLK-01"]["findings"] if "u_mux" in f["message"]]
+    bad = run(tmp_path / "b", MUX_RTL, {**MUX_ARCH, "clock_muxes": [{**MUX_DECL, "inputs": [["a"], "b"]}]})
+    assert "STD-ARCH-00" in failing(bad)
+
+
 def test_clk_01_bufgctrl_as_buffer_needs_no_declaration(tmp_path):
     rtl = MUX_RTL.replace("BUFGMUX_CTRL u_mux (.I0(clk0), .I1(clk1), .S(sel_r), .O(clkm));",
                           "BUFGCTRL u_mux (.I0(clk0), .I1(1'b0), .S0(1'b1), .S1(1'b0), .CE0(1'b1), .CE1(1'b0), "
