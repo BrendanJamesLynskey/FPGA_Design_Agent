@@ -107,6 +107,11 @@ endmodule
     assert "STD-RST-01" not in failing(ok)
 
 
+def init_blocks(out):
+    """Whether STD-INIT-01 itself fails the check (another rule can be not_run where Verilator or Yosys is missing)."""
+    return any(r["id"] == "STD-INIT-01" and r["status"] in ("fail", "not_run") for r in out["rules"])
+
+
 def warning_rules(res):
     return {k for k, v in res.items() if v["status"] == "warn"}
 
@@ -169,7 +174,8 @@ def test_init_01_warn_reports_without_failing(tmp_path):
         out = sc.evaluate(d, tmp_path / str(i), stages=("rtl",))
         r = {x["id"]: x for x in out["rules"]}["STD-INIT-01"]
         assert r["status"] == "warn" and r["findings"] == [] and r["warnings"], i
-        assert out["pass"] and out["stages"]["rtl"]
+        assert not init_blocks(out)
+        assert out["pass"] == all(r["status"] in ("pass", "warn", "review_only", "skipped") for r in out["rules"])
     assert "STD-INIT-01" not in warning_rules(run(tmp_path / "r", ROM, WARN))
     assert run(tmp_path / "c", CLEAN, WARN)["STD-INIT-01"]["status"] == "pass"
 
@@ -187,15 +193,15 @@ def test_init_01_local_variables_are_not_register_initial_values(tmp_path):
 def test_init_01_the_run_setting_beats_the_design_and_the_flow_default(tmp_path):
     d = make(tmp_path, INIT_Q, DENY)
     out = sc.evaluate(d, tmp_path, stages=("rtl",), settings={"rtl.initial_values": "allow"})
-    assert out["pass"] and out["settings"]["source"]["rtl.initial_values"] == "--set"
+    assert not init_blocks(out) and out["settings"]["source"]["rtl.initial_values"] == "--set"
     out = sc.evaluate(d, tmp_path, stages=("rtl",))
-    assert not out["pass"] and out["settings"]["source"]["rtl.initial_values"] == "architecture.yaml"
+    assert init_blocks(out) and not out["pass"] and out["settings"]["source"]["rtl.initial_values"] == "architecture.yaml"
     flow = tmp_path / "flow"
     flow.mkdir()
     (flow / "gates.yaml").write_text("rtl:\n  initial_values: deny\n")
     d2 = make(tmp_path / "g", INIT_Q)
     out = sc.evaluate(d2, tmp_path, stages=("rtl",))
-    assert not out["pass"] and out["settings"]["source"]["rtl.initial_values"] == "flow/gates.yaml"
+    assert init_blocks(out) and not out["pass"] and out["settings"]["source"]["rtl.initial_values"] == "flow/gates.yaml"
 
 
 def test_init_01_an_unknown_value_is_refused(tmp_path):
@@ -209,14 +215,16 @@ def test_init_01_an_unknown_value_is_refused(tmp_path):
 
 def test_init_01_cli_set(tmp_path, capsys):
     d = make(tmp_path, INIT_Q, DENY)
-    assert sc.main([str(d), "--stage", "rtl", "--root", str(tmp_path), "--set", "rtl.initial_values=allow"]) == 0
-    assert "rtl.initial_values" not in capsys.readouterr().err
+    sc.main([str(d), "--stage", "rtl", "--root", str(tmp_path), "--set", "rtl.initial_values=allow"])
+    assert "FAIL    STD-INIT-01" not in capsys.readouterr().out
     assert sc.main([str(d), "--stage", "rtl", "--root", str(tmp_path)]) == 1
+    assert "FAIL    STD-INIT-01" in capsys.readouterr().out
     with pytest.raises(SystemExit):
         sc.main([str(d), "--set", "rtl.initial_values=bogus"])
     d2 = make(tmp_path / "w", INIT_Q, WARN)
-    assert sc.main([str(d2), "--stage", "rtl", "--root", str(tmp_path / "w")]) == 0
-    assert "warn" in capsys.readouterr().out
+    sc.main([str(d2), "--stage", "rtl", "--root", str(tmp_path / "w")])
+    out = capsys.readouterr().out
+    assert "warn    STD-INIT-01" in out and "FAIL    STD-INIT-01" not in out
 
 
 def test_init_01_the_reset_rules_do_not_change(tmp_path):
