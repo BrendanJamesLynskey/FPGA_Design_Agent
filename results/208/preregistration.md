@@ -102,3 +102,9 @@ post, unverified).
 | q1 | Cyclone V (5CEBA4F23C7) and MAX 10 (10M50DAF484C7G): `altclkctrl`, 2 inputs, glitch-free OFF, `clkselect` from a register | E-q1: fits; no logic added on the select path besides the clock control block; Timing Analyzer shows both clocks on the fanout and times them against each other until `set_clock_groups -exclusive` is added. |
 | q2 | as q1, glitch-free ON | E-q2: the generated clearbox adds registers (a per-clock enable handshake) between `clkselect` and the block: the logic count rises by a few registers. |
 | q3 | RTL `assign clkm = sel ? clk1 : clk0;` | E-q3: Quartus places the mux in a LUT, promotes its output to a global clock, and warns; the Timing Analyzer's `report_clocks` shows both clocks propagate; Design Assistant (if it runs on the device) flags C101/C105 or similar: **uncertain**. |
+
+## Planner direction, 2026-11-24 (recorded at pause)
+
+Stay paused until the planner sends "go" (load under 6). On resume: experiments first, then the check. STD-CLK-01
+(`flow/standards_check.py`, owned by brief 205): build on branch `b205-initial-values` (or on main if 205 has merged)
+to give a declared clock mux an allowed path, and say so in the PR.
