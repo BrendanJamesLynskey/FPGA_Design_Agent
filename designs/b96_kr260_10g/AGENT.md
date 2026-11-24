@@ -99,7 +99,7 @@ designs/b96_kr260_10g/model/loop_timing.py a2d1bf6428: Python model of the loop-
 designs/b96_kr260_10g/regmap.py 020260c536: register map as data
 designs/b96_kr260_10g/docs/register_map.md d2846103ad: interface datasheet
 designs/b96_kr260_10g/rm_gp_itch/rtl/udp_strip.sv 18ecd60fab: adapter from mac64_rx to the Mold receiver (build rm_gp_itch, brief 127): header checks, strip with a 2-byte realign, FCS verdict as a late strobe, capture ring
-designs/b96_kr260_10g/rm_gp_itch/rtl/itch_top.sv aaf47540c5: brief 110's mold_rx, itch_dec, book_core, risk_glue (unchanged) with the late verdict and the segment builder (brief 127)
+designs/b96_kr260_10g/rm_gp_itch/rtl/itch_top.sv 5be8de2fca: brief 110's mold_rx, itch_dec, book_core, risk_glue (unchanged) with the late verdict and the segment builder (brief 127)
 designs/b96_kr260_10g/rm_gp_itch/rtl/order_seg.sv 473fe555c6: the order frame as a 113-byte Ethernet/IPv4/TCP stream, the stand-in for brief 119's tcp_fast (brief 127)
 designs/b96_kr260_10g/rm_gp_itch/rtl/order_seg_tcpfast.sv 30fc090de0: the same module with tcp_fast in place of the stand-in: the hook, not in the build (brief 127)
 designs/b96_kr260_10g/rm_gp_itch/rtl/tx_mux.sv 60060254bf: transmit multiplexer in front of mac64_tx: frame source, replay memory, order stream with FIFO and head register (brief 127)

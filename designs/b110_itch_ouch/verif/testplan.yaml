@@ -10,13 +10,13 @@
 schema: fpga-design-agent/testplan/v1
 design: b110_itch_ouch
 notes: >-
-  Simulation only (xsim 2026.1, UVM 1.2; Icarus is not used by this bench). One recorded regression (results/188_trading_safety/uvm/summary.json) and one mutation record
+  Simulation only (xsim 2026.1, UVM 1.2; Icarus is not used by this bench). One recorded regression (results/191_trading_variants/uvm/summary.json) and one mutation record
   (results/170_itch_uvm/mutation_seed*.json). No board, no real feed, every message synthetic.
 
 x-rtl: &rtl [designs/b110_itch_ouch/rtl/mold_rx.sv, designs/b110_itch_ouch/rtl/itch_dec.sv, designs/b110_itch_ouch/rtl/book_core.sv, designs/b110_itch_ouch/rtl/risk_glue.sv,
   designs/b110_itch_ouch/rtl/ouch_enter.sv, designs/b96_kr260_10g/rm_gp_itch/rtl/udp_strip.sv, designs/b96_kr260_10g/rm_gp_itch/rtl/order_seg.sv, designs/b96_kr260_10g/rm_gp_itch/rtl/itch_top.sv,
   designs/b96_kr260_10g/rm_gp_itch/rtl/itch_path.sv, designs/b96_kr260_10g/rm_gp_itch/rtl/tx_mux.sv]
-x-rec: &rec {file: results/188_trading_safety/uvm/summary.json, reader: json}
+x-rec: &rec {file: results/191_trading_variants/uvm/summary.json, reader: json}
 
 requirements:
   - id: B110-F-ORDER-BYTES
@@ -104,6 +104,24 @@ requirements:
     text: The risk limits are staged; a write fills a holding register and the live set changes only on COMMIT, in one clock, so the core never runs on a mix of old and new limits (brief 188, whole core in xsim).
     source: designs/b96_kr260_10g/rm_gp_itch/docs/itch_integration.md#5-registers-and-what-a-user-could-guess-wrong
     spec_status: draft
+  - id: B110-F-PARSE-INPLACE
+    kind: functional
+    title: Parsing a message where it lies gives the same events as shifting it to byte 0 first, for every message type in every start lane
+    text: With PARSE_INPLACE 1 the decoder, built from eight copies with the start byte fixed, gives the events, counters and latency of the shifting decoder; each of the nine decoded types, a skipped type, a wrong length, a bad side and a zero share count are exercised in each of the eight byte lanes a message can start in (brief 191).
+    source: designs/b110_itch_ouch/docs/itch_ouch.md#4-parameters
+    spec_status: draft
+  - id: B110-F-REJECT-BITS
+    kind: functional
+    title: Each pre-trade check sets its own reject bit, and accept and reject take the same number of clocks
+    text: The checks are evaluated side by side; vd_rej shows every failing check (all of them, not only the first), and the verdict record vd_v comes the same number of clocks after the last byte of the candidate for an accept, each single reject and several rejects, with and without speculation (brief 191).
+    source: designs/b110_itch_ouch/docs/itch_ouch.md#15-per-check-reject-bits-brief-191
+    spec_status: draft
+  - id: B110-F-FEED-ARB
+    kind: functional
+    title: The A/B feed arbiter gives the parser one clean sequence from two feeds, first copy wins, the other feed fills a gap
+    text: With DUAL_FEED 1 and both feeds complete the parser sees each packet once; a packet lost on one feed is filled from the other (when its header is in before the next packet's); a packet lost on both is a real gap; heartbeats, another session, runts, overlap and bad frames are handled as the datasheet states; the arbiter adds a fixed 4 clocks (brief 191).
+    source: designs/b110_itch_ouch/docs/feed_arb.md
+    spec_status: draft
 
 verification:
   - id: V-UVM-ORDERS
@@ -190,9 +208,8 @@ verification:
   - id: V-FORMAL-BOOK-QTY
     requirements: [B110-S-QTY]
     method: formal
-    title: SymbiYosys bounded proof (BMC from reset, depth 12) of the book's quantity invariants Q1-Q6 and the cover that saturation is reachable; no k-induction
-    evidence: {file: results/188_trading_safety/pytest_junit.xml, reader: junit, tests: ["test_b110_formal::*"]}
-    bounded: {depth: 12}
+    title: SymbiYosys proof of the book's quantity invariants Q1-Q6 by k-induction (depth 1, with two strengthening invariants over every ladder level and order-table entry; brief 191) at N_INST 2 LEVELS 4 and 8 (a power of two instruments), BMC from reset to depth 12, and the cover that saturation is reachable; a non-power-of-two instrument count is BMC only
+    evidence: {file: results/191_trading_variants/pytest_junit.xml, reader: junit, tests: ["test_b110_formal::*"]}
     checks: [designs/b110_itch_ouch/rtl/book_core.sv, designs/b110_itch_ouch/verif/formal/book_props.sv]
   - id: V-SIM-QTY
     requirements: [B110-S-QTY]
@@ -219,3 +236,22 @@ verification:
     evidence: {file: results/188_trading_safety/staged_limits_sim.json, reader: json}
     pass_when: [{field: orders_b_uncommitted, op: eq, value: 4}, {field: orders_c_committed, op: eq, value: 1}, {field: rej_pos_b, op: eq, value: 0}, {field: rej_pos_c, op: eq, value: 3}]
     checks: [designs/b96_kr260_10g/rm_gp_itch/rtl/b96_core.sv, designs/b96_kr260_10g/rm_gp_itch/rtl/itch_path.sv]
+  # ---- brief 191 (written by the RTL's own brief: directed tests, not independent) ------------------------------------------------
+  - id: V-SIM-PARSE-INPLACE
+    requirements: [B110-F-PARSE-INPLACE]
+    method: sim_test
+    title: Whole bench with the in-place decoder against the model, every type in every start lane (lane_by_type, both decoders), and the lane bins read where the messages lie
+    evidence: {file: results/191_trading_variants/pytest_junit.xml, reader: junit, tests: ["test_b110_rtl::test_parse_inplace", "test_b110_rtl::test_lane_by_type"]}
+    checks: [designs/b110_itch_ouch/rtl/itch_dec.sv, designs/b110_itch_ouch/rtl/mold_rx.sv]
+  - id: V-SIM-REJECT-BITS
+    requirements: [B110-F-REJECT-BITS]
+    method: sim_test
+    title: Reject bits against the model's independent evaluation and verdict latency equal for every outcome, with and without speculation (reject_bits)
+    evidence: {file: results/191_trading_variants/pytest_junit.xml, reader: junit, tests: ["test_b110_rtl::test_reject_bits"]}
+    checks: [designs/b110_itch_ouch/rtl/risk_glue.sv]
+  - id: V-SIM-FEED-ARB
+    requirements: [B110-F-FEED-ARB]
+    method: sim_test
+    title: The A/B arbiter against the single-feed model in twelve tests (skews, losses, both-lost, fill window, heartbeats, bad frame, session, overlap, runts, bursts, interleave, deep skew, random, latency)
+    evidence: {file: results/191_trading_variants/pytest_junit.xml, reader: junit, tests: ["test_b110_rtl::test_dual_feed"]}
+    checks: [designs/b110_itch_ouch/rtl/feed_arb.sv, designs/b110_itch_ouch/rtl/feed_arb_in.sv, designs/b110_itch_ouch/rtl/itch_ouch_top.sv]

@@ -75,7 +75,7 @@ module itch_ouch_tcp_top
         .clk, .rst, .clr_cnt, .clr_pos, .clr_ref, .cfg_watch, .cfg_arm, .cfg_kill, .cfg_spec, .cfg_qty, .cfg_max_qty, .cfg_max_pos, .cfg_band, .cfg_px_off,
         .cfg_holdoff(16'd0), .cfg_ref_sw(1'b0), .cfg_ref_px(32'd0), .cfg_ref_age(32'd0), .ref_load(1'b0), .cfg_max_notional(64'd0), .cfg_nt_shift(5'd0), .cfg_nt_tbl('0),
         .spec_start, .spec_inst, .spec_px, .spec_fail, .tu_v, .tu_inst, .tu_cpx, .tu_cand, .tu_spec, .tu_gapblk, .tu_inx, .nt_px, .tob_px, .tob_ok, .book_ready,
-        .spec_allow, .go, .go_spec, .f_sym, .f_px, .f_qty, .f_ref, .commit, .abort, .b_busy, .b_late, .cnt(cnt_r));
+        .spec_allow, .go, .go_spec, .f_sym, .f_px, .f_qty, .f_ref, .commit, .abort, .b_busy, .b_late, .vd_v(), .vd_pass(), .vd_rej(), .rej_seen(), .cnt(cnt_r));
     logic [15:0] rec_len, rec_id;
     logic [511:0] rec_pay;
     tcp_fast u_tcp (.clk, .rst, .go, .go_spec, .f_sym, .f_px, .f_qty, .f_ref, .commit, .abort, .tx_unsent(1'b0), .tx_drop(1'b0), .cfg_tif, .cfg_display, .cfg_capacity, .cfg_ise, .cfg_cross,

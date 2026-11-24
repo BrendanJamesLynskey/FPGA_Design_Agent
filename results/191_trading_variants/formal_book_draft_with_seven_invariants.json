@@ -1,0 +1,241 @@
+{
+  "tool": "SymbiYosys with yosys-slang, OSS CAD Suite 2026-11-12, engine smtbmc yices",
+  "properties": "Q1-Q6 and invariants N1-N7 (verif/formal/book_props.sv)",
+  "jobs": [
+    {
+      "name": "bmc_2_4_2",
+      "task": "bmc",
+      "instance": {
+        "N_INST": 2,
+        "LEVELS": 4,
+        "ORD_AW": 2
+      },
+      "verdict": "PASS",
+      "proof": "bounded",
+      "failed_assertions": [],
+      "seconds": 43.5
+    },
+    {
+      "name": "prove_2_4_2",
+      "task": "prove",
+      "instance": {
+        "N_INST": 2,
+        "LEVELS": 4,
+        "ORD_AW": 2
+      },
+      "verdict": "PASS",
+      "proof": "k-induction",
+      "failed_assertions": [],
+      "seconds": 2.1
+    },
+    {
+      "name": "cover_2_4_2",
+      "task": "cover",
+      "instance": {
+        "N_INST": 2,
+        "LEVELS": 4,
+        "ORD_AW": 2
+      },
+      "verdict": "PASS",
+      "proof": "",
+      "failed_assertions": [],
+      "seconds": 13.4
+    },
+    {
+      "name": "ablate_n1",
+      "task": "prove",
+      "instance": {
+        "N_INST": 2,
+        "LEVELS": 4,
+        "ORD_AW": 2
+      },
+      "verdict": "PASS",
+      "proof": "k-induction",
+      "failed_assertions": [],
+      "seconds": 2.2,
+      "ablated": "n1",
+      "expect": "FAIL (the invariant is needed for the induction step)"
+    },
+    {
+      "name": "ablate_n2",
+      "task": "prove",
+      "instance": {
+        "N_INST": 2,
+        "LEVELS": 4,
+        "ORD_AW": 2
+      },
+      "verdict": "UNKNOWN",
+      "proof": "",
+      "failed_assertions": [
+        "n3_no_zero_live"
+      ],
+      "seconds": 2.0,
+      "ablated": "n2",
+      "expect": "FAIL (the invariant is needed for the induction step)"
+    },
+    {
+      "name": "ablate_n3",
+      "task": "prove",
+      "instance": {
+        "N_INST": 2,
+        "LEVELS": 4,
+        "ORD_AW": 2
+      },
+      "verdict": "UNKNOWN",
+      "proof": "",
+      "failed_assertions": [
+        "q5_levels_never_zero_live"
+      ],
+      "seconds": 3.1,
+      "ablated": "n3",
+      "expect": "FAIL (the invariant is needed for the induction step)"
+    },
+    {
+      "name": "ablate_n4",
+      "task": "prove",
+      "instance": {
+        "N_INST": 2,
+        "LEVELS": 4,
+        "ORD_AW": 2
+      },
+      "verdict": "UNKNOWN",
+      "proof": "",
+      "failed_assertions": [
+        "n6_read_entry"
+      ],
+      "seconds": 3.1,
+      "ablated": "n4",
+      "expect": "FAIL (the invariant is needed for the induction step)"
+    },
+    {
+      "name": "ablate_n5",
+      "task": "prove",
+      "instance": {
+        "N_INST": 2,
+        "LEVELS": 4,
+        "ORD_AW": 2
+      },
+      "verdict": "PASS",
+      "proof": "k-induction",
+      "failed_assertions": [],
+      "seconds": 3.9,
+      "ablated": "n5",
+      "expect": "FAIL (the invariant is needed for the induction step)"
+    },
+    {
+      "name": "ablate_n6",
+      "task": "prove",
+      "instance": {
+        "N_INST": 2,
+        "LEVELS": 4,
+        "ORD_AW": 2
+      },
+      "verdict": "PASS",
+      "proof": "k-induction",
+      "failed_assertions": [],
+      "seconds": 3.5,
+      "ablated": "n6",
+      "expect": "FAIL (the invariant is needed for the induction step)"
+    },
+    {
+      "name": "ablate_n7",
+      "task": "prove",
+      "instance": {
+        "N_INST": 2,
+        "LEVELS": 4,
+        "ORD_AW": 2
+      },
+      "verdict": "PASS",
+      "proof": "k-induction",
+      "failed_assertions": [],
+      "seconds": 3.2,
+      "ablated": "n7",
+      "expect": "FAIL (the invariant is needed for the induction step)"
+    },
+    {
+      "name": "fault_sat_off",
+      "task": "prove",
+      "instance": {
+        "N_INST": 2,
+        "LEVELS": 4,
+        "ORD_AW": 2
+      },
+      "verdict": "UNKNOWN",
+      "proof": "",
+      "failed_assertions": [
+        "q2_no_wrap"
+      ],
+      "seconds": 3.3,
+      "fault": "sat_off",
+      "why": "a level size wraps instead of saturating"
+    },
+    {
+      "name": "fault_zero_add_allowed",
+      "task": "prove",
+      "instance": {
+        "N_INST": 2,
+        "LEVELS": 4,
+        "ORD_AW": 2
+      },
+      "verdict": "UNKNOWN",
+      "proof": "",
+      "failed_assertions": [
+        "q4_no_zero_entry"
+      ],
+      "seconds": 3.0,
+      "fault": "zero_add_allowed",
+      "why": "an Add of zero shares is entered as a live order of no size"
+    },
+    {
+      "name": "fault_sub_equal_keeps_level",
+      "task": "prove",
+      "instance": {
+        "N_INST": 2,
+        "LEVELS": 4,
+        "ORD_AW": 2
+      },
+      "verdict": "UNKNOWN",
+      "proof": "",
+      "failed_assertions": [
+        "q1_no_zero_level"
+      ],
+      "seconds": 3.2,
+      "fault": "sub_equal_keeps_level",
+      "why": "a reduce that empties a level leaves it live with no size"
+    },
+    {
+      "name": "fault_reduce_equal_keeps_order",
+      "task": "prove",
+      "instance": {
+        "N_INST": 2,
+        "LEVELS": 4,
+        "ORD_AW": 2
+      },
+      "verdict": "UNKNOWN",
+      "proof": "",
+      "failed_assertions": [
+        "q4_no_zero_entry"
+      ],
+      "seconds": 3.1,
+      "fault": "reduce_equal_keeps_order",
+      "why": "a reduce of the whole remaining size leaves the order live with no size"
+    },
+    {
+      "name": "fault_sweep_one_short",
+      "task": "prove",
+      "instance": {
+        "N_INST": 2,
+        "LEVELS": 4,
+        "ORD_AW": 2
+      },
+      "verdict": "UNKNOWN",
+      "proof": "",
+      "failed_assertions": [
+        "n3_no_zero_live"
+      ],
+      "seconds": 3.5,
+      "fault": "sweep_one_short",
+      "why": "the clearing sweep ends one entry early"
+    }
+  ]
+}

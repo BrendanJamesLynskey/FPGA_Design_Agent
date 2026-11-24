@@ -490,4 +490,26 @@ module book_core #(
             end
         end
     end
+`ifdef FORMAL_BOOK
+    // ------------------------------------------------------------------ formal only (brief 191): whole-memory views for the k-induction invariants in verif/formal/book_props.sv.
+    // Not defined in any build; the memories themselves are not changed.
+    logic [LEVELS-1:0] fv_lv_zero_live, fv_lv_unswept;
+    for (genvar l = 0; l < LEVELS; l++) begin : g_fv
+        always_comb begin
+            fv_lv_zero_live[l] = 1'b0; fv_lv_unswept[l] = 1'b0;
+            for (int g = 0; g < NG; g++) begin
+                if (g_lv[l].lm[g][64] && g_lv[l].lm[g][31:0] == 32'd0) fv_lv_zero_live[l] = 1'b1;       // a live level of no size
+                if ((ORD_AW + 1)'(g) < sw_cnt && g_lv[l].lm[g] != '0) fv_lv_unswept[l] = 1'b1;           // a group the sweep has passed that is not zero
+            end
+        end
+    end
+    logic fv_ord_zero_live, fv_ord_unswept;
+    always_comb begin
+        fv_ord_zero_live = 1'b0; fv_ord_unswept = 1'b0;
+        for (int i = 0; i < ORD_N; i++) begin
+            if (mem[i][EW-1] && mem[i][31:0] == 32'd0) fv_ord_zero_live = 1'b1;                         // a live order of no remaining size
+            if ((ORD_AW + 1)'(i) < sw_cnt && mem[i] != '0) fv_ord_unswept = 1'b1;
+        end
+    end
+`endif
 endmodule
