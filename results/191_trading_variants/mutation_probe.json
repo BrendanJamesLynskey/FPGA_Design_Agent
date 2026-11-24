@@ -1,0 +1,70 @@
+{
+  "mutants": 12,
+  "valid": 12,
+  "killed": 12,
+  "survived": [],
+  "invalid": [],
+  "results": [
+    {
+      "name": "cnt_one_late",
+      "why": "a read of CNT returns the clock after the request was accepted",
+      "status": "killed"
+    },
+    {
+      "name": "wr_ts_one_late",
+      "why": "the write stamp is one clock late",
+      "status": "killed"
+    },
+    {
+      "name": "log_uses_old_stamp",
+      "why": "TRIG logs the stamp of the write before it",
+      "status": "killed"
+    },
+    {
+      "name": "partial_strobe_ok",
+      "why": "a write with a partial strobe takes effect",
+      "status": "killed"
+    },
+    {
+      "name": "log_overwrites",
+      "why": "a full log wraps and overwrites its first entry",
+      "status": "killed"
+    },
+    {
+      "name": "bad_read_not_counted",
+      "why": "a bad read is answered SLVERR but not counted",
+      "status": "killed"
+    },
+    {
+      "name": "w_first_loses_data",
+      "why": "when W comes before AW the data is taken from the idle W bus",
+      "status": "killed"
+    },
+    {
+      "name": "bid_not_echoed",
+      "why": "the write response carries no id",
+      "status": "killed"
+    },
+    {
+      "name": "rid_not_echoed",
+      "why": "the read response carries no id",
+      "status": "killed"
+    },
+    {
+      "name": "clear_keeps_count",
+      "why": "CTRL.CLEAR leaves the write count",
+      "status": "killed"
+    },
+    {
+      "name": "unmapped_write_ok",
+      "why": "a write to an unmapped address is answered OKAY and not counted",
+      "status": "killed"
+    },
+    {
+      "name": "scratch_ignored",
+      "why": "SCRATCH keeps its old value",
+      "status": "killed"
+    }
+  ],
+  "score_pct": 100.0
+}

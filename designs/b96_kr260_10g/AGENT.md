@@ -2,14 +2,14 @@
 source: designs/b96_kr260_10g/handover.yaml; human view: README.md; refresh: python -m flow.handover fresh designs/b96_kr260_10g
 
 ## identity
-kind=example produced_by=human part=xck26-sfvc784-2LV-c board=Kria KR260 top=kr260_10g_top tool=Vivado 2026.1
+kind=example produced_by=session part=xck26-sfvc784-2LV-c board=Kria KR260 top=kr260_10g_top tool=Vivado 2026.1
 
 ## summary
 A Kria KR260 design that carries our own 10GBASE-R PCS (64B/66B, scrambler, gearbox, block lock) and a 64-bit Ethernet MAC on one GTH lane at 10.3125 Gb/s, with the mock trading path of brief 58A behind it (a one-rule 64-bit decision in the same message format), because the AMD 10G Ethernet core is refused on the free Basic licence. Verified against an independent Python reference in simulation (the GT is a behavioural stand-in) and built to a bitstream on Vivado 2026.1 Basic with every flow gate passing in two variants. Brief 96C added a rate-matching elastic buffer as a build option (default off, the board-proven 97C receive path); the base and its rate-matched variants have run on a KR260 optical loopback, not yet against a network card or a second reference clock.
 not: an interoperability proof: a PCS talking to itself accepts its own symmetric mistakes, only a network card proves it; the full 58A trading core (book, rule table, interlocks, ARP) at 64 bits: trade64 is a small stand-in with one rule; the reconciliation sublayer link-fault state machine, the BER monitor, an ARP or ICMP responder
 
 ## state
-stage=built vivado=2026.1 kb_pin=5e2eab8 build_id=f387f9e5
+stage=built vivado=2026.1 kb_pin=5e2eab8 build_id=4d5f6d14
 gates: build_2026_1=pass
 
 ## interface
@@ -33,7 +33,7 @@ designs/b96_kr260_10g/dbg_xvc/rtl/b96_core.sv f97848c5f7: copy of rtl/b96_core.s
 designs/b96_kr260_10g/dbg_xvc/rtl/kr260_10g_top.sv ca47f11df2: copy of rtl/kr260_10g_top.sv for build dbg_xvc with the debug path instantiated (brief 131)
 designs/b96_kr260_10g/dbg_xvc/build.yaml 241abf02aa: how flow/run_vivado.sh builds dbg_xvc (the eyescan build plus the debug path, brief 131)
 designs/b96_kr260_10g/ip/amd_ip_xvc.tcl 322bd679d3: the AMD IP of build dbg_xvc: Zynq UltraScale+ PS, AXI Protocol Converter, Debug Bridge, ILA (brief 131)
-designs/b96_kr260_10g/dbg_xvc/docs/dbg_xvc.md afd7cf480e: what build dbg_xvc is, what the ILA watches and why, what the debug logic changes, measured against the parent build (brief 131)
+designs/b96_kr260_10g/dbg_xvc/docs/dbg_xvc.md 8c015b2a81: what build dbg_xvc is, what the ILA watches and why, what the debug logic changes, measured against the parent build (brief 131)
 designs/b96_kr260_10g/dbg_xvc/docs/xvc_board_side.md b5fcf54a03: how XVC would run on the KR260's Ubuntu: which variant fits, the overlay, the Vivado connection; written, not run (brief 131)
 designs/b96_kr260_10g/dbg_xvc/docs/xvc_board_test.md 1c31caf208: the pre-registered board test for build dbg_xvc: criteria written before any board time (brief 131)
 designs/b96_kr260_10g/dbg_xvc/board/pl-dbg-xvc.dtsi 6b0dd3f24b: device-tree overlay fragment for the debug bridge on the KR260; not loaded on a board (brief 131)
@@ -41,7 +41,7 @@ designs/b96_kr260_10g/dbg_xvc/board/xvc_board_session.sh bb8534601a: the board-s
 designs/b96_kr260_10g/dbg_xvc/board/xvc_capture.tcl c43a40ce6f: Vivado hardware-manager side of the dbg_xvc board test: XVC connection and ILA captures; not run (brief 131)
 designs/b96_kr260_10g/dbg_xvc/model/xvc_verdict.py 6e5f94a169: the pre-registered verdict of the dbg_xvc board test (brief 131)
 designs/b96_kr260_10g/dbg_xvc/scripts/dump_netlist_timing.tcl d2746b1b03: dumps a routed build's core cells and slacks so the debug build can be compared with its parent (brief 131)
-designs/b96_kr260_10g/verif/pyuvm/README.md 0b5695e70d: how the pyuvm (Python UVM on cocotb and Icarus) bench for the PCS and MAC is built, run and limited; the same job as the SystemVerilog UVM bench (brief 123)
+designs/b96_kr260_10g/verif/pyuvm/README.md 3ba3fe7b62: how the pyuvm (Python UVM on cocotb, Icarus or Verilator) bench for the PCS and MAC is built, run and limited, with its code coverage on Verilator; the same job as the SystemVerilog UVM bench (briefs 123 and 146)
 designs/b96_kr260_10g/verif/pyuvm/COMPARISON.md 0f9578afff: the measured comparison of the pyuvm and the SystemVerilog UVM bench, where each fits the project, and a section for the verification course (brief 123)
 designs/b96_kr260_10g/verif/uvm/README.md 28bc0ecbd5: how the UVM 1.2 bench for the PCS and MAC is built, what each part checks, the coverage and the seeded bugs (brief 112)
 designs/b96_kr260_10g/rm_gp_bypass/rtl/b96_core.sv 82d6c44238: copy of rtl/b96_core.sv for build rm_gp_bypass with the GT buffer-bypass controllers connected, run gates and (brief 96F1b) the alignment timeout and retry status in GT_BUF
@@ -99,17 +99,17 @@ designs/b96_kr260_10g/model/loop_timing.py a2d1bf6428: Python model of the loop-
 designs/b96_kr260_10g/regmap.py 020260c536: register map as data
 designs/b96_kr260_10g/docs/register_map.md d2846103ad: interface datasheet
 designs/b96_kr260_10g/rm_gp_itch/rtl/udp_strip.sv 18ecd60fab: adapter from mac64_rx to the Mold receiver (build rm_gp_itch, brief 127): header checks, strip with a 2-byte realign, FCS verdict as a late strobe, capture ring
-designs/b96_kr260_10g/rm_gp_itch/rtl/itch_top.sv 186388568e: brief 110's mold_rx, itch_dec, book_core, risk_glue (unchanged) with the late verdict and the segment builder (brief 127)
-designs/b96_kr260_10g/rm_gp_itch/rtl/order_seg.sv 0d885e6b84: the order frame as a 113-byte Ethernet/IPv4/TCP stream, the stand-in for brief 119's tcp_fast (brief 127)
-designs/b96_kr260_10g/rm_gp_itch/rtl/order_seg_tcpfast.sv b6234fcd54: the same module with tcp_fast in place of the stand-in: the hook, not in the build (brief 127)
+designs/b96_kr260_10g/rm_gp_itch/rtl/itch_top.sv 5be8de2fca: brief 110's mold_rx, itch_dec, book_core, risk_glue (unchanged) with the late verdict and the segment builder (brief 127)
+designs/b96_kr260_10g/rm_gp_itch/rtl/order_seg.sv 473fe555c6: the order frame as a 113-byte Ethernet/IPv4/TCP stream, the stand-in for brief 119's tcp_fast (brief 127)
+designs/b96_kr260_10g/rm_gp_itch/rtl/order_seg_tcpfast.sv 30fc090de0: the same module with tcp_fast in place of the stand-in: the hook, not in the build (brief 127)
 designs/b96_kr260_10g/rm_gp_itch/rtl/tx_mux.sv 60060254bf: transmit multiplexer in front of mac64_tx: frame source, replay memory, order stream with FIFO and head register (brief 127)
-designs/b96_kr260_10g/rm_gp_itch/rtl/itch_path.sv 1672408a82: core-clock wrapper of the ITCH path: host vectors, order poison policy, counters, latency statistics (brief 127)
-designs/b96_kr260_10g/rm_gp_itch/rtl/b96_core.sv d026de610d: copy of rtl/b96_core.sv for build rm_gp_itch: RATE_MATCH = 1 only, the ITCH path and its registers 0x300 to 0x57C (brief 127)
-designs/b96_kr260_10g/rm_gp_itch/regmap_itch.py 84df801368: register map of build rm_gp_itch as data, generates its datasheet (brief 127)
-designs/b96_kr260_10g/rm_gp_itch/docs/itch_integration.md b50a92b1aa: the ITCH/OUCH path inside the 10G design: path, latency, the late frame check, registers, hook for tcp_fast, results (brief 127)
-designs/b96_kr260_10g/rm_gp_itch/docs/board_test_plan.md f2994a478f: pre-registered board test of build rm_gp_itch (brief 127; run B 2026-11-22 and the rp.frames amendment, brief 172)
+designs/b96_kr260_10g/rm_gp_itch/rtl/itch_path.sv 3f8c04b0c0: core-clock wrapper of the ITCH path: host vectors, order poison policy, counters, latency statistics (brief 127)
+designs/b96_kr260_10g/rm_gp_itch/rtl/b96_core.sv 2ee04f6ca6: copy of rtl/b96_core.sv for build rm_gp_itch: RATE_MATCH = 1 only, the ITCH path and its registers 0x300 to 0x57C (brief 127)
+designs/b96_kr260_10g/rm_gp_itch/regmap_itch.py 2e77671345: register map of build rm_gp_itch as data, generates its datasheet (brief 127)
+designs/b96_kr260_10g/rm_gp_itch/docs/itch_integration.md dc4f9f826c: the ITCH/OUCH path inside the 10G design: path, latency, the late frame check, registers, hook for tcp_fast, results (brief 127)
+designs/b96_kr260_10g/rm_gp_itch/docs/board_test_plan.md f2994a478f: pre-registered board test of build rm_gp_itch (brief 127), not run
 designs/b96_kr260_10g/rm_gp_itch/host/itch_host.py 61c12a6515: synthetic MoldUDP64/ITCH frames, replay image, expected order frame and the order check (brief 127)
-designs/b96_kr260_10g/rm_gp_itch/host/b127_stages.py 902077604a: the pre-registered board stages, shared with the simulation's dry run (brief 127)
+designs/b96_kr260_10g/rm_gp_itch/host/b127_stages.py bb32838fac: the pre-registered board stages, shared with the simulation's dry run (brief 127)
 
 ## commands
 simulate the PCS, MAC and core against the Python reference (~2min): python -m pytest -q designs/b96_kr260_10g/tests
@@ -117,6 +117,7 @@ simulate the PCS, MAC and core against the Python reference (~2min): python -m p
 [heavy] build variant (a), the near-end loopback self-test (~22min): flow/run_vivado.sh designs/b96_kr260_10g/selftest base
 the UVM 1.2 regression of the PCS and MAC in xsim (every test over its seeds, coverage merge, seeded bugs) (~40min): designs/b96_kr260_10g/verif/uvm/scripts/run_regress.sh --mutants --record results/112_uvm_pcs_mac
 the pyuvm regression of the PCS and MAC in Icarus (every test over its seeds, coverage merge, seeded bugs); needs pyuvm 5.0.0 and cocotb-coverage in a venv that sees cocotb 2.0.1 (~15min): PYTHONPATH=. python designs/b96_kr260_10g/verif/pyuvm/scripts/run_regress.py --mutants --record results/123_pyuvm_pcs_mac
+[heavy] the pyuvm regression of the PCS and MAC on Verilator with line, branch, expression and toggle coverage, merged and reported per module (brief 146); needs Verilator 5.036 or newer (cocotb 2.0.1 refuses the 5.020 of Ubuntu), so it is not in CI (~6min): SIM=verilator PYUVM_COV=1 PYTHONPATH=. python designs/b96_kr260_10g/verif/pyuvm/scripts/run_regress.py --out /tmp/v146 --record results/146_verilator_cov
 
 ## records (path sha256-prefix; claims below cite R<n>)
 R1 designs/b96_kr260_10g/tests/test_b96_pcs_rtl.py b26b6317ae
@@ -207,6 +208,7 @@ M20 latency itch_t2t_verdict_clocks=21.63 clocks R16#itch_to_order.at_verdict.ti
 - Does the PL load over JTAG with the PS idle on the KR260 (flow/program.py has no KR260 board entry yet)?
 
 ## history
+2026-11-22 - pr=-: brief 146: RTL code coverage of the PCS and MAC from the pyuvm bench on Verilator 5.048 (81.25 % line, 85.34 % branch, 92.47 % expression, 96.33 % toggle design-wide, every open point explained; same results as Icarus, 2.9 times faster to run); three additions of stimulus; testplan items V-COV-FUNC and V-COV-CODE; no RTL change
 2026-11-21 - pr=-: brief 127: build rm_gp_itch, brief 110's MoldUDP64/ITCH/book/risk/OUCH path inside the 10G design (udp_strip adapter with a late FCS verdict, transmit multiplexer, replay memory and capture ring, stand-in for tcp_fast with a hook); bit-exact against 110's model in xsim and Icarus; built with timing met; board test pre-registered and script written, nothing run on a board
 2026-11-21 - pr=-: brief 126: build lat_all3_bypass (the default receive path, the 97C latency cuts and the GT buffer bypass together), all 29 gates, WNS +0.066 ns, report_cdc no critical; simulated in xsim; board test pre-registered from the two measured runs (E 16.0, L 38.0, D 6.0, tick-to-trade 22 clocks) and script written; nothing run on a board
 2026-11-20 - pr=-: brief 96F1b: build rm_gp_bypass with AMD-style synchronised controller reset and a 30 ms TX / 130 ms RX alignment timeout with 3 retries then a gave-up flag (GT_BUF bits 29:16); all 29 gates, timing met, report_cdc no critical; gave-up added as a fail line before any board time; nothing run on a board

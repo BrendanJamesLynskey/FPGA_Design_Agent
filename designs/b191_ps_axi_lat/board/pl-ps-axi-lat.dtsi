@@ -1,0 +1,32 @@
+/* pl-ps-axi-lat.dtsi (brief 191, NOT YET LOADED ON A BOARD): device-tree overlay fragment for build ps_axi_lat on the KR260 (Kria, Ubuntu), the same form as dbg_xvc's pl-dbg-xvc.dtsi.
+ * Two register windows of 4 KiB, one per PS master: M_AXI_HPM0_FPD at 0xA0000000 and M_AXI_HPM0_LPD at 0x80000000 (UG1085 address map; confirm in the build's address report before the
+ * first load: the base addresses are the PS's, the probe decodes only the low 12 bits). "generic-uio" is the route of docs/ps_axi_lat.md that needs no kernel module: the host program opens
+ * /dev/uioN and maps the window. The alternative with no overlay entries is /dev/mem at the physical address (the program's default). Package as a Kria app with shell.json and the
+ * converted bitstream (docs/ps_axi_lat.md); compile with dtc. */
+/dts-v1/;
+/plugin/;
+/ {
+    fragment@0 {
+        target = <&fpga_full>;
+        overlay0: __overlay__ {
+            #address-cells = <2>;
+            #size-cells = <2>;
+            firmware-name = "ps_axi_lat.bit.bin";
+        };
+    };
+    fragment@1 {
+        target = <&amba>;
+        overlay1: __overlay__ {
+            #address-cells = <2>;
+            #size-cells = <2>;
+            probe_fpd: axi_lat_probe@a0000000 {
+                compatible = "generic-uio";
+                reg = <0x0 0xa0000000 0x0 0x1000>;
+            };
+            probe_lpd: axi_lat_probe@80000000 {
+                compatible = "generic-uio";
+                reg = <0x0 0x80000000 0x0 0x1000>;
+            };
+        };
+    };
+};

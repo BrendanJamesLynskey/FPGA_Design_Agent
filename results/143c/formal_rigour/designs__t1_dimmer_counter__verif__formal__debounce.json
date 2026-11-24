@@ -1,0 +1,395 @@
+{
+ "sby": "designs/t1_dimmer_counter/verif/formal/debounce.sby",
+ "schema": "fpga-design-agent/formal_rigour/v1",
+ "sources": {
+  "designs/t1_dimmer_counter/rtl/debounce.sv": "e7dd140726b542c3be05aa2494e332d7d2ee7bdb6d617c100001a3f651e8fbb3",
+  "designs/t1_dimmer_counter/verif/checkers/debounce_checker.sv": "98cb35c7b2a061abe25fc1f3580f979448532499d8852c6c376d92513a1ab606",
+  "designs/t1_dimmer_counter/verif/checkers/v_macros.svh": "013c1a5444e3dbd0eb2df54529d09272d8bf601d42ec066d54cadb9589d51083",
+  "designs/t1_dimmer_counter/verif/formal/debounce.sby": "b4a4738ebeab14439cb8d58a54418da1341083e7c314c46759aea25ec30d4dce",
+  "designs/t1_dimmer_counter/verif/formal/formal_debounce.sv": "3f1ca57a2c79f5093f5b19997df6ab2493a7b43b8a2fcd0cedd094374b140b17",
+  "designs/t1_dimmer_counter/verif/formal/v_macros_paired.svh": "b2c3204fd8eda2a8dc25e1703f055c9931a6c5b79f897ba17e5ab9a4c5ebf813",
+  "shell/rtl/sync2.sv": "9103308bbb71cd224d958c434bddd7b3bd2647d49cc8e718df0c6acba49509ba"
+ },
+ "tasks": {
+  "bmc": {
+   "checks": [
+    {
+     "flavor": "cover",
+     "id": "C_DB_RELEASE",
+     "label": "C_DB_RELEASE",
+     "src": "debounce_checker.sv:42",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "C_DB_PRESS",
+     "label": "C_DB_PRESS",
+     "src": "debounce_checker.sv:41",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "C_DB_GLITCH_IGNORED",
+     "label": "C_DB_GLITCH_IGNORED",
+     "src": "debounce_checker.sv:43",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "A_DB_RISE__ante",
+     "label": "A_DB_RISE__ante",
+     "src": "debounce_checker.sv:32",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "A_DB_RISE_ONLY__ante",
+     "label": "A_DB_RISE_ONLY__ante",
+     "src": "debounce_checker.sv:33",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "A_DB_RISE_ONLY",
+     "label": "A_DB_RISE_ONLY",
+     "src": "debounce_checker.sv:33",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "A_DB_RISE",
+     "label": "A_DB_RISE",
+     "src": "debounce_checker.sv:32",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "A_DB_PULSE__ante",
+     "label": "A_DB_PULSE__ante",
+     "src": "debounce_checker.sv:30",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "A_DB_PULSE",
+     "label": "A_DB_PULSE",
+     "src": "debounce_checker.sv:30",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "A_DB_HOLD__ante",
+     "label": "A_DB_HOLD__ante",
+     "src": "debounce_checker.sv:37",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "A_DB_HOLD",
+     "label": "A_DB_HOLD",
+     "src": "debounce_checker.sv:37",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "A_DB_FLIP__ante",
+     "label": "A_DB_FLIP__ante",
+     "src": "debounce_checker.sv:39",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "A_DB_FLIP",
+     "label": "A_DB_FLIP",
+     "src": "debounce_checker.sv:39",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "A_DB_FALL_NO_PRESS__ante",
+     "label": "A_DB_FALL_NO_PRESS__ante",
+     "src": "debounce_checker.sv:35",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "A_DB_FALL_NO_PRESS",
+     "label": "A_DB_FALL_NO_PRESS",
+     "src": "debounce_checker.sv:35",
+     "tautology": false
+    }
+   ],
+   "covers": {},
+   "depth": 24,
+   "mode": "bmc",
+   "seconds": 0.6,
+   "status": "PASS"
+  },
+  "cover": {
+   "checks": [
+    {
+     "flavor": "cover",
+     "id": "C_DB_RELEASE",
+     "label": "C_DB_RELEASE",
+     "src": "debounce_checker.sv:42",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "C_DB_PRESS",
+     "label": "C_DB_PRESS",
+     "src": "debounce_checker.sv:41",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "C_DB_GLITCH_IGNORED",
+     "label": "C_DB_GLITCH_IGNORED",
+     "src": "debounce_checker.sv:43",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "A_DB_RISE__ante",
+     "label": "A_DB_RISE__ante",
+     "src": "debounce_checker.sv:32",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "A_DB_RISE_ONLY__ante",
+     "label": "A_DB_RISE_ONLY__ante",
+     "src": "debounce_checker.sv:33",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "A_DB_RISE_ONLY",
+     "label": "A_DB_RISE_ONLY",
+     "src": "debounce_checker.sv:33",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "A_DB_RISE",
+     "label": "A_DB_RISE",
+     "src": "debounce_checker.sv:32",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "A_DB_PULSE__ante",
+     "label": "A_DB_PULSE__ante",
+     "src": "debounce_checker.sv:30",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "A_DB_PULSE",
+     "label": "A_DB_PULSE",
+     "src": "debounce_checker.sv:30",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "A_DB_HOLD__ante",
+     "label": "A_DB_HOLD__ante",
+     "src": "debounce_checker.sv:37",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "A_DB_HOLD",
+     "label": "A_DB_HOLD",
+     "src": "debounce_checker.sv:37",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "A_DB_FLIP__ante",
+     "label": "A_DB_FLIP__ante",
+     "src": "debounce_checker.sv:39",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "A_DB_FLIP",
+     "label": "A_DB_FLIP",
+     "src": "debounce_checker.sv:39",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "A_DB_FALL_NO_PRESS__ante",
+     "label": "A_DB_FALL_NO_PRESS__ante",
+     "src": "debounce_checker.sv:35",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "A_DB_FALL_NO_PRESS",
+     "label": "A_DB_FALL_NO_PRESS",
+     "src": "debounce_checker.sv:35",
+     "tautology": false
+    }
+   ],
+   "covers": {
+    "A_DB_FALL_NO_PRESS__ante": {
+     "reached": true,
+     "step": 10
+    },
+    "A_DB_FLIP__ante": {
+     "reached": true,
+     "step": 7
+    },
+    "A_DB_HOLD__ante": {
+     "reached": true,
+     "step": 7
+    },
+    "A_DB_PULSE__ante": {
+     "reached": true,
+     "step": 8
+    },
+    "A_DB_RISE_ONLY__ante": {
+     "reached": true,
+     "step": 7
+    },
+    "A_DB_RISE__ante": {
+     "reached": true,
+     "step": 7
+    },
+    "C_DB_GLITCH_IGNORED": {
+     "reached": true,
+     "step": 2
+    },
+    "C_DB_PRESS": {
+     "reached": true,
+     "step": 7
+    },
+    "C_DB_RELEASE": {
+     "reached": true,
+     "step": 2
+    }
+   },
+   "depth": 24,
+   "mode": "cover",
+   "seconds": 0.7,
+   "status": "PASS"
+  },
+  "prove": {
+   "checks": [
+    {
+     "flavor": "cover",
+     "id": "C_DB_RELEASE",
+     "label": "C_DB_RELEASE",
+     "src": "debounce_checker.sv:42",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "C_DB_PRESS",
+     "label": "C_DB_PRESS",
+     "src": "debounce_checker.sv:41",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "C_DB_GLITCH_IGNORED",
+     "label": "C_DB_GLITCH_IGNORED",
+     "src": "debounce_checker.sv:43",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "A_DB_RISE__ante",
+     "label": "A_DB_RISE__ante",
+     "src": "debounce_checker.sv:32",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "A_DB_RISE_ONLY__ante",
+     "label": "A_DB_RISE_ONLY__ante",
+     "src": "debounce_checker.sv:33",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "A_DB_RISE_ONLY",
+     "label": "A_DB_RISE_ONLY",
+     "src": "debounce_checker.sv:33",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "A_DB_RISE",
+     "label": "A_DB_RISE",
+     "src": "debounce_checker.sv:32",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "A_DB_PULSE__ante",
+     "label": "A_DB_PULSE__ante",
+     "src": "debounce_checker.sv:30",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "A_DB_PULSE",
+     "label": "A_DB_PULSE",
+     "src": "debounce_checker.sv:30",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "A_DB_HOLD__ante",
+     "label": "A_DB_HOLD__ante",
+     "src": "debounce_checker.sv:37",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "A_DB_HOLD",
+     "label": "A_DB_HOLD",
+     "src": "debounce_checker.sv:37",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "A_DB_FLIP__ante",
+     "label": "A_DB_FLIP__ante",
+     "src": "debounce_checker.sv:39",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "A_DB_FLIP",
+     "label": "A_DB_FLIP",
+     "src": "debounce_checker.sv:39",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "A_DB_FALL_NO_PRESS__ante",
+     "label": "A_DB_FALL_NO_PRESS__ante",
+     "src": "debounce_checker.sv:35",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "A_DB_FALL_NO_PRESS",
+     "label": "A_DB_FALL_NO_PRESS",
+     "src": "debounce_checker.sv:35",
+     "tautology": false
+    }
+   ],
+   "covers": {},
+   "depth": 12,
+   "mode": "prove",
+   "seconds": 0.5,
+   "status": "PASS"
+  }
+ },
+ "tool": "Yosys 0.70+385 (git sha1 098e46a36, Release, Clang /usr/bin/clang++ 21.1.8)"
+}
