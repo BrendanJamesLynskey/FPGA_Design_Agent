@@ -69,7 +69,8 @@ RULES: dict[str, tuple[str, str, str]] = {
     "STD-CLK-01": ("rtl", "no derived or gated clocks: every clock a register uses is a clock input, an alias of one, "
                           "or the output of a clock-network primitive (MMCM, PLL, BUFG)",
                    "static scan: edge signals of every always block against ports, assigns and instance outputs; "
-                   "clock-gating primitives (BUFGCE, BUFGMUX, BUFHCE) refused"),
+                   "clock-gating primitives (BUFGCE, BUFGMUX, BUFHCE) refused; a BUFGMUX_CTRL, or a BUFGCTRL with two "
+                   "clock inputs, only when declared in architecture.yaml clock_muxes (brief 208)"),
     "STD-CLK-02": ("rtl", "every clock of the top module is declared in architecture.yaml clock_domains",
                    "static scan against architecture.yaml"),
     "STD-CLK-03": ("post_synth", "every clock source in the synthesised design's clock network is a declared domain",
@@ -103,8 +104,11 @@ RULES: dict[str, tuple[str, str, str]] = {
     "STD-REV-03": ("review", "reset values and enables follow the spec and the bank's reset-strategy skill",
                    "review only"),
 }
-CLOCK_PRIMS = re.compile(r"^(MMCM\w*|PLL\w*|BUFG(?!CE|MUX)\w*|BUFH|BUFR|BUFIO|IBUFDS?|IBUF|BUFGCTRL|DCM\w*)$")
+CLOCK_PRIMS = re.compile(r"^(MMCM\w*|PLL\w*|BUFG(?!CE|MUX)\w*|BUFH|BUFR|BUFIO|IBUFDS?|IBUF|BUFGCTRL|BUFGMUX_CTRL|DCM\w*)$")
 GATING_PRIMS = re.compile(r"^(BUFGCE\w*|BUFGMUX\w*|BUFHCE|BUFMRCE)$")
+#: brief 208: the clock-mux primitives a design may use when architecture.yaml declares the instance in ``clock_muxes``
+MUX_PRIMS = re.compile(r"^(BUFGMUX_CTRL|BUFGCTRL)$")
+_CONST = re.compile(r"^\s*(\d*'[bBhHdD][0-9a-fA-F_xXzZ]+|[01]|)\s*$")
 _WAIVE = re.compile(r"//\s*std-waive:\s*(STD-[A-Z]+-\d+)\s*(.*)")
 _KEYWORDS = {"if", "else", "begin", "end", "case", "casez", "casex", "endcase", "for", "while", "assign", "always",
              "always_ff", "always_comb", "always_latch", "initial", "module", "endmodule", "generate", "endgenerate",
@@ -503,6 +507,8 @@ class Check:
 
     def rule_clocks(self) -> None:
         declared = arch_mod.declared_clocks(self.arch)
+        declared_muxes = {str(m.get("instance")): str(m.get("primitive")) for m in self.arch.get("clock_muxes") or []
+                          if isinstance(m, dict) and m.get("instance")}
         memo: dict[str, set[str]] = {}
         for mod in self.modules:
             for a in mod.always:
@@ -519,9 +525,24 @@ class Check:
                          f"module {mod.name}: clock {sig} is driven inside the module ({drv}): a derived or gated "
                          f"clock; use a clock enable on the declared clock")
             for inst in mod.instances:
+                if MUX_PRIMS.match(inst["type"]):
+                    # brief 208: a clock mux (two clock inputs connected) is allowed only when declared; a BUFGCTRL with one
+                    # input tied off is a plain buffer
+                    ins = [inst["conns"].get(p, "") for p in ("I0", "I1")]
+                    if inst["type"] == "BUFGMUX_CTRL" or all(not _CONST.match(x or "") for x in ins):
+                        if inst["name"] not in declared_muxes:
+                            self.add("STD-CLK-01", mod, inst["line"],
+                                     f"instance {inst['name']} ({inst['type']}): a clock mux not declared in architecture.yaml "
+                                     f"clock_muxes (declare it with its inputs, condition and reason, or use a clock enable)")
+                        elif declared_muxes[inst["name"]] != inst["type"]:
+                            self.add("STD-CLK-01", mod, inst["line"],
+                                     f"instance {inst['name']} is a {inst['type']}; architecture.yaml clock_muxes declares a "
+                                     f"{declared_muxes[inst['name']]}")
+                    continue
                 if GATING_PRIMS.match(inst["type"]):
-                    self.add("STD-CLK-01", mod, inst["line"], f"module {mod.name}: {inst['type']} gates a clock; use a "
-                                                              f"clock enable instead")
+                    why = (" (it switches on its CE pins: use BUFGMUX_CTRL, declared in architecture.yaml clock_muxes)"
+                           if inst["type"].startswith("BUFGMUX") else "; use a clock enable instead")
+                    self.add("STD-CLK-01", mod, inst["line"], f"module {mod.name}: {inst['type']} gates a clock{why}")
                     continue
                 child = self.by_name.get(inst["type"])
                 cps = self.clock_ports(child, memo) if child else set()
