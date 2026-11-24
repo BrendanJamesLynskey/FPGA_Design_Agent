@@ -232,7 +232,7 @@ def test_manifest_is_read_when_present(mini):
 def test_t1_matrix_on_reference_run(tmp_path):
     formal = tmp_path / "formal"
     for job in ("debounce", "scan"):
-        for task in ("bmc", "cover"):
+        for task in tr.sby_tasks(T1 / "verif" / "formal" / f"{job}.sby"):      # bmc, prove (brief 143c) and cover: every task the job lists must have run
             (formal / f"{job}_{task}").mkdir(parents=True)
             (formal / f"{job}_{task}" / "status").write_text("PASS 0\n")
     t = tr.build(T1, HERE / "data" / "ref_t1_sim", formal=formal, hw=ROOT / "results" / "f0b" / "t1_dimmer_counter_bringup.json",
@@ -397,7 +397,7 @@ def test_a_listed_formal_task_that_did_not_run_fails(mini):
 
 def test_t1_formal_without_debounce_cover_fails_req_02(tmp_path):
     formal = tmp_path / "formal"
-    for job, task in (("debounce", "bmc"), ("scan", "bmc"), ("scan", "cover")):    # debounce_cover deleted
+    for job, task in (("debounce", "bmc"), ("debounce", "prove"), ("scan", "bmc"), ("scan", "prove"), ("scan", "cover")):    # debounce_cover deleted
         (formal / f"{job}_{task}").mkdir(parents=True)
         (formal / f"{job}_{task}" / "status").write_text("PASS 0\n")
     t = tr.build(T1, HERE / "data" / "ref_t1_sim", formal=formal, hw=ROOT / "results" / "f0b" / "t1_dimmer_counter_bringup.json",

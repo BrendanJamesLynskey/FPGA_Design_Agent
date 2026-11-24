@@ -1,0 +1,398 @@
+{
+ "sby": "designs/b58a_trigger/verif/formal/mac_tx.sby",
+ "schema": "fpga-design-agent/formal_rigour/v1",
+ "sources": {
+  "designs/b58a_trigger/verif/formal/eth_crc32_free.sv": "59303c95f0c5de66bd25979b2d9081133945e1b3e672933bbf95fa7a85ee650c",
+  "designs/b58a_trigger/verif/formal/formal_mac_tx.sv": "24bc5f880cb1600f6637787ddc780d588b2b82b0cf23fcaf802d5872cd072380",
+  "designs/b58a_trigger/verif/formal/mac_tx.sby": "6a2e7dde92b8fae7f7208637423d869d5e15774ec8e748a09e52c0b3b297daf9",
+  "ip_lib/eth_mac_rgmii/rtl/mac_tx.sv": "522a2366f390403d0d90478a3153c2c966e73618e8ac133c6bd0af89cea772a6"
+ },
+ "tasks": {
+  "bmc": {
+   "checks": [
+    {
+     "flavor": "cover",
+     "id": "c_poisoned",
+     "label": "c_poisoned",
+     "src": "formal_mac_tx.sv:78",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "c_ifg_exact",
+     "label": "c_ifg_exact",
+     "src": "formal_mac_tx.sv:79",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "a_sof_only__ante",
+     "label": "a_sof_only__ante",
+     "src": "formal_mac_tx.sv:71",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "a_sof_only",
+     "label": "a_sof_only",
+     "src": "formal_mac_tx.sv:53",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "a_sfd__ante",
+     "label": "a_sfd__ante",
+     "src": "formal_mac_tx.sv:68",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "a_sfd",
+     "label": "a_sfd",
+     "src": "formal_mac_tx.sv:50",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "a_req_in_range__ante",
+     "label": "a_req_in_range__ante",
+     "src": "formal_mac_tx.sv:75",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "a_req_in_range",
+     "label": "a_req_in_range",
+     "src": "formal_mac_tx.sv:63",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "a_preamble__ante",
+     "label": "a_preamble__ante",
+     "src": "formal_mac_tx.sv:67",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "a_preamble",
+     "label": "a_preamble",
+     "src": "formal_mac_tx.sv:49",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "a_last_position__ante",
+     "label": "a_last_position__ante",
+     "src": "formal_mac_tx.sv:73",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "a_last_position",
+     "label": "a_last_position",
+     "src": "formal_mac_tx.sv:59",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "a_ifg__ante",
+     "label": "a_ifg__ante",
+     "src": "formal_mac_tx.sv:74",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "a_ifg",
+     "label": "a_ifg",
+     "src": "formal_mac_tx.sv:61",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "a_frame_len",
+     "label": "a_frame_len",
+     "src": "formal_mac_tx.sv:56",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "a_frame_end_after_last",
+     "label": "a_frame_end_after_last",
+     "src": "formal_mac_tx.sv:57",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "a_frame_end__ante",
+     "label": "a_frame_end__ante",
+     "src": "formal_mac_tx.sv:72",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "a_first_pulse__ante",
+     "label": "a_first_pulse__ante",
+     "src": "formal_mac_tx.sv:69",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "a_first_pulse",
+     "label": "a_first_pulse",
+     "src": "formal_mac_tx.sv:51",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "a_first_only__ante",
+     "label": "a_first_only__ante",
+     "src": "formal_mac_tx.sv:70",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "a_first_only",
+     "label": "a_first_only",
+     "src": "formal_mac_tx.sv:52",
+     "tautology": false
+    },
+    {
+     "flavor": "assume",
+     "id": "formal_mac_tx.sv:30",
+     "label": null,
+     "src": "formal_mac_tx.sv:30",
+     "tautology": false
+    },
+    {
+     "flavor": "assume",
+     "id": "formal_mac_tx.sv:17",
+     "label": null,
+     "src": "formal_mac_tx.sv:17",
+     "tautology": false
+    }
+   ],
+   "covers": {},
+   "depth": 40,
+   "mode": "bmc",
+   "seconds": 78.6,
+   "status": "PASS"
+  },
+  "cover": {
+   "checks": [
+    {
+     "flavor": "cover",
+     "id": "c_poisoned",
+     "label": "c_poisoned",
+     "src": "formal_mac_tx.sv:78",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "c_ifg_exact",
+     "label": "c_ifg_exact",
+     "src": "formal_mac_tx.sv:79",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "a_sof_only__ante",
+     "label": "a_sof_only__ante",
+     "src": "formal_mac_tx.sv:71",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "a_sof_only",
+     "label": "a_sof_only",
+     "src": "formal_mac_tx.sv:53",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "a_sfd__ante",
+     "label": "a_sfd__ante",
+     "src": "formal_mac_tx.sv:68",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "a_sfd",
+     "label": "a_sfd",
+     "src": "formal_mac_tx.sv:50",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "a_req_in_range__ante",
+     "label": "a_req_in_range__ante",
+     "src": "formal_mac_tx.sv:75",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "a_req_in_range",
+     "label": "a_req_in_range",
+     "src": "formal_mac_tx.sv:63",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "a_preamble__ante",
+     "label": "a_preamble__ante",
+     "src": "formal_mac_tx.sv:67",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "a_preamble",
+     "label": "a_preamble",
+     "src": "formal_mac_tx.sv:49",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "a_last_position__ante",
+     "label": "a_last_position__ante",
+     "src": "formal_mac_tx.sv:73",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "a_last_position",
+     "label": "a_last_position",
+     "src": "formal_mac_tx.sv:59",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "a_ifg__ante",
+     "label": "a_ifg__ante",
+     "src": "formal_mac_tx.sv:74",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "a_ifg",
+     "label": "a_ifg",
+     "src": "formal_mac_tx.sv:61",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "a_frame_len",
+     "label": "a_frame_len",
+     "src": "formal_mac_tx.sv:56",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "a_frame_end_after_last",
+     "label": "a_frame_end_after_last",
+     "src": "formal_mac_tx.sv:57",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "a_frame_end__ante",
+     "label": "a_frame_end__ante",
+     "src": "formal_mac_tx.sv:72",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "a_first_pulse__ante",
+     "label": "a_first_pulse__ante",
+     "src": "formal_mac_tx.sv:69",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "a_first_pulse",
+     "label": "a_first_pulse",
+     "src": "formal_mac_tx.sv:51",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "a_first_only__ante",
+     "label": "a_first_only__ante",
+     "src": "formal_mac_tx.sv:70",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "a_first_only",
+     "label": "a_first_only",
+     "src": "formal_mac_tx.sv:52",
+     "tautology": false
+    },
+    {
+     "flavor": "assume",
+     "id": "formal_mac_tx.sv:30",
+     "label": null,
+     "src": "formal_mac_tx.sv:30",
+     "tautology": false
+    },
+    {
+     "flavor": "assume",
+     "id": "formal_mac_tx.sv:17",
+     "label": null,
+     "src": "formal_mac_tx.sv:17",
+     "tautology": false
+    }
+   ],
+   "covers": {
+    "a_first_only__ante": {
+     "reached": true,
+     "step": 4
+    },
+    "a_first_pulse__ante": {
+     "reached": true,
+     "step": 4
+    },
+    "a_frame_end__ante": {
+     "reached": true,
+     "step": 20
+    },
+    "a_ifg__ante": {
+     "reached": true,
+     "step": 24
+    },
+    "a_last_position__ante": {
+     "reached": true,
+     "step": 19
+    },
+    "a_preamble__ante": {
+     "reached": true,
+     "step": 4
+    },
+    "a_req_in_range__ante": {
+     "reached": true,
+     "step": 10
+    },
+    "a_sfd__ante": {
+     "reached": true,
+     "step": 11
+    },
+    "a_sof_only__ante": {
+     "reached": true,
+     "step": 11
+    },
+    "c_ifg_exact": {
+     "reached": true,
+     "step": 24
+    },
+    "c_poisoned": {
+     "reached": true,
+     "step": 19
+    }
+   },
+   "depth": 50,
+   "mode": "cover",
+   "seconds": 7.2,
+   "status": "PASS"
+  }
+ },
+ "tool": "Yosys 0.70+385 (git sha1 098e46a36, Release, Clang /usr/bin/clang++ 21.1.8)"
+}

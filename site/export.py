@@ -494,15 +494,21 @@ def main():
     out.update({f"tasks/{k}": v for k, v in pages.items()})
     (OUT / "tasks").mkdir(exist_ok=True)
     bad = 0
-    for k, v in out.items():
-        s = json.dumps(v, indent=1, sort_keys=True) + "\n"
-        p = OUT / f"{k}.json"
-        if "--check" in sys.argv:
-            if not p.exists() or p.read_text() != s:
-                print("stale:", p)
-                bad = 1
-        else:
-            p.write_text(s)
+
+    def emit(items):
+        nonlocal bad
+        for k, v in items.items():
+            s = json.dumps(v, indent=1, sort_keys=True) + "\n"
+            p = OUT / f"{k}.json"
+            if "--check" in sys.argv:
+                if not p.exists() or p.read_text() != s:
+                    print("stale:", p)
+                    bad = 1
+            else:
+                p.write_text(s)
+    emit(out)
+    import why                                                          # brief 193: "Why this agent", site/why/why.yaml; reads the data files
+    emit({"why": why.build()})                                          # written just above, so it comes last (one export run is enough)
     extra = sorted(set(p.stem for p in (OUT / "tasks").glob("*.json")) - set(pages))
     if extra:
         print("task data with no development page (delete it):", extra)

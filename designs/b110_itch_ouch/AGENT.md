@@ -2,7 +2,7 @@
 source: designs/b110_itch_ouch/handover.yaml; human view: README.md; refresh: python -m flow.handover fresh designs/b110_itch_ouch
 
 ## identity
-kind=showcase produced_by=human part=xck26-sfvc784-2LV-c board=Kria KR260 (K26 SOM) top=itch_ouch_top (wrapped with input registers in ooc_wrap for the out-of-context build) tool=Vivado 2026.1
+kind=showcase produced_by=session part=xck26-sfvc784-2LV-c board=Kria KR260 (K26 SOM) top=itch_ouch_top (wrapped with input registers in ooc_wrap for the out-of-context build) tool=Vivado 2026.1
 
 ## summary
 A trading path in the formats a real venue speaks, in simulation. UDP payload words carrying MoldUDP64 and Nasdaq TotalView-ITCH 5.0 are decoded, a small top-of-book is kept for a few instruments, a pre-trade risk check with a kill switch decides, and an OUCH 5.0 Enter Order is built in a SoupBinTCP 3.00 packet and handed to a stub port, optionally started before the risk verdict and cancelled if it fails. A Python reference model and a seeded synthetic generator check the RTL bit for bit, seeded faults in the RTL are all caught, and the block is built out of context for the KR260's part at the 10G core clock.

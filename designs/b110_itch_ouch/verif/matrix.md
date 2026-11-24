@@ -4,42 +4,64 @@
 
 The human specifies the requirements and checks that the verification is thorough enough. The agent holds the knowledge to implement and to verify. You can open any of the implementation or the evidence, and you do not have to. Hardware on the board, with attached instruments, is a verification layer of its own: where a requirement depends on something outside the design (an optical link, a network card, a data source) it may be the only way to close it.
 
-**Summary.** 14 requirements (9 functional, 5 safety); 13 verified; 1 failing; 0 of 14 requirements agreed by a human, 0 human review(s) recorded.
+**Summary.** 14 requirements (9 functional, 5 safety); 6 verified; 7 partially verified (the required mix of methods is not met); 1 failing; 0 of 14 requirements agreed by a human, 0 agreed on the owner's delegation (not human), 14 draft; 5 resting only on the implementing agent's own tests; 0 human and 0 delegated review(s) recorded.
 
 Simulation only (xsim 2026.1, UVM 1.2; Icarus is not used by this bench). One recorded regression (results/188_trading_safety/uvm/summary.json) and one mutation record (results/170_itch_uvm/mutation_seed*.json). No board, no real feed, every message synthetic.
 
 ## Matrix
 
-Rows are requirements, columns are verification methods. A cell lists each item with its computed status and links to its evidence. Status is read from the evidence by code; it is never typed. `stale` means a file the evidence is about changed after the evidence was recorded; `bounded` means a formal bounded model check only.
+Rows are requirements, columns are verification methods. A cell lists each item with its computed status and links to its evidence. Status is read from the evidence by code; it is never typed. `stale` means a file the evidence is about changed after the evidence was recorded; `bounded` means a formal bounded model check only. A requirement is verified only when its passing items meet the method mix for its kind (`flow/method_mix_policy.yaml`); a test is marked with who wrote it, and a test whose author is not recorded counts as the implementing agent's own. Agreement comes only from `verif/agreements.yaml`, never from the testplan.
 
-| Requirement | Kind | State | sim test | UVM | SVA | formal | Lean | coverage | timing | sim measure | board | review |
-|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| **B110-F-ORDER-BYTES** Every order that leaves with a good frame check sequence is byte exact | functional | verified |  | pass: [V-UVM-ORDERS](../../../results/188_trading_safety/uvm/summary.json) | pass: [V-UVM-SVA](../../../results/188_trading_safety/uvm/summary.json) |  |  |  |  |  |  |  |
-| **B110-F-MOLD** MoldUDP64 sessions, sequence gaps, duplicates, overlaps, heartbeats and broken packets are counted and delivered as the reference says | functional | verified |  | pass: [V-UVM-MOLD](../../../results/188_trading_safety/uvm/summary.json) |  |  |  |  |  |  |  |  |
-| **B110-F-BOOK** The ITCH decoder and the book keep the counters, the inexact flags and the candidates the reference model computes | functional | verified |  | pass: [V-UVM-BOOK](../../../results/188_trading_safety/uvm/summary.json) |  |  |  |  |  |  |  |  |
-| **B110-F-RISK** Every risk refusal is the first failing check, counted once, and no order starts on a refused candidate | safety | verified |  | pass: [V-UVM-RISK](../../../results/188_trading_safety/uvm/summary.json) |  |  |  |  |  |  |  |  |
-| **B110-F-UDP** Frames are forwarded or dropped by the first failing header check, and each drop is counted | functional | verified |  | pass: [V-UVM-UDP](../../../results/188_trading_safety/uvm/summary.json) |  |  |  |  |  |  |  |  |
-| **B110-S-STRICT** Under STRICT an order is never sent on an unverified or bad frame | safety | verified |  | pass: [V-UVM-STRICT](../../../results/188_trading_safety/uvm/summary.json) | pass: [V-UVM-SVA](../../../results/188_trading_safety/uvm/summary.json) |  |  |  |  |  |  |  |
-| **B110-F-SEQ-POISON** A poisoned order frame consumes no TCP sequence number | functional | verified |  | pass: [V-UVM-SEQ](../../../results/188_trading_safety/uvm/summary.json) |  |  |  |  |  |  |  |  |
-| **B110-V-COVERAGE** The bench's functional coverage plan is closed | functional | verified |  |  |  |  |  | pass: [V-UVM-COV](../../../results/188_trading_safety/uvm/summary.json) |  |  |  |  |
-| **B110-V-MUTATION** The bench kills at least 90 % of blind mutants of the path (worst case, over at least 30) | functional | FAILS |  |  |  |  |  |  |  | FAIL: [V-UVM-MUT](../../../results/170_itch_uvm/mutation_seed1.json) |  |  |
-| **B110-S-QTY** No quantity or price accumulator wraps, and no live book entry has zero size | safety | verified | pass: [V-SIM-QTY](../../../results/188_trading_safety/pytest_junit.xml) |  |  | bounded: [V-FORMAL-BOOK-QTY](../../../results/188_trading_safety/pytest_junit.xml) |  |  |  |  |  |  |
-| **B110-S-BANDREF** The price-band reference can come from software, independent of the strategy's own book, and is refused when too old | safety | verified | pass: [V-SIM-BANDREF](../../../results/188_trading_safety/pytest_junit.xml) |  |  |  |  |  |  |  |  |  |
-| **B110-F-HOLDOFF** After an accepted order an instrument is refused for the hold-off, other instruments are not | functional | verified | pass: [V-SIM-BANDREF](../../../results/188_trading_safety/pytest_junit.xml) |  |  |  |  |  |  |  |  |  |
-| **B110-F-NOTIONAL** The notional check (multiply or software price-band table) refuses as the model says, at no extra clock, and the table is never weaker than the multiply | functional | verified | pass: [V-SIM-NOTIONAL](../../../results/188_trading_safety/pytest_junit.xml) |  |  |  |  |  |  |  |  |  |
-| **B110-S-LIMITS-ATOMIC** A half-written set of risk limits never takes effect (rm_gp_itch registers) | safety | verified |  |  |  |  |  |  |  | pass: [V-XSIM-LIMITS](../../../results/188_trading_safety/staged_limits_sim.json) |  |  |
+| Requirement | Kind | Agreement | State | sim test | UVM | SVA | formal | Lean | coverage | timing | sim measure | board | review |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| **B110-F-ORDER-BYTES** Every order that leaves with a good frame check sequence is byte exact | functional | draft | verified |  | pass [independent bench]: [V-UVM-ORDERS](../../../results/188_trading_safety/uvm/summary.json) | pass [independent bench]: [V-UVM-SVA](../../../results/188_trading_safety/uvm/summary.json) |  |  |  |  |  |  |  |
+| **B110-F-MOLD** MoldUDP64 sessions, sequence gaps, duplicates, overlaps, heartbeats and broken packets are counted and delivered as the reference says | functional | draft | verified |  | pass [independent bench]: [V-UVM-MOLD](../../../results/188_trading_safety/uvm/summary.json) |  |  |  |  |  |  |  |  |
+| **B110-F-BOOK** The ITCH decoder and the book keep the counters, the inexact flags and the candidates the reference model computes | functional | draft | verified |  | pass [independent bench]: [V-UVM-BOOK](../../../results/188_trading_safety/uvm/summary.json) |  |  |  |  |  |  |  |  |
+| **B110-F-RISK** Every risk refusal is the first failing check, counted once, and no order starts on a refused candidate | safety | draft | partially verified; lacks a formal proof (SymbiYosys or Lean) |  | pass [independent bench]: [V-UVM-RISK](../../../results/188_trading_safety/uvm/summary.json) |  |  |  |  |  |  |  |  |
+| **B110-F-UDP** Frames are forwarded or dropped by the first failing header check, and each drop is counted | functional | draft | verified |  | pass [independent bench]: [V-UVM-UDP](../../../results/188_trading_safety/uvm/summary.json) |  |  |  |  |  |  |  |  |
+| **B110-S-STRICT** Under STRICT an order is never sent on an unverified or bad frame | safety | draft | partially verified; lacks a formal proof (SymbiYosys or Lean) |  | pass [independent bench]: [V-UVM-STRICT](../../../results/188_trading_safety/uvm/summary.json) | pass [independent bench]: [V-UVM-SVA](../../../results/188_trading_safety/uvm/summary.json) |  |  |  |  |  |  |  |
+| **B110-F-SEQ-POISON** A poisoned order frame consumes no TCP sequence number | functional | draft | verified |  | pass [independent bench]: [V-UVM-SEQ](../../../results/188_trading_safety/uvm/summary.json) |  |  |  |  |  |  |  |  |
+| **B110-V-COVERAGE** The bench's functional coverage plan is closed | functional | draft | verified |  |  |  |  |  | pass [independent bench]: [V-UVM-COV](../../../results/188_trading_safety/uvm/summary.json) |  |  |  |  |
+| **B110-V-MUTATION** The bench kills at least 90 % of blind mutants of the path (worst case, over at least 30) | functional | draft | FAILS |  |  |  |  |  |  |  | FAIL [independent bench]: [V-UVM-MUT](../../../results/170_itch_uvm/mutation_seed1.json) |  |  |
+| **B110-S-QTY** No quantity or price accumulator wraps, and no live book entry has zero size | safety | draft | partially verified; lacks a formal proof (SymbiYosys or Lean); rests only on the implementing agent's own tests | pass [author not recorded]: [V-SIM-QTY](../../../results/188_trading_safety/pytest_junit.xml) |  |  | stale: [V-FORMAL-BOOK-QTY](../../../results/188_trading_safety/pytest_junit.xml) |  |  |  |  |  |  |
+| **B110-S-BANDREF** The price-band reference can come from software, independent of the strategy's own book, and is refused when too old | safety | draft | partially verified; lacks a formal proof (SymbiYosys or Lean); rests only on the implementing agent's own tests | pass [author not recorded]: [V-SIM-BANDREF](../../../results/188_trading_safety/pytest_junit.xml) |  |  |  |  |  |  |  |  |  |
+| **B110-F-HOLDOFF** After an accepted order an instrument is refused for the hold-off, other instruments are not | functional | draft | partially verified; lacks a simulation check from a bench the implementing agent did not write; rests only on the implementing agent's own tests | pass [author not recorded]: [V-SIM-BANDREF](../../../results/188_trading_safety/pytest_junit.xml) |  |  |  |  |  |  |  |  |  |
+| **B110-F-NOTIONAL** The notional check (multiply or software price-band table) refuses as the model says, at no extra clock, and the table is never weaker than the multiply | functional | draft | partially verified; lacks a simulation check from a bench the implementing agent did not write; rests only on the implementing agent's own tests | pass [author not recorded]: [V-SIM-NOTIONAL](../../../results/188_trading_safety/pytest_junit.xml) |  |  |  |  |  |  |  |  |  |
+| **B110-S-LIMITS-ATOMIC** A half-written set of risk limits never takes effect (rm_gp_itch registers) | safety | draft | partially verified; lacks a formal proof (SymbiYosys or Lean); rests only on the implementing agent's own tests |  |  |  |  |  |  |  | pass [author not recorded]: [V-XSIM-LIMITS](../../../results/188_trading_safety/staged_limits_sim.json) |  |  |
 
 ## Gaps
+
+### Requirements whose passing items do not meet the required method mix
+
+- `B110-F-RISK`: safety requirement: passes, but the required mix of methods is not met; lacks a formal proof (SymbiYosys or Lean)
+- `B110-S-STRICT`: safety requirement: passes, but the required mix of methods is not met; lacks a formal proof (SymbiYosys or Lean)
+- `B110-S-QTY`: safety requirement: passes, but the required mix of methods is not met; lacks a formal proof (SymbiYosys or Lean)
+- `B110-S-BANDREF`: safety requirement: passes, but the required mix of methods is not met; lacks a formal proof (SymbiYosys or Lean)
+- `B110-F-HOLDOFF`: functional requirement: passes, but the required mix of methods is not met; lacks a simulation check from a bench the implementing agent did not write
+- `B110-F-NOTIONAL`: functional requirement: passes, but the required mix of methods is not met; lacks a simulation check from a bench the implementing agent did not write
+- `B110-S-LIMITS-ATOMIC`: safety requirement: passes, but the required mix of methods is not met; lacks a formal proof (SymbiYosys or Lean)
+
+### Requirements resting only on the implementing agent's own tests
+
+- `B110-S-QTY`: everything that passes is a test the implementing agent wrote (or whose author is not recorded); the house rule is that these never count alone
+- `B110-S-BANDREF`: everything that passes is a test the implementing agent wrote (or whose author is not recorded); the house rule is that these never count alone
+- `B110-F-HOLDOFF`: everything that passes is a test the implementing agent wrote (or whose author is not recorded); the house rule is that these never count alone
+- `B110-F-NOTIONAL`: everything that passes is a test the implementing agent wrote (or whose author is not recorded); the house rule is that these never count alone
+- `B110-S-LIMITS-ATOMIC`: everything that passes is a test the implementing agent wrote (or whose author is not recorded); the house rule is that these never count alone
 
 ### Requirements with no passing evidence
 
 - `B110-V-MUTATION`: an item fails
 
+### Stale evidence
+
+- `V-FORMAL-BOOK-QTY`: changed since the evidence was recorded: designs/b110_itch_ouch/verif/formal/book_props.sv
+
 ## Requirements in full
 
 ### B110-F-ORDER-BYTES: Every order that leaves with a good frame check sequence is byte exact
 
-- Kind: functional; state: verified; specification status: draft.
+- Kind: functional; state: verified; agreement: draft.
 - Source: `designs/b110_itch_ouch/docs/spec_notes.md#3-ouch-50-hardware-rtlouch_entersv-section-21-type-o-enter-order`
 - Each order frame with a good FCS equals the reference frame byte for byte (Ethernet, IPv4, TCP headers, SoupBinTCP 3.00 length and type, OUCH 5.0 Enter Order fields, ClOrdID, appendage), the orders come in order with UserRefNum rising by one per accepted candidate, and a frame with a wrong FCS is never an order.
   - UVM test: **pass**, UVM scoreboard ORDERS check, every order frame byte for byte against the SV reference model (all sequences, all seeds): checks.ORDERS.mismatches = 0; checks.ORDERS.compared = 3603; failed = 0. [evidence](../../../results/188_trading_safety/uvm/summary.json)
@@ -47,35 +69,35 @@ Rows are requirements, columns are verification methods. A cell lists each item 
 
 ### B110-F-MOLD: MoldUDP64 sessions, sequence gaps, duplicates, overlaps, heartbeats and broken packets are counted and delivered as the reference says
 
-- Kind: functional; state: verified; specification status: draft.
+- Kind: functional; state: verified; agreement: draft.
 - Source: `designs/b110_itch_ouch/docs/itch_ouch.md#2-behaviour-in-detail`
 - For every packet the packet, message, gap, missing, duplicate, overlap, session, heartbeat, end-of-session, short, truncated and bad-length counters and the gap, session-lock and end-of-session flags equal the reference model's at every checkpoint, with 1, 3 and 6 messages a packet and at every frame alignment.
   - UVM test: **pass**, UVM scoreboard COUNTERS and FLAGS at every checkpoint (Mold counters and flags, gaps, duplicates, overlaps, heartbeats, truncation): checks.COUNTERS.mismatches = 0; checks.FLAGS.mismatches = 0; checks.COUNTERS.compared = 10332. [evidence](../../../results/188_trading_safety/uvm/summary.json)
 
 ### B110-F-BOOK: The ITCH decoder and the book keep the counters, the inexact flags and the candidates the reference model computes
 
-- Kind: functional; state: verified; specification status: draft.
+- Kind: functional; state: verified; agreement: draft.
 - Source: `designs/b110_itch_ouch/docs/itch_ouch.md#2-behaviour-in-detail`
 - Message-type counters, malformed and skipped messages, unwatched locates, missing/duplicate/overflowing orders, ladder overflow and over-execution counters, the candidate count and the per-instrument inexact flags equal the reference model's, including the edge cases of an empty book, a full ladder, a table-index collision and a replace.
   - UVM test: **pass**, UVM book edge-case sequence and random mix, counters and inexact flags against the reference model: checks.COUNTERS.mismatches = 0; checks.FLAGS.mismatches = 0; failed = 0. [evidence](../../../results/188_trading_safety/uvm/summary.json)
 
 ### B110-F-RISK: Every risk refusal is the first failing check, counted once, and no order starts on a refused candidate
 
-- Kind: safety; state: verified; specification status: draft.
+- Kind: safety; state: partially verified; lacks a formal proof (SymbiYosys or Lean); agreement: draft.
 - Source: `designs/b110_itch_ouch/docs/itch_ouch.md#2-behaviour-in-detail`
 - Not armed, kill switch, untrusted or gap-halted, inexact book, quantity, position limit per instrument, price band and missing bid refuse a candidate exactly as the reference does; the position and the order number advance only for an accepted candidate.
   - UVM test: **pass**, UVM risk sequence, every refusal counter and the orders that follow: checks.COUNTERS.mismatches = 0; checks.ORDERS.mismatches = 0; failed = 0. [evidence](../../../results/188_trading_safety/uvm/summary.json)
 
 ### B110-F-UDP: Frames are forwarded or dropped by the first failing header check, and each drop is counted
 
-- Kind: functional; state: verified; specification status: draft.
+- Kind: functional; state: verified; agreement: draft.
 - Source: `designs/b96_kr260_10g/rm_gp_itch/docs/itch_integration.md#2-the-path-block-by-block`
 - Destination MAC (unicast or the group's multicast address), EtherType, IPv4 version and header length, fragments, protocol, destination address and port, UDP length against the IP length, and the IPv4 header checksum; EN = 0 drops everything.
   - UVM test: **pass**, UVM header sequence, every drop reason, the multicast address and EN = 0, udp_strip counters against the reference model: checks.US.mismatches = 0; checks.US.compared = 3024. [evidence](../../../results/188_trading_safety/uvm/summary.json)
 
 ### B110-S-STRICT: Under STRICT an order is never sent on an unverified or bad frame
 
-- Kind: safety; state: verified; specification status: draft.
+- Kind: safety; state: partially verified; lacks a formal proof (SymbiYosys or Lean); agreement: draft.
 - Source: `designs/b96_kr260_10g/rm_gp_itch/docs/itch_integration.md#4-the-late-frame-check-and-what-happens-to-an-order-on-a-bad-frame`
 - With STRICT set (the default, owner decision 31) no order leaves with a good FCS when the frame that carried its message has a bad FCS, or when that frame's verdict is not yet known at the order's last word; such an order leaves with a wrong FCS. Cut-through is a documented option with a measured window.
   - UVM test: **pass**, UVM bad-FCS and tail-distance sequences, STRICT and cut-through, orders classed must, may and must-not against the measured window: checks.ORDERS.mismatches = 0; checks.ORDERCNT.mismatches = 0; failed = 0. [evidence](../../../results/188_trading_safety/uvm/summary.json)
@@ -83,57 +105,57 @@ Rows are requirements, columns are verification methods. A cell lists each item 
 
 ### B110-F-SEQ-POISON: A poisoned order frame consumes no TCP sequence number
 
-- Kind: functional; state: verified; specification status: draft.
+- Kind: functional; state: verified; agreement: draft.
 - Source: `designs/b96_kr260_10g/rm_gp_itch/docs/itch_integration.md#5-registers-and-what-a-user-could-guess-wrong`
 - The TCP sequence number of an order is the loaded number plus 59 for every segment that left with a good FCS; a frame poisoned (wrong FCS) by the multiplexer, because its trigger frame was bad or unverified, does not advance it.
   - UVM test: **pass**, UVM sequence-number check on the datasheet's rule, exact and without a waiver in every run (brief 176 fixed the finding t_seq_poison made; the item still read the pre-fix fields until brief 188): checks.SEQ.mismatches = 0; checks.SEQ.compared = 538; failed = 0. [evidence](../../../results/188_trading_safety/uvm/summary.json)
 
 ### B110-V-COVERAGE: The bench's functional coverage plan is closed
 
-- Kind: functional; state: verified; specification status: draft.
+- Kind: functional; state: verified; agreement: draft.
 - Source: `designs/b96_kr260_10g/rm_gp_itch/verif/uvm/README.md#functional-coverage`
 - Every bin of the bench's coverage plan (message types, messages a packet, Mold events, header drops, book edge cases, risk refusals, order outcomes, bad-FCS crosses, frame alignments, backpressure) is hit by the recorded regression.
   - coverage: **pass**, Closure of the bench's functional coverage plan over the recorded regression: coverage.holes = []. [evidence](../../../results/188_trading_safety/uvm/summary.json)
 
 ### B110-V-MUTATION: The bench kills at least 90 % of blind mutants of the path (worst case, over at least 30)
 
-- Kind: functional; state: FAILS; specification status: draft.
+- Kind: functional; state: FAILS; agreement: draft.
 - Source: `designs/b96_kr260_10g/rm_gp_itch/verif/uvm/README.md#mutation-score`
 - A blind mutation sweep (mutants made from the RTL text and a seed only, equivalent mutants decided by a formal miter) scores at least 90 % even if every undecided mutant counted as a survivor.
   - simulation measurement: **FAIL**, Blind mutation sweep with the fixed tool (flow/mutation_score.py): score, worst case and undecided against the floor: mutation score 100.0% (floor 90%): 18 killed, 0 real survivors, 0 equivalent dropped, 12 undecided; worst case 60.0%; seed 1; worst-case score 60.0% is below the floor 90%; 12 undecided (limit 3). [evidence](../../../results/170_itch_uvm/mutation_seed1.json)
 
 ### B110-S-QTY: No quantity or price accumulator wraps, and no live book entry has zero size
 
-- Kind: safety; state: verified; specification status: draft.
+- Kind: safety; state: partially verified; lacks a formal proof (SymbiYosys or Lean); rests only on the implementing agent's own tests; agreement: draft.
 - Source: `designs/b110_itch_ouch/docs/itch_ouch.md#14-observation-and-counters`
 - A level size that would pass 2^32 - 1 saturates and makes the instrument inexact (counted as lvovf); an Add of zero shares is never entered; an order price (candidate price plus offset) that passes 2^32 - 1 is refused as band; no ladder level or order-table entry is ever written live with zero size (brief 188, bounded proof from reset).
-  - formal: **bounded**, SymbiYosys bounded proof (BMC from reset, depth 12) of the book's quantity invariants Q1-Q6 and the cover that saturation is reachable; no k-induction: 2 test(s) passed in the recorded run. [evidence](../../../results/188_trading_safety/pytest_junit.xml)
+  - formal: **stale**, SymbiYosys bounded proof (BMC from reset, depth 12) of the book's quantity invariants Q1-Q6 and the cover that saturation is reachable; no k-induction: 2 test(s) passed in the recorded run (changed since the evidence was recorded: designs/b110_itch_ouch/verif/formal/book_props.sv). [evidence](../../../results/188_trading_safety/pytest_junit.xml)
   - simulation test: **pass**, Saturating level size, zero-share Add and wrapping order price, against the model (the saturation test fails on the RTL before brief 188): 2 test(s) passed in the recorded run. [evidence](../../../results/188_trading_safety/pytest_junit.xml)
 
 ### B110-S-BANDREF: The price-band reference can come from software, independent of the strategy's own book, and is refused when too old
 
-- Kind: safety; state: verified; specification status: draft.
+- Kind: safety; state: partially verified; lacks a formal proof (SymbiYosys or Lean); rests only on the implementing agent's own tests; agreement: draft.
 - Source: `designs/b110_itch_ouch/docs/itch_ouch.md#13-configuration-static`
 - With the software reference selected, the band is measured from the price software wrote and the book's bid is not consulted; a reference never loaded, or older than the age limit in core clocks, refuses every candidate as rej_band (brief 188).
   - simulation test: **pass**, Software band reference, its age limit and the hold-off (cocotb bench soft_reference, soft_reference_age, holdoff): 1 test(s) passed in the recorded run. [evidence](../../../results/188_trading_safety/pytest_junit.xml)
 
 ### B110-F-HOLDOFF: After an accepted order an instrument is refused for the hold-off, other instruments are not
 
-- Kind: functional; state: verified; specification status: draft.
+- Kind: functional; state: partially verified; lacks a simulation check from a bench the implementing agent did not write; rests only on the implementing agent's own tests; agreement: draft.
 - Source: `designs/b110_itch_ouch/docs/itch_ouch.md#13-configuration-static`
 - With a hold-off of N clocks, the next candidate of the same instrument inside N clocks is refused and counted as rej_busy, one after it is accepted, another instrument is unaffected, and speculation is not started during a hold-off (brief 188).
   - simulation test: **pass**, Software band reference, its age limit and the hold-off (cocotb bench soft_reference, soft_reference_age, holdoff): 1 test(s) passed in the recorded run. [evidence](../../../results/188_trading_safety/pytest_junit.xml)
 
 ### B110-F-NOTIONAL: The notional check (multiply or software price-band table) refuses as the model says, at no extra clock, and the table is never weaker than the multiply
 
-- Kind: functional; state: verified; specification status: draft.
+- Kind: functional; state: partially verified; lacks a simulation check from a bench the implementing agent did not write; rests only on the implementing agent's own tests; agreement: draft.
 - Source: `designs/b110_itch_ouch/docs/itch_ouch.md#13-configuration-static`
 - With NOTIONAL_MODE 1 an order whose price times quantity passes the limit is refused as rej_size; with mode 2 a table filled by software from the limit gives verdicts equal to the model's, never admits an order the multiply would refuse, and both add no clock between the book update and the first order word (brief 188).
   - simulation test: **pass**, Notional check in both builds against the model, the table-versus-multiply property, and equal latency in the three NOTIONAL_MODE builds: 3 test(s) passed in the recorded run. [evidence](../../../results/188_trading_safety/pytest_junit.xml)
 
 ### B110-S-LIMITS-ATOMIC: A half-written set of risk limits never takes effect (rm_gp_itch registers)
 
-- Kind: safety; state: verified; specification status: draft.
+- Kind: safety; state: partially verified; lacks a formal proof (SymbiYosys or Lean); rests only on the implementing agent's own tests; agreement: draft.
 - Source: `designs/b96_kr260_10g/rm_gp_itch/docs/itch_integration.md#5-registers-and-what-a-user-could-guess-wrong`
 - The risk limits are staged; a write fills a holding register and the live set changes only on COMMIT, in one clock, so the core never runs on a mix of old and new limits (brief 188, whole core in xsim).
   - simulation measurement: **pass**, Whole core in xsim 2026.1; limit lowered but not committed leaves the old limits in force, COMMIT applies it: orders_b_uncommitted = 4; orders_c_committed = 1; rej_pos_b = 0; rej_pos_c = 3. [evidence](../../../results/188_trading_safety/staged_limits_sim.json)
