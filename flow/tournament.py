@@ -117,6 +117,30 @@ def impl_candidates(menu: list[str] | None) -> list[dict[str, Any]]:
     return [m for m in ms if not menu or m["id"] in menu or m["id"] == "default"]
 
 
+#: the two-step variant (brief 178e): step 1 is synthesis, default against retiming; step 2 is AMD's own Performance_* implementation strategy sets plus the default.
+TWO_STEP_SYNTH = ["default", "retime"]
+#: AMD strategy sets for stacked-silicon (SLR) parts: they only differ from the single-die sets on multi-SLR devices, so a two-step run on a monolithic part leaves them out
+SLR_ONLY = ("Performance_BalanceSLLs", "Performance_BalanceSLRs", "Performance_HighUtilSLRs", "Performance_SpreadSLLs")
+
+
+def performance_menu() -> list[str]:
+    """Step 2's menu for ``--mode two-step``: the default, then every measured ``Performance_*`` strategy except the SLR-only ones, in the order of
+    the strategy file (the order a stop-at-first-pass rule walks). Empty list of strategies until ``strategies`` has been run."""
+    if not STRATEGIES.exists():
+        return ["default"]
+    names = [n for n in json.loads(STRATEGIES.read_text()).get("impl", {}) if n.startswith("Performance_") and n not in SLR_ONLY]
+    return ["default"] + ["amd:" + n for n in names]
+
+
+def two_step_pick(synth: list[dict[str, Any]]) -> dict[str, Any]:
+    """Step 1's choice from the two synthesis results: the better by the tournament's own ``score_key`` (0.05 ns WNS bucket, then area, then menu order, so
+    an identical netlist, or a tie, keeps the default)."""
+    two = [c for c in synth if c["id"] in TWO_STEP_SYNTH and c.get("status") == "ok"]
+    if not two:
+        raise SystemExit("tournament: two-step needs a completed default or retime synthesis")
+    return rank(two, 1)[0]
+
+
 # ---- scoring ------------------------------------------------------------------------------------------------------------------------
 def p_pass(wns: float | None, stage: str) -> float | None:
     """Brief 177's shadow predictor rule_v0 (an unfitted prior), so the tournament's early score and 177's are the same number."""
@@ -337,7 +361,7 @@ def run_children(jobs: list[dict[str, Any]], peak_g: float, max_children: int = 
 
 
 def run(spec: dict[str, Any], stage: str, menu: list[str] | None, k: int, jobs: int, src: str | None = None, take: bool = True,
-        out: Path | None = None, tag: str = "") -> dict[str, Any]:
+        out: Path | None = None, tag: str = "", stop_at_pass: bool = False) -> dict[str, Any]:
     out = out or WORK / spec["name"] / (stage + (("_" + tag) if tag else ""))
     out.mkdir(parents=True, exist_ok=True)
     cands = synth_candidates(spec, menu) if stage == "synth" else impl_candidates(menu)
@@ -375,11 +399,15 @@ def run(spec: dict[str, Any], stage: str, menu: list[str] | None, k: int, jobs: 
                 f"{(datetime.datetime.now() + datetime.timedelta(minutes=5 * len(cands))):%H:%M}, peak {os.environ.get('TOURNAMENT_IMPL_PEAK', '4')}G")
         lock = take_slot(text) if take else None
         try:
-            for c in cands:
+            for i, c in enumerate(cands):
                 wd = Path(c["wd"])
                 wd.mkdir(parents=True, exist_ok=True)
                 (wd / "run.tcl").write_text(impl_tcl(WORK / spec["name"] / "synth" / c["synth"] / "post_synth.dcp", c, wd))
                 run_children([{"tcl": wd / "run.tcl", "log": wd / "vivado.log"}], float(os.environ.get("TOURNAMENT_IMPL_PEAK", "4")), 1)
+                if stop_at_pass and (parse(wd).get("wns_ns") is not None and parse(wd)["wns_ns"] >= 0):   # brief 178e: stop at the first set that meets timing
+                    spec["_skipped"] = spec.get("_skipped", []) + [{"id": x["id"], "reason": f"stopped early: {c['id']} met timing (WNS >= 0)"} for x in cands[i + 1:]]
+                    cands = cands[:i + 1]
+                    break
         finally:
             if lock:
                 release_slot(lock, prefix)
@@ -403,6 +431,20 @@ def run(spec: dict[str, Any], stage: str, menu: list[str] | None, k: int, jobs: 
             f.write(json.dumps({"design": spec["name"], "stage": stage, "id": c["id"], "rank": c["rank"], "p_pass": c.get("p_pass"),
                                 "wns_ns": c.get("wns_ns"), "kept": c["kept"], "routed_wns_ns": None}) + "\n")
     return rec
+
+
+def run_two_step(spec: dict[str, Any], take: bool = True, stop_at_pass: bool = False, tag: str = "two_step") -> dict[str, Any]:
+    """Brief 178e. Step 1: synthesis, default against retiming (2 runs, light class on xc7, one at a time above 2 GiB). Step 2: on the better netlist,
+    AMD's ``Performance_*`` implementation sets and the default, each once (``performance_menu``), optionally stopping at the first set whose WNS is at
+    least 0. Returns the step 2 record with the step 1 choice and the cost of both steps."""
+    s1 = run(spec, "synth", TWO_STEP_SYNTH, 1, 2, take=take, tag="two_step")
+    pick = two_step_pick(s1["candidates"])
+    s2 = run(spec, "impl", performance_menu(), 1, 1, src=pick["id"], take=take, tag=tag, stop_at_pass=stop_at_pass)
+    s2["two_step"] = {"step1_pick": pick["id"], "step1_candidates": [{k: c.get(k) for k in ("id", "wns_ns", "lut", "ff", "runtime_s")} for c in s1["candidates"]],
+                      "step1_cpu_s": s1["cpu_s"], "step2_cpu_s": s2["cpu_s"], "stop_at_pass": stop_at_pass}
+    out = WORK / spec["name"] / ("impl_" + tag) / "tournament.json"
+    out.write_text(json.dumps(s2, indent=1, default=str))
+    return s2
 
 
 PROBE_TCL = '''set_param general.maxThreads 1
@@ -540,13 +582,16 @@ def main(argv: list[str] | None = None) -> int:
     for name in ("plan", "run"):
         p = sub.add_parser(name)
         p.add_argument("spec")
-        p.add_argument("--stage", choices=("synth", "impl"), required=True)
+        p.add_argument("--stage", choices=("synth", "impl"), default="synth")
         p.add_argument("--menu", help="comma list of candidate ids (default is always included)")
         p.add_argument("--k", type=int, default=2)
         p.add_argument("--jobs", type=int, default=3, help="children at once under the one slot (max 4)")
         p.add_argument("--from", dest="src", help="impl: the synthesis candidate whose checkpoint to implement")
         p.add_argument("--tag", default="", help="impl: output directory suffix (several impl runs of one design)")
         p.add_argument("--no-slot", action="store_true", help="the caller already holds a slot (tests, scripted sweeps)")
+        p.add_argument("--mode", choices=("full", "two-step"), default="full",
+                       help="full: the whole menu (default). two-step (brief 178e): synthesis default vs retime, then AMD Performance_* sets on the better netlist; ignores --stage/--menu/--k/--from")
+        p.add_argument("--stop-at-pass", action="store_true", help="two-step: stop place and route at the first set whose WNS is at least 0")
     sub.add_parser("strategies", help="probe AMD's own -strategy sets in Vivado")
     tr = sub.add_parser("triage", help="classify a design easy / marginal / hard before any candidate runs")
     tr.add_argument("spec")
@@ -566,6 +611,14 @@ def main(argv: list[str] | None = None) -> int:
         print(json.dumps(triage(spec, a.default_wns, a.default_wns is not None), indent=1))
         return 0
     menu = a.menu.split(",") if a.menu else None
+    if a.mode == "two-step":
+        if a.cmd == "plan":
+            print(json.dumps({"mode": "two-step", "step1_synth": TWO_STEP_SYNTH, "step2_impl": performance_menu(), "stop_at_pass": a.stop_at_pass}, indent=1))
+            return 0
+        rec = run_two_step(spec, take=not a.no_slot, stop_at_pass=a.stop_at_pass)
+        print(json.dumps({"design": rec["design"], "mode": "two-step", "winner": rec["winner"], "step1_pick": rec["two_step"]["step1_pick"],
+                          "cpu_s": rec["two_step"]["step1_cpu_s"] + rec["two_step"]["step2_cpu_s"], "wall_s": rec["wall_s"]}))
+        return 0
     if a.cmd == "plan":
         cs = synth_candidates(spec, menu) if a.stage == "synth" else impl_candidates(menu)
         print(json.dumps({"stage": a.stage, "candidates": cs, "skipped": spec.get("_skipped", [])}, indent=1))
