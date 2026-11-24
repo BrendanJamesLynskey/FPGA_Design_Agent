@@ -66,7 +66,7 @@ STAT_DOC = {
     "ord.fifo_ofl": "order FIFO overflows and watchdog releases (never seen)",
     "ord.pz_unres": "order frames poisoned because a speculative frame had no risk verdict by its last word",
     "ord.late": "aborts that found no order frame in flight",
-    "rp.frames": "replay frames sent", "rp.stat": "bits 7:0 replay writes committed and executed; bit 8 replay busy; bits 31:16 replay frames skipped for a bad length (rp_err)",
+    "rp.frames": "replay frames sent since reset (NOT cleared by CLR_CNT, only by reset: read it before and after a replay and subtract; brief 172)", "rp.stat": "bits 7:0 replay writes committed and executed; bit 8 replay busy; bits 31:16 replay frames skipped for a bad length (rp_err)",
     "lat.last": "last order latency in clocks: MAC start strobe of the order frame minus the clock of the last payload word at the Mold receiver's input (s_eof of udp_strip); negative when the order started before its packet ended",
     "lat.min": "smallest non-negative latency since the clear", "lat.max": "largest", "lat.count": "orders measured", "lat.neg": "orders that started before their packet ended",
     "ts.eof": "core-clock stamp of the last packet end at the Mold receiver's input", "ts.go": "stamp of the last order `go`", "ts.sop": "stamp of the last order's MAC start strobe",

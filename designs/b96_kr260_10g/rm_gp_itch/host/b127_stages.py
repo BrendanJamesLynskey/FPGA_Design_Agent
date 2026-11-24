@@ -47,6 +47,7 @@ class Runner:
 def play(run: Runner, cfg: Cfg, frames: list[tuple], *, spec=False, strict=False, first=True, read_cap=True, prefix="", cap_slots=8) -> dict:
     """Configure (when `first`), then load and play the frames in chunks that fit the replay memory, and read the counters and the capture ring after the last chunk."""
     res = {}
+    base = None
     chunks = H.split_frames_for_memory(frames)
     for i, ch in enumerate(chunks):
         p = B.Plan()
@@ -54,6 +55,7 @@ def play(run: Runner, cfg: Cfg, frames: list[tuple], *, spec=False, strict=False
             p.link()
         if first and i == 0:
             B.configure(p, cfg, spec=spec, strict=strict)
+            rp_baseline(p, prefix)
         B.load_replay(p, H.replay_image(ch))
         B.start_replay(p, wait_ms=run.wait_ms(200), frames=len(ch))
         p.d(sum(g for _, g, *_ in ch) * 7 + len(ch) * 200 * 7 + 20_000)       # the replay's own time, generously (clocks of 6.2 ns -> ns, upper bound)
@@ -62,7 +64,11 @@ def play(run: Runner, cfg: Cfg, frames: list[tuple], *, spec=False, strict=False
             if read_cap:
                 B.read_capture(p, slots=cap_slots, prefix=prefix)
         res = run.execute(p)
+        if i == 0:
+            base = res                          # the player's counter before the first chunk (the plan of chunk 0 read it); the result of the LAST chunk is the one returned
         run.link_ready = True
+    if first:
+        res[prefix + "base.rp.frames"] = base[prefix + "base.rp.frames"]
     return res
 
 
@@ -93,6 +99,19 @@ def _safety(res: dict, reasons: list[str], *, allow_poison=False, prefix="") -> 
                 reasons.append(f"{k} = {res[prefix + k]}, expected 0")
 
 
+def rp_baseline(p: B.Plan, prefix: str = "") -> B.Plan:
+    """Read the replay player's frame counter into the plan as `<prefix>base.rp.frames`. `rp.frames` is NOT cleared by CLR_CNT (rtl/tx_mux.sv: only the reset clears it), so it counts every frame
+    played since the build was loaded; a stage that checks "frames played" compares the rise over its own replay with the number it sent, never the absolute value (brief 172: board run B of brief 127,
+    stage rate, "frames played 4634 of 1900": 2734 frames of the earlier stages plus its own 1900)."""
+    B.snapshot(p)
+    p.r(B.STAT["rp.frames"], prefix + "base.rp.frames")
+    return p
+
+
+def frames_played(res: dict, prefix: str = "") -> int:
+    return res[prefix + "rp.frames"] - res[prefix + "base.rp.frames"]
+
+
 def stage_smoke(run: Runner, *, n_msgs=60, spec=False, seed=101) -> dict:
     """(a) A short seeded session through the whole chain: every counter of brief 110's path equals the model's, every captured order frame equals the model's frame byte for byte, the safety counters are 0."""
     cfg = stage_cfg()
@@ -109,8 +128,8 @@ def stage_smoke(run: Runner, *, n_msgs=60, spec=False, seed=101) -> dict:
     _safety(res, reasons, allow_poison=spec)
     if res["ord.sent"] != len(m.orders):
         reasons.append(f"orders sent {res['ord.sent']}, model {len(m.orders)}")
-    if res["rp.frames"] != len(frames):
-        reasons.append(f"frames played {res['rp.frames']} of {len(frames)}")
+    if frames_played(res) != len(frames):
+        reasons.append(f"frames played {frames_played(res)} of {len(frames)}")
     return verdict("smoke", True, reasons, {"packets": len(items), "orders_model": len(m.orders), "orders_sent": res["ord.sent"], "aborted_speculative": res["ord.pz_abort"], "capture": chk,
                                             "lat_hist_nonzero": {k: v for k, v in res.items() if k.startswith("lat.hist") and v}})
 
@@ -232,6 +251,7 @@ def stage_rate(run: Runner, *, passes=100) -> dict:
         p.link()
     B.configure(p, cfg, rp_loops=passes)
     B.load_replay(p, img)
+    rp_baseline(p)
     B.start_replay(p, wait_ms=run.wait_ms(2000), frames=len(frames))
     p.d(passes * len(frames) * 20 * 7 + 30_000)
     B.read_stats(p)
@@ -240,14 +260,15 @@ def stage_rate(run: Runner, *, passes=100) -> dict:
     reasons = []
     want = passes * len(frames)
     # each pass repeats the same packets: after the first pass they are duplicates (dropped by the Mold layer, counted): the point is the receive and adapter path at line rate
-    if res["rp.frames"] != want:
-        reasons.append(f"frames played {res['rp.frames']} of {want}")
+    if frames_played(res) != want:
+        reasons.append(f"frames played {frames_played(res)} of {want}")
     if res["us.fwd"] != want:
         reasons.append(f"frames forwarded {res['us.fwd']} of {want}")
     for k in ("us.bad_fcs", "us.cut", "us.orphan", "itch.evdrop", "itch.pkt_err"):
         if res[k]:
             reasons.append(f"{k} = {res[k]}, expected 0")
-    return verdict("rate", True, reasons, {"frames": want, "frame_bytes": [len(f) + 4 for f, *_ in frames][:3], "evdrop": res["itch.evdrop"], "dup": res["itch.dup"]})
+    return verdict("rate", True, reasons, {"frames": want, "frame_bytes": [len(f) + 4 for f, *_ in frames][:3], "evdrop": res["itch.evdrop"], "dup": res["itch.dup"],
+                                          "rp_frames_before": res["base.rp.frames"], "rp_frames_after": res["rp.frames"]})
 
 
 def stage_risk(run: Runner, *, passes=60) -> dict:

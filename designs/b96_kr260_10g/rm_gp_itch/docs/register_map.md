@@ -237,7 +237,7 @@ The two windows follow the same rules as the base map: **unmapped addresses** (0
 | ISTAT66 | 0x508 | ord.fifo_ofl | order FIFO overflows and watchdog releases (never seen) |
 | ISTAT67 | 0x50C | ord.pz_unres | order frames poisoned because a speculative frame had no risk verdict by its last word |
 | ISTAT68 | 0x510 | ord.late | aborts that found no order frame in flight |
-| ISTAT69 | 0x514 | rp.frames | replay frames sent |
+| ISTAT69 | 0x514 | rp.frames | replay frames sent since reset (NOT cleared by CLR_CNT, only by reset: read it before and after a replay and subtract; brief 172) |
 | ISTAT70 | 0x518 | rp.stat | bits 7:0 replay writes committed and executed; bit 8 replay busy; bits 31:16 replay frames skipped for a bad length (rp_err) |
 | ISTAT71 | 0x51C | lat.last | last order latency in clocks: MAC start strobe of the order frame minus the clock of the last payload word at the Mold receiver's input (s_eof of udp_strip); negative when the order started before its packet ended |
 | ISTAT72 | 0x520 | lat.min | smallest non-negative latency since the clear |
