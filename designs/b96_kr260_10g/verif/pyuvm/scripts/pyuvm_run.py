@@ -3,6 +3,7 @@
     pyuvm_run.py build <build_dir> [<rtl_dir>]                 compile the RTL (default: the design's rtl/) and the top
     pyuvm_run.py run <build_dir> <test> <seed> [<out_dir>]     one UVM test, one seed; exit 0 = pass
 
+SIM=verilator builds the top with Verilator (5.036 or newer; brief 146); PYUVM_COV=1 adds --coverage (line, toggle) and each run leaves <test_dir>/coverage.dat.
 PYUVM_WAVES=1 builds and runs with a waveform dump (Icarus writes <build_dir>/tb_pyuvm_top.fst, viewable with GTKWave).
 The Python environment needs cocotb 2.0.1, pyuvm and cocotb-coverage (see ../README.md, Reproduce)."""
 from __future__ import annotations
@@ -24,11 +25,20 @@ def runner():
     return get_runner(os.environ.get("SIM", "icarus"))
 
 
+def _build_args() -> list[str]:
+    if os.environ.get("SIM", "icarus") != "verilator":
+        return ["-g2012"]
+    a = ["-Wno-fatal", "--timing"]
+    if os.environ.get("PYUVM_COV"):
+        a += ["--coverage"]
+    return a
+
+
 def _built(build_dir: Path, rtl_dir: Path | None, always: bool):
     rtl_dir = rtl_dir or DESIGN / "rtl"
     r = runner()
     r.build(sources=[rtl_dir / n for n in RTL_FILES] + [PYUVM / "tb" / "tb_pyuvm_top.sv"], hdl_toplevel="tb_pyuvm_top", build_dir=build_dir,
-            build_args=["-g2012"], always=always, waves=bool(os.environ.get("PYUVM_WAVES")))
+            build_args=_build_args(), always=always, waves=bool(os.environ.get("PYUVM_WAVES")))
     return r
 
 
@@ -38,7 +48,7 @@ def build(build_dir: Path, rtl_dir: Path | None = None) -> float:
     return time.time() - t0
 
 
-def run(build_dir: Path, test: str, seed: int, out_dir: Path | None = None, rtl_dir: Path | None = None) -> tuple[bool, float, Path]:
+def run(build_dir: Path, test: str, seed: int, out_dir: Path | None = None, rtl_dir: Path | None = None, test_dir: Path | None = None) -> tuple[bool, float, Path]:
     """Returns (passed, wall seconds, results.xml). The simulator process runs the one cocotb test named `test` with SEED=seed."""
     from cocotb_tools.runner import get_results
     env = {"SEED": str(seed), "PYTHONPATH": str(ROOT), "COCOTB_RANDOM_SEED": str(seed)}
@@ -48,7 +58,7 @@ def run(build_dir: Path, test: str, seed: int, out_dir: Path | None = None, rtl_
     t0 = time.time()
     try:
         _built(build_dir, rtl_dir, False).test(hdl_toplevel="tb_pyuvm_top", test_module="designs.b96_kr260_10g.verif.pyuvm.tests.pcs_mac_pyuvm_cocotb", testcase=test, build_dir=build_dir,
-                      test_dir=build_dir, results_xml=xml, extra_env=env, seed=seed, test_args=[], waves=bool(os.environ.get("PYUVM_WAVES")))
+                      test_dir=test_dir or build_dir, results_xml=xml, extra_env=env, seed=seed, test_args=[], waves=bool(os.environ.get("PYUVM_WAVES")))
     except (Exception, SystemExit) as e:           # the runner raises (or exits) when a test fails
         print(f"runner: {type(e).__name__}: {e}", file=sys.stderr)
         wall = time.time() - t0

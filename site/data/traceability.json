@@ -2839,19 +2839,41 @@
       "written_by": null
      },
      {
-      "detail": "no evidence file named (planned: not planned in a brief yet)",
-      "evidence": null,
-      "id": "V-COV-PLANNED",
+      "detail": "value = 217",
+      "evidence": {
+       "exists": true,
+       "file": "results/146_verilator_cov/summary.txt"
+      },
+      "id": "V-COV-FUNC",
       "instrument": null,
       "method": "coverage_bin",
-      "planned": "not planned in a brief yet",
+      "planned": null,
       "requirements": [
        "B96-F-PCS",
        "B96-F-MAC"
       ],
-      "status": "not_run",
-      "title": "Functional coverage bins and code coverage of the PCS and MAC bench (no coverage run recorded)",
-      "value": null,
+      "status": "pass",
+      "title": "Functional coverage of the pyuvm bench of the PCS and MAC (brief 123 bench, brief 146 regression on Verilator 5.048; 42 runs, every one of the 217 bins hit; the Icarus run of brief 123 hit the same 217)",
+      "value": 217.0,
+      "written_by": null
+     },
+     {
+      "detail": "design.line.percent = 81.25; design.branch.percent = 85.34; design.expr.percent = 92.47; design.toggle.percent = 96.33",
+      "evidence": {
+       "exists": true,
+       "file": "results/146_verilator_cov/coverage_summary.json"
+      },
+      "id": "V-COV-CODE",
+      "instrument": null,
+      "method": "coverage_bin",
+      "planned": null,
+      "requirements": [
+       "B96-F-PCS",
+       "B96-F-MAC"
+      ],
+      "status": "pass",
+      "title": "RTL code coverage of pcs_tx, pcs_rx, mac64_tx, mac64_rx and b96_pkg by the same 42-run regression (Verilator 5.048 --coverage, merged; brief 146). Floors are the measured design-wide percentages rounded down (line 81.25, branch 85.34, expression 92.47, toggle 96.33); every open point is explained in results/146_verilator_cov/README.md (unreachable by design, one deliberately not driven, or a Verilator reporting artefact reproduced in a 15-line test)",
+      "value": true,
       "written_by": null
      },
      {
@@ -3716,7 +3738,7 @@
       "written_by": null
      }
     ],
-    "notes": "Variants. Unless a requirement says otherwise, \"the default build\" is RATE_MATCH = 0 (the board-proven 97C receive path) and \"the rate-matched build\" is rm_gp (RATE_MATCH = 1, RM_OWN = 1). Board evidence is one KR260 on a short optical loopback; nothing has run against a network card. Briefs 112 (UVM bench), 115 (formal proofs of the rate matcher) and 123 (pyuvm bench) are merged and their tests are in the recorded run; the bound SVA checkers in simulation and the coverage run have no evidence and are shown as not run.",
+    "notes": "Variants. Unless a requirement says otherwise, \"the default build\" is RATE_MATCH = 0 (the board-proven 97C receive path) and \"the rate-matched build\" is rm_gp (RATE_MATCH = 1, RM_OWN = 1). Board evidence is one KR260 on a short optical loopback; nothing has run against a network card. Briefs 112 (UVM bench), 115 (formal proofs of the rate matcher) and 123 (pyuvm bench) are merged and their tests are in the recorded run; the bound SVA checkers in simulation have no evidence and are shown as not run; the functional and code coverage of the pyuvm bench on Verilator (brief 146) is recorded.",
     "path": "designs/b96_kr260_10g",
     "requirements": [
      {
@@ -3737,7 +3759,8 @@
        "V-SVA-PLANNED",
        "V-UVM-PLANNED",
        "V-PYUVM",
-       "V-COV-PLANNED",
+       "V-COV-FUNC",
+       "V-COV-CODE",
        "V-REVIEW-96"
       ],
       "kind": "functional",
@@ -3748,6 +3771,7 @@
       "mix_satisfied": false,
       "own_tests_only": true,
       "passing_methods": [
+       "coverage_bin",
        "sim_test",
        "uvm_test"
       ],
@@ -3777,7 +3801,8 @@
        "V-SVA-PLANNED",
        "V-UVM-PLANNED",
        "V-PYUVM",
-       "V-COV-PLANNED",
+       "V-COV-FUNC",
+       "V-COV-CODE",
        "V-REVIEW-96"
       ],
       "kind": "functional",
@@ -3788,6 +3813,7 @@
       "mix_satisfied": false,
       "own_tests_only": true,
       "passing_methods": [
+       "coverage_bin",
        "sim_test",
        "uvm_test"
       ],
@@ -4816,8 +4842,8 @@
        "bounded": 0,
        "fail": 0,
        "not_in_run": 0,
-       "not_run": 1,
-       "pass": 1,
+       "not_run": 0,
+       "pass": 3,
        "skipped": 0,
        "stale": 0,
        "unapproved": 0
@@ -4910,7 +4936,7 @@
       "stale_evidence": 14
      },
      "human_reviews": 0,
-     "items": 60,
+     "items": 61,
      "lean": {
       "approved": 0,
       "build_sources": [
@@ -36586,19 +36612,41 @@
       "written_by": null
      },
      {
-      "detail": "no evidence file named (planned: not planned in a brief yet)",
-      "evidence": null,
-      "id": "V-COV-PLANNED",
+      "detail": "value = 217",
+      "evidence": {
+       "exists": true,
+       "file": "results/146_verilator_cov/summary.txt"
+      },
+      "id": "V-COV-FUNC",
       "instrument": null,
       "method": "coverage_bin",
-      "planned": "not planned in a brief yet",
+      "planned": null,
       "requirements": [
        "B96-F-PCS",
        "B96-F-MAC"
       ],
-      "status": "not_run",
-      "title": "Functional coverage bins and code coverage of the PCS and MAC bench (no coverage run recorded)",
-      "value": null,
+      "status": "pass",
+      "title": "Functional coverage of the pyuvm bench of the PCS and MAC (brief 123 bench, brief 146 regression on Verilator 5.048; 42 runs, every one of the 217 bins hit; the Icarus run of brief 123 hit the same 217)",
+      "value": 217.0,
+      "written_by": null
+     },
+     {
+      "detail": "design.line.percent = 81.25; design.branch.percent = 85.34; design.expr.percent = 92.47; design.toggle.percent = 96.33",
+      "evidence": {
+       "exists": true,
+       "file": "results/146_verilator_cov/coverage_summary.json"
+      },
+      "id": "V-COV-CODE",
+      "instrument": null,
+      "method": "coverage_bin",
+      "planned": null,
+      "requirements": [
+       "B96-F-PCS",
+       "B96-F-MAC"
+      ],
+      "status": "pass",
+      "title": "RTL code coverage of pcs_tx, pcs_rx, mac64_tx, mac64_rx and b96_pkg by the same 42-run regression (Verilator 5.048 --coverage, merged; brief 146). Floors are the measured design-wide percentages rounded down (line 81.25, branch 85.34, expression 92.47, toggle 96.33); every open point is explained in results/146_verilator_cov/README.md (unreachable by design, one deliberately not driven, or a Verilator reporting artefact reproduced in a 15-line test)",
+      "value": true,
       "written_by": null
      },
      {
@@ -37463,7 +37511,7 @@
       "written_by": null
      }
     ],
-    "notes": "Variants. Unless a requirement says otherwise, \"the default build\" is RATE_MATCH = 0 (the board-proven 97C receive path) and \"the rate-matched build\" is rm_gp (RATE_MATCH = 1, RM_OWN = 1). Board evidence is one KR260 on a short optical loopback; nothing has run against a network card. Briefs 112 (UVM bench), 115 (formal proofs of the rate matcher) and 123 (pyuvm bench) are merged and their tests are in the recorded run; the bound SVA checkers in simulation and the coverage run have no evidence and are shown as not run.",
+    "notes": "Variants. Unless a requirement says otherwise, \"the default build\" is RATE_MATCH = 0 (the board-proven 97C receive path) and \"the rate-matched build\" is rm_gp (RATE_MATCH = 1, RM_OWN = 1). Board evidence is one KR260 on a short optical loopback; nothing has run against a network card. Briefs 112 (UVM bench), 115 (formal proofs of the rate matcher) and 123 (pyuvm bench) are merged and their tests are in the recorded run; the bound SVA checkers in simulation have no evidence and are shown as not run; the functional and code coverage of the pyuvm bench on Verilator (brief 146) is recorded.",
     "path": "designs/b96_kr260_10g",
     "requirements": [
      {
@@ -37484,7 +37532,8 @@
        "V-SVA-PLANNED",
        "V-UVM-PLANNED",
        "V-PYUVM",
-       "V-COV-PLANNED",
+       "V-COV-FUNC",
+       "V-COV-CODE",
        "V-REVIEW-96"
       ],
       "kind": "functional",
@@ -37495,6 +37544,7 @@
       "mix_satisfied": false,
       "own_tests_only": true,
       "passing_methods": [
+       "coverage_bin",
        "sim_test",
        "uvm_test"
       ],
@@ -37524,7 +37574,8 @@
        "V-SVA-PLANNED",
        "V-UVM-PLANNED",
        "V-PYUVM",
-       "V-COV-PLANNED",
+       "V-COV-FUNC",
+       "V-COV-CODE",
        "V-REVIEW-96"
       ],
       "kind": "functional",
@@ -37535,6 +37586,7 @@
       "mix_satisfied": false,
       "own_tests_only": true,
       "passing_methods": [
+       "coverage_bin",
        "sim_test",
        "uvm_test"
       ],
@@ -38563,8 +38615,8 @@
        "bounded": 0,
        "fail": 0,
        "not_in_run": 0,
-       "not_run": 1,
-       "pass": 1,
+       "not_run": 0,
+       "pass": 3,
        "skipped": 0,
        "stale": 0,
        "unapproved": 0
@@ -38657,7 +38709,7 @@
       "stale_evidence": 14
      },
      "human_reviews": 0,
-     "items": 60,
+     "items": 61,
      "lean": {
       "approved": 0,
       "build_sources": [
