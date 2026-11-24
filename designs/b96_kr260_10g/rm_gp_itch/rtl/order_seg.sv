@@ -26,6 +26,8 @@ module order_seg (
     input  logic [31:0] f_ref,
     input  logic        commit,
     input  logic        abort,
+    input  logic        tx_unsent,       // brief 176, one clock: the transmit side poisoned the frame that just ended (the trigger frame's bad FCS, STRICT without a verdict, FIFO overflow): its sequence number is given back
+    input  logic        tx_drop,         // brief 176, one clock, in the clock of the frame's first word: the multiplexer drops this frame whole (the MAC is owned): it consumes no sequence number
     input  logic [7:0]  cfg_tif, cfg_display, cfg_capacity, cfg_ise, cfg_cross, cfg_custtype,
     input  logic [31:0] cfg_minqty,
     // segment template (this stand-in) and software bus (tcp_fast only; read as 0 here)
@@ -94,7 +96,7 @@ module order_seg (
     // ---- the segment
     logic [3:0]  si;
     logic [31:0] snd_nxt;
-    logic        ab_l;
+    logic        ab_l, drop_l;
     logic [63:0] w;
     always_comb begin
         w = '0;
@@ -122,12 +124,13 @@ module order_seg (
     always_ff @(posedge clk) begin
         o_v <= 1'b0; o_sof <= 1'b0; o_eof <= 1'b0; o_poison <= 1'b0; o_unres <= 1'b0;
         if (rst) begin
-            act <= 1'b0; si <= '0; snd_nxt <= '0; ab_l <= 1'b0; o_d <= '0; o_keep <= '0;
+            act <= 1'b0; si <= '0; snd_nxt <= '0; ab_l <= 1'b0; drop_l <= 1'b0; o_d <= '0; o_keep <= '0;
         end else begin
-            if (tpl_load) snd_nxt <= tpl_seq0;
             if (abort && act) ab_l <= 1'b1;
+            if (tx_drop) drop_l <= 1'b1;
+            if (tx_unsent) snd_nxt <= snd_nxt - 32'd59;      // brief 176: the multiplexer poisoned the frame that was counted as sent; it always arrives after that frame's own +59 and before the next frame's header
             if (start) begin
-                act <= 1'b1; si <= 4'd1; ab_l <= 1'b0;
+                act <= 1'b1; si <= 4'd1; ab_l <= 1'b0; drop_l <= 1'b0;
                 o_v <= 1'b1; o_sof <= 1'b1; o_d <= {tpl_my_mac[15:0], tpl_venue_mac}; o_keep <= 8'hFF;
             end else if (act) begin
                 o_v <= 1'b1; o_d <= w; o_keep <= 8'hFF;
@@ -135,10 +138,11 @@ module order_seg (
                 if (si == 4'd14) begin
                     act <= 1'b0; o_eof <= 1'b1; o_keep <= 8'h01;
                     o_poison <= ab_l || abort || unres; o_unres <= !(ab_l || abort) && unres;
-                    if (!(ab_l || abort || unres)) snd_nxt <= snd_nxt + 32'd59;
+                    if (!(ab_l || abort || unres || drop_l || tx_drop)) snd_nxt <= snd_nxt + 32'd59;
                 end
             end
         end
+        if (!rst && tpl_load) snd_nxt <= tpl_seq0;       // TCP_LOAD wins over everything above
     end
     logic _unused;
     assign _unused = &{1'b0, ou_late, ou_eof, ou_abort, ou_keep, sw_we, sw_waddr, sw_wdata, sw_raddr, go_spec};

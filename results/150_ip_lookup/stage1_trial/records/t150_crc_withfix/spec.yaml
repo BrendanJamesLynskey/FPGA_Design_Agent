@@ -1,0 +1,229 @@
+name: crc32_checker
+title: CRC-32 checker
+board: nexys_a7_100t
+part: xc7a100tcsg324-1
+top: crc32_checker_top
+clocks:
+- name: clk
+  freq: 100 MHz (CLK100MHZ, 10 ns period)
+  board_pin: E3
+reset:
+  name: rst_n
+  polarity: active low
+  source: CPU_RESETN button, pin C12
+  style: synchronous to clk through a two-flop synchroniser
+parameters:
+  CRC_POLY: '0xEDB88320'
+  ID_VALUE: '0x43524333'
+ports:
+- name: clk
+  direction: input
+  width: 1
+  board_pin_role: CLK100MHZ oscillator, pin E3
+- name: rst_n
+  direction: input
+  width: 1
+  board_pin_role: CPU_RESETN button, pin C12, active low
+- name: leds
+  direction: output
+  width: 16
+  board_pin_role: LED0 to LED15, low 16 bits of the CRC readback, active high
+- name: bus_wr_en
+  direction: input
+  width: 1
+  board_pin_role: internal write strobe from the UART test shell
+- name: bus_addr
+  direction: input
+  width: 8
+  board_pin_role: internal register offset from the UART test shell
+- name: bus_wdata
+  direction: input
+  width: 32
+  board_pin_role: internal write data from the UART test shell
+- name: bus_rd_en
+  direction: input
+  width: 1
+  board_pin_role: internal read strobe from the UART test shell
+- name: bus_rdata
+  direction: output
+  width: 32
+  board_pin_role: internal read data to the UART test shell, registered one clock
+    after bus_rd_en
+behaviour:
+  crc_engine:
+  - State register crc_state is 32 bits and holds the running CRC-32 in reflected
+    form
+  - Each accepted DATA write folds one 32-bit word into crc_state in the same clock
+    as the write is accepted
+  - The word is processed as four bytes, least significant byte first, and bit 0 of
+    each byte first, using polynomial 0xEDB88320
+  - crc_state is initialised to 0xFFFFFFFF by reset and by CTRL clear
+  - The CRC readback value is crc_state XOR 0xFFFFFFFF, which is the standard IEEE
+    802.3 CRC-32 with final XOR
+  registers_access:
+  - A write to CTRL with bit 0 set sets crc_state to 0xFFFFFFFF and bit 0 of CTRL
+    returns to 0 on the next clock
+  - Reads of CRC return the CRC readback value and reads of ID return ID_VALUE
+  - Writes to ID and CRC are ignored, and reads of DATA return 0x00000000
+  leds:
+  - leds[15:0] equals the CRC readback value bits 15 to 0 in every clock cycle
+  reset:
+  - While rst_n is low crc_state is held at 0xFFFFFFFF and the CRC readback reads
+    0x00000000
+registers:
+  map:
+  - offset: '0x00'
+    name: ID
+    access: RO
+    reset: '0x43524333'
+    bits: 31:0 ASCII CRC3 identifier
+  - offset: '0x04'
+    name: DATA
+    access: WO
+    reset: '0x00000000'
+    bits: 31:0 word folded into crc_state on each accepted write; reads return 0
+  - offset: '0x08'
+    name: CRC
+    access: RO
+    reset: '0x00000000'
+    bits: 31:0 crc_state XOR 0xFFFFFFFF
+  - offset: '0x0C'
+    name: CTRL
+    access: WO
+    reset: '0x00000000'
+    bits: 0 CLEAR, write 1 sets crc_state to 0xFFFFFFFF and self-clears; 31:1 ignored
+      on write and read as 0
+timing:
+  clock: 10 ns period at 100 MHz
+  latency:
+    data_write_to_state: crc_state updated on the clock edge that accepts the DATA
+      write, one clock per word
+    clear_to_state: crc_state reset to 0xFFFFFFFF on the clock edge that accepts the
+      CTRL write
+    read_latency: bus_rdata valid one clock after bus_rd_en
+  closure: setup and hold slack at or above 0 ns at 100 MHz with no failing paths
+    in the implemented design
+resources_expected:
+  lut: 200
+  ff: 100
+  bram: 0
+  dsp: 0
+  note: estimates for a 32-bit bitwise CRC-32 datapath plus register decode and LED
+    output
+assumptions:
+- assumption: The UART test shell is provided by the test harness and is outside this
+    block; this block sees only the internal bus_* ports
+  reason: The request names the shell as the transport but does not ask for its RTL
+- assumption: The shell can issue one DATA write per clock with no ready or wait signal
+  reason: The request asks for one word per clock, so the block has no backpressure
+- assumption: bus_rdata is registered and valid one clock after bus_rd_en
+  reason: A registered read path keeps the 32-bit mux off the critical timing path
+    at 100 MHz
+- assumption: The reset is synchronised to clk before use
+  reason: The CPU_RESETN button is asynchronous to clk and a two-flop synchroniser
+    avoids metastability
+- assumption: Resource counts are estimates and are checked by the implementation
+    report, not fixed by this spec
+  reason: Exact LUT and FF counts depend on synthesis and are only known after implementation
+open_questions: []
+requirements:
+- id: REQ-01
+  text: After reset and one CTRL clear the CRC readback equals 0x00000000
+  proof:
+  - simulation
+  - formal
+- id: REQ-02
+  text: The CRC readback after writing a sequence of 32-bit words equals the value
+    from the Python CRC-32 reference model for the same little-endian byte stream
+  proof:
+  - simulation
+- id: REQ-03
+  text: Each accepted DATA write updates crc_state on the clock edge that accepts
+    the write
+  proof:
+  - simulation
+  - formal
+- id: REQ-04
+  text: A CTRL write with bit 0 set returns crc_state to 0xFFFFFFFF on the clock edge
+    that accepts the write
+  proof:
+  - simulation
+  - formal
+- id: REQ-05
+  text: The ID register reads 0x43524333 after reset
+  proof:
+  - simulation
+  - hardware
+- id: REQ-06
+  text: While rst_n is low the CRC readback reads 0x00000000
+  proof:
+  - simulation
+  - formal
+- id: REQ-07
+  text: leds[15:0] equals CRC readback bits 15 to 0 in every clock cycle
+  proof:
+  - simulation
+  - hardware
+- id: REQ-08
+  text: The implemented design meets setup timing at 100 MHz with worst negative slack
+    at or above 0 ns
+  proof:
+  - analysis
+- id: REQ-09
+  text: The implemented design uses 0 block RAM tiles and 0 DSP slices
+  proof:
+  - analysis
+- id: REQ-10
+  text: A DATA write accepted in the same clock as a CTRL clear leaves the CRC readback
+    at 0x00000000
+  proof:
+  - simulation
+resolved_questions:
+- question: 'Register map: give the offset, width, reset value and access of every
+    register (ID, DATA, CRC, CTRL)'
+  answer: ID at 0x00 RO reset 0x43524333; DATA at 0x04 WO reset 0x00000000; CRC at
+    0x08 RO reset 0x00000000; CTRL at 0x0C WO reset 0x00000000 with bit 0 CLEAR
+  status: defaulted
+  by: default
+  default_reason: The request names registers and read-back and clear but gives no
+    offsets, so a word-aligned layout with ID first is proposed
+- question: UART test shell baud rate and framing
+  answer: 115200 baud, 8 data bits, no parity, 1 stop bit
+  status: defaulted
+  by: default
+  default_reason: The request does not state a rate; 115200 8N1 is the common default
+    for FPGA USB-UART shells
+- question: Byte order of each 32-bit DATA word fed into the CRC
+  answer: Least significant byte first, bit 0 first within each byte, which matches
+    the Ethernet wire order of a little-endian byte stream
+  status: defaulted
+  by: default
+  default_reason: The request does not define how a word maps to bytes and the reflected
+    CRC depends on this order
+- question: Is the CRC readback the value after the final XOR with 0xFFFFFFFF
+  answer: Yes, readback is the standard CRC-32 with final XOR, so an empty stream
+    reads 0x00000000
+  status: defaulted
+  by: default
+  default_reason: The request says standard Ethernet CRC-32, which includes the final
+    XOR; the raw register is a different value
+- question: Should LED polarity be active high with leds showing the readback bits
+    15 to 0
+  answer: Yes, LED n is lit when readback bit n is 1
+  status: defaulted
+  by: default
+  default_reason: The request says the LEDs show the low 16 bits of the CRC but not
+    the polarity
+- question: 'A DATA write and a CTRL clear in the same clock: which takes effect'
+  answer: CTRL clear takes priority and the DATA word is discarded, so crc_state reads
+    0xFFFFFFFF
+  status: defaulted
+  by: default
+  default_reason: The request does not define the conflict and a single winner keeps
+    the model unambiguous
+- question: Can the shell issue a DATA write on every clock back to back
+  answer: Yes, every accepted write updates crc_state in its clock with no wait states
+  status: defaulted
+  by: default
+  default_reason: The request asks for one word per clock, which only holds if writes
+    are not throttled

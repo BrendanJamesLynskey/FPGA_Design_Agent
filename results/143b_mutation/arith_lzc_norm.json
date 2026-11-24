@@ -1,0 +1,1225 @@
+{
+ "schema": "fpga-design-agent/mutation-score/v1",
+ "target": "arith_lzc_norm",
+ "design": "arith/lzc_norm",
+ "what": "leading-zero count and normaliser, four variants (arith library, brief 139b)",
+ "date": "2026-11-21",
+ "generator": {
+  "name": "flow/mutation_blind.py",
+  "blind_to_tests": true,
+  "seed": 1,
+  "requested": 40,
+  "candidates": 56,
+  "sampled": 40,
+  "operators": [
+   "and_to_or",
+   "band_to_bor",
+   "bit0_to_1",
+   "bit1_to_0",
+   "bor_to_band",
+   "const_minus1",
+   "const_plus1",
+   "eq_to_ne",
+   "ge_to_gt",
+   "ge_to_lt",
+   "gt_to_ge",
+   "gt_to_le",
+   "lt_to_le",
+   "minus_to_plus",
+   "ne_to_eq",
+   "not_removed",
+   "or_to_and",
+   "plus_to_minus",
+   "shl_to_shr",
+   "shr_to_shl",
+   "ternary_swap",
+   "tilde_removed",
+   "xor_to_or"
+  ],
+  "llm_proposals_valid": 0,
+  "llm_proposals_dropped": 0,
+  "rtl_sha256": "4a9edec051f2100598914f0f02ac958056c705b9f907e521f2e13fc341809d87"
+ },
+ "rtl": {
+  "lzc_tree.sv": "e198076f93c41b0fb95feb3f348d70493b8ac212989b95fc23031a0b41ee37fd",
+  "lznorm_loop_barrel.sv": "e3321d2279e8a23b7065453697be8ac2c2f07245acbb4e56615a198480e8a5d8",
+  "lznorm_sel.sv": "64a3727d057df296d3b5fcacfb9e9e65e3a53984d0fba07949d165407d34e4e1",
+  "lznorm_stagewise_pipe.sv": "44f842ff20a6d064943fb577ce269e3c034b3b57d10b7f4eb6d93247a6cccbb5",
+  "lznorm_tree_barrel.sv": "46173ce14af1e1bd017b56148a4010755ec82f2c4f7a3ad937f3694ae70310d1",
+  "lznorm_tree_barrel_2st.sv": "1c28919266e4222ad0121f54743555b44c892b237895629c11962256af74499f"
+ },
+ "rtl_source": "origin/b139b-arith-previvado at dfb4a29cf9 (PR 263; not on main)",
+ "bench": {
+  "description": "the function's exhaustive stream bench (Icarus, every input of each width, 25% idle gaps, latency and order checked) at every variant at widths 3 to 12 (pipeline depth as the library's exhaustive test chooses it), 40 configurations",
+  "baseline_seconds": 3.9,
+  "mutant_timeout_s": 60,
+  "jobs": 1
+ },
+ "timeout_policy": "A bench run that exceeds its time limit is `timed_out`: it is not counted as killed and not as a survivor; it is listed, and the worst-case score counts it as a survivor. A formal run that exceeds its limit is `undecided`, handled the same way. Neither is ever counted as a kill.",
+ "filter": {
+  "method": "miter: BMC, then register-matched induction (yosys equiv_induct), then an unbounded proof (sby)",
+  "bmc_depth": 30,
+  "bmc_limit_s": 60,
+  "prove_limit_s": 180,
+  "configs": [
+   "VARIANT=0 W=5 PIPE=1",
+   "VARIANT=0 W=8 PIPE=1",
+   "VARIANT=0 W=12 PIPE=2",
+   "VARIANT=0 W=16 PIPE=2",
+   "VARIANT=1 W=5 PIPE=1",
+   "VARIANT=1 W=8 PIPE=1",
+   "VARIANT=1 W=12 PIPE=2",
+   "VARIANT=1 W=16 PIPE=2",
+   "VARIANT=2 W=5 PIPE=1",
+   "VARIANT=2 W=8 PIPE=1",
+   "VARIANT=2 W=12 PIPE=2",
+   "VARIANT=2 W=16 PIPE=2",
+   "VARIANT=3 W=5 PIPE=1",
+   "VARIANT=3 W=8 PIPE=1",
+   "VARIANT=3 W=12 PIPE=2",
+   "VARIANT=3 W=16 PIPE=2"
+  ],
+  "assumptions": [
+   "!in_valid || g_in_ready"
+  ],
+  "compared": "in_ready always; out_valid always; out_data when out_valid is high (the stream interface's contract)",
+  "reset": {
+   "port": "rst",
+   "clock": "clk",
+   "cycles": 3,
+   "active": 1
+  },
+  "start_state": "registers without an initial value start at 0 in both versions"
+ },
+ "evaluated": 39,
+ "invalid": 1,
+ "bench_timed_out": 0,
+ "killed_by_simulation": 35,
+ "killed_by_formal_bench": 0,
+ "killed": 35,
+ "survived_after_bench": 4,
+ "equivalent": 4,
+ "real_survivors": 0,
+ "undecided": 0,
+ "score_pct": 100.0,
+ "score_simulation_only_pct": 100.0,
+ "score_worst_case_pct": 100.0,
+ "score_before_filter_pct": 89.74,
+ "formal_bench_bound": false,
+ "invalid_listed": [
+  "lznorm_stagewise_pipe_L74_gt_to_le_9"
+ ],
+ "timed_out_listed": [],
+ "survivors": [
+  {
+   "name": "lznorm_stagewise_pipe_L52_lt_to_le_30",
+   "change": "lznorm_stagewise_pipe.sv line 52: `for (int j = 0; j < IT; j++) begin` became `for (int j = 0; j <= IT; j++) begin` ('<' replaced by '<=')",
+   "verdict": "equivalent",
+   "note": ""
+  },
+  {
+   "name": "lznorm_stagewise_pipe_L76_band_to_bor_24",
+   "change": "lznorm_stagewise_pipe.sv line 76: `assign unused = &{1'b0, v_q[S-1][P-W-1:0]};` became `assign unused = |{1'b0, v_q[S-1][P-W-1:0]};` (bitwise '&' replaced by '|')",
+   "verdict": "equivalent",
+   "note": ""
+  },
+  {
+   "name": "lznorm_stagewise_pipe_L76_bit0_to_1_26",
+   "change": "lznorm_stagewise_pipe.sv line 76: `assign unused = &{1'b0, v_q[S-1][P-W-1:0]};` became `assign unused = &{1'b1, v_q[S-1][P-W-1:0]};` (constant 1'b0 replaced by 1'b1)",
+   "verdict": "equivalent",
+   "note": ""
+  },
+  {
+   "name": "lznorm_tree_barrel_2st_L27_bit0_to_1_29",
+   "change": "lznorm_tree_barrel_2st.sv line 27: `assign xp = {x, {(P - W){1'b0}}};` became `assign xp = {x, {(P - W){1'b1}}};` (constant 1'b0 replaced by 1'b1)",
+   "verdict": "equivalent",
+   "note": ""
+  }
+ ],
+ "rows": [
+  {
+   "name": "lzc_tree_L12_eq_to_ne_10",
+   "file": "lzc_tree.sv",
+   "line": 12,
+   "class": "eq_to_ne",
+   "why": "'==' replaced by '!='",
+   "change": "lzc_tree.sv line 12: `if (P == 2) begin : g_leaf` became `if (P != 2) begin : g_leaf` ('==' replaced by '!=')",
+   "status": "killed",
+   "seconds": 0.3
+  },
+  {
+   "name": "lzc_tree_L13_tilde_removed_21",
+   "file": "lzc_tree.sv",
+   "line": 13,
+   "class": "tilde_removed",
+   "why": "a bitwise negation '~' removed",
+   "change": "lzc_tree.sv line 13: `assign cnt = ~x[1];` became `assign cnt = x[1];` (a bitwise negation '~' removed)",
+   "status": "killed",
+   "seconds": 0.4
+  },
+  {
+   "name": "lzc_tree_L22_bit0_to_1_30",
+   "file": "lzc_tree.sv",
+   "line": 22,
+   "class": "bit0_to_1",
+   "why": "constant 1'b0 replaced by 1'b1",
+   "change": "lzc_tree.sv line 22: `assign cnt = nz_hi ? {1'b0, c_hi} : {1'b1, c_lo};` became `assign cnt = nz_hi ? {1'b1, c_hi} : {1'b1, c_lo};` (constant 1'b0 replaced by 1'b1)",
+   "status": "killed",
+   "seconds": 0.4
+  },
+  {
+   "name": "lzc_tree_L22_ternary_swap_29",
+   "file": "lzc_tree.sv",
+   "line": 22,
+   "class": "ternary_swap",
+   "why": "the two arms of a ?: swapped",
+   "change": "lzc_tree.sv line 22: `assign cnt = nz_hi ? {1'b0, c_hi} : {1'b1, c_lo};` became `assign cnt = nz_hi ? {1'b1, c_lo} : {1'b0, c_hi};` (the two arms of a ?: swapped)",
+   "status": "killed",
+   "seconds": 0.3
+  },
+  {
+   "name": "lznorm_loop_barrel_L22_bit1_to_0_22",
+   "file": "lznorm_loop_barrel.sv",
+   "line": 22,
+   "class": "bit1_to_0",
+   "why": "constant 1'b1 replaced by 1'b0",
+   "change": "lznorm_loop_barrel.sv line 22: `assign in_ready = 1'b1;` became `assign in_ready = 1'b0;` (constant 1'b1 replaced by 1'b0)",
+   "status": "killed",
+   "seconds": 1.1
+  },
+  {
+   "name": "lznorm_loop_barrel_L26_bit0_to_1_16",
+   "file": "lznorm_loop_barrel.sv",
+   "line": 26,
+   "class": "bit0_to_1",
+   "why": "constant 1'b0 replaced by 1'b1",
+   "change": "lznorm_loop_barrel.sv line 26: `found = 1'b0;` became `found = 1'b1;` (constant 1'b0 replaced by 1'b1)",
+   "status": "killed",
+   "seconds": 1.2
+  },
+  {
+   "name": "lznorm_loop_barrel_L28_and_to_or_23",
+   "file": "lznorm_loop_barrel.sv",
+   "line": 28,
+   "class": "and_to_or",
+   "why": "'&&' replaced by '||'",
+   "change": "lznorm_loop_barrel.sv line 28: `if (!found && x[i]) begin` became `if (!found || x[i]) begin` ('&&' replaced by '||')",
+   "status": "killed",
+   "seconds": 1.2
+  },
+  {
+   "name": "lznorm_loop_barrel_L28_not_removed_16",
+   "file": "lznorm_loop_barrel.sv",
+   "line": 28,
+   "class": "not_removed",
+   "why": "a logical negation '!' removed",
+   "change": "lznorm_loop_barrel.sv line 28: `if (!found && x[i]) begin` became `if (found && x[i]) begin` (a logical negation '!' removed)",
+   "status": "killed",
+   "seconds": 1.1
+  },
+  {
+   "name": "lznorm_loop_barrel_L29_minus_to_plus_29",
+   "file": "lznorm_loop_barrel.sv",
+   "line": 29,
+   "class": "minus_to_plus",
+   "why": "'-' replaced by '+'",
+   "change": "lznorm_loop_barrel.sv line 29: `lz_c  = LW'(W - 1 - i);` became `lz_c  = LW'(W + 1 - i);` ('-' replaced by '+')",
+   "status": "killed",
+   "seconds": 1.0
+  },
+  {
+   "name": "lznorm_loop_barrel_L29_minus_to_plus_33",
+   "file": "lznorm_loop_barrel.sv",
+   "line": 29,
+   "class": "minus_to_plus",
+   "why": "'-' replaced by '+'",
+   "change": "lznorm_loop_barrel.sv line 29: `lz_c  = LW'(W - 1 - i);` became `lz_c  = LW'(W - 1 + i);` ('-' replaced by '+')",
+   "status": "killed",
+   "seconds": 1.1
+  },
+  {
+   "name": "lznorm_loop_barrel_L30_bit1_to_0_24",
+   "file": "lznorm_loop_barrel.sv",
+   "line": 30,
+   "class": "bit1_to_0",
+   "why": "constant 1'b1 replaced by 1'b0",
+   "change": "lznorm_loop_barrel.sv line 30: `found = 1'b1;` became `found = 1'b0;` (constant 1'b1 replaced by 1'b0)",
+   "status": "killed",
+   "seconds": 1.0
+  },
+  {
+   "name": "lznorm_loop_barrel_L36_bit0_to_1_30",
+   "file": "lznorm_loop_barrel.sv",
+   "line": 36,
+   "class": "bit0_to_1",
+   "why": "constant 1'b0 replaced by 1'b1",
+   "change": "lznorm_loop_barrel.sv line 36: `if (rst) out_valid <= 1'b0;` became `if (rst) out_valid <= 1'b1;` (constant 1'b0 replaced by 1'b1)",
+   "status": "killed",
+   "seconds": 1.1
+  },
+  {
+   "name": "lznorm_sel_L20_eq_to_ne_16",
+   "file": "lznorm_sel.sv",
+   "line": 20,
+   "class": "eq_to_ne",
+   "why": "'==' replaced by '!='",
+   "change": "lznorm_sel.sv line 20: `if (VARIANT == 0) begin : g_v` became `if (VARIANT != 0) begin : g_v` ('==' replaced by '!=')",
+   "status": "killed",
+   "seconds": 0.3
+  },
+  {
+   "name": "lznorm_sel_L22_eq_to_ne_25",
+   "file": "lznorm_sel.sv",
+   "line": 22,
+   "class": "eq_to_ne",
+   "why": "'==' replaced by '!='",
+   "change": "lznorm_sel.sv line 22: `end else if (VARIANT == 1) begin : g_v` became `end else if (VARIANT != 1) begin : g_v` ('==' replaced by '!=')",
+   "status": "killed",
+   "seconds": 0.9
+  },
+  {
+   "name": "lznorm_sel_L24_eq_to_ne_25",
+   "file": "lznorm_sel.sv",
+   "line": 24,
+   "class": "eq_to_ne",
+   "why": "'==' replaced by '!='",
+   "change": "lznorm_sel.sv line 24: `end else if (VARIANT == 2) begin : g_v` became `end else if (VARIANT != 2) begin : g_v` ('==' replaced by '!=')",
+   "status": "killed",
+   "seconds": 2.1
+  },
+  {
+   "name": "lznorm_stagewise_pipe_L38_eq_to_ne_14",
+   "file": "lznorm_stagewise_pipe.sv",
+   "line": 38,
+   "class": "eq_to_ne",
+   "why": "'==' replaced by '!='",
+   "change": "lznorm_stagewise_pipe.sv line 38: `if (s == 0) begin : g_first` became `if (s != 0) begin : g_first` ('==' replaced by '!=')",
+   "status": "killed",
+   "seconds": 1.5
+  },
+  {
+   "name": "lznorm_stagewise_pipe_L39_bit0_to_1_40",
+   "file": "lznorm_stagewise_pipe.sv",
+   "line": 39,
+   "class": "bit0_to_1",
+   "why": "constant 1'b0 replaced by 1'b1",
+   "change": "lznorm_stagewise_pipe.sv line 39: `assign v_i   = {x, {(P - W){1'b0}}};` became `assign v_i   = {x, {(P - W){1'b1}}};` (constant 1'b0 replaced by 1'b1)",
+   "status": "killed",
+   "seconds": 1.5
+  },
+  {
+   "name": "lznorm_stagewise_pipe_L52_lt_to_le_30",
+   "file": "lznorm_stagewise_pipe.sv",
+   "line": 52,
+   "class": "lt_to_le",
+   "why": "'<' replaced by '<='",
+   "change": "lznorm_stagewise_pipe.sv line 52: `for (int j = 0; j < IT; j++) begin` became `for (int j = 0; j <= IT; j++) begin` ('<' replaced by '<=')",
+   "status": "survived",
+   "seconds": 2.7,
+   "formal": {
+    "verdict": "equivalent",
+    "per_config": [
+     {
+      "config": "VARIANT=0 W=5 PIPE=1",
+      "bmc_depth": 30,
+      "bmc_status": "PASS",
+      "register_matched_proof": "proved",
+      "verdict": "equivalent",
+      "method": "register-matched induction (yosys equiv_induct) after a clean BMC",
+      "note": "",
+      "seconds": 0.8
+     },
+     {
+      "config": "VARIANT=0 W=8 PIPE=1",
+      "bmc_depth": 30,
+      "bmc_status": "PASS",
+      "register_matched_proof": "proved",
+      "verdict": "equivalent",
+      "method": "register-matched induction (yosys equiv_induct) after a clean BMC",
+      "note": "",
+      "seconds": 0.7
+     },
+     {
+      "config": "VARIANT=0 W=12 PIPE=2",
+      "bmc_depth": 30,
+      "bmc_status": "PASS",
+      "register_matched_proof": "proved",
+      "verdict": "equivalent",
+      "method": "register-matched induction (yosys equiv_induct) after a clean BMC",
+      "note": "",
+      "seconds": 0.8
+     },
+     {
+      "config": "VARIANT=0 W=16 PIPE=2",
+      "bmc_depth": 30,
+      "bmc_status": "PASS",
+      "register_matched_proof": "proved",
+      "verdict": "equivalent",
+      "method": "register-matched induction (yosys equiv_induct) after a clean BMC",
+      "note": "",
+      "seconds": 0.7
+     },
+     {
+      "config": "VARIANT=1 W=5 PIPE=1",
+      "bmc_depth": 30,
+      "bmc_status": "PASS",
+      "register_matched_proof": "proved",
+      "verdict": "equivalent",
+      "method": "register-matched induction (yosys equiv_induct) after a clean BMC",
+      "note": "",
+      "seconds": 0.7
+     },
+     {
+      "config": "VARIANT=1 W=8 PIPE=1",
+      "bmc_depth": 30,
+      "bmc_status": "PASS",
+      "register_matched_proof": "proved",
+      "verdict": "equivalent",
+      "method": "register-matched induction (yosys equiv_induct) after a clean BMC",
+      "note": "",
+      "seconds": 0.8
+     },
+     {
+      "config": "VARIANT=1 W=12 PIPE=2",
+      "bmc_depth": 30,
+      "bmc_status": "PASS",
+      "register_matched_proof": "proved",
+      "verdict": "equivalent",
+      "method": "register-matched induction (yosys equiv_induct) after a clean BMC",
+      "note": "",
+      "seconds": 0.8
+     },
+     {
+      "config": "VARIANT=1 W=16 PIPE=2",
+      "bmc_depth": 30,
+      "bmc_status": "PASS",
+      "register_matched_proof": "proved",
+      "verdict": "equivalent",
+      "method": "register-matched induction (yosys equiv_induct) after a clean BMC",
+      "note": "",
+      "seconds": 0.8
+     },
+     {
+      "config": "VARIANT=2 W=5 PIPE=1",
+      "bmc_depth": 30,
+      "bmc_status": "PASS",
+      "register_matched_proof": "not_proved",
+      "prove_status": "PASS",
+      "prove_engine": "abc pdr",
+      "verdict": "equivalent",
+      "method": "unbounded proof (abc pdr) after a clean BMC",
+      "note": "",
+      "seconds": 3.2
+     },
+     {
+      "config": "VARIANT=2 W=8 PIPE=1",
+      "bmc_depth": 30,
+      "bmc_status": "PASS",
+      "register_matched_proof": "not_proved",
+      "prove_status": "PASS",
+      "prove_engine": "abc pdr",
+      "verdict": "equivalent",
+      "method": "unbounded proof (abc pdr) after a clean BMC",
+      "note": "",
+      "seconds": 3.4
+     },
+     {
+      "config": "VARIANT=2 W=12 PIPE=2",
+      "bmc_depth": 30,
+      "bmc_status": "PASS",
+      "register_matched_proof": "not_proved",
+      "prove_status": "PASS",
+      "prove_engine": "abc pdr",
+      "verdict": "equivalent",
+      "method": "unbounded proof (abc pdr) after a clean BMC",
+      "note": "",
+      "seconds": 4.3
+     },
+     {
+      "config": "VARIANT=2 W=16 PIPE=2",
+      "bmc_depth": 30,
+      "bmc_status": "PASS",
+      "register_matched_proof": "not_proved",
+      "prove_status": "PASS",
+      "prove_engine": "abc pdr",
+      "verdict": "equivalent",
+      "method": "unbounded proof (abc pdr) after a clean BMC",
+      "note": "",
+      "seconds": 4.3
+     },
+     {
+      "config": "VARIANT=3 W=5 PIPE=1",
+      "bmc_depth": 30,
+      "bmc_status": "PASS",
+      "register_matched_proof": "proved",
+      "verdict": "equivalent",
+      "method": "register-matched induction (yosys equiv_induct) after a clean BMC",
+      "note": "",
+      "seconds": 0.6
+     },
+     {
+      "config": "VARIANT=3 W=8 PIPE=1",
+      "bmc_depth": 30,
+      "bmc_status": "PASS",
+      "register_matched_proof": "proved",
+      "verdict": "equivalent",
+      "method": "register-matched induction (yosys equiv_induct) after a clean BMC",
+      "note": "",
+      "seconds": 0.8
+     },
+     {
+      "config": "VARIANT=3 W=12 PIPE=2",
+      "bmc_depth": 30,
+      "bmc_status": "PASS",
+      "register_matched_proof": "proved",
+      "verdict": "equivalent",
+      "method": "register-matched induction (yosys equiv_induct) after a clean BMC",
+      "note": "",
+      "seconds": 0.8
+     },
+     {
+      "config": "VARIANT=3 W=16 PIPE=2",
+      "bmc_depth": 30,
+      "bmc_status": "PASS",
+      "register_matched_proof": "proved",
+      "verdict": "equivalent",
+      "method": "register-matched induction (yosys equiv_induct) after a clean BMC",
+      "note": "",
+      "seconds": 0.8
+     }
+    ],
+    "seconds": 24.3
+   }
+  },
+  {
+   "name": "lznorm_stagewise_pipe_L53_eq_to_ne_51",
+   "file": "lznorm_stagewise_pipe.sv",
+   "line": 53,
+   "class": "eq_to_ne",
+   "why": "'==' replaced by '!='",
+   "change": "lznorm_stagewise_pipe.sv line 53: `if ((v_v >> (P - (1 << (HI - j)))) == '0) begin` became `if ((v_v >> (P - (1 << (HI - j)))) != '0) begin` ('==' replaced by '!=')",
+   "status": "killed",
+   "seconds": 1.6
+  },
+  {
+   "name": "lznorm_stagewise_pipe_L53_minus_to_plus_30",
+   "file": "lznorm_stagewise_pipe.sv",
+   "line": 53,
+   "class": "minus_to_plus",
+   "why": "'-' replaced by '+'",
+   "change": "lznorm_stagewise_pipe.sv line 53: `if ((v_v >> (P - (1 << (HI - j)))) == '0) begin` became `if ((v_v >> (P + (1 << (HI - j)))) == '0) begin` ('-' replaced by '+')",
+   "status": "killed",
+   "seconds": 1.9
+  },
+  {
+   "name": "lznorm_stagewise_pipe_L53_minus_to_plus_42",
+   "file": "lznorm_stagewise_pipe.sv",
+   "line": 53,
+   "class": "minus_to_plus",
+   "why": "'-' replaced by '+'",
+   "change": "lznorm_stagewise_pipe.sv line 53: `if ((v_v >> (P - (1 << (HI - j)))) == '0) begin` became `if ((v_v >> (P - (1 << (HI + j)))) == '0) begin` ('-' replaced by '+')",
+   "status": "killed",
+   "seconds": 2.2
+  },
+  {
+   "name": "lznorm_stagewise_pipe_L53_shl_to_shr_36",
+   "file": "lznorm_stagewise_pipe.sv",
+   "line": 53,
+   "class": "shl_to_shr",
+   "why": "'<<' replaced by '>>'",
+   "change": "lznorm_stagewise_pipe.sv line 53: `if ((v_v >> (P - (1 << (HI - j)))) == '0) begin` became `if ((v_v >> (P - (1 >> (HI - j)))) == '0) begin` ('<<' replaced by '>>')",
+   "status": "killed",
+   "seconds": 1.5
+  },
+  {
+   "name": "lznorm_stagewise_pipe_L53_shr_to_shl_25",
+   "file": "lznorm_stagewise_pipe.sv",
+   "line": 53,
+   "class": "shr_to_shl",
+   "why": "'>>' replaced by '<<'",
+   "change": "lznorm_stagewise_pipe.sv line 53: `if ((v_v >> (P - (1 << (HI - j)))) == '0) begin` became `if ((v_v << (P - (1 << (HI - j)))) == '0) begin` ('>>' replaced by '<<')",
+   "status": "killed",
+   "seconds": 1.9
+  },
+  {
+   "name": "lznorm_stagewise_pipe_L54_minus_to_plus_42",
+   "file": "lznorm_stagewise_pipe.sv",
+   "line": 54,
+   "class": "minus_to_plus",
+   "why": "'-' replaced by '+'",
+   "change": "lznorm_stagewise_pipe.sv line 54: `v_v = v_v << (1 << (HI - j));` became `v_v = v_v << (1 << (HI + j));` ('-' replaced by '+')",
+   "status": "killed",
+   "seconds": 1.9
+  },
+  {
+   "name": "lznorm_stagewise_pipe_L54_shl_to_shr_30",
+   "file": "lznorm_stagewise_pipe.sv",
+   "line": 54,
+   "class": "shl_to_shr",
+   "why": "'<<' replaced by '>>'",
+   "change": "lznorm_stagewise_pipe.sv line 54: `v_v = v_v << (1 << (HI - j));` became `v_v = v_v >> (1 << (HI - j));` ('<<' replaced by '>>')",
+   "status": "killed",
+   "seconds": 1.7
+  },
+  {
+   "name": "lznorm_stagewise_pipe_L54_shl_to_shr_36",
+   "file": "lznorm_stagewise_pipe.sv",
+   "line": 54,
+   "class": "shl_to_shr",
+   "why": "'<<' replaced by '>>'",
+   "change": "lznorm_stagewise_pipe.sv line 54: `v_v = v_v << (1 << (HI - j));` became `v_v = v_v << (1 >> (HI - j));` ('<<' replaced by '>>')",
+   "status": "killed",
+   "seconds": 2.0
+  },
+  {
+   "name": "lznorm_stagewise_pipe_L55_bit1_to_0_32",
+   "file": "lznorm_stagewise_pipe.sv",
+   "line": 55,
+   "class": "bit1_to_0",
+   "why": "constant 1'b1 replaced by 1'b0",
+   "change": "lznorm_stagewise_pipe.sv line 55: `c_v[HI-j] = 1'b1;` became `c_v[HI-j] = 1'b0;` (constant 1'b1 replaced by 1'b0)",
+   "status": "killed",
+   "seconds": 2.0
+  },
+  {
+   "name": "lznorm_stagewise_pipe_L66_bit0_to_1_33",
+   "file": "lznorm_stagewise_pipe.sv",
+   "line": 66,
+   "class": "bit0_to_1",
+   "why": "constant 1'b0 replaced by 1'b1",
+   "change": "lznorm_stagewise_pipe.sv line 66: `if (rst) val_q[s] <= 1'b0;` became `if (rst) val_q[s] <= 1'b1;` (constant 1'b0 replaced by 1'b1)",
+   "status": "killed",
+   "seconds": 1.8
+  },
+  {
+   "name": "lznorm_stagewise_pipe_L74_gt_to_le_9",
+   "file": "lznorm_stagewise_pipe.sv",
+   "line": 74,
+   "class": "gt_to_le",
+   "why": "'>' replaced by '<='",
+   "change": "lznorm_stagewise_pipe.sv line 74: `if (P > W) begin : g_unused` became `if (P <= W) begin : g_unused` ('>' replaced by '<=')",
+   "status": "invalid",
+   "seconds": 1.9,
+   "note": "the mutated RTL does not build"
+  },
+  {
+   "name": "lznorm_stagewise_pipe_L76_band_to_bor_24",
+   "file": "lznorm_stagewise_pipe.sv",
+   "line": 76,
+   "class": "band_to_bor",
+   "why": "bitwise '&' replaced by '|'",
+   "change": "lznorm_stagewise_pipe.sv line 76: `assign unused = &{1'b0, v_q[S-1][P-W-1:0]};` became `assign unused = |{1'b0, v_q[S-1][P-W-1:0]};` (bitwise '&' replaced by '|')",
+   "status": "survived",
+   "seconds": 3.4,
+   "formal": {
+    "verdict": "equivalent",
+    "per_config": [
+     {
+      "config": "VARIANT=0 W=5 PIPE=1",
+      "bmc_depth": 30,
+      "bmc_status": "PASS",
+      "register_matched_proof": "proved",
+      "verdict": "equivalent",
+      "method": "register-matched induction (yosys equiv_induct) after a clean BMC",
+      "note": "",
+      "seconds": 0.8
+     },
+     {
+      "config": "VARIANT=0 W=8 PIPE=1",
+      "bmc_depth": 30,
+      "bmc_status": "PASS",
+      "register_matched_proof": "proved",
+      "verdict": "equivalent",
+      "method": "register-matched induction (yosys equiv_induct) after a clean BMC",
+      "note": "",
+      "seconds": 0.7
+     },
+     {
+      "config": "VARIANT=0 W=12 PIPE=2",
+      "bmc_depth": 30,
+      "bmc_status": "PASS",
+      "register_matched_proof": "proved",
+      "verdict": "equivalent",
+      "method": "register-matched induction (yosys equiv_induct) after a clean BMC",
+      "note": "",
+      "seconds": 0.8
+     },
+     {
+      "config": "VARIANT=0 W=16 PIPE=2",
+      "bmc_depth": 30,
+      "bmc_status": "PASS",
+      "register_matched_proof": "proved",
+      "verdict": "equivalent",
+      "method": "register-matched induction (yosys equiv_induct) after a clean BMC",
+      "note": "",
+      "seconds": 0.8
+     },
+     {
+      "config": "VARIANT=1 W=5 PIPE=1",
+      "bmc_depth": 30,
+      "bmc_status": "PASS",
+      "register_matched_proof": "proved",
+      "verdict": "equivalent",
+      "method": "register-matched induction (yosys equiv_induct) after a clean BMC",
+      "note": "",
+      "seconds": 0.8
+     },
+     {
+      "config": "VARIANT=1 W=8 PIPE=1",
+      "bmc_depth": 30,
+      "bmc_status": "PASS",
+      "register_matched_proof": "proved",
+      "verdict": "equivalent",
+      "method": "register-matched induction (yosys equiv_induct) after a clean BMC",
+      "note": "",
+      "seconds": 0.8
+     },
+     {
+      "config": "VARIANT=1 W=12 PIPE=2",
+      "bmc_depth": 30,
+      "bmc_status": "PASS",
+      "register_matched_proof": "proved",
+      "verdict": "equivalent",
+      "method": "register-matched induction (yosys equiv_induct) after a clean BMC",
+      "note": "",
+      "seconds": 0.8
+     },
+     {
+      "config": "VARIANT=1 W=16 PIPE=2",
+      "bmc_depth": 30,
+      "bmc_status": "PASS",
+      "register_matched_proof": "proved",
+      "verdict": "equivalent",
+      "method": "register-matched induction (yosys equiv_induct) after a clean BMC",
+      "note": "",
+      "seconds": 0.8
+     },
+     {
+      "config": "VARIANT=2 W=5 PIPE=1",
+      "bmc_depth": 30,
+      "bmc_status": "PASS",
+      "register_matched_proof": "proved",
+      "verdict": "equivalent",
+      "method": "register-matched induction (yosys equiv_induct) after a clean BMC",
+      "note": "",
+      "seconds": 0.8
+     },
+     {
+      "config": "VARIANT=2 W=8 PIPE=1",
+      "bmc_depth": 30,
+      "bmc_status": "PASS",
+      "register_matched_proof": "proved",
+      "verdict": "equivalent",
+      "method": "register-matched induction (yosys equiv_induct) after a clean BMC",
+      "note": "",
+      "seconds": 0.9
+     },
+     {
+      "config": "VARIANT=2 W=12 PIPE=2",
+      "bmc_depth": 30,
+      "bmc_status": "PASS",
+      "register_matched_proof": "proved",
+      "verdict": "equivalent",
+      "method": "register-matched induction (yosys equiv_induct) after a clean BMC",
+      "note": "",
+      "seconds": 0.9
+     },
+     {
+      "config": "VARIANT=2 W=16 PIPE=2",
+      "bmc_depth": 30,
+      "bmc_status": "PASS",
+      "register_matched_proof": "proved",
+      "verdict": "equivalent",
+      "method": "register-matched induction (yosys equiv_induct) after a clean BMC",
+      "note": "",
+      "seconds": 1.0
+     },
+     {
+      "config": "VARIANT=3 W=5 PIPE=1",
+      "bmc_depth": 30,
+      "bmc_status": "PASS",
+      "register_matched_proof": "proved",
+      "verdict": "equivalent",
+      "method": "register-matched induction (yosys equiv_induct) after a clean BMC",
+      "note": "",
+      "seconds": 0.8
+     },
+     {
+      "config": "VARIANT=3 W=8 PIPE=1",
+      "bmc_depth": 30,
+      "bmc_status": "PASS",
+      "register_matched_proof": "proved",
+      "verdict": "equivalent",
+      "method": "register-matched induction (yosys equiv_induct) after a clean BMC",
+      "note": "",
+      "seconds": 0.8
+     },
+     {
+      "config": "VARIANT=3 W=12 PIPE=2",
+      "bmc_depth": 30,
+      "bmc_status": "PASS",
+      "register_matched_proof": "proved",
+      "verdict": "equivalent",
+      "method": "register-matched induction (yosys equiv_induct) after a clean BMC",
+      "note": "",
+      "seconds": 1.0
+     },
+     {
+      "config": "VARIANT=3 W=16 PIPE=2",
+      "bmc_depth": 30,
+      "bmc_status": "PASS",
+      "register_matched_proof": "proved",
+      "verdict": "equivalent",
+      "method": "register-matched induction (yosys equiv_induct) after a clean BMC",
+      "note": "",
+      "seconds": 0.8
+     }
+    ],
+    "seconds": 13.3
+   }
+  },
+  {
+   "name": "lznorm_stagewise_pipe_L76_bit0_to_1_26",
+   "file": "lznorm_stagewise_pipe.sv",
+   "line": 76,
+   "class": "bit0_to_1",
+   "why": "constant 1'b0 replaced by 1'b1",
+   "change": "lznorm_stagewise_pipe.sv line 76: `assign unused = &{1'b0, v_q[S-1][P-W-1:0]};` became `assign unused = &{1'b1, v_q[S-1][P-W-1:0]};` (constant 1'b0 replaced by 1'b1)",
+   "status": "survived",
+   "seconds": 3.6,
+   "formal": {
+    "verdict": "equivalent",
+    "per_config": [
+     {
+      "config": "VARIANT=0 W=5 PIPE=1",
+      "bmc_depth": 30,
+      "bmc_status": "PASS",
+      "register_matched_proof": "proved",
+      "verdict": "equivalent",
+      "method": "register-matched induction (yosys equiv_induct) after a clean BMC",
+      "note": "",
+      "seconds": 0.7
+     },
+     {
+      "config": "VARIANT=0 W=8 PIPE=1",
+      "bmc_depth": 30,
+      "bmc_status": "PASS",
+      "register_matched_proof": "proved",
+      "verdict": "equivalent",
+      "method": "register-matched induction (yosys equiv_induct) after a clean BMC",
+      "note": "",
+      "seconds": 0.7
+     },
+     {
+      "config": "VARIANT=0 W=12 PIPE=2",
+      "bmc_depth": 30,
+      "bmc_status": "PASS",
+      "register_matched_proof": "proved",
+      "verdict": "equivalent",
+      "method": "register-matched induction (yosys equiv_induct) after a clean BMC",
+      "note": "",
+      "seconds": 0.6
+     },
+     {
+      "config": "VARIANT=0 W=16 PIPE=2",
+      "bmc_depth": 30,
+      "bmc_status": "PASS",
+      "register_matched_proof": "proved",
+      "verdict": "equivalent",
+      "method": "register-matched induction (yosys equiv_induct) after a clean BMC",
+      "note": "",
+      "seconds": 0.6
+     },
+     {
+      "config": "VARIANT=1 W=5 PIPE=1",
+      "bmc_depth": 30,
+      "bmc_status": "PASS",
+      "register_matched_proof": "proved",
+      "verdict": "equivalent",
+      "method": "register-matched induction (yosys equiv_induct) after a clean BMC",
+      "note": "",
+      "seconds": 0.7
+     },
+     {
+      "config": "VARIANT=1 W=8 PIPE=1",
+      "bmc_depth": 30,
+      "bmc_status": "PASS",
+      "register_matched_proof": "proved",
+      "verdict": "equivalent",
+      "method": "register-matched induction (yosys equiv_induct) after a clean BMC",
+      "note": "",
+      "seconds": 0.7
+     },
+     {
+      "config": "VARIANT=1 W=12 PIPE=2",
+      "bmc_depth": 30,
+      "bmc_status": "PASS",
+      "register_matched_proof": "proved",
+      "verdict": "equivalent",
+      "method": "register-matched induction (yosys equiv_induct) after a clean BMC",
+      "note": "",
+      "seconds": 0.6
+     },
+     {
+      "config": "VARIANT=1 W=16 PIPE=2",
+      "bmc_depth": 30,
+      "bmc_status": "PASS",
+      "register_matched_proof": "proved",
+      "verdict": "equivalent",
+      "method": "register-matched induction (yosys equiv_induct) after a clean BMC",
+      "note": "",
+      "seconds": 0.6
+     },
+     {
+      "config": "VARIANT=2 W=5 PIPE=1",
+      "bmc_depth": 30,
+      "bmc_status": "PASS",
+      "register_matched_proof": "proved",
+      "verdict": "equivalent",
+      "method": "register-matched induction (yosys equiv_induct) after a clean BMC",
+      "note": "",
+      "seconds": 0.7
+     },
+     {
+      "config": "VARIANT=2 W=8 PIPE=1",
+      "bmc_depth": 30,
+      "bmc_status": "PASS",
+      "register_matched_proof": "proved",
+      "verdict": "equivalent",
+      "method": "register-matched induction (yosys equiv_induct) after a clean BMC",
+      "note": "",
+      "seconds": 0.7
+     },
+     {
+      "config": "VARIANT=2 W=12 PIPE=2",
+      "bmc_depth": 30,
+      "bmc_status": "PASS",
+      "register_matched_proof": "proved",
+      "verdict": "equivalent",
+      "method": "register-matched induction (yosys equiv_induct) after a clean BMC",
+      "note": "",
+      "seconds": 0.6
+     },
+     {
+      "config": "VARIANT=2 W=16 PIPE=2",
+      "bmc_depth": 30,
+      "bmc_status": "PASS",
+      "register_matched_proof": "proved",
+      "verdict": "equivalent",
+      "method": "register-matched induction (yosys equiv_induct) after a clean BMC",
+      "note": "",
+      "seconds": 0.6
+     },
+     {
+      "config": "VARIANT=3 W=5 PIPE=1",
+      "bmc_depth": 30,
+      "bmc_status": "PASS",
+      "register_matched_proof": "proved",
+      "verdict": "equivalent",
+      "method": "register-matched induction (yosys equiv_induct) after a clean BMC",
+      "note": "",
+      "seconds": 0.6
+     },
+     {
+      "config": "VARIANT=3 W=8 PIPE=1",
+      "bmc_depth": 30,
+      "bmc_status": "PASS",
+      "register_matched_proof": "proved",
+      "verdict": "equivalent",
+      "method": "register-matched induction (yosys equiv_induct) after a clean BMC",
+      "note": "",
+      "seconds": 0.7
+     },
+     {
+      "config": "VARIANT=3 W=12 PIPE=2",
+      "bmc_depth": 30,
+      "bmc_status": "PASS",
+      "register_matched_proof": "proved",
+      "verdict": "equivalent",
+      "method": "register-matched induction (yosys equiv_induct) after a clean BMC",
+      "note": "",
+      "seconds": 0.7
+     },
+     {
+      "config": "VARIANT=3 W=16 PIPE=2",
+      "bmc_depth": 30,
+      "bmc_status": "PASS",
+      "register_matched_proof": "proved",
+      "verdict": "equivalent",
+      "method": "register-matched induction (yosys equiv_induct) after a clean BMC",
+      "note": "",
+      "seconds": 0.8
+     }
+    ],
+    "seconds": 10.6
+   }
+  },
+  {
+   "name": "lznorm_tree_barrel_L27_bit1_to_0_22",
+   "file": "lznorm_tree_barrel.sv",
+   "line": 27,
+   "class": "bit1_to_0",
+   "why": "constant 1'b1 replaced by 1'b0",
+   "change": "lznorm_tree_barrel.sv line 27: `assign in_ready = 1'b1;` became `assign in_ready = 1'b0;` (constant 1'b1 replaced by 1'b0)",
+   "status": "killed",
+   "seconds": 0.4
+  },
+  {
+   "name": "lznorm_tree_barrel_L28_minus_to_plus_23",
+   "file": "lznorm_tree_barrel.sv",
+   "line": 28,
+   "class": "minus_to_plus",
+   "why": "'-' replaced by '+'",
+   "change": "lznorm_tree_barrel.sv line 28: `assign xp = {x, {(P - W){1'b0}}};` became `assign xp = {x, {(P + W){1'b0}}};` ('-' replaced by '+')",
+   "status": "killed",
+   "seconds": 0.4
+  },
+  {
+   "name": "lznorm_tree_barrel_L30_ternary_swap_23",
+   "file": "lznorm_tree_barrel.sv",
+   "line": 30,
+   "class": "ternary_swap",
+   "why": "the two arms of a ?: swapped",
+   "change": "lznorm_tree_barrel.sv line 30: `assign lz_c = nz ? LW'(cnt) : LW'(W);` became `assign lz_c = nz ? LW'(W) : LW'(cnt);` (the two arms of a ?: swapped)",
+   "status": "killed",
+   "seconds": 0.4
+  },
+  {
+   "name": "lznorm_tree_barrel_L33_bit0_to_1_30",
+   "file": "lznorm_tree_barrel.sv",
+   "line": 33,
+   "class": "bit0_to_1",
+   "why": "constant 1'b0 replaced by 1'b1",
+   "change": "lznorm_tree_barrel.sv line 33: `if (rst) out_valid <= 1'b0;` became `if (rst) out_valid <= 1'b1;` (constant 1'b0 replaced by 1'b1)",
+   "status": "killed",
+   "seconds": 0.4
+  },
+  {
+   "name": "lznorm_tree_barrel_L38_shl_to_shr_16",
+   "file": "lznorm_tree_barrel.sv",
+   "line": 38,
+   "class": "shl_to_shr",
+   "why": "'<<' replaced by '>>'",
+   "change": "lznorm_tree_barrel.sv line 38: `y  <= x << lz_c;` became `y  <= x >> lz_c;` ('<<' replaced by '>>')",
+   "status": "killed",
+   "seconds": 0.4
+  },
+  {
+   "name": "lznorm_tree_barrel_2st_L26_bit1_to_0_22",
+   "file": "lznorm_tree_barrel_2st.sv",
+   "line": 26,
+   "class": "bit1_to_0",
+   "why": "constant 1'b1 replaced by 1'b0",
+   "change": "lznorm_tree_barrel_2st.sv line 26: `assign in_ready = 1'b1;` became `assign in_ready = 1'b0;` (constant 1'b1 replaced by 1'b0)",
+   "status": "killed",
+   "seconds": 2.8
+  },
+  {
+   "name": "lznorm_tree_barrel_2st_L27_minus_to_plus_23",
+   "file": "lznorm_tree_barrel_2st.sv",
+   "line": 27,
+   "class": "minus_to_plus",
+   "why": "'-' replaced by '+'",
+   "change": "lznorm_tree_barrel_2st.sv line 27: `assign xp = {x, {(P - W){1'b0}}};` became `assign xp = {x, {(P + W){1'b0}}};` ('-' replaced by '+')",
+   "status": "killed",
+   "seconds": 3.2
+  },
+  {
+   "name": "lznorm_tree_barrel_2st_L27_bit0_to_1_29",
+   "file": "lznorm_tree_barrel_2st.sv",
+   "line": 27,
+   "class": "bit0_to_1",
+   "why": "constant 1'b0 replaced by 1'b1",
+   "change": "lznorm_tree_barrel_2st.sv line 27: `assign xp = {x, {(P - W){1'b0}}};` became `assign xp = {x, {(P - W){1'b1}}};` (constant 1'b0 replaced by 1'b1)",
+   "status": "survived",
+   "seconds": 3.9,
+   "formal": {
+    "verdict": "equivalent",
+    "per_config": [
+     {
+      "config": "VARIANT=0 W=5 PIPE=1",
+      "bmc_depth": 30,
+      "bmc_status": "PASS",
+      "register_matched_proof": "proved",
+      "verdict": "equivalent",
+      "method": "register-matched induction (yosys equiv_induct) after a clean BMC",
+      "note": "",
+      "seconds": 0.7
+     },
+     {
+      "config": "VARIANT=0 W=8 PIPE=1",
+      "bmc_depth": 30,
+      "bmc_status": "PASS",
+      "register_matched_proof": "proved",
+      "verdict": "equivalent",
+      "method": "register-matched induction (yosys equiv_induct) after a clean BMC",
+      "note": "",
+      "seconds": 0.6
+     },
+     {
+      "config": "VARIANT=0 W=12 PIPE=2",
+      "bmc_depth": 30,
+      "bmc_status": "PASS",
+      "register_matched_proof": "proved",
+      "verdict": "equivalent",
+      "method": "register-matched induction (yosys equiv_induct) after a clean BMC",
+      "note": "",
+      "seconds": 0.7
+     },
+     {
+      "config": "VARIANT=0 W=16 PIPE=2",
+      "bmc_depth": 30,
+      "bmc_status": "PASS",
+      "register_matched_proof": "proved",
+      "verdict": "equivalent",
+      "method": "register-matched induction (yosys equiv_induct) after a clean BMC",
+      "note": "",
+      "seconds": 0.8
+     },
+     {
+      "config": "VARIANT=1 W=5 PIPE=1",
+      "bmc_depth": 30,
+      "bmc_status": "PASS",
+      "register_matched_proof": "proved",
+      "verdict": "equivalent",
+      "method": "register-matched induction (yosys equiv_induct) after a clean BMC",
+      "note": "",
+      "seconds": 0.5
+     },
+     {
+      "config": "VARIANT=1 W=8 PIPE=1",
+      "bmc_depth": 30,
+      "bmc_status": "PASS",
+      "register_matched_proof": "proved",
+      "verdict": "equivalent",
+      "method": "register-matched induction (yosys equiv_induct) after a clean BMC",
+      "note": "",
+      "seconds": 0.6
+     },
+     {
+      "config": "VARIANT=1 W=12 PIPE=2",
+      "bmc_depth": 30,
+      "bmc_status": "PASS",
+      "register_matched_proof": "proved",
+      "verdict": "equivalent",
+      "method": "register-matched induction (yosys equiv_induct) after a clean BMC",
+      "note": "",
+      "seconds": 0.7
+     },
+     {
+      "config": "VARIANT=1 W=16 PIPE=2",
+      "bmc_depth": 30,
+      "bmc_status": "PASS",
+      "register_matched_proof": "proved",
+      "verdict": "equivalent",
+      "method": "register-matched induction (yosys equiv_induct) after a clean BMC",
+      "note": "",
+      "seconds": 0.7
+     },
+     {
+      "config": "VARIANT=2 W=5 PIPE=1",
+      "bmc_depth": 30,
+      "bmc_status": "PASS",
+      "register_matched_proof": "proved",
+      "verdict": "equivalent",
+      "method": "register-matched induction (yosys equiv_induct) after a clean BMC",
+      "note": "",
+      "seconds": 0.6
+     },
+     {
+      "config": "VARIANT=2 W=8 PIPE=1",
+      "bmc_depth": 30,
+      "bmc_status": "PASS",
+      "register_matched_proof": "proved",
+      "verdict": "equivalent",
+      "method": "register-matched induction (yosys equiv_induct) after a clean BMC",
+      "note": "",
+      "seconds": 0.6
+     },
+     {
+      "config": "VARIANT=2 W=12 PIPE=2",
+      "bmc_depth": 30,
+      "bmc_status": "PASS",
+      "register_matched_proof": "proved",
+      "verdict": "equivalent",
+      "method": "register-matched induction (yosys equiv_induct) after a clean BMC",
+      "note": "",
+      "seconds": 0.8
+     },
+     {
+      "config": "VARIANT=2 W=16 PIPE=2",
+      "bmc_depth": 30,
+      "bmc_status": "PASS",
+      "register_matched_proof": "proved",
+      "verdict": "equivalent",
+      "method": "register-matched induction (yosys equiv_induct) after a clean BMC",
+      "note": "",
+      "seconds": 0.7
+     },
+     {
+      "config": "VARIANT=3 W=5 PIPE=1",
+      "bmc_depth": 30,
+      "bmc_status": "PASS",
+      "register_matched_proof": "not_proved",
+      "prove_status": "PASS",
+      "prove_engine": "abc pdr",
+      "verdict": "equivalent",
+      "method": "unbounded proof (abc pdr) after a clean BMC",
+      "note": "",
+      "seconds": 2.2
+     },
+     {
+      "config": "VARIANT=3 W=8 PIPE=1",
+      "bmc_depth": 30,
+      "bmc_status": "PASS",
+      "register_matched_proof": "proved",
+      "verdict": "equivalent",
+      "method": "register-matched induction (yosys equiv_induct) after a clean BMC",
+      "note": "",
+      "seconds": 0.7
+     },
+     {
+      "config": "VARIANT=3 W=12 PIPE=2",
+      "bmc_depth": 30,
+      "bmc_status": "PASS",
+      "register_matched_proof": "not_proved",
+      "prove_status": "PASS",
+      "prove_engine": "abc pdr",
+      "verdict": "equivalent",
+      "method": "unbounded proof (abc pdr) after a clean BMC",
+      "note": "",
+      "seconds": 3.6
+     },
+     {
+      "config": "VARIANT=3 W=16 PIPE=2",
+      "bmc_depth": 30,
+      "bmc_status": "PASS",
+      "register_matched_proof": "proved",
+      "verdict": "equivalent",
+      "method": "register-matched induction (yosys equiv_induct) after a clean BMC",
+      "note": "",
+      "seconds": 0.8
+     }
+    ],
+    "seconds": 15.3
+   }
+  },
+  {
+   "name": "lznorm_tree_barrel_2st_L29_ternary_swap_23",
+   "file": "lznorm_tree_barrel_2st.sv",
+   "line": 29,
+   "class": "ternary_swap",
+   "why": "the two arms of a ?: swapped",
+   "change": "lznorm_tree_barrel_2st.sv line 29: `assign lz_c = nz ? LW'(cnt) : LW'(W);` became `assign lz_c = nz ? LW'(W) : LW'(cnt);` (the two arms of a ?: swapped)",
+   "status": "killed",
+   "seconds": 3.0
+  }
+ ],
+ "wall_seconds": 128.5,
+ "tools": {
+  "yosys": "Yosys 0.70+385 (git sha1 098e46a36, Release, Clang /usr/bin/clang++ 21.1.8)",
+  "sby": "SBY v0.70-9-g79fc9ed",
+  "iverilog": "Icarus Verilog version 14.0 (devel) (s20260301-966-g3992ea6a3-dirty)"
+ },
+ "rtl_dir": "build/arith_b139b/arith/lzc_norm/rtl"
+}

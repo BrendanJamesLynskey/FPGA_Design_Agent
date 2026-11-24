@@ -173,6 +173,7 @@ class Bench:
         await self.wr(0x022, cfg.max_pos)
         await self.wr(0x023, cfg.bucket)
         await self.wr(0x024, 0xFFFFFFFF)                    # no refill within a test (see ref_model docstring)
+        await self.wr(0x003, 1 << 8)                        # brief 188: the limits are staged; COMMIT makes the five take effect in one clock
         if table is not None:
             await self.load(table)
         await self.wr(0x002, 1 | cfg.spec_en << 1 | cfg.halt_on_gap << 2 | cfg.kill << 3 | metric << 4)
@@ -785,3 +786,69 @@ async def mdio_read_write(dut):
     hdr = "".join("z" if x < 0 else str(x) for x in seen[:48])
     assert hdr == "1" * 32 + "01" + "10" + "00001" + "00010" + "zz" + "z" * 12 or hdr.startswith("1" * 32 + "01100000100010"), hdr
     assert v == val, hex(v)
+
+
+@cocotb.test()
+async def limits_staged_commit(dut):
+    """Brief 188 #2: a half-written set of interlock limits never takes effect. After the config's COMMIT the bucket is 4 tokens with no refill. The host then writes only two of the five limits
+    (a bucket of 1 and a quantity limit of 0) and does NOT commit: a read returns the held values, STATUS bit 8 (pending) is up, and the next twelve triggers still meet the old set (exactly 4 orders).
+    COMMIT then makes the two (and the three unchanged) take effect together: the bucket refills to 1 and the quantity limit refuses every later trigger."""
+    b = Bench(dut)
+    await b.start()
+    cfg = Config(bucket=4, max_pos=100000, max_qty=10)
+    rules = [{"match": {"types": ["ADD"], "instrument": "any"}, "action": {"order": {"side": "buy", "qty": 1, "price": {"mode": "message"}}}}]
+    table = rl.table_words(rl.validate_table(rules))
+    await b.config(cfg, table)
+    assert (await b.rd(0x004)) >> 8 & 1 == 0
+    await b.wr(0x023, 1)                                 # staged only
+    await b.wr(0x020, 0)
+    assert await b.rd(0x023) == 1 and await b.rd(0x020) == 0 and (await b.rd(0x004)) >> 8 & 1 == 1
+    m = Model(cfg=cfg)
+    m.commit(table)
+    prime(b, m)
+    for k in range(12):
+        b.send(bf.with_fcs(bf.feed_frame(1 + k, [bf.Msg(bf.ADD, bf.ASK, k % 8, 10000, 1)])), gap=120)
+    await b.drain(600)
+    hw = await b.counters()
+    assert hw["orders_sent"] == 4 and hw["rej_rate"] == 8 and hw["rej_qty"] == 0, hw      # the old complete set: bucket 4, quantity limit 10
+    assert await b.rd(0x027) == 0
+    await b.wr(0x003, 1 << 8)                            # COMMIT
+    await b.idle(20)
+    assert (await b.rd(0x004)) >> 8 & 1 == 0 and await b.rd(0x027) == 1
+    for k in range(3):
+        b.send(bf.with_fcs(bf.feed_frame(13 + k, [bf.Msg(bf.ADD, bf.ASK, k % 8, 10000, 1)])), gap=120)
+    await b.drain(600)
+    hw = await b.counters()
+    assert hw["orders_sent"] == 4 and hw["rej_qty"] == 3, hw
+
+
+@cocotb.test()
+async def rejected_attempts_do_not_charge_the_bucket(dut):
+    """Brief 188 #15: does the token bucket charge a request that an earlier check refuses? Measured here: it does NOT. Seven triggers refused for quantity (six, and the priming frame's own) and one for the kill register leave
+    TOKENS at 4; only a granted order takes a token (interlocks.sv: `tokens <= tokens - 1` is in the grant branch), so a stream of refused requests can never run the bucket empty, and it
+    is also not rate limited itself (every refusal is counted, none is throttled). Four granted orders then empty it and the fifth is refused for rate, which takes nothing."""
+    b = Bench(dut)
+    await b.start()
+    cfg = Config(bucket=4, max_pos=100000, max_qty=0)    # every quantity of 1 is above the limit
+    rules = [{"match": {"types": ["ADD"], "instrument": "any"}, "action": {"order": {"side": "buy", "qty": 1, "price": {"mode": "message"}}}}]
+    table = rl.table_words(rl.validate_table(rules))
+    await b.config(cfg, table)
+    prime(b, m := Model(cfg=cfg))
+    for k in range(6):
+        b.send(bf.with_fcs(bf.feed_frame(1 + k, [bf.Msg(bf.ADD, bf.ASK, k % 8, 10000, 1)])), gap=120)
+    await b.drain(600)
+    hw = await b.counters()
+    assert hw["rej_qty"] == 7 and hw["orders_sent"] == 0, hw          # the six, and the ADD of the priming frame
+    assert await b.rd(0x027) == 4, "a refused request took a token"
+    await b.wr(0x002, 1 | 1 << 1 | 1 << 3)               # kill register on: refusals for kill
+    b.send(bf.with_fcs(bf.feed_frame(7, [bf.Msg(bf.ADD, bf.ASK, 1, 10000, 1)])), gap=120)
+    await b.drain(400)
+    assert (await b.counters())["rej_kill"] == 1 and await b.rd(0x027) == 4
+    await b.wr(0x002, 1 | 1 << 1)
+    await b.wr(0x020, 10)
+    await b.wr(0x003, 1 << 8)                            # COMMIT also refills the bucket to its size (4)
+    for k in range(5):
+        b.send(bf.with_fcs(bf.feed_frame(8 + k, [bf.Msg(bf.ADD, bf.ASK, k % 8, 10000, 1)])), gap=120)
+    await b.drain(600)
+    hw = await b.counters()
+    assert hw["orders_sent"] == 4 and hw["rej_rate"] == 1 and await b.rd(0x027) == 0, hw

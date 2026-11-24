@@ -1,0 +1,83 @@
+Copyright 1986-2022 Xilinx, Inc. All Rights Reserved. Copyright 2022-2026 Advanced Micro Devices, Inc. All Rights Reserved.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+| Tool Version      : Vivado v.2026.1 (lin64) Build 6511674 Tue Jun 16 11:01:26 MDT 2026
+| Date              : Sat Nov 21 23:15:22 2026
+| Host              : bren-ubuntu24-04 running 64-bit Ubuntu 24.04.4 LTS
+| Command           : report_timing -max_paths 1 -setup -file /tmp/claude-1000/-home-brendan-Claude-sandbox/a54cc85c-2645-4343-9056-2e450c5dac3c/scratchpad/viv/k26/ys_c8/c01_cordic_iterative/timing_worst.rpt
+| Design            : cordic_iterative_w14_n12_ap0_g0_trunc
+| Device            : xck26-sfvc784
+| Speed File        : -2LV  PRODUCTION 1.31 12-08-2025
+| Design State      : Routed
+| Temperature Grade : C
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Timing Report
+
+Slack (MET) :             0.415ns  (required time - arrival time)
+  Source:                 $auto$ff.cc:337:slice$2107/C
+                            (rising edge-triggered cell FDRE clocked by clk  {rise@0.000ns fall@1.250ns period=2.500ns})
+  Destination:            $auto$ff.cc:337:slice$2643/D
+                            (rising edge-triggered cell FDRE clocked by clk  {rise@0.000ns fall@1.250ns period=2.500ns})
+  Path Group:             clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            2.500ns  (clk rise@2.500ns - clk rise@0.000ns)
+  Data Path Delay:        2.083ns  (logic 1.100ns (52.811%)  route 0.983ns (47.189%))
+  Logic Levels:           6  (CARRY8=2 LUT3=1 LUT4=1 LUT5=2)
+  Clock Path Skew:        -0.010ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    0.031ns = ( 2.531 - 2.500 ) 
+    Source Clock Delay      (SCD):    0.041ns
+    Clock Pessimism Removal (CPR):    0.000ns
+  Clock Uncertainty:      0.035ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock clk rise edge)        0.000     0.000 r  <hidden>
+                                                      0.000     0.000 r  clk
+                         net (fo=98, unset)           0.041     0.041    clk
+    SLICE_X16Y109        FDRE                                         r  $auto$ff.cc:337:slice$2107/C
+  -------------------------------------------------------------------    -------------------
+    SLICE_X16Y109        FDRE (Prop_BFF_SLICEL_C_Q)
+                                                      0.113     0.154 f  $auto$ff.cc:337:slice$2107/Q
+                         net (fo=5, routed)           0.290     0.444    y[1]
+    SLICE_X16Y112        LUT3 (Prop_B5LUT_SLICEL_I1_O)
+                                                      0.226     0.670 r  $abc$26915$lut$aiger26914$550/O
+                         net (fo=1, routed)           0.223     0.893    $techmap27060$abc$26915$lut$aiger26914$559.A[3]
+    SLICE_X17Y108        LUT5 (Prop_G6LUT_SLICEM_I3_O)
+                                                      0.082     0.975 r  $abc$26915$lut$aiger26914$559/O
+                         net (fo=1, routed)           0.177     1.152    $techmap27145$auto$abc_ops_reintegrate.cc:722:reintegrate$26933.A[3]
+    SLICE_X15Y109        LUT5 (Prop_A6LUT_SLICEL_I3_O)
+                                                      0.188     1.340 r  $auto$abc_ops_reintegrate.cc:722:reintegrate$26933/O
+                         net (fo=1, routed)           0.014     1.354    $abc$26915$aiger$o118
+    SLICE_X15Y109        CARRY8 (Prop_CARRY8_SLICEL_S[0]_CO[7])
+                                                      0.278     1.632 r  $auto$alumacc.cc:578:replace_alu$1446.genblk1.slice[0].carry8/CO[7]
+                         net (fo=1, routed)           0.030     1.662    $abc$26915$aiger$o117
+    SLICE_X15Y110        CARRY8 (Prop_CARRY8_SLICEL_CI_O[6])
+                                                      0.157     1.819 r  $auto$alumacc.cc:578:replace_alu$1446.genblk1.slice[1].carry8/O[6]
+                         net (fo=1, routed)           0.154     1.973    x_c0[14]
+    SLICE_X13Y110        LUT4 (Prop_F6LUT_SLICEM_I1_O)
+                                                      0.056     2.029 r  $auto$abc_ops_reintegrate.cc:722:reintegrate$26936/O
+                         net (fo=1, routed)           0.095     2.124    $abc$26915$aiger$o82
+    SLICE_X13Y110        FDRE                                         r  $auto$ff.cc:337:slice$2643/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock clk rise edge)        2.500     2.500 r  <hidden>
+                                                      0.000     2.500 r  clk
+                         net (fo=98, unset)           0.031     2.531    clk
+    SLICE_X13Y110        FDRE                                         r  $auto$ff.cc:337:slice$2643/C
+                         clock pessimism              0.000     2.531    <hidden>
+                         clock uncertainty           -0.035     2.496    <hidden>
+    SLICE_X13Y110        FDRE (Setup_FFF_SLICEM_C_D)
+                                                      0.043     2.539    $auto$ff.cc:337:slice$2643
+  -------------------------------------------------------------------
+                         required time                          2.539    <hidden>
+                         arrival time                          -2.124    <hidden>
+  -------------------------------------------------------------------
+                         slack                                  0.415    <hidden>
+
+
+
+

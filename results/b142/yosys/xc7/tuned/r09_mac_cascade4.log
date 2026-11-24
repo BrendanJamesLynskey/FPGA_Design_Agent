@@ -1,0 +1,2538 @@
+
+ /----------------------------------------------------------------------------\
+ |  yosys -- Yosys Open SYnthesis Suite                                       |
+ |  Copyright (C) 2012 - 2026  Claire Xenia Wolf <claire@yosyshq.com>         |
+ |  Distributed under an ISC-like license, type "license" to see terms        |
+ \----------------------------------------------------------------------------/
+ Yosys 0.70+385 (git sha1 098e46a36, Release, Clang /usr/bin/clang++ 21.1.8)
+
+-- Running command `plugin -i slang; read_slang --top mac_dsp_cascade_ooc -G WA=16 -G WB=16 -G LANES=4 -G ACCW=40 -G SIGNED=1 /home/brendan/Claude_sandbox/_worktrees/142-yosys/results/b142/rtl/real/arith_139a/mac_dsp.sv /home/brendan/Claude_sandbox/_worktrees/142-yosys/results/b142/rtl/real/arith_139a/mac_dsp_cascade.sv /home/brendan/Claude_sandbox/_worktrees/142-yosys/results/b142/rtl/real/arith_139a/mac_dsp_cascade_ooc.sv /home/brendan/Claude_sandbox/_worktrees/142-yosys/results/b142/rtl/real/arith_139a/mac_dsp_ooc.sv /home/brendan/Claude_sandbox/_worktrees/142-yosys/results/b142/rtl/real/arith_139a/mac_fabric.sv /home/brendan/Claude_sandbox/_worktrees/142-yosys/results/b142/rtl/real/arith_139a/mac_fabric_ooc.sv; synth_xilinx -family xc7 -top mac_dsp_cascade_ooc -noiopad -noclkbuf -flatten -widemux 5; tee -q -o /home/brendan/Claude_sandbox/_worktrees/142-yosys/results/b142/yosys/xc7/tuned/r09_mac_cascade4.stat.json stat -json -tech xilinx' --
+
+1. Executing SLANG frontend.
+Top level design units:
+    mac_dsp_cascade_ooc
+
+
+Build succeeded: 0 errors, 0 warnings
+
+1.1. Executing PROC_CLEAN pass (remove empty switches from decision trees).
+Found and cleaned up 1 empty switch in `\mac_dsp_cascade_ooc.$106'.
+Found and cleaned up 2 empty switches in `\mac_dsp_cascade_ooc.$104'.
+Removing empty process `mac_dsp_cascade_ooc.$102'.
+Found and cleaned up 1 empty switch in `\mac_dsp_cascade_ooc.$63'.
+Removing empty process `mac_dsp_cascade_ooc.$61'.
+Found and cleaned up 1 empty switch in `\mac_dsp_cascade_ooc.$32'.
+Removing empty process `mac_dsp_cascade_ooc.$30'.
+Found and cleaned up 1 empty switch in `\mac_dsp_cascade_ooc.$11'.
+Removing empty process `mac_dsp_cascade_ooc.$9'.
+Removing empty process `mac_dsp_cascade_ooc.$0'.
+Cleaned up 6 empty switches.
+
+1.2. Executing PROC_RMDEAD pass (remove dead branches from decision trees).
+Marked 2 switch rules as full_case in process $106 in module mac_dsp_cascade_ooc.
+Marked 1 switch rules as full_case in process $104 in module mac_dsp_cascade_ooc.
+Removed a total of 0 dead cases.
+
+1.3. Executing PROC_PRUNE pass (remove redundant assignments in processes).
+Removed 14 redundant assignments.
+Promoted 12 assignments to connections.
+
+1.4. Executing PROC_INIT pass (extract init attributes).
+
+1.5. Executing PROC_ROM pass (convert switches to ROMs).
+Converted 0 switches.
+<suppressed ~4 debug messages>
+
+1.6. Executing PROC_MUX pass (convert decision trees to multiplexers).
+Creating decoders for process `\mac_dsp_cascade_ooc.$32'.
+Creating decoders for process `\mac_dsp_cascade_ooc.$106'.
+     1/2: $u_dut.acc$109
+     2/2: $u_dut.acc$110
+Creating decoders for process `\mac_dsp_cascade_ooc.$11'.
+Creating decoders for process `\mac_dsp_cascade_ooc.$63'.
+Creating decoders for process `\mac_dsp_cascade_ooc.$104'.
+     1/1: $u_dut.en_sr$105
+
+1.7. Executing PROC_CLEAN pass (remove empty switches from decision trees).
+Removing empty process `mac_dsp_cascade_ooc.$32'.
+Found and cleaned up 3 empty switches in `\mac_dsp_cascade_ooc.$106'.
+Removing empty process `mac_dsp_cascade_ooc.$106'.
+Removing empty process `mac_dsp_cascade_ooc.$11'.
+Removing empty process `mac_dsp_cascade_ooc.$63'.
+Found and cleaned up 1 empty switch in `\mac_dsp_cascade_ooc.$104'.
+Removing empty process `mac_dsp_cascade_ooc.$104'.
+Cleaned up 4 empty switches.
+
+1.8. Executing OPT_EXPR pass (perform const folding).
+Optimizing module mac_dsp_cascade_ooc.
+<suppressed ~12 debug messages>
+
+2. Executing SYNTH_XILINX pass.
+
+2.1. Executing Verilog-2005 frontend: /home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/xilinx/cells_sim.v
+Parsing Verilog input from `/home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/xilinx/cells_sim.v' to AST representation.
+Generating RTLIL representation for module `\VCC'.
+Generating RTLIL representation for module `\GND'.
+Generating RTLIL representation for module `\IBUF'.
+Generating RTLIL representation for module `\IBUFG'.
+Generating RTLIL representation for module `\OBUF'.
+Generating RTLIL representation for module `\IOBUF'.
+Generating RTLIL representation for module `\OBUFT'.
+Generating RTLIL representation for module `\BUFG'.
+Generating RTLIL representation for module `\BUFGCTRL'.
+Generating RTLIL representation for module `\BUFHCE'.
+Generating RTLIL representation for module `\INV'.
+Generating RTLIL representation for module `\LUT1'.
+Generating RTLIL representation for module `\LUT2'.
+Generating RTLIL representation for module `\LUT3'.
+Generating RTLIL representation for module `\LUT4'.
+Generating RTLIL representation for module `\LUT5'.
+Generating RTLIL representation for module `\LUT6'.
+Generating RTLIL representation for module `\LUT6_2'.
+Generating RTLIL representation for module `\$__ABC9_LUT7'.
+Generating RTLIL representation for module `\$__ABC9_LUT8'.
+Generating RTLIL representation for module `\MUXCY'.
+Generating RTLIL representation for module `\MUXF5'.
+Generating RTLIL representation for module `\MUXF6'.
+Generating RTLIL representation for module `\MUXF7'.
+Generating RTLIL representation for module `\MUXF8'.
+Generating RTLIL representation for module `\MUXF9'.
+Generating RTLIL representation for module `\XORCY'.
+Generating RTLIL representation for module `\CARRY4'.
+Generating RTLIL representation for module `\CARRY8'.
+Generating RTLIL representation for module `\ORCY'.
+Generating RTLIL representation for module `\MULT_AND'.
+Generating RTLIL representation for module `\FDRE'.
+Generating RTLIL representation for module `\FDRE_1'.
+Generating RTLIL representation for module `\FDSE'.
+Generating RTLIL representation for module `\FDSE_1'.
+Generating RTLIL representation for module `\FDRSE'.
+Generating RTLIL representation for module `\FDRSE_1'.
+Generating RTLIL representation for module `\FDCE'.
+Generating RTLIL representation for module `\FDCE_1'.
+Generating RTLIL representation for module `\FDPE'.
+Generating RTLIL representation for module `\FDPE_1'.
+Generating RTLIL representation for module `\FDCPE'.
+Generating RTLIL representation for module `\FDCPE_1'.
+Generating RTLIL representation for module `\LDCE'.
+Generating RTLIL representation for module `\LDPE'.
+Generating RTLIL representation for module `\LDCPE'.
+Generating RTLIL representation for module `\AND2B1L'.
+Generating RTLIL representation for module `\OR2L'.
+Generating RTLIL representation for module `\RAM16X1S'.
+Generating RTLIL representation for module `\RAM16X1S_1'.
+Generating RTLIL representation for module `\RAM32X1S'.
+Generating RTLIL representation for module `\RAM32X1S_1'.
+Generating RTLIL representation for module `\RAM64X1S'.
+Generating RTLIL representation for module `\RAM64X1S_1'.
+Generating RTLIL representation for module `\RAM128X1S'.
+Generating RTLIL representation for module `\RAM128X1S_1'.
+Generating RTLIL representation for module `\RAM256X1S'.
+Generating RTLIL representation for module `\RAM512X1S'.
+Generating RTLIL representation for module `\RAM16X2S'.
+Generating RTLIL representation for module `\RAM32X2S'.
+Generating RTLIL representation for module `\RAM64X2S'.
+Generating RTLIL representation for module `\RAM16X4S'.
+Generating RTLIL representation for module `\RAM32X4S'.
+Generating RTLIL representation for module `\RAM16X8S'.
+Generating RTLIL representation for module `\RAM32X8S'.
+Generating RTLIL representation for module `\RAM16X1D'.
+Generating RTLIL representation for module `\RAM16X1D_1'.
+Generating RTLIL representation for module `\RAM32X1D'.
+Generating RTLIL representation for module `\RAM32X1D_1'.
+Generating RTLIL representation for module `\RAM64X1D'.
+Generating RTLIL representation for module `\RAM64X1D_1'.
+Generating RTLIL representation for module `\RAM128X1D'.
+Generating RTLIL representation for module `\RAM256X1D'.
+Generating RTLIL representation for module `\RAM32M'.
+Generating RTLIL representation for module `\RAM32M16'.
+Generating RTLIL representation for module `\RAM64M'.
+Generating RTLIL representation for module `\RAM64M8'.
+Generating RTLIL representation for module `\RAM32X16DR8'.
+Generating RTLIL representation for module `\RAM64X8SW'.
+Generating RTLIL representation for module `\ROM16X1'.
+Generating RTLIL representation for module `\ROM32X1'.
+Generating RTLIL representation for module `\ROM64X1'.
+Generating RTLIL representation for module `\ROM128X1'.
+Generating RTLIL representation for module `\ROM256X1'.
+Generating RTLIL representation for module `\SRL16'.
+Generating RTLIL representation for module `\SRL16E'.
+Generating RTLIL representation for module `\SRLC16'.
+Generating RTLIL representation for module `\SRLC16E'.
+Generating RTLIL representation for module `\SRLC32E'.
+Generating RTLIL representation for module `\CFGLUT5'.
+Generating RTLIL representation for module `\MULT18X18'.
+Generating RTLIL representation for module `\MULT18X18S'.
+Generating RTLIL representation for module `\MULT18X18SIO'.
+Generating RTLIL representation for module `\DSP48A'.
+Generating RTLIL representation for module `\DSP48A1'.
+Generating RTLIL representation for module `\DSP48'.
+Generating RTLIL representation for module `\DSP48E1'.
+Generating RTLIL representation for module `\RAMB18E1'.
+Generating RTLIL representation for module `\RAMB36E1'.
+Successfully finished Verilog frontend.
+
+2.2. Executing Verilog-2005 frontend: /home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/xilinx/cells_xtra.v
+Parsing Verilog input from `/home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/xilinx/cells_xtra.v' to AST representation.
+Generating RTLIL representation for module `\RAMB4_S1'.
+Generating RTLIL representation for module `\RAMB4_S2'.
+Generating RTLIL representation for module `\RAMB4_S4'.
+Generating RTLIL representation for module `\RAMB4_S8'.
+Generating RTLIL representation for module `\RAMB4_S16'.
+Generating RTLIL representation for module `\RAMB4_S1_S1'.
+Generating RTLIL representation for module `\RAMB4_S1_S2'.
+Generating RTLIL representation for module `\RAMB4_S1_S4'.
+Generating RTLIL representation for module `\RAMB4_S1_S8'.
+Generating RTLIL representation for module `\RAMB4_S1_S16'.
+Generating RTLIL representation for module `\RAMB4_S2_S2'.
+Generating RTLIL representation for module `\RAMB4_S2_S4'.
+Generating RTLIL representation for module `\RAMB4_S2_S8'.
+Generating RTLIL representation for module `\RAMB4_S2_S16'.
+Generating RTLIL representation for module `\RAMB4_S4_S4'.
+Generating RTLIL representation for module `\RAMB4_S4_S8'.
+Generating RTLIL representation for module `\RAMB4_S4_S16'.
+Generating RTLIL representation for module `\RAMB4_S8_S8'.
+Generating RTLIL representation for module `\RAMB4_S8_S16'.
+Generating RTLIL representation for module `\RAMB4_S16_S16'.
+Generating RTLIL representation for module `\RAMB16_S1'.
+Generating RTLIL representation for module `\RAMB16_S2'.
+Generating RTLIL representation for module `\RAMB16_S4'.
+Generating RTLIL representation for module `\RAMB16_S9'.
+Generating RTLIL representation for module `\RAMB16_S18'.
+Generating RTLIL representation for module `\RAMB16_S36'.
+Generating RTLIL representation for module `\RAMB16_S1_S1'.
+Generating RTLIL representation for module `\RAMB16_S1_S2'.
+Generating RTLIL representation for module `\RAMB16_S1_S4'.
+Generating RTLIL representation for module `\RAMB16_S1_S9'.
+Generating RTLIL representation for module `\RAMB16_S1_S18'.
+Generating RTLIL representation for module `\RAMB16_S1_S36'.
+Generating RTLIL representation for module `\RAMB16_S2_S2'.
+Generating RTLIL representation for module `\RAMB16_S2_S4'.
+Generating RTLIL representation for module `\RAMB16_S2_S9'.
+Generating RTLIL representation for module `\RAMB16_S2_S18'.
+Generating RTLIL representation for module `\RAMB16_S2_S36'.
+Generating RTLIL representation for module `\RAMB16_S4_S4'.
+Generating RTLIL representation for module `\RAMB16_S4_S9'.
+Generating RTLIL representation for module `\RAMB16_S4_S18'.
+Generating RTLIL representation for module `\RAMB16_S4_S36'.
+Generating RTLIL representation for module `\RAMB16_S9_S9'.
+Generating RTLIL representation for module `\RAMB16_S9_S18'.
+Generating RTLIL representation for module `\RAMB16_S9_S36'.
+Generating RTLIL representation for module `\RAMB16_S18_S18'.
+Generating RTLIL representation for module `\RAMB16_S18_S36'.
+Generating RTLIL representation for module `\RAMB16_S36_S36'.
+Generating RTLIL representation for module `\RAMB16BWE_S18'.
+Generating RTLIL representation for module `\RAMB16BWE_S36'.
+Generating RTLIL representation for module `\RAMB16BWE_S18_S9'.
+Generating RTLIL representation for module `\RAMB16BWE_S18_S18'.
+Generating RTLIL representation for module `\RAMB16BWE_S36_S9'.
+Generating RTLIL representation for module `\RAMB16BWE_S36_S18'.
+Generating RTLIL representation for module `\RAMB16BWE_S36_S36'.
+Generating RTLIL representation for module `\RAMB16BWER'.
+Generating RTLIL representation for module `\RAMB8BWER'.
+Generating RTLIL representation for module `\FIFO16'.
+Generating RTLIL representation for module `\RAMB16'.
+Generating RTLIL representation for module `\RAMB32_S64_ECC'.
+Generating RTLIL representation for module `\FIFO18'.
+Generating RTLIL representation for module `\FIFO18_36'.
+Generating RTLIL representation for module `\FIFO36'.
+Generating RTLIL representation for module `\FIFO36_72'.
+Generating RTLIL representation for module `\RAMB18'.
+Generating RTLIL representation for module `\RAMB36'.
+Generating RTLIL representation for module `\RAMB18SDP'.
+Generating RTLIL representation for module `\RAMB36SDP'.
+Generating RTLIL representation for module `\FIFO18E1'.
+Generating RTLIL representation for module `\FIFO36E1'.
+Generating RTLIL representation for module `\FIFO18E2'.
+Generating RTLIL representation for module `\FIFO36E2'.
+Generating RTLIL representation for module `\RAMB18E2'.
+Generating RTLIL representation for module `\RAMB36E2'.
+Generating RTLIL representation for module `\URAM288'.
+Generating RTLIL representation for module `\URAM288_BASE'.
+Generating RTLIL representation for module `\DSP48E'.
+Generating RTLIL representation for module `\DSP48E2'.
+Generating RTLIL representation for module `\FDDRCPE'.
+Generating RTLIL representation for module `\FDDRRSE'.
+Generating RTLIL representation for module `\IFDDRCPE'.
+Generating RTLIL representation for module `\IFDDRRSE'.
+Generating RTLIL representation for module `\OFDDRCPE'.
+Generating RTLIL representation for module `\OFDDRRSE'.
+Generating RTLIL representation for module `\OFDDRTCPE'.
+Generating RTLIL representation for module `\OFDDRTRSE'.
+Generating RTLIL representation for module `\IDDR2'.
+Generating RTLIL representation for module `\ODDR2'.
+Generating RTLIL representation for module `\IDDR'.
+Generating RTLIL representation for module `\IDDR_2CLK'.
+Generating RTLIL representation for module `\ODDR'.
+Generating RTLIL representation for module `\IDELAYCTRL'.
+Generating RTLIL representation for module `\IDELAY'.
+Generating RTLIL representation for module `\ISERDES'.
+Generating RTLIL representation for module `\OSERDES'.
+Generating RTLIL representation for module `\IODELAY'.
+Generating RTLIL representation for module `\ISERDES_NODELAY'.
+Generating RTLIL representation for module `\IODELAYE1'.
+Generating RTLIL representation for module `\ISERDESE1'.
+Generating RTLIL representation for module `\OSERDESE1'.
+Generating RTLIL representation for module `\IDELAYE2'.
+Generating RTLIL representation for module `\ODELAYE2'.
+Generating RTLIL representation for module `\ISERDESE2'.
+Generating RTLIL representation for module `\OSERDESE2'.
+Generating RTLIL representation for module `\PHASER_IN'.
+Generating RTLIL representation for module `\PHASER_IN_PHY'.
+Generating RTLIL representation for module `\PHASER_OUT'.
+Generating RTLIL representation for module `\PHASER_OUT_PHY'.
+Generating RTLIL representation for module `\PHASER_REF'.
+Generating RTLIL representation for module `\PHY_CONTROL'.
+Generating RTLIL representation for module `\IDDRE1'.
+Generating RTLIL representation for module `\ODDRE1'.
+Generating RTLIL representation for module `\IDELAYE3'.
+Generating RTLIL representation for module `\ODELAYE3'.
+Generating RTLIL representation for module `\ISERDESE3'.
+Generating RTLIL representation for module `\OSERDESE3'.
+Generating RTLIL representation for module `\BITSLICE_CONTROL'.
+Generating RTLIL representation for module `\RIU_OR'.
+Generating RTLIL representation for module `\RX_BITSLICE'.
+Generating RTLIL representation for module `\RXTX_BITSLICE'.
+Generating RTLIL representation for module `\TX_BITSLICE'.
+Generating RTLIL representation for module `\TX_BITSLICE_TRI'.
+Generating RTLIL representation for module `\IODELAY2'.
+Generating RTLIL representation for module `\IODRP2'.
+Generating RTLIL representation for module `\IODRP2_MCB'.
+Generating RTLIL representation for module `\ISERDES2'.
+Generating RTLIL representation for module `\OSERDES2'.
+Generating RTLIL representation for module `\IBUF_DLY_ADJ'.
+Generating RTLIL representation for module `\IBUF_IBUFDISABLE'.
+Generating RTLIL representation for module `\IBUF_INTERMDISABLE'.
+Generating RTLIL representation for module `\IBUF_ANALOG'.
+Generating RTLIL representation for module `\IBUFE3'.
+Generating RTLIL representation for module `\IBUFDS'.
+Generating RTLIL representation for module `\IBUFDS_DLY_ADJ'.
+Generating RTLIL representation for module `\IBUFDS_IBUFDISABLE'.
+Generating RTLIL representation for module `\IBUFDS_INTERMDISABLE'.
+Generating RTLIL representation for module `\IBUFDS_DIFF_OUT'.
+Generating RTLIL representation for module `\IBUFDS_DIFF_OUT_IBUFDISABLE'.
+Generating RTLIL representation for module `\IBUFDS_DIFF_OUT_INTERMDISABLE'.
+Generating RTLIL representation for module `\IBUFDSE3'.
+Generating RTLIL representation for module `\IBUFDS_DPHY'.
+Generating RTLIL representation for module `\IBUFGDS'.
+Generating RTLIL representation for module `\IBUFGDS_DIFF_OUT'.
+Generating RTLIL representation for module `\IOBUF_DCIEN'.
+Generating RTLIL representation for module `\IOBUF_INTERMDISABLE'.
+Generating RTLIL representation for module `\IOBUFE3'.
+Generating RTLIL representation for module `\IOBUFDS'.
+Generating RTLIL representation for module `\IOBUFDS_DCIEN'.
+Generating RTLIL representation for module `\IOBUFDS_INTERMDISABLE'.
+Generating RTLIL representation for module `\IOBUFDS_DIFF_OUT'.
+Generating RTLIL representation for module `\IOBUFDS_DIFF_OUT_DCIEN'.
+Generating RTLIL representation for module `\IOBUFDS_DIFF_OUT_INTERMDISABLE'.
+Generating RTLIL representation for module `\IOBUFDSE3'.
+Generating RTLIL representation for module `\OBUFDS'.
+Generating RTLIL representation for module `\OBUFDS_DPHY'.
+Generating RTLIL representation for module `\OBUFTDS'.
+Generating RTLIL representation for module `\KEEPER'.
+Generating RTLIL representation for module `\PULLDOWN'.
+Generating RTLIL representation for module `\PULLUP'.
+Generating RTLIL representation for module `\DCIRESET'.
+Generating RTLIL representation for module `\HPIO_VREF'.
+Generating RTLIL representation for module `\BUFGCE'.
+Generating RTLIL representation for module `\BUFGCE_1'.
+Generating RTLIL representation for module `\BUFGMUX'.
+Generating RTLIL representation for module `\BUFGMUX_1'.
+Generating RTLIL representation for module `\BUFGMUX_CTRL'.
+Generating RTLIL representation for module `\BUFGMUX_VIRTEX4'.
+Generating RTLIL representation for module `\BUFG_GT'.
+Generating RTLIL representation for module `\BUFG_GT_SYNC'.
+Generating RTLIL representation for module `\BUFG_PS'.
+Generating RTLIL representation for module `\BUFGCE_DIV'.
+Generating RTLIL representation for module `\BUFH'.
+Generating RTLIL representation for module `\BUFIO2'.
+Generating RTLIL representation for module `\BUFIO2_2CLK'.
+Generating RTLIL representation for module `\BUFIO2FB'.
+Generating RTLIL representation for module `\BUFPLL'.
+Generating RTLIL representation for module `\BUFPLL_MCB'.
+Generating RTLIL representation for module `\BUFIO'.
+Generating RTLIL representation for module `\BUFIODQS'.
+Generating RTLIL representation for module `\BUFR'.
+Generating RTLIL representation for module `\BUFMR'.
+Generating RTLIL representation for module `\BUFMRCE'.
+Generating RTLIL representation for module `\DCM'.
+Generating RTLIL representation for module `\DCM_SP'.
+Generating RTLIL representation for module `\DCM_CLKGEN'.
+Generating RTLIL representation for module `\DCM_ADV'.
+Generating RTLIL representation for module `\DCM_BASE'.
+Generating RTLIL representation for module `\DCM_PS'.
+Generating RTLIL representation for module `\PMCD'.
+Generating RTLIL representation for module `\PLL_ADV'.
+Generating RTLIL representation for module `\PLL_BASE'.
+Generating RTLIL representation for module `\MMCM_ADV'.
+Generating RTLIL representation for module `\MMCM_BASE'.
+Generating RTLIL representation for module `\MMCME2_ADV'.
+Generating RTLIL representation for module `\MMCME2_BASE'.
+Generating RTLIL representation for module `\PLLE2_ADV'.
+Generating RTLIL representation for module `\PLLE2_BASE'.
+Generating RTLIL representation for module `\MMCME3_ADV'.
+Generating RTLIL representation for module `\MMCME3_BASE'.
+Generating RTLIL representation for module `\PLLE3_ADV'.
+Generating RTLIL representation for module `\PLLE3_BASE'.
+Generating RTLIL representation for module `\MMCME4_ADV'.
+Generating RTLIL representation for module `\MMCME4_BASE'.
+Generating RTLIL representation for module `\PLLE4_ADV'.
+Generating RTLIL representation for module `\PLLE4_BASE'.
+Generating RTLIL representation for module `\BUFT'.
+Generating RTLIL representation for module `\IN_FIFO'.
+Generating RTLIL representation for module `\OUT_FIFO'.
+Generating RTLIL representation for module `\HARD_SYNC'.
+Generating RTLIL representation for module `\STARTUP_SPARTAN3'.
+Generating RTLIL representation for module `\STARTUP_SPARTAN3E'.
+Generating RTLIL representation for module `\STARTUP_SPARTAN3A'.
+Generating RTLIL representation for module `\STARTUP_SPARTAN6'.
+Generating RTLIL representation for module `\STARTUP_VIRTEX4'.
+Generating RTLIL representation for module `\STARTUP_VIRTEX5'.
+Generating RTLIL representation for module `\STARTUP_VIRTEX6'.
+Generating RTLIL representation for module `\STARTUPE2'.
+Generating RTLIL representation for module `\STARTUPE3'.
+Generating RTLIL representation for module `\CAPTURE_SPARTAN3'.
+Generating RTLIL representation for module `\CAPTURE_SPARTAN3A'.
+Generating RTLIL representation for module `\CAPTURE_VIRTEX4'.
+Generating RTLIL representation for module `\CAPTURE_VIRTEX5'.
+Generating RTLIL representation for module `\CAPTURE_VIRTEX6'.
+Generating RTLIL representation for module `\CAPTUREE2'.
+Generating RTLIL representation for module `\ICAP_SPARTAN3A'.
+Generating RTLIL representation for module `\ICAP_SPARTAN6'.
+Generating RTLIL representation for module `\ICAP_VIRTEX4'.
+Generating RTLIL representation for module `\ICAP_VIRTEX5'.
+Generating RTLIL representation for module `\ICAP_VIRTEX6'.
+Generating RTLIL representation for module `\ICAPE2'.
+Generating RTLIL representation for module `\ICAPE3'.
+Generating RTLIL representation for module `\BSCAN_SPARTAN3'.
+Generating RTLIL representation for module `\BSCAN_SPARTAN3A'.
+Generating RTLIL representation for module `\BSCAN_SPARTAN6'.
+Generating RTLIL representation for module `\BSCAN_VIRTEX4'.
+Generating RTLIL representation for module `\BSCAN_VIRTEX5'.
+Generating RTLIL representation for module `\BSCAN_VIRTEX6'.
+Generating RTLIL representation for module `\BSCANE2'.
+Generating RTLIL representation for module `\DNA_PORT'.
+Generating RTLIL representation for module `\DNA_PORTE2'.
+Generating RTLIL representation for module `\FRAME_ECC_VIRTEX4'.
+Generating RTLIL representation for module `\FRAME_ECC_VIRTEX5'.
+Generating RTLIL representation for module `\FRAME_ECC_VIRTEX6'.
+Generating RTLIL representation for module `\FRAME_ECCE2'.
+Generating RTLIL representation for module `\FRAME_ECCE3'.
+Generating RTLIL representation for module `\FRAME_ECCE4'.
+Generating RTLIL representation for module `\USR_ACCESS_VIRTEX4'.
+Generating RTLIL representation for module `\USR_ACCESS_VIRTEX5'.
+Generating RTLIL representation for module `\USR_ACCESS_VIRTEX6'.
+Generating RTLIL representation for module `\USR_ACCESSE2'.
+Generating RTLIL representation for module `\POST_CRC_INTERNAL'.
+Generating RTLIL representation for module `\SUSPEND_SYNC'.
+Generating RTLIL representation for module `\KEY_CLEAR'.
+Generating RTLIL representation for module `\MASTER_JTAG'.
+Generating RTLIL representation for module `\SPI_ACCESS'.
+Generating RTLIL representation for module `\EFUSE_USR'.
+Generating RTLIL representation for module `\SYSMON'.
+Generating RTLIL representation for module `\XADC'.
+Generating RTLIL representation for module `\SYSMONE1'.
+Generating RTLIL representation for module `\SYSMONE4'.
+Generating RTLIL representation for module `\GTPA1_DUAL'.
+Generating RTLIL representation for module `\GT11_CUSTOM'.
+Generating RTLIL representation for module `\GT11_DUAL'.
+Generating RTLIL representation for module `\GT11CLK'.
+Generating RTLIL representation for module `\GT11CLK_MGT'.
+Generating RTLIL representation for module `\GTP_DUAL'.
+Generating RTLIL representation for module `\GTX_DUAL'.
+Generating RTLIL representation for module `\CRC32'.
+Generating RTLIL representation for module `\CRC64'.
+Generating RTLIL representation for module `\GTHE1_QUAD'.
+Generating RTLIL representation for module `\GTXE1'.
+Generating RTLIL representation for module `\IBUFDS_GTXE1'.
+Generating RTLIL representation for module `\IBUFDS_GTHE1'.
+Generating RTLIL representation for module `\GTHE2_CHANNEL'.
+Generating RTLIL representation for module `\GTHE2_COMMON'.
+Generating RTLIL representation for module `\GTPE2_CHANNEL'.
+Generating RTLIL representation for module `\GTPE2_COMMON'.
+Generating RTLIL representation for module `\GTXE2_CHANNEL'.
+Generating RTLIL representation for module `\GTXE2_COMMON'.
+Generating RTLIL representation for module `\IBUFDS_GTE2'.
+Generating RTLIL representation for module `\GTHE3_CHANNEL'.
+Generating RTLIL representation for module `\GTHE3_COMMON'.
+Generating RTLIL representation for module `\GTYE3_CHANNEL'.
+Generating RTLIL representation for module `\GTYE3_COMMON'.
+Generating RTLIL representation for module `\IBUFDS_GTE3'.
+Generating RTLIL representation for module `\OBUFDS_GTE3'.
+Generating RTLIL representation for module `\OBUFDS_GTE3_ADV'.
+Generating RTLIL representation for module `\GTHE4_CHANNEL'.
+Generating RTLIL representation for module `\GTHE4_COMMON'.
+Generating RTLIL representation for module `\GTYE4_CHANNEL'.
+Generating RTLIL representation for module `\GTYE4_COMMON'.
+Generating RTLIL representation for module `\IBUFDS_GTE4'.
+Generating RTLIL representation for module `\OBUFDS_GTE4'.
+Generating RTLIL representation for module `\OBUFDS_GTE4_ADV'.
+Generating RTLIL representation for module `\GTM_DUAL'.
+Generating RTLIL representation for module `\IBUFDS_GTM'.
+Generating RTLIL representation for module `\OBUFDS_GTM'.
+Generating RTLIL representation for module `\OBUFDS_GTM_ADV'.
+Generating RTLIL representation for module `\HSDAC'.
+Generating RTLIL representation for module `\HSADC'.
+Generating RTLIL representation for module `\RFDAC'.
+Generating RTLIL representation for module `\RFADC'.
+Generating RTLIL representation for module `\PCIE_A1'.
+Generating RTLIL representation for module `\PCIE_EP'.
+Generating RTLIL representation for module `\PCIE_2_0'.
+Generating RTLIL representation for module `\PCIE_2_1'.
+Generating RTLIL representation for module `\PCIE_3_0'.
+Generating RTLIL representation for module `\PCIE_3_1'.
+Generating RTLIL representation for module `\PCIE40E4'.
+Generating RTLIL representation for module `\PCIE4CE4'.
+Generating RTLIL representation for module `\EMAC'.
+Generating RTLIL representation for module `\TEMAC'.
+Generating RTLIL representation for module `\TEMAC_SINGLE'.
+Generating RTLIL representation for module `\CMAC'.
+Generating RTLIL representation for module `\CMACE4'.
+Generating RTLIL representation for module `\MCB'.
+Generating RTLIL representation for module `\HBM_REF_CLK'.
+Generating RTLIL representation for module `\HBM_SNGLBLI_INTF_APB'.
+Generating RTLIL representation for module `\HBM_SNGLBLI_INTF_AXI'.
+Generating RTLIL representation for module `\HBM_ONE_STACK_INTF'.
+Generating RTLIL representation for module `\HBM_TWO_STACK_INTF'.
+Generating RTLIL representation for module `\PPC405_ADV'.
+Generating RTLIL representation for module `\PPC440'.
+Generating RTLIL representation for module `\PS7'.
+Generating RTLIL representation for module `\PS8'.
+Generating RTLIL representation for module `\ILKN'.
+Generating RTLIL representation for module `\ILKNE4'.
+Generating RTLIL representation for module `\VCU'.
+Generating RTLIL representation for module `\FE'.
+Successfully finished Verilog frontend.
+
+2.3. Executing HIERARCHY pass (managing design hierarchy).
+
+2.3.1. Analyzing design hierarchy..
+Top module:  \mac_dsp_cascade_ooc
+
+2.3.2. Analyzing design hierarchy..
+Top module:  \mac_dsp_cascade_ooc
+Removed 0 unused modules.
+
+2.4. Executing PROC pass (convert processes to netlists).
+
+2.4.1. Executing PROC_CLEAN pass (remove empty switches from decision trees).
+Cleaned up 0 empty switches.
+
+2.4.2. Executing PROC_RMDEAD pass (remove dead branches from decision trees).
+Removed a total of 0 dead cases.
+
+2.4.3. Executing PROC_PRUNE pass (remove redundant assignments in processes).
+Removed 0 redundant assignments.
+Promoted 0 assignments to connections.
+
+2.4.4. Executing PROC_INIT pass (extract init attributes).
+
+2.4.5. Executing PROC_ARST pass (detect async resets in processes).
+
+2.4.6. Executing PROC_ROM pass (convert switches to ROMs).
+Converted 0 switches.
+
+2.4.7. Executing PROC_MUX pass (convert decision trees to multiplexers).
+
+2.4.8. Executing PROC_DLATCH pass (convert process syncs to latches).
+
+2.4.9. Executing PROC_DFF pass (convert process syncs to FFs).
+
+2.4.10. Executing PROC_MEMWR pass (convert process memory writes to cells).
+
+2.4.11. Executing PROC_CLEAN pass (remove empty switches from decision trees).
+Cleaned up 0 empty switches.
+
+2.4.12. Executing OPT_EXPR pass (perform const folding).
+Optimizing module mac_dsp_cascade_ooc.
+
+2.5. Executing CHECK pass (checking for obvious problems).
+Checking module mac_dsp_cascade_ooc...
+Found and reported 0 problems.
+
+2.6. Executing FLATTEN pass (flatten design).
+
+2.7. Executing TRIBUF pass.
+
+2.8. Executing DEMINOUT pass (demote inout ports to input or output).
+
+2.9. Executing OPT_EXPR pass (perform const folding).
+Optimizing module mac_dsp_cascade_ooc.
+
+2.10. Executing CHECK pass (checking for obvious problems).
+Checking module mac_dsp_cascade_ooc...
+Found and reported 0 problems.
+
+2.11. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \mac_dsp_cascade_ooc..
+Removed 0 unused cells and 41 unused wires.
+<suppressed ~36 debug messages>
+
+2.12. Executing OPT pass (performing simple optimizations).
+
+2.12.1. Executing OPT_EXPR pass (perform const folding).
+Optimizing module mac_dsp_cascade_ooc.
+<suppressed ~1 debug messages>
+
+2.12.2. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\mac_dsp_cascade_ooc'.
+Computing hashes of 51 cells of `\mac_dsp_cascade_ooc'.
+Finding duplicate cells in `\mac_dsp_cascade_ooc'.
+Removed a total of 0 cells.
+
+2.12.3. Executing OPT_MUXTREE pass (detect dead branches in mux trees).
+Running muxtree optimizer on module \mac_dsp_cascade_ooc..
+  Creating internal representation of mux trees.
+  Evaluating internal representation of mux trees.
+  Analyzing evaluation results.
+    dead port 1/2 on $mux $procmux$4.
+Removed 1 multiplexer ports.
+<suppressed ~8 debug messages>
+
+2.12.4. Executing OPT_REDUCE pass (consolidate $*mux and $reduce_* inputs).
+  Optimizing cells in module \mac_dsp_cascade_ooc.
+Performed a total of 0 changes.
+
+2.12.5. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\mac_dsp_cascade_ooc'.
+Computing hashes of 50 cells of `\mac_dsp_cascade_ooc'.
+Finding duplicate cells in `\mac_dsp_cascade_ooc'.
+Removed a total of 0 cells.
+
+2.12.6. Executing OPT_DFF pass (perform DFF optimizations).
+
+2.12.7. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \mac_dsp_cascade_ooc..
+Removed 0 unused cells and 2 unused wires.
+<suppressed ~2 debug messages>
+
+2.12.8. Executing OPT_EXPR pass (perform const folding).
+Optimizing module mac_dsp_cascade_ooc.
+
+2.12.9. Rerunning OPT passes. (Maybe there is more to do..)
+
+2.12.10. Executing OPT_MUXTREE pass (detect dead branches in mux trees).
+Running muxtree optimizer on module \mac_dsp_cascade_ooc..
+  Creating internal representation of mux trees.
+  Evaluating internal representation of mux trees.
+  Analyzing evaluation results.
+Removed 0 multiplexer ports.
+<suppressed ~7 debug messages>
+
+2.12.11. Executing OPT_REDUCE pass (consolidate $*mux and $reduce_* inputs).
+  Optimizing cells in module \mac_dsp_cascade_ooc.
+Performed a total of 0 changes.
+
+2.12.12. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\mac_dsp_cascade_ooc'.
+Computing hashes of 49 cells of `\mac_dsp_cascade_ooc'.
+Finding duplicate cells in `\mac_dsp_cascade_ooc'.
+Removed a total of 0 cells.
+
+2.12.13. Executing OPT_DFF pass (perform DFF optimizations).
+
+2.12.14. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \mac_dsp_cascade_ooc..
+
+2.12.15. Executing OPT_EXPR pass (perform const folding).
+Optimizing module mac_dsp_cascade_ooc.
+
+2.12.16. Finished fast OPT passes. (There is nothing left to do.)
+
+2.13. Executing FSM pass (extract and optimize FSM).
+
+2.13.1. Executing FSM_DETECT pass (finding FSMs in design).
+
+2.13.2. Executing FSM_EXTRACT pass (extracting FSM from design).
+
+2.13.3. Executing FSM_OPT pass (simple optimizations of FSMs).
+
+2.13.4. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \mac_dsp_cascade_ooc..
+
+2.13.5. Executing FSM_OPT pass (simple optimizations of FSMs).
+
+2.13.6. Executing FSM_RECODE pass (re-assigning FSM state encoding).
+
+2.13.7. Executing FSM_INFO pass (dumping all available information on FSM cells).
+
+2.13.8. Executing FSM_MAP pass (mapping FSMs to basic logic).
+
+2.14. Executing OPT pass (performing simple optimizations).
+
+2.14.1. Executing OPT_EXPR pass (perform const folding).
+Optimizing module mac_dsp_cascade_ooc.
+
+2.14.2. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\mac_dsp_cascade_ooc'.
+Computing hashes of 49 cells of `\mac_dsp_cascade_ooc'.
+Finding duplicate cells in `\mac_dsp_cascade_ooc'.
+Removed a total of 0 cells.
+
+2.14.3. Executing OPT_MUXTREE pass (detect dead branches in mux trees).
+Running muxtree optimizer on module \mac_dsp_cascade_ooc..
+  Creating internal representation of mux trees.
+  Evaluating internal representation of mux trees.
+  Analyzing evaluation results.
+Removed 0 multiplexer ports.
+<suppressed ~7 debug messages>
+
+2.14.4. Executing OPT_REDUCE pass (consolidate $*mux and $reduce_* inputs).
+  Optimizing cells in module \mac_dsp_cascade_ooc.
+Performed a total of 0 changes.
+
+2.14.5. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\mac_dsp_cascade_ooc'.
+Computing hashes of 49 cells of `\mac_dsp_cascade_ooc'.
+Finding duplicate cells in `\mac_dsp_cascade_ooc'.
+Removed a total of 0 cells.
+
+2.14.6. Executing OPT_DFF pass (perform DFF optimizations).
+Adding SRST signal on $driver$u_dut.en_sr ($dff) from module mac_dsp_cascade_ooc (D = { \u_dut.en_sr [2:0] \en_q }, Q = \u_dut.en_sr, rval = 4'0000).
+Adding SRST signal on $driver$u_dut.acc ($dff) from module mac_dsp_cascade_ooc (D = $procmux$1_Y, Q = \u_dut.acc, rval = 40'0000000000000000000000000000000000000000).
+Adding EN signal on $auto$ff.cc:337:slice$1110 ($sdff) from module mac_dsp_cascade_ooc (D = $108y, Q = \u_dut.acc).
+
+2.14.7. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \mac_dsp_cascade_ooc..
+Removed 3 unused cells and 3 unused wires.
+<suppressed ~4 debug messages>
+
+2.14.8. Executing OPT_EXPR pass (perform const folding).
+Optimizing module mac_dsp_cascade_ooc.
+
+2.14.9. Rerunning OPT passes. (Maybe there is more to do..)
+
+2.14.10. Executing OPT_MUXTREE pass (detect dead branches in mux trees).
+Running muxtree optimizer on module \mac_dsp_cascade_ooc..
+  Creating internal representation of mux trees.
+  Evaluating internal representation of mux trees.
+  Analyzing evaluation results.
+Removed 0 multiplexer ports.
+<suppressed ~2 debug messages>
+
+2.14.11. Executing OPT_REDUCE pass (consolidate $*mux and $reduce_* inputs).
+  Optimizing cells in module \mac_dsp_cascade_ooc.
+Performed a total of 0 changes.
+
+2.14.12. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\mac_dsp_cascade_ooc'.
+Computing hashes of 46 cells of `\mac_dsp_cascade_ooc'.
+Finding duplicate cells in `\mac_dsp_cascade_ooc'.
+Removed a total of 0 cells.
+
+2.14.13. Executing OPT_DFF pass (perform DFF optimizations).
+
+2.14.14. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \mac_dsp_cascade_ooc..
+
+2.14.15. Executing OPT_EXPR pass (perform const folding).
+Optimizing module mac_dsp_cascade_ooc.
+
+2.14.16. Finished fast OPT passes. (There is nothing left to do.)
+
+2.15. Executing WREDUCE pass (reducing word size of cells).
+Removed top 31 address bits (of 32) from memory init port mac_dsp_cascade_ooc.$53 (u_dut.g_lane[2].g_delay.srb).
+Removed top 30 address bits (of 32) from memory init port mac_dsp_cascade_ooc.$86 (u_dut.g_lane[3].g_delay.srb).
+Removed top 31 address bits (of 32) from memory init port mac_dsp_cascade_ooc.$50 (u_dut.g_lane[2].g_delay.sra).
+Removed top 31 address bits (of 32) from memory init port mac_dsp_cascade_ooc.$48 (u_dut.g_lane[2].g_delay.srb).
+Removed top 30 address bits (of 32) from memory init port mac_dsp_cascade_ooc.$84 (u_dut.g_lane[3].g_delay.sra).
+Removed top 31 address bits (of 32) from memory init port mac_dsp_cascade_ooc.$45 (u_dut.g_lane[2].g_delay.srb).
+Removed top 31 address bits (of 32) from memory init port mac_dsp_cascade_ooc.$43 (u_dut.g_lane[2].g_delay.sra).
+Removed top 31 address bits (of 32) from memory init port mac_dsp_cascade_ooc.$40 (u_dut.g_lane[2].g_delay.sra).
+Removed top 31 address bits (of 32) from memory init port mac_dsp_cascade_ooc.$38 (u_dut.g_lane[2].g_delay.srb).
+Removed top 31 address bits (of 32) from memory init port mac_dsp_cascade_ooc.$35 (u_dut.g_lane[2].g_delay.sra).
+Removed top 30 address bits (of 32) from memory init port mac_dsp_cascade_ooc.$94 (u_dut.g_lane[3].g_delay.srb).
+Removed top 30 address bits (of 32) from memory init port mac_dsp_cascade_ooc.$81 (u_dut.g_lane[3].g_delay.sra).
+Removed top 30 address bits (of 32) from memory init port mac_dsp_cascade_ooc.$79 (u_dut.g_lane[3].g_delay.srb).
+Removed top 30 address bits (of 32) from memory init port mac_dsp_cascade_ooc.$76 (u_dut.g_lane[3].g_delay.srb).
+Removed top 30 address bits (of 32) from memory init port mac_dsp_cascade_ooc.$74 (u_dut.g_lane[3].g_delay.sra).
+Removed top 32 address bits (of 32) from memory init port mac_dsp_cascade_ooc.$22 (u_dut.g_lane[1].g_delay.srb).
+Removed top 30 address bits (of 32) from memory init port mac_dsp_cascade_ooc.$71 (u_dut.g_lane[3].g_delay.sra).
+Removed top 32 address bits (of 32) from memory init port mac_dsp_cascade_ooc.$19 (u_dut.g_lane[1].g_delay.sra).
+Removed top 32 address bits (of 32) from memory init port mac_dsp_cascade_ooc.$17 (u_dut.g_lane[1].g_delay.srb).
+Removed top 30 address bits (of 32) from memory init port mac_dsp_cascade_ooc.$91 (u_dut.g_lane[3].g_delay.sra).
+Removed top 32 address bits (of 32) from memory init port mac_dsp_cascade_ooc.$14 (u_dut.g_lane[1].g_delay.sra).
+Removed top 30 address bits (of 32) from memory init port mac_dsp_cascade_ooc.$89 (u_dut.g_lane[3].g_delay.srb).
+Removed top 30 address bits (of 32) from memory init port mac_dsp_cascade_ooc.$69 (u_dut.g_lane[3].g_delay.srb).
+Removed top 30 address bits (of 32) from memory init port mac_dsp_cascade_ooc.$66 (u_dut.g_lane[3].g_delay.sra).
+Converting cell mac_dsp_cascade_ooc.$5 ($mul) from unsigned to signed.
+Removed top 18 bits (of 34) from port A of cell mac_dsp_cascade_ooc.$5 ($mul).
+Removed top 18 bits (of 34) from port B of cell mac_dsp_cascade_ooc.$5 ($mul).
+Removed top 2 bits (of 34) from port Y of cell mac_dsp_cascade_ooc.$5 ($mul).
+Converting cell mac_dsp_cascade_ooc.$26 ($mul) from unsigned to signed.
+Removed top 18 bits (of 34) from port A of cell mac_dsp_cascade_ooc.$26 ($mul).
+Removed top 18 bits (of 34) from port B of cell mac_dsp_cascade_ooc.$26 ($mul).
+Removed top 2 bits (of 34) from port Y of cell mac_dsp_cascade_ooc.$26 ($mul).
+Converting cell mac_dsp_cascade_ooc.$57 ($mul) from unsigned to signed.
+Removed top 18 bits (of 34) from port A of cell mac_dsp_cascade_ooc.$57 ($mul).
+Removed top 18 bits (of 34) from port B of cell mac_dsp_cascade_ooc.$57 ($mul).
+Removed top 2 bits (of 34) from port Y of cell mac_dsp_cascade_ooc.$57 ($mul).
+Converting cell mac_dsp_cascade_ooc.$98 ($mul) from unsigned to signed.
+Removed top 18 bits (of 34) from port A of cell mac_dsp_cascade_ooc.$98 ($mul).
+Removed top 18 bits (of 34) from port B of cell mac_dsp_cascade_ooc.$98 ($mul).
+Removed top 2 bits (of 34) from port Y of cell mac_dsp_cascade_ooc.$98 ($mul).
+
+2.16. Executing PEEPOPT pass (run peephole optimizers).
+
+2.17. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \mac_dsp_cascade_ooc..
+
+2.18. Executing MUXPACK pass ($mux cell cascades to $pmux).
+Converted 0 (p)mux cells into 0 pmux cells.
+
+2.19. Executing PMUX2SHIFTX pass.
+
+2.20. Executing SORT pass.
+
+2.21. Executing MEMORY_DFF pass (merging $dff cells to $memrd).
+Checking read port `\u_dut.g_lane[1].g_delay.sra'[0] in module `\mac_dsp_cascade_ooc':
+    no output FF found.
+Checking read port `\u_dut.g_lane[1].g_delay.srb'[0] in module `\mac_dsp_cascade_ooc':
+    no output FF found.
+Checking read port `\u_dut.g_lane[2].g_delay.sra'[0] in module `\mac_dsp_cascade_ooc':
+    no output FF found.
+Checking read port `\u_dut.g_lane[2].g_delay.sra'[1] in module `\mac_dsp_cascade_ooc':
+    no output FF found.
+Checking read port `\u_dut.g_lane[2].g_delay.srb'[0] in module `\mac_dsp_cascade_ooc':
+    no output FF found.
+Checking read port `\u_dut.g_lane[2].g_delay.srb'[1] in module `\mac_dsp_cascade_ooc':
+    no output FF found.
+Checking read port `\u_dut.g_lane[3].g_delay.sra'[0] in module `\mac_dsp_cascade_ooc':
+    no output FF found.
+Checking read port `\u_dut.g_lane[3].g_delay.sra'[1] in module `\mac_dsp_cascade_ooc':
+    no output FF found.
+Checking read port `\u_dut.g_lane[3].g_delay.sra'[2] in module `\mac_dsp_cascade_ooc':
+    no output FF found.
+Checking read port `\u_dut.g_lane[3].g_delay.srb'[0] in module `\mac_dsp_cascade_ooc':
+    no output FF found.
+Checking read port `\u_dut.g_lane[3].g_delay.srb'[1] in module `\mac_dsp_cascade_ooc':
+    no output FF found.
+Checking read port `\u_dut.g_lane[3].g_delay.srb'[2] in module `\mac_dsp_cascade_ooc':
+    no output FF found.
+Checking read port address `\u_dut.g_lane[1].g_delay.sra'[0] in module `\mac_dsp_cascade_ooc':
+    no address FF found.
+Checking read port address `\u_dut.g_lane[1].g_delay.srb'[0] in module `\mac_dsp_cascade_ooc':
+    no address FF found.
+Checking read port address `\u_dut.g_lane[2].g_delay.sra'[0] in module `\mac_dsp_cascade_ooc':
+    no address FF found.
+Checking read port address `\u_dut.g_lane[2].g_delay.sra'[1] in module `\mac_dsp_cascade_ooc':
+    no address FF found.
+Checking read port address `\u_dut.g_lane[2].g_delay.srb'[0] in module `\mac_dsp_cascade_ooc':
+    no address FF found.
+Checking read port address `\u_dut.g_lane[2].g_delay.srb'[1] in module `\mac_dsp_cascade_ooc':
+    no address FF found.
+Checking read port address `\u_dut.g_lane[3].g_delay.sra'[0] in module `\mac_dsp_cascade_ooc':
+    no address FF found.
+Checking read port address `\u_dut.g_lane[3].g_delay.sra'[1] in module `\mac_dsp_cascade_ooc':
+    no address FF found.
+Checking read port address `\u_dut.g_lane[3].g_delay.sra'[2] in module `\mac_dsp_cascade_ooc':
+    no address FF found.
+Checking read port address `\u_dut.g_lane[3].g_delay.srb'[0] in module `\mac_dsp_cascade_ooc':
+    no address FF found.
+Checking read port address `\u_dut.g_lane[3].g_delay.srb'[1] in module `\mac_dsp_cascade_ooc':
+    no address FF found.
+Checking read port address `\u_dut.g_lane[3].g_delay.srb'[2] in module `\mac_dsp_cascade_ooc':
+    no address FF found.
+
+2.22. Executing ALUMACC pass (create $alu and $macc cells).
+Extracting $alu and $macc cells in module mac_dsp_cascade_ooc:
+  creating $macc model for $103 ($add).
+  creating $macc model for $108 ($add).
+  creating $macc model for $26 ($mul).
+  creating $macc model for $31 ($add).
+  creating $macc model for $5 ($mul).
+  creating $macc model for $57 ($mul).
+  creating $macc model for $62 ($add).
+  creating $macc model for $98 ($mul).
+  created 0 $alu and 0 $macc cells.
+
+2.23. Executing MACCMAP pass (map $macc cells).
+
+2.24. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \mac_dsp_cascade_ooc..
+
+2.25. Executing TECHMAP pass (map to technology primitives).
+
+2.25.1. Executing Verilog-2005 frontend: /home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/mul2dsp.v
+Parsing Verilog input from `/home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/mul2dsp.v' to AST representation.
+Generating RTLIL representation for module `\_80_mul'.
+Generating RTLIL representation for module `\_90_soft_mul'.
+Successfully finished Verilog frontend.
+
+2.25.2. Executing Verilog-2005 frontend: /home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/xilinx/xc7_dsp_map.v
+Parsing Verilog input from `/home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/xilinx/xc7_dsp_map.v' to AST representation.
+Generating RTLIL representation for module `$__MUL25X18'.
+Successfully finished Verilog frontend.
+
+2.25.3. Continuing TECHMAP pass.
+Using template $paramod$98b5abf51e25760e7ff42b5f29b6a0813dd63380\_80_mul for cells of type $mul.
+Using template $paramod$f906d7f261f5ce278e10550e2aba0dd6ea30f97e$__MUL25X18 for cells of type $__MUL25X18.
+No more expansions possible.
+<suppressed ~95 debug messages>
+
+2.26. Executing OPT_EXPR pass (perform const folding).
+
+2.27. Executing WREDUCE pass (reducing word size of cells).
+
+2.28. Executing XILINX_DSP pass (pack resources into DSPs).
+Analysing mac_dsp_cascade_ooc.$98 for Xilinx DSP packing.
+  postadder $103 ($add)
+  clock: \clk (posedge)
+ ffP:$driver$u_dut.g_lane[3].q
+
+Analysing mac_dsp_cascade_ooc.$57 for Xilinx DSP packing.
+  postadder $62 ($add)
+  clock: \clk (posedge)
+ ffP:$driver$u_dut.g_lane[2].q
+
+Analysing mac_dsp_cascade_ooc.$5 for Xilinx DSP packing.
+  clock: \clk (posedge)
+ ffA2:$driver$a_q
+ ffB2:$driver$b_q
+ ffM:$driver$u_dut.g_lane[0].q
+
+Analysing mac_dsp_cascade_ooc.$26 for Xilinx DSP packing.
+  postadder $31 ($add)
+  clock: \clk (posedge)
+ ffP:$driver$u_dut.g_lane[1].q
+
+<suppressed ~59 debug messages>
+
+2.29. Executing TECHMAP pass (map to technology primitives).
+
+2.29.1. Executing Verilog-2005 frontend: /home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/cmp2lut.v
+Parsing Verilog input from `/home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/cmp2lut.v' to AST representation.
+Generating RTLIL representation for module `\_90_lut_cmp_'.
+Successfully finished Verilog frontend.
+
+2.29.2. Executing Verilog-2005 frontend: /home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/cmp2lcu.v
+Parsing Verilog input from `/home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/cmp2lcu.v' to AST representation.
+Generating RTLIL representation for module `\_80_lcu_cmp_'.
+Generating RTLIL representation for module `$__CMP2LCU'.
+Successfully finished Verilog frontend.
+
+2.29.3. Continuing TECHMAP pass.
+No more expansions possible.
+<suppressed ~7 debug messages>
+
+2.30. Executing ALUMACC pass (create $alu and $macc cells).
+Extracting $alu and $macc cells in module mac_dsp_cascade_ooc:
+  creating $macc model for $108 ($add).
+  creating $alu model for $macc $108.
+  creating $alu cell for $108: $auto$alumacc.cc:578:replace_alu$1155
+  created 1 $alu and 0 $macc cells.
+
+2.31. Executing SHARE pass (SAT-based resource sharing).
+
+2.32. Executing OPT pass (performing simple optimizations).
+
+2.32.1. Executing OPT_EXPR pass (perform const folding).
+Optimizing module mac_dsp_cascade_ooc.
+
+2.32.2. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\mac_dsp_cascade_ooc'.
+Computing hashes of 43 cells of `\mac_dsp_cascade_ooc'.
+Finding duplicate cells in `\mac_dsp_cascade_ooc'.
+Removed a total of 0 cells.
+
+2.32.3. Executing OPT_MUXTREE pass (detect dead branches in mux trees).
+Running muxtree optimizer on module \mac_dsp_cascade_ooc..
+  Creating internal representation of mux trees.
+  Evaluating internal representation of mux trees.
+  Analyzing evaluation results.
+Removed 0 multiplexer ports.
+<suppressed ~2 debug messages>
+
+2.32.4. Executing OPT_REDUCE pass (consolidate $*mux and $reduce_* inputs).
+  Optimizing cells in module \mac_dsp_cascade_ooc.
+Performed a total of 0 changes.
+
+2.32.5. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\mac_dsp_cascade_ooc'.
+Computing hashes of 43 cells of `\mac_dsp_cascade_ooc'.
+Finding duplicate cells in `\mac_dsp_cascade_ooc'.
+Removed a total of 0 cells.
+
+2.32.6. Executing OPT_DFF pass (perform DFF optimizations).
+
+2.32.7. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \mac_dsp_cascade_ooc..
+Removed 4 unused cells and 55 unused wires.
+<suppressed ~13 debug messages>
+
+2.32.8. Executing OPT_EXPR pass (perform const folding).
+Optimizing module mac_dsp_cascade_ooc.
+
+2.32.9. Rerunning OPT passes. (Maybe there is more to do..)
+
+2.32.10. Executing OPT_MUXTREE pass (detect dead branches in mux trees).
+Running muxtree optimizer on module \mac_dsp_cascade_ooc..
+  Creating internal representation of mux trees.
+  Evaluating internal representation of mux trees.
+  Analyzing evaluation results.
+Removed 0 multiplexer ports.
+<suppressed ~2 debug messages>
+
+2.32.11. Executing OPT_REDUCE pass (consolidate $*mux and $reduce_* inputs).
+  Optimizing cells in module \mac_dsp_cascade_ooc.
+Performed a total of 0 changes.
+
+2.32.12. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\mac_dsp_cascade_ooc'.
+Computing hashes of 39 cells of `\mac_dsp_cascade_ooc'.
+Finding duplicate cells in `\mac_dsp_cascade_ooc'.
+Removed a total of 0 cells.
+
+2.32.13. Executing OPT_DFF pass (perform DFF optimizations).
+
+2.32.14. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \mac_dsp_cascade_ooc..
+
+2.32.15. Executing OPT_EXPR pass (perform const folding).
+Optimizing module mac_dsp_cascade_ooc.
+
+2.32.16. Finished fast OPT passes. (There is nothing left to do.)
+
+2.33. Executing MEMORY pass.
+
+2.33.1. Executing OPT_MEM pass (optimize memories).
+Performed a total of 0 transformations.
+
+2.33.2. Executing OPT_MEM_PRIORITY pass (removing unnecessary memory write priority relations).
+Performed a total of 8 transformations.
+
+2.33.3. Executing OPT_MEM_FEEDBACK pass (finding memory read-to-write feedback paths).
+  Analyzing mac_dsp_cascade_ooc.u_dut.g_lane[1].g_delay.sra write port 0.
+  Analyzing mac_dsp_cascade_ooc.u_dut.g_lane[1].g_delay.srb write port 0.
+  Analyzing mac_dsp_cascade_ooc.u_dut.g_lane[2].g_delay.sra write port 0.
+  Analyzing mac_dsp_cascade_ooc.u_dut.g_lane[2].g_delay.sra write port 1.
+  Analyzing mac_dsp_cascade_ooc.u_dut.g_lane[2].g_delay.srb write port 0.
+  Analyzing mac_dsp_cascade_ooc.u_dut.g_lane[2].g_delay.srb write port 1.
+  Analyzing mac_dsp_cascade_ooc.u_dut.g_lane[3].g_delay.sra write port 0.
+  Analyzing mac_dsp_cascade_ooc.u_dut.g_lane[3].g_delay.sra write port 1.
+  Analyzing mac_dsp_cascade_ooc.u_dut.g_lane[3].g_delay.sra write port 2.
+  Analyzing mac_dsp_cascade_ooc.u_dut.g_lane[3].g_delay.srb write port 0.
+  Analyzing mac_dsp_cascade_ooc.u_dut.g_lane[3].g_delay.srb write port 1.
+  Analyzing mac_dsp_cascade_ooc.u_dut.g_lane[3].g_delay.srb write port 2.
+
+2.33.4. Executing MEMORY_BMUX2ROM pass (converting muxes to ROMs).
+
+2.33.5. Executing MEMORY_DFF pass (merging $dff cells to $memrd).
+Checking read port `\u_dut.g_lane[1].g_delay.sra'[0] in module `\mac_dsp_cascade_ooc':
+    no output FF found.
+Checking read port `\u_dut.g_lane[1].g_delay.srb'[0] in module `\mac_dsp_cascade_ooc':
+    no output FF found.
+Checking read port `\u_dut.g_lane[2].g_delay.sra'[0] in module `\mac_dsp_cascade_ooc':
+    no output FF found.
+Checking read port `\u_dut.g_lane[2].g_delay.sra'[1] in module `\mac_dsp_cascade_ooc':
+    no output FF found.
+Checking read port `\u_dut.g_lane[2].g_delay.srb'[0] in module `\mac_dsp_cascade_ooc':
+    no output FF found.
+Checking read port `\u_dut.g_lane[2].g_delay.srb'[1] in module `\mac_dsp_cascade_ooc':
+    no output FF found.
+Checking read port `\u_dut.g_lane[3].g_delay.sra'[0] in module `\mac_dsp_cascade_ooc':
+    no output FF found.
+Checking read port `\u_dut.g_lane[3].g_delay.sra'[1] in module `\mac_dsp_cascade_ooc':
+    no output FF found.
+Checking read port `\u_dut.g_lane[3].g_delay.sra'[2] in module `\mac_dsp_cascade_ooc':
+    no output FF found.
+Checking read port `\u_dut.g_lane[3].g_delay.srb'[0] in module `\mac_dsp_cascade_ooc':
+    no output FF found.
+Checking read port `\u_dut.g_lane[3].g_delay.srb'[1] in module `\mac_dsp_cascade_ooc':
+    no output FF found.
+Checking read port `\u_dut.g_lane[3].g_delay.srb'[2] in module `\mac_dsp_cascade_ooc':
+    no output FF found.
+Checking read port address `\u_dut.g_lane[1].g_delay.sra'[0] in module `\mac_dsp_cascade_ooc':
+    no address FF found.
+Checking read port address `\u_dut.g_lane[1].g_delay.srb'[0] in module `\mac_dsp_cascade_ooc':
+    no address FF found.
+Checking read port address `\u_dut.g_lane[2].g_delay.sra'[0] in module `\mac_dsp_cascade_ooc':
+    no address FF found.
+Checking read port address `\u_dut.g_lane[2].g_delay.sra'[1] in module `\mac_dsp_cascade_ooc':
+    no address FF found.
+Checking read port address `\u_dut.g_lane[2].g_delay.srb'[0] in module `\mac_dsp_cascade_ooc':
+    no address FF found.
+Checking read port address `\u_dut.g_lane[2].g_delay.srb'[1] in module `\mac_dsp_cascade_ooc':
+    no address FF found.
+Checking read port address `\u_dut.g_lane[3].g_delay.sra'[0] in module `\mac_dsp_cascade_ooc':
+    no address FF found.
+Checking read port address `\u_dut.g_lane[3].g_delay.sra'[1] in module `\mac_dsp_cascade_ooc':
+    no address FF found.
+Checking read port address `\u_dut.g_lane[3].g_delay.sra'[2] in module `\mac_dsp_cascade_ooc':
+    no address FF found.
+Checking read port address `\u_dut.g_lane[3].g_delay.srb'[0] in module `\mac_dsp_cascade_ooc':
+    no address FF found.
+Checking read port address `\u_dut.g_lane[3].g_delay.srb'[1] in module `\mac_dsp_cascade_ooc':
+    no address FF found.
+Checking read port address `\u_dut.g_lane[3].g_delay.srb'[2] in module `\mac_dsp_cascade_ooc':
+    no address FF found.
+
+2.33.6. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \mac_dsp_cascade_ooc..
+
+2.33.7. Executing MEMORY_SHARE pass (consolidating $memrd/$memwr cells).
+Consolidating read ports of memory mac_dsp_cascade_ooc.u_dut.g_lane[2].g_delay.sra by address:
+  Merging ports 0, 1 (address 1'1).
+Consolidating write ports of memory mac_dsp_cascade_ooc.u_dut.g_lane[2].g_delay.sra by address:
+  Merging ports 0, 1 (address 1'0).
+Consolidating read ports of memory mac_dsp_cascade_ooc.u_dut.g_lane[2].g_delay.srb by address:
+  Merging ports 0, 1 (address 1'1).
+Consolidating write ports of memory mac_dsp_cascade_ooc.u_dut.g_lane[2].g_delay.srb by address:
+  Merging ports 0, 1 (address 1'0).
+Consolidating read ports of memory mac_dsp_cascade_ooc.u_dut.g_lane[3].g_delay.sra by address:
+  Merging ports 1, 2 (address 2'01).
+Consolidating read ports of memory mac_dsp_cascade_ooc.u_dut.g_lane[3].g_delay.sra by address:
+  Merging ports 0, 1 (address 2'10).
+Consolidating write ports of memory mac_dsp_cascade_ooc.u_dut.g_lane[3].g_delay.sra by address:
+  Merging ports 0, 1 (address 2'00).
+  Merging ports 0, 2 (address 2'00).
+Consolidating read ports of memory mac_dsp_cascade_ooc.u_dut.g_lane[3].g_delay.srb by address:
+  Merging ports 1, 2 (address 2'01).
+Consolidating read ports of memory mac_dsp_cascade_ooc.u_dut.g_lane[3].g_delay.srb by address:
+  Merging ports 0, 1 (address 2'10).
+Consolidating write ports of memory mac_dsp_cascade_ooc.u_dut.g_lane[3].g_delay.srb by address:
+  Merging ports 0, 1 (address 2'00).
+  Merging ports 0, 2 (address 2'00).
+
+2.33.8. Executing OPT_MEM_WIDEN pass (optimize memories where all ports are wide).
+Widening base width of memory u_dut.g_lane[2].g_delay.sra in module mac_dsp_cascade_ooc by factor 2.
+Widening base width of memory u_dut.g_lane[2].g_delay.srb in module mac_dsp_cascade_ooc by factor 2.
+Widening base width of memory u_dut.g_lane[3].g_delay.sra in module mac_dsp_cascade_ooc by factor 4.
+Widening base width of memory u_dut.g_lane[3].g_delay.srb in module mac_dsp_cascade_ooc by factor 4.
+Performed a total of 4 transformations.
+
+2.33.9. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \mac_dsp_cascade_ooc..
+Removed 0 unused cells and 4 unused wires.
+<suppressed ~1 debug messages>
+
+2.33.10. Executing MEMORY_COLLECT pass (generating $mem cells).
+
+2.34. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \mac_dsp_cascade_ooc..
+
+2.35. Executing MEMORY_LIBMAP pass (mapping memories to cells).
+using FF mapping for memory mac_dsp_cascade_ooc.u_dut.g_lane[2].g_delay.srb
+using FF mapping for memory mac_dsp_cascade_ooc.u_dut.g_lane[2].g_delay.sra
+using FF mapping for memory mac_dsp_cascade_ooc.u_dut.g_lane[3].g_delay.sra
+using FF mapping for memory mac_dsp_cascade_ooc.u_dut.g_lane[3].g_delay.srb
+using FF mapping for memory mac_dsp_cascade_ooc.u_dut.g_lane[1].g_delay.sra
+using FF mapping for memory mac_dsp_cascade_ooc.u_dut.g_lane[1].g_delay.srb
+<suppressed ~1764 debug messages>
+
+2.36. Executing TECHMAP pass (map to technology primitives).
+
+2.36.1. Executing Verilog-2005 frontend: /home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/xilinx/lutrams_xc5v_map.v
+Parsing Verilog input from `/home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/xilinx/lutrams_xc5v_map.v' to AST representation.
+Generating RTLIL representation for module `$__XILINX_LUTRAM_SP_'.
+Generating RTLIL representation for module `$__XILINX_LUTRAM_DP_'.
+Generating RTLIL representation for module `$__XILINX_LUTRAM_QP_'.
+Generating RTLIL representation for module `$__XILINX_LUTRAM_OP_'.
+Generating RTLIL representation for module `$__XILINX_LUTRAM_SDP_'.
+Generating RTLIL representation for module `$__XILINX_LUTRAM_64X8SW_'.
+Generating RTLIL representation for module `$__XILINX_LUTRAM_32X16DR8_'.
+Successfully finished Verilog frontend.
+
+2.36.2. Continuing TECHMAP pass.
+No more expansions possible.
+<suppressed ~9 debug messages>
+
+2.37. Executing TECHMAP pass (map to technology primitives).
+
+2.37.1. Executing Verilog-2005 frontend: /home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/xilinx/brams_xc6v_map.v
+Parsing Verilog input from `/home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/xilinx/brams_xc6v_map.v' to AST representation.
+Generating RTLIL representation for module `$__XILINX_BLOCKRAM_TDP_'.
+Generating RTLIL representation for module `$__XILINX_BLOCKRAM_SDP_'.
+Successfully finished Verilog frontend.
+
+2.37.2. Continuing TECHMAP pass.
+No more expansions possible.
+<suppressed ~4 debug messages>
+
+2.38. Executing OPT pass (performing simple optimizations).
+
+2.38.1. Executing OPT_EXPR pass (perform const folding).
+Optimizing module mac_dsp_cascade_ooc.
+<suppressed ~5 debug messages>
+
+2.38.2. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\mac_dsp_cascade_ooc'.
+Computing hashes of 21 cells of `\mac_dsp_cascade_ooc'.
+Finding duplicate cells in `\mac_dsp_cascade_ooc'.
+Removed a total of 0 cells.
+
+2.38.3. Executing OPT_DFF pass (perform DFF optimizations).
+
+2.38.4. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \mac_dsp_cascade_ooc..
+
+2.38.5. Finished fast OPT passes.
+
+2.39. Executing MEMORY_MAP pass (converting memories to logic and flip-flops).
+Mapping memory \u_dut.g_lane[2].g_delay.srb in module \mac_dsp_cascade_ooc:
+  created 1 $dff cells and 0 static cells of width 32.
+  read interface: 0 $dff and 0 $mux cells.
+  write interface: 1 write mux blocks.
+Mapping memory \u_dut.g_lane[2].g_delay.sra in module \mac_dsp_cascade_ooc:
+  created 1 $dff cells and 0 static cells of width 32.
+  read interface: 0 $dff and 0 $mux cells.
+  write interface: 1 write mux blocks.
+Mapping memory \u_dut.g_lane[3].g_delay.sra in module \mac_dsp_cascade_ooc:
+  created 1 $dff cells and 0 static cells of width 64.
+  read interface: 0 $dff and 0 $mux cells.
+  write interface: 2 write mux blocks.
+Mapping memory \u_dut.g_lane[3].g_delay.srb in module \mac_dsp_cascade_ooc:
+  created 1 $dff cells and 0 static cells of width 64.
+  read interface: 0 $dff and 0 $mux cells.
+  write interface: 2 write mux blocks.
+Mapping memory \u_dut.g_lane[1].g_delay.sra in module \mac_dsp_cascade_ooc:
+  created 1 $dff cells and 0 static cells of width 16.
+  read interface: 0 $dff and 0 $mux cells.
+  write interface: 1 write mux blocks.
+Mapping memory \u_dut.g_lane[1].g_delay.srb in module \mac_dsp_cascade_ooc:
+  created 1 $dff cells and 0 static cells of width 16.
+  read interface: 0 $dff and 0 $mux cells.
+  write interface: 1 write mux blocks.
+
+2.40. Executing SIMPLEMAP pass (map simple cells to gate primitives).
+Mapping mac_dsp_cascade_ooc.$memory\u_dut.g_lane[3].g_delay.srb$wrmux[0][0][0]$1208 ($mux).
+Mapping mac_dsp_cascade_ooc.$memory\u_dut.g_lane[3].g_delay.sra$wrmux[0][0][0]$1200 ($mux).
+Mapping mac_dsp_cascade_ooc.$memory\u_dut.g_lane[2].g_delay.srb$wrmux[0][0][0]$1192 ($mux).
+Mapping mac_dsp_cascade_ooc.$memory\u_dut.g_lane[2].g_delay.sra$wrmux[0][0][0]$1196 ($mux).
+Mapping mac_dsp_cascade_ooc.$memory\u_dut.g_lane[3].g_delay.sra$wrmux[0][0][48]$1204 ($mux).
+Mapping mac_dsp_cascade_ooc.$memory\u_dut.g_lane[3].g_delay.srb$wrmux[0][0][48]$1212 ($mux).
+Mapping mac_dsp_cascade_ooc.$107 ($mux).
+Mapping mac_dsp_cascade_ooc.$memory\u_dut.g_lane[1].g_delay.sra$wrmux[0][0][0]$1216 ($mux).
+Mapping mac_dsp_cascade_ooc.$memory\u_dut.g_lane[1].g_delay.srb$wrmux[0][0][0]$1220 ($mux).
+
+2.41. Executing MUXCOVER pass (mapping to wider MUXes).
+Covering MUX trees in module mac_dsp_cascade_ooc..
+  Treeifying 264 MUXes:
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[2].g_delay.srb$wrmux[0][0][0]$y$1193 [0].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[2].g_delay.srb$wrmux[0][0][0]$y$1193 [1].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[2].g_delay.srb$wrmux[0][0][0]$y$1193 [2].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[2].g_delay.srb$wrmux[0][0][0]$y$1193 [3].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[2].g_delay.srb$wrmux[0][0][0]$y$1193 [4].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[2].g_delay.srb$wrmux[0][0][0]$y$1193 [5].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[2].g_delay.srb$wrmux[0][0][0]$y$1193 [6].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[2].g_delay.srb$wrmux[0][0][0]$y$1193 [7].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[2].g_delay.srb$wrmux[0][0][0]$y$1193 [8].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[2].g_delay.srb$wrmux[0][0][0]$y$1193 [9].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[2].g_delay.srb$wrmux[0][0][0]$y$1193 [10].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[2].g_delay.srb$wrmux[0][0][0]$y$1193 [11].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[2].g_delay.srb$wrmux[0][0][0]$y$1193 [12].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[2].g_delay.srb$wrmux[0][0][0]$y$1193 [13].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[2].g_delay.srb$wrmux[0][0][0]$y$1193 [14].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[2].g_delay.srb$wrmux[0][0][0]$y$1193 [15].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[2].g_delay.srb$wrmux[0][0][0]$y$1193 [16].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[2].g_delay.srb$wrmux[0][0][0]$y$1193 [17].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[2].g_delay.srb$wrmux[0][0][0]$y$1193 [18].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[2].g_delay.srb$wrmux[0][0][0]$y$1193 [19].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[2].g_delay.srb$wrmux[0][0][0]$y$1193 [20].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[2].g_delay.srb$wrmux[0][0][0]$y$1193 [21].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[2].g_delay.srb$wrmux[0][0][0]$y$1193 [22].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[2].g_delay.srb$wrmux[0][0][0]$y$1193 [23].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[2].g_delay.srb$wrmux[0][0][0]$y$1193 [24].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[2].g_delay.srb$wrmux[0][0][0]$y$1193 [25].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[2].g_delay.srb$wrmux[0][0][0]$y$1193 [26].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[2].g_delay.srb$wrmux[0][0][0]$y$1193 [27].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[2].g_delay.srb$wrmux[0][0][0]$y$1193 [28].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[2].g_delay.srb$wrmux[0][0][0]$y$1193 [29].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[2].g_delay.srb$wrmux[0][0][0]$y$1193 [30].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[2].g_delay.srb$wrmux[0][0][0]$y$1193 [31].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[2].g_delay.sra$wrmux[0][0][0]$y$1197 [0].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[2].g_delay.sra$wrmux[0][0][0]$y$1197 [1].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[2].g_delay.sra$wrmux[0][0][0]$y$1197 [2].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[2].g_delay.sra$wrmux[0][0][0]$y$1197 [3].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[2].g_delay.sra$wrmux[0][0][0]$y$1197 [4].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[2].g_delay.sra$wrmux[0][0][0]$y$1197 [5].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[2].g_delay.sra$wrmux[0][0][0]$y$1197 [6].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[2].g_delay.sra$wrmux[0][0][0]$y$1197 [7].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[2].g_delay.sra$wrmux[0][0][0]$y$1197 [8].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[2].g_delay.sra$wrmux[0][0][0]$y$1197 [9].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[2].g_delay.sra$wrmux[0][0][0]$y$1197 [10].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[2].g_delay.sra$wrmux[0][0][0]$y$1197 [11].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[2].g_delay.sra$wrmux[0][0][0]$y$1197 [12].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[2].g_delay.sra$wrmux[0][0][0]$y$1197 [13].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[2].g_delay.sra$wrmux[0][0][0]$y$1197 [14].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[2].g_delay.sra$wrmux[0][0][0]$y$1197 [15].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[2].g_delay.sra$wrmux[0][0][0]$y$1197 [16].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[2].g_delay.sra$wrmux[0][0][0]$y$1197 [17].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[2].g_delay.sra$wrmux[0][0][0]$y$1197 [18].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[2].g_delay.sra$wrmux[0][0][0]$y$1197 [19].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[2].g_delay.sra$wrmux[0][0][0]$y$1197 [20].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[2].g_delay.sra$wrmux[0][0][0]$y$1197 [21].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[2].g_delay.sra$wrmux[0][0][0]$y$1197 [22].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[2].g_delay.sra$wrmux[0][0][0]$y$1197 [23].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[2].g_delay.sra$wrmux[0][0][0]$y$1197 [24].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[2].g_delay.sra$wrmux[0][0][0]$y$1197 [25].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[2].g_delay.sra$wrmux[0][0][0]$y$1197 [26].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[2].g_delay.sra$wrmux[0][0][0]$y$1197 [27].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[2].g_delay.sra$wrmux[0][0][0]$y$1197 [28].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[2].g_delay.sra$wrmux[0][0][0]$y$1197 [29].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[2].g_delay.sra$wrmux[0][0][0]$y$1197 [30].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[2].g_delay.sra$wrmux[0][0][0]$y$1197 [31].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[3].g_delay.sra$wrmux[0][0][0]$y$1201 [0].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[3].g_delay.sra$wrmux[0][0][0]$y$1201 [1].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[3].g_delay.sra$wrmux[0][0][0]$y$1201 [2].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[3].g_delay.sra$wrmux[0][0][0]$y$1201 [3].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[3].g_delay.sra$wrmux[0][0][0]$y$1201 [4].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[3].g_delay.sra$wrmux[0][0][0]$y$1201 [5].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[3].g_delay.sra$wrmux[0][0][0]$y$1201 [6].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[3].g_delay.sra$wrmux[0][0][0]$y$1201 [7].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[3].g_delay.sra$wrmux[0][0][0]$y$1201 [8].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[3].g_delay.sra$wrmux[0][0][0]$y$1201 [9].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[3].g_delay.sra$wrmux[0][0][0]$y$1201 [10].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[3].g_delay.sra$wrmux[0][0][0]$y$1201 [11].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[3].g_delay.sra$wrmux[0][0][0]$y$1201 [12].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[3].g_delay.sra$wrmux[0][0][0]$y$1201 [13].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[3].g_delay.sra$wrmux[0][0][0]$y$1201 [14].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[3].g_delay.sra$wrmux[0][0][0]$y$1201 [15].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[3].g_delay.sra$wrmux[0][0][0]$y$1201 [16].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[3].g_delay.sra$wrmux[0][0][0]$y$1201 [17].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[3].g_delay.sra$wrmux[0][0][0]$y$1201 [18].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[3].g_delay.sra$wrmux[0][0][0]$y$1201 [19].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[3].g_delay.sra$wrmux[0][0][0]$y$1201 [20].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[3].g_delay.sra$wrmux[0][0][0]$y$1201 [21].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[3].g_delay.sra$wrmux[0][0][0]$y$1201 [22].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[3].g_delay.sra$wrmux[0][0][0]$y$1201 [23].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[3].g_delay.sra$wrmux[0][0][0]$y$1201 [24].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[3].g_delay.sra$wrmux[0][0][0]$y$1201 [25].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[3].g_delay.sra$wrmux[0][0][0]$y$1201 [26].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[3].g_delay.sra$wrmux[0][0][0]$y$1201 [27].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[3].g_delay.sra$wrmux[0][0][0]$y$1201 [28].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[3].g_delay.sra$wrmux[0][0][0]$y$1201 [29].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[3].g_delay.sra$wrmux[0][0][0]$y$1201 [30].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[3].g_delay.sra$wrmux[0][0][0]$y$1201 [31].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[3].g_delay.sra$wrmux[0][0][0]$y$1201 [32].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[3].g_delay.sra$wrmux[0][0][0]$y$1201 [33].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[3].g_delay.sra$wrmux[0][0][0]$y$1201 [34].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[3].g_delay.sra$wrmux[0][0][0]$y$1201 [35].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[3].g_delay.sra$wrmux[0][0][0]$y$1201 [36].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[3].g_delay.sra$wrmux[0][0][0]$y$1201 [37].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[3].g_delay.sra$wrmux[0][0][0]$y$1201 [38].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[3].g_delay.sra$wrmux[0][0][0]$y$1201 [39].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[3].g_delay.sra$wrmux[0][0][0]$y$1201 [40].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[3].g_delay.sra$wrmux[0][0][0]$y$1201 [41].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[3].g_delay.sra$wrmux[0][0][0]$y$1201 [42].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[3].g_delay.sra$wrmux[0][0][0]$y$1201 [43].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[3].g_delay.sra$wrmux[0][0][0]$y$1201 [44].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[3].g_delay.sra$wrmux[0][0][0]$y$1201 [45].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[3].g_delay.sra$wrmux[0][0][0]$y$1201 [46].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[3].g_delay.sra$wrmux[0][0][0]$y$1201 [47].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[3].g_delay.sra$wrmux[0][0][48]$y$1205 [0].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[3].g_delay.sra$wrmux[0][0][48]$y$1205 [1].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[3].g_delay.sra$wrmux[0][0][48]$y$1205 [2].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[3].g_delay.sra$wrmux[0][0][48]$y$1205 [3].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[3].g_delay.sra$wrmux[0][0][48]$y$1205 [4].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[3].g_delay.sra$wrmux[0][0][48]$y$1205 [5].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[3].g_delay.sra$wrmux[0][0][48]$y$1205 [6].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[3].g_delay.sra$wrmux[0][0][48]$y$1205 [7].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[3].g_delay.sra$wrmux[0][0][48]$y$1205 [8].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[3].g_delay.sra$wrmux[0][0][48]$y$1205 [9].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[3].g_delay.sra$wrmux[0][0][48]$y$1205 [10].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[3].g_delay.sra$wrmux[0][0][48]$y$1205 [11].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[3].g_delay.sra$wrmux[0][0][48]$y$1205 [12].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[3].g_delay.sra$wrmux[0][0][48]$y$1205 [13].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[3].g_delay.sra$wrmux[0][0][48]$y$1205 [14].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[3].g_delay.sra$wrmux[0][0][48]$y$1205 [15].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[3].g_delay.srb$wrmux[0][0][0]$y$1209 [0].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[3].g_delay.srb$wrmux[0][0][0]$y$1209 [1].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[3].g_delay.srb$wrmux[0][0][0]$y$1209 [2].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[3].g_delay.srb$wrmux[0][0][0]$y$1209 [3].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[3].g_delay.srb$wrmux[0][0][0]$y$1209 [4].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[3].g_delay.srb$wrmux[0][0][0]$y$1209 [5].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[3].g_delay.srb$wrmux[0][0][0]$y$1209 [6].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[3].g_delay.srb$wrmux[0][0][0]$y$1209 [7].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[3].g_delay.srb$wrmux[0][0][0]$y$1209 [8].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[3].g_delay.srb$wrmux[0][0][0]$y$1209 [9].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[3].g_delay.srb$wrmux[0][0][0]$y$1209 [10].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[3].g_delay.srb$wrmux[0][0][0]$y$1209 [11].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[3].g_delay.srb$wrmux[0][0][0]$y$1209 [12].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[3].g_delay.srb$wrmux[0][0][0]$y$1209 [13].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[3].g_delay.srb$wrmux[0][0][0]$y$1209 [14].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[3].g_delay.srb$wrmux[0][0][0]$y$1209 [15].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[3].g_delay.srb$wrmux[0][0][0]$y$1209 [16].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[3].g_delay.srb$wrmux[0][0][0]$y$1209 [17].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[3].g_delay.srb$wrmux[0][0][0]$y$1209 [18].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[3].g_delay.srb$wrmux[0][0][0]$y$1209 [19].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[3].g_delay.srb$wrmux[0][0][0]$y$1209 [20].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[3].g_delay.srb$wrmux[0][0][0]$y$1209 [21].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[3].g_delay.srb$wrmux[0][0][0]$y$1209 [22].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[3].g_delay.srb$wrmux[0][0][0]$y$1209 [23].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[3].g_delay.srb$wrmux[0][0][0]$y$1209 [24].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[3].g_delay.srb$wrmux[0][0][0]$y$1209 [25].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[3].g_delay.srb$wrmux[0][0][0]$y$1209 [26].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[3].g_delay.srb$wrmux[0][0][0]$y$1209 [27].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[3].g_delay.srb$wrmux[0][0][0]$y$1209 [28].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[3].g_delay.srb$wrmux[0][0][0]$y$1209 [29].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[3].g_delay.srb$wrmux[0][0][0]$y$1209 [30].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[3].g_delay.srb$wrmux[0][0][0]$y$1209 [31].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[3].g_delay.srb$wrmux[0][0][0]$y$1209 [32].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[3].g_delay.srb$wrmux[0][0][0]$y$1209 [33].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[3].g_delay.srb$wrmux[0][0][0]$y$1209 [34].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[3].g_delay.srb$wrmux[0][0][0]$y$1209 [35].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[3].g_delay.srb$wrmux[0][0][0]$y$1209 [36].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[3].g_delay.srb$wrmux[0][0][0]$y$1209 [37].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[3].g_delay.srb$wrmux[0][0][0]$y$1209 [38].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[3].g_delay.srb$wrmux[0][0][0]$y$1209 [39].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[3].g_delay.srb$wrmux[0][0][0]$y$1209 [40].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[3].g_delay.srb$wrmux[0][0][0]$y$1209 [41].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[3].g_delay.srb$wrmux[0][0][0]$y$1209 [42].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[3].g_delay.srb$wrmux[0][0][0]$y$1209 [43].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[3].g_delay.srb$wrmux[0][0][0]$y$1209 [44].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[3].g_delay.srb$wrmux[0][0][0]$y$1209 [45].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[3].g_delay.srb$wrmux[0][0][0]$y$1209 [46].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[3].g_delay.srb$wrmux[0][0][0]$y$1209 [47].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[3].g_delay.srb$wrmux[0][0][48]$y$1213 [0].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[3].g_delay.srb$wrmux[0][0][48]$y$1213 [1].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[3].g_delay.srb$wrmux[0][0][48]$y$1213 [2].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[3].g_delay.srb$wrmux[0][0][48]$y$1213 [3].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[3].g_delay.srb$wrmux[0][0][48]$y$1213 [4].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[3].g_delay.srb$wrmux[0][0][48]$y$1213 [5].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[3].g_delay.srb$wrmux[0][0][48]$y$1213 [6].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[3].g_delay.srb$wrmux[0][0][48]$y$1213 [7].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[3].g_delay.srb$wrmux[0][0][48]$y$1213 [8].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[3].g_delay.srb$wrmux[0][0][48]$y$1213 [9].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[3].g_delay.srb$wrmux[0][0][48]$y$1213 [10].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[3].g_delay.srb$wrmux[0][0][48]$y$1213 [11].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[3].g_delay.srb$wrmux[0][0][48]$y$1213 [12].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[3].g_delay.srb$wrmux[0][0][48]$y$1213 [13].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[3].g_delay.srb$wrmux[0][0][48]$y$1213 [14].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[3].g_delay.srb$wrmux[0][0][48]$y$1213 [15].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[1].g_delay.sra$wrmux[0][0][0]$y$1217 [0].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[1].g_delay.sra$wrmux[0][0][0]$y$1217 [1].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[1].g_delay.sra$wrmux[0][0][0]$y$1217 [2].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[1].g_delay.sra$wrmux[0][0][0]$y$1217 [3].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[1].g_delay.sra$wrmux[0][0][0]$y$1217 [4].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[1].g_delay.sra$wrmux[0][0][0]$y$1217 [5].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[1].g_delay.sra$wrmux[0][0][0]$y$1217 [6].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[1].g_delay.sra$wrmux[0][0][0]$y$1217 [7].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[1].g_delay.sra$wrmux[0][0][0]$y$1217 [8].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[1].g_delay.sra$wrmux[0][0][0]$y$1217 [9].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[1].g_delay.sra$wrmux[0][0][0]$y$1217 [10].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[1].g_delay.sra$wrmux[0][0][0]$y$1217 [11].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[1].g_delay.sra$wrmux[0][0][0]$y$1217 [12].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[1].g_delay.sra$wrmux[0][0][0]$y$1217 [13].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[1].g_delay.sra$wrmux[0][0][0]$y$1217 [14].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[1].g_delay.sra$wrmux[0][0][0]$y$1217 [15].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[1].g_delay.srb$wrmux[0][0][0]$y$1221 [0].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[1].g_delay.srb$wrmux[0][0][0]$y$1221 [1].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[1].g_delay.srb$wrmux[0][0][0]$y$1221 [2].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[1].g_delay.srb$wrmux[0][0][0]$y$1221 [3].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[1].g_delay.srb$wrmux[0][0][0]$y$1221 [4].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[1].g_delay.srb$wrmux[0][0][0]$y$1221 [5].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[1].g_delay.srb$wrmux[0][0][0]$y$1221 [6].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[1].g_delay.srb$wrmux[0][0][0]$y$1221 [7].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[1].g_delay.srb$wrmux[0][0][0]$y$1221 [8].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[1].g_delay.srb$wrmux[0][0][0]$y$1221 [9].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[1].g_delay.srb$wrmux[0][0][0]$y$1221 [10].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[1].g_delay.srb$wrmux[0][0][0]$y$1221 [11].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[1].g_delay.srb$wrmux[0][0][0]$y$1221 [12].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[1].g_delay.srb$wrmux[0][0][0]$y$1221 [13].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[1].g_delay.srb$wrmux[0][0][0]$y$1221 [14].
+    Found tree with 1 MUXes at root $memory\u_dut.g_lane[1].g_delay.srb$wrmux[0][0][0]$y$1221 [15].
+    Found tree with 1 MUXes at root $107y [0].
+    Found tree with 1 MUXes at root $107y [1].
+    Found tree with 1 MUXes at root $107y [2].
+    Found tree with 1 MUXes at root $107y [3].
+    Found tree with 1 MUXes at root $107y [4].
+    Found tree with 1 MUXes at root $107y [5].
+    Found tree with 1 MUXes at root $107y [6].
+    Found tree with 1 MUXes at root $107y [7].
+    Found tree with 1 MUXes at root $107y [8].
+    Found tree with 1 MUXes at root $107y [9].
+    Found tree with 1 MUXes at root $107y [10].
+    Found tree with 1 MUXes at root $107y [11].
+    Found tree with 1 MUXes at root $107y [12].
+    Found tree with 1 MUXes at root $107y [13].
+    Found tree with 1 MUXes at root $107y [14].
+    Found tree with 1 MUXes at root $107y [15].
+    Found tree with 1 MUXes at root $107y [16].
+    Found tree with 1 MUXes at root $107y [17].
+    Found tree with 1 MUXes at root $107y [18].
+    Found tree with 1 MUXes at root $107y [19].
+    Found tree with 1 MUXes at root $107y [20].
+    Found tree with 1 MUXes at root $107y [21].
+    Found tree with 1 MUXes at root $107y [22].
+    Found tree with 1 MUXes at root $107y [23].
+    Found tree with 1 MUXes at root $107y [24].
+    Found tree with 1 MUXes at root $107y [25].
+    Found tree with 1 MUXes at root $107y [26].
+    Found tree with 1 MUXes at root $107y [27].
+    Found tree with 1 MUXes at root $107y [28].
+    Found tree with 1 MUXes at root $107y [29].
+    Found tree with 1 MUXes at root $107y [30].
+    Found tree with 1 MUXes at root $107y [31].
+    Found tree with 1 MUXes at root $107y [32].
+    Found tree with 1 MUXes at root $107y [33].
+    Found tree with 1 MUXes at root $107y [34].
+    Found tree with 1 MUXes at root $107y [35].
+    Found tree with 1 MUXes at root $107y [36].
+    Found tree with 1 MUXes at root $107y [37].
+    Found tree with 1 MUXes at root $107y [38].
+    Found tree with 1 MUXes at root $107y [39].
+    Finished treeification: Found 264 trees.
+  Covering trees:
+    Replaced tree at $memory\u_dut.g_lane[2].g_delay.srb$wrmux[0][0][0]$y$1193 [0]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[2].g_delay.srb$wrmux[0][0][0]$y$1193 [1]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[2].g_delay.srb$wrmux[0][0][0]$y$1193 [2]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[2].g_delay.srb$wrmux[0][0][0]$y$1193 [3]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[2].g_delay.srb$wrmux[0][0][0]$y$1193 [4]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[2].g_delay.srb$wrmux[0][0][0]$y$1193 [5]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[2].g_delay.srb$wrmux[0][0][0]$y$1193 [6]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[2].g_delay.srb$wrmux[0][0][0]$y$1193 [7]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[2].g_delay.srb$wrmux[0][0][0]$y$1193 [8]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[2].g_delay.srb$wrmux[0][0][0]$y$1193 [9]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[2].g_delay.srb$wrmux[0][0][0]$y$1193 [10]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[2].g_delay.srb$wrmux[0][0][0]$y$1193 [11]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[2].g_delay.srb$wrmux[0][0][0]$y$1193 [12]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[2].g_delay.srb$wrmux[0][0][0]$y$1193 [13]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[2].g_delay.srb$wrmux[0][0][0]$y$1193 [14]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[2].g_delay.srb$wrmux[0][0][0]$y$1193 [15]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[2].g_delay.srb$wrmux[0][0][0]$y$1193 [16]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[2].g_delay.srb$wrmux[0][0][0]$y$1193 [17]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[2].g_delay.srb$wrmux[0][0][0]$y$1193 [18]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[2].g_delay.srb$wrmux[0][0][0]$y$1193 [19]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[2].g_delay.srb$wrmux[0][0][0]$y$1193 [20]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[2].g_delay.srb$wrmux[0][0][0]$y$1193 [21]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[2].g_delay.srb$wrmux[0][0][0]$y$1193 [22]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[2].g_delay.srb$wrmux[0][0][0]$y$1193 [23]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[2].g_delay.srb$wrmux[0][0][0]$y$1193 [24]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[2].g_delay.srb$wrmux[0][0][0]$y$1193 [25]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[2].g_delay.srb$wrmux[0][0][0]$y$1193 [26]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[2].g_delay.srb$wrmux[0][0][0]$y$1193 [27]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[2].g_delay.srb$wrmux[0][0][0]$y$1193 [28]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[2].g_delay.srb$wrmux[0][0][0]$y$1193 [29]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[2].g_delay.srb$wrmux[0][0][0]$y$1193 [30]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[2].g_delay.srb$wrmux[0][0][0]$y$1193 [31]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[2].g_delay.sra$wrmux[0][0][0]$y$1197 [0]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[2].g_delay.sra$wrmux[0][0][0]$y$1197 [1]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[2].g_delay.sra$wrmux[0][0][0]$y$1197 [2]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[2].g_delay.sra$wrmux[0][0][0]$y$1197 [3]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[2].g_delay.sra$wrmux[0][0][0]$y$1197 [4]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[2].g_delay.sra$wrmux[0][0][0]$y$1197 [5]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[2].g_delay.sra$wrmux[0][0][0]$y$1197 [6]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[2].g_delay.sra$wrmux[0][0][0]$y$1197 [7]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[2].g_delay.sra$wrmux[0][0][0]$y$1197 [8]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[2].g_delay.sra$wrmux[0][0][0]$y$1197 [9]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[2].g_delay.sra$wrmux[0][0][0]$y$1197 [10]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[2].g_delay.sra$wrmux[0][0][0]$y$1197 [11]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[2].g_delay.sra$wrmux[0][0][0]$y$1197 [12]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[2].g_delay.sra$wrmux[0][0][0]$y$1197 [13]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[2].g_delay.sra$wrmux[0][0][0]$y$1197 [14]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[2].g_delay.sra$wrmux[0][0][0]$y$1197 [15]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[2].g_delay.sra$wrmux[0][0][0]$y$1197 [16]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[2].g_delay.sra$wrmux[0][0][0]$y$1197 [17]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[2].g_delay.sra$wrmux[0][0][0]$y$1197 [18]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[2].g_delay.sra$wrmux[0][0][0]$y$1197 [19]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[2].g_delay.sra$wrmux[0][0][0]$y$1197 [20]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[2].g_delay.sra$wrmux[0][0][0]$y$1197 [21]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[2].g_delay.sra$wrmux[0][0][0]$y$1197 [22]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[2].g_delay.sra$wrmux[0][0][0]$y$1197 [23]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[2].g_delay.sra$wrmux[0][0][0]$y$1197 [24]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[2].g_delay.sra$wrmux[0][0][0]$y$1197 [25]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[2].g_delay.sra$wrmux[0][0][0]$y$1197 [26]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[2].g_delay.sra$wrmux[0][0][0]$y$1197 [27]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[2].g_delay.sra$wrmux[0][0][0]$y$1197 [28]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[2].g_delay.sra$wrmux[0][0][0]$y$1197 [29]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[2].g_delay.sra$wrmux[0][0][0]$y$1197 [30]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[2].g_delay.sra$wrmux[0][0][0]$y$1197 [31]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[3].g_delay.sra$wrmux[0][0][0]$y$1201 [0]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[3].g_delay.sra$wrmux[0][0][0]$y$1201 [1]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[3].g_delay.sra$wrmux[0][0][0]$y$1201 [2]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[3].g_delay.sra$wrmux[0][0][0]$y$1201 [3]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[3].g_delay.sra$wrmux[0][0][0]$y$1201 [4]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[3].g_delay.sra$wrmux[0][0][0]$y$1201 [5]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[3].g_delay.sra$wrmux[0][0][0]$y$1201 [6]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[3].g_delay.sra$wrmux[0][0][0]$y$1201 [7]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[3].g_delay.sra$wrmux[0][0][0]$y$1201 [8]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[3].g_delay.sra$wrmux[0][0][0]$y$1201 [9]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[3].g_delay.sra$wrmux[0][0][0]$y$1201 [10]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[3].g_delay.sra$wrmux[0][0][0]$y$1201 [11]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[3].g_delay.sra$wrmux[0][0][0]$y$1201 [12]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[3].g_delay.sra$wrmux[0][0][0]$y$1201 [13]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[3].g_delay.sra$wrmux[0][0][0]$y$1201 [14]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[3].g_delay.sra$wrmux[0][0][0]$y$1201 [15]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[3].g_delay.sra$wrmux[0][0][0]$y$1201 [16]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[3].g_delay.sra$wrmux[0][0][0]$y$1201 [17]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[3].g_delay.sra$wrmux[0][0][0]$y$1201 [18]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[3].g_delay.sra$wrmux[0][0][0]$y$1201 [19]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[3].g_delay.sra$wrmux[0][0][0]$y$1201 [20]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[3].g_delay.sra$wrmux[0][0][0]$y$1201 [21]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[3].g_delay.sra$wrmux[0][0][0]$y$1201 [22]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[3].g_delay.sra$wrmux[0][0][0]$y$1201 [23]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[3].g_delay.sra$wrmux[0][0][0]$y$1201 [24]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[3].g_delay.sra$wrmux[0][0][0]$y$1201 [25]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[3].g_delay.sra$wrmux[0][0][0]$y$1201 [26]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[3].g_delay.sra$wrmux[0][0][0]$y$1201 [27]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[3].g_delay.sra$wrmux[0][0][0]$y$1201 [28]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[3].g_delay.sra$wrmux[0][0][0]$y$1201 [29]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[3].g_delay.sra$wrmux[0][0][0]$y$1201 [30]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[3].g_delay.sra$wrmux[0][0][0]$y$1201 [31]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[3].g_delay.sra$wrmux[0][0][0]$y$1201 [32]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[3].g_delay.sra$wrmux[0][0][0]$y$1201 [33]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[3].g_delay.sra$wrmux[0][0][0]$y$1201 [34]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[3].g_delay.sra$wrmux[0][0][0]$y$1201 [35]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[3].g_delay.sra$wrmux[0][0][0]$y$1201 [36]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[3].g_delay.sra$wrmux[0][0][0]$y$1201 [37]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[3].g_delay.sra$wrmux[0][0][0]$y$1201 [38]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[3].g_delay.sra$wrmux[0][0][0]$y$1201 [39]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[3].g_delay.sra$wrmux[0][0][0]$y$1201 [40]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[3].g_delay.sra$wrmux[0][0][0]$y$1201 [41]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[3].g_delay.sra$wrmux[0][0][0]$y$1201 [42]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[3].g_delay.sra$wrmux[0][0][0]$y$1201 [43]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[3].g_delay.sra$wrmux[0][0][0]$y$1201 [44]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[3].g_delay.sra$wrmux[0][0][0]$y$1201 [45]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[3].g_delay.sra$wrmux[0][0][0]$y$1201 [46]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[3].g_delay.sra$wrmux[0][0][0]$y$1201 [47]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[3].g_delay.sra$wrmux[0][0][48]$y$1205 [0]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[3].g_delay.sra$wrmux[0][0][48]$y$1205 [1]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[3].g_delay.sra$wrmux[0][0][48]$y$1205 [2]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[3].g_delay.sra$wrmux[0][0][48]$y$1205 [3]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[3].g_delay.sra$wrmux[0][0][48]$y$1205 [4]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[3].g_delay.sra$wrmux[0][0][48]$y$1205 [5]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[3].g_delay.sra$wrmux[0][0][48]$y$1205 [6]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[3].g_delay.sra$wrmux[0][0][48]$y$1205 [7]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[3].g_delay.sra$wrmux[0][0][48]$y$1205 [8]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[3].g_delay.sra$wrmux[0][0][48]$y$1205 [9]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[3].g_delay.sra$wrmux[0][0][48]$y$1205 [10]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[3].g_delay.sra$wrmux[0][0][48]$y$1205 [11]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[3].g_delay.sra$wrmux[0][0][48]$y$1205 [12]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[3].g_delay.sra$wrmux[0][0][48]$y$1205 [13]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[3].g_delay.sra$wrmux[0][0][48]$y$1205 [14]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[3].g_delay.sra$wrmux[0][0][48]$y$1205 [15]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[3].g_delay.srb$wrmux[0][0][0]$y$1209 [0]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[3].g_delay.srb$wrmux[0][0][0]$y$1209 [1]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[3].g_delay.srb$wrmux[0][0][0]$y$1209 [2]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[3].g_delay.srb$wrmux[0][0][0]$y$1209 [3]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[3].g_delay.srb$wrmux[0][0][0]$y$1209 [4]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[3].g_delay.srb$wrmux[0][0][0]$y$1209 [5]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[3].g_delay.srb$wrmux[0][0][0]$y$1209 [6]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[3].g_delay.srb$wrmux[0][0][0]$y$1209 [7]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[3].g_delay.srb$wrmux[0][0][0]$y$1209 [8]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[3].g_delay.srb$wrmux[0][0][0]$y$1209 [9]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[3].g_delay.srb$wrmux[0][0][0]$y$1209 [10]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[3].g_delay.srb$wrmux[0][0][0]$y$1209 [11]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[3].g_delay.srb$wrmux[0][0][0]$y$1209 [12]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[3].g_delay.srb$wrmux[0][0][0]$y$1209 [13]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[3].g_delay.srb$wrmux[0][0][0]$y$1209 [14]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[3].g_delay.srb$wrmux[0][0][0]$y$1209 [15]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[3].g_delay.srb$wrmux[0][0][0]$y$1209 [16]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[3].g_delay.srb$wrmux[0][0][0]$y$1209 [17]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[3].g_delay.srb$wrmux[0][0][0]$y$1209 [18]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[3].g_delay.srb$wrmux[0][0][0]$y$1209 [19]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[3].g_delay.srb$wrmux[0][0][0]$y$1209 [20]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[3].g_delay.srb$wrmux[0][0][0]$y$1209 [21]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[3].g_delay.srb$wrmux[0][0][0]$y$1209 [22]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[3].g_delay.srb$wrmux[0][0][0]$y$1209 [23]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[3].g_delay.srb$wrmux[0][0][0]$y$1209 [24]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[3].g_delay.srb$wrmux[0][0][0]$y$1209 [25]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[3].g_delay.srb$wrmux[0][0][0]$y$1209 [26]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[3].g_delay.srb$wrmux[0][0][0]$y$1209 [27]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[3].g_delay.srb$wrmux[0][0][0]$y$1209 [28]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[3].g_delay.srb$wrmux[0][0][0]$y$1209 [29]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[3].g_delay.srb$wrmux[0][0][0]$y$1209 [30]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[3].g_delay.srb$wrmux[0][0][0]$y$1209 [31]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[3].g_delay.srb$wrmux[0][0][0]$y$1209 [32]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[3].g_delay.srb$wrmux[0][0][0]$y$1209 [33]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[3].g_delay.srb$wrmux[0][0][0]$y$1209 [34]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[3].g_delay.srb$wrmux[0][0][0]$y$1209 [35]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[3].g_delay.srb$wrmux[0][0][0]$y$1209 [36]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[3].g_delay.srb$wrmux[0][0][0]$y$1209 [37]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[3].g_delay.srb$wrmux[0][0][0]$y$1209 [38]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[3].g_delay.srb$wrmux[0][0][0]$y$1209 [39]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[3].g_delay.srb$wrmux[0][0][0]$y$1209 [40]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[3].g_delay.srb$wrmux[0][0][0]$y$1209 [41]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[3].g_delay.srb$wrmux[0][0][0]$y$1209 [42]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[3].g_delay.srb$wrmux[0][0][0]$y$1209 [43]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[3].g_delay.srb$wrmux[0][0][0]$y$1209 [44]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[3].g_delay.srb$wrmux[0][0][0]$y$1209 [45]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[3].g_delay.srb$wrmux[0][0][0]$y$1209 [46]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[3].g_delay.srb$wrmux[0][0][0]$y$1209 [47]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[3].g_delay.srb$wrmux[0][0][48]$y$1213 [0]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[3].g_delay.srb$wrmux[0][0][48]$y$1213 [1]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[3].g_delay.srb$wrmux[0][0][48]$y$1213 [2]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[3].g_delay.srb$wrmux[0][0][48]$y$1213 [3]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[3].g_delay.srb$wrmux[0][0][48]$y$1213 [4]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[3].g_delay.srb$wrmux[0][0][48]$y$1213 [5]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[3].g_delay.srb$wrmux[0][0][48]$y$1213 [6]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[3].g_delay.srb$wrmux[0][0][48]$y$1213 [7]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[3].g_delay.srb$wrmux[0][0][48]$y$1213 [8]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[3].g_delay.srb$wrmux[0][0][48]$y$1213 [9]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[3].g_delay.srb$wrmux[0][0][48]$y$1213 [10]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[3].g_delay.srb$wrmux[0][0][48]$y$1213 [11]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[3].g_delay.srb$wrmux[0][0][48]$y$1213 [12]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[3].g_delay.srb$wrmux[0][0][48]$y$1213 [13]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[3].g_delay.srb$wrmux[0][0][48]$y$1213 [14]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[3].g_delay.srb$wrmux[0][0][48]$y$1213 [15]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[1].g_delay.sra$wrmux[0][0][0]$y$1217 [0]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[1].g_delay.sra$wrmux[0][0][0]$y$1217 [1]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[1].g_delay.sra$wrmux[0][0][0]$y$1217 [2]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[1].g_delay.sra$wrmux[0][0][0]$y$1217 [3]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[1].g_delay.sra$wrmux[0][0][0]$y$1217 [4]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[1].g_delay.sra$wrmux[0][0][0]$y$1217 [5]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[1].g_delay.sra$wrmux[0][0][0]$y$1217 [6]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[1].g_delay.sra$wrmux[0][0][0]$y$1217 [7]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[1].g_delay.sra$wrmux[0][0][0]$y$1217 [8]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[1].g_delay.sra$wrmux[0][0][0]$y$1217 [9]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[1].g_delay.sra$wrmux[0][0][0]$y$1217 [10]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[1].g_delay.sra$wrmux[0][0][0]$y$1217 [11]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[1].g_delay.sra$wrmux[0][0][0]$y$1217 [12]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[1].g_delay.sra$wrmux[0][0][0]$y$1217 [13]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[1].g_delay.sra$wrmux[0][0][0]$y$1217 [14]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[1].g_delay.sra$wrmux[0][0][0]$y$1217 [15]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[1].g_delay.srb$wrmux[0][0][0]$y$1221 [0]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[1].g_delay.srb$wrmux[0][0][0]$y$1221 [1]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[1].g_delay.srb$wrmux[0][0][0]$y$1221 [2]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[1].g_delay.srb$wrmux[0][0][0]$y$1221 [3]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[1].g_delay.srb$wrmux[0][0][0]$y$1221 [4]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[1].g_delay.srb$wrmux[0][0][0]$y$1221 [5]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[1].g_delay.srb$wrmux[0][0][0]$y$1221 [6]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[1].g_delay.srb$wrmux[0][0][0]$y$1221 [7]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[1].g_delay.srb$wrmux[0][0][0]$y$1221 [8]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[1].g_delay.srb$wrmux[0][0][0]$y$1221 [9]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[1].g_delay.srb$wrmux[0][0][0]$y$1221 [10]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[1].g_delay.srb$wrmux[0][0][0]$y$1221 [11]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[1].g_delay.srb$wrmux[0][0][0]$y$1221 [12]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[1].g_delay.srb$wrmux[0][0][0]$y$1221 [13]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[1].g_delay.srb$wrmux[0][0][0]$y$1221 [14]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $memory\u_dut.g_lane[1].g_delay.srb$wrmux[0][0][0]$y$1221 [15]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $107y [0]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $107y [1]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $107y [2]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $107y [3]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $107y [4]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $107y [5]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $107y [6]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $107y [7]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $107y [8]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $107y [9]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $107y [10]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $107y [11]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $107y [12]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $107y [13]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $107y [14]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $107y [15]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $107y [16]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $107y [17]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $107y [18]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $107y [19]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $107y [20]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $107y [21]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $107y [22]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $107y [23]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $107y [24]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $107y [25]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $107y [26]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $107y [27]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $107y [28]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $107y [29]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $107y [30]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $107y [31]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $107y [32]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $107y [33]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $107y [34]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $107y [35]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $107y [36]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $107y [37]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $107y [38]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+    Replaced tree at $107y [39]: 1 MUX2, 0 MUX4, 0 MUX8, 0 MUX16
+<suppressed ~3432 debug messages>
+
+2.42. Executing OPT pass (performing simple optimizations).
+
+2.42.1. Executing OPT_EXPR pass (perform const folding).
+Optimizing module mac_dsp_cascade_ooc.
+<suppressed ~227 debug messages>
+
+2.42.2. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\mac_dsp_cascade_ooc'.
+Computing hashes of 60 cells of `\mac_dsp_cascade_ooc'.
+Finding duplicate cells in `\mac_dsp_cascade_ooc'.
+Removed a total of 0 cells.
+
+2.42.3. Executing OPT_MUXTREE pass (detect dead branches in mux trees).
+Running muxtree optimizer on module \mac_dsp_cascade_ooc..
+  Creating internal representation of mux trees.
+  No muxes found in this module.
+Removed 0 multiplexer ports.
+
+2.42.4. Executing OPT_REDUCE pass (consolidate $*mux and $reduce_* inputs).
+  Optimizing cells in module \mac_dsp_cascade_ooc.
+Performed a total of 0 changes.
+
+2.42.5. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\mac_dsp_cascade_ooc'.
+Computing hashes of 60 cells of `\mac_dsp_cascade_ooc'.
+Finding duplicate cells in `\mac_dsp_cascade_ooc'.
+Removed a total of 0 cells.
+
+2.42.6. Executing OPT_SHARE pass.
+
+2.42.7. Executing OPT_DFF pass (perform DFF optimizations).
+
+2.42.8. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \mac_dsp_cascade_ooc..
+Removed 0 unused cells and 25 unused wires.
+<suppressed ~1 debug messages>
+
+2.42.9. Executing OPT_EXPR pass (perform const folding).
+Optimizing module mac_dsp_cascade_ooc.
+
+2.42.10. Rerunning OPT passes. (Maybe there is more to do..)
+
+2.42.11. Executing OPT_MUXTREE pass (detect dead branches in mux trees).
+Running muxtree optimizer on module \mac_dsp_cascade_ooc..
+  Creating internal representation of mux trees.
+  No muxes found in this module.
+Removed 0 multiplexer ports.
+
+2.42.12. Executing OPT_REDUCE pass (consolidate $*mux and $reduce_* inputs).
+  Optimizing cells in module \mac_dsp_cascade_ooc.
+Performed a total of 0 changes.
+
+2.42.13. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\mac_dsp_cascade_ooc'.
+Computing hashes of 60 cells of `\mac_dsp_cascade_ooc'.
+Finding duplicate cells in `\mac_dsp_cascade_ooc'.
+Removed a total of 0 cells.
+
+2.42.14. Executing OPT_SHARE pass.
+
+2.42.15. Executing OPT_DFF pass (perform DFF optimizations).
+Adding EN signal on $memory\u_dut.g_lane[3].g_delay.sra[0]$1198 ($dff) from module mac_dsp_cascade_ooc (D = \u_dut.g_lane[3].g_delay.sra[0] [63:48], Q = \u_dut.g_lane[3].g_delay.sra[0] [63:48]).
+Handling D = Q on $auto$ff.cc:337:slice$1750 ($dffe) from module mac_dsp_cascade_ooc (removing D path).
+Adding EN signal on $memory\u_dut.g_lane[3].g_delay.srb[0]$1206 ($dff) from module mac_dsp_cascade_ooc (D = \u_dut.g_lane[3].g_delay.srb[0] [63:48], Q = \u_dut.g_lane[3].g_delay.srb[0] [63:48]).
+Handling D = Q on $auto$ff.cc:337:slice$1754 ($dffe) from module mac_dsp_cascade_ooc (removing D path).
+
+2.42.16. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \mac_dsp_cascade_ooc..
+Removed 2 unused cells and 2 unused wires.
+<suppressed ~3 debug messages>
+
+2.42.17. Executing OPT_EXPR pass (perform const folding).
+Optimizing module mac_dsp_cascade_ooc.
+
+2.42.18. Rerunning OPT passes. (Maybe there is more to do..)
+
+2.42.19. Executing OPT_MUXTREE pass (detect dead branches in mux trees).
+Running muxtree optimizer on module \mac_dsp_cascade_ooc..
+  Creating internal representation of mux trees.
+  No muxes found in this module.
+Removed 0 multiplexer ports.
+
+2.42.20. Executing OPT_REDUCE pass (consolidate $*mux and $reduce_* inputs).
+  Optimizing cells in module \mac_dsp_cascade_ooc.
+Performed a total of 0 changes.
+
+2.42.21. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\mac_dsp_cascade_ooc'.
+Computing hashes of 60 cells of `\mac_dsp_cascade_ooc'.
+Finding duplicate cells in `\mac_dsp_cascade_ooc'.
+Removed a total of 0 cells.
+
+2.42.22. Executing OPT_SHARE pass.
+
+2.42.23. Executing OPT_DFF pass (perform DFF optimizations).
+
+2.42.24. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \mac_dsp_cascade_ooc..
+
+2.42.25. Executing OPT_EXPR pass (perform const folding).
+Optimizing module mac_dsp_cascade_ooc.
+
+2.42.26. Finished fast OPT passes. (There is nothing left to do.)
+
+2.43. Executing XILINX_SRL pass (Xilinx shift register extraction).
+
+2.44. Executing TECHMAP pass (map to technology primitives).
+
+2.44.1. Executing Verilog-2005 frontend: /home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/techmap.v
+Parsing Verilog input from `/home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/techmap.v' to AST representation.
+Generating RTLIL representation for module `\_90_simplemap_bool_ops'.
+Generating RTLIL representation for module `\_90_simplemap_reduce_ops'.
+Generating RTLIL representation for module `\_90_simplemap_logic_ops'.
+Generating RTLIL representation for module `\_90_simplemap_compare_ops'.
+Generating RTLIL representation for module `\_90_simplemap_various'.
+Generating RTLIL representation for module `\_90_simplemap_registers'.
+Generating RTLIL representation for module `\_90_shift_ops_shr_shl_sshl_sshr'.
+Generating RTLIL representation for module `\_90_shift_shiftx'.
+Generating RTLIL representation for module `\_90_fa'.
+Generating RTLIL representation for module `\_90_lcu_brent_kung'.
+Generating RTLIL representation for module `\_90_alu'.
+Generating RTLIL representation for module `\_90_macc'.
+Generating RTLIL representation for module `\_90_alumacc'.
+Generating RTLIL representation for module `$__div_mod_u'.
+Generating RTLIL representation for module `$__div_mod_trunc'.
+Generating RTLIL representation for module `\_90_div'.
+Generating RTLIL representation for module `\_90_mod'.
+Generating RTLIL representation for module `$__div_mod_floor'.
+Generating RTLIL representation for module `\_90_divfloor'.
+Generating RTLIL representation for module `\_90_modfloor'.
+Generating RTLIL representation for module `\_90_pow'.
+Generating RTLIL representation for module `\_90_demux'.
+Generating RTLIL representation for module `\_90_lut'.
+Generating RTLIL representation for module `$connect'.
+Generating RTLIL representation for module `$input_port'.
+Successfully finished Verilog frontend.
+
+2.44.2. Executing Verilog-2005 frontend: /home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/xilinx/mux_map.v
+Parsing Verilog input from `/home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/xilinx/mux_map.v' to AST representation.
+Generating RTLIL representation for module `$shiftx'.
+Successfully finished Verilog frontend.
+
+2.44.3. Executing Verilog-2005 frontend: /home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/xilinx/arith_map.v
+Parsing Verilog input from `/home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/xilinx/arith_map.v' to AST representation.
+Generating RTLIL representation for module `\_80_xilinx_lcu'.
+Generating RTLIL representation for module `\_80_xilinx_alu'.
+Successfully finished Verilog frontend.
+
+2.44.4. Continuing TECHMAP pass.
+Using extmapper simplemap for cells of type $dff.
+Using extmapper simplemap for cells of type $sdff.
+Using extmapper simplemap for cells of type $sdffe.
+Using template $paramod$a04bdd4da3ee8a1269d3d80ee5937a40d6f82cde\_80_xilinx_alu for cells of type $alu.
+Using extmapper simplemap for cells of type $xor.
+Using extmapper simplemap for cells of type $not.
+Using extmapper simplemap for cells of type $mux.
+Using extmapper simplemap for cells of type $pos.
+No more expansions possible.
+<suppressed ~119 debug messages>
+
+2.45. Executing OPT pass (performing simple optimizations).
+
+2.45.1. Executing OPT_EXPR pass (perform const folding).
+Optimizing module mac_dsp_cascade_ooc.
+<suppressed ~40 debug messages>
+
+2.45.2. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\mac_dsp_cascade_ooc'.
+Computing hashes of 545 cells of `\mac_dsp_cascade_ooc'.
+Finding duplicate cells in `\mac_dsp_cascade_ooc'.
+Removed a total of 0 cells.
+
+2.45.3. Executing OPT_DFF pass (perform DFF optimizations).
+
+2.45.4. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \mac_dsp_cascade_ooc..
+Removed 72 unused cells and 19 unused wires.
+<suppressed ~73 debug messages>
+
+2.45.5. Finished fast OPT passes.
+
+2.46. Executing TECHMAP pass (map to technology primitives).
+
+2.46.1. Executing Verilog-2005 frontend: /home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/techmap.v
+Parsing Verilog input from `/home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/techmap.v' to AST representation.
+Generating RTLIL representation for module `\_90_simplemap_bool_ops'.
+Generating RTLIL representation for module `\_90_simplemap_reduce_ops'.
+Generating RTLIL representation for module `\_90_simplemap_logic_ops'.
+Generating RTLIL representation for module `\_90_simplemap_compare_ops'.
+Generating RTLIL representation for module `\_90_simplemap_various'.
+Generating RTLIL representation for module `\_90_simplemap_registers'.
+Generating RTLIL representation for module `\_90_shift_ops_shr_shl_sshl_sshr'.
+Generating RTLIL representation for module `\_90_shift_shiftx'.
+Generating RTLIL representation for module `\_90_fa'.
+Generating RTLIL representation for module `\_90_lcu_brent_kung'.
+Generating RTLIL representation for module `\_90_alu'.
+Generating RTLIL representation for module `\_90_macc'.
+Generating RTLIL representation for module `\_90_alumacc'.
+Generating RTLIL representation for module `$__div_mod_u'.
+Generating RTLIL representation for module `$__div_mod_trunc'.
+Generating RTLIL representation for module `\_90_div'.
+Generating RTLIL representation for module `\_90_mod'.
+Generating RTLIL representation for module `$__div_mod_floor'.
+Generating RTLIL representation for module `\_90_divfloor'.
+Generating RTLIL representation for module `\_90_modfloor'.
+Generating RTLIL representation for module `\_90_pow'.
+Generating RTLIL representation for module `\_90_demux'.
+Generating RTLIL representation for module `\_90_lut'.
+Generating RTLIL representation for module `$connect'.
+Generating RTLIL representation for module `$input_port'.
+Successfully finished Verilog frontend.
+
+2.46.2. Executing Verilog-2005 frontend: /home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/xilinx/cells_map.v
+Parsing Verilog input from `/home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/xilinx/cells_map.v' to AST representation.
+Generating RTLIL representation for module `$__SHREG_'.
+Generating RTLIL representation for module `$__XILINX_SHREG_'.
+Generating RTLIL representation for module `$__XILINX_SHIFTX'.
+Generating RTLIL representation for module `\_90__XILINX_SHIFTX'.
+Generating RTLIL representation for module `$_MUX_'.
+Generating RTLIL representation for module `$_MUX4_'.
+Generating RTLIL representation for module `$_MUX8_'.
+Generating RTLIL representation for module `$_MUX16_'.
+Generating RTLIL representation for module `$__XILINX_MUXF78'.
+Successfully finished Verilog frontend.
+
+2.46.3. Continuing TECHMAP pass.
+Not using module `$_MUX_' from techmap as it contains a genblk1._TECHMAP_FAIL_ marker wire with non-zero value 1'1.
+No more expansions possible.
+<suppressed ~85 debug messages>
+
+2.47. Executing DFFLEGALIZE pass (convert FFs and LATCHes to types supported by the target).
+
+2.48. Executing TECHMAP pass (map to technology primitives).
+
+2.48.1. Executing Verilog-2005 frontend: /home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/xilinx/ff_map.v
+Parsing Verilog input from `/home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/xilinx/ff_map.v' to AST representation.
+Generating RTLIL representation for module `$_DFFE_NP0P_'.
+Generating RTLIL representation for module `$_DFFE_PP0P_'.
+Generating RTLIL representation for module `$_DFFE_NP1P_'.
+Generating RTLIL representation for module `$_DFFE_PP1P_'.
+Generating RTLIL representation for module `$_DFFSRE_NPPP_'.
+Generating RTLIL representation for module `$_DFFSRE_PPPP_'.
+Generating RTLIL representation for module `$_SDFFE_NP0P_'.
+Generating RTLIL representation for module `$_SDFFE_PP0P_'.
+Generating RTLIL representation for module `$_SDFFE_NP1P_'.
+Generating RTLIL representation for module `$_SDFFE_PP1P_'.
+Generating RTLIL representation for module `$_DLATCH_NP0_'.
+Generating RTLIL representation for module `$_DLATCH_PP0_'.
+Generating RTLIL representation for module `$_DLATCH_NP1_'.
+Generating RTLIL representation for module `$_DLATCH_PP1_'.
+Generating RTLIL representation for module `$_DLATCH_NPP_'.
+Generating RTLIL representation for module `$_DLATCH_PPP_'.
+Successfully finished Verilog frontend.
+
+2.48.2. Continuing TECHMAP pass.
+Using template $paramod$_SDFFE_PP0P_\_TECHMAP_WIREINIT_Q_=1'x for cells of type $_SDFFE_PP0P_.
+No more expansions possible.
+<suppressed ~406 debug messages>
+
+2.49. Executing OPT_EXPR pass (perform const folding).
+Optimizing module mac_dsp_cascade_ooc.
+
+2.50. Executing Verilog-2005 frontend: /home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/xilinx/abc9_model.v
+Parsing Verilog input from `/home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/xilinx/abc9_model.v' to AST representation.
+Generating RTLIL representation for module `$__XILINX_MUXF78'.
+Successfully finished Verilog frontend.
+
+2.51. Executing ABC9 pass.
+
+2.51.1. Executing ABC9_OPS pass (helper functions for ABC9).
+
+2.51.2. Executing ABC9_OPS pass (helper functions for ABC9).
+
+2.51.3. Executing SCC pass (detecting logic loops).
+Found 0 SCCs in module mac_dsp_cascade_ooc.
+Found 0 SCCs.
+
+2.51.4. Executing ABC9_OPS pass (helper functions for ABC9).
+
+2.51.5. Executing TECHMAP pass (map to technology primitives).
+
+2.51.5.1. Executing Verilog-2005 frontend: /home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/techmap.v
+Parsing Verilog input from `/home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/techmap.v' to AST representation.
+Generating RTLIL representation for module `\_90_simplemap_bool_ops'.
+Generating RTLIL representation for module `\_90_simplemap_reduce_ops'.
+Generating RTLIL representation for module `\_90_simplemap_logic_ops'.
+Generating RTLIL representation for module `\_90_simplemap_compare_ops'.
+Generating RTLIL representation for module `\_90_simplemap_various'.
+Generating RTLIL representation for module `\_90_simplemap_registers'.
+Generating RTLIL representation for module `\_90_shift_ops_shr_shl_sshl_sshr'.
+Generating RTLIL representation for module `\_90_shift_shiftx'.
+Generating RTLIL representation for module `\_90_fa'.
+Generating RTLIL representation for module `\_90_lcu_brent_kung'.
+Generating RTLIL representation for module `\_90_alu'.
+Generating RTLIL representation for module `\_90_macc'.
+Generating RTLIL representation for module `\_90_alumacc'.
+Generating RTLIL representation for module `$__div_mod_u'.
+Generating RTLIL representation for module `$__div_mod_trunc'.
+Generating RTLIL representation for module `\_90_div'.
+Generating RTLIL representation for module `\_90_mod'.
+Generating RTLIL representation for module `$__div_mod_floor'.
+Generating RTLIL representation for module `\_90_divfloor'.
+Generating RTLIL representation for module `\_90_modfloor'.
+Generating RTLIL representation for module `\_90_pow'.
+Generating RTLIL representation for module `\_90_demux'.
+Generating RTLIL representation for module `\_90_lut'.
+Generating RTLIL representation for module `$connect'.
+Generating RTLIL representation for module `$input_port'.
+Successfully finished Verilog frontend.
+
+2.51.5.2. Continuing TECHMAP pass.
+No more expansions possible.
+<suppressed ~508 debug messages>
+
+2.51.6. Executing OPT pass (performing simple optimizations).
+
+2.51.6.1. Executing OPT_EXPR pass (perform const folding).
+
+2.51.6.2. Executing OPT_MERGE pass (detect identical cells).
+Removed a total of 0 cells.
+
+2.51.6.3. Executing OPT_MUXTREE pass (detect dead branches in mux trees).
+Removed 0 multiplexer ports.
+
+2.51.6.4. Executing OPT_REDUCE pass (consolidate $*mux and $reduce_* inputs).
+Performed a total of 0 changes.
+
+2.51.6.5. Executing OPT_MERGE pass (detect identical cells).
+Removed a total of 0 cells.
+
+2.51.6.6. Executing OPT_DFF pass (perform DFF optimizations).
+
+2.51.6.7. Executing OPT_CLEAN pass (remove unused cells and wires).
+
+2.51.6.8. Executing OPT_EXPR pass (perform const folding).
+
+2.51.6.9. Finished fast OPT passes. (There is nothing left to do.)
+
+2.51.7. Executing TECHMAP pass (map to technology primitives).
+
+2.51.7.1. Executing Verilog-2005 frontend: /home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/abc9_map.v
+Parsing Verilog input from `/home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/abc9_map.v' to AST representation.
+Lexer warning: The SystemVerilog keyword `bit' (at /home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/abc9_map.v:35) is not recognized unless read_verilog is called with -sv!
+Generating RTLIL representation for module `$__ABC9_BARRIER_MAP'.
+Successfully finished Verilog frontend.
+
+2.51.7.2. Continuing TECHMAP pass.
+No more expansions possible.
+<suppressed ~3 debug messages>
+
+2.51.8. Executing Verilog-2005 frontend: /home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/abc9_model.v
+Parsing Verilog input from `/home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/abc9_model.v' to AST representation.
+Generating RTLIL representation for module `$__ABC9_DELAY'.
+Generating RTLIL representation for module `$__ABC9_BARRIER'.
+Generating RTLIL representation for module `$__ABC9_SCC_BREAKER'.
+Generating RTLIL representation for module `$__DFF_N__$abc9_flop'.
+Generating RTLIL representation for module `$__DFF_P__$abc9_flop'.
+Successfully finished Verilog frontend.
+
+2.51.9. Executing ABC9_OPS pass (helper functions for ABC9).
+<suppressed ~482 debug messages>
+
+2.51.10. Executing ABC9_OPS pass (helper functions for ABC9).
+
+2.51.11. Executing ABC9_OPS pass (helper functions for ABC9).
+<suppressed ~2 debug messages>
+
+2.51.12. Executing TECHMAP pass (map to technology primitives).
+
+2.51.12.1. Executing Verilog-2005 frontend: /home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/techmap.v
+Parsing Verilog input from `/home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/techmap.v' to AST representation.
+Generating RTLIL representation for module `\_90_simplemap_bool_ops'.
+Generating RTLIL representation for module `\_90_simplemap_reduce_ops'.
+Generating RTLIL representation for module `\_90_simplemap_logic_ops'.
+Generating RTLIL representation for module `\_90_simplemap_compare_ops'.
+Generating RTLIL representation for module `\_90_simplemap_various'.
+Generating RTLIL representation for module `\_90_simplemap_registers'.
+Generating RTLIL representation for module `\_90_shift_ops_shr_shl_sshl_sshr'.
+Generating RTLIL representation for module `\_90_shift_shiftx'.
+Generating RTLIL representation for module `\_90_fa'.
+Generating RTLIL representation for module `\_90_lcu_brent_kung'.
+Generating RTLIL representation for module `\_90_alu'.
+Generating RTLIL representation for module `\_90_macc'.
+Generating RTLIL representation for module `\_90_alumacc'.
+Generating RTLIL representation for module `$__div_mod_u'.
+Generating RTLIL representation for module `$__div_mod_trunc'.
+Generating RTLIL representation for module `\_90_div'.
+Generating RTLIL representation for module `\_90_mod'.
+Generating RTLIL representation for module `$__div_mod_floor'.
+Generating RTLIL representation for module `\_90_divfloor'.
+Generating RTLIL representation for module `\_90_modfloor'.
+Generating RTLIL representation for module `\_90_pow'.
+Generating RTLIL representation for module `\_90_demux'.
+Generating RTLIL representation for module `\_90_lut'.
+Generating RTLIL representation for module `$connect'.
+Generating RTLIL representation for module `$input_port'.
+Successfully finished Verilog frontend.
+
+2.51.12.2. Continuing TECHMAP pass.
+Using template CARRY4 for cells of type CARRY4.
+Using extmapper simplemap for cells of type $or.
+Using extmapper simplemap for cells of type $xor.
+Using extmapper simplemap for cells of type $mux.
+No more expansions possible.
+<suppressed ~527 debug messages>
+
+2.51.13. Executing OPT pass (performing simple optimizations).
+
+2.51.13.1. Executing OPT_EXPR pass (perform const folding).
+Optimizing module mac_dsp_cascade_ooc.
+
+2.51.13.2. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\mac_dsp_cascade_ooc'.
+Computing hashes of 62 cells of `\mac_dsp_cascade_ooc'.
+Finding duplicate cells in `\mac_dsp_cascade_ooc'.
+Computing hashes of 61 cells of `\mac_dsp_cascade_ooc'.
+Finding duplicate cells in `\mac_dsp_cascade_ooc'.
+<suppressed ~3 debug messages>
+Removed a total of 1 cells.
+
+2.51.13.3. Executing OPT_MUXTREE pass (detect dead branches in mux trees).
+Running muxtree optimizer on module \mac_dsp_cascade_ooc..
+  Creating internal representation of mux trees.
+  No muxes found in this module.
+Removed 0 multiplexer ports.
+
+2.51.13.4. Executing OPT_REDUCE pass (consolidate $*mux and $reduce_* inputs).
+  Optimizing cells in module \mac_dsp_cascade_ooc.
+Performed a total of 0 changes.
+
+2.51.13.5. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\mac_dsp_cascade_ooc'.
+Computing hashes of 61 cells of `\mac_dsp_cascade_ooc'.
+Finding duplicate cells in `\mac_dsp_cascade_ooc'.
+Removed a total of 0 cells.
+
+2.51.13.6. Executing OPT_DFF pass (perform DFF optimizations).
+
+2.51.13.7. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \mac_dsp_cascade_ooc..
+Removed 0 unused cells and 14 unused wires.
+<suppressed ~3 debug messages>
+
+2.51.13.8. Executing OPT_EXPR pass (perform const folding).
+Optimizing module mac_dsp_cascade_ooc.
+
+2.51.13.9. Rerunning OPT passes. (Maybe there is more to do..)
+
+2.51.13.10. Executing OPT_MUXTREE pass (detect dead branches in mux trees).
+Running muxtree optimizer on module \mac_dsp_cascade_ooc..
+  Creating internal representation of mux trees.
+  No muxes found in this module.
+Removed 0 multiplexer ports.
+
+2.51.13.11. Executing OPT_REDUCE pass (consolidate $*mux and $reduce_* inputs).
+  Optimizing cells in module \mac_dsp_cascade_ooc.
+Performed a total of 0 changes.
+
+2.51.13.12. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\mac_dsp_cascade_ooc'.
+Computing hashes of 61 cells of `\mac_dsp_cascade_ooc'.
+Finding duplicate cells in `\mac_dsp_cascade_ooc'.
+Removed a total of 0 cells.
+
+2.51.13.13. Executing OPT_DFF pass (perform DFF optimizations).
+
+2.51.13.14. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \mac_dsp_cascade_ooc..
+
+2.51.13.15. Executing OPT_EXPR pass (perform const folding).
+Optimizing module mac_dsp_cascade_ooc.
+
+2.51.13.16. Finished fast OPT passes. (There is nothing left to do.)
+
+2.51.14. Executing AIGMAP pass (map logic to AIG).
+Module mac_dsp_cascade_ooc: replaced 80 cells with 560 new cells, skipped 873 cells.
+  replaced 2 cell types:
+      40 $_MUX_
+      40 $_XOR_
+  not replaced 10 cell types:
+     379 FDRE
+      10 CARRY4
+       3 $paramod$d44477e6c3a57383e3948c7051a9f0d384980593\DSP48E1
+       1 $paramod$64122d5ad568899bcae025fa8d86ab5cd8af4c8d\DSP48E1
+      90 $paramod$__ABC9_DELAY\DELAY=32'00000000000000000000101010110011
+      54 $paramod$__ABC9_DELAY\DELAY=32'00000000000000000000101000110000
+     144 $paramod$__ABC9_DELAY\DELAY=32'00000000000000000000010011011100
+     144 $paramod$__ABC9_DELAY\DELAY=32'00000000000000000000010000000001
+      30 $paramod$__ABC9_DELAY\DELAY=32'00000000000000000000000011111110
+      18 $paramod$__ABC9_DELAY\DELAY=32'00000000000000000000000101000100
+
+2.51.14.1. Executing ABC9_OPS pass (helper functions for ABC9).
+
+2.51.14.2. Executing ABC9_OPS pass (helper functions for ABC9).
+
+2.51.14.3. Executing XAIGER2 backend.
+<suppressed ~891 debug messages>
+Extracted 1568 AND gates and 0 wires from module `mac_dsp_cascade_ooc' to a netlist network with 1407 inputs and 2142 outputs.
+
+2.51.14.4. Executing ABC9_EXE pass (technology mapping using ABC9).
+
+2.51.14.5. Executing ABC9.
+Running ABC command: "<yosys-exe-dir>/yosys-abc" -s -f <abc-temp-dir>/abc.script 2>&1
+ABC: ======== ABC command line "source <abc-temp-dir>/abc.script"
+ABC: + read_lut <abc-temp-dir>/input.lut 
+ABC: + read_box <abc-temp-dir>/input.box 
+ABC: + &read <abc-temp-dir>/input.xaig 
+ABC: + &ps 
+ABC: <abc-temp-dir>/input : i/o =    847/   1562  and =     160  lev =    3 (0.06)  mem = 0.06 MB  box = 490  bb = 480
+ABC: + &scorr 
+ABC: Warning: The network is combinational.
+ABC: + &sweep 
+ABC: + &dc2 
+ABC: + &dch -f -r 
+ABC: + &ps 
+ABC: <abc-temp-dir>/input : i/o =    847/   1562  and =     160  lev =    3 (0.06)  mem = 0.06 MB  ch =    0  box = 490  bb = 480
+ABC: cst =       0  cls =      0  lit =       0  unused =    1567  proof =     0
+ABC: + &if -W 300 -v 
+ABC: K = 8. Memory (bytes): Truth =    0. Cut =   80. Obj =  160. Set =  816. CutMin = no
+ABC: Node =     160.  Ch =     0.  Total mem =    0.62 MB. Peak cut mem =    0.00 MB.
+ABC: P:  Del = 2739.00.  Ar =     120.0.  Edge =      120.  Cut =      560.  T =     0.00 sec
+ABC: P:  Del = 2739.00.  Ar =     120.0.  Edge =      120.  Cut =      560.  T =     0.00 sec
+ABC: P:  Del = 2739.00.  Ar =     160.0.  Edge =      160.  Cut =      560.  T =     0.00 sec
+ABC: F:  Del = 2739.00.  Ar =     120.0.  Edge =      120.  Cut =      560.  T =     0.00 sec
+ABC: A:  Del = 2739.00.  Ar =     120.0.  Edge =      120.  Cut =      560.  T =     0.00 sec
+ABC: A:  Del = 2739.00.  Ar =     120.0.  Edge =      120.  Cut =      560.  T =     0.00 sec
+ABC: Total time =     0.00 sec
+ABC: + &write -n <abc-temp-dir>/output.aig 
+ABC: + &mfs 
+ABC: The network is not changed by "&mfs".
+ABC: + &ps -l 
+ABC: <abc-temp-dir>/input : i/o =    847/   1562  and =     160  lev =    3 (0.06)  mem = 0.06 MB  box = 490  bb = 480
+ABC: Mapping (K=3)  :  lut =     40  edge =     120  lev =    1 (0.02)  levB =   11  mem = 0.01 MB
+ABC: LUT = 40 : 2=0 0.0 %  3=40 100.0 %  Ave = 3.00
+ABC: + &write -n <abc-temp-dir>/output.aig 
+ABC: + &verify 
+ABC: Networks are equivalent.  Time =     0.02 sec
+ABC: + time 
+ABC: elapse: 0.07 seconds, total: 0.07 seconds
+
+2.51.14.6. Executing AIGER frontend.
+<suppressed ~10 debug messages>
+Removed 281 unused cells and 2789 unused wires.
+
+2.51.14.7. Executing ABC_OPS_REINTEGRATE pass (reintegrate ABC mapped design into module).
+ABC RESULTS:              $lut cells:       40
+ABC RESULTS:           \CARRY4 cells:       10
+ABC RESULTS:           input signals:       71
+ABC RESULTS:          output signals:        1
+<suppressed ~2409 debug messages>
+Removing temp directory.
+
+2.51.15. Executing TECHMAP pass (map to technology primitives).
+
+2.51.15.1. Executing Verilog-2005 frontend: /home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/abc9_unmap.v
+Parsing Verilog input from `/home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/abc9_unmap.v' to AST representation.
+Generating RTLIL representation for module `$__DFF_x__$abc9_flop'.
+Generating RTLIL representation for module `$__ABC9_SCC_BREAKER'.
+Generating RTLIL representation for module `$__ABC9_BARRIER'.
+Successfully finished Verilog frontend.
+
+2.51.15.2. Continuing TECHMAP pass.
+Using template $paramod$64122d5ad568899bcae025fa8d86ab5cd8af4c8d\DSP48E1 for cells of type $paramod$64122d5ad568899bcae025fa8d86ab5cd8af4c8d\DSP48E1.
+Using template $paramod$d44477e6c3a57383e3948c7051a9f0d384980593\DSP48E1 for cells of type $paramod$d44477e6c3a57383e3948c7051a9f0d384980593\DSP48E1.
+No more expansions possible.
+<suppressed ~12 debug messages>
+Removed 0 unused cells and 3325 unused wires.
+
+2.52. Executing XILINX_SRL pass (Xilinx shift register extraction).
+Found fixed chain of length 4 (FDRE):
+    -> $auto$ff.cc:337:slice$1896 ($__XILINX_SHREG_)
+Found fixed chain of length 4 (FDRE):
+    -> $auto$ff.cc:337:slice$1894 ($__XILINX_SHREG_)
+Found fixed chain of length 4 (FDRE):
+    -> $auto$ff.cc:337:slice$1893 ($__XILINX_SHREG_)
+Found fixed chain of length 4 (FDRE):
+    -> $auto$ff.cc:337:slice$1892 ($__XILINX_SHREG_)
+Found fixed chain of length 4 (FDRE):
+    -> $auto$ff.cc:337:slice$1891 ($__XILINX_SHREG_)
+Found fixed chain of length 4 (FDRE):
+    -> $auto$ff.cc:337:slice$1890 ($__XILINX_SHREG_)
+Found fixed chain of length 4 (FDRE):
+    -> $auto$ff.cc:337:slice$1889 ($__XILINX_SHREG_)
+Found fixed chain of length 4 (FDRE):
+    -> $auto$ff.cc:337:slice$1888 ($__XILINX_SHREG_)
+Found fixed chain of length 4 (FDRE):
+    -> $auto$ff.cc:337:slice$1887 ($__XILINX_SHREG_)
+Found fixed chain of length 4 (FDRE):
+    -> $auto$ff.cc:337:slice$1886 ($__XILINX_SHREG_)
+Found fixed chain of length 4 (FDRE):
+    -> $auto$ff.cc:337:slice$1885 ($__XILINX_SHREG_)
+Found fixed chain of length 4 (FDRE):
+    -> $auto$ff.cc:337:slice$1884 ($__XILINX_SHREG_)
+Found fixed chain of length 4 (FDRE):
+    -> $auto$ff.cc:337:slice$1883 ($__XILINX_SHREG_)
+Found fixed chain of length 4 (FDRE):
+    -> $auto$ff.cc:337:slice$1882 ($__XILINX_SHREG_)
+Found fixed chain of length 4 (FDRE):
+    -> $auto$ff.cc:337:slice$1881 ($__XILINX_SHREG_)
+Found fixed chain of length 4 (FDRE):
+    -> $auto$ff.cc:337:slice$1948 ($__XILINX_SHREG_)
+Found fixed chain of length 4 (FDRE):
+    -> $auto$ff.cc:337:slice$1947 ($__XILINX_SHREG_)
+Found fixed chain of length 4 (FDRE):
+    -> $auto$ff.cc:337:slice$1946 ($__XILINX_SHREG_)
+Found fixed chain of length 5 (FDRE):
+    -> $auto$ff.cc:337:slice$1832 ($__XILINX_SHREG_)
+Found fixed chain of length 3 (FDRE):
+    -> $auto$ff.cc:337:slice$1880 ($__XILINX_SHREG_)
+Found fixed chain of length 3 (FDRE):
+    -> $auto$ff.cc:337:slice$1878 ($__XILINX_SHREG_)
+Found fixed chain of length 3 (FDRE):
+    -> $auto$ff.cc:337:slice$1877 ($__XILINX_SHREG_)
+Found fixed chain of length 3 (FDRE):
+    -> $auto$ff.cc:337:slice$1876 ($__XILINX_SHREG_)
+Found fixed chain of length 3 (FDRE):
+    -> $auto$ff.cc:337:slice$1875 ($__XILINX_SHREG_)
+Found fixed chain of length 3 (FDRE):
+    -> $auto$ff.cc:337:slice$1874 ($__XILINX_SHREG_)
+Found fixed chain of length 3 (FDRE):
+    -> $auto$ff.cc:337:slice$1873 ($__XILINX_SHREG_)
+Found fixed chain of length 3 (FDRE):
+    -> $auto$ff.cc:337:slice$1872 ($__XILINX_SHREG_)
+Found fixed chain of length 3 (FDRE):
+    -> $auto$ff.cc:337:slice$1871 ($__XILINX_SHREG_)
+Found fixed chain of length 3 (FDRE):
+    -> $auto$ff.cc:337:slice$1870 ($__XILINX_SHREG_)
+Found fixed chain of length 3 (FDRE):
+    -> $auto$ff.cc:337:slice$1869 ($__XILINX_SHREG_)
+Found fixed chain of length 3 (FDRE):
+    -> $auto$ff.cc:337:slice$1868 ($__XILINX_SHREG_)
+Found fixed chain of length 3 (FDRE):
+    -> $auto$ff.cc:337:slice$1867 ($__XILINX_SHREG_)
+Found fixed chain of length 3 (FDRE):
+    -> $auto$ff.cc:337:slice$1866 ($__XILINX_SHREG_)
+Found fixed chain of length 3 (FDRE):
+    -> $auto$ff.cc:337:slice$1865 ($__XILINX_SHREG_)
+Found fixed chain of length 4 (FDRE):
+    -> $auto$ff.cc:337:slice$1945 ($__XILINX_SHREG_)
+Found fixed chain of length 4 (FDRE):
+    -> $auto$ff.cc:337:slice$1952 ($__XILINX_SHREG_)
+Found fixed chain of length 4 (FDRE):
+    -> $auto$ff.cc:337:slice$1951 ($__XILINX_SHREG_)
+Found fixed chain of length 4 (FDRE):
+    -> $auto$ff.cc:337:slice$1950 ($__XILINX_SHREG_)
+Found fixed chain of length 4 (FDRE):
+    -> $auto$ff.cc:337:slice$1953 ($__XILINX_SHREG_)
+Found fixed chain of length 4 (FDRE):
+    -> $auto$ff.cc:337:slice$1954 ($__XILINX_SHREG_)
+Found fixed chain of length 4 (FDRE):
+    -> $auto$ff.cc:337:slice$1955 ($__XILINX_SHREG_)
+Found fixed chain of length 4 (FDRE):
+    -> $auto$ff.cc:337:slice$1956 ($__XILINX_SHREG_)
+Found fixed chain of length 4 (FDRE):
+    -> $auto$ff.cc:337:slice$1957 ($__XILINX_SHREG_)
+Found fixed chain of length 4 (FDRE):
+    -> $auto$ff.cc:337:slice$1958 ($__XILINX_SHREG_)
+Found fixed chain of length 3 (FDRE):
+    -> $auto$ff.cc:337:slice$1942 ($__XILINX_SHREG_)
+Found fixed chain of length 3 (FDRE):
+    -> $auto$ff.cc:337:slice$1941 ($__XILINX_SHREG_)
+Found fixed chain of length 3 (FDRE):
+    -> $auto$ff.cc:337:slice$1940 ($__XILINX_SHREG_)
+Found fixed chain of length 3 (FDRE):
+    -> $auto$ff.cc:337:slice$1939 ($__XILINX_SHREG_)
+Found fixed chain of length 3 (FDRE):
+    -> $auto$ff.cc:337:slice$1938 ($__XILINX_SHREG_)
+Found fixed chain of length 3 (FDRE):
+    -> $auto$ff.cc:337:slice$1937 ($__XILINX_SHREG_)
+Found fixed chain of length 3 (FDRE):
+    -> $auto$ff.cc:337:slice$1936 ($__XILINX_SHREG_)
+Found fixed chain of length 3 (FDRE):
+    -> $auto$ff.cc:337:slice$1935 ($__XILINX_SHREG_)
+Found fixed chain of length 3 (FDRE):
+    -> $auto$ff.cc:337:slice$1934 ($__XILINX_SHREG_)
+Found fixed chain of length 3 (FDRE):
+    -> $auto$ff.cc:337:slice$1933 ($__XILINX_SHREG_)
+Found fixed chain of length 3 (FDRE):
+    -> $auto$ff.cc:337:slice$1932 ($__XILINX_SHREG_)
+Found fixed chain of length 3 (FDRE):
+    -> $auto$ff.cc:337:slice$1931 ($__XILINX_SHREG_)
+Found fixed chain of length 3 (FDRE):
+    -> $auto$ff.cc:337:slice$1930 ($__XILINX_SHREG_)
+Found fixed chain of length 3 (FDRE):
+    -> $auto$ff.cc:337:slice$1929 ($__XILINX_SHREG_)
+Found fixed chain of length 4 (FDRE):
+    -> $auto$ff.cc:337:slice$1960 ($__XILINX_SHREG_)
+Found fixed chain of length 4 (FDRE):
+    -> $auto$ff.cc:337:slice$1959 ($__XILINX_SHREG_)
+Found fixed chain of length 4 (FDRE):
+    -> $auto$ff.cc:337:slice$1895 ($__XILINX_SHREG_)
+Found fixed chain of length 3 (FDRE):
+    -> $auto$ff.cc:337:slice$1879 ($__XILINX_SHREG_)
+Found fixed chain of length 4 (FDRE):
+    -> $auto$ff.cc:337:slice$1949 ($__XILINX_SHREG_)
+Found fixed chain of length 3 (FDRE):
+    -> $auto$ff.cc:337:slice$1943 ($__XILINX_SHREG_)
+Found fixed chain of length 3 (FDRE):
+    -> $auto$ff.cc:337:slice$1944 ($__XILINX_SHREG_)
+<suppressed ~229 debug messages>
+
+2.53. Executing TECHMAP pass (map to technology primitives).
+
+2.53.1. Executing Verilog-2005 frontend: /home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/xilinx/lut_map.v
+Parsing Verilog input from `/home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/xilinx/lut_map.v' to AST representation.
+Generating RTLIL representation for module `$lut'.
+Successfully finished Verilog frontend.
+
+2.53.2. Executing Verilog-2005 frontend: /home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/xilinx/cells_map.v
+Parsing Verilog input from `/home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/xilinx/cells_map.v' to AST representation.
+Generating RTLIL representation for module `$__SHREG_'.
+Generating RTLIL representation for module `$__XILINX_SHREG_'.
+Generating RTLIL representation for module `$__XILINX_MUXF78'.
+Successfully finished Verilog frontend.
+
+2.53.3. Continuing TECHMAP pass.
+Using template $paramod$8d9fdc0b35d87e1e14d87f7e9fc79147d0e76bfc$__XILINX_SHREG_ for cells of type $__XILINX_SHREG_.
+Using template $paramod$3a1207df2e48834b0c9044d9be7ea05dcfd4a734$__XILINX_SHREG_ for cells of type $__XILINX_SHREG_.
+Using template $paramod$113f39b58d331af52a896ee39335acc59ba9b851$__XILINX_SHREG_ for cells of type $__XILINX_SHREG_.
+Using template $paramod$lut\WIDTH=32'00000000000000000000000000000011\LUT=8'10011100 for cells of type $lut.
+Using template $paramod$lut\WIDTH=32'00000000000000000000000000000011\LUT=8'10110100 for cells of type $lut.
+No more expansions possible.
+<suppressed ~184 debug messages>
+
+2.54. Executing XILINX_DFFOPT pass (optimize FF control signal usage).
+Optimizing FFs in mac_dsp_cascade_ooc.
+
+2.55. Executing OPT_LUT_INS pass (discard unused LUT inputs).
+Optimizing LUTs in mac_dsp_cascade_ooc.
+Removed 0 unused cells and 537 unused wires.
+
+2.56. Executing HIERARCHY pass (managing design hierarchy).
+Attribute `top' found on module `mac_dsp_cascade_ooc'. Setting top module to mac_dsp_cascade_ooc.
+
+2.56.1. Analyzing design hierarchy..
+Top module:  \mac_dsp_cascade_ooc
+
+2.56.2. Analyzing design hierarchy..
+Top module:  \mac_dsp_cascade_ooc
+Removed 0 unused modules.
+
+2.57. Printing statistics.
+
+=== mac_dsp_cascade_ooc ===
+
+        +----------Local Count, excluding submodules.
+        | 
+      295 wires
+     1041 wire bits
+       27 public wires
+      737 public wire bits
+        7 ports
+      172 port bits
+       44 cells
+        4   DSP48E1
+       40   LUT3
+      225 submodules
+       10   CARRY4
+      150   FDRE
+       65   SRL16E
+
+   Estimated number of LCs:         40
+
+=== design hierarchy ===
+
+        +----------Count including submodules.
+        | 
+       44 mac_dsp_cascade_ooc
+
+        +----------Count including submodules.
+        | 
+      295 wires
+     1041 wire bits
+       27 public wires
+      737 public wire bits
+        7 ports
+      172 port bits
+        - memories
+        - memory bits
+        - processes
+       44 cells
+        4   DSP48E1
+       40   LUT3
+      225 submodules
+       10   CARRY4
+      150   FDRE
+       65   SRL16E
+
+   Estimated number of LCs:         40
+
+2.58. Executing CHECK pass (checking for obvious problems).
+Checking module mac_dsp_cascade_ooc...
+Found and reported 0 problems.
+End of script. Logfile hash: 5ef297634d, time: 7.78s, user: 6.85s, system: 0.75s, MEM: 165.41 MB peak
+Yosys 0.70+385 (git sha1 098e46a36, Release, Clang /usr/bin/clang++ 21.1.8)
+Time spent: 57% 26x read_verilog (4 sec), 10% 1x synth_xilinx (0 sec), ...
