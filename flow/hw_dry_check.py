@@ -74,8 +74,15 @@ def check_design(design: Path) -> dict[str, Any]:
                             probs.append(f"hw_checks.py: CAPTURES[{i}] lacks "
                                          f"{', '.join(f for f in CAPTURE_FIELDS if f not in kw)}")
                         probs += _or_problem(i, e)
-    for sv in sorted((design / "rtl").glob("*.sv")) if (design / "rtl").is_dir() else []:
-        if re.search(r"\.BUILD_STAMP\s*\(\s*(\d+\s*')?[hHdDbB]\s*_?0[0_]*\s*\)", sv.read_text()):
+    try:
+        from flow import sources
+    except ImportError:                       # run as a script: flow/ itself is on sys.path
+        import sources                     # type: ignore[no-redef]
+    for sv in sources.design_rtl(design):
+        text = sources.strip_comments(sv.read_text(errors="replace"), sources.language(sv) or "sv")
+        zero = (r"(?i)\bBUILD_STAMP\s*=>\s*(?:\d*[xbo]\s*\"[0_]*\"|0+\b|\(\s*others\s*=>\s*'0'\s*\))" if sources.language(sv) == "vhdl"
+                else r"\.BUILD_STAMP\s*\(\s*(\d+\s*')?[hHdDbB]\s*_?0[0_]*\s*\)")
+        if re.search(zero, text):
             probs.append(f"rtl/{sv.name}: fpga_shell BUILD_STAMP is a constant 0; pass the top's BUILD_STAMP parameter "
                          "through (the flow sets it per build; bring-up's still_alive compares it with the build's)")
     tests = sorted((design / "tests").glob("test_*_hw.py")) if (design / "tests").is_dir() else []

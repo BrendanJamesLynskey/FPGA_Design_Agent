@@ -28,6 +28,7 @@ REPO = "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent"
 
 PAGES = [  # file, nav label, title, description, data keys inlined
     ("index.html", "Home", "FPGA Design Agent", "An agentic FPGA design environment: from a plain-English request to a bitstream proven on the board. Language-model agents write the spec, tests and RTL; code-run gates, hidden tests and the board judge them; every number is read from a committed result file.", ["loop", "dev", "kr260"]),
+    ("why.html", "Why", "Why this agent", "The one-page summary: what makes this agent different, in drawers that each open to what it means, an example from this project with its numbers, what it does not do yet, and where to read more.", []),
     ("agent.html", "The agent", "The agent", "The agent itself: a LangGraph controller over Deep Agents or Claude Code role agents, drawn from its code, with a recorded run replayed through the diagrams.", ["agent_graph"]),
     ("story.html", "How it was built", "How the agent was built", "How the agent was designed, measured and corrected: a timeline, an experiment card for every test including the nulls and the stopped evaluation, the method, the improvement loop and the lessons, with every number read from a committed result file.", []),
     ("worked-example.html", "Worked example", "Worked example: a 10G trading path on the KR260", "One design end to end, seen as who did what: what the human specified, what the agent built, what verified it, what the board measured, and where human judgement mattered, each linked to its committed record.", ["kr260"]),
@@ -199,6 +200,9 @@ def block(name, d):
     if name == "traceability_body":
         import traceability_page
         return traceability_page.body(d["traceability"])
+    if name == "why_body":
+        import why_page
+        return why_page.body(d["why"]["content"])
     if name == "story_body":
         import story_page
         return story_page.body(d["story"])
@@ -453,7 +457,7 @@ def build(outdir: Path, d, check_numbers=True):
     js = (SRC / "app.js").read_text()
     # the showcase projects' own text never enters the number check (it would vouch for its own numbers); the showcase
     # pages are checked against the shared data plus each project's resolved values and hero data
-    shared = {k: v for k, v in d.items() if k not in ("tasks", "showcase", "story", "verification", "traceability")}
+    shared = {k: v for k, v in d.items() if k not in ("tasks", "showcase", "story", "verification", "traceability", "why")}
     sc_values = {P["id"]: {"values": P["values"], "hero": P["hero"]["data"]}
                  for P in d.get("showcase", {}).get("projects", []) if P["status"] == "published"}
     if "catalogue" in d:
@@ -465,7 +469,8 @@ def build(outdir: Path, d, check_numbers=True):
         page_data[fname] = ({"shared": shared, "showcase_values": sc_values} if fname == "showcase.html"
                             else {"shared": shared, "story": d["story"]["check"]} if fname == "story.html"
                             else {"shared": shared, "verification": d["verification"]["check"]} if fname == "verification.html"
-                            else {"shared": shared, "traceability": d["traceability"]["check"]} if fname == "traceability.html" else shared)
+                            else {"shared": shared, "traceability": d["traceability"]["check"]} if fname == "traceability.html"
+                            else {"shared": shared, "why": d["why"]["check"]} if fname == "why.html" else shared)
     if "catalogue" in d:
         order = task_order(d)
         for i, r in enumerate(order):
@@ -504,7 +509,7 @@ def build(outdir: Path, d, check_numbers=True):
         allow = allow_tokens()
         cache = {}
         for fname, page in pages.items():
-            key = fname if fname.startswith(("problems/", "showcase/", "blockdesign/")) or fname in ("showcase.html", "story.html", "verification.html", "traceability.html") else "_shared"
+            key = fname if fname.startswith(("problems/", "showcase/", "blockdesign/")) or fname in ("showcase.html", "story.html", "verification.html", "traceability.html", "why.html") else "_shared"
             if key not in cache:
                 cache[key] = data_tokens(page_data[fname]) | allow
             ok = cache[key]

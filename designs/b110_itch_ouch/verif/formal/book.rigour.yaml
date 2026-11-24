@@ -1,0 +1,12 @@
+schema: fpga-design-agent/formal_rigour/v1
+scope: >-
+  book_core at N_INST = 2, LEVELS = 4 and ORD_AW = 2 (the instance run_book_formal.py also runs with its ablations and seeded faults), properties Q1 to Q6 and the strengthening
+  invariants N1 and N2, from reset (bmc) and for every reachable state (prove).
+# every assertion NAME is paired with the cover NAME__ante written next to it in book_props.sv; q3's antecedent is the saturation itself
+sanity: [c_saturates, c_live_level]
+depth:
+  bmc:
+    enough: true
+    why: >-
+      Cross-check only: the prove task (k-induction, depth 4; depth 1 is enough because N1 and N2 make Q1 to Q6 inductive) proves every assertion for every depth, so the bounded run
+      from reset (depth 12: the 5-clock sweep after reset plus the deepest antecedent, the saturation, reached by step 9) is not the argument.

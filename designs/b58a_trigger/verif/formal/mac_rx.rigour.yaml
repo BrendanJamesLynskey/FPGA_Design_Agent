@@ -1,0 +1,17 @@
+schema: fpga-design-agent/formal_rigour/v1
+scope: "mac_rx.sv with MIN_FRAME 5 and MAX_FRAME 8 (the shipped design uses 64 and 1518: the length thresholds are parameters, the frame FSM is the same); the byte stream is free"
+antecedents:
+  "a_out_*": a_out__ante
+  "a_end_in_frame": a_end__ante
+  "a_end_len": a_end__ante
+  "a_end_runt": a_end__ante
+  "a_end_giant": a_end__ante
+  "a_end_from_eof": a_end__ante
+sanity: [c_good_frame, c_runt, c_giant, c_er]
+depth:
+  bmc:
+    enough: false
+    why: >-
+      Bounded, not claimed exhaustive. Measured in the cover task: a runt or RX_ER verdict is reached at step 4, a good frame at step 9, a giant frame at step 13,
+      so depth 20 holds one frame of each verdict and 7 clocks more; the next frame after a giant one is not covered. A k-induction `prove` was tried on 2026-11-21
+      and fails (counterexample to induction on the ghost counters f_cnt and f_in, which would need strengthening lemmas), so there is no unbounded result.
