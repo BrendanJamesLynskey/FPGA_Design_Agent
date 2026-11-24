@@ -18,6 +18,12 @@ What is derived, and from what (nothing else is checked, so a finding is always 
 3. **The board clock period.** ``create_clock -period`` on the board's own oscillator port must be 1000 / freq_mhz of
    the board file. ``CONST-CLK-01`` (blocking).
 
+VHDL (brief 153): the design ID binding is read from the VHDL ``generic map`` of the ``fpga_shell`` component or entity instance
+(``DESIGN_ID => x"47524159"``, a based literal, a string, or a name that is a ``constant`` or a generic default with a literal value),
+and the named-literal and clock checks read the VHDL's literals and the XDC the same way. A VHDL design whose quoted design ID cannot be
+read (no ``fpga_shell`` instance with a ``DESIGN_ID`` binding, or an expression that is not a literal) makes the check PARTIAL
+(``parts``: "not run: ..."), never a clean pass.
+
 What the gate cannot do (recorded in ``reports/106_orchestrator_lessons_report.md``): it does not read the spec's
 meaning. A constant the spec states in prose it has no pattern for is not checked, and a design with no quoted design ID
 or no shell instance gets no ID finding at all (the result says so, it is never a silent pass). The table it derives is
@@ -41,6 +47,7 @@ _DESIGN_ID = re.compile(r"design\s+id\s*(?:is|=|:)\s*[\"“'‘]([\x20-\x7e]{4})
 _HEX = re.compile(r"\b0x([0-9A-Fa-f][0-9A-Fa-f_]{3,15})\b")
 #: words that make a hex literal an identity word (a constant that names the design, not a polynomial or a mask)
 _IDENTITY = re.compile(r"\b(id|identification|identity|magic|signature)\b", re.I)
+HDL_SUFFIX = (".sv", ".v", ".svh", ".vh", ".vhd", ".vhdl")
 _NUM = re.compile(r"(\d+)?\s*'\s*([sS]?)([hHdDbBoO])\s*([0-9a-fA-F_xXzZ]+)")
 
 
@@ -60,9 +67,75 @@ def spec_table(spec_text: str) -> dict[str, Any]:
     return out
 
 
-def _strip_comments(t: str) -> str:
+def _strip_comments(t: str, lang: str = "sv") -> str:
+    if lang == "vhdl":
+        return re.sub(r"/\*.*?\*/", " ", re.sub(r"--[^\n]*", "", t), flags=re.S)
     t = re.sub(r"/\*.*?\*/", " ", t, flags=re.S)
     return re.sub(r"//[^\n]*", "", t)
+
+
+_VHDL_LIT = r'(?:\d+#[0-9a-fA-F_]+#|\d*[xXbBoO]"[0-9a-fA-F_]+"|"[^"\n]*"|\d[\d_]*)'
+_VHDL_DEF = re.compile(r"(?is)\b([A-Za-z_]\w*)\s*:\s*(?:constant\s+)?[^;=:]+?:=\s*(" + _VHDL_LIT + r")\s*(?=[;)])")
+_VHDL_SHELL = re.compile(r"(?is):\s*(?:component\s+|entity\s+(?:\w+\.)?)?fpga_shell\b\s*generic\s+map\s*\(")
+
+
+def _vhdl_params(texts: dict[str, str]) -> dict[str, list[tuple[str, int | None]]]:
+    """name -> [(file, value)] for every ``constant``/generic default of a VHDL file whose value is a literal."""
+    try:
+        from flow.sources import language, parse_vhdl_literal
+    except ImportError:                       # run as a script: flow/ itself is on sys.path
+        from sources import language, parse_vhdl_literal          # type: ignore[no-redef]
+    out: dict[str, list[tuple[str, int | None]]] = {}
+    for f, t in texts.items():
+        if language(f) != "vhdl":
+            continue
+        for m in _VHDL_DEF.finditer(t):
+            out.setdefault(m.group(1).lower(), []).append((f, parse_vhdl_literal(m.group(2))))
+    return out
+
+
+def _top_level_split(body: str) -> list[str]:
+    parts, depth, cur = [], 0, ""
+    for ch in body:
+        depth += (ch == "(") - (ch == ")")
+        if ch == "," and depth == 0:
+            parts.append(cur)
+            cur = ""
+        else:
+            cur += ch
+    return parts + [cur]
+
+
+def vhdl_design_id_bindings(texts: dict[str, str], cfg_generics: dict | None = None) -> list[dict[str, Any]]:
+    """Each ``DESIGN_ID => expr`` in the generic map of an ``fpga_shell`` instance in the VHDL files: file, expression, value or None."""
+    try:
+        from flow.sources import language, parse_vhdl_literal
+    except ImportError:                       # run as a script: flow/ itself is on sys.path
+        from sources import language, parse_vhdl_literal          # type: ignore[no-redef]
+    params = _vhdl_params(texts)
+    out = []
+    for f, t in texts.items():
+        if language(f) != "vhdl":
+            continue
+        for inst in _VHDL_SHELL.finditer(t):
+            i, depth = inst.end(), 1
+            while depth and i < len(t):
+                depth += (t[i] == "(") - (t[i] == ")")
+                i += 1
+            for part in _top_level_split(t[inst.end():i - 1]):
+                m = re.fullmatch(r"(?is)\s*DESIGN_ID\s*=>\s*(.*?)\s*", part)
+                if not m:
+                    continue
+                expr = " ".join(m.group(1).split())
+                val, how = parse_vhdl_literal(expr), "literal"
+                if val is None and re.fullmatch(r"[A-Za-z_]\w*", expr) and expr not in (cfg_generics or {}):
+                    cands = [v for (pf, v) in params.get(expr.lower(), []) if v is not None]
+                    same = [v for (pf, v) in params.get(expr.lower(), []) if v is not None and pf == f]
+                    pick = same or cands
+                    if pick:
+                        val, how = pick[0], f"constant or generic default {expr}"
+                out.append({"file": f, "expr": expr, "value": val, "how": how})
+    return out
 
 
 def parse_literal(expr: str) -> int | None:
@@ -94,8 +167,10 @@ def _params(texts: dict[str, str]) -> dict[str, list[tuple[str, int | None]]]:
 def design_id_bindings(texts: dict[str, str], cfg_generics: dict | None = None) -> list[dict[str, Any]]:
     """Each ``.DESIGN_ID(expr)`` binding on an ``fpga_shell`` instance: file, the expression, its value or None."""
     params = _params(texts)
-    out = []
+    out = vhdl_design_id_bindings(texts, cfg_generics)
     for f, t in texts.items():
+        if f.lower().endswith((".vhd", ".vhdl")):
+            continue
         for inst in re.finditer(r"\bfpga_shell\b\s*(?:#\s*\((.*?)\))?\s*\w+\s*\(", t, re.S):
             body = inst.group(1) or ""
             m = re.search(r"\.DESIGN_ID\s*\(\s*(.*?)\s*\)\s*(?:,|$)", body, re.S) or re.search(r"\.DESIGN_ID\s*\(\s*([^()]*?)\s*\)", body)
@@ -121,9 +196,9 @@ def _sources(design: Path, root: Path) -> tuple[list[Path], dict[str, Any]]:
         cfg = {}
     files: list[Path] = []
     for g in cfg.get("sources") or []:
-        files += [p for p in sorted(root.glob(g)) if p.suffix in (".sv", ".v", ".svh", ".vh") and p not in files]
+        files += [p for p in sorted(root.glob(g)) if p.suffix.lower() in HDL_SUFFIX and p not in files]
     if not files:                                        # no build.yaml (a bare design directory): its own rtl/
-        files = sorted(p for p in design.glob("rtl/**/*") if p.suffix in (".sv", ".v"))
+        files = sorted(p for p in design.glob("rtl/**/*") if p.suffix.lower() in (".sv", ".v", ".vhd", ".vhdl"))
     return files, cfg
 
 
@@ -258,26 +333,34 @@ def derive(design: Path, root: Path = ROOT) -> dict[str, Any]:
     """The derived table and the findings, as plain data."""
     design = Path(design).resolve()
     files, cfg = _sources(design, root)
-    texts = {str(p.relative_to(root)) if p.is_relative_to(root) else str(p): _strip_comments(p.read_text(errors="replace")) for p in files}
+    texts = {str(p.relative_to(root)) if p.is_relative_to(root) else str(p): _strip_comments(p.read_text(errors="replace"), "vhdl" if p.suffix.lower() in (".vhd", ".vhdl") else "sv") for p in files}
     spec_f = design / "spec.md"
     spec = spec_table(spec_f.read_text(errors="replace")) if spec_f.is_file() else {"design_id": None, "named_literals": []}
     findings: list[dict[str, Any]] = []
     notes: list[str] = []
+    not_read: list[str] = []
     table: dict[str, Any] = {"schema": "fda-derived-constants/1", "design": design.name, "spec": spec, "design_id_bindings": [],
                              "clock": None, "notes": notes}
 
     did = spec["design_id"]
     binds = design_id_bindings(texts, cfg.get("generics"))
     table["design_id_bindings"] = binds
+    has_vhdl = any(f.lower().endswith((".vhd", ".vhdl")) for f in texts)
+    table["languages"] = sorted({"vhdl" if f.lower().endswith((".vhd", ".vhdl")) else "sv" for f in texts})
     if not spec_f.is_file():
         notes.append("no spec.md: no spec constant derived")
     elif did is None:
         notes.append("the spec has no quoted design ID: no design-ID check")
     elif not binds:
         notes.append("a design ID is quoted in the spec but no fpga_shell instance binds DESIGN_ID: not checked")
+        if has_vhdl:
+            not_read.append("the spec quotes a design ID but no fpga_shell instance with a DESIGN_ID binding was found in the build's sources "
+                            "(VHDL read: a `generic map` on an `fpga_shell` component or entity instance)")
     else:
         for b in binds:
             if b["value"] is None:
+                if has_vhdl and b["file"].lower().endswith((".vhd", ".vhdl")):
+                    not_read.append(f"{b['file']}: DESIGN_ID is bound to `{b['expr']}`, which is not a literal or a literal constant")
                 findings.append({"code": "CONST-ID-02", "severity": "warning", "blocking": False, "where": b["file"],
                                  "message": f"DESIGN_ID is bound to `{b['expr']}`, which does not resolve to a literal in the build's "
                                             f"sources; the spec's design ID {did['string']!r} is 0x{did['value']:08X}"})
@@ -290,7 +373,13 @@ def derive(design: Path, root: Path = ROOT) -> dict[str, Any]:
                                  "message": f"DESIGN_ID is 0x{b['value']:08X} ({b['how']}) but the spec's design ID "
                                             f"{did['string']!r} is 0x{did['value']:08X} ({did['rule']}){why}"})
 
+    try:
+        from flow.sources import parse_vhdl_literal
+    except ImportError:                       # run as a script: flow/ itself is on sys.path
+        from sources import parse_vhdl_literal          # type: ignore[no-redef]
     all_lits = {parse_literal(m.group(0)) for t in texts.values() for m in re.finditer(r"\d*'[sS]?[hH][0-9a-fA-F_]+", t)}
+    all_lits |= {parse_vhdl_literal(m.group(0)) for f, t in texts.items() if f.lower().endswith((".vhd", ".vhdl"))
+                 for m in re.finditer(r'\d*[xX]"[0-9a-fA-F_]+"|\d+#[0-9a-fA-F_]+#', t)}
     for lit in spec["named_literals"]:
         if lit["value"] not in all_lits:
             findings.append({"code": "CONST-LIT-01", "severity": "warning", "blocking": False, "where": "spec.md",
@@ -312,6 +401,7 @@ def derive(design: Path, root: Path = ROOT) -> dict[str, Any]:
                                          "message": f"create_clock -period {per} ns on {clk['port']} but the board file "
                                                     f"({clk['board']}) says {clk['freq_mhz']:g} MHz = {clk['period_ns']:.3f} ns"})
     table["findings"] = findings
+    table["not_read"] = not_read
     return table
 
 
@@ -328,6 +418,8 @@ def main(argv: list[str] | None = None) -> int:
         print(f"{f['code']} {'BLOCK' if f['blocking'] else 'advice'} {f['where']}: {f['message']}")
     for n in t["notes"]:
         print(f"note: {n}")
+    for n in t.get("not_read", []):
+        print(f"NOT RUN (partial): {n}")
     return 1 if any(f["blocking"] for f in t["findings"]) else 0
 
 

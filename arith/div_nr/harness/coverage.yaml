@@ -1,0 +1,11 @@
+# Coverage targets of the packaged harness (brief 139c): each bin is a Python expression over one input vector; every bin must be hit at least once.
+bins:
+  a_equals_b: "a == b"
+  a_below_b: "a < b"
+  a_above_b: "a > b"
+  ratio_near_two: "a == (1 << w) - 1 and b == 1 << (w - 1)"
+  ratio_near_half: "a == 1 << (w - 1) and b == (1 << w) - 1"
+  b_min: "b == 1 << (w - 1)"
+  b_max: "b == (1 << w) - 1"
+  divisor_in_first_eighth: "i == 0"
+  divisor_in_last_eighth: "i == 7"

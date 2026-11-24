@@ -24,7 +24,7 @@ RESULTS: dict = {}
 
 
 async def run_case(dut, name, ppm, n_frames=300, gaps=(2,), seed=1, hi=None, os_every=0, err_every=0, lock_drop=None, w_offset_fs=1_234_567,
-                   r_start_fs=0, phase=0, clr_at=None):
+                   r_start_fs=0, phase=0, clr_at=None, pause_after_start=0, r_rst_clks=40):
     """One run. The write clock is nominal (the partner's) and the read clock is offset by `ppm` (ours = partner * (1 - ppm*1e-6), so a
     positive ppm means the partner is faster than we are). Returns a dict of results and asserts RTL == twin."""
     hi = HI if hi is None else hi
@@ -33,7 +33,7 @@ async def run_case(dut, name, ppm, n_frames=300, gaps=(2,), seed=1, hi=None, os_
     pr = round(P_NOM_FS * (1 + ppm * 1e-6) / 2) * 2
     frames = st.make_frames(rng, n_frames)
     blocks = st.block_stream(rng, frames, list(gaps), os_every=os_every, err_every=err_every)
-    ent = st.to_entries(blocks, phase=phase)
+    ent = st.to_entries(blocks, phase=phase, pause_after_start=pause_after_start)
     n_w = len(ent) - 300
     in_flight = {"w_t": [], "r_t": [], "wclr": [0], "w_in": [(0, 0, 0, 0)], "w_lock": [0], "r_rst": [1], "clr": [0], "out": []}
     dut.w_v.value = 0; dut.w_d.value = 0; dut.w_c.value = 0; dut.w_os.value = 0; dut.w_lock.value = 0; dut.rrst.value = 1; dut.clr_r.value = 0; dut.clr_w.value = 0
@@ -74,7 +74,7 @@ async def run_case(dut, name, ppm, n_frames=300, gaps=(2,), seed=1, hi=None, os_
             in_flight["r_t"].append(get_sim_time("fs"))
             j = len(in_flight["r_t"])
             in_flight["out"].append((int(dut.r_v.value), int(dut.r_d.value), int(dut.r_c.value), int(dut.r_lock.value)))
-            rst = 1 if j < n_rst else 0
+            rst = 1 if j < r_rst_clks else 0
             dut.rrst.value = rst
             in_flight["r_rst"].append(rst)
             cl = 1 if (clr_at and j == clr_at[1]) else 0
@@ -174,3 +174,24 @@ async def clear_wins_over_a_count(dut):
     """A counter clear in the write and read domains in the middle of a stream (blocks are being counted in that very clock): the counters restart from the clear."""
     r = await run_case(dut, "clear", 150, n_frames=200, gaps=(2,), seed=7, clr_at=(3000, 3000))
     assert r["frames_equal"] and r["rtl"]["n_wr"] < 7000, r
+
+
+@cocotb.test(timeout_time=50, timeout_unit="ms")
+async def pause_right_after_a_frame_start(dut):
+    """Brief 152: the write side has nothing to write for 40 clocks right after every frame-start block (Start in lane 0 for two frames in three, in lane 4 for one in three), so
+    the buffer is empty when the reader has output the start block and the next slot finds nothing to read. Inside a frame the reader must stall (n_stall counts it) and never insert an idle
+    block: a reader that does not recognise a start block as the start of a frame (the in-frame flag is set from the block just output) inserts an idle there and cuts the frame.
+    Found by brief 152: a mutant that changed the lane-4 start byte compared in head_frame (0xFB to 0xFA) survived the five-case bench of brief 143b, because in its streams the buffer
+    never happens to be empty right after a lane-4 start block."""
+    r = await run_case(dut, "pause_after_start", 0, n_frames=40, gaps=(2, 3), seed=11, pause_after_start=40)
+    assert r["frames_equal"] and r["rtl"]["n_stall"] > 0 and r["rtl"]["n_ovf"] == 0, r
+
+
+@cocotb.test(timeout_time=50, timeout_unit="ms")
+async def writer_outruns_a_reader_held_in_reset(dut):
+    """Brief 152: the read side is held in reset for 400 clocks while the write side offers a stream, so the 16-entry buffer fills and the writer must refuse the blocks that do not fit
+    (n_ovf counts every one, the pointers never wrap onto unread entries). The RTL equals the twin, counters included, and n_ovf is not zero. Found by brief 152: a mutant whose full flag
+    was never true (the mask of the write-side fill computation tied to 0) survived every case of brief 143b's bench, none of which fills the buffer (fill_max 6 of 16 in the longest);
+    the SymbiYosys bench of brief 115 (p1_no_overflow) caught it."""
+    r = await run_case(dut, "reader_in_reset", 0, n_frames=30, gaps=(2, 3), seed=13, r_rst_clks=400)
+    assert r["rtl"]["n_ovf"] > 0 and r["rtl"]["fill_max"] >= 15, r

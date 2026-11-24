@@ -59,7 +59,7 @@
    },
    {
     "layer": "family",
-    "skills": 75
+    "skills": 79
    },
    {
     "layer": "device",
@@ -67,16 +67,16 @@
    },
    {
     "layer": "board",
-    "skills": 40
+    "skills": 57
    },
    {
     "layer": "procedures",
     "skills": 15
    }
   ],
-  "pin": "93d158c",
-  "skills": 263,
-  "units": 25
+  "pin": "5e2eab8",
+  "skills": 284,
+  "units": 42
  },
  "check_suite": {
   "checks": [
@@ -185,13 +185,14 @@
     "kind": "records",
     "name": "io",
     "rules": [
+     "HDL-IO-01",
      "HDL-XDC-01"
     ],
     "scopes": [
      "synth",
      "route"
     ],
-    "what": "I/O timing constraints (flow/io_check.py: invented delays, -min/-max from the data sheet, IOB packing)"
+    "what": "I/O timing constraints (flow/io_check.py: invented delays, -min/-max from the data sheet, IOB packing) and the I/O-block packing of every marked register with Vivado's reason (flow/iob_check.py, brief 129)"
    },
    {
     "by": "AMD reports and ours",
@@ -360,7 +361,7 @@
     "what": "the DOC gate (brief 68: flow/handover.py problems, required gaps, over-claims)"
    }
   ],
-  "standard": "FDA-HDL v1.5"
+  "standard": "FDA-HDL v1.6"
  },
  "closure": {
   "by_goal": {
@@ -1245,7 +1246,8 @@
         "check_constraints",
         "gates",
         "check",
-        "gt_plan"
+        "gt_plan",
+        "ip_lookup"
        ],
        "role": "rtl",
        "tools": {}
@@ -1278,7 +1280,8 @@
         "check_constraints",
         "gates",
         "check",
-        "gt_plan"
+        "gt_plan",
+        "ip_lookup"
        ],
        "role": "rtl",
        "tools": {}
@@ -1819,7 +1822,8 @@
         "check_constraints",
         "gates",
         "check",
-        "gt_plan"
+        "gt_plan",
+        "ip_lookup"
        ],
        "refused": {
         "arguments": 2,
@@ -2390,7 +2394,8 @@
     "check_constraints",
     "gates",
     "check",
-    "gt_plan"
+    "gt_plan",
+    "ip_lookup"
    ],
    "tools": {
     "rtl": [
@@ -2403,7 +2408,8 @@
      "check_constraints",
      "gates",
      "check",
-     "gt_plan"
+     "gt_plan",
+     "ip_lookup"
     ]
    },
    "ultrafast": true,
@@ -2925,6 +2931,12 @@
    "model_may_call": true,
    "name": "load_skill",
    "what": "load know-how from the bank"
+  },
+  {
+   "group": "Knowledge",
+   "model_may_call": true,
+   "name": "ip_lookup",
+   "what": "look in the IP library before writing a block"
   },
   {
    "group": "Verification",

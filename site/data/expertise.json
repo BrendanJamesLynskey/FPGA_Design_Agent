@@ -469,6 +469,11 @@
       "topic": "XPM CDC macros and report_cdc"
      },
      {
+      "confirmed": "tool",
+      "summary": "Without ASYNC_REG both families raise TIMING-10 and CDC-5 (Warnings only); UltraScale+ report_synchronizer_mtbf then finds no synchroniser and writes no report; Artix-7 packed 11 of 24 chains in one slice, not 24.",
+      "topic": "Missing ASYNC_REG on a synchroniser stage"
+     },
+     {
       "confirmed": "doc",
       "summary": "Both Zynq families clock PS-PL AXI ports from a PL-supplied clock and cross inside the PS, but ZU+ adds the LPD/FPD split, so a crossing into a powered-down domain behaves differently.",
       "topic": "PS-PL clock crossings"
@@ -716,7 +721,7 @@
      },
      {
       "confirmed": "tool",
-      "summary": "BUFR, BUFIO, BUFMR and BUFH exist only on 7-series; UltraScale+ uses BUFGCE, BUFGCE_DIV, BUFG_GT and BUFG_PS, and synthesis maps BUFG to BUFGCE.",
+      "summary": "BUFR, BUFIO, BUFMR and BUFH exist only on 7-series; UltraScale+ uses BUFGCE, BUFGCE_DIV, BUFG_GT, BUFG_PS. Synthesis maps BUFG to BUFGCE and, measured, silently retargets BUFR and BUFIO.",
       "topic": "Global and regional clock buffers"
      },
      {
@@ -874,7 +879,7 @@
     "enforced": 0,
     "evidence": 0,
     "sections": 15,
-    "skills": 35
+    "skills": 39
    },
    "evidence": [],
    "family": {
@@ -995,6 +1000,26 @@
       "confirmed": "doc",
       "summary": "Both families have 32-, 64-, 128- and 256-deep single-bit LUT RAMs; UltraScale+ adds RAM32M16, RAM64M8, RAM256X1D and RAM512X1S, so wide multi-port shapes and 512-deep columns exist only there.",
       "topic": "LUT RAM shapes for table emulation"
+     },
+     {
+      "confirmed": "doc",
+      "summary": "UltraScale/UltraScale+ GTH/GTY can program a ppm offset of the TX line rate (244 ppm a step with the Wizard's settings). With one reference the user clocks follow it: a loopback sees none (KR260: 0.0 ppm).",
+      "topic": "GTH/GTY TX phase-interpolator ppm controller (a controlled line-rate offset)"
+     },
+     {
+      "confirmed": "doc",
+      "summary": "Every GT family has an RX eye-scan block (ES_* attributes, prescale, error and sample counters) measuring margin after the equaliser. The Wizard leaves it off on GTHE4: set ES_EYE_SCAN_EN and ES_ERRDET_EN in the build.",
+      "topic": "GTH/GTY on-chip RX eye scan (margin analysis) and the attributes the Wizard leaves off"
+     },
+     {
+      "confirmed": "doc",
+      "summary": "Both families can bypass the TX and RX buffers, cutting the GT delay by tens of UI for a phase-alignment procedure. On the K26 the Wizard builds it from two properties; AR 68177 gives the saving; not board-measured yet.",
+      "topic": "GTH/GTY transmit and receive buffer bypass (fixed, lower transceiver latency)"
+     },
+     {
+      "confirmed": "tool",
+      "summary": "A marked first input or last output flop packs into the I/O logic on both families when only the pad is next to it; failure is a critical warning that drc_clean never sees. BELs, messages and DRC rows differ.",
+      "topic": "Registers in the I/O block (IOB packing)"
      }
     ]
    },
@@ -1018,6 +1043,10 @@
       {
        "description": "Writing or checking set_input_delay/set_output_delay on 7-series (Artix-7, Zynq-7020 PL): system- vs source-synchronous, centre- vs edge-aligned, min and max, DDR edges ...",
        "name": "artix7-io-timing-constraints"
+      },
+      {
+       "description": "A first input or last output flip-flop of an RGMII, RMII, ADC, DAC or other synchronous interface must sit in the I/O block on 7-series (Artix-7 ...",
+       "name": "artix7-iob-register-packing"
       },
       {
        "description": "Assigning I/O standards, drive, slew, pull-ups or IOB registers on Artix-7 pins; HR banks and VCCO, LVCMOS33/LVCMOS18 rules, differential inputs, tri-state and open-drain pins.",
@@ -1140,6 +1169,10 @@
        "name": "zynqmp-hp-io-delays-and-serdes"
       },
       {
+       "description": "A first input or last output flip-flop must sit in the I/O logic on Zynq UltraScale+ (K26/KR260): IOB TRUE on a plain flop packs into the bit slice (IN_FF/OUT_FF) ...",
+       "name": "zynqmp-iob-register-packing"
+      },
+      {
        "description": "Using Zynq UltraScale+ PS MIO/EMIO or choosing PL I/O banks on the K26: HD banks 3.3 V, HP banks 1.8 V, which PS peripherals use PS-GTR lanes.",
        "name": "zynqmp-mio-emio-and-pl-io-banks"
       }
@@ -1174,6 +1207,10 @@
     {
      "items": [
       {
+       "description": "Bypassing the GTH TX and RX buffers for lower, fixed latency (Wizard settings, attributes, the bypass controllers' reset and timeout), predicting the saving ...",
+       "name": "gth-buffer-bypass-and-latency"
+      },
+      {
        "description": "Choosing the reference clock, CPLL or QPLL, dividers and line rate of a GTH link, or checking the TXUSRCLK2/RXUSRCLK2 frequency; K26 (-2LV) numbers.",
        "name": "gth-clocking-plls-and-line-rates"
       },
@@ -1192,6 +1229,10 @@
       {
        "description": "Testing or tuning a GTH link: LPM against DFE, TX swing and pre/post-cursor, the four loopback modes, the PRBS generator and checker (and their reset rules), eye scan ...",
        "name": "gth-loopback-prbs-and-eye-scan"
+      },
+      {
+       "description": "Measuring or displaying a GTH receiver's margin with its own eye-scan counters (DRP sequence, the attributes the Wizard leaves off, masks for the 32-bit width, units, BER floor per point ...",
+       "name": "gth-on-chip-eye-scan"
       },
       {
        "description": "Deciding which protocol layer to put on a GTH: PCIe (endpoint, XDMA, AXI bridge), Aurora 8b/10b or 64b/66b, 10G/25G Ethernet, JESD204B/C, or a raw link layer of our own ...",
@@ -2933,7 +2974,7 @@
      },
      {
       "confirmed": "tool",
-      "summary": "UltraScale+ has MUXF9 (a 64:1 mux within one CLB); 7-series stops at MUXF8 (16:1 per slice).",
+      "summary": "UltraScale+ has MUXF9 and 7-series stops at MUXF8, but a 64:1 mux was built identically on both parts (measured, no MUXF9 used).",
       "topic": "Wide multiplexers"
      },
      {
@@ -4124,7 +4165,7 @@
      },
      {
       "confirmed": "tool",
-      "summary": "On UltraScale+ synthesis retargets some 7-series primitives (BUFG to BUFGCE, MMCME2_ADV to MMCME4_ADV) but not regional buffers, IDELAYE2, XADC or CARRY4, which have no lib cell.",
+      "summary": "On UltraScale+ synthesis retargets some 7-series primitives (BUFG to BUFGCE, MMCME2_ADV to MMCME4_ADV, and measured BUFR, BUFIO to BUFGCE_DIV or BUFGCE); IDELAYE2, XADC, CARRY4 have no lib cell.",
       "topic": "Primitive retargeting in synthesis"
      }
     ]
@@ -4307,7 +4348,7 @@
    "means": "Development-task runs of the agent, recorded in committed run files, exercised the area."
   }
  ],
- "pin": "93d158c",
- "skills_total": 263,
- "skills_used": 206
+ "pin": "5e2eab8",
+ "skills_total": 284,
+ "skills_used": 210
 }

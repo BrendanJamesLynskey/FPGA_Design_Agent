@@ -39,7 +39,7 @@ python3 -m flow.checks designs/<d> [--names all|resets,cdc,...] [--scope auto|rt
 | `methodology` | AMD | rtl, synth, route | report_methodology: Critical Warnings fail, Warnings are advisory |
 | `drc` | AMD | synth, route | report_drc: Errors and Critical Warnings fail; CFGBVS-1/2 (a Warning in the report) also fail when the build's board has a confirmed configuration voltage in `boards/<board>/board.yaml` (brief 105A, `flow/constraint_gates.py`, gate `config_voltage_declared`) |
 | `exceptions` | ours | synth, route | `flow/exceptions_check.py` through `flow/gates.py`'s own helper |
-| `io` | ours | synth, route | `flow/io_check.py` through `flow/gates.py`'s own helper |
+| `io` | ours | synth, route | `flow/io_check.py` through `flow/gates.py`'s own helper; at route also the I/O-block packing of every register marked `IOB TRUE` (`flow/iob_check.py`, brief 129, codes `IOB-NOT-PACKED`, `IOB-MARK-ORPHAN`; advisory `IOB-UNMARKED`), with the cell and Vivado's reason |
 | `constraint_scope` | ours | route | advisory, never blocks (brief 105A): `set_clock_groups -asynchronous` over a clock pair that report_clock_interaction shows with endpoints between the clocks (`XDC-ASYNC-PATHS`), or one command whose groups cover every clock (`XDC-ASYNC-ALL`); `flow/constraint_gates.py` |
 | `xpm_sim` | ours | rtl, synth, route | advisory (brief 105A): an `xpm_cdc_*` instance with `SIM_ASSERT_CHK` not 1 (`XPM-SIM-01`); the build's own source list; `xpm_cdc_async_rst` has no such parameter |
 | `clocking` | AMD reports and ours | synth, route | CLKC methodology rows; MMCM/PLL VCO and PFD ranges (`flow/cmt_check.tcl`) |
@@ -68,6 +68,10 @@ python3 -m flow.checks designs/<d> [--names all|resets,cdc,...] [--scope auto|rt
 - **`pass`** means every part of the check that ran found nothing blocking. **`PARTIAL`** in the digest (`incomplete`
   in the JSON) means a part could not run, for example the reset netlist scan with no Vivado; the suite's overall verdict
   is then not a pass. **`not run`** always carries its reason.
+- **A check that cannot read a language says so (brief 153).** On a design with VHDL, a part that has no VHDL reader is `PARTIAL` or
+  `not run` with "no reader for .vhd (...)", never a clean pass. The lint of a VHDL design is GHDL's, listed under the tool name
+  `verilator` with the code `GHDL` (rule HDL-LINT-00); the `constants` check is `PARTIAL` when it cannot read the quoted design ID's binding.
+  Which check reads what: `python3 -m flow.sources --help`, and [vhdl.md](vhdl.md).
 - **Advisory findings never fail a check**: in the checks that mirror a stage gate (methodology, drc, cdc), Warnings
   are advisory because the gates fail only on Critical Warnings (or Errors); Advisory and Info rows and the `axi` notes
   are advisory everywhere. **The `resets` check is stricter**: AMD's reset rows at Warning (LUTAR-1, DPIR, DPOR, CDC-8)

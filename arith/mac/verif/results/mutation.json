@@ -1,0 +1,201 @@
+{
+ "function": "mac",
+ "mutants": 22,
+ "valid": 22,
+ "killed": 22,
+ "survived": [],
+ "invalid": [],
+ "score_pct": 100.0,
+ "per_variant": {
+  "dsp": {
+   "valid": 8,
+   "killed": 8
+  },
+  "dsp_cascade": {
+   "valid": 8,
+   "killed": 8
+  },
+  "fabric": {
+   "valid": 6,
+   "killed": 6
+  }
+ },
+ "results": [
+  {
+   "name": "dsp_en_stuck",
+   "variant": "dsp",
+   "class": "connection",
+   "status": "killed",
+   "detail": "exhaustive {'WA': 2, 'WB': 3, 'LANES': 2, 'ACCW': 7, 'SIGNED': 1, 'NREG': 3}",
+   "why": "the sample's enable is ignored: a held accumulator keeps adding"
+  },
+  {
+   "name": "dsp_clr_dropped",
+   "variant": "dsp",
+   "class": "connection",
+   "status": "killed",
+   "detail": "exhaustive {'WA': 2, 'WB': 3, 'LANES': 2, 'ACCW': 7, 'SIGNED': 1, 'NREG': 3}",
+   "why": "a new sum never starts"
+  },
+  {
+   "name": "dsp_clr_ignored_at_acc",
+   "variant": "dsp",
+   "class": "operator",
+   "status": "killed",
+   "detail": "exhaustive {'WA': 3, 'WB': 3, 'LANES': 1, 'ACCW': 6, 'SIGNED': 1, 'NREG': 1}",
+   "why": "the accumulator is not restarted by clr"
+  },
+  {
+   "name": "dsp_rst_acc",
+   "variant": "dsp",
+   "class": "condition",
+   "status": "killed",
+   "detail": "exhaustive {'WA': 3, 'WB': 3, 'LANES': 1, 'ACCW': 6, 'SIGNED': 1, 'NREG': 1}",
+   "why": "reset does not clear the accumulator"
+  },
+  {
+   "name": "dsp_rst_in_flight",
+   "variant": "dsp",
+   "class": "condition",
+   "status": "killed",
+   "detail": "randomised {'WA': 12, 'WB': 12, 'LANES': 2, 'ACCW': 24, 'SIGNED': 1, 'NREG': 3}",
+   "why": "reset does not discard the samples already in the pipeline"
+  },
+  {
+   "name": "dsp_no_sign_ext",
+   "variant": "dsp",
+   "class": "operator",
+   "status": "killed",
+   "detail": "exhaustive {'WA': 2, 'WB': 3, 'LANES': 2, 'ACCW': 7, 'SIGNED': 1, 'NREG': 3}",
+   "why": "a negative product is zero-extended into the accumulator"
+  },
+  {
+   "name": "dsp_lane_broadcast",
+   "variant": "dsp",
+   "class": "connection",
+   "status": "killed",
+   "detail": "exhaustive {'WA': 2, 'WB': 3, 'LANES': 2, 'ACCW': 7, 'SIGNED': 1, 'NREG': 3}",
+   "why": "every lane's product register takes lane 0's product"
+  },
+  {
+   "name": "dsp_b_lane_index",
+   "variant": "dsp",
+   "class": "connection",
+   "status": "killed",
+   "detail": "exhaustive {'WA': 2, 'WB': 2, 'LANES': 3, 'ACCW': 6, 'SIGNED': 0, 'NREG': 2}",
+   "why": "an unsigned lane multiplies by lane 0's b"
+  },
+  {
+   "name": "cas_chain_broken",
+   "variant": "dsp_cascade",
+   "class": "operator",
+   "status": "killed",
+   "detail": "exhaustive {'WA': 2, 'WB': 3, 'LANES': 2, 'ACCW': 7, 'SIGNED': 1}",
+   "why": "the lanes are not added into the chain"
+  },
+  {
+   "name": "cas_chain_sub",
+   "variant": "dsp_cascade",
+   "class": "operator",
+   "status": "killed",
+   "detail": "exhaustive {'WA': 2, 'WB': 3, 'LANES': 2, 'ACCW': 7, 'SIGNED': 1}",
+   "why": "the lane sum subtracts the previous lane"
+  },
+  {
+   "name": "cas_skew_short",
+   "variant": "dsp_cascade",
+   "class": "connection",
+   "status": "killed",
+   "detail": "exhaustive {'WA': 2, 'WB': 2, 'LANES': 3, 'ACCW': 6, 'SIGNED': 0}",
+   "why": "a lane's multiplicand is delayed one clock whatever the lane number"
+  },
+  {
+   "name": "cas_en_stuck",
+   "variant": "dsp_cascade",
+   "class": "connection",
+   "status": "killed",
+   "detail": "exhaustive {'WA': 2, 'WB': 3, 'LANES': 2, 'ACCW': 7, 'SIGNED': 1}",
+   "why": "the sample's enable is ignored"
+  },
+  {
+   "name": "cas_clr_dropped",
+   "variant": "dsp_cascade",
+   "class": "connection",
+   "status": "killed",
+   "detail": "exhaustive {'WA': 2, 'WB': 3, 'LANES': 2, 'ACCW': 7, 'SIGNED': 1}",
+   "why": "a new sum never starts"
+  },
+  {
+   "name": "cas_clr_wrong_tap",
+   "variant": "dsp_cascade",
+   "class": "condition",
+   "status": "killed",
+   "detail": "exhaustive {'WA': 2, 'WB': 3, 'LANES': 2, 'ACCW': 7, 'SIGNED': 1}",
+   "why": "clr is read before it has travelled with its sample"
+  },
+  {
+   "name": "cas_rst_in_flight",
+   "variant": "dsp_cascade",
+   "class": "condition",
+   "status": "killed",
+   "detail": "exhaustive {'WA': 2, 'WB': 3, 'LANES': 2, 'ACCW': 7, 'SIGNED': 1}",
+   "why": "reset does not discard the samples in the chain"
+  },
+  {
+   "name": "cas_no_sign_ext",
+   "variant": "dsp_cascade",
+   "class": "operator",
+   "status": "killed",
+   "detail": "exhaustive {'WA': 2, 'WB': 3, 'LANES': 2, 'ACCW': 7, 'SIGNED': 1}",
+   "why": "a negative product is zero-extended into the sum"
+  },
+  {
+   "name": "fab_sign_row",
+   "variant": "fabric",
+   "class": "condition",
+   "status": "killed",
+   "detail": "exhaustive {'WA': 3, 'WB': 3, 'LANES': 1, 'ACCW': 6, 'SIGNED': 1, 'NREG': 1}",
+   "why": "the wrong row is subtracted for a signed lane"
+  },
+  {
+   "name": "fab_no_sign_ext",
+   "variant": "fabric",
+   "class": "operator",
+   "status": "killed",
+   "detail": "exhaustive {'WA': 3, 'WB': 3, 'LANES': 1, 'ACCW': 6, 'SIGNED': 1, 'NREG': 1}",
+   "why": "a signed multiplicand is zero-extended"
+  },
+  {
+   "name": "fab_b_lane_index",
+   "variant": "fabric",
+   "class": "connection",
+   "status": "killed",
+   "detail": "randomised {'WA': 12, 'WB': 9, 'LANES': 2, 'ACCW': 28, 'SIGNED': 0, 'NREG': 2}",
+   "why": "an unsigned lane is gated by lane 0's b bits"
+  },
+  {
+   "name": "fab_sum_reg_or",
+   "variant": "fabric",
+   "class": "operator",
+   "status": "killed",
+   "detail": "exhaustive {'WA': 2, 'WB': 3, 'LANES': 2, 'ACCW': 7, 'SIGNED': 1, 'NREG': 2}",
+   "why": "the lane-sum register accumulates instead of loading"
+  },
+  {
+   "name": "fab_clr_ignored",
+   "variant": "fabric",
+   "class": "operator",
+   "status": "killed",
+   "detail": "exhaustive {'WA': 3, 'WB': 3, 'LANES': 1, 'ACCW': 6, 'SIGNED': 1, 'NREG': 1}",
+   "why": "the accumulator is not restarted by clr"
+  },
+  {
+   "name": "fab_rst_in_flight",
+   "variant": "fabric",
+   "class": "condition",
+   "status": "killed",
+   "detail": "randomised {'WA': 12, 'WB': 9, 'LANES': 2, 'ACCW': 28, 'SIGNED': 0, 'NREG': 2}",
+   "why": "reset does not discard the sample already registered"
+  }
+ ]
+}

@@ -1,0 +1,197 @@
+{
+ "function": "fp_mul",
+ "mutants": 22,
+ "valid": 22,
+ "killed": 22,
+ "survived": [],
+ "invalid": [],
+ "score_pct": 100.0,
+ "per_variant": {
+  "dsp": {
+   "valid": 17,
+   "killed": 17
+  },
+  "lut": {
+   "valid": 5,
+   "killed": 5
+  }
+ },
+ "results": [
+  {
+   "name": "dsp_add_not_mul",
+   "variant": "dsp",
+   "class": "operator",
+   "status": "killed",
+   "detail": "exhaustive {'EXP': 3, 'MAN': 2, 'SUBNORM': 1, 'STAGES': 0}",
+   "why": "an adder where the significand multiplier is"
+  },
+  {
+   "name": "dsp_sign_and",
+   "variant": "dsp",
+   "class": "operator",
+   "status": "killed",
+   "detail": "exhaustive {'EXP': 3, 'MAN': 2, 'SUBNORM': 1, 'STAGES': 0}",
+   "why": "the product sign is the AND of the signs, not the xor"
+  },
+  {
+   "name": "dsp_bias",
+   "variant": "dsp",
+   "class": "constant",
+   "status": "killed",
+   "detail": "exhaustive {'EXP': 3, 'MAN': 2, 'SUBNORM': 1, 'STAGES': 0}",
+   "why": "the exponent bias subtracted is one too large"
+  },
+  {
+   "name": "dsp_no_daz",
+   "variant": "dsp",
+   "class": "condition",
+   "status": "killed",
+   "detail": "exhaustive {'EXP': 3, 'MAN': 2, 'SUBNORM': 0, 'STAGES': 2}",
+   "why": "flush-to-zero does not flush a subnormal first operand"
+  },
+  {
+   "name": "dsp_inf_zero",
+   "variant": "dsp",
+   "class": "condition",
+   "status": "killed",
+   "detail": "exhaustive {'EXP': 3, 'MAN': 2, 'SUBNORM': 1, 'STAGES': 0}",
+   "why": "infinity times zero is NaN only in one operand order"
+  },
+  {
+   "name": "dsp_zero_sign",
+   "variant": "dsp",
+   "class": "connection",
+   "status": "killed",
+   "detail": "exhaustive {'EXP': 3, 'MAN': 2, 'SUBNORM': 1, 'STAGES': 0}",
+   "why": "a zero product is always +0"
+  },
+  {
+   "name": "dsp_ftz_norm",
+   "variant": "dsp",
+   "class": "constant",
+   "status": "killed",
+   "detail": "exhaustive {'EXP': 3, 'MAN': 2, 'SUBNORM': 0, 'STAGES': 2}",
+   "why": "flush-to-zero normalisation shifts two places instead of one"
+  },
+  {
+   "name": "dsp_eff_exp",
+   "variant": "dsp",
+   "class": "condition",
+   "status": "killed",
+   "detail": "exhaustive {'EXP': 3, 'MAN': 2, 'SUBNORM': 1, 'STAGES': 0}",
+   "why": "a subnormal first operand has exponent 0 instead of 1"
+  },
+  {
+   "name": "dsp_rank1_sig",
+   "variant": "dsp",
+   "class": "connection",
+   "status": "killed",
+   "detail": "exhaustive {'EXP': 3, 'MAN': 2, 'SUBNORM': 0, 'STAGES': 2}",
+   "why": "the first rank register takes the wrong significand"
+  },
+  {
+   "name": "dsp_rank2_exp",
+   "variant": "dsp",
+   "class": "connection",
+   "status": "killed",
+   "detail": "randomised {'EXP': 8, 'MAN': 23, 'SUBNORM': 1, 'STAGES': 3}",
+   "why": "the second rank register never loads the exponent"
+  },
+  {
+   "name": "dsp_out_reg_or",
+   "variant": "dsp",
+   "class": "operator",
+   "status": "killed",
+   "detail": "exhaustive {'EXP': 3, 'MAN': 2, 'SUBNORM': 0, 'STAGES': 2}",
+   "why": "the output register accumulates instead of loading"
+  },
+  {
+   "name": "lut_shift",
+   "variant": "lut",
+   "class": "operator",
+   "status": "killed",
+   "detail": "exhaustive {'EXP': 3, 'MAN': 2, 'SUBNORM': 1, 'STAGES': 0}",
+   "why": "every partial product is shifted one place too far"
+  },
+  {
+   "name": "lut_top_row",
+   "variant": "lut",
+   "class": "condition",
+   "status": "killed",
+   "detail": "exhaustive {'EXP': 3, 'MAN': 2, 'SUBNORM': 1, 'STAGES': 0}",
+   "why": "the last partial product is not added"
+  },
+  {
+   "name": "lut_row_select",
+   "variant": "lut",
+   "class": "condition",
+   "status": "killed",
+   "detail": "exhaustive {'EXP': 3, 'MAN': 2, 'SUBNORM': 1, 'STAGES': 0}",
+   "why": "the multiplier bits are taken in reverse order"
+  },
+  {
+   "name": "pk_ties_down",
+   "variant": "dsp",
+   "class": "condition",
+   "status": "killed",
+   "detail": "exhaustive {'EXP': 3, 'MAN': 2, 'SUBNORM': 1, 'STAGES': 0}",
+   "why": "a tie always rounds down instead of to even"
+  },
+  {
+   "name": "pk_ties_up",
+   "variant": "lut",
+   "class": "condition",
+   "status": "killed",
+   "detail": "exhaustive {'EXP': 3, 'MAN': 2, 'SUBNORM': 1, 'STAGES': 0}",
+   "why": "a tie always rounds up instead of to even"
+  },
+  {
+   "name": "pk_no_round",
+   "variant": "dsp",
+   "class": "operator",
+   "status": "killed",
+   "detail": "exhaustive {'EXP': 3, 'MAN': 2, 'SUBNORM': 1, 'STAGES': 0}",
+   "why": "the result is truncated"
+  },
+  {
+   "name": "pk_denorm_threshold",
+   "variant": "dsp",
+   "class": "condition",
+   "status": "killed",
+   "detail": "exhaustive {'EXP': 3, 'MAN': 2, 'SUBNORM': 1, 'STAGES': 0}",
+   "why": "a result with biased exponent 0 is not denormalised"
+  },
+  {
+   "name": "pk_denorm_sticky",
+   "variant": "lut",
+   "class": "connection",
+   "status": "killed",
+   "detail": "exhaustive {'EXP': 3, 'MAN': 2, 'SUBNORM': 1, 'STAGES': 0}",
+   "why": "the bits lost by the denormalising shift are not part of the sticky bit"
+  },
+  {
+   "name": "pk_overflow_compare",
+   "variant": "dsp",
+   "class": "condition",
+   "status": "killed",
+   "detail": "exhaustive {'EXP': 3, 'MAN': 2, 'SUBNORM': 1, 'STAGES': 0}",
+   "why": "a rounded exponent of all ones is not turned into an infinity"
+  },
+  {
+   "name": "pk_flush_compare",
+   "variant": "dsp",
+   "class": "condition",
+   "status": "killed",
+   "detail": "exhaustive {'EXP': 3, 'MAN': 2, 'SUBNORM': 0, 'STAGES': 2}",
+   "why": "flush-to-zero leaves a result with exponent field 0 as a subnormal pattern"
+  },
+  {
+   "name": "nm_first_one",
+   "variant": "dsp",
+   "class": "condition",
+   "status": "killed",
+   "detail": "exhaustive {'EXP': 3, 'MAN': 2, 'SUBNORM': 1, 'STAGES': 0}",
+   "why": "the leading-zero count takes the lowest set bit instead of the highest"
+  }
+ ]
+}

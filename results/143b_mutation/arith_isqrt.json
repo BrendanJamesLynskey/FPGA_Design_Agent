@@ -1,0 +1,1319 @@
+{
+ "schema": "fpga-design-agent/mutation-score/v1",
+ "target": "arith_isqrt",
+ "design": "arith/isqrt",
+ "what": "integer square root with remainder, three variants (arith library, brief 139b)",
+ "date": "2026-11-21",
+ "generator": {
+  "name": "flow/mutation_blind.py",
+  "blind_to_tests": true,
+  "seed": 1,
+  "requested": 40,
+  "candidates": 54,
+  "sampled": 40,
+  "operators": [
+   "and_to_or",
+   "band_to_bor",
+   "bit0_to_1",
+   "bit1_to_0",
+   "bor_to_band",
+   "const_minus1",
+   "const_plus1",
+   "eq_to_ne",
+   "ge_to_gt",
+   "ge_to_lt",
+   "gt_to_ge",
+   "gt_to_le",
+   "lt_to_le",
+   "minus_to_plus",
+   "ne_to_eq",
+   "not_removed",
+   "or_to_and",
+   "plus_to_minus",
+   "shl_to_shr",
+   "shr_to_shl",
+   "ternary_swap",
+   "tilde_removed",
+   "xor_to_or"
+  ],
+  "llm_proposals_valid": 0,
+  "llm_proposals_dropped": 0,
+  "rtl_sha256": "99fc218fac25f3268b3a2bf7f631709aef31a2e4ace56395fb5a6e5ece18230c"
+ },
+ "rtl": {
+  "isqrt_nonrestoring_pipe.sv": "b97e630a2229c4f0f1c01b59af2e36b11796cd2c8ef66c2c436294ae09a58c61",
+  "isqrt_restoring_iter.sv": "6632f8ca41a5cd02b4f00ce029a08494a5f2b81c7c79cb5ae6d3d5e64af21eef",
+  "isqrt_restoring_pipe.sv": "77db656855e9831faee2b8a5133a30ee0d8bd74ca32d4fd755be23fb97673e80",
+  "isqrt_sel.sv": "217340c9e8a2664b715888a6c80874f4bbbc33ab4a4e9f3f7fd63b2a9772c5da"
+ },
+ "rtl_source": "origin/b139b-arith-previvado at dfb4a29cf9 (PR 263; not on main)",
+ "bench": {
+  "description": "the function's exhaustive stream bench (Icarus, every input of each width, 25% idle gaps, latency and order checked) at every variant at widths 3 to 12 (pipeline depth as the library's exhaustive test chooses it), 30 configurations",
+  "baseline_seconds": 5.7,
+  "mutant_timeout_s": 60,
+  "jobs": 1
+ },
+ "timeout_policy": "A bench run that exceeds its time limit is `timed_out`: it is not counted as killed and not as a survivor; it is listed, and the worst-case score counts it as a survivor. A formal run that exceeds its limit is `undecided`, handled the same way. Neither is ever counted as a kill.",
+ "filter": {
+  "method": "miter: BMC, then register-matched induction (yosys equiv_induct), then an unbounded proof (sby)",
+  "bmc_depth": 30,
+  "bmc_limit_s": 60,
+  "prove_limit_s": 180,
+  "configs": [
+   "VARIANT=0 W=6 PIPE=1",
+   "VARIANT=0 W=9 PIPE=1",
+   "VARIANT=0 W=12 PIPE=1",
+   "VARIANT=0 W=16 PIPE=1",
+   "VARIANT=1 W=6 PIPE=1",
+   "VARIANT=1 W=9 PIPE=2",
+   "VARIANT=1 W=12 PIPE=3",
+   "VARIANT=1 W=16 PIPE=4",
+   "VARIANT=2 W=6 PIPE=1",
+   "VARIANT=2 W=9 PIPE=2",
+   "VARIANT=2 W=12 PIPE=3",
+   "VARIANT=2 W=16 PIPE=4"
+  ],
+  "assumptions": [
+   "!in_valid || g_in_ready"
+  ],
+  "compared": "in_ready always; out_valid always; out_data when out_valid is high (the stream interface's contract)",
+  "reset": {
+   "port": "rst",
+   "clock": "clk",
+   "cycles": 3,
+   "active": 1
+  },
+  "start_state": "registers without an initial value start at 0 in both versions"
+ },
+ "evaluated": 35,
+ "invalid": 5,
+ "bench_timed_out": 0,
+ "killed_by_simulation": 29,
+ "killed_by_formal_bench": 0,
+ "killed": 29,
+ "survived_after_bench": 6,
+ "equivalent": 6,
+ "real_survivors": 0,
+ "undecided": 0,
+ "score_pct": 100.0,
+ "score_simulation_only_pct": 100.0,
+ "score_worst_case_pct": 100.0,
+ "score_before_filter_pct": 82.86,
+ "formal_bench_bound": false,
+ "invalid_listed": [
+  "isqrt_nonrestoring_pipe_L29_lt_to_le_25",
+  "isqrt_nonrestoring_pipe_L70_ne_to_eq_14",
+  "isqrt_restoring_pipe_L28_lt_to_le_25",
+  "isqrt_restoring_pipe_L34_eq_to_ne_14",
+  "isqrt_restoring_pipe_L67_ne_to_eq_14"
+ ],
+ "timed_out_listed": [],
+ "survivors": [
+  {
+   "name": "isqrt_nonrestoring_pipe_L70_minus_to_plus_18",
+   "change": "isqrt_nonrestoring_pipe.sv line 70: `if (s != S - 1) begin : g_x` became `if (s != S + 1) begin : g_x` ('-' replaced by '+')",
+   "verdict": "equivalent",
+   "note": ""
+  },
+  {
+   "name": "isqrt_nonrestoring_pipe_L75_bit0_to_1_30",
+   "change": "isqrt_nonrestoring_pipe.sv line 75: `assign unused = &{1'b0, xs_c};` became `assign unused = &{1'b1, xs_c};` (constant 1'b0 replaced by 1'b1)",
+   "verdict": "equivalent",
+   "note": ""
+  },
+  {
+   "name": "isqrt_restoring_iter_L38_band_to_bor_20",
+   "change": "isqrt_restoring_iter.sv line 38: `assign unused = &{1'b0, rm[RW], rt[RW-1], t[RW+1]};` became `assign unused = |{1'b0, rm[RW], rt[RW-1], t[RW+1]};` (bitwise '&' replaced by '|')",
+   "verdict": "equivalent",
+   "note": ""
+  },
+  {
+   "name": "isqrt_restoring_iter_L38_bit0_to_1_22",
+   "change": "isqrt_restoring_iter.sv line 38: `assign unused = &{1'b0, rm[RW], rt[RW-1], t[RW+1]};` became `assign unused = &{1'b1, rm[RW], rt[RW-1], t[RW+1]};` (constant 1'b0 replaced by 1'b1)",
+   "verdict": "equivalent",
+   "note": ""
+  },
+  {
+   "name": "isqrt_restoring_pipe_L67_minus_to_plus_18",
+   "change": "isqrt_restoring_pipe.sv line 67: `if (s != S - 1) begin : g_x` became `if (s != S + 1) begin : g_x` ('-' replaced by '+')",
+   "verdict": "equivalent",
+   "note": ""
+  },
+  {
+   "name": "isqrt_restoring_pipe_L72_bit0_to_1_30",
+   "change": "isqrt_restoring_pipe.sv line 72: `assign unused = &{1'b0, xs_c};` became `assign unused = &{1'b1, xs_c};` (constant 1'b0 replaced by 1'b1)",
+   "verdict": "equivalent",
+   "note": ""
+  }
+ ],
+ "rows": [
+  {
+   "name": "isqrt_nonrestoring_pipe_L27_bit1_to_0_22",
+   "file": "isqrt_nonrestoring_pipe.sv",
+   "line": 27,
+   "class": "bit1_to_0",
+   "why": "constant 1'b1 replaced by 1'b0",
+   "change": "isqrt_nonrestoring_pipe.sv line 27: `assign in_ready = 1'b1;` became `assign in_ready = 1'b0;` (constant 1'b1 replaced by 1'b0)",
+   "status": "killed",
+   "seconds": 2.9
+  },
+  {
+   "name": "isqrt_nonrestoring_pipe_L29_lt_to_le_25",
+   "file": "isqrt_nonrestoring_pipe.sv",
+   "line": 29,
+   "class": "lt_to_le",
+   "why": "'<' replaced by '<='",
+   "change": "isqrt_nonrestoring_pipe.sv line 29: `for (genvar s = 0; s < S; s++) begin : g_stage` became `for (genvar s = 0; s <= S; s++) begin : g_stage` ('<' replaced by '<=')",
+   "status": "invalid",
+   "seconds": 2.8,
+   "note": "the mutated RTL does not build"
+  },
+  {
+   "name": "isqrt_nonrestoring_pipe_L59_bit1_to_0_50",
+   "file": "isqrt_nonrestoring_pipe.sv",
+   "line": 59,
+   "class": "bit1_to_0",
+   "why": "constant 1'b1 replaced by 1'b0",
+   "change": "isqrt_nonrestoring_pipe.sv line 59: `tr_v = {rt_v[RW-2:0], rm_v[RW+1], 1'b1};` became `tr_v = {rt_v[RW-2:0], rm_v[RW+1], 1'b0};` (constant 1'b1 replaced by 1'b0)",
+   "status": "killed",
+   "seconds": 3.2
+  },
+  {
+   "name": "isqrt_nonrestoring_pipe_L60_minus_to_plus_63",
+   "file": "isqrt_nonrestoring_pipe.sv",
+   "line": 60,
+   "class": "minus_to_plus",
+   "why": "'-' replaced by '+'",
+   "change": "isqrt_nonrestoring_pipe.sv line 60: `t_v  = rm_v[RW+1] ? sh_v + {2'b00, tr_v} : sh_v - {2'b00, tr_v};` became `t_v  = rm_v[RW+1] ? sh_v + {2'b00, tr_v} : sh_v + {2'b00, tr_v};` ('-' replaced by '+')",
+   "status": "killed",
+   "seconds": 3.4
+  },
+  {
+   "name": "isqrt_nonrestoring_pipe_L60_ternary_swap_36",
+   "file": "isqrt_nonrestoring_pipe.sv",
+   "line": 60,
+   "class": "ternary_swap",
+   "why": "the two arms of a ?: swapped",
+   "change": "isqrt_nonrestoring_pipe.sv line 60: `t_v  = rm_v[RW+1] ? sh_v + {2'b00, tr_v} : sh_v - {2'b00, tr_v};` became `t_v  = rm_v[RW+1] ? sh_v - {2'b00, tr_v} : sh_v + {2'b00, tr_v};` (the two arms of a ?: swapped)",
+   "status": "killed",
+   "seconds": 3.2
+  },
+  {
+   "name": "isqrt_nonrestoring_pipe_L62_tilde_removed_38",
+   "file": "isqrt_nonrestoring_pipe.sv",
+   "line": 62,
+   "class": "tilde_removed",
+   "why": "a bitwise negation '~' removed",
+   "change": "isqrt_nonrestoring_pipe.sv line 62: `rt_v = {rt_v[RW-2:0], ~t_v[RW+1]};` became `rt_v = {rt_v[RW-2:0], t_v[RW+1]};` (a bitwise negation '~' removed)",
+   "status": "killed",
+   "seconds": 3.4
+  },
+  {
+   "name": "isqrt_nonrestoring_pipe_L65_plus_to_minus_47",
+   "file": "isqrt_nonrestoring_pipe.sv",
+   "line": 65,
+   "class": "plus_to_minus",
+   "why": "'+' replaced by '-'",
+   "change": "isqrt_nonrestoring_pipe.sv line 65: `if (LAST && rm_v[RW+1]) rm_v = rm_v + {1'b0, rt_v, 1'b1};` became `if (LAST && rm_v[RW+1]) rm_v = rm_v - {1'b0, rt_v, 1'b1};` ('+' replaced by '-')",
+   "status": "killed",
+   "seconds": 2.9
+  },
+  {
+   "name": "isqrt_nonrestoring_pipe_L65_bit1_to_0_63",
+   "file": "isqrt_nonrestoring_pipe.sv",
+   "line": 65,
+   "class": "bit1_to_0",
+   "why": "constant 1'b1 replaced by 1'b0",
+   "change": "isqrt_nonrestoring_pipe.sv line 65: `if (LAST && rm_v[RW+1]) rm_v = rm_v + {1'b0, rt_v, 1'b1};` became `if (LAST && rm_v[RW+1]) rm_v = rm_v + {1'b0, rt_v, 1'b0};` (constant 1'b1 replaced by 1'b0)",
+   "status": "killed",
+   "seconds": 3.1
+  },
+  {
+   "name": "isqrt_nonrestoring_pipe_L70_ne_to_eq_14",
+   "file": "isqrt_nonrestoring_pipe.sv",
+   "line": 70,
+   "class": "ne_to_eq",
+   "why": "'!=' replaced by '=='",
+   "change": "isqrt_nonrestoring_pipe.sv line 70: `if (s != S - 1) begin : g_x` became `if (s == S - 1) begin : g_x` ('!=' replaced by '==')",
+   "status": "invalid",
+   "seconds": 2.5,
+   "note": "the mutated RTL does not build"
+  },
+  {
+   "name": "isqrt_nonrestoring_pipe_L70_minus_to_plus_18",
+   "file": "isqrt_nonrestoring_pipe.sv",
+   "line": 70,
+   "class": "minus_to_plus",
+   "why": "'-' replaced by '+'",
+   "change": "isqrt_nonrestoring_pipe.sv line 70: `if (s != S - 1) begin : g_x` became `if (s != S + 1) begin : g_x` ('-' replaced by '+')",
+   "status": "survived",
+   "seconds": 3.5,
+   "formal": {
+    "verdict": "equivalent",
+    "per_config": [
+     {
+      "config": "VARIANT=0 W=6 PIPE=1",
+      "bmc_depth": 30,
+      "bmc_status": "PASS",
+      "register_matched_proof": "proved",
+      "verdict": "equivalent",
+      "method": "register-matched induction (yosys equiv_induct) after a clean BMC",
+      "note": "",
+      "seconds": 1.6
+     },
+     {
+      "config": "VARIANT=0 W=9 PIPE=1",
+      "bmc_depth": 30,
+      "bmc_status": "PASS",
+      "register_matched_proof": "proved",
+      "verdict": "equivalent",
+      "method": "register-matched induction (yosys equiv_induct) after a clean BMC",
+      "note": "",
+      "seconds": 2.0
+     },
+     {
+      "config": "VARIANT=0 W=12 PIPE=1",
+      "bmc_depth": 30,
+      "bmc_status": "PASS",
+      "register_matched_proof": "proved",
+      "verdict": "equivalent",
+      "method": "register-matched induction (yosys equiv_induct) after a clean BMC",
+      "note": "",
+      "seconds": 2.2
+     },
+     {
+      "config": "VARIANT=0 W=16 PIPE=1",
+      "bmc_depth": 30,
+      "bmc_status": "PASS",
+      "register_matched_proof": "proved",
+      "verdict": "equivalent",
+      "method": "register-matched induction (yosys equiv_induct) after a clean BMC",
+      "note": "",
+      "seconds": 2.6
+     },
+     {
+      "config": "VARIANT=1 W=6 PIPE=1",
+      "bmc_depth": 30,
+      "bmc_status": "PASS",
+      "register_matched_proof": "proved",
+      "verdict": "equivalent",
+      "method": "register-matched induction (yosys equiv_induct) after a clean BMC",
+      "note": "",
+      "seconds": 0.7
+     },
+     {
+      "config": "VARIANT=1 W=9 PIPE=2",
+      "bmc_depth": 30,
+      "bmc_status": "PASS",
+      "register_matched_proof": "proved",
+      "verdict": "equivalent",
+      "method": "register-matched induction (yosys equiv_induct) after a clean BMC",
+      "note": "",
+      "seconds": 0.9
+     },
+     {
+      "config": "VARIANT=1 W=12 PIPE=3",
+      "bmc_depth": 30,
+      "bmc_status": "PASS",
+      "register_matched_proof": "proved",
+      "verdict": "equivalent",
+      "method": "register-matched induction (yosys equiv_induct) after a clean BMC",
+      "note": "",
+      "seconds": 1.1
+     },
+     {
+      "config": "VARIANT=1 W=16 PIPE=4",
+      "bmc_depth": 30,
+      "bmc_status": "PASS",
+      "register_matched_proof": "proved",
+      "verdict": "equivalent",
+      "method": "register-matched induction (yosys equiv_induct) after a clean BMC",
+      "note": "",
+      "seconds": 1.2
+     },
+     {
+      "config": "VARIANT=2 W=6 PIPE=1",
+      "bmc_depth": 30,
+      "bmc_status": "PASS",
+      "register_matched_proof": "proved",
+      "verdict": "equivalent",
+      "method": "register-matched induction (yosys equiv_induct) after a clean BMC",
+      "note": "",
+      "seconds": 1.0
+     },
+     {
+      "config": "VARIANT=2 W=9 PIPE=2",
+      "bmc_depth": 30,
+      "bmc_status": "PASS",
+      "register_matched_proof": "proved",
+      "verdict": "equivalent",
+      "method": "register-matched induction (yosys equiv_induct) after a clean BMC",
+      "note": "",
+      "seconds": 1.2
+     },
+     {
+      "config": "VARIANT=2 W=12 PIPE=3",
+      "bmc_depth": 30,
+      "bmc_status": "PASS",
+      "register_matched_proof": "proved",
+      "verdict": "equivalent",
+      "method": "register-matched induction (yosys equiv_induct) after a clean BMC",
+      "note": "",
+      "seconds": 1.2
+     },
+     {
+      "config": "VARIANT=2 W=16 PIPE=4",
+      "bmc_depth": 30,
+      "bmc_status": "PASS",
+      "register_matched_proof": "proved",
+      "verdict": "equivalent",
+      "method": "register-matched induction (yosys equiv_induct) after a clean BMC",
+      "note": "",
+      "seconds": 1.4
+     }
+    ],
+    "seconds": 17.1
+   }
+  },
+  {
+   "name": "isqrt_nonrestoring_pipe_L75_bit0_to_1_30",
+   "file": "isqrt_nonrestoring_pipe.sv",
+   "line": 75,
+   "class": "bit0_to_1",
+   "why": "constant 1'b0 replaced by 1'b1",
+   "change": "isqrt_nonrestoring_pipe.sv line 75: `assign unused = &{1'b0, xs_c};` became `assign unused = &{1'b1, xs_c};` (constant 1'b0 replaced by 1'b1)",
+   "status": "survived",
+   "seconds": 3.7,
+   "formal": {
+    "verdict": "equivalent",
+    "per_config": [
+     {
+      "config": "VARIANT=0 W=6 PIPE=1",
+      "bmc_depth": 30,
+      "bmc_status": "PASS",
+      "register_matched_proof": "proved",
+      "verdict": "equivalent",
+      "method": "register-matched induction (yosys equiv_induct) after a clean BMC",
+      "note": "",
+      "seconds": 1.4
+     },
+     {
+      "config": "VARIANT=0 W=9 PIPE=1",
+      "bmc_depth": 30,
+      "bmc_status": "PASS",
+      "register_matched_proof": "proved",
+      "verdict": "equivalent",
+      "method": "register-matched induction (yosys equiv_induct) after a clean BMC",
+      "note": "",
+      "seconds": 1.7
+     },
+     {
+      "config": "VARIANT=0 W=12 PIPE=1",
+      "bmc_depth": 30,
+      "bmc_status": "PASS",
+      "register_matched_proof": "proved",
+      "verdict": "equivalent",
+      "method": "register-matched induction (yosys equiv_induct) after a clean BMC",
+      "note": "",
+      "seconds": 1.9
+     },
+     {
+      "config": "VARIANT=0 W=16 PIPE=1",
+      "bmc_depth": 30,
+      "bmc_status": "PASS",
+      "register_matched_proof": "proved",
+      "verdict": "equivalent",
+      "method": "register-matched induction (yosys equiv_induct) after a clean BMC",
+      "note": "",
+      "seconds": 2.2
+     },
+     {
+      "config": "VARIANT=1 W=6 PIPE=1",
+      "bmc_depth": 30,
+      "bmc_status": "PASS",
+      "register_matched_proof": "proved",
+      "verdict": "equivalent",
+      "method": "register-matched induction (yosys equiv_induct) after a clean BMC",
+      "note": "",
+      "seconds": 0.7
+     },
+     {
+      "config": "VARIANT=1 W=9 PIPE=2",
+      "bmc_depth": 30,
+      "bmc_status": "PASS",
+      "register_matched_proof": "proved",
+      "verdict": "equivalent",
+      "method": "register-matched induction (yosys equiv_induct) after a clean BMC",
+      "note": "",
+      "seconds": 1.0
+     },
+     {
+      "config": "VARIANT=1 W=12 PIPE=3",
+      "bmc_depth": 30,
+      "bmc_status": "PASS",
+      "register_matched_proof": "proved",
+      "verdict": "equivalent",
+      "method": "register-matched induction (yosys equiv_induct) after a clean BMC",
+      "note": "",
+      "seconds": 0.9
+     },
+     {
+      "config": "VARIANT=1 W=16 PIPE=4",
+      "bmc_depth": 30,
+      "bmc_status": "PASS",
+      "register_matched_proof": "proved",
+      "verdict": "equivalent",
+      "method": "register-matched induction (yosys equiv_induct) after a clean BMC",
+      "note": "",
+      "seconds": 1.0
+     },
+     {
+      "config": "VARIANT=2 W=6 PIPE=1",
+      "bmc_depth": 30,
+      "bmc_status": "PASS",
+      "register_matched_proof": "proved",
+      "verdict": "equivalent",
+      "method": "register-matched induction (yosys equiv_induct) after a clean BMC",
+      "note": "",
+      "seconds": 1.0
+     },
+     {
+      "config": "VARIANT=2 W=9 PIPE=2",
+      "bmc_depth": 30,
+      "bmc_status": "PASS",
+      "register_matched_proof": "proved",
+      "verdict": "equivalent",
+      "method": "register-matched induction (yosys equiv_induct) after a clean BMC",
+      "note": "",
+      "seconds": 1.2
+     },
+     {
+      "config": "VARIANT=2 W=12 PIPE=3",
+      "bmc_depth": 30,
+      "bmc_status": "PASS",
+      "register_matched_proof": "proved",
+      "verdict": "equivalent",
+      "method": "register-matched induction (yosys equiv_induct) after a clean BMC",
+      "note": "",
+      "seconds": 1.5
+     },
+     {
+      "config": "VARIANT=2 W=16 PIPE=4",
+      "bmc_depth": 30,
+      "bmc_status": "PASS",
+      "register_matched_proof": "proved",
+      "verdict": "equivalent",
+      "method": "register-matched induction (yosys equiv_induct) after a clean BMC",
+      "note": "",
+      "seconds": 1.8
+     }
+    ],
+    "seconds": 16.3
+   }
+  },
+  {
+   "name": "isqrt_nonrestoring_pipe_L82_bit0_to_1_31",
+   "file": "isqrt_nonrestoring_pipe.sv",
+   "line": 82,
+   "class": "bit0_to_1",
+   "why": "constant 1'b0 replaced by 1'b1",
+   "change": "isqrt_nonrestoring_pipe.sv line 82: `if (rst) v_q[s] <= 1'b0;` became `if (rst) v_q[s] <= 1'b1;` (constant 1'b0 replaced by 1'b1)",
+   "status": "killed",
+   "seconds": 2.3
+  },
+  {
+   "name": "isqrt_restoring_iter_L32_tilde_removed_22",
+   "file": "isqrt_restoring_iter.sv",
+   "line": 32,
+   "class": "tilde_removed",
+   "why": "a bitwise negation '~' removed",
+   "change": "isqrt_restoring_iter.sv line 32: `assign in_ready = ~busy;` became `assign in_ready = busy;` (a bitwise negation '~' removed)",
+   "status": "killed",
+   "seconds": 0.2
+  },
+  {
+   "name": "isqrt_restoring_iter_L35_minus_to_plus_29",
+   "file": "isqrt_restoring_iter.sv",
+   "line": 35,
+   "class": "minus_to_plus",
+   "why": "'-' replaced by '+'",
+   "change": "isqrt_restoring_iter.sv line 35: `assign t     = {1'b0, sh} - {2'b00, trial};` became `assign t     = {1'b0, sh} + {2'b00, trial};` ('-' replaced by '+')",
+   "status": "killed",
+   "seconds": 0.3
+  },
+  {
+   "name": "isqrt_restoring_iter_L38_band_to_bor_20",
+   "file": "isqrt_restoring_iter.sv",
+   "line": 38,
+   "class": "band_to_bor",
+   "why": "bitwise '&' replaced by '|'",
+   "change": "isqrt_restoring_iter.sv line 38: `assign unused = &{1'b0, rm[RW], rt[RW-1], t[RW+1]};` became `assign unused = |{1'b0, rm[RW], rt[RW-1], t[RW+1]};` (bitwise '&' replaced by '|')",
+   "status": "survived",
+   "seconds": 3.3,
+   "formal": {
+    "verdict": "equivalent",
+    "per_config": [
+     {
+      "config": "VARIANT=0 W=6 PIPE=1",
+      "bmc_depth": 30,
+      "bmc_status": "PASS",
+      "register_matched_proof": "proved",
+      "verdict": "equivalent",
+      "method": "register-matched induction (yosys equiv_induct) after a clean BMC",
+      "note": "",
+      "seconds": 1.9
+     },
+     {
+      "config": "VARIANT=0 W=9 PIPE=1",
+      "bmc_depth": 30,
+      "bmc_status": "PASS",
+      "register_matched_proof": "proved",
+      "verdict": "equivalent",
+      "method": "register-matched induction (yosys equiv_induct) after a clean BMC",
+      "note": "",
+      "seconds": 2.3
+     },
+     {
+      "config": "VARIANT=0 W=12 PIPE=1",
+      "bmc_depth": 30,
+      "bmc_status": "PASS",
+      "register_matched_proof": "proved",
+      "verdict": "equivalent",
+      "method": "register-matched induction (yosys equiv_induct) after a clean BMC",
+      "note": "",
+      "seconds": 3.8
+     },
+     {
+      "config": "VARIANT=0 W=16 PIPE=1",
+      "bmc_depth": 30,
+      "bmc_status": "PASS",
+      "register_matched_proof": "proved",
+      "verdict": "equivalent",
+      "method": "register-matched induction (yosys equiv_induct) after a clean BMC",
+      "note": "",
+      "seconds": 3.7
+     },
+     {
+      "config": "VARIANT=1 W=6 PIPE=1",
+      "bmc_depth": 30,
+      "bmc_status": "PASS",
+      "register_matched_proof": "proved",
+      "verdict": "equivalent",
+      "method": "register-matched induction (yosys equiv_induct) after a clean BMC",
+      "note": "",
+      "seconds": 1.5
+     },
+     {
+      "config": "VARIANT=1 W=9 PIPE=2",
+      "bmc_depth": 30,
+      "bmc_status": "PASS",
+      "register_matched_proof": "proved",
+      "verdict": "equivalent",
+      "method": "register-matched induction (yosys equiv_induct) after a clean BMC",
+      "note": "",
+      "seconds": 1.4
+     },
+     {
+      "config": "VARIANT=1 W=12 PIPE=3",
+      "bmc_depth": 30,
+      "bmc_status": "PASS",
+      "register_matched_proof": "proved",
+      "verdict": "equivalent",
+      "method": "register-matched induction (yosys equiv_induct) after a clean BMC",
+      "note": "",
+      "seconds": 1.2
+     },
+     {
+      "config": "VARIANT=1 W=16 PIPE=4",
+      "bmc_depth": 30,
+      "bmc_status": "PASS",
+      "register_matched_proof": "proved",
+      "verdict": "equivalent",
+      "method": "register-matched induction (yosys equiv_induct) after a clean BMC",
+      "note": "",
+      "seconds": 1.2
+     },
+     {
+      "config": "VARIANT=2 W=6 PIPE=1",
+      "bmc_depth": 30,
+      "bmc_status": "PASS",
+      "register_matched_proof": "proved",
+      "verdict": "equivalent",
+      "method": "register-matched induction (yosys equiv_induct) after a clean BMC",
+      "note": "",
+      "seconds": 1.2
+     },
+     {
+      "config": "VARIANT=2 W=9 PIPE=2",
+      "bmc_depth": 30,
+      "bmc_status": "PASS",
+      "register_matched_proof": "proved",
+      "verdict": "equivalent",
+      "method": "register-matched induction (yosys equiv_induct) after a clean BMC",
+      "note": "",
+      "seconds": 1.4
+     },
+     {
+      "config": "VARIANT=2 W=12 PIPE=3",
+      "bmc_depth": 30,
+      "bmc_status": "PASS",
+      "register_matched_proof": "proved",
+      "verdict": "equivalent",
+      "method": "register-matched induction (yosys equiv_induct) after a clean BMC",
+      "note": "",
+      "seconds": 1.3
+     },
+     {
+      "config": "VARIANT=2 W=16 PIPE=4",
+      "bmc_depth": 30,
+      "bmc_status": "PASS",
+      "register_matched_proof": "proved",
+      "verdict": "equivalent",
+      "method": "register-matched induction (yosys equiv_induct) after a clean BMC",
+      "note": "",
+      "seconds": 1.8
+     }
+    ],
+    "seconds": 22.7
+   }
+  },
+  {
+   "name": "isqrt_restoring_iter_L38_bit0_to_1_22",
+   "file": "isqrt_restoring_iter.sv",
+   "line": 38,
+   "class": "bit0_to_1",
+   "why": "constant 1'b0 replaced by 1'b1",
+   "change": "isqrt_restoring_iter.sv line 38: `assign unused = &{1'b0, rm[RW], rt[RW-1], t[RW+1]};` became `assign unused = &{1'b1, rm[RW], rt[RW-1], t[RW+1]};` (constant 1'b0 replaced by 1'b1)",
+   "status": "survived",
+   "seconds": 2.4,
+   "formal": {
+    "verdict": "equivalent",
+    "per_config": [
+     {
+      "config": "VARIANT=0 W=6 PIPE=1",
+      "bmc_depth": 30,
+      "bmc_status": "PASS",
+      "register_matched_proof": "proved",
+      "verdict": "equivalent",
+      "method": "register-matched induction (yosys equiv_induct) after a clean BMC",
+      "note": "",
+      "seconds": 1.8
+     },
+     {
+      "config": "VARIANT=0 W=9 PIPE=1",
+      "bmc_depth": 30,
+      "bmc_status": "PASS",
+      "register_matched_proof": "proved",
+      "verdict": "equivalent",
+      "method": "register-matched induction (yosys equiv_induct) after a clean BMC",
+      "note": "",
+      "seconds": 2.4
+     },
+     {
+      "config": "VARIANT=0 W=12 PIPE=1",
+      "bmc_depth": 30,
+      "bmc_status": "PASS",
+      "register_matched_proof": "proved",
+      "verdict": "equivalent",
+      "method": "register-matched induction (yosys equiv_induct) after a clean BMC",
+      "note": "",
+      "seconds": 2.6
+     },
+     {
+      "config": "VARIANT=0 W=16 PIPE=1",
+      "bmc_depth": 30,
+      "bmc_status": "PASS",
+      "register_matched_proof": "proved",
+      "verdict": "equivalent",
+      "method": "register-matched induction (yosys equiv_induct) after a clean BMC",
+      "note": "",
+      "seconds": 3.1
+     },
+     {
+      "config": "VARIANT=1 W=6 PIPE=1",
+      "bmc_depth": 30,
+      "bmc_status": "PASS",
+      "register_matched_proof": "proved",
+      "verdict": "equivalent",
+      "method": "register-matched induction (yosys equiv_induct) after a clean BMC",
+      "note": "",
+      "seconds": 1.1
+     },
+     {
+      "config": "VARIANT=1 W=9 PIPE=2",
+      "bmc_depth": 30,
+      "bmc_status": "PASS",
+      "register_matched_proof": "proved",
+      "verdict": "equivalent",
+      "method": "register-matched induction (yosys equiv_induct) after a clean BMC",
+      "note": "",
+      "seconds": 1.3
+     },
+     {
+      "config": "VARIANT=1 W=12 PIPE=3",
+      "bmc_depth": 30,
+      "bmc_status": "PASS",
+      "register_matched_proof": "proved",
+      "verdict": "equivalent",
+      "method": "register-matched induction (yosys equiv_induct) after a clean BMC",
+      "note": "",
+      "seconds": 1.2
+     },
+     {
+      "config": "VARIANT=1 W=16 PIPE=4",
+      "bmc_depth": 30,
+      "bmc_status": "PASS",
+      "register_matched_proof": "proved",
+      "verdict": "equivalent",
+      "method": "register-matched induction (yosys equiv_induct) after a clean BMC",
+      "note": "",
+      "seconds": 1.6
+     },
+     {
+      "config": "VARIANT=2 W=6 PIPE=1",
+      "bmc_depth": 30,
+      "bmc_status": "PASS",
+      "register_matched_proof": "proved",
+      "verdict": "equivalent",
+      "method": "register-matched induction (yosys equiv_induct) after a clean BMC",
+      "note": "",
+      "seconds": 1.1
+     },
+     {
+      "config": "VARIANT=2 W=9 PIPE=2",
+      "bmc_depth": 30,
+      "bmc_status": "PASS",
+      "register_matched_proof": "proved",
+      "verdict": "equivalent",
+      "method": "register-matched induction (yosys equiv_induct) after a clean BMC",
+      "note": "",
+      "seconds": 2.1
+     },
+     {
+      "config": "VARIANT=2 W=12 PIPE=3",
+      "bmc_depth": 30,
+      "bmc_status": "PASS",
+      "register_matched_proof": "proved",
+      "verdict": "equivalent",
+      "method": "register-matched induction (yosys equiv_induct) after a clean BMC",
+      "note": "",
+      "seconds": 2.3
+     },
+     {
+      "config": "VARIANT=2 W=16 PIPE=4",
+      "bmc_depth": 30,
+      "bmc_status": "PASS",
+      "register_matched_proof": "proved",
+      "verdict": "equivalent",
+      "method": "register-matched induction (yosys equiv_induct) after a clean BMC",
+      "note": "",
+      "seconds": 2.7
+     }
+    ],
+    "seconds": 23.3
+   }
+  },
+  {
+   "name": "isqrt_restoring_iter_L43_bit0_to_1_25",
+   "file": "isqrt_restoring_iter.sv",
+   "line": 43,
+   "class": "bit0_to_1",
+   "why": "constant 1'b0 replaced by 1'b1",
+   "change": "isqrt_restoring_iter.sv line 43: `out_valid <= 1'b0;` became `out_valid <= 1'b1;` (constant 1'b0 replaced by 1'b1)",
+   "status": "killed",
+   "seconds": 0.4
+  },
+  {
+   "name": "isqrt_restoring_iter_L46_bit0_to_1_25",
+   "file": "isqrt_restoring_iter.sv",
+   "line": 46,
+   "class": "bit0_to_1",
+   "why": "constant 1'b0 replaced by 1'b1",
+   "change": "isqrt_restoring_iter.sv line 46: `out_valid <= 1'b0;` became `out_valid <= 1'b1;` (constant 1'b0 replaced by 1'b1)",
+   "status": "killed",
+   "seconds": 0.3
+  },
+  {
+   "name": "isqrt_restoring_iter_L47_and_to_or_25",
+   "file": "isqrt_restoring_iter.sv",
+   "line": 47,
+   "class": "and_to_or",
+   "why": "'&&' replaced by '||'",
+   "change": "isqrt_restoring_iter.sv line 47: `if (in_valid && in_ready) begin` became `if (in_valid || in_ready) begin` ('&&' replaced by '||')",
+   "status": "killed",
+   "seconds": 0.3
+  },
+  {
+   "name": "isqrt_restoring_iter_L51_plus_to_minus_26",
+   "file": "isqrt_restoring_iter.sv",
+   "line": 51,
+   "class": "plus_to_minus",
+   "why": "'+' replaced by '-'",
+   "change": "isqrt_restoring_iter.sv line 51: `cnt <= cnt + 1'b1;` became `cnt <= cnt - 1'b1;` ('+' replaced by '-')",
+   "status": "killed",
+   "seconds": 0.3
+  },
+  {
+   "name": "isqrt_restoring_iter_L51_bit1_to_0_29",
+   "file": "isqrt_restoring_iter.sv",
+   "line": 51,
+   "class": "bit1_to_0",
+   "why": "constant 1'b1 replaced by 1'b0",
+   "change": "isqrt_restoring_iter.sv line 51: `cnt <= cnt + 1'b1;` became `cnt <= cnt + 1'b0;` (constant 1'b1 replaced by 1'b0)",
+   "status": "killed",
+   "seconds": 0.4
+  },
+  {
+   "name": "isqrt_restoring_iter_L52_eq_to_ne_24",
+   "file": "isqrt_restoring_iter.sv",
+   "line": 52,
+   "class": "eq_to_ne",
+   "why": "'==' replaced by '!='",
+   "change": "isqrt_restoring_iter.sv line 52: `if (cnt == CW'(RW - 1)) begin` became `if (cnt != CW'(RW - 1)) begin` ('==' replaced by '!=')",
+   "status": "killed",
+   "seconds": 0.4
+  },
+  {
+   "name": "isqrt_restoring_iter_L52_minus_to_plus_33",
+   "file": "isqrt_restoring_iter.sv",
+   "line": 52,
+   "class": "minus_to_plus",
+   "why": "'-' replaced by '+'",
+   "change": "isqrt_restoring_iter.sv line 52: `if (cnt == CW'(RW - 1)) begin` became `if (cnt == CW'(RW + 1)) begin` ('-' replaced by '+')",
+   "status": "killed",
+   "seconds": 0.3
+  },
+  {
+   "name": "isqrt_restoring_iter_L53_bit0_to_1_33",
+   "file": "isqrt_restoring_iter.sv",
+   "line": 53,
+   "class": "bit0_to_1",
+   "why": "constant 1'b0 replaced by 1'b1",
+   "change": "isqrt_restoring_iter.sv line 53: `busy      <= 1'b0;` became `busy      <= 1'b1;` (constant 1'b0 replaced by 1'b1)",
+   "status": "killed",
+   "seconds": 0.4
+  },
+  {
+   "name": "isqrt_restoring_iter_L54_bit1_to_0_33",
+   "file": "isqrt_restoring_iter.sv",
+   "line": 54,
+   "class": "bit1_to_0",
+   "why": "constant 1'b1 replaced by 1'b0",
+   "change": "isqrt_restoring_iter.sv line 54: `out_valid <= 1'b1;` became `out_valid <= 1'b0;` (constant 1'b1 replaced by 1'b0)",
+   "status": "killed",
+   "seconds": 0.3
+  },
+  {
+   "name": "isqrt_restoring_iter_L61_and_to_or_21",
+   "file": "isqrt_restoring_iter.sv",
+   "line": 61,
+   "class": "and_to_or",
+   "why": "'&&' replaced by '||'",
+   "change": "isqrt_restoring_iter.sv line 61: `if (in_valid && in_ready) begin` became `if (in_valid || in_ready) begin` ('&&' replaced by '||')",
+   "status": "killed",
+   "seconds": 0.4
+  },
+  {
+   "name": "isqrt_restoring_iter_L67_tilde_removed_31",
+   "file": "isqrt_restoring_iter.sv",
+   "line": 67,
+   "class": "tilde_removed",
+   "why": "a bitwise negation '~' removed",
+   "change": "isqrt_restoring_iter.sv line 67: `rt <= {rt[RW-2:0], ~t[RW+2]};` became `rt <= {rt[RW-2:0], t[RW+2]};` (a bitwise negation '~' removed)",
+   "status": "killed",
+   "seconds": 0.4
+  },
+  {
+   "name": "isqrt_restoring_pipe_L26_bit1_to_0_22",
+   "file": "isqrt_restoring_pipe.sv",
+   "line": 26,
+   "class": "bit1_to_0",
+   "why": "constant 1'b1 replaced by 1'b0",
+   "change": "isqrt_restoring_pipe.sv line 26: `assign in_ready = 1'b1;` became `assign in_ready = 1'b0;` (constant 1'b1 replaced by 1'b0)",
+   "status": "killed",
+   "seconds": 1.3
+  },
+  {
+   "name": "isqrt_restoring_pipe_L28_lt_to_le_25",
+   "file": "isqrt_restoring_pipe.sv",
+   "line": 28,
+   "class": "lt_to_le",
+   "why": "'<' replaced by '<='",
+   "change": "isqrt_restoring_pipe.sv line 28: `for (genvar s = 0; s < S; s++) begin : g_stage` became `for (genvar s = 0; s <= S; s++) begin : g_stage` ('<' replaced by '<=')",
+   "status": "invalid",
+   "seconds": 1.7,
+   "note": "the mutated RTL does not build"
+  },
+  {
+   "name": "isqrt_restoring_pipe_L34_eq_to_ne_14",
+   "file": "isqrt_restoring_pipe.sv",
+   "line": 34,
+   "class": "eq_to_ne",
+   "why": "'==' replaced by '!='",
+   "change": "isqrt_restoring_pipe.sv line 34: `if (s == 0) begin : g_first` became `if (s != 0) begin : g_first` ('==' replaced by '!=')",
+   "status": "invalid",
+   "seconds": 1.5,
+   "note": "the mutated RTL does not build"
+  },
+  {
+   "name": "isqrt_restoring_pipe_L55_lt_to_le_30",
+   "file": "isqrt_restoring_pipe.sv",
+   "line": 55,
+   "class": "lt_to_le",
+   "why": "'<' replaced by '<='",
+   "change": "isqrt_restoring_pipe.sv line 55: `for (int k = 0; k < IT; k++) begin` became `for (int k = 0; k <= IT; k++) begin` ('<' replaced by '<=')",
+   "status": "killed",
+   "seconds": 1.3
+  },
+  {
+   "name": "isqrt_restoring_pipe_L58_minus_to_plus_38",
+   "file": "isqrt_restoring_pipe.sv",
+   "line": 58,
+   "class": "minus_to_plus",
+   "why": "'-' replaced by '+'",
+   "change": "isqrt_restoring_pipe.sv line 58: `t_v     = {1'b0, sh_v} - {2'b00, trial_v};` became `t_v     = {1'b0, sh_v} + {2'b00, trial_v};` ('-' replaced by '+')",
+   "status": "killed",
+   "seconds": 1.3
+  },
+  {
+   "name": "isqrt_restoring_pipe_L58_bit0_to_1_27",
+   "file": "isqrt_restoring_pipe.sv",
+   "line": 58,
+   "class": "bit0_to_1",
+   "why": "constant 1'b0 replaced by 1'b1",
+   "change": "isqrt_restoring_pipe.sv line 58: `t_v     = {1'b0, sh_v} - {2'b00, trial_v};` became `t_v     = {1'b1, sh_v} - {2'b00, trial_v};` (constant 1'b0 replaced by 1'b1)",
+   "status": "killed",
+   "seconds": 1.4
+  },
+  {
+   "name": "isqrt_restoring_pipe_L59_ternary_swap_38",
+   "file": "isqrt_restoring_pipe.sv",
+   "line": 59,
+   "class": "ternary_swap",
+   "why": "the two arms of a ?: swapped",
+   "change": "isqrt_restoring_pipe.sv line 59: `rm_v    = t_v[RW+2] ? sh_v[RW:0] : t_v[RW:0];` became `rm_v    = t_v[RW+2] ? t_v[RW:0] : sh_v[RW:0];` (the two arms of a ?: swapped)",
+   "status": "killed",
+   "seconds": 1.5
+  },
+  {
+   "name": "isqrt_restoring_pipe_L60_tilde_removed_41",
+   "file": "isqrt_restoring_pipe.sv",
+   "line": 60,
+   "class": "tilde_removed",
+   "why": "a bitwise negation '~' removed",
+   "change": "isqrt_restoring_pipe.sv line 60: `rt_v    = {rt_v[RW-2:0], ~t_v[RW+2]};` became `rt_v    = {rt_v[RW-2:0], t_v[RW+2]};` (a bitwise negation '~' removed)",
+   "status": "killed",
+   "seconds": 1.5
+  },
+  {
+   "name": "isqrt_restoring_pipe_L67_ne_to_eq_14",
+   "file": "isqrt_restoring_pipe.sv",
+   "line": 67,
+   "class": "ne_to_eq",
+   "why": "'!=' replaced by '=='",
+   "change": "isqrt_restoring_pipe.sv line 67: `if (s != S - 1) begin : g_x` became `if (s == S - 1) begin : g_x` ('!=' replaced by '==')",
+   "status": "invalid",
+   "seconds": 1.0,
+   "note": "the mutated RTL does not build"
+  },
+  {
+   "name": "isqrt_restoring_pipe_L67_minus_to_plus_18",
+   "file": "isqrt_restoring_pipe.sv",
+   "line": 67,
+   "class": "minus_to_plus",
+   "why": "'-' replaced by '+'",
+   "change": "isqrt_restoring_pipe.sv line 67: `if (s != S - 1) begin : g_x` became `if (s != S + 1) begin : g_x` ('-' replaced by '+')",
+   "status": "survived",
+   "seconds": 3.2,
+   "formal": {
+    "verdict": "equivalent",
+    "per_config": [
+     {
+      "config": "VARIANT=0 W=6 PIPE=1",
+      "bmc_depth": 30,
+      "bmc_status": "PASS",
+      "register_matched_proof": "proved",
+      "verdict": "equivalent",
+      "method": "register-matched induction (yosys equiv_induct) after a clean BMC",
+      "note": "",
+      "seconds": 2.4
+     },
+     {
+      "config": "VARIANT=0 W=9 PIPE=1",
+      "bmc_depth": 30,
+      "bmc_status": "PASS",
+      "register_matched_proof": "proved",
+      "verdict": "equivalent",
+      "method": "register-matched induction (yosys equiv_induct) after a clean BMC",
+      "note": "",
+      "seconds": 2.5
+     },
+     {
+      "config": "VARIANT=0 W=12 PIPE=1",
+      "bmc_depth": 30,
+      "bmc_status": "PASS",
+      "register_matched_proof": "proved",
+      "verdict": "equivalent",
+      "method": "register-matched induction (yosys equiv_induct) after a clean BMC",
+      "note": "",
+      "seconds": 2.6
+     },
+     {
+      "config": "VARIANT=0 W=16 PIPE=1",
+      "bmc_depth": 30,
+      "bmc_status": "PASS",
+      "register_matched_proof": "proved",
+      "verdict": "equivalent",
+      "method": "register-matched induction (yosys equiv_induct) after a clean BMC",
+      "note": "",
+      "seconds": 3.3
+     },
+     {
+      "config": "VARIANT=1 W=6 PIPE=1",
+      "bmc_depth": 30,
+      "bmc_status": "PASS",
+      "register_matched_proof": "proved",
+      "verdict": "equivalent",
+      "method": "register-matched induction (yosys equiv_induct) after a clean BMC",
+      "note": "",
+      "seconds": 1.1
+     },
+     {
+      "config": "VARIANT=1 W=9 PIPE=2",
+      "bmc_depth": 30,
+      "bmc_status": "PASS",
+      "register_matched_proof": "proved",
+      "verdict": "equivalent",
+      "method": "register-matched induction (yosys equiv_induct) after a clean BMC",
+      "note": "",
+      "seconds": 1.1
+     },
+     {
+      "config": "VARIANT=1 W=12 PIPE=3",
+      "bmc_depth": 30,
+      "bmc_status": "PASS",
+      "register_matched_proof": "proved",
+      "verdict": "equivalent",
+      "method": "register-matched induction (yosys equiv_induct) after a clean BMC",
+      "note": "",
+      "seconds": 1.0
+     },
+     {
+      "config": "VARIANT=1 W=16 PIPE=4",
+      "bmc_depth": 30,
+      "bmc_status": "PASS",
+      "register_matched_proof": "proved",
+      "verdict": "equivalent",
+      "method": "register-matched induction (yosys equiv_induct) after a clean BMC",
+      "note": "",
+      "seconds": 1.3
+     },
+     {
+      "config": "VARIANT=2 W=6 PIPE=1",
+      "bmc_depth": 30,
+      "bmc_status": "PASS",
+      "register_matched_proof": "proved",
+      "verdict": "equivalent",
+      "method": "register-matched induction (yosys equiv_induct) after a clean BMC",
+      "note": "",
+      "seconds": 1.1
+     },
+     {
+      "config": "VARIANT=2 W=9 PIPE=2",
+      "bmc_depth": 30,
+      "bmc_status": "PASS",
+      "register_matched_proof": "proved",
+      "verdict": "equivalent",
+      "method": "register-matched induction (yosys equiv_induct) after a clean BMC",
+      "note": "",
+      "seconds": 1.4
+     },
+     {
+      "config": "VARIANT=2 W=12 PIPE=3",
+      "bmc_depth": 30,
+      "bmc_status": "PASS",
+      "register_matched_proof": "proved",
+      "verdict": "equivalent",
+      "method": "register-matched induction (yosys equiv_induct) after a clean BMC",
+      "note": "",
+      "seconds": 1.4
+     },
+     {
+      "config": "VARIANT=2 W=16 PIPE=4",
+      "bmc_depth": 30,
+      "bmc_status": "PASS",
+      "register_matched_proof": "proved",
+      "verdict": "equivalent",
+      "method": "register-matched induction (yosys equiv_induct) after a clean BMC",
+      "note": "",
+      "seconds": 1.7
+     }
+    ],
+    "seconds": 20.9
+   }
+  },
+  {
+   "name": "isqrt_restoring_pipe_L72_bit0_to_1_30",
+   "file": "isqrt_restoring_pipe.sv",
+   "line": 72,
+   "class": "bit0_to_1",
+   "why": "constant 1'b0 replaced by 1'b1",
+   "change": "isqrt_restoring_pipe.sv line 72: `assign unused = &{1'b0, xs_c};` became `assign unused = &{1'b1, xs_c};` (constant 1'b0 replaced by 1'b1)",
+   "status": "survived",
+   "seconds": 2.9,
+   "formal": {
+    "verdict": "equivalent",
+    "per_config": [
+     {
+      "config": "VARIANT=0 W=6 PIPE=1",
+      "bmc_depth": 30,
+      "bmc_status": "PASS",
+      "register_matched_proof": "proved",
+      "verdict": "equivalent",
+      "method": "register-matched induction (yosys equiv_induct) after a clean BMC",
+      "note": "",
+      "seconds": 1.9
+     },
+     {
+      "config": "VARIANT=0 W=9 PIPE=1",
+      "bmc_depth": 30,
+      "bmc_status": "PASS",
+      "register_matched_proof": "proved",
+      "verdict": "equivalent",
+      "method": "register-matched induction (yosys equiv_induct) after a clean BMC",
+      "note": "",
+      "seconds": 2.5
+     },
+     {
+      "config": "VARIANT=0 W=12 PIPE=1",
+      "bmc_depth": 30,
+      "bmc_status": "PASS",
+      "register_matched_proof": "proved",
+      "verdict": "equivalent",
+      "method": "register-matched induction (yosys equiv_induct) after a clean BMC",
+      "note": "",
+      "seconds": 2.4
+     },
+     {
+      "config": "VARIANT=0 W=16 PIPE=1",
+      "bmc_depth": 30,
+      "bmc_status": "PASS",
+      "register_matched_proof": "proved",
+      "verdict": "equivalent",
+      "method": "register-matched induction (yosys equiv_induct) after a clean BMC",
+      "note": "",
+      "seconds": 3.1
+     },
+     {
+      "config": "VARIANT=1 W=6 PIPE=1",
+      "bmc_depth": 30,
+      "bmc_status": "PASS",
+      "register_matched_proof": "proved",
+      "verdict": "equivalent",
+      "method": "register-matched induction (yosys equiv_induct) after a clean BMC",
+      "note": "",
+      "seconds": 0.9
+     },
+     {
+      "config": "VARIANT=1 W=9 PIPE=2",
+      "bmc_depth": 30,
+      "bmc_status": "PASS",
+      "register_matched_proof": "proved",
+      "verdict": "equivalent",
+      "method": "register-matched induction (yosys equiv_induct) after a clean BMC",
+      "note": "",
+      "seconds": 1.1
+     },
+     {
+      "config": "VARIANT=1 W=12 PIPE=3",
+      "bmc_depth": 30,
+      "bmc_status": "PASS",
+      "register_matched_proof": "proved",
+      "verdict": "equivalent",
+      "method": "register-matched induction (yosys equiv_induct) after a clean BMC",
+      "note": "",
+      "seconds": 1.1
+     },
+     {
+      "config": "VARIANT=1 W=16 PIPE=4",
+      "bmc_depth": 30,
+      "bmc_status": "PASS",
+      "register_matched_proof": "proved",
+      "verdict": "equivalent",
+      "method": "register-matched induction (yosys equiv_induct) after a clean BMC",
+      "note": "",
+      "seconds": 1.4
+     },
+     {
+      "config": "VARIANT=2 W=6 PIPE=1",
+      "bmc_depth": 30,
+      "bmc_status": "PASS",
+      "register_matched_proof": "proved",
+      "verdict": "equivalent",
+      "method": "register-matched induction (yosys equiv_induct) after a clean BMC",
+      "note": "",
+      "seconds": 1.1
+     },
+     {
+      "config": "VARIANT=2 W=9 PIPE=2",
+      "bmc_depth": 30,
+      "bmc_status": "PASS",
+      "register_matched_proof": "proved",
+      "verdict": "equivalent",
+      "method": "register-matched induction (yosys equiv_induct) after a clean BMC",
+      "note": "",
+      "seconds": 1.4
+     },
+     {
+      "config": "VARIANT=2 W=12 PIPE=3",
+      "bmc_depth": 30,
+      "bmc_status": "PASS",
+      "register_matched_proof": "proved",
+      "verdict": "equivalent",
+      "method": "register-matched induction (yosys equiv_induct) after a clean BMC",
+      "note": "",
+      "seconds": 1.2
+     },
+     {
+      "config": "VARIANT=2 W=16 PIPE=4",
+      "bmc_depth": 30,
+      "bmc_status": "PASS",
+      "register_matched_proof": "proved",
+      "verdict": "equivalent",
+      "method": "register-matched induction (yosys equiv_induct) after a clean BMC",
+      "note": "",
+      "seconds": 1.6
+     }
+    ],
+    "seconds": 19.7
+   }
+  },
+  {
+   "name": "isqrt_restoring_pipe_L79_bit0_to_1_31",
+   "file": "isqrt_restoring_pipe.sv",
+   "line": 79,
+   "class": "bit0_to_1",
+   "why": "constant 1'b0 replaced by 1'b1",
+   "change": "isqrt_restoring_pipe.sv line 79: `if (rst) v_q[s] <= 1'b0;` became `if (rst) v_q[s] <= 1'b1;` (constant 1'b0 replaced by 1'b1)",
+   "status": "killed",
+   "seconds": 1.5
+  },
+  {
+   "name": "isqrt_sel_L21_eq_to_ne_16",
+   "file": "isqrt_sel.sv",
+   "line": 21,
+   "class": "eq_to_ne",
+   "why": "'==' replaced by '!='",
+   "change": "isqrt_sel.sv line 21: `if (VARIANT == 0) begin : g_v` became `if (VARIANT != 0) begin : g_v` ('==' replaced by '!=')",
+   "status": "killed",
+   "seconds": 0.4
+  }
+ ],
+ "wall_seconds": 193.0,
+ "tools": {
+  "yosys": "Yosys 0.70+385 (git sha1 098e46a36, Release, Clang /usr/bin/clang++ 21.1.8)",
+  "sby": "SBY v0.70-9-g79fc9ed",
+  "iverilog": "Icarus Verilog version 14.0 (devel) (s20260301-966-g3992ea6a3-dirty)"
+ },
+ "rtl_dir": "build/arith_b139b/arith/isqrt/rtl"
+}

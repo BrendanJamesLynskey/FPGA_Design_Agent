@@ -12,7 +12,7 @@ Not in scope:
 - TCP options, selective acknowledgement, window scaling, several connections or a hardware retransmission
 - the MAC, the frame check sequence and the transmit multiplexer; the block's words go to a MAC that does not exist here (docs/phase2_integration.md is a plan)
 
-Kind: showcase; written by hand. State: built. For an agent: [AGENT.md](AGENT.md).
+Kind: showcase; written by a Claude Code session. State: built. For an agent: [AGENT.md](AGENT.md).
 
 ![Block diagram: the design's blocks and the links between them](docs/handover/architecture.svg)
 
@@ -87,7 +87,7 @@ Interfaces:
 | the seeded faults (every mutant of verif/mutants.yaml against the bench); needs as above; each run uses its own build root, two at a time | `python3 designs/b119_tcp_fast/tests/run_mutants.py --jobs 2 --json results/b119/mutation.json` | no | about 20 min |
 | the out-of-context builds (two clocks); needs Vivado 2026.1 and a heavy slot (take_heavy_slot.sh) | `python3 -m designs.b119_tcp_fast.ooc.ooc --clocks 6.2061 5.0` | yes | about 30 min |
 
-Tool: Vivado 2026.1. Build ID of the inputs at handover: none (no Vivado build of this directory). Knowledge-bank pin: `93d158c`.
+Tool: Vivado 2026.1. Build ID of the inputs at handover: none (no Vivado build of this directory). Knowledge-bank pin: `5e2eab8`.
 
 | File | What |
 |---|---|
@@ -129,6 +129,8 @@ Gates at handover: `rtl_equals_model` pass, `lint` pass, `seeded_faults` pass, `
 Every segment is compared byte for byte with a reference whose checksums are checked against outside vectors; the bench covers an abort at every edge, every refusal
 path, the register semantics, a dropped segment retransmitted by software, heartbeats that take and give back the sequence space, and a full session against the
 software exchange. Seeded faults in the block are all caught. The block also runs behind brief 110's risk logic against its reference model.
+
+**Specification to evidence.** Every requirement of this design against the checks that cover it, with each status computed from the evidence files, the gaps and the stale evidence: [verif/matrix.md](verif/matrix.md) ([html](verif/matrix.html)), generated from [verif/testplan.yaml](verif/testplan.yaml) by `python -m flow.trace_v1 write`; schema and rules in [docs/traceability_v1.md](../../docs/traceability_v1.md). Requirements here are drafts written from the design documents; the matrix shows which are closed by simulation, post-route timing or formal proof, and which depend on an element that does not exist here yet (the 96 design's MAC in simulation, a real TCP peer). The three Lean checksum requirements (`B119-F-CKSUM-IP`, `-TCP`, `-MODEL`, first filed under the b96 testplan and moved here) are proved for all inputs but their statements are not approved by a human, so the matrix does not count them as verification.
 <!-- /prose:verified -->
 
 ## Measured

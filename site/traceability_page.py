@@ -8,12 +8,12 @@ from story_page import REPO
 E = html.escape
 METHODS = [("sim_test", "Simulation test"), ("uvm_test", "UVM"), ("assertion", "SVA"), ("formal", "Formal"), ("formal_lean", "Lean (all widths)"), ("coverage_bin", "Coverage"),
            ("timing", "Timing"), ("sim_measurement", "Sim measure"), ("board_measurement", "Board"), ("review", "Review")]
-STATE = {"verified": "verified", "fail": "fails", "not_run": "not run", "stale": "stale", "bounded": "bounded only", "no_measurement": "no measurement",
+STATE = {"verified": "verified", "partially_verified": "partially verified", "waived": "verified under a waiver", "fail": "fails", "not_run": "not run", "not_in_run": "not in the recorded run", "skipped": "skipped in the recorded run", "stale": "stale", "bounded": "bounded only", "no_measurement": "no measurement",
          "unapproved": "proved, statement not approved"}
-MARK = {"pass": "pass", "fail": "FAIL", "not_run": "not run", "stale": "stale", "bounded": "bounded", "unapproved": "statement not approved"}
+MARK = {"pass": "pass", "fail": "FAIL", "not_run": "not run", "not_in_run": "not in the recorded run", "skipped": "skipped", "stale": "stale", "bounded": "bounded", "unapproved": "statement not approved"}
 TIER = {"kernel_only": "kernel only", "compiled_decision_procedure": "kernel plus a compiled decision procedure", "unsound": "unsound"}
 RTL_LINK = {"rtl_generated": "RTL-generated model", "transcription_tested": "transcription tested", "transcription_untested": "transcription untested", "model_only": "no RTL link"}
-GAP = {"lean_frozen_statement_changed": "Lean: an approved statement changed", "lean_approval": "Lean: approval file problems", "lean_failing": "Lean proofs that fail",
+GAP = {"record_problem": "Agreement, review or waiver record problems", "method_mix_missing": "Required method mix not met", "own_tests_only": "Resting only on the implementing agent's own tests", "waiver_in_effect": "Waivers in effect", "waiver_expired": "Expired waivers", "agreement_dropped": "Agreements dropped (text changed)", "lean_frozen_statement_changed": "Lean: an approved statement changed", "lean_approval": "Lean: approval file problems", "lean_failing": "Lean proofs that fail",
        "lean_statement_unapproved": "Lean proofs whose statement is not approved by a human", "untraced_requirement": "Requirements with no verification item", "orphan_check": "Orphan checks (trace to no requirement)",
        "hardware_open": "Depend on an external element and not yet verified on hardware",
        "external_not_hardware_verified": "Depend on an external element and pass without hardware",
@@ -26,12 +26,18 @@ def state_text(r: dict) -> str:
     if r["state"] == "verified" and r.get("external") and not r["hardware_verified"]:
         return "passes without hardware; hardware verification open"
     t = STATE[r["state"]]
+    if r["state"] in ("partially_verified", "no_measurement", "waived") and r.get("missing_methods"):
+        t += "; lacks " + "; ".join(r["missing_methods"])
+    if r.get("own_tests_only") and r["state"] != "fail":
+        t += "; rests only on the implementing agent's own tests"
     if r["state"] == "verified" and r["kind"] == "performance":
         t += " (" + {"board": "board-measured", "timing": "post-route timing"}.get(r["basis"], "simulation only") + ")"
     if r["state"] == "verified" and r.get("stale_items"):
         t += f"; {r['stale_items']} item(s) stale"
     if r["state"] == "verified" and r.get("lean_transcription_only"):
         t += "; the Lean proof is of a transcription of the RTL, not of the RTL itself"
+    if r["state"] == "verified" and r.get("rests_on_delegated"):
+        t += "; rests on a delegated acceptance of the Lean statement, not a human approval"
     return t
 
 
@@ -39,7 +45,7 @@ def lean_note(i: dict) -> str:
     L = i.get("lean")
     if i["method"] != "formal_lean" or not L:
         return ""
-    bits = [TIER.get(L.get("tier") or "", "no build"), RTL_LINK.get(L.get("rtl_link") or "", "no RTL link"), (L.get("build_source") or "").replace(" (not re-run)", "")]
+    bits = (["statement accepted on delegation, not a human approval" if L.get("approver_kind") == "agent_delegated" else "statement approved by a human"] if i["status"] == "pass" else []) + [TIER.get(L.get("tier") or "", "no build"), RTL_LINK.get(L.get("rtl_link") or "", "no RTL link"), (L.get("build_source") or "").replace(" (not re-run)", "")]
     return ' <span class="muted small">' + E("; ".join(b for b in bits if b)) + "</span>"
 
 
@@ -102,7 +108,7 @@ def body(S: dict) -> str:
            'A performance requirement counts as verified only when a measured value lies inside its bound, and the page says whether that was measured on the board, '
            'by post-route timing, or in simulation only. A requirement that depends on something outside the design, such as a network card or a second clock, '
            'is shown plainly as open until hardware verification has been done. Evidence that is older than the design files it is about is marked stale. '
-           'Requirements here were drafted from the designs&#39; own documents and none has been agreed by a human yet.</p>']
+           'Requirements here were drafted from the designs&#39; own documents; the summary of each design says how many a human has agreed, how many were agreed on the owner&#39;s delegation, and how many are still drafts. A requirement counts as verified only when its passing evidence meets the method mix its kind needs.</p>']
     for g in C["designs"]:
         s = g["summary"]
         out.append(f'<h2 id="{E(g["design"])}">{E(g["design"])}</h2><p>{E(s["line"])}</p>')

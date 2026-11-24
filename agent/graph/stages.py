@@ -31,7 +31,7 @@ _L = {"turns": 30, "seconds": 1800, "usd": 0.40}
 
 MACHINE: tuple[Stage, ...] = (
     Stage(0, "clarify", FILES, ("spec_signed",), (), {"turns": 20, "seconds": 900, "usd": 0.20}),
-    Stage(1, "board-and-device-planning", (*FILES, "board_constraints", "check_constraints", "gates", "check", "gt_plan"),
+    Stage(1, "board-and-device-planning", (*FILES, "board_constraints", "check_constraints", "gates", "check", "gt_plan", "ip_lookup"),
           ("arch_note", "arch_yaml", "inventory"), (0,), _L),
     Stage(2, "rtl-design-creation", (*FILES, "lint", "simulate", "formal", "gates", "check", "gt_plan"),
           ("arch_approved", "lint", "model_contract", "simulate", "standards_rtl", "constants", "verif_v3", "stage_rtl"), (0, 1),
