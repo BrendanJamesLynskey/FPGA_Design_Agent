@@ -1,0 +1,125 @@
+{
+ "function": "fft_axis",
+ "mutants": 13,
+ "valid": 13,
+ "killed": 13,
+ "survived": [],
+ "invalid": [],
+ "score_pct": 100.0,
+ "per_variant": {
+  "sdf": {
+   "valid": 7,
+   "killed": 7
+  },
+  "burst": {
+   "valid": 6,
+   "killed": 6
+  }
+ },
+ "results": [
+  {
+   "name": "a_sof",
+   "variant": "sdf",
+   "class": "connection",
+   "status": "killed",
+   "detail": "directed {'LOGN': 4, 'W': 8, 'TW': 10, 'SCALE': 1, 'RND': 1, 'ORDER': 0, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 2}",
+   "why": "every beat is a start of frame"
+  },
+  {
+   "name": "a_start",
+   "variant": "sdf",
+   "class": "operator",
+   "status": "killed",
+   "detail": "directed {'LOGN': 4, 'W': 8, 'TW': 10, 'SCALE': 1, 'RND': 1, 'ORDER': 0, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 2}",
+   "why": "the start flag follows the wrong polarity of tlast"
+  },
+  {
+   "name": "a_tuser",
+   "variant": "sdf",
+   "class": "connection",
+   "status": "killed",
+   "detail": "directed {'LOGN': 4, 'W': 8, 'TW': 10, 'SCALE': 1, 'RND': 1, 'ORDER': 0, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 2}",
+   "why": "tuser never reaches the core"
+  },
+  {
+   "name": "a_pack",
+   "variant": "sdf",
+   "class": "connection",
+   "status": "killed",
+   "detail": "directed {'LOGN': 4, 'W': 8, 'TW': 10, 'SCALE': 1, 'RND': 1, 'ORDER': 0, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 2}",
+   "why": "real and imaginary parts exchanged on the output"
+  },
+  {
+   "name": "a_tlast",
+   "variant": "sdf",
+   "class": "constant",
+   "status": "killed",
+   "detail": "directed {'LOGN': 4, 'W': 8, 'TW': 10, 'SCALE': 1, 'RND': 1, 'ORDER': 0, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 2}",
+   "why": "tlast one beat early"
+  },
+  {
+   "name": "a_in_re",
+   "variant": "sdf",
+   "class": "connection",
+   "status": "killed",
+   "detail": "directed {'LOGN': 4, 'W': 8, 'TW': 10, 'SCALE': 1, 'RND': 1, 'ORDER': 0, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 2}",
+   "why": "real and imaginary parts exchanged on the input"
+  },
+  {
+   "name": "a_ocnt",
+   "variant": "sdf",
+   "class": "connection",
+   "status": "killed",
+   "detail": "directed {'LOGN': 4, 'W': 8, 'TW': 10, 'SCALE': 1, 'RND': 1, 'ORDER': 0, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 2}",
+   "why": "the output beat counter never advances"
+  },
+  {
+   "name": "b_ready",
+   "variant": "burst",
+   "class": "connection",
+   "status": "killed",
+   "detail": "directed {'LOGN': 4, 'W': 8, 'TW': 10, 'SCALE': 1, 'RND': 1, 'ORDER': 0, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 2}",
+   "why": "tready low during the load: the frame cannot be loaded"
+  },
+  {
+   "name": "b_valid_ready",
+   "variant": "burst",
+   "class": "operator",
+   "status": "killed",
+   "detail": "randomised {'LOGN': 5, 'W': 8, 'TW': 10, 'SCALE': 0, 'RND': 0, 'ORDER': 1, 'CMUL': 3, 'TWSTAGES': 2, 'MULSTAGES': 0}",
+   "why": "tvalid depends on tready (an AXI4-Stream rule violation: it drops while stalled)"
+  },
+  {
+   "name": "b_ocnt",
+   "variant": "burst",
+   "class": "connection",
+   "status": "killed",
+   "detail": "randomised {'LOGN': 5, 'W': 8, 'TW': 10, 'SCALE': 0, 'RND': 0, 'ORDER': 1, 'CMUL': 3, 'TWSTAGES': 2, 'MULSTAGES': 0}",
+   "why": "the output beat counter advances on stalled clocks (tlast in the wrong place under back-pressure)"
+  },
+  {
+   "name": "b_out_ready",
+   "variant": "burst",
+   "class": "connection",
+   "status": "killed",
+   "detail": "randomised {'LOGN': 5, 'W': 8, 'TW': 10, 'SCALE': 0, 'RND': 0, 'ORDER': 1, 'CMUL': 3, 'TWSTAGES': 2, 'MULSTAGES': 0}",
+   "why": "the core never stalls: data changes while the sink is not ready"
+  },
+  {
+   "name": "b_tuser",
+   "variant": "burst",
+   "class": "connection",
+   "status": "killed",
+   "detail": "directed {'LOGN': 4, 'W': 8, 'TW': 10, 'SCALE': 1, 'RND': 1, 'ORDER': 0, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 2}",
+   "why": "tuser never reaches the core"
+  },
+  {
+   "name": "b_in_valid",
+   "variant": "burst",
+   "class": "operator",
+   "status": "killed",
+   "detail": "directed {'LOGN': 4, 'W': 8, 'TW': 10, 'SCALE': 1, 'RND': 1, 'ORDER': 0, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 2}",
+   "why": "beats are taken that were not accepted (tready low)"
+  }
+ ]
+}

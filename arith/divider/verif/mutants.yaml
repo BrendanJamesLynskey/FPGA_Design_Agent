@@ -1,0 +1,42 @@
+# Seeded mutants of the divider RTL (brief 139b): one text change each, run by arith/common/mutants.py under `config` with the exhaustive
+# stream of that width. A mutant is killed when the bench reports any mismatch, latency error or spurious/X valid.
+mutants:
+  - {id: M01, file: div_restoring_iter.sv, what: "restoring step keeps the trial result when the subtraction borrowed (restore dropped)", config: {variant: 0, w: 6, pipe: 1},
+     find: "p  <= t[W] ? sh : t[W-1:0];", replace: "p  <= t[W-1:0];"}
+  - {id: M02, file: div_restoring_iter.sv, what: "quotient bit inverted", config: {variant: 0, w: 6, pipe: 1},
+     find: "rn <= {rn[W-2:0], ~t[W]};", replace: "rn <= {rn[W-2:0], t[W]};"}
+  - {id: M03, file: div_restoring_iter.sv, what: "one iteration too few (latency and result)", config: {variant: 0, w: 6, pipe: 1},
+     find: "if (cnt == CW'(W - 1)) begin", replace: "if (cnt == CW'(W - 2)) begin"}
+  - {id: M04, file: div_restoring_iter.sv, what: "shift drops the wrong bit of the partial remainder (p[W-3:0] instead of p[W-2:0])", config: {variant: 0, w: 6, pipe: 1},
+     find: "assign sh = {p[W-2:0], rn[W-1]};", replace: "assign sh = {p[W-3:0], 1'b0, rn[W-1]};"}
+  - {id: M05, file: div_nonrestoring_iter.sv, what: "subtract/add selected by the wrong sign", config: {variant: 1, w: 6, pipe: 1},
+     find: "assign t  = p[W] ? sh + {2'b00, dd} : sh - {2'b00, dd};", replace: "assign t  = p[W] ? sh - {2'b00, dd} : sh + {2'b00, dd};"}
+  - {id: M06, file: div_nonrestoring_iter.sv, what: "final correction omitted", config: {variant: 1, w: 6, pipe: 1},
+     find: "if (p[W]) p <= p + {1'b0, dd};", replace: "if (p[W]) p <= p;"}
+  - {id: M07, file: div_nonrestoring_iter.sv, what: "correction adds nothing on a zero remainder boundary (condition p[W] replaced by p[W-1])", config: {variant: 1, w: 6, pipe: 1},
+     find: "if (p[W]) p <= p + {1'b0, dd};", replace: "if (p[W-1]) p <= p + {1'b0, dd};"}
+  - {id: M08, file: div_nonrestoring_iter.sv, what: "latency: output valid one clock early", config: {variant: 1, w: 6, pipe: 1},
+     find: "if (cnt == CW'(W)) begin  // the correction clock is the last", replace: "if (cnt == CW'(W - 1)) begin  // the correction clock is the last"}
+  - {id: M09, file: div_restoring_pipe.sv, what: "restore mux select inverted", config: {variant: 2, w: 6, pipe: 2},
+     find: "p_v  = t_v[W] ? sh_v : t_v[W-1:0];", replace: "p_v  = t_v[W] ? t_v[W-1:0] : sh_v;"}
+  - {id: M10, file: div_restoring_pipe.sv, what: "divisor not carried to the next stage (stage 1 sees a stale divisor)", config: {variant: 2, w: 6, pipe: 2},
+     find: "always_ff @(posedge clk) d_q <= d_i;", replace: "always_ff @(posedge clk) d_q <= '0;"}
+  - {id: M11, file: div_restoring_pipe.sv, what: "valid taken from the pipeline input instead of the previous stage (latency 1 instead of ceil(W/PIPE))", config: {variant: 2, w: 6, pipe: 2},
+     find: "else     v_q[s] <= v_i;", replace: "else     v_q[s] <= in_valid;"}
+  - {id: M12, file: div_restoring_pipe.sv, what: "last stage runs PIPE iterations even when fewer remain", config: {variant: 2, w: 5, pipe: 2},
+     find: "localparam int IT = (W - s * PIPE < PIPE) ? (W - s * PIPE) : PIPE;", replace: "localparam int IT = PIPE;"}
+  - {id: M13, file: div_nonrestoring_pipe.sv, what: "correction tested on the wrong bit (p_v[W-1] instead of the sign p_v[W])", config: {variant: 3, w: 6, pipe: 2},
+     find: "if (LAST && p_v[W]) p_v = p_v + {1'b0, d_i};", replace: "if (LAST && p_v[W-1]) p_v = p_v + {1'b0, d_i};"}
+  - {id: M14, file: div_nonrestoring_pipe.sv, what: "correction omitted", config: {variant: 3, w: 6, pipe: 2},
+     find: "if (LAST && p_v[W]) p_v = p_v + {1'b0, d_i};", replace: "if (LAST && p_v[W]) p_v = p_v;"}
+  - {id: M15, file: div_nonrestoring_pipe.sv, what: "quotient bit from the wrong polarity", config: {variant: 3, w: 6, pipe: 2},
+     find: "rn_v = {rn_v[W-2:0], ~t_v[W+1]};", replace: "rn_v = {rn_v[W-2:0], t_v[W+1]};"}
+  - {id: M16, file: divider_sel.sv, what: "operands swapped at the selector", config: {variant: 3, w: 6, pipe: 3},
+     find: ".n(in_data[2*W-1:W]), .d(in_data[W-1:0]), .out_valid, .q, .r);\n    end\nendmodule", replace: ".n(in_data[W-1:0]), .d(in_data[2*W-1:W]), .out_valid, .q, .r);\n    end\nendmodule"}
+
+# Mutants found equivalent while building the bench (they survived the exhaustive stream, and the argument says why). Reported separately and
+# not counted as kills; the formal equivalence proofs in ../formal cover the same ground at W = 4.
+equivalent:
+  - {id: E01, file: div_nonrestoring_pipe.sv, what: "correction applied in every stage instead of only the last", config: {variant: 3, w: 6, pipe: 2},
+     find: "localparam bit LAST = (s == S - 1);", replace: "localparam bit LAST = 1'b1;",
+     why: "adding D to a negative P before the next step turns 2P+b+D into 2(P+D)+b-D, the same value, and the quotient bit is already decided; a restoring-style correction at each stage boundary is an identity (it costs an adder per stage, so it is a worse implementation, not a wrong one)"}

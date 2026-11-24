@@ -1,0 +1,13 @@
+schema: fpga-design-agent/formal_rigour/v1
+scope: "eth_rx_classify with MC_EXACT 2, any byte stream with gaps, configuration held steady while a frame's address bytes arrive (the contract), table writes only between frames"
+antecedents:
+  "a_six_bytes": a_verdict__ante
+  "a_flags": a_verdict__ante
+sanity: [c_multicast_matched, c_rejected]
+depth:
+  bmc:
+    enough: false
+    why: >-
+      Bounded, not claimed exhaustive. Measured in the cover task: the first address verdict (and a multicast match by table or hash) is reached at step 9, so depth 12 holds one
+      frame's six address bytes and three clocks more. A second frame's verdict needs at least six more clocks, so it is outside the bound: the filter is checked after reset and
+      one frame, not after a frame that changed the table. No k-induction proof was attempted.

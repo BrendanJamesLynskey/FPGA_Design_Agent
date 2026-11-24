@@ -1,0 +1,205 @@
+{
+ "function": "fft_window",
+ "tool": "Yosys 0.70+385 (git sha1 098e46a36, Release, Clang /usr/bin/clang++ 21.1.8)",
+ "jobs": 9,
+ "ok": 9,
+ "results": [
+  {
+   "name": "round_4x4_r1_s0",
+   "top": "fft_window_fv",
+   "params": {
+    "WD": 4,
+    "WW": 4,
+    "RND": 1,
+    "ST": 0
+   },
+   "mode": "prove",
+   "depth": 6,
+   "engine": "boolector",
+   "claim": "the block equals the rounding formula (4-bit samples, 4-bit coefficient, RND 1, STAGES 0), for all inputs and any run length (proved)",
+   "mutant": null,
+   "expected": "PASS",
+   "status": "PASS",
+   "ok": true,
+   "seconds": 0.8,
+   "failed_assertions": [],
+   "tail": ""
+  },
+  {
+   "name": "round_4x4_r0_s1",
+   "top": "fft_window_fv",
+   "params": {
+    "WD": 4,
+    "WW": 4,
+    "RND": 0,
+    "ST": 1
+   },
+   "mode": "prove",
+   "depth": 6,
+   "engine": "boolector",
+   "claim": "the block equals the rounding formula (4-bit samples, 4-bit coefficient, RND 0, STAGES 1), for all inputs and any run length (proved)",
+   "mutant": null,
+   "expected": "PASS",
+   "status": "PASS",
+   "ok": true,
+   "seconds": 1.0,
+   "failed_assertions": [],
+   "tail": ""
+  },
+  {
+   "name": "round_4x4_r1_s3",
+   "top": "fft_window_fv",
+   "params": {
+    "WD": 4,
+    "WW": 4,
+    "RND": 1,
+    "ST": 3
+   },
+   "mode": "prove",
+   "depth": 6,
+   "engine": "boolector",
+   "claim": "the block equals the rounding formula (4-bit samples, 4-bit coefficient, RND 1, STAGES 3), for all inputs and any run length (proved)",
+   "mutant": null,
+   "expected": "PASS",
+   "status": "PASS",
+   "ok": true,
+   "seconds": 0.9,
+   "failed_assertions": [],
+   "tail": ""
+  },
+  {
+   "name": "round_5x3_r1_s2",
+   "top": "fft_window_fv",
+   "params": {
+    "WD": 5,
+    "WW": 3,
+    "RND": 1,
+    "ST": 2
+   },
+   "mode": "prove",
+   "depth": 6,
+   "engine": "boolector",
+   "claim": "the block equals the rounding formula (5-bit samples, 3-bit coefficient, RND 1, STAGES 2), for all inputs and any run length (proved)",
+   "mutant": null,
+   "expected": "PASS",
+   "status": "PASS",
+   "ok": true,
+   "seconds": 1.0,
+   "failed_assertions": [],
+   "tail": ""
+  },
+  {
+   "name": "round_3x6_r0_s3",
+   "top": "fft_window_fv",
+   "params": {
+    "WD": 3,
+    "WW": 6,
+    "RND": 0,
+    "ST": 3
+   },
+   "mode": "prove",
+   "depth": 6,
+   "engine": "boolector",
+   "claim": "the block equals the rounding formula (3-bit samples, 6-bit coefficient, RND 0, STAGES 3), for all inputs and any run length (proved)",
+   "mutant": null,
+   "expected": "PASS",
+   "status": "PASS",
+   "ok": true,
+   "seconds": 1.0,
+   "failed_assertions": [],
+   "tail": ""
+  },
+  {
+   "name": "mutant_round_half",
+   "top": "fft_window_fv",
+   "params": {
+    "WD": 4,
+    "WW": 4,
+    "RND": 1,
+    "ST": 3
+   },
+   "mode": "bmc",
+   "depth": 6,
+   "engine": "boolector",
+   "claim": "a build with the seeded fault round_half is refuted",
+   "mutant": "round_half",
+   "expected": "FAIL",
+   "status": "FAIL",
+   "ok": true,
+   "seconds": 1.1,
+   "failed_assertions": [
+    "WIN"
+   ],
+   "tail": ""
+  },
+  {
+   "name": "mutant_coef_sign",
+   "top": "fft_window_fv",
+   "params": {
+    "WD": 4,
+    "WW": 4,
+    "RND": 1,
+    "ST": 3
+   },
+   "mode": "bmc",
+   "depth": 6,
+   "engine": "boolector",
+   "claim": "a build with the seeded fault coef_sign is refuted",
+   "mutant": "coef_sign",
+   "expected": "FAIL",
+   "status": "FAIL",
+   "ok": true,
+   "seconds": 1.1,
+   "failed_assertions": [
+    "WIN"
+   ],
+   "tail": ""
+  },
+  {
+   "name": "mutant_imag_uses_real",
+   "top": "fft_window_fv",
+   "params": {
+    "WD": 4,
+    "WW": 4,
+    "RND": 1,
+    "ST": 3
+   },
+   "mode": "bmc",
+   "depth": 6,
+   "engine": "boolector",
+   "claim": "a build with the seeded fault imag_uses_real is refuted",
+   "mutant": "imag_uses_real",
+   "expected": "FAIL",
+   "status": "FAIL",
+   "ok": true,
+   "seconds": 1.0,
+   "failed_assertions": [
+    "WIN"
+   ],
+   "tail": ""
+  },
+  {
+   "name": "mutant_rnd_inverted",
+   "top": "fft_window_fv",
+   "params": {
+    "WD": 4,
+    "WW": 4,
+    "RND": 1,
+    "ST": 3
+   },
+   "mode": "bmc",
+   "depth": 6,
+   "engine": "boolector",
+   "claim": "a build with the seeded fault rnd_inverted is refuted",
+   "mutant": "rnd_inverted",
+   "expected": "FAIL",
+   "status": "FAIL",
+   "ok": true,
+   "seconds": 0.8,
+   "failed_assertions": [
+    "WIN"
+   ],
+   "tail": ""
+  }
+ ]
+}
