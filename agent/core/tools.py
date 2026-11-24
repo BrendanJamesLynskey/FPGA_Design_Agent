@@ -858,13 +858,14 @@ def report_digest(s: Session, name: str, variant: str = "base", level: str = "su
 
 
 CHECK_NAMES = ("all", "lint", "standards", "resets", "cdc", "methodology", "drc", "exceptions", "io", "clocking",
-               "dsp_ram_mapping", "control_sets", "fsm", "axi", "axi_profile", "gt_plan", "constants", "stale", "constraint_scope", "xpm_sim", "doc")
+               "dsp_ram_mapping", "control_sets", "fsm", "axi", "axi_profile", "gt_plan", "constants", "stale", "constraint_scope", "xpm_sim", "doc",
+               "clock_mux")
 
 
 @tool("check", "Run design checks from the check suite (flow/checks) and get a compact digest: per check pass, fail, "
                "partial or not run (with the reason), then findings with rule id, where, a one-line fix and the KB skill to "
                "load. names: [\"all\"] (every check that applies at the scope) or any of lint, standards, resets, cdc, "
-               "methodology, drc, exceptions, io, clocking, dsp_ram_mapping, control_sets, fsm, axi, axi_profile, gt_plan, doc. scope: rtl "
+               "methodology, drc, exceptions, io, clocking, clock_mux, dsp_ram_mapping, control_sets, fsm, axi, axi_profile, gt_plan, doc. scope: rtl "
                "(sources only), synth or route (the build's reports; reports the build did not write are made in one Vivado "
                "session on the checkpoint), auto (the latest build stage). level: summary, standard (5 findings per check) or "
                "detail (30). The full result is written under build/checks/ and named in the digest; read it with read_file.",

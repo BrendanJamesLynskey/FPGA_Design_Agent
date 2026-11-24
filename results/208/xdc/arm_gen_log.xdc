@@ -1,0 +1,4 @@
+# generated clocks on the mux output (UG949 p.174 template), -logically_exclusive groups on the generated clocks
+create_generated_clock -name clk0mux -divide_by 1 -source [get_pins -of_objects [get_cells -hier -filter {NAME =~ *u_mux}] -filter {REF_PIN_NAME == I0}] [get_pins -of_objects [get_cells -hier -filter {NAME =~ *u_mux}] -filter {REF_PIN_NAME == O}]
+create_generated_clock -name clk1mux -divide_by 1 -add -master_clock [get_clocks -of_objects [get_pins -of_objects [get_cells -hier -filter {NAME =~ *u_mux}] -filter {REF_PIN_NAME == I1}]] -source [get_pins -of_objects [get_cells -hier -filter {NAME =~ *u_mux}] -filter {REF_PIN_NAME == I1}] [get_pins -of_objects [get_cells -hier -filter {NAME =~ *u_mux}] -filter {REF_PIN_NAME == O}]
+set_clock_groups -name mux_gen -logically_exclusive -group [get_clocks clk0mux] -group [get_clocks clk1mux]

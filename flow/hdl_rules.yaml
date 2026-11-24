@@ -88,6 +88,18 @@ rules:
     checks: {clocking: [CMT-RANGE-01]}
     fix: choose DIVCLK_DIVIDE and CLKFBOUT_MULT so the VCO and PFD sit inside the speed grade's range (flow/mmcm_search.py)
     skill: artix7-mmcm-pll-configuration
+  - id: HDL-CLK-03
+    title: A clock mux is a clock buffer (BUFGMUX_CTRL or BUFGCTRL switched on S), and its modes are constrained as exclusive without hiding real paths
+    rationale: A LUT clock mux glitches when the select changes (brief 208 c3, 40 runt pulses in 40 switches) and puts
+      fabric routing on the clock (TIMING-14). Every clock entering a mux propagates through it, so its modes are timed
+      against each other until they are grouped (UG903 ch. 3). Grouping the SOURCE clocks also removes every real path
+      between a source clock's own registers and the mux fanout; measured, it hid a -6.63 ns setup failure and every
+      report_cdc row (brief 208 b1), so with such paths the groups go on generated clocks on the mux output (UG949 ch. 4).
+    checks: {clock_mux: [CLKMUX-LUT, CLKMUX-NO-GROUPS, CLKMUX-SRC-GROUPED, CLKMUX-CASE, CLKMUX-CE-SELECT, CLKMUX-STOP, CLKMUX-CASCADE]}
+    fix: use BUFGMUX_CTRL (or BUFGCTRL on S) with the select from a register; create_generated_clock -divide_by 1 on the mux
+      output for each input (-add -master_clock for the second) and set_clock_groups -physically_exclusive on those
+      generated clocks; group the source clocks directly only when they meet nowhere but the mux fanout
+    skill: amd-clock-multiplexing
   - id: HDL-RST-01
     title: Synchronous resets; an asynchronous reset only in a reset synchroniser or from a declared external asynchronous input
     rationale: AMD recommends synchronous resets (UG949); an asynchronous reset is released at an arbitrary time relative

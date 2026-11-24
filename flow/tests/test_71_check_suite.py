@@ -263,7 +263,8 @@ def test_vivado_session_is_one_call_for_all_missing_reports(tmp_path: Path) -> N
         (out / "cmt.not_run.txt").write_text("cmt not run: test")
         return 0, "ok"
     rep = C.run(d, "all", "synth", vivado=fake)
-    assert calls == [["cmt", "control_sets", "reset_scan"]]
+    # brief 208 added clock_mux (and the clock_interaction it reads, which this mini build does not have)
+    assert calls == [["clock_interaction", "clock_mux", "cmt", "control_sets", "reset_scan"]]
     st = {c["check"]: c for c in rep["checks"]}
     assert st["resets"]["status"] == "pass" and not st["resets"]["incomplete"]
     assert st["clocking"]["parts"]["cmt"].startswith("not run: cmt not run")
