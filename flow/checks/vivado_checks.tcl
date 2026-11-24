@@ -177,7 +177,7 @@ proc fda_init_block {pin} {
     if {![regexp {^(DSP|RAMB|URAM|FIFO)} $r]} { return "" }
     set bn [get_property NAME $b]
     if {[regexp {^(.*)/DSP_[A-Z_]+_INST$} $bn -> top]} {
-        set m [get_cells -quiet $top]
+        set m [get_cells -quiet -hier -filter "NAME == \"$top\""]
         if {$m ne ""} { set bn $top; set r [get_property REF_NAME $m] }
     }
     return [list $bn $r [get_property REF_PIN_NAME $pin]]
@@ -204,8 +204,9 @@ proc fda_init_scan {fname} {
         set qnet [get_nets -quiet -of_objects [get_pins -quiet $c/Q]]
         if {$qnet ne ""} {
             foreach p [get_pins -quiet -leaf -of_objects $qnet -filter {DIRECTION == IN}] {
+                # only a DSP has input registers a register could be absorbed into (a RAM's address and data inputs have none)
                 set x [fda_init_block $p]
-                if {$x ne ""} { lappend rows [concat to $x] }
+                if {$x ne "" && [string match DSP* [lindex $x 1]]} { lappend rows [concat to $x] }
             }
         }
         foreach x $rows {

@@ -68,6 +68,8 @@ def scan_findings(rows: list[dict[str, str]]) -> list[dict[str, Any]]:
     for r in rows:
         if str(r.get("init", "")).strip() not in ("1", "1'b1"):
             continue
+        if r.get("dir") == "to" and not str(r.get("block_ref", "")).startswith("DSP"):
+            continue        # only a DSP has input registers to absorb a register; a RAM's inputs have none (review fix)
         by.setdefault(r["block"], []).append(r)
     out = []
     for block, rs in sorted(by.items()):

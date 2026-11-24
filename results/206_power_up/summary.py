@@ -4,6 +4,7 @@
     python3 results/206_power_up/summary.py           # write records/summary.json and print the Markdown tables
     python3 results/206_power_up/summary.py --check   # exit 1 if records/summary.json differs from what the records give
 
+Rows of ``amd`` carry ``batch`` (main, b, scan): arms repeated across batches appear once per batch, so do not sum over them.
 AMD: records/amd_<part>.tsv (arms.tcl), records/amd_<part>_b.tsv (arms_b.tcl), records/amd_<part>_scan.tsv (arms_scan.tcl).
 Altera: records/altera/<case>.json (altera/parse_quartus.py on each compiled case).
 """
@@ -38,8 +39,7 @@ def amd_rows() -> list[dict]:
                 cells = {k[6:]: int(v) for k, v in kv.items() if k.startswith("cells.")}
                 lut = sum(v for k, v in cells.items() if re.fullmatch(r"LUT\d", k))
                 dsp = {k.rsplit(".", 1)[1]: v for k, v in kv.items() if k.startswith("dsp.") and k.count(".") == 2 and v != ""}
-                bram = {k.rsplit(".", 1)[1]: v for k, v in kv.items() if k.startswith("bram.") and k.count(".") == 2 and "_bram_" not in k
-                        or re.match(r"bram\.mem_reg(_bram_0)?\.", k)}
+                bram = {k.rsplit(".", 1)[1]: v for k, v in kv.items() if re.match(r"bram\.mem_reg(_bram_0)?\.\w+$", k)}
                 rows.append({"part": part, "batch": suffix.strip("_") or "main", "arm": arm, "initv": int(initv),
                              "ff_total": sum(ff.values()), "ff_by_type_init": ff, "lut": lut,
                              "lut1_inverters": int(kv.get("lut1_inverters", 0)),

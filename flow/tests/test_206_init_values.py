@@ -54,6 +54,14 @@ def test_row_order_and_cell_names_do_not_change_the_verdict() -> None:
     assert [(f["code"], f["where"], f["count"]) for f in a] == [(f["code"], f["where"], f["count"]) for f in b]
 
 
+def test_a_register_feeding_a_ram_input_is_not_reported() -> None:
+    # a block RAM's address and data inputs have no register to absorb one, whatever its INIT (review fix)
+    rows = [{"cell": "a", "ref": "FDRE", "init": "1", "dir": "to", "block": "m", "block_ref": "RAMB36E1", "block_pin": "ADDRARDADDR[5]"}]
+    assert I.scan_findings(rows) == []
+    rows[0]["block_ref"] = "DSP48E1"
+    assert [f["code"] for f in I.scan_findings(rows)] == ["INIT-HB-01"]
+
+
 def test_rows_with_init_zero_are_ignored() -> None:
     rows = [{"cell": "r", "ref": "FDRE", "init": "0", "dir": "to", "block": "d", "block_ref": "DSP48E1", "block_pin": "A[0]"}]
     assert I.scan_findings(rows) == []
