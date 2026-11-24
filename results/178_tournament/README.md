@@ -104,3 +104,20 @@ The log line `MemAvailable 99.0 G` was not a fallback: `run()` called `run_child
 is policed by the slot). The 4 GiB P&R child also failed the light-class gate (declared peak above 2 GiB), so every P&R run logged "gate refused" and then ran via the 120 s fallback (about 2 minutes of idle slot per run, 20+ runs per design), with a
 fake reading. Fix: single-child stages (`max_children == 1`: K26 synthesis, all P&R) use the real `MemAvailable` and admit at once when it covers the peak plus 1 GiB, with no light-class limit and no stub; the one-hour error still fires if memory never frees.
 Test `test_single_child_stage_uses_the_real_memory_reading_and_no_light_gate` (14 tests pass in total). The multi-child light class path is unchanged.
+
+## Records
+
+- `runs/<design>/synth.json`, `impl_top2.json`, `impl_base.json`: every candidate with rank, WNS, area, runtime and why it was dropped (schema `fda-tournament/1`).
+- `gain_summary.json`: the per-design baseline, winner and cost numbers quoted in the tables above.
+- `part1_existing_data.json`: the part 1 rank-correlation data from the 49 existing rows.
+- `vendor_strategies.json`, `strategies_raw.tsv`: the AMD `-strategy` directives read from Vivado by the probe. `specs/`: the five design specs.
+
+## Reproduce
+
+Part 1 and the unit tests need no Vivado: `python3 tools/qor/rank_existing.py` and `python3 -m pytest flow/tests/test_178_tournament.py`.
+The evaluation needs a Vivado 2026.1 install and a heavy slot: `tools/qor/run_178_eval.sh` is resumable and runs the five tournaments in about 6 to 8 hours.
+
+## Known gaps and limits
+
+Single runs with no seed repeats, so differences under about 0.03 ns are not shown to be real. Only five small out-of-context arithmetic blocks, not full designs.
+Triage thresholds are untuned and were not scored against these outcomes. The cheaper two-step variant (default against retime, then strategies) is not measured. K26 Fmax is capped at 725.2 MHz, so K26 rows are compared on WNS.
