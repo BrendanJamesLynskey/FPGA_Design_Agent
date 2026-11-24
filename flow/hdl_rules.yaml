@@ -15,14 +15,15 @@
 # A finding that no rule maps lands in the catch-all rule of its tool (HDL-LINT-00, HDL-VIV-00, HDL-STD-00), so nothing is lost.
 # Waivers: designs/<d>/lint/waivers.yaml, {rule, match (a glob over the finding key), reason, owner, date}.
 standard: FDA-HDL
-version: "1.6"            # 1.0 2026-11-12 (first release); 1.1 2026-11-14 (brief 71: reset rules split into HDL-RST-01..05,
+version: "1.7"            # 1.0 2026-11-12 (first release); 1.1 2026-11-14 (brief 71: reset rules split into HDL-RST-01..05,
                           # HDL-CLK-02, HDL-VER-01, HDL-IF-02/03, HDL-GT-01, HDL-DOC-01; check-suite tool keys; fix and skill);
                           # 1.2 2026-11-14 (brief 73: HDL-IF-04..06, the axi_profile check);
                           # 1.3 2026-11-14 (brief 70: REQP-1840 in HDL-RST-03, HDL-RST-06 AMD IP resets);
                           # 1.4 2026-11-19 (brief 106: HDL-ORC-01 derived constants, HDL-ORC-02 stale evidence);
                           # 1.5 2026-11-19 (brief 105A: HDL-DRC-01 CFGBVS gate on confirmed boards, HDL-XDC-02 blanket asynchronous
-                          #     clock groups (advisory), HDL-CDC-02 XPM SIM_ASSERT_CHK = 1 (advisory))
-date: 2026-11-19
+                          #     clock groups (advisory), HDL-CDC-02 XPM SIM_ASSERT_CHK = 1 (advisory));
+                          # 1.7 2026-11-24 (brief 204a: HDL-TIM-01, HDL-CLK-03, HDL-FO-01, HDL-LOG-01, HDL-CONG-01, HDL-IP-01, HDL-CS-01; the report-driven checks)
+date: 2026-11-24
 rules:
   - id: HDL-SYN-01
     title: No latches
@@ -272,6 +273,57 @@ rules:
     checks: {stale: [STALE-EVID-01, STALE-CLAIM-01]}
     fix: rebuild or re-run the stage the finding names, then read its result; cite the fresh build ID
     skill: docs/agent_lessons.md
+  - id: HDL-TIM-01
+    title: Logic depth fits the clock period
+    rationale: A path with too many logic levels for its clock cannot be fixed by placement (UG949 p.75, p.200, p.234). The distribution of logic
+      levels against each clock's requirement is advisory; a setup path that still fails with its net delay taken out is a gate, because no
+      placement can close it.
+    checks: {logic_levels: ["RPT-LL-*"]}
+    fix: pipeline the path (a register stage in the middle of the logic), or try synthesis -retiming; CARRY and MUXF levels inflate the count with little delay
+    skill: timing-closure
+  - id: HDL-CLK-03
+    title: Simple, parallel clock trees with small skew and uncertainty
+    rationale: Cascaded global buffers do not match insertion delay, local clocks routed in fabric have unpredictable skew, and clock uncertainty or skew
+      above the guide's review thresholds usually means the clock topology is wrong (UG949 p.111, p.139, p.232, p.248). Advisory.
+    checks: {clock_tree: ["RPT-CLK-*"]}
+    fix: feed parallel buffers from one source (an MMCM output or a pin), use a clock enable or BUFGCE_DIV instead of a fabric divider, and review the topology
+      when uncertainty is over 100 ps (setup) or 200 ps (hold)
+    skill: timing-closure
+  - id: HDL-FO-01
+    title: High-fanout nets are replicated by the right means
+    rationale: A net with thousands of loads, or hundreds of loads on a fast clock, limits the clock frequency (UG949 p.75). The fix is a balanced tree and
+      placement-based replication, not MAX_FANOUT on a global net. Advisory.
+    checks: {fanout: ["RPT-FO-01"]}
+    fix: a balanced replica tree in the RTL with KEEP, a driver register for the net, phys_opt_design -directive Explore, no MAX_FANOUT on globals, no replicated ASYNC_REG register
+    skill: timing-closure
+  - id: HDL-LOG-01
+    title: The synthesis log is reviewed, and not truncated
+    rationale: Messages that say logic was removed or tied off show where the netlist differs from the intent, and the tool prints a message only 100
+      times by default, so a long log hides the rest (UG949 p.198). Advisory, except one gate for a generic the build sets that the top does not have
+      (Synth 8-3301) means its value never reached the design (brief 203).
+    checks: {synth_log: ["RPT-LOG-*"]}
+    fix: read the listed message ids and confirm each is intended; raise messaging.defaultLimit so none is cut off (the flow sets it); name only generics the top declares
+    skill: vivado-timing-methodology-checks
+  - id: HDL-CONG-01
+    title: Congestion and utilisation stay in the range the placer handles
+    rationale: A congestion window of level 4 or more, a short-interconnect share over 5 %, or high average utilisation makes placement and routing
+      hard (UG949 p.240, p.244, p.273; UG1292 p.6). Advisory.
+    checks: {congestion: ["RPT-CONG-*"]}
+    fix: lower utilisation, try a spreading placer directive, remove MAX_FANOUT, reduce MUXF and LUT combining in the congested modules
+    skill: timing-closure
+  - id: HDL-IP-01
+    title: IP is up to date and unlocked at build time
+    rationale: A locked or out-of-date IP is built from a customisation the tool no longer supports; AMD recommends the latest IP version (UG949 p.49).
+    checks: {ip_status: ["RPT-IP-01"]}
+    fix: upgrade the IP (upgrade_ip) or regenerate its output products, then rebuild
+    skill: drc-closure
+  - id: HDL-CS-01
+    title: Control sets stay within the device guideline
+    rationale: Registers share a slice only with the same clock, set/reset and enable, so many unique control sets waste slices and spread placement
+      (UG949 p.49, p.265). Under 7.5 % of the device's capacity is acceptable, 7.5 to 15 % reduction is recommended (advisory), above 15 % it is required (gate).
+    checks: {control_sets: ["RPT-CS-*"]}
+    fix: opt_design -control_set_merge, a higher -control_set_opt_threshold, CONTROL_SET_REMAP, and fewer clock enables on single registers
+    skill: control-sets-resets-and-enables
   - id: HDL-LINT-00
     title: Verilator -Wall clean (any warning no other rule maps)
     rationale: A new Verilator warning code is never dropped for want of a rule; it is fixed or waived with a reason.

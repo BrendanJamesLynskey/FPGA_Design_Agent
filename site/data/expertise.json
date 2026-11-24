@@ -626,12 +626,26 @@
      "gate": null,
      "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/flow/cmt_check.tcl",
      "what": "A VCO and phase-detector range checker, written and measured but not wired into a gate."
+    },
+    {
+     "enforced": false,
+     "file": "flow/report_gates.py",
+     "gate": "RPT-CLK-01",
+     "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/flow/report_gates.py",
+     "what": "Advisory (Brief 204a): a global clock buffer driven by another buffer, or a clock made in fabric, read from the clock-utilisation and clock-networks reports."
+    },
+    {
+     "enforced": false,
+     "file": "flow/report_gates.py",
+     "gate": "RPT-CLK-02",
+     "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/flow/report_gates.py",
+     "what": "Advisory (Brief 204a): clock uncertainty and hold skew over the guide's review thresholds, read from the timing paths."
     }
    ],
    "counts": {
-    "checks": 3,
+    "checks": 5,
     "enforced": 1,
-    "evidence": 1,
+    "evidence": 2,
     "sections": 7,
     "skills": 12
    },
@@ -645,6 +659,16 @@
       }
      ],
      "text": "Of 4 probe designs (one legal, three with an MMCM setting outside its range), Vivado's design-rule check after synthesis flagged the setting as out of range on 3."
+    },
+    {
+     "kind": "measured",
+     "sources": [
+      {
+       "path": "results/204a_report_gates/hits.json",
+       "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/results/204a_report_gates/hits.json"
+      }
+     ],
+     "text": "The clock-tree checks were run over 65 recorded builds: 0 of 58 showed a cascaded buffer or a local clock, and 9 of 59 had a hold skew or uncertainty over the guide's review threshold."
     }
    ],
    "family": {
@@ -2903,12 +2927,33 @@
      "gate": null,
      "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/flow/lint.sh",
      "what": "Verilator lint, run before the stage can end."
+    },
+    {
+     "enforced": false,
+     "file": "flow/report_gates.py",
+     "gate": "RPT-LL-02",
+     "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/flow/report_gates.py",
+     "what": "Check-suite gate (Brief 204a): a post-synthesis setup path that still fails with its net delay taken out cannot be closed by placement. Advisory RPT-LL-01 compares the logic-level distribution with the clock period."
+    },
+    {
+     "enforced": false,
+     "file": "flow/report_gates.py",
+     "gate": "RPT-FO-01",
+     "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/flow/report_gates.py",
+     "what": "Advisory (Brief 204a): a net with too many loads for its clock, with the guide's fixes (balanced tree with KEEP, a driver register, no MAX_FANOUT on global nets)."
+    },
+    {
+     "enforced": false,
+     "file": "flow/report_gates.py",
+     "gate": "RPT-CS-02",
+     "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/flow/report_gates.py",
+     "what": "Check-suite gate (Brief 204a): control sets above the guide's required-reduction share of the device's capacity; the recommended-reduction band is an advisory."
     }
    ],
    "counts": {
-    "checks": 3,
+    "checks": 6,
     "enforced": 2,
-    "evidence": 1,
+    "evidence": 2,
     "sections": 13,
     "skills": 24
    },
@@ -2922,6 +2967,16 @@
       }
      ],
      "text": "Across all 21 development runs, 13 passed every hidden test, 6 were escapes (the agent's own checks passed, the hidden tests did not) and 2 failed."
+    },
+    {
+     "kind": "measured",
+     "sources": [
+      {
+       "path": "results/204a_report_gates/hits.json",
+       "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/results/204a_report_gates/hits.json"
+      }
+     ],
+     "text": "The logic-depth gate was run on 55 recorded builds: it failed 3, and 0 of them met timing after routing; the logic-level advisory flagged 8 of 39 builds."
     }
    ],
    "family": {
@@ -4085,12 +4140,33 @@
      "gate": null,
      "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/flow/xprobe.py",
      "what": "Cross-probing: names the RTL file and line, clock region and nets of a failing or tight path."
+    },
+    {
+     "enforced": false,
+     "file": "flow/report_gates.py",
+     "gate": "RPT-LOG-03",
+     "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/flow/report_gates.py",
+     "what": "Check-suite gate (Brief 204a, from Brief 203): a generic the build sets that the top does not have, which Vivado only warns about, so its value never reaches the design."
+    },
+    {
+     "enforced": false,
+     "file": "flow/report_gates.py",
+     "gate": "RPT-IP-01",
+     "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/flow/report_gates.py",
+     "what": "Check-suite gate (Brief 204a): an IP that report_ip_status shows locked or not up to date."
+    },
+    {
+     "enforced": false,
+     "file": "flow/report_gates.py",
+     "gate": "RPT-CONG-01",
+     "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/flow/report_gates.py",
+     "what": "Advisory (Brief 204a): placer or router congestion at the guide's review level, and utilisation the guide ties to hard placement."
     }
    ],
    "counts": {
-    "checks": 2,
+    "checks": 5,
     "enforced": 0,
-    "evidence": 2,
+    "evidence": 3,
     "sections": 7,
     "skills": 22
    },
@@ -4114,6 +4190,16 @@
       }
      ],
      "text": "Of the development runs, 16 went through every stage up to configuration with every stage gate passed."
+    },
+    {
+     "kind": "measured",
+     "sources": [
+      {
+       "path": "results/204a_report_gates/hits.json",
+       "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/results/204a_report_gates/hits.json"
+      }
+     ],
+     "text": "The report-driven checks were run on 65 recorded builds without re-running Vivado: 13 had synthesis messages saying logic was dropped, 12 had a generic the top did not use, and 1 showed placer congestion at the guide's review level or above."
     }
    ],
    "family": {
