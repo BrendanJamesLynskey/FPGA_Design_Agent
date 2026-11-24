@@ -30,6 +30,10 @@ module itch_top
     input  logic [31:0]          cfg_thr, cfg_qty, cfg_max_qty, cfg_max_pos, cfg_band, cfg_px_off, cfg_minqty,
     input  logic [7:0]           cfg_tif, cfg_display, cfg_capacity, cfg_ise, cfg_cross, cfg_custtype,
     input  logic                 cfg_arm, cfg_kill, cfg_halt_on_gap, cfg_spec,
+    input  logic [15:0]          cfg_holdoff,            // brief 188: see risk_glue
+    input  logic                 cfg_ref_sw,
+    input  logic [31:0]          cfg_ref_px, cfg_ref_age,
+    input  logic                 ref_load,
     input  logic [47:0]          tpl_my_mac, tpl_venue_mac,
     input  logic [31:0]          tpl_my_ip, tpl_venue_ip,
     input  logic [15:0]          tpl_sport, tpl_dport,
@@ -83,6 +87,7 @@ module itch_top
     logic [11*32-1:0] cnt_d;
     itch_dec u_dec (.clk, .rst, .clr_cnt, .m_v, .m_w, .m_off, .m_len, .m_seq, .e_v, .e_k, .e_loc, .e_ref, .e_nref, .e_sell, .e_sh, .e_px, .e_stock, .e_code,
                     .e_seq, .cnt(cnt_d));
+    logic [31:0] nt_px;                       // brief 188: early copy of the ladder-update price, book_core to risk_glue
     logic spec_allow, spec_start, spec_fail, tu_v, tu_side, tu_ok, tu_cand, tu_spec, tu_gapblk, tu_inx, book_ready, gapblk_now;
     logic [IW-1:0] spec_inst, tu_inst; logic [31:0] spec_px, tu_cpx, tu_px, tu_sz; logic [N_INST-1:0] inexact;
     logic [N_INST*2*32-1:0] tob_px, tob_sz; logic [N_INST*2-1:0] tob_ok; logic [7:0] sys_code;
@@ -92,7 +97,7 @@ module itch_top
         .clk, .rst, .clr_book, .clr_cnt, .cfg_watch, .cfg_thr, .spec_allow, .gapblk_now,
         .e_v, .e_k, .e_loc, .e_ref, .e_nref, .e_sell, .e_sh, .e_px, .e_stock, .e_code,
         .spec_start, .spec_inst, .spec_px, .spec_fail,
-        .tu_v, .tu_inst, .tu_side, .tu_px, .tu_sz, .tu_ok, .tu_cpx, .tu_cand, .tu_spec, .tu_gapblk, .tu_inx,
+        .tu_v, .tu_inst, .tu_side, .tu_px, .tu_sz, .tu_ok, .tu_cpx, .tu_cand, .tu_spec, .tu_gapblk, .tu_inx, .nt_px,
         .tob_px, .tob_sz, .tob_ok, .inexact, .book_ready, .sys_code, .cnt(cnt_b));
     logic b_busy, seg_busy, spec_pend;
     logic [63:0] f_sym; logic [31:0] f_px, f_qty, f_ref;
@@ -100,8 +105,9 @@ module itch_top
     assign b_busy = seg_busy || tx_busy;
     risk_glue #(.N_INST(N_INST)) u_risk (
         .clk, .rst, .clr_cnt, .clr_pos, .clr_ref, .cfg_watch, .cfg_arm, .cfg_kill, .cfg_spec, .cfg_qty, .cfg_max_qty, .cfg_max_pos, .cfg_band, .cfg_px_off,
-        .spec_start, .spec_inst, .spec_px, .spec_fail, .tu_v, .tu_inst, .tu_cpx, .tu_cand, .tu_spec, .tu_gapblk, .tu_inx, .tob_px, .tob_ok, .book_ready,
-        .spec_allow, .go, .go_spec, .f_sym, .f_px, .f_qty, .f_ref, .commit, .abort, .b_busy, .b_late, .cnt(cnt_r));
+        .cfg_holdoff, .cfg_ref_sw, .cfg_ref_px, .cfg_ref_age, .ref_load, .cfg_max_notional(64'd0), .cfg_nt_shift(5'd0), .cfg_nt_tbl('0),       // NOTIONAL_MODE 0 in this build: the register window has no room for a table
+        .spec_start, .spec_inst, .spec_px, .spec_fail, .tu_v, .tu_inst, .tu_cpx, .tu_cand, .tu_spec, .tu_gapblk, .tu_inx, .nt_px, .tob_px, .tob_ok, .book_ready,
+        .spec_allow, .go, .go_spec, .f_sym, .f_px, .f_qty, .f_ref, .commit, .abort, .b_busy, .b_late, .vd_v(), .vd_pass(), .vd_rej(), .rej_seen(), .cnt(cnt_r));
     order_seg u_seg (.clk, .rst, .go, .go_spec, .f_sym, .f_px, .f_qty, .f_ref, .commit, .abort, .tx_unsent, .tx_drop, .cfg_tif, .cfg_display, .cfg_capacity, .cfg_ise, .cfg_cross,
                      .cfg_custtype, .cfg_minqty, .tpl_my_mac, .tpl_venue_mac, .tpl_my_ip, .tpl_venue_ip, .tpl_sport, .tpl_dport, .tpl_seq0, .tpl_ack, .tpl_load,
                      .sw_we, .sw_waddr, .sw_wdata, .sw_raddr, .sw_rdata, .busy(seg_busy), .late(b_late), .spec_pend, .refuse_v,

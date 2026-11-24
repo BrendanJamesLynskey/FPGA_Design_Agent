@@ -71,6 +71,11 @@ module trigger_core #(
     logic [15:0] my_port, dst_port, gen_src_port;
     logic [31:0] max_qty, band, max_pos, refill, pin_width;
     logic [15:0] bucket;
+    // brief 188: the five interlock limits are staged. A host write to 0x020..0x024 fills a holding register; PULSE bit 8 copies all five to the live registers in one clock, so a half-written set never takes effect.
+    logic [31:0] s_max_qty, s_band, s_max_pos, s_refill;
+    logic [15:0] s_bucket;
+    logic        lim_pending;
+    assign lim_pending = (s_max_qty != max_qty) || (s_band != band) || (s_max_pos != max_pos) || (s_refill != refill) || (s_bucket != bucket);
     logic        gen_en;
     logic [31:0] gen_interval, gen_npkts, gen_base_px, gen_px_mask;
     logic [7:0]  gen_nmsg;
@@ -280,7 +285,7 @@ module trigger_core #(
         else if (kill_in)       kill_lat <= 1'b1;
     end
     logic bucket_wr_q;
-    always_ff @(posedge clk) bucket_wr_q <= h_we && h_addr == 12'h023;   // the new size is in the register by then
+    always_ff @(posedge clk) bucket_wr_q <= h_we && h_addr == 12'h003 && h_wdata[8];   // the commit wrote the new size into the register by then (brief 188: the bucket refills on COMMIT, not on the write of 0x023)
     interlocks u_il (.clk, .rst, .kill_reg(kill_reg), .kill_in(kill_lat | kill_in), .halt(halted),
         .max_qty, .band, .max_pos, .bucket, .refill, .reload(bucket_wr_q),
         .req_v, .req_side(fire_side), .req_qty(fire_qty), .req_px(fire_px), .req_ref(fire_ref), .req_noref(fire_noref),
@@ -467,6 +472,7 @@ module trigger_core #(
             my_ip <= 32'hC0A8_3A0A; dst_ip <= 32'hC0A8_3A0F; gen_src_ip <= 32'hC0A8_3A0B;
             my_port <= 16'd5800; dst_port <= 16'd5801; gen_src_port <= 16'd5802;
             max_qty <= 32'd100; band <= 32'd500; max_pos <= 32'd1000; bucket <= 16'd16; refill <= 32'd125000;
+            s_max_qty <= 32'd100; s_band <= 32'd500; s_max_pos <= 32'd1000; s_bucket <= 16'd16; s_refill <= 32'd125000;
             pin_width <= 32'd12_500_000;
             gen_en <= 1'b0; gen_interval <= 32'd1250; gen_npkts <= '0; gen_nmsg <= 8'd1; gen_inst_mask <= 16'h7;
             gen_base_px <= 32'd10000; gen_px_mask <= 32'hFF; gen_bad_every <= '0; gen_gap_every <= '0;
@@ -484,6 +490,7 @@ module trigger_core #(
                         clr_cnt <= h_wdata[0]; clr_book <= h_wdata[1]; clr_hist <= h_wdata[2]; clr_halt <= h_wdata[3];
                         clr_kill_in <= h_wdata[4]; rules_commit <= h_wdata[5]; log_pop <= h_wdata[6];
                         soft_rst <= h_wdata[7];
+                        if (h_wdata[8]) begin max_qty <= s_max_qty; band <= s_band; max_pos <= s_max_pos; bucket <= s_bucket; refill <= s_refill; end    // COMMIT: all five in one clock
                     end
                     12'h010: my_mac[47:16] <= h_wdata;
                     12'h011: my_mac[15:0]  <= h_wdata[15:0];
@@ -493,11 +500,11 @@ module trigger_core #(
                     12'h015: dst_mac[15:0]  <= h_wdata[15:0];
                     12'h016: dst_ip        <= h_wdata;
                     12'h017: dst_port      <= h_wdata[15:0];
-                    12'h020: max_qty <= h_wdata;
-                    12'h021: band    <= h_wdata;
-                    12'h022: max_pos <= h_wdata;
-                    12'h023: bucket  <= h_wdata[15:0];
-                    12'h024: refill  <= h_wdata;
+                    12'h020: s_max_qty <= h_wdata;
+                    12'h021: s_band    <= h_wdata;
+                    12'h022: s_max_pos <= h_wdata;
+                    12'h023: s_bucket  <= h_wdata[15:0];
+                    12'h024: s_refill  <= h_wdata;
                     12'h025: pin_width <= h_wdata;
                     12'h02A: begin ml_en <= h_wdata[0]; ml_inst <= h_wdata[31:16]; end
                     12'h030: book_inst <= h_wdata[15:0];
@@ -535,7 +542,7 @@ module trigger_core #(
                 12'h000: rd = 32'h58A0_0001;
                 12'h001: rd = BUILD_STAMP;
                 12'h002: rd = {26'd0, phy_rst_force, hist_metric, kill_reg, halt_on_gap, spec_en, core_en};
-                12'h004: rd = {24'd0, bk_busy, ha_busy | hb_busy, a_mdio_busy, b_mdio_busy, drp_busy, kill_lat, halted,
+                12'h004: rd = {23'd0, lim_pending, bk_busy, ha_busy | hb_busy, a_mdio_busy, b_mdio_busy, drp_busy, kill_lat, halted,
                                kill_now};
                 12'h005: rd = ts;
                 12'h006: rd = {16'd0, rules_ver};
@@ -550,14 +557,14 @@ module trigger_core #(
                 12'h015: rd = {16'd0, dst_mac[15:0]};
                 12'h016: rd = dst_ip;
                 12'h017: rd = {16'd0, dst_port};
-                12'h020: rd = max_qty;
-                12'h021: rd = band;
+                12'h020: rd = s_max_qty;
+                12'h021: rd = s_band;
                 12'h02A: rd = {ml_inst, 15'd0, ml_en};
                 12'h02B: rd = {30'd0, ml_last};
                 12'h02C: rd = ml_vetoes;
-                12'h022: rd = max_pos;
-                12'h023: rd = {16'd0, bucket};
-                12'h024: rd = refill;
+                12'h022: rd = s_max_pos;
+                12'h023: rd = {16'd0, s_bucket};
+                12'h024: rd = s_refill;
                 12'h025: rd = pin_width;
                 12'h026: rd = pos[31:0];
                 12'h027: rd = {16'd0, tokens};
