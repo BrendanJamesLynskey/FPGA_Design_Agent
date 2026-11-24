@@ -257,6 +257,9 @@ def pickup_cmd(a) -> int:
     except pickup.PickupError as e:
         print(f"resume: {e}", file=sys.stderr)
         return 2
+    if entry.get("question"):                        # brief 149: nothing matched; a question, not stage 0
+        print(json.dumps({**report, "resume": "no entry stage: a question", "question": entry["question"]}, indent=1))
+        return 2
     report["entry"] = {"stage": entry["stage"], "kind": entry["kind"], "notes": entry.get("notes") or [],
                        "reasons": [{"stage": s, "why": w} for s, w in entry["reasons"]]}
     scope = None
@@ -417,11 +420,16 @@ def main(argv: list[str] | None = None) -> int:
         p.add_argument("--replay-tape", help="brief 107: serve every model call from this tape directory (level 2); a missing call is an error")
     rs = sub._name_parser_map["resume"]
     rs.add_argument("run_id", help="a run id under runs/, or a design directory with handover.yaml (brief 68 D)")
-    rs.add_argument("change", nargs="?", help="design resume: the change request")
+    rs.add_argument("change", nargs="?", help="design resume: the change request. Its class sets the entry stage (earliest match wins): "
+                    "spec 0; area, latency, retarget, arch 1; language, mapping, rtl 2; fmax, power, constraints 3; timing 6; board 9. "
+                    "A request that matches no class is a question (exit 2), not stage 0; documentation-only is never guessed (use --kind docs). "
+                    "'lower the latency but keep the interface' goes back to the spec (the word 'interface'); a bare '200 MHz' is a clock change "
+                    "(stage 3), 'close timing at 200 MHz' is stage 6. --dry-run shows the class, the stage and the matched words")
     rs.add_argument("--rewind", type=int)
     rs.add_argument("--max-usd", type=float, help="cost cap for this resumed process (the meter starts at 0)")
     rs.add_argument("--kind", choices=sorted(__import__("agent.graph.pickup", fromlist=["x"]).STAGE_OF_KIND),
-                    help="design resume: the change's class, instead of the keyword classifier")
+                    help="design resume: the change's class, instead of the keyword classifier (each class has a fixed entry stage; "
+                         "`resume ... --dry-run` prints the class, the stage and the matched words)")
     rs.add_argument("--from-stage", type=int, help="design resume: enter at this stage, overriding the rule")
     rs.add_argument("--dry-run", action="store_true", help="design resume: report the freshness and the entry stage only")
     rs.add_argument("--scope", help="design resume of a managed project: the components or hierarchy paths this request may touch "
