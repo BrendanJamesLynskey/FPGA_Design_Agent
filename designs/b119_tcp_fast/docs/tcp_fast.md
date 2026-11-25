@@ -232,6 +232,19 @@ risk logic (`rtl/itch_ouch_tcp_top.sv`, simulation) the first byte of the Ethern
 starts at the verdict and **3 clocks** when it starts speculatively, the same as the stub port. The checksum fields are complete 6 clocks after the first byte, inside the
 header's own transmission time, as the TCP plan claimed.
 
+
+**Cycle cost (per block).** Generated from `cycle_cost.yaml` by `flow/cycle_cost.py`; do not edit between the markers.
+
+<!-- cycle_cost:begin -->
+Cycle cost of each block on the path (clocks of 6.2061 ns, simulation; the first row counts from the clock in which go is presented, the second from the last byte of the triggering ITCH message). Each figure is the difference of two fields of the record named; a row of 0 says why.
+
+| Block | Adds (clocks) | From event | To event | Record | Why |
+|---|---|---|---|---|---|
+| tcp_fast: go to first byte of the frame | 1 | go presented (edge 0) | first byte of the frame (destination MAC) | `results/b119/bench_sim.json` | - |
+| tcp_fast behind the risk logic, frame started speculatively: added to the stub port of brief 110 | 0 | stub port's first word (b110) | first Ethernet byte (b119) | `results/b119/top_sim.json` | the template and the partial sums of the fixed header fields are prepared when software arms the block, so the first byte leaves in the clock after go and the changing fields are added while the header is already on its way (the IPv4 checksum field is complete 4 clocks after go, the TCP one 7) |
+| tcp_fast behind the risk logic, frame started at the verdict: added to the stub port of brief 110 | 0 | stub port's first word (b110) | first Ethernet byte (b119) | `results/b119/top_sim.json` | as the speculative row: the headers add nothing to the first byte |
+<!-- cycle_cost:end -->
+
 Throughput: one segment per 15 clocks (the block is busy that long and drops a `go` meanwhile).
 
 ## 5. Integration notes (phase 2)

@@ -135,6 +135,17 @@ verbatim quote from the hidden spec, otherwise "not specified" and the default s
 The record (asked / answered / defaulted, by whom) goes into `spec.yaml` `resolved_questions`, the stage 0 review
 page and `summary.json`.
 
+**New-protocol intake (brief 190).** When the request names an exchange or messaging protocol (market data, order entry, a feed handler, a binary
+wire format, sequence numbers, a datagram feed, or ITCH, OUCH, FIX or SBE in capitals; a bare "protocol" or "framing" does not count), the harness adds
+six standing questions the spec has not already asked, each with a default and the reason for it (`ensure_protocol_questions`, run beside the
+register-map question): how a session is set up and ended; how messages are delimited; how each field is encoded (width, byte order, signedness,
+scale); the largest message and packet; how sequence numbers behave; what happens on a gap, duplicate or overlap. The defaults are the smallest
+checkable choice (one established session, a length prefix, big-endian unsigned fields listed in a byte map, per-packet numbering from 1, drop duplicates
+and stop and flag on a gap). The byte map and a golden model come before any RTL. The interview's limit of twelve questions still applies, so on a request
+that already has many open questions the later intake questions are defaulted and the record says "limit". The question text is in
+`agent/graph/interview.py`, in public code and not in the pinned private prompts (the register-map question's text is a private prompt); it names no protocol by brand. Moving it to the private prompt set is a planner decision (it needs a pin change). The idea of asking these six first is
+from Edwards 2026, ch 7; the wording, defaults and reasons are ours.
+
 ## Review and rewind (`agent/graph/review.py`, `snapshot.py`)
 
 Each stage end writes a self-contained page (light and dark, no external assets): gates, inputs and outputs, the
