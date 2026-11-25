@@ -1,0 +1,10 @@
+schema: fpga-design-agent/formal_rigour/v1
+scope: "ipv4_udp_tx with MAX_PAYLOAD 4, CSUM 1 (the shipped payload limit is larger: a parameter), any payload stream, destination fields and back-pressure"
+sanity: [c_two_byte_datagram]
+depth:
+  bmc:
+    enough: false
+    why: >-
+      Bounded, not claimed exhaustive. Measured in the cover task: the first output beat is at step 9, the last beat of a frame at step 51 and a two-byte datagram has been sent
+      by step 54; depth 60 holds one datagram's frame and 9 clocks more, not a second datagram behind it, so the framing is not checked across two datagrams. No k-induction
+      proof was attempted.

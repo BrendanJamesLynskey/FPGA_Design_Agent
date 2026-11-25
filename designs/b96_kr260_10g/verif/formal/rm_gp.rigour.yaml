@@ -1,0 +1,19 @@
+schema: fpga-design-agent/formal_rigour/v1
+scope: >-
+  rate_match_gp at AW = 2 (4 entries) and KB = 0 (the symbolic entry follows data bit 0), two free clocks within a 3:1 band. The shipped AW = 4 and the
+  other bit classes (control mask, ordered-set and idle flags) are proved by run_formal.py (results/b115/formal_ci.json), not by the tasks of this file.
+# every assertion NAME is paired with the cover NAME__ante written next to it in rm_gp_props.sv (FV_ANTE); p6b's antecedent (an idle deletion) needs the deeper cover_del task
+sanity: [c_pop_tp, c_ins, c_full, c_wrap, c_stall]
+depth:
+  safety_bmc:
+    enough: true
+    why: >-
+      Cross-check only: safety_prove (k-induction, depth 24) proves every safety assertion for every depth, so safety_bmc is not the argument.
+  progress_bmc:
+    enough: false
+    why: >-
+      Not exhaustive. The response bound is RMAX = (RATIO + 4) + 3 + DEPTH + 1 = 15 read clocks (RATIO 3, DEPTH 4), which fits in depth 40 for one item, but
+      the one non-slot reader clock in 33 needs a long history (the idle-deletion antecedent, which needs it, is first reached at step 65 in cover_del), so depth 40 never
+      exercises the NS term of the rank (results/b115/formal_full.json runs depth 70). The induction step for the ranking function has open counterexamples (docs/formal_study_notes.md section 7): progress is a bounded check.
+unclaimed:
+  progress_prove: "k-induction of the progress properties has open counterexamples (docs/formal_study_notes.md section 7; brief 115 reports progress as bounded); the task is kept for the day the helper invariant closes it, and its result is not relied on"

@@ -8,7 +8,15 @@
     python -m agent review <design-dir> [--out DIR] [--intent FILE] [--improvements FILE] [--no-judge]   (brief 84: review an existing design, read-only)
     python -m agent document <run-dir> [--cc-model M] [--replay doc_calls.jsonl]   (brief 68 C: the DOC step on a finished run)
     python -m agent project check|status|hash|gen-tests <dir> ...     (the project layer, project/cli.py)
+    python -m agent ip search|rank|show|use ...                  (brief 150: the IP library, `python -m agent ip --help`)
     python -m agent improve <design-dir> "<request>" [--more | --edit N "<change>" | --choose N]   (brief 104: analysis, then strategy options; --choose runs one)
+
+    python -m agent doctor [--json] [--no-probe]        (brief 157: what this machine is missing before a first run; no key needed)
+    python -m agent models show                          (brief 157: the model table; no key needed)
+
+Without the access key only these run: ``--help`` at any level, ``doctor``, ``models show`` and ``resume <design-dir> ... --dry-run``
+(``agent/newcomer.py``, the single place that decides it; ``agent/tests/test_157_newcomer_cli.py`` proves everything else still stops at
+the gate). Every other command exits 2 with one line naming FDA_ACCESS_KEY.
 
 A paused run (an interview question or a stage review) prints what it waits for; answer with ``resume --reply``
 ({"answer": ...} for a question; {"decision": "approve"|"edit"|"rewind", "note": ..., "to": N} for a review).
@@ -24,8 +32,23 @@ import json
 import sys
 from pathlib import Path
 
-from agent.core.boards import board_arg, board_name
-from agent.core.session import ROOT
+ROOT = Path(__file__).resolve().parents[1]           # the checkout (agent.core.session.ROOT is the same path; no import, so --help and doctor need no extras)
+
+
+def newcomer_is_design_resume(run_id: str) -> bool:
+    from agent.newcomer import is_design_resume
+    return is_design_resume(run_id)
+
+
+def board_arg(text: str):
+    """``--board``: a board id or the words of a request (agent.core.boards, imported when the option is used)."""
+    from agent.core.boards import board_arg as f
+    return f(text)
+
+
+def board_name(text: str):
+    from agent.core.boards import board_name as f
+    return f(text)
 
 
 def scope_for_record(design: Path) -> dict | None:
@@ -118,7 +141,10 @@ def model_kwargs(a, argv: list[str]) -> dict:
     """The Config fields of the model configuration: the project file, ``--model-config``, which model flags were given, the owner's Fable flag."""
     from agent.models.config import parse_cli_json
     given = tuple(sorted({v for f, v in MODEL_FLAGS.items() if any(x == f or x.startswith(f + "=") for x in argv)}))
-    return dict(models_file=getattr(a, "models_file", None), model_config=parse_cli_json(getattr(a, "model_config", None)) or None,
+    mc = parse_cli_json(getattr(a, "model_config", None))
+    if getattr(a, "budget_scale", None) is not None:          # brief 209b: --budget-scale is one more key of the command-line layer
+        mc = parse_cli_json({**mc, "budget_scale": a.budget_scale})
+    return dict(models_file=getattr(a, "models_file", None), model_config=mc or None,
                 explicit=given, allow_fable=bool(getattr(a, "allow_fable", False)), replay_run=bool(getattr(a, "replay", None)))
 
 
@@ -210,6 +236,8 @@ def models_cmd(a, argv: list[str]) -> int:
     if a.action == "show":
         print(json.dumps(table.record(), indent=1) if a.json else table.show())
         return 0
+    from agent.access import require_or_exit      # brief 157: `check` (and --probe, which spends tokens) is not the exempt `show`
+    require_or_exit("python -m agent models check")
     print(table.show())
     print(f"\nthe table is valid ({len(table.entries())} entries, hash {table.hash})")
     if not a.probe:
@@ -266,9 +294,12 @@ def pickup_cmd(a) -> int:
         print(json.dumps({**report, "resume": "refused: the handover has errors; fix them first"}, indent=1))
         return 2
     try:
-        entry = pickup.entry_stage(ld["handover"], fresh, a.change, a.kind, a.from_stage)
+        entry = getattr(a, "entry_override", None) or pickup.entry_stage(ld["handover"], fresh, a.change, a.kind, a.from_stage)   # brief 159: revise gives its own
     except pickup.PickupError as e:
         print(f"resume: {e}", file=sys.stderr)
+        return 2
+    if entry.get("question"):                        # brief 149: nothing matched; a question, not stage 0
+        print(json.dumps({**report, "resume": "no entry stage: a question", "question": entry["question"]}, indent=1))
         return 2
     report["entry"] = {"stage": entry["stage"], "kind": entry["kind"], "notes": entry.get("notes") or [],
                        "reasons": [{"stage": s, "why": w} for s, w in entry["reasons"]]}
@@ -286,6 +317,8 @@ def pickup_cmd(a) -> int:
         report["resume"] = "dry run" if a.dry_run else "nothing to re-run: the handover is current"
         print(json.dumps(report, indent=1))
         return 0
+    from agent.access import require_or_exit      # brief 157: past the dry run this resume calls models and writes a run: the gate again,
+    require_or_exit("python -m agent resume")     # in case main() let the command line through without a key
     hb = (ld["handover"].get("target") or {}).get("board")
     board = a.board or (hb if hb and (ROOT / "boards" / str(hb)).is_dir() else "nexys_a7_100t")
     ar = ld["handover"].get("agent_run") or {}
@@ -301,6 +334,10 @@ def pickup_cmd(a) -> int:
     rt = new_runtime(cfg, None, replay=a.replay, record=a.record)
     try:
         state = pickup.prepare(ddir, rt, entry, a.change)
+        if getattr(a, "revise_goals", None) is not None:           # brief 159: the typed goals (and a retarget) go into the run's copy, never the source
+            from agent.graph import revise as _rv
+            report["revise_written"] = _rv.write_goals(Path(rt.design), a.revise_goals, getattr(a, "revise_retarget", None),
+                                                       (ld["handover"].get("target") or {}).get("part"))
     except pickup.PickupError as e:
         print(f"resume: {e}", file=sys.stderr)
         return 2
@@ -326,6 +363,41 @@ def pickup_cmd(a) -> int:
     graph = build_graph(checkpointer_for(rt.run_dir), routing=cfg.skill_routing != "off")
     _drive(graph, rt, {"configurable": {"thread_id": rt.run_id}}, state, replies)
     return 0
+
+
+def revise_cmd(a) -> int:
+    """Brief 159: ``agent revise <design> --goal ... [--retarget ...]``: the plan (agent.graph.revise), then, unless --dry-run, the run."""
+    from agent.graph import goals as G
+    from agent.graph import pickup
+    from agent.graph import revise as R
+    ddir = Path(a.design).resolve()
+    try:
+        goals = [G.parse_goal(t, source=a.source) for t in a.goal]
+        ld = pickup.load(ddir)
+        pl = R.plan(ddir, ld, goals, a.retarget)
+    except (G.GoalError, R.ReviseError, pickup.PickupError) as e:
+        print(f"revise: {e}", file=sys.stderr)
+        return 2
+    if ld["fresh"]["errors"]:
+        print(json.dumps({"revise": "refused: the handover has errors; fix them first", "errors": ld["fresh"]["errors"]}, indent=1))
+        return 2
+    out = R.public(pl)
+    if a.dry_run or pl["entry"]["stage"] >= pickup.DOC_ONLY:
+        out["revise"] = "dry run" if a.dry_run else "nothing to re-run: the committed evidence already meets every goal and the handover is current"
+        print(json.dumps(out, indent=1, default=str))
+        return 0
+    print(json.dumps(out, indent=1, default=str))
+    text = "; ".join([c["goal"] for c in out["changes"]] + ([f"retarget to {a.retarget}"] if a.retarget else []))
+    b = argparse.Namespace(**vars(a))
+    b.run_id, b.change, b.kind, b.from_stage, b.scope, b.strategy_file, b.rewind, b.stop_after = (
+        str(ddir), "revise: " + text, None, None, None, None, None, getattr(a, "stop_after", None))
+    b.entry_override = {"stage": pl["entry"]["stage"], "kind": pl["entry"]["kind"],
+                        "reasons": [(r["stage"], r["why"]) for r in pl["entry"]["reasons"]], "notes": pl["entry"]["notes"]}
+    b.revise_goals = pl["_after"]
+    b.revise_retarget = (pl["retarget"] or {}).get("to") if pl["retarget"] and pl["retarget"].get("stage") is not None else None
+    if b.revise_retarget and b.revise_retarget.get("board") and not getattr(a, "board", None):
+        b.board = b.revise_retarget["board"]
+    return pickup_cmd(b)
 
 
 def live_cmd(a) -> int:
@@ -414,27 +486,28 @@ def review_cmd(a) -> int:
     return 0 if rep["design"]["unchanged"] else 2
 
 
-def main(argv: list[str] | None = None) -> int:
-    args = sys.argv[1:] if argv is None else argv
-    if args[:1] == ["project"]:                      # brief 27B: the project layer (project/), not part of the agent graph
-        from project.cli import main as project_main
-        return project_main(args[1:])
-    from agent.access import require_or_exit      # brief 94: run, resume and document all start here
-    require_or_exit("python -m agent")
-    from agent.graph.role_models import parse_roles
-    from agent.graph.run import Config, build_graph, checkpointer_for, new_runtime
-    ap = argparse.ArgumentParser(prog="python -m agent")
-    sub = ap.add_subparsers(dest="cmd", required=True)
-    r = sub.add_parser("run")
-    r.add_argument("spec", type=Path)
+def build_parser() -> argparse.ArgumentParser:
+    """The command line. Building it reads no key and no private file; ``--help`` is argparse's own, so it prints and exits 0 before the
+    access gate (brief 157). Which commands need the key is in ``agent.newcomer.COMMANDS`` and in the epilog."""
+    from agent import newcomer
+    ap = argparse.ArgumentParser(prog="python -m agent", description=newcomer.TOP_DESCRIPTION, epilog=newcomer.TOP_EPILOG,
+                                 formatter_class=argparse.RawDescriptionHelpFormatter)
+    sub = ap.add_subparsers(dest="cmd", required=True, metavar="command")
+    r = sub.add_parser("run", help=newcomer.COMMANDS["run"][0], description=newcomer.COMMANDS["run"][1], epilog=newcomer.RUN_EPILOG,
+                       formatter_class=argparse.RawDescriptionHelpFormatter)
+    r.add_argument("spec", type=Path, help="the plain-English spec (spec.md); a task directory's data/ and bench.yaml sit beside it")
     r.add_argument("--board", default="nexys_a7_100t", type=board_arg,
                    help="a board id or the words of a request (boards/catalogue.yaml; docs/board_catalogue.md)")
-    r.add_argument("--name")
-    r.add_argument("--interview", choices=["on", "oracle", "off"], default="off")
-    r.add_argument("--review", choices=["on", "off"], default="off")
-    r.add_argument("--model", default="openai/gpt-6-luna")
-    r.add_argument("--hidden-spec", type=Path)
-    r.add_argument("--stop-after", type=int)
+    r.add_argument("--name", help="the design's name (default: the spec's directory name)")
+    r.add_argument("--interview", choices=["on", "oracle", "off"], default="off",
+                   help="on: the clarifier asks a person questions; oracle: a model answers them from --hidden-spec; off (default): it assumes")
+    r.add_argument("--review", choices=["on", "off"], default="off", help="on: pause for a person's decision after every stage")
+    r.add_argument("--model", default="openai/gpt-6-luna", help="the OpenRouter model of the default endpoint (see `models show` for every purpose)")
+    r.add_argument("--hidden-spec", type=Path, help="the full spec an interview oracle answers from (evaluation runs)")
+    r.add_argument("--stop-after", type=int, metavar="N",
+                   help="stop after stage N passes; stages count from 0: 0 clarify, 1 board-and-device-planning, 2 rtl-design-creation, "
+                        "3 constraints, 4 synthesis, 5 implementation, 6 timing-closure, 7 power-closure, 8 drc-closure, "
+                        "9 configuration-and-debug. 0-2 need no Vivado; the default (no flag) runs to 9")
     r.add_argument("--harness", choices=["deepagents", "claude_code"], default="deepagents",
                    help="claude_code: each sub-agent turn is a headless `claude -p` on the Max plan (05c)")
     r.add_argument("--cc-model", default="claude-haiku-5-5", help="Claude Code model id (--harness claude_code)")
@@ -448,7 +521,8 @@ def main(argv: list[str] | None = None) -> int:
                                    "roles (record keys): clarify (Clarifier), model (Modeller), tests (Verifier), rtl (Designer)")
     r.add_argument("--no-shell", action="store_true",
                    help="the subject is the USB-UART itself: build, lint and simulate without the test shell "
-                        "(07a2-prep; also set when --hidden-spec sits next to a bench.yaml with no_shell: true)")
+                        "(07a2-prep; also set when --hidden-spec sits next to a bench.yaml with no_shell: true, and for a board "
+                        "with no UART such as the KR260, from its board file: brief 209a)")
     r.add_argument("--data-dir", type=Path,
                    help="the task's data/ files (weights, images ...), copied to <design>/data (07a2-prep; default: "
                         "data/ next to spec.md, when it exists)")
@@ -461,6 +535,8 @@ def main(argv: list[str] | None = None) -> int:
     r.add_argument("--spectest-model", default="claude-sonnet-5-5", help="Claude Code model of the spec-test role and its triage")
     r.add_argument("--spectest-max-loops", type=int, default=2, help="design_wrong round trips per run before 'unresolved'")
     r.add_argument("--max-usd", type=float, help="run cost cap (provider-reported); default RUN_LIMITS")
+    r.add_argument("--budget-scale", type=float, help="brief 209b: multiplies every stage USD budget and the default run cap (for a dearer model; "
+                   "default 1, or `budget_scale:` in a models file); an explicit --max-usd stays as given")
     r.add_argument("--verif-level", choices=["V1", "V2", "V3"], default="V3",
                    help="verification stage stage 2 must reach (default V3, the methodology; V1/V2 only for a cheaper run: "
                         "V3 needs multi-seed runs; the graph itself runs the Verilator coverage run and the mutation run)")
@@ -501,9 +577,10 @@ def main(argv: list[str] | None = None) -> int:
     r.add_argument("--hdl", choices=["sv", "vhdl"], default="sv",
                    help="the design language; vhdl = VHDL-2008 RTL (GHDL lint, GHDL netlist or GHDL simulation, "
                         "read_vhdl -vhdl2008 in Vivado); the test shell stays SystemVerilog")
-    for p in (r, sub.add_parser("resume")):
-        p.add_argument("--replies", type=Path)
-        p.add_argument("--reply")
+    for p in (r, sub.add_parser("resume", help=newcomer.COMMANDS["resume"][0], description=newcomer.COMMANDS["resume"][1],
+                                epilog=newcomer.RESUME_EPILOG, formatter_class=argparse.RawDescriptionHelpFormatter)):
+        p.add_argument("--replies", type=Path, help="a JSON list of replies fed in order to the questions and reviews that pause the run")
+        p.add_argument("--reply", help="one JSON reply to the question or review the run is paused on")
         p.add_argument("--replay", help="LLM replay fixture (no network)")
         p.add_argument("--record", help="record LLM calls to this fixture")
         p.add_argument("--deterministic", action="store_true",
@@ -513,18 +590,25 @@ def main(argv: list[str] | None = None) -> int:
         p.add_argument("--record-tape", help="brief 107: record every model call to this tape directory (private; outside the repo or git-ignored)")
         p.add_argument("--replay-tape", help="brief 107: serve every model call from this tape directory (level 2); a missing call is an error")
     rs = sub._name_parser_map["resume"]
-    rs.add_argument("run_id", help="a run id under runs/, or a design directory with handover.yaml (brief 68 D)")
-    rs.add_argument("change", nargs="?", help="design resume: the change request")
-    rs.add_argument("--rewind", type=int)
+    rs.add_argument("run_id", help="a run id under runs/, or a design directory containing handover.yaml; a name that is not such a "
+                                   "directory is taken as a run id")
+    rs.add_argument("change", nargs="?", help="design resume: the change request, in plain words. Its class sets the entry stage (earliest match wins): "
+                    "spec 0; area, latency, retarget, arch 1; language, mapping, rtl 2; fmax, power, constraints 3; timing 6; board 9. "
+                    "A request that matches no class is a question (exit 2), not stage 0; documentation-only is never guessed (use --kind docs). "
+                    "--dry-run shows the class, the stage and the matched words")
+    rs.add_argument("--rewind", type=int, metavar="N", help="run resume: restore the end of stage N (files, .dcp, checkpoint; hash-checked) and continue there")
     rs.add_argument("--max-usd", type=float, help="cost cap for this resumed process (the meter starts at 0)")
     rs.add_argument("--kind", choices=sorted(__import__("agent.graph.pickup", fromlist=["x"]).STAGE_OF_KIND),
-                    help="design resume: the change's class, instead of the keyword classifier")
+                    help="design resume: the change's class, instead of the keyword classifier (each class has a fixed entry stage; "
+                         "`resume ... --dry-run` prints the class, the stage and the matched words)")
     rs.add_argument("--from-stage", type=int, help="design resume: enter at this stage, overriding the rule")
-    rs.add_argument("--dry-run", action="store_true", help="design resume: report the freshness and the entry stage only")
+    rs.add_argument("--dry-run", action="store_true",
+                    help="design resume only: report the freshness and the entry stage, then stop; needs no key, writes nothing, calls no model. "
+                         "For a run id it does nothing (the run continues, with the key)")
     rs.add_argument("--scope", help="design resume of a managed project: the components or hierarchy paths this request may touch "
                                     "(comma separated; default: resolved from the change text, else every owned component)")
     rs.add_argument("--strategy-file", type=Path, help="design resume: the strategy.json `agent improve --choose` saved (the options offered and the choice go into the run record)")
-    rs.add_argument("--stop-after", type=int)
+    rs.add_argument("--stop-after", type=int, metavar="N", help="stop after stage N passes (stages count from 0; see `run --help`)")
     rs.add_argument("--board", type=board_name, help="design resume: default the handover's target.board when it names a board directory")
     rs.add_argument("--model", default="openai/gpt-6-luna")
     rs.add_argument("--harness", choices=["deepagents", "claude_code"], default="deepagents")
@@ -536,8 +620,19 @@ def main(argv: list[str] | None = None) -> int:
     rs.add_argument("--docs", choices=["on", "off"], default="on")
     rs.add_argument("--models-file", type=Path, help="design resume: the project's model table (a run resume reads the run's own)")
     rs.add_argument("--model-config", help="design resume: JSON command-line layer of the model table")
+    rs.add_argument("--budget-scale", type=float, help="brief 209b: multiplies every stage USD budget and the default run cap")
     rs.add_argument("--allow-fable", action="store_true", help="the owner's flag: permits Fable on a claude_code endpoint")
     rs.add_argument("--allow-model-change", action="store_true", help="resume a run although its model table hash has changed")
+    from agent.graph.revise import add_parser as _revise_parser         # brief 159
+    _revise_parser(sub)
+    rvp = sub._name_parser_map["revise"]
+    for act in rs._actions:                                             # the run options are the resume command's, shared
+        if act.dest in ("max_usd", "board", "stop_after", "model", "harness", "cc_model", "cc_effort", "profile", "roles", "verif_level", "docs",
+                        "models_file", "model_config", "allow_fable", "allow_model_change", "budget_scale"):
+            rvp._add_action(act)
+    for act in sub._name_parser_map["resume"]._actions:
+        if act.dest in ("replies", "reply", "replay", "record", "deterministic", "tape", "record_tape", "replay_tape"):
+            rvp._add_action(act)
     pp = sub.add_parser("propose", help="brief 194: read an input folder and write proposed_settings.yaml (board, part, clocks, I/O standards, PHYs, interfaces, "
                                         "profile), each value with its source. It is the interview's input (agent run --settings FILE); nothing is confirmed here")
     pp.add_argument("folder", type=Path)
@@ -585,7 +680,17 @@ def main(argv: list[str] | None = None) -> int:
     _latency_parser(sub)
     from flow.options.cli import add_parser as _improve_parser           # brief 104
     _improve_parser(sub)
-    a = ap.parse_args(argv)
+    sub.add_parser("doctor", help=newcomer.COMMANDS["doctor"][0], description=newcomer.COMMANDS["doctor"][1],
+                   add_help=False)                      # dispatched in main() before this parser: listed here so --help shows it
+    sub.add_parser("project", help=newcomer.COMMANDS["project"][0], add_help=False)
+    sub.add_parser("ip", help="the IP library: search, rank, show, use (brief 150; plain Python, no model, no Vivado; needs the key)", add_help=False)   # dispatched in main()
+    return ap
+
+
+def _run_main(a, args: list[str], ap: argparse.ArgumentParser) -> int:
+    """Everything after the access gate (or after an exemption): the parsed command line ``a`` runs."""
+    from agent.graph.role_models import parse_roles
+    from agent.graph.run import Config, build_graph, checkpointer_for, new_runtime
     if a.cmd in ("status", "ask", "request"):
         return live_cmd(a)
     if a.cmd == "models":
@@ -609,7 +714,9 @@ def main(argv: list[str] | None = None) -> int:
         return review_cmd(a)
     if a.cmd == "document":
         return document_cmd(a)
-    if a.cmd == "resume" and (Path(a.run_id) / "handover.yaml").is_file():
+    if a.cmd == "revise":
+        return revise_cmd(a)
+    if a.cmd == "resume" and newcomer_is_design_resume(a.run_id):
         return pickup_cmd(a)
     replies = json.loads(a.replies.read_text()) if a.replies else []
     if a.reply:
@@ -719,6 +826,39 @@ def main(argv: list[str] | None = None) -> int:
         first = None
     _drive(graph, rt, lg, first, replies)
     return 0
+
+
+def main(argv: list[str] | None = None) -> int:
+    args = sys.argv[1:] if argv is None else argv
+    if args[:1] == ["project"]:                      # brief 27B: the project layer (project/), not part of the agent graph
+        from project.cli import main as project_main
+        return project_main(args[1:])
+    from agent import newcomer
+    if args[:1] == ["ip"]:                           # brief 150: the IP-library retriever (plain Python: no model, no Vivado); its own --help prints before the gate
+        from agent.ip_cmd import main as ip_main
+        if not (set(args[1:2]) & {"-h", "--help"}):
+            from agent.access import require_or_exit
+            require_or_exit("python -m agent ip")
+        return ip_main(args[1:])
+    if args[:1] == ["doctor"]:                       # brief 157: reads no private file without the key; never prints the key
+        return newcomer.doctor_main(args[1:])
+    try:
+        ap = build_parser()
+        a = ap.parse_args(args)                      # --help and usage errors end here, before the gate: they print text only
+    except ImportError as e:                         # an extra is not installed: help still answers; anything else is gated first
+        if not newcomer.is_missing_package(e):
+            raise                                    # a first-party import error is a bug: keep its traceback
+        return newcomer.without_extras(args, e)
+    from agent.access import require_or_exit      # brief 94: run, resume and document all start here
+    why = newcomer.ungated(a)                        # brief 157: the only commands that run without a key, each with its reason
+    if why is None:
+        require_or_exit("python -m agent")
+    try:
+        return _run_main(a, args, ap)
+    except ImportError as e:
+        if not newcomer.is_missing_package(e):
+            raise
+        return newcomer.missing_extra(a, e)
 
 
 if __name__ == "__main__":

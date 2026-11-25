@@ -1,0 +1,43 @@
+=== risk_glue position registers (pos)
+SLACK 1.140 STARTPOINT u_core/g_rm.u_ip/u_it/u_book/r_tob_px_reg[6][1]/C ENDPOINT u_core/g_rm.u_ip/u_it/u_risk/pos_reg[3][10]/CE REQ 6.206 LOGIC_LEVELS 13
+=== risk_glue verdict counters and queue (the rest of the risk verdict)
+SLACK 0.992 STARTPOINT u_core/g_rm.u_ip/u_it/u_dec/e_px_reg[19]/C ENDPOINT u_core/g_rm.u_ip/u_it/u_risk/dq_reg[0][32]/CE REQ 6.206 LOGIC_LEVELS 7
+=== book_core price ladder RAMs (g_lv[*].lm: the ladder update B3 writes them)
+SLACK 0.115 STARTPOINT u_core/g_rm.u_ip/u_it/u_book/d3_side_reg/C ENDPOINT u_core/g_rm.u_ip/u_it/u_book/g_lv[2].lm_reg_r1_0_7_28_41/RAMA_D1/I REQ 6.206 LOGIC_LEVELS 12
+=== book_core ladder reduction T1 to T2 (t2b_*, t2a_*, w2_*)
+SLACK 0.219 STARTPOINT u_core/g_rm.u_ip/u_it/u_book/t1_inst_reg[0]/C ENDPOINT u_core/g_rm.u_ip/u_it/u_book/t2a_px_reg[23]/D REQ 6.206 LOGIC_LEVELS 9
+=== book_core top of book and update record
+SLACK 2.309 STARTPOINT u_core/g_rm.u_ip/cmd_seq_q_reg[3]/C ENDPOINT u_core/g_rm.u_ip/u_it/u_book/tu_cpx_reg[28]/CE REQ 6.206 LOGIC_LEVELS 4
+=== mold_rx
+SLACK 0.921 STARTPOINT u_core/g_rm.u_ip/u_us/s_keep_reg[1]/C ENDPOINT u_core/g_rm.u_ip/u_it/u_mold/c_trunc_reg[4]/CE REQ 6.206 LOGIC_LEVELS 11
+=== itch_dec
+SLACK 1.019 STARTPOINT u_core/g_rm.u_ip/u_it/u_mold/moff_r_reg[2]/C ENDPOINT u_core/g_rm.u_ip/u_it/u_dec/c_bad_reg[4]/CE REQ 6.206 LOGIC_LEVELS 5
+=== udp_strip
+SLACK 0.665 STARTPOINT u_core/g_rm.u_rx/u_mr/m_v_reg/C ENDPOINT u_core/g_rm.u_ip/u_us/n_fwd_reg[24]/CE REQ 6.206 LOGIC_LEVELS 8
+=== order_seg
+SLACK 0.256 STARTPOINT u_core/g_rm.u_ip/u_it/u_book/r_tob_px_reg[6][1]/C ENDPOINT u_core/g_rm.u_ip/u_it/u_seg/snd_nxt_reg[21]/D REQ 6.206 LOGIC_LEVELS 19
+=== tx_mux
+SLACK 0.292 STARTPOINT u_core/g_rm.u_tx/u_mx/own_reg[1]/C ENDPOINT u_core/g_rm.u_tx/u_mx/gapc_reg[13]/CE REQ 6.206 LOGIC_LEVELS 17
+=== mac64_tx (the CRC path with the multiplexer in front)
+SLACK 0.340 STARTPOINT u_core/g_rm.u_tx/u_mx/own_reg[0]/C ENDPOINT u_core/g_rm.u_tx/u_mt/tail_d_reg[23]/D REQ 6.206 LOGIC_LEVELS 11
+=== itch_path (poison policy, counters, statistics)
+SLACK 0.115 STARTPOINT u_core/g_rm.u_ip/u_it/u_book/d3_side_reg/C ENDPOINT u_core/g_rm.u_ip/u_it/u_book/g_lv[2].lm_reg_r1_0_7_28_41/RAMA_D1/I REQ 6.206 LOGIC_LEVELS 12
+=== whole design, worst 3 setup paths per clock group
+CLOCK tck_out SLACK 29.739 START u_jtag/sr_reg[44]/C END u_jtag/cmd_reg[13]/CE
+CLOCK tck_out SLACK 29.739 START u_jtag/sr_reg[44]/C END u_jtag/cmd_reg[16]/CE
+CLOCK tck_out SLACK 29.739 START u_jtag/sr_reg[44]/C END u_jtag/cmd_reg[19]/CE
+CLOCK clk_u SLACK 1.096 START u_jtag/h_addr_reg[3]_rep__3/C END u_core/h_rdata_reg[26]/D
+CLOCK clk_u SLACK 1.284 START u_jtag/h_addr_reg[3]_rep__3/C END u_core/h_rdata_reg[23]/D
+CLOCK clk_u SLACK 1.498 START u_jtag/h_addr_reg[3]_rep__3/C END u_core/h_rdata_reg[29]/D
+CLOCK gen_gtwizard_gthe4.rxoutclkpcs_int[0] SLACK 1.890 START u_core/u_gt/inst/gen_gtwizard_gthe4_top.gth_wiz_gtwizard_gthe4_inst/gen_gtwizard_gthe4.gen_pwrgood_delay_inst[0].delay_powergood_inst/gen_powergood_delay.intclk_rrst_n_r_reg[4]/C END u_core/u_gt/inst/gen_gtwizard_gthe4_top.gth_wiz_gtwizard_gthe4_inst/gen_gtwizard_gthe4.gen_pwrgood_delay_inst[0].delay_powergood_inst/gen_powergood_delay.wait_cnt_reg[0]/CE
+CLOCK gen_gtwizard_gthe4.rxoutclkpcs_int[0] SLACK 2.178 START u_core/u_gt/inst/gen_gtwizard_gthe4_top.gth_wiz_gtwizard_gthe4_inst/gen_gtwizard_gthe4.gen_pwrgood_delay_inst[0].delay_powergood_inst/gen_powergood_delay.intclk_rrst_n_r_reg[4]/C END u_core/u_gt/inst/gen_gtwizard_gthe4_top.gth_wiz_gtwizard_gthe4_inst/gen_gtwizard_gthe4.gen_pwrgood_delay_inst[0].delay_powergood_inst/gen_powergood_delay.wait_cnt_reg[1]/R
+CLOCK gen_gtwizard_gthe4.rxoutclkpcs_int[0] SLACK 2.178 START u_core/u_gt/inst/gen_gtwizard_gthe4_top.gth_wiz_gtwizard_gthe4_inst/gen_gtwizard_gthe4.gen_pwrgood_delay_inst[0].delay_powergood_inst/gen_powergood_delay.intclk_rrst_n_r_reg[4]/C END u_core/u_gt/inst/gen_gtwizard_gthe4_top.gth_wiz_gtwizard_gthe4_inst/gen_gtwizard_gthe4.gen_pwrgood_delay_inst[0].delay_powergood_inst/gen_powergood_delay.wait_cnt_reg[2]/R
+CLOCK gtwiz_userclk_tx_srcclk_out[0] SLACK 2.004 START u_core/u_c_ppm/syncstages_ff_reg[1][2]/C END u_core/u_c_ppm/syncstages_ff_reg[2][2]/D
+CLOCK gtwiz_userclk_tx_srcclk_out[0] SLACK 2.530 START u_core/u_c_ppm/syncstages_ff_reg[1][0]/C END u_core/u_c_ppm/syncstages_ff_reg[2][0]/D
+CLOCK gtwiz_userclk_tx_srcclk_out[0] SLACK 2.566 START u_core/u_c_ppm/syncstages_ff_reg[1][1]/C END u_core/u_c_ppm/syncstages_ff_reg[2][1]/D
+CLOCK rxusr2 SLACK 1.074 START u_core/u_gt/inst/gen_gtwizard_gthe4_top.gth_wiz_gtwizard_gthe4_inst/gen_gtwizard_gthe4.gen_reset_controller_internal.gen_single_instance.gtwiz_reset_inst/reset_synchronizer_rx_done_inst/rst_in_out_reg/C END u_core/g_rm.u_rx/g_own.u_rm/ent_reg[1][29]/CE
+CLOCK rxusr2 SLACK 1.140 START u_core/u_gt/inst/gen_gtwizard_gthe4_top.gth_wiz_gtwizard_gthe4_inst/gen_gtwizard_gthe4.gen_reset_controller_internal.gen_single_instance.gtwiz_reset_inst/reset_synchronizer_rx_done_inst/rst_in_out_reg/C END u_core/g_rm.u_rx/g_own.u_rm/ent_reg[15][27]/CE
+CLOCK rxusr2 SLACK 1.213 START u_core/u_gt/inst/gen_gtwizard_gthe4_top.gth_wiz_gtwizard_gthe4_inst/gen_gtwizard_gthe4.gen_reset_controller_internal.gen_single_instance.gtwiz_reset_inst/reset_synchronizer_rx_done_inst/rst_in_out_reg/C END u_core/g_rm.u_rx/g_own.u_rm/ent_reg[0][13]/CE
+CLOCK txusr2 SLACK 0.050 START u_core/g_rm.u_tx/gen_left_reg[15]/C END u_core/g_rm.u_tx/u_fs/ip_csum_reg[10]/D
+CLOCK txusr2 SLACK 0.095 START u_core/g_rm.u_tx/gen_left_reg[15]/C END u_core/g_rm.u_tx/u_fs/ip_csum_reg[13]/D
+CLOCK txusr2 SLACK 0.096 START u_core/g_rm.u_tx/gen_left_reg[15]/C END u_core/g_rm.u_tx/u_fs/ip_csum_reg[12]/D

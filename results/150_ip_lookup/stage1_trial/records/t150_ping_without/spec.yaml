@@ -1,0 +1,310 @@
+name: ping_responder
+title: Ping responder
+board: nexys_a7_100t
+part: xc7a100tcsg324-1
+top: ping_top
+clocks:
+- name: clk
+  port: clk_100mhz
+  source: CLK100MHZ board oscillator, 100 MHz (10 ns period)
+  role: system clock for all logic, MAC and register block
+- name: refclk
+  port: eth_refclk
+  source: generated in the FPGA by toggling a flop on clk, 50 MHz
+  role: RMII reference clock driven to the PHY and used as the RMII receive/transmit
+    clock domain
+reset:
+  name: cpu_resetn
+  port: cpu_resetn
+  polarity: active_low
+  source: CPU RESET pushbutton (CPU_RESETN), active low
+  behaviour: synchronised to clk; while asserted, all state returns to reset values
+    and eth_rstn is driven low
+parameters:
+  LOCAL_IPV4: '0xC0A80132'
+  LOCAL_MAC: '0x020000000050'
+  LED_HOLD_CYCLES: 10000000
+  REPLY_TTL: 64
+ports:
+- name: clk_100mhz
+  direction: input
+  width: 1
+  pin_role: CLK100MHZ oscillator
+- name: cpu_resetn
+  direction: input
+  width: 1
+  pin_role: CPU RESET pushbutton, active low
+- name: eth_refclk
+  direction: output
+  width: 1
+  pin_role: Ethernet PHY REF_CLK, 50 MHz from FPGA
+- name: eth_rstn
+  direction: output
+  width: 1
+  pin_role: Ethernet PHY reset, active low
+- name: eth_crsdv
+  direction: input
+  width: 1
+  pin_role: Ethernet PHY RMII carrier sense / receive data valid
+- name: eth_rxerr
+  direction: input
+  width: 1
+  pin_role: Ethernet PHY RMII receive error
+- name: eth_rxd
+  direction: input
+  width: 2
+  pin_role: Ethernet PHY RMII receive data, 2 bits
+- name: eth_txen
+  direction: output
+  width: 1
+  pin_role: Ethernet PHY RMII transmit enable
+- name: eth_txd
+  direction: output
+  width: 2
+  pin_role: Ethernet PHY RMII transmit data, 2 bits
+- name: eth_mdc
+  direction: output
+  width: 1
+  pin_role: Ethernet PHY management clock, driven low (MDIO not used)
+- name: led
+  direction: output
+  width: 1
+  pin_role: LED0 (LD0), lit while an echo reply hold timer runs
+behaviour:
+  receive:
+  - Assemble Ethernet frames from eth_rxd and eth_crsdv, sampled on eth_refclk rising
+    edge
+  - Check the Ethernet FCS of each frame and discard frames with a bad FCS
+  - Discard frames shorter than 64 bytes or longer than 1518 bytes, including FCS
+  - Pass frames with EtherType 0x0806 (ARP) or 0x0800 (IPv4) to the protocol stage,
+    drop all others
+  arp:
+  - Answer an ARP request whose target protocol address is LOCAL_IPV4 with an ARP
+    reply carrying LOCAL_MAC
+  - Ignore ARP requests whose target protocol address is not LOCAL_IPV4
+  icmp_echo:
+  - Accept an IPv4 packet only when its destination address equals LOCAL_IPV4 and
+    its protocol field is 1 (ICMP)
+  - Drop IPv4 packets with a bad IPv4 header checksum, fragmented packets, or ICMP
+    messages with a bad ICMP checksum
+  - For an ICMP echo request (type 8, code 0) build an echo reply (type 0, code 0)
+    with the same identifier, sequence number and payload
+  - Set the reply destination MAC and IPv4 address to the request source, and the
+    reply source MAC and IPv4 address to LOCAL_MAC and LOCAL_IPV4
+  - Recompute the IPv4 header checksum and the ICMP checksum of the reply before transmission
+  - Transmit the reply on eth_txd and eth_txen with the Ethernet FCS appended
+  led:
+  - Start the led hold timer when an echo reply transmission begins
+  - Drive led high while the hold timer counts LED_HOLD_CYCLES cycles, then drive
+    led low
+  - Restart the hold timer from LED_HOLD_CYCLES if another echo reply begins while
+    the timer runs
+  registers:
+  - Return the design ID 0x50494E47 (ASCII PING) on a read of register ID; the register
+    is read-only
+  reset:
+  - While cpu_resetn is low, drive eth_rstn low, eth_txen low and led low
+registers:
+  map:
+  - offset: '0x00'
+    name: ID
+    access: RO
+    reset: '0x50494E47'
+    bits: '[31:24] ''P'' 0x50, [23:16] ''I'' 0x49, [15:8] ''N'' 0x4E, [7:0] ''G''
+      0x47'
+timing:
+  latency:
+    request_end_to_reply_start: fixed pipeline of at most 64 clk cycles after the
+      last FCS-checked byte of the request, assumed; to be confirmed in simulation
+    led_on_delay: led rises on the clk cycle after the reply transmission begins
+    led_hold: LED_HOLD_CYCLES clk cycles (100 ms at 100 MHz)
+  constraints:
+    clock_period: 10 ns on clk; timing must close at this period with no failing setup
+      or hold paths
+    refclk_crossing: eth_rxd and eth_crsdv are sampled in the refclk domain and crossed
+      to clk through a handshake or FIFO
+resources_expected:
+  lut: about 1500
+  ff: about 1200
+  bram: 2 RAMB36 for the frame buffer holding one 1518-byte frame
+  dsp: 0
+  note: estimate for a single-frame store-and-forward responder; reviewed by the resources
+    report
+assumptions:
+- assumption: The Nexys A7-100T Ethernet PHY is an RMII device clocked by the FPGA
+    50 MHz eth_refclk output
+  reason: the board places the PHY in RMII mode with the FPGA supplying the reference
+    clock, so no external oscillator is needed
+- assumption: The PHY is strapped for autonegotiation and its MDIO interface is not
+    used
+  reason: the request asks only for a fixed address and no PHY configuration, so the
+    default straps are relied on
+- assumption: The link runs at 100 Mb/s full duplex with the link partner
+  reason: the design only has the 50 MHz RMII clock path and no 10 Mb/s clock enable
+- assumption: The FPGA ships the MAC address that the user will assign, and the default
+    in parameters is used until the user answers
+  reason: spec.md asks for a MAC address without giving one
+- assumption: The CPU reset button is the only reset source
+  reason: spec.md says reset with the CPU reset button
+- assumption: The design drives eth_refclk and eth_mdc only; eth_mdio is not connected
+    in the top level
+  reason: no MDIO access is requested
+requirements:
+- id: REQ-01
+  text: The design transmits an ICMP echo reply for each ICMP echo request whose destination
+    IPv4 address is 192.168.1.50
+  proof:
+  - simulation
+  - hardware
+- id: REQ-02
+  text: The echo reply destination MAC address equals the source MAC address of the
+    request
+  proof:
+  - simulation
+- id: REQ-03
+  text: The echo reply source MAC address equals LOCAL_MAC
+  proof:
+  - simulation
+- id: REQ-04
+  text: The echo reply destination IPv4 address equals the source IPv4 address of
+    the request
+  proof:
+  - simulation
+- id: REQ-05
+  text: The echo reply source IPv4 address equals 192.168.1.50
+  proof:
+  - simulation
+- id: REQ-06
+  text: The echo reply ICMP type field equals 0 and the code field equals 0
+  proof:
+  - simulation
+- id: REQ-07
+  text: The echo reply payload equals the request payload byte for byte
+  proof:
+  - simulation
+- id: REQ-08
+  text: The echo reply IPv4 header checksum verifies to 0xFFFF when the receiver sums
+    the header
+  proof:
+  - simulation
+- id: REQ-09
+  text: The echo reply ICMP checksum verifies to 0xFFFF when the receiver sums the
+    ICMP message
+  proof:
+  - simulation
+- id: REQ-10
+  text: The design transmits no frame for an echo request whose destination IPv4 address
+    differs from 192.168.1.50
+  proof:
+  - simulation
+- id: REQ-11
+  text: The design transmits no frame for an echo request whose ICMP checksum is wrong
+  proof:
+  - simulation
+- id: REQ-12
+  text: The led output is high on the 1st clk cycle after an echo reply transmission
+    begins
+  proof:
+  - simulation
+  - hardware
+- id: REQ-13
+  text: The led output stays high for exactly LED_HOLD_CYCLES clk cycles when no further
+    reply begins
+  proof:
+  - simulation
+- id: REQ-14
+  text: The led hold timer restarts from LED_HOLD_CYCLES when a second echo reply
+    begins before the first hold ends
+  proof:
+  - simulation
+- id: REQ-15
+  text: A read of register ID at offset 0x00 returns 0x50494E47
+  proof:
+  - simulation
+  - hardware
+- id: REQ-16
+  text: While cpu_resetn is low the led output is low and the eth_txen output is low
+  proof:
+  - formal
+  - hardware
+- id: REQ-17
+  text: The design answers an ARP request whose target protocol address is 192.168.1.50
+    with an ARP reply
+  proof:
+  - simulation
+  - hardware
+- id: REQ-18
+  text: The design runs the RMII interface at 100 Mb/s with a 50 MHz eth_refclk
+  proof:
+  - hardware
+- id: REQ-19
+  text: The implemented design meets timing at the 10 ns clk period with zero failing
+    setup endpoints
+  proof:
+  - analysis
+open_questions: []
+resolved_questions:
+- question: 'Register map: give the offset, width, reset value and access of every
+    register (the design ID at least). Is the ID register the only register?'
+  answer: One 32-bit read-only register ID at offset 0x00, reset 0x50494E47, access
+    RO, no other registers
+  status: defaulted
+  by: default
+  default_reason: spec.md says the design ID reads PING through the shell but gives
+    no offset, so the map is proposed here and must be confirmed
+- question: What MAC address should the board use?
+  answer: 0x020000000050 (02:00:00:00:00:50), a locally administered unicast address
+  status: defaulted
+  by: default
+  default_reason: spec.md asks for a MAC address without giving a value and the locally
+    administered range avoids clashing with vendor addresses
+- question: Should the board answer ARP requests for 192.168.1.50?
+  answer: Yes, answer ARP requests for 192.168.1.50 with an ARP reply
+  status: defaulted
+  by: default
+  default_reason: other machines must learn the MAC address before they can send echo
+    requests on a LAN, so ping fails without ARP
+- question: Should the LED also light for ARP replies?
+  answer: No, the LED lights only for ICMP echo replies
+  status: defaulted
+  by: default
+  default_reason: spec.md says light the LED each time a reply is sent, read as ping
+    replies; ARP is a separate protocol
+- question: How long should the LED stay lit after a reply?
+  answer: LED_HOLD_CYCLES 10000000, which is 100 ms at 100 MHz
+  status: defaulted
+  by: default
+  default_reason: spec.md gives no duration and 100 ms is long enough to see a single
+    reply
+- question: Should broadcast or multicast echo requests be answered?
+  answer: No, only unicast echo requests addressed to 192.168.1.50 are answered
+  status: defaulted
+  by: default
+  default_reason: spec.md names one fixed address and answering broadcasts would reply
+    to every host on the segment
+- question: Should fragmented IPv4 packets or echo requests with payloads larger than
+    one frame be handled?
+  answer: No, fragmented packets are dropped and echo payloads are limited to what
+    fits in one 1518-byte frame
+  status: defaulted
+  by: default
+  default_reason: reassembly is not requested and the frame buffer holds one frame
+- question: Should 10 Mb/s links be supported?
+  answer: No, the design runs at 100 Mb/s only
+  status: defaulted
+  by: default
+  default_reason: the RMII clock enable for 10 Mb/s is not requested and the spec
+    names no link speed
+- question: Which TTL value is used in the reply?
+  answer: '64'
+  status: defaulted
+  by: default
+  default_reason: 64 is the common default TTL for IPv4 hosts and spec.md gives no
+    value
+- question: Should the design check the Ethernet FCS on receive and append it on transmit?
+  answer: Yes, bad-FCS frames are dropped and the FCS is generated on every transmitted
+    frame
+  status: defaulted
+  by: default
+  default_reason: without FCS handling the PHY-facing frames are invalid on a real
+    network

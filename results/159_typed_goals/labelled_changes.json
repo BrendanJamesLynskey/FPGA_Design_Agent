@@ -1,0 +1,98 @@
+[
+ {
+  "id": "C01",
+  "design": "t1_dimmer_counter",
+  "goals": [
+   "lut<=700"
+  ],
+  "retarget": null,
+  "required": "met",
+  "why": "LUT 487 measured (M1, routed base build) is within 700"
+ },
+ {
+  "id": "C02",
+  "design": "t1_dimmer_counter",
+  "goals": [
+   "lut<=400"
+  ],
+  "retarget": null,
+  "required": 1,
+  "why": "487 measured LUTs exceed 400: the resource budget and architecture change"
+ },
+ {
+  "id": "C03",
+  "design": "t1_dimmer_counter",
+  "goals": [
+   "fmax>=150MHz"
+  ],
+  "retarget": null,
+  "required": 3,
+  "why": "the committed build was timed at 100 MHz: a tighter clock constraint and a new build"
+ },
+ {
+  "id": "C04",
+  "design": "t1_dimmer_counter",
+  "goals": [
+   "power<=0.1W"
+  ],
+  "retarget": null,
+  "required": 3,
+  "why": "0.15 W estimated in the committed build exceeds 0.1 W: a new build reports the effect; closure reopens RTL if needed"
+ },
+ {
+  "id": "C05",
+  "design": "t1_dimmer_counter",
+  "goals": [],
+  "retarget": "xc7a200tfbg484-1",
+  "required": 3,
+  "why": "same family (Artix-7), new package: new pins and constraints and a new build; RTL kept, the utilisation gate re-checks it"
+ },
+ {
+  "id": "C06",
+  "design": "b58a_trigger",
+  "goals": [
+   "latency.decision_clocks_speculative<=10clk"
+  ],
+  "retarget": null,
+  "required": "met",
+  "why": "8 clocks measured (M7) are within 10"
+ },
+ {
+  "id": "C07",
+  "design": "b58a_trigger",
+  "goals": [
+   "latency.decision_clocks_speculative<=6clk"
+  ],
+  "retarget": null,
+  "required": 1,
+  "why": "8 measured clocks exceed 6: the pipeline depth is architecture"
+ },
+ {
+  "id": "C08",
+  "design": "b58a_trigger",
+  "goals": [],
+  "retarget": "xc7a200tfbg484-1",
+  "required": 1,
+  "why": "UltraScale+ to 7-series: another family, so the architecture plan, the primitives and the family advice change"
+ },
+ {
+  "id": "C09",
+  "design": "b96_kr260_10g",
+  "goals": [
+   "power<=1.5W"
+  ],
+  "retarget": null,
+  "required": "met",
+  "why": "1.087 W estimated in the committed build (M5) is within 1.5 W"
+ },
+ {
+  "id": "C10",
+  "design": "b96_kr260_10g",
+  "goals": [
+   "lut<=5000"
+  ],
+  "retarget": null,
+  "required": 1,
+  "why": "6167 measured LUTs exceed 5000: the resource budget and architecture change"
+ }
+]

@@ -94,6 +94,21 @@ BUILD_YAML_KEYS = frozenset({"top", "part", "board", "sources", "constraints", "
                              "hdl", "ip_tcl", "netlists"})
 
 
+#: stages that run before the RTL is written (agent/graph/stages.py): a `sources` glob over the design's own rtl/ may match nothing yet
+PRE_RTL_STAGES = frozenset({"clarify", "board-and-device-planning"})
+_RTL_SUFFIXES = (".vhd", ".vhdl", ".sv", ".v")
+
+
+def rtl_pending(s: Session, pat: str) -> bool:
+    """Brief 167b: True when ``pat`` is a glob over the design's own ``rtl/`` directory with an HDL suffix and the session is still
+    before the RTL stage. The agent writes build.yaml at stage 1 (brief 167: 5 of 6 VHDL runs stopped there, SystemVerilog shares the path);
+    from stage 2 on the glob must match, so a pending source is a state stage 2 has to satisfy."""
+    if getattr(s, "stage", "") not in PRE_RTL_STAGES:
+        return False
+    p = Path(pat)
+    return p.suffix in _RTL_SUFFIXES and (s.root / p).parent.resolve() == (s.design / "rtl").resolve()
+
+
 def load_build_cfg(s: Session) -> dict[str, Any]:
     """build.yaml with every value that reaches Tcl or a command line validated. Raises SecurityError."""
     f = s.design / "build.yaml"
@@ -132,6 +147,8 @@ def load_build_cfg(s: Session) -> dict[str, Any]:
             if not isinstance(pat, str) or pat.startswith("/") or ".." in Path(pat).parts or "\x00" in pat:
                 raise SecurityError("build-yaml", f"{key} entry {pat!r} must be a repo-relative path without '..'")
             hits = glob.glob(str(s.root / pat))
+            if not hits and key == "sources" and rtl_pending(s, pat):
+                continue                       # brief 167b: stage 1 plans the build before the RTL exists; stage 2 and later refuse it
             if not hits:
                 raise SecurityError("build-yaml", f"{key} entry {pat!r} matches no file")
             for h in hits:
@@ -756,7 +773,7 @@ def gates(s: Session, kind: str = "stages", variant: str = "base") -> dict:
         out = s.design / "build" / "bringup_ready.json"
         out.parent.mkdir(parents=True, exist_ok=True)
         out.unlink(missing_ok=True)
-        r = s.runner.run("bringup_ready", [PY, str(s.root / "flow" / "hw_dry_check.py"), str(s.design), "--json", str(out)],
+        r = s.runner.run("bringup_ready", [PY, str(s.root / "flow" / "hw_dry_check.py"), str(s.design), "--json", str(out), "--board", str(s.board)],
                          s.root, timeout=120)
         return {"ok": r.returncode == 0, "output": _text_out(r), "returncode": r.returncode, "gates": _read_json(out)}
     if kind == "verif":
@@ -858,13 +875,13 @@ def report_digest(s: Session, name: str, variant: str = "base", level: str = "su
 
 
 CHECK_NAMES = ("all", "lint", "standards", "resets", "cdc", "methodology", "drc", "exceptions", "io", "clocking",
-               "dsp_ram_mapping", "control_sets", "fsm", "axi", "axi_profile", "gt_plan", "constants", "stale", "constraint_scope", "xpm_sim", "doc")
+               "dsp_ram_mapping", "init_values", "control_sets", "fsm", "axi", "axi_profile", "gt_plan", "constants", "stale", "constraint_scope", "xpm_sim", "cdc_margin", "clock_mux", "fastpath", "doc")
 
 
 @tool("check", "Run design checks from the check suite (flow/checks) and get a compact digest: per check pass, fail, "
                "partial or not run (with the reason), then findings with rule id, where, a one-line fix and the KB skill to "
                "load. names: [\"all\"] (every check that applies at the scope) or any of lint, standards, resets, cdc, "
-               "methodology, drc, exceptions, io, clocking, dsp_ram_mapping, control_sets, fsm, axi, axi_profile, gt_plan, doc. scope: rtl "
+               "methodology, drc, exceptions, io, clocking, dsp_ram_mapping, init_values, control_sets, fsm, axi, axi_profile, gt_plan, cdc_margin, clock_mux, doc. scope: rtl "
                "(sources only), synth or route (the build's reports; reports the build did not write are made in one Vivado "
                "session on the checkpoint), auto (the latest build stage). level: summary, standard (5 findings per check) or "
                "detail (30). The full result is written under build/checks/ and named in the digest; read it with read_file.",
@@ -977,6 +994,59 @@ def spec_items(s: Session) -> dict:
         f"{r.get('id')}: [{', '.join(r.get('proof') or [])}] {str(r.get('text', ''))[:200]}" for r in reqs)) if reqs else ""
     return {"output": "\n".join(f"{i}: {t[:240]}" for i, t in rows) + tail, "ids": ids, "count": len(ids),
             "requirements": [{"id": r.get("id"), "proof": r.get("proof")} for r in reqs]}
+
+
+@tool("ip_lookup", "Look in the IP library (ip_lib, 24 verified-by-simulation entries, SystemVerilog only) before writing a block. "
+                   "action=search: find entries for a plain-English request (words, a function name) and rank their variants (fits / does not fit / unknown: a figure never measured) against "
+                   "an optional part, clock, budget and II; the answer is 'nothing fits' when no entry does, with the nearest misses "
+                   "marked as such. action=show: the contract, variants, measured costs, verification label and an instantiation "
+                   "snippet of one entry. Costs are Artix-7 measurements unless a row names another part. Read-only; it never copies "
+                   "files (the owner's `python -m agent ip use` does). Each call is logged to build/ip_lookup.jsonl.",
+      {"action": {"type": "string", "enum": ["search", "show"]},
+       "query": {"type": "string", "maxLength": 300},
+       "block": {"type": "string", "pattern": "^[a-z0-9_]{1,40}$"},
+       "part": {"type": "string", "pattern": "^[A-Za-z0-9_-]{1,40}$"},
+       "clock_ns": {"type": "number", "exclusiveMinimum": 0},
+       "budget": {"type": "object", "properties": {k: {"type": "integer", "minimum": 0} for k in ("lut", "ff", "lutram", "bram_tiles", "dsp")},
+                  "additionalProperties": False},
+       "need_ii": {"type": "integer", "minimum": 1},
+       "objective": {"type": "string", "enum": ["area", "fabric", "throughput", "fmax"]},
+       "language": {"type": "string", "enum": ["sv", "v", "vhdl"]},
+       "params": {"type": "object", "additionalProperties": {"type": ["integer", "string"]}},
+       "variant": {"type": "string", "pattern": "^[a-z0-9_]{1,40}$"},
+       "k": {"type": "integer", "minimum": 1, "maximum": 5}},
+      ["action"])
+def ip_lookup(s: Session, action: str, query: str = "", block: str = "", part: str | None = None, clock_ns: float | None = None,
+              budget: dict | None = None, need_ii: int | None = None, objective: str = "area", language: str = "sv",
+              params: dict | None = None, variant: str | None = None, k: int = 3) -> dict:
+    from flow import iplookup
+    try:
+        if action == "search":
+            if not query.strip():
+                return {"ok": False, "output": "search needs a query (the request in words)"}
+            res = iplookup.lookup(query, part, clock_ns, budget, need_ii, objective, language, params, k)
+            text = iplookup.render(res)
+            considered = [{"block": h["block"], "score": h["score"], "matched": h["matched"]} for h in res["hits"]] or \
+                         [{"near_miss": h["block"], "score": h["score"]} for h in res["nearest_miss"]]
+            rec = {"action": "search", "query": query, "fits": res["fits"], "considered": considered}
+        elif action == "show":
+            if not block:
+                return {"ok": False, "output": "show needs a block (an ip_lib entry name)"}
+            res = iplookup.show(block, params, variant, language, part)
+            text = json.dumps(res, indent=1)
+            rec = {"action": "show", "block": block}
+        else:
+            return {"ok": False, "output": f"unknown action {action!r}"}
+    except ValueError as e:
+        return {"ok": False, "output": f"ip_lookup: {e}"}
+    try:                                        # the stage-1 record: which entries were considered (the tool never writes the design)
+        d = s.design / "build"
+        d.mkdir(parents=True, exist_ok=True)
+        with (d / "ip_lookup.jsonl").open("a") as f:
+            f.write(json.dumps({**rec, "time": time.strftime("%Y-%m-%d %H:%M:%S")}) + "\n")
+    except OSError:
+        pass
+    return {"output": text, "result": res, "ok": True, "untrusted": False}
 
 
 # --- the frozen knowledge bank --------------------------------------------------------------------------------------
