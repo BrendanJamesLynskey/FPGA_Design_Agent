@@ -164,6 +164,15 @@ module b96_core #(
     // ---------------------------------------------------------------- brief 127: the ITCH path's registers and vectors
     // CFG2 (host -> core clock) is the register words below, STAT2 (core clock -> host) the counters and stamps of itch_path; both are coherent copies by hs_vec like cfg and the status vectors.
     logic [31:0] c2 [NCW];
+    logic [31:0] c2s [NCW];                         // brief 188: staged copies of the limit words (host writes land here; one IT_CMD COMMIT copies them all to c2 in one clock)
+    function automatic logic is_staged(input int w);
+        return w == C_THR || w == C_QTY || w == C_MAXQTY || w == C_MAXPOS || w == C_BAND || w == C_PXOFF || w == C_REFPX || w == C_REFAGE;
+    endfunction
+    logic lim_pending;
+    always_comb begin
+        lim_pending = 1'b0;
+        for (int i = 0; i < NCW; i++) if (is_staged(i) && c2s[i] != c2[i]) lim_pending = 1'b1;
+    end
     logic [7:0]  c2_cmd_seq, c2_rpw_seq, c2_tcpf_seq;
     logic [15:0] c2_cmd_bits;
     logic [32*NCW-1:0] cfg2_vec, cfg2_tx;
@@ -290,8 +299,9 @@ module b96_core #(
             gen_kind <= 2'd2; gen_len <= 16'd66; gen_inst <= 16'd1; gen_price <= 32'd9950; gen_interval <= 32'd2000; gen_count <= 32'd1;
             i2c_scl_r <= 1'b0; i2c_sda_r <= 1'b0; sm_en <= 1'b0; sm_valid <= 1'b0; sm_data <= '0; sm_addr_r <= '0;
             rx_snap <= '0; tx_snap <= '0;
-            for (int i = 0; i < NCW; i++) c2[i] <= '0;
+            for (int i = 0; i < NCW; i++) begin c2[i] <= '0; c2s[i] <= '0; end
             c2[C_CTRL] <= 32'h10; c2[C_THR] <= 32'd1000000; c2[C_QTY] <= 32'd100; c2[C_MAXQTY] <= 32'd500; c2[C_MAXPOS] <= 32'd1000; c2[C_BAND] <= 32'd20000;
+            c2s[C_THR] <= 32'd1000000; c2s[C_QTY] <= 32'd100; c2s[C_MAXQTY] <= 32'd500; c2s[C_MAXPOS] <= 32'd1000; c2s[C_BAND] <= 32'd20000;
             c2[C_ORDF0] <= 32'h4E505933; c2[C_ORDF1] <= 32'h4E4E;
             c2[C_WATCH] <= 32'h20202020; c2[C_WATCH+1] <= 32'h41414120; c2[C_WATCH+2] <= 32'h20202020; c2[C_WATCH+3] <= 32'h42424220;
             c2[C_WATCH+4] <= 32'h20202020; c2[C_WATCH+5] <= 32'h43434320; c2[C_WATCH+6] <= 32'h20202020; c2[C_WATCH+7] <= 32'h44444420;
@@ -342,10 +352,14 @@ module b96_core #(
                     12'h090: begin sm_addr_r <= h_wdata[7:0]; sm_en <= 1'b1; sm_valid <= 1'b0; end
                     default: if (h_addr >= 12'h300 && h_addr < 12'h380) begin
                         case (c2_wi)
-                            C_CTRL:     c2[C_CTRL] <= {26'd0, h_wdata[5:0]};
+                            C_CTRL:     c2[C_CTRL] <= {h_wdata[31:16], 9'd0, h_wdata[6:0]};      // bits 6:0 flags (6 REF_SW), 31:16 HOLDOFF; immediate, not staged
                             C_ORDF1:    c2[C_ORDF1] <= {16'd0, h_wdata[15:0]};
                             C_FEEDPORT: c2[C_FEEDPORT] <= {16'd0, h_wdata[15:0]};
-                            C_CMD:      begin c2_cmd_bits <= h_wdata[15:0]; c2_cmd_seq <= c2_cmd_seq + 8'd1; end
+                            C_CMD:      begin
+                                c2_cmd_bits <= h_wdata[15:0]; c2_cmd_seq <= c2_cmd_seq + 8'd1;
+                                if (h_wdata[M_COMMIT]) for (int i = 0; i < NCW; i++) if (is_staged(i)) c2[i] <= c2s[i];     // every staged limit changes in this one clock
+                            end
+                            C_THR, C_QTY, C_MAXQTY, C_MAXPOS, C_BAND, C_PXOFF, C_REFPX, C_REFAGE: c2s[c2_wi] <= h_wdata;     // staged: no effect until IT_CMD COMMIT
                             C_RPW:      c2[C_RPW] <= {24'd0, h_wdata[7:0]};
                             C_RPCFG:    c2[C_RPCFG] <= {16'd0, h_wdata[15:0]};
                             C_RPWHI:    begin c2[C_RPWHI] <= h_wdata; c2_rpw_seq <= c2_rpw_seq + 8'd1; end
@@ -397,11 +411,12 @@ module b96_core #(
             default: begin
                 if (h_addr >= 12'h300 && h_addr < 12'h380) begin
                     rd = (c2_wi < NCW) ? c2[c2_wi] : 32'd0;
-                    if (c2_wi == C_CMD) rd = {8'd0, c2_cmd_seq, 16'd0};
+                    if (c2_wi < NCW && is_staged(c2_wi)) rd = c2s[c2_wi];                  // a read returns the staged value; the active one differs until COMMIT (IT_CMD bit 0 reads 1 meanwhile)
+                    if (c2_wi == C_CMD) rd = {8'd0, c2_cmd_seq, 15'd0, lim_pending};
                     if (c2_wi == C_RPW) rd = {8'd0, c2_rpw_seq, 8'd0, c2[C_RPW][7:0]};
                     if (c2_wi == C_TCPFA) rd = {8'd0, c2_tcpf_seq, c2[C_TCPFA][15:0]};
                     if (c2_wi == C_TCPFD) rd = c2[C_TCPFD];
-                    if (c2_wi > C_RPCFG) rd = 32'd0;
+                    if (c2_wi > C_RPCFG && c2_wi < C_REFPX) rd = 32'd0;
                 end
                 else if (h_addr >= 12'h400 && h_addr < 12'h400 + 12'(4 * NSW)) rd = stat2_snap[32 * s2_i +: 32];
                 else if (h_addr >= 12'h100 && h_addr < 12'h100 + 12'(4 * NRXW)) rd = rx_snap[32 * rx_i +: 32];

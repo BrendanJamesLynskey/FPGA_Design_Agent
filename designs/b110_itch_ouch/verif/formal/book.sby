@@ -1,0 +1,31 @@
+# SymbiYosys: book_core quantity invariants (brief 188, k-induction added by brief 191), properties bound from book_props.sv.
+#   bmc   : Q1..Q6 and the invariants N1..N2 from reset, bounded (depth 12)
+#   prove : k-induction (depth 1 is enough: the invariants N1..N2 make Q1..Q6 inductive); needs book_core's FORMAL_BOOK views (defined below, never defined in a build)
+#   cover : the saturation and a live level are reachable (the properties are not vacuous)
+# Run: sby -f book.sby <task>      (OSS CAD Suite 2026-11-12, as designs/b96_kr260_10g/verif/formal/rm_gp.sby); run_book_formal.py runs the instances, the ablations and the seeded faults.
+[tasks]
+bmc
+prove
+cover
+
+[options]
+bmc: mode bmc
+bmc: depth 12
+prove: mode prove
+prove: depth 4
+cover: mode cover
+cover: depth 14
+
+[engines]
+smtbmc yices
+
+[script]
+plugin -i slang
+read_slang -D FORMAL_BOOK --top book_core -G N_INST=2 -G LEVELS=4 -G ORD_AW=2 itch_pkg.sv book_core.sv book_props.sv book_bind.sv
+prep -top book_core
+
+[files]
+../../rtl/itch_pkg.sv
+../../rtl/book_core.sv
+book_props.sv
+book_bind.sv

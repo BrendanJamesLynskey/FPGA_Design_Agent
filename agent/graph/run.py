@@ -41,7 +41,7 @@ from agent.core.runner import ContainerRunner, LocalRunner, container_available
 from agent.core.session import ROOT
 from agent.graph import review as rv
 from agent.graph.contract import contract_argv, parse_result
-from agent.graph.interview import (Interview, Question, SpecOracle, apply_register_answer, ensure_register_question, merge_summaries,
+from agent.graph.interview import (Interview, Question, SpecOracle, apply_register_answer, ensure_protocol_questions, ensure_register_question, merge_summaries,
                                    register_map_errors)
 from agent.graph.llm import BudgetExceeded, Meter, chat_model
 from agent.graph.roles import ROLES, RoleJail, role_inputs, role_session
@@ -131,6 +131,11 @@ class Config:
     explicit: tuple = ()            # brief 108: the model flags given on the command line (they override the user and project files)
     allow_fable: bool = False       # brief 108: the owner's --allow-fable flag (command line only; no file can set it)
     replay_run: bool = False        # brief 108: the chat calls are served from a recorded fixture (--replay): nothing live on an endpoint host
+    verif_profile: str = "standard"  # brief 194: the verification profile (agent.graph.profiles); the switches below it are overridable
+    verif_sets: dict | None = None  # brief 194: the overrides on top of the profile, switch -> value (--set), incl. --verif-level and --spec-tests when given
+    settings_flags: dict | None = None  # brief 194: the explicit --board and --verif-profile, which become the proposed values
+    settings_file: Path | None = None  # brief 194: proposed_settings.yaml, the interview's input; each setting becomes a question (agent.graph.settings)
+    verif_ask: bool = False         # brief 194: the interview proposes a profile (only when none was given on the command line)
     level1_seed: int | None = None  # brief 107: --deterministic at level 1: temperature 0 (and this seed) on every purpose that can take it
 
     @property
@@ -308,6 +313,50 @@ def surviving_mutants_note(design: Path, limit: int = 30) -> str:
 
 
 
+
+
+#: brief 209a: what a board with no UART changes in the Designer's and Verifier's instructions (the board file's ``host_access``
+#: decides: flow/host_transport.py). Code, not a private prompt: added only for such boards, so every UART board's request is unchanged.
+JTAG_NOTE = """
+HOST ACCESS ON THIS BOARD (board.yaml host_access): there is NO PL UART. The test shell (fpga_shell, shell/) is not used: the design is built
+without it, for that reason (ignore any sentence that says the design's subject is the UART). The host reads and writes the design's
+registers through the JTAG register bus, the BSCANE2 USER4 module `jtag_bus` (designs/b58a_trigger/rtl/jtag_bus.sv). If the request supplies it as
+data/jtag_bus.sv, leave it there (read-only, byte-identical) and add `{design_rel}/data/jtag_bus.sv` to the build.yaml sources; do NOT copy it into rtl/: the
+mutation and CDC-injection checks work on rtl/ and the supplied bus is not yours to mutate. Structure the design as a register core (a module with the
+register port below, which you simulate and test directly) and a thin top that only instantiates `jtag_bus`, the reset generator and the core. Put the LEDs, the blink and every register
+behaviour in the core (its ports carry them), so the core is the one simulated toplevel and one bench covers the request. Verilator lint and Icarus elaboration of the top still
+need BSCANE2, USR_ACCESSE2 and the xpm_cdc_* macros: write simulation-only stand-ins in rtl/xilinx_sim_stubs.sv between `ifndef SYNTHESIS` and `endif` (Vivado supplies the real
+ones in synthesis), and never name a stand-in in the build's synthesis sources. Its register port, in the clock domain of the clk
+you give it: `h_we`, `h_re` pulses, `h_addr[11:0]` (byte addresses), `h_wdata[31:0]`, `h_rdata[31:0]`; a write takes effect the clock after `h_we`;
+after `h_re`, `h_rdata` shows the addressed register within 2 clocks and holds it; unmapped addresses read 0 and ignore writes.
+Every design has the common map: 0x000 ID (RO, the design ID), 0x004 BUILD (RO, the bitstream's USR_ACCESS word, the build stamp, read with the
+USR_ACCESSE2 primitive), 0x008 SCRATCH (RW, reads back what was written, resets to 0). Your own registers start at 0x010. jtag_bus contains Xilinx
+primitives (BSCANE2, xpm_cdc), so simulate and test the register port directly (drive h_we/h_re/h_addr/h_wdata), never jtag_bus itself.
+Resource cost to put in the architecture's ranges: `jtag_bus` alone is about 90 LUTs and 413 flip-flops (measured, xck26, Vivado 2026.1, results/209a_pilot_ready), so a design with it
+has at least that many; do not predict a range for the whole design that leaves it out.
+"""
+
+JTAG_HW_FORMAT = """
+Bring-up files for THIS board (no UART, no ILA build; this format replaces any UART or ILA format described above; flow/bringup.py runs them
+over the JTAG register bus once the owner approves programming):
+- hw_checks.py: `DESIGN_ID = 0x...` (what register 0x000 reads); `make_mock()` returning an instance of a subclass of
+  `flow.host_transport.MockBus` (set ID, override `read(addr)` and `write(addr, value)` for YOUR registers from 0x010, written from spec.yaml and
+  model.py: it is the register behaviour a correct design shows; the common map 0x000-0x008 is done by MockBus); and
+  `run(bus) -> list[(name, ok, detail)]` which checks the design through `bus.rd(addr)` / `bus.wr(addr, value)` against expected values
+  computed in Python (from model.py or plain Python), leaves the design at its reset values and keeps LED duty and any soak short.
+  The same run(bus) runs in CI on make_mock() and on the board on the real bus (flow.host_transport.run_checks adds the ID, build-stamp and
+  scratch checks). hw_checks.py may import only the standard library, `flow.host_transport` and `model`. No tests/test_*_hw.py and no probes.yaml.
+- BRINGUP.md written for someone who has not seen the design: sections Setup, Testing (numbered steps, each with its pass or fail rule), Debug aids, If it fails.
+Call gates(kind="bringup_ready") to check these files and to run every check against the mock; the stage cannot ask the owner to approve
+programming until that passes.
+"""
+
+
+def transport_of(rt_or_cfg: Any) -> str:
+    """``uart`` or ``jtag_bus``: from the run's board file (flow/host_transport.py)."""
+    from flow import host_transport
+    cfg = getattr(rt_or_cfg, "cfg", rt_or_cfg)
+    return host_transport.board_transport(cfg.board, ROOT)
 
 
 def no_shell_conventions(t: str) -> str:
@@ -823,19 +872,23 @@ def node_work(state: State) -> dict:
     rt.meter.start_stage(st.limits)
     rt.session.stage = st.name
     rt.visit, rt.budget_notes = visits[str(n)], []
+    _run_event(rt, "stage_start", st.name, n=n, visit=visits[str(n)])
     follow_spec_language(rt)                 # brief 55: `language: vhdl` in spec.yaml works like --hdl vhdl
     fmt = {"board": rt.cfg.board, "name": rt.cfg.name, "stage": n, "stage_name": st.name,
            "allowed": ", ".join(st.tools), "fails": "; ".join(state.get("fails") or []) or "none",
            "note": state.get("note") or "none",
            "design_rel": str(rt.design.relative_to(ROOT)), "no_shell": rt.cfg.no_shell, "hdl": rt.cfg.hdl}
     conv0 = conventions_text(fmt)
+    jtag = transport_of(rt) == "jtag_bus"
+    if jtag:
+        conv0 += JTAG_NOTE.replace("{design_rel}", fmt["design_rel"])
     if rt.cfg.design_plan:                   # closure-loop hook: the datapaths bullet (stage 1) and the computed plan (later stages)
         from flow import timing_plan as _tp
         conv0 += _tp.DATAPATHS_CONVENTION + (("\n" + (rt.design / _tp.PLAN_MD).read_text()) if (rt.design / _tp.PLAN_MD).is_file() else "")
     if n == 1 and "ip_lookup" in st.tools and ip_lookup_allowed(rt.cfg):   # brief 150: the library is consulted before a block is invented, and the choice is recorded
         from flow import iplookup as _ipl
         conv0 += _ipl.IP_LOOKUP_CONVENTION
-    conv_tests = tests_conventions_text(fmt)
+    conv_tests = tests_conventions_text(fmt) + (JTAG_NOTE.replace("{design_rel}", fmt["design_rel"]) if jtag else "")
     conv = conv0 + ("\nLast gate output:\n" + state["detail"][:3000] if state.get("detail") else "")
     # the owner's edit prompt (brief 05d, addition 6) goes to the role it names, default the stage's writer
     note_for = state.get("note_role") or ("clarify" if n == 0 else "rtl")
@@ -873,15 +926,18 @@ def node_work(state: State) -> dict:
                     run_role(rt, "rtl", PROMPTS["rtl"].format(**{**fmt, "fails": own})
                                  + (note if repair else "") + prompt_note("rtl") + conv0, role_allowed("rtl", 2), repair)
         else:           # stage 9 too: the model writes probes.yaml and BRINGUP.md BEFORE the builds and the hardware pause
-            run_role(rt, "rtl", PROMPTS["rtl"].format(**fmt) + conv + (_p("graph/run/hw_format").format(**fmt) if n == 9 else ""),
+            run_role(rt, "rtl", PROMPTS["rtl"].format(**fmt) + conv + ((JTAG_HW_FORMAT if jtag else _p("graph/run/hw_format").format(**fmt)) if n == 9 else ""),
                          role_allowed("rtl", n))
             if n == 9:                                  # then the bring-up tests, which need the probe names (planner item, 05d)
                 from flow import hw_dry_check
-                dry = hw_dry_check.check_design(rt.design)
+                dry = hw_dry_check.check_design(rt.design, "jtag_bus" if jtag else "uart")
                 own = [q for q in dry["problems"] if not q.startswith(("BRINGUP.md", "probes.yaml"))]
+                if jtag and not own:                              # brief 209a: every check against the mock bus, in the sandbox
+                    mk = hw_mock_gate(rt)
+                    own = [] if mk["ok"] else ["the checks fail against the mock bus: " + mk["error"]]
                 if own:
                     run_role(rt, "tests", PROMPTS["hwtests"].format(**{**fmt, "fails": "; ".join(own)})
-                                 + tests_checklist(rt, 9, True) + _p("graph/run/hw_format").format(**fmt) + _p("graph/contract/model_contract"), role_allowed("tests", 9),
+                                 + tests_checklist(rt, 9, True) + (JTAG_HW_FORMAT if jtag else _p("graph/run/hw_format").format(**fmt)) + _p("graph/contract/model_contract"), role_allowed("tests", 9),
                                  repair=True)        # never "fresh": a fresh tests write deletes the stage-2 benches
         files = [p for p in rt.design.rglob("*") if p.is_file() and "build" not in p.relative_to(rt.design).parts
                  and "__pycache__" not in p.parts]
@@ -903,9 +959,30 @@ def _spec(rt: Runtime) -> dict:
     return load_spec(rt.design / "spec.yaml")
 
 
+def _pin_run(rt: "Runtime") -> None:
+    """Brief 194: the verification settings are variables, fixed by the user for the run. Write the pin (outside the design directory, where
+    no role can reach it) and record who set them in the ledger. A resumed run keeps its first pin."""
+    from agent.graph import profiles
+    pin = profiles.write_pin(rt.run_dir, rt.cfg.verif_profile, rt.cfg.verif_sets)
+    if pin.get("new"):
+        given = bool(rt.cfg.verif_sets) or not getattr(rt.cfg, "verif_ask", False)
+        ownership.record(rt.design, "owner" if rt.cfg.verif_sets else "auto", "start", "verification profile",
+                         f"{rt.cfg.verif_profile}" + (f" with overrides {rt.cfg.verif_sets}" if rt.cfg.verif_sets else "")
+                         + ("" if given else " (the interview will propose one)"))
+
+
+def _profile_record(cfg: Config) -> dict:
+    """Brief 194: the profile, every override and the switches that are only recorded, for the run summary."""
+    from agent.graph import assurance, profiles
+    rec = profiles.record_of(cfg.verif_profile, cfg.verif_sets)
+    return {"profile": rec["profile"], "overrides": rec["overrides"], "effective": rec["effective"], "not_wired": rec["not_wired"],
+            "ip_release_gaps": rec["ip_release_gaps"], "method_mix_gaps": rec["method_mix_gaps"], "advisory": assurance.advisory(rec)}
+
+
 def _interview(rt: Runtime, spec: dict, state: State) -> tuple[dict, dict]:
     from langgraph.types import interrupt
-    iv = Interview()
+    from agent.graph.package_facts import load_facts
+    iv = Interview(facts=load_facts(rt.design))                    # brief 174: a design package's sourced facts are not asked again
     who = None
     if rt.cfg.interview == "oracle":
         who = SpecOracle(rt.cfg.hidden_spec, rt.oracle_llm or rt.resolver.oracle())
@@ -920,9 +997,23 @@ def _interview(rt: Runtime, spec: dict, state: State) -> tuple[dict, dict]:
     for r in unproven:                                            # 05d: a proof method per requirement, with a default
         methods, why = propose_proof(str(r.get("text", "")))
         asks.append((_p("graph/run/interview_3").format(r['id'], r.get('text'), ', '.join(PROOF_METHODS)), ",".join(methods), why))
-    for i, (qt, qd, qr) in enumerate(asks):
-        q = Question(id=f"q{i + 1}", text=qt, default=qd, reason=qr)
-        if rt.cfg.interview == "on":                                  # one question at a time, to the human
+    from agent.graph import assurance as _assur, profiles as _prof
+    sdoc = None
+    if getattr(rt.cfg, "settings_file", None) and not (rt.design / "confirmed_settings.yaml").is_file():
+        from agent.graph import settings as _set
+        fl = rt.cfg.settings_flags or {}
+        sdoc = _set.apply_flags(_set.load_proposals(rt.cfg.settings_file), fl.get("board"), fl.get("profile"))
+        for k, qt, qd, qr in _set.questions(sdoc):                # brief 194: every proposed setting is an interview question
+            asks.append((qt + f" [{k}]", qd, qr))
+    profile_ask = sdoc is None and getattr(rt.cfg, "verif_ask", False) and not any(o.get("question", "").startswith("Which verification profile") for o in spec.get("resolved_questions") or [])
+    if profile_ask:                                               # brief 194: the verification profile, with a default and a reason
+        asks.append(_assur.profile_question(spec))
+    sec_ask = rt.cfg.interview in ("on", "oracle") and getattr(rt.cfg, "verif_ask", False) and "production_secure" not in (rt.cfg.verif_sets or {}) and not any(
+        o.get("question", "").startswith(_assur.SECURITY_QUESTION) for o in spec.get("resolved_questions") or [])
+    if sec_ask:                                                   # brief 196: production_secure, with a default and a reason
+        asks.append(_assur.security_question(spec))
+    def ask_one(q: Question) -> None:
+        if rt.cfg.interview == "on" and iv.lookup(q) is None:         # one question at a time, to the human (not a package fact)
             ans = interrupt({"kind": "question", "id": q.id, "question": q.text, "default": q.default,
                              "reason": q.reason})
 
@@ -934,6 +1025,9 @@ def _interview(rt: Runtime, spec: dict, state: State) -> tuple[dict, dict]:
             iv.ask(q, _Human())
         else:
             iv.ask(q, who)
+
+    for i, (qt, qd, qr) in enumerate(asks):
+        ask_one(Question(id=f"q{i + 1}", text=qt, default=qd, reason=qr))
     spec = apply_register_answer(iv.resolve_into(spec))               # 07a2 fix 5 C: an answered map beats the role's default
     for r in rates:                                               # the answered (or defaulted) integer replaces it
         got = next((q for q in iv.questions if q.text.startswith(f"{r['name']} is given as")), None)
@@ -945,8 +1039,50 @@ def _interview(rt: Runtime, spec: dict, state: State) -> tuple[dict, dict]:
         got = next((q for q in iv.questions if q.text.startswith(_p("graph/run/interview_4").format(r['id']))), None)
         found = [m for m in PROOF_METHODS if got and got.answer and m in got.answer.lower()]
         r["proof"] = found or propose_proof(str(r.get("text", "")))[0]
+    if sec_ask:                                                   # the answer is a variable: it joins the overrides and the pin
+        got = next((q for q in iv.questions if q.text.startswith(_assur.SECURITY_QUESTION)), None)
+        yes = _assur.security_from_answer(got.answer if got else None, _assur.security_question(spec)[1])
+        rt.cfg.verif_sets = {**(rt.cfg.verif_sets or {}), "production_secure": yes}
+        spec["production_secure"] = {"answer": got.answer if got else None, "status": got.status if got else "defaulted", "value": yes}
+        _prof.write_pin(rt.run_dir, rt.cfg.verif_profile, rt.cfg.verif_sets, replace=True, set_by="the interview (security question)")
+    unconfirmed: list[str] = []
+    if sdoc is not None:                                          # the interview's output: the confirmed settings
+        from agent.graph import settings as _set
+        ans = {}
+        for k, *_ in _set.questions(sdoc):
+            got = next((q for q in iv.questions if q.text.endswith(f"[{k}]")), None)
+            ans[k] = (got.answer if got else None, got.status if got else "defaulted")
+        values, unconfirmed = _set.resolve(sdoc, ans)
+        if values.get("board") and values["board"] != rt.cfg.board:
+            unconfirmed.append(f"board: the confirmed board {values['board']} is not the run's board {rt.cfg.board}; start the run with --board {values['board']}")
+        prof = values.get("profile")
+        if prof in _prof.PROFILES:
+            rt.cfg.verif_profile, rt.cfg.verif_ask = prof, False
+            rt.cfg.__dict__.update(_prof.cfg_fields(_prof.resolve(prof, rt.cfg.verif_sets)["effective"]))
+            spec["verif_profile"] = prof
+            _prof.write_pin(rt.run_dir, prof, rt.cfg.verif_sets, replace=True, set_by="the interview (settings question)")
+        elif prof is not None:
+            unconfirmed.append(f"profile: {prof!r} is not a profile")
+        if not unconfirmed:
+            (rt.design / "confirmed_settings.yaml").write_text(yaml.safe_dump(_set.confirmed_document(sdoc, values, ans), sort_keys=False))
+        spec["settings"] = values
+    if profile_ask:                                               # the answered (or defaulted) profile replaces the command line's default
+        got = next((q for q in iv.questions if q.text.startswith("Which verification profile")), None)
+        name = _assur.profile_from_answer(got.answer if got else None, _assur.propose_profile(spec)[0])
+        sets = {k: v for k, v in (rt.cfg.verif_sets or {}).items()}
+        rec = _prof.resolve(name, sets)
+        rt.cfg.verif_profile, rt.cfg.verif_ask = name, False
+        rt.cfg.__dict__.update(_prof.cfg_fields(rec["effective"]))
+        spec["verif_profile"] = name
+        _prof.write_pin(rt.run_dir, name, sets, replace=True, set_by="the interview (the user's answer or the default they accepted)")
+        for i, (qt, qd, qr) in enumerate(_assur.structure_questions(spec, rec["effective"])):
+            ask_one(Question(id=f"s{i + 1}", text=qt, default=qd, reason=qr))
+        spec["dependability"] = [{"question": q.text, "answer": q.answer, "status": q.status} for q in iv.questions if q.id.startswith("s")]
     (rt.design / "spec.yaml").write_text(yaml.safe_dump(spec, sort_keys=False))
-    return spec, merge_summaries(state.get("interview"), iv.summary())
+    summ = merge_summaries(state.get("interview"), iv.summary())
+    if unconfirmed:
+        summ["unconfirmed"] = unconfirmed
+    return spec, summ
 
 
 _ORDER = ["synth", "place", "route", "bitstream"]
@@ -984,15 +1120,19 @@ def _build(rt: Runtime, until: str, variant: str = "base") -> dict:
     if c.get("sources") == key and _ORDER.index(c.get("until", "synth")) >= _ORDER.index(until) and c.get("ok"):
         b = {"ok": True, "cached": True}
     else:
+        _run_event(rt, "build_step", getattr(rt.session, "stage", None), state="start", until=until, variant=variant)
+        _t_build = time.time()
         b = dispatch(rt.session, "build", {"until": until, "variant": variant})
         waited = 0.0
         while not b.get("ok") and VIVADO_BUSY in str(b.get("output", "")) and waited < vivado_wait_s():
             time.sleep(VIVADO_POLL_S)                   # b82p2: another Vivado holds the PC's slot; that is no fault of the design
             waited += VIVADO_POLL_S
+            _run_event(rt, "slot_wait", getattr(rt.session, "stage", None), waited_s=round(waited), reason="another Vivado holds the PC's slot")
             b = dispatch(rt.session, "build", {"until": until, "variant": variant})
         if not b.get("ok"):
             rt.last_build_output = str(b.get("output", ""))[-2000:]
         cache.write_text(json.dumps({"sources": key, "until": until, "ok": bool(b.get("ok"))}))
+        _run_event(rt, "build_step", getattr(rt.session, "stage", None), state="end", until=until, variant=variant, ok=bool(b.get("ok")), seconds=round(time.time() - _t_build, 1))
     g = dispatch(rt.session, "gates", {"kind": "stages", "variant": variant})
     return {"build": {k: b.get(k) for k in ("ok", "refused", "returncode", "cached")}, "gates": g.get("gates")}
 
@@ -1151,6 +1291,61 @@ def mark_persisted(prev: dict | None, new: dict) -> dict:
     return new
 
 
+REPORT_GATE_CHECKS = ("logic_levels", "control_sets", "synth_log")
+
+
+def report_gates_eval(rt: Runtime) -> dict | None:
+    """Brief 209a: the report checks of brief 204a on the post-synthesis reports the build just wrote (``logic_levels``: RPT-LL-02,
+    ``control_sets``: RPT-CS-02, ``synth_log``: RPT-LOG-03; the rest of what these checks find is an advisory). Reads records only
+    (no Vivado session). ``None`` when the build wrote no synthesis timing report (nothing to judge) or the checks could not run:
+    the gate never fails a design by being unavailable. Blocking findings are routed to the Designer by ``stages.report_gates_stage``."""
+    from flow import checks
+    try:
+        if not (rt.design / "build" / "base" / "timing_summary_synth.rpt").is_file():
+            return None
+        rep = checks.run(rt.design, list(REPORT_GATE_CHECKS), scope="synth", level="standard")
+    except Exception as e:                                       # noqa: BLE001
+        return {"findings": [], "advisories": [], "error": f"{type(e).__name__}: {str(e)[:200]}"}
+    fs = [f for c in rep["checks"] for f in (c.get("findings") or []) if "waived" not in f]            # a waived finding (lint/waivers.yaml) is the owner's decision
+    from agent.graph.stages import REPORT_GATE_CODES
+    return {"findings": [f for f in fs if f["blocking"] and f["code"] in REPORT_GATE_CODES],
+            "advisories": [f for f in fs if not f["blocking"] or f["code"] not in REPORT_GATE_CODES],
+            "checks": {c["check"]: c["status"] for c in rep["checks"]}, "report": rep.get("report_path")}
+
+
+def report_gates_detail(ev: dict, detail: list, rt: Runtime | None = None) -> None:
+    """The failure text of a blocking report finding, for the repair visit's Designer (the gate's own wording). With ``rt`` the
+    decision is also recorded in the run's routing events (the repair prompt itself is private and not logged)."""
+    from agent.graph.stages import report_gates_stage
+    from agent.graph.repair import report_advisory_text
+    ok, why = report_gates_stage(ev.get("report_gates"))
+    if rt is not None and ev.get("report_gates") is not None:
+        r = ev["report_gates"]
+        log_routing_event(rt, "report_gates_checked", blocked=not ok, codes=sorted({f["code"] for f in r.get("findings") or []}),
+                          advisories=sorted({a["code"] for a in r.get("advisories") or []}), where=[f.get("where", "")[:120] for f in (r.get("findings") or [])[:3]],
+                          text=why[:2] and why[0][:300])
+    if not ok:
+        detail.append("[report gates] " + "\n".join(why)[:1800] + report_advisory_text(ev.get("report_gates")))
+
+
+HW_MOCK_SNIPPET = ("import sys, json; sys.path.insert(0, sys.argv[2]); from flow import host_transport as H; "
+                   "r = H.run_mock(__import__('pathlib').Path(sys.argv[1])); print(json.dumps(r))")
+
+
+def hw_mock_gate(rt: Runtime) -> dict:
+    """Brief 209a: the design's hw_checks.py ``run(bus)`` against its own ``make_mock()`` bus plus the common-map checks, run by the
+    session's runner (the container for agent-written code). ``ok`` False carries the failing checks, or the traceback."""
+    r = rt.session.runner.run("contract", [sys.executable, "-I", "-c", HW_MOCK_SNIPPET, str(rt.design), str(ROOT)], ROOT, None, 120)
+    for line in reversed((r.stdout or "").splitlines()):
+        try:
+            x = json.loads(line)
+            if isinstance(x, dict) and "ok" in x:
+                return x
+        except ValueError:
+            continue
+    return {"ok": False, "error": ((r.stderr or r.stdout or f"exit {r.returncode}")[-1200:])}
+
+
 def constants_blocks(ev: dict) -> bool:
     return any(f.get("blocking") for f in ((ev.get("constants") or {}).get("findings") or []))
 
@@ -1196,6 +1391,7 @@ def node_gate(state: State) -> dict:
         else:
             req = (rt.design / "spec.md").read_text() if (rt.design / "spec.md").is_file() else ""
             spec, _asked = ensure_register_question(req, spec)       # 07a2 fix 7: the harness asks for the register map itself
+            spec, _proto = ensure_protocol_questions(req, spec)      # brief 190: the six new-protocol intake questions, with defaults and reasons
             errs = register_map_errors(req, spec)           # 07a2 fix 1: ask for the register map before the interview
             if errs:
                 ev["spec"], ev["signed_off"], ev["spec_errors"] = spec, False, errs
@@ -1208,6 +1404,7 @@ def node_gate(state: State) -> dict:
                 errs += ["constants " + f"{f['code']} {f['where']}: {f['message']}" for f in cf]
                 ev["spec_constants"] = {"findings": cf}
                 log_routing_event(rt, "clarify_constants_check", findings=[f["code"] for f in cf], failed=bool(cf))
+                errs += ["[interview] unconfirmed variable: " + u for u in summary.get("unconfirmed") or []]      # brief 194: no run leaves the interview with one
                 ev["spec"], ev["signed_off"], ev["spec_errors"] = spec, not spec.get("open_questions"), errs
                 if errs:
                     detail.append("[spec.yaml] " + "; ".join(errs))
@@ -1264,12 +1461,16 @@ def node_gate(state: State) -> dict:
                 detail.append(ev["spec_test"]["evidence"][:3000])
         if ev["lint"]["ok"] and ev["simulate"]["ok"] and not spec_blocks and not constants_blocks(ev):   # no Vivado time on a design that fails its tests
             ev["gates_base"] = _build(rt, "synth")["gates"]
+            ev["report_gates"] = report_gates_eval(rt)           # brief 209a: the synthesis report is the first the build writes
+            report_gates_detail(ev, detail, rt)
     elif n in (3, 4):
         if n == 3:
             ev["constants"] = constants_gate(rt)                 # brief 82P4: the board clock period against the XDC
             if constants_blocks(ev):
                 detail.append("[constants] " + "\n".join(f["message"] for f in ev["constants"]["findings"] if f.get("blocking"))[:1800])
         ev["gates_base"] = _build(rt, "synth")["gates"]
+        ev["report_gates"] = report_gates_eval(rt)               # brief 209a
+        report_gates_detail(ev, detail, rt)
         if n == 4 and rt.cfg.design_plan:                        # closure-loop hook: inferred primitives against the plan
             from flow import timing_plan as _tp
             ev["plan_fails"] = _tp.post_synth_failures(rt.design, ev["gates_base"])
@@ -1285,9 +1486,16 @@ def node_gate(state: State) -> dict:
             _tp.record_calibration(rt.design, rt.run_dir / "plan_calibration.jsonl")
     elif n == 9:
         from flow import hw_dry_check
-        ev["bringup_ready"] = hw_dry_check.check_design(rt.design)     # before the approval pause, not after it
+        jtag9 = transport_of(rt) == "jtag_bus"
+        ev["bringup_ready"] = hw_dry_check.check_design(rt.design, "jtag_bus" if jtag9 else "uart")     # before the approval pause, not after it
+        if jtag9 and ev["bringup_ready"]["ok"]:                        # brief 209a: and every check against the mock bus
+            mk = hw_mock_gate(rt)
+            ev["hw_mock"] = mk
+            if not mk["ok"]:
+                ev["bringup_ready"] = {"ok": False, "problems": ["the checks fail against the mock bus: " + mk["error"]]}
         ev["gates_base"] = _build(rt, "bitstream")["gates"]
-        ev["gates_ila"] = _build(rt, "bitstream", "ila")["gates"]
+        if not jtag9:                                                  # a JTAG-bus design has no ILA build
+            ev["gates_ila"] = _build(rt, "bitstream", "ila")["gates"]
         if state.get("hw_approved"):
             rt.session.stage = st.name
             br = dispatch(rt.session, "bringup", {}) or {}
@@ -1300,11 +1508,13 @@ def node_gate(state: State) -> dict:
         rt.last_build_output = ""
     if n == 9 and not state.get("hw_approved"):
         from dataclasses import replace as _replace
-        ok, fails = exit_check(_replace(st, gates=tuple(g for g in st.gates if g not in ("bringup", "signoff"))), ev)
+        ok, fails = exit_check(_replace(st, gates=tuple(g for g in st.gates if g not in ("bringup", "signoff")
+                                                        and not (g == "bitstream_ila" and transport_of(rt) == "jtag_bus"))), ev)
         if ok:                                   # everything but the board passes: ask before programming
             ok, fails = False, ["hardware: awaiting approval before programming"]
     else:
-        ok, fails = exit_check(st, ev)
+        ok, fails = exit_check(dataclasses.replace(st, gates=tuple(g for g in st.gates if g != "bitstream_ila")) if (n == 9 and transport_of(rt) == "jtag_bus")
+                               else st, ev)
     if n == 2 and ok and (ev.get("spec_test") or {}).get("blocks"):      # 08f: the independent bench failed and triage blamed the design
         ok, fails = False, ["spec test: an independent bench written from the request alone fails against the design"]
     if n == 2:                                   # 05c2 fix 1: the roles that own this visit's failures, and the repeat count
@@ -1327,7 +1537,7 @@ ARCH_FILES = ("architecture.yaml", "ARCHITECTURE.md")
 
 def _who(by: str) -> str:
     """owner (a person), auto (the run's own default or an oracle)."""
-    return "auto" if by in ("auto", "oracle", "default", "limit") else "owner"
+    return "auto" if by in ("auto", "oracle", "default", "limit", "package") else "owner"
 
 
 def node_review(state: State) -> dict:
@@ -1494,8 +1704,24 @@ def node_document(state: State) -> dict:
     return {"doc": res}
 
 
+def _run_event(rt: Runtime, name: str, stage: str | None = None, **fields: Any) -> None:
+    """Brief 182: one ``kind: "event"`` row in the run's trace.jsonl (what the navigator's plain-words status reads). Never fails the run."""
+    try:
+        from agent.core.trace import Trace
+        Trace(rt.run_dir / "trace.jsonl", harness="graph").event(name, stage, **fields)
+    except Exception:                                  # noqa: BLE001
+        pass
+
+
 def node_advance(state: State) -> dict:
+    """The safe point (brief 182): mid-run requests (``agent request``) are applied here and nowhere else, then the stage machine's own rule."""
+    from agent.graph import requests as rq
     rt, n = _rt(state), state["stage"]
+    _run_event(rt, "stage_end", MACHINE[n].name, n=n, visit=(state.get("visits") or {}).get(str(n)), passed=not state.get("fails") and not state.get("stop"))
+    return rq.safe_point(rt, state, _advance_core)
+
+
+def _advance_core(rt: Runtime, n: int, state: State) -> dict:
     hist = state.get("history") or []
     last = hist[-1] if hist else {}
     if last.get("rewind"):
@@ -1647,6 +1873,8 @@ def new_runtime(cfg: Config, client: Callable | None = None, run_id: str | None 
                 tape_spec: dict | None = None) -> Runtime:
     from agent.access import require_or_exit      # brief 94: every run is created here
     require_or_exit("new_runtime")
+    if not cfg.no_shell and transport_of(cfg) == "jtag_bus":     # brief 209a: a board with no UART has no test shell to build in
+        cfg.no_shell = True
     run_id = run_id or time.strftime("%Y%m%d-%H%M%S-") + uuid.uuid4().hex[:4]
     run_dir = RUNS / run_id
     design = run_dir / cfg.name
@@ -1689,7 +1917,7 @@ def new_runtime(cfg: Config, client: Callable | None = None, run_id: str | None 
     except Exception:                                      # CI: no private knowledge bank
         bank = None
     sess = Session(design=design, board=cfg.board, runner=runner, bank=bank, skill_routing=cfg.skill_routing,
-                   harness_arms=cfg.arms)
+                   harness_arms=cfg.arms, policy_run_dir=run_dir)
     from agent.models.resolver import Resolver
     table = cfg.model_table()
     tape, det = None, None
@@ -1705,11 +1933,17 @@ def new_runtime(cfg: Config, client: Callable | None = None, run_id: str | None 
         det = determinism.describe(tape.mode, tape_spec["level"], tape, table, seed=cfg.level1_seed, note=tape_spec["note"]) \
             if tape_spec["level"] else {"requested": False, "level": 0, "mode": tape.mode, "tape": str(tape.root), "note": tape_spec["note"],
                                         "pinned": determinism.versions(table)}
+    from agent.core import console as _console           # brief 182: every tool run leaves console/<step>.log for the navigator's live console
+    _console.install(sess.runner, run_dir, lambda: sess.stage)
     resolver = Resolver(table, run_dir=run_dir, injected=client, replay=replay, record=record, tape=tape,
                         level1=bool(tape_spec and tape_spec["level"] == 1))
-    rt = Runtime(cfg, run_id, run_dir, design, sess, client, Meter(cfg.run_limits), Snapshots(run_dir, design),
+    scale = float(table.budget_scale)                         # brief 209b: budget_scale of the model config / --budget-scale
+    if scale != 1.0 and cfg.run_limits.get("usd") == RUN_LIMITS["usd"]:      # the default run cap follows the scale; an explicit --max-usd does not
+        cfg.run_limits["usd"] = round(RUN_LIMITS["usd"] * scale, 6)
+    rt = Runtime(cfg, run_id, run_dir, design, sess, client, Meter(cfg.run_limits, usd_scale=scale), Snapshots(run_dir, design),
                  oracle_llm=oracle_llm, resolver=resolver)
     _RT[run_id] = rt
+    _pin_run(rt)
     prior = None
     try:                                                    # brief 107: a resume keeps the earlier determinism block in a history
         pj = json.loads((run_dir / "config.json").read_text())
@@ -1886,15 +2120,19 @@ def summary(rt: Runtime, state: dict) -> dict:
             "turn_trace": usage_trace(usage),
             "per_role": usage_by(usage, "role"), "per_stage": usage_by(usage, "stage"),
             "interview": rt.cfg.interview,
+            "user_requests": __import__("agent.graph.requests", fromlist=["x"]).counts(rt.run_dir),     # brief 182: mid-run requests and questions
             "review": rt.cfg.review, "stages_visited": [h["n"] for h in hist],
             "loops": sum(1 for a, b in zip(hist, hist[1:]) if b["n"] <= a["n"] and not a.get("rewind")),
             "rewinds": [h["rewind"] for h in hist if h.get("rewind")],
             "tokens": rt.meter.run["tokens"], "cost_usd": rt.meter.run["usd"], "unreported_cost_calls": rt.meter.unreported,
+            "token_split": dict(getattr(rt.meter, "split", {})), "budget_scale": getattr(rt.meter, "usd_scale", 1.0), "truncated_calls": getattr(rt.meter, "truncated", 0),       # brief 209b: input / output / cache write / cache read tokens
             "turns": rt.meter.run["turns"], "wall_s": rt.meter.run["seconds"],
             "questions": (state.get("interview") or {}), "stop": state.get("stop"), "stop_detail": state.get("stop_detail"),
             "last_rtl_message": (getattr(rt, "last_role_message", None) or {}).get("rtl"),
             "routing_events": routing_events(rt),
             "clean_stop": state.get("stop") == "done",
+            "verification_profile": {**_profile_record(rt.cfg), "policy_breaches": __import__("agent.graph.profiles", fromlist=["x"]).check_pin(
+                rt.run_dir, rt.cfg.verif_profile, rt.cfg.verif_sets, rt.design)},
             "constants": constants_summary(rt),
             "gates_last": {h["stage"]: h["passed"] for h in hist if h.get("gated", True)},   # 68F: not an entry that ran no gate
             "approvals": [{"n": h["n"], **h["approval"]} for h in hist],

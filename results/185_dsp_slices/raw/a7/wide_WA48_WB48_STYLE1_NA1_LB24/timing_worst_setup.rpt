@@ -1,0 +1,115 @@
+Copyright 1986-2022 Xilinx, Inc. All Rights Reserved. Copyright 2022-2026 Advanced Micro Devices, Inc. All Rights Reserved.
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+| Tool Version : Vivado v.2026.1 (lin64) Build 6511674 Tue Jun 16 11:01:26 MDT 2026
+| Date         : Mon Nov 23 06:16:01 2026
+| Host         : bren-ubuntu24-04 running 64-bit Ubuntu 24.04.4 LTS
+| Command      : report_timing -delay_type max -max_paths 1 -file /home/brendan/Claude_sandbox/_worktrees/185-dsp-slices/build/185_dsp/a7/wide_WA48_WB48_STYLE1_NA1_LB24/timing_worst_setup.rpt
+| Design       : dsp_wide_mul_ooc
+| Device       : 7a100t-csg324
+| Speed File   : -1  PRODUCTION 1.23 2018-06-13
+| Design State : Routed
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Timing Report
+
+Slack (VIOLATED) :        -1.964ns  (required time - arrival time)
+  Source:                 u_dut/g_cascade.g_chain[1].g_stage[0].g_lowd.ld_reg[1][10]/C
+                            (rising edge-triggered cell FDRE clocked by clk  {rise@0.000ns fall@0.900ns period=1.800ns})
+  Destination:            u_dut/g_cascade.g_sum.p_reg[95]/D
+                            (rising edge-triggered cell FDRE clocked by clk  {rise@0.000ns fall@0.900ns period=1.800ns})
+  Path Group:             clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            1.800ns  (clk rise@1.800ns - clk rise@0.000ns)
+  Data Path Delay:        3.789ns  (logic 2.930ns (77.328%)  route 0.859ns (22.672%))
+  Logic Levels:           18  (CARRY4=17 LUT2=1)
+  Clock Path Skew:        -0.049ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    0.924ns = ( 2.724 - 1.800 ) 
+    Source Clock Delay      (SCD):    0.973ns
+    Clock Pessimism Removal (CPR):    0.000ns
+  Clock Uncertainty:      0.035ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock clk rise edge)        0.000     0.000 r  <hidden>
+                                                      0.000     0.000 r  clk
+                         net (fo=392, unset)          0.973     0.973    u_dut/clk
+    SLICE_X59Y94         FDRE                                         r  u_dut/g_cascade.g_chain[1].g_stage[0].g_lowd.ld_reg[1][10]/C
+  -------------------------------------------------------------------    -------------------
+    SLICE_X59Y94         FDRE (Prop_fdre_C_Q)         0.456     1.429 r  u_dut/g_cascade.g_chain[1].g_stage[0].g_lowd.ld_reg[1][10]/Q
+                         net (fo=1, routed)           0.858     2.287    u_dut/g_cascade.g_chain[1].g_stage[0].g_lowd.ld_reg_n_0_[1][10]
+    SLICE_X58Y94         LUT2 (Prop_lut2_I1_O)        0.124     2.411 r  u_dut/g_cascade.g_sum.p[34]_i_2/O
+                         net (fo=1, routed)           0.000     2.411    u_dut/g_cascade.g_sum.p[34]_i_2_n_0
+    SLICE_X58Y94         CARRY4 (Prop_carry4_S[3]_CO[3])
+                                                      0.376     2.787 r  u_dut/g_cascade.g_sum.p_reg[34]_i_1/CO[3]
+                         net (fo=1, routed)           0.000     2.787    u_dut/g_cascade.g_sum.p_reg[34]_i_1_n_0
+    SLICE_X58Y95         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117     2.904 r  u_dut/g_cascade.g_sum.p_reg[38]_i_1/CO[3]
+                         net (fo=1, routed)           0.000     2.904    u_dut/g_cascade.g_sum.p_reg[38]_i_1_n_0
+    SLICE_X58Y96         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117     3.021 r  u_dut/g_cascade.g_sum.p_reg[42]_i_1/CO[3]
+                         net (fo=1, routed)           0.000     3.021    u_dut/g_cascade.g_sum.p_reg[42]_i_1_n_0
+    SLICE_X58Y97         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117     3.138 r  u_dut/g_cascade.g_sum.p_reg[46]_i_1/CO[3]
+                         net (fo=1, routed)           0.000     3.138    u_dut/g_cascade.g_sum.p_reg[46]_i_1_n_0
+    SLICE_X58Y98         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117     3.255 r  u_dut/g_cascade.g_sum.p_reg[50]_i_1/CO[3]
+                         net (fo=1, routed)           0.000     3.255    u_dut/g_cascade.g_sum.p_reg[50]_i_1_n_0
+    SLICE_X58Y99         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117     3.372 r  u_dut/g_cascade.g_sum.p_reg[54]_i_1/CO[3]
+                         net (fo=1, routed)           0.001     3.373    u_dut/g_cascade.g_sum.p_reg[54]_i_1_n_0
+    SLICE_X58Y100        CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117     3.490 r  u_dut/g_cascade.g_sum.p_reg[58]_i_1/CO[3]
+                         net (fo=1, routed)           0.000     3.490    u_dut/g_cascade.g_sum.p_reg[58]_i_1_n_0
+    SLICE_X58Y101        CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117     3.607 r  u_dut/g_cascade.g_sum.p_reg[62]_i_1/CO[3]
+                         net (fo=1, routed)           0.000     3.607    u_dut/g_cascade.g_sum.p_reg[62]_i_1_n_0
+    SLICE_X58Y102        CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117     3.724 r  u_dut/g_cascade.g_sum.p_reg[66]_i_1/CO[3]
+                         net (fo=1, routed)           0.000     3.724    u_dut/g_cascade.g_sum.p_reg[66]_i_1_n_0
+    SLICE_X58Y103        CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117     3.841 r  u_dut/g_cascade.g_sum.p_reg[70]_i_1/CO[3]
+                         net (fo=1, routed)           0.000     3.841    u_dut/g_cascade.g_sum.p_reg[70]_i_1_n_0
+    SLICE_X58Y104        CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117     3.958 r  u_dut/g_cascade.g_sum.p_reg[74]_i_1/CO[3]
+                         net (fo=1, routed)           0.000     3.958    u_dut/g_cascade.g_sum.p_reg[74]_i_1_n_0
+    SLICE_X58Y105        CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117     4.075 r  u_dut/g_cascade.g_sum.p_reg[78]_i_1/CO[3]
+                         net (fo=1, routed)           0.000     4.075    u_dut/g_cascade.g_sum.p_reg[78]_i_1_n_0
+    SLICE_X58Y106        CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117     4.192 r  u_dut/g_cascade.g_sum.p_reg[82]_i_1/CO[3]
+                         net (fo=1, routed)           0.000     4.192    u_dut/g_cascade.g_sum.p_reg[82]_i_1_n_0
+    SLICE_X58Y107        CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117     4.309 r  u_dut/g_cascade.g_sum.p_reg[86]_i_1/CO[3]
+                         net (fo=1, routed)           0.000     4.309    u_dut/g_cascade.g_sum.p_reg[86]_i_1_n_0
+    SLICE_X58Y108        CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117     4.426 r  u_dut/g_cascade.g_sum.p_reg[90]_i_1/CO[3]
+                         net (fo=1, routed)           0.000     4.426    u_dut/g_cascade.g_sum.p_reg[90]_i_1_n_0
+    SLICE_X58Y109        CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117     4.543 r  u_dut/g_cascade.g_sum.p_reg[94]_i_1/CO[3]
+                         net (fo=1, routed)           0.000     4.543    u_dut/g_cascade.g_sum.p_reg[94]_i_1_n_0
+    SLICE_X58Y110        CARRY4 (Prop_carry4_CI_O[0])
+                                                      0.219     4.762 r  u_dut/g_cascade.g_sum.p_reg[95]_i_1/O[0]
+                         net (fo=1, routed)           0.000     4.762    u_dut/g_cascade.g_sum.s[95]
+    SLICE_X58Y110        FDRE                                         r  u_dut/g_cascade.g_sum.p_reg[95]/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock clk rise edge)        1.800     1.800 r  <hidden>
+                                                      0.000     1.800 r  clk
+                         net (fo=392, unset)          0.924     2.724    u_dut/clk
+    SLICE_X58Y110        FDRE                                         r  u_dut/g_cascade.g_sum.p_reg[95]/C
+                         clock pessimism              0.000     2.724    <hidden>
+                         clock uncertainty           -0.035     2.689    <hidden>
+    SLICE_X58Y110        FDRE (Setup_fdre_C_D)        0.109     2.798    u_dut/g_cascade.g_sum.p_reg[95]
+  -------------------------------------------------------------------
+                         required time                          2.798    <hidden>
+                         arrival time                          -4.762    <hidden>
+  -------------------------------------------------------------------
+                         slack                                 -1.964    <hidden>
+
+
+
+

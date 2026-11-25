@@ -2,48 +2,88 @@
 # For each item: the evidence file's hash, and the hash of every file the evidence is about as of the commit that last changed
 # the evidence. The collector compares them with the files today: a difference marks the evidence stale.
 pins:
+  V-FORMAL-BOOK-QTY:
+    checks:
+      designs/b110_itch_ouch/rtl/book_core.sv: 629dab43bf80ed61b9ab06944ca9b2bf4819a6a4a67f13368cb431c080acf3c3
+      designs/b110_itch_ouch/verif/formal/book_props.sv: f8fd5ce180ebcc603681a8e7972f7905455e445437545340607fcc136e5c6c1c
+    evidence: results/191_trading_variants/pytest_junit.xml
+    evidence_sha256: be267a11ab78090653eabcbd05cd0c4bc429fcf9edac9ab3c7ab631befba15da
+  V-SIM-BANDREF:
+    checks:
+      designs/b110_itch_ouch/rtl/risk_glue.sv: 003f48109b60c3dbc33ea76c04f0120436e2c928da1b132daf5319e9bb452ebd
+    evidence: results/188_trading_safety/pytest_junit.xml
+    evidence_sha256: 586166cc870084588567f21ed2bdf1caceaae9b781f335b1001a336e4b40f0ad
+  V-SIM-FEED-ARB:
+    checks:
+      designs/b110_itch_ouch/rtl/feed_arb.sv: e523ff419e52e683b3d00a2c6e82c72aa3f09056d269ebf46edcd808a0a1420a
+      designs/b110_itch_ouch/rtl/feed_arb_in.sv: 77db45af279cd13e12452f0201621955c01a593b5f21a38875bbba279988b408
+      designs/b110_itch_ouch/rtl/itch_ouch_top.sv: 8f5d552941866af7efa2a893b5d64ae7228f0c6ae36cbe296203146a77d75024
+    evidence: results/191_trading_variants/pytest_junit.xml
+    evidence_sha256: be267a11ab78090653eabcbd05cd0c4bc429fcf9edac9ab3c7ab631befba15da
+  V-SIM-NOTIONAL:
+    checks:
+      designs/b110_itch_ouch/rtl/risk_glue.sv: 003f48109b60c3dbc33ea76c04f0120436e2c928da1b132daf5319e9bb452ebd
+    evidence: results/188_trading_safety/pytest_junit.xml
+    evidence_sha256: 586166cc870084588567f21ed2bdf1caceaae9b781f335b1001a336e4b40f0ad
+  V-SIM-PARSE-INPLACE:
+    checks:
+      designs/b110_itch_ouch/rtl/itch_dec.sv: 816b19c5cc47df033006617f755525bf43df7adbda59c8abbdfaef9d24b37265
+      designs/b110_itch_ouch/rtl/mold_rx.sv: 2439cc5a50ff265598da6afbf6faba81e6004bea70f7e3585c6ab8718c344d66
+    evidence: results/191_trading_variants/pytest_junit.xml
+    evidence_sha256: be267a11ab78090653eabcbd05cd0c4bc429fcf9edac9ab3c7ab631befba15da
+  V-SIM-QTY:
+    checks:
+      designs/b110_itch_ouch/rtl/book_core.sv: 624b55e0fff988692a3f4bd68b7901bebcf3e4c458901966a84c7599319d257a
+      designs/b110_itch_ouch/rtl/risk_glue.sv: 003f48109b60c3dbc33ea76c04f0120436e2c928da1b132daf5319e9bb452ebd
+    evidence: results/188_trading_safety/pytest_junit.xml
+    evidence_sha256: 586166cc870084588567f21ed2bdf1caceaae9b781f335b1001a336e4b40f0ad
+  V-SIM-REJECT-BITS:
+    checks:
+      designs/b110_itch_ouch/rtl/risk_glue.sv: 9d3d031147f19db09506d5a2ac12b63ce8277cf536c15d0548a78b071ac6a1cc
+    evidence: results/191_trading_variants/pytest_junit.xml
+    evidence_sha256: be267a11ab78090653eabcbd05cd0c4bc429fcf9edac9ab3c7ab631befba15da
   V-UVM-BOOK:
     checks:
-      designs/b110_itch_ouch/rtl/book_core.sv: 4f9ea037d5b1a77ba56e87e340987d1155212593ceea0b1ff24cc02d4dddaf74
-      designs/b110_itch_ouch/rtl/itch_dec.sv: 43c7f717f13f703a1bf8869f6294aee6a8eed737b8435d733a78ec87af52ec8d
+      designs/b110_itch_ouch/rtl/book_core.sv: 629dab43bf80ed61b9ab06944ca9b2bf4819a6a4a67f13368cb431c080acf3c3
+      designs/b110_itch_ouch/rtl/itch_dec.sv: 816b19c5cc47df033006617f755525bf43df7adbda59c8abbdfaef9d24b37265
       designs/b110_itch_ouch/rtl/mold_rx.sv: 2439cc5a50ff265598da6afbf6faba81e6004bea70f7e3585c6ab8718c344d66
       designs/b110_itch_ouch/rtl/ouch_enter.sv: 95066c0f3caaf67b87eb40baf88d5704b6eec8387384d00014cbe93f3f64addd
-      designs/b110_itch_ouch/rtl/risk_glue.sv: 2cde343aec11afbddb108c4728157b83e11533644da80c2a7bd8bc13ffdc23f1
-      designs/b96_kr260_10g/rm_gp_itch/rtl/itch_path.sv: 1672408a82201beab1b68ae768a80c8e4eef09b60cadafaff0ee5f192bac9b4f
-      designs/b96_kr260_10g/rm_gp_itch/rtl/itch_top.sv: 186388568e0ad6c5c654da191aa290776b4bfd8934d60afae04607bf7d2b4764
-      designs/b96_kr260_10g/rm_gp_itch/rtl/order_seg.sv: 0d885e6b8420c7e836b9486c5bd81247de3e0e24eada6d57a22ad2e1b2789a64
+      designs/b110_itch_ouch/rtl/risk_glue.sv: 9d3d031147f19db09506d5a2ac12b63ce8277cf536c15d0548a78b071ac6a1cc
+      designs/b96_kr260_10g/rm_gp_itch/rtl/itch_path.sv: 3f8c04b0c061b3e41f67640dde4fa603ee20c7866f264a97c68b69f932bbb600
+      designs/b96_kr260_10g/rm_gp_itch/rtl/itch_top.sv: 5be8de2fca1c8f6aa511bde820eb1e433e693a9bb7dc8533f91f98ab225fe781
+      designs/b96_kr260_10g/rm_gp_itch/rtl/order_seg.sv: 473fe555c60f81e9f484bcbf9c300d07d4c19f7e92ee57a30390d94e781dd841
       designs/b96_kr260_10g/rm_gp_itch/rtl/tx_mux.sv: 60060254bf35df39db013b4a9cd347c13d241a22d7932966dd33ae05faabb7fb
       designs/b96_kr260_10g/rm_gp_itch/rtl/udp_strip.sv: 18ecd60fabbb24dcc5b8337dd255272ddbf94adeb08a21af839e3e1c9b125cb5
-    evidence: results/170_itch_uvm/summary.json
-    evidence_sha256: da35ce6eb6c7a45b303035e0358229cf48ff4ae159432787169dfc4650c134f1
+    evidence: results/191_trading_variants/uvm/summary.json
+    evidence_sha256: efc7d36560fcbb7b1b070287a0dd93a6b13346d342d735508357a43abfae1901
   V-UVM-COV:
     checks:
-      designs/b110_itch_ouch/rtl/book_core.sv: 4f9ea037d5b1a77ba56e87e340987d1155212593ceea0b1ff24cc02d4dddaf74
-      designs/b110_itch_ouch/rtl/itch_dec.sv: 43c7f717f13f703a1bf8869f6294aee6a8eed737b8435d733a78ec87af52ec8d
+      designs/b110_itch_ouch/rtl/book_core.sv: 629dab43bf80ed61b9ab06944ca9b2bf4819a6a4a67f13368cb431c080acf3c3
+      designs/b110_itch_ouch/rtl/itch_dec.sv: 816b19c5cc47df033006617f755525bf43df7adbda59c8abbdfaef9d24b37265
       designs/b110_itch_ouch/rtl/mold_rx.sv: 2439cc5a50ff265598da6afbf6faba81e6004bea70f7e3585c6ab8718c344d66
       designs/b110_itch_ouch/rtl/ouch_enter.sv: 95066c0f3caaf67b87eb40baf88d5704b6eec8387384d00014cbe93f3f64addd
-      designs/b110_itch_ouch/rtl/risk_glue.sv: 2cde343aec11afbddb108c4728157b83e11533644da80c2a7bd8bc13ffdc23f1
-      designs/b96_kr260_10g/rm_gp_itch/rtl/itch_path.sv: 1672408a82201beab1b68ae768a80c8e4eef09b60cadafaff0ee5f192bac9b4f
-      designs/b96_kr260_10g/rm_gp_itch/rtl/itch_top.sv: 186388568e0ad6c5c654da191aa290776b4bfd8934d60afae04607bf7d2b4764
-      designs/b96_kr260_10g/rm_gp_itch/rtl/order_seg.sv: 0d885e6b8420c7e836b9486c5bd81247de3e0e24eada6d57a22ad2e1b2789a64
+      designs/b110_itch_ouch/rtl/risk_glue.sv: 9d3d031147f19db09506d5a2ac12b63ce8277cf536c15d0548a78b071ac6a1cc
+      designs/b96_kr260_10g/rm_gp_itch/rtl/itch_path.sv: 3f8c04b0c061b3e41f67640dde4fa603ee20c7866f264a97c68b69f932bbb600
+      designs/b96_kr260_10g/rm_gp_itch/rtl/itch_top.sv: 5be8de2fca1c8f6aa511bde820eb1e433e693a9bb7dc8533f91f98ab225fe781
+      designs/b96_kr260_10g/rm_gp_itch/rtl/order_seg.sv: 473fe555c60f81e9f484bcbf9c300d07d4c19f7e92ee57a30390d94e781dd841
       designs/b96_kr260_10g/rm_gp_itch/rtl/tx_mux.sv: 60060254bf35df39db013b4a9cd347c13d241a22d7932966dd33ae05faabb7fb
       designs/b96_kr260_10g/rm_gp_itch/rtl/udp_strip.sv: 18ecd60fabbb24dcc5b8337dd255272ddbf94adeb08a21af839e3e1c9b125cb5
-    evidence: results/170_itch_uvm/summary.json
-    evidence_sha256: da35ce6eb6c7a45b303035e0358229cf48ff4ae159432787169dfc4650c134f1
+    evidence: results/191_trading_variants/uvm/summary.json
+    evidence_sha256: efc7d36560fcbb7b1b070287a0dd93a6b13346d342d735508357a43abfae1901
   V-UVM-MOLD:
     checks:
-      designs/b110_itch_ouch/rtl/book_core.sv: 4f9ea037d5b1a77ba56e87e340987d1155212593ceea0b1ff24cc02d4dddaf74
-      designs/b110_itch_ouch/rtl/itch_dec.sv: 43c7f717f13f703a1bf8869f6294aee6a8eed737b8435d733a78ec87af52ec8d
+      designs/b110_itch_ouch/rtl/book_core.sv: 629dab43bf80ed61b9ab06944ca9b2bf4819a6a4a67f13368cb431c080acf3c3
+      designs/b110_itch_ouch/rtl/itch_dec.sv: 816b19c5cc47df033006617f755525bf43df7adbda59c8abbdfaef9d24b37265
       designs/b110_itch_ouch/rtl/mold_rx.sv: 2439cc5a50ff265598da6afbf6faba81e6004bea70f7e3585c6ab8718c344d66
       designs/b110_itch_ouch/rtl/ouch_enter.sv: 95066c0f3caaf67b87eb40baf88d5704b6eec8387384d00014cbe93f3f64addd
-      designs/b110_itch_ouch/rtl/risk_glue.sv: 2cde343aec11afbddb108c4728157b83e11533644da80c2a7bd8bc13ffdc23f1
-      designs/b96_kr260_10g/rm_gp_itch/rtl/itch_path.sv: 1672408a82201beab1b68ae768a80c8e4eef09b60cadafaff0ee5f192bac9b4f
-      designs/b96_kr260_10g/rm_gp_itch/rtl/itch_top.sv: 186388568e0ad6c5c654da191aa290776b4bfd8934d60afae04607bf7d2b4764
-      designs/b96_kr260_10g/rm_gp_itch/rtl/order_seg.sv: 0d885e6b8420c7e836b9486c5bd81247de3e0e24eada6d57a22ad2e1b2789a64
+      designs/b110_itch_ouch/rtl/risk_glue.sv: 9d3d031147f19db09506d5a2ac12b63ce8277cf536c15d0548a78b071ac6a1cc
+      designs/b96_kr260_10g/rm_gp_itch/rtl/itch_path.sv: 3f8c04b0c061b3e41f67640dde4fa603ee20c7866f264a97c68b69f932bbb600
+      designs/b96_kr260_10g/rm_gp_itch/rtl/itch_top.sv: 5be8de2fca1c8f6aa511bde820eb1e433e693a9bb7dc8533f91f98ab225fe781
+      designs/b96_kr260_10g/rm_gp_itch/rtl/order_seg.sv: 473fe555c60f81e9f484bcbf9c300d07d4c19f7e92ee57a30390d94e781dd841
       designs/b96_kr260_10g/rm_gp_itch/rtl/tx_mux.sv: 60060254bf35df39db013b4a9cd347c13d241a22d7932966dd33ae05faabb7fb
       designs/b96_kr260_10g/rm_gp_itch/rtl/udp_strip.sv: 18ecd60fabbb24dcc5b8337dd255272ddbf94adeb08a21af839e3e1c9b125cb5
-    evidence: results/170_itch_uvm/summary.json
-    evidence_sha256: da35ce6eb6c7a45b303035e0358229cf48ff4ae159432787169dfc4650c134f1
+    evidence: results/191_trading_variants/uvm/summary.json
+    evidence_sha256: efc7d36560fcbb7b1b070287a0dd93a6b13346d342d735508357a43abfae1901
   V-UVM-MUT:
     checks:
       designs/b110_itch_ouch/rtl/book_core.sv: 4f9ea037d5b1a77ba56e87e340987d1155212593ceea0b1ff24cc02d4dddaf74
@@ -60,85 +100,91 @@ pins:
     evidence_sha256: 6345bf1a4af7fd9d20118a0f1ce4f6e6fc332fe8d3f5e722ff0a7452097ec6fd
   V-UVM-ORDERS:
     checks:
-      designs/b110_itch_ouch/rtl/book_core.sv: 4f9ea037d5b1a77ba56e87e340987d1155212593ceea0b1ff24cc02d4dddaf74
-      designs/b110_itch_ouch/rtl/itch_dec.sv: 43c7f717f13f703a1bf8869f6294aee6a8eed737b8435d733a78ec87af52ec8d
+      designs/b110_itch_ouch/rtl/book_core.sv: 629dab43bf80ed61b9ab06944ca9b2bf4819a6a4a67f13368cb431c080acf3c3
+      designs/b110_itch_ouch/rtl/itch_dec.sv: 816b19c5cc47df033006617f755525bf43df7adbda59c8abbdfaef9d24b37265
       designs/b110_itch_ouch/rtl/mold_rx.sv: 2439cc5a50ff265598da6afbf6faba81e6004bea70f7e3585c6ab8718c344d66
       designs/b110_itch_ouch/rtl/ouch_enter.sv: 95066c0f3caaf67b87eb40baf88d5704b6eec8387384d00014cbe93f3f64addd
-      designs/b110_itch_ouch/rtl/risk_glue.sv: 2cde343aec11afbddb108c4728157b83e11533644da80c2a7bd8bc13ffdc23f1
-      designs/b96_kr260_10g/rm_gp_itch/rtl/itch_path.sv: 1672408a82201beab1b68ae768a80c8e4eef09b60cadafaff0ee5f192bac9b4f
-      designs/b96_kr260_10g/rm_gp_itch/rtl/itch_top.sv: 186388568e0ad6c5c654da191aa290776b4bfd8934d60afae04607bf7d2b4764
-      designs/b96_kr260_10g/rm_gp_itch/rtl/order_seg.sv: 0d885e6b8420c7e836b9486c5bd81247de3e0e24eada6d57a22ad2e1b2789a64
+      designs/b110_itch_ouch/rtl/risk_glue.sv: 9d3d031147f19db09506d5a2ac12b63ce8277cf536c15d0548a78b071ac6a1cc
+      designs/b96_kr260_10g/rm_gp_itch/rtl/itch_path.sv: 3f8c04b0c061b3e41f67640dde4fa603ee20c7866f264a97c68b69f932bbb600
+      designs/b96_kr260_10g/rm_gp_itch/rtl/itch_top.sv: 5be8de2fca1c8f6aa511bde820eb1e433e693a9bb7dc8533f91f98ab225fe781
+      designs/b96_kr260_10g/rm_gp_itch/rtl/order_seg.sv: 473fe555c60f81e9f484bcbf9c300d07d4c19f7e92ee57a30390d94e781dd841
       designs/b96_kr260_10g/rm_gp_itch/rtl/tx_mux.sv: 60060254bf35df39db013b4a9cd347c13d241a22d7932966dd33ae05faabb7fb
       designs/b96_kr260_10g/rm_gp_itch/rtl/udp_strip.sv: 18ecd60fabbb24dcc5b8337dd255272ddbf94adeb08a21af839e3e1c9b125cb5
-    evidence: results/170_itch_uvm/summary.json
-    evidence_sha256: da35ce6eb6c7a45b303035e0358229cf48ff4ae159432787169dfc4650c134f1
+    evidence: results/191_trading_variants/uvm/summary.json
+    evidence_sha256: efc7d36560fcbb7b1b070287a0dd93a6b13346d342d735508357a43abfae1901
   V-UVM-RISK:
     checks:
-      designs/b110_itch_ouch/rtl/book_core.sv: 4f9ea037d5b1a77ba56e87e340987d1155212593ceea0b1ff24cc02d4dddaf74
-      designs/b110_itch_ouch/rtl/itch_dec.sv: 43c7f717f13f703a1bf8869f6294aee6a8eed737b8435d733a78ec87af52ec8d
+      designs/b110_itch_ouch/rtl/book_core.sv: 629dab43bf80ed61b9ab06944ca9b2bf4819a6a4a67f13368cb431c080acf3c3
+      designs/b110_itch_ouch/rtl/itch_dec.sv: 816b19c5cc47df033006617f755525bf43df7adbda59c8abbdfaef9d24b37265
       designs/b110_itch_ouch/rtl/mold_rx.sv: 2439cc5a50ff265598da6afbf6faba81e6004bea70f7e3585c6ab8718c344d66
       designs/b110_itch_ouch/rtl/ouch_enter.sv: 95066c0f3caaf67b87eb40baf88d5704b6eec8387384d00014cbe93f3f64addd
-      designs/b110_itch_ouch/rtl/risk_glue.sv: 2cde343aec11afbddb108c4728157b83e11533644da80c2a7bd8bc13ffdc23f1
-      designs/b96_kr260_10g/rm_gp_itch/rtl/itch_path.sv: 1672408a82201beab1b68ae768a80c8e4eef09b60cadafaff0ee5f192bac9b4f
-      designs/b96_kr260_10g/rm_gp_itch/rtl/itch_top.sv: 186388568e0ad6c5c654da191aa290776b4bfd8934d60afae04607bf7d2b4764
-      designs/b96_kr260_10g/rm_gp_itch/rtl/order_seg.sv: 0d885e6b8420c7e836b9486c5bd81247de3e0e24eada6d57a22ad2e1b2789a64
+      designs/b110_itch_ouch/rtl/risk_glue.sv: 9d3d031147f19db09506d5a2ac12b63ce8277cf536c15d0548a78b071ac6a1cc
+      designs/b96_kr260_10g/rm_gp_itch/rtl/itch_path.sv: 3f8c04b0c061b3e41f67640dde4fa603ee20c7866f264a97c68b69f932bbb600
+      designs/b96_kr260_10g/rm_gp_itch/rtl/itch_top.sv: 5be8de2fca1c8f6aa511bde820eb1e433e693a9bb7dc8533f91f98ab225fe781
+      designs/b96_kr260_10g/rm_gp_itch/rtl/order_seg.sv: 473fe555c60f81e9f484bcbf9c300d07d4c19f7e92ee57a30390d94e781dd841
       designs/b96_kr260_10g/rm_gp_itch/rtl/tx_mux.sv: 60060254bf35df39db013b4a9cd347c13d241a22d7932966dd33ae05faabb7fb
       designs/b96_kr260_10g/rm_gp_itch/rtl/udp_strip.sv: 18ecd60fabbb24dcc5b8337dd255272ddbf94adeb08a21af839e3e1c9b125cb5
-    evidence: results/170_itch_uvm/summary.json
-    evidence_sha256: da35ce6eb6c7a45b303035e0358229cf48ff4ae159432787169dfc4650c134f1
+    evidence: results/191_trading_variants/uvm/summary.json
+    evidence_sha256: efc7d36560fcbb7b1b070287a0dd93a6b13346d342d735508357a43abfae1901
   V-UVM-SEQ:
     checks:
-      designs/b110_itch_ouch/rtl/book_core.sv: 4f9ea037d5b1a77ba56e87e340987d1155212593ceea0b1ff24cc02d4dddaf74
-      designs/b110_itch_ouch/rtl/itch_dec.sv: 43c7f717f13f703a1bf8869f6294aee6a8eed737b8435d733a78ec87af52ec8d
+      designs/b110_itch_ouch/rtl/book_core.sv: 629dab43bf80ed61b9ab06944ca9b2bf4819a6a4a67f13368cb431c080acf3c3
+      designs/b110_itch_ouch/rtl/itch_dec.sv: 816b19c5cc47df033006617f755525bf43df7adbda59c8abbdfaef9d24b37265
       designs/b110_itch_ouch/rtl/mold_rx.sv: 2439cc5a50ff265598da6afbf6faba81e6004bea70f7e3585c6ab8718c344d66
       designs/b110_itch_ouch/rtl/ouch_enter.sv: 95066c0f3caaf67b87eb40baf88d5704b6eec8387384d00014cbe93f3f64addd
-      designs/b110_itch_ouch/rtl/risk_glue.sv: 2cde343aec11afbddb108c4728157b83e11533644da80c2a7bd8bc13ffdc23f1
-      designs/b96_kr260_10g/rm_gp_itch/rtl/itch_path.sv: 1672408a82201beab1b68ae768a80c8e4eef09b60cadafaff0ee5f192bac9b4f
-      designs/b96_kr260_10g/rm_gp_itch/rtl/itch_top.sv: 186388568e0ad6c5c654da191aa290776b4bfd8934d60afae04607bf7d2b4764
-      designs/b96_kr260_10g/rm_gp_itch/rtl/order_seg.sv: 0d885e6b8420c7e836b9486c5bd81247de3e0e24eada6d57a22ad2e1b2789a64
+      designs/b110_itch_ouch/rtl/risk_glue.sv: 9d3d031147f19db09506d5a2ac12b63ce8277cf536c15d0548a78b071ac6a1cc
+      designs/b96_kr260_10g/rm_gp_itch/rtl/itch_path.sv: 3f8c04b0c061b3e41f67640dde4fa603ee20c7866f264a97c68b69f932bbb600
+      designs/b96_kr260_10g/rm_gp_itch/rtl/itch_top.sv: 5be8de2fca1c8f6aa511bde820eb1e433e693a9bb7dc8533f91f98ab225fe781
+      designs/b96_kr260_10g/rm_gp_itch/rtl/order_seg.sv: 473fe555c60f81e9f484bcbf9c300d07d4c19f7e92ee57a30390d94e781dd841
       designs/b96_kr260_10g/rm_gp_itch/rtl/tx_mux.sv: 60060254bf35df39db013b4a9cd347c13d241a22d7932966dd33ae05faabb7fb
       designs/b96_kr260_10g/rm_gp_itch/rtl/udp_strip.sv: 18ecd60fabbb24dcc5b8337dd255272ddbf94adeb08a21af839e3e1c9b125cb5
-    evidence: results/170_itch_uvm/summary.json
-    evidence_sha256: da35ce6eb6c7a45b303035e0358229cf48ff4ae159432787169dfc4650c134f1
+    evidence: results/191_trading_variants/uvm/summary.json
+    evidence_sha256: efc7d36560fcbb7b1b070287a0dd93a6b13346d342d735508357a43abfae1901
   V-UVM-STRICT:
     checks:
-      designs/b110_itch_ouch/rtl/book_core.sv: 4f9ea037d5b1a77ba56e87e340987d1155212593ceea0b1ff24cc02d4dddaf74
-      designs/b110_itch_ouch/rtl/itch_dec.sv: 43c7f717f13f703a1bf8869f6294aee6a8eed737b8435d733a78ec87af52ec8d
+      designs/b110_itch_ouch/rtl/book_core.sv: 629dab43bf80ed61b9ab06944ca9b2bf4819a6a4a67f13368cb431c080acf3c3
+      designs/b110_itch_ouch/rtl/itch_dec.sv: 816b19c5cc47df033006617f755525bf43df7adbda59c8abbdfaef9d24b37265
       designs/b110_itch_ouch/rtl/mold_rx.sv: 2439cc5a50ff265598da6afbf6faba81e6004bea70f7e3585c6ab8718c344d66
       designs/b110_itch_ouch/rtl/ouch_enter.sv: 95066c0f3caaf67b87eb40baf88d5704b6eec8387384d00014cbe93f3f64addd
-      designs/b110_itch_ouch/rtl/risk_glue.sv: 2cde343aec11afbddb108c4728157b83e11533644da80c2a7bd8bc13ffdc23f1
-      designs/b96_kr260_10g/rm_gp_itch/rtl/itch_path.sv: 1672408a82201beab1b68ae768a80c8e4eef09b60cadafaff0ee5f192bac9b4f
-      designs/b96_kr260_10g/rm_gp_itch/rtl/itch_top.sv: 186388568e0ad6c5c654da191aa290776b4bfd8934d60afae04607bf7d2b4764
-      designs/b96_kr260_10g/rm_gp_itch/rtl/order_seg.sv: 0d885e6b8420c7e836b9486c5bd81247de3e0e24eada6d57a22ad2e1b2789a64
+      designs/b110_itch_ouch/rtl/risk_glue.sv: 9d3d031147f19db09506d5a2ac12b63ce8277cf536c15d0548a78b071ac6a1cc
+      designs/b96_kr260_10g/rm_gp_itch/rtl/itch_path.sv: 3f8c04b0c061b3e41f67640dde4fa603ee20c7866f264a97c68b69f932bbb600
+      designs/b96_kr260_10g/rm_gp_itch/rtl/itch_top.sv: 5be8de2fca1c8f6aa511bde820eb1e433e693a9bb7dc8533f91f98ab225fe781
+      designs/b96_kr260_10g/rm_gp_itch/rtl/order_seg.sv: 473fe555c60f81e9f484bcbf9c300d07d4c19f7e92ee57a30390d94e781dd841
       designs/b96_kr260_10g/rm_gp_itch/rtl/tx_mux.sv: 60060254bf35df39db013b4a9cd347c13d241a22d7932966dd33ae05faabb7fb
       designs/b96_kr260_10g/rm_gp_itch/rtl/udp_strip.sv: 18ecd60fabbb24dcc5b8337dd255272ddbf94adeb08a21af839e3e1c9b125cb5
-    evidence: results/170_itch_uvm/summary.json
-    evidence_sha256: da35ce6eb6c7a45b303035e0358229cf48ff4ae159432787169dfc4650c134f1
+    evidence: results/191_trading_variants/uvm/summary.json
+    evidence_sha256: efc7d36560fcbb7b1b070287a0dd93a6b13346d342d735508357a43abfae1901
   V-UVM-SVA:
     checks:
-      designs/b110_itch_ouch/rtl/book_core.sv: 4f9ea037d5b1a77ba56e87e340987d1155212593ceea0b1ff24cc02d4dddaf74
-      designs/b110_itch_ouch/rtl/itch_dec.sv: 43c7f717f13f703a1bf8869f6294aee6a8eed737b8435d733a78ec87af52ec8d
+      designs/b110_itch_ouch/rtl/book_core.sv: 629dab43bf80ed61b9ab06944ca9b2bf4819a6a4a67f13368cb431c080acf3c3
+      designs/b110_itch_ouch/rtl/itch_dec.sv: 816b19c5cc47df033006617f755525bf43df7adbda59c8abbdfaef9d24b37265
       designs/b110_itch_ouch/rtl/mold_rx.sv: 2439cc5a50ff265598da6afbf6faba81e6004bea70f7e3585c6ab8718c344d66
       designs/b110_itch_ouch/rtl/ouch_enter.sv: 95066c0f3caaf67b87eb40baf88d5704b6eec8387384d00014cbe93f3f64addd
-      designs/b110_itch_ouch/rtl/risk_glue.sv: 2cde343aec11afbddb108c4728157b83e11533644da80c2a7bd8bc13ffdc23f1
-      designs/b96_kr260_10g/rm_gp_itch/rtl/itch_path.sv: 1672408a82201beab1b68ae768a80c8e4eef09b60cadafaff0ee5f192bac9b4f
-      designs/b96_kr260_10g/rm_gp_itch/rtl/itch_top.sv: 186388568e0ad6c5c654da191aa290776b4bfd8934d60afae04607bf7d2b4764
-      designs/b96_kr260_10g/rm_gp_itch/rtl/order_seg.sv: 0d885e6b8420c7e836b9486c5bd81247de3e0e24eada6d57a22ad2e1b2789a64
+      designs/b110_itch_ouch/rtl/risk_glue.sv: 9d3d031147f19db09506d5a2ac12b63ce8277cf536c15d0548a78b071ac6a1cc
+      designs/b96_kr260_10g/rm_gp_itch/rtl/itch_path.sv: 3f8c04b0c061b3e41f67640dde4fa603ee20c7866f264a97c68b69f932bbb600
+      designs/b96_kr260_10g/rm_gp_itch/rtl/itch_top.sv: 5be8de2fca1c8f6aa511bde820eb1e433e693a9bb7dc8533f91f98ab225fe781
+      designs/b96_kr260_10g/rm_gp_itch/rtl/order_seg.sv: 473fe555c60f81e9f484bcbf9c300d07d4c19f7e92ee57a30390d94e781dd841
       designs/b96_kr260_10g/rm_gp_itch/rtl/tx_mux.sv: 60060254bf35df39db013b4a9cd347c13d241a22d7932966dd33ae05faabb7fb
       designs/b96_kr260_10g/rm_gp_itch/rtl/udp_strip.sv: 18ecd60fabbb24dcc5b8337dd255272ddbf94adeb08a21af839e3e1c9b125cb5
-    evidence: results/170_itch_uvm/summary.json
-    evidence_sha256: da35ce6eb6c7a45b303035e0358229cf48ff4ae159432787169dfc4650c134f1
+    evidence: results/191_trading_variants/uvm/summary.json
+    evidence_sha256: efc7d36560fcbb7b1b070287a0dd93a6b13346d342d735508357a43abfae1901
   V-UVM-UDP:
     checks:
-      designs/b110_itch_ouch/rtl/book_core.sv: 4f9ea037d5b1a77ba56e87e340987d1155212593ceea0b1ff24cc02d4dddaf74
-      designs/b110_itch_ouch/rtl/itch_dec.sv: 43c7f717f13f703a1bf8869f6294aee6a8eed737b8435d733a78ec87af52ec8d
+      designs/b110_itch_ouch/rtl/book_core.sv: 629dab43bf80ed61b9ab06944ca9b2bf4819a6a4a67f13368cb431c080acf3c3
+      designs/b110_itch_ouch/rtl/itch_dec.sv: 816b19c5cc47df033006617f755525bf43df7adbda59c8abbdfaef9d24b37265
       designs/b110_itch_ouch/rtl/mold_rx.sv: 2439cc5a50ff265598da6afbf6faba81e6004bea70f7e3585c6ab8718c344d66
       designs/b110_itch_ouch/rtl/ouch_enter.sv: 95066c0f3caaf67b87eb40baf88d5704b6eec8387384d00014cbe93f3f64addd
-      designs/b110_itch_ouch/rtl/risk_glue.sv: 2cde343aec11afbddb108c4728157b83e11533644da80c2a7bd8bc13ffdc23f1
-      designs/b96_kr260_10g/rm_gp_itch/rtl/itch_path.sv: 1672408a82201beab1b68ae768a80c8e4eef09b60cadafaff0ee5f192bac9b4f
-      designs/b96_kr260_10g/rm_gp_itch/rtl/itch_top.sv: 186388568e0ad6c5c654da191aa290776b4bfd8934d60afae04607bf7d2b4764
-      designs/b96_kr260_10g/rm_gp_itch/rtl/order_seg.sv: 0d885e6b8420c7e836b9486c5bd81247de3e0e24eada6d57a22ad2e1b2789a64
+      designs/b110_itch_ouch/rtl/risk_glue.sv: 9d3d031147f19db09506d5a2ac12b63ce8277cf536c15d0548a78b071ac6a1cc
+      designs/b96_kr260_10g/rm_gp_itch/rtl/itch_path.sv: 3f8c04b0c061b3e41f67640dde4fa603ee20c7866f264a97c68b69f932bbb600
+      designs/b96_kr260_10g/rm_gp_itch/rtl/itch_top.sv: 5be8de2fca1c8f6aa511bde820eb1e433e693a9bb7dc8533f91f98ab225fe781
+      designs/b96_kr260_10g/rm_gp_itch/rtl/order_seg.sv: 473fe555c60f81e9f484bcbf9c300d07d4c19f7e92ee57a30390d94e781dd841
       designs/b96_kr260_10g/rm_gp_itch/rtl/tx_mux.sv: 60060254bf35df39db013b4a9cd347c13d241a22d7932966dd33ae05faabb7fb
       designs/b96_kr260_10g/rm_gp_itch/rtl/udp_strip.sv: 18ecd60fabbb24dcc5b8337dd255272ddbf94adeb08a21af839e3e1c9b125cb5
-    evidence: results/170_itch_uvm/summary.json
-    evidence_sha256: da35ce6eb6c7a45b303035e0358229cf48ff4ae159432787169dfc4650c134f1
+    evidence: results/191_trading_variants/uvm/summary.json
+    evidence_sha256: efc7d36560fcbb7b1b070287a0dd93a6b13346d342d735508357a43abfae1901
+  V-XSIM-LIMITS:
+    checks:
+      designs/b96_kr260_10g/rm_gp_itch/rtl/b96_core.sv: 2ee04f6ca6b40be38de985da6b48e22ae5401ebd75331531d65b6bdeea48257c
+      designs/b96_kr260_10g/rm_gp_itch/rtl/itch_path.sv: 3f8c04b0c061b3e41f67640dde4fa603ee20c7866f264a97c68b69f932bbb600
+    evidence: results/188_trading_safety/staged_limits_sim.json
+    evidence_sha256: f750bfa407beb82d79503c695fc2e2e268ddd7f23010c9450bee80229ccf9538

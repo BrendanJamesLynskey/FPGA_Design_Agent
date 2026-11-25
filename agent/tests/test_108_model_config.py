@@ -358,7 +358,7 @@ def test_the_anthropic_client_translates_messages_tools_and_replies() -> None:
         sent["body"], sent["headers"], sent["url"] = json.loads(req.data), dict(req.header_items()), req.full_url
         return Resp({"content": [{"type": "text", "text": "hi"}, {"type": "tool_use", "id": "t1", "name": "write_file", "input": {"p": 1}}],
                      "usage": {"input_tokens": 5, "output_tokens": 3}})
-    c = AnthropicClient("claude-haiku-5-5", key_env="ANTHROPIC_API_KEY", opener=opener, temperature=0, max_tokens=100, stop=["END"])
+    c = AnthropicClient("claude-haiku-5-5", key_env="ANTHROPIC_API_KEY", opener=opener, temperature=0, max_tokens=100, stop=["END"], cache=False)
     c._key = "k"
     tools = [{"type": "function", "function": {"name": "write_file", "description": "w", "parameters": {"type": "object", "properties": {"p": {}}}}}]
     msgs = [{"role": "system", "content": "S"}, {"role": "user", "content": "U"},

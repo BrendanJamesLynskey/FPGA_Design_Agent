@@ -29,6 +29,7 @@ import yaml
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
+from flow import fmax_cap  # noqa: E402
 from flow import ipvariants as iv  # noqa: E402
 
 BUILD = ROOT / "build" / "ipchar"
@@ -103,7 +104,7 @@ def _row(txt: str, label: str):
     return float(m.group(1)) if "." in m.group(1) else int(m.group(1))
 
 
-def parse(wd: Path, clock_ns: float) -> dict:
+def parse(wd: Path, clock_ns: float, part: str | None = None) -> dict:
     if (wd / "error.txt").exists():
         return {"status": "error: " + (wd / "error.txt").read_text().strip().splitlines()[0][:300]}
     if not (wd / "done.txt").exists():
@@ -128,9 +129,18 @@ def parse(wd: Path, clock_ns: float) -> dict:
     r["whs_ns"], r["wpws_ns"] = num("WHS(ns)"), num("WPWS(ns)")
     r["fmax_setup_mhz"] = round(1000.0 / (clock_ns - r["wns_ns"]), 1) if r["wns_ns"] is not None else None
     r["fmax_mhz"] = r["fmax_setup_mhz"]
+    bound = "setup slack at the target clock"
     if r["wpws_ns"] is not None and r["wpws_ns"] < 0 and r["fmax_mhz"] is not None:
         # a 50 % duty clock: the high and low pulses are each period/2, so the period must grow by 2 x the shortfall
-        r["fmax_mhz"] = min(r["fmax_mhz"], round(1000.0 / (clock_ns - 2 * r["wpws_ns"]), 1))
+        pw = round(1000.0 / (clock_ns - 2 * r["wpws_ns"]), 1)
+        if pw < r["fmax_mhz"]:
+            r["fmax_mhz"], bound = pw, "pulse width of a primitive in the design (WPWS)"
+    if part and r["fmax_mhz"] is not None:
+        # brief 201: the run has no clock buffer, a real design does; cap at the buffer's minimum period for this part and say which limit binds.
+        # fmax_setup_mhz stays the raw setup figure; a part with no recorded buffer limit gets no extra fields.
+        v, bound, buf = fmax_cap.cap(part, r["fmax_mhz"], bound)
+        if buf is not None:
+            r["fmax_mhz"], r["fmax_bound"], r["fmax_clock_buffer_mhz"] = v, bound, buf
     p = (wd / "power.rpt").read_text()
     pw = {}
     for key, label in (("total", "Total On-Chip Power (W)"), ("dynamic", "Dynamic (W)"), ("static", "Device Static (W)")):
@@ -158,7 +168,7 @@ def record(block: str, part: str, js: list[dict]) -> Path:
     old = json.loads(f.read_text()) if f.exists() else {"results": []}
     rows = {(r["variant"], json.dumps(r["params"], sort_keys=True)): r for r in old["results"]}
     for j in js:
-        r = {"variant": j["variant"], "params": j["params"], **parse(j["wd"], j["clock_ns"])}
+        r = {"variant": j["variant"], "params": j["params"], **parse(j["wd"], j["clock_ns"], part)}
         if y.get("variants"):
             pr = iv.predict(block, j["variant"], j["params"])
             r["latency"], r["ii"] = pr.get("latency"), pr.get("ii")
@@ -169,7 +179,7 @@ def record(block: str, part: str, js: list[dict]) -> Path:
            "date": datetime.date.today().isoformat(),
            "flow": "out-of-context synth_design, opt_design, place_design, route_design; one thread; clock on port clk "
                    "only (I/O paths unconstrained); Fmax = 1000 / (period - WNS) after routing, an estimate from one "
-                   "run at the target clock; power: report_power, vectorless, default toggle rates",
+                   "run at the target clock, capped at the part's clock-buffer minimum period (flow/fmax_cap.py); power: report_power, vectorless, default toggle rates",
            "results": sorted(rows.values(), key=lambda r: (list(y.get("variants") or {BASE: {}}).index(r["variant"]),
                                                             [r["params"][k] for k in sorted(r["params"])]))}
     f.parent.mkdir(parents=True, exist_ok=True)

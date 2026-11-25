@@ -1,0 +1,27 @@
+--- 186-alveo-cards-src/GTF_Latency/Synchronized/GTFRAW_Latency_10G_Sync/sim/sim_clk_reset.sv	2026-11-23 01:09:17.828787103 +0000
++++ 186-sim/raw/sim/sim_clk_reset.sv	2026-11-23 03:19:26.175160454 +0000
+@@ -21,10 +21,14 @@
+ 
+ reg refclk_300;
+ reg refclk_300_rst;
++// 186 sweep edit: start offsets (ps) from plusargs, default 0 (as shipped)
++integer refoff_ps = 0, f300off_ps = 0;
+ 
+ initial      
+ begin
++    if (!$value$plusargs("F300OFF_PS=%d", f300off_ps)) f300off_ps = 0;
+     refclk_300 = 1'b0;
++    #(f300off_ps);
+     forever
+     begin
+         refclk_300 = #(`PERIOD_300MHZ_PS/2) ~refclk_300;
+@@ -52,7 +56,9 @@
+ 
+ initial
+ begin
++    if (!$value$plusargs("REFOFF_PS=%d", refoff_ps)) refoff_ps = 0;
+     SYNCE_CLK_LVDS_P = 0;
++    #(refoff_ps);
+     forever
+     begin
+         SYNCE_CLK_LVDS_P = #(`PERIOD_161MHZ_PS/2) ~SYNCE_CLK_LVDS_P;

@@ -6,7 +6,7 @@
 # setup WNS of -1.364 ns (5 failing endpoints), i.e. every XPM crossing was timed as a synchronous path.
 # The same rules are applied here, after synth_design, for every xpm_cdc_single / sync_rst first stage, every
 # xpm_cdc_gray (max_delay -datapath_only at the source period plus set_bus_skew at the smaller period) and every
-# xpm_cdc_handshake data bus. Written from hil/cdc_soak/tcl/rig_cdc.tcl section 4b (proven in the rig build).
+# xpm_cdc_handshake data bus (max_delay and bus skew at destination period x sync stages, AMD's 2026.1 template; brief 207). Written from hil/cdc_soak/tcl/rig_cdc.tcl section 4b (proven in the rig build).
 # Everything is get_cells -quiet: a design with no XPM macros gets no exception.
 #
 # Status: the gap was measured for xpm_cdc_single and xpm_cdc_gray (flow/tests/fixtures/xpm_probe). This fix reuses the rig's
@@ -70,7 +70,10 @@ proc apply_xpm_cdc_constraints {} {
         set_bus_skew -from $starts -to $ends [expr {min($ps, $pd)}]
         incr nxg
     }
-    # xpm_cdc_handshake: the held data bus, max_delay -datapath_only at the source period
+    # xpm_cdc_handshake: the held data bus. Brief 207: AMD's own template (Vivado 2026.1 data/ip/xpm/xpm_cdc/tcl/xpm_cdc_handshake.tcl, read, not
+    # copied) bounds a bus of up to 100 bits with max_delay -datapath_only AND set_bus_skew, both at the destination period x the number of
+    # src-to-dest synchroniser stages (the data is held while the request crosses); above 100 bits, max_delay at the smaller period and no bus
+    # skew. Until brief 207 this file used the source period and no bus skew (measured: results/207_cdc_margin, xpm_a7 and xpm_k26).
     set nxh 0
     set xh [dict create]
     foreach c [xpm_cells_like *dest_hsdata_ff_reg*] {
@@ -82,7 +85,16 @@ proc apply_xpm_cdc_constraints {} {
         set ends [xpm_pins_of $cs]
         set starts [get_cells -quiet -of_objects [all_fanin -quiet -startpoints_only -flat $ends] -filter {NAME =~ *src_hsdata_ff_reg*}]
         if {[llength $starts] == 0} { continue }
-        set_max_delay -datapath_only -from $starts -to $ends [xpm_src_period $starts]
+        set ps [xpm_src_period $starts]
+        set pd [xpm_dst_period $ends]
+        set nsync [llength [get_cells -quiet "$key/xpm_cdc_single_src2dest_inst/syncstages_ff_reg*"]]
+        if {[llength $ends] <= 100 && $nsync > 0} {
+            set v [expr {$pd * $nsync}]
+            set_max_delay -datapath_only -from $starts -to $ends $v
+            set_bus_skew -from $starts -to $ends $v
+        } else {
+            set_max_delay -datapath_only -from $starts -to $ends [expr {min($ps, $pd)}]
+        }
         incr nxh
     }
     # brief 96C: xpm_fifo_async. AMD ships no scoped constraint for the FIFO's block memory (its gray pointers are xpm_cdc_gray and are handled above). The memory

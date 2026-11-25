@@ -125,6 +125,7 @@ READMEs: `python flow/net/ipdoc.py`.
 | Entry | What | Tests |
 |---|---|---|
 | [axil_xbar](axil_xbar/README.md) | AXI4-Lite crossbar, N masters to M slaves, round robin per slave, DECERR for unmapped addresses; the interconnect that the block-design generator ([docs/blockdesign.md](../docs/blockdesign.md)) inserts | random traffic with stalls at five parameter points against Python masters and slaves, the AXI4-Lite protocol checker on every link, read and write fairness, a reset with transfers in flight, map guards, ten seeded faults |
+| [jtag_regs](jtag_regs/README.md) | register window over the JTAG cable for a board with no PL UART (KR260): BSCANE2 USER4 bus, common map ID / BUILD (USR_ACCESS) / SCRATCH, the design's registers from 0x010 (brief 209a) | the common map in cocotb (Icarus); the BSCANE2 and CDC part is designs/b58a_trigger's, which the owner's KR260 run exercised |
 
 Run: `python3 -m pytest ip_lib/axil_xbar/tb/test_axil_xbar_rtl.py`; faults: `python3 hil/ip_faults.py --blocks axil_xbar`.
 
