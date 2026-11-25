@@ -1,0 +1,159 @@
+{
+ "sby": "ip_lib/eth_mac_rgmii/formal/classify.sby",
+ "schema": "fpga-design-agent/formal_rigour/v1",
+ "sources": {
+  "ip_lib/eth_mac_rgmii/formal/classify.sby": "7507e62a53723950d7017afa311807a518ab9f1fd73754c302873db29f167626",
+  "ip_lib/eth_mac_rgmii/formal/formal_classify.sv": "0c1432f2073fdb59b063b50c1fc91d7c98b693a923a5af0fb6aee532e9b3baa0",
+  "ip_lib/eth_mac_rgmii/rtl/eth_rx_classify.sv": "75b50dcc05ad122a73a7aea940c15566e1ac6fa8f7b73327724e231eb5e9689d"
+ },
+ "tasks": {
+  "bmc": {
+   "checks": [
+    {
+     "flavor": "cover",
+     "id": "c_rejected",
+     "label": "c_rejected",
+     "src": "formal_classify.sv:68",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "c_multicast_matched",
+     "label": "c_multicast_matched",
+     "src": "formal_classify.sv:67",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "a_verdict__ante",
+     "label": "a_verdict__ante",
+     "src": "formal_classify.sv:65",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "a_six_bytes",
+     "label": "a_six_bytes",
+     "src": "formal_classify.sv:58",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "a_match_rule__ante",
+     "label": "a_match_rule__ante",
+     "src": "formal_classify.sv:66",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "a_match_rule",
+     "label": "a_match_rule",
+     "src": "formal_classify.sv:59",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "a_flags",
+     "label": "a_flags",
+     "src": "formal_classify.sv:60",
+     "tautology": false
+    },
+    {
+     "flavor": "assume",
+     "id": "formal_classify.sv:47",
+     "label": null,
+     "src": "formal_classify.sv:47",
+     "tautology": false
+    }
+   ],
+   "covers": {},
+   "depth": 12,
+   "mode": "bmc",
+   "seconds": 72.1,
+   "status": "PASS"
+  },
+  "cover": {
+   "checks": [
+    {
+     "flavor": "cover",
+     "id": "c_rejected",
+     "label": "c_rejected",
+     "src": "formal_classify.sv:68",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "c_multicast_matched",
+     "label": "c_multicast_matched",
+     "src": "formal_classify.sv:67",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "a_verdict__ante",
+     "label": "a_verdict__ante",
+     "src": "formal_classify.sv:65",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "a_six_bytes",
+     "label": "a_six_bytes",
+     "src": "formal_classify.sv:58",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "a_match_rule__ante",
+     "label": "a_match_rule__ante",
+     "src": "formal_classify.sv:66",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "a_match_rule",
+     "label": "a_match_rule",
+     "src": "formal_classify.sv:59",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "a_flags",
+     "label": "a_flags",
+     "src": "formal_classify.sv:60",
+     "tautology": false
+    },
+    {
+     "flavor": "assume",
+     "id": "formal_classify.sv:47",
+     "label": null,
+     "src": "formal_classify.sv:47",
+     "tautology": false
+    }
+   ],
+   "covers": {
+    "a_match_rule__ante": {
+     "reached": true,
+     "step": 9
+    },
+    "a_verdict__ante": {
+     "reached": true,
+     "step": 9
+    },
+    "c_multicast_matched": {
+     "reached": true,
+     "step": 9
+    },
+    "c_rejected": {
+     "reached": true,
+     "step": 9
+    }
+   },
+   "depth": 16,
+   "mode": "cover",
+   "seconds": 1.6,
+   "status": "PASS"
+  }
+ },
+ "tool": "Yosys 0.70+385 (git sha1 098e46a36, Release, Clang /usr/bin/clang++ 21.1.8)"
+}

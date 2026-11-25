@@ -232,7 +232,7 @@ def test_manifest_is_read_when_present(mini):
 def test_t1_matrix_on_reference_run(tmp_path):
     formal = tmp_path / "formal"
     for job in ("debounce", "scan"):
-        for task in ("bmc", "cover"):
+        for task in tr.sby_tasks(T1 / "verif" / "formal" / f"{job}.sby"):      # bmc, prove (brief 143c) and cover: every task the job lists must have run
             (formal / f"{job}_{task}").mkdir(parents=True)
             (formal / f"{job}_{task}" / "status").write_text("PASS 0\n")
     t = tr.build(T1, HERE / "data" / "ref_t1_sim", formal=formal, hw=ROOT / "results" / "f0b" / "t1_dimmer_counter_bringup.json",
@@ -283,7 +283,7 @@ def test_trace_tag_migrates_from_the_testplan(mini):
 def test_rule_set_is_well_formed():
     rs = lr.load_rules()
     assert lr.rule_problems(rs) == []
-    assert rs["standard"] == "FDA-HDL" and rs["version"] == "1.6"      # brief 105A: v1.5 (brief 106 was v1.4, brief 70 v1.3)
+    assert rs["standard"] == "FDA-HDL" and rs["version"] == "1.9"      # brief 204a: v1.9; brief 206: v1.8; brief 205: v1.7; brief 105A: v1.5 (brief 106 was v1.4, brief 70 v1.3)
     assert lr.rule_for(rs, "verilator", "LATCH") == "HDL-SYN-01"
     assert lr.rule_for(rs, "verilator", "WIDTHTRUNC") == "HDL-WID-01"
     assert lr.rule_for(rs, "verilator", "SOMETHINGNEW") == "HDL-LINT-00"
@@ -397,7 +397,7 @@ def test_a_listed_formal_task_that_did_not_run_fails(mini):
 
 def test_t1_formal_without_debounce_cover_fails_req_02(tmp_path):
     formal = tmp_path / "formal"
-    for job, task in (("debounce", "bmc"), ("scan", "bmc"), ("scan", "cover")):    # debounce_cover deleted
+    for job, task in (("debounce", "bmc"), ("debounce", "prove"), ("scan", "bmc"), ("scan", "prove"), ("scan", "cover")):    # debounce_cover deleted
         (formal / f"{job}_{task}").mkdir(parents=True)
         (formal / f"{job}_{task}" / "status").write_text("PASS 0\n")
     t = tr.build(T1, HERE / "data" / "ref_t1_sim", formal=formal, hw=ROOT / "results" / "f0b" / "t1_dimmer_counter_bringup.json",

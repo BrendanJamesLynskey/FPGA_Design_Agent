@@ -2,14 +2,14 @@
 source: designs/b119_tcp_fast/handover.yaml; human view: README.md; refresh: python -m flow.handover fresh designs/b119_tcp_fast
 
 ## identity
-kind=showcase produced_by=human part=xck26-sfvc784-2LV-c board=Kria KR260 (K26 SOM) top=tcp_fast (wrapped with input registers in ooc_wrap for the out-of-context build) tool=Vivado 2026.1
+kind=showcase produced_by=session part=xck26-sfvc784-2LV-c board=Kria KR260 (K26 SOM) top=tcp_fast (wrapped with input registers in ooc_wrap for the out-of-context build) tool=Vivado 2026.1
 
 ## summary
 A block that holds the TCP connection state which software hands it and sends each OUCH 5.0 order of brief 110 as one complete Ethernet, IPv4 and TCP frame, with sequence number, identification and both checksums finished incrementally from partial sums of a template. It supports the speculative start and abort of brief 110, where an aborted frame is poisoned and consumes no sequence space, refuses to send when it is not armed, its state is stale, the window is closed or the MSS is too small, and hands every sent segment back to software. A Python TCP owner and a software OUCH exchange test it end to end in simulation, seeded faults in the RTL are caught, and the block is built out of context for the KR260's part at the 10G core clock.
 not: real market data, a real exchange or a real network; every order comes from our own generator and no frame is ever sent anywhere; a board run, power, or timing inside the 10G core; the numbers are simulation and an out-of-context Vivado 2026.1 build; receiving, parsing or acknowledging anything; software owns the receive side and writes the acknowledgement state into the block; TCP options, selective acknowledgement, window scaling, several connections or a hardware retransmission; the MAC, the frame check sequence and the transmit multiplexer; the block's words go to a MAC that does not exist here (docs/phase2_integration.md is a plan)
 
 ## state
-stage=built vivado=2026.1 kb_pin=93d158c build_id=None
+stage=built vivado=2026.1 kb_pin=5e2eab8 build_id=None
 gates: rtl_equals_model=pass lint=pass seeded_faults=pass ooc_build_2026_1=pass board_run=not-run
 
 ## interface
@@ -23,19 +23,19 @@ param PAYLEN=59 legal=fixed
 param segment bytes=113 legal=fixed
 
 ## files
-designs/b119_tcp_fast/rtl/tcp_fast.sv dec57d4bb1: the TCP fast path
-designs/b119_tcp_fast/rtl/itch_ouch_tcp_top.sv 34ce2effbb: brief 110's trading path with tcp_fast in place of its stub port (simulation)
+designs/b119_tcp_fast/rtl/tcp_fast.sv 0a9b9e0de8: the TCP fast path
+designs/b119_tcp_fast/rtl/itch_ouch_tcp_top.sv dce6ad68f3: brief 110's trading path with tcp_fast in place of its stub port (simulation)
 designs/b119_tcp_fast/model/tcpref.py f6ca3aecbc: segment, checksum and decision reference
 designs/b119_tcp_fast/model/softtcp.py 1f6b650e44: TCP endpoint, owner and software exchange
 designs/b119_tcp_fast/model/soup.py fb5ab8e196: SoupBinTCP and OUCH response packers and parsers
 designs/b119_tcp_fast/model/hwmodel.py 5bdd61efa5: untimed stand-in for the block's register file
 designs/b119_tcp_fast/model/orders.py f2009e9338: order payload builder from brief 110's packers
-designs/b119_tcp_fast/tests/b119_cocotb.py 8ddaee11af: cocotb bench of the block
+designs/b119_tcp_fast/tests/b119_cocotb.py 6e94d3d68c: cocotb bench of the block
 designs/b119_tcp_fast/tests/b119_top_cocotb.py cb47428981: cocotb bench behind brief 110's risk logic
 designs/b119_tcp_fast/tests/netsim.py 3632074a28: the pure-Python network of owner, exchange and stand-in
 designs/b119_tcp_fast/tests/run_mutants.py c4a57bf19d: seeded-fault runner
 designs/b119_tcp_fast/ooc/ooc.py 48962fa558: out-of-context build driver
-designs/b119_tcp_fast/docs/tcp_fast.md 5c1937bbba: datasheet
+designs/b119_tcp_fast/docs/tcp_fast.md 3aa68a6167: datasheet
 designs/b119_tcp_fast/docs/software_side.md 340d510d39: the Python TCP owner and exchange
 designs/b119_tcp_fast/docs/phase2_integration.md e58721f2a6: integration notes for the 10G MAC and open points
 

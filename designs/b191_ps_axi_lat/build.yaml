@@ -1,0 +1,13 @@
+# ps_axi_lat (brief 191, board row B-R8): the latency image. The PS's two AXI masters towards the PL (HPM0_FPD at 0xA0000000, HPM0_LPD at 0x80000000), each with an axi_lat_probe on pl_clk0 (100 MHz).
+# Not built yet: the recipe is written and the RTL is simulated (docs/ps_axi_lat.md, "Status"). A debug-free image: no ILA, no GT, no I/O pins.
+top: ps_axi_lat_top
+part: xck26-sfvc784-2LV-c
+board: kr260
+sources:
+- designs/b191_ps_axi_lat/rtl/axi_lat_probe.sv
+- designs/b191_ps_axi_lat/rtl/ps_axi_lat_top.sv
+constraints:
+- designs/b191_ps_axi_lat/design.xdc
+ip_tcl:
+- designs/b191_ps_axi_lat/ip/amd_ip_lat.tcl
+generics: {}

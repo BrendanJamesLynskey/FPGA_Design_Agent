@@ -272,6 +272,41 @@ def xpm_sim_findings(text: str, where: str = "") -> list[dict[str, Any]]:
     return out
 
 
+_XPM_INST_VHDL = re.compile(r"(?i):\s*(?:entity\s+(?:\w+\.)?|component\s+)?xpm_cdc_(%s)\b" % "|".join(XPM_WITH_SIM_ASSERT))
+
+
+def xpm_sim_findings_vhdl(text: str, where: str = "") -> list[dict[str, Any]]:
+    """The VHDL twin of :func:`xpm_sim_findings` (brief 153): an instance ``label : xpm_cdc_single ...``, ``label : entity xpm.xpm_cdc_single
+    ...`` or ``label : component xpm_cdc_single ...`` whose ``generic map`` has no ``SIM_ASSERT_CHK => 1``. A component declaration (no
+    label before the name) and a mention in a comment or string are not instances. The instance statement ends at its ``;``."""
+    try:
+        from flow.sources import strip_comments
+    except ImportError:                       # run as a script: flow/ itself is on sys.path
+        from sources import strip_comments          # type: ignore[no-redef]
+    t = re.sub(r'"(?:[^"\n]|"")*"', lambda m: " " * len(m.group(0)), strip_comments(text, "vhdl"))
+    out = []
+    for m in _XPM_INST_VHDL.finditer(t):
+        end = t.find(";", m.end())
+        body = t[m.end():end if end >= 0 else len(t)]
+        gm = re.search(r"(?i)\bgeneric\s+map\s*\(", body)
+        s = None
+        if gm:
+            i, depth = gm.end(), 1
+            while depth and i < len(body):
+                depth += (body[i] == "(") - (body[i] == ")")
+                i += 1
+            s = re.search(r"(?i)\bSIM_ASSERT_CHK\s*=>\s*([^,)\s]+)", body[gm.end():i])
+        val = s.group(1) if s else None
+        if val == "1":
+            continue
+        line = t.count("\n", 0, m.start()) + 1
+        out.append({"code": "XPM-SIM-01", "where": f"{where}:{line}" if where else str(line), "macro": f"xpm_cdc_{m.group(1).lower()}",
+                    "value": val, "blocking": False,
+                    "message": f"xpm_cdc_{m.group(1).lower()} has SIM_ASSERT_CHK " + (f"set to {val}" if val is not None else "at AMD's default 0")
+                               + ", which turns off the macro's simulation warnings; set SIM_ASSERT_CHK => 1 (house default, simulation only)"})
+    return out
+
+
 def evaluate(d: Path, xdcs: list[Path], board: str | None, root: Path = ROOT) -> dict[str, Any]:
     """Both rules for a finished build directory (flow/gates.py calls the pieces; this is the command-line summary)."""
     from flow.gates import parse_rule_table

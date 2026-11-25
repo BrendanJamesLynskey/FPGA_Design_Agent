@@ -15,8 +15,10 @@
 The stage-choice rule (:func:`entry_stage`): the entry stage is the earliest of
 
 - the change request's stage (:func:`classify_change`: keyword classes matched as whole words, earliest match wins, so a
-  request that names both a behaviour and a signal goes back to the spec (conservative); no match means stage 0, re-read
-  the request; ``--kind`` overrides the classifier, ``--from-stage`` overrides the whole rule);
+  request that names both a behaviour and a signal goes back to the spec (conservative). Brief 149 added the goal
+  classes (area, latency, retarget, fmax, power, language, mapping). A request that matches no class is not guessed:
+  :func:`entry_stage` returns a question (``stage`` None, ``question`` set) and ``resume`` stops; ``--kind`` overrides
+  the classifier, ``--from-stage`` overrides the whole rule);
 - each changed or deleted file's stage (:data:`FILE_STAGE`);
 - each stale record's stage (the evidence activity or measurement category that cites it, :data:`ACTIVITY_STAGE`,
   :data:`CATEGORY_STAGE`);
@@ -46,19 +48,42 @@ from agent.graph.document import STAGE_NAMES
 from flow import handover as H
 
 DOC_ONLY = 10
-#: change-request classes, their entry stage and the words that select them (checked on the lower-cased request)
+#: change-request classes, their entry stage and the words that select them (checked on the lower-cased request).
+#: A word starting ``re:`` is a regular expression (matched as it is, no plural suffix). Brief 149 goal classes: area,
+#: latency and retarget enter at stage 1 (the resource budget, the pipeline depth and the device plan are architecture);
+#: fmax and power at stage 3 (a new clock or power constraint and a new build; closure reopens the RTL if it fails);
+#: language and mapping at stage 2 (the same architecture, the RTL written again).
 CHANGE_RULES: tuple[tuple[str, int, tuple[str, ...]], ...] = (
     ("spec", 0, ("requirement", "behaviour", "behavior", "register map", "new register", "add a register", "register offset",
                  "new port", "add a port", "feature", "spec", "parameter", "default value", "new mode", "protocol",
                  "interface")),
     ("arch", 1, ("architecture", "clock domain", "block diagram", "datapath", "resource budget", "add a block")),
+    ("retarget", 1, ("retarget", "re-target", "kr260", "kv260", "kria", "k26", "zedboard", "de10", "nexys", "artix", "kintex",
+                     "ultrascale", "zynq", "new board", "another board", "different board", "change the part", "change the device",
+                     "switch the device", "move the design to", r"re:\bxc[0-9][a-z0-9]+")),
+    ("latency", 1, ("latency", "shorten the pipeline", "fewer cycles", "fewer clocks", r"re:\b\d+ (clocks?|cycles?|clock cycles?)\b")),
+    ("area", 1, (r"re:\bluts?\b(?! ?ram)", "flip-flop", "flip flop", "ff", "lut count", "area", "smaller", "footprint", "fewer",
+                 "resource usage", "dsp usage", "the logic", r"re:\b\d+ slices\b")),
+    ("language", 2, ("vhdl", "verilog", "systemverilog")),
+    ("mapping", 2, ("block ram", "bram", "uram", "ultraram", "lutram", "lut ram", "distributed ram", "dsp48", "dsp slice", "srl",
+                    "shift register", "ram style", "ram_style")),
     ("rtl", 2, ("rtl", "bug", "fix", "rename", "refactor", "lint", "comment", "signal", "testbench", "test bench",
                 "coverage", "mutant", "assertion")),
     ("constraints", 3, ("pin", "xdc", "constraint", "iostandard", "i/o standard", "input delay", "output delay")),
+    ("fmax", 3, ("fmax", "frequency", "clock period", "faster clock", "clock must be", r"re:\brun (the core|it|the design) at\b",
+                 r"re:\b\d+ ?(mhz|ghz)\b")),
+    ("power", 3, ("power", "watt", "thermal", "junction temperature", "battery", r"re:\b\d+ ?(mw|w)\b")),
     ("timing", 6, ("timing", "slack", "wns", "closure")),
     ("board", 9, ("bring-up", "bringup", "board test", "ila", "probe", "hardware test")),
     ("docs", DOC_ONLY, ("documentation", "readme", "docs", "handover", "typo")),
 )
+#: fmax words that only give a number (a frequency in MHz): when a timing-closure word is also present the request is
+#: about closing timing (stage 6) at a clock the constraints already carry, so these do not pull it back to stage 3
+FMAX_WEAK = r"\b\d+ ?(mhz|ghz)\b"
+#: words that do not make a request about documents a change to the design ("fix the typo in the README")
+DOC_GENERIC = {"fix", "comment"}
+#: the goal classes (brief 149), for the help text and the question
+GOAL_KINDS = ("area", "fmax", "power", "latency", "retarget", "language", "mapping")
 STAGE_OF_KIND = {k: s for k, s, _ in CHANGE_RULES}
 #: words that make a request a change to what is built, so a late class (constraints, timing, board) still reopens the RTL
 CHANGE_VERBS = re.compile(r"\b(add|adds|adding|change|changes|increase|decrease|remove|widen|narrow|replace|pipeline|"
@@ -68,7 +93,8 @@ NOT_INPUTS = ("handover.yaml", "README.md", "AGENT.md", "docs/*", "build/*", "__
 #: the role that owns each entry stage's work (gets the change request as the owner's note)
 ROLE_OF_STAGE = {0: "clarify"}
 #: stage-2 roles that a change of each kind reopens (repair visits with the request as the reason)
-OWNERS_OF_KIND = {"spec": ("model", "tests", "rtl"), "arch": ("rtl",), "rtl": ("rtl",)}
+OWNERS_OF_KIND = {"spec": ("model", "tests", "rtl"), "arch": ("rtl",), "rtl": ("rtl",), "area": ("rtl",), "latency": ("rtl",),
+                  "retarget": ("rtl",), "language": ("rtl",), "mapping": ("rtl",)}
 FILE_STAGE: tuple[tuple[str, int], ...] = (
     ("spec.md", 0), ("spec.yaml", 0), ("architecture.yaml", 1), ("ARCHITECTURE.md", 1),
     ("rtl/*", 2), ("model.py", 2), ("tests/*", 2), ("verif/*", 2), ("lint/*", 2),
@@ -84,20 +110,49 @@ class PickupError(Exception):
     """The design cannot be resumed (a handover with errors, or not in the agent's file layout)."""
 
 
+def _hit(word: str, low: str) -> str | None:
+    pat = word[3:] if word.startswith("re:") else r"\b" + re.escape(word) + r"(s|es)?\b"
+    m = re.search(pat, low)
+    return m.group(0) if m else None
+
+
 def classify_change(text: str | None) -> tuple[str | None, int | None, list[str]]:
     """(kind, stage, matched words): the earliest stage any class matches. No request: (None, None, []). A request that
-    matches nothing is ``spec`` (stage 0): re-read the request rather than guess a later stage."""
+    matches no class (or only the docs class) is also (None, None, []): the caller asks a question (:func:`question_for`)
+    instead of guessing stage 0 (brief 149; before it, an unmatched request silently re-ran from the interview)."""
     if not text or not text.strip():
         return None, None, []
     low = text.lower()
-    hits = [(s, k, [w for w in words if re.search(r"\b" + re.escape(w) + r"(s|es)?\b", low)]) for k, s, words in CHANGE_RULES]
-    hits = [h for h in hits if h[2] and h[1] != "docs"]      # docs-only is never guessed: it needs --kind docs
+    hits, docs = [], False
+    for k, s, words in CHANGE_RULES:
+        ws = [h for h in (_hit(w, low) for w in words) if h]
+        if k == "docs":
+            docs = bool(ws)
+        elif ws:
+            hits.append((s, k, ws))
+    if docs and all(set(h[2]) <= DOC_GENERIC for h in hits):   # "fix the typo in the README": docs-only is never guessed (--kind docs)
+        hits = []
+    timing = any(k == "timing" for _, k, _ in hits)
+    hits = [h for h in hits if not (h[1] == "fmax" and timing and all(re.fullmatch(FMAX_WEAK, x) for x in h[2]))]
     if not hits:
-        return "spec", 0, []
+        return None, None, []
     s, k, words = min(hits, key=lambda h: h[0])
-    if s > 2 and CHANGE_VERBS.search(low):                  # "add a pipeline stage" under a timing word changes the RTL
+    if s > 2 and k in ("constraints", "timing", "board") and CHANGE_VERBS.search(low):   # "add a pipeline stage" under a timing word changes the RTL
         return "rtl", 2, words + ["(a change verb: the RTL changes too)"]
     return k, s, words
+
+
+def question_for(text: str | None) -> str:
+    """The question asked when a change request matches no class (brief 149)."""
+    low = (text or "").lower()
+    docs_words = next(w for k, _, w in CHANGE_RULES if k == "docs")
+    docs = [h for h in (_hit(w, low) for w in docs_words) if h]
+    if docs:
+        return (f"The request reads as a documentation-only change (matched: {', '.join(docs)}), and that is never guessed. "
+                "If nothing but the documents change, run it again with --kind docs; otherwise say what the design should do differently.")
+    return ("No change class matched this request, so no entry stage is guessed. Say what you want to change: a goal "
+            f"({', '.join(GOAL_KINDS)}), a behaviour or interface (spec), the architecture, the RTL, the pins and constraints, "
+            "timing closure or the board test; or pass --kind <class> or --from-stage <0-9>.")
 
 
 def _stage_of_file(path: str, ddir_rel: str) -> int | None:
@@ -119,16 +174,18 @@ def entry_stage(h: dict, fresh: dict, change: str | None = None, kind: str | Non
             raise PickupError(f"--from-stage {from_stage}: a stage is 0 to 9")
         rule = entry_stage(h, fresh, change, kind)
         notes = [f"--from-stage {from_stage} is later than the rule's stage {rule['stage']}: skipped reasons: "
-                 + "; ".join(w for s, w in rule["reasons"] if s < from_stage)] if rule["stage"] < from_stage else []
+                 + "; ".join(w for s, w in rule["reasons"] if s < from_stage)] if rule["stage"] is not None and rule["stage"] < from_stage else []
         return {"stage": from_stage, "kind": kind or rule["kind"], "reasons": [(from_stage, "--from-stage given by the owner")],
                 "notes": notes}
     if kind:
         k, s, words = kind, STAGE_OF_KIND[kind], ["--kind"]
     else:
         k, s, words = classify_change(change)
+        if s is None and change and change.strip():          # brief 149: no class matched: ask, do not guess stage 0
+            return {"stage": None, "kind": None, "reasons": [], "notes": [], "question": question_for(change)}
     if s is not None:
         reasons.append((s, f"change request is a {k} change" + (f" (matched: {', '.join(words)})" if words else
-                                                                  " (no class matched: re-read the request)")))
+                                                                  "")))
     drel = fresh.get("design") or H.rel(Path(fresh["ddir"]))
     for f in (fresh.get("changed_files") or []) + (fresh.get("added_files") or []):
         fs = _stage_of_file(f, drel)
