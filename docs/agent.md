@@ -26,7 +26,11 @@ Vivado checkpoints of each stage end), `checkpoints.sqlite` (LangGraph), `summar
 | document | at the end of every run (brief 68 C, `--docs on`, the CLI default): code drafts `handover.yaml` from the run's records, the Designer writes its prose, the flow renders `README.md` and `AGENT.md`; the DOC gate must pass (up to three Designer passes; it also rejects a gap that quotes a gate detail the run's own build records contradict, and requires re-measuring as the first next step after a build from an earlier Vivado release). A stop before a stage's gate (the visit limit) is recorded as `gated: false` and is not a result of that stage. Writes `summary.json` first (the handover cites it) and `doc.json` (the DOC result and `signed_off`) | code for every fact and gate result; the model for the prose only |
 
 Limits: turns, seconds and USD per stage visit (`stages.MACHINE`) and per run (`RUN_LIMITS`), enforced before each
-model call by the `Meter` (`agent/graph/llm.py`); at most 4 visits per stage. Cost is only what the provider reports.
+model call by the `Meter` (`agent/graph/llm.py`); at most 4 visits per stage. Cost is only what the provider reports; for the `anthropic_api` endpoint (which reports tokens), it is computed from
+the response `usage` and the model's price table, never estimated (brief 209b, [model_config.md](model_config.md#anthropic-api-cost-caching-temperature-budgets-brief-209b)).
+The USD limits were sized for the default model (OpenRouter, a few hundredths of a USD per call, where the turn limits bind first); for a dearer model
+`--budget-scale N` (or `budget_scale:` in a models file) multiplies every stage's USD limit and the default run cap by `N`, so a stage can use its turns.
+An explicit `--max-usd` is kept as given. The run summary records `budget_scale` and `token_split` (input, output, cache write and cache read tokens).
 Vivado builds are reused when the sources are unchanged and the earlier build went far enough.
 
 ### Documentation and resume (brief 68 parts C and D)
