@@ -1,0 +1,56 @@
+schema: fpga-design-agent/architecture/v1
+blocks:
+- name: fir_top
+  function: top; MMCM, reset generator, jtag_bus, fir_core, sfp_tx_disable tie-off
+- name: jtag_bus
+  function: JTAG register bus (supplied, unchanged)
+- name: fir_core
+  function: register map, FIFOs, run control, CDC to clk_dsp
+- name: fir_engine
+  function: 32-tap symmetric FIR, 16 DSP48E2, 1 sample per clk_dsp cycle, saturation counter
+interfaces:
+- name: host_regs
+  between: [jtag_bus, fir_core]
+  protocol: simple
+  prefix: h
+  module: fir_core
+clock_domains:
+- name: clk_bus
+  clock: clk_25
+  freq_mhz: 25
+- name: clk_dsp
+  clock: clk_dsp
+  freq_mhz: 250
+reset:
+  synchronisers: [fir_top]
+crossings:
+- from: clk_bus
+  to: clk_dsp
+  signal: input FIFO data
+  primitive: xpm_fifo_async
+  inline_in: fir_core
+- from: clk_dsp
+  to: clk_bus
+  signal: output FIFO data
+  primitive: xpm_fifo_async
+  inline_in: fir_core
+- from: clk_bus
+  to: clk_dsp
+  signal: CLEAR and RUN commands
+  primitive: xpm_cdc_pulse
+  inline_in: fir_core
+- from: clk_dsp
+  to: clk_bus
+  signal: BUSY, SAT_COUNT, SAMPLES_DONE
+  primitive: xpm_cdc_array_single
+  inline_in: fir_core
+- from: clk_bus
+  to: clk_dsp
+  signal: reset
+  primitive: xpm_cdc_async_rst
+  inline_in: fir_top
+predicted_resources:
+  lut: [900, 2000]
+  ff: [1200, 3000]
+  bram_tile: [2, 4]
+  dsp: 16
