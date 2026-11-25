@@ -1,0 +1,20 @@
+--- 186-alveo-cards-src/GTF_Latency/Synchronized/GTFRAW_Latency_10G_Sync/sim/sim_top.sv	2026-11-23 01:09:17.828787103 +0000
++++ 186-sim/raw/sim/sim_top.sv	2026-11-23 03:19:14.204139571 +0000
+@@ -87,6 +87,7 @@
+     real        lat_total;
+     real        VNC_LATENCY_CLK_PERIOD_NS;   // Set based on the configured data rate
+ 
++    integer     rstdly;
+     integer     ERROR_INJ_DELAY = 40;
+     integer     ERROR_INJ_COUNT = 10;
+ 
+@@ -97,7 +98,8 @@
+     
+         // Wait for clock/rst....
+         @(posedge refclk_300_rst); 
+-        repeat (1000) @(posedge refclk_300);
++        if (!$value$plusargs("RSTDLY=%d", rstdly)) rstdly = 1000;   // 186 sweep edit
++        repeat (rstdly) @(posedge refclk_300);
+ 
+         //  Apply System Resets...
+         //  Set - gtwiz_reset_all

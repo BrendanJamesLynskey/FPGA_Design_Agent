@@ -232,6 +232,8 @@ def run_subagent_cc(rt, plan: dict[str, Any]) -> dict[str, str]:
     res = info["result"] or {}
     (out_dir / f"{tag}.jsonl").write_text("\n".join(lines) + "\n")
     text = str(res.get("result", ""))
+    from agent.graph.run import record_role_message
+    record_role_message(rt, plan["role"], text if not res.get("is_error") else "")      # brief 82P6 (P3)
     if res.get("is_error") and any(k in text.lower() + err.lower() for k in ("login", "authenticat", "oauth", "401")):
         raise ArmBlocked("Claude Code could not authenticate: " + text[:200])
     turns = int(res.get("num_turns") or 0)

@@ -85,11 +85,38 @@ Written without knowing the design the block will sit in (brief 139a, owner deci
 - STAGES (dsp) and REG (lut_array, booth_r4) are register stages in the variant, not retiming requests: Vivado does not move them unless retiming is enabled
 - STAGES above 3 behaves as 3 and REG other than 0 behaves as 1; SIGNED other than 0 or 1 behaves as 1; none of this is rejected by an assertion
 
+## Measured (Vivado out-of-context, brief 160)
+
+Vivado 2026.1 (build 6511674), out-of-context synthesis, placement and routing on one thread, one run per point, at the clock shown. LUT, FF and carry cells are as reported after routing for the wrapper (which registers every port, so the FF column includes the wrapper's register bits); WNS at the target clock gives Fmax = 1000 / (clock - WNS), a lower bound (marked `>=`) when WNS is positive; latency is the spec's, in clocks, without the wrapper's two. `F` marks a point on the area-against-Fmax front of its group, `L` on the area-against-latency front (see [../../results/160_arith_vivado/README.md](../../results/160_arith_vivado/README.md)). Records: [verif/results/](verif/results/), the pre-stated expectation and its verdict per point: [verif/results/vivado_surface.json](verif/results/vivado_surface.json).
+
+| Variant | Part | Point | Clock ns | LUT | FF | SRL | Carry | DSP | BRAM | WNS ns | Fmax MHz | Logic levels | Latency | Fronts | Expectation |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| booth_r4 | a7 | WA=16, WB=16, SIGNED=1, REG=1 | 5.0 | 359 | 96 | 0 | 61 | 0 | 0 | -2.665 | 130.5 | 10 | 1 | FL | missed |
+| booth_r4 | a7 | WA=18, WB=18, SIGNED=1, REG=1 | 5.0 | 491 | 108 | 0 | 77 | 0 | 0 | -3.2 | 122.0 | 13 | 1 | FL | missed |
+| booth_r4 | a7 | WA=32, WB=32, SIGNED=1, REG=1 | 5.0 | 1392 | 194 | 0 | 249 | 0 | 0 | -6.038 | 90.6 | 22 | 1 | FL | missed |
+| booth_r4 | k26 | WA=16, WB=16, SIGNED=1, REG=1 | 3.0 | 348 | 96 | 0 | 31 | 0 | 0 | 0.001 | >=333.4 | 9 | 1 | FL | missed |
+| booth_r4 | k26 | WA=18, WB=18, SIGNED=1, REG=1 | 3.0 | 484 | 108 | 0 | 43 | 0 | 0 | -0.148 | 317.7 | 10 | 1 | F | missed |
+| booth_r4 | k26 | WA=32, WB=32, SIGNED=1, REG=1 | 3.0 | 1392 | 194 | 0 | 125 | 0 | 0 | -1.608 | 217.0 | 13 | 1 | FL | missed |
+| dsp | a7 | WA=18, WB=18, SIGNED=1, STAGES=3 | 5.0 | 0 | 36 | 0 | 0 | 1 | 0 | 3.53 | >=680.3 | 0 | 3 | FL | met |
+| dsp | a7 | WA=25, WB=18, SIGNED=1, STAGES=3 | 5.0 | 0 | 43 | 0 | 0 | 1 | 0 | 3.53 | >=680.3 | 0 | 3 |  | met |
+| dsp | a7 | WA=32, WB=32, SIGNED=1, STAGES=3 | 5.0 | 0 | 98 | 0 | 0 | 4 | 0 | 1.103 | >=256.6 | 0 | 3 | FL | met |
+| dsp | a7 | WA=32, WB=32, SIGNED=1, STAGES=1 | 5.0 | 47 | 98 | 0 | 12 | 4 | 0 | 1.026 | >=251.6 | 0 | 1 | L | met |
+| dsp | k26 | WA=18, WB=18, SIGNED=1, STAGES=3 | 3.0 | 0 | 36 | 0 | 0 | 1 | 0 | 1.805 | >=836.8 | 2 | 3 | FL | met |
+| dsp | k26 | WA=25, WB=18, SIGNED=1, STAGES=3 | 3.0 | 0 | 43 | 0 | 0 | 1 | 0 | 1.805 | >=836.8 | 2 | 3 |  | met |
+| dsp | k26 | WA=32, WB=32, SIGNED=1, STAGES=3 | 3.0 | 0 | 98 | 0 | 0 | 4 | 0 | 1.029 | >=507.4 | 4 | 3 | FL | met |
+| dsp | k26 | WA=32, WB=32, SIGNED=1, STAGES=1 | 3.0 | 47 | 98 | 0 | 6 | 4 | 0 | 0.109 | >=345.9 | 6 | 1 | L | met |
+| lut_array | a7 | WA=16, WB=16, SIGNED=1, REG=1 | 5.0 | 405 | 96 | 0 | 51 | 0 | 0 | -3.284 | 120.7 | 11 | 1 |  | missed |
+| lut_array | a7 | WA=18, WB=18, SIGNED=1, REG=1 | 5.0 | 519 | 108 | 0 | 63 | 0 | 0 | -4.024 | 110.8 | 10 | 1 |  | missed |
+| lut_array | a7 | WA=32, WB=32, SIGNED=1, REG=1 | 5.0 | 1552 | 194 | 0 | 199 | 0 | 0 | -5.958 | 91.3 | 20 | 1 | F | missed |
+| lut_array | k26 | WA=16, WB=16, SIGNED=1, REG=1 | 3.0 | 378 | 96 | 0 | 26 | 0 | 0 | -0.088 | 323.8 | 11 | 1 |  | missed |
+| lut_array | k26 | WA=18, WB=18, SIGNED=1, REG=1 | 3.0 | 481 | 108 | 0 | 34 | 0 | 0 | -0.297 | 303.3 | 11 | 1 | FL | missed |
+| lut_array | k26 | WA=32, WB=32, SIGNED=1, REG=1 | 3.0 | 1535 | 195 | 0 | 102 | 0 | 0 | -1.763 | 210.0 | 11 | 1 |  | missed |
+
 ## Files
 
 - [model.py](model.py): the bit-exact model; tests/test_*_model.py check it against independent formulations
 - [harness/](harness/): the packaged verification harness a user reruns against their own instance (model, bench, SystemVerilog checker, coverage targets, standalone runner)
 - [tests/](tests/): the cocotb bench, exhaustive and random points, mutation and formal tests; [verif/testplan.yaml](verif/testplan.yaml) names each
 - [verif/mutants.yaml](verif/mutants.yaml), [formal/jobs.yaml](formal/jobs.yaml): the seeded faults and the formal jobs; results in [verif/results/](verif/results/)
-- [build/](build/): one `build.yaml` per variant for an out-of-context Vivado run on Artix-7 and K26 (prepared, not run); [ooc/](ooc/): the generated register wrappers
+- [build/](build/): one `build.yaml` per variant for an out-of-context Vivado run on Artix-7 and K26 (prepared in brief 139a, run in brief 160); [ooc/](ooc/): the generated register wrappers
 - [../../formal/lean/Arith/](../../formal/lean/Arith/): Lean statements (not approved by a human)

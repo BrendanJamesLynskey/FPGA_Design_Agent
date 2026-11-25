@@ -97,6 +97,9 @@ def plan(requests: list[str], report: dict[str, Any], files_text: str, model_run
         req = it.get("request") or (requests[i] if i < len(requests) else "")
         kind, stage, matched = classify_change(req)
         it["entry"] = {"kind": kind, "stage": stage, "matched": matched}
+        if stage is None and req.strip():                      # brief 149: no class matched: a question, not stage 0
+            from agent.graph.pickup import question_for
+            it["entry"]["question"] = question_for(req)
         if not it.get("measurable", True) and not str(it.get("question", "")).strip():
             it.setdefault("problems", []).append("not measurable but no question asked")
         if it.get("measurable", True) and not str((it.get("goal") or {}).get("acceptance_test", "")).strip():

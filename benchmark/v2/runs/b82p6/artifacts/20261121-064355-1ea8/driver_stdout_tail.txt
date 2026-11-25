@@ -1,0 +1,201 @@
+ero period is not specified.",
+    "status": "answered",
+    "by": "oracle",
+    "evidence": "Pacer: TLM_START restarts the count (period 0 keeps, below 4 raised to 4); a frame falls due every period ticks; one held frame; overruns dropped; STOP forgets the held frame; TAKE releases it."
+   },
+   {
+    "id": "q5",
+    "text": "Is the busy bit high from the end-flag byte until the reply is built?",
+    "default": "Yes, busy is high while a packet is being judged or a reply is built",
+    "reason": "Busy is not defined in the request.",
+    "answer": "Yes, busy is high while a packet is being judged or a reply is built",
+    "status": "defaulted",
+    "by": "oracle",
+    "evidence": null
+   },
+   {
+    "id": "q6",
+    "text": "Does a read of register 6 or 7 or a write to the tick register count as a command?",
+    "default": "Only packets count, the tick register write is not a command",
+    "reason": "Not stated.",
+    "answer": "Only packets count, the tick register write is not a command",
+    "status": "defaulted",
+    "by": "oracle",
+    "evidence": null
+   }
+  ]
+ },
+ "stop": "stage 2 visited more than 6 times; last failing gate: simulate; owned by the rtl role; last failing assertion: test_v2_e_udp_endpoint_rtl: Traceback (most recent call last): | File \"/home/brendan/Claude_sandbox/_worktrees/82p6-frozen/runs/20261121-064355-1ea8/v2_e_udp_endpoint/tests/bench_udp_endpoint.py\", line 273, in test_reset_smoke (runs/2026112",
+ "stop_detail": {
+  "stage": 2,
+  "limit": 6,
+  "gates": [
+   "simulate"
+  ],
+  "roles": [
+   "rtl"
+  ],
+  "owners_last_visit": [
+   "rtl"
+  ],
+  "last_failing_assertion": "test_v2_e_udp_endpoint_rtl: Traceback (most recent call last): | File \"/home/brendan/Claude_sandbox/_worktrees/82p6-frozen/runs/20261121-064355-1ea8/v2_e_udp_endpoint/tests/bench_udp_endpoint.py\", line 273, in test_reset_smoke (runs/2026112",
+  "same_signature_visits": 1,
+  "last_fails": [
+   "simulate not passing",
+   "V2 failing_tests: [2] seed1:bench_udp_endpoint.test_reset_smoke, seed1:bench_udp_endpoint.test_uart_baud (need [])",
+   "V2 assertions_bound_zero_failures: a test failed in some seed: see failing_tests [value [1] A_led_step, need bound in the run; no failure]",
+   "rtl: did not run (no gates record)"
+  ]
+ },
+ "last_rtl_message": {
+  "stage": "rtl-design-creation",
+  "visit": 6,
+  "text": "The first failure is fixed. The simulate failure is still there, and I could not change it from the RTL. I'm replying DONE, but the run still fails two tests.\n\n- **CONST-ID-01:** I changed `DESIGN_ID` in `rtl/v2_e_udp_endpoint_top.sv` from 0x55445031 to 0x55455031 (\"UEP1\"). I did not re-run the constants check after the edit.\n- **`test_reset_smoke` (new failure):** this test now fails, because the bench hard-codes `ID_WORD = 0x55445031` and compares it with the shell's design-ID register. The bench is frozen this visit, so I could not change it. The two frozen artefacts disagree: the constants check wants 0x55455031 and the bench wants 0x55445031. Whoever owns the bench or the spec has to settle which value is right.\n- **`test_uart_baud`:** I did not change this and cannot fix it in my files. A run of 11 clocks appears where the bench expects a multiple of 8, so the shell's UART transmitter seems to leave a 3-clock idle gap between reply bytes. That timing comes from the shell sources (`shell/rtl/uart_tx.sv` and `shell_core.sv`), which this stage does not own, and it has nothing to do with the ID value. I did not read those files, so this is inferred from the log. That assertion needs a shell fix or a bench tolerance change.\n\nThe last simulate run failed 2 of 27 tests. I did not run the `check` tool.\n\nDONE"
+ },
+ "routing_events": [
+  {
+   "event": "clarify_constants_check",
+   "stage": "clarify",
+   "visit": 1,
+   "findings": [],
+   "failed": false
+  },
+  {
+   "event": "clarify_constants_check",
+   "stage": "clarify",
+   "visit": 2,
+   "findings": [],
+   "failed": false
+  },
+  {
+   "event": "p1_consequences_covered",
+   "stage": "rtl-design-creation",
+   "visit": 2,
+   "repeat": 0,
+   "checks": [
+    "failing_tests",
+    "assertions_bound_zero_failures"
+   ]
+  },
+  {
+   "event": "p1_consequences_covered",
+   "stage": "rtl-design-creation",
+   "visit": 3,
+   "repeat": 0,
+   "checks": [
+    "failing_tests",
+    "assertions_bound_zero_failures"
+   ]
+  },
+  {
+   "event": "p1_consequences_covered",
+   "stage": "rtl-design-creation",
+   "visit": 4,
+   "repeat": 0,
+   "checks": [
+    "failing_tests",
+    "assertions_bound_zero_failures"
+   ]
+  },
+  {
+   "event": "p1_consequences_covered",
+   "stage": "rtl-design-creation",
+   "visit": 5,
+   "repeat": 0,
+   "checks": [
+    "failing_tests",
+    "assertions_bound_zero_failures"
+   ]
+  },
+  {
+   "event": "p1_consequences_covered",
+   "stage": "rtl-design-creation",
+   "visit": 6,
+   "repeat": 0,
+   "checks": [
+    "failing_tests",
+    "assertions_bound_zero_failures"
+   ]
+  }
+ ],
+ "clean_stop": false,
+ "constants": {
+  "ran": true,
+  "blocking": [],
+  "advice": []
+ },
+ "gates_last": {
+  "clarify": true,
+  "board-and-device-planning": true,
+  "rtl-design-creation": false
+ },
+ "approvals": [
+  {
+   "n": 0,
+   "decision": "approve",
+   "by": "auto",
+   "note": ""
+  },
+  {
+   "n": 0,
+   "decision": "approve",
+   "by": "auto",
+   "note": ""
+  },
+  {
+   "n": 1,
+   "decision": "approve",
+   "by": "auto",
+   "note": ""
+  },
+  {
+   "n": 1,
+   "decision": "approve",
+   "by": "auto",
+   "note": ""
+  },
+  {
+   "n": 2,
+   "decision": "approve",
+   "by": "auto",
+   "note": ""
+  },
+  {
+   "n": 2,
+   "decision": "approve",
+   "by": "auto",
+   "note": ""
+  },
+  {
+   "n": 2,
+   "decision": "approve",
+   "by": "auto",
+   "note": ""
+  },
+  {
+   "n": 2,
+   "decision": "approve",
+   "by": "auto",
+   "note": ""
+  },
+  {
+   "n": 2,
+   "decision": "approve",
+   "by": "auto",
+   "note": ""
+  },
+  {
+   "n": 2,
+   "decision": "approve",
+   "by": "auto",
+   "note": ""
+  },
+  {
+   "n": 2,
+   "decision": "approve",
+   "by": "auto",
+   "note": ""
+  }
+ ],
+ "bringup": null
+}
