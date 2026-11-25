@@ -206,7 +206,7 @@ python -m agent resume <run-id> --reply '{"decision": "allow"}'   # answer a per
 |---|---|---|---|---|---|
 | `edit_design_files` | writing RTL, tests, constraints, scripts (stage 2 on; the spec and architecture the first two stages write are the plan) | deny | ask | allow | allow |
 | `run_simulation` | simulation, formal, mutation, lint, open-source synthesis and equivalence checks | deny | allow | allow | allow |
-| `run_vivado` | Vivado synthesis, implementation, bitstream (stage 3 on) | deny | ask | allow | allow |
+| `run_vivado` | Vivado synthesis, implementation, bitstream (from stage 2: once lint and simulation pass, the RTL stage's gate runs a synthesis) | deny | ask | allow | allow |
 | `spend_model_money` | going on once the run has spent more than `--ask-above-usd` (default $1.00) | deny | ask | allow | allow |
 | `raise_budget` | `resume` with a higher `--max-usd` or `--budget-scale` than the run started with | deny | ask | ask | deny |
 | `approve_architecture` | accepting the architecture as the plan the RTL is written from | deny | ask | allow | allow |
@@ -235,7 +235,7 @@ arguments of the simulation tools, and it is not a sandbox: it stops the agent's
 
 ### Where it is decided
 
-- **The start of every stage** (`permission_entry`): the stage's actions are looked up (the graph's own gates count: stage 2 simulates, stage 3 on runs Vivado). A `deny` stops the run (`stop` starts
+- **The start of every stage** (`permission_entry`): the stage's actions are looked up (the graph's own gates count: stage 2 simulates and, once that passes, synthesises; stage 3 on runs Vivado). A `deny` stops the run (`stop` starts
   `permission denied:`, with `stop_detail.permission` naming what is needed and how to change it); an `ask` pauses on a `permission` interrupt; an `allow` goes to the log.
 - **The end of a stage**: `approve_stage` and (stage 1) `approve_architecture` set `ask` pauses for a person (the existing review interrupt); in Plan, `approve_architecture` is `deny`, so the run stops after stage 1 with
   the architecture left unapproved (no `architecture_approval` is written).
@@ -265,7 +265,7 @@ resume with `--allow <action>` or another `--permissions`. A raised budget on a 
 
 - **Full auto on a shared bench.** Nothing asks first: it programs the board and runs the bring-up (register writes) when the bitstream is ready. Use it only when you are watching that board and nobody else is using the
   bench. The board rules of the house (SRAM only, power limit, one board job at a time) are checks of their own and still apply; Full does not suspend them.
-- **A deny that blocks a gate the run needs.** `--deny run_vivado` on a run that must build stops the run at stage 3, on purpose. The same for `--deny edit_design_files` at stage 2, or `--deny write_board_register` at stage 9. Remove the
+- **A deny that blocks a gate the run needs.** `--deny run_vivado` on a run that must build stops the run at stage 2, on purpose. The same for `--deny edit_design_files` at stage 2, or `--deny write_board_register` at stage 9. Remove the
   override and `resume`.
 - **Plan is not "no model".** The interview and architecture still call the model and spend (below the threshold; at it, Plan stops). Plan's estimate is the stage limits, not a forecast.
 - **The default differs between the two front ends.** The Navigator starts at Ask; the command line with no flag is Auto, so existing scripts and evaluations are unchanged. Set `mode:` in `permissions.yaml` to change the command line's default.
@@ -274,7 +274,15 @@ resume with `--allow <action>` or another `--permissions`. A raised budget on a 
 - **The never-list is a filter on the agent's tool calls**, not a guarantee about the machine: it does not stop a person, another program, or a script the owner runs.
 - **Settings file location.** `permissions.yaml` is in `~/.config/fpga_design_agent/` (`FDA_PERMISSIONS_FILE` for the command line). The command line wins over a project's entry, which wins over the file's default.
 
-@@MEASURED@@
+### Measured
+
+One real `--harness claude_code` run per mode on a small design (a 4-bit Gray counter; records and the table in [results/222_permission_modes](../results/222_permission_modes/README.md)):
+**Plan** ran stages 0 and 1, asked nothing, wrote its estimate and stopped with the architecture unapproved; **Ask** paused for the knowledge bank (stage 0), the architecture review (stage 1) and edit plus Vivado (stage 2), then only
+for the per-stage reviews; **Auto** and **Full** asked nothing. None of the four reached the stage-9 hardware pause (Ask and Auto stopped on a failing ILA debug build, Full on a constraints gate at stage 3, by its own `--stop-after 8` choice
+it was kept away from the board), so what Ask, Auto and Full do at the board is shown by `agent/tests/test_222_permission_modes.py` with a scripted model and a fake programmer, not by a run. The first Ask runs also found that the stage-2 gate
+synthesises: before the fix the tool gate refused that build and the run looped at stage 2.
+
+- **Claude Code runs on the subscription report no cost**, so `spend_model_money` never triggers for them; the stage caps on turns and time still apply.
 
 ## Benchmark tasks as agent runs (brief 07a2-prep)
 

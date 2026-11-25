@@ -250,8 +250,8 @@ def test_a_tool_the_next_brief_adds_is_gated_by_registering_its_action(tmp_path)
 
 
 def test_the_stage_actions_cover_what_the_graph_runs_itself():
-    assert "run_simulation" in P.stage_actions(2) and "run_vivado" not in P.stage_actions(2)
-    assert "run_vivado" in P.stage_actions(3) and "edit_design_files" in P.stage_actions(3) and "edit_design_files" not in P.stage_actions(1)
+    assert "run_simulation" in P.stage_actions(2) and "run_vivado" in P.stage_actions(2)       # stage 2's gate synthesises once lint and simulation pass
+    assert "run_vivado" not in P.stage_actions(1) and "run_vivado" in P.stage_actions(3) and "edit_design_files" in P.stage_actions(3) and "edit_design_files" not in P.stage_actions(1)
     assert set(P.HW_APPROVAL_ACTIONS) <= set(P.stage_actions(9)) and not set(P.HW_APPROVAL_ACTIONS) & set(P.stage_actions(8))
 
 
@@ -330,9 +330,9 @@ def test_ask_mode_asks_for_each_gated_action_and_records_who_allowed_it(world):
     perms = [p for p in seen if p["kind"] == "permission"]
     asked = [(p["stage"], tuple(p["needs"])) for p in perms]
     assert asked[0] == (0, ("use_knowledge_bank",))                                      # the first stage asks for the bank
-    assert any(n == ("edit_design_files",) and s == 2 for s, n in asked)                  # RTL: edit asked, simulation not (allowed by the mode)
+    assert any(s == 2 and set(n) == {"edit_design_files", "run_vivado"} for s, n in asked)      # RTL: edit and the stage's synthesis asked in one question, simulation not (allowed by the mode)
     assert not any("run_simulation" in n for _, n in asked)
-    assert any(s == 3 and "run_vivado" in n for s, n in asked)                           # Vivado asked when the first build stage starts
+    assert all(s != 3 or "run_vivado" not in n for s, n in asked)                         # and not asked again at stage 3: the grant lasts for the run
     assert all("program_board_sram" not in n for _, n in asked)                           # the board is asked at the hardware approval, not at the stage start
     reviews = [(p["stage"], p.get("hardware")) for p in seen if p["kind"] == "review"]
     assert [s for s, _ in reviews if s != 9][:3] == [0, 1, 2] and (9, True) in reviews     # a review for every stage, and the hardware approval
@@ -373,7 +373,7 @@ def test_a_deny_override_stops_the_run_where_it_is_needed_with_the_reason(world)
     rt, graph, lg, runner = start("auto", {"run_vivado": "deny"})
     st, seen = drive(rt, graph, lg)
     assert st.values["stop"].startswith("permission denied: Run Vivado synthesis and implementation (run_vivado)") and "override deny run_vivado" in st.values["stop"]
-    assert [h["n"] for h in st.values["history"]][-1] == 3 and "build" not in runner.kinds
+    assert [h["n"] for h in st.values["history"]][-1] == 2 and "build" not in runner.kinds
     assert st.values["stop_detail"]["permission"]["needs"] == ["run_vivado"] and "resume" in st.values["stop_detail"]["permission"]["change"]
     from agent.__main__ import drive_exit
     assert drive_exit({"stop": st.values["stop"]}) == 4
@@ -389,8 +389,8 @@ def test_declining_a_question_stops_the_run_and_is_recorded(world):
 
 def test_a_partial_answer_grants_what_was_named_and_declines_the_rest(world):
     rt, graph, lg, runner = start("ask", {"use_knowledge_bank": "allow"})
-    st, seen = drive(rt, graph, lg, answer=lambda p: {"allow": ["edit_design_files"], "by": "you"} if "run_vivado" not in p["needs"] else {"allow": [], "by": "you"})
-    assert st.values["stop"].startswith("permission denied") and "run_vivado" in st.values["stop"] and "edit_design_files" not in st.values["stop"]
+    st, seen = drive(rt, graph, lg, answer=lambda p: {"allow": ["edit_design_files"], "by": "you"})
+    assert st.values["stop"].startswith("permission denied") and "run_vivado" in st.values["stop"] and "edit_design_files" not in st.values["stop"] and "declined by you" in st.values["stop"]
 
 
 def test_spending_past_the_threshold_is_a_gated_action(world):
@@ -418,7 +418,7 @@ def test_the_headless_run_stops_at_the_first_ungranted_action_with_what_it_needs
     assert p["kind"] == "permission" and p["needs"] == ["use_knowledge_bank"] and p["actions"][0]["label"] == "Use the knowledge bank and IP library"
     assert not runner.kinds                                                              # nothing ran, nothing was skipped silently
     res2 = _drive(graph, rt, lg, None, [{"decision": "allow", "by": "you"}, {"decision": "approve"}, {"decision": "approve"}])   # a reply resumes it; two reviews, then the RTL stage asks to edit
-    assert res2["paused"]["kind"] == "permission" and res2["paused"]["needs"] == ["edit_design_files"]
+    assert res2["paused"]["kind"] == "permission" and res2["paused"]["needs"] == ["edit_design_files", "run_vivado"]
 
 
 def test_a_run_started_with_no_flag_is_auto_and_says_so(world):

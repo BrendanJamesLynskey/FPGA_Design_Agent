@@ -279,13 +279,13 @@ def tool_actions(tool: str, args: dict[str, Any] | None = None, stage: str | Non
 
 def stage_actions(n: int, tools: tuple[str, ...] = ()) -> tuple[str, ...]:
     """The actions the graph itself and the stage's agent need at stage ``n``. The graph runs the stage's own gates (simulation in stage 2, Vivado
-    from stage 3 on), so those are counted here and not only through the tools the model may call."""
+    from stage 2 on, for the synthesis its gate runs), so those are counted here and not only through the tools the model may call."""
     acts = ["use_knowledge_bank"]
     if n >= 2:
         acts.append("edit_design_files")
     if n == 2:
         acts.append("run_simulation")
-    if n >= 3:
+    if n >= 2:                                   # stage 2 too: once lint and simulation pass, its gate runs the synthesis (found by the first Ask-mode run, brief 222)
         acts.append("run_vivado")
     if n == 9:
         acts += list(HW_APPROVAL_ACTIONS)
