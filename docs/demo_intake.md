@@ -1,6 +1,6 @@
 # Demo intake: what to send before a demo is considered
 
-Plain text, one page. The owner may send this to someone who asks for a demo of FPGA Guild. Nothing is built or run until
+Plain text, one page. The owner may send this to someone who asks for a demo of FPGA Force. Nothing is built or run until
 the owner has read the answers and decided it is worth doing. A demo is a recording and a set of result files, not a copy of the agent or access to it.
 
 Please answer in plain text, a line or two each. "Don't know" is a fine answer.

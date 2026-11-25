@@ -1,4 +1,4 @@
-"""Data for site/src/why.html (brief 193): "Why FPGA Guild", the one-page summary in drawers.
+"""Data for site/src/why.html (brief 193): "Why FPGA Force", the one-page summary in drawers.
 
     site/why/why.yaml      the authored page: the answer, the drawers (claim, meaning, example, what it does not do yet, link)
     site/data/why.json     what the page reads (written by site/export.py)

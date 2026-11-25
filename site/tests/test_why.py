@@ -1,4 +1,4 @@
-"""Brief 193: the "Why FPGA Guild" page is built from the committed records, with no typed number."""
+"""Brief 193: the "Why FPGA Force" page is built from the committed records, with no typed number."""
 import json
 import re
 import sys
