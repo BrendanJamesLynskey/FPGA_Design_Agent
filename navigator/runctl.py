@@ -272,6 +272,8 @@ class RunControl:
         if not isinstance(p, dict):
             raise Refused("the request body must be a JSON object")
         kind = p.get("kind")
+        if kind == "answer":
+            return self.build_answer(p)
         harness = p.get("harness", "claude_code")
         if harness not in ("claude_code", "deepagents"):
             raise Refused("harness must be claude_code or deepagents")
@@ -339,6 +341,27 @@ class RunControl:
         if any(a == "--allow-fable" for a in argv):                                  # never reachable; a tripwire
             raise Refused("--allow-fable is never passed")
         return argv, summary
+
+    def build_answer(self, p: dict[str, Any]) -> tuple[list[str], dict[str, Any]]:
+        """Brief 182: resume a run that paused on a question of its own, with the user's answer: ``python -m agent resume <run id> --reply '{"answer": ...}'``.
+        The run is looked up in the list of run directories the service built (never named by path); the answer is data in one argv element and cannot start a flag."""
+        rid = p.get("run")
+        if not isinstance(rid, str) or rid not in P.run_ids(self.runs_dir, 200):
+            raise Refused("pick a run from the list")
+        try:
+            pend = json.loads((self.runs_dir / rid / "pending.json").read_text()).get("paused") or {}
+        except (OSError, ValueError, AttributeError):
+            pend = {}
+        if pend.get("kind") != "question":
+            raise Refused("that run is not waiting for an answer to a question of its own")
+        ans = p.get("answer")
+        if not isinstance(ans, str):
+            raise Refused("the answer must be text")
+        ans = re.sub(r"[\x00-\x1f\x7f]", " ", ans).strip()
+        if not ans or len(ans) > 400:
+            raise Refused("the answer is 1 to 400 characters")
+        argv = [self.python, "-m", "agent", "resume", rid, "--reply", json.dumps({"answer": ans})]
+        return argv, {"kind": "answer", "target": rid, "hardware": "no hardware: the run resumes at its question", "answer": ans[:80]}
 
     # -- start, stop, list ----------------------------------------------------------------------------------------------------------
     def active(self) -> list[str]:

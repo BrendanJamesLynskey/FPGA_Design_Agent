@@ -873,6 +873,7 @@ def node_work(state: State) -> dict:
     rt.meter.start_stage(st.limits)
     rt.session.stage = st.name
     rt.visit, rt.budget_notes = visits[str(n)], []
+    _run_event(rt, "stage_start", st.name, n=n, visit=visits[str(n)])
     follow_spec_language(rt)                 # brief 55: `language: vhdl` in spec.yaml works like --hdl vhdl
     fmt = {"board": rt.cfg.board, "name": rt.cfg.name, "stage": n, "stage_name": st.name,
            "allowed": ", ".join(st.tools), "fails": "; ".join(state.get("fails") or []) or "none",
@@ -1077,15 +1078,19 @@ def _build(rt: Runtime, until: str, variant: str = "base") -> dict:
     if c.get("sources") == key and _ORDER.index(c.get("until", "synth")) >= _ORDER.index(until) and c.get("ok"):
         b = {"ok": True, "cached": True}
     else:
+        _run_event(rt, "build_step", getattr(rt.session, "stage", None), state="start", until=until, variant=variant)
+        _t_build = time.time()
         b = dispatch(rt.session, "build", {"until": until, "variant": variant})
         waited = 0.0
         while not b.get("ok") and VIVADO_BUSY in str(b.get("output", "")) and waited < vivado_wait_s():
             time.sleep(VIVADO_POLL_S)                   # b82p2: another Vivado holds the PC's slot; that is no fault of the design
             waited += VIVADO_POLL_S
+            _run_event(rt, "slot_wait", getattr(rt.session, "stage", None), waited_s=round(waited), reason="another Vivado holds the PC's slot")
             b = dispatch(rt.session, "build", {"until": until, "variant": variant})
         if not b.get("ok"):
             rt.last_build_output = str(b.get("output", ""))[-2000:]
         cache.write_text(json.dumps({"sources": key, "until": until, "ok": bool(b.get("ok"))}))
+        _run_event(rt, "build_step", getattr(rt.session, "stage", None), state="end", until=until, variant=variant, ok=bool(b.get("ok")), seconds=round(time.time() - _t_build, 1))
     g = dispatch(rt.session, "gates", {"kind": "stages", "variant": variant})
     return {"build": {k: b.get(k) for k in ("ok", "refused", "returncode", "cached")}, "gates": g.get("gates")}
 
@@ -1709,8 +1714,24 @@ def node_document(state: State) -> dict:
     return {"doc": res}
 
 
+def _run_event(rt: Runtime, name: str, stage: str | None = None, **fields: Any) -> None:
+    """Brief 182: one ``kind: "event"`` row in the run's trace.jsonl (what the navigator's plain-words status reads). Never fails the run."""
+    try:
+        from agent.core.trace import Trace
+        Trace(rt.run_dir / "trace.jsonl", harness="graph").event(name, stage, **fields)
+    except Exception:                                  # noqa: BLE001
+        pass
+
+
 def node_advance(state: State) -> dict:
+    """The safe point (brief 182): mid-run requests (``agent request``) are applied here and nowhere else, then the stage machine's own rule."""
+    from agent.graph import requests as rq
     rt, n = _rt(state), state["stage"]
+    _run_event(rt, "stage_end", MACHINE[n].name, n=n, visit=(state.get("visits") or {}).get(str(n)), passed=not state.get("fails") and not state.get("stop"))
+    return rq.safe_point(rt, state, _advance_core)
+
+
+def _advance_core(rt: Runtime, n: int, state: State) -> dict:
     hist = state.get("history") or []
     last = hist[-1] if hist else {}
     if last.get("rewind"):
@@ -1922,6 +1943,8 @@ def new_runtime(cfg: Config, client: Callable | None = None, run_id: str | None 
         det = determinism.describe(tape.mode, tape_spec["level"], tape, table, seed=cfg.level1_seed, note=tape_spec["note"]) \
             if tape_spec["level"] else {"requested": False, "level": 0, "mode": tape.mode, "tape": str(tape.root), "note": tape_spec["note"],
                                         "pinned": determinism.versions(table)}
+    from agent.core import console as _console           # brief 182: every tool run leaves console/<step>.log for the navigator's live console
+    _console.install(sess.runner, run_dir, lambda: sess.stage)
     resolver = Resolver(table, run_dir=run_dir, injected=client, replay=replay, record=record, tape=tape,
                         level1=bool(tape_spec and tape_spec["level"] == 1))
     scale = float(table.budget_scale)                         # brief 209b: budget_scale of the model config / --budget-scale
@@ -2106,6 +2129,7 @@ def summary(rt: Runtime, state: dict) -> dict:
             "turn_trace": usage_trace(usage),
             "per_role": usage_by(usage, "role"), "per_stage": usage_by(usage, "stage"),
             "interview": rt.cfg.interview, "requirements": _requirements_summary(rt),
+            "user_requests": __import__("agent.graph.requests", fromlist=["x"]).counts(rt.run_dir),     # brief 182: mid-run requests and questions
             "review": rt.cfg.review, "stages_visited": [h["n"] for h in hist],
             "loops": sum(1 for a, b in zip(hist, hist[1:]) if b["n"] <= a["n"] and not a.get("rewind")),
             "rewinds": [h["rewind"] for h in hist if h.get("rewind")],
