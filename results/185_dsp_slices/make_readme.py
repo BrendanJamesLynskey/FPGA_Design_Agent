@@ -8,15 +8,14 @@ D = {k: json.loads((HERE / "data" / f"{k}.json").read_text()) for k in ("a7", "k
 P = {k: {p["id"]: p for p in v["points"]} for k, v in D.items()}
 
 
-SIMD_NOTE = ("The SIMD coding was **not** mapped to a slice on either part (fabric adders instead); the pattern-detect compare was. "
+SIMD_NOTE = ("Our SIMD coding (attribute on a signal) was **not** mapped to a slice on either part (fabric adders instead); the pattern-detect compare was. Brief 199 then ran the probe: with the attribute on the **module** (AMD's template placement) four 10-bit or 12-bit lanes map to one slice with USE_SIMD = FOUR12, input and output registers folded in (AREG = 1, PREG = 1), on a7 and k26 under Vivado 2026.1 (results/199_dsp_fmax/README.md). "
              "What AMD documents (brief 197): UG901 v2025.2 p. 73 gives `use_dsp = \"simd\"` as a value that puts SIMD structures into DSP blocks and refers to the templates, without a device list or conditions; "
              "UG479 v1.10 (ch. 3 notes, pdf p. 52) recommends the SIMD mode for a large number of small adds with their input registers folded into the slice, and UG479 and UG579 give four 12-bit lanes as the narrowest mode. "
              "Vivado 2025.2's SIMD language template (Verilog) puts the attribute on the **module**, takes four 10-bit operands as unpacked arrays and registers both the inputs and the outputs around the adds. "
-             "Our test put the attribute on one 48-bit signal, sliced a packed vector into four 12-bit lanes, and had one instance. It is not known whether the coding, the signal-level attribute, the single instance or Vivado 2026.1 is why it did not map; "
-             "the template coding was not run (the heavy-slot queue was full; the four variants and a Tcl driver are in the planner's research folder, `_handoff/fpga_agent/research/197_simd_probe/`).")
+             "Our test put the attribute on one 48-bit signal, sliced a packed vector into four 12-bit lanes, and had one instance. The probe shows the signal-level attribute is why it did not map: the same packed 48-bit coding with the attribute on the module mapped (brief 199).")
 SIMD_RULE = ("**Do not rely on `use_dsp = \"simd\"` for small adds.** UG901 v2025.2 (p. 73) names the value but gives no device list or conditions (it points to the Vivado templates); UG479 recommends SIMD for many small adds with their input registers in the slice. "
-             "Our test of four 12-bit adds did not map on either part under Vivado 2026.1 (coding differs from AMD's template: attribute on a signal, packed vector, one instance; the template coding was not run). "
-             "When four lanes are needed, instantiate the DSP48E1 / DSP48E2 with USE_SIMD = FOUR12, or check the synthesis report for the slice.")
+             "Our test of four 12-bit adds with the attribute on a signal did not map on either part under Vivado 2026.1; with the attribute on the module it mapped to one slice with FOUR12 (brief 199, measured on a7 and k26 synthesis). Put the attribute on the module, not a signal. "
+             "To be sure of four lanes, instantiate the DSP48E1 / DSP48E2 with USE_SIMD = FOUR12, or check the synthesis report for the slice.")
 
 
 def f(p):
@@ -33,7 +32,7 @@ out = ["# Brief 185: DSP slices as an area of expertise (measured)", "",
        "and **k26** = `xck26-sfvc784-2LV-c` (DSP48E2, target clock 1.0 ns). Records: `data/a7.json`, `data/k26.json` (116 points, every one `ok`); per-point evidence "
        "(DSP cell register properties, the synthesis DSP Report, the DSP lines of the DRC and methodology reports, the pulse-width and Min Period checks) in `raw/<part>/<point>/`.", "",
        "## How to read the numbers", "",
-       "- **Fmax** = the smaller of `1000 / (target period - worst setup slack)` and `1000 / the largest Min Period a clock pin requires` in the routed timing summary. "
+       "- **Fmax** = the smallest of `1000 / (target period - worst setup slack)`, `1000 / the largest Min Period a clock pin requires` in the routed timing summary, and the clock-buffer limit (BUFG Min Period: a7 2.155 ns, k26 1.379 ns, brief 199, results/199_dsp_fmax; the out-of-context wrappers have no buffer, so it is applied from the probe). "
        "One run per point at a target clock tighter than most points can meet, so it is an estimate (no repeats, no spread). A target that was easy would give only a lower bound; "
        "the points whose setup slack was positive (nine on a7, one on k26) are limited by the slice's own Min Period instead, except the k26 SIMD point (fabric adders, slack positive), whose figure is only a lower bound.",
        "- **Latency** = register stages from the module's operand inputs to its output (the formula the RTL is written for; checked by the Icarus benches in `tb/`). "
@@ -98,9 +97,12 @@ out += ["", f"Steps, as a share of the three-register result: a7 {pc(BA,0)} perc
         row([DS[2][0], DS[2][1], f(P["a7"]["preadd_WA24_WB18_VAR1"]), DS[2][2], f(P["k26"]["preadd_WA24_WB18_VAR1"])]),
         row([DS[3][0], DS[3][1], f(P["a7"]["mul_WA18_WB18_NA0_NM0_NP0_RSTP0"]), DS[3][2], f(P["k26"]["mul_WA18_WB18_NA0_NM0_NP0_RSTP0"])]), "",
         "On a7 the fully registered and the no-ADREG slices match the data sheet (the slice's own Min Period); with no pipeline registers ours is lower (reason not investigated). "
-        "On k26 the fully registered 837 MHz is **above** the data sheet's 775 MHz (-2, 0.85 V) and 644 MHz (-2, 0.72 V): it is a setup estimate at a 1.0 ns target, and the Min Period Vivado reports for the slice (0.85 ns) is looser than the data sheet's. "
-        "Use the data-sheet figure, not 837, as the K26 slice ceiling at sign-off; the table shows the shape (the steps between register counts), which is what rule 1 rests on. "
-        "Which supply voltage the -2LV run assumed was not recorded.", "",
+        "On k26 Vivado's own checks give 837 MHz for the fully registered slice (setup at a 1.0 ns target; the slice's Min Period is 0.85 ns, 1176 MHz), which is **above** the data sheet's 775 MHz (-2, 0.85 V) and 644 MHz (-2, 0.72 V). "
+        "Brief 199 found why the table no longer shows 837: the out-of-context wrappers have no clock buffer, and as soon as the clock goes through a BUFG Vivado also checks the buffer's Min Period, 1.379 ns = 725 MHz on the -2LV part (equal to DS925 Table 84, BUFG FMAX, -2 at 0.72 V; a7: 2.155 ns, the same as the slice's 2.154 ns, so a7 does not change). "
+        "Fmax in this page is therefore min(setup, slice Min Period, BUFG Min Period) and the k26 columns are capped at 725 MHz (rows that were setup-limited above it are marked BUFG in the bound column; probe in results/199_dsp_fmax). "
+        "Vivado does not turn the data sheet's 775 / 644 MHz DSP figure into a DSP check: its Min Period for the slice (0.85 ns) stays looser, so 725 is still above the DS925 -2 0.72 V DSP figure of 644. "
+        "Use the data-sheet figure (644 MHz at 0.72 V, 775 MHz at 0.85 V), not 725, as the K26 slice ceiling at sign-off; the table shows the shape (the steps between register counts), which is what rule 1 rests on. "
+        "The BUFG value matching the 0.72 V column suggests Vivado times the -2LV part at 0.72 V (an inference from one number, not read from the tool).", "",
         "![Fmax against the number of registers around one multiply](fmax_vs_registers.svg)", ""]
 out += ["", "## 2. Wide multiplies (slices, latency, MHz)", "",
         "Style 0 = the `*` operator with the same operand, multiplier and output registers (the tool's own split); 1 = hand-written cascade (PCOUT to PCIN with the 17-bit shift, operands skewed one clock per stage, chains added in the fabric); 2 = partial products each in a slice, summed in a registered fabric adder tree. Style-0 results with a second operand register (NA 2) are in the data and equal or lower.", "",
@@ -180,7 +182,7 @@ out += ["", SIMD_NOTE, "",
         "- Methodology DRC rows (DPIP-1, DPOP-1, DPOP-2) are recorded per point in `raw/`; they flag unregistered slices but not how fast the slice then runs.",
         "- Slice limits are best cases of few runs: `flow/dsp_regs_limits.json` is advisory, not a guarantee.", "",
         "## Next steps", "",
-        "- Repeat points to get a spread; add accumulate and wide-accumulator points; run the SIMD variants in `_handoff/fpga_agent/research/197_simd_probe/` (AMD's template coding against ours); measure the UltraScale+ cascade with the skew lines forced into the slices' input registers.",
+        "- Repeat points to get a spread; add accumulate and wide-accumulator points; run the module-attribute SIMD coding through place and route for Fmax; measure the UltraScale+ cascade with the skew lines forced into the slices' input registers.",
         "- Run the agent on a task that needs slice usage and see whether the advisory check changes its design (no agent run uses it yet).", ""]
 (HERE / "README.md").write_text("\n".join(out) + "\n")
 

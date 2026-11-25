@@ -3024,7 +3024,7 @@
        "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/results/185_dsp_slices/data/k26.json"
       }
      ],
-     "text": "The same on the UltraScale+ part: 354.2, 571.4, 678, 836.8 and 836.8 MHz. The three-register figure is a setup estimate at the target clock; the data sheet's own limit for the part is lower and is the ceiling at sign-off."
+     "text": "The same on the UltraScale+ part: 354.2, 571.4, 678, 725.2 and 725.2 MHz. The three-register figure is the clock-buffer limit of the part (the setup estimate at the target clock is higher); the data sheet's own DSP limit for the part is lower still and is the ceiling at sign-off."
     },
     {
      "kind": "measured",
@@ -3044,7 +3044,7 @@
        "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/results/185_dsp_slices/data/k26.json"
       }
      ],
-     "text": "On the UltraScale+ part the same three cases reached 836.8, 595.9 and 354.2 MHz; with every register the result is limited by the clock period asked for, not by the slice."
+     "text": "On the UltraScale+ part the same three cases reached 725.2, 595.9 and 354.2 MHz; with every register the result is limited by the clock buffer (and the clock period asked for), not by the slice."
     },
     {
      "kind": "measured",
@@ -3137,7 +3137,7 @@
    },
    "figures": [
     {
-     "caption": "Each dot is one run of a multiply of two narrow operands with the registers placed in the RTL; the line joins the best run at each latency. At zero registers the part reaches 175 MHz (Artix-7) and 354 MHz (UltraScale+); with operand, multiplier and output registers, 464 and 837 MHz; a fourth register adds nothing.",
+     "caption": "Each dot is one run of a multiply of two narrow operands with the registers placed in the RTL; the line joins the best run at each latency. At zero registers the part reaches 175 MHz (Artix-7) and 354 MHz (UltraScale+); with operand, multiplier and output registers, 464 and 725 MHz; a fourth register adds nothing.",
      "data": {
       "panels": [
        {
@@ -3281,7 +3281,7 @@
           "regs": "110"
          },
          {
-          "fmax": 837,
+          "fmax": 725,
           "latency": 3,
           "regs": "111"
          },
@@ -3301,7 +3301,7 @@
           "regs": "210"
          },
          {
-          "fmax": 837,
+          "fmax": 725,
           "latency": 4,
           "regs": "211"
          }
@@ -3322,11 +3322,11 @@
           "latency": 2
          },
          {
-          "fmax": 837,
+          "fmax": 725,
           "latency": 3
          },
          {
-          "fmax": 837,
+          "fmax": 725,
           "latency": 4
          }
         ],
@@ -3342,8 +3342,7 @@
          200,
          400,
          600,
-         800,
-         1000
+         800
         ]
        }
       ]
@@ -3630,7 +3629,7 @@
          },
          {
           "dsp": 2,
-          "fmax": 794,
+          "fmax": 725,
           "latency": 4,
           "style": 1,
           "w": "27 x 27"
@@ -3672,7 +3671,7 @@
          },
          {
           "dsp": 2,
-          "fmax": 794,
+          "fmax": 725,
           "latency": 4,
           "style": 1,
           "w": "35 x 25"
