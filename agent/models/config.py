@@ -60,7 +60,7 @@ PURPOSE_ROLE = {v: k for k, v in ROLE_PURPOSE.items()}
 KINDS = ("claude_code", "anthropic_api", "openrouter", "openai_compatible", "replay")
 SUPPORTS: dict[str, dict[str, frozenset[str]]] = {          # kind -> what it can do
     "claude_code": {"options": frozenset({"effort", "timeout_s"}), "needs": frozenset({"agent", "text", "chat"})},
-    "anthropic_api": {"options": frozenset({"temperature", "max_tokens", "stop", "thinking_budget", "timeout_s", "retries"}),
+    "anthropic_api": {"options": frozenset({"temperature", "max_tokens", "stop", "thinking_budget", "timeout_s", "retries", "effort"}),
                       "needs": frozenset({"agent", "text", "chat", "tools"})},
     "openrouter": {"options": frozenset({"temperature", "seed", "max_tokens", "stop", "effort", "timeout_s", "retries"}),
                    "needs": frozenset({"agent", "text", "chat", "tools"})},
@@ -91,7 +91,8 @@ ANTHROPIC_TEMPERATURE_OK = ("claude-haiku-4-5", "claude-sonnet-4-6", "claude-son
 #: ``temperature``: true when the API accepts a temperature for the model. A model with no price keeps the per-call cost ceiling.
 #: A ``models:`` section of any layer overrides these key by key.
 BUILTIN_MODELS: dict[str, dict[str, Any]] = {
-    "claude-sonnet-5-5": {"price": {"input": 2.00, "output": 10.00, "cache_write": 2.50, "cache_read": 0.10}, "temperature": False},
+    "claude-sonnet-5-5": {"price": {"input": 2.00, "output": 10.00, "cache_write": 2.50, "cache_read": 0.10}, "temperature": False,
+                          "max_tokens": 16000, "effort": "medium", "timeout_s": 300},
     "claude-haiku-5-5": {"price": {"input": 0.10, "output": 0.50}, "temperature": False},
     **{m: {"temperature": True} for m in ANTHROPIC_TEMPERATURE_OK},
 }
@@ -225,8 +226,14 @@ def _check_models(data: dict[str, Any], where: str) -> None:
     if not isinstance(ms, dict):
         raise ConfigError(f"{where}: models must be a mapping of model name to rules")
     for name, rule in ms.items():
-        if not isinstance(rule, dict) or set(rule) - {"price", "temperature"}:
-            raise ConfigError(f"{where}: models.{name}: allowed keys are price and temperature")
+        if not isinstance(rule, dict) or set(rule) - {"price", "temperature", "max_tokens", "effort", "timeout_s"}:
+            raise ConfigError(f"{where}: models.{name}: allowed keys are price, temperature, max_tokens, effort and timeout_s")
+        if "max_tokens" in rule and (isinstance(rule["max_tokens"], bool) or not isinstance(rule["max_tokens"], int) or rule["max_tokens"] <= 0):
+            raise ConfigError(f"{where}: models.{name}.max_tokens must be a positive integer")
+        if "effort" in rule and rule["effort"] not in ("low", "medium", "high", "xhigh", "max"):
+            raise ConfigError(f"{where}: models.{name}.effort must be one of low, medium, high, xhigh, max")
+        if "timeout_s" in rule and (isinstance(rule["timeout_s"], bool) or not isinstance(rule["timeout_s"], (int, float)) or rule["timeout_s"] <= 0):
+            raise ConfigError(f"{where}: models.{name}.timeout_s must be a positive number of seconds")
         pr = rule.get("price")
         if pr is not None:
             if not isinstance(pr, dict) or set(pr) - set(PRICE_KEYS) or not {"input", "output"} <= set(pr):
@@ -310,8 +317,9 @@ class Table:
                 cur = self.models.setdefault(mn, {})
                 if "price" in rule:
                     cur["price"] = {**cur.get("price", {}), **rule["price"]}
-                if "temperature" in rule:
-                    cur["temperature"] = rule["temperature"]
+                for k in ("temperature", "max_tokens", "effort", "timeout_s"):
+                    if k in rule:
+                        cur[k] = rule[k]
             if L.data.get("budget_scale") is not None:
                 self.budget_scale = float(L.data["budget_scale"])
         allowed_keys = {v["key_env"] for v in BUILTIN_ENDPOINTS.values() if v.get("key_env")}
@@ -391,7 +399,8 @@ class Table:
         """The rules of ``model`` (longest matching name prefix): ``price`` (a dict or None) and ``temperature`` (bool, default False)."""
         best = max((k for k in self.models if model and model.startswith(k)), key=len, default=None)
         r = self.models.get(best, {}) if best else {}
-        return {"price": dict(r["price"]) if r.get("price") else None, "temperature": bool(r.get("temperature", False)), "matched": best}
+        return {"price": dict(r["price"]) if r.get("price") else None, "temperature": bool(r.get("temperature", False)), "matched": best,
+                **{k: r[k] for k in ("max_tokens", "effort", "timeout_s") if k in r}}
 
     def entry(self, purpose: str, stage: str | None = None) -> Entry:
         if purpose not in PURPOSES:
@@ -419,6 +428,8 @@ class Table:
                     raise ConfigError(f"purpose {purpose!r}: option {o!r} (from the {layer} layer) is not supported by endpoint kind {kind!r}; "
                                       f"it supports {sorted(SUPPORTS[kind]['options']) or 'none'}")
                 opts[o] = v
+        if kind == "anthropic_api":                    # brief 209b: the model's own max_tokens, effort and timeout replace the kind's soft defaults
+            soft.update({k: v for k, v in self.model_rule(raw.get("model")).items() if k in ("max_tokens", "effort", "timeout_s")})
         if kind == "anthropic_api" and not self.model_rule(raw.get("model"))["temperature"]:
             soft.pop("temperature", None)                  # brief 209b: the API rejects a temperature for this model; the soft default is not sent
         for o, v in soft.items():

@@ -114,7 +114,8 @@ def test_temperature_is_omitted_by_the_model_rule_and_kept_where_accepted() -> N
 
 def test_the_config_rules_and_the_resolver_wire_them() -> None:
     t = build_table(user_file=None)
-    assert t.model_rule("claude-sonnet-5-5") == {"price": SONNET, "temperature": False, "matched": "claude-sonnet-5-5"}
+    assert t.model_rule("claude-sonnet-5-5") == {"price": SONNET, "temperature": False, "matched": "claude-sonnet-5-5",
+                                                 "max_tokens": 16000, "effort": "medium", "timeout_s": 300}
     assert t.model_rule("claude-haiku-5-5")["price"] == {"input": 0.10, "output": 0.50}
     assert t.model_rule("claude-sonnet-4-6")["temperature"] is True and t.model_rule("claude-sonnet-4-6")["price"] is None
     assert t.model_rule("claude-unknown-1")["temperature"] is False and t.model_rule("openai/x")["price"] is None
@@ -129,6 +130,7 @@ def test_the_config_rules_and_the_resolver_wire_them() -> None:
     os.environ["ANTHROPIC_API_KEY"] = "sk-test-0000000000"
     try:
         c = rs._build(t2.entry("rtl"), None)
+        assert (c.max_tokens, c.effort, c.timeout_s) == (16000, "medium", 300)
     finally:
         del os.environ["ANTHROPIC_API_KEY"]
     assert c.price == SONNET and c.accepts_temperature is False
@@ -183,3 +185,61 @@ def test_the_run_limit_wins_when_stage_and_run_limits_are_both_exceeded() -> Non
     with pytest.raises(BudgetExceeded) as e:
         m.check()
     assert str(e.value).startswith("run ")              # node_work re-raises only a "run ..." stop; a "stage ..." one starts the next visit
+
+
+def test_effort_and_max_tokens_follow_the_model_and_an_explicit_option_wins() -> None:
+    cli = {"endpoint": "anthropic_api", "model": "claude-sonnet-5-5"}
+    o = build_table(user_file=None, cli={"purposes": {"rtl": cli}}).entry("rtl").options
+    assert (o["max_tokens"], o["effort"], o["timeout_s"]) == (16000, "medium", 300)
+    o2 = build_table(user_file=None, cli={"purposes": {"rtl": {**cli, "options": {"max_tokens": 4000, "effort": "high"}}}}).entry("rtl").options
+    assert (o2["max_tokens"], o2["effort"]) == (4000, "high")
+    o3 = build_table(user_file=None, cli={"models": {"claude-sonnet-5-5": {"max_tokens": 9000, "effort": "low"}}, "purposes": {"rtl": cli}}).entry("rtl").options
+    assert (o3["max_tokens"], o3["effort"]) == (9000, "low")
+    o4 = build_table(user_file=None, cli={"purposes": {"rtl": {**cli, "model": "claude-haiku-5-5"}}}).entry("rtl").options
+    assert o4["max_tokens"] == 8192 and "effort" not in o4            # a model with no rule keeps the kind's defaults
+    for bad in ({"models": {"m": {"effort": "huge"}}}, {"models": {"m": {"max_tokens": 0}}}, {"models": {"m": {"timeout_s": -1}}}):
+        with pytest.raises(ConfigError):
+            validate_layer(bad, "cli", "t")
+
+
+def test_the_request_carries_output_config_effort_and_no_thinking_budget() -> None:
+    sent: list = []
+    client({"input_tokens": 1, "output_tokens": 1}, sent, effort="medium", max_tokens=16000)(MSGS, TOOLS)
+    assert sent[0]["output_config"] == {"effort": "medium"} and sent[0]["max_tokens"] == 16000 and "thinking" not in sent[0]
+    sent.clear()
+    client({"input_tokens": 1, "output_tokens": 1}, sent)(MSGS, TOOLS)
+    assert "output_config" not in sent[0]
+
+
+def _truncated(usage, content):
+    def opener(req, timeout):
+        return Resp({"content": content, "usage": usage, "stop_reason": "max_tokens"})
+    c = E.AnthropicClient("claude-sonnet-5-5", key_env="ANTHROPIC_API_KEY", opener=opener, price=SONNET, max_tokens=16000)
+    c._key = "k"
+    return c
+
+
+def test_a_reply_cut_off_at_max_tokens_is_recorded_and_hands_the_role_a_note(tmp_path, capsys) -> None:
+    c = _truncated({"input_tokens": 3, "output_tokens": 16000},
+                   [{"type": "text", "text": "partial"}, {"type": "tool_use", "id": "x", "name": "write_file", "input": {"p": "half"}}])
+    r = c(MSGS, TOOLS)
+    assert r.stop_reason == "max_tokens" and r.tool_calls == []             # the cut-off call has incomplete arguments: dropped
+    assert "cut off at the output limit of 16000 tokens" in r.text and r.text.startswith("partial")
+    assert r.cost == pytest.approx((3 * 2 + 16000 * 10) / 1e6)             # the truncated call is still paid for, and charged
+    assert "FDA_TRUNCATED" in capsys.readouterr().err
+    m = Meter({"turns": 9, "seconds": 99, "usd": 3.0})
+    m.add(r)
+    assert m.truncated == 1
+    from agent.models.resolver import Resolver
+    t = build_table(user_file=None, cli={"purposes": {"rtl": {"endpoint": "anthropic_api", "model": "claude-sonnet-5-5"}}})
+    Resolver(t, run_dir=tmp_path).log_call(t.entry("rtl"), r, 1.0)
+    assert json.loads((tmp_path / "model_calls.jsonl").read_text())["stop_reason"] == "max_tokens"
+
+
+def test_a_normal_reply_keeps_its_tool_calls_and_stop_reason() -> None:
+    def opener(req, timeout):
+        return Resp({"content": [{"type": "tool_use", "id": "x", "name": "t", "input": {"a": 1}}], "usage": {"input_tokens": 1, "output_tokens": 1}, "stop_reason": "tool_use"})
+    c = E.AnthropicClient("claude-sonnet-5-5", key_env="ANTHROPIC_API_KEY", opener=opener, price=SONNET)
+    c._key = "k"
+    r = c(MSGS, TOOLS)
+    assert r.stop_reason == "tool_use" and r.tool_calls == [{"id": "x", "name": "t", "args": {"a": 1}}] and "cut off" not in r.text

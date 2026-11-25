@@ -38,6 +38,7 @@ class Reply:
     input_tokens: int = 0            # brief 209b: Anthropic usage, uncached input (prompt_tokens is the sum of the three input fields)
     cache_write_tokens: int = 0      # cache_creation_input_tokens
     cache_read_tokens: int = 0       # cache_read_input_tokens
+    stop_reason: str | None = None   # brief 209b: the API's stop_reason ("max_tokens" means the reply was cut off)
     cost_basis: str | None = None    # "usage*price" when the cost was computed from usage and a price table, else None
 
 
@@ -89,6 +90,7 @@ class Meter:
     t_stage: float = field(default_factory=time.monotonic)
     t_run: float = field(default_factory=time.monotonic)
     unreported: int = 0
+    truncated: int = 0         # brief 209b: calls whose reply stopped at max_tokens
     usd_scale: float = 1.0     # brief 209b: multiplies every stage USD limit (the run cap is scaled by the caller); recorded in the run summary
     split: dict[str, int] = field(default_factory=lambda: {"input": 0, "output": 0, "cache_write": 0, "cache_read": 0})
     reserved: int = 0          # brief 05g: turns held back for the roles that run after the current one
@@ -119,6 +121,7 @@ class Meter:
     def add(self, r: Reply) -> None:
         usd = r.cost if r.cost is not None else UNREPORTED_COST_CEILING
         self.unreported += r.cost is None
+        self.truncated += getattr(r, "stop_reason", None) == "max_tokens"
         for d in (self.stage, self.run):
             d["turns"] += 1
             d["usd"] = round(d["usd"] + usd, 6)

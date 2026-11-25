@@ -138,8 +138,8 @@ class AnthropicClient:
 
     def __init__(self, model: str, *, base_url: str = "https://api.anthropic.com", key_env: str | None = "ANTHROPIC_API_KEY", timeout_s: float = 180.0,
                  temperature: float | None = 0.2, max_tokens: int = 8192, stop: list[str] | None = None, thinking_budget: int | None = None,
-                 retries: int = 1, opener=None, price: dict[str, float] | None = None, accepts_temperature: bool = True, cache: bool = True):
-        self.price, self.accepts_temperature, self.cache = price, accepts_temperature, cache          # brief 209b
+                 retries: int = 1, opener=None, effort: str | None = None, price: dict[str, float] | None = None, accepts_temperature: bool = True, cache: bool = True):
+        self.price, self.accepts_temperature, self.cache, self.effort = price, accepts_temperature, cache, effort          # brief 209b
         self.model, self.base_url, self.timeout_s, self.retries = model, base_url.rstrip("/"), timeout_s, retries
         self.temperature, self.max_tokens, self.stop, self.thinking_budget = temperature, max_tokens, stop, thinking_budget
         self._key = read_key(key_env)
@@ -212,6 +212,8 @@ class AnthropicClient:
             body["tools"] = tl
         if self.stop:
             body["stop_sequences"] = list(self.stop)
+        if self.effort:                                  # Messages API: output_config.effort (GA, no beta header); thinking stays adaptive (omitted)
+            body["output_config"] = {"effort": self.effort}
         if self.thinking_budget:
             body["thinking"] = {"type": "enabled", "budget_tokens": int(self.thinking_budget)}
         elif self.temperature is not None and self.accepts_temperature:      # per-model rule of the config, never a caught 400
@@ -242,9 +244,17 @@ class AnthropicClient:
             print(f"FDA_NO_PRICE: no price for model {self.model!r} in the model config (models: <name>: price:); every call counts at the "
                   "per-call cost ceiling", file=sys.stderr, flush=True)
         i, w, r = (int(u.get(k) or 0) for k in ("input_tokens", "cache_creation_input_tokens", "cache_read_input_tokens"))
+        stop = d.get("stop_reason")
+        if stop == "max_tokens":
+            # brief 209b: a reply cut off at max_tokens (thinking plus text) is a failed attempt, not retried at the same cap and not retried
+            # larger (above ~16000 the API wants streaming). A cut-off tool call has incomplete arguments, so it is dropped, and the role is told.
+            calls = []
+            text = (text + "\n\n" if text else "") + (f"[the reply was cut off at the output limit of {self.max_tokens} tokens (thinking counts), so any tool call "
+                                                      "in it was dropped: do less in one reply, for example write a shorter file, then continue]")
+            print(f"FDA_TRUNCATED: {self.model} reply stopped at max_tokens={self.max_tokens}", file=sys.stderr, flush=True)
         return Reply(text=text, tool_calls=calls, prompt_tokens=i + w + r, completion_tokens=int(u.get("output_tokens") or 0), cost=cost,
                      seconds=round(time.monotonic() - t0, 2), provider="anthropic", input_tokens=i, cache_write_tokens=w, cache_read_tokens=r,
-                     cost_basis="usage*price" if cost is not None else None)
+                     cost_basis="usage*price" if cost is not None else None, stop_reason=stop)
 
 
 class ClaudeCodeChat:

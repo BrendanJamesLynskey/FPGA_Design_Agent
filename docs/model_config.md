@@ -88,6 +88,18 @@ Opus 4.5/4.6 and the Claude 3 family); everything else rejects it with HTTP 400,
 in the entry. A `temperature` you set on such a model is also not sent (it never reaches the API); `--deterministic` level 1 already refuses these models.
 An unknown model counts as one that rejects it.
 
+**Output limit, effort and cut-off replies (brief 209b).** `max_tokens` is a hard cap on thinking plus text. The per-model rules in `models:` take
+`max_tokens`, `effort` (`low`, `medium`, `high`, `xhigh`, `max`, sent as `output_config.effort`; thinking stays adaptive, never `budget_tokens`, which
+Sonnet 5.5 rejects) and `timeout_s`; a purpose's own `options:` beat them, and they beat the kind's defaults (8192 tokens, 180 s). Built in for
+`claude-sonnet-5-5`: `max_tokens` 16000, `effort` medium, `timeout_s` 300. Why: the first smoke run had 9 of 17 replies stop at the old 8192 cap, so
+normal replies need more than that, and the largest output it saw below the cap was 8141 tokens; 16000 is about twice that, and is the size the API
+guide gives for a non-streaming request (above about 16000 it asks for streaming, which this client does not do). At the measured 8192 tokens in about
+55 s (150 tokens per second) 16000 tokens take about 110 s, so the 300 s timeout leaves a wide margin. `medium` is the guide's setting for agentic
+coding and tool-heavy work at moderate cost (the default of the model is `high`). A reply that stops with `stop_reason` `max_tokens` is **not** retried
+(the guide: a cut-off is a failed attempt, not to be retried at the same cap, and a larger cap would need streaming): its tool calls are dropped (their
+arguments are incomplete), the role gets the partial text plus a note saying the reply was cut off and to do less in one reply, the call is paid and
+charged, a line `FDA_TRUNCATED` is printed, the `model_calls.jsonl` row has `stop_reason: "max_tokens"`, and the run summary counts `truncated_calls`.
+
 **Budgets that follow the model's price.** Stage USD budgets (`stages.MACHINE`) and the run cap (`RUN_LIMITS`) were sized for the cheap default model.
 `budget_scale` (top-level key of any layer, or `--budget-scale N` on `run` and `resume`) multiplies every stage's USD budget and the default run cap by
 `N`; it is recorded in the run summary and, when not 1, in the table record. Turns and seconds are not scaled. An explicit `--max-usd` is kept as given, and

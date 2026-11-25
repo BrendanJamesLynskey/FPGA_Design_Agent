@@ -2013,7 +2013,7 @@ def summary(rt: Runtime, state: dict) -> dict:
             "loops": sum(1 for a, b in zip(hist, hist[1:]) if b["n"] <= a["n"] and not a.get("rewind")),
             "rewinds": [h["rewind"] for h in hist if h.get("rewind")],
             "tokens": rt.meter.run["tokens"], "cost_usd": rt.meter.run["usd"], "unreported_cost_calls": rt.meter.unreported,
-            "token_split": dict(getattr(rt.meter, "split", {})), "budget_scale": getattr(rt.meter, "usd_scale", 1.0),       # brief 209b: input / output / cache write / cache read tokens
+            "token_split": dict(getattr(rt.meter, "split", {})), "budget_scale": getattr(rt.meter, "usd_scale", 1.0), "truncated_calls": getattr(rt.meter, "truncated", 0),       # brief 209b: input / output / cache write / cache read tokens
             "turns": rt.meter.run["turns"], "wall_s": rt.meter.run["seconds"],
             "questions": (state.get("interview") or {}), "stop": state.get("stop"), "stop_detail": state.get("stop_detail"),
             "last_rtl_message": (getattr(rt, "last_role_message", None) or {}).get("rtl"),
