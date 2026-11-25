@@ -1,0 +1,11 @@
+schema: fpga-design-agent/formal_rigour/v1
+scope: "arp_responder with CACHE_N 2 and HOLDOFF 3 (the shipped cache is larger: parameters), any received frames, lookups, flushes and back-pressure"
+sanity: [c_reply, c_request]
+depth:
+  bmc:
+    enough: false
+    why: >-
+      Bounded, not claimed exhaustive. Measured in the cover task: the last beat of a 42-byte frame is first reached at step 45 and an ARP request leaves at step 46, but a reply
+      to a received request leaves only at step 89. Depth 60 therefore checks the frame length, the AXI-Stream rules and the lookup answers on a request frame and not on a
+      reply frame, and not on a second frame. K-induction `prove` was tried on 2026-11-21 and did not close (UNKNOWN after 61 s: the induction step fails on the beat counter),
+      so there is no unbounded result.

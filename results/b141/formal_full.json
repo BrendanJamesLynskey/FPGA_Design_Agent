@@ -1,0 +1,677 @@
+{
+ "tool": "Yosys 0.70+385 (git sha1 098e46a36, Release, Clang /usr/bin/clang++ 21.1.8)",
+ "bounds": {
+  "real": 331,
+  "tiny": 92
+ },
+ "results": [
+  {
+   "name": "rules_order_real_p0",
+   "only": null,
+   "task": "prove",
+   "engine": "smtbmc boolector",
+   "depth": 3,
+   "status": "PASS",
+   "seconds": 14.5,
+   "failed_assertions": [],
+   "verdict": "PASS"
+  },
+  {
+   "name": "rules_order_tiny_p0",
+   "only": null,
+   "task": "prove",
+   "engine": "smtbmc boolector",
+   "depth": 3,
+   "status": "PASS",
+   "seconds": 4.2,
+   "failed_assertions": [],
+   "verdict": "PASS"
+  },
+  {
+   "name": "debt_tiny_p0",
+   "only": null,
+   "task": "prove",
+   "engine": "abc pdr",
+   "depth": 0,
+   "status": "PASS",
+   "seconds": 27.4,
+   "failed_assertions": [],
+   "verdict": "PASS"
+  },
+  {
+   "name": "debt_real_p0",
+   "only": null,
+   "task": "prove",
+   "engine": "abc pdr",
+   "depth": 0,
+   "status": "PASS",
+   "seconds": 144.4,
+   "failed_assertions": [],
+   "verdict": "PASS"
+  },
+  {
+   "name": "live_bmc_tiny_p0",
+   "only": null,
+   "task": "bmc",
+   "engine": "abc bmc3",
+   "depth": 98,
+   "status": "PASS",
+   "seconds": 62.9,
+   "failed_assertions": [],
+   "verdict": "PASS"
+  },
+  {
+   "name": "rules_order_real_p1",
+   "only": null,
+   "task": "prove",
+   "engine": "smtbmc boolector",
+   "depth": 3,
+   "status": "PASS",
+   "seconds": 9.4,
+   "failed_assertions": [],
+   "verdict": "PASS"
+  },
+  {
+   "name": "rules_order_tiny_p1",
+   "only": null,
+   "task": "prove",
+   "engine": "smtbmc boolector",
+   "depth": 3,
+   "status": "PASS",
+   "seconds": 2.9,
+   "failed_assertions": [],
+   "verdict": "PASS"
+  },
+  {
+   "name": "debt_tiny_p1",
+   "only": null,
+   "task": "prove",
+   "engine": "abc pdr",
+   "depth": 0,
+   "status": "PASS",
+   "seconds": 14.9,
+   "failed_assertions": [],
+   "verdict": "PASS"
+  },
+  {
+   "name": "debt_real_p1",
+   "only": null,
+   "task": "prove",
+   "engine": "abc pdr",
+   "depth": 0,
+   "status": "PASS",
+   "seconds": 198.2,
+   "failed_assertions": [],
+   "verdict": "PASS"
+  },
+  {
+   "name": "live_bmc_tiny_p1",
+   "only": null,
+   "task": "bmc",
+   "engine": "abc bmc3",
+   "depth": 98,
+   "status": "PASS",
+   "seconds": 84.6,
+   "failed_assertions": [],
+   "verdict": "PASS"
+  },
+  {
+   "name": "cover_tiny",
+   "only": null,
+   "task": "cover",
+   "engine": "smtbmc boolector",
+   "depth": 220,
+   "status": "PASS",
+   "seconds": 106.5,
+   "failed_assertions": [],
+   "unreached_covers": [],
+   "verdict": "PASS"
+  },
+  {
+   "name": "mut_trcd",
+   "only": null,
+   "task": "bmc",
+   "engine": "abc bmc3",
+   "depth": 25,
+   "status": "FAIL",
+   "seconds": 7.1,
+   "failed_assertions": [
+    "r_col_trcd"
+   ],
+   "caught": true,
+   "verdict": "CAUGHT",
+   "why": "a column command one clock early after ACTIVATE"
+  },
+  {
+   "name": "mut_tras",
+   "only": null,
+   "task": "bmc",
+   "engine": "abc bmc3",
+   "depth": 25,
+   "status": "FAIL",
+   "seconds": 6.7,
+   "failed_assertions": [
+    "r_pre_tras"
+   ],
+   "caught": true,
+   "verdict": "CAUGHT",
+   "why": "PRECHARGE one clock before tRAS"
+  },
+  {
+   "name": "mut_trp",
+   "only": null,
+   "task": "bmc",
+   "engine": "abc bmc3",
+   "depth": 25,
+   "status": "FAIL",
+   "seconds": 9.7,
+   "failed_assertions": [
+    "r_act_trp"
+   ],
+   "caught": true,
+   "verdict": "CAUGHT",
+   "why": "ACTIVATE one clock before tRP after a PRECHARGE"
+  },
+  {
+   "name": "mut_trrd",
+   "only": null,
+   "task": "bmc",
+   "engine": "abc bmc3",
+   "depth": 25,
+   "status": "FAIL",
+   "seconds": 5.4,
+   "failed_assertions": [
+    "r_act_trrd"
+   ],
+   "caught": true,
+   "verdict": "CAUGHT",
+   "why": "ACTIVATE to another bank one clock before tRRD"
+  },
+  {
+   "name": "mut_tfaw",
+   "only": null,
+   "task": "bmc",
+   "engine": "abc bmc3",
+   "depth": 30,
+   "status": "FAIL",
+   "seconds": 36.1,
+   "failed_assertions": [
+    "r_act_tfaw"
+   ],
+   "caught": true,
+   "verdict": "CAUGHT",
+   "why": "a fifth ACTIVATE inside the four-activate window"
+  },
+  {
+   "name": "mut_twr",
+   "only": null,
+   "task": "bmc",
+   "engine": "abc bmc3",
+   "depth": 30,
+   "status": "FAIL",
+   "seconds": 7.8,
+   "failed_assertions": [
+    "r_pre_twr"
+   ],
+   "caught": true,
+   "verdict": "CAUGHT",
+   "why": "PRECHARGE before write recovery ends"
+  },
+  {
+   "name": "mut_trtp",
+   "only": null,
+   "task": "bmc",
+   "engine": "abc bmc3",
+   "depth": 30,
+   "status": "FAIL",
+   "seconds": 5.6,
+   "failed_assertions": [
+    "r_pre_trtp"
+   ],
+   "caught": true,
+   "verdict": "CAUGHT",
+   "why": "PRECHARGE before the read-to-precharge time"
+  },
+  {
+   "name": "mut_twtr",
+   "only": null,
+   "task": "bmc",
+   "engine": "abc bmc3",
+   "depth": 30,
+   "status": "FAIL",
+   "seconds": 8.9,
+   "failed_assertions": [
+    "r_rd_twtr"
+   ],
+   "caught": true,
+   "verdict": "CAUGHT",
+   "why": "a READ one clock before the write-to-read time"
+  },
+  {
+   "name": "mut_rtw",
+   "only": null,
+   "task": "bmc",
+   "engine": "abc bmc3",
+   "depth": 30,
+   "status": "FAIL",
+   "seconds": 7.0,
+   "failed_assertions": [
+    "r_wr_rtw"
+   ],
+   "caught": true,
+   "verdict": "CAUGHT",
+   "why": "a WRITE one clock before the read-to-write time"
+  },
+  {
+   "name": "mut_trfc",
+   "only": null,
+   "task": "bmc",
+   "engine": "abc bmc3",
+   "depth": 50,
+   "status": "FAIL",
+   "seconds": 129.8,
+   "failed_assertions": [
+    "r_act_trfc",
+    "r_any_trfc"
+   ],
+   "caught": true,
+   "verdict": "CAUGHT",
+   "why": "a command before tRFC after REFRESH"
+  },
+  {
+   "name": "mut_ref_open",
+   "only": null,
+   "task": "bmc",
+   "engine": "abc bmc3",
+   "depth": 50,
+   "status": "FAIL",
+   "seconds": 139.0,
+   "failed_assertions": [
+    "r_ref_closed"
+   ],
+   "caught": true,
+   "verdict": "CAUGHT",
+   "why": "REFRESH with a bank still open"
+  },
+  {
+   "name": "mut_no_refresh",
+   "only": null,
+   "task": "bmc",
+   "engine": "abc bmc3",
+   "depth": 95,
+   "status": "FAIL",
+   "seconds": 831.2,
+   "failed_assertions": [
+    "l_debt_bound"
+   ],
+   "caught": true,
+   "verdict": "CAUGHT",
+   "why": "refresh never requested: the debt grows past the allowance"
+  },
+  {
+   "name": "mut_no_dep",
+   "only": null,
+   "task": "bmc",
+   "engine": "abc bmc3",
+   "depth": 40,
+   "status": "FAIL",
+   "seconds": 3.9,
+   "failed_assertions": [
+    "o_no_overtake"
+   ],
+   "caught": true,
+   "verdict": "CAUGHT",
+   "why": "a request does not wait for an older request to the same address"
+  },
+  {
+   "name": "mut_no_age",
+   "only": null,
+   "task": "bmc",
+   "engine": "abc bmc3",
+   "depth": 104,
+   "status": "FAIL",
+   "seconds": 105.6,
+   "failed_assertions": [
+    "l_bounded"
+   ],
+   "caught": true,
+   "verdict": "CAUGHT",
+   "why": "no aging: a request can wait without bound"
+  }
+ ],
+ "by_name": {
+  "rules_order_real_p0": {
+   "name": "rules_order_real_p0",
+   "only": null,
+   "task": "prove",
+   "engine": "smtbmc boolector",
+   "depth": 3,
+   "status": "PASS",
+   "seconds": 14.5,
+   "failed_assertions": [],
+   "verdict": "PASS"
+  },
+  "rules_order_tiny_p0": {
+   "name": "rules_order_tiny_p0",
+   "only": null,
+   "task": "prove",
+   "engine": "smtbmc boolector",
+   "depth": 3,
+   "status": "PASS",
+   "seconds": 4.2,
+   "failed_assertions": [],
+   "verdict": "PASS"
+  },
+  "debt_tiny_p0": {
+   "name": "debt_tiny_p0",
+   "only": null,
+   "task": "prove",
+   "engine": "abc pdr",
+   "depth": 0,
+   "status": "PASS",
+   "seconds": 27.4,
+   "failed_assertions": [],
+   "verdict": "PASS"
+  },
+  "debt_real_p0": {
+   "name": "debt_real_p0",
+   "only": null,
+   "task": "prove",
+   "engine": "abc pdr",
+   "depth": 0,
+   "status": "PASS",
+   "seconds": 144.4,
+   "failed_assertions": [],
+   "verdict": "PASS"
+  },
+  "live_bmc_tiny_p0": {
+   "name": "live_bmc_tiny_p0",
+   "only": null,
+   "task": "bmc",
+   "engine": "abc bmc3",
+   "depth": 98,
+   "status": "PASS",
+   "seconds": 62.9,
+   "failed_assertions": [],
+   "verdict": "PASS"
+  },
+  "rules_order_real_p1": {
+   "name": "rules_order_real_p1",
+   "only": null,
+   "task": "prove",
+   "engine": "smtbmc boolector",
+   "depth": 3,
+   "status": "PASS",
+   "seconds": 9.4,
+   "failed_assertions": [],
+   "verdict": "PASS"
+  },
+  "rules_order_tiny_p1": {
+   "name": "rules_order_tiny_p1",
+   "only": null,
+   "task": "prove",
+   "engine": "smtbmc boolector",
+   "depth": 3,
+   "status": "PASS",
+   "seconds": 2.9,
+   "failed_assertions": [],
+   "verdict": "PASS"
+  },
+  "debt_tiny_p1": {
+   "name": "debt_tiny_p1",
+   "only": null,
+   "task": "prove",
+   "engine": "abc pdr",
+   "depth": 0,
+   "status": "PASS",
+   "seconds": 14.9,
+   "failed_assertions": [],
+   "verdict": "PASS"
+  },
+  "debt_real_p1": {
+   "name": "debt_real_p1",
+   "only": null,
+   "task": "prove",
+   "engine": "abc pdr",
+   "depth": 0,
+   "status": "PASS",
+   "seconds": 198.2,
+   "failed_assertions": [],
+   "verdict": "PASS"
+  },
+  "live_bmc_tiny_p1": {
+   "name": "live_bmc_tiny_p1",
+   "only": null,
+   "task": "bmc",
+   "engine": "abc bmc3",
+   "depth": 98,
+   "status": "PASS",
+   "seconds": 84.6,
+   "failed_assertions": [],
+   "verdict": "PASS"
+  },
+  "cover_tiny": {
+   "name": "cover_tiny",
+   "only": null,
+   "task": "cover",
+   "engine": "smtbmc boolector",
+   "depth": 220,
+   "status": "PASS",
+   "seconds": 106.5,
+   "failed_assertions": [],
+   "unreached_covers": [],
+   "verdict": "PASS"
+  },
+  "mut_trcd": {
+   "name": "mut_trcd",
+   "only": null,
+   "task": "bmc",
+   "engine": "abc bmc3",
+   "depth": 25,
+   "status": "FAIL",
+   "seconds": 7.1,
+   "failed_assertions": [
+    "r_col_trcd"
+   ],
+   "caught": true,
+   "verdict": "CAUGHT",
+   "why": "a column command one clock early after ACTIVATE"
+  },
+  "mut_tras": {
+   "name": "mut_tras",
+   "only": null,
+   "task": "bmc",
+   "engine": "abc bmc3",
+   "depth": 25,
+   "status": "FAIL",
+   "seconds": 6.7,
+   "failed_assertions": [
+    "r_pre_tras"
+   ],
+   "caught": true,
+   "verdict": "CAUGHT",
+   "why": "PRECHARGE one clock before tRAS"
+  },
+  "mut_trp": {
+   "name": "mut_trp",
+   "only": null,
+   "task": "bmc",
+   "engine": "abc bmc3",
+   "depth": 25,
+   "status": "FAIL",
+   "seconds": 9.7,
+   "failed_assertions": [
+    "r_act_trp"
+   ],
+   "caught": true,
+   "verdict": "CAUGHT",
+   "why": "ACTIVATE one clock before tRP after a PRECHARGE"
+  },
+  "mut_trrd": {
+   "name": "mut_trrd",
+   "only": null,
+   "task": "bmc",
+   "engine": "abc bmc3",
+   "depth": 25,
+   "status": "FAIL",
+   "seconds": 5.4,
+   "failed_assertions": [
+    "r_act_trrd"
+   ],
+   "caught": true,
+   "verdict": "CAUGHT",
+   "why": "ACTIVATE to another bank one clock before tRRD"
+  },
+  "mut_tfaw": {
+   "name": "mut_tfaw",
+   "only": null,
+   "task": "bmc",
+   "engine": "abc bmc3",
+   "depth": 30,
+   "status": "FAIL",
+   "seconds": 36.1,
+   "failed_assertions": [
+    "r_act_tfaw"
+   ],
+   "caught": true,
+   "verdict": "CAUGHT",
+   "why": "a fifth ACTIVATE inside the four-activate window"
+  },
+  "mut_twr": {
+   "name": "mut_twr",
+   "only": null,
+   "task": "bmc",
+   "engine": "abc bmc3",
+   "depth": 30,
+   "status": "FAIL",
+   "seconds": 7.8,
+   "failed_assertions": [
+    "r_pre_twr"
+   ],
+   "caught": true,
+   "verdict": "CAUGHT",
+   "why": "PRECHARGE before write recovery ends"
+  },
+  "mut_trtp": {
+   "name": "mut_trtp",
+   "only": null,
+   "task": "bmc",
+   "engine": "abc bmc3",
+   "depth": 30,
+   "status": "FAIL",
+   "seconds": 5.6,
+   "failed_assertions": [
+    "r_pre_trtp"
+   ],
+   "caught": true,
+   "verdict": "CAUGHT",
+   "why": "PRECHARGE before the read-to-precharge time"
+  },
+  "mut_twtr": {
+   "name": "mut_twtr",
+   "only": null,
+   "task": "bmc",
+   "engine": "abc bmc3",
+   "depth": 30,
+   "status": "FAIL",
+   "seconds": 8.9,
+   "failed_assertions": [
+    "r_rd_twtr"
+   ],
+   "caught": true,
+   "verdict": "CAUGHT",
+   "why": "a READ one clock before the write-to-read time"
+  },
+  "mut_rtw": {
+   "name": "mut_rtw",
+   "only": null,
+   "task": "bmc",
+   "engine": "abc bmc3",
+   "depth": 30,
+   "status": "FAIL",
+   "seconds": 7.0,
+   "failed_assertions": [
+    "r_wr_rtw"
+   ],
+   "caught": true,
+   "verdict": "CAUGHT",
+   "why": "a WRITE one clock before the read-to-write time"
+  },
+  "mut_trfc": {
+   "name": "mut_trfc",
+   "only": null,
+   "task": "bmc",
+   "engine": "abc bmc3",
+   "depth": 50,
+   "status": "FAIL",
+   "seconds": 129.8,
+   "failed_assertions": [
+    "r_act_trfc",
+    "r_any_trfc"
+   ],
+   "caught": true,
+   "verdict": "CAUGHT",
+   "why": "a command before tRFC after REFRESH"
+  },
+  "mut_ref_open": {
+   "name": "mut_ref_open",
+   "only": null,
+   "task": "bmc",
+   "engine": "abc bmc3",
+   "depth": 50,
+   "status": "FAIL",
+   "seconds": 139.0,
+   "failed_assertions": [
+    "r_ref_closed"
+   ],
+   "caught": true,
+   "verdict": "CAUGHT",
+   "why": "REFRESH with a bank still open"
+  },
+  "mut_no_refresh": {
+   "name": "mut_no_refresh",
+   "only": null,
+   "task": "bmc",
+   "engine": "abc bmc3",
+   "depth": 95,
+   "status": "FAIL",
+   "seconds": 831.2,
+   "failed_assertions": [
+    "l_debt_bound"
+   ],
+   "caught": true,
+   "verdict": "CAUGHT",
+   "why": "refresh never requested: the debt grows past the allowance"
+  },
+  "mut_no_dep": {
+   "name": "mut_no_dep",
+   "only": null,
+   "task": "bmc",
+   "engine": "abc bmc3",
+   "depth": 40,
+   "status": "FAIL",
+   "seconds": 3.9,
+   "failed_assertions": [
+    "o_no_overtake"
+   ],
+   "caught": true,
+   "verdict": "CAUGHT",
+   "why": "a request does not wait for an older request to the same address"
+  },
+  "mut_no_age": {
+   "name": "mut_no_age",
+   "only": null,
+   "task": "bmc",
+   "engine": "abc bmc3",
+   "depth": 104,
+   "status": "FAIL",
+   "seconds": 105.6,
+   "failed_assertions": [
+    "l_bounded"
+   ],
+   "caught": true,
+   "verdict": "CAUGHT",
+   "why": "no aging: a request can wait without bound"
+  }
+ }
+}

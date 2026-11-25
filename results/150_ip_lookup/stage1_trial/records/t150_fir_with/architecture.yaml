@@ -1,0 +1,47 @@
+schema: fpga-design-agent/architecture/v1
+design: low_pass_fir
+top: filt_top
+blocks:
+  - name: filt_top
+    function: board top; instantiates fpga_shell, reset_sync, fir_regs and fir_mac
+  - name: fpga_shell
+    function: provided test shell; UART frame decoder and register window (win_addr/win_wr/win_rd/win_wdata/win_rdata)
+  - name: reset_sync
+    function: two-flop synchroniser of cpu_resetn on clk; output inverted once to rst (active high)
+  - name: fir_regs
+    function: register map (ID, SAMPLE_IN, SAMPLE_OUT, STATUS, COEF_0..31), 32-entry sample history, busy sequencer
+  - name: fir_mac
+    function: one DSP48E1 multiply-accumulate, one tap per clk, sum shifted by FRAC_BITS and saturated to 16 bits
+interfaces:
+  - name: host_uart
+    between: [host, fpga_shell]
+    protocol: uart
+    prefix: uart
+    module: fpga_shell
+  - name: reg_window
+    between: [fpga_shell, fir_regs]
+    protocol: simple
+    prefix: win
+    module: fir_regs
+clock_domains:
+  - name: clk
+    clock: clk
+    freq_mhz: 100
+reset:
+  synchronisers: [reset_sync]
+crossings:
+  - from: async
+    to: clk
+    signal: cpu_resetn
+    primitive: reset_sync
+    inline_in: reset_sync
+  - from: async
+    to: clk
+    signal: uart_rx
+    primitive: sync2
+    inline_in: fpga_shell
+predicted_resources:
+  lut: [300, 800]
+  ff: [1000, 1600]
+  bram_tile: 0
+  dsp: 1

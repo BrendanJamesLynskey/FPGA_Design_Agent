@@ -1,0 +1,34 @@
+# Seeded mutants of the reciprocal-multiply divider RTL (brief 139c): one text change each, run under `config` with every normalised pair of that width.
+mutants:
+  - {id: M01, file: div_nr_seed.sv, what: "table index taken from the leading one and the bits below it minus one", config: {variant: 0, w: 8, a: 3, it: 2},
+     find: "assign idx = b[W-2 -: A];", replace: "assign idx = b[W-1 -: A];"}
+  - {id: M02, file: div_nr_seed.sv, what: "table entries rounded down instead of to nearest", config: {variant: 0, w: 8, a: 3, it: 1},
+     find: "F'(((64'd1 << (F + A + 2)) + num) / (64'd2 * num));", replace: "F'(((64'd1 << (F + A + 2))) / (64'd2 * num));"}
+  - {id: M03, file: div_nr_iter.sv, what: "first multiplier takes the previous estimate (one stage misaligned)", config: {variant: 0, w: 8, a: 3, it: 2},
+     find: "t_q <= b * y;", replace: "t_q <= b * y1;"}
+  - {id: M04, file: div_nr_iter.sv, what: "correction shifted by F - 1", config: {variant: 0, w: 8, a: 3, it: 2},
+     find: "p_q >>> F", replace: "p_q >>> (F - 1)"}
+  - {id: M05, file: div_nr_iter.sv, what: "correction subtracted instead of added", config: {variant: 0, w: 8, a: 3, it: 2},
+     find: "y_o <= YW'(y3 + ", replace: "y_o <= YW'(y3 - "}
+  - {id: M06, file: div_nr_newton.sv, what: "final multiply result taken one bit low", config: {variant: 0, w: 8, a: 3, it: 2},
+     find: "q <= prod[F +: W];", replace: "q <= prod[F-1 +: W];"}
+  - {id: M07, file: div_nr_newton.sv, what: "the dividend delayed one stage too few", config: {variant: 0, w: 8, a: 3, it: 2},
+     find: "assign prod  = a_sr[NA-1] * y_fin;", replace: "assign prod  = a_sr[NA-2] * y_fin;"}
+  - {id: M08, file: div_nr_newton.sv, what: "valid pipeline fed a constant one", config: {variant: 0, w: 8, a: 3, it: 2},
+     find: "else     v_q <= {v_q[NV-2:0], in_valid};", replace: "else     v_q <= {v_q[NV-2:0], 1'b1};"}
+  - {id: M09, file: div_nr_newton.sv, what: "seed stage register cleared", config: {variant: 0, w: 8, a: 3, it: 2},
+     find: "y_s0 <= {1'b0, y0};", replace: "y_s0 <= '0;"}
+  - {id: M10, file: div_nr_gs.sv, what: "numerator scaled by 2**-W, not 2**-(W-1)", config: {variant: 1, w: 8, a: 3, it: 2},
+     find: "n_s1 <= NW'(pa >> (W - 1));", replace: "n_s1 <= NW'(pa >> W);"}
+  - {id: M11, file: div_nr_gs.sv, what: "correction factor is 1 - d, not 2 - d", config: {variant: 1, w: 8, a: 3, it: 2},
+     find: "DWD'({1'b1, {(F+1){1'b0}}} - {1'b0, d_in});", replace: "DWD'({1'b0, 1'b1, {(F){1'b0}}} - {1'b0, d_in});"}
+  - {id: M12, file: div_nr_gs.sv, what: "numerator product shifted by F - 1", config: {variant: 1, w: 8, a: 3, it: 2},
+     find: "n_out <= NW'(pn >> F);", replace: "n_out <= NW'(pn >> (F - 1));"}
+  - {id: M13, file: div_nr_gs.sv, what: "denominator product shifted by F - 1 (second iteration sees a wrong d)", config: {variant: 1, w: 8, a: 3, it: 2},
+     find: "d_out <= DWD'(pd >> F);", replace: "d_out <= DWD'(pd >> (F - 1));"}
+  - {id: M14, file: div_nr_gs.sv, what: "quotient taken one bit low", config: {variant: 1, w: 8, a: 3, it: 2},
+     find: "assign q     = n_fin[F-(W-1) +: W];", replace: "assign q     = n_fin[F-W +: W];"}
+  - {id: M15, file: div_nr_gs.sv, what: "the denominator multiply uses the dividend", config: {variant: 1, w: 8, a: 3, it: 2},
+     find: "assign pb = b_s0 * y_s0;", replace: "assign pb = a_s0 * y_s0;"}
+  - {id: M16, file: div_nr_gs.sv, what: "valid pipeline fed a constant one", config: {variant: 1, w: 8, a: 3, it: 2},
+     find: "else     v_q <= {v_q[NV-2:0], in_valid};", replace: "else     v_q <= {v_q[NV-2:0], 1'b1};"}

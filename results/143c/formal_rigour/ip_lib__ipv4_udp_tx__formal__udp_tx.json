@@ -1,0 +1,210 @@
+{
+ "sby": "ip_lib/ipv4_udp_tx/formal/udp_tx.sby",
+ "schema": "fpga-design-agent/formal_rigour/v1",
+ "sources": {
+  "axi_tx/rtl/axis_rules.sv": "e3e7974734f0560b8a40eba4a9e383b0b61ef3f5e90e196995295f77280c313f",
+  "ip_lib/ipv4_udp_tx/formal/formal_udp_tx.sv": "c6dfda0396995446fc3426e3d705306bc13b38a59e391158c3d69ba8493cfc19",
+  "ip_lib/ipv4_udp_tx/formal/udp_tx.sby": "07d06508611f4847217f2c92e6555341cf7570331a5f4b2e62b77516b337a787",
+  "ip_lib/ipv4_udp_tx/rtl/ipv4_udp_tx.sv": "de89f8a3840ac111e497fbe4379cf56c52c2b46c721729daf8ba83e52561092f"
+ },
+ "tasks": {
+  "bmc": {
+   "checks": [
+    {
+     "flavor": "cover",
+     "id": "c_two_byte_datagram",
+     "label": "c_two_byte_datagram",
+     "src": "formal_udp_tx.sv:59",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "a_output_needs_datagram__ante",
+     "label": "a_output_needs_datagram__ante",
+     "src": "formal_udp_tx.sv:55",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "a_output_needs_datagram",
+     "label": "a_output_needs_datagram",
+     "src": "formal_udp_tx.sv:47",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "a_input_blocked_while_sending__ante",
+     "label": "a_input_blocked_while_sending__ante",
+     "src": "formal_udp_tx.sv:58",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "a_input_blocked_while_sending",
+     "label": "a_input_blocked_while_sending",
+     "src": "formal_udp_tx.sv:50",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "a_frame_mid_beat__ante",
+     "label": "a_frame_mid_beat__ante",
+     "src": "formal_udp_tx.sv:57",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "a_frame_mid_beat",
+     "label": "a_frame_mid_beat",
+     "src": "formal_udp_tx.sv:49",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "a_frame_last_beat__ante",
+     "label": "a_frame_last_beat__ante",
+     "src": "formal_udp_tx.sv:56",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "a_frame_last_beat",
+     "label": "a_frame_last_beat",
+     "src": "formal_udp_tx.sv:48",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "a_axis_rules__ante",
+     "label": "a_axis_rules__ante",
+     "src": "formal_udp_tx.sv:54",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "a_axis_rules",
+     "label": "a_axis_rules",
+     "src": "formal_udp_tx.sv:46",
+     "tautology": false
+    }
+   ],
+   "covers": {},
+   "depth": 60,
+   "mode": "bmc",
+   "seconds": 64.5,
+   "status": "PASS"
+  },
+  "cover": {
+   "checks": [
+    {
+     "flavor": "cover",
+     "id": "c_two_byte_datagram",
+     "label": "c_two_byte_datagram",
+     "src": "formal_udp_tx.sv:59",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "a_output_needs_datagram__ante",
+     "label": "a_output_needs_datagram__ante",
+     "src": "formal_udp_tx.sv:55",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "a_output_needs_datagram",
+     "label": "a_output_needs_datagram",
+     "src": "formal_udp_tx.sv:47",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "a_input_blocked_while_sending__ante",
+     "label": "a_input_blocked_while_sending__ante",
+     "src": "formal_udp_tx.sv:58",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "a_input_blocked_while_sending",
+     "label": "a_input_blocked_while_sending",
+     "src": "formal_udp_tx.sv:50",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "a_frame_mid_beat__ante",
+     "label": "a_frame_mid_beat__ante",
+     "src": "formal_udp_tx.sv:57",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "a_frame_mid_beat",
+     "label": "a_frame_mid_beat",
+     "src": "formal_udp_tx.sv:49",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "a_frame_last_beat__ante",
+     "label": "a_frame_last_beat__ante",
+     "src": "formal_udp_tx.sv:56",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "a_frame_last_beat",
+     "label": "a_frame_last_beat",
+     "src": "formal_udp_tx.sv:48",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "a_axis_rules__ante",
+     "label": "a_axis_rules__ante",
+     "src": "formal_udp_tx.sv:54",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "a_axis_rules",
+     "label": "a_axis_rules",
+     "src": "formal_udp_tx.sv:46",
+     "tautology": false
+    }
+   ],
+   "covers": {
+    "a_axis_rules__ante": {
+     "reached": true,
+     "step": 9
+    },
+    "a_frame_last_beat__ante": {
+     "reached": true,
+     "step": 51
+    },
+    "a_frame_mid_beat__ante": {
+     "reached": true,
+     "step": 9
+    },
+    "a_input_blocked_while_sending__ante": {
+     "reached": true,
+     "step": 3
+    },
+    "a_output_needs_datagram__ante": {
+     "reached": true,
+     "step": 9
+    },
+    "c_two_byte_datagram": {
+     "reached": true,
+     "step": 54
+    }
+   },
+   "depth": 60,
+   "mode": "cover",
+   "seconds": 5.6,
+   "status": "PASS"
+  }
+ },
+ "tool": "Yosys 0.70+385 (git sha1 098e46a36, Release, Clang /usr/bin/clang++ 21.1.8)"
+}

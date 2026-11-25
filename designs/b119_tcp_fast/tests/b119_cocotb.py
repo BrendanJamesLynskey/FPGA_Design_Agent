@@ -46,7 +46,7 @@ class Bench:
     async def start(self, conn: Conn | None = None):
         d = self.dut
         cocotb.start_soon(Clock(d.clk, PERIOD_PS, unit="ps").start())
-        for n in ("go", "go_spec", "commit", "abort", "sw_we"):
+        for n in ("go", "go_spec", "commit", "abort", "sw_we", "tx_unsent", "tx_drop"):
             getattr(d, n).value = 0
         for n in ("f_sym", "f_px", "f_qty", "f_ref", "sw_waddr", "sw_wdata", "sw_raddr"):
             getattr(d, n).value = 0
@@ -159,7 +159,7 @@ class Bench:
 
     # ---- orders
     async def fire(self, f: dict | None = None, spec: bool = False, commit_at: int | None = None, abort_at: int | None = None, min_k: int = 1,
-                   budget: int = 40, cfg_at: tuple | None = None) -> dict:
+                   budget: int = 40, cfg_at: tuple | None = None, unsent_at: int | None = None, drop_at: int | None = None) -> dict:
         """Present one order for one clock (go) and, at the given offsets in edges from go, commit and abort. Runs until the block is idle again
         (and at least to the last offset). cfg_at=(k, {name: value}) changes the static configuration at edge k."""
         d = self.dut
@@ -176,13 +176,15 @@ class Bench:
                 d.f_sym.value, d.f_px.value, d.f_qty.value, d.f_ref.value = sym, f["px"], f["qty"], f["ref"]
             d.commit.value = 1 if commit_at == k else 0
             d.abort.value = 1 if abort_at == k else 0
+            d.tx_unsent.value = 1 if unsent_at == k else 0          # brief 176: the transmit side's give-back of the previous segment, k edges after go
+            d.tx_drop.value = 1 if drop_at == k else 0              # brief 176: the transmit side drops this segment whole
             if cfg_at and cfg_at[0] == k:
                 for name, v in cfg_at[1].items():
                     getattr(d, name).value = v
             await self.tick()
             if k >= min_k and int(d.busy.value) == 0:
                 break
-        for n in ("go", "go_spec", "commit", "abort"):
+        for n in ("go", "go_spec", "commit", "abort", "tx_unsent", "tx_drop"):
             getattr(d, n).value = 0
         return {"go_clk": go_clk, "pay": pay, "frames": self.frames[nf0:], "refusals": self.refusals[nr0:], "lates": self.lates[nl0:]}
 
@@ -282,6 +284,65 @@ async def t_smoke(dut):
         assert settle(b, e) == "sent"
     assert len(b.recs) == 5 and [r["seq"] for r in b.recs] == [1000 + 59 * i for i in range(5)]
     await b.check_counters("smoke")
+
+
+async def giveback(b: Bench, delay: int):
+    """The transmit side poisoned the segment that just ended: one tx_unsent pulse `delay` clocks after it ended; the model gives its number back."""
+    for _ in range(delay):
+        await b.tick()
+    b.dut.tx_unsent.value = 1
+    await b.tick()
+    b.dut.tx_unsent.value = 0
+    b.model.snd_nxt -= 59
+    b.model.ip_id = (b.model.ip_id - 1) & 0xFFFF
+    b.model.counters_unsent = getattr(b.model, "counters_unsent", 0) + 1
+
+
+@cocotb.test()
+async def t_giveback(dut):
+    """Brief 176: a segment that the transmit side poisons (the trigger frame's bad FCS, STRICT with no verdict) consumes no sequence number and no IP identification.
+    Order 1 and 2 are sent, 2 is then poisoned downstream, 3 must carry 1059 (not 1118) and the identification of 2; the give-back is tried at several delays, in the clock
+    of the next go (the segment latches its numbers at that edge), with a dropped segment in between, and with a run of poisoned ones."""
+    b = await reset_bench(dut)
+    e = await b.order()
+    assert settle(b, e) == "sent"
+    for delay in (0, 1, 2, 5):
+        e = await b.order()                      # a segment that ends unpoisoned in the block ...
+        assert settle(b, e) == "sent"
+        seq_poisoned = e["snd_nxt"]
+        await giveback(b, delay)                 # ... and is poisoned by the transmit side
+        e = await b.order()
+        assert settle(b, e) == "sent"
+        assert e["snd_nxt"] == seq_poisoned, (delay, e["snd_nxt"], seq_poisoned)       # the next one reuses the number (model has been rolled back too)
+        p = tcpref.parse(e["frames"][0]["bytes"])
+        assert p.seq == seq_poisoned and p.ok
+    # give-back in the very clock of the next go (a go one clock after the segment ended): the segment latches the corrected numbers
+    e = await b.order()
+    assert settle(b, e) == "sent"
+    seq_poisoned, id_poisoned = e["snd_nxt"], e["id"]
+    b.model.snd_nxt -= 59
+    b.model.ip_id = (b.model.ip_id - 1) & 0xFFFF
+    e = await b.order(unsent_at=0)
+    assert settle(b, e) == "sent"
+    p = tcpref.parse(e["frames"][0]["bytes"])
+    assert p.ok and p.seq == seq_poisoned and p.ident == id_poisoned, (p.seq, seq_poisoned, p.ident, id_poisoned)
+    # a segment the multiplexer drops whole (pulse in the clock of its first word): nothing consumed, no record
+    nrec = len(b.recs)
+    nxt, ident = b.model.snd_nxt, b.model.ip_id
+    f = await b.fire(orders.random_order(b.rng), drop_at=1)
+    assert len(f["frames"]) == 1 and len(b.recs) == nrec
+    e = await b.order()
+    assert settle(b, e) == "sent" and e["snd_nxt"] == nxt and e["id"] == ident
+    # several in a row
+    for i in range(6):
+        e = await b.order()
+        assert settle(b, e) == "sent"
+        if i % 2 == 0:
+            await giveback(b, i)
+    seqs = [r["seq"] for r in b.recs]
+    assert (await b.rd(SND_NXT)) == b.model.snd_nxt and (await b.rd(IP_ID)) == b.model.ip_id
+    assert (await b.rd(CNT_BASE + 14)) == 4 + 1 + 3, "c_unsent counts every give-back"
+    assert len(seqs) == len(b.recs)
 
 
 @cocotb.test()

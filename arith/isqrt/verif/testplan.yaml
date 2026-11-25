@@ -4,7 +4,7 @@ schema: fpga-design-agent/testplan/v1
 design: isqrt
 notes: 'Arithmetic library function isqrt (brief 139b). Every requirement is a draft written by the agent from the owner''s request (spec_status: draft; only a human sets agreed). Evidence is generated
   by `python -m pytest arith/isqrt/tests --junitxml=results/139b_arith/isqrt_junit.xml` with ARITH_RECORD_DIR=results/139b_arith. The Lean items show ''statement not approved'': lean_approvals.yaml is the
-  owner''s. No Vivado run exists for this function (the build descriptions are prepared, not run), so there are no performance requirements.'
+  owner''s. The one performance requirement (brief 160) says every prepared out-of-context point has a routed Vivado result; no Fmax or area bound is agreed.'
 discover:
 - glob: arith/isqrt/tests/test_*.py
   pattern: ^def (test_\w+)
@@ -69,13 +69,27 @@ requirements:
   spec_status: draft
 - id: SQRT-F-BUILD
   kind: functional
-  title: Out-of-context build descriptions are prepared for Artix-7 and K26 (not run)
+  title: Out-of-context build descriptions are prepared for Artix-7 and K26 (prepared in brief 139b, run in brief 160)
   text: 'For every variant of the integer square root there is a build.yaml and an out-of-context clock constraint for xc7a100t and xck26, current against arith/tools/gen_build.py, consistent with the RTL
     (top, parameters, sources), with the expected primitive use evaluated for each point; the out-of-context wrapper lints clean and is functionally exact for the always-ready variants; the packaged verification
-    harness (harness/run.py, which a user reruns against their own instance) passes on the library instance with every coverage bin hit. No Vivado run has been made: this requirement is about preparation,
-    not about area, Fmax or power.'
-  source: arith/isqrt/spec.md#prepared-for-vivado-not-run
+    harness (harness/run.py, which a user reruns against their own instance) passes on the library instance with every coverage bin hit. This requirement is about preparation; the measured area, Fmax and power are in the brief 160 records.'
+  source: arith/isqrt/spec.md#vivado-builds-prepared-in-brief-139b-run-in-brief-160
   spec_status: draft
+- id: SQRT-P-OOC
+  kind: performance
+  title: Every prepared point places and routes out of context on Artix-7 and K26
+  text: Each point of the build files of isqrt (build/<variant>/build.yaml; 24 in all, both parts) goes through Vivado 2026.1 out-of-context synthesis, placement and routing and leaves
+    a recorded result (utilisation, WNS, WHS, Fmax, logic levels, vectorless power) in verif/results/vivado_ooc_<variant>_<part>.json. The measured values and each point's pre-stated
+    expectation are in the Measured table of spec.md and in verif/results/vivado_surface.json; this requirement states only that the measurement exists for every point, because no Fmax
+    or area bound has been agreed.
+  source: arith/isqrt/spec.md
+  spec_status: draft
+  performance:
+    quantity: prepared points with a routed out-of-context Vivado result
+    unit: points
+    op: ge
+    bound: 24
+    condition: Vivado 2026.1 out-of-context, one thread, the clocks of the build files, brief 160
 verification:
 - id: V-SQRT-MODEL
   requirements:
@@ -326,3 +340,19 @@ verification:
     - test_isqrt_build_rtl::test_packaged_harness_runs_against_an_instance
     - test_isqrt_build_rtl::test_ooc_wrapper_lints_and_is_functionally_exact_for_pipelines
   checks: *id001
+- id: V-SQRT-OOC
+  requirements:
+  - SQRT-P-OOC
+  method: timing
+  title: The routed Vivado results of every prepared point (the records of the last run)
+  evidence:
+    file: arith/isqrt/verif/results/vivado_surface.json
+    reader: json
+    field: summary.routed_points
+  checks:
+  - arith/isqrt/build/nonrestoring_pipe/a7/build.yaml
+  - arith/isqrt/build/nonrestoring_pipe/k26/build.yaml
+  - arith/isqrt/build/restoring_iter/a7/build.yaml
+  - arith/isqrt/build/restoring_iter/k26/build.yaml
+  - arith/isqrt/build/restoring_pipe/a7/build.yaml
+  - arith/isqrt/build/restoring_pipe/k26/build.yaml
