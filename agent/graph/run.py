@@ -131,6 +131,11 @@ class Config:
     explicit: tuple = ()            # brief 108: the model flags given on the command line (they override the user and project files)
     allow_fable: bool = False       # brief 108: the owner's --allow-fable flag (command line only; no file can set it)
     replay_run: bool = False        # brief 108: the chat calls are served from a recorded fixture (--replay): nothing live on an endpoint host
+    verif_profile: str = "standard"  # brief 194: the verification profile (agent.graph.profiles); the switches below it are overridable
+    verif_sets: dict | None = None  # brief 194: the overrides on top of the profile, switch -> value (--set), incl. --verif-level and --spec-tests when given
+    settings_flags: dict | None = None  # brief 194: the explicit --board and --verif-profile, which become the proposed values
+    settings_file: Path | None = None  # brief 194: proposed_settings.yaml, the interview's input; each setting becomes a question (agent.graph.settings)
+    verif_ask: bool = False         # brief 194: the interview proposes a profile (only when none was given on the command line)
     level1_seed: int | None = None  # brief 107: --deterministic at level 1: temperature 0 (and this seed) on every purpose that can take it
 
     @property
@@ -954,6 +959,26 @@ def _spec(rt: Runtime) -> dict:
     return load_spec(rt.design / "spec.yaml")
 
 
+def _pin_run(rt: "Runtime") -> None:
+    """Brief 194: the verification settings are variables, fixed by the user for the run. Write the pin (outside the design directory, where
+    no role can reach it) and record who set them in the ledger. A resumed run keeps its first pin."""
+    from agent.graph import profiles
+    pin = profiles.write_pin(rt.run_dir, rt.cfg.verif_profile, rt.cfg.verif_sets)
+    if pin.get("new"):
+        given = bool(rt.cfg.verif_sets) or not getattr(rt.cfg, "verif_ask", False)
+        ownership.record(rt.design, "owner" if rt.cfg.verif_sets else "auto", "start", "verification profile",
+                         f"{rt.cfg.verif_profile}" + (f" with overrides {rt.cfg.verif_sets}" if rt.cfg.verif_sets else "")
+                         + ("" if given else " (the interview will propose one)"))
+
+
+def _profile_record(cfg: Config) -> dict:
+    """Brief 194: the profile, every override and the switches that are only recorded, for the run summary."""
+    from agent.graph import assurance, profiles
+    rec = profiles.record_of(cfg.verif_profile, cfg.verif_sets)
+    return {"profile": rec["profile"], "overrides": rec["overrides"], "effective": rec["effective"], "not_wired": rec["not_wired"],
+            "ip_release_gaps": rec["ip_release_gaps"], "method_mix_gaps": rec["method_mix_gaps"], "advisory": assurance.advisory(rec)}
+
+
 def _interview(rt: Runtime, spec: dict, state: State) -> tuple[dict, dict]:
     from langgraph.types import interrupt
     from agent.graph.package_facts import load_facts
@@ -972,8 +997,18 @@ def _interview(rt: Runtime, spec: dict, state: State) -> tuple[dict, dict]:
     for r in unproven:                                            # 05d: a proof method per requirement, with a default
         methods, why = propose_proof(str(r.get("text", "")))
         asks.append((_p("graph/run/interview_3").format(r['id'], r.get('text'), ', '.join(PROOF_METHODS)), ",".join(methods), why))
-    for i, (qt, qd, qr) in enumerate(asks):
-        q = Question(id=f"q{i + 1}", text=qt, default=qd, reason=qr)
+    from agent.graph import assurance as _assur, profiles as _prof
+    sdoc = None
+    if getattr(rt.cfg, "settings_file", None) and not (rt.design / "confirmed_settings.yaml").is_file():
+        from agent.graph import settings as _set
+        fl = rt.cfg.settings_flags or {}
+        sdoc = _set.apply_flags(_set.load_proposals(rt.cfg.settings_file), fl.get("board"), fl.get("profile"))
+        for k, qt, qd, qr in _set.questions(sdoc):                # brief 194: every proposed setting is an interview question
+            asks.append((qt + f" [{k}]", qd, qr))
+    profile_ask = sdoc is None and getattr(rt.cfg, "verif_ask", False) and not any(o.get("question", "").startswith("Which verification profile") for o in spec.get("resolved_questions") or [])
+    if profile_ask:                                               # brief 194: the verification profile, with a default and a reason
+        asks.append(_assur.profile_question(spec))
+    def ask_one(q: Question) -> None:
         if rt.cfg.interview == "on" and iv.lookup(q) is None:         # one question at a time, to the human (not a package fact)
             ans = interrupt({"kind": "question", "id": q.id, "question": q.text, "default": q.default,
                              "reason": q.reason})
@@ -986,6 +1021,9 @@ def _interview(rt: Runtime, spec: dict, state: State) -> tuple[dict, dict]:
             iv.ask(q, _Human())
         else:
             iv.ask(q, who)
+
+    for i, (qt, qd, qr) in enumerate(asks):
+        ask_one(Question(id=f"q{i + 1}", text=qt, default=qd, reason=qr))
     spec = apply_register_answer(iv.resolve_into(spec))               # 07a2 fix 5 C: an answered map beats the role's default
     for r in rates:                                               # the answered (or defaulted) integer replaces it
         got = next((q for q in iv.questions if q.text.startswith(f"{r['name']} is given as")), None)
@@ -997,8 +1035,44 @@ def _interview(rt: Runtime, spec: dict, state: State) -> tuple[dict, dict]:
         got = next((q for q in iv.questions if q.text.startswith(_p("graph/run/interview_4").format(r['id']))), None)
         found = [m for m in PROOF_METHODS if got and got.answer and m in got.answer.lower()]
         r["proof"] = found or propose_proof(str(r.get("text", "")))[0]
+    unconfirmed: list[str] = []
+    if sdoc is not None:                                          # the interview's output: the confirmed settings
+        from agent.graph import settings as _set
+        ans = {}
+        for k, *_ in _set.questions(sdoc):
+            got = next((q for q in iv.questions if q.text.endswith(f"[{k}]")), None)
+            ans[k] = (got.answer if got else None, got.status if got else "defaulted")
+        values, unconfirmed = _set.resolve(sdoc, ans)
+        if values.get("board") and values["board"] != rt.cfg.board:
+            unconfirmed.append(f"board: the confirmed board {values['board']} is not the run's board {rt.cfg.board}; start the run with --board {values['board']}")
+        prof = values.get("profile")
+        if prof in _prof.PROFILES:
+            rt.cfg.verif_profile, rt.cfg.verif_ask = prof, False
+            rt.cfg.__dict__.update(_prof.cfg_fields(_prof.resolve(prof, rt.cfg.verif_sets)["effective"]))
+            spec["verif_profile"] = prof
+            _prof.write_pin(rt.run_dir, prof, rt.cfg.verif_sets, replace=True, set_by="the interview (settings question)")
+        elif prof is not None:
+            unconfirmed.append(f"profile: {prof!r} is not a profile")
+        if not unconfirmed:
+            (rt.design / "confirmed_settings.yaml").write_text(yaml.safe_dump(_set.confirmed_document(sdoc, values, ans), sort_keys=False))
+        spec["settings"] = values
+    if profile_ask:                                               # the answered (or defaulted) profile replaces the command line's default
+        got = next((q for q in iv.questions if q.text.startswith("Which verification profile")), None)
+        name = _assur.profile_from_answer(got.answer if got else None, _assur.propose_profile(spec)[0])
+        sets = {k: v for k, v in (rt.cfg.verif_sets or {}).items()}
+        rec = _prof.resolve(name, sets)
+        rt.cfg.verif_profile, rt.cfg.verif_ask = name, False
+        rt.cfg.__dict__.update(_prof.cfg_fields(rec["effective"]))
+        spec["verif_profile"] = name
+        _prof.write_pin(rt.run_dir, name, sets, replace=True, set_by="the interview (the user's answer or the default they accepted)")
+        for i, (qt, qd, qr) in enumerate(_assur.structure_questions(spec, rec["effective"])):
+            ask_one(Question(id=f"s{i + 1}", text=qt, default=qd, reason=qr))
+        spec["dependability"] = [{"question": q.text, "answer": q.answer, "status": q.status} for q in iv.questions if q.id.startswith("s")]
     (rt.design / "spec.yaml").write_text(yaml.safe_dump(spec, sort_keys=False))
-    return spec, merge_summaries(state.get("interview"), iv.summary())
+    summ = merge_summaries(state.get("interview"), iv.summary())
+    if unconfirmed:
+        summ["unconfirmed"] = unconfirmed
+    return spec, summ
 
 
 _ORDER = ["synth", "place", "route", "bitstream"]
@@ -1320,6 +1394,7 @@ def node_gate(state: State) -> dict:
                 errs += ["constants " + f"{f['code']} {f['where']}: {f['message']}" for f in cf]
                 ev["spec_constants"] = {"findings": cf}
                 log_routing_event(rt, "clarify_constants_check", findings=[f["code"] for f in cf], failed=bool(cf))
+                errs += ["[interview] unconfirmed variable: " + u for u in summary.get("unconfirmed") or []]      # brief 194: no run leaves the interview with one
                 ev["spec"], ev["signed_off"], ev["spec_errors"] = spec, not spec.get("open_questions"), errs
                 if errs:
                     detail.append("[spec.yaml] " + "; ".join(errs))
@@ -1858,6 +1933,7 @@ def new_runtime(cfg: Config, client: Callable | None = None, run_id: str | None 
     rt = Runtime(cfg, run_id, run_dir, design, sess, client, Meter(cfg.run_limits, usd_scale=scale), Snapshots(run_dir, design),
                  oracle_llm=oracle_llm, resolver=resolver)
     _RT[run_id] = rt
+    _pin_run(rt)
     prior = None
     try:                                                    # brief 107: a resume keeps the earlier determinism block in a history
         pj = json.loads((run_dir / "config.json").read_text())
@@ -2045,6 +2121,8 @@ def summary(rt: Runtime, state: dict) -> dict:
             "last_rtl_message": (getattr(rt, "last_role_message", None) or {}).get("rtl"),
             "routing_events": routing_events(rt),
             "clean_stop": state.get("stop") == "done",
+            "verification_profile": {**_profile_record(rt.cfg), "policy_breaches": __import__("agent.graph.profiles", fromlist=["x"]).check_pin(
+                rt.run_dir, rt.cfg.verif_profile, rt.cfg.verif_sets, rt.design)},
             "constants": constants_summary(rt),
             "gates_last": {h["stage"]: h["passed"] for h in hist if h.get("gated", True)},   # 68F: not an entry that ran no gate
             "approvals": [{"n": h["n"], **h["approval"]} for h in hist],
