@@ -1,38 +1,38 @@
 Copyright 1986-2022 Xilinx, Inc. All Rights Reserved. Copyright 2022-2026 Advanced Micro Devices, Inc. All Rights Reserved.
----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 | Tool Version      : Vivado v.2026.1 (lin64) Build 6511674 Tue Jun 16 11:01:26 MDT 2026
-| Date              : Thu Nov 12 21:40:40 2026
+| Date              : Mon Nov 23 01:18:06 2026
 | Host              : bren-ubuntu24-04 running 64-bit Ubuntu 24.04.4 LTS
-| Command           : report_timing -delay_type max -max_paths 1 -file /tmp/claude-1000/-home-brendan-Claude-sandbox/4a9bf707-8d35-4a84-a3ae-1e3802ba8b4e/scratchpad/b58a/designs/b58a_trigger/build/base/timing_worst_setup.rpt
+| Command           : report_timing -delay_type max -max_paths 1 -file /home/brendan/Claude_sandbox/_worktrees/175-b58a-phy/designs/b58a_trigger/build/base/timing_worst_setup.rpt
 | Design            : kr260_top
 | Device            : xck26-sfvc784
 | Speed File        : -2LV  PRODUCTION 1.31 12-08-2025
 | Design State      : Routed
 | Temperature Grade : C
----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 Timing Report
 
-Slack (MET) :             0.102ns  (required time - arrival time)
-  Source:                 u_atx/g_oddr[0].u_oddr/CLK
+Slack (VIOLATED) :        -0.003ns  (required time - arrival time)
+  Source:                 u_btx/g_us.g_oddr[0].u_oddr/CLK
                             (rising edge-triggered cell OSERDESE3 clocked by clk0_u  {rise@0.000ns fall@4.000ns period=8.000ns})
-  Destination:            a_txd[0]
-                            (output port clocked by a_txc  {rise@0.000ns fall@4.000ns period=8.000ns})
-  Path Group:             a_txc
+  Destination:            b_txd[0]
+                            (output port clocked by b_txc  {rise@0.000ns fall@4.000ns period=8.000ns})
+  Path Group:             b_txc
   Path Type:              Max at Slow Process Corner
-  Requirement:            4.000ns  (a_txc fall@4.000ns - clk0_u rise@0.000ns)
-  Data Path Delay:        1.507ns  (logic 1.222ns (81.086%)  route 0.285ns (18.914%))
+  Requirement:            4.000ns  (b_txc fall@4.000ns - clk0_u rise@0.000ns)
+  Data Path Delay:        1.453ns  (logic 1.168ns (80.387%)  route 0.285ns (19.613%))
   Logic Levels:           1  (OBUF=1)
-  Output Delay:           3.200ns
-  Clock Path Skew:        0.918ns (DCD - SCD + CPR)
-    Destination Clock Delay (DCD):    4.838ns = ( 8.838 - 4.000 ) 
-    Source Clock Delay      (SCD):    3.649ns
-    Clock Pessimism Removal (CPR):    -0.272ns
+  Output Delay:           3.340ns
+  Clock Path Skew:        0.899ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    4.774ns = ( 8.774 - 4.000 ) 
+    Source Clock Delay      (SCD):    3.600ns
+    Clock Pessimism Removal (CPR):    -0.275ns
   Clock Uncertainty:      0.109ns  ((TSJ^2 + DJ^2)^1/2) / 2 + PE
     Total System Jitter     (TSJ):    0.071ns
     Discrete Jitter          (DJ):    0.205ns
     Phase Error              (PE):    0.000ns
-  Clock Net Delay (Source):      2.271ns (routing 0.962ns, distribution 1.309ns)
+  Clock Net Delay (Source):      2.222ns (routing 0.962ns, distribution 1.260ns)
 
     Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
   -------------------------------------------------------------------    -------------------
@@ -50,21 +50,21 @@ Slack (MET) :             0.102ns  (required time - arrival time)
                          net (fo=1, routed)           0.348     1.334    clk0_u
     BUFGCE_X0Y76         BUFGCE (Prop_BUFCE_BUFGCE_I_O)
                                                       0.044     1.378 r  u_bg0/O
-    X1Y2 (CLOCK_ROOT)    net (fo=10053, routed)       2.271     3.649    u_atx/clk
-    BITSLICE_RX_TX_X0Y158
-                         OSERDESE3                                    r  u_atx/g_oddr[0].u_oddr/CLK
+    X1Y2 (CLOCK_ROOT)    net (fo=10082, routed)       2.222     3.600    u_btx/clk
+    BITSLICE_RX_TX_X0Y106
+                         OSERDESE3                                    r  u_btx/g_us.g_oddr[0].u_oddr/CLK
   -------------------------------------------------------------------    -------------------
-    BITSLICE_RX_TX_X0Y158
+    BITSLICE_RX_TX_X0Y106
                          OSERDESE3 (Prop_OSERDES_BITSLICE_COMPONENT_RX_TX_CLK_OQ)
-                                                      0.522     4.171 r  u_atx/g_oddr[0].u_oddr/OQ
-                         net (fo=1, routed)           0.285     4.456    a_txd_OBUF[0]
-    E1                   OBUF (Prop_OUTBUF_HPIOB_M_I_O)
-                                                      0.700     5.155 r  a_txd_OBUF[0]_inst/O
-                         net (fo=0)                   0.000     5.155    a_txd[0]
-    E1                                                                r  a_txd[0]
+                                                      0.522     4.122 r  u_btx/g_us.g_oddr[0].u_oddr/OQ
+                         net (fo=1, routed)           0.285     4.407    b_txd_OBUF[0]
+    U9                   OBUF (Prop_OUTBUF_HPIOB_M_I_O)
+                                                      0.646     5.053 r  b_txd_OBUF[0]_inst/O
+                         net (fo=0)                   0.000     5.053    b_txd[0]
+    U9                                                                r  b_txd[0]
   -------------------------------------------------------------------    -------------------
 
-                         (clock a_txc fall edge)      4.000     4.000 f  <hidden>
+                         (clock b_txc fall edge)      4.000     4.000 f  <hidden>
     C3                                                0.000     4.000 f  clk_25
                          net (fo=0)                   0.000     4.000    clk_25_IBUF_inst/I
     C3                   INBUF (Prop_INBUF_HPIOB_M_PAD_O)
@@ -78,23 +78,23 @@ Slack (MET) :             0.102ns  (required time - arrival time)
                          net (fo=1, routed)           0.307     5.769    clk0_u
     BUFGCE_X0Y76         BUFGCE (Prop_BUFCE_BUFGCE_I_O)
                                                       0.039     5.808 f  u_bg0/O
-                         net (fo=10053, routed)       1.967     7.775    u_atx/clk
-    BITSLICE_RX_TX_X0Y171
+                         net (fo=10082, routed)       1.921     7.729    u_btx/clk
+    BITSLICE_RX_TX_X0Y119
                          OSERDESE3 (Prop_OSERDES_BITSLICE_COMPONENT_RX_TX_CLK_OQ)
-                                                      0.341     8.116 f  u_atx/u_txc/OQ
-                         net (fo=1, routed)           0.176     8.292    a_txc_OBUF
-    A2                   OBUF (Prop_OUTBUF_HPIOB_M_I_O)
-                                                      0.546     8.838 f  a_txc_OBUF_inst/O
-                         net (fo=0)                   0.000     8.838    a_txc
-    A2                                                                f  a_txc
-                         clock pessimism             -0.272     8.566    <hidden>
-                         clock uncertainty           -0.109     8.458    <hidden>
-                         output delay                -3.200     5.258    <hidden>
+                                                      0.341     8.070 f  u_btx/g_us.u_txc/OQ
+                         net (fo=1, routed)           0.176     8.246    b_txc_OBUF
+    J1                   OBUF (Prop_OUTBUF_HPIOB_M_I_O)
+                                                      0.527     8.774 f  b_txc_OBUF_inst/O
+                         net (fo=0)                   0.000     8.774    b_txc
+    J1                                                                f  b_txc
+                         clock pessimism             -0.275     8.499    <hidden>
+                         clock uncertainty           -0.109     8.390    <hidden>
+                         output delay                -3.340     5.050    <hidden>
   -------------------------------------------------------------------
-                         required time                          5.258    <hidden>
-                         arrival time                          -5.155    <hidden>
+                         required time                          5.050    <hidden>
+                         arrival time                          -5.053    <hidden>
   -------------------------------------------------------------------
-                         slack                                  0.102    <hidden>
+                         slack                                 -0.003    <hidden>
 
 
 

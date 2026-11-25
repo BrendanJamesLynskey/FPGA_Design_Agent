@@ -69,7 +69,7 @@
     "enforced": 3,
     "evidence": 6,
     "sections": 7,
-    "skills": 21
+    "skills": 24
    },
    "evidence": [
     {
@@ -208,6 +208,7 @@
      }
     ]
    },
+   "figures": [],
    "gaps": [
     "I/O delay constraints, virtual clocks and clock uncertainty are written from the skills; no committed run scores them against a data sheet.",
     "The flow's multicycle check looks at each register's clock-enable logic, not at whether the register really changes only on the enable; the drill grader adds that check in simulation, the flow does not yet.",
@@ -221,6 +222,10 @@
    "skills": [
     {
      "items": [
+      {
+       "description": "Constraining an asynchronous clock-domain crossing and deciding where its timing margin goes, in Vivado or Quartus: per-crossing latency bound ...",
+       "name": "xdc-cdc-crossing-margin-method"
+      },
       {
        "description": "Writing the clock part of an XDC: create_clock (-add, waveform), which generated clocks Vivado derives by itself and which need create_generated_clock (fabric dividers, forwarded clocks) ...",
        "name": "xdc-clock-definitions"
@@ -273,6 +278,14 @@
     },
     {
      "items": [
+      {
+       "description": "A clock mux (BUFGMUX, BUFGCTRL, LUT) must be constrained or a check reports CLKMUX-NO-GROUPS/SRC-GROUPED/CASE, multiple_clock or TIMING-56: generated clocks on the mux output vs groups on ...",
+       "name": "amd-clock-mux-constraints"
+      },
+      {
+       "description": "Deciding whether and how to switch clocks on AMD (7 series, UltraScale+): alternatives, BUFGMUX_CTRL/BUFGCTRL on S, never a LUT, the safe-switch protocol for a clock that can stop (IGNORE) ...",
+       "name": "amd-clock-mux-switching"
+      },
       {
        "description": "The setup, hold or pulse-width gate fails, or timing reports must be explained: WNS/TNS/WHS, path anatomy, logic vs net delay, skew.",
        "name": "reading-timing-reports"
@@ -392,17 +405,34 @@
      "file": "flow/xpm_cdc.tcl",
      "gate": null,
      "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/flow/xpm_cdc.tcl",
-     "what": "Exceptions for AMD's crossing macros."
+     "what": "Exceptions for AMD's crossing macros; the handshake bound is AMD's own: destination period times its sync stages, with a bus skew."
+    },
+    {
+     "enforced": true,
+     "file": "flow/cdc_margin.py",
+     "gate": "post_route_bus_skew_met",
+     "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/flow/cdc_margin.py",
+     "what": "After routing, every set_bus_skew must be met; a hand-built bus with no bus skew, a loose datapath-only bound, a missing or low MTBF (UltraScale+) and user clock uncertainty are warnings."
     }
    ],
    "counts": {
-    "checks": 4,
-    "enforced": 3,
-    "evidence": 2,
+    "checks": 5,
+    "enforced": 4,
+    "evidence": 3,
     "sections": 7,
     "skills": 15
    },
    "evidence": [
+    {
+     "kind": "measured",
+     "sources": [
+      {
+       "path": "results/207_cdc_margin/headline.json",
+       "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/results/207_cdc_margin/headline.json"
+      }
+     ],
+     "text": "A clock-uncertainty margin is not crossing margin. On Artix-7 it left a crossing's slack unchanged (5.34 and 5.34 ns) and failed hold elsewhere (worst -0.692 ns); on MAX10 it turned a passing path (0.76 ns) into a failing one (-0.04 ns); in Quartus a clock group removed the skew check (96 paths with bounds, 0 with the group)."
+    },
     {
      "kind": "measured",
      "sources": [
@@ -477,13 +507,25 @@
       "confirmed": "doc",
       "summary": "Both Zynq families clock PS-PL AXI ports from a PL-supplied clock and cross inside the PS, but ZU+ adds the LPD/FPD split, so a crossing into a powered-down domain behaves differently.",
       "topic": "PS-PL clock crossings"
+     },
+     {
+      "confirmed": "tool",
+      "summary": "Both families: a user uncertainty leaves a datapath-only crossing bound unchanged, fails hold on other paths and lowers MTBF (reported on US+, settling slack on 7-series); per-crossing bounds are the margin.",
+      "topic": "User clock uncertainty on crossings (crossing margin)"
+     },
+     {
+      "confirmed": "tool",
+      "summary": "AMD's 2026.1 xpm_cdc_handshake template sets max delay and bus skew at destination period x sync stages (up to 100 bits); a hand-written copy of the scoped constraints must match.",
+      "topic": "XPM handshake constraint values in a non-project build"
      }
     ]
    },
+   "figures": [],
    "gaps": [
     "No agent run has used the stronger crossing gate yet.",
     "A reset cleared on one side only, in an asynchronous FIFO or a handshake, gets past the gate; only the rig's simulation catches it.",
-    "The gate's simulation works cycle by cycle, so it finds lost pulses and bits crossed separately but not route skew, glitches or true metastability."
+    "The gate's simulation works cycle by cycle, so it finds lost pulses and bits crossed separately but not route skew, glitches or true metastability.",
+    "The bus-skew gate has no failing case from our own designs: neither tested part could be routed past a realistic bound; its negative case is a recorded over-tight bound."
    ],
    "id": "cdc",
    "level": "checked",
@@ -640,12 +682,19 @@
      "gate": "RPT-CLK-02",
      "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/flow/report_gates.py",
      "what": "Advisory (Brief 204a): clock uncertainty and hold skew over the guide's review thresholds, read from the timing paths."
+    },
+    {
+     "enforced": false,
+     "file": "flow/clock_mux_check.py",
+     "gate": null,
+     "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/flow/clock_mux_check.py",
+     "what": "The clock_mux check: a LUT on a clock path, a clock mux whose modes are still timed against each other, clock groups on the source clocks that hide real paths into or out of the mux fanout, and a BUFGCTRL chain longer than the cascade ring; advice for a case-analysed select, a CE-pin select, an external clock with IGNORE tied, and a needlessly deep tree. It runs in the check suite, not as a stage gate."
     }
    ],
    "counts": {
-    "checks": 5,
+    "checks": 6,
     "enforced": 1,
-    "evidence": 2,
+    "evidence": 4,
     "sections": 7,
     "skills": 12
    },
@@ -664,11 +713,31 @@
      "kind": "measured",
      "sources": [
       {
-       "path": "results/204a_report_gates/hits.json",
-       "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/results/204a_report_gates/hits.json"
+       "path": "results/208/measured.json",
+       "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/results/208/measured.json"
       }
      ],
-     "text": "The clock-tree checks were run over 65 recorded builds: 0 of 58 showed a cascaded buffer or a local clock, and 9 of 59 had a hold skew or uncertainty over the guide's review threshold."
+     "text": "Two clocks through a BUFGMUX, with paths between one clock's own registers and the mux fanout: setup slack was -6.63 ns unconstrained and 0.419 ns once the source clocks were declared exclusive on xc7a35t (-6.03 and 0.01 ns on xck26), because the clock group also removed the real crossing (Vivado 2026.1, routed)."
+    },
+    {
+     "kind": "measured",
+     "sources": [
+      {
+       "path": "results/208/measured.json",
+       "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/results/208/measured.json"
+      }
+     ],
+     "text": "The clock_mux check on the recorded clock-mux designs (xc7a35t and xck26) blocked 36 and passed 22; every design whose clock groups hid a path was among those blocked."
+    },
+    {
+     "kind": "measured",
+     "sources": [
+      {
+       "path": "results/208/records/sim/tb_lutmux.log",
+       "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/results/208/records/sim/tb_lutmux.log"
+      }
+     ],
+     "text": "An RTL clock mux (a LUT) switched 40 times at times unrelated to its clocks gave 40 runt pulses in simulation; Vivado reports it only as TIMING-14."
     }
    ],
    "family": {
@@ -775,8 +844,10 @@
      }
     ]
    },
+   "figures": [],
    "gaps": [
     "The Clocking Wizard's own settings were compared with the flow's search on only a few target frequencies.",
+    "The clock-mux check reads a netlist dump made in the check suite's Vivado session; it is not a stage gate, and the CE-select glitch it warns about was not shown in simulation (the unisim model has no timing).",
     "No agent run has been graded on a clocking task yet."
    ],
    "id": "clocking",
@@ -903,7 +974,7 @@
     "enforced": 0,
     "evidence": 0,
     "sections": 15,
-    "skills": 39
+    "skills": 40
    },
    "evidence": [],
    "family": {
@@ -1044,9 +1115,15 @@
       "confirmed": "tool",
       "summary": "A marked first input or last output flop packs into the I/O logic on both families when only the pad is next to it; failure is a critical warning that drc_clean never sees. BELs, messages and DRC rows differ.",
       "topic": "Registers in the I/O block (IOB packing)"
+     },
+     {
+      "confirmed": "doc",
+      "summary": "DRIVE is a current limit, not an impedance: 7-series HR LVCMOS33 is 96 ohm at 4 mA and 15 ohm at 16 mA into 50 ohm, 2:1 over corners; only DCI and OUTPUT_IMPEDANCE outputs target 40, 48 or 60 ohm.",
+      "topic": "LVCMOS output drive, slew and output resistance"
      }
     ]
    },
+   "figures": [],
    "gaps": [
     "The I/O delay and eye-scan procedures exist as skills, and the rig that would measure them is designed on paper only.",
     "No transceiver design has been built or run.",
@@ -1219,6 +1296,10 @@
       {
        "description": "Choosing or configuring memory, DSP or carry primitives on Zynq UltraScale+ (K26): RAMB36E2/RAMB18E2 changes from 7-series (built-in cascade, all SDP write modes), URAM288 (4K x 72 ...",
        "name": "zynqmp-bram-uram-dsp48e2-carry8"
+      },
+      {
+       "description": "A netlist, a resource count or a timing estimate for a Zynq UltraScale+ (K26/KR260) design would come from Yosys (synth_xilinx -family xcup) instead of Vivado: what Yosys maps differently ...",
+       "name": "zynqmp-oss-synthesis-gaps"
       },
       {
        "description": "Moving RTL, XDC or a block design from a 7-series board (Nexys A7, ZedBoard) to the K26/KR260: which 7-series primitives do not exist on Zynq UltraScale+, which Vivado retargets ...",
@@ -1429,6 +1510,7 @@
      }
     ]
    },
+   "figures": [],
    "gaps": [
     "No committed run exercises error correction, dual-port or asynchronous memory behaviour in Vivado or on hardware; the skills give the rules.",
     "The memory controller's pin validation lives in the GUI and has no script command, so pins are checked against rules instead; that rule checker is not in this repository yet.",
@@ -1727,6 +1809,7 @@
      }
     ]
    },
+   "figures": [],
    "gaps": [
     "The on-chip XADC is covered by skills only; no committed design reads it or its alarms.",
     "No development task scores analogue front ends or converter timing.",
@@ -1929,6 +2012,7 @@
      }
     ]
    },
+   "figures": [],
    "gaps": [
     "The gate checks interface names and declarations only; protocol behaviour, such as holding valid until ready, is left to review and to the assertions the skills describe.",
     "No development task is an AXI design, so nothing measures this area end to end yet.",
@@ -2270,6 +2354,7 @@
      }
     ]
    },
+   "figures": [],
    "gaps": [
     "The encrypted cores run only in AMD's simulator; the file-driven harness drives four of them, and the rest are skills only.",
     "The Transceiver wizard's legal low-rate setting was not measured, because of a property-name error."
@@ -2504,6 +2589,7 @@
      }
     ]
    },
+   "figures": [],
    "gaps": [
     "Only the FIR, CIC, block memory and DDS cores have adapters; CORDIC, FFT and the Clocking Wizard do not, and the CIC and FIR have not been simulated in cascade.",
     "The cores are exercised by examples run by hand, not by the agent; no development task uses an AMD core yet.",
@@ -2669,6 +2755,7 @@
      }
     ]
    },
+   "figures": [],
    "gaps": [
     "There is one development run only, and the high-definition VGA task has not been run.",
     "HDMI and DisplayPort have skills but no design."
@@ -2820,6 +2907,7 @@
      }
     ]
    },
+   "figures": [],
    "gaps": [
     "The int8 task escaped most often, and the misreading was of the spec, not of the arithmetic.",
     "Rounding modes and saturation are covered by skills, and only these tasks test them."
@@ -2898,6 +2986,863 @@
    "summary": "Widths and rounding, saturation, fixed-point datapaths, modular multiplication and quantised neural-network arithmetic."
   },
   {
+   "about": "A DSP slice is a multiplier and an adder with registers built into it. How fast a design that uses one can be clocked depends on which of those registers are turned on, and the agent writes them in the RTL so that synthesis packs them into the slice. Wider multiplies and long sums are built from several slices, either left to the tool or chained by hand, and each choice trades clocks of latency against clock speed and fabric logic. The agent knows this from skills and from measurements on two parts; an advisory check, not a gate, flags a slice with too few registers for the target clock period.",
+   "cap_reason": null,
+   "cards": [],
+   "checks": [
+    {
+     "enforced": false,
+     "file": "flow/dsp_regs_check.py",
+     "gate": "DSPREG-01",
+     "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/flow/dsp_regs_check.py",
+     "what": "Advisory, from the slices' register properties and the target clock period: flags a multiplier with no multiplier register, or a slice with no output register, at a period the measurements below say it cannot meet; a period below the slice's own minimum; and AMD's DPIP and DPOP rows. Never fails a run; a deliberately slow datapath may waive it with a reason."
+    }
+   ],
+   "counts": {
+    "checks": 1,
+    "enforced": 0,
+    "evidence": 7,
+    "sections": 6,
+    "skills": 8
+   },
+   "evidence": [
+    {
+     "kind": "measured",
+     "sources": [
+      {
+       "path": "results/185_dsp_slices/data/a7.json",
+       "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/results/185_dsp_slices/data/a7.json"
+      }
+     ],
+     "text": "On the Artix-7 part, a multiply of two narrow operands with operand, multiplier and output registers around it reached 464.3 MHz, which is the slice's own limit; with the output register left out it reached 326.6 MHz, and with no register at all 175.2 MHz (one routed run each, Vivado 2026.1)."
+    },
+    {
+     "kind": "measured",
+     "sources": [
+      {
+       "path": "results/185_dsp_slices/data/k26.json",
+       "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/results/185_dsp_slices/data/k26.json"
+      }
+     ],
+     "text": "On the UltraScale+ part the same three cases reached 836.8, 595.9 and 354.2 MHz; with every register the result is limited by the clock period asked for, not by the slice."
+    },
+    {
+     "kind": "measured",
+     "sources": [
+      {
+       "path": "results/185_dsp_slices/data/a7.json",
+       "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/results/185_dsp_slices/data/a7.json"
+      }
+     ],
+     "text": "A single register after the multiply was packed into the slice's multiplier register (MREG 1, output register PREG 0) rather than its output register. With an asynchronous reset on that register it was packed into the output register instead, the multiplier stayed unregistered, and the slice ran at 198.9 MHz instead of 318.7 with a synchronous reset (Artix-7)."
+    },
+    {
+     "kind": "measured",
+     "sources": [
+      {
+       "path": "results/185_dsp_slices/data/a7.json",
+       "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/results/185_dsp_slices/data/a7.json"
+      }
+     ],
+     "text": "A signed multiply of two thirty-two-bit operands on the Artix-7 part, with the same registers at the ends: the tool's own split used 4 slices and reached 251.6 MHz; a hand-written cascade of slices (with the seventeen-bit shift) used 4 and reached 306.3 MHz; partial products summed in the fabric used 4 and reached 194.3 MHz."
+    },
+    {
+     "kind": "measured",
+     "sources": [
+      {
+       "path": "results/185_dsp_slices/data/a7.json",
+       "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/results/185_dsp_slices/data/a7.json"
+      }
+     ],
+     "text": "An eight-term dot product on the Artix-7 part: a chain of slices (cascade) reached 464.3 MHz at 10 register stages; the same sum with a fabric adder tree, a register after every level, reached 328.4 MHz at 6 stages, so the tree saves clocks and loses speed."
+    },
+    {
+     "kind": "measured",
+     "sources": [
+      {
+       "path": "results/185_dsp_slices/data/k26.json",
+       "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/results/185_dsp_slices/data/k26.json"
+      }
+     ],
+     "text": "The same two on the UltraScale+ part: the cascade reached 656.2 MHz at 10 stages (the delay registers that skew its operands became shift-register cells that limit the clock) and the tree 702.2 MHz at 6 stages."
+    },
+    {
+     "kind": "measured",
+     "sources": [
+      {
+       "path": "results/185_dsp_slices/data/a7.json",
+       "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/results/185_dsp_slices/data/a7.json"
+      }
+     ],
+     "text": "A pre-adder before the multiplier was used by the slice and ran at 464.3 MHz with its own register and 290.4 MHz without it. A constant compare on an accumulator used the slice's pattern detector (PATDET); four twelve-bit adds written for the SIMD mode were not mapped to a slice (0 slices) with this coding."
+    }
+   ],
+   "family": {
+    "docs": {
+     "7series": [
+      {
+       "doc": "UG479 v1.10 (DSP48E1)",
+       "use": "DSP48E1 25 x 18, pre-adder, pattern detect"
+      }
+     ],
+     "common": [
+      {
+       "doc": "UG901 v2026.1 (synthesis)",
+       "use": "DSP inference templates"
+      }
+     ],
+     "ultrascale_plus": [
+      {
+       "doc": "UG579 v1.11 (DSP48E2)",
+       "use": "DSP48E2 27 x 18, wide XOR, W mux, 'Differences from Previous Generations'"
+      },
+      {
+       "doc": "DS925 v1.30 (Zynq UltraScale+ data sheet)",
+       "use": "DSP48 switching"
+      }
+     ]
+    },
+    "rows": [
+     {
+      "confirmed": "tool",
+      "summary": "DSP48E1 multiplies 25 x 18 with a 25-bit pre-adder; DSP48E2 multiplies 27 x 18 with a 27-bit pre-adder, so a 27-bit coefficient fits one slice only on UltraScale+.",
+      "topic": "Multiplier and pre-adder width"
+     },
+     {
+      "confirmed": "tool",
+      "summary": "DSP48E2 is a macro of several lib cells in Vivado, so netlist queries by REF_NAME or lib cell behave differently from DSP48E1.",
+      "topic": "DSP primitive is a macro on UltraScale+"
+     }
+    ]
+   },
+   "figures": [
+    {
+     "caption": "Each dot is one run of a multiply of two narrow operands with the registers placed in the RTL; the line joins the best run at each latency. At zero registers the part reaches 175 MHz (Artix-7) and 354 MHz (UltraScale+); with operand, multiplier and output registers, 464 and 837 MHz; a fourth register adds nothing.",
+     "data": {
+      "panels": [
+       {
+        "dots": [
+         {
+          "fmax": 175,
+          "latency": 0,
+          "regs": "000"
+         },
+         {
+          "fmax": 319,
+          "latency": 1,
+          "regs": "001"
+         },
+         {
+          "fmax": 319,
+          "latency": 1,
+          "regs": "010"
+         },
+         {
+          "fmax": 325,
+          "latency": 2,
+          "regs": "011"
+         },
+         {
+          "fmax": 319,
+          "latency": 1,
+          "regs": "100"
+         },
+         {
+          "fmax": 327,
+          "latency": 2,
+          "regs": "101"
+         },
+         {
+          "fmax": 327,
+          "latency": 2,
+          "regs": "110"
+         },
+         {
+          "fmax": 464,
+          "latency": 3,
+          "regs": "111"
+         },
+         {
+          "fmax": 327,
+          "latency": 2,
+          "regs": "200"
+         },
+         {
+          "fmax": 317,
+          "latency": 3,
+          "regs": "201"
+         },
+         {
+          "fmax": 317,
+          "latency": 3,
+          "regs": "210"
+         },
+         {
+          "fmax": 464,
+          "latency": 4,
+          "regs": "211"
+         }
+        ],
+        "key": "a7",
+        "label": "Artix-7 xc7a100t (DSP48E1)",
+        "line": [
+         {
+          "fmax": 175,
+          "latency": 0
+         },
+         {
+          "fmax": 319,
+          "latency": 1
+         },
+         {
+          "fmax": 327,
+          "latency": 2
+         },
+         {
+          "fmax": 464,
+          "latency": 3
+         },
+         {
+          "fmax": 464,
+          "latency": 4
+         }
+        ],
+        "xticks": [
+         0,
+         1,
+         2,
+         3,
+         4
+        ],
+        "yticks": [
+         0,
+         100,
+         200,
+         300,
+         400,
+         500
+        ]
+       },
+       {
+        "dots": [
+         {
+          "fmax": 354,
+          "latency": 0,
+          "regs": "000"
+         },
+         {
+          "fmax": 571,
+          "latency": 1,
+          "regs": "001"
+         },
+         {
+          "fmax": 571,
+          "latency": 1,
+          "regs": "010"
+         },
+         {
+          "fmax": 678,
+          "latency": 2,
+          "regs": "011"
+         },
+         {
+          "fmax": 394,
+          "latency": 1,
+          "regs": "100"
+         },
+         {
+          "fmax": 596,
+          "latency": 2,
+          "regs": "101"
+         },
+         {
+          "fmax": 596,
+          "latency": 2,
+          "regs": "110"
+         },
+         {
+          "fmax": 837,
+          "latency": 3,
+          "regs": "111"
+         },
+         {
+          "fmax": 394,
+          "latency": 2,
+          "regs": "200"
+         },
+         {
+          "fmax": 596,
+          "latency": 3,
+          "regs": "201"
+         },
+         {
+          "fmax": 596,
+          "latency": 3,
+          "regs": "210"
+         },
+         {
+          "fmax": 837,
+          "latency": 4,
+          "regs": "211"
+         }
+        ],
+        "key": "k26",
+        "label": "Zynq UltraScale+ K26 (DSP48E2)",
+        "line": [
+         {
+          "fmax": 354,
+          "latency": 0
+         },
+         {
+          "fmax": 571,
+          "latency": 1
+         },
+         {
+          "fmax": 678,
+          "latency": 2
+         },
+         {
+          "fmax": 837,
+          "latency": 3
+         },
+         {
+          "fmax": 837,
+          "latency": 4
+         }
+        ],
+        "xticks": [
+         0,
+         1,
+         2,
+         3,
+         4
+        ],
+        "yticks": [
+         0,
+         200,
+         400,
+         600,
+         800,
+         1000
+        ]
+       }
+      ]
+     },
+     "how": "Out-of-context synthesis, placement and routing in Vivado 2026.1 on two parts, one run per point at a target clock tighter than the part can meet; speed is the target period minus the worst setup slack, limited by the slice's minimum period. A run is an estimate, not a guarantee.",
+     "id": "depth",
+     "kind": "mul_depth",
+     "sources": [
+      {
+       "path": "results/185_dsp_slices/data/a7.json",
+       "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/results/185_dsp_slices/data/a7.json"
+      },
+      {
+       "path": "results/185_dsp_slices/data/k26.json",
+       "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/results/185_dsp_slices/data/k26.json"
+      }
+     ],
+     "title": "Clock speed against the number of registers around one multiply",
+     "wrong": "Latency here is register stages from the module's operand inputs to its product output; the two kept registers of the test wrapper are not counted. The speed is for one slice by itself: a real design adds routing from its own logic."
+    },
+    {
+     "caption": "Filled circle: a chain of slices (cascade); square: a fabric adder tree with a register every level, every second level, or only at the end. On Artix-7 the cascade reaches 464 MHz at 10 stages and the tree 328 MHz at 6; on UltraScale+ 656 MHz at 10 against 702 MHz at 6.",
+     "data": {
+      "panels": [
+       {
+        "dots": [
+         {
+          "dsp": 8,
+          "fmax": 464,
+          "latency": 10,
+          "name": "cascade"
+         },
+         {
+          "dsp": 8,
+          "fmax": 328,
+          "latency": 6,
+          "name": "tree, register every level"
+         },
+         {
+          "dsp": 8,
+          "fmax": 256,
+          "latency": 5,
+          "name": "tree, every 2 levels"
+         },
+         {
+          "dsp": 8,
+          "fmax": 157,
+          "latency": 4,
+          "name": "tree, register at the end"
+         }
+        ],
+        "key": "a7",
+        "label": "Artix-7 xc7a100t (DSP48E1)",
+        "xticks": [
+         4,
+         5,
+         6,
+         10
+        ],
+        "yticks": [
+         0,
+         100,
+         200,
+         300,
+         400,
+         500
+        ]
+       },
+       {
+        "dots": [
+         {
+          "dsp": 8,
+          "fmax": 656,
+          "latency": 10,
+          "name": "cascade"
+         },
+         {
+          "dsp": 8,
+          "fmax": 702,
+          "latency": 6,
+          "name": "tree, register every level"
+         },
+         {
+          "dsp": 8,
+          "fmax": 552,
+          "latency": 5,
+          "name": "tree, every 2 levels"
+         },
+         {
+          "dsp": 8,
+          "fmax": 392,
+          "latency": 4,
+          "name": "tree, register at the end"
+         }
+        ],
+        "key": "k26",
+        "label": "Zynq UltraScale+ K26 (DSP48E2)",
+        "xticks": [
+         4,
+         5,
+         6,
+         10
+        ],
+        "yticks": [
+         0,
+         200,
+         400,
+         600,
+         800
+        ]
+       }
+      ]
+     },
+     "how": "The same flow as the previous figure; the dot product is sixteen-bit signed terms, one result per clock, with a kept register at every port of the test wrapper.",
+     "id": "dot",
+     "kind": "dot_pareto",
+     "sources": [
+      {
+       "path": "results/185_dsp_slices/data/a7.json",
+       "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/results/185_dsp_slices/data/a7.json"
+      },
+      {
+       "path": "results/185_dsp_slices/data/k26.json",
+       "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/results/185_dsp_slices/data/k26.json"
+      }
+     ],
+     "title": "Eight-term dot product, clock speed against latency",
+     "wrong": "A published estimate of fewer stages for the tree than for the cascade holds for latency only. Whether the tree also costs speed depends on the part: it did on Artix-7, but not on UltraScale+, where the cascade's own delay registers set its limit. Which is better depends on the clock the rest of the design needs."
+    },
+    {
+     "caption": "Slices used by a signed multiply wider than one slice, as the tool splits it, as a hand-written cascade, and with partial products summed in the fabric; for forty-eight by forty-eight the tool used 9 slices on Artix-7 against 6 for the cascade.",
+     "data": {
+      "panels": [
+       {
+        "key": "a7",
+        "label": "Artix-7 xc7a100t (DSP48E1)",
+        "rows": [
+         {
+          "dsp": 3,
+          "fmax": 126,
+          "latency": 3,
+          "style": 0,
+          "w": "27 x 27"
+         },
+         {
+          "dsp": 4,
+          "fmax": 309,
+          "latency": 5,
+          "style": 1,
+          "w": "27 x 27"
+         },
+         {
+          "dsp": 4,
+          "fmax": 200,
+          "latency": 5,
+          "style": 2,
+          "w": "27 x 27"
+         },
+         {
+          "dsp": 4,
+          "fmax": 252,
+          "latency": 3,
+          "style": 0,
+          "w": "32 x 32"
+         },
+         {
+          "dsp": 4,
+          "fmax": 306,
+          "latency": 5,
+          "style": 1,
+          "w": "32 x 32"
+         },
+         {
+          "dsp": 4,
+          "fmax": 194,
+          "latency": 5,
+          "style": 2,
+          "w": "32 x 32"
+         },
+         {
+          "dsp": 2,
+          "fmax": 257,
+          "latency": 3,
+          "style": 0,
+          "w": "35 x 25"
+         },
+         {
+          "dsp": 2,
+          "fmax": 464,
+          "latency": 4,
+          "style": 1,
+          "w": "35 x 25"
+         },
+         {
+          "dsp": 2,
+          "fmax": 198,
+          "latency": 4,
+          "style": 2,
+          "w": "35 x 25"
+         },
+         {
+          "dsp": 6,
+          "fmax": 221,
+          "latency": 3,
+          "style": 0,
+          "w": "44 x 35"
+         },
+         {
+          "dsp": 6,
+          "fmax": 308,
+          "latency": 6,
+          "style": 1,
+          "w": "44 x 35"
+         },
+         {
+          "dsp": 6,
+          "fmax": 197,
+          "latency": 6,
+          "style": 2,
+          "w": "44 x 35"
+         },
+         {
+          "dsp": 9,
+          "fmax": 135,
+          "latency": 3,
+          "style": 0,
+          "w": "48 x 48"
+         },
+         {
+          "dsp": 6,
+          "fmax": 266,
+          "latency": 6,
+          "style": 1,
+          "w": "48 x 48"
+         },
+         {
+          "dsp": 6,
+          "fmax": 194,
+          "latency": 6,
+          "style": 2,
+          "w": "48 x 48"
+         },
+         {
+          "dsp": 16,
+          "fmax": 110,
+          "latency": 3,
+          "style": 0,
+          "w": "64 x 64"
+         },
+         {
+          "dsp": 12,
+          "fmax": 212,
+          "latency": 7,
+          "style": 1,
+          "w": "64 x 64"
+         },
+         {
+          "dsp": 12,
+          "fmax": 194,
+          "latency": 7,
+          "style": 2,
+          "w": "64 x 64"
+         }
+        ],
+        "widths": [
+         "27 x 27",
+         "32 x 32",
+         "35 x 25",
+         "44 x 35",
+         "48 x 48",
+         "64 x 64"
+        ]
+       },
+       {
+        "key": "k26",
+        "label": "Zynq UltraScale+ K26 (DSP48E2)",
+        "rows": [
+         {
+          "dsp": 2,
+          "fmax": 493,
+          "latency": 3,
+          "style": 0,
+          "w": "27 x 27"
+         },
+         {
+          "dsp": 2,
+          "fmax": 794,
+          "latency": 4,
+          "style": 1,
+          "w": "27 x 27"
+         },
+         {
+          "dsp": 2,
+          "fmax": 433,
+          "latency": 4,
+          "style": 2,
+          "w": "27 x 27"
+         },
+         {
+          "dsp": 4,
+          "fmax": 346,
+          "latency": 3,
+          "style": 0,
+          "w": "32 x 32"
+         },
+         {
+          "dsp": 4,
+          "fmax": 552,
+          "latency": 5,
+          "style": 1,
+          "w": "32 x 32"
+         },
+         {
+          "dsp": 4,
+          "fmax": 412,
+          "latency": 5,
+          "style": 2,
+          "w": "32 x 32"
+         },
+         {
+          "dsp": 2,
+          "fmax": 493,
+          "latency": 3,
+          "style": 0,
+          "w": "35 x 25"
+         },
+         {
+          "dsp": 2,
+          "fmax": 794,
+          "latency": 4,
+          "style": 1,
+          "w": "35 x 25"
+         },
+         {
+          "dsp": 2,
+          "fmax": 420,
+          "latency": 4,
+          "style": 2,
+          "w": "35 x 25"
+         },
+         {
+          "dsp": 4,
+          "fmax": 346,
+          "latency": 3,
+          "style": 0,
+          "w": "44 x 35"
+         },
+         {
+          "dsp": 6,
+          "fmax": 577,
+          "latency": 6,
+          "style": 1,
+          "w": "44 x 35"
+         },
+         {
+          "dsp": 6,
+          "fmax": 412,
+          "latency": 6,
+          "style": 2,
+          "w": "44 x 35"
+         },
+         {
+          "dsp": 9,
+          "fmax": 261,
+          "latency": 3,
+          "style": 0,
+          "w": "48 x 48"
+         },
+         {
+          "dsp": 6,
+          "fmax": 571,
+          "latency": 6,
+          "style": 1,
+          "w": "48 x 48"
+         },
+         {
+          "dsp": 6,
+          "fmax": 413,
+          "latency": 6,
+          "style": 2,
+          "w": "48 x 48"
+         },
+         {
+          "dsp": 16,
+          "fmax": 209,
+          "latency": 3,
+          "style": 0,
+          "w": "64 x 64"
+         },
+         {
+          "dsp": 12,
+          "fmax": 538,
+          "latency": 7,
+          "style": 1,
+          "w": "64 x 64"
+         },
+         {
+          "dsp": 12,
+          "fmax": 392,
+          "latency": 7,
+          "style": 2,
+          "w": "64 x 64"
+         }
+        ],
+        "widths": [
+         "27 x 27",
+         "32 x 32",
+         "35 x 25",
+         "44 x 35",
+         "48 x 48",
+         "64 x 64"
+        ]
+       }
+      ]
+     },
+     "how": "The same flow as the previous figures; operand widths are the first number by the second; the hand-written versions cut the operands to the slice's port widths.",
+     "id": "width",
+     "kind": "dsp_width",
+     "sources": [
+      {
+       "path": "results/185_dsp_slices/data/a7.json",
+       "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/results/185_dsp_slices/data/a7.json"
+      },
+      {
+       "path": "results/185_dsp_slices/data/k26.json",
+       "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/results/185_dsp_slices/data/k26.json"
+      }
+     ],
+     "title": "Slices used by wide multiplies, three ways of building them",
+     "wrong": "The hand-written cascade was the fastest of the three at every width on both parts and used fewer slices than the tool's split for the two widest cases, but the tool's split used fewer or the same number of slices for the narrower ones. These are single runs of one coding style, not the limit of what each method can do."
+    }
+   ],
+   "gaps": [
+    "Two parts only (Artix-7 and the Kria K26); the part on the Alveo trading card is refused by the installed licence tier (Brief 186's licence check), so nothing is measured on it.",
+    "Each point is one routed run at one clock, an estimate of the speed; no repeats, no spread.",
+    "The multiply tests use narrow operands and no carry-in or accumulate except the dot product; wide accumulators and time multiplexing are not measured.",
+    "The pre-adder, SIMD and pattern-detect modes have one point each; why the SIMD coding was not mapped to a slice was not investigated, and the pre-adder is on one width.",
+    "Why an asynchronous reset moved a lone register out of the multiplier register on Artix-7 was not investigated.",
+    "The advisory check's limits are best cases from these few runs; no agent run has used the check yet.",
+    "No development task of the agent targets slice usage, so nothing here is shown in agent runs."
+   ],
+   "id": "dsp_slices",
+   "level": "measured",
+   "level_label": "Measured in Vivado",
+   "level_n": 2,
+   "name": "DSP slices: registers, cascades and speed against latency",
+   "skills": [
+    {
+     "items": [
+      {
+       "description": "FIR forms (direct, transposed, systolic, symmetric), time-multiplexed MAC, CIC droop, CORDIC vectoring; group delay.",
+       "name": "dsp-filter-structures"
+      },
+      {
+       "description": "Q-format data, multipliers/MACs, rounding and saturation, complex multiply, FIR, CIC, CORDIC, colour-space conversion.",
+       "name": "fixed-point-and-dsp-datapaths"
+      }
+     ],
+     "section": "dsp",
+     "unit": "functions"
+    },
+    {
+     "items": [
+      {
+       "description": "A 7-series datapath should use DSP48E1 features beyond a plain MAC: the pre-adder, the pattern detector (overflow, rounding, terminal count with AUTORESET_PATDET) ...",
+       "name": "artix7-dsp48e1-advanced-modes"
+      },
+      {
+       "description": "Multipliers, multiply-accumulate, wide adders/counters or filters must map onto Artix-7 DSP48E1 slices; 25x18 multiply, pre-adder, 48-bit accumulator, pipeline registers, cascade, inference.",
+       "name": "artix7-dsp48e1"
+      }
+     ],
+     "section": "dsp",
+     "unit": "family/artix7"
+    },
+    {
+     "items": [
+      {
+       "description": "Writing, instantiating or auditing a DSP48E1: which RTL infers it, the attributes that matter (AREG/BREG/MREG/PREG, USE_MULT, USE_SIMD), OPMODE/ALUMODE, cascade ...",
+       "name": "artix7-primitives-dsp"
+      }
+     ],
+     "section": "primitives",
+     "unit": "family/artix7"
+    },
+    {
+     "items": [
+      {
+       "description": "Choosing or configuring memory, DSP or carry primitives on Zynq UltraScale+ (K26): RAMB36E2/RAMB18E2 changes from 7-series (built-in cascade, all SDP write modes), URAM288 (4K x 72 ...",
+       "name": "zynqmp-bram-uram-dsp48e2-carry8"
+      }
+     ],
+     "section": "primitives",
+     "unit": "family/zynq_ultrascale_plus"
+    },
+    {
+     "items": [
+      {
+       "description": "RAM, ROM, multiplier or MAC that should map to hard blocks; read-during-write modes, output registers, pipelined multiply-accumulate.",
+       "name": "memory-and-arithmetic-inference"
+      }
+     ],
+     "section": "on-chip-memory",
+     "unit": "functions"
+    },
+    {
+     "items": [
+      {
+       "description": "Add/sub/multiply/compare/shift, signed or fixed-point data, overflow, saturation, rounding, width and sign-extension rules.",
+       "name": "arithmetic-and-widths"
+      }
+     ],
+     "section": "arithmetic",
+     "unit": "techniques"
+    }
+   ],
+   "summary": "Which registers to turn on around a multiplier, how wide multiplies and dot products are built from slices, and how clock speed trades against latency."
+  },
+  {
    "about": "RTL design is the core of the work: reading a spec, writing synthesisable code, pipelines and handshakes, hierarchy and register boundaries, and acting on lint and synthesis messages. One gate enforces the design standards on every run (no latches, no combinational loops, no gated clocks, synchronous resets), and another requires Vivado's methodology checks to show no critical warning.",
    "cap_reason": null,
    "cards": [
@@ -2962,7 +3907,7 @@
     "enforced": 2,
     "evidence": 4,
     "sections": 13,
-    "skills": 24
+    "skills": 25
    },
    "evidence": [
     {
@@ -3083,9 +4028,15 @@
       "confirmed": "tool",
       "summary": "No family difference found: resetting control registers only removes 15 LUTs and adds 2 control sets on both families (same bench).",
       "topic": "Resetting only control registers"
+     },
+     {
+      "confirmed": "tool",
+      "summary": "No family difference found: initial values are free on fabric and IOB flip-flops, but a value of 1 keeps a register out of a DSP48 or block-RAM register; UltraRAM refuses initial contents.",
+      "topic": "Register initial (power-up) values and hard blocks"
      }
     ]
    },
+   "figures": [],
    "gaps": [
     "Every escape so far was a misreading of the spec, and no gate can catch a spec error that the agent's own tests share.",
     "These are development tasks, not the held-out score."
@@ -3255,6 +4206,10 @@
     {
      "items": [
       {
+       "description": "A register, memory or I/O register has an initial (power-up) value, or a design moves between AMD and Altera parts: what INIT costs per family ...",
+       "name": "power-up-values-amd-and-altera"
+      },
+      {
        "description": "Writing SystemVerilog that Vivado must map to a DSP48E1 (multiply, MAC, pre-adder, wide add), carry-chain arithmetic, MUXF7/F8 wide muxes ...",
        "name": "vivado-inference-templates-datapath"
       },
@@ -3421,6 +4376,7 @@
      }
     ]
    },
+   "figures": [],
    "gaps": [
     "The coverage check is not an agent tool and is off by default, so the agent does not yet know its state table or write one.",
     "Routed numbers for output and input registering come from one controller on one part; the other families were probed in synthesis only.",
@@ -3628,6 +4584,7 @@
      }
     ]
    },
+   "figures": [],
    "gaps": [
     "The agent's own tests never count as a pass, and several runs passed every gate yet failed the hidden tests.",
     "Formal checks are enforced only where the test plan promises a proof."
@@ -3891,6 +4848,7 @@
      }
     ]
    },
+   "figures": [],
    "gaps": [
     "No USB scope, logic analyser, spectrum analyser, Red Pitaya or video capture was connected on the day, so those paths are drivers tested on synthetic data, not measurements.",
     "The soak's hardware logs are not among the committed results; the builds and simulations are.",
@@ -4054,6 +5012,7 @@
      }
     ]
    },
+   "figures": [],
    "gaps": [
     "The power figures are Vivado's estimates, not measurements at the supply.",
     "Low-power coding techniques have skills, but no run compares them."
@@ -4195,7 +5154,7 @@
     "enforced": 0,
     "evidence": 3,
     "sections": 7,
-    "skills": 22
+    "skills": 23
    },
    "evidence": [
     {
@@ -4283,6 +5242,7 @@
      }
     ]
    },
+   "figures": [],
    "gaps": [
     "No local design had a failing path to cross-probe, so it is shown on passing ones.",
     "Every Vivado number on this page is measured on Vivado 2026.1, and other versions are not tested here.",
@@ -4367,6 +5327,10 @@
     {
      "items": [
       {
+       "description": "A register, memory or I/O register has an initial (power-up) value, or a design moves between AMD and Altera parts: what INIT costs per family ...",
+       "name": "power-up-values-amd-and-altera"
+      },
+      {
        "description": "Writing SystemVerilog that Vivado must map to a DSP48E1 (multiply, MAC, pre-adder, wide add), carry-chain arithmetic, MUXF7/F8 wide muxes ...",
        "name": "vivado-inference-templates-datapath"
       },
@@ -4443,7 +5407,7 @@
    "means": "Skills in the knowledge bank and nothing measured or enforced for this area yet."
   },
   {
-   "areas": 3,
+   "areas": 4,
    "id": "measured",
    "label": "Measured in Vivado",
    "means": "Committed results from Vivado runs (or the board) that the skills and checks rest on."
@@ -4461,7 +5425,7 @@
    "means": "Development-task runs of the agent, recorded in committed run files, exercised the area."
   }
  ],
- "pin": "5e2eab8",
- "skills_total": 284,
- "skills_used": 210
+ "pin": "6185830",
+ "skills_total": 289,
+ "skills_used": 215
 }

@@ -90,6 +90,67 @@ endmodule
     assert "STD-CLK-01" in failing(run(tmp_path, rtl))
 
 
+MUX_RTL = """module m (input logic clk0, input logic clk1, input logic sel, output logic q);
+    logic sel_r, clkm;
+    always_ff @(posedge clk0) sel_r <= sel;
+    BUFGMUX_CTRL u_mux (.I0(clk0), .I1(clk1), .S(sel_r), .O(clkm));
+    always_ff @(posedge clkm) q <= ~q;
+endmodule
+"""
+MUX_ARCH = {"clock_domains": [{"name": "a", "clock": "clk0"}, {"name": "b", "clock": "clk1"}, {"name": "m", "clock": "clkm"}]}
+MUX_DECL = {"instance": "u_mux", "primitive": "BUFGMUX_CTRL", "inputs": ["a", "b"], "output": "m", "condition": "reset_on_switch",
+            "reason": "the line rate changes at run time and the logic must follow it"}
+
+
+def test_clk_01_clock_mux_brief_208(tmp_path):
+    """Brief 208: a BUFGMUX_CTRL (or a BUFGCTRL with both clock inputs connected) is refused unless architecture.yaml declares it
+    in clock_muxes; once declared, registers on its output are on a clock primitive; BUFGMUX (CE select) stays refused."""
+    undeclared = run(tmp_path / "u", MUX_RTL, MUX_ARCH)
+    assert "STD-CLK-01" in failing(undeclared)
+    assert any("clock_muxes" in f["message"] for f in undeclared["STD-CLK-01"]["findings"])
+    declared = run(tmp_path / "d", MUX_RTL, {**MUX_ARCH, "clock_muxes": [MUX_DECL]})
+    assert "STD-CLK-01" not in failing(declared), declared["STD-CLK-01"]["findings"]
+    assert "STD-ARCH-00" not in failing(declared)
+    wrong_prim = run(tmp_path / "w", MUX_RTL, {**MUX_ARCH, "clock_muxes": [{**MUX_DECL, "primitive": "BUFGCTRL"}]})
+    assert "STD-CLK-01" in failing(wrong_prim)
+    bufgmux = run(tmp_path / "b", MUX_RTL.replace("BUFGMUX_CTRL", "BUFGMUX"), {**MUX_ARCH, "clock_muxes": [MUX_DECL]})
+    assert any("CE pins" in f["message"] for f in bufgmux["STD-CLK-01"]["findings"])
+    bad_decl = run(tmp_path / "x", MUX_RTL, {**MUX_ARCH, "clock_muxes": [{**MUX_DECL, "condition": "because"}]})
+    assert "STD-ARCH-00" in failing(bad_decl)
+
+
+def test_clk_01_clock_mux_review_cases(tmp_path):
+    """Review fixes: positional connections are refused; a declaration names the module when given; declared inputs must
+    match the connected clocks; '0 and 1'sb0 are constants; a malformed inputs list is a schema error, not a crash."""
+    pos = MUX_RTL.replace("BUFGMUX_CTRL u_mux (.I0(clk0), .I1(clk1), .S(sel_r), .O(clkm));",
+                          "BUFGMUX_CTRL u_mux (clkm, clk0, clk1, sel_r);")
+    res = run(tmp_path / "p", pos, {**MUX_ARCH, "clock_muxes": [MUX_DECL]})
+    assert any("by position" in f["message"] for f in res["STD-CLK-01"]["findings"])
+    other_mod = run(tmp_path / "o", MUX_RTL, {**MUX_ARCH, "clock_muxes": [{**MUX_DECL, "module": "elsewhere"}]})
+    assert "STD-CLK-01" in failing(other_mod)
+    same_mod = run(tmp_path / "s", MUX_RTL, {**MUX_ARCH, "clock_muxes": [{**MUX_DECL, "module": "m"}]})
+    assert "STD-CLK-01" not in failing(same_mod)
+    wrong_in = run(tmp_path / "i", MUX_RTL, {**MUX_ARCH, "clock_muxes": [{**MUX_DECL, "inputs": ["a", "m"]}]})
+    assert any("not the declared input" in f["message"] for f in wrong_in["STD-CLK-01"]["findings"])
+    for k, tie in enumerate(("'0", "1'sb0")):
+        buf = MUX_RTL.replace("BUFGMUX_CTRL u_mux (.I0(clk0), .I1(clk1), .S(sel_r), .O(clkm));",
+                              f"BUFGCTRL u_mux (.I0(clk0), .I1({tie}), .S0(1'b1), .S1(1'b0), .CE0(1'b1), .CE1(1'b0), "
+                              ".IGNORE0(1'b0), .IGNORE1(1'b0), .O(clkm));")
+        assert not [f for f in run(tmp_path / f"c{k}", buf, MUX_ARCH)["STD-CLK-01"]["findings"] if "u_mux" in f["message"]]
+    bad = run(tmp_path / "b", MUX_RTL, {**MUX_ARCH, "clock_muxes": [{**MUX_DECL, "inputs": [["a"], "b"]}]})
+    assert "STD-ARCH-00" in failing(bad)
+
+
+def test_clk_01_bufgctrl_as_buffer_needs_no_declaration(tmp_path):
+    rtl = MUX_RTL.replace("BUFGMUX_CTRL u_mux (.I0(clk0), .I1(clk1), .S(sel_r), .O(clkm));",
+                          "BUFGCTRL u_mux (.I0(clk0), .I1(1'b0), .S0(1'b1), .S1(1'b0), .CE0(1'b1), .CE1(1'b0), "
+                          ".IGNORE0(1'b0), .IGNORE1(1'b0), .O(clkm));")
+    res = run(tmp_path, rtl, MUX_ARCH)
+    assert not [f for f in res["STD-CLK-01"]["findings"] if "u_mux" in f["message"]]
+    mux = rtl.replace(".I1(1'b0)", ".I1(clk1)")
+    assert "STD-CLK-01" in failing(run(tmp_path / "m", mux, MUX_ARCH))
+
+
 def test_clk_02_undeclared_top_clock(tmp_path):
     rtl = CLEAN.replace("clk", "other_clk")
     assert "STD-CLK-02" in failing(run(tmp_path, rtl))

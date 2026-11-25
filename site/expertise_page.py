@@ -38,6 +38,20 @@ def _src(srcs) -> str:
     return " ".join(f'<a class="evsrc" href="{e(s["url"])}" title="{e(s["path"])}" aria-label="Source: {e(s["path"])}">source</a>' for s in srcs)
 
 
+def figures(a: dict) -> str:
+    """Plots of an area (brief 185), drawn from the committed result files by site/dsp_figures.py: a wide and a narrow drawing of each, one shown by CSS,
+    with a caption that says what it shows, how it was obtained and what a reader could get wrong."""
+    out = ""
+    for fg in a.get("figures", []):
+        import dsp_figures
+        svgs = "".join(f'<div class="{cls}">{dsp_figures.render(fg["kind"], fg, lay)}</div>' for cls, lay in (("dsp-w", "wide"), ("dsp-n", "narrow")))
+        src = " ".join(f'<a class="evsrc" href="{e(s["url"])}" title="{e(s["path"])}" aria-label="Source: {e(s["path"])}">source</a>' for s in fg["sources"])
+        out += (f'<figure class="dspfig" id="{e(a["id"])}-{e(fg["id"])}"><figcaption class="figt">{e(fg["title"])}</figcaption>{svgs}'
+                f'<figcaption><strong>What it shows.</strong> {e(fg["caption"])} <strong>How it was obtained.</strong> {e(fg["how"])} '
+                f'<strong>What a reader could get wrong.</strong> {e(fg["wrong"])} {src}</figcaption></figure>')
+    return out
+
+
 def drawer(a: dict) -> str:
     """One area: a plain opening paragraph, what has been shown (by kind of evidence, each sentence with its source link),
     what is not yet shown, related cards; skills, checks and family differences in a nested Details drawer, closed."""
@@ -53,6 +67,7 @@ def drawer(a: dict) -> str:
                       " ".join(f'{e(x["text"])} {_src(x["sources"])}' for x in items) + "</p>")
     if not shown:
         shown = "<p><strong>Measured.</strong> Nothing yet for this area.</p>"
+    shown += figures(a)
     gaps = " ".join(e(g) for g in a["gaps"])
     cap = f' {e(a["cap_reason"])}' if a["cap_reason"] else ""
     notyet = f"<p><strong>Not yet shown.</strong> {gaps}{cap}</p>"

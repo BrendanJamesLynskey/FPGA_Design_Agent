@@ -66,8 +66,13 @@ areas:
   - {file: flow/cdc_structure.py, gate: post_synth_cdc_structure_clean, gate_in: flow/gates.py, enforced: true, what: "After synthesis, classifies every flip-flop reached from another clock (synchroniser chain, XPM macro, constrained Gray or handshake, reset bridge, unsafe) and fails on an unsafe one."}
   - {file: flow/cdc_inject.py, enforced: true, gate: inject, what: "Simulation with a late-resolving first synchroniser stage, so a crossing that only works when every bit settles on time fails."}
   - {file: flow/gates.py, gate: cdc_no_critical, enforced: true, what: "report_cdc must have no Critical row, after synthesis and after routing."}
-  - {file: flow/xpm_cdc.tcl, enforced: false, what: "Exceptions for AMD's crossing macros."}
+  - {file: flow/xpm_cdc.tcl, enforced: false, what: "Exceptions for AMD's crossing macros; the handshake bound is AMD's own: destination period times its sync stages, with a bus skew."}
+  - {file: flow/cdc_margin.py, gate: post_route_bus_skew_met, gate_in: flow/gates.py, enforced: true, what: "After routing, every set_bus_skew must be met; a hand-built bus with no bus skew, a loose datapath-only bound, a missing or low MTBF (UltraScale+) and user clock uncertainty are warnings."}
   evidence:
+  - kind: measured
+    source: results/207_cdc_margin/headline.json
+    values: ["get:a7.lvl_slack_D", "get:a7.lvl_slack_DU", "get:a7.filler_whs_a_U", "get:m10.filler_wns_b_D", "get:m10.filler_wns_b_DU", "get:m10.maxskew_paths_D", "get:m10.maxskew_paths_DD"]
+    text: "A clock-uncertainty margin is not crossing margin. On Artix-7 it left a crossing's slack unchanged ({0} and {1} ns) and failed hold elsewhere (worst {2} ns); on MAX10 it turned a passing path ({3} ns) into a failing one ({4} ns); in Quartus a clock group removed the skew check ({5} paths with bounds, {6} with the group)."
   - kind: measured
     source: results/16_cdc_gate_2026_1/mutant_table.json
     values: ["count@rows:kind=mutant", "count@rows:kind=mutant,report_cdc_alone_flags=true", "count@rows:kind=mutant,gate_flags=true", "count@rows:kind=correct", "count@rows:kind=correct,gate_flags=false"]
@@ -85,6 +90,7 @@ areas:
   - "No agent run has used the stronger crossing gate yet."
   - "A reset cleared on one side only, in an asynchronous FIFO or a handshake, gets past the gate; only the rig's simulation catches it."
   - "The gate's simulation works cycle by cycle, so it finds lost pulses and bits crossed separately but not route skew, glitches or true metastability."
+  - "The bus-skew gate has no failing case from our own designs: neither tested part could be routed past a realistic bound; its negative case is a recorded over-tight bound."
 - id: clocking
   name: Clocking
   summary: Choosing an MMCM or PLL setting, clock buffers, dynamic phase and glitch-free switching, and using the Clocking Wizard as a checker.
@@ -97,6 +103,7 @@ areas:
   - {file: flow/cmt_check.tcl, enforced: false, what: "A VCO and phase-detector range checker, written and measured but not wired into a gate."}
   - {file: flow/report_gates.py, gate: RPT-CLK-01, enforced: false, what: "Advisory (Brief 204a): a global clock buffer driven by another buffer, or a clock made in fabric, read from the clock-utilisation and clock-networks reports."}
   - {file: flow/report_gates.py, gate: RPT-CLK-02, enforced: false, what: "Advisory (Brief 204a): clock uncertainty and hold skew over the guide's review thresholds, read from the timing paths."}
+  - {file: flow/clock_mux_check.py, enforced: false, what: "The clock_mux check: a LUT on a clock path, a clock mux whose modes are still timed against each other, clock groups on the source clocks that hide real paths into or out of the mux fanout, and a BUFGCTRL chain longer than the cascade ring; advice for a case-analysed select, a CE-pin select, an external clock with IGNORE tied, and a needlessly deep tree. It runs in the check suite, not as a stage gate."}
   evidence:
   - kind: measured
     source: results/project_parity_2026_1/cmt_check/drc_*.rpt
@@ -106,10 +113,22 @@ areas:
     source: results/204a_report_gates/hits.json
     values: ["get:builds", "get:summary.RPT-CLK-01.builds_measured", "get:summary.RPT-CLK-01.builds_with_a_hit", "get:summary.RPT-CLK-02.builds_with_a_hit", "get:summary.RPT-CLK-02.builds_measured"]
     text: "The clock-tree checks were run over {0} recorded builds: {2} of {1} showed a cascaded buffer or a local clock, and {3} of {4} had a hold skew or uncertainty over the guide's review threshold."
+    source: results/208/measured.json
+    values: [get:vivado.a7_u_none.route.timing.wns, get:vivado.a7_u_srclog.route.timing.wns, get:vivado.k26_u_none.route.timing.wns, get:vivado.k26_u_srclog.route.timing.wns]
+    text: "Two clocks through a BUFGMUX, with paths between one clock's own registers and the mux fanout: setup slack was {0} ns unconstrained and {1} ns once the source clocks were declared exclusive on xc7a35t ({2} and {3} ns on xck26), because the clock group also removed the real crossing (Vivado 2026.1, routed)."
+  - kind: measured
+    source: results/208/measured.json
+    values: ["count@check:pass=false", "count@check:pass=true"]
+    text: "The clock_mux check on the recorded clock-mux designs (xc7a35t and xck26) blocked {0} and passed {1}; every design whose clock groups hid a path was among those blocked."
+  - kind: measured
+    source: results/208/records/sim/tb_lutmux.log
+    values: ["re:SCEN c3_lut_mux switches=(\\d+)", "re:runts=(\\d+)"]
+    text: "An RTL clock mux (a LUT) switched {0} times at times unrelated to its clocks gave {1} runt pulses in simulation; Vivado reports it only as TIMING-14."
   cards:
   - {href: "flow-notes.html#xpm-cdc", label: "Beyond the flow: AMD's crossing macros lose their exceptions"}
   gaps:
   - "The Clocking Wizard's own settings were compared with the flow's search on only a few target frequencies."
+  - "The clock-mux check reads a netlist dump made in the check suite's Vivado session; it is not a stage gate, and the CE-select glitch it warns about was not shown in simulation (the unisim model has no timing)."
   - "No agent run has been graded on a clocking task yet."
 - id: io
   name: I/O, primitives and transceivers
@@ -280,6 +299,74 @@ areas:
   gaps:
   - "The int8 task escaped most often, and the misreading was of the spec, not of the arithmetic."
   - "Rounding modes and saturation are covered by skills, and only these tasks test them."
+- id: dsp_slices
+  name: "DSP slices: registers, cascades and speed against latency"
+  summary: Which registers to turn on around a multiplier, how wide multiplies and dot products are built from slices, and how clock speed trades against latency.
+  about: "A DSP slice is a multiplier and an adder with registers built into it. How fast a design that uses one can be clocked depends on which of those registers are turned on, and the agent writes them in the RTL so that synthesis packs them into the slice. Wider multiplies and long sums are built from several slices, either left to the tool or chained by hand, and each choice trades clocks of latency against clock speed and fabric logic. The agent knows this from skills and from measurements on two parts; an advisory check, not a gate, flags a slice with too few registers for the target clock period."
+  kb: [functions/dsp~fixed-point|dsp-filter, family/artix7/dsp, family/artix7/primitives~dsp, family/zynq_ultrascale_plus/primitives~dsp48e2, functions/on-chip-memory~memory-and-arithmetic, techniques/arithmetic]
+  family_from: {area: dsp, topics: ["Multiplier and pre-adder width", "DSP primitive is a macro on UltraScale+"], docs: ["UG479", "UG579", "DS925", "UG901"]}
+  checks:
+  - {file: flow/dsp_regs_check.py, gate: DSPREG-01, enforced: false, what: "Advisory, from the slices' register properties and the target clock period: flags a multiplier with no multiplier register, or a slice with no output register, at a period the measurements below say it cannot meet; a period below the slice's own minimum; and AMD's DPIP and DPOP rows. Never fails a run; a deliberately slow datapath may waive it with a reason."}
+  evidence:
+  - kind: measured
+    source: results/185_dsp_slices/data/a7.json
+    values: ["pick@points:fmax_mhz|id=mul_WA18_WB18_NA1_NM1_NP1_RSTP0", "pick@points:fmax_mhz|id=mul_WA18_WB18_NA1_NM1_NP0_RSTP0", "pick@points:fmax_mhz|id=mul_WA18_WB18_NA0_NM0_NP0_RSTP0"]
+    text: "On the Artix-7 part, a multiply of two narrow operands with operand, multiplier and output registers around it reached {0} MHz, which is the slice's own limit; with the output register left out it reached {1} MHz, and with no register at all {2} MHz (one routed run each, Vivado 2026.1)."
+  - kind: measured
+    source: results/185_dsp_slices/data/k26.json
+    values: ["pick@points:fmax_mhz|id=mul_WA18_WB18_NA1_NM1_NP1_RSTP0", "pick@points:fmax_mhz|id=mul_WA18_WB18_NA1_NM1_NP0_RSTP0", "pick@points:fmax_mhz|id=mul_WA18_WB18_NA0_NM0_NP0_RSTP0"]
+    text: "On the UltraScale+ part the same three cases reached {0}, {1} and {2} MHz; with every register the result is limited by the clock period asked for, not by the slice."
+  - kind: measured
+    source: results/185_dsp_slices/data/a7.json
+    values: ["pick@points:dsp_cells.0.MREG|id=mul_WA18_WB18_NA0_NM0_NP1_RSTP0", "pick@points:dsp_cells.0.PREG|id=mul_WA18_WB18_NA0_NM0_NP1_RSTP0", "pick@points:fmax_mhz|id=mul_WA18_WB18_NA0_NM0_NP1_RSTP2", "pick@points:fmax_mhz|id=mul_WA18_WB18_NA0_NM0_NP1_RSTP1"]
+    text: "A single register after the multiply was packed into the slice's multiplier register (MREG {0}, output register PREG {1}) rather than its output register. With an asynchronous reset on that register it was packed into the output register instead, the multiplier stayed unregistered, and the slice ran at {2} MHz instead of {3} with a synchronous reset (Artix-7)."
+  - kind: measured
+    source: results/185_dsp_slices/data/a7.json
+    values: ["pick@points:fmax_mhz|id=wide_WA32_WB32_STYLE0_NA1_LB24", "pick@points:dsp|id=wide_WA32_WB32_STYLE0_NA1_LB24", "pick@points:fmax_mhz|id=wide_WA32_WB32_STYLE1_NA1_LB24", "pick@points:dsp|id=wide_WA32_WB32_STYLE1_NA1_LB24", "pick@points:fmax_mhz|id=wide_WA32_WB32_STYLE2_NA1_LB24", "pick@points:dsp|id=wide_WA32_WB32_STYLE2_NA1_LB24"]
+    text: "A signed multiply of two thirty-two-bit operands on the Artix-7 part, with the same registers at the ends: the tool's own split used {1} slices and reached {0} MHz; a hand-written cascade of slices (with the seventeen-bit shift) used {3} and reached {2} MHz; partial products summed in the fabric used {5} and reached {4} MHz."
+  - kind: measured
+    source: results/185_dsp_slices/data/a7.json
+    values: ["pick@points:fmax_mhz|id=dot_W16_K8_STYLE0_TR1", "pick@points:latency_clocks|id=dot_W16_K8_STYLE0_TR1", "pick@points:fmax_mhz|id=dot_W16_K8_STYLE1_TR1", "pick@points:latency_clocks|id=dot_W16_K8_STYLE1_TR1"]
+    text: "An eight-term dot product on the Artix-7 part: a chain of slices (cascade) reached {0} MHz at {1} register stages; the same sum with a fabric adder tree, a register after every level, reached {2} MHz at {3} stages, so the tree saves clocks and loses speed."
+  - kind: measured
+    source: results/185_dsp_slices/data/k26.json
+    values: ["pick@points:fmax_mhz|id=dot_W16_K8_STYLE0_TR1", "pick@points:latency_clocks|id=dot_W16_K8_STYLE0_TR1", "pick@points:fmax_mhz|id=dot_W16_K8_STYLE1_TR1", "pick@points:latency_clocks|id=dot_W16_K8_STYLE1_TR1"]
+    text: "The same two on the UltraScale+ part: the cascade reached {0} MHz at {1} stages (the delay registers that skew its operands became shift-register cells that limit the clock) and the tree {2} MHz at {3} stages."
+  - kind: measured
+    source: results/185_dsp_slices/data/a7.json
+    values: ["pick@points:fmax_mhz|id=preadd_WA24_WB18_VAR0", "pick@points:fmax_mhz|id=preadd_WA24_WB18_VAR1", "pick@points:dsp_cells.0.USE_PATTERN_DETECT|id=simdpat_MODE1", "pick@points:dsp|id=simdpat_MODE0"]
+    text: "A pre-adder before the multiplier was used by the slice and ran at {0} MHz with its own register and {1} MHz without it. A constant compare on an accumulator used the slice's pattern detector ({2}); four twelve-bit adds written for the SIMD mode were not mapped to a slice ({3} slices) with this coding."
+  cards: []
+  figures:
+  - id: depth
+    kind: mul_depth
+    title: Clock speed against the number of registers around one multiply
+    caption: "Each dot is one run of a multiply of two narrow operands with the registers placed in the RTL; the line joins the best run at each latency. At zero registers the part reaches {a7_best_0} MHz (Artix-7) and {k26_best_0} MHz (UltraScale+); with operand, multiplier and output registers, {a7_best_3} and {k26_best_3} MHz; a fourth register adds nothing."
+    how: "Out-of-context synthesis, placement and routing in Vivado 2026.1 on two parts, one run per point at a target clock tighter than the part can meet; speed is the target period minus the worst setup slack, limited by the slice's minimum period. A run is an estimate, not a guarantee."
+    wrong: "Latency here is register stages from the module's operand inputs to its product output; the two kept registers of the test wrapper are not counted. The speed is for one slice by itself: a real design adds routing from its own logic."
+    sources: [results/185_dsp_slices/data/a7.json, results/185_dsp_slices/data/k26.json]
+  - id: dot
+    kind: dot_pareto
+    title: Eight-term dot product, clock speed against latency
+    caption: "Filled circle: a chain of slices (cascade); square: a fabric adder tree with a register every level, every second level, or only at the end. On Artix-7 the cascade reaches {a7_dot_0_1_f} MHz at {a7_dot_0_1_l} stages and the tree {a7_dot_1_1_f} MHz at {a7_dot_1_1_l}; on UltraScale+ {k26_dot_0_1_f} MHz at {k26_dot_0_1_l} against {k26_dot_1_1_f} MHz at {k26_dot_1_1_l}."
+    how: "The same flow as the previous figure; the dot product is sixteen-bit signed terms, one result per clock, with a kept register at every port of the test wrapper."
+    wrong: "A published estimate of fewer stages for the tree than for the cascade holds for latency only. Whether the tree also costs speed depends on the part: it did on Artix-7, but not on UltraScale+, where the cascade's own delay registers set its limit. Which is better depends on the clock the rest of the design needs."
+    sources: [results/185_dsp_slices/data/a7.json, results/185_dsp_slices/data/k26.json]
+  - id: width
+    kind: dsp_width
+    title: Slices used by wide multiplies, three ways of building them
+    caption: "Slices used by a signed multiply wider than one slice, as the tool splits it, as a hand-written cascade, and with partial products summed in the fabric; for forty-eight by forty-eight the tool used {a7_48x48_0_dsp} slices on Artix-7 against {a7_48x48_1_dsp} for the cascade."
+    how: "The same flow as the previous figures; operand widths are the first number by the second; the hand-written versions cut the operands to the slice's port widths."
+    wrong: "The hand-written cascade was the fastest of the three at every width on both parts and used fewer slices than the tool's split for the two widest cases, but the tool's split used fewer or the same number of slices for the narrower ones. These are single runs of one coding style, not the limit of what each method can do."
+    sources: [results/185_dsp_slices/data/a7.json, results/185_dsp_slices/data/k26.json]
+  gaps:
+  - "Two parts only (Artix-7 and the Kria K26); the part on the Alveo trading card is refused by the installed licence tier (Brief 186's licence check), so nothing is measured on it."
+  - "Each point is one routed run at one clock, an estimate of the speed; no repeats, no spread."
+  - "The multiply tests use narrow operands and no carry-in or accumulate except the dot product; wide accumulators and time multiplexing are not measured."
+  - "The pre-adder, SIMD and pattern-detect modes have one point each; why the SIMD coding was not mapped to a slice was not investigated, and the pre-adder is on one width."
+  - "Why an asynchronous reset moved a lone register out of the multiplier register on Artix-7 was not investigated."
+  - "The advisory check's limits are best cases from these few runs; no agent run has used the check yet."
+  - "No development task of the agent targets slice usage, so nothing here is shown in agent runs."
 - id: rtl
   name: RTL design
   summary: Reading a specification, synthesisable coding, pipelines and handshakes, hierarchy and register boundaries, lint and synthesis messages.

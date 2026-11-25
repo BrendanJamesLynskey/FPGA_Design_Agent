@@ -64,6 +64,8 @@ source $flow_dir/mcp_paths.tcl
 source $flow_dir/io_paths.tcl
 source $flow_dir/iob_paths.tcl
 source $flow_dir/result_hash.tcl
+source $flow_dir/security.tcl     ;# brief 196: production_secure settings and the evidence dump (definitions only)
+source $flow_dir/dsp_cells.tcl
 # brief 140: check_timing's no_clock list at the synthesis stage names output pins of a hard block that drive nothing (measured in dbg_xvc: the
 # PS8's EMIO clock outputs, nets with no load; opt_design removes the nets and the routed check_timing lists none). A pin with no load is
 # no endpoint and nothing can be timed from it. This writes the pins of that list that are outputs with no loads, one per line, to
@@ -225,6 +227,7 @@ if {$resume_from eq ""} {
     }
     report_control_sets -verbose -file $out/control_sets_synth.rpt
     report_drc            -file $out/drc_synth.rpt
+    catch {fda_dsp_cells $out/dsp_cells_synth.txt}      ;# brief 185: register properties of every DSP48 (flow/dsp_regs_check.py)
     fda_qor $out synth
     report_utilization    -file $out/utilization_synth.rpt
     report_clock_networks -file $out/clock_networks_synth.rpt
@@ -314,7 +317,17 @@ if {$resume_from ne "route"} {
     report_utilization    -hierarchical -file $out/utilization_hier.rpt
     report_methodology    -file $out/methodology.rpt
     report_cdc -details   -file $out/cdc.rpt
+    # brief 189: MTBF of every identified synchroniser chain, parsed by flow/mtbf.py. UltraScale+ gives numbers; 7-series prints a warning and
+    # none. Advisory: a failure of the command never fails the build.
+    if {[catch {report_synchronizer_mtbf -file $out/mtbf.rpt} mtbf_err]} { puts "FDA: report_synchronizer_mtbf not written: $mtbf_err" }
+    # brief 207 (docs/cdc_margin_method.md, flow/cdc_margin.py): every set_bus_skew after routing (report_timing_summary leaves bus
+    # skew out, UG906 p. 161), and on UltraScale+ the synchroniser MTBF (UG835: not supported on 7 series)
+    report_bus_skew -max_paths 50 -nworst 1 -file $out/bus_skew_route.rpt
+    if {[regexp {^(xck|xczu|xcvu|xcku|xcau)} $part]} {
+        if {[catch { report_synchronizer_mtbf -file $out/mtbf_route.rpt } mtbf_err]} { puts "FLOW-MTBF report_synchronizer_mtbf failed: $mtbf_err" }
+    }
     report_drc            -file $out/drc.rpt
+    catch {fda_dsp_cells $out/dsp_cells.txt}
     fda_qor $out route
     exception_reports $out route
     io_dump_paths $out/io_paths_route.txt
@@ -360,7 +373,15 @@ if {[info exists build_id] && $build_id ne ""} {
     set_property BITSTREAM.CONFIG.USR_ACCESS 0x$build_id [current_design]
     puts "FLOW-BUILD-ID $build_id"
 }
-write_bitstream -force $out/$top.bit
+# brief 196: production_secure. The settings (flow/security.py via prepare.py) go on the design just before write_bitstream; the properties are read back
+# after it, with the debug inventory and the system monitor, for the gates of flow/security.py. Off: nothing here runs and the build is unchanged.
+if {[info exists security_on] && $security_on} {
+    fda_security_apply $out $security_props $security_switches
+    write_bitstream -force -verbose $out/$top.bit      ;# -verbose prints the options applied to the bitstream: the log is evidence for flow/security.py
+    fda_security_dump $out
+} else {
+    write_bitstream -force $out/$top.bit
+}
 if {$ila} {
     write_debug_probes -force $out/$top.ltx
     # brief 48: an ILA that is an IP can get a .ltx the hardware manager calls inconsistent; repair what is safe, fail the build on

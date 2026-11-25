@@ -201,8 +201,8 @@ def test_the_axi_amd_ip_note_check_reports_ip_it_finds(tmp_path: Path) -> None:
 def test_the_tool_schema_lists_the_check() -> None:
     from agent.core import tools
     assert "axi_profile" in tools.CHECK_NAMES
-    # brief 204a: the report-driven checks are not offered to the Designer yet (the tool schema is in the frozen request golden)
-    not_offered = {"logic_levels", "clock_tree", "fanout", "synth_log", "congestion", "ip_status"}
+    # briefs 185 and 204a: advisory suite-only checks are not offered to the Designer (the tool's schema is in the frozen request golden)
+    not_offered = {"dsp_regs", "logic_levels", "clock_tree", "fanout", "synth_log", "congestion", "ip_status"}
     assert set(C.CHECKS) - set(tools.CHECK_NAMES) == not_offered
 
 

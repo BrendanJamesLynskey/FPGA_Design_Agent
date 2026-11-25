@@ -199,7 +199,8 @@ EXPR = """expression forms (value of one {n} placeholder), op[@list][:conditions
   n                    number of JSON documents (after `where`)
   get:a.b.0.c          the value at a path in the first document
   count[@lst]:c1,c2    documents (or items of the list at path lst in every document) meeting all conditions
-  sum|max|min[@lst]:p  of the number at path p over the documents (or list items)
+  sum|max|min[@lst]:p[|c1,c2]  of the number at path p over the documents (or list items), keeping only those meeting the conditions after |
+  pick@lst:p|c1,c2     the value at path p of the one list item that meets the conditions (exactly one must)
   nfiles               number of source files
   nmatch:REGEX         number of source files whose text matches REGEX
   re:REGEX             first group of REGEX in the first source file's text
@@ -228,7 +229,12 @@ def evaluate(expr: str, item):
     items = [x for d in docs for x in (_path(d, lst) if lst else [d])]
     if op == "count":
         return sum(1 for x in items if _conds_ok(x, rest))
-    if op in ("sum", "max", "min"):
+    if op in ("sum", "max", "min", "pick"):
+        rest, _, conds = rest.partition("|")        # brief 185: "|conds" keeps only the items meeting them; pick = the one item that does
+        items = [x for x in items if _conds_ok(x, conds or None)]
+        if op == "pick":
+            assert len(items) == 1, (expr, "pick needs exactly one item, got", len(items))
+            return _path(items[0], rest)
         vals = [_path(x, rest) for x in items]
         return {"sum": sum, "max": max, "min": min}[op](vals)
     raise ValueError(expr)
@@ -304,6 +310,43 @@ def family_diffs() -> dict:
     return json.loads((HERE / "data" / "family_diffs.json").read_text())
 
 
+def family_of(a: dict, fd: dict) -> dict:
+    """The family rows and documents of an area. An area with ``family_from: {area, topics, docs}`` (brief 185) shows the named rows of another
+    matrix area and the documents of that area whose name starts with one of ``docs``, because the bank's matrix has no area of its own for it."""
+    ff = a.get("family_from")
+    if not ff:
+        return {"rows": fd["areas"][a["id"]]["rows"], "docs": fd["areas"][a["id"]]["docs"]}
+    src = fd["areas"][ff["area"]]
+    rows = [r for t in ff["topics"] for r in src["rows"] if r["topic"] == t]
+    assert len(rows) == len(ff["topics"]), (a["id"], "a family_from topic is not in the matrix", ff["topics"])
+    docs = {f: [d for d in lst if any(d["doc"].startswith(x) for x in ff["docs"])] for f, lst in src["docs"].items()}
+    return {"rows": rows, "docs": {f: v for f, v in docs.items() if v}}
+
+
+def _fill(tmpl: str, vals: dict, where: str) -> str:
+    assert not prose_numbers(re.sub(r"\{\w+\}", " ", tmpl)), (where, "a number in a figure text", prose_numbers(re.sub(r"\{\w+\}", " ", tmpl)))
+    for k, v in vals.items():
+        tmpl = tmpl.replace("{%s}" % k, fmt(v))
+    assert not re.search(r"\{\w+\}", tmpl), (where, "unfilled placeholder", tmpl)
+    return tmpl
+
+
+def figures_of(a: dict) -> list[dict]:
+    """Plots for a drawer, drawn from committed result files (site/dsp_figures.py); texts take their numbers from the plotted data."""
+    out = []
+    for fg in a.get("figures", []):
+        import sys
+        if str(HERE) not in sys.path:
+            sys.path.insert(0, str(HERE))
+        import dsp_figures
+        d = dsp_figures.data(fg["kind"])
+        w = f'{a["id"]}/{fg["id"]}'
+        out.append({"id": fg["id"], "kind": fg["kind"], "title": fg["title"], "caption": _fill(fg["caption"], d["vals"], w),
+                    "how": _fill(fg["how"], d["vals"], w), "wrong": _fill(fg["wrong"], d["vals"], w), "data": d["data"],
+                    "sources": [link(x) for x in fg["sources"]]})
+    return out
+
+
 def build() -> dict:
     y = yaml.safe_load((HERE / "data" / "expertise.yaml").read_text())
     fd = family_diffs()
@@ -346,7 +389,8 @@ def build() -> dict:
             cards.append({"href": c["href"], "label": c["label"]})
         for g in a["gaps"]:
             assert g
-        assert a["id"] in fd["areas"] and fd["areas"][a["id"]]["rows"], (a["id"], "no family-difference rows (brief 31)")
+        fam = family_of(a, fd)
+        assert fam["rows"], (a["id"], "no family-difference rows (brief 31)")
         sup = ["knowledge"]
         if any(e["kind"] == "measured" for e in ev):
             sup.append("measured")
@@ -366,7 +410,7 @@ def build() -> dict:
             "skills": [{"unit": u, "section": s, "items": [{"name": x["name"], "description": x["description"]} for x in v]}
                        for (u, s), v in groups.items()],
             "checks": checks, "evidence": ev, "cards": cards, "gaps": a["gaps"],
-            "family": {"rows": fd["areas"][a["id"]]["rows"], "docs": fd["areas"][a["id"]]["docs"]},
+            "family": fam, "figures": figures_of(a),
             "counts": {"skills": len(picked), "sections": len(groups), "checks": len(checks),
                        "enforced": sum(c["enforced"] for c in checks), "evidence": len(ev)},
         })

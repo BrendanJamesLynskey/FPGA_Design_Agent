@@ -59,6 +59,8 @@ BUILD_FILES = {
     # written by flow/build.tcl after synthesis since brief 71; the route scope reads the same post-synthesis scan
     "reset_scan": {"synth": "reset_scan_synth.tsv", "route": "reset_scan_synth.tsv"},
     "control_sets": {"synth": "control_sets_synth.rpt"},
+    "mtbf": {"route": "mtbf.rpt"},               # brief 189: flow/mtbf.py parses it (advisory; UltraScale+ only)
+    "dsp_cells": {"synth": "dsp_cells_synth.txt", "route": "dsp_cells.txt"},      # brief 185: written by flow/build.tcl (flow/dsp_cells.tcl)
     # brief 204a: written by flow/build.tcl after synthesis and routing; the route scope reads the post-synthesis ones where the
     # guide asks for them before placement (logic levels, high-fanout nets)
     "logic_levels": {"synth": "logic_levels_synth.rpt", "route": "logic_levels_synth.rpt"},
@@ -486,6 +488,46 @@ def _xpm_sim(ctx: Ctx) -> dict[str, Any]:
     return _result(fs, records=srcs)
 
 
+def _fastpath(ctx: Ctx) -> dict[str, Any]:
+    """Brief 190, advisory: a data-dependent shift or index of a wide vector in a module declared fast-path (flow/checks/wide_index.py).
+    Modules are declared in architecture.yaml ``fast_path: [module, ...]`` or by a ``// fda:fast_path`` comment inside the module."""
+    from flow.checks import wide_index as WI
+    try:
+        declared = {str(x) for x in ((yaml.safe_load((ctx.design / "architecture.yaml").read_text()) or {}).get("fast_path") or [])}
+    except (OSError, yaml.YAMLError, AttributeError):
+        declared = set()
+    srcs = [f for f in build_sources(ctx.design, ctx.root) if f.suffix in (".sv", ".v")]
+    r = WI.run(srcs, declared, ctx.root)
+    fs = [{"tool": "fastpath", "code": x["code"], "severity": "advisory", "where": x["where"], "key": f"fastpath:{x['code']} {x['where']} {x['vector']}",
+           "message": x["message"], "blocking": False} for x in r["findings"]]
+    parts = {"modules": f"{r['modules']} fast-path module(s) examined" if r["modules"] else
+             "no module declared fast-path (architecture.yaml fast_path: [...] or a // fda:fast_path comment)"}
+    if r["unjudged"]:
+        parts["unjudged"] = f"{r['unjudged']} shift(s) or index(es) on vectors whose width could not be evaluated were not judged"
+    return _result(fs, parts, srcs)
+
+
+def _cdc_margin(ctx: Ctx) -> dict[str, Any]:
+    """Brief 207: clock-crossing intent constrained and met (flow/cdc_margin.py, the same function as the gate post_route_bus_skew_met):
+    a bus-skew violation blocks; missing bus-skew coverage, a loose datapath-only value, a missing or low MTBF (UltraScale+) and high
+    user clock uncertainty are advisory."""
+    if ctx.scope != "route":
+        return _not_run("needs the routed design's report_bus_skew (scope route)")
+    if not (ctx.build / "bus_skew_route.rpt").is_file():
+        return _not_run("the build has no bus_skew_route.rpt (made before brief 207)")
+    from flow import gates as G
+    try:
+        prep = json.loads((ctx.build / "prepare.json").read_text()) if (ctx.build / "prepare.json").is_file() else {}
+        r = G._cdc_margin(ctx.build, None, prep)
+    except (OSError, ValueError, KeyError) as e:
+        return _not_run(f"{type(e).__name__}: {e}")
+    fs = [{"tool": "cdc_margin", "code": f["code"], "severity": "error" if f["level"] == "gate" else "advisory",
+           "where": str(f.get("cell") or f.get("net") or f.get("position") or f.get("id") or "bus_skew_route.rpt"),
+           "key": f"cdc_margin:{f['code']} {f.get('cell') or f.get('net') or f.get('position') or f.get('id') or ''}".strip(),
+           "message": str(f.get("text") or f)[:240], "blocking": f["level"] == "gate"} for f in (r or {}).get("findings", [])]
+    return _result(fs, records=[ctx.build / "bus_skew_route.rpt"])
+
+
 def _owned(code: str, by: str) -> str | None:
     """The dedicated check that reads this AMD rule id (resets, cdc, clocking, ...), other than the pass-through ``by``."""
     import fnmatch
@@ -615,6 +657,28 @@ def _clocking(ctx: Ctx) -> dict[str, Any]:
     return _result(fs, parts, recs)
 
 
+
+def _clock_mux(ctx: Ctx) -> dict[str, Any]:
+    """Brief 208: clock multiplexers (flow/clock_mux_check.py on flow/clock_mux_dump.tcl's netlist scan, with the
+    clock-interaction report): a LUT on a clock path, a mux whose modes are still timed against each other, clock groups on
+    the mux's source clocks while paths join a source tree and the mux fanout (they hide real paths), and advisories for a
+    case-analysed select, a CE-pin select, an external clock with IGNORE tied, and a deep BUFGCTRL cascade."""
+    if ctx.scope == "rtl":
+        return _not_run("needs a synthesised netlist (scope synth or route)")
+    p = ctx.report("clock_mux")
+    if p is None:
+        return _not_run(ctx.not_run_reason("clock_mux"))
+    from flow import clock_mux_check as CM
+    from flow.constraint_gates import parse_clock_pairs
+    ci = ctx.report("clock_interaction")
+    pairs = parse_clock_pairs(ci.read_text(errors="replace")) if ci else None
+    fs = [{"tool": "clock_mux", "code": f["code"], "severity": "error" if f["blocking"] else "advisory", "where": f["where"],
+           "key": f"clock_mux:{f['code']} {f['where']}", "message": f["message"], "blocking": f["blocking"]}
+          for f in CM.findings(CM.parse_dump(p.read_text(errors="replace")), pairs)]
+    parts = {"clock_mux": "ran", "clock_interaction": "ran" if ci else "not run: " + ctx.not_run_reason("clock_interaction")}
+    return _result(fs, parts, [p, ci])
+
+
 def _dsp_ram(ctx: Ctx) -> dict[str, Any]:
     """DSP and block-RAM mapping: AMD's DPIP/DPOP pipelining rows and SYNTH rows (methodology), RBOR and REQP RAM rows
     (DRC), and the utilisation of DSP and RAM. Critical rows fail; the rest are advice."""
@@ -640,6 +704,40 @@ def _dsp_ram(ctx: Ctx) -> dict[str, Any]:
         ctx.cache["dsp_ram_util"] = {k: v for k, v in used.items() if any(x in k.upper() for x in ("DSP", "RAMB", "BLOCK RAM"))}
         recs.append(u)
     return _result(fs, parts, recs)
+
+
+def _dsp_regs_applies(design: Path) -> str | None:
+    """Only builds that recorded their DSP cells (flow/build.tcl since brief 185): an older build, or no build, has nothing to read."""
+    if not any(design.glob("build/*/dsp_cells*.txt")):
+        return "no dsp_cells*.txt in the build (made by flow/build.tcl since brief 185)"
+    return None
+
+
+def _dsp_regs(ctx: Ctx) -> dict[str, Any]:
+    """Advisory (brief 185): a DSP slice without the multiplier or output register at a period the measurements say it cannot meet, and Vivado's own
+    DPIP/DPOP rows. The limits are flow/dsp_regs_limits.json (regenerated from results/185_dsp_slices by tools/dsp_regs_limits.py)."""
+    if ctx.scope == "rtl":
+        return _not_run("needs a synthesised design (scope synth or route)")
+    import re
+    from flow import dsp_regs_check as D
+    cells = ctx.report("dsp_cells")
+    if cells is None:
+        return _not_run(ctx.not_run_reason("dsp_cells"))
+    ts = ctx.report("timing_summary")
+    period = None
+    if ts is not None:
+        rows = re.findall(r"^\s*\S+\s+\{[^}]*\}\s+([\d.]+)\s+[\d.]+", ts.read_text(errors="replace"), re.M)
+        period = min(float(x) for x in rows) if rows else None
+    drc = ctx.report("drc")
+    fs = []
+    if period is None:
+        parts = {"registers": "not run: no clock period in the timing summary"}
+    else:
+        parts = {"registers": "ran"}
+    for f in D.check(D.parse_cells(cells.read_text(errors="replace")) if period is not None else [], period or 0.0, drc.read_text(errors="replace") if drc else None):
+        fs.append({"tool": "dsp_regs", "code": f["code"], "severity": "advisory", "where": f["where"], "key": f"dsp_regs:{f['code']} {f['where']}",
+                   "message": f["message"], "blocking": False})
+    return _result(fs, parts, [cells])
 
 
 def _init_values(ctx: Ctx) -> dict[str, Any]:
@@ -1006,16 +1104,32 @@ register(Check("io", "records", POST, {"io": ("IO-*", "IOB-*")},
 register(Check("clocking", "vivado", POST, {"vivado": ("CLKC-*",), "clocking": ("CMT-RANGE-01",)},
                "AMD's CLKC methodology rows and the MMCM/PLL VCO and PFD range check (flow/cmt_check.tcl)", _clocking,
                reports=("methodology", "cmt")))
+register(Check("clock_mux", "vivado", POST, {"clock_mux": ("CLKMUX-LUT", "CLKMUX-NO-GROUPS", "CLKMUX-SRC-GROUPED", "CLKMUX-CASE",
+                                                       "CLKMUX-CE-SELECT", "CLKMUX-STOP", "CLKMUX-CASCADE", "CLKMUX-UNTRACED")},
+               "clock multiplexers (brief 208, flow/clock_mux_check.py): a LUT on a clock path, mux modes timed against each other, "
+               "clock groups on the source clocks that hide real paths, and advisories (case-analysed select, CE select, stoppable "
+               "input with IGNORE tied, deep cascade)", _clock_mux, reports=("clock_mux", "clock_interaction")))
 register(Check("xpm_sim", "source", ALL, {"xpm_sim": ("XPM-SIM-01",)},
                "advisory: an xpm_cdc instance whose SIM_ASSERT_CHK is not 1, which turns off the macro's own simulation warnings "
                "(flow/constraint_gates.py, brief 105A)", _xpm_sim))
+register(Check("fastpath", "source", ALL, {"fastpath": ("FAST-SHIFT-01", "FAST-INDEX-01")},
+               "advisory (brief 190): a data-dependent shift or index of a wide vector (a barrel shifter) in a module declared fast-path "
+               "(flow/checks/wide_index.py)", _fastpath))
 register(Check("constraint_scope", "records", ("route",), {"constraint_scope": ("XDC-ASYNC-PATHS", "XDC-ASYNC-ALL")},
                "advisory flag for owner review: set_clock_groups -asynchronous over clock pairs with paths between them, or over every clock "
                "(flow/constraint_gates.py, brief 105A); never blocks", _async_groups, reports=("clock_interaction",)))
+register(Check("cdc_margin", "records", ("route",), {"cdc_margin": ("CDCM-SKEW-VIOL", "CDCM-SKEW-MISSING", "CDCM-DPO-LOOSE",
+                                                                  "CDCM-MTBF-MISSING", "CDCM-MTBF-LOW", "CDCM-UNC-HIGH")},
+               "clock-crossing intent constrained and met (flow/cdc_margin.py, brief 207): a set_bus_skew violation blocks (gate "
+               "post_route_bus_skew_met); missing bus skew, a loose datapath-only value, MTBF (UltraScale+) and user uncertainty are advisory",
+               _cdc_margin, gate_mirror=True))
 register(Check("dsp_ram_mapping", "records", POST, {"vivado": ("DPIP-*", "DPOP-*", "SYNTH-*", "RBOR-*", "DPIR-*", "DPOR-*",
                                                               "RMIR-*", "RMOR-*", "RROR-*")},
                "DSP and block-RAM mapping advice (AMD DPIP/DPOP/SYNTH/RBOR rows) and their utilisation", _dsp_ram,
                reports=("methodology", "drc", "utilization"), amd=True))
+register(Check("dsp_regs", "records", POST, {"dsp_regs": ("DSPREG-01", "DSPREG-02", "DSPREG-03", "DSPREG-04")},
+               "advisory (brief 185): a DSP slice with no multiplier or output register at a period the measured limits say it cannot meet, a period "
+               "below the slice's own minimum, and AMD's DPIP/DPOP rows (flow/dsp_regs_check.py)", _dsp_regs, reports=("timing_summary", "drc"), applies=_dsp_regs_applies))   # dsp_cells is written by flow/build.tcl, never by the Vivado session
 register(Check("init_values", "vivado", POST, {"init_values": ("INIT-HB-01", "INIT-URAM-01")},
                "initial values that cost a hard block's register on AMD parts (brief 206): INIT = 1 registers wired to a DSP, "
                "RAM or FIFO (our netlist scan) and UltraRAM refused for initial contents (Synth 8-12183); advisory "
@@ -1065,7 +1179,7 @@ register(Check("doc", "records", ALL, {"doc": ("DOC-PROBLEM",)},
                waivable=False))
 
 #: the Vivado-session reports each check may need (the ones the build does not write)
-SESSION_ONLY = ("reset_scan", "cmt", "control_sets", "qor_suggestions", "init_scan", "logic_levels", "clock_utilization", "clock_networks", "congestion")
+SESSION_ONLY = ("reset_scan", "cmt", "control_sets", "qor_suggestions", "init_scan", "logic_levels", "clock_utilization", "clock_networks", "congestion", "clock_mux")
 
 
 # ---- the runner ----------------------------------------------------------------------------------------------------

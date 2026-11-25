@@ -254,6 +254,10 @@ proc fda_report {name out} {
         # flow/cmt_check.tcl (brief 18): VCO and PFD legality of hand-instantiated MMCME2/PLLE2 (7-series)
         source [file join $::fda_checks_dir .. cmt_check.tcl]
         set cmd [list cmt_check $out/cmt.rpt]
+    } elseif {$name eq "clock_mux"} {
+        # flow/clock_mux_dump.tcl (brief 208): clock-buffer muxes, their clocks and control pins, LUTs on clock paths
+        source [file join $::fda_checks_dir .. clock_mux_dump.tcl]
+        set cmd [list clock_mux_dump $out/clock_mux.tsv]
     } elseif {$name eq "rule_catalogue"} {
         set cmd [list fda_rule_catalogue $out/rule_catalogue.tsv]
     } elseif {[dict exists $cmds $name]} {
