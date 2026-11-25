@@ -101,11 +101,17 @@ areas:
   - {file: flow/gates.py, gate: post_synth_drc_clean, enforced: true, what: "A DRC Error or Critical Warning after synthesis fails the run; an illegal MMCM VCO or phase-detector frequency raises one (AVAL-46)."}
   - {file: flow/mmcm_search.py, enforced: false, what: "A search over legal MMCM settings for a target frequency, so the setting is computed, not guessed."}
   - {file: flow/cmt_check.tcl, enforced: false, what: "A VCO and phase-detector range checker, written and measured but not wired into a gate."}
+  - {file: flow/report_gates.py, gate: RPT-CLK-01, enforced: false, what: "Advisory (Brief 204a): a global clock buffer driven by another buffer, or a clock made in fabric, read from the clock-utilisation and clock-networks reports."}
+  - {file: flow/report_gates.py, gate: RPT-CLK-02, enforced: false, what: "Advisory (Brief 204a): clock uncertainty and hold skew over the guide's review thresholds, read from the timing paths."}
   evidence:
   - kind: measured
     source: results/project_parity_2026_1/cmt_check/drc_*.rpt
     values: [nfiles, "nmatch:AVAL-46"]
     text: "Of {0} probe designs (one legal, three with an MMCM setting outside its range), Vivado's design-rule check after synthesis flagged the setting as out of range on {1}."
+  - kind: measured
+    source: results/204a_report_gates/hits.json
+    values: ["get:builds", "get:summary.RPT-CLK-01.builds_measured", "get:summary.RPT-CLK-01.builds_with_a_hit", "get:summary.RPT-CLK-02.builds_with_a_hit", "get:summary.RPT-CLK-02.builds_measured"]
+    text: "The clock-tree checks were run over {0} recorded builds: {2} of {1} showed a cascaded buffer or a local clock, and {3} of {4} had a hold skew or uncertainty over the guide's review threshold."
   cards:
   - {href: "flow-notes.html#xpm-cdc", label: "Beyond the flow: AMD's crossing macros lose their exceptions"}
   gaps:
@@ -291,12 +297,28 @@ areas:
   - {file: agent/graph/stages.py, gate: standards_rtl, enforced: true, what: "Design standards on the RTL: no latches, no combinational loops, no gated clocks, synchronous resets, declared crossings."}
   - {file: flow/gates.py, gate: rtl_methodology_no_critical, enforced: true, what: "Methodology checks on the elaborated design, then after synthesis: no Critical Warning."}
   - {file: flow/lint.sh, enforced: false, what: "Verilator lint, run before the stage can end."}
+  - {file: flow/checks/init_values.py, enforced: false, what: "Advice after synthesis: a register whose non-zero initial value keeps it out of a DSP or block RAM, and an UltraRAM refused because of initial contents."}
+  - {file: flow/report_gates.py, gate: RPT-LL-02, enforced: false, what: "Check-suite gate (Brief 204a): a post-synthesis setup path that still fails with its net delay taken out cannot be closed by placement. Advisory RPT-LL-01 compares the logic-level distribution with the clock period."}
+  - {file: flow/report_gates.py, gate: RPT-FO-01, enforced: false, what: "Advisory (Brief 204a): a net with too many loads for its clock, with the guide's fixes (balanced tree with KEEP, a driver register, no MAX_FANOUT on global nets)."}
+  - {file: flow/report_gates.py, gate: RPT-CS-02, enforced: false, what: "Check-suite gate (Brief 204a): control sets above the guide's required-reduction share of the device's capacity; the recommended-reduction band is an advisory."}
   evidence:
+  - kind: measured
+    source: results/206_power_up/records/summary.json
+    values: ["count@amd:arm=x8,initv=1,ff_total>0", "count@amd:arm=x8,initv=0,ff_total=0"]
+    text: "In {0} Vivado 2026.1 syntheses of a multiply whose registers all start non-zero (two families), every one of those registers stayed out of the DSP block, with no warning; in {1} with them at zero, all went into it."
+  - kind: measured
+    source: results/206_power_up/records/summary.json
+    values: ["count@altera:arm=q6_ram,initv=1,mem_bits=0", "count@altera:arm=q6_ram,initv=0,mem_bits>0"]
+    text: "On Altera parts every core register starts at zero: in {0} Quartus Lite compiles (three families, NOT-gate push-back on and off) a RAM whose read register was to start non-zero was built from logic instead of a block RAM; in {1} with it at zero, a block RAM was used."
   - kind: agent
     source: results/course/*/run_*.json
     where: split=dev
     values: [n, "count:hidden_pass=true", "count:outcome=escape", "count:outcome=fail"]
     text: "Across all {0} development runs, {1} passed every hidden test, {2} were escapes (the agent's own checks passed, the hidden tests did not) and {3} failed."
+  - kind: measured
+    source: results/204a_report_gates/hits.json
+    values: ["get:summary.RPT-LL-02.builds_measured", "get:summary.RPT-LL-02.builds_with_a_hit", "get:summary.RPT-LL-02.builds_with_a_hit_that_met_timing", "get:summary.RPT-LL-01.builds_with_a_hit", "get:summary.RPT-LL-01.builds_measured"]
+    text: "The logic-depth gate was run on {0} recorded builds: it failed {1}, and {2} of them met timing after routing; the logic-level advisory flagged {3} of {4} builds."
   cards:
   - {href: "flow-notes.html#gates", label: "Beyond the flow: a missing report or skipped test looks like a pass"}
   gaps:
@@ -422,6 +444,9 @@ areas:
   checks:
   - {file: flow/run_vivado.sh, enforced: false, what: "The only way the agent builds: batch Vivado under a memory cap and a thread limit, writing the reports the gates read."}
   - {file: flow/xprobe.py, enforced: false, what: "Cross-probing: names the RTL file and line, clock region and nets of a failing or tight path."}
+  - {file: flow/report_gates.py, gate: RPT-LOG-03, enforced: false, what: "Check-suite gate (Brief 204a, from Brief 203): a generic the build sets that the top does not have, which Vivado only warns about, so its value never reaches the design."}
+  - {file: flow/report_gates.py, gate: RPT-IP-01, enforced: false, what: "Check-suite gate (Brief 204a): an IP that report_ip_status shows locked or not up to date."}
+  - {file: flow/report_gates.py, gate: RPT-CONG-01, enforced: false, what: "Advisory (Brief 204a): placer or router congestion at the guide's review level, and utilisation the guide ties to hard placement."}
   evidence:
   - kind: measured
     source: results/project_parity_2026_1/xprobe/*.xprobe.json
@@ -432,6 +457,10 @@ areas:
     where: split=dev,stop.stages_0_to_8_passed=true
     values: [n]
     text: "Of the development runs, {0} went through every stage up to configuration with every stage gate passed."
+  - kind: measured
+    source: results/204a_report_gates/hits.json
+    values: ["get:builds", "get:summary.RPT-LOG-01.builds_with_a_hit", "get:summary.RPT-LOG-03.builds_with_a_hit", "get:summary.RPT-CONG-01.builds_with_a_hit"]
+    text: "The report-driven checks were run on {0} recorded builds without re-running Vivado: {1} had synthesis messages saying logic was dropped, {2} had a generic the top did not use, and {3} showed placer congestion at the guide's review level or above."
   cards: []
   gaps:
   - "No local design had a failing path to cross-probe, so it is shown on passing ones."

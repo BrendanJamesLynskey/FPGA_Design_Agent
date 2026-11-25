@@ -104,6 +104,12 @@ def run_job(name: str, task: str, aw: int, kb: int, defines: list[str], mutate: 
 
 def plan(which: str):
     jobs = []
+    if which == "pdr":         # brief 191: the progress ranking function (R1, R2) and the safety set closed unbounded by IC3/PDR (abc pdr), and the same engine on the progress mutant
+        nopop = next(m for m in MUTANTS if m[0] == "mut_no_pop")
+        return [dict(name="progress_pdr_aw2", task="progress_pdr", aw=2, kb=0, bmc=40, prove=24, cover=60),
+                dict(name="progress_pdr_aw1", task="progress_pdr", aw=1, kb=0, bmc=40, prove=24, cover=60),
+                dict(name="mut_no_pop_pdr", task="progress_pdr", aw=2, kb=0, bmc=40, prove=24, cover=60, mutate=[(nopop[1], nopop[2])], expect_fail_any=nopop[7], why=nopop[8]),
+                dict(name="safety_pdr_aw2", task="safety_pdr", aw=2, kb=0, bmc=40, prove=24, cover=60)]
     # proofs
     for kb in (REP_BITS if which in ("ci", "full") else [0]):
         jobs.append(dict(name=f"safety_prove_aw4_kb{kb}", task="safety_prove", aw=4, kb=kb, bmc=40, prove=8, cover=60))
@@ -126,7 +132,7 @@ def plan(which: str):
 
 def main() -> int:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--set", choices=["ci", "full"], default="ci")
+    ap.add_argument("--set", choices=["ci", "full", "pdr"], default="ci")
     ap.add_argument("--only", help="run only the jobs whose name contains this text")
     ap.add_argument("--json", help="write the results here")
     ap.add_argument("--work", help="directory for the runs (default: a temporary one)")
