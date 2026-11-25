@@ -1,12 +1,15 @@
 // kr260_top.sv: the mock trading path on the Kria KR260 carrier's two PL Gigabit Ethernet ports.
 //
 // Port A (J10B, Ethernet 2, PHY2 on HPA) is the trading port; port B (J10A, Ethernet 3, PHY3 on HPB) is the bench
-// source, so a cable between J10A and J10B closes the loop with both ends timed by one counter. Both PHYs are Marvell
-// M88E1111 in RGMII mode (the project knowledge base, board/kr260/ethernet; pins from the AMD kr260 board files).
-// Clocks: the 25 MHz HPA input (25 MHz is the figure an open-source KR260 reference design uses; unconfirmed against the schematic) -> MMCM ->
+// source, so a cable between J10A and J10B closes the loop with both ends timed by one counter. Both PHYs are TI
+// DP83867CSRGZ (U79 = port A, MDIO address 2; U80 = port B, MDIO address 3) in RGMII mode: AMD's carrier BOM (XTP757 row 60)
+// and schematic (XTP743 sheets 20 and 21); brief 175 corrected an earlier assumption of a Marvell 88E1111. Pins are from the
+// AMD kr260 board files; the PHY facts and the datasheet windows are in docs/phy_dp83867.md.
+// Clocks: the 25 MHz HPA input (25 MHz: SiT1602 U92 via buffer U91, AMD schematic, brief 174) -> MMCM ->
 // 125 MHz core clock and a 90-degree copy for TXC. Each port's RX_CLK is its own clock domain (gmii_cdc).
 // The PS is not used: the host reaches the registers over the JTAG cable (jtag_bus). The PHYs are held in reset for
-// 2^21 clocks (16.8 ms) after the MMCM locks; the M88E1111 needs at least 10 ms.
+// 2^21 clocks (16.8 ms) after the MMCM locks; the DP83867 needs a reset pulse of at least 1 us and then 195 us before MDC
+// carries a management frame (datasheet SNLS484J section 6.7), so 16.8 ms is ample; the host's first MDIO access comes later.
 
 module kr260_top #(
     parameter logic [31:0] BUILD_STAMP = 32'h0,

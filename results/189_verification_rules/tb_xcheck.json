@@ -1,0 +1,36 @@
+{
+ "enforced": false,
+ "files_scanned": 67,
+ "findings": [
+  {
+   "code": "TB-X-01",
+   "where": "designs/b96_kr260_10g/verif/uvm/env/pcs_mac_scoreboard.sv:237",
+   "condition": "abort_ref != abort_dut",
+   "message": "an error raised under a != (or negated ==) compare: an X or Z operand makes the condition X and the error is skipped; use !== or test $isunknown first"
+  },
+  {
+   "code": "TB-X-01",
+   "where": "designs/m141_ddr2_sched/tb/tb_ddr2.sv:114",
+   "condition": "now - last_ref < M_RFC && last_ref >= 0 && cmd_op != OP_REF",
+   "message": "an error raised under a != (or negated ==) compare: an X or Z operand makes the condition X and the error is skipped; use !== or test $isunknown first"
+  },
+  {
+   "code": "TB-X-01",
+   "where": "designs/m141_ddr2_sched/tb/tb_ddr2.sv:131",
+   "condition": "t_wrt[cmd_tag] != (cmd_op == OP_WR) || dec_v[CB+RW+BW-1:CB+RW] != cmd_bank || dec_v[CB-1:0] != cmd_col",
+   "message": "an error raised under a != (or negated ==) compare: an X or Z operand makes the condition X and the error is skipped; use !== or test $isunknown first"
+  },
+  {
+   "code": "TB-X-01",
+   "where": "designs/m141_ddr2_sched/tb/tb_ddr2.sv:134",
+   "condition": "open_m[b] && row_m[b] != dec_v[CB+RW-1:CB]",
+   "message": "an error raised under a != (or negated ==) compare: an X or Z operand makes the condition X and the error is skipped; use !== or test $isunknown first"
+  },
+  {
+   "code": "TB-X-01",
+   "where": "designs/m141_ddr2_sched/tb/tb_ddr2.sv:138",
+   "condition": "t_live[t] && t != int'(cmd_tag) && t_addr[t] == t_addr[cmd_tag] && t_seq[t] < t_seq[cmd_tag] && (t_wrt[t] || t_wrt[cmd_t",
+   "message": "an error raised under a != (or negated ==) compare: an X or Z operand makes the condition X and the error is skipped; use !== or test $isunknown first"
+  }
+ ]
+}

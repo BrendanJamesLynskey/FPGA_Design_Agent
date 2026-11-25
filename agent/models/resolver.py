@@ -103,7 +103,9 @@ class Resolver:
         row = {"seq": self.seq, **({"tape": self.tape.mode} if self.tape is not None else {}), "purpose": e.purpose, **({"stage": e.stage} if e.stage else {}), "endpoint": e.endpoint, "kind": e.kind,
                "model": e.model, "entry_hash": e.hash, "table_hash": self.table.hash,
                "prompt_tokens": getattr(r, "prompt_tokens", None), "completion_tokens": getattr(r, "completion_tokens", None),
-               "cost_usd": getattr(r, "cost", None), "seconds": round(seconds, 2)}
+               "cost_usd": getattr(r, "cost", None), "seconds": round(seconds, 2),
+               **({"input_tokens": r.input_tokens, "cache_write_tokens": r.cache_write_tokens, "cache_read_tokens": r.cache_read_tokens,
+                   "cost_basis": r.cost_basis, "stop_reason": r.stop_reason} if e.kind == "anthropic_api" and hasattr(r, "cache_read_tokens") else {})}
         self.run_dir.mkdir(parents=True, exist_ok=True)
         with (self.run_dir / "model_calls.jsonl").open("a") as f:
             f.write(json.dumps(row) + "\n")
@@ -180,7 +182,8 @@ class Resolver:
             from agent.models.endpoints import AnthropicClient
             client = AnthropicClient(e.model, base_url=e.base_url or "https://api.anthropic.com", key_env=e.key_env,
                                      timeout_s=o.get("timeout_s", 180), temperature=o.get("temperature"), max_tokens=int(o.get("max_tokens", 8192)),
-                                     stop=o.get("stop"), thinking_budget=o.get("thinking_budget"), retries=int(o.get("retries", 1)))
+                                     stop=o.get("stop"), thinking_budget=o.get("thinking_budget"), retries=int(o.get("retries", 1)), effort=o.get("effort"),
+                                     price=self.table.model_rule(e.model)["price"], accepts_temperature=self.table.model_rule(e.model)["temperature"])
         elif e.kind == "claude_code":
             from agent.models.endpoints import ClaudeCodeChat
             client = ClaudeCodeChat(e.model, effort=o.get("effort"), timeout_s=o.get("timeout_s", 900),

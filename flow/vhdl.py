@@ -326,6 +326,24 @@ def rtl_files(design: Path) -> list[Path]:
     return sorted(p for p in rtl.iterdir() if p.suffix in (".sv", ".v") or is_vhdl(p))
 
 
+def own_sources(design: Path, params: dict[str, object] | None = None) -> list[Path]:
+    """The design's own sources for a Verilog simulator (brief 153; the spec-test entry file calls this): its ``rtl/*.sv`` and ``*.v``
+    as they are, and, when it has VHDL, the GHDL netlist of the VHDL (top from ``build.yaml``, ``params`` fixed as the top's generics)
+    in place of the VHDL files. Raises RuntimeError with GHDL's message when the VHDL does not synthesise."""
+    import yaml
+    files = rtl_files(design)
+    vh = [p for p in files if is_vhdl(p)]
+    own = [p for p in files if not is_vhdl(p)]
+    if not vh:
+        return own
+    try:
+        top = str((yaml.safe_load((design / "build.yaml").read_text()) or {}).get("top") or "")
+    except (OSError, yaml.YAMLError):
+        top = ""
+    net = to_verilog(vh, top_entity(vh, top), dict(params or {}), design / "build" / "vhdl_sim")
+    return own + [net]
+
+
 _INST_ENT = re.compile(r"\bentity\s+work\s*\.\s*([A-Za-z]\w*)", re.I)
 _INST_COMP = re.compile(r"^\s*\w+\s*:\s*(?:component\s+)?([A-Za-z]\w*)\s+(?:generic|port)\s+map\b", re.M | re.I)
 

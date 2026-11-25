@@ -47,6 +47,9 @@ PARAM_DEFAULTS = {"VARIANT": 0, "W": 16, "PIPE": 1, "W_IN": 32, "S": 12, "W_OUT"
 DEFAULTS = {"PIPE": 1, "SAT": 1}
 
 
+RUN_IN_160 = {"adder", "multiplier", "mac", "divider", "fxp_round", "isqrt", "lzc_norm"}     # brief 160 ran these
+
+
 def brief(fn: str) -> str:
     return "139c" if fn in ("sqrt_r4", "divider_hr", "div_nr", "recip", "rsqrt") else "139b"
 
@@ -131,7 +134,8 @@ def build_text(fn: str, spec: dict, var: dict, fab: str) -> str:
         "constraints": [f"arith/{fn}/build/{var['id']}/{fab}/ooc.xdc"],
         "generics": {**base, **{k: v for k, v in pts[0]["generics"].items() if k not in base}},
         "points": [{"generics": {**base, **p["generics"]}, "expected_primitives": p["expected_primitives"]} for p in pts],
-        "status": f"prepared, not run (no Vivado in brief {brief(fn)})",
+        "status": (f"prepared in brief {brief(fn)}, run in brief 160 (python -m arith.tools.run_vivado_ooc); records in arith/<function>/verif/results/vivado_ooc_*.json"
+                   if fn in RUN_IN_160 else f"prepared, not run (no Vivado in brief {brief(fn)})"),
         "variant": var["id"],
         "function": fn,
     }
@@ -139,7 +143,7 @@ def build_text(fn: str, spec: dict, var: dict, fab: str) -> str:
             f"# {f['note']}.\n"
             "# Keys top, part, sources, constraints, generics are the flow's design build.yaml; mode, clock_ns, points and expected_primitives extend it for an\n"
             "# out-of-context run (one Vivado run per entry of `points`). expected_primitives is a planning estimate from spec.yaml, NOT a measurement; carry4 is the\n"
-            "# 7-series CARRY4 count (UltraScale+ CARRY8 is about half). The runs are for a free heavy slot; none has been made.\n")
+            "# 7-series CARRY4 count (UltraScale+ CARRY8 is about half). " + ("The runs were made in brief 160 (arith/tools/run_vivado_ooc.py)." if fn in RUN_IN_160 else "The runs are for a free heavy slot; none has been made.") + "\n")
     return head + yaml.safe_dump(doc, sort_keys=False, default_flow_style=None, width=160)
 
 
@@ -223,7 +227,8 @@ def build_text_a(fn: str, variant: str, spec: dict) -> str:
     y = {
         "variant": variant,
         "function": fn,
-        "status": f"prepared, not run: no Vivado in brief {ac.brief_of(fn)}; a Vivado out-of-context run reads this file (see arith/README.md, 'Running the Vivado characterisation')",
+        "status": (f"prepared in brief {ac.brief_of(fn)}, run in brief 160 (python -m arith.tools.run_vivado_ooc reads this file; see arith/README.md, 'Running the Vivado characterisation'); records in arith/<function>/verif/results/vivado_ooc_*.json"
+                   if fn in RUN_IN_160 else f"prepared, not run: no Vivado in brief {ac.brief_of(fn)}; a Vivado out-of-context run reads this file (see arith/README.md, 'Running the Vivado characterisation')"),
         "top": v["module"] + "_ooc",
         "part": ac.PARTS["a7"],
         "sources": [f"arith/{fn}/{v['file']}"] + [f"arith/{d}" for d in v.get("deps", [])] + [f"arith/{fn}/ooc/{v['module']}_ooc.sv"],

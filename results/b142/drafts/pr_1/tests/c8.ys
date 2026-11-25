@@ -1,0 +1,6 @@
+synth_xilinx -family xcup -noiopad -noclkbuf -run begin:fine
+opt -full
+xilinx_srl -variable -minlen 3
+techmap -map +/techmap.v -D LUT_SIZE=6 -D HAS_CARRY8 -map /home/brendan/Claude_sandbox/_worktrees/142-yosys/results/b142/drafts/pr_1/tests/../arith_map_carry8.v
+opt -fast
+synth_xilinx -family xcup -noiopad -noclkbuf -run map_cells:

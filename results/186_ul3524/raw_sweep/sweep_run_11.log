@@ -1,0 +1,62 @@
+#-----------------------------------------------------------
+# xsim v2026.1 (64-bit)
+# SW Build 6511674 on Tue Jun 16 11:01:26 MDT 2026
+# IP Build 6504888 on Tue Jun 09 09:05:25 MDT 2026
+# SharedData Build 6501428 on Mon Jun 08 17:34:18 MDT 2026
+# Start of session at: Mon Nov 23 03:46:22 2026
+# Process ID         : 2895655
+# Current directory  : /home/brendan/Claude_sandbox/_worktrees/186-sim/raw/Vivado_Project/project_1/project_1.sim/sim_1/behav/xsim
+# Command line       : xsim -log sweep_run_11.log -mode tcl -source {xsim.dir/sim_top_behav/xsim_script.tcl}
+# Log file           : /home/brendan/Claude_sandbox/_worktrees/186-sim/raw/Vivado_Project/project_1/project_1.sim/sim_1/behav/xsim/sweep_run_11.log
+# Journal file       : /home/brendan/Claude_sandbox/_worktrees/186-sim/raw/Vivado_Project/project_1/project_1.sim/sim_1/behav/xsim/xsim.jou
+# Running On         : bren-ubuntu24-04
+# Platform           : Ubuntu
+# Operating System   : Ubuntu 24.04.4 LTS
+# Processor Detail   : Intel(R) Core(TM) i7-3770 CPU @ 3.40GHz
+# CPU Frequency      : 3691.542 MHz
+# CPU Physical cores : 4
+# CPU Logical cores  : 8
+# Host memory        : 33513 MB
+# Swap memory        : 4294 MB
+# Total Virtual      : 37808 MB
+# Available Virtual  : 20937 MB
+#-----------------------------------------------------------
+source xsim.dir/sim_top_behav/xsim_script.tcl
+# xsim {sim_top_behav} -testplusarg REFOFF_PS=4000 -testplusarg F300OFF_PS=0 -testplusarg RSTDLY=1077 -autoloadwcfg -tclbatch {run_all.tcl}
+Time resolution is 1 fs
+source run_all.tcl
+## run all
+Time :         3586898 fs   Set and clear system resets...
+Time :         3795146 fs   Wait for link stable...
+TIME:         5456071 fs  plllock_tx_in is 1
+TIME:         5456071 fs  plllock_rx_in is 1
+Warning: [Unisim MMCME4_ADV-20] Input CLKIN1 period and attribute CLKIN1_PERIOD are not same. Instance sim_top.u_gtfwizard_raw_gtfraw_ex.u_gtfwizard_raw_example_top.gen_blk_multi_ch[0].u_gtf_wiz_ip_top.inst.genblk1.phase_shift_mmcm_inst.inst.mmcme4_adv_inst 
+Warning: [Unisim MMCME4_ADV-39] Input clock has jitter. This may cause misalignment in output clocks. Instance sim_top.u_gtfwizard_raw_gtfraw_ex.u_gtfwizard_raw_example_top.gen_blk_multi_ch[0].u_gtf_wiz_ip_top.inst.genblk1.phase_shift_mmcm_inst.inst.mmcme4_adv_inst            120010978
+TIME:       120202903 fs  txresetdone_in is 1
+TIME:       120203290 fs  rxresetdone_in is 1
+Time :       140680370 fs   Initial link achieved across all transceiver channels.
+Time :       140690370 fs   Setup Error Inject and Latency.
+Time :       141110198 fs   Latency Loop.
+Time :       141739946 fs   Latency:   1 ::  Rx= 27211 Tx= 27203  Delta=1.500 cycles
+Time :       142289726 fs   Latency:   2 ::  Rx= 27252 Tx= 27244  Delta=1.500 cycles
+Time :       142839506 fs   Latency:   3 ::  Rx= 27293 Tx= 27285  Delta=1.500 cycles
+Time :       143389286 fs   Latency:   4 ::  Rx= 27334 Tx= 27326  Delta=1.500 cycles
+Time :       143939066 fs   Latency:   5 ::  Rx= 27375 Tx= 27367  Delta=1.500 cycles
+Time :       144488846 fs   Latency:   6 ::  Rx= 27416 Tx= 27408  Delta=1.500 cycles
+Time :       145038626 fs   Latency:   7 ::  Rx= 27457 Tx= 27449  Delta=1.500 cycles
+Time :       145588406 fs   Latency:   8 ::  Rx= 27498 Tx= 27490  Delta=1.500 cycles
+Time :       146138186 fs   Latency:   9 ::  Rx= 27539 Tx= 27531  Delta=1.500 cycles
+Time :       146687966 fs   Latency:  10 ::  Rx= 27580 Tx= 27572  Delta=1.500 cycles
+Time :       146847902 fs   Latency Loop Done.
+
+146848 ns Latency calculation:  1.5/1.50/1.5 ticks (10 records).  2.33 ns/2.33 ns/2.33 ns
+
+Time :       146847902 ps   Resetting latched link down indicator.
+Time :       146847902 fs   Continuing simulation for 50us to check for maintenance of link.
+Time :       196927862 fs   PASS: simulation completed with maintained link.
+** Test completed successfully
+$finish called at time : 196928862 ps : File "/home/brendan/Claude_sandbox/_worktrees/186-sim/raw/sim/sim_top.sv" Line 270
+run: Time (s): cpu = 00:00:00.24 ; elapsed = 00:02:12 . Memory (MB): peak = 1505.258 ; gain = 0.000 ; free physical = 3699 ; free virtual = 17469
+## quit
+INFO: xsimkernel Simulation Memory Usage: 412004 KB (Peak: 477540 KB), Simulation CPU Usage: 133740 ms
+INFO: [Common 17-206] Exiting xsim at Mon Nov 23 03:48:38 2026...

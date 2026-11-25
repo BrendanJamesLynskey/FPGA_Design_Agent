@@ -33,8 +33,8 @@ sides first run ``sim -w`` for two reset clocks, so every register starts from i
 * ``auto``   (default) ``name``; if that does not prove, ``bmc`` looks for a real counterexample from reset, and only if there is
              none does ``group`` try the proof.
 
-Limits that hold for every strategy: INIT values are not compared (the RTL has no initial values; the post-reset state is
-what is proved); the reset must be a synchronous input named ``rst`` (``reset=`` changes the name); a clock named ``clk``;
+Limits that hold for every strategy: INIT values are not compared (an initial value in the RTL, which rtl.initial_values allows, is not proved;
+the post-reset state is what is proved); the reset must be a synchronous input named ``rst`` (``reset=`` changes the name); a clock named ``clk``;
 primitives other than those in the pinned suite's ``cells_sim.v`` (DSP48, RAMB, GT, clocking) are not modelled, and a netlist
 that uses one is ERROR, not a pass; the proof is of the netlist's function, not of its timing or placement; the equivalence
 is of the netlist text given, so it covers a Vivado post-synthesis netlist and a RapidWright netlist only if they are

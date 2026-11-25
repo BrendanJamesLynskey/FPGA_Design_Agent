@@ -1,0 +1,685 @@
+{
+ "schema": "fpga-design-agent/mutation-score/v1",
+ "target": "b170_itch_path",
+ "design": "designs/b96_kr260_10g/rm_gp_itch",
+ "what": "the ITCH/OUCH trading path (brief 110's blocks with build rm_gp_itch's adapter, builder and multiplexer)",
+ "date": "2026-11-22",
+ "generator": {
+  "name": "flow/mutation_blind.py",
+  "blind_to_tests": true,
+  "seed": 1,
+  "requested": 30,
+  "candidates": 1768,
+  "sampled": 30,
+  "operators": [
+   "and_to_or",
+   "band_to_bor",
+   "bit0_to_1",
+   "bit1_to_0",
+   "bor_to_band",
+   "const_minus1",
+   "const_plus1",
+   "eq_to_ne",
+   "ge_to_gt",
+   "ge_to_lt",
+   "gt_to_ge",
+   "gt_to_le",
+   "lt_to_le",
+   "minus_to_plus",
+   "ne_to_eq",
+   "not_removed",
+   "or_to_and",
+   "plus_to_minus",
+   "shl_to_shr",
+   "shr_to_shl",
+   "ternary_swap",
+   "tilde_removed",
+   "xor_to_or"
+  ],
+  "llm_proposals_valid": 0,
+  "llm_proposals_dropped": 0,
+  "rtl_sha256": "a33d6f8465de36ffb72aa25438866afe9c1ad97b0b8fe3e2fe4bd77d5dcc551c"
+ },
+ "rtl": {
+  "mold_rx.sv": "2439cc5a50ff265598da6afbf6faba81e6004bea70f7e3585c6ab8718c344d66",
+  "itch_dec.sv": "43c7f717f13f703a1bf8869f6294aee6a8eed737b8435d733a78ec87af52ec8d",
+  "book_core.sv": "4f9ea037d5b1a77ba56e87e340987d1155212593ceea0b1ff24cc02d4dddaf74",
+  "risk_glue.sv": "2cde343aec11afbddb108c4728157b83e11533644da80c2a7bd8bc13ffdc23f1",
+  "ouch_enter.sv": "95066c0f3caaf67b87eb40baf88d5704b6eec8387384d00014cbe93f3f64addd",
+  "udp_strip.sv": "18ecd60fabbb24dcc5b8337dd255272ddbf94adeb08a21af839e3e1c9b125cb5",
+  "order_seg.sv": "0d885e6b8420c7e836b9486c5bd81247de3e0e24eada6d57a22ad2e1b2789a64",
+  "itch_top.sv": "186388568e0ad6c5c654da191aa290776b4bfd8934d60afae04607bf7d2b4764",
+  "itch_path.sv": "1672408a82201beab1b68ae768a80c8e4eef09b60cadafaff0ee5f192bac9b4f",
+  "tx_mux.sv": "60060254bf35df39db013b4a9cd347c13d241a22d7932966dd33ae05faabb7fb"
+ },
+ "rtl_source": "the files of designs/b110_itch_ouch/rtl and designs/b96_kr260_10g/rm_gp_itch/rtl named in rtl (staged into one directory)",
+ "bench": {
+  "description": "the independent UVM 1.2 bench of brief 170 in xsim 2026.1 (reference model written from the specifications; scoreboard, assertions, functional coverage), tests t_smoke, t_mold, t_tail, t_badfcs, t_book, t_risk, t_hdr, t_bp, t_mix:1, t_rand:1, t_rand:2, stopped at the first failing test; build and run of each mutant from the mutated copy",
+  "baseline_seconds": 215.5,
+  "mutant_timeout_s": 900,
+  "jobs": 1
+ },
+ "timeout_policy": "A bench run that exceeds its time limit is `timed_out`: it is not counted as killed and not as a survivor; it is listed, and the worst-case score counts it as a survivor. A formal run that exceeds its limit is `undecided`, handled the same way. Neither is ever counted as a kill.",
+ "filter": {
+  "method": "miter: BMC, then register-matched induction (yosys equiv_induct), then an unbounded proof (sby)",
+  "bmc_depth": 30,
+  "bmc_limit_s": 60,
+  "prove_limit_s": 180,
+  "configs": [
+   "N_INST=2 LEVELS=4 ORD_AW=4"
+  ],
+  "assumptions": [],
+  "compared": "every output, every clock",
+  "reset": {
+   "port": "rst",
+   "clock": "clk",
+   "cycles": 4,
+   "active": 1
+  },
+  "start_state": "registers without an initial value start at 0 in both versions"
+ },
+ "evaluated": 30,
+ "invalid": 0,
+ "bench_timed_out": 0,
+ "killed_by_simulation": 18,
+ "killed_by_formal_bench": 0,
+ "killed": 18,
+ "survived_after_bench": 12,
+ "equivalent": 0,
+ "real_survivors": 0,
+ "undecided": 12,
+ "score_pct": 100.0,
+ "score_simulation_only_pct": 100.0,
+ "score_worst_case_pct": 60.0,
+ "score_before_filter_pct": 60.0,
+ "formal_bench_bound": false,
+ "invalid_listed": [],
+ "timed_out_listed": [],
+ "survivors": [
+  {
+   "name": "book_core_L94_minus_to_plus_27",
+   "change": "book_core.sv line 94: `for (int i = N_INST - 1; i >= 0; i--) begin` became `for (int i = N_INST + 1; i >= 0; i--) begin` ('-' replaced by '+')",
+   "verdict": "undecided",
+   "note": "BMC to 30 clocks timed out after 60 s; the unbounded proof (abc pdr) ended TIMEOUT within 180 s"
+  },
+  {
+   "name": "book_core_L302_bit1_to_0_33",
+   "change": "book_core.sv line 302: `end else miss3 = 1'b1;` became `end else miss3 = 1'b0;` (constant 1'b1 replaced by 1'b0)",
+   "verdict": "undecided",
+   "note": "BMC to 30 clocks timed out after 60 s; the unbounded proof (abc pdr) ended TIMEOUT within 180 s"
+  },
+  {
+   "name": "book_core_L429_const_minus1_69",
+   "change": "book_core.sv line 429: `if (q_cnt == 2'd1) begin q0 <= inb; q_cnt <= 2'd1; end` became `if (q_cnt == 2'd1) begin q0 <= inb; q_cnt <= 2'd0; end` (constant 2'd1 changed to 2'd0)",
+   "verdict": "undecided",
+   "note": "BMC to 30 clocks timed out after 60 s; the unbounded proof (abc pdr) ended TIMEOUT within 180 s"
+  },
+  {
+   "name": "book_core_L455_const_plus1_50",
+   "change": "book_core.sv line 455: `if (miss3) c_lvmiss <= c_lvmiss + 32'd1;` became `if (miss3) c_lvmiss <= c_lvmiss + 32'd2;` (constant 32'd1 changed to 32'd2)",
+   "verdict": "undecided",
+   "note": "BMC to 30 clocks timed out after 60 s; the unbounded proof (abc pdr) ended TIMEOUT within 180 s"
+  },
+  {
+   "name": "itch_path_L156_gt_to_le_40",
+   "change": "itch_path.sv line 156: `assign lat_bin = (lat_v[31] || lat_v > 32'd14) ? 4'd15 : lat_v[3:0];` became `assign lat_bin = (lat_v[31] || lat_v <= 32'd14) ? 4'd15 : lat_v[3:0];` ('>' replaced by '<=')",
+   "verdict": "undecided",
+   "note": "BMC to 30 clocks timed out after 60 s; the unbounded proof (abc pdr) ended TIMEOUT within 180 s"
+  },
+  {
+   "name": "mold_rx_L53_const_plus1_16",
+   "change": "mold_rx.sv line 53: `8'h1F:   nv = 4'd5;` became `8'h20:   nv = 4'd5;` (constant 8'h1F changed to 8'h20)",
+   "verdict": "undecided",
+   "note": "BMC to 30 clocks timed out after 60 s; the unbounded proof (abc pdr) ended TIMEOUT within 180 s"
+  },
+  {
+   "name": "tx_mux_L80_const_plus1_60",
+   "change": "tx_mux.sv line 80: `s_valid = 1'b0; s_data = '0; s_last = 1'b0; s_nb1 = 3'd0; s_poison = 1'b0;` became `s_valid = 1'b0; s_data = '0; s_last = 1'b0; s_nb1 = 3'd1; s_poison = 1'b0;` (constant 3'd0 changed to 3'd1)",
+   "verdict": "undecided",
+   "note": "BMC to 30 clocks timed out after 60 s; the unbounded proof (abc pdr) ended TIMEOUT within 180 s"
+  },
+  {
+   "name": "tx_mux_L152_and_to_or_54",
+   "change": "tx_mux.sv line 152: `fq_d[wp] <= o_d; fq_f[wp] <= {in_last && o_unres, in_last && o_poison, in_last, in_nb1}; wp <= wp + 3'd1;` became `fq_d[wp] <= o_d; fq_f[wp] <= {in_last || o_unres, in_last && o_poison, in_last, in_nb1}; wp <= wp + 3'd1;` ('&&' replaced by '||')",
+   "verdict": "undecided",
+   "note": "BMC to 30 clocks timed out after 60 s; the unbounded proof (abc pdr) ended TIMEOUT within 180 s"
+  },
+  {
+   "name": "tx_mux_L205_const_minus1_121",
+   "change": "tx_mux.sv line 205: `gapc <= hw[31:16]; flen <= hw[15:0]; r_pz <= hw[32]; wl <= (hw[15:0] + 16'd7) >> 3; ptr <= ptr + 8'd1; rst_s <= R_GAP;` became `gapc <= hw[31:16]; flen <= hw[15:0]; r_pz <= hw[32]; wl <= (hw[15:0] + 16'd7) >> 3; ptr <= ptr + 8'd0; rst_s <= R_GAP;` (constant 8'd1 changed to 8'd0)",
+   "verdict": "undecided",
+   "note": "BMC to 30 clocks timed out after 60 s; the unbounded proof (abc pdr) ended TIMEOUT within 180 s"
+  },
+  {
+   "name": "udp_strip_L152_bit0_to_1_114",
+   "change": "udp_strip.sv line 152: `iptot <= '0; udplen <= '0; dip_hi <= '0; acc <= '0; s1r <= '0; rem <= '0; started <= 1'b0; dropped <= 1'b0; lp <= 1'b0; cslot_cur <= '0; cap_wp <= '0;` became `iptot <= '0; udplen <= '0; dip_hi <= '0; acc <= '0; s1r <= '0; rem <= '0; started <= 1'b0; dropped <= 1'b1; lp <= 1'b0; cslot_cur <= '0; cap_wp <= '0;` (constant 1'b0 replaced by 1'b1)",
+   "verdict": "undecided",
+   "note": "BMC to 30 clocks timed out after 60 s; the unbounded proof (abc pdr) ended TIMEOUT within 180 s"
+  },
+  {
+   "name": "udp_strip_L161_not_removed_22",
+   "change": "udp_strip.sv line 161: `q_fwd[!cs] <= 1'b0; q_cap[!cs] <= 1'b0; q_len[!cs] <= '0;` became `q_fwd[cs] <= 1'b0; q_cap[!cs] <= 1'b0; q_len[!cs] <= '0;` (a logical negation '!' removed)",
+   "verdict": "undecided",
+   "note": "BMC to 30 clocks timed out after 60 s; the unbounded proof (abc pdr) ended TIMEOUT within 180 s"
+  },
+  {
+   "name": "udp_strip_L163_plus_to_minus_54",
+   "change": "udp_strip.sv line 163: `if (vd && oc == 2'd0) n_orphan <= n_orphan + 32'd1;` became `if (vd && oc == 2'd0) n_orphan <= n_orphan - 32'd1;` ('+' replaced by '-')",
+   "verdict": "undecided",
+   "note": "BMC to 30 clocks timed out after 60 s; the unbounded proof (abc pdr) ended TIMEOUT within 180 s"
+  }
+ ],
+ "rows": [
+  {
+   "name": "book_core_L94_minus_to_plus_27",
+   "file": "book_core.sv",
+   "line": 94,
+   "class": "minus_to_plus",
+   "why": "'-' replaced by '+'",
+   "change": "book_core.sv line 94: `for (int i = N_INST - 1; i >= 0; i--) begin` became `for (int i = N_INST + 1; i >= 0; i--) begin` ('-' replaced by '+')",
+   "status": "survived",
+   "seconds": 195.2,
+   "formal": {
+    "verdict": "undecided",
+    "per_config": [
+     {
+      "config": "N_INST=2 LEVELS=4 ORD_AW=4",
+      "bmc_depth": 30,
+      "bmc_status": "TIMEOUT",
+      "note": "BMC to 30 clocks timed out after 60 s; the unbounded proof (abc pdr) ended TIMEOUT within 180 s",
+      "register_matched_proof": "not_proved",
+      "prove_status": "TIMEOUT",
+      "prove_engine": "abc pdr",
+      "verdict": "undecided",
+      "seconds": 364.6
+     }
+    ],
+    "seconds": 364.6
+   }
+  },
+  {
+   "name": "book_core_L211_and_to_or_20",
+   "file": "book_core.sv",
+   "line": 211,
+   "class": "and_to_or",
+   "why": "'&&' replaced by '||'",
+   "change": "book_core.sv line 211: `hit2 = e2_v && (e2_ref == b2_ref);` became `hit2 = e2_v || (e2_ref == b2_ref);` ('&&' replaced by '||')",
+   "status": "killed",
+   "seconds": 115.6
+  },
+  {
+   "name": "book_core_L302_bit1_to_0_33",
+   "file": "book_core.sv",
+   "line": 302,
+   "class": "bit1_to_0",
+   "why": "constant 1'b1 replaced by 1'b0",
+   "change": "book_core.sv line 302: `end else miss3 = 1'b1;` became `end else miss3 = 1'b0;` (constant 1'b1 replaced by 1'b0)",
+   "status": "survived",
+   "seconds": 228.1,
+   "formal": {
+    "verdict": "undecided",
+    "per_config": [
+     {
+      "config": "N_INST=2 LEVELS=4 ORD_AW=4",
+      "bmc_depth": 30,
+      "bmc_status": "TIMEOUT",
+      "note": "BMC to 30 clocks timed out after 60 s; the unbounded proof (abc pdr) ended TIMEOUT within 180 s",
+      "register_matched_proof": "not_proved",
+      "prove_status": "TIMEOUT",
+      "prove_engine": "abc pdr",
+      "verdict": "undecided",
+      "seconds": 363.8
+     }
+    ],
+    "seconds": 363.8
+   }
+  },
+  {
+   "name": "book_core_L400_bit0_to_1_65",
+   "file": "book_core.sv",
+   "line": 400,
+   "class": "bit0_to_1",
+   "why": "constant 1'b0 replaced by 1'b1",
+   "change": "book_core.sv line 400: `if (sw_cnt == (ORD_AW + 1)'(ORD_N - 1)) sweep <= 1'b0;` became `if (sw_cnt == (ORD_AW + 1)'(ORD_N - 1)) sweep <= 1'b1;` (constant 1'b0 replaced by 1'b1)",
+   "status": "killed",
+   "seconds": 97.5
+  },
+  {
+   "name": "book_core_L429_const_minus1_69",
+   "file": "book_core.sv",
+   "line": 429,
+   "class": "const_minus1",
+   "why": "constant 2'd1 changed to 2'd0",
+   "change": "book_core.sv line 429: `if (q_cnt == 2'd1) begin q0 <= inb; q_cnt <= 2'd1; end` became `if (q_cnt == 2'd1) begin q0 <= inb; q_cnt <= 2'd0; end` (constant 2'd1 changed to 2'd0)",
+   "status": "survived",
+   "seconds": 202.3,
+   "formal": {
+    "verdict": "undecided",
+    "per_config": [
+     {
+      "config": "N_INST=2 LEVELS=4 ORD_AW=4",
+      "bmc_depth": 30,
+      "bmc_status": "TIMEOUT",
+      "note": "BMC to 30 clocks timed out after 60 s; the unbounded proof (abc pdr) ended TIMEOUT within 180 s",
+      "register_matched_proof": "not_proved",
+      "prove_status": "TIMEOUT",
+      "prove_engine": "abc pdr",
+      "verdict": "undecided",
+      "seconds": 363.8
+     }
+    ],
+    "seconds": 363.8
+   }
+  },
+  {
+   "name": "book_core_L455_const_plus1_50",
+   "file": "book_core.sv",
+   "line": 455,
+   "class": "const_plus1",
+   "why": "constant 32'd1 changed to 32'd2",
+   "change": "book_core.sv line 455: `if (miss3) c_lvmiss <= c_lvmiss + 32'd1;` became `if (miss3) c_lvmiss <= c_lvmiss + 32'd2;` (constant 32'd1 changed to 32'd2)",
+   "status": "survived",
+   "seconds": 221.1,
+   "formal": {
+    "verdict": "undecided",
+    "per_config": [
+     {
+      "config": "N_INST=2 LEVELS=4 ORD_AW=4",
+      "bmc_depth": 30,
+      "bmc_status": "TIMEOUT",
+      "note": "BMC to 30 clocks timed out after 60 s; the unbounded proof (abc pdr) ended TIMEOUT within 180 s",
+      "register_matched_proof": "not_proved",
+      "prove_status": "TIMEOUT",
+      "prove_engine": "abc pdr",
+      "verdict": "undecided",
+      "seconds": 364.6
+     }
+    ],
+    "seconds": 364.6
+   }
+  },
+  {
+   "name": "itch_path_L156_gt_to_le_40",
+   "file": "itch_path.sv",
+   "line": 156,
+   "class": "gt_to_le",
+   "why": "'>' replaced by '<='",
+   "change": "itch_path.sv line 156: `assign lat_bin = (lat_v[31] || lat_v > 32'd14) ? 4'd15 : lat_v[3:0];` became `assign lat_bin = (lat_v[31] || lat_v <= 32'd14) ? 4'd15 : lat_v[3:0];` ('>' replaced by '<=')",
+   "status": "survived",
+   "seconds": 216.7,
+   "formal": {
+    "verdict": "undecided",
+    "per_config": [
+     {
+      "config": "N_INST=2 LEVELS=4 ORD_AW=4",
+      "bmc_depth": 30,
+      "bmc_status": "TIMEOUT",
+      "note": "BMC to 30 clocks timed out after 60 s; the unbounded proof (abc pdr) ended TIMEOUT within 180 s",
+      "register_matched_proof": "proved",
+      "prove_status": "TIMEOUT",
+      "prove_engine": "abc pdr",
+      "verdict": "undecided",
+      "seconds": 316.6
+     }
+    ],
+    "seconds": 316.6
+   }
+  },
+  {
+   "name": "itch_top_L112_or_to_and_50",
+   "file": "itch_top.sv",
+   "line": 112,
+   "class": "or_to_and",
+   "why": "'||' replaced by '&&'",
+   "change": "itch_top.sv line 112: `flags[0] = gap_flag; flags[1] = untrusted || untrusted_m; flags[2] = eos_seen; flags[3] = sess_lock; flags[4] = book_ready; flags[5] = b_busy;` became `flags[0] = gap_flag; flags[1] = untrusted && untrusted_m; flags[2] = eos_seen; flags[3] = sess_lock; flags[4] = book_ready; flags[5] = b_busy;` ('||' replaced by '&&')",
+   "status": "killed",
+   "seconds": 142.8
+  },
+  {
+   "name": "mold_rx_L53_const_plus1_16",
+   "file": "mold_rx.sv",
+   "line": 53,
+   "class": "const_plus1",
+   "why": "constant 8'h1F changed to 8'h20",
+   "change": "mold_rx.sv line 53: `8'h1F:   nv = 4'd5;` became `8'h20:   nv = 4'd5;` (constant 8'h1F changed to 8'h20)",
+   "status": "survived",
+   "seconds": 216.1,
+   "formal": {
+    "verdict": "undecided",
+    "per_config": [
+     {
+      "config": "N_INST=2 LEVELS=4 ORD_AW=4",
+      "bmc_depth": 30,
+      "bmc_status": "TIMEOUT",
+      "note": "BMC to 30 clocks timed out after 60 s; the unbounded proof (abc pdr) ended TIMEOUT within 180 s",
+      "register_matched_proof": "not_proved",
+      "prove_status": "TIMEOUT",
+      "prove_engine": "abc pdr",
+      "verdict": "undecided",
+      "seconds": 364.2
+     }
+    ],
+    "seconds": 364.2
+   }
+  },
+  {
+   "name": "mold_rx_L237_const_plus1_24",
+   "file": "mold_rx.sv",
+   "line": 237,
+   "class": "const_plus1",
+   "why": "constant 3'd3 changed to 3'd4",
+   "change": "mold_rx.sv line 237: `3'd3: wb3 <= s_d;` became `3'd4: wb3 <= s_d;` (constant 3'd3 changed to 3'd4)",
+   "status": "killed",
+   "seconds": 117.3
+  },
+  {
+   "name": "mold_rx_L250_const_plus1_43",
+   "file": "mold_rx.sv",
+   "line": 250,
+   "class": "const_plus1",
+   "why": "constant 3'd1 changed to 3'd2",
+   "change": "mold_rx.sv line 250: `soff    <= hip_start ? 3'd1 : (ph <= 3'd5 ? ph + 3'd2 : 3'd0);` became `soff    <= hip_start ? 3'd2 : (ph <= 3'd5 ? ph + 3'd2 : 3'd0);` (constant 3'd1 changed to 3'd2)",
+   "status": "killed",
+   "seconds": 127.4
+  },
+  {
+   "name": "order_seg_L87_plus_to_minus_40",
+   "file": "order_seg.sv",
+   "line": 87,
+   "class": "plus_to_minus",
+   "why": "'+' replaced by '-'",
+   "change": "order_seg.sv line 87: `ck_a <= {1'b0, tpl_my_ip[31:16]} + {1'b0, tpl_my_ip[15:0]};` became `ck_a <= {1'b0, tpl_my_ip[31:16]} - {1'b0, tpl_my_ip[15:0]};` ('+' replaced by '-')",
+   "status": "killed",
+   "seconds": 94.9
+  },
+  {
+   "name": "order_seg_L104_const_minus1_12",
+   "file": "order_seg.sv",
+   "line": 104,
+   "class": "const_minus1",
+   "why": "constant 4'd2 changed to 4'd1",
+   "change": "order_seg.sv line 104: `4'd2: w = 64'h0640_0040_0000_6300;` became `4'd1: w = 64'h0640_0040_0000_6300;` (constant 4'd2 changed to 4'd1)",
+   "status": "killed",
+   "seconds": 99.0
+  },
+  {
+   "name": "order_seg_L107_const_minus1_12",
+   "file": "order_seg.sv",
+   "line": 107,
+   "class": "const_minus1",
+   "why": "constant 4'd5 changed to 4'd4",
+   "change": "order_seg.sv line 107: `4'd5: w = {8'h18, 8'h50, tpl_ack[7:0], tpl_ack[15:8], tpl_ack[23:16], tpl_ack[31:24], snd_nxt[7:0], snd_nxt[15:8]};` became `4'd4: w = {8'h18, 8'h50, tpl_ack[7:0], tpl_ack[15:8], tpl_ack[23:16], tpl_ack[31:24], snd_nxt[7:0], snd_nxt[15:8]};` (constant 4'd5 changed to 4'd4)",
+   "status": "killed",
+   "seconds": 98.4
+  },
+  {
+   "name": "order_seg_L133_const_minus1_49",
+   "file": "order_seg.sv",
+   "line": 133,
+   "class": "const_minus1",
+   "why": "constant 8'hFF changed to 8'hfe",
+   "change": "order_seg.sv line 133: `o_v <= 1'b1; o_d <= w; o_keep <= 8'hFF;` became `o_v <= 1'b1; o_d <= w; o_keep <= 8'hfe;` (constant 8'hFF changed to 8'hfe)",
+   "status": "killed",
+   "seconds": 95.7
+  },
+  {
+   "name": "ouch_enter_L50_plus_to_minus_57",
+   "file": "ouch_enter.sv",
+   "line": 50,
+   "class": "plus_to_minus",
+   "why": "'+' replaced by '-'",
+   "change": "ouch_enter.sv line 50: `hexa = (n < 4'd10) ? (8'h30 + {4'd0, n}) : (8'h41 + {4'd0, n} - 8'd10);` became `hexa = (n < 4'd10) ? (8'h30 + {4'd0, n}) : (8'h41 - {4'd0, n} - 8'd10);` ('+' replaced by '-')",
+   "status": "killed",
+   "seconds": 106.9
+  },
+  {
+   "name": "ouch_enter_L56_const_minus1_45",
+   "file": "ouch_enter.sv",
+   "line": 56,
+   "class": "const_minus1",
+   "why": "constant 8'h39 changed to 8'h38",
+   "change": "ouch_enter.sv line 56: `fr[8*0 +: 8] = 8'h00; fr[8*1 +: 8] = 8'h39; fr[8*2 +: 8] = \"U\"; fr[8*3 +: 8] = \"O\";` became `fr[8*0 +: 8] = 8'h00; fr[8*1 +: 8] = 8'h38; fr[8*2 +: 8] = \"U\"; fr[8*3 +: 8] = \"O\";` (constant 8'h39 changed to 8'h38)",
+   "status": "killed",
+   "seconds": 86.6
+  },
+  {
+   "name": "risk_glue_L139_const_plus1_49",
+   "file": "risk_glue.sv",
+   "line": 139,
+   "class": "const_plus1",
+   "why": "constant 32'd1 changed to 32'd2",
+   "change": "risk_glue.sv line 139: `3'd1: c_rarm   <= c_rarm   + 32'd1;` became `3'd1: c_rarm   <= c_rarm   + 32'd2;` (constant 32'd1 changed to 32'd2)",
+   "status": "killed",
+   "seconds": 126.5
+  },
+  {
+   "name": "tx_mux_L80_const_plus1_60",
+   "file": "tx_mux.sv",
+   "line": 80,
+   "class": "const_plus1",
+   "why": "constant 3'd0 changed to 3'd1",
+   "change": "tx_mux.sv line 80: `s_valid = 1'b0; s_data = '0; s_last = 1'b0; s_nb1 = 3'd0; s_poison = 1'b0;` became `s_valid = 1'b0; s_data = '0; s_last = 1'b0; s_nb1 = 3'd1; s_poison = 1'b0;` (constant 3'd0 changed to 3'd1)",
+   "status": "survived",
+   "seconds": 189.6,
+   "formal": {
+    "verdict": "undecided",
+    "per_config": [
+     {
+      "config": "N_INST=2 LEVELS=4 ORD_AW=4",
+      "bmc_depth": 30,
+      "bmc_status": "TIMEOUT",
+      "note": "BMC to 30 clocks timed out after 60 s; the unbounded proof (abc pdr) ended TIMEOUT within 180 s",
+      "register_matched_proof": "proved",
+      "prove_status": "TIMEOUT",
+      "prove_engine": "abc pdr",
+      "verdict": "undecided",
+      "seconds": 316.8
+     }
+    ],
+    "seconds": 316.8
+   }
+  },
+  {
+   "name": "tx_mux_L152_and_to_or_54",
+   "file": "tx_mux.sv",
+   "line": 152,
+   "class": "and_to_or",
+   "why": "'&&' replaced by '||'",
+   "change": "tx_mux.sv line 152: `fq_d[wp] <= o_d; fq_f[wp] <= {in_last && o_unres, in_last && o_poison, in_last, in_nb1}; wp <= wp + 3'd1;` became `fq_d[wp] <= o_d; fq_f[wp] <= {in_last || o_unres, in_last && o_poison, in_last, in_nb1}; wp <= wp + 3'd1;` ('&&' replaced by '||')",
+   "status": "survived",
+   "seconds": 211.4,
+   "formal": {
+    "verdict": "undecided",
+    "per_config": [
+     {
+      "config": "N_INST=2 LEVELS=4 ORD_AW=4",
+      "bmc_depth": 30,
+      "bmc_status": "TIMEOUT",
+      "note": "BMC to 30 clocks timed out after 60 s; the unbounded proof (abc pdr) ended TIMEOUT within 180 s",
+      "register_matched_proof": "proved",
+      "prove_status": "TIMEOUT",
+      "prove_engine": "abc pdr",
+      "verdict": "undecided",
+      "seconds": 308.1
+     }
+    ],
+    "seconds": 308.1
+   }
+  },
+  {
+   "name": "tx_mux_L205_const_minus1_121",
+   "file": "tx_mux.sv",
+   "line": 205,
+   "class": "const_minus1",
+   "why": "constant 8'd1 changed to 8'd0",
+   "change": "tx_mux.sv line 205: `gapc <= hw[31:16]; flen <= hw[15:0]; r_pz <= hw[32]; wl <= (hw[15:0] + 16'd7) >> 3; ptr <= ptr + 8'd1; rst_s <= R_GAP;` became `gapc <= hw[31:16]; flen <= hw[15:0]; r_pz <= hw[32]; wl <= (hw[15:0] + 16'd7) >> 3; ptr <= ptr + 8'd0; rst_s <= R_GAP;` (constant 8'd1 changed to 8'd0)",
+   "status": "survived",
+   "seconds": 206.7,
+   "formal": {
+    "verdict": "undecided",
+    "per_config": [
+     {
+      "config": "N_INST=2 LEVELS=4 ORD_AW=4",
+      "bmc_depth": 30,
+      "bmc_status": "TIMEOUT",
+      "note": "BMC to 30 clocks timed out after 60 s; the unbounded proof (abc pdr) ended TIMEOUT within 180 s",
+      "register_matched_proof": "proved",
+      "prove_status": "TIMEOUT",
+      "prove_engine": "abc pdr",
+      "verdict": "undecided",
+      "seconds": 306.6
+     }
+    ],
+    "seconds": 306.6
+   }
+  },
+  {
+   "name": "udp_strip_L115_ge_to_gt_32",
+   "file": "udp_strip.sv",
+   "line": 115,
+   "class": "ge_to_gt",
+   "why": "'>=' replaced by '>'",
+   "change": "udp_strip.sv line 115: `attempt = ((m_v && wi_n >= 4'd6) || lp) && rem_eff != 16'd0 && hdr_ok && !dropped;` became `attempt = ((m_v && wi_n > 4'd6) || lp) && rem_eff != 16'd0 && hdr_ok && !dropped;` ('>=' replaced by '>')",
+   "status": "killed",
+   "seconds": 102.7
+  },
+  {
+   "name": "udp_strip_L152_bit0_to_1_114",
+   "file": "udp_strip.sv",
+   "line": 152,
+   "class": "bit0_to_1",
+   "why": "constant 1'b0 replaced by 1'b1",
+   "change": "udp_strip.sv line 152: `iptot <= '0; udplen <= '0; dip_hi <= '0; acc <= '0; s1r <= '0; rem <= '0; started <= 1'b0; dropped <= 1'b0; lp <= 1'b0; cslot_cur <= '0; cap_wp <= '0;` became `iptot <= '0; udplen <= '0; dip_hi <= '0; acc <= '0; s1r <= '0; rem <= '0; started <= 1'b0; dropped <= 1'b1; lp <= 1'b0; cslot_cur <= '0; cap_wp <= '0;` (constant 1'b0 replaced by 1'b1)",
+   "status": "survived",
+   "seconds": 192.9,
+   "formal": {
+    "verdict": "undecided",
+    "per_config": [
+     {
+      "config": "N_INST=2 LEVELS=4 ORD_AW=4",
+      "bmc_depth": 30,
+      "bmc_status": "TIMEOUT",
+      "note": "BMC to 30 clocks timed out after 60 s; the unbounded proof (abc pdr) ended TIMEOUT within 180 s",
+      "register_matched_proof": "proved",
+      "prove_status": "TIMEOUT",
+      "prove_engine": "abc pdr",
+      "verdict": "undecided",
+      "seconds": 306.8
+     }
+    ],
+    "seconds": 306.8
+   }
+  },
+  {
+   "name": "udp_strip_L159_const_plus1_39",
+   "file": "udp_strip.sv",
+   "line": 159,
+   "class": "const_plus1",
+   "why": "constant 32'd1 changed to 32'd2",
+   "change": "udp_strip.sv line 159: `n_frames <= n_frames + 32'd1;` became `n_frames <= n_frames + 32'd2;` (constant 32'd1 changed to 32'd2)",
+   "status": "killed",
+   "seconds": 102.1
+  },
+  {
+   "name": "udp_strip_L161_not_removed_22",
+   "file": "udp_strip.sv",
+   "line": 161,
+   "class": "not_removed",
+   "why": "a logical negation '!' removed",
+   "change": "udp_strip.sv line 161: `q_fwd[!cs] <= 1'b0; q_cap[!cs] <= 1'b0; q_len[!cs] <= '0;` became `q_fwd[cs] <= 1'b0; q_cap[!cs] <= 1'b0; q_len[!cs] <= '0;` (a logical negation '!' removed)",
+   "status": "survived",
+   "seconds": 212.9,
+   "formal": {
+    "verdict": "undecided",
+    "per_config": [
+     {
+      "config": "N_INST=2 LEVELS=4 ORD_AW=4",
+      "bmc_depth": 30,
+      "bmc_status": "TIMEOUT",
+      "note": "BMC to 30 clocks timed out after 60 s; the unbounded proof (abc pdr) ended TIMEOUT within 180 s",
+      "register_matched_proof": "proved",
+      "prove_status": "TIMEOUT",
+      "prove_engine": "abc pdr",
+      "verdict": "undecided",
+      "seconds": 307.4
+     }
+    ],
+    "seconds": 307.4
+   }
+  },
+  {
+   "name": "udp_strip_L163_plus_to_minus_54",
+   "file": "udp_strip.sv",
+   "line": 163,
+   "class": "plus_to_minus",
+   "why": "'+' replaced by '-'",
+   "change": "udp_strip.sv line 163: `if (vd && oc == 2'd0) n_orphan <= n_orphan + 32'd1;` became `if (vd && oc == 2'd0) n_orphan <= n_orphan - 32'd1;` ('+' replaced by '-')",
+   "status": "survived",
+   "seconds": 221.2,
+   "formal": {
+    "verdict": "undecided",
+    "per_config": [
+     {
+      "config": "N_INST=2 LEVELS=4 ORD_AW=4",
+      "bmc_depth": 30,
+      "bmc_status": "TIMEOUT",
+      "note": "BMC to 30 clocks timed out after 60 s; the unbounded proof (abc pdr) ended TIMEOUT within 180 s",
+      "register_matched_proof": "proved",
+      "prove_status": "TIMEOUT",
+      "prove_engine": "abc pdr",
+      "verdict": "undecided",
+      "seconds": 308.2
+     }
+    ],
+    "seconds": 308.2
+   }
+  },
+  {
+   "name": "udp_strip_L183_bit0_to_1_61",
+   "file": "udp_strip.sv",
+   "line": 183,
+   "class": "bit0_to_1",
+   "why": "constant 1'b0 replaced by 1'b1",
+   "change": "udp_strip.sv line 183: `if (m_sof) begin started <= 1'b0; dropped <= 1'b0; lp <= 1'b0; rem <= '0; hdr_ok <= 1'b0; tcp_cur <= 1'b0; end` became `if (m_sof) begin started <= 1'b0; dropped <= 1'b1; lp <= 1'b0; rem <= '0; hdr_ok <= 1'b0; tcp_cur <= 1'b0; end` (constant 1'b0 replaced by 1'b1)",
+   "status": "killed",
+   "seconds": 119.7
+  },
+  {
+   "name": "udp_strip_L196_const_minus1_52",
+   "file": "udp_strip.sv",
+   "line": 196,
+   "class": "const_minus1",
+   "why": "constant 8'h11 changed to 8'h10",
+   "change": "udp_strip.sv line 196: `proto_udp <= (m_d[63:56] == 8'h11);` became `proto_udp <= (m_d[63:56] == 8'h10);` (constant 8'h11 changed to 8'h10)",
+   "status": "killed",
+   "seconds": 154.8
+  },
+  {
+   "name": "udp_strip_L219_bit0_to_1_82",
+   "file": "udp_strip.sv",
+   "line": 219,
+   "class": "bit0_to_1",
+   "why": "constant 1'b0 replaced by 1'b1",
+   "change": "udp_strip.sv line 219: `else if (!c_dip)  begin n_dip <= n_dip + 32'd1; hdr_ok <= 1'b0; end` became `else if (!c_dip)  begin n_dip <= n_dip + 32'd1; hdr_ok <= 1'b1; end` (constant 1'b0 replaced by 1'b1)",
+   "status": "killed",
+   "seconds": 215.4
+  },
+  {
+   "name": "udp_strip_L230_const_plus1_91",
+   "file": "udp_strip.sv",
+   "line": 230,
+   "class": "const_plus1",
+   "why": "constant 32'd1 changed to 32'd2",
+   "change": "udp_strip.sv line 230: `if (attempt && !started && !ipck_ok) begin dropped <= 1'b1; n_ipck <= n_ipck + 32'd1; end` became `if (attempt && !started && !ipck_ok) begin dropped <= 1'b1; n_ipck <= n_ipck + 32'd2; end` (constant 32'd1 changed to 32'd2)",
+   "status": "killed",
+   "seconds": 216.6
+  }
+ ],
+ "wall_seconds": 8941.2,
+ "tools": {
+  "yosys": "Yosys 0.70+385 (git sha1 098e46a36, Release, Clang /usr/bin/clang++ 21.1.8)",
+  "sby": "SBY v0.70-9-g79fc9ed",
+  "iverilog": "Icarus Verilog version 14.0 (devel) (s20260301-966-g3992ea6a3-dirty)"
+ },
+ "rtl_dir": "build/b170_rtl"
+}

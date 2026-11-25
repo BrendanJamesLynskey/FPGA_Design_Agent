@@ -48,7 +48,7 @@ def test_every_rule_is_covered_by_a_check_or_marked_manual() -> None:
 def test_rule_set_shape_fix_and_skill() -> None:
     rs = LR.load_rules()
     assert not LR.rule_problems(rs)
-    assert rs["version"] == "1.6"
+    assert rs["version"] == "1.12"         # brief 190: HDL-FAST-01 (brief 208: 1.11, brief 207: 1.10, brief 204a: 1.9)
     for r in rs["rules"]:
         assert str(r.get("fix") or "").strip(), f"{r['id']}: no fix"
         sk = str(r.get("skill") or "")
@@ -263,7 +263,10 @@ def test_vivado_session_is_one_call_for_all_missing_reports(tmp_path: Path) -> N
         (out / "cmt.not_run.txt").write_text("cmt not run: test")
         return 0, "ok"
     rep = C.run(d, "all", "synth", vivado=fake)
-    assert calls == [["cmt", "control_sets", "reset_scan"]]
+    # brief 204a and 206: the report-driven checks and init_scan ask for their reports in the same one session
+    # brief 208: clock_mux, and the clock_interaction it reads (this mini build has none)
+    assert calls == [["clock_interaction", "clock_mux", "clock_networks", "clock_utilization", "cmt", "congestion", "control_sets", "high_fanout",
+                      "init_scan", "logic_levels", "reset_scan"]]
     st = {c["check"]: c for c in rep["checks"]}
     assert st["resets"]["status"] == "pass" and not st["resets"]["incomplete"]
     assert st["clocking"]["parts"]["cmt"].startswith("not run: cmt not run")
@@ -299,7 +302,10 @@ def test_agent_check_tool_is_registered_and_offered_to_the_designer() -> None:
     import agent.core.tools  # noqa: F401
     from agent.core.registry import TOOLS
     from agent.graph import run as RUN
-    assert "check" in TOOLS and set(TOOLS["check"].input_schema["properties"]["names"]["items"]["enum"]) == {"all", *C.CHECKS}
+    # brief 204a: the report-driven checks are run by the CLI and the sign-off, but are not yet offered to the Designer: the tool schema is part of
+    # the frozen request golden (agent/tests/test_08f_golden_requests.py), so offering them is a new evaluation and the planner's decision
+    not_offered = {"logic_levels", "clock_tree", "fanout", "synth_log", "congestion", "ip_status"}
+    assert "check" in TOOLS and set(TOOLS["check"].input_schema["properties"]["names"]["items"]["enum"]) == {"all", *C.CHECKS} - not_offered
     for n in range(1, 10):
         assert "check" in RUN.effective_tools("rtl", n, "V3")
     assert "check" not in RUN.effective_tools("tests", 2, "V3") and "check" not in RUN.effective_tools("model", 2, "V3")

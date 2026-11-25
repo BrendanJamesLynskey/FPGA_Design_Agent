@@ -56,6 +56,7 @@ module itch_ouch_tcp_top
     logic [11*32-1:0] cnt_d;
     itch_dec u_dec (.clk, .rst, .clr_cnt, .m_v, .m_w, .m_off, .m_len, .m_seq, .e_v, .e_k, .e_loc, .e_ref, .e_nref, .e_sell, .e_sh, .e_px, .e_stock, .e_code,
                     .e_seq, .cnt(cnt_d));
+    logic [31:0] nt_px;                       // brief 188: early copy of the ladder-update price, book_core to risk_glue
     logic spec_allow, spec_start, spec_fail, tu_v, tu_side, tu_ok, tu_cand, tu_spec, tu_gapblk, tu_inx, book_ready, gapblk_now;
     logic [IW-1:0] spec_inst, tu_inst; logic [31:0] spec_px, tu_cpx, tu_px, tu_sz; logic [N_INST-1:0] inexact;
     logic [N_INST*2*32-1:0] tob_px, tob_sz; logic [N_INST*2-1:0] tob_ok; logic [7:0] sys_code;
@@ -65,18 +66,19 @@ module itch_ouch_tcp_top
         .clk, .rst, .clr_book, .clr_cnt, .cfg_watch, .cfg_thr, .spec_allow, .gapblk_now,
         .e_v, .e_k, .e_loc, .e_ref, .e_nref, .e_sell, .e_sh, .e_px, .e_stock, .e_code,
         .spec_start, .spec_inst, .spec_px, .spec_fail,
-        .tu_v, .tu_inst, .tu_side, .tu_px, .tu_sz, .tu_ok, .tu_cpx, .tu_cand, .tu_spec, .tu_gapblk, .tu_inx,
+        .tu_v, .tu_inst, .tu_side, .tu_px, .tu_sz, .tu_ok, .tu_cpx, .tu_cand, .tu_spec, .tu_gapblk, .tu_inx, .nt_px,
         .tob_px, .tob_sz, .tob_ok, .inexact, .book_ready, .sys_code, .cnt(cnt_b));
     logic go, go_spec, commit, abort, b_busy, b_late;
     logic [63:0] f_sym; logic [31:0] f_px, f_qty, f_ref;
     logic [13*32-1:0] cnt_r;
     risk_glue #(.N_INST(N_INST)) u_risk (
         .clk, .rst, .clr_cnt, .clr_pos, .clr_ref, .cfg_watch, .cfg_arm, .cfg_kill, .cfg_spec, .cfg_qty, .cfg_max_qty, .cfg_max_pos, .cfg_band, .cfg_px_off,
-        .spec_start, .spec_inst, .spec_px, .spec_fail, .tu_v, .tu_inst, .tu_cpx, .tu_cand, .tu_spec, .tu_gapblk, .tu_inx, .tob_px, .tob_ok, .book_ready,
-        .spec_allow, .go, .go_spec, .f_sym, .f_px, .f_qty, .f_ref, .commit, .abort, .b_busy, .b_late, .cnt(cnt_r));
+        .cfg_holdoff(16'd0), .cfg_ref_sw(1'b0), .cfg_ref_px(32'd0), .cfg_ref_age(32'd0), .ref_load(1'b0), .cfg_max_notional(64'd0), .cfg_nt_shift(5'd0), .cfg_nt_tbl('0),
+        .spec_start, .spec_inst, .spec_px, .spec_fail, .tu_v, .tu_inst, .tu_cpx, .tu_cand, .tu_spec, .tu_gapblk, .tu_inx, .nt_px, .tob_px, .tob_ok, .book_ready,
+        .spec_allow, .go, .go_spec, .f_sym, .f_px, .f_qty, .f_ref, .commit, .abort, .b_busy, .b_late, .vd_v(), .vd_pass(), .vd_rej(), .rej_seen(), .cnt(cnt_r));
     logic [15:0] rec_len, rec_id;
     logic [511:0] rec_pay;
-    tcp_fast u_tcp (.clk, .rst, .go, .go_spec, .f_sym, .f_px, .f_qty, .f_ref, .commit, .abort, .cfg_tif, .cfg_display, .cfg_capacity, .cfg_ise, .cfg_cross,
+    tcp_fast u_tcp (.clk, .rst, .go, .go_spec, .f_sym, .f_px, .f_qty, .f_ref, .commit, .abort, .tx_unsent(1'b0), .tx_drop(1'b0), .cfg_tif, .cfg_display, .cfg_capacity, .cfg_ise, .cfg_cross,
                     .cfg_custtype, .cfg_minqty, .busy(b_busy), .late(b_late), .refuse_v, .refuse_code, .o_v, .o_d, .o_sof, .o_eof, .o_keep, .o_poison,
                     .rec_v, .rec_seq, .rec_len, .rec_id, .rec_pay, .sw_we, .sw_waddr, .sw_wdata, .sw_raddr, .sw_rdata);
 

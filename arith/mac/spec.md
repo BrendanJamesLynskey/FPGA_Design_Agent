@@ -92,11 +92,38 @@ Written without knowing the design the block will sit in (brief 139a, owner deci
 - ACCW must be at least WA + WB (the model and the tests assume it) and LANES at least 1; NREG above the stated range behaves as the maximum (3 for dsp, 2 for fabric); none of this is rejected by an assertion
 - the data registers inside the pipeline are not reset: only en is, so after rst the accumulator is 0 and stays 0 until a new sample with en = 1 arrives
 
+## Measured (Vivado out-of-context, brief 160)
+
+Vivado 2026.1 (build 6511674), out-of-context synthesis, placement and routing on one thread, one run per point, at the clock shown. LUT, FF and carry cells are as reported after routing for the wrapper (which registers every port, so the FF column includes the wrapper's register bits); WNS at the target clock gives Fmax = 1000 / (clock - WNS), a lower bound (marked `>=`) when WNS is positive; latency is the spec's, in clocks, without the wrapper's two. `F` marks a point on the area-against-Fmax front of its group, `L` on the area-against-latency front (see [../../results/160_arith_vivado/README.md](../../results/160_arith_vivado/README.md)). Records: [verif/results/](verif/results/), the pre-stated expectation and its verdict per point: [verif/results/vivado_surface.json](verif/results/vivado_surface.json).
+
+| Variant | Part | Point | Clock ns | LUT | FF | SRL | Carry | DSP | BRAM | WNS ns | Fmax MHz | Logic levels | Latency | Fronts | Expectation |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| dsp | a7 | WA=16, WB=16, LANES=1, ACCW=40, SIGNED=1, NREG=3 | 5.0 | 1 | 47 | 0 | 0 | 2 | 0 | 1.502 | >=285.9 | 0 | 3 |  | missed |
+| dsp | a7 | WA=16, WB=16, LANES=1, ACCW=40, SIGNED=1, NREG=1 | 5.0 | 0 | 42 | 0 | 0 | 1 | 0 | 3.394 | >=622.7 | 0 | 1 | FL | met |
+| dsp | a7 | WA=16, WB=16, LANES=2, ACCW=40, SIGNED=1, NREG=3 | 5.0 | 21 | 47 | 0 | 0 | 3 | 0 | 0.221 | >=209.2 | 1 | 3 | L | missed |
+| dsp | a7 | WA=16, WB=16, LANES=4, ACCW=40, SIGNED=1, NREG=3 | 5.0 | 167 | 183 | 0 | 20 | 4 | 0 | -0.641 | 177.3 | 13 | 3 | FL | met |
+| dsp_cascade | a7 | WA=16, WB=16, LANES=2, ACCW=40, SIGNED=1 | 5.0 | 21 | 47 | 0 | 0 | 3 | 0 | 0.511 | >=222.8 | 1 | 3 | FL | met |
+| dsp_cascade | a7 | WA=16, WB=16, LANES=4, ACCW=40, SIGNED=1 | 5.0 | 21 | 80 | 1 | 0 | 5 | 0 | 0.375 | >=216.2 | 1 | 5 | FL | met |
+| dsp_cascade | a7 | WA=16, WB=16, LANES=8, ACCW=40, SIGNED=1 | 5.0 | 70 | 245 | 49 | 0 | 9 | 0 | 0.439 | >=219.3 | 1 | 9 |  | met |
+| dsp_cascade | k26 | WA=16, WB=16, LANES=2, ACCW=40, SIGNED=1 | 3.0 | 20 | 47 | 0 | 0 | 3 | 0 | 0.736 | >=441.7 | 3 | 3 |  | met |
+| dsp_cascade | k26 | WA=16, WB=16, LANES=4, ACCW=40, SIGNED=1 | 3.0 | 21 | 144 | 1 | 0 | 5 | 0 | 0.644 | >=424.4 | 3 | 5 | FL | met |
+| dsp_cascade | k26 | WA=16, WB=16, LANES=8, ACCW=40, SIGNED=1 | 3.0 | 69 | 436 | 49 | 0 | 9 | 0 | 0.785 | >=451.5 | 3 | 9 |  | met |
+| dsp | k26 | WA=16, WB=16, LANES=1, ACCW=40, SIGNED=1, NREG=3 | 3.0 | 0 | 47 | 0 | 0 | 2 | 0 | 1.029 | >=507.4 | 4 | 3 |  | missed |
+| dsp | k26 | WA=16, WB=16, LANES=1, ACCW=40, SIGNED=1, NREG=1 | 3.0 | 0 | 42 | 0 | 0 | 1 | 0 | 1.029 | >=507.4 | 4 | 1 | FL | met |
+| dsp | k26 | WA=16, WB=16, LANES=2, ACCW=40, SIGNED=1, NREG=3 | 3.0 | 0 | 47 | 0 | 0 | 2 | 0 | 1.029 | >=507.4 | 4 | 3 | FL | met |
+| dsp | k26 | WA=16, WB=16, LANES=4, ACCW=40, SIGNED=1, NREG=3 | 3.0 | 141 | 87 | 0 | 10 | 4 | 0 | 0.25 | >=363.6 | 4 | 3 | FL | met |
+| fabric | a7 | WA=16, WB=16, LANES=1, ACCW=40, SIGNED=1, NREG=1 | 5.0 | 489 | 116 | 0 | 72 | 0 | 0 | -3.825 | 113.3 | 13 | 1 | FL | missed |
+| fabric | a7 | WA=16, WB=16, LANES=1, ACCW=40, SIGNED=1, NREG=2 | 5.0 | 534 | 157 | 0 | 75 | 0 | 0 | -3.583 | 116.5 | 11 | 2 | F | missed |
+| fabric | a7 | WA=16, WB=16, LANES=2, ACCW=40, SIGNED=1, NREG=2 | 5.0 | 992 | 193 | 0 | 146 | 0 | 0 | -4.895 | 101.1 | 14 | 2 | FL | missed |
+| fabric | k26 | WA=16, WB=16, LANES=1, ACCW=40, SIGNED=1, NREG=1 | 3.0 | 478 | 116 | 0 | 37 | 0 | 0 | -0.161 | 316.4 | 10 | 1 | FL | missed |
+| fabric | k26 | WA=16, WB=16, LANES=1, ACCW=40, SIGNED=1, NREG=2 | 3.0 | 509 | 157 | 0 | 38 | 0 | 0 | -0.296 | 303.4 | 11 | 2 |  | missed |
+| fabric | k26 | WA=16, WB=16, LANES=2, ACCW=40, SIGNED=1, NREG=2 | 3.0 | 973 | 193 | 0 | 75 | 0 | 0 | -0.748 | 266.8 | 11 | 2 | FL | missed |
+
 ## Files
 
 - [model.py](model.py): the bit-exact model; tests/test_*_model.py check it against independent formulations
 - [harness/](harness/): the packaged verification harness a user reruns against their own instance (model, bench, SystemVerilog checker, coverage targets, standalone runner)
 - [tests/](tests/): the cocotb bench, exhaustive and random points, mutation and formal tests; [verif/testplan.yaml](verif/testplan.yaml) names each
 - [verif/mutants.yaml](verif/mutants.yaml), [formal/jobs.yaml](formal/jobs.yaml): the seeded faults and the formal jobs; results in [verif/results/](verif/results/)
-- [build/](build/): one `build.yaml` per variant for an out-of-context Vivado run on Artix-7 and K26 (prepared, not run); [ooc/](ooc/): the generated register wrappers
+- [build/](build/): one `build.yaml` per variant for an out-of-context Vivado run on Artix-7 and K26 (prepared in brief 139a, run in brief 160); [ooc/](ooc/): the generated register wrappers
 - [../../formal/lean/Arith/](../../formal/lean/Arith/): Lean statements (not approved by a human)
