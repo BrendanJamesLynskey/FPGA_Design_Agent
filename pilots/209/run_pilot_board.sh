@@ -14,14 +14,16 @@ case "$STAGE" in p1_clkmeter|p2_bram_rom|p3_crc_engine|p4_fir_dsp|p5_async_fifo|
 ROOT="${PILOT_ROOT:-/home/brendan/Claude_sandbox/_worktrees/209-kr260-pilot}"
 H="${HANDOFF_DIR:-/home/brendan/Claude_sandbox/_handoff}"
 P="$ROOT/pilots/209/$STAGE"
-DESIGN_DIR="$P/design"
+BOARD_RUN_FILE="$P/board_run.txt"   # the run directory the board build came from (in place: the build stamp covers the paths in build.yaml, so a copy cannot be programmed)
 STAMP_FILE="$P/stamp.txt"
 BOARDS="$HOME/.config/fpga_design_agent/boards.yaml"
 cd "$ROOT"
 [ -f "$STAMP_FILE" ] || { echo "no $STAMP_FILE: the build stamp is added after the agent's build (preregistration, Build stamp); nothing touched"; exit 2; }
 EXPECT_STAMP="$(tr -d '[:space:]' < "$STAMP_FILE")"
 case "$EXPECT_STAMP" in [0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]) ;; *) echo "stamp.txt must hold 8 hex digits, got '$EXPECT_STAMP'"; exit 2;; esac
-ls "$DESIGN_DIR"/build/base/*.bit >/dev/null 2>&1 || { echo "no bitstream in $DESIGN_DIR/build/base: copy the agent's design there first"; exit 2; }
+[ -f "$BOARD_RUN_FILE" ] || { echo "no $BOARD_RUN_FILE: only designs that reached a bitstream have a board stage"; exit 2; }
+DESIGN_DIR="$ROOT/$(tr -d '[:space:]' < "$BOARD_RUN_FILE")"
+ls "$DESIGN_DIR"/build/base/*.bit >/dev/null 2>&1 || { echo "no bitstream in $DESIGN_DIR/build/base: the run directory in board_run.txt must still exist"; exit 2; }
 GOT_STAMP="$(python3 -c "import json,sys; print(json.load(open(sys.argv[1]))['build_id'])" "$DESIGN_DIR/build/base/manifest.json" 2>/dev/null || echo none)"
 [ "$GOT_STAMP" = "$EXPECT_STAMP" ] || { echo "build id in $DESIGN_DIR/build/base/manifest.json is $GOT_STAMP, stamp.txt says $EXPECT_STAMP: refusing; nothing touched"; exit 2; }
 grep -q '^  kr260:' "$BOARDS" 2>/dev/null || { echo "no kr260 entry in $BOARDS"; exit 2; }

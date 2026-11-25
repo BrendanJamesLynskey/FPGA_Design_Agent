@@ -63,3 +63,7 @@ The API answered the first launch with HTTP 400 "`temperature` is deprecated for
 - The cost cap is now in real dollars, so the "240 calls" statement of the earlier cost addendum no longer applies; the token prices and stop rules (cumulative real total above 130 USD or one run above 20 USD stops the pilot) stand. `truncated_calls` of each run is recorded.
 - "First time" is still run 1.
 
+### Addendum 2026-11-25 17:28 GMT: no board stage
+
+None of the three runs of this design reached a bitstream (all stopped at stage 2: Designer replies cut off at the 16,000-token output limit), so this design has no board stage and no hardware result in this pilot. A labelled second arm after brief 224 will re-run it; that arm's results are not first-time results. The criteria above stand for that arm.
+

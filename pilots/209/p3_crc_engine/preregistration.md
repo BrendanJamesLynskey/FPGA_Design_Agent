@@ -59,3 +59,7 @@ The API answered the first launch with HTTP 400 "`temperature` is deprecated for
 - The cost cap is now in real dollars, so the "240 calls" statement of the earlier cost addendum no longer applies; the token prices and stop rules (cumulative real total above 130 USD or one run above 20 USD stops the pilot) stand. `truncated_calls` of each run is recorded.
 - "First time" is still run 1.
 
+### Addendum 2026-11-25 17:28 GMT: build stamp and board run
+
+The board stage uses agent run 2 of this design, the first of the three runs to reach a bitstream (rule fixed before the runs). BUILD register (USR_ACCESS) must read `4c7b1ce0`, written to `stamp.txt`; the build is read in place from the run directory named in `board_run.txt` (the build stamp covers paths in build.yaml, so a copy cannot be programmed). The criteria above are unchanged.
+

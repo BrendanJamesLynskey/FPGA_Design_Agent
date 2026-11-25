@@ -107,16 +107,21 @@ def main() -> int:
     rec["hw_checks_present"] = hc.exists()
     if hc.exists():
         try:
-            sys.path.insert(0, str(dd.parent))
+            sys.path.insert(0, str(dd.parent)); sys.path.insert(0, str(dd))
             spec = importlib.util.spec_from_file_location("gen_hw_checks", hc)
             mod = importlib.util.module_from_spec(spec); spec.loader.exec_module(mod)
             mock = mod.make_mock()
             res = mod.run(mock)
-            rec["generated_hw_checks_vs_own_mock"] = {"returned": str(res)[:300]}
+            try:
+                items = [(r[0], bool(r[1])) for r in res]
+                rec["generated_hw_checks_vs_own_mock"] = {"checks": len(items), "failed": [n for n, ok in items if not ok]}
+            except Exception:                                   # noqa: BLE001
+                rec["generated_hw_checks_vs_own_mock"] = {"returned": str(res)[:300]}
             import run_check as rc
             import mocks_209 as m
             clk = m.VClock()
-            rep = rc.check(did, mod.make_mock(), clk, None, run / "host_vs_mock")
+            mk = mod.make_mock()
+            rep = rc.check(did, mk, clk, mk.rd(4) if hasattr(mk, 'rd') else None, run / "host_vs_mock")
             rec["pilot_host_check_vs_design_mock"] = {"verdict": rep.verdict(), "failed": [c["name"] for c in rep.criteria if not c["pass"]][:12], "aborted": rep.aborted}
         except Exception as e:                                  # noqa: BLE001
             rec["generated_hw_checks_vs_own_mock"] = rec.get("generated_hw_checks_vs_own_mock") or {"error": f"{type(e).__name__}: {e}"[:300]}
