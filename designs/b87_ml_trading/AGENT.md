@@ -2,7 +2,7 @@
 source: designs/b87_ml_trading/handover.yaml; human view: README.md; refresh: python -m flow.handover fresh designs/b87_ml_trading
 
 ## identity
-kind=showcase produced_by=human part=xck26-sfvc784-2LV-c board=Kria KR260 (K26 SOM) top=ooc_wrap (one arm with an input register), out of context; trigger_core with ML_ARM = 1 in simulation tool=Vivado 2026.1
+kind=showcase produced_by=session part=xck26-sfvc784-2LV-c board=Kria KR260 (K26 SOM) top=ooc_wrap (one arm with an input register), out of context; trigger_core with ML_ARM = 1 in simulation tool=Vivado 2026.1
 
 ## summary
 Small decision models for the 58A trading path, trained on synthetic order flow and built in the fabric of the K26 (Kria KR260). Boosted trees, an MLP built by hand and through hls4ml with Vitis HLS, and a LUT network are each checked bit for bit against their integer models over the whole test split, built out of context and routed, and the boosted trees sit behind the 58A rule table in simulation, switched by a register.

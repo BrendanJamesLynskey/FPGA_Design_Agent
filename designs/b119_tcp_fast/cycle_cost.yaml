@@ -1,0 +1,16 @@
+# Cycle cost of the b119 TCP fast path, from results/b119/bench_sim.json and results/b119/top_sim.json (brief 190; flow/cycle_cost.py).
+design: b119_tcp_fast
+doc: docs/tcp_fast.md
+unit: "clocks of 6.2061 ns, simulation; the first row counts from the clock in which go is presented, the second from the last byte of the triggering ITCH message"
+rows:
+  - {id: first, block: "tcp_fast: go to first byte of the frame", from_event: "go presented (edge 0)", to_event: "first byte of the frame (destination MAC)",
+     record: results/b119/bench_sim.json, to: [timing, first_byte_clocks_after_go]}
+  - {id: headers_s, block: "tcp_fast behind the risk logic, frame started speculatively: added to the stub port of brief 110", from_event: "stub port's first word (b110)",
+     to_event: "first Ethernet byte (b119)", record: results/b119/top_sim.json, from_record: results/b110/latency_sim.json,
+     from: [speculative, first_order_word], to: [behind_risk_logic, speculative, first_ethernet_byte_clocks_after_last_itch_byte],
+     why: "the template and the partial sums of the fixed header fields are prepared when software arms the block, so the first byte leaves in the clock after go and the changing fields are added while the header is already on its way (the IPv4 checksum field is complete 4 clocks after go, the TCP one 7)"}
+  - {id: headers_v, block: "tcp_fast behind the risk logic, frame started at the verdict: added to the stub port of brief 110", from_event: "stub port's first word (b110)",
+     to_event: "first Ethernet byte (b119)", record: results/b119/top_sim.json, from_record: results/b110/latency_sim.json,
+     from: [non_speculative, first_order_word], to: [behind_risk_logic, non_speculative, first_ethernet_byte_clocks_after_last_itch_byte],
+     why: "as the speculative row: the headers add nothing to the first byte"}
+totals: []

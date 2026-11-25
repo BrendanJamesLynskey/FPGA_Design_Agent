@@ -1,0 +1,245 @@
+Copyright 1986-2022 Xilinx, Inc. All Rights Reserved. Copyright 2022-2026 Advanced Micro Devices, Inc. All Rights Reserved.
+------------------------------------------------------------------------------------------------------------------------------------------------
+| Tool Version : Vivado v.2026.1 (lin64) Build 6511674 Tue Jun 16 11:01:26 MDT 2026
+| Date         : Tue Nov 24 17:55:18 2026
+| Host         : bren-ubuntu24-04 running 64-bit Ubuntu 24.04.4 LTS
+| Command      : report_methodology -file /home/brendan/Claude_sandbox/_worktrees/208-clock-mux/build/208/a7/a7_u_genphys/methodology_route.rpt
+| Design       : mux_top
+| Device       : xc7a35tcpg236-1
+| Speed File   : -1
+| Design State : Fully Routed
+------------------------------------------------------------------------------------------------------------------------------------------------
+
+Report Methodology
+
+Table of Contents
+-----------------
+1. REPORT SUMMARY
+2. REPORT DETAILS
+
+1. REPORT SUMMARY
+-----------------
+            Netlist: mux_top
+          Floorplan: design_1
+      Design limits: <entire design considered>
+             Max checks: <unlimited>
+             Checks found: 41
++-----------+------------------+------------------------------------------------+--------+
+| Rule      | Severity         | Description                                    | Checks |
++-----------+------------------+------------------------------------------------+--------+
+| TIMING-6  | Critical Warning | No common primary clock between related clocks | 4      |
+| TIMING-7  | Critical Warning | No common node between related clocks          | 4      |
+| TIMING-16 | Warning          | Large setup violation                          | 32     |
+| XDCH-2    | Warning          | Same min and max delay values on IO port       | 1      |
++-----------+------------------+------------------------------------------------+--------+
+
+2. REPORT DETAILS
+-----------------
+TIMING-6#1 Critical Warning
+No common primary clock between related clocks  
+The clocks clk0 and clk1 are related (timed together) but they have no common primary clock. The design could fail in hardware. To find a timing path between these clocks, run the following command: report_timing -from [get_clocks clk0] -to [get_clocks clk1]
+Related violations: <none>
+
+TIMING-6#2 Critical Warning
+No common primary clock between related clocks  
+The clocks clk0 and clk1mux are related (timed together) but they have no common primary clock. The design could fail in hardware. To find a timing path between these clocks, run the following command: report_timing -from [get_clocks clk0] -to [get_clocks clk1mux]
+Related violations: <none>
+
+TIMING-6#3 Critical Warning
+No common primary clock between related clocks  
+The clocks clk1 and clk0mux are related (timed together) but they have no common primary clock. The design could fail in hardware. To find a timing path between these clocks, run the following command: report_timing -from [get_clocks clk1] -to [get_clocks clk0mux]
+Related violations: <none>
+
+TIMING-6#4 Critical Warning
+No common primary clock between related clocks  
+The clocks clk1mux and clk0 are related (timed together) but they have no common primary clock. The design could fail in hardware. To find a timing path between these clocks, run the following command: report_timing -from [get_clocks clk1mux] -to [get_clocks clk0]
+Related violations: <none>
+
+TIMING-7#1 Critical Warning
+No common node between related clocks  
+The clocks clk0 and clk1 are related (timed together) but they have no common node. The design could fail in hardware. To find a timing path between these clocks, run the following command: report_timing -from [get_clocks clk0] -to [get_clocks clk1]
+Related violations: <none>
+
+TIMING-7#2 Critical Warning
+No common node between related clocks  
+The clocks clk0 and clk1mux are related (timed together) but they have no common node. The design could fail in hardware. To find a timing path between these clocks, run the following command: report_timing -from [get_clocks clk0] -to [get_clocks clk1mux]
+Related violations: <none>
+
+TIMING-7#3 Critical Warning
+No common node between related clocks  
+The clocks clk1 and clk0mux are related (timed together) but they have no common node. The design could fail in hardware. To find a timing path between these clocks, run the following command: report_timing -from [get_clocks clk1] -to [get_clocks clk0mux]
+Related violations: <none>
+
+TIMING-7#4 Critical Warning
+No common node between related clocks  
+The clocks clk1mux and clk0 are related (timed together) but they have no common node. The design could fail in hardware. To find a timing path between these clocks, run the following command: report_timing -from [get_clocks clk1mux] -to [get_clocks clk0]
+Related violations: <none>
+
+TIMING-16#1 Warning
+Large setup violation  
+There is a large setup violation of -5.001 ns between r0_reg[4]/C (clocked by clk0) and g_int.rm_reg[1]/D (clocked by clk1mux). Large setup violations at the end of those stages might be difficult to fix during the post-placement implementation flow and could be the result of non-optimal XDC constraints or non-optimal design architecture
+Related violations: <none>
+
+TIMING-16#2 Warning
+Large setup violation  
+There is a large setup violation of -5.051 ns between r0_reg[4]/C (clocked by clk0) and g_int.rm_reg[0]/D (clocked by clk1mux). Large setup violations at the end of those stages might be difficult to fix during the post-placement implementation flow and could be the result of non-optimal XDC constraints or non-optimal design architecture
+Related violations: <none>
+
+TIMING-16#3 Warning
+Large setup violation  
+There is a large setup violation of -5.610 ns between r0_reg[4]/C (clocked by clk0) and g_int.rm_reg[2]/D (clocked by clk1mux). Large setup violations at the end of those stages might be difficult to fix during the post-placement implementation flow and could be the result of non-optimal XDC constraints or non-optimal design architecture
+Related violations: <none>
+
+TIMING-16#4 Warning
+Large setup violation  
+There is a large setup violation of -5.613 ns between r0_reg[4]/C (clocked by clk0) and g_int.rm_reg[3]/D (clocked by clk1mux). Large setup violations at the end of those stages might be difficult to fix during the post-placement implementation flow and could be the result of non-optimal XDC constraints or non-optimal design architecture
+Related violations: <none>
+
+TIMING-16#5 Warning
+Large setup violation  
+There is a large setup violation of -5.872 ns between r0_reg[4]/C (clocked by clk0) and g_int.rm_reg[5]/D (clocked by clk1mux). Large setup violations at the end of those stages might be difficult to fix during the post-placement implementation flow and could be the result of non-optimal XDC constraints or non-optimal design architecture
+Related violations: <none>
+
+TIMING-16#6 Warning
+Large setup violation  
+There is a large setup violation of -5.949 ns between r0_reg[4]/C (clocked by clk0) and g_int.rm_reg[4]/D (clocked by clk1mux). Large setup violations at the end of those stages might be difficult to fix during the post-placement implementation flow and could be the result of non-optimal XDC constraints or non-optimal design architecture
+Related violations: <none>
+
+TIMING-16#7 Warning
+Large setup violation  
+There is a large setup violation of -6.105 ns between r0_reg[4]/C (clocked by clk0) and g_int.rm_reg[6]/D (clocked by clk1mux). Large setup violations at the end of those stages might be difficult to fix during the post-placement implementation flow and could be the result of non-optimal XDC constraints or non-optimal design architecture
+Related violations: <none>
+
+TIMING-16#8 Warning
+Large setup violation  
+There is a large setup violation of -6.123 ns between r0_reg[4]/C (clocked by clk0) and g_int.rm_reg[7]/D (clocked by clk1mux). Large setup violations at the end of those stages might be difficult to fix during the post-placement implementation flow and could be the result of non-optimal XDC constraints or non-optimal design architecture
+Related violations: <none>
+
+TIMING-16#9 Warning
+Large setup violation  
+There is a large setup violation of -6.289 ns between r0_reg[4]/C (clocked by clk0) and g_int.rm_reg[10]/D (clocked by clk1mux). Large setup violations at the end of those stages might be difficult to fix during the post-placement implementation flow and could be the result of non-optimal XDC constraints or non-optimal design architecture
+Related violations: <none>
+
+TIMING-16#10 Warning
+Large setup violation  
+There is a large setup violation of -6.373 ns between r0_reg[4]/C (clocked by clk0) and g_int.rm_reg[8]/D (clocked by clk1mux). Large setup violations at the end of those stages might be difficult to fix during the post-placement implementation flow and could be the result of non-optimal XDC constraints or non-optimal design architecture
+Related violations: <none>
+
+TIMING-16#11 Warning
+Large setup violation  
+There is a large setup violation of -6.495 ns between r0_reg[4]/C (clocked by clk0) and g_int.rm_reg[9]/D (clocked by clk1mux). Large setup violations at the end of those stages might be difficult to fix during the post-placement implementation flow and could be the result of non-optimal XDC constraints or non-optimal design architecture
+Related violations: <none>
+
+TIMING-16#12 Warning
+Large setup violation  
+There is a large setup violation of -6.498 ns between r0_reg[4]/C (clocked by clk0) and g_int.rm_reg[12]/D (clocked by clk1mux). Large setup violations at the end of those stages might be difficult to fix during the post-placement implementation flow and could be the result of non-optimal XDC constraints or non-optimal design architecture
+Related violations: <none>
+
+TIMING-16#13 Warning
+Large setup violation  
+There is a large setup violation of -6.566 ns between r0_reg[4]/C (clocked by clk0) and g_int.rm_reg[14]/D (clocked by clk1mux). Large setup violations at the end of those stages might be difficult to fix during the post-placement implementation flow and could be the result of non-optimal XDC constraints or non-optimal design architecture
+Related violations: <none>
+
+TIMING-16#14 Warning
+Large setup violation  
+There is a large setup violation of -6.566 ns between r0_reg[4]/C (clocked by clk0) and g_int.rm_reg[15]/D (clocked by clk1mux). Large setup violations at the end of those stages might be difficult to fix during the post-placement implementation flow and could be the result of non-optimal XDC constraints or non-optimal design architecture
+Related violations: <none>
+
+TIMING-16#15 Warning
+Large setup violation  
+There is a large setup violation of -6.584 ns between r0_reg[4]/C (clocked by clk0) and g_int.rm_reg[13]/D (clocked by clk1mux). Large setup violations at the end of those stages might be difficult to fix during the post-placement implementation flow and could be the result of non-optimal XDC constraints or non-optimal design architecture
+Related violations: <none>
+
+TIMING-16#16 Warning
+Large setup violation  
+There is a large setup violation of -6.591 ns between r0_reg[4]/C (clocked by clk0) and g_int.rm_reg[16]/D (clocked by clk1mux). Large setup violations at the end of those stages might be difficult to fix during the post-placement implementation flow and could be the result of non-optimal XDC constraints or non-optimal design architecture
+Related violations: <none>
+
+TIMING-16#17 Warning
+Large setup violation  
+There is a large setup violation of -6.598 ns between r0_reg[4]/C (clocked by clk0) and g_int.rm_reg[18]/D (clocked by clk1mux). Large setup violations at the end of those stages might be difficult to fix during the post-placement implementation flow and could be the result of non-optimal XDC constraints or non-optimal design architecture
+Related violations: <none>
+
+TIMING-16#18 Warning
+Large setup violation  
+There is a large setup violation of -6.629 ns between r0_reg[4]/C (clocked by clk0) and g_int.rm_reg[19]/D (clocked by clk1mux). Large setup violations at the end of those stages might be difficult to fix during the post-placement implementation flow and could be the result of non-optimal XDC constraints or non-optimal design architecture
+Related violations: <none>
+
+TIMING-16#19 Warning
+Large setup violation  
+There is a large setup violation of -6.636 ns between r0_reg[4]/C (clocked by clk0) and g_int.rm_reg[11]/D (clocked by clk1mux). Large setup violations at the end of those stages might be difficult to fix during the post-placement implementation flow and could be the result of non-optimal XDC constraints or non-optimal design architecture
+Related violations: <none>
+
+TIMING-16#20 Warning
+Large setup violation  
+There is a large setup violation of -6.682 ns between r0_reg[4]/C (clocked by clk0) and g_int.rm_reg[20]/D (clocked by clk1mux). Large setup violations at the end of those stages might be difficult to fix during the post-placement implementation flow and could be the result of non-optimal XDC constraints or non-optimal design architecture
+Related violations: <none>
+
+TIMING-16#21 Warning
+Large setup violation  
+There is a large setup violation of -6.686 ns between r0_reg[4]/C (clocked by clk0) and g_int.rm_reg[24]/D (clocked by clk1mux). Large setup violations at the end of those stages might be difficult to fix during the post-placement implementation flow and could be the result of non-optimal XDC constraints or non-optimal design architecture
+Related violations: <none>
+
+TIMING-16#22 Warning
+Large setup violation  
+There is a large setup violation of -6.694 ns between r0_reg[4]/C (clocked by clk0) and g_int.rm_reg[17]/D (clocked by clk1mux). Large setup violations at the end of those stages might be difficult to fix during the post-placement implementation flow and could be the result of non-optimal XDC constraints or non-optimal design architecture
+Related violations: <none>
+
+TIMING-16#23 Warning
+Large setup violation  
+There is a large setup violation of -6.714 ns between r0_reg[4]/C (clocked by clk0) and g_int.rm_reg[22]/D (clocked by clk1mux). Large setup violations at the end of those stages might be difficult to fix during the post-placement implementation flow and could be the result of non-optimal XDC constraints or non-optimal design architecture
+Related violations: <none>
+
+TIMING-16#24 Warning
+Large setup violation  
+There is a large setup violation of -6.741 ns between r0_reg[4]/C (clocked by clk0) and g_int.rm_reg[23]/D (clocked by clk1mux). Large setup violations at the end of those stages might be difficult to fix during the post-placement implementation flow and could be the result of non-optimal XDC constraints or non-optimal design architecture
+Related violations: <none>
+
+TIMING-16#25 Warning
+Large setup violation  
+There is a large setup violation of -6.756 ns between r0_reg[4]/C (clocked by clk0) and g_int.rm_reg[26]/D (clocked by clk1mux). Large setup violations at the end of those stages might be difficult to fix during the post-placement implementation flow and could be the result of non-optimal XDC constraints or non-optimal design architecture
+Related violations: <none>
+
+TIMING-16#26 Warning
+Large setup violation  
+There is a large setup violation of -6.778 ns between r0_reg[4]/C (clocked by clk0) and g_int.rm_reg[21]/D (clocked by clk1mux). Large setup violations at the end of those stages might be difficult to fix during the post-placement implementation flow and could be the result of non-optimal XDC constraints or non-optimal design architecture
+Related violations: <none>
+
+TIMING-16#27 Warning
+Large setup violation  
+There is a large setup violation of -6.785 ns between r0_reg[4]/C (clocked by clk0) and g_int.rm_reg[27]/D (clocked by clk1mux). Large setup violations at the end of those stages might be difficult to fix during the post-placement implementation flow and could be the result of non-optimal XDC constraints or non-optimal design architecture
+Related violations: <none>
+
+TIMING-16#28 Warning
+Large setup violation  
+There is a large setup violation of -6.821 ns between r0_reg[4]/C (clocked by clk0) and g_int.rm_reg[30]/D (clocked by clk1mux). Large setup violations at the end of those stages might be difficult to fix during the post-placement implementation flow and could be the result of non-optimal XDC constraints or non-optimal design architecture
+Related violations: <none>
+
+TIMING-16#29 Warning
+Large setup violation  
+There is a large setup violation of -6.910 ns between r0_reg[4]/C (clocked by clk0) and g_int.rm_reg[25]/D (clocked by clk1mux). Large setup violations at the end of those stages might be difficult to fix during the post-placement implementation flow and could be the result of non-optimal XDC constraints or non-optimal design architecture
+Related violations: <none>
+
+TIMING-16#30 Warning
+Large setup violation  
+There is a large setup violation of -6.915 ns between r0_reg[4]/C (clocked by clk0) and g_int.rm_reg[29]/D (clocked by clk1mux). Large setup violations at the end of those stages might be difficult to fix during the post-placement implementation flow and could be the result of non-optimal XDC constraints or non-optimal design architecture
+Related violations: <none>
+
+TIMING-16#31 Warning
+Large setup violation  
+There is a large setup violation of -7.012 ns between r0_reg[4]/C (clocked by clk0) and g_int.rm_reg[31]/D (clocked by clk1mux). Large setup violations at the end of those stages might be difficult to fix during the post-placement implementation flow and could be the result of non-optimal XDC constraints or non-optimal design architecture
+Related violations: <none>
+
+TIMING-16#32 Warning
+Large setup violation  
+There is a large setup violation of -7.027 ns between r0_reg[4]/C (clocked by clk0) and g_int.rm_reg[28]/D (clocked by clk1mux). Large setup violations at the end of those stages might be difficult to fix during the post-placement implementation flow and could be the result of non-optimal XDC constraints or non-optimal design architecture
+Related violations: <none>
+
+XDCH-2#1 Warning
+Same min and max delay values on IO port  
+The same input delay of 1.000 ns has been defined on port 'sel_in' relative to clock clk0 for both max and min. Make sure this reflects the design intent.
+set_input_delay -clock clk0 1.000 [get_ports sel_in]
+/home/brendan/Claude_sandbox/_worktrees/208-clock-mux/results/208/xdc/u_base.xdc (Line: 4)
+Related violations: <none>
+
+

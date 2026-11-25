@@ -10,7 +10,7 @@ Not in scope:
 - a board run or a full-design build; every hardware number is an out-of-context, post-route Vivado 2026.1 build
 - a general-purpose tool; the argmax is written for three classes, and the generator has been measured on one data set
 
-Kind: showcase; written by hand. State: built. For an agent: [AGENT.md](AGENT.md).
+Kind: showcase; written by a Claude Code session. State: built. For an agent: [AGENT.md](AGENT.md).
 
 <!-- prose:what -->
 **Purpose:** build our own LUT-network generator properly, measure it honestly against the brief 87 arms and TreeLUT,

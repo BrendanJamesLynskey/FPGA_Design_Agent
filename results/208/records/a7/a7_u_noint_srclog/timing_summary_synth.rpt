@@ -1,0 +1,401 @@
+Copyright 1986-2022 Xilinx, Inc. All Rights Reserved. Copyright 2022-2026 Advanced Micro Devices, Inc. All Rights Reserved.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+| Tool Version : Vivado v.2026.1 (lin64) Build 6511674 Tue Jun 16 11:01:26 MDT 2026
+| Date         : Tue Nov 24 17:58:23 2026
+| Host         : bren-ubuntu24-04 running 64-bit Ubuntu 24.04.4 LTS
+| Command      : report_timing_summary -max_paths 5 -report_unconstrained -file /home/brendan/Claude_sandbox/_worktrees/208-clock-mux/build/208/a7/a7_u_noint_srclog/timing_summary_synth.rpt
+| Design       : mux_top
+| Device       : 7a35t-cpg236
+| Speed File   : -1  PRODUCTION 1.23 2018-06-13
+| Design State : Synthesized
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Timing Summary Report
+
+------------------------------------------------------------------------------------------------
+| Timer Settings
+| --------------
+------------------------------------------------------------------------------------------------
+
+  Enable Multi Corner Analysis               :  Yes
+  Enable Pessimism Removal                   :  Yes
+  Pessimism Removal Resolution               :  Nearest Common Node
+  Enable Input Delay Default Clock           :  No
+  Enable Preset / Clear Arcs                 :  No
+  Disable Flight Delays                      :  No
+  Ignore I/O Paths                           :  No
+  Timing Early Launch at Borrowing Latches   :  No
+  Borrow Time for Max Delay Exceptions       :  Yes
+  Merge Timing Exceptions                    :  Yes
+  Inter-SLR Compensation                     :  Conservative
+
+  Corner  Analyze    Analyze    
+  Name    Max Paths  Min Paths  
+  ------  ---------  ---------  
+  Slow    Yes        Yes        
+  Fast    Yes        Yes        
+
+
+------------------------------------------------------------------------------------------------
+| Report Methodology
+| ------------------
+------------------------------------------------------------------------------------------------
+
+Rule    Severity  Description                               Violations  
+------  --------  ----------------------------------------  ----------  
+XDCH-2  Warning   Same min and max delay values on IO port  1           
+
+Note: This report is based on the most recent report_methodology run and may not be up-to-date. Run report_methodology on the current design for the latest report.
+
+
+
+check_timing report
+
+Table of Contents
+-----------------
+1. checking no_clock (0)
+2. checking constant_clock (0)
+3. checking pulse_width_clock (0)
+4. checking unconstrained_internal_endpoints (0)
+5. checking no_input_delay (0)
+6. checking no_output_delay (3)
+7. checking multiple_clock (0)
+8. checking generated_clocks (0)
+9. checking loops (0)
+10. checking partial_input_delay (0)
+11. checking partial_output_delay (0)
+12. checking latch_loops (0)
+
+1. checking no_clock (0)
+------------------------
+ There are 0 register/latch pins with no clock.
+
+
+2. checking constant_clock (0)
+------------------------------
+ There are 0 register/latch pins with constant_clock.
+
+
+3. checking pulse_width_clock (0)
+---------------------------------
+ There are 0 register/latch pins which need pulse_width check
+
+
+4. checking unconstrained_internal_endpoints (0)
+------------------------------------------------
+ There are 0 pins that are not constrained for maximum delay.
+
+ There are 0 pins that are not constrained for maximum delay due to constant clock.
+
+
+5. checking no_input_delay (0)
+------------------------------
+ There are 0 input ports with no input delay specified.
+
+ There are 0 input ports with no input delay but user has a false path constraint.
+
+
+6. checking no_output_delay (3)
+-------------------------------
+ There are 0 ports with no output delay specified.
+
+ There are 3 ports with no output delay but user has a false path constraint (MEDIUM)
+
+ There are 0 ports with no output delay but with a timing clock defined on it or propagating through it
+
+
+7. checking multiple_clock (0)
+------------------------------
+ There are 0 register/latch pins with multiple clocks.
+
+
+8. checking generated_clocks (0)
+--------------------------------
+ There are 0 generated clocks that are not connected to a clock source.
+
+
+9. checking loops (0)
+---------------------
+ There are 0 combinational loops in the design.
+
+
+10. checking partial_input_delay (0)
+------------------------------------
+ There are 0 input ports with partial input delay specified.
+
+
+11. checking partial_output_delay (0)
+-------------------------------------
+ There are 0 ports with partial output delay specified.
+
+
+12. checking latch_loops (0)
+----------------------------
+ There are 0 combinational latch loops in the design through latch input
+
+
+
+------------------------------------------------------------------------------------------------
+| Design Timing Summary
+| ---------------------
+------------------------------------------------------------------------------------------------
+
+    WNS(ns)      TNS(ns)  TNS Failing Endpoints  TNS Total Endpoints      WHS(ns)      THS(ns)  THS Failing Endpoints  THS Total Endpoints     WPWS(ns)     TPWS(ns)  TPWS Failing Endpoints  TPWS Total Endpoints  
+    -------      -------  ---------------------  -------------------      -------      -------  ---------------------  -------------------     --------     --------  ----------------------  --------------------  
+      1.000        0.000                      0                  133        0.120        0.000                      0                  133        4.500        0.000                       0                   136  
+
+
+All user specified timing constraints are met.
+
+
+------------------------------------------------------------------------------------------------
+| Clock Summary
+| -------------
+------------------------------------------------------------------------------------------------
+
+Clock  Waveform(ns)       Period(ns)      Frequency(MHz)
+-----  ------------       ----------      --------------
+clk0   {0.000 5.000}      10.000          100.000         
+clk1   {0.000 6.667}      13.333          75.002          
+
+
+------------------------------------------------------------------------------------------------
+| Intra Clock Table
+| -----------------
+------------------------------------------------------------------------------------------------
+
+Clock             WNS(ns)      TNS(ns)  TNS Failing Endpoints  TNS Total Endpoints      WHS(ns)      THS(ns)  THS Failing Endpoints  THS Total Endpoints     WPWS(ns)     TPWS(ns)  TPWS Failing Endpoints  TPWS Total Endpoints  
+-----             -------      -------  ---------------------  -------------------      -------      -------  ---------------------  -------------------     --------     --------  ----------------------  --------------------  
+clk0                1.000        0.000                      0                  100        0.120        0.000                      0                  100        4.500        0.000                       0                   101  
+clk1               10.367        0.000                      0                   66        0.145        0.000                      0                   66        6.166        0.000                       0                    68  
+
+
+------------------------------------------------------------------------------------------------
+| Inter Clock Table
+| -----------------
+------------------------------------------------------------------------------------------------
+
+From Clock    To Clock          WNS(ns)      TNS(ns)  TNS Failing Endpoints  TNS Total Endpoints      WHS(ns)      THS(ns)  THS Failing Endpoints  THS Total Endpoints  
+----------    --------          -------      -------  ---------------------  -------------------      -------      -------  ---------------------  -------------------  
+
+
+------------------------------------------------------------------------------------------------
+| Other Path Groups Table
+| -----------------------
+------------------------------------------------------------------------------------------------
+
+Path Group    From Clock    To Clock          WNS(ns)      TNS(ns)  TNS Failing Endpoints  TNS Total Endpoints      WHS(ns)      THS(ns)  THS Failing Endpoints  THS Total Endpoints  
+----------    ----------    --------          -------      -------  ---------------------  -------------------      -------      -------  ---------------------  -------------------  
+
+
+------------------------------------------------------------------------------------------------
+| User Ignored Path Table
+| -----------------------
+------------------------------------------------------------------------------------------------
+
+Path Group    From Clock    To Clock    
+----------    ----------    --------    
+(none)        clk0                        
+(none)        clk1                        
+(none)        clk1          clk0          
+(none)        clk0          clk1          
+
+
+------------------------------------------------------------------------------------------------
+| Unconstrained Path Table
+| ------------------------
+------------------------------------------------------------------------------------------------
+
+Path Group    From Clock    To Clock    
+----------    ----------    --------    
+
+
+------------------------------------------------------------------------------------------------
+| Timing Details
+| --------------
+------------------------------------------------------------------------------------------------
+
+
+---------------------------------------------------------------------------------------------------
+From Clock:  clk0
+  To Clock:  clk0
+
+Setup :            0  Failing Endpoints,  Worst Slack        1.000ns,  Total Violation        0.000ns
+Hold  :            0  Failing Endpoints,  Worst Slack        0.120ns,  Total Violation        0.000ns
+PW    :            0  Failing Endpoints,  Worst Slack        4.500ns,  Total Violation        0.000ns
+---------------------------------------------------------------------------------------------------
+
+
+Max Delay Paths
+--------------------------------------------------------------------------------------
+Slack (MET) :             1.000ns  (required time - arrival time)
+  Source:                 r0_reg[20]/C
+                            (rising edge-triggered cell FDRE clocked by clk0  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            g_noint.back_reg[29]/D
+                            (rising edge-triggered cell FDRE clocked by clk0  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             clk0
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (clk0 rise@10.000ns - clk0 rise@0.000ns)
+  Data Path Delay:        8.896ns  (logic 5.231ns (58.802%)  route 3.665ns (41.198%))
+  Logic Levels:           20  (CARRY4=15 LUT4=1 LUT5=1 LUT6=3)
+  Clock Path Skew:        -0.145ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    1.758ns = ( 11.758 - 10.000 ) 
+    Source Clock Delay      (SCD):    2.187ns
+    Clock Pessimism Removal (CPR):    0.283ns
+  Clock Uncertainty:      0.035ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock clk0 rise edge)       0.000     0.000 r  <hidden>
+                                                      0.000     0.000 r  clk0_p
+                         net (fo=0)                   0.000     0.000    clk0_p
+                         IBUF (Prop_ibuf_I_O)         0.923     0.923 r  clk0_p_IBUF_inst/O
+                         net (fo=2, unplaced)         0.584     1.507    clk0_p_IBUF
+                         BUFG (Prop_bufg_I_O)         0.096     1.603 r  u_bufg0/O
+                         net (fo=66, unplaced)        0.584     2.187    clk0
+                         FDRE                                         r  r0_reg[20]/C
+  -------------------------------------------------------------------    -------------------
+                         FDRE (Prop_fdre_C_Q)         0.456     2.643 r  r0_reg[20]/Q
+                         net (fo=25, unplaced)        0.806     3.449    p_0_in[4]
+                         LUT4 (Prop_lut4_I1_O)        0.295     3.744 r  g_noint.back[27]_i_33/O
+                         net (fo=1, unplaced)         0.000     3.744    g_noint.back[27]_i_33_n_0
+                         CARRY4 (Prop_carry4_S[1]_CO[3])
+                                                      0.533     4.277 r  g_noint.back_reg[27]_i_14/CO[3]
+                         net (fo=1, unplaced)         0.000     4.277    g_noint.back_reg[27]_i_14_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117     4.394 r  g_noint.back_reg[31]_i_12/CO[3]
+                         net (fo=1, unplaced)         0.000     4.394    g_noint.back_reg[31]_i_12_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117     4.511 r  g_noint.back_reg[31]_i_9/CO[3]
+                         net (fo=1, unplaced)         0.000     4.511    g_noint.back_reg[31]_i_9_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117     4.628 r  g_noint.back_reg[7]_i_14/CO[3]
+                         net (fo=1, unplaced)         0.000     4.628    g_noint.back_reg[7]_i_14_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117     4.745 r  g_noint.back_reg[11]_i_14/CO[3]
+                         net (fo=1, unplaced)         0.000     4.745    g_noint.back_reg[11]_i_14_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117     4.862 r  g_noint.back_reg[15]_i_14/CO[3]
+                         net (fo=1, unplaced)         0.000     4.862    g_noint.back_reg[15]_i_14_n_0
+                         CARRY4 (Prop_carry4_CI_O[3])
+                                                      0.331     5.193 r  g_noint.back_reg[19]_i_14/O[3]
+                         net (fo=7, unplaced)         0.653     5.846    p_0_in0_in[15]
+                         LUT5 (Prop_lut5_I4_O)        0.307     6.153 r  g_noint.back[7]_i_24/O
+                         net (fo=2, unplaced)         0.460     6.613    g_noint.back[7]_i_24_n_0
+                         LUT6 (Prop_lut6_I0_O)        0.124     6.737 r  g_noint.back[7]_i_28/O
+                         net (fo=1, unplaced)         0.000     6.737    g_noint.back[7]_i_28_n_0
+                         CARRY4 (Prop_carry4_S[0]_CO[3])
+                                                      0.513     7.250 r  g_noint.back_reg[7]_i_13/CO[3]
+                         net (fo=1, unplaced)         0.000     7.250    g_noint.back_reg[7]_i_13_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117     7.367 r  g_noint.back_reg[11]_i_13/CO[3]
+                         net (fo=1, unplaced)         0.000     7.367    g_noint.back_reg[11]_i_13_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117     7.484 r  g_noint.back_reg[15]_i_13/CO[3]
+                         net (fo=1, unplaced)         0.000     7.484    g_noint.back_reg[15]_i_13_n_0
+                         CARRY4 (Prop_carry4_CI_O[3])
+                                                      0.331     7.815 r  g_noint.back_reg[19]_i_15/O[3]
+                         net (fo=3, unplaced)         0.636     8.451    a[2][31]
+                         LUT6 (Prop_lut6_I0_O)        0.307     8.758 r  g_noint.back[19]_i_13/O
+                         net (fo=2, unplaced)         0.460     9.218    g_noint.back[19]_i_13_n_0
+                         LUT6 (Prop_lut6_I5_O)        0.124     9.342 r  g_noint.back[19]_i_4/O
+                         net (fo=2, unplaced)         0.650     9.992    g_noint.back[19]_i_4_n_0
+                         CARRY4 (Prop_carry4_DI[1]_CO[3])
+                                                      0.520    10.512 r  g_noint.back_reg[19]_i_1/CO[3]
+                         net (fo=1, unplaced)         0.000    10.512    g_noint.back_reg[19]_i_1_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    10.629 r  g_noint.back_reg[23]_i_1/CO[3]
+                         net (fo=1, unplaced)         0.000    10.629    g_noint.back_reg[23]_i_1_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117    10.746 r  g_noint.back_reg[27]_i_1/CO[3]
+                         net (fo=1, unplaced)         0.000    10.746    g_noint.back_reg[27]_i_1_n_0
+                         CARRY4 (Prop_carry4_CI_O[1])
+                                                      0.337    11.083 r  g_noint.back_reg[31]_i_1/O[1]
+                         net (fo=1, unplaced)         0.000    11.083    a[3][29]
+                         FDRE                                         r  g_noint.back_reg[29]/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock clk0 rise edge)      10.000    10.000 r  <hidden>
+                                                      0.000    10.000 r  clk0_p
+                         net (fo=0)                   0.000    10.000    clk0_p
+                         IBUF (Prop_ibuf_I_O)         0.789    10.789 r  clk0_p_IBUF_inst/O
+                         net (fo=2, unplaced)         0.439    11.228    clk0_p_IBUF
+                         BUFG (Prop_bufg_I_O)         0.091    11.319 r  u_bufg0/O
+                         net (fo=66, unplaced)        0.439    11.758    clk0
+                         FDRE                                         r  g_noint.back_reg[29]/C
+                         clock pessimism              0.283    12.042    <hidden>
+                         clock uncertainty           -0.035    12.006    <hidden>
+                         FDRE (Setup_fdre_C_D)        0.076    12.082    g_noint.back_reg[29]
+  -------------------------------------------------------------------
+                         required time                         12.082    <hidden>
+                         arrival time                         -11.083    <hidden>
+  -------------------------------------------------------------------
+                         slack                                  1.000    <hidden>
+
+Slack (MET) :             1.006ns  (required time - arrival time)
+  Source:                 r0_reg[20]/C
+                            (rising edge-triggered cell FDRE clocked by clk0  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            g_noint.back_reg[31]/D
+                            (rising edge-triggered cell FDRE clocked by clk0  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             clk0
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (clk0 rise@10.000ns - clk0 rise@0.000ns)
+  Data Path Delay:        8.890ns  (logic 5.225ns (58.774%)  route 3.665ns (41.226%))
+  Logic Levels:           20  (CARRY4=15 LUT4=1 LUT5=1 LUT6=3)
+  Clock Path Skew:        -0.145ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    1.758ns = ( 11.758 - 10.000 ) 
+    Source Clock Delay      (SCD):    2.187ns
+    Clock Pessimism Removal (CPR):    0.283ns
+  Clock Uncertainty:      0.035ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock clk0 rise edge)       0.000     0.000 r  <hidden>
+                                                      0.000     0.000 r  clk0_p
+                         net (fo=0)                   0.000     0.000    clk0_p
+                         IBUF (Prop_ibuf_I_O)         0.923     0.923 r  clk0_p_IBUF_inst/O
+                         net (fo=2, unplaced)         0.584     1.507    clk0_p_IBUF
+                         BUFG (Prop_bufg_I_O)         0.096     1.603 r  u_bufg0/O
+                         net (fo=66, unplaced)        0.584     2.187    clk0
+                         FDRE                                         r  r0_reg[20]/C
+  -------------------------------------------------------------------    -------------------
+                         FDRE (Prop_fdre_C_Q)         0.456     2.643 r  r0_reg[20]/Q
+                         net (fo=25, unplaced)        0.806     3.449    p_0_in[4]
+                         LUT4 (Prop_lut4_I1_O)        0.295     3.744 r  g_noint.back[27]_i_33/O
+                         net (fo=1, unplaced)         0.000     3.744    g_noint.back[27]_i_33_n_0
+                         CARRY4 (Prop_carry4_S[1]_CO[3])
+                                                      0.533     4.277 r  g_noint.back_reg[27]_i_14/CO[3]
+                         net (fo=1, unplaced)         0.000     4.277    g_noint.back_reg[27]_i_14_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117     4.394 r  g_noint.back_reg[31]_i_12/CO[3]
+                         net (fo=1, unplaced)         0.000     4.394    g_noint.back_reg[31]_i_12_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117     4.511 r  g_noint.back_reg[31]_i_9/CO[3]
+                         net (fo=1, unplaced)         0.000     4.511    g_noint.back_reg[31]_i_9_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117     4.628 r  g_noint.back_reg[7]_i_14/CO[3]
+                         net (fo=1, unplaced)         0.000     4.628    g_noint.back_reg[7]_i_14_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117     4.745 r  g_noint.back_reg[11]_i_14/CO[3]
+                         net (fo=1, unplaced)         0.000     4.745    g_noint.back_reg[11]_i_14_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117     4.862 r  g_noint.back_reg[15]_i_14/CO[3]
+                         net (fo=1, unplaced)         0.000     4.862    g_noint.back_reg[15]_i_14_n_0
+                         CARRY4 (Prop_carry4_CI_O[3])
+                                                      0.331     5.193 r  g_noint.back_reg[19]_i_14/O[3]
+                         net (fo=7, unplaced)         0.653     5.846    p_0_in0_in[15]
+                         LUT5 (Prop_lut5_I4_O)        0.307     6.153 r  g_noint.back[7]_i_24/O
+                         net (fo=2, unplaced)         0.460     6.613    g_noint.back[7]_i_24_n_0
+                         LUT6 (Prop_lut6_I0_O)        0.124     6.737 r  g_noint.back[7]_i_28/O
+                         net (fo=1, unplaced)         0.000     6.737    g_noint.back[7]_i_28_n_0
+                         CARRY4 (Prop_carry4_S[0]_CO[3])
+                                                      0.513     7.250 r  g_noint.back_reg[7]_i_13/CO[3]
+[brief 208: truncated to the first 400 lines; the full report is 199195 bytes, regenerate with tcl/run_jobs.tcl]

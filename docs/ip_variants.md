@@ -9,7 +9,8 @@ result, and what each one costs in logic, memory, multipliers, speed and latency
 
 ```
 python3 -m flow.ipvariants fir --params TAPS=32,FOLD=8 --budget dsp=0 --objective fabric   # rank the FIR's variants
-python3 -m flow.ipvariants --search fir filter                                            # find library entries
+python3 -m flow.ipvariants --search fir filter                                            # find library entries (every word must match)
+python -m agent ip search "low-pass filter"                                               # find by meaning; says 'nothing fits' (docs/ip_lookup.md)
 python3 -m flow.ipvariants                                                                # check every entry
 ```
 

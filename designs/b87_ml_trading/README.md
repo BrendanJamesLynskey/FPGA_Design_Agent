@@ -10,7 +10,7 @@ Not in scope:
 - a board run; every number here is from simulation or an out-of-context Vivado 2026.1 build
 - a trading result; the back-test's fill model is an assumption and its differences are within noise
 
-Kind: showcase; written by hand. State: built. For an agent: [AGENT.md](AGENT.md).
+Kind: showcase; written by a Claude Code session. State: built. For an agent: [AGENT.md](AGENT.md).
 
 <!-- prose:what -->
 **Purpose:** measure, on one part and one data set, what a small learned model costs inside a nanosecond trading path:

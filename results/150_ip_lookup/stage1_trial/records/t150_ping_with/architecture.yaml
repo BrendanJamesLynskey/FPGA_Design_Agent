@@ -1,0 +1,76 @@
+schema: fpga-design-agent/architecture/v1
+design: ping_responder
+top: ping_top
+part: xc7a100tcsg324-1
+blocks:
+- name: fpga_shell
+  function: "reused test shell (USB-UART, register window); instantiated at the top, maps the design ID register into window address 0x80"
+- name: id_reg
+  function: "read-only ID register at design offset 0x00 returning DESIGN_ID (ASCII PING); clk domain"
+- name: clk_gen
+  function: "MMCME2 turns clk (100 MHz) into the 50 MHz eth clock clk_eth through a BUFG; the MMCM locked output gates the reset"
+- name: reset_sync
+  function: "xpm_cdc_async_rst instances that bring cpu_resetn into clk and clk_eth (asynchronous assert, synchronous release), active high inside"
+- name: phy_rst_seq
+  function: "holds eth_rst_n low while reset is active and for PHY_RST_RELEASE_CYCLES clk cycles after release; clk domain"
+- name: eth_mac_rmii
+  function: "library entry eth_mac_rmii (RMII 10/100 MAC): RMII receive and transmit, preamble and SFD, FCS check and generate, padding, inter-frame gap; clk_eth domain"
+- name: responder
+  function: "parses the received frame byte by byte (EtherType, IPv4 header and checksum, ICMP type and checksum, ARP opcode and target), decides at frame end, supplies the reply fields; clk_eth domain"
+- name: frame_buf
+  function: "one RAMB36 frame buffer (2 KB, 8 bits, simple dual port), written by the receive path, read by the reply path; no reset; clk_eth domain"
+- name: reply_tx
+  function: "streams the reply frame from frame_buf with substituted fields (MAC, IP, TTL, checksums, ICMP type 0, ARP reply); clk_eth domain"
+- name: led_pulse
+  function: "led high on the first clock of a reply, low after LED_PULSE_CYCLES/2 clk_eth cycles; a new reply restarts the count; clk_eth domain"
+interfaces:
+- name: host_uart
+  between: [host, fpga_shell]
+  protocol: uart
+  prefix: UART
+  module: fpga_shell
+- name: id_window
+  between: [fpga_shell, id_reg]
+  protocol: simple
+  prefix: win
+  module: id_reg
+- name: rx_stream
+  between: [eth_mac_rmii, responder]
+  protocol: axi4-stream
+  prefix: rx_axis
+  module: eth_mac_rmii
+- name: tx_stream
+  between: [reply_tx, eth_mac_rmii]
+  protocol: axi4-stream
+  prefix: tx_axis
+  module: eth_mac_rmii
+- name: rmii_phy
+  between: [eth_mac_rmii, phy]
+  protocol: other
+  prefix: eth
+  module: eth_mac_rmii
+clock_domains:
+- name: clk
+  clock: clk
+  freq_mhz: 100
+- name: clk_eth
+  clock: clk_eth
+  freq_mhz: 50
+reset:
+  synchronisers: [xpm_cdc_async_rst]
+crossings:
+- from: async
+  to: clk
+  signal: cpu_resetn
+  primitive: xpm_cdc_async_rst
+  inline_in: ping_top
+- from: async
+  to: clk_eth
+  signal: cpu_resetn
+  primitive: xpm_cdc_async_rst
+  inline_in: ping_top
+predicted_resources:
+  lut: [400, 2000]
+  ff: [300, 1800]
+  bram_tile: [1, 2]
+  dsp: 0

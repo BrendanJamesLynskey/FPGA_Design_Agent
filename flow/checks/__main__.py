@@ -10,7 +10,9 @@ from flow import checks as C
 
 
 def main(argv: list[str] | None = None) -> int:
-    ap = argparse.ArgumentParser(prog="python3 -m flow.checks", description="Run design checks; print the digest.")
+    ap = argparse.ArgumentParser(prog="python3 -m flow.checks", description="Run design checks; print the digest.",
+                                 epilog="A design with VHDL: a check that cannot read VHDL says 'no reader for .vhd' and is PARTIAL or NOT RUN, "
+                                        "never a clean pass. Which check reads what: python3 -m flow.sources --help (docs/vhdl.md).")
     ap.add_argument("design")
     ap.add_argument("--names", default="all", help="all, or a comma-separated list: " + ", ".join(sorted(C.CHECKS)))
     ap.add_argument("--scope", default="auto", choices=("auto", *C.SCOPES))

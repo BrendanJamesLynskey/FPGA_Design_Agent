@@ -2,7 +2,7 @@
 source: designs/b91_lowbit/handover.yaml; human view: README.md; refresh: python -m flow.handover fresh designs/b91_lowbit
 
 ## identity
-kind=showcase produced_by=human part=xck26-sfvc784-2LV-c board=Kria KR260 (K26 SOM); also xc7a100tcsg324-1 (Nexys A7) out of context top=ooc_wrap (one generated network with an input register), out of context tool=Vivado 2026.1
+kind=showcase produced_by=session part=xck26-sfvc784-2LV-c board=Kria KR260 (K26 SOM); also xc7a100tcsg324-1 (Nexys A7) out of context top=ooc_wrap (one generated network with an input register), out of context tool=Vivado 2026.1
 
 ## summary
 A generator and a measurement of eight weight formats for tiny integer networks: binary, ternary, INT4, an MXFP4-style E2M1 format with a power-of-two scale, our power-of-two format log4 (with and without a zero) and a two-term log4+1. Each is trained with its quantiser in the loop, exported to integers, checked against a bit-exact Python twin and generated RTL, and built out of context on the K26 and the Artix-7 100T. On the brief 87 synthetic order flow the 4-bit-weight formats match the 89 LUT network and the 87 trees on accuracy but need about four times the LUTs, so no format is on the accuracy-against-area or accuracy-against-latency front.

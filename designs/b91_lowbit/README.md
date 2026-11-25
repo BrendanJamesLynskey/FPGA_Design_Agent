@@ -11,7 +11,7 @@ Not in scope:
 - weights held in block RAM (the phase-2 student): phase 1 weights are constants; docs/stage2_plan.md is a plan only
 - a general-purpose tool; the argmax is written for three classes and the networks have at most two hidden layers
 
-Kind: showcase; written by hand. State: built. For an agent: [AGENT.md](AGENT.md).
+Kind: showcase; written by a Claude Code session. State: built. For an agent: [AGENT.md](AGENT.md).
 
 <!-- prose:what -->
 <!-- /prose:what -->
