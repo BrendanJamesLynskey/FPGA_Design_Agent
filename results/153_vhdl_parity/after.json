@@ -1,0 +1,258 @@
+{
+ "schema": "fda-vhdl-parity-probe/1",
+ "task": "t1_gray_stepper",
+ "readers": [
+  {
+   "id": "R01",
+   "reader": "flow.checks lint (lint_ruleset.verilator_findings)",
+   "where": "flow/lint_ruleset.py:103",
+   "plant": "latch",
+   "sv": {
+    "outcome": "caught",
+    "detail": "fail: ['UNUSEDSIGNAL', 'UNUSEDSIGNAL', 'UNUSEDSIGNAL']"
+   },
+   "vhdl": {
+    "outcome": "caught",
+    "detail": "fail: ['GHDL']"
+   }
+  },
+  {
+   "id": "R02",
+   "reader": "flow.checks standards (flow/standards_check.py)",
+   "where": "flow/standards_check.py:311,334",
+   "plant": "async_reset",
+   "sv": {
+    "outcome": "caught",
+    "detail": "['STD-RST-01']"
+   },
+   "vhdl": {
+    "outcome": "caught",
+    "detail": "['STD-ARCH-00', 'STD-ARCH-00']"
+   }
+  },
+  {
+   "id": "R03",
+   "reader": "flow.checks resets, source part (flow/checks/resets.py)",
+   "where": "flow/checks/__init__.py:299",
+   "plant": "async_reset",
+   "sv": {
+    "outcome": "caught",
+    "detail": "['RST-ASYNC-01']"
+   },
+   "vhdl": {
+    "outcome": "caught",
+    "detail": "['RST-ASYNC-01']"
+   }
+  },
+  {
+   "id": "R04",
+   "reader": "flow.checks xpm_sim (constraint_gates.xpm_sim_findings)",
+   "where": "flow/checks/__init__.py:436",
+   "plant": "xpm_no_sim_assert",
+   "sv": {
+    "outcome": "caught",
+    "detail": "XPM-SIM-01 raised"
+   },
+   "vhdl": {
+    "outcome": "caught",
+    "detail": "XPM-SIM-01 raised"
+   }
+  },
+  {
+   "id": "R05",
+   "reader": "flow.checks constants (flow/derived_constants.py)",
+   "where": "flow/derived_constants.py:124",
+   "plant": "wrong_id",
+   "sv": {
+    "outcome": "caught",
+    "detail": "CONST-ID-01 raised"
+   },
+   "vhdl": {
+    "outcome": "caught",
+    "detail": "CONST-ID-01 raised"
+   }
+  },
+  {
+   "id": "R06",
+   "reader": "flow.checks axi (flow/amd_ip_notes.py), control",
+   "where": "flow/amd_ip_notes.py:29",
+   "plant": null,
+   "sv": {
+    "outcome": "caught",
+    "detail": "['axi_gpio']"
+   },
+   "vhdl": {
+    "outcome": "caught",
+    "detail": "['axi_gpio']"
+   }
+  },
+  {
+   "id": "R07",
+   "reader": "flow.checks axi_profile (flow/checks/axi_profile.py)",
+   "where": "flow/checks/axi_profile.py:57",
+   "plant": null,
+   "sv": {
+    "outcome": "control",
+    "detail": "status pass: the check reads generated SystemVerilog blocks (the generator emits no VHDL); none here"
+   },
+   "vhdl": {
+    "outcome": "no_reader",
+    "detail": "vhdl_register_logic: not run: no reader for .vhd (4 file(s): bm_debounce.vhd, gray_stepper.vhd, sync2_vh.vhd (+1 more)): axi_profile (generated register blocks) reads SystemVerilog only"
+   }
+  },
+  {
+   "id": "R08",
+   "reader": "flow.checks fsm (flow/fsm_coverage.py parse_enum)",
+   "where": "flow/fsm_coverage.py:48",
+   "plant": null,
+   "sv": {
+    "outcome": "caught",
+    "detail": "states read: []"
+   },
+   "vhdl": {
+    "outcome": "no_reader",
+    "detail": "raised ValueError: no reader for .vhd (1 file(s): fsm.vhd): fsm_coverage (state table from a `typedef enum`) reads SystemVerilog only"
+   }
+  },
+  {
+   "id": "R09",
+   "reader": "flow.cdc_inject.design_crosses (V3 CDC checks)",
+   "where": "flow/cdc_inject.py:238",
+   "plant": "crossing",
+   "sv": {
+    "outcome": "caught",
+    "detail": "crossing found"
+   },
+   "vhdl": {
+    "outcome": "caught",
+    "detail": "crossing found"
+   }
+  },
+  {
+   "id": "R10",
+   "reader": "flow.cdc_inject_run.evaluate (CDC injection run)",
+   "where": "flow/cdc_inject_run.py:58",
+   "plant": "crossing",
+   "sv": {
+    "outcome": "caught",
+    "detail": "applicable=True pass=False (a trivial test: injection ran)"
+   },
+   "vhdl": {
+    "outcome": "no_reader",
+    "detail": "pass=False: no reader for .vhd (4 file(s): bm_debounce.vhd, gray_stepper.vhd, sync2_vh.vhd (+1 more)): the CDC injection run (it rewrites SystemVerilog synchroniser registers and XPM instances) reads SystemVerilog only; the design's crossing is not exercised by delay injection"
+   }
+  },
+  {
+   "id": "R11",
+   "reader": "agent.graph.spectest (spec-test role RTL list)",
+   "where": "agent/graph/spectest.py:213,327",
+   "plant": null,
+   "sv": {
+    "outcome": "caught",
+    "detail": "3 source(s): ['bm_debounce.sv', 'gray_stepper.sv', 't1_gray_stepper_top.sv']"
+   },
+   "vhdl": {
+    "outcome": "caught",
+    "detail": "1 source(s): ['t1_gray_stepper_top_ghdl_52bb7f765f8bfa1f.v']"
+   }
+  },
+  {
+   "id": "R12",
+   "reader": "agent.graph.spectest.rtl_hash (stale-evidence key)",
+   "where": "agent/graph/spectest.py:327",
+   "plant": "edit",
+   "sv": {
+    "outcome": "caught",
+    "detail": "hash changed"
+   },
+   "vhdl": {
+    "outcome": "caught",
+    "detail": "hash changed"
+   }
+  },
+  {
+   "id": "R13",
+   "reader": "flow.trace_v1.legacy_items (RTL files per item)",
+   "where": "flow/trace_v1.py:132",
+   "plant": null,
+   "sv": {
+    "outcome": "caught",
+    "detail": "3 RTL file(s)"
+   },
+   "vhdl": {
+    "outcome": "caught",
+    "detail": "4 RTL file(s)"
+   }
+  },
+  {
+   "id": "R14",
+   "reader": "flow.hw_dry_check (constant-0 BUILD_STAMP)",
+   "where": "flow/hw_dry_check.py:77",
+   "plant": "stamp_zero",
+   "sv": {
+    "outcome": "caught",
+    "detail": "rtl/t1_gray_stepper_top.sv: fpga_shell BUILD_STAMP is a constant 0; pass the top's BUILD_STAMP parameter through (the flow sets it per build; bring-up's still_alive compares it with the build's)"
+   },
+   "vhdl": {
+    "outcome": "caught",
+    "detail": "rtl/t1_gray_stepper_top.vhd: fpga_shell BUILD_STAMP is a constant 0; pass the top's BUILD_STAMP parameter through (the flow sets it per build; bring-up's still_alive compares it with the build's)"
+   }
+  },
+  {
+   "id": "R15",
+   "reader": "flow.managed_rtl_import.build_files (managed project)",
+   "where": "flow/managed_rtl_import.py:125",
+   "plant": null,
+   "sv": {
+    "outcome": "caught",
+    "detail": "1 file(s)"
+   },
+   "vhdl": {
+    "outcome": "no_reader",
+    "detail": "raised ValueError: no reader for .vhd (1 file(s): gray_stepper.vhd): the managed RTL import reads SystemVerilog only"
+   }
+  },
+  {
+   "id": "R16",
+   "reader": "flow.review.prepare.infer_top (review of a user's RTL)",
+   "where": "flow/review/prepare.py:66",
+   "plant": null,
+   "sv": {
+    "outcome": "caught",
+    "detail": "top t1_gray_stepper_top"
+   },
+   "vhdl": {
+    "outcome": "caught",
+    "detail": "top t1_gray_stepper_top"
+   }
+  },
+  {
+   "id": "R17",
+   "reader": "flow.inspect_views schematic sources",
+   "where": "flow/inspect_views.py:424",
+   "plant": null,
+   "sv": {
+    "outcome": "caught",
+    "detail": "3 file(s)"
+   },
+   "vhdl": {
+    "outcome": "no_reader",
+    "detail": "no reader for .vhd (4 file(s): bm_debounce.vhd, gray_stepper.vhd, sync2_vh.vhd (+1 more)): the schematic drawer (Yosys with the slang front end) reads SystemVerilog only"
+   }
+  }
+ ],
+ "vhdl_summary": {
+  "caught": 12,
+  "no_reader": 5,
+  "silent": 0,
+  "wrong": 0,
+  "control": 0
+ },
+ "sv_summary": {
+  "caught": 16,
+  "no_reader": 0,
+  "silent": 0,
+  "wrong": 0,
+  "control": 1
+ }
+}

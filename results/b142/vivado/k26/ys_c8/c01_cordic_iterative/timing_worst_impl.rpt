@@ -1,0 +1,79 @@
+Copyright 1986-2022 Xilinx, Inc. All Rights Reserved. Copyright 2022-2026 Advanced Micro Devices, Inc. All Rights Reserved.
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+| Tool Version      : Vivado v.2026.1 (lin64) Build 6511674 Tue Jun 16 11:01:26 MDT 2026
+| Date              : Sat Nov 21 23:12:59 2026
+| Host              : bren-ubuntu24-04 running 64-bit Ubuntu 24.04.4 LTS
+| Command           : report_timing -max_paths 1 -setup -file /tmp/claude-1000/-home-brendan-Claude-sandbox/a54cc85c-2645-4343-9056-2e450c5dac3c/scratchpad/viv/k26/ys_c8/c01_cordic_iterative/timing_worst_impl.rpt
+| Design            : cordic_iterative_w14_n12_ap0_g0_trunc
+| Device            : xck26-sfvc784
+| Speed File        : -2LV  PRODUCTION 1.31 12-08-2025
+| Design State      : Synthesized
+| Temperature Grade : C
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Timing Report
+
+Slack (MET) :             0.490ns  (required time - arrival time)
+  Source:                 $auto$ff.cc:337:slice$2011/C
+                            (rising edge-triggered cell FDRE clocked by clk  {rise@0.000ns fall@1.250ns period=2.500ns})
+  Destination:            $auto$ff.cc:337:slice$2641/D
+                            (rising edge-triggered cell FDRE clocked by clk  {rise@0.000ns fall@1.250ns period=2.500ns})
+  Path Group:             clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            2.500ns  (clk rise@2.500ns - clk rise@0.000ns)
+  Data Path Delay:        2.007ns  (logic 0.891ns (44.395%)  route 1.116ns (55.605%))
+  Logic Levels:           7  (CARRY8=2 LUT3=2 LUT4=1 LUT5=2)
+  Clock Path Skew:        -0.012ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    0.029ns = ( 2.529 - 2.500 ) 
+    Source Clock Delay      (SCD):    0.041ns
+    Clock Pessimism Removal (CPR):    0.000ns
+  Clock Uncertainty:      0.035ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock clk rise edge)        0.000     0.000 r  <hidden>
+                                                      0.000     0.000 r  clk
+                         net (fo=98, unset)           0.041     0.041    clk
+                         FDRE                                         r  $auto$ff.cc:337:slice$2011/C
+  -------------------------------------------------------------------    -------------------
+                         FDRE (Prop_FDRE_C_Q)         0.114     0.155 r  $auto$ff.cc:337:slice$2011/Q
+                         net (fo=44, unplaced)        0.173     0.328    base[0]
+                         LUT3 (Prop_LUT3_I0_O)        0.137     0.465 r  $abc$26915$lut$aiger26914$391/O
+                         net (fo=2, unplaced)         0.211     0.676    $techmap27019$abc$26915$lut$aiger26914$397.A[4]
+                         LUT5 (Prop_LUT5_I4_O)        0.058     0.734 r  $abc$26915$lut$aiger26914$397/O
+                         net (fo=3, unplaced)         0.217     0.951    $techmap27020$abc$26915$lut$aiger$o122.A[4]
+                         LUT3 (Prop_LUT3_I2_O)        0.058     1.009 r  $abc$26915$lut$aiger26914$409/O
+                         net (fo=1, unplaced)         0.211     1.220    $techmap27145$auto$abc_ops_reintegrate.cc:722:reintegrate$26933.A[4]
+                         LUT5 (Prop_LUT5_I4_O)        0.058     1.278 r  $auto$abc_ops_reintegrate.cc:722:reintegrate$26933/O
+                         net (fo=1, unplaced)         0.022     1.300    $abc$26915$aiger$o118
+                         CARRY8 (Prop_CARRY8_S[0]_CO[7])
+                                                      0.289     1.589 r  $auto$alumacc.cc:578:replace_alu$1446.genblk1.slice[0].carry8/CO[7]
+                         net (fo=1, unplaced)         0.006     1.595    $abc$26915$aiger$o117
+                         CARRY8 (Prop_CARRY8_CI_O[4])
+                                                      0.119     1.714 r  $auto$alumacc.cc:578:replace_alu$1446.genblk1.slice[1].carry8/O[4]
+                         net (fo=1, unplaced)         0.209     1.923    x_c0[12]
+                         LUT4 (Prop_LUT4_I1_O)        0.058     1.981 r  $auto$abc_ops_reintegrate.cc:722:reintegrate$26937/O
+                         net (fo=1, unplaced)         0.067     2.048    $abc$26915$aiger$o75
+                         FDRE                                         r  $auto$ff.cc:337:slice$2641/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock clk rise edge)        2.500     2.500 r  <hidden>
+                                                      0.000     2.500 r  clk
+                         net (fo=98, unset)           0.029     2.529    clk
+                         FDRE                                         r  $auto$ff.cc:337:slice$2641/C
+                         clock pessimism              0.000     2.529    <hidden>
+                         clock uncertainty           -0.035     2.494    <hidden>
+                         FDRE (Setup_FDRE_C_D)        0.044     2.538    $auto$ff.cc:337:slice$2641
+  -------------------------------------------------------------------
+                         required time                          2.538    <hidden>
+                         arrival time                          -2.048    <hidden>
+  -------------------------------------------------------------------
+                         slack                                  0.490    <hidden>
+
+
+
+

@@ -10,7 +10,7 @@ Not in scope:
 - a test of the instruments' own correctness; the library blocks are tested in ip_lib and hil/tests
 - the video, analogue-input, M2K, Pluto, RTL-SDR and Red Pitaya paths, which no run covered
 
-Kind: demonstration; written by hand. State: board-verified. For an agent: [AGENT.md](AGENT.md).
+Kind: demonstration; written by a Claude Code session. State: board-verified. For an agent: [AGENT.md](AGENT.md).
 
 <!-- prose:what -->
 ### How it is built
@@ -75,7 +75,7 @@ Interfaces:
 | build and run the gates; needs local Vivado 2026.1 and a heavy slot (take_heavy_slot.sh) | `flow/run_vivado.sh designs/b30_hil_audio base` | yes | about 4 min |
 | program the SRAM and run the hardware-in-the-loop checks; needs the Nexys A7 on wall power, the board lock, and an audio interface cabled from the Nexys audio jack for the audio check (the check is skipped, not passed, if it is missing) | `python3 flow/hil.py designs/b30_hil_audio` | no | about 1 min |
 
-Tool: Vivado 2026.1. Build ID of the inputs at handover: `efa287bc` (`python flow/manifest.py show designs/b30_hil_audio`: what a rebuild of today's sources and flow would carry; it changes when any build input or the flow changes, so it can differ from the build ID in an older evidence record). Knowledge-bank pin: `1fc7ed8`.
+Tool: Vivado 2026.1. Build ID of the inputs at handover: `45c5bb00` (`python flow/manifest.py show designs/b30_hil_audio`: what a rebuild of today's sources and flow would carry; it changes when any build input or the flow changes, so it can differ from the build ID in an older evidence record). Knowledge-bank pin: `5e2eab8`.
 
 | File | What |
 |---|---|

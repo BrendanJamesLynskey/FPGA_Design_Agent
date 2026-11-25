@@ -241,6 +241,7 @@ module ddr2_props #(
 
     // ---------------------------------------------------------------- covers: the proofs are not vacuous
     `FVC(cov_act, act_c)
+    `FVC(cov_col, rd_c || wr_c)
     `FVC(cov_rd, rd_c)
     `FVC(cov_wr, wr_c)
     `FVC(cov_pre, pre_c)
@@ -249,5 +250,6 @@ module ddr2_props #(
     `FVC(cov_rd_after_wr, rd_c && g_wr_any < 8'(W2R + 3))
     `FVC(cov_wr_after_rd, wr_c && g_rd_any < 8'(RTW + 3))
     `FVC(cov_tracked_served, haveT && col_c && d_slot == slT)
+    `FVC(cov_debt_any,  debt >= 4'd1)
     `FVC(cov_debt_pending,  debt >= 4'd2)
 endmodule

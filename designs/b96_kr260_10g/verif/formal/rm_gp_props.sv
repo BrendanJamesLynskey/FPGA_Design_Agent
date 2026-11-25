@@ -8,6 +8,8 @@
 // observations of the model's state at that instant (the proof is over interleavings of the two clock edges, see rm_gp_fv_top.sv).
 // Checked at every step, not at a clock edge: an invariant clocked on one edge constrains an induction hypothesis only at steps where that clock rises, and with two free clocks there can be many steps with none.
 `define FV_BOTH(NAME, EXPR) always_comb NAME: assert (EXPR);
+// FV_ANTE (brief 143c): the cover of an assertion's antecedent, NAME__ante: if it is unreachable the assertion has nothing to check (flow/formal_rigour.py). Same every-step form as FV_BOTH.
+`define FV_ANTE(NAME, EXPR) always_comb NAME``__ante: cover (EXPR);
 module rm_gp_props #(
     parameter int AW = 2,
     parameter bit ENT_SYNC = 1'b1,               // rate_match_gp's ENT_SYNC (the pointer crosses with ENT_SYNC ? 3 : 2 flops; the entry copies exist only with 1)
@@ -124,20 +126,27 @@ module rm_gp_props #(
     // (3) the data copy of the tracked entry against the pointer's stage: a stage that shows the item as written implies a data stage that shows the right bit (the 3-flop pointer vs 2-flop data rule).
     // H1: before the item is written the write pointer has not reached it (pointers start at 0 and count up: no wrap before the first pass over tp).  SVA: !tw |-> wbin <= tp
     `FV_BOTH(h1_not_yet_written, tw || wbin <= tp)
+    `FV_ANTE(h1_not_yet_written, !tw)
     // H2: while the item is written and not consumed it lies inside the window of unread blocks.  SVA: (tw && !done) |-> 1 <= ((wbin - tp) & MASK) <= ((wbin - rbin) & MASK)
     wire [CW-1:0] age_q = (wbin - tp) & MASK;                  // position of the item from the newest block: 1 = the newest
     `FV_BOTH(h2_item_in_window, !(tw && !done) || (age_q >= CW'(1) && age_q <= true_fill))
+    `FV_ANTE(h2_item_in_window, tw && !done)
     // H3: before the item is consumed the read pointer has not passed it.  SVA: !done |-> rbin <= tp
     `FV_BOTH(h3_reader_not_past, done || rbin <= tp)
+    `FV_ANTE(h3_reader_not_past, !done)
 `ifndef FV_PROGRESS
     // H4: the entry flop holds the written bit for as long as the item is unread.  SVA: (tw && !done) |-> ent[tp[AW-1:0]][KB] == written[KB]
     `FV_BOTH(h4_entry_holds, !(tw && !done) || ent[tp[AW-1:0]][KB] == tbit)
+    `FV_ANTE(h4_entry_holds, tw && !done)
 `endif
     // H8: before the item is written neither pointer has wrapped, so the read pointer is not ahead of the write pointer in plain numbers.  SVA: !tw |-> rbin <= wbin
     `FV_BOTH(h8_no_wrap_yet, tw || rbin <= wbin)
+    `FV_ANTE(h8_no_wrap_yet, !tw)
     // H3b: an item is consumed only after it was written, and the pending output check belongs to a consumed item.  SVA: done |-> tw      chk_out |-> done
     `FV_BOTH(h3b_done_implies_written, !done || tw)
+    `FV_ANTE(h3b_done_implies_written, done)
     `FV_BOTH(h3c_check_implies_done, !chk_out || done)
+    `FV_ANTE(h3c_check_implies_done, chk_out)
 
     // H5: order in a pointer's synchroniser chain. Every stage holds an older value of the pointer than the stage before it, and the value never runs ahead:
     //     pdist(x) = (pointer - decode(x)) mod 2**CW is 0 or more and nondecreasing along  pointer, gray register, stage 0, stage 1, ...  (SVA: always pdist(g) <= pdist(s0) && pdist(s0) <= pdist(s1) ...)
@@ -164,7 +173,9 @@ module rm_gp_props #(
     wire [CW-1:0] dw_g = pdist(wbin, wp_g), dw_dl = pdist(wbin, wp_dl), dw_0 = pdist(wbin, wp_s[0]), dw_1 = pdist(wbin, wp_s[1]), dw_2 = pdist(wbin, wp_s[NW-1]);
     wire [CW-1:0] dr_g = pdist(rbin, rp_g), dr_dl = pdist(rbin, rp_dl), dr_0 = pdist(rbin, rp_s[0]), dr_1 = pdist(rbin, rp_s[1]);
     `FV_BOTH(h5a_wp_chain_order, dw_g <= CW'(1) && dw_g <= dw_dl && dw_dl <= dw_g + CW'(1) && dw_g <= dw_0 && dw_0 <= dw_1 && dw_1 <= dw_2 && dw_2 <= true_fill)
+    `FV_ANTE(h5a_wp_chain_order, dw_2 != '0)               // the pointer is ahead of the chain's last stage
     `FV_BOTH(h5b_rp_chain_order, dr_g <= CW'(1) && dr_g <= dr_dl && dr_dl <= dr_g + CW'(1) && dr_g <= dr_0 && dr_0 <= dr_1 && dr_1 <= lag_r)
+    `FV_ANTE(h5b_rp_chain_order, dr_1 != '0)
 
 `ifndef FV_PROGRESS
     // H6: the tracked item against the write pointer's stages and the entry copy's stages.  P(x) = "stage x already shows the item as written" = pdist(x) < age_q.
@@ -183,52 +194,74 @@ module rm_gp_props #(
         `FV_BOTH(h6a_p0, !act || !(dw_0 < age_q) || dc0 || dh0)
         `FV_BOTH(h6b_p1, !act || !(dw_1 < age_q) || dc0)
         `FV_BOTH(h6c_p2, !act || !(dw_2 < age_q) || dc1)
+        `FV_ANTE(h6a_p0, act && dw_0 < age_q)
+        `FV_ANTE(h6b_p1, act && dw_1 < age_q)
+        `FV_ANTE(h6c_p2, act && dw_2 < age_q)
     end
 `endif
 
     // ------------------------------------------------------------------ safety, write side
     // P1 no overflow: the writer never writes into an entry the reader has not released.  SVA: wr_en |-> ((wbin - rbin) & MASK) < DEPTH
     p1_no_overflow: assert property (@(posedge wclk) !wr_en || true_fill < CW'(DEPTH));
+    p1_no_overflow__ante: cover property (@(posedge wclk) wr_en);
     // P1b the buffer never holds more than DEPTH blocks.  SVA: always ((wbin - rbin) & MASK) <= DEPTH
     `FV_BOTH(p1b_bound, true_fill <= CW'(DEPTH))
+    `FV_ANTE(p1b_bound, true_fill == CW'(DEPTH))     // the buffer is full
     // P2 the writer's view of the read pointer is conservative (never ahead of the reader).  SVA: always lag_r <= wview
     `FV_BOTH(p2_wview, lag_r <= wview && wview <= CW'(DEPTH))
+    `FV_ANTE(p2_wview, lag_r != '0)
     // P3 the reader's view of the write pointer never runs ahead of the real one, and its fill is at most the true fill.  SVA: always lag_w <= true_fill  (and fill <= true_fill)
     `FV_BOTH(p3_rview, lag_w <= true_fill && fill <= true_fill)
+    `FV_ANTE(p3_rview, lag_w != '0)
     // P4 no underflow: a read, delete or drain only happens when a block has crossed and has been written.  SVA: rd_en |-> (fill != 0) && (true_fill != 0)
     `FV_BOTH(p4_no_underflow, !armed || !rd_en || (fill != '0 && true_fill != '0))
+    `FV_ANTE(p4_no_underflow, armed && rd_en)
     // P5 gray pointers change by at most one bit per clock (both pointers).  SVA: $countones(gray(wbin) ^ gray($past(wbin))) <= 1
     logic [CW-1:0] wbin_q = '0, rbin_q = '0;
     always_ff @(posedge wclk) wbin_q <= wbin;
     always_ff @(posedge rclk) rbin_q <= rbin;
     `FV_BOTH(p5_gray_w, $countones(gray(wbin) ^ gray(wbin_q)) <= 1)
+    `FV_ANTE(p5_gray_w, wbin != wbin_q)
     `FV_BOTH(p5_gray_r, $countones(gray(rbin) ^ gray(rbin_q)) <= 1)
+    `FV_ANTE(p5_gray_r, rbin != rbin_q)
 
     // ------------------------------------------------------------------ safety, read side policy
     // P6 only between frames: an idle is inserted, and an idle deleted, only when the output stream is not inside a frame (spec_in is the spec's own tracking of the output stream).
     //    SVA: (empty slot clock && output block appears next clock) |-> !spec_in      and      do_del |-> !spec_in
     `FV_BOTH(p6a_insert_idle_only_between_frames, !(ins_q && r_v) || !sp_q)
+    `FV_ANTE(p6a_insert_idle_only_between_frames, ins_q && r_v)
     `FV_BOTH(p6b_delete_only_between_frames, !armed || !do_del || !spec_in)
+`ifdef FV_COVER_DEL     // an idle deletion needs the one non-slot clock in 33: about 70 steps of history, so this cover is in the deeper cover_del task
+    `FV_ANTE(p6b_delete_only_between_frames, armed && do_del)
+`endif
     `FV_BOTH(p6c_spec_matches_rtl, !armed || in_frame == spec_in)
+    `FV_ANTE(p6c_spec_matches_rtl, armed && in_frame)
 `ifndef FV_PROGRESS
     // P7 only pure idle blocks are deleted. Two parts. (a) At the write: the pure-idle flag (entry bit 73) is set only for the idle pattern, judged on the raw inputs.
     //    SVA: wr_en |-> (w_ent[73] |-> (w_c == 8'hFF && w_d == 64'h0707070707070707 && !w_os))
     p7a_flag_means_idle: assert property (@(posedge wclk) !wr_en || !w_ent[73] || (w_c == 8'hFF && w_d == 64'h0707070707070707 && !w_os));
+    p7a_flag_means_idle__ante: cover property (@(posedge wclk) wr_en && w_ent[73]);
     //    (b) At the read: the flag the reader sees for the item numbered tp is the flag that was written (P8a with KB = 73), and a deletion needs it (checked only in the KB = 73 slice).
     //    SVA: (do_del && rbin == tp && !done) |-> written_flag
     if (KB == 73) begin : g_p7b
         p7b_delete_only_flagged: assert property (@(posedge rclk) !armed || !(do_del && rbin == tp && !done) || (tw && tbit));
+`ifdef FV_COVER_DEL
+        p7b_delete_only_flagged__ante: cover property (@(posedge rclk) armed && do_del && rbin == tp && !done);
+`endif
     end
     // P8 data integrity of the symbolic entry: the bit KB popped for write sequence number tp is the bit that was written, and (KB < 72) it is on the output one read clock later.
     //    SVA: (do_pop && rbin == tp && !done) |-> (head[KB] == written[KB]) ##1 (r_v && out[KB] == written[KB])
     p8a_pop_is_written_bit: assert property (@(posedge rclk) !armed || !(do_pop && rbin == tp && !done) || (tw && head[KB] == tbit));
+    p8a_pop_is_written_bit__ante: cover property (@(posedge rclk) armed && do_pop && rbin == tp && !done);
     if (KB < 72) begin : g_p8b
         wire out_bit = (KB < 64) ? r_d[KB % 64] : r_c[KB % 8];
         `FV_BOTH(p8b_output_is_written_bit, !chk_out || (r_v && out_bit == tbit))   // a state invariant: chk_out and the output register are loaded by the same read-clock edge
+        `FV_ANTE(p8b_output_is_written_bit, chk_out)
     end
 `endif
     // P9 no reading of an unwritten item (order): the item numbered tp is consumed only after it was written.  SVA: (rd_en && rbin == tp && !done) |-> tw
     p9_consume_after_write: assert property (@(posedge rclk) !armed || !consume_tp || tw);
+    p9_consume_after_write__ante: cover property (@(posedge rclk) armed && consume_tp);
 
     // ------------------------------------------------------------------ progress
     // P10 the written item is eventually consumed (popped, deleted or drained).
@@ -264,11 +297,16 @@ module rm_gp_props #(
     always_ff @(posedge rclk) begin rk_q <= rk; act_q <= act_p && armed; end
     // H10: with the lock held high the lock chain fills from the front: a 1 never sits behind a 0.
     `FV_BOTH(h10_lock_chain_prefix, !lk1 || lk0)
+    `FV_ANTE(h10_lock_chain_prefix, lk1)
     // H11: the previous-read-clock sample refers to an item that has been written.
     `FV_BOTH(h11_sample_implies_written, !act_q || tw)
+    `FV_ANTE(h11_sample_implies_written, act_q)
     `FV_BOTH(h9_pace_range, !armed || pace <= 6'd32)
+    `FV_ANTE(h9_pace_range, armed && pace != 6'd0)
     `FV_BOTH(r1_rank_bounded, !armed || !act_p || rk <= 6'(RMAX))
+    `FV_ANTE(r1_rank_bounded, armed && act_p)
     `FV_BOTH(r2_rank_decreases, !(act_q && act_p) || rk < rk_q)
+    `FV_ANTE(r2_rank_decreases, act_q && act_p)
 `endif
 
     // ------------------------------------------------------------------ cover (the proofs are not vacuous)

@@ -1,0 +1,70 @@
+Copyright 1986-2022 Xilinx, Inc. All Rights Reserved. Copyright 2022-2026 Advanced Micro Devices, Inc. All Rights Reserved.
+----------------------------------------------------------------------------------------------------------------------------------------------------------
+| Tool Version : Vivado v.2026.1 (lin64) Build 6511674 Tue Jun 16 11:01:26 MDT 2026
+| Date         : Tue Nov 24 23:09:46 2026
+| Host         : bren-ubuntu24-04 running 64-bit Ubuntu 24.04.4 LTS
+| Command      : report_synchronizer_mtbf -file /home/brendan/Claude_sandbox/_worktrees/207-cdc-margin/results/207_cdc_margin/raw/vv_k26_good/DU/mtbf.rpt
+| Design       : cdc207_top
+| Device       : xck26-sfvc784-2LV-c
+| Design State : Fully Placed
+----------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Mean Time Between Failures (MTBF) due to metastability
+
+Table of Contents
+-----------------
+1. Design summary
+2. Default Synchronizer Chain Summary
+3. Default Hard FIFO Summary
+
+1. Design summary
+-----------------
+
++----------------+-----------------+---------------+
+| Structure Type | Total in Design | MTBF          |
++----------------+-----------------+---------------+
+| Synchronizers  | 21              | 1.2e+34 years |
+| FIFOs          | 0               |  ---          |
+| Overall        | 21              |  ---          |
++----------------+-----------------+---------------+
+
+
+2. Default Synchronizer Chain Summary
+-------------------------------------
+
++----------+----------------+------------------------+-----------------------+-------------------------+----------------+------------------+---------------+--------------+
+| CDC Path |    MTBF        | Data Toggle Rate(Mtrs) | Data Sample Rate(Mhz) | Total Settling Time(ns) | Sending Domain | Receiving Domain | Number Stages | CDC Net Name |
++----------+----------------+------------------------+-----------------------+-------------------------+----------------+------------------+---------------+--------------+
+| 1        | 5.53e+72 years | 2.77                   | 100                   | 8.6                     | clk_b          | clk_a            | 2             | ack_b        |
+| 2        | 5.65e+35 years | 49.5                   | 156                   | 4.92                    | clk_a          | clk_b            | 2             | ctg_a        |
+| 3        | 1.4e+53 years  | 0.5                    | 156                   | 6.7                     | clk_a          | clk_b            | 2             | lvl_a        |
+| 4        | 2.31e+54 years | 19.5                   | 100                   | 6.91                    | clk_b          | clk_a            | 2             | rsend_b[0]   |
+| 5        | 2.98e+52 years | 19.5                   | 100                   | 6.59                    | clk_b          | clk_a            | 2             | rsend_b[1]   |
+| 6        | 3.03e+50 years | 15.8                   | 100                   | 6.62                    | clk_b          | clk_a            | 2             | rsend_b[2]   |
+| 7        | 1.84e+56 years | 9.88                   | 100                   | 7.12                    | clk_b          | clk_a            | 2             | rsend_b[3]   |
+| 8        | 7.73e+55 years | 5.49                   | 100                   | 7.06                    | clk_b          | clk_a            | 2             | rsend_b[4]   |
+| 9        | 2e+54 years    | 2.89                   | 100                   | 6.87                    | clk_b          | clk_a            | 2             | rsend_b[5]   |
+| 10       | 1.41e+48 years | 1.48                   | 100                   | 6.19                    | clk_b          | clk_a            | 2             | rsend_b[6]   |
+| 11       | 2.43e+41 years | 0.304                  | 100                   | 5.25                    | clk_b          | clk_a            | 2             | rsend_b[7]   |
+| 12       | 1.54e+68 years | 2.77                   | 156                   | 8.12                    | clk_a          | clk_b            | 3             | req_a        |
+| 13       | 1.11e+43 years | 25                     | 156                   | 5.64                    | clk_a          | clk_b            | 2             | tg_a         |
+| 14       | 7.85e+38 years | 12.5                   | 156                   | 5.18                    | clk_a          | clk_b            | 2             | wsend_a[0]   |
+| 15       | 4.43e+38 years | 12.5                   | 156                   | 5.24                    | clk_a          | clk_b            | 2             | wsend_a[1]   |
+| 16       | 6.81e+36 years | 10.1                   | 156                   | 4.96                    | clk_a          | clk_b            | 2             | wsend_a[2]   |
+| 17       | 1.13e+40 years | 6.32                   | 156                   | 5.37                    | clk_a          | clk_b            | 2             | wsend_a[3]   |
+| 18       | 1.66e+35 years | 3.51                   | 156                   | 4.75                    | clk_a          | clk_b            | 2             | wsend_a[4]   |
+| 19       | 3.82e+38 years | 1.85                   | 156                   | 5.17                    | clk_a          | clk_b            | 2             | wsend_a[5]   |
+| 20       | 1.07e+37 years | 0.949                  | 156                   | 4.96                    | clk_a          | clk_b            | 2             | wsend_a[6]   |
+| 21       | 1.33e+34 years | 0.195                  | 156                   | 4.5                     | clk_a          | clk_b            | 2             | wsend_a[7]   |
++----------+----------------+------------------------+-----------------------+-------------------------+----------------+------------------+---------------+--------------+
+* Summary: Overall Synchronizer MTBF:1.2e+34 years
+
+
+3. Default Hard FIFO Summary
+----------------------------
+
+Glossary:
+
+   MTBF: Mean Time Between Failures
+   CDC: Clock Domain Crossing
+   Synchronizer Chain: A chain of registers connected as a shift register that captures a logic value from a different clock domain

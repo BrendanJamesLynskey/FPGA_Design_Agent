@@ -1,0 +1,42 @@
+# designs/b58a_trigger on the KR260 (brief 155): the RGMII transmit pins of the two PL Ethernet ports, LVCMOS18 in HP banks, 125 MHz DDR.
+# Brief 162: carrier data from AMD's KR260 files instead of assumptions. Length = routed copper on the carrier from the SOM connector to the TI DP83867 PHY
+# (results/162_kr260_si/kr260_net_lengths.csv, AMD xtp756 board file: PHY2 / port A on the HPA nets, PHY3 / port B on the HPB nets; NOT included: the K26 SOM's own routing).
+# Z0 50 ohm by the board's fab table (+/-10 %); no series resistor on any RGMII net (xtp743 page 20/21 and the board file: one net per signal); PHY input capacitance 5 pF max (DP83867 data sheet SNLS504G, CIN).
+design: designs/b58a_trigger
+xdc: designs/b58a_trigger/design.xdc
+board: kr260
+family: zynquplus
+part: xck26-sfvc784-2LV-c
+bank_type: HP
+off_chip:
+  - name: rgmii_a_tx
+    ports: [a_txd*, a_tx_ctl, a_txc]
+    direction: output
+    iostandard: LVCMOS18
+    vcco: 1.8
+    bank_type: HP
+    line: {z0_ohm: 50, length_in: 7.2}      # MEASURED on the carrier: HPA01..HPA08 nets 7.07 to 7.34 in (kr260_net_lengths.csv); the SOM adds more
+    load: {c_pf: 5.0, receiver_std: LVCMOS18}  # DP83867 CIN 5 pF max (data sheet); package/pad stub not included
+    priority: edge_rate
+    ui_ns: 4.0
+  - name: rgmii_b_tx
+    ports: [b_txd*, b_tx_ctl, b_txc]
+    direction: output
+    iostandard: LVCMOS18
+    vcco: 1.8
+    bank_type: HP
+    line: {z0_ohm: 50, length_in: 2.8}      # MEASURED on the carrier: HPB01..HPB08 nets 2.34 to 2.87 in
+    load: {c_pf: 5.0, receiver_std: LVCMOS18}
+    priority: edge_rate
+    ui_ns: 4.0
+  - name: leds
+    ports: [led*]
+    direction: output
+    iostandard: LVCMOS18
+    vcco: 1.8
+    bank_type: HP
+    line: short
+    load: {c_pf: 5.0}
+    priority: emi
+    ui_ns: 1000.0                              # a static or slow signal: a long unit interval (UART 115200 baud = 8680 ns)
+    min_drive_ma: 4                        # ASSUMED: the output must source or sink at least this much DC current

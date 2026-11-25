@@ -71,7 +71,9 @@ PART_DEFAULT = {"lut": 63400, "ff": 126800, "bram_tile": 135, "dsp": 240, "iob":
 
 def goals_from_spec(spec: dict[str, Any], board: str = "nexys_a7_100t") -> dict[str, Any]:
     """The targets of G1..G5 from spec.yaml: ``clocks`` (freq_mhz), ``budget: {lut, ff, bram, dsp, io, power_w}``.
-    A missing budget entry gets the default (80 % of the part; the board power limit), with that reason recorded."""
+    A missing budget entry gets the default (80 % of the part; the board power limit), with that reason recorded.
+    Brief 159: the ``must`` goals of ``goals:`` (``agent.graph.goals``) win over ``budget:`` and ``clocks:`` (lut, ff, bram, dsp, fmax,
+    power), the reason says so, and the goals are listed under ``typed_goals``."""
     b = spec.get("budget") or {}
     alias = {"bram_tile": ("bram_tile", "bram"), "iob": ("iob", "io"), "lut": ("lut",), "ff": ("ff",), "dsp": ("dsp",)}
     g3, why = {}, {}
@@ -86,15 +88,52 @@ def goals_from_spec(spec: dict[str, Any], board: str = "nexys_a7_100t") -> dict[
                **({"min_freq_mhz": c["min_freq_mhz"]} if c.get("min_freq_mhz") else {})}
               for c in spec.get("clocks") or [] if c.get("freq_mhz")]
     pw = b.get("power_w")
-    return {
+    typed = _typed_goals(spec, g3, why, clocks)
+    if typed.get("power_w") is not None:
+        pw, power_why = typed["power_w"], f"typed goal {typed['power_text']}"
+    else:
+        power_why = None
+    out = {
         "G1": {"what": "the independent bench and the verification gates pass"},
         "G2": {"wns_min_ns": 0.0, "whs_min_ns": 0.0, "clocks": clocks},
         "G3": {"budget": g3, "why": why, "no_latches": True, "no_ram_in_registers": True},
         "G4": {"power_w": float(pw) if pw is not None else BOARD_POWER_W.get(board, 2.0),
-               "why": "spec.yaml budget" if pw is not None else f"no budget in spec.yaml: the board limit ({board})",
+               "why": power_why or ("spec.yaml budget" if pw is not None else f"no budget in spec.yaml: the board limit ({board})"),
                "tj_max_c": TJ_MAX_C},
         "G5": {"what": "board checks (not run yet)"},
     }
+    if typed["goals"]:
+        out["typed_goals"] = typed["goals"]
+    return out
+
+
+def _typed_goals(spec: dict[str, Any], g3: dict[str, float], why: dict[str, str], clocks: list[dict[str, Any]]) -> dict[str, Any]:
+    """Brief 159: apply the ``must`` goals of ``spec.yaml goals:`` (``agent.graph.goals``) over ``budget:`` and ``clocks:``, in place
+    (``g3``, ``why`` and ``clocks`` are the caller's); a ``should`` goal and a latency goal are only listed (``typed_goals`` in the result),
+    because this loop judges no latency and a ``should`` goal never fails closure. A goal that names no clock (fmax) means the first clock;
+    one that names a clock the spec lacks is listed as ``unapplied``."""
+    from agent.graph import goals as G
+    out: dict[str, Any] = {"goals": [], "power_w": None, "power_text": None}
+    for g in G.load(spec):
+        row = {**g.as_dict(), "text": g.text(), "applied": None}
+        if g.priority == "must":
+            if g.kind == "area":
+                prev = g3.get(g.metric)
+                g3[g.metric], why[g.metric] = float(g.bound), f"typed goal {g.text()}" + (f" (replaces {prev:g} from the budget or default)" if prev != g.bound else "")
+                row["applied"] = f"G3 budget {g.metric}"
+            elif g.kind == "fmax":
+                c = next((c for c in clocks if g.name in (None, c.get("name"))), None)
+                if c is None:
+                    row["applied"] = "unapplied: no clock " + (g.name or "in the spec")
+                else:
+                    c["freq_mhz"], c["period_ns"] = g.bound, round(1000 / g.bound, 3)
+                    c.pop("min_freq_mhz", None)
+                    row["applied"] = f"G2 clock {c.get('name')}"
+            elif g.kind == "power":
+                out["power_w"], out["power_text"] = g.bound, g.text()
+                row["applied"] = "G4 power_w"
+        out["goals"].append(row)
+    return out
 
 
 def goal_vector(g1: dict[str, Any] | None, dg: dict[str, Any] | None, goals: dict[str, Any],
@@ -343,8 +382,9 @@ class Workspace:
         return self.root / "rtl"
 
     def read(self) -> dict[str, str]:
-        """rtl/*.sv, and the design's own XDC files (a constraints fix changes them; restored like the RTL)."""
-        out = {f"rtl/{p.name}": p.read_text() for p in sorted(self.rtl.glob("*.sv"))}
+        """The RTL (SystemVerilog, Verilog and VHDL: brief 153), and the design's own XDC files (a constraints fix changes them; restored like the RTL)."""
+        from flow import sources
+        out = {f"rtl/{p.name}": p.read_text() for p in sources.design_rtl(self.root)}
         out.update({p.name: p.read_text() for p in sorted(self.root.glob("*.xdc"))})
         return out
 
@@ -353,7 +393,8 @@ class Workspace:
             (self.root / rel).write_text(text)
 
     def restore(self, snap: dict[str, str]) -> None:
-        for p in self.rtl.glob("*.sv"):
+        from flow import sources
+        for p in sources.design_rtl(self.root):
             if f"rtl/{p.name}" not in snap:
                 p.unlink()
         self.write(snap)

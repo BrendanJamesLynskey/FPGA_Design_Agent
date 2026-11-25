@@ -55,11 +55,11 @@
    },
    {
     "layer": "vendor",
-    "skills": 89
+    "skills": 93
    },
    {
     "layer": "family",
-    "skills": 79
+    "skills": 80
    },
    {
     "layer": "device",
@@ -74,8 +74,8 @@
     "skills": 15
    }
   ],
-  "pin": "5e2eab8",
-  "skills": 284,
+  "pin": "6185830",
+  "skills": 289,
   "units": 42
  },
  "check_suite": {
@@ -210,6 +210,19 @@
    },
    {
     "by": "ours",
+    "kind": "vivado",
+    "name": "clock_mux",
+    "rules": [
+     "HDL-CLK-04"
+    ],
+    "scopes": [
+     "synth",
+     "route"
+    ],
+    "what": "clock multiplexers (brief 208, flow/clock_mux_check.py): a LUT on a clock path, mux modes timed against each other, clock groups on the source clocks that hide real paths, and advisories (case-analysed select, CE select, stoppable input with IGNORE tied, deep cascade)"
+   },
+   {
+    "by": "ours",
     "kind": "source",
     "name": "xpm_sim",
     "rules": [
@@ -249,6 +262,18 @@
     "what": "advisory flag for owner review: set_clock_groups -asynchronous over clock pairs with paths between them, or over every clock (flow/constraint_gates.py, brief 105A); never blocks"
    },
    {
+    "by": "ours",
+    "kind": "records",
+    "name": "cdc_margin",
+    "rules": [
+     "HDL-CDC-03"
+    ],
+    "scopes": [
+     "route"
+    ],
+    "what": "clock-crossing intent constrained and met (flow/cdc_margin.py, brief 207): a set_bus_skew violation blocks (gate post_route_bus_skew_met); missing bus skew, a loose datapath-only value, MTBF (UltraScale+) and user uncertainty are advisory"
+   },
+   {
     "by": "AMD report",
     "kind": "records",
     "name": "dsp_ram_mapping",
@@ -263,17 +288,109 @@
     "what": "DSP and block-RAM mapping advice (AMD DPIP/DPOP/SYNTH/RBOR rows) and their utilisation"
    },
    {
+    "by": "ours",
+    "kind": "vivado",
+    "name": "init_values",
+    "rules": [
+     "HDL-INIT-01"
+    ],
+    "scopes": [
+     "synth",
+     "route"
+    ],
+    "what": "initial values that cost a hard block's register on AMD parts (brief 206): INIT = 1 registers wired to a DSP, RAM or FIFO (our netlist scan) and UltraRAM refused for initial contents (Synth 8-12183); advisory (flow/checks/init_values.py)"
+   },
+   {
     "by": "AMD report",
     "kind": "vivado",
     "name": "control_sets",
     "rules": [
+     "HDL-CS-01",
      "HDL-METH-01"
     ],
     "scopes": [
      "synth",
      "route"
     ],
-    "what": "report_control_sets (count of unique control sets) and AMD's ULMTCS rows"
+    "what": "report_control_sets (count of unique control sets), AMD's ULMTCS rows and the three bands of UG949 Table 17 (7.5 % and 15 % of CLB registers / 8: reduction recommended, then required; brief 204a)"
+   },
+   {
+    "by": "AMD report",
+    "kind": "records",
+    "name": "logic_levels",
+    "rules": [
+     "HDL-TIM-01"
+    ],
+    "scopes": [
+     "synth",
+     "route"
+    ],
+    "what": "logic levels against the clock period (advisory, UG949 p.75/p.234) and a setup path that fails even with no net delay (gate, UG949 p.200); flow/report_gates.py, brief 204a"
+   },
+   {
+    "by": "AMD report",
+    "kind": "records",
+    "name": "clock_tree",
+    "rules": [
+     "HDL-CLK-03"
+    ],
+    "scopes": [
+     "synth",
+     "route"
+    ],
+    "what": "cascaded global buffers and local clocks (UG949 p.111/p.139) and clock uncertainty and skew over the review thresholds (p.232/p.248); advisory; brief 204a"
+   },
+   {
+    "by": "AMD report",
+    "kind": "records",
+    "name": "fanout",
+    "rules": [
+     "HDL-FO-01"
+    ],
+    "scopes": [
+     "synth",
+     "route"
+    ],
+    "what": "high-fanout nets against the clock frequency (UG949 p.75 table), with the guide's fixes; advisory; brief 204a"
+   },
+   {
+    "by": "ours",
+    "kind": "records",
+    "name": "synth_log",
+    "rules": [
+     "HDL-LOG-01"
+    ],
+    "scopes": [
+     "synth",
+     "route"
+    ],
+    "what": "synthesis messages that say logic was dropped, messages the tool switched off at its 100-message limit (UG949 p.198) (advisory), and a generic the build sets that the top does not have (gate, brief 203); brief 204a"
+   },
+   {
+    "by": "AMD report",
+    "kind": "records",
+    "name": "congestion",
+    "rules": [
+     "HDL-CONG-01"
+    ],
+    "scopes": [
+     "synth",
+     "route"
+    ],
+    "what": "placer and router congestion level 4 or above, short-interconnect share, and utilisation the guide ties to hard placement (UG949 p.240/p.273, UG1292 p.6); advisory; brief 204a"
+   },
+   {
+    "by": "AMD report",
+    "kind": "records",
+    "name": "ip_status",
+    "rules": [
+     "HDL-IP-01"
+    ],
+    "scopes": [
+     "synth",
+     "route"
+    ],
+    "what": "report_ip_status: IP locked or not up to date fails (UG949 p.49); brief 204a"
    },
    {
     "by": "ours",
@@ -375,7 +492,7 @@
     "what": "the DOC gate (brief 68: flow/handover.py problems, required gaps, over-claims)"
    }
   ],
-  "standard": "FDA-HDL v1.7"
+  "standard": "FDA-HDL v1.12"
  },
  "closure": {
   "by_goal": {
@@ -1260,7 +1377,8 @@
         "check_constraints",
         "gates",
         "check",
-        "gt_plan"
+        "gt_plan",
+        "ip_lookup"
        ],
        "role": "rtl",
        "tools": {}
@@ -1293,7 +1411,8 @@
         "check_constraints",
         "gates",
         "check",
-        "gt_plan"
+        "gt_plan",
+        "ip_lookup"
        ],
        "role": "rtl",
        "tools": {}
@@ -1834,7 +1953,8 @@
         "check_constraints",
         "gates",
         "check",
-        "gt_plan"
+        "gt_plan",
+        "ip_lookup"
        ],
        "refused": {
         "arguments": 2,
@@ -2405,7 +2525,8 @@
     "check_constraints",
     "gates",
     "check",
-    "gt_plan"
+    "gt_plan",
+    "ip_lookup"
    ],
    "tools": {
     "rtl": [
@@ -2418,7 +2539,8 @@
      "check_constraints",
      "gates",
      "check",
-     "gt_plan"
+     "gt_plan",
+     "ip_lookup"
     ]
    },
    "ultrafast": true,
@@ -2457,6 +2579,10 @@
     {
      "id": "stage_rtl",
      "words": "RTL methodology checks"
+    },
+    {
+     "id": "report_gates",
+     "words": "the synthesis reports show no path that cannot close, too many control sets or an unused generic"
     }
    ],
    "label": "RTL and tests",
@@ -2529,6 +2655,10 @@
     {
      "id": "constraints_post_synth",
      "words": "every timing endpoint constrained"
+    },
+    {
+     "id": "report_gates",
+     "words": "the synthesis reports show no path that cannot close, too many control sets or an unused generic"
     }
    ],
    "label": "Constraints",
@@ -2587,6 +2717,10 @@
     {
      "id": "standards_post_synth",
      "words": "design standards on the netlist"
+    },
+    {
+     "id": "report_gates",
+     "words": "the synthesis reports show no path that cannot close, too many control sets or an unused generic"
     }
    ],
    "label": "Synthesis",
@@ -2940,6 +3074,12 @@
    "model_may_call": true,
    "name": "load_skill",
    "what": "load know-how from the bank"
+  },
+  {
+   "group": "Knowledge",
+   "model_may_call": true,
+   "name": "ip_lookup",
+   "what": "look in the IP library before writing a block"
   },
   {
    "group": "Verification",

@@ -1,0 +1,10 @@
+schema: fpga-design-agent/formal_rigour/v1
+scope: "igmp_join with 2 groups, TICK_CLKS 2 and UNSOL_TICKS 2 (the shipped timers are far longer: parameters), any received frames, joins, leaves and back-pressure"
+sanity: [c_report, c_leave]
+depth:
+  bmc:
+    enough: false
+    why: >-
+      Bounded, not claimed exhaustive. Measured in the cover task: the last beat of a 46-byte frame is first reached at step 52 and a membership report leaves at step 53, but a
+      leave message leaves only at step 105. Depth 60 therefore checks the frame length and the AXI-Stream rules on the first report frame, not on a leave frame and not on a
+      second frame. No k-induction proof was attempted.

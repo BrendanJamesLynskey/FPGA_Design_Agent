@@ -7,7 +7,7 @@
 #   vivado:    rule-ID patterns (fnmatch) from report_methodology, report_drc and report_cdc in the build's gates.json;
 #              severities Error, Critical Warning and Warning count, Info and Advisory do not
 #   standards: rule ids of flow/standards_check.py (docs/design_standards.md), status fail or not_run
-#   resets, cdc_structure, exceptions, io, clocking, fsm, axi, gt, doc, constraint_scope, xpm_sim, fastpath: the codes the check suite's checks raise
+#   resets, cdc_structure, exceptions, io, clocking, fsm, axi, gt, doc, constraint_scope, xpm_sim, fastpath, init_values, cdc_margin, clock_mux: the codes the check suite's checks raise
 #              (flow/checks, brief 71; `python3 -m flow.checks`); axi_checker: a simulation monitor's rule (axi_tx/rtl)
 # Each rule also names `fix` (one line, shown in the check digest) and `skill` (the KB skill with the background and the
 # fix). Every code a check can raise maps to a rule here, and every rule is covered by a check or marked `manual: true`
@@ -15,15 +15,22 @@
 # A finding that no rule maps lands in the catch-all rule of its tool (HDL-LINT-00, HDL-VIV-00, HDL-STD-00), so nothing is lost.
 # Waivers: designs/<d>/lint/waivers.yaml, {rule, match (a glob over the finding key), reason, owner, date}.
 standard: FDA-HDL
-version: "1.7"            # 1.0 2026-11-12 (first release); 1.1 2026-11-14 (brief 71: reset rules split into HDL-RST-01..05,
+version: "1.12"            # 1.0 2026-11-12 (first release); 1.1 2026-11-14 (brief 71: reset rules split into HDL-RST-01..05,
                           # HDL-CLK-02, HDL-VER-01, HDL-IF-02/03, HDL-GT-01, HDL-DOC-01; check-suite tool keys; fix and skill);
                           # 1.2 2026-11-14 (brief 73: HDL-IF-04..06, the axi_profile check);
                           # 1.3 2026-11-14 (brief 70: REQP-1840 in HDL-RST-03, HDL-RST-06 AMD IP resets);
                           # 1.4 2026-11-19 (brief 106: HDL-ORC-01 derived constants, HDL-ORC-02 stale evidence);
                           # 1.5 2026-11-19 (brief 105A: HDL-DRC-01 CFGBVS gate on confirmed boards, HDL-XDC-02 blanket asynchronous
                           #     clock groups (advisory), HDL-CDC-02 XPM SIM_ASSERT_CHK = 1 (advisory));
-                          # 1.6 (brief 129: HDL-IO-01); 1.7 2026-11-23 (brief 190: HDL-FAST-01 data-dependent wide shift or index on a fast path (advisory))
-date: 2026-11-23
+                          # 1.6 (brief 129: HDL-IO-01)
+                          # 1.7 2026-11-24 (brief 205, owner decision 38: HDL-SYN-06 follows the setting rtl.initial_values,
+                          #     default allow; STD-INIT-01 version 1.1);
+                          # 1.8 2026-11-24 (brief 206: HDL-INIT-01 initial values that cost a hard block's register, advisory)
+                          # 1.9 2026-11-24 (brief 204a: HDL-TIM-01, HDL-CLK-03, HDL-FO-01, HDL-LOG-01, HDL-CONG-01, HDL-IP-01, HDL-CS-01; the report-driven checks)
+                          # 1.10 2026-11-25 (brief 207: HDL-CDC-03 clock-crossing intent constrained and met)
+                          # 1.11 2026-11-24 (brief 208: HDL-CLK-04 clock multiplexers, the clock_mux check)
+                          # 1.12 2026-11-25 (brief 190: HDL-FAST-01 data-dependent wide shift or index on a fast path (advisory))
+date: 2026-11-24
 rules:
   - id: HDL-SYN-01
     title: No latches
@@ -58,11 +65,25 @@ rules:
     fix: drive each signal from one always block or one assign
     skill: sequential-and-combinational-coding
   - id: HDL-SYN-06
-    title: No initial blocks except ROM initialisation
-    rationale: Initial values are not a reset; a design that relies on them cannot be reset back to a known state.
+    title: Initial values follow the setting rtl.initial_values (default allow); ROM initialisation always passes
+    rationale: AMD (UG949) and Altera recommend defined power-up values, so initial values on registers and memories are allowed
+      by default (setting rtl.initial_values - allow, warn or deny). They are a power-up state, not a reset, and the reset rules
+      do not change. An initial block that does more than give power-up values (delays, $display, if or case sequences) is
+      flagged in synthesisable RTL, and deny restores the earlier ban.
     checks: {standards: [STD-INIT-01]}
-    fix: set start values with the reset, not an initial block (ROM contents excepted)
+    fix: keep initial blocks to constant power-up values (or $readmem for ROM), or set rtl.initial_values to match the project's choice
     skill: synthesisable-subset-and-parameters
+  - id: HDL-INIT-01
+    title: An initial value of 1 does not sit on a register that belongs in a DSP or RAM block (advisory)
+    rationale: On AMD parts an initial value is free on fabric and IOB flip-flops, but the DSP48 pipeline registers and
+      UltraRAM power up 0 and a block-RAM port holds one INIT value, so synthesis leaves an INIT = 1 register next to such a
+      block in the fabric, with no warning for the DSP (brief 206, Vivado 2026.1, xc7a35t and xck26 - an 18 x 18 multiply
+      with all four register stages at INIT 1 kept 108 flip-flops out of the DSP48), and refuses UltraRAM for initial
+      contents (Synth 8-12183). Advisory, since the design is still correct, only bigger and slower than it looks.
+    checks: {init_values: [INIT-HB-01, INIT-URAM-01]}
+    fix: drop the initial value (or make it 0) on registers around a DSP or RAM unless their power-up value matters; give the
+      block RAM's read and output registers the same value; load UltraRAM contents after configuration
+    skill: power-up-values-amd-and-altera
   - id: HDL-WID-01
     title: Widths match
     rationale: A silent extension or truncation is the commonest arithmetic bug; the reader of the code cannot see it.
@@ -89,6 +110,18 @@ rules:
     checks: {clocking: [CMT-RANGE-01]}
     fix: choose DIVCLK_DIVIDE and CLKFBOUT_MULT so the VCO and PFD sit inside the speed grade's range (flow/mmcm_search.py)
     skill: artix7-mmcm-pll-configuration
+  - id: HDL-CLK-04
+    title: A clock mux is a clock buffer (BUFGMUX_CTRL or BUFGCTRL switched on S), and its modes are constrained as exclusive without hiding real paths
+    rationale: A LUT clock mux glitches when the select changes (brief 208 c3, 40 runt pulses in 40 switches) and puts
+      fabric routing on the clock (TIMING-14). Every clock entering a mux propagates through it, so its modes are timed
+      against each other until they are grouped (UG903 ch. 3). Grouping the SOURCE clocks also removes every real path
+      between a source clock's own registers and the mux fanout; measured, it hid a -6.63 ns setup failure and every
+      report_cdc row (brief 208 b1), so with such paths the groups go on generated clocks on the mux output (UG949 ch. 4).
+    checks: {clock_mux: [CLKMUX-LUT, CLKMUX-NO-GROUPS, CLKMUX-SRC-GROUPED, CLKMUX-CASE, CLKMUX-CE-SELECT, CLKMUX-STOP, CLKMUX-CASCADE, CLKMUX-UNTRACED]}
+    fix: use BUFGMUX_CTRL (or BUFGCTRL on S) with the select from a register; create_generated_clock -divide_by 1 on the mux
+      output for each input (-add -master_clock for the second) and set_clock_groups -physically_exclusive on those
+      generated clocks; group the source clocks directly only when they meet nowhere but the mux fanout
+    skill: amd-clock-mux-constraints
   - id: HDL-RST-01
     title: Synchronous resets; an asynchronous reset only in a reset synchroniser or from a declared external asynchronous input
     rationale: AMD recommends synchronous resets (UG949); an asynchronous reset is released at an arbitrary time relative
@@ -188,6 +221,14 @@ rules:
     checks: {xpm_sim: [XPM-SIM-01]}
     fix: set .SIM_ASSERT_CHK(1) on every xpm_cdc_* instance that has the parameter (xpm_cdc_async_rst has none)
     skill: clock-domain-crossing
+  - id: HDL-CDC-03
+    title: Each crossing's timing intent is constrained and met
+    rationale: An asynchronous crossing needs a bounded latency and, if multi-bit, a bounded skew across its bits; a clock group or a user
+      clock uncertainty bounds neither (brief 207 measured it). A bus-skew violation after routing fails (UG906); the rest is advisory.
+    checks: {cdc_margin: [CDCM-SKEW-VIOL, CDCM-SKEW-MISSING, CDCM-DPO-LOOSE, CDCM-MTBF-MISSING, CDCM-MTBF-LOW, CDCM-UNC-HIGH]}
+    fix: per crossing, set_max_delay -datapath_only at its latency bound and set_bus_skew at its skew bound (docs/cdc_margin_method.md); never
+      use set_clock_uncertainty as crossing margin
+    skill: clock-domain-crossing
   - id: HDL-FAST-01
     title: No data-dependent wide shift or index on a fast path
     rationale: A shift by a signal, or an index by a signal, of a wide vector is a barrel shifter or wide multiplexer; it reads as one line and costs
@@ -281,6 +322,57 @@ rules:
     checks: {stale: [STALE-EVID-01, STALE-CLAIM-01]}
     fix: rebuild or re-run the stage the finding names, then read its result; cite the fresh build ID
     skill: docs/agent_lessons.md
+  - id: HDL-TIM-01
+    title: Logic depth fits the clock period
+    rationale: A path with too many logic levels for its clock cannot be fixed by placement (UG949 p.75, p.200, p.234). The distribution of logic
+      levels against each clock's requirement is advisory; a setup path that still fails with its net delay taken out is a gate, because no
+      placement can close it.
+    checks: {logic_levels: ["RPT-LL-*"]}
+    fix: pipeline the path (a register stage in the middle of the logic), or try synthesis -retiming; CARRY and MUXF levels inflate the count with little delay
+    skill: timing-closure
+  - id: HDL-CLK-03
+    title: Simple, parallel clock trees with small skew and uncertainty
+    rationale: Cascaded global buffers do not match insertion delay, local clocks routed in fabric have unpredictable skew, and clock uncertainty or skew
+      above the guide's review thresholds usually means the clock topology is wrong (UG949 p.111, p.139, p.232, p.248). Advisory.
+    checks: {clock_tree: ["RPT-CLK-*"]}
+    fix: feed parallel buffers from one source (an MMCM output or a pin), use a clock enable or BUFGCE_DIV instead of a fabric divider, and review the topology
+      when uncertainty is over 100 ps (setup) or 200 ps (hold)
+    skill: timing-closure
+  - id: HDL-FO-01
+    title: High-fanout nets are replicated by the right means
+    rationale: A net with thousands of loads, or hundreds of loads on a fast clock, limits the clock frequency (UG949 p.75). The fix is a balanced tree and
+      placement-based replication, not MAX_FANOUT on a global net. Advisory.
+    checks: {fanout: ["RPT-FO-01"]}
+    fix: a balanced replica tree in the RTL with KEEP, a driver register for the net, phys_opt_design -directive Explore, no MAX_FANOUT on globals, no replicated ASYNC_REG register
+    skill: timing-closure
+  - id: HDL-LOG-01
+    title: The synthesis log is reviewed, and not truncated
+    rationale: Messages that say logic was removed or tied off show where the netlist differs from the intent, and the tool prints a message only 100
+      times by default, so a long log hides the rest (UG949 p.198). Advisory, except one gate for a generic the build sets that the top does not have
+      (Synth 8-3301) means its value never reached the design (brief 203).
+    checks: {synth_log: ["RPT-LOG-*"]}
+    fix: read the listed message ids and confirm each is intended; raise messaging.defaultLimit so none is cut off (the flow sets it); name only generics the top declares
+    skill: vivado-timing-methodology-checks
+  - id: HDL-CONG-01
+    title: Congestion and utilisation stay in the range the placer handles
+    rationale: A congestion window of level 4 or more, a short-interconnect share over 5 %, or high average utilisation makes placement and routing
+      hard (UG949 p.240, p.244, p.273; UG1292 p.6). Advisory.
+    checks: {congestion: ["RPT-CONG-*"]}
+    fix: lower utilisation, try a spreading placer directive, remove MAX_FANOUT, reduce MUXF and LUT combining in the congested modules
+    skill: timing-closure
+  - id: HDL-IP-01
+    title: IP is up to date and unlocked at build time
+    rationale: A locked or out-of-date IP is built from a customisation the tool no longer supports; AMD recommends the latest IP version (UG949 p.49).
+    checks: {ip_status: ["RPT-IP-01"]}
+    fix: upgrade the IP (upgrade_ip) or regenerate its output products, then rebuild
+    skill: drc-closure
+  - id: HDL-CS-01
+    title: Control sets stay within the device guideline
+    rationale: Registers share a slice only with the same clock, set/reset and enable, so many unique control sets waste slices and spread placement
+      (UG949 p.49, p.265). Under 7.5 % of the device's capacity is acceptable, 7.5 to 15 % reduction is recommended (advisory), above 15 % it is required (gate).
+    checks: {control_sets: ["RPT-CS-*"]}
+    fix: opt_design -control_set_merge, a higher -control_set_opt_threshold, CONTROL_SET_REMAP, and fewer clock enables on single registers
+    skill: control-sets-resets-and-enables
   - id: HDL-LINT-00
     title: Verilator -Wall clean (any warning no other rule maps)
     rationale: A new Verilator warning code is never dropped for want of a rule; it is fixed or waived with a reason.

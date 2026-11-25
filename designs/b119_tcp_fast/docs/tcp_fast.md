@@ -69,6 +69,7 @@ A complete segment is 113 bytes: Ethernet 14, IPv4 20, TCP 20 (no options), payl
 | `rec_pay` | the 59 payload bytes, byte 0 in bits 7:0 | stable from `rec_v` until the next segment completes |
 
 A poisoned segment produces no record and changes no state.
+**Poisoned downstream (brief 176).** The block decides unpoisoned or poisoned at the last word, but the transmit side can still poison the frame (the trigger frame's bad FCS, STRICT mode without a verdict) or drop it whole (the MAC was owned). Two input pulses cover it: `tx_unsent` (one clock, in the clock the MAC takes the last word of a frame that was counted sent here and then poisoned) subtracts 59 from SND_NXT and 1 from IP_ID and counts `unsent`; `tx_drop` (one clock, in the clock of the segment's first word) makes the segment consume nothing and leave no record. A `go` in the same clock as `tx_unsent` takes the corrected numbers. The record `rec_v` of such a segment was already emitted: a consumer that retransmits from it must also watch `tx_unsent`. The flight test of that same-clock `go` still uses the uncorrected SND_NXT, so it can refuse one segment early at the very edge of the window. Tie both inputs to 0 when no transmit side poisons.
 
 ### 1.4 Register bus (`sw_*`)
 
@@ -90,7 +91,7 @@ before the clock edge that follows**, so a write is visible to a read issued the
 | 13 | RCV_WND | R/W | the 16-bit window field to advertise (already scaled down by software if window scaling was negotiated) |
 | 14 | IP_ID | R/W | the IP identification of the next segment; updated by the block |
 | 15 | STALE_LIMIT | R/W | clocks; 0 disables the staleness check |
-| 16 to 29 | counters | R | see 1.5 |
+| 16 to 30 | counters | R | see 1.5 |
 | 31 | CLR_CNT | W | any write clears every counter |
 
 What a write does:
@@ -102,7 +103,7 @@ What a write does:
 
 ### 1.5 Counters
 
-32 bits, wrap, never saturate; reset and CLR_CNT zero them. Addresses 16 to 29, in this order.
+32 bits, wrap, never saturate; reset and CLR_CNT zero them. Addresses 16 to 30, in this order.
 
 | Addr | Name | Counts |
 |---|---|---|
@@ -120,6 +121,7 @@ What a write does:
 | 27 | cancel0 | orders cancelled by an abort in their go clock |
 | 28 | build | template builds completed |
 | 29 | abort | segments aborted in flight (also counted in `poison`) |
+| 30 | unsent | segments given back by the transmit side (`tx_unsent`, brief 176): they ended unpoisoned here (so they are also in `sent`) but the multiplexer poisoned them downstream |
 
 ## 2. Behaviour in detail
 

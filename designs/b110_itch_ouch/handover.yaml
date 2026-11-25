@@ -5,7 +5,7 @@ schema: fda-handover/1
 id: b110_itch_ouch
 title: ITCH 5.0 over MoldUDP64 in, OUCH 5.0 out, phase 1 (simulation)
 kind: showcase
-produced_by: human
+produced_by: session
 summary: A trading path in the formats a real venue speaks, in simulation. UDP payload words carrying MoldUDP64 and Nasdaq
   TotalView-ITCH 5.0 are decoded, a small top-of-book is kept for a few instruments, a pre-trade risk check with a kill
   switch decides, and an OUCH 5.0 Enter Order is built in a SoupBinTCP 3.00 packet and handed to a stub port, optionally
@@ -49,6 +49,16 @@ interfaces:
   type: cfg_* static inputs and one-clock clr_* pulses
   doc: designs/b110_itch_ouch/docs/itch_ouch.md
   note: configuration is static while traffic runs; clr_book starts a table sweep during which events are dropped and counted
+- name: B feed (brief 191)
+  type: sb_v, sb_d[63:0], sb_sof, sb_eof, sb_keep[7:0], sb_err (the second UDP payload stream)
+  doc: designs/b110_itch_ouch/docs/feed_arb.md
+  note: used only with DUAL_FEED 1 (tie to 0 otherwise); first copy of each packet wins, the other feed fills a gap if its
+    header is in before the first feed's next packet; adds 4 clocks
+- name: reject bits (brief 191)
+  type: vd_v, vd_pass, vd_rej[7:0], rej_seen[7:0], cnt_ab (feed arbiter counters)
+  doc: designs/b110_itch_ouch/docs/itch_ouch.md
+  note: vd_v is one clock after the verdict, the same number of clocks for every outcome; vd_rej has one bit per check and
+    shows all that failed
 - name: observation
   type: flags, cnt (45 counters of 32 bits), tu_* top-of-book update record, tob_* registers
   doc: designs/b110_itch_ouch/docs/itch_ouch.md
@@ -66,46 +76,74 @@ parameters:
   value: 8
   legal: 4 to 16 (tested at 5, 6, 8 and 10)
   note: order table index bits, so 2^ORD_AW live orders; two live orders with one index make the instrument inexact
+- name: PARSE_INPLACE
+  value: 0
+  legal: 0 or 1
+  note: brief 191, 1 decodes a message where it lies (eight copies of the decoder with the start byte fixed) instead of
+    shifting it to byte 0 first; same output
+- name: DUAL_FEED
+  value: 0
+  legal: 0 or 1
+  note: brief 191, 1 puts the A/B feed arbiter in front of mold_rx and uses the sb_* inputs; adds 4 clocks
+- name: ARB_AW
+  value: 5
+  legal: 4 to 10
+  note: brief 191, feed arbiter FIFO depth per feed, 2^ARB_AW words
 files:
+- path: designs/b110_itch_ouch/rtl/feed_arb.sv
+  what: A/B feed arbiter (brief 191)
+  sha256: e523ff419e52e683b3d00a2c6e82c72aa3f09056d269ebf46edcd808a0a1420a
+- path: designs/b110_itch_ouch/rtl/feed_arb_in.sv
+  what: one feed's input stage of the arbiter
+  sha256: 77db45af279cd13e12452f0201621955c01a593b5f21a38875bbba279988b408
+- path: designs/b110_itch_ouch/tests/b110_ab_cocotb.py
+  what: cocotb bench of the A/B feed arbiter
+  sha256: 35e9b845e1186224fac240600bb233b8eb8ebcd19bc7a39385f330f6c28cfc9a
+- path: designs/b110_itch_ouch/docs/feed_arb.md
+  what: datasheet of the A/B feed arbiter
+  sha256: a7fae9c15804ef65d080b3f597eb5d31531dcaed8ba9a61dafbbede0c968d26f
+- path: designs/b110_itch_ouch/verif/formal/run_book_formal.py
+  what: k-induction record runner for the book's quantity invariants, with ablations and seeded faults
+  sha256: cdbe36627e46f009f5d366d3306334b90e0f1f35b4859f2f39dc7eda7ea9f54d
 - path: designs/b110_itch_ouch/rtl/mold_rx.sv
   what: MoldUDP64 receiver
   sha256: 2439cc5a50ff265598da6afbf6faba81e6004bea70f7e3585c6ab8718c344d66
 - path: designs/b110_itch_ouch/rtl/itch_dec.sv
   what: ITCH 5.0 decoder
-  sha256: 43c7f717f13f703a1bf8869f6294aee6a8eed737b8435d733a78ec87af52ec8d
+  sha256: 816b19c5cc47df033006617f755525bf43df7adbda59c8abbdfaef9d24b37265
 - path: designs/b110_itch_ouch/rtl/book_core.sv
   what: order table, ladders, top of book
-  sha256: 4f9ea037d5b1a77ba56e87e340987d1155212593ceea0b1ff24cc02d4dddaf74
+  sha256: 629dab43bf80ed61b9ab06944ca9b2bf4819a6a4a67f13368cb431c080acf3c3
 - path: designs/b110_itch_ouch/rtl/risk_glue.sv
   what: decision, risk checks, kill switch, order queue
-  sha256: 2cde343aec11afbddb108c4728157b83e11533644da80c2a7bd8bc13ffdc23f1
+  sha256: 9d3d031147f19db09506d5a2ac12b63ce8277cf536c15d0548a78b071ac6a1cc
 - path: designs/b110_itch_ouch/rtl/ouch_enter.sv
   what: OUCH 5.0 Enter Order in SoupBinTCP framing
   sha256: 95066c0f3caaf67b87eb40baf88d5704b6eec8387384d00014cbe93f3f64addd
 - path: designs/b110_itch_ouch/rtl/itch_ouch_top.sv
   what: top level
-  sha256: 6f9da0506556e3e4e8a37d2e1a77fa78ee5cffe2ad37132a318c6b12f9eacde5
+  sha256: 8f5d552941866af7efa2a893b5d64ae7228f0c6ae36cbe296203146a77d75024
 - path: designs/b110_itch_ouch/model/proto.py
   what: packers for the four protocols, from the specifications
   sha256: ae43fca45e818890658887462b96017b34b4bb436834f0100aaaf5496eee0c70
 - path: designs/b110_itch_ouch/model/ref.py
   what: reference model (untimed, exact)
-  sha256: 92ebceb812f4203d0872849c5ff5b6855b36ff95875e6527537f3f10a29c0df9
+  sha256: 39011988eff79615e0db77042e343d4bc4739c705834fe92eaf16ed47484d97c
 - path: designs/b110_itch_ouch/model/gen.py
   what: seeded synthetic ITCH over MoldUDP64 generator
   sha256: 7a5ed6f04b10ad587e3a0d3cfb7d8ec64d986ead15e5df3f37bfd8ff0ef1e305
 - path: designs/b110_itch_ouch/tests/b110_cocotb.py
   what: cocotb bench
-  sha256: e8b7915b02e750725f206af70bf84d1d0cf471f818fea566a0982e5a671545ad
+  sha256: 75f4e34aa76e7e807c840fd092dcb1c53b8dc1c80ca2b9dd59ec24075322573d
 - path: designs/b110_itch_ouch/tests/run_mutants.py
   what: seeded-fault runner
-  sha256: d7d017acd50cadfe86ccb2c189feaa3cc4e69ca8851095bc08fa54dc767e3fdb
+  sha256: 320ce1f1f494d12cf1af8aa94bd56e8c19ecd2a3188e1455b0efdefcd5ca9da2
 - path: designs/b110_itch_ouch/ooc/ooc.py
   what: out-of-context build driver
-  sha256: 13550cc38a0d6f45591830a089d0c1ed83d8a93b6d2990cd0cc6341dab411f85
+  sha256: 55cd7509f068eb5a86ad66e83e40106d5d94d865b6841ce15091ade852ec665a
 - path: designs/b110_itch_ouch/docs/itch_ouch.md
   what: datasheet
-  sha256: 2c2d912ac34bcb88b26abe857dee5aef4b7bbef5e760c9bcc7c1692d2d3567e2
+  sha256: 939660686e40f2c36920f490582c6920036a6916415bbad321966a6baa7e0fcc
 - path: designs/b110_itch_ouch/docs/spec_notes.md
   what: field layouts and where each comes from
   sha256: 5ce86ae4a2f406348508f42a54939b0b3f9c8bb52c3bd1a6d730e4d1c0c2ecf9
@@ -145,7 +183,7 @@ evidence:
   what: the whole path against the Python reference over seeded sessions, hand-built corner cases, impairments, a stress
     run and other parameters - events, every top-of-book update, every order frame bit for bit, every counter and flag
   record: designs/b110_itch_ouch/tests/test_b110_rtl.py
-  sha256: ed9179dc6eab910eff6b4e26fb3204e5c2e181f3d0ce232d5b691d42bced781a
+  sha256: 0643e7cfe2cc8f698e976bcddf727406e82b171ab33bf8c035009a7c65a11f20
 - id: E2
   activity: model
   result: pass
@@ -153,14 +191,14 @@ evidence:
   what: the packers against the field tables of the specifications and the reference model against hand-computed behaviour
     of the protocol layer, the book and the risk checks
   record: designs/b110_itch_ouch/tests/test_b110_model.py
-  sha256: 0ac06f1af3eeeb85af07a4b941809f63e3567a0488cec4aa94bdd1b5e3e3c70c
+  sha256: 248e0832139deea80b0ef66e6e4648a387d301c2956386c131efe751ba96c44b
 - id: E3
   activity: lint
   result: pass
   how: ci
   what: Verilator -Wall clean at the default parameters and at three others
   record: designs/b110_itch_ouch/tests/test_b110_lint.py
-  sha256: 3028d8b5b412cb501cda525d4e9cb1580bdd661154b2d1a8b6cef0367890f10f
+  sha256: 29645bead1557efdb851e23b7aae422640f14d1217a4cc42d2ca1c284d21c499
 - id: E4
   activity: faults
   result: pass
@@ -392,5 +430,5 @@ state:
     ooc_build_2026_1: pass
     board_run: not-run
   vivado: '2026.1'
-  kb_pin: 93d158c
+  kb_pin: 5e2eab8
   build_id: null
