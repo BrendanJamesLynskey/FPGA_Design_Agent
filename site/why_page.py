@@ -1,4 +1,4 @@
-"""HTML for the "Why this agent" page (brief 193), from site/data/why.json. Native <details>, no script needed for the drawers;
+"""HTML for the "Why Gatewright" page (brief 193), from site/data/why.json. Native <details>, no script needed for the drawers;
 the expertise page's script (expand all, collapse all, a hash link opens its drawer) is reused, so why.html#verification opens that drawer."""
 from __future__ import annotations
 
@@ -84,6 +84,6 @@ def drawer(d: dict) -> str:
 def body(W: dict) -> str:
     ctl = ('<div class="areactl" id="areactl" hidden><button type="button" id="expand-all">Expand all</button>'
            '<button type="button" id="collapse-all">Collapse all</button></div>')
-    hero = (f'<section class="hero whyhero"><p class="eyebrow">Why this agent: the one-page summary</p><h1>{e(W["intro"]["answer"])}</h1>'
+    hero = (f'<section class="hero whyhero"><p class="eyebrow">Why Gatewright: the one-page summary</p><h1>{e(W["intro"]["answer"])}</h1>'
             f'<p class="lede">{e(W["intro"]["note"])}</p></section>')
     return hero + figure(W["caption"]) + '<h2 id="drawers">What makes it different</h2>' + ctl + "".join(drawer(d) for d in W["drawers"])
