@@ -1,0 +1,392 @@
+Copyright 1986-2022 Xilinx, Inc. All Rights Reserved. Copyright 2022-2026 Advanced Micro Devices, Inc. All Rights Reserved.
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+| Tool Version      : Vivado v.2026.1 (lin64) Build 6511674 Tue Jun 16 11:01:26 MDT 2026
+| Date              : Tue Nov 24 21:19:46 2026
+| Host              : bren-ubuntu24-04 running 64-bit Ubuntu 24.04.4 LTS
+| Command           : report_timing -to [get_pins -quiet -of_objects [get_cells -quiet -hier -filter {IS_PRIMITIVE && (REF_NAME =~ BUFG* )}] -filter {DIRECTION == IN && (REF_PIN_NAME =~ S* || REF_PIN_NAME =~ CE*)}] -max_paths 8 -nworst 2 -file /home/brendan/Claude_sandbox/_worktrees/208-clock-mux/build/208/k26/k26_bal3/timing_to_bufctl_place.rpt
+| Design            : casc
+| Device            : xck26-sfvc784
+| Speed File        : -2LV  PRODUCTION 1.31 12-08-2025
+| Design State      : Fully Placed
+| Temperature Grade : C
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Timing Report
+
+Slack:                    inf
+  Source:                 sel[0]
+                            (input port)
+  Destination:            g_bal3.u_l1a/S1
+                            (falling edge-triggered cell BUFGCTRL clocked by c_1  {rise@0.000ns fall@3.333ns period=6.667ns})
+  Path Group:             (none)
+  Path Type:              Setup (Max at Slow Process Corner)
+  Data Path Delay:        1.824ns  (logic 0.509ns (27.916%)  route 1.315ns (72.084%))
+  Logic Levels:           2  (IBUFCTRL=1 INBUF=1)
+  Clock Path Skew:        1.781ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    1.781ns = ( 5.114 - 3.333 ) 
+    Source Clock Delay      (SCD):    0.000ns
+    Clock Pessimism Removal (CPR):    0.000ns
+  Clock Uncertainty:      0.173ns  ((TSJ^2 + DJ^2)^1/2) / 2 + PE
+    Total System Jitter     (TSJ):    0.050ns
+    Discrete Jitter          (DJ):    0.126ns
+    Phase Error              (PE):    0.105ns
+  Timing Exception:       False Path
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+    E8                                                0.000     0.000 r  sel[0]
+                         net (fo=0)                   0.000     0.000    sel_IBUF[0]_inst/I
+    E8                   INBUF (Prop_INBUF_HPIOB_S_PAD_O)
+                                                      0.509     0.509 r  sel_IBUF[0]_inst/INBUF_INST/O
+                         net (fo=1, routed)           0.000     0.509    sel_IBUF[0]_inst/OUT
+    E8                   IBUFCTRL (Prop_IBUFCTRL_HPIOB_S_I_O)
+                                                      0.000     0.509 r  sel_IBUF[0]_inst/IBUFCTRL_INST/O
+                         net (fo=2, estimated)        1.315     1.824    sel_IBUF[0]
+    BUFGCTRL_X0Y27       BUFGCTRL                                     r  g_bal3.u_l1a/S1
+  -------------------------------------------------------------------    -------------------
+
+                         (clock c_1 fall edge)        3.333     3.333 f  <hidden>
+    E5                                                0.000     3.333 f  clk_in
+                         net (fo=0)                   0.000     3.333    clk_in_IBUF_inst/I
+    E5                   INBUF (Prop_INBUF_HPIOB_M_PAD_O)
+                                                      0.274     3.607 f  clk_in_IBUF_inst/INBUF_INST/O
+                         net (fo=1, routed)           0.000     3.607    clk_in_IBUF_inst/OUT
+    E5                   IBUFCTRL (Prop_IBUFCTRL_HPIOB_M_I_O)
+                                                      0.000     3.607 f  clk_in_IBUF_inst/IBUFCTRL_INST/O
+                         net (fo=1, estimated)        0.421     4.028    clk_in_IBUF
+    MMCM_X0Y3            MMCME4_ADV (Prop_MMCM_CLKIN1_CLKOUT1)
+                                                      0.739     4.767 f  g_us.u_mmcm/CLKOUT1
+                         net (fo=1, estimated)        0.347     5.114    c_1
+    BUFGCTRL_X0Y27       BUFGCTRL                                     f  g_bal3.u_l1a/I1
+
+Slack:                    inf
+  Source:                 sel[0]
+                            (input port)
+  Destination:            g_bal3.u_l1a/S1
+                            (falling edge-triggered cell BUFGCTRL clocked by c_1  {rise@0.000ns fall@3.333ns period=6.667ns})
+  Path Group:             (none)
+  Path Type:              Setup (Max at Slow Process Corner)
+  Data Path Delay:        1.824ns  (logic 0.509ns (27.916%)  route 1.315ns (72.084%))
+  Logic Levels:           2  (IBUFCTRL=1 INBUF=1)
+  Clock Path Skew:        1.781ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    1.781ns = ( 5.114 - 3.333 ) 
+    Source Clock Delay      (SCD):    0.000ns
+    Clock Pessimism Removal (CPR):    0.000ns
+  Clock Uncertainty:      0.173ns  ((TSJ^2 + DJ^2)^1/2) / 2 + PE
+    Total System Jitter     (TSJ):    0.050ns
+    Discrete Jitter          (DJ):    0.126ns
+    Phase Error              (PE):    0.105ns
+  Timing Exception:       False Path
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+    E8                                                0.000     0.000 f  sel[0]
+                         net (fo=0)                   0.000     0.000    sel_IBUF[0]_inst/I
+    E8                   INBUF (Prop_INBUF_HPIOB_S_PAD_O)
+                                                      0.509     0.509 f  sel_IBUF[0]_inst/INBUF_INST/O
+                         net (fo=1, routed)           0.000     0.509    sel_IBUF[0]_inst/OUT
+    E8                   IBUFCTRL (Prop_IBUFCTRL_HPIOB_S_I_O)
+                                                      0.000     0.509 f  sel_IBUF[0]_inst/IBUFCTRL_INST/O
+                         net (fo=2, estimated)        1.315     1.824    sel_IBUF[0]
+    BUFGCTRL_X0Y27       BUFGCTRL                                     f  g_bal3.u_l1a/S1
+  -------------------------------------------------------------------    -------------------
+
+                         (clock c_1 fall edge)        3.333     3.333 f  <hidden>
+    E5                                                0.000     3.333 f  clk_in
+                         net (fo=0)                   0.000     3.333    clk_in_IBUF_inst/I
+    E5                   INBUF (Prop_INBUF_HPIOB_M_PAD_O)
+                                                      0.274     3.607 f  clk_in_IBUF_inst/INBUF_INST/O
+                         net (fo=1, routed)           0.000     3.607    clk_in_IBUF_inst/OUT
+    E5                   IBUFCTRL (Prop_IBUFCTRL_HPIOB_M_I_O)
+                                                      0.000     3.607 f  clk_in_IBUF_inst/IBUFCTRL_INST/O
+                         net (fo=1, estimated)        0.421     4.028    clk_in_IBUF
+    MMCM_X0Y3            MMCME4_ADV (Prop_MMCM_CLKIN1_CLKOUT1)
+                                                      0.739     4.767 f  g_us.u_mmcm/CLKOUT1
+                         net (fo=1, estimated)        0.347     5.114    c_1
+    BUFGCTRL_X0Y27       BUFGCTRL                                     f  g_bal3.u_l1a/I1
+
+Slack:                    inf
+  Source:                 sel[0]
+                            (input port)
+  Destination:            g_bal3.u_l1a/S0
+                            (falling edge-triggered cell BUFGCTRL clocked by c_0  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             (none)
+  Path Type:              Setup (Max at Slow Process Corner)
+  Data Path Delay:        1.810ns  (logic 0.509ns (28.132%)  route 1.301ns (71.868%))
+  Logic Levels:           2  (IBUFCTRL=1 INBUF=1)
+  Clock Path Skew:        1.777ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    1.777ns = ( 6.777 - 5.000 ) 
+    Source Clock Delay      (SCD):    0.000ns
+    Clock Pessimism Removal (CPR):    0.000ns
+  Clock Uncertainty:      0.178ns  ((TSJ^2 + DJ^2)^1/2) / 2 + PE
+    Total System Jitter     (TSJ):    0.050ns
+    Discrete Jitter          (DJ):    0.136ns
+    Phase Error              (PE):    0.105ns
+  Timing Exception:       False Path
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+    E8                                                0.000     0.000 f  sel[0]
+                         net (fo=0)                   0.000     0.000    sel_IBUF[0]_inst/I
+    E8                   INBUF (Prop_INBUF_HPIOB_S_PAD_O)
+                                                      0.509     0.509 f  sel_IBUF[0]_inst/INBUF_INST/O
+                         net (fo=1, routed)           0.000     0.509    sel_IBUF[0]_inst/OUT
+    E8                   IBUFCTRL (Prop_IBUFCTRL_HPIOB_S_I_O)
+                                                      0.000     0.509 f  sel_IBUF[0]_inst/IBUFCTRL_INST/O
+                         net (fo=2, estimated)        1.301     1.810    sel_IBUF[0]
+    BUFGCTRL_X0Y27       BUFGCTRL                                     r  g_bal3.u_l1a/S0  (IS_INVERTED)
+  -------------------------------------------------------------------    -------------------
+
+                         (clock c_0 fall edge)        5.000     5.000 f  <hidden>
+    E5                                                0.000     5.000 f  clk_in
+                         net (fo=0)                   0.000     5.000    clk_in_IBUF_inst/I
+    E5                   INBUF (Prop_INBUF_HPIOB_M_PAD_O)
+                                                      0.274     5.274 f  clk_in_IBUF_inst/INBUF_INST/O
+                         net (fo=1, routed)           0.000     5.274    clk_in_IBUF_inst/OUT
+    E5                   IBUFCTRL (Prop_IBUFCTRL_HPIOB_M_I_O)
+                                                      0.000     5.274 f  clk_in_IBUF_inst/IBUFCTRL_INST/O
+                         net (fo=1, estimated)        0.421     5.695    clk_in_IBUF
+    MMCM_X0Y3            MMCME4_ADV (Prop_MMCM_CLKIN1_CLKOUT0)
+                                                      0.739     6.434 f  g_us.u_mmcm/CLKOUT0
+                         net (fo=1, estimated)        0.343     6.777    c_0
+    BUFGCTRL_X0Y27       BUFGCTRL                                     f  g_bal3.u_l1a/I0
+
+Slack:                    inf
+  Source:                 sel[0]
+                            (input port)
+  Destination:            g_bal3.u_l1a/S0
+                            (falling edge-triggered cell BUFGCTRL clocked by c_0  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             (none)
+  Path Type:              Setup (Max at Slow Process Corner)
+  Data Path Delay:        1.810ns  (logic 0.509ns (28.132%)  route 1.301ns (71.868%))
+  Logic Levels:           2  (IBUFCTRL=1 INBUF=1)
+  Clock Path Skew:        1.777ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    1.777ns = ( 6.777 - 5.000 ) 
+    Source Clock Delay      (SCD):    0.000ns
+    Clock Pessimism Removal (CPR):    0.000ns
+  Clock Uncertainty:      0.178ns  ((TSJ^2 + DJ^2)^1/2) / 2 + PE
+    Total System Jitter     (TSJ):    0.050ns
+    Discrete Jitter          (DJ):    0.136ns
+    Phase Error              (PE):    0.105ns
+  Timing Exception:       False Path
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+    E8                                                0.000     0.000 r  sel[0]
+                         net (fo=0)                   0.000     0.000    sel_IBUF[0]_inst/I
+    E8                   INBUF (Prop_INBUF_HPIOB_S_PAD_O)
+                                                      0.509     0.509 r  sel_IBUF[0]_inst/INBUF_INST/O
+                         net (fo=1, routed)           0.000     0.509    sel_IBUF[0]_inst/OUT
+    E8                   IBUFCTRL (Prop_IBUFCTRL_HPIOB_S_I_O)
+                                                      0.000     0.509 r  sel_IBUF[0]_inst/IBUFCTRL_INST/O
+                         net (fo=2, estimated)        1.301     1.810    sel_IBUF[0]
+    BUFGCTRL_X0Y27       BUFGCTRL                                     f  g_bal3.u_l1a/S0  (IS_INVERTED)
+  -------------------------------------------------------------------    -------------------
+
+                         (clock c_0 fall edge)        5.000     5.000 f  <hidden>
+    E5                                                0.000     5.000 f  clk_in
+                         net (fo=0)                   0.000     5.000    clk_in_IBUF_inst/I
+    E5                   INBUF (Prop_INBUF_HPIOB_M_PAD_O)
+                                                      0.274     5.274 f  clk_in_IBUF_inst/INBUF_INST/O
+                         net (fo=1, routed)           0.000     5.274    clk_in_IBUF_inst/OUT
+    E5                   IBUFCTRL (Prop_IBUFCTRL_HPIOB_M_I_O)
+                                                      0.000     5.274 f  clk_in_IBUF_inst/IBUFCTRL_INST/O
+                         net (fo=1, estimated)        0.421     5.695    clk_in_IBUF
+    MMCM_X0Y3            MMCME4_ADV (Prop_MMCM_CLKIN1_CLKOUT0)
+                                                      0.739     6.434 f  g_us.u_mmcm/CLKOUT0
+                         net (fo=1, estimated)        0.343     6.777    c_0
+    BUFGCTRL_X0Y27       BUFGCTRL                                     f  g_bal3.u_l1a/I0
+
+Slack:                    inf
+  Source:                 sel[2]
+                            (input port)
+  Destination:            g_bal3.u_l2/S0
+                            (falling edge-triggered cell BUFGCTRL clocked by c_1  {rise@0.000ns fall@3.333ns period=6.667ns})
+  Path Group:             (none)
+  Path Type:              Setup (Max at Slow Process Corner)
+  Data Path Delay:        1.766ns  (logic 0.510ns (28.866%)  route 1.256ns (71.134%))
+  Logic Levels:           2  (IBUFCTRL=1 INBUF=1)
+  Clock Path Skew:        1.960ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    1.960ns = ( 5.293 - 3.333 ) 
+    Source Clock Delay      (SCD):    0.000ns
+    Clock Pessimism Removal (CPR):    0.000ns
+  Clock Uncertainty:      0.173ns  ((TSJ^2 + DJ^2)^1/2) / 2 + PE
+    Total System Jitter     (TSJ):    0.050ns
+    Discrete Jitter          (DJ):    0.126ns
+    Phase Error              (PE):    0.105ns
+  Timing Exception:       False Path
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+    G8                                                0.000     0.000 f  sel[2]
+                         net (fo=0)                   0.000     0.000    sel_IBUF[2]_inst/I
+    G8                   INBUF (Prop_INBUF_HPIOB_M_PAD_O)
+                                                      0.510     0.510 f  sel_IBUF[2]_inst/INBUF_INST/O
+                         net (fo=1, routed)           0.000     0.510    sel_IBUF[2]_inst/OUT
+    G8                   IBUFCTRL (Prop_IBUFCTRL_HPIOB_M_I_O)
+                                                      0.000     0.510 f  sel_IBUF[2]_inst/IBUFCTRL_INST/O
+                         net (fo=2, estimated)        1.256     1.766    sel_IBUF[2]
+    BUFGCTRL_X0Y26       BUFGCTRL                                     r  g_bal3.u_l2/S0  (IS_INVERTED)
+  -------------------------------------------------------------------    -------------------
+
+                         (clock c_1 fall edge)        3.333     3.333 f  <hidden>
+    E5                                                0.000     3.333 f  clk_in
+                         net (fo=0)                   0.000     3.333    clk_in_IBUF_inst/I
+    E5                   INBUF (Prop_INBUF_HPIOB_M_PAD_O)
+                                                      0.274     3.607 f  clk_in_IBUF_inst/INBUF_INST/O
+                         net (fo=1, routed)           0.000     3.607    clk_in_IBUF_inst/OUT
+    E5                   IBUFCTRL (Prop_IBUFCTRL_HPIOB_M_I_O)
+                                                      0.000     3.607 f  clk_in_IBUF_inst/IBUFCTRL_INST/O
+                         net (fo=1, estimated)        0.421     4.028    clk_in_IBUF
+    MMCM_X0Y3            MMCME4_ADV (Prop_MMCM_CLKIN1_CLKOUT1)
+                                                      0.739     4.767 f  g_us.u_mmcm/CLKOUT1
+                         net (fo=1, estimated)        0.347     5.114    c_1
+    BUFGCTRL_X0Y27       BUFGCTRL (Prop_BUFGCTRL_I1_O)
+                                                      0.129     5.243 f  g_bal3.u_l1a/O
+                         net (fo=1, estimated)        0.050     5.293    g_bal3.l1a
+    BUFGCTRL_X0Y26       BUFGCTRL                                     f  g_bal3.u_l2/I0
+
+Slack:                    inf
+  Source:                 sel[2]
+                            (input port)
+  Destination:            g_bal3.u_l2/S0
+                            (falling edge-triggered cell BUFGCTRL clocked by c_1  {rise@0.000ns fall@3.333ns period=6.667ns})
+  Path Group:             (none)
+  Path Type:              Setup (Max at Slow Process Corner)
+  Data Path Delay:        1.766ns  (logic 0.510ns (28.866%)  route 1.256ns (71.134%))
+  Logic Levels:           2  (IBUFCTRL=1 INBUF=1)
+  Clock Path Skew:        1.960ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    1.960ns = ( 5.293 - 3.333 ) 
+    Source Clock Delay      (SCD):    0.000ns
+    Clock Pessimism Removal (CPR):    0.000ns
+  Clock Uncertainty:      0.173ns  ((TSJ^2 + DJ^2)^1/2) / 2 + PE
+    Total System Jitter     (TSJ):    0.050ns
+    Discrete Jitter          (DJ):    0.126ns
+    Phase Error              (PE):    0.105ns
+  Timing Exception:       False Path
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+    G8                                                0.000     0.000 r  sel[2]
+                         net (fo=0)                   0.000     0.000    sel_IBUF[2]_inst/I
+    G8                   INBUF (Prop_INBUF_HPIOB_M_PAD_O)
+                                                      0.510     0.510 r  sel_IBUF[2]_inst/INBUF_INST/O
+                         net (fo=1, routed)           0.000     0.510    sel_IBUF[2]_inst/OUT
+    G8                   IBUFCTRL (Prop_IBUFCTRL_HPIOB_M_I_O)
+                                                      0.000     0.510 r  sel_IBUF[2]_inst/IBUFCTRL_INST/O
+                         net (fo=2, estimated)        1.256     1.766    sel_IBUF[2]
+    BUFGCTRL_X0Y26       BUFGCTRL                                     f  g_bal3.u_l2/S0  (IS_INVERTED)
+  -------------------------------------------------------------------    -------------------
+
+                         (clock c_1 fall edge)        3.333     3.333 f  <hidden>
+    E5                                                0.000     3.333 f  clk_in
+                         net (fo=0)                   0.000     3.333    clk_in_IBUF_inst/I
+    E5                   INBUF (Prop_INBUF_HPIOB_M_PAD_O)
+                                                      0.274     3.607 f  clk_in_IBUF_inst/INBUF_INST/O
+                         net (fo=1, routed)           0.000     3.607    clk_in_IBUF_inst/OUT
+    E5                   IBUFCTRL (Prop_IBUFCTRL_HPIOB_M_I_O)
+                                                      0.000     3.607 f  clk_in_IBUF_inst/IBUFCTRL_INST/O
+                         net (fo=1, estimated)        0.421     4.028    clk_in_IBUF
+    MMCM_X0Y3            MMCME4_ADV (Prop_MMCM_CLKIN1_CLKOUT1)
+                                                      0.739     4.767 f  g_us.u_mmcm/CLKOUT1
+                         net (fo=1, estimated)        0.347     5.114    c_1
+    BUFGCTRL_X0Y27       BUFGCTRL (Prop_BUFGCTRL_I1_O)
+                                                      0.129     5.243 f  g_bal3.u_l1a/O
+                         net (fo=1, estimated)        0.050     5.293    g_bal3.l1a
+    BUFGCTRL_X0Y26       BUFGCTRL                                     f  g_bal3.u_l2/I0
+
+Slack:                    inf
+  Source:                 sel[2]
+                            (input port)
+  Destination:            g_bal3.u_l2/S1
+                            (falling edge-triggered cell BUFGCTRL clocked by c_2  {rise@0.000ns fall@4.444ns period=8.889ns})
+  Path Group:             (none)
+  Path Type:              Setup (Max at Slow Process Corner)
+  Data Path Delay:        1.755ns  (logic 0.510ns (29.047%)  route 1.245ns (70.953%))
+  Logic Levels:           2  (IBUFCTRL=1 INBUF=1)
+  Clock Path Skew:        1.779ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    1.779ns = ( 6.223 - 4.444 ) 
+    Source Clock Delay      (SCD):    0.000ns
+    Clock Pessimism Removal (CPR):    0.000ns
+  Clock Uncertainty:      0.176ns  ((TSJ^2 + DJ^2)^1/2) / 2 + PE
+    Total System Jitter     (TSJ):    0.050ns
+    Discrete Jitter          (DJ):    0.133ns
+    Phase Error              (PE):    0.105ns
+  Timing Exception:       False Path
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+    G8                                                0.000     0.000 r  sel[2]
+                         net (fo=0)                   0.000     0.000    sel_IBUF[2]_inst/I
+    G8                   INBUF (Prop_INBUF_HPIOB_M_PAD_O)
+                                                      0.510     0.510 r  sel_IBUF[2]_inst/INBUF_INST/O
+                         net (fo=1, routed)           0.000     0.510    sel_IBUF[2]_inst/OUT
+    G8                   IBUFCTRL (Prop_IBUFCTRL_HPIOB_M_I_O)
+                                                      0.000     0.510 r  sel_IBUF[2]_inst/IBUFCTRL_INST/O
+                         net (fo=2, estimated)        1.245     1.755    sel_IBUF[2]
+    BUFGCTRL_X0Y26       BUFGCTRL                                     r  g_bal3.u_l2/S1
+  -------------------------------------------------------------------    -------------------
+
+                         (clock c_2 fall edge)        4.444     4.444 f  <hidden>
+    E5                                                0.000     4.444 f  clk_in
+                         net (fo=0)                   0.000     4.444    clk_in_IBUF_inst/I
+    E5                   INBUF (Prop_INBUF_HPIOB_M_PAD_O)
+                                                      0.274     4.718 f  clk_in_IBUF_inst/INBUF_INST/O
+                         net (fo=1, routed)           0.000     4.718    clk_in_IBUF_inst/OUT
+    E5                   IBUFCTRL (Prop_IBUFCTRL_HPIOB_M_I_O)
+                                                      0.000     4.718 f  clk_in_IBUF_inst/IBUFCTRL_INST/O
+                         net (fo=1, estimated)        0.421     5.139    clk_in_IBUF
+    MMCM_X0Y3            MMCME4_ADV (Prop_MMCM_CLKIN1_CLKOUT2)
+                                                      0.739     5.878 f  g_us.u_mmcm/CLKOUT2
+                         net (fo=1, estimated)        0.345     6.223    c_2
+    BUFGCTRL_X0Y26       BUFGCTRL                                     f  g_bal3.u_l2/I1
+
+Slack:                    inf
+  Source:                 sel[2]
+                            (input port)
+  Destination:            g_bal3.u_l2/S1
+                            (falling edge-triggered cell BUFGCTRL clocked by c_2  {rise@0.000ns fall@4.444ns period=8.889ns})
+  Path Group:             (none)
+  Path Type:              Setup (Max at Slow Process Corner)
+  Data Path Delay:        1.755ns  (logic 0.510ns (29.047%)  route 1.245ns (70.953%))
+  Logic Levels:           2  (IBUFCTRL=1 INBUF=1)
+  Clock Path Skew:        1.779ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    1.779ns = ( 6.223 - 4.444 ) 
+    Source Clock Delay      (SCD):    0.000ns
+    Clock Pessimism Removal (CPR):    0.000ns
+  Clock Uncertainty:      0.176ns  ((TSJ^2 + DJ^2)^1/2) / 2 + PE
+    Total System Jitter     (TSJ):    0.050ns
+    Discrete Jitter          (DJ):    0.133ns
+    Phase Error              (PE):    0.105ns
+  Timing Exception:       False Path
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+    G8                                                0.000     0.000 f  sel[2]
+                         net (fo=0)                   0.000     0.000    sel_IBUF[2]_inst/I
+    G8                   INBUF (Prop_INBUF_HPIOB_M_PAD_O)
+                                                      0.510     0.510 f  sel_IBUF[2]_inst/INBUF_INST/O
+                         net (fo=1, routed)           0.000     0.510    sel_IBUF[2]_inst/OUT
+    G8                   IBUFCTRL (Prop_IBUFCTRL_HPIOB_M_I_O)
+                                                      0.000     0.510 f  sel_IBUF[2]_inst/IBUFCTRL_INST/O
+                         net (fo=2, estimated)        1.245     1.755    sel_IBUF[2]
+    BUFGCTRL_X0Y26       BUFGCTRL                                     f  g_bal3.u_l2/S1
+  -------------------------------------------------------------------    -------------------
+
+                         (clock c_2 fall edge)        4.444     4.444 f  <hidden>
+    E5                                                0.000     4.444 f  clk_in
+                         net (fo=0)                   0.000     4.444    clk_in_IBUF_inst/I
+    E5                   INBUF (Prop_INBUF_HPIOB_M_PAD_O)
+                                                      0.274     4.718 f  clk_in_IBUF_inst/INBUF_INST/O
+                         net (fo=1, routed)           0.000     4.718    clk_in_IBUF_inst/OUT
+    E5                   IBUFCTRL (Prop_IBUFCTRL_HPIOB_M_I_O)
+                                                      0.000     4.718 f  clk_in_IBUF_inst/IBUFCTRL_INST/O
+                         net (fo=1, estimated)        0.421     5.139    clk_in_IBUF
+    MMCM_X0Y3            MMCME4_ADV (Prop_MMCM_CLKIN1_CLKOUT2)
+                                                      0.739     5.878 f  g_us.u_mmcm/CLKOUT2
+                         net (fo=1, estimated)        0.345     6.223    c_2
+    BUFGCTRL_X0Y26       BUFGCTRL                                     f  g_bal3.u_l2/I1
+
+
+
+

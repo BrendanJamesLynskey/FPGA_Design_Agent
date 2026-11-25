@@ -74,6 +74,7 @@ MIN_WORDS = {"summary": 12, "gap": 4, "next": 4, "evidence": 4, "scope": 3, "boa
 FREE = re.compile(r"^(title|summary|scope_not\[\d+\]|target\.note|clocks\[\d+\]\.note|resets\[\d+\]\.(note|name)|"
                   r"interfaces\[\d+\]\.(note|type|name)|parameters\[\d+\]\.(note|legal)|gaps\[\d+\]\.about|files\[\d+\]\.what|commands\[\d+\]\.(what|needs)|"
                   r"evidence\[\d+\]\.(what|conditions)|measurements\[\d+\]\.(what|conditions|unit)|gaps\[\d+\]\.text|"
+                  r"security\.(enabled\[\d+\]\.(item|proof)|not_enabled\[\d+\]\.(item|reason)|could_get_wrong\[\d+\]|key_handling)|"
                   r"next_steps\[\d+\]|open_questions\[\d+\]|history\[\d+\]\.note|agent_run\.note|numbers_allow\[\d+\]\.reason)$")
 NO_VOUCH = re.compile(r"(sha256|build_id|kb_pin)$")
 
@@ -192,7 +193,7 @@ def fill(h: dict, ddir: Path, build_id: bool = False) -> dict:
 
 def dump(h: dict) -> str:
     order = ["schema", "id", "title", "kind", "produced_by", "summary", "scope_not", "target", "clocks", "resets",
-             "interfaces", "registers", "parameters", "files", "commands", "evidence", "measurements", "gaps", "next_steps",
+             "interfaces", "registers", "parameters", "files", "commands", "evidence", "measurements", "security", "gaps", "next_steps",
              "open_questions", "history", "agent_run", "numbers_allow", "state"]
     out = {k: h[k] for k in order if k in h}
     out.update({k: v for k, v in h.items() if k not in out})
@@ -347,11 +348,47 @@ def _validate(h: dict) -> list[str]:
     return [f"schema: {'/'.join(map(str, e.absolute_path)) or '(top)'}: {e.message}" for e in v.iter_errors(h)]
 
 
+def _security_problems(h: dict, ddir: Path) -> list[str]:
+    """Brief 196: the datasheet's security section. Required when the design is built with production_secure (its state.gates carry
+    security_profile_met, or its build.yaml has a ``security`` request); then it must say what is enabled and how Vivado's output shows it, what
+    is not enabled, what a user could get wrong, and who owns the key. A section on a design that has no such build is allowed."""
+    sec = h.get("security")
+    bld = ddir / "build.yaml"
+    try:
+        asks = "security" in (yaml.safe_load(bld.read_text()) or {}) if bld.is_file() else False
+    except yaml.YAMLError:
+        asks = False
+    needed = asks or "security_profile_met" in (h["state"].get("gates") or {})
+    if sec is None:
+        return ["security: this design is built with production_secure; the datasheet needs a security section "
+                "(enabled with proof, not_enabled, could_get_wrong, key_handling)"] if needed else []
+    out = []
+    if needed and not sec["production_secure"]:
+        out.append("security.production_secure is false but the design is built with it")
+    if sec["production_secure"] and not sec["enabled"]:
+        out.append("security.enabled: a production_secure design lists what is enabled")
+    for i, e in enumerate(sec["enabled"]):
+        if meaningful(e["proof"]) < MIN_WORDS["gap"]:
+            out.append(f"security.enabled[{i}].proof: under {MIN_WORDS['gap']} distinct meaningful words")
+        if e.get("record") and not (ROOT / e["record"]).is_file():
+            out.append(f"security.enabled[{i}].record: {e['record']} does not exist")
+    for i, e in enumerate(sec["not_enabled"]):
+        if meaningful(e["reason"]) < MIN_WORDS["gap"]:
+            out.append(f"security.not_enabled[{i}].reason: under {MIN_WORDS['gap']} distinct meaningful words")
+    for i, s in enumerate(sec["could_get_wrong"]):
+        if meaningful(s) < MIN_WORDS["gap"]:
+            out.append(f"security.could_get_wrong[{i}]: under {MIN_WORDS['gap']} distinct meaningful words")
+    if re.search(r"\b(FIPS|Common Criteria|DPA[- ]resistan\w*|side[- ]channel[- ]resistan\w*|certified)\b", json.dumps(sec), re.I) and \
+            not re.search(r"\bno\b|\bnot\b|\bnever\b|\bnone\b", json.dumps(sec), re.I):
+        out.append("security: no certification or side-channel claim is made (brief 196 scope)")
+    return out
+
+
 def agent_run_dir(h: dict, ddir: Path) -> Path | None:
     """The run directory of an agent-produced handover (brief 68 C): the directory of ``agent_run.record``, and only when
     the design directory is inside it (the design is that run's own). None otherwise."""
     ar = h.get("agent_run") or {}
-    if h.get("produced_by") == "human" or not ar.get("record"):
+    if h.get("produced_by") in ("human", "session") or not ar.get("record"):
         return None
     rd = (ROOT / ar["record"]).resolve().parent
     return rd if rd != ROOT and rd in ddir.resolve().parents else None
@@ -392,7 +429,7 @@ def problems(ddir: Path, h: dict | None = None, readme: str | None = None) -> tu
         errs.append(f"target.tool must be 'Vivado {VIVADO}' or 'none' (published text names only {VIVADO})")
     if h["target"]["tool"] != "none" and not h["clocks"]:
         errs.append("clocks: a design built with Vivado has at least one clock")
-    if h["produced_by"] != "human" and not h.get("agent_run"):
+    if h["produced_by"] not in ("human", "session") and not h.get("agent_run"):
         errs.append(f"produced_by {h['produced_by']} needs agent_run (the run record)")
     # placeholders and minimum lengths (meaningful words: distinct, not filler)
     for path, s in _strings(h):
@@ -412,6 +449,7 @@ def problems(ddir: Path, h: dict | None = None, readme: str | None = None) -> tu
     for e in h["evidence"]:
         if meaningful(e["what"]) < MIN_WORDS["evidence"]:
             errs.append(f"{e['id']}: what is under {MIN_WORDS['evidence']} distinct meaningful words")
+    errs += _security_problems(h, ddir)
     ids = [x["id"] for x in h["evidence"] + h["measurements"]]
     if len(ids) != len(set(ids)):
         errs.append("evidence and measurement ids must be unique")
@@ -603,7 +641,8 @@ def render_readme(h: dict, ddir: Path, prose: dict, svgs: dict) -> str:
          f"prose markers, then run: python -m flow.handover write {rid} -->", "", h["summary"].strip(), "",
          "Not in scope:", ""]
     L += [f"- {s}" for s in h["scope_not"]]
-    who = {"human": "written by hand", "agent": "produced by the agent", "human+agent": "written by hand with agent runs"}
+    who = {"human": "written by hand", "agent": "produced by the agent", "human+agent": "written by hand with agent runs",
+           "session": "written by a Claude Code session"}
     L += ["", f"Kind: {h['kind']}; {who[h['produced_by']]}"
           + (f" (agent run `{h['agent_run']['run_id']}`, [record]({_link(h['agent_run']['record'], ddir)}))"
              if h.get("agent_run") else "") + f". State: {h['state']['stage']}. For an agent: [AGENT.md](AGENT.md)."]
@@ -693,6 +732,14 @@ def render_readme(h: dict, ddir: Path, prose: dict, svgs: dict) -> str:
     else:
         L += ["Nothing measured; see Known gaps."]
     L += _block("measured", prose)
+    sec = h.get("security")
+    if sec:
+        L += ["", "## Security", "", "Production-secure build: " + ("yes" if sec["production_secure"] else "no") + ".", "", "Enabled, and what shows it:", ""]
+        L += [f"- **{e['item']}**: {e['proof']}" + (f" ([record]({_link(e['record'], ddir)}))" if e.get("record") else "") for e in sec["enabled"]] or ["- nothing"]
+        L += ["", "Not enabled:", ""] + [f"- **{e['item']}**: {e['reason']}" for e in sec["not_enabled"]]
+        L += ["", "What a user could get wrong:", ""] + [f"- {s}" for s in sec["could_get_wrong"]]
+        L += ["", "Keys: " + sec["key_handling"].strip()]
+        L += _block("security", prose)
     L += ["", "## Known gaps and limits", ""]
     L += [f"- **{g['about']}**: {g['text']}" for g in h["gaps"]]
     L += _block("gaps", prose)
@@ -753,6 +800,13 @@ def render_agent(h: dict, ddir: Path) -> str:
         ms.append(f"{m['id']} {m['category']} {m.get('key') or '-'}={fmt(m.get('value'))}{m['unit'] and ' ' + m['unit']}"
                   f" {recs[m['record']][0]}#{m.get('field') or 're'}: {m['what']} | {cond}")
     L += ["", "## measured"] + (ms or ["none"])
+    sec = h.get("security")
+    if sec:
+        L += ["", "## security", f"production_secure={'yes' if sec['production_secure'] else 'no'}"]
+        L += [f"on {e['item']}: {e['proof']}" for e in sec["enabled"]]
+        L += [f"off {e['item']}: {e['reason']}" for e in sec["not_enabled"]]
+        L += [f"wrong? {s}" for s in sec["could_get_wrong"]]
+        L += [f"keys: {sec['key_handling'].strip()}"]
     L += ["", "## gaps"]
     groups: dict[str, list[dict]] = {}
     pointer = {e["id"]: f"{e['activity']} evidence is {e['result']}: " for e in h["evidence"]} if compact else {}

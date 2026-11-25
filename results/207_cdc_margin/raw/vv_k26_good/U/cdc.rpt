@@ -1,0 +1,84 @@
+Copyright 1986-2022 Xilinx, Inc. All Rights Reserved. Copyright 2022-2026 Advanced Micro Devices, Inc. All Rights Reserved.
+--------------------------------------------------------------------------------------------------------------------------------------------------------
+| Tool Version      : Vivado v.2026.1 (lin64) Build 6511674 Tue Jun 16 11:01:26 MDT 2026
+| Date              : Tue Nov 24 23:05:10 2026
+| Host              : bren-ubuntu24-04 running 64-bit Ubuntu 24.04.4 LTS
+| Command           : report_cdc -details -file /home/brendan/Claude_sandbox/_worktrees/207-cdc-margin/results/207_cdc_margin/raw/vv_k26_good/U/cdc.rpt
+| Design            : cdc207_top
+| Device            : xck26-sfvc784
+| Speed File        : -2LV  PRODUCTION 1.31 12-08-2025
+| Design State      : Routed
+| Temperature Grade : C
+--------------------------------------------------------------------------------------------------------------------------------------------------------
+
+CDC Report
+
+ID      Severity  Count  Description
+------  --------  -----  ----------------------------------------------
+CDC-3   Info          7  1-bit synchronized with ASYNC_REG property
+CDC-6   Warning       2  Multi-bit synchronized with ASYNC_REG property
+CDC-15  Warning      40  Clock enable controlled CDC structure detected
+
+Source Clock: clk_b
+Destination Clock: clk_a
+CDC Type: No Common Primary Clock
+
+Row  ID     Severity  Description                                     Depth  Exception            Source (From)       Destination (To)
+---  -----  --------  ----------------------------------------------  -----  -------------------  ------------------  ----------------
+  1  CDC-3  Info      1-bit synchronized with ASYNC_REG property          2  Asynch Clock Groups  ack_b_reg/C         aq1_a_reg/D
+  2  CDC-6  Warning   Multi-bit synchronized with ASYNC_REG property      2  Asynch Clock Groups  rgray_b_reg[6:0]/C  rq1_a_reg[6:0]/D
+  3  CDC-3  Info      1-bit synchronized with ASYNC_REG property          2  Asynch Clock Groups  rbin_b_reg[7]/C     rq1_a_reg[7]/D
+
+Source Clock: clk_a
+Destination Clock: clk_b
+CDC Type: No Common Primary Clock
+
+Row  ID      Severity  Description                                     Depth  Exception            Source (From)                Destination (To)
+---  ------  --------  ----------------------------------------------  -----  -------------------  ---------------------------  -------------------
+  1  CDC-15  Warning   Clock enable controlled CDC structure detected      0  Asynch Clock Groups  cfg_hold_a_reg[0]/C          cfg_b_reg[0]/D
+  2  CDC-15  Warning   Clock enable controlled CDC structure detected      0  Asynch Clock Groups  cfg_hold_a_reg[1]/C          cfg_b_reg[1]/D
+  3  CDC-15  Warning   Clock enable controlled CDC structure detected      0  Asynch Clock Groups  cfg_hold_a_reg[2]/C          cfg_b_reg[2]/D
+  4  CDC-15  Warning   Clock enable controlled CDC structure detected      0  Asynch Clock Groups  cfg_hold_a_reg[3]/C          cfg_b_reg[3]/D
+  5  CDC-15  Warning   Clock enable controlled CDC structure detected      0  Asynch Clock Groups  cfg_hold_a_reg[4]/C          cfg_b_reg[4]/D
+  6  CDC-15  Warning   Clock enable controlled CDC structure detected      0  Asynch Clock Groups  cfg_hold_a_reg[5]/C          cfg_b_reg[5]/D
+  7  CDC-15  Warning   Clock enable controlled CDC structure detected      0  Asynch Clock Groups  cfg_hold_a_reg[6]/C          cfg_b_reg[6]/D
+  8  CDC-15  Warning   Clock enable controlled CDC structure detected      0  Asynch Clock Groups  cfg_hold_a_reg[7]/C          cfg_b_reg[7]/D
+  9  CDC-15  Warning   Clock enable controlled CDC structure detected      0  Asynch Clock Groups  cfg_hold_a_reg[8]/C          cfg_b_reg[8]/D
+ 10  CDC-15  Warning   Clock enable controlled CDC structure detected      0  Asynch Clock Groups  cfg_hold_a_reg[9]/C          cfg_b_reg[9]/D
+ 11  CDC-15  Warning   Clock enable controlled CDC structure detected      0  Asynch Clock Groups  cfg_hold_a_reg[10]/C         cfg_b_reg[10]/D
+ 12  CDC-15  Warning   Clock enable controlled CDC structure detected      0  Asynch Clock Groups  cfg_hold_a_reg[11]/C         cfg_b_reg[11]/D
+ 13  CDC-15  Warning   Clock enable controlled CDC structure detected      0  Asynch Clock Groups  cfg_hold_a_reg[12]/C         cfg_b_reg[12]/D
+ 14  CDC-15  Warning   Clock enable controlled CDC structure detected      0  Asynch Clock Groups  cfg_hold_a_reg[13]/C         cfg_b_reg[13]/D
+ 15  CDC-15  Warning   Clock enable controlled CDC structure detected      0  Asynch Clock Groups  cfg_hold_a_reg[14]/C         cfg_b_reg[14]/D
+ 16  CDC-15  Warning   Clock enable controlled CDC structure detected      0  Asynch Clock Groups  cfg_hold_a_reg[15]/C         cfg_b_reg[15]/D
+ 17  CDC-3   Info      1-bit synchronized with ASYNC_REG property          2  Asynch Clock Groups  ctg_a_reg/C                  ct1_b_reg/D
+ 18  CDC-15  Warning   Clock enable controlled CDC structure detected      0  Asynch Clock Groups  mem_reg_0_63_0_6/RAMA/CLK    dout_b_reg[0]/D
+ 19  CDC-15  Warning   Clock enable controlled CDC structure detected      0  Asynch Clock Groups  mem_reg_0_63_0_6/RAMB/CLK    dout_b_reg[1]/D
+ 20  CDC-15  Warning   Clock enable controlled CDC structure detected      0  Asynch Clock Groups  mem_reg_64_127_0_6/RAMC/CLK  dout_b_reg[2]/D
+ 21  CDC-15  Warning   Clock enable controlled CDC structure detected      0  Asynch Clock Groups  mem_reg_0_63_0_6/RAMD/CLK    dout_b_reg[3]/D
+ 22  CDC-15  Warning   Clock enable controlled CDC structure detected      0  Asynch Clock Groups  mem_reg_64_127_0_6/RAME/CLK  dout_b_reg[4]/D
+ 23  CDC-15  Warning   Clock enable controlled CDC structure detected      0  Asynch Clock Groups  mem_reg_64_127_0_6/RAMF/CLK  dout_b_reg[5]/D
+ 24  CDC-15  Warning   Clock enable controlled CDC structure detected      0  Asynch Clock Groups  mem_reg_64_127_0_6/RAMG/CLK  dout_b_reg[6]/D
+ 25  CDC-15  Warning   Clock enable controlled CDC structure detected      0  Asynch Clock Groups  mem_reg_64_127_7_7/DP/CLK    dout_b_reg[7]/D
+ 26  CDC-15  Warning   Clock enable controlled CDC structure detected      0  Asynch Clock Groups  hs_hold_a_reg[0]/C           hs_data_b_reg[0]/D
+ 27  CDC-15  Warning   Clock enable controlled CDC structure detected      0  Asynch Clock Groups  hs_hold_a_reg[1]/C           hs_data_b_reg[1]/D
+ 28  CDC-15  Warning   Clock enable controlled CDC structure detected      0  Asynch Clock Groups  hs_hold_a_reg[2]/C           hs_data_b_reg[2]/D
+ 29  CDC-15  Warning   Clock enable controlled CDC structure detected      0  Asynch Clock Groups  hs_hold_a_reg[3]/C           hs_data_b_reg[3]/D
+ 30  CDC-15  Warning   Clock enable controlled CDC structure detected      0  Asynch Clock Groups  hs_hold_a_reg[4]/C           hs_data_b_reg[4]/D
+ 31  CDC-15  Warning   Clock enable controlled CDC structure detected      0  Asynch Clock Groups  hs_hold_a_reg[5]/C           hs_data_b_reg[5]/D
+ 32  CDC-15  Warning   Clock enable controlled CDC structure detected      0  Asynch Clock Groups  hs_hold_a_reg[6]/C           hs_data_b_reg[6]/D
+ 33  CDC-15  Warning   Clock enable controlled CDC structure detected      0  Asynch Clock Groups  hs_hold_a_reg[7]/C           hs_data_b_reg[7]/D
+ 34  CDC-15  Warning   Clock enable controlled CDC structure detected      0  Asynch Clock Groups  hs_hold_a_reg[8]/C           hs_data_b_reg[8]/D
+ 35  CDC-15  Warning   Clock enable controlled CDC structure detected      0  Asynch Clock Groups  hs_hold_a_reg[9]/C           hs_data_b_reg[9]/D
+ 36  CDC-15  Warning   Clock enable controlled CDC structure detected      0  Asynch Clock Groups  hs_hold_a_reg[10]/C          hs_data_b_reg[10]/D
+ 37  CDC-15  Warning   Clock enable controlled CDC structure detected      0  Asynch Clock Groups  hs_hold_a_reg[11]/C          hs_data_b_reg[11]/D
+ 38  CDC-15  Warning   Clock enable controlled CDC structure detected      0  Asynch Clock Groups  hs_hold_a_reg[12]/C          hs_data_b_reg[12]/D
+ 39  CDC-15  Warning   Clock enable controlled CDC structure detected      0  Asynch Clock Groups  hs_hold_a_reg[13]/C          hs_data_b_reg[13]/D
+ 40  CDC-15  Warning   Clock enable controlled CDC structure detected      0  Asynch Clock Groups  hs_hold_a_reg[14]/C          hs_data_b_reg[14]/D
+ 41  CDC-15  Warning   Clock enable controlled CDC structure detected      0  Asynch Clock Groups  hs_hold_a_reg[15]/C          hs_data_b_reg[15]/D
+ 42  CDC-3   Info      1-bit synchronized with ASYNC_REG property          2  Asynch Clock Groups  lvl_a_reg/C                  lvl_s1_reg/D
+ 43  CDC-3   Info      1-bit synchronized with ASYNC_REG property          3  Asynch Clock Groups  req_a_reg/C                  rq1_b_reg/D
+ 44  CDC-3   Info      1-bit synchronized with ASYNC_REG property          2  Asynch Clock Groups  tg_a_reg/C                   tg_s1_reg/D
+ 45  CDC-6   Warning   Multi-bit synchronized with ASYNC_REG property      2  Asynch Clock Groups  wgray_a_reg[6:0]/C           wq1_b_reg[6:0]/D
+ 46  CDC-3   Info      1-bit synchronized with ASYNC_REG property          2  Asynch Clock Groups  wbin_a_reg[7]/C              wq1_b_reg[7]/D
+

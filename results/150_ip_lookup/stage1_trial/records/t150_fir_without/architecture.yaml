@@ -1,0 +1,66 @@
+schema: fpga-design-agent/architecture/v1
+design: fir_lowpass32
+top: fir_top
+board: nexys_a7_100t
+part: xc7a100tcsg324-1
+blocks:
+  - name: fir_top
+    function: Board top. Instantiates fpga_shell and reset_sync, inverts the synchronised CPU reset once into the active-high rst used inside, and wires the window to fir_regs.
+  - name: fpga_shell
+    function: Embedded test shell (shell/rtl/fpga_shell.sv). Runs the 8-byte UART request/response protocol at 115200 baud and exposes registers 0x80-0xFF as the window.
+  - name: fir_regs
+    function: Window decode and register file. Maps window words 0-5 (byte offsets 0x00-0x14) to ID, SAMPLE_IN, RESULT, STATUS, COEF_ADDR and COEF_DATA, applies write strobes and read-data mux.
+  - name: fir_delay_line
+    function: 32 x 16-bit signed shift register built from flip-flops, newest sample at index 0. Shifts on each accepted SAMPLE_IN write.
+  - name: fir_coef_bank
+    function: 32 x 16-bit signed coefficient registers built from flip-flops, written at COEF_ADDR by COEF_DATA writes, read through a 32:1 mux. Reset to zero.
+  - name: fir_mac
+    function: Run sequencer and the single DSP48E1 multiply-accumulate, one tap per clk over 32 taps plus pipeline. Shifts the accumulator right by 15, saturates to 16 bits, drives RESULT and busy/result_valid.
+interfaces:
+  - name: host_uart
+    between: [host, fpga_shell]
+    protocol: uart
+    prefix: uart
+    module: fpga_shell
+  - name: test_window
+    between: [fpga_shell, fir_regs]
+    protocol: simple
+    prefix: win
+    module: fir_regs
+  - name: sample_bus
+    between: [fir_regs, fir_delay_line]
+    protocol: other
+    prefix: sample
+    module: fir_delay_line
+  - name: coef_bus
+    between: [fir_regs, fir_coef_bank]
+    protocol: other
+    prefix: coef
+    module: fir_coef_bank
+  - name: run_bus
+    between: [fir_regs, fir_mac]
+    protocol: other
+    prefix: run
+    module: fir_mac
+clock_domains:
+  - name: clk
+    clock: clk
+    freq_mhz: 100
+reset:
+  synchronisers: [reset_sync]
+crossings:
+  - from: async
+    to: clk
+    signal: cpu_resetn
+    primitive: reset_sync
+    inline_in: reset_sync
+  - from: async
+    to: clk
+    signal: uart_rx
+    primitive: sync2
+    inline_in: uart_rx
+predicted_resources:
+  lut: [200, 800]
+  ff: [900, 1500]
+  bram_tile: 0
+  dsp: 1

@@ -1,0 +1,105 @@
+Running as unit: run-u41799.scope; invocation ID: b1d18642d1814388977e1ed2c0068b2b
+INFO: [Common 17-3922] A valid Vivado Design Suite BASIC license has been detected. Your current license is active and will expire on 10-nov-2027.
+
+****** Vivado v2026.1 (64-bit)
+  **** SW Build 6511674 on Tue Jun 16 11:01:26 MDT 2026
+  **** IP Build 6504888 on Tue Jun 09 09:05:25 MDT 2026
+  **** SharedData Build 6501428 on Mon Jun 08 17:34:18 MDT 2026
+  **** Start of session at: Mon Nov 23 05:36:09 2026
+    ** Copyright 1986-2022 Xilinx, Inc. All Rights Reserved.
+    ** Copyright 2022-2026 Advanced Micro Devices, Inc. All Rights Reserved.
+
+source results/b127/ctx_timing.tcl
+# set dcp [lindex $argv 0]
+# set out [lindex $argv 1]
+# file mkdir $out
+# open_checkpoint $dcp
+Command: open_checkpoint designs/b96_kr260_10g/rm_gp_itch/build/base/post_route.dcp
+
+Starting open_checkpoint Task
+
+Time (s): cpu = 00:00:00.05 ; elapsed = 00:00:00.05 . Memory (MB): peak = 1485.176 ; gain = 8.906 ; free physical = 8965 ; free virtual = 16229
+INFO: [Device 21-403] Loading part xck26-sfvc784-2LV-c
+Netlist sorting complete. Time (s): cpu = 00:00:00.18 ; elapsed = 00:00:00.18 . Memory (MB): peak = 2779.414 ; gain = 0.000 ; free physical = 8046 ; free virtual = 15245
+INFO: [Netlist 29-17] Analyzing 1984 Unisim elements for replacement
+INFO: [Netlist 29-28] Unisim Transformation completed in 0 CPU seconds
+INFO: [Project 1-479] Netlist was created with Vivado 2026.1
+INFO: [Project 1-570] Preparing netlist for logic optimization
+Read ShapeDB Complete: Time (s): cpu = 00:00:00.07 ; elapsed = 00:00:00.08 . Memory (MB): peak = 2779.414 ; gain = 0.000 ; free physical = 8032 ; free virtual = 15243
+INFO: [Timing 38-478] Restoring timing data from binary archive.
+INFO: [Timing 38-479] Binary timing data restore complete.
+INFO: [Project 1-856] Restoring constraints from binary archive.
+INFO: [Constraints 18-5170] The checkpoint was created with non-default parameter values which do not match the current Vivado settings.  Mismatching parameters are:
+  synth.maxThreads
+  general.maxThreads
+INFO: [Project 1-853] Binary constraint restore complete.
+INFO: [Designutils 20-5722] Start Reading Physical Databases.
+Reading placement.
+Read Netlist Cache: Time (s): cpu = 00:00:00.05 ; elapsed = 00:00:00.06 . Memory (MB): peak = 3124.254 ; gain = 0.000 ; free physical = 7787 ; free virtual = 15002
+Reading placer database...
+Read Device Cache: Time (s): cpu = 00:00:00.03 ; elapsed = 00:00:00.03 . Memory (MB): peak = 3124.254 ; gain = 0.000 ; free physical = 7779 ; free virtual = 14994
+Read PlaceDB: Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 3124.254 ; gain = 0.000 ; free physical = 7779 ; free virtual = 14994
+Read placeStorage: Time (s): cpu = 00:00:01 ; elapsed = 00:00:01 . Memory (MB): peak = 3171.871 ; gain = 47.617 ; free physical = 7746 ; free virtual = 14962
+Read PulsedLatchDB: Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 3171.871 ; gain = 0.000 ; free physical = 7746 ; free virtual = 14962
+Reading routing.
+Read RouteStorage: Time (s): cpu = 00:00:11 ; elapsed = 00:00:09 . Memory (MB): peak = 3605.520 ; gain = 433.648 ; free physical = 7272 ; free virtual = 14515
+Read Physdb Files: Time (s): cpu = 00:00:13 ; elapsed = 00:00:11 . Memory (MB): peak = 3605.520 ; gain = 481.266 ; free physical = 7272 ; free virtual = 14515
+Restored from archive | CPU: 12.910000 secs | Memory: 450.661537 MB |
+Finished XDEF File Restore: Time (s): cpu = 00:00:13 ; elapsed = 00:00:11 . Memory (MB): peak = 3605.520 ; gain = 481.266 ; free physical = 7272 ; free virtual = 14515
+Netlist sorting complete. Time (s): cpu = 00:00:00.01 ; elapsed = 00:00:00.01 . Memory (MB): peak = 3605.520 ; gain = 0.000 ; free physical = 7272 ; free virtual = 14515
+INFO: [Project 1-111] Unisim Transformation Summary:
+  A total of 287 instances were transformed.
+  IBUF => IBUF (IBUFCTRL, INBUF): 4 instances
+  IOBUF => IOBUF (IBUFCTRL, INBUF, OBUFT): 2 instances
+  RAM32M16 => RAM32M16 (RAMD32(x14), RAMS32(x2)): 69 instances
+  RAM64M8 => RAM64M8 (RAMD64E(x8)): 206 instances
+  RAM64X1D => RAM64X1D (RAMD64E(x2)): 6 instances
+
+INFO: [Project 1-604] Checkpoint was created with Vivado v2026.1 (64-bit) build 6511674
+open_checkpoint: Time (s): cpu = 00:01:00 ; elapsed = 00:00:41 . Memory (MB): peak = 3605.555 ; gain = 2136.223 ; free physical = 7272 ; free virtual = 14516
+# set fh [open $out/ctx_timing.txt w]
+# proc one {fh title cells} {
+#     puts $fh "=== $title"
+#     if {[llength $cells] == 0} { puts $fh "no cells matched"; return }
+#     # data and enable endpoints only: the reset pins of these registers are fed by the GT's reset synchroniser, a different (and shorter) path than the logic of the block
+#     set pins [get_pins -quiet -of_objects $cells -filter {DIRECTION == IN && REF_PIN_NAME != R && REF_PIN_NAME != S && REF_PIN_NAME != CLR && REF_PIN_NAME != PRE && REF_PIN_NAME != C && REF_PIN_NAME != CLK && REF_PIN_NAME != WCLK && REF_PIN_NAME != RST}]
+#     if {[llength $pins] == 0} { puts $fh "no endpoint pins"; return }
+#     set p [get_timing_paths -delay_type max -to $pins -max_paths 1 -nworst 1]
+#     if {[llength $p] == 0} { puts $fh "no timing path"; return }
+#     puts $fh "SLACK [get_property SLACK $p] STARTPOINT [get_property STARTPOINT_PIN $p] ENDPOINT [get_property ENDPOINT_PIN $p] REQ [get_property REQUIREMENT $p] LOGIC_LEVELS [get_property LOGIC_LEVELS $p]"
+# }
+# one $fh "risk_glue position registers (pos[])" [get_cells -hier -filter {NAME =~ *u_ip/u_it/u_risk/pos_reg*}]
+get_timing_paths: Time (s): cpu = 00:00:59 ; elapsed = 00:00:12 . Memory (MB): peak = 3769.770 ; gain = 164.215 ; free physical = 7071 ; free virtual = 14317
+# one $fh "risk_glue verdict counters and queue (the rest of the risk verdict)" [get_cells -hier -filter {NAME =~ *u_ip/u_it/u_risk/dq*}]
+# one $fh "book_core price ladder RAMs (g_lv[*].lm: the ladder update B3 writes them)" [get_cells -hier -filter {NAME =~ *u_ip/u_it/u_book/g_lv* && IS_PRIMITIVE}]
+# one $fh "book_core ladder reduction T1 to T2 (t2b_*, t2a_*, w2_*)" [get_cells -hier -filter {NAME =~ *u_ip/u_it/u_book/t2* && IS_SEQUENTIAL}]
+# one $fh "book_core top of book and update record" [get_cells -hier -filter {NAME =~ *u_ip/u_it/u_book/tu_*}]
+# one $fh "mold_rx" [get_cells -hier -filter {NAME =~ *u_ip/u_it/u_mold/*}]
+# one $fh "itch_dec" [get_cells -hier -filter {NAME =~ *u_ip/u_it/u_dec/*}]
+# one $fh "udp_strip" [get_cells -hier -filter {NAME =~ *u_ip/u_us/*}]
+# one $fh "order_seg" [get_cells -hier -filter {NAME =~ *u_ip/u_it/u_seg/*}]
+# one $fh "tx_mux" [get_cells -hier -filter {NAME =~ *u_tx/u_mx/*}]
+# one $fh "mac64_tx (the CRC path with the multiplexer in front)" [get_cells -hier -filter {NAME =~ *u_tx/u_mt/*}]
+# one $fh "itch_path (poison policy, counters, statistics)" [get_cells -hier -filter {NAME =~ *u_ip/*}]
+CRITICAL WARNING: [Vivado 12-4439] The number of objects collected by the 'to' option of 'get_timing_paths' is very large: 105267. This may lead to serious performance issues and out-of-memory conditions in handling the results.
+Resolution: Further filtering of the command results, or narrowing the scope of the command is recommended.
+# puts $fh "=== whole design, worst 3 setup paths per clock group"
+# foreach c [get_clocks] {
+#     set p [get_timing_paths -delay_type max -from [get_clocks $c] -to [get_clocks $c] -max_paths 3 -nworst 1]
+#     foreach q $p { puts $fh "CLOCK $c SLACK [get_property SLACK $q] START [get_property STARTPOINT_PIN $q] END [get_property ENDPOINT_PIN $q]" }
+# }
+WARNING: [Timing 38-164] This design has multiple clocks. Inter clock paths are considered valid unless explicitly excluded by timing constraints such as set_clock_groups or set_false_path.
+WARNING: [Vivado 12-975] No timing paths matched 'get_timing_paths -delay_type max -from [get_clocks clk_25] -to [get_clocks clk_25] -max_paths 3 -nworst 1'.
+WARNING: [Timing 38-164] This design has multiple clocks. Inter clock paths are considered valid unless explicitly excluded by timing constraints such as set_clock_groups or set_false_path.
+WARNING: [Vivado 12-975] No timing paths matched 'get_timing_paths -delay_type max -from [get_clocks sfp_mgt_refclk] -to [get_clocks sfp_mgt_refclk] -max_paths 3 -nworst 1'.
+WARNING: [Timing 38-164] This design has multiple clocks. Inter clock paths are considered valid unless explicitly excluded by timing constraints such as set_clock_groups or set_false_path.
+WARNING: [Vivado 12-975] No timing paths matched 'get_timing_paths -delay_type max -from [get_clocks tck] -to [get_clocks tck] -max_paths 3 -nworst 1'.
+WARNING: [Timing 38-164] This design has multiple clocks. Inter clock paths are considered valid unless explicitly excluded by timing constraints such as set_clock_groups or set_false_path.
+WARNING: [Vivado 12-975] No timing paths matched 'get_timing_paths -delay_type max -from [get_clocks {qpll0outclk_out[0]}] -to [get_clocks {qpll0outclk_out[0]}] -max_paths 3 -nworst 1'.
+WARNING: [Timing 38-164] This design has multiple clocks. Inter clock paths are considered valid unless explicitly excluded by timing constraints such as set_clock_groups or set_false_path.
+WARNING: [Vivado 12-975] No timing paths matched 'get_timing_paths -delay_type max -from [get_clocks {qpll0outrefclk_out[0]}] -to [get_clocks {qpll0outrefclk_out[0]}] -max_paths 3 -nworst 1'.
+WARNING: [Timing 38-164] This design has multiple clocks. Inter clock paths are considered valid unless explicitly excluded by timing constraints such as set_clock_groups or set_false_path.
+WARNING: [Vivado 12-975] No timing paths matched 'get_timing_paths -delay_type max -from [get_clocks {gtwiz_userclk_rx_srcclk_out[0]}] -to [get_clocks {gtwiz_userclk_rx_srcclk_out[0]}] -max_paths 3 -nworst 1'.
+# close $fh
+# close_design
+INFO: [Common 17-206] Exiting Vivado at Mon Nov 23 05:37:10 2026...

@@ -233,6 +233,11 @@ class Unit:
         return out
 
 
+def order_seqs(wf) -> list[int]:
+    """TCP sequence numbers of the order frames (113 bytes before the FCS, TCP) that reached the wire with a good FCS, in wire order (brief 176)."""
+    return [int.from_bytes(d[38:42], "big") for d, ok, *_ in wf if ok and len(d) >= 113 and d[12:14] == b"\x08\x00" and d[23] == 6]
+
+
 def mk_frame(payload: bytes, **kw):
     args = dict(dst_mac=H.DEFAULTS["my_mac"], src_mac=H.DEFAULTS["venue_mac"], src_ip="192.168.58.15", dst_ip="192.168.58.10", sport=26000, dport=5810)
     args.update(kw)
@@ -531,6 +536,7 @@ async def poison_policy(dut):
         bad = [f for f in wf if not f[1]]
         # with speculation the second candidate's frame (refused by the untrusted flag) was started and aborted as well: one more poisoned frame, counted as an abort
         assert len(bad) == 1 + int(spec) and od["pz_bad"] == 1 and od["pz_abort"] == int(spec), (od, len(bad), spec)
+        assert order_seqs(wf) == [], order_seqs(wf)
         assert od["sent"] == 0 and itch["rej_gap"] == 1, (od, itch["rej_gap"])       # the second candidate, in a good frame, is refused: the bad frame made the path untrusted
     # 2. the candidate is the FIRST message of a long frame (tail of 6 messages = 274 bytes): its order is out long before the frame ends: cut-through leaves it unverified
     (itch, us, od), wf, m = await poison_scenario(dut, spec=True, strict=False, tail_msgs=6, bad_fcs=False)
@@ -543,6 +549,7 @@ async def poison_policy(dut):
     # 4. STRICT mode closes the window: the first message's order is poisoned because the verdict was not known by its last word
     (itch, us, od), wf, m = await poison_scenario(dut, spec=True, strict=True, tail_msgs=6, bad_fcs=False)
     assert od["pz_strict"] == 1 and od["sent"] == 1 and od["unv"] == 0, od
+    assert order_seqs(wf) == [1], order_seqs(wf)        # brief 176: the poisoned order consumed no TCP sequence number (the sent one is the first, TCP_LOAD = 1)
     (itch, us, od), wf, m = await poison_scenario(dut, spec=True, strict=True, tail_msgs=0, bad_fcs=False)
     assert od["pz_strict"] == 0 and od["sent"] == 2, od                     # the candidate at the end of a short frame: the verdict is in time, nothing is lost
 
@@ -650,6 +657,8 @@ async def order_dropped_when_mac_busy(dut):
     assert u.stat_word(69) == len(frames)
     assert od["drop"] > 0 and od["sent"] + od["drop"] == len(m.orders), (od, len(m.orders))
     assert all(f[1] for f in u.wire_frames()), "a frame with a bad FCS reached the wire"
+    # brief 176: a dropped order frame never reached the wire and consumes no sequence number: the ones that did are consecutive from TCP_LOAD (1)
+    assert order_seqs(u.wire_frames()) == [1 + 59 * k for k in range(od["sent"])] and od["sent"] > 0, (order_seqs(u.wire_frames()), od)
     assert us["bad_fcs"] == 0 and us["cut"] == 0, us
 
 

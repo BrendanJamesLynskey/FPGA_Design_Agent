@@ -2,7 +2,7 @@
 # Zynq UltraScale+ K26 (xck26), speed grade -2LV; 1.4 ns for the same reason.
 # Keys top, part, sources, constraints, generics are the flow's design build.yaml; mode, clock_ns, points and expected_primitives extend it for an
 # out-of-context run (one Vivado run per entry of `points`). expected_primitives is a planning estimate from spec.yaml, NOT a measurement; carry4 is the
-# 7-series CARRY4 count (UltraScale+ CARRY8 is about half). The runs are for a free heavy slot; none has been made.
+# 7-series CARRY4 count (UltraScale+ CARRY8 is about half). The runs were made in brief 160 (arith/tools/run_vivado_ooc.py).
 top: lzc_norm_ooc
 part: xck26-sfvc784-2LV-c
 mode: out_of_context
@@ -17,6 +17,6 @@ points:
   expected_primitives: {carry4: 0, dsp48: 0, bram: 0, ff: 78}
 - generics: {VARIANT: 3, PIPE: 1, W: 64}
   expected_primitives: {carry4: 0, dsp48: 0, bram: 0, ff: 144}
-status: prepared, not run (no Vivado in brief 139b)
+status: prepared in brief 139b, run in brief 160 (python -m arith.tools.run_vivado_ooc); records in arith/<function>/verif/results/vivado_ooc_*.json
 variant: tree_barrel_2st
 function: lzc_norm

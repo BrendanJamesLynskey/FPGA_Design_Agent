@@ -66,8 +66,13 @@ areas:
   - {file: flow/cdc_structure.py, gate: post_synth_cdc_structure_clean, gate_in: flow/gates.py, enforced: true, what: "After synthesis, classifies every flip-flop reached from another clock (synchroniser chain, XPM macro, constrained Gray or handshake, reset bridge, unsafe) and fails on an unsafe one."}
   - {file: flow/cdc_inject.py, enforced: true, gate: inject, what: "Simulation with a late-resolving first synchroniser stage, so a crossing that only works when every bit settles on time fails."}
   - {file: flow/gates.py, gate: cdc_no_critical, enforced: true, what: "report_cdc must have no Critical row, after synthesis and after routing."}
-  - {file: flow/xpm_cdc.tcl, enforced: false, what: "Exceptions for AMD's crossing macros."}
+  - {file: flow/xpm_cdc.tcl, enforced: false, what: "Exceptions for AMD's crossing macros; the handshake bound is AMD's own: destination period times its sync stages, with a bus skew."}
+  - {file: flow/cdc_margin.py, gate: post_route_bus_skew_met, gate_in: flow/gates.py, enforced: true, what: "After routing, every set_bus_skew must be met; a hand-built bus with no bus skew, a loose datapath-only bound, a missing or low MTBF (UltraScale+) and user clock uncertainty are warnings."}
   evidence:
+  - kind: measured
+    source: results/207_cdc_margin/headline.json
+    values: ["get:a7.lvl_slack_D", "get:a7.lvl_slack_DU", "get:a7.filler_whs_a_U", "get:m10.filler_wns_b_D", "get:m10.filler_wns_b_DU", "get:m10.maxskew_paths_D", "get:m10.maxskew_paths_DD"]
+    text: "A clock-uncertainty margin is not crossing margin. On Artix-7 it left a crossing's slack unchanged ({0} and {1} ns) and failed hold elsewhere (worst {2} ns); on MAX10 it turned a passing path ({3} ns) into a failing one ({4} ns); in Quartus a clock group removed the skew check ({5} paths with bounds, {6} with the group)."
   - kind: measured
     source: results/16_cdc_gate_2026_1/mutant_table.json
     values: ["count@rows:kind=mutant", "count@rows:kind=mutant,report_cdc_alone_flags=true", "count@rows:kind=mutant,gate_flags=true", "count@rows:kind=correct", "count@rows:kind=correct,gate_flags=false"]
@@ -85,6 +90,7 @@ areas:
   - "No agent run has used the stronger crossing gate yet."
   - "A reset cleared on one side only, in an asynchronous FIFO or a handshake, gets past the gate; only the rig's simulation catches it."
   - "The gate's simulation works cycle by cycle, so it finds lost pulses and bits crossed separately but not route skew, glitches or true metastability."
+  - "The bus-skew gate has no failing case from our own designs: neither tested part could be routed past a realistic bound; its negative case is a recorded over-tight bound."
 - id: clocking
   name: Clocking
   summary: Choosing an MMCM or PLL setting, clock buffers, dynamic phase and glitch-free switching, and using the Clocking Wizard as a checker.
@@ -95,15 +101,34 @@ areas:
   - {file: flow/gates.py, gate: post_synth_drc_clean, enforced: true, what: "A DRC Error or Critical Warning after synthesis fails the run; an illegal MMCM VCO or phase-detector frequency raises one (AVAL-46)."}
   - {file: flow/mmcm_search.py, enforced: false, what: "A search over legal MMCM settings for a target frequency, so the setting is computed, not guessed."}
   - {file: flow/cmt_check.tcl, enforced: false, what: "A VCO and phase-detector range checker, written and measured but not wired into a gate."}
+  - {file: flow/report_gates.py, gate: RPT-CLK-01, enforced: false, what: "Advisory (Brief 204a): a global clock buffer driven by another buffer, or a clock made in fabric, read from the clock-utilisation and clock-networks reports."}
+  - {file: flow/report_gates.py, gate: RPT-CLK-02, enforced: false, what: "Advisory (Brief 204a): clock uncertainty and hold skew over the guide's review thresholds, read from the timing paths."}
+  - {file: flow/clock_mux_check.py, enforced: false, what: "The clock_mux check: a LUT on a clock path, a clock mux whose modes are still timed against each other, clock groups on the source clocks that hide real paths into or out of the mux fanout, and a BUFGCTRL chain longer than the cascade ring; advice for a case-analysed select, a CE-pin select, an external clock with IGNORE tied, and a needlessly deep tree. It runs in the check suite, not as a stage gate."}
   evidence:
   - kind: measured
     source: results/project_parity_2026_1/cmt_check/drc_*.rpt
     values: [nfiles, "nmatch:AVAL-46"]
     text: "Of {0} probe designs (one legal, three with an MMCM setting outside its range), Vivado's design-rule check after synthesis flagged the setting as out of range on {1}."
+  - kind: measured
+    source: results/204a_report_gates/hits.json
+    values: ["get:builds", "get:summary.RPT-CLK-01.builds_measured", "get:summary.RPT-CLK-01.builds_with_a_hit", "get:summary.RPT-CLK-02.builds_with_a_hit", "get:summary.RPT-CLK-02.builds_measured"]
+    text: "The clock-tree checks were run over {0} recorded builds: {2} of {1} showed a cascaded buffer or a local clock, and {3} of {4} had a hold skew or uncertainty over the guide's review threshold."
+    source: results/208/measured.json
+    values: [get:vivado.a7_u_none.route.timing.wns, get:vivado.a7_u_srclog.route.timing.wns, get:vivado.k26_u_none.route.timing.wns, get:vivado.k26_u_srclog.route.timing.wns]
+    text: "Two clocks through a BUFGMUX, with paths between one clock's own registers and the mux fanout: setup slack was {0} ns unconstrained and {1} ns once the source clocks were declared exclusive on xc7a35t ({2} and {3} ns on xck26), because the clock group also removed the real crossing (Vivado 2026.1, routed)."
+  - kind: measured
+    source: results/208/measured.json
+    values: ["count@check:pass=false", "count@check:pass=true"]
+    text: "The clock_mux check on the recorded clock-mux designs (xc7a35t and xck26) blocked {0} and passed {1}; every design whose clock groups hid a path was among those blocked."
+  - kind: measured
+    source: results/208/records/sim/tb_lutmux.log
+    values: ["re:SCEN c3_lut_mux switches=(\\d+)", "re:runts=(\\d+)"]
+    text: "An RTL clock mux (a LUT) switched {0} times at times unrelated to its clocks gave {1} runt pulses in simulation; Vivado reports it only as TIMING-14."
   cards:
   - {href: "flow-notes.html#xpm-cdc", label: "Beyond the flow: AMD's crossing macros lose their exceptions"}
   gaps:
   - "The Clocking Wizard's own settings were compared with the flow's search on only a few target frequencies."
+  - "The clock-mux check reads a netlist dump made in the check suite's Vivado session; it is not a stage gate, and the CE-select glitch it warns about was not shown in simulation (the unisim model has no timing)."
   - "No agent run has been graded on a clocking task yet."
 - id: io
   name: I/O, primitives and transceivers
@@ -361,12 +386,28 @@ areas:
   - {file: agent/graph/stages.py, gate: standards_rtl, enforced: true, what: "Design standards on the RTL: no latches, no combinational loops, no gated clocks, synchronous resets, declared crossings."}
   - {file: flow/gates.py, gate: rtl_methodology_no_critical, enforced: true, what: "Methodology checks on the elaborated design, then after synthesis: no Critical Warning."}
   - {file: flow/lint.sh, enforced: false, what: "Verilator lint, run before the stage can end."}
+  - {file: flow/checks/init_values.py, enforced: false, what: "Advice after synthesis: a register whose non-zero initial value keeps it out of a DSP or block RAM, and an UltraRAM refused because of initial contents."}
+  - {file: flow/report_gates.py, gate: RPT-LL-02, enforced: false, what: "Check-suite gate (Brief 204a): a post-synthesis setup path that still fails with its net delay taken out cannot be closed by placement. Advisory RPT-LL-01 compares the logic-level distribution with the clock period."}
+  - {file: flow/report_gates.py, gate: RPT-FO-01, enforced: false, what: "Advisory (Brief 204a): a net with too many loads for its clock, with the guide's fixes (balanced tree with KEEP, a driver register, no MAX_FANOUT on global nets)."}
+  - {file: flow/report_gates.py, gate: RPT-CS-02, enforced: false, what: "Check-suite gate (Brief 204a): control sets above the guide's required-reduction share of the device's capacity; the recommended-reduction band is an advisory."}
   evidence:
+  - kind: measured
+    source: results/206_power_up/records/summary.json
+    values: ["count@amd:arm=x8,initv=1,ff_total>0", "count@amd:arm=x8,initv=0,ff_total=0"]
+    text: "In {0} Vivado 2026.1 syntheses of a multiply whose registers all start non-zero (two families), every one of those registers stayed out of the DSP block, with no warning; in {1} with them at zero, all went into it."
+  - kind: measured
+    source: results/206_power_up/records/summary.json
+    values: ["count@altera:arm=q6_ram,initv=1,mem_bits=0", "count@altera:arm=q6_ram,initv=0,mem_bits>0"]
+    text: "On Altera parts every core register starts at zero: in {0} Quartus Lite compiles (three families, NOT-gate push-back on and off) a RAM whose read register was to start non-zero was built from logic instead of a block RAM; in {1} with it at zero, a block RAM was used."
   - kind: agent
     source: results/course/*/run_*.json
     where: split=dev
     values: [n, "count:hidden_pass=true", "count:outcome=escape", "count:outcome=fail"]
     text: "Across all {0} development runs, {1} passed every hidden test, {2} were escapes (the agent's own checks passed, the hidden tests did not) and {3} failed."
+  - kind: measured
+    source: results/204a_report_gates/hits.json
+    values: ["get:summary.RPT-LL-02.builds_measured", "get:summary.RPT-LL-02.builds_with_a_hit", "get:summary.RPT-LL-02.builds_with_a_hit_that_met_timing", "get:summary.RPT-LL-01.builds_with_a_hit", "get:summary.RPT-LL-01.builds_measured"]
+    text: "The logic-depth gate was run on {0} recorded builds: it failed {1}, and {2} of them met timing after routing; the logic-level advisory flagged {3} of {4} builds."
   cards:
   - {href: "flow-notes.html#gates", label: "Beyond the flow: a missing report or skipped test looks like a pass"}
   gaps:
@@ -492,6 +533,9 @@ areas:
   checks:
   - {file: flow/run_vivado.sh, enforced: false, what: "The only way the agent builds: batch Vivado under a memory cap and a thread limit, writing the reports the gates read."}
   - {file: flow/xprobe.py, enforced: false, what: "Cross-probing: names the RTL file and line, clock region and nets of a failing or tight path."}
+  - {file: flow/report_gates.py, gate: RPT-LOG-03, enforced: false, what: "Check-suite gate (Brief 204a, from Brief 203): a generic the build sets that the top does not have, which Vivado only warns about, so its value never reaches the design."}
+  - {file: flow/report_gates.py, gate: RPT-IP-01, enforced: false, what: "Check-suite gate (Brief 204a): an IP that report_ip_status shows locked or not up to date."}
+  - {file: flow/report_gates.py, gate: RPT-CONG-01, enforced: false, what: "Advisory (Brief 204a): placer or router congestion at the guide's review level, and utilisation the guide ties to hard placement."}
   evidence:
   - kind: measured
     source: results/project_parity_2026_1/xprobe/*.xprobe.json
@@ -502,6 +546,10 @@ areas:
     where: split=dev,stop.stages_0_to_8_passed=true
     values: [n]
     text: "Of the development runs, {0} went through every stage up to configuration with every stage gate passed."
+  - kind: measured
+    source: results/204a_report_gates/hits.json
+    values: ["get:builds", "get:summary.RPT-LOG-01.builds_with_a_hit", "get:summary.RPT-LOG-03.builds_with_a_hit", "get:summary.RPT-CONG-01.builds_with_a_hit"]
+    text: "The report-driven checks were run on {0} recorded builds without re-running Vivado: {1} had synthesis messages saying logic was dropped, {2} had a generic the top did not use, and {3} showed placer congestion at the guide's review level or above."
   cards: []
   gaps:
   - "No local design had a failing path to cross-probe, so it is shown on passing ones."

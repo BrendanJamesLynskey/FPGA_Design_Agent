@@ -22,7 +22,8 @@ PERIOD_PS = 6206
 KIND = {"A": 0, "F": 0, "E": 1, "C": 1, "X": 2, "D": 3, "U": 4, "R": 5, "S": 6}
 TIMING_DEPENDENT = ("spec", "abort", "late_abort", "rej_busy")
 REC: dict = {}
-COVER: dict = {"start_off": set(), "end_off": set(), "keep": set(), "counters": set(), "lengths": set(), "tests": []}
+NOTIONAL = int(os.environ.get("B110_NOTIONAL", "0"))
+COVER: dict = {"lane_type": set(), "start_off": set(), "end_off": set(), "keep": set(), "counters": set(), "lengths": set(), "tests": []}
 
 
 class Bench:
@@ -30,6 +31,7 @@ class Bench:
         self.dut, self.cfg, self.spec = dut, cfg, spec
         self.cyc = 0
         self.msgs, self.evs, self.tus, self.frames, self.aborts, self.late = [], [], [], [], [], 0
+        self.vds = []                              # brief 191: the verdict records (vd_v) the risk block shows
         self._cur = None
         self.last_word_cycle = {}
 
@@ -37,10 +39,12 @@ class Bench:
     async def start(self):
         d = self.dut
         cocotb.start_soon(Clock(d.clk, PERIOD_PS, unit="ps").start())
-        for n in ("s_v", "s_sof", "s_eof", "s_err", "clr_cnt", "clr_flags", "clr_book", "clr_pos", "clr_ref"):
+        for n in ("s_v", "s_sof", "s_eof", "s_err", "clr_cnt", "clr_flags", "clr_book", "clr_pos", "clr_ref", "ref_load"):
             getattr(d, n).value = 0
         d.s_d.value = 0
         d.s_keep.value = 0
+        for n in ("sb_v", "sb_sof", "sb_eof", "sb_err", "sb_d", "sb_keep"):                 # the B feed (brief 191), unused unless DUAL_FEED
+            getattr(d, n).value = 0
         self.configure()
         d.rst.value = 1
         for _ in range(4):
@@ -48,7 +52,7 @@ class Bench:
         d.rst.value = 0
         await self.tick(sample=False)
         await self.wait_ready()
-        self.msgs, self.evs, self.tus, self.frames, self.aborts = [], [], [], [], []
+        self.msgs, self.evs, self.tus, self.frames, self.aborts, self.vds = [], [], [], [], [], []
 
     def configure(self, **kw):
         c, d = self.cfg, self.dut
@@ -63,6 +67,10 @@ class Bench:
         d.cfg_tif.value, d.cfg_display.value, d.cfg_capacity.value = ord(c.tif), ord(c.display), ord(c.capacity)
         d.cfg_ise.value, d.cfg_cross.value, d.cfg_custtype.value = ord(c.ise), ord(c.cross), ord(c.custtype)
         d.cfg_arm.value, d.cfg_kill.value, d.cfg_halt_on_gap.value, d.cfg_spec.value = int(c.arm), int(c.kill), int(c.halt_on_gap), int(self.spec)
+        # brief 188: hold-off, software band reference (its age is not modelled: the limit is the largest value), notional check
+        d.cfg_holdoff.value, d.cfg_ref_sw.value, d.cfg_ref_px.value, d.cfg_ref_age.value = c.holdoff, int(c.ref_sw), c.ref_px, 0xFFFFFFFE
+        d.cfg_max_notional.value, d.cfg_nt_shift.value = c.max_notional, c.nt_shift
+        d.cfg_nt_tbl.value = sum(v << (32 * i) for i, v in enumerate(c.nt_tbl))
 
     async def wait_ready(self):
         for _ in range(2000):
@@ -92,11 +100,14 @@ class Bench:
             COVER["start_off"].add(so)
             COVER["end_off"].add((so + int(d.m_len.value)) % 8)
             COVER["lengths"].add(int(d.m_len.value))
+            COVER["lane_type"].add((chr(int(d.u_mold.m_w.value) >> (8 * so) & 0xFF), so))       # message type byte read where the message lies, by start lane
         if int(d.e_v.value):
             u = d.u_dec
             self.evs.append({"cyc": c, "k": int(d.e_k.value), "loc": int(u.e_loc.value), "ref": int(u.e_ref.value), "nref": int(u.e_nref.value),
                              "sell": int(u.e_sell.value), "sh": int(u.e_sh.value), "px": int(u.e_px.value),
                              "stock": int(u.e_stock.value).to_bytes(8, "big"), "code": int(u.e_code.value), "seq": int(u.e_seq.value)})
+        if int(d.vd_v.value):
+            self.vds.append({"cyc": c, "pass": int(d.vd_pass.value), "rej": int(d.vd_rej.value), "seen": int(d.rej_seen.value)})
         if int(d.tu_v.value):
             b = d.u_book
             self.tus.append({"cyc": c, "inst": int(d.tu_inst.value), "side": int(d.tu_side.value), "px": int(d.tu_px.value), "sz": int(d.tu_sz.value),
@@ -653,7 +664,7 @@ async def latency(dut):
     px = MID
     out = {}
     for spec in (False, True):
-        cfg = small_cfg()
+        cfg = small_cfg(**nt_pass())
         b, m = await fresh(dut, cfg, spec=spec)
         d = Day(b, m)
         await d.open()
@@ -905,3 +916,287 @@ async def zz_coverage(dut):
             "last_word_keep_masks": sorted(COVER["keep"]), "distinct_message_lengths": len(COVER["lengths"]),
             "counters_non_zero_somewhere": sorted(COVER["counters"]), "counters_never_non_zero": sorted(missing),
             "excluded": {"late_abort": "a cancel that finds no frame in flight cannot happen with this pipeline (verdict 3 clocks before the frame's last word)"}}, indent=2) + "\n")
+
+
+# ============================================================================== brief 188: software band reference, hold-off, price wrap, notional check
+
+
+def nt_pass() -> dict:
+    """The configuration of a build with a notional check that lets the bench's orders through (brief 188; empty for mode 0, which has no check)."""
+    return dict(notional_mode=NOTIONAL, max_notional=1 << 62, nt_shift=0, nt_tbl=(1_000_000,) * 16) if NOTIONAL else {}
+
+
+def nt_table(max_notional: int, shift: int) -> tuple:
+    """Entry i = the notional limit divided by the highest price of bucket i, rounded down (the last bucket: by the largest price); so the table never admits more than the multiply."""
+    return tuple(max_notional // (((i + 1) << shift) if i < 15 else 0xFFFFFFFF) for i in range(16))
+
+
+async def day_with_bid(dut, cfg, spec=False):
+    b, m = await fresh(dut, cfg, spec=spec)
+    d = Day(b, m)
+    await d.open()
+    return b, m, d
+
+
+@cocotb.test()
+async def soft_reference(dut):
+    """Brief 188 #3: the band reference is the price software wrote, not the strategy's own book. The own book has a bid that would let the candidates through; the software reference
+    does not, so they are refused. Without a bid in the book at all, the software reference still decides. Every verdict equals the model's."""
+    px = MID
+    for name, kw, bid, want_fire in (("book_bid_would_pass", dict(ref_sw=True, ref_px=px - 5000, band=200), px - 100, 0),
+                                     ("software_passes", dict(ref_sw=True, ref_px=px - 100, band=200), px - 5000, 4),
+                                     ("no_bid_at_all", dict(ref_sw=True, ref_px=px - 100, band=200), None, 4),
+                                     ("legacy_own_book", dict(ref_sw=False, ref_px=px - 5000, band=200), px - 100, 4)):
+        cfg = small_cfg(**kw)
+        b, m, d = await day_with_bid(dut, cfg)
+        await b.pulse("ref_load")
+        if bid is not None:
+            await d.send([d.A(0, 1, "B", 100, bid)])
+        for k in range(4):
+            await d.send([d.A(0, 10 + k, "S", 100, px + 100)], idle=20)
+        await settle(b)
+        compare_all(b, m)
+        assert m.cnt["fire"] == want_fire, (name, m.cnt["fire"])
+        assert b.counters()["fire"] == want_fire, name
+
+
+@cocotb.test()
+async def soft_reference_age(dut):
+    """Brief 188 #3: a software reference older than cfg_ref_age clocks is refused as band, and loading it again makes it good again; one never loaded is refused."""
+    px = MID
+    cfg = small_cfg(ref_sw=True, ref_px=px - 100, band=200)
+    b, m, d = await day_with_bid(dut, cfg)
+    dut.cfg_ref_age.value = 700
+    await d.send([d.A(0, 10, "S", 100, px + 100)], idle=20)               # never loaded: refused
+    await settle(b)
+    assert (b.counters()["fire"], b.counters()["rej_band"]) == (0, 1), b.counters()
+    await b.pulse("ref_load")
+    await d.send([d.A(0, 11, "S", 100, px + 100)], idle=20)               # fresh: passes
+    await settle(b)
+    assert b.counters()["fire"] == 1, b.counters()
+    await settle(b, 900)
+    await d.send([d.A(0, 12, "S", 100, px + 100)], idle=20)               # older than 700 clocks: refused
+    await settle(b)
+    c = b.counters()
+    assert (c["fire"], c["rej_band"], c["cand"]) == (1, 2, 3), c
+    await b.pulse("ref_load")
+    await d.send([d.A(0, 13, "S", 100, px + 100)], idle=20)               # loaded again: passes
+    await settle(b)
+    c = b.counters()
+    assert (c["fire"], c["rej_band"]) == (2, 2), c
+    dut.cfg_ref_age.value = 0xFFFFFFFE
+
+
+@cocotb.test()
+async def holdoff(dut):
+    """Brief 188 #19: after an accepted order an instrument is refused for cfg_holdoff clocks (counted as rej_busy), then accepted again; another instrument is not held; zero turns it off.
+    Without and with speculation (speculation is not started while an instrument is in hold-off, so no order frame leaves for a refused candidate)."""
+    px = MID
+    for spec in (False, True):
+        cfg = small_cfg(holdoff=900, max_pos=100_000)
+        b, m, d = await day_with_bid(dut, cfg, spec=spec)
+        await d.send([d.A(0, 1, "B", 100, px - 100), d.A(1, 2, "B", 100, px - 100)])
+        await d.send([d.A(0, 10, "S", 100, px + 100)], idle=20)               # accepted, hold-off starts
+        await d.send([d.A(0, 11, "S", 100, px + 100)], idle=20)               # about 100 clocks later: held
+        await d.send([d.A(1, 12, "S", 100, px + 100)], idle=20)               # another instrument: accepted
+        await settle(b, 1000)
+        await d.send([d.A(0, 13, "S", 100, px + 100)], idle=20)               # more than 900 clocks later: accepted
+        await settle(b, 100)
+        c = b.counters()
+        assert (c["cand"], c["fire"], c["rej_busy"]) == (4, 3, 1), (spec, c)
+        assert len(b.frames_bytes()) == 3, (spec, len(b.frames_bytes()))
+    cfg = small_cfg(holdoff=0, max_pos=100_000)
+    b, m, d = await day_with_bid(dut, cfg)
+    await d.send([d.A(0, 1, "B", 100, px - 100)])
+    for k in range(3):
+        await d.send([d.A(0, 10 + k, "S", 100, px + 100)], idle=20)
+    await settle(b)
+    compare_all(b, m)
+    assert b.counters()["fire"] == 3 and b.counters()["rej_busy"] == 0
+
+
+@cocotb.test()
+async def price_wrap(dut):
+    """Brief 188 #1: an order price (candidate price plus the offset) that passes 2^32 - 1 is refused as band; it used to wrap to a small number and pass the band check."""
+    px = MID
+    cfg = small_cfg(px_off=0xFFFFFFFF, band=0x7FFFFFFF)
+    b, m, d = await day_with_bid(dut, cfg)
+    await d.send([d.A(0, 1, "B", 100, px - 100)])
+    for k in range(3):
+        await d.send([d.A(0, 10 + k, "S", 100, px + 100)], idle=20)
+    await settle(b)
+    compare_all(b, m)
+    assert m.cnt["rej_band"] == 3 and m.cnt["fire"] == 0 and b.counters()["rej_band"] == 3
+
+
+@cocotb.test()
+async def notional(dut):
+    """Brief 188 #14 (the build under test has NOTIONAL_MODE B110_NOTIONAL: 1 multiply, 2 table): a notional at the limit passes, one tick over is refused as rej_size, a larger quantity is refused;
+    every verdict equals the model's. Mode 0 (the default build) has no check and passes everything."""
+    px = MID
+    qty = 100
+    limit = (px + 100) * qty                         # exactly the notional of a candidate at px + 100
+    shift = 17                                       # prices of 100.0000 fall in bucket 7 (1,000,000 >> 17)
+    for name, kw in (("at_limit", dict(qty=qty)), ("qty_over", dict(qty=qty + 1)), ("limit_minus_1", dict(qty=qty, max_notional=limit - 1)), ("zero_limit", dict(qty=qty, max_notional=0)),
+                     ("last_bucket", dict(qty=qty, nt_shift=15))):         # prices of 100.0000 are in bucket 30 >> 15 = the last one (index 15), whose entry is the limit divided by 2^32 - 1: refuses in mode 2
+        k = {**dict(notional_mode=NOTIONAL, max_notional=limit, nt_shift=shift), **kw}
+        k["nt_tbl"] = nt_table(k["max_notional"], k["nt_shift"])
+        cfg = small_cfg(max_qty=500, **k)
+        b, m, d = await day_with_bid(dut, cfg)
+        await d.send([d.A(0, 1, "B", 100, px - 100)])
+        for i in range(3):
+            await d.send([d.A(0, 10 + i, "S", 100, px + 100 + 10 * i)], idle=20)      # notionals (px + 100 + 10 i) * qty: only i = 0 can be at the limit
+        await settle(b)
+        compare_all(b, m)
+        dut._log.info("notional mode %d %s: fire %d rej_size %d", NOTIONAL, name, m.cnt["fire"], m.cnt["rej_size"])
+        if NOTIONAL == 0:
+            assert m.cnt["rej_size"] == 0 and m.cnt["fire"] == 3
+        elif name == "at_limit" and NOTIONAL == 1:
+            assert m.cnt["fire"] == 1 and m.cnt["rej_size"] == 2
+
+
+# ============================================================================== brief 191: every message type in every start lane (the parse-in-place decoder's bins)
+LANE_TYPES = "AFECXDUSR"
+
+
+def pad_for_lane(lane: int) -> bytes:
+    """A skipped-type message whose length puts the next block's data at byte `lane` of its word: header 20 bytes, then (length 2, pad L, length 2) puts the data at 24 + L."""
+    return proto.itch_other("P", 16 + lane, 10, 0)
+
+
+@cocotb.test()
+async def lane_by_type(dut):
+    """Brief 191: each of the nine decoded message types, plus a skipped type, a wrong length, an Add with a bad side and an Add of zero shares, starting in each of the
+    eight byte lanes of a word (a packet of its own per message: a padding message puts the next one in the lane), against the model; every field is made of
+    distinct bytes so that a crossed lane wire shows. Bins (type, lane) are read where the message lies (m_w and m_off of mold_rx), and all 8 x 9 must be hit."""
+    cfg = small_cfg()
+    b, m = await fresh(dut, cfg)
+    d = Day(b, m)
+    await d.open()
+    r = __import__("random").Random(191)
+    w = cfg.watch
+    for lane in range(8):
+        pad = pad_for_lane(lane)
+        seqbase = (lane + 1) << 36                                 # high reference bytes differ per lane (the low bits stay within the order table's window)
+        ref_a, ref_f, ref_u = seqbase + 7 * lane + 1, seqbase + 7 * lane + 2, seqbase + 7 * lane + 3
+        inst = lane % cfg.n_inst
+        loc = d.loc0 + inst
+        px = MID - TK * (1 + lane)
+
+        def sh() -> int:
+            return r.randrange(1, 1 << 14) | (r.randrange(0, 4) << 16) | 1
+
+        sends = [
+            proto.itch_F(loc, d.t(), ref_f, "B", sh(), w[inst], px - TK, "MPID"),
+            proto.itch_A(loc, d.t(), ref_a, r.choice("BS"), sh(), w[inst], px),
+            proto.itch_E(loc, d.t(), ref_a, 1 + r.randrange(40), match=r.getrandbits(40) | 1),
+            proto.itch_C(loc, d.t(), ref_a, 1 + r.randrange(40), px, match=r.getrandbits(40) | 1),
+            proto.itch_X(loc, d.t(), ref_a, 1 + r.randrange(40)),
+            proto.itch_U(loc, d.t(), ref_f, ref_u, sh(), px + TK),
+            proto.itch_D(loc, d.t(), ref_u),
+            proto.itch_S(0, d.t(), "Q"),
+            proto.itch_R(d.loc0 + inst, d.t(), w[inst]),
+            proto.itch_other("P", 30 + lane, 10, d.t()),                 # a skipped type
+            proto.itch_other("E", 30, 10, d.t()),                        # a known type of the wrong length
+            proto.itch_A(loc, d.t(), ref_a + 100, "Z", 5, w[inst], px),   # side neither B nor S
+            proto.itch_A(loc, d.t(), ref_a + 101, "B", 0, w[inst], px),   # zero shares
+            proto.itch_E(loc, d.t(), ref_a + 102, 0),                    # zero shares
+            proto.itch_U(loc, d.t(), ref_a + 103, ref_a + 104, 0, px),
+        ]
+        for msg in sends:
+            await d.send([pad, msg], idle=r.choice([4, 6, 9]))
+    await settle(b)
+    compare_all(b, m)
+    want = {(t, lane) for t in LANE_TYPES for lane in range(8)}
+    missing = want - COVER["lane_type"]
+    dut._log.info("lane x type bins hit: %d of %d", len(want & COVER["lane_type"]), len(want))
+    assert not missing, f"bins never hit: {sorted(missing)}"
+    c = b.counters()
+    assert c["m_bad"] >= 8 * 5 and c["m_skip"] >= 8, c
+    out = os.environ.get("B110_RECORD")
+    if out:
+        Path(out).mkdir(parents=True, exist_ok=True)
+        (Path(out) / "lane_by_type.json").write_text(json.dumps({
+            "bins_wanted": len(want), "bins_hit": len(want & COVER["lane_type"]), "types": LANE_TYPES, "lanes": 8,
+            "bad_or_malformed_counted": c["m_bad"], "skipped_counted": c["m_skip"], "messages_delivered": c["msg"],
+            "parse_inplace": os.environ.get("B110_PARSE_INPLACE", "0")}, indent=2) + "\n")
+
+
+# ============================================================================== brief 191: every check sets its own bit; accept and reject take the same time
+CHK_NAMES = ("arm", "kill", "gap", "stale", "size", "pos", "band", "hold")
+
+
+async def fresh_ab_free(dut, cfg):
+    b = Bench(dut, cfg, spec=False)
+    await b.start()
+    return b, Model(cfg)
+
+
+@cocotb.test()
+async def reject_bits(dut):
+    """Brief 191: a candidate that fails one check, several checks, or none shows every failing check as its own bit of vd_rej (against the model's independent evaluation:
+    the old priority chain showed only the first), and the verdict record (vd_v) comes the same number of clocks after the last byte of the candidate whatever the outcome:
+    accept, each single reject, several rejects, with and without speculation. The first order word of an accepted candidate is at the same clock as vd_v (no speculation)."""
+    px = MID
+    scenarios = [
+        ("accept", {}, None), ("arm", dict(arm=False), None), ("kill", dict(kill=True), None), ("gap", {}, "gap"), ("stale", {}, "stale"),
+        ("size", dict(qty=600), None), ("pos", dict(max_pos=50), None), ("band", dict(band=100), None),
+        ("arm_kill_size_pos_band", dict(arm=False, kill=True, qty=600, max_pos=50, band=100), None),
+        ("gap_stale_size", dict(qty=0), "gap_stale"), ("size_band", dict(qty=1_000_000, max_qty=2_000_000, band=10), None),
+    ]
+    out = {}
+    for spec in (False, True):
+        lat, rows = set(), {}
+        for name, kw, extra in scenarios:
+            cfg = small_cfg(**kw)
+            b, m = await fresh(dut, cfg, spec=spec)
+            d = Day(b, m)
+            await d.open()
+            await d.send([d.A(0, 1, "B", 100, px - 100)])
+            if extra in ("stale", "gap_stale"):                  # nine distinct ask levels: the ninth overflows the ladder, instrument 0 is inexact from then on
+                for k in range(9):
+                    await d.send([d.A(0, 10 + k, "S", 100, px + 10 + k)], idle=20)
+            await settle(b, 30)
+            if extra in ("gap", "gap_stale"):
+                d.seq += 3                                         # a sequence gap: the next packet is accepted but the path is not trusted
+            n_before, nv, nf = len(m.verdicts), len(b.vds), len(b.frames)
+            msg = d.A(0, 99, "S", 100, px + 100)
+            p = pk(d.seq, [msg])
+            m.feed(p)
+            d.seq += 1
+            T = await b.send(p, idle=20)
+            await settle(b, 40)
+            assert len(m.verdicts) == n_before + 1 and len(b.vds) == nv + 1, (name, len(m.verdicts) - n_before, len(b.vds) - nv)
+            v, want = b.vds[-1], m.verdicts[-1]["chk"]
+            assert (v["rej"] & 0x7F) == want, f"{name}: vd_rej {v['rej']:#x} model {want:#x}"
+            assert v["pass"] == int(want == 0 and v["rej"] == 0) and (v["pass"] == 0 or v["rej"] == 0), (name, v)
+            lat.add(v["cyc"] - T)
+            assert b.tus[-1]["cyc"] + 1 == v["cyc"], (name, b.tus[-1]["cyc"], v["cyc"])
+            if v["pass"] and not spec:
+                assert len(b.frames) == nf + 1 and b.frames[-1]["cyc"] == v["cyc"], f"{name}: first order word {b.frames[-1]['cyc'] - T} clocks after the last byte, verdict {v['cyc'] - T}"
+            compare_all(b, m)
+            assert int(b.dut.rej_seen.value) & 0x7F == m.rej_seen, name
+            rows[name] = {"vd_rej_bits": [CHK_NAMES[i] for i in range(7) if (v["rej"] >> i) & 1], "passed": bool(v["pass"]), "vd_clocks_after_last_byte": v["cyc"] - T,
+                          "first_order_word_clocks_after_last_byte": (b.frames[-1]["cyc"] - T) if len(b.frames) > nf else None}
+        assert len(lat) == 1, f"verdict latency differs between outcomes (spec={spec}): {lat}"
+        out["speculative" if spec else "non_speculative"] = {"latency_clocks_all_outcomes": lat.pop(), "scenarios": rows}
+    # the history: a size reject, then a passing candidate: vd_rej is for the last candidate only, rej_seen keeps the first one's bit and clr_cnt clears it
+    cfg = small_cfg(qty=600)
+    b, m = await fresh_ab_free(dut, cfg)
+    d = Day(b, m)
+    await d.open()
+    await d.send([d.A(0, 1, "B", 100, px - 100)])
+    await d.send([d.A(0, 2, "S", 100, px + 100)], idle=20)
+    await settle(b, 30)
+    b.configure(qty=100)
+    await d.send([d.A(0, 3, "S", 100, px + 100)], idle=20)
+    await settle(b, 40)
+    assert b.vds[-1]["rej"] == 0 and b.vds[-1]["pass"] == 1 and (b.vds[-2]["rej"] & 0x10), b.vds[-2:]
+    assert int(b.dut.rej_seen.value) & 0x7F == 0x10, hex(int(b.dut.rej_seen.value))
+    await b.pulse("clr_cnt")
+    await settle(b, 4)
+    assert int(b.dut.rej_seen.value) == 0
+    rec = os.environ.get("B110_RECORD")
+    if rec:
+        Path(rec).mkdir(parents=True, exist_ok=True)
+        (Path(rec) / "reject_bits_latency.json").write_text(json.dumps({"unit": "clocks from the clock the last byte of the candidate message is presented (T) to the clock vd_v is high", **out}, indent=2) + "\n")
