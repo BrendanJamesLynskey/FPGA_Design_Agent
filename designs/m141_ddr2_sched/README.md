@@ -10,7 +10,7 @@ Not in scope:
 - any Vivado build or board run; both heavy slots were taken by other sessions during the work, and the build plan and the pre-registered board test are written but not run
 - the four-wide command packing a controller clock slower than the memory clock needs; the scheduler decides one command per memory clock
 
-Kind: showcase; written by hand. State: simulated. For an agent: [AGENT.md](AGENT.md).
+Kind: showcase; written by a Claude Code session. State: simulated. For an agent: [AGENT.md](AGENT.md).
 
 <!-- prose:what -->
 **Purpose:** answer "can we build memory controllers optimised for an application?" for the Nexys A7's DDR2, with a scheduler whose
@@ -83,7 +83,7 @@ Interfaces:
 | the proofs, covers and mutants of the CI set; needs the OSS CAD Suite release 2026-11-12 (SymbiYosys, Yosys with the slang plugin, Boolector, ABC); FDA_OSS_CAD or ~/.local/opt/oss-cad-suite | `python3 -m pytest -q designs/m141_ddr2_sched/tests/test_m141_formal.py` | no | about 20 min |
 | the measured simulation runs of results/b141; needs Icarus Verilog 12; single process, nice it on a shared machine | `python3 designs/m141_ddr2_sched/tests/m141_measure.py --json results/b141/sim_summary.json` | no | about 60 min |
 
-Tool: Vivado 2026.1. Build ID of the inputs at handover: none (no Vivado build of this directory). Knowledge-bank pin: `93d158c`.
+Tool: Vivado 2026.1. Build ID of the inputs at handover: none (no Vivado build of this directory). Knowledge-bank pin: `5e2eab8`.
 
 | File | What |
 |---|---|

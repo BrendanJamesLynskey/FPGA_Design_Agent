@@ -13,18 +13,24 @@ master_xdc_source:
   note: the clock, user LEDs and PL Ethernet pins come from the AMD board files (kr260_carrier 1.1 and kr260_som 1.1, Apache-2.0) through designs/b58a_trigger/design.xdc; the SFP+ control and I2C pins through designs/b96_kr260_10g/design.xdc, which the board run of 2026-11-17 used; the GTH pins are in `gt:` below, they have no I/O standard
 clock:
   port: clk_25
-  pin: C3                         # HPA_CLK0P, bank 66, LVCMOS18 (25 MHz in an open-source reference design: unconfirmed against the schematic)
+  pin: C3                         # HPA_CLK0P, bank 66, LVCMOS18; 25 MHz: schematic XTP743 page 16 labels the 25 MHz LVCMOS (PL GEM2&3) clock (SiT1602 25.000 MHz, BOM U92, through the LMK1C1104 buffer U91 and 0 ohm R477 to HPA_CLK0P_CLK); brief 174
   freq_mhz: 25
-pl_ethernet:                      # Marvell M88E1111 PHYs, RGMII, 1.8 V HP banks
-  port_a: {connector: J10B, name: Ethernet 2, phy: PHY2, rx_clk: D4, tx_clk: A2, reset_n: B1, mdio: F3, mdc: G3}
-  port_b: {connector: J10A, name: Ethernet 3, phy: PHY3, rx_clk: K4, tx_clk: J1, reset_n: K1, mdio: T8, mdc: R8}
+pl_ethernet:                      # TI DP83867 PHYs (DP83867CSRGZT, refs U36, U79, U80, U81; the schematic text puts U79 on GEM2), RGMII, 1.8 V HP banks
+  # brief 174 CORRECTION (2026-11-22): this entry said Marvell M88E1111. AMD's carrier BOM (XTP757, row 60: DP83867CSRGZT, 4 parts) and the
+  # schematic (XTP743, four PHY sheets, first on page 18, carry DP83867CSRGZ) name the TI DP83867; the knowledge-bank claim could not be re-read
+  # here (UG1092 is not on disk). Consequence for designs/b58a_trigger: its PHY register plan (Marvell register 20 bits 7 and 1) and the RGMII
+  # timing notes citing the 88E1111 datasheet do not apply to a DP83867 (its delays are in RGMIICTL/RGMIIDCTL); the design was never run on the board.
+  # Sources: packages/kr260/board_facts.yaml (chip.phy.DP83867). The 5 pF input figure of brief 162 is the DP83867's (SNLS504G).
+  phy_part: DP83867
+  port_a: {connector: J10B, name: Ethernet 2, phy: PHY2, phy_ref: U79, mdio_addr: 2, rx_clk: D4, tx_clk: A2, reset_n: B1, mdio: F3, mdc: G3}
+  port_b: {connector: J10A, name: Ethernet 3, phy: PHY3, phy_ref: U80, mdio_addr: 3, rx_clk: K4, tx_clk: J1, reset_n: K1, mdio: T8, mdc: R8}
 gt:                               # GTH transceivers on the PL (brief 56A; flow/gt_plan.py, flow/gt_gates.py)
   sfp:                            # SFP+ cage J24 (UG1092); pins and sites resolved on Vivado 2026.1 (results/56a_serdes/gt_sites.txt)
     lanes: 1
     channel: X0Y6                 # GTHE4_CHANNEL_X0Y6, quad 224 (GTHE4_COMMON_X0Y1), channel 2
     rx: {p: T2, n: T1}
     tx: {p: R4, n: R3}
-    refclk: {source: "X0Y6 clk0", mhz: 156.25, p: Y6, n: Y5, status: "pins confirmed (Vivado package database: MGTREFCLK0P/N_224); frequency and source still unconfirmed against the carrier schematic (brief 96 stage 0: UG1092 has no clock table or pin table, the schematic is not obtainable offline; two third-party sources, Taxi sfp.xdc create_clock 6.400 and a community Aurora tutorial, agree on 156.25 MHz); only the 156.25 family (156.25, 312.5, 161.1328125, 322.265625 MHz) reaches 10.3125 Gb/s exactly through the QPLL0 integer dividers; 100 or 125 MHz would need the fractional-N divider (not built), see designs/b96_kr260_10g/docs/design.md"}
+    refclk: {source: "X0Y6 clk0", mhz: 156.25, p: Y6, n: Y5, status: "pins confirmed (Vivado package database: MGTREFCLK0P/N_224); frequency CONFIRMED by brief 174 against AMD's carrier files: BOM XTP757 U90 (Raltron XCO583IV11-156.250, LVDS) and schematic XTP743 page 16 label '156.25 MHz LVDS (GTH SFP+)' on GTH_REFCLK0 (before brief 174: unconfirmed, two third-party sources agreed on 156.25 MHz); only the 156.25 family (156.25, 312.5, 161.1328125, 322.265625 MHz) reaches 10.3125 Gb/s exactly through the QPLL0 integer dividers; 100 or 125 MHz would need the fractional-N divider (not built), see designs/b96_kr260_10g/docs/design.md"}
     speed: {line_rate_gbps_max: 12.5, note: "K26 -2LV GTH maximum (DS925 table 99, brief 56A); 10.3125 Gb/s is inside the QPLL0 divider-1 window 9.8 to 12.5; the SFP+ cage J24 carries one lane (UG1092)"}
     control: {tx_disable: Y10, mod_abs: W10, rx_los: J12, tx_fault: A10, i2c_scl: AB11, i2c_sda: AC11, level: LVCMOS33, status: "I2C pins confirmed (AMD board file sfp_iic: som240_2 b49/b50); SOM-to-package pins confirmed (AMD board files); the TX_DISABLE, MOD_ABS, RX_LOS and TX_FAULT functions were exercised on the owner's board on 2026-11-17 (results/b96/hw/20261117_101326/stage3.json: polarity_ok true, rx_los 1 with the laser off and 0 with it on, mod_abs 0 with the module fitted, tx_fault 0); they are still not checked against the schematic"}
 user_leds: [F8, E8]               # LVCMOS18
@@ -57,3 +63,12 @@ thermal:                          # report_power's environment for this board (f
   board: medium
   board_layers: 8to11             # not published: a mid class
   ambient_c: 40
+operating_limits:                 # brief 196: what the production_secure SYSMON alarms are set from (flow/security.py sysmon-init); read by the build check too
+  status: assumption              # the K26 -2LV-c grade is not named in DS925; the 0.72 V rows (-1LI, -2LE) are used, as designs/b96_kr260_10g/host/b96c_ppm.py did
+  source: "DS925 v1.30 (Zynq UltraScale+ MPSoC data sheet: DC and AC switching characteristics), recommended operating conditions: VCCINT 0.698 to 0.742 V (the 0.72 V rows), VCCAUX 1.746 to 1.854 V, VCCBRAM 0.825 to 0.876 V, Tj 0 to 100 C (extended); note 16 (SYSMON temperature error of 3 C is to be accounted for); Table 127 (PL SYSMON: 10 bit, ADCCLK 1 to 5.2 MHz)"
+  tj_alarm_c: 85                  # the board's own rule (house rules, owner 2026-10-31): junction temperature at most 85 C on the reading
+  tj_device_max_c: 100            # DS925 Tj for the extended grade; the device's own OT output stays at its default limit (125 C reading), beyond this
+  sysmon_temp_error_c: 3          # DS925 note 16: a reading is within 3 C of the true Tj with the external reference; the 85 C rule is applied to the reading as it is
+  vccint_v: [0.698, 0.742]
+  vccaux_v: [1.746, 1.854]
+  vccbram_v: [0.825, 0.876]

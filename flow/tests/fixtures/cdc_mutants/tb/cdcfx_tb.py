@@ -18,7 +18,7 @@ KIND = {
     **{n: "events" for n in ("c1", "c2", "c3", "c4", "c5", "m1", "m1b", "m2", "m4", "m5", "m7")},
     **{n: "bus" for n in ("c6", "c7", "m3", "m6a")},
     **{n: "handshake" for n in ("c8", "c9")},
-    **{n: "fifo" for n in ("c10", "c11")},
+    **{n: "fifo" for n in ("c10", "c11", "m12")},
     **{n: "smoke" for n in ("c12", "m10", "m8")},
 }[NAME.replace("cdcfx_", "")]
 NO_EVENT_OUTPUT = {"cdcfx_m4"}        # the fixture's output is an error flag only

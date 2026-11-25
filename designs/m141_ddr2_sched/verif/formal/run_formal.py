@@ -81,13 +81,13 @@ MUTANTS = [
 def sby_text(cfg: dict, task: str, depth: int, bnd: int, engine: str, skip: str) -> str:
     t = (HERE / "ddr2.sby").read_text()
     gs = " ".join(f"-G {k}={v}" for k, v in cfg.items())
-    t = re.sub(r"read_slang --top ddr2_fv_top -G POLICY=0", f"read_slang --top ddr2_fv_top -D FV_BOUND={bnd} " + "".join(f"-D FV_NO_{g} " for g in skip) + gs, t)
+    t = re.sub(r"read_slang --top ddr2_fv_top(?: -G \w+=\w+)+", f"read_slang --top ddr2_fv_top -D FV_BOUND={bnd} " + "".join(f"-D FV_NO_{g} " for g in skip) + gs, t)
     t = re.sub(r"(?m)^bmc: depth \d+", f"bmc: depth {depth}", t)
     t = re.sub(r"(?m)^cover: depth \d+", f"cover: depth {depth}", t)
     if task == "bmc" and engine:
-        t = re.sub(r"(?m)^bmc: smtbmc boolector", f"bmc: {engine}", t)
-    if task == "prove":
-        t = re.sub(r"(?m)^prove: abc pdr", f"prove: {engine}", t)
+        t = re.sub(r"(?m)^bmc: (?:smtbmc boolector|abc bmc3)", f"bmc: {engine}", t)
+    if task == "prove":                  # the shipped ddr2.sby has no prove task (see ddr2.rigour.yaml): add it to this copy
+        t = t.replace("[tasks]\nbmc\ncover", "[tasks]\nbmc\nprove\ncover").replace("cover: mode cover", "prove: mode prove\ncover: mode cover").replace("cover: smtbmc boolector", f"prove: {engine}\ncover: smtbmc boolector")
         if engine.startswith("smtbmc"):
             t = t.replace("prove: mode prove", f"prove: mode prove\nprove: depth {depth}")
     t = t.replace("../../rtl/", "")

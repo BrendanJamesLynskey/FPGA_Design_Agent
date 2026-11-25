@@ -65,7 +65,8 @@ def sim_ns(xml: Path) -> float:
 def one(build: Path, test: str, seed: int, out: Path, rtl_dir: Path | None = None):
     wait_for_machine()
     run_dir = out / f"{test}_{seed}"
-    ok, wall, xml = pyuvm_run.run(build, test, seed, run_dir, rtl_dir)
+    run_dir.mkdir(parents=True, exist_ok=True)
+    ok, wall, xml = pyuvm_run.run(build, test, seed, run_dir, rtl_dir, test_dir=run_dir if os.environ.get("SIM", "icarus") == "verilator" else None)
     js = run_dir / f"{test}_seed{seed}.json"
     rec = json.loads(js.read_text()) if js.exists() else None
     return ok, wall, sim_ns(xml), rec
