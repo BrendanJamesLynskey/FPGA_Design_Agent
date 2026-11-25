@@ -1,0 +1,28 @@
+schema: fpga-design-agent/architecture/v1
+blocks:
+- name: p2_top
+  function: Thin top; instantiates reset generator, jtag_bus and p2_core; drives sfp_tx_disable to constant 1.
+- name: rst_gen
+  function: Power-on reset counter, holds rst high for 8 clk cycles after configuration.
+- name: jtag_bus
+  function: Supplied data/jtag_bus.sv, BSCANE2 USER4 register bus (h_we, h_re, h_addr, h_wdata, h_rdata) in the clk domain.
+- name: p2_core
+  function: Register map, ROM (1024x32, $readmemh), RAM (1024x32, init 0xC0DE0000+i), AUTOINC address logic, March C- engine, LEDs.
+interfaces:
+- name: host_port
+  between: [jtag_bus, p2_core]
+  protocol: simple
+  prefix: h
+  module: p2_core
+clock_domains:
+- name: clk
+  clock: clk
+  freq_mhz: 25
+reset:
+  synchronisers: []
+crossings: []
+predicted_resources:
+  lut: [250, 800]
+  ff: [550, 1000]
+  bram_tile: [2, 4]
+  dsp: 0
