@@ -194,6 +194,11 @@ def load() -> dict[str, list[dict]]:
         for f in sorted((ROOT / "arith" / fn / "verif" / "results").glob("vivado_ooc_*.json")):
             d = json.loads(f.read_text())
             a7 = d["part_key"] == "a7"
+            sw = {}                                  # brief 166: clock sweep of the points whose Fmax was a lower bound
+            sf = f.with_name(f"vivado_sweep_{d['variant']}_{d['part_key']}.json")
+            if sf.exists():
+                for sp in json.loads(sf.read_text())["points"]:
+                    sw[json.dumps(sp["generics"], sort_keys=True)] = sp
             for p in d["points"]:
                 g = p["generics"]
                 shape = {k: g[k] for k in SHAPE[fn] if k in g}
@@ -204,6 +209,12 @@ def load() -> dict[str, list[dict]]:
                     r["power_total_w"] = p["power_w"]["total"]
                     r["fmax_mhz"] = p["fmax_mhz"]
                     r["lower_bound"] = bool(p["wns_ns"] is not None and p["wns_ns"] > 0)
+                    sp = sw.get(json.dumps(g, sort_keys=True))
+                    if sp and sp.get("fmax_mhz") is not None:
+                        r["fmax_mhz_160"] = p["fmax_mhz"]
+                        r["fmax_mhz"] = sp["fmax_mhz"]
+                        r["lower_bound"] = not sp["measured"]
+                        r["sweep"] = {"measured": sp["measured"], "clock_ns": sp["fmax_clock_ns"], "wns_ns": sp["wns_ns"], "rounds": len(sp["rounds"]), "record": sf.name}
                     r["latency_clocks"] = latency(fn, d["variant"], g)
                     wrap = wrapper_bits(fn, d["build_file"], d["top"], g)
                     r["wrapper_register_bits"] = wrap
@@ -259,6 +270,19 @@ def readme(data: dict, pc: list[dict]) -> str:
             rs = [r for r in rows if r["part_key"] == part and r["status"] == "ok"]
             if rs:
                 L.append(f"| {fn} | {part} | {len(rs)} | {sum(r['lower_bound'] for r in rs)} | {sum(r['expectation'] == 'met' for r in rs)} | {sum(r['expectation'] == 'missed' for r in rs)} | {sum(r['expectation'] == 'none stated' for r in rs)} |")
+    sw = [r for r in ok if r.get("sweep")]
+    if sw:
+        L += ["", "## Clock sweep (brief 166)", "",
+              "Points whose Fmax was a lower bound at the build file's clock were re-run at tighter clocks (`python -m arith.tools.run_sweep`; method in its docstring and in the `method` field of "
+              "`vivado_sweep_<variant>_<part>.json`). Measured = some round gave WNS <= 0, Fmax = 1000 / (clock - WNS). Bracketed = no round did within the round limit, the last bound stands. "
+              "The table above now counts, in its lower-bound column, only the bracketed points.", "",
+              "| Function | Part | Points swept | Measured | Bracketed | Median Fmax change against the 160 bound |", "|---|---|---|---|---|---|"]
+        for fn, rows in data.items():
+            for part in ("a7", "k26"):
+                rs = [r for r in rows if r["part_key"] == part and r.get("sweep")]
+                if rs:
+                    ch = sorted(r["fmax_mhz"] / r["fmax_mhz_160"] - 1 for r in rs)
+                    L.append(f"| {fn} | {part} | {len(rs)} | {sum(r['sweep']['measured'] for r in rs)} | {sum(not r['sweep']['measured'] for r in rs)} | {ch[len(ch) // 2]:+.0%} |")
     L += ["", "## Pre-stated expectations that were missed", "", "A point is missed when any numeric expectation fails (inside the stated range widened by 25 % and 2 counts as met for LUTs, FFs and carry cells; DSP and BRAM counts must be exact).", "",
           "| Function | Part | Point | Quantity | Expected | Measured |", "|---|---|---|---|---|---|"]
     for r in ok:

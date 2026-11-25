@@ -68,8 +68,10 @@ Goldens, oldest first:
   differ from the brief 150 golden. Runs before this change belong to the earlier goldens.
 - ``b206_request_golden.json`` (brief 206, 2026-11-24): the ``check`` tool's name list gained ``init_values`` (schema 1.21.0). No stage or role is offered
   a new tool, so every hash other than ``tool_registry`` equals the brief 205 golden's.
-- ``b208_request_golden.json`` (brief 208, 2026-11-24): the ``check`` tool's name list gained ``clock_mux`` (schema 1.22.0). No stage or role
-  is offered a new tool, so every hash other than ``tool_registry`` equals the brief 206 golden's."""
+- ``b207_request_golden.json`` (brief 207, 2026-11-25): the ``check`` tool's name list gained ``cdc_margin`` (schema 1.22.0). No stage or role is offered a
+  new tool, so every hash other than ``tool_registry`` equals the brief 206 golden's.
+- ``b208_request_golden.json`` (brief 208, 2026-11-24): the ``check`` tool's name list gained ``clock_mux`` (schema 1.23.0). No stage or role
+  is offered a new tool, so every hash other than ``tool_registry`` equals the brief 207 golden's."""
 
 from __future__ import annotations
 
@@ -86,7 +88,7 @@ CHANGED_SINCE_EVAL1 = {"arm_constants": "brief 80: Claude Code 2.1.321 accepted 
                        "tool_registry": "brief 36: skill_index, skill_excerpt, load_skill(name=); brief 42 H9: report_digest; "
                                         "brief 50A: debug_plan, debug_capture, debug_query; brief 59A: axi_program_check, axi_simulate, axi_board_run; brief 56A: gt_plan; "
                                         "brief 68: bringup description (reference model); brief 71: check; brief 73: check name axi_profile; brief 97: latency_path, latency_budget; "
-                                        "brief 101: oss_synth, eqy_check (no role is offered them); brief 96D: eye_scan (no role is offered it); brief 104: design_analysis (no role is offered it); brief 106: check names constants and stale; brief 105A: check names constraint_scope and xpm_sim; brief 114: doc_crossread (no role is offered it); brief 150: ip_lookup (offered to the Designer at stage 1); brief 206: check name init_values; brief 208: check name clock_mux",
+                                        "brief 101: oss_synth, eqy_check (no role is offered them); brief 96D: eye_scan (no role is offered it); brief 104: design_analysis (no role is offered it); brief 106: check names constants and stale; brief 105A: check names constraint_scope and xpm_sim; brief 114: doc_crossread (no role is offered it); brief 150: ip_lookup (offered to the Designer at stage 1); brief 206: check name init_values; brief 207: check name cdc_margin; brief 208: check name clock_mux",
                        "prompts": "brief 53: requirement quality (clarify) and requirement tags (tests); brief 68: role names; "
                                   "brief 71: the check tool (rtl); brief 73: the interface profile (clarify, rtl); "
                                   "brief 70: the Designer's reset paragraph (rtl)",

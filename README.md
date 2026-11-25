@@ -49,6 +49,11 @@ disk, a smoke design generated from the board's own pins, and a request that nam
 [docs/board_catalogue.md](docs/board_catalogue.md) (the table), [boards/SCHEMA.md](boards/SCHEMA.md) (the file format and how to add a board),
 [docs/demo_intake.md](docs/demo_intake.md) (what to ask someone who wants a demo), [results/95_boards](results/95_boards/README.md).
 
+Design package (brief 174): one folder with `spec.md`, every board material (schematic, BOM, board file, XDC) and, optionally, an existing design to change in part;
+`python -m flow.package ingest` writes `board_facts.yaml` (each fact with its source, hash and confidence) and lists conflicts with the board file. It found that the
+KR260's PL Ethernet PHYs are TI DP83867, not Marvell M88E1111: [docs/design_package.md](docs/design_package.md), pilots [packages/kr260](packages/kr260/board_facts.yaml),
+[packages/nexys_a7_100t](packages/nexys_a7_100t/board_facts.yaml) and [packages/b58a_change](packages/b58a_change/spec.md), [results/174_design_package](results/174_design_package/README.md).
+
 Showcase pages for projects built with the agent follow one template: [docs/showcase_pages.md](docs/showcase_pages.md).
 Every design, `ip_lib` entry and results folder is documented for the next engineer to
 [docs/documentation_standard.md](docs/documentation_standard.md) (brief 68): each design has one `handover.yaml` (the facts,
@@ -87,6 +92,7 @@ Nothing on this table is checked by a model: `--help`, `--dry-run`, `models show
 | a goal with a number (LUTs, Fmax, power, latency) or a new part, on a design the agent made | `python -m agent revise <design-dir> --goal "lut<=700" [--retarget <part\|board>] --dry-run` | a goal is `<metric>[.<name>]<op><number><unit>`: the direction is fixed by the metric (`lut`, `ff`, `bram`, `dsp`, `power`, `latency` take `<=`; `fmax` takes `>=`), `=` is refused, and a bare number is an error where a unit is needed (`fmax` MHz or GHz, `power` W or mW, `latency` clk). A goal the committed, fresh measurement already meets re-runs nothing ("met by evidence": one build's number, not a promise for another seed; power is Vivado's estimate; fmax only if the build was timed at that clock). Otherwise area and latency enter at stage 1, fmax and power at 3; a retarget inside one device family at 3, to another family at 1 (planned in dry runs only, no live retarget run yet). The goals go into the run's copy of `spec.yaml` (`goals:`), never the source design; the closure loop, the latency loop (`--goal`) and the trace matrix read the same block ([agent/graph/goals.py](agent/graph/goals.py), [agent/graph/revise.py](agent/graph/revise.py), [results/159_typed_goals](results/159_typed_goals/README.md)) |
 | a VHDL design | `python -m agent run <spec.md> --hdl vhdl`, or `python -m flow.vhdl lint rtl --top <top>` | VHDL-2008 through GHDL; the test shell stays SystemVerilog ([docs/vhdl.md](docs/vhdl.md)) |
 | know which checks read a VHDL design | `python -m flow.sources <design-dir>` (`--help` lists the traps) | plain Python, read-only; a check that cannot read VHDL is PARTIAL or NOT RUN with "no reader for .vhd", never a clean pass; the CDC injection run fails closed on a VHDL crossing ([docs/vhdl.md](docs/vhdl.md); measured in [results/153_vhdl_parity](results/153_vhdl_parity/README.md)) |
+| see whether the VHDL stage-2 fix changed the end-to-end agent | [results/167_vhdl_rerun](results/167_vhdl_rerun/README.md) | 6 Haiku runs, none passed; 5 stopped at stage 1 on a VHDL `build.yaml` glob before the fix could act (inconclusive) |
 | a Vivado build of a design directory | `flow/run_vivado.sh designs/<name> base` | local Vivado 2026.1 only; then `python -m flow inspect designs/<name>` opens the checkpoints ([flow/README.md](flow/README.md)) |
 | the project in a browser | `python -m navigator` | needs the access key; local only (127.0.0.1); prints a one-time address ([navigator/README.md](navigator/README.md)) |
 | everything else (`run`, `resume`, `document`, `review`, `models check`, `latency`, `improve`, including `improve --choose --dry-run`) | the same commands | exit status 2 with one line naming `FDA_ACCESS_KEY`; measured in [results/157_newcomer_cli](results/157_newcomer_cli/README.md) |
@@ -203,6 +209,9 @@ per-stage procedures the agent reads (exact Tcl, thresholds, common failures) ar
 knowledge bank. T1 built through the staged flow on Vivado 2026.1 passes every stage
 ([results/f0a_2026_1](results/f0a_2026_1/t1_dimmer_counter.md)); the post-route QoR-assessment gate is absent on the free
 Basic licence tier, not passed.
+Clock-domain crossings follow one method for Vivado and Quartus (brief 207): each crossing has a latency bound, a skew bound and an
+MTBF target, set as per-crossing bounds rather than as a clock uncertainty margin; `flow/cdc_margin.py` checks that they are present and
+met ([docs/cdc_margin_method.md](docs/cdc_margin_method.md), measured in [results/207_cdc_margin](results/207_cdc_margin/README.md)).
 
 ## Knowledge packs
 The agent's know-how is a set of frozen, hashed knowledge layers in Agent Skills format: generic RTL skills, an AMD
@@ -489,6 +498,7 @@ docs/        methodology.md (UG949 -> flow stages, gates, deviations, the agent'
              agent_core.md (tools, MCP server, security rules, traces); agent.md (the 05b agent graph; benchmark tasks as agent runs, 07a2-prep); claude_code_arm.md (the 05c Claude Code arm); role_models.md (the 05f per-role model routing); doc_crossread.md (brief 114: the blind document cross-read); model_config.md (brief 108: one table of endpoint, model and options for every model call, `python -m agent models show`); deterministic_mode.md (brief 107: the model-call tape, `--deterministic`, levels 1 to 3); test_writer.md (the 05g Verifier diagnosis, turn trace, formal re-plan, QoR gate);
              project_mode_parity.md (what project mode and the wizards give that non-project mode does not, measured; cross-probing);
              ipgen.md (the ipgen pipeline, the adapter interface, candidate IPs); ipgen_tradeoffs.md (design only: the drop-down trade-off view);
+             design_package.md (brief 174: the package folder, ingest of board files into sourced facts, an existing design to change in part, the frozen-file gates);
              design_environment.md (design only, brief 27: projects of many modules, contracts, re-entry by input hash, the engineer's own edits);
              fsm.md (brief 24: the reference controller, the FSM coverage check, the drills);
              vhdl.md (VHDL-2008 designs: how to ask for one, the language boundary with the SystemVerilog shell, what runs where);
@@ -600,6 +610,7 @@ request list is the record.
 | 155 | Choosing the off-chip I/O buffer from the load and the line: output resistance of every LVCMOS DRIVE and SLEW from AMD's IBIS models (pull-up and pull-down, three corners), a tested time-domain model of driver, line and load, a termination matrix on a 50 ohm line, the best DRIVE plus series resistor, an advisory `off_chip:` check and proposal, and a run on our board designs ([docs/offchip_io.md](docs/offchip_io.md), [results/155_offchip](results/155_offchip/README.md)); no Vivado run, no board measurement | PR open |
 | 162 | KR260 carrier board data from AMD's Allegro file (per-net lengths, stack-up Z0 and delay, series resistors, PHY input capacitance), the check re-run with it, a DRIVE x SLEW x series-R sweep on a 50 ohm line (1 to 10 in; LVCMOS33, 25 HR and LVCMOS18 HP) with an ngspice cross-check, and a check of newer IBIS files ([docs/offchip_drive_slew.md](docs/offchip_drive_slew.md), [results/162_kr260_si](results/162_kr260_si/README.md)); no Vivado, no board measurement | PR open |
 | F3 | Scored runs | `eval-1` stopped 2026-11-09 before analysis, no score ([pre-registration](docs/eval/eval1_preregistration.md)); baseline evaluation on a larger benchmark next |
+| 209b | the `anthropic_api` endpoint made first-class: cost computed from response usage and a per-model price table, prompt caching markers, `temperature` omitted by a per-model rule, `--budget-scale` for dearer models ([docs/model_config.md](docs/model_config.md#anthropic-api-cost-caching-temperature-budgets-brief-209b), [smoke record](results/209b_anthropic_smoke/README.md)) | PR open |
 
 ## Licence
 

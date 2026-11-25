@@ -32,6 +32,7 @@ from flow import ipchar  # noqa: E402
 HANDOFF = Path("/home/brendan/Claude_sandbox/_handoff")
 WORK = ROOT / "build" / "arith_ooc"
 PEAK_G = 4
+BRIEF = os.environ.get("ARITH_RUN_BRIEF", "160")      # heavy-slot prefix and the brief number written to the records
 FN_ORDER = ["adder", "lzc_norm", "fxp_round", "isqrt", "divider", "mac", "multiplier"]
 
 
@@ -119,7 +120,7 @@ def vivado_version(batch: Path) -> str:
 def record(s: dict, batch: Path, date: str) -> Path:
     rows = [parse_point(s, p) for p in s["points"]]
     out = {"schema": "fda-arith/vivado_ooc/1", "function": s["fn"], "variant": s["variant"], "part_key": s["part_key"], "part": s["part"],
-           "clock_ns": s["clock_ns"], "top": s["top"], "tool": vivado_version(batch), "date": date, "brief": 160,
+           "clock_ns": s["clock_ns"], "top": s["top"], "tool": vivado_version(batch), "date": date, "brief": int(BRIEF),
            "flow": "out-of-context synth_design, opt_design, place_design, route_design; one thread; clock on port clk only (the wrapper registers every "
                    "input and output; I/O paths unconstrained); Fmax = 1000 / (clock_ns - WNS) after routing, one run at that clock; power: vectorless",
            "expected_text": s["expected_text"], "build_file": str(s["file"].relative_to(ROOT)), "points": rows}
@@ -168,7 +169,7 @@ def run_session(s: dict, deadline: float | None) -> int:
             (wd(s, p["generics"]) / mk).unlink(missing_ok=True)
     now = datetime.datetime.now()
     est = max(8, 4 * len(s["points"]))
-    text = f"160: Vivado impl OOC {sid(s)}, {now:%H:%M}, expected end {(now + datetime.timedelta(minutes=est)):%H:%M}, peak {PEAK_G}G"
+    text = f"{BRIEF}: Vivado impl OOC {sid(s)}, {now:%H:%M}, expected end {(now + datetime.timedelta(minutes=est)):%H:%M}, peak {PEAK_G}G"
     lock = take_slot(text)
     try:
         if deadline and time.time() > deadline:
@@ -182,7 +183,7 @@ def run_session(s: dict, deadline: float | None) -> int:
         proc.wait()
         rc = proc.returncode
     finally:
-        release(lock, "160")
+        release(lock, BRIEF)
     print(f"{sid(s)}: exit {rc}; wrote", record(s, batch, datetime.date.today().isoformat()).relative_to(ROOT), flush=True)
     return rc
 

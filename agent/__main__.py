@@ -138,7 +138,10 @@ def model_kwargs(a, argv: list[str]) -> dict:
     """The Config fields of the model configuration: the project file, ``--model-config``, which model flags were given, the owner's Fable flag."""
     from agent.models.config import parse_cli_json
     given = tuple(sorted({v for f, v in MODEL_FLAGS.items() if any(x == f or x.startswith(f + "=") for x in argv)}))
-    return dict(models_file=getattr(a, "models_file", None), model_config=parse_cli_json(getattr(a, "model_config", None)) or None,
+    mc = parse_cli_json(getattr(a, "model_config", None))
+    if getattr(a, "budget_scale", None) is not None:          # brief 209b: --budget-scale is one more key of the command-line layer
+        mc = parse_cli_json({**mc, "budget_scale": a.budget_scale})
+    return dict(models_file=getattr(a, "models_file", None), model_config=mc or None,
                 explicit=given, allow_fable=bool(getattr(a, "allow_fable", False)), replay_run=bool(getattr(a, "replay", None)))
 
 
@@ -432,7 +435,8 @@ def build_parser() -> argparse.ArgumentParser:
                                    "roles (record keys): clarify (Clarifier), model (Modeller), tests (Verifier), rtl (Designer)")
     r.add_argument("--no-shell", action="store_true",
                    help="the subject is the USB-UART itself: build, lint and simulate without the test shell "
-                        "(07a2-prep; also set when --hidden-spec sits next to a bench.yaml with no_shell: true)")
+                        "(07a2-prep; also set when --hidden-spec sits next to a bench.yaml with no_shell: true, and for a board "
+                        "with no UART such as the KR260, from its board file: brief 209a)")
     r.add_argument("--data-dir", type=Path,
                    help="the task's data/ files (weights, images ...), copied to <design>/data (07a2-prep; default: "
                         "data/ next to spec.md, when it exists)")
@@ -445,6 +449,8 @@ def build_parser() -> argparse.ArgumentParser:
     r.add_argument("--spectest-model", default="claude-sonnet-5-5", help="Claude Code model of the spec-test role and its triage")
     r.add_argument("--spectest-max-loops", type=int, default=2, help="design_wrong round trips per run before 'unresolved'")
     r.add_argument("--max-usd", type=float, help="run cost cap (provider-reported); default RUN_LIMITS")
+    r.add_argument("--budget-scale", type=float, help="brief 209b: multiplies every stage USD budget and the default run cap (for a dearer model; "
+                   "default 1, or `budget_scale:` in a models file); an explicit --max-usd stays as given")
     r.add_argument("--verif-level", choices=["V1", "V2", "V3"], default="V3",
                    help="verification stage stage 2 must reach (default V3, the methodology; V1/V2 only for a cheaper run: "
                         "V3 needs multi-seed runs; the graph itself runs the Verilator coverage run and the mutation run)")
@@ -517,6 +523,7 @@ def build_parser() -> argparse.ArgumentParser:
     rs.add_argument("--docs", choices=["on", "off"], default="on")
     rs.add_argument("--models-file", type=Path, help="design resume: the project's model table (a run resume reads the run's own)")
     rs.add_argument("--model-config", help="design resume: JSON command-line layer of the model table")
+    rs.add_argument("--budget-scale", type=float, help="brief 209b: multiplies every stage USD budget and the default run cap")
     rs.add_argument("--allow-fable", action="store_true", help="the owner's flag: permits Fable on a claude_code endpoint")
     rs.add_argument("--allow-model-change", action="store_true", help="resume a run although its model table hash has changed")
     from agent.graph.revise import add_parser as _revise_parser         # brief 159
@@ -524,7 +531,7 @@ def build_parser() -> argparse.ArgumentParser:
     rvp = sub._name_parser_map["revise"]
     for act in rs._actions:                                             # the run options are the resume command's, shared
         if act.dest in ("max_usd", "board", "stop_after", "model", "harness", "cc_model", "cc_effort", "profile", "roles", "verif_level", "docs",
-                        "models_file", "model_config", "allow_fable", "allow_model_change"):
+                        "models_file", "model_config", "allow_fable", "allow_model_change", "budget_scale"):
             rvp._add_action(act)
     for act in sub._name_parser_map["resume"]._actions:
         if act.dest in ("replies", "reply", "replay", "record", "deterministic", "tape", "record_tape", "replay_tape"):

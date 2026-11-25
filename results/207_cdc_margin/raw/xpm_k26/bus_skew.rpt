@@ -1,0 +1,628 @@
+Copyright 1986-2022 Xilinx, Inc. All Rights Reserved. Copyright 2022-2026 Advanced Micro Devices, Inc. All Rights Reserved.
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------
+| Tool Version      : Vivado v.2026.1 (lin64) Build 6511674 Tue Jun 16 11:01:26 MDT 2026
+| Date              : Tue Nov 24 21:32:16 2026
+| Host              : bren-ubuntu24-04 running 64-bit Ubuntu 24.04.4 LTS
+| Command           : report_bus_skew -max_paths 20 -file /home/brendan/Claude_sandbox/_worktrees/207-cdc-margin/results/207_cdc_margin/raw/xpm_k26/bus_skew.rpt
+| Design            : x_xpm_hs
+| Device            : xck26-sfvc784
+| Speed File        : -2LV  PRODUCTION 1.31 12-08-2025
+| Design State      : Routed
+| Temperature Grade : C
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Bus Skew Report
+
+Table of Contents
+-----------------
+1. Bus Skew Report Summary
+2. Bus Skew Report Per Constraint
+
+1. Bus Skew Report Summary
+--------------------------
+
+Id  Position  From                            To                              Corner  Requirement(ns)  Actual(ns)  Slack(ns)
+--  --------  ------------------------------  ------------------------------  ------  ---------------  ----------  ---------
+1   5         [get_cells -quiet -of_objects [all_fanin -quiet -startpoints_only -flat [get_pins -quiet -of_objects {{u_gray/dest_graysync_ff_reg[0][0]} {u_gray/dest_graysync_ff_reg[0][1]} {u_gray/dest_graysync_ff_reg[0][2]} {u_gray/dest_graysync_ff_reg[0][3]} {u_gray/dest_graysync_ff_reg[0][4]} {u_gray/dest_graysync_ff_reg[0][5]} {u_gray/dest_graysync_ff_reg[0][6]} {u_gray/dest_graysync_ff_reg[0][7]}} -filter {REF_PIN_NAME == D}]]]
+                                              [get_pins -quiet -of_objects {{u_gray/dest_graysync_ff_reg[0][0]} {u_gray/dest_graysync_ff_reg[0][1]} {u_gray/dest_graysync_ff_reg[0][2]} {u_gray/dest_graysync_ff_reg[0][3]} {u_gray/dest_graysync_ff_reg[0][4]} {u_gray/dest_graysync_ff_reg[0][5]} {u_gray/dest_graysync_ff_reg[0][6]} {u_gray/dest_graysync_ff_reg[0][7]}} -filter {REF_PIN_NAME == D}]
+                                                                              Slow              6.400       0.334      6.066
+
+
+2. Bus Skew Report Per Constraint
+---------------------------------
+
+Id: 1
+set_bus_skew -from [get_cells -quiet -of_objects [all_fanin -quiet -startpoints_only -flat [get_pins -quiet -of_objects {{u_gray/dest_graysync_ff_reg[0][0]} {u_gray/dest_graysync_ff_reg[0][1]} {u_gray/dest_graysync_ff_reg[0][2]} {u_gray/dest_graysync_ff_reg[0][3]} {u_gray/dest_graysync_ff_reg[0][4]} {u_gray/dest_graysync_ff_reg[0][5]} {u_gray/dest_graysync_ff_reg[0][6]} {u_gray/dest_graysync_ff_reg[0][7]}} -filter {REF_PIN_NAME == D}]]] -to [get_pins -quiet -of_objects {{u_gray/dest_graysync_ff_reg[0][0]} {u_gray/dest_graysync_ff_reg[0][1]} {u_gray/dest_graysync_ff_reg[0][2]} {u_gray/dest_graysync_ff_reg[0][3]} {u_gray/dest_graysync_ff_reg[0][4]} {u_gray/dest_graysync_ff_reg[0][5]} {u_gray/dest_graysync_ff_reg[0][6]} {u_gray/dest_graysync_ff_reg[0][7]}} -filter {REF_PIN_NAME == D}] 6.400
+Requirement: 6.400ns
+Endpoints: 8
+
+From Clock            To Clock              Endpoint Pin                    Reference Pin                   Corner  Actual(ns)  Slack(ns)
+--------------------  --------------------  ------------------------------  ------------------------------  ------  ----------  ---------
+clk_a                 clk_b                 u_gray/dest_graysync_ff_reg[0][2]/D
+                                                                            u_gray/dest_graysync_ff_reg[0][0]/D
+                                                                                                            Slow         0.334      6.066
+clk_a                 clk_b                 u_gray/dest_graysync_ff_reg[0][0]/D
+                                                                            u_gray/dest_graysync_ff_reg[0][2]/D
+                                                                                                            Slow         0.334      6.066
+clk_a                 clk_b                 u_gray/dest_graysync_ff_reg[0][3]/D
+                                                                            u_gray/dest_graysync_ff_reg[0][2]/D
+                                                                                                            Slow         0.332      6.068
+clk_a                 clk_b                 u_gray/dest_graysync_ff_reg[0][5]/D
+                                                                            u_gray/dest_graysync_ff_reg[0][2]/D
+                                                                                                            Slow         0.331      6.069
+clk_a                 clk_b                 u_gray/dest_graysync_ff_reg[0][6]/D
+                                                                            u_gray/dest_graysync_ff_reg[0][0]/D
+                                                                                                            Slow         0.318      6.082
+clk_a                 clk_b                 u_gray/dest_graysync_ff_reg[0][1]/D
+                                                                            u_gray/dest_graysync_ff_reg[0][2]/D
+                                                                                                            Slow         0.306      6.094
+clk_a                 clk_b                 u_gray/dest_graysync_ff_reg[0][7]/D
+                                                                            u_gray/dest_graysync_ff_reg[0][0]/D
+                                                                                                            Slow         0.293      6.107
+clk_a                 clk_b                 u_gray/dest_graysync_ff_reg[0][4]/D
+                                                                            u_gray/dest_graysync_ff_reg[0][2]/D
+                                                                                                            Slow         0.287      6.113
+
+
+Slack (MET) :             6.066ns  (requirement - actual skew)
+  Endpoint Source:        u_gray/src_gray_ff_reg[2]/C
+                            (rising edge-triggered cell FDRE clocked by clk_a)
+  Endpoint Destination:   u_gray/dest_graysync_ff_reg[0][2]/D
+                            (rising edge-triggered cell FDRE clocked by clk_b)
+  Reference Source:       u_gray/src_gray_ff_reg[0]/C
+                            (rising edge-triggered cell FDRE clocked by clk_a)
+  Reference Destination:  u_gray/dest_graysync_ff_reg[0][0]/D
+                            (rising edge-triggered cell FDRE clocked by clk_b)
+  Path Type:              Bus Skew (Max at Slow Process Corner)
+  Requirement:            6.400ns
+  Endpoint Relative Delay:    0.426ns
+  Reference Relative Delay:   0.092ns
+  Relative CRPR:              0.000ns
+  Actual Bus Skew:            0.334ns  (Endpoint Relative Delay - Reference Relative Delay - Relative CRPR)
+
+Endpoint path:
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock clk_a rise edge)      0.000     0.000 r  <hidden>
+                                                      0.000     0.000 r  clk_a
+                         net (fo=27, unset)           0.042     0.042    u_gray/src_clk
+    SLICE_X23Y41         FDRE                                         r  u_gray/src_gray_ff_reg[2]/C
+  -------------------------------------------------------------------    -------------------
+    SLICE_X23Y41         FDRE (Prop_HFF_SLICEL_C_Q)
+                                                      0.113     0.155 r  u_gray/src_gray_ff_reg[2]/Q
+                         net (fo=1, routed)           0.346     0.501    u_gray/async_path[2]
+    SLICE_X24Y41         FDRE                                         r  u_gray/dest_graysync_ff_reg[0][2]/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock clk_b rise edge)      0.000     0.000 r  <hidden>
+                                                      0.000     0.000 r  clk_b
+                         net (fo=43, unset)           0.030     0.030    u_gray/dest_clk
+    SLICE_X24Y41         FDRE                                         r  u_gray/dest_graysync_ff_reg[0][2]/C
+                         clock pessimism              0.000     0.030    <hidden>
+    SLICE_X24Y41         FDRE (Setup_DFF2_SLICEM_C_D)
+                                                      0.045     0.075    u_gray/dest_graysync_ff_reg[0][2]
+  -------------------------------------------------------------------
+                         data arrival                           0.501    <hidden>
+                         clock arrival                          0.075    <hidden>
+  -------------------------------------------------------------------
+                         relative delay                         0.426    <hidden>
+
+Reference path:
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock clk_a rise edge)      0.000     0.000 r  <hidden>
+                                                      0.000     0.000 r  clk_a
+                         net (fo=27, unset)           0.029     0.029    u_gray/src_clk
+    SLICE_X23Y43         FDRE                                         r  u_gray/src_gray_ff_reg[0]/C
+  -------------------------------------------------------------------    -------------------
+    SLICE_X23Y43         FDRE (Prop_DFF_SLICEL_C_Q)
+                                                      0.112     0.141 r  u_gray/src_gray_ff_reg[0]/Q
+                         net (fo=1, routed)           0.096     0.237    u_gray/async_path[0]
+    SLICE_X23Y42         FDRE                                         r  u_gray/dest_graysync_ff_reg[0][0]/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock clk_b rise edge)      0.000     0.000 r  <hidden>
+                                                      0.000     0.000 r  clk_b
+                         net (fo=43, unset)           0.042     0.042    u_gray/dest_clk
+    SLICE_X23Y42         FDRE                                         r  u_gray/dest_graysync_ff_reg[0][0]/C
+                         clock pessimism              0.000     0.042    <hidden>
+    SLICE_X23Y42         FDRE (Hold_HFF2_SLICEL_C_D)
+                                                      0.103     0.145    u_gray/dest_graysync_ff_reg[0][0]
+  -------------------------------------------------------------------
+                         data arrival                           0.237    <hidden>
+                         clock arrival                          0.145    <hidden>
+  -------------------------------------------------------------------
+                         relative delay                         0.092    <hidden>
+
+Slack (MET) :             6.066ns  (requirement - actual skew)
+  Endpoint Source:        u_gray/src_gray_ff_reg[0]/C
+                            (rising edge-triggered cell FDRE clocked by clk_a)
+  Endpoint Destination:   u_gray/dest_graysync_ff_reg[0][0]/D
+                            (rising edge-triggered cell FDRE clocked by clk_b)
+  Reference Source:       u_gray/src_gray_ff_reg[2]/C
+                            (rising edge-triggered cell FDRE clocked by clk_a)
+  Reference Destination:  u_gray/dest_graysync_ff_reg[0][2]/D
+                            (rising edge-triggered cell FDRE clocked by clk_b)
+  Path Type:              Bus Skew (Min at Slow Process Corner)
+  Requirement:            6.400ns
+  Endpoint Relative Delay:    0.092ns
+  Reference Relative Delay:   0.426ns
+  Relative CRPR:              0.000ns
+  Actual Bus Skew:            0.334ns  (Reference Relative Delay - Endpoint Relative Delay - Relative CRPR)
+
+Endpoint path:
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock clk_a rise edge)      0.000     0.000 r  <hidden>
+                                                      0.000     0.000 r  clk_a
+                         net (fo=27, unset)           0.029     0.029    u_gray/src_clk
+    SLICE_X23Y43         FDRE                                         r  u_gray/src_gray_ff_reg[0]/C
+  -------------------------------------------------------------------    -------------------
+    SLICE_X23Y43         FDRE (Prop_DFF_SLICEL_C_Q)
+                                                      0.112     0.141 r  u_gray/src_gray_ff_reg[0]/Q
+                         net (fo=1, routed)           0.096     0.237    u_gray/async_path[0]
+    SLICE_X23Y42         FDRE                                         r  u_gray/dest_graysync_ff_reg[0][0]/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock clk_b rise edge)      0.000     0.000 r  <hidden>
+                                                      0.000     0.000 r  clk_b
+                         net (fo=43, unset)           0.042     0.042    u_gray/dest_clk
+    SLICE_X23Y42         FDRE                                         r  u_gray/dest_graysync_ff_reg[0][0]/C
+                         clock pessimism              0.000     0.042    <hidden>
+    SLICE_X23Y42         FDRE (Hold_HFF2_SLICEL_C_D)
+                                                      0.103     0.145    u_gray/dest_graysync_ff_reg[0][0]
+  -------------------------------------------------------------------
+                         data arrival                           0.237    <hidden>
+                         clock arrival                          0.145    <hidden>
+  -------------------------------------------------------------------
+                         relative delay                         0.092    <hidden>
+
+Reference path:
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock clk_a rise edge)      0.000     0.000 r  <hidden>
+                                                      0.000     0.000 r  clk_a
+                         net (fo=27, unset)           0.042     0.042    u_gray/src_clk
+    SLICE_X23Y41         FDRE                                         r  u_gray/src_gray_ff_reg[2]/C
+  -------------------------------------------------------------------    -------------------
+    SLICE_X23Y41         FDRE (Prop_HFF_SLICEL_C_Q)
+                                                      0.113     0.155 r  u_gray/src_gray_ff_reg[2]/Q
+                         net (fo=1, routed)           0.346     0.501    u_gray/async_path[2]
+    SLICE_X24Y41         FDRE                                         r  u_gray/dest_graysync_ff_reg[0][2]/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock clk_b rise edge)      0.000     0.000 r  <hidden>
+                                                      0.000     0.000 r  clk_b
+                         net (fo=43, unset)           0.030     0.030    u_gray/dest_clk
+    SLICE_X24Y41         FDRE                                         r  u_gray/dest_graysync_ff_reg[0][2]/C
+                         clock pessimism              0.000     0.030    <hidden>
+    SLICE_X24Y41         FDRE (Setup_DFF2_SLICEM_C_D)
+                                                      0.045     0.075    u_gray/dest_graysync_ff_reg[0][2]
+  -------------------------------------------------------------------
+                         data arrival                           0.501    <hidden>
+                         clock arrival                          0.075    <hidden>
+  -------------------------------------------------------------------
+                         relative delay                         0.426    <hidden>
+
+Slack (MET) :             6.068ns  (requirement - actual skew)
+  Endpoint Source:        u_gray/src_gray_ff_reg[3]/C
+                            (rising edge-triggered cell FDRE clocked by clk_a)
+  Endpoint Destination:   u_gray/dest_graysync_ff_reg[0][3]/D
+                            (rising edge-triggered cell FDRE clocked by clk_b)
+  Reference Source:       u_gray/src_gray_ff_reg[2]/C
+                            (rising edge-triggered cell FDRE clocked by clk_a)
+  Reference Destination:  u_gray/dest_graysync_ff_reg[0][2]/D
+                            (rising edge-triggered cell FDRE clocked by clk_b)
+  Path Type:              Bus Skew (Min at Slow Process Corner)
+  Requirement:            6.400ns
+  Endpoint Relative Delay:    0.094ns
+  Reference Relative Delay:   0.426ns
+  Relative CRPR:              0.000ns
+  Actual Bus Skew:            0.332ns  (Reference Relative Delay - Endpoint Relative Delay - Relative CRPR)
+
+Endpoint path:
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock clk_a rise edge)      0.000     0.000 r  <hidden>
+                                                      0.000     0.000 r  clk_a
+                         net (fo=27, unset)           0.029     0.029    u_gray/src_clk
+    SLICE_X23Y41         FDRE                                         r  u_gray/src_gray_ff_reg[3]/C
+  -------------------------------------------------------------------    -------------------
+    SLICE_X23Y41         FDRE (Prop_HFF2_SLICEL_C_Q)
+                                                      0.113     0.142 r  u_gray/src_gray_ff_reg[3]/Q
+                         net (fo=1, routed)           0.095     0.237    u_gray/async_path[3]
+    SLICE_X23Y42         FDRE                                         r  u_gray/dest_graysync_ff_reg[0][3]/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock clk_b rise edge)      0.000     0.000 r  <hidden>
+                                                      0.000     0.000 r  clk_b
+                         net (fo=43, unset)           0.041     0.041    u_gray/dest_clk
+    SLICE_X23Y42         FDRE                                         r  u_gray/dest_graysync_ff_reg[0][3]/C
+                         clock pessimism              0.000     0.041    <hidden>
+    SLICE_X23Y42         FDRE (Hold_DFF2_SLICEL_C_D)
+                                                      0.102     0.143    u_gray/dest_graysync_ff_reg[0][3]
+  -------------------------------------------------------------------
+                         data arrival                           0.237    <hidden>
+                         clock arrival                          0.143    <hidden>
+  -------------------------------------------------------------------
+                         relative delay                         0.094    <hidden>
+
+Reference path:
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock clk_a rise edge)      0.000     0.000 r  <hidden>
+                                                      0.000     0.000 r  clk_a
+                         net (fo=27, unset)           0.042     0.042    u_gray/src_clk
+    SLICE_X23Y41         FDRE                                         r  u_gray/src_gray_ff_reg[2]/C
+  -------------------------------------------------------------------    -------------------
+    SLICE_X23Y41         FDRE (Prop_HFF_SLICEL_C_Q)
+                                                      0.113     0.155 r  u_gray/src_gray_ff_reg[2]/Q
+                         net (fo=1, routed)           0.346     0.501    u_gray/async_path[2]
+    SLICE_X24Y41         FDRE                                         r  u_gray/dest_graysync_ff_reg[0][2]/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock clk_b rise edge)      0.000     0.000 r  <hidden>
+                                                      0.000     0.000 r  clk_b
+                         net (fo=43, unset)           0.030     0.030    u_gray/dest_clk
+    SLICE_X24Y41         FDRE                                         r  u_gray/dest_graysync_ff_reg[0][2]/C
+                         clock pessimism              0.000     0.030    <hidden>
+    SLICE_X24Y41         FDRE (Setup_DFF2_SLICEM_C_D)
+                                                      0.045     0.075    u_gray/dest_graysync_ff_reg[0][2]
+  -------------------------------------------------------------------
+                         data arrival                           0.501    <hidden>
+                         clock arrival                          0.075    <hidden>
+  -------------------------------------------------------------------
+                         relative delay                         0.426    <hidden>
+
+Slack (MET) :             6.069ns  (requirement - actual skew)
+  Endpoint Source:        u_gray/src_gray_ff_reg[5]/C
+                            (rising edge-triggered cell FDRE clocked by clk_a)
+  Endpoint Destination:   u_gray/dest_graysync_ff_reg[0][5]/D
+                            (rising edge-triggered cell FDRE clocked by clk_b)
+  Reference Source:       u_gray/src_gray_ff_reg[2]/C
+                            (rising edge-triggered cell FDRE clocked by clk_a)
+  Reference Destination:  u_gray/dest_graysync_ff_reg[0][2]/D
+                            (rising edge-triggered cell FDRE clocked by clk_b)
+  Path Type:              Bus Skew (Min at Slow Process Corner)
+  Requirement:            6.400ns
+  Endpoint Relative Delay:    0.095ns
+  Reference Relative Delay:   0.426ns
+  Relative CRPR:              0.000ns
+  Actual Bus Skew:            0.331ns  (Reference Relative Delay - Endpoint Relative Delay - Relative CRPR)
+
+Endpoint path:
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock clk_a rise edge)      0.000     0.000 r  <hidden>
+                                                      0.000     0.000 r  clk_a
+                         net (fo=27, unset)           0.030     0.030    u_gray/src_clk
+    SLICE_X24Y40         FDRE                                         r  u_gray/src_gray_ff_reg[5]/C
+  -------------------------------------------------------------------    -------------------
+    SLICE_X24Y40         FDRE (Prop_DFF2_SLICEM_C_Q)
+                                                      0.115     0.145 r  u_gray/src_gray_ff_reg[5]/Q
+                         net (fo=1, routed)           0.096     0.241    u_gray/async_path[5]
+    SLICE_X24Y41         FDRE                                         r  u_gray/dest_graysync_ff_reg[0][5]/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock clk_b rise edge)      0.000     0.000 r  <hidden>
+                                                      0.000     0.000 r  clk_b
+                         net (fo=43, unset)           0.043     0.043    u_gray/dest_clk
+    SLICE_X24Y41         FDRE                                         r  u_gray/dest_graysync_ff_reg[0][5]/C
+                         clock pessimism              0.000     0.043    <hidden>
+    SLICE_X24Y41         FDRE (Hold_HFF2_SLICEM_C_D)
+                                                      0.103     0.146    u_gray/dest_graysync_ff_reg[0][5]
+  -------------------------------------------------------------------
+                         data arrival                           0.241    <hidden>
+                         clock arrival                          0.146    <hidden>
+  -------------------------------------------------------------------
+                         relative delay                         0.095    <hidden>
+
+Reference path:
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock clk_a rise edge)      0.000     0.000 r  <hidden>
+                                                      0.000     0.000 r  clk_a
+                         net (fo=27, unset)           0.042     0.042    u_gray/src_clk
+    SLICE_X23Y41         FDRE                                         r  u_gray/src_gray_ff_reg[2]/C
+  -------------------------------------------------------------------    -------------------
+    SLICE_X23Y41         FDRE (Prop_HFF_SLICEL_C_Q)
+                                                      0.113     0.155 r  u_gray/src_gray_ff_reg[2]/Q
+                         net (fo=1, routed)           0.346     0.501    u_gray/async_path[2]
+    SLICE_X24Y41         FDRE                                         r  u_gray/dest_graysync_ff_reg[0][2]/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock clk_b rise edge)      0.000     0.000 r  <hidden>
+                                                      0.000     0.000 r  clk_b
+                         net (fo=43, unset)           0.030     0.030    u_gray/dest_clk
+    SLICE_X24Y41         FDRE                                         r  u_gray/dest_graysync_ff_reg[0][2]/C
+                         clock pessimism              0.000     0.030    <hidden>
+    SLICE_X24Y41         FDRE (Setup_DFF2_SLICEM_C_D)
+                                                      0.045     0.075    u_gray/dest_graysync_ff_reg[0][2]
+  -------------------------------------------------------------------
+                         data arrival                           0.501    <hidden>
+                         clock arrival                          0.075    <hidden>
+  -------------------------------------------------------------------
+                         relative delay                         0.426    <hidden>
+
+Slack (MET) :             6.082ns  (requirement - actual skew)
+  Endpoint Source:        u_gray/src_gray_ff_reg[6]/C
+                            (rising edge-triggered cell FDRE clocked by clk_a)
+  Endpoint Destination:   u_gray/dest_graysync_ff_reg[0][6]/D
+                            (rising edge-triggered cell FDRE clocked by clk_b)
+  Reference Source:       u_gray/src_gray_ff_reg[0]/C
+                            (rising edge-triggered cell FDRE clocked by clk_a)
+  Reference Destination:  u_gray/dest_graysync_ff_reg[0][0]/D
+                            (rising edge-triggered cell FDRE clocked by clk_b)
+  Path Type:              Bus Skew (Max at Slow Process Corner)
+  Requirement:            6.400ns
+  Endpoint Relative Delay:    0.410ns
+  Reference Relative Delay:   0.092ns
+  Relative CRPR:              0.000ns
+  Actual Bus Skew:            0.318ns  (Endpoint Relative Delay - Reference Relative Delay - Relative CRPR)
+
+Endpoint path:
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock clk_a rise edge)      0.000     0.000 r  <hidden>
+                                                      0.000     0.000 r  clk_a
+                         net (fo=27, unset)           0.042     0.042    u_gray/src_clk
+    SLICE_X23Y41         FDRE                                         r  u_gray/src_gray_ff_reg[6]/C
+  -------------------------------------------------------------------    -------------------
+    SLICE_X23Y41         FDRE (Prop_GFF2_SLICEL_C_Q)
+                                                      0.116     0.158 r  u_gray/src_gray_ff_reg[6]/Q
+                         net (fo=1, routed)           0.327     0.485    u_gray/async_path[6]
+    SLICE_X23Y41         FDRE                                         r  u_gray/dest_graysync_ff_reg[0][6]/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock clk_b rise edge)      0.000     0.000 r  <hidden>
+                                                      0.000     0.000 r  clk_b
+                         net (fo=43, unset)           0.029     0.029    u_gray/dest_clk
+    SLICE_X23Y41         FDRE                                         r  u_gray/dest_graysync_ff_reg[0][6]/C
+                         clock pessimism              0.000     0.029    <hidden>
+    SLICE_X23Y41         FDRE (Setup_DFF2_SLICEL_C_D)
+                                                      0.046     0.075    u_gray/dest_graysync_ff_reg[0][6]
+  -------------------------------------------------------------------
+                         data arrival                           0.485    <hidden>
+                         clock arrival                          0.075    <hidden>
+  -------------------------------------------------------------------
+                         relative delay                         0.410    <hidden>
+
+Reference path:
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock clk_a rise edge)      0.000     0.000 r  <hidden>
+                                                      0.000     0.000 r  clk_a
+                         net (fo=27, unset)           0.029     0.029    u_gray/src_clk
+    SLICE_X23Y43         FDRE                                         r  u_gray/src_gray_ff_reg[0]/C
+  -------------------------------------------------------------------    -------------------
+    SLICE_X23Y43         FDRE (Prop_DFF_SLICEL_C_Q)
+                                                      0.112     0.141 r  u_gray/src_gray_ff_reg[0]/Q
+                         net (fo=1, routed)           0.096     0.237    u_gray/async_path[0]
+    SLICE_X23Y42         FDRE                                         r  u_gray/dest_graysync_ff_reg[0][0]/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock clk_b rise edge)      0.000     0.000 r  <hidden>
+                                                      0.000     0.000 r  clk_b
+                         net (fo=43, unset)           0.042     0.042    u_gray/dest_clk
+    SLICE_X23Y42         FDRE                                         r  u_gray/dest_graysync_ff_reg[0][0]/C
+                         clock pessimism              0.000     0.042    <hidden>
+    SLICE_X23Y42         FDRE (Hold_HFF2_SLICEL_C_D)
+                                                      0.103     0.145    u_gray/dest_graysync_ff_reg[0][0]
+  -------------------------------------------------------------------
+                         data arrival                           0.237    <hidden>
+                         clock arrival                          0.145    <hidden>
+  -------------------------------------------------------------------
+                         relative delay                         0.092    <hidden>
+
+Slack (MET) :             6.094ns  (requirement - actual skew)
+  Endpoint Source:        u_gray/src_gray_ff_reg[1]/C
+                            (rising edge-triggered cell FDRE clocked by clk_a)
+  Endpoint Destination:   u_gray/dest_graysync_ff_reg[0][1]/D
+                            (rising edge-triggered cell FDRE clocked by clk_b)
+  Reference Source:       u_gray/src_gray_ff_reg[2]/C
+                            (rising edge-triggered cell FDRE clocked by clk_a)
+  Reference Destination:  u_gray/dest_graysync_ff_reg[0][2]/D
+                            (rising edge-triggered cell FDRE clocked by clk_b)
+  Path Type:              Bus Skew (Min at Slow Process Corner)
+  Requirement:            6.400ns
+  Endpoint Relative Delay:    0.120ns
+  Reference Relative Delay:   0.426ns
+  Relative CRPR:              0.000ns
+  Actual Bus Skew:            0.306ns  (Reference Relative Delay - Endpoint Relative Delay - Relative CRPR)
+
+Endpoint path:
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock clk_a rise edge)      0.000     0.000 r  <hidden>
+                                                      0.000     0.000 r  clk_a
+                         net (fo=27, unset)           0.029     0.029    u_gray/src_clk
+    SLICE_X23Y43         FDRE                                         r  u_gray/src_gray_ff_reg[1]/C
+  -------------------------------------------------------------------    -------------------
+    SLICE_X23Y43         FDRE (Prop_DFF2_SLICEL_C_Q)
+                                                      0.115     0.144 r  u_gray/src_gray_ff_reg[1]/Q
+                         net (fo=1, routed)           0.121     0.265    u_gray/async_path[1]
+    SLICE_X23Y43         FDRE                                         r  u_gray/dest_graysync_ff_reg[0][1]/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock clk_b rise edge)      0.000     0.000 r  <hidden>
+                                                      0.000     0.000 r  clk_b
+                         net (fo=43, unset)           0.042     0.042    u_gray/dest_clk
+    SLICE_X23Y43         FDRE                                         r  u_gray/dest_graysync_ff_reg[0][1]/C
+                         clock pessimism              0.000     0.042    <hidden>
+    SLICE_X23Y43         FDRE (Hold_HFF2_SLICEL_C_D)
+                                                      0.103     0.145    u_gray/dest_graysync_ff_reg[0][1]
+  -------------------------------------------------------------------
+                         data arrival                           0.265    <hidden>
+                         clock arrival                          0.145    <hidden>
+  -------------------------------------------------------------------
+                         relative delay                         0.120    <hidden>
+
+Reference path:
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock clk_a rise edge)      0.000     0.000 r  <hidden>
+                                                      0.000     0.000 r  clk_a
+                         net (fo=27, unset)           0.042     0.042    u_gray/src_clk
+    SLICE_X23Y41         FDRE                                         r  u_gray/src_gray_ff_reg[2]/C
+  -------------------------------------------------------------------    -------------------
+    SLICE_X23Y41         FDRE (Prop_HFF_SLICEL_C_Q)
+                                                      0.113     0.155 r  u_gray/src_gray_ff_reg[2]/Q
+                         net (fo=1, routed)           0.346     0.501    u_gray/async_path[2]
+    SLICE_X24Y41         FDRE                                         r  u_gray/dest_graysync_ff_reg[0][2]/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock clk_b rise edge)      0.000     0.000 r  <hidden>
+                                                      0.000     0.000 r  clk_b
+                         net (fo=43, unset)           0.030     0.030    u_gray/dest_clk
+    SLICE_X24Y41         FDRE                                         r  u_gray/dest_graysync_ff_reg[0][2]/C
+                         clock pessimism              0.000     0.030    <hidden>
+    SLICE_X24Y41         FDRE (Setup_DFF2_SLICEM_C_D)
+                                                      0.045     0.075    u_gray/dest_graysync_ff_reg[0][2]
+  -------------------------------------------------------------------
+                         data arrival                           0.501    <hidden>
+                         clock arrival                          0.075    <hidden>
+  -------------------------------------------------------------------
+                         relative delay                         0.426    <hidden>
+
+Slack (MET) :             6.107ns  (requirement - actual skew)
+  Endpoint Source:        u_gray/src_gray_ff_reg[7]/C
+                            (rising edge-triggered cell FDRE clocked by clk_a)
+  Endpoint Destination:   u_gray/dest_graysync_ff_reg[0][7]/D
+                            (rising edge-triggered cell FDRE clocked by clk_b)
+  Reference Source:       u_gray/src_gray_ff_reg[0]/C
+                            (rising edge-triggered cell FDRE clocked by clk_a)
+  Reference Destination:  u_gray/dest_graysync_ff_reg[0][0]/D
+                            (rising edge-triggered cell FDRE clocked by clk_b)
+  Path Type:              Bus Skew (Max at Slow Process Corner)
+  Requirement:            6.400ns
+  Endpoint Relative Delay:    0.385ns
+  Reference Relative Delay:   0.092ns
+  Relative CRPR:              0.000ns
+  Actual Bus Skew:            0.293ns  (Endpoint Relative Delay - Reference Relative Delay - Relative CRPR)
+
+Endpoint path:
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock clk_a rise edge)      0.000     0.000 r  <hidden>
+                                                      0.000     0.000 r  clk_a
+                         net (fo=27, unset)           0.043     0.043    u_gray/src_clk
+    SLICE_X24Y43         FDRE                                         r  u_gray/src_gray_ff_reg[7]/C
+  -------------------------------------------------------------------    -------------------
+    SLICE_X24Y43         FDRE (Prop_EFF_SLICEM_C_Q)
+                                                      0.113     0.156 r  u_gray/src_gray_ff_reg[7]/Q
+                         net (fo=1, routed)           0.304     0.460    u_gray/async_path[7]
+    SLICE_X24Y43         FDRE                                         r  u_gray/dest_graysync_ff_reg[0][7]/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock clk_b rise edge)      0.000     0.000 r  <hidden>
+                                                      0.000     0.000 r  clk_b
+                         net (fo=43, unset)           0.030     0.030    u_gray/dest_clk
+    SLICE_X24Y43         FDRE                                         r  u_gray/dest_graysync_ff_reg[0][7]/C
+                         clock pessimism              0.000     0.030    <hidden>
+    SLICE_X24Y43         FDRE (Setup_DFF2_SLICEM_C_D)
+                                                      0.045     0.075    u_gray/dest_graysync_ff_reg[0][7]
+  -------------------------------------------------------------------
+                         data arrival                           0.460    <hidden>
+                         clock arrival                          0.075    <hidden>
+  -------------------------------------------------------------------
+                         relative delay                         0.385    <hidden>
+
+Reference path:
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock clk_a rise edge)      0.000     0.000 r  <hidden>
+                                                      0.000     0.000 r  clk_a
+                         net (fo=27, unset)           0.029     0.029    u_gray/src_clk
+    SLICE_X23Y43         FDRE                                         r  u_gray/src_gray_ff_reg[0]/C
+  -------------------------------------------------------------------    -------------------
+    SLICE_X23Y43         FDRE (Prop_DFF_SLICEL_C_Q)
+                                                      0.112     0.141 r  u_gray/src_gray_ff_reg[0]/Q
+                         net (fo=1, routed)           0.096     0.237    u_gray/async_path[0]
+    SLICE_X23Y42         FDRE                                         r  u_gray/dest_graysync_ff_reg[0][0]/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock clk_b rise edge)      0.000     0.000 r  <hidden>
+                                                      0.000     0.000 r  clk_b
+                         net (fo=43, unset)           0.042     0.042    u_gray/dest_clk
+    SLICE_X23Y42         FDRE                                         r  u_gray/dest_graysync_ff_reg[0][0]/C
+                         clock pessimism              0.000     0.042    <hidden>
+    SLICE_X23Y42         FDRE (Hold_HFF2_SLICEL_C_D)
+                                                      0.103     0.145    u_gray/dest_graysync_ff_reg[0][0]
+  -------------------------------------------------------------------
+                         data arrival                           0.237    <hidden>
+                         clock arrival                          0.145    <hidden>
+  -------------------------------------------------------------------
+                         relative delay                         0.092    <hidden>
+
+Slack (MET) :             6.113ns  (requirement - actual skew)
+  Endpoint Source:        u_gray/src_gray_ff_reg[4]/C
+                            (rising edge-triggered cell FDRE clocked by clk_a)
+  Endpoint Destination:   u_gray/dest_graysync_ff_reg[0][4]/D
+                            (rising edge-triggered cell FDRE clocked by clk_b)
+  Reference Source:       u_gray/src_gray_ff_reg[2]/C
+                            (rising edge-triggered cell FDRE clocked by clk_a)
+  Reference Destination:  u_gray/dest_graysync_ff_reg[0][2]/D
+                            (rising edge-triggered cell FDRE clocked by clk_b)
+  Path Type:              Bus Skew (Min at Slow Process Corner)
+  Requirement:            6.400ns
+  Endpoint Relative Delay:    0.139ns
+  Reference Relative Delay:   0.426ns
+  Relative CRPR:              0.000ns
+  Actual Bus Skew:            0.287ns  (Reference Relative Delay - Endpoint Relative Delay - Relative CRPR)
+
+Endpoint path:
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock clk_a rise edge)      0.000     0.000 r  <hidden>
+                                                      0.000     0.000 r  clk_a
+                         net (fo=27, unset)           0.030     0.030    u_gray/src_clk
+    SLICE_X24Y40         FDRE                                         r  u_gray/src_gray_ff_reg[4]/C
+  -------------------------------------------------------------------    -------------------
+    SLICE_X24Y40         FDRE (Prop_DFF_SLICEM_C_Q)
+                                                      0.112     0.142 r  u_gray/src_gray_ff_reg[4]/Q
+                         net (fo=1, routed)           0.143     0.285    u_gray/async_path[4]
+    SLICE_X24Y40         FDRE                                         r  u_gray/dest_graysync_ff_reg[0][4]/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock clk_b rise edge)      0.000     0.000 r  <hidden>
+                                                      0.000     0.000 r  clk_b
+                         net (fo=43, unset)           0.043     0.043    u_gray/dest_clk
+    SLICE_X24Y40         FDRE                                         r  u_gray/dest_graysync_ff_reg[0][4]/C
+                         clock pessimism              0.000     0.043    <hidden>
+    SLICE_X24Y40         FDRE (Hold_HFF2_SLICEM_C_D)
+                                                      0.103     0.146    u_gray/dest_graysync_ff_reg[0][4]
+  -------------------------------------------------------------------
+                         data arrival                           0.285    <hidden>
+                         clock arrival                          0.146    <hidden>
+  -------------------------------------------------------------------
+                         relative delay                         0.139    <hidden>
+
+Reference path:
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock clk_a rise edge)      0.000     0.000 r  <hidden>
+                                                      0.000     0.000 r  clk_a
+                         net (fo=27, unset)           0.042     0.042    u_gray/src_clk
+    SLICE_X23Y41         FDRE                                         r  u_gray/src_gray_ff_reg[2]/C
+  -------------------------------------------------------------------    -------------------
+    SLICE_X23Y41         FDRE (Prop_HFF_SLICEL_C_Q)
+                                                      0.113     0.155 r  u_gray/src_gray_ff_reg[2]/Q
+                         net (fo=1, routed)           0.346     0.501    u_gray/async_path[2]
+    SLICE_X24Y41         FDRE                                         r  u_gray/dest_graysync_ff_reg[0][2]/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock clk_b rise edge)      0.000     0.000 r  <hidden>
+                                                      0.000     0.000 r  clk_b
+                         net (fo=43, unset)           0.030     0.030    u_gray/dest_clk
+    SLICE_X24Y41         FDRE                                         r  u_gray/dest_graysync_ff_reg[0][2]/C
+                         clock pessimism              0.000     0.030    <hidden>
+    SLICE_X24Y41         FDRE (Setup_DFF2_SLICEM_C_D)
+                                                      0.045     0.075    u_gray/dest_graysync_ff_reg[0][2]
+  -------------------------------------------------------------------
+                         data arrival                           0.501    <hidden>
+                         clock arrival                          0.075    <hidden>
+  -------------------------------------------------------------------
+                         relative delay                         0.426    <hidden>
+
+
+

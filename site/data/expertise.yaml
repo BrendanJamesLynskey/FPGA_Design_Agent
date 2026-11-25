@@ -66,8 +66,13 @@ areas:
   - {file: flow/cdc_structure.py, gate: post_synth_cdc_structure_clean, gate_in: flow/gates.py, enforced: true, what: "After synthesis, classifies every flip-flop reached from another clock (synchroniser chain, XPM macro, constrained Gray or handshake, reset bridge, unsafe) and fails on an unsafe one."}
   - {file: flow/cdc_inject.py, enforced: true, gate: inject, what: "Simulation with a late-resolving first synchroniser stage, so a crossing that only works when every bit settles on time fails."}
   - {file: flow/gates.py, gate: cdc_no_critical, enforced: true, what: "report_cdc must have no Critical row, after synthesis and after routing."}
-  - {file: flow/xpm_cdc.tcl, enforced: false, what: "Exceptions for AMD's crossing macros."}
+  - {file: flow/xpm_cdc.tcl, enforced: false, what: "Exceptions for AMD's crossing macros; the handshake bound is AMD's own: destination period times its sync stages, with a bus skew."}
+  - {file: flow/cdc_margin.py, gate: post_route_bus_skew_met, gate_in: flow/gates.py, enforced: true, what: "After routing, every set_bus_skew must be met; a hand-built bus with no bus skew, a loose datapath-only bound, a missing or low MTBF (UltraScale+) and user clock uncertainty are warnings."}
   evidence:
+  - kind: measured
+    source: results/207_cdc_margin/headline.json
+    values: ["get:a7.lvl_slack_D", "get:a7.lvl_slack_DU", "get:a7.filler_whs_a_U", "get:m10.filler_wns_b_D", "get:m10.filler_wns_b_DU", "get:m10.maxskew_paths_D", "get:m10.maxskew_paths_DD"]
+    text: "A clock-uncertainty margin is not crossing margin. On Artix-7 it left a crossing's slack unchanged ({0} and {1} ns) and failed hold elsewhere (worst {2} ns); on MAX10 it turned a passing path ({3} ns) into a failing one ({4} ns); in Quartus a clock group removed the skew check ({5} paths with bounds, {6} with the group)."
   - kind: measured
     source: results/16_cdc_gate_2026_1/mutant_table.json
     values: ["count@rows:kind=mutant", "count@rows:kind=mutant,report_cdc_alone_flags=true", "count@rows:kind=mutant,gate_flags=true", "count@rows:kind=correct", "count@rows:kind=correct,gate_flags=false"]
@@ -85,6 +90,7 @@ areas:
   - "No agent run has used the stronger crossing gate yet."
   - "A reset cleared on one side only, in an asynchronous FIFO or a handshake, gets past the gate; only the rig's simulation catches it."
   - "The gate's simulation works cycle by cycle, so it finds lost pulses and bits crossed separately but not route skew, glitches or true metastability."
+  - "The bus-skew gate has no failing case from our own designs: neither tested part could be routed past a realistic bound; its negative case is a recorded over-tight bound."
 - id: clocking
   name: Clocking
   summary: Choosing an MMCM or PLL setting, clock buffers, dynamic phase and glitch-free switching, and using the Clocking Wizard as a checker.

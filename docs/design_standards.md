@@ -1,6 +1,6 @@
-# Design standards (v1.1)
+# Design standards (v1.2)
 
-Versioned: **v1.1** (2026-11-24, brief 205: initial values became the setting `rtl.initial_values`); v1.0 was 2026-11-02, brief 05d. The agent's RTL, and anything a human adds, follows these rules; the
+Versioned: **v1.2** (2026-11-24, brief 208: a clock mux declared in `architecture.yaml` `clock_muxes` passes STD-CLK-01); v1.1 (2026-11-24, brief 205: initial values became the setting `rtl.initial_values`); v1.0 was 2026-11-02, brief 05d. The agent's RTL, and anything a human adds, follows these rules; the
 flow checks the ones a program can check (`flow/standards_check.py`) and lists the rest for the human reviewer.
 The rules come from the owner's plan, from the knowledge bank (the `reset-strategy`, `clock-domain-crossing` and
 `clocking` skills: "clock enables, not gated clocks"; reset policy per the bank) and from the practice in Adam
@@ -11,7 +11,12 @@ gates as human RTL). A change to a rule bumps the version above and the checker'
 ## The standards
 
 1. **Synchronous design only.** No derived or gated clocks (use a clock enable on the declared clock), no latches, no
-   combinational loops.
+   combinational loops. The one exception is a clock mux that a clock enable or a data mux cannot replace (brief
+   208): a BUFGMUX_CTRL, or a BUFGCTRL switched on S, declared in `architecture.yaml` as
+   `clock_muxes: [{instance, primitive, inputs: [domain, ...], output: domain, condition, reason}]`. `condition` is
+   the reason a clock switch is acceptable: `static` (fixed after configuration), `test_only`, `reset_on_switch` or
+   `tolerant` (Altera's four conditions). Constrain it with generated clocks on the mux output
+   (`flow/clock_mux_check.py`, KB `amd-clock-mux-constraints`).
 2. **Every clock domain is declared** in `architecture.yaml` (`clock_domains`), which the owner approves before RTL
    is written, and every crossing goes through a named CDC primitive from the bank, listed under `crossings`.
 3. **Reset is synchronous** unless the spec says otherwise or the module is a declared reset synchroniser
@@ -30,7 +35,7 @@ counts as a failure, not a pass.
 | Rule | Stage | Rule text | How it is checked |
 |---|---|---|---|
 | `STD-ARCH-00` | rtl | architecture.yaml exists and has the shape the checker reads | flow/architecture.py check_architecture |
-| `STD-CLK-01` | rtl | no derived or gated clocks: every clock a register uses is a clock input, an alias of one, or the output of a clock-network primitive (MMCM, PLL, BUFG) | static scan: edge signals of every always block against ports, assigns and instance outputs; clock-gating primitives (BUFGCE, BUFGMUX, BUFHCE) refused |
+| `STD-CLK-01` | rtl | no derived or gated clocks: every clock a register uses is a clock input, an alias of one, or the output of a clock-network primitive (MMCM, PLL, BUFG, or a declared clock mux) | static scan: edge signals of every always block against ports, assigns and instance outputs; clock-gating primitives (BUFGCE, BUFGMUX, BUFHCE) refused; a BUFGMUX_CTRL, or a BUFGCTRL with both clock inputs connected, refused unless `architecture.yaml` `clock_muxes` declares the instance (brief 208) |
 | `STD-CLK-02` | rtl | every clock of the top module is declared in architecture.yaml clock_domains | static scan against architecture.yaml |
 | `STD-CLK-03` | post_synth | every clock source in the synthesised design's clock network is a declared domain | clock-net scan of report_clock_networks (clock_networks_synth.rpt) against architecture.yaml |
 | `STD-RST-01` | rtl | synchronous reset: a reset is not in a sensitivity list (the bank's reset-strategy skill: follow the spec; FPGA default synchronous), except in a declared reset synchroniser | static scan of sensitivity lists; architecture.yaml reset.synchronisers or a waiver |
