@@ -4,6 +4,7 @@ the retrieval probe uses. Plain Python: no model, no Vivado, no simulator."""
 from __future__ import annotations
 
 import json
+import re
 import shutil
 from pathlib import Path
 
@@ -74,7 +75,8 @@ def test_every_entry_has_a_readable_instantiation_snippet() -> None:
     for b in iv.entries():
         sn = il.snippet(b)
         top = iv._yaml(b)["top"]
-        assert sn.lstrip().startswith(top) and ".clk(clk)" in sn.replace(" ", ""), b
+        # the clock is connected: the entry's clock port is `clk`, or `aclk` for the AMBA-style entries (pipe_reg, credit_chan, axi_reg_slice; brief 202)
+        assert sn.lstrip().startswith(top) and re.search(r"\.a?clk\(a?clk\)", sn.replace(" ", "")), b
         assert "could not be read" not in sn, b
 
 

@@ -1,0 +1,16 @@
+Brief 156, 2026-11-22, by hand (not scripted): why the VHDL Gray-stepper job did not finish under the older formal flow.
+Design: psl/rtl/gray_stepper.vhd with the PSL properties split into single-property copies (req01, inv, reset, steps, cov, each with
+the first-cycle reset assumption) and the time constants 2 (by -g, or by editing the generic defaults), SymbiYosys bmc, depth 12 or 20.
+
+Yosys 0.33 + GHDL 4.1.0 plugin (formal-deb), z3 4.8.12:
+  all properties, depth 20, -g constants ........ no result in 150 s (the log stops at "Checking assumptions in step 0")
+  all properties, depth 20, constants edited .... no result in 150 s
+  req01, inv, reset, steps, cov, depth 12 each .. no result in 60 s each
+  inv without the assumption, depth 12 .......... no result in 60 s
+Yosys 0.70+385 + GHDL 7.0.0-dev plugin (OSS CAD Suite), z3 from the OSS CAD Suite (4.15.5):
+  req01, inv, reset, steps, cov, depth 12 each .. PASS in 0 to 3 s each
+  all properties, depth 20 / depth 12 ........... PASS in 3 s / 1 s
+Yosys 0.70+385 + GHDL 7.0.0-dev plugin, z3 4.8.12 (the older flow's solver, via a wrapper):
+  inv, depth 12 ................................. PASS in 2 s
+So the solver version is not the cause: what the older Yosys / plugin hand to it is. The brief 55 fixture (psl_cnt, 4-bit counter) is
+small enough to finish under the older flow. psl_gray.py records the older flow's four VHDL jobs as TIMEOUT at 60 s.

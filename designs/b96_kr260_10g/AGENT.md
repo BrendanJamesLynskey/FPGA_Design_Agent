@@ -9,7 +9,7 @@ A Kria KR260 design that carries our own 10GBASE-R PCS (64B/66B, scrambler, gear
 not: an interoperability proof: a PCS talking to itself accepts its own symmetric mistakes, only a network card proves it; the full 58A trading core (book, rule table, interlocks, ARP) at 64 bits: trade64 is a small stand-in with one rule; the reconciliation sublayer link-fault state machine, the BER monitor, an ARP or ICMP responder
 
 ## state
-stage=built vivado=2026.1 kb_pin=5e2eab8 build_id=4d5f6d14
+stage=built vivado=2026.1 kb_pin=6185830 build_id=aff38299
 gates: build_2026_1=pass
 
 ## interface
@@ -101,17 +101,17 @@ designs/b96_kr260_10g/model/loop_timing.py a2d1bf6428: Python model of the loop-
 designs/b96_kr260_10g/regmap.py 020260c536: register map as data
 designs/b96_kr260_10g/docs/register_map.md d2846103ad: interface datasheet
 designs/b96_kr260_10g/rm_gp_itch/rtl/udp_strip.sv 18ecd60fab: adapter from mac64_rx to the Mold receiver (build rm_gp_itch, brief 127): header checks, strip with a 2-byte realign, FCS verdict as a late strobe, capture ring
-designs/b96_kr260_10g/rm_gp_itch/rtl/itch_top.sv 186388568e: brief 110's mold_rx, itch_dec, book_core, risk_glue (unchanged) with the late verdict and the segment builder (brief 127)
-designs/b96_kr260_10g/rm_gp_itch/rtl/order_seg.sv 0d885e6b84: the order frame as a 113-byte Ethernet/IPv4/TCP stream, the stand-in for brief 119's tcp_fast (brief 127)
-designs/b96_kr260_10g/rm_gp_itch/rtl/order_seg_tcpfast.sv b6234fcd54: the same module with tcp_fast in place of the stand-in: the hook, not in the build (brief 127)
+designs/b96_kr260_10g/rm_gp_itch/rtl/itch_top.sv 5be8de2fca: brief 110's mold_rx, itch_dec, book_core, risk_glue (unchanged) with the late verdict and the segment builder (brief 127)
+designs/b96_kr260_10g/rm_gp_itch/rtl/order_seg.sv 473fe555c6: the order frame as a 113-byte Ethernet/IPv4/TCP stream, the stand-in for brief 119's tcp_fast (brief 127)
+designs/b96_kr260_10g/rm_gp_itch/rtl/order_seg_tcpfast.sv 30fc090de0: the same module with tcp_fast in place of the stand-in: the hook, not in the build (brief 127)
 designs/b96_kr260_10g/rm_gp_itch/rtl/tx_mux.sv 60060254bf: transmit multiplexer in front of mac64_tx: frame source, replay memory, order stream with FIFO and head register (brief 127)
-designs/b96_kr260_10g/rm_gp_itch/rtl/itch_path.sv 1672408a82: core-clock wrapper of the ITCH path: host vectors, order poison policy, counters, latency statistics (brief 127)
-designs/b96_kr260_10g/rm_gp_itch/rtl/b96_core.sv d026de610d: copy of rtl/b96_core.sv for build rm_gp_itch: RATE_MATCH = 1 only, the ITCH path and its registers 0x300 to 0x57C (brief 127)
-designs/b96_kr260_10g/rm_gp_itch/regmap_itch.py b983520024: register map of build rm_gp_itch as data, generates its datasheet (brief 127)
-designs/b96_kr260_10g/rm_gp_itch/docs/itch_integration.md b50a92b1aa: the ITCH/OUCH path inside the 10G design: path, latency, the late frame check, registers, hook for tcp_fast, results (brief 127)
-designs/b96_kr260_10g/rm_gp_itch/docs/board_test_plan.md 2801a79865: pre-registered board test of build rm_gp_itch (brief 127), not run
+designs/b96_kr260_10g/rm_gp_itch/rtl/itch_path.sv 3f8c04b0c0: core-clock wrapper of the ITCH path: host vectors, order poison policy, counters, latency statistics (brief 127)
+designs/b96_kr260_10g/rm_gp_itch/rtl/b96_core.sv 2ee04f6ca6: copy of rtl/b96_core.sv for build rm_gp_itch: RATE_MATCH = 1 only, the ITCH path and its registers 0x300 to 0x57C (brief 127)
+designs/b96_kr260_10g/rm_gp_itch/regmap_itch.py 2e77671345: register map of build rm_gp_itch as data, generates its datasheet (brief 127)
+designs/b96_kr260_10g/rm_gp_itch/docs/itch_integration.md dc4f9f826c: the ITCH/OUCH path inside the 10G design: path, latency, the late frame check, registers, hook for tcp_fast, results (brief 127)
+designs/b96_kr260_10g/rm_gp_itch/docs/board_test_plan.md f2994a478f: pre-registered board test of build rm_gp_itch (brief 127), not run
 designs/b96_kr260_10g/rm_gp_itch/host/itch_host.py 61c12a6515: synthetic MoldUDP64/ITCH frames, replay image, expected order frame and the order check (brief 127)
-designs/b96_kr260_10g/rm_gp_itch/host/b127_stages.py 0a8c138fb0: the pre-registered board stages, shared with the simulation's dry run (brief 127)
+designs/b96_kr260_10g/rm_gp_itch/host/b127_stages.py bb32838fac: the pre-registered board stages, shared with the simulation's dry run (brief 127)
 
 ## commands
 simulate the PCS, MAC and core against the Python reference (~2min): python -m pytest -q designs/b96_kr260_10g/tests

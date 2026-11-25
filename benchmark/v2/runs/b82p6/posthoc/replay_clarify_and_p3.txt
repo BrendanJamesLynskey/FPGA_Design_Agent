@@ -1,0 +1,16 @@
+## 82P5 planted run: clarify-exit check on the run's spec.yaml and spec.md
+  CONST-ID-03 BLOCK spec.yaml: spec.yaml parameter DESIGN_ID is 0x55445031 (1430540337) but the spec's design ID 'UEP1' is 0x55455031 (1430605873; shell/PROTOCOL.md register 0x00: four ASCII characters, MSB first); 0x55445031 is the spec's own '0 identification word' word, a different constant. Set DESIGN_ID to 1430605873
+## 82P5 planted run: the archived final design with the shell DESIGN_ID set back to the planted word, as at its visits 1 to 3 (model, bench, spec.yaml as archived)
+  CONST-ID-01 BLOCK runs/20261120-140630-340a/v2_e_udp_endpoint/rtl/v2_e_udp_endpoint_top.sv: DESIGN_ID is 0x55445031 (parameter DESIGN_ID) but the spec's design ID 'UEP1' is 0x55455031 (shell/PROTOCOL.md register 0x00: four ASCII characters, MSB first);
+   holders: [('spec', 'spec.yaml', '21'), ('model', 'model.py', '3'), ('tests', 'tests/bench_v2_e_udp_endpoint.py', '22'), ('rtl', 'runs/20261120-140630-340a/v2_e_udp_endpoint/rtl/v2_e_udp_endpoint_top.sv', '')]
+  first visit: owners ['rtl']; classify -> rtl
+     rtl   <- '[derived constants] constants CONST-ID-01 runs/20261120-140630-340a/v2_e_udp_endpoint/rtl/v2_e_udp_endpoint_top.sv: DESIGN_ID is 0x55445031 (parameter'
+  persisting visit: owners ['model', 'tests', 'rtl']; classify -> spec
+     model <- "[derived constants] the shell design ID is derived from the spec's quoted string 'UEP1' (four ASCII characters, most significant first): 0x55455031. m"
+     tests <- "[derived constants] the shell design ID is derived from the spec's quoted string 'UEP1' (four ASCII characters, most significant first): 0x55455031. t"
+     rtl   <- '[derived constants] constants CONST-ID-01 runs/20261120-140630-340a/v2_e_udp_endpoint/rtl/v2_e_udp_endpoint_top.sv: DESIGN_ID is 0x55445031 (parameter'
+## stop reasons on the recorded visit-limit stops, as written by this branch
+  B_r2 (run 20261120-072336-553a): was 'stage 2 visited more than 6 times'; now:
+    stage 2 visited more than 6 times; last failing gate: simulate; owned by the rtl role; last failing assertion: test_rtl_bench[1]: AssertionError: status 2 expected 0; the same failure on 5 consecutive visits
+  B_r3 (run 20261120-104735-68eb): was 'stage 2 visited more than 6 times'; now:
+    stage 2 visited more than 6 times; last failing gate: simulate; owned by the rtl role; last failing assertion: test_v2_e_udp_endpoint_rtl: AssertionError: read offset 2: dut 0xd model 0x9; the same failure on 5 consecutive visits

@@ -14,21 +14,22 @@ constraints:
   - designs/b58a_trigger/design.xdc
 generics: {}           # BUILD_STAMP is added by the flow
 # The RGMII interfaces (flow/io_check.py): the delays the XDC must carry and the edge pairing Vivado must apply.
-# Source: Marvell 88E1111 datasheet, document MV-S100649-00 Rev. M (classified Public), section 4.12.2; our own
-# reading of its numbers, no text copied.
-# Receive, PHY register 20 bit 7 = 1 (the PHY delays RX_CLK; centre-aligned at the pins): the datasheet's RX_CLK
-# output table for that setting gives data valid at least 1.2 ns before and 1.2 ns after each RX_CLK edge.
-# Transmit, PHY register 20 bit 1 = 1 (the PHY delays GTX_CLK itself; TXC forwarded edge-aligned): the datasheet's
-# GTX_CLK input table for that setting needs the data at the PHY pins settled from 0.9 ns after each TXC edge until
-# 2.7 ns after it. So a data change may come up to 0.9 ns after its edge (skew_after) and no earlier than
-# 4.0 - 2.7 = 1.3 ns before the next edge (skew_before). board_skew_ns: the KR260's TXC-to-TXD trace skew is not in
-# our notes; 0.1 ns is an ASSUMED allowance, taken off both sides of the window.
+# Source: TI DP83867IR/CR datasheet SNLS484J (revised June 2026), section 6.9 RGMII timing and section 8.44 RGMIIDCTL;
+# our own reading of its numbers, no text copied; derivation in design.xdc, PHY facts in docs/phy_dp83867.md.
+# Receive, PHY RX clock delay on (RGMIICTL bit 0 = 1, RGMIIDCTL[3:0] = 2.0 ns, both the strap defaults on this carrier): the
+# datasheet's "Data to Clock output Setup / Hold (at Transmitter - internal delay)" give data valid at least 1.2 ns before
+# and 1.2 ns after each RX_CLK edge.
+# Transmit, PHY TX clock delay D_TX = 1.75 ns (RGMIICTL bit 1 = 1, RGMIIDCTL[7:4] = 0110; TXC forwarded edge-aligned): the
+# datasheet's clock-after-data window at the PHY is 1.0 to 2.6 ns (TskewR), so a data change may come up to D_TX - 1.0 =
+# 0.75 ns after its TXC edge (skew_after) and no earlier than 2.6 - D_TX = 0.85 ns before it (skew_before). board_skew_ns:
+# the carrier's TXC-to-TXD copper skew bound from AMD's board file (brief 162): port A at most 0.27 in, port B 0.53 in at
+# 150-190 ps/in -> 0.05 ns and 0.09 ns, taken off both sides of the window; the SOM routing is not in the files.
 io_interfaces:
   - {name: rgmii_rx_a, kind: source_synchronous, direction: in, ports: ["a_rxd[*]", a_rx_ctl], clock: a_rxc_v,
      clock_period_ns: 8.0, ddr: true, data_sheet: {dv_before_ns: 1.2, dv_after_ns: 1.2}}
   - {name: rgmii_rx_b, kind: source_synchronous, direction: in, ports: ["b_rxd[*]", b_rx_ctl], clock: b_rxc_v,
      clock_period_ns: 8.0, ddr: true, data_sheet: {dv_before_ns: 1.2, dv_after_ns: 1.2}}
   - {name: rgmii_tx_a, kind: forwarded_clock, direction: out, ports: ["a_txd[*]", a_tx_ctl], clock: a_txc,
-     clock_period_ns: 8.0, ddr: true, data_sheet: {skew_before_ns: 1.3, skew_after_ns: 0.9, board_skew_ns: 0.1}}
+     clock_period_ns: 8.0, ddr: true, data_sheet: {skew_before_ns: 0.85, skew_after_ns: 0.75, board_skew_ns: 0.05}}
   - {name: rgmii_tx_b, kind: forwarded_clock, direction: out, ports: ["b_txd[*]", b_tx_ctl], clock: b_txc,
-     clock_period_ns: 8.0, ddr: true, data_sheet: {skew_before_ns: 1.3, skew_after_ns: 0.9, board_skew_ns: 0.1}}
+     clock_period_ns: 8.0, ddr: true, data_sheet: {skew_before_ns: 0.85, skew_after_ns: 0.75, board_skew_ns: 0.09}}

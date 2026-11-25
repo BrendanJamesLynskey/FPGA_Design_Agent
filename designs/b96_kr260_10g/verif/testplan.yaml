@@ -299,6 +299,12 @@ verification:
     title: Build lat_all3_bypass composes 97C's cuts with the bypass build's files, and its board driver's verdicts, references and lock prefix (brief 126)
     evidence: {file: results/116_traceability/b96_kr260_10g/pytest_junit.xml, reader: junit, tests: ["test_126_all3_bypass::*"]}
     checks: [designs/b96_kr260_10g/lat_all3_bypass/build.yaml]
+  - id: V-SIM-169-CUTS
+    requirements: [B96-F-BUILDS]
+    method: sim_test
+    title: Prototype latency cuts EARLY_MAC and FAST_PRE (lat_cuts169) keep their defaults off, are copies, and pass the 97C core bench in all four parameter combinations (brief 169)
+    evidence: {file: results/116_traceability/b96_kr260_10g/pytest_junit.xml, reader: junit, tests: ["test_169_cuts::*", "test_169_cuts_rtl::*"]}
+    checks: [designs/b96_kr260_10g/lat_cuts169/build.yaml]
   - id: V-SIM-BUILDS
     requirements: [B96-F-BUILDS]
     method: sim_test
@@ -322,9 +328,16 @@ verification:
   - id: V-FORMAL-SVA-PLANNED
     requirements: [B96-F-PCS, B96-S-RATEMATCH]
     method: formal
-    title: SVA properties of the gray-pointer rate matcher with SymbiYosys (brief 115; designs/b96_kr260_10g/verif/formal/, results/b115); safety by k-induction, progress by BMC only; the recorded run re-proves every CI job, mutants included
+    title: SVA properties of the gray-pointer rate matcher with SymbiYosys (brief 115; designs/b96_kr260_10g/verif/formal/, results/b115); safety by k-induction, progress by BMC in this item (V-FORMAL-PROGRESS-PDR closes it unbounded); the recorded run re-proves every CI job, mutants included
     evidence: {file: results/116_traceability/b96_kr260_10g/pytest_junit.xml, reader: junit, tests: ["test_b115_formal::*"]}
     rigour: [designs/b96_kr260_10g/verif/formal/rm_gp.sby]        # brief 143c: every assertion's antecedent reached, the assumptions' sanity covers reached, bounded results justified (flow/formal_rigour.py)
+  - id: V-FORMAL-PROGRESS-PDR
+    requirements: [B96-S-RATEMATCH]
+    method: formal
+    title: The progress ranking function of the gray-pointer rate matcher (a written block is consumed within a bounded number of read clocks, R1 and R2) proved unbounded by IC3/PDR at AW 1 and 2, the safety set re-proved by the same engine, and the no-slot-clock mutant caught (brief 191; designs/b96_kr260_10g/verif/formal, results/191_trading_variants)
+    evidence: {file: results/191_trading_variants/formal_rm_gp_pdr.json, reader: json}
+    pass_when: [{field: "results[0].verdict", op: eq, value: PASS}, {field: "results[1].verdict", op: eq, value: PASS}, {field: "results[2].verdict", op: eq, value: CAUGHT}, {field: "results[3].verdict", op: eq, value: PASS}]
+    checks: [designs/b96_kr260_10g/rtl/rate_match_gp.sv, designs/b96_kr260_10g/verif/formal/rm_gp_props.sv]
   - id: V-SVA-PLANNED
     requirements: [B96-F-PCS, B96-F-MAC, B96-S-RATEMATCH]
     method: assertion

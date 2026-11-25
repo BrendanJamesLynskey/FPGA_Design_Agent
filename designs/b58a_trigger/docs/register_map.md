@@ -11,8 +11,8 @@ after the address (the histogram RAMs need the first). RO = read only; P = pulse
 | 0x000 | ID (RO) | 0x58A00001 |
 | 0x001 | BUILD_STAMP (RO) | first 8 hex digits of the sources' SHA-256 (the flow sets it) |
 | 0x002 | CTRL | [0] core enable, [1] speculative (1, default) or safe (0), [2] halt on sequence gap, [3] kill, [4] histogram A metric (0 RX SFD to first preamble byte, 1 decision to first preamble byte), [5] hold both PHYs in reset |
-| 0x003 | PULSE (P) | [0] clear counters, [1] clear book, [2] clear histograms, [3] clear halt, [4] clear the latched kill input, [5] commit the rule table, [6] pop the decision log, [7] soft reset of the order slot (board-safe): drops an order that has not started and a pending ARP reply; never an undo: an order already started is still poisoned or cancelled if its frame turns out bad, and a pending cancel is still sent; it also forgets which frame last made a request, so a frame that already made one may make one more after a soft reset (the slot stays single) |
-| 0x004 | STATUS (RO) | [0] kill in force, [1] halted, [2] kill input latched, [3] DRP busy, [4] MDIO B busy, [5] MDIO A busy, [6] histogram clearing, [7] book clearing |
+| 0x003 | PULSE (P) | [0] clear counters, [1] clear book, [2] clear histograms, [3] clear halt, [4] clear the latched kill input, [5] commit the rule table, [6] pop the decision log, [8] COMMIT the interlock limits (brief 188: the five registers 0x020 to 0x024 are staged, see Interlocks), [7] soft reset of the order slot (board-safe): drops an order that has not started and a pending ARP reply; never an undo: an order already started is still poisoned or cancelled if its frame turns out bad, and a pending cancel is still sent; it also forgets which frame last made a request, so a frame that already made one may make one more after a soft reset (the slot stays single) |
+| 0x004 | STATUS (RO) | [8] a staged interlock limit differs from the live one (COMMIT pending), [0] kill in force, [1] halted, [2] kill input latched, [3] DRP busy, [4] MDIO B busy, [5] MDIO A busy, [6] histogram clearing, [7] book clearing |
 | 0x005 | TS (RO) | the free-running 125 MHz counter (8 ns) |
 | 0x006 | RULES_VERSION (RO) | commits since reset |
 | 0x007 | COMMIT_TS (RO) | TS at the last commit (the tick-to-config end point) |
@@ -31,6 +31,9 @@ after the address (the histogram RAMs need the first). RO = read only; P = pulse
 | 0x017 | venue UDP port | 5801 |
 
 ## Interlocks
+
+**Staged (brief 188, idea from Edwards 2026, ch 8).** A write to 0x020 to 0x024 fills a holding register and changes nothing live; PULSE[8] copies all five to the live registers in one clock, and the token bucket refills to its (new) size in the clock after. A set that is only partly written never takes effect. A read of 0x020 to 0x024 returns the HELD value; STATUS[8] says a held value differs from the live one. 0x026 and 0x027 (position, tokens) read live state. Writing 0x023 no longer refills the bucket by itself: COMMIT does. Test: `limits_staged_commit` in `tests/b58a_cocotb.py`.
+**Token bucket (brief 188, measured by `rejected_attempts_do_not_charge_the_bucket`):** only a GRANTED order takes a token; a request refused by an earlier check (kill, halt, quantity, band, position) takes none, and a refusal for rate (no token) takes none either. A stream of refused requests therefore cannot empty the bucket and is itself not rate limited; every refusal is counted.
 
 | Address | Name | Default |
 |---|---|---|

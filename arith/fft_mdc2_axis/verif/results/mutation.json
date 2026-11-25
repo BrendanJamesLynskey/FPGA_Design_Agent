@@ -1,0 +1,361 @@
+{
+ "function": "fft_mdc2_axis",
+ "mutants": 43,
+ "valid": 43,
+ "killed": 43,
+ "survived": [],
+ "invalid": [],
+ "score_pct": 100.0,
+ "per_variant": {
+  "par2": {
+   "valid": 43,
+   "killed": 43
+  }
+ },
+ "results": [
+  {
+   "name": "gap_rule_removed",
+   "variant": "par2",
+   "class": "operator",
+   "status": "killed",
+   "detail": "randomised {'LOGN': 6, 'W': 16, 'TW': 16, 'RND': 1, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 2, 'NB': 4}",
+   "why": "the frame gap is not enforced: a source that idles 1 to N/8 - 1 clocks corrupts a frame"
+  },
+  {
+   "name": "gap_one_short",
+   "variant": "par2",
+   "class": "constant",
+   "status": "killed",
+   "detail": "randomised {'LOGN': 6, 'W': 16, 'TW': 16, 'RND': 1, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 2, 'NB': 4}",
+   "why": "tready returns one clock early: N/8 - 1 idle clocks"
+  },
+  {
+   "name": "gap_one_long",
+   "variant": "par2",
+   "class": "constant",
+   "status": "killed",
+   "detail": "gaps {'LOGN': 5, 'W': 8, 'TW': 10, 'RND': 1, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 2, 'NB': 4}",
+   "why": "tready returns one clock late: N/8 + 1 idle clocks (correct data, throughput lost)"
+  },
+  {
+   "name": "credit_ignored",
+   "variant": "par2",
+   "class": "operator",
+   "status": "killed",
+   "detail": "randomised {'LOGN': 6, 'W': 16, 'TW': 16, 'RND': 1, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 2, 'NB': 4}",
+   "why": "frames are accepted although every bank may be in use: the store overflows when the sink stalls"
+  },
+  {
+   "name": "credit_one_too_many",
+   "variant": "par2",
+   "class": "constant",
+   "status": "killed",
+   "detail": "randomised {'LOGN': 6, 'W': 16, 'TW': 16, 'RND': 1, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 2, 'NB': 4}",
+   "why": "NB + 1 frames are allowed in the block"
+  },
+  {
+   "name": "credit_one_too_few",
+   "variant": "par2",
+   "class": "constant",
+   "status": "killed",
+   "detail": "directed {'LOGN': 5, 'W': 8, 'TW': 10, 'RND': 1, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 2, 'NB': 4}",
+   "why": "only NB - 1 frames are allowed in the block (correct data, throughput lost)"
+  },
+  {
+   "name": "credit_never_returned",
+   "variant": "par2",
+   "class": "connection",
+   "status": "killed",
+   "detail": "directed {'LOGN': 5, 'W': 8, 'TW': 10, 'RND': 1, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 2, 'NB': 4}",
+   "why": "a finished frame does not give its credit back: the block stops after NB frames"
+  },
+  {
+   "name": "credit_every_beat",
+   "variant": "par2",
+   "class": "operator",
+   "status": "killed",
+   "detail": "directed {'LOGN': 5, 'W': 8, 'TW': 10, 'RND': 1, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 2, 'NB': 4}",
+   "why": "every input beat takes a credit, not only the first of a frame"
+  },
+  {
+   "name": "start_polarity",
+   "variant": "par2",
+   "class": "operator",
+   "status": "killed",
+   "detail": "directed {'LOGN': 5, 'W': 8, 'TW': 10, 'RND': 1, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 2, 'NB': 4}",
+   "why": "the start flag follows the wrong polarity of tlast"
+  },
+  {
+   "name": "direction_ignored",
+   "variant": "par2",
+   "class": "connection",
+   "status": "killed",
+   "detail": "directed {'LOGN': 5, 'W': 8, 'TW': 10, 'RND': 1, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 2, 'NB': 4}",
+   "why": "tuser of the input is not read: every frame is forward"
+  },
+  {
+   "name": "sof_always",
+   "variant": "par2",
+   "class": "connection",
+   "status": "killed",
+   "detail": "directed {'LOGN': 5, 'W': 8, 'TW': 10, 'RND': 1, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 2, 'NB': 4}",
+   "why": "every beat is a start of frame"
+  },
+  {
+   "name": "core_sees_unaccepted",
+   "variant": "par2",
+   "class": "operator",
+   "status": "killed",
+   "detail": "randomised {'LOGN': 6, 'W': 16, 'TW': 16, 'RND': 1, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 2, 'NB': 4}",
+   "why": "beats are taken that were not accepted (tready low)"
+  },
+  {
+   "name": "odd_sample_exchanged",
+   "variant": "par2",
+   "class": "connection",
+   "status": "killed",
+   "detail": "directed {'LOGN': 5, 'W': 8, 'TW': 10, 'RND': 1, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 2, 'NB': 4}",
+   "why": "real and imaginary part of the odd sample exchanged on the input"
+  },
+  {
+   "name": "even_odd_exchanged",
+   "variant": "par2",
+   "class": "connection",
+   "status": "killed",
+   "detail": "directed {'LOGN': 5, 'W': 8, 'TW': 10, 'RND': 1, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 2, 'NB': 4}",
+   "why": "the even and the odd sample exchanged on the input"
+  },
+  {
+   "name": "done_ignores_ready",
+   "variant": "par2",
+   "class": "operator",
+   "status": "killed",
+   "detail": "randomised {'LOGN': 6, 'W': 16, 'TW': 16, 'RND': 1, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 2, 'NB': 4}",
+   "why": "a frame gives its credit back when its last beat is offered, not when it is taken: a stalled sink overflows the store"
+  },
+  {
+   "name": "core_scaled",
+   "variant": "par2",
+   "class": "constant",
+   "status": "killed",
+   "detail": "directed {'LOGN': 5, 'W': 8, 'TW': 10, 'RND': 1, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 2, 'NB': 4}",
+   "why": "the core runs scaled: the output is 1/N of the unscaled transform in the wide words"
+  },
+  {
+   "name": "core_natural",
+   "variant": "par2",
+   "class": "constant",
+   "status": "killed",
+   "detail": "directed {'LOGN': 5, 'W': 8, 'TW': 10, 'RND': 1, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 2, 'NB': 4}",
+   "why": "the core reorders to natural order and the store reads bit-reversed: the order is scrambled"
+  },
+  {
+   "name": "pack_out",
+   "variant": "par2",
+   "class": "connection",
+   "status": "killed",
+   "detail": "directed {'LOGN': 5, 'W': 8, 'TW': 10, 'RND': 1, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 2, 'NB': 4}",
+   "why": "the two samples of an output beat exchanged"
+  },
+  {
+   "name": "part_out",
+   "variant": "par2",
+   "class": "connection",
+   "status": "killed",
+   "detail": "directed {'LOGN': 5, 'W': 8, 'TW': 10, 'RND': 1, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 2, 'NB': 4}",
+   "why": "real and imaginary parts exchanged on the output"
+  },
+  {
+   "name": "tuser_zero",
+   "variant": "par2",
+   "class": "connection",
+   "status": "killed",
+   "detail": "directed {'LOGN': 5, 'W': 8, 'TW': 10, 'RND': 1, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 2, 'NB': 4}",
+   "why": "the exponent is not driven on tuser"
+  },
+  {
+   "name": "exp_off",
+   "variant": "par2",
+   "class": "constant",
+   "status": "killed",
+   "detail": "directed {'LOGN': 5, 'W': 8, 'TW': 10, 'RND': 1, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 2, 'NB': 4}",
+   "why": "the exponent is one too small: the largest part does not fit"
+  },
+  {
+   "name": "bl_off",
+   "variant": "par2",
+   "class": "constant",
+   "status": "killed",
+   "detail": "directed {'LOGN': 5, 'W': 8, 'TW': 10, 'RND': 1, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 2, 'NB': 4}",
+   "why": "the bit length is one too small"
+  },
+  {
+   "name": "mag_not_xored",
+   "variant": "par2",
+   "class": "operator",
+   "status": "killed",
+   "detail": "directed {'LOGN': 5, 'W': 8, 'TW': 10, 'RND': 1, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 2, 'NB': 4}",
+   "why": "negative real parts of the even sample are not turned into their ones-complement magnitude: the OR sees the sign bits"
+  },
+  {
+   "name": "odd_imag_ignored",
+   "variant": "par2",
+   "class": "connection",
+   "status": "killed",
+   "detail": "directed {'LOGN': 5, 'W': 8, 'TW': 10, 'RND': 1, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 2, 'NB': 4}",
+   "why": "the odd sample's imaginary part does not enter the exponent"
+  },
+  {
+   "name": "acc_not_restarted",
+   "variant": "par2",
+   "class": "connection",
+   "status": "killed",
+   "detail": "directed {'LOGN': 5, 'W': 8, 'TW': 10, 'RND': 1, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 2, 'NB': 4}",
+   "why": "the OR is not cleared at a frame start: the largest earlier frame sets this one's exponent"
+  },
+  {
+   "name": "round_inverted",
+   "variant": "par2",
+   "class": "operator",
+   "status": "killed",
+   "detail": "directed {'LOGN': 5, 'W': 8, 'TW': 10, 'RND': 1, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 2, 'NB': 4}",
+   "why": "the rounding constant is added in the truncating mode and not in the rounding mode"
+  },
+  {
+   "name": "round_half_off",
+   "variant": "par2",
+   "class": "constant",
+   "status": "killed",
+   "detail": "directed {'LOGN': 5, 'W': 8, 'TW': 10, 'RND': 1, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 2, 'NB': 4}",
+   "why": "the rounding constant is a whole unit, not a half"
+  },
+  {
+   "name": "saturation_to_zero",
+   "variant": "par2",
+   "class": "constant",
+   "status": "killed",
+   "detail": "directed {'LOGN': 5, 'W': 8, 'TW': 10, 'RND': 1, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 2, 'NB': 4}",
+   "why": "a part that the rounding carries to 2**(W-1) becomes zero instead of saturating"
+  },
+  {
+   "name": "left_shift_zero_ext",
+   "variant": "par2",
+   "class": "width",
+   "status": "killed",
+   "detail": "directed {'LOGN': 5, 'W': 8, 'TW': 10, 'RND': 1, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 2, 'NB': 4}",
+   "why": "a negative word is zero-extended before the shift"
+  },
+  {
+   "name": "acc_bank",
+   "variant": "par2",
+   "class": "connection",
+   "status": "killed",
+   "detail": "directed {'LOGN': 5, 'W': 8, 'TW': 10, 'RND': 1, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 2, 'NB': 4}",
+   "why": "the exponent is taken from the OR of the bank being written, not the one being read"
+  },
+  {
+   "name": "write_bank_stuck",
+   "variant": "par2",
+   "class": "connection",
+   "status": "killed",
+   "detail": "directed {'LOGN': 5, 'W': 8, 'TW': 10, 'RND': 1, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 2, 'NB': 4}",
+   "why": "the write bank never changes: a frame overwrites the one before it"
+  },
+  {
+   "name": "read_bank_stuck",
+   "variant": "par2",
+   "class": "connection",
+   "status": "killed",
+   "detail": "directed {'LOGN': 5, 'W': 8, 'TW': 10, 'RND': 1, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 2, 'NB': 4}",
+   "why": "the read bank never changes: the first frame's bank is read again"
+  },
+  {
+   "name": "bank_wrap_early",
+   "variant": "par2",
+   "class": "constant",
+   "status": "killed",
+   "detail": "directed {'LOGN': 5, 'W': 8, 'TW': 10, 'RND': 1, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 2, 'NB': 4}",
+   "why": "the write bank wraps one bank early: the last bank is never used"
+  },
+  {
+   "name": "mem_banks_overlap",
+   "variant": "par2",
+   "class": "connection",
+   "status": "killed",
+   "detail": "directed {'LOGN': 5, 'W': 8, 'TW': 10, 'RND': 1, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 2, 'NB': 4}",
+   "why": "every frame is written into the first bank's addresses"
+  },
+  {
+   "name": "read_bank_zero",
+   "variant": "par2",
+   "class": "connection",
+   "status": "killed",
+   "detail": "directed {'LOGN': 5, 'W': 8, 'TW': 10, 'RND': 1, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 2, 'NB': 4}",
+   "why": "every frame is read from the first bank's addresses"
+  },
+  {
+   "name": "order_unreversed",
+   "variant": "par2",
+   "class": "connection",
+   "status": "killed",
+   "detail": "directed {'LOGN': 5, 'W': 8, 'TW': 10, 'RND': 1, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 2, 'NB': 4}",
+   "why": "the pair index is not bit reversed on reading: bit-reversed order out"
+  },
+  {
+   "name": "pair_written_swapped",
+   "variant": "par2",
+   "class": "connection",
+   "status": "killed",
+   "detail": "directed {'LOGN': 5, 'W': 8, 'TW': 10, 'RND': 1, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 2, 'NB': 4}",
+   "why": "the two samples of a pair exchanged on the way into the store"
+  },
+  {
+   "name": "odd_read_slice",
+   "variant": "par2",
+   "class": "connection",
+   "status": "killed",
+   "detail": "directed {'LOGN': 5, 'W': 8, 'TW': 10, 'RND': 1, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 2, 'NB': 4}",
+   "why": "the odd real part read from the odd imaginary slice"
+  },
+  {
+   "name": "tlast_early",
+   "variant": "par2",
+   "class": "constant",
+   "status": "killed",
+   "detail": "directed {'LOGN': 5, 'W': 8, 'TW': 10, 'RND': 1, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 2, 'NB': 4}",
+   "why": "tlast one beat early"
+  },
+  {
+   "name": "exp_not_aligned",
+   "variant": "par2",
+   "class": "latency",
+   "status": "killed",
+   "detail": "directed {'LOGN': 5, 'W': 8, 'TW': 10, 'RND': 1, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 2, 'NB': 4}",
+   "why": "the exponent is two clocks ahead of the data (visible when frames follow each other with different levels)"
+  },
+  {
+   "name": "hold_missing",
+   "variant": "par2",
+   "class": "connection",
+   "status": "killed",
+   "detail": "randomised {'LOGN': 6, 'W': 16, 'TW': 16, 'RND': 1, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 2, 'NB': 4}",
+   "why": "the read-out does not stall: beats are lost while the sink is not ready"
+  },
+  {
+   "name": "rd_not_held",
+   "variant": "par2",
+   "class": "connection",
+   "status": "killed",
+   "detail": "randomised {'LOGN': 6, 'W': 16, 'TW': 16, 'RND': 1, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 2, 'NB': 4}",
+   "why": "the memory output register is not held while the output is stalled"
+  },
+  {
+   "name": "exp_reg_not_held",
+   "variant": "par2",
+   "class": "connection",
+   "status": "killed",
+   "detail": "randomised {'LOGN': 6, 'W': 16, 'TW': 16, 'RND': 1, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 2, 'NB': 4}",
+   "why": "the exponent pipeline register is not held while the output is stalled"
+  }
+ ]
+}

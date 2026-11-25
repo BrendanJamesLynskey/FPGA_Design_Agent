@@ -69,6 +69,7 @@ A complete segment is 113 bytes: Ethernet 14, IPv4 20, TCP 20 (no options), payl
 | `rec_pay` | the 59 payload bytes, byte 0 in bits 7:0 | stable from `rec_v` until the next segment completes |
 
 A poisoned segment produces no record and changes no state.
+**Poisoned downstream (brief 176).** The block decides unpoisoned or poisoned at the last word, but the transmit side can still poison the frame (the trigger frame's bad FCS, STRICT mode without a verdict) or drop it whole (the MAC was owned). Two input pulses cover it: `tx_unsent` (one clock, in the clock the MAC takes the last word of a frame that was counted sent here and then poisoned) subtracts 59 from SND_NXT and 1 from IP_ID and counts `unsent`; `tx_drop` (one clock, in the clock of the segment's first word) makes the segment consume nothing and leave no record. A `go` in the same clock as `tx_unsent` takes the corrected numbers. The record `rec_v` of such a segment was already emitted: a consumer that retransmits from it must also watch `tx_unsent`. The flight test of that same-clock `go` still uses the uncorrected SND_NXT, so it can refuse one segment early at the very edge of the window. Tie both inputs to 0 when no transmit side poisons.
 
 ### 1.4 Register bus (`sw_*`)
 
@@ -90,7 +91,7 @@ before the clock edge that follows**, so a write is visible to a read issued the
 | 13 | RCV_WND | R/W | the 16-bit window field to advertise (already scaled down by software if window scaling was negotiated) |
 | 14 | IP_ID | R/W | the IP identification of the next segment; updated by the block |
 | 15 | STALE_LIMIT | R/W | clocks; 0 disables the staleness check |
-| 16 to 29 | counters | R | see 1.5 |
+| 16 to 30 | counters | R | see 1.5 |
 | 31 | CLR_CNT | W | any write clears every counter |
 
 What a write does:
@@ -102,7 +103,7 @@ What a write does:
 
 ### 1.5 Counters
 
-32 bits, wrap, never saturate; reset and CLR_CNT zero them. Addresses 16 to 29, in this order.
+32 bits, wrap, never saturate; reset and CLR_CNT zero them. Addresses 16 to 30, in this order.
 
 | Addr | Name | Counts |
 |---|---|---|
@@ -120,6 +121,7 @@ What a write does:
 | 27 | cancel0 | orders cancelled by an abort in their go clock |
 | 28 | build | template builds completed |
 | 29 | abort | segments aborted in flight (also counted in `poison`) |
+| 30 | unsent | segments given back by the transmit side (`tx_unsent`, brief 176): they ended unpoisoned here (so they are also in `sent`) but the multiplexer poisoned them downstream |
 
 ## 2. Behaviour in detail
 
@@ -229,6 +231,19 @@ The headers add nothing to the first byte: the destination MAC leaves in the sam
 risk logic (`rtl/itch_ouch_tcp_top.sv`, simulation) the first byte of the Ethernet frame is **8 clocks** after the last byte of the triggering ITCH message when the frame
 starts at the verdict and **3 clocks** when it starts speculatively, the same as the stub port. The checksum fields are complete 6 clocks after the first byte, inside the
 header's own transmission time, as the TCP plan claimed.
+
+
+**Cycle cost (per block).** Generated from `cycle_cost.yaml` by `flow/cycle_cost.py`; do not edit between the markers.
+
+<!-- cycle_cost:begin -->
+Cycle cost of each block on the path (clocks of 6.2061 ns, simulation; the first row counts from the clock in which go is presented, the second from the last byte of the triggering ITCH message). Each figure is the difference of two fields of the record named; a row of 0 says why.
+
+| Block | Adds (clocks) | From event | To event | Record | Why |
+|---|---|---|---|---|---|
+| tcp_fast: go to first byte of the frame | 1 | go presented (edge 0) | first byte of the frame (destination MAC) | `results/b119/bench_sim.json` | - |
+| tcp_fast behind the risk logic, frame started speculatively: added to the stub port of brief 110 | 0 | stub port's first word (b110) | first Ethernet byte (b119) | `results/b119/top_sim.json` | the template and the partial sums of the fixed header fields are prepared when software arms the block, so the first byte leaves in the clock after go and the changing fields are added while the header is already on its way (the IPv4 checksum field is complete 4 clocks after go, the TCP one 7) |
+| tcp_fast behind the risk logic, frame started at the verdict: added to the stub port of brief 110 | 0 | stub port's first word (b110) | first Ethernet byte (b119) | `results/b119/top_sim.json` | as the speculative row: the headers add nothing to the first byte |
+<!-- cycle_cost:end -->
 
 Throughput: one segment per 15 clocks (the block is busy that long and drops a `go` meanwhile).
 

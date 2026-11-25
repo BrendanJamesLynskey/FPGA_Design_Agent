@@ -329,6 +329,25 @@ def generic(design: Path, a) -> int:
             lock.unlink(missing_ok=True)
 
 
+def vendored_sources(design: Path) -> list[Path]:
+    """Brief 209a: the build.yaml sources that are not the design's own rtl/ files (a supplied module kept in ``data/``, such as the JTAG
+    register bus the request provides): they are not mutated, but a mutant of rtl/ must be compiled with them or the top that instantiates
+    them does not resolve and every mutant looks invalid. Paths in build.yaml are relative to the repository root."""
+    import glob as _glob
+    try:
+        pats = (yaml.safe_load((design / "build.yaml").read_text()) or {}).get("sources") or []
+    except (OSError, yaml.YAMLError):
+        return []
+    own = (design / "rtl").resolve()
+    out: list[Path] = []
+    for pat in pats if isinstance(pats, list) else [pats]:
+        for f in sorted(_glob.glob(str(ROOT / pat))):
+            p = Path(f).resolve()
+            if p.suffix in (".sv", ".v") and own not in p.parents and not srcorder.is_shell_source(p) and p not in out:
+                out.append(p)
+    return out
+
+
 def _generic_locked(design: Path, a, rtl: Path, out_json: Path, t_start: float, runner=None) -> int:
     mdir_root = design / "build" / "mutants"
     shell = [] if srcorder.no_shell(design) else sorted((ROOT / "shell" / "rtl").glob("*.sv"))     # 07a2-prep
@@ -373,7 +392,7 @@ def _generic_locked(design: Path, a, rtl: Path, out_json: Path, t_start: float, 
             rows.append(row | {"status": "invalid", "note": "the text to change was not found exactly once"})
             continue
         (d / m["file"]).write_text(new)
-        files = srcorder.order_sv(shell + sorted(p for p in d.iterdir() if p.suffix == ".sv" or vhdl.is_vhdl(p)))
+        files = srcorder.order_sv(shell + sorted(p for p in d.iterdir() if p.suffix == ".sv" or vhdl.is_vhdl(p)) + vendored_sources(design))
         if compile_ok(files, runner) is False or (sim == "verilator" and compile_ok_verilator(files, top, runner) is False):
             rows.append(row | {"status": "invalid", "note": "the mutated RTL does not compile"})
             shutil.rmtree(d, ignore_errors=True)

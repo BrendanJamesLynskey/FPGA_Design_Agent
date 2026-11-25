@@ -60,7 +60,7 @@ PURPOSE_ROLE = {v: k for k, v in ROLE_PURPOSE.items()}
 KINDS = ("claude_code", "anthropic_api", "openrouter", "openai_compatible", "replay")
 SUPPORTS: dict[str, dict[str, frozenset[str]]] = {          # kind -> what it can do
     "claude_code": {"options": frozenset({"effort", "timeout_s"}), "needs": frozenset({"agent", "text", "chat"})},
-    "anthropic_api": {"options": frozenset({"temperature", "max_tokens", "stop", "thinking_budget", "timeout_s", "retries"}),
+    "anthropic_api": {"options": frozenset({"temperature", "max_tokens", "stop", "thinking_budget", "timeout_s", "retries", "effort"}),
                       "needs": frozenset({"agent", "text", "chat", "tools"})},
     "openrouter": {"options": frozenset({"temperature", "seed", "max_tokens", "stop", "effort", "timeout_s", "retries"}),
                    "needs": frozenset({"agent", "text", "chat", "tools"})},
@@ -82,6 +82,22 @@ BUILTIN_ENDPOINTS: dict[str, dict[str, Any]] = {
     "replay": {"kind": "replay"},
 }
 DEFAULT_MODEL = "openai/gpt-6-luna"
+#: Anthropic models that still accept a ``temperature`` (claude-api skill, cached 2026-11-03): Haiku 4.5, Sonnet 4.6, Opus 4.6 and older.
+#: Every other Anthropic model (Sonnet 5.5, Haiku 5.5, Opus 5/5.5, Sonnet 5, Opus 4.7/4.8, Fable/Mythos) rejects a non-default value with
+#: HTTP 400, and API version 2026-10-21 rejects it on every model.
+ANTHROPIC_TEMPERATURE_OK = ("claude-haiku-4-5", "claude-sonnet-4-6", "claude-sonnet-4-5", "claude-opus-4-6", "claude-opus-4-5", "claude-3")
+#: brief 209b: per-model rules, matched by the longest model-name prefix. ``price`` is USD per million tokens (``input``, ``output``,
+#: ``cache_write`` = 5-minute cache write, ``cache_read``); a missing cache price is derived from ``input`` (write 1.25x, read 0.10x).
+#: ``temperature``: true when the API accepts a temperature for the model. A model with no price keeps the per-call cost ceiling.
+#: A ``models:`` section of any layer overrides these key by key.
+BUILTIN_MODELS: dict[str, dict[str, Any]] = {
+    "claude-sonnet-5-5": {"price": {"input": 2.00, "output": 10.00, "cache_write": 2.50, "cache_read": 0.10}, "temperature": False,
+                          "max_tokens": 16000, "effort": "medium", "timeout_s": 300},
+    "claude-haiku-5-5": {"price": {"input": 0.10, "output": 0.50}, "temperature": False},
+    **{m: {"temperature": True} for m in ANTHROPIC_TEMPERATURE_OK},
+}
+PRICE_KEYS = ("input", "output", "cache_write", "cache_read")
+CACHE_WRITE_RATIO, CACHE_READ_RATIO = 1.25, 0.10     # applied to ``input`` when a price table gives no cache price
 _OR = {"endpoint": "openrouter", "model": DEFAULT_MODEL}
 BUILTIN_PURPOSES: dict[str, dict[str, Any]] = {
     **{p: dict(_OR) for p in ("interpret", "oracle", "model", "tests", "rtl", "closure", "latency")},
@@ -167,7 +183,7 @@ def load_file(path: Path, name: str) -> Layer:
 def validate_layer(data: Any, layer: str, where: str) -> dict[str, Any]:
     if not isinstance(data, dict):
         raise ConfigError(f"{where}: the file must be a mapping")
-    extra = set(data) - {"version", "endpoints", "purposes", "default", "work_hardware_hosts", "allow_fable"}
+    extra = set(data) - {"version", "endpoints", "purposes", "default", "work_hardware_hosts", "allow_fable", "models", "budget_scale"}
     if "allow_fable" in data:
         raise ConfigError(f"{where}: allow_fable is not a file setting; Fable needs the owner's --allow-fable command-line flag")
     if extra:
@@ -196,8 +212,36 @@ def validate_layer(data: Any, layer: str, where: str) -> dict[str, Any]:
             raise ConfigError(f"{where}: endpoint {name!r}: key_env must be an environment variable NAME (upper case), not a key")
     for key, pe in {**(data.get("purposes") or {}), **({"default": data["default"]} if data.get("default") else {})}.items():
         _check_purpose_entry(key, pe, where)
+    _check_models(data, where)
     scan_for_keys(data, where)
     return data
+
+
+def _check_models(data: dict[str, Any], where: str) -> None:
+    """brief 209b: the ``models:`` rules (price, temperature) and ``budget_scale``."""
+    bs = data.get("budget_scale")
+    if bs is not None and (isinstance(bs, bool) or not isinstance(bs, (int, float)) or not 0 < bs <= 100):
+        raise ConfigError(f"{where}: budget_scale must be a number above 0 and at most 100, not {bs!r}")
+    ms = data.get("models") or {}
+    if not isinstance(ms, dict):
+        raise ConfigError(f"{where}: models must be a mapping of model name to rules")
+    for name, rule in ms.items():
+        if not isinstance(rule, dict) or set(rule) - {"price", "temperature", "max_tokens", "effort", "timeout_s"}:
+            raise ConfigError(f"{where}: models.{name}: allowed keys are price, temperature, max_tokens, effort and timeout_s")
+        if "max_tokens" in rule and (isinstance(rule["max_tokens"], bool) or not isinstance(rule["max_tokens"], int) or rule["max_tokens"] <= 0):
+            raise ConfigError(f"{where}: models.{name}.max_tokens must be a positive integer")
+        if "effort" in rule and rule["effort"] not in ("low", "medium", "high", "xhigh", "max"):
+            raise ConfigError(f"{where}: models.{name}.effort must be one of low, medium, high, xhigh, max")
+        if "timeout_s" in rule and (isinstance(rule["timeout_s"], bool) or not isinstance(rule["timeout_s"], (int, float)) or rule["timeout_s"] <= 0):
+            raise ConfigError(f"{where}: models.{name}.timeout_s must be a positive number of seconds")
+        pr = rule.get("price")
+        if pr is not None:
+            if not isinstance(pr, dict) or set(pr) - set(PRICE_KEYS) or not {"input", "output"} <= set(pr):
+                raise ConfigError(f"{where}: models.{name}.price needs input and output (USD per million tokens); optional cache_write, cache_read")
+            if any(isinstance(v, bool) or not isinstance(v, (int, float)) or v < 0 for v in pr.values()):
+                raise ConfigError(f"{where}: models.{name}.price values must be numbers of USD per million tokens, zero or more")
+        if "temperature" in rule and not isinstance(rule["temperature"], bool):
+            raise ConfigError(f"{where}: models.{name}.temperature must be true or false")
 
 
 def _check_purpose_entry(key: str, pe: Any, where: str) -> None:
@@ -266,6 +310,18 @@ class Table:
         self.endpoints: dict[str, dict[str, Any]] = {}
         self.endpoint_src: dict[str, str] = {}
         self.work_hosts: set[str] = set()
+        self.models: dict[str, dict[str, Any]] = copy.deepcopy(BUILTIN_MODELS)       # brief 209b
+        self.budget_scale: float = 1.0
+        for L in self.layers:
+            for mn, rule in (L.data.get("models") or {}).items():
+                cur = self.models.setdefault(mn, {})
+                if "price" in rule:
+                    cur["price"] = {**cur.get("price", {}), **rule["price"]}
+                for k in ("temperature", "max_tokens", "effort", "timeout_s"):
+                    if k in rule:
+                        cur[k] = rule[k]
+            if L.data.get("budget_scale") is not None:
+                self.budget_scale = float(L.data["budget_scale"])
         allowed_keys = {v["key_env"] for v in BUILTIN_ENDPOINTS.values() if v.get("key_env")}
         for L in self.layers:
             if L.name == "user":
@@ -339,6 +395,13 @@ class Table:
                 src = {**src, **ssrc}
         return raw, src
 
+    def model_rule(self, model: str | None) -> dict[str, Any]:
+        """The rules of ``model`` (longest matching name prefix): ``price`` (a dict or None) and ``temperature`` (bool, default False)."""
+        best = max((k for k in self.models if model and model.startswith(k)), key=len, default=None)
+        r = self.models.get(best, {}) if best else {}
+        return {"price": dict(r["price"]) if r.get("price") else None, "temperature": bool(r.get("temperature", False)), "matched": best,
+                **{k: r[k] for k in ("max_tokens", "effort", "timeout_s") if k in r}}
+
     def entry(self, purpose: str, stage: str | None = None) -> Entry:
         if purpose not in PURPOSES:
             raise ConfigError(f"unknown purpose {purpose!r}")
@@ -365,6 +428,10 @@ class Table:
                     raise ConfigError(f"purpose {purpose!r}: option {o!r} (from the {layer} layer) is not supported by endpoint kind {kind!r}; "
                                       f"it supports {sorted(SUPPORTS[kind]['options']) or 'none'}")
                 opts[o] = v
+        if kind == "anthropic_api":                    # brief 209b: the model's own max_tokens, effort and timeout replace the kind's soft defaults
+            soft.update({k: v for k, v in self.model_rule(raw.get("model")).items() if k in ("max_tokens", "effort", "timeout_s")})
+        if kind == "anthropic_api" and not self.model_rule(raw.get("model"))["temperature"]:
+            soft.pop("temperature", None)                  # brief 209b: the API rejects a temperature for this model; the soft default is not sent
         for o, v in soft.items():
             opts.setdefault(o, v)
         opts = {o: v for o, v in opts.items() if v is not None}     # null = unset (the CLI default)
@@ -436,6 +503,8 @@ class Table:
     def record(self) -> dict[str, Any]:
         rows = {(f"{e.purpose}@{e.stage}" if e.stage else e.purpose): e.record() for e in self.entries()}
         body = {"purposes": rows, "layers": [{"layer": L.name, "source": L.source, "sha256": L.sha256} for L in self.layers if L.name != "builtin"]}
+        if self.budget_scale != 1.0:
+            body["budget_scale"] = self.budget_scale
         out = {**body, "hash": hashlib.sha256(json.dumps(rows, sort_keys=True).encode()).hexdigest()[:16]}
         _assert_no_secret(out)
         return out

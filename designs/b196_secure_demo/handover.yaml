@@ -1,0 +1,256 @@
+# Brief 68 handover: the facts behind README.md and AGENT.md (docs/documentation_standard.md).
+# Measurement values and every sha256 are filled from the records by `python -m flow.handover fill`;
+# do not type them. Render with `python -m flow.handover write <this directory>`.
+schema: fda-handover/1
+id: b196_secure_demo
+title: Demonstration of the production_secure switch on the KR260 part (a stream core, a system-monitor safe shutdown, no
+  debug core)
+kind: demonstration
+produced_by: session
+summary: A 25 MHz design for the Kria KR260 part that runs the brief-194 stream core and drives two LEDs, with a SYSMONE4
+  whose alarm thresholds come from the board's operating limits and feed a latched safe shutdown. It is built with the production_secure
+  switch on, and the same design with one ILA added is built to show the check failing. Built only; never programmed and
+  never on a board.
+scope_not:
+- a held-out or benchmark task; it was written to demonstrate and measure the production_secure check
+- a statement that the part is secure against an attacker; nothing was measured against one and no certification or side-channel
+  claim is made
+- a board design; it was never programmed and no hardware measurement exists
+- bitstream encryption or authentication, which on a Zynq MPSoC are boot-image steps that belong to the owner
+target:
+  part: xck26-sfvc784-2LV-c
+  board: kr260
+  top: b196_top
+  tool: Vivado 2026.1
+clocks:
+- name: clk_25
+  mhz: 25
+  source: designs/b196_secure_demo/design.xdc
+  note: the board's 25 MHz clock input; the frequency is an open-source reference design's figure, unconfirmed on the board
+resets:
+- name: por
+  active: low
+  note: a 32-clock power-on counter from the configuration's register values; there is no reset pin; used synchronously
+    everywhere
+interfaces:
+- name: led
+  type: two user LEDs, LVCMOS18
+  doc: designs/b196_secure_demo/rtl/b196_top.sv
+  note: led 0 follows the parity of the core's running checksum, led 1 lights on any core fault flag; both are driven low
+    in the safe state
+parameters:
+- name: ECC
+  value: 1
+  legal: 0 to 2 in the brief-194 core
+  note: fabric SECDED code on the core's FIFO, fixed in b196_top
+- name: SAFE
+  value: 1
+  legal: 0 or 1
+  note: fsm_safe_state on the core's state register, fixed in b196_top
+files:
+- path: designs/b196_secure_demo/rtl/b196_top.sv
+  what: the top, the stream source, the core and the LEDs
+  sha256: a5bba950b498a897963f28b6912264e01b7f9744b59e037d3fa3bafa94d1fb4e
+- path: designs/b196_secure_demo/rtl/b196_sysmon_guard.sv
+  what: SYSMONE4 with its INIT attributes and the latched shutdown behind it
+  sha256: 66c9b9c67910cdd942f803efb1115a61c4b1cdd1af1ebfaf6c43ab4026138006
+- path: designs/b196_secure_demo/rtl/b196_shutdown.sv
+  what: the latch that holds the design in reset after any alarm
+  sha256: 255676dc364752812896785fbdd1a0c3dc04bee2daea89e9211bd865dfa871ec
+- path: designs/b196_secure_demo/rtl/b196_sysmon_pkg.sv
+  what: the SYSMONE4 INIT values, generated from the board file by flow.security
+  sha256: 2188c6edcf0e8045add91d5b35dfde7ddba8d02f88411160279bab62fec22fe8
+- path: designs/b196_secure_demo/design.xdc
+  what: pins, clock and LED output delays
+  sha256: 9286232be0aecdd895e1231fbb29b38caae799745839090f0fc658635c4790a5
+- path: designs/b196_secure_demo/build.yaml
+  what: the production build (the security request comes from the run's pin)
+  sha256: 32fbdd54d46ab6ad55cebe655a28c96d4adc2fc9fc22d09b375a42a9132fad10
+- path: designs/b196_secure_demo/dbg/build.yaml
+  what: the debug build, the same design plus one ILA
+  sha256: da7bab7cf049c8e54d7fae2fe45d674f2dafc859acc2853444761bb45219c1ae
+- path: designs/b196_secure_demo/tb/tb_shutdown.sv
+  what: bench of the safe shutdown in the top
+  sha256: aacde628c522c6cbc2b66069e40089eed154452d1077d3bcfb6129be8d10fe56
+- path: designs/b196_secure_demo/tests/run_sysmon_sim.py
+  what: the SYSMONE4 simulation model driven with readings inside and outside the limits
+  sha256: 0c549936ec5ea70aa21a744c0c4b5809283eb6e668a2523f03b48001c0263373
+commands:
+- what: the safe-shutdown bench and the generated-package check under Icarus
+  cmd: python3 -m pytest -q designs/b196_secure_demo/tests/test_b196_rtl.py
+  heavy: false
+  minutes: 1
+  needs: Icarus Verilog 12, Vivado 2026.1 xsim for the model test
+- what: sixteen readings through the SYSMONE4 simulation model
+  cmd: python3 designs/b196_secure_demo/tests/run_sysmon_sim.py --out results/b196/sysmon_sim.json
+  heavy: false
+  minutes: 5
+  needs: Vivado 2026.1 xsim
+- what: the production build and the debug build
+  cmd: 'FDA_SECURITY=''{"production_secure": true}'' flow/run_vivado.sh designs/b196_secure_demo base; FDA_SECURITY=''{"production_secure":
+    true}'' flow/run_vivado.sh designs/b196_secure_demo/dbg base'
+  heavy: true
+  minutes: 15
+  needs: Vivado 2026.1 and a heavy slot (take_heavy_slot.sh); the debug build needs about 8 GB
+evidence:
+- id: E1
+  activity: simulation
+  result: pass
+  what: one alarm clock latches the shutdown, holds the core in reset, drives the LEDs low and stays latched
+  record: designs/b196_secure_demo/tests/test_b196_rtl.py
+  sha256: 9dcfc8410a282793d2b6d6363de626547a5ed75023c4bab06de74ee7f91d16d1
+- id: E2
+  activity: simulation
+  result: pass
+  what: the Vivado simulation model of the system monitor, configured by the generated INIT values, raises the right alarm
+    for each of sixteen readings
+  record: results/b196/sysmon_sim.json
+  sha256: 2dd7ab3777c62921ad3d1d832fd409cc435de22aed468fb605ab4d6c8dd8758a
+- id: E3
+  activity: build
+  result: pass
+  what: the production_secure build of Vivado 2026.1 reads back the readback and JTAG settings, finds no debug core and
+    the system monitor wired to the latch
+  record: results/b196/demo_builds.json
+  sha256: 2d69e4fc63a13d573d385731c676a4e429cc41760592537b6ddb4fcbb41e513c
+- id: E4
+  activity: build
+  result: fail
+  what: the same design with one ILA fails the strip_debug gate, as it must
+  record: results/b196/demo_builds.json
+  sha256: 2d69e4fc63a13d573d385731c676a4e429cc41760592537b6ddb4fcbb41e513c
+measurements:
+- id: M1
+  what: LUTs of the production_secure build
+  category: resources
+  key: lut
+  unit: LUT
+  record: results/b196/demo_builds.json
+  field: builds.secure.utilization.lut
+  conditions: routed, Vivado 2026.1, xck26-sfvc784-2LV-c, 25 MHz clock, one run
+  value: 334
+  sha256: 2d69e4fc63a13d573d385731c676a4e429cc41760592537b6ddb4fcbb41e513c
+- id: M2
+  what: flip-flops of the production_secure build
+  category: resources
+  key: ff
+  unit: FF
+  record: results/b196/demo_builds.json
+  field: builds.secure.utilization.ff
+  conditions: routed, Vivado 2026.1, xck26-sfvc784-2LV-c, 25 MHz clock, one run
+  value: 287
+  sha256: 2d69e4fc63a13d573d385731c676a4e429cc41760592537b6ddb4fcbb41e513c
+- id: M3
+  what: worst setup slack of the production_secure build
+  category: timing
+  key: wns_ns
+  unit: ns
+  record: results/b196/demo_builds.json
+  field: builds.secure.wns_ns
+  conditions: routed, clk_25 at a 40 ns period
+  value: 33.254
+  sha256: 2d69e4fc63a13d573d385731c676a4e429cc41760592537b6ddb4fcbb41e513c
+- id: M4
+  what: LUTs of the debug build (the production design plus one ILA and its debug hub)
+  category: cost
+  unit: LUT
+  record: results/b196/demo_builds.json
+  field: builds.debug.utilization.lut
+  conditions: routed, Vivado 2026.1, one run, one thread
+  value: 1357
+  sha256: 2d69e4fc63a13d573d385731c676a4e429cc41760592537b6ddb4fcbb41e513c
+- id: M5
+  what: wall time of the production_secure build
+  category: cost
+  unit: s
+  record: results/b196/demo_builds.json
+  field: builds.secure.wall_s
+  conditions: one run, two threads, this PC; the plain build of the same design took the same to the tenth of a second,
+    so the switch costs no build time that this run could see
+  value: 263.4
+  sha256: 2d69e4fc63a13d573d385731c676a4e429cc41760592537b6ddb4fcbb41e513c
+security:
+  production_secure: true
+  enabled:
+  - item: readback security Level1, JTAG access to the system monitor disabled, BSCAN access after configuration disabled
+    proof: the three BITSTREAM properties are set before write_bitstream and read back from the design after it (gate security_readback_off),
+      and the write_bitstream verbose log prints them
+    record: results/b196/secure_security_design.txt
+  - item: no debug core, hub, bridge, BSCAN primitive, marked debug net, debug-class port or probe file
+    proof: the inventory of the implemented design lists none of them (gate security_strip_debug); the debug build of the
+      same design lists two cores, a BSCAN primitive and sixteen marked nets and fails it
+    record: results/b196/debug_security_design.txt
+  - item: system-monitor alarm thresholds from the board's operating limits, wired to a latched safe shutdown
+    proof: the SYSMONE4 attributes in the implemented design equal the values recomputed from boards/kr260/board.yaml, and
+      each alarm output reaches the shutdown register (gate security_sysmon_shutdown)
+    record: results/b196/secure_security_design.txt
+  not_enabled:
+  - item: bitstream encryption and authentication
+    reason: on a Zynq MPSoC they are boot-image steps; Vivado 2026.1 makes the encryption and authentication properties
+      read-only for this part, so the record lists them as handed to the owner
+  - item: the user over-temperature limit and the automatic device shutdown
+    reason: setting the limit also enables the automatic shutdown that de-configures the part, so the device keeps its default
+      limit and the shutdown is a latch in the fabric
+  - item: a JTAG disable by eFUSE and any key programming
+    reason: irreversible and the owner's; this design never programs anything
+  could_get_wrong:
+  - a passed gate shows that Vivado's output carries the setting, not that the part resists an attacker
+  - the alarm thresholds were checked in the vendor simulation model, not on silicon, and the model uses another temperature
+    transfer function than the data sheet
+  - the limits are the 0.72 volt rows of the data sheet, because the K26 grade is not named there
+  - with JTAG access to the system monitor disabled a reconfiguration over JTAG needs a power cycle first
+  - the latch holds until power or a new configuration clears it, by design
+  key_handling: the flow never makes, reads, stores or programs a key; there is no key in this design; key files are git-ignored
+    and never recorded; eFUSE and BBRAM are the owner's.
+gaps:
+- about: power
+  text: Not measured here; no power report was recorded for the production build.
+- about: throughput
+  text: Not applicable beyond the brief-194 core; the design moves 16 words every 65536 clocks.
+- about: latency
+  text: Not measured; the design has no latency requirement.
+- about: board
+  text: Never programmed and never on a board; every statement about behaviour on the part is from Vivado's reports or its
+    simulation model.
+- about: E4
+  text: Evidence E4 is a build that fails its gate on purpose; the failure is the expected result.
+- about: threshold
+  text: The temperature thresholds follow the data-sheet transfer function that this repository read back on the owner's
+    board; the vendor model uses another one, about one degree apart at 85 degrees.
+- about: bitstream
+  text: The bitstreams of the plain and the production build differ; the differing configuration words were not decoded
+    for this family.
+- about: spread
+  text: Resources and times are one run each; the spread between runs is unknown.
+next_steps:
+- Run the debug build and the production build on a fresh Vivado release when the pin changes.
+- Decode the configuration-register difference between the plain and the production bitstream.
+- Give the owner the boot-image steps for encryption and authentication when a board run is planned.
+open_questions:
+- Whether the K26 grade has its own limits table that replaces the 0.72 volt rows.
+history:
+- date: '2026-11-23'
+  brief: '196'
+  note: written with the production_secure measurements
+numbers_allow:
+- token: '25'
+  reason: the board clock frequency in megahertz
+- token: '32'
+  reason: length of the power-on reset in clocks
+- token: '16'
+  reason: words per burst and the bits of the debug probe
+- token: '65536'
+  reason: clocks between bursts
+- token: '0.72'
+  reason: the nominal core voltage of the data-sheet rows used
+- token: '85'
+  reason: the board's junction temperature rule in degrees
+- token: '2'
+  reason: the number of debug cores in the debug build
+state:
+  stage: built
+  gates:
+    security_profile_met: pass
+  vivado: '2026.1'
+  kb_pin: 5e2eab8
+  build_id: 32f26e59

@@ -78,7 +78,7 @@ Interfaces:
 | the pyuvm regression of brief 158 (44 runs with the transmit-underrun test) on Verilator with coverage, then the 17 seeded bugs on Verilator; same build and rules as the brief 146 command; needs Verilator 5.048 (source ~/.local/opt/verilator-5048/env.sh), cocotb 2.0.1, pyuvm 5.0.0, cocotb-coverage; heavy slot for the build; the mutant run is the same command with --mutants-only and no PYUVM_COV (about 7 minutes) | `SIM=verilator PYUVM_COV=1 PYTHONPATH=. python designs/b96_kr260_10g/verif/pyuvm/scripts/run_regress.py --out /tmp/v158 --record results/158_cov_closure` | yes | about 4 min |
 | the SymbiYosys covers and proofs of the two mac64_tx interframe-gap conditions (brief 158); needs the OSS CAD Suite release the repository's CI pins (found through FDA_OSS_CAD or ~/.local/opt/oss-cad-suite); a few seconds of solver time, no heavy slot | `bash designs/b96_kr260_10g/verif/formal/run_ifg_formal.sh /tmp/mac64_tx_ifg` | no | about 1 min |
 
-Tool: Vivado 2026.1. Build ID of the inputs at handover: `4d5f6d14` (`python flow/manifest.py show designs/b96_kr260_10g`: what a rebuild of today's sources and flow would carry; it changes when any build input or the flow changes, so it can differ from the build ID in an older evidence record). Knowledge-bank pin: `5e2eab8`.
+Tool: Vivado 2026.1. Build ID of the inputs at handover: `aff38299` (`python flow/manifest.py show designs/b96_kr260_10g`: what a rebuild of today's sources and flow would carry; it changes when any build input or the flow changes, so it can differ from the build ID in an older evidence record). Knowledge-bank pin: `6185830`.
 
 | File | What |
 |---|---|

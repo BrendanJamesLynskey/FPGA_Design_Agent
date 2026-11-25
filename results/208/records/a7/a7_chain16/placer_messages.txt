@@ -1,0 +1,16 @@
+     15 	Clock Rule: rule_cascaded_bufg
+      1 	Clock Rule: rule_gclkio_mmcm_1load
+      1 	Clock Rule: rule_mmcm_bufg
+      1 	Clock Rule: rule_mmcm_mmcm
+      1 	each other (vertically), if the  CLOCK_DEDICATED_ROUTE=BACKBONE constraint is NOT set
+      1 ERROR: [Place 30-120] Sub-optimal placement for a BUFG-BUFG cascade pair. If this sub optimal condition is acceptable for this design, you may use the CLOCK_DEDICATED_ROUTE constraint in the .xdc file to demote this message to a WARNING. However, the use of this override is highly discouraged. These examples can be used directly in the .xdc file to override this clock rule.
+      1 ERROR: [Place 30-99] Placer failed with error: 'IO Clock Placer failed'
+      1 	Rule Description: An IOB driving a single MMCM must both be in the same clock region if CLOCK_DEDICATED_ROUTE=BACKBONE
+      1 	Rule Description: An MMCM driving a BUFG must be placed on the same half side (top/bottom) of the device
+      1 	Rule Description: An MMCM driving an MMCM must be in the same CMT column, and they are adjacent to
+     15 	Rule Description: Cascaded bufg (bufg->bufg) must be adjacent and cyclic
+      1 	< set_property CLOCK_DEDICATED_ROUTE ANY_CMT_COLUMN [get_nets g_chain.s_2] >
+      1 	Workaround: < set_property CLOCK_DEDICATED_ROUTE ANY_CMT_COLUMN [get_nets g_chain.s_11] >
+      1 	Workaround: < set_property CLOCK_DEDICATED_ROUTE ANY_CMT_COLUMN [get_nets g_chain.s_12] >
+      1 	Workaround: < set_property CLOCK_DEDICATED_ROUTE ANY_CMT_COLUMN [get_nets g_chain.s_4] >
+      1 	Workaround: < set_property CLOCK_DEDICATED_ROUTE ANY_CMT_COLUMN [get_nets g_chain.s_5] >

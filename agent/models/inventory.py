@@ -64,6 +64,8 @@ SITES: list[dict[str, object]] = [
      "prompts": ["graph/doc_crossread/system", "graph/doc_crossread/user", "graph/doc_crossread/repair"], "before": "new in brief 114"},
     {"file": "formal/lean/tools/prove.py", "fn": "main", "purposes": ["proof"], "needs": "text", "prompts": ["public: formal/lean/tools/prove.py SYSTEM"],
      "before": "new in brief 125 (the general proof driver; brief 124's llm_prove.py overrode the rtl purpose)"},
+    {"file": "tools/hardcaml/probe/probe.py", "fn": "ask", "purposes": ["rtl"], "needs": "text", "prompts": ["public: tools/hardcaml/probe/probe.py SYSTEM"],
+     "before": "new in brief 171 (the Hardcaml fluency probe, run on claude_code through an override of the rtl purpose)"},
     {"file": "agent/models/resolver.py", "fn": "Resolver.probe (agent models check --probe)", "purposes": ["*"], "needs": "chat", "prompts": [],
      "before": "new in brief 108"},
 ]
