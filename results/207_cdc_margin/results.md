@@ -255,6 +255,153 @@ Checks on each variant: report_cdc rule IDs (severity); cdc_structure verdict; M
 | N | CDC-15 (Warning), CDC-3 (Info), CDC-6 (Warning) | FAIL U2:cfg_b_reg, U2:hs_data_b_reg, U5:rq1_a_reg, U5:wq1_b_reg | - | - |
 | U | CDC-15 (Warning), CDC-3 (Info), CDC-6 (Warning) | FAIL U2:cfg_b_reg, U2:hs_data_b_reg, U5:rq1_a_reg, U5:wq1_b_reg | - | - |
 
+## Vivado vv_k26_b1
+
+Latency = worst routed datapath delay to the first stage (ns); skew = routed bus skew from report_bus_skew (ns, the post-route assertion, so the same measure in every variant); 'slack' = the bus-skew constraint used during routing (D, DU, M only).
+
+| variant | lvl lat | wptr lat | hsdat lat | cfgd lat | ram lat | wptr skew | hsdat skew | cfgd skew | rptr skew | min routed skew slack | filler WNS a | filler WNS b | inter WNS a->b | TIMING-44/45 | U_pair | MTBF overall |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| D_Default | 0.388 | 0.901 | 0.589 | 0.590 | 1.009 | 0.706 | 0.435 | 0.432 | 0.552 | 5.694 | 7.458 | 4.254 | 5.901 | 0 | - | 5.22e+76 years |
+| N | 0.388 | 0.877 | 0.589 | 0.524 | 0.873 | 0.700 | 0.435 | 0.367 | 0.634 | - | 7.495 | 4.532 | - | 0 | 0.035 | 1.04e+80 years |
+
+Per-crossing worst-path detail (slack, requirement and clock uncertainty from report_timing):
+
+| variant | crossing | npaths | ignored | latency | spread | slack | requirement | clock uncertainty |
+|---|---|---|---|---|---|---|---|---|
+| D_Default | lvl | 1 | 0 | 0.388 | 0.000 | 6.058 | 6.400 |  |
+| D_Default | tgl | 1 | 0 | 0.389 | 0.000 | 6.057 | 6.400 |  |
+| D_Default | wptr | 8 | 0 | 0.901 | 0.441 | 9.145 | 10.000 |  |
+| D_Default | rptr | 8 | 0 | 0.694 | 0.322 | 5.752 | 6.400 |  |
+| D_Default | ram | 8 | 0 | 1.009 | 0.233 | 9.036 | 10.000 |  |
+| D_Default | hsreq | 1 | 0 | 0.545 | 0.000 | 5.901 | 6.400 |  |
+| D_Default | hsack | 1 | 0 | 0.417 | 0.000 | 9.628 | 10.000 |  |
+| D_Default | hsdat | 16 | 0 | 0.589 | 0.206 | 18.657 | 19.200 |  |
+| D_Default | cfgt | 1 | 0 | 0.506 | 0.000 | 5.940 | 6.400 |  |
+| D_Default | cfgd | 16 | 0 | 0.590 | 0.207 | 12.256 | 12.800 |  |
+| N | lvl | 1 | 0 | 0.388 | 0.000 |  |  | 0.035 |
+| N | tgl | 1 | 0 | 0.389 | 0.000 |  |  | 0.035 |
+| N | wptr | 8 | 0 | 0.877 | 0.473 |  |  | 0.035 |
+| N | rptr | 8 | 0 | 0.802 | 0.391 |  |  | 0.035 |
+| N | ram | 8 | 0 | 0.873 | 0.097 |  |  | 0.035 |
+| N | hsreq | 1 | 0 | 0.545 | 0.000 |  |  | 0.035 |
+| N | hsack | 1 | 0 | 0.417 | 0.000 |  |  | 0.035 |
+| N | hsdat | 16 | 0 | 0.589 | 0.206 |  |  | 0.035 |
+| N | cfgt | 1 | 0 | 0.506 | 0.000 |  |  | 0.035 |
+| N | cfgd | 16 | 0 | 0.524 | 0.141 |  |  | 0.035 |
+
+Checks on each variant: report_cdc rule IDs (severity); cdc_structure verdict; MTBF chains (UltraScale+).
+
+| variant | report_cdc rules | cdc_structure | MTBF chains | lowest chain MTBF |
+|---|---|---|---|---|
+| D_Default | CDC-15 (Warning), CDC-3 (Info), CDC-6 (Warning) | pass | 21 | 5.67e+76 years |
+| N | CDC-15 (Warning), CDC-3 (Info), CDC-6 (Warning) | FAIL U2:cfg_b_reg, U2:hs_data_b_reg, U5:rq1_a_reg, U5:wq1_b_reg | 21 | 1.89e+80 years |
+
+## Vivado vv_k26_b2
+
+Latency = worst routed datapath delay to the first stage (ns); skew = routed bus skew from report_bus_skew (ns, the post-route assertion, so the same measure in every variant); 'slack' = the bus-skew constraint used during routing (D, DU, M only).
+
+| variant | lvl lat | wptr lat | hsdat lat | cfgd lat | ram lat | wptr skew | hsdat skew | cfgd skew | rptr skew | min routed skew slack | filler WNS a | filler WNS b | inter WNS a->b | TIMING-44/45 | U_pair | MTBF overall |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| D_Default | 0.350 | 0.630 | 0.590 | 0.590 | 1.011 | 0.503 | 0.436 | 0.432 | 0.428 | 5.897 | 7.768 | 4.718 | 5.940 | 0 | - | 2.62e+80 years |
+| N | 0.350 | 0.742 | 0.590 | 0.515 | 0.923 | 0.615 | 0.436 | 0.373 | 0.415 | - | 7.725 | 4.679 | - | 0 | 0.035 | 6.74e+80 years |
+
+Per-crossing worst-path detail (slack, requirement and clock uncertainty from report_timing):
+
+| variant | crossing | npaths | ignored | latency | spread | slack | requirement | clock uncertainty |
+|---|---|---|---|---|---|---|---|---|
+| D_Default | lvl | 1 | 0 | 0.350 | 0.000 | 6.094 | 6.400 |  |
+| D_Default | tgl | 1 | 0 | 0.389 | 0.000 | 6.057 | 6.400 |  |
+| D_Default | wptr | 8 | 0 | 0.630 | 0.292 | 9.416 | 10.000 |  |
+| D_Default | rptr | 8 | 0 | 0.527 | 0.221 | 5.918 | 6.400 |  |
+| D_Default | ram | 8 | 0 | 1.011 | 0.223 | 9.035 | 10.000 |  |
+| D_Default | hsreq | 1 | 0 | 0.404 | 0.000 | 6.042 | 6.400 |  |
+| D_Default | hsack | 1 | 0 | 0.417 | 0.000 | 9.628 | 10.000 |  |
+| D_Default | hsdat | 16 | 0 | 0.590 | 0.206 | 18.656 | 19.200 |  |
+| D_Default | cfgt | 1 | 0 | 0.506 | 0.000 | 5.940 | 6.400 |  |
+| D_Default | cfgd | 16 | 0 | 0.590 | 0.207 | 12.256 | 12.800 |  |
+| N | lvl | 1 | 0 | 0.350 | 0.000 |  |  | 0.035 |
+| N | tgl | 1 | 0 | 0.389 | 0.000 |  |  | 0.035 |
+| N | wptr | 8 | 0 | 0.742 | 0.404 |  |  | 0.035 |
+| N | rptr | 8 | 0 | 0.514 | 0.208 |  |  | 0.035 |
+| N | ram | 8 | 0 | 0.923 | 0.143 |  |  | 0.035 |
+| N | hsreq | 1 | 0 | 0.404 | 0.000 |  |  | 0.035 |
+| N | hsack | 1 | 0 | 0.417 | 0.000 |  |  | 0.035 |
+| N | hsdat | 16 | 0 | 0.590 | 0.206 |  |  | 0.035 |
+| N | cfgt | 1 | 0 | 0.506 | 0.000 |  |  | 0.035 |
+| N | cfgd | 16 | 0 | 0.515 | 0.165 |  |  | 0.035 |
+
+Checks on each variant: report_cdc rule IDs (severity); cdc_structure verdict; MTBF chains (UltraScale+).
+
+| variant | report_cdc rules | cdc_structure | MTBF chains | lowest chain MTBF |
+|---|---|---|---|---|
+| D_Default | CDC-1 (Critical), CDC-15 (Warning), CDC-3 (Info), CDC-6 (Warning) | FAIL U2:lvl_s1_reg | 20 | 6.22e+80 years |
+| N | CDC-1 (Critical), CDC-15 (Warning), CDC-3 (Info), CDC-6 (Warning) | FAIL U2:cfg_b_reg, U2:hs_data_b_reg, U2:lvl_s1_reg, U5:rq1_a_reg, U5:wq1_b_reg | 20 | 1.13e+81 years |
+
+## Vivado vv_k26_b3
+
+Latency = worst routed datapath delay to the first stage (ns); skew = routed bus skew from report_bus_skew (ns, the post-route assertion, so the same measure in every variant); 'slack' = the bus-skew constraint used during routing (D, DU, M only).
+
+| variant | lvl lat | wptr lat | hsdat lat | cfgd lat | ram lat | wptr skew | hsdat skew | cfgd skew | rptr skew | min routed skew slack | filler WNS a | filler WNS b | inter WNS a->b | TIMING-44/45 | U_pair | MTBF overall |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| B3D_Default | 0.417 | 2.432 | 0.566 | 0.748 | 1.069 | 1.211 | 0.377 | 0.596 | 0.508 | 1.289 | 7.500 | -0.648 | 2.046 | 0 | - | 1.48e+17 years |
+| B3M_Default | 0.417 | 2.436 | 0.566 | 0.748 | 1.069 | 1.215 | 0.377 | 0.596 | 0.486 | 1.250 | 7.604 | -0.621 | 2.011 | 0 | 0.035 | 1.48e+17 years |
+| B3N | 0.417 | 2.465 | 0.677 | 0.558 | 1.041 | 1.086 | 0.523 | 0.384 | 0.578 | - | 6.810 | -0.643 | - | 0 | 0.035 | 1.65e+18 years |
+| B3U | 0.417 | 2.477 | 0.677 | 0.590 | 1.456 | 1.096 | 0.523 | 0.436 | 0.612 | - | 1.785 | -1.033 | - | 2 | - | 1.32 days |
+
+Per-crossing worst-path detail (slack, requirement and clock uncertainty from report_timing):
+
+| variant | crossing | npaths | ignored | latency | spread | slack | requirement | clock uncertainty |
+|---|---|---|---|---|---|---|---|---|
+| B3D_Default | lvl | 1 | 0 | 0.417 | 0.000 | 2.128 | 2.500 |  |
+| B3D_Default | tgl | 1 | 0 | 0.389 | 0.000 | 2.157 | 2.500 |  |
+| B3D_Default | wptr | 8 | 0 | 2.432 | 0.416 | 7.614 | 10.000 |  |
+| B3D_Default | rptr | 8 | 0 | 0.658 | 0.276 | 1.888 | 2.500 |  |
+| B3D_Default | ram | 8 | 0 | 1.069 | 0.316 | 8.975 | 10.000 |  |
+| B3D_Default | hsreq | 1 | 0 | 0.500 | 0.000 | 2.046 | 2.500 |  |
+| B3D_Default | hsack | 1 | 0 | 0.470 | 0.000 | 9.575 | 10.000 |  |
+| B3D_Default | hsdat | 16 | 0 | 0.566 | 0.137 | 6.978 | 7.500 |  |
+| B3D_Default | cfgt | 1 | 0 | 0.389 | 0.000 | 2.157 | 2.500 |  |
+| B3D_Default | cfgd | 16 | 0 | 0.748 | 0.365 | 4.296 | 5.000 |  |
+| B3M_Default | lvl | 1 | 0 | 0.417 | 0.000 | 2.093 | 2.465 |  |
+| B3M_Default | tgl | 1 | 0 | 0.389 | 0.000 | 2.122 | 2.465 |  |
+| B3M_Default | wptr | 8 | 0 | 2.436 | 0.420 | 7.575 | 9.965 |  |
+| B3M_Default | rptr | 8 | 0 | 0.638 | 0.256 | 1.873 | 2.465 |  |
+| B3M_Default | ram | 8 | 0 | 1.069 | 0.316 | 8.940 | 9.965 |  |
+| B3M_Default | hsreq | 1 | 0 | 0.500 | 0.000 | 2.011 | 2.465 |  |
+| B3M_Default | hsack | 1 | 0 | 0.470 | 0.000 | 9.540 | 9.965 |  |
+| B3M_Default | hsdat | 16 | 0 | 0.566 | 0.137 | 6.943 | 7.465 |  |
+| B3M_Default | cfgt | 1 | 0 | 0.389 | 0.000 | 2.122 | 2.465 |  |
+| B3M_Default | cfgd | 16 | 0 | 0.748 | 0.365 | 4.261 | 4.965 |  |
+| B3N | lvl | 1 | 0 | 0.417 | 0.000 |  |  | 0.035 |
+| B3N | tgl | 1 | 0 | 0.373 | 0.000 |  |  | 0.035 |
+| B3N | wptr | 8 | 0 | 2.465 | 0.197 |  |  | 0.035 |
+| B3N | rptr | 8 | 0 | 0.702 | 0.376 |  |  | 0.035 |
+| B3N | ram | 8 | 0 | 1.041 | 0.192 |  |  | 0.035 |
+| B3N | hsreq | 1 | 0 | 0.430 | 0.000 |  |  | 0.035 |
+| B3N | hsack | 1 | 0 | 0.417 | 0.000 |  |  | 0.035 |
+| B3N | hsdat | 16 | 0 | 0.677 | 0.294 |  |  | 0.035 |
+| B3N | cfgt | 1 | 0 | 0.506 | 0.000 |  |  | 0.035 |
+| B3N | cfgd | 16 | 0 | 0.558 | 0.145 |  |  | 0.035 |
+| B3U | lvl | 1 | 0 | 0.417 | 0.000 |  |  | 0.348 |
+| B3U | tgl | 1 | 0 | 0.381 | 0.000 |  |  | 0.348 |
+| B3U | wptr | 8 | 0 | 2.477 | 0.201 |  |  | 0.348 |
+| B3U | rptr | 8 | 0 | 0.738 | 0.400 |  |  | 1.285 |
+| B3U | ram | 8 | 0 | 1.456 | 0.576 |  |  | 0.348 |
+| B3U | hsreq | 1 | 0 | 0.392 | 0.000 |  |  | 0.348 |
+| B3U | hsack | 1 | 0 | 0.417 | 0.000 |  |  | 1.285 |
+| B3U | hsdat | 16 | 0 | 0.677 | 0.294 |  |  | 0.348 |
+| B3U | cfgt | 1 | 0 | 0.403 | 0.000 |  |  | 0.348 |
+| B3U | cfgd | 16 | 0 | 0.590 | 0.207 |  |  | 0.348 |
+
+Checks on each variant: report_cdc rule IDs (severity); cdc_structure verdict; MTBF chains (UltraScale+).
+
+| variant | report_cdc rules | cdc_structure | MTBF chains | lowest chain MTBF |
+|---|---|---|---|---|
+| B3D_Default | CDC-15 (Warning), CDC-3 (Info), CDC-6 (Warning) | pass | 21 | 1.77e+17 years |
+| B3M_Default | CDC-15 (Warning), CDC-3 (Info), CDC-6 (Warning) | pass | 21 | 1.77e+17 years |
+| B3N | CDC-15 (Warning), CDC-3 (Info), CDC-6 (Warning) | FAIL U2:cfg_b_reg, U2:hs_data_b_reg, U5:rq1_a_reg, U5:wq1_b_reg | 21 | 1.78e+18 years |
+| B3U | CDC-15 (Warning), CDC-3 (Info), CDC-6 (Warning) | FAIL U2:cfg_b_reg, U2:hs_data_b_reg, U5:rq1_a_reg, U5:wq1_b_reg | 21 | 0.00361 years |
+
 ## Vivado vv_k26_good
 
 Latency = worst routed datapath delay to the first stage (ns); skew = routed bus skew from report_bus_skew (ns, the post-route assertion, so the same measure in every variant); 'slack' = the bus-skew constraint used during routing (D, DU, M only).
@@ -561,6 +708,28 @@ Analysis variants on one fit (the fit used the variant in the directory name). S
 - exception: position 4, max_dpo 10.0: `4         [get_cells -quiet -of_objects [all_fanin -quiet -startpoints_only -flat [get_pin  *               [get_pins -quiet -of_objects {{u_gray/dest_graysync_`
 - exception: position 6, max_dpo 10.0: `6         [get_cells [list {u_hs/src_hsdata_ff_reg[0]} \                                    *               [get_pins [list {u_hs/dest_hsdata_ff_reg[0]/D} \    `
 - bus skew: requirement 6.4, actual 1.0, slack 5.4: `set_bus_skew -from [get_cells -quiet -of_objects [all_fanin -quiet -startpoints_only -flat [get_pins -quiet -of_objects {{u_gray/dest_graysync_ff_reg[0][0]} {u_`
+
+## XPM handshake / Gray: what flow/xpm_cdc.tcl applies (xpm_fixed_a7)
+
+- AMD_TEMPLATE|handshake|width=16|n_s2d=3|max_delay=19.200000000000003|bus_skew=19.200000000000003
+- AMD_TEMPLATE|gray|max_delay=10.0|bus_skew=6.4
+- ROUTED|hs|npaths=16|dmax=1.092|req=19.200|exc=MaxDelay Path 19.200ns -datapath_only
+- ROUTED|gray|npaths=8|dmax=1.065|req=10.000|exc=MaxDelay Path 10.000ns -datapath_only
+- exception: position 4, max_dpo 10.0: `4         [get_cells -quiet -of_objects [all_fanin -quiet -startpoints_only -flat [get_pin  *               [get_pins -quiet -of_objects {{u_gray/dest_graysync_`
+- exception: position 6, max_dpo 19.2: `6         [get_cells [list {u_hs/src_hsdata_ff_reg[0]} \                                    *               [get_pins [list {u_hs/dest_hsdata_ff_reg[0]/D} \    `
+- bus skew: requirement 6.4, actual 0.995, slack 5.405: `set_bus_skew -from [get_cells -quiet -of_objects [all_fanin -quiet -startpoints_only -flat [get_pins -quiet -of_objects {{u_gray/dest_graysync_ff_reg[0][0]} {u_`
+- bus skew: requirement 19.2, actual 0.826, slack 18.374: `set_bus_skew -from [get_cells [list {u_hs/src_hsdata_ff_reg[0]} \`
+
+## XPM handshake / Gray: what flow/xpm_cdc.tcl applies (xpm_fixed_k26)
+
+- AMD_TEMPLATE|handshake|width=16|n_s2d=3|max_delay=19.200000000000003|bus_skew=19.200000000000003
+- AMD_TEMPLATE|gray|max_delay=10.0|bus_skew=6.4
+- ROUTED|hs|npaths=16|dmax=0.637|req=19.200|exc=MaxDelay Path 19.200ns -datapath_only
+- ROUTED|gray|npaths=8|dmax=0.459|req=10.000|exc=MaxDelay Path 10.000ns -datapath_only
+- exception: position 4, max_dpo 10.0: `4         [get_cells -quiet -of_objects [all_fanin -quiet -startpoints_only -flat [get_pin  *               [get_pins -quiet -of_objects {{u_gray/dest_graysync_`
+- exception: position 6, max_dpo 19.2: `6         [get_cells [list {u_hs/src_hsdata_ff_reg[0]} \                                    *               [get_pins [list {u_hs/dest_hsdata_ff_reg[0]/D} \    `
+- bus skew: requirement 6.4, actual 0.334, slack 6.066: `set_bus_skew -from [get_cells -quiet -of_objects [all_fanin -quiet -startpoints_only -flat [get_pins -quiet -of_objects {{u_gray/dest_graysync_ff_reg[0][0]} {u_`
+- bus skew: requirement 19.2, actual 0.493, slack 18.707: `set_bus_skew -from [get_cells [list {u_hs/src_hsdata_ff_reg[0]} \`
 
 ## XPM handshake / Gray: what flow/xpm_cdc.tcl applies (xpm_k26)
 

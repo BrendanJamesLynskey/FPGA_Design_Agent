@@ -11,15 +11,15 @@ house rule comes last and is built from all three.
 
 ## 1. What each vendor's crossing check guarantees (vendor text)
 
-Tags: **B** = body text read; **S** = a search snippet only. Full table with all sources: [results/207_cdc_margin/README.md](../results/207_cdc_margin/README.md) section 1.
+Tags: **B** = body text read; **S** = a search snippet only. Page numbers refer to the local copies of the AMD guides; their versions and dates are recorded in [results/207_cdc_margin/README.md](../results/207_cdc_margin/README.md) section 1. Full table with all sources: [results/207_cdc_margin/README.md](../results/207_cdc_margin/README.md) section 1.
 
 | | AMD (Vivado 2026.1) | Altera (Quartus Prime Standard 25.1std) |
 |---|---|---|
-| Latency bound | `set_max_delay -datapath_only`: the data path alone, no clock skew, the hold check becomes a false path (UG903 v2025.2 pp. 129-131, B). A clock group overrides it. | `set_max_delay` includes clock skew; `set_net_delay -max` bounds the net only (Quartus help, B). `set_data_delay` (the datapath-only form) is Pro-only in practice: **25.1std accepts the command but its Timing Analyzer rejects it** (measured, section 2). |
-| Skew bound | `set_bus_skew`: the spread of capture times across the bits of one constraint, **clock uncertainty excluded** (UG906 v2025.2 p. 163, B), slow and fast corners, optimised only by `route_design` (UG903 p. 143, B). Not in `report_timing_summary`: run `report_bus_skew`. | `set_max_skew`: data and clock arrival, micro-parameters, **clock uncertainty included**, on-die variation (Quartus help `set_max_skew`, B). **Cut by `set_false_path` and `set_clock_groups`**, not by `set_max_delay`/`set_min_delay`. Reported by `report_max_skew`. |
+| Latency bound | `set_max_delay -datapath_only`: the data path alone, no clock skew, the hold check becomes a false path (UG903 pp. 129-131, B). A clock group overrides it. | `set_max_delay` includes clock skew; `set_net_delay -max` bounds the net only (Quartus help, B). `set_data_delay` (the datapath-only form) is Pro-only in practice: **25.1std accepts the command but its Timing Analyzer rejects it** (measured, section 2). |
+| Skew bound | `set_bus_skew`: the spread of capture times across the bits of one constraint, **clock uncertainty excluded** (UG906 p. 163, B), slow and fast corners, optimised only by `route_design` (UG903 p. 143, B). Not in `report_timing_summary`: run `report_bus_skew`. | `set_max_skew`: data and clock arrival, micro-parameters, **clock uncertainty included**, on-die variation (Quartus help `set_max_skew`, B). **Cut by `set_false_path` and `set_clock_groups`**, not by `set_max_delay`/`set_min_delay`. Reported by `report_max_skew`. |
 | Recommended values | Gray bus: max delay at the source period, bus skew at min(source, destination); handshake (up to 100 bits): both at destination period x the request's sync stages; single bit and reset synchronisers: a false path to stage 0, so **no latency bound** (the XPM constraint files shipped with 2026.1, B). Bus skew should be more than half the smaller period (UG903 p. 144, B). | Pro guide: keep crossings short with `set_net_delay` and put `set_max_skew` on buses (S). |
-| Margin | No percentage for crossings. User uncertainty is for overconstraining a failing clock before routing: setup only, removed before routing, never above 0.5 ns (UG949 v2025.2 p. 283, B; TIMING-44/45, UG906 App. A, B). | Setup and hold uncertainty of 10 to 15 % of the clock delay, in "Optimizing Clocking Schemes" (Design Recommendations 18.1 body via brief 204's study, B; that its scope is timed paths between clock domains, not asynchronous crossings, is S). |
-| MTBF | `report_synchronizer_mtbf`, UltraScale only; chains found only through `ASYNC_REG`; settling time = the positive slack after the stages; UNDEFINED on a violation, an unconstrained clock or a zero toggle rate (UG835 v2025.2 pp. 1528-1530, B). 7 series: take the default `DEST_SYNC_FF` (UG949 p. 144, B). | `report_metastability`: typical and worst-case design MTBF; per-chain MTBF needs "Forced If Asynchronous" identification; default toggle rate 12.5 % of the source clock (Quartus help, B). Values are capped at "Greater than 1 Billion" years. |
+| Margin | No percentage for crossings. User uncertainty is for overconstraining a failing clock before routing: setup only, removed before routing, never above 0.5 ns (UG949 p. 283, B; TIMING-44/45, UG906 App. A, B). | Setup and hold uncertainty of 10 to 15 % of the clock delay, in "Optimizing Clocking Schemes" (Design Recommendations 18.1 body via brief 204's study, B; that its scope is timed paths between clock domains, not asynchronous crossings, is S). |
+| MTBF | `report_synchronizer_mtbf`, UltraScale only; chains found only through `ASYNC_REG`; settling time = the positive slack after the stages; UNDEFINED on a violation, an unconstrained clock or a zero toggle rate (UG835 pp. 1528-1530, B). 7 series: take the default `DEST_SYNC_FF` (UG949 p. 144, B). | `report_metastability`: typical and worst-case design MTBF; per-chain MTBF needs "Forced If Asynchronous" identification; default toggle rate 12.5 % of the source clock (Quartus help, B). Values are capped at "Greater than 1 Billion" years. |
 
 ## 2. What we measured
 
@@ -45,7 +45,12 @@ and MAX 10 10M50DAF484C7G, slow 85 C corner unless named.
 | on a datapath-only (Vivado) / max-delay (Quartus) crossing bound, same crossing, D against DU | none: level crossing slack 5.340 and 5.340 ns, no Clock Uncertainty line in the path | none: 6.028 and 6.028 | slack falls by the added 0.8 ns (Gray bus 7.760 to 6.960): Quartus `set_max_delay` includes uncertainty | the same, 8.651 to 7.851 |
 | on the crossings themselves under clock groups (N against U) | untimed either way; under U the unbounded Gray bus routed to 3.642 ns latency and 3.227 ns skew (N: 0.915 and 0.819) | untimed; the FIFO memory read routed to 2.995 ns (N: 1.030) | untimed; `report_max_skew` analyses 0 paths with a clock group over the pair | 0 paths |
 | on the rest of the design (filler) | setup WNS 4.600 to 0.746 (clk_a) and 1.530 to 0.208 (clk_b); **hold fails**: WHS -0.692 and -0.242; TIMING-44/45 raised | WNS 7.539 to 0.346 and 4.605 to 0.329; **hold fails**: WHS -1.106 and -0.656; TIMING-44/45 | WNS falls by exactly the added amount (clk_b 1.804 to 1.004) | clk_b 0.760 to **-0.040: the design now fails** |
-| on MTBF (settling time) | 7-series has no report; settling slack after the Gray pointer's second stage 2.065 to 0.480 ns | overall MTBF 7.73e+79 to 1.22e+32 years (N to U); 3.77e+79 to 1.2e+34 (D to DU) | settling 7.490 to 5.890 ns; MTBF capped at 1 billion years both ways | settling 6.977 to 5.377 ns; worst-case MTBF **1e+06 to 69.1 years** |
+| on MTBF (settling time) | 7-series has no report; settling slack after the Gray pointer's second stage 2.065 to 0.480 ns | overall MTBF 3.77e+79 to 1.2e+34 years (D to DU, re-routed); on one routed design, analysis only, 2.46e+78 to 7.36e+66 | settling 7.490 to 5.890 ns; MTBF capped at 1 billion years both ways | settling 6.977 to 5.377 ns; worst-case MTBF **1e+06 to 69.1 years** |
+
+On one routed design reported before and after adding the uncertainty (`raw/analysis_*`), every bus skew and every
+datapath-only slack was identical on both AMD parts (Gray bus skew 0.981 and 0.981 ns on Artix-7, 0.485 and 0.485 on the K26).
+The filler lost exactly the added amount and failed hold. The larger setup losses in the separately routed U and DU runs come from
+the router working on the added hold requirement.
 
 So the Altera percentage, applied to AMD parts, fails hold on the filler of both AMD parts and adds nothing to any crossing
 check. Applied in Quartus, it tightens the crossing checks, but by an amount (0.8 ns setup, 1.6 ns of skew and of settling
@@ -70,12 +75,12 @@ time) that bears no relation to what the crossing's protocol tolerates. It also 
 | Fault | report_cdc | cdc_structure | bus-skew / max-skew | MTBF report | injected simulation |
 |---|---|---|---|---|---|
 | B1 binary bus (D constraints) | CDC-6 Warning only (same as Gray) | pass ("coding unchecked") | met | every chain listed and fine | caught only with a pointer-safety check: the write pointer was seen ahead 22 to 40 cycles per seed (5 of 5); the end-to-end data check missed it in 5 of 5 |
-| B2 one stage (D constraints) | **CDC-1 Critical** (gate `cdc_no_critical` fails) | passed before this brief: the datapath-only bound made the lone ASYNC_REG flop look like a handshake data path. **Fixed**: U2 now | n/a | Quartus: MTBF still over 1 billion years; "Shortest Synchronizer Chain: 1" is the signal | not caught (the counter still counts) |
+| B2 one stage (D constraints) | **CDC-1 Critical** (gate `cdc_no_critical` fails) | passed before this brief: the datapath-only bound made the lone ASYNC_REG flop look like a handshake data path. **Fixed**: U2 now | n/a | K26: the one-stage chain is silently left out (20 chains listed, 21 expected); Quartus: MTBF still over 1 billion years, "Shortest Synchronizer Chain: 1" is the signal | not caught (the counter still counts) |
 | B3 bus pulled apart, 400 MHz | - | - | Artix-7: skew 1.459 against 2.5, met, **no violation could be produced** (die too small); brief 105 M3's recorded violation is the gate's negative case | - | - |
 
 No timing check sees a bus's coding. The method leaves coding to the structural check and the injected simulation. That
 simulation needs a property that observes the fault: a data check alone did not catch a pointer seen ahead for one cycle.
-<!-- K26-BAD -->
+B1 and B2 gave the same verdicts on the xck26 as on the xc7a35t. B3 on the xck26 is reported in [results.md](../results/207_cdc_margin/results.md).
 
 **2.4 The flow's own XPM handshake rule.** A non-project build does not apply AMD's scoped XPM constraints, so `flow/xpm_cdc.tcl`
 applies its own. Measured on a 16-bit `xpm_cdc_handshake` (3 sync stages) and an 8-bit `xpm_cdc_gray`, 100 to 156.25 MHz, on both
@@ -85,7 +90,7 @@ AMD parts (`raw/xpm_a7`, `raw/xpm_k26`):
 - **Gray:** max delay 10 ns and bus skew 6.4 ns, matching AMD's template.
 
 The handshake rule now follows AMD: the destination period x the src-to-dest stages, for both, up to 100 bits; the smaller period
-and no bus skew above 100 bits. That is also this method's handshake bound. After the fix: <!-- XPM-AFTER -->
+and no bus skew above 100 bits. That is also this method's handshake bound. After the fix (`raw/xpm_fixed_a7`, `raw/xpm_fixed_k26`), the handshake carries max_dpo 19.2 ns and a 19.2 ns bus skew on both parts (routed skew 0.826 ns on Artix-7); the Gray rule is unchanged.
 
 ## 3. The method (house rule)
 

@@ -152,6 +152,16 @@
      "topic": "PS-PL clock crossings",
      "summary": "Both Zynq families clock PS-PL AXI ports from a PL-supplied clock and cross inside the PS, but ZU+ adds the LPD/FPD split, so a crossing into a powered-down domain behaves differently.",
      "confirmed": "doc"
+    },
+    {
+     "topic": "User clock uncertainty on crossings (crossing margin)",
+     "summary": "Both families: a user uncertainty leaves a datapath-only crossing bound unchanged, fails hold on other paths and lowers MTBF (reported on US+, settling slack on 7-series); per-crossing bounds are the margin.",
+     "confirmed": "tool"
+    },
+    {
+     "topic": "XPM handshake constraint values in a non-project build",
+     "summary": "AMD's 2026.1 xpm_cdc_handshake template sets max delay and bus skew at destination period x sync stages (up to 100 bits); a hand-written copy of the scoped constraints must match.",
+     "confirmed": "tool"
     }
    ],
    "docs": {
@@ -691,6 +701,11 @@
      "topic": "Registers in the I/O block (IOB packing)",
      "summary": "A marked first input or last output flop packs into the I/O logic on both families when only the pad is next to it; failure is a critical warning that drc_clean never sees. BELs, messages and DRC rows differ.",
      "confirmed": "tool"
+    },
+    {
+     "topic": "LVCMOS output drive, slew and output resistance",
+     "summary": "DRIVE is a current limit, not an impedance: 7-series HR LVCMOS33 is 96 ohm at 4 mA and 15 ohm at 16 mA into 50 ohm, 2:1 over corners; only DCI and OUTPUT_IMPEDANCE outputs target 40, 48 or 60 ohm.",
+     "confirmed": "doc"
     }
    ],
    "docs": {

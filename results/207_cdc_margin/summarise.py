@@ -230,6 +230,32 @@ def main() -> int:
             L.append("- bus skew: none")
         L.append("")
     (HERE / "results.md").write_text("\n".join(L) + "\n")
+    # headline numbers for site/data/expertise.yaml (get: paths), each copied from the records above
+    h: dict = {}
+    try:
+        V, Q = res["vivado"], res["quartus"]
+        for fam in ("a7", "k26"):
+            g = V.get(f"vv_{fam}_good", {})
+            if g:
+                h[fam] = {"upair_ns": g["N"]["upair"], "filler_whs_a_D": float(g["D_Default"]["fill"]["a"]["whs"]),
+                          "filler_whs_a_U": float(g["U"]["fill"]["a"]["whs"]),
+                          "lvl_slack_D": float(g["D_Default"]["cross"]["lvl"]["slack"]), "lvl_slack_DU": float(g["DU"]["cross"]["lvl"]["slack"])}
+                if g["D_Default"].get("mtbf"):
+                    h[fam]["mtbf_D_years"] = g["D_Default"]["mtbf"]["overall_years"]
+                    h[fam]["mtbf_DU_years"] = g["DU"]["mtbf"]["overall_years"]
+        for fam, cn in (("cv", "6_slow_1100mv_85c"), ("m10", "7_slow_1200mv_85c")):
+            f = Q.get(f"q_{fam}_good_D_s1", {})
+            if f:
+                h[fam] = {"maxskew_paths_D": f["D"]["corners"][cn]["max_skew"]["paths"], "maxskew_paths_DD": f["DD"]["corners"][cn]["max_skew"]["paths"],
+                          "settle_D_ns": float(f["D"]["corners"][cn]["meta"]["settle"]), "settle_DU_ns": float(f["DU"]["corners"][cn]["meta"]["settle"]),
+                          "filler_wns_b_D": float(f["D"]["corners"][cn]["fill"]["clk_b"]["wns"]), "filler_wns_b_DU": float(f["DU"]["corners"][cn]["fill"]["clk_b"]["wns"]),
+                          "worst_mtbf_D": f["D"]["corners"][cn]["meta"]["worst_mtbf"], "worst_mtbf_DU": f["DU"]["corners"][cn]["meta"]["worst_mtbf"]}
+        for job, x in res["xpm"].items():
+            ex = [e["value"] for e in x["exceptions"]]
+            h[job] = {"flow_max_dpo_ns": sorted(set(ex)), "bus_skew_constraints": len(x["bus_skew"])}
+    except (KeyError, TypeError, ValueError) as e:
+        h["error"] = f"{type(e).__name__}: {e}"
+    (HERE / "headline.json").write_text(json.dumps(h, indent=1, sort_keys=True) + "\n")
     print(f"results.md: {len(res['vivado'])} Vivado jobs, {len(res['quartus'])} Quartus fits, {len(res['xpm'])} XPM runs")
     return 0
 
