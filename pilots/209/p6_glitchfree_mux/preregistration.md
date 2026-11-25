@@ -49,4 +49,6 @@ Expected values: A is the C3 clock counted against itself (so it checks the mux 
 
 ## Addenda
 
-(none)
+### Addendum 2026-11-25 02:45 GMT: cost accounting
+
+The 12 USD per-run cap is enforced by the agent as 240 calls at its 0.05 USD per-call ceiling (`anthropic_api` calls report tokens, not dollars). Real dollars are computed from the token counts at Sonnet 5.5 list prices per million tokens: input 2, output 10, cache read 0.10, cache write (5 min) 2.50 USD (split recorded when the run's records have it; otherwise all tokens counted as input plus output by role, and said so). A run that stops at the cap is a pre-registered outcome "stopped at cost cap", not an intervention. Pilot stop rule: no run starts if the cumulative real total is above 130 USD; a run above 20 USD real stops the pilot for the planner. The agent SHA of every run is recorded with the run.
