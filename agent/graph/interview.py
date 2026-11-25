@@ -190,6 +190,98 @@ def ensure_register_question(request: str, spec: dict[str, Any]) -> tuple[dict[s
     return spec, True
 
 
+# ---- brief 190 (item 10): the new-protocol intake -------------------------------------------------------------------------------------------
+# A request for a block that speaks an exchange or messaging protocol (a market-data feed, an order-entry session, a framed binary protocol)
+# gets six standing questions the Clarifier may not have asked: how a session is set up, how messages are delimited, how each field is encoded,
+# the largest message, how sequence numbers behave and how a gap is recovered. Each carries a default and the reason for it, so an interview
+# that is off or an oracle that does not know still produces a documented choice. The list is ours, written for this agent; the idea of asking
+# for these six things first, and building the golden model and byte map before any RTL, is from Edwards 2026, ch 7. The question text is
+# in this public file, not in the pinned private prompts (the register-map question is a private prompt); it names no protocol by brand.
+REQUEST_PROTOCOL = re.compile(
+    r"(?i:\b(?:wire[- ]format|message[- ](?:format|feed|types?|set)|binary[- ](?:feed|protocol|messages?)|market[- ]data|feed[- ]handler|"
+    r"order[- ]entry|(?:stock|trading|exchange)[- ](?:feed|protocol|messages?|venue)|datagrams?|MoldUDP\w*|SoupBinTCP|sequence[- ]numbers?)\b)"
+    r"|\b(?:ITCH|OUCH|FIX|SBE)\b")           # the acronyms are matched in capitals only: the word "fix" is not a protocol
+# a bare "protocol" or "framing" is not enough: a request for an SPI or UART block would get questions that do not apply
+
+
+@dataclass(frozen=True)
+class ProtocolQuestion:
+    topic: str            # session | delimiting | encodings | largest | sequencing | gaps
+    seen: str             # regex: an existing question on this topic means it is not asked again
+    text: str
+    default: str
+    reason: str
+
+
+PROTOCOL_QUESTIONS: tuple[ProtocolQuestion, ...] = (
+    ProtocolQuestion(
+        "session", r"(?i)\b(?:sessions?|log(?:in|on|out)|heartbeats?|keep-?alive|reconnect)",
+        "How is a session set up, kept alive and ended: is there a login, an identity, heartbeats, a logout, and what happens on a reconnect?",
+        "One session for the whole run, already established before the first message; no login or logout message is modelled; heartbeats are "
+        "accepted and ignored; a reconnect is a reset of the block.",
+        "The smallest model that can be checked end to end. A session state machine is built only when the spec states one, because every state "
+        "added is a path the golden model and the testbench must also cover."),
+    ProtocolQuestion(
+        "delimiting", r"(?i)\b(?:delimit\w*|length[- ]prefix\w*|message length|terminator|packet boundar\w*|span\w* (?:two )?packets?)",
+        "How is one message separated from the next: a length prefix, a fixed size per message type, a terminator or a packet boundary? May "
+        "several messages share a packet, and may one message span two packets?",
+        "Each message starts with a length field that gives the bytes after it; several messages may share a packet; no message spans two packets.",
+        "Delimiting decides where every later field is found. Messages that straddle the datapath word, or share a packet, are where decoders go "
+        "wrong, so the choice is fixed in writing before the byte map is."),
+    ProtocolQuestion(
+        "encodings", r"(?i)\b(?:endian\w*|byte[- ]order|encod\w+|field widths?|fixed[- ]point|space[- ]padded|signedness)",
+        "For every field: its width, byte order, signedness and encoding (binary integer, fixed-point with a stated scale, text padded with spaces "
+        "on the left or right, or a flag bit)?",
+        "Binary fields are big-endian and unsigned; prices are integers with the decimal scale the spec states; text is left-justified and padded "
+        "with spaces; every field is listed in a byte map (name, offset, length, encoding) before any RTL is written.",
+        "Network byte order is the usual choice for these protocols, but it has to be confirmed field by field: a wrong order or scale shows up "
+        "only as plausible-looking wrong values. The byte map is the one table the golden model, the decoder and the test stimulus all read."),
+    ProtocolQuestion(
+        "largest", r"(?i)\b(?:largest|maximum|max\.?) (?:message|packet|frame|payload)|\bMTU\b",
+        "What is the largest message in bytes, and the largest packet or frame the block must accept?",
+        "The largest message in the spec's own message table; if the spec gives none, a packet of at most 1,500 bytes of payload and a message "
+        "of at most 255 bytes.",
+        "It sets the buffer depth, the datapath width and the number of clocks a message can take, so it is a design input and not a detail "
+        "found during test."),
+    ProtocolQuestion(
+        "sequencing", r"(?i)\bsequenc\w*|\bnumbered\b",
+        "How are messages numbered: per message or per packet, starting at what value, wrapping or not, and shared across sessions or not?",
+        "The packet header carries the sequence number of its first message; the next packet's number is that value plus the message count; "
+        "numbering starts at 1 and does not wrap during a run; one counter per session.",
+        "Gap and duplicate detection are arithmetic on these numbers, so the counting rule has to be exact. A per-packet and a per-message "
+        "convention differ by the message count and look alike on a short test."),
+    ProtocolQuestion(
+        "gaps", r"(?i)\b(?:gaps?|retransmi\w+|re-?request\w*|duplicates?|overlap\w*|recover\w*)",
+        "What must the block do on a gap, a duplicate or an overlap: drop, request a retransmission, or continue and flag it?",
+        "Drop duplicates and the repeated part of an overlap and count them; on a gap stop applying messages, raise a flag and count it until "
+        "software re-synchronises; no retransmission request is made in hardware.",
+        "A silently applied gap makes downstream state wrong with no sign of it. Stopping and flagging is safe and observable, and the counters "
+        "make each case testable."),
+)
+
+
+def request_is_protocol(request: str) -> bool:
+    """The request names an exchange or messaging protocol (market data, order entry, a framed binary protocol, sequence numbers)."""
+    return bool(REQUEST_PROTOCOL.search(request or ""))
+
+
+def ensure_protocol_questions(request: str, spec: dict[str, Any]) -> tuple[dict[str, Any], list[str]]:
+    """Brief 190: for a protocol request, add the six intake questions the spec does not already ask (open or resolved), each with its default
+    and reason, to ``open_questions``. Returns (spec, topics added). A request with no protocol wording, or a spec that has asked all six, is
+    returned unchanged. The Interview's question limit (12) still applies: later questions are defaulted by the limit and the record says so."""
+    if not request_is_protocol(request):
+        return spec, []
+    asked = " \n ".join(str(q.get("question", "")) for q in [*(spec.get("open_questions") or []), *(spec.get("resolved_questions") or [])]
+                        if isinstance(q, dict))
+    add = [q for q in PROTOCOL_QUESTIONS if not re.search(q.seen, asked)]
+    if not add:
+        return spec, []
+    spec = dict(spec)
+    spec["open_questions"] = [*(spec.get("open_questions") or []),
+                              *({"question": q.text, "default": q.default, "reason": q.reason} for q in add)]
+    return spec, [q.topic for q in add]
+
+
 def _offset_int(t: str) -> int | None:
     try:
         return int(str(t), 0)

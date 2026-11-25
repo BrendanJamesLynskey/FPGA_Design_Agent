@@ -875,8 +875,7 @@ def report_digest(s: Session, name: str, variant: str = "base", level: str = "su
 
 
 CHECK_NAMES = ("all", "lint", "standards", "resets", "cdc", "methodology", "drc", "exceptions", "io", "clocking",
-               "dsp_ram_mapping", "init_values", "control_sets", "fsm", "axi", "axi_profile", "gt_plan", "constants", "stale", "constraint_scope",
-               "xpm_sim", "cdc_margin", "clock_mux", "doc")
+               "dsp_ram_mapping", "init_values", "control_sets", "fsm", "axi", "axi_profile", "gt_plan", "constants", "stale", "constraint_scope", "xpm_sim", "cdc_margin", "clock_mux", "fastpath", "doc")
 
 
 @tool("check", "Run design checks from the check suite (flow/checks) and get a compact digest: per check pass, fail, "
