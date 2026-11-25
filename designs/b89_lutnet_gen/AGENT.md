@@ -40,7 +40,7 @@ RTL against the twins, lint (~2min): B89_RECORD=results/b89 python3 -m pytest -q
 
 ## records (path sha256-prefix; claims below cite R<n>)
 R1 designs/b89_lutnet_gen/tests/test_b89_rtl.py 3d9eb57504
-R2 results/b89/summary.json 48b73dd7e4
+R2 results/b89/summary.json b124c12000
 R3 results/b89/accuracy.json b2f23ad7c2
 
 ## evidence

@@ -47,3 +47,11 @@ valid TCP segment. Those need a NIC (the owner's later purchase), the real-offse
 
 `host/b127_board.py` (the driver), `host/b127_stages.py` (the stages, shared with the simulation's dry run), `host/itch_bench.py` and `host/itch_host.py` (plans and frames), `_handoff/fpga_agent/run_127_stage1.sh` (the owner's script), results go to
 `results/b127/hw/<timestamp>/rm_gp_itch/stage1.json`.
+
+## 5. Amendment 2026-11-22 (brief 172): run B and the `rp.frames` counter
+
+Run B (2026-11-22, stamp `1d8ac802`) passed five of six stage entries; `rate` failed with "frames played 4634 of 1900". Cause: `rp.frames` (the replay player's counter, register `S_RP_FRAMES`) is cleared only by reset, not by CLR_CNT, and the stage compared the absolute
+value, which still held the 2734 frames of the stages before it. The stages now read the counter after their configure step and judge the rise over their own replay (`rp_baseline`, `frames_played` in `host/b127_stages.py`). **The criteria in section 2 are unchanged**: "`rp.frames`
+= frames sent" always meant the stage's own frames. Datasheet note: **`rp.frames` counts frames since reset; CLR_CNT does not clear it; read it before and after a replay and subtract.** Run B's record stays as found
+([results/b127/hw/README.md](../../../../results/b127/hw/README.md)); the re-run is pre-registered in [results/b127/preregistration_rerun_172.md](../../../../results/b127/preregistration_rerun_172.md). The stages are now also tested in the board's order on one continuous simulation
+(`test_full_session_in_board_order`) and without a simulator (`tests/test_b127_stages_order.py`).

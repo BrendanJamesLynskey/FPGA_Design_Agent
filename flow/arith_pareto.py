@@ -28,6 +28,8 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT))
+from flow import fmax_cap  # noqa: E402
 RES = ROOT / "results" / "137_arith_pareto"
 
 # (id, family, params). Chosen to span the knobs, none equal to a point already in HW_Design_Space_Agent's
@@ -188,6 +190,18 @@ def _clean(text: str) -> str:
     return "\n".join(keep) + "\n"
 
 
+def restate_cap(res: Path) -> None:
+    """Brief 201: add fmax_capped_mhz / fmax_bound / fmax_clock_buffer_mhz to every stage of <res>/*/measured.json; fmax_mhz (raw) is not changed."""
+    for f in sorted(res.glob("*/measured.json")):
+        d = json.loads(f.read_text())
+        for r in d["rows"]:
+            for stage in ("synth", "route"):
+                if stage in r:
+                    r[stage].update(fmax_cap.restate(d["part"], r[stage]["fmax_mhz"]))
+        f.write_text(json.dumps(d, indent=1) + "\n")
+        print("restated", f.relative_to(ROOT))
+
+
 def collect(part: str, work: Path, out: Path, clock: float, vivado_version: str, threads: int) -> None:
     rows = []
     out.mkdir(parents=True, exist_ok=True)
@@ -203,6 +217,7 @@ def collect(part: str, work: Path, out: Path, clock: float, vivado_version: str,
         for stage, util, tim in (("synth", "utilization_synth.rpt", "timing_synth.rpt"), ("route", "utilization.rpt", "timing.rpt")):
             u, t = parse_util((wd / util).read_text()), parse_wns((wd / tim).read_text())
             r[stage] = dict(**u, **t, fmax_mhz=round(1000.0 / (clock - t["wns"]), 2))
+            r[stage].update(fmax_cap.restate(part, r[stage]["fmax_mhz"]))     # brief 201: raw fmax_mhz kept; capped figure and binding limit beside it
         r["power"] = parse_power((wd / "power.rpt").read_text())
         rows.append(r)
         d = out / "reports" / pid
@@ -362,6 +377,12 @@ def _model_paths(H) -> dict:
     return {k: (refit if v == "REFIT" else v) for k, v in MODELS.items()}
 
 
+def fm(st: dict) -> str:
+    """A table cell: the raw Fmax, and the clock-buffer cap beside it when the cap binds (brief 201)."""
+    raw, cp = st["fmax_mhz"], st.get("fmax_capped_mhz")
+    return f"{raw:.0f}" if cp is None or cp >= raw else f"{raw:.0f} (cap {cp:.0f})"
+
+
 def report(res: Path) -> int:
     """Comparison tables, the Pareto fronts and the figures from the committed records (needs hw_dse for the predictions only)."""
     import matplotlib
@@ -415,7 +436,7 @@ def report(res: Path) -> int:
             o = obj[r["id"]]
             _, fam, params = next(p for p in POINTS if p[0] == r["id"])
             tag = ("L" if r["id"] in fr["latency"] else "") + ("T" if r["id"] in fr["throughput"] else "")
-            md.append(f"| {r['id']} | {fam} | {params['data_width']}/{params['n_iter']} | {r['route']['luts']} | {r['route']['ffs']} | {r['synth']['fmax_mhz']:.0f} | {r['route']['fmax_mhz']:.0f} | "
+            md.append(f"| {r['id']} | {fam} | {params['data_width']}/{params['n_iter']} | {r['route']['luts']} | {r['route']['ffs']} | {fm(r['synth'])} | {fm(r['route'])} | "
                       f"{r['route']['wns']:.2f} | {o['cycles']} | {o['latency_ns']:.1f} | {o['throughput']:.0f} | {o['err_lsb']:.2f} | {r['power']['dynamic_w']*1000:.0f} | {tag or '-'} |")
         md.append("")
         for mname, c in comp.items():
@@ -499,6 +520,7 @@ def main() -> int:
     sub = ap.add_subparsers(dest="cmd", required=True)
     s = sub.add_parser("verify"); s.add_argument("--out", type=Path, default=RES / "verify.json")
     s = sub.add_parser("report"); s.add_argument("--res", type=Path, default=RES)
+    s = sub.add_parser("restate-cap"); s.add_argument("--res", type=Path, default=RES)
     s = sub.add_parser("equiv"); s.add_argument("--work", type=Path, required=True); s.add_argument("--out", type=Path, required=True)
     s.add_argument("--yosys", default="yosys"); s.add_argument("--timeout", type=int, default=900); s.add_argument("--ids", nargs="*")
     s = sub.add_parser("export")
@@ -514,6 +536,9 @@ def main() -> int:
         return equiv(a.work, a.out, a.yosys, a.timeout, a.ids)
     if a.cmd == "report":
         return report(a.res)
+    if a.cmd == "restate-cap":
+        restate_cap(a.res)
+        return 0
     clock = a.clock or PARTS[a.part]["clock"]
     if a.cmd == "export":
         export(a.part, clock, a.work, a.threads, a.ids)

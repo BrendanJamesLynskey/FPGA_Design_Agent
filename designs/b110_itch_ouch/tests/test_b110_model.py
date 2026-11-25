@@ -223,3 +223,24 @@ def test_latency_record_matches_datasheet() -> None:
     for row in ("| message delivered by mold_rx (`m_v`) | 1 |", "| decoded event (`e_v`) | 2 |", "| first word of the order frame, speculative start | 3 |",
                 "| first word of the order frame, started at the verdict | 8 |", "| the second change of a Replace | 8 |"):
         assert row in doc, row
+
+
+def test_notional_table_never_weaker_than_multiply() -> None:
+    """Brief 188 #14: with a table filled as the datasheet says (limit divided by the highest price of the bucket, rounded down), no order the table admits is refused by the multiply;
+    the table refuses some orders the multiply admits (the price below the top of its bucket). Random prices, quantities, limits and shifts; the numbers are written to the test log."""
+    import random
+    r = random.Random(188)
+    admitted_by_table_only = admitted_by_mul_only = total = 0
+    for _ in range(20000):
+        shift = r.randrange(0, 20)
+        limit = r.randrange(1, 1 << 40)
+        tbl = [limit // (((i + 1) << shift) if i < 15 else 0xFFFFFFFF) for i in range(16)]
+        price = r.randrange(1, 1 << r.randrange(8, 33))
+        qty = r.randrange(1, 1_000_000)
+        mul_ok = price * qty <= limit
+        tbl_ok = qty <= tbl[min(price >> shift, 15)]
+        total += 1
+        assert not (tbl_ok and not mul_ok), (shift, limit, price, qty)
+        admitted_by_mul_only += mul_ok and not tbl_ok
+        admitted_by_table_only += tbl_ok and not mul_ok
+    assert admitted_by_table_only == 0 and admitted_by_mul_only > 0

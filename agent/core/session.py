@@ -60,6 +60,9 @@ class Session:
     skill_routing: str = "off"
     #: brief 42: harness arms on for this session, e.g. ``("H1", "H2")``; empty (default) is the unchanged baseline.
     harness_arms: tuple[str, ...] = ()
+    #: brief 196: the run directory whose ``policy.json`` pins the run's settings (outside the design directory, so no role reaches it); the
+    #: ``build`` tool passes the pinned security request to the flow in ``FDA_SECURITY``. None: no pin (a hand-run session).
+    policy_run_dir: Path | None = None
 
     def __post_init__(self) -> None:
         self.design = Path(self.design).resolve()

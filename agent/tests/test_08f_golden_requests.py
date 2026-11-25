@@ -61,7 +61,19 @@ Goldens, oldest first:
 - ``b150_request_golden.json`` (brief 150, 2026-11-21): the registry gained ``ip_lookup`` (schema 1.20.0; the read-only IP-library query) and it is offered at
   stage 1 (the board-and-device-planning stage), so ``tool_registry``, ``tools_rtl_1`` and ``tools_clarify_1`` (the stage-1 tool lists) differ from the brief 114
   golden's and nothing else does. The stage-1 conventions bullet that tells the Designer about it is appended in ``agent/graph/run.py`` (like the design-plan
-  bullet), not in the hashed prompts."""
+  bullet), not in the hashed prompts.
+- ``b205_request_golden.json`` (brief 205, 2026-11-24, owner decision 38): the Designer's conventions list the design-standards rules
+  (``agent/graph/run.py`` ``_standards_summary`` from ``flow/standards_check.py`` ``RULES``), and the STD-INIT-01 text changed from "no initial blocks" to
+  "initial values follow the setting rtl.initial_values (default allow)". Only ``conventions_text_noshell_False`` and ``conventions_text_noshell_True``
+  differ from the brief 150 golden. Runs before this change belong to the earlier goldens.
+- ``b206_request_golden.json`` (brief 206, 2026-11-24): the ``check`` tool's name list gained ``init_values`` (schema 1.21.0). No stage or role is offered
+  a new tool, so every hash other than ``tool_registry`` equals the brief 205 golden's.
+- ``b207_request_golden.json`` (brief 207, 2026-11-25): the ``check`` tool's name list gained ``cdc_margin`` (schema 1.22.0). No stage or role is offered a
+  new tool, so every hash other than ``tool_registry`` equals the brief 206 golden's.
+- ``b208_request_golden.json`` (brief 208, 2026-11-24): the ``check`` tool's name list gained ``clock_mux`` (schema 1.23.0). No stage or role
+  is offered a new tool, so every hash other than ``tool_registry`` equals the brief 207 golden's.
+- ``b190_request_golden.json`` (brief 190, 2026-11-23): the ``check`` tool's name list gained ``fastpath`` (schema 1.24.0; an advisory source check). No stage or role
+  is offered a new tool, so every hash other than ``tool_registry`` equals the brief 208 golden's."""
 
 from __future__ import annotations
 
@@ -72,19 +84,19 @@ from agent.tests.request_golden import collect
 
 FIXTURES = Path(__file__).parent / "fixtures"
 EVAL1 = FIXTURES / "eval1_request_golden.json"
-GOLDEN = FIXTURES / "b150_request_golden.json"          # the newest golden
+GOLDEN = FIXTURES / "b190_request_golden.json"          # the newest golden
 #: the hashes that differ from eval-1's, and the brief that changed each (an intended change is listed here, with why)
 CHANGED_SINCE_EVAL1 = {"arm_constants": "brief 80: Claude Code 2.1.321 accepted (ACCEPTED_CLI; the tool-text check passed)",
                        "tool_registry": "brief 36: skill_index, skill_excerpt, load_skill(name=); brief 42 H9: report_digest; "
                                         "brief 50A: debug_plan, debug_capture, debug_query; brief 59A: axi_program_check, axi_simulate, axi_board_run; brief 56A: gt_plan; "
                                         "brief 68: bringup description (reference model); brief 71: check; brief 73: check name axi_profile; brief 97: latency_path, latency_budget; "
-                                        "brief 101: oss_synth, eqy_check (no role is offered them); brief 96D: eye_scan (no role is offered it); brief 104: design_analysis (no role is offered it); brief 106: check names constants and stale; brief 105A: check names constraint_scope and xpm_sim; brief 114: doc_crossread (no role is offered it); brief 150: ip_lookup (offered to the Designer at stage 1)",
+                                        "brief 101: oss_synth, eqy_check (no role is offered them); brief 96D: eye_scan (no role is offered it); brief 104: design_analysis (no role is offered it); brief 106: check names constants and stale; brief 105A: check names constraint_scope and xpm_sim; brief 114: doc_crossread (no role is offered it); brief 150: ip_lookup (offered to the Designer at stage 1); brief 206: check name init_values; brief 207: check name cdc_margin; brief 208: check name clock_mux; brief 190: check name fastpath",
                        "prompts": "brief 53: requirement quality (clarify) and requirement tags (tests); brief 68: role names; "
                                   "brief 71: the check tool (rtl); brief 73: the interface profile (clarify, rtl); "
                                   "brief 70: the Designer's reset paragraph (rtl)",
                        "conventions": "brief 68: role names (Tests (Verifier))",
-                       "conventions_text_noshell_False": "brief 68: as conventions",
-                       "conventions_text_noshell_True": "brief 68: as conventions",
+                       "conventions_text_noshell_False": "brief 68: as conventions; brief 205: the STD-INIT-01 rule text (rtl.initial_values)",
+                       "conventions_text_noshell_True": "brief 68: as conventions; brief 205: the STD-INIT-01 rule text (rtl.initial_values)",
                        "tests_conventions_text_noshell_False": "brief 68: as conventions",
                        "tests_conventions_text_noshell_True": "brief 68: as conventions",
                        "hw_format": "brief 68: reference model for blind model",

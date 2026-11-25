@@ -153,7 +153,8 @@ def run(name: str, toplevel: str, sources: list[Path], test_module: str, test_di
     # $FDA_CDC_INJECT_SEED, the synchroniser-delay injection (flow/cdc_inject.py)
     inj_env = os.environ.get("FDA_CDC_INJECT_SEED")
     sources, inj_plus, inj_info = cdc_inject.prepare(sources, (build_root or SIM_ROOT) / f"{name}_cdcinj",
-                                                     int(inj_env) if inj_env not in (None, "") else None)
+                                                     int(inj_env) if inj_env not in (None, "") else None,
+                                                     int(os.environ.get("FDA_CDC_INJECT_SKEW") or 0) or None)
     if inj_env not in (None, "") and os.environ.get("FDA_CDC_INJECT_INFO"):
         Path(os.environ["FDA_CDC_INJECT_INFO"]).write_text(__import__("json").dumps(inj_info, indent=1))
     if srcorder.no_shell(design):                         # 07a2-prep: a UART-subject design is built without the test shell
