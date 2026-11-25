@@ -58,8 +58,9 @@ from pathlib import Path
 from typing import Any
 
 try:
-    from flow import version_pin
+    from flow import predict, version_pin
 except ImportError:      # run as a script: flow/ is on sys.path, not the repo
+    import predict
     import version_pin
 
 # --- copied and extended from HW_Design_Space_Agent -----------------------------
@@ -114,6 +115,46 @@ def parse_timing_summary(text: str) -> dict[str, Any]:
         out[k] = None if v == "NA" else (int(v) if k.endswith("endpoints") else float(v))
     out["timing_met"] = "All user specified timing constraints are met." in text
     return out
+
+
+# Brief 140: clocks that AMD's debug IP creates in its own constraint files carry the names of the IP's cells (the generated clocks of the Debug Bridge's
+# TCK divider and soft BSCAN TAP, the debug hub's TCK): name fragments of those cells. A clock of the design's own never has them.
+DEBUG_CLOCK = re.compile(r"u_jtag_proc|USE_SOFTBSCAN|U_BSCAN_TAP|BSCANID|dbg_hub|ila_core_inst")
+_NUM = r"(?:-?\d+(?:\.\d+)?|NA)"
+_ROW8 = rf"((?:{_NUM}\s+){{7}}{_NUM}(?:\s+(?:{_NUM}\s+){{3}}{_NUM})?)\s*$"   # setup and hold columns, then the pulse-width ones when the table has them
+
+
+def place_hold_by_clock(text: str) -> list[tuple[tuple[str, ...], float | None]]:
+    """The hold slack (WHS) of every clock row of the Intra Clock and Inter Clock tables of report_timing_summary: ``((clock,), whs)`` for an
+    intra-clock row, ``((from, to), whs)`` for an inter-clock row. Rows with no numbers (a parent clock's heading) are left out."""
+    out: list[tuple[tuple[str, ...], float | None]] = []
+    for head, tail, n in (("Intra Clock Table", "Inter Clock Table", 1), ("Inter Clock Table", "Other Path Groups Table", 2)):
+        a = text.find("| " + head)
+        b = text.find("| " + tail, a + 1) if a >= 0 else -1
+        if a < 0 or b < 0:
+            continue
+        rx = re.compile(rf"^\s*" + r"(\S+)\s+" * n + _ROW8, re.M)
+        for m in rx.finditer(text[a:b]):
+            v = m.group(n + 1).split()[4]
+            out.append((tuple(m.group(i) for i in range(1, n + 1)), None if v == "NA" else float(v)))
+    return out
+
+
+def place_hold_split(text: str) -> dict[str, Any] | None:
+    """Worst placement-stage hold slack outside and inside AMD debug IP clocks (``DEBUG_CLOCK``), from the clock tables. None when the tables
+    cannot be read or their worst row is not the design's WHS (then the gate keeps judging the design-wide WHS)."""
+    rows = place_hold_by_clock(text)
+    if not rows:
+        return None
+    whs_all = parse_timing_summary(text)["whs_ns"]
+    vals = [v for _, v in rows if v is not None]
+    if whs_all is None or not vals or abs(min(vals) - whs_all) > 1e-9:
+        return None
+    dbg = [(c, v) for c, v in rows if v is not None and any(DEBUG_CLOCK.search(x) for x in c)]
+    rest = [v for c, v in rows if v is not None and not any(DEBUG_CLOCK.search(x) for x in c)]
+    return {"worst_outside_debug_ip_ns": min(rest) if rest else None,
+            "worst_debug_ip_ns": min((v for _, v in dbg), default=None),
+            "debug_ip_clocks": sorted({x for c, _ in dbg for x in c if DEBUG_CLOCK.search(x)})}
 
 
 def parse_wns(text: str) -> float:
@@ -330,12 +371,22 @@ def forwarded_clock_ports_text(dump: str) -> set[str]:
     return out & {x.split("|")[1] for x in dump.splitlines() if x.startswith("PORT|")}
 
 
-def unconstrained_ok(counts: dict[str, int], ports: dict[str, list[str]], fwd: set[str]) -> bool:
-    """Every check_timing unconstrained count is zero, except no_output_delay entries that are forwarded-clock ports."""
+def unloaded_noclock_pins(d: Path) -> set[str]:
+    """Brief 140: the output pins in check_timing's post-synthesis no_clock list that drive nothing (flow/build.tcl
+    ``fda_unloaded_noclock``: pin direction out, net with no load pin). Nothing can be timed from them, so they are no endpoint."""
+    f = d / "no_clock_unloaded_synth.txt"
+    return {ln.strip() for ln in f.read_text(errors="replace").splitlines() if ln.strip()} if f.is_file() else set()
+
+
+def unconstrained_ok(counts: dict[str, int], ports: dict[str, list[str]], fwd: set[str], unloaded: set[str] | frozenset = frozenset()) -> bool:
+    """Every check_timing unconstrained count is zero, except no_output_delay entries that are forwarded-clock ports and
+    no_clock entries that are output pins with no load (``unloaded``, post-synthesis only)."""
     for k in UNCONSTRAINED_CHECKS:
         n = counts.get(k, 0)
         if k == "no_output_delay" and n and fwd:
             n = len([p for p in ports.get(k, []) if p not in fwd]) if ports.get(k) else n
+        if k == "no_clock" and n and unloaded:
+            n = max(0, n - len([p for p in ports.get(k, []) if p in unloaded]))
         if n:
             return False
     return True
@@ -410,6 +461,20 @@ def _cdc_structure(d: Path, architecture: Path | None) -> dict[str, Any]:
     return cdc_structure.evaluate(d / "cdc_paths_synth.rpt", d / "cdc_synth.rpt", waivers)
 
 
+def _cdc_margin(d: Path, architecture: Path | None, prep: dict[str, Any]) -> dict[str, Any] | None:
+    """flow/cdc_margin.py on a routed build (brief 207); the architecture's ``crossings`` (declared intent) and
+    ``mtbf_target_years`` refine it. None when the build has no bus_skew_route.rpt (made before brief 207)."""
+    if not (d / "bus_skew_route.rpt").exists():
+        return None
+    try:
+        from flow import cdc_margin
+    except ImportError:      # run as a script: flow/ is on sys.path
+        import cdc_margin
+    arch = _architecture_for(d, architecture) or {}
+    return cdc_margin.evaluate(d, crossings=[c for c in (arch.get("crossings") or []) if isinstance(c, dict)],
+                               mtbf_target_years=arch.get("mtbf_target_years"), part=str(prep.get("part", "")))
+
+
 def _gt(d: Path, g: dict[str, bool]) -> dict[str, Any] | None:
     """Brief 56A: flow/gt_gates.py's gates (reference-clock pin and quad, lane pins, line-rate window, user-clock limit, reset
     sequence, timed user clocks, transceiver DRCs) when the build has a gtwizard_ultrascale core; None otherwise. A gate whose data is
@@ -441,6 +506,24 @@ def _oss_netlist(d: Path, g: dict[str, bool]) -> dict[str, Any] | None:
     r = eqy_gate.evidence(d)
     if r is not None:
         g["post_synth_oss_netlist_equivalent"] = r["pass"]
+    return r
+
+
+def _security(d: Path, g: dict[str, bool]) -> dict[str, Any] | None:
+    """Brief 196: flow/security.py's gates (``security_*``, with ``security_profile_met`` for the whole request) for a build that had a
+    production_secure request, and ``security_policy_pin`` where a build.yaml request disagreed with the run's pin. None for a build with no request."""
+    try:
+        from flow import security
+    except ImportError:      # run as a script: flow/ is on sys.path, not the repo
+        sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+        from flow import security
+    try:
+        r = security.evaluate(d)
+    except (OSError, ValueError, KeyError) as e:
+        g["security_profile_met"] = False
+        return {"error": f"{type(e).__name__}: {e}"}
+    if r is not None:
+        g.update(r["gates"])
     return r
 
 
@@ -652,7 +735,7 @@ def evaluate(build_dir: Path, architecture: Path | None = None) -> dict[str, Any
         d_s_gated = [r for r in d_s if not (routed_import_waived(d) and r["rule"] in ROUTED_IMPORT_DRC_WAIVED)]
         q_s = parse_qor_assessment(_read(d, "qor_assessment_synth.rpt")) if (d / "qor_assessment_synth.rpt").exists() else None
         g = {"post_synth_no_unconstrained_endpoints": unconstrained_ok(c_s, parse_check_timing_ports(c_s_text),
-                                                                       forwarded_clock_ports(d, "synth")),
+                                                                       forwarded_clock_ports(d, "synth"), unloaded_noclock_pins(d)),
              "post_synth_methodology_no_critical": _n_sev(m_s, "Critical Warning") == 0,
              "post_synth_drc_clean": _n_sev(d_s_gated, "Error") == 0 and _n_sev(d_s_gated, "Critical Warning") == 0}
         warn: list[dict[str, Any]] = []
@@ -702,10 +785,20 @@ def evaluate(build_dir: Path, architecture: Path | None = None) -> dict[str, Any
 
     # --- post_place: UG949 ch. 6 "Pre- and Post-Placement" ---
     if (d / "timing_summary_place.rpt").exists():
-        t_p = parse_timing_summary(_read(d, "timing_summary_place.rpt"))
+        place_text = _read(d, "timing_summary_place.rpt")
+        t_p = parse_timing_summary(place_text)
         whs = t_p["whs_ns"]
-        stages["post_place"] = {"ran": True, "gates": {"post_place_hold": whs is None or whs > PLACE_WHS_MIN_NS},
+        # brief 140: a build with the Debug Bridge's soft BSCAN has debug-IP clocks whose placement-stage hold slack is a clock-tree estimate (the TCK reaches
+        # the debug hub through a second BUFGCE the hub puts in series: 3 ns of clock skew before routing, closed by the router). Those clock rows are
+        # judged after routing (post_route_hold); the rest of the design keeps the -0.5 ns limit here. The split is recorded; any other clock row counts.
+        split = place_hold_split(place_text)
+        gated = whs
+        if split is not None and split["worst_debug_ip_ns"] is not None:
+            gated = split["worst_outside_debug_ip_ns"]
+        stages["post_place"] = {"ran": True, "gates": {"post_place_hold": gated is None or gated > PLACE_WHS_MIN_NS},
                                 "timing": t_p}
+        if split is not None and split["worst_debug_ip_ns"] is not None:
+            stages["post_place"]["hold_debug_ip"] = {**split, "judged_after_routing": "post_route_hold"}
     else:
         stages["post_place"] = {"ran": False, "gates": {}}
 
@@ -764,6 +857,11 @@ def evaluate(build_dir: Path, architecture: Path | None = None) -> dict[str, Any
             hub_info = hub
         else:
             hub_info = None
+        # brief 207: clock-crossing margins (flow/cdc_margin.py): a bus-skew violation is a gate failure (UG906 p. 162); missing
+        # bus-skew coverage, a loose datapath-only value, a missing or low MTBF and high user uncertainty are warnings
+        cdcm = _cdc_margin(d, architecture, prep)
+        if cdcm is not None and cdcm["evaluated"]:
+            route_gates["post_route_bus_skew_met"] = cdcm["pass"]
         exc_r = _exceptions(d, "route", strict, route_gates, "exceptions_clean")
         io_r = _io(d, "route", strict, route_gates, "io_timing_clean")
         iob_r = _iob_packing(d, prep, strict, route_gates)
@@ -771,7 +869,10 @@ def evaluate(build_dir: Path, architecture: Path | None = None) -> dict[str, Any
                                 "io_timing": io_r, "timing_margin": _margin(d), "ila_hub_crossing": hub_info,
                                 "config_voltage": cfg_info,
                                 **({"iob_packing": iob_r} if iob_r is not None else {}),
-                                "warnings": (io_r or {}).get("warnings", []) + cfg_warn + (iob_r or {}).get("warnings", []),
+                                "cdc_margin": cdcm,
+                                "warnings": (io_r or {}).get("warnings", []) + cfg_warn + (iob_r or {}).get("warnings", [])
+                                + [{"name": f["code"], "stage": "post_route", **f} for f in (cdcm or {}).get("findings", [])
+                                   if f["level"] == "advisory"],
                                 "unconstrained_ports": parse_check_timing_ports(checks_text)}
 
         # --- bitstream ---
@@ -781,6 +882,9 @@ def evaluate(build_dir: Path, architecture: Path | None = None) -> dict[str, Any
         if variant == "ila":
             bit_gates["debug_probes_present"] = ltx.exists() and ltx.stat().st_size > 0
         stages["bitstream"] = {"ran": True, "gates": bit_gates}
+        sec = _security(d, bit_gates)             # brief 196: production_secure, from what Vivado wrote (None for an ordinary build)
+        if sec is not None:
+            stages["bitstream"]["security"] = sec
 
     gates: dict[str, bool] = {}
     warnings: list[dict[str, Any]] = []
@@ -850,6 +954,7 @@ def main(argv: list[str] | None = None) -> int:
     if a.json:
         a.json.parent.mkdir(parents=True, exist_ok=True)
         a.json.write_text(json.dumps(r, indent=2) + "\n")
+    predict.shadow(a.build_dir, r)          # brief 177: shadow-mode prediction per stage; never changes a gate
     t, u = r["timing"] or {}, r["utilization"] or {}
     if (n := version_pin.note(r)):
         print(f"gates: {n}")

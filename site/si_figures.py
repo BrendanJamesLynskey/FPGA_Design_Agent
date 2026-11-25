@@ -140,6 +140,9 @@ def _rout() -> dict:
     return {"data": {"panels": panels, "z0_ohm": 50, "series_ohm": 22, "target_ohm": 28}, "vals": vals}
 
 
+KINDS = ("waveforms", "sweep", "kr260", "rout")        # the figure kinds this module draws (site/expertise.py dispatches on it)
+
+
 def data(kind: str) -> dict:
     return {"waveforms": _waveforms, "sweep": _sweep, "kr260": _kr260, "rout": _rout}[kind]()
 

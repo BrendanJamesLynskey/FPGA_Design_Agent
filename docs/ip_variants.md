@@ -9,7 +9,8 @@ result, and what each one costs in logic, memory, multipliers, speed and latency
 
 ```
 python3 -m flow.ipvariants fir --params TAPS=32,FOLD=8 --budget dsp=0 --objective fabric   # rank the FIR's variants
-python3 -m flow.ipvariants --search fir filter                                            # find library entries
+python3 -m flow.ipvariants --search fir filter                                            # find library entries (every word must match)
+python -m agent ip search "low-pass filter"                                               # find by meaning; says 'nothing fits' (docs/ip_lookup.md)
 python3 -m flow.ipvariants                                                                # check every entry
 ```
 
@@ -130,6 +131,11 @@ characterisations one at a time. Artix-7 only so far: no other family has been m
 - `fmax_mhz = 1000 / (clock_ns - wns_ns)` after routing: an estimate from one run at the target clock, not a closure at
   that frequency. A design far below the target is under-optimised at the target; one far above it was not pushed.
   Negative WNS means the target clock was missed; the figure is then the speed the same run would reach.
+  `fmax_setup_mhz` is that raw figure. `fmax_mhz` is the lowest of it, the 2 x WPWS pulse-width rule and, since brief 201,
+  the clock-buffer limit of the part (`flow/fmax_cap.py`: Artix-7 and Zynq-7000 -1 464.0 MHz, K26 -2LV 725.2 MHz; an
+  out-of-context run has no BUFG, a real design does). `fmax_bound` names the limit that binds and
+  `fmax_clock_buffer_mhz` is the buffer limit; both appear only for a part with a recorded limit, and rows measured
+  before brief 201 do not have them (none of them was above its limit).
 - `power_w` is `report_power` without activity files (vectorless, default toggle rates). It ranks variants; it is not a
   board measurement. `static` is the whole device's static power and is the same for every row on a part.
 - Out of context, I/O paths are not timed: WNS covers register-to-register paths inside the block only.

@@ -40,14 +40,16 @@ def _src(srcs) -> str:
 
 
 def figures(a: dict) -> str:
-    """Plots of an area (brief 164), drawn from the committed result files by site/si_figures.py: a wide and a narrow drawing of each, one shown by CSS,
-    with a caption that says what it shows, how it was measured and what a reader could get wrong."""
+    """Plots of an area (briefs 185 and 164), drawn from the committed result files by site/dsp_figures.py or site/si_figures.py (the module that knows the kind): a wide
+    and a narrow drawing of each, one shown by CSS, with a caption that says what it shows, how it was obtained and what a reader could get wrong."""
     out = ""
     for fg in a.get("figures", []):
+        import dsp_figures
         import si_figures
-        svgs = "".join(f'<div class="{cls}">{si_figures.render(fg["kind"], fg, lay)}</div>' for cls, lay in (("lay-w", "wide"), ("lay-n", "narrow")))
+        mod, fcls, wcls, ncls = (si_figures, "sifig", "lay-w", "lay-n") if fg["kind"] in si_figures.KINDS else (dsp_figures, "dspfig", "dsp-w", "dsp-n")
+        svgs = "".join(f'<div class="{cls}">{mod.render(fg["kind"], fg, lay)}</div>' for cls, lay in ((wcls, "wide"), (ncls, "narrow")))
         src = " ".join(f'<a class="evsrc" href="{e(s["url"])}" title="{e(s["path"])}" aria-label="Source: {e(s["path"])}">source</a>' for s in fg["sources"])
-        out += (f'<figure class="sifig" id="{e(a["id"])}-{e(fg["id"])}"><figcaption class="figt">{e(fg["title"])}</figcaption>{svgs}'
+        out += (f'<figure class="{fcls}" id="{e(a["id"])}-{e(fg["id"])}"><figcaption class="figt">{e(fg["title"])}</figcaption>{svgs}'
                 f'<figcaption><strong>What it shows.</strong> {e(fg["caption"])} <strong>How it was obtained.</strong> {e(fg["how"])} '
                 f'<strong>What a reader could get wrong.</strong> {e(fg["wrong"])} {src}</figcaption></figure>')
     return out

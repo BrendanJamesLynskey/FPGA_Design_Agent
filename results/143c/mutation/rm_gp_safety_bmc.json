@@ -1,0 +1,1143 @@
+{
+ "sby": "designs/b96_kr260_10g/verif/formal/rm_gp.sby",
+ "task": "safety_bmc",
+ "mode": "bmc",
+ "depth": 24,
+ "n": 60,
+ "seed": 1,
+ "select": "a:src=*rate_match_gp.sv* a:src=*xpm_formal.sv* %u",
+ "control": "PASS",
+ "tool": "Yosys 0.70+385 (git sha1 098e46a36, Release, Clang /usr/bin/clang++ 21.1.8)",
+ "summary": {
+  "mutants": 60,
+  "killed": 10,
+  "survived": 50,
+  "score": 16.7
+ },
+ "mutants": [
+  {
+   "n": 1,
+   "mutation": "-mode const0 -module rm_gp_fv_top -cell $driver$dut.r_v -port Q -portbit 0 -wire r_v -wirebit 0 -src rm_gp_fv_top.sv:19.11 -src rate_match_gp.sv:117.5",
+   "mode": "const0",
+   "module": "rm_gp_fv_top",
+   "wire": "r_v",
+   "src": "rm_gp_fv_top.sv:19.11",
+   "rtl": "logic r_v, r_lock;",
+   "status": "FAIL",
+   "result": "killed",
+   "caught_by": [
+    "p8b_output_is_written_bit"
+   ],
+   "seconds": 4.1,
+   "wires": [
+    "dut.r_v",
+    "rclk"
+   ],
+   "wirebit": 0
+  },
+  {
+   "n": 2,
+   "mutation": "-mode const0 -module rm_gp_fv_top -cell $driver$dut.g_ent[0].s.u_e.u.s[1] -port D -portbit 15 -src xpm_formal.sv:28.5",
+   "mode": "const0",
+   "module": "rm_gp_fv_top",
+   "wire": null,
+   "src": "xpm_formal.sv:28.5",
+   "rtl": "always_ff @(posedge dest_clk) begin",
+   "status": "PASS",
+   "result": "survived",
+   "caught_by": [],
+   "seconds": 31.1,
+   "wires": [
+    "dut.g_ent[0].s.u_e.u.s",
+    "rclk"
+   ],
+   "wirebit": null,
+   "class": "entry_data"
+  },
+  {
+   "n": 3,
+   "mutation": "-mode const1 -module rm_gp_fv_top -cell $236 -port Y -portbit 0 -wire dut.u_props.can_read -wirebit 0 -src rm_gp_props.sv:25.17 -src rate_match_gp.sv:104.25-104.35",
+   "mode": "const1",
+   "module": "rm_gp_fv_top",
+   "wire": "dut.u_props.can_read",
+   "src": "rm_gp_props.sv:25.17",
+   "rtl": "input logic can_read, lock_s, slot, in_frame, do_pop, do_del, rd_en,",
+   "status": "FAIL",
+   "result": "killed",
+   "caught_by": [
+    "p4_no_underflow"
+   ],
+   "seconds": 1.0,
+   "wires": [
+    "dut.can_read",
+    "dut.fill"
+   ],
+   "wirebit": 0
+  },
+  {
+   "n": 4,
+   "mutation": "-mode inv -module rm_gp_fv_top -cell $18 -port A -portbit 1 -src rate_match_gp.sv:64.13-64.39",
+   "mode": "inv",
+   "module": "rm_gp_fv_top",
+   "wire": null,
+   "src": "rate_match_gp.sv:64.13-64.39",
+   "rtl": "ent[wbin[AW-1:0]] <= w_ent;",
+   "status": "PASS",
+   "result": "survived",
+   "caught_by": [],
+   "seconds": 30.1,
+   "wires": [],
+   "wirebit": null,
+   "class": "entry_data"
+  },
+  {
+   "n": 5,
+   "mutation": "-mode inv -module rm_gp_fv_top -cell $procmux$601 -port Y -portbit 0 -src rate_match_gp.sv:118.20-118.42 -src rate_match_gp.sv:118.9-118.42",
+   "mode": "inv",
+   "module": "rm_gp_fv_top",
+   "wire": null,
+   "src": "rate_match_gp.sv:118.20-118.42",
+   "rtl": "if (rd_en) rbin <= rbin + CW'(1);",
+   "status": "FAIL",
+   "result": "killed",
+   "caught_by": [
+    "h3_reader_not_past",
+    "h8_no_wrap_yet",
+    "p1b_bound",
+    "p2_wview"
+   ],
+   "seconds": 1.0,
+   "wires": [
+    "dut.u_props.rd_en",
+    "dut.rbin"
+   ],
+   "wirebit": null
+  },
+  {
+   "n": 6,
+   "mutation": "-mode const1 -module rm_gp_fv_top -cell $driver$dut.g_ent[0].s.u_e.u.s[1] -port Q -portbit 0 -wire dut.u_props.u_data_s -wirebit 518 -src rm_gp_props.sv:114.23 -src xpm_formal.sv:28.5",
+   "mode": "const1",
+   "module": "rm_gp_fv_top",
+   "wire": "dut.u_props.u_data_s",
+   "src": "rm_gp_props.sv:114.23",
+   "rtl": "logic [1:0][73:0] u_data_s [1 << AW];",
+   "status": "FAIL",
+   "result": "killed",
+   "caught_by": [
+    "h6c_p2"
+   ],
+   "seconds": 2.3,
+   "wires": [
+    "dut.g_ent[0].s.u_e.u.s",
+    "rclk"
+   ],
+   "wirebit": 518
+  },
+  {
+   "n": 7,
+   "mutation": "-mode const1 -module rm_gp_fv_top -cell $procmux$198 -port B -portbit 0 -src rate_match_gp.sv:137.41-141.20 -src rate_match_gp.sv:137.26-141.53",
+   "mode": "const1",
+   "module": "rm_gp_fv_top",
+   "wire": null,
+   "src": "rate_match_gp.sv:137.41-141.20",
+   "rtl": "end else if (!in_frame) begin",
+   "status": "FAIL",
+   "result": "killed",
+   "caught_by": [
+    "p6a_insert_idle_only_between_frames"
+   ],
+   "seconds": 5.3,
+   "wires": [
+    "dut.in_frame"
+   ],
+   "wirebit": null
+  },
+  {
+   "n": 8,
+   "mutation": "-mode inv -module rm_gp_fv_top -cell $driver$dut.g_ent[1].s.u_e.u.dlast -port Q -portbit 48 -wire dut.g_ent[1].s.u_e.u.dlast -wirebit 48 -src xpm_formal.sv:23.19 -src xpm_formal.sv:27.5",
+   "mode": "inv",
+   "module": "rm_gp_fv_top",
+   "wire": "dut.g_ent[1].s.u_e.u.dlast",
+   "src": "xpm_formal.sv:23.19",
+   "rtl": "logic [W-1:0] dlast = '0;",
+   "status": "PASS",
+   "result": "survived",
+   "caught_by": [],
+   "seconds": 29.0,
+   "wires": [
+    "dut.g_ent[1].s.u_e.u.dlast",
+    "dut.ent",
+    "wclk"
+   ],
+   "wirebit": 48,
+   "class": "entry_data"
+  },
+  {
+   "n": 9,
+   "mutation": "-mode cnot0 -module rm_gp_fv_top -cell $192 -port Y -portbit 38 -ctrlbit 11 -src xpm_formal.sv:29.32-29.44",
+   "mode": "cnot0",
+   "module": "rm_gp_fv_top",
+   "wire": null,
+   "src": "xpm_formal.sv:29.32-29.44",
+   "rtl": "s[0] <= (d & ~late) | (dlast & late);",
+   "status": "PASS",
+   "result": "survived",
+   "caught_by": [],
+   "seconds": 29.0,
+   "wires": [
+    "dut.g_ent[3].s.u_e.u.late",
+    "dut.g_ent[3].s.u_e.u.dlast"
+   ],
+   "wirebit": null,
+   "class": "entry_data"
+  },
+  {
+   "n": 10,
+   "mutation": "-mode inv -module rm_gp_fv_top -cell $driver$dut.u_rp.u.held -port Q -portbit 2 -wire dut.u_rp.u.held -wirebit 2 -src xpm_formal.sv:24.19 -src xpm_formal.sv:28.5",
+   "mode": "inv",
+   "module": "rm_gp_fv_top",
+   "wire": "dut.u_rp.u.held",
+   "src": "xpm_formal.sv:24.19",
+   "rtl": "logic [W-1:0] held = '0;",
+   "status": "PASS",
+   "result": "survived",
+   "caught_by": [],
+   "seconds": 31.2,
+   "wires": [
+    "dut.u_rp.u.held",
+    "dut.u_rp.u.late",
+    "wclk"
+   ],
+   "wirebit": 2,
+   "class": "other"
+  },
+  {
+   "n": 11,
+   "mutation": "-mode const0 -module rm_gp_fv_top -cell $procmux$627 -port A -portbit 47 -src rate_match_gp.sv:63.20-66.12 -src rate_match_gp.sv:63.9-66.12",
+   "mode": "const0",
+   "module": "rm_gp_fv_top",
+   "wire": null,
+   "src": "rate_match_gp.sv:63.20-66.12",
+   "rtl": "if (wr_en) begin",
+   "status": "PASS",
+   "result": "survived",
+   "caught_by": [],
+   "seconds": 27.2,
+   "wires": [
+    "dut.u_props.wr_en",
+    "dut.ent"
+   ],
+   "wirebit": null,
+   "class": "entry_data"
+  },
+  {
+   "n": 12,
+   "mutation": "-mode const1 -module rm_gp_fv_top -cell $109 -port Y -portbit 22 -src xpm_formal.sv:26.19-26.35",
+   "mode": "const1",
+   "module": "rm_gp_fv_top",
+   "wire": null,
+   "src": "xpm_formal.sv:26.19-26.35",
+   "rtl": "assign late = (d ^ dlast) & sk & ~held & ~(s[0] ^ dlast);    // only a bit that has not yet shown its new value can stil",
+   "status": "PASS",
+   "result": "survived",
+   "caught_by": [],
+   "seconds": 27.7,
+   "wires": [],
+   "wirebit": null,
+   "class": "other"
+  },
+  {
+   "n": 13,
+   "mutation": "-mode cnot1 -module rm_gp_fv_top -cell $114 -port A -portbit 67 -ctrlbit 4 -src xpm_formal.sv:26.19-26.61",
+   "mode": "cnot1",
+   "module": "rm_gp_fv_top",
+   "wire": null,
+   "src": "xpm_formal.sv:26.19-26.61",
+   "rtl": "assign late = (d ^ dlast) & sk & ~held & ~(s[0] ^ dlast);    // only a bit that has not yet shown its new value can stil",
+   "status": "PASS",
+   "result": "survived",
+   "caught_by": [],
+   "seconds": 31.8,
+   "wires": [
+    "dut.g_ent[0].s.u_e.u.late"
+   ],
+   "wirebit": null,
+   "class": "entry_data"
+  },
+  {
+   "n": 14,
+   "mutation": "-mode const0 -module rm_gp_fv_top -cell $269 -port A -portbit 0 -src rate_match_gp.sv:116.21-116.37",
+   "mode": "const0",
+   "module": "rm_gp_fv_top",
+   "wire": null,
+   "src": "rate_match_gp.sv:116.21-116.37",
+   "rtl": "assign rd_en  = do_pop || do_del || (!rrst && can_read && !lock_s);                   // output, delete, or drain while ",
+   "status": "PASS",
+   "result": "survived",
+   "caught_by": [],
+   "seconds": 27.2,
+   "wires": [
+    "dut.do_del",
+    "dut.do_pop"
+   ],
+   "wirebit": null,
+   "class": "other"
+  },
+  {
+   "n": 15,
+   "mutation": "-mode inv -module rm_gp_fv_top -cell $driver$dut.g_ent[3].s.u_e.u.held -port Q -portbit 31 -wire dut.u_props.u_data_h -wirebit 31 -src rm_gp_props.sv:115.23 -src xpm_formal.sv:28.5",
+   "mode": "inv",
+   "module": "rm_gp_fv_top",
+   "wire": "dut.u_props.u_data_h",
+   "src": "rm_gp_props.sv:115.23",
+   "rtl": "logic [73:0]      u_data_h [1 << AW];",
+   "status": "PASS",
+   "result": "survived",
+   "caught_by": [],
+   "seconds": 32.3,
+   "wires": [
+    "dut.g_ent[3].s.u_e.u.held",
+    "dut.g_ent[3].s.u_e.u.late",
+    "rclk"
+   ],
+   "wirebit": 31,
+   "class": "entry_data"
+  },
+  {
+   "n": 16,
+   "mutation": "-mode const1 -module rm_gp_fv_top -cell $216 -port A -portbit 0 -src xpm_formal.sv:29.32-29.44",
+   "mode": "const1",
+   "module": "rm_gp_fv_top",
+   "wire": null,
+   "src": "xpm_formal.sv:29.32-29.44",
+   "rtl": "s[0] <= (d & ~late) | (dlast & late);",
+   "status": "PASS",
+   "result": "survived",
+   "caught_by": [],
+   "seconds": 33.1,
+   "wires": [
+    "dut.u_lk.u.late",
+    "dut.u_lk.u.dlast"
+   ],
+   "wirebit": null,
+   "class": "liveness"
+  },
+  {
+   "n": 17,
+   "mutation": "-mode inv -module rm_gp_fv_top -cell $43 -port A -portbit 2 -wire dut.u_wp.u.held -wirebit 2 -src xpm_formal.sv:24.19 -src xpm_formal.sv:26.38-26.43",
+   "mode": "inv",
+   "module": "rm_gp_fv_top",
+   "wire": "dut.u_wp.u.held",
+   "src": "xpm_formal.sv:24.19",
+   "rtl": "logic [W-1:0] held = '0;",
+   "status": "PASS",
+   "result": "survived",
+   "caught_by": [],
+   "seconds": 45.4,
+   "wires": [
+    "dut.u_wp.u.held"
+   ],
+   "wirebit": 2,
+   "class": "other"
+  },
+  {
+   "n": 18,
+   "mutation": "-mode const1 -module rm_gp_fv_top -cell $143 -port B -portbit 56 -src xpm_formal.sv:29.18-29.27",
+   "mode": "const1",
+   "module": "rm_gp_fv_top",
+   "wire": null,
+   "src": "xpm_formal.sv:29.18-29.27",
+   "rtl": "s[0] <= (d & ~late) | (dlast & late);",
+   "status": "PASS",
+   "result": "survived",
+   "caught_by": [],
+   "seconds": 43.5,
+   "wires": [
+    "dut.ent"
+   ],
+   "wirebit": null,
+   "class": "entry_data"
+  },
+  {
+   "n": 19,
+   "mutation": "-mode inv -module rm_gp_fv_top -cell $269 -port B -portbit 0 -src rate_match_gp.sv:116.21-116.37",
+   "mode": "inv",
+   "module": "rm_gp_fv_top",
+   "wire": null,
+   "src": "rate_match_gp.sv:116.21-116.37",
+   "rtl": "assign rd_en  = do_pop || do_del || (!rrst && can_read && !lock_s);                   // output, delete, or drain while ",
+   "status": "FAIL",
+   "result": "killed",
+   "caught_by": [
+    "h5a_wp_chain_order",
+    "p3_rview",
+    "p4_no_underflow"
+   ],
+   "seconds": 2.2,
+   "wires": [
+    "dut.do_del",
+    "dut.do_pop"
+   ],
+   "wirebit": null
+  },
+  {
+   "n": 20,
+   "mutation": "-mode cnot1 -module rm_gp_fv_top -cell $driver$dut.ent[2] -port D -portbit 9 -ctrlbit 14 -src rate_match_gp.sv:62.5",
+   "mode": "cnot1",
+   "module": "rm_gp_fv_top",
+   "wire": null,
+   "src": "rate_match_gp.sv:62.5",
+   "rtl": "always_ff @(posedge wclk) begin",
+   "status": "PASS",
+   "result": "survived",
+   "caught_by": [],
+   "seconds": 33.7,
+   "wires": [
+    "dut.ent",
+    "wclk"
+   ],
+   "wirebit": null,
+   "class": "entry_data"
+  },
+  {
+   "n": 21,
+   "mutation": "-mode inv -module rm_gp_fv_top -cell $231 -port B -portbit 49 -src rate_match_gp.sv:102.24-102.43",
+   "mode": "inv",
+   "module": "rm_gp_fv_top",
+   "wire": null,
+   "src": "rate_match_gp.sv:102.24-102.43",
+   "rtl": "assign head      = ent_r[rbin[AW-1:0]];          // ENT_SYNC = 0: the write clock's entry flops directly (see the header",
+   "status": "PASS",
+   "result": "survived",
+   "caught_by": [],
+   "seconds": 29.4,
+   "wires": [
+    "dut.head"
+   ],
+   "wirebit": null,
+   "class": "entry_data"
+  },
+  {
+   "n": 22,
+   "mutation": "-mode inv -module rm_gp_fv_top -cell $driver$dut.g_ent[3].s.u_e.u.s[0] -port Q -portbit 59 -wire dut.u_props.u_data_s -wirebit 59 -src rm_gp_props.sv:114.23 -src xpm_formal.sv:28.5",
+   "mode": "inv",
+   "module": "rm_gp_fv_top",
+   "wire": "dut.u_props.u_data_s",
+   "src": "rm_gp_props.sv:114.23",
+   "rtl": "logic [1:0][73:0] u_data_s [1 << AW];",
+   "status": "PASS",
+   "result": "survived",
+   "caught_by": [],
+   "seconds": 26.3,
+   "wires": [
+    "dut.g_ent[3].s.u_e.u.s",
+    "rclk"
+   ],
+   "wirebit": 59,
+   "class": "entry_data"
+  },
+  {
+   "n": 23,
+   "mutation": "-mode const1 -module rm_gp_fv_top -cell $160 -port B -portbit 14 -src xpm_formal.sv:26.48-26.60",
+   "mode": "const1",
+   "module": "rm_gp_fv_top",
+   "wire": null,
+   "src": "xpm_formal.sv:26.48-26.60",
+   "rtl": "assign late = (d ^ dlast) & sk & ~held & ~(s[0] ^ dlast);    // only a bit that has not yet shown its new value can stil",
+   "status": "PASS",
+   "result": "survived",
+   "caught_by": [],
+   "seconds": 31.8,
+   "wires": [
+    "dut.g_ent[2].s.u_e.u.dlast",
+    "dut.g_ent[2].s.u_e.u.s"
+   ],
+   "wirebit": null,
+   "class": "entry_data"
+  },
+  {
+   "n": 24,
+   "mutation": "-mode cnot1 -module rm_gp_fv_top -cell $driver$dut.g_ent[2].s.u_e.u.s[0] -port Q -portbit 68 -ctrlbit 11 -wire dut.u_props.u_data_s -wirebit 216 -src rm_gp_props.sv:114.23 -src xpm_formal.sv:28.5",
+   "mode": "cnot1",
+   "module": "rm_gp_fv_top",
+   "wire": "dut.u_props.u_data_s",
+   "src": "rm_gp_props.sv:114.23",
+   "rtl": "logic [1:0][73:0] u_data_s [1 << AW];",
+   "status": "PASS",
+   "result": "survived",
+   "caught_by": [],
+   "seconds": 31.4,
+   "wires": [
+    "dut.g_ent[2].s.u_e.u.s",
+    "rclk"
+   ],
+   "wirebit": 216,
+   "class": "entry_data"
+  },
+  {
+   "n": 25,
+   "mutation": "-mode cnot1 -module rm_gp_fv_top -cell $driver$dut.g_ent[0].s.u_e.u.held -port Q -portbit 39 -ctrlbit 31 -wire dut.u_props.u_data_h -wirebit 261 -src rm_gp_props.sv:115.23 -src xpm_formal.sv:28.5",
+   "mode": "cnot1",
+   "module": "rm_gp_fv_top",
+   "wire": "dut.u_props.u_data_h",
+   "src": "rm_gp_props.sv:115.23",
+   "rtl": "logic [73:0]      u_data_h [1 << AW];",
+   "status": "PASS",
+   "result": "survived",
+   "caught_by": [],
+   "seconds": 33.7,
+   "wires": [
+    "dut.g_ent[0].s.u_e.u.held",
+    "dut.g_ent[0].s.u_e.u.late",
+    "rclk"
+   ],
+   "wirebit": 261,
+   "class": "entry_data"
+  },
+  {
+   "n": 26,
+   "mutation": "-mode inv -module rm_gp_fv_top -cell $145 -port B -portbit 30 -src xpm_formal.sv:29.17-29.45",
+   "mode": "inv",
+   "module": "rm_gp_fv_top",
+   "wire": null,
+   "src": "xpm_formal.sv:29.17-29.45",
+   "rtl": "s[0] <= (d & ~late) | (dlast & late);",
+   "status": "PASS",
+   "result": "survived",
+   "caught_by": [],
+   "seconds": 33.1,
+   "wires": [],
+   "wirebit": null,
+   "class": "other"
+  },
+  {
+   "n": 27,
+   "mutation": "-mode cnot1 -module rm_gp_fv_top -cell $driver$dut.g_ent[3].s.u_e.u.held -port Q -portbit 9 -ctrlbit 56 -wire dut.u_props.u_data_h -wirebit 9 -src rm_gp_props.sv:115.23 -src xpm_formal.sv:28.5",
+   "mode": "cnot1",
+   "module": "rm_gp_fv_top",
+   "wire": "dut.u_props.u_data_h",
+   "src": "rm_gp_props.sv:115.23",
+   "rtl": "logic [73:0]      u_data_h [1 << AW];",
+   "status": "PASS",
+   "result": "survived",
+   "caught_by": [],
+   "seconds": 31.6,
+   "wires": [
+    "dut.g_ent[3].s.u_e.u.held",
+    "dut.g_ent[3].s.u_e.u.late",
+    "rclk"
+   ],
+   "wirebit": 9,
+   "class": "entry_data"
+  },
+  {
+   "n": 28,
+   "mutation": "-mode const0 -module rm_gp_fv_top -cell $180 -port B -portbit 61 -src xpm_formal.sv:26.20-26.29",
+   "mode": "const0",
+   "module": "rm_gp_fv_top",
+   "wire": null,
+   "src": "xpm_formal.sv:26.20-26.29",
+   "rtl": "assign late = (d ^ dlast) & sk & ~held & ~(s[0] ^ dlast);    // only a bit that has not yet shown its new value can stil",
+   "status": "PASS",
+   "result": "survived",
+   "caught_by": [],
+   "seconds": 32.8,
+   "wires": [
+    "dut.g_ent[3].s.u_e.u.dlast",
+    "dut.ent"
+   ],
+   "wirebit": null,
+   "class": "entry_data"
+  },
+  {
+   "n": 29,
+   "mutation": "-mode inv -module rm_gp_fv_top -cell $114 -port Y -portbit 4 -wire dut.g_ent[0].s.u_e.u.late -wirebit 4 -src xpm_formal.sv:25.19 -src xpm_formal.sv:26.19-26.61",
+   "mode": "inv",
+   "module": "rm_gp_fv_top",
+   "wire": "dut.g_ent[0].s.u_e.u.late",
+   "src": "xpm_formal.sv:25.19",
+   "rtl": "logic [W-1:0] late;",
+   "status": "PASS",
+   "result": "survived",
+   "caught_by": [],
+   "seconds": 31.6,
+   "wires": [
+    "dut.g_ent[0].s.u_e.u.late"
+   ],
+   "wirebit": 4,
+   "class": "entry_data"
+  },
+  {
+   "n": 30,
+   "mutation": "-mode cnot1 -module rm_gp_fv_top -cell $183 -port Y -portbit 63 -ctrlbit 69 -src xpm_formal.sv:26.19-26.43",
+   "mode": "cnot1",
+   "module": "rm_gp_fv_top",
+   "wire": null,
+   "src": "xpm_formal.sv:26.19-26.43",
+   "rtl": "assign late = (d ^ dlast) & sk & ~held & ~(s[0] ^ dlast);    // only a bit that has not yet shown its new value can stil",
+   "status": "PASS",
+   "result": "survived",
+   "caught_by": [],
+   "seconds": 31.0,
+   "wires": [],
+   "wirebit": null,
+   "class": "other"
+  },
+  {
+   "n": 31,
+   "mutation": "-mode cnot0 -module rm_gp_fv_top -cell $procmux$432 -port Y -portbit 16 -ctrlbit 43 -src rate_match_gp.sv:129.32-142.16 -src rate_match_gp.sv:129.22-142.57",
+   "mode": "cnot0",
+   "module": "rm_gp_fv_top",
+   "wire": null,
+   "src": "rate_match_gp.sv:129.32-142.16",
+   "rtl": "end else if (slot) begin",
+   "status": "PASS",
+   "result": "survived",
+   "caught_by": [],
+   "seconds": 32.0,
+   "wires": [
+    "dut.slot",
+    "dut.r_d"
+   ],
+   "wirebit": null,
+   "class": "liveness"
+  },
+  {
+   "n": 32,
+   "mutation": "-mode const1 -module rm_gp_fv_top -cell $driver$dut.u_wp.g -port Q -portbit 2 -wire dut.u_wp.u.d -wirebit 2 -src xpm_formal.sv:14.25 -src xpm_formal.sv:54.5",
+   "mode": "const1",
+   "module": "rm_gp_fv_top",
+   "wire": "dut.u_wp.u.d",
+   "src": "xpm_formal.sv:14.25",
+   "rtl": "input  wire [W-1:0] d,",
+   "status": "FAIL",
+   "result": "killed",
+   "caught_by": [
+    "h5a_wp_chain_order"
+   ],
+   "seconds": 1.1,
+   "wires": [
+    "dut.u_wp.g",
+    "wclk"
+   ],
+   "wirebit": 2
+  },
+  {
+   "n": 33,
+   "mutation": "-mode const0 -module rm_gp_fv_top -cell $166 -port A -portbit 29 -src xpm_formal.sv:29.22-29.27",
+   "mode": "const0",
+   "module": "rm_gp_fv_top",
+   "wire": null,
+   "src": "xpm_formal.sv:29.22-29.27",
+   "rtl": "s[0] <= (d & ~late) | (dlast & late);",
+   "status": "PASS",
+   "result": "survived",
+   "caught_by": [],
+   "seconds": 31.5,
+   "wires": [
+    "dut.g_ent[2].s.u_e.u.late"
+   ],
+   "wirebit": null,
+   "class": "entry_data"
+  },
+  {
+   "n": 34,
+   "mutation": "-mode cnot1 -module rm_gp_fv_top -cell $procmux$594 -port Y -portbit 1 -ctrlbit 5 -src rate_match_gp.sv:120.19-123.12 -src rate_match_gp.sv:120.9-144.12",
+   "mode": "cnot1",
+   "module": "rm_gp_fv_top",
+   "wire": null,
+   "src": "rate_match_gp.sv:120.19-123.12",
+   "rtl": "if (rrst) begin",
+   "status": "PASS",
+   "result": "survived",
+   "caught_by": [],
+   "seconds": 32.1,
+   "wires": [
+    "rrst"
+   ],
+   "wirebit": null,
+   "class": "free_input"
+  },
+  {
+   "n": 35,
+   "mutation": "-mode const0 -module rm_gp_fv_top -cell $12 -port A -portbit 0 -wire wrst -wirebit 0 -src rm_gp_fv_top.sv:13.17 -src rate_match_gp.sv:61.39-61.44",
+   "mode": "const0",
+   "module": "rm_gp_fv_top",
+   "wire": "wrst",
+   "src": "rm_gp_fv_top.sv:13.17",
+   "rtl": "input logic wrst, rrst, clr_w, clr_r,",
+   "status": "PASS",
+   "result": "survived",
+   "caught_by": [],
+   "seconds": 30.8,
+   "wires": [
+    "wrst"
+   ],
+   "wirebit": 0,
+   "class": "free_input"
+  },
+  {
+   "n": 36,
+   "mutation": "-mode const0 -module rm_gp_fv_top -cell $driver$dut.g_ent[1].s.u_e.u.s[0] -port Q -portbit 55 -wire dut.u_props.u_data_s -wirebit 351 -src rm_gp_props.sv:114.23 -src xpm_formal.sv:28.5",
+   "mode": "const0",
+   "module": "rm_gp_fv_top",
+   "wire": "dut.u_props.u_data_s",
+   "src": "rm_gp_props.sv:114.23",
+   "rtl": "logic [1:0][73:0] u_data_s [1 << AW];",
+   "status": "PASS",
+   "result": "survived",
+   "caught_by": [],
+   "seconds": 32.0,
+   "wires": [
+    "dut.g_ent[1].s.u_e.u.s",
+    "rclk"
+   ],
+   "wirebit": 351,
+   "class": "entry_data"
+  },
+  {
+   "n": 37,
+   "mutation": "-mode inv -module rm_gp_fv_top -cell $238 -port Y -portbit 0 -wire dut.u_props.slot -wirebit 0 -src rm_gp_props.sv:25.35 -src rate_match_gp.sv:105.25-105.38",
+   "mode": "inv",
+   "module": "rm_gp_fv_top",
+   "wire": "dut.u_props.slot",
+   "src": "rm_gp_props.sv:25.35",
+   "rtl": "input logic can_read, lock_s, slot, in_frame, do_pop, do_del, rd_en,",
+   "status": "PASS",
+   "result": "survived",
+   "caught_by": [],
+   "seconds": 32.0,
+   "wires": [
+    "dut.slot",
+    "dut.pace"
+   ],
+   "wirebit": 0,
+   "class": "liveness"
+  },
+  {
+   "n": 38,
+   "mutation": "-mode const1 -module rm_gp_fv_top -cell $procmux$532 -port Y -portbit 20 -src rate_match_gp.sv:126.26-129.16 -src rate_match_gp.sv:126.13-142.57",
+   "mode": "const1",
+   "module": "rm_gp_fv_top",
+   "wire": null,
+   "src": "rate_match_gp.sv:126.26-129.16",
+   "rtl": "if (!lock_s) begin",
+   "status": "PASS",
+   "result": "survived",
+   "caught_by": [],
+   "seconds": 32.7,
+   "wires": [
+    "dut.u_lk.u.s",
+    "dut.r_d"
+   ],
+   "wirebit": null,
+   "class": "liveness"
+  },
+  {
+   "n": 39,
+   "mutation": "-mode cnot1 -module rm_gp_fv_top -cell $162 -port Y -portbit 54 -ctrlbit 19 -wire dut.g_ent[2].s.u_e.u.late -wirebit 54 -src xpm_formal.sv:25.19 -src xpm_formal.sv:26.19-26.61",
+   "mode": "cnot1",
+   "module": "rm_gp_fv_top",
+   "wire": "dut.g_ent[2].s.u_e.u.late",
+   "src": "xpm_formal.sv:25.19",
+   "rtl": "logic [W-1:0] late;",
+   "status": "PASS",
+   "result": "survived",
+   "caught_by": [],
+   "seconds": 33.6,
+   "wires": [
+    "dut.g_ent[2].s.u_e.u.late"
+   ],
+   "wirebit": 54,
+   "class": "entry_data"
+  },
+  {
+   "n": 40,
+   "mutation": "-mode inv -module rm_gp_fv_top -cell $113 -port Y -portbit 64 -src xpm_formal.sv:26.46-26.61",
+   "mode": "inv",
+   "module": "rm_gp_fv_top",
+   "wire": null,
+   "src": "xpm_formal.sv:26.46-26.61",
+   "rtl": "assign late = (d ^ dlast) & sk & ~held & ~(s[0] ^ dlast);    // only a bit that has not yet shown its new value can stil",
+   "status": "PASS",
+   "result": "survived",
+   "caught_by": [],
+   "seconds": 32.7,
+   "wires": [],
+   "wirebit": null,
+   "class": "other"
+  },
+  {
+   "n": 41,
+   "mutation": "-mode const0 -module rm_gp_fv_top -cell $121 -port Y -portbit 69 -src xpm_formal.sv:29.17-29.45",
+   "mode": "const0",
+   "module": "rm_gp_fv_top",
+   "wire": null,
+   "src": "xpm_formal.sv:29.17-29.45",
+   "rtl": "s[0] <= (d & ~late) | (dlast & late);",
+   "status": "PASS",
+   "result": "survived",
+   "caught_by": [],
+   "seconds": 32.9,
+   "wires": [],
+   "wirebit": null,
+   "class": "other"
+  },
+  {
+   "n": 42,
+   "mutation": "-mode cnot0 -module rm_gp_fv_top -cell $137 -port Y -portbit 29 -ctrlbit 3 -src xpm_formal.sv:26.46-26.61",
+   "mode": "cnot0",
+   "module": "rm_gp_fv_top",
+   "wire": null,
+   "src": "xpm_formal.sv:26.46-26.61",
+   "rtl": "assign late = (d ^ dlast) & sk & ~held & ~(s[0] ^ dlast);    // only a bit that has not yet shown its new value can stil",
+   "status": "PASS",
+   "result": "survived",
+   "caught_by": [],
+   "seconds": 27.9,
+   "wires": [],
+   "wirebit": null,
+   "class": "other"
+  },
+  {
+   "n": 43,
+   "mutation": "-mode cnot1 -module rm_gp_fv_top -cell $procmux$253 -port A -portbit 17 -ctrlbit 19 -src rate_match_gp.sv:132.31-137.20 -src rate_match_gp.sv:132.17-141.53",
+   "mode": "cnot1",
+   "module": "rm_gp_fv_top",
+   "wire": null,
+   "src": "rate_match_gp.sv:132.31-137.20",
+   "rtl": "if (can_read) begin",
+   "status": "PASS",
+   "result": "survived",
+   "caught_by": [],
+   "seconds": 29.6,
+   "wires": [
+    "dut.can_read",
+    "dut.head"
+   ],
+   "wirebit": null,
+   "class": "entry_data"
+  },
+  {
+   "n": 44,
+   "mutation": "-mode const0 -module rm_gp_fv_top -cell $driver$dut.ent[3] -port Q -portbit 1 -wire dut.u_props.ent -wirebit 1 -src rm_gp_props.sv:28.24 -src rate_match_gp.sv:62.5",
+   "mode": "const0",
+   "module": "rm_gp_fv_top",
+   "wire": "dut.u_props.ent",
+   "src": "rm_gp_props.sv:28.24",
+   "rtl": "input logic [73:0] ent [1 << AW],",
+   "status": "PASS",
+   "result": "survived",
+   "caught_by": [],
+   "seconds": 31.5,
+   "wires": [
+    "dut.ent",
+    "wclk"
+   ],
+   "wirebit": 1,
+   "class": "entry_data"
+  },
+  {
+   "n": 45,
+   "mutation": "-mode cnot0 -module rm_gp_fv_top -cell $driver$dut.g_ent[2].s.u_e.u.s[0] -port Q -portbit 4 -ctrlbit 67 -wire dut.u_props.u_data_s -wirebit 152 -src rm_gp_props.sv:114.23 -src xpm_formal.sv:28.5",
+   "mode": "cnot0",
+   "module": "rm_gp_fv_top",
+   "wire": "dut.u_props.u_data_s",
+   "src": "rm_gp_props.sv:114.23",
+   "rtl": "logic [1:0][73:0] u_data_s [1 << AW];",
+   "status": "PASS",
+   "result": "survived",
+   "caught_by": [],
+   "seconds": 30.8,
+   "wires": [
+    "dut.g_ent[2].s.u_e.u.s",
+    "rclk"
+   ],
+   "wirebit": 152,
+   "class": "entry_data"
+  },
+  {
+   "n": 46,
+   "mutation": "-mode cnot0 -module rm_gp_fv_top -cell $231 -port Y -portbit 33 -ctrlbit 11 -wire dut.u_props.head -wirebit 33 -src rm_gp_props.sv:27.24 -src rate_match_gp.sv:102.24-102.43",
+   "mode": "cnot0",
+   "module": "rm_gp_fv_top",
+   "wire": "dut.u_props.head",
+   "src": "rm_gp_props.sv:27.24",
+   "rtl": "input logic [73:0] head,",
+   "status": "PASS",
+   "result": "survived",
+   "caught_by": [],
+   "seconds": 31.5,
+   "wires": [
+    "dut.head"
+   ],
+   "wirebit": 33,
+   "class": "entry_data"
+  },
+  {
+   "n": 47,
+   "mutation": "-mode const1 -module rm_gp_fv_top -cell $109 -port A -portbit 53 -src xpm_formal.sv:26.19-26.35",
+   "mode": "const1",
+   "module": "rm_gp_fv_top",
+   "wire": null,
+   "src": "xpm_formal.sv:26.19-26.35",
+   "rtl": "assign late = (d ^ dlast) & sk & ~held & ~(s[0] ^ dlast);    // only a bit that has not yet shown its new value can stil",
+   "status": "PASS",
+   "result": "survived",
+   "caught_by": [],
+   "seconds": 27.9,
+   "wires": [],
+   "wirebit": null,
+   "class": "other"
+  },
+  {
+   "n": 48,
+   "mutation": "-mode inv -module rm_gp_fv_top -cell $263 -port Y -portbit 0 -src rate_match_gp.sv:114.21-114.77",
+   "mode": "inv",
+   "module": "rm_gp_fv_top",
+   "wire": null,
+   "src": "rate_match_gp.sv:114.21-114.77",
+   "rtl": "assign do_del = !rrst && can_read && lock_s && !slot && (fill > CW'(HI)) && !in_frame && keep_ok && head_idle;",
+   "status": "FAIL",
+   "result": "killed",
+   "caught_by": [
+    "p4_no_underflow"
+   ],
+   "seconds": 1.3,
+   "wires": [],
+   "wirebit": null
+  },
+  {
+   "n": 49,
+   "mutation": "-mode cnot1 -module rm_gp_fv_top -cell $233 -port A -portbit 2 -ctrlbit 1 -src rate_match_gp.sv:103.25-103.38",
+   "mode": "cnot1",
+   "module": "rm_gp_fv_top",
+   "wire": null,
+   "src": "rate_match_gp.sv:103.25-103.38",
+   "rtl": "assign fill      = (wbin_r - rbin) & {CW{1'b1}};     // blocks whose write pointer has crossed and that are not yet read",
+   "status": "FAIL",
+   "result": "killed",
+   "caught_by": [
+    "p3_rview"
+   ],
+   "seconds": 3.2,
+   "wires": [
+    "dut.fill",
+    "dut.rbin"
+   ],
+   "wirebit": null
+  },
+  {
+   "n": 50,
+   "mutation": "-mode inv -module rm_gp_fv_top -cell $driver$dut.ent[1] -port Q -portbit 68 -wire dut.u_props.ent -wirebit 216 -src rm_gp_props.sv:28.24 -src rate_match_gp.sv:62.5",
+   "mode": "inv",
+   "module": "rm_gp_fv_top",
+   "wire": "dut.u_props.ent",
+   "src": "rm_gp_props.sv:28.24",
+   "rtl": "input logic [73:0] ent [1 << AW],",
+   "status": "PASS",
+   "result": "survived",
+   "caught_by": [],
+   "seconds": 32.6,
+   "wires": [
+    "dut.ent",
+    "wclk"
+   ],
+   "wirebit": 216,
+   "class": "entry_data"
+  },
+  {
+   "n": 51,
+   "mutation": "-mode const1 -module rm_gp_fv_top -cell $driver$dut.u_lk.u.s[1] -port Q -portbit 0 -wire dut.u_props.lock_s -wirebit 0 -src rm_gp_props.sv:25.27 -src xpm_formal.sv:28.5",
+   "mode": "const1",
+   "module": "rm_gp_fv_top",
+   "wire": "dut.u_props.lock_s",
+   "src": "rm_gp_props.sv:25.27",
+   "rtl": "input logic can_read, lock_s, slot, in_frame, do_pop, do_del, rd_en,",
+   "status": "PASS",
+   "result": "survived",
+   "caught_by": [],
+   "seconds": 30.4,
+   "wires": [
+    "dut.u_lk.u.s",
+    "rclk"
+   ],
+   "wirebit": 0,
+   "class": "liveness"
+  },
+  {
+   "n": 52,
+   "mutation": "-mode cnot0 -module rm_gp_fv_top -cell $driver$dut.g_ent[1].s.u_e.u.s[0] -port Q -portbit 43 -ctrlbit 38 -wire dut.u_props.u_data_s -wirebit 339 -src rm_gp_props.sv:114.23 -src xpm_formal.sv:28.5",
+   "mode": "cnot0",
+   "module": "rm_gp_fv_top",
+   "wire": "dut.u_props.u_data_s",
+   "src": "rm_gp_props.sv:114.23",
+   "rtl": "logic [1:0][73:0] u_data_s [1 << AW];",
+   "status": "PASS",
+   "result": "survived",
+   "caught_by": [],
+   "seconds": 31.2,
+   "wires": [
+    "dut.g_ent[1].s.u_e.u.s",
+    "rclk"
+   ],
+   "wirebit": 339,
+   "class": "entry_data"
+  },
+  {
+   "n": 53,
+   "mutation": "-mode const1 -module rm_gp_fv_top -cell $driver$dut.g_ent[2].s.u_e.u.dlast -port Q -portbit 1 -wire dut.g_ent[2].s.u_e.u.dlast -wirebit 1 -src xpm_formal.sv:23.19 -src xpm_formal.sv:27.5",
+   "mode": "const1",
+   "module": "rm_gp_fv_top",
+   "wire": "dut.g_ent[2].s.u_e.u.dlast",
+   "src": "xpm_formal.sv:23.19",
+   "rtl": "logic [W-1:0] dlast = '0;",
+   "status": "PASS",
+   "result": "survived",
+   "caught_by": [],
+   "seconds": 30.4,
+   "wires": [
+    "dut.g_ent[2].s.u_e.u.dlast",
+    "dut.ent",
+    "wclk"
+   ],
+   "wirebit": 1,
+   "class": "entry_data"
+  },
+  {
+   "n": 54,
+   "mutation": "-mode inv -module rm_gp_fv_top -cell $279 -port A -portbit 5 -src rate_match_gp.sv:124.22-124.35",
+   "mode": "inv",
+   "module": "rm_gp_fv_top",
+   "wire": null,
+   "src": "rate_match_gp.sv:124.22-124.35",
+   "rtl": "pace <= (pace == 6'd32) ? 6'd0 : pace + 6'd1;",
+   "status": "PASS",
+   "result": "survived",
+   "caught_by": [],
+   "seconds": 32.3,
+   "wires": [
+    "dut.pace"
+   ],
+   "wirebit": null,
+   "class": "liveness"
+  },
+  {
+   "n": 55,
+   "mutation": "-mode cnot1 -module rm_gp_fv_top -cell $280 -port Y -portbit 2 -ctrlbit 1 -src rate_match_gp.sv:124.46-124.57",
+   "mode": "cnot1",
+   "module": "rm_gp_fv_top",
+   "wire": null,
+   "src": "rate_match_gp.sv:124.46-124.57",
+   "rtl": "pace <= (pace == 6'd32) ? 6'd0 : pace + 6'd1;",
+   "status": "PASS",
+   "result": "survived",
+   "caught_by": [],
+   "seconds": 27.6,
+   "wires": [
+    "dut.pace"
+   ],
+   "wirebit": null,
+   "class": "liveness"
+  },
+  {
+   "n": 56,
+   "mutation": "-mode cnot1 -module rm_gp_fv_top -cell $driver$dut.u_rp.u.s[0] -port Q -portbit 1 -ctrlbit 2 -wire dut.u_rp.u.s -wirebit 1 -src xpm_formal.sv:22.26 -src xpm_formal.sv:28.5",
+   "mode": "cnot1",
+   "module": "rm_gp_fv_top",
+   "wire": "dut.u_rp.u.s",
+   "src": "xpm_formal.sv:22.26",
+   "rtl": "logic [N-1:0][W-1:0] s = '0;",
+   "status": "FAIL",
+   "result": "killed",
+   "caught_by": [
+    "h5b_rp_chain_order"
+   ],
+   "seconds": 19.8,
+   "wires": [
+    "dut.u_rp.u.s",
+    "wclk"
+   ],
+   "wirebit": 1
+  },
+  {
+   "n": 57,
+   "mutation": "-mode cnot0 -module rm_gp_fv_top -cell $182 -port A -portbit 34 -ctrlbit 67 -wire dut.u_props.u_data_h -wirebit 34 -src rm_gp_props.sv:115.23 -src xpm_formal.sv:26.38-26.43",
+   "mode": "cnot0",
+   "module": "rm_gp_fv_top",
+   "wire": "dut.u_props.u_data_h",
+   "src": "rm_gp_props.sv:115.23",
+   "rtl": "logic [73:0]      u_data_h [1 << AW];",
+   "status": "PASS",
+   "result": "survived",
+   "caught_by": [],
+   "seconds": 29.7,
+   "wires": [
+    "dut.g_ent[3].s.u_e.u.held"
+   ],
+   "wirebit": 34,
+   "class": "entry_data"
+  },
+  {
+   "n": 58,
+   "mutation": "-mode const0 -module rm_gp_fv_top -cell $238 -port Y -portbit 0 -wire dut.u_props.slot -wirebit 0 -src rm_gp_props.sv:25.35 -src rate_match_gp.sv:105.25-105.38",
+   "mode": "const0",
+   "module": "rm_gp_fv_top",
+   "wire": "dut.u_props.slot",
+   "src": "rm_gp_props.sv:25.35",
+   "rtl": "input logic can_read, lock_s, slot, in_frame, do_pop, do_del, rd_en,",
+   "status": "PASS",
+   "result": "survived",
+   "caught_by": [],
+   "seconds": 27.4,
+   "wires": [
+    "dut.slot",
+    "dut.pace"
+   ],
+   "wirebit": 0,
+   "class": "liveness"
+  },
+  {
+   "n": 59,
+   "mutation": "-mode const1 -module rm_gp_fv_top -cell $12 -port Y -portbit 0 -src rate_match_gp.sv:61.39-61.44",
+   "mode": "const1",
+   "module": "rm_gp_fv_top",
+   "wire": null,
+   "src": "rate_match_gp.sv:61.39-61.44",
+   "rtl": "assign wr_en  = w_v && !f_full && !wrst;",
+   "status": "PASS",
+   "result": "survived",
+   "caught_by": [],
+   "seconds": 26.2,
+   "wires": [
+    "wrst"
+   ],
+   "wirebit": null,
+   "class": "free_input"
+  },
+  {
+   "n": 60,
+   "mutation": "-mode inv -module rm_gp_fv_top -cell $12 -port A -portbit 0 -wire wrst -wirebit 0 -src rm_gp_fv_top.sv:13.17 -src rate_match_gp.sv:61.39-61.44",
+   "mode": "inv",
+   "module": "rm_gp_fv_top",
+   "wire": "wrst",
+   "src": "rm_gp_fv_top.sv:13.17",
+   "rtl": "input logic wrst, rrst, clr_w, clr_r,",
+   "status": "PASS",
+   "result": "survived",
+   "caught_by": [],
+   "seconds": 26.6,
+   "wires": [
+    "wrst"
+   ],
+   "wirebit": 0,
+   "class": "free_input"
+  }
+ ],
+ "survivor_classes": {
+  "entry_data": 28,
+  "other": 10,
+  "liveness": 8,
+  "free_input": 4
+ }
+}

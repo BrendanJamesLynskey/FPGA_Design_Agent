@@ -10,7 +10,7 @@ Not in scope:
 - a claim that RapidWright's placer or router is better or worse than Vivado's in general; this is one chain, one part, our first-cut placer and a handful of period perturbations
 - the full brief 96 design; the chain is brief 96's own MAC and PCS RTL with a bare GT, not the GT Wizard design
 
-Kind: showcase; written by hand. State: built. For an agent: [AGENT.md](AGENT.md).
+Kind: showcase; written by a Claude Code session. State: built. For an agent: [AGENT.md](AGENT.md).
 
 <!-- prose:what -->
 **Purpose:** make RapidWright a first-class, tested capability of the agent and find out, with Vivado as the referee, where it helps.
@@ -78,7 +78,7 @@ Interfaces:
 | the stage 2 agent runs (access key in .env; Claude Code token file); needs Vivado 2026.1, RapidWright, the Claude Code arm of brief 05c, a heavy slot | `python3 designs/b100_rapidwright/agent_run/run_arm.py a --max-turns 30 --minutes 75` | yes | about 75 min |
 | tests that need neither tool; needs pytest | `python3 -m pytest -q designs/b100_rapidwright/tests agent/tests/test_100_rapidwright.py` | no | about 1 min |
 
-Tool: Vivado 2026.1. Build ID of the inputs at handover: none (no Vivado build of this directory). Knowledge-bank pin: `93d158c`.
+Tool: Vivado 2026.1. Build ID of the inputs at handover: none (no Vivado build of this directory). Knowledge-bank pin: `5e2eab8`.
 
 | File | What |
 |---|---|

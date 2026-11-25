@@ -1,0 +1,105 @@
+{
+ "function": "fft_real_axis",
+ "mutants": 11,
+ "valid": 11,
+ "killed": 11,
+ "survived": [],
+ "invalid": [],
+ "score_pct": 100.0,
+ "per_variant": {
+  "post": {
+   "valid": 11,
+   "killed": 11
+  }
+ },
+ "results": [
+  {
+   "name": "gap_not_enforced",
+   "variant": "post",
+   "class": "connection",
+   "status": "killed",
+   "detail": "directed {'LOGN': 5, 'W': 8, 'TW': 10, 'SCALE': 1, 'RND': 1, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 2}",
+   "why": "tready never falls: the frame gap rule is not enforced"
+  },
+  {
+   "name": "gap_one_short",
+   "variant": "post",
+   "class": "constant",
+   "status": "killed",
+   "detail": "directed {'LOGN': 5, 'W': 8, 'TW': 10, 'SCALE': 1, 'RND': 1, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 2}",
+   "why": "tready is low one clock too short"
+  },
+  {
+   "name": "gap_quarter",
+   "variant": "post",
+   "class": "constant",
+   "status": "killed",
+   "detail": "directed {'LOGN': 5, 'W': 8, 'TW': 10, 'SCALE': 1, 'RND': 1, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 2}",
+   "why": "the gap is N/4 (the complex streaming rule) instead of the measured N/8"
+  },
+  {
+   "name": "core_sees_unaccepted",
+   "variant": "post",
+   "class": "operator",
+   "status": "killed",
+   "detail": "directed {'LOGN': 5, 'W': 8, 'TW': 10, 'SCALE': 1, 'RND': 1, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 2}",
+   "why": "beats are taken that were not accepted (tready low)"
+  },
+  {
+   "name": "start_polarity",
+   "variant": "post",
+   "class": "operator",
+   "status": "killed",
+   "detail": "directed {'LOGN': 5, 'W': 8, 'TW': 10, 'SCALE': 1, 'RND': 1, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 2}",
+   "why": "the start flag follows the wrong polarity of tlast"
+  },
+  {
+   "name": "sof_always",
+   "variant": "post",
+   "class": "connection",
+   "status": "killed",
+   "detail": "directed {'LOGN': 5, 'W': 8, 'TW': 10, 'SCALE': 1, 'RND': 1, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 2}",
+   "why": "every beat is a start of frame"
+  },
+  {
+   "name": "samples_exchanged",
+   "variant": "post",
+   "class": "connection",
+   "status": "killed",
+   "detail": "directed {'LOGN': 5, 'W': 8, 'TW': 10, 'SCALE': 1, 'RND': 1, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 2}",
+   "why": "the even and the odd sample exchanged"
+  },
+  {
+   "name": "pack_out",
+   "variant": "post",
+   "class": "connection",
+   "status": "killed",
+   "detail": "directed {'LOGN': 5, 'W': 8, 'TW': 10, 'SCALE': 1, 'RND': 1, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 2}",
+   "why": "real and imaginary parts exchanged on the output"
+  },
+  {
+   "name": "tlast_early",
+   "variant": "post",
+   "class": "constant",
+   "status": "killed",
+   "detail": "directed {'LOGN': 5, 'W': 8, 'TW': 10, 'SCALE': 1, 'RND': 1, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 2}",
+   "why": "tlast one beat early (N/2 instead of N/2 + 1 beats)"
+  },
+  {
+   "name": "ocnt_stuck",
+   "variant": "post",
+   "class": "connection",
+   "status": "killed",
+   "detail": "directed {'LOGN': 5, 'W': 8, 'TW': 10, 'SCALE': 1, 'RND': 1, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 2}",
+   "why": "the output beat counter never advances"
+  },
+  {
+   "name": "ocnt_not_restarted",
+   "variant": "post",
+   "class": "connection",
+   "status": "killed",
+   "detail": "directed {'LOGN': 5, 'W': 8, 'TW': 10, 'SCALE': 1, 'RND': 1, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 2}",
+   "why": "the output beat counter is not restarted at out_sof"
+  }
+ ]
+}

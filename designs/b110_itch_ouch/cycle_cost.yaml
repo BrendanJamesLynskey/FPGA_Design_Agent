@@ -1,0 +1,19 @@
+# Cycle cost of each block on the b110 path, from results/b110/latency_sim.json (brief 190; flow/cycle_cost.py renders and checks it).
+design: b110_itch_ouch
+doc: docs/itch_ouch.md
+unit: "clocks of 6.2061 ns, simulation, counted from T, the clock in which the last byte of the message is presented on s_*"
+rows:
+  - {id: mold, block: mold_rx, from_event: "T (last byte of the message presented)", to_event: "message delivered raw (m_v)",
+     record: results/b110/latency_sim.json, to: [non_speculative, mold_message_out]}
+  - {id: dec, block: itch_dec, from_event: "m_v", to_event: "decoded event (e_v)",
+     record: results/b110/latency_sim.json, from: [non_speculative, mold_message_out], to: [non_speculative, decoded_event]}
+  - {id: book, block: book_core, from_event: "e_v", to_event: "top-of-book update visible (an Add)",
+     record: results/b110/latency_sim.json, from: [non_speculative, decoded_event], to: [non_speculative, book_update_add]}
+  - {id: order_v, block: "risk_glue + ouch_enter, frame started at the verdict", from_event: "top-of-book update visible", to_event: "first word of the order frame",
+     record: results/b110/latency_sim.json, from: [non_speculative, book_update_add], to: [non_speculative, first_order_word]}
+  - {id: order_s, block: "risk_glue + ouch_enter, frame started speculatively", from_event: "e_v", to_event: "first word of the order frame",
+     record: results/b110/latency_sim.json, from: [speculative, decoded_event], to: [speculative, first_order_word],
+     why: "when the frame is idle, the order queue is empty and no earlier candidate is in flight, the frame starts from the candidate flag at decode, in parallel with the book, so the book's cycle cost is off this path; the verdict (clock 7) can still abort the frame, whose last word is at clock 10"}
+totals:
+  - {label: "T to first order word, frame started at the verdict", sum_of: [mold, dec, book, order_v], record: results/b110/latency_sim.json, path: [non_speculative, first_order_word]}
+  - {label: "T to first order word, frame started speculatively", sum_of: [mold, dec, order_s], record: results/b110/latency_sim.json, path: [speculative, first_order_word]}

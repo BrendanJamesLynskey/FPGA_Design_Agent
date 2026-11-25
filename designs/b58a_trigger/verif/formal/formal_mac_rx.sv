@@ -30,29 +30,38 @@ module formal_mac_rx (
             if (end_valid) f_in <= 1'b0;
         end
     end
+    // Every assertion is labelled (a_*) and paired with a cover of its own antecedent (a_*__ante, below; brief 143c).
     always_ff @(posedge clk) if (f_past && !rst) begin
         // bytes leave in order, numbered from 0, only inside a frame, and each one is the byte that came in
         if (out_valid) begin
-            assert (f_in);
-            assert (out_idx == f_cnt);
-            assert (out_sof == (f_cnt == 11'd0));
-            assert ($past(in_valid) && !$past(in_eof) && out_data == $past(in_data));
+            a_out_in_frame: assert (f_in);
+            a_out_index: assert (out_idx == f_cnt);
+            a_out_sof: assert (out_sof == (f_cnt == 11'd0));
+            a_out_is_input: assert ($past(in_valid) && !$past(in_eof) && out_data == $past(in_data));
         end
         // the verdict: length counted right; good only when long enough, short enough, no RX_ER and the FCS right
         if (end_valid) begin
-            assert (f_in);
-            assert (end_len == f_cnt);
-            assert (end_runt == (f_cnt < 11'(MINF)));
-            assert (end_giant == (f_cnt > 11'(MAXF)));
-            if (end_good) assert (!end_fcs_err && !end_runt && !end_giant && !end_er);
-            assert ($past(in_valid) && $past(in_eof));
+            a_end_in_frame: assert (f_in);
+            a_end_len: assert (end_len == f_cnt);
+            a_end_runt: assert (end_runt == (f_cnt < 11'(MINF)));
+            a_end_giant: assert (end_giant == (f_cnt > 11'(MAXF)));
+            if (end_good) a_end_good_clean: assert (!end_fcs_err && !end_runt && !end_giant && !end_er);
+            a_end_from_eof: assert ($past(in_valid) && $past(in_eof));
         end
-        assert (!(sof_pulse && out_valid));
+        a_sof_no_data: assert (!(sof_pulse && out_valid));
+    end
+    // antecedents (same guard): a byte leaves, a frame ends, a good frame ends, a start pulse comes
+    always_ff @(posedge clk) if (f_past && !rst) begin
+        a_out__ante: cover (out_valid && f_cnt != 11'd0);        // all a_out_*: not only the first byte
+        a_end__ante: cover (end_valid);                          // all a_end_* except a_end_good_clean
+        a_end_good_clean__ante: cover (end_valid && end_good);
+        a_sof_no_data__ante: cover (sof_pulse);
     end
     always_ff @(posedge clk) if (f_past && !rst) begin
-        cover (end_valid && end_runt);
-        cover (end_valid && end_giant);
-        cover (end_valid && end_er);
-        cover (ev_bad_pre);
+        c_runt: cover (end_valid && end_runt);
+        c_giant: cover (end_valid && end_giant);
+        c_er: cover (end_valid && end_er);
+        c_bad_pre: cover (ev_bad_pre);
+        c_good_frame: cover (end_valid && end_good);
     end
 endmodule

@@ -1,0 +1,91 @@
+# Machine-readable specification of the multiply-accumulate (arith brief 139a). The prose is spec.md; the two agree (tests/test_mac_package.py).
+schema: fda-arith/spec/1
+function: mac
+title: Multiply-accumulate (dot-product accumulator)
+model: arith/mac/model.py
+summary: "A multiply-accumulate unit with LANES products summed per clock into one accumulator: acc <= (clr ? 0 : acc) + sum of a_k * b_k when en = 1. Three implementations trade DSP blocks against fabric and latency: a DSP-mapped MAC with 1 to 3 register stages, a chain of LANES DSPs joined like a cascade, and an all-fabric MAC."
+semantics:
+  - "on a clock with en = 1: acc <= (clr ? 0 : acc) + the sum over the lanes of a_k * b_k, reduced modulo 2**ACCW; with en = 0 acc holds"
+  - "rst (synchronous) sets acc to 0 and discards every sample still in the pipeline, including the one presented on the same clock"
+  - "the products are signed (SIGNED = 1) or unsigned and are sign- or zero-extended to ACCW bits before they are added; there is no saturation"
+  - "acc is always the sum of the products since the last clr, modulo 2**ACCW, for any run length (Lean: ArithMac.run_noclr, ArithMac.run_after_clr)"
+ports:
+  - {name: clk, dir: in, width: 1, text: "clock"}
+  - {name: rst, dir: in, width: 1, text: "synchronous reset: clears acc and every sample in flight, including the sample presented on the same clock"}
+  - {name: en, dir: in, width: 1, text: "a sample is presented: its products are added to the accumulator"}
+  - {name: clr, dir: in, width: 1, text: "start a new sum: the accumulator's old value is replaced by 0 before this sample is added (a sample with en = 0 ignores clr)"}
+  - {name: a, dir: in, width: "LANES*WA", text: "LANES multiplicands, lane k in bits [k*WA +: WA]"}
+  - {name: b, dir: in, width: "LANES*WB", text: "LANES multipliers, lane k in bits [k*WB +: WB]"}
+  - {name: acc, dir: out, width: ACCW, text: "the accumulator, registered, modulo 2**ACCW: it wraps, it does not saturate"}
+parameters:
+  WA: {min: 1, text: "width of each a lane"}
+  WB: {min: 1, text: "width of each b lane"}
+  LANES: {min: 1, text: "products summed per clock (a dot product of LANES terms per sample)"}
+  ACCW: {min: "WA+WB", text: "accumulator width; guard bits for the run length are the user's choice"}
+  SIGNED: {values: [0, 1], text: "1: lanes and the accumulator are two's complement; 0: unsigned"}
+signedness: "SIGNED chooses the reading of every lane and of acc; the products are sign- (or zero-) extended to ACCW before they are added"
+exactness: "exact modulo 2**ACCW: acc equals the integer sum of the products since the last clr, reduced modulo 2**ACCW; no rounding, no saturation"
+latency_definition: "clocks from a sample being presented (en = 1) to acc including it; 1 means the same edge, as for a plain registered accumulator; one sample per clock in every variant"
+contract:
+  protocol: "plain registered ports with an enable: a sample (a, b, clr) is accepted on every clock where en = 1 and ignored where en = 0; no ready or backpressure (the block can always accept). The result is the registered accumulator, always valid after reset, and it changes only when a sample reaches the accumulator, latency clocks after it was presented"
+  throughput: "one sample (LANES products) per clock in every variant (initiation interval 1)"
+  latency: "per variant, in clocks: dsp NREG (1 to 3), dsp_cascade LANES + 1, fabric NREG (1 or 2); en and clr travel with the data, so a result can be matched to its sample by counting clocks"
+  reset: "synchronous rst, active high: clears acc and discards every sample in flight (including one presented on the same clock); hold it for at least one clock; the data registers inside the pipeline are not reset (only the enable pipeline is), which is harmless because a discarded sample has its enable cleared. Reset is needed once after power-up: the accumulator has no initial value"
+  clock: "one clock, rising edge; no clock gating; en is the only throttle"
+  stall: "an en = 0 clock is a bubble: the accumulator holds; there is no way to freeze the pipeline stages themselves, so a sample already in flight completes"
+integration:
+  port_timing: "all variants register the accumulator, so acc can be read by ordinary registers with a full clock of slack. Inputs: with NREG >= 2 (dsp, fabric) and for dsp_cascade the operands are registered inside, so they can be driven by ordinary registers; dsp with NREG 1 and fabric with NREG 1 leave the whole multiply-and-add as a combinational path from a/b to acc, a long path the caller must budget"
+  constraints: "no multicycle or false paths, one clock. DSP variants: keep operand, product and accumulator registers in the DSP (NREG 3); the accumulator feedback stays inside one DSP when LANES = 1, so do not insert logic between acc and its consumer that forces the P register out of the DSP (a second reader of acc is fine; a mux on acc is not). The synchronous reset and enable map onto the DSP's RSTP and CEP pins; an asynchronous reset would defeat that (FDA-HDL HDL-RST-03)"
+guess_wrong:
+  - "acc wraps modulo 2**ACCW and never saturates: a run of N products of full-scale operands needs about log2(N) guard bits beyond WA + WB"
+  - "clr does not clear acc to 0 on its own: it makes THIS clock's sample the first of a new sum (acc becomes the product, not 0); a sample with en = 0 ignores clr"
+  - "rst discards the samples in the pipeline as well as clearing acc; with latency L, a sample presented fewer than L clocks before rst is lost"
+  - "the output acc lags the input by the latency, and the variants differ in it (NREG, LANES + 1): compare results by latency, not by clock number"
+  - "with SIGNED = 1 every lane of a and b is signed; there is no mixed-signedness lane"
+  - "dsp_cascade needs its inputs for all lanes on the same clock: it delays the higher lanes itself, so the caller does not skew them"
+  - "ACCW must be at least WA + WB (the model and the tests assume it) and LANES at least 1; NREG above the stated range behaves as the maximum (3 for dsp, 2 for fabric); none of this is rejected by an assertion"
+  - "the data registers inside the pipeline are not reset: only en is, so after rst the accumulator is 0 and stays 0 until a new sample with en = 1 arrives"
+
+variants:
+  dsp:
+    file: rtl/mac_dsp.sv
+    module: mac_dsp
+    params: {WA: 16, WB: 16, LANES: 1, ACCW: 40, SIGNED: 1, NREG: 3}
+    throughput: "1 per clock"
+    latency: "NREG"
+    tradeoff: "one DSP per lane with the accumulate in the DSP (LANES = 1) or in the fabric (LANES > 1); NREG 3 uses the DSP's own operand, product and result registers"
+    exhaustive_points: [{WA: 3, WB: 3, LANES: 1, ACCW: 6, SIGNED: 1, NREG: 1}, {WA: 3, WB: 3, LANES: 1, ACCW: 8, SIGNED: 0, NREG: 2}, {WA: 3, WB: 3, LANES: 1, ACCW: 9, SIGNED: 1, NREG: 3}, {WA: 2, WB: 3, LANES: 2, ACCW: 7, SIGNED: 1, NREG: 3}, {WA: 2, WB: 2, LANES: 3, ACCW: 6, SIGNED: 0, NREG: 2}, {WA: 1, WB: 1, LANES: 1, ACCW: 2, SIGNED: 1, NREG: 1}]
+    random_points: [{WA: 16, WB: 16, LANES: 1, ACCW: 40, SIGNED: 1, NREG: 3}, {WA: 25, WB: 18, LANES: 1, ACCW: 48, SIGNED: 1, NREG: 2}, {WA: 18, WB: 18, LANES: 2, ACCW: 40, SIGNED: 0, NREG: 3}, {WA: 8, WB: 8, LANES: 4, ACCW: 20, SIGNED: 1, NREG: 1}, {WA: 12, WB: 12, LANES: 2, ACCW: 24, SIGNED: 1, NREG: 3}]
+    expected_primitives:
+      a7: "DSP48E1: LANES (WA <= 25, WB <= 18 signed); accumulate in the DSP for LANES = 1; registers absorbed at NREG = 3"
+      k26: "DSP48E2 (27 x 18): LANES; accumulate in the DSP for LANES = 1"
+    ooc_points: [{WA: 16, WB: 16, LANES: 1, ACCW: 40, SIGNED: 1, NREG: 3}, {WA: 16, WB: 16, LANES: 1, ACCW: 40, SIGNED: 1, NREG: 1}, {WA: 16, WB: 16, LANES: 2, ACCW: 40, SIGNED: 1, NREG: 3}, {WA: 16, WB: 16, LANES: 4, ACCW: 40, SIGNED: 1, NREG: 3}]
+    mutant_run: [{mode: exhaustive, params: {WA: 3, WB: 3, LANES: 1, ACCW: 6, SIGNED: 1, NREG: 1}}, {mode: exhaustive, params: {WA: 2, WB: 3, LANES: 2, ACCW: 7, SIGNED: 1, NREG: 3}}, {mode: exhaustive, params: {WA: 2, WB: 2, LANES: 3, ACCW: 6, SIGNED: 0, NREG: 2}}, {mode: randomised, params: {WA: 12, WB: 12, LANES: 2, ACCW: 24, SIGNED: 1, NREG: 3}, n: 600}]
+  dsp_cascade:
+    file: rtl/mac_dsp_cascade.sv
+    module: mac_dsp_cascade
+    params: {WA: 16, WB: 16, LANES: 2, ACCW: 40, SIGNED: 1}
+    throughput: "1 per clock"
+    latency: "LANES + 1"
+    tradeoff: "lanes chained like a DSP cascade (no fabric adder between lanes) at the price of LANES + 1 clocks of latency and skew registers on the operands"
+    exhaustive_points: [{WA: 3, WB: 3, LANES: 1, ACCW: 6, SIGNED: 1}, {WA: 2, WB: 3, LANES: 2, ACCW: 7, SIGNED: 1}, {WA: 2, WB: 2, LANES: 3, ACCW: 6, SIGNED: 0}, {WA: 1, WB: 2, LANES: 4, ACCW: 5, SIGNED: 1}, {WA: 2, WB: 2, LANES: 2, ACCW: 4, SIGNED: 0}]
+    random_points: [{WA: 16, WB: 16, LANES: 2, ACCW: 40, SIGNED: 1}, {WA: 18, WB: 18, LANES: 3, ACCW: 44, SIGNED: 0}, {WA: 8, WB: 8, LANES: 4, ACCW: 20, SIGNED: 1}, {WA: 12, WB: 9, LANES: 1, ACCW: 24, SIGNED: 1}]
+    expected_primitives:
+      a7: "DSP48E1: LANES chained PCOUT to PCIN, plus the accumulate in fabric or one DSP C-port add; skew registers (about (WA+WB)*LANES*(LANES-1)/2 FF or SRL)"
+      k26: "DSP48E2: as a7"
+    ooc_points: [{WA: 16, WB: 16, LANES: 2, ACCW: 40, SIGNED: 1}, {WA: 16, WB: 16, LANES: 4, ACCW: 40, SIGNED: 1}, {WA: 16, WB: 16, LANES: 8, ACCW: 40, SIGNED: 1}]
+    mutant_run: [{mode: exhaustive, params: {WA: 2, WB: 3, LANES: 2, ACCW: 7, SIGNED: 1}}, {mode: exhaustive, params: {WA: 2, WB: 2, LANES: 3, ACCW: 6, SIGNED: 0}}, {mode: randomised, params: {WA: 8, WB: 8, LANES: 4, ACCW: 20, SIGNED: 1}, n: 600}]
+  fabric:
+    file: rtl/mac_fabric.sv
+    module: mac_fabric
+    params: {WA: 16, WB: 16, LANES: 1, ACCW: 40, SIGNED: 1, NREG: 1}
+    throughput: "1 per clock"
+    latency: "NREG"
+    tradeoff: "no DSP at all: LUT array multipliers into a carry-chain accumulator; the largest and slowest, and the only one when the DSPs are taken"
+    exhaustive_points: [{WA: 3, WB: 3, LANES: 1, ACCW: 6, SIGNED: 1, NREG: 1}, {WA: 3, WB: 3, LANES: 1, ACCW: 8, SIGNED: 0, NREG: 2}, {WA: 2, WB: 3, LANES: 2, ACCW: 7, SIGNED: 1, NREG: 2}, {WA: 2, WB: 2, LANES: 3, ACCW: 6, SIGNED: 0, NREG: 1}, {WA: 1, WB: 1, LANES: 1, ACCW: 2, SIGNED: 1, NREG: 1}]
+    random_points: [{WA: 16, WB: 16, LANES: 1, ACCW: 40, SIGNED: 1, NREG: 1}, {WA: 12, WB: 9, LANES: 2, ACCW: 28, SIGNED: 0, NREG: 2}, {WA: 8, WB: 8, LANES: 4, ACCW: 20, SIGNED: 1, NREG: 1}]
+    expected_primitives:
+      a7: "0 DSP; about LANES*WA*WB LUTs; LANES*WB carry chains up to ACCW bits; ACCW FF (2*ACCW at NREG = 2)"
+      k26: "0 DSP; as a7 with CARRY8 cells"
+    ooc_points: [{WA: 16, WB: 16, LANES: 1, ACCW: 40, SIGNED: 1, NREG: 1}, {WA: 16, WB: 16, LANES: 1, ACCW: 40, SIGNED: 1, NREG: 2}, {WA: 16, WB: 16, LANES: 2, ACCW: 40, SIGNED: 1, NREG: 2}]
+    mutant_run: [{mode: exhaustive, params: {WA: 3, WB: 3, LANES: 1, ACCW: 6, SIGNED: 1, NREG: 1}}, {mode: exhaustive, params: {WA: 2, WB: 3, LANES: 2, ACCW: 7, SIGNED: 1, NREG: 2}}, {mode: exhaustive, params: {WA: 3, WB: 3, LANES: 1, ACCW: 8, SIGNED: 0, NREG: 2}}, {mode: randomised, params: {WA: 12, WB: 9, LANES: 2, ACCW: 28, SIGNED: 0, NREG: 2}, n: 600}]

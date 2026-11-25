@@ -17,3 +17,9 @@
 - path: designs/b96_kr260_10g/ip/amd_ip_xvc.tcl
   sha256: 322bd679d33e15d5ce4b9654ac129bd2e7a526b2b1001cd3aa35157a3c12014c
   why: "the debug path of build dbg_xvc (brief 131): Zynq UltraScale+ PS (default, only M_AXI_HPM0_LPD and pl_clk0 used), AXI Protocol Converter, Debug Bridge (AXI to BSCAN) and one ILA, so an ILA is reachable over Ethernet (XVC) in a debug build"
+- path: designs/b191_ps_axi_lat/ip/amd_ip_lat.tcl
+  sha256: d11b2c806756ae6b68b264306c9157e92ed73342e584b64b5829b514514b44dd
+  why: "the PS of the latency image of build ps_axi_lat (brief 191, board row B-R8): Zynq UltraScale+ PS with M_AXI_HPM0_FPD and M_AXI_HPM0_LPD at 32 bits and pl_clk0 at 100 MHz, so the Cortex-A53's access latency to the fabric can be measured"
+- path: designs/b196_secure_demo/dbg/ip/amd_ip_ila.tcl
+  sha256: 842ef5d47a316cae39f0c8c4fced2cb5b368cceaaa1b4908de0c1e58c14e1aba
+  why: "one ILA (ila 6.2, 16-bit probe) for the debug build of the production_secure demonstration (brief 196): the debug core the production_secure check must fail"

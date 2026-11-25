@@ -2,14 +2,14 @@
 source: designs/b89_lutnet_gen/handover.yaml; human view: README.md; refresh: python -m flow.handover fresh designs/b89_lutnet_gen
 
 ## identity
-kind=showcase produced_by=human part=xck26-sfvc784-2LV-c board=Kria KR260 (K26 SOM); also xc7a100tcsg324-1 (Nexys A7) out of context top=ooc_wrap (one generated network with an input register), out of context tool=Vivado 2026.1
+kind=showcase produced_by=session part=xck26-sfvc784-2LV-c board=Kria KR260 (K26 SOM); also xc7a100tcsg324-1 (Nexys A7) out of context top=ooc_wrap (one generated network with an input register), out of context tool=Vivado 2026.1
 
 ## summary
 Our own generator of LUT networks for nanosecond inference. It trains a sparse network with its quantisers in the loop, enumerates every neuron into a truth table, and emits SystemVerilog plus a bit-exact Python twin, with a choice of pipelining. On the brief 87 synthetic order-flow data its best network beats the trivial rule and equals the 87 boosted trees on the test split; it is built out of context on the K26 and the Artix-7 100T beside TreeLUT, the published tree-to-LUT tool, as the reference.
 not: real market data; the data are brief 87's seeded synthetic order flow with a planted signal; a board run or a full-design build; every hardware number is an out-of-context, post-route Vivado 2026.1 build; a general-purpose tool; the argmax is written for three classes, and the generator has been measured on one data set
 
 ## state
-stage=built vivado=2026.1 kb_pin=2338b83 build_id=None
+stage=built vivado=2026.1 kb_pin=5e2eab8 build_id=None
 gates: rtl_equals_twin=pass ooc_build_2026_1=pass board_run=not-run
 
 ## interface
@@ -40,7 +40,7 @@ RTL against the twins, lint (~2min): B89_RECORD=results/b89 python3 -m pytest -q
 
 ## records (path sha256-prefix; claims below cite R<n>)
 R1 designs/b89_lutnet_gen/tests/test_b89_rtl.py 3d9eb57504
-R2 results/b89/summary.json 48b73dd7e4
+R2 results/b89/summary.json b124c12000
 R3 results/b89/accuracy.json b2f23ad7c2
 
 ## evidence

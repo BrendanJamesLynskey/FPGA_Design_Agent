@@ -152,6 +152,16 @@
      "topic": "PS-PL clock crossings",
      "summary": "Both Zynq families clock PS-PL AXI ports from a PL-supplied clock and cross inside the PS, but ZU+ adds the LPD/FPD split, so a crossing into a powered-down domain behaves differently.",
      "confirmed": "doc"
+    },
+    {
+     "topic": "User clock uncertainty on crossings (crossing margin)",
+     "summary": "Both families: a user uncertainty leaves a datapath-only crossing bound unchanged, fails hold on other paths and lowers MTBF (reported on US+, settling slack on 7-series); per-crossing bounds are the margin.",
+     "confirmed": "tool"
+    },
+    {
+     "topic": "XPM handshake constraint values in a non-project build",
+     "summary": "AMD's 2026.1 xpm_cdc_handshake template sets max delay and bus skew at destination period x sync stages (up to 100 bits); a hand-written copy of the scoped constraints must match.",
+     "confirmed": "tool"
     }
    ],
    "docs": {
@@ -1133,6 +1143,11 @@
     {
      "topic": "Resetting only control registers",
      "summary": "No family difference found: resetting control registers only removes 15 LUTs and adds 2 control sets on both families (same bench).",
+     "confirmed": "tool"
+    },
+    {
+     "topic": "Register initial (power-up) values and hard blocks",
+     "summary": "No family difference found: initial values are free on fabric and IOB flip-flops, but a value of 1 keeps a register out of a DSP48 or block-RAM register; UltraRAM refuses initial contents.",
      "confirmed": "tool"
     }
    ],

@@ -1,0 +1,253 @@
+{
+ "function": "log2",
+ "mutants": 28,
+ "valid": 28,
+ "killed": 28,
+ "survived": [],
+ "invalid": [],
+ "score_pct": 100.0,
+ "per_variant": {
+  "table": {
+   "valid": 5,
+   "killed": 5
+  },
+  "lerp": {
+   "valid": 7,
+   "killed": 7
+  },
+  "poly2": {
+   "valid": 7,
+   "killed": 7
+  },
+  "cordic": {
+   "valid": 9,
+   "killed": 9
+  }
+ },
+ "results": [
+  {
+   "name": "t_round_half",
+   "variant": "table",
+   "class": "constant",
+   "status": "killed",
+   "detail": "exhaustive {'IW': 6, 'OW': 8, 'REG': 1}",
+   "why": "the rounding constant is a quarter of a place instead of half"
+  },
+  {
+   "name": "t_no_scale_index",
+   "variant": "table",
+   "class": "operator",
+   "status": "killed",
+   "detail": "exhaustive {'IW': 6, 'OW': 8, 'REG': 1}",
+   "why": "a narrower input is not scaled to the 256-entry table's index"
+  },
+  {
+   "name": "t_reg_shifted",
+   "variant": "table",
+   "class": "connection",
+   "status": "killed",
+   "detail": "exhaustive {'IW': 6, 'OW': 8, 'REG': 1}",
+   "why": "the output register shifts the result left"
+  },
+  {
+   "name": "t_sh_off",
+   "variant": "table",
+   "class": "constant",
+   "status": "killed",
+   "detail": "exhaustive {'IW': 6, 'OW': 8, 'REG': 1}",
+   "why": "the table is read with one fractional bit too many"
+  },
+  {
+   "name": "t_low_bits_cut",
+   "variant": "table",
+   "class": "operator",
+   "status": "killed",
+   "detail": "exhaustive {'IW': 8, 'OW': 12, 'REG': 0}",
+   "why": "the table output loses its low 8 bits"
+  },
+  {
+   "name": "l_no_round",
+   "variant": "lerp",
+   "class": "operator",
+   "status": "killed",
+   "detail": "exhaustive {'IW': 9, 'OW': 10, 'SB': 4}",
+   "why": "the interpolated value is truncated, not rounded"
+  },
+  {
+   "name": "l_slope_zero",
+   "variant": "lerp",
+   "class": "connection",
+   "status": "killed",
+   "detail": "exhaustive {'IW': 9, 'OW': 10, 'SB': 4}",
+   "why": "the slope register loses the slope"
+  },
+  {
+   "name": "l_c0_shift",
+   "variant": "lerp",
+   "class": "constant",
+   "status": "killed",
+   "detail": "exhaustive {'IW': 9, 'OW': 10, 'SB': 4}",
+   "why": "the break-point value is aligned one place low"
+  },
+  {
+   "name": "l_d_halved",
+   "variant": "lerp",
+   "class": "operator",
+   "status": "killed",
+   "detail": "exhaustive {'IW': 9, 'OW': 10, 'SB': 4}",
+   "why": "the position inside the segment is halved"
+  },
+  {
+   "name": "l_prod_sign",
+   "variant": "lerp",
+   "class": "operator",
+   "status": "killed",
+   "detail": "exhaustive {'IW': 9, 'OW': 10, 'SB': 4}",
+   "why": "the position is read as a signed number"
+  },
+  {
+   "name": "l_wrong_segment",
+   "variant": "lerp",
+   "class": "connection",
+   "status": "killed",
+   "detail": "exhaustive {'IW': 9, 'OW': 10, 'SB': 4}",
+   "why": "the break-point value comes from the neighbouring segment"
+  },
+  {
+   "name": "l_rs_off",
+   "variant": "lerp",
+   "class": "constant",
+   "status": "killed",
+   "detail": "exhaustive {'IW': 9, 'OW': 10, 'SB': 4}",
+   "why": "the final shift drops one bit too few"
+  },
+  {
+   "name": "p_floor_lost",
+   "variant": "poly2",
+   "class": "constant",
+   "status": "killed",
+   "detail": "exhaustive {'IW': 9, 'OW': 10, 'SB': 4}",
+   "why": "the first Horner product is shifted one place too far"
+  },
+  {
+   "name": "p_a1_lost",
+   "variant": "poly2",
+   "class": "connection",
+   "status": "killed",
+   "detail": "exhaustive {'IW': 9, 'OW': 10, 'SB': 4}",
+   "why": "the linear coefficient is lost"
+  },
+  {
+   "name": "p_a2_lost",
+   "variant": "poly2",
+   "class": "connection",
+   "status": "killed",
+   "detail": "exhaustive {'IW': 9, 'OW': 10, 'SB': 4}",
+   "why": "the quadratic coefficient is lost"
+  },
+  {
+   "name": "p_d_misaligned",
+   "variant": "poly2",
+   "class": "connection",
+   "status": "killed",
+   "detail": "exhaustive {'IW': 9, 'OW': 10, 'SB': 4}",
+   "why": "the second multiply uses the position of the input now, not of the one in the pipeline"
+  },
+  {
+   "name": "p_a0_halved",
+   "variant": "poly2",
+   "class": "operator",
+   "status": "killed",
+   "detail": "exhaustive {'IW': 9, 'OW': 10, 'SB': 4}",
+   "why": "the constant coefficient is halved in the second register"
+  },
+  {
+   "name": "p_acc_shift",
+   "variant": "poly2",
+   "class": "constant",
+   "status": "killed",
+   "detail": "exhaustive {'IW': 9, 'OW': 10, 'SB': 4}",
+   "why": "the constant coefficient is aligned one place low"
+  },
+  {
+   "name": "p_q_halved",
+   "variant": "poly2",
+   "class": "operator",
+   "status": "killed",
+   "detail": "exhaustive {'IW': 9, 'OW': 10, 'SB': 4}",
+   "why": "the first Horner result is halved"
+  },
+  {
+   "name": "c_no_repeat",
+   "variant": "cordic",
+   "class": "operator",
+   "status": "killed",
+   "detail": "exhaustive {'IW': 8, 'OW': 10, 'NIT': 12, 'G': 4}",
+   "why": "the iterations at shifts 4 and 13 are not repeated"
+  },
+  {
+   "name": "c_dir_flip",
+   "variant": "cordic",
+   "class": "operator",
+   "status": "killed",
+   "detail": "exhaustive {'IW': 8, 'OW': 10, 'NIT': 12, 'G': 4}",
+   "why": "the rotation direction is inverted"
+  },
+  {
+   "name": "c_z_update",
+   "variant": "cordic",
+   "class": "operator",
+   "status": "killed",
+   "detail": "exhaustive {'IW': 8, 'OW': 10, 'NIT': 12, 'G': 4}",
+   "why": "the angle accumulates with the wrong sign"
+  },
+  {
+   "name": "c_xs_plain",
+   "variant": "cordic",
+   "class": "constant",
+   "status": "killed",
+   "detail": "exhaustive {'IW': 8, 'OW': 10, 'NIT': 12, 'G': 4}",
+   "why": "the start x is m, not m + 1"
+  },
+  {
+   "name": "c_ys_shift",
+   "variant": "cordic",
+   "class": "constant",
+   "status": "killed",
+   "detail": "exhaustive {'IW': 8, 'OW': 10, 'NIT': 12, 'G': 4}",
+   "why": "the start y (m - 1) is doubled"
+  },
+  {
+   "name": "c_no_round",
+   "variant": "cordic",
+   "class": "operator",
+   "status": "killed",
+   "detail": "exhaustive {'IW': 8, 'OW': 10, 'NIT': 12, 'G': 4}",
+   "why": "the output is truncated, not rounded"
+  },
+  {
+   "name": "c_const",
+   "variant": "cordic",
+   "class": "constant",
+   "status": "killed",
+   "detail": "exhaustive {'IW': 8, 'OW': 10, 'NIT': 12, 'G': 4}",
+   "why": "the constant 2 / ln 2 is wrong in its third decimal"
+  },
+  {
+   "name": "c_x_stage",
+   "variant": "cordic",
+   "class": "operator",
+   "status": "killed",
+   "detail": "exhaustive {'IW': 8, 'OW': 10, 'NIT': 12, 'G': 4}",
+   "why": "x ignores the direction"
+  },
+  {
+   "name": "c_y_stage",
+   "variant": "cordic",
+   "class": "operator",
+   "status": "killed",
+   "detail": "exhaustive {'IW': 8, 'OW': 10, 'NIT': 12, 'G': 4}",
+   "why": "y ignores the direction"
+  }
+ ]
+}

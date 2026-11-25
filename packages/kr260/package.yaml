@@ -1,0 +1,87 @@
+# The package manifest (brief 174, docs/design_package.md). Every file under board/, refs/ and existing/ is listed
+# with its kind, source, licence, SHA-256 and a public flag. Files with public: false stay on disk and are git-ignored
+# (flow.package gitignore); only this manifest and the derived facts (board_facts.yaml) are committed.
+name: kr260
+board: kr260
+part: xck26-sfvc784-2LV-c
+board_fixed: true
+ingest:
+  net_filter: ^(HP[AB]\d|GEM[23]_|HPA_CLK|HPB_CLK|GTH_|SFP|P[12]_)
+files:
+- path: spec.md
+  kind: spec
+  source_url: null
+  licence: this repository (MIT)
+  public: true
+  sha256: 1dc7aa27825350f5afe4cf97c442f258d056895ccd484d9b56786d4f0ca39894
+  bytes: 650
+- path: board/allegro_dump/layers.csv
+  kind: allegro_dump
+  source_url: derived from the XTP756 board file by the owner-run dump (brief 162)
+  licence: 'derived from an AMD file: raw CSV not committed, only derived facts'
+  public: false
+  sha256: bffa57ecfc1a71fb9c422efb181192a98f45892d9a06cf21d62f90c17676c695
+  bytes: 7368
+- path: board/allegro_dump/meta.txt
+  kind: notes
+  source_url: derived from the XTP756 board file by the owner-run dump (brief 162)
+  licence: 'derived from an AMD file: raw CSV not committed, only derived facts'
+  public: false
+  sha256: 159ea98d2ea2b49e346b8be0a95320a0c7f1908301ca4c1c343422c5bfc006f7
+  bytes: 177
+- path: board/allegro_dump/net_vias.csv
+  kind: allegro_dump
+  source_url: derived from the XTP756 board file by the owner-run dump (brief 162)
+  licence: 'derived from an AMD file: raw CSV not committed, only derived facts'
+  public: false
+  sha256: 5d502cf8efb1bf1304dc7fbb8028ab97d6f069ba80d18425659ca5504a7e3afc
+  bytes: 12369
+- path: board/allegro_dump/nets.csv
+  kind: allegro_dump
+  source_url: derived from the XTP756 board file by the owner-run dump (brief 162)
+  licence: 'derived from an AMD file: raw CSV not committed, only derived facts'
+  public: false
+  sha256: da33b289d627f3967789e896ea2bd22360044e7c1a9b37fa7c9d3b2acff83884
+  bytes: 91634
+- path: board/dump_allegro.sh
+  kind: other
+  source_url: null
+  licence: null
+  public: false
+  sha256: 193f442b929fe37c0f9ad899dfccc4e8d74d11b9e7e7273b3c9af721c25bb4ac
+  bytes: 990
+- path: board/xtp743_kr260_schematic.pdf
+  kind: schematic_pdf
+  source_url: https://www.xilinx.com/member/kria-kr260.html (AMD XTP743, KR260 carrier card schematic, rev A02)
+  licence: AMD/Xilinx file, confidential-and-proprietary header and disclaimer; not redistributed
+  public: false
+  sha256: 3d9eab500bcacbe20bb98e0820988dcbcecd212cb4f11cb9b68934e4ae7305ad
+  bytes: 7231357
+- path: board/xtp743_readme.txt
+  kind: notes
+  source_url: https://www.xilinx.com/member/kria-kr260.html (AMD XTP743, KR260 carrier card schematic, rev A02)
+  licence: AMD/Xilinx file, confidential-and-proprietary header and disclaimer; not redistributed
+  public: false
+  sha256: 13a8f5e15cbe68af9cc7898337cd3aa3a300161f90c1962d6cab6742b967f167
+  bytes: 3260
+- path: board/xtp756_kr260_allegro.brd
+  kind: board_file
+  source_url: AMD XTP756, KR260 Allegro board source (BRD_05101_01 rev b01)
+  licence: AMD/Xilinx file, confidential-and-proprietary header and disclaimer; not redistributed
+  public: false
+  sha256: 89d0515528923df06e2e787f5d07bbbd62dfe2a18e34ad054a57a875fc04a0a0
+  bytes: 25692656
+- path: board/xtp757_kr260_bom.xls
+  kind: bom
+  source_url: AMD XTP757, KR260 carrier card BOM (SCK-KR_SKIT_B01)
+  licence: AMD/Xilinx file, confidential-and-proprietary header and disclaimer; not redistributed
+  public: false
+  sha256: d185ab22c95bfedba5fdc01e3d6fb283c115b5f603168cf26303641d41acf28d
+  bytes: 53760
+- path: refs/ug_68177_gth_latency.html
+  kind: ref
+  source_url: https://docs.amd.com/ (AMD answer record 68177, GTH latency values)
+  licence: AMD/Xilinx file, confidential-and-proprietary header and disclaimer; not redistributed
+  public: false
+  sha256: 97107ca762b0b5959c31f7ed49947494c2abd359866e0a45133961f40167aeef
+  bytes: 657017

@@ -14,7 +14,7 @@ design: b96_kr260_10g
 notes: >-
   Variants. Unless a requirement says otherwise, "the default build" is RATE_MATCH = 0 (the board-proven 97C receive path) and "the rate-matched
   build" is rm_gp (RATE_MATCH = 1, RM_OWN = 1). Board evidence is one KR260 on a short optical loopback; nothing has run against a network card.
-  Briefs 112 (UVM bench), 115 (formal proofs of the rate matcher) and 123 (pyuvm bench) are merged and their tests are in the recorded run; the bound SVA checkers in simulation and the coverage run have no evidence and are shown as not run.
+  Briefs 112 (UVM bench), 115 (formal proofs of the rate matcher) and 123 (pyuvm bench) are merged and their tests are in the recorded run; the bound SVA checkers in simulation have no evidence and are shown as not run; the functional and code coverage of the pyuvm bench on Verilator (brief 146) is recorded.
 
 discover:
   - {glob: designs/b96_kr260_10g/tests/test_*.py, pattern: '^def (test_\w+)'}
@@ -74,6 +74,13 @@ requirements:
     text: The elastic buffer inserts and deletes idles only between frames, never under- or overflows silently, and every order sent is fired and passes its content check.
     source: designs/b96_kr260_10g/docs/design.md#9-rate-matching-and-the-receive-to-core-crossing-brief-96c
     spec_status: draft
+  - id: B96-V-RM-BENCH
+    kind: safety
+    title: The rate matcher's simulation bench catches seeded bugs
+    text: A blind sample of at least 30 one-line changes to rate_match_gp.sv (flow/mutation_blind.py, 23 operator classes), with survivors decided by a formal miter, scores a worst case of at least 90 percent (every undecided mutant and bench timeout counted as a survivor). The floor is the planner's, delegated by the owner (decision 23, brief 152); whether it is high enough is the human's check.
+    source: results/152_b96_mutation/README.md
+    spec_status: draft
+    mutation_floor: {score_pct: 90, worst_case_pct: 90, min_mutants: 30, max_undecided: 3}
   - id: B96-F-OFFSET
     kind: functional
     title: Rate matching holds under a real frequency offset
@@ -257,6 +264,11 @@ verification:
     title: Rate matcher benches (macro, own buffer, direct-read variant, the MIN_KEEP limit)
     evidence: {file: results/116_traceability/b96_kr260_10g/pytest_junit.xml, reader: junit, tests: ["test_b96_pcs_rtl::test_rate_match_cocotb", "test_b96_pcs_rtl::test_rate_match_gp_cocotb", "test_b96_pcs_rtl::test_rate_match_gp_direct_read_cocotb", "test_b96_pcs_rtl::test_rate_match_min_keep_1_shows_the_limit"]}
     checks: *rtl_rm
+  - id: V-RM-MUTATION
+    requirements: [B96-V-RM-BENCH, B96-S-RATEMATCH]
+    method: coverage_bin
+    title: Mutation score of the rate matcher's bench (brief 152; seed 2, 30 blind mutants, all nine cases of test_rate_match_gp_cocotb; the formal miter decides survivors); seed 1 and the as-found counts are in results/152_b96_mutation
+    evidence: {file: results/152_b96_mutation/b96_rate_match_gp_seed2.json, reader: mutation}
   - id: V-SIM-PPM-PARTNER
     requirements: [B96-F-OFFSET]
     method: sim_test
@@ -310,8 +322,16 @@ verification:
   - id: V-FORMAL-SVA-PLANNED
     requirements: [B96-F-PCS, B96-S-RATEMATCH]
     method: formal
-    title: SVA properties of the gray-pointer rate matcher with SymbiYosys (brief 115; designs/b96_kr260_10g/verif/formal/, results/b115); safety by k-induction, progress by BMC only; the recorded run re-proves every CI job, mutants included
+    title: SVA properties of the gray-pointer rate matcher with SymbiYosys (brief 115; designs/b96_kr260_10g/verif/formal/, results/b115); safety by k-induction, progress by BMC in this item (V-FORMAL-PROGRESS-PDR closes it unbounded); the recorded run re-proves every CI job, mutants included
     evidence: {file: results/116_traceability/b96_kr260_10g/pytest_junit.xml, reader: junit, tests: ["test_b115_formal::*"]}
+    rigour: [designs/b96_kr260_10g/verif/formal/rm_gp.sby]        # brief 143c: every assertion's antecedent reached, the assumptions' sanity covers reached, bounded results justified (flow/formal_rigour.py)
+  - id: V-FORMAL-PROGRESS-PDR
+    requirements: [B96-S-RATEMATCH]
+    method: formal
+    title: The progress ranking function of the gray-pointer rate matcher (a written block is consumed within a bounded number of read clocks, R1 and R2) proved unbounded by IC3/PDR at AW 1 and 2, the safety set re-proved by the same engine, and the no-slot-clock mutant caught (brief 191; designs/b96_kr260_10g/verif/formal, results/191_trading_variants)
+    evidence: {file: results/191_trading_variants/formal_rm_gp_pdr.json, reader: json}
+    pass_when: [{field: "results[0].verdict", op: eq, value: PASS}, {field: "results[1].verdict", op: eq, value: PASS}, {field: "results[2].verdict", op: eq, value: CAUGHT}, {field: "results[3].verdict", op: eq, value: PASS}]
+    checks: [designs/b96_kr260_10g/rtl/rate_match_gp.sv, designs/b96_kr260_10g/verif/formal/rm_gp_props.sv]
   - id: V-SVA-PLANNED
     requirements: [B96-F-PCS, B96-F-MAC, B96-S-RATEMATCH]
     method: assertion
@@ -327,11 +347,24 @@ verification:
     method: uvm_test
     title: pyuvm-on-cocotb twin of the UVM bench of the PCS and MAC (brief 123; designs/b96_kr260_10g/verif/pyuvm/); the recorded run is the reference-model checks, one smoke run in Icarus and one seeded-bug kill; the full regression is run by hand
     evidence: {file: results/116_traceability/b96_kr260_10g/pytest_junit.xml, reader: junit, tests: ["test_b96_pyuvm::*"]}
-  - id: V-COV-PLANNED
+  - id: V-COV-FUNC
     requirements: [B96-F-PCS, B96-F-MAC]
     method: coverage_bin
-    title: Functional coverage bins and code coverage of the PCS and MAC bench (no coverage run recorded)
-    planned: not planned in a brief yet
+    title: Functional coverage of the pyuvm bench of the PCS and MAC (brief 123 bench, brief 146 regression on Verilator 5.048; 42 runs, every one of the 217 bins hit; the Icarus run of brief 123 hit the same 217)
+    evidence: {file: results/146_verilator_cov/summary.txt, reader: text, regex: 'merged 42 runs: (\d+)/217 bins hit'}
+    pass_when: [{op: ge, value: 217}]
+    checks: [designs/b96_kr260_10g/verif/pyuvm/pcs_mac_pyuvm/cov.py]
+  - id: V-COV-CODE
+    requirements: [B96-F-PCS, B96-F-MAC]
+    method: coverage_bin
+    title: RTL code coverage of pcs_tx, pcs_rx, mac64_tx, mac64_rx and b96_pkg by the same 42-run regression (Verilator 5.048 --coverage, merged; brief 146). Floors are the measured design-wide percentages rounded down (line 81.25, branch 85.34, expression 92.47, toggle 96.33); every open point is explained in results/146_verilator_cov/README.md (unreachable by design, one deliberately not driven, or a Verilator reporting artefact reproduced in a 15-line test)
+    evidence: {file: results/146_verilator_cov/coverage_summary.json, reader: json}
+    pass_when:
+      - {field: design.line.percent, op: ge, value: 81}
+      - {field: design.branch.percent, op: ge, value: 85}
+      - {field: design.expr.percent, op: ge, value: 92}
+      - {field: design.toggle.percent, op: ge, value: 96}
+    checks: [designs/b96_kr260_10g/rtl/pcs_tx.sv, designs/b96_kr260_10g/rtl/pcs_rx.sv, designs/b96_kr260_10g/rtl/mac64_tx.sv, designs/b96_kr260_10g/rtl/mac64_rx.sv, designs/b96_kr260_10g/rtl/b96_pkg.sv]
   # ---- simulation measurements ---------------------------------------------------------------------------------------
   - id: V-SIMM-T2T
     requirements: [B96-P-T2T-DIGITAL]
@@ -428,6 +461,7 @@ verification:
     instrument: jtag_registers
     title: 100 receive restarts on build rm_gp, counters read over JTAG
     evidence: {file: results/b96e/hw/20261119_231251/rm_gp/stage3.json, reader: json}
+    build: designs/b96_kr260_10g/rm_gp/build.yaml     # the build that ran (brief 143a: its sources join the staleness check)
     pass_when:
       - {field: restarts.restarts, op: ge, value: 100}
       - {field: restarts.failed_to_lock, op: eq, value: 0}
@@ -458,6 +492,7 @@ verification:
     instrument: jtag_registers
     title: Laser polarity read back before the laser was enabled
     evidence: {file: results/b96e/hw/20261119_231251/rm_gp/stage3.json, reader: json}
+    build: designs/b96_kr260_10g/rm_gp/build.yaml     # the build that ran (brief 143a: its sources join the staleness check)
     pass_when: [{field: polarity_ok, op: "true"}, {field: polarity.off.tx_fault, op: eq, value: 0}]
     checks: [designs/b96_kr260_10g/rtl/kr260_10g_top.sv, designs/b96_kr260_10g/rtl/b96_core.sv]
   - id: V-HW-SYSMON-96E
@@ -466,6 +501,7 @@ verification:
     instrument: sysmon
     title: SYSMON at the start and end of the 96E run
     evidence: {file: results/b96e/hw/20261119_231251/rm_gp/session.json, reader: json}
+    build: designs/b96_kr260_10g/rm_gp/build.yaml     # the build that ran (brief 143a: its sources join the staleness check)
     pass_when: [{field: conditions_start.inside_roc, op: "true"}, {field: conditions_end.inside_roc, op: "true"}, {field: roc_ok, op: "true"}]
   - id: V-HW-SYSMON-EYE
     requirements: [B96-S-ROC]
@@ -480,6 +516,7 @@ verification:
     instrument: latency_loop
     title: Build rm_gp, 100 restarts, median of per-link minima
     evidence: {file: results/b96e/hw/20261119_231251/rm_gp/stage3.json, reader: json, field: restarts.E_min_per_link.median}
+    build: designs/b96_kr260_10g/rm_gp/build.yaml     # the build that ran (brief 143a: its sources join the staleness check)
     checks: *rtl_core
   - id: V-HW-LAT-E-97C
     requirements: [B96-P-LAT-E]
@@ -494,6 +531,7 @@ verification:
     instrument: latency_loop
     title: Build rm_gp, 100 restarts
     evidence: {file: results/b96e/hw/20261119_231251/rm_gp/stage3.json, reader: json, field: restarts.L_min_per_link.median}
+    build: designs/b96_kr260_10g/rm_gp/build.yaml     # the build that ran (brief 143a: its sources join the staleness check)
     checks: *rtl_core
   - id: V-HW-LAT-L-97C
     requirements: [B96-P-LAT-L]
@@ -508,6 +546,7 @@ verification:
     instrument: latency_loop
     title: Build rm_gp, D = L - 2E from the medians of minima
     evidence: {file: results/b96e/hw/20261119_231251/rm_gp/stage3.json, reader: json, field: D_clocks_from_medians_of_minima}
+    build: designs/b96_kr260_10g/rm_gp/build.yaml     # the build that ran (brief 143a: its sources join the staleness check)
     checks: *rtl_core
   - id: V-HW-EYE
     requirements: [B96-P-EYE]
@@ -523,6 +562,7 @@ verification:
     title: Build rm_gp_bypass on the KR260, 100 receive restarts (pre-registered, board run 2026-11-21, stamp 86037ce1)
     evidence: {file: results/b96f1/hw/20261120_215255/rm_gp_bypass/stage3.json, reader: json, field: restarts.E_min_per_link.median}
     checks: *rtl_core
+    build: designs/b96_kr260_10g/rm_gp_bypass/build.yaml     # the build that ran: its own b96_core.sv, gt_bp_*.sv, constraints and IP script
   - id: V-HW-OFFSET-PLANNED
     requirements: [B96-F-OFFSET]
     method: board_measurement
@@ -567,10 +607,17 @@ verification:
   - id: V-XVC-CDC-STRUCT
     requirements: [B96-S-CDC, B96-F-DBGXVC]
     method: timing
-    title: "The flow's post-synthesis CDC structure gate on dbg_xvc (open: 2203 crossings of the core's own hs_vec buses are not matched to their max-delay exceptions in this build; the exceptions exist in the routed design)"
-    evidence: {file: results/b131/builds/dbg_xvc/digest.json, reader: json}
+    title: "The flow's post-synthesis CDC structure gate on dbg_xvc (brief 140: AMD's CDC-15 waiver for the XPM handshake left report_cdc no row for the 2203 hs_vec crossings; the flow now reads their exception from the timing exceptions)"
+    evidence: {file: results/b140/builds/dbg_xvc/digest.json, reader: json}
     pass_when: [{field: gates.post_synth_cdc_structure_clean, op: "true"}]
     checks: [designs/b96_kr260_10g/dbg_xvc/rtl/xvc_debug.sv, designs/b96_kr260_10g/dbg_xvc/rtl/b96_core.sv]
+  - id: V-XVC-FLOW-GATES
+    requirements: [B96-F-DBGXVC]
+    method: timing
+    title: "Every flow gate of build dbg_xvc, synthesis to bitstream (brief 140: six that failed in brief 131 now pass, by flow fixes and no waiver; the eyescan and default builds are unchanged)"
+    evidence: {file: results/b140/builds/dbg_xvc/gates.json, reader: json}
+    pass_when: [{field: pass, op: "true"}]
+    checks: [designs/b96_kr260_10g/dbg_xvc/rtl/xvc_debug.sv, designs/b96_kr260_10g/dbg_xvc/rtl/b96_core.sv, designs/b96_kr260_10g/dbg_xvc/rtl/kr260_10g_top.sv]
   - id: V-XVC-VERDICT
     requirements: [B96-F-DBGXVC]
     method: sim_test

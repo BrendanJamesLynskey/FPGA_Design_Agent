@@ -1,0 +1,49 @@
+Copyright 1986-2022 Xilinx, Inc. All Rights Reserved. Copyright 2022-2026 Advanced Micro Devices, Inc. All Rights Reserved.
+------------------------------------------------------------------------------------------------------------------------------------------------
+| Tool Version : Vivado v.2026.1 (lin64) Build 6511674 Tue Jun 16 11:01:26 MDT 2026
+| Date         : Tue Nov 24 18:20:15 2026
+| Host         : bren-ubuntu24-04 running 64-bit Ubuntu 24.04.4 LTS
+| Command      : report_methodology -file /home/brendan/Claude_sandbox/_worktrees/208-clock-mux/build/208/a7/a7_pwr_fabce/methodology_synth.rpt
+| Design       : pwr
+| Device       : xc7a35tcpg236-1
+| Speed File   : -1
+| Design State : Synthesized
+------------------------------------------------------------------------------------------------------------------------------------------------
+
+Report Methodology
+
+Table of Contents
+-----------------
+1. REPORT SUMMARY
+2. REPORT DETAILS
+
+1. REPORT SUMMARY
+-----------------
+            Netlist: pwr
+          Floorplan: design_1
+      Design limits: <entire design considered>
+             Max checks: <unlimited>
+             Checks found: 2
++--------+----------+------------------------------------------+--------+
+| Rule   | Severity | Description                              | Checks |
++--------+----------+------------------------------------------+--------+
+| XDCH-2 | Warning  | Same min and max delay values on IO port | 2      |
++--------+----------+------------------------------------------+--------+
+
+2. REPORT DETAILS
+-----------------
+XDCH-2#1 Warning
+Same min and max delay values on IO port  
+The same input delay of 0.500 ns has been defined on port 'din' relative to clock clk for both max and min. Make sure this reflects the design intent.
+set_input_delay -clock clk 0.500 [get_ports {en_in din}]
+/home/brendan/Claude_sandbox/_worktrees/208-clock-mux/results/208/xdc/pwr.xdc (Line: 2)
+Related violations: <none>
+
+XDCH-2#2 Warning
+Same min and max delay values on IO port  
+The same input delay of 0.500 ns has been defined on port 'en_in' relative to clock clk for both max and min. Make sure this reflects the design intent.
+set_input_delay -clock clk 0.500 [get_ports {en_in din}]
+/home/brendan/Claude_sandbox/_worktrees/208-clock-mux/results/208/xdc/pwr.xdc (Line: 2)
+Related violations: <none>
+
+

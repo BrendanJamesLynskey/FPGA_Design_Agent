@@ -24,7 +24,7 @@ Run times are in the records. The runs are small (a few hundred MB each); no hea
 ## Known gaps and limits
 
 - The properties are Boolean forms compiled by hand; the SVA text beside each one was not read by any tool (the free front end rejects implication and `s_eventually`).
-- Progress is a bounded model check of a ranking function to a stated depth, not an unbounded proof; the induction step for it has open counterexamples (docs/formal_study_notes.md, section 7).
+- Progress is a bounded model check of a ranking function to a stated depth in these records; brief 191 closed it unbounded with IC3/PDR at AW = 1 and 2 (`results/191_trading_variants/formal_rm_gp_pdr.json`); by k-induction it still has open counterexamples (docs/formal_study_notes.md, section 7).
 - Instances: AW = 1, 2, 4, `ENT_SYNC` = 1, `HI` = 1, `MIN_KEEP` = 0. The clock ratio is assumed within 3:1; skew beyond one source clock is not modelled.
 - A mutant that shortens the write pointer's chain from three flops to two was not refuted at depth 32 of the base case (the model's skew bound makes it safe); it is not in the records as a catch.
-- The ITCH/MoldUDP64 parser of brief 110 was not covered: its pull request was not merged when this work started.
+- The ITCH/MoldUDP64 parser of brief 110 was not covered here: the book's quantity invariants are proved by k-induction in brief 191 (`designs/b110_itch_ouch/verif/formal`); the parser itself (mold_rx, itch_dec) has no formal properties.

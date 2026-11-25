@@ -214,7 +214,8 @@ EXPR = """expression forms (value of one {n} placeholder), op[@list][:conditions
   n                    number of JSON documents, or CSV rows (a document each, numbers converted), after `where`
   get:a.b.0.c          the value at a path in the first document
   count[@lst]:c1,c2    documents (or items of the list at path lst in every document) meeting all conditions
-  sum|max|min[@lst]:p  of the number at path p over the documents (or list items)
+  sum|max|min[@lst]:p[|c1,c2]  of the number at path p over the documents (or list items), keeping only those meeting the conditions after |
+  pick@lst:p|c1,c2     the value at path p of the one list item that meets the conditions (exactly one must)
   nfiles               number of source files
   nmatch:REGEX         number of source files whose text matches REGEX
   re:REGEX             first group of REGEX in the first source file's text
@@ -243,7 +244,12 @@ def evaluate(expr: str, item):
     items = [x for d in docs for x in (_path(d, lst) if lst else [d])]
     if op == "count":
         return sum(1 for x in items if _conds_ok(x, rest))
-    if op in ("sum", "max", "min"):
+    if op in ("sum", "max", "min", "pick"):
+        rest, _, conds = rest.partition("|")        # brief 185: "|conds" keeps only the items meeting them; pick = the one item that does
+        items = [x for x in items if _conds_ok(x, conds or None)]
+        if op == "pick":
+            assert len(items) == 1, (expr, "pick needs exactly one item, got", len(items))
+            return _path(items[0], rest)
         vals = [_path(x, rest) for x in items]
         return {"sum": sum, "max": max, "min": min}[op](vals)
     raise ValueError(expr)
@@ -322,7 +328,7 @@ def family_diffs() -> dict:
 
 
 def family_of(a: dict, fd: dict) -> dict:
-    """The family rows and documents of an area. An area with ``family_from: {area, topics, docs}`` (brief 164) shows the named rows of another
+    """The family rows and documents of an area. An area with ``family_from: {area, topics, docs}`` (briefs 185 and 164) shows the named rows of another
     matrix area and the documents of that area whose name starts with one of ``docs``, because the bank's matrix has no area of its own for it."""
     ff = a.get("family_from")
     if not ff:
@@ -343,14 +349,16 @@ def _fill(tmpl: str, vals: dict, where: str) -> str:
 
 
 def figures_of(a: dict) -> list[dict]:
-    """Plots for a drawer, drawn from committed result files (site/si_figures.py); texts take their numbers from the plotted data."""
+    """Plots for a drawer, drawn from committed result files (site/dsp_figures.py, site/si_figures.py: the module that knows the kind draws it); texts take their numbers from the plotted data."""
     out = []
     for fg in a.get("figures", []):
         import sys
         if str(HERE) not in sys.path:
             sys.path.insert(0, str(HERE))
+        import dsp_figures
         import si_figures
-        d = si_figures.data(fg["kind"])
+        mod = si_figures if fg["kind"] in si_figures.KINDS else dsp_figures
+        d = mod.data(fg["kind"])
         w = f'{a["id"]}/{fg["id"]}'
         out.append({"id": fg["id"], "kind": fg["kind"], "title": _fill(fg["title"], d["vals"], w), "caption": _fill(fg["caption"], d["vals"], w),
                     "how": _fill(fg["how"], d["vals"], w), "wrong": _fill(fg["wrong"], d["vals"], w), "data": d["data"],
