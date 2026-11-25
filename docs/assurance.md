@@ -140,6 +140,8 @@ structures, not a certification.
 | **Safety** (absence of catastrophic consequences) | a fault leads to a defined safe state | `fsm_safe_state`, fail-safe defaults, and for the trading designs the kill switch and the risk gate | `fsm_safe_state` costs +7 LUT; its effect is a netlist property and was not injected (gap); the trading kill switch and risk gate are brief 188's, not measured here |
 | **Maintainability** (ability to undergo repairs and modifications) | a fault can be found and the design changed | build identity (`BUILD_STAMP`, build ID in every record), partial reconfiguration | not measured in this brief; listed so the profile does not claim it |
 
+| **Security** (Avizienis et al.: availability, confidentiality and integrity against *unauthorised* actions) | the design and its bitstream resist copying, readback, tampering and debug access | the `production_secure` switch (brief 196): bitstream encryption and authentication settings, readback and JTAG-to-SYSMON off, no debug cores or ports, SYSMON alarms wired to a latched safe shutdown; keys and eFUSE or BBRAM programming are the owner's | [docs/security.md](security.md): a KR260-part build checked against Vivado's own outputs; the same design with a debug core fails the gate. Nothing is measured against an attacker, and no certification or side-channel claim is made |
+
 The four **means** map onto the rest of the profile switches:
 
 | Means | Meaning | Where it is in the profiles |
@@ -173,7 +175,7 @@ Results for that structure on the same family) before applying it. A block the u
 2. **Clarify (stage 0).** If no profile was given and the interview is on, one question proposes one (default from the spec's words, reason, expected extra
    time). If the profile asks for structures (`dependability: interview`), one question per block class found in the spec (memories, state machines,
    counters, internal buses) states the measured cost of the structure and proposes "protect" for memories and state machines and "do not protect" for the
-   rest. The answers go into `spec.yaml` (`verif_profile`, `dependability`); a block the user does not name is not changed.
+   rest. The answers go into `spec.yaml` (`verif_profile`, `dependability`); a block the user does not name is not changed. With the interview on, one more question asks whether this is a production build (`production_secure`, brief 196: default from the spec's words, reason with the measured cost); the answer joins the pin and every later build gets it as `FDA_SECURITY`.
 3. **Flow.** `flow/assurance.py` and `flow/assurance_profiles.py` run the netlist checks and the cost and fault measurements. They run on the
    development design here; wiring them in as a run stage is the follow-up (a stage needs a gate and a heavy slot).
 4. **Run summary.** `verification_profile` in `summary.json`: the profile, every override, the effective switches, the switches that are only recorded,

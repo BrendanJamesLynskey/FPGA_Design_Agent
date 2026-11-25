@@ -1,0 +1,243 @@
+{
+ "design": "designs/b196_secure_demo",
+ "part": "xck26-sfvc784-2LV-c",
+ "board": "kr260",
+ "builds": {
+  "plain": {
+   "variant": "base",
+   "gates_pass": true,
+   "failed_gates": [],
+   "gates": {
+    "rtl_methodology_no_critical": true,
+    "post_synth_no_unconstrained_endpoints": true,
+    "post_synth_methodology_no_critical": true,
+    "post_synth_drc_clean": true,
+    "post_synth_cdc_no_critical": true,
+    "post_synth_cdc_structure_clean": true,
+    "post_synth_exceptions_clean": true,
+    "post_synth_io_constraints_clean": true,
+    "post_synth_resets_clean": true,
+    "post_place_hold": true,
+    "setup": true,
+    "hold": true,
+    "pulse_width": true,
+    "no_unconstrained_endpoints": true,
+    "drc_clean": true,
+    "methodology_no_critical": true,
+    "cdc_no_critical": true,
+    "power_junction_ok": true,
+    "exceptions_clean": true,
+    "io_timing_clean": true,
+    "bitstream_present": true
+   },
+   "security_gates": {},
+   "wall_s": 263.4,
+   "stages_s": {
+    "read": 6.4,
+    "elaborate": 32.8,
+    "rtl_reports": 33.2,
+    "synth": 118.6,
+    "synth_reports": 143.9,
+    "opt": 152.9,
+    "place": 195.8,
+    "phys_opt": 196.1,
+    "place_reports": 196.4,
+    "route": 204.2,
+    "reports": 217.8,
+    "bitstream": 255.1
+   },
+   "utilization": {
+    "lut": 334,
+    "ff": 287,
+    "bram_tile": 1,
+    "dsp": 0
+   },
+   "bitstream_bytes": 7797899,
+   "wns_ns": 33.254,
+   "vivado_version": "2026.1",
+   "scope_anon_peak_mib": 3559
+  },
+  "secure": {
+   "variant": "base",
+   "gates_pass": true,
+   "failed_gates": [],
+   "gates": {
+    "rtl_methodology_no_critical": true,
+    "post_synth_no_unconstrained_endpoints": true,
+    "post_synth_methodology_no_critical": true,
+    "post_synth_drc_clean": true,
+    "post_synth_cdc_no_critical": true,
+    "post_synth_cdc_structure_clean": true,
+    "post_synth_exceptions_clean": true,
+    "post_synth_io_constraints_clean": true,
+    "post_synth_resets_clean": true,
+    "post_place_hold": true,
+    "setup": true,
+    "hold": true,
+    "pulse_width": true,
+    "no_unconstrained_endpoints": true,
+    "drc_clean": true,
+    "methodology_no_critical": true,
+    "cdc_no_critical": true,
+    "power_junction_ok": true,
+    "exceptions_clean": true,
+    "io_timing_clean": true,
+    "bitstream_present": true,
+    "security_settings_applied": true,
+    "security_readback_off": true,
+    "security_strip_debug": true,
+    "security_sysmon_shutdown": true,
+    "security_profile_met": true
+   },
+   "security_gates": {
+    "security_settings_applied": true,
+    "security_readback_off": true,
+    "security_strip_debug": true,
+    "security_sysmon_shutdown": true,
+    "security_profile_met": true
+   },
+   "wall_s": 263.4,
+   "stages_s": {
+    "read": 6.5,
+    "elaborate": 32.9,
+    "rtl_reports": 33.3,
+    "synth": 118.1,
+    "synth_reports": 142.1,
+    "opt": 151.0,
+    "place": 192.3,
+    "phys_opt": 192.6,
+    "place_reports": 193.0,
+    "route": 201.2,
+    "reports": 215.2,
+    "bitstream": 255.2
+   },
+   "utilization": {
+    "lut": 334,
+    "ff": 287,
+    "bram_tile": 1,
+    "dsp": 0
+   },
+   "bitstream_bytes": 7797899,
+   "wns_ns": 33.254,
+   "vivado_version": "2026.1",
+   "scope_anon_peak_mib": 3526,
+   "security": {
+    "source": "pin",
+    "switches": {
+     "authenticate": true,
+     "encrypt": true,
+     "readback_off": true,
+     "strip_debug": true,
+     "sysmon_shutdown": true
+    },
+    "findings": [],
+    "handed_to_owner": {
+     "encrypt": "on a Zynq UltraScale+ MPSoC the PL bitstream is encrypted by the boot image (bootgen, UG1085 ch. 12): the PS secure-boot chain and the key are the owner's; BITSTREAM.ENCRYPTION.* is read-only in Vivado 2026.1 for this part",
+     "authenticate": "likewise: RSA authentication of the PL partition belongs to the boot image; BITSTREAM.AUTHENTICATION.* is read-only in Vivado 2026.1 for this part"
+    },
+    "policy_conflict": []
+   }
+  },
+  "debug": {
+   "variant": "base",
+   "gates_pass": false,
+   "failed_gates": [
+    "security_profile_met",
+    "security_strip_debug"
+   ],
+   "gates": {
+    "rtl_methodology_no_critical": true,
+    "post_synth_no_unconstrained_endpoints": true,
+    "post_synth_methodology_no_critical": true,
+    "post_synth_drc_clean": true,
+    "post_synth_cdc_no_critical": true,
+    "post_synth_cdc_structure_clean": true,
+    "post_synth_exceptions_clean": true,
+    "post_synth_io_constraints_clean": true,
+    "post_synth_resets_clean": true,
+    "post_place_hold": true,
+    "setup": true,
+    "hold": true,
+    "pulse_width": true,
+    "no_unconstrained_endpoints": true,
+    "drc_clean": true,
+    "methodology_no_critical": true,
+    "cdc_no_critical": true,
+    "power_junction_ok": true,
+    "exceptions_clean": true,
+    "io_timing_clean": true,
+    "bitstream_present": true,
+    "security_settings_applied": true,
+    "security_readback_off": true,
+    "security_strip_debug": false,
+    "security_sysmon_shutdown": true,
+    "security_profile_met": false
+   },
+   "security_gates": {
+    "security_settings_applied": true,
+    "security_readback_off": true,
+    "security_strip_debug": false,
+    "security_sysmon_shutdown": true,
+    "security_profile_met": false
+   },
+   "wall_s": 554.8,
+   "stages_s": {
+    "read": 17.4,
+    "elaborate": 67.6,
+    "rtl_reports": 68.1,
+    "synth": 196.2,
+    "synth_reports": 360.4,
+    "opt": 370.5,
+    "place": 452.9,
+    "phys_opt": 455.0,
+    "place_reports": 456.1,
+    "route": 479.2,
+    "reports": 502.8,
+    "bitstream": 546.4
+   },
+   "utilization": {
+    "lut": 1357,
+    "ff": 2119,
+    "bram_tile": 1.5,
+    "dsp": 0
+   },
+   "bitstream_bytes": 7797899,
+   "wns_ns": 13.351,
+   "vivado_version": "2026.1",
+   "scope_anon_peak_mib": 6754,
+   "security": {
+    "source": "pin",
+    "switches": {
+     "authenticate": true,
+     "encrypt": true,
+     "readback_off": true,
+     "strip_debug": true,
+     "sysmon_shutdown": true
+    },
+    "findings": [
+     {
+      "rule": "debug_core",
+      "what": "2 debug core(s) in the design: dbg_hub u_ila"
+     },
+     {
+      "rule": "debug_cell",
+      "what": "3582 cell(s) of a debug core, hub or bridge (reference names: BUFGCE, FDCE, FDRE, FDSE, GND, LUT1)"
+     },
+     {
+      "rule": "bscan",
+      "what": "1 BSCAN primitive(s): a JTAG user-register path into the design"
+     },
+     {
+      "rule": "mark_debug",
+      "what": "16 net(s) marked MARK_DEBUG"
+     }
+    ],
+    "handed_to_owner": {
+     "encrypt": "on a Zynq UltraScale+ MPSoC the PL bitstream is encrypted by the boot image (bootgen, UG1085 ch. 12): the PS secure-boot chain and the key are the owner's; BITSTREAM.ENCRYPTION.* is read-only in Vivado 2026.1 for this part",
+     "authenticate": "likewise: RSA authentication of the PL partition belongs to the boot image; BITSTREAM.AUTHENTICATION.* is read-only in Vivado 2026.1 for this part"
+    },
+    "policy_conflict": []
+   }
+  }
+ }
+}
