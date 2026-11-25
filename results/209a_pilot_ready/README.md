@@ -8,6 +8,7 @@ harness (`--harness claude_code`, Sonnet 5.5); no OpenRouter or Anthropic API ca
 
 - `toy_jtag_leds/spec.md` and `toy_jtag_leds/data/jtag_bus.sv`: the request of the JTAG-route toy run (the bus is `designs/b58a_trigger/rtl/jtag_bus.sv`, unchanged).
 - `deep_for_clock/spec.md`: the request of the report-gate run (24 dependent multiplies in one 40 ns clock).
+- `toy_jtag_leds/jtag_bus_utilization_hier.rpt`: the hierarchical utilisation (Vivado 2026.1, xck26) of the first toy run that built: `jtag_bus` is 90 LUTs and 413 flip-flops (u_bus 200, u_cmd 90, u_resp 120 flip-flops); the Designer's note quotes these.
 - The results of the runs are in the brief's report; this folder holds the requests.
 
 ## Reproduce

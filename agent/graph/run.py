@@ -327,6 +327,8 @@ after `h_re`, `h_rdata` shows the addressed register within 2 clocks and holds i
 Every design has the common map: 0x000 ID (RO, the design ID), 0x004 BUILD (RO, the bitstream's USR_ACCESS word, the build stamp, read with the
 USR_ACCESSE2 primitive), 0x008 SCRATCH (RW, reads back what was written, resets to 0). Your own registers start at 0x010. jtag_bus contains Xilinx
 primitives (BSCANE2, xpm_cdc), so simulate and test the register port directly (drive h_we/h_re/h_addr/h_wdata), never jtag_bus itself.
+Resource cost to put in the architecture's ranges: `jtag_bus` alone is about 90 LUTs and 413 flip-flops (measured, xck26, Vivado 2026.1, results/209a_pilot_ready), so a design with it
+has at least that many; do not predict a range for the whole design that leaves it out.
 """
 
 JTAG_HW_FORMAT = """
