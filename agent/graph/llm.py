@@ -39,6 +39,7 @@ class Reply:
     cache_write_tokens: int = 0      # cache_creation_input_tokens
     cache_read_tokens: int = 0       # cache_read_input_tokens
     stop_reason: str | None = None   # brief 209b: the API's stop_reason ("max_tokens" means the reply was cut off)
+    stream_retries: int = 0          # brief 224: streams that dropped and were asked for again before this reply arrived
     cost_basis: str | None = None    # "usage*price" when the cost was computed from usage and a price table, else None
 
 

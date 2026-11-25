@@ -13,18 +13,7 @@ from agent.models.config import ConfigError, Layer, Table, build_table, validate
 SONNET = {"input": 2.00, "output": 10.00, "cache_write": 2.50, "cache_read": 0.10}
 
 
-class Resp:
-    def __init__(self, d):
-        self.d = d
-
-    def read(self):
-        return json.dumps(self.d).encode()
-
-    def __enter__(self):
-        return self
-
-    def __exit__(self, *a):
-        return False
+from agent.tests.sse_fake import StreamResp as Resp          # brief 224: every request is streamed
 
 
 def client(usage, sent=None, **kw):
@@ -115,7 +104,7 @@ def test_temperature_is_omitted_by_the_model_rule_and_kept_where_accepted() -> N
 def test_the_config_rules_and_the_resolver_wire_them() -> None:
     t = build_table(user_file=None)
     assert t.model_rule("claude-sonnet-5-5") == {"price": SONNET, "temperature": False, "matched": "claude-sonnet-5-5",
-                                                 "max_tokens": 16000, "effort": "medium", "timeout_s": 300}
+                                                 "max_tokens": 16000, "writing_max_tokens": 32000, "effort": "medium", "timeout_s": 300}
     assert t.model_rule("claude-haiku-5-5")["price"] == {"input": 0.10, "output": 0.50}
     assert t.model_rule("claude-sonnet-4-6")["temperature"] is True and t.model_rule("claude-sonnet-4-6")["price"] is None
     assert t.model_rule("claude-unknown-1")["temperature"] is False and t.model_rule("openai/x")["price"] is None
@@ -130,7 +119,7 @@ def test_the_config_rules_and_the_resolver_wire_them() -> None:
     os.environ["ANTHROPIC_API_KEY"] = "sk-test-0000000000"
     try:
         c = rs._build(t2.entry("rtl"), None)
-        assert (c.max_tokens, c.effort, c.timeout_s) == (16000, "medium", 300)
+        assert (c.max_tokens, c.effort, c.timeout_s) == (32000, "medium", 300)      # brief 224: rtl writes whole files
     finally:
         del os.environ["ANTHROPIC_API_KEY"]
     assert c.price == SONNET and c.accepts_temperature is False
@@ -189,7 +178,7 @@ def test_the_run_limit_wins_when_stage_and_run_limits_are_both_exceeded() -> Non
 
 def test_effort_and_max_tokens_follow_the_model_and_an_explicit_option_wins() -> None:
     cli = {"endpoint": "anthropic_api", "model": "claude-sonnet-5-5"}
-    o = build_table(user_file=None, cli={"purposes": {"rtl": cli}}).entry("rtl").options
+    o = build_table(user_file=None, cli={"purposes": {"interpret": cli}}).entry("interpret").options       # brief 224: rtl, tests and constraints get writing_max_tokens
     assert (o["max_tokens"], o["effort"], o["timeout_s"]) == (16000, "medium", 300)
     o2 = build_table(user_file=None, cli={"purposes": {"rtl": {**cli, "options": {"max_tokens": 4000, "effort": "high"}}}}).entry("rtl").options
     assert (o2["max_tokens"], o2["effort"]) == (4000, "high")

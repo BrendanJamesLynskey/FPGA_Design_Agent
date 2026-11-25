@@ -90,9 +90,12 @@ ANTHROPIC_TEMPERATURE_OK = ("claude-haiku-4-5", "claude-sonnet-4-6", "claude-son
 #: ``cache_write`` = 5-minute cache write, ``cache_read``); a missing cache price is derived from ``input`` (write 1.25x, read 0.10x).
 #: ``temperature``: true when the API accepts a temperature for the model. A model with no price keeps the per-call cost ceiling.
 #: A ``models:`` section of any layer overrides these key by key.
+#: brief 224: the purposes that write whole files (the Designer's RTL, the Verifier's tests, the constraints step). On the ``anthropic_api``
+#: kind they get the model's ``writing_max_tokens`` (when it has one) in place of ``max_tokens``; an explicit option still wins.
+WRITING_PURPOSES = ("rtl", "tests", "constraints")
 BUILTIN_MODELS: dict[str, dict[str, Any]] = {
     "claude-sonnet-5-5": {"price": {"input": 2.00, "output": 10.00, "cache_write": 2.50, "cache_read": 0.10}, "temperature": False,
-                          "max_tokens": 16000, "effort": "medium", "timeout_s": 300},
+                          "max_tokens": 16000, "writing_max_tokens": 32000, "effort": "medium", "timeout_s": 300},
     "claude-haiku-5-5": {"price": {"input": 0.10, "output": 0.50}, "temperature": False},
     **{m: {"temperature": True} for m in ANTHROPIC_TEMPERATURE_OK},
 }
@@ -226,10 +229,11 @@ def _check_models(data: dict[str, Any], where: str) -> None:
     if not isinstance(ms, dict):
         raise ConfigError(f"{where}: models must be a mapping of model name to rules")
     for name, rule in ms.items():
-        if not isinstance(rule, dict) or set(rule) - {"price", "temperature", "max_tokens", "effort", "timeout_s"}:
-            raise ConfigError(f"{where}: models.{name}: allowed keys are price, temperature, max_tokens, effort and timeout_s")
-        if "max_tokens" in rule and (isinstance(rule["max_tokens"], bool) or not isinstance(rule["max_tokens"], int) or rule["max_tokens"] <= 0):
-            raise ConfigError(f"{where}: models.{name}.max_tokens must be a positive integer")
+        if not isinstance(rule, dict) or set(rule) - {"price", "temperature", "max_tokens", "writing_max_tokens", "effort", "timeout_s"}:
+            raise ConfigError(f"{where}: models.{name}: allowed keys are price, temperature, max_tokens, writing_max_tokens, effort and timeout_s")
+        for mk in ("max_tokens", "writing_max_tokens"):
+            if mk in rule and (isinstance(rule[mk], bool) or not isinstance(rule[mk], int) or rule[mk] <= 0):
+                raise ConfigError(f"{where}: models.{name}.{mk} must be a positive integer")
         if "effort" in rule and rule["effort"] not in ("low", "medium", "high", "xhigh", "max"):
             raise ConfigError(f"{where}: models.{name}.effort must be one of low, medium, high, xhigh, max")
         if "timeout_s" in rule and (isinstance(rule["timeout_s"], bool) or not isinstance(rule["timeout_s"], (int, float)) or rule["timeout_s"] <= 0):
@@ -317,7 +321,9 @@ class Table:
                 cur = self.models.setdefault(mn, {})
                 if "price" in rule:
                     cur["price"] = {**cur.get("price", {}), **rule["price"]}
-                for k in ("temperature", "max_tokens", "effort", "timeout_s"):
+                if "max_tokens" in rule and "writing_max_tokens" not in rule:
+                    cur.pop("writing_max_tokens", None)      # brief 224: a layer that sets max_tokens alone means it for every purpose
+                for k in ("temperature", "max_tokens", "writing_max_tokens", "effort", "timeout_s"):
                     if k in rule:
                         cur[k] = rule[k]
             if L.data.get("budget_scale") is not None:
@@ -400,7 +406,7 @@ class Table:
         best = max((k for k in self.models if model and model.startswith(k)), key=len, default=None)
         r = self.models.get(best, {}) if best else {}
         return {"price": dict(r["price"]) if r.get("price") else None, "temperature": bool(r.get("temperature", False)), "matched": best,
-                **{k: r[k] for k in ("max_tokens", "effort", "timeout_s") if k in r}}
+                **{k: r[k] for k in ("max_tokens", "writing_max_tokens", "effort", "timeout_s") if k in r}}
 
     def entry(self, purpose: str, stage: str | None = None) -> Entry:
         if purpose not in PURPOSES:
@@ -429,7 +435,10 @@ class Table:
                                       f"it supports {sorted(SUPPORTS[kind]['options']) or 'none'}")
                 opts[o] = v
         if kind == "anthropic_api":                    # brief 209b: the model's own max_tokens, effort and timeout replace the kind's soft defaults
-            soft.update({k: v for k, v in self.model_rule(raw.get("model")).items() if k in ("max_tokens", "effort", "timeout_s")})
+            rule = self.model_rule(raw.get("model"))
+            soft.update({k: v for k, v in rule.items() if k in ("max_tokens", "effort", "timeout_s")})
+            if "writing_max_tokens" in rule and (purpose in WRITING_PURPOSES or (purpose, stage) == ("rtl", "constraints")):
+                soft["max_tokens"] = rule["writing_max_tokens"]          # brief 224: the writing roles get the larger limit (streamed)
         if kind == "anthropic_api" and not self.model_rule(raw.get("model"))["temperature"]:
             soft.pop("temperature", None)                  # brief 209b: the API rejects a temperature for this model; the soft default is not sent
         for o, v in soft.items():

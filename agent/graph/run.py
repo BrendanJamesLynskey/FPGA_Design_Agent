@@ -207,6 +207,7 @@ class Runtime:
     skill_notes: list = field(default_factory=list)
     doc_llm: Callable[[str, str], str] | None = None        # brief 68 C: the DOC step's model call (None: the Designer's model)
     resolver: Any = None                                    # brief 108: every model call of this run goes through it (agent.models.Resolver)
+    cut_streak: dict = field(default_factory=dict)          # brief 224: role -> consecutive replies cut off at the output limit with no file written
 
 
 _RT: dict[str, Runtime] = {}
@@ -226,6 +227,105 @@ def repair_note(role: str, reasons: list[str]) -> str:
     """The extra prompt text of a repair visit: only this role's own failures, and the instruction to edit."""
     return (_p("graph/run/repair_note_1").format(role) + "\n".join(f"- {r[:2200]}" for r in reasons)
             + _p("graph/run/repair_note_2"))
+
+
+#: brief 224: how the Designer writes a long design. Code, not a private prompt (like JTAG_NOTE): appended to the stage-2 Designer's request only.
+FILE_BY_FILE_NOTE = """
+HOW TO WRITE THE FILES: one file per write_file call, smallest first (package or header files, then leaf modules, then the core, then the top).
+A reply has an output limit, and a reply that reaches it is cut off and its tool call is lost: a long design written in one reply is never written.
+After each file, go on to the next without summarising. Files that are already on disk stay; do not write them again unless they are wrong.
+"""
+
+#: consecutive replies cut off at the output limit, with no file written in between, that end the run (the stop reason names it)
+MAX_REPLY_CUTS = 2
+#: extra calls of the Designer inside one stage-2 visit after a reply was cut off (the files already written stay on disk)
+RTL_CONTINUATIONS = 3
+
+_MODULE_RE = re.compile(r"^\s*(?:module|entity)\s+([A-Za-z_]\w*)", re.M | re.I)
+
+
+class ReplyTooLong(Exception):
+    """Two replies in a row of one role were cut off at the output limit and no file was written in between (brief 224)."""
+
+
+def _arch_blocks(design: Path) -> list[str]:
+    """The block names of architecture.yaml (what the Designer committed to write); empty when there is none or it cannot be read."""
+    try:
+        doc = yaml.safe_load((design / "architecture.yaml").read_text()) or {}
+        return [str(b["name"]) for b in doc.get("blocks") or [] if isinstance(b, dict) and b.get("name")]
+    except (OSError, yaml.YAMLError, TypeError):
+        return []
+
+
+def _declared_modules(design: Path) -> set[str]:
+    """Every module or entity declared in the design's rtl/ and data/ (a supplied block kept in data/ counts as written)."""
+    names: set[str] = set()
+    for d in ("rtl", "data"):
+        for f in sorted((design / d).glob("*")) if (design / d).is_dir() else []:
+            if f.is_file() and f.suffix.lower() in (".sv", ".v", ".vhd", ".vhdl", ".svh"):
+                try:
+                    names |= set(_MODULE_RE.findall(f.read_text(errors="replace")))
+                except OSError:
+                    pass
+    return names
+
+
+def files_status(design: Path) -> tuple[list[str], list[str]]:
+    """(rtl files on disk, architecture blocks with no module declared yet), both sorted by name."""
+    rtl = sorted(p.name for p in (design / "rtl").iterdir() if p.is_file()) if (design / "rtl").is_dir() else []
+    have = _declared_modules(design)
+    return rtl, [b for b in _arch_blocks(design) if b not in have]
+
+
+def files_status_note(design: Path, cut: bool) -> str:
+    """The text a cut-off or continued Designer visit is handed: which files exist and which blocks are still missing, and to continue, not restart."""
+    rtl, missing = files_status(design)
+    return ("\n\nWHERE THE WRITING STANDS" + (" (your last reply was cut off at the output limit and its tool call was lost)" if cut else "") + ":\n"
+            + ("Files in rtl/ now: " + (", ".join(rtl) if rtl else "none") + ".\n")
+            + ("Blocks of architecture.yaml with no module written yet: " + ", ".join(missing) + ".\n" if missing else
+               ("All blocks of architecture.yaml have a module on disk.\n" if _arch_blocks(design) else ""))
+            + "Continue with the next missing file, one file per write_file call, smallest first. Do not start again and do not rewrite files that are on disk.\n")
+
+
+def _written_snapshot(design: Path, role: str) -> dict[str, tuple[int, int]]:
+    """{path: (size, mtime_ns)} of what a role writes, to tell whether a call wrote any file."""
+    dirs = {"rtl": ("rtl",), "tests": ("tests", "verif"), "model": ()}.get(role, ())
+    files = [p for d in dirs for p in sorted((design / d).rglob("*")) if p.is_file() and "__pycache__" not in p.parts]
+    if role == "model" and (design / "model.py").is_file():
+        files.append(design / "model.py")
+    out = {}
+    for p in files:
+        try:
+            st = p.stat()
+            out[str(p.relative_to(design))] = (st.st_size, st.st_mtime_ns)
+        except OSError:
+            pass
+    return out
+
+
+def run_writing_role(rt: "Runtime", role: str, prompt: str, allowed: tuple[str, ...], repair: bool) -> None:
+    """``run_role`` for a role that writes files (brief 224). A reply cut off at the output limit loses its tool call; the Designer is then
+    called again inside the visit (up to ``RTL_CONTINUATIONS`` times) with a note of the files on disk and the blocks still missing. Two
+    cut-off replies in a row of one role with no file written in between raise :class:`ReplyTooLong`."""
+    n_calls = (RTL_CONTINUATIONS + 1) if role == "rtl" else 1
+    cut_any = False
+    for k in range(n_calls):
+        t0, before = rt.meter.truncated, _written_snapshot(rt.design, role)
+        extra = files_status_note(rt.design, True) if k else (files_status_note(rt.design, False) if role == "rtl" and rt.meter.truncated else "")
+        run_role(rt, role, prompt + extra, allowed, repair or k > 0)
+        cut = rt.meter.truncated - t0
+        wrote = _written_snapshot(rt.design, role) != before
+        cut_any = cut_any or bool(cut)
+        if wrote:
+            rt.cut_streak[role] = 0
+        if cut and not wrote:
+            rt.cut_streak[role] = rt.cut_streak.get(role, 0) + cut
+        elif not cut:
+            rt.cut_streak[role] = 0
+        if rt.cut_streak.get(role, 0) >= MAX_REPLY_CUTS:
+            raise ReplyTooLong(role)
+        if not cut or rt.budget_notes or (role == "rtl" and wrote and not files_status(rt.design)[1] and _arch_blocks(rt.design)):
+            break
 
 
 SELF_CHECK_PASSES = 2          # 07a2 fix 7: repair passes the tests role gets inside one turn before it hands over
@@ -912,10 +1012,10 @@ def node_work(state: State) -> dict:
                 repair = reasons is not None
                 note = repair_note(role, reasons) if repair else ""
                 if role == "model":
-                    run_role(rt, "model", PROMPTS["model"].format(**fmt) + note + prompt_note("model"), role_allowed("model", 2), repair)
+                    run_writing_role(rt, "model", PROMPTS["model"].format(**fmt) + note + prompt_note("model"), role_allowed("model", 2), repair)
                 elif role == "tests":
                     mut = surviving_mutants_note(rt.design) if repair else ""        # 07a2 fix 7 (3)
-                    run_role(rt, "tests", PROMPTS["tests"].format(**fmt) + (note if repair else _p("graph/run/fresh_tests")) + mut
+                    run_writing_role(rt, "tests", PROMPTS["tests"].format(**fmt) + (note if repair else _p("graph/run/fresh_tests")) + mut
                                  + tests_checklist(rt, 2, repair) + prompt_note("tests") + conv_tests, role_allowed("tests", 2), repair)
                     selfcheck_tests_role(rt, lambda extra: run_role(            # 07a2 fix 7 (2): convention misses end here
                         rt, "tests", PROMPTS["tests"].format(**fmt) + repair_note("tests", extra) + mut
@@ -923,8 +1023,8 @@ def node_work(state: State) -> dict:
                 else:
                     own = "; ".join(r[:1500] for r in reasons) if repair else (
                         "; ".join(state.get("fails") or []) or "none")
-                    run_role(rt, "rtl", PROMPTS["rtl"].format(**{**fmt, "fails": own})
-                                 + (note if repair else "") + prompt_note("rtl") + conv0, role_allowed("rtl", 2), repair)
+                    run_writing_role(rt, "rtl", PROMPTS["rtl"].format(**{**fmt, "fails": own})
+                                     + (note if repair else "") + prompt_note("rtl") + conv0 + FILE_BY_FILE_NOTE, role_allowed("rtl", 2), repair)
         else:           # stage 9 too: the model writes probes.yaml and BRINGUP.md BEFORE the builds and the hardware pause
             run_role(rt, "rtl", PROMPTS["rtl"].format(**fmt) + conv + ((JTAG_HW_FORMAT if jtag else _p("graph/run/hw_format").format(**fmt)) if n == 9 else ""),
                          role_allowed("rtl", n))
@@ -943,6 +1043,13 @@ def node_work(state: State) -> dict:
                  and "__pycache__" not in p.parts]
         ownership.record(rt.design, "agent", st.name, f"stage {n} work, visit {visits[str(n)]}",
                          f"{len(files)} files in the design", n=n)
+    except ReplyTooLong as e:                              # brief 224: say what stalled, not "stage 2 visited more than 6 times"
+        role = str(e)
+        rtl, missing = files_status(rt.design)
+        return {"visits": visits, "stop": f"reply too long: no file written; the {role} role's last {MAX_REPLY_CUTS} replies were cut off at the output limit "
+                                          "(max_tokens), and no file was written in between",
+                "stop_detail": {"kind": "reply_too_long", "stage": n, "role": role, "consecutive_cut_replies": rt.cut_streak.get(role),
+                                "truncated_calls": rt.meter.truncated, "rtl_files": rtl, "blocks_missing": missing}}
     except ArmBlocked as e:                                # the Claude Code arm cannot run (auth, CLI): stop, say why
         return {"visits": visits, "stop": f"claude_code blocked: {e}"}
     except BudgetExceeded as e:
