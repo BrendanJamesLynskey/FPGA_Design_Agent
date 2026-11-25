@@ -3,7 +3,7 @@
 T1 has 11 requirements and 14 requirement-and-method rows (the committed reference simulation run, formal status files written here, and
 the f0b bring-up record). Cases: a clean report with its pending analysis rows, a pending hardware row that becomes pass or fail by
 regenerating from the bring-up JSON alone, a failed row, a requirement the report marks failed because a fix broke it, and the origin of
-each requirement (a line of the request, an answered question, a default with its class, a waiver, the agent's own reading)."""
+each requirement (a line of the request, an answered question, a default with its class, a waiver, the Clarifier's own reading, recorded or not)."""
 from __future__ import annotations
 
 import json
@@ -114,7 +114,7 @@ SPEC = {"resolved_questions": [
 def test_origin_is_a_request_line_an_answered_question_a_default_a_waiver_or_the_agents_reading():
     og = lambda text, **kw: rr.origin_of({"id": "R", "text": text, **kw}, SPEC, REQUEST)             # noqa: E731
     a = og("The counter wraps modulo 65536 at both ends")
-    assert (a["kind"], a["detail"], a["unconfirmed"]) == ("spec", "your request, line 2", False)
+    assert (a["kind"], a["detail"], a["unconfirmed"]) == ("spec", "your request, near line 2", False)
     b = og("The display scans 8 digits, one at a time")
     assert b["kind"] == "answered" and "oracle" in b["detail"] and not b["unconfirmed"]
     c = og("A button press is accepted after the 10 ms debounce interval")
@@ -122,7 +122,8 @@ def test_origin_is_a_request_line_an_answered_question_a_default_a_waiver_or_the
     d = og("The buzzer is driven from pin H17 with LVCMOS33")
     assert d["kind"] == "waiver" and "Alex" in d["detail"] and d["unconfirmed"]
     e = og("The design answers a read of address 0x20 with the version")
-    assert e["kind"] == "agent" and e["unconfirmed"]
+    assert e["kind"] == "unrecorded" and not e["unconfirmed"]          # nothing says it is a guess, and nothing says it is not
+    assert og("x", origin={"kind": "agent", "detail": "inferred"})["unconfirmed"]
     f = og("anything", origin={"kind": "answered", "detail": "q7"})
     assert f["kind"] == "answered" and f["detail"] == "q7"
 

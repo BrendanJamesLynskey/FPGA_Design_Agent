@@ -2,7 +2,7 @@
 """The requirements verification report of a design (brief 210): ``REQUIREMENTS_REPORT.md`` at the design root.
 
 One row per requirement of ``spec.yaml``: its id and text, **where it came from** (a line of the user's request, an answered question,
-a default with its risk class, a waiver, or the agent's own reading of the request), the method(s) that verify it, the evidence as links
+a default with its risk class, a waiver, or "unrecorded": the request or the Clarifier's reading of it, which spec.yaml does not tell apart), the method(s) that verify it, the evidence as links
 (test, formal job, gate or bring-up step) and the result: ``pass``, ``fail`` or ``pending`` (the evidence is not produced yet, for example a
 board check before the visit). The headline line counts them: "N of M requirements verified and passed; K pending; F failed".
 
@@ -45,7 +45,8 @@ _TOK = re.compile(r"[a-z0-9_]+(?:\.[0-9]+)?")
 
 
 def _tokens(s: str) -> set[str]:
-    return {t for t in _TOK.findall(str(s).lower()) if t not in STOP and (len(t) > 2 or t.isdigit())}
+    """Content words, cut to five letters so that "debounced" and "debounce", or "press" and "presses", meet."""
+    return {t if t.isdigit() else t[:5] for t in _TOK.findall(str(s).lower()) if t not in STOP and (len(t) > 2 or t.isdigit())}
 
 
 def _coverage(req: set[str], other: set[str]) -> float:
@@ -54,27 +55,23 @@ def _coverage(req: set[str], other: set[str]) -> float:
 
 # ---- where a requirement came from ---------------------------------------------------------------------------------------------------
 def origin_of(req: dict[str, Any], spec: dict[str, Any], request: str) -> dict[str, Any]:
-    """``{kind, detail, risk?, unconfirmed}``. ``kind`` is spec | answered | default | waiver | agent.
+    """``{kind, detail, risk, unconfirmed}``. ``kind`` is spec | answered | default | waiver | unrecorded | agent.
 
-    1. An explicit ``origin`` on the requirement (``{kind, detail}`` or a string) is used as written.
-    2. A line of the request (spec.md) that holds at least 60 % of the requirement's words: ``spec``, with the line number.
-    3. A resolved question (spec.yaml ``resolved_questions``) whose question and answer hold at least half of them: ``answered``
-       (by a person, the oracle or a package fact), ``default`` (nobody answered; with the question's risk class) or ``waiver``.
-    4. Otherwise ``agent``: the requirement is the Clarifier's reading of the request, not a statement in it."""
+    1. An explicit ``origin`` on the requirement (``{kind, detail}`` or a string) is used as written; ``agent`` and ``default`` count as
+       unconfirmed.
+    2. A resolved question (spec.yaml ``resolved_questions``) whose question and answer hold at least half of the requirement's words:
+       ``answered`` (by a person, the oracle or a package fact), ``default`` (nobody answered; with the question's risk class) or ``waiver``.
+    3. A line, or two lines together, of the request (spec.md) that holds at least 40 % of its words: ``spec``, with the line number. The
+       match is by words, and the Clarifier rewrites each requirement as one checkable statement, so it is a pointer to the likely line, not proof.
+    4. Otherwise ``unrecorded``: the requirement comes from the request or from the Clarifier's reading of it, and spec.yaml does not say which.
+       It is not marked unconfirmed: nothing says it is a guess either."""
     given = req.get("origin")
     if isinstance(given, dict) and given.get("kind"):
         return {"kind": str(given["kind"]), "detail": str(given.get("detail", "")), "risk": given.get("risk"),
-                "unconfirmed": str(given["kind"]) in ("default", "agent")}
+                "unconfirmed": str(given["kind"]) in ("default", "agent", "waiver")}
     if isinstance(given, str) and given.strip():
         return {"kind": "spec", "detail": given.strip(), "risk": None, "unconfirmed": False}
     want = _tokens(req.get("text", ""))
-    best, at = 0.0, 0
-    for i, line in enumerate(request.splitlines(), 1):
-        c = _coverage(want, _tokens(line))
-        if c > best:
-            best, at = c, i
-    if best >= 0.6:
-        return {"kind": "spec", "detail": f"your request, line {at}", "risk": None, "unconfirmed": False}
     from agent.graph import requirements as RQ
     top: tuple[float, dict] = (0.0, {})
     for q in spec.get("resolved_questions") or []:
@@ -92,7 +89,16 @@ def origin_of(req: dict[str, Any], spec: dict[str, Any], request: str) -> dict[s
         if q.get("status") == "defaulted":
             return {"kind": "default", "detail": f"a default (nobody answered): {what}", "risk": risk, "unconfirmed": True}
         return {"kind": "answered", "detail": f"answered by {q.get('by', '?')}: {what}", "risk": risk, "unconfirmed": False}
-    return {"kind": "agent", "detail": "the Clarifier's reading of the request; no line or answer states it", "risk": None, "unconfirmed": True}
+    lines = request.splitlines()
+    best, at = 0.0, 0
+    for pair in (False, True):                                   # a single line first: two lines together win only by holding more of the words
+        for i, line in enumerate(lines):
+            c = _coverage(want, _tokens(line + " " + lines[i + 1] if pair and i + 1 < len(lines) else line))
+            if c > best:
+                best, at = c, i + 1
+    if best >= 0.4:
+        return {"kind": "spec", "detail": f"your request, near line {at}", "risk": None, "unconfirmed": False}
+    return {"kind": "unrecorded", "detail": "the request or the Clarifier's reading of it (spec.yaml does not record which)", "risk": None, "unconfirmed": False}
 
 
 # ---- the evidence as links ------------------------------------------------------------------------------------------------------------
