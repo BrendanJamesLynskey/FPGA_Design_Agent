@@ -52,13 +52,36 @@ def version(exe: str = EXE) -> str:
     return subprocess.run([shutil.which(exe) or exe, "--version"], capture_output=True, text=True).stdout.strip()
 
 
-def run(argv: list[str], *, cwd: Path, env: dict[str, str], timeout: float, input: str | None = None) -> subprocess.CompletedProcess:
-    """Run one call in its isolated working directory and environment (``arm.isolated_env``). Raises ``subprocess.TimeoutExpired``."""
+def run(argv: list[str], *, cwd: Path, env: dict[str, str], timeout: float, input: str | None = None,
+        stdout_file: Path | None = None) -> subprocess.CompletedProcess:
+    """Run one call in its isolated working directory and environment (``arm.isolated_env``). Raises ``subprocess.TimeoutExpired``.
+
+    ``stdout_file`` (brief 182): the stream is written to this file as the call runs, so the navigator's live console can follow it; the
+    returned ``stdout`` is the file's text, as without it."""
+    kw: dict = {"input": input} if input is not None else {"stdin": subprocess.DEVNULL}
+    f = None
     try:
-        return subprocess.run(argv, cwd=cwd, env=env, capture_output=True, text=True, timeout=timeout,
-                              **({"input": input} if input is not None else {"stdin": subprocess.DEVNULL}))
-    except subprocess.TimeoutExpired as e:        # its message would carry the whole argv, prompt included
-        raise subprocess.TimeoutExpired("claude -p (argv withheld)", e.timeout, output=e.output, stderr=e.stderr) from None
+        if stdout_file is not None:
+            Path(stdout_file).parent.mkdir(parents=True, exist_ok=True)
+            f = open(stdout_file, "w")
+            kw.update(stdout=f, stderr=subprocess.PIPE)
+        else:
+            kw["capture_output"] = True
+        try:
+            p = subprocess.run(argv, cwd=cwd, env=env, text=True, timeout=timeout, **kw)
+        except subprocess.TimeoutExpired as e:        # its message would carry the whole argv, prompt included
+            out = e.output
+            if f is not None and out is None:
+                f.flush()
+                out = Path(stdout_file).read_text(errors="replace")
+            raise subprocess.TimeoutExpired("claude -p (argv withheld)", e.timeout, output=out, stderr=e.stderr) from None
+        if f is not None and p.stdout is None:
+            f.flush()
+            p.stdout = Path(stdout_file).read_text(errors="replace")
+        return p
+    finally:
+        if f is not None:
+            f.close()
 
 
 def text_call(system: str, user: str, *, model: str, effort: str | None = None, timeout_s: float = 900,

@@ -1,0 +1,40 @@
++-----------------------------------------------------------------------------------------------------------------+
+; Create Clock                                                                                                    ;
++--------------+-------+--------+-----------------+---------------------+-----------+------------------+----------+
+; SDC Command  ; Name  ; Period ; Waveform        ; Targets             ; Add Clock ; Location         ; Comments ;
++--------------+-------+--------+-----------------+---------------------+-----------+------------------+----------+
+; create_clock ; clk_a ; 10.000 ; { 0.000 5.000 } ; [get_ports {clk_a}] ;           ; q_variant.sdc:11 ;          ;
+; create_clock ; clk_b ; 6.400  ; { 0.000 3.200 } ; [get_ports {clk_b}] ;           ; q_variant.sdc:12 ;          ;
++--------------+-------+--------+-----------------+---------------------+-----------+------------------+----------+
+
++-------------------------------------------------------------------------------------------------------------------------------------------------+
+; Set Clock Uncertainty                                                                                                                           ;
++-----------------------+-------+------------+----------------------+----------+----------------------+-------------+------------------+----------+
+; SDC Command           ; Flags ; From Flags ; From                 ; To Flags ; To                   ; Uncertainty ; Source           ; Comments ;
++-----------------------+-------+------------+----------------------+----------+----------------------+-------------+------------------+----------+
+; set_clock_uncertainty ;       ; -rise_from ; [get_clocks {clk_b}] ; -rise_to ; [get_clocks {clk_b}] ; 0.820       ; q_variant.sdc:19 ;          ;
+; set_clock_uncertainty ;       ; -rise_from ; [get_clocks {clk_b}] ; -fall_to ; [get_clocks {clk_b}] ; 0.820       ; q_variant.sdc:19 ;          ;
+; set_clock_uncertainty ;       ; -rise_from ; [get_clocks {clk_b}] ; -rise_to ; [get_clocks {clk_a}] ; 1.250       ; q_variant.sdc:21 ;          ;
+; set_clock_uncertainty ;       ; -rise_from ; [get_clocks {clk_b}] ; -fall_to ; [get_clocks {clk_a}] ; 1.250       ; q_variant.sdc:21 ;          ;
+; set_clock_uncertainty ;       ; -fall_from ; [get_clocks {clk_b}] ; -rise_to ; [get_clocks {clk_b}] ; 0.820       ; q_variant.sdc:19 ;          ;
+; set_clock_uncertainty ;       ; -fall_from ; [get_clocks {clk_b}] ; -fall_to ; [get_clocks {clk_b}] ; 0.820       ; q_variant.sdc:19 ;          ;
+; set_clock_uncertainty ;       ; -fall_from ; [get_clocks {clk_b}] ; -rise_to ; [get_clocks {clk_a}] ; 1.250       ; q_variant.sdc:21 ;          ;
+; set_clock_uncertainty ;       ; -fall_from ; [get_clocks {clk_b}] ; -fall_to ; [get_clocks {clk_a}] ; 1.250       ; q_variant.sdc:21 ;          ;
+; set_clock_uncertainty ;       ; -rise_from ; [get_clocks {clk_a}] ; -rise_to ; [get_clocks {clk_b}] ; 0.800       ; q_variant.sdc:20 ;          ;
+; set_clock_uncertainty ;       ; -rise_from ; [get_clocks {clk_a}] ; -fall_to ; [get_clocks {clk_b}] ; 0.800       ; q_variant.sdc:20 ;          ;
+; set_clock_uncertainty ;       ; -rise_from ; [get_clocks {clk_a}] ; -rise_to ; [get_clocks {clk_a}] ; 1.270       ; q_variant.sdc:18 ;          ;
+; set_clock_uncertainty ;       ; -rise_from ; [get_clocks {clk_a}] ; -fall_to ; [get_clocks {clk_a}] ; 1.270       ; q_variant.sdc:18 ;          ;
+; set_clock_uncertainty ;       ; -fall_from ; [get_clocks {clk_a}] ; -rise_to ; [get_clocks {clk_b}] ; 0.800       ; q_variant.sdc:20 ;          ;
+; set_clock_uncertainty ;       ; -fall_from ; [get_clocks {clk_a}] ; -fall_to ; [get_clocks {clk_b}] ; 0.800       ; q_variant.sdc:20 ;          ;
+; set_clock_uncertainty ;       ; -fall_from ; [get_clocks {clk_a}] ; -rise_to ; [get_clocks {clk_a}] ; 1.270       ; q_variant.sdc:18 ;          ;
+; set_clock_uncertainty ;       ; -fall_from ; [get_clocks {clk_a}] ; -fall_to ; [get_clocks {clk_a}] ; 1.270       ; q_variant.sdc:18 ;          ;
++-----------------------+-------+------------+----------------------+----------+----------------------+-------------+------------------+----------+
+
++---------------------------------------------------------------------------------------------------------------------------+
+; Set Clock Groups                                                                                                          ;
++------------------+---------------+----------------------------------------------------------+------------------+----------+
+; SDC Command      ; Exclusive     ; Groups                                                   ; Location         ; Comments ;
++------------------+---------------+----------------------------------------------------------+------------------+----------+
+; set_clock_groups ; -asynchronous ; -group [get_clocks {clk_a}] -group [get_clocks {clk_b}]  ; q_variant.sdc:73 ;          ;
++------------------+---------------+----------------------------------------------------------+------------------+----------+
+

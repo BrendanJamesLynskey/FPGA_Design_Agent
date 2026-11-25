@@ -1,0 +1,35 @@
+{
+ "enforced": false,
+ "simulator": "Icarus Verilog 12.0",
+ "design": "flow/tests/fixtures/latency_race",
+ "rows": [
+  {
+   "variant": 0,
+   "what": "planted race, counter process written first",
+   "counter_clocks": 2,
+   "simulator_time_clocks": 3,
+   "true_latency_clocks": 3,
+   "findings": [
+    "LAT-X-03"
+   ]
+  },
+  {
+   "variant": 1,
+   "what": "planted race, stamp process written first",
+   "counter_clocks": 4,
+   "simulator_time_clocks": 3,
+   "true_latency_clocks": 3,
+   "findings": [
+    "LAT-X-03"
+   ]
+  },
+  {
+   "variant": 2,
+   "what": "repaired: non-blocking counter",
+   "counter_clocks": 3,
+   "simulator_time_clocks": 3,
+   "true_latency_clocks": 3,
+   "findings": []
+  }
+ ]
+}

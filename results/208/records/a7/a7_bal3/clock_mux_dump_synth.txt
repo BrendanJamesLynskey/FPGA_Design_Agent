@@ -1,0 +1,26 @@
+MUX	g_bal3.u_l1a	BUFGCTRL	BUFGCTRL	2
+MUXIN	g_bal3.u_l1a	I0	g_7.u_mmcm	MMCME2_ADV	c_0
+MUXIN	g_bal3.u_l1a	I1	g_7.u_mmcm	MMCME2_ADV	c_1
+MUXOUT	g_bal3.u_l1a	c_0,c_1
+MUXCTL	g_bal3.u_l1a	CE0	1	VCC	VCC
+MUXCTL	g_bal3.u_l1a	CE1	1	VCC	VCC
+MUXCTL	g_bal3.u_l1a	IGNORE0	0	GND	GND
+MUXCTL	g_bal3.u_l1a	IGNORE1	0	GND	GND
+MUXCTL	g_bal3.u_l1a	S0	-	g_bal3.u_l1a_i_1	LUT1
+MUXCTL	g_bal3.u_l1a	S1	-	sel_IBUF[0]_inst	IBUF
+FANOUT	g_bal3.u_l1a	17
+INTER	g_bal3.u_l1a	A	0	-
+INTER	g_bal3.u_l1a	C	0	-
+MUX	g_bal3.u_l2	BUFGCTRL	BUFGCTRL	2
+MUXIN	g_bal3.u_l2	I0	g_bal3.u_l1a	BUFGCTRL	c_0,c_1
+MUXIN	g_bal3.u_l2	I1	g_7.u_mmcm	MMCME2_ADV	c_2
+MUXOUT	g_bal3.u_l2	c_0,c_1,c_2
+MUXCTL	g_bal3.u_l2	CE0	1	VCC	VCC
+MUXCTL	g_bal3.u_l2	CE1	1	VCC	VCC
+MUXCTL	g_bal3.u_l2	IGNORE0	0	GND	GND
+MUXCTL	g_bal3.u_l2	IGNORE1	0	GND	GND
+MUXCTL	g_bal3.u_l2	S0	-	g_bal3.u_l2_i_1	LUT1
+MUXCTL	g_bal3.u_l2	S1	-	sel_IBUF[2]_inst	IBUF
+FANOUT	g_bal3.u_l2	17
+INTER	g_bal3.u_l2	A	0	-
+INTER	g_bal3.u_l2	C	0	-

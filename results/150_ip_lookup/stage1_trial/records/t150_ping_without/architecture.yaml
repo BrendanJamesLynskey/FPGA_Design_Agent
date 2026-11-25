@@ -1,0 +1,82 @@
+schema: fpga-design-agent/architecture/v1
+design: ping_top
+board: nexys_a7_100t
+blocks:
+  - name: ping_top
+    function: board top; instantiates fpga_shell and the blocks below; ID register and window mapping
+  - name: clk_gen
+    function: MMCME2 100 MHz to 50 MHz refclk, BUFG, ODDR forwarding refclk to the eth_refclk pin
+  - name: rst_sync
+    function: reset_sync per domain (clk, refclk); active-low cpu_resetn to active-high synchronous reset
+  - name: rmii_rx
+    function: dibit to byte assembly, preamble/SFD, CRC-32 FCS check, runt (<64 B) and oversize (>1518 B) drop
+  - name: rx_cdc
+    function: xpm_fifo_async of {byte, last, good} from refclk to clk
+  - name: frame_buf
+    function: one-frame store (2 RAMB36) holding request and reply
+  - name: proto
+    function: EtherType dispatch 0x0806/0x0800, ARP reply, IPv4 checks, ICMP echo reply with recomputed checksums, TTL 64
+  - name: tx_cdc
+    function: xpm_fifo_async of reply bytes from clk to refclk
+  - name: rmii_tx
+    function: dibit serialisation on eth_txd, eth_txen, FCS append, preamble/SFD
+  - name: led_timer
+    function: LED_HOLD_CYCLES countdown on clk, restarted by each echo reply start
+  - name: reg_block
+    function: ID register (RO 0x50494E47) at window offset 0x00 (shell address 0x80)
+interfaces:
+  - name: host_uart
+    between: [host, fpga_shell]
+    protocol: uart
+    prefix: uart
+    module: fpga_shell
+  - name: register_window
+    between: [fpga_shell, reg_block]
+    protocol: simple
+    prefix: win
+    module: reg_block
+  - name: rmii_phy
+    between: [phy, ping_top]
+    protocol: other
+    prefix: eth
+    module: rmii_rx
+  - name: led_out
+    between: [ping_top, led]
+    protocol: gpio
+    prefix: led
+    module: led_timer
+clock_domains:
+  - name: clk
+    clock: clk_100mhz
+    freq_mhz: 100
+  - name: refclk
+    clock: eth_refclk
+    freq_mhz: 50
+reset:
+  synchronisers: [reset_sync]
+crossings:
+  - from: async
+    to: clk
+    signal: cpu_resetn
+    primitive: reset_sync
+    inline_in: rst_sync
+  - from: async
+    to: refclk
+    signal: cpu_resetn
+    primitive: reset_sync
+    inline_in: rst_sync
+  - from: refclk
+    to: clk
+    signal: rx_byte_last_good
+    primitive: xpm_fifo_async
+    inline_in: rx_cdc
+  - from: clk
+    to: refclk
+    signal: tx_byte_last
+    primitive: xpm_fifo_async
+    inline_in: tx_cdc
+predicted_resources:
+  lut: [1000, 2500]
+  ff: [600, 2400]
+  bram_tile: [1, 4]
+  dsp: [0, 2]

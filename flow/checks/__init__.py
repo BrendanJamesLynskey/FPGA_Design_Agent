@@ -59,8 +59,17 @@ BUILD_FILES = {
     # written by flow/build.tcl after synthesis since brief 71; the route scope reads the same post-synthesis scan
     "reset_scan": {"synth": "reset_scan_synth.tsv", "route": "reset_scan_synth.tsv"},
     "control_sets": {"synth": "control_sets_synth.rpt"},
+    "mtbf": {"route": "mtbf.rpt"},               # brief 189: flow/mtbf.py parses it (advisory; UltraScale+ only)
     "dsp_cells": {"synth": "dsp_cells_synth.txt", "route": "dsp_cells.txt"},      # brief 185: written by flow/build.tcl (flow/dsp_cells.tcl)
+    # brief 204a: written by flow/build.tcl after synthesis and routing; the route scope reads the post-synthesis ones where the
+    # guide asks for them before placement (logic levels, high-fanout nets)
+    "logic_levels": {"synth": "logic_levels_synth.rpt", "route": "logic_levels_synth.rpt"},
+    "clock_utilization": {"synth": "clock_utilization_synth.rpt", "route": "clock_utilization_route.rpt"},
+    "clock_networks": {"synth": "clock_networks_synth.rpt", "route": "clock_networks_synth.rpt"},
+    "congestion": {"route": "congestion_route.rpt"},
 }
+#: the post-synthesis report the high-fanout check reads at both scopes
+BUILD_FILES["high_fanout"]["route"] = "high_fanout_synth.rpt"
 DCP = {"synth": "post_synth.dcp", "route": "post_route.dcp"}
 GATE_STAGE = {"rtl": "rtl", "synth": "post_synth", "route": "post_route"}
 
@@ -192,15 +201,9 @@ def _not_run(why: str) -> dict[str, Any]:
 
 
 def build_sources(design: Path, root: Path = ROOT) -> list[Path]:
-    """The build's own source list: flow/prepare.py's expansion (pathlib glob, so ``**`` recurses), no duplicates."""
-    try:
-        b = yaml.safe_load((design / "build.yaml").read_text()) or {}
-    except (OSError, yaml.YAMLError):
-        return sorted(design.glob("rtl/**/*.sv")) + sorted(design.glob("rtl/**/*.v"))
-    out: list[Path] = []
-    for g in b.get("sources") or []:
-        out += [p for p in sorted(root.glob(g)) if p not in out]
-    return out
+    """The build's own source list, every language (flow/sources.py, brief 153)."""
+    from flow import sources
+    return sources.build_sources(design, root)
 
 
 def build_top(design: Path) -> str | None:
@@ -221,13 +224,41 @@ def _lint(ctx: Ctx) -> dict[str, Any]:
             fs = [{"tool": "verilator", "code": "ERROR", "severity": "error", "where": "lint",
                    "message": out.strip()[-400:] or "lint failed", "blocking": True}]
         return {**_result(fs), "verdict": bool(r.get("ok"))}
+    from flow import sources
     from flow.lint_ruleset import verilator_findings
+    g = sources.by_language(build_sources(ctx.design, ctx.root))
+    if g["vhdl"]:
+        return _lint_vhdl(ctx, g)
     vf, note = verilator_findings(ctx.design)
     if vf is None:
+        return _not_run(note)
+    if note and not vf:                                  # Verilator itself failed (a crash, a bad VERILATOR_ROOT): that is not a clean lint
         return _not_run(note)
     fs = [{"tool": "verilator", "code": f["code"], "severity": f["severity"], "where": f["key"].split(" ", 1)[-1],
            "key": f["key"], "message": f["message"], "blocking": True} for f in vf]
     return _result(fs)
+
+
+def _lint_vhdl(ctx: Ctx, g: dict[str, list[Path]]) -> dict[str, Any]:
+    """The lint of a design with VHDL in its build list (brief 153): the VHDL tool's own lint, as the agent's lint tool runs it
+    (``flow.vhdl.lint``: GHDL analysis with -Wall, then synthesis of the top; latches and double drivers refused; the shell's modules
+    may stay unbound components). A VHDL top with SystemVerilog beside it (the test shell) is linted as VHDL. A SystemVerilog top over
+    VHDL entities has no lint that reads both languages: it is not run, and says so. The findings carry the tool key ``verilator``
+    (the lint tool's key in the rule set) with the code ``GHDL``, so they map to the lint catch-all rule HDL-LINT-00."""
+    from flow import vhdl
+    top = build_top(ctx.design)
+    vh = [f for f in g["vhdl"] if f.is_file()]
+    own_vhdl_top = bool(top) and any(re.search(rf"(?im)^\s*entity\s+{re.escape(top)}\s+is\b", f.read_text(errors="replace")) for f in vh)
+    if not own_vhdl_top:
+        return _not_run(f"no reader: the build's top {top!r} is not a VHDL entity but the build has VHDL files "
+                        f"({', '.join(f.name for f in vh[:3])}): no lint reads SystemVerilog and VHDL together")
+    r = vhdl.lint(vh, vhdl.top_entity(vh, top))
+    if r["ok"]:
+        return {**_result([]), "verdict": True}
+    text = str(r.get("output", "")).strip()
+    where = next((m.group(1) for m in re.finditer(r"([\w./-]+\.vhdl?):\d+", text)), "lint")
+    return {**_result([{"tool": "verilator", "code": "GHDL", "severity": "error", "where": where, "key": f"verilator:GHDL {where}",
+                        "message": text[-400:] or "GHDL lint failed", "blocking": True}]), "verdict": False}
 
 
 def _verilator_lines(text: str, ctx: Ctx) -> list[dict[str, Any]]:
@@ -272,6 +303,12 @@ def _standards(ctx: Ctx) -> dict[str, Any]:
                 where = f"{f.get('file')}:{f.get('line')}"
                 fs.append({"tool": "standards", "code": r["id"], "severity": r["status"], "where": where,
                            "key": f"standards:{r['id']} {where}", "message": f.get("message", ""), "blocking": True})
+    for r in rep.get("rules") or []:        # rtl.initial_values: warn (brief 205): shown, never blocking
+        if r.get("status") == "warn" and (ctx.scope != "rtl" or r.get("stage") in ("rtl", None)):
+            for f in r.get("warnings") or []:
+                where = f"{f.get('file')}:{f.get('line')}"
+                fs.append({"tool": "standards", "code": r["id"], "severity": "warning", "where": where,
+                           "key": f"standards:{r['id']} {where}", "message": f.get("message", ""), "blocking": False})
     return _result(fs, records=[out])
 
 
@@ -434,7 +471,10 @@ def _xpm_sim(ctx: Ctx) -> dict[str, Any]:
     """Brief 105A, advisory: an xpm_cdc instance (of a macro that has the parameter) whose SIM_ASSERT_CHK is not 1 (flow/constraint_gates.py).
     Reads the build's own source list; only text of the design's RTL, never a vendor file."""
     from flow import constraint_gates as CG
-    srcs = [f for f in build_sources(ctx.design, ctx.root) if f.suffix in (".sv", ".v", ".svh", ".vh")]
+    from flow import sources
+    srcs = [f for f in build_sources(ctx.design, ctx.root) if sources.language(f)]
+    if not srcs:
+        return _not_run("no HDL source file in the build list")
     fs = []
     for f in srcs:
         try:
@@ -442,10 +482,50 @@ def _xpm_sim(ctx: Ctx) -> dict[str, Any]:
         except OSError:
             continue
         rel = str(f.relative_to(ctx.root)) if f.is_relative_to(ctx.root) else str(f)
-        for x in CG.xpm_sim_findings(text, rel):
+        for x in (CG.xpm_sim_findings_vhdl if sources.language(f) == "vhdl" else CG.xpm_sim_findings)(text, rel):
             fs.append({"tool": "xpm_sim", "code": x["code"], "severity": "advisory", "where": x["where"],
                        "key": f"xpm_sim:{x['code']} {x['where']}", "message": x["message"], "blocking": False})
     return _result(fs, records=srcs)
+
+
+def _fastpath(ctx: Ctx) -> dict[str, Any]:
+    """Brief 190, advisory: a data-dependent shift or index of a wide vector in a module declared fast-path (flow/checks/wide_index.py).
+    Modules are declared in architecture.yaml ``fast_path: [module, ...]`` or by a ``// fda:fast_path`` comment inside the module."""
+    from flow.checks import wide_index as WI
+    try:
+        declared = {str(x) for x in ((yaml.safe_load((ctx.design / "architecture.yaml").read_text()) or {}).get("fast_path") or [])}
+    except (OSError, yaml.YAMLError, AttributeError):
+        declared = set()
+    srcs = [f for f in build_sources(ctx.design, ctx.root) if f.suffix in (".sv", ".v")]
+    r = WI.run(srcs, declared, ctx.root)
+    fs = [{"tool": "fastpath", "code": x["code"], "severity": "advisory", "where": x["where"], "key": f"fastpath:{x['code']} {x['where']} {x['vector']}",
+           "message": x["message"], "blocking": False} for x in r["findings"]]
+    parts = {"modules": f"{r['modules']} fast-path module(s) examined" if r["modules"] else
+             "no module declared fast-path (architecture.yaml fast_path: [...] or a // fda:fast_path comment)"}
+    if r["unjudged"]:
+        parts["unjudged"] = f"{r['unjudged']} shift(s) or index(es) on vectors whose width could not be evaluated were not judged"
+    return _result(fs, parts, srcs)
+
+
+def _cdc_margin(ctx: Ctx) -> dict[str, Any]:
+    """Brief 207: clock-crossing intent constrained and met (flow/cdc_margin.py, the same function as the gate post_route_bus_skew_met):
+    a bus-skew violation blocks; missing bus-skew coverage, a loose datapath-only value, a missing or low MTBF (UltraScale+) and high
+    user clock uncertainty are advisory."""
+    if ctx.scope != "route":
+        return _not_run("needs the routed design's report_bus_skew (scope route)")
+    if not (ctx.build / "bus_skew_route.rpt").is_file():
+        return _not_run("the build has no bus_skew_route.rpt (made before brief 207)")
+    from flow import gates as G
+    try:
+        prep = json.loads((ctx.build / "prepare.json").read_text()) if (ctx.build / "prepare.json").is_file() else {}
+        r = G._cdc_margin(ctx.build, None, prep)
+    except (OSError, ValueError, KeyError) as e:
+        return _not_run(f"{type(e).__name__}: {e}")
+    fs = [{"tool": "cdc_margin", "code": f["code"], "severity": "error" if f["level"] == "gate" else "advisory",
+           "where": str(f.get("cell") or f.get("net") or f.get("position") or f.get("id") or "bus_skew_route.rpt"),
+           "key": f"cdc_margin:{f['code']} {f.get('cell') or f.get('net') or f.get('position') or f.get('id') or ''}".strip(),
+           "message": str(f.get("text") or f)[:240], "blocking": f["level"] == "gate"} for f in (r or {}).get("findings", [])]
+    return _result(fs, records=[ctx.build / "bus_skew_route.rpt"])
 
 
 def _owned(code: str, by: str) -> str | None:
@@ -577,6 +657,28 @@ def _clocking(ctx: Ctx) -> dict[str, Any]:
     return _result(fs, parts, recs)
 
 
+
+def _clock_mux(ctx: Ctx) -> dict[str, Any]:
+    """Brief 208: clock multiplexers (flow/clock_mux_check.py on flow/clock_mux_dump.tcl's netlist scan, with the
+    clock-interaction report): a LUT on a clock path, a mux whose modes are still timed against each other, clock groups on
+    the mux's source clocks while paths join a source tree and the mux fanout (they hide real paths), and advisories for a
+    case-analysed select, a CE-pin select, an external clock with IGNORE tied, and a deep BUFGCTRL cascade."""
+    if ctx.scope == "rtl":
+        return _not_run("needs a synthesised netlist (scope synth or route)")
+    p = ctx.report("clock_mux")
+    if p is None:
+        return _not_run(ctx.not_run_reason("clock_mux"))
+    from flow import clock_mux_check as CM
+    from flow.constraint_gates import parse_clock_pairs
+    ci = ctx.report("clock_interaction")
+    pairs = parse_clock_pairs(ci.read_text(errors="replace")) if ci else None
+    fs = [{"tool": "clock_mux", "code": f["code"], "severity": "error" if f["blocking"] else "advisory", "where": f["where"],
+           "key": f"clock_mux:{f['code']} {f['where']}", "message": f["message"], "blocking": f["blocking"]}
+          for f in CM.findings(CM.parse_dump(p.read_text(errors="replace")), pairs)]
+    parts = {"clock_mux": "ran", "clock_interaction": "ran" if ci else "not run: " + ctx.not_run_reason("clock_interaction")}
+    return _result(fs, parts, [p, ci])
+
+
 def _dsp_ram(ctx: Ctx) -> dict[str, Any]:
     """DSP and block-RAM mapping: AMD's DPIP/DPOP pipelining rows and SYNTH rows (methodology), RBOR and REQP RAM rows
     (DRC), and the utilisation of DSP and RAM. Critical rows fail; the rest are advice."""
@@ -638,6 +740,32 @@ def _dsp_regs(ctx: Ctx) -> dict[str, Any]:
     return _result(fs, parts, [cells])
 
 
+def _init_values(ctx: Ctx) -> dict[str, Any]:
+    """Initial values that cost a hard block's register (brief 206, flow/checks/init_values.py): the session's netlist scan
+    (init_scan) for INIT = 1 registers wired to a DSP, RAM or FIFO, and the build log for UltraRAM refused for initial
+    contents (Synth 8-12183). Advisory only."""
+    if ctx.scope == "rtl":
+        return _not_run("needs a synthesised design (scope synth or route)")
+    from flow.checks import init_values as I
+    fs, parts, recs = [], {}, []
+    scan = ctx.report("init_scan")
+    if scan:
+        fs += [{**f, "key": f"init_values:{f['code']} {f['where']}", "blocking": False} for f in I.scan_findings(I.read_scan(scan))]
+        parts["netlist"] = "ran"
+        recs.append(scan)
+    else:
+        parts["netlist"] = "not run: " + ctx.not_run_reason("init_scan")
+    log = ctx.build / "vivado.log"
+    if log.is_file():
+        fs += [{**f, "key": f"init_values:{f['code']} {f['where']}", "blocking": False}
+               for f in I.log_findings(log.read_text(errors="replace"))]
+        parts["log"] = "ran"
+        recs.append(log)
+    else:
+        parts["log"] = "not run: no build/<variant>/vivado.log"
+    return _result(fs, parts, recs)
+
+
 def _control_sets(ctx: Ctx) -> dict[str, Any]:
     """report_control_sets (AMD): the number of unique control sets, and AMD's ULMTCS rows from report_methodology."""
     if ctx.scope == "rtl":
@@ -655,7 +783,150 @@ def _control_sets(ctx: Ctx) -> dict[str, Any]:
         if r["rule"].startswith("ULMTCS-"):
             fs.append(_vrow(r, ctx, mp.name, _crit(r["severity"])))
     parts = {"report_control_sets": "ran", "methodology": "ran" if mp else "not run: " + ctx.not_run_reason("methodology")}
+    # brief 204a: UG949 Table 17 (p.265): the bands against the device's capacity (CLB registers / 8)
+    from flow import report_gates as R
+    ut, _up, why = _txt(ctx, "utilization")
+    if ut is not None:
+        fs += R.control_set_findings(ctx.cache["control_sets"], G_parse_util(ut).get("ff_available"))
+        parts["utilization"] = "ran"
+    else:
+        parts["utilization"] = "not run: " + why
     return _result(fs, parts, records=[p])
+
+
+# ---- brief 204a: report-driven checks (flow/report_gates.py) ------------------------------------------------------------
+def _txt(ctx: Ctx, name: str) -> tuple[str | None, Path | None, str]:
+    """(text, path, why): the report's text, or None and the reason it is missing."""
+    p = ctx.report(name)
+    if p is None:
+        return None, None, ctx.not_run_reason(name)
+    return p.read_text(errors="replace"), p, ""
+
+
+def _timing_texts(ctx: Ctx) -> list[tuple[str, str]]:
+    """The timing-path reports of this scope: (file name, text)."""
+    names = ["timing_summary_synth.rpt"] if ctx.scope == "synth" else ["timing_summary.rpt", "timing_worst_setup.rpt", "timing_worst_hold.rpt"]
+    return [(n, (ctx.build / n).read_text(errors="replace")) for n in names if (ctx.build / n).is_file()]
+
+
+def _logic_levels(ctx: Ctx) -> dict[str, Any]:
+    """RPT-LL-01 (advisory): the logic-level distribution against each clock's requirement; RPT-LL-02 (gate): a setup path of the
+    post-synthesis timing report that still fails with its net delay taken out."""
+    from flow import report_gates as R
+    if ctx.scope == "rtl":
+        return _not_run("needs a synthesised design (scope synth or route)")
+    fs, parts, recs = [], {}, []
+    t, p, why = _txt(ctx, "logic_levels")
+    if t is not None:
+        fs += R.logic_level_findings(R.parse_logic_levels(t))
+        parts["logic_levels"] = "ran"
+        recs.append(p)
+    else:
+        parts["logic_levels"] = "not run: " + why
+    ts = ctx.build / "timing_summary_synth.rpt"
+    if ts.is_file():
+        fs += R.zero_net_delay_findings(ts.read_text(errors="replace"))
+        parts["zero_net_delay"] = "ran"
+        recs.append(ts)
+    else:
+        parts["zero_net_delay"] = "not run: no timing_summary_synth.rpt"
+    return _result(fs, parts, recs)
+
+
+def _clock_tree(ctx: Ctx) -> dict[str, Any]:
+    """RPT-CLK-01 (advisory): cascaded global buffers and local clocks; RPT-CLK-02 (advisory): uncertainty and skew over the guide's
+    review thresholds, on the timing paths of the scope."""
+    from flow import report_gates as R
+    if ctx.scope == "rtl":
+        return _not_run("needs a synthesised design (scope synth or route)")
+    fs, parts, recs = [], {}, []
+    u, up, why = _txt(ctx, "clock_utilization")
+    util = R.parse_clock_utilization(u) if u is not None else None
+    parts["clock_utilization"] = "ran" if u is not None else "not run: " + why
+    n, np_, why2 = _txt(ctx, "clock_networks")
+    nets = R.parse_clock_networks(n) if n is not None else None
+    parts["clock_networks"] = "ran" if n is not None else "not run: " + why2
+    fs += R.clock_tree_findings(util, nets)
+    recs += [x for x in (up, np_) if x]
+    tt = _timing_texts(ctx)
+    parts["timing_paths"] = "ran" if tt else "not run: no timing report for this scope"
+    for name, text in tt:
+        fs += R.path_clock_findings(R.T.parse_paths(text), name)
+        recs.append(ctx.build / name)
+    return _result(fs, parts, recs)
+
+
+def _fanout(ctx: Ctx) -> dict[str, Any]:
+    """RPT-FO-01 (advisory): a high-fanout net against the clock frequency (UG949 p.75), with the guide's fixes."""
+    from flow import report_gates as R
+    if ctx.scope == "rtl":
+        return _not_run("needs a synthesised design (scope synth or route)")
+    t, p, why = _txt(ctx, "high_fanout")
+    if t is None:
+        return _not_run(why)
+    ts = ctx.build / "timing_summary_synth.rpt"
+    clocks = R.parse_clock_summary(ts.read_text(errors="replace")) if ts.is_file() else []
+    parts = {"high_fanout": "ran", "clock_summary": "ran" if clocks else "not run: no Clock Summary (fastest clock unknown)"}
+    return _result(R.fanout_findings(R.parse_high_fanout(t), clocks), parts, [p])
+
+
+def _synth_log(ctx: Ctx) -> dict[str, Any]:
+    """RPT-LOG-01 / RPT-LOG-02 (advisory): the build's log (the flow's own vivado.log)."""
+    from flow import report_gates as R
+    log = ctx.build / "vivado.log"
+    if ctx.scope == "rtl" or not log.is_file():
+        return _not_run("no vivado.log for this build" if ctx.scope != "rtl" else "needs a build log (scope synth or route)")
+    inp = ctx.build / "inputs.tcl"
+    gens = R.build_generics(inp.read_text(errors="replace")) if inp.is_file() else None   # None: unknown, so every unused generic counts
+    return _result(R.log_findings(log.read_text(errors="replace"), generics=gens), {"vivado.log": "ran"}, [log])
+
+
+def _congestion(ctx: Ctx) -> dict[str, Any]:
+    """RPT-CONG-01 / RPT-CONG-02 (advisory): congestion tables in the log and report_design_analysis -congestion, and the
+    utilisation the guide ties to hard placement."""
+    from flow import report_gates as R
+    if ctx.scope == "rtl":
+        return _not_run("needs a synthesised design (scope synth or route)")
+    fs, parts, recs = [], {}, []
+    log = ctx.build / "vivado.log"
+    tables = R.parse_placer_congestion(log.read_text(errors="replace")) if log.is_file() else []
+    parts["vivado.log"] = "ran" if log.is_file() else "not run: no vivado.log"
+    wins: list[dict[str, Any]] = []
+    t, p, why = _txt(ctx, "congestion") if ctx.scope == "route" else (None, None, "congestion is read after place and route")
+    if t is not None:
+        wins = R.parse_congestion_report(t)
+        recs.append(p)
+    parts["congestion_report"] = "ran" if t is not None else "not run: " + why
+    fs += R.congestion_findings(tables, wins)
+    u, up, why2 = _txt(ctx, "utilization")
+    parts["utilization"] = "ran" if u is not None else "not run: " + why2
+    if u is not None:
+        fs += R.utilization_findings(G_parse_util(u))
+        recs.append(up)
+    return _result(fs, parts, recs)
+
+
+def G_parse_util(text: str) -> dict[str, Any]:
+    from flow.gates import parse_utilization
+    return parse_utilization(text)
+
+
+def _ip_status(ctx: Ctx) -> dict[str, Any]:
+    """RPT-IP-01 (gate): report_ip_status after synthesis, written by flow/build.tcl for a build whose session holds IP."""
+    from flow import report_gates as R
+    if ctx.scope == "rtl":
+        return _not_run("needs a synthesised design (scope synth or route)")
+    f = ctx.build / "ip_status_synth.rpt"
+    if not f.is_file():
+        return _not_run("no ip_status_synth.rpt (the build holds no IP, or predates brief 204a)")
+    return _result(R.ip_status_findings(R.parse_ip_status(f.read_text(errors="replace"))), {"report_ip_status": "ran"}, [f])
+
+
+def _ip_applies(design: Path) -> str | None:
+    b = design / "build"
+    if b.is_dir() and any(b.glob("*/ip_status_synth.rpt")):
+        return None
+    return "no IP status report in the build (the design has no IP, or its build predates brief 204a)"
 
 
 def _fsm(ctx: Ctx) -> dict[str, Any]:
@@ -704,8 +975,14 @@ def _axi_profile(ctx: Ctx) -> dict[str, Any]:
     (flow/checks/axi_profile.py, brief 73): the block's source map is resolved under the design's `interfaces:`, the RTL
     regenerated and compared with the file."""
     from flow.checks import axi_profile as AP
+    from flow import sources
     fs = AP.run_checks(ctx.design, ctx.root)
-    return _result(fs, records=[p for p in (ctx.design / "spec.yaml",) if p.is_file()])
+    parts: dict[str, str] = {}
+    ifs, _ = AP.interfaces(ctx.design)
+    unread = sources.no_reader(sources.vhdl_files(build_sources(ctx.design, ctx.root)), {"sv"}, "axi_profile (generated register blocks)") if ifs is not None else None
+    if unread:                                          # the generator emits SystemVerilog only, so a VHDL register block has no claim to compare
+        parts = {"generated_sv_blocks": "ran", "vhdl_register_logic": "not run: " + unread}
+    return _result(fs, parts, records=[p for p in (ctx.design / "spec.yaml",) if p.is_file()])
 
 
 def _axi_profile_applies(design: Path) -> str | None:
@@ -780,7 +1057,10 @@ def _constants(ctx: Ctx) -> dict[str, Any]:
     out.write_text(json.dumps(t, indent=1) + "\n")
     fs = [{"tool": "constants", "code": f["code"], "severity": f["severity"], "where": f["where"], "key": f"constants:{f['code']} {f['where']}",
            "message": f["message"], "blocking": f["blocking"]} for f in t["findings"]]
-    return _result(fs, records=[out])
+    parts = {"design_id": "not run: " + "; ".join(t["not_read"][:2])} if t.get("not_read") else {}
+    if parts:
+        parts["spec_literals_and_clock"] = "ran"
+    return _result(fs, parts, records=[out])
 
 
 def _stale(ctx: Ctx) -> dict[str, Any]:
@@ -824,12 +1104,25 @@ register(Check("io", "records", POST, {"io": ("IO-*", "IOB-*")},
 register(Check("clocking", "vivado", POST, {"vivado": ("CLKC-*",), "clocking": ("CMT-RANGE-01",)},
                "AMD's CLKC methodology rows and the MMCM/PLL VCO and PFD range check (flow/cmt_check.tcl)", _clocking,
                reports=("methodology", "cmt")))
+register(Check("clock_mux", "vivado", POST, {"clock_mux": ("CLKMUX-LUT", "CLKMUX-NO-GROUPS", "CLKMUX-SRC-GROUPED", "CLKMUX-CASE",
+                                                       "CLKMUX-CE-SELECT", "CLKMUX-STOP", "CLKMUX-CASCADE", "CLKMUX-UNTRACED")},
+               "clock multiplexers (brief 208, flow/clock_mux_check.py): a LUT on a clock path, mux modes timed against each other, "
+               "clock groups on the source clocks that hide real paths, and advisories (case-analysed select, CE select, stoppable "
+               "input with IGNORE tied, deep cascade)", _clock_mux, reports=("clock_mux", "clock_interaction")))
 register(Check("xpm_sim", "source", ALL, {"xpm_sim": ("XPM-SIM-01",)},
                "advisory: an xpm_cdc instance whose SIM_ASSERT_CHK is not 1, which turns off the macro's own simulation warnings "
                "(flow/constraint_gates.py, brief 105A)", _xpm_sim))
+register(Check("fastpath", "source", ALL, {"fastpath": ("FAST-SHIFT-01", "FAST-INDEX-01")},
+               "advisory (brief 190): a data-dependent shift or index of a wide vector (a barrel shifter) in a module declared fast-path "
+               "(flow/checks/wide_index.py)", _fastpath))
 register(Check("constraint_scope", "records", ("route",), {"constraint_scope": ("XDC-ASYNC-PATHS", "XDC-ASYNC-ALL")},
                "advisory flag for owner review: set_clock_groups -asynchronous over clock pairs with paths between them, or over every clock "
                "(flow/constraint_gates.py, brief 105A); never blocks", _async_groups, reports=("clock_interaction",)))
+register(Check("cdc_margin", "records", ("route",), {"cdc_margin": ("CDCM-SKEW-VIOL", "CDCM-SKEW-MISSING", "CDCM-DPO-LOOSE",
+                                                                  "CDCM-MTBF-MISSING", "CDCM-MTBF-LOW", "CDCM-UNC-HIGH")},
+               "clock-crossing intent constrained and met (flow/cdc_margin.py, brief 207): a set_bus_skew violation blocks (gate "
+               "post_route_bus_skew_met); missing bus skew, a loose datapath-only value, MTBF (UltraScale+) and user uncertainty are advisory",
+               _cdc_margin, gate_mirror=True))
 register(Check("dsp_ram_mapping", "records", POST, {"vivado": ("DPIP-*", "DPOP-*", "SYNTH-*", "RBOR-*", "DPIR-*", "DPOR-*",
                                                               "RMIR-*", "RMOR-*", "RROR-*")},
                "DSP and block-RAM mapping advice (AMD DPIP/DPOP/SYNTH/RBOR rows) and their utilisation", _dsp_ram,
@@ -837,9 +1130,31 @@ register(Check("dsp_ram_mapping", "records", POST, {"vivado": ("DPIP-*", "DPOP-*
 register(Check("dsp_regs", "records", POST, {"dsp_regs": ("DSPREG-01", "DSPREG-02", "DSPREG-03", "DSPREG-04")},
                "advisory (brief 185): a DSP slice with no multiplier or output register at a period the measured limits say it cannot meet, a period "
                "below the slice's own minimum, and AMD's DPIP/DPOP rows (flow/dsp_regs_check.py)", _dsp_regs, reports=("timing_summary", "drc"), applies=_dsp_regs_applies))   # dsp_cells is written by flow/build.tcl, never by the Vivado session
-register(Check("control_sets", "vivado", POST, {"vivado": ("ULMTCS-*",)},
-               "report_control_sets (count of unique control sets) and AMD's ULMTCS rows", _control_sets,
-               reports=("control_sets", "methodology"), amd=True))
+register(Check("init_values", "vivado", POST, {"init_values": ("INIT-HB-01", "INIT-URAM-01")},
+               "initial values that cost a hard block's register on AMD parts (brief 206): INIT = 1 registers wired to a DSP, "
+               "RAM or FIFO (our netlist scan) and UltraRAM refused for initial contents (Synth 8-12183); advisory "
+               "(flow/checks/init_values.py)", _init_values, reports=("init_scan",)))
+register(Check("control_sets", "vivado", POST, {"vivado": ("ULMTCS-*",), "control_sets": ("RPT-CS-01", "RPT-CS-02")},
+               "report_control_sets (count of unique control sets), AMD's ULMTCS rows and the three bands of UG949 Table 17 (7.5 % and 15 % of "
+               "CLB registers / 8: reduction recommended, then required; brief 204a)", _control_sets,
+               reports=("control_sets", "methodology", "utilization"), amd=True))
+register(Check("logic_levels", "records", POST, {"logic_levels": ("RPT-LL-01", "RPT-LL-02")},
+               "logic levels against the clock period (advisory, UG949 p.75/p.234) and a setup path that fails even with no net delay "
+               "(gate, UG949 p.200); flow/report_gates.py, brief 204a", _logic_levels, reports=("logic_levels",), amd=True))
+register(Check("clock_tree", "records", POST, {"clock_tree": ("RPT-CLK-01", "RPT-CLK-02")},
+               "cascaded global buffers and local clocks (UG949 p.111/p.139) and clock uncertainty and skew over the review thresholds "
+               "(p.232/p.248); advisory; brief 204a", _clock_tree, reports=("clock_utilization", "clock_networks"), amd=True))
+register(Check("fanout", "records", POST, {"fanout": ("RPT-FO-01",)},
+               "high-fanout nets against the clock frequency (UG949 p.75 table), with the guide's fixes; advisory; brief 204a", _fanout,
+               reports=("high_fanout",), amd=True))
+register(Check("synth_log", "records", POST, {"synth_log": ("RPT-LOG-01", "RPT-LOG-02", "RPT-LOG-03")},
+               "synthesis messages that say logic was dropped, messages the tool switched off at its 100-message limit (UG949 p.198) "
+               "(advisory), and a generic the build sets that the top does not have (gate, brief 203); brief 204a", _synth_log))
+register(Check("congestion", "records", POST, {"congestion": ("RPT-CONG-01", "RPT-CONG-02")},
+               "placer and router congestion level 4 or above, short-interconnect share, and utilisation the guide ties to hard placement "
+               "(UG949 p.240/p.273, UG1292 p.6); advisory; brief 204a", _congestion, reports=("congestion", "utilization"), amd=True))
+register(Check("ip_status", "records", POST, {"ip_status": ("RPT-IP-01",)},
+               "report_ip_status: IP locked or not up to date fails (UG949 p.49); brief 204a", _ip_status, applies=_ip_applies, amd=True))
 register(Check("fsm", "records", ALL, {"fsm": ("FSM-STATE", "FSM-TRANS", "FSM-UNLISTED")},
                "FSM state and transition coverage from the simulation traces (flow/fsm_coverage.py)", _fsm, applies=_fsm_applies))
 register(Check("axi", "source", ALL, {"axi": ("AXI-AMD-IP",)},
@@ -864,7 +1179,7 @@ register(Check("doc", "records", ALL, {"doc": ("DOC-PROBLEM",)},
                waivable=False))
 
 #: the Vivado-session reports each check may need (the ones the build does not write)
-SESSION_ONLY = ("reset_scan", "cmt", "control_sets", "qor_suggestions")
+SESSION_ONLY = ("reset_scan", "cmt", "control_sets", "qor_suggestions", "init_scan", "logic_levels", "clock_utilization", "clock_networks", "congestion", "clock_mux")
 
 
 # ---- the runner ----------------------------------------------------------------------------------------------------
