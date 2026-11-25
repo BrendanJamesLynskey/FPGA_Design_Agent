@@ -8,11 +8,8 @@ and a development figure.** Our hidden-test benchmark (`benchmark/`, `results/co
 
 ## Result, nulls first
 
-- **Pre-registered (strict) pass rate: 29 of 50 = 58%, 95% interval 44% to 71%** (Wilson). Stratum-weighted to the file's mix of categories: 57%
-  (44% to 71%, bootstrap). With n = 50 the interval is 27 points wide; it cannot separate this from the 62% below or from most published figures' neighbours.
-- **Post hoc variant: 31 of 50 = 62% (48% to 74%).** Three runs wrote `rtl/<name>.sv` where the task names `rtl/<name>.v` (the flow writes SystemVerilog);
-  strict scoring counts a missing file as empty, the variant lets the same-stem `.sv` file stand in (text unchanged). Two of the three then pass. The strict figure is
-  the one set in advance; the variant is shown because the strict rule penalises a file-name convention, not a design.
+- **Headline: 31 of 50 (62%, 95% Wilson 48% to 74%), counting a design written as rtl/x.sv where the task names rtl/x.v.** FPGA Force targets FPGA tools, which accept `.sv`, and the aim is a real, working design (owner decision, 2026-11-25 19:17). **This scoring was chosen after the results were seen.** Three runs wrote `rtl/<name>.sv` where the task names `rtl/<name>.v`; the same-stem `.sv` file stands in (text unchanged), and two of the three then pass.
+- **Pre-registered strict score, kept beside it: 29 of 50 = 58%, 95% interval 44% to 71%** (Wilson); stratum-weighted 57% (44% to 71%, bootstrap). Strict scoring counts a file missing at the named path as empty. With n = 50 the intervals are about 27 points wide and overlap.
 - **No category is established.** The per-category intervals (table below) all overlap. Code improvement (cid007) is 6 of 7 but **an empty file passes 2 of the 7 cid007
   problems** in this sample (null control: 2 of 50 pass, both cid007, `cvdp_copilot_scrambler_0018` and `cvdp_copilot_elevator_control_0033`); our run passes the first and fails the second. Without
   those two problems the strict figure is 28 of 48 = 58% (44% to 71%).
