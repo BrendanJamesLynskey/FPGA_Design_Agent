@@ -1,12 +1,12 @@
 {
-  "build_dir": "/tmp/claude-1000/-home-brendan-Claude-sandbox/4a9bf707-8d35-4a84-a3ae-1e3802ba8b4e/scratchpad/b58a/designs/b58a_trigger/build/base",
+  "build_dir": "/home/brendan/Claude_sandbox/_worktrees/175-b58a-phy/designs/b58a_trigger/build/base",
   "vivado_version": "2026.1",
   "kb_measured_version": "2026.1",
   "kb_version_match": true,
   "top": "kr260_top",
   "variant": "base",
-  "pass": true,
-  "first_failed_stage": null,
+  "pass": false,
+  "first_failed_stage": "post_route",
   "gates": {
     "rtl_methodology_no_critical": true,
     "post_synth_no_unconstrained_endpoints": true,
@@ -16,8 +16,9 @@
     "post_synth_cdc_structure_clean": true,
     "post_synth_exceptions_clean": true,
     "post_synth_io_constraints_clean": true,
+    "post_synth_resets_clean": true,
     "post_place_hold": true,
-    "setup": true,
+    "setup": false,
     "hold": true,
     "pulse_width": true,
     "no_unconstrained_endpoints": true,
@@ -84,22 +85,23 @@
         "post_synth_cdc_no_critical": true,
         "post_synth_cdc_structure_clean": true,
         "post_synth_exceptions_clean": true,
-        "post_synth_io_constraints_clean": true
+        "post_synth_io_constraints_clean": true,
+        "post_synth_resets_clean": true
       },
       "warnings": [],
       "timing": {
-        "wns_ns": -0.069,
-        "tns_ns": -0.181,
-        "tns_failing_endpoints": 5,
-        "tns_total_endpoints": 30292,
+        "wns_ns": -0.169,
+        "tns_ns": -1.242,
+        "tns_failing_endpoints": 10,
+        "tns_total_endpoints": 30389,
         "whs_ns": -0.856,
-        "ths_ns": -167.975,
-        "ths_failing_endpoints": 6408,
-        "ths_total_endpoints": 30192,
+        "ths_ns": -168.655,
+        "ths_failing_endpoints": 6438,
+        "ths_total_endpoints": 30277,
         "wpws_ns": 0.333,
         "tpws_ns": 0.0,
         "tpws_failing_endpoints": 0,
-        "tpws_total_endpoints": 10622,
+        "tpws_total_endpoints": 10651,
         "timing_met": false
       },
       "check_timing": {
@@ -3222,25 +3224,25 @@
         "status": "pass",
         "waived": 0,
         "waived_rules": [],
-        "exceptions": 11,
+        "exceptions": 9,
         "ignored": 0,
         "info": [],
         "covered": {
-          "26": 10,
-          "27": 10,
-          "30": 8,
-          "31": 2,
-          "32": 98,
-          "33": 32,
-          "35": 5,
-          "37": 4,
-          "39": 5,
-          "41": 4,
-          "43": 32,
-          "45": 5,
-          "47": 4,
-          "49": 5,
-          "51": 4
+          "28": 8,
+          "29": 2,
+          "30": 98,
+          "31": 32,
+          "33": 5,
+          "35": 4,
+          "37": 5,
+          "39": 4,
+          "41": 32,
+          "43": 5,
+          "45": 4,
+          "47": 5,
+          "49": 4,
+          "51": 16,
+          "52": 16
         },
         "failures": []
       },
@@ -3399,14 +3401,14 @@
         },
         "worst": {
           "setup": {
-            "slack": -0.069,
+            "slack": -0.169,
             "requirement": 4.0,
             "start_clock": "clk0_u",
             "end_clock": "a_txc",
             "corner": "Slow",
             "uncertainty": 0.109,
             "pessimism": -0.463,
-            "from": "u_atx/g_oddr[0].u_oddr/CLK",
+            "from": "u_atx/g_us.g_oddr[0].u_oddr/CLK",
             "to": "a_txd[0]"
           },
           "hold": {
@@ -3418,10 +3420,26 @@
             "uncertainty": 0.025,
             "pessimism": 0.0,
             "from": "a_rxd[1]",
-            "to": "u_arx/g_iddr[1].u_iddr/D"
+            "to": "u_arx/g_iddr[1].g_us.u_iddr/D"
           }
         }
       },
+      "gt": null,
+      "resets": {
+        "status": "pass",
+        "parts": {
+          "source": "ran",
+          "amd_methodology": "ran",
+          "amd_drc": "ran",
+          "amd_cdc": "ran",
+          "netlist": "ran",
+          "netlist_clocks": "ran",
+          "polarity": "ran"
+        },
+        "n_findings": 0,
+        "findings": []
+      },
+      "oss_netlist": null,
       "resource_sanity": null,
       "utilization": {
         "lutram": 164,
@@ -3433,7 +3451,13 @@
         "iob": 33,
         "iob_available": 189,
         "bufg": 0,
-        "bufg_available": 32
+        "bufg_available": 32,
+        "lut": 7343,
+        "lut_available": 117120,
+        "ff": 10413,
+        "ff_available": 234240,
+        "carry8": 531,
+        "carry8_available": 14640
       },
       "pass": true
     },
@@ -3443,18 +3467,18 @@
         "post_place_hold": true
       },
       "timing": {
-        "wns_ns": 0.102,
-        "tns_ns": 0.0,
-        "tns_failing_endpoints": 0,
-        "tns_total_endpoints": 30229,
-        "whs_ns": -0.075,
-        "ths_ns": -1.919,
-        "ths_failing_endpoints": 107,
-        "ths_total_endpoints": 30149,
+        "wns_ns": -0.002,
+        "tns_ns": -0.002,
+        "tns_failing_endpoints": 1,
+        "tns_total_endpoints": 30326,
+        "whs_ns": -0.091,
+        "ths_ns": -1.967,
+        "ths_failing_endpoints": 91,
+        "ths_total_endpoints": 30234,
         "wpws_ns": 0.333,
         "tpws_ns": 0.0,
         "tpws_failing_endpoints": 0,
-        "tpws_total_endpoints": 10557,
+        "tpws_total_endpoints": 10586,
         "timing_met": false
       },
       "pass": true
@@ -3462,7 +3486,7 @@
     "post_route": {
       "ran": true,
       "gates": {
-        "setup": true,
+        "setup": false,
         "hold": true,
         "pulse_width": true,
         "no_unconstrained_endpoints": true,
@@ -3483,21 +3507,21 @@
         "status": "pass",
         "waived": 0,
         "waived_rules": [],
-        "exceptions": 9,
+        "exceptions": 7,
         "ignored": 0,
         "info": [],
         "covered": {
-          "26": 10,
-          "27": 10,
-          "30": 8,
-          "31": 2,
-          "32": 97,
-          "33": 32,
-          "37": 4,
-          "41": 4,
-          "43": 32,
-          "47": 4,
-          "51": 4
+          "28": 8,
+          "29": 2,
+          "30": 97,
+          "31": 32,
+          "35": 4,
+          "39": 4,
+          "41": 32,
+          "45": 4,
+          "49": 4,
+          "51": 16,
+          "52": 16
         },
         "failures": []
       },
@@ -3560,8 +3584,8 @@
               "a_txd[3]"
             ],
             "clock": "a_txc",
-            "setup_slack_ns": 0.102,
-            "hold_slack_ns": 0.533,
+            "setup_slack_ns": 0.002,
+            "hold_slack_ns": 0.133,
             "requirements_ns": {
               "max": [
                 4.0
@@ -3582,8 +3606,8 @@
               "b_txd[3]"
             ],
             "clock": "b_txc",
-            "setup_slack_ns": 0.137,
-            "hold_slack_ns": 0.516,
+            "setup_slack_ns": -0.003,
+            "hold_slack_ns": 0.076,
             "requirements_ns": {
               "max": [
                 4.0
@@ -3688,26 +3712,26 @@
         },
         "worst": {
           "setup": {
-            "slack": 0.102,
+            "slack": -0.003,
             "requirement": 4.0,
             "start_clock": "clk0_u",
-            "end_clock": "a_txc",
+            "end_clock": "b_txc",
             "corner": "Slow",
             "uncertainty": 0.109,
-            "pessimism": -0.272,
-            "from": "u_atx/g_oddr[0].u_oddr/CLK",
-            "to": "a_txd[0]"
+            "pessimism": -0.275,
+            "from": "u_btx/g_us.g_oddr[0].u_oddr/CLK",
+            "to": "b_txd[0]"
           },
           "hold": {
-            "slack": 0.01,
+            "slack": 0.012,
             "requirement": 0.0,
             "start_clock": "clk0_u",
             "end_clock": "clk0_u",
             "corner": "Slow",
             "uncertainty": null,
-            "pessimism": 0.294,
-            "from": "u_core/u_rules/sh_reg[6][9]/C",
-            "to": "u_core/u_rules/act_reg[6][9]/D"
+            "pessimism": 0.293,
+            "from": "u_core/u_rules/sh_reg[47][27]/C",
+            "to": "u_core/u_rules/act_reg[47][27]/D"
           }
         },
         "uncertainty": {
@@ -3717,15 +3741,248 @@
             "tsj_ns": 0.071,
             "dj_ns": 0.205,
             "pe_ns": 0.0,
-            "pessimism_ns": -0.272,
+            "pessimism_ns": -0.275,
             "requirement_ns": 4.0,
-            "slack_ns": 0.102
+            "slack_ns": -0.003
           },
           "hold": null
         }
       },
       "timing_margin": null,
       "ila_hub_crossing": null,
+      "config_voltage": null,
+      "iob_packing": {
+        "pass": true,
+        "part": "xck26-sfvc784-2LV-c",
+        "family": "zynquplus",
+        "family_class": "ultrascale_plus",
+        "registers": [
+          {
+            "port": "a_rx_ctl",
+            "dir": "in",
+            "cell": "u_arx/g_iddr[4].g_dly.u_dly",
+            "ref": "IDELAYE3",
+            "bel": "BITSLICE_COMPONENT_RX_TX.IDELAY",
+            "site": "BITSLICE_RX_TX_X0Y176",
+            "marked": false,
+            "interface": "rgmii_rx_a",
+            "packed": true
+          },
+          {
+            "port": "a_rxd[0]",
+            "dir": "in",
+            "cell": "u_arx/g_iddr[0].g_dly.u_dly",
+            "ref": "IDELAYE3",
+            "bel": "BITSLICE_COMPONENT_RX_TX.IDELAY",
+            "site": "BITSLICE_RX_TX_X0Y172",
+            "marked": false,
+            "interface": "rgmii_rx_a",
+            "packed": true
+          },
+          {
+            "port": "a_rxd[1]",
+            "dir": "in",
+            "cell": "u_arx/g_iddr[1].g_dly.u_dly",
+            "ref": "IDELAYE3",
+            "bel": "BITSLICE_COMPONENT_RX_TX.IDELAY",
+            "site": "BITSLICE_RX_TX_X0Y173",
+            "marked": false,
+            "interface": "rgmii_rx_a",
+            "packed": true
+          },
+          {
+            "port": "a_rxd[2]",
+            "dir": "in",
+            "cell": "u_arx/g_iddr[2].g_dly.u_dly",
+            "ref": "IDELAYE3",
+            "bel": "BITSLICE_COMPONENT_RX_TX.IDELAY",
+            "site": "BITSLICE_RX_TX_X0Y174",
+            "marked": false,
+            "interface": "rgmii_rx_a",
+            "packed": true
+          },
+          {
+            "port": "a_rxd[3]",
+            "dir": "in",
+            "cell": "u_arx/g_iddr[3].g_dly.u_dly",
+            "ref": "IDELAYE3",
+            "bel": "BITSLICE_COMPONENT_RX_TX.IDELAY",
+            "site": "BITSLICE_RX_TX_X0Y175",
+            "marked": false,
+            "interface": "rgmii_rx_a",
+            "packed": true
+          },
+          {
+            "port": "a_tx_ctl",
+            "dir": "out",
+            "cell": "u_atx/g_us.u_ctl",
+            "ref": "OSERDESE3",
+            "bel": "BITSLICE_COMPONENT_RX_TX.OSERDES",
+            "site": "BITSLICE_RX_TX_X0Y157",
+            "marked": false,
+            "interface": "rgmii_tx_a",
+            "packed": true
+          },
+          {
+            "port": "a_txd[0]",
+            "dir": "out",
+            "cell": "u_atx/g_us.g_oddr[0].u_oddr",
+            "ref": "OSERDESE3",
+            "bel": "BITSLICE_COMPONENT_RX_TX.OSERDES",
+            "site": "BITSLICE_RX_TX_X0Y158",
+            "marked": false,
+            "interface": "rgmii_tx_a",
+            "packed": true
+          },
+          {
+            "port": "a_txd[1]",
+            "dir": "out",
+            "cell": "u_atx/g_us.g_oddr[1].u_oddr",
+            "ref": "OSERDESE3",
+            "bel": "BITSLICE_COMPONENT_RX_TX.OSERDES",
+            "site": "BITSLICE_RX_TX_X0Y159",
+            "marked": false,
+            "interface": "rgmii_tx_a",
+            "packed": true
+          },
+          {
+            "port": "a_txd[2]",
+            "dir": "out",
+            "cell": "u_atx/g_us.g_oddr[2].u_oddr",
+            "ref": "OSERDESE3",
+            "bel": "BITSLICE_COMPONENT_RX_TX.OSERDES",
+            "site": "BITSLICE_RX_TX_X0Y160",
+            "marked": false,
+            "interface": "rgmii_tx_a",
+            "packed": true
+          },
+          {
+            "port": "a_txd[3]",
+            "dir": "out",
+            "cell": "u_atx/g_us.g_oddr[3].u_oddr",
+            "ref": "OSERDESE3",
+            "bel": "BITSLICE_COMPONENT_RX_TX.OSERDES",
+            "site": "BITSLICE_RX_TX_X0Y161",
+            "marked": false,
+            "interface": "rgmii_tx_a",
+            "packed": true
+          },
+          {
+            "port": "b_rx_ctl",
+            "dir": "in",
+            "cell": "u_brx/g_iddr[4].g_dly.u_dly",
+            "ref": "IDELAYE3",
+            "bel": "BITSLICE_COMPONENT_RX_TX.IDELAY",
+            "site": "BITSLICE_RX_TX_X0Y124",
+            "marked": false,
+            "interface": "rgmii_rx_b",
+            "packed": true
+          },
+          {
+            "port": "b_rxd[0]",
+            "dir": "in",
+            "cell": "u_brx/g_iddr[0].g_dly.u_dly",
+            "ref": "IDELAYE3",
+            "bel": "BITSLICE_COMPONENT_RX_TX.IDELAY",
+            "site": "BITSLICE_RX_TX_X0Y120",
+            "marked": false,
+            "interface": "rgmii_rx_b",
+            "packed": true
+          },
+          {
+            "port": "b_rxd[1]",
+            "dir": "in",
+            "cell": "u_brx/g_iddr[1].g_dly.u_dly",
+            "ref": "IDELAYE3",
+            "bel": "BITSLICE_COMPONENT_RX_TX.IDELAY",
+            "site": "BITSLICE_RX_TX_X0Y121",
+            "marked": false,
+            "interface": "rgmii_rx_b",
+            "packed": true
+          },
+          {
+            "port": "b_rxd[2]",
+            "dir": "in",
+            "cell": "u_brx/g_iddr[2].g_dly.u_dly",
+            "ref": "IDELAYE3",
+            "bel": "BITSLICE_COMPONENT_RX_TX.IDELAY",
+            "site": "BITSLICE_RX_TX_X0Y122",
+            "marked": false,
+            "interface": "rgmii_rx_b",
+            "packed": true
+          },
+          {
+            "port": "b_rxd[3]",
+            "dir": "in",
+            "cell": "u_brx/g_iddr[3].g_dly.u_dly",
+            "ref": "IDELAYE3",
+            "bel": "BITSLICE_COMPONENT_RX_TX.IDELAY",
+            "site": "BITSLICE_RX_TX_X0Y123",
+            "marked": false,
+            "interface": "rgmii_rx_b",
+            "packed": true
+          },
+          {
+            "port": "b_tx_ctl",
+            "dir": "out",
+            "cell": "u_btx/g_us.u_ctl",
+            "ref": "OSERDESE3",
+            "bel": "BITSLICE_COMPONENT_RX_TX.OSERDES",
+            "site": "BITSLICE_RX_TX_X0Y105",
+            "marked": false,
+            "interface": "rgmii_tx_b",
+            "packed": true
+          },
+          {
+            "port": "b_txd[0]",
+            "dir": "out",
+            "cell": "u_btx/g_us.g_oddr[0].u_oddr",
+            "ref": "OSERDESE3",
+            "bel": "BITSLICE_COMPONENT_RX_TX.OSERDES",
+            "site": "BITSLICE_RX_TX_X0Y106",
+            "marked": false,
+            "interface": "rgmii_tx_b",
+            "packed": true
+          },
+          {
+            "port": "b_txd[1]",
+            "dir": "out",
+            "cell": "u_btx/g_us.g_oddr[1].u_oddr",
+            "ref": "OSERDESE3",
+            "bel": "BITSLICE_COMPONENT_RX_TX.OSERDES",
+            "site": "BITSLICE_RX_TX_X0Y107",
+            "marked": false,
+            "interface": "rgmii_tx_b",
+            "packed": true
+          },
+          {
+            "port": "b_txd[2]",
+            "dir": "out",
+            "cell": "u_btx/g_us.g_oddr[2].u_oddr",
+            "ref": "OSERDESE3",
+            "bel": "BITSLICE_COMPONENT_RX_TX.OSERDES",
+            "site": "BITSLICE_RX_TX_X0Y108",
+            "marked": false,
+            "interface": "rgmii_tx_b",
+            "packed": true
+          },
+          {
+            "port": "b_txd[3]",
+            "dir": "out",
+            "cell": "u_btx/g_us.g_oddr[3].u_oddr",
+            "ref": "OSERDESE3",
+            "bel": "BITSLICE_COMPONENT_RX_TX.OSERDES",
+            "site": "BITSLICE_RX_TX_X0Y109",
+            "marked": false,
+            "interface": "rgmii_tx_b",
+            "packed": true
+          }
+        ],
+        "findings": [],
+        "log_messages": [],
+        "dump_errors": [],
+        "warnings": []
+      },
       "warnings": [],
       "unconstrained_ports": {
         "no_output_delay": [
@@ -3733,7 +3990,7 @@
           "b_txc"
         ]
       },
-      "pass": true
+      "pass": false
     },
     "bitstream": {
       "ran": true,
@@ -3744,19 +4001,19 @@
     }
   },
   "timing": {
-    "wns_ns": 0.102,
-    "tns_ns": 0.0,
-    "tns_failing_endpoints": 0,
-    "tns_total_endpoints": 30229,
-    "whs_ns": 0.01,
+    "wns_ns": -0.003,
+    "tns_ns": -0.003,
+    "tns_failing_endpoints": 1,
+    "tns_total_endpoints": 30326,
+    "whs_ns": 0.012,
     "ths_ns": 0.0,
     "ths_failing_endpoints": 0,
-    "ths_total_endpoints": 30149,
+    "ths_total_endpoints": 30234,
     "wpws_ns": 0.333,
     "tpws_ns": 0.0,
     "tpws_failing_endpoints": 0,
-    "tpws_total_endpoints": 10557,
-    "timing_met": true
+    "tpws_total_endpoints": 10586,
+    "timing_met": false
   },
   "check_timing": {
     "no_clock": 0,
@@ -3782,7 +4039,13 @@
     "iob": 33,
     "iob_available": 189,
     "bufg": 0,
-    "bufg_available": 32
+    "bufg_available": 32,
+    "lut": 7305,
+    "lut_available": 117120,
+    "ff": 10347,
+    "ff_available": 234240,
+    "carry8": 531,
+    "carry8_available": 14640
   },
   "drc": {
     "errors": 0,
@@ -3856,6 +4119,6 @@
     "file": "kr260_top.bit",
     "bytes": 7797900
   },
-  "build_stamp": "52a4c291",
-  "sources_sha256": "52a4c29151df55a85b2c724dd1f8538e3bea8f7ff503a075dd6e1b8c96075a0d"
+  "build_stamp": "79d01c27",
+  "sources_sha256": "79d01c2793d47dfc90eee608806da397c2b58e6a1f22f523e302025fcd850c02"
 }

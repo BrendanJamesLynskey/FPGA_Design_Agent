@@ -146,9 +146,16 @@ def test_expected_delays_formulas() -> None:
     # edge-aligned DDR output with a forwarded clock: -min is +skew_before (the b58a TX hold sign, review B3)
     assert e({"direction": "out", "clock_period_ns": 8.0, "data_sheet": {"skew_before_ns": 0.5, "skew_after_ns": 0.5}}) \
         == {"max": 3.5, "min": 0.5}
-    # with a board clock-to-data skew allowance: both sides of the window narrow by it (b58a TX, 88E1111 20.1 = 1)
+    # with a board clock-to-data skew allowance: both sides of the window narrow by it (the first b58a TX window, which assumed
+    # another PHY: brief 175 replaced it with the DP83867's, below)
     assert e({"direction": "out", "clock_period_ns": 8.0,
               "data_sheet": {"skew_before_ns": 1.3, "skew_after_ns": 0.9, "board_skew_ns": 0.1}}) == {"max": 3.2, "min": 1.2}
+    # b58a TX on the KR260's TI DP83867 (brief 175): PHY TX delay 1.75 ns, clock-after-data window 1.0 to 2.6 ns -> after 0.75,
+    # before 0.85; carrier skew bounds 0.05 ns (port A) and 0.09 ns (port B)
+    assert e({"direction": "out", "clock_period_ns": 8.0,
+              "data_sheet": {"skew_before_ns": 0.85, "skew_after_ns": 0.75, "board_skew_ns": 0.05}}) == {"max": 3.3, "min": 0.8}
+    assert e({"direction": "out", "clock_period_ns": 8.0,
+              "data_sheet": {"skew_before_ns": 0.85, "skew_after_ns": 0.75, "board_skew_ns": 0.09}}) == {"max": 3.34, "min": 0.76}
 
 
 def test_uncertainty_breakdown_parse() -> None:
