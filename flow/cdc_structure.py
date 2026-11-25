@@ -181,7 +181,12 @@ def classify(paths: dict[str, Any], rows: list[dict[str, Any]], waivers: list[di
             continue
         if not is_chain(p):
             hand = "Max Delay Datapath Only" in p["exception"] and (p["src_clk"], p["clk"]) in pairs_ok
-            if hand and p["ref"] in ("FDRE", "FDSE", "FDCE", "FDPE"):
+            if p["async_reg"] and p["ref"] in ("FDRE", "FDSE", "FDCE", "FDPE"):
+                # brief 207: an ASYNC_REG flop is a synchroniser stage by declaration; a chain shorter than 2 is a missing stage even when the
+                # crossing carries a max-delay bound (measured: a one-stage level synchroniser with set_max_delay -datapath_only was classed as a
+                # handshake data path and passed, while report_cdc raised CDC-1)
+                verdict[i] = ("unsafe", "U2", "no synchroniser: the ASYNC_REG chain behind this capture flop is shorter than 2")
+            elif hand and p["ref"] in ("FDRE", "FDSE", "FDCE", "FDPE"):
                 verdict[i] = ("handshake", "", "hand-built handshake data path: max-delay exception, control crosses through a synchroniser")
             elif p["ref"] in ("FDRE", "FDSE", "FDCE", "FDPE") and not p["async_reg"]:
                 verdict[i] = ("unsafe", "U2", "no synchroniser: the capture flop is not the first of an ASYNC_REG chain "
