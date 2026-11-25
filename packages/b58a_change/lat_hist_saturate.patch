@@ -1,0 +1,11 @@
+--- existing/rtl/lat_hist.sv	2026-11-22 15:40:41.797922941 +0000
++++ proposed/rtl/lat_hist.sv	2026-11-22 15:41:05.631184994 +0000
+@@ -66,7 +66,7 @@
+         end else begin
+             p1 <= 1'b0;
+             if (s_v) begin
+-                if (p1) lost <= lost + 32'd1;
++                if (p1) lost <= (lost == 32'hFFFF_FFFF) ? lost : lost + 32'd1;   // brief 174 pilot: saturate, do not wrap
+                 else begin
+                     p1 <= 1'b1;
+                     a1 <= ra;

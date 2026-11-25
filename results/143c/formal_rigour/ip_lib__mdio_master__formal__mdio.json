@@ -1,0 +1,351 @@
+{
+ "sby": "ip_lib/mdio_master/formal/mdio.sby",
+ "schema": "fpga-design-agent/formal_rigour/v1",
+ "sources": {
+  "ip_lib/mdio_master/formal/formal_mdio.sv": "c58cc8f6172a2d59e769ee103545f603bf71d31956884a4dedb99455c679543d",
+  "ip_lib/mdio_master/formal/mdio.sby": "6a27448cdccfa0de80251d1fa8d01ad9fe76f2608af8aa82b0b89f1ab1c0e34e",
+  "ip_lib/mdio_master/rtl/mdio_master.sv": "8f5364dab58590b23a894cff088db575507d05348b4a5b62ccb5f42fb719f503"
+ },
+ "tasks": {
+  "cover": {
+   "checks": [
+    {
+     "flavor": "cover",
+     "id": "c_write_frame_done",
+     "label": "c_write_frame_done",
+     "src": "mdio_master.sv:106",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "c_read_frame_done",
+     "label": "c_read_frame_done",
+     "src": "mdio_master.sv:105",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "a_write_drives_line__ante",
+     "label": "a_write_drives_line__ante",
+     "src": "mdio_master.sv:100",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "a_write_drives_line",
+     "label": "a_write_drives_line",
+     "src": "mdio_master.sv:86",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "a_setup_at_rise__ante",
+     "label": "a_setup_at_rise__ante",
+     "src": "mdio_master.sv:103",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "a_setup_at_rise",
+     "label": "a_setup_at_rise",
+     "src": "mdio_master.sv:92",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "a_read_releases_line__ante",
+     "label": "a_read_releases_line__ante",
+     "src": "mdio_master.sv:99",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "a_read_releases_line",
+     "label": "a_read_releases_line",
+     "src": "mdio_master.sv:85",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "a_output_enable_mask",
+     "label": "a_output_enable_mask",
+     "src": "mdio_master.sv:79",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "a_mdc_phase",
+     "label": "a_mdc_phase",
+     "src": "mdio_master.sv:81",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "a_line_is_current_bit__ante",
+     "label": "a_line_is_current_bit__ante",
+     "src": "mdio_master.sv:98",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "a_line_is_current_bit",
+     "label": "a_line_is_current_bit",
+     "src": "mdio_master.sv:83",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "a_idle_mdc_low__ante",
+     "label": "a_idle_mdc_low__ante",
+     "src": "mdio_master.sv:101",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "a_idle_mdc_low",
+     "label": "a_idle_mdc_low",
+     "src": "mdio_master.sv:88",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "a_idle_line_released__ante",
+     "label": "a_idle_line_released__ante",
+     "src": "mdio_master.sv:102",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "a_idle_line_released",
+     "label": "a_idle_line_released",
+     "src": "mdio_master.sv:89",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "a_hold_after_rise__ante",
+     "label": "a_hold_after_rise__ante",
+     "src": "mdio_master.sv:104",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "a_hold_after_rise",
+     "label": "a_hold_after_rise",
+     "src": "mdio_master.sv:93",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "a_counters_in_range",
+     "label": "a_counters_in_range",
+     "src": "mdio_master.sv:78",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "a_busy__ante",
+     "label": "a_busy__ante",
+     "src": "mdio_master.sv:97",
+     "tautology": false
+    }
+   ],
+   "covers": {
+    "a_busy__ante": {
+     "reached": true,
+     "step": 255
+    },
+    "a_hold_after_rise__ante": {
+     "reached": true,
+     "step": 7
+    },
+    "a_idle_line_released__ante": {
+     "reached": true,
+     "step": 3
+    },
+    "a_idle_mdc_low__ante": {
+     "reached": true,
+     "step": 3
+    },
+    "a_line_is_current_bit__ante": {
+     "reached": true,
+     "step": 4
+    },
+    "a_read_releases_line__ante": {
+     "reached": true,
+     "step": 188
+    },
+    "a_setup_at_rise__ante": {
+     "reached": true,
+     "step": 6
+    },
+    "a_write_drives_line__ante": {
+     "reached": true,
+     "step": 4
+    },
+    "c_read_frame_done": {
+     "reached": true,
+     "step": 259
+    },
+    "c_write_frame_done": {
+     "reached": true,
+     "step": 259
+    }
+   },
+   "depth": 262,
+   "mode": "cover",
+   "seconds": 17.8,
+   "status": "PASS"
+  },
+  "prove": {
+   "checks": [
+    {
+     "flavor": "cover",
+     "id": "c_write_frame_done",
+     "label": "c_write_frame_done",
+     "src": "mdio_master.sv:106",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "c_read_frame_done",
+     "label": "c_read_frame_done",
+     "src": "mdio_master.sv:105",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "a_write_drives_line__ante",
+     "label": "a_write_drives_line__ante",
+     "src": "mdio_master.sv:100",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "a_write_drives_line",
+     "label": "a_write_drives_line",
+     "src": "mdio_master.sv:86",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "a_setup_at_rise__ante",
+     "label": "a_setup_at_rise__ante",
+     "src": "mdio_master.sv:103",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "a_setup_at_rise",
+     "label": "a_setup_at_rise",
+     "src": "mdio_master.sv:92",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "a_read_releases_line__ante",
+     "label": "a_read_releases_line__ante",
+     "src": "mdio_master.sv:99",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "a_read_releases_line",
+     "label": "a_read_releases_line",
+     "src": "mdio_master.sv:85",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "a_output_enable_mask",
+     "label": "a_output_enable_mask",
+     "src": "mdio_master.sv:79",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "a_mdc_phase",
+     "label": "a_mdc_phase",
+     "src": "mdio_master.sv:81",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "a_line_is_current_bit__ante",
+     "label": "a_line_is_current_bit__ante",
+     "src": "mdio_master.sv:98",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "a_line_is_current_bit",
+     "label": "a_line_is_current_bit",
+     "src": "mdio_master.sv:83",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "a_idle_mdc_low__ante",
+     "label": "a_idle_mdc_low__ante",
+     "src": "mdio_master.sv:101",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "a_idle_mdc_low",
+     "label": "a_idle_mdc_low",
+     "src": "mdio_master.sv:88",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "a_idle_line_released__ante",
+     "label": "a_idle_line_released__ante",
+     "src": "mdio_master.sv:102",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "a_idle_line_released",
+     "label": "a_idle_line_released",
+     "src": "mdio_master.sv:89",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "a_hold_after_rise__ante",
+     "label": "a_hold_after_rise__ante",
+     "src": "mdio_master.sv:104",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "a_hold_after_rise",
+     "label": "a_hold_after_rise",
+     "src": "mdio_master.sv:93",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "a_counters_in_range",
+     "label": "a_counters_in_range",
+     "src": "mdio_master.sv:78",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "a_busy__ante",
+     "label": "a_busy__ante",
+     "src": "mdio_master.sv:97",
+     "tautology": false
+    }
+   ],
+   "covers": {},
+   "depth": 12,
+   "mode": "prove",
+   "seconds": 1.0,
+   "status": "PASS"
+  }
+ },
+ "tool": "Yosys 0.70+385 (git sha1 098e46a36, Release, Clang /usr/bin/clang++ 21.1.8)"
+}

@@ -1,12 +1,13 @@
-# SymbiYosys: ipv4_udp_rx's output protocol (axi_tx/rtl/axis_rules.sv, the AXI checker). bmc: bounded, depth 30; cover:
-# a whole datagram with a one-byte payload is parsed and passed on (depth 52).
+# SymbiYosys: ipv4_udp_rx's output protocol (axi_tx/rtl/axis_rules.sv, the AXI checker). bmc: bounded, depth 52 (30 before brief 143c:
+# the first output beat is reached at step 46, so depth 30 never checked the output rules); cover: a whole datagram with a
+# one-byte payload is parsed and passed on (depth 52). Rigour: udp_rx.rigour.yaml (flow/formal_rigour.py).
 [tasks]
 bmc
 cover
 
 [options]
 bmc: mode bmc
-bmc: depth 30
+bmc: depth 52
 cover: mode cover
 cover: depth 52
 

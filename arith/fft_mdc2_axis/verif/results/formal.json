@@ -1,0 +1,311 @@
+{
+ "function": "fft_mdc2_axis",
+ "tool": "Yosys 0.70+385 (git sha1 098e46a36, Release, Clang /usr/bin/clang++ 21.1.8)",
+ "jobs": 15,
+ "ok": 15,
+ "results": [
+  {
+   "name": "ctl_prove_n16_nb2",
+   "top": "fft_mdc2_axis_ctl_fv",
+   "params": {
+    "LOGN": 4,
+    "NB": 2
+   },
+   "mode": "prove",
+   "depth": 14,
+   "engine": "boolector",
+   "claim": "the slave-side control at N = 16, NB = 2 keeps the gap rule (0 idle clocks or at least N/8, never in between), the frame credit (never more than NB frames in the block, counter equal to the shadow count, a start refused while NB are in), tready high inside a frame, the window after a tlast beat open when there is room, for every source and sink that obey the AXI4-Stream rules; proved for all time by k-induction (depth 14) from helper invariants on the window flag and the gap counter",
+   "mutant": null,
+   "expected": "PASS",
+   "status": "PASS",
+   "ok": true,
+   "seconds": 1.2,
+   "failed_assertions": [],
+   "tail": ""
+  },
+  {
+   "name": "ctl_prove_n32_nb2",
+   "top": "fft_mdc2_axis_ctl_fv",
+   "params": {
+    "LOGN": 5,
+    "NB": 2
+   },
+   "mode": "prove",
+   "depth": 14,
+   "engine": "boolector",
+   "claim": "the slave-side control at N = 32, NB = 2 keeps the gap rule (0 idle clocks or at least N/8, never in between), the frame credit (never more than NB frames in the block, counter equal to the shadow count, a start refused while NB are in), tready high inside a frame, the window after a tlast beat open when there is room, for every source and sink that obey the AXI4-Stream rules; proved for all time by k-induction (depth 14) from helper invariants on the window flag and the gap counter",
+   "mutant": null,
+   "expected": "PASS",
+   "status": "PASS",
+   "ok": true,
+   "seconds": 1.4,
+   "failed_assertions": [],
+   "tail": ""
+  },
+  {
+   "name": "ctl_prove_n32_nb4",
+   "top": "fft_mdc2_axis_ctl_fv",
+   "params": {
+    "LOGN": 5,
+    "NB": 4
+   },
+   "mode": "prove",
+   "depth": 14,
+   "engine": "boolector",
+   "claim": "the slave-side control at N = 32, NB = 4 keeps the gap rule (0 idle clocks or at least N/8, never in between), the frame credit (never more than NB frames in the block, counter equal to the shadow count, a start refused while NB are in), tready high inside a frame, the window after a tlast beat open when there is room, for every source and sink that obey the AXI4-Stream rules; proved for all time by k-induction (depth 14) from helper invariants on the window flag and the gap counter",
+   "mutant": null,
+   "expected": "PASS",
+   "status": "PASS",
+   "ok": true,
+   "seconds": 1.2,
+   "failed_assertions": [],
+   "tail": ""
+  },
+  {
+   "name": "ctl_prove_n64_nb4",
+   "top": "fft_mdc2_axis_ctl_fv",
+   "params": {
+    "LOGN": 6,
+    "NB": 4
+   },
+   "mode": "prove",
+   "depth": 14,
+   "engine": "boolector",
+   "claim": "the slave-side control at N = 64, NB = 4 keeps the gap rule (0 idle clocks or at least N/8, never in between), the frame credit (never more than NB frames in the block, counter equal to the shadow count, a start refused while NB are in), tready high inside a frame, the window after a tlast beat open when there is room, for every source and sink that obey the AXI4-Stream rules; proved for all time by k-induction (depth 14) from helper invariants on the window flag and the gap counter",
+   "mutant": null,
+   "expected": "PASS",
+   "status": "PASS",
+   "ok": true,
+   "seconds": 1.5,
+   "failed_assertions": [],
+   "tail": ""
+  },
+  {
+   "name": "ctl_prove_n128_nb3",
+   "top": "fft_mdc2_axis_ctl_fv",
+   "params": {
+    "LOGN": 7,
+    "NB": 3
+   },
+   "mode": "prove",
+   "depth": 14,
+   "engine": "boolector",
+   "claim": "the slave-side control at N = 128, NB = 3 keeps the gap rule (0 idle clocks or at least N/8, never in between), the frame credit (never more than NB frames in the block, counter equal to the shadow count, a start refused while NB are in), tready high inside a frame, the window after a tlast beat open when there is room, for every source and sink that obey the AXI4-Stream rules; proved for all time by k-induction (depth 14) from helper invariants on the window flag and the gap counter",
+   "mutant": null,
+   "expected": "PASS",
+   "status": "PASS",
+   "ok": true,
+   "seconds": 1.3,
+   "failed_assertions": [],
+   "tail": ""
+  },
+  {
+   "name": "ctl_prove_n1024_nb4",
+   "top": "fft_mdc2_axis_ctl_fv",
+   "params": {
+    "LOGN": 10,
+    "NB": 4
+   },
+   "mode": "prove",
+   "depth": 14,
+   "engine": "boolector",
+   "claim": "the slave-side control at N = 1024, NB = 4 keeps the gap rule (0 idle clocks or at least N/8, never in between), the frame credit (never more than NB frames in the block, counter equal to the shadow count, a start refused while NB are in), tready high inside a frame, the window after a tlast beat open when there is room, for every source and sink that obey the AXI4-Stream rules; proved for all time by k-induction (depth 14) from helper invariants on the window flag and the gap counter",
+   "mutant": null,
+   "expected": "PASS",
+   "status": "PASS",
+   "ok": true,
+   "seconds": 1.1,
+   "failed_assertions": [],
+   "tail": ""
+  },
+  {
+   "name": "mutant_gap_rule_removed",
+   "top": "fft_mdc2_axis_ctl_fv",
+   "params": {
+    "LOGN": 5,
+    "NB": 2
+   },
+   "mode": "bmc",
+   "depth": 24,
+   "engine": "boolector",
+   "claim": "a build with the seeded fault gap_rule_removed is refuted by the properties, bounded to 24 clocks from reset (N = 32, NB = 2)",
+   "mutant": "gap_rule_removed",
+   "expected": "FAIL",
+   "status": "FAIL",
+   "ok": true,
+   "seconds": 0.7,
+   "failed_assertions": [
+    "fft_mdc2_axis_ctl_fv.sv:67.5-67.130"
+   ],
+   "tail": ""
+  },
+  {
+   "name": "mutant_gap_one_short",
+   "top": "fft_mdc2_axis_ctl_fv",
+   "params": {
+    "LOGN": 5,
+    "NB": 2
+   },
+   "mode": "bmc",
+   "depth": 24,
+   "engine": "boolector",
+   "claim": "a build with the seeded fault gap_one_short is refuted by the properties, bounded to 24 clocks from reset (N = 32, NB = 2)",
+   "mutant": "gap_one_short",
+   "expected": "FAIL",
+   "status": "FAIL",
+   "ok": true,
+   "seconds": 0.7,
+   "failed_assertions": [
+    "fft_mdc2_axis_ctl_fv.sv:76.5-76.178"
+   ],
+   "tail": ""
+  },
+  {
+   "name": "mutant_gap_one_long",
+   "top": "fft_mdc2_axis_ctl_fv",
+   "params": {
+    "LOGN": 5,
+    "NB": 2
+   },
+   "mode": "bmc",
+   "depth": 24,
+   "engine": "boolector",
+   "claim": "a build with the seeded fault gap_one_long is refuted by the properties, bounded to 24 clocks from reset (N = 32, NB = 2)",
+   "mutant": "gap_one_long",
+   "expected": "FAIL",
+   "status": "FAIL",
+   "ok": true,
+   "seconds": 0.7,
+   "failed_assertions": [
+    "fft_mdc2_axis_ctl_fv.sv:76.5-76.178"
+   ],
+   "tail": ""
+  },
+  {
+   "name": "mutant_credit_ignored",
+   "top": "fft_mdc2_axis_ctl_fv",
+   "params": {
+    "LOGN": 5,
+    "NB": 2
+   },
+   "mode": "bmc",
+   "depth": 24,
+   "engine": "boolector",
+   "claim": "a build with the seeded fault credit_ignored is refuted by the properties, bounded to 24 clocks from reset (N = 32, NB = 2)",
+   "mutant": "credit_ignored",
+   "expected": "FAIL",
+   "status": "FAIL",
+   "ok": true,
+   "seconds": 0.7,
+   "failed_assertions": [
+    "fft_mdc2_axis_ctl_fv.sv:72.5-72.102"
+   ],
+   "tail": ""
+  },
+  {
+   "name": "mutant_credit_one_too_many",
+   "top": "fft_mdc2_axis_ctl_fv",
+   "params": {
+    "LOGN": 5,
+    "NB": 2
+   },
+   "mode": "bmc",
+   "depth": 24,
+   "engine": "boolector",
+   "claim": "a build with the seeded fault credit_one_too_many is refuted by the properties, bounded to 24 clocks from reset (N = 32, NB = 2)",
+   "mutant": "credit_one_too_many",
+   "expected": "FAIL",
+   "status": "FAIL",
+   "ok": true,
+   "seconds": 0.7,
+   "failed_assertions": [
+    "fft_mdc2_axis_ctl_fv.sv:72.5-72.102"
+   ],
+   "tail": ""
+  },
+  {
+   "name": "mutant_credit_one_too_few",
+   "top": "fft_mdc2_axis_ctl_fv",
+   "params": {
+    "LOGN": 5,
+    "NB": 2
+   },
+   "mode": "bmc",
+   "depth": 24,
+   "engine": "boolector",
+   "claim": "a build with the seeded fault credit_one_too_few is refuted by the properties, bounded to 24 clocks from reset (N = 32, NB = 2)",
+   "mutant": "credit_one_too_few",
+   "expected": "FAIL",
+   "status": "FAIL",
+   "ok": true,
+   "seconds": 0.6,
+   "failed_assertions": [
+    "fft_mdc2_axis_ctl_fv.sv:73.5-73.130"
+   ],
+   "tail": ""
+  },
+  {
+   "name": "mutant_credit_never_returned",
+   "top": "fft_mdc2_axis_ctl_fv",
+   "params": {
+    "LOGN": 5,
+    "NB": 2
+   },
+   "mode": "bmc",
+   "depth": 24,
+   "engine": "boolector",
+   "claim": "a build with the seeded fault credit_never_returned is refuted by the properties, bounded to 24 clocks from reset (N = 32, NB = 2)",
+   "mutant": "credit_never_returned",
+   "expected": "FAIL",
+   "status": "FAIL",
+   "ok": true,
+   "seconds": 0.9,
+   "failed_assertions": [
+    "fft_mdc2_axis_ctl_fv.sv:69.5-69.79"
+   ],
+   "tail": ""
+  },
+  {
+   "name": "mutant_credit_every_beat",
+   "top": "fft_mdc2_axis_ctl_fv",
+   "params": {
+    "LOGN": 5,
+    "NB": 2
+   },
+   "mode": "bmc",
+   "depth": 24,
+   "engine": "boolector",
+   "claim": "a build with the seeded fault credit_every_beat is refuted by the properties, bounded to 24 clocks from reset (N = 32, NB = 2)",
+   "mutant": "credit_every_beat",
+   "expected": "FAIL",
+   "status": "FAIL",
+   "ok": true,
+   "seconds": 0.8,
+   "failed_assertions": [
+    "fft_mdc2_axis_ctl_fv.sv:69.5-69.79"
+   ],
+   "tail": ""
+  },
+  {
+   "name": "mutant_start_polarity",
+   "top": "fft_mdc2_axis_ctl_fv",
+   "params": {
+    "LOGN": 5,
+    "NB": 2
+   },
+   "mode": "bmc",
+   "depth": 24,
+   "engine": "boolector",
+   "claim": "a build with the seeded fault start_polarity is refuted by the properties, bounded to 24 clocks from reset (N = 32, NB = 2)",
+   "mutant": "start_polarity",
+   "expected": "FAIL",
+   "status": "FAIL",
+   "ok": true,
+   "seconds": 0.8,
+   "failed_assertions": [
+    "fft_mdc2_axis_ctl_fv.sv:71.5-71.80"
+   ],
+   "tail": ""
+  }
+ ]
+}

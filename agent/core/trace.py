@@ -6,6 +6,8 @@ JSONL, one record per event, ``v`` = 1:
                    string ``"unreported"``: a cost is never estimated), stage, seconds, ``fake`` (true for a
                    scripted or replayed model).
 ``kind: "tool"``   tool, arguments, result (``ok``, ``refused``, ``rule``, ``output`` clipped), stage, seconds.
+``kind: "event"``  (brief 182) ``event`` (stage_start, stage_end, build_step, slot_wait, console, request ...) plus named fields: what the
+                   navigator's plain-words status needs. One more row kind in this same file, not a second log.
 
 Strings are redacted before they are written (``agent.core.security.redact``). The record shape follows the
 HW Design Space Agent's tracer (BrendanJamesLynskey/HW_Design_Space_Agent @ 80415c6, ``agent/trace.py``):
@@ -53,6 +55,10 @@ class Trace:
         self._write({"kind": "model", "harness": self.harness, "model": model,
                      "tokens": tokens or {"input": 0, "output": 0}, "cost_usd": cost_usd, "stage": stage,
                      "seconds": seconds, "fake": fake})
+
+    def event(self, event: str, stage: str | None = None, **fields: Any) -> None:
+        """A run event (brief 182). Field values are plain numbers, strings and short lists; strings pass the same redaction as every row."""
+        self._write({"kind": "event", "event": event, "stage": stage, **fields})
 
     def tool(self, name: str, arguments: dict[str, Any], result: dict[str, Any], stage: str) -> None:
         keep = {k: result.get(k) for k in ("ok", "refused", "rule", "output") if k in result}

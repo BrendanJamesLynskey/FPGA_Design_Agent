@@ -46,7 +46,7 @@ set_property -dict {PACKAGE_PIN F8 IOSTANDARD LVCMOS18 SLEW SLOW DRIVE 8} [get_p
 set_property -dict {PACKAGE_PIN E8 IOSTANDARD LVCMOS18 SLEW SLOW DRIVE 8} [get_ports {led[1]}]
 
 # ---- RGMII receive: each port's RX_CLK, 125 MHz at 1000 Mb/s ----
-# The PHY's internal RX clock delay is to be enabled over MDIO (M88E1111 register 20 bit 7; docs/board_run_plan.md), which
+# The PHY's internal RX clock delay is to be enabled over MDIO (DP83867 RGMIICTL bit 0, delay RGMIIDCTL[3:0]; designs/b58a_trigger/docs/board_run_plan.md; the first draft of this fixture named another PHY), which
 # makes the data centre-aligned at the FPGA pins. RGMII v2.0 with the delay gives data valid at least tSU = 1.2 ns
 # before and tH = 1.2 ns after each RX_CLK edge (to be confirmed for this PHY: owner question). A virtual clock models
 # the PHY's launch; data launched on one edge are captured on the next opposite edge by IDDRE1 (SAME_EDGE_PIPELINED).
