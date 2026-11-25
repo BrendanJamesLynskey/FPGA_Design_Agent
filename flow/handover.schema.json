@@ -82,6 +82,11 @@
                                  "turns": {"type": "integer"}, "wall_s": {"type": "number"}, "tokens": {"type": "integer"},
                                  "cost_usd": {"type": "number"}, "plan_cost_estimate_usd": {"type": "number"},
                                  "stop": {"type": "string"}}},
+    "requirements_report": {"type": "string", "pattern": "^[A-Za-z0-9_./-]+$", "description": "brief 210: the requirements verification report of the design (REQUIREMENTS_REPORT.md), a file in the design directory"},
+    "assumptions": {"type": "array", "description": "brief 210: the questions the agent settled with its own default, with their risk class (Assumptions you did not confirm)", "items": {
+      "type": "object", "additionalProperties": false, "required": ["question", "risk", "used", "how"],
+      "properties": {"question": {"type": "string"}, "risk": {"enum": ["low", "medium", "high"]}, "used": {"type": "string"},
+                     "how": {"type": "string"}, "reason": {"type": "string"}}}},
     "registers": {"type": "array", "items": {
       "type": "object", "additionalProperties": false, "required": ["offset", "name", "access"],
       "properties": {"offset": {"type": ["string", "integer"]}, "name": {"type": "string"}, "access": {"type": "string"},

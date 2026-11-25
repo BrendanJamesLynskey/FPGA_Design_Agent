@@ -99,6 +99,7 @@ class Config:
     name: str
     board: str = "nexys_a7_100t"
     interview: str = "off"          # on (human) | oracle | off
+    requirements: str = ""          # brief 210: loose | standard | strict, from --requirements; "" = not given (the request, the design package or the default decides)
     review: str = "off"             # on | off
     model: str = "openai/gpt-6-luna"
     hidden_spec: Path | None = None
@@ -256,6 +257,11 @@ def trace_record(design: Path, root: Path) -> dict:
     (b / "trace" / "trace.md").write_text(tr.to_markdown(t))
     if t["gates"]["changed_requirements_reverified"]["pass"]:
         (b / "trace" / "baseline.json").write_text(text)
+    try:                                                         # brief 210: the readable form, REQUIREMENTS_REPORT.md at the design root
+        from flow import requirements_report as rr
+        rr.write(design, t)
+    except Exception as e:                                       # noqa: BLE001 (a record must never stop the run)
+        (b / "trace" / "requirements_report_error.txt").write_text(f"{type(e).__name__}: {e}\n")
     return {"ok": t["pass"], "gates": {k: v["pass"] for k, v in t["gates"].items()}, "defer": list(defer),
             "changed": {k: t["change"][k] for k in ("text_changed", "evidence_changed", "stale")}}
 
@@ -953,38 +959,66 @@ def _spec(rt: Runtime) -> dict:
     return load_spec(rt.design / "spec.yaml")
 
 
+def _request_dirs(rt: Runtime) -> list[Path]:
+    """The directory of the request (spec.md as given on the command line), where a ``requirements_waivers.yaml`` may sit beside it."""
+    sm = getattr(rt.cfg, "spec_md", None)
+    return [Path(sm).resolve().parent] if sm else []
+
+
+def requirements_level(rt: Runtime, spec: dict) -> tuple[str, str]:
+    """Brief 210: (level, where it came from) of this run: ``--requirements``, else the request's own line or spec.yaml, else the design
+    package's ``requirements`` field, else the default (``agent.graph.requirements.default_level``); production_secure and the high
+    verification profiles raise it to at least ``standard``."""
+    from agent.graph import requirements as RQ
+    md = (rt.design / "spec.md").read_text(errors="replace") if (rt.design / "spec.md").is_file() else ""
+    sets = getattr(rt.cfg, "verif_sets", None) or {}
+    return RQ.resolve_level(cli=getattr(rt.cfg, "requirements", "") or None, spec_md=md, spec=spec, package=RQ.load_package(rt.design),
+                            default=RQ.default_level(bool(getattr(rt.cfg, "hidden_spec", None)), getattr(rt.cfg, "interview", "off")),
+                            production_secure=bool(sets.get("production_secure")) or bool(getattr(rt.cfg, "production_secure", False)),
+                            verif_profile=getattr(rt.cfg, "verif_profile", None))
+
+
 def _interview(rt: Runtime, spec: dict, state: State) -> tuple[dict, dict]:
     from langgraph.types import interrupt
+    from agent.graph import requirements as RQ
     from agent.graph.package_facts import load_facts
-    iv = Interview(facts=load_facts(rt.design))                    # brief 174: a design package's sourced facts are not asked again
+    level, level_src = requirements_level(rt, spec)
+    waivers, wprobs = RQ.load_waivers(rt.design, *_request_dirs(rt))
+    iv = Interview(facts=load_facts(rt.design), level=level, waivers=waivers)   # brief 174: a design package's sourced facts are not asked again
     who = None
     if rt.cfg.interview == "oracle":
         who = SpecOracle(rt.cfg.hidden_spec, rt.oracle_llm or rt.resolver.oracle())
-    asks = [(str(o.get("question", "")), str(o.get("default", "")), str(o.get("reason", o.get("default", ""))))
+    asks = [(str(o.get("question", "")), str(o.get("default", "")), str(o.get("reason", o.get("default", ""))), o.get("risk"))
             for o in spec.get("open_questions") or []]
     rates = [r for r in rate_params(spec) if r["cycles"]]
     for r in rates:                                               # 05c fix 3: rates become cycle counts
         clk = f"{clock_hz(spec) / 1e6:g} MHz"
         asks.append((_p("graph/run/interview_1").format(r['name'], r['value'], r['unit'], r['new_name'], clk), str(r["cycles"]),
-                     _p("graph/run/interview_2").format(r['cycles'], r['value'], r['unit'], clk)))
+                     _p("graph/run/interview_2").format(r['cycles'], r['value'], r['unit'], clk), None))
     unproven = [r for r in spec.get("requirements") or [] if isinstance(r, dict) and not r.get("proof")]
     for r in unproven:                                            # 05d: a proof method per requirement, with a default
         methods, why = propose_proof(str(r.get("text", "")))
-        asks.append((_p("graph/run/interview_3").format(r['id'], r.get('text'), ', '.join(PROOF_METHODS)), ",".join(methods), why))
-    for i, (qt, qd, qr) in enumerate(asks):
-        q = Question(id=f"q{i + 1}", text=qt, default=qd, reason=qr)
+        asks.append((_p("graph/run/interview_3").format(r['id'], r.get('text'), ', '.join(PROOF_METHODS)), ",".join(methods), why, None))
+    for i, (qt, qd, qr, qk) in enumerate(asks):
+        q = Question(id=f"q{i + 1}", text=qt, default=qd, reason=qr, clarifier_risk=qk if qk in RQ.RANK else None)
         if rt.cfg.interview == "on" and iv.lookup(q) is None:         # one question at a time, to the human (not a package fact)
             ans = interrupt({"kind": "question", "id": q.id, "question": q.text, "default": q.default,
-                             "reason": q.reason})
+                             "reason": q.reason, "risk": RQ.classify(q.text, q.default, q.reason, q.clarifier_risk).cls, "requirements": level})
+            waived = RQ.waiver_from_human(ans, q)                    # brief 210: "accept default" / {waive: true, why} is a recorded decision
+            if waived is not None:
+                iv.waivers.append(waived)
 
             class _Human:
                 name = "human"
 
-                def answer(self, _q, a=ans):
+                def answer(self, _q, a=ans, w=waived):
+                    if w is not None:
+                        return "not specified", None
                     return (str(a.get("answer") or "not specified") if isinstance(a, dict) else str(a)), None
             iv.ask(q, _Human())
         else:
             iv.ask(q, who)
+    pending = iv.unresolved()
     spec = apply_register_answer(iv.resolve_into(spec))               # 07a2 fix 5 C: an answered map beats the role's default
     for r in rates:                                               # the answered (or defaulted) integer replaces it
         got = next((q for q in iv.questions if q.text.startswith(f"{r['name']} is given as")), None)
@@ -997,7 +1031,15 @@ def _interview(rt: Runtime, spec: dict, state: State) -> tuple[dict, dict]:
         found = [m for m in PROOF_METHODS if got and got.answer and m in got.answer.lower()]
         r["proof"] = found or propose_proof(str(r.get("text", "")))[0]
     (rt.design / "spec.yaml").write_text(yaml.safe_dump(spec, sort_keys=False))
-    return spec, merge_summaries(state.get("interview"), iv.summary())
+    summ = iv.summary()
+    summ["level_source"] = level_src
+    RQ.write_state(rt.design, level=level, source=level_src, waivers=[w.as_dict() for w in iv.waivers], waiver_problems=wprobs)
+    if wprobs:
+        summ["waiver_problems"] = wprobs
+    if pending:                                                   # brief 210: the run stops here and says what is needed
+        (rt.design / RQ.NEEDED_FILE).write_text(RQ.needed_markdown(level, level_src, pending, problems=wprobs))
+        summ["requirements_stop"] = RQ.stop_text(pending)
+    return spec, merge_summaries(state.get("interview"), summ)
 
 
 _ORDER = ["synth", "place", "route", "bitstream"]
@@ -1239,6 +1281,55 @@ def report_gates_detail(ev: dict, detail: list, rt: Runtime | None = None) -> No
         detail.append("[report gates] " + "\n".join(why)[:1800] + report_advisory_text(ev.get("report_gates")))
 
 
+def _requirements_summary(rt: Runtime) -> dict:
+    """Brief 210: the level the run used and where it came from, and the conflicts it met (build/requirements/state.json)."""
+    from agent.graph import requirements as RQ
+    st = RQ.read_state(rt.design)
+    return {"level": st.get("level") or rt.cfg.requirements or None, "source": st.get("source"),
+            "conflicts": [{k: c.get(k) for k in ("requirement", "code", "fix_kind", "action")} for c in st.get("conflicts") or []]}
+
+
+def requirements_conflict_gate(rt: Runtime, ev: dict, out: dict, detail: list) -> None:
+    """Brief 210 (item 7): the fix a blocking report finding asks for (pipelining a path) may break a requirement the request states
+    (REQ-08, "no register between a and y"). Brief 209a's live run pipelined the chain and left the conflict for someone else to find.
+    Now: at ``standard`` and ``strict`` the run stops, naming the conflict (exit status 3), unless a waiver names the requirement; at
+    ``loose`` the Designer may go ahead, the conflict is recorded and the requirements report marks that requirement ``fail`` with the
+    reason. Never raises: a record must not stop the run by failing."""
+    from agent.graph import requirements as RQ
+    try:
+        r = ev.get("report_gates") or {}
+        fs = [f for f in r.get("findings") or [] if f.get("blocking")]
+        if not fs:
+            return
+        spec = _spec(rt)
+        found = RQ.fix_conflicts(fs, spec)
+        if not found:
+            return
+        level, src = requirements_level(rt, spec)
+        waivers, probs = RQ.load_waivers(rt.design, *_request_dirs(rt))
+        waived = {w.requirement: w.as_dict() for w in waivers if w.requirement}
+        st = RQ.read_state(rt.design)
+        rows = list(st.get("conflicts") or [])
+        for c in found:
+            c = {**c, "level": level, "stage": rt.session.stage, "waiver": waived.get(c["requirement"]),
+                 "action": "proceeded" if (level == "loose" or c["requirement"] in waived) else "stopped"}
+            if not any(x["requirement"] == c["requirement"] and x["code"] == c["code"] for x in rows):
+                rows.append(c)
+        RQ.write_state(rt.design, conflicts=rows, level=level, source=src)
+        log_routing_event(rt, "requirements_conflict", level=level, conflicts=[(c["requirement"], c["code"]) for c in found],
+                          waived=sorted(set(waived) & {c["requirement"] for c in found}))
+        stopping = [c for c in found if level != "loose" and c["requirement"] not in waived]
+        if stopping:
+            (rt.design / RQ.NEEDED_FILE).write_text(RQ.needed_markdown(level, src, [], conflicts=stopping, problems=probs))
+            out["stop"] = RQ.stop_text([], stopping)
+            detail.append("[requirements] " + out["stop"])
+        else:
+            detail.append("[requirements] note for the record: the fix above conflicts with " + ", ".join(c["requirement"] for c in found)
+                          + (" (waived)" if waived else f" (level {level}: proceeding; the requirements report marks it failed)"))
+    except Exception as e:                                       # noqa: BLE001
+        detail.append(f"[requirements] conflict check unavailable: {type(e).__name__}: {str(e)[:160]}")
+
+
 HW_MOCK_SNIPPET = ("import sys, json; sys.path.insert(0, sys.argv[2]); from flow import host_transport as H; "
                    "r = H.run_mock(__import__('pathlib').Path(sys.argv[1])); print(json.dumps(r))")
 
@@ -1310,6 +1401,8 @@ def node_gate(state: State) -> dict:
             else:
                 spec, summary = _interview(rt, spec, state)
                 out["interview"] = summary
+                if summary.get("requirements_stop"):                  # brief 210: standard/strict: a question that must be resolved is not
+                    out["stop"] = summary["requirements_stop"]
                 errs = validate(spec) + requirement_quality_errors(spec) + register_map_errors(req, spec)   # brief 53
                 cf = spec_constants_findings(rt)                   # brief 82P6: spec.yaml against the derived constants, at the clarify exit
                 errs += ["constants " + f"{f['code']} {f['where']}: {f['message']}" for f in cf]
@@ -1373,6 +1466,7 @@ def node_gate(state: State) -> dict:
             ev["gates_base"] = _build(rt, "synth")["gates"]
             ev["report_gates"] = report_gates_eval(rt)           # brief 209a: the synthesis report is the first the build writes
             report_gates_detail(ev, detail, rt)
+            requirements_conflict_gate(rt, ev, out, detail)
     elif n in (3, 4):
         if n == 3:
             ev["constants"] = constants_gate(rt)                 # brief 82P4: the board clock period against the XDC
@@ -1381,6 +1475,7 @@ def node_gate(state: State) -> dict:
         ev["gates_base"] = _build(rt, "synth")["gates"]
         ev["report_gates"] = report_gates_eval(rt)               # brief 209a
         report_gates_detail(ev, detail, rt)
+        requirements_conflict_gate(rt, ev, out, detail)
         if n == 4 and rt.cfg.design_plan:                        # closure-loop hook: inferred primitives against the plan
             from flow import timing_plan as _tp
             ev["plan_fails"] = _tp.post_synth_failures(rt.design, ev["gates_base"])
@@ -2010,7 +2105,7 @@ def summary(rt: Runtime, state: dict) -> dict:
             "knowledge_use": knowledge_use(rt), "knowledge_bank": knowledge_bank_status(rt),
             "turn_trace": usage_trace(usage),
             "per_role": usage_by(usage, "role"), "per_stage": usage_by(usage, "stage"),
-            "interview": rt.cfg.interview,
+            "interview": rt.cfg.interview, "requirements": _requirements_summary(rt),
             "review": rt.cfg.review, "stages_visited": [h["n"] for h in hist],
             "loops": sum(1 for a, b in zip(hist, hist[1:]) if b["n"] <= a["n"] and not a.get("rewind")),
             "rewinds": [h["rewind"] for h in hist if h.get("rewind")],
