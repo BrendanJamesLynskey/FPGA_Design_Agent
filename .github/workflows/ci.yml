@@ -190,7 +190,7 @@ jobs:
       - name: Safety by k-induction (AW 4, 2, 1; one bit of each class of the entry), bounded progress, covers, and one mutant per key property
         run: |
           $FDA_OSS_CAD/bin/yosys -V
-          python -m pytest -q designs/b96_kr260_10g/tests/test_b115_formal.py
+          python -m pytest -q designs/b96_kr260_10g/tests/test_b115_formal.py designs/b96_kr260_10g/tests/test_b158_ifg_formal.py
       - name: Partitioning blocks (brief 151) - pipe_reg and credit_chan proofs by k-induction (data, order, credits, the AXI4-Stream rules as SVA) and the planted faults refuted
         run: |
           python -m pytest -q ip_lib/pipe_reg/tb/test_pipe_reg_formal.py ip_lib/credit_chan/tb/test_credit_chan_formal.py
