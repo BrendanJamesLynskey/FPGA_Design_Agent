@@ -85,7 +85,7 @@ Vivado 2026.1 (build 6511674), out-of-context synthesis, placement and routing o
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
 | fold_add | a7 | SAT=1, W_IN=24, S=8, W_OUT=16, MODE=2 | 2.0 | 24 | 60 | 0 | 7 | 0 | 0 | -1.42 | 292.4 | 8 | 1 |  | met |
 | fold_add | a7 | SAT=1, W_IN=32, S=12, W_OUT=18, MODE=2 | 2.0 | 30 | 72 | 0 | 9 | 0 | 0 | -2.025 | 248.4 | 10 | 1 | F | met |
-| fold_add | a7 | SAT=0, W_IN=32, S=12, W_OUT=18, MODE=0 | 2.0 | 1 | 58 | 0 | 0 | 0 | 0 | 0.785 | >=823.0 | 0 | 1 | FL | missed |
+| fold_add | a7 | SAT=0, W_IN=32, S=12, W_OUT=18, MODE=0 | 2.0 | 1 | 58 | 0 | 0 | 0 | 0 | 0.785 | 937.2 | 0 | 1 | FL | missed |
 | fold_add | a7 | SAT=1, W_IN=48, S=16, W_OUT=24, MODE=2 | 2.0 | 43 | 100 | 0 | 13 | 0 | 0 | -3.357 | 186.7 | 13 | 1 |  | met |
 | fold_add | k26 | SAT=1, W_IN=24, S=8, W_OUT=16, MODE=2 | 1.4 | 24 | 60 | 0 | 3 | 0 | 0 | -0.039 | 694.9 | 5 | 1 |  | met |
 | fold_add | k26 | SAT=1, W_IN=32, S=12, W_OUT=18, MODE=2 | 1.4 | 30 | 72 | 0 | 4 | 0 | 0 | -0.18 | 632.9 | 6 | 1 |  | met |
@@ -93,7 +93,7 @@ Vivado 2026.1 (build 6511674), out-of-context synthesis, placement and routing o
 | fold_add | k26 | SAT=1, W_IN=48, S=16, W_OUT=24, MODE=2 | 1.4 | 43 | 100 | 0 | 6 | 0 | 0 | -0.791 | 456.4 | 9 | 1 |  | met |
 | inc_after | a7 | SAT=1, W_IN=24, S=8, W_OUT=16, MODE=2 | 2.0 | 19 | 60 | 0 | 5 | 0 | 0 | -2.487 | 222.9 | 7 | 1 | FL | met |
 | inc_after | a7 | SAT=1, W_IN=32, S=12, W_OUT=18, MODE=2 | 2.0 | 23 | 72 | 0 | 6 | 0 | 0 | -3.337 | 187.4 | 8 | 1 | FL | met |
-| inc_after | a7 | SAT=0, W_IN=32, S=12, W_OUT=18, MODE=0 | 2.0 | 1 | 58 | 0 | 0 | 0 | 0 | 0.785 | >=823.0 | 0 | 1 | FL | missed |
+| inc_after | a7 | SAT=0, W_IN=32, S=12, W_OUT=18, MODE=0 | 2.0 | 1 | 58 | 0 | 0 | 0 | 0 | 0.785 | 937.2 | 0 | 1 | FL | missed |
 | inc_after | a7 | SAT=1, W_IN=48, S=16, W_OUT=24, MODE=2 | 2.0 | 32 | 100 | 0 | 9 | 0 | 0 | -4.149 | 162.6 | 11 | 1 | FL | met |
 | inc_after | k26 | SAT=1, W_IN=24, S=8, W_OUT=16, MODE=2 | 1.4 | 19 | 60 | 0 | 2 | 0 | 0 | -0.388 | 559.3 | 5 | 1 | FL | met |
 | inc_after | k26 | SAT=1, W_IN=32, S=12, W_OUT=18, MODE=2 | 1.4 | 23 | 72 | 0 | 3 | 0 | 0 | -0.518 | 521.4 | 6 | 1 | FL | met |

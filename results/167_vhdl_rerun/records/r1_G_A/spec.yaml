@@ -1,0 +1,304 @@
+name: gray_stepper
+title: 10-bit Gray-code stepper on the Nexys A7-100T LEDs
+board: nexys_a7_100t
+part: xc7a100tcsg324-1
+top: t1_gray_stepper_top
+design_id: GRAY
+clocks:
+- name: clk100mhz
+  period_ns: 10
+  pin: W5
+  role: 100 MHz board oscillator; all logic runs on this clock
+reset:
+  name: CPU_RESETN
+  pin: C12
+  polarity: active low
+  behaviour: sampled synchronously on clk100mhz; while low, count, step counter, rate
+    and auto mode are set to 0 and LED outputs show Gray 0
+parameters:
+  DEBOUNCE_CYCLES: 2000000
+  TICK_CYCLES: 100000
+  CLKS_PER_BIT: 868
+  TIMEOUT_CYCLES: 1000000
+  BUILD_STAMP: 0
+ports:
+- name: clk100mhz
+  direction: input
+  width: 1
+  pin_role: W5, 100 MHz clock
+- name: CPU_RESETN
+  direction: input
+  width: 1
+  pin_role: C12, CPU reset button, active low
+- name: BTNU
+  direction: input
+  width: 1
+  pin_role: T18, up button; one press is one step
+- name: sw
+  direction: input
+  width: 16
+  pin_role: sw[15] on V10 selects direction; sw[14:0] unused
+- name: led
+  direction: output
+  width: 16
+  pin_role: led[9:0] Gray count on bits 9 down to 0; led[15] auto mode on; led[14:10]
+    always 0
+- name: uart_txd_in
+  direction: input
+  width: 1
+  pin_role: C4, UART receive from host (PC TX into FPGA)
+- name: uart_rxd_out
+  direction: output
+  width: 1
+  pin_role: D4, UART transmit to host (FPGA TX to PC)
+behaviour:
+  debounce:
+  - BTNU is sampled on clk100mhz and a new level is accepted only after it has held
+    for DEBOUNCE_CYCLES clocks
+  - a press is a rising edge of the accepted BTNU level and produces exactly one button
+    step request
+  - releasing BTNU produces no step request
+  stepping:
+  - bin is a 10-bit binary count; gray = bin XOR (bin shifted right by 1)
+  - 'each step request is applied on one clock: bin = bin + 1 when sw[15] = 0, bin
+    = bin - 1 when sw[15] = 1, modulo 1024'
+  - led[9:0] shows gray of bin and changes by exactly one bit per applied step, including
+    1023 to 0 and 0 to 1023
+  - the step counter increments by one for every applied step from a button or from
+    automatic mode and never for a binary write
+  - a button step and an automatic step arriving on the same clock are applied on
+    consecutive clocks, so each applied step is one clock apart
+  automatic:
+  - auto_en is set and cleared only by the shell control register bit 0
+  - a free-running TICK_CYCLES counter produces a tick every TICK_CYCLES clocks; when
+    auto_en is 1 and rate is nonzero, an automatic step is requested after rate ticks
+  - 'rate of zero holds the count: no automatic step is requested'
+  - button steps do not reset or advance the automatic tick counter
+  - led[15] equals auto_en
+  shell:
+  - a read of GRAY_RD returns gray of bin
+  - a read of COUNT_BIN returns bin; a write to COUNT_BIN sets bin to the low 10 bits
+    of the written value and does not change the step counter
+  - a read of STEP_CNT returns the number of applied steps since reset
+  - a read of ID returns the design ID 'GRAY' as a 32-bit ASCII word
+registers:
+  map:
+  - offset: '0x00'
+    name: ID
+    access: RO
+    reset: '0x47524159'
+    bits: '[31:0] ASCII ''GRAY'''
+  - offset: '0x04'
+    name: COUNT_BIN
+    access: RW
+    reset: '0x00000000'
+    bits: '[9:0] binary count; write sets count, read returns count'
+  - offset: '0x08'
+    name: GRAY_RD
+    access: RO
+    reset: '0x00000000'
+    bits: '[9:0] Gray code of the count'
+  - offset: '0x0C'
+    name: CTRL
+    access: RW
+    reset: '0x00000000'
+    bits: '[0] auto_en; [31:1] read as 0, writes ignored'
+  - offset: '0x10'
+    name: RATE_MS
+    access: RW
+    reset: '0x00000000'
+    bits: '[15:0] automatic step period in ticks (1 ms each); 0 holds the count'
+  - offset: '0x14'
+    name: STEP_CNT
+    access: RO
+    reset: '0x00000000'
+    bits: '[31:0] applied steps since reset, wraps at 2^32'
+timing:
+  latency:
+    button_to_led: DEBOUNCE_CYCLES plus 3 clocks from the BTNU edge to the led change
+    auto_step_period: rate * TICK_CYCLES clocks between automatic steps when rate
+      is nonzero
+    shell_write_to_led: 2 clocks after the write is accepted by the shell bus
+  constraints:
+  - clk100mhz period 10 ns met with no failing setup or hold slack in the implemented
+    design
+  - UART divider CLKS_PER_BIT 868 gives 115200 baud within 1 percent
+resources_expected:
+  lut: 200
+  ff: 150
+  bram: 0
+  dsp: 0
+  bufg: 1
+assumptions:
+- text: the test shell presents register reads and writes to the design on a simple
+    bus and the design answers within TIMEOUT_CYCLES
+  reason: the shell is part of the test harness and its bus is not described in the
+    request
+- text: BTNU and sw are asynchronous inputs and are synchronised before use
+  reason: they come from mechanical switches and buttons on the board, which are unrelated
+    to clk100mhz
+- text: the design uses no DSP blocks and no block RAM
+  reason: the count, timers and registers fit in fabric flip-flops and LUTs
+- text: the LED outputs are driven directly from registers or combinational logic
+    of registers
+  reason: keeps the one-bit-change property checkable on the register values
+requirements:
+- id: REQ-01
+  text: One debounced BTNU press produces exactly one applied step
+  proof:
+  - simulation
+  - hardware
+- id: REQ-02
+  text: A BTNU level change held for fewer than DEBOUNCE_CYCLES clocks produces no
+    step
+  proof:
+  - simulation
+- id: REQ-03
+  text: With sw[15] equal to 1 each applied step decrements the count modulo 1024
+  proof:
+  - simulation
+- id: REQ-04
+  text: With sw[15] equal to 0 each applied step increments the count modulo 1024
+  proof:
+  - simulation
+- id: REQ-05
+  text: Every applied step changes exactly one bit of led[9:0] for all 1024 counts
+    in both directions
+  proof:
+  - simulation
+  - formal
+- id: REQ-06
+  text: The step from count 1023 to count 0 changes exactly one bit of led[9:0]
+  proof:
+  - simulation
+  - formal
+- id: REQ-07
+  text: The step from count 0 to count 1023 changes exactly one bit of led[9:0]
+  proof:
+  - simulation
+  - formal
+- id: REQ-08
+  text: With auto_en 1 and rate R nonzero an automatic step occurs every R times TICK_CYCLES
+    clocks
+  proof:
+  - simulation
+- id: REQ-09
+  text: With rate 0 and auto_en 1 the count does not change
+  proof:
+  - simulation
+- id: REQ-10
+  text: A BTNU press during automatic mode adds one step without changing the automatic
+    step times
+  proof:
+  - simulation
+- id: REQ-11
+  text: led[15] equals auto_en at all times
+  proof:
+  - simulation
+  - hardware
+- id: REQ-18
+  text: led[14:10] are 0 at all times
+  proof:
+  - simulation
+  - hardware
+- id: REQ-12
+  text: CPU_RESETN low sets the count to 0
+  proof:
+  - simulation
+- id: REQ-19
+  text: CPU_RESETN low sets the step counter to 0
+  proof:
+  - simulation
+- id: REQ-20
+  text: CPU_RESETN low sets rate to 0
+  proof:
+  - simulation
+- id: REQ-21
+  text: CPU_RESETN low sets auto_en to 0
+  proof:
+  - simulation
+- id: REQ-13
+  text: A read of GRAY_RD returns the Gray code of the count
+  proof:
+  - simulation
+- id: REQ-14
+  text: A write of value V to COUNT_BIN followed by a read of GRAY_RD returns V XOR
+    (V shifted right by 1) in the low 10 bits
+  proof:
+  - simulation
+- id: REQ-15
+  text: A read of STEP_CNT after N applied steps since reset returns N
+  proof:
+  - simulation
+- id: REQ-16
+  text: A read of ID returns 0x47524159
+  proof:
+  - simulation
+  - hardware
+- id: REQ-17
+  text: The design meets timing at 100 MHz with no failing setup or hold slack
+  proof:
+  - analysis
+open_questions: []
+resolved_questions:
+- question: 'What is the register map: offset, width, reset value and access of every
+    register?'
+  answer: 'Proposed map in registers.map: ID at 0x00 RO, COUNT_BIN at 0x04 RW, GRAY_RD
+    at 0x08 RO, CTRL at 0x0C RW with bit 0 auto_en, RATE_MS at 0x10 RW 16-bit, STEP_CNT
+    at 0x14 RO 32-bit; all 32-bit words with reset 0 except ID'
+  status: defaulted
+  by: default
+  default_reason: spec.md names the shell reads and writes but gives no offsets, so
+    the map must be confirmed before the shell is built
+- question: How many clocks must BTNU hold a new level before it counts as a change
+    (DEBOUNCE_CYCLES)?
+  answer: 2000000 clocks, 20 ms at 100 MHz
+  status: defaulted
+  by: default
+  default_reason: typical mechanical push-button bounce settles within 20 ms and the
+    request does not give a figure
+- question: How wide is the applied-step counter and what happens when it wraps?
+  answer: 32 bits, wraps modulo 2^32 with no saturation
+  status: defaulted
+  by: default
+  default_reason: the request asks for a count of steps but gives no width
+- question: How wide is the rate register and what is its largest value?
+  answer: 16 bits, rate in ticks of TICK_CYCLES clocks, 0 to 65535 ms
+  status: defaulted
+  by: default
+  default_reason: the request gives the rate in milliseconds without a range
+- question: Does writing RATE_MS restart the automatic tick phase?
+  answer: 'No: the tick counter free-runs and a new rate takes effect at the next
+    comparison'
+  status: defaulted
+  by: default
+  default_reason: the request says automatic steps carry on at the set rate, so phase
+    should not be disturbed by a write
+- question: Does a binary write to COUNT_BIN count as a step or restart the automatic
+    period?
+  answer: 'No on both: STEP_CNT is unchanged and the automatic tick counter is unchanged'
+  status: defaulted
+  by: default
+  default_reason: the request asks for STEP_CNT to count steps, and a write is not
+    a step
+- question: What happens when a button step and an automatic step fall on the same
+    clock?
+  answer: Both are applied on consecutive clocks, so each applied step still changes
+    one bit
+  status: defaulted
+  by: default
+  default_reason: the request requires one LED change per step and forbids a merged
+    double step
+- question: Is the direction for automatic steps taken from sw[15] in the same way
+    as for button steps?
+  answer: Yes, sw[15] is sampled at each applied step for both sources
+  status: defaulted
+  by: default
+  default_reason: the request gives one direction switch and does not separate the
+    two sources
+- question: Is the shell response timeout TIMEOUT_CYCLES 1000000 clocks?
+  answer: 1000000 clocks, 10 ms at 100 MHz
+  status: defaulted
+  by: default
+  default_reason: the shell timeout is not given in the request and must be long enough
+    for a UART frame at 115200 baud
