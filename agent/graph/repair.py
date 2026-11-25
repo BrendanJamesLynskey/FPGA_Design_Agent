@@ -106,6 +106,14 @@ def constants_holder_texts(c: dict | None) -> dict[str, str]:
     return out
 
 
+def report_advisory_text(r: dict | None, limit: int = 5) -> str:
+    """The advisories of the report checks, one line each, for a repair visit's feedback (they never block)."""
+    adv = (r or {}).get("advisories") or []
+    if not adv:
+        return ""
+    return "\n[advisories, not blocking] " + "; ".join(f"{a['code']} {a.get('where', '')}: {a.get('message', '')[:160]}" for a in adv[:limit])
+
+
 def stage2_owners(ev: dict[str, Any], repeat: int = 0, events: list[dict[str, Any]] | None = None) -> tuple[dict[str, list[str]], str]:
     """Which roles must act on a failed stage-2 visit, with the failure text each one is given, and a signature of
     the failure (equal signatures on consecutive visits mean the last repair did not change it).
@@ -133,6 +141,10 @@ def stage2_owners(ev: dict[str, Any], repeat: int = 0, events: list[dict[str, An
             add(role, text, "constants")
             if events is not None:
                 events.append({"event": "const_id_routed_to_holder", "role": role})
+    from agent.graph.stages import report_gates_stage
+    g_ok, g_why = report_gates_stage(ev.get("report_gates"))
+    if not g_ok:                                       # brief 209a: the synthesis report says the design cannot close
+        add("rtl", "[report gates] " + "\n".join(g_why)[:1800] + report_advisory_text(ev.get("report_gates")), "report_gates")
     c = ev.get("contract") or {}
     if not c.get("ok"):
         add("model", "[model contract] " + str(c.get("error") or "not checked")[-1200:], "contract")
@@ -182,7 +194,7 @@ def stage2_owners(ev: dict[str, Any], repeat: int = 0, events: list[dict[str, An
 
 _GATE_OF_TAG = {"lint": "lint", "standards": "design standards", "constants": "derived constants", "contract": "model contract",
                 "model_present": "verification (model present)", "spectest": "spec test", "other": "other gates",
-                "sim": "simulate"}
+                "sim": "simulate", "report_gates": "report gates"}
 
 
 def stop_diagnosis(n: int, limit: int, state: dict[str, Any]) -> tuple[str, dict[str, Any]]:

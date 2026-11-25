@@ -9,7 +9,7 @@ brief 204 (ranks 1, 2, 5, 11, 12, 13, 14). Code: `flow/report_gates.py`, wired i
 
 **Gate or advisory.** A *gate* finding blocks the check (status `fail`). It is a gate only where the guide calls the item a requirement, or says the
 design cannot work. Everything else is advisory: listed with its fix, never blocking. The gates are findings of the check suite; they are **not** entries of
-`gates.json`, which the stage controller reads (a planner decision to add them there is open).
+`gates.json`, which the stage controller reads. **Since brief 209a** the agent's stage machine acts on three of them: a blocking RPT-LL-02, RPT-CS-02 or RPT-LOG-03 on the post-synthesis reports fails the `report_gates` exit gate of stages 2, 3 and 4 and sends the run back to the Designer (stage 2) with the finding's own text and the advisories of the same checks (`agent/graph/stages.py` `report_gates_stage`, `agent/graph/run.py` `report_gates_eval`); every advisory stays advisory.
 
 | Id | Level | Source (PDF page) | Rule | Reads |
 |---|---|---|---|---|
