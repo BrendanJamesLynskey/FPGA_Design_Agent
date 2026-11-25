@@ -42,12 +42,66 @@ arm (a `claude_code` endpoint) or Deep Agents over a chat endpoint (the other ki
 | kind | what | options it accepts | key |
 |---|---|---|---|
 | `claude_code` | the Max subscription, headless `claude -p` ("API-like mode"); no dollars are reported, only the plan's estimate | `effort`, `timeout_s` | the plan's token (`CLAUDE_CODE_OAUTH_TOKEN`, or the mode-600 file) |
-| `anthropic_api` | the Messages API; reports tokens, not dollars (cost is counted at the per-call ceiling against the run's cap) | `temperature`, `max_tokens`, `stop`, `thinking_budget`, `timeout_s`, `retries` | `key_env` (default `ANTHROPIC_API_KEY`) |
+| `anthropic_api` | the Messages API; reports tokens, so the agent computes each call's dollars from the response `usage` and the model's price table (see [Anthropic API: cost, caching, temperature, budgets](#anthropic-api-cost-caching-temperature-budgets-brief-209b)) | `temperature`, `max_tokens`, `stop`, `thinking_budget`, `timeout_s`, `retries` | `key_env` (default `ANTHROPIC_API_KEY`) |
 | `openrouter` | OpenRouter chat completions, data collection denied, provider cost reported | `temperature`, `seed`, `max_tokens`, `stop`, `effort`, `timeout_s`, `retries` | `key_env` (default `OPENROUTER_API_KEY`, or the owner's mode-600 file) |
 | `openai_compatible` | any base URL: vLLM, a local model, a specialist fine-tune (brief 107's hook). OpenRouter's extra fields are sent only when the host is `openrouter.ai` | as `openrouter` | `key_env`; none needed on `localhost` |
 | `replay` | recorded replies in order (`path:` of a fixture) | none | none |
 
 The endpoint table has four built-in names (`openrouter`, `claude_code`, `anthropic_api`, `replay`); add your own under `endpoints:`.
+
+## Anthropic API: cost, caching, temperature, budgets (brief 209b)
+
+The `anthropic_api` kind is a first-class endpoint. Four things are decided by the configuration, not by catching an error.
+
+**Cost from usage.** Each response reports `input_tokens` (uncached), `output_tokens`, `cache_creation_input_tokens` and
+`cache_read_input_tokens`. The call's cost is `(input x p_in + output x p_out + cache_write x p_write + cache_read x p_read) / 1e6`, from a
+price table in USD per million tokens. It is the call's reported cost: the meter charges it, and the per-call ceiling is not used for this endpoint.
+`model_calls.jsonl` rows of an `anthropic_api` call carry `prompt_tokens` (the sum of the three input fields), `input_tokens`,
+`completion_tokens` (output), `cache_write_tokens`, `cache_read_tokens`, `cost_usd` and `cost_basis: "usage*price"`; the run summary
+(`summary.json`) carries `token_split` (the same four numbers summed over the run) and `budget_scale`.
+
+The price table is the `models:` section of any layer, matched by the longest model-name prefix, and merged key by key over the built-in rules:
+
+```yaml
+models:
+  claude-sonnet-5-5:
+    price: {input: 2.00, output: 10.00, cache_write: 2.50, cache_read: 0.10}   # USD per million tokens
+    temperature: false                                                        # the API rejects a temperature for this model
+  claude-haiku-5-5:
+    price: {input: 0.10, output: 0.50}                                        # no cache prices given: write = 1.25 x input, read = 0.10 x input
+```
+
+Built in: `claude-sonnet-5-5` (prices above), `claude-haiku-5-5` (input 0.10, output 0.50; cache prices derived as stated). A price needs `input` and
+`output`; `cache_write` (the 5-minute write) and `cache_read` are optional. A model with **no price keeps today's behaviour**: the call's cost is
+unreported, each call is charged at the per-call ceiling of 0.05 USD, and a line `FDA_NO_PRICE` is printed once per model. Prices are not part of the
+model-table hash: a changed price changes the dollars, not which model runs.
+
+**Prompt caching.** The client marks the stable prefix with `cache_control: {"type": "ephemeral"}` (the 5-minute cache entry), at most four markers,
+the API limit: the last tool definition, the system prompt (the prefix is rendered tools, then system, then messages), the last block of the last
+message (the conversation so far) and the last block of the user turn before the previous assistant turn, which is where the previous call wrote its
+entry (so a turn that appends more than 20 blocks still finds it). A prefix shorter than the model's minimum cacheable length is silently not
+cached (no error; `cache_creation_input_tokens` is 0). A cache entry lives 5 minutes after its last use; a pause longer than that between calls pays
+the write price again. Caching is on for every `anthropic_api` call and has no switch in the file.
+
+**Temperature.** The rule is per model: `temperature: true` in `models:` for models that accept one (the built-in list is Haiku 4.5, Sonnet 4.5/4.6,
+Opus 4.5/4.6 and the Claude 3 family); everything else rejects it with HTTP 400, so the client leaves it out, and the soft default of 0.2 is not set
+in the entry. A `temperature` you set on such a model is also not sent (it never reaches the API); `--deterministic` level 1 already refuses these models.
+An unknown model counts as one that rejects it.
+
+**Budgets that follow the model's price.** Stage USD budgets (`stages.MACHINE`) and the run cap (`RUN_LIMITS`) were sized for the cheap default model.
+`budget_scale` (top-level key of any layer, or `--budget-scale N` on `run` and `resume`) multiplies every stage's USD budget and the default run cap by
+`N`; it is recorded in the run summary and, when not 1, in the table record. Turns and seconds are not scaled. An explicit `--max-usd` is kept as given, and
+the closure and latency loops keep their own caps (`closure_usd`, `--max-usd` of their commands). The default is 1: nothing changes for the default model.
+
+*Choosing the scale for `claude-sonnet-5-5` (brief 209b; modelled from the first pilot run's recorded token counts, one stage only).* With the default
+model, a call cost a median 0.00078 USD over two whole runs (`results/68_agent_docs`), so a stage's 0.40 USD never binds: the turn limit (30, or 20,
+80 and 45 for the clarify, verification and configuration stages) does. To give Sonnet 5.5 the same calls per stage, the stage USD budget must cover
+`turn limit x cost per call`. Priced with caching (first call of a conversation at the cache-write price, the rest as cache reads), stage 1 of the pilot
+averaged 0.020 USD per call (32 calls) and the clarify stage 0.033 (11 calls, with two large outputs), so: stage 1, 30 x 0.020 = 0.61 against 0.40 (x1.5);
+clarify, 20 x 0.033 = 0.65 against 0.20 (x3.3); stage 2 (no data; assume 0.030 as the context grows), 80 x 0.030 = 2.4 against 0.80 (x3.0). A scale of **3.5**
+covers all three (stage budgets 0.70, 1.40, 2.80; 1.40 for the other stages) and gives a default run cap of 10.5 USD, about twice the 5.3 USD a
+210-call run would cost at 0.025 USD per call. A call that ends at the 8192 output-token cap costs 0.082 USD on its own; a stage that does that repeatedly
+(the smoke run did, 9 times in 17 calls) spends any budget, so the scale does not replace looking at why.
 
 ## The file
 
@@ -97,9 +151,9 @@ default does not hide the file.
 - **`default:` skips** the opt-in purposes (`route`, `embed` stay off; `options` and `doc_crossread` keep their own entries, Claude Code on the plan) and any purpose the kind cannot serve (`latency` needs
   tool calls through a chat endpoint). Naming such a purpose explicitly on `claude_code` is an error at load.
 - **`doc` and `constraints` inherit `rtl`** until a layer sets them. A `default:` sets them explicitly.
-- **`anthropic_api` and `claude_code` calls are counted differently:** the run's USD cap counts provider-reported dollars (OpenRouter); an
-  `anthropic_api` call reports none, so each is charged at the per-call ceiling (0.05 USD); `claude_code` calls are counted in turns and tokens,
-  with the plan's estimate beside them.
+- **`anthropic_api` and `claude_code` calls are counted differently:** the run's USD cap counts dollars: provider-reported (OpenRouter) or, for
+  `anthropic_api`, computed from the response `usage` and the price table below. An `anthropic_api` call to a model with no price is charged at the
+  per-call ceiling (0.05 USD) and warns once; `claude_code` calls are counted in turns and tokens, with the plan's estimate beside them.
 - **A resume rebuilds the table from the run's `config.json`** and refuses if the table's hash differs from the run's (`--allow-model-change`
   overrides it); the user file is part of the table, so editing it between a run and its resume is a change.
 - **The review benchmark scripts pin their model and effort as aliases**; if the user file moves `review` off `claude_code`, a pinned scored run

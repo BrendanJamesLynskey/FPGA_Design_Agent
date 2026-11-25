@@ -35,6 +35,10 @@ class Reply:
     cost: float | None = 0.0
     seconds: float = 0.0
     provider: str | None = None
+    input_tokens: int = 0            # brief 209b: Anthropic usage, uncached input (prompt_tokens is the sum of the three input fields)
+    cache_write_tokens: int = 0      # cache_creation_input_tokens
+    cache_read_tokens: int = 0       # cache_read_input_tokens
+    cost_basis: str | None = None    # "usage*price" when the cost was computed from usage and a price table, else None
 
 
 def __getattr__(name: str):
@@ -85,17 +89,21 @@ class Meter:
     t_stage: float = field(default_factory=time.monotonic)
     t_run: float = field(default_factory=time.monotonic)
     unreported: int = 0
+    usd_scale: float = 1.0     # brief 209b: multiplies every stage USD limit (the run cap is scaled by the caller); recorded in the run summary
+    split: dict[str, int] = field(default_factory=lambda: {"input": 0, "output": 0, "cache_write": 0, "cache_read": 0})
     reserved: int = 0          # brief 05g: turns held back for the roles that run after the current one
 
     def start_stage(self, limits: dict[str, float]) -> None:
-        self.stage_limits = limits
+        self.stage_limits = {**limits, **({"usd": round(limits["usd"] * self.usd_scale, 6)} if "usd" in limits else {})}
         self.stage = {"turns": 0, "seconds": 0.0, "usd": 0.0, "tokens": 0}
         self.t_stage = time.monotonic()
 
     def check(self) -> None:
         self.stage["seconds"] = round(time.monotonic() - self.t_stage, 1)
         self.run["seconds"] = round(time.monotonic() - self.t_run, 1)
-        for scope, used, lim in (("stage", self.stage, self.stage_limits), ("run", self.run, self.run_limits)):
+        # brief 209b: the run limit is tested first. When both were exceeded the stage message won, node_work's handler (which re-raises only
+        # a message starting "run ") treated it as a stage stop and the run went on past its cap (smoke run: 1.01 USD against --max-usd 0.9).
+        for scope, used, lim in (("run", self.run, self.run_limits), ("stage", self.stage, self.stage_limits)):
             for k in ("turns", "seconds", "usd"):
                 held = self.reserved if k == "turns" else 0
                 if k in lim and used[k] >= lim[k] - held:
@@ -115,6 +123,10 @@ class Meter:
             d["turns"] += 1
             d["usd"] = round(d["usd"] + usd, 6)
             d["tokens"] += r.prompt_tokens + r.completion_tokens
+        self.split["input"] += getattr(r, "input_tokens", 0) or 0
+        self.split["output"] += r.completion_tokens
+        self.split["cache_write"] += getattr(r, "cache_write_tokens", 0) or 0
+        self.split["cache_read"] += getattr(r, "cache_read_tokens", 0) or 0
 
 
 def chat_model(client, meter: Meter, log: list):
