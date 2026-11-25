@@ -299,6 +299,74 @@ areas:
   gaps:
   - "The int8 task escaped most often, and the misreading was of the spec, not of the arithmetic."
   - "Rounding modes and saturation are covered by skills, and only these tasks test them."
+- id: dsp_slices
+  name: "DSP slices: registers, cascades and speed against latency"
+  summary: Which registers to turn on around a multiplier, how wide multiplies and dot products are built from slices, and how clock speed trades against latency.
+  about: "A DSP slice is a multiplier and an adder with registers built into it. How fast a design that uses one can be clocked depends on which of those registers are turned on, and the agent writes them in the RTL so that synthesis packs them into the slice. Wider multiplies and long sums are built from several slices, either left to the tool or chained by hand, and each choice trades clocks of latency against clock speed and fabric logic. The agent knows this from skills and from measurements on two parts; an advisory check, not a gate, flags a slice with too few registers for the target clock period."
+  kb: [functions/dsp~fixed-point|dsp-filter, family/artix7/dsp, family/artix7/primitives~dsp, family/zynq_ultrascale_plus/primitives~dsp48e2, functions/on-chip-memory~memory-and-arithmetic, techniques/arithmetic]
+  family_from: {area: dsp, topics: ["Multiplier and pre-adder width", "DSP primitive is a macro on UltraScale+"], docs: ["UG479", "UG579", "DS925", "UG901"]}
+  checks:
+  - {file: flow/dsp_regs_check.py, gate: DSPREG-01, enforced: false, what: "Advisory, from the slices' register properties and the target clock period: flags a multiplier with no multiplier register, or a slice with no output register, at a period the measurements below say it cannot meet; a period below the slice's own minimum; and AMD's DPIP and DPOP rows. Never fails a run; a deliberately slow datapath may waive it with a reason."}
+  evidence:
+  - kind: measured
+    source: results/185_dsp_slices/data/a7.json
+    values: ["pick@points:fmax_mhz|id=mul_WA18_WB18_NA1_NM1_NP1_RSTP0", "pick@points:fmax_mhz|id=mul_WA18_WB18_NA1_NM1_NP0_RSTP0", "pick@points:fmax_mhz|id=mul_WA18_WB18_NA0_NM0_NP0_RSTP0"]
+    text: "On the Artix-7 part, a multiply of two narrow operands with operand, multiplier and output registers around it reached {0} MHz, which is the slice's own limit; with the output register left out it reached {1} MHz, and with no register at all {2} MHz (one routed run each, Vivado 2026.1)."
+  - kind: measured
+    source: results/185_dsp_slices/data/k26.json
+    values: ["pick@points:fmax_mhz|id=mul_WA18_WB18_NA1_NM1_NP1_RSTP0", "pick@points:fmax_mhz|id=mul_WA18_WB18_NA1_NM1_NP0_RSTP0", "pick@points:fmax_mhz|id=mul_WA18_WB18_NA0_NM0_NP0_RSTP0"]
+    text: "On the UltraScale+ part the same three cases reached {0}, {1} and {2} MHz; with every register the result is limited by the clock period asked for, not by the slice."
+  - kind: measured
+    source: results/185_dsp_slices/data/a7.json
+    values: ["pick@points:dsp_cells.0.MREG|id=mul_WA18_WB18_NA0_NM0_NP1_RSTP0", "pick@points:dsp_cells.0.PREG|id=mul_WA18_WB18_NA0_NM0_NP1_RSTP0", "pick@points:fmax_mhz|id=mul_WA18_WB18_NA0_NM0_NP1_RSTP2", "pick@points:fmax_mhz|id=mul_WA18_WB18_NA0_NM0_NP1_RSTP1"]
+    text: "A single register after the multiply was packed into the slice's multiplier register (MREG {0}, output register PREG {1}) rather than its output register. With an asynchronous reset on that register it was packed into the output register instead, the multiplier stayed unregistered, and the slice ran at {2} MHz instead of {3} with a synchronous reset (Artix-7)."
+  - kind: measured
+    source: results/185_dsp_slices/data/a7.json
+    values: ["pick@points:fmax_mhz|id=wide_WA32_WB32_STYLE0_NA1_LB24", "pick@points:dsp|id=wide_WA32_WB32_STYLE0_NA1_LB24", "pick@points:fmax_mhz|id=wide_WA32_WB32_STYLE1_NA1_LB24", "pick@points:dsp|id=wide_WA32_WB32_STYLE1_NA1_LB24", "pick@points:fmax_mhz|id=wide_WA32_WB32_STYLE2_NA1_LB24", "pick@points:dsp|id=wide_WA32_WB32_STYLE2_NA1_LB24"]
+    text: "A signed multiply of two thirty-two-bit operands on the Artix-7 part, with the same registers at the ends: the tool's own split used {1} slices and reached {0} MHz; a hand-written cascade of slices (with the seventeen-bit shift) used {3} and reached {2} MHz; partial products summed in the fabric used {5} and reached {4} MHz."
+  - kind: measured
+    source: results/185_dsp_slices/data/a7.json
+    values: ["pick@points:fmax_mhz|id=dot_W16_K8_STYLE0_TR1", "pick@points:latency_clocks|id=dot_W16_K8_STYLE0_TR1", "pick@points:fmax_mhz|id=dot_W16_K8_STYLE1_TR1", "pick@points:latency_clocks|id=dot_W16_K8_STYLE1_TR1"]
+    text: "An eight-term dot product on the Artix-7 part: a chain of slices (cascade) reached {0} MHz at {1} register stages; the same sum with a fabric adder tree, a register after every level, reached {2} MHz at {3} stages, so the tree saves clocks and loses speed."
+  - kind: measured
+    source: results/185_dsp_slices/data/k26.json
+    values: ["pick@points:fmax_mhz|id=dot_W16_K8_STYLE0_TR1", "pick@points:latency_clocks|id=dot_W16_K8_STYLE0_TR1", "pick@points:fmax_mhz|id=dot_W16_K8_STYLE1_TR1", "pick@points:latency_clocks|id=dot_W16_K8_STYLE1_TR1"]
+    text: "The same two on the UltraScale+ part: the cascade reached {0} MHz at {1} stages (the delay registers that skew its operands became shift-register cells that limit the clock) and the tree {2} MHz at {3} stages."
+  - kind: measured
+    source: results/185_dsp_slices/data/a7.json
+    values: ["pick@points:fmax_mhz|id=preadd_WA24_WB18_VAR0", "pick@points:fmax_mhz|id=preadd_WA24_WB18_VAR1", "pick@points:dsp_cells.0.USE_PATTERN_DETECT|id=simdpat_MODE1", "pick@points:dsp|id=simdpat_MODE0"]
+    text: "A pre-adder before the multiplier was used by the slice and ran at {0} MHz with its own register and {1} MHz without it. A constant compare on an accumulator used the slice's pattern detector ({2}); four twelve-bit adds written for the SIMD mode were not mapped to a slice ({3} slices) with this coding."
+  cards: []
+  figures:
+  - id: depth
+    kind: mul_depth
+    title: Clock speed against the number of registers around one multiply
+    caption: "Each dot is one run of a multiply of two narrow operands with the registers placed in the RTL; the line joins the best run at each latency. At zero registers the part reaches {a7_best_0} MHz (Artix-7) and {k26_best_0} MHz (UltraScale+); with operand, multiplier and output registers, {a7_best_3} and {k26_best_3} MHz; a fourth register adds nothing."
+    how: "Out-of-context synthesis, placement and routing in Vivado 2026.1 on two parts, one run per point at a target clock tighter than the part can meet; speed is the target period minus the worst setup slack, limited by the slice's minimum period. A run is an estimate, not a guarantee."
+    wrong: "Latency here is register stages from the module's operand inputs to its product output; the two kept registers of the test wrapper are not counted. The speed is for one slice by itself: a real design adds routing from its own logic."
+    sources: [results/185_dsp_slices/data/a7.json, results/185_dsp_slices/data/k26.json]
+  - id: dot
+    kind: dot_pareto
+    title: Eight-term dot product, clock speed against latency
+    caption: "Filled circle: a chain of slices (cascade); square: a fabric adder tree with a register every level, every second level, or only at the end. On Artix-7 the cascade reaches {a7_dot_0_1_f} MHz at {a7_dot_0_1_l} stages and the tree {a7_dot_1_1_f} MHz at {a7_dot_1_1_l}; on UltraScale+ {k26_dot_0_1_f} MHz at {k26_dot_0_1_l} against {k26_dot_1_1_f} MHz at {k26_dot_1_1_l}."
+    how: "The same flow as the previous figure; the dot product is sixteen-bit signed terms, one result per clock, with a kept register at every port of the test wrapper."
+    wrong: "A published estimate of fewer stages for the tree than for the cascade holds for latency only. Whether the tree also costs speed depends on the part: it did on Artix-7, but not on UltraScale+, where the cascade's own delay registers set its limit. Which is better depends on the clock the rest of the design needs."
+    sources: [results/185_dsp_slices/data/a7.json, results/185_dsp_slices/data/k26.json]
+  - id: width
+    kind: dsp_width
+    title: Slices used by wide multiplies, three ways of building them
+    caption: "Slices used by a signed multiply wider than one slice, as the tool splits it, as a hand-written cascade, and with partial products summed in the fabric; for forty-eight by forty-eight the tool used {a7_48x48_0_dsp} slices on Artix-7 against {a7_48x48_1_dsp} for the cascade."
+    how: "The same flow as the previous figures; operand widths are the first number by the second; the hand-written versions cut the operands to the slice's port widths."
+    wrong: "The hand-written cascade was the fastest of the three at every width on both parts and used fewer slices than the tool's split for the two widest cases, but the tool's split used fewer or the same number of slices for the narrower ones. These are single runs of one coding style, not the limit of what each method can do."
+    sources: [results/185_dsp_slices/data/a7.json, results/185_dsp_slices/data/k26.json]
+  gaps:
+  - "Two parts only (Artix-7 and the Kria K26); the part on the Alveo trading card is refused by the installed licence tier (Brief 186's licence check), so nothing is measured on it."
+  - "Each point is one routed run at one clock, an estimate of the speed; no repeats, no spread."
+  - "The multiply tests use narrow operands and no carry-in or accumulate except the dot product; wide accumulators and time multiplexing are not measured."
+  - "The pre-adder, SIMD and pattern-detect modes have one point each; why the SIMD coding was not mapped to a slice was not investigated, and the pre-adder is on one width."
+  - "Why an asynchronous reset moved a lone register out of the multiplier register on Artix-7 was not investigated."
+  - "The advisory check's limits are best cases from these few runs; no agent run has used the check yet."
+  - "No development task of the agent targets slice usage, so nothing here is shown in agent runs."
 - id: rtl
   name: RTL design
   summary: Reading a specification, synthesisable coding, pipelines and handshakes, hierarchy and register boundaries, lint and synthesis messages.
