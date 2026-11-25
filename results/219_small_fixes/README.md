@@ -1,6 +1,6 @@
-# results/219_small_fixes: records behind brief 219 (nine small fixes)
+# results/219_small_fixes: records behind brief 219 (eight small fixes)
 
-Brief 219 fixes nine small defects found by briefs 207, 208, 209a and the 209 pilot. The code and its tests are in the pull request; this folder holds
+Brief 219 fixes eight small defects found by briefs 207, 208, 209a and the 209 pilot. The code and its tests are in the pull request; this folder holds
 the measured records that two of the fixes stand on.
 
 ## Records
@@ -12,7 +12,7 @@ the measured records that two of the fixes stand on.
 | `raw/gt_buf_sites.txt` | Vivado 2026.1 `link_design -part xck26-sfvc784-2LV-c`: every `BUFG_GT` and `BUFG_GT_SYNC` site, and the part has no site of type `IBUFDS_GTE4` (probe `designs/b56a_gth_serdes/probe/gt_bufs.tcl`) |
 | `raw/gt_ref_bels.txt` | the same part: each `GTHE4_COMMON` site and its two IBUFDS bels, and the package pins of the four `MGTREFCLK` functions (probe `designs/b56a_gth_serdes/probe/gt_ref_bels.tcl`) |
 
-## The nine fixes
+## The eight fixes
 
 | # | Fix | Where | Test |
 |---|---|---|---|
@@ -25,7 +25,6 @@ the measured records that two of the fixes stand on.
 | 7 | a run paused at the programming approval writes `summary.json` and the DOC step, marked `paused` | `agent/graph/run.py` `write_paused_record`, `agent/__main__.py`, `agent/graph/requests.py` | `agent/tests/test_219_agent_fixes.py` |
 | 8 | supplied `data/` bus files, and copies of them in `rtl/`, are not mutation targets; the result lists them as `excluded_supplied` | `flow/mutate.py` `supplied_copies` | `flow/tests/test_219_small_fixes.py` |
 
-| 9 | `write_file` refuses an rtl/ file with the stem of a file the task names but another extension (rtl/x.sv for rtl/x.v), and, when the task says only that file is compiled, any other rtl/ file; the message gives the exact path | `agent/core/tools.py` `spec_output_refusal` | `agent/tests/test_219_agent_fixes.py` |
 
 ## Measured
 
@@ -35,7 +34,7 @@ the measured records that two of the fixes stand on.
 - **Fix 5, the pilot's failure:** the XDC of p1_clkmeter run 3 (`LOC IBUFDS_GTE4_X1Y6`) is refused at line 13 before synthesis, and the message names the board's own answer: package pins Y6 and Y5 belong to
   `GTHE4_COMMON_X0Y1`, bel `IBUFDS0_GTHE4`. The XDC of run 1 of the same spec, which passed in the pilot, is accepted.
 - **Fix 5, why no site list for the buffer:** the xck26 has no site of type `IBUFDS_GTE4`; the reference-clock buffer is a bel of the `GTHE4_COMMON` site (`raw/gt_buf_sites.txt`, `raw/gt_ref_bels.txt`).
-- **Fix 9:** the CVDP sample of the public-benchmark brief had three runs write `.sv` where the task named `.v`, and one problem split over three files; this is a tool-side guard, so no prompt text, request golden or prompt pin changes. Not run on a live task (no model calls).
+- **Fix 9 withdrawn** by the planner (owner: a `.sv` file where the task names `.v` is acceptable); its code and tests were removed.
 - **Fix 4, cause:** the site data was right. `site/data/family_diffs.json` was regenerated from the bank at the commit `knowledge/PACKS.md` pins (the knowledge-bank re-pin), and matches the matrix tool at that commit. The test ran the tool from the
   owner's working copy of the bank, which sits on another branch, so it failed whenever that copy was not at the pin. The test was wrong; the data was not changed.
 

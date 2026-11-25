@@ -109,24 +109,3 @@ def test_the_driver_writes_the_record_at_a_hardware_pause_only() -> None:
     src = inspect.getsource(m._drive)
     assert 'pending[0].get("kind") == "review" and pending[0].get("hardware")' in src and "write_paused_record" in src
 
-
-# ---- fix 9: the file the task names (brief 215) ----------------------------------------------------------------------------------
-def test_the_named_extension_is_the_one_written(session) -> None:
-    (session.design / "spec.md").write_text("Write the module to rtl/cache_mshr.v.\n")
-    r = dispatch(session, "write_file", {"path": "rtl/cache_mshr.sv", "content": "module m; endmodule\n"})
-    assert r["ok"] is False and "rtl/cache_mshr.v" in r["output"] and not (session.design / "rtl" / "cache_mshr.sv").exists()
-    r = dispatch(session, "write_file", {"path": "rtl/cache_mshr.v", "content": "module m; endmodule\n"})
-    assert (session.design / "rtl" / "cache_mshr.v").is_file() and r.get("ok", True) is not False
-
-
-def test_a_single_file_task_is_not_split(session) -> None:
-    (session.design / "spec.md").write_text("The hidden testbench compiles only rtl/divider.v: single file, no helper modules elsewhere.\n")
-    r = dispatch(session, "write_file", {"path": "rtl/divider_core.sv", "content": "module c; endmodule\n"})
-    assert r["ok"] is False and "rtl/divider.v" in r["output"]
-    assert dispatch(session, "write_file", {"path": "rtl/divider.v", "content": "module d; endmodule\n"}).get("ok", True) is not False
-
-
-def test_a_spec_that_names_no_file_changes_nothing(session) -> None:
-    (session.design / "spec.md").write_text("A dimmer counter.\n")
-    r = dispatch(session, "write_file", {"path": "rtl/extra.sv", "content": "module e; endmodule\n"})
-    assert r.get("ok", True) is not False

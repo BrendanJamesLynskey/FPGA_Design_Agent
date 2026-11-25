@@ -224,33 +224,6 @@ def read_file(s: Session, path: str, offset: int = 0, max_bytes: int = 20000) ->
             "size_bytes": len(data), "offset": offset, "truncated": offset + max_bytes < len(data)}
 
 
-_NAMED_RTL = re.compile(r"(?<![\w/.])(rtl/[A-Za-z_][\w]*\.(?:v|sv|vhd|vhdl))\b")
-_ONLY_FILE = re.compile(r"(?i)\b(single[- ]file|only (?:that|this|the named|the) file|only that file is compiled|compiles? only)\b")
-
-
-def spec_output_refusal(design: Path, rel: Path) -> str | None:
-    """Brief 219 fix 9 (the public-benchmark CVDP sample: three runs wrote rtl/x.sv where the task named rtl/x.v, one split a single-file design over three
-    files). When spec.md names RTL output files with an extension, an rtl/ file with the same stem and another extension is refused with the
-    exact name to use; when it also says only that file is compiled (single file), any other rtl/ file is refused. None: allowed."""
-    if rel.parent != Path("rtl") or rel.suffix not in _RTL_SUFFIXES:
-        return None
-    try:
-        text = (design / "spec.md").read_text(errors="replace")
-    except OSError:
-        return None
-    named = sorted(set(_NAMED_RTL.findall(text)))
-    if not named or rel.as_posix() in named:
-        return None
-    same = [n for n in named if Path(n).stem == rel.stem]
-    if same:
-        return (f"not written: the task names {', '.join(same)}; write exactly that path, not {rel.as_posix()} (the flow compiles the file with the "
-                f"name the task gives, and the scorer reads that name)")
-    if len(named) == 1 and _ONLY_FILE.search(text):
-        return (f"not written: the task says only {named[0]} is compiled, so the whole design goes in that one file; {rel.as_posix()} would "
-                f"not be compiled by the scorer. Put the module in {named[0]}.")
-    return None
-
-
 @tool("write_file", "Write (create or replace) a text file inside the design directory. build/ is read-only. Known "
                     "artefacts (spec.yaml, verif/testplan.yaml, build.yaml, ARCHITECTURE.md, any *.yaml) are checked "
                     "first: a malformed one is NOT written and the error names the line and column.",
@@ -258,9 +231,6 @@ def spec_output_refusal(design: Path, rel: Path) -> str | None:
       ["path", "content"])
 def write_file(s: Session, path: str, content: str) -> dict:
     p = s.jail.resolve(path, write=True)
-    spec_bad = spec_output_refusal(s.design, p.relative_to(s.jail.root))
-    if spec_bad:
-        return {"ok": False, "output": spec_bad, "invalid": True}
     if len(content.encode()) > s.jail.MAX_WRITE_BYTES:
         raise SecurityError("path-jail", "file too large")
     rel = p.relative_to(s.jail.root)
