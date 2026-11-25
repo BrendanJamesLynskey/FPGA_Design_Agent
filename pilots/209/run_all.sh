@@ -15,19 +15,8 @@ for ID in "${DESIGNS[@]}"; do for K in 1 2 3; do
   pilots/209/run_agent.sh "$ID" "$K"
   RID=$(ls -1 runs | grep '^2026' | sort | tail -1)
   D=pilots/209/$ID/run$K; mkdir -p "$D"
-  if [ "$RID" = "$BEFORE" ] || [ ! -f runs/$RID/summary.json ]; then echo "no summary for $ID run $K ($RID)" > "$D/NO_SUMMARY.txt"; cp runs/_logs/${ID}_r${K}.log "$D/agent_stdout.log"; git add -A pilots; git commit -qm "209: $ID run $K without summary" ; git push -q; echo "STOP no summary: $ID $K" | tee pilots/209/STOPPED; exit 8; fi
-  R=runs/$RID
-  cp $R/summary.json $R/role_usage.jsonl $R/model_calls.jsonl $R/config.json "$D/" 2>/dev/null
-  cp runs/_logs/${ID}_r${K}.log "$D/agent_stdout.log"
-  DD=$(ls -d $R/*/ | grep -v snap | head -1)
-  for f in build/trace/trace.md build/trace/trace.json build/base/manifest.json build/base/run.json build/gates.json build/verif/*.json; do [ -f "$DD$f" ] && { mkdir -p "$D/$(dirname $f)"; cp "$DD$f" "$D/$f"; }; done
-  rsync -a --exclude build --exclude __pycache__ --exclude sim_build "$DD" "$D/design/" 2>/dev/null
-  SHA=$(git rev-parse --short=12 HEAD)
-  python3 - "$ID" "$K" "$RID" "$SHA" "$R/summary.json" >> "$LED" <<'PY'
-import json,sys
-i,k,rid,sha,p=sys.argv[1:6]; d=json.load(open(p))
-print("\t".join(map(str,[i,k,rid,sha,d.get("cost_usd"),d.get("tokens"),d.get("truncated_calls"),(d.get("stop") or "reached end")[:120].replace("\t"," ")])))
-PY
+  if [ "$RID" = "$BEFORE" ] || [ ! -f runs/$RID/model_calls.jsonl ]; then echo "no run record for $ID run $K ($RID)" > "$D/NO_RECORD.txt"; cp runs/_logs/${ID}_r${K}.log "$D/agent_stdout.log"; git add -A pilots; git commit -qm "209: $ID run $K without record" ; git push -q; echo "STOP no record: $ID $K" | tee pilots/209/STOPPED; exit 8; fi
+  pilots/209/record_one.sh "$ID" "$K" "$RID"
   LAST=$(tail -1 "$LED" | cut -f5)
   git add -A pilots; git commit -qm "209: $ID run $K record ($RID)
 
