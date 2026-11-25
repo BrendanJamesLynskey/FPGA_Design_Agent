@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Brief 208: collect the measured facts of every recorded run into measured.json (the README tables and the site's
-expertise evidence read this file; every number comes from a report under runs/).
+expertise evidence read this file; every number comes from a report under records/).
 
     python3 results/208/summarise.py            # writes results/208/measured.json
 """
@@ -81,13 +81,13 @@ def arm(d: Path) -> dict:
 
 def main() -> int:
     res: dict = {"vivado": {}, "sim": {}, "analyse": [], "quartus": {}}
-    for part in sorted((HERE / "runs").glob("*")):
+    for part in sorted((HERE / "records").glob("*")):
         if part.name in ("sim", "gotchas", "quartus", "analyse"):
             continue
         for d in sorted(part.iterdir()):
             if d.is_dir():
                 res["vivado"][d.name] = arm(d)
-    for log in sorted((HERE / "runs" / "sim").glob("*.log")):
+    for log in sorted((HERE / "records" / "sim").glob("*.log")):
         for ln in _read(log).splitlines():
             if ln.startswith("SCEN "):
                 f = ln.split()
@@ -95,7 +95,7 @@ def main() -> int:
     # the clock_mux check on every recorded arm (the dump and clock-interaction report of the latest stage it reached)
     res["check"] = []
     for part in ("a7", "k26"):
-        for d in sorted((HERE / "runs" / part).glob("*")):
+        for d in sorted((HERE / "records" / part).glob("*")):
             st = next((x for x in ("route", "place", "synth") if (d / f"clock_mux_dump_{x}.txt").is_file()), None)
             if st is None:
                 continue
@@ -105,10 +105,10 @@ def main() -> int:
             res["check"].append({"arm": d.name, "stage": st, "blocking": sorted({f["code"] for f in fs if f["blocking"]}),
                                  "advisory": sorted({f["code"] for f in fs if not f["blocking"]}),
                                  "pass": not any(f["blocking"] for f in fs)})
-    a = HERE / "runs" / "analyse" / "analyse.tsv"
+    a = HERE / "records" / "analyse" / "analyse.tsv"
     for ln in _read(a).splitlines():
         res["analyse"].append(ln.split("\t"))
-    for d in sorted((HERE / "runs" / "quartus").glob("*")):
+    for d in sorted((HERE / "records" / "quartus").glob("*")):
         if not d.is_dir():
             continue
         q: dict = {}

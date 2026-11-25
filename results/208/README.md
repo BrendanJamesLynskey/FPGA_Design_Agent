@@ -23,15 +23,15 @@ Parts: `xc7a35tcpg236-1` (7 series, "a7") and `xck26-sfvc784-2LV-c` (Zynq UltraS
 | `tcl/run_jobs.tcl`, `tcl/jobs_*.txt` | the runner (one Vivado session per list) and the job lists actually run |
 | `tcl/clock_mux_dump.tcl` | the netlist dump the check reads (copied to `flow/clock_mux_dump.tcl`) |
 | `tcl/analyse.tcl` | second pass on the checkpoints: BUFGCTRL sites, per-input insertion delay, power with activity on the enable |
-| `tcl/jobs_review*.txt`, `tcl/redump.tcl` | after the correctness review: three more constraint arms, the cascade bisection, and the re-dump of every checkpoint with the revised `clock_mux_dump.tcl` (the dumps under `runs/` and the check's fixtures are from that revision) |
+| `tcl/jobs_review*.txt`, `tcl/redump.tcl` | after the correctness review: three more constraint arms, the cascade bisection, and the re-dump of every checkpoint with the revised `clock_mux_dump.tcl` (the dumps under `records/` and the check's fixtures are from that revision) |
 | `sim/` | xsim benches: `tb_bufgctrl.v` (e1 to e3), `tb_safe_switch.v` (protocol), `tb_lutmux.v` (c3) |
 | `quartus/` | the Quartus arms: designs, SDC, `sta.tcl`, `run_quartus.sh` |
-| `runs/a7/<arm>/`, `runs/k26/<arm>/` | every text report of every arm (check_timing, clocks, clock_interaction, methodology, cdc, timing_summary, exceptions, utilization, power, the dump). Reports over 300 kB keep their first 400 lines (they say so) |
-| `runs/sim/*.log` | the xsim logs (lines `SCEN ...` are the results) |
-| `runs/quartus/<arm>/` | Quartus fit summary, messages and Timing Analyzer reports |
-| `runs/analyse/analyse.tsv` | the second-pass measurements |
-| `runs/gotchas/` | tool failures met on the way (a report_clock_networks segfault) |
-| `measured.json` | every number below, extracted from `runs/` by `summarise.py` |
+| `records/a7/<arm>/`, `records/k26/<arm>/` | every text report of every arm (check_timing, clocks, clock_interaction, methodology, cdc, timing_summary, exceptions, utilization, power, the dump). Reports over 300 kB keep their first 400 lines (they say so) |
+| `records/sim/*.log` | the xsim logs (lines `SCEN ...` are the results) |
+| `records/quartus/<arm>/` | Quartus fit summary, messages and Timing Analyzer reports |
+| `records/analyse/analyse.tsv` | the second-pass measurements |
+| `records/gotchas/` | tool failures met on the way (a report_clock_networks segfault) |
+| `measured.json` | every number below, extracted from `records/` by `summarise.py` |
 
 Arm names: `u_` unrelated clocks, `r_` related (MMCM) clocks; `none` no mux constraint; `srclog`/`srcphys`/`async`
 `set_clock_groups -logically_exclusive`/`-physically_exclusive`/`-asynchronous` on the two **source** clocks;
@@ -121,10 +121,10 @@ only signals are TIMING-14 in report_methodology and the glitch in simulation.
 On UltraScale+ the limit is the cascade ring of eight (UG572): 8 placed, 9 failed. On 7 series the ring is 16 per
 half (UG472), but in this design, where one MMCM feeds every stage, 14 placed and 15 failed. The likely reason is that
 the MMCM's BUFGs must share its half. So the ring is an upper bound, and a design can fail earlier. The check blocks a
-chain longer than the ring and gives an advisory for 15 or 16 on 7 series. Messages: `runs/*/a7_chain1[5-7]/` and
-`runs/k26/k26_chain9/placer_messages.txt`.
+chain longer than the ring and gives an advisory for 15 or 16 on 7 series. Messages: `records/*/a7_chain1[5-7]/` and
+`records/k26/k26_chain9/placer_messages.txt`.
 
-Second pass (`runs/analyse/analyse.tsv`, source clock delay of each input's same-clock path on the mux fanout):
+Second pass (`records/analyse/analyse.tsv`, source clock delay of each input's same-clock path on the mux fanout):
 
 | Design | BUFGCTRL sites | Delay spread across inputs |
 |---|---|---|
@@ -221,11 +221,11 @@ From the worktree root (each Vivado list is one heavy job: take a slot with `_ha
 
     vivado -mode batch -source results/208/tcl/run_jobs.tcl -tclargs results/208/tcl/jobs_a7.txt build/208/a7      # 24 jobs, about 35 min
     vivado -mode batch -source results/208/tcl/run_jobs.tcl -tclargs results/208/tcl/jobs_k26_rest.txt build/208/k26
-    vivado -mode batch -source results/208/tcl/analyse.tcl -tclargs build/208 results/208/runs/analyse/analyse.tsv
+    vivado -mode batch -source results/208/tcl/analyse.tcl -tclargs build/208 results/208/records/analyse/analyse.tsv
     results/208/quartus/run_quartus.sh build/208/quartus             # ARMS=gen, ARMS=gen_m10: the generated-clock arms
     vivado -mode batch -source results/208/tcl/run_jobs.tcl -tclargs results/208/tcl/jobs_review.txt build/208/a7   # and jobs_review2/3, jobs_review_k26
     vivado -mode batch -source results/208/tcl/redump.tcl -tclargs build/208      # the revised dump on every checkpoint
-    results/208/collect_runs.sh build/208/a7 results/208/runs/a7      # and k26
+    results/208/collect_runs.sh build/208/a7 results/208/records/a7      # and k26
     python3 results/208/summarise.py
 
 The job lists hold absolute paths of the worktree that ran them; edit the prefix to rerun elsewhere. The first a7 list
@@ -249,7 +249,7 @@ ran to `k26_u_ctrl_genphys` with routing and the rest ran as `jobs_k26_rest.txt`
   measured with chains fed by one MMCM in a small design. A design with clock buffers already placed elsewhere may hit
   it sooner.
 - **report_clock_networks segfaulted** (Vivado 2026.1) on the post-synthesis MMCM design `a7_r_none`, inside
-  `HASTClockSniffer::isForwardedClock` (stack in `runs/gotchas/`). The runner stopped calling it, and no arm uses it.
+  `HASTClockSniffer::isForwardedClock` (stack in `records/gotchas/`). The runner stopped calling it, and no arm uses it.
 - Altera: Design Assistant was not run. The Quartus arms are one small design per family, compiled once.
 - **The check was tuned on these arms.** Its verdicts on the recorded designs (`measured.json` `check`) are a record,
   not a validation on held-out designs. The correctness review found five false-pass or false-fail cases in the first
