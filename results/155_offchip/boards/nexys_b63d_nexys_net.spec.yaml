@@ -1,0 +1,29 @@
+# Off-chip groups of designs/b63d_nexys_net on the Nexys A7-100T (brief 155, measured run). Board facts are from the Nexys A7 reference manual
+# (local copy, v. in _amd_docs) and the design's own XDC. Every line, length and capacitance below is an ASSUMPTION for this run, because neither
+# the manual nor the master XDC gives a trace length, a Z0 for these nets or the receiver pin capacitance: the report lists what is missing.
+design: designs/b63d_nexys_net
+xdc: designs/b63d_nexys_net/design.xdc
+board: nexys_a7_100t
+family: artix7
+part: xc7a100tcsg324-1
+bank_type: HR
+off_chip:
+  - name: rmii_out
+    ports: [ETH_TXD*, ETH_TXEN, ETH_REFCLK, ETH_MDC]
+    direction: output
+    iostandard: LVCMOS33
+    vcco: 3.3
+    line: {z0_ohm: 50, length_in: 2.5}      # ASSUMED: PHY placed near the FPGA; no length in the manual
+    load: {c_pf: 6.0, receiver_std: LVCMOS33}   # ASSUMED: LAN8720A input plus stub
+    priority: balanced
+    ui_ns: 20.0                              # RMII: 50 MHz reference clock, one bit per 20 ns per data wire
+  - name: leds
+    ports: [LED*]
+    direction: output
+    iostandard: LVCMOS33
+    vcco: 3.3
+    line: short
+    load: {c_pf: 5.0}                        # manual: LED anode via 330 ohm
+    priority: emi
+    ui_ns: 1000.0                              # a static or slow signal: a long unit interval (UART 115200 baud = 8680 ns)
+    min_drive_ma: 4                        # ASSUMED: the output must source or sink at least this much DC current

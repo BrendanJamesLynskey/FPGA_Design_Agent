@@ -2,14 +2,14 @@
 source: designs/b59a_axi_tx/handover.yaml; human view: README.md; refresh: python -m flow.handover fresh designs/b59a_axi_tx
 
 ## identity
-kind=showcase produced_by=human part=xc7a100tcsg324-1 board=Nexys A7-100T top=b59a_axi_tx_top tool=Vivado 2026.1
+kind=showcase produced_by=session part=xc7a100tcsg324-1 board=Nexys A7-100T top=b59a_axi_tx_top tool=Vivado 2026.1
 
 ## summary
 Board demonstration of an on-chip AXI4-Lite and AXI4-Stream traffic generator, protocol checker and scoreboard. A program loaded over the UART shell drives a vendor block-RAM controller or our own peripheral and stream FIFO, which carry run-time seeded bugs. Ten AXI4-Lite and five AXI4-Stream rules are watched and counted, a capture records the bus around the first violation, and AMD's AXI Protocol Checker watches the same AXI4-Lite bus as a cross-check.
 not: full AXI4 (bursts, IDs, several transactions in flight), a slave side, a DMA target or a soak mode; a hunt for bugs in a third-party core; the peripheral, the FIFO and their bugs are ours and deliberately simple
 
 ## state
-stage=board-verified vivado=2026.1 kb_pin=20d73e8 build_id=55b4d5dd
+stage=board-verified vivado=2026.1 kb_pin=5e2eab8 build_id=d1460455
 gates: build_2026_1=pass board_plan=pass
 
 ## interface

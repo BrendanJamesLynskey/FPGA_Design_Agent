@@ -34,12 +34,13 @@ Schema v1 (a superset of v0, so ``flow/verif_gates.py`` still reads a v1 file th
         method: sim_test | uvm_test | assertion | formal | formal_lean | coverage_bin | timing | sim_measurement | board_measurement | review
         instrument: eye_scan | jtag_registers | sysmon | ila_capture | latency_loop | optical_ddm | external_equipment   # board_measurement
         title: ...
-        evidence: {file: results/x/*.json, reader: json|text|junit|gates|exists, field: a.b.c, regex: ..., tests: [stem::name]}
+        evidence: {file: results/x/*.json, reader: json|text|junit|gates|exists|mutation, field: a.b.c, regex: ..., tests: [stem::name]}
         pass_when: [{field: a.b, op: eq, value: 0}]    # non-measuring items; a measuring item is judged against its requirement's bound
         checks: [designs/x/rtl/a.sv]                   # the RTL/spec this evidence is about (staleness)
         build: designs/x/variant/build.yaml            # optional: the build the evidence ran; its sources, constraints and IP scripts join `checks` (brief 143a)
         written_by: implementing_agent | independent_bench | human   # test items; unmarked counts as the implementing agent's own (brief 143a)
         bounded: {depth: 24}                           # formal BMC only
+        rigour: [designs/x/verif/formal/a.sby]         # formal: SymbiYosys jobs judged by flow/formal_rigour.py (brief 143c): pass only if every assertion is proved with its antecedent reached
         planned: "brief 112"                           # a hook for evidence that does not exist yet
         reviewer: name, reviewer_kind: human|agent, date: YYYY-MM-DD   # review
         lean: {module: Gray.Spec, theorem: Gray.gray_step, project: formal/lean}                                  # formal_lean (brief 125)
@@ -67,7 +68,10 @@ from typing import Any
 
 import yaml
 
-from flow import trace_records as TR
+try:
+    from flow import trace_records as TR
+except ModuleNotFoundError:  # run as `python flow/trace_v1.py` with only flow/ on sys.path (brief 153's guard test)
+    import trace_records as TR  # type: ignore[no-redef]
 
 ROOT = Path(__file__).resolve().parents[1]
 SCHEMA_V1 = "fpga-design-agent/testplan/v1"
@@ -117,7 +121,9 @@ def load(design: Path) -> dict[str, Any]:
         raise PlanError(f"{p}: not a mapping")
     schema = raw.get("schema")
     if schema == SCHEMA_V0:
-        return upgrade_v0(design, raw)
+        plan0 = upgrade_v0(design, raw)
+        _add_goal_requirements(design, plan0)
+        return plan0
     if schema != SCHEMA_V1:
         raise PlanError(f"{p}: unknown schema {schema!r}")
     plan = {"design": raw.get("design") or design.name, "schema": schema, "source_schema": schema,
@@ -131,12 +137,34 @@ def load(design: Path) -> dict[str, Any]:
             r.setdefault("title", ", ".join(r.get("spec", [])))
             r.setdefault("spec_status", "unspecified")
             r.setdefault("source", raw.get("spec", ""))
+    _add_goal_requirements(design, plan)
     return plan
+
+
+def _add_goal_requirements(design: Path, plan: dict[str, Any]) -> None:
+    """Brief 159: the typed goals of ``<design>/spec.yaml goals:`` (``agent.graph.goals``) become ``performance`` requirements
+    ``GOAL-<metric>[-<name>]`` unless the plan already defines that id. A verification item must still trace to each (until one does, the
+    goal is an untraced requirement, a gate gap): a goal is never counted as verified because it was written down."""
+    sp = design / "spec.yaml"
+    if not sp.is_file():
+        return
+    from flow import goals as G
+    try:
+        spec = yaml.safe_load(sp.read_text()) or {}
+        reqs = G.requirements(spec) if isinstance(spec, dict) and spec.get("goals") else []
+    except (G.GoalError, yaml.YAMLError) as e:
+        raise PlanError(f"{sp}: {e}")
+    have = {r.get("id") for r in plan["requirements"]}
+    plan["requirements"] += [r for r in reqs if r["id"] not in have]
 
 
 def legacy_items(design: Path, raw: dict) -> list[dict]:
     rec = raw.get("evidence_record") or f"results/04f/{design.name}_verif_gates.json"
-    rtl = sorted(str(p.relative_to(ROOT)) for p in (design / "rtl").glob("*.sv"))
+    try:
+        from flow import sources
+    except ImportError:                       # run as a script: flow/ itself is on sys.path
+        import sources                     # type: ignore[no-redef]
+    rtl = [str(p.relative_to(ROOT)) for p in sources.design_rtl(design)]       # every language (brief 153)
     items = []
     for r in raw.get("requirements") or []:
         for method, key, rd in (("sim_test", "tests", "v0_test"), ("assertion", "assertions", "v0_assertion"),
@@ -286,6 +314,9 @@ def judge(item: dict, req_by_id: dict, cache: dict) -> dict[str, Any]:
         if reader == "gates":
             g = cache.setdefault(("json", str(p)), json.loads(p.read_text()))
             return _gates(item, ev, g, res)
+        if reader == "mutation":            # brief 143b: a mutation-score record judged against a `mutation_floor` (flow/mutation_score.py)
+            from flow import mutation_score
+            return mutation_score.judge(item, req_by_id, p, res, ROOT)
         value = read_value(ev, p)
     except (KeyError, IndexError, ValueError, TypeError, ET.ParseError, json.JSONDecodeError, re.error) as e:
         res.update(status="not_run", detail=f"field not readable ({type(e).__name__}: {e})")
@@ -501,6 +532,9 @@ def collect(design: Path, lean: str = "recorded", fresh: Path | None = None) -> 
                 r["status"], r["stale_because"] = "stale", why
             elif it.get("bounded") is not None:
                 r["status"] = "bounded"
+        if it.get("rigour"):                    # brief 143c: a vacuous, unreachable-cover or unjustified-bounded proof is not a pass
+            from flow import formal_rigour
+            formal_rigour.apply_to_item(it, r)
         results.append(r)
     by_req: dict[str, list] = {r["id"]: [] for r in reqs}
     for r in results:

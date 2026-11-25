@@ -158,3 +158,36 @@ async def queue_and_replace(dut):
                 g = 2 * i + s
                 assert ((px >> (32 * g)) & 0xFFFFFFFF, (sz >> (32 * g)) & 0xFFFFFFFF, bool((ok >> g) & 1)) == model.tob[i][s], (i, s)
         assert sum(1 for e in evs if e["t"] == "U") > 20
+
+
+@cocotb.test()
+async def level_size_saturates(dut):
+    """Brief 188: a level size that would pass 2^32 - 1 saturates, counts as lvovf and makes the instrument inexact, where it used to wrap to a small number.
+
+    Two Adds at one price whose sizes sum to 2^32 + 16, then a zero-share Add (never entered: oovf, inexact), then both orders deleted. Every update record, counter and the top-of-book
+    registers equal the model's; the top-of-book size after the second Add is 0xFFFFFFFF (a wrapped level would show 16), and the inexact flag is up in the hardware."""
+    cfg = Cfg(n_inst=4, levels=8, ord_aw=8)
+    rig = Rig(dut, cfg)
+    await rig.start()
+    model = Model(cfg)
+    px = 1_000_000
+    evs = [{"t": "R", "loc": 10 + i, "stock": proto.alpha(cfg.watch[i], 8)} for i in range(cfg.n_inst)]
+    evs += [
+        {"t": "A", "loc": 10, "ref": 500, "sell": False, "shares": 0xFFFFFFF0, "px": px},
+        {"t": "A", "loc": 10, "ref": 501, "sell": False, "shares": 0x20, "px": px},          # sum 2^32 + 16: saturates
+        {"t": "A", "loc": 11, "ref": 502, "sell": False, "shares": 0, "px": px},             # zero shares: never entered
+        {"t": "D", "loc": 10, "ref": 501},
+        {"t": "D", "loc": 10, "ref": 500},
+    ]
+    for e in evs:
+        model.event(e)
+    assert model.tus[1]["sz"] == 0xFFFFFFFF and model.inexact[0] and model.inexact[1]
+    await rig.send([(2, e) for e in evs[:cfg.n_inst]] + [(3, e) for e in evs[cfg.n_inst:]])
+    want = [(t["inst"], t["side"], t["px"], t["sz"], t["ok"], t["cause_px"]) for t in model.tus]
+    assert rig.tus == want, (rig.tus, want)
+    assert rig.tus[1][3] == 0xFFFFFFFF, "the level size wrapped instead of saturating"
+    cnt = int(dut.cnt.value)
+    got = {k: (cnt >> (32 * i)) & 0xFFFFFFFF for i, k in enumerate(BOOK_COUNTERS)}
+    assert got == {k: model.cnt[k] for k in BOOK_COUNTERS}, (got, {k: model.cnt[k] for k in BOOK_COUNTERS})
+    assert got["lvovf"] == 1 and got["oovf"] == 1
+    assert int(dut.inexact.value) & 0b11 == 0b11, "the saturated and the zero-share instruments must both be inexact"

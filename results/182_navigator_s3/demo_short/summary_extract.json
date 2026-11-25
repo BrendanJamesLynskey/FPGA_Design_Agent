@@ -1,0 +1,100 @@
+{
+ "run_id": "20261123-021425-d176",
+ "design": "c9_median3x3",
+ "harness": "claude_code",
+ "role_models": {
+  "clarify": {
+   "harness": "claude_code",
+   "model": "claude-sonnet-5-5",
+   "effort": "medium"
+  },
+  "model": {
+   "harness": "claude_code",
+   "model": "claude-sonnet-5-5",
+   "effort": "medium"
+  },
+  "tests": {
+   "harness": "claude_code",
+   "model": "claude-sonnet-5-5",
+   "effort": "medium"
+  },
+  "rtl": {
+   "harness": "claude_code",
+   "model": "claude-sonnet-5-5",
+   "effort": "medium"
+  }
+ },
+ "stop": "done",
+ "stages_visited": [
+  0,
+  0,
+  1,
+  1
+ ],
+ "user_requests": {
+  "control": 0,
+  "design": 1,
+  "applied": 1,
+  "declined": 0,
+  "questions_asked": 1,
+  "user_interventions": 1
+ },
+ "questions": {
+  "asked": 5,
+  "answered": 0,
+  "defaulted": 5,
+  "questions": [
+   {
+    "id": "q1",
+    "text": "What is the register map (offset, width, reset value and access of every register) the shell exposes?",
+    "default": "The map in registers.map (ID 0x00, CONTROL 0x04, STATUS 0x08, PATTERN 0x0C, NUM_WINDOWS 0x10, RESULT_COUNT 0x14, RESULT_RECORD 0x18, windows from 0x40 at 3 words each, medians from 0xA0).",
+    "reason": "The request names the loads and readbacks but gives no offsets.",
+    "answer": "The map in registers.map (ID 0x00, CONTROL 0x04, STATUS 0x08, PATTERN 0x0C, NUM_WINDOWS 0x10, RESULT_COUNT 0x14, RESULT_RECORD 0x18, windows from 0x40 at 3 words each, medians from 0xA0).",
+    "status": "defaulted",
+    "by": "default",
+    "evidence": null
+   },
+   {
+    "id": "q2",
+    "text": "What if the pattern has more 1 bits than loaded windows?",
+    "default": "Presents nothing extra: windows beyond NUM_WINDOWS are not presented, and the bit does not produce a result.",
+    "reason": "The request does not say; this keeps the count equal to the windows actually presented.",
+    "answer": "Presents nothing extra: windows beyond NUM_WINDOWS are not presented, and the bit does not produce a result.",
+    "status": "defaulted",
+    "by": "default",
+    "evidence": null
+   },
+   {
+    "id": "q3",
+    "text": "What is the TIMEOUT_CYCLES default and what does it guard?",
+    "default": "100000000 cycles (1 s at 100 MHz), the shell host-transaction timeout.",
+    "reason": "The request names the parameter but no value.",
+    "answer": "100000000 cycles (1 s at 100 MHz), the shell host-transaction timeout.",
+    "status": "defaulted",
+    "by": "default",
+    "evidence": null
+   },
+   {
+    "id": "q4",
+    "text": "Is the 32-clock pattern window allowed to start at the clock after go or at go itself?",
+    "default": "Clock 0 is the first clock after the go write is accepted.",
+    "reason": "Needed to define the record bit positions.",
+    "answer": "Clock 0 is the first clock after the go write is accepted.",
+    "status": "defaulted",
+    "by": "default",
+    "evidence": null
+   },
+   {
+    "id": "q5",
+    "text": "Does a second go keep the loaded windows and overwrite the results?",
+    "default": "Yes, windows and pattern stay loaded, count and record are cleared at each go.",
+    "reason": "The request describes only one run.",
+    "answer": "Yes, windows and pattern stay loaded, count and record are cleared at each go.",
+    "status": "defaulted",
+    "by": "default",
+    "evidence": null
+   }
+  ]
+ },
+ "wall_s": 93.6
+}

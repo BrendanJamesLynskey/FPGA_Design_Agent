@@ -1,0 +1,576 @@
+{
+ "sby": "designs/b58a_trigger/verif/formal/interlocks.sby",
+ "schema": "fpga-design-agent/formal_rigour/v1",
+ "sources": {
+  "designs/b58a_trigger/rtl/interlocks.sv": "37a99e59c69e5e2976afcfb9f3466f72a850456daef4569716b37fb6f1d10e89",
+  "designs/b58a_trigger/verif/formal/formal_interlocks.sv": "fbc65432d3b44797782bc21d5544dac75978be7a785844dc8eed0eac428c13c6",
+  "designs/b58a_trigger/verif/formal/interlocks.sby": "c26446ee50966ca89248f721d2fcc1592db73d2b8f9edd5a0d494fa0179df820"
+ },
+ "tasks": {
+  "bmc": {
+   "checks": [
+    {
+     "flavor": "cover",
+     "id": "c_reject_token",
+     "label": "c_reject_token",
+     "src": "formal_interlocks.sv:100",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "c_reject_qty",
+     "label": "c_reject_qty",
+     "src": "formal_interlocks.sv:98",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "c_reject_band",
+     "label": "c_reject_band",
+     "src": "formal_interlocks.sv:99",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "c_grant",
+     "label": "c_grant",
+     "src": "formal_interlocks.sv:97",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "a_window_cap__ante",
+     "label": "a_window_cap__ante",
+     "src": "formal_interlocks.sv:92",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "a_window_cap",
+     "label": "a_window_cap",
+     "src": "formal_interlocks.sv:84",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "a_tokens_cap__ante",
+     "label": "a_tokens_cap__ante",
+     "src": "formal_interlocks.sv:91",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "a_tokens_cap",
+     "label": "a_tokens_cap",
+     "src": "formal_interlocks.sv:83",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "a_pos_sum",
+     "label": "a_pos_sum",
+     "src": "formal_interlocks.sv:80",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "a_pos_limit",
+     "label": "a_pos_limit",
+     "src": "formal_interlocks.sv:82",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "a_pos__ante",
+     "label": "a_pos__ante",
+     "src": "formal_interlocks.sv:90",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "a_grant_xor_reject",
+     "label": "a_grant_xor_reject",
+     "src": "formal_interlocks.sv:85",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "a_grant_token",
+     "label": "a_grant_token",
+     "src": "formal_interlocks.sv:75",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "a_grant_size",
+     "label": "a_grant_size",
+     "src": "formal_interlocks.sv:73",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "a_grant_price_band",
+     "label": "a_grant_price_band",
+     "src": "formal_interlocks.sv:74",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "a_grant_not_stopped",
+     "label": "a_grant_not_stopped",
+     "src": "formal_interlocks.sv:72",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "a_grant_kill_wins",
+     "label": "a_grant_kill_wins",
+     "src": "formal_interlocks.sv:71",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "a_grant_implies_approved",
+     "label": "a_grant_implies_approved",
+     "src": "formal_interlocks.sv:81",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "a_grant__ante",
+     "label": "a_grant__ante",
+     "src": "formal_interlocks.sv:89",
+     "tautology": false
+    },
+    {
+     "flavor": "assume",
+     "id": "formal_interlocks.sv:36",
+     "label": null,
+     "src": "formal_interlocks.sv:36",
+     "tautology": false
+    },
+    {
+     "flavor": "assume",
+     "id": "formal_interlocks.sv:35",
+     "label": null,
+     "src": "formal_interlocks.sv:35",
+     "tautology": false
+    },
+    {
+     "flavor": "assume",
+     "id": "formal_interlocks.sv:34",
+     "label": null,
+     "src": "formal_interlocks.sv:34",
+     "tautology": false
+    },
+    {
+     "flavor": "assume",
+     "id": "formal_interlocks.sv:31",
+     "label": null,
+     "src": "formal_interlocks.sv:31",
+     "tautology": false
+    },
+    {
+     "flavor": "assume",
+     "id": "formal_interlocks.sv:30",
+     "label": null,
+     "src": "formal_interlocks.sv:30",
+     "tautology": false
+    }
+   ],
+   "covers": {},
+   "depth": 30,
+   "mode": "bmc",
+   "seconds": 66.6,
+   "status": "PASS"
+  },
+  "cover": {
+   "checks": [
+    {
+     "flavor": "cover",
+     "id": "c_reject_token",
+     "label": "c_reject_token",
+     "src": "formal_interlocks.sv:100",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "c_reject_qty",
+     "label": "c_reject_qty",
+     "src": "formal_interlocks.sv:98",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "c_reject_band",
+     "label": "c_reject_band",
+     "src": "formal_interlocks.sv:99",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "c_grant",
+     "label": "c_grant",
+     "src": "formal_interlocks.sv:97",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "a_window_cap__ante",
+     "label": "a_window_cap__ante",
+     "src": "formal_interlocks.sv:92",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "a_window_cap",
+     "label": "a_window_cap",
+     "src": "formal_interlocks.sv:84",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "a_tokens_cap__ante",
+     "label": "a_tokens_cap__ante",
+     "src": "formal_interlocks.sv:91",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "a_tokens_cap",
+     "label": "a_tokens_cap",
+     "src": "formal_interlocks.sv:83",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "a_pos_sum",
+     "label": "a_pos_sum",
+     "src": "formal_interlocks.sv:80",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "a_pos_limit",
+     "label": "a_pos_limit",
+     "src": "formal_interlocks.sv:82",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "a_pos__ante",
+     "label": "a_pos__ante",
+     "src": "formal_interlocks.sv:90",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "a_grant_xor_reject",
+     "label": "a_grant_xor_reject",
+     "src": "formal_interlocks.sv:85",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "a_grant_token",
+     "label": "a_grant_token",
+     "src": "formal_interlocks.sv:75",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "a_grant_size",
+     "label": "a_grant_size",
+     "src": "formal_interlocks.sv:73",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "a_grant_price_band",
+     "label": "a_grant_price_band",
+     "src": "formal_interlocks.sv:74",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "a_grant_not_stopped",
+     "label": "a_grant_not_stopped",
+     "src": "formal_interlocks.sv:72",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "a_grant_kill_wins",
+     "label": "a_grant_kill_wins",
+     "src": "formal_interlocks.sv:71",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "a_grant_implies_approved",
+     "label": "a_grant_implies_approved",
+     "src": "formal_interlocks.sv:81",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "a_grant__ante",
+     "label": "a_grant__ante",
+     "src": "formal_interlocks.sv:89",
+     "tautology": false
+    },
+    {
+     "flavor": "assume",
+     "id": "formal_interlocks.sv:36",
+     "label": null,
+     "src": "formal_interlocks.sv:36",
+     "tautology": false
+    },
+    {
+     "flavor": "assume",
+     "id": "formal_interlocks.sv:35",
+     "label": null,
+     "src": "formal_interlocks.sv:35",
+     "tautology": false
+    },
+    {
+     "flavor": "assume",
+     "id": "formal_interlocks.sv:34",
+     "label": null,
+     "src": "formal_interlocks.sv:34",
+     "tautology": false
+    },
+    {
+     "flavor": "assume",
+     "id": "formal_interlocks.sv:31",
+     "label": null,
+     "src": "formal_interlocks.sv:31",
+     "tautology": false
+    },
+    {
+     "flavor": "assume",
+     "id": "formal_interlocks.sv:30",
+     "label": null,
+     "src": "formal_interlocks.sv:30",
+     "tautology": false
+    }
+   ],
+   "covers": {
+    "a_grant__ante": {
+     "reached": true,
+     "step": 3
+    },
+    "a_pos__ante": {
+     "reached": true,
+     "step": 3
+    },
+    "a_tokens_cap__ante": {
+     "reached": true,
+     "step": 3
+    },
+    "a_window_cap__ante": {
+     "reached": true,
+     "step": 4
+    },
+    "c_grant": {
+     "reached": true,
+     "step": 3
+    },
+    "c_reject_band": {
+     "reached": true,
+     "step": 3
+    },
+    "c_reject_qty": {
+     "reached": true,
+     "step": 3
+    },
+    "c_reject_token": {
+     "reached": true,
+     "step": 3
+    }
+   },
+   "depth": 30,
+   "mode": "cover",
+   "seconds": 0.8,
+   "status": "PASS"
+  },
+  "prove": {
+   "checks": [
+    {
+     "flavor": "cover",
+     "id": "c_reject_token",
+     "label": "c_reject_token",
+     "src": "formal_interlocks.sv:100",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "c_reject_qty",
+     "label": "c_reject_qty",
+     "src": "formal_interlocks.sv:98",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "c_reject_band",
+     "label": "c_reject_band",
+     "src": "formal_interlocks.sv:99",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "c_grant",
+     "label": "c_grant",
+     "src": "formal_interlocks.sv:97",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "a_window_cap__ante",
+     "label": "a_window_cap__ante",
+     "src": "formal_interlocks.sv:92",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "a_window_cap",
+     "label": "a_window_cap",
+     "src": "formal_interlocks.sv:84",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "a_tokens_cap__ante",
+     "label": "a_tokens_cap__ante",
+     "src": "formal_interlocks.sv:91",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "a_tokens_cap",
+     "label": "a_tokens_cap",
+     "src": "formal_interlocks.sv:83",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "a_pos_sum",
+     "label": "a_pos_sum",
+     "src": "formal_interlocks.sv:80",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "a_pos_limit",
+     "label": "a_pos_limit",
+     "src": "formal_interlocks.sv:82",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "a_pos__ante",
+     "label": "a_pos__ante",
+     "src": "formal_interlocks.sv:90",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "a_grant_xor_reject",
+     "label": "a_grant_xor_reject",
+     "src": "formal_interlocks.sv:85",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "a_grant_token",
+     "label": "a_grant_token",
+     "src": "formal_interlocks.sv:75",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "a_grant_size",
+     "label": "a_grant_size",
+     "src": "formal_interlocks.sv:73",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "a_grant_price_band",
+     "label": "a_grant_price_band",
+     "src": "formal_interlocks.sv:74",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "a_grant_not_stopped",
+     "label": "a_grant_not_stopped",
+     "src": "formal_interlocks.sv:72",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "a_grant_kill_wins",
+     "label": "a_grant_kill_wins",
+     "src": "formal_interlocks.sv:71",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "a_grant_implies_approved",
+     "label": "a_grant_implies_approved",
+     "src": "formal_interlocks.sv:81",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "a_grant__ante",
+     "label": "a_grant__ante",
+     "src": "formal_interlocks.sv:89",
+     "tautology": false
+    },
+    {
+     "flavor": "assume",
+     "id": "formal_interlocks.sv:36",
+     "label": null,
+     "src": "formal_interlocks.sv:36",
+     "tautology": false
+    },
+    {
+     "flavor": "assume",
+     "id": "formal_interlocks.sv:35",
+     "label": null,
+     "src": "formal_interlocks.sv:35",
+     "tautology": false
+    },
+    {
+     "flavor": "assume",
+     "id": "formal_interlocks.sv:34",
+     "label": null,
+     "src": "formal_interlocks.sv:34",
+     "tautology": false
+    },
+    {
+     "flavor": "assume",
+     "id": "formal_interlocks.sv:31",
+     "label": null,
+     "src": "formal_interlocks.sv:31",
+     "tautology": false
+    },
+    {
+     "flavor": "assume",
+     "id": "formal_interlocks.sv:30",
+     "label": null,
+     "src": "formal_interlocks.sv:30",
+     "tautology": false
+    }
+   ],
+   "covers": {},
+   "depth": 30,
+   "mode": "prove",
+   "seconds": 71.3,
+   "status": "PASS"
+  }
+ },
+ "tool": "Yosys 0.70+385 (git sha1 098e46a36, Release, Clang /usr/bin/clang++ 21.1.8)"
+}

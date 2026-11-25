@@ -1,0 +1,1101 @@
+{
+ "schema": "fda-two-step/1",
+ "date": "2026-11-24",
+ "designs": {
+  "adder_csel_a7_w64b16": {
+   "clock_ns": 5.0,
+   "step1_pick": "default",
+   "step1_cpu_s": 154,
+   "step2_runs": 15,
+   "step2_cpu_s": 3959,
+   "step2_cpu_new_s": 3883,
+   "full_tournament_cpu_s": 9050,
+   "step2_best_single_run": {
+    "set": "amd:Performance_WLBlockPlacement",
+    "wns_ns": -0.309,
+    "lut": 116,
+    "ff": 199,
+    "runtime_s": 276,
+    "source": "178e run"
+   },
+   "step2_ranked_pick": "amd:Performance_WLBlockPlacementFanoutOpt",
+   "pick_repeats": {
+    "source": "178e validation",
+    "mean": -0.432,
+    "min": -0.551,
+    "max": -0.316,
+    "spread": 0.235,
+    "fresh_mean": -0.47,
+    "n": 4
+   },
+   "verdict": {
+    "two_step_pick_minus_tournament_winner_mean": -0.198,
+    "noise_floor_ns": 0.273,
+    "within_noise": true,
+    "two_step_pick_minus_default_mean": 0.043,
+    "gain_over_default_beyond_noise": false
+   },
+   "stop_rules": {
+    "pick the best of all 15 (tool rank)": {
+     "stop_set": "amd:Performance_WLBlockPlacementFanoutOpt",
+     "wns_ns": -0.316,
+     "cpu_s": 3959,
+     "stopped": false,
+     "total_cpu_s": 4113,
+     "share_of_full_tournament": 0.454,
+     "vs_tournament_winner_mean": -0.082,
+     "within_noise_of_tournament": true,
+     "meets_timing": false
+    },
+    "default implementation only": {
+     "stop_set": "default",
+     "wns_ns": -0.426,
+     "cpu_s": 76,
+     "stopped": false,
+     "total_cpu_s": 230,
+     "share_of_full_tournament": 0.025,
+     "vs_tournament_winner_mean": -0.192,
+     "within_noise_of_tournament": true,
+     "meets_timing": false
+    },
+    "stop at first WNS>=0, cheapest first (the tool's order)": {
+     "stop_set": "amd:Performance_WLBlockPlacement",
+     "wns_ns": -0.309,
+     "cpu_s": 3959,
+     "stopped": false,
+     "total_cpu_s": 4113,
+     "share_of_full_tournament": 0.454,
+     "vs_tournament_winner_mean": -0.075,
+     "within_noise_of_tournament": true,
+     "meets_timing": false
+    },
+    "stop at first WNS>=0, alphabetical order": {
+     "stop_set": "amd:Performance_WLBlockPlacement",
+     "wns_ns": -0.309,
+     "cpu_s": 3959,
+     "stopped": false,
+     "total_cpu_s": 4113,
+     "share_of_full_tournament": 0.454,
+     "vs_tournament_winner_mean": -0.075,
+     "within_noise_of_tournament": true,
+     "meets_timing": false
+    }
+   },
+   "step2_default": {
+    "set": "default",
+    "wns_ns": -0.426,
+    "lut": 114,
+    "ff": 196,
+    "runtime_s": 76,
+    "source": "178b stored"
+   },
+   "noise_single_run_ns": 0.273,
+   "tournament_winner_id": "altroute/amd:Performance_NetDelay_high",
+   "tournament_winner_stored_run": -0.129,
+   "tournament_winner_mean": -0.234,
+   "tournament_winner_spread": 0.273,
+   "default_mean": -0.475,
+   "default_spread": 0.14,
+   "best_amd_id": null,
+   "best_amd_mean": null,
+   "rows": [
+    {
+     "set": "default",
+     "wns_ns": -0.426,
+     "lut": 114,
+     "ff": 196,
+     "runtime_s": 76,
+     "source": "178b stored"
+    },
+    {
+     "set": "amd:Performance_Explore",
+     "wns_ns": -0.477,
+     "lut": 116,
+     "ff": 200,
+     "runtime_s": 189,
+     "source": "178e run"
+    },
+    {
+     "set": "amd:Performance_WLBlockPlacementFanoutOpt",
+     "wns_ns": -0.316,
+     "lut": 116,
+     "ff": 196,
+     "runtime_s": 224,
+     "source": "178e run"
+    },
+    {
+     "set": "amd:Performance_ExploreWithRemap",
+     "wns_ns": -0.415,
+     "lut": 116,
+     "ff": 200,
+     "runtime_s": 230,
+     "source": "178e run"
+    },
+    {
+     "set": "amd:Performance_WLBlockPlacement",
+     "wns_ns": -0.309,
+     "lut": 116,
+     "ff": 199,
+     "runtime_s": 276,
+     "source": "178e run"
+    },
+    {
+     "set": "amd:Performance_ExplorePostRoutePhysOpt",
+     "wns_ns": -0.449,
+     "lut": 117,
+     "ff": 200,
+     "runtime_s": 227,
+     "source": "178e run"
+    },
+    {
+     "set": "amd:Performance_ExtraTimingOpt",
+     "wns_ns": -0.466,
+     "lut": 116,
+     "ff": 197,
+     "runtime_s": 240,
+     "source": "178e run"
+    },
+    {
+     "set": "amd:Performance_Auto_1",
+     "wns_ns": -0.455,
+     "lut": 112,
+     "ff": 198,
+     "runtime_s": 191,
+     "source": "178e run"
+    },
+    {
+     "set": "amd:Performance_RefinePlacement",
+     "wns_ns": -0.436,
+     "lut": 112,
+     "ff": 200,
+     "runtime_s": 324,
+     "source": "178e run"
+    },
+    {
+     "set": "amd:Performance_Retiming",
+     "wns_ns": -0.414,
+     "lut": 112,
+     "ff": 198,
+     "runtime_s": 291,
+     "source": "178e run"
+    },
+    {
+     "set": "amd:Performance_EarlyBlockPlacement",
+     "wns_ns": -0.453,
+     "lut": 118,
+     "ff": 200,
+     "runtime_s": 289,
+     "source": "178e run"
+    },
+    {
+     "set": "amd:Performance_Auto_3",
+     "wns_ns": -0.455,
+     "lut": 112,
+     "ff": 198,
+     "runtime_s": 191,
+     "source": "178e run"
+    },
+    {
+     "set": "amd:Performance_NetDelay_low",
+     "wns_ns": -0.506,
+     "lut": 115,
+     "ff": 198,
+     "runtime_s": 200,
+     "source": "178e run"
+    },
+    {
+     "set": "amd:Performance_Auto_2",
+     "wns_ns": -0.455,
+     "lut": 112,
+     "ff": 198,
+     "runtime_s": 189,
+     "source": "178e run"
+    },
+    {
+     "set": "amd:Performance_NetDelay_high",
+     "wns_ns": -0.411,
+     "lut": 116,
+     "ff": 198,
+     "runtime_s": 822,
+     "source": "178e run"
+    }
+   ]
+  },
+  "divider_restpipe_k26_w16": {
+   "clock_ns": 1.4,
+   "step1_pick": "default",
+   "step1_cpu_s": 195,
+   "step2_runs": 15,
+   "step2_cpu_s": 3889,
+   "step2_cpu_new_s": 3712,
+   "full_tournament_cpu_s": 7815,
+   "step2_best_single_run": {
+    "set": "amd:Performance_NetDelay_high",
+    "wns_ns": 0.015,
+    "lut": 505,
+    "ff": 594,
+    "runtime_s": 456,
+    "source": "178e run"
+   },
+   "step2_ranked_pick": "amd:Performance_ExtraTimingOpt",
+   "pick_repeats": {
+    "source": "178e validation",
+    "mean": -0.01,
+    "min": -0.04,
+    "max": 0.013,
+    "spread": 0.053,
+    "fresh_mean": -0.018,
+    "n": 4
+   },
+   "verdict": {
+    "two_step_pick_minus_tournament_winner_mean": -0.021,
+    "noise_floor_ns": 0.053,
+    "within_noise": true,
+    "two_step_pick_minus_default_mean": 0.022,
+    "gain_over_default_beyond_noise": false
+   },
+   "stop_rules": {
+    "pick the best of all 15 (tool rank)": {
+     "stop_set": "amd:Performance_ExtraTimingOpt",
+     "wns_ns": 0.013,
+     "cpu_s": 3889,
+     "stopped": false,
+     "total_cpu_s": 4084,
+     "share_of_full_tournament": 0.523,
+     "vs_tournament_winner_mean": 0.002,
+     "within_noise_of_tournament": true,
+     "meets_timing": true
+    },
+    "default implementation only": {
+     "stop_set": "default",
+     "wns_ns": -0.031,
+     "cpu_s": 177,
+     "stopped": false,
+     "total_cpu_s": 372,
+     "share_of_full_tournament": 0.048,
+     "vs_tournament_winner_mean": -0.042,
+     "within_noise_of_tournament": false,
+     "meets_timing": false
+    },
+    "stop at first WNS>=0, cheapest first (the tool's order)": {
+     "stop_set": "amd:Performance_WLBlockPlacementFanoutOpt",
+     "wns_ns": 0.005,
+     "cpu_s": 566,
+     "stopped": true,
+     "total_cpu_s": 761,
+     "share_of_full_tournament": 0.097,
+     "vs_tournament_winner_mean": -0.006,
+     "within_noise_of_tournament": true,
+     "meets_timing": true
+    },
+    "stop at first WNS>=0, alphabetical order": {
+     "stop_set": "amd:Performance_ExplorePostRoutePhysOpt",
+     "wns_ns": 0.005,
+     "cpu_s": 1841,
+     "stopped": true,
+     "total_cpu_s": 2036,
+     "share_of_full_tournament": 0.261,
+     "vs_tournament_winner_mean": -0.006,
+     "within_noise_of_tournament": true,
+     "meets_timing": true
+    }
+   },
+   "step2_default": {
+    "set": "default",
+    "wns_ns": -0.031,
+    "lut": 509,
+    "ff": 594,
+    "runtime_s": 177,
+    "source": "178b stored"
+   },
+   "noise_single_run_ns": 0.03,
+   "tournament_winner_id": "altroute/aggressive",
+   "tournament_winner_stored_run": 0.009,
+   "tournament_winner_mean": 0.011,
+   "tournament_winner_spread": 0.03,
+   "default_mean": -0.032,
+   "default_spread": 0.021,
+   "best_amd_id": "altroute/amd:Performance_NetDelay_high",
+   "best_amd_mean": -0.007,
+   "rows": [
+    {
+     "set": "default",
+     "wns_ns": -0.031,
+     "lut": 509,
+     "ff": 594,
+     "runtime_s": 177,
+     "source": "178b stored"
+    },
+    {
+     "set": "amd:Performance_Explore",
+     "wns_ns": -0.01,
+     "lut": 509,
+     "ff": 595,
+     "runtime_s": 194,
+     "source": "178e run"
+    },
+    {
+     "set": "amd:Performance_WLBlockPlacementFanoutOpt",
+     "wns_ns": 0.005,
+     "lut": 508,
+     "ff": 594,
+     "runtime_s": 195,
+     "source": "178e run"
+    },
+    {
+     "set": "amd:Performance_ExploreWithRemap",
+     "wns_ns": 0.005,
+     "lut": 509,
+     "ff": 595,
+     "runtime_s": 223,
+     "source": "178e run"
+    },
+    {
+     "set": "amd:Performance_WLBlockPlacement",
+     "wns_ns": -0.031,
+     "lut": 508,
+     "ff": 595,
+     "runtime_s": 194,
+     "source": "178e run"
+    },
+    {
+     "set": "amd:Performance_ExplorePostRoutePhysOpt",
+     "wns_ns": 0.005,
+     "lut": 509,
+     "ff": 595,
+     "runtime_s": 205,
+     "source": "178e run"
+    },
+    {
+     "set": "amd:Performance_ExtraTimingOpt",
+     "wns_ns": 0.013,
+     "lut": 505,
+     "ff": 594,
+     "runtime_s": 208,
+     "source": "178e run"
+    },
+    {
+     "set": "amd:Performance_Auto_1",
+     "wns_ns": -0.043,
+     "lut": 492,
+     "ff": 598,
+     "runtime_s": 287,
+     "source": "178e run"
+    },
+    {
+     "set": "amd:Performance_RefinePlacement",
+     "wns_ns": -0.01,
+     "lut": 509,
+     "ff": 595,
+     "runtime_s": 217,
+     "source": "178e run"
+    },
+    {
+     "set": "amd:Performance_Retiming",
+     "wns_ns": -0.006,
+     "lut": 509,
+     "ff": 594,
+     "runtime_s": 219,
+     "source": "178e run"
+    },
+    {
+     "set": "amd:Performance_EarlyBlockPlacement",
+     "wns_ns": -0.059,
+     "lut": 492,
+     "ff": 598,
+     "runtime_s": 292,
+     "source": "178e run"
+    },
+    {
+     "set": "amd:Performance_Auto_3",
+     "wns_ns": -0.027,
+     "lut": 505,
+     "ff": 591,
+     "runtime_s": 300,
+     "source": "178e run"
+    },
+    {
+     "set": "amd:Performance_NetDelay_low",
+     "wns_ns": 0.008,
+     "lut": 508,
+     "ff": 594,
+     "runtime_s": 336,
+     "source": "178e run"
+    },
+    {
+     "set": "amd:Performance_Auto_2",
+     "wns_ns": -0.027,
+     "lut": 509,
+     "ff": 595,
+     "runtime_s": 386,
+     "source": "178e run"
+    },
+    {
+     "set": "amd:Performance_NetDelay_high",
+     "wns_ns": 0.015,
+     "lut": 505,
+     "ff": 594,
+     "runtime_s": 456,
+     "source": "178e run"
+    }
+   ]
+  },
+  "isqrt_restpipe_k26_w32": {
+   "clock_ns": 1.4,
+   "step1_pick": "default",
+   "step1_cpu_s": 200,
+   "step2_runs": 15,
+   "step2_cpu_s": 3633,
+   "step2_cpu_new_s": 3439,
+   "full_tournament_cpu_s": 8471,
+   "step2_best_single_run": {
+    "set": "amd:Performance_Explore",
+    "wns_ns": 0.005,
+    "lut": 425,
+    "ff": 473,
+    "runtime_s": 188,
+    "source": "178e run"
+   },
+   "step2_ranked_pick": "amd:Performance_Auto_1",
+   "pick_repeats": {
+    "source": "178e validation",
+    "mean": 0.006,
+    "min": -0.027,
+    "max": 0.037,
+    "spread": 0.064,
+    "fresh_mean": 0.007,
+    "n": 4
+   },
+   "verdict": {
+    "two_step_pick_minus_tournament_winner_mean": 0.005,
+    "noise_floor_ns": 0.087,
+    "within_noise": true,
+    "two_step_pick_minus_default_mean": 0.033,
+    "gain_over_default_beyond_noise": false
+   },
+   "stop_rules": {
+    "pick the best of all 15 (tool rank)": {
+     "stop_set": "amd:Performance_Auto_1",
+     "wns_ns": 0.003,
+     "cpu_s": 3633,
+     "stopped": false,
+     "total_cpu_s": 3833,
+     "share_of_full_tournament": 0.452,
+     "vs_tournament_winner_mean": 0.002,
+     "within_noise_of_tournament": true,
+     "meets_timing": true
+    },
+    "default implementation only": {
+     "stop_set": "default",
+     "wns_ns": 0.002,
+     "cpu_s": 194,
+     "stopped": true,
+     "total_cpu_s": 394,
+     "share_of_full_tournament": 0.047,
+     "vs_tournament_winner_mean": 0.001,
+     "within_noise_of_tournament": true,
+     "meets_timing": true
+    },
+    "stop at first WNS>=0, cheapest first (the tool's order)": {
+     "stop_set": "default",
+     "wns_ns": 0.002,
+     "cpu_s": 194,
+     "stopped": true,
+     "total_cpu_s": 394,
+     "share_of_full_tournament": 0.047,
+     "vs_tournament_winner_mean": 0.001,
+     "within_noise_of_tournament": true,
+     "meets_timing": true
+    },
+    "stop at first WNS>=0, alphabetical order": {
+     "stop_set": "default",
+     "wns_ns": 0.002,
+     "cpu_s": 194,
+     "stopped": true,
+     "total_cpu_s": 394,
+     "share_of_full_tournament": 0.047,
+     "vs_tournament_winner_mean": 0.001,
+     "within_noise_of_tournament": true,
+     "meets_timing": true
+    }
+   },
+   "step2_default": {
+    "set": "default",
+    "wns_ns": 0.002,
+    "lut": 425,
+    "ff": 473,
+    "runtime_s": 194,
+    "source": "178b stored"
+   },
+   "noise_single_run_ns": 0.087,
+   "tournament_winner_id": "altroute/aggressive",
+   "tournament_winner_stored_run": 0.016,
+   "tournament_winner_mean": 0.001,
+   "tournament_winner_spread": 0.031,
+   "default_mean": -0.027,
+   "default_spread": 0.087,
+   "best_amd_id": "altroute/amd:Performance_RefinePlacement",
+   "best_amd_mean": -0.002,
+   "rows": [
+    {
+     "set": "default",
+     "wns_ns": 0.002,
+     "lut": 425,
+     "ff": 473,
+     "runtime_s": 194,
+     "source": "178b stored"
+    },
+    {
+     "set": "amd:Performance_Explore",
+     "wns_ns": 0.005,
+     "lut": 425,
+     "ff": 473,
+     "runtime_s": 188,
+     "source": "178e run"
+    },
+    {
+     "set": "amd:Performance_WLBlockPlacementFanoutOpt",
+     "wns_ns": -0.002,
+     "lut": 418,
+     "ff": 473,
+     "runtime_s": 192,
+     "source": "178e run"
+    },
+    {
+     "set": "amd:Performance_ExploreWithRemap",
+     "wns_ns": 0.005,
+     "lut": 425,
+     "ff": 473,
+     "runtime_s": 194,
+     "source": "178e run"
+    },
+    {
+     "set": "amd:Performance_WLBlockPlacement",
+     "wns_ns": -0.002,
+     "lut": 418,
+     "ff": 473,
+     "runtime_s": 192,
+     "source": "178e run"
+    },
+    {
+     "set": "amd:Performance_ExplorePostRoutePhysOpt",
+     "wns_ns": 0.005,
+     "lut": 425,
+     "ff": 473,
+     "runtime_s": 191,
+     "source": "178e run"
+    },
+    {
+     "set": "amd:Performance_ExtraTimingOpt",
+     "wns_ns": -0.023,
+     "lut": 424,
+     "ff": 475,
+     "runtime_s": 187,
+     "source": "178e run"
+    },
+    {
+     "set": "amd:Performance_Auto_1",
+     "wns_ns": 0.003,
+     "lut": 406,
+     "ff": 477,
+     "runtime_s": 237,
+     "source": "178e run"
+    },
+    {
+     "set": "amd:Performance_RefinePlacement",
+     "wns_ns": -0.017,
+     "lut": 425,
+     "ff": 473,
+     "runtime_s": 238,
+     "source": "178e run"
+    },
+    {
+     "set": "amd:Performance_Retiming",
+     "wns_ns": -0.017,
+     "lut": 425,
+     "ff": 473,
+     "runtime_s": 243,
+     "source": "178e run"
+    },
+    {
+     "set": "amd:Performance_EarlyBlockPlacement",
+     "wns_ns": 0.003,
+     "lut": 406,
+     "ff": 477,
+     "runtime_s": 234,
+     "source": "178e run"
+    },
+    {
+     "set": "amd:Performance_Auto_3",
+     "wns_ns": -0.031,
+     "lut": 413,
+     "ff": 479,
+     "runtime_s": 216,
+     "source": "178e run"
+    },
+    {
+     "set": "amd:Performance_NetDelay_low",
+     "wns_ns": 0.002,
+     "lut": 425,
+     "ff": 471,
+     "runtime_s": 290,
+     "source": "178e run"
+    },
+    {
+     "set": "amd:Performance_Auto_2",
+     "wns_ns": -0.031,
+     "lut": 426,
+     "ff": 473,
+     "runtime_s": 438,
+     "source": "178e run"
+    },
+    {
+     "set": "amd:Performance_NetDelay_high",
+     "wns_ns": -0.027,
+     "lut": 412,
+     "ff": 471,
+     "runtime_s": 399,
+     "source": "178e run"
+    }
+   ]
+  },
+  "lzc_treebarrel_k26_w32": {
+   "clock_ns": 1.4,
+   "step1_pick": "retime",
+   "step1_cpu_s": 202,
+   "step2_runs": 15,
+   "step2_cpu_s": 3965,
+   "step2_cpu_new_s": 2624,
+   "full_tournament_cpu_s": 8465,
+   "step2_best_single_run": {
+    "set": "amd:Performance_NetDelay_high",
+    "wns_ns": 0.196,
+    "lut": 141,
+    "ff": 137,
+    "runtime_s": 562,
+    "source": "178b stored"
+   },
+   "step2_ranked_pick": "amd:Performance_RefinePlacement",
+   "pick_repeats": {
+    "source": "178d winner",
+    "mean": 0.151,
+    "min": 0.122,
+    "max": 0.181,
+    "spread": 0.059,
+    "fresh_mean": 0.146,
+    "n": 4
+   },
+   "verdict": {
+    "two_step_pick_minus_tournament_winner_mean": 0.0,
+    "noise_floor_ns": 0.122,
+    "within_noise": true,
+    "two_step_pick_minus_default_mean": 0.608,
+    "gain_over_default_beyond_noise": true
+   },
+   "stop_rules": {
+    "pick the best of all 15 (tool rank)": {
+     "stop_set": "amd:Performance_RefinePlacement",
+     "wns_ns": 0.165,
+     "cpu_s": 3965,
+     "stopped": false,
+     "total_cpu_s": 4167,
+     "share_of_full_tournament": 0.492,
+     "vs_tournament_winner_mean": 0.014,
+     "within_noise_of_tournament": true,
+     "meets_timing": true
+    },
+    "default implementation only": {
+     "stop_set": "default",
+     "wns_ns": 0.119,
+     "cpu_s": 176,
+     "stopped": true,
+     "total_cpu_s": 378,
+     "share_of_full_tournament": 0.045,
+     "vs_tournament_winner_mean": -0.032,
+     "within_noise_of_tournament": true,
+     "meets_timing": true
+    },
+    "stop at first WNS>=0, cheapest first (the tool's order)": {
+     "stop_set": "default",
+     "wns_ns": 0.119,
+     "cpu_s": 176,
+     "stopped": true,
+     "total_cpu_s": 378,
+     "share_of_full_tournament": 0.045,
+     "vs_tournament_winner_mean": -0.032,
+     "within_noise_of_tournament": true,
+     "meets_timing": true
+    },
+    "stop at first WNS>=0, alphabetical order": {
+     "stop_set": "default",
+     "wns_ns": 0.119,
+     "cpu_s": 176,
+     "stopped": true,
+     "total_cpu_s": 378,
+     "share_of_full_tournament": 0.045,
+     "vs_tournament_winner_mean": -0.032,
+     "within_noise_of_tournament": true,
+     "meets_timing": true
+    }
+   },
+   "step2_default": {
+    "set": "default",
+    "wns_ns": 0.119,
+    "lut": 139,
+    "ff": 137,
+    "runtime_s": 176,
+    "source": "178b stored"
+   },
+   "noise_single_run_ns": 0.122,
+   "tournament_winner_id": "retime/amd:Performance_RefinePlacement",
+   "tournament_winner_stored_run": 0.165,
+   "tournament_winner_mean": 0.151,
+   "tournament_winner_spread": 0.059,
+   "default_mean": -0.457,
+   "default_spread": 0.122,
+   "best_amd_id": "retime/amd:Performance_NetDelay_high",
+   "best_amd_mean": 0.127,
+   "rows": [
+    {
+     "set": "default",
+     "wns_ns": 0.119,
+     "lut": 139,
+     "ff": 137,
+     "runtime_s": 176,
+     "source": "178b stored"
+    },
+    {
+     "set": "amd:Performance_Explore",
+     "wns_ns": 0.119,
+     "lut": 139,
+     "ff": 137,
+     "runtime_s": 176,
+     "source": "178b stored"
+    },
+    {
+     "set": "amd:Performance_WLBlockPlacementFanoutOpt",
+     "wns_ns": 0.141,
+     "lut": 139,
+     "ff": 137,
+     "runtime_s": 207,
+     "source": "178e run"
+    },
+    {
+     "set": "amd:Performance_ExploreWithRemap",
+     "wns_ns": 0.133,
+     "lut": 135,
+     "ff": 137,
+     "runtime_s": 183,
+     "source": "178e run"
+    },
+    {
+     "set": "amd:Performance_WLBlockPlacement",
+     "wns_ns": 0.141,
+     "lut": 139,
+     "ff": 137,
+     "runtime_s": 204,
+     "source": "178e run"
+    },
+    {
+     "set": "amd:Performance_ExplorePostRoutePhysOpt",
+     "wns_ns": 0.119,
+     "lut": 139,
+     "ff": 137,
+     "runtime_s": 184,
+     "source": "178e run"
+    },
+    {
+     "set": "amd:Performance_ExtraTimingOpt",
+     "wns_ns": 0.084,
+     "lut": 142,
+     "ff": 137,
+     "runtime_s": 218,
+     "source": "178b stored"
+    },
+    {
+     "set": "amd:Performance_Auto_1",
+     "wns_ns": 0.123,
+     "lut": 140,
+     "ff": 137,
+     "runtime_s": 189,
+     "source": "178e run"
+    },
+    {
+     "set": "amd:Performance_RefinePlacement",
+     "wns_ns": 0.165,
+     "lut": 138,
+     "ff": 137,
+     "runtime_s": 209,
+     "source": "178b stored"
+    },
+    {
+     "set": "amd:Performance_Retiming",
+     "wns_ns": 0.165,
+     "lut": 138,
+     "ff": 137,
+     "runtime_s": 208,
+     "source": "178e run"
+    },
+    {
+     "set": "amd:Performance_EarlyBlockPlacement",
+     "wns_ns": 0.123,
+     "lut": 140,
+     "ff": 137,
+     "runtime_s": 187,
+     "source": "178e run"
+    },
+    {
+     "set": "amd:Performance_Auto_3",
+     "wns_ns": 0.137,
+     "lut": 141,
+     "ff": 137,
+     "runtime_s": 713,
+     "source": "178e run"
+    },
+    {
+     "set": "amd:Performance_NetDelay_low",
+     "wns_ns": 0.165,
+     "lut": 139,
+     "ff": 137,
+     "runtime_s": 275,
+     "source": "178e run"
+    },
+    {
+     "set": "amd:Performance_Auto_2",
+     "wns_ns": 0.004,
+     "lut": 139,
+     "ff": 137,
+     "runtime_s": 274,
+     "source": "178e run"
+    },
+    {
+     "set": "amd:Performance_NetDelay_high",
+     "wns_ns": 0.196,
+     "lut": 141,
+     "ff": 137,
+     "runtime_s": 562,
+     "source": "178b stored"
+    }
+   ]
+  },
+  "mac_fabric_k26": {
+   "clock_ns": 3.0,
+   "step1_pick": "retime",
+   "step1_cpu_s": 204,
+   "step2_runs": 15,
+   "step2_cpu_s": 4057,
+   "step2_cpu_new_s": 2619,
+   "full_tournament_cpu_s": 8431,
+   "step2_best_single_run": {
+    "set": "amd:Performance_ExtraTimingOpt",
+    "wns_ns": 0.129,
+    "lut": 479,
+    "ff": 197,
+    "runtime_s": 212,
+    "source": "178b stored"
+   },
+   "step2_ranked_pick": "amd:Performance_ExtraTimingOpt",
+   "pick_repeats": {
+    "source": "178d best_amd",
+    "mean": 0.068,
+    "min": 0.007,
+    "max": 0.129,
+    "spread": 0.122,
+    "fresh_mean": 0.047,
+    "n": 4
+   },
+   "verdict": {
+    "two_step_pick_minus_tournament_winner_mean": 0.007,
+    "noise_floor_ns": 0.241,
+    "within_noise": true,
+    "two_step_pick_minus_default_mean": 0.318,
+    "gain_over_default_beyond_noise": true
+   },
+   "stop_rules": {
+    "pick the best of all 15 (tool rank)": {
+     "stop_set": "amd:Performance_ExtraTimingOpt",
+     "wns_ns": 0.129,
+     "cpu_s": 4057,
+     "stopped": false,
+     "total_cpu_s": 4261,
+     "share_of_full_tournament": 0.505,
+     "vs_tournament_winner_mean": 0.068,
+     "within_noise_of_tournament": true,
+     "meets_timing": true
+    },
+    "default implementation only": {
+     "stop_set": "default",
+     "wns_ns": 0.057,
+     "cpu_s": 197,
+     "stopped": true,
+     "total_cpu_s": 401,
+     "share_of_full_tournament": 0.048,
+     "vs_tournament_winner_mean": -0.004,
+     "within_noise_of_tournament": true,
+     "meets_timing": true
+    },
+    "stop at first WNS>=0, cheapest first (the tool's order)": {
+     "stop_set": "default",
+     "wns_ns": 0.057,
+     "cpu_s": 197,
+     "stopped": true,
+     "total_cpu_s": 401,
+     "share_of_full_tournament": 0.048,
+     "vs_tournament_winner_mean": -0.004,
+     "within_noise_of_tournament": true,
+     "meets_timing": true
+    },
+    "stop at first WNS>=0, alphabetical order": {
+     "stop_set": "default",
+     "wns_ns": 0.057,
+     "cpu_s": 197,
+     "stopped": true,
+     "total_cpu_s": 401,
+     "share_of_full_tournament": 0.048,
+     "vs_tournament_winner_mean": -0.004,
+     "within_noise_of_tournament": true,
+     "meets_timing": true
+    }
+   },
+   "step2_default": {
+    "set": "default",
+    "wns_ns": 0.057,
+    "lut": 481,
+    "ff": 197,
+    "runtime_s": 197,
+    "source": "178b stored"
+   },
+   "noise_single_run_ns": 0.241,
+   "tournament_winner_id": "retime/congestion",
+   "tournament_winner_stored_run": 0.208,
+   "tournament_winner_mean": 0.061,
+   "tournament_winner_spread": 0.241,
+   "default_mean": -0.25,
+   "default_spread": 0.15,
+   "best_amd_id": "retime/amd:Performance_ExtraTimingOpt",
+   "best_amd_mean": 0.068,
+   "rows": [
+    {
+     "set": "default",
+     "wns_ns": 0.057,
+     "lut": 481,
+     "ff": 197,
+     "runtime_s": 197,
+     "source": "178b stored"
+    },
+    {
+     "set": "amd:Performance_Explore",
+     "wns_ns": -0.001,
+     "lut": 481,
+     "ff": 197,
+     "runtime_s": 196,
+     "source": "178b stored"
+    },
+    {
+     "set": "amd:Performance_WLBlockPlacementFanoutOpt",
+     "wns_ns": 0.022,
+     "lut": 482,
+     "ff": 197,
+     "runtime_s": 226,
+     "source": "178e run"
+    },
+    {
+     "set": "amd:Performance_ExploreWithRemap",
+     "wns_ns": 0.015,
+     "lut": 481,
+     "ff": 197,
+     "runtime_s": 204,
+     "source": "178e run"
+    },
+    {
+     "set": "amd:Performance_WLBlockPlacement",
+     "wns_ns": 0.022,
+     "lut": 482,
+     "ff": 197,
+     "runtime_s": 226,
+     "source": "178e run"
+    },
+    {
+     "set": "amd:Performance_ExplorePostRoutePhysOpt",
+     "wns_ns": 0.034,
+     "lut": 482,
+     "ff": 197,
+     "runtime_s": 220,
+     "source": "178e run"
+    },
+    {
+     "set": "amd:Performance_ExtraTimingOpt",
+     "wns_ns": 0.129,
+     "lut": 479,
+     "ff": 197,
+     "runtime_s": 212,
+     "source": "178b stored"
+    },
+    {
+     "set": "amd:Performance_Auto_1",
+     "wns_ns": 0.063,
+     "lut": 477,
+     "ff": 197,
+     "runtime_s": 268,
+     "source": "178e run"
+    },
+    {
+     "set": "amd:Performance_RefinePlacement",
+     "wns_ns": 0.021,
+     "lut": 480,
+     "ff": 197,
+     "runtime_s": 239,
+     "source": "178b stored"
+    },
+    {
+     "set": "amd:Performance_Retiming",
+     "wns_ns": 0.021,
+     "lut": 480,
+     "ff": 197,
+     "runtime_s": 243,
+     "source": "178e run"
+    },
+    {
+     "set": "amd:Performance_EarlyBlockPlacement",
+     "wns_ns": 0.056,
+     "lut": 477,
+     "ff": 197,
+     "runtime_s": 247,
+     "source": "178e run"
+    },
+    {
+     "set": "amd:Performance_Auto_3",
+     "wns_ns": 0.007,
+     "lut": 477,
+     "ff": 197,
+     "runtime_s": 249,
+     "source": "178e run"
+    },
+    {
+     "set": "amd:Performance_NetDelay_low",
+     "wns_ns": 0.03,
+     "lut": 475,
+     "ff": 197,
+     "runtime_s": 298,
+     "source": "178e run"
+    },
+    {
+     "set": "amd:Performance_Auto_2",
+     "wns_ns": 0.035,
+     "lut": 480,
+     "ff": 197,
+     "runtime_s": 438,
+     "source": "178e run"
+    },
+    {
+     "set": "amd:Performance_NetDelay_high",
+     "wns_ns": 0.007,
+     "lut": 477,
+     "ff": 197,
+     "runtime_s": 594,
+     "source": "178b stored"
+    }
+   ]
+  }
+ }
+}

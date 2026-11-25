@@ -3,81 +3,81 @@
  "top": "kr260_top",
  "part": "xck26-sfvc784-2LV-c",
  "vivado": "2026.1 (Basic tier)",
- "build_id": "566ae800",
- "wall_s": 1356.8,
+ "build_id": "65a18c3f",
+ "wall_s": 1359.9,
  "run": {
   "design": "designs/b58a_trigger",
   "variant": "base",
   "exit_code": 0,
-  "wall_s": 1356.8,
-  "vivado_peak_rss_mib": 4369,
-  "scope_memory_peak_mib": 3862,
-  "scope_anon_peak_mib": 3678,
+  "wall_s": 1359.9,
+  "vivado_peak_rss_mib": 4471,
+  "scope_memory_peak_mib": 3855,
+  "scope_anon_peak_mib": 3784,
   "scope_swap_peak_mib": 0,
   "scope_cap_hits": 0,
   "scope_oom_kills": 0,
   "memory_cap": "6G",
-  "max_threads": 2,
+  "max_threads": 4,
   "nice": 15,
-  "scope_unit": "fda-vivado-3103447-base",
+  "scope_unit": "fda-vivado-2651408-base",
   "vivado_version": "2026.1",
-  "git_commit": "7171168e499624c5ba49d5b5daad66f13c9b2d52",
+  "git_commit": "ffc6bc490ad28ce113905b9257bd09bac943e6d8",
   "git_dirty": false,
-  "build_stamp": "52a4c291",
-  "sources_sha256": "52a4c29151df55a85b2c724dd1f8538e3bea8f7ff503a075dd6e1b8c96075a0d",
+  "build_stamp": "79d01c27",
+  "sources_sha256": "79d01c2793d47dfc90eee608806da397c2b58e6a1f22f523e302025fcd850c02",
   "stages_s": {
-   "read": 6.5,
-   "elaborate": 36.8,
-   "rtl_reports": 37.2,
-   "synth": 248.8,
-   "synth_reports": 1019.8,
-   "opt": 1034.9,
-   "place": 1172.3,
-   "phys_opt": 1180.6,
-   "place_reports": 1183.5,
-   "route": 1254.8,
-   "reports": 1307.1,
-   "bitstream": 1349.4
+   "read": 3.6,
+   "elaborate": 32.0,
+   "rtl_reports": 32.5,
+   "synth": 232.7,
+   "synth_reports": 1043.6,
+   "opt": 1059.0,
+   "place": 1168.7,
+   "phys_opt": 1178.8,
+   "place_reports": 1181.1,
+   "route": 1264.3,
+   "reports": 1303.0,
+   "bitstream": 1353.1
   },
   "cache": "fresh",
-  "flow_key": "ec24e5bbccf362290139e38944535d7d9c3028dfbb12248cf88e71c885583086",
-  "build_id": "566ae800"
+  "flow_key": "5df24bbd4cc5affa567479ef7f7e345e431d43be3cfa2248140218f032946a7e",
+  "build_id": "65a18c3f"
  },
  "timing_post_route": {
   "source": "gates.json timing (timing_summary.rpt)",
-  "wns_ns": 0.102,
-  "tns_ns": 0.0,
-  "tns_failing_endpoints": 0,
-  "whs_ns": 0.01,
+  "wns_ns": -0.003,
+  "tns_ns": -0.003,
+  "tns_failing_endpoints": 1,
+  "whs_ns": 0.012,
   "ths_ns": 0.0,
   "ths_failing_endpoints": 0,
-  "all_constraints_met": true
+  "all_constraints_met": false
  },
  "rgmii_io_slack_ns": {
   "source": "io_paths_route.txt, worst per port, direction and check",
   "a_rx_hold": 0.697,
   "a_rx_setup": 0.36,
-  "a_tx_hold": 0.533,
-  "a_tx_setup": 0.102,
+  "a_tx_hold": 0.133,
+  "a_tx_setup": 0.002,
   "b_rx_hold": 0.238,
   "b_rx_setup": 0.642,
-  "b_tx_hold": 0.516,
-  "b_tx_setup": 0.137
+  "b_tx_hold": 0.076,
+  "b_tx_setup": -0.003
  },
  "rgmii_constraints": {
-  "rx": "centre-aligned, PHY RX delay on (register 20.7 = 1; the 88E1111 datasheet's 1.2/1.2 ns); -max 2.8, -min 1.2 on both edges; IDELAYE3 1000 ps on each data input",
-  "tx": "edge-aligned forwarded TXC, PHY TX delay on (register 20.1 = 1); the 88E1111 datasheet window (a change up to 0.9 ns after its edge, no earlier than 1.3 ns before the next) less an assumed 0.1 ns board skew: -max 3.2, -min +1.2 on both edges"
+  "rx": "centre-aligned, PHY RX delay on (DP83867 RGMIICTL bit 0 = 1, RGMIIDCTL[3:0] = 2.0 ns; the datasheet's 1.2/1.2 ns); -max 2.8, -min 1.2 on both edges; IDELAYE3 1000 ps on each data input",
+  "tx": "edge-aligned forwarded TXC, PHY TX delay 1.75 ns (RGMIIDCTL[7:4] = 0110); the DP83867 datasheet's 1.0 to 2.6 ns clock-after-data window gives a change up to 0.75 ns after its edge, no earlier than 0.85 ns before the next, less the carrier skew bound (0.05 ns port A, 0.09 ns port B): port A -max 3.30, -min +0.80; port B -max 3.34, -min +0.76, on both edges"
  },
  "utilisation": {
   "CLB LUTs": {
-   "used": 7225.0,
+   "used": 7305.0,
    "available": 117120.0,
-   "pct": 6.17
+   "pct": 6.24
   },
   "CLB Registers": {
-   "used": 10318.0,
+   "used": 10347.0,
    "available": 234240.0,
-   "pct": 4.4
+   "pct": 4.42
   },
   "Block RAM Tile": {
    "used": 6.5,
@@ -100,7 +100,9 @@
   "junction_c": 43.7,
   "environment": "still air, no heat sink, 40 C ambient: the pessimistic bound (boards/kr260/board.yaml)"
  },
- "first_failed_stage": null,
- "gates_failed": [],
- "note": "Every gate passes."
+ "first_failed_stage": "post_route",
+ "gates_failed": [
+  "setup"
+ ],
+ "note": "1 gate(s) fail: setup. Setup or hold fails on the RGMII transmit pins; reported, not waived."
 }

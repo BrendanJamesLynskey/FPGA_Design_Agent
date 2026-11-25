@@ -1,0 +1,135 @@
+{
+ "stages": {
+  "smoke": {
+   "stage": "smoke",
+   "pass": false,
+   "reasons": [
+    "the session produced no order: not a test"
+   ],
+   "numbers": {
+    "packets": 29,
+    "orders_model": 0,
+    "orders_sent": 0,
+    "aborted_speculative": 0,
+    "capture": {
+     "captured": 0,
+     "good": 0,
+     "model_orders": 0,
+     "compared": 0,
+     "problems": []
+    },
+    "lat_hist_nonzero": {}
+   }
+  },
+  "counters": {
+   "stage": "counters",
+   "pass": true,
+   "reasons": [],
+   "numbers": {
+    "packets": 35,
+    "frames_played": 38,
+    "orders_model": 1,
+    "us": {
+     "us.frames": 39,
+     "us.fwd": 35,
+     "us.drop_off": 0,
+     "us.drop_mac": 1,
+     "us.drop_type": 0,
+     "us.drop_frag": 0,
+     "us.drop_proto": 3,
+     "us.drop_dip": 0,
+     "us.drop_port": 0,
+     "us.drop_len": 0,
+     "us.drop_ipck": 0,
+     "us.bad_fcs": 0,
+     "us.cut": 0,
+     "us.orphan": 0,
+     "us.cap_n": 4
+    }
+   }
+  },
+  "latency_at_verdict": {
+   "stage": "latency",
+   "pass": true,
+   "reasons": [],
+   "numbers": {
+    "mode": "at_verdict",
+    "orders": 8,
+    "min": 10,
+    "max": 11,
+    "hist": {
+     "10": 7,
+     "11": 1
+    },
+    "predicted_clocks": [
+     10,
+     11
+    ],
+    "clock_ns": 6.2058
+   }
+  },
+  "latency_speculative": {
+   "stage": "latency",
+   "pass": true,
+   "reasons": [],
+   "numbers": {
+    "mode": "speculative",
+    "orders": 8,
+    "min": 5,
+    "max": 5,
+    "hist": {
+     "5": 8
+    },
+    "predicted_clocks": [
+     5,
+     6
+    ],
+    "clock_ns": 6.2058
+   }
+  },
+  "rate": {
+   "stage": "rate",
+   "pass": true,
+   "reasons": [],
+   "numbers": {
+    "frames": 38,
+    "frame_bytes": [
+     162,
+     87,
+     99
+    ],
+    "evdrop": 0,
+    "dup": 19,
+    "rp_frames_before": 87,
+    "rp_frames_after": 125
+   }
+  },
+  "risk": {
+   "stage": "risk",
+   "pass": true,
+   "reasons": [],
+   "numbers": {
+    "orders_before_kill": 4,
+    "orders_with_kill": 0,
+    "orders_with_limit": 1
+   }
+  },
+  "all_pass": false
+ },
+ "sizes": {
+  "smoke": {
+   "n_msgs": 20
+  },
+  "counters": {
+   "n_msgs": 20
+  },
+  "rate": {
+   "passes": 2
+  },
+  "risk": {},
+  "latency_passes": 1
+ },
+ "simulation_runs": 8,
+ "simulation": "whole core, xsim 2026.1, real XPM macros, GT stand-in, phase 0 ps, one continuous session from reset",
+ "note": "Attempt 1 (2026-11-22, 2 h 19 min, 8 simulations): smoke was sized at 20 messages, which gave no order, so smoke failed on 'no order: not a test' (the stage's own guard) - a test-sizing mistake, not a harness or design fault. Every other stage passed, rate included, with rp_frames_before 87 (29 + 38 + 2 x 10) and rp_frames_after 125 for 38 frames of its own: the old absolute check would have read 125 of 38. Attempt 2 uses smoke 30 messages (the size of the existing single-stage dry run) and leaves out risk; see stages_continuous_sim.json."
+}
