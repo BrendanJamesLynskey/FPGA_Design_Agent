@@ -10578,14 +10578,22 @@
      {
       "gate": false,
       "id": "ADD-F-PACKAGE",
-      "text": "functional requirement: passes, but the required mix of methods is not met; lacks a simulation check from a bench the implementing agent did not write",
-      "type": "method_mix_missing"
+      "state": "stale",
+      "text": "its evidence is stale",
+      "type": "no_passing_evidence"
      },
      {
       "gate": false,
-      "id": "ADD-F-PACKAGE",
-      "text": "everything that passes is a test the implementing agent wrote (or whose author is not recorded); the house rule is that these never count alone",
-      "type": "own_tests_only"
+      "id": "ADD-P-OOC",
+      "state": "stale",
+      "text": "its evidence is stale",
+      "type": "no_passing_evidence"
+     },
+     {
+      "gate": false,
+      "id": "V-ADD-PACKAGE",
+      "text": "changed since the evidence was recorded: arith/adder/spec.md",
+      "type": "stale_evidence"
      },
      {
       "gate": false,
@@ -10598,6 +10606,12 @@
       "id": "V-ADD-LEAN-SUB",
       "text": "the Lean statement is not approved by a human; until it is, the proof is not counted as verification",
       "type": "lean_statement_unapproved"
+     },
+     {
+      "gate": false,
+      "id": "V-ADD-OOC",
+      "text": "the evidence file changed after it was pinned (run: python -m flow.trace_v1 pin)",
+      "type": "stale_evidence"
      }
     ],
     "items": [
@@ -10776,7 +10790,8 @@
       "requirements": [
        "ADD-F-PACKAGE"
       ],
-      "status": "pass",
+      "stale_because": "changed since the evidence was recorded: arith/adder/spec.md",
+      "status": "stale",
       "title": "spec.yaml against the RTL headers, spec.md against spec.yaml, Verilator -Wall at every point, wrappers and build.yaml current and lint-clean",
       "value": "5 of 5 tests passed",
       "written_by": null
@@ -10872,7 +10887,8 @@
       "requirements": [
        "ADD-P-OOC"
       ],
-      "status": "pass",
+      "stale_because": "the evidence file changed after it was pinned (run: python -m flow.trace_v1 pin)",
+      "status": "stale",
       "title": "The routed Vivado results of every prepared point (the records of the last run)",
       "value": 20,
       "written_by": null
@@ -11097,19 +11113,15 @@
       ],
       "kind": "functional",
       "lean_transcription_only": false,
-      "missing_methods": [
-       "a simulation check from a bench the implementing agent did not write"
-      ],
+      "missing_methods": [],
       "mix_satisfied": false,
-      "own_tests_only": true,
-      "passing_methods": [
-       "sim_test"
-      ],
+      "own_tests_only": false,
+      "passing_methods": [],
       "rests_on_delegated": false,
       "source": "arith/adder/spec.yaml",
       "spec_status": "draft",
-      "stale_items": 0,
-      "state": "partially_verified",
+      "stale_items": 1,
+      "state": "stale",
       "text": "spec.yaml states an interface contract (protocol, throughput, latency, reset, clock, stalls) and integration guidance (port timing, constraints to carry). Every variant passes Verilator -Wall at every point of spec.yaml; its ports and default parameters are the ones spec.yaml states; its header states the intended primitive use before any Vivado run; spec.md is the rendering of spec.yaml; the out-of-context wrapper and the build.yaml for each variant (Artix-7 xc7a100t and K26 xck26, prepared in 139a and run in brief 160) are current and lint-clean at every point they list, so a Vivado run can start from the repository alone.",
       "title": "The RTL is lint-clean, and its files agree with the specification and with the Vivado build files",
       "waivers": []
@@ -11178,7 +11190,7 @@
       "agreement_date": null,
       "agreement_dropped": false,
       "agreement_note": "",
-      "basis": "timing",
+      "basis": null,
       "hardware_closure": null,
       "hardware_only": false,
       "hardware_verified": false,
@@ -11189,11 +11201,9 @@
       "kind": "performance",
       "lean_transcription_only": false,
       "missing_methods": [],
-      "mix_satisfied": true,
+      "mix_satisfied": false,
       "own_tests_only": false,
-      "passing_methods": [
-       "timing"
-      ],
+      "passing_methods": [],
       "performance": {
        "bound": 20,
        "condition": "Vivado 2026.1 out-of-context, one thread, the clocks of the build files, brief 160",
@@ -11204,8 +11214,8 @@
       "rests_on_delegated": false,
       "source": "arith/adder/spec.md",
       "spec_status": "draft",
-      "stale_items": 0,
-      "state": "verified",
+      "stale_items": 1,
+      "state": "stale",
       "text": "Each point of the build files of adder (build/<variant>/build.yaml; 20 in all, both parts) goes through Vivado 2026.1 out-of-context synthesis, placement and routing and leaves a recorded result (utilisation, WNS, WHS, Fmax, logic levels, vectorless power) in verif/results/vivado_ooc_<variant>_<part>.json. The measured values and each point's pre-stated expectation are in the Measured table of spec.md and in verif/results/vivado_surface.json; this requirement states only that the measurement exists for every point, because no Fmax or area bound has been agreed.",
       "title": "Every prepared point places and routes out of context on Artix-7 and K26",
       "waivers": []
@@ -11300,9 +11310,9 @@
        "fail": 0,
        "not_in_run": 0,
        "not_run": 0,
-       "pass": 7,
+       "pass": 6,
        "skipped": 0,
-       "stale": 0,
+       "stale": 1,
        "unapproved": 0
       },
       "timing": {
@@ -11310,9 +11320,9 @@
        "fail": 0,
        "not_in_run": 0,
        "not_run": 0,
-       "pass": 1,
+       "pass": 0,
        "skipped": 0,
-       "stale": 0,
+       "stale": 1,
        "unapproved": 0
       },
       "uvm_test": {
@@ -11327,17 +11337,20 @@
       }
      },
      "by_state": {
-      "partially_verified": 6,
+      "partially_verified": 5,
+      "stale": 2,
       "unapproved": 2,
-      "verified": 2
+      "verified": 1
      },
      "delegated_reviews": 0,
      "external": 0,
      "external_hardware_done": 0,
      "gap_counts": {
       "lean_statement_unapproved": 2,
-      "method_mix_missing": 6,
-      "own_tests_only": 6
+      "method_mix_missing": 5,
+      "no_passing_evidence": 2,
+      "own_tests_only": 5,
+      "stale_evidence": 2
      },
      "human_reviews": 0,
      "items": 13,
@@ -11364,11 +11377,11 @@
       "items": 2,
       "statement_not_approved": 2
      },
-     "line": "10 requirements (9 functional, 1 performance); 2 verified; 6 partially verified (the required mix of methods is not met); performance verified: 0 on the board, 1 by post-route timing, 0 in simulation only; 0 of 10 requirements agreed by a human, 0 agreed on the owner's delegation (not human), 10 draft; 6 resting only on the implementing agent's own tests; 0 human and 0 delegated review(s) recorded; 2 Lean proof item(s) (all widths): 0 with a human-approved statement, 0 with a statement accepted on the owner's delegation (not a human approval), 2 with statement not approved; 2 kernel only, 0 using a compiled decision procedure; build status from: recorded build (not re-run).",
-     "own_tests_only": 6,
+     "line": "10 requirements (9 functional, 1 performance); 1 verified; 5 partially verified (the required mix of methods is not met); 2 stale; 0 of 10 requirements agreed by a human, 0 agreed on the owner's delegation (not human), 10 draft; 5 resting only on the implementing agent's own tests; 0 human and 0 delegated review(s) recorded; 2 Lean proof item(s) (all widths): 0 with a human-approved statement, 0 with a statement accepted on the owner's delegation (not a human approval), 2 with statement not approved; 2 kernel only, 0 using a compiled decision procedure; build status from: recorded build (not re-run).",
+     "own_tests_only": 5,
      "performance_board": 0,
      "performance_sim_only": 0,
-     "performance_timing": 1,
+     "performance_timing": 0,
      "requirements": 10,
      "spec_agreed": 0,
      "verified_on_delegated": 0,
@@ -26986,6 +26999,13 @@
      },
      {
       "gate": false,
+      "id": "FXR-P-OOC",
+      "state": "stale",
+      "text": "its evidence is stale",
+      "type": "no_passing_evidence"
+     },
+     {
+      "gate": false,
       "id": "V-LEAN-FXR-CONV-FOLD",
       "text": "the Lean statement is not approved by a human; until it is, the proof is not counted as verification",
       "type": "lean_statement_unapproved"
@@ -27019,6 +27039,12 @@
       "id": "V-LEAN-FXR-TRUNC-ERR",
       "text": "the Lean statement is not approved by a human; until it is, the proof is not counted as verification",
       "type": "lean_statement_unapproved"
+     },
+     {
+      "gate": false,
+      "id": "V-FXR-OOC",
+      "text": "the evidence file changed after it was pinned (run: python -m flow.trace_v1 pin)",
+      "type": "stale_evidence"
      }
     ],
     "items": [
@@ -27506,7 +27532,8 @@
       "requirements": [
        "FXR-P-OOC"
       ],
-      "status": "pass",
+      "stale_because": "the evidence file changed after it was pinned (run: python -m flow.trace_v1 pin)",
+      "status": "stale",
       "title": "The routed Vivado results of every prepared point (the records of the last run)",
       "value": 24,
       "written_by": null
@@ -27883,7 +27910,7 @@
       "agreement_date": null,
       "agreement_dropped": false,
       "agreement_note": "",
-      "basis": "timing",
+      "basis": null,
       "hardware_closure": null,
       "hardware_only": false,
       "hardware_verified": false,
@@ -27894,11 +27921,9 @@
       "kind": "performance",
       "lean_transcription_only": false,
       "missing_methods": [],
-      "mix_satisfied": true,
+      "mix_satisfied": false,
       "own_tests_only": false,
-      "passing_methods": [
-       "timing"
-      ],
+      "passing_methods": [],
       "performance": {
        "bound": 24,
        "condition": "Vivado 2026.1 out-of-context, one thread, the clocks of the build files, brief 160",
@@ -27909,8 +27934,8 @@
       "rests_on_delegated": false,
       "source": "arith/fxp_round/spec.md",
       "spec_status": "draft",
-      "stale_items": 0,
-      "state": "verified",
+      "stale_items": 1,
+      "state": "stale",
       "text": "Each point of the build files of fxp_round (build/<variant>/build.yaml; 24 in all, both parts) goes through Vivado 2026.1 out-of-context synthesis, placement and routing and leaves a recorded result (utilisation, WNS, WHS, Fmax, logic levels, vectorless power) in verif/results/vivado_ooc_<variant>_<part>.json. The measured values and each point's pre-stated expectation are in the Measured table of spec.md and in verif/results/vivado_surface.json; this requirement states only that the measurement exists for every point, because no Fmax or area bound has been agreed.",
       "title": "Every prepared point places and routes out of context on Artix-7 and K26",
       "waivers": []
@@ -28015,9 +28040,9 @@
        "fail": 0,
        "not_in_run": 0,
        "not_run": 0,
-       "pass": 1,
+       "pass": 0,
        "skipped": 0,
-       "stale": 0,
+       "stale": 1,
        "unapproved": 0
       },
       "uvm_test": {
@@ -28033,8 +28058,9 @@
      },
      "by_state": {
       "partially_verified": 7,
+      "stale": 1,
       "unapproved": 2,
-      "verified": 3
+      "verified": 2
      },
      "delegated_reviews": 0,
      "external": 0,
@@ -28042,7 +28068,9 @@
      "gap_counts": {
       "lean_statement_unapproved": 6,
       "method_mix_missing": 7,
-      "own_tests_only": 7
+      "no_passing_evidence": 1,
+      "own_tests_only": 7,
+      "stale_evidence": 1
      },
      "human_reviews": 0,
      "items": 20,
@@ -28069,11 +28097,11 @@
       "items": 6,
       "statement_not_approved": 6
      },
-     "line": "12 requirements (11 functional, 1 performance); 3 verified; 7 partially verified (the required mix of methods is not met); performance verified: 0 on the board, 1 by post-route timing, 0 in simulation only; 0 of 12 requirements agreed by a human, 0 agreed on the owner's delegation (not human), 12 draft; 7 resting only on the implementing agent's own tests; 0 human and 0 delegated review(s) recorded; 6 Lean proof item(s) (all widths): 0 with a human-approved statement, 0 with a statement accepted on the owner's delegation (not a human approval), 6 with statement not approved; 6 kernel only, 0 using a compiled decision procedure; build status from: recorded build (not re-run).",
+     "line": "12 requirements (11 functional, 1 performance); 2 verified; 7 partially verified (the required mix of methods is not met); 1 stale; 0 of 12 requirements agreed by a human, 0 agreed on the owner's delegation (not human), 12 draft; 7 resting only on the implementing agent's own tests; 0 human and 0 delegated review(s) recorded; 6 Lean proof item(s) (all widths): 0 with a human-approved statement, 0 with a statement accepted on the owner's delegation (not a human approval), 6 with statement not approved; 6 kernel only, 0 using a compiled decision procedure; build status from: recorded build (not re-run).",
      "own_tests_only": 7,
      "performance_board": 0,
      "performance_sim_only": 0,
-     "performance_timing": 1,
+     "performance_timing": 0,
      "requirements": 12,
      "spec_agreed": 0,
      "verified_on_delegated": 0,
@@ -36195,7 +36223,7 @@
   "total": {
    "designs": 36,
    "requirements": 391,
-   "verified": 69
+   "verified": 67
   }
  },
  "content": {
@@ -46777,14 +46805,22 @@
      {
       "gate": false,
       "id": "ADD-F-PACKAGE",
-      "text": "functional requirement: passes, but the required mix of methods is not met; lacks a simulation check from a bench the implementing agent did not write",
-      "type": "method_mix_missing"
+      "state": "stale",
+      "text": "its evidence is stale",
+      "type": "no_passing_evidence"
      },
      {
       "gate": false,
-      "id": "ADD-F-PACKAGE",
-      "text": "everything that passes is a test the implementing agent wrote (or whose author is not recorded); the house rule is that these never count alone",
-      "type": "own_tests_only"
+      "id": "ADD-P-OOC",
+      "state": "stale",
+      "text": "its evidence is stale",
+      "type": "no_passing_evidence"
+     },
+     {
+      "gate": false,
+      "id": "V-ADD-PACKAGE",
+      "text": "changed since the evidence was recorded: arith/adder/spec.md",
+      "type": "stale_evidence"
      },
      {
       "gate": false,
@@ -46797,6 +46833,12 @@
       "id": "V-ADD-LEAN-SUB",
       "text": "the Lean statement is not approved by a human; until it is, the proof is not counted as verification",
       "type": "lean_statement_unapproved"
+     },
+     {
+      "gate": false,
+      "id": "V-ADD-OOC",
+      "text": "the evidence file changed after it was pinned (run: python -m flow.trace_v1 pin)",
+      "type": "stale_evidence"
      }
     ],
     "items": [
@@ -46975,7 +47017,8 @@
       "requirements": [
        "ADD-F-PACKAGE"
       ],
-      "status": "pass",
+      "stale_because": "changed since the evidence was recorded: arith/adder/spec.md",
+      "status": "stale",
       "title": "spec.yaml against the RTL headers, spec.md against spec.yaml, Verilator -Wall at every point, wrappers and build.yaml current and lint-clean",
       "value": "5 of 5 tests passed",
       "written_by": null
@@ -47071,7 +47114,8 @@
       "requirements": [
        "ADD-P-OOC"
       ],
-      "status": "pass",
+      "stale_because": "the evidence file changed after it was pinned (run: python -m flow.trace_v1 pin)",
+      "status": "stale",
       "title": "The routed Vivado results of every prepared point (the records of the last run)",
       "value": 20,
       "written_by": null
@@ -47296,19 +47340,15 @@
       ],
       "kind": "functional",
       "lean_transcription_only": false,
-      "missing_methods": [
-       "a simulation check from a bench the implementing agent did not write"
-      ],
+      "missing_methods": [],
       "mix_satisfied": false,
-      "own_tests_only": true,
-      "passing_methods": [
-       "sim_test"
-      ],
+      "own_tests_only": false,
+      "passing_methods": [],
       "rests_on_delegated": false,
       "source": "arith/adder/spec.yaml",
       "spec_status": "draft",
-      "stale_items": 0,
-      "state": "partially_verified",
+      "stale_items": 1,
+      "state": "stale",
       "text": "spec.yaml states an interface contract (protocol, throughput, latency, reset, clock, stalls) and integration guidance (port timing, constraints to carry). Every variant passes Verilator -Wall at every point of spec.yaml; its ports and default parameters are the ones spec.yaml states; its header states the intended primitive use before any Vivado run; spec.md is the rendering of spec.yaml; the out-of-context wrapper and the build.yaml for each variant (Artix-7 xc7a100t and K26 xck26, prepared in 139a and run in brief 160) are current and lint-clean at every point they list, so a Vivado run can start from the repository alone.",
       "title": "The RTL is lint-clean, and its files agree with the specification and with the Vivado build files",
       "waivers": []
@@ -47377,7 +47417,7 @@
       "agreement_date": null,
       "agreement_dropped": false,
       "agreement_note": "",
-      "basis": "timing",
+      "basis": null,
       "hardware_closure": null,
       "hardware_only": false,
       "hardware_verified": false,
@@ -47388,11 +47428,9 @@
       "kind": "performance",
       "lean_transcription_only": false,
       "missing_methods": [],
-      "mix_satisfied": true,
+      "mix_satisfied": false,
       "own_tests_only": false,
-      "passing_methods": [
-       "timing"
-      ],
+      "passing_methods": [],
       "performance": {
        "bound": 20,
        "condition": "Vivado 2026.1 out-of-context, one thread, the clocks of the build files, brief 160",
@@ -47403,8 +47441,8 @@
       "rests_on_delegated": false,
       "source": "arith/adder/spec.md",
       "spec_status": "draft",
-      "stale_items": 0,
-      "state": "verified",
+      "stale_items": 1,
+      "state": "stale",
       "text": "Each point of the build files of adder (build/<variant>/build.yaml; 20 in all, both parts) goes through Vivado 2026.1 out-of-context synthesis, placement and routing and leaves a recorded result (utilisation, WNS, WHS, Fmax, logic levels, vectorless power) in verif/results/vivado_ooc_<variant>_<part>.json. The measured values and each point's pre-stated expectation are in the Measured table of spec.md and in verif/results/vivado_surface.json; this requirement states only that the measurement exists for every point, because no Fmax or area bound has been agreed.",
       "title": "Every prepared point places and routes out of context on Artix-7 and K26",
       "waivers": []
@@ -47499,9 +47537,9 @@
        "fail": 0,
        "not_in_run": 0,
        "not_run": 0,
-       "pass": 7,
+       "pass": 6,
        "skipped": 0,
-       "stale": 0,
+       "stale": 1,
        "unapproved": 0
       },
       "timing": {
@@ -47509,9 +47547,9 @@
        "fail": 0,
        "not_in_run": 0,
        "not_run": 0,
-       "pass": 1,
+       "pass": 0,
        "skipped": 0,
-       "stale": 0,
+       "stale": 1,
        "unapproved": 0
       },
       "uvm_test": {
@@ -47526,17 +47564,20 @@
       }
      },
      "by_state": {
-      "partially_verified": 6,
+      "partially_verified": 5,
+      "stale": 2,
       "unapproved": 2,
-      "verified": 2
+      "verified": 1
      },
      "delegated_reviews": 0,
      "external": 0,
      "external_hardware_done": 0,
      "gap_counts": {
       "lean_statement_unapproved": 2,
-      "method_mix_missing": 6,
-      "own_tests_only": 6
+      "method_mix_missing": 5,
+      "no_passing_evidence": 2,
+      "own_tests_only": 5,
+      "stale_evidence": 2
      },
      "human_reviews": 0,
      "items": 13,
@@ -47563,11 +47604,11 @@
       "items": 2,
       "statement_not_approved": 2
      },
-     "line": "10 requirements (9 functional, 1 performance); 2 verified; 6 partially verified (the required mix of methods is not met); performance verified: 0 on the board, 1 by post-route timing, 0 in simulation only; 0 of 10 requirements agreed by a human, 0 agreed on the owner's delegation (not human), 10 draft; 6 resting only on the implementing agent's own tests; 0 human and 0 delegated review(s) recorded; 2 Lean proof item(s) (all widths): 0 with a human-approved statement, 0 with a statement accepted on the owner's delegation (not a human approval), 2 with statement not approved; 2 kernel only, 0 using a compiled decision procedure; build status from: recorded build (not re-run).",
-     "own_tests_only": 6,
+     "line": "10 requirements (9 functional, 1 performance); 1 verified; 5 partially verified (the required mix of methods is not met); 2 stale; 0 of 10 requirements agreed by a human, 0 agreed on the owner's delegation (not human), 10 draft; 5 resting only on the implementing agent's own tests; 0 human and 0 delegated review(s) recorded; 2 Lean proof item(s) (all widths): 0 with a human-approved statement, 0 with a statement accepted on the owner's delegation (not a human approval), 2 with statement not approved; 2 kernel only, 0 using a compiled decision procedure; build status from: recorded build (not re-run).",
+     "own_tests_only": 5,
      "performance_board": 0,
      "performance_sim_only": 0,
-     "performance_timing": 1,
+     "performance_timing": 0,
      "requirements": 10,
      "spec_agreed": 0,
      "verified_on_delegated": 0,
@@ -63185,6 +63226,13 @@
      },
      {
       "gate": false,
+      "id": "FXR-P-OOC",
+      "state": "stale",
+      "text": "its evidence is stale",
+      "type": "no_passing_evidence"
+     },
+     {
+      "gate": false,
       "id": "V-LEAN-FXR-CONV-FOLD",
       "text": "the Lean statement is not approved by a human; until it is, the proof is not counted as verification",
       "type": "lean_statement_unapproved"
@@ -63218,6 +63266,12 @@
       "id": "V-LEAN-FXR-TRUNC-ERR",
       "text": "the Lean statement is not approved by a human; until it is, the proof is not counted as verification",
       "type": "lean_statement_unapproved"
+     },
+     {
+      "gate": false,
+      "id": "V-FXR-OOC",
+      "text": "the evidence file changed after it was pinned (run: python -m flow.trace_v1 pin)",
+      "type": "stale_evidence"
      }
     ],
     "items": [
@@ -63705,7 +63759,8 @@
       "requirements": [
        "FXR-P-OOC"
       ],
-      "status": "pass",
+      "stale_because": "the evidence file changed after it was pinned (run: python -m flow.trace_v1 pin)",
+      "status": "stale",
       "title": "The routed Vivado results of every prepared point (the records of the last run)",
       "value": 24,
       "written_by": null
@@ -64082,7 +64137,7 @@
       "agreement_date": null,
       "agreement_dropped": false,
       "agreement_note": "",
-      "basis": "timing",
+      "basis": null,
       "hardware_closure": null,
       "hardware_only": false,
       "hardware_verified": false,
@@ -64093,11 +64148,9 @@
       "kind": "performance",
       "lean_transcription_only": false,
       "missing_methods": [],
-      "mix_satisfied": true,
+      "mix_satisfied": false,
       "own_tests_only": false,
-      "passing_methods": [
-       "timing"
-      ],
+      "passing_methods": [],
       "performance": {
        "bound": 24,
        "condition": "Vivado 2026.1 out-of-context, one thread, the clocks of the build files, brief 160",
@@ -64108,8 +64161,8 @@
       "rests_on_delegated": false,
       "source": "arith/fxp_round/spec.md",
       "spec_status": "draft",
-      "stale_items": 0,
-      "state": "verified",
+      "stale_items": 1,
+      "state": "stale",
       "text": "Each point of the build files of fxp_round (build/<variant>/build.yaml; 24 in all, both parts) goes through Vivado 2026.1 out-of-context synthesis, placement and routing and leaves a recorded result (utilisation, WNS, WHS, Fmax, logic levels, vectorless power) in verif/results/vivado_ooc_<variant>_<part>.json. The measured values and each point's pre-stated expectation are in the Measured table of spec.md and in verif/results/vivado_surface.json; this requirement states only that the measurement exists for every point, because no Fmax or area bound has been agreed.",
       "title": "Every prepared point places and routes out of context on Artix-7 and K26",
       "waivers": []
@@ -64214,9 +64267,9 @@
        "fail": 0,
        "not_in_run": 0,
        "not_run": 0,
-       "pass": 1,
+       "pass": 0,
        "skipped": 0,
-       "stale": 0,
+       "stale": 1,
        "unapproved": 0
       },
       "uvm_test": {
@@ -64232,8 +64285,9 @@
      },
      "by_state": {
       "partially_verified": 7,
+      "stale": 1,
       "unapproved": 2,
-      "verified": 3
+      "verified": 2
      },
      "delegated_reviews": 0,
      "external": 0,
@@ -64241,7 +64295,9 @@
      "gap_counts": {
       "lean_statement_unapproved": 6,
       "method_mix_missing": 7,
-      "own_tests_only": 7
+      "no_passing_evidence": 1,
+      "own_tests_only": 7,
+      "stale_evidence": 1
      },
      "human_reviews": 0,
      "items": 20,
@@ -64268,11 +64324,11 @@
       "items": 6,
       "statement_not_approved": 6
      },
-     "line": "12 requirements (11 functional, 1 performance); 3 verified; 7 partially verified (the required mix of methods is not met); performance verified: 0 on the board, 1 by post-route timing, 0 in simulation only; 0 of 12 requirements agreed by a human, 0 agreed on the owner's delegation (not human), 12 draft; 7 resting only on the implementing agent's own tests; 0 human and 0 delegated review(s) recorded; 6 Lean proof item(s) (all widths): 0 with a human-approved statement, 0 with a statement accepted on the owner's delegation (not a human approval), 6 with statement not approved; 6 kernel only, 0 using a compiled decision procedure; build status from: recorded build (not re-run).",
+     "line": "12 requirements (11 functional, 1 performance); 2 verified; 7 partially verified (the required mix of methods is not met); 1 stale; 0 of 12 requirements agreed by a human, 0 agreed on the owner's delegation (not human), 12 draft; 7 resting only on the implementing agent's own tests; 0 human and 0 delegated review(s) recorded; 6 Lean proof item(s) (all widths): 0 with a human-approved statement, 0 with a statement accepted on the owner's delegation (not a human approval), 6 with statement not approved; 6 kernel only, 0 using a compiled decision procedure; build status from: recorded build (not re-run).",
      "own_tests_only": 7,
      "performance_board": 0,
      "performance_sim_only": 0,
-     "performance_timing": 1,
+     "performance_timing": 0,
      "requirements": 12,
      "spec_agreed": 0,
      "verified_on_delegated": 0,
@@ -72394,7 +72450,7 @@
   "total": {
    "designs": 36,
    "requirements": 391,
-   "verified": 69
+   "verified": 67
   }
  }
 }
