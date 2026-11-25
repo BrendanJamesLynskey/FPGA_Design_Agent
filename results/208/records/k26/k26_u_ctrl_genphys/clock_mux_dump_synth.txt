@@ -1,0 +1,14 @@
+PART	xck26-sfvc784-2LV-c	zynquplus	us
+MUX	g_bufgmux_ctrl.u_mux	BUFGCTRL	BUFGCTRL	2
+MUXIN	g_bufgmux_ctrl.u_mux	I0	clk0_p_IBUF_inst/IBUFCTRL_INST	IBUFCTRL	clk0
+MUXIN	g_bufgmux_ctrl.u_mux	I1	clk1_p_IBUF_inst/IBUFCTRL_INST	IBUFCTRL	clk1
+MUXOUT	g_bufgmux_ctrl.u_mux	clk0mux,clk1mux
+MUXCTL	g_bufgmux_ctrl.u_mux	CE0	1	VCC_1	VCC
+MUXCTL	g_bufgmux_ctrl.u_mux	CE1	1	VCC_1	VCC
+MUXCTL	g_bufgmux_ctrl.u_mux	IGNORE0	0	GND_1	GND
+MUXCTL	g_bufgmux_ctrl.u_mux	IGNORE1	0	GND_1	GND
+MUXCTL	g_bufgmux_ctrl.u_mux	S0	-	sel_r_reg	FDRE
+MUXCTL	g_bufgmux_ctrl.u_mux	S1	-	sel_r_reg	FDRE
+FANOUT	g_bufgmux_ctrl.u_mux	33
+INTER	g_bufgmux_ctrl.u_mux	A	1056	r0_reg[0] -> g_int.rm_reg[0]
+INTER	g_bufgmux_ctrl.u_mux	C	32	g_int.rm_reg[0] -> g_int.back_reg[0]

@@ -636,6 +636,28 @@ def _clocking(ctx: Ctx) -> dict[str, Any]:
     return _result(fs, parts, recs)
 
 
+
+def _clock_mux(ctx: Ctx) -> dict[str, Any]:
+    """Brief 208: clock multiplexers (flow/clock_mux_check.py on flow/clock_mux_dump.tcl's netlist scan, with the
+    clock-interaction report): a LUT on a clock path, a mux whose modes are still timed against each other, clock groups on
+    the mux's source clocks while paths join a source tree and the mux fanout (they hide real paths), and advisories for a
+    case-analysed select, a CE-pin select, an external clock with IGNORE tied, and a deep BUFGCTRL cascade."""
+    if ctx.scope == "rtl":
+        return _not_run("needs a synthesised netlist (scope synth or route)")
+    p = ctx.report("clock_mux")
+    if p is None:
+        return _not_run(ctx.not_run_reason("clock_mux"))
+    from flow import clock_mux_check as CM
+    from flow.constraint_gates import parse_clock_pairs
+    ci = ctx.report("clock_interaction")
+    pairs = parse_clock_pairs(ci.read_text(errors="replace")) if ci else None
+    fs = [{"tool": "clock_mux", "code": f["code"], "severity": "error" if f["blocking"] else "advisory", "where": f["where"],
+           "key": f"clock_mux:{f['code']} {f['where']}", "message": f["message"], "blocking": f["blocking"]}
+          for f in CM.findings(CM.parse_dump(p.read_text(errors="replace")), pairs)]
+    parts = {"clock_mux": "ran", "clock_interaction": "ran" if ci else "not run: " + ctx.not_run_reason("clock_interaction")}
+    return _result(fs, parts, [p, ci])
+
+
 def _dsp_ram(ctx: Ctx) -> dict[str, Any]:
     """DSP and block-RAM mapping: AMD's DPIP/DPOP pipelining rows and SYNTH rows (methodology), RBOR and REQP RAM rows
     (DRC), and the utilisation of DSP and RAM. Critical rows fail; the rest are advice."""
@@ -1027,6 +1049,11 @@ register(Check("io", "records", POST, {"io": ("IO-*", "IOB-*")},
 register(Check("clocking", "vivado", POST, {"vivado": ("CLKC-*",), "clocking": ("CMT-RANGE-01",)},
                "AMD's CLKC methodology rows and the MMCM/PLL VCO and PFD range check (flow/cmt_check.tcl)", _clocking,
                reports=("methodology", "cmt")))
+register(Check("clock_mux", "vivado", POST, {"clock_mux": ("CLKMUX-LUT", "CLKMUX-NO-GROUPS", "CLKMUX-SRC-GROUPED", "CLKMUX-CASE",
+                                                       "CLKMUX-CE-SELECT", "CLKMUX-STOP", "CLKMUX-CASCADE", "CLKMUX-UNTRACED")},
+               "clock multiplexers (brief 208, flow/clock_mux_check.py): a LUT on a clock path, mux modes timed against each other, "
+               "clock groups on the source clocks that hide real paths, and advisories (case-analysed select, CE select, stoppable "
+               "input with IGNORE tied, deep cascade)", _clock_mux, reports=("clock_mux", "clock_interaction")))
 register(Check("xpm_sim", "source", ALL, {"xpm_sim": ("XPM-SIM-01",)},
                "advisory: an xpm_cdc instance whose SIM_ASSERT_CHK is not 1, which turns off the macro's own simulation warnings "
                "(flow/constraint_gates.py, brief 105A)", _xpm_sim))
@@ -1091,7 +1118,7 @@ register(Check("doc", "records", ALL, {"doc": ("DOC-PROBLEM",)},
                waivable=False))
 
 #: the Vivado-session reports each check may need (the ones the build does not write)
-SESSION_ONLY = ("reset_scan", "cmt", "control_sets", "qor_suggestions", "init_scan", "logic_levels", "clock_utilization", "clock_networks", "congestion")
+SESSION_ONLY = ("reset_scan", "cmt", "control_sets", "qor_suggestions", "init_scan", "logic_levels", "clock_utilization", "clock_networks", "congestion", "clock_mux")
 
 
 # ---- the runner ----------------------------------------------------------------------------------------------------

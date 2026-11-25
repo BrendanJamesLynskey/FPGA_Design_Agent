@@ -680,12 +680,19 @@
      "gate": "RPT-CLK-02",
      "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/flow/report_gates.py",
      "what": "Advisory (Brief 204a): clock uncertainty and hold skew over the guide's review thresholds, read from the timing paths."
+    },
+    {
+     "enforced": false,
+     "file": "flow/clock_mux_check.py",
+     "gate": null,
+     "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/flow/clock_mux_check.py",
+     "what": "The clock_mux check: a LUT on a clock path, a clock mux whose modes are still timed against each other, clock groups on the source clocks that hide real paths into or out of the mux fanout, and a BUFGCTRL chain longer than the cascade ring; advice for a case-analysed select, a CE-pin select, an external clock with IGNORE tied, and a needlessly deep tree. It runs in the check suite, not as a stage gate."
     }
    ],
    "counts": {
-    "checks": 5,
+    "checks": 6,
     "enforced": 1,
-    "evidence": 2,
+    "evidence": 4,
     "sections": 7,
     "skills": 12
    },
@@ -704,11 +711,31 @@
      "kind": "measured",
      "sources": [
       {
-       "path": "results/204a_report_gates/hits.json",
-       "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/results/204a_report_gates/hits.json"
+       "path": "results/208/measured.json",
+       "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/results/208/measured.json"
       }
      ],
-     "text": "The clock-tree checks were run over 65 recorded builds: 0 of 58 showed a cascaded buffer or a local clock, and 9 of 59 had a hold skew or uncertainty over the guide's review threshold."
+     "text": "Two clocks through a BUFGMUX, with paths between one clock's own registers and the mux fanout: setup slack was -6.63 ns unconstrained and 0.419 ns once the source clocks were declared exclusive on xc7a35t (-6.03 and 0.01 ns on xck26), because the clock group also removed the real crossing (Vivado 2026.1, routed)."
+    },
+    {
+     "kind": "measured",
+     "sources": [
+      {
+       "path": "results/208/measured.json",
+       "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/results/208/measured.json"
+      }
+     ],
+     "text": "The clock_mux check on the recorded clock-mux designs (xc7a35t and xck26) blocked 36 and passed 22; every design whose clock groups hid a path was among those blocked."
+    },
+    {
+     "kind": "measured",
+     "sources": [
+      {
+       "path": "results/208/records/sim/tb_lutmux.log",
+       "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/results/208/records/sim/tb_lutmux.log"
+      }
+     ],
+     "text": "An RTL clock mux (a LUT) switched 40 times at times unrelated to its clocks gave 40 runt pulses in simulation; Vivado reports it only as TIMING-14."
     }
    ],
    "family": {
@@ -817,6 +844,7 @@
    },
    "gaps": [
     "The Clocking Wizard's own settings were compared with the flow's search on only a few target frequencies.",
+    "The clock-mux check reads a netlist dump made in the check suite's Vivado session; it is not a stage gate, and the CE-select glitch it warns about was not shown in simulation (the unisim model has no timing).",
     "No agent run has been graded on a clocking task yet."
    ],
    "id": "clocking",

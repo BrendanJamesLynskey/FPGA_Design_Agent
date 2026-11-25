@@ -103,6 +103,7 @@ areas:
   - {file: flow/cmt_check.tcl, enforced: false, what: "A VCO and phase-detector range checker, written and measured but not wired into a gate."}
   - {file: flow/report_gates.py, gate: RPT-CLK-01, enforced: false, what: "Advisory (Brief 204a): a global clock buffer driven by another buffer, or a clock made in fabric, read from the clock-utilisation and clock-networks reports."}
   - {file: flow/report_gates.py, gate: RPT-CLK-02, enforced: false, what: "Advisory (Brief 204a): clock uncertainty and hold skew over the guide's review thresholds, read from the timing paths."}
+  - {file: flow/clock_mux_check.py, enforced: false, what: "The clock_mux check: a LUT on a clock path, a clock mux whose modes are still timed against each other, clock groups on the source clocks that hide real paths into or out of the mux fanout, and a BUFGCTRL chain longer than the cascade ring; advice for a case-analysed select, a CE-pin select, an external clock with IGNORE tied, and a needlessly deep tree. It runs in the check suite, not as a stage gate."}
   evidence:
   - kind: measured
     source: results/project_parity_2026_1/cmt_check/drc_*.rpt
@@ -112,10 +113,22 @@ areas:
     source: results/204a_report_gates/hits.json
     values: ["get:builds", "get:summary.RPT-CLK-01.builds_measured", "get:summary.RPT-CLK-01.builds_with_a_hit", "get:summary.RPT-CLK-02.builds_with_a_hit", "get:summary.RPT-CLK-02.builds_measured"]
     text: "The clock-tree checks were run over {0} recorded builds: {2} of {1} showed a cascaded buffer or a local clock, and {3} of {4} had a hold skew or uncertainty over the guide's review threshold."
+    source: results/208/measured.json
+    values: [get:vivado.a7_u_none.route.timing.wns, get:vivado.a7_u_srclog.route.timing.wns, get:vivado.k26_u_none.route.timing.wns, get:vivado.k26_u_srclog.route.timing.wns]
+    text: "Two clocks through a BUFGMUX, with paths between one clock's own registers and the mux fanout: setup slack was {0} ns unconstrained and {1} ns once the source clocks were declared exclusive on xc7a35t ({2} and {3} ns on xck26), because the clock group also removed the real crossing (Vivado 2026.1, routed)."
+  - kind: measured
+    source: results/208/measured.json
+    values: ["count@check:pass=false", "count@check:pass=true"]
+    text: "The clock_mux check on the recorded clock-mux designs (xc7a35t and xck26) blocked {0} and passed {1}; every design whose clock groups hid a path was among those blocked."
+  - kind: measured
+    source: results/208/records/sim/tb_lutmux.log
+    values: ["re:SCEN c3_lut_mux switches=(\\d+)", "re:runts=(\\d+)"]
+    text: "An RTL clock mux (a LUT) switched {0} times at times unrelated to its clocks gave {1} runt pulses in simulation; Vivado reports it only as TIMING-14."
   cards:
   - {href: "flow-notes.html#xpm-cdc", label: "Beyond the flow: AMD's crossing macros lose their exceptions"}
   gaps:
   - "The Clocking Wizard's own settings were compared with the flow's search on only a few target frequencies."
+  - "The clock-mux check reads a netlist dump made in the check suite's Vivado session; it is not a stage gate, and the CE-select glitch it warns about was not shown in simulation (the unisim model has no timing)."
   - "No agent run has been graded on a clocking task yet."
 - id: io
   name: I/O, primitives and transceivers
