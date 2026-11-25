@@ -56,3 +56,10 @@ The 12 USD per-run cap is enforced by the agent as 240 calls at its 0.05 USD per
 ### Addendum 2026-11-25 02:51 GMT: model options
 
 The API answered the first launch with HTTP 400 "`temperature` is deprecated for this model" (claude-sonnet-5-5), so every run sets `options: {temperature: null}` (unset) in the same `--model-config`; all other options stay the agent's defaults (max_tokens 8192, timeout 180 s, one retry). This is a model-configuration setting, not an intervention. The agent also needs the pinned private prompts: `FDA_KNOWLEDGE` points at a checkout of the knowledge repository at the pinned commit 5e2eab87.
+
+### Addendum 2026-11-25 05:11 GMT: agent fix 209b, run settings (supersedes the 240-call wording of the cost addendum)
+
+- Runs 1 to 3 of this design use the agent at SHA 364503063f2c (209a merged, plus brief 209b: real per-call cost from token usage with Sonnet 5.5 prices, prompt caching, temperature omitted by a model rule, max_tokens 16000, effort medium, timeout 300 s, truncated replies recorded), with `--budget-scale 3.5`, a real-dollar run cap of 12 (`--max-usd 12`), `--verif-level V2`, `--board kr260 --review off --interview off`. The `"options": {"temperature": null}` setting of the earlier addendum is dropped (the model rule does it).
+- The cost cap is now in real dollars, so the "240 calls" statement of the earlier cost addendum no longer applies; the token prices and stop rules (cumulative real total above 130 USD or one run above 20 USD stops the pilot) stand. `truncated_calls` of each run is recorded.
+- "First time" is still run 1.
+
