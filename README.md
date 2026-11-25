@@ -61,6 +61,7 @@ numbers filled from the records by code) rendered as `README.md` for people and 
 `flow/doccheck.py --check` enforces it in CI. The agent writes the same handover for its own work at the end of every run
 and can pick older work up again from one (`python -m agent resume <design> "<change>"`): [docs/agent.md](docs/agent.md),
 with three recorded runs documented by the agent in [results/68_agent_docs](results/68_agent_docs/README.md).
+Verification and measurement rules from the low-latency-trading book backlog (brief 189; nine advisory checks, none a gate): conservation of frames, tail-percentile sample sizes, a regression ratchet, a second latency method, per-bit skew in CDC simulation, class-split latency histograms, X-blind testbench compares, per-crossing MTBF and our own per-level delays: [docs/verification_measurement_rules.md](docs/verification_measurement_rules.md), records in [results/189_verification_rules](results/189_verification_rules/README.md).
 Design review mode (`python -m agent review <design-dir>`, read-only; findings with severity, place, evidence, rule, fix and confidence; improvement-request plans): [docs/review.md](docs/review.md), with the pre-registered benchmark results in [results/84_review/README.md](results/84_review/README.md).
 Managed projects (brief 102, stage 1): a design may carry a `project.yaml` that marks each component `owned`, `frozen` or `excluded` and
 lists the level it arrives at (RTL or an externally made netlist) and its interface contract. Ownership and the request's scope are enforced in the agent's tools,

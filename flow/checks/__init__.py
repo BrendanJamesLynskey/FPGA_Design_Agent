@@ -59,6 +59,7 @@ BUILD_FILES = {
     # written by flow/build.tcl after synthesis since brief 71; the route scope reads the same post-synthesis scan
     "reset_scan": {"synth": "reset_scan_synth.tsv", "route": "reset_scan_synth.tsv"},
     "control_sets": {"synth": "control_sets_synth.rpt"},
+    "mtbf": {"route": "mtbf.rpt"},               # brief 189: flow/mtbf.py parses it (advisory; UltraScale+ only)
     # brief 204a: written by flow/build.tcl after synthesis and routing; the route scope reads the post-synthesis ones where the
     # guide asks for them before placement (logic levels, high-fanout nets)
     "logic_levels": {"synth": "logic_levels_synth.rpt", "route": "logic_levels_synth.rpt"},
