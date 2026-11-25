@@ -1,0 +1,133 @@
+{
+ "period_ns": 6.2058,
+ "sim_means_clocks": {
+  "base": {
+   "tick_to_trade": 7.62,
+   "rx_start_strobe": 5.62,
+   "d_strobe_to_order": 7.37,
+   "x_price_to_fire": 1.0,
+   "fire_to_go": 2.62,
+   "go_to_sop": 1.0,
+   "go_to_return": 6.62,
+   "order_loop": 5.62
+  },
+  "early": {
+   "tick_to_trade": 6.72,
+   "rx_start_strobe": 5.62,
+   "d_strobe_to_order": 6.47,
+   "x_price_to_fire": 0.0,
+   "fire_to_go": 2.62,
+   "go_to_sop": 1.09,
+   "go_to_return": 6.71,
+   "order_loop": 5.62
+  },
+  "fast": {
+   "tick_to_trade": 6.62,
+   "rx_start_strobe": 5.62,
+   "d_strobe_to_order": 6.38,
+   "x_price_to_fire": 1.0,
+   "fire_to_go": 2.62,
+   "go_to_sop": 0.0,
+   "go_to_return": 5.62,
+   "order_loop": 5.62
+  },
+  "both": {
+   "tick_to_trade": 5.81,
+   "rx_start_strobe": 5.62,
+   "d_strobe_to_order": 5.56,
+   "x_price_to_fire": 0.0,
+   "fire_to_go": 2.62,
+   "go_to_sop": 0.19,
+   "go_to_return": 5.81,
+   "order_loop": 5.62
+  }
+ },
+ "stages": [
+  {
+   "stage": "pcs_rx stage A (gearbox, block extract)",
+   "start": "GT RXDATA word holding the block's last bit captured",
+   "end": "same edge: `blk` register loaded",
+   "clocks": 0.0
+  },
+  {
+   "stage": "pcs_rx stage B (descramble, decode)",
+   "start": "`blk` loaded",
+   "end": "`x_d`/`x_c` loaded (word 7 of the frame: the price)",
+   "clocks": 1.0
+  },
+  {
+   "stage": "mac64_rx aligned-word register",
+   "start": "`x_d` loaded",
+   "end": "`m_d` holds word 7 (lane-4 starts realigned)",
+   "clocks": 1.0
+  },
+  {
+   "stage": "trade64 decision `fire`",
+   "start": "`m_d` holds word 7",
+   "end": "`fire` high (combinational compare, price <= thr)",
+   "clocks": 0.0
+  },
+  {
+   "stage": "go-pulse crossing RXUSRCLK2 -> TXUSRCLK2",
+   "start": "`fire` high (toggle flop loads)",
+   "end": "`go_p` high in TXUSRCLK2 (2 synchroniser flops, XOR edge detect, no output register)",
+   "clocks": 2.62
+  },
+  {
+   "stage": "order start: frame_src start -> mac64_tx preamble register",
+   "start": "`go_p` high",
+   "end": "preamble word in the MAC output register (`sop`)",
+   "clocks": 1.0
+  },
+  {
+   "stage": "pcs_tx gearbox, first bit of the start block",
+   "start": "preamble in the MAC register",
+   "end": "first bit of the start block on GT TXDATA",
+   "clocks": 1.0
+  },
+  {
+   "stage": "pcs_tx gearbox spill, last bit of the start block",
+   "start": "first bit on TXDATA",
+   "end": "last bit of the start block on TXDATA (a 66-bit block never fits one 64-bit word)",
+   "clocks": 1.0
+  }
+ ],
+ "sim_total_clocks": 7.62,
+ "board": {
+  "record": "_worktrees/126-all3/results/b126/hw/20261122_145404/lat_all3_bypass/stage3.json (stamp 9641284d)",
+  "E_median": 16.0,
+  "L_median": 40.0,
+  "D_from_medians": 8.0,
+  "L_minus_E_clocks": 24,
+  "L_minus_E_ns_net_of_fibre": 148.1,
+  "E_mean": 15.91,
+  "L_mean": 39.56,
+  "D_register_mean": 7.86,
+  "D_register_hist": {
+   "7": 29,
+   "8": 56,
+   "9": 15
+  },
+  "E_hist": {
+   "15": 19,
+   "16": 71,
+   "17": 10
+  },
+  "L_hist": {
+   "39": 44,
+   "40": 56
+  },
+  "D_by_E": {
+   "15": 8.37,
+   "16": 7.8,
+   "17": 7.3
+  }
+ },
+ "board_decomposition_clocks": {
+  "L_minus_E_mean": 23.77,
+  "frame_time_to_price_word_derived": 8.51,
+  "digital_sim_price_word_to_first_bit": 6.62,
+  "residual_GT_module_fibre_derived": 8.64,
+  "residual_ns": 53.6
+ }
+}

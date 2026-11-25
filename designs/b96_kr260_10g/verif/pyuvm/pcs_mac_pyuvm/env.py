@@ -33,6 +33,7 @@ class Env(uvm_env):
 
     def connect_phase(self):
         self.usr.mon.ap.connect(self.sb.usr.analysis_export)
+        self.usr.mon.ap_abort.connect(self.sb.usr_abort.analysis_export)
         self.xg.mon.ap_mac.connect(self.sb.macw.analysis_export)
         self.xg.mon.ap_pin.connect(self.sb.pin.analysis_export)
         self.line.mon.ap_tx.connect(self.sb.gtx.analysis_export)
@@ -101,6 +102,7 @@ t_smoke = _mk("t_smoke", seqs.VseqSmoke)
 t_lens = _mk("t_lens", seqs.VseqLens)
 t_gaps = _mk("t_gaps", seqs.VseqGaps)
 t_badfcs = _mk("t_badfcs", seqs.VseqBadfcs)
+t_underrun = _mk("t_underrun", seqs.VseqUnderrun)
 t_xg = _mk("t_xg", seqs.VseqXg)
 t_line_blocks = _mk("t_line_blocks", seqs.VseqLineBlocks, line_mode=True)
 t_hdr = _mk("t_hdr", seqs.VseqHdr)
@@ -111,4 +113,4 @@ t_offsets = _mk("t_offsets", seqs.VseqOffsets)
 t_rand = _mk("t_rand", seqs.VseqRand, random_offset=True)
 t_rand_line = _mk("t_rand_line", seqs.VseqRand, line_mode=True, random_offset=True)
 
-TESTS = ["t_smoke", "t_lens", "t_gaps", "t_badfcs", "t_xg", "t_line_blocks", "t_hdr", "t_slip", "t_ber", "t_rxreset", "t_offsets", "t_rand", "t_rand_line"]
+TESTS = ["t_smoke", "t_lens", "t_gaps", "t_badfcs", "t_underrun", "t_xg", "t_line_blocks", "t_hdr", "t_slip", "t_ber", "t_rxreset", "t_offsets", "t_rand", "t_rand_line"]

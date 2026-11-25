@@ -1,0 +1,82 @@
+schema: fpga-design-agent/testplan/v1
+entry: credit_chan
+purpose: 'v1 testplan of a library entry (brief 151, decision 24): every requirement traces to the tests, formal tasks and seeded faults
+  that check it. Not yet part of the flow.trace_v1 roll-up (that reads designs/ and, in brief 139a, arith/); flow/tests/test_151_partition_testplans.py
+  checks that every name below resolves.'
+model: ip_lib/credit_chan/model.py
+bench: ip_lib/credit_chan/tb/test_credit_chan_rtl.py
+formal_dir: ip_lib/credit_chan/formal
+requirements:
+- id: R01
+  requirement: No beat is lost, repeated or reordered; the receiver buffer never overflows or underflows.
+  tests:
+  - ip_lib/credit_chan/tb/test_credit_chan_rtl.py::test_random_traffic
+  - ip_lib/credit_chan/tb/test_credit_chan_rtl.py::test_random_traffic_sideband
+  formal:
+  - c1f0b0
+  - c2f0b0
+  - c1f1b1
+  - c2f1b1
+  - c3f1b1
+  - c4f1b1
+  - c2f2b1
+  - c3f0b2
+  - c5f2b2
+  - c4f3b0
+  faults:
+  - credit_double_return
+  - ready_without_credit
+  - write_pointer_no_wrap
+  - read_wrong_entry
+  - pop_without_ready
+  - forward_stage_skips
+  - count_unaccepted_beat
+  - buffer_write_ignores_valid
+- id: R02
+  requirement: 'Credits conserve: credits held + beats in flight + beats buffered + credits returning = CREDITS, at every clock.'
+  tests: []
+  formal:
+  - c3f1b1
+  - c5f2b2
+  - c4f3b0
+  faults:
+  - credit_lost_when_both
+  - credit_start_zero
+  - return_stage_drops
+- id: R03
+  requirement: Latency is LF + 1 clocks; the credit round trip is LF + LB + 2 clocks.
+  tests:
+  - ip_lib/credit_chan/tb/test_credit_chan_rtl.py::test_measure_declared
+  formal: []
+  faults:
+  - valid_one_clock_late
+- id: R04
+  requirement: Throughput is min(1, CREDITS / (LF + LB + 2)); with fewer credits the sender bursts CREDITS beats and waits.
+  tests:
+  - ip_lib/credit_chan/tb/test_credit_chan_rtl.py::test_measure_declared
+  formal: []
+  faults:
+  - credit_lost_when_both
+  - return_stage_drops
+- id: R05
+  requirement: The channel holds CREDITS beats when the sink stops.
+  tests:
+  - ip_lib/credit_chan/tb/test_credit_chan_rtl.py::test_measure_declared
+  formal: []
+  faults:
+  - ready_without_credit
+- id: R06
+  requirement: AXI4-Stream rules at both ports, and tvalid does not depend on tready.
+  tests:
+  - ip_lib/credit_chan/tb/test_credit_chan_rtl.py::test_random_traffic
+  formal:
+  - sva_c3f1b1
+  - sva_c5f2b2
+  - sva_c1f0b0
+  faults: []
+- id: R07
+  requirement: Parameters outside the declared space fail at elaboration.
+  tests:
+  - ip_lib/credit_chan/tb/test_credit_chan_rtl.py::test_guards
+  formal: []
+  faults: []

@@ -63,3 +63,12 @@ thermal:                          # report_power's environment for this board (f
   board: medium
   board_layers: 8to11             # not published: a mid class
   ambient_c: 40
+operating_limits:                 # brief 196: what the production_secure SYSMON alarms are set from (flow/security.py sysmon-init); read by the build check too
+  status: assumption              # the K26 -2LV-c grade is not named in DS925; the 0.72 V rows (-1LI, -2LE) are used, as designs/b96_kr260_10g/host/b96c_ppm.py did
+  source: "DS925 v1.30 (Zynq UltraScale+ MPSoC data sheet: DC and AC switching characteristics), recommended operating conditions: VCCINT 0.698 to 0.742 V (the 0.72 V rows), VCCAUX 1.746 to 1.854 V, VCCBRAM 0.825 to 0.876 V, Tj 0 to 100 C (extended); note 16 (SYSMON temperature error of 3 C is to be accounted for); Table 127 (PL SYSMON: 10 bit, ADCCLK 1 to 5.2 MHz)"
+  tj_alarm_c: 85                  # the board's own rule (house rules, owner 2026-10-31): junction temperature at most 85 C on the reading
+  tj_device_max_c: 100            # DS925 Tj for the extended grade; the device's own OT output stays at its default limit (125 C reading), beyond this
+  sysmon_temp_error_c: 3          # DS925 note 16: a reading is within 3 C of the true Tj with the external reference; the 85 C rule is applied to the reading as it is
+  vccint_v: [0.698, 0.742]
+  vccaux_v: [1.746, 1.854]
+  vccbram_v: [0.825, 0.876]

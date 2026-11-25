@@ -1,0 +1,7 @@
+schema: fpga-design-agent/formal_rigour/v1
+scope: "mac64_tx with every input free after the first (reset) cycle, three tasks: unreach_prove (k-induction, depth 8) proves that the two interframe-gap conditions of RTL lines 76 and 79 cannot be taken and that n stays in 1..8; reach_cover reaches the situation in which each assertion could be broken and the neighbouring arms (the control that the unreached conditions are not unreached for a wrong reason). The unreach_cover task is a corroboration of the proof, not part of it."
+sanity: [R_SPILL_1, R_FITS_2, R_N1, R_N8]
+# unreach_cover asks sby to cover the two conditions and passes only when sby reports them UNREACHED, which sby prints as a failed cover task (status FAIL): its
+# result is the expected one, it is checked by test_b158_ifg_formal.py (both reported unreached, nothing reached), and the claim rests on unreach_prove, not on it.
+unclaimed:
+  unreach_cover: "its expected result is FAIL (both covers unreached: sby reports an unreached cover as a failed cover task); the unreachability is proved by unreach_prove, and test_b158_ifg_formal.py checks this task's output; it is kept as a second view, not relied on for the verdict"

@@ -109,11 +109,17 @@ class LocalRunner:
         argv = [resolve_tool(argv[0], full_env), *argv[1:]]
         # own session/process group: on a timeout the whole group is killed. subprocess.run(timeout=) kills only the
         # direct child, so a timed-out flow/run_vivado.sh left its Vivado (in the systemd scope) running (QR1, verified)
-        proc = subprocess.Popen(argv, cwd=cwd, env=full_env, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
+        tee = getattr(self, "_tee_to", None)                  # brief 182: the live console follows this file while the tool runs
+        tee_f = open(tee, "w") if tee else None
+        proc = subprocess.Popen(argv, cwd=cwd, env=full_env, stdout=tee_f or subprocess.PIPE, stderr=subprocess.PIPE, text=True,
                                 errors="replace", start_new_session=True, stdin=subprocess.DEVNULL)
+        if tee_f is not None:
+            tee_f.close()                                    # the child holds its own copy of the descriptor
         try:
             out, err = proc.communicate(timeout=timeout)
             rc = proc.returncode
+            if tee:
+                out = Path(tee).read_text(errors="replace")
         except subprocess.TimeoutExpired:
             try:
                 os.killpg(proc.pid, signal.SIGKILL)
@@ -123,6 +129,8 @@ class LocalRunner:
                 out, _ = proc.communicate(timeout=15)       # partial output; a grandchild that left the group may hold the pipes
             except subprocess.TimeoutExpired:
                 out = ""
+            if tee:
+                out = Path(tee).read_text(errors="replace")
             rc, err = 124, f"timed out after {timeout} s"
         return RunResult(rc, out, err, round(time.monotonic() - t0, 2))
 

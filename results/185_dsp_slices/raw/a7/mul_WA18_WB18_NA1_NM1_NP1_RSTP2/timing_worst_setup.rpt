@@ -1,0 +1,63 @@
+Copyright 1986-2022 Xilinx, Inc. All Rights Reserved. Copyright 2022-2026 Advanced Micro Devices, Inc. All Rights Reserved.
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+| Tool Version : Vivado v.2026.1 (lin64) Build 6511674 Tue Jun 16 11:01:26 MDT 2026
+| Date         : Mon Nov 23 01:56:19 2026
+| Host         : bren-ubuntu24-04 running 64-bit Ubuntu 24.04.4 LTS
+| Command      : report_timing -delay_type max -max_paths 1 -file /home/brendan/Claude_sandbox/_worktrees/185-dsp-slices/build/185_dsp/a7/mul_WA18_WB18_NA1_NM1_NP1_RSTP2/timing_worst_setup.rpt
+| Design       : dsp_mul_pipe_ooc
+| Device       : 7a100t-csg324
+| Speed File   : -1  PRODUCTION 1.23 2018-06-13
+| Design State : Routed
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Timing Report
+
+Slack (MET) :             0.183ns  (required time - arrival time)
+  Source:                 b_q_reg[13]/C
+                            (rising edge-triggered cell FDRE clocked by clk  {rise@0.000ns fall@0.900ns period=1.800ns})
+  Destination:            u_dut/g_m.m_r_reg/B[13]
+                            (rising edge-triggered cell DSP48E1 clocked by clk  {rise@0.000ns fall@0.900ns period=1.800ns})
+  Path Group:             clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            1.800ns  (clk rise@1.800ns - clk rise@0.000ns)
+  Data Path Delay:        1.083ns  (logic 0.518ns (47.829%)  route 0.565ns (52.171%))
+  Logic Levels:           0  
+  Clock Path Skew:        -0.049ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    0.924ns = ( 2.724 - 1.800 ) 
+    Source Clock Delay      (SCD):    0.973ns
+    Clock Pessimism Removal (CPR):    0.000ns
+  Clock Uncertainty:      0.035ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock clk rise edge)        0.000     0.000 r  <hidden>
+                                                      0.000     0.000 r  clk
+                         net (fo=74, unset)           0.973     0.973    clk
+    SLICE_X10Y98         FDRE                                         r  b_q_reg[13]/C
+  -------------------------------------------------------------------    -------------------
+    SLICE_X10Y98         FDRE (Prop_fdre_C_Q)         0.518     1.491 r  b_q_reg[13]/Q
+                         net (fo=1, routed)           0.565     2.056    u_dut/out[13]
+    DSP48_X0Y39          DSP48E1                                      r  u_dut/g_m.m_r_reg/B[13]
+  -------------------------------------------------------------------    -------------------
+
+                         (clock clk rise edge)        1.800     1.800 r  <hidden>
+                                                      0.000     1.800 r  clk
+                         net (fo=74, unset)           0.924     2.724    u_dut/clk
+    DSP48_X0Y39          DSP48E1                                      r  u_dut/g_m.m_r_reg/CLK
+                         clock pessimism              0.000     2.724    <hidden>
+                         clock uncertainty           -0.035     2.689    <hidden>
+    DSP48_X0Y39          DSP48E1 (Setup_dsp48e1_CLK_B[13])
+                                                     -0.450     2.239    u_dut/g_m.m_r_reg
+  -------------------------------------------------------------------
+                         required time                          2.239    <hidden>
+                         arrival time                          -2.056    <hidden>
+  -------------------------------------------------------------------
+                         slack                                  0.183    <hidden>
+
+
+
+

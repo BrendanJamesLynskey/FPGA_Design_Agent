@@ -44,3 +44,7 @@ The data are the brief 87 synthetic splits, unchanged (digests checked). There w
   not the bound.
 - `fanin4_comb` did not close on the Artix-7 within four passes.
 - The data come from one synthetic generator.
+
+## Change log
+
+- 2026-11-24 (brief 201): the out-of-context runs have no clock buffer; on the K26 (-2LV) a BUFGCE limits a real clock to 725.2 MHz ([flow/fmax_cap.py](../../flow/fmax_cap.py), [results/201_fmax_cap](../201_fmax_cap/README.md)). In `summary.json` the K26 `lg_b87_layer` row (closed at 1.3 ns, 769.2 MHz) now carries `fmax_capped_mhz` 725.2, `fmax_bound` and `fmax_clock_buffer_mhz` beside the raw `fmax_mhz`; every other K26 row and every Artix-7 row is below its limit. Latency was already quoted at no faster than 2.0 ns, so no latency changes.

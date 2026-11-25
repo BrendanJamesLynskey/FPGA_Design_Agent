@@ -42,7 +42,7 @@ Spearman rank correlation, default model against measurement: luts_synth 0.977, 
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|
 | P01 | iterative | 14/12 | 144 | 86 | 529 | 503 | 0.01 | 15 | 29.8 | 34 | 8.18 | 8 | LT |
 | P04 | unrolled_k | 12/12 | 286 | 74 | 213 | 192 | -3.20 | 6 | 31.2 | 32 | 6.54 | 24 | - |
-| P07 | pipelined | 20/18 | 1206 | 1249 | 833 | 615 | 0.38 | 20 | 32.5 | 615 | 5.04 | 101 | LT |
+| P07 | pipelined | 20/18 | 1206 | 1249 | 833 (cap 725) | 615 | 0.38 | 20 | 32.5 | 615 | 5.04 | 101 | LT |
 | P09 | pipelined_m | 18/16 | 913 | 383 | 318 | 325 | -1.08 | 8 | 24.6 | 325 | 11.91 | 57 | LT |
 
 default (2-anchor): RMS % error of prediction against Vivado (max abs in brackets)

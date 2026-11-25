@@ -1,0 +1,19 @@
+schema: fpga-design-agent/formal_rigour/v1
+scope: "pipe_reg at W = 4 with the AXI4-Stream rules of tb/axis_sva.sv bound to both ports, one job per mode (FWD 3, SKID 1 and 2, FULL 2, HALF 2, COMB 2, the N = 0 wire); the data and slice assertions of pipe.sby are in this job too, with the same antecedents. Every proof task is k-induction. a_hold and a_reset are checked on both ports with one antecedent cover each: the cover is reached on either port, which is the weak point of the pairing (a cover on one port does not show the other fires)."
+antecedents:
+  "comb_*": comb_holds__ante
+  "half_count": half_holds__ante
+  "half_data": half_holds__ante
+  "half_ready_empty": half_ready__ante
+  "skid_count": skid_holds__ante
+  "skid_data": skid_holds__ante
+  "skid_t_*": skid_spill__ante
+  "full_count": full_holds__ante
+  "full_cnt_max": full_holds__ante
+  "full_valid": full_holds__ante
+  "full_wp": full_holds__ante
+  "full_data": full_holds__ante
+  "full_ready_room": full_ready__ante
+  "full_second": full_two__ante
+  "h_stall_*": h_stall__ante
+sanity: [c_through, c_xfer, c_stall]

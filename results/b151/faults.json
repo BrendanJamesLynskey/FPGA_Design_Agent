@@ -1,0 +1,303 @@
+{
+ "caught": 33,
+ "valid": 33,
+ "faults": [
+  {
+   "name": "wstrb_wdata_swapped",
+   "block": "axi_reg_slice",
+   "class": "data-corruption",
+   "why": "the write strobe is taken from the wrong bits of the packed word",
+   "status": "caught",
+   "seconds": 0.8,
+   "pytest": "1 failed in 0.54s"
+  },
+  {
+   "name": "bresp_dropped",
+   "block": "axi_reg_slice",
+   "class": "data-corruption",
+   "why": "the write response is replaced by OKAY",
+   "status": "caught",
+   "seconds": 1.0,
+   "pytest": "1 failed in 0.65s"
+  },
+  {
+   "name": "rready_not_forwarded",
+   "block": "axi_reg_slice",
+   "class": "data-loss",
+   "why": "the read-data channel ignores the master's rready",
+   "status": "caught",
+   "seconds": 2.1,
+   "pytest": "1 failed, 1 passed in 1.78s"
+  },
+  {
+   "name": "araddr_offset",
+   "block": "axi_reg_slice",
+   "class": "data-corruption",
+   "why": "the read address is taken one bit off",
+   "status": "caught",
+   "seconds": 1.3,
+   "pytest": "1 failed in 0.82s"
+  },
+  {
+   "name": "axi4_rlast_swapped",
+   "block": "axi_reg_slice",
+   "class": "data-corruption",
+   "why": "rlast is taken from rresp",
+   "status": "caught",
+   "seconds": 6.1,
+   "pytest": "1 failed, 4 passed in 5.74s"
+  },
+  {
+   "name": "axi4_awlen_dropped",
+   "block": "axi_reg_slice",
+   "class": "data-corruption",
+   "why": "the burst length is forced to one beat",
+   "status": "caught",
+   "seconds": 6.1,
+   "pytest": "1 failed, 4 passed in 5.79s"
+  },
+  {
+   "name": "credit_double_return",
+   "block": "credit_chan",
+   "class": "data-loss",
+   "why": "a returned credit counts as two: the sender sends into a full receiver buffer",
+   "status": "caught",
+   "seconds": 0.8,
+   "pytest": "1 failed, 30 deselected in 0.57s"
+  },
+  {
+   "name": "ready_without_credit",
+   "block": "credit_chan",
+   "class": "data-loss",
+   "why": "s_ready ignores the credit count: the sender sends with no credit and the receiver buffer overflows",
+   "status": "caught",
+   "seconds": 0.9,
+   "pytest": "1 failed, 30 deselected in 0.56s"
+  },
+  {
+   "name": "credit_lost_when_both",
+   "block": "credit_chan",
+   "class": "performance",
+   "why": "a credit arriving in the clock a beat is sent is dropped: credits leak and the channel slows then stops",
+   "status": "caught",
+   "seconds": 3.0,
+   "pytest": "1 failed, 1 passed, 30 deselected in 2.62s"
+  },
+  {
+   "name": "credit_start_zero",
+   "block": "credit_chan",
+   "class": "deadlock",
+   "why": "the sender starts with no credits: nothing is ever sent",
+   "status": "caught",
+   "seconds": 1.3,
+   "pytest": "1 failed, 30 deselected in 0.84s"
+  },
+  {
+   "name": "write_pointer_no_wrap",
+   "block": "credit_chan",
+   "class": "data-corruption",
+   "why": "the write pointer does not wrap at CREDITS: wrong entries for a depth that is not a power of two",
+   "status": "caught",
+   "seconds": 1.2,
+   "pytest": "1 failed, 30 deselected in 0.79s"
+  },
+  {
+   "name": "read_wrong_entry",
+   "block": "credit_chan",
+   "class": "data-corruption",
+   "why": "the output reads the write position, not the read position",
+   "status": "caught",
+   "seconds": 2.6,
+   "pytest": "1 failed, 1 passed, 30 deselected in 2.24s"
+  },
+  {
+   "name": "pop_without_ready",
+   "block": "credit_chan",
+   "class": "data-loss",
+   "why": "the read pointer advances whenever the output is valid, not when it is taken: a stalled beat is skipped",
+   "status": "caught",
+   "seconds": 3.1,
+   "pytest": "1 failed, 1 passed, 30 deselected in 2.68s"
+  },
+  {
+   "name": "valid_one_clock_late",
+   "block": "credit_chan",
+   "class": "protocol",
+   "why": "m_valid follows the buffer count one clock late: a beat is offered after it was popped",
+   "status": "caught",
+   "seconds": 1.3,
+   "pytest": "1 failed, 30 deselected in 0.86s"
+  },
+  {
+   "name": "forward_stage_skips",
+   "block": "credit_chan",
+   "class": "data-corruption",
+   "why": "a forward stage takes its data from the first stage, not the previous one",
+   "status": "caught",
+   "seconds": 9.4,
+   "pytest": "1 failed, 7 passed, 30 deselected in 8.99s"
+  },
+  {
+   "name": "return_stage_drops",
+   "block": "credit_chan",
+   "class": "performance",
+   "why": "a credit-return stage past the first drops every credit",
+   "status": "caught",
+   "seconds": 3.2,
+   "pytest": "1 failed, 2 passed, 30 deselected in 2.86s"
+  },
+  {
+   "name": "count_unaccepted_beat",
+   "block": "credit_chan",
+   "class": "data-corruption",
+   "why": "a beat that was offered but not accepted enters the channel",
+   "status": "caught",
+   "seconds": 0.8,
+   "pytest": "1 failed, 30 deselected in 0.51s"
+  },
+  {
+   "name": "buffer_write_ignores_valid",
+   "block": "credit_chan",
+   "class": "data-corruption",
+   "why": "the receiver buffer is written on every clock: an entry is overwritten by an invalid beat",
+   "status": "caught",
+   "seconds": 0.8,
+   "pytest": "1 failed, 30 deselected in 0.51s"
+  },
+  {
+   "name": "comb_ready_ignores_take",
+   "block": "pipe_reg",
+   "class": "performance",
+   "why": "the comb slice's s_ready no longer depends on m_ready: it works but at half throughput and with a different ready timing",
+   "status": "caught",
+   "seconds": 22.2,
+   "pytest": "1 failed, 17 passed, 41 deselected in 21.84s"
+  },
+  {
+   "name": "comb_reset_keeps_valid",
+   "block": "pipe_reg",
+   "class": "reset",
+   "why": "reset does not clear the comb slice's valid: a beat survives a reset",
+   "status": "caught",
+   "seconds": 24.4,
+   "pytest": "1 failed, 17 passed, 41 deselected in 24.02s"
+  },
+  {
+   "name": "half_ready_stale",
+   "block": "pipe_reg",
+   "class": "protocol",
+   "why": "the half slice's ready register is computed from the old valid: it accepts a second beat into a full slice",
+   "status": "caught",
+   "seconds": 17.2,
+   "pytest": "1 failed, 13 passed, 41 deselected in 16.74s"
+  },
+  {
+   "name": "half_drop_unready",
+   "block": "pipe_reg",
+   "class": "data-loss",
+   "why": "the half slice empties itself without waiting for m_ready: a stalled beat is lost",
+   "status": "caught",
+   "seconds": 15.0,
+   "pytest": "1 failed, 13 passed, 41 deselected in 14.67s"
+  },
+  {
+   "name": "skid_ready_too_late",
+   "block": "pipe_reg",
+   "class": "data-loss",
+   "why": "the skid buffer stays ready one clock too long: the side register is overwritten",
+   "status": "caught",
+   "seconds": 6.3,
+   "pytest": "1 failed, 5 passed, 41 deselected in 6.00s"
+  },
+  {
+   "name": "skid_park_dropped",
+   "block": "pipe_reg",
+   "class": "data-loss",
+   "why": "the skid buffer never parks the beat that arrives after m_ready falls: it is lost",
+   "status": "caught",
+   "seconds": 5.8,
+   "pytest": "1 failed, 5 passed, 41 deselected in 5.48s"
+  },
+  {
+   "name": "skid_drain_wrong_source",
+   "block": "pipe_reg",
+   "class": "data-corruption",
+   "why": "the side register drains into the output register from the wrong source: the parked beat is replaced by the input",
+   "status": "caught",
+   "seconds": 5.7,
+   "pytest": "1 failed, 5 passed, 41 deselected in 5.47s"
+  },
+  {
+   "name": "full_write_pointer_stuck",
+   "block": "pipe_reg",
+   "class": "data-loss",
+   "why": "the full slice's write pointer stops alternating: later beats overwrite the same entry",
+   "status": "caught",
+   "seconds": 9.7,
+   "pytest": "1 failed, 9 passed, 41 deselected in 9.44s"
+  },
+  {
+   "name": "full_read_swapped",
+   "block": "pipe_reg",
+   "class": "data-corruption",
+   "why": "the full slice reads the entries in the wrong order: two beats swap",
+   "status": "caught",
+   "seconds": 9.7,
+   "pytest": "1 failed, 9 passed, 41 deselected in 9.36s"
+  },
+  {
+   "name": "full_ready_overfill",
+   "block": "pipe_reg",
+   "class": "protocol",
+   "why": "the full slice never says not-ready: a third beat overwrites an unread one",
+   "status": "caught",
+   "seconds": 10.6,
+   "pytest": "1 failed, 9 passed, 41 deselected in 10.24s"
+  },
+  {
+   "name": "fwd_enable_needs_ready",
+   "block": "pipe_reg",
+   "class": "deadlock",
+   "why": "the shared enable ignores an empty output: a sink that waits for valid before ready never sees the beat",
+   "status": "caught",
+   "seconds": 1.8,
+   "pytest": "1 failed, 1 passed, 41 deselected in 1.44s"
+  },
+  {
+   "name": "fwd_first_stage_free_running",
+   "block": "pipe_reg",
+   "class": "data-corruption",
+   "why": "the first stage's data register loads on every clock, not only when enabled: a stalled beat is overwritten",
+   "status": "caught",
+   "seconds": 1.8,
+   "pytest": "1 failed, 1 passed, 41 deselected in 1.48s"
+  },
+  {
+   "name": "chain_output_ready_ignored",
+   "block": "pipe_reg",
+   "class": "data-loss",
+   "why": "the last slice is told the sink is always ready: beats are lost while the sink stalls",
+   "status": "caught",
+   "seconds": 5.8,
+   "pytest": "1 failed, 5 passed, 41 deselected in 5.56s"
+  },
+  {
+   "name": "wire_ready_constant",
+   "block": "pipe_reg",
+   "class": "data-loss",
+   "why": "the N = 0 wire tells the source it is ready whatever the sink says",
+   "status": "caught",
+   "seconds": 0.9,
+   "pytest": "1 failed, 41 deselected in 0.59s"
+  },
+  {
+   "name": "fwd_valid_gated_by_ready",
+   "block": "pipe_reg",
+   "class": "protocol",
+   "why": "the output's tvalid depends on tready (forbidden by AXI4-Stream): the bench's tready flip within a clock sees it; the port rules cannot, because a gated valid never looks withdrawn",
+   "status": "caught",
+   "seconds": 1.8,
+   "pytest": "1 failed, 1 passed, 41 deselected in 1.51s"
+  }
+ ]
+}
