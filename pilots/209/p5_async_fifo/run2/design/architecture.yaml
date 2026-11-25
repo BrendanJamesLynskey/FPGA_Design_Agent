@@ -1,0 +1,63 @@
+schema: fpga-design-agent/architecture/v1
+blocks:
+- name: p5_async_fifo_soak
+  function: thin top; instantiates jtag_bus, POR reset generator, IBUFDS_GTE4+BUFG_GT, the core; drives sfp_tx_disable=1
+- name: jtag_bus
+  function: supplied BSCANE2 USER4 register bus (data/jtag_bus.sv, unchanged)
+- name: por_reset
+  function: 16-clock power-on reset counter in clk_25 (active high)
+- name: soak_core
+  function: register map, writer PRBS-31, xpm_fifo_async 512x32, reader PRBS check, counters, snapshot
+- name: reset_sync_gt
+  function: xpm_cdc_async_rst of rst into clk_gt156
+interfaces:
+- name: reg_port
+  between: [jtag_bus, soak_core]
+  protocol: simple
+  prefix: h
+  module: soak_core
+clock_domains:
+- name: clk_25
+  clock: clk_c3
+  freq_mhz: 25
+- name: clk_gt156
+  clock: gt_refclk0_p
+  freq_mhz: 156.25
+reset:
+  synchronisers: [reset_sync_gt]
+crossings:
+- from: clk_25
+  to: clk_gt156
+  signal: rst
+  primitive: xpm_cdc_async_rst
+  inline_in: p5_async_fifo_soak
+- from: clk_25
+  to: clk_gt156
+  signal: FIFO data and Gray pointers (512x32)
+  primitive: xpm_fifo_async
+  inline_in: soak_core
+- from: clk_25
+  to: clk_gt156
+  signal: RUN, SLOW_READ levels
+  primitive: xpm_cdc_array_single
+  inline_in: soak_core
+- from: clk_25
+  to: clk_gt156
+  signal: CLEAR and INJECT pulses
+  primitive: xpm_cdc_pulse
+  inline_in: soak_core
+- from: clk_gt156
+  to: clk_25
+  signal: snapshot reader counters (WORDS_R, DATA_ERRS, UNDERFLOWS) with req/ack
+  primitive: xpm_cdc_handshake
+  inline_in: soak_core
+- from: clk_gt156
+  to: clk_25
+  signal: sticky reader error flag (LED)
+  primitive: xpm_cdc_single
+  inline_in: soak_core
+predicted_resources:
+  lut: [450, 1400]
+  ff: [900, 2000]
+  bram_tile: [1, 2]
+  dsp: 0
