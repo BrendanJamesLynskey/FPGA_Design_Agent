@@ -155,7 +155,7 @@ What the structural form gives: a result that no longer depends on the synthesis
 
 Cheap demonstration in phase 0: the Vivado runs also write `netlist_synth.v` (post-synthesis, `write_verilog -mode funcsim`, primitive-level) per point. The report states whether the small pipelined point's netlist could be checked equivalent to the generated RTL with Yosys in the time available, or the check is left planned.
 
-### 3. A meta-project above the Gateguild
+### 3. A meta-project above FPGA Guild
 
 The proposal: the FPGA-arithmetic work is a **separate meta-project** that owns the things the design agent does not:
 
@@ -164,7 +164,7 @@ The proposal: the FPGA-arithmetic work is a **separate meta-project** that owns 
 * the **Pareto analysis**: fronts, surfaces, volume (area, latency, throughput, error, power), the cost model and its calibration, the atlas page;
 * the **library** and its records.
 
-and **calls the Gateguild as a service** to turn a design point into evidence. HW_Design_Space_Agent is the natural start of this meta-project (it already has the functions, search and cost models, and no tool flow beyond its own Vivado scripts); the proposal is to add a service client to it, not to fork it.
+and **calls FPGA Guild as a service** to turn a design point into evidence. HW_Design_Space_Agent is the natural start of this meta-project (it already has the functions, search and cost models, and no tool flow beyond its own Vivado scripts); the proposal is to add a service client to it, not to fork it.
 
 **Call interface** (what the meta-project sends and gets). The service is a function from a design point and a request to a record:
 
@@ -217,7 +217,7 @@ BRAM/URAM, SRLs, control sets) and whether Vivado retargets a CARRY4 netlist to 
 
 ## Goal restated: entries of an FPGA IP library that the agent retrieves from (owner decision 24, 2026-11-21 16:08)
 
-The product of this line of work is not a set of charts. It is **entries of an FPGA IP library** that the Gateguild retrieves from when it plans a design and from which
+The product of this line of work is not a set of charts. It is **entries of an FPGA IP library** that FPGA Guild retrieves from when it plans a design and from which
 it picks the Pareto point that fits the design's constraints. The owner's framing: fully verified RTL optimised for FPGA, produced *without knowing the larger design*, with a
 packaged verification harness, characterised per device family. The measured CORDIC surface of phase 0 is the first surface of such an entry; everything in "A library of
 characterised functions" above is the content of an entry. This section fixes the entry schema, the retrieval interface and the relation to the meta-project.
@@ -294,11 +294,11 @@ measured limit: about 300 MHz with a dynamic OPMODE, so the entry must record wh
 The retrieval code lives with the agent (`agent/core/`, next to the skill index) and reads only the entry's committed records; the surface files use the schema phase 0 defined (`measured.json`, `comparison.json`,
 `verify.json`), so adding a function adds data, not code. The library's entries are untrusted data like skill text: the query tool parses them and interprets nothing.
 
-### (c) Relation to the meta-project that calls the Gateguild
+### (c) Relation to the meta-project that calls FPGA Guild
 
 The two directions are one loop, not two projects:
 
-* **The meta-project produces entries.** It owns functions, search and Pareto analysis, and calls the Gateguild *as a service* to implement, verify, implement-in-Vivado and close timing for each design point (the call interface above). What it writes back is an entry: contract, model,
+* **The meta-project produces entries.** It owns functions, search and Pareto analysis, and calls FPGA Guild *as a service* to implement, verify, implement-in-Vivado and close timing for each design point (the call interface above). What it writes back is an entry: contract, model,
   harness, verified variants, surfaces. The agent is the **producer's workhorse** here, and the entry is the product.
 * **The agent consumes entries.** When it plans a design, it retrieves an entry, queries a Pareto point against the design's constraints, instantiates it, and reruns the entry's harness in context. The library is the **consumer's resource** there.
 * The loop closes when an agent run exposes something the entry did not say (an in-context timing failure, a contract ambiguity, a guess that was wrong): that goes back as a defect or a new line in "what a user could guess wrong", and a new characterisation run

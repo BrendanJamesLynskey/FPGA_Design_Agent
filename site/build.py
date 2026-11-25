@@ -27,8 +27,8 @@ SRC = HERE / "src"
 REPO = "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent"
 
 PAGES = [  # file, nav label, title, description, data keys inlined
-    ("index.html", "Home", "Gateguild", "An agentic FPGA design environment: from a plain-English request to a bitstream proven on the board. Language-model agents write the spec, tests and RTL; code-run gates, hidden tests and the board judge them; every number is read from a committed result file.", ["loop", "dev", "kr260"]),
-    ("why.html", "Why", "Why Gateguild", "The one-page summary: what makes this agent different, in drawers that each open to what it means, an example from this project with its numbers, what it does not do yet, and where to read more.", []),
+    ("index.html", "Home", "FPGA Guild", "An agentic FPGA design environment: from a plain-English request to a bitstream proven on the board. Language-model agents write the spec, tests and RTL; code-run gates, hidden tests and the board judge them; every number is read from a committed result file.", ["loop", "dev", "kr260"]),
+    ("why.html", "Why", "Why FPGA Guild", "The one-page summary: what makes this agent different, in drawers that each open to what it means, an example from this project with its numbers, what it does not do yet, and where to read more.", []),
     ("agent.html", "The agent", "The agent", "The agent itself: a LangGraph controller over Deep Agents or Claude Code role agents, drawn from its code, with a recorded run replayed through the diagrams.", ["agent_graph"]),
     ("story.html", "How it was built", "How the agent was built", "How the agent was designed, measured and corrected: a timeline, an experiment card for every test including the nulls and the stopped evaluation, the method, the improvement loop and the lessons, with every number read from a committed result file.", []),
     ("worked-example.html", "Worked example", "Worked example: a 10G trading path on the KR260", "One design end to end, seen as who did what: what the human specified, what the agent built, what verified it, what the board measured, and where human judgement mattered, each linked to its committed record.", ["kr260"]),
@@ -382,7 +382,7 @@ def layout(fname, title, desc, body, keys, d, css, js, prefix="", current=None, 
         nxt = PAGES[idx + 1] if idx + 1 < len(PAGES) else None
         pager = '<div class="pager">' + (f'<a href="{prev[0]}">&larr; {html.escape(prev[1])}</a>' if prev else "<span></span>") + \
                 (f'<a href="{nxt[0]}">{html.escape(nxt[1])} &rarr;</a>' if nxt else "<span></span>") + "</div>"
-    full = title if fname == "index.html" else f"{title} | Gateguild"
+    full = title if fname == "index.html" else f"{title} | FPGA Guild"
     return f"""<!doctype html>
 <html lang="en">
 <head>
@@ -396,7 +396,7 @@ def layout(fname, title, desc, body, keys, d, css, js, prefix="", current=None, 
 </head>
 <body>
 <a class="visually-hidden" href="#main">Skip to content</a>
-<header class="bar"><div class="wrap"><a class="brand" href="{prefix}index.html">Gateguild</a><nav aria-label="Pages">{nav}</nav><button id="theme" type="button" aria-label="Switch to dark theme">Dark</button></div></header>
+<header class="bar"><div class="wrap"><a class="brand" href="{prefix}index.html">FPGA Guild</a><nav aria-label="Pages">{nav}</nav><button id="theme" type="button" aria-label="Switch to dark theme">Dark</button></div></header>
 <main id="main" class="wrap">
 {body}
 {pager}

@@ -3,11 +3,11 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Decimal up/down counter with selectable step | Gateguild</title>
+<title>Decimal up/down counter with selectable step | FPGA Guild</title>
 <meta name="description" content="Decimal up/down counter with selectable step: the spec, hidden tests, reference RTL, mutants and golden model of benchmark task t1_bcd_updown.">
 <meta name="color-scheme" content="light dark">
 <link rel="icon" href="../favicon.svg" type="image/svg+xml">
-<style>/* Gateguild site: sober monochrome, dark and light, no glow. Same manner as the CVDP RTL Agent site. */
+<style>/* FPGA Guild site: sober monochrome, dark and light, no glow. Same manner as the CVDP RTL Agent site. */
 :root {
   --bg: #f6f6f4; --panel: #ffffff; --rule: #d6d6d2; --ink: #161616; --ink-2: #4a4a4a; --ink-3: #6b6b6b;
   --mark: #161616; --mute: #b9b9b4; --warn: #b3261e; --ok: #161616;
@@ -675,7 +675,7 @@ svg .bdtick { stroke: var(--ink-3); }
 @media (max-width: 520px) { .evm tbody th { min-width: 9em; } }
 @media (max-width: 520px) { .evm tbody th { white-space: normal; min-width: 8em; max-width: 9em; font-size: .8rem; } .evm td.ev { min-width: 4.2em; } .evm thead th { font-size: .72rem; } }
 
-/* brief 193: "Why Gateguild": the one-page summary */
+/* brief 193: "Why FPGA Guild": the one-page summary */
 svg .boxyou { fill: var(--ink); stroke: var(--ink); }
 .whyhero h1 { font-size: clamp(1.35rem, 1rem + 1.6vw, 2rem); letter-spacing: -.01em; line-height: 1.3; max-width: 48ch; }
 .whyfig { margin: 18px 0 8px; }
@@ -694,7 +694,7 @@ details.area.why .more-link { margin: .8em 0 0; font-weight: 600; }
 </head>
 <body>
 <a class="visually-hidden" href="#main">Skip to content</a>
-<header class="bar"><div class="wrap"><a class="brand" href="../index.html">Gateguild</a><nav aria-label="Pages"><a href="../why.html">Why</a><a href="../agent.html">The agent</a><a class="sub" href="../agent.html#harness">Harness</a><a href="../story.html">How it was built</a><a href="../worked-example.html">Worked example</a><a href="../inspect.html">Inspect it</a><a href="../how.html">How it works</a><a href="../verification.html">Verification</a><a href="../traceability.html">Traceability</a><a href="../flow-notes.html">Beyond the flow</a><a href="../expertise.html">Expertise</a><a href="../examples.html">Examples</a><a href="../showcase.html">Showcase</a><a href="../problems.html" aria-current="page">Problems</a><a href="../evaluation.html">Evaluation</a><a href="../results.html">Results</a></nav><button id="theme" type="button" aria-label="Switch to dark theme">Dark</button></div></header>
+<header class="bar"><div class="wrap"><a class="brand" href="../index.html">FPGA Guild</a><nav aria-label="Pages"><a href="../why.html">Why</a><a href="../agent.html">The agent</a><a class="sub" href="../agent.html#harness">Harness</a><a href="../story.html">How it was built</a><a href="../worked-example.html">Worked example</a><a href="../inspect.html">Inspect it</a><a href="../how.html">How it works</a><a href="../verification.html">Verification</a><a href="../traceability.html">Traceability</a><a href="../flow-notes.html">Beyond the flow</a><a href="../expertise.html">Expertise</a><a href="../examples.html">Examples</a><a href="../showcase.html">Showcase</a><a href="../problems.html" aria-current="page">Problems</a><a href="../evaluation.html">Evaluation</a><a href="../results.html">Results</a></nav><button id="theme" type="button" aria-label="Switch to dark theme">Dark</button></div></header>
 <main id="main" class="wrap">
 <p class="crumbs small"><a href="../problems.html">Problems</a> / <a href="../problems.html#dom-A">A. Basic digital design drills</a></p>
 <h1>Decimal up/down counter with selectable step</h1>
@@ -1272,7 +1272,7 @@ GLYPHS = (<span class="hs">&quot;abcdef&quot;</span>, <span class="hs">&quot;bc&
 </main>
 <footer><div class="wrap"><p>Designed by Brendan Lynskey. Code and results: <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent">github.com/BrendanJamesLynskey/FPGA_Design_Agent</a> (all rights reserved; source visible for review, see LICENSE). Every number on these pages is read from a committed result file; development results are labelled as such and are not the held-out score.</p></div></footer>
 <script type="application/json" data-key="trace">{"captions":["Press 0: the count is set to 9985 over the shell, so the display shows 9985. No wraps yet.","Press 1: switches 00 give a step of 1; one press up takes 9985 to 9986.","Press 2: switches 00 give a step of 1; one press up takes 9986 to 9987.","Press 3: switches 01 give a step of 2; one press up takes 9987 to 9989.","Press 4: switches 10 give a step of 5; one press up takes 9989 to 9994.","Press 5: switches 11 give a step of 10; one press up takes 9994 to 4. That passes the end of the range, so the wrap count becomes 1.","Press 6: switches 11 give a step of 10; one press up takes 4 to 14.","Press 7: switches 11 give a step of 10; one press down takes 14 to 4.","Press 8: switches 10 give a step of 5; one press down takes 4 to 9999. That passes the end of the range, so the wrap count becomes 2.","Press 9: switches 01 give a step of 2; one press down takes 9999 to 9997.","Press 10: switches 00 give a step of 1; one press down takes 9997 to 9996.","Press 11: switches 00 give a step of 1; one press down takes 9996 to 9995.","Press 12: switches 11 give a step of 10; one press down takes 9995 to 9985.","Press 13: switches 11 give a step of 10; one press down takes 9985 to 9975.","Press 14: switches 11 give a step of 10; one press down takes 9975 to 9965.","Press 15: switches 10 give a step of 5; one press down takes 9965 to 9960.","Press 16: switches 10 give a step of 5; one press up takes 9960 to 9965.","Press 17: switches 11 give a step of 10; one press up takes 9965 to 9975.","Press 18: switches 11 give a step of 10; one press up takes 9975 to 9985.","Press 19: switches 11 give a step of 10; one press up takes 9985 to 9995.","Press 20: switches 00 give a step of 1; one press up takes 9995 to 9996."],"signals":[{"kind":"bus","name":"COUNT","radix":"dec","v":[9985,9986,9987,9989,9994,4,14,4,9999,9997,9996,9995,9985,9975,9965,9960,9965,9975,9985,9995,9996]},{"kind":"bus","name":"STEP","radix":"dec","v":[1,1,1,2,5,10,10,10,5,2,1,1,10,10,10,5,5,10,10,10,1]},{"kind":"bus","name":"WRAPS","radix":"dec","v":[0,0,0,0,0,1,1,1,2,2,2,2,2,2,2,2,2,2,2,2,2]},{"kind":"bus","name":"BCD","radix":"hex","v":[39301,39302,39303,39305,39316,4,20,4,39321,39319,39318,39317,39301,39285,39269,39264,39269,39285,39301,39317,39318],"width":16}],"stimulus":"The count is set to 9985, then 20 clean button presses are applied (the debounced button, so one press is one step), up or down, with the step switches changed between presses.","unit":"press","x":[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]}</script>
-<script>/* Gateguild site. No dependencies. Every animation is frame(step) over a state list built from site/data/*.json. */
+<script>/* FPGA Guild site. No dependencies. Every animation is frame(step) over a state list built from site/data/*.json. */
 (function () {
   "use strict";
   var D = {};
