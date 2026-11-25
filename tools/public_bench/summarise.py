@@ -17,12 +17,13 @@ def wilson(k, n, z=1.959964):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("csv"); ap.add_argument("--weights")
+    ap.add_argument("csv"); ap.add_argument("--weights"); ap.add_argument("--col", default="result"); ap.add_argument("--exclude", default="", help="comma-separated problem ids to leave out")
     a = ap.parse_args()
-    rows = list(csv.DictReader(open(a.csv)))
+    ex = set(x for x in a.exclude.split(",") if x)
+    rows = [r for r in csv.DictReader(open(a.csv)) if r["id"] not in ex]
     cat = collections.defaultdict(list)
     for r in rows:
-        cat[r["category"]].append(1 if r["result"] == "pass" else 0)
+        cat[r["category"]].append(1 if r[a.col] == "pass" else 0)
     print("| category | n | passed | pass rate | 95% interval (Wilson) |")
     print("|---|---|---|---|---|")
     K = N = 0

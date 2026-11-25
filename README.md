@@ -614,6 +614,7 @@ request list is the record.
 | 162 | KR260 carrier board data from AMD's Allegro file (per-net lengths, stack-up Z0 and delay, series resistors, PHY input capacitance), the check re-run with it, a DRIVE x SLEW x series-R sweep on a 50 ohm line (1 to 10 in; LVCMOS33, 25 HR and LVCMOS18 HP) with an ngspice cross-check, and a check of newer IBIS files ([docs/offchip_drive_slew.md](docs/offchip_drive_slew.md), [results/162_kr260_si](results/162_kr260_si/README.md)); no Vivado, no board measurement | PR open |
 | F3 | Scored runs | `eval-1` stopped 2026-11-09 before analysis, no score ([pre-registration](docs/eval/eval1_preregistration.md)); baseline evaluation on a larger benchmark next |
 | 209b | the `anthropic_api` endpoint made first-class: cost computed from response usage and a per-model price table, prompt caching markers, `temperature` omitted by a per-model rule, `--budget-scale` for dearer models ([docs/model_config.md](docs/model_config.md#anthropic-api-cost-caching-temperature-budgets-brief-209b), [smoke record](results/209b_anthropic_smoke/README.md)) | PR open |
+| 215 | a public-benchmark baseline: the agent's stages 0 to 2 (Sonnet 5.5, simulation only) on 50 of the 302 CVDP non-agentic code-generation problems, scored only by CVDP's hidden tests: 29 of 50 pass strictly (95% interval 44% to 71%), 31 with a file-extension stand-in; public, contamination-exposed, not our primary score ([results/215_public_benchmarks](results/215_public_benchmarks/README.md), [tools/public_bench](tools/public_bench/cvdp_adapter.py)) | PR open |
 
 ## Licence
 

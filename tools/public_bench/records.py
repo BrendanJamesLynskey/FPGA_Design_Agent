@@ -18,12 +18,14 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--batch", required=True); ap.add_argument("--data", required=True); ap.add_argument("--ids", required=True)
     ap.add_argument("--prefix", required=True); ap.add_argument("--scores", required=True)
+    ap.add_argument("--scores2", help="second scores.csv (post hoc extension-mapped variant)")
     ap.add_argument("--tags", help="id=tag,... overrides"); ap.add_argument("--out", default=str(W / "results/215_public_benchmarks"))
     a = ap.parse_args()
     cat = {}
     for l in open(a.data):
         r = json.loads(l); cat[r["id"]] = (r["categories"][0], r["categories"][1] if len(r["categories"]) > 1 else "")
     sc = dict(x.split(",") for x in Path(a.scores).read_text().split())
+    sc2 = dict(x.split(",") for x in Path(a.scores2).read_text().split()) if a.scores2 else {}
     ov = dict(x.split("=") for x in a.tags.split(",")) if a.tags else {}
     rows = []
     for pid in Path(a.ids).read_text().split():
@@ -31,7 +33,7 @@ def main():
         dst = Path(a.out) / "records" / a.batch / tag
         found = sorted(W.glob(f"runs/*/{tag}"))
         log = (S / "logs" / f"{tag}.log")
-        row = {"id": pid, "category": cat[pid][0], "difficulty": cat[pid][1], "tag": tag, "result": sc.get(pid, "NOT RUN")}
+        row = {"id": pid, "category": cat[pid][0], "difficulty": cat[pid][1], "tag": tag, "result": sc.get(pid, "NOT RUN"), "result_ext_mapped": sc2.get(pid, "")}
         if found:
             d = found[0]; run = d.parent
             dst.mkdir(parents=True, exist_ok=True)
@@ -57,7 +59,7 @@ def main():
             keep = [x for x in lines if re.match(r"^20\d\d-", x)]
             (dst / "driver.log").write_text("\n".join(keep) + "\n")
         rows.append(row)
-    cols = ["id", "category", "difficulty", "tag", "result", "run_id", "stop", "stage2_visits", "wall_s", "driver_wall_s", "plan_cost_usd", "tokens",
+    cols = ["id", "category", "difficulty", "tag", "result", "result_ext_mapped", "run_id", "stop", "stage2_visits", "wall_s", "driver_wall_s", "plan_cost_usd", "tokens",
             "weekly_before", "weekly_after"]
     out = Path(a.out) / f"results_{a.batch}.csv"
     with open(out, "w", newline="") as f:

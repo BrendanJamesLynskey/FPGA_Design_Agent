@@ -83,6 +83,11 @@ def cmd_collect(a):
         got, missing = {}, []
         for k in targets(row):
             f = Path(d) / k
+            if not f.is_file() and a.ext_map:      # post hoc variant (amendment 3): the flow writes .sv for a task that names .v; same stem, same text
+                alt = f.with_suffix(".sv" if f.suffix == ".v" else ".v")
+                if alt.is_file():
+                    f = alt
+                    print(f"{pid} ext_map {k} <- {alt.name}", file=sys.stderr)
             if f.is_file():
                 got[k] = f.read_text(errors="replace")
             else:
@@ -117,7 +122,8 @@ def main():
     s = sp.add_parser("prepare"); s.add_argument("--data", required=True); s.add_argument("--id", required=True)
     s.add_argument("--out", required=True); s.set_defaults(f=cmd_prepare)
     s = sp.add_parser("collect"); s.add_argument("--data", required=True); s.add_argument("--out", required=True)
-    s.add_argument("--run", nargs="+", required=True); s.set_defaults(f=cmd_collect)
+    s.add_argument("--run", nargs="+", required=True)
+    s.add_argument("--ext-map", action="store_true", help="use the same-stem .sv file for a missing .v target (and the reverse)"); s.set_defaults(f=cmd_collect)
     s = sp.add_parser("score"); s.add_argument("--harness", required=True); s.add_argument("--python", required=True)
     s.add_argument("--dataset", required=True); s.add_argument("--work", required=True); s.add_argument("--threads", type=int, default=2)
     s.set_defaults(f=cmd_score)

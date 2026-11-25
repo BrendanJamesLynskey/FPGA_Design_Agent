@@ -19,7 +19,7 @@ load=$(cut -d' ' -f1 /proc/loadavg); free_gb=$(free -g | awk '/^Mem:/{print $7}'
 echo "$(date '+%F %T') load=$load available_gb=$free_gb" | tee -a $L
 awk -v l=$load 'BEGIN{exit !(l<6)}' && [ "$free_gb" -gt 12 ] || { echo "WAIT_RESOURCES $tag" | tee -a $L; exit 6; }
 python3 $W/tools/public_bench/cvdp_adapter.py prepare --data $DATA --id $pid --out $S/runs/$tag/in >> $L 2>&1 || exit 7
-cd $W
+cd $W || exit 8
 export PATH=$S/bin:$PATH FDA_KNOWLEDGE=/home/brendan/Claude_sandbox/_worktrees/215-kb FDA_PROMPTS_DIR=/home/brendan/Claude_sandbox/_worktrees/215-kb/prompts
 t0=$(date +%s)
 timeout -k 30 $WALL systemd-run --user --scope -q -p MemoryMax=6G nice -n 15 \
