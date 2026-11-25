@@ -38,6 +38,7 @@ class Question:
     status: str = "open"                # open | answered | defaulted
     by: str | None = None               # human | oracle | default
     evidence: str | None = None         # the oracle's quoted line from the hidden spec
+    fact: str | None = None             # brief 174: the board_facts.yaml key that answered it (by == "package")
 
 
 class Answerer(Protocol):
@@ -50,11 +51,23 @@ class Answerer(Protocol):
 class Interview:
     questions: list[Question] = field(default_factory=list)
     max_questions: int = 12
+    facts: list[dict[str, Any]] = field(default_factory=list)   # brief 174: board_facts.yaml rows of a design package
+
+    def lookup(self, q: Question) -> dict[str, Any] | None:
+        """A sourced fact of the design package that answers the question, or None (then the question is asked as before)."""
+        from agent.graph.package_facts import fact_for
+        return fact_for(q.text, self.facts) if self.facts else None
 
     def ask(self, q: Question, who: Answerer | None) -> Question:
         """Ask one question. ``who=None`` (interview off) takes the default."""
         if not (q.text.strip() and q.default.strip() and q.reason.strip()):
             raise ValueError("a question needs text, a proposed default and the reason for it")
+        known = self.lookup(q)
+        if known is not None:             # brief 174: a fact with a cited source is not asked again; it does not count against the limit
+            from agent.graph.package_facts import answer_text, evidence_text
+            q.answer, q.status, q.by, q.fact, q.evidence = answer_text(known), "answered", "package", known["key"], evidence_text(known)
+            self.questions.append(q)
+            return q
         if len(self.questions) >= self.max_questions:
             # a limit degrades, never crashes the run (a live run died here): the user is not asked, the default is
             # taken, and the record says it was the limit
