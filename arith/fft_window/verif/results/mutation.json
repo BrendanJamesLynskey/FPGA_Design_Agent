@@ -1,0 +1,73 @@
+{
+ "function": "fft_window",
+ "mutants": 7,
+ "valid": 7,
+ "killed": 7,
+ "survived": [],
+ "invalid": [],
+ "score_pct": 100.0,
+ "per_variant": {
+  "dsp": {
+   "valid": 7,
+   "killed": 7
+  }
+ },
+ "results": [
+  {
+   "name": "round_half",
+   "variant": "dsp",
+   "class": "constant",
+   "status": "killed",
+   "detail": "exhaustive {'WD': 3, 'WW': 3, 'RND': 1, 'STAGES': 0}",
+   "why": "the rounding constant is a quarter instead of a half"
+  },
+  {
+   "name": "coef_sign",
+   "variant": "dsp",
+   "class": "width",
+   "status": "killed",
+   "detail": "exhaustive {'WD': 3, 'WW': 3, 'RND': 1, 'STAGES': 0}",
+   "why": "the coefficient is read as signed"
+  },
+  {
+   "name": "imag_uses_real",
+   "variant": "dsp",
+   "class": "connection",
+   "status": "killed",
+   "detail": "exhaustive {'WD': 3, 'WW': 3, 'RND': 1, 'STAGES': 0}",
+   "why": "the imaginary part multiplies the real part"
+  },
+  {
+   "name": "coef_rank",
+   "variant": "dsp",
+   "class": "latency",
+   "status": "killed",
+   "detail": "exhaustive {'WD': 3, 'WW': 3, 'RND': 0, 'STAGES': 2}",
+   "why": "the coefficient skips its operand rank"
+  },
+  {
+   "name": "output_rank",
+   "variant": "dsp",
+   "class": "latency",
+   "status": "killed",
+   "detail": "exhaustive {'WD': 3, 'WW': 3, 'RND': 0, 'STAGES': 2}",
+   "why": "the real output skips its register"
+  },
+  {
+   "name": "product_rank",
+   "variant": "dsp",
+   "class": "latency",
+   "status": "killed",
+   "detail": "randomised {'WD': 16, 'WW': 16, 'RND': 1, 'STAGES': 3}",
+   "why": "the real product skips its register"
+  },
+  {
+   "name": "rnd_inverted",
+   "variant": "dsp",
+   "class": "operator",
+   "status": "killed",
+   "detail": "exhaustive {'WD': 3, 'WW': 3, 'RND': 1, 'STAGES': 0}",
+   "why": "rounding and truncation are exchanged"
+  }
+ ]
+}

@@ -100,11 +100,11 @@ def check_lint_clean(fn: str) -> None:
     spec = ac.load_spec(fn)
     bad = []
     for v, vd in spec["variants"].items():
-        f = ac.ARITH / fn / vd["file"]
+        f = ac.rtl_files(fn, vd)
         pts = {json.dumps({**vd["params"], **p}, sort_keys=True): {**vd["params"], **p} for k in ("exhaustive_points", "random_points", "ooc_points") for p in vd[k]}
         pts[json.dumps(vd["params"], sort_keys=True)] = dict(vd["params"])
         for p in pts.values():
-            e = lint(vd["module"], [f], p)
+            e = lint(vd["module"], f, p)
             if e:
                 bad.append(f"{v} {p}: {e}")
     assert not bad, "\n".join(bad[:3])
@@ -148,7 +148,7 @@ def check_latency_is_exact(fn: str, variant: str, params: dict) -> None:
         ac.run_point(fn, variant, params, "randomised", n=200, lat=good + 2)
 
 
-def check_mutants(fn: str) -> None:
+def check_mutants(fn: str, min_valid: int = 10) -> None:
     with tempfile.TemporaryDirectory() as t:
         out = Path(t) / "mutation.json"
         r = subprocess.run([sys.executable, "-m", "arith.tools.run_mutants", fn, "--jobs", "2", "--json", str(out)], cwd=ac.ROOT, capture_output=True, text=True)
@@ -156,7 +156,7 @@ def check_mutants(fn: str) -> None:
         res = json.loads(out.read_text())
     assert not res["invalid"], f"mutants that do not build: {res['invalid']}"
     assert not res["survived"], f"mutants the bench did not kill: {res['survived']}"
-    assert res["killed"] == res["valid"] and res["valid"] >= 10
+    assert res["killed"] == res["valid"] and res["valid"] >= min_valid
 
 
 def job_kind(j: dict) -> str:
@@ -182,10 +182,10 @@ def check_formal_job(fn: str, name: str) -> None:
 
 
 # ---- the packaged harness -------------------------------------------------------------------------------------
-def run_harness(fn: str, rtl: Path, top: str, params: dict, lat: int, mode: str, extra: list[str] | None = None, n: int = 800) -> subprocess.CompletedProcess:
+def run_harness(fn: str, rtl: "Path | list[Path]", top: str, params: dict, lat: int, mode: str, extra: list[str] | None = None, n: int = 800, variant: str = "") -> subprocess.CompletedProcess:
     h = ac.ARITH / fn / "harness"
-    cmd = [sys.executable, str(h / "run_harness.py"), "--rtl", str(rtl), "--top", top, "--params", json.dumps(params), "--latency", str(lat), "--mode", mode,
-           "--n", str(n)] + (extra or [])
+    cmd = [sys.executable, str(h / "run_harness.py"), "--rtl", *[str(x) for x in (rtl if isinstance(rtl, list) else [rtl])], "--top", top, "--params", json.dumps(params), "--latency", str(lat), "--mode", mode,
+           "--n", str(n)] + (["--variant", variant] if variant and fn in ac.ELEMENTARY else []) + (extra or [])
     return subprocess.run(cmd, capture_output=True, text=True, cwd=h)
 
 
@@ -203,7 +203,7 @@ def check_harness_passes(fn: str, variant: str, params: dict, mode: str) -> None
     spec = ac.load_spec(fn)
     vd = spec["variants"][variant]
     p = ac.merged_params(spec, variant, params)
-    r = run_harness(fn, ac.ARITH / fn / vd["file"], vd["module"], p, ac.latency_of(spec, variant, p), mode, ["--checker"])
+    r = run_harness(fn, ac.rtl_files(fn, vd), vd["module"], p, ac.latency_of(spec, variant, p), mode, ["--checker"], variant=variant)
     assert r.returncode == 0, r.stdout[-700:] + r.stderr[-300:]
     if mode == "randomised":
         assert "bins met" in r.stdout and "NOT met" not in r.stdout, r.stdout[-500:]
@@ -218,12 +218,18 @@ def check_harness_catches_a_fault(fn: str, mutant: str) -> None:
     run0 = vd["mutant_run"][0]
     p = ac.merged_params(spec, m["variant"], run0["params"])
     with tempfile.TemporaryDirectory() as t:
-        f = Path(t) / Path(vd["file"]).name
-        src = (d / vd["file"]).read_text()
-        assert src.count(m["old"]) == 1
-        f.write_text(src.replace(m["old"], m["new"]))
+        files = ac.rtl_files(fn, vd)
+        target = (d / m["file"]).resolve() if m.get("file") else files[0].resolve()
+        new = []
+        for x in files:
+            if x.resolve() == target:
+                src = x.read_text()
+                assert src.count(m["old"]) == 1
+                x = Path(t) / x.name
+                x.write_text(src.replace(m["old"], m["new"]))
+            new.append(x)
         for extra in ([], ["--checker"]):
-            r = run_harness(fn, f, vd["module"], p, ac.latency_of(spec, m["variant"], p), run0["mode"], extra)
+            r = run_harness(fn, new, vd["module"], p, ac.latency_of(spec, m["variant"], p), run0["mode"], extra, variant=m["variant"])
             assert r.returncode == 1 and "FAIL" in r.stdout, r.stdout[-500:]
 
 
@@ -235,7 +241,101 @@ def check_harness_files(fn: str) -> None:
     for f in ("assertions.sv", "chk_top.sv", "coverage.yaml", "README.md", "run_harness.py"):
         assert (h / f).is_file()
     # the checker is a simulation checker (initial values, a display): it must parse and elaborate in Verilator; warnings are not a failure
-    top = {"adder": "adder_checker", "multiplier": "mult_checker", "mac": "mac_checker"}[fn]
-    r = subprocess.run([ac.tool("verilator"), "--lint-only", "-Wno-fatal", "-Wno-lint", "-Wno-style", "--top-module", top, str(h / "assertions.sv")] + [str(x) for x in sorted(h.glob("mac_ref.sv"))],
+    top = {"adder": "adder_checker", "multiplier": "mult_checker", "mac": "mac_checker", "exp2": "exp2_checker", "log2": "log2_checker", "sincos": "sincos_checker",
+           "atan2_mag": "atan2_checker", "fp_add": "fp_add_checker", "fp_mul": "fp_mul_checker", "fp_fma": "fp_fma_checker"}[fn]
+    r = subprocess.run([ac.tool("verilator"), "--lint-only", "-Wno-fatal", "-Wno-lint", "-Wno-style", "--top-module", top, str(h / "assertions.sv")] + [str(x) for x in sorted(h.glob("mac_ref.sv")) + sorted(h.glob("fpx_ref.sv"))],
                        capture_output=True, text=True)
     assert r.returncode == 0 and "%Error" not in r.stderr, r.stderr[-600:]
+
+
+# ---- accuracy (the elementary functions of brief 139d) ------------------------------------------------------------------------------------
+def accuracy_points(fn: str) -> list:
+    spec = ac.load_spec(fn)
+    return [pytest.param(v, pt["params"], pt["bound_ulp"], id=f"{v}-" + "-".join(f"{k}{x}" for k, x in pt["params"].items())) for v, vd in spec["variants"].items() for pt in vd["accuracy_points"]]
+
+
+def check_accuracy(fn: str, variant: str, params: dict, bound: dict, slack: float = 0.06) -> None:
+    """The stated error bound at a listed point is true (the model's error over every input is at most the bound) and not loose (within `slack` of the measured maximum)."""
+    import importlib
+    model = importlib.import_module(f"arith.{fn}.model")
+    spec = ac.load_spec(fn)
+    p = ac.merged_params(spec, variant, params)
+    got = model.max_error(variant, p)
+    assert set(got) == set(bound), (got, bound)
+    for k, v in bound.items():
+        assert got[k] <= v, f"{fn} {variant} {p}: measured error {got[k]:.4f} exceeds the stated bound {v} ({k})"
+        assert v - got[k] < slack, f"{fn} {variant} {p}: the stated bound {v} is loose: measured {got[k]:.4f} ({k})"
+
+
+def check_generated_rtl_is_current(fn: str) -> None:
+    """The committed RTL of the generated variants is what arith/tools/gen_rtl.py writes now (so the tables in it are the model's)."""
+    from arith.tools import gen_rtl
+    for p, t in gen_rtl.outputs().items():
+        if p.parent.parent.name == fn:
+            assert p.exists() and p.read_text() == t, f"{p.relative_to(ac.ROOT)} is out of date: run python -m arith.tools.gen_rtl"
+
+
+# ---- the packaged harness of the frequency-domain suite's phase 1 functions (brief 161) ---------------------------------
+def run_harness_fft(fn: str, rtl: "list[Path]", top: str, variant: str, params: dict, lat: int, mode: str = "all", extra: list[str] | None = None, n: int = 600) -> subprocess.CompletedProcess:
+    h = ac.ARITH / fn / "harness"
+    cmd = [sys.executable, str(h / "run_harness.py"), "--rtl", *[str(x) for x in rtl], "--top", top, "--variant", variant, "--params", json.dumps(params), "--latency", str(lat), "--mode", mode,
+           "--n", str(n)] + (extra or [])
+    return subprocess.run(cmd, capture_output=True, text=True, cwd=h, env={**__import__("os").environ, "PYTHONHASHSEED": "0"})
+
+
+def _dut_files(fn: str, vd: dict) -> "list[Path]":
+    """The variant's files as a user's instance would have them: without the repository's simulation checkers, which the harness's assertions.sv supplies."""
+    return [x for x in ac.rtl_files(fn, vd) if x.name not in ("axis_checker.sv", "axil_checker.sv")]
+
+
+def check_harness_fft_passes(fn: str, variant: str) -> None:
+    """The harness, run standalone against the repository's own variant with the SystemVerilog checkers beside it, in every mode: it passes and meets every coverage target."""
+    spec = ac.load_spec(fn)
+    vd = spec["variants"][variant]
+    p = ac.merged_params(spec, variant, vd["exhaustive_points"][1])
+    r = run_harness_fft(fn, _dut_files(fn, vd), vd["module"], variant, p, ac.latency_of(spec, variant, p), "all", ["--checker"])
+    assert r.returncode == 0 and "PASS" in r.stdout and "NOT met" not in r.stdout, r.stdout[-900:] + r.stderr[-300:]
+    assert "bins met" in r.stdout
+
+
+def check_harness_fft_catches(fn: str, mutant: str) -> None:
+    """A planted fault (a mutant of verif/mutants.yaml) makes the standalone harness fail, with the checkers beside the instance, and a wrong latency fails it on the unmutated RTL."""
+    d = ac.ARITH / fn
+    spec = ac.load_spec(fn)
+    m = next(x for x in yaml.safe_load((d / "verif" / "mutants.yaml").read_text())["mutants"] if x["name"] == mutant)
+    vd = spec["variants"][m["variant"]]
+    p = ac.merged_params(spec, m["variant"], vd["mutant_run"][0]["params"])
+    lat = ac.latency_of(spec, m["variant"], p)
+    mode = vd["mutant_run"][0]["mode"]
+    with tempfile.TemporaryDirectory() as t:
+        files = _dut_files(fn, vd)
+        target = (d / m["file"]).resolve() if m.get("file") else files[0].resolve()
+        new = []
+        for x in files:
+            if x.resolve() == target:
+                src = x.read_text()
+                assert src.count(m["old"]) == 1
+                x = Path(t) / x.name
+                x.write_text(src.replace(m["old"], m["new"]))
+            new.append(x)
+        r = run_harness_fft(fn, new, vd["module"], m["variant"], p, lat, mode, ["--checker"])
+        assert r.returncode == 1 and "FAIL" in r.stdout, r.stdout[-500:]
+    r = run_harness_fft(fn, _dut_files(fn, vd), vd["module"], m["variant"], p, lat + 2, mode, ["--checker"])
+    assert r.returncode == 1 and "FAIL" in r.stdout, "a wrong latency must fail the harness: " + r.stdout[-400:]
+
+
+def check_harness_fft_files(fn: str) -> None:
+    from arith.tools import gen_harness_fft
+    for p, t in gen_harness_fft.outputs(fn).items():
+        assert p.exists() and p.read_text() == t, f"{p.relative_to(ac.ROOT)} is out of date: run python -m arith.tools.gen_harness_fft"
+    h = ac.ARITH / fn / "harness"
+    for f in ("assertions.sv", "chk_top.sv", "coverage.yaml", "README.md", "run_harness.py"):
+        assert (h / f).is_file()
+    # chk_top elaborates with a variant of the function (its checkers and the instance): Verilator -Wall is not demanded of the simulation checkers, only that they elaborate
+    spec = ac.load_spec(fn)
+    v, vd = next(iter(spec["variants"].items()))
+    with tempfile.TemporaryDirectory() as t:
+        (Path(t) / "dut_defs.svh").write_text(f"`define DUT_MODULE {vd['module']}\n`define DUT_PARAMS #(" + ", ".join(f".{k}({k})" for k in vd["params"]) + ")\n")
+        r = subprocess.run([ac.tool("verilator"), "--lint-only", "-Wno-fatal", "-Wno-lint", "-Wno-style", f"-I{t}", "--top-module", "chk_top", *[f"-G{k}={x}" for k, x in vd["params"].items()],
+                            str(h / "chk_top.sv"), str(h / "assertions.sv"), *[str(x) for x in _dut_files(fn, vd)]], capture_output=True, text=True)
+    assert r.returncode == 0 and "%Error" not in r.stderr, r.stderr[-800:]

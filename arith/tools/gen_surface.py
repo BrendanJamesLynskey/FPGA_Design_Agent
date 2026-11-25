@@ -310,7 +310,20 @@ def readme(data: dict, pc: list[dict]) -> str:
           "Spearman is the rank correlation, errors are |predicted - measured| / measured.", "",
           "| Function | Part | Quantity | n | Spearman | Median error | Max error |", "|---|---|---|---|---|---|---|"]
     L += [f"| {c['function']} | {c['part']} | {c['quantity']} | {c['n']} | {c['spearman']} | {c['median_abs_rel_error']} | {c['max_abs_rel_error']} |" for c in pc]
-    L.append("")
+    L += ["", "## Records", "",
+          "- One record per point and part: `arith/<function>/verif/results/vivado_ooc_<variant>_<part>.json` (written by `python -m arith.tools.run_vivado_ooc`).",
+          "- One roll-up per function: `arith/<function>/verif/results/vivado_surface.json`; all functions together: [surface.json](surface.json) (this folder).",
+          "- The testplan of each function (`arith/<function>/verif/testplan.yaml`) has one performance requirement saying that every prepared point has a routed result; the Measured table of each `spec.md` shows the values.", "",
+          "## Reproduce", "",
+          "1. Take a heavy slot with `_handoff/take_heavy_slot.sh` (a Vivado run takes memory; one thread: `general.maxThreads 1`).",
+          "2. `python -m arith.tools.run_vivado_ooc` runs every point of the build files (`arith/<function>/build/<variant>/build.yaml`) through out-of-context synthesis, placement and routing and writes the records.",
+          "3. `python -m arith.tools.gen_surface` rebuilds [surface.json](surface.json), this README and the per-function roll-ups; `python -m arith.tools.gen_surface --check` fails when they are out of date.",
+          "4. `python -m arith.tools.gen_spec_md` and `python -m arith.tools.gen_testplan` carry the numbers into each `spec.md` and testplan.", "",
+          "## Known gaps and limits", "",
+          "- One run per point: no run-to-run spread is measured, and Fmax is read from WNS at the stated clock, so it is only a lower bound (marked `>=`) when WNS is positive.",
+          "- Out-of-context results with every port registered by a wrapper: no in-design placement, no neighbouring logic, no board. Power is vectorless.",
+          "- The planning check compares the specs' own expected primitive use with the measurement, not a cost model (see above); functions added after brief 160 (floating point, elementary functions, FFT) are not run here.",
+          "- Only the clocks named in each `build.yaml` were run; the results say nothing about other clocks, speed grades or tool versions.", ""]
     return "\n".join(L)
 
 

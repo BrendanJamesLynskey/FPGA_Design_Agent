@@ -16,12 +16,29 @@ import yaml
 
 ROOT = Path(__file__).resolve().parents[2]
 ARITH = ROOT / "arith"
-FUNCTIONS = ("adder", "multiplier", "mac")
+FUNCTIONS = ("adder", "multiplier", "mac", "exp2", "log2", "sincos", "atan2_mag", "fp_add", "fp_mul", "fp_fma")
+ELEMENTARY = ("exp2", "log2", "sincos", "atan2_mag")        # brief 139d; the first three functions are brief 139a
+FLOAT = ("fp_add", "fp_mul", "fp_fma")                     # brief 139e
+FFT_FUNCTIONS = ("fft_cmul", "fft_twiddle", "fft_reorder", "fft_window", "fft", "fft_real", "fft_axis", "fft_bfp", "fft_mdc2", "fft_real_axis", "fft_fastconv", "fft_mdc2_axis")      # the frequency-domain suite (brief 148): no packaged harness, see arith/README.md
+HARNESS_FFT_FUNCTIONS = ("fft_bfp", "fft_mdc2", "fft_real_axis", "fft_fastconv")      # the phase 1 functions of the suite (brief 161) have a packaged harness; the phase 0 ones do not
+AXIS168 = ("fft_mdc2_axis",)      # brief 168: the AXI4-Stream wrapper of fft_mdc2 with block floating point (no packaged harness yet)
+ALL_FUNCTIONS = FUNCTIONS + FFT_FUNCTIONS
+
+
+def brief_of(fn: str) -> str:
+    return "168" if fn in AXIS168 else "139d" if fn in ELEMENTARY else "139e" if fn in FLOAT else "161" if fn in HARNESS_FFT_FUNCTIONS else "148" if fn in FFT_FUNCTIONS else "139a"
+
+
 PARTS = {"a7": "xc7a100tcsg324-1", "k26": "xck26-sfvc784-2LV-c"}      # the two parts of the brief: Artix-7 (xc7a100t) and Kria K26 (xck26)
 
 
 def load_spec(fn: str) -> dict:
     return yaml.safe_load((ARITH / fn / "spec.yaml").read_text())
+
+
+def rtl_files(fn: str, vd: dict) -> list[Path]:
+    """The variant's file and the shared files it needs (spec.yaml ``deps``, paths relative to arith/), in the order the simulator and the linter read them."""
+    return [ARITH / fn / vd["file"]] + [ARITH / d for d in vd.get("deps", [])]
 
 
 def latency_of(spec: dict, variant: str, params: dict) -> int:
@@ -58,14 +75,14 @@ def run_point(fn: str, variant: str, params: dict, mode: str, rtl_dir: Path | No
     spec = load_spec(fn)
     v = spec["variants"][variant]
     p = merged_params(spec, variant, params)
-    src = ARITH / fn / v["file"]
-    if rtl_dir is not None:
-        src = Path(rtl_dir) / src.name
+    files = rtl_files(fn, v)
+    if rtl_dir is not None:                                  # a mutated copy of any one of the variant's files replaces the original of the same name
+        files = [Path(rtl_dir) / f.name if (Path(rtl_dir) / f.name).exists() else f for f in files]
     tests = ARITH / fn / "tests"
     tag = name or f"{fn}_{variant}_{mode}{'_lat' + str(lat) if lat is not None else ''}_" + "_".join(f"{k}{x}" for k, x in sorted(p.items()))
     env = {"PYTHONPATH": str(ROOT), "ARITH_PARAMS": json.dumps(p), "ARITH_LAT": str(latency_of(spec, variant, p) if lat is None else lat),
-           "ARITH_SEED": str(seed), "ARITH_N": str(n)}
-    cocotb_run.run(tag, v["module"], [src], f"{fn}_cocotb", tests, parameters=p, testcase=mode, extra_env=env, build_root=build_root)
+           "ARITH_SEED": str(seed), "ARITH_N": str(n), "ARITH_VARIANT": variant}
+    cocotb_run.run(tag, v["module"], files, f"{fn}_cocotb", tests, parameters=p, testcase=mode, extra_env=env, build_root=build_root)
 
 
 # ---- vectors -----------------------------------------------------------------------------------------------

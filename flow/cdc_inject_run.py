@@ -58,6 +58,11 @@ def evaluate(design: Path, seeds: int = DEFAULT_SEEDS, tests: list[Path] | None 
     if not cdc_inject.design_crosses(design):
         rep.update({"applicable": False, "pass": True, "why": "the design has no ASYNC_REG register, XPM CDC macro or second clock domain"})
         return rep
+    from flow import sources
+    unread = sources.no_reader(sources.design_rtl(design), {"sv"}, "the CDC injection run (it rewrites SystemVerilog synchroniser registers and XPM instances)")
+    if unread:                                           # brief 153: a VHDL crossing is detected, but cannot be injected: fail closed, never a silent pass
+        rep.update({"applicable": True, "pass": False, "why": unread + "; the design's crossing is not exercised by delay injection"})
+        return rep
     tests = tests or sorted((design / "tests").glob("test_*_rtl.py"))
     if not tests:
         rep.update({"applicable": True, "pass": False, "why": "the design has no tests/test_*_rtl.py to run with injection"})

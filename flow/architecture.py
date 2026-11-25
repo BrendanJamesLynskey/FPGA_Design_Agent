@@ -39,6 +39,8 @@ PROTOCOLS = ("axi4-lite", "axi4-stream", "simple", "uart", "gpio", "other")
 CDC_PRIMITIVES = ("sync_2ff", "sync2", "pulse_cdc", "reset_sync", "gray_pointer", "handshake_cdc", "async_fifo",
                   "xpm_cdc_single", "xpm_cdc_array_single", "xpm_cdc_gray", "xpm_cdc_handshake", "xpm_cdc_pulse",
                   "xpm_cdc_async_rst", "xpm_fifo_async")
+#: ``rtl.initial_values`` (brief 205, owner decision 38); flow/standards_check.py STD-INIT-01 reads it
+INITIAL_VALUES_MODES = ("allow", "warn", "deny")
 GATES_YAML = Path(__file__).with_name("gates.yaml")
 APPROVAL = Path("build") / "approvals" / "architecture.json"
 FILES = ("architecture.yaml", "ARCHITECTURE.md")
@@ -46,12 +48,14 @@ FILES = ("architecture.yaml", "ARCHITECTURE.md")
 
 def gates_config(path: Path | None = None) -> dict[str, Any]:
     """``flow/gates.yaml``: thresholds the flow owns (the resource sanity factor). Missing file: the defaults."""
-    cfg = {"resource_sanity": {"factor": 2.0, "resources": list(RESOURCES)}}
+    cfg = {"resource_sanity": {"factor": 2.0, "resources": list(RESOURCES)}, "rtl": {"initial_values": "allow"}}
     p = path or GATES_YAML
     if p.is_file():
         data = yaml.safe_load(p.read_text()) or {}
         for k, v in (data.get("resource_sanity") or {}).items():
             cfg["resource_sanity"][k] = v
+        for k, v in (data.get("rtl") or {}).items():
+            cfg["rtl"][k] = v
     return cfg
 
 
@@ -74,6 +78,10 @@ def check_architecture(data: Any) -> list[str]:
     if not isinstance(blocks, list) or not blocks or not all(isinstance(b, dict) and b.get("name") for b in blocks):
         errs.append("'blocks' must be a non-empty list of mappings, each with a 'name' (and a 'function')")
     names = {b["name"] for b in blocks if isinstance(b, dict) and b.get("name")} if isinstance(blocks, list) else set()
+    rtl = data.get("rtl")
+    if rtl is not None and (not isinstance(rtl, dict) or str(rtl.get("initial_values", "allow")) not in INITIAL_VALUES_MODES):
+        errs.append(f"'rtl' must be a mapping whose 'initial_values' is one of {', '.join(INITIAL_VALUES_MODES)} "
+                    "(brief 205: how the design's initial values are treated; the flow default is in flow/gates.yaml)")
     ifs = data.get("interfaces")
     if not isinstance(ifs, list):
         errs.append("'interfaces' must be a list (it may be empty: each entry {name, between: [a, b], protocol, "

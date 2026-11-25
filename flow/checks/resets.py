@@ -610,9 +610,15 @@ def _in(hier: str, names: set[str]) -> bool:
     return any(p in names for p in _parts(hier))
 
 
+#: AMD's debug IP library modules, by their versioned library names (xsdbm_v3_0_6_icon, ila_v6_2_..., ltlib_v1_0_...): what the scan's module
+#: chain shows for the debug hub and the ILA. Brief 140: once the flow implements the hub at the synthesis stage the scan sees its
+#: cross-clock FIFO resets; the hub is AMD's, as the module docstring says ("a debug core"). The version-qualified name is not one a user module has.
+DEBUG_IP = re.compile(r"^(xsdbm|ila|ltlib)_v\d+_\d+(_\d+)?_")
+
+
 def _vendor(hier: str, ip_names: set[str]) -> bool:
     parts = _parts(hier)
-    return any((XPM.match(p) and p not in RECOGNISED) or p in ip_names for p in parts)   # exact names (review round 2)
+    return any((XPM.match(p) and p not in RECOGNISED) or p in ip_names or DEBUG_IP.match(p) for p in parts)   # exact names (review round 2)
 
 
 def _clocks(s: str) -> set[str]:
