@@ -172,7 +172,8 @@ The files of a design are found once (this module), by language: .sv .v (SystemV
 - The spec-test role and the hidden-test scorer simulate the GHDL netlist of your VHDL (a synthesis view; an incomplete sensitivity
   list or a 'U' start value is not seen). Use the native GHDL route (docs/vhdl.md) for a block without the shell.
 - The CDC injection run cannot inject into VHDL: a VHDL design with a clock-domain crossing FAILS that run closed until it has an injector.
-- There is no VHDL code coverage (GHDL's mcode back end has none) and no VHDL register-map generator: the register map's VHDL is yours.
+- The flow records no VHDL code coverage (brief 156 measured it: GHDL 4.1.0 `--coverage` gives statement lines, NVC gives statement, branch,
+  toggle and expression bins; results/156_vhdl_tools) and has no VHDL register-map generator: the register map's VHDL is yours.
 """
 
 

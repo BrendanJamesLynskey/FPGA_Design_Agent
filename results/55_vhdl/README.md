@@ -38,7 +38,7 @@ Tools: GHDL 4.1.0, Icarus 12, cocotb 2.0.1, Vivado 2026.1.
     needs a Vivado elaboration (`stage_rtl`), which the build runner refused while two Vivado jobs were already running.
 - **One block fails as written:** the 4-phase handshake (`cdcfx_c8`) in both arms, on 'U' at time 0 (mistake M2). The rule was in
   arm B's prompt; the model translated literally anyway.
-- No code coverage for VHDL (GHDL's mcode back end has none). UVVM was not run.
+- No code coverage for VHDL was recorded (brief 156 later found that GHDL 4.1.0's mcode build does write statement coverage, and measured NVC's: [results/156_vhdl_tools](../156_vhdl_tools/README.md)). UVVM was not run.
 
 ## The translation table
 

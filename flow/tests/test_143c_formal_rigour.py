@@ -355,3 +355,19 @@ def test_mutation_run_on_a_small_proof(tmp_path):
     assert {m["result"] for m in r["mutants"]} <= {"killed", "survived"}
     assert all(m["rtl"] for m in r["mutants"]), "each mutant is reported with the RTL line it sits on"
     assert r["summary"]["killed"] + r["summary"].get("survived", 0) == 3
+
+
+def test_a_psl_model_from_the_ghdl_plugin_is_read_by_label_and_its_dot_cover_pairs(tmp_path):
+    """The GHDL plugin writes no source attribute, names the antecedent cover of a PSL implication `<label>.cover`, and the instance path of a cover in a
+    generate scope in the log holds a space (brief 202)."""
+    il = tmp_path / "design.il"
+    il.write_text('module \\top\n  cell $cover $pub@1 # \\steps.cover\n    connect \\EN 1\'1\n  end\n  cell $assert $pub@2 # \\steps\n    connect \\EN 1\'1\n  end\nend\n')
+    checks = fr.read_checks(il, tmp_path)
+    assert {(c["flavor"], c["id"]) for c in checks} == {("cover", "steps.cover"), ("assert", "steps")}
+    log = ("Reached cover statement in step 4 at top: steps.cover\n"
+           "Reached cover statement in step 5 at top.\\genblk1.g_a[1].u : deep__ante\n"
+           "Unreached cover statement at top: never__ante\n")
+    cov = fr.read_covers(log)
+    assert cov["steps.cover"] == {"reached": True, "step": 4}
+    assert cov["deep__ante"]["reached"] and cov["deep__ante"]["step"] == 5
+    assert cov["never__ante"]["reached"] is False

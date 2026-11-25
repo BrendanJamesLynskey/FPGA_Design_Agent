@@ -162,12 +162,12 @@ def read_checks(il: Path, srcdir: Path) -> list[dict[str, Any]]:
             label = None
             for cand in (comment, cname):
                 if cand and cand.startswith("\\") and not cand.startswith("\\$") and not cand.startswith("\\_witness_."):
-                    label = cand[1:].split(".")[-1]       # last component of a generate-scope path; `rename -witness` names an unlabelled statement `_witness_.check_<file>_<line>_assert_<n>`: not a label
+                    label = label_of(cand[1:])            # last component of a generate-scope path; `rename -witness` names an unlabelled statement `_witness_.check_<file>_<line>_assert_<n>`: not a label
                     break
-            if flavor in ("assert", "assume", "cover") and src:
-                ss = short_src(src)
+            if flavor in ("assert", "assume", "cover") and (src or label):         # the GHDL plugin (PSL) writes no source attribute: such a statement is known by its label
+                ss = short_src(src) if src else ""
                 taut = False
-                if flavor == "assert":
+                if flavor == "assert" and src:
                     taut = bool(TAUTOLOGY.search(statement_text(srcdir, src)))
                 out.append({"flavor": flavor, "label": label, "src": ss, "id": label or ss, "tautology": taut})
             i = j
@@ -179,6 +179,13 @@ def read_checks(il: Path, srcdir: Path) -> list[dict[str, Any]]:
             seen.add(k)
             uniq.append(c)
     return uniq
+
+
+def label_of(name: str) -> str:
+    """The label of a statement from its hierarchical name: the last component, except that the cover the GHDL plugin adds beside every PSL
+    implication (``<label>.cover``: the cover of its left side) keeps both parts, as that pair is the name it is paired by."""
+    parts = name.split(".")
+    return ".".join(parts[-2:]) if len(parts) >= 2 and parts[-1] == "cover" else parts[-1]
 
 
 def statement_text(srcdir: Path, src: str) -> str:
@@ -208,7 +215,7 @@ def read_covers(log: str) -> dict[str, dict[str, Any]]:
     out: dict[str, dict[str, Any]] = {}
     for m in COVER_RE.finditer(log):
         what, step, _hier, name, src = m.groups()
-        label = name.split(".")[-1]
+        label = label_of(name)
         keys = []
         if not label.startswith(("check_", "$")) and ":" not in label:
             keys.append(label)
