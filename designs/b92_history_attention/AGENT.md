@@ -9,7 +9,7 @@ A gated study of whether order-flow history helps small integer classifiers on s
 not: real market data; both generators are seeded synthetic order flow with planted structure; a board run or a full-design build; every hardware number is an out-of-context, post-route Vivado 2026.1 build; an attention block in the fabric: it lost at the stage 2 test, so its RTL was simulated against its twin but never built; a model of a real market; the clustering is exponential and short-memory (docs/what_we_found.md section 2)
 
 ## state
-stage=built vivado=2026.1 kb_pin=2338b83 build_id=None
+stage=built vivado=2026.1 kb_pin=5e2eab8 build_id=None
 gates: rtl_equals_twin=pass ooc_build_2026_1=pass board_run=not-run
 
 ## interface
@@ -42,7 +42,7 @@ designs/b92_history_attention/docs/preregistration.md abd96614e0: pre-registrati
 designs/b92_history_attention/docs/preregistration_stage2.md 83c49887e1: pre-registration, stage 2
 designs/b92_history_attention/docs/what_we_found.md c3c5c1eeea: the write-up
 designs/b92_history_attention/docs/generator.md e952618e0f: datasheet
-results/b92/summary.py 897425ffae: summary and figures
+results/b92/summary.py 1ecc6d416d: summary and figures
 results/b92/tables.py 4a451e5ecb: tables
 
 ## commands
@@ -54,7 +54,7 @@ summary, figures and tables (~1min): python3 results/b92/summary.py && python3 r
 
 ## records (path sha256-prefix; claims below cite R<n>)
 R1 designs/b92_history_attention/tests/test_b92_rtl.py 44817e5f08
-R2 results/b92/summary.json 784bedbf70
+R2 results/b92/summary.json d5bf9a75c6
 
 ## evidence
 E1 simulation pass R1 ci: every stateful arm equals its stream twin on all 100,000 events of the ten test sessions, 20,000 random events and 9,000 extreme-input events, with one fixed latency; Verilator -Wall clean
