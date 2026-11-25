@@ -200,7 +200,7 @@ def statement_text(srcdir: Path, src: str) -> str:
     return " ".join(seg)
 
 
-COVER_RE = re.compile(r"(Reached cover statement in step (\d+) at|Unreached cover statement at) ([^:\s]+): (\S+)(?: \((\S+)\))?")
+COVER_RE = re.compile(r"(Reached cover statement in step (\d+) at|Unreached cover statement at) (.+?) ?: (\S+)(?: \((\S+)\))?")      # the instance path may hold spaces (an escaped generate-scope name ends in one)
 
 
 def read_covers(log: str) -> dict[str, dict[str, Any]]:

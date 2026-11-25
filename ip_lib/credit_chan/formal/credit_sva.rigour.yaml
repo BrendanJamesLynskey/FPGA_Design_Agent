@@ -1,0 +1,14 @@
+schema: fpga-design-agent/formal_rigour/v1
+scope: "credit_chan at W = 4 with the AXI4-Stream rules of ../../pipe_reg/tb/axis_sva.sv bound to both ports, at three (CREDITS, LF, LB) points (3/1/1, 5/2/2, 1/0/0); the credit and data assertions of credit.sby are in this job too, with the same antecedents. Every proof task is k-induction. The covers run at 3/1/1 only, so an antecedent reached there is not shown reached at the other two points; a_hold and a_reset are on both ports with one cover each, reached on either port."
+antecedents:
+  cc_conserve: cc_flight__ante
+  cc_credits_max: cc_flight__ante
+  cc_cnt_max: cc_full__ante
+  cc_ready: cc_spent__ante
+  cc_valid: cc_buffered__ante
+  cc_no_overflow: cc_full__ante
+  cc_ptr_range: cc_wrap__ante
+  cc_ptr_gap: cc_wrap__ante
+  cc_count: cc_flight__ante
+  "h_stall_*": h_stall__ante
+sanity: [c_through, c_xfer, c_stall]
