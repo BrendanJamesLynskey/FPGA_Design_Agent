@@ -1,0 +1,70 @@
+# Machine-readable specification of the real-input FFT (arith brief 148). The prose is spec.md; the two agree (tests/test_fft_real_package.py).
+schema: fda-arith/spec/1
+function: fft_real
+title: Real-input FFT (N real samples through an N/2-point complex FFT)
+model: arith/fft_real/model.py
+summary: "The N = 2**LOGN point DFT of a frame of N REAL samples, delivered two per clock (in_even = x[2m], in_odd = x[2m+1]), as the N/2 + 1 distinct bins X[0] .. X[N/2] (the other bins are their conjugates), in natural order, one bin per clock. It runs the pairs as an N/2-point complex FFT (fft_sdf_r22) and finishes with a post-processing pass that combines Z[k] and Z[N/2-k] with one twiddle multiplication per bin. Half the transform of feeding the real signal as a complex one, at the price of a post-processing memory and one more multiplier. Forward transform only; scaled (output X / N) or unscaled (X, growing word); natural order."
+semantics:
+  - "input: N/2 consecutive clocks of in_valid, the first with in_sof; on clock m, in_even = x[2m] and in_odd = x[2m+1], two's complement, W bits; the frame is the real sequence x[0] .. x[N-1]"
+  - "output: N/2 + 1 consecutive clocks of out_valid, the first with out_sof; output word k is X[k] = sum over n of x[n] exp(-j 2 pi n k / N) for k = 0 .. N/2, as {out_re, out_im} (SCALE = 0), or X[k] / N (SCALE = 1); X[0] and X[N/2] are real in exact arithmetic (their imaginary parts are rounding noise of at most a few LSB, not exactly zero)"
+  - "method (all rounding as the model fft_ref.real_post): z[m] = x[2m] + j x[2m+1] is transformed by fft_sdf_r22 with N/2 points on W + 1 bit words (so a real input at full scale cannot overflow), SCALE as given, bit-reversed output; Z is stored at bit-reversed addresses (the memory is the reorder buffer); then for k = 0 .. N/2: E = Z[k] + conj Z[N/2-k] and O = Z[k] - conj Z[N/2-k] (Z indices modulo N/2), E and O shifted right by 1 (SCALE = 0) or by 2 (SCALE = 1: the N/2-point transform was already scaled by 2/N) rounded as RND says, and X[k] = E + W_N^k * (-j O) with the product exact then shifted right by TW-2 with the same rounding"
+  - "SCALE = 1: the whole transform divides by N, like the complex FFT's scaled mode, in a W + 1 bit word. SCALE = 0: the word is W + LOGN + 1 bits, so that a full-scale real input cannot overflow it"
+  - "the overflow guarantee is that of a real input: every sample in the W-bit range, no restriction on magnitude beyond that (the extra input bit of the core is why)"
+ports:
+  - {name: clk, dir: in, width: 1, text: "clock"}
+  - {name: rst, dir: in, width: 1, text: "synchronous reset of the control state (not of the memories and delay lines)"}
+  - {name: in_valid, dir: in, width: 1, text: "a pair of input samples is present; N/2 consecutive clocks per frame"}
+  - {name: in_sof, dir: in, width: 1, text: "with in_valid, the first pair of a frame"}
+  - {name: in_even, dir: in, width: W, text: "the even-indexed real sample x[2m], two's complement"}
+  - {name: in_odd, dir: in, width: W, text: "the odd-indexed real sample x[2m+1]"}
+  - {name: out_valid, dir: out, width: 1, text: "a bin is present; N/2 + 1 consecutive clocks per frame"}
+  - {name: out_sof, dir: out, width: 1, text: "with out_valid, bin 0"}
+  - {name: out_re, dir: out, width: "((SCALE != 0) ? W + 1 : W + LOGN + 1)", text: "real part of the bin, two's complement"}
+  - {name: out_im, dir: out, width: "((SCALE != 0) ? W + 1 : W + LOGN + 1)", text: "imaginary part of the bin"}
+parameters:
+  LOGN: {min: 4, text: "log2 of the number of REAL samples N per frame: 4 to 13 (the core has N/2 points, 8 to 4096; 7 to 8 are simulated)"}
+  W: {min: 4, text: "width of a real input sample"}
+  TW: {min: 4, text: "twiddle width, 4 to 28 (scale 2**(TW-2))"}
+  SCALE: {values: [0, 1], text: "1: output X / N in W + 1 bits; 0: output X in W + LOGN + 1 bits"}
+  RND: {values: [0, 1], text: "1: round half up at every shift; 0: truncate"}
+  CMUL: {values: [3, 4], text: "twiddle multiplier form of the core and the post-processing"}
+  TWSTAGES: {values: [1, 2], text: "twiddle ROM latency"}
+  MULSTAGES: {min: 0, text: "register ranks of each complex multiplier, 0 to 3"}
+signedness: "two's complement on every data port"
+exactness: "bit-exact against the model (fft_ref.real_frame) for every frame; against numpy.fft.rfft the error is a few LSB of the output word (the rounding of the core plus the post-processing: measured in tests/test_fft_model.py and stated in the report); bins 0 and N/2 have imaginary parts of rounding noise, not exact zeros"
+latency_definition: "clocks from the clock in which in_sof is asserted to the clock in which out_sof is asserted (bin 0); the last bin leaves N/2 clocks later"
+contract:
+  protocol: "streaming frames, no back-pressure: N/2 consecutive clocks of in_valid per frame (in_sof on the first); the next frame must start after at least N/8 idle clocks (the read-out of a frame takes N/2 + 1 clocks, one more than its input, so frames cannot be back to back, and the N/2-point core needs 0 or at least N/8 idle clocks); the output is N/2 + 1 consecutive clocks"
+  throughput: "N real samples per N/2 + N/8 clocks at the fastest legal spacing, i.e. 1.6 real samples per clock (2 per clock inside a frame)"
+  latency: "(N/2) - 1 + (LOGN - 1) + ((LOGN - 2) // 2) * (TWSTAGES + MULSTAGES + 1) + N/2 + MULSTAGES + 3 clocks: the N/2-point core's bit-reversed latency, then N/2 clocks for the frame to be stored, then the post-processing pipeline"
+  reset: "synchronous: clears the control state and the bank pointer; memories and delay lines are not cleared; a frame in flight is lost (no test covers a reset in the middle of a frame)"
+  clock: "one clock, rising edge, no clock-enable"
+  stall: "none: there is no way to pause the input or the output"
+integration:
+  port_timing: "the output is a register: the post-processing adds E to the rounded product and registers the sum; the longest path is the complex multiplier (use MULSTAGES 3) and the E/O adders"
+  constraints: "one clock, no multicycle paths; two banks of two N/2-word memories of 2 * (W + 1 .. W + LOGN) bits each"
+guess_wrong:
+  - "the input is TWO real samples per clock (even and odd), not one: a real stream at one sample per clock needs a 2:1 gearbox in front, which this block does not contain"
+  - "only the N/2 + 1 bins from 0 to N/2 are produced; bins N/2 + 1 .. N - 1 are the conjugates of bins N/2 - 1 .. 1 and are not output"
+  - "frames cannot be back to back: the output of a frame is one clock longer than its input, so the next frame must start after an idle gap of at least N/8 clocks (a smaller gap, except zero, corrupts the previous frame's output, and zero is excluded by the output length); nothing flags a violation"
+  - "SCALE = 1 divides by N (like the complex FFT) even though the core works on N/2 points: the post-processing shifts by 2 instead of 1; the word is W + 1 bits, one more than the input"
+  - "bins 0 and N/2 are real in exact arithmetic but their imaginary parts are rounding noise of a few LSB, not zero"
+  - "the transform is forward only: there is no in_inverse; an inverse real transform is not this block"
+  - "no valid, ready or reset behaviour beyond the control state: for the latency after power-up the outputs are not meaningful, and a frame in flight when rst is asserted is lost"
+lean_note: "Not attempted: the algebra of the real-input split (E, O and the twiddle W_N^k) is covered by the model against numpy.fft.rfft and the RTL against the model; core Lean (4.36) has no complex exponentials."
+variants:
+  post:
+    file: rtl/fft_real_post.sv
+    module: fft_real_post
+    deps: [fft/rtl/fft_sdf_r22.sv, fft_common/fft_sdf_stage.sv, fft_common/fft_sdf_twmul.sv, fft_common/fft_bitrev.sv, fft_common/fft_cos_rom.sv, fft_reorder/rtl/fft_reorder_pingpong.sv, fft_twiddle/rtl/fft_twiddle_quarter.sv, fft_cmul/rtl/fft_cmul_m4.sv, fft_cmul/rtl/fft_cmul_m3.sv]
+    params: {LOGN: 7, W: 16, TW: 16, SCALE: 1, RND: 1, CMUL: 4, TWSTAGES: 1, MULSTAGES: 2}
+    throughput: "2 real samples per clock inside a frame; N real samples per N/2 + N/8 clocks at the fastest legal frame spacing"
+    latency: "(1<<(LOGN-1))-1+(LOGN-1)+((LOGN-2)//2)*(TWSTAGES+MULSTAGES+1)+(1<<(LOGN-1))+MULSTAGES+3"
+    tradeoff: "an N/2-point streaming core plus one multiplier and a double-buffered post-processing memory: about half the multipliers and delay memory of feeding the real signal to a complex N-point core, but one more multiplier and two banks of N/2 words"
+    exhaustive_points: [{LOGN: 4, W: 8, TW: 10, SCALE: 1, RND: 1, CMUL: 4, TWSTAGES: 1, MULSTAGES: 1}, {LOGN: 5, W: 16, TW: 16, SCALE: 1, RND: 1, CMUL: 4, TWSTAGES: 1, MULSTAGES: 2}, {LOGN: 6, W: 16, TW: 18, SCALE: 0, RND: 1, CMUL: 3, TWSTAGES: 2, MULSTAGES: 0}, {LOGN: 7, W: 12, TW: 14, SCALE: 1, RND: 0, CMUL: 4, TWSTAGES: 1, MULSTAGES: 3}, {LOGN: 8, W: 16, TW: 16, SCALE: 0, RND: 1, CMUL: 3, TWSTAGES: 2, MULSTAGES: 3}]
+    random_points: [{LOGN: 6, W: 16, TW: 16, SCALE: 1, RND: 1, CMUL: 4, TWSTAGES: 1, MULSTAGES: 2}, {LOGN: 9, W: 16, TW: 18, SCALE: 0, RND: 1, CMUL: 4, TWSTAGES: 1, MULSTAGES: 3}, {LOGN: 11, W: 18, TW: 18, SCALE: 1, RND: 1, CMUL: 3, TWSTAGES: 2, MULSTAGES: 2}]
+    expected_primitives:
+      a7: "N = 1024 (N/2 = 512 core), W = TW = 16, CMUL 4, MULSTAGES 3: core 4 complex multipliers (16 DSP48E1) + 1 for the post-processing (4 DSP48E1) = 20 DSP48E1; delay memory about 511 words of 34 bits; post-processing memory 2 banks x 2 copies x 512 words x 2 * 17 bits (about 8 RAMB18); 5 twiddle ROMs; about 3 to 5 k LUT; expected Fmax 250 to 350 MHz"
+      k26: "as a7 with DSP48E2 and BRAM/URAM; Fmax 400 to 550 MHz expected"
+    ooc_points: [{LOGN: 10, W: 16, TW: 16, SCALE: 1, RND: 1, CMUL: 4, TWSTAGES: 2, MULSTAGES: 3}, {LOGN: 12, W: 16, TW: 18, SCALE: 1, RND: 1, CMUL: 4, TWSTAGES: 2, MULSTAGES: 3}, {LOGN: 10, W: 16, TW: 16, SCALE: 0, RND: 1, CMUL: 3, TWSTAGES: 2, MULSTAGES: 3}]
+    mutant_run: [{mode: directed, params: {LOGN: 5, W: 8, TW: 10, SCALE: 1, RND: 1, CMUL: 4, TWSTAGES: 1, MULSTAGES: 2}}, {mode: directed, params: {LOGN: 6, W: 8, TW: 10, SCALE: 0, RND: 0, CMUL: 3, TWSTAGES: 2, MULSTAGES: 0}}, {mode: randomised, params: {LOGN: 6, W: 16, TW: 16, SCALE: 1, RND: 1, CMUL: 4, TWSTAGES: 1, MULSTAGES: 2}, n: 400}]

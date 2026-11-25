@@ -46,7 +46,39 @@ def _or_problem(i: int, call: ast.Call) -> list[str]:
     return []
 
 
-def check_design(design: Path) -> dict[str, Any]:
+def check_jtag_design(design: Path) -> dict[str, Any]:
+    """Brief 209a: the artefacts of a design on a board with no UART (flow/host_transport.py, transport ``jtag_bus``): ``hw_checks.py``
+    with ``DESIGN_ID``, ``make_mock()`` and ``run(bus)`` (the checks, run in CI against the mock bus and on the board through the JTAG
+    register bus), and BRINGUP.md. No ``tests/test_*_hw.py`` (pytest over a UART) and no ``probes.yaml`` (no ILA build) are needed.
+    Read as text and syntax trees only; the mock run is a separate step (flow.host_transport.run_mock)."""
+    probs: list[str] = []
+    hc = design / "hw_checks.py"
+    if not hc.is_file():
+        probs.append("hw_checks.py does not exist (the bring-up runs its run(bus) over the JTAG register bus)")
+    elif (tree := _parse(hc, probs)) is not None:
+        names = {t.id for n in tree.body if isinstance(n, (ast.Assign, ast.AnnAssign))
+                 for t in (n.targets if isinstance(n, ast.Assign) else [n.target]) if isinstance(t, ast.Name)}
+        funcs = {n.name for n in tree.body if isinstance(n, ast.FunctionDef)}
+        if "DESIGN_ID" not in names:
+            probs.append("hw_checks.py defines no module-level DESIGN_ID (the value the ID register at 0x000 reads)")
+        for f_, why in (("make_mock", "a MockBus (flow.host_transport) with the design's registers, so every check runs in CI with no board"),
+                        ("run", "run(bus) -> list of (name, ok, detail), reading and writing registers with bus.rd(addr) / bus.wr(addr, value)")):
+            if f_ not in funcs:
+                probs.append(f"hw_checks.py defines no {f_}(): {why}")
+    bu = design / "BRINGUP.md"
+    if not bu.is_file():
+        probs.append("BRINGUP.md does not exist")
+    else:
+        heads = [l.lstrip("# ").lower() for l in bu.read_text().splitlines() if l.startswith("#")]
+        missing = [s for s in BRINGUP_SECTIONS if not any(s in h for h in heads)]
+        if missing:
+            probs.append("BRINGUP.md has no section for: " + ", ".join(missing))
+    return {"ok": not probs, "problems": probs}
+
+
+def check_design(design: Path, transport: str = "uart") -> dict[str, Any]:
+    if transport == "jtag_bus":
+        return check_jtag_design(design)
     probs: list[str] = []
     hc = design / "hw_checks.py"
     if not hc.is_file():
@@ -128,8 +160,13 @@ def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.split("\n", 1)[0])
     ap.add_argument("design", type=Path)
     ap.add_argument("--json", type=Path)
+    ap.add_argument("--board", help="the board file name: a board with no UART (host_access: JTAG register bus) gets the JTAG-bus artefacts")
     a = ap.parse_args(argv)
-    res = check_design(a.design.resolve())
+    try:
+        from flow import host_transport
+    except ImportError:
+        import host_transport                  # type: ignore[no-redef]
+    res = check_design(a.design.resolve(), host_transport.board_transport(a.board) if a.board else "uart")
     for p in res["problems"]:
         print(f"bringup artefacts: {p}")
     print(f"bringup artefacts: {'ready' if res['ok'] else 'NOT READY'}")

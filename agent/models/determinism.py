@@ -26,10 +26,7 @@ from agent.models.tape import DeterminismError, Tape
 
 LEVEL1_KINDS = ("openrouter", "openai_compatible", "anthropic_api")
 SEED = 1234
-#: Anthropic models that still accept a ``temperature`` (claude-api skill, cached 2026-11-03): Haiku 4.5, Sonnet 4.6, Opus 4.6 and older.
-#: Sonnet 5.5, Haiku 5.5, Opus 5/5.5, Sonnet 5, Opus 4.7/4.8 and Fable/Mythos reject a non-default or any value (HTTP 400), and
-#: API version 2026-10-21 rejects it on every model.
-ANTHROPIC_TEMPERATURE_OK = ("claude-haiku-4-5", "claude-sonnet-4-6", "claude-sonnet-4-5", "claude-opus-4-6", "claude-opus-4-5", "claude-3")
+from agent.models.config import ANTHROPIC_TEMPERATURE_OK     # brief 209b: the per-model rule lives in the model config (agent.models.config.BUILTIN_MODELS)
 DEFAULT_TAPE_ROOT = Path(os.environ.get("FDA_TAPE_DIR") or Path.home() / ".local" / "share" / "fpga_design_agent" / "tapes")
 
 

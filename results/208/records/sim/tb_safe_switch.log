@@ -1,0 +1,20 @@
+
+****** xsim v2026.1 (64-bit)
+  **** SW Build 6511674 on Tue Jun 16 11:01:26 MDT 2026
+  **** IP Build 6504888 on Tue Jun 09 09:05:25 MDT 2026
+  **** SharedData Build 6501428 on Mon Jun 08 17:34:18 MDT 2026
+  **** Start of session at: Tue Nov 24 17:42:16 2026
+    ** Copyright 1986-2022 Xilinx, Inc. All Rights Reserved.
+    ** Copyright 2022-2026 Advanced Micro Devices, Inc. All Rights Reserved.
+
+source xsim.dir/tb_safe_switch_s/xsim_script.tcl
+# xsim {tb_safe_switch_s} -autoloadwcfg -runall
+Time resolution is 1 ps
+run -all
+SCEN p1_both_running cur=1 edges_in_140ns=10 runts=0 ignore_raised=0
+SCEN p2_switch_to_dead_refused cur=0 errs=1 busy=0
+SCEN p3_leave_stopped_clock cur=1 edges_in_140ns=10 runts=0 ignore_raised=1
+$finish called at time : 3585 ns : File "/home/brendan/Claude_sandbox/_worktrees/208-clock-mux/results/208/sim/tb_safe_switch.v" Line 28
+exit
+INFO: xsimkernel Simulation Memory Usage: 143996 KB (Peak: 209532 KB), Simulation CPU Usage: 1570 ms
+INFO: [Common 17-206] Exiting xsim at Tue Nov 24 17:42:20 2026...

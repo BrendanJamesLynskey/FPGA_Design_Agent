@@ -1,0 +1,351 @@
+name: t1_sync_fifo_regs
+title: Byte FIFO behind the test shell
+board: nexys_a7_100t
+part: xc7a100tcsg324-1
+top: t1_sync_fifo_regs_top
+clocks:
+- name: CLK100MHZ
+  port: CLK100MHZ
+  frequency: 100 MHz board oscillator
+  note: All FIFO, flag, error, LED and shell logic runs in this single clock domain
+reset:
+  name: CPU_RESETN
+  port: CPU_RESETN
+  polarity: active low
+  synchronisation: two flip-flop synchroniser on CLK100MHZ, then synchronous clear
+  effect: empties the FIFO, sets COUNT to 0, clears both ERR bits
+parameters:
+  DEPTH: 16
+  WIDTH: 8
+  CLKS_PER_BIT: 868
+  TIMEOUT_CYCLES: 1000000
+  BUILD_STAMP: 0
+ports:
+- name: CLK100MHZ
+  direction: input
+  width: 1
+  board_pin_role: 100 MHz oscillator (master XDC CLK100MHZ, pin E3)
+- name: CPU_RESETN
+  direction: input
+  width: 1
+  board_pin_role: CPU reset push button, active low (master XDC CPU_RESETN, pin C12)
+- name: UART_TXD_IN
+  direction: input
+  width: 1
+  board_pin_role: USB-UART receive line into the FPGA, host to FPGA (master XDC UART_TXD_IN,
+    pin C4)
+- name: UART_RXD_OUT
+  direction: output
+  width: 1
+  board_pin_role: USB-UART transmit line out of the FPGA, FPGA to host (master XDC
+    UART_RXD_OUT, pin D4)
+- name: LED
+  direction: output
+  width: 16
+  board_pin_role: 16 user LEDs, LED[0] at the bottom of the bar graph (master XDC
+    LED[15:0])
+behaviour:
+  fifo:
+  - Storage holds DEPTH = 16 entries of WIDTH = 8 bits, first-in first-out
+  - A byte written to PUSH is added at the tail on the write accepted in that cycle,
+    when the FIFO is not full
+  - A read of POP returns the head byte and removes it, when the FIFO is not empty
+  - A read of PEEK returns the head byte and leaves the stored bytes unchanged
+  - COUNT is the number of stored bytes, from 0 to 16
+  - A push to a full FIFO discards the byte and leaves the stored bytes and COUNT
+    unchanged
+  - A read of POP from an empty FIFO returns 0x00 and leaves COUNT at 0
+  - A read of PEEK from an empty FIFO returns 0x00 and sets no error flag
+  flags:
+  - STATUS bit 0 (empty) is 1 exactly when COUNT is 0
+  - STATUS bit 1 (full) is 1 exactly when COUNT is 16
+  - STATUS bit 2 (almost_full) is 1 exactly when COUNT is greater than or equal to
+    AF_THRESH
+  - AF_THRESH holds a 5-bit threshold, reset value 12, written and read over the shell
+  errors:
+  - ERR bit 0 (overflow) is set by a push to a full FIFO
+  - ERR bit 1 (underflow) is set by a read of POP from an empty FIFO
+  - Each ERR bit is sticky and stays 1 until a 1 is written to that bit of ERR
+  - Writing 0 to an ERR bit leaves that bit unchanged
+  - Setting or clearing one ERR bit does not change the other ERR bit
+  leds:
+  - LED[k] is 1 exactly when COUNT is greater than k, for k from 0 to 15
+  - LED[15:0] is driven from COUNT only, with no blinking or other pattern
+  id:
+  - Reads of ID0, ID1, ID2 and ID3 return the ASCII bytes of the design ID FIFO in
+    that order
+  reset:
+  - CPU_RESETN low empties the FIFO, sets COUNT to 0, sets STATUS to 0x01 and clears
+    both ERR bits
+  - CPU_RESETN low sets AF_THRESH to 12
+  shell_link:
+  - The USB-UART link runs at 115200 baud with CLKS_PER_BIT = 868 at 100 MHz
+  - TIMEOUT_CYCLES and BUILD_STAMP are top-level parameters of the test shell and
+    drive no logic in this design
+registers:
+  map:
+  - offset: '0x00'
+    name: PUSH
+    access: W
+    reset: '0x00'
+    bits: 7:0 byte pushed at the tail
+  - offset: '0x01'
+    name: POP
+    access: R
+    reset: '0x00'
+    bits: 7:0 head byte, removed by the read; 0x00 when empty (sets underflow)
+  - offset: '0x02'
+    name: PEEK
+    access: R
+    reset: '0x00'
+    bits: 7:0 head byte, not removed; 0x00 when empty
+  - offset: '0x03'
+    name: COUNT
+    access: R
+    reset: '0x00'
+    bits: 4:0 number of stored bytes, 0 to 16
+  - offset: '0x04'
+    name: STATUS
+    access: R
+    reset: '0x01'
+    bits: bit0 empty, bit1 full, bit2 almost_full
+  - offset: '0x05'
+    name: AF_THRESH
+    access: RW
+    reset: '0x0C'
+    bits: 4:0 almost_full threshold
+  - offset: '0x06'
+    name: ERR
+    access: RW1C
+    reset: '0x00'
+    bits: bit0 overflow sticky, bit1 underflow sticky
+  - offset: '0x07'
+    name: ID0
+    access: R
+    reset: '0x46'
+    bits: 7:0 ASCII F
+  - offset: '0x08'
+    name: ID1
+    access: R
+    reset: '0x49'
+    bits: 7:0 ASCII I
+  - offset: '0x09'
+    name: ID2
+    access: R
+    reset: '0x46'
+    bits: 7:0 ASCII F
+  - offset: '0x0A'
+    name: ID3
+    access: R
+    reset: '0x4F'
+    bits: 7:0 ASCII O
+timing:
+  latency:
+    push_to_count: COUNT and STATUS show a push 1 clock after the PUSH write is accepted
+    pop_to_count: COUNT and STATUS show a pop 1 clock after the POP read is accepted
+    reset_to_empty: COUNT is 0 and STATUS is 0x01 on the clock after CPU_RESETN is
+      sampled low by the synchroniser
+    uart_bit: CLKS_PER_BIT = 868 clocks per UART bit, 10 bits per byte on the link
+resources_expected:
+- 'LUT: about 120'
+- 'FF: about 90'
+- 'Storage: 16 x 8 bits in distributed RAM or flip-flops'
+- 'BRAM: 0'
+- 'DSP: 0'
+assumptions:
+- assumption: The shell serialises transactions, so a push and a pop never arrive
+    in the same clock
+  reason: The shell is a single UART link that sends one register access at a time
+- assumption: Port names CLK100MHZ, CPU_RESETN, UART_TXD_IN, UART_RXD_OUT and LED
+    match the Digilent master XDC for the Nexys A7-100T
+  reason: spec.md asks for ports named as in the board master XDC and I have no XDC
+    view in this session
+- assumption: The 100 MHz oscillator is the only clock and no PLL is used
+  reason: The request lists no other clock and the 868 clocks per bit value is for
+    100 MHz
+- assumption: CLKS_PER_BIT = 868 gives 115200 baud with an error of about 0.006 percent
+  reason: 100000000 / 115200 = 868.06, so 868 is the nearest integer
+- assumption: The design has no AXI4-Lite block, so no interface profile applies
+  reason: The register block is read and written through the UART test shell
+requirements:
+- id: REQ-01
+  text: A write of byte B to PUSH when COUNT is less than 16 makes B the newest entry
+    at the tail
+  proof:
+  - simulation
+  - formal
+- id: REQ-02
+  text: A read of POP returns the oldest stored byte
+  proof:
+  - simulation
+  - formal
+- id: REQ-03
+  text: A read of POP reduces COUNT by 1 when COUNT is greater than 0
+  proof:
+  - simulation
+- id: REQ-04
+  text: A read of PEEK returns the oldest stored byte and leaves COUNT unchanged
+  proof:
+  - simulation
+- id: REQ-05
+  text: COUNT equals the number of stored bytes, from 0 to 16
+  proof:
+  - simulation
+  - formal
+- id: REQ-06
+  text: STATUS bit 0 is 1 exactly when COUNT is 0
+  proof:
+  - simulation
+  - formal
+- id: REQ-07
+  text: STATUS bit 1 is 1 exactly when COUNT is 16
+  proof:
+  - simulation
+  - formal
+- id: REQ-08
+  text: STATUS bit 2 is 1 exactly when COUNT is greater than or equal to AF_THRESH
+  proof:
+  - simulation
+  - formal
+- id: REQ-09
+  text: AF_THRESH is a 5-bit read-write register with reset value 12
+  proof:
+  - simulation
+- id: REQ-10
+  text: A write to PUSH while COUNT is 16 leaves every stored byte and COUNT unchanged
+  proof:
+  - simulation
+  - formal
+- id: REQ-11
+  text: A write to PUSH while COUNT is 16 sets ERR bit 0
+  proof:
+  - simulation
+- id: REQ-12
+  text: A read of POP while COUNT is 0 returns 0x00
+  proof:
+  - simulation
+- id: REQ-13
+  text: A read of POP while COUNT is 0 sets ERR bit 1
+  proof:
+  - simulation
+- id: REQ-14
+  text: ERR bit 0 stays 1 after being set until a 1 is written to ERR bit 0
+  proof:
+  - simulation
+  - formal
+- id: REQ-15
+  text: ERR bit 1 stays 1 after being set until a 1 is written to ERR bit 1
+  proof:
+  - simulation
+  - formal
+- id: REQ-16
+  text: A write of 1 to ERR bit 0 leaves ERR bit 1 unchanged
+  proof:
+  - simulation
+- id: REQ-17
+  text: LED[k] is 1 exactly when COUNT is greater than k, for k from 0 to 15
+  proof:
+  - simulation
+  - hardware
+- id: REQ-18
+  text: CPU_RESETN low sets COUNT to 0
+  proof:
+  - simulation
+  - hardware
+- id: REQ-19
+  text: CPU_RESETN low clears both ERR bits
+  proof:
+  - simulation
+  - hardware
+- id: REQ-20
+  text: Reads of ID0, ID1, ID2 and ID3 return 0x46, 0x49, 0x46 and 0x4F
+  proof:
+  - simulation
+  - hardware
+- id: REQ-21
+  text: The UART link at CLKS_PER_BIT = 868 on a 100 MHz clock echoes a written byte
+    back to the host at 115200 baud
+  proof:
+  - hardware
+- id: REQ-22
+  text: Timing closes at the 100 MHz clock with a worst negative slack of 0 ns or
+    more
+  proof:
+  - analysis
+- id: REQ-23
+  text: The design uses 0 BRAM and 0 DSP blocks
+  proof:
+  - analysis
+open_questions: []
+resolved_questions:
+- question: 'Give the register map: offset, width, reset value and access of every
+    register'
+  answer: 'Proposed map in registers.map: PUSH 0x00 W, POP 0x01 R, PEEK 0x02 R, COUNT
+    0x03 R, STATUS 0x04 R, AF_THRESH 0x05 RW reset 0x0C, ERR 0x06 RW1C, ID0 to ID3
+    at 0x07 to 0x0A R'
+  status: defaulted
+  by: default
+  default_reason: spec.md names registers and shell reads but gives no offsets, so
+    the map must be confirmed
+- question: How are the sticky ERR bits cleared
+  answer: Write 1 to the ERR bit to clear it, write 0 leaves it unchanged (write-1-to-clear
+    per bit)
+  status: defaulted
+  by: default
+  default_reason: spec.md says the errors stay until cleared but does not name the
+    clear mechanism
+- question: What does a read of PUSH return
+  answer: 0x00, with no effect on the FIFO or flags
+  status: defaulted
+  by: default
+  default_reason: PUSH is a write-only register and the request does not say what
+    a read returns
+- question: Is CPU_RESETN synchronous or asynchronous to CLK100MHZ
+  answer: Two flip-flop synchroniser, then synchronous clear, so all state resets
+    on the clock edge after the synchronised low
+  status: defaulted
+  by: default
+  default_reason: The request says reset empties the FIFO but not how reset is applied
+- question: What happens when a push and a pop arrive in the same clock
+  answer: Pop is applied first and then the push is applied, COUNT is unchanged when
+    COUNT was between 1 and 15, and a push to a full FIFO with a pop in the same clock
+    is accepted with no overflow
+  status: defaulted
+  by: default
+  default_reason: The request does not define simultaneous push and pop, though the
+    shell serialises accesses so this should not occur
+- question: Reset value and valid range of AF_THRESH
+  answer: Reset 12, values 0 to 16 used as written, 17 to 31 treated as 16, and threshold
+    0 makes almost_full always 1
+  status: defaulted
+  by: default
+  default_reason: The request asks for a settable threshold but gives no reset or
+    range
+- question: Is the design ID FIFO read as four separate byte registers
+  answer: Four byte registers ID0 to ID3 with ASCII F I F O
+  status: defaulted
+  by: default
+  default_reason: The request gives the ID as a string but not how the shell reads
+    it
+- question: Should BUILD_STAMP be readable over the shell
+  answer: No, BUILD_STAMP is a parameter only and drives no logic
+  status: defaulted
+  by: default
+  default_reason: The request names it as a test hook with no read path
+- question: Value of TIMEOUT_CYCLES
+  answer: 1000000 clocks, which is 10 ms at 100 MHz, as the shell read timeout
+  status: defaulted
+  by: default
+  default_reason: The request names the parameter but gives no value
+- question: Should CLKS_PER_BIT be 868 or 869
+  answer: 868, the nearest integer to 100000000 / 115200 = 868.06
+  status: defaulted
+  by: default
+  default_reason: The request gives the baud rate but not the integer divider
+- question: Should the LED bar graph show COUNT directly
+  answer: Yes, LED[k] lit when COUNT is greater than k, so 16 entries fill all 16
+    LEDs
+  status: defaulted
+  by: default
+  default_reason: The request asks for a bar graph of the fill level but does not
+    give the exact mapping

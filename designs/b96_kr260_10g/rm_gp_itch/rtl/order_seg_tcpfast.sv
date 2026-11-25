@@ -15,6 +15,8 @@ module order_seg (
     input  logic [31:0] f_ref,
     input  logic        commit,
     input  logic        abort,
+    input  logic        tx_unsent,       // brief 176, one clock: the transmit side poisoned the frame that just ended (the trigger frame's bad FCS, STRICT without a verdict, FIFO overflow): its sequence number is given back
+    input  logic        tx_drop,         // brief 176, one clock, in the clock of the frame's first word: the multiplexer drops this frame whole (the MAC is owned): it consumes no sequence number
     input  logic [7:0]  cfg_tif, cfg_display, cfg_capacity, cfg_ise, cfg_cross, cfg_custtype,
     input  logic [31:0] cfg_minqty,
     input  logic [47:0] tpl_my_mac, tpl_venue_mac,
@@ -44,7 +46,7 @@ module order_seg (
     logic [31:0]  rec_seq;
     logic [15:0]  rec_len, rec_id;
     logic [511:0] rec_pay;
-    tcp_fast u_tf (.clk, .rst, .go, .go_spec, .f_sym, .f_px, .f_qty, .f_ref, .commit, .abort, .cfg_tif, .cfg_display, .cfg_capacity, .cfg_ise, .cfg_cross, .cfg_custtype, .cfg_minqty,
+    tcp_fast u_tf (.clk, .rst, .go, .go_spec, .f_sym, .f_px, .f_qty, .f_ref, .commit, .abort, .tx_unsent, .tx_drop, .cfg_tif, .cfg_display, .cfg_capacity, .cfg_ise, .cfg_cross, .cfg_custtype, .cfg_minqty,
                    .busy, .late, .refuse_v, .refuse_code, .o_v, .o_d, .o_sof, .o_eof, .o_keep, .o_poison, .rec_v, .rec_seq, .rec_len, .rec_id, .rec_pay,
                    .sw_we, .sw_waddr, .sw_wdata, .sw_raddr, .sw_rdata);
     assign o_unres = 1'b0;

@@ -225,3 +225,29 @@ def test_session_oracle_and_project_spec_are_gated():
         tree = ast.parse((ROOT / rel).read_text())
         f = next(n for n in ast.walk(tree) if isinstance(n, ast.FunctionDef) and n.name == fn)
         assert _calls_gate(ast.Module(body=f.body, type_ignores=[])), f"{rel}:{fn}"
+
+
+# --- brief 157: what runs without a key, and nothing more -------------------------------------------------------
+
+def test_only_help_doctor_models_show_and_design_dry_run_run_without_a_key():
+    """The exemptions are one function (``agent.newcomer.ungated``); a command line outside the documented two is refused. The
+    command lines themselves, run for real, are in ``test_157_newcomer_cli.py``."""
+    from types import SimpleNamespace
+    from agent import newcomer
+    yes = {("models", "show", False, "x"), ("models", "show", True, "x"), ("resume", None, True, "designs/b110_itch_ouch"),
+           ("resume", "show", True, "designs/b110_itch_ouch"), ("resume", "check", True, "designs/b110_itch_ouch")}
+    for cmd in ("run", "resume", "document", "review", "models", "latency", "improve", "project", "doctor"):
+        for action in (None, "show", "check"):
+            for dry in (False, True):
+                for rid in ("x", "designs/b110_itch_ouch"):
+                    got = newcomer.ungated(SimpleNamespace(cmd=cmd, action=action, dry_run=dry, run_id=rid)) is not None
+                    want = (cmd, action, dry, rid) in yes or (cmd == "models" and action == "show") or \
+                           (cmd == "resume" and dry and rid == "designs/b110_itch_ouch")
+                    assert got == want, (cmd, action, dry, rid)
+
+
+def test_a_model_calling_function_is_still_gated_inside_when_main_lets_a_command_through():
+    for rel, fn in (("agent/__main__.py", "pickup_cmd"), ("agent/__main__.py", "models_cmd")):
+        tree = ast.parse((ROOT / rel).read_text())
+        f = next(n for n in ast.walk(tree) if isinstance(n, ast.FunctionDef) and n.name == fn)
+        assert _calls_gate(ast.Module(body=f.body, type_ignores=[])), f"{rel}:{fn}"

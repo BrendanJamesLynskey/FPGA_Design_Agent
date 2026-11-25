@@ -1,0 +1,74 @@
+# Machine-readable specification of the complex multiplier (arith brief 148). The prose is spec.md; the two agree (tests/test_fft_cmul_package.py).
+schema: fda-arith/spec/1
+function: fft_cmul
+title: Complex multiplier (exact, signed parts)
+model: arith/fft_cmul/model.py
+summary: "p = a * b for complex a = ar + j ai (WA-bit signed parts) and b = br + j bi (WB-bit signed parts), computed EXACTLY: pr = ar*br - ai*bi and pi = ar*bi + ai*br, each WA+WB+1 bits signed, with no rounding and no overflow. One product per clock. Two forms trade DSP blocks against adders: four real multipliers (m4) or three (m3, the identity k1 = br(ar+ai), pr = k1 - ai(br+bi), pi = k1 + ar(bi-br)). Both give identical bits. It is the multiplier the FFT suite uses for twiddle factors and the real-input post-processing; the caller rounds and shifts."
+semantics:
+  - "inputs and outputs are two's-complement bit patterns: ar and ai are WA bits, br and bi are WB bits, pr and pi are WA+WB+1 bits"
+  - "pr = ar*br - ai*bi and pi = ar*bi + ai*br, exactly, as signed integers; the output width suffices for every input, including the most negative values (no overflow, no saturation, no rounding)"
+  - "the three-multiplication form computes the same integers: its pre-additions (ar+ai, br+bi, bi-br) are held in one extra bit, so they never wrap"
+  - "the model (model.py) is Python integer arithmetic; a second formulation (the three-multiplication identity) is checked against it for every input at small widths"
+ports:
+  - {name: clk, dir: in, width: 1, text: "clock; unused (kept for a common port list) when STAGES is 0"}
+  - {name: ar, dir: in, width: WA, text: "real part of the first operand, two's complement"}
+  - {name: ai, dir: in, width: WA, text: "imaginary part of the first operand"}
+  - {name: br, dir: in, width: WB, text: "real part of the second operand (the twiddle factor, in the FFT)"}
+  - {name: bi, dir: in, width: WB, text: "imaginary part of the second operand"}
+  - {name: pr, dir: out, width: "WA+WB+1", text: "real part of the product, exact, STAGES clocks after the operands"}
+  - {name: pi, dir: out, width: "WA+WB+1", text: "imaginary part of the product, exact"}
+parameters:
+  WA: {min: 2, text: "width of the parts of the first operand"}
+  WB: {min: 2, text: "width of the parts of the second operand"}
+  STAGES: {min: 0, text: "register ranks, 0 to 3: the latency in clocks (above 3 behaves as 3)"}
+signedness: "signed two's complement on every port"
+exactness: "exact: pr and pi equal the mathematical products of the signed operands, for every input; the output is WA+WB+1 bits so nothing is lost. Both variants give identical bits"
+latency_definition: "clocks from the operands being presented to pr and pi being valid; 0 means combinational; throughput is one product per clock in both variants"
+contract:
+  protocol: "plain registered-or-combinational ports, no handshake: operands are sampled every clock and one product leaves, with no valid, ready or backpressure. A caller that needs a valid bit delays its own valid by STAGES"
+  throughput: "one product per clock in both variants (initiation interval 1)"
+  latency: "STAGES (0 to 3) for both m4 and m3"
+  reset: "none: no control state; the rank registers hold data only and the outputs are meaningless for STAGES clocks after power-up"
+  clock: "one clock, rising edge, no clock-enable and no gating; clk is present but unused when STAGES is 0"
+  stall: "none: the pipeline cannot be frozen (no enable); DSP registers are inferred without a clock-enable"
+integration:
+  port_timing: "STAGES 3: operand registers (AREG, BREG), product registers (MREG) and the output register (PREG) can be absorbed by the DSP blocks, so the block sits between ordinary registers. STAGES 0 to 2 leave the multipliers and the adders in series with the caller's logic; the m3 form puts a pre-adder in front of the first rank, so at STAGES 1 and 0 its path is the longest"
+  constraints: "one clock, no multicycle or false paths. Use the DSP registers (STAGES 3) and keep the stages as written (no retiming that moves them). The output is wider than the multipliers' natural width (WA+WB+1 bits): a caller that keeps only the high part must say so (round-and-shift stage of its own)"
+guess_wrong:
+  - "the product is EXACT and WA+WB+1 bits wide: it is not rounded or shifted back to the width of an operand; scaling by a twiddle factor of scale 2**k means shifting the result right by k yourself (the FFT does, with the rounding its RND parameter names)"
+  - "all four operand parts are signed two's complement: an unsigned operand needs a zero bit added on the caller's side"
+  - "the most negative operand times the most negative operand fits (WA+WB+1 bits), so there is no overflow to guard against, but the m3 form's DSP blocks need one operand bit more than the m4 form's (the pre-added sum)"
+  - "STAGES is the number of register ranks and the latency, not a retiming request. Above 3 it behaves as 3; values outside the ranges in the table above are not rejected by an assertion"
+  - "there is no valid, ready or reset: for STAGES clocks after power-up the outputs are not meaningful"
+lean_note: "Not attempted. The identity behind the three-multiplication form (k1 - ai(br+bi) = ar br - ai bi, k1 + ar(bi-br) = ar bi + ai br) is polynomial ring arithmetic that a ring tactic closes; the repository's Lean is core only (no Mathlib), so it is covered by an exhaustive enumeration at small widths and by SymbiYosys proofs of the two variants against each other and against the plain formula (formal/jobs.yaml), not by a Lean statement."
+variants:
+  m4:
+    file: rtl/fft_cmul_m4.sv
+    module: fft_cmul_m4
+    deps: []
+    params: {WA: 16, WB: 16, STAGES: 3}
+    throughput: "1 per clock"
+    latency: "STAGES"
+    tradeoff: "four real multipliers and two adders: four DSP blocks, the fewest LUTs and the shortest path; the scarce resource is the DSP"
+    exhaustive_points: [{WA: 2, WB: 2, STAGES: 0}, {WA: 3, WB: 2, STAGES: 1}, {WA: 2, WB: 3, STAGES: 2}, {WA: 3, WB: 3, STAGES: 3}, {WA: 4, WB: 2, STAGES: 3}]
+    random_points: [{WA: 16, WB: 16, STAGES: 3}, {WA: 18, WB: 18, STAGES: 2}, {WA: 24, WB: 16, STAGES: 1}, {WA: 12, WB: 10, STAGES: 0}, {WA: 25, WB: 18, STAGES: 3}]
+    expected_primitives:
+      a7: "4 DSP48E1 when WA <= 25 and WB <= 18; 0 BRAM; about 2 * (WA + WB) LUT6 for the two adders if they do not fold into the DSPs"
+      k26: "4 DSP48E2 when WA <= 27 and WB <= 18; 0 BRAM; adders as a7 with CARRY8 cells"
+    ooc_points: [{WA: 16, WB: 16, STAGES: 3}, {WA: 18, WB: 16, STAGES: 3}, {WA: 24, WB: 16, STAGES: 3}, {WA: 16, WB: 16, STAGES: 1}]
+    mutant_run: [{mode: exhaustive, params: {WA: 3, WB: 3, STAGES: 0}}, {mode: exhaustive, params: {WA: 3, WB: 2, STAGES: 2}}, {mode: randomised, params: {WA: 16, WB: 16, STAGES: 3}, n: 3000}]
+  m3:
+    file: rtl/fft_cmul_m3.sv
+    module: fft_cmul_m3
+    deps: []
+    params: {WA: 16, WB: 16, STAGES: 3}
+    throughput: "1 per clock"
+    latency: "STAGES"
+    tradeoff: "three real multipliers, three pre-adders and three post-adders: three DSP blocks (one fewer), more LUTs, and a longer path at STAGES 0 and 1 because of the pre-adders"
+    exhaustive_points: [{WA: 2, WB: 2, STAGES: 0}, {WA: 3, WB: 2, STAGES: 1}, {WA: 2, WB: 3, STAGES: 2}, {WA: 3, WB: 3, STAGES: 3}, {WA: 4, WB: 2, STAGES: 3}]
+    random_points: [{WA: 16, WB: 16, STAGES: 3}, {WA: 18, WB: 18, STAGES: 2}, {WA: 24, WB: 16, STAGES: 1}, {WA: 12, WB: 10, STAGES: 0}, {WA: 25, WB: 18, STAGES: 3}]
+    expected_primitives:
+      a7: "3 DSP48E1 when WA + 1 <= 25 and WB + 1 <= 18 (the pre-added operands are one bit wider; at WA = 25 or WB = 18 a multiplier needs a second DSP); 0 BRAM; about 4 * (WA + WB) LUT6 for the pre-adders and post-adders"
+      k26: "3 DSP48E2 when WA + 1 <= 27 and WB + 1 <= 18, the pre-adder can be the DSP's own; 0 BRAM; LUTs as a7 with CARRY8 cells"
+    ooc_points: [{WA: 16, WB: 16, STAGES: 3}, {WA: 18, WB: 16, STAGES: 3}, {WA: 24, WB: 16, STAGES: 3}, {WA: 16, WB: 16, STAGES: 1}]
+    mutant_run: [{mode: exhaustive, params: {WA: 3, WB: 3, STAGES: 0}}, {mode: exhaustive, params: {WA: 3, WB: 2, STAGES: 2}}, {mode: randomised, params: {WA: 16, WB: 16, STAGES: 3}, n: 3000}]

@@ -9,7 +9,7 @@ Not in scope:
 - a 10G Ethernet FCS check; the block is instantiated at 16 data bits a clock, not the 64-bit word of the 96 design
 - a board design; it was not programmed, and the 161 MHz clock constraint is on the 25 MHz oscillator pin for a timing study
 
-Kind: demonstration; written by hand. State: built. For an agent: [AGENT.md](AGENT.md).
+Kind: demonstration; written by a Claude Code session. State: built. For an agent: [AGENT.md](AGENT.md).
 
 <!-- prose:what -->
 <!-- /prose:what -->
@@ -61,7 +61,7 @@ Interfaces:
 | the scripted agent session on a scratch copy (run under pytest: the in-process access-gate bypass applies); needs Python with PyYAML and jsonschema; Icarus Verilog | `FDA_102_RECORD=1 python3 -m pytest -q flow/tests/test_102_stage3.py -k scripted` | no | about 1 min |
 | build and run the gates; needs local Vivado 2026.1 and a heavy slot (take_heavy_slot.sh) | `flow/run_vivado.sh designs/b102_managed_ext base` | yes | about 5 min |
 
-Tool: Vivado 2026.1. Build ID of the inputs at handover: `19e88489` (`python flow/manifest.py show designs/b102_managed_ext`: what a rebuild of today's sources and flow would carry; it changes when any build input or the flow changes, so it can differ from the build ID in an older evidence record). Knowledge-bank pin: `93d158c`.
+Tool: Vivado 2026.1. Build ID of the inputs at handover: `0c08e7c4` (`python flow/manifest.py show designs/b102_managed_ext`: what a rebuild of today's sources and flow would carry; it changes when any build input or the flow changes, so it can differ from the build ID in an older evidence record). Knowledge-bank pin: `5e2eab8`.
 
 | File | What |
 |---|---|

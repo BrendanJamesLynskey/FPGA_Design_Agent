@@ -33,6 +33,8 @@ if {[info exists ::env(FDA_VIVADO_THREADS)] && $::env(FDA_VIVADO_THREADS) ne ""}
 set_param general.maxThreads $fda_threads
 set_param synth.maxThreads   $fda_threads
 set_param chipscope.maxJobs  1
+# brief 204a (UG949 p.198): the tool writes only the first 100 occurrences of a message; raise the limit so the log review sees them all
+catch {set_param messaging.defaultLimit 100000}
 puts "FLOW-THREADS $fda_threads"
 
 source [lindex $argv 0]
@@ -62,6 +64,35 @@ source $flow_dir/mcp_paths.tcl
 source $flow_dir/io_paths.tcl
 source $flow_dir/iob_paths.tcl
 source $flow_dir/result_hash.tcl
+# brief 140: check_timing's no_clock list at the synthesis stage names output pins of a hard block that drive nothing (measured in dbg_xvc: the
+# PS8's EMIO clock outputs, nets with no load; opt_design removes the nets and the routed check_timing lists none). A pin with no load is
+# no endpoint and nothing can be timed from it. This writes the pins of that list that are outputs with no loads, one per line, to
+# <file>; flow/gates.py takes them out of the no_clock count of the post-synthesis gate only (input pins, and any output that has a load,
+# stay counted).
+proc fda_unloaded_noclock {check_file out_file} {
+    set f [open $check_file r]; set txt [read $f]; close $f
+    set lines [split $txt "\n"]
+    set pins {}
+    set n [llength $lines]
+    for {set i 0} {$i < $n} {incr i} {
+        if {[regexp {There are ([0-9]+) register/latch pins with no clock} [lindex $lines $i] -> cnt]} {
+            if {$cnt == 0} { break }      ;# no pin listed: the lines that follow belong to the next check
+            incr i
+            while {$i < $n && [string trim [lindex $lines $i]] eq ""} { incr i }
+            while {$i < $n && [string trim [lindex $lines $i]] ne ""} { lappend pins [string trim [lindex $lines $i]]; incr i }
+            break
+        }
+    }
+    set o [open $out_file w]
+    foreach nm $pins {
+        if {[string match *<hidden>* $nm] || ![regexp {^[A-Za-z_]} $nm]} { continue }
+        set p [get_pins -quiet $nm]
+        if {$p eq "" || [get_property DIRECTION $p] ne "OUT"} { continue }
+        set net [get_nets -quiet -of_objects $p]
+        if {$net eq "" || [llength [get_pins -quiet -leaf -of_objects $net -filter {DIRECTION == IN}]] == 0} { puts $o $nm }
+    }
+    close $o
+}
 proc exception_reports {out sfx} {
     mcp_dump_paths $out/mcp_paths_$sfx.txt
     report_exceptions           -file $out/exceptions_$sfx.rpt
@@ -149,6 +180,28 @@ if {$resume_from eq ""} {
     # brief 102: a post-synthesis (or placed) checkpoint of an imported block fills its black-box cell (UG835 read_checkpoint -cell)
     if {[info exists netlists]} { foreach n $netlists { if {[lindex $n 0] eq "checkpoint"} { read_checkpoint -cell [lindex $n 2] [lindex $n 1] } } }
     stage synth
+    # brief 140: a design that instantiates AMD debug IP (an ILA IP, a Debug Bridge) gets its debug hub only in opt_design, so the post-synthesis
+    # netlist holds a hub with no inside: the clock that reaches the ILA's capture memory and registers through the hub (dbg_hub/sl_iport0_o[1])
+    # cannot be followed, 1000 register pins read as unclocked (check_timing no_clock, TIMING-17 Critical), and the hub's own timing is absent.
+    # implement_debug_core (UG908: "Implementing the debug cores") builds the hub now, as opt_design would; a design with no debug core has
+    # nothing to do. The ILA variant makes its own hub in flow/debug.tcl.
+    if {$ila eq "0" && [llength [get_debug_cores -quiet]]} {
+        implement_debug_core
+        puts "FLOW-DEBUG-CORES-IMPLEMENTED [get_debug_cores -quiet]"
+        # With the hub in, report_drc raises AVAL-244/-245 (Critical) on the ILA's trace RAM: AMD ships it with CLOCK_DOMAINS=INDEPENDENT and
+        # both ports on one clock. opt_design corrects exactly this (Opt 31-422 in dbg_xvc's log: "The CLOCK_DOMAINS attribute on the BRAM cell
+        # ... has been changed"), so the finding would otherwise be gone one step later. Do the same here, for RAMs inside a debug core only.
+        set n_cd 0
+        foreach core [get_debug_cores -quiet] {
+            foreach r [get_cells -quiet -hierarchical -filter "IS_PRIMITIVE && REF_NAME =~ RAMB* && NAME =~ $core/* && CLOCK_DOMAINS == INDEPENDENT"] {
+                # the two clock pins sit on different net objects of one hierarchical net: compare the driving pins (AVAL-244's own test)
+                set a [get_pins -quiet -leaf -of_objects [get_nets -quiet -of_objects [get_pins -quiet $r/CLKARDCLK]] -filter {DIRECTION == OUT}]
+                set b [get_pins -quiet -leaf -of_objects [get_nets -quiet -of_objects [get_pins -quiet $r/CLKBWRCLK]] -filter {DIRECTION == OUT}]
+                if {$a ne "" && $a eq $b} { set_property CLOCK_DOMAINS COMMON $r; incr n_cd }
+            }
+        }
+        puts "FLOW-DEBUG-RAM-CLOCK-DOMAINS set to COMMON on $n_cd RAM(s) inside debug cores (both clock pins on one driver)"
+    }
     # AMD's scoped XPM constraints are not applied in this non-project flow (QR1, docs/methodology.md): apply them by cell name.
     # FDA_XPM_CDC=0 skips this, only to measure the gap (brief 49 re-measured the QR1 probe both ways); never set it in a real build.
     if {![info exists ::env(FDA_XPM_CDC)] || $::env(FDA_XPM_CDC) ne "0"} { apply_xpm_cdc_constraints }
@@ -159,6 +212,7 @@ if {$resume_from eq ""} {
     # clock networks, clock interaction, high-fanout nets).
     report_timing_summary -max_paths 10 -report_unconstrained -file $out/timing_summary_synth.rpt
     check_timing -verbose -file $out/check_timing_synth.rpt
+    fda_unloaded_noclock $out/check_timing_synth.rpt $out/no_clock_unloaded_synth.txt
     report_methodology    -file $out/methodology_synth.rpt
     # design standard STD-CDC-02 (docs/design_standards.md, brief 05d): report_cdc on the synthesised netlist
     report_cdc -details   -file $out/cdc_synth.rpt
@@ -176,6 +230,11 @@ if {$resume_from eq ""} {
     report_clock_networks -file $out/clock_networks_synth.rpt
     report_clock_interaction -delay_type min_max -file $out/clock_interaction_synth.rpt
     report_high_fanout_nets -timing -load_types -max_nets 25 -file $out/high_fanout_synth.rpt
+    # brief 204a (flow/report_gates.py): logic levels against the period and the global clocks, before placement (UG949 p.200, p.234);
+    # report_ip_status only when the session holds IP (a debug core); none of them can fail the build
+    catch {report_design_analysis -logic_level_distribution -logic_level_dist_paths 5000 -file $out/logic_levels_synth.rpt}
+    catch {report_clock_utilization -file $out/clock_utilization_synth.rpt}
+    if {[llength [get_ips -quiet]]} { catch {report_ip_status -file $out/ip_status_synth.rpt} }
     # brief 20: every timing exception, the ones Vivado drops (overridden or no path) and the endpoints each covers, for
     # flow/exceptions_check.py (gates post_synth_exceptions_clean and exceptions_clean; UG906 ch. 5 "Report Exceptions")
     exception_reports $out synth
@@ -255,6 +314,12 @@ if {$resume_from ne "route"} {
     report_utilization    -hierarchical -file $out/utilization_hier.rpt
     report_methodology    -file $out/methodology.rpt
     report_cdc -details   -file $out/cdc.rpt
+    # brief 207 (docs/cdc_margin_method.md, flow/cdc_margin.py): every set_bus_skew after routing (report_timing_summary leaves bus
+    # skew out, UG906 p. 161), and on UltraScale+ the synchroniser MTBF (UG835: not supported on 7 series)
+    report_bus_skew -max_paths 50 -nworst 1 -file $out/bus_skew_route.rpt
+    if {[regexp {^(xck|xczu|xcvu|xcku|xcau)} $part]} {
+        if {[catch { report_synchronizer_mtbf -file $out/mtbf_route.rpt } mtbf_err]} { puts "FLOW-MTBF report_synchronizer_mtbf failed: $mtbf_err" }
+    }
     report_drc            -file $out/drc.rpt
     fda_qor $out route
     exception_reports $out route
@@ -263,6 +328,9 @@ if {$resume_from ne "route"} {
     iob_dump $out/iob_route.txt
     report_timing -delay_type max -max_paths 1 -file $out/timing_worst_setup.rpt
     report_timing -delay_type min -max_paths 1 -file $out/timing_worst_hold.rpt
+    # brief 204a: congestion windows and the routed clock buffers (UG949 p.240, p.244, p.200); never fatal
+    catch {report_design_analysis -congestion -file $out/congestion_route.rpt}
+    catch {report_clock_utilization -file $out/clock_utilization_route.rpt}
     # the board's thermal environment (boards/<board>/board.yaml, via prepare.py) so that the
     # junction temperature is the board's, not Vivado's default heat sink and 250 LFM airflow
     if {[info exists power_env] && $power_env ne ""} { set_operating_conditions {*}$power_env }

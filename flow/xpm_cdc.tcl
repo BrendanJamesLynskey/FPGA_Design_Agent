@@ -6,7 +6,7 @@
 # setup WNS of -1.364 ns (5 failing endpoints), i.e. every XPM crossing was timed as a synchronous path.
 # The same rules are applied here, after synth_design, for every xpm_cdc_single / sync_rst first stage, every
 # xpm_cdc_gray (max_delay -datapath_only at the source period plus set_bus_skew at the smaller period) and every
-# xpm_cdc_handshake data bus. Written from hil/cdc_soak/tcl/rig_cdc.tcl section 4b (proven in the rig build).
+# xpm_cdc_handshake data bus (max_delay and bus skew at destination period x sync stages, AMD's 2026.1 template; brief 207). Written from hil/cdc_soak/tcl/rig_cdc.tcl section 4b (proven in the rig build).
 # Everything is get_cells -quiet: a design with no XPM macros gets no exception.
 #
 # Status: the gap was measured for xpm_cdc_single and xpm_cdc_gray (flow/tests/fixtures/xpm_probe). This fix reuses the rig's
@@ -30,10 +30,28 @@ proc xpm_dst_period {pins} {
     return [get_property PERIOD [lindex $c 0]]
 }
 
+# Brief 140: in some designs Vivado applies AMD's scoped XPM constraint files itself ("Project 1-1714: 48 XPM XDC files have been applied",
+# measured in the debug build dbg_xvc, which holds a Debug Bridge, an ILA and a PS8; the eyescan build and the default build get no such
+# message). Applying the same exceptions again here made the flow's copy override AMD's (37 "totally overridden" rows in report_exceptions,
+# which the exception gate fails) and AMD's CDC-15 waiver for the handshake hid the Max Delay Datapath Only exception from report_cdc.
+# So: when AMD's own rows are already in the exception list (the unscoped patterns AMD's files use, which this file never writes), the kind
+# they cover is left to AMD; every other kind, and a design where AMD's files were not applied, gets the rules below exactly as before.
+proc xpm_amd_applied {} {
+    set res [dict create single 0 hs 0 gray 0]
+    if {[catch {report_exceptions -return_string} rep]} { return $res }
+    regsub -all {\s+} $rep {} rep
+    if {[regexp {get_cells.syncstages_ff_reg\[0\]} $rep]} { dict set res single 1 }
+    if {[regexp {get_cellssrc_hsdata_ff_reg\*} $rep]}      { dict set res hs 1 }
+    if {[regexp {get_cellssrc_gray_ff_reg\*} $rep]}        { dict set res gray 1 }
+    return $res
+}
+
 proc apply_xpm_cdc_constraints {} {
+    set amd [xpm_amd_applied]
     # xpm_cdc_single, xpm_cdc_sync_rst: false path to the first synchroniser stage
     set xs [xpm_cells_like *syncstages_ff_reg?0?*]
-    if {[llength $xs]} { set_false_path -to [xpm_pins_of $xs] }
+    set nxs 0
+    if {[llength $xs] && ![dict get $amd single]} { set_false_path -to [xpm_pins_of $xs]; set nxs [llength $xs] }
     # xpm_cdc_gray: per instance, max_delay -datapath_only (source period) and bus skew (smaller period)
     set nxg 0
     set xg [dict create]
@@ -42,6 +60,7 @@ proc apply_xpm_cdc_constraints {} {
         dict lappend xg $key $c
     }
     dict for {key cs} $xg {
+        if {[dict get $amd gray]} { break }
         set ends [xpm_pins_of $cs]
         set starts [get_cells -quiet -of_objects [all_fanin -quiet -startpoints_only -flat $ends]]
         if {[llength $starts] == 0} { continue }
@@ -51,7 +70,10 @@ proc apply_xpm_cdc_constraints {} {
         set_bus_skew -from $starts -to $ends [expr {min($ps, $pd)}]
         incr nxg
     }
-    # xpm_cdc_handshake: the held data bus, max_delay -datapath_only at the source period
+    # xpm_cdc_handshake: the held data bus. Brief 207: AMD's own template (Vivado 2026.1 data/ip/xpm/xpm_cdc/tcl/xpm_cdc_handshake.tcl, read, not
+    # copied) bounds a bus of up to 100 bits with max_delay -datapath_only AND set_bus_skew, both at the destination period x the number of
+    # src-to-dest synchroniser stages (the data is held while the request crosses); above 100 bits, max_delay at the smaller period and no bus
+    # skew. Until brief 207 this file used the source period and no bus skew (measured: results/207_cdc_margin, xpm_a7 and xpm_k26).
     set nxh 0
     set xh [dict create]
     foreach c [xpm_cells_like *dest_hsdata_ff_reg*] {
@@ -59,10 +81,20 @@ proc apply_xpm_cdc_constraints {} {
         dict lappend xh $key $c
     }
     dict for {key cs} $xh {
+        if {[dict get $amd hs]} { break }
         set ends [xpm_pins_of $cs]
         set starts [get_cells -quiet -of_objects [all_fanin -quiet -startpoints_only -flat $ends] -filter {NAME =~ *src_hsdata_ff_reg*}]
         if {[llength $starts] == 0} { continue }
-        set_max_delay -datapath_only -from $starts -to $ends [xpm_src_period $starts]
+        set ps [xpm_src_period $starts]
+        set pd [xpm_dst_period $ends]
+        set nsync [llength [get_cells -quiet "$key/xpm_cdc_single_src2dest_inst/syncstages_ff_reg*"]]
+        if {[llength $ends] <= 100 && $nsync > 0} {
+            set v [expr {$pd * $nsync}]
+            set_max_delay -datapath_only -from $starts -to $ends $v
+            set_bus_skew -from $starts -to $ends $v
+        } else {
+            set_max_delay -datapath_only -from $starts -to $ends [expr {min($ps, $pd)}]
+        }
         incr nxh
     }
     # brief 96C: xpm_fifo_async. AMD ships no scoped constraint for the FIFO's block memory (its gray pointers are xpm_cdc_gray and are handled above). The memory
@@ -93,5 +125,6 @@ proc apply_xpm_cdc_constraints {} {
         set_max_delay -datapath_only -from $clkpins -to $endpins $per
         incr nxf
     }
-    puts "xpm_cdc: false path to [llength $xs] first stages, $nxg Gray instances, $nxh handshake data buses, $nxf FIFO memories"
+    puts "xpm_cdc: false path to $nxs first stages, $nxg Gray instances, $nxh handshake data buses, $nxf FIFO memories"
+    puts "xpm_cdc: AMD's own scoped XPM exceptions already present (flow rule skipped for these kinds): $amd"
 }
