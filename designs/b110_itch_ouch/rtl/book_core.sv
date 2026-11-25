@@ -58,6 +58,7 @@ module book_core #(
     output logic                 tu_spec,         // ... whose frame was started speculatively
     output logic                 tu_gapblk,
     output logic                 tu_inx,          // the instrument was inexact when this update was made (this update included)
+    output logic [31:0]          nt_px,           // brief 188: the price of the ladder update in stage B3, three clocks before tu_* (an early copy of tu_cpx, for risk_glue's pipelined notional check)
     // top of book registers, all instruments
     output logic [N_INST*2*32-1:0] tob_px,        // index inst*2 + side
     output logic [N_INST*2*32-1:0] tob_sz,
@@ -197,6 +198,7 @@ module book_core #(
     logic              t2a_v, t2b_v;
     logic [31:0]       t2a_px, t2a_sz, t2b_px, t2b_sz;
 
+    assign nt_px = d3_px;
     assign cand_ahead = (b2_v && b2_cand) || (d3_v && d3_cand) || (t1_v && t1_cand) || (t2_v && t2_cand) || (tu_v && tu_cand);
 
     // forwarded table entry
@@ -230,6 +232,9 @@ module book_core #(
                 OP_ADD, OP_UADD: begin
                     if (b2_op == OP_UADD && !ctx_v) begin
                         // the old order of a Replace was not found: nothing to add (the miss was counted in its first slot)
+                    end else if (b2_sh == 32'd0) begin
+                        // an Add of zero shares would be a live entry of no size: never entered (itch_dec already refuses it as m_bad); counted as oovf and the instrument is inexact
+                        n_oovf = 1'b1; set_inx2 = 1'b1;
                     end else if (e2_v) begin
                         if (hit2) n_odup = 1'b1;
                         else begin n_oovf = 1'b1; set_inx2 = 1'b1; end
@@ -275,9 +280,10 @@ module book_core #(
     logic [64:0]   lv_wd;
     logic [GW-1:0] lv_wa;
     logic [LEVELS-1:0] hit_v, free_v;
-    logic              any_hit, any_free, ovf3, miss3;
+    logic              any_hit, any_free, ovf3, miss3, sat3;
     logic [LW-1:0]     l_hit, l_free;
     logic [31:0]       sz_hit;
+    logic [32:0]       sz_sum;                              // level size plus the added quantity, one bit wider: bit 32 is the carry (the level size would wrap)
     always_comb begin
         any_hit = 1'b0; any_free = 1'b0; l_hit = '0; l_free = '0; sz_hit = '0;
         for (int l = LEVELS - 1; l >= 0; l--) begin
@@ -287,12 +293,17 @@ module book_core #(
             if (free_v[l]) begin any_free = 1'b1; l_free = LW'(l); end
         end
         for (int l = 0; l < LEVELS; l++) if (hit_v[l]) sz_hit = sz_hit | rda[l][31:0];
-        ovf3 = 1'b0; miss3 = 1'b0;
+        ovf3 = 1'b0; miss3 = 1'b0; sat3 = 1'b0;
+        sz_sum = {1'b0, sz_hit} + {1'b0, d3_amt};
         lv_wd = '0; lv_wa = ga;
         lv_we = '0;
         if (d3_v) begin
             if (d3_add) begin
-                if (any_hit) begin lv_we[l_hit] = 1'b1; lv_wd = {1'b1, d3_px, sz_hit + d3_amt}; end
+                if (any_hit) begin
+                    // the level size saturates at 2^32 - 1 instead of wrapping; the instrument is then inexact (sat3 sets it, counted as lvovf)
+                    lv_we[l_hit] = 1'b1; sat3 = sz_sum[32];
+                    lv_wd = {1'b1, d3_px, sz_sum[32] ? 32'hFFFF_FFFF : sz_sum[31:0]};
+                end
                 else if (any_free) begin lv_we[l_free] = 1'b1; lv_wd = {1'b1, d3_px, d3_amt}; end
                 else ovf3 = 1'b1;
             end else begin
@@ -372,7 +383,7 @@ module book_core #(
     always_comb begin
         inx_set = '0;
         if (set_inx2) inx_set[add_inst] = 1'b1;
-        if (ovf3)     inx_set[d3_inst] = 1'b1;
+        if (ovf3 || sat3) inx_set[d3_inst] = 1'b1;
     end
 
     always_ff @(posedge clk) begin
@@ -451,11 +462,11 @@ module book_core #(
                 d3_v <= dl_v; d3_add <= dl_add; d3_inst <= dl_inst; d3_side <= dl_side; d3_px <= dl_px; d3_amt <= dl_amt;
                 d3_cand <= b2_cand && b2_op == OP_ADD && dl_v && dl_add; d3_spec <= b2_spec && dl_v && dl_add; d3_gap <= b2_gap;
                 // ---- B3: ladder updated above (generate); counters; inexact flags
-                if (ovf3)  c_lvovf  <= c_lvovf  + 32'd1;
+                if (ovf3 || sat3) c_lvovf <= c_lvovf + 32'd1;
                 if (miss3) c_lvmiss <= c_lvmiss + 32'd1;
                 for (int i = 0; i < N_INST; i++) if (inx_set[i]) inx_r[i] <= 1'b1;
                 t1_v <= d3_v; t1_side <= d3_side; t1_inst <= d3_inst; t1_cand <= d3_cand; t1_spec <= d3_spec; t1_gap <= d3_gap;
-                t1_cpx <= d3_px; t1_inx <= inx_r[d3_inst] | ovf3;
+                t1_cpx <= d3_px; t1_inx <= inx_r[d3_inst] | ovf3 | sat3;
                 // ---- T1 -> T2
                 t2_v <= t1_v; t2_side <= t1_side; t2_inst <= t1_inst; t2_cand <= t1_cand; t2_spec <= t1_spec; t2_gap <= t1_gap;
                 t2_cpx <= t1_cpx; t2_inx <= t1_inx;
@@ -479,4 +490,26 @@ module book_core #(
             end
         end
     end
+`ifdef FORMAL_BOOK
+    // ------------------------------------------------------------------ formal only (brief 191): whole-memory views for the k-induction invariants in verif/formal/book_props.sv.
+    // Not defined in any build; the memories themselves are not changed.
+    logic [LEVELS-1:0] fv_lv_zero_live, fv_lv_unswept;
+    for (genvar l = 0; l < LEVELS; l++) begin : g_fv
+        always_comb begin
+            fv_lv_zero_live[l] = 1'b0; fv_lv_unswept[l] = 1'b0;
+            for (int g = 0; g < NG; g++) begin
+                if (g_lv[l].lm[g][64] && g_lv[l].lm[g][31:0] == 32'd0) fv_lv_zero_live[l] = 1'b1;       // a live level of no size
+                if ((ORD_AW + 1)'(g) < sw_cnt && g_lv[l].lm[g] != '0) fv_lv_unswept[l] = 1'b1;           // a group the sweep has passed that is not zero
+            end
+        end
+    end
+    logic fv_ord_zero_live, fv_ord_unswept;
+    always_comb begin
+        fv_ord_zero_live = 1'b0; fv_ord_unswept = 1'b0;
+        for (int i = 0; i < ORD_N; i++) begin
+            if (mem[i][EW-1] && mem[i][31:0] == 32'd0) fv_ord_zero_live = 1'b1;                         // a live order of no remaining size
+            if ((ORD_AW + 1)'(i) < sw_cnt && mem[i] != '0) fv_ord_unswept = 1'b1;
+        end
+    end
+`endif
 endmodule

@@ -123,6 +123,9 @@ class VseqLens(VseqBase):
             await self.frame(b, 0, i % 4)
         for l in range(60, 76):
             await self.frame(l, 0, 0)
+        # two frames longer than 16 KiB, then a short one so the length registers fall back (brief 146: Verilator toggle coverage showed bits 14 and 15 of the receive length counters never moved)
+        for b in [32800, 16400, 61]:
+            await self.frame(b, 0, 1)
         await self.drain(); self.e2e(False)
 
 
@@ -177,6 +180,15 @@ class VseqXg(VseqBase):
         for k in range(8):
             d = ref.IDLE_D & ~(0xFF << (8 * k)) | (ref.TERM << (8 * k))
             await self.xg([(d, 0xFF)], f"lone terminate lane {k}")
+        # all-control words that carry error characters, and terminates followed by an error character or by another control character in a higher lane
+        # (brief 146: Verilator expression coverage of enc66 showed those combinations never reached pcs_tx)
+        for k in range(8):
+            await self.xg([(ref.IDLE_D & ~(0xFF << (8 * k)) | (ref.ERRC << (8 * k)), 0xFF)], f"error character in lane {k} of an all-control word")
+        await self.xg([(int.from_bytes(bytes([ref.ERRC] * 8), "little"), 0xFF)], "all error characters")
+        for k in range(7):
+            base = ref.IDLE_D & ~(0xFF << (8 * k)) | (ref.TERM << (8 * k))
+            await self.xg([(base & ~(0xFF << (8 * (k + 1))) | (ref.ERRC << (8 * (k + 1))), (0xFF << k) & 0xFF)], f"terminate lane {k}, error character after it")
+            await self.xg([(base & ~(0xFF << (8 * (k + 1))) | (0x9C << (8 * (k + 1))), (0xFF << k) & 0xFF)], f"terminate lane {k}, other control character after it")
         # start followed at once by a terminate, in lane 0 and lane 4 (a frame with no data)
         for k in range(8):
             t = (ref.IDLE_D & ~(0xFF << (8 * k)) | (ref.TERM << (8 * k)), (0xFF << k) & 0xFF)
@@ -226,6 +238,11 @@ class VseqLineBlocks(VseqBase):
             for i in range(k):
                 d = d & ~(0xFF << (8 * i)) | (self.rng.getrandbits(8) << (8 * i))
             await lb([ref.encode_rtl(d, (0xFF << k) & 0xFF)])
+        # a lane-4 start block straight followed by a terminate block of each lane: a frame with no data (brief 146: Verilator branch coverage of mac64_rx)
+        for k in range(8):
+            t = (ref.IDLE_D & ~(0xFF << (8 * k)) | (ref.TERM << (8 * k)), (0xFF << k) & 0xFF)
+            await lb(bo([(int.from_bytes(bytes([ref.IDLE] * 4 + [ref.START, 0x55, 0x55, 0x55]), "little"), 0x1F), t]))
+            await lb(ib(2))
         q = bo(fw(rb(90), False, False)); q.insert(4, self.bad_type_block()); await lb(q)
         q = bo(fw(rb(90), True, False)); q.insert(3, self.bad_sh_block()); await lb(q)
         q = bo(fw(rb(90), False, False)); q = q[0:2] + q; await lb(q)                      # a second start inside the frame

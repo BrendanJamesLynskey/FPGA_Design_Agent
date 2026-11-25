@@ -5,7 +5,7 @@ schema: fda-handover/1
 id: b119_tcp_fast
 title: TCP fast path for OUCH orders (software owns the connection, hardware sends pre-built segments)
 kind: showcase
-produced_by: human
+produced_by: session
 summary: A block that holds the TCP connection state which software hands it and sends each OUCH 5.0 order of brief 110
   as one complete Ethernet, IPv4 and TCP frame, with sequence number, identification and both checksums finished incrementally
   from partial sums of a template. It supports the speculative start and abort of brief 110, where an aborted frame is poisoned
@@ -74,10 +74,10 @@ parameters:
 files:
 - path: designs/b119_tcp_fast/rtl/tcp_fast.sv
   what: the TCP fast path
-  sha256: dec57d4bb14ef4ec6326e78450d0caec09ef74128277be5b727bf179136359aa
+  sha256: 0a9b9e0de854cae1418c554fe2b81de6fc781027363364530864773557df42c2
 - path: designs/b119_tcp_fast/rtl/itch_ouch_tcp_top.sv
   what: brief 110's trading path with tcp_fast in place of its stub port (simulation)
-  sha256: 34ce2effbb2236b03c7cd6d032620f2ae5e1cd43e92daf53fb82e79e79e49301
+  sha256: dce6ad68f3905ebb843783fe6e2e5fb626e9b6cdabbdb0b7e448d54df4c81f9e
 - path: designs/b119_tcp_fast/model/tcpref.py
   what: segment, checksum and decision reference
   sha256: f6ca3aecbc5ba38e97ee5b4416f57a04c6cf4139c3a8a6553ce54aefe8a720d4
@@ -95,7 +95,7 @@ files:
   sha256: f2009e9338149fa4ce66b3089a65f9b017c16f53c4eb6c8efec8b7987347732c
 - path: designs/b119_tcp_fast/tests/b119_cocotb.py
   what: cocotb bench of the block
-  sha256: 8ddaee11afb9f06899d7561fe93ccfa29289b2123556d117815821053cd5d1df
+  sha256: 6e94d3d68ce9acf3845176579d3720784ba354232818c79c2c53ed95f4e565a0
 - path: designs/b119_tcp_fast/tests/b119_top_cocotb.py
   what: cocotb bench behind brief 110's risk logic
   sha256: cb474289815aea60ee5f3609fa0964acb14126df7aaac3b58c8d7192de88a3d0
@@ -110,7 +110,7 @@ files:
   sha256: 48962fa55888673b266e5bf31fabd6f7ecbafab1349aa3404a633d3356ac1029
 - path: designs/b119_tcp_fast/docs/tcp_fast.md
   what: datasheet
-  sha256: 5c1937bbba2229c4385360110f0c3c0ab3b0892addc41c8602c0bb900af73cc7
+  sha256: d93c76bd30ea4f1c559fedb6245a9803d01dd78d14d77acffb8a75cdd372f2f5
 - path: designs/b119_tcp_fast/docs/software_side.md
   what: the Python TCP owner and exchange
   sha256: 340d510d3942d42da49465124a8145f1bb1167b84459e8b87969639e07995b3d
@@ -394,5 +394,5 @@ state:
     ooc_build_2026_1: pass
     board_run: not-run
   vivado: '2026.1'
-  kb_pin: 93d158c
+  kb_pin: 5e2eab8
   build_id: null

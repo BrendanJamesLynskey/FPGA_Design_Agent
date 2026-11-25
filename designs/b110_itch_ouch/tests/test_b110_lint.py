@@ -1,4 +1,4 @@
-"""Verilator -Wall lint of the whole path at the default and at three other parameter points (brief 110, flow/lint.sh's rules for a design without a board top)."""
+"""Verilator -Wall lint of the whole path at the default and at six other parameter points (brief 191 adds PARSE_INPLACE and DUAL_FEED) (brief 110, flow/lint.sh's rules for a design without a board top)."""
 from __future__ import annotations
 
 import os
@@ -13,7 +13,8 @@ VERILATOR = shutil.which("verilator") or str(Path.home() / ".local/opt/verilator
 
 
 @pytest.mark.skipif(not (shutil.which("verilator") or Path(VERILATOR).exists()), reason="Verilator not installed")
-@pytest.mark.parametrize("params", [[], ["-GN_INST=2", "-GLEVELS=4", "-GORD_AW=5"], ["-GN_INST=3", "-GLEVELS=4", "-GORD_AW=6"], ["-GN_INST=8", "-GLEVELS=8", "-GORD_AW=10"]])
+@pytest.mark.parametrize("params", [[], ["-GN_INST=2", "-GLEVELS=4", "-GORD_AW=5"], ["-GN_INST=3", "-GLEVELS=4", "-GORD_AW=6"], ["-GN_INST=8", "-GLEVELS=8", "-GORD_AW=10"],
+                                    ["-GPARSE_INPLACE=1"], ["-GDUAL_FEED=1"], ["-GDUAL_FEED=1", "-GARB_AW=8", "-GPARSE_INPLACE=1", "-GNOTIONAL_MODE=1"]])
 def test_lint_clean(params) -> None:
     srcs = [str(DESIGN / "lint" / "lint_waivers.vlt"), str(DESIGN / "rtl" / "itch_pkg.sv")] + sorted(str(p) for p in (DESIGN / "rtl").glob("*.sv") if p.name != "itch_pkg.sv")
     env = dict(os.environ)

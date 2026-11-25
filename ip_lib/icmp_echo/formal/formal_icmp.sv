@@ -50,12 +50,21 @@ module formal_icmp (
             if (m_axis_tvalid && m_axis_tready) f_ok <= m_axis_tlast ? 16'd0 : f_ok + 16'd1;
         end
     end
+    // Every assertion is labelled (a_*) and paired with a cover of its own antecedent (a_*__ante; brief 143c, flow/formal_rigour.py).
     always_ff @(posedge clk) if (f_past && !rst) begin
-        if (m_axis_tvalid && f_ok == 16'd13 && f_rq[8]) assert (m_axis_tdata == f_rq[7:0]);
-        if (ev_request) assert (f_p3[8]);
-        assert (viol[3:0] == 4'b0000);
-        if (m_axis_tvalid) assert (f_req || ev_request);
-        if (ev_reply) assert (f_req);
-        cover (ev_reply);
+        if (m_axis_tvalid && f_ok == 16'd13 && f_rq[8]) a_reply_carries_request: assert (m_axis_tdata == f_rq[7:0]);
+        if (ev_request) a_request_has_byte13: assert (f_p3[8]);
+        a_axis_rules: assert (viol[3:0] == 4'b0000);
+        if (m_axis_tvalid) a_reply_needs_request: assert (f_req || ev_request);
+    end
+    // `if (ev_reply) assert (f_req)` (a reply ends only after a request) was removed in brief 143c: ev_reply first happens at step 90 and the bounded check stops at 62
+    // (no solver finishes deeper: see icmp.sby), so the assertion never had anything to check; c_reply below covers that the reply path is reachable.
+    // antecedents (same guard); the first is the strongest: the reply's byte 13 is on the output and a request was remembered
+    always_ff @(posedge clk) if (f_past && !rst) begin
+        a_reply_carries_request__ante: cover (m_axis_tvalid && f_ok == 16'd13 && f_rq[8]);
+        a_request_has_byte13__ante: cover (ev_request);
+        a_axis_rules__ante: cover (m_axis_tvalid && m_axis_tready);
+        a_reply_needs_request__ante: cover (m_axis_tvalid);
+        c_reply: cover (ev_reply);
     end
 endmodule
