@@ -23,7 +23,7 @@ D204 = Path(__file__).resolve().parents[2] / "flow" / "tests" / "data" / "204a"
     ("Which clock is clk_sys: its frequency and where it comes from?", "high", "clock"),
     ("What does the board pin CLK100MHZ connect to, and how is it driven (push-pull, open-drain, pulled up, input)?", "high", "clock"),      # CLK100MHZ is also a clock name: the first rule that matches decides, the class is the same
     ("Is median_filter's reset rst active high or active low, and synchronous or asynchronous?", "high", "reset"),
-    ("What is the register map (offset, width, reset value and access of every register)?", "high", "reset"),
+    ("What is the register map (offset, width, reset value and access of every register)?", "high", "register-map"),
     ("May the sink of median_filter.out stall the stream (drive tready low)?", "high", "interface"),
     ("What throughput must median_filter.out sustain (beats per clock)?", "high", "clock"),
     ("What latency, in clock cycles, from in to out?", "high", "clock"),

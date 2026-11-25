@@ -67,7 +67,9 @@ RULES: tuple[Rule, ...] = (
     _r("pins-and-io", "high", r"\bpins?\b|\bI/?O standards?\b|\bIOSTANDARD\b|\bLVCMOS\w*|\bLVDS\b|\bdrive strength|\bconnect to\b|\bpull(?:ed)?[- ]?(?:up|down)\b|"
        r"\bpush-pull\b|\bopen-drain\b|\bvoltage\b|\bVadj\b|\btermination\b|\bseries (?:resistor|R)\b|\bpinout\b",
        "a pin or I/O standard decides what the board sees; a wrong one can damage a part"),
-    _r("reset", "high", r"\bresets?\b|\bactive[- ](?:high|low)\b|\bpolarity\b", "reset polarity and style decide the start-up state and the interface"),
+    _r("register-map", "high", r"\bregister map\b|\bregisters?\b.{0,60}\boffsets?\b|\boffsets?\b.{0,60}\bregisters?\b",
+       "the register map is what host software and the test shell are written against"),
+    _r("reset", "high", r"\bresets?\b|\bactive[- ](?:high|low)\b|\bpolarity\b", "a reset's polarity, style or value decides the start-up state and the interface"),
     _r("external-device", "high", r"\btransceivers?\b|\bGT[HYXP]\b|\blaser\b|\boptical\b|\bmotor\b|\brelay\b|\bDAC\b|\bADC\b|\bexternal device\b|\bPHY\b|"
        r"\bMAC address\b|\bIP address\b|\bARP\b|\bEthernet\b|\bsensor\b", "it drives or answers a device outside the FPGA"),
     _r("cosmetic", "low", r"^(?!.*\b(?:offsets?|address\w*|widths?|map|protocol|pins?)\b).*\b(?:nam(?:e|es|ed|ing)|comments?|labels?|titles?|cosmetic|prefix|register order|order of)\b",
