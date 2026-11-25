@@ -461,6 +461,20 @@ def _cdc_structure(d: Path, architecture: Path | None) -> dict[str, Any]:
     return cdc_structure.evaluate(d / "cdc_paths_synth.rpt", d / "cdc_synth.rpt", waivers)
 
 
+def _cdc_margin(d: Path, architecture: Path | None, prep: dict[str, Any]) -> dict[str, Any] | None:
+    """flow/cdc_margin.py on a routed build (brief 207); the architecture's ``crossings`` (declared intent) and
+    ``mtbf_target_years`` refine it. None when the build has no bus_skew_route.rpt (made before brief 207)."""
+    if not (d / "bus_skew_route.rpt").exists():
+        return None
+    try:
+        from flow import cdc_margin
+    except ImportError:      # run as a script: flow/ is on sys.path
+        import cdc_margin
+    arch = _architecture_for(d, architecture) or {}
+    return cdc_margin.evaluate(d, crossings=[c for c in (arch.get("crossings") or []) if isinstance(c, dict)],
+                               mtbf_target_years=arch.get("mtbf_target_years"), part=str(prep.get("part", "")))
+
+
 def _gt(d: Path, g: dict[str, bool]) -> dict[str, Any] | None:
     """Brief 56A: flow/gt_gates.py's gates (reference-clock pin and quad, lane pins, line-rate window, user-clock limit, reset
     sequence, timed user clocks, transceiver DRCs) when the build has a gtwizard_ultrascale core; None otherwise. A gate whose data is
@@ -825,6 +839,11 @@ def evaluate(build_dir: Path, architecture: Path | None = None) -> dict[str, Any
             hub_info = hub
         else:
             hub_info = None
+        # brief 207: clock-crossing margins (flow/cdc_margin.py): a bus-skew violation is a gate failure (UG906 p. 162); missing
+        # bus-skew coverage, a loose datapath-only value, a missing or low MTBF and high user uncertainty are warnings
+        cdcm = _cdc_margin(d, architecture, prep)
+        if cdcm is not None and cdcm["evaluated"]:
+            route_gates["post_route_bus_skew_met"] = cdcm["pass"]
         exc_r = _exceptions(d, "route", strict, route_gates, "exceptions_clean")
         io_r = _io(d, "route", strict, route_gates, "io_timing_clean")
         iob_r = _iob_packing(d, prep, strict, route_gates)
@@ -832,7 +851,10 @@ def evaluate(build_dir: Path, architecture: Path | None = None) -> dict[str, Any
                                 "io_timing": io_r, "timing_margin": _margin(d), "ila_hub_crossing": hub_info,
                                 "config_voltage": cfg_info,
                                 **({"iob_packing": iob_r} if iob_r is not None else {}),
-                                "warnings": (io_r or {}).get("warnings", []) + cfg_warn + (iob_r or {}).get("warnings", []),
+                                "cdc_margin": cdcm,
+                                "warnings": (io_r or {}).get("warnings", []) + cfg_warn + (iob_r or {}).get("warnings", [])
+                                + [{"name": f["code"], "stage": "post_route", **f} for f in (cdcm or {}).get("findings", [])
+                                   if f["level"] == "advisory"],
                                 "unconstrained_ports": parse_check_timing_ports(checks_text)}
 
         # --- bitstream ---

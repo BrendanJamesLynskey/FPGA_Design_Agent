@@ -404,17 +404,34 @@
      "file": "flow/xpm_cdc.tcl",
      "gate": null,
      "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/flow/xpm_cdc.tcl",
-     "what": "Exceptions for AMD's crossing macros."
+     "what": "Exceptions for AMD's crossing macros; the handshake bound is AMD's own: destination period times its sync stages, with a bus skew."
+    },
+    {
+     "enforced": true,
+     "file": "flow/cdc_margin.py",
+     "gate": "post_route_bus_skew_met",
+     "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/flow/cdc_margin.py",
+     "what": "After routing, every set_bus_skew must be met; a hand-built bus with no bus skew, a loose datapath-only bound, a missing or low MTBF (UltraScale+) and user clock uncertainty are warnings."
     }
    ],
    "counts": {
-    "checks": 4,
-    "enforced": 3,
-    "evidence": 2,
+    "checks": 5,
+    "enforced": 4,
+    "evidence": 3,
     "sections": 7,
     "skills": 15
    },
    "evidence": [
+    {
+     "kind": "measured",
+     "sources": [
+      {
+       "path": "results/207_cdc_margin/headline.json",
+       "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/results/207_cdc_margin/headline.json"
+      }
+     ],
+     "text": "A clock-uncertainty margin is not crossing margin. On Artix-7 it left a crossing's slack unchanged (5.34 and 5.34 ns) and failed hold elsewhere (worst -0.692 ns); on MAX10 it turned a passing path (0.76 ns) into a failing one (-0.04 ns); in Quartus a clock group removed the skew check (96 paths with bounds, 0 with the group)."
+    },
     {
      "kind": "measured",
      "sources": [
@@ -505,7 +522,8 @@
    "gaps": [
     "No agent run has used the stronger crossing gate yet.",
     "A reset cleared on one side only, in an asynchronous FIFO or a handshake, gets past the gate; only the rig's simulation catches it.",
-    "The gate's simulation works cycle by cycle, so it finds lost pulses and bits crossed separately but not route skew, glitches or true metastability."
+    "The gate's simulation works cycle by cycle, so it finds lost pulses and bits crossed separately but not route skew, glitches or true metastability.",
+    "The bus-skew gate has no failing case from our own designs: neither tested part could be routed past a realistic bound; its negative case is a recorded over-tight bound."
    ],
    "id": "cdc",
    "level": "checked",
