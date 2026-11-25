@@ -214,6 +214,7 @@ class LatencyLoop:
     max_turns: int = 16
     rows: list[dict[str, Any]] = field(default_factory=list)
     usd: float = 0.0
+    target_clocks: float | None = None            # brief 159: the typed latency goal (tick_to_trade, at most N clocks); None = shorten as far as it goes
 
     def _rec(self, row: dict[str, Any]) -> None:
         self.rows.append(row)
@@ -232,6 +233,9 @@ class LatencyLoop:
         if not base.get("tests_pass"):
             return {"arm": self.arm, "stopped": "the baseline fails its own bench", "baseline": base}
         best, history, stall = base, [], 0
+        if self.target_clocks is not None and base["ttt_clocks"] <= self.target_clocks:
+            self._rec({"iteration": 0, "event": "stop", "reason": f"the goal (at most {self.target_clocks:g} clocks) already holds at the baseline"})
+            return self._summary(base, best)
         for it in range(1, self.max_iter + 1):
             if self.usd >= self.max_usd:
                 self._rec({"iteration": it, "event": "stop", "reason": "cost cap"})
@@ -273,11 +277,20 @@ class LatencyLoop:
                     stall += 1
             history.append(f"visit {it}: {res['note'] or '(no note)'} -> {'KEPT' if row.get('kept') else 'REVERTED'}: {row['reason']}")
             self._rec(row)
+            if self.target_clocks is not None and best["ttt_clocks"] <= self.target_clocks:
+                self._rec({"iteration": it, "event": "stop", "reason": f"goal met: {best['ttt_clocks']} clocks, at most {self.target_clocks:g}"})
+                break
             if stall >= 2:
                 break
+        return self._summary(base, best)
+
+    def _summary(self, base: dict[str, Any], best: dict[str, Any]) -> dict[str, Any]:
         summary = {"arm": self.arm, "baseline_clocks": base["ttt_clocks"], "final_clocks": best["ttt_clocks"], "usd": round(self.usd, 6),
                    "kept": sum(1 for r in self.rows if r.get("kept")), "visits": sum(1 for r in self.rows if r.get("event") == "visit"),
                    "final_rtl_sha": rtl_sha(self.design)}
+        if self.target_clocks is not None:
+            summary.update(target_clocks=self.target_clocks, goal_met=best["ttt_clocks"] <= self.target_clocks)
+        (self.out / "summary.json").parent.mkdir(parents=True, exist_ok=True)
         (self.out / "summary.json").write_text(json.dumps(summary, indent=1) + "\n")
         return summary
 
@@ -289,6 +302,22 @@ def rtl_sha(design: Path) -> str:
     return h.hexdigest()[:16]
 
 
+def latency_goal_clocks(design: Path, goal: str | None) -> float | None:
+    """Brief 159: the typed tick-to-trade goal in clocks: ``--goal "latency<=N clk"`` (or ``latency.tick_to_trade<=N clk``), else the ``must``
+    latency goal in ``<design>/spec.yaml goals:`` (``agent.graph.goals``), else None (the loop shortens as far as it can, as before).
+    A goal that is not a latency goal is an error, not ignored."""
+    import yaml
+    from agent.graph import goals as G
+    if goal:
+        g = G.parse_goal(goal)
+        if g.metric != "latency_clk" or g.name not in (None, "tick_to_trade") or g.op != "le":
+            raise G.GoalError(f"{goal!r}: the latency loop reads one goal, latency<=N clk (or latency.tick_to_trade<=N clk)")
+        return g.bound
+    sp = design / "spec.yaml"
+    g = G.latency_target(G.load(yaml.safe_load(sp.read_text()) or {})) if sp.is_file() else None
+    return g.bound if g is not None and g.op == "le" else None
+
+
 def latency_cmd(a: argparse.Namespace) -> int:
     from agent.access import require_or_exit
     from agent.models import resolver_for
@@ -297,7 +326,7 @@ def latency_cmd(a: argparse.Namespace) -> int:
     design = (root / a.design).resolve()
     out = (a.out or root / "results" / "b97" / "runs" / f"{a.arm}_{int(time.time())}").resolve()
     client = resolver_for("latency", model=a.model, replay=a.replay, record=None if a.replay else out / "llm_calls.json").chat("latency")
-    loop = LatencyLoop(root, design, a.arm, client, out, a.max_iter, a.max_usd, a.max_turns)
+    loop = LatencyLoop(root, design, a.arm, client, out, a.max_iter, a.max_usd, a.max_turns, target_clocks=latency_goal_clocks(design, a.goal))
     print(json.dumps(loop.run(), indent=1))
     return 0
 
@@ -312,4 +341,7 @@ def add_parser(sub) -> None:
     p.add_argument("--max-turns", type=int, default=16)
     p.add_argument("--max-usd", type=float, default=1.0)
     p.add_argument("--out", type=Path)
+    p.add_argument("--goal", help="brief 159: the tick-to-trade target, latency<=N clk (default: the latency goal in <design>/spec.yaml, if any); "
+                                  "the loop stops as soon as the measured clocks reach it, or when the baseline already does. "
+                                  "A bare number without clk is refused; nanoseconds are not accepted")
     p.add_argument("--replay", help="LLM replay fixture (no network)")

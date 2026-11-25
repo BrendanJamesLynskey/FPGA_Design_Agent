@@ -1,0 +1,66 @@
+{
+ "schema": "fpga-design-agent/uvm-regression/v1",
+ "bench": "designs/b96_kr260_10g/rm_gp_itch/verif/uvm",
+ "simulator": "xsim 2026.1, UVM 1.2",
+ "runs": 34,
+ "failed": 0,
+ "tests": [
+  "t_badfcs",
+  "t_book",
+  "t_bp",
+  "t_hdr",
+  "t_mix",
+  "t_mold",
+  "t_rand",
+  "t_risk",
+  "t_smoke",
+  "t_tail"
+ ],
+ "checks": {
+  "CHECKPOINTS": {
+   "compared": 217,
+   "mismatches": 0
+  },
+  "COUNTERS": {
+   "compared": 8897,
+   "mismatches": 0
+  },
+  "FLAGS": {
+   "compared": 1736,
+   "mismatches": 0
+  },
+  "ORDERCNT": {
+   "compared": 434,
+   "mismatches": 0
+  },
+  "ORDERS": {
+   "compared": 3112,
+   "mismatches": 0
+  },
+  "SEQ": {
+   "compared": 454,
+   "mismatches": 1
+  },
+  "SEQ_WAIVED": {
+   "compared": 11,
+   "mismatches": 0
+  },
+  "US": {
+   "compared": 2604,
+   "mismatches": 0
+  }
+ },
+ "sva_failures": 0,
+ "coverage": {
+  "bins": 97,
+  "hit": 97,
+  "holes": []
+ },
+ "seq_waived": 11,
+ "finding_seq_poison": {
+  "test": "t_seq_poison",
+  "plusarg": "+SEQ_STRICT",
+  "failed": true,
+  "message": "order 3: TCP sequence number 1118, expected 1059 (1 good segments since TCP_LOAD, 1 poisoned frames seen)"
+ }
+}

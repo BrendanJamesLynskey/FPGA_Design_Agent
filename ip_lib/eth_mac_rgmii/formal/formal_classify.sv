@@ -52,12 +52,19 @@ module formal_classify (
                 (f_da[40] && f_da != 48'hFFFF_FFFF_FFFF &&
                  (mcast_all || (f_tv[0] && f_ta[0] == f_da) || (f_tv[1] && f_ta[1] == f_da) || mc_hash[f_crc[5:0]]));
     end
+    // Every assertion is labelled (a_*) and paired with a cover of its own antecedent (a_*__ante; brief 143c, flow/formal_rigour.py).
     always_ff @(posedge clk) if (f_past && !rst) begin
         if (da_valid && !$past(da_valid)) begin
-            assert (f_k == 3'd6);
-            assert (match == f_exp);
-            assert (is_bcast == (f_da == 48'hFFFF_FFFF_FFFF) && is_mcast == f_da[40] && is_own == (f_da == own_mac));
+            a_six_bytes: assert (f_k == 3'd6);
+            a_match_rule: assert (match == f_exp);
+            a_flags: assert (is_bcast == (f_da == 48'hFFFF_FFFF_FFFF) && is_mcast == f_da[40] && is_own == (f_da == own_mac));
         end
-        cover (da_valid && match && is_mcast && !is_bcast && !mcast_all && !promisc);
+    end
+    // antecedents (same guard): a verdict appears; the strongest case is a match for a reason other than promiscuous mode
+    always_ff @(posedge clk) if (f_past && !rst) begin
+        a_verdict__ante: cover (da_valid && !$past(da_valid));
+        a_match_rule__ante: cover (da_valid && !$past(da_valid) && match && !promisc);
+        c_multicast_matched: cover (da_valid && match && is_mcast && !is_bcast && !mcast_all && !promisc);
+        c_rejected: cover (da_valid && !match);
     end
 endmodule

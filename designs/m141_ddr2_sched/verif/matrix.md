@@ -4,29 +4,45 @@
 
 The human specifies the requirements and checks that the verification is thorough enough. The agent holds the knowledge to implement and to verify. You can open any of the implementation or the evidence, and you do not have to. Hardware on the board, with attached instruments, is a verification layer of its own: where a requirement depends on something outside the design (an optical link, a network card, a data source) it may be the only way to close it.
 
-**Summary.** 11 requirements (3 functional, 5 performance, 3 safety); 10 verified; 1 with no passing evidence; 0 of 1 requirements that depend on an external element closed by hardware; performance verified: 0 on the board, 0 by post-route timing, 4 in simulation only; 0 of 11 requirements agreed by a human, 0 human review(s) recorded.
+**Summary.** 11 requirements (3 functional, 5 performance, 3 safety); 7 verified; 3 partially verified (the required mix of methods is not met); 1 with no passing evidence; 1 with no passing evidence; 0 of 1 requirements that depend on an external element closed by hardware; performance verified: 0 on the board, 0 by post-route timing, 4 in simulation only; 0 of 11 requirements agreed by a human, 0 agreed on the owner's delegation (not human), 11 draft; 7 resting only on the implementing agent's own tests; 0 human and 0 delegated review(s) recorded.
 
 Simulation and formal only (phase 0): the scheduler is checked against a behavioural DDR2 command-rule model written from the data sheet, and its rules are proved on its own command output. No PHY, no MIG, no board: the board items are hooks (planned) with the pre-registration in docs/memory_controller_plan.md section 12. "Latency" is clocks from the request handshake to the first data beat at the nexys_650 profile (tCK 3077 ps, CL 5).
 
 ## Matrix
 
-Rows are requirements, columns are verification methods. A cell lists each item with its computed status and links to its evidence. Status is read from the evidence by code; it is never typed. `stale` means a file the evidence is about changed after the evidence was recorded; `bounded` means a formal bounded model check only.
+Rows are requirements, columns are verification methods. A cell lists each item with its computed status and links to its evidence. Status is read from the evidence by code; it is never typed. `stale` means a file the evidence is about changed after the evidence was recorded; `bounded` means a formal bounded model check only. A requirement is verified only when its passing items meet the method mix for its kind (`flow/method_mix_policy.yaml`); a test is marked with who wrote it, and a test whose author is not recorded counts as the implementing agent's own. Agreement comes only from `verif/agreements.yaml`, never from the testplan.
 
-| Requirement | Kind | State | sim test | UVM | SVA | formal | Lean | coverage | timing | sim measure | board | review |
-|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| **M141-S-TIMING** No DDR2 timing rule is ever violated on the command stream | safety | verified | pass: [V-SIM-CLEAN](../../../results/116_traceability/m141_ddr2_sched/pytest_junit.xml)<br>pass: [V-SIM-FAULTS](../../../results/116_traceability/m141_ddr2_sched/pytest_junit.xml) |  |  | pass: [V-FORMAL-RULES](../../../results/116_traceability/m141_ddr2_sched/pytest_junit.xml) |  |  |  |  |  |  |
-| **M141-S-ORDER** A request never overtakes an older request to the same burst address when either is a write | safety | verified | pass: [V-SIM-CLEAN](../../../results/116_traceability/m141_ddr2_sched/pytest_junit.xml)<br>pass: [V-SIM-FAULTS](../../../results/116_traceability/m141_ddr2_sched/pytest_junit.xml) |  |  | pass: [V-FORMAL-RULES](../../../results/116_traceability/m141_ddr2_sched/pytest_junit.xml) |  |  |  |  |  |  |
-| **M141-S-REFRESH** Refresh is never starved | safety | verified | pass: [V-SIM-CLEAN](../../../results/116_traceability/m141_ddr2_sched/pytest_junit.xml)<br>pass: [V-SIM-FAULTS](../../../results/116_traceability/m141_ddr2_sched/pytest_junit.xml) |  |  | pass: [V-FORMAL-RULES](../../../results/116_traceability/m141_ddr2_sched/pytest_junit.xml) |  |  |  |  |  |  |
-| **M141-F-SERVICE** Every request is served exactly once with its own bank, row, column and direction | functional | verified | pass: [V-SIM-CLEAN](../../../results/116_traceability/m141_ddr2_sched/pytest_junit.xml)<br>pass: [V-SIM-FAULTS](../../../results/116_traceability/m141_ddr2_sched/pytest_junit.xml) |  |  |  |  |  |  |  |  |  |
-| **M141-F-BOUND** Every request is served within a bounded wait | functional | verified | pass: [V-SIM-CLEAN](../../../results/116_traceability/m141_ddr2_sched/pytest_junit.xml) |  |  | bounded: [V-FORMAL-BOUND](../../../results/b141/formal_full.json) |  |  |  |  |  |  |
-| **M141-F-LINT** The RTL is Verilator -Wall clean and follows the HDL standard's structural rules | functional | verified | pass: [V-LINT](../../../results/116_traceability/m141_ddr2_sched/pytest_junit.xml) |  |  |  |  |  |  |  |  |  |
-| **M141-P-LAT** Median read latency of the latency-first policy on light random reads | performance | verified (simulation only) |  |  |  |  |  |  |  | pass: [V-SIM-LAT](../../../results/b141/sim_summary.json) |  |  |
-| **M141-P-LATTAIL** Tail of the read latency of the latency-first policy on light random reads | performance | verified (simulation only) |  |  |  |  |  |  |  | pass: [V-SIM-LATTAIL](../../../results/b141/sim_summary.json) |  |  |
-| **M141-P-WINDOW** No read inside a refresh-deferral window waits for a refresh | performance | verified (simulation only) |  |  |  |  |  |  |  | pass: [V-SIM-WINDOW](../../../results/b141/sim_summary.json) |  |  |
-| **M141-P-BW** Streaming read bandwidth of the bandwidth-first policy | performance | verified (simulation only) |  |  |  |  |  |  |  | pass: [V-SIM-BW](../../../results/b141/sim_summary.json) |  |  |
-| **M141-P-BOARD** Latency and bandwidth against MIG's own controller on the board Depends on: a Nexys A7-100T on wall power, a generated MIG core with the PHY interface, and a Vivado build (heavy slot); hardware verification open. | performance | not run |  |  |  |  |  |  |  |  | not run [latency_loop]: V-BOARD-PLANNED |  |
+| Requirement | Kind | Agreement | State | sim test | UVM | SVA | formal | Lean | coverage | timing | sim measure | board | review |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| **M141-S-TIMING** No DDR2 timing rule is ever violated on the command stream | safety | draft | verified | pass [author not recorded]: [V-SIM-CLEAN](../../../results/116_traceability/m141_ddr2_sched/pytest_junit.xml)<br>pass [author not recorded]: [V-SIM-FAULTS](../../../results/116_traceability/m141_ddr2_sched/pytest_junit.xml) |  |  | pass: [V-FORMAL-RULES](../../../results/116_traceability/m141_ddr2_sched/pytest_junit.xml) |  |  |  |  |  |  |
+| **M141-S-ORDER** A request never overtakes an older request to the same burst address when either is a write | safety | draft | verified | pass [author not recorded]: [V-SIM-CLEAN](../../../results/116_traceability/m141_ddr2_sched/pytest_junit.xml)<br>pass [author not recorded]: [V-SIM-FAULTS](../../../results/116_traceability/m141_ddr2_sched/pytest_junit.xml) |  |  | pass: [V-FORMAL-RULES](../../../results/116_traceability/m141_ddr2_sched/pytest_junit.xml) |  |  |  |  |  |  |
+| **M141-S-REFRESH** Refresh is never starved | safety | draft | verified | pass [author not recorded]: [V-SIM-CLEAN](../../../results/116_traceability/m141_ddr2_sched/pytest_junit.xml)<br>pass [author not recorded]: [V-SIM-FAULTS](../../../results/116_traceability/m141_ddr2_sched/pytest_junit.xml) |  |  | pass: [V-FORMAL-RULES](../../../results/116_traceability/m141_ddr2_sched/pytest_junit.xml) |  |  |  |  |  |  |
+| **M141-F-SERVICE** Every request is served exactly once with its own bank, row, column and direction | functional | draft | partially verified; lacks a simulation check from a bench the implementing agent did not write; rests only on the implementing agent's own tests | pass [author not recorded]: [V-SIM-CLEAN](../../../results/116_traceability/m141_ddr2_sched/pytest_junit.xml)<br>pass [author not recorded]: [V-SIM-FAULTS](../../../results/116_traceability/m141_ddr2_sched/pytest_junit.xml) |  |  |  |  |  |  |  |  |  |
+| **M141-F-BOUND** Every request is served within a bounded wait | functional | draft | partially verified; lacks a simulation check from a bench the implementing agent did not write; rests only on the implementing agent's own tests | pass [author not recorded]: [V-SIM-CLEAN](../../../results/116_traceability/m141_ddr2_sched/pytest_junit.xml) |  |  | bounded: [V-FORMAL-BOUND](../../../results/b141/formal_full.json) |  |  |  |  |  |  |
+| **M141-F-LINT** The RTL is Verilator -Wall clean and follows the HDL standard's structural rules | functional | draft | partially verified; lacks a simulation check from a bench the implementing agent did not write; rests only on the implementing agent's own tests | pass [author not recorded]: [V-LINT](../../../results/116_traceability/m141_ddr2_sched/pytest_junit.xml) |  |  |  |  |  |  |  |  |  |
+| **M141-P-LAT** Median read latency of the latency-first policy on light random reads | performance | draft | verified; rests only on the implementing agent's own tests (simulation only) |  |  |  |  |  |  |  | pass [author not recorded]: [V-SIM-LAT](../../../results/b141/sim_summary.json) |  |  |
+| **M141-P-LATTAIL** Tail of the read latency of the latency-first policy on light random reads | performance | draft | verified; rests only on the implementing agent's own tests (simulation only) |  |  |  |  |  |  |  | pass [author not recorded]: [V-SIM-LATTAIL](../../../results/b141/sim_summary.json) |  |  |
+| **M141-P-WINDOW** No read inside a refresh-deferral window waits for a refresh | performance | draft | verified; rests only on the implementing agent's own tests (simulation only) |  |  |  |  |  |  |  | pass [author not recorded]: [V-SIM-WINDOW](../../../results/b141/sim_summary.json) |  |  |
+| **M141-P-BW** Streaming read bandwidth of the bandwidth-first policy | performance | draft | verified; rests only on the implementing agent's own tests (simulation only) |  |  |  |  |  |  |  | pass [author not recorded]: [V-SIM-BW](../../../results/b141/sim_summary.json) |  |  |
+| **M141-P-BOARD** Latency and bandwidth against MIG's own controller on the board Depends on: a Nexys A7-100T on wall power, a generated MIG core with the PHY interface, and a Vivado build (heavy slot); hardware verification open. | performance | draft | not run |  |  |  |  |  |  |  |  | not run [latency_loop]: V-BOARD-PLANNED |  |
 
 ## Gaps
+
+### Requirements whose passing items do not meet the required method mix
+
+- `M141-F-SERVICE`: functional requirement: passes, but the required mix of methods is not met; lacks a simulation check from a bench the implementing agent did not write
+- `M141-F-BOUND`: functional requirement: passes, but the required mix of methods is not met; lacks a simulation check from a bench the implementing agent did not write
+- `M141-F-LINT`: functional requirement: passes, but the required mix of methods is not met; lacks a simulation check from a bench the implementing agent did not write
+
+### Requirements resting only on the implementing agent's own tests
+
+- `M141-F-SERVICE`: everything that passes is a test the implementing agent wrote (or whose author is not recorded); the house rule is that these never count alone
+- `M141-F-BOUND`: everything that passes is a test the implementing agent wrote (or whose author is not recorded); the house rule is that these never count alone
+- `M141-F-LINT`: everything that passes is a test the implementing agent wrote (or whose author is not recorded); the house rule is that these never count alone
+- `M141-P-LAT`: everything that passes is a test the implementing agent wrote (or whose author is not recorded); the house rule is that these never count alone
+- `M141-P-LATTAIL`: everything that passes is a test the implementing agent wrote (or whose author is not recorded); the house rule is that these never count alone
+- `M141-P-WINDOW`: everything that passes is a test the implementing agent wrote (or whose author is not recorded); the house rule is that these never count alone
+- `M141-P-BW`: everything that passes is a test the implementing agent wrote (or whose author is not recorded); the house rule is that these never count alone
 
 ### Requirements that depend on an external element and are not yet verified on hardware
 
@@ -47,7 +63,7 @@ Rows are requirements, columns are verification methods. A cell lists each item 
 
 ### M141-S-TIMING: No DDR2 timing rule is ever violated on the command stream
 
-- Kind: safety; state: verified; specification status: draft.
+- Kind: safety; state: verified; agreement: draft.
 - Source: `docs/memory_controller_plan.md#2-the-part-and-the-rules-that-matter`
 - For every request sequence and both policies, the command bus never breaks tRCD, tRP and tRPA, tRAS, tRC, tRRD, tFAW, tWR, tWTR, tRTP, tRFC, the read-to-write and write-to-read spacings, the one-command state rules (ACTIVATE to a closed bank, a column command to an open bank, REFRESH with every bank closed), nor the data-bus rules (no overlap, one idle clock between a read and a write burst).
   - simulation test: **pass**, Both policies, six traffic patterns, two timing profiles and three address maps against the behavioural DDR2 model: zero violations, every request served once, order kept, refresh gap within 9 x tREFI, longest wait within the bound: 19 test(s) passed in the recorded run. [evidence](../../../results/116_traceability/m141_ddr2_sched/pytest_junit.xml)
@@ -56,7 +72,7 @@ Rows are requirements, columns are verification methods. A cell lists each item 
 
 ### M141-S-ORDER: A request never overtakes an older request to the same burst address when either is a write
 
-- Kind: safety; state: verified; specification status: draft.
+- Kind: safety; state: verified; agreement: draft.
 - Source: `docs/memory_controller_plan.md#7-the-scheduler-v0`
 - Read-after-write, write-after-write and write-after-read order to one burst address is kept; other requests complete in any order.
   - simulation test: **pass**, Both policies, six traffic patterns, two timing profiles and three address maps against the behavioural DDR2 model: zero violations, every request served once, order kept, refresh gap within 9 x tREFI, longest wait within the bound: 19 test(s) passed in the recorded run. [evidence](../../../results/116_traceability/m141_ddr2_sched/pytest_junit.xml)
@@ -65,7 +81,7 @@ Rows are requirements, columns are verification methods. A cell lists each item 
 
 ### M141-S-REFRESH: Refresh is never starved
 
-- Kind: safety; state: verified; specification status: draft.
+- Kind: safety; state: verified; agreement: draft.
 - Source: `docs/memory_controller_plan.md#2-the-part-and-the-rules-that-matter`
 - At most REF_POST + 2 refreshes are outstanding at any time, and the gap between two REFRESH commands never exceeds 9 x tREFI (JEDEC's limit with eight postponed); a REFRESH is issued only when one is due.
   - simulation test: **pass**, Both policies, six traffic patterns, two timing profiles and three address maps against the behavioural DDR2 model: zero violations, every request served once, order kept, refresh gap within 9 x tREFI, longest wait within the bound: 19 test(s) passed in the recorded run. [evidence](../../../results/116_traceability/m141_ddr2_sched/pytest_junit.xml)
@@ -74,7 +90,7 @@ Rows are requirements, columns are verification methods. A cell lists each item 
 
 ### M141-F-SERVICE: Every request is served exactly once with its own bank, row, column and direction
 
-- Kind: functional; state: verified; specification status: draft.
+- Kind: functional; state: partially verified; lacks a simulation check from a bench the implementing agent did not write; rests only on the implementing agent's own tests; agreement: draft.
 - Source: `docs/blocks.md`
 - Each accepted request gets one column command carrying its tag, the bank and column of its address, in the direction asked, on a bank whose open row is the request's row.
   - simulation test: **pass**, Both policies, six traffic patterns, two timing profiles and three address maps against the behavioural DDR2 model: zero violations, every request served once, order kept, refresh gap within 9 x tREFI, longest wait within the bound: 19 test(s) passed in the recorded run. [evidence](../../../results/116_traceability/m141_ddr2_sched/pytest_junit.xml)
@@ -82,7 +98,7 @@ Rows are requirements, columns are verification methods. A cell lists each item 
 
 ### M141-F-BOUND: Every request is served within a bounded wait
 
-- Kind: functional; state: verified; specification status: draft.
+- Kind: functional; state: partially verified; lacks a simulation check from a bench the implementing agent did not write; rests only on the implementing agent's own tests; agreement: draft.
 - Source: `docs/memory_controller_plan.md#7-the-scheduler-v0`
 - A request waits at most AGE_LIM + QD x R_MAX + the refresh cost clocks (verif/formal/run_formal.py:bound), under both policies. Proved at small parameters by bounded model check; measured at the real parameters.
   - simulation test: **pass**, Both policies, six traffic patterns, two timing profiles and three address maps against the behavioural DDR2 model: zero violations, every request served once, order kept, refresh gap within 9 x tREFI, longest wait within the bound: 19 test(s) passed in the recorded run. [evidence](../../../results/116_traceability/m141_ddr2_sched/pytest_junit.xml)
@@ -90,14 +106,14 @@ Rows are requirements, columns are verification methods. A cell lists each item 
 
 ### M141-F-LINT: The RTL is Verilator -Wall clean and follows the HDL standard's structural rules
 
-- Kind: functional; state: verified; specification status: draft.
+- Kind: functional; state: partially verified; lacks a simulation check from a bench the implementing agent did not write; rests only on the implementing agent's own tests; agreement: draft.
 - Source: `docs/hdl_coding_standard.md`
 - Verilator 5 --lint-only -Wall reports nothing on ddr2_sched and ddr2_addrmap; synchronous reset only, no initial blocks, no latches, no derived clocks.
   - simulation test: **pass**, Verilator 5 -Wall clean on both modules: 2 test(s) passed in the recorded run. [evidence](../../../results/116_traceability/m141_ddr2_sched/pytest_junit.xml)
 
 ### M141-P-LAT: Median read latency of the latency-first policy on light random reads
 
-- Kind: performance; state: verified (simulation only); specification status: draft.
+- Kind: performance; state: verified; rests only on the implementing agent's own tests (simulation only); agreement: draft.
 - Source: `docs/memory_controller_plan.md#10-results`
 - Random reads at light load (one request every 40 clocks on average) find a precharged bank, so a read pays ACTIVATE, tRCD and the read latency and nothing else. The bound is a regression bound from the recorded run, not a target.
 - Bound: median read latency at most 13 clocks; condition: POLICY 0, random reads, mean gap 40 clocks, nexys_650 profile (tCK 3077 ps, CL 5), simulation, 3000 reads.
@@ -105,7 +121,7 @@ Rows are requirements, columns are verification methods. A cell lists each item 
 
 ### M141-P-LATTAIL: Tail of the read latency of the latency-first policy on light random reads
 
-- Kind: performance; state: verified (simulation only); specification status: draft.
+- Kind: performance; state: verified; rests only on the implementing agent's own tests (simulation only); agreement: draft.
 - Source: `docs/memory_controller_plan.md#10-results`
 - The 99.9th percentile of the read latency at light load stays within a refresh's worth of the median (a refresh in progress when a read arrives is the tail). Regression bound, not a target.
 - Bound: 99.9th percentile read latency at most 60 clocks; condition: POLICY 0, random reads, mean gap 40 clocks, REF_POST 4, nexys_650 profile, simulation, 3000 reads.
@@ -113,7 +129,7 @@ Rows are requirements, columns are verification methods. A cell lists each item 
 
 ### M141-P-WINDOW: No read inside a refresh-deferral window waits for a refresh
 
-- Kind: performance; state: verified (simulation only); specification status: draft.
+- Kind: performance; state: verified; rests only on the implementing agent's own tests (simulation only); agreement: draft.
 - Source: `docs/memory_controller_plan.md#10-results`
 - While ref_defer is high and the postponement allowance is not used up, refreshes that fall due are postponed, so the reads accepted in the window see no tRFC wait (the cost moves to reads after the window). Regression bound, not a target.
 - Bound: maximum read latency inside the window at most 40 clocks; condition: POLICY 0, REF_POST 4, ref_defer high for 5000 of every 12000 clocks, random reads at light load, nexys_650 profile, simulation, 6000 reads.
@@ -121,7 +137,7 @@ Rows are requirements, columns are verification methods. A cell lists each item 
 
 ### M141-P-BW: Streaming read bandwidth of the bandwidth-first policy
 
-- Kind: performance; state: verified (simulation only); specification status: draft.
+- Kind: performance; state: verified; rests only on the implementing agent's own tests (simulation only); agreement: draft.
 - Source: `docs/memory_controller_plan.md#10-results`
 - A sequential read stream keeps the data bus busy: utilisation (data clocks over elapsed clocks) at least 0.95 with the page-interleaved map. Regression bound, not a target.
 - Bound: data-bus utilisation at least 0.95 fraction; condition: POLICY 1, sequential reads, map 0, QD 8, nexys_650 profile, simulation, 4000 reads.
@@ -129,7 +145,7 @@ Rows are requirements, columns are verification methods. A cell lists each item 
 
 ### M141-P-BOARD: Latency and bandwidth against MIG's own controller on the board
 
-- Kind: performance; state: not run; specification status: draft.
+- Kind: performance; state: not run; agreement: draft.
 - Source: `docs/memory_controller_plan.md#12-pre-registered-board-test-prepared-not-run`
 - The five pre-registered hypotheses of docs/memory_controller_plan.md section 12 (median, tail, bandwidth, integrity, predictability against MIG ordering NORM and STRICT, and LiteDRAM if practical).
 - Bound: median read latency difference to MIG NORM at most -1 controller clocks; condition: POLICY 0 on the PHY against MIG ordering NORM, random reads, light load, board, at least 5 runs (the pre-registered H1).

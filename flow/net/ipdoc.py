@@ -23,7 +23,7 @@ HIL = ["freq_duty_counter", "frame_crc", "dds_awg", "logic_analyser", "adc_histo
 DSP = ["fir"]                                                                                # library entries with variants
 NET63 = ["mdio_master", "arp_responder", "icmp_echo", "ipv4_udp_rx", "ipv4_udp_tx", "igmp_join"]  # brief 63D
 CPU = ["crc32_step"]                                                                         # brief 64A+: function units (custom instructions)
-INFRA = ["axil_xbar"]                                                                        # brief 65A: bus infrastructure
+INFRA = ["axil_xbar", "jtag_regs"]                                                                        # brief 65A: bus infrastructure
 ALL = NET + NET63 + HIL + DSP + CPU + INFRA
 FAULTS_JSON = {**{b: "b30" for b in HIL}, **{b: "b63a" for b in DSP}, **{b: "b64a" for b in CPU},
                **{b: "65a_blockdesign" for b in INFRA}, **{b: "b63d" for b in NET63 + ["eth_mac_rgmii"]}}   # default: b40

@@ -1,0 +1,122 @@
+{
+ "schema": "fda-arith/vivado_ooc/1",
+ "function": "mac",
+ "variant": "dsp_cascade",
+ "part_key": "a7",
+ "part": "xc7a100tcsg324-1",
+ "clock_ns": 5.0,
+ "top": "mac_dsp_cascade_ooc",
+ "tool": "Vivado 2026.1 (build 6511674)",
+ "date": "2026-11-22",
+ "brief": 160,
+ "flow": "out-of-context synth_design, opt_design, place_design, route_design; one thread; clock on port clk only (the wrapper registers every input and output; I/O paths unconstrained); Fmax = 1000 / (clock_ns - WNS) after routing, one run at that clock; power: vectorless",
+ "expected_text": "DSP48E1: LANES chained PCOUT to PCIN, plus the accumulate in fabric or one DSP C-port add; skew registers (about (WA+WB)*LANES*(LANES-1)/2 FF or SRL)",
+ "build_file": "arith/mac/build/dsp_cascade/build.yaml",
+ "points": [
+  {
+   "status": "ok",
+   "lut": 21,
+   "ff": 47,
+   "lutram": 0,
+   "srl": 0,
+   "bram_tiles": 0,
+   "ramb36": 0,
+   "ramb18": 0,
+   "dsp": 3,
+   "wns_ns": 0.511,
+   "whs_ns": 0.196,
+   "wpws_ns": 2.0,
+   "fmax_setup_mhz": 222.8,
+   "fmax_mhz": 222.8,
+   "power_w": {
+    "total": 0.092,
+    "dynamic": 0.008,
+    "static": 0.084,
+    "confidence": "Medium"
+   },
+   "generics": {
+    "WA": 16,
+    "WB": 16,
+    "LANES": 2,
+    "ACCW": 40,
+    "SIGNED": 1
+   },
+   "carry4": 0,
+   "carry8": 0,
+   "carry": 0,
+   "logic_levels": 1,
+   "runtime_s": 109,
+   "expected": null
+  },
+  {
+   "status": "ok",
+   "lut": 21,
+   "ff": 80,
+   "lutram": 0,
+   "srl": 1,
+   "bram_tiles": 0,
+   "ramb36": 0,
+   "ramb18": 0,
+   "dsp": 5,
+   "wns_ns": 0.375,
+   "whs_ns": 0.193,
+   "wpws_ns": 1.52,
+   "fmax_setup_mhz": 216.2,
+   "fmax_mhz": 216.2,
+   "power_w": {
+    "total": 0.097,
+    "dynamic": 0.013,
+    "static": 0.084,
+    "confidence": "Medium"
+   },
+   "generics": {
+    "WA": 16,
+    "WB": 16,
+    "LANES": 4,
+    "ACCW": 40,
+    "SIGNED": 1
+   },
+   "carry4": 0,
+   "carry8": 0,
+   "carry": 0,
+   "logic_levels": 1,
+   "runtime_s": 117,
+   "expected": null
+  },
+  {
+   "status": "ok",
+   "lut": 70,
+   "ff": 245,
+   "lutram": 0,
+   "srl": 49,
+   "bram_tiles": 0,
+   "ramb36": 0,
+   "ramb18": 0,
+   "dsp": 9,
+   "wns_ns": 0.439,
+   "whs_ns": 0.058,
+   "wpws_ns": 1.52,
+   "fmax_setup_mhz": 219.3,
+   "fmax_mhz": 219.3,
+   "power_w": {
+    "total": 0.112,
+    "dynamic": 0.028,
+    "static": 0.084,
+    "confidence": "Medium"
+   },
+   "generics": {
+    "WA": 16,
+    "WB": 16,
+    "LANES": 8,
+    "ACCW": 40,
+    "SIGNED": 1
+   },
+   "carry4": 0,
+   "carry8": 0,
+   "carry": 0,
+   "logic_levels": 1,
+   "runtime_s": 116,
+   "expected": null
+  }
+ ]
+}

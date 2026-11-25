@@ -2,14 +2,14 @@
 source: designs/b30_hil_audio_pinfault/handover.yaml; human view: README.md; refresh: python -m flow.handover fresh designs/b30_hil_audio_pinfault
 
 ## identity
-kind=demonstration produced_by=human part=xc7a100tcsg324-1 board=Nexys A7-100T top=b30_hil_audio_top tool=Vivado 2026.1
+kind=demonstration produced_by=session part=xc7a100tcsg324-1 board=Nexys A7-100T top=b30_hil_audio_top tool=Vivado 2026.1
 
 ## summary
 The seeded-fault twin of b30_hil_audio. It builds from the same RTL, but its constraint file puts the audio output AUD_PWM on the pin of LED 0, so the tone never reaches the audio jack. It passes simulation and every check made inside the FPGA, and only the measurement at the jack fails, which is the point of the demonstration. The hardware-in-the-loop run of this design therefore reports a failure by intent.
 not: a working design; the audio output is deliberately miswired and the design is not meant to pass the check at the jack; a general fault library; it seeds one fault, a wrong pin, to show the class of defect that simulation and in-FPGA self-checks cannot see
 
 ## state
-stage=built vivado=2026.1 kb_pin=1fc7ed8 build_id=d2f00de4
+stage=built vivado=2026.1 kb_pin=5e2eab8 build_id=fd1f668b
 gates: build_2026_1=not-run hil_fault_caught=pass
 
 ## interface

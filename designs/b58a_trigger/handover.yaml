@@ -5,7 +5,7 @@ schema: fda-handover/1
 id: b58a_trigger
 title: Mock low-latency trading path on the Kria KR260
 kind: showcase
-produced_by: human
+produced_by: session
 summary: A bench model of a low-latency trading path. A packet arrives on a PL Ethernet port, its fields are parsed while
   it is still arriving, a rule loaded at run time decides, hardware interlocks check the order, and in speculative mode
   the response leaves before the incoming frame has finished (undone by a poisoned frame check sequence if the frame was
@@ -78,7 +78,7 @@ files:
   sha256: fca2846beacdbb98559532c63da1d02125d814f0e823b5efeaaec043c1677811
 - path: designs/b58a_trigger/rtl/trigger_core.sv
   what: the path from frame parser to order control
-  sha256: cf7c64d60a10a6ad309a5f796b9451f4574fab61ad3d54302e1027700b776cdc
+  sha256: e7c26425518eb3bfdd7dc873f85b63d1af7d47977128edc2a3c4d90e57cf5833
 - path: designs/b58a_trigger/rtl/feed_rx.sv
   what: Ethernet, IPv4, UDP and Bench Feed parser, field by field
   sha256: ccc1c62f8b710bf480a435f66fbd5e54b7b9d6c81928bf013330a35b0618670a
@@ -384,4 +384,4 @@ state:
     board_run: not-run
   vivado: '2026.1'
   kb_pin: 5e2eab8
-  build_id: cc21fb7f
+  build_id: 6d677d7f
