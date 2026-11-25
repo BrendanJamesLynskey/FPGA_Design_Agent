@@ -1,0 +1,27 @@
+--- /home/brendan/Claude_sandbox/_worktrees/186-alveo-cards-src/GTF_Latency/Synchronized/GTFMAC_Latency_10G_Sync/Sim/gtfmac_vnc_tb.v	2026-11-23 01:09:17.816695868 +0000
++++ ../../../../../../Sim/gtfmac_vnc_tb.v	2026-11-23 03:21:11.369719474 +0000
+@@ -9,10 +9,14 @@
+ 
+     reg refclk;
+     reg freerun_clk;
++    // 186 sweep edit: start offsets (ps) from plusargs, default 0 (as shipped)
++    integer refoff_ps = 0, frroff_ps = 0;
+ 
+     initial
+     begin
++      if (!$value$plusargs("REFOFF_PS=%d", refoff_ps)) refoff_ps = 0;
+       refclk = 0;
++      #(refoff_ps);
+       forever
+       begin
+         refclk = #3103  ~refclk;
+@@ -21,7 +25,9 @@
+ 
+     initial
+     begin
++      if (!$value$plusargs("F300OFF_PS=%d", frroff_ps)) frroff_ps = 0;
+       freerun_clk = 0;
++      #(frroff_ps);
+       forever
+       begin
+         freerun_clk = #1250  ~freerun_clk;

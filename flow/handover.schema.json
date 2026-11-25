@@ -67,6 +67,21 @@
                      "record": {"$ref": "#/$defs/path"}, "field": {"type": "string"}, "match": {"type": "string"},
                      "sha256": {"$ref": "#/$defs/sha"}, "conditions": {"$ref": "#/$defs/text"},
                      "runs": {"type": "integer", "minimum": 1}}}},
+    "security": {
+      "type": "object", "additionalProperties": false, "required": ["production_secure", "enabled", "not_enabled", "could_get_wrong", "key_handling"],
+      "description": "Brief 196: the security section of the datasheet. What is enabled (each with the Vivado output that shows it), what is not, what a user could get wrong, and who owns the key. Required for a design built with production_secure (a security_profile_met gate or a build.yaml security request).",
+      "properties": {
+        "production_secure": {"type": "boolean"},
+        "enabled": {"type": "array", "items": {
+          "type": "object", "additionalProperties": false, "required": ["item", "proof"],
+          "properties": {"item": {"$ref": "#/$defs/text"}, "proof": {"$ref": "#/$defs/text"}, "record": {"$ref": "#/$defs/path"}}}},
+        "not_enabled": {"type": "array", "minItems": 1, "items": {
+          "type": "object", "additionalProperties": false, "required": ["item", "reason"],
+          "properties": {"item": {"$ref": "#/$defs/text"}, "reason": {"$ref": "#/$defs/text"}}}},
+        "could_get_wrong": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/text"}},
+        "key_handling": {"$ref": "#/$defs/text"}
+      }
+    },
     "gaps": {"type": "array", "minItems": 1, "items": {
       "type": "object", "additionalProperties": false, "required": ["about", "text"],
       "properties": {"about": {"type": "string"}, "text": {"$ref": "#/$defs/text"}}}},

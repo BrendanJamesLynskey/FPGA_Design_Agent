@@ -70,6 +70,10 @@ module itch_path
     always_comb for (int i = 0; i < NCW; i++) cw[i] = cfg2[32*i +: 32];
     logic        k_en, k_arm, k_kill, k_spec, k_halt, k_strict;
     assign {k_strict, k_halt, k_spec, k_kill, k_arm, k_en} = cw[C_CTRL][5:0];
+    logic        k_refsw, c_commit;
+    logic [15:0] k_holdoff;
+    assign k_refsw = cw[C_CTRL][K_REFSW];
+    assign k_holdoff = cw[C_CTRL][31:16];
     logic [N_INST*64-1:0] watch;
     always_comb for (int i = 0; i < N_INST; i++) watch[64*i +: 64] = {cw[C_WATCH + 2*i + 1], cw[C_WATCH + 2*i]};
     // commands: executed once when the sequence byte changes (the host writes them at least a microsecond apart)
@@ -83,7 +87,7 @@ module itch_path
         cmd = cw[C_CMD][15:0];
         c_cnt = cmd_go && cmd[M_CLR_CNT]; c_flags = cmd_go && cmd[M_CLR_FLAGS]; c_book = cmd_go && cmd[M_CLR_BOOK]; c_pos = cmd_go && cmd[M_CLR_POS];
         c_ref = cmd_go && cmd[M_CLR_REF]; c_tcp = cmd_go && cmd[M_TCP_LOAD]; c_lat = cmd_go && cmd[M_LAT_CLR]; c_cap = cmd_go && cmd[M_CAP_CLR];
-        rp_start = cmd_go && cmd[M_RP_START]; rp_stop = cmd_go && cmd[M_RP_STOP];
+        rp_start = cmd_go && cmd[M_RP_START]; c_commit = cmd_go && cmd[M_COMMIT]; rp_stop = cmd_go && cmd[M_RP_STOP];
     end
     // replay memory write and the tcp_fast software bus: a write happens once when its sequence byte changes
     logic [7:0] rpw_q, tcpf_q;
@@ -112,12 +116,17 @@ module itch_path
     logic [15:0]      flags;
     logic             go, go_spec, commit, abort, b_late, refuse_v;
     logic [31:0]      tcpf_rd;
+    logic             tx_unsent;
+    // brief 176: a frame the multiplexer poisoned for a reason order_seg cannot see (the trigger frame's bad FCS, STRICT without a verdict, order FIFO overflow) consumes no TCP sequence
+    // number: the builder gives it back. `ord_end_seg` frames were never counted by the builder. The give-back is a one-clock pulse in the clock the frame's last word is taken by the
+    // MAC (ord_end) and adds no clock to the order path: the multiplexer grants the MAC to the next frame only after this verdict (a frame that starts earlier is dropped whole and consumes nothing).
+    assign tx_unsent = ord_end && !ord_end_seg && (ord_end_ofl || ord_end_fcs);
     itch_top #(.N_INST(N_INST)) u_it (.clk, .rst, .s_v, .s_d, .s_sof, .s_eof, .s_keep, .v_v, .v_bad,
         .cfg_watch(watch), .cfg_thr(cw[C_THR]), .cfg_qty(cw[C_QTY]), .cfg_max_qty(cw[C_MAXQTY]), .cfg_max_pos(cw[C_MAXPOS]), .cfg_band(cw[C_BAND]), .cfg_px_off(cw[C_PXOFF]),
         .cfg_minqty(cw[C_MINQTY]), .cfg_tif(cw[C_ORDF0][7:0]), .cfg_display(cw[C_ORDF0][15:8]), .cfg_capacity(cw[C_ORDF0][23:16]), .cfg_ise(cw[C_ORDF0][31:24]),
-        .cfg_cross(cw[C_ORDF1][7:0]), .cfg_custtype(cw[C_ORDF1][15:8]), .cfg_arm(k_arm), .cfg_kill(k_kill), .cfg_halt_on_gap(k_halt), .cfg_spec(k_spec),
+        .cfg_cross(cw[C_ORDF1][7:0]), .cfg_custtype(cw[C_ORDF1][15:8]), .cfg_arm(k_arm), .cfg_kill(k_kill), .cfg_halt_on_gap(k_halt), .cfg_spec(k_spec), .cfg_holdoff(k_holdoff), .cfg_ref_sw(k_refsw), .cfg_ref_px(cw[C_REFPX]), .cfg_ref_age(cw[C_REFAGE]), .ref_load(c_commit),
         .tpl_my_mac(my_mac), .tpl_venue_mac(venue_mac), .tpl_my_ip(my_ip), .tpl_venue_ip(venue_ip), .tpl_sport(sport), .tpl_dport(port_order),
-        .tpl_seq0(cw[C_TCPSEQ]), .tpl_ack(cw[C_TCPACK]), .tpl_load(c_tcp), .sw_we(tcpf_we), .sw_waddr(cw[C_TCPFA][4:0]), .sw_wdata(cw[C_TCPFD]),
+        .tpl_seq0(cw[C_TCPSEQ]), .tpl_ack(cw[C_TCPACK]), .tpl_load(c_tcp), .tx_unsent, .tx_drop(ord_drop), .sw_we(tcpf_we), .sw_waddr(cw[C_TCPFA][4:0]), .sw_wdata(cw[C_TCPFD]),
         .sw_raddr(cw[C_TCPFA][12:8]), .sw_rdata(tcpf_rd),
         .clr_cnt(c_cnt), .clr_flags(c_flags), .clr_book(c_book), .clr_pos(c_pos), .clr_ref(c_ref), .tx_busy(ord_busy),
         .o_v, .o_d, .o_sof, .o_eof, .o_keep, .o_poison, .o_unres, .go, .go_spec, .commit, .abort, .b_late, .refuse_v, .flags, .cnt(cnt_i));

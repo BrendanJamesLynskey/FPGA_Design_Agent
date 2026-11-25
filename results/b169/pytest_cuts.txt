@@ -1,0 +1,412 @@
+Running as unit: run-u38045.scope; invocation ID: f9ef9406b5de4a78964e6c21a53b0a8c
+.FFF.                                                                    [100%]
+=================================== FAILURES ===================================
+__________________ test_core_cocotb_default_with_cuts[early] ___________________
+
+combo = 'early'
+tmp_path = PosixPath('/tmp/pytest-of-brendan/pytest-2914/test_core_cocotb_default_with_1')
+
+    @pytest.mark.parametrize("combo", list(COMBOS))
+    def test_core_cocotb_default_with_cuts(combo: str, tmp_path: Path) -> None:
+        e, f = COMBOS[combo]
+        # sources: the base files, then lat_all3's trade64/tx_path (what lat_all3_bypass uses), then lat_cuts169's copies; b96_core is the base core patched to take the two parameters
+        pick = lambda n: next(d / n for d in (CUTS, ALL3, RTL) if (d / n).is_file())     # noqa: E731
+        srcs = [pick(n) for n in CORE_SRCS if n != "b96_core.sv"] + [_patched_core(tmp_path / "b96_core.sv")]
+        srcs = [tmp_path / "b96_core.sv" if s.name == "b96_core.sv" else s for s in srcs]
+        srcs += [DESIGN / "sim" / "gth_wiz_model96.sv", _tb(tmp_path / "tb_core.sv")]
+>       cocotb_run.run(f"b169_core_{combo}", "tb_core", srcs, "core_cocotb_default", HERE,
+                       parameters={"RATE_MATCH": 0, "EARLY_MAC": e, "FAST_PRE": f}, extra_env={"PYTHONPATH": str(ROOT)})
+
+designs/b96_kr260_10g/tests/test_169_cuts.py:56: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+name = 'b169_core_early', toplevel = 'tb_core'
+sources = [PosixPath('/home/brendan/Claude_sandbox/_worktrees/169-next-cuts/flow/cdc_models/cdc_inj_pkg.sv'), PosixPath('/home/b...ixPath('/home/brendan/Claude_sandbox/_worktrees/169-next-cuts/designs/b96_kr260_10g/lat_cuts169/rtl/mac64_tx.sv'), ...]
+test_module = 'core_cocotb_default'
+test_dir = PosixPath('/home/brendan/Claude_sandbox/_worktrees/169-next-cuts/designs/b96_kr260_10g/tests')
+parameters = {'RATE_MATCH': 0, 'EARLY_MAC': 1, 'FAST_PRE': 0}, testcase = None
+seed = None, build_root = None
+extra_env = {'PYTHONPATH': '/home/brendan/Claude_sandbox/_worktrees/169-next-cuts'}
+coverage = False
+
+    def run(name: str, toplevel: str, sources: list[Path], test_module: str, test_dir: Path,
+            parameters: dict[str, object] | None = None, testcase: str | list[str] | None = None,
+            seed: int | None = None, build_root: Path | None = None, extra_env: dict[str, str] | None = None,
+            coverage: bool | None = None) -> None:
+        """Build ``sources`` with $SIM (icarus by default; verilator needs 5.036+ for cocotb 2) and run
+        ``test_module`` (a name or a list of names); fail if any test failed.
+    
+        ``coverage=None`` follows ``$FDA_COVERAGE`` (set by the agent's ``simulate(coverage=True)``). The bench can export
+        its functional-coverage bins to ``$FDA_COV_OUT`` (cocotb-coverage ``coverage_db.export_to_yaml``). With ``coverage`` (Verilator only) the build is instrumented for line and toggle coverage and the run
+        writes ``<build_dir>/coverage.dat``. Under Verilator, warnings are not fatal (the repo's lint gate is
+        flow/lint.sh) and concurrent assertions are on."""
+        simname = os.environ.get("SIM", "icarus")
+        if coverage is None:
+            coverage = os.environ.get("FDA_COVERAGE") == "1"
+        sources = swap_mutant_sources(sources)
+        design = srcorder.design_of(test_dir)
+        if any(vhdl.is_vhdl(s) for s in sources):            # brief 55: VHDL sources (GHDL natively, or a GHDL netlist)
+            return _run_vhdl(name, toplevel, sources, test_module, test_dir, parameters, testcase, seed, build_root,
+                             extra_env, coverage, simname, design)
+        # brief 16: stand-ins for the XPM macros a build instantiates (Icarus and Verilator have none) and, with
+        # $FDA_CDC_INJECT_SEED, the synchroniser-delay injection (flow/cdc_inject.py)
+        inj_env = os.environ.get("FDA_CDC_INJECT_SEED")
+        sources, inj_plus, inj_info = cdc_inject.prepare(sources, (build_root or SIM_ROOT) / f"{name}_cdcinj",
+                                                         int(inj_env) if inj_env not in (None, "") else None)
+        if inj_env not in (None, "") and os.environ.get("FDA_CDC_INJECT_INFO"):
+            Path(os.environ["FDA_CDC_INJECT_INFO"]).write_text(__import__("json").dumps(inj_info, indent=1))
+        if srcorder.no_shell(design):                         # 07a2-prep: a UART-subject design is built without the test shell
+            sources = srcorder.drop_shell(sources)
+        if simname == "verilator":                            # 07a2 fix 4: bound checkers belong to every Verilator build
+            sources = with_checkers(sources, design)
+        sources = srcorder.order_sv(sources)                  # 07a2-prep: packages and interfaces first, not name order
+        sim = get_runner(simname)
+        build_dir = (build_root or SIM_ROOT) / name
+        if simname == "verilator":
+            args = ["--assert", "-Wno-fatal", "-Wno-lint", "-Wno-style", "-Wno-TIMESCALEMOD", "-j", "1"]
+            if coverage:
+                args += ["--coverage-line", "--coverage-toggle", "--coverage-user"]
+        else:
+            args = ["-g2012"]
+            trace_dir = os.environ.get("FDA_FSM_TRACE")        # brief 24: the state register's value changes, for flow/fsm_coverage.py
+            if trace_dir:
+                Path(trace_dir).mkdir(parents=True, exist_ok=True)
+                dump = fsm_coverage.trace_module(design, Path(trace_dir) / f"{name}{'' if seed is None else f'_seed{seed}'}.fsmtrace")
+                if dump:
+                    dsrc = (build_root or SIM_ROOT) / f"{name}_fsm_trace" / "fsm_trace_dump.sv"
+                    dsrc.parent.mkdir(parents=True, exist_ok=True)
+                    dsrc.write_text(dump)
+                    sources = list(sources) + [dsrc]
+                    args += ["-s", "fsm_trace_dump"]
+        args += [f"-I{d}" for d in sorted({str(Path(s).parent) for s in sources})]     # `include "x.svh" next to a source
+        sim.build(sources=[str(s) for s in sources], hdl_toplevel=toplevel, parameters=parameters or {},
+                  build_dir=build_dir, timescale=("1ns", "1ps"), always=True, build_args=args)
+        env = {"PYTHONPATH": os.pathsep.join([str(ROOT), str(test_dir), os.environ.get("PYTHONPATH", "")])}
+        env["FDA_COV_OUT"] = str(build_dir / "coverage_func.yml")
+        env.update(extra_env or {})
+        plus = [f"+verilator+coverage+file+{build_dir / 'coverage.dat'}"] if (simname == "verilator" and coverage) else []
+        plus += inj_plus
+        try:
+            # 07a2-prep: the simulator starts in test_dir; the task's data files are linked there for the run ($readmemh)
+            with srcorder.linked_data(design / "data", test_dir):
+                results = sim.test(test_module=test_module, hdl_toplevel=toplevel, testcase=testcase, seed=seed,
+                                   build_dir=build_dir, test_dir=test_dir, extra_env=env, parameters=parameters or {},
+                                   timescale=("1ns", "1ps"), results_xml=str(build_dir / "results.xml"),
+                                   log_file=build_dir / "sim.log", plusargs=plus)
+        except SystemExit:
+            collect_results(build_dir, seed)         # a failing run is evidence too: the gate reads the failures
+            # cocotb's runner exits with only "Failed n of m tests"; the failing assertions and tracebacks are in the
+            # simulator log, which lives in a scratch directory the caller never sees. Say what they are.
+>           raise AssertionError(f"{name}: the cocotb run failed. From {build_dir / 'sim.log'}:\n"
+                                 + failure_excerpt(build_dir / "sim.log")) from None
+E           AssertionError: b169_core_early: the cocotb run failed. From /home/brendan/Claude_sandbox/_worktrees/169-next-cuts/build/sim/b169_core_early/sim.log:
+E                                                                   Traceback (most recent call last):
+E                                                                     File "/home/brendan/Claude_sandbox/_worktrees/169-next-cuts/designs/b96_kr260_10g/tests/core_cocotb_default.py", line 225, in poisoned_order_bad_fcs
+E                                                                       await poison_case(dut, 4, expect_err=False)
+E                                                                     File "/home/brendan/Claude_sandbox/_worktrees/169-next-cuts/designs/b96_kr260_10g/tests/core_cocotb_default.py", line 215, in poison_case
+E                                                                       assert r["bad"] >= 1 and (r["err"] >= 1) == expect_err
+E                                                                   AssertionError: assert (1 >= 1 and (1 >= 1) == False)
+E            96784.00ns WARNING  cocotb.regression                  core_cocotb_default.poisoned_order_bad_fcs failed
+E            96784.00ns INFO     cocotb.regression                  running core_cocotb_default.poisoned_order_cut_frame (5/16)
+E                                                                       The feed frame is cut by a line error that makes a block an error block: the order leaves with a wrong FCS too.
+E           117215.00ns INFO     cocotb.tb_core                     poison 3: tx {'n_order': 0, 'n_feed': 1, 'n_probe': 0, 'n_test': 0, 'poisoned': 0, 'dropped': 0, 'underrun': 0, 'late': 0, 'stale': 0, 'go': 0, 't_tx_feed': 1611, 't_tx_probe': 0, 't_tx_order': 0, 't_rx_feed': 1623, 't_rx_probe': 0, 't_rx_order': 0, 'e_last': 0, 'e_min': 4294967295, 'e_max': 0, 'e_cnt': 0, 'l_last': 0, 'l_min': 4294967295, 'l_max': 0, 'l_cnt': 0, 'd_last': 0, 'ts': 2557}
+E                                                                   rx {'lock': 1, 'slip': 0, 'loss': 0, 'lock_ev': 0, 'sh': 0, 'type': 0, 'os': 0, 'frames': 1, 'good': 0, 'bad': 1, 'err': 0, 'fired': 0, 'blocked': 0, 'toolong': 0, 'last_len': 70, 'lock_clk': 91}
+E           117215.00ns WARNING  ..t_frame.poisoned_order_cut_frame ({'lock': 1, 'slip': 0, 'loss': 0, 'lock_ev': 0, ...}, {'n_order': 0, 'n_feed': 1, 'n_probe': 0, 'n_test': 0, ...})
+E                                                                   assert (0 == 1)
+E                                                                     File "/home/brendan/Claude_sandbox/_worktrees/169-next-cuts/designs/b96_kr260_10g/tests/core_cocotb_default.py", line 231, in poisoned_order_cut_frame
+E                                                                       await poison_case(dut, 3, expect_err=True)
+E                                                                     File "/home/brendan/Claude_sandbox/_worktrees/169-next-cuts/designs/b96_kr260_10g/tests/core_cocotb_default.py", line 214, in poison_case
+E                                                                       assert r["fired"] == 1 and t["n_order"] == 1 and t["poisoned"] == 1, (r, t)
+E                                                                   AssertionError: ({'lock': 1, 'slip': 0, 'loss': 0, 'lock_ev': 0, ...}, {'n_order': 0, 'n_feed': 1, 'n_probe': 0, 'n_test': 0, ...})
+E           117215.00ns WARNING  cocotb.regression                  core_cocotb_default.poisoned_order_cut_frame failed
+E           117215.00ns INFO     cocotb.regression                  running core_cocotb_default.tick_to_trade_digital (6/16)
+E                                                                       The fabric's own tick-to-trade in clocks, from the clock edge that captures the GT word completing the price field (RX side) to the clock
+E           130421.47ns INFO     cocotb.tb_core                     TTT {"price_word_captured_at_gt_t
+
+flow/cocotb_run.py:201: AssertionError
+----------------------------- Captured stderr call -----------------------------
+/home/brendan/Claude_sandbox/_worktrees/169-next-cuts/designs/b96_kr260_10g/lat_cuts169/rtl/frame_src.sv:64: sorry: constant selects in always_* processes are not currently supported (all bits will be included).
+/home/brendan/Claude_sandbox/_worktrees/169-next-cuts/designs/b96_kr260_10g/lat_cuts169/rtl/frame_src.sv:64: sorry: constant selects in always_* processes are not currently supported (all bits will be included).
+/home/brendan/Claude_sandbox/_worktrees/169-next-cuts/designs/b96_kr260_10g/lat_cuts169/rtl/frame_src.sv:64: sorry: constant selects in always_* processes are not currently supported (all bits will be included).
+/home/brendan/Claude_sandbox/_worktrees/169-next-cuts/designs/b96_kr260_10g/lat_cuts169/rtl/frame_src.sv:64: sorry: constant selects in always_* processes are not currently supported (all bits will be included).
+/tmp/pytest-of-brendan/pytest-2914/test_core_cocotb_default_with_1/b96_core.sv:335: sorry: constant selects in always_* processes are not currently supported (all bits will be included).
+/tmp/pytest-of-brendan/pytest-2914/test_core_cocotb_default_with_1/b96_core.sv:335: sorry: constant selects in always_* processes are not currently supported (all bits will be included).
+/tmp/pytest-of-brendan/pytest-2914/test_core_cocotb_default_with_1/b96_core.sv:335: sorry: constant selects in always_* processes are not currently supported (all bits will be included).
+/tmp/pytest-of-brendan/pytest-2914/test_core_cocotb_default_with_1/b96_core.sv:335: sorry: constant selects in always_* processes are not currently supported (all bits will be included).
+------------------------------ Captured log call -------------------------------
+INFO     Icarus:runner.py:632 Running command iverilog -o /home/brendan/Claude_sandbox/_worktrees/169-next-cuts/build/sim/b169_core_early/sim.vvp -s tb_core -g2012 -Ptb_core.RATE_MATCH=0 -Ptb_core.EARLY_MAC=1 -Ptb_core.FAST_PRE=0 -g2012 -I/home/brendan/Claude_sandbox/_worktrees/169-next-cuts/designs/b96_kr260_10g/lat_cuts169/rtl -I/home/brendan/Claude_sandbox/_worktrees/169-next-cuts/designs/b96_kr260_10g/rtl -I/home/brendan/Claude_sandbox/_worktrees/169-next-cuts/designs/b96_kr260_10g/sim -I/home/brendan/Claude_sandbox/_worktrees/169-next-cuts/flow/cdc_models -I/tmp/pytest-of-brendan/pytest-2914/test_core_cocotb_default_with_1 -f /home/brendan/Claude_sandbox/_worktrees/169-next-cuts/build/sim/b169_core_early/cmds.f /home/brendan/Claude_sandbox/_worktrees/169-next-cuts/flow/cdc_models/cdc_inj_pkg.sv /home/brendan/Claude_sandbox/_worktrees/169-next-cuts/flow/cdc_models/xpm_cdc_models.sv /home/brendan/Claude_sandbox/_worktrees/169-next-cuts/designs/b96_kr260_10g/rtl/b96_pkg.sv /home/brendan/Claude_sandbox/_worktrees/169-next-cuts/designs/b96_kr260_10g/lat_cuts169/rtl/pcs_tx.sv /home/brendan/Claude_sandbox/_worktrees/169-next-cuts/designs/b96_kr260_10g/rtl/pcs_rx.sv /home/brendan/Claude_sandbox/_worktrees/169-next-cuts/designs/b96_kr260_10g/lat_cuts169/rtl/mac64_tx.sv /home/brendan/Claude_sandbox/_worktrees/169-next-cuts/designs/b96_kr260_10g/lat_cuts169/rtl/mac64_rx.sv /home/brendan/Claude_sandbox/_worktrees/169-next-cuts/designs/b96_kr260_10g/rtl/hs_vec.sv /home/brendan/Claude_sandbox/_worktrees/169-next-cuts/designs/b96_kr260_10g/lat_cuts169/rtl/frame_src.sv /home/brendan/Claude_sandbox/_worktrees/169-next-cuts/designs/b96_kr260_10g/lat_cuts169/rtl/trade64.sv /home/brendan/Claude_sandbox/_worktrees/169-next-cuts/designs/b96_kr260_10g/rtl/rate_match.sv /home/brendan/Claude_sandbox/_worktrees/169-next-cuts/designs/b96_kr260_10g/rtl/rate_match_gp.sv /home/brendan/Claude_sandbox/_worktrees/169-next-cuts/designs/b96_kr260_10g/lat_cuts169/rtl/tx_path.sv /home/brendan/Claude_sandbox/_worktrees/169-next-cuts/designs/b96_kr260_10g/rtl/rx_path.sv /home/brendan/Claude_sandbox/_worktrees/169-next-cuts/designs/b96_kr260_10g/lat_cuts169/rtl/rx_path_legacy.sv /tmp/pytest-of-brendan/pytest-2914/test_core_cocotb_default_with_1/b96_core.sv /home/brendan/Claude_sandbox/_worktrees/169-next-cuts/designs/b96_kr260_10g/sim/gth_wiz_model96.sv /tmp/pytest-of-brendan/pytest-2914/test_core_cocotb_default_with_1/tb_core.sv in directory /home/brendan/Claude_sandbox/_worktrees/169-next-cuts/build/sim/b169_core_early
+INFO     Icarus:runner.py:632 Running command vvp -M /home/brendan/.local/lib/python3.12/site-packages/cocotb/libs -m libcocotbvpi_icarus /home/brendan/Claude_sandbox/_worktrees/169-next-cuts/build/sim/b169_core_early/sim.vvp -none in directory /home/brendan/Claude_sandbox/_worktrees/169-next-cuts/designs/b96_kr260_10g/tests
+ERROR    Icarus:runner.py:572 ERROR: Failed 2 of 16 tests.
+___________________ test_core_cocotb_default_with_cuts[fast] ___________________
+
+combo = 'fast'
+tmp_path = PosixPath('/tmp/pytest-of-brendan/pytest-2914/test_core_cocotb_default_with_2')
+
+    @pytest.mark.parametrize("combo", list(COMBOS))
+    def test_core_cocotb_default_with_cuts(combo: str, tmp_path: Path) -> None:
+        e, f = COMBOS[combo]
+        # sources: the base files, then lat_all3's trade64/tx_path (what lat_all3_bypass uses), then lat_cuts169's copies; b96_core is the base core patched to take the two parameters
+        pick = lambda n: next(d / n for d in (CUTS, ALL3, RTL) if (d / n).is_file())     # noqa: E731
+        srcs = [pick(n) for n in CORE_SRCS if n != "b96_core.sv"] + [_patched_core(tmp_path / "b96_core.sv")]
+        srcs = [tmp_path / "b96_core.sv" if s.name == "b96_core.sv" else s for s in srcs]
+        srcs += [DESIGN / "sim" / "gth_wiz_model96.sv", _tb(tmp_path / "tb_core.sv")]
+>       cocotb_run.run(f"b169_core_{combo}", "tb_core", srcs, "core_cocotb_default", HERE,
+                       parameters={"RATE_MATCH": 0, "EARLY_MAC": e, "FAST_PRE": f}, extra_env={"PYTHONPATH": str(ROOT), "B169_WI_SHIFT": str(e)})     # with EARLY_MAC the word index runs one clock ahead: the poison tests inject by index
+
+designs/b96_kr260_10g/tests/test_169_cuts.py:56: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+name = 'b169_core_fast', toplevel = 'tb_core'
+sources = [PosixPath('/home/brendan/Claude_sandbox/_worktrees/169-next-cuts/flow/cdc_models/cdc_inj_pkg.sv'), PosixPath('/home/b...ixPath('/home/brendan/Claude_sandbox/_worktrees/169-next-cuts/designs/b96_kr260_10g/lat_cuts169/rtl/mac64_tx.sv'), ...]
+test_module = 'core_cocotb_default'
+test_dir = PosixPath('/home/brendan/Claude_sandbox/_worktrees/169-next-cuts/designs/b96_kr260_10g/tests')
+parameters = {'RATE_MATCH': 0, 'EARLY_MAC': 0, 'FAST_PRE': 1}, testcase = None
+seed = None, build_root = None
+extra_env = {'PYTHONPATH': '/home/brendan/Claude_sandbox/_worktrees/169-next-cuts'}
+coverage = False
+
+    def run(name: str, toplevel: str, sources: list[Path], test_module: str, test_dir: Path,
+            parameters: dict[str, object] | None = None, testcase: str | list[str] | None = None,
+            seed: int | None = None, build_root: Path | None = None, extra_env: dict[str, str] | None = None,
+            coverage: bool | None = None) -> None:
+        """Build ``sources`` with $SIM (icarus by default; verilator needs 5.036+ for cocotb 2) and run
+        ``test_module`` (a name or a list of names); fail if any test failed.
+    
+        ``coverage=None`` follows ``$FDA_COVERAGE`` (set by the agent's ``simulate(coverage=True)``). The bench can export
+        its functional-coverage bins to ``$FDA_COV_OUT`` (cocotb-coverage ``coverage_db.export_to_yaml``). With ``coverage`` (Verilator only) the build is instrumented for line and toggle coverage and the run
+        writes ``<build_dir>/coverage.dat``. Under Verilator, warnings are not fatal (the repo's lint gate is
+        flow/lint.sh) and concurrent assertions are on."""
+        simname = os.environ.get("SIM", "icarus")
+        if coverage is None:
+            coverage = os.environ.get("FDA_COVERAGE") == "1"
+        sources = swap_mutant_sources(sources)
+        design = srcorder.design_of(test_dir)
+        if any(vhdl.is_vhdl(s) for s in sources):            # brief 55: VHDL sources (GHDL natively, or a GHDL netlist)
+            return _run_vhdl(name, toplevel, sources, test_module, test_dir, parameters, testcase, seed, build_root,
+                             extra_env, coverage, simname, design)
+        # brief 16: stand-ins for the XPM macros a build instantiates (Icarus and Verilator have none) and, with
+        # $FDA_CDC_INJECT_SEED, the synchroniser-delay injection (flow/cdc_inject.py)
+        inj_env = os.environ.get("FDA_CDC_INJECT_SEED")
+        sources, inj_plus, inj_info = cdc_inject.prepare(sources, (build_root or SIM_ROOT) / f"{name}_cdcinj",
+                                                         int(inj_env) if inj_env not in (None, "") else None)
+        if inj_env not in (None, "") and os.environ.get("FDA_CDC_INJECT_INFO"):
+            Path(os.environ["FDA_CDC_INJECT_INFO"]).write_text(__import__("json").dumps(inj_info, indent=1))
+        if srcorder.no_shell(design):                         # 07a2-prep: a UART-subject design is built without the test shell
+            sources = srcorder.drop_shell(sources)
+        if simname == "verilator":                            # 07a2 fix 4: bound checkers belong to every Verilator build
+            sources = with_checkers(sources, design)
+        sources = srcorder.order_sv(sources)                  # 07a2-prep: packages and interfaces first, not name order
+        sim = get_runner(simname)
+        build_dir = (build_root or SIM_ROOT) / name
+        if simname == "verilator":
+            args = ["--assert", "-Wno-fatal", "-Wno-lint", "-Wno-style", "-Wno-TIMESCALEMOD", "-j", "1"]
+            if coverage:
+                args += ["--coverage-line", "--coverage-toggle", "--coverage-user"]
+        else:
+            args = ["-g2012"]
+            trace_dir = os.environ.get("FDA_FSM_TRACE")        # brief 24: the state register's value changes, for flow/fsm_coverage.py
+            if trace_dir:
+                Path(trace_dir).mkdir(parents=True, exist_ok=True)
+                dump = fsm_coverage.trace_module(design, Path(trace_dir) / f"{name}{'' if seed is None else f'_seed{seed}'}.fsmtrace")
+                if dump:
+                    dsrc = (build_root or SIM_ROOT) / f"{name}_fsm_trace" / "fsm_trace_dump.sv"
+                    dsrc.parent.mkdir(parents=True, exist_ok=True)
+                    dsrc.write_text(dump)
+                    sources = list(sources) + [dsrc]
+                    args += ["-s", "fsm_trace_dump"]
+        args += [f"-I{d}" for d in sorted({str(Path(s).parent) for s in sources})]     # `include "x.svh" next to a source
+        sim.build(sources=[str(s) for s in sources], hdl_toplevel=toplevel, parameters=parameters or {},
+                  build_dir=build_dir, timescale=("1ns", "1ps"), always=True, build_args=args)
+        env = {"PYTHONPATH": os.pathsep.join([str(ROOT), str(test_dir), os.environ.get("PYTHONPATH", "")])}
+        env["FDA_COV_OUT"] = str(build_dir / "coverage_func.yml")
+        env.update(extra_env or {})
+        plus = [f"+verilator+coverage+file+{build_dir / 'coverage.dat'}"] if (simname == "verilator" and coverage) else []
+        plus += inj_plus
+        try:
+            # 07a2-prep: the simulator starts in test_dir; the task's data files are linked there for the run ($readmemh)
+            with srcorder.linked_data(design / "data", test_dir):
+                results = sim.test(test_module=test_module, hdl_toplevel=toplevel, testcase=testcase, seed=seed,
+                                   build_dir=build_dir, test_dir=test_dir, extra_env=env, parameters=parameters or {},
+                                   timescale=("1ns", "1ps"), results_xml=str(build_dir / "results.xml"),
+                                   log_file=build_dir / "sim.log", plusargs=plus)
+        except SystemExit:
+            collect_results(build_dir, seed)         # a failing run is evidence too: the gate reads the failures
+            # cocotb's runner exits with only "Failed n of m tests"; the failing assertions and tracebacks are in the
+            # simulator log, which lives in a scratch directory the caller never sees. Say what they are.
+>           raise AssertionError(f"{name}: the cocotb run failed. From {build_dir / 'sim.log'}:\n"
+                                 + failure_excerpt(build_dir / "sim.log")) from None
+E           AssertionError: b169_core_fast: the cocotb run failed. From /home/brendan/Claude_sandbox/_worktrees/169-next-cuts/build/sim/b169_core_fast/sim.log:
+E                                                                   Traceback (most recent call last):
+E                                                                     File "/home/brendan/Claude_sandbox/_worktrees/169-next-cuts/designs/b96_kr260_10g/tests/core_cocotb_default.py", line 263, in tick_to_trade_digital
+E                                                                       assert {"w7_at_mac", "fire_reg", "go_pulse_tx", "sop_mac_reg"} <= set(ev), ev
+E                                                                   AssertionError: {'w7_at_mac': 346, 'fire_reg': 346, 'go_pulse_tx': 350}
+E                                                                   assert {'fire_reg', 'go_pulse_tx', 'sop_mac_reg', 'w7_at_mac'} <= {'fire_reg', 'go_pulse_tx', 'w7_at_mac'}
+E                                                                    +  where {'fire_reg', 'go_pulse_tx', 'w7_at_mac'} = set({'w7_at_mac': 346, 'fire_reg': 346, 'go_pulse_tx': 350})
+E           165495.37ns WARNING  cocotb.regression                  core_cocotb_default.tick_to_trade_digital failed
+E           165495.37ns INFO     cocotb.regression                  running core_cocotb_default.seq_after_counter_clear (7/16)
+E                                                                       Brief 97C: CMD bit 0 clears the order number on the receive side; the transmit side's expectation must follow.
+E           230866.37ns INFO     cocotb.tb_core                     SEQ counter_clear {"start": {"t_n_order": 3, "t_n_feed": 3, "t_poisoned": 0, "t_late": 0, "t_stale": 0, "t_go": 3, "t_dropped": 0, "t_underrun": 0, "r_fired": 3, "r_good": 6, "r_bad": 0, "r_err": 0, "r_order_ok": 3, "r_order_bad": 0}, "round0": {"t_n_order": 3, "t_n_feed": 3, "t_poisoned": 0, "t_late": 0, "t_stale": 0, "t_go": 3, "t_dropped": 0, "t_underrun": 0, "r_fired": 3, "r_good": 6, "r_bad": 0, "r_err": 0, "r_order_ok": 3, "r_order_bad": 0}, "round1": {"t_n_order": 3, "t_n_feed": 3, "t_poisoned": 0, "t_late": 0, "t_stale": 0, "t_go": 3, "t_dropped": 0, "t_underrun": 0, "r_fired": 3, "r_good": 6, "r_bad": 0, "r_err": 0, "r_order_ok": 3, "r_order_bad": 0}}
+E           230866.37ns INFO     cocotb.regression                  core_cocotb_default.seq_after_counter_clear passed
+E           230866.37ns INFO     cocotb.regression                  running core_cocotb_default.seq_after_rx_relink (8/16)
+E                                                                       An RX datapath restart (no clear) leaves the order sequence in step.
+E           302817.38ns INFO     cocotb.tb_core                     SEQ rx_relink {"start": {"t_n_order": 3, "t_n_feed": 3, "t_poisoned": 0, "t_late": 0, "t_stale": 0, "t_go": 3, "t_dropped": 0, "t_underrun": 0, "r_fired": 3, "r_good": 6, "r_bad": 0, "r_err": 0, "r_order_ok": 3, "r_order_bad": 0}, "round0": {"t_n_order": 3, "t_n_feed": 3, "t_poisoned": 0, "t_late": 0, "t_stale": 0, "t_go": 3, "t_dropped": 0, "t_underrun": 0, "r_fired": 3, "r_good": 6, "r_bad": 0, "r_err": 0, "r_order_ok": 3, "r_order_bad": 0}, "round1": {"t_n_order": 3, "t_n_feed": 3, "t_poisoned": 0, "t_late": 0, "t_stale": 0, "t_go": 3, "t_dropped": 0, "t_underrun": 0, "r_fired": 3, "r_good": 6, "r_bad": 0, "r_err": 0, "r_order_ok": 3, "r_order_bad": 0}}
+E           302817.38ns INFO     cocotb.regression                  core_cocotb_default.seq_after_rx_relink passed
+E           302817.38ns INFO     cocotb.regression                  running core_cocotb_default.seq_after_tx_relink (9/16)
+E                                                                       A TX datapath restart (no clear) leaves the order sequence in step.
+E           370398.38ns INFO     cocotb.tb_core                     SEQ tx_relink {"start"
+
+flow/cocotb_run.py:201: AssertionError
+----------------------------- Captured stderr call -----------------------------
+/home/brendan/Claude_sandbox/_worktrees/169-next-cuts/designs/b96_kr260_10g/lat_cuts169/rtl/frame_src.sv:64: sorry: constant selects in always_* processes are not currently supported (all bits will be included).
+/home/brendan/Claude_sandbox/_worktrees/169-next-cuts/designs/b96_kr260_10g/lat_cuts169/rtl/frame_src.sv:64: sorry: constant selects in always_* processes are not currently supported (all bits will be included).
+/home/brendan/Claude_sandbox/_worktrees/169-next-cuts/designs/b96_kr260_10g/lat_cuts169/rtl/frame_src.sv:64: sorry: constant selects in always_* processes are not currently supported (all bits will be included).
+/home/brendan/Claude_sandbox/_worktrees/169-next-cuts/designs/b96_kr260_10g/lat_cuts169/rtl/frame_src.sv:64: sorry: constant selects in always_* processes are not currently supported (all bits will be included).
+/tmp/pytest-of-brendan/pytest-2914/test_core_cocotb_default_with_2/b96_core.sv:335: sorry: constant selects in always_* processes are not currently supported (all bits will be included).
+/tmp/pytest-of-brendan/pytest-2914/test_core_cocotb_default_with_2/b96_core.sv:335: sorry: constant selects in always_* processes are not currently supported (all bits will be included).
+/tmp/pytest-of-brendan/pytest-2914/test_core_cocotb_default_with_2/b96_core.sv:335: sorry: constant selects in always_* processes are not currently supported (all bits will be included).
+/tmp/pytest-of-brendan/pytest-2914/test_core_cocotb_default_with_2/b96_core.sv:335: sorry: constant selects in always_* processes are not currently supported (all bits will be included).
+------------------------------ Captured log call -------------------------------
+INFO     Icarus:runner.py:632 Running command iverilog -o /home/brendan/Claude_sandbox/_worktrees/169-next-cuts/build/sim/b169_core_fast/sim.vvp -s tb_core -g2012 -Ptb_core.RATE_MATCH=0 -Ptb_core.EARLY_MAC=0 -Ptb_core.FAST_PRE=1 -g2012 -I/home/brendan/Claude_sandbox/_worktrees/169-next-cuts/designs/b96_kr260_10g/lat_cuts169/rtl -I/home/brendan/Claude_sandbox/_worktrees/169-next-cuts/designs/b96_kr260_10g/rtl -I/home/brendan/Claude_sandbox/_worktrees/169-next-cuts/designs/b96_kr260_10g/sim -I/home/brendan/Claude_sandbox/_worktrees/169-next-cuts/flow/cdc_models -I/tmp/pytest-of-brendan/pytest-2914/test_core_cocotb_default_with_2 -f /home/brendan/Claude_sandbox/_worktrees/169-next-cuts/build/sim/b169_core_fast/cmds.f /home/brendan/Claude_sandbox/_worktrees/169-next-cuts/flow/cdc_models/cdc_inj_pkg.sv /home/brendan/Claude_sandbox/_worktrees/169-next-cuts/flow/cdc_models/xpm_cdc_models.sv /home/brendan/Claude_sandbox/_worktrees/169-next-cuts/designs/b96_kr260_10g/rtl/b96_pkg.sv /home/brendan/Claude_sandbox/_worktrees/169-next-cuts/designs/b96_kr260_10g/lat_cuts169/rtl/pcs_tx.sv /home/brendan/Claude_sandbox/_worktrees/169-next-cuts/designs/b96_kr260_10g/rtl/pcs_rx.sv /home/brendan/Claude_sandbox/_worktrees/169-next-cuts/designs/b96_kr260_10g/lat_cuts169/rtl/mac64_tx.sv /home/brendan/Claude_sandbox/_worktrees/169-next-cuts/designs/b96_kr260_10g/lat_cuts169/rtl/mac64_rx.sv /home/brendan/Claude_sandbox/_worktrees/169-next-cuts/designs/b96_kr260_10g/rtl/hs_vec.sv /home/brendan/Claude_sandbox/_worktrees/169-next-cuts/designs/b96_kr260_10g/lat_cuts169/rtl/frame_src.sv /home/brendan/Claude_sandbox/_worktrees/169-next-cuts/designs/b96_kr260_10g/lat_cuts169/rtl/trade64.sv /home/brendan/Claude_sandbox/_worktrees/169-next-cuts/designs/b96_kr260_10g/rtl/rate_match.sv /home/brendan/Claude_sandbox/_worktrees/169-next-cuts/designs/b96_kr260_10g/rtl/rate_match_gp.sv /home/brendan/Claude_sandbox/_worktrees/169-next-cuts/designs/b96_kr260_10g/lat_cuts169/rtl/tx_path.sv /home/brendan/Claude_sandbox/_worktrees/169-next-cuts/designs/b96_kr260_10g/rtl/rx_path.sv /home/brendan/Claude_sandbox/_worktrees/169-next-cuts/designs/b96_kr260_10g/lat_cuts169/rtl/rx_path_legacy.sv /tmp/pytest-of-brendan/pytest-2914/test_core_cocotb_default_with_2/b96_core.sv /home/brendan/Claude_sandbox/_worktrees/169-next-cuts/designs/b96_kr260_10g/sim/gth_wiz_model96.sv /tmp/pytest-of-brendan/pytest-2914/test_core_cocotb_default_with_2/tb_core.sv in directory /home/brendan/Claude_sandbox/_worktrees/169-next-cuts/build/sim/b169_core_fast
+INFO     Icarus:runner.py:632 Running command vvp -M /home/brendan/.local/lib/python3.12/site-packages/cocotb/libs -m libcocotbvpi_icarus /home/brendan/Claude_sandbox/_worktrees/169-next-cuts/build/sim/b169_core_fast/sim.vvp -none in directory /home/brendan/Claude_sandbox/_worktrees/169-next-cuts/designs/b96_kr260_10g/tests
+ERROR    Icarus:runner.py:572 ERROR: Failed 2 of 16 tests.
+___________________ test_core_cocotb_default_with_cuts[both] ___________________
+
+combo = 'both'
+tmp_path = PosixPath('/tmp/pytest-of-brendan/pytest-2914/test_core_cocotb_default_with_3')
+
+    @pytest.mark.parametrize("combo", list(COMBOS))
+    def test_core_cocotb_default_with_cuts(combo: str, tmp_path: Path) -> None:
+        e, f = COMBOS[combo]
+        # sources: the base files, then lat_all3's trade64/tx_path (what lat_all3_bypass uses), then lat_cuts169's copies; b96_core is the base core patched to take the two parameters
+        pick = lambda n: next(d / n for d in (CUTS, ALL3, RTL) if (d / n).is_file())     # noqa: E731
+        srcs = [pick(n) for n in CORE_SRCS if n != "b96_core.sv"] + [_patched_core(tmp_path / "b96_core.sv")]
+        srcs = [tmp_path / "b96_core.sv" if s.name == "b96_core.sv" else s for s in srcs]
+        srcs += [DESIGN / "sim" / "gth_wiz_model96.sv", _tb(tmp_path / "tb_core.sv")]
+>       cocotb_run.run(f"b169_core_{combo}", "tb_core", srcs, "core_cocotb_default", HERE,
+                       parameters={"RATE_MATCH": 0, "EARLY_MAC": e, "FAST_PRE": f}, extra_env={"PYTHONPATH": str(ROOT), "B169_WI_SHIFT": str(e)})     # with EARLY_MAC the word index runs one clock ahead: the poison tests inject by index
+
+designs/b96_kr260_10g/tests/test_169_cuts.py:56: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+name = 'b169_core_both', toplevel = 'tb_core'
+sources = [PosixPath('/home/brendan/Claude_sandbox/_worktrees/169-next-cuts/flow/cdc_models/cdc_inj_pkg.sv'), PosixPath('/home/b...ixPath('/home/brendan/Claude_sandbox/_worktrees/169-next-cuts/designs/b96_kr260_10g/lat_cuts169/rtl/mac64_tx.sv'), ...]
+test_module = 'core_cocotb_default'
+test_dir = PosixPath('/home/brendan/Claude_sandbox/_worktrees/169-next-cuts/designs/b96_kr260_10g/tests')
+parameters = {'RATE_MATCH': 0, 'EARLY_MAC': 1, 'FAST_PRE': 1}, testcase = None
+seed = None, build_root = None
+extra_env = {'PYTHONPATH': '/home/brendan/Claude_sandbox/_worktrees/169-next-cuts'}
+coverage = False
+
+    def run(name: str, toplevel: str, sources: list[Path], test_module: str, test_dir: Path,
+            parameters: dict[str, object] | None = None, testcase: str | list[str] | None = None,
+            seed: int | None = None, build_root: Path | None = None, extra_env: dict[str, str] | None = None,
+            coverage: bool | None = None) -> None:
+        """Build ``sources`` with $SIM (icarus by default; verilator needs 5.036+ for cocotb 2) and run
+        ``test_module`` (a name or a list of names); fail if any test failed.
+    
+        ``coverage=None`` follows ``$FDA_COVERAGE`` (set by the agent's ``simulate(coverage=True)``). The bench can export
+        its functional-coverage bins to ``$FDA_COV_OUT`` (cocotb-coverage ``coverage_db.export_to_yaml``). With ``coverage`` (Verilator only) the build is instrumented for line and toggle coverage and the run
+        writes ``<build_dir>/coverage.dat``. Under Verilator, warnings are not fatal (the repo's lint gate is
+        flow/lint.sh) and concurrent assertions are on."""
+        simname = os.environ.get("SIM", "icarus")
+        if coverage is None:
+            coverage = os.environ.get("FDA_COVERAGE") == "1"
+        sources = swap_mutant_sources(sources)
+        design = srcorder.design_of(test_dir)
+        if any(vhdl.is_vhdl(s) for s in sources):            # brief 55: VHDL sources (GHDL natively, or a GHDL netlist)
+            return _run_vhdl(name, toplevel, sources, test_module, test_dir, parameters, testcase, seed, build_root,
+                             extra_env, coverage, simname, design)
+        # brief 16: stand-ins for the XPM macros a build instantiates (Icarus and Verilator have none) and, with
+        # $FDA_CDC_INJECT_SEED, the synchroniser-delay injection (flow/cdc_inject.py)
+        inj_env = os.environ.get("FDA_CDC_INJECT_SEED")
+        sources, inj_plus, inj_info = cdc_inject.prepare(sources, (build_root or SIM_ROOT) / f"{name}_cdcinj",
+                                                         int(inj_env) if inj_env not in (None, "") else None)
+        if inj_env not in (None, "") and os.environ.get("FDA_CDC_INJECT_INFO"):
+            Path(os.environ["FDA_CDC_INJECT_INFO"]).write_text(__import__("json").dumps(inj_info, indent=1))
+        if srcorder.no_shell(design):                         # 07a2-prep: a UART-subject design is built without the test shell
+            sources = srcorder.drop_shell(sources)
+        if simname == "verilator":                            # 07a2 fix 4: bound checkers belong to every Verilator build
+            sources = with_checkers(sources, design)
+        sources = srcorder.order_sv(sources)                  # 07a2-prep: packages and interfaces first, not name order
+        sim = get_runner(simname)
+        build_dir = (build_root or SIM_ROOT) / name
+        if simname == "verilator":
+            args = ["--assert", "-Wno-fatal", "-Wno-lint", "-Wno-style", "-Wno-TIMESCALEMOD", "-j", "1"]
+            if coverage:
+                args += ["--coverage-line", "--coverage-toggle", "--coverage-user"]
+        else:
+            args = ["-g2012"]
+            trace_dir = os.environ.get("FDA_FSM_TRACE")        # brief 24: the state register's value changes, for flow/fsm_coverage.py
+            if trace_dir:
+                Path(trace_dir).mkdir(parents=True, exist_ok=True)
+                dump = fsm_coverage.trace_module(design, Path(trace_dir) / f"{name}{'' if seed is None else f'_seed{seed}'}.fsmtrace")
+                if dump:
+                    dsrc = (build_root or SIM_ROOT) / f"{name}_fsm_trace" / "fsm_trace_dump.sv"
+                    dsrc.parent.mkdir(parents=True, exist_ok=True)
+                    dsrc.write_text(dump)
+                    sources = list(sources) + [dsrc]
+                    args += ["-s", "fsm_trace_dump"]
+        args += [f"-I{d}" for d in sorted({str(Path(s).parent) for s in sources})]     # `include "x.svh" next to a source
+        sim.build(sources=[str(s) for s in sources], hdl_toplevel=toplevel, parameters=parameters or {},
+                  build_dir=build_dir, timescale=("1ns", "1ps"), always=True, build_args=args)
+        env = {"PYTHONPATH": os.pathsep.join([str(ROOT), str(test_dir), os.environ.get("PYTHONPATH", "")])}
+        env["FDA_COV_OUT"] = str(build_dir / "coverage_func.yml")
+        env.update(extra_env or {})
+        plus = [f"+verilator+coverage+file+{build_dir / 'coverage.dat'}"] if (simname == "verilator" and coverage) else []
+        plus += inj_plus
+        try:
+            # 07a2-prep: the simulator starts in test_dir; the task's data files are linked there for the run ($readmemh)
+            with srcorder.linked_data(design / "data", test_dir):
+                results = sim.test(test_module=test_module, hdl_toplevel=toplevel, testcase=testcase, seed=seed,
+                                   build_dir=build_dir, test_dir=test_dir, extra_env=env, parameters=parameters or {},
+                                   timescale=("1ns", "1ps"), results_xml=str(build_dir / "results.xml"),
+                                   log_file=build_dir / "sim.log", plusargs=plus)
+        except SystemExit:
+            collect_results(build_dir, seed)         # a failing run is evidence too: the gate reads the failures
+            # cocotb's runner exits with only "Failed n of m tests"; the failing assertions and tracebacks are in the
+            # simulator log, which lives in a scratch directory the caller never sees. Say what they are.
+>           raise AssertionError(f"{name}: the cocotb run failed. From {build_dir / 'sim.log'}:\n"
+                                 + failure_excerpt(build_dir / "sim.log")) from None
+E           AssertionError: b169_core_both: the cocotb run failed. From /home/brendan/Claude_sandbox/_worktrees/169-next-cuts/build/sim/b169_core_both/sim.log:
+E                                                                   Traceback (most recent call last):
+E                                                                     File "/home/brendan/Claude_sandbox/_worktrees/169-next-cuts/designs/b96_kr260_10g/tests/core_cocotb_default.py", line 227, in poisoned_order_bad_fcs
+E                                                                       await poison_case(dut, 4, expect_err=False)
+E                                                                     File "/home/brendan/Claude_sandbox/_worktrees/169-next-cuts/designs/b96_kr260_10g/tests/core_cocotb_default.py", line 217, in poison_case
+E                                                                       assert r["bad"] >= 1 and (r["err"] >= 1) == expect_err
+E                                                                   AssertionError: assert (1 >= 1 and (1 >= 1) == False)
+E            96784.00ns WARNING  cocotb.regression                  core_cocotb_default.poisoned_order_bad_fcs failed
+E            96784.00ns INFO     cocotb.regression                  running core_cocotb_default.poisoned_order_cut_frame (5/16)
+E                                                                       The feed frame is cut by a line error that makes a block an error block: the order leaves with a wrong FCS too.
+E           117215.00ns INFO     cocotb.tb_core                     poison 3: tx {'n_order': 0, 'n_feed': 1, 'n_probe': 0, 'n_test': 0, 'poisoned': 0, 'dropped': 0, 'underrun': 0, 'late': 0, 'stale': 0, 'go': 0, 't_tx_feed': 1611, 't_tx_probe': 0, 't_tx_order': 0, 't_rx_feed': 1623, 't_rx_probe': 0, 't_rx_order': 0, 'e_last': 0, 'e_min': 4294967295, 'e_max': 0, 'e_cnt': 0, 'l_last': 0, 'l_min': 4294967295, 'l_max': 0, 'l_cnt': 0, 'd_last': 0, 'ts': 2557}
+E                                                                   rx {'lock': 1, 'slip': 0, 'loss': 0, 'lock_ev': 0, 'sh': 0, 'type': 0, 'os': 0, 'frames': 1, 'good': 0, 'bad': 1, 'err': 0, 'fired': 0, 'blocked': 0, 'toolong': 0, 'last_len': 70, 'lock_clk': 91}
+E           117215.00ns WARNING  ..t_frame.poisoned_order_cut_frame ({'lock': 1, 'slip': 0, 'loss': 0, 'lock_ev': 0, ...}, {'n_order': 0, 'n_feed': 1, 'n_probe': 0, 'n_test': 0, ...})
+E                                                                   assert (0 == 1)
+E                                                                     File "/home/brendan/Claude_sandbox/_worktrees/169-next-cuts/designs/b96_kr260_10g/tests/core_cocotb_default.py", line 233, in poisoned_order_cut_frame
+E                                                                       await poison_case(dut, 3, expect_err=True)
+E                                                                     File "/home/brendan/Claude_sandbox/_worktrees/169-next-cuts/designs/b96_kr260_10g/tests/core_cocotb_default.py", line 216, in poison_case
+E                                                                       assert r["fired"] == 1 and t["n_order"] == 1 and t["poisoned"] == 1, (r, t)
+E                                                                   AssertionError: ({'lock': 1, 'slip': 0, 'loss': 0, 'lock_ev': 0, ...}, {'n_order': 0, 'n_feed': 1, 'n_probe': 0, 'n_test': 0, ...})
+E           117215.00ns WARNING  cocotb.regression                  core_cocotb_default.poisoned_order_cut_frame failed
+E           117215.00ns INFO     cocotb.regression                  running core_cocotb_default.tick_to_trade_digital (6/16)
+E                                                                       The fabric's own tick-to-trade in clocks, from the clock edge that captures the GT word completing the price field (RX side) to the clock
+E           165485.37ns WARNING  ..de_digital.tick_to_trade_digital {'w7_at_mac': 345, 'fire_reg': 34
+
+flow/cocotb_run.py:201: AssertionError
+----------------------------- Captured stderr call -----------------------------
+/home/brendan/Claude_sandbox/_worktrees/169-next-cuts/designs/b96_kr260_10g/lat_cuts169/rtl/frame_src.sv:64: sorry: constant selects in always_* processes are not currently supported (all bits will be included).
+/home/brendan/Claude_sandbox/_worktrees/169-next-cuts/designs/b96_kr260_10g/lat_cuts169/rtl/frame_src.sv:64: sorry: constant selects in always_* processes are not currently supported (all bits will be included).
+/home/brendan/Claude_sandbox/_worktrees/169-next-cuts/designs/b96_kr260_10g/lat_cuts169/rtl/frame_src.sv:64: sorry: constant selects in always_* processes are not currently supported (all bits will be included).
+/home/brendan/Claude_sandbox/_worktrees/169-next-cuts/designs/b96_kr260_10g/lat_cuts169/rtl/frame_src.sv:64: sorry: constant selects in always_* processes are not currently supported (all bits will be included).
+/tmp/pytest-of-brendan/pytest-2914/test_core_cocotb_default_with_3/b96_core.sv:335: sorry: constant selects in always_* processes are not currently supported (all bits will be included).
+/tmp/pytest-of-brendan/pytest-2914/test_core_cocotb_default_with_3/b96_core.sv:335: sorry: constant selects in always_* processes are not currently supported (all bits will be included).
+/tmp/pytest-of-brendan/pytest-2914/test_core_cocotb_default_with_3/b96_core.sv:335: sorry: constant selects in always_* processes are not currently supported (all bits will be included).
+/tmp/pytest-of-brendan/pytest-2914/test_core_cocotb_default_with_3/b96_core.sv:335: sorry: constant selects in always_* processes are not currently supported (all bits will be included).
+------------------------------ Captured log call -------------------------------
+INFO     Icarus:runner.py:632 Running command iverilog -o /home/brendan/Claude_sandbox/_worktrees/169-next-cuts/build/sim/b169_core_both/sim.vvp -s tb_core -g2012 -Ptb_core.RATE_MATCH=0 -Ptb_core.EARLY_MAC=1 -Ptb_core.FAST_PRE=1 -g2012 -I/home/brendan/Claude_sandbox/_worktrees/169-next-cuts/designs/b96_kr260_10g/lat_cuts169/rtl -I/home/brendan/Claude_sandbox/_worktrees/169-next-cuts/designs/b96_kr260_10g/rtl -I/home/brendan/Claude_sandbox/_worktrees/169-next-cuts/designs/b96_kr260_10g/sim -I/home/brendan/Claude_sandbox/_worktrees/169-next-cuts/flow/cdc_models -I/tmp/pytest-of-brendan/pytest-2914/test_core_cocotb_default_with_3 -f /home/brendan/Claude_sandbox/_worktrees/169-next-cuts/build/sim/b169_core_both/cmds.f /home/brendan/Claude_sandbox/_worktrees/169-next-cuts/flow/cdc_models/cdc_inj_pkg.sv /home/brendan/Claude_sandbox/_worktrees/169-next-cuts/flow/cdc_models/xpm_cdc_models.sv /home/brendan/Claude_sandbox/_worktrees/169-next-cuts/designs/b96_kr260_10g/rtl/b96_pkg.sv /home/brendan/Claude_sandbox/_worktrees/169-next-cuts/designs/b96_kr260_10g/lat_cuts169/rtl/pcs_tx.sv /home/brendan/Claude_sandbox/_worktrees/169-next-cuts/designs/b96_kr260_10g/rtl/pcs_rx.sv /home/brendan/Claude_sandbox/_worktrees/169-next-cuts/designs/b96_kr260_10g/lat_cuts169/rtl/mac64_tx.sv /home/brendan/Claude_sandbox/_worktrees/169-next-cuts/designs/b96_kr260_10g/lat_cuts169/rtl/mac64_rx.sv /home/brendan/Claude_sandbox/_worktrees/169-next-cuts/designs/b96_kr260_10g/rtl/hs_vec.sv /home/brendan/Claude_sandbox/_worktrees/169-next-cuts/designs/b96_kr260_10g/lat_cuts169/rtl/frame_src.sv /home/brendan/Claude_sandbox/_worktrees/169-next-cuts/designs/b96_kr260_10g/lat_cuts169/rtl/trade64.sv /home/brendan/Claude_sandbox/_worktrees/169-next-cuts/designs/b96_kr260_10g/rtl/rate_match.sv /home/brendan/Claude_sandbox/_worktrees/169-next-cuts/designs/b96_kr260_10g/rtl/rate_match_gp.sv /home/brendan/Claude_sandbox/_worktrees/169-next-cuts/designs/b96_kr260_10g/lat_cuts169/rtl/tx_path.sv /home/brendan/Claude_sandbox/_worktrees/169-next-cuts/designs/b96_kr260_10g/rtl/rx_path.sv /home/brendan/Claude_sandbox/_worktrees/169-next-cuts/designs/b96_kr260_10g/lat_cuts169/rtl/rx_path_legacy.sv /tmp/pytest-of-brendan/pytest-2914/test_core_cocotb_default_with_3/b96_core.sv /home/brendan/Claude_sandbox/_worktrees/169-next-cuts/designs/b96_kr260_10g/sim/gth_wiz_model96.sv /tmp/pytest-of-brendan/pytest-2914/test_core_cocotb_default_with_3/tb_core.sv in directory /home/brendan/Claude_sandbox/_worktrees/169-next-cuts/build/sim/b169_core_both
+INFO     Icarus:runner.py:632 Running command vvp -M /home/brendan/.local/lib/python3.12/site-packages/cocotb/libs -m libcocotbvpi_icarus /home/brendan/Claude_sandbox/_worktrees/169-next-cuts/build/sim/b169_core_both/sim.vvp -none in directory /home/brendan/Claude_sandbox/_worktrees/169-next-cuts/designs/b96_kr260_10g/tests
+ERROR    Icarus:runner.py:572 ERROR: Failed 4 of 16 tests.
+=========================== short test summary info ============================
+FAILED designs/b96_kr260_10g/tests/test_169_cuts.py::test_core_cocotb_default_with_cuts[early]
+FAILED designs/b96_kr260_10g/tests/test_169_cuts.py::test_core_cocotb_default_with_cuts[fast]
+FAILED designs/b96_kr260_10g/tests/test_169_cuts.py::test_core_cocotb_default_with_cuts[both]
+3 failed, 2 passed in 1764.52s (0:29:24)

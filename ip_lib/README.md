@@ -37,6 +37,19 @@ instruction for a simple in-order CPU pipeline ([docs/hwsw.md](../docs/hwsw.md#3
 |---|---|---|
 | [crc32_step](crc32_step/README.md) | `word`, `byte`: one CRC-32 update by a 32-bit word in one clock, or a byte per clock | both bit-exact against `crc32_step/model.py` and zlib, latency and II measured, the guard, five seeded faults; built into the BRV32P RV32 core as `crc32.w` and run there in simulation |
 
+## Partitioning blocks: pipeline registers, credit link, AXI slices
+
+AXI4-Stream and AXI4 / AXI4-Lite blocks for registering between sub-modules (brief 151); the study, the questions and the sweep that
+will decide the house rules are in [docs/partitioning_study.md](../docs/partitioning_study.md). Simulated clock by clock against Python
+models with an AXI4-Stream rule monitor; the data and stream rules are proved by k-induction at a small width. No Vivado build and no
+board run yet.
+
+| Entry | What | Tests |
+|---|---|---|
+| [pipe_reg](pipe_reg/README.md) | AXI4-Stream pipeline register, N slices of five kinds (forward-only, skid buffer, full register slice, half-rate slice, combinational-ready slice), optional tlast, tkeep, tuser | 32 points against the model clock by clock, the declared latency, throughput and capacity measured, 15 seeded faults, SymbiYosys proofs |
+| [credit_chan](credit_chan/README.md) | credit-based channel between two AXI4-Stream ports, with forward and return register stages; for the cases valid/ready does not fit | 19 points below, at and above the credit round trip, 12 seeded faults, conservation and order proved |
+| [axi_reg_slice](axi_reg_slice/README.md) | AXI4 and AXI4-Lite register slices, one pipe_reg chain per channel with its own mode | five channels at once against the model, 6 seeded faults |
+
 ## Networking and packet processing
 
 Byte-wide AXI-Stream blocks, simulated bit-exact against Python golden models with pcap traffic. Status: simulated
@@ -125,6 +138,7 @@ READMEs: `python flow/net/ipdoc.py`.
 | Entry | What | Tests |
 |---|---|---|
 | [axil_xbar](axil_xbar/README.md) | AXI4-Lite crossbar, N masters to M slaves, round robin per slave, DECERR for unmapped addresses; the interconnect that the block-design generator ([docs/blockdesign.md](../docs/blockdesign.md)) inserts | random traffic with stalls at five parameter points against Python masters and slaves, the AXI4-Lite protocol checker on every link, read and write fairness, a reset with transfers in flight, map guards, ten seeded faults |
+| [jtag_regs](jtag_regs/README.md) | register window over the JTAG cable for a board with no PL UART (KR260): BSCANE2 USER4 bus, common map ID / BUILD (USR_ACCESS) / SCRATCH, the design's registers from 0x010 (brief 209a) | the common map in cocotb (Icarus); the BSCANE2 and CDC part is designs/b58a_trigger's, which the owner's KR260 run exercised |
 
 Run: `python3 -m pytest ip_lib/axil_xbar/tb/test_axil_xbar_rtl.py`; faults: `python3 hil/ip_faults.py --blocks axil_xbar`.
 

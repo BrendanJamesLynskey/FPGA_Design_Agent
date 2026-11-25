@@ -1,0 +1,332 @@
+name: t1_sync_fifo_regs
+title: Byte FIFO behind the test shell
+board: nexys_a7_100t
+part: xc7a100tcsg324-1
+top: t1_sync_fifo_regs_top
+clocks:
+- name: CLK100MHZ
+  port: CLK100MHZ
+  period_ns: 10
+  note: 100 MHz board oscillator, single clock domain for the whole design
+reset:
+  port: CPU_RESETN
+  polarity: active_low
+  sync: assertion is synchronised to CLK100MHZ through two flip-flops
+  note: CPU_RESETN is the board reset button
+parameters:
+  CLKS_PER_BIT: 868
+  TIMEOUT_CYCLES: 100000
+  BUILD_STAMP: 0
+  DEPTH: 16
+  DATA_WIDTH: 8
+  AF_THRESHOLD_RESET: 12
+ports:
+- name: CLK100MHZ
+  direction: input
+  width: 1
+  role: 100 MHz board oscillator
+- name: CPU_RESETN
+  direction: input
+  width: 1
+  role: CPU reset button, active low
+- name: UART_TXD_IN
+  direction: input
+  width: 1
+  role: USB-UART receive line, host to FPGA
+- name: UART_RXD_OUT
+  direction: output
+  width: 1
+  role: USB-UART transmit line, FPGA to host
+- name: LED
+  direction: output
+  width: 16
+  role: 16 LEDs as a fill-level bar graph, LED[0] is the first bar
+behaviour:
+  fifo:
+  - The FIFO holds DEPTH entries of DATA_WIDTH bits, DEPTH = 16 and DATA_WIDTH = 8
+  - A byte written to PUSH is added at the tail when the FIFO is not full
+  - A read of POP returns the head byte and removes it when the FIFO is not empty
+  - A read of PEEK returns the head byte and leaves the stored bytes unchanged
+  - COUNT holds the number of stored bytes, from 0 to 16
+  - A push to a full FIFO discards the byte and sets the overflow error flag
+  - A pop from an empty FIFO returns 0x00 and sets the underflow error flag
+  - A push and a pop in the same clock cycle on a full FIFO performs the pop and discards
+    the push, which sets the overflow error flag
+  - A push and a pop in the same clock cycle on an empty FIFO performs the push and
+    discards the pop, which sets the underflow error flag
+  flags:
+  - empty is 1 exactly when COUNT is 0
+  - full is 1 exactly when COUNT is 16
+  - almost_full is 1 exactly when COUNT is greater than or equal to AF_THRESHOLD
+  - AF_THRESHOLD is a 5-bit register written over the shell, reset value AF_THRESHOLD_RESET
+  - overflow is a sticky flag, set by a push to a full FIFO and cleared only by writing
+    1 to its bit
+  - underflow is a sticky flag, set by a pop from an empty FIFO and cleared only by
+    writing 1 to its bit
+  - Clearing one error flag leaves the other error flag unchanged
+  leds:
+  - LED[i] is 1 exactly when COUNT is greater than i, for i from 0 to 15
+  - LED bar graph updates one clock cycle after COUNT changes
+  reset:
+  - CPU_RESETN low empties the FIFO, sets COUNT to 0 and clears overflow and underflow
+  - CPU_RESETN low sets AF_THRESHOLD to AF_THRESHOLD_RESET
+  shell:
+  - The register block is accessed from the test shell over the USB-UART at 115200
+    baud
+  - ID reads back the design ID FIFO as ASCII
+  - Writes to the read-only registers are ignored
+registers:
+  map:
+  - offset: '0x00'
+    name: ID
+    access: RO
+    reset: '0x4649464F'
+    bits: '[31:0] design ID, ASCII FIFO'
+  - offset: '0x04'
+    name: PUSH
+    access: WO
+    reset: '0x00'
+    bits: '[7:0] byte to push at the tail, reads return 0'
+  - offset: '0x08'
+    name: POP
+    access: RO (read pops)
+    reset: '0x00'
+    bits: '[7:0] head byte, removed by the read, 0x00 when empty'
+  - offset: '0x0C'
+    name: PEEK
+    access: RO
+    reset: '0x00'
+    bits: '[7:0] head byte, not removed, 0x00 when empty'
+  - offset: '0x10'
+    name: COUNT
+    access: RO
+    reset: '0x00'
+    bits: '[4:0] number of stored bytes, 0 to 16'
+  - offset: '0x14'
+    name: STATUS
+    access: RO
+    reset: '0x01'
+    bits: '[0] empty, [1] full, [2] almost_full'
+  - offset: '0x18'
+    name: AF_THRESHOLD
+    access: RW
+    reset: '0x0C'
+    bits: '[4:0] almost-full threshold'
+  - offset: '0x1C'
+    name: ERROR
+    access: RW1C
+    reset: '0x00'
+    bits: '[0] overflow sticky, [1] underflow sticky, write 1 to clear the bit'
+behaviour_notes:
+- Register offsets above are a proposal until the register map question is answered
+timing:
+  clock_period_ns: 10
+  latency:
+    push_to_count: COUNT changes one clock cycle after the push is accepted
+    pop_to_count: COUNT changes one clock cycle after the pop is accepted
+    flags_to_status: STATUS reflects COUNT in the same clock cycle COUNT changes
+    led_update: LED changes one clock cycle after COUNT changes
+    uart_bit: one UART bit lasts CLKS_PER_BIT clock cycles = 868
+resources_expected:
+  LUT: under 300
+  FF: under 250
+  BRAM: 0
+  DSP: 0
+  note: 16 x 8 storage in distributed RAM or flip-flops, plus the UART and register
+    block
+assumptions:
+- text: The test shell is the existing UART register shell and supplies the register
+    access protocol
+  reason: spec.md says the FIFO is exercised entirely from the test shell
+- text: There is one clock, CLK100MHZ, and every register and the FIFO run in that
+    domain
+  reason: spec.md names no other clock and gives no other time constant
+- text: CPU_RESETN is the only reset and the FIFO has no separate soft reset register
+  reason: spec.md lists only CPU_RESETN as the reset
+- text: The 115200 baud UART uses CLKS_PER_BIT = 868 from a 100 MHz clock
+  reason: 100000000 / 115200 is about 868.06, rounded to the nearest integer
+- text: Only the names given in the master XDC are used for board ports
+  reason: spec.md requires top-level ports named as in the board master XDC
+interfaces_note: No AXI4-Lite block, the register block is driven by the USB-UART
+  shell, so no interfaces profile is set
+open_questions: []
+requirements:
+- id: REQ-01
+  text: A write of a byte to PUSH adds that byte at the tail of the FIFO
+  proof:
+  - simulation
+- id: REQ-02
+  text: A read of POP returns the head byte
+  proof:
+  - simulation
+- id: REQ-21
+  text: A read of POP reduces COUNT by 1
+  proof:
+  - simulation
+- id: REQ-03
+  text: A read of PEEK returns the head byte
+  proof:
+  - simulation
+- id: REQ-22
+  text: A read of PEEK leaves COUNT unchanged
+  proof:
+  - simulation
+- id: REQ-04
+  text: A read of COUNT returns the number of stored bytes
+  proof:
+  - simulation
+- id: REQ-05
+  text: The empty flag is 1 exactly when COUNT is 0
+  proof:
+  - formal
+- id: REQ-06
+  text: The full flag is 1 exactly when COUNT is 16
+  proof:
+  - formal
+- id: REQ-07
+  text: The almost_full flag is 1 exactly when COUNT is greater than or equal to AF_THRESHOLD
+  proof:
+  - formal
+  - simulation
+- id: REQ-08
+  text: A write to AF_THRESHOLD followed by a read returns the written value in bits
+    4 to 0
+  proof:
+  - simulation
+- id: REQ-09
+  text: A push to a full FIFO leaves the stored bytes unchanged
+  proof:
+  - simulation
+  - formal
+- id: REQ-10
+  text: A push to a full FIFO sets the overflow flag
+  proof:
+  - simulation
+- id: REQ-11
+  text: A pop from an empty FIFO returns 0x00
+  proof:
+  - simulation
+- id: REQ-12
+  text: A pop from an empty FIFO sets the underflow flag
+  proof:
+  - simulation
+- id: REQ-13
+  text: The overflow flag stays 1 until a write of 1 to bit 0 of ERROR
+  proof:
+  - formal
+  - simulation
+- id: REQ-14
+  text: The underflow flag stays 1 until a write of 1 to bit 1 of ERROR
+  proof:
+  - formal
+  - simulation
+- id: REQ-15
+  text: A write of 1 to one bit of ERROR leaves the other error bit unchanged
+  proof:
+  - simulation
+- id: REQ-16
+  text: LED[i] is lit exactly when COUNT is greater than i, for i from 0 to 15
+  proof:
+  - simulation
+  - hardware
+- id: REQ-17
+  text: CPU_RESETN low sets COUNT to 0
+  proof:
+  - simulation
+  - hardware
+- id: REQ-23
+  text: CPU_RESETN low clears the overflow flag
+  proof:
+  - simulation
+- id: REQ-24
+  text: CPU_RESETN low clears the underflow flag
+  proof:
+  - simulation
+- id: REQ-25
+  text: CPU_RESETN low sets AF_THRESHOLD to 12
+  proof:
+  - simulation
+- id: REQ-18
+  text: A read of ID returns 0x4649464F
+  proof:
+  - simulation
+  - hardware
+- id: REQ-26
+  text: A write to ID leaves the value read from ID unchanged
+  proof:
+  - simulation
+- id: REQ-27
+  text: LED bar graph changes exactly one clock cycle after COUNT changes
+  proof:
+  - simulation
+- id: REQ-19
+  text: The design meets timing at a 10 ns clock period with no failing setup or hold
+    paths
+  proof:
+  - analysis
+- id: REQ-20
+  text: The UART bit period is 868 clock cycles of CLK100MHZ
+  proof:
+  - simulation
+  - hardware
+resolved_questions:
+- question: What is the register map (offset, width, reset value and access of every
+    register)?
+  answer: 'Use the proposed map in registers.map: ID at 0x00 RO, PUSH 0x04 WO, POP
+    0x08 RO with read-pops, PEEK 0x0C RO, COUNT 0x10 RO, STATUS 0x14 RO, AF_THRESHOLD
+    0x18 RW reset 12, ERROR 0x1C RW1C'
+  status: defaulted
+  by: default
+  default_reason: spec.md names shell registers and reading values back but gives
+    no offsets, so the map must come from the user
+- question: Does a push and a pop in the same cycle on a full FIFO perform the pop
+    and drop the push, or drop the pop?
+  answer: Perform the pop, drop the push and set overflow, because the pop frees a
+    slot and the FIFO is full only at the start of the cycle
+  status: defaulted
+  by: default
+  default_reason: spec.md does not cover simultaneous push and pop
+- question: Does a push and a pop in the same cycle on an empty FIFO perform the push
+    and drop the pop, or drop the push?
+  answer: Perform the push, drop the pop and set underflow, mirroring the full case
+  status: defaulted
+  by: default
+  default_reason: spec.md does not cover simultaneous push and pop on an empty FIFO
+- question: What value does PEEK return when the FIFO is empty, and does it set an
+    error flag?
+  answer: Return 0x00 and set no flag, because spec.md only defines the pop-empty
+    case
+  status: defaulted
+  by: default
+  default_reason: spec.md defines POP on empty but not PEEK on empty
+- question: Which values are legal for AF_THRESHOLD and what happens above 16?
+  answer: Accept 0 to 16 as thresholds, and store values 17 to 31 with almost_full
+    never set, because COUNT cannot exceed 16
+  status: defaulted
+  by: default
+  default_reason: spec.md asks for a settable threshold but gives no range
+- question: What is the almost-full threshold after reset?
+  answer: 12, three quarters of the depth, and reset restores it
+  status: defaulted
+  by: default
+  default_reason: spec.md gives no reset value for the threshold
+- question: Does CPU_RESETN also reset AF_THRESHOLD to its default, or only clear
+    the error flags?
+  answer: Reset restores AF_THRESHOLD to 12 as well, so the design starts in a known
+    state
+  status: defaulted
+  by: default
+  default_reason: spec.md says reset clears every flag but does not mention the threshold
+- question: What does BUILD_STAMP do, and is it read back over the shell?
+  answer: BUILD_STAMP is a top-level parameter with default 0 that the FIFO logic
+    ignores, and it is not readable over the shell
+  status: defaulted
+  by: default
+  default_reason: spec.md names BUILD_STAMP as a test hook but does not say what it
+    does
+- question: What is the shell response timeout TIMEOUT_CYCLES?
+  answer: 100000 clock cycles, which is 1 ms at 100 MHz, enough for one 8-byte-command
+    round trip at 115200 baud
+  status: defaulted
+  by: default
+  default_reason: spec.md names TIMEOUT_CYCLES but gives no value

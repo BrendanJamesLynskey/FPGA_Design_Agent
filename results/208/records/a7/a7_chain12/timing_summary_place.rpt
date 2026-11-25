@@ -1,0 +1,401 @@
+Copyright 1986-2022 Xilinx, Inc. All Rights Reserved. Copyright 2022-2026 Advanced Micro Devices, Inc. All Rights Reserved.
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+| Tool Version : Vivado v.2026.1 (lin64) Build 6511674 Tue Jun 16 11:01:26 MDT 2026
+| Date         : Tue Nov 24 23:05:56 2026
+| Host         : bren-ubuntu24-04 running 64-bit Ubuntu 24.04.4 LTS
+| Command      : report_timing_summary -max_paths 5 -report_unconstrained -file /home/brendan/Claude_sandbox/_worktrees/208-clock-mux/build/208/a7/a7_chain12/timing_summary_place.rpt
+| Design       : casc
+| Device       : 7a35t-cpg236
+| Speed File   : -1  PRODUCTION 1.23 2018-06-13
+| Design State : Fully Placed
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Timing Summary Report
+
+------------------------------------------------------------------------------------------------
+| Timer Settings
+| --------------
+------------------------------------------------------------------------------------------------
+
+  Enable Multi Corner Analysis               :  Yes
+  Enable Pessimism Removal                   :  Yes
+  Pessimism Removal Resolution               :  Nearest Common Node
+  Enable Input Delay Default Clock           :  No
+  Enable Preset / Clear Arcs                 :  No
+  Disable Flight Delays                      :  No
+  Ignore I/O Paths                           :  No
+  Timing Early Launch at Borrowing Latches   :  No
+  Borrow Time for Max Delay Exceptions       :  Yes
+  Merge Timing Exceptions                    :  Yes
+  Inter-SLR Compensation                     :  Conservative
+
+  Corner  Analyze    Analyze    
+  Name    Max Paths  Min Paths  
+  ------  ---------  ---------  
+  Slow    Yes        Yes        
+  Fast    Yes        Yes        
+
+
+------------------------------------------------------------------------------------------------
+| Report Methodology
+| ------------------
+------------------------------------------------------------------------------------------------
+
+Rule       Severity  Description            Violations  
+---------  --------  ---------------------  ----------  
+TIMING-15  Warning   Large hold violation   17          
+TIMING-16  Warning   Large setup violation  17          
+
+Note: This report is based on the most recent report_methodology run and may not be up-to-date. Run report_methodology on the current design for the latest report.
+
+
+
+check_timing report
+
+Table of Contents
+-----------------
+1. checking no_clock (0)
+2. checking constant_clock (0)
+3. checking pulse_width_clock (0)
+4. checking unconstrained_internal_endpoints (0)
+5. checking no_input_delay (12)
+6. checking no_output_delay (1)
+7. checking multiple_clock (28)
+8. checking generated_clocks (0)
+9. checking loops (0)
+10. checking partial_input_delay (0)
+11. checking partial_output_delay (0)
+12. checking latch_loops (0)
+
+1. checking no_clock (0)
+------------------------
+ There are 0 register/latch pins with no clock.
+
+
+2. checking constant_clock (0)
+------------------------------
+ There are 0 register/latch pins with constant_clock.
+
+
+3. checking pulse_width_clock (0)
+---------------------------------
+ There are 0 register/latch pins which need pulse_width check
+
+
+4. checking unconstrained_internal_endpoints (0)
+------------------------------------------------
+ There are 0 pins that are not constrained for maximum delay.
+
+ There are 0 pins that are not constrained for maximum delay due to constant clock.
+
+
+5. checking no_input_delay (12)
+-------------------------------
+ There are 0 input ports with no input delay specified.
+
+ There are 12 input ports with no input delay but user has a false path constraint. (MEDIUM)
+
+
+6. checking no_output_delay (1)
+-------------------------------
+ There are 0 ports with no output delay specified.
+
+ There is 1 port with no output delay but user has a false path constraint (MEDIUM)
+
+ There are 0 ports with no output delay but with a timing clock defined on it or propagating through it
+
+
+7. checking multiple_clock (28)
+-------------------------------
+ There are 28 register/latch pins with multiple clocks. (HIGH)
+
+
+8. checking generated_clocks (0)
+--------------------------------
+ There are 0 generated clocks that are not connected to a clock source.
+
+
+9. checking loops (0)
+---------------------
+ There are 0 combinational loops in the design.
+
+
+10. checking partial_input_delay (0)
+------------------------------------
+ There are 0 input ports with partial input delay specified.
+
+
+11. checking partial_output_delay (0)
+-------------------------------------
+ There are 0 ports with partial output delay specified.
+
+
+12. checking latch_loops (0)
+----------------------------
+ There are 0 combinational latch loops in the design through latch input
+
+
+
+------------------------------------------------------------------------------------------------
+| Design Timing Summary
+| ---------------------
+------------------------------------------------------------------------------------------------
+
+    WNS(ns)      TNS(ns)  TNS Failing Endpoints  TNS Total Endpoints      WHS(ns)      THS(ns)  THS Failing Endpoints  THS Total Endpoints     WPWS(ns)     TPWS(ns)  TPWS Failing Endpoints  TPWS Total Endpoints  
+    -------      -------  ---------------------  -------------------      -------      -------  ---------------------  -------------------     --------     --------  ----------------------  --------------------  
+    -17.453     -292.006                     17                   17      -17.834     -301.384                     17                   17        2.833        0.000                       0                    51  
+
+
+Timing constraints are not met.
+
+
+------------------------------------------------------------------------------------------------
+| Clock Summary
+| -------------
+------------------------------------------------------------------------------------------------
+
+Clock   Waveform(ns)         Period(ns)      Frequency(MHz)
+-----   ------------         ----------      --------------
+clkref  {0.000 5.000}        10.000          100.000         
+  c_0   {0.000 5.000}        10.000          100.000         
+  c_1   {0.000 3.333}        6.667           150.000         
+  c_2   {0.000 4.444}        8.889           112.500         
+  c_3   {0.000 5.556}        11.111          90.000          
+  c_4   {0.000 6.667}        13.333          75.000          
+  c_5   {0.000 8.333}        16.667          60.000          
+  c_6   {0.000 10.000}       20.000          50.000          
+  fb    {0.000 5.000}        10.000          100.000         
+
+
+------------------------------------------------------------------------------------------------
+| Intra Clock Table
+| -----------------
+------------------------------------------------------------------------------------------------
+
+Clock             WNS(ns)      TNS(ns)  TNS Failing Endpoints  TNS Total Endpoints      WHS(ns)      THS(ns)  THS Failing Endpoints  THS Total Endpoints     WPWS(ns)     TPWS(ns)  TPWS Failing Endpoints  TPWS Total Endpoints  
+-----             -------      -------  ---------------------  -------------------      -------      -------  ---------------------  -------------------     --------     --------  ----------------------  --------------------  
+clkref                                                                                                                                                          3.000        0.000                       0                     1  
+  c_0               7.892        0.000                      0                   17        0.245        0.000                      0                   17        4.500        0.000                       0                    31  
+  c_1               4.564        0.000                      0                   17        0.245        0.000                      0                   17        2.833        0.000                       0                    31  
+  c_2               6.783        0.000                      0                   17        0.245        0.000                      0                   17        3.944        0.000                       0                    30  
+  c_3               9.002        0.000                      0                   17        0.245        0.000                      0                   17        5.056        0.000                       0                    29  
+  c_4              11.222        0.000                      0                   17        0.245        0.000                      0                   17        6.167        0.000                       0                    28  
+  c_5              14.553        0.000                      0                   17        0.245        0.000                      0                   17        7.833        0.000                       0                    27  
+  c_6              17.884        0.000                      0                   17        0.245        0.000                      0                   17        9.500        0.000                       0                    25  
+  fb                                                                                                                                                            8.751        0.000                       0                     2  
+
+
+------------------------------------------------------------------------------------------------
+| Inter Clock Table
+| -----------------
+------------------------------------------------------------------------------------------------
+
+From Clock    To Clock          WNS(ns)      TNS(ns)  TNS Failing Endpoints  TNS Total Endpoints      WHS(ns)      THS(ns)  THS Failing Endpoints  THS Total Endpoints  
+----------    --------          -------      -------  ---------------------  -------------------      -------      -------  ---------------------  -------------------  
+c_1           c_0                -9.595     -158.425                     17                   17      -12.064     -203.303                     17                   17  
+c_2           c_0                -9.881     -163.277                     17                   17      -12.419     -209.335                     17                   17  
+c_3           c_0                -7.945     -130.372                     17                   17      -14.223     -240.004                     17                   17  
+c_4           c_0                -3.788      -59.706                     17                   17      -16.028     -270.689                     17                   17  
+c_5           c_0                -3.420      -53.450                     17                   17      -17.834     -301.384                     17                   17  
+c_6           c_0                 5.182        0.000                      0                   17       -8.467     -142.155                     17                   17  
+c_0           c_1               -11.398     -189.073                     17                   17      -10.261     -172.656                     17                   17  
+c_2           c_1               -10.571     -175.013                     17                   17      -12.418     -209.313                     17                   17  
+c_3           c_1                -8.637     -142.131                     17                   17      -14.223     -240.004                     17                   17  
+c_4           c_1                -2.258      -33.687                     17                   17      -16.028     -270.689                     17                   17  
+c_5           c_1                -5.223      -84.098                     17                   17      -17.834     -301.384                     17                   17  
+c_6           c_1                 0.046        0.000                      0                   17       -8.467     -142.155                     17                   17  
+c_0           c_2               -13.975     -232.882                     17                   17       -8.325     -139.730                     17                   17  
+c_1           c_2               -12.863     -213.971                     17                   17      -10.126     -170.355                     17                   17  
+c_3           c_2                -8.992     -148.163                     17                   17      -12.286     -207.078                     17                   17  
+c_4           c_2                -4.835      -77.497                     17                   17      -14.091     -237.763                     17                   17  
+c_5           c_2                -7.800     -127.907                     17                   17      -15.897     -268.459                     17                   17  
+c_6           c_2                -4.754      -76.117                     17                   17       -6.530     -109.229                     17                   17  
+c_0           c_3               -15.779     -263.551                     17                   17       -6.389     -106.825                     17                   17  
+c_1           c_3               -14.668     -244.662                     17                   17       -8.192     -137.473                     17                   17  
+c_2           c_3               -12.731     -211.736                     17                   17       -8.547     -143.505                     17                   17  
+c_4           c_3                -8.860     -145.922                     17                   17      -12.154     -204.837                     17                   17  
+c_5           c_3                -5.159      -83.000                     17                   17      -13.960     -235.533                     17                   17  
+c_6           c_3                -6.556     -106.764                     17                   17       -4.594      -76.303                     17                   17  
+c_0           c_4               -15.362     -256.458                     17                   17       -4.454      -73.937                     17                   17  
+c_1           c_4               -12.029     -199.792                     17                   17       -6.257     -104.584                     17                   17  
+c_2           c_4               -12.314     -204.644                     17                   17       -6.612     -110.616                     17                   17  
+c_3           c_4               -12.599     -209.496                     17                   17       -8.415     -141.264                     17                   17  
+c_5           c_4                -9.184     -151.425                     17                   17      -12.023     -202.607                     17                   17  
+c_6           c_4                -3.915      -61.857                     17                   17       -2.657      -43.401                     17                   17  
+c_0           c_5               -17.168     -287.154                     17                   17       -4.086      -67.681                     17                   17  
+c_1           c_5               -17.168     -287.154                     17                   17       -5.889      -98.329                     17                   17  
+c_2           c_5               -17.453     -292.006                     17                   17       -6.244     -104.360                     17                   17  
+c_3           c_5               -11.072     -183.525                     17                   17       -8.047     -135.008                     17                   17  
+c_4           c_5               -11.357     -188.377                     17                   17       -9.850     -165.656                     17                   17  
+c_6           c_5                -9.051     -149.171                     17                   17       -2.385      -39.424                     17                   17  
+c_0           c_6                -1.134      -14.591                     17                   17       -2.151      -35.046                     17                   17  
+c_1           c_6                -4.468      -71.258                     17                   17       -3.954      -65.427                     17                   17  
+c_2           c_6                -6.975     -113.887                     17                   17       -4.309      -71.458                     17                   17  
+c_3           c_6                -5.039      -80.962                     17                   17       -6.111     -102.106                     17                   17  
+c_4           c_6                 1.343        0.000                      0                   17       -7.914     -132.754                     17                   17  
+c_5           c_6                -1.620      -22.843                     17                   17       -9.717     -163.402                     17                   17  
+
+
+------------------------------------------------------------------------------------------------
+| Other Path Groups Table
+| -----------------------
+------------------------------------------------------------------------------------------------
+
+Path Group    From Clock    To Clock          WNS(ns)      TNS(ns)  TNS Failing Endpoints  TNS Total Endpoints      WHS(ns)      THS(ns)  THS Failing Endpoints  THS Total Endpoints  
+----------    ----------    --------          -------      -------  ---------------------  -------------------      -------      -------  ---------------------  -------------------  
+
+
+------------------------------------------------------------------------------------------------
+| User Ignored Path Table
+| -----------------------
+------------------------------------------------------------------------------------------------
+
+Path Group    From Clock    To Clock    
+----------    ----------    --------    
+(none)        c_0                         
+(none)        c_1                         
+(none)        c_2                         
+(none)        c_3                         
+(none)        c_4                         
+(none)        c_5                         
+(none)        c_6                         
+(none)                      c_0           
+(none)                      c_1           
+(none)                      c_2           
+(none)                      c_3           
+(none)                      c_4           
+(none)                      c_5           
+(none)                      c_6           
+
+
+------------------------------------------------------------------------------------------------
+| Unconstrained Path Table
+| ------------------------
+------------------------------------------------------------------------------------------------
+
+Path Group    From Clock    To Clock    
+----------    ----------    --------    
+
+
+------------------------------------------------------------------------------------------------
+| Timing Details
+| --------------
+------------------------------------------------------------------------------------------------
+
+
+---------------------------------------------------------------------------------------------------
+From Clock:  clkref
+  To Clock:  clkref
+
+Setup :           NA  Failing Endpoints,  Worst Slack           NA  ,  Total Violation           NA
+Hold  :           NA  Failing Endpoints,  Worst Slack           NA  ,  Total Violation           NA
+PW    :            0  Failing Endpoints,  Worst Slack        3.000ns,  Total Violation        0.000ns
+---------------------------------------------------------------------------------------------------
+
+
+Pulse Width Checks
+--------------------------------------------------------------------------------------
+Clock Name:         clkref
+Waveform(ns):       { 0.000 5.000 }
+Period(ns):         10.000
+Sources:            { clk_in }
+
+Check Type        Corner  Lib Pin            Reference Pin  Required(ns)  Actual(ns)  Slack(ns)  Location         Pin
+Min Period        n/a     MMCME2_ADV/CLKIN1  n/a            1.249         10.000      8.751      MMCME2_ADV_X0Y0  g_7.u_mmcm/CLKIN1
+Max Period        n/a     MMCME2_ADV/CLKIN1  n/a            100.000       10.000      90.000     MMCME2_ADV_X0Y0  g_7.u_mmcm/CLKIN1
+Low Pulse Width   Slow    MMCME2_ADV/CLKIN1  n/a            2.000         5.000       3.000      MMCME2_ADV_X0Y0  g_7.u_mmcm/CLKIN1
+Low Pulse Width   Fast    MMCME2_ADV/CLKIN1  n/a            2.000         5.000       3.000      MMCME2_ADV_X0Y0  g_7.u_mmcm/CLKIN1
+High Pulse Width  Slow    MMCME2_ADV/CLKIN1  n/a            2.000         5.000       3.000      MMCME2_ADV_X0Y0  g_7.u_mmcm/CLKIN1
+High Pulse Width  Fast    MMCME2_ADV/CLKIN1  n/a            2.000         5.000       3.000      MMCME2_ADV_X0Y0  g_7.u_mmcm/CLKIN1
+
+
+
+---------------------------------------------------------------------------------------------------
+From Clock:  c_0
+  To Clock:  c_0
+
+Setup :            0  Failing Endpoints,  Worst Slack        7.892ns,  Total Violation        0.000ns
+Hold  :            0  Failing Endpoints,  Worst Slack        0.245ns,  Total Violation        0.000ns
+PW    :            0  Failing Endpoints,  Worst Slack        4.500ns,  Total Violation        0.000ns
+---------------------------------------------------------------------------------------------------
+
+
+Max Delay Paths
+--------------------------------------------------------------------------------------
+Slack (MET) :             7.892ns  (required time - arrival time)
+  Source:                 cnt_reg[4]/C
+                            (rising edge-triggered cell FDRE clocked by c_0  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            cnt_reg[13]/D
+                            (rising edge-triggered cell FDRE clocked by c_0  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             c_0
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (c_0 rise@10.000ns - c_0 rise@0.000ns)
+  Data Path Delay:        2.067ns  (logic 1.560ns (75.472%)  route 0.507ns (24.528%))
+  Logic Levels:           3  (CARRY4=3)
+  Clock Path Skew:        -0.026ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    12.821ns = ( 22.821 - 10.000 ) 
+    Source Clock Delay      (SCD):    23.841ns
+    Clock Pessimism Removal (CPR):    10.994ns
+  Clock Uncertainty:      0.077ns  ((TSJ^2 + DJ^2)^1/2) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Discrete Jitter          (DJ):    0.136ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock c_0 rise edge)        0.000     0.000 r  <hidden>
+    M18                                               0.000     0.000 r  clk_in
+                         net (fo=0)                   0.000     0.000    clk_in
+    M18                  IBUF (Prop_ibuf_I_O)         0.938     0.938 r  clk_in_IBUF_inst/O
+                         net (fo=1, estimated)        1.233     2.171    clk_in_IBUF
+    MMCME2_ADV_X0Y0      MMCME2_ADV (Prop_mmcme2_adv_CLKIN1_CLKOUT0)
+                                                      0.088     2.259 r  g_7.u_mmcm/CLKOUT0
+                         net (fo=2, estimated)        1.666     3.925    c_0
+    BUFGCTRL_X0Y0        BUFGCTRL (Prop_bufgctrl_I0_O)
+                                                      0.096     4.021 r  g_chain.g_st[0].u_st/O
+                         net (fo=1, estimated)        1.841     5.862    g_chain.s_1
+    BUFGCTRL_X0Y1        BUFGCTRL (Prop_bufgctrl_I0_O)
+                                                      0.096     5.958 r  g_chain.g_st[1].u_st/O
+                         net (fo=1, estimated)        1.841     7.799    g_chain.s_2
+    BUFGCTRL_X0Y2        BUFGCTRL (Prop_bufgctrl_I0_O)
+                                                      0.096     7.895 r  g_chain.g_st[2].u_st/O
+                         net (fo=1, estimated)        1.841     9.735    g_chain.s_3
+    BUFGCTRL_X0Y3        BUFGCTRL (Prop_bufgctrl_I0_O)
+                                                      0.096     9.831 r  g_chain.g_st[3].u_st/O
+                         net (fo=1, estimated)        0.275    10.106    g_chain.s_4
+    BUFGCTRL_X0Y4        BUFGCTRL (Prop_bufgctrl_I0_O)
+                                                      0.096    10.202 r  g_chain.g_st[4].u_st/O
+                         net (fo=1, estimated)        1.842    12.044    g_chain.s_5
+    BUFGCTRL_X0Y5        BUFGCTRL (Prop_bufgctrl_I0_O)
+                                                      0.096    12.140 r  g_chain.g_st[5].u_st/O
+                         net (fo=1, estimated)        1.842    13.982    g_chain.s_6
+    BUFGCTRL_X0Y6        BUFGCTRL (Prop_bufgctrl_I0_O)
+                                                      0.096    14.078 r  g_chain.g_st[6].u_st/O
+                         net (fo=1, estimated)        1.842    15.920    g_chain.s_7
+    BUFGCTRL_X0Y7        BUFGCTRL (Prop_bufgctrl_I0_O)
+                                                      0.096    16.016 r  g_chain.g_st[7].u_st/O
+                         net (fo=1, estimated)        0.275    16.290    g_chain.s_8
+    BUFGCTRL_X0Y8        BUFGCTRL (Prop_bufgctrl_I0_O)
+                                                      0.096    16.386 r  g_chain.g_st[8].u_st/O
+                         net (fo=1, estimated)        1.842    18.228    g_chain.s_9
+    BUFGCTRL_X0Y9        BUFGCTRL (Prop_bufgctrl_I0_O)
+                                                      0.096    18.324 r  g_chain.g_st[9].u_st/O
+                         net (fo=1, estimated)        1.842    20.166    g_chain.s_10
+    BUFGCTRL_X0Y10       BUFGCTRL (Prop_bufgctrl_I0_O)
+                                                      0.096    20.262 r  g_chain.g_st[10].u_st/O
+                         net (fo=1, estimated)        1.842    22.104    g_chain.s_11
+    BUFGCTRL_X0Y11       BUFGCTRL (Prop_bufgctrl_I0_O)
+                                                      0.096    22.200 r  g_chain.g_st[11].u_st/O
+                         net (fo=17, estimated)       1.641    23.841    clkm
+    SLICE_X0Y2           FDRE                                         r  cnt_reg[4]/C
+  -------------------------------------------------------------------    -------------------
+    SLICE_X0Y2           FDRE (Prop_fdre_C_Q)         0.456    24.297 r  cnt_reg[4]/Q
+                         net (fo=2, estimated)        0.507    24.804    cnt_reg[4]
+    SLICE_X0Y2           CARRY4 (Prop_carry4_S[0]_CO[3])
+                                                      0.656    25.460 r  cnt_reg[4]_i_1/CO[3]
+                         net (fo=1, estimated)        0.000    25.460    cnt_reg[4]_i_1_n_0
+    SLICE_X0Y3           CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.114    25.574 r  cnt_reg[8]_i_1/CO[3]
+                         net (fo=1, estimated)        0.000    25.574    cnt_reg[8]_i_1_n_0
+    SLICE_X0Y4           CARRY4 (Prop_carry4_CI_O[1])
+[brief 208: truncated to the first 400 lines; the full report is 4060206 bytes, regenerate with tcl/run_jobs.tcl]

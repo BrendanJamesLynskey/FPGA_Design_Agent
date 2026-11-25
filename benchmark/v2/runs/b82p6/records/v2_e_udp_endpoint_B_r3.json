@@ -1,0 +1,108 @@
+{
+ "task": "v2_e_udp_endpoint",
+ "level": "L2",
+ "arm": "B",
+ "repeat": 3,
+ "attempt": 1,
+ "run_id": "20261121-084350-2fe1",
+ "rc": -9,
+ "wall_s": 14400.6,
+ "hard_limit": true,
+ "worker": "w1",
+ "code": "55cb0fa7",
+ "claude_cli": "2.1.321",
+ "spec_tests": true,
+ "started": "2026-11-21 08:43:49",
+ "error_tail": "",
+ "tokens_lower_bound": 4287205,
+ "stage2_gates_passed": false,
+ "reached_first_model_turn": true,
+ "score": {
+  "pass": false,
+  "tests_passed": 1,
+  "tests": 10,
+  "failed": [
+   "test_ep_counter_registers_show_the_count_before_the_command",
+   "test_ep_damaged_packets_get_no_reply_and_change_nothing",
+   "test_ep_error_codes_and_consumed_numbers",
+   "test_ep_identity_reset_and_basic_commands",
+   "test_ep_random_packets",
+   "test_ep_refused_packets_leave_telemetry_alone_and_frames_are_snapshots",
+   "test_ep_sequence_rules",
+   "test_ep_short_packet_with_big_length_unmapped_writes_and_reset",
+   "test_ep_telemetry_stop_period_floor_and_restart"
+  ]
+ },
+ "score_3h": {
+  "basis": "last snapshot before the 3 h mark",
+  "snapshot": "28d39ed4e957",
+  "snapshot_age_s": 6476,
+  "snapshot_note": "02 rtl-design-creation: simulate not passing; V2 failing_tests: [14] seed1:bench_v2_e_udp_endpoint.test_drops_and_counte",
+  "pass": true,
+  "tests_passed": 10,
+  "tests": 10,
+  "failed": [],
+  "reason": null
+ },
+ "routing_events": [
+  {
+   "event": "clarify_constants_check",
+   "stage": "clarify",
+   "visit": 1,
+   "findings": [],
+   "failed": false
+  },
+  {
+   "event": "clarify_constants_check",
+   "stage": "clarify",
+   "visit": 2,
+   "findings": [],
+   "failed": false
+  },
+  {
+   "event": "p1_consequences_covered",
+   "stage": "rtl-design-creation",
+   "visit": 1,
+   "repeat": 0,
+   "checks": [
+    "failing_tests",
+    "assertions_bound_zero_failures"
+   ]
+  },
+  {
+   "event": "p1_consequences_covered",
+   "stage": "rtl-design-creation",
+   "visit": 2,
+   "repeat": 1,
+   "checks": [
+    "failing_tests",
+    "assertions_bound_zero_failures"
+   ]
+  },
+  {
+   "event": "p1_hint_sent",
+   "stage": "rtl-design-creation",
+   "visit": 2,
+   "repeat": 1,
+   "test": "test_v2_e_udp_endpoint_rtl",
+   "bench_owner_for_other_reasons": false
+  },
+  {
+   "event": "p1_consequences_covered",
+   "stage": "rtl-design-creation",
+   "visit": 4,
+   "repeat": 0,
+   "checks": [
+    "failing_tests",
+    "constrained_random_test_ran",
+    "assertions_bound_zero_failures"
+   ]
+  }
+ ],
+ "tool_calls": 258,
+ "simulate_calls": 15,
+ "artifact_tarball_sha256": "c0b1b8b1d86c982cff9aac10e0b5fec6a8a388a581491c06282bd91f389b7484",
+ "artifact_tarball_bytes": 856442,
+ "weekly_pct_before": 60.0,
+ "weekly_pct_after": 61.0
+}
