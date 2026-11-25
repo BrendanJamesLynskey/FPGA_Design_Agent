@@ -1,0 +1,62 @@
+Copyright 1986-2022 Xilinx, Inc. All Rights Reserved. Copyright 2022-2026 Advanced Micro Devices, Inc. All Rights Reserved.
+-----------------------------------------------------------------------------------------------------------------------------------------------
+| Tool Version : Vivado v.2026.1 (lin64) Build 6511674 Tue Jun 16 11:01:26 MDT 2026
+| Date         : Tue Nov 24 18:05:53 2026
+| Host         : bren-ubuntu24-04 running 64-bit Ubuntu 24.04.4 LTS
+| Command      : report_methodology -file /home/brendan/Claude_sandbox/_worktrees/208-clock-mux/build/208/a7/a7_r_srclog/methodology_route.rpt
+| Design       : mux_top
+| Device       : xc7a35tcpg236-1
+| Speed File   : -1
+| Design State : Fully Routed
+-----------------------------------------------------------------------------------------------------------------------------------------------
+
+Report Methodology
+
+Table of Contents
+-----------------
+1. REPORT SUMMARY
+2. REPORT DETAILS
+
+1. REPORT SUMMARY
+-----------------
+            Netlist: mux_top
+          Floorplan: design_1
+      Design limits: <entire design considered>
+             Max checks: <unlimited>
+             Checks found: 4
++--------+----------+---------------------------------------------+--------+
+| Rule   | Severity | Description                                 | Checks |
++--------+----------+---------------------------------------------+--------+
+| XDCB-5 | Warning  | Runtime inefficient way to find pin objects | 2      |
+| XDCH-2 | Warning  | Same min and max delay values on IO port    | 2      |
++--------+----------+---------------------------------------------+--------+
+
+2. REPORT DETAILS
+-----------------
+XDCB-5#1 Warning
+Runtime inefficient way to find pin objects  
+The option 'objects : [get_pins -hier -filter {NAME =~ *u_mmcm/CLKOUT0}]' of constraint 'create_generated_clock' uses inefficient query to find pin objects (see constraint position '4' in the Timing Constraint window in Vivado IDE). To reduce runtime, it is recommended to get the pins through the cell objects. Please refer to Using Constraints Guide (Constraints Efficiency). An example of optimal query is: get_pins -filter {REF_PIN_NAME=~yy*} -of_objects [get_cells -hierarchical xx*].
+Current XDC: /home/brendan/Claude_sandbox/_worktrees/208-clock-mux/results/208/xdc/r_base.xdc (Line: 6)
+Related violations: <none>
+
+XDCB-5#2 Warning
+Runtime inefficient way to find pin objects  
+The option 'objects : [get_pins -hier -filter {NAME =~ *u_mmcm/CLKOUT1}]' of constraint 'create_generated_clock' uses inefficient query to find pin objects (see constraint position '5' in the Timing Constraint window in Vivado IDE). To reduce runtime, it is recommended to get the pins through the cell objects. Please refer to Using Constraints Guide (Constraints Efficiency). An example of optimal query is: get_pins -filter {REF_PIN_NAME=~yy*} -of_objects [get_cells -hierarchical xx*].
+Current XDC: /home/brendan/Claude_sandbox/_worktrees/208-clock-mux/results/208/xdc/r_base.xdc (Line: 7)
+Related violations: <none>
+
+XDCH-2#1 Warning
+Same min and max delay values on IO port  
+The same input delay of 1.000 ns has been defined on port 'clk1_p' relative to clock clkref for both max and min. Make sure this reflects the design intent.
+set_input_delay -clock clkref 1.000 [get_ports {sel_in clk1_p}]
+/home/brendan/Claude_sandbox/_worktrees/208-clock-mux/results/208/xdc/r_base.xdc (Line: 3)
+Related violations: <none>
+
+XDCH-2#2 Warning
+Same min and max delay values on IO port  
+The same input delay of 1.000 ns has been defined on port 'sel_in' relative to clock clkref for both max and min. Make sure this reflects the design intent.
+set_input_delay -clock clkref 1.000 [get_ports {sel_in clk1_p}]
+/home/brendan/Claude_sandbox/_worktrees/208-clock-mux/results/208/xdc/r_base.xdc (Line: 3)
+Related violations: <none>
+
+

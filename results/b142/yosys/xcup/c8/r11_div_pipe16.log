@@ -1,0 +1,2257 @@
+
+ /----------------------------------------------------------------------------\
+ |  yosys -- Yosys Open SYnthesis Suite                                       |
+ |  Copyright (C) 2012 - 2026  Claire Xenia Wolf <claire@yosyshq.com>         |
+ |  Distributed under an ISC-like license, type "license" to see terms        |
+ \----------------------------------------------------------------------------/
+ Yosys 0.70+385 (git sha1 098e46a36, Release, Clang /usr/bin/clang++ 21.1.8)
+
+-- Running command `plugin -i slang; read_slang --top divider_ooc -G VARIANT=2 -G W=16 -G PIPE=1 /home/brendan/Claude_sandbox/_worktrees/142-yosys/results/b142/rtl/real/arith_139b/div_nonrestoring_iter.sv /home/brendan/Claude_sandbox/_worktrees/142-yosys/results/b142/rtl/real/arith_139b/div_nonrestoring_pipe.sv /home/brendan/Claude_sandbox/_worktrees/142-yosys/results/b142/rtl/real/arith_139b/div_restoring_iter.sv /home/brendan/Claude_sandbox/_worktrees/142-yosys/results/b142/rtl/real/arith_139b/div_restoring_pipe.sv /home/brendan/Claude_sandbox/_worktrees/142-yosys/results/b142/rtl/real/arith_139b/divider_ooc.sv /home/brendan/Claude_sandbox/_worktrees/142-yosys/results/b142/rtl/real/arith_139b/divider_sel.sv; synth_xilinx -family xcup -top divider_ooc -noiopad -noclkbuf -flatten -run begin:fine; opt -full; xilinx_srl -variable -minlen 3; techmap -map +/techmap.v -D LUT_SIZE=6 -D HAS_CARRY8 -map /home/brendan/Claude_sandbox/_worktrees/142-yosys/results/b142/drafts/pr_1/arith_map_carry8.v; opt -fast; synth_xilinx -family xcup -top divider_ooc -noiopad -noclkbuf -flatten -run map_cells:; tee -q -o /home/brendan/Claude_sandbox/_worktrees/142-yosys/results/b142/yosys/xcup/c8/r11_div_pipe16.stat.json stat -json -tech xilinx' --
+
+1. Executing SLANG frontend.
+Top level design units:
+    divider_ooc
+
+
+Build succeeded: 0 errors, 0 warnings
+
+1.1. Executing PROC_CLEAN pass (remove empty switches from decision trees).
+Removing empty process `divider_ooc.$389'.
+Found and cleaned up 1 empty switch in `\divider_ooc.$364'.
+Found and cleaned up 1 empty switch in `\divider_ooc.$357'.
+Removing empty process `divider_ooc.$352'.
+Found and cleaned up 1 empty switch in `\divider_ooc.$342'.
+Found and cleaned up 1 empty switch in `\divider_ooc.$335'.
+Removing empty process `divider_ooc.$334'.
+Removing empty process `divider_ooc.$329'.
+Found and cleaned up 1 empty switch in `\divider_ooc.$319'.
+Found and cleaned up 1 empty switch in `\divider_ooc.$312'.
+Removing empty process `divider_ooc.$311'.
+Removing empty process `divider_ooc.$306'.
+Found and cleaned up 1 empty switch in `\divider_ooc.$296'.
+Found and cleaned up 1 empty switch in `\divider_ooc.$289'.
+Removing empty process `divider_ooc.$288'.
+Removing empty process `divider_ooc.$283'.
+Found and cleaned up 1 empty switch in `\divider_ooc.$273'.
+Found and cleaned up 1 empty switch in `\divider_ooc.$266'.
+Removing empty process `divider_ooc.$265'.
+Removing empty process `divider_ooc.$260'.
+Found and cleaned up 1 empty switch in `\divider_ooc.$250'.
+Found and cleaned up 1 empty switch in `\divider_ooc.$243'.
+Removing empty process `divider_ooc.$242'.
+Removing empty process `divider_ooc.$237'.
+Found and cleaned up 1 empty switch in `\divider_ooc.$227'.
+Found and cleaned up 1 empty switch in `\divider_ooc.$220'.
+Removing empty process `divider_ooc.$219'.
+Removing empty process `divider_ooc.$214'.
+Found and cleaned up 1 empty switch in `\divider_ooc.$204'.
+Found and cleaned up 1 empty switch in `\divider_ooc.$197'.
+Removing empty process `divider_ooc.$196'.
+Removing empty process `divider_ooc.$191'.
+Found and cleaned up 1 empty switch in `\divider_ooc.$181'.
+Found and cleaned up 1 empty switch in `\divider_ooc.$174'.
+Removing empty process `divider_ooc.$173'.
+Removing empty process `divider_ooc.$168'.
+Found and cleaned up 1 empty switch in `\divider_ooc.$158'.
+Found and cleaned up 1 empty switch in `\divider_ooc.$151'.
+Removing empty process `divider_ooc.$150'.
+Removing empty process `divider_ooc.$145'.
+Found and cleaned up 1 empty switch in `\divider_ooc.$135'.
+Found and cleaned up 1 empty switch in `\divider_ooc.$128'.
+Removing empty process `divider_ooc.$127'.
+Removing empty process `divider_ooc.$122'.
+Found and cleaned up 1 empty switch in `\divider_ooc.$112'.
+Found and cleaned up 1 empty switch in `\divider_ooc.$105'.
+Removing empty process `divider_ooc.$104'.
+Removing empty process `divider_ooc.$99'.
+Found and cleaned up 1 empty switch in `\divider_ooc.$89'.
+Found and cleaned up 1 empty switch in `\divider_ooc.$82'.
+Removing empty process `divider_ooc.$81'.
+Removing empty process `divider_ooc.$76'.
+Found and cleaned up 1 empty switch in `\divider_ooc.$66'.
+Found and cleaned up 1 empty switch in `\divider_ooc.$59'.
+Removing empty process `divider_ooc.$58'.
+Removing empty process `divider_ooc.$53'.
+Found and cleaned up 1 empty switch in `\divider_ooc.$43'.
+Found and cleaned up 1 empty switch in `\divider_ooc.$36'.
+Removing empty process `divider_ooc.$35'.
+Removing empty process `divider_ooc.$30'.
+Found and cleaned up 1 empty switch in `\divider_ooc.$20'.
+Found and cleaned up 1 empty switch in `\divider_ooc.$13'.
+Removing empty process `divider_ooc.$12'.
+Removing empty process `divider_ooc.$7'.
+Removing empty process `divider_ooc.$0'.
+Cleaned up 32 empty switches.
+
+1.2. Executing PROC_RMDEAD pass (remove dead branches from decision trees).
+Marked 1 switch rules as full_case in process $273 in module divider_ooc.
+Marked 1 switch rules as full_case in process $158 in module divider_ooc.
+Marked 1 switch rules as full_case in process $319 in module divider_ooc.
+Marked 1 switch rules as full_case in process $135 in module divider_ooc.
+Marked 1 switch rules as full_case in process $250 in module divider_ooc.
+Marked 1 switch rules as full_case in process $112 in module divider_ooc.
+Marked 1 switch rules as full_case in process $342 in module divider_ooc.
+Marked 1 switch rules as full_case in process $89 in module divider_ooc.
+Marked 1 switch rules as full_case in process $227 in module divider_ooc.
+Marked 1 switch rules as full_case in process $66 in module divider_ooc.
+Marked 1 switch rules as full_case in process $296 in module divider_ooc.
+Marked 1 switch rules as full_case in process $43 in module divider_ooc.
+Marked 1 switch rules as full_case in process $204 in module divider_ooc.
+Marked 1 switch rules as full_case in process $20 in module divider_ooc.
+Marked 1 switch rules as full_case in process $364 in module divider_ooc.
+Marked 1 switch rules as full_case in process $181 in module divider_ooc.
+Removed a total of 0 dead cases.
+
+1.3. Executing PROC_PRUNE pass (remove redundant assignments in processes).
+Removed 48 redundant assignments.
+Promoted 32 assignments to connections.
+
+1.4. Executing PROC_INIT pass (extract init attributes).
+
+1.5. Executing PROC_ROM pass (convert switches to ROMs).
+Converted 0 switches.
+<suppressed ~16 debug messages>
+
+1.6. Executing PROC_MUX pass (convert decision trees to multiplexers).
+Creating decoders for process `\divider_ooc.$174'.
+Creating decoders for process `\divider_ooc.$273'.
+     1/1: $u_core.g_v.u.v_q[11]$274
+Creating decoders for process `\divider_ooc.$266'.
+Creating decoders for process `\divider_ooc.$158'.
+     1/1: $u_core.g_v.u.v_q[6]$159
+Creating decoders for process `\divider_ooc.$151'.
+Creating decoders for process `\divider_ooc.$319'.
+     1/1: $u_core.g_v.u.v_q[13]$320
+Creating decoders for process `\divider_ooc.$312'.
+Creating decoders for process `\divider_ooc.$135'.
+     1/1: $u_core.g_v.u.v_q[5]$136
+Creating decoders for process `\divider_ooc.$128'.
+Creating decoders for process `\divider_ooc.$250'.
+     1/1: $u_core.g_v.u.v_q[10]$251
+Creating decoders for process `\divider_ooc.$243'.
+Creating decoders for process `\divider_ooc.$112'.
+     1/1: $u_core.g_v.u.v_q[4]$113
+Creating decoders for process `\divider_ooc.$105'.
+Creating decoders for process `\divider_ooc.$342'.
+     1/1: $u_core.g_v.u.v_q[14]$343
+Creating decoders for process `\divider_ooc.$335'.
+Creating decoders for process `\divider_ooc.$89'.
+     1/1: $u_core.g_v.u.v_q[3]$90
+Creating decoders for process `\divider_ooc.$82'.
+Creating decoders for process `\divider_ooc.$227'.
+     1/1: $u_core.g_v.u.v_q[9]$228
+Creating decoders for process `\divider_ooc.$220'.
+Creating decoders for process `\divider_ooc.$66'.
+     1/1: $u_core.g_v.u.v_q[2]$67
+Creating decoders for process `\divider_ooc.$59'.
+Creating decoders for process `\divider_ooc.$296'.
+     1/1: $u_core.g_v.u.v_q[12]$297
+Creating decoders for process `\divider_ooc.$289'.
+Creating decoders for process `\divider_ooc.$43'.
+     1/1: $u_core.g_v.u.v_q[1]$44
+Creating decoders for process `\divider_ooc.$36'.
+Creating decoders for process `\divider_ooc.$204'.
+     1/1: $u_core.g_v.u.v_q[8]$205
+Creating decoders for process `\divider_ooc.$197'.
+Creating decoders for process `\divider_ooc.$20'.
+     1/1: $u_core.g_v.u.v_q[0]$21
+Creating decoders for process `\divider_ooc.$13'.
+Creating decoders for process `\divider_ooc.$357'.
+Creating decoders for process `\divider_ooc.$364'.
+     1/1: $u_core.g_v.u.v_q[15]$365
+Creating decoders for process `\divider_ooc.$181'.
+     1/1: $u_core.g_v.u.v_q[7]$182
+
+1.7. Executing PROC_CLEAN pass (remove empty switches from decision trees).
+Removing empty process `divider_ooc.$174'.
+Found and cleaned up 1 empty switch in `\divider_ooc.$273'.
+Removing empty process `divider_ooc.$273'.
+Removing empty process `divider_ooc.$266'.
+Found and cleaned up 1 empty switch in `\divider_ooc.$158'.
+Removing empty process `divider_ooc.$158'.
+Removing empty process `divider_ooc.$151'.
+Found and cleaned up 1 empty switch in `\divider_ooc.$319'.
+Removing empty process `divider_ooc.$319'.
+Removing empty process `divider_ooc.$312'.
+Found and cleaned up 1 empty switch in `\divider_ooc.$135'.
+Removing empty process `divider_ooc.$135'.
+Removing empty process `divider_ooc.$128'.
+Found and cleaned up 1 empty switch in `\divider_ooc.$250'.
+Removing empty process `divider_ooc.$250'.
+Removing empty process `divider_ooc.$243'.
+Found and cleaned up 1 empty switch in `\divider_ooc.$112'.
+Removing empty process `divider_ooc.$112'.
+Removing empty process `divider_ooc.$105'.
+Found and cleaned up 1 empty switch in `\divider_ooc.$342'.
+Removing empty process `divider_ooc.$342'.
+Removing empty process `divider_ooc.$335'.
+Found and cleaned up 1 empty switch in `\divider_ooc.$89'.
+Removing empty process `divider_ooc.$89'.
+Removing empty process `divider_ooc.$82'.
+Found and cleaned up 1 empty switch in `\divider_ooc.$227'.
+Removing empty process `divider_ooc.$227'.
+Removing empty process `divider_ooc.$220'.
+Found and cleaned up 1 empty switch in `\divider_ooc.$66'.
+Removing empty process `divider_ooc.$66'.
+Removing empty process `divider_ooc.$59'.
+Found and cleaned up 1 empty switch in `\divider_ooc.$296'.
+Removing empty process `divider_ooc.$296'.
+Removing empty process `divider_ooc.$289'.
+Found and cleaned up 1 empty switch in `\divider_ooc.$43'.
+Removing empty process `divider_ooc.$43'.
+Removing empty process `divider_ooc.$36'.
+Found and cleaned up 1 empty switch in `\divider_ooc.$204'.
+Removing empty process `divider_ooc.$204'.
+Removing empty process `divider_ooc.$197'.
+Found and cleaned up 1 empty switch in `\divider_ooc.$20'.
+Removing empty process `divider_ooc.$20'.
+Removing empty process `divider_ooc.$13'.
+Removing empty process `divider_ooc.$357'.
+Found and cleaned up 1 empty switch in `\divider_ooc.$364'.
+Removing empty process `divider_ooc.$364'.
+Found and cleaned up 1 empty switch in `\divider_ooc.$181'.
+Removing empty process `divider_ooc.$181'.
+Cleaned up 16 empty switches.
+
+1.8. Executing OPT_EXPR pass (perform const folding).
+Optimizing module divider_ooc.
+<suppressed ~32 debug messages>
+
+2. Executing SYNTH_XILINX pass.
+
+2.1. Executing Verilog-2005 frontend: /home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/xilinx/cells_sim.v
+Parsing Verilog input from `/home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/xilinx/cells_sim.v' to AST representation.
+Generating RTLIL representation for module `\VCC'.
+Generating RTLIL representation for module `\GND'.
+Generating RTLIL representation for module `\IBUF'.
+Generating RTLIL representation for module `\IBUFG'.
+Generating RTLIL representation for module `\OBUF'.
+Generating RTLIL representation for module `\IOBUF'.
+Generating RTLIL representation for module `\OBUFT'.
+Generating RTLIL representation for module `\BUFG'.
+Generating RTLIL representation for module `\BUFGCTRL'.
+Generating RTLIL representation for module `\BUFHCE'.
+Generating RTLIL representation for module `\INV'.
+Generating RTLIL representation for module `\LUT1'.
+Generating RTLIL representation for module `\LUT2'.
+Generating RTLIL representation for module `\LUT3'.
+Generating RTLIL representation for module `\LUT4'.
+Generating RTLIL representation for module `\LUT5'.
+Generating RTLIL representation for module `\LUT6'.
+Generating RTLIL representation for module `\LUT6_2'.
+Generating RTLIL representation for module `\$__ABC9_LUT7'.
+Generating RTLIL representation for module `\$__ABC9_LUT8'.
+Generating RTLIL representation for module `\MUXCY'.
+Generating RTLIL representation for module `\MUXF5'.
+Generating RTLIL representation for module `\MUXF6'.
+Generating RTLIL representation for module `\MUXF7'.
+Generating RTLIL representation for module `\MUXF8'.
+Generating RTLIL representation for module `\MUXF9'.
+Generating RTLIL representation for module `\XORCY'.
+Generating RTLIL representation for module `\CARRY4'.
+Generating RTLIL representation for module `\CARRY8'.
+Generating RTLIL representation for module `\ORCY'.
+Generating RTLIL representation for module `\MULT_AND'.
+Generating RTLIL representation for module `\FDRE'.
+Generating RTLIL representation for module `\FDRE_1'.
+Generating RTLIL representation for module `\FDSE'.
+Generating RTLIL representation for module `\FDSE_1'.
+Generating RTLIL representation for module `\FDRSE'.
+Generating RTLIL representation for module `\FDRSE_1'.
+Generating RTLIL representation for module `\FDCE'.
+Generating RTLIL representation for module `\FDCE_1'.
+Generating RTLIL representation for module `\FDPE'.
+Generating RTLIL representation for module `\FDPE_1'.
+Generating RTLIL representation for module `\FDCPE'.
+Generating RTLIL representation for module `\FDCPE_1'.
+Generating RTLIL representation for module `\LDCE'.
+Generating RTLIL representation for module `\LDPE'.
+Generating RTLIL representation for module `\LDCPE'.
+Generating RTLIL representation for module `\AND2B1L'.
+Generating RTLIL representation for module `\OR2L'.
+Generating RTLIL representation for module `\RAM16X1S'.
+Generating RTLIL representation for module `\RAM16X1S_1'.
+Generating RTLIL representation for module `\RAM32X1S'.
+Generating RTLIL representation for module `\RAM32X1S_1'.
+Generating RTLIL representation for module `\RAM64X1S'.
+Generating RTLIL representation for module `\RAM64X1S_1'.
+Generating RTLIL representation for module `\RAM128X1S'.
+Generating RTLIL representation for module `\RAM128X1S_1'.
+Generating RTLIL representation for module `\RAM256X1S'.
+Generating RTLIL representation for module `\RAM512X1S'.
+Generating RTLIL representation for module `\RAM16X2S'.
+Generating RTLIL representation for module `\RAM32X2S'.
+Generating RTLIL representation for module `\RAM64X2S'.
+Generating RTLIL representation for module `\RAM16X4S'.
+Generating RTLIL representation for module `\RAM32X4S'.
+Generating RTLIL representation for module `\RAM16X8S'.
+Generating RTLIL representation for module `\RAM32X8S'.
+Generating RTLIL representation for module `\RAM16X1D'.
+Generating RTLIL representation for module `\RAM16X1D_1'.
+Generating RTLIL representation for module `\RAM32X1D'.
+Generating RTLIL representation for module `\RAM32X1D_1'.
+Generating RTLIL representation for module `\RAM64X1D'.
+Generating RTLIL representation for module `\RAM64X1D_1'.
+Generating RTLIL representation for module `\RAM128X1D'.
+Generating RTLIL representation for module `\RAM256X1D'.
+Generating RTLIL representation for module `\RAM32M'.
+Generating RTLIL representation for module `\RAM32M16'.
+Generating RTLIL representation for module `\RAM64M'.
+Generating RTLIL representation for module `\RAM64M8'.
+Generating RTLIL representation for module `\RAM32X16DR8'.
+Generating RTLIL representation for module `\RAM64X8SW'.
+Generating RTLIL representation for module `\ROM16X1'.
+Generating RTLIL representation for module `\ROM32X1'.
+Generating RTLIL representation for module `\ROM64X1'.
+Generating RTLIL representation for module `\ROM128X1'.
+Generating RTLIL representation for module `\ROM256X1'.
+Generating RTLIL representation for module `\SRL16'.
+Generating RTLIL representation for module `\SRL16E'.
+Generating RTLIL representation for module `\SRLC16'.
+Generating RTLIL representation for module `\SRLC16E'.
+Generating RTLIL representation for module `\SRLC32E'.
+Generating RTLIL representation for module `\CFGLUT5'.
+Generating RTLIL representation for module `\MULT18X18'.
+Generating RTLIL representation for module `\MULT18X18S'.
+Generating RTLIL representation for module `\MULT18X18SIO'.
+Generating RTLIL representation for module `\DSP48A'.
+Generating RTLIL representation for module `\DSP48A1'.
+Generating RTLIL representation for module `\DSP48'.
+Generating RTLIL representation for module `\DSP48E1'.
+Generating RTLIL representation for module `\RAMB18E1'.
+Generating RTLIL representation for module `\RAMB36E1'.
+Successfully finished Verilog frontend.
+
+2.2. Executing Verilog-2005 frontend: /home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/xilinx/cells_xtra.v
+Parsing Verilog input from `/home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/xilinx/cells_xtra.v' to AST representation.
+Generating RTLIL representation for module `\RAMB4_S1'.
+Generating RTLIL representation for module `\RAMB4_S2'.
+Generating RTLIL representation for module `\RAMB4_S4'.
+Generating RTLIL representation for module `\RAMB4_S8'.
+Generating RTLIL representation for module `\RAMB4_S16'.
+Generating RTLIL representation for module `\RAMB4_S1_S1'.
+Generating RTLIL representation for module `\RAMB4_S1_S2'.
+Generating RTLIL representation for module `\RAMB4_S1_S4'.
+Generating RTLIL representation for module `\RAMB4_S1_S8'.
+Generating RTLIL representation for module `\RAMB4_S1_S16'.
+Generating RTLIL representation for module `\RAMB4_S2_S2'.
+Generating RTLIL representation for module `\RAMB4_S2_S4'.
+Generating RTLIL representation for module `\RAMB4_S2_S8'.
+Generating RTLIL representation for module `\RAMB4_S2_S16'.
+Generating RTLIL representation for module `\RAMB4_S4_S4'.
+Generating RTLIL representation for module `\RAMB4_S4_S8'.
+Generating RTLIL representation for module `\RAMB4_S4_S16'.
+Generating RTLIL representation for module `\RAMB4_S8_S8'.
+Generating RTLIL representation for module `\RAMB4_S8_S16'.
+Generating RTLIL representation for module `\RAMB4_S16_S16'.
+Generating RTLIL representation for module `\RAMB16_S1'.
+Generating RTLIL representation for module `\RAMB16_S2'.
+Generating RTLIL representation for module `\RAMB16_S4'.
+Generating RTLIL representation for module `\RAMB16_S9'.
+Generating RTLIL representation for module `\RAMB16_S18'.
+Generating RTLIL representation for module `\RAMB16_S36'.
+Generating RTLIL representation for module `\RAMB16_S1_S1'.
+Generating RTLIL representation for module `\RAMB16_S1_S2'.
+Generating RTLIL representation for module `\RAMB16_S1_S4'.
+Generating RTLIL representation for module `\RAMB16_S1_S9'.
+Generating RTLIL representation for module `\RAMB16_S1_S18'.
+Generating RTLIL representation for module `\RAMB16_S1_S36'.
+Generating RTLIL representation for module `\RAMB16_S2_S2'.
+Generating RTLIL representation for module `\RAMB16_S2_S4'.
+Generating RTLIL representation for module `\RAMB16_S2_S9'.
+Generating RTLIL representation for module `\RAMB16_S2_S18'.
+Generating RTLIL representation for module `\RAMB16_S2_S36'.
+Generating RTLIL representation for module `\RAMB16_S4_S4'.
+Generating RTLIL representation for module `\RAMB16_S4_S9'.
+Generating RTLIL representation for module `\RAMB16_S4_S18'.
+Generating RTLIL representation for module `\RAMB16_S4_S36'.
+Generating RTLIL representation for module `\RAMB16_S9_S9'.
+Generating RTLIL representation for module `\RAMB16_S9_S18'.
+Generating RTLIL representation for module `\RAMB16_S9_S36'.
+Generating RTLIL representation for module `\RAMB16_S18_S18'.
+Generating RTLIL representation for module `\RAMB16_S18_S36'.
+Generating RTLIL representation for module `\RAMB16_S36_S36'.
+Generating RTLIL representation for module `\RAMB16BWE_S18'.
+Generating RTLIL representation for module `\RAMB16BWE_S36'.
+Generating RTLIL representation for module `\RAMB16BWE_S18_S9'.
+Generating RTLIL representation for module `\RAMB16BWE_S18_S18'.
+Generating RTLIL representation for module `\RAMB16BWE_S36_S9'.
+Generating RTLIL representation for module `\RAMB16BWE_S36_S18'.
+Generating RTLIL representation for module `\RAMB16BWE_S36_S36'.
+Generating RTLIL representation for module `\RAMB16BWER'.
+Generating RTLIL representation for module `\RAMB8BWER'.
+Generating RTLIL representation for module `\FIFO16'.
+Generating RTLIL representation for module `\RAMB16'.
+Generating RTLIL representation for module `\RAMB32_S64_ECC'.
+Generating RTLIL representation for module `\FIFO18'.
+Generating RTLIL representation for module `\FIFO18_36'.
+Generating RTLIL representation for module `\FIFO36'.
+Generating RTLIL representation for module `\FIFO36_72'.
+Generating RTLIL representation for module `\RAMB18'.
+Generating RTLIL representation for module `\RAMB36'.
+Generating RTLIL representation for module `\RAMB18SDP'.
+Generating RTLIL representation for module `\RAMB36SDP'.
+Generating RTLIL representation for module `\FIFO18E1'.
+Generating RTLIL representation for module `\FIFO36E1'.
+Generating RTLIL representation for module `\FIFO18E2'.
+Generating RTLIL representation for module `\FIFO36E2'.
+Generating RTLIL representation for module `\RAMB18E2'.
+Generating RTLIL representation for module `\RAMB36E2'.
+Generating RTLIL representation for module `\URAM288'.
+Generating RTLIL representation for module `\URAM288_BASE'.
+Generating RTLIL representation for module `\DSP48E'.
+Generating RTLIL representation for module `\DSP48E2'.
+Generating RTLIL representation for module `\FDDRCPE'.
+Generating RTLIL representation for module `\FDDRRSE'.
+Generating RTLIL representation for module `\IFDDRCPE'.
+Generating RTLIL representation for module `\IFDDRRSE'.
+Generating RTLIL representation for module `\OFDDRCPE'.
+Generating RTLIL representation for module `\OFDDRRSE'.
+Generating RTLIL representation for module `\OFDDRTCPE'.
+Generating RTLIL representation for module `\OFDDRTRSE'.
+Generating RTLIL representation for module `\IDDR2'.
+Generating RTLIL representation for module `\ODDR2'.
+Generating RTLIL representation for module `\IDDR'.
+Generating RTLIL representation for module `\IDDR_2CLK'.
+Generating RTLIL representation for module `\ODDR'.
+Generating RTLIL representation for module `\IDELAYCTRL'.
+Generating RTLIL representation for module `\IDELAY'.
+Generating RTLIL representation for module `\ISERDES'.
+Generating RTLIL representation for module `\OSERDES'.
+Generating RTLIL representation for module `\IODELAY'.
+Generating RTLIL representation for module `\ISERDES_NODELAY'.
+Generating RTLIL representation for module `\IODELAYE1'.
+Generating RTLIL representation for module `\ISERDESE1'.
+Generating RTLIL representation for module `\OSERDESE1'.
+Generating RTLIL representation for module `\IDELAYE2'.
+Generating RTLIL representation for module `\ODELAYE2'.
+Generating RTLIL representation for module `\ISERDESE2'.
+Generating RTLIL representation for module `\OSERDESE2'.
+Generating RTLIL representation for module `\PHASER_IN'.
+Generating RTLIL representation for module `\PHASER_IN_PHY'.
+Generating RTLIL representation for module `\PHASER_OUT'.
+Generating RTLIL representation for module `\PHASER_OUT_PHY'.
+Generating RTLIL representation for module `\PHASER_REF'.
+Generating RTLIL representation for module `\PHY_CONTROL'.
+Generating RTLIL representation for module `\IDDRE1'.
+Generating RTLIL representation for module `\ODDRE1'.
+Generating RTLIL representation for module `\IDELAYE3'.
+Generating RTLIL representation for module `\ODELAYE3'.
+Generating RTLIL representation for module `\ISERDESE3'.
+Generating RTLIL representation for module `\OSERDESE3'.
+Generating RTLIL representation for module `\BITSLICE_CONTROL'.
+Generating RTLIL representation for module `\RIU_OR'.
+Generating RTLIL representation for module `\RX_BITSLICE'.
+Generating RTLIL representation for module `\RXTX_BITSLICE'.
+Generating RTLIL representation for module `\TX_BITSLICE'.
+Generating RTLIL representation for module `\TX_BITSLICE_TRI'.
+Generating RTLIL representation for module `\IODELAY2'.
+Generating RTLIL representation for module `\IODRP2'.
+Generating RTLIL representation for module `\IODRP2_MCB'.
+Generating RTLIL representation for module `\ISERDES2'.
+Generating RTLIL representation for module `\OSERDES2'.
+Generating RTLIL representation for module `\IBUF_DLY_ADJ'.
+Generating RTLIL representation for module `\IBUF_IBUFDISABLE'.
+Generating RTLIL representation for module `\IBUF_INTERMDISABLE'.
+Generating RTLIL representation for module `\IBUF_ANALOG'.
+Generating RTLIL representation for module `\IBUFE3'.
+Generating RTLIL representation for module `\IBUFDS'.
+Generating RTLIL representation for module `\IBUFDS_DLY_ADJ'.
+Generating RTLIL representation for module `\IBUFDS_IBUFDISABLE'.
+Generating RTLIL representation for module `\IBUFDS_INTERMDISABLE'.
+Generating RTLIL representation for module `\IBUFDS_DIFF_OUT'.
+Generating RTLIL representation for module `\IBUFDS_DIFF_OUT_IBUFDISABLE'.
+Generating RTLIL representation for module `\IBUFDS_DIFF_OUT_INTERMDISABLE'.
+Generating RTLIL representation for module `\IBUFDSE3'.
+Generating RTLIL representation for module `\IBUFDS_DPHY'.
+Generating RTLIL representation for module `\IBUFGDS'.
+Generating RTLIL representation for module `\IBUFGDS_DIFF_OUT'.
+Generating RTLIL representation for module `\IOBUF_DCIEN'.
+Generating RTLIL representation for module `\IOBUF_INTERMDISABLE'.
+Generating RTLIL representation for module `\IOBUFE3'.
+Generating RTLIL representation for module `\IOBUFDS'.
+Generating RTLIL representation for module `\IOBUFDS_DCIEN'.
+Generating RTLIL representation for module `\IOBUFDS_INTERMDISABLE'.
+Generating RTLIL representation for module `\IOBUFDS_DIFF_OUT'.
+Generating RTLIL representation for module `\IOBUFDS_DIFF_OUT_DCIEN'.
+Generating RTLIL representation for module `\IOBUFDS_DIFF_OUT_INTERMDISABLE'.
+Generating RTLIL representation for module `\IOBUFDSE3'.
+Generating RTLIL representation for module `\OBUFDS'.
+Generating RTLIL representation for module `\OBUFDS_DPHY'.
+Generating RTLIL representation for module `\OBUFTDS'.
+Generating RTLIL representation for module `\KEEPER'.
+Generating RTLIL representation for module `\PULLDOWN'.
+Generating RTLIL representation for module `\PULLUP'.
+Generating RTLIL representation for module `\DCIRESET'.
+Generating RTLIL representation for module `\HPIO_VREF'.
+Generating RTLIL representation for module `\BUFGCE'.
+Generating RTLIL representation for module `\BUFGCE_1'.
+Generating RTLIL representation for module `\BUFGMUX'.
+Generating RTLIL representation for module `\BUFGMUX_1'.
+Generating RTLIL representation for module `\BUFGMUX_CTRL'.
+Generating RTLIL representation for module `\BUFGMUX_VIRTEX4'.
+Generating RTLIL representation for module `\BUFG_GT'.
+Generating RTLIL representation for module `\BUFG_GT_SYNC'.
+Generating RTLIL representation for module `\BUFG_PS'.
+Generating RTLIL representation for module `\BUFGCE_DIV'.
+Generating RTLIL representation for module `\BUFH'.
+Generating RTLIL representation for module `\BUFIO2'.
+Generating RTLIL representation for module `\BUFIO2_2CLK'.
+Generating RTLIL representation for module `\BUFIO2FB'.
+Generating RTLIL representation for module `\BUFPLL'.
+Generating RTLIL representation for module `\BUFPLL_MCB'.
+Generating RTLIL representation for module `\BUFIO'.
+Generating RTLIL representation for module `\BUFIODQS'.
+Generating RTLIL representation for module `\BUFR'.
+Generating RTLIL representation for module `\BUFMR'.
+Generating RTLIL representation for module `\BUFMRCE'.
+Generating RTLIL representation for module `\DCM'.
+Generating RTLIL representation for module `\DCM_SP'.
+Generating RTLIL representation for module `\DCM_CLKGEN'.
+Generating RTLIL representation for module `\DCM_ADV'.
+Generating RTLIL representation for module `\DCM_BASE'.
+Generating RTLIL representation for module `\DCM_PS'.
+Generating RTLIL representation for module `\PMCD'.
+Generating RTLIL representation for module `\PLL_ADV'.
+Generating RTLIL representation for module `\PLL_BASE'.
+Generating RTLIL representation for module `\MMCM_ADV'.
+Generating RTLIL representation for module `\MMCM_BASE'.
+Generating RTLIL representation for module `\MMCME2_ADV'.
+Generating RTLIL representation for module `\MMCME2_BASE'.
+Generating RTLIL representation for module `\PLLE2_ADV'.
+Generating RTLIL representation for module `\PLLE2_BASE'.
+Generating RTLIL representation for module `\MMCME3_ADV'.
+Generating RTLIL representation for module `\MMCME3_BASE'.
+Generating RTLIL representation for module `\PLLE3_ADV'.
+Generating RTLIL representation for module `\PLLE3_BASE'.
+Generating RTLIL representation for module `\MMCME4_ADV'.
+Generating RTLIL representation for module `\MMCME4_BASE'.
+Generating RTLIL representation for module `\PLLE4_ADV'.
+Generating RTLIL representation for module `\PLLE4_BASE'.
+Generating RTLIL representation for module `\BUFT'.
+Generating RTLIL representation for module `\IN_FIFO'.
+Generating RTLIL representation for module `\OUT_FIFO'.
+Generating RTLIL representation for module `\HARD_SYNC'.
+Generating RTLIL representation for module `\STARTUP_SPARTAN3'.
+Generating RTLIL representation for module `\STARTUP_SPARTAN3E'.
+Generating RTLIL representation for module `\STARTUP_SPARTAN3A'.
+Generating RTLIL representation for module `\STARTUP_SPARTAN6'.
+Generating RTLIL representation for module `\STARTUP_VIRTEX4'.
+Generating RTLIL representation for module `\STARTUP_VIRTEX5'.
+Generating RTLIL representation for module `\STARTUP_VIRTEX6'.
+Generating RTLIL representation for module `\STARTUPE2'.
+Generating RTLIL representation for module `\STARTUPE3'.
+Generating RTLIL representation for module `\CAPTURE_SPARTAN3'.
+Generating RTLIL representation for module `\CAPTURE_SPARTAN3A'.
+Generating RTLIL representation for module `\CAPTURE_VIRTEX4'.
+Generating RTLIL representation for module `\CAPTURE_VIRTEX5'.
+Generating RTLIL representation for module `\CAPTURE_VIRTEX6'.
+Generating RTLIL representation for module `\CAPTUREE2'.
+Generating RTLIL representation for module `\ICAP_SPARTAN3A'.
+Generating RTLIL representation for module `\ICAP_SPARTAN6'.
+Generating RTLIL representation for module `\ICAP_VIRTEX4'.
+Generating RTLIL representation for module `\ICAP_VIRTEX5'.
+Generating RTLIL representation for module `\ICAP_VIRTEX6'.
+Generating RTLIL representation for module `\ICAPE2'.
+Generating RTLIL representation for module `\ICAPE3'.
+Generating RTLIL representation for module `\BSCAN_SPARTAN3'.
+Generating RTLIL representation for module `\BSCAN_SPARTAN3A'.
+Generating RTLIL representation for module `\BSCAN_SPARTAN6'.
+Generating RTLIL representation for module `\BSCAN_VIRTEX4'.
+Generating RTLIL representation for module `\BSCAN_VIRTEX5'.
+Generating RTLIL representation for module `\BSCAN_VIRTEX6'.
+Generating RTLIL representation for module `\BSCANE2'.
+Generating RTLIL representation for module `\DNA_PORT'.
+Generating RTLIL representation for module `\DNA_PORTE2'.
+Generating RTLIL representation for module `\FRAME_ECC_VIRTEX4'.
+Generating RTLIL representation for module `\FRAME_ECC_VIRTEX5'.
+Generating RTLIL representation for module `\FRAME_ECC_VIRTEX6'.
+Generating RTLIL representation for module `\FRAME_ECCE2'.
+Generating RTLIL representation for module `\FRAME_ECCE3'.
+Generating RTLIL representation for module `\FRAME_ECCE4'.
+Generating RTLIL representation for module `\USR_ACCESS_VIRTEX4'.
+Generating RTLIL representation for module `\USR_ACCESS_VIRTEX5'.
+Generating RTLIL representation for module `\USR_ACCESS_VIRTEX6'.
+Generating RTLIL representation for module `\USR_ACCESSE2'.
+Generating RTLIL representation for module `\POST_CRC_INTERNAL'.
+Generating RTLIL representation for module `\SUSPEND_SYNC'.
+Generating RTLIL representation for module `\KEY_CLEAR'.
+Generating RTLIL representation for module `\MASTER_JTAG'.
+Generating RTLIL representation for module `\SPI_ACCESS'.
+Generating RTLIL representation for module `\EFUSE_USR'.
+Generating RTLIL representation for module `\SYSMON'.
+Generating RTLIL representation for module `\XADC'.
+Generating RTLIL representation for module `\SYSMONE1'.
+Generating RTLIL representation for module `\SYSMONE4'.
+Generating RTLIL representation for module `\GTPA1_DUAL'.
+Generating RTLIL representation for module `\GT11_CUSTOM'.
+Generating RTLIL representation for module `\GT11_DUAL'.
+Generating RTLIL representation for module `\GT11CLK'.
+Generating RTLIL representation for module `\GT11CLK_MGT'.
+Generating RTLIL representation for module `\GTP_DUAL'.
+Generating RTLIL representation for module `\GTX_DUAL'.
+Generating RTLIL representation for module `\CRC32'.
+Generating RTLIL representation for module `\CRC64'.
+Generating RTLIL representation for module `\GTHE1_QUAD'.
+Generating RTLIL representation for module `\GTXE1'.
+Generating RTLIL representation for module `\IBUFDS_GTXE1'.
+Generating RTLIL representation for module `\IBUFDS_GTHE1'.
+Generating RTLIL representation for module `\GTHE2_CHANNEL'.
+Generating RTLIL representation for module `\GTHE2_COMMON'.
+Generating RTLIL representation for module `\GTPE2_CHANNEL'.
+Generating RTLIL representation for module `\GTPE2_COMMON'.
+Generating RTLIL representation for module `\GTXE2_CHANNEL'.
+Generating RTLIL representation for module `\GTXE2_COMMON'.
+Generating RTLIL representation for module `\IBUFDS_GTE2'.
+Generating RTLIL representation for module `\GTHE3_CHANNEL'.
+Generating RTLIL representation for module `\GTHE3_COMMON'.
+Generating RTLIL representation for module `\GTYE3_CHANNEL'.
+Generating RTLIL representation for module `\GTYE3_COMMON'.
+Generating RTLIL representation for module `\IBUFDS_GTE3'.
+Generating RTLIL representation for module `\OBUFDS_GTE3'.
+Generating RTLIL representation for module `\OBUFDS_GTE3_ADV'.
+Generating RTLIL representation for module `\GTHE4_CHANNEL'.
+Generating RTLIL representation for module `\GTHE4_COMMON'.
+Generating RTLIL representation for module `\GTYE4_CHANNEL'.
+Generating RTLIL representation for module `\GTYE4_COMMON'.
+Generating RTLIL representation for module `\IBUFDS_GTE4'.
+Generating RTLIL representation for module `\OBUFDS_GTE4'.
+Generating RTLIL representation for module `\OBUFDS_GTE4_ADV'.
+Generating RTLIL representation for module `\GTM_DUAL'.
+Generating RTLIL representation for module `\IBUFDS_GTM'.
+Generating RTLIL representation for module `\OBUFDS_GTM'.
+Generating RTLIL representation for module `\OBUFDS_GTM_ADV'.
+Generating RTLIL representation for module `\HSDAC'.
+Generating RTLIL representation for module `\HSADC'.
+Generating RTLIL representation for module `\RFDAC'.
+Generating RTLIL representation for module `\RFADC'.
+Generating RTLIL representation for module `\PCIE_A1'.
+Generating RTLIL representation for module `\PCIE_EP'.
+Generating RTLIL representation for module `\PCIE_2_0'.
+Generating RTLIL representation for module `\PCIE_2_1'.
+Generating RTLIL representation for module `\PCIE_3_0'.
+Generating RTLIL representation for module `\PCIE_3_1'.
+Generating RTLIL representation for module `\PCIE40E4'.
+Generating RTLIL representation for module `\PCIE4CE4'.
+Generating RTLIL representation for module `\EMAC'.
+Generating RTLIL representation for module `\TEMAC'.
+Generating RTLIL representation for module `\TEMAC_SINGLE'.
+Generating RTLIL representation for module `\CMAC'.
+Generating RTLIL representation for module `\CMACE4'.
+Generating RTLIL representation for module `\MCB'.
+Generating RTLIL representation for module `\HBM_REF_CLK'.
+Generating RTLIL representation for module `\HBM_SNGLBLI_INTF_APB'.
+Generating RTLIL representation for module `\HBM_SNGLBLI_INTF_AXI'.
+Generating RTLIL representation for module `\HBM_ONE_STACK_INTF'.
+Generating RTLIL representation for module `\HBM_TWO_STACK_INTF'.
+Generating RTLIL representation for module `\PPC405_ADV'.
+Generating RTLIL representation for module `\PPC440'.
+Generating RTLIL representation for module `\PS7'.
+Generating RTLIL representation for module `\PS8'.
+Generating RTLIL representation for module `\ILKN'.
+Generating RTLIL representation for module `\ILKNE4'.
+Generating RTLIL representation for module `\VCU'.
+Generating RTLIL representation for module `\FE'.
+Successfully finished Verilog frontend.
+
+2.3. Executing HIERARCHY pass (managing design hierarchy).
+
+2.3.1. Analyzing design hierarchy..
+Top module:  \divider_ooc
+
+2.3.2. Analyzing design hierarchy..
+Top module:  \divider_ooc
+Removed 0 unused modules.
+
+2.4. Executing PROC pass (convert processes to netlists).
+
+2.4.1. Executing PROC_CLEAN pass (remove empty switches from decision trees).
+Cleaned up 0 empty switches.
+
+2.4.2. Executing PROC_RMDEAD pass (remove dead branches from decision trees).
+Removed a total of 0 dead cases.
+
+2.4.3. Executing PROC_PRUNE pass (remove redundant assignments in processes).
+Removed 0 redundant assignments.
+Promoted 0 assignments to connections.
+
+2.4.4. Executing PROC_INIT pass (extract init attributes).
+
+2.4.5. Executing PROC_ARST pass (detect async resets in processes).
+
+2.4.6. Executing PROC_ROM pass (convert switches to ROMs).
+Converted 0 switches.
+
+2.4.7. Executing PROC_MUX pass (convert decision trees to multiplexers).
+
+2.4.8. Executing PROC_DLATCH pass (convert process syncs to latches).
+
+2.4.9. Executing PROC_DFF pass (convert process syncs to FFs).
+
+2.4.10. Executing PROC_MEMWR pass (convert process memory writes to cells).
+
+2.4.11. Executing PROC_CLEAN pass (remove empty switches from decision trees).
+Cleaned up 0 empty switches.
+
+2.4.12. Executing OPT_EXPR pass (perform const folding).
+Optimizing module divider_ooc.
+
+2.5. Executing CHECK pass (checking for obvious problems).
+Checking module divider_ooc...
+Found and reported 0 problems.
+
+2.6. Executing FLATTEN pass (flatten design).
+
+2.7. Executing TRIBUF pass.
+
+2.8. Executing DEMINOUT pass (demote inout ports to input or output).
+
+2.9. Executing OPT_EXPR pass (perform const folding).
+Optimizing module divider_ooc.
+
+2.10. Executing CHECK pass (checking for obvious problems).
+Checking module divider_ooc...
+Found and reported 0 problems.
+
+2.11. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \divider_ooc..
+Removed 0 unused cells and 176 unused wires.
+<suppressed ~102 debug messages>
+
+2.12. Executing OPT pass (performing simple optimizations).
+
+2.12.1. Executing OPT_EXPR pass (perform const folding).
+Optimizing module divider_ooc.
+
+2.12.2. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\divider_ooc'.
+Computing hashes of 165 cells of `\divider_ooc'.
+Finding duplicate cells in `\divider_ooc'.
+Removed a total of 0 cells.
+
+2.12.3. Executing OPT_MUXTREE pass (detect dead branches in mux trees).
+Running muxtree optimizer on module \divider_ooc..
+  Creating internal representation of mux trees.
+  Evaluating internal representation of mux trees.
+  Analyzing evaluation results.
+Removed 0 multiplexer ports.
+<suppressed ~64 debug messages>
+
+2.12.4. Executing OPT_REDUCE pass (consolidate $*mux and $reduce_* inputs).
+  Optimizing cells in module \divider_ooc.
+Performed a total of 0 changes.
+
+2.12.5. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\divider_ooc'.
+Computing hashes of 165 cells of `\divider_ooc'.
+Finding duplicate cells in `\divider_ooc'.
+Removed a total of 0 cells.
+
+2.12.6. Executing OPT_DFF pass (perform DFF optimizations).
+Setting constant 1-bit at position 0 on $driver$in_ready ($dff) from module divider_ooc.
+
+2.12.7. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \divider_ooc..
+
+2.12.8. Executing OPT_EXPR pass (perform const folding).
+Optimizing module divider_ooc.
+
+2.12.9. Rerunning OPT passes. (Maybe there is more to do..)
+
+2.12.10. Executing OPT_MUXTREE pass (detect dead branches in mux trees).
+Running muxtree optimizer on module \divider_ooc..
+  Creating internal representation of mux trees.
+  Evaluating internal representation of mux trees.
+  Analyzing evaluation results.
+Removed 0 multiplexer ports.
+<suppressed ~64 debug messages>
+
+2.12.11. Executing OPT_REDUCE pass (consolidate $*mux and $reduce_* inputs).
+  Optimizing cells in module \divider_ooc.
+Performed a total of 0 changes.
+
+2.12.12. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\divider_ooc'.
+Computing hashes of 164 cells of `\divider_ooc'.
+Finding duplicate cells in `\divider_ooc'.
+Removed a total of 0 cells.
+
+2.12.13. Executing OPT_DFF pass (perform DFF optimizations).
+
+2.12.14. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \divider_ooc..
+
+2.12.15. Executing OPT_EXPR pass (perform const folding).
+Optimizing module divider_ooc.
+
+2.12.16. Finished fast OPT passes. (There is nothing left to do.)
+
+2.13. Executing FSM pass (extract and optimize FSM).
+
+2.13.1. Executing FSM_DETECT pass (finding FSMs in design).
+
+2.13.2. Executing FSM_EXTRACT pass (extracting FSM from design).
+
+2.13.3. Executing FSM_OPT pass (simple optimizations of FSMs).
+
+2.13.4. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \divider_ooc..
+
+2.13.5. Executing FSM_OPT pass (simple optimizations of FSMs).
+
+2.13.6. Executing FSM_RECODE pass (re-assigning FSM state encoding).
+
+2.13.7. Executing FSM_INFO pass (dumping all available information on FSM cells).
+
+2.13.8. Executing FSM_MAP pass (mapping FSMs to basic logic).
+
+2.14. Executing OPT pass (performing simple optimizations).
+
+2.14.1. Executing OPT_EXPR pass (perform const folding).
+Optimizing module divider_ooc.
+
+2.14.2. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\divider_ooc'.
+Computing hashes of 164 cells of `\divider_ooc'.
+Finding duplicate cells in `\divider_ooc'.
+Removed a total of 0 cells.
+
+2.14.3. Executing OPT_MUXTREE pass (detect dead branches in mux trees).
+Running muxtree optimizer on module \divider_ooc..
+  Creating internal representation of mux trees.
+  Evaluating internal representation of mux trees.
+  Analyzing evaluation results.
+Removed 0 multiplexer ports.
+<suppressed ~64 debug messages>
+
+2.14.4. Executing OPT_REDUCE pass (consolidate $*mux and $reduce_* inputs).
+  Optimizing cells in module \divider_ooc.
+Performed a total of 0 changes.
+
+2.14.5. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\divider_ooc'.
+Computing hashes of 164 cells of `\divider_ooc'.
+Finding duplicate cells in `\divider_ooc'.
+Removed a total of 0 cells.
+
+2.14.6. Executing OPT_DFF pass (perform DFF optimizations).
+Adding SRST signal on $driver$u_core.g_v.u.v_q[0:0] ($dff) from module divider_ooc (D = \v_q, Q = \u_core.g_v.u.v_q [0], rval = 1'0).
+Adding SRST signal on $driver$u_core.g_v.u.v_q[1:1] ($dff) from module divider_ooc (D = \u_core.g_v.u.v_q [0], Q = \u_core.g_v.u.v_q [1], rval = 1'0).
+Adding SRST signal on $driver$u_core.g_v.u.v_q[10:10] ($dff) from module divider_ooc (D = \u_core.g_v.u.v_q [9], Q = \u_core.g_v.u.v_q [10], rval = 1'0).
+Adding SRST signal on $driver$u_core.g_v.u.v_q[2:2] ($dff) from module divider_ooc (D = \u_core.g_v.u.v_q [1], Q = \u_core.g_v.u.v_q [2], rval = 1'0).
+Adding SRST signal on $driver$u_core.g_v.u.v_q[13:13] ($dff) from module divider_ooc (D = \u_core.g_v.u.v_q [12], Q = \u_core.g_v.u.v_q [13], rval = 1'0).
+Adding SRST signal on $driver$u_core.g_v.u.v_q[3:3] ($dff) from module divider_ooc (D = \u_core.g_v.u.v_q [2], Q = \u_core.g_v.u.v_q [3], rval = 1'0).
+Adding SRST signal on $driver$u_core.g_v.u.v_q[4:4] ($dff) from module divider_ooc (D = \u_core.g_v.u.v_q [3], Q = \u_core.g_v.u.v_q [4], rval = 1'0).
+Adding SRST signal on $driver$u_core.g_v.u.v_q[11:11] ($dff) from module divider_ooc (D = \u_core.g_v.u.v_q [10], Q = \u_core.g_v.u.v_q [11], rval = 1'0).
+Adding SRST signal on $driver$u_core.g_v.u.v_q[5:5] ($dff) from module divider_ooc (D = \u_core.g_v.u.v_q [4], Q = \u_core.g_v.u.v_q [5], rval = 1'0).
+Adding SRST signal on $driver$u_core.g_v.u.v_q[6:6] ($dff) from module divider_ooc (D = \u_core.g_v.u.v_q [5], Q = \u_core.g_v.u.v_q [6], rval = 1'0).
+Adding SRST signal on $driver$u_core.g_v.u.v_q[7:7] ($dff) from module divider_ooc (D = \u_core.g_v.u.v_q [6], Q = \u_core.g_v.u.v_q [7], rval = 1'0).
+Adding SRST signal on $driver$u_core.g_v.u.v_q[12:12] ($dff) from module divider_ooc (D = \u_core.g_v.u.v_q [11], Q = \u_core.g_v.u.v_q [12], rval = 1'0).
+Adding SRST signal on $driver$u_core.g_v.u.v_q[8:8] ($dff) from module divider_ooc (D = \u_core.g_v.u.v_q [7], Q = \u_core.g_v.u.v_q [8], rval = 1'0).
+Adding SRST signal on $driver$u_core.g_v.u.v_q[15:15] ($dff) from module divider_ooc (D = \u_core.g_v.u.v_q [14], Q = \u_core.g_v.u.v_q [15], rval = 1'0).
+Adding SRST signal on $driver$u_core.g_v.u.v_q[14:14] ($dff) from module divider_ooc (D = \u_core.g_v.u.v_q [13], Q = \u_core.g_v.u.v_q [14], rval = 1'0).
+Adding SRST signal on $driver$u_core.g_v.u.v_q[9:9] ($dff) from module divider_ooc (D = \u_core.g_v.u.v_q [8], Q = \u_core.g_v.u.v_q [9], rval = 1'0).
+
+2.14.7. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \divider_ooc..
+Removed 16 unused cells and 16 unused wires.
+<suppressed ~17 debug messages>
+
+2.14.8. Executing OPT_EXPR pass (perform const folding).
+Optimizing module divider_ooc.
+
+2.14.9. Rerunning OPT passes. (Maybe there is more to do..)
+
+2.14.10. Executing OPT_MUXTREE pass (detect dead branches in mux trees).
+Running muxtree optimizer on module \divider_ooc..
+  Creating internal representation of mux trees.
+  Evaluating internal representation of mux trees.
+  Analyzing evaluation results.
+Removed 0 multiplexer ports.
+<suppressed ~32 debug messages>
+
+2.14.11. Executing OPT_REDUCE pass (consolidate $*mux and $reduce_* inputs).
+  Optimizing cells in module \divider_ooc.
+Performed a total of 0 changes.
+
+2.14.12. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\divider_ooc'.
+Computing hashes of 148 cells of `\divider_ooc'.
+Finding duplicate cells in `\divider_ooc'.
+Removed a total of 0 cells.
+
+2.14.13. Executing OPT_DFF pass (perform DFF optimizations).
+
+2.14.14. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \divider_ooc..
+
+2.14.15. Executing OPT_EXPR pass (perform const folding).
+Optimizing module divider_ooc.
+
+2.14.16. Finished fast OPT passes. (There is nothing left to do.)
+
+2.15. Executing WREDUCE pass (reducing word size of cells).
+Removed top 28 address bits (of 32) from memory init port divider_ooc.$207 (u_core.g_v.u.n_q).
+Removed top 28 address bits (of 32) from memory init port divider_ooc.$203 (u_core.g_v.u.p_q).
+Removed top 28 address bits (of 32) from memory init port divider_ooc.$200 (u_core.g_v.u.n_q).
+Removed top 28 address bits (of 32) from memory init port divider_ooc.$299 (u_core.g_v.u.n_q).
+Removed top 28 address bits (of 32) from memory init port divider_ooc.$295 (u_core.g_v.u.p_q).
+Removed top 28 address bits (of 32) from memory init port divider_ooc.$187 (u_core.g_v.u.p_q).
+Removed top 28 address bits (of 32) from memory init port divider_ooc.$292 (u_core.g_v.u.n_q).
+Removed top 28 address bits (of 32) from memory init port divider_ooc.$184 (u_core.g_v.u.n_q).
+Removed top 28 address bits (of 32) from memory init port divider_ooc.$180 (u_core.g_v.u.p_q).
+Removed top 28 address bits (of 32) from memory init port divider_ooc.$230 (u_core.g_v.u.n_q).
+Removed top 28 address bits (of 32) from memory init port divider_ooc.$177 (u_core.g_v.u.n_q).
+Removed top 28 address bits (of 32) from memory init port divider_ooc.$164 (u_core.g_v.u.p_q).
+Removed top 28 address bits (of 32) from memory init port divider_ooc.$161 (u_core.g_v.u.n_q).
+Removed top 28 address bits (of 32) from memory init port divider_ooc.$157 (u_core.g_v.u.p_q).
+Removed top 28 address bits (of 32) from memory init port divider_ooc.$226 (u_core.g_v.u.p_q).
+Removed top 28 address bits (of 32) from memory init port divider_ooc.$154 (u_core.g_v.u.n_q).
+Removed top 28 address bits (of 32) from memory init port divider_ooc.$141 (u_core.g_v.u.p_q).
+Removed top 28 address bits (of 32) from memory init port divider_ooc.$279 (u_core.g_v.u.p_q).
+Removed top 28 address bits (of 32) from memory init port divider_ooc.$138 (u_core.g_v.u.n_q).
+Removed top 28 address bits (of 32) from memory init port divider_ooc.$134 (u_core.g_v.u.p_q).
+Removed top 28 address bits (of 32) from memory init port divider_ooc.$223 (u_core.g_v.u.n_q).
+Removed top 28 address bits (of 32) from memory init port divider_ooc.$131 (u_core.g_v.u.n_q).
+Removed top 28 address bits (of 32) from memory init port divider_ooc.$276 (u_core.g_v.u.n_q).
+Removed top 28 address bits (of 32) from memory init port divider_ooc.$272 (u_core.g_v.u.p_q).
+Removed top 28 address bits (of 32) from memory init port divider_ooc.$118 (u_core.g_v.u.p_q).
+Removed top 28 address bits (of 32) from memory init port divider_ooc.$363 (u_core.g_v.u.p_q).
+Removed top 28 address bits (of 32) from memory init port divider_ooc.$115 (u_core.g_v.u.n_q).
+Removed top 28 address bits (of 32) from memory init port divider_ooc.$111 (u_core.g_v.u.p_q).
+Removed top 28 address bits (of 32) from memory init port divider_ooc.$108 (u_core.g_v.u.n_q).
+Removed top 28 address bits (of 32) from memory init port divider_ooc.$269 (u_core.g_v.u.n_q).
+Removed top 28 address bits (of 32) from memory init port divider_ooc.$368 (u_core.g_v.u.n_q).
+Removed top 28 address bits (of 32) from memory init port divider_ooc.$325 (u_core.g_v.u.p_q).
+Removed top 28 address bits (of 32) from memory init port divider_ooc.$95 (u_core.g_v.u.p_q).
+Removed top 28 address bits (of 32) from memory init port divider_ooc.$92 (u_core.g_v.u.n_q).
+Removed top 28 address bits (of 32) from memory init port divider_ooc.$88 (u_core.g_v.u.p_q).
+Removed top 28 address bits (of 32) from memory init port divider_ooc.$85 (u_core.g_v.u.n_q).
+Removed top 28 address bits (of 32) from memory init port divider_ooc.$360 (u_core.g_v.u.n_q).
+Removed top 28 address bits (of 32) from memory init port divider_ooc.$322 (u_core.g_v.u.n_q).
+Removed top 28 address bits (of 32) from memory init port divider_ooc.$72 (u_core.g_v.u.p_q).
+Removed top 28 address bits (of 32) from memory init port divider_ooc.$69 (u_core.g_v.u.n_q).
+Removed top 28 address bits (of 32) from memory init port divider_ooc.$65 (u_core.g_v.u.p_q).
+Removed top 28 address bits (of 32) from memory init port divider_ooc.$62 (u_core.g_v.u.n_q).
+Removed top 28 address bits (of 32) from memory init port divider_ooc.$341 (u_core.g_v.u.p_q).
+Removed top 28 address bits (of 32) from memory init port divider_ooc.$256 (u_core.g_v.u.p_q).
+Removed top 28 address bits (of 32) from memory init port divider_ooc.$318 (u_core.g_v.u.p_q).
+Removed top 28 address bits (of 32) from memory init port divider_ooc.$253 (u_core.g_v.u.n_q).
+Removed top 28 address bits (of 32) from memory init port divider_ooc.$49 (u_core.g_v.u.p_q).
+Removed top 28 address bits (of 32) from memory init port divider_ooc.$249 (u_core.g_v.u.p_q).
+Removed top 28 address bits (of 32) from memory init port divider_ooc.$46 (u_core.g_v.u.n_q).
+Removed top 28 address bits (of 32) from memory init port divider_ooc.$42 (u_core.g_v.u.p_q).
+Removed top 28 address bits (of 32) from memory init port divider_ooc.$39 (u_core.g_v.u.n_q).
+Removed top 28 address bits (of 32) from memory init port divider_ooc.$302 (u_core.g_v.u.p_q).
+Removed top 28 address bits (of 32) from memory init port divider_ooc.$348 (u_core.g_v.u.p_q).
+Removed top 28 address bits (of 32) from memory init port divider_ooc.$246 (u_core.g_v.u.n_q).
+Removed top 28 address bits (of 32) from memory init port divider_ooc.$315 (u_core.g_v.u.n_q).
+Removed top 28 address bits (of 32) from memory init port divider_ooc.$26 (u_core.g_v.u.p_q).
+Removed top 28 address bits (of 32) from memory init port divider_ooc.$371 (u_core.g_v.u.p_q).
+Removed top 28 address bits (of 32) from memory init port divider_ooc.$23 (u_core.g_v.u.n_q).
+Removed top 28 address bits (of 32) from memory init port divider_ooc.$19 (u_core.g_v.u.p_q).
+Removed top 28 address bits (of 32) from memory init port divider_ooc.$210 (u_core.g_v.u.p_q).
+Removed top 28 address bits (of 32) from memory init port divider_ooc.$16 (u_core.g_v.u.n_q).
+Removed top 28 address bits (of 32) from memory init port divider_ooc.$338 (u_core.g_v.u.n_q).
+Removed top 28 address bits (of 32) from memory init port divider_ooc.$345 (u_core.g_v.u.n_q).
+Removed top 28 address bits (of 32) from memory init port divider_ooc.$233 (u_core.g_v.u.p_q).
+Removed top 16 bits (of 17) from port A of cell divider_ooc.$8 ($sub).
+Removed top 1 bits (of 17) from port B of cell divider_ooc.$8 ($sub).
+Removed top 1 bits (of 17) from port A of cell divider_ooc.$31 ($sub).
+Removed top 1 bits (of 17) from port B of cell divider_ooc.$31 ($sub).
+Removed top 1 bits (of 17) from port A of cell divider_ooc.$54 ($sub).
+Removed top 1 bits (of 17) from port B of cell divider_ooc.$54 ($sub).
+Removed top 1 bits (of 17) from port A of cell divider_ooc.$77 ($sub).
+Removed top 1 bits (of 17) from port B of cell divider_ooc.$77 ($sub).
+Removed top 1 bits (of 17) from port A of cell divider_ooc.$100 ($sub).
+Removed top 1 bits (of 17) from port B of cell divider_ooc.$100 ($sub).
+Removed top 1 bits (of 17) from port A of cell divider_ooc.$123 ($sub).
+Removed top 1 bits (of 17) from port B of cell divider_ooc.$123 ($sub).
+Removed top 1 bits (of 17) from port A of cell divider_ooc.$146 ($sub).
+Removed top 1 bits (of 17) from port B of cell divider_ooc.$146 ($sub).
+Removed top 1 bits (of 17) from port A of cell divider_ooc.$169 ($sub).
+Removed top 1 bits (of 17) from port B of cell divider_ooc.$169 ($sub).
+Removed top 1 bits (of 17) from port A of cell divider_ooc.$192 ($sub).
+Removed top 1 bits (of 17) from port B of cell divider_ooc.$192 ($sub).
+Removed top 1 bits (of 17) from port A of cell divider_ooc.$215 ($sub).
+Removed top 1 bits (of 17) from port B of cell divider_ooc.$215 ($sub).
+Removed top 1 bits (of 17) from port A of cell divider_ooc.$238 ($sub).
+Removed top 1 bits (of 17) from port B of cell divider_ooc.$238 ($sub).
+Removed top 1 bits (of 17) from port A of cell divider_ooc.$261 ($sub).
+Removed top 1 bits (of 17) from port B of cell divider_ooc.$261 ($sub).
+Removed top 1 bits (of 17) from port A of cell divider_ooc.$284 ($sub).
+Removed top 1 bits (of 17) from port B of cell divider_ooc.$284 ($sub).
+Removed top 1 bits (of 17) from port A of cell divider_ooc.$307 ($sub).
+Removed top 1 bits (of 17) from port B of cell divider_ooc.$307 ($sub).
+Removed top 1 bits (of 17) from port A of cell divider_ooc.$330 ($sub).
+Removed top 1 bits (of 17) from port B of cell divider_ooc.$330 ($sub).
+Removed top 1 bits (of 17) from port A of cell divider_ooc.$353 ($sub).
+Removed top 1 bits (of 17) from port B of cell divider_ooc.$353 ($sub).
+
+2.16. Executing PEEPOPT pass (run peephole optimizers).
+
+2.17. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \divider_ooc..
+
+2.18. Executing PMUX2SHIFTX pass.
+
+2.19. Executing SORT pass.
+
+2.20. Executing MEMORY_DFF pass (merging $dff cells to $memrd).
+Checking read port `\u_core.g_v.u.n_q'[0] in module `\divider_ooc':
+    no output FF found.
+Checking read port `\u_core.g_v.u.n_q'[1] in module `\divider_ooc':
+    no output FF found.
+Checking read port `\u_core.g_v.u.n_q'[2] in module `\divider_ooc':
+    no output FF found.
+Checking read port `\u_core.g_v.u.n_q'[3] in module `\divider_ooc':
+    merging output FF to cell.
+    Write port 0: don't care on collision.
+    Write port 1: don't care on collision.
+    Write port 2: don't care on collision.
+    Write port 3: don't care on collision.
+    Write port 4: don't care on collision.
+    Write port 5: don't care on collision.
+    Write port 6: don't care on collision.
+    Write port 7: don't care on collision.
+    Write port 8: don't care on collision.
+    Write port 9: don't care on collision.
+    Write port 10: don't care on collision.
+    Write port 11: don't care on collision.
+    Write port 12: don't care on collision.
+    Write port 13: don't care on collision.
+    Write port 14: don't care on collision.
+    Write port 15: non-transparent.
+Checking read port `\u_core.g_v.u.n_q'[4] in module `\divider_ooc':
+    no output FF found.
+Checking read port `\u_core.g_v.u.n_q'[5] in module `\divider_ooc':
+    no output FF found.
+Checking read port `\u_core.g_v.u.n_q'[6] in module `\divider_ooc':
+    no output FF found.
+Checking read port `\u_core.g_v.u.n_q'[7] in module `\divider_ooc':
+    no output FF found.
+Checking read port `\u_core.g_v.u.n_q'[8] in module `\divider_ooc':
+    no output FF found.
+Checking read port `\u_core.g_v.u.n_q'[9] in module `\divider_ooc':
+    no output FF found.
+Checking read port `\u_core.g_v.u.n_q'[10] in module `\divider_ooc':
+    no output FF found.
+Checking read port `\u_core.g_v.u.n_q'[11] in module `\divider_ooc':
+    no output FF found.
+Checking read port `\u_core.g_v.u.n_q'[12] in module `\divider_ooc':
+    no output FF found.
+Checking read port `\u_core.g_v.u.n_q'[13] in module `\divider_ooc':
+    no output FF found.
+Checking read port `\u_core.g_v.u.n_q'[14] in module `\divider_ooc':
+    no output FF found.
+Checking read port `\u_core.g_v.u.n_q'[15] in module `\divider_ooc':
+    no output FF found.
+Checking read port `\u_core.g_v.u.p_q'[0] in module `\divider_ooc':
+    no output FF found.
+Checking read port `\u_core.g_v.u.p_q'[1] in module `\divider_ooc':
+    no output FF found.
+Checking read port `\u_core.g_v.u.p_q'[2] in module `\divider_ooc':
+    no output FF found.
+Checking read port `\u_core.g_v.u.p_q'[3] in module `\divider_ooc':
+    merging output FF to cell.
+    Write port 0: don't care on collision.
+    Write port 1: don't care on collision.
+    Write port 2: don't care on collision.
+    Write port 3: don't care on collision.
+    Write port 4: don't care on collision.
+    Write port 5: don't care on collision.
+    Write port 6: don't care on collision.
+    Write port 7: don't care on collision.
+    Write port 8: don't care on collision.
+    Write port 9: don't care on collision.
+    Write port 10: don't care on collision.
+    Write port 11: don't care on collision.
+    Write port 12: don't care on collision.
+    Write port 13: don't care on collision.
+    Write port 14: don't care on collision.
+    Write port 15: non-transparent.
+Checking read port `\u_core.g_v.u.p_q'[4] in module `\divider_ooc':
+    no output FF found.
+Checking read port `\u_core.g_v.u.p_q'[5] in module `\divider_ooc':
+    no output FF found.
+Checking read port `\u_core.g_v.u.p_q'[6] in module `\divider_ooc':
+    no output FF found.
+Checking read port `\u_core.g_v.u.p_q'[7] in module `\divider_ooc':
+    no output FF found.
+Checking read port `\u_core.g_v.u.p_q'[8] in module `\divider_ooc':
+    no output FF found.
+Checking read port `\u_core.g_v.u.p_q'[9] in module `\divider_ooc':
+    no output FF found.
+Checking read port `\u_core.g_v.u.p_q'[10] in module `\divider_ooc':
+    no output FF found.
+Checking read port `\u_core.g_v.u.p_q'[11] in module `\divider_ooc':
+    no output FF found.
+Checking read port `\u_core.g_v.u.p_q'[12] in module `\divider_ooc':
+    no output FF found.
+Checking read port `\u_core.g_v.u.p_q'[13] in module `\divider_ooc':
+    no output FF found.
+Checking read port `\u_core.g_v.u.p_q'[14] in module `\divider_ooc':
+    no output FF found.
+Checking read port `\u_core.g_v.u.p_q'[15] in module `\divider_ooc':
+    no output FF found.
+Checking read port address `\u_core.g_v.u.n_q'[0] in module `\divider_ooc':
+    no address FF found.
+Checking read port address `\u_core.g_v.u.n_q'[1] in module `\divider_ooc':
+    no address FF found.
+Checking read port address `\u_core.g_v.u.n_q'[2] in module `\divider_ooc':
+    no address FF found.
+Checking read port address `\u_core.g_v.u.n_q'[4] in module `\divider_ooc':
+    no address FF found.
+Checking read port address `\u_core.g_v.u.n_q'[5] in module `\divider_ooc':
+    no address FF found.
+Checking read port address `\u_core.g_v.u.n_q'[6] in module `\divider_ooc':
+    no address FF found.
+Checking read port address `\u_core.g_v.u.n_q'[7] in module `\divider_ooc':
+    no address FF found.
+Checking read port address `\u_core.g_v.u.n_q'[8] in module `\divider_ooc':
+    no address FF found.
+Checking read port address `\u_core.g_v.u.n_q'[9] in module `\divider_ooc':
+    no address FF found.
+Checking read port address `\u_core.g_v.u.n_q'[10] in module `\divider_ooc':
+    no address FF found.
+Checking read port address `\u_core.g_v.u.n_q'[11] in module `\divider_ooc':
+    no address FF found.
+Checking read port address `\u_core.g_v.u.n_q'[12] in module `\divider_ooc':
+    no address FF found.
+Checking read port address `\u_core.g_v.u.n_q'[13] in module `\divider_ooc':
+    no address FF found.
+Checking read port address `\u_core.g_v.u.n_q'[14] in module `\divider_ooc':
+    no address FF found.
+Checking read port address `\u_core.g_v.u.n_q'[15] in module `\divider_ooc':
+    no address FF found.
+Checking read port address `\u_core.g_v.u.p_q'[0] in module `\divider_ooc':
+    no address FF found.
+Checking read port address `\u_core.g_v.u.p_q'[1] in module `\divider_ooc':
+    no address FF found.
+Checking read port address `\u_core.g_v.u.p_q'[2] in module `\divider_ooc':
+    no address FF found.
+Checking read port address `\u_core.g_v.u.p_q'[4] in module `\divider_ooc':
+    no address FF found.
+Checking read port address `\u_core.g_v.u.p_q'[5] in module `\divider_ooc':
+    no address FF found.
+Checking read port address `\u_core.g_v.u.p_q'[6] in module `\divider_ooc':
+    no address FF found.
+Checking read port address `\u_core.g_v.u.p_q'[7] in module `\divider_ooc':
+    no address FF found.
+Checking read port address `\u_core.g_v.u.p_q'[8] in module `\divider_ooc':
+    no address FF found.
+Checking read port address `\u_core.g_v.u.p_q'[9] in module `\divider_ooc':
+    no address FF found.
+Checking read port address `\u_core.g_v.u.p_q'[10] in module `\divider_ooc':
+    no address FF found.
+Checking read port address `\u_core.g_v.u.p_q'[11] in module `\divider_ooc':
+    no address FF found.
+Checking read port address `\u_core.g_v.u.p_q'[12] in module `\divider_ooc':
+    no address FF found.
+Checking read port address `\u_core.g_v.u.p_q'[13] in module `\divider_ooc':
+    no address FF found.
+Checking read port address `\u_core.g_v.u.p_q'[14] in module `\divider_ooc':
+    no address FF found.
+Checking read port address `\u_core.g_v.u.p_q'[15] in module `\divider_ooc':
+    no address FF found.
+
+2.21. Executing ALUMACC pass (create $alu and $macc cells).
+Extracting $alu and $macc cells in module divider_ooc:
+  creating $macc model for $100 ($sub).
+  creating $macc model for $123 ($sub).
+  creating $macc model for $146 ($sub).
+  creating $macc model for $169 ($sub).
+  creating $macc model for $192 ($sub).
+  creating $macc model for $215 ($sub).
+  creating $macc model for $238 ($sub).
+  creating $macc model for $261 ($sub).
+  creating $macc model for $284 ($sub).
+  creating $macc model for $307 ($sub).
+  creating $macc model for $31 ($sub).
+  creating $macc model for $330 ($sub).
+  creating $macc model for $353 ($sub).
+  creating $macc model for $54 ($sub).
+  creating $macc model for $77 ($sub).
+  creating $macc model for $8 ($sub).
+  created 0 $alu and 0 $macc cells.
+
+2.22. Executing MACCMAP pass (map $macc cells).
+
+2.23. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \divider_ooc..
+Removed 1 unused cells and 38 unused wires.
+<suppressed ~8 debug messages>
+
+2.24. Executing TECHMAP pass (map to technology primitives).
+
+2.24.1. Executing Verilog-2005 frontend: /home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/mul2dsp.v
+Parsing Verilog input from `/home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/mul2dsp.v' to AST representation.
+Generating RTLIL representation for module `\_80_mul'.
+Generating RTLIL representation for module `\_90_soft_mul'.
+Successfully finished Verilog frontend.
+
+2.24.2. Executing Verilog-2005 frontend: /home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/xilinx/xcu_dsp_map.v
+Parsing Verilog input from `/home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/xilinx/xcu_dsp_map.v' to AST representation.
+Generating RTLIL representation for module `$__MUL27X18'.
+Successfully finished Verilog frontend.
+
+2.24.3. Continuing TECHMAP pass.
+No more expansions possible.
+<suppressed ~5 debug messages>
+
+2.25. Executing OPT_EXPR pass (perform const folding).
+
+2.26. Executing WREDUCE pass (reducing word size of cells).
+
+2.27. Executing XILINX_DSP pass (pack resources into DSPs).
+
+2.28. Executing TECHMAP pass (map to technology primitives).
+
+2.28.1. Executing Verilog-2005 frontend: /home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/cmp2lut.v
+Parsing Verilog input from `/home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/cmp2lut.v' to AST representation.
+Generating RTLIL representation for module `\_90_lut_cmp_'.
+Successfully finished Verilog frontend.
+
+2.28.2. Executing Verilog-2005 frontend: /home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/cmp2lcu.v
+Parsing Verilog input from `/home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/cmp2lcu.v' to AST representation.
+Generating RTLIL representation for module `\_80_lcu_cmp_'.
+Generating RTLIL representation for module `$__CMP2LCU'.
+Successfully finished Verilog frontend.
+
+2.28.3. Continuing TECHMAP pass.
+No more expansions possible.
+<suppressed ~7 debug messages>
+
+2.29. Executing ALUMACC pass (create $alu and $macc cells).
+Extracting $alu and $macc cells in module divider_ooc:
+  creating $macc model for $100 ($sub).
+  creating $macc model for $123 ($sub).
+  creating $macc model for $146 ($sub).
+  creating $macc model for $169 ($sub).
+  creating $macc model for $192 ($sub).
+  creating $macc model for $215 ($sub).
+  creating $macc model for $238 ($sub).
+  creating $macc model for $261 ($sub).
+  creating $macc model for $284 ($sub).
+  creating $macc model for $307 ($sub).
+  creating $macc model for $31 ($sub).
+  creating $macc model for $330 ($sub).
+  creating $macc model for $353 ($sub).
+  creating $macc model for $54 ($sub).
+  creating $macc model for $77 ($sub).
+  creating $macc model for $8 ($sub).
+  creating $alu model for $macc $8.
+  creating $alu model for $macc $77.
+  creating $alu model for $macc $54.
+  creating $alu model for $macc $353.
+  creating $alu model for $macc $330.
+  creating $alu model for $macc $31.
+  creating $alu model for $macc $307.
+  creating $alu model for $macc $284.
+  creating $alu model for $macc $261.
+  creating $alu model for $macc $238.
+  creating $alu model for $macc $215.
+  creating $alu model for $macc $192.
+  creating $alu model for $macc $169.
+  creating $alu model for $macc $146.
+  creating $alu model for $macc $123.
+  creating $alu model for $macc $100.
+  creating $alu cell for $100: $auto$alumacc.cc:578:replace_alu$1256
+  creating $alu cell for $123: $auto$alumacc.cc:578:replace_alu$1259
+  creating $alu cell for $146: $auto$alumacc.cc:578:replace_alu$1262
+  creating $alu cell for $169: $auto$alumacc.cc:578:replace_alu$1265
+  creating $alu cell for $192: $auto$alumacc.cc:578:replace_alu$1268
+  creating $alu cell for $215: $auto$alumacc.cc:578:replace_alu$1271
+  creating $alu cell for $238: $auto$alumacc.cc:578:replace_alu$1274
+  creating $alu cell for $261: $auto$alumacc.cc:578:replace_alu$1277
+  creating $alu cell for $284: $auto$alumacc.cc:578:replace_alu$1280
+  creating $alu cell for $307: $auto$alumacc.cc:578:replace_alu$1283
+  creating $alu cell for $31: $auto$alumacc.cc:578:replace_alu$1286
+  creating $alu cell for $330: $auto$alumacc.cc:578:replace_alu$1289
+  creating $alu cell for $353: $auto$alumacc.cc:578:replace_alu$1292
+  creating $alu cell for $54: $auto$alumacc.cc:578:replace_alu$1295
+  creating $alu cell for $77: $auto$alumacc.cc:578:replace_alu$1298
+  creating $alu cell for $8: $auto$alumacc.cc:578:replace_alu$1301
+  created 16 $alu and 0 $macc cells.
+
+2.30. Executing SHARE pass (SAT-based resource sharing).
+
+2.31. Executing OPT pass (performing simple optimizations).
+
+2.31.1. Executing OPT_EXPR pass (perform const folding).
+Optimizing module divider_ooc.
+
+2.31.2. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\divider_ooc'.
+Computing hashes of 147 cells of `\divider_ooc'.
+Finding duplicate cells in `\divider_ooc'.
+Removed a total of 0 cells.
+
+2.31.3. Executing OPT_MUXTREE pass (detect dead branches in mux trees).
+Running muxtree optimizer on module \divider_ooc..
+  Creating internal representation of mux trees.
+  Evaluating internal representation of mux trees.
+  Analyzing evaluation results.
+Removed 0 multiplexer ports.
+<suppressed ~32 debug messages>
+
+2.31.4. Executing OPT_REDUCE pass (consolidate $*mux and $reduce_* inputs).
+  Optimizing cells in module \divider_ooc.
+Performed a total of 0 changes.
+
+2.31.5. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\divider_ooc'.
+Computing hashes of 147 cells of `\divider_ooc'.
+Finding duplicate cells in `\divider_ooc'.
+Removed a total of 0 cells.
+
+2.31.6. Executing OPT_DFF pass (perform DFF optimizations).
+
+2.31.7. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \divider_ooc..
+
+2.31.8. Executing OPT_EXPR pass (perform const folding).
+Optimizing module divider_ooc.
+
+2.31.9. Finished fast OPT passes. (There is nothing left to do.)
+
+2.32. Executing MEMORY pass.
+
+2.32.1. Executing OPT_MEM pass (optimize memories).
+Performed a total of 0 transformations.
+
+2.32.2. Executing OPT_MEM_PRIORITY pass (removing unnecessary memory write priority relations).
+Performed a total of 0 transformations.
+
+2.32.3. Executing OPT_MEM_FEEDBACK pass (finding memory read-to-write feedback paths).
+  Analyzing divider_ooc.u_core.g_v.u.n_q write port 0.
+  Analyzing divider_ooc.u_core.g_v.u.n_q write port 1.
+  Analyzing divider_ooc.u_core.g_v.u.n_q write port 2.
+  Analyzing divider_ooc.u_core.g_v.u.n_q write port 3.
+  Analyzing divider_ooc.u_core.g_v.u.n_q write port 4.
+  Analyzing divider_ooc.u_core.g_v.u.n_q write port 5.
+  Analyzing divider_ooc.u_core.g_v.u.n_q write port 6.
+  Analyzing divider_ooc.u_core.g_v.u.n_q write port 7.
+  Analyzing divider_ooc.u_core.g_v.u.n_q write port 8.
+  Analyzing divider_ooc.u_core.g_v.u.n_q write port 9.
+  Analyzing divider_ooc.u_core.g_v.u.n_q write port 10.
+  Analyzing divider_ooc.u_core.g_v.u.n_q write port 11.
+  Analyzing divider_ooc.u_core.g_v.u.n_q write port 12.
+  Analyzing divider_ooc.u_core.g_v.u.n_q write port 13.
+  Analyzing divider_ooc.u_core.g_v.u.n_q write port 14.
+  Analyzing divider_ooc.u_core.g_v.u.n_q write port 15.
+  Analyzing divider_ooc.u_core.g_v.u.p_q write port 0.
+  Analyzing divider_ooc.u_core.g_v.u.p_q write port 1.
+  Analyzing divider_ooc.u_core.g_v.u.p_q write port 2.
+  Analyzing divider_ooc.u_core.g_v.u.p_q write port 3.
+  Analyzing divider_ooc.u_core.g_v.u.p_q write port 4.
+  Analyzing divider_ooc.u_core.g_v.u.p_q write port 5.
+  Analyzing divider_ooc.u_core.g_v.u.p_q write port 6.
+  Analyzing divider_ooc.u_core.g_v.u.p_q write port 7.
+  Analyzing divider_ooc.u_core.g_v.u.p_q write port 8.
+  Analyzing divider_ooc.u_core.g_v.u.p_q write port 9.
+  Analyzing divider_ooc.u_core.g_v.u.p_q write port 10.
+  Analyzing divider_ooc.u_core.g_v.u.p_q write port 11.
+  Analyzing divider_ooc.u_core.g_v.u.p_q write port 12.
+  Analyzing divider_ooc.u_core.g_v.u.p_q write port 13.
+  Analyzing divider_ooc.u_core.g_v.u.p_q write port 14.
+  Analyzing divider_ooc.u_core.g_v.u.p_q write port 15.
+
+2.32.4. Executing MEMORY_BMUX2ROM pass (converting muxes to ROMs).
+
+2.32.5. Executing MEMORY_DFF pass (merging $dff cells to $memrd).
+Checking read port `\u_core.g_v.u.n_q'[0] in module `\divider_ooc':
+    no output FF found.
+Checking read port `\u_core.g_v.u.n_q'[1] in module `\divider_ooc':
+    no output FF found.
+Checking read port `\u_core.g_v.u.n_q'[2] in module `\divider_ooc':
+    no output FF found.
+Checking read port `\u_core.g_v.u.n_q'[4] in module `\divider_ooc':
+    no output FF found.
+Checking read port `\u_core.g_v.u.n_q'[5] in module `\divider_ooc':
+    no output FF found.
+Checking read port `\u_core.g_v.u.n_q'[6] in module `\divider_ooc':
+    no output FF found.
+Checking read port `\u_core.g_v.u.n_q'[7] in module `\divider_ooc':
+    no output FF found.
+Checking read port `\u_core.g_v.u.n_q'[8] in module `\divider_ooc':
+    no output FF found.
+Checking read port `\u_core.g_v.u.n_q'[9] in module `\divider_ooc':
+    no output FF found.
+Checking read port `\u_core.g_v.u.n_q'[10] in module `\divider_ooc':
+    no output FF found.
+Checking read port `\u_core.g_v.u.n_q'[11] in module `\divider_ooc':
+    no output FF found.
+Checking read port `\u_core.g_v.u.n_q'[12] in module `\divider_ooc':
+    no output FF found.
+Checking read port `\u_core.g_v.u.n_q'[13] in module `\divider_ooc':
+    no output FF found.
+Checking read port `\u_core.g_v.u.n_q'[14] in module `\divider_ooc':
+    no output FF found.
+Checking read port `\u_core.g_v.u.n_q'[15] in module `\divider_ooc':
+    no output FF found.
+Checking read port `\u_core.g_v.u.p_q'[0] in module `\divider_ooc':
+    no output FF found.
+Checking read port `\u_core.g_v.u.p_q'[1] in module `\divider_ooc':
+    no output FF found.
+Checking read port `\u_core.g_v.u.p_q'[2] in module `\divider_ooc':
+    no output FF found.
+Checking read port `\u_core.g_v.u.p_q'[4] in module `\divider_ooc':
+    no output FF found.
+Checking read port `\u_core.g_v.u.p_q'[5] in module `\divider_ooc':
+    no output FF found.
+Checking read port `\u_core.g_v.u.p_q'[6] in module `\divider_ooc':
+    no output FF found.
+Checking read port `\u_core.g_v.u.p_q'[7] in module `\divider_ooc':
+    no output FF found.
+Checking read port `\u_core.g_v.u.p_q'[8] in module `\divider_ooc':
+    no output FF found.
+Checking read port `\u_core.g_v.u.p_q'[9] in module `\divider_ooc':
+    no output FF found.
+Checking read port `\u_core.g_v.u.p_q'[10] in module `\divider_ooc':
+    no output FF found.
+Checking read port `\u_core.g_v.u.p_q'[11] in module `\divider_ooc':
+    no output FF found.
+Checking read port `\u_core.g_v.u.p_q'[12] in module `\divider_ooc':
+    no output FF found.
+Checking read port `\u_core.g_v.u.p_q'[13] in module `\divider_ooc':
+    no output FF found.
+Checking read port `\u_core.g_v.u.p_q'[14] in module `\divider_ooc':
+    no output FF found.
+Checking read port `\u_core.g_v.u.p_q'[15] in module `\divider_ooc':
+    no output FF found.
+Checking read port address `\u_core.g_v.u.n_q'[0] in module `\divider_ooc':
+    no address FF found.
+Checking read port address `\u_core.g_v.u.n_q'[1] in module `\divider_ooc':
+    no address FF found.
+Checking read port address `\u_core.g_v.u.n_q'[2] in module `\divider_ooc':
+    no address FF found.
+Checking read port address `\u_core.g_v.u.n_q'[4] in module `\divider_ooc':
+    no address FF found.
+Checking read port address `\u_core.g_v.u.n_q'[5] in module `\divider_ooc':
+    no address FF found.
+Checking read port address `\u_core.g_v.u.n_q'[6] in module `\divider_ooc':
+    no address FF found.
+Checking read port address `\u_core.g_v.u.n_q'[7] in module `\divider_ooc':
+    no address FF found.
+Checking read port address `\u_core.g_v.u.n_q'[8] in module `\divider_ooc':
+    no address FF found.
+Checking read port address `\u_core.g_v.u.n_q'[9] in module `\divider_ooc':
+    no address FF found.
+Checking read port address `\u_core.g_v.u.n_q'[10] in module `\divider_ooc':
+    no address FF found.
+Checking read port address `\u_core.g_v.u.n_q'[11] in module `\divider_ooc':
+    no address FF found.
+Checking read port address `\u_core.g_v.u.n_q'[12] in module `\divider_ooc':
+    no address FF found.
+Checking read port address `\u_core.g_v.u.n_q'[13] in module `\divider_ooc':
+    no address FF found.
+Checking read port address `\u_core.g_v.u.n_q'[14] in module `\divider_ooc':
+    no address FF found.
+Checking read port address `\u_core.g_v.u.n_q'[15] in module `\divider_ooc':
+    no address FF found.
+Checking read port address `\u_core.g_v.u.p_q'[0] in module `\divider_ooc':
+    no address FF found.
+Checking read port address `\u_core.g_v.u.p_q'[1] in module `\divider_ooc':
+    no address FF found.
+Checking read port address `\u_core.g_v.u.p_q'[2] in module `\divider_ooc':
+    no address FF found.
+Checking read port address `\u_core.g_v.u.p_q'[4] in module `\divider_ooc':
+    no address FF found.
+Checking read port address `\u_core.g_v.u.p_q'[5] in module `\divider_ooc':
+    no address FF found.
+Checking read port address `\u_core.g_v.u.p_q'[6] in module `\divider_ooc':
+    no address FF found.
+Checking read port address `\u_core.g_v.u.p_q'[7] in module `\divider_ooc':
+    no address FF found.
+Checking read port address `\u_core.g_v.u.p_q'[8] in module `\divider_ooc':
+    no address FF found.
+Checking read port address `\u_core.g_v.u.p_q'[9] in module `\divider_ooc':
+    no address FF found.
+Checking read port address `\u_core.g_v.u.p_q'[10] in module `\divider_ooc':
+    no address FF found.
+Checking read port address `\u_core.g_v.u.p_q'[11] in module `\divider_ooc':
+    no address FF found.
+Checking read port address `\u_core.g_v.u.p_q'[12] in module `\divider_ooc':
+    no address FF found.
+Checking read port address `\u_core.g_v.u.p_q'[13] in module `\divider_ooc':
+    no address FF found.
+Checking read port address `\u_core.g_v.u.p_q'[14] in module `\divider_ooc':
+    no address FF found.
+Checking read port address `\u_core.g_v.u.p_q'[15] in module `\divider_ooc':
+    no address FF found.
+
+2.32.6. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \divider_ooc..
+
+2.32.7. Executing MEMORY_SHARE pass (consolidating $memrd/$memwr cells).
+Consolidating read ports of memory divider_ooc.u_core.g_v.u.n_q by address:
+  Merging ports 0, 1 (address 4'0011).
+  Merging ports 0, 2 (address 4'0010).
+  Merging ports 0, 10 (address 4'0000).
+  Merging ports 0, 12 (address 4'0000).
+  Merging ports 0, 13 (address 4'0000).
+  Merging ports 0, 14 (address 4'0000).
+  Merging ports 0, 15 (address 4'0000).
+  Merging ports 5, 6 (address 4'1101).
+  Merging ports 7, 8 (address 4'1011).
+  Merging ports 7, 9 (address 4'1010).
+  Merging ports 7, 11 (address 4'1000).
+Consolidating read ports of memory divider_ooc.u_core.g_v.u.n_q by address:
+  Merging ports 0, 2 (address 4'0000).
+  Merging ports 3, 4 (address 4'1100).
+Consolidating read ports of memory divider_ooc.u_core.g_v.u.n_q by address:
+Consolidating write ports of memory divider_ooc.u_core.g_v.u.n_q by address:
+  Merging ports 0, 1 (address 4'0000).
+  Merging ports 0, 2 (address 4'0000).
+  Merging ports 0, 3 (address 4'0000).
+  Merging ports 0, 4 (address 4'0000).
+  Merging ports 0, 5 (address 4'0000).
+  Merging ports 0, 6 (address 4'0000).
+  Merging ports 0, 7 (address 4'0000).
+  Merging ports 0, 8 (address 4'0000).
+  Merging ports 10, 11 (address 4'1010).
+  Merging ports 12, 13 (address 4'1100).
+  Merging ports 12, 14 (address 4'1100).
+  Merging ports 12, 15 (address 4'1100).
+Consolidating write ports of memory divider_ooc.u_core.g_v.u.n_q by address:
+  Merging ports 1, 2 (address 4'1001).
+  Merging ports 1, 3 (address 4'1000).
+Consolidating write ports of memory divider_ooc.u_core.g_v.u.n_q by address:
+Consolidating read ports of memory divider_ooc.u_core.g_v.u.p_q by address:
+  Merging ports 0, 1 (address 4'0011).
+  Merging ports 0, 2 (address 4'0010).
+  Merging ports 0, 8 (address 4'0000).
+  Merging ports 0, 12 (address 4'0000).
+  Merging ports 0, 13 (address 4'0000).
+  Merging ports 0, 14 (address 4'0000).
+  Merging ports 0, 15 (address 4'0000).
+  Merging ports 5, 6 (address 4'1101).
+  Merging ports 7, 9 (address 4'1011).
+  Merging ports 7, 10 (address 4'1010).
+  Merging ports 7, 11 (address 4'1000).
+Consolidating read ports of memory divider_ooc.u_core.g_v.u.p_q by address:
+  Merging ports 0, 2 (address 4'0000).
+  Merging ports 3, 4 (address 4'1100).
+Consolidating read ports of memory divider_ooc.u_core.g_v.u.p_q by address:
+Consolidating write ports of memory divider_ooc.u_core.g_v.u.p_q by address:
+  Merging ports 0, 1 (address 4'0000).
+  Merging ports 0, 2 (address 4'0000).
+  Merging ports 0, 3 (address 4'0000).
+  Merging ports 0, 4 (address 4'0000).
+  Merging ports 0, 5 (address 4'0000).
+  Merging ports 0, 6 (address 4'0000).
+  Merging ports 0, 7 (address 4'0000).
+  Merging ports 0, 8 (address 4'0000).
+  Merging ports 10, 11 (address 4'1010).
+  Merging ports 12, 13 (address 4'1100).
+  Merging ports 12, 14 (address 4'1100).
+  Merging ports 12, 15 (address 4'1100).
+Consolidating write ports of memory divider_ooc.u_core.g_v.u.p_q by address:
+  Merging ports 1, 2 (address 4'1001).
+  Merging ports 1, 3 (address 4'1000).
+Consolidating write ports of memory divider_ooc.u_core.g_v.u.p_q by address:
+
+2.32.8. Executing OPT_MEM_WIDEN pass (optimize memories where all ports are wide).
+Performed a total of 0 transformations.
+
+2.32.9. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \divider_ooc..
+Removed 0 unused cells and 22 unused wires.
+<suppressed ~1 debug messages>
+
+2.32.10. Executing MEMORY_COLLECT pass (generating $mem cells).
+
+2.33. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \divider_ooc..
+
+2.34. Executing MEMORY_LIBMAP pass (mapping memories to cells).
+using FF mapping for memory divider_ooc.u_core.g_v.u.n_q
+using FF mapping for memory divider_ooc.u_core.g_v.u.p_q
+<suppressed ~224 debug messages>
+
+2.35. Executing TECHMAP pass (map to technology primitives).
+
+2.35.1. Executing Verilog-2005 frontend: /home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/xilinx/lutrams_xc5v_map.v
+Parsing Verilog input from `/home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/xilinx/lutrams_xc5v_map.v' to AST representation.
+Generating RTLIL representation for module `$__XILINX_LUTRAM_SP_'.
+Generating RTLIL representation for module `$__XILINX_LUTRAM_DP_'.
+Generating RTLIL representation for module `$__XILINX_LUTRAM_QP_'.
+Generating RTLIL representation for module `$__XILINX_LUTRAM_OP_'.
+Generating RTLIL representation for module `$__XILINX_LUTRAM_SDP_'.
+Generating RTLIL representation for module `$__XILINX_LUTRAM_64X8SW_'.
+Generating RTLIL representation for module `$__XILINX_LUTRAM_32X16DR8_'.
+Successfully finished Verilog frontend.
+
+2.35.2. Continuing TECHMAP pass.
+No more expansions possible.
+<suppressed ~9 debug messages>
+
+2.36. Executing TECHMAP pass (map to technology primitives).
+
+2.36.1. Executing Verilog-2005 frontend: /home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/xilinx/brams_xcu_map.v
+Parsing Verilog input from `/home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/xilinx/brams_xcu_map.v' to AST representation.
+Generating RTLIL representation for module `$__XILINX_BLOCKRAM_TDP_'.
+Generating RTLIL representation for module `$__XILINX_BLOCKRAM_SDP_'.
+Successfully finished Verilog frontend.
+
+2.36.2. Continuing TECHMAP pass.
+No more expansions possible.
+<suppressed ~4 debug messages>
+
+2.37. Executing TECHMAP pass (map to technology primitives).
+
+2.37.1. Executing Verilog-2005 frontend: /home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/xilinx/urams_map.v
+Parsing Verilog input from `/home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/xilinx/urams_map.v' to AST representation.
+Generating RTLIL representation for module `$__XILINX_URAM_'.
+Generating RTLIL representation for module `$__XILINX_URAM_SP_'.
+Successfully finished Verilog frontend.
+
+2.37.2. Continuing TECHMAP pass.
+No more expansions possible.
+<suppressed ~4 debug messages>
+
+2.38. Executing OPT pass (performing simple optimizations).
+
+2.38.1. Executing OPT_EXPR pass (perform const folding).
+Optimizing module divider_ooc.
+
+2.38.2. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\divider_ooc'.
+Computing hashes of 85 cells of `\divider_ooc'.
+Finding duplicate cells in `\divider_ooc'.
+Removed a total of 0 cells.
+
+2.38.3. Executing OPT_DFF pass (perform DFF optimizations).
+
+2.38.4. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \divider_ooc..
+
+2.38.5. Finished fast OPT passes.
+
+2.39. Executing MEMORY_MAP pass (converting memories to logic and flip-flops).
+Mapping memory \u_core.g_v.u.n_q in module \divider_ooc:
+  created 16 $dff cells and 0 static cells of width 16.
+Extracted data FF from read port 1 of divider_ooc.u_core.g_v.u.n_q: $\u_core.g_v.u.n_q$rdreg[1]
+  read interface: 1 $dff and 16 $mux cells.
+  write interface: 32 write mux blocks.
+Mapping memory \u_core.g_v.u.p_q in module \divider_ooc:
+  created 16 $dff cells and 0 static cells of width 16.
+Extracted data FF from read port 1 of divider_ooc.u_core.g_v.u.p_q: $\u_core.g_v.u.p_q$rdreg[1]
+  read interface: 1 $dff and 16 $mux cells.
+  write interface: 32 write mux blocks.
+
+3. Executing OPT pass (performing simple optimizations).
+
+3.1. Executing OPT_EXPR pass (perform const folding).
+Optimizing module divider_ooc.
+<suppressed ~209 debug messages>
+
+3.2. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\divider_ooc'.
+Computing hashes of 117 cells of `\divider_ooc'.
+Finding duplicate cells in `\divider_ooc'.
+Removed a total of 0 cells.
+
+3.3. Executing OPT_MUXTREE pass (detect dead branches in mux trees).
+Running muxtree optimizer on module \divider_ooc..
+  Creating internal representation of mux trees.
+  Evaluating internal representation of mux trees.
+  Analyzing evaluation results.
+Removed 0 multiplexer ports.
+<suppressed ~32 debug messages>
+
+3.4. Executing OPT_REDUCE pass (consolidate $*mux and $reduce_* inputs).
+  Optimizing cells in module \divider_ooc.
+Performed a total of 0 changes.
+
+3.5. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\divider_ooc'.
+Computing hashes of 117 cells of `\divider_ooc'.
+Finding duplicate cells in `\divider_ooc'.
+Removed a total of 0 cells.
+
+3.6. Executing OPT_SHARE pass.
+
+3.7. Executing OPT_DFF pass (perform DFF optimizations).
+
+3.8. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \divider_ooc..
+Removed 0 unused cells and 279 unused wires.
+<suppressed ~1 debug messages>
+
+3.9. Executing OPT_EXPR pass (perform const folding).
+Optimizing module divider_ooc.
+
+3.10. Rerunning OPT passes. (Maybe there is more to do..)
+
+3.11. Executing OPT_MUXTREE pass (detect dead branches in mux trees).
+Running muxtree optimizer on module \divider_ooc..
+  Creating internal representation of mux trees.
+  Evaluating internal representation of mux trees.
+  Analyzing evaluation results.
+Removed 0 multiplexer ports.
+<suppressed ~32 debug messages>
+
+3.12. Executing OPT_REDUCE pass (consolidate $*mux and $reduce_* inputs).
+  Optimizing cells in module \divider_ooc.
+Performed a total of 0 changes.
+
+3.13. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\divider_ooc'.
+Computing hashes of 117 cells of `\divider_ooc'.
+Finding duplicate cells in `\divider_ooc'.
+Removed a total of 0 cells.
+
+3.14. Executing OPT_SHARE pass.
+
+3.15. Executing OPT_DFF pass (perform DFF optimizations).
+Adding SRST signal on $memory\u_core.g_v.u.p_q[0]$1604 ($dff) from module divider_ooc (D = \u_core.g_v.u.g_stage[0].iterate.t_v [15:1], Q = \u_core.g_v.u.p_q[0] [15:1], rval = 15'000000000000000).
+
+3.16. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \divider_ooc..
+
+3.17. Executing OPT_EXPR pass (perform const folding).
+Optimizing module divider_ooc.
+
+3.18. Rerunning OPT passes. (Maybe there is more to do..)
+
+3.19. Executing OPT_MUXTREE pass (detect dead branches in mux trees).
+Running muxtree optimizer on module \divider_ooc..
+  Creating internal representation of mux trees.
+  Evaluating internal representation of mux trees.
+  Analyzing evaluation results.
+Removed 0 multiplexer ports.
+<suppressed ~32 debug messages>
+
+3.20. Executing OPT_REDUCE pass (consolidate $*mux and $reduce_* inputs).
+  Optimizing cells in module \divider_ooc.
+Performed a total of 0 changes.
+
+3.21. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\divider_ooc'.
+Computing hashes of 118 cells of `\divider_ooc'.
+Finding duplicate cells in `\divider_ooc'.
+Removed a total of 0 cells.
+
+3.22. Executing OPT_SHARE pass.
+
+3.23. Executing OPT_DFF pass (perform DFF optimizations).
+
+3.24. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \divider_ooc..
+
+3.25. Executing OPT_EXPR pass (perform const folding).
+Optimizing module divider_ooc.
+
+3.26. Finished fast OPT passes. (There is nothing left to do.)
+
+4. Executing XILINX_SRL pass (Xilinx shift register extraction).
+
+5. Executing TECHMAP pass (map to technology primitives).
+
+5.1. Executing Verilog-2005 frontend: /home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/techmap.v
+Parsing Verilog input from `/home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/techmap.v' to AST representation.
+Generating RTLIL representation for module `\_90_simplemap_bool_ops'.
+Generating RTLIL representation for module `\_90_simplemap_reduce_ops'.
+Generating RTLIL representation for module `\_90_simplemap_logic_ops'.
+Generating RTLIL representation for module `\_90_simplemap_compare_ops'.
+Generating RTLIL representation for module `\_90_simplemap_various'.
+Generating RTLIL representation for module `\_90_simplemap_registers'.
+Generating RTLIL representation for module `\_90_shift_ops_shr_shl_sshl_sshr'.
+Generating RTLIL representation for module `\_90_shift_shiftx'.
+Generating RTLIL representation for module `\_90_fa'.
+Generating RTLIL representation for module `\_90_lcu_brent_kung'.
+Generating RTLIL representation for module `\_90_alu'.
+Generating RTLIL representation for module `\_90_macc'.
+Generating RTLIL representation for module `\_90_alumacc'.
+Generating RTLIL representation for module `$__div_mod_u'.
+Generating RTLIL representation for module `$__div_mod_trunc'.
+Generating RTLIL representation for module `\_90_div'.
+Generating RTLIL representation for module `\_90_mod'.
+Generating RTLIL representation for module `$__div_mod_floor'.
+Generating RTLIL representation for module `\_90_divfloor'.
+Generating RTLIL representation for module `\_90_modfloor'.
+Generating RTLIL representation for module `\_90_pow'.
+Generating RTLIL representation for module `\_90_demux'.
+Generating RTLIL representation for module `\_90_lut'.
+Generating RTLIL representation for module `$connect'.
+Generating RTLIL representation for module `$input_port'.
+Successfully finished Verilog frontend.
+
+5.2. Executing Verilog-2005 frontend: /home/brendan/Claude_sandbox/_worktrees/142-yosys/results/b142/drafts/pr_1/arith_map_carry8.v
+Parsing Verilog input from `/home/brendan/Claude_sandbox/_worktrees/142-yosys/results/b142/drafts/pr_1/arith_map_carry8.v' to AST representation.
+Generating RTLIL representation for module `\_80_xilinx_lcu'.
+Generating RTLIL representation for module `\_80_xilinx_alu'.
+Successfully finished Verilog frontend.
+
+5.3. Continuing TECHMAP pass.
+Using extmapper simplemap for cells of type $dff.
+Using template $paramod$848a3c3e720fe14516d3502363c1a7bf537c78eb\_80_xilinx_alu for cells of type $alu.
+Using extmapper simplemap for cells of type $sdff.
+Using extmapper simplemap for cells of type $mux.
+Using extmapper simplemap for cells of type $not.
+Using template $paramod$263a675945334de477b218c16c156c5777c87d3c\_80_xilinx_alu for cells of type $alu.
+Using extmapper simplemap for cells of type $xor.
+Using extmapper simplemap for cells of type $pos.
+No more expansions possible.
+<suppressed ~317 debug messages>
+
+6. Executing OPT pass (performing simple optimizations).
+
+6.1. Executing OPT_EXPR pass (perform const folding).
+Optimizing module divider_ooc.
+<suppressed ~319 debug messages>
+
+6.2. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\divider_ooc'.
+Computing hashes of 1652 cells of `\divider_ooc'.
+Finding duplicate cells in `\divider_ooc'.
+Removed a total of 0 cells.
+
+6.3. Executing OPT_DFF pass (perform DFF optimizations).
+
+6.4. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \divider_ooc..
+Removed 44 unused cells and 256 unused wires.
+<suppressed ~45 debug messages>
+
+6.5. Finished fast OPT passes.
+
+7. Executing SYNTH_XILINX pass.
+
+7.1. Executing TECHMAP pass (map to technology primitives).
+
+7.1.1. Executing Verilog-2005 frontend: /home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/techmap.v
+Parsing Verilog input from `/home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/techmap.v' to AST representation.
+Generating RTLIL representation for module `\_90_simplemap_bool_ops'.
+Generating RTLIL representation for module `\_90_simplemap_reduce_ops'.
+Generating RTLIL representation for module `\_90_simplemap_logic_ops'.
+Generating RTLIL representation for module `\_90_simplemap_compare_ops'.
+Generating RTLIL representation for module `\_90_simplemap_various'.
+Generating RTLIL representation for module `\_90_simplemap_registers'.
+Generating RTLIL representation for module `\_90_shift_ops_shr_shl_sshl_sshr'.
+Generating RTLIL representation for module `\_90_shift_shiftx'.
+Generating RTLIL representation for module `\_90_fa'.
+Generating RTLIL representation for module `\_90_lcu_brent_kung'.
+Generating RTLIL representation for module `\_90_alu'.
+Generating RTLIL representation for module `\_90_macc'.
+Generating RTLIL representation for module `\_90_alumacc'.
+Generating RTLIL representation for module `$__div_mod_u'.
+Generating RTLIL representation for module `$__div_mod_trunc'.
+Generating RTLIL representation for module `\_90_div'.
+Generating RTLIL representation for module `\_90_mod'.
+Generating RTLIL representation for module `$__div_mod_floor'.
+Generating RTLIL representation for module `\_90_divfloor'.
+Generating RTLIL representation for module `\_90_modfloor'.
+Generating RTLIL representation for module `\_90_pow'.
+Generating RTLIL representation for module `\_90_demux'.
+Generating RTLIL representation for module `\_90_lut'.
+Generating RTLIL representation for module `$connect'.
+Generating RTLIL representation for module `$input_port'.
+Successfully finished Verilog frontend.
+
+7.1.2. Executing Verilog-2005 frontend: /home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/xilinx/cells_map.v
+Parsing Verilog input from `/home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/xilinx/cells_map.v' to AST representation.
+Generating RTLIL representation for module `$__SHREG_'.
+Generating RTLIL representation for module `$__XILINX_SHREG_'.
+Generating RTLIL representation for module `$__XILINX_MUXF78'.
+Successfully finished Verilog frontend.
+
+7.1.3. Continuing TECHMAP pass.
+No more expansions possible.
+<suppressed ~80 debug messages>
+
+7.2. Executing DFFLEGALIZE pass (convert FFs and LATCHes to types supported by the target).
+
+7.3. Executing TECHMAP pass (map to technology primitives).
+
+7.3.1. Executing Verilog-2005 frontend: /home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/xilinx/ff_map.v
+Parsing Verilog input from `/home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/xilinx/ff_map.v' to AST representation.
+Generating RTLIL representation for module `$_DFFE_NP0P_'.
+Generating RTLIL representation for module `$_DFFE_PP0P_'.
+Generating RTLIL representation for module `$_DFFE_NP1P_'.
+Generating RTLIL representation for module `$_DFFE_PP1P_'.
+Generating RTLIL representation for module `$_DFFSRE_NPPP_'.
+Generating RTLIL representation for module `$_DFFSRE_PPPP_'.
+Generating RTLIL representation for module `$_SDFFE_NP0P_'.
+Generating RTLIL representation for module `$_SDFFE_PP0P_'.
+Generating RTLIL representation for module `$_SDFFE_NP1P_'.
+Generating RTLIL representation for module `$_SDFFE_PP1P_'.
+Generating RTLIL representation for module `$_DLATCH_NP0_'.
+Generating RTLIL representation for module `$_DLATCH_PP0_'.
+Generating RTLIL representation for module `$_DLATCH_NP1_'.
+Generating RTLIL representation for module `$_DLATCH_PP1_'.
+Generating RTLIL representation for module `$_DLATCH_NPP_'.
+Generating RTLIL representation for module `$_DLATCH_PPP_'.
+Successfully finished Verilog frontend.
+
+7.3.2. Continuing TECHMAP pass.
+Using template $paramod$_SDFFE_PP0P_\_TECHMAP_WIREINIT_Q_=1'x for cells of type $_SDFFE_PP0P_.
+No more expansions possible.
+<suppressed ~847 debug messages>
+
+7.4. Executing OPT_EXPR pass (perform const folding).
+Optimizing module divider_ooc.
+
+7.5. Executing Verilog-2005 frontend: /home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/xilinx/abc9_model.v
+Parsing Verilog input from `/home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/xilinx/abc9_model.v' to AST representation.
+Generating RTLIL representation for module `$__XILINX_MUXF78'.
+Successfully finished Verilog frontend.
+
+7.6. Executing ABC9 pass.
+
+7.6.1. Executing ABC9_OPS pass (helper functions for ABC9).
+
+7.6.2. Executing ABC9_OPS pass (helper functions for ABC9).
+
+7.6.3. Executing SCC pass (detecting logic loops).
+Found 0 SCCs in module divider_ooc.
+Found 0 SCCs.
+
+7.6.4. Executing ABC9_OPS pass (helper functions for ABC9).
+
+7.6.5. Executing TECHMAP pass (map to technology primitives).
+
+7.6.5.1. Executing Verilog-2005 frontend: /home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/techmap.v
+Parsing Verilog input from `/home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/techmap.v' to AST representation.
+Generating RTLIL representation for module `\_90_simplemap_bool_ops'.
+Generating RTLIL representation for module `\_90_simplemap_reduce_ops'.
+Generating RTLIL representation for module `\_90_simplemap_logic_ops'.
+Generating RTLIL representation for module `\_90_simplemap_compare_ops'.
+Generating RTLIL representation for module `\_90_simplemap_various'.
+Generating RTLIL representation for module `\_90_simplemap_registers'.
+Generating RTLIL representation for module `\_90_shift_ops_shr_shl_sshl_sshr'.
+Generating RTLIL representation for module `\_90_shift_shiftx'.
+Generating RTLIL representation for module `\_90_fa'.
+Generating RTLIL representation for module `\_90_lcu_brent_kung'.
+Generating RTLIL representation for module `\_90_alu'.
+Generating RTLIL representation for module `\_90_macc'.
+Generating RTLIL representation for module `\_90_alumacc'.
+Generating RTLIL representation for module `$__div_mod_u'.
+Generating RTLIL representation for module `$__div_mod_trunc'.
+Generating RTLIL representation for module `\_90_div'.
+Generating RTLIL representation for module `\_90_mod'.
+Generating RTLIL representation for module `$__div_mod_floor'.
+Generating RTLIL representation for module `\_90_divfloor'.
+Generating RTLIL representation for module `\_90_modfloor'.
+Generating RTLIL representation for module `\_90_pow'.
+Generating RTLIL representation for module `\_90_demux'.
+Generating RTLIL representation for module `\_90_lut'.
+Generating RTLIL representation for module `$connect'.
+Generating RTLIL representation for module `$input_port'.
+Successfully finished Verilog frontend.
+
+7.6.5.2. Continuing TECHMAP pass.
+No more expansions possible.
+<suppressed ~506 debug messages>
+
+7.6.6. Executing OPT pass (performing simple optimizations).
+
+7.6.6.1. Executing OPT_EXPR pass (perform const folding).
+
+7.6.6.2. Executing OPT_MERGE pass (detect identical cells).
+Removed a total of 0 cells.
+
+7.6.6.3. Executing OPT_MUXTREE pass (detect dead branches in mux trees).
+Removed 0 multiplexer ports.
+
+7.6.6.4. Executing OPT_REDUCE pass (consolidate $*mux and $reduce_* inputs).
+Performed a total of 0 changes.
+
+7.6.6.5. Executing OPT_MERGE pass (detect identical cells).
+Removed a total of 0 cells.
+
+7.6.6.6. Executing OPT_DFF pass (perform DFF optimizations).
+
+7.6.6.7. Executing OPT_CLEAN pass (remove unused cells and wires).
+
+7.6.6.8. Executing OPT_EXPR pass (perform const folding).
+
+7.6.6.9. Finished fast OPT passes. (There is nothing left to do.)
+
+7.6.7. Executing TECHMAP pass (map to technology primitives).
+
+7.6.7.1. Executing Verilog-2005 frontend: /home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/abc9_map.v
+Parsing Verilog input from `/home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/abc9_map.v' to AST representation.
+Lexer warning: The SystemVerilog keyword `bit' (at /home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/abc9_map.v:35) is not recognized unless read_verilog is called with -sv!
+Generating RTLIL representation for module `$__ABC9_BARRIER_MAP'.
+Successfully finished Verilog frontend.
+
+7.6.7.2. Continuing TECHMAP pass.
+No more expansions possible.
+<suppressed ~3 debug messages>
+
+7.6.8. Executing Verilog-2005 frontend: /home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/abc9_model.v
+Parsing Verilog input from `/home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/abc9_model.v' to AST representation.
+Generating RTLIL representation for module `$__ABC9_DELAY'.
+Generating RTLIL representation for module `$__ABC9_BARRIER'.
+Generating RTLIL representation for module `$__ABC9_SCC_BREAKER'.
+Generating RTLIL representation for module `$__DFF_N__$abc9_flop'.
+Generating RTLIL representation for module `$__DFF_P__$abc9_flop'.
+Successfully finished Verilog frontend.
+
+7.6.9. Executing ABC9_OPS pass (helper functions for ABC9).
+
+7.6.10. Executing ABC9_OPS pass (helper functions for ABC9).
+
+7.6.11. Executing ABC9_OPS pass (helper functions for ABC9).
+<suppressed ~2 debug messages>
+
+7.6.12. Executing AIGMAP pass (map logic to AIG).
+Module divider_ooc: replaced 468 cells with 3276 new cells, skipped 1140 cells.
+  replaced 2 cell types:
+     227 $_MUX_
+     241 $_XOR_
+  not replaced 3 cell types:
+     272 $_NOT_
+     820 FDRE
+      48 CARRY8
+
+7.6.12.1. Executing ABC9_OPS pass (helper functions for ABC9).
+
+7.6.12.2. Executing ABC9_OPS pass (helper functions for ABC9).
+
+7.6.12.3. Executing XAIGER2 backend.
+<suppressed ~908 debug messages>
+Extracted 3028 AND gates and 0 wires from module `divider_ooc' to a netlist network with 1623 inputs and 2321 outputs.
+
+7.6.12.4. Executing ABC9_EXE pass (technology mapping using ABC9).
+
+7.6.12.5. Executing ABC9.
+Running ABC command: "<yosys-exe-dir>/yosys-abc" -s -f <abc-temp-dir>/abc.script 2>&1
+ABC: ======== ABC command line "source <abc-temp-dir>/abc.script"
+ABC: + read_lut <abc-temp-dir>/input.lut 
+ABC: + read_box <abc-temp-dir>/input.box 
+ABC: + &read <abc-temp-dir>/input.xaig 
+ABC: + &ps 
+ABC: <abc-temp-dir>/input : i/o =   1623/   2321  and =    1404  lev =    2 (0.40)  mem = 0.08 MB  box = 0  bb = 0
+ABC: + &scorr 
+ABC: Warning: The network is combinational.
+ABC: + &sweep 
+ABC: + &dc2 
+ABC: + &dch -f -r 
+ABC: + &ps 
+ABC: <abc-temp-dir>/input : i/o =   1623/   2321  and =    2808  lev =    2 (0.40)  mem = 0.09 MB  ch =  468  box = 0  bb = 0
+ABC: cst =       0  cls =    468  lit =     468  unused =    3495  proof =     0
+ABC: + &if -W 300 -v 
+ABC: K = 8. Memory (bytes): Truth =    0. Cut =   80. Obj =  160. Set =  816. CutMin = no
+ABC: Node =    2808.  Ch =   468.  Total mem =    1.13 MB. Peak cut mem =    0.00 MB.
+ABC: P:  Del =  707.00.  Ar =    1163.0.  Edge =     1163.  Cut =     5616.  T =     0.00 sec
+ABC: P:  Del =  707.00.  Ar =    1163.0.  Edge =     1163.  Cut =     5616.  T =     0.00 sec
+ABC: P:  Del =  707.00.  Ar =    1163.0.  Edge =     1163.  Cut =     5616.  T =     0.00 sec
+ABC: F:  Del =  707.00.  Ar =    1163.0.  Edge =     1163.  Cut =     5616.  T =     0.00 sec
+ABC: A:  Del =  707.00.  Ar =    1163.0.  Edge =     1163.  Cut =     5616.  T =     0.00 sec
+ABC: A:  Del =  707.00.  Ar =    1163.0.  Edge =     1163.  Cut =     5616.  T =     0.00 sec
+ABC: Total time =     0.01 sec
+ABC: + &write -n <abc-temp-dir>/output.aig 
+ABC: + &mfs 
+ABC: The network is not changed by "&mfs".
+ABC: + &ps -l 
+ABC: <abc-temp-dir>/input : i/o =   1623/   2321  and =    1404  lev =    2 (0.40)  mem = 0.08 MB  box = 0  bb = 0
+ABC: Mapping (K=3)  :  lut =    468  edge =    1163  lev =    1 (0.20)  mem = 0.03 MB
+ABC: LUT = 468 : 2=241 51.5 %  3=227 48.5 %  Ave = 2.49
+ABC: + &write -n <abc-temp-dir>/output.aig 
+ABC: + &verify 
+ABC: Networks are equivalent.  Time =     0.02 sec
+ABC: + time 
+ABC: elapse: 0.11 seconds, total: 0.11 seconds
+
+7.6.12.6. Executing AIGER frontend.
+<suppressed ~10 debug messages>
+Removed 2354 unused cells and 4478 unused wires.
+
+7.6.12.7. Executing ABC_OPS_REINTEGRATE pass (reintegrate ABC mapped design into module).
+ABC RESULTS:              $lut cells:      499
+ABC RESULTS:           input signals:      184
+ABC RESULTS:          output signals:        3
+<suppressed ~3944 debug messages>
+Removing temp directory.
+
+7.6.13. Executing TECHMAP pass (map to technology primitives).
+
+7.6.13.1. Executing Verilog-2005 frontend: /home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/abc9_unmap.v
+Parsing Verilog input from `/home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/abc9_unmap.v' to AST representation.
+Generating RTLIL representation for module `$__DFF_x__$abc9_flop'.
+Generating RTLIL representation for module `$__ABC9_SCC_BREAKER'.
+Generating RTLIL representation for module `$__ABC9_BARRIER'.
+Successfully finished Verilog frontend.
+
+7.6.13.2. Continuing TECHMAP pass.
+No more expansions possible.
+<suppressed ~6 debug messages>
+Removed 227 unused cells and 4621 unused wires.
+
+7.7. Executing XILINX_SRL pass (Xilinx shift register extraction).
+Found fixed chain of length 17 (FDRE):
+    -> $auto$ff.cc:337:slice$1814 ($__XILINX_SHREG_)
+Found fixed chain of length 15 (FDRE):
+    -> $auto$ff.cc:337:slice$1932 ($__XILINX_SHREG_)
+Found fixed chain of length 14 (FDRE):
+    -> $auto$ff.cc:337:slice$1981 ($__XILINX_SHREG_)
+Found fixed chain of length 13 (FDRE):
+    -> $auto$ff.cc:337:slice$1997 ($__XILINX_SHREG_)
+Found fixed chain of length 12 (FDRE):
+    -> $auto$ff.cc:337:slice$2049 ($__XILINX_SHREG_)
+Found fixed chain of length 11 (FDRE):
+    -> $auto$ff.cc:337:slice$2065 ($__XILINX_SHREG_)
+Found fixed chain of length 10 (FDRE):
+    -> $auto$ff.cc:337:slice$2081 ($__XILINX_SHREG_)
+Found fixed chain of length 9 (FDRE):
+    -> $auto$ff.cc:337:slice$2097 ($__XILINX_SHREG_)
+Found fixed chain of length 8 (FDRE):
+    -> $auto$ff.cc:337:slice$2113 ($__XILINX_SHREG_)
+Found fixed chain of length 7 (FDRE):
+    -> $auto$ff.cc:337:slice$2146 ($__XILINX_SHREG_)
+Found fixed chain of length 6 (FDRE):
+    -> $auto$ff.cc:337:slice$2178 ($__XILINX_SHREG_)
+Found fixed chain of length 5 (FDRE):
+    -> $auto$ff.cc:337:slice$2194 ($__XILINX_SHREG_)
+Found fixed chain of length 4 (FDRE):
+    -> $auto$ff.cc:337:slice$2210 ($__XILINX_SHREG_)
+Found fixed chain of length 3 (FDRE):
+    -> $auto$ff.cc:337:slice$2226 ($__XILINX_SHREG_)
+Found fixed chain of length 16 (FDRE):
+    -> $auto$ff.cc:337:slice$1851 ($__XILINX_SHREG_)
+Found fixed chain of length 15 (FDRE):
+    -> $auto$ff.cc:337:slice$1852 ($__XILINX_SHREG_)
+Found fixed chain of length 14 (FDRE):
+    -> $auto$ff.cc:337:slice$1853 ($__XILINX_SHREG_)
+Found fixed chain of length 13 (FDRE):
+    -> $auto$ff.cc:337:slice$1854 ($__XILINX_SHREG_)
+Found fixed chain of length 12 (FDRE):
+    -> $auto$ff.cc:337:slice$1855 ($__XILINX_SHREG_)
+Found fixed chain of length 11 (FDRE):
+    -> $auto$ff.cc:337:slice$1856 ($__XILINX_SHREG_)
+Found fixed chain of length 10 (FDRE):
+    -> $auto$ff.cc:337:slice$1857 ($__XILINX_SHREG_)
+Found fixed chain of length 9 (FDRE):
+    -> $auto$ff.cc:337:slice$1858 ($__XILINX_SHREG_)
+Found fixed chain of length 8 (FDRE):
+    -> $auto$ff.cc:337:slice$1859 ($__XILINX_SHREG_)
+Found fixed chain of length 7 (FDRE):
+    -> $auto$ff.cc:337:slice$1860 ($__XILINX_SHREG_)
+Found fixed chain of length 6 (FDRE):
+    -> $auto$ff.cc:337:slice$1861 ($__XILINX_SHREG_)
+Found fixed chain of length 5 (FDRE):
+    -> $auto$ff.cc:337:slice$1862 ($__XILINX_SHREG_)
+Found fixed chain of length 4 (FDRE):
+    -> $auto$ff.cc:337:slice$1863 ($__XILINX_SHREG_)
+Found fixed chain of length 3 (FDRE):
+    -> $auto$ff.cc:337:slice$1864 ($__XILINX_SHREG_)
+Found fixed chain of length 16 (FDRE):
+    -> $auto$ff.cc:337:slice$1875 ($__XILINX_SHREG_)
+<suppressed ~283 debug messages>
+
+7.8. Executing TECHMAP pass (map to technology primitives).
+
+7.8.1. Executing Verilog-2005 frontend: /home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/xilinx/lut_map.v
+Parsing Verilog input from `/home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/xilinx/lut_map.v' to AST representation.
+Generating RTLIL representation for module `$lut'.
+Successfully finished Verilog frontend.
+
+7.8.2. Executing Verilog-2005 frontend: /home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/xilinx/cells_map.v
+Parsing Verilog input from `/home/brendan/.local/opt/oss-cad-suite/lib/../share/yosys/xilinx/cells_map.v' to AST representation.
+Generating RTLIL representation for module `$__SHREG_'.
+Generating RTLIL representation for module `$__XILINX_SHREG_'.
+Generating RTLIL representation for module `$__XILINX_MUXF78'.
+Successfully finished Verilog frontend.
+
+7.8.3. Continuing TECHMAP pass.
+Using template $paramod$lut\WIDTH=32'00000000000000000000000000000001\LUT=2'01 for cells of type $lut.
+Using template $paramod$0fc8ad4102952e611008da630614e74e6a3d53e7$__XILINX_SHREG_ for cells of type $__XILINX_SHREG_.
+Using template $paramod$6eb28ba123be6931de84398e766dab1875d575bf$__XILINX_SHREG_ for cells of type $__XILINX_SHREG_.
+Using template $paramod$42358d8cf6eb9273d80322b333e47bc0d26aba4b$__XILINX_SHREG_ for cells of type $__XILINX_SHREG_.
+Using template $paramod$e4abcc012110e9de39d520499c028a40d2eb6679$__XILINX_SHREG_ for cells of type $__XILINX_SHREG_.
+Using template $paramod$40a95e1d72471b5d834a4a6947d8ac29abf5fcbf$__XILINX_SHREG_ for cells of type $__XILINX_SHREG_.
+Using template $paramod$c745ec27977857047012163bd98ef348198010f1$__XILINX_SHREG_ for cells of type $__XILINX_SHREG_.
+Using template $paramod$0ec2e63fd95d8dc6b4d421898cf8ed9378dca243$__XILINX_SHREG_ for cells of type $__XILINX_SHREG_.
+Using template $paramod$5295a73e1026eaa52b13b970124057be2f52a8a2$__XILINX_SHREG_ for cells of type $__XILINX_SHREG_.
+Using template $paramod$a0c693580258b71a3dfb8c7753eaa2151b97696c$__XILINX_SHREG_ for cells of type $__XILINX_SHREG_.
+Using template $paramod$85ca3ef8df56852c87a03093ecaf2a1cff050e0c$__XILINX_SHREG_ for cells of type $__XILINX_SHREG_.
+Using template $paramod$fb58815d044f8d48b38e8aff9d675c49887caa1e$__XILINX_SHREG_ for cells of type $__XILINX_SHREG_.
+Using template $paramod$94b290335d0d1761706f5e3f69a0225ba6c4b5f5$__XILINX_SHREG_ for cells of type $__XILINX_SHREG_.
+Using template $paramod$8d9fdc0b35d87e1e14d87f7e9fc79147d0e76bfc$__XILINX_SHREG_ for cells of type $__XILINX_SHREG_.
+Using template $paramod$113f39b58d331af52a896ee39335acc59ba9b851$__XILINX_SHREG_ for cells of type $__XILINX_SHREG_.
+Using template $paramod$3a1207df2e48834b0c9044d9be7ea05dcfd4a734$__XILINX_SHREG_ for cells of type $__XILINX_SHREG_.
+Using template $paramod$lut\WIDTH=32'00000000000000000000000000000010\LUT=4'1001 for cells of type $lut.
+Using template $paramod$lut\WIDTH=32'00000000000000000000000000000011\LUT=8'11100010 for cells of type $lut.
+Using template $paramod$lut\WIDTH=32'00000000000000000000000000000011\LUT=8'10101100 for cells of type $lut.
+Using template $paramod$26ad8e2b0ef05270f7dd4036ca7fe227a7fb27f7$__XILINX_SHREG_ for cells of type $__XILINX_SHREG_.
+No more expansions possible.
+<suppressed ~852 debug messages>
+
+7.9. Executing XILINX_DFFOPT pass (optimize FF control signal usage).
+Optimizing FFs in divider_ooc.
+
+7.10. Executing OPT_LUT_INS pass (discard unused LUT inputs).
+Optimizing LUTs in divider_ooc.
+Removed 0 unused cells and 1215 unused wires.
+
+7.11. Executing HIERARCHY pass (managing design hierarchy).
+Attribute `top' found on module `divider_ooc'. Setting top module to divider_ooc.
+
+7.11.1. Analyzing design hierarchy..
+Top module:  \divider_ooc
+
+7.11.2. Analyzing design hierarchy..
+Top module:  \divider_ooc
+Removed 0 unused modules.
+
+7.12. Printing statistics.
+
+=== divider_ooc ===
+
+        +----------Local Count, excluding submodules.
+        | 
+      690 wires
+     2190 wire bits
+       94 public wires
+     1162 public wire bits
+        7 ports
+       69 port bits
+      547 cells
+       48   CARRY8
+       31   INV
+      241   LUT2
+      227   LUT3
+      567 submodules
+      538   FDRE
+       29   SRL16E
+
+   Estimated number of LCs:        234
+
+=== design hierarchy ===
+
+        +----------Count including submodules.
+        | 
+      547 divider_ooc
+
+        +----------Count including submodules.
+        | 
+      690 wires
+     2190 wire bits
+       94 public wires
+     1162 public wire bits
+        7 ports
+       69 port bits
+        - memories
+        - memory bits
+        - processes
+      547 cells
+       48   CARRY8
+       31   INV
+      241   LUT2
+      227   LUT3
+      567 submodules
+      538   FDRE
+       29   SRL16E
+
+   Estimated number of LCs:        234
+
+7.13. Executing CHECK pass (checking for obvious problems).
+Checking module divider_ooc...
+Found and reported 0 problems.
+End of script. Logfile hash: 3daf33cebb, time: 8.75s, user: 6.89s, system: 0.81s, MEM: 163.87 MB peak
+Yosys 0.70+385 (git sha1 098e46a36, Release, Clang /usr/bin/clang++ 21.1.8)
+Time spent: 58% 25x read_verilog (4 sec), 10% 2x synth_xilinx (0 sec), ...

@@ -290,6 +290,13 @@ def builtin_svg(j: dict, module: str) -> str:
     return "\n".join(o)
 
 
+def schematic_sources(srcs: list[Path]) -> tuple[list[Path], str | None]:
+    """``(files the schematic drawer reads, the fail-closed text for the files it does not)``: Yosys with the slang front end reads
+    SystemVerilog and Verilog; a VHDL file is named in the text (brief 153), never dropped silently."""
+    from flow import sources
+    return [p for p in srcs if p.suffix in (".sv", ".v")], sources.no_reader(srcs, {"sv"}, "the schematic drawer (Yosys with the slang front end)")
+
+
 def make_schematic(files: list[Path], module: str, out: Path, ip_names: set[str], use_ns: bool = True) -> dict:
     d = out / "schematics"
     d.mkdir(parents=True, exist_ok=True)
@@ -421,7 +428,9 @@ def write_views(b: Any, out: Path, cps: dict, st: dict, schematic_modules: list[
     # schematics
     sch, notes = [], []
     mods = schematic_modules or [b.prep["top"]]
-    src_files = [p for p in srcs if p.suffix in (".sv", ".v")]
+    src_files, _unread = schematic_sources(srcs)
+    if _unread:                                         # brief 153: a VHDL design gets a said-so note, not an empty schematic list
+        notes.append(_unread)
     ip_names = {p.stem for p in (b.dir / "ip").rglob("*.xci")} if (b.dir / "ip").is_dir() else set()
     for mname in mods:
         r = make_schematic(src_files, mname, out, ip_names)
@@ -429,7 +438,8 @@ def write_views(b: Any, out: Path, cps: dict, st: dict, schematic_modules: list[
         if not r["ok"]:
             notes.append(f"{mname}: {r['note']}")
     body += ["<h2>Schematics</h2><p class='mut'>One module, one level deep (its instances are boxes), elaborated from the RTL in today's tree, not the netlist Vivado made. "
-             "Add modules with <code>--schematic MODULE</code>.</p><ul>"]
+             "Add modules with <code>--schematic MODULE</code>.</p>"
+             + (f"<p class='bad'>{esc(_unread)}</p>" if _unread else "") + "<ul>"]
     for r in sch:
         if r["ok"]:
             body.append(f"<li><a href='{r['svg']}'>{esc(r['module'])}</a> <span class='mut'>({r['cells']} cells, {r['tool']}, {esc(r['note'])})</span></li>")

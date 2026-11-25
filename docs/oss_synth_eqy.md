@@ -85,7 +85,7 @@ Both sides first run `sim -w` for two reset clocks, so every register starts fro
 
 Limits that hold for every strategy:
 
-* INIT values are not compared: the RTL has no initial values, so what is proved is the post-reset state and every input
+* INIT values are not compared: the RTL of these designs has no initial values (`rtl.initial_values` allows them, [design_standards.md](design_standards.md#initial-values-rtlinitial_values)), so what is proved is the post-reset state and every input
   sequence after it. A design whose reset is asynchronous, or whose reset input is not named `rst` and the clock `clk`, is
   not covered (`reset=` changes the name).
 * The proof is of the netlist's function, not of its timing or placement.

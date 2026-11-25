@@ -41,12 +41,21 @@ module formal_udp_tx (
             end
         end
     end
+    // Every assertion is labelled (a_*) and paired with a cover of its own antecedent (a_*__ante; brief 143c, flow/formal_rigour.py).
     always_ff @(posedge clk) if (f_past && !rst) begin
-        assert (viol[3:0] == 4'b0000);
-        if (m_axis_tvalid) assert (f_tx);
-        if (m_axis_tvalid && m_axis_tlast) assert (f_out == 7'd41 + {3'd0, f_n});
-        if (m_axis_tvalid && !m_axis_tlast) assert (f_out < 7'd41 + {3'd0, f_n});
-        if (f_tx) assert (!s_axis_tready);
-        cover (ev_sent && f_n == 4'd2);
+        a_axis_rules: assert (viol[3:0] == 4'b0000);
+        if (m_axis_tvalid) a_output_needs_datagram: assert (f_tx);
+        if (m_axis_tvalid && m_axis_tlast) a_frame_last_beat: assert (f_out == 7'd41 + {3'd0, f_n});
+        if (m_axis_tvalid && !m_axis_tlast) a_frame_mid_beat: assert (f_out < 7'd41 + {3'd0, f_n});
+        if (f_tx) a_input_blocked_while_sending: assert (!s_axis_tready);
+    end
+    // antecedents (same guard)
+    always_ff @(posedge clk) if (f_past && !rst) begin
+        a_axis_rules__ante: cover (m_axis_tvalid && m_axis_tready);
+        a_output_needs_datagram__ante: cover (m_axis_tvalid);
+        a_frame_last_beat__ante: cover (m_axis_tvalid && m_axis_tlast);
+        a_frame_mid_beat__ante: cover (m_axis_tvalid && !m_axis_tlast);
+        a_input_blocked_while_sending__ante: cover (f_tx);
+        c_two_byte_datagram: cover (ev_sent && f_n == 4'd2);
     end
 endmodule

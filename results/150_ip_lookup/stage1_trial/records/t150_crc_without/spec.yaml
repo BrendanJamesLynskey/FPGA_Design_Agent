@@ -1,0 +1,216 @@
+name: crc32_checker
+title: CRC-32 (IEEE 802.3, reflected) checker over UART test shell
+board: nexys_a7_100t
+part: xc7a100tcsg324-1
+top: crc32_top
+clocks:
+- name: clk
+  pin: E3 (CLK100MHZ)
+  period: 10 ns (100 MHz)
+  domain: single clock domain for engine, shell registers and LEDs
+reset:
+  signal: cpu_resetn
+  pin: C12 (CPU_RESETN button)
+  active: low
+  style: asynchronous assert, synchronous deassert on clk
+  value: running CRC state set to 0xFFFFFFFF; CRC register reads 0x00000000
+parameters:
+  POLY: '0xEDB88320'
+  INIT: '0xFFFFFFFF'
+  DATA_WIDTH: 32
+ports:
+- name: clk
+  direction: input
+  width: 1
+  role: board clock E3 CLK100MHZ, 100 MHz
+- name: cpu_resetn
+  direction: input
+  width: 1
+  role: board CPU reset button C12, active low
+- name: uart_rxd
+  direction: input
+  width: 1
+  role: USB-UART receive from host, pin C4
+- name: uart_txd
+  direction: output
+  width: 1
+  role: USB-UART transmit to host, pin D4
+- name: led
+  direction: output
+  width: 16
+  role: board LEDs LD0 to LD15, driven with CRC[15:0]
+behaviour:
+  engine:
+  - state is the running CRC-32 register, initialised to 0xFFFFFFFF on reset and on
+    CLEAR
+  - on each clock with a DATA write strobe and no CLEAR, state is updated with the
+    32-bit data word using POLY 0xEDB88320, processing the word least significant
+    bit first, one word per clock
+  - the update is a combinational XOR network computing the state after 32 bit shifts
+    in one clock
+  - 'bytes of the word are taken little endian: bits 7:0 are the first byte, bits
+    31:24 the last'
+  - on a clock with both DATA write strobe and CLEAR, CLEAR wins and the data word
+    is dropped
+  registers:
+  - CRC register value is state XOR 0xFFFFFFFF, so the empty stream reads 0x00000000
+    and the standard CRC-32 check value of ASCII 123456789 is 0xCBF43926
+  - reads of the ID register return 0x43524333, the ASCII bytes of CRC3
+  - reads of CTRL and DATA return 0x00000000
+  - a write of bit 0 equal to 1 to CTRL sets state to 0xFFFFFFFF, the CLEAR action
+  leds:
+  - led[15:0] continuously shows CRC register bits 15:0 and led is not affected by
+    the shell reads
+registers:
+  map:
+  - offset: '0x00'
+    name: ID
+    access: RO
+    reset: '0x43524333'
+    bits: '[31:0] design ID, ASCII CRC3'
+  - offset: '0x04'
+    name: CRC
+    access: RO
+    reset: '0x00000000'
+    bits: '[31:0] running CRC-32 after final XOR with 0xFFFFFFFF'
+  - offset: '0x08'
+    name: CTRL
+    access: WO (reads 0)
+    reset: '0x00000000'
+    bits: '[0] CLEAR, write 1 sets state to 0xFFFFFFFF, self-clearing; [31:1] reserved'
+  - offset: '0x0C'
+    name: DATA
+    access: WO (reads 0)
+    reset: '0x00000000'
+    bits: '[31:0] data word, a write pushes the word into the CRC engine for one clock'
+timing:
+  latency:
+    data_write_to_state: 1 clock cycle after the DATA write strobe
+    clear_to_state: 1 clock cycle after the CTRL write strobe
+    state_to_crc_register: 0 clock cycles, CRC register is combinational from state
+    state_to_led: 1 clock cycle
+  constraints: 100 MHz clock, the XOR network must close setup at 10 ns with no failing
+    endpoints
+resources_expected:
+  lut: about 150 to 300 LUT6 for the 32-bit parallel CRC network and shell register
+    decode
+  ff: about 32 state flops plus shell register and UART flops
+  bram: 0
+  dsp: 0
+  notes: no block RAM or DSP slices are used by the CRC engine
+assumptions:
+- text: the UART test shell is an existing block that delivers a 32-bit write to DATA
+    and a CTRL write as one-clock strobes into the engine
+  reason: spec.md names the UART test shell but does not describe its internal bus,
+    so the shell is taken as given
+- text: a single host supplies words in order and there is no flow control beyond
+    the shell
+  reason: spec.md does not state flow control, and one word per clock is only meaningful
+    if the shell delivers ordered words
+- text: the CRC register and LEDs are not required to hold a value across reset
+  reason: reset is defined to restore the initial state, so the stored state is discarded
+- text: the design uses the built-in CONFIG defaults of the Nexys A7-100T with no
+    external clock source
+  reason: the spec names only the board and the CPU reset button
+open_questions: []
+requirements:
+- id: REQ-01
+  text: The engine updates the running state from each 32-bit data word using polynomial
+    0xEDB88320 and initial state 0xFFFFFFFF.
+  proof:
+  - simulation
+- id: REQ-02
+  text: The CRC register reads the state XOR 0xFFFFFFFF so an empty stream reads 0x00000000.
+  proof:
+  - simulation
+- id: REQ-03
+  text: The engine applies one 32-bit data word per clock cycle with no wait state.
+  proof:
+  - simulation
+- id: REQ-04
+  text: The CRC of the stream 123456789 in ASCII bytes read back from the CRC register
+    is 0xCBF43926.
+  proof:
+  - simulation
+- id: REQ-05
+  text: A write of 1 to CTRL bit 0 sets the running state to 0xFFFFFFFF one clock
+    cycle later.
+  proof:
+  - simulation
+  - formal
+- id: REQ-06
+  text: A DATA write in the same clock as a CLEAR leaves the state at 0xFFFFFFFF.
+  proof:
+  - simulation
+- id: REQ-07
+  text: Assertion of cpu_resetn low sets the running state to 0xFFFFFFFF.
+  proof:
+  - simulation
+  - hardware
+- id: REQ-08
+  text: The ID register at offset 0x00 reads 0x43524333.
+  proof:
+  - simulation
+  - hardware
+- id: REQ-09
+  text: The led output equals CRC register bits 15:0 in every clock cycle after reset.
+  proof:
+  - simulation
+  - hardware
+- id: REQ-10
+  text: The design closes setup timing at 100 MHz with zero failing endpoints.
+  proof:
+  - analysis
+- id: REQ-11
+  text: The design uses zero block RAM tiles and zero DSP slices.
+  proof:
+  - analysis
+- id: REQ-12
+  text: A read of the CTRL register at offset 0x08 returns 0x00000000.
+  proof:
+  - simulation
+resolved_questions:
+- question: 'Register map: give the offset, width, reset value and access of every
+    register the test shell exposes (ID, CRC readback, CLEAR control, DATA input).'
+  answer: ID at 0x00 RO reset 0x43524333; CRC at 0x04 RO reset 0x00000000; CTRL at
+    0x08 WO with bit 0 CLEAR; DATA at 0x0C WO with 32-bit word
+  status: defaulted
+  by: default
+  default_reason: spec.md says the CRC is read back and cleared over the UART shell
+    and names the ID, so the proposed map is kept until the shell map is confirmed
+- question: 'Bit and byte order of a data word: which bit and which byte enter the
+    CRC first?'
+  answer: least significant bit first within each byte, bytes from bits 7:0 to 31:24
+    (little endian), the usual Ethernet byte order
+  status: defaulted
+  by: default
+  default_reason: the reflected CRC-32 is defined over a byte stream, and the word-to-stream
+    order decides the result
+- question: Should the CRC register read the finalised value (state XOR 0xFFFFFFFF)
+    or the raw running state?
+  answer: finalised value, so the empty stream reads 0x00000000 and the 123456789
+    check value is 0xCBF43926
+  status: defaulted
+  by: default
+  default_reason: spec.md says standard Ethernet CRC-32, which includes the final
+    XOR, and a checker needs the standard check value
+- question: When CLEAR and a DATA write occur in the same clock, which wins?
+  answer: CLEAR wins and the data word is dropped
+  status: defaulted
+  by: default
+  default_reason: a clear is a reset-like command, and dropping the word keeps the
+    state well defined in one cycle
+- question: Is the UART baud rate and frame format (8N1 at 115200 baud) fixed by the
+    existing shell?
+  answer: 115200 baud, 8 data bits, no parity, 1 stop bit
+  status: defaulted
+  by: default
+  default_reason: spec.md does not give the baud rate; 115200 8N1 is the common default
+    for the Nexys A7 USB-UART bridge
+- question: Should the LEDs show the CRC low 16 bits when reset is active?
+  answer: yes, they show 0x0000 during and after reset because the CRC register reads
+    0x00000000 then
+  status: defaulted
+  by: default
+  default_reason: spec.md says the LEDs show the low 16 bits of the CRC and gives
+    no reset behaviour for them

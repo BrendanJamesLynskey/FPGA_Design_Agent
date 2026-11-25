@@ -1,6 +1,6 @@
 # results/b127: the standard-protocol trading path inside the KR260 10G design (brief 127)
 
-Records of build `designs/b96_kr260_10g/rm_gp_itch`: simulation (xsim with AMD's real XPM macros and the GT stand-in; Icarus with the real MACs) and the Vivado 2026.1 build. **No board was used.** Datasheet and method:
+Records of build `designs/b96_kr260_10g/rm_gp_itch`: simulation (xsim with AMD's real XPM macros and the GT stand-in; Icarus with the real MACs) and the Vivado 2026.1 build. **No board was used for these records, except `hw/` (the owner's run B).** Datasheet and method:
 [designs/b96_kr260_10g/rm_gp_itch/docs/itch_integration.md](../../designs/b96_kr260_10g/rm_gp_itch/docs/itch_integration.md); the pre-registered board test: [preregistration.md](preregistration.md), [board_test_plan.md](../../designs/b96_kr260_10g/rm_gp_itch/docs/board_test_plan.md).
 
 ## Records
@@ -12,6 +12,7 @@ Records of build `designs/b96_kr260_10g/rm_gp_itch`: simulation (xsim with AMD's
 - `fcs_window_unit_sim.json`, `fcs_window_share.json`: how many bytes may follow a candidate message in a bad packet before its order escapes the late frame check, and the share of the synthetic generator's candidates beyond that.
 - `back_to_back_unit_sim.json`: the spacing of the start strobes of two to four orders in a row.
 - `builds/rm_gp_itch/`: the Vivado build (digest, run record, report_cdc summary, in-context timing of brief 110's critical paths).
+- `hw/`: the owner's board runs, as found (`hw/README.md`: run B, 2026-11-22, 5 of 6 stages passed, `rate` failed); `preregistration_rerun_172.md`: why, the harness fix, and the pre-registered re-run (brief 172).
 - `preregistration.md`: the board test's arms, runs, criteria and stopping rules, written before any board time.
 
 ## Reproduce

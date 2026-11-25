@@ -1,0 +1,19 @@
+PART	xc7a35tcpg236-1	artix7	7
+MUX	g_bufgmux_ctrl.u_mux	BUFGCTRL	BUFGCTRL	2
+MUXIN	g_bufgmux_ctrl.u_mux	I0	clk0_p_IBUF_inst	IBUF	clk0
+MUXIN	g_bufgmux_ctrl.u_mux	I1	clk1_p_IBUF_inst	IBUF	clk1
+MUXOUT	g_bufgmux_ctrl.u_mux	clk0mux,clk1mux
+MUXOCLK	g_bufgmux_ctrl.u_mux	clk1mux	clk1
+MUXOCLK	g_bufgmux_ctrl.u_mux	clk0mux	clk0
+MUXCTL	g_bufgmux_ctrl.u_mux	CE0	1	VCC_1	VCC
+MUXCTL	g_bufgmux_ctrl.u_mux	CE1	1	VCC_1	VCC
+MUXCTL	g_bufgmux_ctrl.u_mux	IGNORE0	0	GND_1	GND
+MUXCTL	g_bufgmux_ctrl.u_mux	IGNORE1	0	GND_1	GND
+MUXCTL	g_bufgmux_ctrl.u_mux	S0	-	sel_r_reg	FDRE
+MUXCTL	g_bufgmux_ctrl.u_mux	S1	-	sel_r_reg	FDRE
+FANOUT	g_bufgmux_ctrl.u_mux	33
+INTER	g_bufgmux_ctrl.u_mux	A	64	r0_reg[0]
+INTERCLK	g_bufgmux_ctrl.u_mux	A	clk0	32	r0_reg[0]
+INTERCLK	g_bufgmux_ctrl.u_mux	A	clk1	32	r1_reg[0]
+INTER	g_bufgmux_ctrl.u_mux	C	32	g_int.back_reg[0]
+INTERCLK	g_bufgmux_ctrl.u_mux	C	clk0	32	g_int.back_reg[0]

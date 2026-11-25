@@ -54,6 +54,8 @@ The README's sections, in this order (the generator writes them; you add narrati
 8. **History**: dates, briefs, PRs, and the agent run when the agent produced the design (`agent_run`).
    `produced_by: agent` (or `human+agent`) means this repository's agent produced it and needs `agent_run`; a design
    written by an engineer in a planned brief session is `human`.
+   `produced_by: session` means written by a Claude Code session or sub-agent, checked by the planner; not human-written.
+   It needs no `agent_run` (the repository's agent did not produce it). Never use `human` for Claude-written work.
 
 `AGENT.md` has the same facts without prose: `identity`, `summary`, `state` (stage, gates, Vivado version,
 knowledge-bank pin, build ID), `interface`, `files` (with hash prefixes), `commands`, `records` (path and hash prefix,
@@ -99,6 +101,23 @@ Limits of the checks, so nobody over-trusts them (brief 68's adversarial review)
   records a PR adds);
 - `activity` labels are not checked against the record (a board run labelled as simulation escapes the conditions
   rule). Review still matters.
+
+## Trading blocks: the cycle-cost line (brief 190)
+
+Every block on a trading path (a feed in, an order out) states **what it adds to the path in clocks, between which two events, and why it adds zero
+where it adds zero**, so the path total is a sum of lines that can be audited and not one number nobody can take apart (idea from Edwards 2026, ch 2;
+the format and the check are ours). A design on the path has `designs/<d>/cycle_cost.yaml`; `python3 flow/cycle_cost.py --write` renders it as a table between
+`<!-- cycle_cost:begin -->` and `<!-- cycle_cost:end -->` in the design's datasheet, and `--check` (run by `flow/tests/test_190_cycle_cost.py`, so by CI) fails when:
+
+- a clocks figure cannot be computed: each is the **difference of two fields of a committed record** (the second field absent means 0), never typed;
+- a row adds 0 clocks and gives no `why`;
+- a total is not the sum of its rows, or is not the record's own total;
+- the table in the datasheet differs from the rendering.
+
+The line is required for the designs in `flow/cycle_cost.TRADING` (b110, b58a, b119 at the time of writing); `--coverage` lists any that lack the file. The
+list is advisory: adding a new trading design to it is the author's job, and nothing finds a trading design that is not listed. Start and end events are
+named in the same words as `docs/latency_definitions.md`; a figure with no named events does not pass review (owner rule, 2026-11-19). The clocks are those
+of simulation; the line does not claim anything about a board.
 
 ## IP library entries (`ip_lib/<entry>/`)
 

@@ -1,0 +1,15 @@
++---------------------------------------------------------------------+
+; Setup Transfers                                                     ;
++------------+----------+------------+----------+----------+----------+
+; From Clock ; To Clock ; RR Paths   ; FR Paths ; RF Paths ; FF Paths ;
++------------+----------+------------+----------+----------+----------+
+; clk0       ; clk0     ; 68         ; 0        ; 0        ; 0        ;
+; clk0mux    ; clk0     ; 1          ; 0        ; 0        ; 0        ;
+; clk1mux    ; clk0     ; 1          ; 0        ; 0        ; 0        ;
+; clk0mux    ; clk0mux  ; 67         ; 0        ; 0        ; 0        ;
+; clk1mux    ; clk0mux  ; false path ; 0        ; 0        ; 0        ;
+; clk0mux    ; clk1mux  ; false path ; 0        ; 0        ; 0        ;
+; clk1mux    ; clk1mux  ; 67         ; 0        ; 0        ; 0        ;
++------------+----------+------------+----------+----------+----------+
+Entries labeled "false path" only account for clock-to-clock false paths and not path-based false paths. As a result, actual path counts may be lower than reported.
+

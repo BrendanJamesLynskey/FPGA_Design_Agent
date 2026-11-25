@@ -18,6 +18,7 @@ COUNTERS = (
     "cand", "fire", "rej_arm", "rej_kill", "rej_gap", "rej_stale", "rej_size", "rej_pos", "rej_band", "rej_busy", "abort", "late_abort", "spec",
 )
 M32 = 0xFFFFFFFF
+CHECKS = ("arm", "kill", "gap", "stale", "size", "pos", "band", "hold")   # bit k of the verdict's reject word (brief 191)
 BID, ASK = 0, 1
 
 
@@ -43,6 +44,14 @@ class Cfg:
     arm: bool = True
     kill: bool = False
     halt_on_gap: bool = True
+    # brief 188 (the untimed model assumes a software reference is always fresh and has no hold-off; both are clock-based and are tested in the bench)
+    ref_sw: bool = False          # band reference: False the best bid of the own book, True the software reference ref_px
+    ref_px: int = 0
+    holdoff: int = 0              # clocks; not modelled (timing), the bench tests it
+    notional_mode: int = 0        # 0 none, 1 price * qty <= max_notional, 2 price-band table (nt_shift, nt_tbl: 16 entries)
+    max_notional: int = 0
+    nt_shift: int = 0
+    nt_tbl: tuple = (0,) * 16
 
 
 @dataclass
@@ -69,6 +78,8 @@ class Model:
         self.pos = [0] * c.n_inst
         self.next_ref = 1
         self.msgs, self.events, self.tus, self.orders = [], [], [], []
+        self.verdicts = []                               # brief 191: per candidate, every failing check as a bit (CHECKS order); hold-off (bit 7) is clock based and not modelled
+        self.rej_seen = 0
 
     def clear_book(self):
         c = self.cfg
@@ -202,7 +213,13 @@ class Model:
         d = self.lv[inst][side]
         if add:
             if px in d:
-                d[px] = (d[px] + amt) & M32
+                tot = d[px] + amt
+                if tot > M32:                       # the level size saturates (brief 188): counted as lvovf, the instrument is inexact
+                    d[px] = M32
+                    cnt["lvovf"] += 1
+                    self.inexact[inst] = True
+                else:
+                    d[px] = tot
             elif len(d) < c.levels:
                 d[px] = amt & M32
             else:
@@ -231,6 +248,10 @@ class Model:
         c, cnt = self.cfg, self.cnt
         idx = ref & ((1 << c.ord_aw) - 1)
         e = self.table.get(idx)
+        if shares == 0:                             # a live entry of no size is never made (brief 188): counted as oovf, the instrument is inexact
+            cnt["oovf"] += 1
+            self.inexact[inst] = True
+            return False
         if e is not None:
             if e["ref"] == ref:
                 cnt["odup"] += 1
@@ -297,8 +318,22 @@ class Model:
         if side != ASK or px == 0 or px > c.thr:
             return None
         cnt["cand"] += 1
-        price = (px + c.px_off) & M32
+        price33 = px + c.px_off
+        price = price33 & M32
+        carry = price33 > M32                    # the order price wrapped past 2^32 - 1: refused as band (brief 188)
         bid = self.tob[inst][BID]
+        ref_ok, ref_px = (True, c.ref_px) if c.ref_sw else (bid[2], bid[0])
+        if c.notional_mode == 1:
+            nt_bad = price * c.qty > c.max_notional
+        elif c.notional_mode == 2:
+            nt_bad = c.qty > c.nt_tbl[min(price >> c.nt_shift, 15)]
+        else:
+            nt_bad = False
+        chk = (int(not c.arm) | int(c.kill) << 1 | int(self.untrusted or (c.halt_on_gap and self.gap)) << 2 | int(self.inexact[inst]) << 3
+               | int(c.qty == 0 or c.qty > c.max_qty or c.qty >= 1_000_000 or nt_bad) << 4 | int(self.pos[inst] + c.qty > c.max_pos) << 5
+               | int(not (ref_ok and not carry and price <= ref_px + c.band)) << 6)
+        self.verdicts.append({"inst": inst, "chk": chk})
+        self.rej_seen |= chk
         if not c.arm:
             cnt["rej_arm"] += 1
         elif c.kill:
@@ -307,11 +342,11 @@ class Model:
             cnt["rej_gap"] += 1
         elif self.inexact[inst]:
             cnt["rej_stale"] += 1
-        elif c.qty == 0 or c.qty > c.max_qty or c.qty >= 1_000_000:
+        elif c.qty == 0 or c.qty > c.max_qty or c.qty >= 1_000_000 or nt_bad:
             cnt["rej_size"] += 1
         elif self.pos[inst] + c.qty > c.max_pos:
             cnt["rej_pos"] += 1
-        elif not (bid[2] and price <= bid[0] + c.band):
+        elif not (ref_ok and not carry and price <= ref_px + c.band):
             cnt["rej_band"] += 1
         else:
             ref = self.next_ref
