@@ -1,6 +1,6 @@
 {
  "note": "Names and one-line descriptions only, from the SKILL.md front matter at the pin; Ross-as-shipped is not listed.",
- "pin": "5e2eab8",
+ "pin": "6185830",
  "skills": [
   {
    "description": "A design or request names the Analog Devices ADALM-Pluto (PlutoSDR) (xc7z010clg400-1): its part, clock, user I/O and UART pins, I/O standards, what is unconfirmed ...",
@@ -867,6 +867,12 @@
    "unit": "family/zynq_ultrascale_plus"
   },
   {
+   "description": "A netlist, a resource count or a timing estimate for a Zynq UltraScale+ (K26/KR260) design would come from Yosys (synth_xilinx -family xcup) instead of Vivado: what Yosys maps differently ...",
+   "name": "zynqmp-oss-synthesis-gaps",
+   "section": "primitives",
+   "unit": "family/zynq_ultrascale_plus"
+  },
+  {
    "description": "Moving RTL, XDC or a block design from a 7-series board (Nexys A7, ZedBoard) to the K26/KR260: which 7-series primitives do not exist on Zynq UltraScale+, which Vivado retargets ...",
    "name": "zynqmp-porting-from-7-series",
    "section": "primitives",
@@ -1281,6 +1287,12 @@
    "unit": "vendor/amba_axi"
   },
   {
+   "description": "Constraining an asynchronous clock-domain crossing and deciding where its timing margin goes, in Vivado or Quartus: per-crossing latency bound ...",
+   "name": "xdc-cdc-crossing-margin-method",
+   "section": "constraints",
+   "unit": "vendor/amd_constraints"
+  },
+  {
    "description": "Writing the clock part of an XDC: create_clock (-add, waveform), which generated clocks Vivado derives by itself and which need create_generated_clock (fabric dividers, forwarded clocks) ...",
    "name": "xdc-clock-definitions",
    "section": "constraints",
@@ -1611,6 +1623,18 @@
    "unit": "vendor/ross_distilled"
   },
   {
+   "description": "A clock mux (BUFGMUX, BUFGCTRL, LUT) must be constrained or a check reports CLKMUX-NO-GROUPS/SRC-GROUPED/CASE, multiple_clock or TIMING-56: generated clocks on the mux output vs groups on ...",
+   "name": "amd-clock-mux-constraints",
+   "section": "timing-methodology",
+   "unit": "vendor/ross_distilled"
+  },
+  {
+   "description": "Deciding whether and how to switch clocks on AMD (7 series, UltraScale+): alternatives, BUFGMUX_CTRL/BUFGCTRL on S, never a LUT, the safe-switch protocol for a clock that can stop (IGNORE) ...",
+   "name": "amd-clock-mux-switching",
+   "section": "timing-methodology",
+   "unit": "vendor/ross_distilled"
+  },
+  {
    "description": "The setup, hold or pulse-width gate fails, or timing reports must be explained: WNS/TNS/WHS, path anatomy, logic vs net delay, skew.",
    "name": "reading-timing-reports",
    "section": "timing-methodology",
@@ -1681,6 +1705,12 @@
    "name": "vhdl-vunit-osvvm-uvvm",
    "section": "simulation",
    "unit": "vendor/vhdl_verification"
+  },
+  {
+   "description": "A register, memory or I/O register has an initial (power-up) value, or a design moves between AMD and Altera parts: what INIT costs per family ...",
+   "name": "power-up-values-amd-and-altera",
+   "section": "synthesis-attributes",
+   "unit": "vendor/vivado_synthesis"
   },
   {
    "description": "Writing SystemVerilog that Vivado must map to a DSP48E1 (multiply, MAC, pre-adder, wide add), carry-chain arithmetic, MUXF7/F8 wide muxes ...",

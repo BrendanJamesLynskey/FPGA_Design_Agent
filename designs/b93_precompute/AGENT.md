@@ -23,7 +23,7 @@ param ML_PRE=0 (default), 1, 2 and 3 all built in simulation legal=0 to 3; 2 and
 designs/b93_precompute/model/gen_rtl.py 47e61982fe: generator of the table blocks
 designs/b93_precompute/rtl/ml_feat_pre.sv 8745a2f49b: early feature unit
 designs/b93_precompute/rtl/ml_gate_pre.sv b69f63825b: gate for an early class
-designs/b58a_trigger/rtl/trigger_core.sv cf7c64d60a: ML_PRE and ML_ARM 4 added (defaults unchanged)
+designs/b58a_trigger/rtl/trigger_core.sv e7c2642551: ML_PRE and ML_ARM 4 added (defaults unchanged)
 designs/b93_precompute/ooc/ooc.py 950817e484: out-of-context clock search on both parts
 
 ## commands

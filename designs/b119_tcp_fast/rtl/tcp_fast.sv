@@ -28,6 +28,8 @@ module tcp_fast (
     input  logic [31:0] f_ref,
     input  logic        commit,
     input  logic        abort,
+    input  logic        tx_unsent,     // brief 176, one clock: the transmit side poisoned the last finished segment (it was counted as sent here): give its sequence number and IP identification back
+    input  logic        tx_drop,       // brief 176, one clock, while a segment is being built: the transmit side drops this segment whole (it never reaches the wire): it consumes nothing
     input  logic [7:0]  cfg_tif, cfg_display, cfg_capacity, cfg_ise, cfg_cross, cfg_custtype,
     input  logic [31:0] cfg_minqty,
     output logic        busy,
@@ -84,6 +86,8 @@ module tcp_fast (
     logic [511:0] pay;
 
     // ---- counters
+    logic [31:0] c_unsent;
+    logic        drop_l;
     logic [31:0] c_sent, c_poison, c_ref_arm, c_ref_stale, c_ref_win, c_ref_mss, c_busy, c_late, c_nov, c_wrign, c_sumerr, c_cancel0, c_build, c_abort;
 
     // ---- the order's frame, for the early payload sum (the same layout as ouch_enter; the streaming check below compares it with the real bytes)
@@ -225,6 +229,7 @@ module tcp_fast (
             5'd27: rd = c_cancel0;
             5'd28: rd = c_build;
             5'd29: rd = c_abort;
+            5'd30: rd = c_unsent;
             default: rd = '0;
         endcase
     end
@@ -246,7 +251,7 @@ module tcp_fast (
             ip1 <= '0; pg0 <= '0; pg1 <= '0; pg2 <= '0; pg3 <= '0; sump <= '0; acc <= '0; hdr1 <= '0; tot <= '0; f1 <= '0; prev <= '0; pay <= '0;
             o_d <= '0; o_keep <= '0; refuse_code <= '0; rec_seq <= '0; rec_len <= '0; rec_id <= '0; rec_pay <= '0;
             c_sent <= '0; c_poison <= '0; c_ref_arm <= '0; c_ref_stale <= '0; c_ref_win <= '0; c_ref_mss <= '0; c_busy <= '0; c_late <= '0;
-            c_nov <= '0; c_wrign <= '0; c_sumerr <= '0; c_cancel0 <= '0; c_build <= '0; c_abort <= '0;
+            c_nov <= '0; c_wrign <= '0; c_sumerr <= '0; c_cancel0 <= '0; c_build <= '0; c_abort <= '0; c_unsent <= '0; drop_l <= 1'b0;
         end else begin
             if (age != 32'hFFFFFFFF) age <= age + 32'd1;
 
@@ -314,12 +319,14 @@ module tcp_fast (
             end
 
             if (go_take) begin
-                busy <= 1'b1; ph <= 4'd1; spec_c <= go_spec; committed <= commit;
+                busy <= 1'b1; ph <= 4'd1; spec_c <= go_spec; drop_l <= 1'b0; committed <= commit;
                 r_sym <= f_sym; r_px <= f_px; r_qty <= f_qty; r_ref <= f_ref;
-                seq_c <= snd_nxt; ack_c <= rcv_nxt; win_c <= rcv_wnd; id_c <= ip_id; acc <= '0;
+                // brief 176: a give-back arriving in this very clock is not yet in snd_nxt / ip_id, so the new segment takes the corrected values (the flight test above stays conservative by one segment)
+                seq_c <= tx_unsent ? snd_nxt - {16'd0, PAYLEN} : snd_nxt; ack_c <= rcv_nxt; win_c <= rcv_wnd; id_c <= tx_unsent ? ip_id - 16'd1 : ip_id; acc <= '0;
                 o_v <= 1'b1; o_sof <= 1'b1; o_d <= hb[63:0]; o_keep <= 8'hFF;
             end else if (busy) begin
                 if (commit) committed <= 1'b1;
+                if (tx_drop) drop_l <= 1'b1;
                 ph <= ph + 4'd1;
                 // checksum pipeline
                 if (ph == 4'd1) begin
@@ -344,7 +351,10 @@ module tcp_fast (
                 o_v <= 1'b1; o_d <= nw; o_keep <= nw_last ? 8'h01 : 8'hFF;
                 if (abort_now || nw_last) begin
                     o_eof <= 1'b1; busy <= 1'b0; ph <= '0;
-                    if (fin_poison) begin
+                    if (drop_l || tx_drop) begin
+                        // brief 176: the transmit side dropped this segment whole (the MAC was owned): nothing left, so nothing is consumed and nothing is recorded
+                        o_poison <= 1'b1;
+                    end else if (fin_poison) begin
                         o_poison <= 1'b1; c_poison <= c_poison + 32'd1;
                         if (abort_now) c_abort <= c_abort + 32'd1;
                         else if (sumerr) c_sumerr <= c_sumerr + 32'd1;
@@ -356,10 +366,18 @@ module tcp_fast (
                 end
             end
 
+            // brief 176: a segment that ended unpoisoned here but was poisoned by the transmit side (the trigger frame's bad FCS, STRICT without a verdict, FIFO overflow): its sequence number
+            // and IP identification are given back, so the next segment carries the number the peer expects. The pulse always comes after the segment's own update (its last word is registered
+            // at that update and the multiplexer consumes it at least one clock later). The next segment latches its numbers at go_take, which can be the same clock as the pulse (the multiplexer
+            // grants the MAC the clock after the verdict): the go_take branch above applies the correction itself in that case, and a go_take before the pulse is dropped by the multiplexer.
+            if (tx_unsent) begin
+                snd_nxt <= snd_nxt - {16'd0, PAYLEN}; ip_id <= ip_id - 16'd1; c_unsent <= c_unsent + 32'd1;
+            end
+
             // a write to CLR_CNT wins over a count in the same clock (it comes last, so its assignments override the increments above)
             if (sw_we && sw_waddr == 5'd31) begin
                 c_sent <= '0; c_poison <= '0; c_ref_arm <= '0; c_ref_stale <= '0; c_ref_win <= '0; c_ref_mss <= '0; c_busy <= '0; c_late <= '0;
-                c_nov <= '0; c_wrign <= '0; c_sumerr <= '0; c_cancel0 <= '0; c_build <= '0; c_abort <= '0;
+                c_nov <= '0; c_wrign <= '0; c_sumerr <= '0; c_cancel0 <= '0; c_build <= '0; c_abort <= '0; c_unsent <= '0;
             end
         end
     end

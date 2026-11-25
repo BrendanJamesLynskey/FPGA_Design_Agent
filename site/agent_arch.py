@@ -60,6 +60,7 @@ GATE_WORDS = {
     "inventory": "pins and clocks match the board",
     "arch_approved": "architecture approved",
     "constants": "constants match the spec and the board",
+    "report_gates": "the synthesis reports show no path that cannot close, too many control sets or an unused generic",
     "lint": "lint clean",
     "model_contract": "golden model keeps its contract",
     "simulate": "tests pass against the model",

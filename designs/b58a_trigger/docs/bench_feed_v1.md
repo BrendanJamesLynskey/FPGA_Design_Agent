@@ -92,6 +92,25 @@ An order whose frame is known to be bad before it starts is dropped. In safe mod
 FCS is good (this adds the rest of the frame plus the 4-byte FCS to the latency). A dropped, cancelled or poisoned
 order still counts toward the position limit, so the limit is never understated.
 
+## Cycle cost (per stage)
+
+Generated from `designs/b58a_trigger/cycle_cost.yaml` by `flow/cycle_cost.py`; do not edit between the markers.
+
+<!-- cycle_cost:begin -->
+Cycle cost of each block on the path (clocks of 8 ns (125 MHz), simulation, core side, from the clock the last price byte enters mac_rx to the clock mac_tx's first preamble byte is on its registered output). Each figure is the difference of two fields of the record named; a row of 0 says why.
+
+| Block | Adds (clocks) | From event | To event | Record | Why |
+|---|---|---|---|---|---|
+| mac_rx + feed_rx | 2 | last price byte in | msg_px_v | `results/b58a/latency_sim.json` | - |
+| rules | 1 | msg_px_v | fire | `results/b58a/latency_sim.json` | - |
+| interlocks | 1 | fire | grant | `results/b58a/latency_sim.json` | - |
+| order_ctl, speculative | 2 | grant | tx_start | `results/b58a/latency_sim.json` | - |
+| mac_tx | 2 | tx_start | first preamble byte | `results/b58a/latency_sim.json` | - |
+| order_ctl, safe mode (instead of the speculative row) | 12 | grant | tx_start | `results/b58a/latency_sim.json` | in safe mode nothing is sent until the frame check sequence is good, so this stage waits for the end of the frame; the other four stages have the same figures in both modes |
+| **price complete to first byte, speculative** | **8** | | | `results/b58a/latency_sim.json` | sum of rx, rules, il, oc, tx; equals the record's own figure |
+| **price complete to first byte, safe mode** | **18** | | | `results/b58a/latency_sim.json` | sum of rx, rules, il, oc_safe, tx; equals the record's own figure |
+<!-- cycle_cost:end -->
+
 ## Where the design comes from
 
 The format follows a general topic checklist, restated in our own words from a conference talk's list of topics:

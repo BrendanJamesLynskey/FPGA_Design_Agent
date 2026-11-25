@@ -1,0 +1,54 @@
+Copyright 1986-2022 Xilinx, Inc. All Rights Reserved. Copyright 2022-2026 Advanced Micro Devices, Inc. All Rights Reserved.
+---------------------------------------------------------------------------------------------------------------------------------------------
+| Tool Version : Vivado v.2026.1 (lin64) Build 6511674 Tue Jun 16 11:01:26 MDT 2026
+| Date         : Tue Nov 24 17:57:21 2026
+| Host         : bren-ubuntu24-04 running 64-bit Ubuntu 24.04.4 LTS
+| Command      : report_methodology -file /home/brendan/Claude_sandbox/_worktrees/208-clock-mux/build/208/a7/a7_u_case/methodology_synth.rpt
+| Design       : mux_top
+| Device       : xc7a35tcpg236-1
+| Speed File   : -1
+| Design State : Synthesized
+---------------------------------------------------------------------------------------------------------------------------------------------
+
+Report Methodology
+
+Table of Contents
+-----------------
+1. REPORT SUMMARY
+2. REPORT DETAILS
+
+1. REPORT SUMMARY
+-----------------
+            Netlist: mux_top
+          Floorplan: design_1
+      Design limits: <entire design considered>
+             Max checks: <unlimited>
+             Checks found: 3
++----------+------------------+------------------------------------------------+--------+
+| Rule     | Severity         | Description                                    | Checks |
++----------+------------------+------------------------------------------------+--------+
+| TIMING-6 | Critical Warning | No common primary clock between related clocks | 1      |
+| TIMING-7 | Critical Warning | No common node between related clocks          | 1      |
+| XDCH-2   | Warning          | Same min and max delay values on IO port       | 1      |
++----------+------------------+------------------------------------------------+--------+
+
+2. REPORT DETAILS
+-----------------
+TIMING-6#1 Critical Warning
+No common primary clock between related clocks  
+The clocks clk1 and clk0 are related (timed together) but they have no common primary clock. The design could fail in hardware. To find a timing path between these clocks, run the following command: report_timing -from [get_clocks clk1] -to [get_clocks clk0]
+Related violations: <none>
+
+TIMING-7#1 Critical Warning
+No common node between related clocks  
+The clocks clk1 and clk0 are related (timed together) but they have no common node. The design could fail in hardware. To find a timing path between these clocks, run the following command: report_timing -from [get_clocks clk1] -to [get_clocks clk0]
+Related violations: <none>
+
+XDCH-2#1 Warning
+Same min and max delay values on IO port  
+The same input delay of 1.000 ns has been defined on port 'sel_in' relative to clock clk0 for both max and min. Make sure this reflects the design intent.
+set_input_delay -clock clk0 1.000 [get_ports sel_in]
+/home/brendan/Claude_sandbox/_worktrees/208-clock-mux/results/208/xdc/u_base.xdc (Line: 4)
+Related violations: <none>
+
+

@@ -1,0 +1,21 @@
+# Cycle cost of each stage of the b58a mock trading path, from results/b58a/latency_sim.json, one-message frame (brief 190; flow/cycle_cost.py).
+design: b58a_trigger
+doc: docs/bench_feed_v1.md
+unit: "clocks of 8 ns (125 MHz), simulation, core side, from the clock the last price byte enters mac_rx to the clock mac_tx's first preamble byte is on its registered output"
+rows:
+  - {id: rx, block: "mac_rx + feed_rx", from_event: "last price byte in", to_event: "msg_px_v",
+     record: results/b58a/latency_sim.json, to: [modes, speculative_1msg, stages_cycles, "mac_rx + feed_rx (price byte in -> msg_px_v)"]}
+  - {id: rules, block: rules, from_event: "msg_px_v", to_event: "fire",
+     record: results/b58a/latency_sim.json, to: [modes, speculative_1msg, stages_cycles, "rules (msg_px_v -> fire)"]}
+  - {id: il, block: interlocks, from_event: "fire", to_event: "grant",
+     record: results/b58a/latency_sim.json, to: [modes, speculative_1msg, stages_cycles, "interlocks (fire -> grant)"]}
+  - {id: oc, block: "order_ctl, speculative", from_event: "grant", to_event: "tx_start",
+     record: results/b58a/latency_sim.json, to: [modes, speculative_1msg, stages_cycles, "order_ctl (grant -> tx_start)"]}
+  - {id: tx, block: mac_tx, from_event: "tx_start", to_event: "first preamble byte",
+     record: results/b58a/latency_sim.json, to: [modes, speculative_1msg, stages_cycles, "mac_tx (tx_start -> first preamble byte)"]}
+  - {id: oc_safe, block: "order_ctl, safe mode (instead of the speculative row)", from_event: "grant", to_event: "tx_start",
+     record: results/b58a/latency_sim.json, to: [modes, safe_1msg, stages_cycles, "order_ctl (grant -> tx_start)"],
+     why: "in safe mode nothing is sent until the frame check sequence is good, so this stage waits for the end of the frame; the other four stages have the same figures in both modes"}
+totals:
+  - {label: "price complete to first byte, speculative", sum_of: [rx, rules, il, oc, tx], record: results/b58a/latency_sim.json, path: [modes, speculative_1msg, decision_to_first_byte]}
+  - {label: "price complete to first byte, safe mode", sum_of: [rx, rules, il, oc_safe, tx], record: results/b58a/latency_sim.json, path: [modes, safe_1msg, decision_to_first_byte]}
