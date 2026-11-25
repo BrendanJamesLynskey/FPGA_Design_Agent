@@ -29,13 +29,19 @@ from agent.graph.llm import DEFAULT_MODEL, FORBIDDEN, OPENROUTER_BASE, Reply
 KEY_FILE = Path.home() / ".config" / "fpga_design_agent" / "openrouter.env"
 
 
-def _key_from_file() -> str | None:
-    """OPENROUTER_API_KEY=... from the local key file (outside the repo, mode 600); never printed."""
+def anthropic_key_file() -> Path:
+    """The owner's Anthropic key file (brief 209a), outside the repository; HOME is read at call time."""
+    return Path.home() / ".config" / "fpga_design_agent" / "anthropic.env"
+
+
+def _key_from_file(name: str = "OPENROUTER_API_KEY", path: Path | None = None) -> str | None:
+    """``NAME=...`` from a local key file (outside the repo, mode 600); never printed."""
+    path = path or KEY_FILE
     try:
-        if KEY_FILE.stat().st_mode & 0o077:
-            raise ValueError(f"{KEY_FILE} must be readable by its owner only (chmod 600)")
-        for line in KEY_FILE.read_text().splitlines():
-            if line.startswith("OPENROUTER_API_KEY="):
+        if path.stat().st_mode & 0o077:
+            raise ValueError(f"{path} must be readable by its owner only (chmod 600)")
+        for line in path.read_text().splitlines():
+            if line.startswith(name + "="):
                 return line.split("=", 1)[1].strip() or None
     except FileNotFoundError:
         return None
@@ -46,7 +52,13 @@ def read_key(key_env: str | None) -> str | None:
     """The key named by ``key_env`` (an environment variable name); the OpenRouter key may come from the owner's key file."""
     if not key_env:
         return None
-    return os.environ.get(key_env) or (_key_from_file() if key_env == "OPENROUTER_API_KEY" else None)
+    if os.environ.get(key_env):
+        return os.environ[key_env]
+    if key_env == "OPENROUTER_API_KEY":
+        return _key_from_file()
+    if key_env == "ANTHROPIC_API_KEY":                  # brief 209a: the same owner key-file route, its own file
+        return _key_from_file("ANTHROPIC_API_KEY", anthropic_key_file())
+    return None
 
 
 class OpenRouterClient:
@@ -111,7 +123,7 @@ class AnthropicClient:
         self.temperature, self.max_tokens, self.stop, self.thinking_budget = temperature, max_tokens, stop, thinking_budget
         self._key = read_key(key_env)
         if not self._key and opener is None:
-            raise ValueError(f"{key_env} is not set")
+            raise ValueError(f"{key_env} is not set" + (f" and {anthropic_key_file()} has none" if key_env == "ANTHROPIC_API_KEY" else ""))
         self._open = opener or urllib.request.urlopen
 
     @staticmethod

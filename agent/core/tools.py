@@ -756,7 +756,7 @@ def gates(s: Session, kind: str = "stages", variant: str = "base") -> dict:
         out = s.design / "build" / "bringup_ready.json"
         out.parent.mkdir(parents=True, exist_ok=True)
         out.unlink(missing_ok=True)
-        r = s.runner.run("bringup_ready", [PY, str(s.root / "flow" / "hw_dry_check.py"), str(s.design), "--json", str(out)],
+        r = s.runner.run("bringup_ready", [PY, str(s.root / "flow" / "hw_dry_check.py"), str(s.design), "--json", str(out), "--board", str(s.board)],
                          s.root, timeout=120)
         return {"ok": r.returncode == 0, "output": _text_out(r), "returncode": r.returncode, "gates": _read_json(out)}
     if kind == "verif":
