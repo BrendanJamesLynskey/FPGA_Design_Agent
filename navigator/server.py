@@ -64,8 +64,10 @@ class App:
         self.token = token or secrets.token_urlsafe(24)
         self.port = 0
         self.state_dir = Path(state_dir) if state_dir else Path.home() / ".local" / "state" / "fpga_design_agent" / "navigator"
+        self.config_dir = Path(config_dir) if config_dir is not None else self.health.config_dir
+        self.perm_file = self.config_dir / "permissions.yaml"           # brief 222: the saved permission settings; `python -m agent` reads the same file
         self.runctl = runctl.RunControl(self.root, self.handoff, self.runs_dir, self.health.runner, self.state_dir, lambda: self.health._cached("models_view", self.health.models_view),
-                                        spawner=spawner, gate=self.gate, **({"killpg": killpg} if killpg else {}))
+                                        spawner=spawner, gate=self.gate, perm_file=self.perm_file, **({"killpg": killpg} if killpg else {}))
         self.runctl.reconcile()
         self.board = boardops.BoardOps(self.handoff, self.health.runner, config_dir if config_dir is not None else self.health.config_dir,
                                        transport or boardops.VivadoTransport(self.state_dir / "board"))
@@ -147,7 +149,9 @@ class App:
         if path == "/api/start/options":
             return self.json(200, {**self.runctl.options(), "usage": self.health.usage(), "slots": self.health.locks(), "started": self.runctl.records()})
         if path == "/api/board":
-            return self.json(200, self.board.listing())
+            return self.json(200, {**self.board.listing(), "permission": self.board_permission()})
+        if path == "/api/permissions":
+            return self.json(200, self.permissions_view(one("project")))
         if path == "/api/trace":
             return self.json(200, S.trace_view(r))
         if path == "/api/health":
@@ -176,6 +180,8 @@ class App:
             return self.json(200, self.runctl.stop(body.get("id")))
         if path in ("/api/run/ask", "/api/run/request", "/api/run/answer"):
             return self.live_post(path, body)
+        if path == "/api/permissions/save":
+            return self.permissions_save(body)
         if path == "/api/board/run":
             try:
                 self.gate("python -m navigator (board action)")
@@ -183,8 +189,57 @@ class App:
                 return self.json(403, {"ok": False, "refused": "access gate: " + redact.text(str(e))[:160]})
             if body.get("confirm") != "read":
                 return self.json(200, {"ok": False, "refused": "a board action needs the confirmation the page sends"})
+            bp = self.board_permission()
+            if bp["result"] == "deny":                                # brief 222: the default settings turn the read-only board actions off
+                return self.json(200, {"ok": False, "refused": f"read-only board actions are off in the saved permission settings ({bp['by']}); change them on the Permissions page"})
             return self.json(200, self.board.run(body.get("board"), body.get("action")))
         return self.json(404, {"error": "no such endpoint"})
+
+    # -- permissions (brief 222) --------------------------------------------------------------------------------------------------------
+    def board_permission(self) -> dict[str, Any]:
+        """The read-only board actions against the default settings: ``deny`` refuses them; ``ask`` and ``allow`` both go on, because every board action already
+        needs the confirmation the page sends (that click is the ask)."""
+        from agent.core import permissions as P
+        spec = self.runctl.saved_permissions(None)
+        d = P.Policy.from_spec(spec).decide("read_board", log=False)
+        return {"result": d.result, "by": d.by, "mode": spec["mode"]}
+
+    def permissions_view(self, project: str) -> dict[str, Any]:
+        from agent.core import permissions as P
+        names = self.runctl.permission_options()["projects"]
+        proj = project if project and project in names else ""
+        spec = self.runctl.saved_permissions(proj or None)
+        pol = P.Policy.from_spec(spec)
+        eff = {a.name: {"value": pol.base(a.name)[0], "rule": pol.base(a.name)[1]} for a in P.ACTIONS}
+        flags = ["--permissions", spec["mode"], *sum((["--allow" if v == P.ALLOW else "--deny" if v == P.DENY else "--ask", k] for k, v in sorted(spec["overrides"].items())
+                                                      if v != P.MODES[spec["mode"]]["actions"][k]), [])]
+        return {**P.view(), "projects": names, "project": proj, "settings": {k: spec[k] for k in ("mode", "overrides", "source", "ask_above_usd", "saved")},
+                "effective": eff, "file": str(self.perm_file), "cli": "python -m agent run <spec> " + " ".join(flags),
+                "stops": "A run started from the Start page stops after stage 8, so it never reaches the board; Full auto reaches the board only from the command line."}
+
+    def permissions_save(self, body: dict[str, Any]) -> tuple[int, str, bytes, dict[str, str]]:
+        from agent.core import permissions as P
+        extra = sorted(set(body) - {"project", "mode", "overrides", "ask_above_usd", "confirm"})
+        if extra:
+            return self.json(200, {"ok": False, "refused": "the request has fields this action does not take: " + ", ".join(redact.text(str(k))[:20] for k in extra[:5])})
+        if body.get("confirm") != "save":
+            return self.json(200, {"ok": False, "refused": "saving permissions needs the confirmation the page sends"})
+        try:
+            self.gate("python -m navigator (save permissions)")
+        except Exception as e:
+            return self.json(403, {"ok": False, "refused": "access gate: " + redact.text(str(e))[:160]})
+        names = self.runctl.permission_options()["projects"]
+        project = body.get("project") or None
+        if project is not None and project not in names:
+            return self.json(200, {"ok": False, "refused": "pick a project from the list (or none, for the default)"})
+        ask_above = body.get("ask_above_usd")
+        if ask_above is not None and (isinstance(ask_above, bool) or not isinstance(ask_above, (int, float)) or not (0 <= ask_above <= runctl.MAX_USD)):
+            return self.json(200, {"ok": False, "refused": f"the ask-above amount is between 0 and ${runctl.MAX_USD:g}"})
+        try:
+            P.save_config(project, body.get("mode"), body.get("overrides") or {}, ask_above, self.perm_file)
+        except (ValueError, TypeError, AttributeError) as e:
+            return self.json(200, {"ok": False, "refused": redact.text(str(e))[:200]})
+        return self.json(200, {"ok": True, **self.permissions_view(project or "")})
 
     def known_run(self, rid: str) -> bool:
         """The run is one of the directories this service lists: a request never names a path."""
@@ -248,7 +303,7 @@ class App:
                 "projects": len(S.design_dirs(self.root)), "latency_designs": S.latency_designs(self.root), "builds": len(S.builds(self.root)),
                 "captures": len(S.capture_files(self.root, self.extra)),
                 "synthetic_captures": sum(1 for c in measure.listing(self.root, self.extra) if c["synthetic"]),
-                "binds": f"{LOOPBACK}:{self.port}", "pages": ["Project", "Timing", "Runs", "Live", "Start", "Board", "Measurements", "Health", "Models"]}
+                "binds": f"{LOOPBACK}:{self.port}", "pages": ["Project", "Timing", "Runs", "Live", "Start", "Permissions", "Board", "Measurements", "Health", "Models"]}
 
 
 def _default_gate(entry: str) -> Any:

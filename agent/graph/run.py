@@ -137,6 +137,7 @@ class Config:
     settings_file: Path | None = None  # brief 194: proposed_settings.yaml, the interview's input; each setting becomes a question (agent.graph.settings)
     verif_ask: bool = False         # brief 194: the interview proposes a profile (only when none was given on the command line)
     level1_seed: int | None = None  # brief 107: --deterministic at level 1: temperature 0 (and this seed) on every purpose that can take it
+    permissions: dict | None = None  # brief 222: the permission policy spec (mode, overrides, source, ask_above_usd; agent.core.permissions); None: the default mode
 
     @property
     def arms(self) -> tuple[str, ...]:
@@ -207,6 +208,7 @@ class Runtime:
     skill_notes: list = field(default_factory=list)
     doc_llm: Callable[[str, str], str] | None = None        # brief 68 C: the DOC step's model call (None: the Designer's model)
     resolver: Any = None                                    # brief 108: every model call of this run goes through it (agent.models.Resolver)
+    policy: Any = None                                      # brief 222: the run's permission policy (agent.core.permissions.Policy); every stage start and tool call consults it
 
 
 _RT: dict[str, Runtime] = {}
@@ -858,11 +860,77 @@ def stage2_plan(rt: Runtime, state: State) -> dict[str, list[str] | None]:
     return plan
 
 
+def _policy(rt: Any) -> Any:
+    """The run's permission policy (brief 222); a runtime without one (a test double) has none, and nothing is gated."""
+    return getattr(rt, "policy", None)
+
+
+def _perm_stop(rt: Runtime, n: int, why: list[str], needs: list[str]) -> dict:
+    from agent.core import permissions as P
+    msg = "permission denied: " + "; ".join(why)
+    _run_event(rt, "permission_stop", MACHINE[n].name, n=n, needs=needs, why=msg[:300])
+    return {"stop": msg, "stop_detail": {"permission": {"mode": _policy(rt).mode, "needs": needs, "why": why,
+                                                        "change": "python -m agent resume " + rt.run_id + " --permissions ask|auto|full, or --allow <action>"}}}
+
+
+def permission_entry(rt: Runtime, state: State, n: int) -> dict | None:
+    """Brief 222: what stage ``n`` needs is looked up in the run's policy. A ``deny`` returns the update that stops the run; an ``ask`` pauses on a
+    ``permission`` interrupt (the Navigator's question panel, or a headless stop that lists what is needed); an ``allow`` is logged and the stage goes on.
+    The board actions are asked at the stage-9 hardware approval, not here, so the owner is asked about the board once, with the bitstream in front of them."""
+    pol = _policy(rt)
+    if pol is None:
+        return None
+    from agent.core import permissions as P
+    from langgraph.types import interrupt
+    st = MACHINE[n]
+    actions = list(P.stage_actions(n, st.tools))
+    if float(rt.meter.run.get("usd") or 0) >= pol.ask_above_usd:
+        actions.append("spend_model_money")
+    ask, deny = [], []
+    for a in actions:
+        d = pol.decide(a, n, f"stage {n} {st.name}", log=False)
+        if a in P.HW_APPROVAL_ACTIONS and d.result == P.ASK:
+            continue                                         # asked at the hardware approval
+        if d.result == P.DENY:
+            pol.record(d, n, f"stage {n} {st.name}")
+            deny.append((a, d.by))
+        elif d.result == P.ASK:
+            pol.record(d, n, f"stage {n} {st.name}")
+            ask.append(a)
+        else:
+            pol.record(d, n, f"stage {n} {st.name}")
+    if deny:
+        return _perm_stop(rt, n, [f"{P.BY_NAME[a].label} ({a}) is {P.DENY}ed by {by}" for a, by in deny], [a for a, _ in deny])
+    if not ask:
+        return None
+    reply = interrupt({"kind": "permission", "stage": n, "stage_name": st.name, "mode": pol.mode, "needs": ask,
+                       "actions": [{"action": a, "label": P.BY_NAME[a].label, "plain": P.BY_NAME[a].plain} for a in ask],
+                       "resume": f"python -m agent resume {rt.run_id} --reply '{{\"decision\": \"allow\"}}'"})
+    if not isinstance(reply, dict):
+        reply = {"decision": "deny"}
+    by = str(reply.get("by") or "you")[:40]
+    yes = set(reply.get("allow") or []) if isinstance(reply.get("allow"), list) else set()
+    if reply.get("decision") == "allow":
+        yes |= set(ask)
+    yes &= set(ask)
+    no = [a for a in ask if a not in yes]
+    if yes:
+        pol.grant(sorted(yes), by, n, f"asked at stage {n} {st.name}")
+    if no:
+        pol.refuse(no, by, n, f"asked at stage {n} {st.name}")
+        return _perm_stop(rt, n, [f"{P.BY_NAME[a].label} ({a}) was declined by {by}" for a in no], no)
+    _run_event(rt, "permission_granted", st.name, n=n, actions=sorted(yes), by=by)
+    return None
+
+
 def node_work(state: State) -> dict:
     rt, n = _rt(state), state["stage"]
     if state.get("hand_edit_only"):                    # the owner edited by hand: gate their files, do not rewrite them
         return {"hand_edit_only": False, "note": ""}
     st = MACHINE[n]
+    stop = permission_entry(rt, state, n)             # brief 222: a denied or declined permission ends the run here, before anything is spent; an ask pauses it
+    if stop is not None:
+        return stop
     visits = dict(state.get("visits") or {})
     visits[str(n)] = visits.get(str(n), 0) + 1
     limit = visit_limit(n, rt.cfg.run_limits)
@@ -1359,6 +1427,24 @@ def spec_test_gate(rt: Runtime) -> dict:
     return spectest.gate(rt.design, rt.cfg.board, rt.session.runner, role, tri, max_loops=rt.cfg.spectest_max_loops)
 
 
+def hw_authorised(rt: Runtime, state: State) -> bool:
+    """Brief 222: may stage 9 touch the board now? Yes when a person approved at the hardware pause, or when the mode allows both programming and register
+    writes (Full auto, or an override). Either way the decision and who made it go into the run's log, and the run is granted the board actions its
+    tools check at each call."""
+    from agent.core import permissions as P
+    pol = _policy(rt)
+    if state.get("hw_approved"):
+        if pol is not None and not all(a in pol.granted for a in P.HW_APPROVAL_ACTIONS):
+            pol.grant(P.HW_APPROVAL_ACTIONS, "the stage-9 hardware approval", 9, "approved at the hardware pause")
+        return True
+    if pol is not None and pol.hw_by_rule():
+        for a in P.HW_APPROVAL_ACTIONS:
+            pol.record(pol.decide(a, 9, log=False), 9, "bring-up on the board, no approval pause")
+        pol.grant(P.HW_APPROVAL_ACTIONS, pol.decide(P.HW_APPROVAL_ACTIONS[0], 9, log=False).by, 9, "allowed without a pause")
+        return True
+    return False
+
+
 def node_gate(state: State) -> dict:
     rt, n = _rt(state), state["stage"]
     if state.get("stop"):
@@ -1367,6 +1453,7 @@ def node_gate(state: State) -> dict:
     out: dict[str, Any] = {}
     rt.session.stage = st.name
     detail: list[str] = []
+    hw_ok = False
 
     def d(name, r):
         if not r.get("ok"):
@@ -1496,7 +1583,8 @@ def node_gate(state: State) -> dict:
         ev["gates_base"] = _build(rt, "bitstream")["gates"]
         if not jtag9:                                                  # a JTAG-bus design has no ILA build
             ev["gates_ila"] = _build(rt, "bitstream", "ila")["gates"]
-        if state.get("hw_approved"):
+        hw_ok = hw_authorised(rt, state)                               # brief 222: the approval a person gave, or a mode that allows it
+        if hw_ok:
             rt.session.stage = st.name
             br = dispatch(rt.session, "bringup", {}) or {}
             ev["bringup"] = br.get("bringup") or {"pass": False, "failed_step": br.get("rule") or "bringup",
@@ -1506,7 +1594,7 @@ def node_gate(state: State) -> dict:
         ev["build_output"] = rt.last_build_output           # the repair visit's Designer is shown it (05d live run 3)
         detail.append("[build] " + rt.last_build_output)
         rt.last_build_output = ""
-    if n == 9 and not state.get("hw_approved"):
+    if n == 9 and not hw_ok:
         from dataclasses import replace as _replace
         ok, fails = exit_check(_replace(st, gates=tuple(g for g in st.gates if g not in ("bringup", "signoff")
                                                         and not (g == "bitstream_ila" and transport_of(rt) == "jtag_bus"))), ev)
@@ -1579,9 +1667,11 @@ def node_review(state: State) -> dict:
     hand_only = False
     supplied = None
     reply: dict = {}
-    if rt.cfg.review == "on" or hw_pause:
+    ask_review = bool(_policy(rt) is not None and passed and not ungated and _policy(rt).review_required(n))      # brief 222: the mode asks for this stage's approval
+    if rt.cfg.review == "on" or hw_pause or ask_review:
         reply = interrupt({"kind": "review", "stage": n, "stage_name": st.name, "page": str(page),
-                           "passed": passed, "fails": state.get("fails"), "hardware": hw_pause})
+                           "passed": passed, "fails": state.get("fails"), "hardware": hw_pause,
+                           **({"permission": ["approve_architecture"] * (n == 1) + ["approve_stage"]} if ask_review else {})})
         decision = {"decision": reply.get("decision", "approve"), "by": reply.get("by", "human"),
                     "note": reply.get("note", ""), "to": reply.get("to"), "role": reply.get("role")}
         if decision["decision"] == "supply" and n == 1:             # the owner supplies the architecture
@@ -1614,7 +1704,14 @@ def node_review(state: State) -> dict:
         f.write(f"\n## review {n:02d} {st.name}\n\n{decision['decision']} by {decision['by']}"
                 f"{': ' + decision['note'] if decision.get('note') else ''} (gates {'pass' if passed else 'fail'})\n")
     upd: dict[str, Any] = {"history": hist, "hand_edit_only": False}
-    if rt.cfg.review == "on" or hw_pause:
+    if _policy(rt) is not None and (ask_review or hw_pause):                 # brief 222: the person's answer is a permission decision, kept with the rest
+        from agent.core import permissions as P
+        acts = list(P.HW_APPROVAL_ACTIONS) if hw_pause else (["approve_architecture"] * (n == 1)) + ["approve_stage"]
+        for a in acts:
+            _policy(rt).record(P.Decision(a, P.ALLOW if decision["decision"] in ("approve", "supply") else P.ASK, f"answered by {decision['by']}"), n,
+                             f"stage {n} {st.name}: {decision['decision']}" + (f" ({decision['note'][:60]})" if decision.get("note") else ""),
+                             result="approved" if decision["decision"] in ("approve", "supply") else decision["decision"])
+    if rt.cfg.review == "on" or hw_pause or ask_review:
         who = _who(decision["by"])
         what = {"approve": "approved", "edit": "asked for changes", "rewind": f"rewound to stage {decision.get('to')}",
                 "supply": "supplied the architecture"}.get(decision["decision"], decision["decision"])
@@ -1624,7 +1721,14 @@ def node_review(state: State) -> dict:
     elif passed:
         ownership.record(rt.design, "auto", st.name, "approved (review off)", "", n=n)
     # the architecture approval (Taylor addition 2): before any RTL, by the owner or, with review off, automatic
-    if n == 1 and passed and decision["decision"] == "approve":
+    plan_only = bool(n == 1 and passed and decision["decision"] == "approve" and _policy(rt) is not None
+                     and _policy(rt).decide("approve_architecture", n, "the architecture's approval").result == "deny")
+    if plan_only:                                                      # brief 222: Plan mode (or a deny): the architecture is written and left for a person to approve
+        upd["stop"] = ("plan complete: the architecture is written and waiting for you; approving it is " + "denied by "
+                       + _policy(rt).decide("approve_architecture", n, log=False).by + ". Resume in another mode to go on: python -m agent resume "
+                       + rt.run_id + " --permissions ask")
+        _write_plan_estimate(rt)
+    if n == 1 and passed and decision["decision"] == "approve" and not plan_only:
         who = _who(decision["by"])
         by_owner = any(r["who"] == "owner" and r["what"] in ("hand edit", "supplied architecture") and r["n"] == 1
                        for r in ownership.load(rt.design))
@@ -1650,8 +1754,19 @@ def node_review(state: State) -> dict:
         return {**upd, "note": decision.get("note", ""), "note_role": decision.get("role") or "", "hand_edit_only": hand_only,
                 "fails": ["reviewer asked for changes"]}
     if hw_pause:
-        return {**upd, "hw_approved": decision["decision"] == "approve"}
+        ok = decision["decision"] == "approve"
+        if ok and _policy(rt) is not None:
+            from agent.core import permissions as P
+            _policy(rt).grant(P.HW_APPROVAL_ACTIONS, f"{_who(decision['by'])} ({decision['by']}) at the stage-9 hardware approval", n, "programming and bring-up")
+        return {**upd, "hw_approved": ok}
     return upd
+
+
+def _write_plan_estimate(rt: Runtime) -> None:
+    """Plan mode's estimate of time and cost: the stage limits and the run caps, labelled as limits (``agent.core.permissions.plan_estimate``)."""
+    from agent.core import permissions as P
+    est = P.plan_estimate(rt.cfg.run_limits, MACHINE, rt.cfg.stop_after)
+    (rt.run_dir / "plan_estimate.json").write_text(json.dumps(est, indent=1))
 
 
 def _stage_diff(rt: Runtime, n: int) -> list[dict]:
@@ -1873,6 +1988,10 @@ def new_runtime(cfg: Config, client: Callable | None = None, run_id: str | None 
                 tape_spec: dict | None = None) -> Runtime:
     from agent.access import require_or_exit      # brief 94: every run is created here
     require_or_exit("new_runtime")
+    from agent.core import permissions as _perm_cap       # brief 222: a cost cap above the hard cap is refused in every mode, before anything is created
+    bad_cap = _perm_cap.check_hard_cap(cfg.run_limits.get("usd"))
+    if bad_cap:
+        raise _perm_cap.NeverRefused("hard_cap", bad_cap)
     if not cfg.no_shell and transport_of(cfg) == "jtag_bus":     # brief 209a: a board with no UART has no test shell to build in
         cfg.no_shell = True
     run_id = run_id or time.strftime("%Y%m%d-%H%M%S-") + uuid.uuid4().hex[:4]
@@ -1917,7 +2036,7 @@ def new_runtime(cfg: Config, client: Callable | None = None, run_id: str | None 
     except Exception:                                      # CI: no private knowledge bank
         bank = None
     sess = Session(design=design, board=cfg.board, runner=runner, bank=bank, skill_routing=cfg.skill_routing,
-                   harness_arms=cfg.arms, policy_run_dir=run_dir)
+                   harness_arms=cfg.arms, policy_run_dir=run_dir, permissions_run_dir=run_dir)
     from agent.models.resolver import Resolver
     table = cfg.model_table()
     tape, det = None, None
@@ -1940,8 +2059,14 @@ def new_runtime(cfg: Config, client: Callable | None = None, run_id: str | None 
     scale = float(table.budget_scale)                         # brief 209b: budget_scale of the model config / --budget-scale
     if scale != 1.0 and cfg.run_limits.get("usd") == RUN_LIMITS["usd"]:      # the default run cap follows the scale; an explicit --max-usd does not
         cfg.run_limits["usd"] = round(RUN_LIMITS["usd"] * scale, 6)
+        bad_scaled = _perm_cap.check_hard_cap(cfg.run_limits["usd"])          # brief 222: the scaled default cap is held to the hard cap too
+        if bad_scaled:
+            raise _perm_cap.NeverRefused("hard_cap", bad_scaled)
+    from agent.core import permissions as _perm          # brief 222: the run's permission policy; a resume keeps the run's own (its grants and refusals included)
+    policy = _perm.Policy.load(run_dir) or _perm.Policy.from_spec(cfg.permissions, run_dir)
     rt = Runtime(cfg, run_id, run_dir, design, sess, client, Meter(cfg.run_limits, usd_scale=scale), Snapshots(run_dir, design),
-                 oracle_llm=oracle_llm, resolver=resolver)
+                 oracle_llm=oracle_llm, resolver=resolver, policy=policy)
+    policy.save()
     _RT[run_id] = rt
     _pin_run(rt)
     prior = None
@@ -1957,7 +2082,7 @@ def new_runtime(cfg: Config, client: Callable | None = None, run_id: str | None 
                                                      "oracle_model": oracle_model_name(cfg),
                                                      "models_file": str(cfg.models_file) if cfg.models_file else None,
                                                      "model_config": cfg.model_config or {}, "explicit": list(cfg.explicit),
-                                                     "allow_fable": cfg.allow_fable, "models": table.record(),
+                                                     "allow_fable": cfg.allow_fable, "models": table.record(), "permissions": policy.spec(),
                                                      **({"determinism": det} if det else {}),
                                                      "isolation": type(runner).__name__}, indent=1))
     return rt
@@ -2136,6 +2261,8 @@ def summary(rt: Runtime, state: dict) -> dict:
             "constants": constants_summary(rt),
             "gates_last": {h["stage"]: h["passed"] for h in hist if h.get("gated", True)},   # 68F: not an entry that ran no gate
             "approvals": [{"n": h["n"], **h["approval"]} for h in hist],
+            "permissions": __import__("agent.core.permissions", fromlist=["x"]).summarise(rt.run_dir, _policy(rt)),      # brief 222: the mode and every gated decision
+            **({"plan_estimate": json.loads((rt.run_dir / "plan_estimate.json").read_text())} if (rt.run_dir / "plan_estimate.json").is_file() else {}),
             "bringup": ((state.get("evidence") or {}).get("bringup") or {}).get("pass"),
             **({"spec_test": __import__("agent.graph.spectest", fromlist=["x"]).record(rt.design)} if rt.cfg.spec_tests else {})}
 

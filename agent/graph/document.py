@@ -438,7 +438,23 @@ def agent_facts(S: dict) -> dict:
         f["cost_usd"] = S["cost_usd"]                      # provider-reported (plan runs report none)
     if isinstance(S.get("plan_cost_estimate_usd"), (int, float)):
         f["plan_cost_estimate_usd"] = S["plan_cost_estimate_usd"]
+    pm = S.get("permissions")
+    if isinstance(pm, dict) and pm.get("mode"):                  # brief 222: the mode and every gated decision (when: runs/<id>/permissions.jsonl)
+        f["permissions"] = {"mode": pm["mode"], "source": re.sub(r"\s+", " ", str(pm.get("source") or ""))[:160], "overrides": dict(pm.get("overrides") or {}),
+                            "decisions": permission_lines(pm)}
     return f
+
+
+def permission_lines(pm: dict) -> list[str]:
+    """One plain line per distinct gated decision of the run: what, the outcome, who or which rule decided, and the stage. The times are in the run's permissions.jsonl."""
+    names = list(STAGE_NAMES)
+    out = []
+    for d in pm.get("decisions") or []:
+        n = d.get("stage")
+        by = re.sub(r" at \d{4}-\d\d-\d\d \d\d:\d\d:\d\d", "", str(d.get("by") or ""))
+        out.append(f"{d.get('result')} {d.get('action')} by {by}" + (f" at stage {names[n]}" if isinstance(n, int) and 0 <= n < len(names) else "")
+                   + (f" ({d['count']} times)" if (d.get("count") or 1) > 1 else ""))
+    return out
 
 
 def _clocks(design: Path) -> list[dict]:
@@ -915,7 +931,7 @@ def recheck(ddir: Path) -> list[str]:
             errs.append(f"gap about {g['about']!r} is required by the run's records and missing")
         elif texts[g["about"]] != g["text"]:
             errs.append(f"gap about {g['about']!r}: its text is not the run's (a required gap is never reworded)")
-    for k in ("model", "harness", "loops", "turns", "wall_s", "tokens", "cost_usd", "plan_cost_estimate_usd", "stop"):
+    for k in ("model", "harness", "loops", "turns", "wall_s", "tokens", "cost_usd", "plan_cost_estimate_usd", "stop", "permissions"):
         if (h.get("agent_run") or {}).get(k) != d["agent_run"].get(k):
             errs.append(f"agent_run.{k}: {(h.get('agent_run') or {}).get(k)!r} is not the run record's {d['agent_run'].get(k)!r}")
     errs += [f"state.gate_notes: {(h.get('state') or {}).get('gate_notes')!r} is not the run's {d['state'].get('gate_notes')!r}"] \

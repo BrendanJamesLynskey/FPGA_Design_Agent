@@ -628,6 +628,9 @@ def run_line(ar: dict) -> str:
         bits.append(f"{fmt(ar['cost_usd'])} USD model cost (provider-reported)")
     if ar.get("plan_cost_estimate_usd") is not None:
         bits.append(f"{fmt(ar['plan_cost_estimate_usd'])} USD plan-cost estimate (not billed)")
+    if isinstance(ar.get("permissions"), dict) and ar["permissions"].get("mode"):       # brief 222
+        pm = ar["permissions"]
+        bits.append(f"permission mode {pm['mode']} ({len(pm.get('decisions') or [])} distinct gated decisions listed in handover.yaml)")
     if ar.get("stop"):
         bits.append(f"stopped because: {ar['stop']}")
     return ", ".join(bits)

@@ -96,7 +96,11 @@
                                  "model": {"type": "string"}, "harness": {"type": "string"}, "loops": {"type": "integer"},
                                  "turns": {"type": "integer"}, "wall_s": {"type": "number"}, "tokens": {"type": "integer"},
                                  "cost_usd": {"type": "number"}, "plan_cost_estimate_usd": {"type": "number"},
-                                 "stop": {"type": "string"}}},
+                                 "stop": {"type": "string"},
+                                 "permissions": {"type": "object", "additionalProperties": false, "required": ["mode"],
+                                                 "properties": {"mode": {"type": "string"}, "source": {"type": "string"},
+                                                                "overrides": {"type": "object", "additionalProperties": {"type": "string"}},
+                                                                "decisions": {"type": "array", "items": {"type": "string"}}}}}},
     "registers": {"type": "array", "items": {
       "type": "object", "additionalProperties": false, "required": ["offset", "name", "access"],
       "properties": {"offset": {"type": ["string", "integer"]}, "name": {"type": "string"}, "access": {"type": "string"},
