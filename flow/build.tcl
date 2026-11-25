@@ -230,7 +230,6 @@ if {$resume_from eq ""} {
     catch {fda_dsp_cells $out/dsp_cells_synth.txt}      ;# brief 185: register properties of every DSP48 (flow/dsp_regs_check.py)
     fda_qor $out synth
     report_utilization    -file $out/utilization_synth.rpt
-    report_clock_networks -file $out/clock_networks_synth.rpt
     report_clock_interaction -delay_type min_max -file $out/clock_interaction_synth.rpt
     report_high_fanout_nets -timing -load_types -max_nets 25 -file $out/high_fanout_synth.rpt
     # brief 204a (flow/report_gates.py): logic levels against the period and the global clocks, before placement (UG949 p.200, p.234);
@@ -244,6 +243,14 @@ if {$resume_from eq ""} {
     # brief 20 part B: each port's delays, IOB register and synchroniser, the clocks (virtual, generated, input jitter), for
     # flow/io_check.py (gates post_synth_io_constraints_clean and io_timing_clean)
     io_dump_paths $out/io_paths_synth.txt
+    # brief 219 fix 2: report_clock_networks is the LAST synthesis report. It segfaulted Vivado 2026.1 (HASTClockSniffer::isForwardedClock)
+    # on a post-synthesis MMCM design (brief 208), so every report the gates need is already written when it runs. The marker file
+    # stays if the process dies inside it: a reader then sees "report unavailable", never a pass (flow/checks, flow/standards_check.py)
+    set cn_mark [open $out/clock_networks_synth.not_run.txt w]
+    puts $cn_mark "report unavailable: report_clock_networks did not complete (Vivado 2026.1 can crash in it); not a pass"
+    close $cn_mark
+    report_clock_networks -file $out/clock_networks_synth.rpt
+    file delete $out/clock_networks_synth.not_run.txt
     stage synth_reports
 } elseif {$resume_from eq "synth"} {
     open_checkpoint $resume_dir/post_synth.dcp

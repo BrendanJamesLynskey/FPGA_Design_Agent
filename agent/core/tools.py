@@ -224,6 +224,33 @@ def read_file(s: Session, path: str, offset: int = 0, max_bytes: int = 20000) ->
             "size_bytes": len(data), "offset": offset, "truncated": offset + max_bytes < len(data)}
 
 
+_NAMED_RTL = re.compile(r"(?<![\w/.])(rtl/[A-Za-z_][\w]*\.(?:v|sv|vhd|vhdl))\b")
+_ONLY_FILE = re.compile(r"(?i)\b(single[- ]file|only (?:that|this|the named|the) file|only that file is compiled|compiles? only)\b")
+
+
+def spec_output_refusal(design: Path, rel: Path) -> str | None:
+    """Brief 219 fix 9 (the public-benchmark CVDP sample: three runs wrote rtl/x.sv where the task named rtl/x.v, one split a single-file design over three
+    files). When spec.md names RTL output files with an extension, an rtl/ file with the same stem and another extension is refused with the
+    exact name to use; when it also says only that file is compiled (single file), any other rtl/ file is refused. None: allowed."""
+    if rel.parent != Path("rtl") or rel.suffix not in _RTL_SUFFIXES:
+        return None
+    try:
+        text = (design / "spec.md").read_text(errors="replace")
+    except OSError:
+        return None
+    named = sorted(set(_NAMED_RTL.findall(text)))
+    if not named or rel.as_posix() in named:
+        return None
+    same = [n for n in named if Path(n).stem == rel.stem]
+    if same:
+        return (f"not written: the task names {', '.join(same)}; write exactly that path, not {rel.as_posix()} (the flow compiles the file with the "
+                f"name the task gives, and the scorer reads that name)")
+    if len(named) == 1 and _ONLY_FILE.search(text):
+        return (f"not written: the task says only {named[0]} is compiled, so the whole design goes in that one file; {rel.as_posix()} would "
+                f"not be compiled by the scorer. Put the module in {named[0]}.")
+    return None
+
+
 @tool("write_file", "Write (create or replace) a text file inside the design directory. build/ is read-only. Known "
                     "artefacts (spec.yaml, verif/testplan.yaml, build.yaml, ARCHITECTURE.md, any *.yaml) are checked "
                     "first: a malformed one is NOT written and the error names the line and column.",
@@ -231,6 +258,9 @@ def read_file(s: Session, path: str, offset: int = 0, max_bytes: int = 20000) ->
       ["path", "content"])
 def write_file(s: Session, path: str, content: str) -> dict:
     p = s.jail.resolve(path, write=True)
+    spec_bad = spec_output_refusal(s.design, p.relative_to(s.jail.root))
+    if spec_bad:
+        return {"ok": False, "output": spec_bad, "invalid": True}
     if len(content.encode()) > s.jail.MAX_WRITE_BYTES:
         raise SecurityError("path-jail", "file too large")
     rel = p.relative_to(s.jail.root)
@@ -299,6 +329,18 @@ def lint(s: Session) -> dict:
     argv = ["verilator", "--lint-only", "-Wall", "--top-module", cfg["top"], *srcs, *stubs]
     r = s.runner.run("lint", argv, s.root, timeout=300)
     out, ok = _text_out(r), r.returncode == 0
+    waived_clean = False
+    if not ok:                                          # brief 219 fix 6: lint/waivers.yaml applies here, as it does at the stage gate
+        from flow.lint_ruleset import waive_verilator_text
+        wv = waive_verilator_text(out, s.design, s.root)
+        if wv["waived"] or wv["bad_waivers"]:
+            ok = waived_clean = bool(wv["waived"]) and not wv["open"] and not wv["unparsed"]
+            out += (f"\n[lint/waivers.yaml applied: {len(wv['waived'])} finding(s) waived, {len(wv['open'])} open"
+                    + ("; the run is clean" if ok else "; the open findings still fail") + "]")
+            out += "".join(f"\n  waived {k}: {why[:100]}" for k, why in wv["waived"][:10])
+            out += "".join(f"\n  OPEN {k}" for k in wv["open"][:10])
+            out += "".join(f"\n  not waivable: {u}" for u in wv["unparsed"][:5])
+            out += "".join(f"\n  BAD waiver: {b}" for b in wv["bad_waivers"])
     ic = _icarus_elaborate(s, cfg["top"], srcs)           # 07a2 fix 5 D: the simulator the tests run on must accept it too
     if ic is not None and ic.returncode != 0:
         ok = False
@@ -309,7 +351,8 @@ def lint(s: Session) -> dict:
     if found:
         ok = False
         out += ("\n" if out else "") + "\n".join(f"{x['rule']} {x['message']}" for x in found)
-    return {"ok": ok, "output": out, "returncode": r.returncode if r.returncode else (ic.returncode if ic else 0),
+    vrc = 0 if (r.returncode and waived_clean) else r.returncode     # a run whose every finding is waived reports Verilator's rc as 0
+    return {"ok": ok, "output": out, "returncode": vrc if vrc else (ic.returncode if ic else 0),
             "seconds_run": r.seconds + (ic.seconds if ic else 0)}
 
 
