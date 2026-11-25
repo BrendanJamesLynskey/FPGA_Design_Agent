@@ -6,7 +6,10 @@
   it sends ``provider: {data_collection: "deny"}`` and ``usage: {include: true}``; elsewhere neither. Cost is only what the
   provider reports (never estimated; unreported cost is ``None`` and counts against the cap at the per-call ceiling).
 - :class:`AnthropicClient`: the Messages API (plain HTTPS, no extra dependency), with tools in the Anthropic shape. The API
-  reports tokens, not dollars, so ``cost`` is ``None``.
+  reports tokens, not dollars, so (brief 209b) ``cost`` is computed from the response ``usage`` (input, output, cache write, cache
+  read) and the model's price table in the model config (``models:`` in ``agent.models.config``): never from a guess. A model with no
+  price keeps ``cost=None`` (the per-call ceiling) and warns once. The stable prefix is marked for prompt caching, and ``temperature``
+  is left out for models the config says reject it.
 - :class:`ClaudeCodeChat`: a messages -> Reply adapter over one tool-less headless ``claude -p`` call (the subscription's
   "API-like mode"), for call sites that only need text.
 
@@ -29,13 +32,19 @@ from agent.graph.llm import DEFAULT_MODEL, FORBIDDEN, OPENROUTER_BASE, Reply
 KEY_FILE = Path.home() / ".config" / "fpga_design_agent" / "openrouter.env"
 
 
-def _key_from_file() -> str | None:
-    """OPENROUTER_API_KEY=... from the local key file (outside the repo, mode 600); never printed."""
+def anthropic_key_file() -> Path:
+    """The owner's Anthropic key file (brief 209a), outside the repository; HOME is read at call time."""
+    return Path.home() / ".config" / "fpga_design_agent" / "anthropic.env"
+
+
+def _key_from_file(name: str = "OPENROUTER_API_KEY", path: Path | None = None) -> str | None:
+    """``NAME=...`` from a local key file (outside the repo, mode 600); never printed."""
+    path = path or KEY_FILE
     try:
-        if KEY_FILE.stat().st_mode & 0o077:
-            raise ValueError(f"{KEY_FILE} must be readable by its owner only (chmod 600)")
-        for line in KEY_FILE.read_text().splitlines():
-            if line.startswith("OPENROUTER_API_KEY="):
+        if path.stat().st_mode & 0o077:
+            raise ValueError(f"{path} must be readable by its owner only (chmod 600)")
+        for line in path.read_text().splitlines():
+            if line.startswith(name + "="):
                 return line.split("=", 1)[1].strip() or None
     except FileNotFoundError:
         return None
@@ -46,7 +55,13 @@ def read_key(key_env: str | None) -> str | None:
     """The key named by ``key_env`` (an environment variable name); the OpenRouter key may come from the owner's key file."""
     if not key_env:
         return None
-    return os.environ.get(key_env) or (_key_from_file() if key_env == "OPENROUTER_API_KEY" else None)
+    if os.environ.get(key_env):
+        return os.environ[key_env]
+    if key_env == "OPENROUTER_API_KEY":
+        return _key_from_file()
+    if key_env == "ANTHROPIC_API_KEY":                  # brief 209a: the same owner key-file route, its own file
+        return _key_from_file("ANTHROPIC_API_KEY", anthropic_key_file())
+    return None
 
 
 class OpenRouterClient:
@@ -101,17 +116,35 @@ class OpenRouterClient:
                      provider=getattr(r, "provider", None) or (r.model_extra or {}).get("provider"))
 
 
+_WARNED_NO_PRICE: set[str] = set()
+
+
+def usage_cost(usage: dict[str, Any], price: dict[str, float] | None) -> float | None:
+    """USD of one call from the response ``usage`` and a price table (USD per million tokens); None when the model has no price.
+    A price with no cache prices derives them from ``input`` (write 1.25x, read 0.10x)."""
+    if not price:
+        return None
+    from agent.models.config import CACHE_READ_RATIO, CACHE_WRITE_RATIO
+    p_in, p_out = float(price["input"]), float(price["output"])
+    p_w = float(price["cache_write"]) if price.get("cache_write") is not None else p_in * CACHE_WRITE_RATIO
+    p_r = float(price["cache_read"]) if price.get("cache_read") is not None else p_in * CACHE_READ_RATIO
+    n = lambda k: int(usage.get(k) or 0)                                   # noqa: E731
+    return round((n("input_tokens") * p_in + n("output_tokens") * p_out + n("cache_creation_input_tokens") * p_w
+                  + n("cache_read_input_tokens") * p_r) / 1e6, 8)
+
+
 class AnthropicClient:
     """The Messages API over plain HTTPS. ``opener`` is the injection point of the tests."""
 
     def __init__(self, model: str, *, base_url: str = "https://api.anthropic.com", key_env: str | None = "ANTHROPIC_API_KEY", timeout_s: float = 180.0,
                  temperature: float | None = 0.2, max_tokens: int = 8192, stop: list[str] | None = None, thinking_budget: int | None = None,
-                 retries: int = 1, opener=None):
+                 retries: int = 1, opener=None, effort: str | None = None, price: dict[str, float] | None = None, accepts_temperature: bool = True, cache: bool = True):
+        self.price, self.accepts_temperature, self.cache, self.effort = price, accepts_temperature, cache, effort          # brief 209b
         self.model, self.base_url, self.timeout_s, self.retries = model, base_url.rstrip("/"), timeout_s, retries
         self.temperature, self.max_tokens, self.stop, self.thinking_budget = temperature, max_tokens, stop, thinking_budget
         self._key = read_key(key_env)
         if not self._key and opener is None:
-            raise ValueError(f"{key_env} is not set")
+            raise ValueError(f"{key_env} is not set" + (f" and {anthropic_key_file()} has none" if key_env == "ANTHROPIC_API_KEY" else ""))
         self._open = opener or urllib.request.urlopen
 
     @staticmethod
@@ -141,9 +174,37 @@ class AnthropicClient:
                "input_schema": t["function"].get("parameters") or {"type": "object", "properties": {}}} for t in (tools or [])]
         return system, out, tl
 
+    CACHE = {"type": "ephemeral"}                    # the 5-minute cache entry (Messages API: ``cache_control`` on a content block)
+
+    @classmethod
+    def mark_cache(cls, system: str, msgs: list[dict], tl: list[dict]) -> tuple[Any, list[dict], list[dict]]:
+        """Prompt caching markers (brief 209b), at most 4 per request (the API limit): the last tool definition and the system block
+        (the prefix is rendered tools, then system, then messages), the last block of the last message (the conversation so far), and
+        the last block of the user turn before the previous assistant turn, which is where the previous call wrote its entry, so a call
+        that appends more than 20 blocks still finds it. Empty text blocks cannot carry a marker and are skipped."""
+        def mark(m: dict) -> None:
+            c = m["content"]
+            if isinstance(c, str):
+                if not c:
+                    return
+                m["content"] = c = [{"type": "text", "text": c}]
+            if c and not (c[-1].get("type") == "text" and not c[-1].get("text")):
+                c[-1] = {**c[-1], "cache_control": dict(cls.CACHE)}
+        if tl:
+            tl = [*tl[:-1], {**tl[-1], "cache_control": dict(cls.CACHE)}]
+        msgs = [dict(m, content=[dict(b) for b in m["content"]] if isinstance(m["content"], list) else m["content"]) for m in msgs]
+        if msgs:
+            mark(msgs[-1])
+            if len(msgs) >= 3 and msgs[-3]["role"] == "user":
+                mark(msgs[-3])
+        sysb: Any = [{"type": "text", "text": system, "cache_control": dict(cls.CACHE)}] if system else system
+        return sysb, msgs, tl
+
     def __call__(self, messages: list[dict], tools: list[dict] | None = None) -> Reply:
         t0 = time.monotonic()
         system, msgs, tl = self.to_anthropic(messages, tools)
+        if self.cache:
+            system, msgs, tl = self.mark_cache(system, msgs, tl)
         body: dict[str, Any] = {"model": self.model, "max_tokens": self.max_tokens, "messages": msgs}
         if system:
             body["system"] = system
@@ -151,9 +212,11 @@ class AnthropicClient:
             body["tools"] = tl
         if self.stop:
             body["stop_sequences"] = list(self.stop)
+        if self.effort:                                  # Messages API: output_config.effort (GA, no beta header); thinking stays adaptive (omitted)
+            body["output_config"] = {"effort": self.effort}
         if self.thinking_budget:
             body["thinking"] = {"type": "enabled", "budget_tokens": int(self.thinking_budget)}
-        elif self.temperature is not None:
+        elif self.temperature is not None and self.accepts_temperature:      # per-model rule of the config, never a caught 400
             body["temperature"] = self.temperature
         req = urllib.request.Request(f"{self.base_url}/v1/messages", data=json.dumps(body).encode(), method="POST",
                                      headers={"content-type": "application/json", "anthropic-version": "2023-06-01",
@@ -175,9 +238,23 @@ class AnthropicClient:
         text = "".join(b.get("text", "") for b in d.get("content", []) if b.get("type") == "text")
         calls = [{"id": b["id"], "name": b["name"], "args": b.get("input") or {}} for b in d.get("content", []) if b.get("type") == "tool_use"]
         u = d.get("usage") or {}
-        return Reply(text=text, tool_calls=calls, prompt_tokens=int(u.get("input_tokens") or 0) + int(u.get("cache_read_input_tokens") or 0)
-                     + int(u.get("cache_creation_input_tokens") or 0), completion_tokens=int(u.get("output_tokens") or 0), cost=None,
-                     seconds=round(time.monotonic() - t0, 2), provider="anthropic")
+        cost = usage_cost(u, self.price)
+        if cost is None and self.model not in _WARNED_NO_PRICE:
+            _WARNED_NO_PRICE.add(self.model)
+            print(f"FDA_NO_PRICE: no price for model {self.model!r} in the model config (models: <name>: price:); every call counts at the "
+                  "per-call cost ceiling", file=sys.stderr, flush=True)
+        i, w, r = (int(u.get(k) or 0) for k in ("input_tokens", "cache_creation_input_tokens", "cache_read_input_tokens"))
+        stop = d.get("stop_reason")
+        if stop == "max_tokens":
+            # brief 209b: a reply cut off at max_tokens (thinking plus text) is a failed attempt, not retried at the same cap and not retried
+            # larger (above ~16000 the API wants streaming). A cut-off tool call has incomplete arguments, so it is dropped, and the role is told.
+            calls = []
+            text = (text + "\n\n" if text else "") + (f"[the reply was cut off at the output limit of {self.max_tokens} tokens (thinking counts), so any tool call "
+                                                      "in it was dropped: do less in one reply, for example write a shorter file, then continue]")
+            print(f"FDA_TRUNCATED: {self.model} reply stopped at max_tokens={self.max_tokens}", file=sys.stderr, flush=True)
+        return Reply(text=text, tool_calls=calls, prompt_tokens=i + w + r, completion_tokens=int(u.get("output_tokens") or 0), cost=cost,
+                     seconds=round(time.monotonic() - t0, 2), provider="anthropic", input_tokens=i, cache_write_tokens=w, cache_read_tokens=r,
+                     cost_basis="usage*price" if cost is not None else None, stop_reason=stop)
 
 
 class ClaudeCodeChat:

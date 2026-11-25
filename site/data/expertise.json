@@ -69,7 +69,7 @@
     "enforced": 3,
     "evidence": 6,
     "sections": 7,
-    "skills": 21
+    "skills": 24
    },
    "evidence": [
     {
@@ -222,6 +222,10 @@
     {
      "items": [
       {
+       "description": "Constraining an asynchronous clock-domain crossing and deciding where its timing margin goes, in Vivado or Quartus: per-crossing latency bound ...",
+       "name": "xdc-cdc-crossing-margin-method"
+      },
+      {
        "description": "Writing the clock part of an XDC: create_clock (-add, waveform), which generated clocks Vivado derives by itself and which need create_generated_clock (fabric dividers, forwarded clocks) ...",
        "name": "xdc-clock-definitions"
       },
@@ -273,6 +277,14 @@
     },
     {
      "items": [
+      {
+       "description": "A clock mux (BUFGMUX, BUFGCTRL, LUT) must be constrained or a check reports CLKMUX-NO-GROUPS/SRC-GROUPED/CASE, multiple_clock or TIMING-56: generated clocks on the mux output vs groups on ...",
+       "name": "amd-clock-mux-constraints"
+      },
+      {
+       "description": "Deciding whether and how to switch clocks on AMD (7 series, UltraScale+): alternatives, BUFGMUX_CTRL/BUFGCTRL on S, never a LUT, the safe-switch protocol for a clock that can stop (IGNORE) ...",
+       "name": "amd-clock-mux-switching"
+      },
       {
        "description": "The setup, hold or pulse-width gate fails, or timing reports must be explained: WNS/TNS/WHS, path anatomy, logic vs net delay, skew.",
        "name": "reading-timing-reports"
@@ -392,17 +404,34 @@
      "file": "flow/xpm_cdc.tcl",
      "gate": null,
      "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/flow/xpm_cdc.tcl",
-     "what": "Exceptions for AMD's crossing macros."
+     "what": "Exceptions for AMD's crossing macros; the handshake bound is AMD's own: destination period times its sync stages, with a bus skew."
+    },
+    {
+     "enforced": true,
+     "file": "flow/cdc_margin.py",
+     "gate": "post_route_bus_skew_met",
+     "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/flow/cdc_margin.py",
+     "what": "After routing, every set_bus_skew must be met; a hand-built bus with no bus skew, a loose datapath-only bound, a missing or low MTBF (UltraScale+) and user clock uncertainty are warnings."
     }
    ],
    "counts": {
-    "checks": 4,
-    "enforced": 3,
-    "evidence": 2,
+    "checks": 5,
+    "enforced": 4,
+    "evidence": 3,
     "sections": 7,
     "skills": 15
    },
    "evidence": [
+    {
+     "kind": "measured",
+     "sources": [
+      {
+       "path": "results/207_cdc_margin/headline.json",
+       "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/results/207_cdc_margin/headline.json"
+      }
+     ],
+     "text": "A clock-uncertainty margin is not crossing margin. On Artix-7 it left a crossing's slack unchanged (5.34 and 5.34 ns) and failed hold elsewhere (worst -0.692 ns); on MAX10 it turned a passing path (0.76 ns) into a failing one (-0.04 ns); in Quartus a clock group removed the skew check (96 paths with bounds, 0 with the group)."
+    },
     {
      "kind": "measured",
      "sources": [
@@ -477,13 +506,24 @@
       "confirmed": "doc",
       "summary": "Both Zynq families clock PS-PL AXI ports from a PL-supplied clock and cross inside the PS, but ZU+ adds the LPD/FPD split, so a crossing into a powered-down domain behaves differently.",
       "topic": "PS-PL clock crossings"
+     },
+     {
+      "confirmed": "tool",
+      "summary": "Both families: a user uncertainty leaves a datapath-only crossing bound unchanged, fails hold on other paths and lowers MTBF (reported on US+, settling slack on 7-series); per-crossing bounds are the margin.",
+      "topic": "User clock uncertainty on crossings (crossing margin)"
+     },
+     {
+      "confirmed": "tool",
+      "summary": "AMD's 2026.1 xpm_cdc_handshake template sets max delay and bus skew at destination period x sync stages (up to 100 bits); a hand-written copy of the scoped constraints must match.",
+      "topic": "XPM handshake constraint values in a non-project build"
      }
     ]
    },
    "gaps": [
     "No agent run has used the stronger crossing gate yet.",
     "A reset cleared on one side only, in an asynchronous FIFO or a handshake, gets past the gate; only the rig's simulation catches it.",
-    "The gate's simulation works cycle by cycle, so it finds lost pulses and bits crossed separately but not route skew, glitches or true metastability."
+    "The gate's simulation works cycle by cycle, so it finds lost pulses and bits crossed separately but not route skew, glitches or true metastability.",
+    "The bus-skew gate has no failing case from our own designs: neither tested part could be routed past a realistic bound; its negative case is a recorded over-tight bound."
    ],
    "id": "cdc",
    "level": "checked",
@@ -903,7 +943,7 @@
     "enforced": 0,
     "evidence": 0,
     "sections": 15,
-    "skills": 39
+    "skills": 40
    },
    "evidence": [],
    "family": {
@@ -1044,6 +1084,11 @@
       "confirmed": "tool",
       "summary": "A marked first input or last output flop packs into the I/O logic on both families when only the pad is next to it; failure is a critical warning that drc_clean never sees. BELs, messages and DRC rows differ.",
       "topic": "Registers in the I/O block (IOB packing)"
+     },
+     {
+      "confirmed": "doc",
+      "summary": "DRIVE is a current limit, not an impedance: 7-series HR LVCMOS33 is 96 ohm at 4 mA and 15 ohm at 16 mA into 50 ohm, 2:1 over corners; only DCI and OUTPUT_IMPEDANCE outputs target 40, 48 or 60 ohm.",
+      "topic": "LVCMOS output drive, slew and output resistance"
      }
     ]
    },
@@ -1219,6 +1264,10 @@
       {
        "description": "Choosing or configuring memory, DSP or carry primitives on Zynq UltraScale+ (K26): RAMB36E2/RAMB18E2 changes from 7-series (built-in cascade, all SDP write modes), URAM288 (4K x 72 ...",
        "name": "zynqmp-bram-uram-dsp48e2-carry8"
+      },
+      {
+       "description": "A netlist, a resource count or a timing estimate for a Zynq UltraScale+ (K26/KR260) design would come from Yosys (synth_xilinx -family xcup) instead of Vivado: what Yosys maps differently ...",
+       "name": "zynqmp-oss-synthesis-gaps"
       },
       {
        "description": "Moving RTL, XDC or a block design from a 7-series board (Nexys A7, ZedBoard) to the K26/KR260: which 7-series primitives do not exist on Zynq UltraScale+, which Vivado retargets ...",
@@ -2962,7 +3011,7 @@
     "enforced": 2,
     "evidence": 4,
     "sections": 13,
-    "skills": 24
+    "skills": 25
    },
    "evidence": [
     {
@@ -3083,6 +3132,11 @@
       "confirmed": "tool",
       "summary": "No family difference found: resetting control registers only removes 15 LUTs and adds 2 control sets on both families (same bench).",
       "topic": "Resetting only control registers"
+     },
+     {
+      "confirmed": "tool",
+      "summary": "No family difference found: initial values are free on fabric and IOB flip-flops, but a value of 1 keeps a register out of a DSP48 or block-RAM register; UltraRAM refuses initial contents.",
+      "topic": "Register initial (power-up) values and hard blocks"
      }
     ]
    },
@@ -3254,6 +3308,10 @@
     },
     {
      "items": [
+      {
+       "description": "A register, memory or I/O register has an initial (power-up) value, or a design moves between AMD and Altera parts: what INIT costs per family ...",
+       "name": "power-up-values-amd-and-altera"
+      },
       {
        "description": "Writing SystemVerilog that Vivado must map to a DSP48E1 (multiply, MAC, pre-adder, wide add), carry-chain arithmetic, MUXF7/F8 wide muxes ...",
        "name": "vivado-inference-templates-datapath"
@@ -4195,7 +4253,7 @@
     "enforced": 0,
     "evidence": 3,
     "sections": 7,
-    "skills": 22
+    "skills": 23
    },
    "evidence": [
     {
@@ -4367,6 +4425,10 @@
     {
      "items": [
       {
+       "description": "A register, memory or I/O register has an initial (power-up) value, or a design moves between AMD and Altera parts: what INIT costs per family ...",
+       "name": "power-up-values-amd-and-altera"
+      },
+      {
        "description": "Writing SystemVerilog that Vivado must map to a DSP48E1 (multiply, MAC, pre-adder, wide add), carry-chain arithmetic, MUXF7/F8 wide muxes ...",
        "name": "vivado-inference-templates-datapath"
       },
@@ -4461,7 +4523,7 @@
    "means": "Development-task runs of the agent, recorded in committed run files, exercised the area."
   }
  ],
- "pin": "5e2eab8",
- "skills_total": 284,
- "skills_used": 210
+ "pin": "6185830",
+ "skills_total": 289,
+ "skills_used": 215
 }

@@ -45,8 +45,21 @@ The 177 predictor `rule_v0` is a step function of the same WNS, so it is recorde
 * **Implementation stage:** normal rule (CLAUDE.md section 4): one slot, one Vivado at a time, never fanned out.
 * No change to how any other job takes a slot; the slot is released only if its text is ours.
 
+## Two-step mode (brief 178e): the recommended way to run one
+
+`python3 -m flow.tournament run <spec.yaml> --mode two-step [--stop-at-pass]` (`plan` prints the steps without running):
+
+1. **Step 1, synthesis:** default against `-retiming` (2 runs). The better by the tournament's own score (0.05 ns WNS bucket, then area, then menu order, so a tie or an
+   identical netlist keeps the default) goes on.
+2. **Step 2, implementation:** on that netlist, the default and AMD's `Performance_*` strategy sets (14 on a single-die part; the four SLR-only ones are left out), cheapest first.
+   With `--stop-at-pass` the walk stops at the first set whose WNS is at least 0; without it all 15 run and the best by the same score wins.
+
+The full mode stays the default of the command line (`--mode full`): it is the only mode that tries our own synthesis and directive menus. Measured on five small blocks
+(`results/178_tournament/two_step/README.md`), two-step with `--stop-at-pass` matched the full tournament's winner within the run-to-run noise on all five at 4.5 to 10 percent of its CPU
+on four of them (45 percent on the one that never meets timing). Not shown on full designs. Walk order: `PERF_ORDER` in `flow/tournament.py`.
+
 ## Agent hook (shadow or opt-in only)
 
-The agent runs `triage` first. `easy`: nothing more. `marginal` or `hard`: a tournament may be run **only** when the run is in shadow mode (results logged, the
+The agent runs `triage` first. `easy`: nothing more. `marginal` or `hard`: a tournament (two-step mode first) may be run **only** when the run is in shadow mode (results logged, the
 default flow's result is the one used) or the owner or spec opts in (`tournament: true`). It never replaces the default result silently, never gates a build,
 and the `p_pass` log feeds brief 177's shadow data. Nothing is wired into the gates.

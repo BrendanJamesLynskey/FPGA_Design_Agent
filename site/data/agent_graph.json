@@ -55,11 +55,11 @@
    },
    {
     "layer": "vendor",
-    "skills": 89
+    "skills": 93
    },
    {
     "layer": "family",
-    "skills": 79
+    "skills": 80
    },
    {
     "layer": "device",
@@ -74,8 +74,8 @@
     "skills": 15
    }
   ],
-  "pin": "5e2eab8",
-  "skills": 284,
+  "pin": "6185830",
+  "skills": 289,
   "units": 42
  },
  "check_suite": {
@@ -233,6 +233,18 @@
      "route"
     ],
     "what": "advisory flag for owner review: set_clock_groups -asynchronous over clock pairs with paths between them, or over every clock (flow/constraint_gates.py, brief 105A); never blocks"
+   },
+   {
+    "by": "ours",
+    "kind": "records",
+    "name": "cdc_margin",
+    "rules": [
+     "HDL-CDC-03"
+    ],
+    "scopes": [
+     "route"
+    ],
+    "what": "clock-crossing intent constrained and met (flow/cdc_margin.py, brief 207): a set_bus_skew violation blocks (gate post_route_bus_skew_met); missing bus skew, a loose datapath-only value, MTBF (UltraScale+) and user uncertainty are advisory"
    },
    {
     "by": "AMD report",
@@ -453,7 +465,7 @@
     "what": "the DOC gate (brief 68: flow/handover.py problems, required gaps, over-claims)"
    }
   ],
-  "standard": "FDA-HDL v1.9"
+  "standard": "FDA-HDL v1.10"
  },
  "closure": {
   "by_goal": {
@@ -2540,6 +2552,10 @@
     {
      "id": "stage_rtl",
      "words": "RTL methodology checks"
+    },
+    {
+     "id": "report_gates",
+     "words": "the synthesis reports show no path that cannot close, too many control sets or an unused generic"
     }
    ],
    "label": "RTL and tests",
@@ -2612,6 +2628,10 @@
     {
      "id": "constraints_post_synth",
      "words": "every timing endpoint constrained"
+    },
+    {
+     "id": "report_gates",
+     "words": "the synthesis reports show no path that cannot close, too many control sets or an unused generic"
     }
    ],
    "label": "Constraints",
@@ -2670,6 +2690,10 @@
     {
      "id": "standards_post_synth",
      "words": "design standards on the netlist"
+    },
+    {
+     "id": "report_gates",
+     "words": "the synthesis reports show no path that cannot close, too many control sets or an unused generic"
     }
    ],
    "label": "Synthesis",

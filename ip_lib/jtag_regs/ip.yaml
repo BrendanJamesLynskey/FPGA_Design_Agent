@@ -1,0 +1,50 @@
+# ip.yaml for jtag_regs: the host's register window over the JTAG cable for a board with no PL UART (brief 209a; jtag_bus is brief 58A's).
+name: jtag_regs
+version: 0.1.0
+status: 'the common map (jtag_regs_map) simulated with cocotb and Icarus Verilog 12; jtag_bus (BSCANE2 USER4 and two xpm_cdc crossings) is designs/b58a_trigger/rtl/jtag_bus.sv, whose host script read and wrote registers on the owner KR260 on 2026-11-17 (the K26 USER4 code 0x923 and 65-bit DR are in boards/kr260/board.yaml); this entry as a whole has not been built or run on a board'
+summary: 'Register window over the board JTAG cable (BSCANE2 USER4): the host reads and writes 32-bit registers with no UART and no processor. Common map ID 0x000, BUILD 0x004 (USR_ACCESS), SCRATCH 0x008; the design own registers from 0x010 through a simple register port.'
+top: jtag_regs
+rtl:
+- rtl/jtag_bus.sv
+- rtl/jtag_regs_map.sv
+- rtl/jtag_regs.sv
+depends: []
+interfaces:
+- name: registers
+  type: native
+  signals: u_we, u_re, u_addr[11:0] (byte address), u_wdata[31:0], u_rdata[31:0] (the design's registers, addresses 0x010 and up)
+clocks:
+- name: clk
+parameters:
+  DESIGN_ID:
+    type: int
+    default: 0
+    range:
+    - 0
+    - 2147483647
+    note: the value register 0x000 reads (a 32-bit pattern; an ID with bit 31 set is passed as the same bits, a negative int)
+latency:
+  result: a read returns on the bus within 2 clocks of u_re; the host needs a read scan and two more JTAG scans for the data
+throughput: one register access per JTAG scan group; this is a bring-up and control window, not a data path
+guards: []
+sweep_tested:
+- DESIGN_ID: 0x20920001
+boundary:
+  registered_outputs: 'yes'
+  cdc: 'two, in jtag_bus: the TCK-side command into clk (xpm_cdc_single and xpm_cdc_array_single) and the clk-side response into TCK (xpm_cdc_array_single)'
+  part_specific: 'BSCANE2 and USR_ACCESSE2 are Xilinx 7-series and UltraScale primitives; the BSCANE2 chain 4 (USER4) is used'
+limits: 'jtag_bus itself is not simulated here (it needs the Xilinx models); the design is simulated through the register port h_*/u_*; the JTAG chain code is board specific (board.yaml)'
+resets:
+- name: rst
+  polarity: high
+  style: synchronous
+evidence:
+  tests:
+  - ip_lib/jtag_regs/tb/test_jtag_regs_rtl.py
+  simulator: Icarus Verilog 12 (local and CI)
+  summary: 'The common map (ID, BUILD, SCRATCH, read-only registers, unmapped reads 0, pass-through of the design addresses, reset of SCRATCH) in cocotb. The BSCANE2 and CDC part is the code of designs/b58a_trigger, checked there and on the KR260.'
+cost_table: 'not measured as a library entry'
+constraints: []
+licence: all rights reserved (this repository)
+next_steps:
+- Build it out of context and in the KR260 pilot designs (brief 209), and add the Vivado simulation test of jtag_bus with the xpm models.

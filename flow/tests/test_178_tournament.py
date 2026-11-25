@@ -179,3 +179,59 @@ def test_single_child_stage_uses_the_real_memory_reading_and_no_light_gate():
         t.time.time = orig
     assert raised and not live
 
+
+
+# ---- brief 178e: the two-step mode -------------------------------------------------------------------------------------------------
+def _strategies(tmp_path, monkeypatch):
+    import json
+    p = tmp_path / "vs.json"
+    p.write_text(json.dumps({"impl": {"Area_Explore": {"opt": "ExploreArea"}, "Performance_Explore": {"opt": "Explore", "place": "Explore", "route": "Explore"},
+                                      "Performance_BalanceSLLs": {"place": "SSI_BalanceSLLs"}, "Performance_NetDelay_high": {"opt": "Default", "place": "ExtraNetDelay_high"},
+                                      "Performance_Brandnew": {"place": "X"}, "Performance_Auto_1": {"place": "Auto_1"},
+                                      "Congestion_SpreadLogic_high": {"place": "AltSpreadLogic_high"}}}))
+    monkeypatch.setattr(t, "STRATEGIES", p)
+
+
+def test_performance_menu_is_default_plus_performance_sets_without_slr_only(tmp_path, monkeypatch):
+    _strategies(tmp_path, monkeypatch)
+    # cheapest first (PERF_ORDER), a set the order does not know goes last, SLR-only and non-Performance sets are left out
+    assert t.performance_menu() == ["default", "amd:Performance_Explore", "amd:Performance_Auto_1", "amd:Performance_NetDelay_high", "amd:Performance_Brandnew"]
+    monkeypatch.setattr(t, "STRATEGIES", tmp_path / "missing.json")
+    assert t.performance_menu() == ["default"]
+
+
+def test_two_step_pick_keeps_default_on_identical_netlists_and_takes_better_retime():
+    d, r = cand("default", -0.9, lut=116, ff=196, order=0), cand("retime", -0.9, lut=116, ff=196, order=8)
+    assert t.two_step_pick([r, d, cand("altroute", 0.5, order=3)])["id"] == "default"          # a tie, and a third candidate step 1 never looks at
+    assert t.two_step_pick([cand("default", -0.19, lut=510, ff=117, order=0), cand("retime", 0.15, lut=501, ff=197, order=8)])["id"] == "retime"
+    assert t.two_step_pick([cand("default", -0.5, order=0), cand("retime", None, status="error: x", order=8)])["id"] == "default"
+
+
+def test_run_two_step_stops_at_the_first_set_that_meets_timing(tmp_path, monkeypatch):
+    _strategies(tmp_path, monkeypatch)
+    monkeypatch.setattr(t, "WORK", tmp_path / "work")
+    monkeypatch.setattr(t, "take_slot", lambda text, wait_s=0: tmp_path / "lock")
+    monkeypatch.setattr(t, "release_slot", lambda lock, prefix: None)
+    monkeypatch.setattr(t, "vivado", lambda: "/x/2026.1/Vivado/bin/vivado")
+    wns = {"default": -0.3, "retime": -0.1, "amd_Performance_Explore": 0.02, "amd_Performance_NetDelay_high": 0.5}
+    ran = []
+
+    def fake(jobs, peak, n, **k):                                   # writes the reports a Vivado run would, from the run directory's name
+        for j in jobs:
+            wd = j["tcl"].parent
+            key = wd.name.split("_", 1)[1] if wd.parent.name.startswith("impl") else wd.name
+            w = wns.get(key, wns.get(wd.name, -0.3))
+            (wd / "utilization.rpt").write_text(UT.format(l=100, f=50))
+            (wd / "timing_summary.rpt").write_text(TS.format(w=w))
+            (wd / "done.txt").write_text("7\n")
+            ran.append(wd.name)
+
+    monkeypatch.setattr(t, "run_children", fake)
+    spec = {"name": "d", "part": "xc7a100tcsg324-1", "top": "x", "clock_ns": 5.0, "files": ["/a.sv"]}
+    rec = t.run_two_step(spec, take=False, stop_at_pass=True)
+    assert rec["two_step"]["step1_pick"] == "retime"                                           # -0.1 beats -0.3
+    impl = [r for r in ran if r.startswith("retime_")]
+    assert impl == ["retime_default", "retime_amd_Performance_Explore"]                         # stopped at the first WNS >= 0, NetDelay_high never ran
+    assert rec["winner"] == "retime/amd:Performance_Explore"
+    assert any("stopped early" in s["reason"] for s in spec["_skipped"])
+    assert rec["two_step"]["step1_cpu_s"] == 14 and rec["two_step"]["step2_cpu_s"] == 14

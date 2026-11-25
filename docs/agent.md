@@ -26,7 +26,11 @@ Vivado checkpoints of each stage end), `checkpoints.sqlite` (LangGraph), `summar
 | document | at the end of every run (brief 68 C, `--docs on`, the CLI default): code drafts `handover.yaml` from the run's records, the Designer writes its prose, the flow renders `README.md` and `AGENT.md`; the DOC gate must pass (up to three Designer passes; it also rejects a gap that quotes a gate detail the run's own build records contradict, and requires re-measuring as the first next step after a build from an earlier Vivado release). A stop before a stage's gate (the visit limit) is recorded as `gated: false` and is not a result of that stage. Writes `summary.json` first (the handover cites it) and `doc.json` (the DOC result and `signed_off`) | code for every fact and gate result; the model for the prose only |
 
 Limits: turns, seconds and USD per stage visit (`stages.MACHINE`) and per run (`RUN_LIMITS`), enforced before each
-model call by the `Meter` (`agent/graph/llm.py`); at most 4 visits per stage. Cost is only what the provider reports.
+model call by the `Meter` (`agent/graph/llm.py`); at most 4 visits per stage. Cost is only what the provider reports; for the `anthropic_api` endpoint (which reports tokens), it is computed from
+the response `usage` and the model's price table, never estimated (brief 209b, [model_config.md](model_config.md#anthropic-api-cost-caching-temperature-budgets-brief-209b)).
+The USD limits were sized for the default model (OpenRouter, a few hundredths of a USD per call, where the turn limits bind first); for a dearer model
+`--budget-scale N` (or `budget_scale:` in a models file) multiplies every stage's USD limit and the default run cap by `N`, so a stage can use its turns.
+An explicit `--max-usd` is kept as given. The run summary records `budget_scale` and `token_split` (input, output, cache write and cache read tokens).
 Vivado builds are reused when the sources are unchanged and the earlier build went far enough.
 
 ### Documentation and resume (brief 68 parts C and D)
@@ -80,6 +84,34 @@ when software already written for AMD IP will drive the block, `strict` for brin
 `house` otherwise); `spec_schema.validate` refuses a bad section; the Designer's `axi_profile` check regenerates each
 generated block under that profile and compares it with the file, so a block cannot claim a profile and behave as
 another. The profiles, their settings and costs: [hwsw.md](hwsw.md#interface-profiles-brief-73).
+
+## Report gates (brief 209a)
+
+The report checks of brief 204a feed the stage machine. After each synthesis build of stages 2, 3 and 4 the graph reads the post-synthesis
+reports (`flow.checks` `logic_levels`, `control_sets`, `synth_log`; no Vivado session): a blocking RPT-LL-02 (a setup path fails even with no net delay,
+so the design cannot close at its clock), RPT-CS-02 (control sets above 15 % of capacity) or RPT-LOG-03 (a generic the build sets that the top lacks) fails
+the `report_gates` gate. The failure goes to the Designer with the finding's text and one-line fix, plus the advisories of the same checks
+(RPT-LL-01 and the rest, which never block). Stage 2 is where the first synthesis build exists, so a design that cannot close is caught there, before the
+constraints, implementation and timing-closure stages spend their visits. A build that wrote no synthesis timing report is not judged, and a waived finding does not block.
+Tests: `agent/tests/test_209a_report_gates.py`, on the recorded c15 report of brief 204a.
+
+## Boards with no UART: the JTAG register bus (brief 209a)
+
+`flow/host_transport.py` chooses how the host reaches the design from the board file: `uart` (a `uart:` block in board.yaml; the test shell is built in) or
+`jtag_bus` (`host_access` names the BSCANE2 USER4 register bus and there is no `uart:` block: the KR260). For `jtag_bus` the run is built without the test
+shell (`.no_shell` is set by the board, so `--no-shell` is not needed), the Designer and Verifier are told the register port and the common map
+(ID 0x000, BUILD 0x004 = USR_ACCESS, SCRATCH 0x008; the design's registers from 0x010), and the stage-9 bring-up files differ:
+
+| | `uart` | `jtag_bus` |
+|---|---|---|
+| host files | `tests/test_*_hw.py` (pytest over the shell), `hw_checks.py` `CAPTURES` (ILA) | `hw_checks.py` with `DESIGN_ID`, `make_mock()`, `run(bus)` |
+| builds | base and ILA | base only (no ILA) |
+| CI check | none: the board is needed | every check against the mock bus (`gates(kind=bringup_ready)` and the graph run `flow.host_transport.run_mock` in the sandbox) |
+| `flow/bringup.py` | power_ok, discover, program_base, uart_tests, program_ila, ila_captures, still_alive | discover (needs `--cable-serial`), program_base, bus_checks, still_alive |
+
+`ip_lib/jtag_regs` holds the bus (`jtag_bus.sv` from designs/b58a_trigger, unchanged) and the common map. The real bus, `host_transport.VivadoBus`, runs
+`designs/b58a_trigger/host/jtag_regs.tcl` in a Vivado hardware-manager child; it needs the board and is never used in CI.
+Tests: `flow/tests/test_209a_jtag_bringup.py`.
 
 ## Separation (`agent/graph/roles.py`)
 

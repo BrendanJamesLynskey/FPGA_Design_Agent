@@ -1,6 +1,11 @@
 #!/usr/bin/env python3
 """One-command bring-up on the attached board: discover, program, test over UART, capture with the ILA.
 
+The transport comes from the board file's ``host_access`` (flow/host_transport.py): ``uart`` (below) or, for a board with no PL
+UART (the KR260), ``jtag_bus`` (brief 209a): power_ok, discover, program_base, ``bus_checks`` (the design's ``hw_checks.py`` ``run(bus)``
+over the JTAG register bus, with the ID, USR_ACCESS build stamp and scratch checks of the common map) and still_alive; no ILA step
+(a JTAG-bus design has no ``probes.yaml`` ILA build). Needs ``--cable-serial`` (never "the first target").
+
     python3 flow/bringup.py designs/t1_dimmer_counter [--board nexys_a7_100t] [--keep-captures]
 
 Steps (each recorded with pass/fail and its time; the first failure stops the run):
@@ -39,6 +44,7 @@ if __package__ in (None, ""):
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from flow import hw, hw_discover, ila, program  # noqa: E402
+from flow import host_transport  # noqa: E402
 from shell.host import protocol as p  # noqa: E402
 from shell.host.fpga_shell import FpgaShell  # noqa: E402
 
@@ -74,7 +80,11 @@ class StepFailed(Exception):
 
 
 class Run:
-    def __init__(self, design: Path, board: str | None, keep: bool, results: Path = RESULTS) -> None:
+    def __init__(self, design: Path, board: str | None, keep: bool, results: Path = RESULTS, cable_serial: str | None = None,
+                 bus_factory: Callable[[str], Any] | None = None) -> None:
+        self.transport = host_transport.board_transport(board)
+        self.cable_serial = cable_serial
+        self.bus_factory = bus_factory or host_transport.VivadoBus      # the tests pass a mock
         self.results = results
         self.design = design
         self.name = design.name
@@ -256,6 +266,50 @@ class Run:
         return {"pass": ok, "build_stamp": f"{ident['build_stamp']:08x}", "scratch_kept": scratch == SENTINEL,
                 "status": status}
 
+    # --- the JTAG register bus transport (brief 209a) -----------------------------------------
+    def jtag_discover(self) -> dict[str, Any]:
+        if not self.cable_serial:
+            raise StepFailed("a JTAG-bus board needs --cable-serial (the cable is selected by serial, never the first target)")
+        self.secrets = [self.cable_serial]
+        self.res["cable_serial"] = hw.redact(self.cable_serial)
+        return {"pass": True, "transport": "jtag_bus", "note": "the bus is opened by serial in bus_checks"}
+
+    def jtag_program(self) -> dict[str, Any]:
+        r = program.program(self.design, "base", self.board_name, self.log_dir / "program_base")
+        self.res["build_stamp"] = r.get("build_stamp")
+        self.res["usr_access"] = r.get("build_id")
+        return r
+
+    def bus_checks(self) -> dict[str, Any]:
+        mod = host_transport.load_hw_checks(self.design)
+        stamp = self.res.get("usr_access")
+        expected = int(str(stamp), 16) if stamp not in (None, "") else None
+        bus = self.bus_factory(self.cable_serial)
+        try:
+            res = host_transport.run_checks(mod, bus, expected)
+            bus.wr(host_transport.REG_SCRATCH, host_transport.SENTINEL)         # the still_alive step reads it back
+        finally:
+            close = getattr(bus, "close", None)
+            if close:
+                close()
+        bad = [f"{n}: {d}" for n, ok, d in res if not ok]
+        out = {"pass": not bad, "checks": [{"name": n, "ok": ok, "detail": d} for n, ok, d in res], "expected_build": expected}
+        if bad:
+            out["why"] = self.scrub("; ".join(bad))[:1500]
+        return out
+
+    def jtag_still_alive(self) -> dict[str, Any]:
+        bus = self.bus_factory(self.cable_serial)
+        try:
+            ident, build, scratch = (bus.rd(host_transport.REG_ID), bus.rd(host_transport.REG_BUILD), bus.rd(host_transport.REG_SCRATCH))
+        finally:
+            close = getattr(bus, "close", None)
+            if close:
+                close()
+        mod = host_transport.load_hw_checks(self.design)
+        ok = ident == mod.DESIGN_ID and scratch == host_transport.SENTINEL
+        return {"pass": ok, "design_id": f"{ident:#010x}", "build": f"{build:#010x}", "scratch_kept": scratch == host_transport.SENTINEL}
+
     # --- whole run ------------------------------------------------------------------------
     def run(self) -> int:
         t0 = time.monotonic()
@@ -263,13 +317,19 @@ class Run:
         server = hw.HwServer(self.log_dir)
         try:
             server.__enter__()
-            self.step("power_ok", self.power)
-            self.step("discover", self.discover)
-            self.step("program_base", lambda: self.program("base"))
-            self.step("uart_tests", self.uart_tests)
-            self.step("program_ila", lambda: self.program("ila"))
-            self.step("ila_captures", self.ila_captures)
-            self.step("still_alive", self.still_alive)
+            if self.transport == "jtag_bus":
+                self.step("discover", self.jtag_discover)
+                self.step("program_base", self.jtag_program)
+                self.step("bus_checks", self.bus_checks)
+                self.step("still_alive", self.jtag_still_alive)
+            else:
+                self.step("power_ok", self.power)
+                self.step("discover", self.discover)
+                self.step("program_base", lambda: self.program("base"))
+                self.step("uart_tests", self.uart_tests)
+                self.step("program_ila", lambda: self.program("ila"))
+                self.step("ila_captures", self.ila_captures)
+                self.step("still_alive", self.still_alive)
             self.res["pass"] = True
         except StepFailed as e:
             self.res["failed_step"] = str(e)
@@ -314,9 +374,10 @@ def main(argv: list[str] | None = None) -> int:
                          "the design's build directory so they never touch committed results)")
     ap.add_argument("--keep-captures", action="store_true",
                     help="copy this run's CSV/VCD captures and test log to results/f0b/captures/")
+    ap.add_argument("--cable-serial", help="JTAG-bus boards only: the cable's serial (the cable is never chosen as 'the first target')")
     a = ap.parse_args(argv)
     design = (hw.ROOT / a.design).resolve() if not a.design.is_absolute() else a.design
-    return Run(design, a.board, a.keep_captures, a.results_dir).run()
+    return Run(design, a.board, a.keep_captures, a.results_dir, a.cable_serial).run()
 
 
 if __name__ == "__main__":
