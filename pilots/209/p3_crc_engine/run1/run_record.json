@@ -1,0 +1,367 @@
+{
+ "design": "p3_crc_engine",
+ "run": 1,
+ "run_id": "20261125-102852-3fd4",
+ "agent_sha": "cc6597b64bb3",
+ "model": [
+  "claude-sonnet-5-5"
+ ],
+ "endpoint": [
+  "anthropic_api"
+ ],
+ "api_calls": 157,
+ "real_usd": 2.9452,
+ "prompt_tokens": 5394066,
+ "completion_tokens": 111728,
+ "input_tokens": 350,
+ "cache_read_tokens": 4857127,
+ "cache_write_tokens": 536589,
+ "tokens_total": 5505794,
+ "truncated_calls": 0,
+ "cost_basis": [
+  "usage*price"
+ ],
+ "wall_s_after_slot": 1150,
+ "stage_visits": [
+  [
+   "clarify",
+   1,
+   "clarify",
+   "done",
+   3,
+   0.079
+  ],
+  [
+   "clarify",
+   2,
+   "clarify",
+   "done",
+   6,
+   0.077
+  ],
+  [
+   "board-and-device-planning",
+   1,
+   "rtl",
+   "done",
+   10,
+   0.156
+  ],
+  [
+   "rtl-design-creation",
+   1,
+   "model",
+   "done",
+   2,
+   0.049
+  ],
+  [
+   "rtl-design-creation",
+   1,
+   "tests",
+   "done",
+   6,
+   0.321
+  ],
+  [
+   "rtl-design-creation",
+   1,
+   "tests",
+   "done",
+   10,
+   0.141
+  ],
+  [
+   "rtl-design-creation",
+   1,
+   "rtl",
+   "done",
+   46,
+   0.913
+  ],
+  [
+   "board-and-device-planning",
+   2,
+   "rtl",
+   "done",
+   12,
+   0.194
+  ],
+  [
+   "board-and-device-planning",
+   3,
+   "rtl",
+   "done",
+   5,
+   0.073
+  ],
+  [
+   "rtl-design-creation",
+   2,
+   "tests",
+   "done",
+   2,
+   0.096
+  ],
+  [
+   "rtl-design-creation",
+   2,
+   "rtl",
+   "done",
+   7,
+   0.088
+  ],
+  [
+   "rtl-design-creation",
+   3,
+   "rtl",
+   "done",
+   7,
+   0.1
+  ],
+  [
+   "rtl-design-creation",
+   4,
+   "rtl",
+   "done",
+   13,
+   0.141
+  ],
+  [
+   "rtl-design-creation",
+   5,
+   "rtl",
+   "done",
+   16,
+   0.154
+  ],
+  [
+   "rtl-design-creation",
+   6,
+   "rtl",
+   "done",
+   10,
+   0.089
+  ]
+ ],
+ "outcome": "stopped: stage 2 visited more than 6 times; last failing gate: lint; owned by the rtl role; the same failure on 5 consecutive visits",
+ "reached_stage": 2,
+ "summary_stop": "stage 2 visited more than 6 times; last failing gate: lint; owned by the rtl role; the same failure on 5 consecutive visits",
+ "interview": "off",
+ "cost_usd_agent": 2.671223,
+ "interview_note": "--interview off: the agent's defaults were taken, nothing asked or answered by hand",
+ "bitstream_built": false,
+ "verif_stages": {
+  "V0": true,
+  "V1": true,
+  "V2": true,
+  "V3": false,
+  "SIGNOFF": false,
+  "V-HW": false
+ },
+ "trace_pass": true,
+ "requirement_table": [
+  {
+   "id": "REQ-01",
+   "text": "CRC register equals zlib.crc32 of the pushed bytes for 1000 random messages.",
+   "methods": {
+    "simulation": "pass",
+    "hardware": "pending"
+   }
+  },
+  {
+   "id": "REQ-02",
+   "text": "BYTE_COUNT equals the number of bytes pushed since INIT for 1000 random messages.",
+   "methods": {
+    "simulation": "pass",
+    "hardware": "pending"
+   }
+  },
+  {
+   "id": "REQ-03",
+   "text": "An empty message reads CRC 0x00000000.",
+   "methods": {
+    "simulation": "pass"
+   }
+  },
+  {
+   "id": "REQ-04",
+   "text": "Message lengths 0, 1, 2, 3, 4, 5, 7, 8, 63, 64 and 65 bytes match zlib.crc32.",
+   "methods": {
+    "simulation": "pass"
+   }
+  },
+  {
+   "id": "REQ-05",
+   "text": "PUSH4 consumes the bytes of the word least significant byte first.",
+   "methods": {
+    "simulation": "pass"
+   }
+  },
+  {
+   "id": "REQ-06",
+   "text": "PUSH_N consumes the low TAIL_LEN bytes, with TAIL_LEN 0 consuming nothing.",
+   "methods": {
+    "simulation": "pass"
+   }
+  },
+  {
+   "id": "REQ-07",
+   "text": "A message of N full words gives BUSY_CYCLES equal to N.",
+   "methods": {
+    "simulation": "pass",
+    "hardware": "pending"
+   }
+  },
+  {
+   "id": "REQ-08",
+   "text": "The datapath accepts one PUSH4 every clock with no stall.",
+   "methods": {
+    "simulation": "pass"
+   }
+  },
+  {
+   "id": "REQ-09",
+   "text": "INIT sets CRC state to 0xFFFFFFFF.",
+   "methods": {
+    "simulation": "pass",
+    "formal": "pass"
+   }
+  },
+  {
+   "id": "REQ-21",
+   "text": "INIT clears BYTE_COUNT to 0.",
+   "methods": {
+    "simulation": "pass",
+    "formal": "pass"
+   }
+  },
+  {
+   "id": "REQ-22",
+   "text": "INIT clears BUSY_CYCLES to 0.",
+   "methods": {
+    "simulation": "pass",
+    "formal": "pass"
+   }
+  },
+  {
+   "id": "REQ-10",
+   "text": "CTRL bit 0 reads 0 the clock after an INIT write.",
+   "methods": {
+    "simulation": "pass"
+   }
+  },
+  {
+   "id": "REQ-11",
+   "text": "The design clock frequency is at least 100 MHz.",
+   "methods": {
+    "analysis": "pending"
+   }
+  },
+  {
+   "id": "REQ-23",
+   "text": "Timing closes with WNS at or above 0 ns.",
+   "methods": {
+    "analysis": "pending"
+   }
+  },
+  {
+   "id": "REQ-12",
+   "text": "Register ID at 0x000 reads 0x20930001.",
+   "methods": {
+    "simulation": "pass",
+    "hardware": "pending"
+   }
+  },
+  {
+   "id": "REQ-13",
+   "text": "Register BUILD at 0x004 reads the USR_ACCESSE2 word.",
+   "methods": {
+    "hardware": "pending"
+   }
+  },
+  {
+   "id": "REQ-14",
+   "text": "SCRATCH reads back the written 32-bit value.",
+   "methods": {
+    "simulation": "pass",
+    "hardware": "pending"
+   }
+  },
+  {
+   "id": "REQ-24",
+   "text": "SCRATCH resets to 0.",
+   "methods": {
+    "simulation": "pass",
+    "hardware": "pending"
+   }
+  },
+  {
+   "id": "REQ-15",
+   "text": "Unmapped addresses read 0.",
+   "methods": {
+    "simulation": "pass",
+    "formal": "pass"
+   }
+  },
+  {
+   "id": "REQ-25",
+   "text": "Writes to unmapped addresses change no register.",
+   "methods": {
+    "simulation": "pass",
+    "formal": "pass"
+   }
+  },
+  {
+   "id": "REQ-16",
+   "text": "h_rdata shows the addressed register within 2 clocks of h_re.",
+   "methods": {
+    "simulation": "pass",
+    "formal": "pass"
+   }
+  },
+  {
+   "id": "REQ-26",
+   "text": "h_rdata holds its value until the next h_re.",
+   "methods": {
+    "simulation": "pass",
+    "formal": "pass"
+   }
+  },
+  {
+   "id": "REQ-17",
+   "text": "A write takes effect 1 clock after h_we.",
+   "methods": {
+    "simulation": "pass"
+   }
+  },
+  {
+   "id": "REQ-18",
+   "text": "sfp_tx_disable is 1 at all times.",
+   "methods": {
+    "formal": "pass",
+    "analysis": "pending"
+   }
+  },
+  {
+   "id": "REQ-19",
+   "text": "The design uses 0 GT transceiver channels.",
+   "methods": {
+    "analysis": "pending"
+   }
+  },
+  {
+   "id": "REQ-20",
+   "text": "data/jtag_bus.sv is instantiated unmodified.",
+   "methods": {
+    "analysis": "pending"
+   }
+  }
+ ],
+ "requirement_method_results": {
+  "pass": 28,
+  "pending": 12
+ },
+ "requirements": 26,
+ "hw_checks_present": false
+}
