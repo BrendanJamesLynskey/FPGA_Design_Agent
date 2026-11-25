@@ -1,0 +1,86 @@
+{
+ "design": "p3_crc_engine",
+ "verdict": "FAIL",
+ "aborted": null,
+ "expect_id": 546504705,
+ "expect_build": null,
+ "stamp_time": "2026-11-25T12:29:56",
+ "criteria": [
+  {
+   "name": "id",
+   "pass": true,
+   "value": "20930001",
+   "expected": "20930001"
+  },
+  {
+   "name": "build_stamp",
+   "pass": false,
+   "value": "1234abcd",
+   "expected": "no stamp given"
+  },
+  {
+   "name": "scratch_readback",
+   "pass": true,
+   "value": [
+    "a5a5a5a5",
+    "5a5a5a5a",
+    "ffffffff",
+    "00000001",
+    "80000000",
+    "00000000"
+   ],
+   "expected": "what was written"
+  },
+  {
+   "name": "crc_equals_zlib_1000_messages",
+   "pass": true,
+   "value": "0 of 1000 differ",
+   "expected": "0 differ"
+  },
+  {
+   "name": "byte_count_equals_length",
+   "pass": true,
+   "value": "0 wrong",
+   "expected": 0
+  },
+  {
+   "name": "busy_cycles_one_per_word",
+   "pass": true,
+   "value": "0 of 272 full-word messages wrong",
+   "expected": "BUSY_CYCLES = length / 4"
+  },
+  {
+   "name": "empty_message_crc_zero",
+   "pass": true,
+   "value": "model",
+   "expected": "0x00000000"
+  }
+ ],
+ "data": {
+  "id": "20930001",
+  "build": "1234abcd",
+  "lengths": [
+   0,
+   1,
+   2,
+   3,
+   4,
+   5,
+   6,
+   7,
+   8,
+   9,
+   10,
+   11,
+   12,
+   15,
+   16,
+   17,
+   18,
+   19,
+   20,
+   21
+  ],
+  "first_mismatches": []
+ }
+}
