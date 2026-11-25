@@ -1,0 +1,483 @@
+# Brief 68 handover: the facts behind README.md and AGENT.md (docs/documentation_standard.md).
+# Measurement values and every sha256 are filled from the records by `python -m flow.handover fill`;
+# do not type them. Render with `python -m flow.handover write <this directory>`.
+schema: fda-handover/1
+id: p6_glitchfree_mux
+title: P6 glitch-free clock multiplexer (25 MHz C3 clock and divided GT refclk)
+kind: agent-run
+produced_by: agent
+summary: The design switches a muxed clock domain between the 25 MHz C3 clock and the SFP+ GT reference clock divided by
+  B_DIV, using a BUFGCTRL. A register map on the JTAG bus controls SEL, reports switching state, checks a binary counter
+  against a Gray twin in the muxed domain, and measures the muxed clock frequency with a gate counted in clk cycles. The
+  run stopped at rtl-design-creation, which did not pass its gates. Verification reached V1 of V3, no seeded simulation
+  results exist, and nothing was synthesised or built. The specification and architecture were approved automatically, with
+  no human review.
+scope_not:
+- Not a bitstream-ready design; no synthesis, implementation or board result exists.
+- No GT transceiver channel is used; only the reference clock buffer IBUFDS_GTE4 is.
+- B_DIV is a build-time constant, not a run-time setting.
+target:
+  part: xck26-sfvc784-2LV-c
+  board: kr260
+  tool: Vivado 2026.1
+  top: p6_clkmux_top
+clocks:
+- name: clk_25
+  mhz: 25.0
+  source: runs/20261125-154117-dad9/p6_glitchfree_mux/design.xdc
+resets:
+- name: rst
+  active: high
+  note: Per spec.yaml, synchronous and held a few clocks at start by jtag_bus; it is synchronised into clk_mux with RESET_SYNC_STAGES
+    stages. design.xdc has no reset pin, and the RTL source was not among the files shown for this handover, so the reset
+    style is the spec's, not read from the RTL.
+interfaces:
+- name: clk_25
+  type: input clock, 1 bit, pin C3 LVCMOS18
+  note: Register bus, gate and clock A. design.xdc names the port clk_25 and creates a 40 ns clock; spec.yaml names it clk.
+- name: gt_refclk_p / gt_refclk_n
+  type: differential input clock, SFP+ MGTREFCLK0
+  note: Drives IBUFDS_GTE4 and then BUFG_GT. design.xdc has no pin or clock constraint for these ports.
+- name: led
+  type: output, 2 bits, pins F8 (led[0]) and E8 (led[1]) LVCMOS18
+  note: led[0] shows ACTIVE_SEL, led[1] shows SWITCHING (spec.yaml).
+- name: sfp_tx_disable
+  type: output, 1 bit, pin Y10 LVCMOS33
+  note: Constant 1.
+registers:
+- offset: 0
+  name: ID
+  access: RO
+  reset: 546701313
+  bits: 31:0 design ID
+- offset: 4
+  name: BUILD
+  access: RO
+  reset: 0
+  bits: 31:0 USR_ACCESS word
+- offset: 8
+  name: SCRATCH
+  access: RW
+  reset: 0
+  bits: 31:0 data
+- offset: 16
+  name: SEL
+  access: RW
+  reset: 0
+  bits: 0 SEL (0 = A, 1 = B)
+- offset: 20
+  name: STATUS
+  access: RO
+  reset: 0
+  bits: 0 SWITCHING, 1 ACTIVE_SEL
+- offset: 24
+  name: B_DIV
+  access: RO
+  reset: 2
+  bits: 3:0 divide of GT refclk (1 to 8)
+- offset: 28
+  name: GATE_LEN
+  access: RW
+  reset: 25000000
+  bits: 31:0 gate length in clk cycles
+- offset: 32
+  name: FREQ_CTRL
+  access: RW
+  reset: 0
+  bits: 0 START (self-clearing)
+- offset: 36
+  name: FREQ_STATUS
+  access: RO
+  reset: 0
+  bits: 0 BUSY, 1 DONE
+- offset: 40
+  name: FREQ_COUNT
+  access: RO
+  reset: 0
+  bits: 31:0 edges in last gate
+- offset: 44
+  name: MUX_ERRS
+  access: RO
+  reset: 0
+  bits: 31:0 error count
+- offset: 48
+  name: MUX_COUNT
+  access: RO
+  reset: 0
+  bits: 31:0 counter low 32 bits at last SNAPSHOT
+- offset: 52
+  name: SWITCH_COUNT
+  access: RO
+  reset: 0
+  bits: 31:0 completed switches
+- offset: 56
+  name: SNAPSHOT
+  access: WO
+  reset: 0
+  bits: any write latches MUX_COUNT
+parameters:
+- name: DESIGN_ID
+  value: 546701313
+  legal: any 32-bit value; the spec fixes 546701313 (0x20960001)
+  note: Value returned by the ID register.
+- name: B_DIV_VALUE
+  value: 2
+  legal: 1 to 8 (BUFG_GT divide range)
+  note: Divides the 156.25 MHz GT refclk to give clk_b at 78.125 MHz; read back through B_DIV.
+- name: GATE_LEN_DEFAULT
+  value: 25000000
+  legal: 32-bit unsigned; 0 is treated as 1 cycle (spec default)
+  note: 'Reset value of GATE_LEN, 1 s at 25 MHz. The benches simulated 200, so the spec''s value was not simulated. Spec
+    timing: clk cycles'
+- name: MUX_COUNTER_WIDTH
+  value: 32
+  legal: 32 (MUX_COUNT exposes only the low 32 bits)
+  note: Width of the binary counter and Gray twin in the muxed domain.
+- name: RESET_SYNC_STAGES
+  value: 3
+  legal: 2 or more (XPM reset synchroniser)
+  note: Stages of the reset synchroniser into clk_mux.
+files:
+- path: runs/20261125-154117-dad9/p6_glitchfree_mux/spec.md
+  what: the request the run started from
+  sha256: f0fea2fdef7b4204ffc882eb783ee881f13785b58a4b03ff51f3c6ae3ed093ca
+- path: runs/20261125-154117-dad9/p6_glitchfree_mux/spec.yaml
+  what: the specification the Clarifier wrote, approved automatically with no human review
+  sha256: b6026fd8a7791ce868e6f9ee51d4ffa1a4f90fcd4c44e9dc5f62a31c69d655ea
+- path: runs/20261125-154117-dad9/p6_glitchfree_mux/ARCHITECTURE.md
+  what: the architecture note, accepted automatically before any RTL (no human review)
+  sha256: 31e71523047c48a8d137856d961923abb1f4fb569cb3196fbe96a14851ad2af2
+- path: runs/20261125-154117-dad9/p6_glitchfree_mux/architecture.yaml
+  what: 'the machine-checked architecture: blocks, clocks, predicted resources'
+  sha256: fa39418cb879cf10d6b2c9965e44a3706b8a74873bb434d9e246a1cbc5297978
+- path: runs/20261125-154117-dad9/p6_glitchfree_mux/design.xdc
+  what: pin, I/O standard and timing constraints
+  sha256: 713c2601cace00d2201beca5d75a68cd5722273fef65fae3ab57bd8371ab52d3
+- path: runs/20261125-154117-dad9/p6_glitchfree_mux/model.py
+  what: the Modeller's reference model of the visible behaviour
+  sha256: ef3fb034f0dd50da0c467de01b75f9cf9aad2c85894e2d4ca11b437641829fc8
+- path: runs/20261125-154117-dad9/p6_glitchfree_mux/tests/p6_bench.py
+  what: the Verifier's cocotb benches and pytest entries
+  sha256: 64431f9b534a210437bbadc5091e8a1dba4c5f9373c3a4ecfbc06464a6db82fa
+- path: runs/20261125-154117-dad9/p6_glitchfree_mux/tests/test_p6_glitchfree_mux_rtl.py
+  what: the Verifier's cocotb benches and pytest entries
+  sha256: 30684c755acc017e271420858bb888c9fa1d67e05e6a0bfbdc1da1a30a3c50a3
+- path: runs/20261125-154117-dad9/p6_glitchfree_mux/verif/testplan.yaml
+  what: the test plan and mutant list read by the verification gates
+  sha256: f98943851c94bfd8b829aa8746d913ea7ad123b4ce71e2ceec8be068e8af5538
+- path: runs/20261125-154117-dad9/p6_glitchfree_mux/verif/checkers/v_macros.svh
+  what: bound assertion and cover checkers
+  sha256: 013c1a5444e3dbd0eb2df54529d09272d8bf601d42ec066d54cadb9589d51083
+- path: runs/20261125-154117-dad9/p6_glitchfree_mux/build/review/02_rtl-design-creation.html
+  what: 'the review page of stage rtl-design-creation: its exit gates and their failures at the last visit'
+  sha256: 40762dd5190a0ca474f9edcb63ab72b5b144a84e30d8b4df2c0ffc5192a08a58
+commands:
+- what: what changed since this handover (stale records, changed files, tool and knowledge-bank pins)
+  cmd: python -m flow.handover fresh runs/20261125-154117-dad9/p6_glitchfree_mux
+  heavy: false
+  minutes: null
+- what: pick the work up again from the earliest stage the change or the staleness needs
+  cmd: python -m agent resume runs/20261125-154117-dad9/p6_glitchfree_mux "<change request>"
+  heavy: true
+  minutes: null
+  needs: a model (see docs/agent.md); Vivado for any stage from synthesis on
+- what: run the Verifier's simulation tests
+  cmd: python -m pytest -q runs/20261125-154117-dad9/p6_glitchfree_mux/tests/test_p6_glitchfree_mux_rtl.py
+  heavy: false
+  minutes: null
+  needs: Icarus Verilog and cocotb, or the simulation container
+- what: re-run the Verilator coverage simulation and the verification gates (line, toggle, functional and cover results)
+  cmd: SIM=verilator FDA_COVERAGE=1 FDA_SIM_RESULTS_DIR=runs/20261125-154117-dad9/p6_glitchfree_mux/build/verif/sim python
+    -m pytest -q -x runs/20261125-154117-dad9/p6_glitchfree_mux/tests/test_p6_glitchfree_mux_rtl.py && python3 flow/verif_gates.py
+    runs/20261125-154117-dad9/p6_glitchfree_mux --runs runs/20261125-154117-dad9/p6_glitchfree_mux/build/verif/sim
+  heavy: false
+  minutes: null
+  needs: Verilator 5.036 or later and cocotb (the simulation container has them)
+- what: rebuild the bitstream with the flow
+  cmd: flow/run_vivado.sh runs/20261125-154117-dad9/p6_glitchfree_mux base
+  heavy: true
+  minutes: null
+  needs: Vivado 2026.1 and a heavy slot
+evidence:
+- id: E1
+  activity: review
+  result: partial
+  what: the specification and the architecture were approved automatically, with no human review (review off; the interview
+    oracle claude-sonnet-5-5 only answered the interview questions); the interview asked 8 questions, 0 answered and 8 defaulted
+  record: runs/20261125-154117-dad9/summary.json
+  sha256: 550b5002d3d71a4bd1515043f06ae06fc68db045e711ec04e011e7998f25eff0
+- id: E2
+  activity: simulation
+  result: partial
+  what: 'verification (flow/verif_gates.py) against the Modeller''s reference model reached V1 of V3; the run asked for
+    V2; V1 means every spec item is traced to a check and the benches use the blind model; V2 (simulation: seeded runs,
+    a constrained-random test, bound assertions and formal tasks) did not pass: seeds run no seeded results: read runs/20261125-154117-dad9/p6_glitchfree_mux/build/verif/sim/seed*/results.xml
+    and found none. The gate expects runs/20261125-154117-dad9/p6_glitchfree_mux/build/verif/sim/seed<N>/results.xml, one
+    directory per seed. The flow''s simulation step writes it when the bench runs through flow.cocotb_run.run(name, toplevel,
+    sources, test_module, test_dir, parameters=..., seed=N) in tests/test_*_rtl.py: call run() once per seed (for example
+    seed=1, 2, 3; a seed left out counts as seed 1) with the module(s) listed in bench.modules; the flow runs it and checks
+    again. A bench that runs the simulator some other way leaves nothing there. (needs >=1 seed); constrained random test
+    ran not evaluated (no seeded results) (needs True); assertions bound zero failures not evaluated (no seeded results)
+    (needs bound in the run; no failure); V3 (coverage (line, toggle, functional bins, cover properties), three seeds and
+    the mutation score) did not pass: seeds run no seeded results: read runs/20261125-154117-dad9/p6_glitchfree_mux/build/verif/sim/seed*/results.xml
+    and found none. The gate expects runs/20261125-154117-dad9/p6_glitchfree_mux/build/verif/sim/seed<N>/results.xml, one
+    directory per seed. The flow''s simulation step writes it when the bench runs through flow.cocotb_run.run(name, toplevel,
+    sources, test_module, test_dir, parameters=..., seed=N) in tests/test_*_rtl.py: call run() once per seed (for example
+    seed=1, 2, 3; a seed left out counts as seed 1) with the module(s) listed in bench.modules; the flow runs it and checks
+    again. A bench that runs the simulator some other way leaves nothing there. (needs >=3); functional bins pct not evaluated
+    (no seeded results) (needs 100); cover properties pct not evaluated (no seeded results) (needs 100); line pct not evaluated
+    (no seeded results) (needs 90); toggle pct not evaluated (no seeded results) (needs 75); mutation score pct not measured
+    (needs 80); cdc structure clean missing (needs no unsafe crossing); cdc injection clean missing (needs pass); no board
+    result (V-HW) is recorded'
+  record: runs/20261125-154117-dad9/p6_glitchfree_mux/build/verif/verif_gates.json
+  sha256: c86f508b7dbf23cb48759ac9be064960dadf4dca41dc20610ae5ece68a63becd
+measurements:
+- id: M1
+  what: model cost of the run, provider-reported
+  category: cost
+  unit: USD
+  record: runs/20261125-154117-dad9/summary.json
+  field: cost_usd
+  conditions: every role and the interview oracle, as the run summary records it
+  value: 3.938912
+  sha256: 550b5002d3d71a4bd1515043f06ae06fc68db045e711ec04e011e7998f25eff0
+gaps:
+- about: REQ-01
+  text: 'REQ-01 has no passing evidence for every proof method: simulation (p6_bench.test_reset_values) is pending: no simulation
+    results; hardware (ila_captures) is pending: no bring-up result'
+- about: REQ-02
+  text: 'REQ-02 has no passing evidence for every proof method: hardware (ila_captures) is pending: no bring-up result'
+- about: REQ-03
+  text: 'REQ-03 has no passing evidence for every proof method: simulation (p6_bench.test_scratch_and_unmapped) is pending:
+    no simulation results; hardware (ila_captures) is pending: no bring-up result'
+- about: REQ-25
+  text: 'REQ-25 has no passing evidence for every proof method: simulation (p6_bench.test_reset_values) is pending: no simulation
+    results'
+- about: REQ-04
+  text: 'REQ-04 has no passing evidence for every proof method: simulation (p6_bench.test_scratch_and_unmapped) is pending:
+    no simulation results'
+- about: REQ-26
+  text: 'REQ-26 has no passing evidence for every proof method: simulation (p6_bench.test_scratch_and_unmapped) is pending:
+    no simulation results'
+- about: REQ-05
+  text: 'REQ-05 has no passing evidence for every proof method: simulation (p6_bench.test_read_latency_and_hold) is pending:
+    no simulation results; simulation (p6_bench.test_read_latency_and_hold) is pending: no simulation results; formal (p6_bench.test_read_latency_and_hold)
+    is pending: re-planned from formal to simulation (SymbiYosys is not installed here, so the read-latency check is made
+    by simulation against the model.): no simulation results'
+- about: REQ-27
+  text: 'REQ-27 has no passing evidence for every proof method: simulation (p6_bench.test_read_latency_and_hold) is pending:
+    no simulation results; simulation (p6_bench.test_read_latency_and_hold) is pending: no simulation results; formal (p6_bench.test_read_latency_and_hold)
+    is pending: re-planned from formal to simulation (SymbiYosys is not installed here, so the hold check is made by simulation.):
+    no simulation results'
+- about: REQ-06
+  text: 'REQ-06 has no passing evidence for every proof method: simulation (p6_bench.test_reset_values) is pending: no simulation
+    results'
+- about: REQ-07
+  text: 'REQ-07 has no passing evidence for every proof method: simulation (p6_bench.test_switching) is pending: no simulation
+    results; hardware (ila_captures) is pending: no bring-up result'
+- about: REQ-08
+  text: 'REQ-08 has no passing evidence for every proof method: simulation (p6_bench.test_switching) is pending: no simulation
+    results; hardware (ila_captures) is pending: no bring-up result'
+- about: REQ-09
+  text: 'REQ-09 has no passing evidence for every proof method: analysis (post_route:setup) is pending: no flow gates result;
+    hardware (ila_captures) is pending: no bring-up result'
+- about: REQ-10
+  text: 'REQ-10 has no passing evidence for every proof method: simulation (p6_bench.test_reset_values) is pending: no simulation
+    results; hardware (ila_captures) is pending: no bring-up result'
+- about: REQ-11
+  text: 'REQ-11 has no passing evidence for every proof method: hardware (ila_captures) is pending: no bring-up result'
+- about: REQ-12
+  text: 'REQ-12 has no passing evidence for every proof method: simulation (p6_bench.test_snapshot_and_errors) is pending:
+    no simulation results'
+- about: REQ-13
+  text: 'REQ-13 has no passing evidence for every proof method: simulation (p6_bench.test_snapshot_and_errors) is pending:
+    no simulation results; simulation (p6_bench.test_snapshot_and_errors) is pending: no simulation results; formal (p6_bench.test_snapshot_and_errors)
+    is pending: re-planned from formal to simulation (SymbiYosys is not installed here, so the counter-increment check is
+    made by simulation.): no simulation results'
+- about: REQ-14
+  text: 'REQ-14 has no passing evidence for every proof method: simulation (p6_bench.test_switching) is pending: no simulation
+    results; hardware (ila_captures) is pending: no bring-up result'
+- about: REQ-15
+  text: 'REQ-15 has no passing evidence for every proof method: simulation (p6_bench.test_switching) is pending: no simulation
+    results'
+- about: REQ-16
+  text: 'REQ-16 has no passing evidence for every proof method: simulation (p6_bench.test_snapshot_and_errors) is pending:
+    no simulation results; hardware (ila_captures) is pending: no bring-up result'
+- about: REQ-17
+  text: 'REQ-17 has no passing evidence for every proof method: simulation (p6_bench.test_reset_values) is pending: no simulation
+    results'
+- about: REQ-18
+  text: 'REQ-18 has no passing evidence for every proof method: simulation (p6_bench.test_frequency_gate) is pending: no
+    simulation results'
+- about: REQ-28
+  text: 'REQ-28 has no passing evidence for every proof method: simulation (p6_bench.test_frequency_gate) is pending: no
+    simulation results'
+- about: REQ-19
+  text: 'REQ-19 has no passing evidence for every proof method: simulation (p6_bench.test_frequency_gate) is pending: no
+    simulation results; hardware (ila_captures) is pending: no bring-up result'
+- about: REQ-29
+  text: 'REQ-29 has no passing evidence for every proof method: simulation (p6_bench.test_frequency_gate) is pending: no
+    simulation results; hardware (ila_captures) is pending: no bring-up result'
+- about: REQ-20
+  text: 'REQ-20 has no passing evidence for every proof method: simulation (p6_bench.test_frequency_gate) is pending: no
+    simulation results; hardware (ila_captures) is pending: no bring-up result'
+- about: REQ-21
+  text: 'REQ-21 has no passing evidence for every proof method: simulation (p6_bench.test_switching) is pending: no simulation
+    results; simulation (p6_bench.test_switching) is pending: no simulation results; formal (p6_bench.test_switching) is
+    pending: re-planned from formal to simulation (SymbiYosys is not installed here, so the constant output is checked by
+    simulation.): no simulation results; hardware (ila_captures) is pending: no bring-up result'
+- about: REQ-22
+  text: 'REQ-22 has no passing evidence for every proof method: analysis (post_synth:post_synth_resources_in_range) is pending:
+    no flow gates result'
+- about: REQ-23
+  text: 'REQ-23 has no passing evidence for every proof method: analysis (post_route:setup) is pending: no flow gates result'
+- about: REQ-24
+  text: 'REQ-24 has no passing evidence for every proof method: analysis (post_synth:post_synth_resources_in_range) is pending:
+    no flow gates result'
+- about: E1
+  text: 'review evidence is partial: the specification and the architecture were approved automatically, with no human review
+    (review off; the interview oracle claude-sonnet-5-5 only answered the interview questions); the interview asked 8 questions,
+    0 answered and 8 defaulted'
+- about: E2
+  text: 'simulation evidence is partial: verification reached V1 of V3 (the run asked for V2); the checks that did not pass
+    or did not run are listed in the evidence row'
+- about: rtl-design-creation
+  text: 'stage rtl-design-creation did not pass its gates in this run; at its last visit: lint not passing FAIL simulate
+    not passing FAIL standards STD-LATCH-01: not checked (no build.yaml top or sources to check) FAIL standards STD-LOOP-01:
+    not checked (no build.yaml top or sources to check) FAIL standards STD-CDC-01: architecture.yaml:1: crossings[0]: inline_in
+    p6_clkmux_top is not a module of this design or the shell FAIL standards STD-CDC-01: architecture.yaml:1: crossings[1]:
+    inli ...'
+- about: constraints
+  text: 'stage constraints was not run: the run stopped before this stage (stage 2 visited more than 6 times; last failing
+    gate: lint, simulate, design standards, verification V2; owned by the rtl/tests role; last failing assertion: V2 seeds_run:
+    no seeded results: read runs/20261125-154117-dad9/p6_glitchfree_mux/build/verif/sim/seed*/results.xml and found none.
+    The gate expects runs/20261125-154117-dad9/p6_glitchfree_mux/build/verif/sim/seed<N>/results.xml, one direct; the same
+    failure on 6 consecutive visits)'
+- about: synthesis
+  text: 'stage synthesis was not run: the run stopped before this stage (stage 2 visited more than 6 times; last failing
+    gate: lint, simulate, design standards, verification V2; owned by the rtl/tests role; last failing assertion: V2 seeds_run:
+    no seeded results: read runs/20261125-154117-dad9/p6_glitchfree_mux/build/verif/sim/seed*/results.xml and found none.
+    The gate expects runs/20261125-154117-dad9/p6_glitchfree_mux/build/verif/sim/seed<N>/results.xml, one direct; the same
+    failure on 6 consecutive visits)'
+- about: implementation
+  text: 'stage implementation was not run: the run stopped before this stage (stage 2 visited more than 6 times; last failing
+    gate: lint, simulate, design standards, verification V2; owned by the rtl/tests role; last failing assertion: V2 seeds_run:
+    no seeded results: read runs/20261125-154117-dad9/p6_glitchfree_mux/build/verif/sim/seed*/results.xml and found none.
+    The gate expects runs/20261125-154117-dad9/p6_glitchfree_mux/build/verif/sim/seed<N>/results.xml, one direct; the same
+    failure on 6 consecutive visits)'
+- about: timing-closure
+  text: 'stage timing-closure was not run: the run stopped before this stage (stage 2 visited more than 6 times; last failing
+    gate: lint, simulate, design standards, verification V2; owned by the rtl/tests role; last failing assertion: V2 seeds_run:
+    no seeded results: read runs/20261125-154117-dad9/p6_glitchfree_mux/build/verif/sim/seed*/results.xml and found none.
+    The gate expects runs/20261125-154117-dad9/p6_glitchfree_mux/build/verif/sim/seed<N>/results.xml, one direct; the same
+    failure on 6 consecutive visits)'
+- about: power-closure
+  text: 'stage power-closure was not run: the run stopped before this stage (stage 2 visited more than 6 times; last failing
+    gate: lint, simulate, design standards, verification V2; owned by the rtl/tests role; last failing assertion: V2 seeds_run:
+    no seeded results: read runs/20261125-154117-dad9/p6_glitchfree_mux/build/verif/sim/seed*/results.xml and found none.
+    The gate expects runs/20261125-154117-dad9/p6_glitchfree_mux/build/verif/sim/seed<N>/results.xml, one direct; the same
+    failure on 6 consecutive visits)'
+- about: drc-closure
+  text: 'stage drc-closure was not run: the run stopped before this stage (stage 2 visited more than 6 times; last failing
+    gate: lint, simulate, design standards, verification V2; owned by the rtl/tests role; last failing assertion: V2 seeds_run:
+    no seeded results: read runs/20261125-154117-dad9/p6_glitchfree_mux/build/verif/sim/seed*/results.xml and found none.
+    The gate expects runs/20261125-154117-dad9/p6_glitchfree_mux/build/verif/sim/seed<N>/results.xml, one direct; the same
+    failure on 6 consecutive visits)'
+- about: configuration-and-debug
+  text: 'stage configuration-and-debug was not run: the run stopped before this stage (stage 2 visited more than 6 times;
+    last failing gate: lint, simulate, design standards, verification V2; owned by the rtl/tests role; last failing assertion:
+    V2 seeds_run: no seeded results: read runs/20261125-154117-dad9/p6_glitchfree_mux/build/verif/sim/seed*/results.xml
+    and found none. The gate expects runs/20261125-154117-dad9/p6_glitchfree_mux/build/verif/sim/seed<N>/results.xml, one
+    direct; the same failure on 6 consecutive visits)'
+- about: formal
+  text: 'formal checks were planned for REQ-05, REQ-27, REQ-13, REQ-21 and did not run; each was replaced by a simulation
+    check (verif/testplan.yaml replan). Reason recorded: SymbiYosys is not installed here, so the read-latency check is
+    made by simulation against the model.'
+- about: simulated_parameters
+  text: 'the benches simulate at values other than the spec''s (scaled for simulation speed or otherwise): GATE_LEN_DEFAULT
+    is simulated at 200 (runs/20261125-154117-dad9/p6_glitchfree_mux/tests/test_p6_glitchfree_mux_rtl.py:29) while spec.yaml
+    gives 25000000. Behaviour that depends on the spec''s value, such as a divider''s timing against the clock, was not
+    simulated at that value; it is stated here, not shown, unless another record covers it'
+- about: resources
+  text: 'resources not measured: no current Vivado build of this design has been recorded'
+- about: timing
+  text: 'timing not measured: no current Vivado build of this design has been recorded'
+- about: power
+  text: 'power not measured: no current Vivado build of this design has been recorded'
+- about: latency
+  text: 'latency not measured: the run measured no latency; the spec''s latency promise is checked only by the benches'
+- about: throughput
+  text: 'throughput not measured: the run measured no throughput'
+- about: clock_port_name
+  text: design.xdc names the clock port clk_25 and creates a 40 ns clock on it, while spec.yaml and ARCHITECTURE.md call
+    the port clk. The XDC is what was built. The RTL top port name was not shown and must match clk_25.
+- about: xdc_missing_constraints
+  text: design.xdc has no pins or constraints for gt_refclk_p/n and no asynchronous clock-group between clk_mux and clk,
+    although REQ-23 and ARCHITECTURE.md require the asynchronous constraint. It also has no clock for the 156.25 MHz refclk.
+- about: unmapped_and_reserved_accesses
+  text: Per spec.yaml, unmapped addresses (the hole between SCRATCH and SEL, and everything above SNAPSHOT) read 0 and ignore
+    writes; writes to RO registers are not specified to have any effect. This is the spec's behaviour and was not shown
+    by simulation.
+- about: defaulted_behaviours
+  text: All eight interview answers were defaults, not user decisions. START written while BUSY is ignored. GATE_LEN 0 acts
+    as 1 cycle. A switch during a gate does not abort it or flag FREQ_COUNT. MUX_ERRS saturates at 0xFFFFFFFF and clears
+    only on reset. A SEL write during SWITCHING makes the last value win. None of these was checked against the RTL.
+- about: read_and_write_latency
+  text: The spec promises a write effective 1 clk after h_we and h_rdata valid within 2 clk of h_re, held. This was not
+    counted from the RTL here, and no passing simulation backs it.
+- about: architecture_cdc_check
+  text: The STD-CDC-01 failures cite architecture.yaml crossings whose inline_in names p6_clkmux_top, which the checker
+    says is not a module of the design or the shell. This may be an architecture.yaml error rather than an RTL one.
+next_steps:
+- Fix the earliest failure first, in rtl-design-creation. Make the bench run through flow.cocotb_run.run() once per seed
+  (1, 2, 3) so a results.xml is written per seed under build/verif/sim, and clear the lint, simulate and design-standards
+  failures listed on the stage review page.
+- Correct the architecture.yaml crossings (inline_in names) so STD-CDC-01 can check the design, and ensure build.yaml names
+  the top and sources.
+- Once simulation results exist, compare the cover results with the functional coverage before adding any stimulus, then
+  raise coverage and the mutation score toward V3.
+- Add the missing gt_refclk constraints and the asynchronous clock groups to design.xdc, and reconcile the clk and clk_25
+  port name.
+- Resume the flow with python -m agent resume to run constraints through configuration-and-debug, then measure resources,
+  timing and power, and plan the board bring-up (ila_captures).
+open_questions:
+- Should the simulation benches also run at GATE_LEN_DEFAULT 25000000, or is the scaled value of 200 enough?
+- Is the reset port rst present in the RTL top, given that design.xdc declares no reset pin?
+history:
+- date: '2026-11-25'
+  brief: agent run
+  note: 'produced by the agent graph; stages that passed: clarify, board-and-device-planning'
+agent_run:
+  run_id: 20261125-154117-dad9
+  record: runs/20261125-154117-dad9/summary.json
+  model: claude-sonnet-5-5
+  harness: deepagents
+  stop: 'stage 2 visited more than 6 times; last failing gate: lint, simulate, design standards, verification V2; owned
+    by the rtl/tests role; last failing assertion: V2 seeds_run: no seeded results: read runs/20261125-154117-dad9/p6_glitchfree_mux/build/verif/sim/seed*/results.xml
+    and found none. The gate expects runs/20261125-154117-dad9/p6_glitchfree_mux/build/verif/sim/seed<N>/results.xml, one
+    direct; the same failure on 6 consecutive visits'
+  loops: 9
+  turns: 108
+  tokens: 3776649
+  wall_s: 1788.1
+  cost_usd: 3.938912
+numbers_allow:
+- token: '29'
+  reason: line number of a file the flow cites in a gap or open question it wrote
+state:
+  stage: spec
+  gates:
+    clarify: pass
+    board-and-device-planning: pass
+    rtl-design-creation: fail
+    constraints: not-run
+    synthesis: not-run
+    implementation: not-run
+    timing-closure: not-run
+    power-closure: not-run
+    drc-closure: not-run
+    configuration-and-debug: not-run
+  vivado: '2026.1'
+  kb_pin: 5e2eab8
+  build_id: null
+  evidence_vivado: none
