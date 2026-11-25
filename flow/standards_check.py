@@ -1,12 +1,14 @@
 #!/usr/bin/env python3
 """Design-standards checker (brief 05d, Taylor addition 3): docs/design_standards.md v1.0, rule by rule.
 
-    python3 flow/standards_check.py designs/<name> [--variant base] [--json OUT]
+    python3 flow/standards_check.py designs/<name> [--variant base] [--json OUT] [--set rtl.initial_values=allow|warn|deny]
 
 Every rule has an id, a stage (``rtl`` runs on the sources, ``post_synth`` on the Vivado reports) and a status:
 
     pass         checked, no finding
     fail         checked, findings listed (file, line, message)
+    warn         checked, findings listed as warnings; they do not fail the check (only STD-INIT-01 with
+                 ``rtl.initial_values: warn``)
     not_run      a checkable rule whose tool is missing here (Verilator, Yosys) or whose report is absent;
                  counts as a failure (an unchecked rule is not a pass)
     review_only  cannot be checked by a program; listed so the human reviewer sees it
@@ -52,7 +54,13 @@ except ImportError:
     import vhdl                         # type: ignore[no-redef]
 
 ROOT = Path(__file__).resolve().parents[1]
-VERSION = "1.0"
+VERSION = "1.1"
+#: brief 205 (owner decision 38): initial values in RTL are a setting. ``deny`` fails an initial block or a register
+#: initial value; ``warn`` reports it without failing; ``allow`` (the default) passes power-up values and still flags an
+#: initial block that does more. ROM initialisation (``$readmemh`` / ``$readmemb``) passes in every mode.
+INITIAL_VALUES_MODES = ("allow", "warn", "deny")
+DEFAULT_INITIAL_VALUES = "allow"
+SETTING_INITIAL_VALUES = "rtl.initial_values"
 
 #: id -> (stage, title, how it is checked)
 RULES: dict[str, tuple[str, str, str]] = {
@@ -71,7 +79,9 @@ RULES: dict[str, tuple[str, str, str]] = {
                    "static scan of sensitivity lists; architecture.yaml reset.synchronisers or a waiver"),
     "STD-LATCH-01": ("rtl", "no latches", "Verilator -Wall LATCH warnings; Yosys proc (a $dlatch cell)"),
     "STD-LOOP-01": ("rtl", "no combinational loops", "Verilator UNOPTFLAT warnings; Yosys check (logic loop)"),
-    "STD-INIT-01": ("rtl", "no initial blocks in synthesisable RTL except ROM initialisation ($readmemh/$readmemb)",
+    "STD-INIT-01": ("rtl", "initial values in synthesisable RTL follow the setting rtl.initial_values (allow, the default: power-up "
+                           "values pass, an initial block that does more is flagged; warn: reported, not failed; deny: no initial "
+                           "blocks or register initial values); ROM initialisation ($readmemh/$readmemb) passes in every mode",
                     "static scan; // synthesis translate_off regions are skipped"),
     "STD-CDC-01": ("rtl", "every clock-domain crossing is a named CDC primitive from the bank, listed in "
                           "architecture.yaml crossings, and instantiated; no module mixes two clocks outside one",
@@ -300,16 +310,65 @@ def _scan_body(mod: Module) -> None:
         mod.instances.append({"type": typ, "name": mm.group(1), "conns": conns, "line": _line_of(b, m.start(), l0)})
 
 
+#: system functions that are constants or pure maths, so an initial block that uses them still only computes power-up values
+_PURE_SYS = {"readmemh", "readmemb", "clog2", "bits", "signed", "unsigned", "size", "high", "low", "left", "right", "itor",
+             "rtoi", "realtobits", "bitstoreal", "sin", "cos", "tan", "asin", "acos", "atan", "atan2", "sinh", "cosh", "tanh",
+             "sqrt", "exp", "ln", "log10", "pow", "floor", "ceil"}
+
+
+def initial_block_extras(block: str) -> list[str]:
+    """What an initial block does beyond giving registers and memories power-up values (empty: nothing more).
+
+    Allowed: assignments of constants or constant expressions, ``for`` loops that fill a memory, ``$readmem`` and pure
+    maths functions. Flagged: delays, event or level waits, loops other than ``for``, ``if`` / ``case`` sequencing, ``fork``,
+    and system tasks such as ``$display``, ``$finish`` or ``$random`` (comments and strings are already blanked)."""
+    out: list[str] = []
+    if re.search(r"#\s*[\w(]", block):
+        out.append("a delay")
+    if re.search(r"(?<![\w$])@", block) or re.search(r"\bwait\b", block):
+        out.append("an event or level wait")
+    for kw, label in (("forever", "forever"), ("repeat", "repeat"), ("while", "while"), ("do", "do-while"),
+                      ("fork", "fork"), ("if", "if"), ("case", "case"), ("casez", "case"), ("casex", "case")):
+        if re.search(rf"\b{kw}\b", block):
+            lab = f"a {label} statement" if label not in ("if", "case") else f"conditional {label} sequencing"
+            if lab not in out:
+                out.append(lab)
+    tasks = sorted({n for n in re.findall(r"\$(\w+)", block) if n not in _PURE_SYS})
+    if tasks:
+        out.append("system task " + ", ".join("$" + n for n in tasks))
+    return out
+
+
+_REG_DECL_INIT = re.compile(r"(?m)^[ \t]*(?:output[ \t]+)?(?:var[ \t]+)?(?:reg|logic|bit|byte|shortint|int|longint|integer)\b"
+                            r"(?:[ \t]+(?:signed|unsigned))?(?:[ \t]*\[[^\]\n]*\])*[ \t]+(\w+)(?:[ \t]*\[[^\]\n]*\])*[ \t]*=(?!=)[^;]*;")
+
+
+def register_initial_values(text: str) -> list[tuple[int, str]]:
+    """Declarations of a register or memory with an initial value (``logic q = 1'b0;``) at module scope: position and
+    name. Declarations inside functions, tasks and begin/end blocks are local variables, not power-up state."""
+    body = re.sub(r"\b(function|task)\b.*?\bend\1\b", lambda m: re.sub(r"[^\n]", " ", m.group(0)), text, flags=re.S)
+    out = []
+    for m in _REG_DECL_INIT.finditer(body):
+        before = body[:m.start()]
+        if len(re.findall(r"\bbegin\b", before)) - len(re.findall(r"\bend\b", before)) > 0:
+            continue
+        out.append((m.start(1), m.group(1)))
+    return out
+
+
 # ---- the rules -------------------------------------------------------------------------------------------
 class Check:
-    def __init__(self, design: Path, root: Path = ROOT, variant: str = "base", stage: str | None = None):
+    def __init__(self, design: Path, root: Path = ROOT, variant: str = "base", stage: str | None = None,
+                 settings: dict[str, str] | None = None):
         self.design, self.root, self.variant = design.resolve(), root, variant
         self.findings: dict[str, list[Finding]] = {r: [] for r in RULES}
+        self.warnings: dict[str, list[Finding]] = {r: [] for r in RULES}
         self.notes: dict[str, str] = {}
         self.not_run: dict[str, str] = {}
         self.arch = arch_mod.load(self.design) if (self.design / "architecture.yaml").is_file() else {}
         self.rtl_files = sorted(glob.glob(str(self.design / "rtl" / "*.sv")) + glob.glob(str(self.design / "rtl" / "*.v")))
         self.vhdl_error: str | None = None
+        self.initial_values, self.initial_values_source = self.resolve_initial_values(settings or {})
         if vhdl.design_language(self.design) == "vhdl":   # brief 55: the rules read the GHDL netlist of the VHDL
             self.rtl_files = self._vhdl_netlist()
         self.waivers: dict[str, dict[int, tuple[str, str]]] = {}
@@ -325,6 +384,28 @@ class Check:
             for m in parse_modules(Path(f).read_text(errors="replace"), f):
                 self.lib[m.name] = m
         self.by_name = {**self.lib, **{m.name: m for m in self.modules}}
+
+    def _gates_initial_values(self) -> Any:
+        try:
+            data = yaml.safe_load((self.root / "flow" / "gates.yaml").read_text()) or {}
+            return (data.get("rtl") or {}).get("initial_values")
+        except (OSError, yaml.YAMLError, AttributeError):
+            return None
+
+    def resolve_initial_values(self, settings: dict[str, str]) -> tuple[str, str]:
+        """The effective ``rtl.initial_values`` and where it came from: the run's ``--set`` > the design's
+        ``architecture.yaml`` (``rtl: {initial_values: ...}``) > the flow default in ``flow/gates.yaml`` > ``allow``."""
+        cands: list[tuple[str, Any]] = [("--set", settings.get(SETTING_INITIAL_VALUES)),
+                                         ("architecture.yaml", (self.arch.get("rtl") or {}).get("initial_values")
+                                          if isinstance(self.arch.get("rtl"), dict) else None),
+                                         ("flow/gates.yaml", self._gates_initial_values())]
+        for src, v in cands:
+            if v is not None:
+                if str(v) not in INITIAL_VALUES_MODES:
+                    raise ValueError(f"{SETTING_INITIAL_VALUES} is {v!r} (from {src}); it must be one of "
+                                     f"{', '.join(INITIAL_VALUES_MODES)}")
+                return str(v), src
+        return DEFAULT_INITIAL_VALUES, "default"
 
     def _vhdl_netlist(self) -> list[str]:
         """Brief 55: the design's VHDL as one Verilog netlist (GHDL synthesis, hierarchy kept, generics at their
@@ -359,13 +440,13 @@ class Check:
         except ValueError:
             return Path(f).name
 
-    def add(self, rule: str, mod_or_file: Module | str, line: int, message: str) -> None:
+    def add(self, rule: str, mod_or_file: Module | str, line: int, message: str, warn: bool = False) -> None:
         f = mod_or_file.file if isinstance(mod_or_file, Module) else mod_or_file
         w = self.waivers.get(f, {})
         for ln in (line, line - 1):
             if ln in w and w[ln][0] == rule and w[ln][1]:
                 return
-        self.findings[rule].append(Finding(self.rel(f), line, message))
+        (self.warnings if warn else self.findings)[rule].append(Finding(self.rel(f), line, message))
 
     def top(self) -> str | None:
         try:
@@ -494,6 +575,10 @@ class Check:
                                                            f"sequential block: an asynchronous reset")
 
     def rule_init(self) -> None:
+        """STD-INIT-01 under ``rtl.initial_values`` (brief 205). Initial values are a power-up state, not a reset: the
+        reset rules are unchanged and a design with a reset still gets its state from the reset."""
+        mode = self.initial_values
+        self.notes["initial_values"] = f"{SETTING_INITIAL_VALUES} = {mode} ({self.initial_values_source})"
         for f in self.rtl_files:
             text, _ = strip_comments(drop_translate_off(self.texts[f]))
             for m in re.finditer(r"\binitial\b", text):
@@ -514,8 +599,20 @@ class Check:
                 stmts = [s.strip() for s in re.sub(r"\b(begin|end)\b", ";", block).split(";") if s.strip()]
                 if stmts and all(re.match(r"\$readmem[hb]\b", s) for s in stmts):
                     continue                                         # ROM initialisation
-                self.add("STD-INIT-01", f, _line_of(text, m.start()), "initial block in synthesisable RTL "
-                                                                       "(only $readmemh/$readmemb ROM initialisation is allowed)")
+                line = _line_of(text, m.start())
+                if mode == "allow":
+                    extra = initial_block_extras(block)
+                    if extra:
+                        self.add("STD-INIT-01", f, line, "initial block in synthesisable RTL does more than set power-up "
+                                                         f"values ({', '.join(extra)}); with rtl.initial_values: allow only "
+                                                         "constant assignments to registers and memories pass")
+                else:
+                    self.add("STD-INIT-01", f, line, f"initial block in synthesisable RTL (rtl.initial_values: {mode}: only "
+                                                     "$readmemh/$readmemb ROM initialisation passes)", warn=mode == "warn")
+            if mode != "allow":
+                for pos, name in register_initial_values(text):
+                    self.add("STD-INIT-01", f, _line_of(text, pos), f"initial value on {name} (rtl.initial_values: {mode}; "
+                                                                      "set start values with the reset)", warn=mode == "warn")
 
     def rule_cdc(self) -> None:
         a = self.arch
@@ -740,21 +837,23 @@ class Check:
             elif rid in self.not_run and not self.findings[rid]:
                 status = "not_run"
             else:
-                status = "fail" if self.findings[rid] else "pass"
+                status = "fail" if self.findings[rid] else ("warn" if self.warnings[rid] else "pass")
             rules.append({"id": rid, "stage": stage, "title": title, "how": how, "status": status,
                           "findings": [f.as_dict() for f in self.findings[rid]],
+                          **({"warnings": [f.as_dict() for f in self.warnings[rid]]} if self.warnings[rid] else {}),
                           **({"why_not_run": self.not_run[rid]} if status == "not_run" else {})})
-        checked = [r for r in rules if r["status"] in ("pass", "fail", "not_run")]
-        by_stage = {s: all(r["status"] == "pass" for r in checked if r["stage"] == s) for s in ("rtl", "post_synth")
+        checked = [r for r in rules if r["status"] in ("pass", "warn", "fail", "not_run")]
+        by_stage = {s: all(r["status"] in ("pass", "warn") for r in checked if r["stage"] == s) for s in ("rtl", "post_synth")
                     if s in stages}
         return {"version": VERSION, "design": self.design.name, "variant": self.variant, "rules": rules,
+                "settings": {SETTING_INITIAL_VALUES: self.initial_values, "source": {SETTING_INITIAL_VALUES: self.initial_values_source}},
                 "stages": by_stage, "notes": self.notes,
-                "pass": all(r["status"] == "pass" for r in checked)}
+                "pass": all(r["status"] in ("pass", "warn") for r in checked)}
 
 
 def evaluate(design: Path, root: Path = ROOT, variant: str = "base",
-             stages: tuple[str, ...] = ("rtl", "post_synth")) -> dict[str, Any]:
-    return Check(design, root, variant).run(stages)
+             stages: tuple[str, ...] = ("rtl", "post_synth"), settings: dict[str, str] | None = None) -> dict[str, Any]:
+    return Check(design, root, variant, settings=settings).run(stages)
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -764,19 +863,29 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--stage", choices=["rtl", "post_synth", "all"], default="all")
     ap.add_argument("--json", type=Path)
     ap.add_argument("--root", type=Path, default=ROOT)
+    ap.add_argument("--set", action="append", default=[], metavar="NAME=VALUE",
+                    help=f"a setting for this run (repeatable): {SETTING_INITIAL_VALUES}={'|'.join(INITIAL_VALUES_MODES)}")
     a = ap.parse_args(argv)
     stages = ("rtl", "post_synth") if a.stage == "all" else (a.stage,)
+    settings: dict[str, str] = {}
+    for kv in a.set:
+        name, eq, val = kv.partition("=")
+        if not eq or name != SETTING_INITIAL_VALUES or val not in INITIAL_VALUES_MODES:
+            ap.error(f"--set {kv!r}: expected {SETTING_INITIAL_VALUES}=<{'|'.join(INITIAL_VALUES_MODES)}>")
+        settings[name] = val
     try:
-        res = evaluate(a.design, a.root, a.variant, stages)
+        res = evaluate(a.design, a.root, a.variant, stages, settings)
     except (OSError, ValueError, KeyError, TypeError, AttributeError) as e:      # a failed gate, not a traceback
         res = {"version": VERSION, "design": a.design.name, "pass": False, "stages": {}, "rules": [{
             "id": "STD-ARCH-00", "stage": "rtl", "title": RULES["STD-ARCH-00"][1], "how": "", "status": "fail",
             "findings": [{"file": "", "line": 0, "message": f"the checker could not read the design: {type(e).__name__}: {e}"}]}]}
     for r in res["rules"]:
-        tag = {"pass": "ok  ", "fail": "FAIL", "not_run": "NOT RUN", "review_only": "review", "skipped": "-"}[r["status"]]
+        tag = {"pass": "ok  ", "warn": "warn", "fail": "FAIL", "not_run": "NOT RUN", "review_only": "review", "skipped": "-"}[r["status"]]
         print(f"{tag:7} {r['id']}: {r['title']}")
         for f in r["findings"]:
             print(f"          {f['file']}:{f['line']}: {f['message']}")
+        for f in r.get("warnings", []):
+            print(f"          warning {f['file']}:{f['line']}: {f['message']}")
         if r["status"] == "not_run":
             print(f"          not checked: {r.get('why_not_run')}")
     print(f"standards {VERSION}: {'PASS' if res['pass'] else 'FAIL'}")

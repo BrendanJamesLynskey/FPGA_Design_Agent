@@ -58,8 +58,9 @@ from pathlib import Path
 from typing import Any
 
 try:
-    from flow import version_pin
+    from flow import predict, version_pin
 except ImportError:      # run as a script: flow/ is on sys.path, not the repo
+    import predict
     import version_pin
 
 # --- copied and extended from HW_Design_Space_Agent -----------------------------
@@ -910,6 +911,7 @@ def main(argv: list[str] | None = None) -> int:
     if a.json:
         a.json.parent.mkdir(parents=True, exist_ok=True)
         a.json.write_text(json.dumps(r, indent=2) + "\n")
+    predict.shadow(a.build_dir, r)          # brief 177: shadow-mode prediction per stage; never changes a gate
     t, u = r["timing"] or {}, r["utilization"] or {}
     if (n := version_pin.note(r)):
         print(f"gates: {n}")

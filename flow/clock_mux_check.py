@@ -13,7 +13,7 @@ Inputs (both written in the check suite's one Vivado session, flow/checks/vivado
                                   output reaches a clock pin
     report_clock_interaction      the "Inter-Clock Constraints" column (Timed, Clock Group, Asynchronous Groups, ...)
 
-Rules (codes map to FDA-HDL rule HDL-CLK-03 in flow/hdl_rules.yaml):
+Rules (codes map to FDA-HDL rule HDL-CLK-04 in flow/hdl_rules.yaml):
 
     CLKMUX-LUT          (blocking) a LUT output reaches a clock pin: a clock mux or gate built in fabric. Brief 208 c3:
                         an RTL mux glitched on every one of 40 asynchronous select changes in simulation (runt pulses down
