@@ -125,7 +125,7 @@ near the SOM end and drives 2.6 to 4 inches of line. The BOM says the parts are 
 
 **Receiver.** TI DP83867CS (the part on the PL Ethernet sheets): input capacitance **5 pF max** (SNLS504G, electrical characteristics, CIN). Package and pad stub not included.
 
-**The check with real data against the assumed run** (`kr260_b58a_trigger_*.check.json`, with `--family zynquplus --part xck26-sfvc784-2LV-c --bank-type HP`; `designs/b58a_trigger/design.xdc`, DRIVE 12 FAST):
+**The check with real data against the assumed run** (`kr260_b58a_trigger_*.check.json`, run with `--family zynquplus --part xck26-sfvc784-2LV-c --bank-type HP`; since brief 164 the spec's own keys supply them and the same run needs no flags, `results/164_si_expertise/kr260_carrier_data_no_flags.check.*`; `designs/b58a_trigger/design.xdc`, DRIVE 12 FAST):
 
 | | assumed (brief 155): 4 in, 4 pF | carrier data: port A 7.2 in, port B 2.8 in, 5 pF |
 |---|---|---|
@@ -162,3 +162,18 @@ A `report_ssn` run on `b58a_trigger` and `b63d_nexys_net` is queued in `_handoff
 - Z0 is the fab drawing's value; Dk is calibrated from it and the two solvers disagree (section 5).
 - The sweep is a 50 ohm, `er_eff` 3.2, 5 pF line; the real stripline is slower (shorter lines look electrically longer than modelled).
 - Not covered: the 7-series HP banks, UltraScale+ HD LVCMOS33 (brief 155's tables have it), SSTL/DCI (calibrated outputs, decision 29g).
+
+## 10. Two answers per port: the board as built and the best setup (brief 164, owner decision 30)
+
+A finished board cannot change its series resistor, so the check gives two answers for every output port group (`docs/offchip_io.md` section 8): the best DRIVE and SLEW with the board's own resistor (none on the KR260 carrier's RGMII nets, so 0 ohm), and the best resistor with its DRIVE and SLEW if the resistor can change. The DCI and `OUTPUT_IMPEDANCE` choices are not offered: the model has LVCMOS outputs only.
+
+KR260 `b58a_trigger`, carrier lengths (`results/164_si_expertise/kr260_two_answers.json`, model on AMD's preliminary IBIS tables, nothing measured on the board):
+
+| | as the XDC sets it (DRIVE 12 FAST, no resistor) | best as built (no resistor) | optimal if a resistor can be fitted |
+|---|---|---|---|
+| port A, 7.2 in | 1.06 V over the rail, 2.38 ns beyond 0.2 V | **no setting meets every limit**; the least bad, DRIVE 4 FAST, keeps the peaks at 0.05 V but its weak-corner edge takes 2.08 ns against the 1 ns the house rule allows | DRIVE 12 FAST + 27 ohm (peak 0.08 V, edge 0.41 ns; 7 combinations pass) |
+| port B, 2.8 in | 1.00 V over the rail, 1.04 ns beyond 0.2 V | **no setting meets every limit**; the least bad, DRIVE 4 FAST, 1.55 ns against 1 ns | DRIVE 12 FAST + 22 ohm (peak 0.16 V, edge 0.36 ns; 10 combinations pass) |
+
+So on this carrier the data sheet's overshoot limit can be met without touching the board (a weak driver), but only by an edge too slow for 125 MHz DDR by the house rule (a quarter of the unit interval); the fast edge needs the resistor. The signal-integrity drawer on the site's Expertise page draws both answers for both ports, with the waveforms (`tools/si_expertise_data.py`).
+
+**What a reader could get wrong.** The "house rule" of a quarter of the unit interval is an assumption, not a data sheet number, so DRIVE 4 FAST is not wrong for a slower link. The lengths are carrier copper only, so the SOM's own routing is missing. "As built" assumes the board has nothing in series; if the SOM carries a part on these nets (not found in the files) the answer changes.

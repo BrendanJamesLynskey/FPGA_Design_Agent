@@ -35,7 +35,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
-from flow import oss_synth  # noqa: E402
+from flow import fmax_cap, oss_synth  # noqa: E402
 from flow.ipchar import tcl_list, vivado  # noqa: E402
 
 HERE = Path(__file__).resolve().parent
@@ -256,17 +256,20 @@ def table() -> None:
             c = r.get("at_closed_clock") or {}
             p = r.get("perturb") or {}
             rows.append({"part": PARTS[part], "block": r["block"], "arm": r["arm"], "closed_ns": r["closed_at_ns"],
-                         "fmax_mhz": r["closed_at_mhz"], "latency_ns": r["latency_ns"], "lut_levels": c.get("lut_levels"),
+                         "fmax_mhz": r["closed_at_mhz"], **fmax_cap.restate(PARTS[part], r["closed_at_mhz"], "closed clock of the search (setup, hold, primitive pulse width)"),
+                         "latency_ns": r["latency_ns"], "latency_capped_ns": (None if r["latency_ns"] is None else round(
+                             r["latency_ns"] * max(1.0, 1000.0 / fmax_cap.restate(PARTS[part], r["closed_at_mhz"])["fmax_capped_mhz"] / r["closed_at_ns"]), 3)),
+                         "lut_levels": c.get("lut_levels"),
                          "lut": c.get("lut"), "ff": c.get("ff"), "carry": c.get("carry"), "data_path_ns": c.get("data_path_ns"),
                          "vivado_s": c.get("build_seconds"), "yosys_s": (r.get("yosys") or {}).get("seconds"),
                          "spread_ns": p.get("spread_ns")})
     out = ROOT / "results" / "b101"
     (out / "summary.json").write_text(json.dumps(rows, indent=1))
-    md = ["| part | block | arm | T closed (ns) | Fmax (MHz) | latency (ns) | LUT levels | LUT | FF | CARRY | seed spread (ns) | Vivado s | Yosys s |",
-          "|---|---|---|---|---|---|---|---|---|---|---|---|---|"]
+    md = ["| part | block | arm | T closed (ns) | Fmax (MHz) | Fmax capped (MHz) | latency (ns) | latency capped (ns) | LUT levels | LUT | FF | CARRY | seed spread (ns) | Vivado s | Yosys s |",
+          "|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|"]
     for r in rows:
-        md.append("| " + " | ".join("" if v is None else str(v) for v in (r["part"], r["block"], r["arm"], (None if r["closed_ns"] is None else round(r["closed_ns"], 2)), r["fmax_mhz"],
-                                                                            r["latency_ns"], r["lut_levels"], r["lut"], r["ff"], r["carry"],
+        md.append("| " + " | ".join("" if v is None else str(v) for v in (r["part"], r["block"], r["arm"], (None if r["closed_ns"] is None else round(r["closed_ns"], 2)), r["fmax_mhz"], r["fmax_capped_mhz"],
+                                                                            r["latency_ns"], r["latency_capped_ns"], r["lut_levels"], r["lut"], r["ff"], r["carry"],
                                                                             r["spread_ns"], r["vivado_s"], r["yosys_s"])) + " |")
     (out / "summary.md").write_text("\n".join(md) + "\n")
     print(f"table: {len(rows)} rows")
