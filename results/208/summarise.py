@@ -87,6 +87,7 @@ def main() -> int:
         for d in sorted(part.iterdir()):
             if d.is_dir():
                 res["vivado"][d.name] = arm(d)
+    res["sim_window_ns"] = 140      # tb_bufgctrl.v / tb_safe_switch.v count rising edges over 140000 ps (10 periods of I1)
     for log in sorted((HERE / "records" / "sim").glob("*.log")):
         for ln in _read(log).splitlines():
             if ln.startswith("SCEN "):
@@ -108,6 +109,12 @@ def main() -> int:
     a = HERE / "records" / "analyse" / "analyse.tsv"
     for ln in _read(a).splitlines():
         res["analyse"].append(ln.split("\t"))
+    # per design: the spread of the source clock delay (SCD) across the mux inputs, in ns (README table)
+    scd: dict = {}
+    for f in res["analyse"]:
+        if f[0] == "D_DELAY" and len(f) >= 5 and f[4] not in ("none", "-"):
+            scd.setdefault(f[1], []).append(float(f[4]))
+    res["delay_spread_ns"] = {k: round(max(v) - min(v), 3) for k, v in scd.items()}
     for d in sorted((HERE / "records" / "quartus").glob("*")):
         if not d.is_dir():
             continue

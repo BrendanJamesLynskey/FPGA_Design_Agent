@@ -81,12 +81,12 @@ The other k26 arms (srcphys, genlog, async, case, noint_*) gave the same pattern
 clk0-to-clk1 and 65 clk1-to-clk0 endpoints of a7 u_srclog are "Ignored" in report_clock_interaction. They include path
 A, a real crossing from clk0's own registers into the mux fanout while clk1 is selected (WNS -6.63 ns unconstrained,
 -7.03 ns with the correct constraint), and the BUFGMUX select's own setup check against clk1. The timing summary then
-passes (+0.419 ns), report_cdc lists nothing, and the methodology report loses TIMING-6/7. With related clocks the
+passes (+0.419 ns), report_cdc lists nothing, and the methodology report loses TIMING-6 and TIMING-7. With related clocks the
 same mistake turns a -6.61 ns failure (r_genphys) into a pass (r_srclog, +0.295 ns). Every gate the flow had before
 this brief passes the srclog arms: `multiple_clock` is 0, there is no Critical Warning, and report_cdc is empty.
 `-asynchronous` removes the same paths from timing but report_cdc still lists the crossings, and the flow's advisory
 `async_clock_groups_review` (brief 105A) fires. A `set_false_path` between the sources (report_clock_interaction:
-"False Path", "Ignored") hides the same timing and also keeps report_cdc. The UG949 p. 173 form that groups
+"False Path", "Ignored") hides the same timing and also keeps report_cdc. The UG949 ch. 4 form that groups
 `-include_generated_clocks` of each source, added on top of the generated-clock template, groups clk0 with clk1mux:
 the crossing taken when clk1 is selected is "Ignored" and report_cdc goes empty, as with the source groups.
 
@@ -101,9 +101,9 @@ whether one extra pulse of the old clock passes (UG472).
 
 | Arm | Netlist | Methodology | Placement and routing | Simulation |
 |---|---|---|---|---|
-| a7 lut [route] | LUT3 driving a BUFG that synthesis inserted (`clkm_BUFG_inst`); no BUFGMUX inferred | **TIMING-14** x1 (CW), TIMING-6/7 | completed, no error | (c3) 40 select changes at times unrelated to the clocks: **40 runt pulses**, down to 25 ps |
+| a7 lut [route] | LUT3 driving a BUFG that synthesis inserted (`clkm_BUFG_inst`); no BUFGMUX inferred | **TIMING-14** x1 (CW), TIMING-6, TIMING-7 | completed, no error | (c3) 40 select changes at times unrelated to the clocks: **40 runt pulses**, down to 25 ps |
 | a7 lut_tied [route] | the LUT is gone: one BUFG | none | completed | |
-| k26 lut [place] | LUT3 into BUFG, as on a7 | TIMING-14 (CW), TIMING-6/7 | placed, no error | |
+| k26 lut [place] | LUT3 into BUFG, as on a7 | TIMING-14 (CW), TIMING-6, TIMING-7 | placed, no error | |
 | k26 lut_tied [place] | no LUT | none | placed | |
 
 Synthesis neither refuses the RTL mux nor maps it to a clock buffer. It builds a LUT and puts a BUFG after it, and the
@@ -121,10 +121,10 @@ only signals are TIMING-14 in report_methodology and the glitch in simulation.
 On UltraScale+ the limit is the cascade ring of eight (UG572): 8 placed, 9 failed. On 7 series the ring is 16 per
 half (UG472), but in this design, where one MMCM feeds every stage, 14 placed and 15 failed. The likely reason is that
 the MMCM's BUFGs must share its half. So the ring is an upper bound, and a design can fail earlier. The check blocks a
-chain longer than the ring and gives an advisory for 15 or 16 on 7 series. Messages: `records/*/a7_chain1[5-7]/` and
+chain longer than the ring and gives an advisory for 15 or 16 on 7 series. Messages: `placer_messages.txt` in `records/a7/` (a7_chain15, a7_chain16, a7_chain17) and
 `records/k26/k26_chain9/placer_messages.txt`.
 
-Second pass (`records/analyse/analyse.tsv`, source clock delay of each input's same-clock path on the mux fanout):
+Second pass (`records/analyse/analyse.tsv`, source clock delay of each input's same-clock path on the mux fanout; spreads in `measured.json` `delay_spread_ns`):
 
 | Design | BUFGCTRL sites | Delay spread across inputs |
 |---|---|---|
@@ -176,8 +176,8 @@ run was not made.
 | q3 RTL clock mux | **Warning 19016 "Clock multiplexers are found and protected"** and 19017 naming `clkm` (mux_lut.v line 9) | the same two warnings |
 
 - The output node of the block differs by family: `...|sd<n>|outclk` on Cyclone V, `...|clkctrl1|outclk` on MAX 10.
-  The first MAX 10 generated-clock attempt used the Cyclone V name and was ignored (Critical Warning 332049, "empty
-  collection"); it was rerun with `gen_m10.sdc`.
+  The first MAX 10 generated-clock attempt used the Cyclone V name and was ignored (a Critical Warning that the target
+  collection was empty); it was rerun with `gen_m10.sdc`.
 - The mistake carries over to Altera unchanged: grouping the sources hid the crossing; generated clocks kept it.
 - Unlike Vivado, Quartus names an RTL clock mux at synthesis.
 - Design Assistant was not run.
@@ -188,9 +188,9 @@ run was not made.
 |---|---|---|
 | E-a1 | multiple_clock lists the FDM clock pins | yes: 33 pins |
 | E-a2 | clock interaction "Timed (unsafe)", no common primary clock | yes |
-| E-a3 | no TIMING-56 (60 %) | yes, none; instead TIMING-6/7 (Critical Warning) fired, which the pre-registration did not foresee |
+| E-a3 | no TIMING-56 (60 %) | yes, none; instead TIMING-6 and TIMING-7 (Critical Warning) fired, which the pre-registration did not foresee |
 | E-a4 | report_cdc lists the crossings as unsafe | yes, 68 Critical rows |
-| E-a5 | the existing gates fail arm a | yes (multiple_clock, and the TIMING-6/7 Critical Warnings) |
+| E-a5 | the existing gates fail arm a | yes (multiple_clock, and the TIMING-6 and TIMING-7 Critical Warnings) |
 | E-b1 | source groups hide path A from report_cdc; every gate passes | yes, and they also hide it from timing (WNS -6.63 to +0.419) |
 | E-b2, E-b4 | logically = physically exclusive | yes: identical reports (a7, synth) |
 | E-b3 | generated clocks keep path A visible | yes |
