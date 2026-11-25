@@ -48,3 +48,7 @@ The empty message must give CRC 0x00000000 (it is one of the 1,000).
 ### Addendum 2026-11-25 02:45 GMT: cost accounting
 
 The 12 USD per-run cap is enforced by the agent as 240 calls at its 0.05 USD per-call ceiling (`anthropic_api` calls report tokens, not dollars). Real dollars are computed from the token counts at Sonnet 5.5 list prices per million tokens: input 2, output 10, cache read 0.10, cache write (5 min) 2.50 USD (split recorded when the run's records have it; otherwise all tokens counted as input plus output by role, and said so). A run that stops at the cap is a pre-registered outcome "stopped at cost cap", not an intervention. Pilot stop rule: no run starts if the cumulative real total is above 130 USD; a run above 20 USD real stops the pilot for the planner. The agent SHA of every run is recorded with the run.
+
+### Addendum 2026-11-25 02:51 GMT: model options
+
+The API answered the first launch with HTTP 400 "`temperature` is deprecated for this model" (claude-sonnet-5-5), so every run sets `options: {temperature: null}` (unset) in the same `--model-config`; all other options stay the agent's defaults (max_tokens 8192, timeout 180 s, one retry). This is a model-configuration setting, not an intervention. The agent also needs the pinned private prompts: `FDA_KNOWLEDGE` points at a checkout of the knowledge repository at the pinned commit 5e2eab87.

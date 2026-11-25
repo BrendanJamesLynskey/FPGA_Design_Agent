@@ -15,8 +15,9 @@ HEAVY=""
 until HEAVY="$("$H/take_heavy_slot.sh" "$TEXT")"; do sleep 120; done
 echo "slot $HEAVY taken $(date '+%F %T')" >> "$LOG"
 trap 'case "$(cat "$HEAVY" 2>/dev/null)" in "209:"*) rm -f "$HEAVY";; esac' EXIT
+export FDA_KNOWLEDGE="${FDA_KNOWLEDGE:-/home/brendan/Claude_sandbox/_worktrees/209-kb}"
 export FDA_HEAVY_LOCK="$ROOT/runs/_locks/${ID}_r${K}.heavy_slot.lock"
 systemd-run --user --scope -q -p MemoryMax=7G nice -n 15 \
   "$PY" -m agent run "pilots/209/$ID/spec.md" --name "$ID" --board kr260 --review off --interview off --verif-level V2 --max-usd 12 \
-  --model-config '{"default": {"endpoint": "anthropic_api", "model": "claude-sonnet-5-5"}}' >> "$LOG" 2>&1
+  --model-config '{"default": {"endpoint": "anthropic_api", "model": "claude-sonnet-5-5", "options": {"temperature": null}}}' >> "$LOG" 2>&1
 echo "exit $? $(date '+%F %T')" >> "$LOG"
