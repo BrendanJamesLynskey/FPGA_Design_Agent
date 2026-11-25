@@ -1828,7 +1828,10 @@ def new_runtime(cfg: Config, client: Callable | None = None, run_id: str | None 
                                         "pinned": determinism.versions(table)}
     resolver = Resolver(table, run_dir=run_dir, injected=client, replay=replay, record=record, tape=tape,
                         level1=bool(tape_spec and tape_spec["level"] == 1))
-    rt = Runtime(cfg, run_id, run_dir, design, sess, client, Meter(cfg.run_limits), Snapshots(run_dir, design),
+    scale = float(table.budget_scale)                         # brief 209b: budget_scale of the model config / --budget-scale
+    if scale != 1.0 and cfg.run_limits.get("usd") == RUN_LIMITS["usd"]:      # the default run cap follows the scale; an explicit --max-usd does not
+        cfg.run_limits["usd"] = round(RUN_LIMITS["usd"] * scale, 6)
+    rt = Runtime(cfg, run_id, run_dir, design, sess, client, Meter(cfg.run_limits, usd_scale=scale), Snapshots(run_dir, design),
                  oracle_llm=oracle_llm, resolver=resolver)
     _RT[run_id] = rt
     prior = None
@@ -2011,6 +2014,7 @@ def summary(rt: Runtime, state: dict) -> dict:
             "loops": sum(1 for a, b in zip(hist, hist[1:]) if b["n"] <= a["n"] and not a.get("rewind")),
             "rewinds": [h["rewind"] for h in hist if h.get("rewind")],
             "tokens": rt.meter.run["tokens"], "cost_usd": rt.meter.run["usd"], "unreported_cost_calls": rt.meter.unreported,
+            "token_split": dict(getattr(rt.meter, "split", {})), "budget_scale": getattr(rt.meter, "usd_scale", 1.0), "truncated_calls": getattr(rt.meter, "truncated", 0),       # brief 209b: input / output / cache write / cache read tokens
             "turns": rt.meter.run["turns"], "wall_s": rt.meter.run["seconds"],
             "questions": (state.get("interview") or {}), "stop": state.get("stop"), "stop_detail": state.get("stop_detail"),
             "last_rtl_message": (getattr(rt, "last_role_message", None) or {}).get("rtl"),
