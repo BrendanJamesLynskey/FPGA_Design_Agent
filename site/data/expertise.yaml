@@ -555,3 +555,92 @@ areas:
   - "No local design had a failing path to cross-probe, so it is shown on passing ones."
   - "Every Vivado number on this page is measured on Vivado 2026.1, and other versions are not tested here."
   - "The block-design and project-mode steps are measured in scripts but are not part of the flow."
+- id: signal_integrity
+  name: Signal integrity at the pins
+  summary: Choosing the output drive, slew and series resistor of an off-chip link so the receiver stays inside the data sheet limits, for the board as built and for a board whose resistor can still change.
+  about: "A signal that leaves the chip runs down a board trace, and the trace can send the edge back as overshoot and ringing at the receiver. The agent models one output at the pins: it takes the driver tables that AMD publishes for each I/O standard, the line's length and impedance and the receiver's capacitance, and finds out whether the receiver stays inside the data sheet's overshoot and undershoot limits, whether its first wave is large enough and whether the edge rings back through the threshold. It then proposes the drive strength, slew rate and series resistor. A finished board cannot always change its resistor, so it gives two answers for each port: the best setting for the board as built, and the best setup if the resistor can change. The check is advisory, nothing in the flow stops a run that disagrees with it, and every figure here is a model result, not a scope measurement."
+  kb: [family/artix7/io-standards~selectio-and-banks, family/zynq_ultrascale_plus/io-standards~mio-emio-and-pl-io-banks]
+  family_from:
+    area: io
+    topics: ["LVCMOS output drive, slew and output resistance", "Bank types and VCCO limits"]
+    docs: ["UG471", "UG571", "UG583", "UG899", "DS181", "DS925"]
+  checks:
+  - {file: flow/offchip_check.py, enforced: false, what: "Advisory check of every output port group of a design against the receiver limits in the data sheet (overshoot and undershoot with their duration tables, first-wave level, ringback), reading the part family from the spec. It gives two answers per group: the best DRIVE and SLEW with the board's own series resistor, and the best series resistor with its DRIVE and SLEW; a group marked board_fixed gets the first."}
+  - {file: flow/offchip_model.py, enforced: false, what: "The solver under the check: a transmission line between AMD's IBIS output models and a capacitive receiver, at the three IBIS corners, with the first-incident level and the ringback."}
+  evidence:
+  - kind: model
+    source: results/162_kr260_si/drive_slew_sweep.csv
+    values: [n, "count:standard=LVCMOS33,length_in=6,series_ohm=22,pass=true", "count:standard=LVCMOS33,length_in=6,series_ohm=22", "count:standard=LVCMOS18,length_in=6,series_ohm=22,pass=true", "count:standard=LVCMOS18,length_in=6,series_ohm=22", "count:standard=LVCMOS33,length_in=6,series_ohm=47,pass=true"]
+    text: "A sweep of {0} model runs (DRIVE, SLEW, series resistor and line length, three IBIS corners in each) found that 22 ohm in series on a 6 in line passes {1} of {2} DRIVE and SLEW combinations for LVCMOS33 in 7-series HR banks, against {5} of {2} with 47 ohm, and {3} of {4} for LVCMOS18 in UltraScale+ HP banks."
+  - kind: model
+    source: results/164_si_expertise/kr260_two_answers.json
+    values: ["get:ports.2.length_in", "get:ports.3.length_in", "get:xdc_setting.drive", "get:ports.2.answers.xdc.worst_over_v", "get:ports.3.answers.xdc.worst_over_v", "get:limit_v", "get:ports.2.answers.optimal.series_ohm", "get:ports.3.answers.optimal.series_ohm"]
+    round: 2
+    text: "With the KR260 carrier's measured routing (port A {0} in, port B {1} in, no series resistor on either), the transmit pins as the design sets them (DRIVE {2} mA FAST) put the receiver {3} V beyond the rail on port A and {4} V on port B, against the {5} V limit; the model puts that right with {6} ohm in series on port A and {7} ohm on port B."
+  - kind: model
+    source: results/164_si_expertise/kr260_two_answers.json
+    values: ["get:ports.2.answers.as_built.drive", "get:ports.2.answers.as_built.rx_rise_2080_ns_weak", "get:ports.2.answers.as_built.max_rise_ns", "get:ports.2.answers.optimal.passing_combinations", "get:ports.2.answers.optimal.series_ohm"]
+    text: "With no resistor on the board, no setting meets every limit on port A: the best, DRIVE {0} mA, keeps the overshoot inside the limit but its receiver edge takes {1} ns at the weak corner against the {2} ns the house rule allows. If a resistor can be fitted, {3} combinations pass, and the check proposes {4} ohm."
+  - kind: model
+    source: results/162_kr260_si/ngspice_check.csv
+    where: "series_ohm>0"
+    values: [n, "max:waveform_max_abs_diff_v"]
+    round: 2
+    text: "A second solver, ngspice, run on {0} cases with a series resistor, agreed with the model's receiver waveform to within {1} V."
+  - kind: model
+    source: results/162_kr260_si/ngspice_check.csv
+    where: "series_ohm=0,edge=f"
+    values: [n, "max:waveform_max_abs_diff_v"]
+    round: 2
+    text: "On {0} falling edges with nothing in series the two solvers disagree by up to {1} V; the cause is not found."
+  - kind: model
+    source: results/162_kr260_si/kr260_net_lengths.csv
+    where: "group=rgmii_phy2_hpa,total_in>7"
+    values: [n, "min:total_in", "max:total_in"]
+    round: 2
+    text: "Routed lengths read from the vendor's KR260 board file: the {0} length-matched RGMII nets of port A run {1} to {2} in on the carrier."
+  - kind: model
+    source: results/162_kr260_si/kr260_net_lengths.csv
+    where: "group=rgmii_phy3_hpb,total_in>2.3,total_in<3"
+    values: [n, "min:total_in", "max:total_in"]
+    round: 2
+    text: "The {0} length-matched RGMII nets of port B run {1} to {2} in."
+  cards: []
+  figures:
+  - id: series_r_waveforms
+    kind: waveforms
+    title: "Receiver waveforms: what a series resistor does to a {length_in} in line"
+    sources: [results/164_si_expertise/waveforms_series_r.csv]
+    caption: "The voltage at the receiver end of a {z0_ohm} ohm, {length_in} in line with {c_pf} pF at the receiver, driven at {drive_ma} mA FAST, with the series resistor of each key entry. The rising edge is drawn on the left and the falling edge on the right. The hatched bands lie more than {limit} V beyond either rail, outside the data sheet's recommended limit. With nothing in series the 3.3 V output rings {hr33_over_0} V above its rail and {hr33_under_0} V below ground; 22 ohm still leaves {hr33_over_22} V above the rail; 47 ohm brings it to {hr33_over_47} V. The 1.8 V output is already close to its limit with 22 ohm ({hp18_over_22} V above the rail, {hp18_under_22} V below ground)."
+    how: "Model output: the transmission-line solver of Brief 155 on AMD's preliminary IBIS tables at the strong corner, which gives the worst overshoot, each edge simulated from a settled state. It is not a scope measurement, and the receiver has no clamp diodes in the model."
+    wrong: "Reading 22 ohm as the right value everywhere. The resistor that suits the 1.8 V output leaves the 3.3 V output outside the limit on this line. These are two of the three IBIS corners' worth of behaviour, not the whole spread; the check uses all three."
+  - id: pass_map
+    kind: sweep
+    title: "Where a series resistor passes: resistor value against line length"
+    sources: [results/162_kr260_si/drive_slew_sweep.csv]
+    caption: "Each cell counts the DRIVE and SLEW combinations that pass every limit at all three IBIS corners, on a {z0_ohm} ohm line of the length shown with {c_pf} pF at the receiver; a stronger fill means more pass, and the 22 ohm row is boxed. For LVCMOS33 in 7-series HR banks 22 ohm passes {hr33_22_1} of {hr33_total} combinations at 1 in, {hr33_22_6} at 6 in and {hr33_22_10} at 10 in, while 47 ohm still passes {hr33_47_10} at 10 in. For LVCMOS18 in UltraScale+ HP banks 22 ohm passes {hp18_22_3}, {hp18_22_6} and {hp18_22_10} of {hp18_total} at 3 in, 6 in and 10 in."
+    how: "Model output: {n_runs} runs of the Brief 155 solver on AMD's IBIS tables. A combination passes when the overshoot and undershoot stay inside the data sheet's duration tables, the first wave clears the threshold with a margin and the weak-corner edge takes at most a quarter of a {ui_ns} ns unit interval; the last two are house assumptions."
+    wrong: "A pass is the model's, for one line (a 50 ohm stripline-like trace with 5 pF at the receiver): a different impedance, a stub or a second receiver moves it. A pass says nothing about crosstalk or radiated noise. The 22 ohm rule is right for 1.8 V HP outputs and wrong for 3.3 V and 2.5 V HR outputs on lines beyond about 3 in."
+  - id: kr260_check
+    kind: kr260
+    title: "KR260 ports A and B: as set, best as built and optimal"
+    sources: [results/164_si_expertise/kr260_two_answers.json, results/164_si_expertise/kr260_waveforms.csv, results/162_kr260_si/kr260_b58a_trigger_carrier_data.check.json]
+    caption: "The receiver waveform of the two PL Ethernet transmit groups under three settings: as the XDC sets them (DRIVE {xdc_drive} mA FAST, no resistor), the best setting that keeps the board as built (no resistor), and the optimal setup if a resistor can be fitted ({a_optimal_r} ohm on port A, {b_optimal_r} ohm on port B). The bars give the time beyond the {limit} V limit at the worst corner. As set, port A spends {a_xdc_t} ns of its {a_ui} ns unit interval beyond it on its measured {a_len} in, against {a_assumed_t} ns on the {a_assumed_len} in assumed before the board file was read; port B spends {b_xdc_t} ns on {b_len} in. The best setting as built stays inside the limit, but at DRIVE {a_as_built_drive} mA its edge takes {a_as_built_edge} ns on port A against {a_as_built_max} ns allowed, so it is the least bad choice rather than a pass."
+    how: "Model output on AMD's preliminary IBIS tables, strong corner for the waveforms and all three corners for the bars; carrier copper only, so the lengths leave out the SOM routing. Lengths come from the vendor's board file read by a local parse; the 50 ohm impedance is the fabricator's table, with no dielectric constant in the file."
+    wrong: "Reading the as-built answer as a fix. It is the least harm without touching the board, not a pass, and the optimal answer needs a resistor the carrier does not have. The model has not been compared with a scope on this board."
+  - id: r_out
+    kind: rout
+    title: "Output resistance against DRIVE"
+    sources: [results/155_offchip/r_out.csv]
+    caption: "The pull-up resistance of an LVCMOS output into a {z0_ohm} ohm load, from AMD's IBIS tables, for three I/O standards. For the 3.3 V output in 7-series HR banks it falls from {hr33_r_4} ohm at 4 mA to {hr33_r_16} ohm at 16 mA (FAST, typical corner), so DRIVE sets how much current the output can supply and only indirectly its impedance. A series resistor of 22 ohm matches the line when the output resistance is {target_ohm} ohm, the lower dashed line."
+    how: "From Brief 155's r_out.csv: the chord resistance of the pull-up in a 50 ohm load at the typical corner (marker) and at the weak and strong corners (the bar), from the IBIS tables."
+    wrong: "Treating DRIVE as an impedance setting, or treating SLEW as changing the resistance: it changes the edge time. The weak and strong corners differ by about two to one, so no single series value matches the line at every corner."
+  gaps:
+  - "No board scope measurement: every waveform and number is a model result on AMD's preliminary IBIS data, so none of it has been compared with a real edge."
+  - "The dielectric constant of the carrier is not in its board file, so the line impedance is the fabricator's table value, and two solvers disagree about it by about a sixth."
+  - "The routing inside the K26 module is missing, so every length is carrier copper only and the real lines are longer."
+  - "ngspice and the model disagree on falling edges with nothing in series and the cause is not found, so the falling-edge rows without a resistor may understate the ringing."
+  - "The survey of series resistor values counted one board only, so the belief that 22 ohm is the commonest value is neither confirmed nor refuted."
+  - "Calibrated drivers (DCI, OUTPUT_IMPEDANCE) are not simulated in the time domain, and simultaneous-switching noise is left to Vivado's own report, which has not been run for these designs."
+  - "The knowledge bank at its pin has the I/O standard skills and a family-matrix row for drive, slew and output resistance, but no skill on choosing a series resistor."
+  - "The check is advisory and is not a gate in any stage, no agent run has been scored on it, and no result in this area comes from Vivado or a board, so the level stays at knowledge only."
