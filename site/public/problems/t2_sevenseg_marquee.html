@@ -3,11 +3,11 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Scrolling message on the eight 7-segment digits | Gatewright</title>
+<title>Scrolling message on the eight 7-segment digits | Gateguild</title>
 <meta name="description" content="Scrolling message on the eight 7-segment digits: the spec, hidden tests, reference RTL, mutants and golden model of benchmark task t2_sevenseg_marquee.">
 <meta name="color-scheme" content="light dark">
 <link rel="icon" href="../favicon.svg" type="image/svg+xml">
-<style>/* Gatewright site: sober monochrome, dark and light, no glow. Same manner as the CVDP RTL Agent site. */
+<style>/* Gateguild site: sober monochrome, dark and light, no glow. Same manner as the CVDP RTL Agent site. */
 :root {
   --bg: #f6f6f4; --panel: #ffffff; --rule: #d6d6d2; --ink: #161616; --ink-2: #4a4a4a; --ink-3: #6b6b6b;
   --mark: #161616; --mute: #b9b9b4; --warn: #b3261e; --ok: #161616;
@@ -675,7 +675,7 @@ svg .bdtick { stroke: var(--ink-3); }
 @media (max-width: 520px) { .evm tbody th { min-width: 9em; } }
 @media (max-width: 520px) { .evm tbody th { white-space: normal; min-width: 8em; max-width: 9em; font-size: .8rem; } .evm td.ev { min-width: 4.2em; } .evm thead th { font-size: .72rem; } }
 
-/* brief 193: "Why Gatewright": the one-page summary */
+/* brief 193: "Why Gateguild": the one-page summary */
 svg .boxyou { fill: var(--ink); stroke: var(--ink); }
 .whyhero h1 { font-size: clamp(1.35rem, 1rem + 1.6vw, 2rem); letter-spacing: -.01em; line-height: 1.3; max-width: 48ch; }
 .whyfig { margin: 18px 0 8px; }
@@ -694,7 +694,7 @@ details.area.why .more-link { margin: .8em 0 0; font-weight: 600; }
 </head>
 <body>
 <a class="visually-hidden" href="#main">Skip to content</a>
-<header class="bar"><div class="wrap"><a class="brand" href="../index.html">Gatewright</a><nav aria-label="Pages"><a href="../why.html">Why</a><a href="../agent.html">The agent</a><a class="sub" href="../agent.html#harness">Harness</a><a href="../story.html">How it was built</a><a href="../worked-example.html">Worked example</a><a href="../inspect.html">Inspect it</a><a href="../how.html">How it works</a><a href="../verification.html">Verification</a><a href="../traceability.html">Traceability</a><a href="../flow-notes.html">Beyond the flow</a><a href="../expertise.html">Expertise</a><a href="../examples.html">Examples</a><a href="../showcase.html">Showcase</a><a href="../problems.html" aria-current="page">Problems</a><a href="../evaluation.html">Evaluation</a><a href="../results.html">Results</a></nav><button id="theme" type="button" aria-label="Switch to dark theme">Dark</button></div></header>
+<header class="bar"><div class="wrap"><a class="brand" href="../index.html">Gateguild</a><nav aria-label="Pages"><a href="../why.html">Why</a><a href="../agent.html">The agent</a><a class="sub" href="../agent.html#harness">Harness</a><a href="../story.html">How it was built</a><a href="../worked-example.html">Worked example</a><a href="../inspect.html">Inspect it</a><a href="../how.html">How it works</a><a href="../verification.html">Verification</a><a href="../traceability.html">Traceability</a><a href="../flow-notes.html">Beyond the flow</a><a href="../expertise.html">Expertise</a><a href="../examples.html">Examples</a><a href="../showcase.html">Showcase</a><a href="../problems.html" aria-current="page">Problems</a><a href="../evaluation.html">Evaluation</a><a href="../results.html">Results</a></nav><button id="theme" type="button" aria-label="Switch to dark theme">Dark</button></div></header>
 <main id="main" class="wrap">
 <p class="crumbs small"><a href="../problems.html">Problems</a> / <a href="../problems.html#dom-A">A. Basic digital design drills</a></p>
 <h1>Scrolling message on the eight 7-segment digits</h1>
@@ -1113,7 +1113,7 @@ SCROLL, DIR = 1, 2
 </main>
 <footer><div class="wrap"><p>Designed by Brendan Lynskey. Code and results: <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent">github.com/BrendanJamesLynskey/FPGA_Design_Agent</a> (all rights reserved; source visible for review, see LICENSE). Every number on these pages is read from a committed result file; development results are labelled as such and are not the held-out score.</p></div></footer>
 <script type="application/json" data-key="trace">{"captions":["Step 0: Scrolling starts from the beginning of the message. Position 0; the eight digits show FPGA-7SE.","Step 1: The text moves one character left. Position 1; the eight digits show PGA-7SEG.","Step 2: The text moves one character left. Position 2; the eight digits show GA-7SEG-.","Step 3: The text moves one character left. Position 3; the eight digits show A-7SEG-F.","Step 4: The text moves one character left. Position 4; the eight digits show -7SEG-FP.","Step 5: The text moves one character left. Position 5; the eight digits show 7SEG-FPG.","Step 6: The text moves one character left. Position 6; the eight digits show SEG-FPGA.","Step 7: The text moves one character left. Position 7; the eight digits show EG-FPGA-.","Step 8: The text moves one character left. Position 8; the eight digits show G-FPGA-7.","Step 9: The text moves one character left. Position 9; the eight digits show -FPGA-7S.","Step 10: The text moves one character left. The message wraps round to its start. Position 0; the eight digits show FPGA-7SE.","Step 11: The text moves one character left. Position 1; the eight digits show PGA-7SEG.","Step 12: The text moves one character left. Position 2; the eight digits show GA-7SEG-.","Step 13: The direction is reversed, so the text moves right. Position 1; the eight digits show PGA-7SEG.","Step 14: The text moves one character right. Position 0; the eight digits show FPGA-7SE.","Step 15: The text moves one character right. The message wraps round to its end. Position 9; the eight digits show -FPGA-7S.","Step 16: The text moves one character right. Position 8; the eight digits show G-FPGA-7.","Step 17: The text moves one character right. Position 7; the eight digits show EG-FPGA-.","Step 18: The text moves one character right. Position 6; the eight digits show SEG-FPGA.","Step 19: The text moves one character right. Position 5; the eight digits show 7SEG-FPG.","Step 20: The text moves one character right. Position 4; the eight digits show -7SEG-FP."],"signals":[{"kind":"text","name":"window (left to right)","v":["FPGA-7SE","PGA-7SEG","GA-7SEG-","A-7SEG-F","-7SEG-FP","7SEG-FPG","SEG-FPGA","EG-FPGA-","G-FPGA-7","-FPGA-7S","FPGA-7SE","PGA-7SEG","GA-7SEG-","PGA-7SEG","FPGA-7SE","-FPGA-7S","G-FPGA-7","EG-FPGA-","SEG-FPGA","7SEG-FPG","-7SEG-FP"]},{"kind":"bus","name":"POS","radix":"dec","v":[0,1,2,3,4,5,6,7,8,9,0,1,2,1,0,9,8,7,6,5,4]},{"kind":"bus","name":"leftmost digit","radix":"hex","v":[113,115,61,119,64,7,109,121,61,64,113,115,61,115,113,64,61,121,109,7,64],"width":8},{"kind":"bus","name":"rightmost digit","radix":"hex","v":[121,61,64,113,115,61,119,64,7,109,121,61,64,61,121,109,7,64,119,61,115],"width":8},{"kind":"bit","name":"DIR","v":[0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1]}],"stimulus":"The message FPGA-7SEG- (10 characters, each written as a raw segment byte) is scrolled 12 steps left and then 8 steps right. The window text below is those bytes shown as the letters they draw.","unit":"scroll step","x":[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]}</script>
-<script>/* Gatewright site. No dependencies. Every animation is frame(step) over a state list built from site/data/*.json. */
+<script>/* Gateguild site. No dependencies. Every animation is frame(step) over a state list built from site/data/*.json. */
 (function () {
   "use strict";
   var D = {};

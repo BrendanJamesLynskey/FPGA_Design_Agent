@@ -1,4 +1,4 @@
-"""Brief 193: the "Why Gatewright" page is built from the committed records, with no typed number."""
+"""Brief 193: the "Why Gateguild" page is built from the committed records, with no typed number."""
 import json
 import re
 import sys

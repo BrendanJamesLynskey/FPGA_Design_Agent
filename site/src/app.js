@@ -1,4 +1,4 @@
-/* Gatewright site. No dependencies. Every animation is frame(step) over a state list built from site/data/*.json. */
+/* Gateguild site. No dependencies. Every animation is frame(step) over a state list built from site/data/*.json. */
 (function () {
   "use strict";
   var D = {};
