@@ -16,6 +16,7 @@ Heuristic and syntactic: it looks only at the file it reads.
 from __future__ import annotations
 
 import ast
+import re
 from pathlib import Path
 
 _EVENT_WAITS = {"RisingEdge", "FallingEdge", "Edge", "ClockCycles", "ReadOnly", "ReadWrite", "NextTimeStep", "Timer",
@@ -112,6 +113,38 @@ def unbounded_waits(path: Path) -> list[dict]:
             seen.add(k)
             uniq.append(o)
     return uniq
+
+
+_STDLIB_OK = {"cocotb", "os", "sys", "random", "json", "math", "pathlib", "typing", "itertools", "collections", "struct", "re", "yaml",
+              "functools", "dataclasses", "enum", "logging", "model", "__future__", "cocotb_coverage", "numpy", "decimal", "fractions"}
+
+
+def no_assertion_bench(path: Path) -> dict | None:
+    """Brief 231 item 2 (Edwards 2026, appendix D: a bench prints PASS or FAIL from an error count): a cocotb test file with tests and no
+    ``assert``, ``raise`` or ``fail`` anywhere passes whatever the design does. Advisory: a file that imports a helper module of its own
+    (a shared checker such as ``bench.check``) may assert there, so it is not flagged. ``{file, tests}`` or None."""
+    src = Path(path).read_text(errors="replace")
+    try:
+        tree = ast.parse(src)
+    except SyntaxError:
+        return None
+    tests = [f.name for f in ast.walk(tree) if isinstance(f, (ast.AsyncFunctionDef, ast.FunctionDef)) and _is_test(f)[0]]
+    if not tests:
+        return None
+    if any(isinstance(x, (ast.Assert, ast.Raise)) for x in ast.walk(tree)) or re.search(r"\.fail\(|TestFailure|TestError", src):
+        return None
+    for n in ast.walk(tree):
+        mods = [n.module or ""] if isinstance(n, ast.ImportFrom) else [a.name for a in n.names] if isinstance(n, ast.Import) else []
+        if any(m.split(".")[0] not in _STDLIB_OK for m in mods):
+            return None
+    return {"file": str(path), "tests": tests}
+
+
+def bench_hygiene_text(found: list[dict], design: Path) -> str:
+    rows = "\n".join(f"  {Path(f['file']).relative_to(design) if Path(f['file']).is_relative_to(design) else f['file']}: "
+                     f"{', '.join(f['tests'][:4])}" for f in found)
+    return ("[bench hygiene, advisory] these test files have no assert, raise or fail, so they pass whatever the design does:\n" + rows +
+            "\nCompare each result with the model's and assert on a mismatch (count the errors, show the first few, assert the count is 0).")
 
 
 def refusal_text(findings: list[dict], design: Path) -> str:

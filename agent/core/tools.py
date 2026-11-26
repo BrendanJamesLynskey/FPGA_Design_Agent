@@ -285,6 +285,20 @@ def list_files(s: Session, path: str = ".") -> dict:
 
 # --- the flow ---------------------------------------------------------------------------------------------------------
 
+#: Verilator warnings the lint tool switches off (brief 231): PROCASSINIT fires on every register with an initial value that a clocked
+#: block also writes, which rtl.initial_values: allow (the default) permits; STD-INIT-01 and STD-INIT-02 (flow/standards_check.py) check
+#: initial values and resets instead, with the reset model in view.
+LINT_OFF = ["-Wno-PROCASSINIT"]
+#: one-line repair notes appended to the lint output for a warning whose fix is not obvious from Verilator's text (brief 231)
+LINT_HINTS = {"DECLFILENAME": "[lint note: DECLFILENAME (HDL-STY-01) is a naming mismatch, not a logic defect. Rename the file to <module>.sv "
+                              "(the first module it holds), or move the module into the file named after it, and update the build.yaml "
+                              "sources glob if it lists the file by name.]"}
+
+
+def lint_hints(out: str) -> str:
+    return "".join("\n" + h for code, h in LINT_HINTS.items() if f"%Warning-{code}" in out)
+
+
 @tool("lint", "Verilator --lint-only -Wall on the design (the build.yaml sources).", {})   # brief 55: GHDL for a VHDL design (_lint_vhdl; the description is unchanged so the request golden holds)
 def lint(s: Session) -> dict:
     cfg = load_build_cfg(s)
@@ -296,9 +310,10 @@ def lint(s: Session) -> dict:
         srcs = srcorder.drop_shell(srcs)
     srcs = [str(p) for p in srcorder.order_sv(srcs)]   # 07a2-prep: packages and interfaces first, not name order
     stubs = sorted(glob.glob(str(s.design / "lint" / "*.sv")))
-    argv = ["verilator", "--lint-only", "-Wall", "--top-module", cfg["top"], *srcs, *stubs]
+    argv = ["verilator", "--lint-only", "-Wall", *LINT_OFF, "--top-module", cfg["top"], *srcs, *stubs]
     r = s.runner.run("lint", argv, s.root, timeout=300)
     out, ok = _text_out(r), r.returncode == 0
+    out += lint_hints(out)
     waived_clean = False
     if not ok:                                          # brief 219 fix 6: lint/waivers.yaml applies here, as it does at the stage gate
         from flow.lint_ruleset import waive_verilator_text
@@ -556,6 +571,12 @@ def simulate(s: Session, sim: str = "auto", coverage: bool = False) -> dict:
                    + "".join("\n  cause: " + e for e in ff.get("cause") or [])
                    + "".join("\n  log: " + e for e in ff.get("log_errors") or []) + "\n[end first failure]\n" + out)
     res.update({"output": out, "returncode": r.returncode, "sim": sim, "seconds_run": r.seconds})
+    if r.returncode == 0:                   # brief 231 item 2: a bench with no assertion passes whatever the design does (advisory)
+        from agent.core.cocotb_lint import bench_hygiene_text, no_assertion_bench
+        vac = [v for v in (no_assertion_bench(t) for t in sorted((s.design / "tests").rglob("*.py"))) if v]
+        if vac:
+            res["bench_hygiene"] = vac
+            res["output"] += "\n" + bench_hygiene_text(vac, s.design)
     _stamp(s, "sim")
     if r.returncode == 0 and not coverage:
         record_sim_baseline(s.design, sim, r.seconds)
