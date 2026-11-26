@@ -295,6 +295,19 @@ LINT_HINTS = {"DECLFILENAME": "[lint note: DECLFILENAME (HDL-STY-01) is a naming
                               "sources glob if it lists the file by name.]"}
 
 
+#: rules switched off for the design's own simulation-only vendor stand-ins (rtl/*sim_stubs*.sv, written between `ifndef SYNTHESIS`): they copy a
+#: primitive's whole parameter list and port list, so most of it is unused by construction (brief 231: 290 of 291 UNUSEDPARAM lines in the run
+#: records came from such a file)
+STUB_FILE = "sim_stubs"
+STUB_RULES = ("UNUSEDPARAM", "UNUSEDSIGNAL", "DECLFILENAME")
+
+
+def stub_waiver_vlt(srcs: list[str]) -> str:
+    """A Verilator config (``.vlt``) text that switches STUB_RULES off for each source file whose name holds ``sim_stubs``; empty if none."""
+    rows = "".join(f'lint_off -rule {r} -file "{p}"\n' for p in srcs if STUB_FILE in Path(p).name for r in STUB_RULES)
+    return "`verilator_config\n" + rows if rows else ""
+
+
 def lint_hints(out: str) -> str:
     return "".join("\n" + h for code, h in LINT_HINTS.items() if f"%Warning-{code}" in out)
 
@@ -310,7 +323,14 @@ def lint(s: Session) -> dict:
         srcs = srcorder.drop_shell(srcs)
     srcs = [str(p) for p in srcorder.order_sv(srcs)]   # 07a2-prep: packages and interfaces first, not name order
     stubs = sorted(glob.glob(str(s.design / "lint" / "*.sv")))
-    argv = ["verilator", "--lint-only", "-Wall", *LINT_OFF, "--top-module", cfg["top"], *srcs, *stubs]
+    vlt = stub_waiver_vlt(srcs)                         # brief 231: the design's own simulation stubs are not linted for unused parameters
+    vlt_path: list[str] = []
+    if vlt:
+        wd = s.design / "build" / "lint"
+        wd.mkdir(parents=True, exist_ok=True)
+        (wd / "stub_waivers.vlt").write_text(vlt)
+        vlt_path = [str(wd / "stub_waivers.vlt")]
+    argv = ["verilator", "--lint-only", "-Wall", *LINT_OFF, "--top-module", cfg["top"], *vlt_path, *srcs, *stubs]
     r = s.runner.run("lint", argv, s.root, timeout=300)
     out, ok = _text_out(r), r.returncode == 0
     out += lint_hints(out)

@@ -83,3 +83,29 @@ def test_a_passing_simulation_with_a_vacuous_bench_carries_the_advisory(session)
     session.runner = FakeRunner({"simulate": RunResult(0, "1 passed", "", 0.1)})
     r = dispatch(session, "simulate", {})
     assert r["ok"] is True and r["bench_hygiene"][0]["tests"] == ["t"] and "[bench hygiene, advisory]" in r["output"]
+
+
+def test_the_stub_waiver_names_only_simulation_stub_files() -> None:
+    from agent.core.tools import STUB_RULES, stub_waiver_vlt
+    t = stub_waiver_vlt(["/d/rtl/top.sv", "/d/rtl/xilinx_sim_stubs.sv"])
+    assert t.startswith("`verilator_config\n") and t.count("\n") == len(STUB_RULES) + 1 and "top.sv" not in t and all(f"-rule {r} " in t for r in STUB_RULES)
+    assert stub_waiver_vlt(["/d/rtl/top.sv"]) == ""
+
+
+def test_verilator_accepts_the_stub_waiver_and_still_reports_other_files(tmp_path) -> None:
+    import shutil
+    import subprocess
+    import pytest
+    from agent.core.tools import stub_waiver_vlt
+    exe = shutil.which("verilator")
+    if not exe:
+        pytest.skip("verilator not installed")
+    stub, top = tmp_path / "xilinx_sim_stubs.sv", tmp_path / "top.sv"
+    stub.write_text("module BSCANE2 #(parameter JTAG_CHAIN = 1, parameter UNUSED_P = 0) (input logic tdo, output logic tck);\n"
+                    "  assign tck = 1'b0;\nendmodule\n")
+    top.write_text("module top #(parameter NOT_USED = 3) (input logic a, output logic y);\n  BSCANE2 u (.tdo(a), .tck(y));\nendmodule\n")
+    (tmp_path / "w.vlt").write_text(stub_waiver_vlt([str(stub), str(top)]))
+    r = subprocess.run([exe, "--lint-only", "-Wall", "-Wno-DECLFILENAME", "--top-module", "top", str(tmp_path / "w.vlt"), str(top), str(stub)],
+                       capture_output=True, text=True)
+    assert "UNUSED_P" not in r.stderr and "'tdo'" not in r.stderr, r.stderr      # the stub's own parameter and port: waived
+    assert "NOT_USED" in r.stderr                                                # the design's own unused parameter is still reported
