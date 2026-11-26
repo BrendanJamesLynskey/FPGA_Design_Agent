@@ -274,6 +274,113 @@ The page also shows, for line-by-line review, the RTL diff against the previous 
 tests and bins, buses as hex waveforms, `design.xdc` in full with each pin traced through the master XDC to the board
 inventory, the proof-method traceability table and the design-standards results.
 
+## Permission modes (brief 222)
+
+What a run may do without asking is set by a **mode**, with optional per-action **overrides**, and a short list of things that are **never** allowed. The code is
+`agent/core/permissions.py` (no model involved); the Navigator's **Permissions** page sets it ([navigator/README.md](../navigator/README.md#permission-modes-brief-222)).
+
+```
+python -m agent run spec.md --permissions ask                     # plan | ask | auto | full
+python -m agent run spec.md --permissions auto --deny run_vivado --allow read_board --ask-above-usd 2
+python -m agent resume <run-id> --permissions auto                # change the mode of a run (what the old mode had granted is dropped)
+python -m agent resume <run-id> --reply '{"decision": "allow"}'   # answer a permission question
+```
+
+### The modes
+
+| Mode | In plain words |
+|---|---|
+| **Plan** | Reads and plans only. The interview and the architecture run, and an estimate of time and cost is written (`plan_estimate.json`: the stage limits and run caps, labelled as limits, not a prediction). No file is changed after the architecture stage, no simulation or build runs, the board is not touched. The run stops with the architecture written and **not approved**. |
+| **Ask** (the Navigator's default) | Runs simulation and checks itself; asks before every other gated action. |
+| **Auto within limits** (the command line's default) | Edits, Vivado and model spend run without asking, inside the run's budgets. Still asks before programming a board, writing registers, driving an instrument and raising a budget. This is what a run did before brief 222, so a command with no flag behaves as it always did. |
+| **Full auto** | Also programs SRAM, writes registers and drives instruments (inside the lab file's safety limits), and stops at the budget caps: it never raises one. |
+
+### The gated actions, and what each mode does with them
+
+`allow` = runs without a question; `ask` = the run pauses and asks; `deny` = the run stops at that point with the reason.
+
+| Action | What it covers | Plan | Ask | Auto | Full |
+|---|---|---|---|---|---|
+| `edit_design_files` | writing RTL, tests, constraints, scripts (stage 2 on; the spec and architecture the first two stages write are the plan) | deny | ask | allow | allow |
+| `run_simulation` | simulation, formal, mutation, lint, open-source synthesis and equivalence checks | deny | allow | allow | allow |
+| `run_vivado` | Vivado synthesis, implementation, bitstream (from stage 2: once lint and simulation pass, the RTL stage's gate runs a synthesis) | deny | ask | allow | allow |
+| `spend_model_money` | going on once the run has spent more than `--ask-above-usd` (default $1.00) | deny | ask | allow | allow |
+| `raise_budget` | `resume` with a higher `--max-usd` or `--budget-scale` than the run started with | deny | ask | ask | deny |
+| `approve_architecture` | accepting the architecture as the plan the RTL is written from | deny | ask | allow | allow |
+| `approve_stage` | a person's approve/edit/rewind at the end of every stage (as `--review on`) | allow | ask | allow | allow |
+| `program_board_sram` | loading the bitstream into the board's SRAM (never flash) | deny | ask | ask | allow |
+| `write_board_register` | the bring-up, which writes the design's registers on the board | deny | ask | ask | allow |
+| `drive_instrument_output` | enabling a lab instrument output (brief 221) | deny | ask | ask | allow |
+| `read_board` | the Navigator's read-only board actions | deny | ask | allow | allow |
+| `use_knowledge_bank` | the private knowledge bank and the IP library (today a local clone behind the access key; the switch for any remote fetch) | allow | ask | allow | allow |
+
+Overrides (`--allow`, `--ask`, `--deny`, or the Navigator's per-action column) replace one cell. A `deny` from the mode or an override is never lifted by a question: nobody is asked about it.
+
+### Never, in any mode
+
+Code checks, run before the mode is read (`never_violation`, `check_script`, `lab_limits_violation`, `check_hard_cap`), so no flag, file or answer reaches them. The Navigator lists them as fixed.
+
+- writing flash or configuration memory (QSPI, `.pof`, `.mcs`), an SD card or eMMC (`program` takes only `target: sram`);
+- writing a boot image (`BOOT.BIN`, `.bif`, `.jic`);
+- programming eFUSE or BBRAM, or loading a key into a device;
+- enabling a laser anywhere except the design's own bring-up step;
+- driving an instrument output beyond the lab file's limits, or one the lab file lists as never enabled by a script (a limit the file does not state is zero, never assumed free; brief 221 calls `lab_limits_violation` before an output is enabled);
+- a cost cap above the hard cap (`HARD_CAP_USD`, $35: the FPGA share of the key).
+
+The scan covers the arguments of the tools that touch a board or an instrument and the path of any file the agent writes. It does not read file contents (an AES core's RTL may say `key`) or the
+arguments of the simulation tools, and it is not a sandbox: it stops the agent's own tool calls, not a person's shell.
+
+### Where it is decided
+
+- **The start of every stage** (`permission_entry`): the stage's actions are looked up (the graph's own gates count: stage 2 simulates and, once that passes, synthesises; stage 3 on runs Vivado). A `deny` stops the run (`stop` starts
+  `permission denied:`, with `stop_detail.permission` naming what is needed and how to change it); an `ask` pauses on a `permission` interrupt; an `allow` goes to the log.
+- **The end of a stage**: `approve_stage` and (stage 1) `approve_architecture` set `ask` pauses for a person (the existing review interrupt); in Plan, `approve_architecture` is `deny`, so the run stops after stage 1 with
+  the architecture left unapproved (no `architecture_approval` is written).
+- **The stage-9 hardware approval** asks for `program_board_sram` and `write_board_register` together, with the bitstream in front of the person (so the board is not asked about at the start of stage 9). In Full, or with both
+  allowed by an override, there is no pause: the run records "allowed by mode full" and goes on.
+- **Every tool call** (`registry.dispatch` calls `tool_gate`; the Claude Code arm's tool server calls it too, through the run directory): the never-rules, then the run's `permissions.json`. A call that needs an action
+  the run has not been granted is refused with the reason (`permission-not-granted` or `permission-denied`), never a crash; the model is told not to retry.
+- **A tool added later** (brief 221's instrument tools) is gated by `register_tool_action(tool, "drive_instrument_output")`, and is also scanned by the never-rules.
+
+### Asking, in practice
+
+In the Navigator the question appears on the Live page, in the question panel, with the actions in plain words and *Allow and resume* or *Deny*. **Headless** (`python -m agent run|resume` with no reply),
+the run stops at the first ungranted action: it prints `{"status": "needs_permission", "needs": [...], "how": ..., "or": ...}`, writes `pending.json`, and **exits 3**; a run stopped by a refused or denied
+permission **exits 4**. Nothing is skipped silently and nothing crashes. Reply with `--reply '{"decision": "allow"}'` (all it asked), `{"allow": ["run_vivado"]}` (only those; the rest are declined), or `{"decision": "deny"}`; or
+resume with `--allow <action>` or another `--permissions`. A raised budget on a resume asks the same way (`--allow raise_budget`).
+
+### The record
+
+- `runs/<id>/config.json` has `permissions` (mode, overrides, source, threshold); `permissions.json` is the run's live state (what it was granted or refused, and mode changes on resume);
+  `permissions.jsonl` has **every decision**: when, the action, allowed / asked / denied / granted / refused / approved, who or which rule decided (`mode ask`, `override deny run_vivado (command line)`,
+  `granted by planner at <time>`), and the stage.
+- `summary.json` carries `permissions` (the same, deduplicated) and, in Plan, `plan_estimate`. The handover lists the mode, its source, the overrides and one line per distinct decision in
+  `agent_run.permissions` (the times stay in `permissions.jsonl`), and the DOC step's re-check compares it with the run's record.
+- A resume keeps the run's own policy, grants included. A different `--permissions` on a resume replaces it and drops the grants.
+
+### What a user could get wrong
+
+- **Full auto on a shared bench.** Nothing asks first: it programs the board and runs the bring-up (register writes) when the bitstream is ready. Use it only when you are watching that board and nobody else is using the
+  bench. The board rules of the house (SRAM only, power limit, one board job at a time) are checks of their own and still apply; Full does not suspend them.
+- **A deny that blocks a gate the run needs.** `--deny run_vivado` on a run that must build stops the run at stage 2, on purpose. The same for `--deny edit_design_files` at stage 2, or `--deny write_board_register` at stage 9. Remove the
+  override and `resume`.
+- **Plan is not "no model".** The interview and architecture still call the model and spend (below the threshold; at it, Plan stops). Plan's estimate is the stage limits, not a forecast.
+- **The default differs between the two front ends.** The Navigator starts at Ask; the command line with no flag is Auto, so existing scripts and evaluations are unchanged. Set `mode:` in `permissions.yaml` to change the command line's default.
+- **A saved setting is not a running run's.** The run keeps the mode it began with.
+- **`ask` answered "allow" lasts for the run**, not for one call. Granting `run_vivado` allows every build after it.
+- **The never-list is a filter on the agent's tool calls**, not a guarantee about the machine: it does not stop a person, another program, or a script the owner runs.
+- **Settings file location.** `permissions.yaml` is in `~/.config/fpga_design_agent/` (`FDA_PERMISSIONS_FILE` for the command line). The command line wins over a project's entry, which wins over the file's default.
+
+### Measured
+
+One real `--harness claude_code` run per mode on a small design (a 4-bit Gray counter; records and the table in [results/222_permission_modes](../results/222_permission_modes/README.md)):
+**Plan** ran stages 0 and 1, asked nothing, wrote its estimate and stopped with the architecture unapproved; **Ask** paused for the knowledge bank (stage 0), the architecture review (stage 1) and edit plus Vivado (stage 2), then only
+for the per-stage reviews; **Auto** and **Full** asked nothing. None of the four reached the stage-9 hardware pause (Ask and Auto stopped on a failing ILA debug build, Full on a constraints gate at stage 3, by its own `--stop-after 8` choice
+it was kept away from the board), so what Ask, Auto and Full do at the board is shown by `agent/tests/test_222_permission_modes.py` with a scripted model and a fake programmer, not by a run. The first Ask runs also found that the stage-2 gate
+synthesises: before the fix the tool gate refused that build and the run looped at stage 2.
+
+- **Claude Code runs on the subscription report no cost**, so `spend_model_money` never triggers for them; the stage caps on turns and time still apply.
+
 ## Benchmark tasks as agent runs (brief 07a2-prep)
 
 `python -m agent run <task>/spec.md --interview oracle --hidden-spec <task>/hidden/spec.yaml ...` runs a benchmark task.

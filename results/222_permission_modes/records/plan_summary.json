@@ -1,0 +1,128 @@
+{
+ "mode": "plan",
+ "run_id": "20261125-184458-c031",
+ "model": "claude-haiku-5-5",
+ "harness": "claude_code",
+ "stages_visited": [
+  0,
+  0,
+  1,
+  1
+ ],
+ "stop": "plan complete: the architecture is written and waiting for you; approving it is denied by mode plan. Resume in another mode to go on: python -m agent resume 20261125-184458-c031 --permissions ask",
+ "permissions_source": "command line",
+ "decisions": [
+  {
+   "action": "use_knowledge_bank",
+   "result": "allowed",
+   "by": "mode plan",
+   "stage": 0,
+   "first": "2026-11-25 18:44:59",
+   "last": "2026-11-25 18:45:26",
+   "count": 2
+  },
+  {
+   "action": "use_knowledge_bank",
+   "result": "allowed",
+   "by": "mode plan",
+   "stage": 1,
+   "first": "2026-11-25 18:45:45",
+   "last": "2026-11-25 18:46:25",
+   "count": 2
+  },
+  {
+   "action": "approve_architecture",
+   "result": "denied",
+   "by": "mode plan",
+   "stage": 1,
+   "first": "2026-11-25 18:46:58",
+   "last": "2026-11-25 18:46:58",
+   "count": 1
+  }
+ ],
+ "config_permissions": {
+  "mode": "plan",
+  "overrides": {},
+  "source": "command line",
+  "ask_above_usd": 1.0
+ },
+ "plan_cost_estimate_usd_not_billed": 0.0283,
+ "plan_estimate": {
+  "stages": [
+   {
+    "stage": 0,
+    "name": "clarify",
+    "seconds_per_visit": 900.0,
+    "usd_per_visit": 0.2
+   },
+   {
+    "stage": 1,
+    "name": "board-and-device-planning",
+    "seconds_per_visit": 1800.0,
+    "usd_per_visit": 0.4
+   },
+   {
+    "stage": 2,
+    "name": "rtl-design-creation",
+    "seconds_per_visit": 3600.0,
+    "usd_per_visit": 0.8
+   },
+   {
+    "stage": 3,
+    "name": "constraints",
+    "seconds_per_visit": 1800.0,
+    "usd_per_visit": 0.4
+   },
+   {
+    "stage": 4,
+    "name": "synthesis",
+    "seconds_per_visit": 1800.0,
+    "usd_per_visit": 0.4
+   },
+   {
+    "stage": 5,
+    "name": "implementation",
+    "seconds_per_visit": 1800.0,
+    "usd_per_visit": 0.4
+   },
+   {
+    "stage": 6,
+    "name": "timing-closure",
+    "seconds_per_visit": 1800.0,
+    "usd_per_visit": 0.4
+   },
+   {
+    "stage": 7,
+    "name": "power-closure",
+    "seconds_per_visit": 1800.0,
+    "usd_per_visit": 0.4
+   },
+   {
+    "stage": 8,
+    "name": "drc-closure",
+    "seconds_per_visit": 1800.0,
+    "usd_per_visit": 0.4
+   },
+   {
+    "stage": 9,
+    "name": "configuration-and-debug",
+    "seconds_per_visit": 3600.0,
+    "usd_per_visit": 0.4
+   }
+  ],
+  "one_visit_each": {
+   "hours": 5.75,
+   "usd": 4.2
+  },
+  "run_caps": {
+   "hours": 6.0,
+   "usd": 2.0,
+   "visits_per_stage": 4
+  },
+  "upper_bound": {
+   "hours": 6.0,
+   "usd": 2.0
+  },
+  "note": "limits the run enforces, not a prediction: stages normally end well inside them (see the measured runs in docs/agent.md), and Claude Code runs on the plan report no bill"
+ }
+}
