@@ -8,7 +8,7 @@ run's own files (where the run is, the visit against its limit, the role that la
 
 - `replay_10_p2_bram_rom_k3_control.webm`: a screen recording (about 1.2 MB) of Replay at 2x on 213 run `10_p2_bram_rom_k3_control`, which passes and routed back once (stage 2 to stage 1).
 - `screenshots/working_<theme>_<width>.png`: a synthetic run in the trace mode, working at stage 2 with a Vivado build step open (spinner), a lint gate failure and an earlier route back; `visit_limit_*`: 213 run `2_p1_clkmeter_k3_treatment`, six
-  failing `lint` visits of stage 2, stopped on its limit; `route_back_*`: run 10 at its end; `reduced_motion_1280.png`: the same page with `prefers-reduced-motion`. Themes dark and light, widths 1280 and 390 px (the list layout).
+  failing `lint` visits of stage 2, stopped on its limit; `route_back_*`: run 10 at its end; `runs_<theme>_390.png` and `working_<theme>_390.png`: the whole Live page at 390 px with the new phone layout of tables (each row a card, every field kept) and the Navigator header with the FPGA Force mark; `reduced_motion_1280.png`: the same page with `prefers-reduced-motion`. Themes dark and light, widths 1280 and 390 px (the list layout).
 - `shoot_report.json`: the headless checks: zero page errors, no request to another host, no horizontal overflow at 390 px; the replay showed a travelling token 8 times in 250 ms samples; with reduced motion no token and no node animation;
   the replay of the visit-limit run ended on its stop reason; the working run showed one spinner.
 - Test fixtures: `navigator/tests/fixtures_238/` holds three 213 run folders cut down to the files the map reads (`config.json`, `role_usage.jsonl`, `routing_events.jsonl` and a few fields of `summary.json`).

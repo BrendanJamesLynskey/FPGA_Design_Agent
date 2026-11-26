@@ -261,6 +261,8 @@ and fails on a page error, an overflow at 390 px or a request to another host. S
 
 ## Stage map (brief 238)
 
+The header reads "FPGA Force Navigator" with the G2 mark (`currentColor`; the favicon is the same mark in grey). Below 640 px every table becomes a list of cards (first cell as the title line, then label and value for each other cell; nothing is dropped).
+
 The **Live** page draws, above the plain-words status, a map of the stages of the selected run and moves it as the run's files change. Results and recordings: [results/238_navigator_animation](../results/238_navigator_animation/README.md).
 
 - **Drawn from the code.** `navigator/stagemap.py` takes the stages, their visit limits and the allowed route-backs from `agent.graph.stages.MACHINE`, so a stage added there appears by itself. The route is `GET /api/live/map?id=<run>`; `static/stagemap.js` draws it (inline SVG and CSS, no library, no inline style).

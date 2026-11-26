@@ -10,6 +10,8 @@ header#top{display:flex;flex-wrap:wrap;align-items:center;gap:8px 20px;padding:1
 nav#nav{display:flex;flex-wrap:wrap;gap:0}
 nav#nav a{padding:6px 14px;border:1px solid var(--rule2);margin-left:-1px;text-decoration:none;color:var(--ink);min-height:34px}
 nav#nav a[aria-current="page"]{background:var(--ink);color:var(--bg)}
+.brand{display:flex;align-items:center;gap:8px}
+.brand .logo{flex:none;color:var(--ink)}
 .meta{margin-left:auto;font-size:.82rem}
 button{font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--rule2);padding:5px 12px;border-radius:0;min-height:34px;cursor:pointer}
 button:hover:not(:disabled){border-color:var(--ink)}
@@ -152,3 +154,15 @@ svg [hidden]{display:none}
 @keyframes map-spin{to{transform:rotate(360deg)}}
 @media (max-width:640px){.stagemap svg.map-wide{display:none}.stagemap ol.map-list{display:block}}
 @media (prefers-reduced-motion:reduce){.stagemap .node.working .node-rect,.stagemap .node.flash-pass .node-rect,.stagemap .node.flash-fail .node-rect,.stagemap .spin,.stagemap ol.map-list li.working{animation:none}}
+/* phone layout of every table (below 640 px): each row is a compact card, the first cell is its title line, every other cell is "label value"; no field is dropped */
+@media (max-width:640px){
+  .scroll{overflow-x:visible}
+  table,table tbody{display:block}
+  table thead{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+  table tr{display:block;border:1px solid var(--rule2);padding:6px 10px;margin:0 0 8px}
+  table td{display:flex;gap:10px;justify-content:space-between;border:0;padding:2px 0;text-align:right}
+  table td::before{content:attr(data-label);color:var(--mute);text-align:left;flex:none}
+  table td:first-child{display:block;text-align:left;font-weight:600;border-bottom:1px solid var(--rule);padding-bottom:4px;margin-bottom:2px}
+  table td:first-child::before{content:none}
+  table td:empty{display:none}
+}

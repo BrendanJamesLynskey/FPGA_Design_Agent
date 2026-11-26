@@ -58,11 +58,11 @@
   function fail(e) { return h("div", { class: "banner" }, h("strong", null, "Could not load. "), e.message || String(e)); }
   function table(head, rows, opts) {
     opts = opts || {};
-    var t = h("table", null, h("thead", null, h("tr", null, head.map(function (c, i) { return h("th", { class: (opts.num || []).indexOf(i) >= 0 ? "num" : null }, c); }))),
+    var t = h("table", { role: "table" }, h("thead", null, h("tr", { role: "row" }, head.map(function (c, i) { return h("th", { role: "columnheader", class: (opts.num || []).indexOf(i) >= 0 ? "num" : null }, c); }))),
       h("tbody", null, rows.map(function (r) {
         var cells = r.cells || r;
-        var tr = h("tr", { class: r.onclick ? "click" : null, tabindex: r.onclick ? "0" : null, on: r.onclick ? { click: r.onclick, keydown: function (e) { if (e.key === "Enter") r.onclick(); } } : null },
-          cells.map(function (c, i) { return h("td", { class: (opts.num || []).indexOf(i) >= 0 ? "num" : null }, c); }));
+        var tr = h("tr", { role: "row", class: r.onclick ? "click" : null, tabindex: r.onclick ? "0" : null, on: r.onclick ? { click: r.onclick, keydown: function (e) { if (e.key === "Enter") r.onclick(); } } : null },
+          cells.map(function (c, i) { return h("td", { class: (opts.num || []).indexOf(i) >= 0 ? "num" : null, "data-label": head[i] || null, role: "cell" }, c); }));
         return tr;
       })));
     return h("div", { class: "scroll" }, t);
