@@ -8,7 +8,7 @@ writes the structured layer from the user's English alone; a difference from the
 Roles (each its own model call; none sees the RTL; the purposes ``reqreview``, ``reqreader`` and ``reqreader3`` of the model table):
 
 - the **requirements reviewer**: an experienced FPGA engineer's pre-build questions by checklist topic (the knowledge-bank skill
-  ``procedures/requirements-review``, cited by id; a short public fallback when the bank is not present), and the early compliance assessment;
+  ``procedures/requirements-review/pre-build-review``, cited by id; a short public fallback when the bank is not present), and the early compliance assessment;
 - the **probe writer** (the reviewer's model, its own call): scenarios (edge cases, reset, back-pressure, overflow, simultaneous events), each with a
   constrained answer so that code can compare the answers;
 - **reader A and reader B**: the same model, two separate fresh calls that see only the requirements and the interface table;
@@ -40,7 +40,7 @@ STOP_PREFIX = "requirements:"
 REPORT_FILE = "REQUIREMENTS_READINESS.md"
 NEEDED_FILE = "REQUIREMENTS_NEEDED.md"
 
-#: the checklist topics (the headings of the knowledge-bank skill ``procedures/requirements-review``). A topic list is general engineering practice, so
+#: the checklist topics (the headings of the knowledge-bank skill ``procedures/requirements-review/pre-build-review``). A topic list is general engineering practice, so
 #: this fallback is public; the questions under each topic, seeded from the owner's own pre-build questions and the recorded failures, live in the bank.
 TOPICS = ("clocks and their sources", "clocks and crossings", "reset strategy", "I/O standards and board pins", "throughput and latency", "resource budget",
           "timing-closure risk", "numeric formats", "error and back-pressure", "power-up state", "test strategy", "interface", "feasibility", "requirement")
@@ -58,7 +58,7 @@ FALLBACK_CHECKLIST = """Pre-build checklist, by topic (ask only what the request
 - test strategy: how each requirement is checked, and what the board can measure.
 """
 
-KB_SKILL_ID = "procedures/requirements-review"
+KB_SKILL_ID = "procedures/requirements-review/pre-build-review"
 
 
 def load_checklist(knowledge: str | os.PathLike[str] | None = None) -> tuple[str, str]:
@@ -66,7 +66,7 @@ def load_checklist(knowledge: str | os.PathLike[str] | None = None) -> tuple[str
     the file's SHA-256 so a record says which checklist was used; the skill's text is private and is never copied into a public file."""
     import hashlib
     root = Path(knowledge or os.environ.get("FDA_KNOWLEDGE") or "")
-    f = root / "procedures" / "requirements-review" / "SKILL.md"
+    f = root / "procedures" / "requirements-review" / "pre-build-review" / "SKILL.md"
     if str(root) and f.is_file():
         t = f.read_text()
         return t, f"{KB_SKILL_ID}@sha256:{hashlib.sha256(t.encode()).hexdigest()[:12]}"
@@ -210,6 +210,30 @@ def clean_review(d: dict[str, Any]) -> dict[str, Any]:
             comp.append({"id": str(c["id"]), "status": c["status"], "why": R.norm(c.get("why")), "risk": c.get("risk") if isinstance(c.get("risk"), dict) else {}})
     blocking_any = any(f["blocking"] for f in fs)
     return {"findings": fs, "compliance": comp, "verdict": "not_ready" if blocking_any else "ready"}      # the verdict follows the findings, whatever the model wrote
+
+
+def problem_text(prompt: str, files: dict[str, str], produce: list[str], *, per_file: int = 15000, total: int = 60000) -> str:
+    """A whole request as a builder receives it (the problem text, the files it is given with their contents, cut to a budget with a visible mark, and the files it
+    must produce), for ``review_problem``: the reviewer reads this and nothing the builder does not have."""
+    out, used = [prompt.strip(), ""], 0
+    for path, body in files.items():
+        body = str(body)
+        cut = body[:per_file] + (f"\n[... {len(body) - per_file} more characters of this file not shown ...]" if len(body) > per_file else "")
+        if used + len(cut) > total:
+            out.append(f"--- {path} --- [not shown: {len(body)} characters]")
+            continue
+        used += len(cut)
+        out += [f"--- {path} ---", cut]
+    if produce:
+        out += ["", "Files the builder must produce: " + ", ".join(produce)]
+    return "\n".join(out)
+
+
+def review_problem(llm: LLM, text: str, checklist: str) -> dict[str, Any]:
+    """The reviewer on a request alone (no requirement rows, no interface table): used by the reviewer test set. Same system prompt, same cleaning."""
+    user = (f"Request (this is the whole of what the builder receives):\n{text}\n\nRequirements: none are written beyond the request.\n\n"
+            f"Checklist:\n{checklist}\n\nDo not give a compliance assessment (leave compliance empty).\n")
+    return clean_review(parse_json(llm(REVIEWER_SYSTEM, user)) or {})
 
 
 def write_probes(llm: LLM, spec: dict[str, Any]) -> tuple[list[dict[str, Any]], list[str]]:

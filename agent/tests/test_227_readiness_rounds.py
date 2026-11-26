@@ -214,11 +214,11 @@ def test_the_third_reader_at_strict_is_a_different_call_and_its_difference_is_a_
 def test_the_checklist_comes_from_the_knowledge_bank_skill_when_it_is_at_hand(tmp_path):
     txt, src = G.load_checklist(tmp_path)
     assert src == "public fallback checklist" and "clocks and their sources" in txt
-    sk = tmp_path / "procedures" / "requirements-review"
+    sk = tmp_path / "procedures" / "requirements-review" / "pre-build-review"
     sk.mkdir(parents=True)
     (sk / "SKILL.md").write_text("# requirements-review\nASK-ABOUT-THE-RESET-OF-EVERY-OUTPUT\n")
     txt, src = G.load_checklist(tmp_path)
-    assert "ASK-ABOUT-THE-RESET" in txt and src.startswith("procedures/requirements-review@sha256:")
+    assert "ASK-ABOUT-THE-RESET" in txt and src.startswith("procedures/requirements-review/pre-build-review@sha256:")
 
 
 def test_json_in_a_fence_or_a_sentence_is_read_and_garbage_is_none():
