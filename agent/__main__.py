@@ -89,6 +89,68 @@ def with_scope(s: dict, design: Path) -> dict:
     return s
 
 
+NEEDS_PERMISSION = "needs_permission"
+EXIT_NEEDS_PERMISSION, EXIT_PERMISSION_DENIED = 3, 4        # brief 222: distinct from success (0) and a usage error (2)
+
+
+def drive_exit(res: dict) -> int:
+    """The exit code of a driven run: 3 when it stopped to ask for a permission nobody was there to give, 4 when a permission was refused, else 0."""
+    if res.get("status") == NEEDS_PERMISSION:
+        return EXIT_NEEDS_PERMISSION
+    if str(res.get("stop") or "").startswith("permission denied"):
+        return EXIT_PERMISSION_DENIED
+    return exit_status(res)         # brief 210: 3 as well when the run stopped on unresolved requirements (both mean "a person has to answer"; the JSON on stdout says which)
+
+
+def permission_spec(a, name: str | None, ap) -> dict:
+    """The run's permission policy from the command line and the config file (the command line wins); a bad name is a usage error."""
+    from agent.core import permissions as _perm
+    try:
+        return _perm.resolve(a.permissions, a.allow, a.deny, a.ask_above_usd, project=name, cli_ask=a.ask)
+    except ValueError as e:
+        ap.error(str(e))
+
+
+def resume_permissions(a, rt, c: dict) -> int | None:
+    """On ``resume``: flags on the command line change the run's policy (a new mode drops what the old one was granted); a higher cost cap needs
+    ``raise_budget``. Returns an exit code when the resume must not go on, else None."""
+    from agent.core import permissions as _perm
+    pol = getattr(rt, "policy", None)
+    if pol is None:                                           # a runtime without a policy (a test double): nothing to change or check
+        return None
+    if a.permissions or a.allow or a.deny or a.ask or a.ask_above_usd is not None:
+        spec = pol.spec()
+        if a.permissions and a.permissions != pol.mode:
+            spec.update(mode=a.permissions, overrides={})
+        spec["source"] = "command line (resume)"
+        for n in a.ask:
+            spec["overrides"][n] = _perm.ASK
+        for n in a.allow:
+            spec["overrides"][n] = _perm.ALLOW
+        for n in a.deny:
+            spec["overrides"][n] = _perm.DENY
+        if a.ask_above_usd is not None:
+            spec["ask_above_usd"] = a.ask_above_usd
+        pol.change_mode(spec)
+        print(json.dumps({"permissions": {"mode": pol.mode, "overrides": pol.overrides, "source": pol.source}}))
+    prior = (c.get("run_limits") or {}).get("usd")
+    prior_scale = float((c.get("models") or {}).get("budget_scale") or 1.0)
+    raising = (a.max_usd is not None and prior is not None and float(a.max_usd) > float(prior)) or (a.budget_scale is not None and float(a.budget_scale) > prior_scale)
+    if raising:
+        d = pol.decide("raise_budget", None, f"cost cap {prior} -> {a.max_usd}, scale {prior_scale} -> {a.budget_scale}")
+        if d.result == _perm.DENY:
+            print(json.dumps({"status": "permission_denied", "needs": ["raise_budget"], "why": d.by, "run_id": rt.run_id}, indent=1))
+            return EXIT_PERMISSION_DENIED
+        if d.result == _perm.ASK:
+            print(json.dumps({"status": NEEDS_PERMISSION, "needs": ["raise_budget"], "run_id": rt.run_id,
+                              "how": f"python -m agent resume {rt.run_id} --allow raise_budget --max-usd {a.max_usd}" if a.max_usd is not None else
+                              f"python -m agent resume {rt.run_id} --allow raise_budget --budget-scale {a.budget_scale}"}, indent=1))
+            return EXIT_NEEDS_PERMISSION
+        if d.by.startswith("override") or d.by.startswith("mode"):
+            pol.grant(["raise_budget"], d.by, None, "a higher cost cap")
+    return None
+
+
 def _drive(graph, rt, cfg_lg, first_input, replies: list) -> dict:
     from langgraph.types import Command
 
@@ -106,8 +168,12 @@ def _drive(graph, rt, cfg_lg, first_input, replies: list) -> dict:
             if pending[0].get("kind") == "review" and pending[0].get("hardware"):      # brief 219 fix 7: a pause for the programming approval leaves the run record
                 from agent.graph.run import write_paused_record
                 write_paused_record(rt, snap.values, pending[0])
-            print(json.dumps({"paused": pending[0], "run_id": rt.run_id}, indent=1))
-            return {"paused": pending[0]}
+            out = {"paused": pending[0], "run_id": rt.run_id}
+            if pending[0].get("kind") == "permission":                                      # brief 222: a headless run stops here, on purpose, with what it needs
+                out = {"status": NEEDS_PERMISSION, **out, "needs": pending[0].get("needs"), "how": pending[0].get("resume"),
+                       "or": "python -m agent resume " + rt.run_id + " --allow <action> (or --permissions auto|full)"}
+            print(json.dumps(out, indent=1))
+            return {"paused": pending[0], **({"status": NEEDS_PERMISSION} if pending[0].get("kind") == "permission" else {})}
         reply = replies.pop(0)
         (rt.run_dir / "pending.json").unlink(missing_ok=True)
         print(json.dumps({"interrupt": pending[0].get("kind"), "stage": pending[0].get("stage"), "reply": reply}))
@@ -225,10 +291,12 @@ def config_from_json(c: dict):
                   hdl=c.get("hdl", "sv") or "sv",
                   design_plan=flag("design_plan"), closure=c.get("closure", "off") or "off",     # closure loop
                   docs=c.get("docs", "off") or "off",                                            # brief 68 C
+                  coverage_loop=c.get("coverage_loop", "off") or "off", req_sva=c.get("req_sva", "off") or "off",   # brief 218
                   models_file=Path(c["models_file"]) if c.get("models_file") not in (None, "None") else None,   # brief 108
                   model_config=c.get("model_config") or None, explicit=tuple(c.get("explicit") or ()),
                   allow_fable=str(c.get("allow_fable", False)) == "True",
-                  level1_seed=int(c["level1_seed"]) if c.get("level1_seed") not in (None, "None") else None)
+                  level1_seed=int(c["level1_seed"]) if c.get("level1_seed") not in (None, "None") else None,
+                  permissions=_literal(c.get("permissions")))                                    # brief 222
 
 
 def models_cmd(a, argv: list[str]) -> int:
@@ -337,11 +405,17 @@ def pickup_cmd(a) -> int:
     report["settings"] = {"board": board, "verif_level": verif}
     cfg = Config(spec_md=ddir / "spec.md", name=ddir.name, board=board, model=a.model, stop_after=a.stop_after,
                  harness=a.harness, cc_model=a.cc_model, cc_effort=a.cc_effort, verif_level=verif,
-                 profile=a.profile, roles=parse_roles(a.roles), docs=a.docs, **model_kwargs(a, sys.argv[1:]))
+                 profile=a.profile, roles=parse_roles(a.roles), docs=a.docs, permissions=permission_spec(a, ddir.name, build_parser()),
+                 **model_kwargs(a, sys.argv[1:]))
     cfg.role_models()
     if a.max_usd is not None:
         cfg.run_limits["usd"] = a.max_usd
-    rt = new_runtime(cfg, None, replay=a.replay, record=a.record)
+    from agent.core.permissions import NeverRefused
+    try:
+        rt = new_runtime(cfg, None, replay=a.replay, record=a.record)
+    except NeverRefused as e:                                # brief 222: a cost cap above the hard cap
+        print(f"resume: {e}", file=sys.stderr)
+        return 2
     try:
         state = pickup.prepare(ddir, rt, entry, a.change)
         if getattr(a, "revise_goals", None) is not None:           # brief 159: the typed goals (and a retarget) go into the run's copy, never the source
@@ -371,8 +445,7 @@ def pickup_cmd(a) -> int:
     print(json.dumps(report, indent=1))
     replies = json.loads(a.replies.read_text()) if a.replies else []
     graph = build_graph(checkpointer_for(rt.run_dir), routing=cfg.skill_routing != "off")
-    _drive(graph, rt, {"configurable": {"thread_id": rt.run_id}}, state, replies)
-    return 0
+    return drive_exit(_drive(graph, rt, {"configurable": {"thread_id": rt.run_id}}, state, replies))
 
 
 def revise_cmd(a) -> int:
@@ -581,6 +654,14 @@ def build_parser() -> argparse.ArgumentParser:
     r.add_argument("--closure", choices=["on", "off"], default="off",
                    help="after the build, loop on timing, area and power, re-checking simulation after every change, until all hold "
                         "or the loop stalls (stage 6; tested with fakes only; default off)")
+    r.add_argument("--coverage-loop", choices=["on", "off"], default="off",
+                   help="brief 218: at V3, when only stimulus-owned checks fail (bins, cover properties, line, toggle, mutation survivors), run rounds "
+                        "of coverage-directed stimulus inside the gate (the tests role is shown just the holes, the V3 evidence is rerun) until a "
+                        "plateau (no hole closed in two rounds), convergence or the round limit; every round is recorded (default off: today's V3)")
+    r.add_argument("--req-sva", choices=["on", "off"], default="off",
+                   help="brief 218: once V2 passes, write an SVA property for each checkable requirement from its text and the port list, "
+                        "read it back in English with a different model, compare in code, and prove or bounded-check it with a reachable "
+                        "cover of its trigger; a proved property becomes evidence on the requirement's row (needs sby; default off)")
     r.add_argument("--docs", choices=["on", "off"], default="on",
                    help="brief 68: at the end of the run the Designer writes handover.yaml and the flow renders README.md and "
                         "AGENT.md; the DOC gate (flow/handover.py checks) must pass for sign-off (doc.json)")
@@ -604,6 +685,18 @@ def build_parser() -> argparse.ArgumentParser:
         p.add_argument("--tape", help="with --deterministic: the tape directory (default ~/.local/share/fpga_design_agent/tapes/<design name>)")
         p.add_argument("--record-tape", help="brief 107: record every model call to this tape directory (private; outside the repo or git-ignored)")
         p.add_argument("--replay-tape", help="brief 107: serve every model call from this tape directory (level 2); a missing call is an error")
+        from agent.core import permissions as _perm
+        p.add_argument("--permissions", choices=list(_perm.MODE_ORDER), metavar="MODE",
+                       help="brief 222: what the run may do without asking: plan | ask | auto | full (default: the config file's mode, else auto). "
+                            "Plan reads and plans only; Ask runs simulation itself and asks before every other gated action; Auto asks only before the board, "
+                            "registers, instruments and a higher budget; Full also does those, inside the lab file's limits. Flash, boot images, eFUSE, BBRAM and keys are never allowed. See docs/agent.md")
+        p.add_argument("--allow", action="append", default=[], choices=list(_perm.ACTION_NAMES), metavar="ACTION",
+                       help="brief 222: allow one gated action whatever the mode says (repeatable; the actions are listed in docs/agent.md)")
+        p.add_argument("--ask", action="append", default=[], choices=list(_perm.ACTION_NAMES), metavar="ACTION",
+                       help="brief 222: ask before one gated action whatever the mode says (repeatable)")
+        p.add_argument("--deny", action="append", default=[], choices=list(_perm.ACTION_NAMES), metavar="ACTION",
+                       help="brief 222: deny one gated action whatever the mode says (repeatable); a run that needs it stops with the reason")
+        p.add_argument("--ask-above-usd", type=float, metavar="N", help="brief 222: ask before spending model money past this run total in USD (default 1.00)")
     rs = sub._name_parser_map["resume"]
     rs.add_argument("run_id", help="a run id under runs/, or a design directory containing handover.yaml; a name that is not such a "
                                    "directory is taken as a run id")
@@ -768,10 +861,13 @@ def _run_main(a, args: list[str], ap: argparse.ArgumentParser) -> int:
                      skill_routing=a.skill_routing, router_model=a.router_model, router_k=a.router_k,
                      harness_arms=a.harness_arm, hdl=a.hdl,
                      design_plan=a.design_plan, closure=a.closure, docs=a.docs,          # closure loop; brief 68 C
+                     permissions=permission_spec(a, name, ap),                          # brief 222
+                     coverage_loop=a.coverage_loop, req_sva=a.req_sva,                   # brief 218
                      **{**model_kwargs(a, args), "models_file": a.models_file or project_models_file(a.spec)})
         cfg.role_models()                                     # fail early on an unknown profile, role or forbidden model
         if a.max_usd is not None:
             cfg.run_limits["usd"] = a.max_usd
+        from agent.core.permissions import NeverRefused
         from agent.models.tape import DeterminismError
         try:
             tspec = tape_spec_from(a, cfg)
@@ -779,10 +875,12 @@ def _run_main(a, args: list[str], ap: argparse.ArgumentParser) -> int:
         except DeterminismError as e:
             print(f"deterministic: {e}", file=sys.stderr)
             return 2
+        except NeverRefused as e:                             # brief 222: a cost cap above the hard cap, never allowed in any mode
+            print(f"run: {e}", file=sys.stderr)
+            return 2
         graph = build_graph(checkpointer_for(rt.run_dir), routing=cfg.skill_routing != "off")
-        s = _drive(graph, rt, {"configurable": {"thread_id": rt.run_id}},
-                   {"run_id": rt.run_id, "stage": 0, "visits": {}, "history": []}, replies)
-        return exit_status(s)
+        return drive_exit(_drive(graph, rt, {"configurable": {"thread_id": rt.run_id}},
+                                 {"run_id": rt.run_id, "stage": 0, "visits": {}, "history": []}, replies))
     # resume
     run_dir = ROOT / "runs" / a.run_id
     c = json.loads((run_dir / "config.json").read_text())
@@ -795,6 +893,7 @@ def _run_main(a, args: list[str], ap: argparse.ArgumentParser) -> int:
         print(f"resume: the model configuration changed since the run started (table hash {was} then, {cfg.model_table().hash} now); "
               "restore the models.yaml files, or pass --allow-model-change", file=sys.stderr)
         return 2
+    from agent.core.permissions import NeverRefused
     from agent.models.tape import DeterminismError
     try:
         tspec = tape_spec_from(a, cfg)
@@ -802,6 +901,12 @@ def _run_main(a, args: list[str], ap: argparse.ArgumentParser) -> int:
     except DeterminismError as e:
         print(f"deterministic: {e}", file=sys.stderr)
         return 2
+    except NeverRefused as e:                                 # brief 222: a cost cap above the hard cap
+        print(f"resume: {e}", file=sys.stderr)
+        return 2
+    stop_code = resume_permissions(a, rt, c)                  # brief 222: flags that change the mode; a higher cost cap needs raise_budget
+    if stop_code is not None:
+        return stop_code
     from agent.core import managed                    # brief 102F: a managed project's run continues the request it started with
     try:
         mproj = managed.load(Path(rt.design))
@@ -839,7 +944,7 @@ def _run_main(a, args: list[str], ap: argparse.ArgumentParser) -> int:
             return 2
         lg = graph.update_state(target.config, {"stage": a.rewind, "fails": [], "stop": None}, as_node="advance")
         first = None
-    return exit_status(_drive(graph, rt, lg, first, replies))
+    return drive_exit(_drive(graph, rt, lg, first, replies))
 
 
 def main(argv: list[str] | None = None) -> int:

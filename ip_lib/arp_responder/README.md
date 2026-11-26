@@ -4,6 +4,8 @@ Address Resolution Protocol (ARP, RFC 826): answers 'who has this IPv4 address?'
 
 Generated from `ip.yaml` by `flow/net/ipdoc.py`; do not edit by hand.
 
+**Verification: not assessed: no requirements recorded (no verif/testplan.yaml), so nothing here is traced to a requirement.** [VERIFIED.md](VERIFIED.md) is the generated, hash-pinned record; [what the label means](../../docs/verified.md).
+
 Status: Meets 125 MHz out of context on xc7a100t-1 with 4 and 16 cache entries (Fmax estimates 151 and 127 MHz; 16 entries by +0.15 ns only) and with margin on xck26-2LV (228-288 MHz). Version 0.2.0 sends the first reply byte 4 clocks after the request's last byte (was 3). Simulated against an RFC 826 model, with scapy as a second decoder and an independent adversarial bench; built alone out of context with Vivado 2026.1 (single runs at 8 ns, estimates); not yet run on a board (the Nexys A7 network design carries it behind eth_mac_rmii; built, not yet run: a cable check comes first, see designs/b63d_nexys_net/host/PLAN.md).
 
 ## Parameters

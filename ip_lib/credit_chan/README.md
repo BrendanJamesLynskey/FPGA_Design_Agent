@@ -4,6 +4,8 @@ Credit-based pipelined channel between two AXI4-Stream ports: LF plain register 
 
 Generated from `ip.yaml` by `flow/net/ipdoc.py`; do not edit by hand.
 
+**Verification: not assessed: no requirements recorded (no verif/testplan.yaml), so nothing here is traced to a requirement.** [VERIFIED.md](VERIFIED.md) is the generated, hash-pinned record; [what the label means](../../docs/verified.md).
+
 Status: simulated clock by clock against a Python model with an AXI4-Stream rule monitor (cocotb, Icarus Verilog 12) at 19 points below, at and above the credit round trip; credit conservation, buffer bounds, order and the stream rules proved by k-induction at W = 4 (SymbiYosys); 12 of 12 seeded faults caught; not built with Vivado yet (queued); not run on a board.
 
 ## Parameters

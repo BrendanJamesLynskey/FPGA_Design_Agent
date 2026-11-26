@@ -30,6 +30,8 @@ python -m agent models check [--probe]                                         #
 | `options` | the strategy generator of `agent improve` (brief 104): two to four ways to improve a loaded design, checked by code | text | Claude Code, `claude-sonnet-5-5`, effort medium (a `default:` does not move it; name it explicitly) |
 | `proof` | the Lean proof writer (brief 125, `formal/lean/tools/prove.py`): writes a proof for a theorem statement a human approved, with `lake build` feedback; the kernel is the checker | text | Claude Code, `claude-sonnet-5-5`, effort medium, 1500 s timeout (a `default:` does not move it; name it explicitly) |
 | `doc_crossread` | the blind document reader (brief 114): sees only a vendor-document excerpt, writes the facts code depends on with citations; code does the comparison, never a model | text, chat | Claude Code, `claude-sonnet-5-5`, effort medium (opt-in like `options`: a `default:` does not move it; name it explicitly) |
+| `assertgen` | the assertion writer (brief 218, `flow/sva_req.py`, behind `--req-sva on`): one SVA property from a requirement and the port list, never the RTL; the formal flow proves it, never a model | text | Claude Code, `claude-sonnet-5-5`, effort low (opt-in: a `default:` does not move it; name it explicitly) |
+| `assertback` | the assertion reader (brief 218): reads the property alone and says in English what it requires; code compares that with the requirement, never a model. Keep it a different model from `assertgen` | text | Claude Code, `claude-haiku-5-5`, effort low (opt-in like `assertgen`) |
 | `embed` | reserved: embeddings | chat | off; the only embedder is fastembed's local model in `agent/core/skill_index.py` (in-process, tied to the bank's stored vectors), not routed |
 
 A key is a purpose, or `purpose@stage` for one stage of the machine (`rtl@timing-closure`; stage names as in `agent/graph/stages.py`).
@@ -42,7 +44,7 @@ arm (a `claude_code` endpoint) or Deep Agents over a chat endpoint (the other ki
 | kind | what | options it accepts | key |
 |---|---|---|---|
 | `claude_code` | the Max subscription, headless `claude -p` ("API-like mode"); no dollars are reported, only the plan's estimate | `effort`, `timeout_s` | the plan's token (`CLAUDE_CODE_OAUTH_TOKEN`, or the mode-600 file) |
-| `anthropic_api` | the Messages API; reports tokens, so the agent computes each call's dollars from the response `usage` and the model's price table (see [Anthropic API: cost, caching, temperature, budgets](#anthropic-api-cost-caching-temperature-budgets-brief-209b)) | `temperature`, `max_tokens`, `stop`, `thinking_budget`, `timeout_s`, `retries` | `key_env` (default `ANTHROPIC_API_KEY`) |
+| `anthropic_api` | the Messages API; reports tokens, so the agent computes each call's dollars from the response `usage` and the model's price table (see [Anthropic API: cost, caching, temperature, budgets](#anthropic-api-cost-caching-temperature-budgets-brief-209b)) | `temperature`, `max_tokens`, `stop`, `thinking_budget`, `timeout_s`, `retries`, `effort` | `key_env` (default `ANTHROPIC_API_KEY`) |
 | `openrouter` | OpenRouter chat completions, data collection denied, provider cost reported | `temperature`, `seed`, `max_tokens`, `stop`, `effort`, `timeout_s`, `retries` | `key_env` (default `OPENROUTER_API_KEY`, or the owner's mode-600 file) |
 | `openai_compatible` | any base URL: vLLM, a local model, a specialist fine-tune (brief 107's hook). OpenRouter's extra fields are sent only when the host is `openrouter.ai` | as `openrouter` | `key_env`; none needed on `localhost` |
 | `replay` | recorded replies in order (`path:` of a fixture) | none | none |
@@ -99,6 +101,24 @@ coding and tool-heavy work at moderate cost (the default of the model is `high`)
 (the guide: a cut-off is a failed attempt, not to be retried at the same cap, and a larger cap would need streaming): its tool calls are dropped (their
 arguments are incomplete), the role gets the partial text plus a note saying the reply was cut off and to do less in one reply, the call is paid and
 charged, a line `FDA_TRUNCATED` is printed, the `model_calls.jsonl` row has `stop_reason: "max_tokens"`, and the run summary counts `truncated_calls`.
+
+**Long replies: streaming, the writing roles' limit, file by file (brief 224).** Every `anthropic_api` request is **streamed** (server-sent events through the
+same `urllib` call; no second code path), so a long reply is not killed by `timeout_s`, which now is the longest wait between two events (300 s for
+`claude-sonnet-5-5`), not the length of a reply. Usage and cost are taken from the stream (input and cache tokens from the first event, output tokens from
+the last) and recorded per call as before. A stream that drops, ends before `message_stop`, or carries an `overloaded_error`/`api_error` event is asked
+for again once (`retries`), logged as `FDA_STREAM_DROPPED`, counted in `stream_retries` of the `model_calls.jsonl` row, and after the second failure raised as an
+error: a partial reply is never returned as a success (the dropped attempt's tokens are billed by the API but not in the run's cost; the cost
+guard sees them only through the account). The writing purposes (`rtl`, `tests`, `constraints`) take the model's `writing_max_tokens` in place of
+`max_tokens`: built in for `claude-sonnet-5-5`, **32000** (twice the 16000 of the other purposes; the pilot's 16000 limit cut off every whole-design reply of the
+FIR, async FIFO and glitch-free mux designs after about 134 s). It is not the largest value the model may accept: the cost of one full 32000-token reply is
+32000 x 10 USD per million = 0.32 USD, which a stage USD budget (scaled by `budget_scale`) and the run cap still bound. Order of precedence: a purpose's own
+`options: {max_tokens: N}` (config or CLI), then `writing_max_tokens` (writing purposes only), then the model's `max_tokens`, then the kind default. A `models:`
+layer that sets `max_tokens` without `writing_max_tokens` means it for every purpose (it removes the built-in writing limit).
+
+What a user could get wrong: (1) a high `max_tokens` with a low per-run cap (`--max-usd`) stops a run early, because one cut-off reply costs the full limit
+(0.32 USD at 32000, 0.64 at 64000) and the Meter charges it; raise `budget_scale` or the cap with the limit. (2) A limit the model does not accept is a
+non-retried HTTP 400 on the first call. (3) The Verifier (`tests`) writes its files through an in-memory backend that is copied to disk when the role
+ends, so a cut-off there loses every file of the reply; only the Designer is called again inside the visit.
 
 **Budgets that follow the model's price.** Stage USD budgets (`stages.MACHINE`) and the run cap (`RUN_LIMITS`) were sized for the cheap default model.
 `budget_scale` (top-level key of any layer, or `--budget-scale N` on `run` and `resume`) multiplies every stage's USD budget and the default run cap by
@@ -160,7 +180,7 @@ default does not hide the file.
   kind supports. The one exception is the built-in soft defaults (`temperature 0.2`, `timeout_s 180`, `retries 1` on chat kinds, `effort
   medium` on `claude_code`): they are dropped when the kind cannot take them, so switching a purpose from one kind to another is a one-line change.
 - **`effort: null` means unset** (the CLI default), not "medium".
-- **`default:` skips** the opt-in purposes (`route`, `embed` stay off; `options` and `doc_crossread` keep their own entries, Claude Code on the plan) and any purpose the kind cannot serve (`latency` needs
+- **`default:` skips** the opt-in purposes (`route`, `embed` stay off; `options`, `doc_crossread`, `assertgen` and `assertback` keep their own entries, Claude Code on the plan) and any purpose the kind cannot serve (`latency` needs
   tool calls through a chat endpoint). Naming such a purpose explicitly on `claude_code` is an error at load.
 - **`doc` and `constraints` inherit `rtl`** until a layer sets them. A `default:` sets them explicitly.
 - **`anthropic_api` and `claude_code` calls are counted differently:** the run's USD cap counts dollars: provider-reported (OpenRouter) or, for

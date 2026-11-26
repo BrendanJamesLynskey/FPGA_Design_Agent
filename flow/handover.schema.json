@@ -96,7 +96,11 @@
                                  "model": {"type": "string"}, "harness": {"type": "string"}, "loops": {"type": "integer"},
                                  "turns": {"type": "integer"}, "wall_s": {"type": "number"}, "tokens": {"type": "integer"},
                                  "cost_usd": {"type": "number"}, "plan_cost_estimate_usd": {"type": "number"},
-                                 "stop": {"type": "string"}}},
+                                 "stop": {"type": "string"},
+                                 "permissions": {"type": "object", "additionalProperties": false, "required": ["mode"],
+                                                 "properties": {"mode": {"type": "string"}, "source": {"type": "string"},
+                                                                "overrides": {"type": "object", "additionalProperties": {"type": "string"}},
+                                                                "decisions": {"type": "array", "items": {"type": "string"}}}}}},
     "requirements_report": {"type": "string", "pattern": "^[A-Za-z0-9_./-]+$", "description": "brief 210: the requirements verification report of the design (REQUIREMENTS_REPORT.md), a file in the design directory"},
     "assumptions": {"type": "array", "description": "brief 210: the questions the agent settled with its own default, with their risk class (Assumptions you did not confirm)", "items": {
       "type": "object", "additionalProperties": false, "required": ["question", "risk", "used", "how"],

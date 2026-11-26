@@ -2,6 +2,8 @@
 
 <!-- Generated from handover.yaml by flow/handover.py (brief 68). Edit handover.yaml, or the text between the prose markers, then run: python -m flow.handover write designs/b194_assurance -->
 
+**Verification: not assessed: no requirements recorded (no verif/testplan.yaml), so nothing here is traced to a requirement.** [VERIFIED.md](VERIFIED.md) is the generated, hash-pinned record; [what the label means](../../docs/verified.md).
+
 A burst sequencer in front of a 512 x 64 FIFO with an accumulating checksum, AXI4-Stream handshakes. Each reliability structure is a parameter (ECC 0/1/2, parity, safe-state FSM, TMR on the remaining-words counter, watchdog) so that its area, Fmax, latency and what it catches in a seeded single-event-upset simulation are measured against the plain design. It is the demonstration design of the verification profiles and is not a held-out benchmark task.
 
 Not in scope:
@@ -67,7 +69,7 @@ Interfaces:
 | the full seeded fault campaign (xsim for the ECC primitive variants); needs Icarus Verilog 12 and Vivado 2026.1 xsim | `python3 designs/b194_assurance/tests/run_faults.py --trials 300 --seed 1` | no | about 12 min |
 | out-of-context cost runs and netlist checks; needs Vivado 2026.1, the OSS CAD Suite for eqy, a heavy slot (take_heavy_slot.sh) | `python3 -m flow.assurance cost --ctrl; python3 -m flow.assurance costs; python3 -m flow.assurance_profiles netlist` | yes | about 30 min |
 
-Tool: Vivado 2026.1. Build ID of the inputs at handover: `none` (`python flow/manifest.py show designs/b194_assurance`: what a rebuild of today's sources and flow would carry; it changes when any build input or the flow changes, so it can differ from the build ID in an older evidence record). Knowledge-bank pin: `5e2eab8`.
+Tool: Vivado 2026.1. Build ID of the inputs at handover: `none` (`python flow/manifest.py show designs/b194_assurance`: what a rebuild of today's sources and flow would carry; it changes when any build input or the flow changes, so it can differ from the build ID in an older evidence record). Knowledge-bank pin: `6185830`.
 
 | File | What |
 |---|---|

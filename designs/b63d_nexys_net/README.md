@@ -2,6 +2,8 @@
 
 <!-- Generated from handover.yaml by flow/handover.py (brief 68). Edit handover.yaml, or the text between the prose markers, then run: python -m flow.handover write designs/b63d_nexys_net -->
 
+**Verification: not assessed: no requirements recorded (no verif/testplan.yaml), so nothing here is traced to a requirement.** [VERIFIED.md](VERIFIED.md) is the generated, hash-pinned record; [what the label means](../../docs/verified.md).
+
 Answers ARP and ping, receives and sends UDP, joins IGMP multicast groups and counts frames on the Nexys A7's 10/100 Ethernet PHY (LAN8720A, RMII). A UDP service on port 5000 replies with the tag N63D and 21 statistics counters. A frame injector and capture let the host check the stack through the PHY's loopback with no cable. Built and simulated; it has not been run on a board.
 
 Not in scope:
@@ -84,7 +86,7 @@ Interfaces:
 | build the design; needs local Vivado 2026.1 and a heavy slot (take_heavy_slot.sh) | `flow/run_vivado.sh designs/b63d_nexys_net base` | yes | about 5 min |
 | board run phase 1, PHY loopback, no cable; needs the board programmed with flow/run_vivado.sh designs/b63d_nexys_net program, and no cable in J4; not yet run | `python3 designs/b63d_nexys_net/host/board_run.py --port <shell UART> --phase loopback --out board_loopback.json` | no | - |
 
-Tool: Vivado 2026.1. Build ID of the inputs at handover: `616ca3f8` (`python flow/manifest.py show designs/b63d_nexys_net`: what a rebuild of today's sources and flow would carry; it changes when any build input or the flow changes, so it can differ from the build ID in an older evidence record). Knowledge-bank pin: `5e2eab8`.
+Tool: Vivado 2026.1. Build ID of the inputs at handover: `befd2e43` (`python flow/manifest.py show designs/b63d_nexys_net`: what a rebuild of today's sources and flow would carry; it changes when any build input or the flow changes, so it can differ from the build ID in an older evidence record). Knowledge-bank pin: `6185830`.
 
 | File | What |
 |---|---|

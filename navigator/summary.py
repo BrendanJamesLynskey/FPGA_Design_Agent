@@ -51,6 +51,10 @@ def _pending(rd: Path) -> dict[str, Any] | None:
         out.update(qid=str(p.get("id"))[:12], ask=redact.text(str(p.get("question") or ""))[:400], default=redact.text(str(p.get("default") or ""))[:200], why=redact.text(str(p.get("reason") or ""))[:300])
     if p.get("kind") == "paused":
         out.update(resume=str(p.get("resume") or "")[:120])
+    if p.get("kind") == "permission":                                  # brief 222: what the run needs and why; answered allow or deny
+        out.update(mode=str(p.get("mode") or "")[:12], needs=[str(x)[:40] for x in (p.get("needs") or [])][:12],
+                   actions=[{"action": str(a.get("action"))[:40], "label": redact.text(str(a.get("label") or ""))[:80], "plain": redact.text(str(a.get("plain") or ""))[:300]}
+                            for a in (p.get("actions") or []) if isinstance(a, dict)][:12])
     return out
 
 
@@ -118,6 +122,8 @@ def summarise(runs_dir: Path, run_id: str, now: float | None = None) -> dict[str
             blocked.append(f"paused for your review after stage {pend['stage']} ({pend.get('stage_name')}): approve, edit or rewind with python -m agent resume {run_id}")
         elif pend["kind"] == "question":
             blocked.append("waiting for your answer to a question the agent asked (shown below with its default)")
+        elif pend["kind"] == "permission":
+            blocked.append(f"waiting for your permission at stage {pend['stage']} ({pend.get('stage_name')}): " + ", ".join(pend.get("needs") or []) + f" (mode {pend.get('mode')}; allow or deny below)")
         elif pend["kind"] == "paused":
             blocked.append(f"paused at your request after stage {pend['stage']} ({pend.get('stage_name')}): {pend.get('resume')}")
     queued = [r for r in reqs if r["status"] == "queued"]
@@ -131,7 +137,7 @@ def summarise(runs_dir: Path, run_id: str, now: float | None = None) -> dict[str
         nxt = "nothing: the run has ended"
     elif pend is not None:
         doing = "waiting"
-        nxt = {"review": "the next stage after you answer", "question": "the stage that asked, once you answer", "paused": "the next stage after a resume"}.get(pend["kind"], "the next stage after you answer")
+        nxt = {"review": "the next stage after you answer", "question": "the stage that asked, once you answer", "permission": "the stage that asked, once you allow it", "paused": "the next stage after a resume"}.get(pend["kind"], "the next stage after you answer")
     elif cur is None:
         doing = "starting"
         nxt = "stage 0 (clarify)"

@@ -7,6 +7,7 @@ Verifying a design by sensing what it does on a board and feeding the result bac
 | [cdc_soak/](cdc_soak/README.md) | the CDC soak rig (brief 11b/11c) |
 | [instruments/](instruments/) | host-side drivers: board lock, UART-shell instrument hosts (XADC, logic analyser, frequency and duty, frame CRC), audio capture and tone measurement, JTAG sysmon, logic-analyser decode (UART, SPI, I2C), M2K (libm2k), Pluto swept analyser and tracking generator, Red Pitaya SCPI, golden models |
 | [ip_tb/](ip_tb/) and [tests/](tests/) | cocotb benches and pytest for the five library instruments in [ip_lib](../ip_lib/README.md) (`freq_duty_counter`, `frame_crc`, `dds_awg`, `logic_analyser`, `adc_histogram`), the ILA known-answer checks, the driver tests |
+| [lab.py](lab.py), [lab_bringup.py](lab_bringup.py), [lab_drivers.py](lab_drivers.py), [lab.example.yaml](lab.example.yaml) | the lab file (brief 221): which instruments exist, which a script may drive, method choice per requirement, instrument steps in a bring-up, adapters and mocks; docs in [docs/agent.md](../docs/agent.md#the-lab-instruments-the-agent-can-use-hillabpy-brief-221) |
 | [ip_faults.py](ip_faults.py) | seeded-fault runner for those five (16 faults, all caught: [results/b30/faults.json](../results/b30/faults.json)) |
 
 The stage that runs a design's `hil.yaml` after the board build is [flow/hil.py](../flow/hil.py); the demonstration designs are

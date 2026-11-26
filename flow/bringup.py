@@ -16,6 +16,7 @@ Steps (each recorded with pass/fail and its time; the first failure stops the ru
   5. program_ila   flow/program.py <design> ila (bitstream + .ltx)
   6. ila_captures  flow/ila_capture.tcl in Vivado, driven in step over the UART by
                    designs/<name>/hw_checks.py; each capture exported to CSV + VCD and checked
+  4b. lab_instruments  brief 221: the design's lab_steps.yaml (instrument readings; passes when there is none)
   7. still_alive   the design still answers with the same identity and a scratch value
                    written before the captures (a reset or brown-out would clear it)
 Writes results/f0b/<design>_bringup.json (this run) and results/f0b/runs/<design>_<time>.json;
@@ -81,10 +82,11 @@ class StepFailed(Exception):
 
 class Run:
     def __init__(self, design: Path, board: str | None, keep: bool, results: Path = RESULTS, cable_serial: str | None = None,
-                 bus_factory: Callable[[str], Any] | None = None) -> None:
+                 bus_factory: Callable[[str], Any] | None = None, lab_runner: Callable[[Path], dict[str, Any] | None] | None = None) -> None:
         self.transport = host_transport.board_transport(board)
         self.cable_serial = cable_serial
         self.bus_factory = bus_factory or host_transport.VivadoBus      # the tests pass a mock
+        self.lab_runner = lab_runner                                    # brief 221: the tests pass mock instruments; None = the owner's real run
         self.results = results
         self.design = design
         self.name = design.name
@@ -266,6 +268,26 @@ class Run:
         return {"pass": ok, "build_stamp": f"{ident['build_stamp']:08x}", "scratch_kept": scratch == SENTINEL,
                 "status": status}
 
+    def has_lab_steps(self) -> bool:
+        return (self.design / "lab_steps.yaml").is_file()      # a design with no instrument steps has the same step list as before brief 221
+
+    def lab_instruments(self) -> dict[str, Any]:
+        """Brief 221: the design's instrument steps (``lab_steps.yaml``: scripted readings, manual readings the owner types, wiring and drive
+        confirmations). No file: nothing to do (passes). Real instruments are opened only here, in a run the owner starts."""
+        from hil import lab_bringup
+        if self.lab_runner is not None:
+            res = self.lab_runner(self.design)
+        else:
+            res = lab_bringup.run_for_design(self.design, dry_run=False, ask=lab_bringup._tty_ask, confirm=lab_bringup._tty_confirm)
+        if res is None:
+            return {"pass": True, "note": "the design has no instrument steps (no lab_steps.yaml)"}
+        bad = [f"{r['step']}: {r['result']} {r.get('detail', '')}".strip() for r in res["rows"] if r["result"] in ("fail", "refused", "error", "not_confirmed")]
+        out = {"pass": res["pass"], "mode": res["mode"], "rows": [{k: r.get(k) for k in ("step", "requirement", "instrument", "channel", "method", "result", "value", "unit", "expected", "error_ppm")}
+                                                                    for r in res["rows"]]}
+        if bad:
+            out["why"] = self.scrub("; ".join(bad))[:1500]
+        return out
+
     # --- the JTAG register bus transport (brief 209a) -----------------------------------------
     def jtag_discover(self) -> dict[str, Any]:
         if not self.cable_serial:
@@ -321,12 +343,16 @@ class Run:
                 self.step("discover", self.jtag_discover)
                 self.step("program_base", self.jtag_program)
                 self.step("bus_checks", self.bus_checks)
+                if self.has_lab_steps():
+                    self.step("lab_instruments", self.lab_instruments)
                 self.step("still_alive", self.jtag_still_alive)
             else:
                 self.step("power_ok", self.power)
                 self.step("discover", self.discover)
                 self.step("program_base", lambda: self.program("base"))
                 self.step("uart_tests", self.uart_tests)
+                if self.has_lab_steps():
+                    self.step("lab_instruments", self.lab_instruments)       # the base bitstream is still loaded
                 self.step("program_ila", lambda: self.program("ila"))
                 self.step("ila_captures", self.ila_captures)
                 self.step("still_alive", self.still_alive)

@@ -2,6 +2,8 @@
 
 <!-- Generated from handover.yaml by flow/handover.py (brief 68). Edit handover.yaml, or the text between the prose markers, then run: python -m flow.handover write designs/b30_hil_audio_pinfault -->
 
+**Verification: not assessed: no requirements recorded (no verif/testplan.yaml), so nothing here is traced to a requirement.** [VERIFIED.md](VERIFIED.md) is the generated, hash-pinned record; [what the label means](../../docs/verified.md).
+
 The seeded-fault twin of b30_hil_audio. It builds from the same RTL, but its constraint file puts the audio output AUD_PWM on the pin of LED 0, so the tone never reaches the audio jack. It passes simulation and every check made inside the FPGA, and only the measurement at the jack fails, which is the point of the demonstration. The hardware-in-the-loop run of this design therefore reports a failure by intent.
 
 Not in scope:
@@ -66,7 +68,7 @@ Interfaces:
 | build and run the gates; needs local Vivado 2026.1 and a heavy slot (take_heavy_slot.sh) | `flow/run_vivado.sh designs/b30_hil_audio_pinfault base` | yes | about 4 min |
 | program the SRAM and run the hardware-in-the-loop checks (expected overall result fail, from the audio check); needs the Nexys A7 on wall power, the board lock, and an audio interface cabled from the Nexys audio jack | `python3 flow/hil.py designs/b30_hil_audio_pinfault` | no | about 1 min |
 
-Tool: Vivado 2026.1. Build ID of the inputs at handover: `fd1f668b` (`python flow/manifest.py show designs/b30_hil_audio_pinfault`: what a rebuild of today's sources and flow would carry; it changes when any build input or the flow changes, so it can differ from the build ID in an older evidence record). Knowledge-bank pin: `5e2eab8`.
+Tool: Vivado 2026.1. Build ID of the inputs at handover: `4ab0c933` (`python flow/manifest.py show designs/b30_hil_audio_pinfault`: what a rebuild of today's sources and flow would carry; it changes when any build input or the flow changes, so it can differ from the build ID in an older evidence record). Knowledge-bank pin: `6185830`.
 
 | File | What |
 |---|---|

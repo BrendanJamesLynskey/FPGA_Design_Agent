@@ -1,0 +1,305 @@
+# Brief 68 handover: the facts behind README.md and AGENT.md (docs/documentation_standard.md).
+# Measurement values and every sha256 are filled from the records by `python -m flow.handover fill`;
+# do not type them. Render with `python -m flow.handover write <this directory>`.
+schema: fda-handover/1
+id: p4_fir_dsp
+title: 32-tap symmetric FIR filter with FIFOs and JTAG register access (specified, RTL not written)
+kind: agent-run
+produced_by: agent
+summary: The design is specified as a 32-tap symmetric low-pass FIR filter on the KR260 (xck26). Samples are pushed through
+  a register bus behind jtag_bus into an input FIFO, a RUN command streams them through a 16-DSP datapath at 250 MHz from
+  an MMCM, and results are popped from an output FIFO. The run stopped after the clarify and board-and-device-planning stages
+  passed; no RTL was written, so nothing was simulated, synthesised or measured.
+scope_not:
+- Not a runtime-loadable coefficient filter; coefficients are fixed, symmetric, and come from data/coeffs.hex.
+- Not an AXI4-Lite peripheral and does not use a GT transceiver channel; the SFP+ transmitter is only held disabled.
+- Not built or verified; there is no RTL, bitstream, or timing, power or resource result.
+target:
+  part: xck26-sfvc784-2LV-c
+  board: kr260
+  tool: Vivado 2026.1
+  top: fir32_top
+clocks:
+- name: clk_25
+  mhz: 25.0
+  source: runs/20261126-015902-dd64/p4_fir_dsp/design.xdc
+resets:
+- name: rst
+  active: high
+  note: Per spec.yaml it is driven by jtag_bus, synchronous to clk, and synchronised into clk_dsp with MMCM lock gating
+    the datapath reset. No RTL exists to confirm this.
+interfaces:
+- name: clk25
+  type: input, 1 bit, 25 MHz board clock
+  note: spec.yaml names it clk25 but design.xdc constrains and places a port named clk_25 on pin C3 with a 40 ns period.
+- name: led
+  type: output, 2 bits
+  note: design.xdc places led[0] on F8 and led[1] on E8, LVCMOS18. Per spec, led[0] shows BUSY and led[1] a heartbeat.
+- name: sfp_tx_disable
+  type: output, 1 bit
+  note: design.xdc places it on Y10, LVCMOS33. Per spec it is constant 1 and no GT channel is used.
+registers:
+- offset: 0
+  name: ID
+  access: RO
+  reset: 546570241
+  bits: 31:0 design ID
+- offset: 4
+  name: BUILD
+  access: RO
+  reset: 0
+  bits: 31:0 USR_ACCESS word
+- offset: 8
+  name: SCRATCH
+  access: RW
+  reset: 0
+  bits: 31:0 read back what was written
+- offset: 16
+  name: CTRL
+  access: RW
+  reset: 0
+  bits: 0 CLEAR self-clearing; 1 RUN self-clearing
+- offset: 20
+  name: IN_PUSH
+  access: WO
+  reset: 0
+  bits: 15:0 sample
+- offset: 24
+  name: OUT_POP
+  access: RO
+  reset: 0
+  bits: 31 valid; 15:0 oldest output; read pops
+- offset: 28
+  name: STATUS
+  access: RO
+  reset: 0
+  bits: 0 BUSY; 15:4 input FIFO count; 31:20 output FIFO count
+- offset: 32
+  name: SAT_COUNT
+  access: RO
+  reset: 0
+  bits: 31:0 saturated outputs since CLEAR
+- offset: 36
+  name: SAMPLES_DONE
+  access: RO
+  reset: 0
+  bits: 31:0 samples processed since CLEAR
+parameters:
+- name: TAPS
+  value: 32
+  legal: fixed at 32 by the symmetric structure
+  note: Number of filter taps; the datapath is specified for exactly 32.
+- name: UNIQUE_COEFFS
+  value: 16
+  legal: TAPS/2
+  note: One DSP multiplier per unique coefficient.
+- name: DATA_WIDTH
+  value: 16
+  legal: 16 (signed)
+  note: Sample width; the pre-add makes it 17 bits.
+- name: COEFF_WIDTH
+  value: 16
+  legal: 16 (signed Q1.15)
+  note: Coefficient width.
+- name: FIFO_DEPTH
+  value: 1024
+  legal: 1024 as specified; the 12-bit STATUS count fields bound any larger depth
+  note: Depth of each of the input and output FIFOs; the 12-bit STATUS count fields are sized for it. Only 1024 was specified,
+    and nothing was simulated.
+- name: SHIFT
+  value: 15
+  legal: 15 (Q1.15 coefficients); changing it also changes ROUND_CONST
+  note: Arithmetic right shift after rounding.
+- name: ROUND_CONST
+  value: 16384
+  legal: 16384 (0x4000, half of 2^SHIFT)
+  note: Rounding constant added before the shift.
+- name: ID_VALUE
+  value: 546570241
+  legal: 546570241 (0x20940001)
+  note: Value read from the ID register.
+- name: READ_LATENCY_CYCLES
+  value: 2
+  legal: 2 or fewer clk cycles
+  note: Spec gives h_rdata valid within 2 clk cycles of h_re; no RTL exists to count it.
+files:
+- path: runs/20261126-015902-dd64/p4_fir_dsp/spec.md
+  what: the request the run started from
+  sha256: 7efe165f5f079d09f9d8b88ccd59bb08a40efe9e8956ba4fa94494f11c647a20
+- path: runs/20261126-015902-dd64/p4_fir_dsp/spec.yaml
+  what: the specification the Clarifier wrote, approved automatically with no human review
+  sha256: 81de32a5a7dc864c99a2e32483d63c9dfd37903d47f2a02b7e5a12e5b600a36d
+- path: runs/20261126-015902-dd64/p4_fir_dsp/ARCHITECTURE.md
+  what: the architecture note, accepted automatically before any RTL (no human review)
+  sha256: 2c2d7bd8bd658cacf38f8ac12e785704bb19e6021ed0b5890a3c1b968428cb51
+- path: runs/20261126-015902-dd64/p4_fir_dsp/architecture.yaml
+  what: 'the machine-checked architecture: blocks, clocks, predicted resources'
+  sha256: e3aff21d5c20504f01f9996a8bb221ed8ff268ed79b870be195f85fb1539584d
+- path: runs/20261126-015902-dd64/p4_fir_dsp/design.xdc
+  what: pin, I/O standard and timing constraints
+  sha256: 713c2601cace00d2201beca5d75a68cd5722273fef65fae3ab57bd8371ab52d3
+- path: runs/20261126-015902-dd64/p4_fir_dsp/model.py
+  what: the Modeller's reference model of the visible behaviour
+  sha256: 321f3d976735e84180772156422d29a8e5e2baad643db1dd97a6b42589ae9bde
+- path: runs/20261126-015902-dd64/p4_fir_dsp/tests/bench_p4_fir_dsp.py
+  what: the Verifier's cocotb benches and pytest entries
+  sha256: 649d85e7c741688c365280c0cb1683da4e4090d600196ad148fe4c6cb78d4d3f
+- path: runs/20261126-015902-dd64/p4_fir_dsp/tests/test_p4_fir_dsp_rtl.py
+  what: the Verifier's cocotb benches and pytest entries
+  sha256: 086ee981cd9e6dfe1258f221e9f7ebe8dd99d77a8a601a3bb2971d5386b12213
+- path: runs/20261126-015902-dd64/p4_fir_dsp/verif/testplan.yaml
+  what: the test plan and mutant list read by the verification gates
+  sha256: 2f86b26c704e6ec556e81a5c1e28f64e01484e84c7d28c094b9eedfbdea84aa9
+- path: runs/20261126-015902-dd64/p4_fir_dsp/verif/checkers/v_macros.svh
+  what: bound assertion and cover checkers
+  sha256: 013c1a5444e3dbd0eb2df54529d09272d8bf601d42ec066d54cadb9589d51083
+commands:
+- what: what changed since this handover (stale records, changed files, tool and knowledge-bank pins)
+  cmd: python -m flow.handover fresh runs/20261126-015902-dd64/p4_fir_dsp
+  heavy: false
+  minutes: null
+- what: pick the work up again from the earliest stage the change or the staleness needs
+  cmd: python -m agent resume runs/20261126-015902-dd64/p4_fir_dsp "<change request>"
+  heavy: true
+  minutes: null
+  needs: a model (see docs/agent.md); Vivado for any stage from synthesis on
+- what: run the Verifier's simulation tests
+  cmd: python -m pytest -q runs/20261126-015902-dd64/p4_fir_dsp/tests/test_p4_fir_dsp_rtl.py
+  heavy: false
+  minutes: null
+  needs: Icarus Verilog and cocotb, or the simulation container
+- what: rebuild the bitstream with the flow
+  cmd: flow/run_vivado.sh runs/20261126-015902-dd64/p4_fir_dsp base
+  heavy: true
+  minutes: null
+  needs: Vivado 2026.1 and a heavy slot
+evidence:
+- id: E1
+  activity: review
+  result: partial
+  what: the specification and the architecture were approved automatically, with no human review (review off; the interview
+    oracle claude-sonnet-5-5 only answered the interview questions); the interview asked 7 questions, 0 answered and 7 defaulted
+  record: runs/20261126-015902-dd64/summary.json
+  sha256: 0e4158237bcd2cab524d0d084c9f079b85cc2c32189132b4d8349e823272c3df
+measurements:
+- id: M1
+  what: model cost of the run, provider-reported
+  category: cost
+  unit: USD
+  record: runs/20261126-015902-dd64/summary.json
+  field: cost_usd
+  conditions: every role and the interview oracle, as the run summary records it
+  value: 2.108155
+  sha256: 0e4158237bcd2cab524d0d084c9f079b85cc2c32189132b4d8349e823272c3df
+gaps:
+- about: E1
+  text: 'review evidence is partial: the specification and the architecture were approved automatically, with no human review
+    (review off; the interview oracle claude-sonnet-5-5 only answered the interview questions); the interview asked 7 questions,
+    0 answered and 7 defaulted'
+- about: rtl-design-creation
+  text: 'stage rtl-design-creation was not run: the run stopped before this stage (reply too long: no file written; the
+    rtl role''s last 2 replies were cut off at the output limit (max_tokens), and no file was written in between)'
+- about: constraints
+  text: 'stage constraints was not run: the run stopped before this stage (reply too long: no file written; the rtl role''s
+    last 2 replies were cut off at the output limit (max_tokens), and no file was written in between)'
+- about: synthesis
+  text: 'stage synthesis was not run: the run stopped before this stage (reply too long: no file written; the rtl role''s
+    last 2 replies were cut off at the output limit (max_tokens), and no file was written in between)'
+- about: implementation
+  text: 'stage implementation was not run: the run stopped before this stage (reply too long: no file written; the rtl role''s
+    last 2 replies were cut off at the output limit (max_tokens), and no file was written in between)'
+- about: timing-closure
+  text: 'stage timing-closure was not run: the run stopped before this stage (reply too long: no file written; the rtl role''s
+    last 2 replies were cut off at the output limit (max_tokens), and no file was written in between)'
+- about: power-closure
+  text: 'stage power-closure was not run: the run stopped before this stage (reply too long: no file written; the rtl role''s
+    last 2 replies were cut off at the output limit (max_tokens), and no file was written in between)'
+- about: drc-closure
+  text: 'stage drc-closure was not run: the run stopped before this stage (reply too long: no file written; the rtl role''s
+    last 2 replies were cut off at the output limit (max_tokens), and no file was written in between)'
+- about: configuration-and-debug
+  text: 'stage configuration-and-debug was not run: the run stopped before this stage (reply too long: no file written;
+    the rtl role''s last 2 replies were cut off at the output limit (max_tokens), and no file was written in between)'
+- about: formal
+  text: 'formal checks were planned for REQ-06, REQ-32, REQ-13, REQ-33, REQ-25 and did not run; each was replaced by a simulation
+    check (verif/testplan.yaml replan). Reason recorded: SymbiYosys is not installed here, so the read-latency property
+    is checked in simulation.'
+- about: resources
+  text: 'resources not measured: no current Vivado build of this design has been recorded'
+- about: timing
+  text: 'timing not measured: no current Vivado build of this design has been recorded'
+- about: power
+  text: 'power not measured: no current Vivado build of this design has been recorded'
+- about: latency
+  text: 'latency not measured: the run measured no latency; the spec''s latency promise is checked only by the benches'
+- about: throughput
+  text: 'throughput not measured: the run measured no throughput'
+- about: clock_name
+  text: spec.yaml and ARCHITECTURE.md name the board clock clk25, but design.xdc constrains a port named clk_25 (period
+    40.00 ns). The XDC is what was built; the top-level port name must match it or the constraint will not bind.
+- about: rtl-absent
+  text: No RTL exists, so the reset style, reset values, read latency and filter pipeline depth are spec intent only. Spec
+    leaves the filter pipeline depth to the implementation.
+- about: busy-and-full-behaviour
+  text: Defaulted answers, not built. RUN while BUSY is ignored. IN_PUSH while BUSY is accepted if the FIFO is not full
+    and is held for the next RUN. CLEAR during BUSY aborts the run. A result arriving at a full output FIFO is dropped,
+    though SAMPLES_DONE still counts it.
+- about: register-access
+  text: Per spec, unmapped addresses (including 0x00C and the gaps between the mapped registers) read 0 and ignore writes.
+    OUT_POP on an empty FIFO reads 0, and a valid read pops as a side effect. IN_PUSH on a full FIFO is ignored. CTRL bits
+    read back 0 the clock after the write.
+- about: snapshot
+  text: Each register read is a single-register snapshot; STATUS counts, SAT_COUNT and SAMPLES_DONE are not read atomically
+    together.
+- about: build_sim
+  text: BUILD reads USR_ACCESSE2, which does not exist in simulation; the behavioural model returns 0 or a testbench-set
+    word.
+- about: unread_sources
+  text: spec.yaml records that data/jtag_bus.sv and data/coeffs.hex were not readable when the spec was written, so their
+    contents come only from the description in spec.md.
+- about: led1_proposal
+  text: The led[1] heartbeat is a proposal in the spec, not a requirement.
+next_steps:
+- Re-run the rtl-design-creation stage (python -m agent resume) with the RTL split into several smaller files, so that no
+  reply is cut off at the output limit.
+- Once RTL exists, run the Verifier's simulation tests and compare the cover results with the functional coverage before
+  adding any stimulus.
+- Resolve the clk25 versus clk_25 naming between the spec and design.xdc, then run synthesis and implementation and check
+  250 MHz timing, the 16 DSP count and the read latency against the spec.
+- Replace the planned formal checks with simulation checks or install SymbiYosys, and confirm the readable jtag_bus.sv and
+  coeffs.hex contents against the spec.
+open_questions:
+- Should the clock port be named clk25 as in the spec or clk_25 as in design.xdc?
+history:
+- date: '2026-11-26'
+  brief: agent run
+  note: 'produced by the agent graph; stages that passed: clarify, board-and-device-planning'
+agent_run:
+  run_id: 20261126-015902-dd64
+  record: runs/20261126-015902-dd64/summary.json
+  model: claude-sonnet-5-5
+  harness: deepagents
+  stop: 'reply too long: no file written; the rtl role''s last 2 replies were cut off at the output limit (max_tokens),
+    and no file was written in between'
+  loops: 2
+  turns: 50
+  tokens: 1622442
+  wall_s: 763.9
+  cost_usd: 2.108155
+state:
+  stage: spec
+  gates:
+    clarify: pass
+    board-and-device-planning: pass
+    rtl-design-creation: not-run
+    constraints: not-run
+    synthesis: not-run
+    implementation: not-run
+    timing-closure: not-run
+    power-closure: not-run
+    drc-closure: not-run
+    configuration-and-debug: not-run
+  vivado: '2026.1'
+  kb_pin: '6185830'
+  build_id: null
+  evidence_vivado: none

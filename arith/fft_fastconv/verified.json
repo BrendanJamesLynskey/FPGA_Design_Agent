@@ -1,0 +1,767 @@
+{
+ "counts": {
+  "agreed_delegated": 0,
+  "agreed_human": 0,
+  "draft": 11,
+  "items": 14,
+  "requirements": 11,
+  "stale_items": 1,
+  "verified": 1
+ },
+ "criteria": [
+  {
+   "detail": "10 of 11 requirements are not in state verified: FFC-F-MODEL (partially_verified), FFC-F-EXACT (partially_verified), FFC-F-LAT (partially_verified), FFC-F-BENCH (partially_verified), FFC-F-PACKAGE (stale), FFC-F-AXIL (partially_verified), FFC-F-SAT (partially_verified), FFC-F-AXIS (partially_verified), FFC-F-ACCURACY (partially_verified), FFC-F-HARNESS (partially_verified)",
+   "id": "evidence",
+   "ids": [
+    "FFC-F-MODEL",
+    "FFC-F-EXACT",
+    "FFC-F-LAT",
+    "FFC-F-BENCH",
+    "FFC-F-PACKAGE",
+    "FFC-F-AXIL",
+    "FFC-F-SAT",
+    "FFC-F-AXIS",
+    "FFC-F-ACCURACY",
+    "FFC-F-HARNESS"
+   ],
+   "state": "unmet",
+   "title": "Every requirement has passing evidence"
+  },
+  {
+   "detail": "0 agreed by a human, 0 agreed by delegation, 11 draft, 0 marked agreed without a record",
+   "id": "agreement",
+   "ids": [
+    "FFC-F-MODEL",
+    "FFC-F-EXACT",
+    "FFC-F-LAT",
+    "FFC-F-EQUIV",
+    "FFC-F-BENCH",
+    "FFC-F-PACKAGE",
+    "FFC-F-AXIL",
+    "FFC-F-SAT",
+    "FFC-F-AXIS",
+    "FFC-F-ACCURACY",
+    "FFC-F-HARNESS"
+   ],
+   "state": "unmet",
+   "title": "Every requirement is agreed (human, or delegated and labelled so)"
+  },
+  {
+   "detail": "not yet measured: the required method mix per requirement kind is brief 143a; the collector does not supply it yet",
+   "id": "method_mix",
+   "ids": [],
+   "state": "not_measured",
+   "title": "Every requirement meets its required method mix"
+  },
+  {
+   "detail": "not yet measured: the mutation score and floor are brief 143b; the collector does not supply them yet",
+   "id": "mutation",
+   "ids": [],
+   "state": "not_measured",
+   "title": "The bench passes the mutation floor"
+  },
+  {
+   "detail": "not yet measured: the vacuity, assumption and depth checks are brief 143c; the collector does not supply them yet",
+   "id": "formal_rigour",
+   "ids": [],
+   "state": "not_measured",
+   "title": "The formal results pass the rigour checks"
+  },
+  {
+   "detail": "1 items are stale (a file they are about changed after the evidence was recorded)",
+   "id": "fresh",
+   "ids": [
+    "V-FFC-PACKAGE"
+   ],
+   "state": "unmet",
+   "title": "The evidence is fresh"
+  }
+ ],
+ "declared": null,
+ "definition": "docs/verified.md",
+ "git_commit": "8b3b7767288b3aa2d84ddcc0f25af0284dd9a56f",
+ "kind": "arith",
+ "label": "verified except: 10 of 11 requirements without passing evidence; 11 of 11 requirements not agreed; required method mix not yet measured; mutation floor not yet measured; formal rigour not yet measured; 1 stale or differing evidence items",
+ "label_kind": "verified_except",
+ "limits": [
+  "Verified never means interoperability with a device the design talks to unless a board measurement against that device is listed in the record; a design that checks its own output against its own model accepts its own symmetric mistakes.",
+  "Verified never means timing beyond the stated corner: a post-route timing result is for the part, speed grade, clock and tool version in its evidence file, not for other corners, temperatures or devices.",
+  "Verified never means beyond the widths and depths checked: a simulation covers the vectors it ran, a bounded formal result covers the stated depth only, and a per-width proof covers the widths it names; only a Lean proof marked all widths covers every width, and only for its model.",
+  "Verified never means the requirement is the right one: the text of a requirement is the human's check (or the planner's, where the record says delegated), and a record shows that checks exist and pass, not that nothing was left out.",
+  "Verified never means a hardware or board result unless a board measurement item is listed; a simulation is not the board.",
+  "Verified is about the files in the manifest at the hashes given. A change to any of them makes the record out of date (the CI check fails), and the evidence stale until it is re-recorded.",
+  "An agreement or acceptance recorded as delegated is the planner's decision on the owner's delegation, not a human sign-off; the record counts it apart.",
+  "1 formal items are bounded model checks; each holds to its stated depth only: V-FFC-FORMAL-BOUNDED."
+ ],
+ "manifest": {
+  "arith/fft/rtl/fft_sdf_r22.sv": "58d1227449d390af0f70aef7bb5bbcaa1bd76e701e7928961fec45dcd27e5072",
+  "arith/fft_cmul/rtl/fft_cmul_m3.sv": "8475634ed3f87a36645d4f2d3f82dac56e7b60b924b8169f67398bb113fc470c",
+  "arith/fft_cmul/rtl/fft_cmul_m4.sv": "826a27855314155fa138bf9c681c779129b02aa1d2e7f24b855abff10b8001f0",
+  "arith/fft_common/axil_checker.sv": "ff125b03979eac33d5dde47fd19f31d993f526ce1acc4701b57a3ea9486a667f",
+  "arith/fft_common/axis_checker.sv": "6608a719c010a9e77d12a3b712a4cee859239b8dd853327a5c0dddfde26bbccb",
+  "arith/fft_common/fastconv.py": "e743c24578aad0d23c89f307b4c1b06ab38ef79aaf72170c2f050c82a8ee2911",
+  "arith/fft_common/fft_bitrev.sv": "650b28bf48a4fd7b2ffb4b4b7ed597d96e0e4fcc32931357583013e11c287c35",
+  "arith/fft_common/fft_cos_rom.sv": "bcf1d079ba8a48d3757484ab8706051b46fa45046400eed1b7fe2ddd3cbbda38",
+  "arith/fft_common/fft_ref.py": "96a983692b9eac1d70ef32a874ace99a40c668cf5dcf746cfc93093f85fb54c5",
+  "arith/fft_common/fft_sdf_stage.sv": "3bce071db10fbbb3adf4f6f6e31680077ff2059f87fe21a3429ff821336ac801",
+  "arith/fft_common/fft_sdf_twmul.sv": "ced119e7c513deb23e392a199ef239d54a81ae4a5b647fb470c1daa9da3720b5",
+  "arith/fft_fastconv/build/os/build.yaml": "853f1b50edff46862ba69626536fdc80b7888a6baaa4b98b468a4f6965462113",
+  "arith/fft_fastconv/formal/fft_fastconv_axil_fv.sv": "96b2ead9ee606bfcccbff1f4c27b317cf39461c347e42e0b32e3efba587fe173",
+  "arith/fft_fastconv/formal/jobs.yaml": "50d7db75204c3fa2d69d1f4633a01ad853137fe8c87673a8724d4837aa95aa39",
+  "arith/fft_fastconv/harness/assertions.sv": "d20d2eab139b003bb2d0b90d402eb753cb6b01a87bfa2c3c0e99d718a2d7a509",
+  "arith/fft_fastconv/harness/chk_top.sv": "c3b1871d49a0100552627df0cb1110cba9768595c05ec75b0afc8194bc877cfd",
+  "arith/fft_fastconv/harness/coverage.yaml": "7692b9571398567269df944634816dba1f5cc21b4ee932040d2e18bac641ca6c",
+  "arith/fft_fastconv/harness/fft_fastconv_cocotb.py": "3e1dc4fdddd5918b2062008ca6369478f53115f5b233f29a0b12257b83d52764",
+  "arith/fft_fastconv/harness/model.py": "7ba6ba911b423189e7e44ea1790895bffe4c5fa99d911df85bece85f4edcb483",
+  "arith/fft_fastconv/harness/run_harness.py": "3da6cb25e41c34a9278f2910df75ff8e009c1d893e8e522ae9643949c97240c2",
+  "arith/fft_fastconv/model.py": "0caa76657ba88be66ef0ffcb87739115f7687aaa1910768f2aea2a4cefac6a2b",
+  "arith/fft_fastconv/rtl/fft_fastconv_axil.sv": "e044a09c073e25aba3e0ef7be83607b7945e2aa8945f3ba1cec6db48c75cafb2",
+  "arith/fft_fastconv/rtl/fft_fastconv_os.sv": "0aa5e8c8111db6632f74fa756988aa0e8a4e9f8ece2f8dcd65528204f7258256",
+  "arith/fft_fastconv/spec.md": "9d4fbfcc287a8080e305dac5482c61487c5c7a3b03f68ff1c776c637d8a6d352",
+  "arith/fft_fastconv/spec.yaml": "9edb8d842d342d6f2f606165931a380f1beea6a85dc86093488e9a5528376a0c",
+  "arith/fft_fastconv/tests/fft_fastconv_cocotb.py": "38b515f20417c58f46a385d5270153d30e4ac6812f54a6f846146ec79fb98ff6",
+  "arith/fft_fastconv/verif/evidence_pins.yaml": "28cd81b72a4828b5a67df55832f467e04e44549b02fcead0be5bff22e0536ff2",
+  "arith/fft_fastconv/verif/mutants.yaml": "6ea327e354eb71ec7480aeeece24066e65a590696e52ed07e2ca328fab3a7533",
+  "arith/fft_fastconv/verif/results/accuracy.json": "13d1a0bef3f167eca5ac303f5c67d8ce4cc856eba0308bddaf63cd1e194d632d",
+  "arith/fft_fastconv/verif/results/mutation.json": "e114ce3f951a38d078ac671902b50ea97d2c321ddbb796f60e3baa3fe743822c",
+  "arith/fft_fastconv/verif/results/pytest_junit.xml": "63bee51761232a3427cf75a7639e5f12ec858093f297f1da73f479d0fd1c980b",
+  "arith/fft_fastconv/verif/testplan.yaml": "977284f257a44ad0b48eee7f84444c08aa32a12e622902e5c38bdd7d77631c83",
+  "arith/fft_reorder/rtl/fft_reorder_pingpong.sv": "7867dd5a9c732d242eca668c17083b35190cd02cedbdf550920f7629175e9029",
+  "arith/fft_twiddle/rtl/fft_twiddle_quarter.sv": "f646b37f46b317abf8569372715d14be0ff9c7f0443e5740d703071145359f67",
+  "arith/tools/fft_fastconv_accuracy.py": "a64ceeb8b029e8fff52d4e58bdf0950cbd6e9ab7fda625adb72b3718a30d158b"
+ },
+ "name": "fft_fastconv",
+ "notes": "Frequency-domain suite, function fft_fastconv (brief 148). Everything here is before Vivado: the model, the RTL variants, simulation, formal properties and the prepared out-of-context build files. No performance requirement on LUTs, DSPs, Fmax or power exists because none has been measured; the Vivado runs (build/<variant>/build.yaml, queued in _handoff/fpga_agent/vivado_later_queue.md) will add them. Every requirement is a draft written by the agent; none is agreed by a human. There are no Lean statements (the packaged harness of this function, in harness/, is evidenced by the harness item). Generated by arith/tools/gen_testplan_fft.py.",
+ "path": "arith/fft_fastconv",
+ "reproduce": [
+  {
+   "cmd": "python -m pytest -q arith/fft_fastconv/tests",
+   "what": "the simulation tests"
+  }
+ ],
+ "requirements": [
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "FFC-F-MODEL",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-FFC-MODEL",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "arith/fft_fastconv/verif/results/pytest_junit.xml",
+     "record_sha256": "63bee51761232a3427cf75a7639e5f12ec858093f297f1da73f479d0fd1c980b",
+     "status": "pass",
+     "title": "The model against independent formulations and the pinned conventions"
+    }
+   ],
+   "items": [
+    "V-FFC-MODEL"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": false,
+   "missing_methods": [
+    "a simulation check from a bench the implementing agent did not write"
+   ],
+   "mix_satisfied": false,
+   "own_tests_only": true,
+   "passing_methods": [
+    "sim_test"
+   ],
+   "rests_on_delegated": false,
+   "source": "arith/fft_fastconv/spec.md",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "partially_verified",
+   "text": "arith/fft_fastconv/model.py gives, for every input, the result that spec.md defines. It agrees with an independent formulation (numpy.convolve of the same samples and the unquantised taps (the overlap-save identity, within the stated bound), the bit-exact FFT models it is built from, and the overlap-save and overlap-add models of arith/fft_common/fastconv.py), and the conventions that a user could guess wrong (spec.md, last section) are pinned by examples.",
+   "title": "The bit-exact model is right",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "FFC-F-EXACT",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-FFC-DIRECTED",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "arith/fft_fastconv/verif/results/pytest_junit.xml",
+     "record_sha256": "63bee51761232a3427cf75a7639e5f12ec858093f297f1da73f479d0fd1c980b",
+     "status": "pass",
+     "title": "Every variant against the model at the small points (Icarus + cocotb): directed or exhaustive stimuli"
+    },
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-FFC-RANDOM",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "arith/fft_fastconv/verif/results/pytest_junit.xml",
+     "record_sha256": "63bee51761232a3427cf75a7639e5f12ec858093f297f1da73f479d0fd1c980b",
+     "status": "pass",
+     "title": "Every variant against the model at the large points: random stimuli (Icarus + cocotb)"
+    }
+   ],
+   "items": [
+    "V-FFC-DIRECTED",
+    "V-FFC-RANDOM"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": false,
+   "missing_methods": [
+    "a simulation check from a bench the implementing agent did not write"
+   ],
+   "mix_satisfied": false,
+   "own_tests_only": true,
+   "passing_methods": [
+    "sim_test"
+   ],
+   "rests_on_delegated": false,
+   "source": "arith/fft_fastconv/spec.md",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "partially_verified",
+   "text": "At every parameter point listed in spec.yaml (5 directed or exhaustive points, 3 random ones, across 1 variants), each variant's outputs equal the model's: the directed points drive the register defaults, a zero filter (zero output), a filter loaded through the registers and a random stream through it with random stalls on both streams; the random points use random taps, random streams with random stalls, register traffic while the stream runs and a new filter after the stream drains. The whole output stream equals the model bit for bit (no sample lost, added or reordered), the latency from the last input beat of the first block to its first output beat equals the formula, and the three protocol checkers count no error.",
+   "title": "Every variant is bit-exact against the model",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "FFC-F-LAT",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-FFC-LATENCY",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "arith/fft_fastconv/verif/results/pytest_junit.xml",
+     "record_sha256": "63bee51761232a3427cf75a7639e5f12ec858093f297f1da73f479d0fd1c980b",
+     "status": "pass",
+     "title": "The bench passes at the stated latency and fails two clocks off, for every variant"
+    }
+   ],
+   "items": [
+    "V-FFC-LATENCY"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": false,
+   "missing_methods": [
+    "a simulation check from a bench the implementing agent did not write"
+   ],
+   "mix_satisfied": false,
+   "own_tests_only": true,
+   "passing_methods": [
+    "sim_test"
+   ],
+   "rests_on_delegated": false,
+   "source": "arith/fft_fastconv/spec.md",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "partially_verified",
+   "text": "Each variant's latency in clocks is the expression in spec.yaml (os: 2*(2*(1<<LOGN)+LOGN+((LOGN-1)//2)*(TWSTAGES+MULSTAGES+1))+MULSTAGES+L+7), and the bench, run with a latency two clocks off, fails for every variant, so the passing runs prove the latency rather than assume it.",
+   "title": "Latency is as specified and the bench would notice if it were not",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "FFC-F-EQUIV",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": 26,
+     "freshness": "fresh",
+     "id": "V-FFC-FORMAL-BOUNDED",
+     "instrument": null,
+     "method": "formal",
+     "mutation_score": null,
+     "record": "arith/fft_fastconv/verif/results/pytest_junit.xml",
+     "record_sha256": "63bee51761232a3427cf75a7639e5f12ec858093f297f1da73f479d0fd1c980b",
+     "status": "bounded",
+     "title": "Bounded model checks from an arbitrary state (2 jobs; depths in formal/jobs.yaml)"
+    },
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-FFC-FORMAL-REFUTE",
+     "instrument": null,
+     "method": "formal",
+     "mutation_score": null,
+     "record": "arith/fft_fastconv/verif/results/pytest_junit.xml",
+     "record_sha256": "63bee51761232a3427cf75a7639e5f12ec858093f297f1da73f479d0fd1c980b",
+     "status": "pass",
+     "title": "Each formal check refutes a planted fault (the check can fail)"
+    }
+   ],
+   "items": [
+    "V-FFC-FORMAL-BOUNDED",
+    "V-FFC-FORMAL-REFUTE"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": false,
+   "missing_methods": [],
+   "mix_satisfied": true,
+   "own_tests_only": false,
+   "passing_methods": [
+    "formal"
+   ],
+   "rests_on_delegated": false,
+   "source": "arith/fft_fastconv/formal/jobs.yaml",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "verified",
+   "text": "SymbiYosys with the slang front end checks the properties of formal/jobs.yaml: a proof is by k-induction (for all inputs, any run length) at the parameters listed there, a bounded check holds only to its stated depth. What the jobs say is in each job's `claim`; parameters beyond the listed ones are covered by simulation, not by proof.",
+   "title": "The properties named in formal/jobs.yaml hold, by proof where the tools allow",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "FFC-F-BENCH",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-FFC-MUTANT-TEST",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "arith/fft_fastconv/verif/results/pytest_junit.xml",
+     "record_sha256": "63bee51761232a3427cf75a7639e5f12ec858093f297f1da73f479d0fd1c980b",
+     "status": "pass",
+     "title": "The mutation run as a test: no mutant survives, none fails to build"
+    },
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-FFC-MUTANT-SCORE",
+     "instrument": null,
+     "method": "sim_measurement",
+     "mutation_score": null,
+     "record": "arith/fft_fastconv/verif/results/mutation.json",
+     "record_sha256": "e114ce3f951a38d078ac671902b50ea97d2c321ddbb796f60e3baa3fe743822c",
+     "status": "pass",
+     "title": "Mutants killed of valid mutants (the record of the last full run)"
+    }
+   ],
+   "items": [
+    "V-FFC-MUTANT-TEST",
+    "V-FFC-MUTANT-SCORE"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": false,
+   "missing_methods": [
+    "a simulation check from a bench the implementing agent did not write"
+   ],
+   "mix_satisfied": false,
+   "own_tests_only": true,
+   "passing_methods": [
+    "sim_measurement",
+    "sim_test"
+   ],
+   "rests_on_delegated": false,
+   "source": "arith/fft_fastconv/verif/mutants.yaml",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "partially_verified",
+   "text": "Every one of the mutants in verif/mutants.yaml (one exact text change each: an inverted condition, a wrong constant, a dropped connection, a wrong width) makes the cocotb bench fail, or is argued equivalent in the file's header; mutants that survive or do not build are reported, never hidden.",
+   "title": "The bench catches seeded faults",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "FFC-F-PACKAGE",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "stale",
+     "id": "V-FFC-PACKAGE",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "arith/fft_fastconv/verif/results/pytest_junit.xml",
+     "record_sha256": "63bee51761232a3427cf75a7639e5f12ec858093f297f1da73f479d0fd1c980b",
+     "stale_because": "changed since the evidence was recorded: arith/fft_fastconv/build/os/build.yaml, arith/fft_fastconv/spec.md",
+     "status": "stale",
+     "title": "spec.yaml against the RTL headers, spec.md against spec.yaml, Verilator -Wall at every point, wrappers and build.yaml current and lint-clean"
+    }
+   ],
+   "items": [
+    "V-FFC-PACKAGE"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": false,
+   "missing_methods": [],
+   "mix_satisfied": false,
+   "own_tests_only": false,
+   "passing_methods": [],
+   "rests_on_delegated": false,
+   "source": "arith/fft_fastconv/spec.yaml",
+   "spec_status": "draft",
+   "stale_items": 1,
+   "state": "stale",
+   "text": "spec.yaml states an interface contract (protocol, throughput, latency, reset, clock, stalls) and integration guidance (port timing, constraints to carry). Every variant passes Verilator -Wall at every point of spec.yaml; its ports and default parameters are the ones spec.yaml states; its header states the intended primitive use before any Vivado run; spec.md is the rendering of spec.yaml; the out-of-context wrapper and the build.yaml for each variant (Artix-7 xc7a100t and K26 xck26, prepared and not run) are current and lint-clean at every point they list, so a Vivado run can start from the repository alone.",
+   "title": "The RTL is lint-clean, and its files agree with the specification and with the Vivado build files",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "FFC-F-AXIL",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-FFC-AXIL",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "arith/fft_fastconv/verif/results/pytest_junit.xml",
+     "record_sha256": "63bee51761232a3427cf75a7639e5f12ec858093f297f1da73f479d0fd1c980b",
+     "status": "pass",
+     "title": "The register contract, every access type, with the AXI4-Lite checker"
+    }
+   ],
+   "items": [
+    "V-FFC-AXIL"
+   ],
+   "kind": "interface",
+   "lean_transcription_only": false,
+   "missing_methods": [
+    "a simulation check from a bench the implementing agent did not write"
+   ],
+   "mix_satisfied": false,
+   "own_tests_only": true,
+   "passing_methods": [
+    "sim_test"
+   ],
+   "rests_on_delegated": false,
+   "source": "arith/fft_fastconv/spec.md",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "partially_verified",
+   "text": "The ID, CFG0 and CFG1 registers read their documented values; read-only and unmapped addresses answer SLVERR and change nothing; byte address bits [1:0] are ignored; writes with partial strobes are refused with SLVERR and no effect; COEF_ADDR masks its upper bits and wraps; the staging registers read back sign-extended; a commit auto-increments COEF_ADDR and wraps at the last bin; a commit while BUSY (during the clear after reset, and while a block is in flight) is refused with SLVERR, sets DROPPED, does not advance COEF_ADDR and changes nothing; DROPPED and SAT are cleared by writing 1; reads have no side effects; address and data may arrive in either order and the response channels may wait. The AXI4-Lite protocol checker (fft_common/axil_checker.sv) counts no violation. The handshake rules and the response of every executed write are also checked by bounded model checks (formal/jobs.yaml) against shadow state.",
+   "title": "The AXI4-Lite register file follows the contract's register map and response rules",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "FFC-F-SAT",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-FFC-SATURATE",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "arith/fft_fastconv/verif/results/pytest_junit.xml",
+     "record_sha256": "63bee51761232a3427cf75a7639e5f12ec858093f297f1da73f479d0fd1c980b",
+     "status": "pass",
+     "title": "A loud input through a filter of gain 2**GB saturates as the model says"
+    }
+   ],
+   "items": [
+    "V-FFC-SATURATE"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": false,
+   "missing_methods": [
+    "a simulation check from a bench the implementing agent did not write"
+   ],
+   "mix_satisfied": false,
+   "own_tests_only": true,
+   "passing_methods": [
+    "sim_test"
+   ],
+   "rests_on_delegated": false,
+   "source": "arith/fft_fastconv/spec.md",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "partially_verified",
+   "text": "With a filter of gain 2**GB and a loud input the output parts that leave the W-bit range are clamped to the nearest end exactly as the model says, STATUS.SAT is set, and it is cleared by writing 1 to it.",
+   "title": "Output saturation is exact and reported",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "FFC-F-AXIS",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-FFC-STREAMS",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "arith/fft_fastconv/verif/results/pytest_junit.xml",
+     "record_sha256": "63bee51761232a3427cf75a7639e5f12ec858093f297f1da73f479d0fd1c980b",
+     "status": "pass",
+     "title": "Both streams under random stalls, with the protocol checkers (the random points)"
+    }
+   ],
+   "items": [
+    "V-FFC-STREAMS"
+   ],
+   "kind": "interface",
+   "lean_transcription_only": false,
+   "missing_methods": [
+    "a simulation check from a bench the implementing agent did not write"
+   ],
+   "mix_satisfied": false,
+   "own_tests_only": true,
+   "passing_methods": [
+    "sim_test"
+   ],
+   "rests_on_delegated": false,
+   "source": "arith/fft_fastconv/spec.md",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "partially_verified",
+   "text": "The checkers on s_axis and m_axis (valid stays high until accepted, tdata stable while stalled, no unknowns after reset) count no violation while both streams stall at random, including a sink so slow that the block controller must wait for output room: no sample is lost, added or reordered. A mutant that makes tvalid depend on tready is killed.",
+   "title": "The AXI4-Stream rules hold on both streams under random stalls",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "FFC-F-ACCURACY",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-FFC-ACCURACY",
+     "instrument": null,
+     "method": "sim_measurement",
+     "mutation_score": null,
+     "record": "arith/fft_fastconv/verif/results/accuracy.json",
+     "record_sha256": "13d1a0bef3f167eca5ac303f5c67d8ce4cc856eba0308bddaf63cd1e194d632d",
+     "status": "pass",
+     "title": "Error against numpy.convolve at every recorded point (the record of the last run)"
+    }
+   ],
+   "items": [
+    "V-FFC-ACCURACY"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": false,
+   "missing_methods": [
+    "a simulation check from a bench the implementing agent did not write"
+   ],
+   "mix_satisfied": false,
+   "own_tests_only": true,
+   "passing_methods": [
+    "sim_measurement"
+   ],
+   "rests_on_delegated": false,
+   "source": "arith/fft_fastconv/spec.md",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "partially_verified",
+   "text": "For N = 64 to 4096, L from N/8 + 1 to 3N/4 + 1 taps (low-pass, random and delta filters of absolute gain at most 2**GB) and a random complex stream, the output of the model (which the RTL equals bit for bit) differs from numpy.convolve of the same samples and the unquantised taps by at most the recorded error (verif/results/accuracy.json: worst and rms error in output LSB, SQNR) at W = 16, TW = 18, WH = 24, FH = 14; the test enforces a worst error of at most 8 LSB.",
+   "title": "The filter output equals numpy.convolve within a stated error",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "FFC-F-HARNESS",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-FFC-HARNESS",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "arith/fft_fastconv/verif/results/pytest_junit.xml",
+     "record_sha256": "63bee51761232a3427cf75a7639e5f12ec858093f297f1da73f479d0fd1c980b",
+     "status": "pass",
+     "title": "The harness against the repository's variants, a planted fault and a wrong latency"
+    }
+   ],
+   "items": [
+    "V-FFC-HARNESS"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": false,
+   "missing_methods": [
+    "a simulation check from a bench the implementing agent did not write"
+   ],
+   "mix_satisfied": false,
+   "own_tests_only": true,
+   "passing_methods": [
+    "sim_test"
+   ],
+   "rests_on_delegated": false,
+   "source": "arith/fft_fastconv/harness/README.md",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "partially_verified",
+   "text": "arith/fft_fastconv/harness/ (model, bench, SystemVerilog checkers, coverage targets, standalone runner: owner decision 24) needs no other file of the repository. Run against each variant of this function with the checkers beside it, in every mode, it passes and meets every coverage target; against one planted fault (a mutant of verif/mutants.yaml), or with a latency two clocks off, it fails; its model, bench and checker files are the repository's own, generated by arith/tools/gen_harness_fft.py, so they cannot drift.",
+   "title": "The packaged harness runs standalone, passes on the repository's variants and catches faults",
+   "waivers": []
+  }
+ ],
+ "schema": "fda-verified/1",
+ "summary_line": "11 requirements (9 functional, 2 interface); 1 verified; 9 partially verified (the required mix of methods is not met); 1 stale; 0 of 11 requirements agreed by a human, 0 agreed on the owner's delegation (not human), 11 draft; 9 resting only on the implementing agent's own tests; 0 human and 0 delegated review(s) recorded."
+}
