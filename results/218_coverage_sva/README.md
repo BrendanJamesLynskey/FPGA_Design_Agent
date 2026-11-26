@@ -14,9 +14,8 @@ proved with a reachable trigger) and measures the second on the three 209 pilot 
   - `rows.csv`: one row per candidate requirement and run: its status, the property, the model's English reading of it, and the reason.
   - `summary.md`, `stats.txt`, `unusable_reasons.md`: the table, run b against run a through `tools/run_stats/graded.py` (the stability of the step, 3 designs), and the count of why rows were unusable.
   - `as_run/`: each run's `evidence.json` as the pipeline wrote it, the stdout, and the run order and times.
-  - `post_hoc_rejudge/`: the same six runs after a fix to the comparison (below), judged again on the recorded replies with no new model call. **Post hoc, not part of the
-    pre-registered result.**
-  - `traces/`: two WaveDrom documents drawn from cover traces.
+  - `post_hoc_replay/`: the same six runs after two changes to the tool (below), run again on the recorded model replies with no new model call, on fresh copies of the designs, with `summary.md`. **Post hoc, not part of the pre-registered result.**
+  - `traces/`: four WaveDrom documents drawn from cover traces (the replay's, so the response signals are in them).
   - `aborted_first_start/`: the first, stopped start (Yosys 0.33's reader); its numbers are not used.
 - `partA_collect.py`: turns the six scratch folders into the files above.
 - `run_partB.sh`: the Part B launcher (not run).
@@ -43,12 +42,13 @@ the property, Haiku 5.5 reading it back, `sby` on the pinned OSS CAD Suite (Yosy
   the value may still arrive after the read strobe, so the property was stronger than the requirement; on p1_clkmeter and p3_crc_engine the same wording was proved because their
   read data are not pending. The first is the useful kind of failure: it shows an ambiguity in the requirement, which the requirements-readiness brief's two-reader test is for.
 
-## Post-hoc re-judge (not pre-registered)
+## Post hoc: two changes after the counted runs (not pre-registered)
 
-The comparison in `flow/sva_req.py` called two of the six `mismatch` rows by a rule that was wrong, not the model: a back-translation that quoted the expression `!h_re` counted as a
-negation, and `h_addr < 1024` was called a number the requirement does not give when the requirement says "0 to 1023". Both were fixed and the six runs judged again from their recorded
-replies (`post_hoc_rejudge/`): p3_crc_engine run a gains one proved property (REQ-22), and p2_bram_rom run a's RAM-word property now goes to the formal tool and fails. Counts differ from
-`as_run/` only there; nothing in the pre-registered table above is changed by it.
+The comparison in `flow/sva_req.py` called two of the six `mismatch` rows by a rule that was wrong, not the model: a back-translation that quoted the expression `!h_re` counted as a negation, and
+`h_addr < 1024` was called a number the requirement does not give when the requirement says "0 to 1023". Both were fixed. Separately, the property's job now also covers its response (`<name>__resp`),
+so the response signals appear in the cover trace the diagram is drawn from (the first traces showed only the trigger's signals). The six runs were then run again from their recorded replies on fresh
+copies (`post_hoc_replay/`): p3_crc_engine run a gains one proved property (REQ-22), and p2_bram_rom run a's RAM-word property now goes to the formal tool and fails; every other outcome is as in
+`as_run/`. The table under Measured is the pre-registered, as-run one.
 
 ## Part B: the coverage loop (not run)
 

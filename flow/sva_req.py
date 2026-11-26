@@ -487,7 +487,8 @@ def _decl(p: dict[str, Any]) -> str:
 
 def wrapper_sv(design: Path, spec: dict[str, Any], rid: str, gen: dict[str, Any]) -> str:
     """The formal wrapper: the design's top module with free inputs, reset asserted in the first cycle, and the property (the house form of
-    ``flow/v_macros.svh``'s ``V_SAME`` / ``V_NEXT`` / ``V_RST``, each with the ``<name>__ante`` cover of ``v_macros_paired.svh``)."""
+    ``flow/v_macros.svh``'s ``V_SAME`` / ``V_NEXT`` / ``V_RST``, each with the ``<name>__ante`` cover of ``v_macros_paired.svh``, and a
+    ``<name>__resp`` cover of the response, which puts the response signals in the cover trace the diagram is drawn from)."""
     top = str(spec.get("top") or spec.get("name"))
     clk_port = str(clocks_of(spec)[0]["port"]) if clocks_of(spec) else None
     rst_port, low = reset_of(spec)
@@ -522,11 +523,11 @@ def wrapper_sv(design: Path, spec: dict[str, Any], rid: str, gen: dict[str, Any]
     lines.append(f"    {top} dut ({', '.join(conn)});")
     guard = "past_ok && seen_rst && !rst && !$past(rst)"
     if gen["kind"] == "same":
-        lines.append(f"    always @(posedge clk) if ({guard} && ({gen['ante']})) begin {name}: assert ({gen['cons']}); {name}__ante: cover (1'b1); end")
+        lines.append(f"    always @(posedge clk) if ({guard} && ({gen['ante']})) begin {name}: assert ({gen['cons']}); {name}__ante: cover (1'b1); {name}__resp: cover ({gen['cons']}); end")
     elif gen["kind"] == "next":
-        lines.append(f"    always @(posedge clk) if ({guard} && $past({gen['ante']})) begin {name}: assert ({gen['cons']}); {name}__ante: cover (1'b1); end")
+        lines.append(f"    always @(posedge clk) if ({guard} && $past({gen['ante']})) begin {name}: assert ({gen['cons']}); {name}__ante: cover (1'b1); {name}__resp: cover ({gen['cons']}); end")
     else:
-        lines.append(f"    always @(posedge clk) if (past_ok && $past(rst)) begin {name}: assert ({gen['cons']}); {name}__ante: cover (1'b1); end")
+        lines.append(f"    always @(posedge clk) if (past_ok && $past(rst)) begin {name}: assert ({gen['cons']}); {name}__ante: cover (1'b1); {name}__resp: cover ({gen['cons']}); end")
     lines.append("endmodule")
     return "\n".join(lines) + "\n"
 
@@ -926,6 +927,8 @@ def main(argv: list[str] | None = None) -> int:
         def back_llm(system: str, user: str) -> str:
             return rp[cur["id"]]["back"]
     else:
+        from agent.access import require_or_exit            # the gate every entry point that runs the agent calls (brief 94)
+        require_or_exit("python -m flow.sva_req")
         from agent.models import claude_cli
 
         def _call(model: str) -> Callable[[str, str], str]:
