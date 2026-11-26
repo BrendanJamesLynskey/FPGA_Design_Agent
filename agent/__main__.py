@@ -9,6 +9,7 @@
     python -m agent document <run-dir> [--cc-model M] [--replay doc_calls.jsonl]   (brief 68 C: the DOC step on a finished run)
     python -m agent project check|status|hash|gen-tests <dir> ...     (the project layer, project/cli.py)
     python -m agent ip search|rank|show|use ...                  (brief 150: the IP library, `python -m agent ip --help`)
+    python -m agent example list | run <name> | compare <run_dir> | tools <name>   (brief 195: reproducible examples with reference runs)
     python -m agent improve <design-dir> "<request>" [--more | --edit N "<change>" | --choose N]   (brief 104: analysis, then strategy options; --choose runs one)
 
     python -m agent doctor [--json] [--no-probe]        (brief 157: what this machine is missing before a first run; no key needed)
@@ -788,6 +789,8 @@ def build_parser() -> argparse.ArgumentParser:
     _latency_parser(sub)
     from flow.options.cli import add_parser as _improve_parser           # brief 104
     _improve_parser(sub)
+    from agent.repro.cli import add_parser as _example_parser            # brief 195
+    _example_parser(sub)
     sub.add_parser("doctor", help=newcomer.COMMANDS["doctor"][0], description=newcomer.COMMANDS["doctor"][1],
                    add_help=False)                      # dispatched in main() before this parser: listed here so --help shows it
     sub.add_parser("project", help=newcomer.COMMANDS["project"][0], add_help=False)
@@ -801,6 +804,9 @@ def _run_main(a, args: list[str], ap: argparse.ArgumentParser) -> int:
     from agent.graph.run import Config, build_graph, checkpointer_for, new_runtime
     if a.cmd in ("status", "ask", "request"):
         return live_cmd(a)
+    if a.cmd == "example":
+        from agent.repro.cli import main as example_main
+        return example_main(a)
     if a.cmd == "models":
         return models_cmd(a, args)
     if a.cmd == "latency":

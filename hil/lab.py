@@ -19,7 +19,12 @@ What a lab file can get wrong, and what happens (see also docs/agent.md):
 * an output with no stated limit, or with ``never_by_script: true``, is never enabled by a script (:func:`check_drive` refuses);
 * a probe recorded on the wrong pin is not detectable here: the plan prints the pin it assumed, and the bring-up asks the owner to confirm the wiring
   before the first reading;
-* a ``connections`` entry for a channel the instrument does not have is a validation error.
+* a ``connections`` entry for a channel the instrument does not have is a validation error;
+* an instrument that is also a board (``is_board``, brief 225: the Red Pitaya) has a ``mode``: ``factory_instrument`` (its factory image runs, so its
+  instruments work) or ``target_loaded`` with the ``build_id`` of the design loaded into it (the factory instruments are gone until a power cycle or the
+  reload script restores them). It is never planned as the measurement of a design that runs on it (the design's ``target_board`` is its ``is_board``),
+  unless the design is itself the instrument, and then only its own readout counts, never the factory oscilloscope. Every run row records the mode the
+  measurement used (:func:`instrument_mode`).
 """
 
 from __future__ import annotations
@@ -42,6 +47,8 @@ MEASURES = ("frequency", "logic", "voltage", "audio", "video", "link")
 CONTROL = ("scripted", "manual")
 CONNECTIONS = ("usb", "lan", "none")
 OUTPUT_KINDS = ("awg", "supply", "rf_tx", "pattern")
+#: an instrument that is also a board (brief 225): which of its two roles the box is in now
+MODE_STATES = ("factory_instrument", "target_loaded")
 #: nothing may transmit RF into anything but a dummy load or at least this much attenuation (house rules, "RF")
 MIN_TX_ATTENUATION_DB = 30.0
 
@@ -112,6 +119,18 @@ def validate_instrument(i: Any, where: str = "instrument") -> list[str]:
         errs.append(f"{w}: control.mode must be 'scripted' or 'manual'")
     elif ctl["mode"] == "scripted" and not ctl.get("driver"):
         errs.append(f"{w}: a scripted instrument names its driver (control.driver)")
+    if "is_board" in i and not (isinstance(i["is_board"], str) and re.fullmatch(r"[a-z][a-z0-9_]*", i["is_board"])):
+        errs.append(f"{w}: is_board names the board this instrument is (a board directory name such as redpitaya_stemlab_125_14)")
+    if "mode" in i:
+        m = i["mode"]
+        if not isinstance(m, dict) or m.get("state") not in MODE_STATES:
+            errs.append(f"{w}: mode.state must be one of {', '.join(MODE_STATES)}")
+        elif m["state"] == "target_loaded" and not (isinstance(m.get("build_id"), str) and m["build_id"].strip()):
+            errs.append(f"{w}: mode target_loaded needs the build_id of the design loaded into the board")
+        elif m["state"] == "factory_instrument" and m.get("build_id"):
+            errs.append(f"{w}: mode factory_instrument has no build_id (the factory image is running)")
+        if not i.get("is_board"):
+            errs.append(f"{w}: only an instrument that is also a board (is_board) has a mode")
     names = {c.get("name") for c in i.get("channels") or [] if isinstance(c, dict)}
     for c in i.get("channels") or []:
         if not isinstance(c, dict) or not c.get("name"):
@@ -168,6 +187,8 @@ class Lab:
     design_file: Path | None = None
     problems: list[str] = field(default_factory=list)
     declined: bool = False                                                # the design's lab file says: no instruments for this design
+    target_board: str | None = None                                       # the board the design runs on (the design's lab file, else its build.yaml)
+    design_is_instrument: bool = False                                    # the design's lab file says: the design itself is the instrument (brief 225)
 
     @property
     def present(self) -> bool:
@@ -197,6 +218,8 @@ def merge(profile: dict[str, Any] | None, design: dict[str, Any] | None) -> Lab:
             lab.instruments[i["id"]] = {**old, **{k: v for k, v in i.items() if v is not None}}
     lab.connections = [c for c in (design or {}).get("connections") or [] if isinstance(c, dict)]
     lab.declined = bool((design or {}).get("no_instruments"))
+    lab.target_board = (design or {}).get("target_board") or None
+    lab.design_is_instrument = bool((design or {}).get("design_is_instrument"))
     return lab
 
 
@@ -230,6 +253,11 @@ def load(design: Path | None = None, profile: Path | None = None, *, strict: boo
                 problems += bad
                 lab.instruments.pop(iid, None)
     lab.profile, lab.design_file, lab.problems = (Path(prof) if prof and Path(prof).is_file() else None), dfile, problems
+    if lab.target_board is None and design is not None and (Path(design) / "build.yaml").is_file():      # the design's own build.yaml names its board
+        try:
+            lab.target_board = (yaml.safe_load((Path(design) / "build.yaml").read_text()) or {}).get("board") or None
+        except (OSError, yaml.YAMLError):
+            pass
     good = []
     for c in lab.connections:                                              # a connection must name a real instrument and channel
         inst = lab.instruments.get(c.get("instrument"))
@@ -310,6 +338,36 @@ def _covers(cap: dict[str, Any], need: Need) -> str | None:
     return None
 
 
+def instrument_mode(lab: Lab, iid: str) -> dict[str, Any] | None:
+    """The mode a board-and-instrument is in (brief 225), for a run record: ``{"state", "build_id", "is_board", "design_runs_on_it"}``, or None for an
+    instrument that is not also a board. An ``is_board`` instrument with no ``mode`` is in ``factory_instrument``, unless the design runs on it (then it
+    is a target, whatever the file says: the factory image is not what is measuring)."""
+    inst = lab.instruments.get(iid) or {}
+    if not inst.get("is_board"):
+        return None
+    m = inst.get("mode") or {}
+    on_it = bool(lab.target_board) and inst["is_board"] == lab.target_board
+    state = m.get("state") or ("target_loaded" if on_it else "factory_instrument")
+    return {"state": state, "build_id": m.get("build_id"), "is_board": inst["is_board"], "design_runs_on_it": on_it}
+
+
+def factory_unavailable(lab: Lab, iid: str) -> str | None:
+    """Why the factory instruments of ``iid`` cannot be used for this design, or None. The same box cannot be the instrument and the target at once:
+    a power cycle or the reload script returns it to its factory image, which ends the design's run."""
+    m = instrument_mode(lab, iid)
+    if m is None:
+        return None
+    if m["design_runs_on_it"] and lab.design_is_instrument:
+        return (f"the design runs on {iid} and is itself the instrument: only its own readout counts; the factory instruments of {iid} are not running "
+                "(check it against another instrument)")
+    if m["design_runs_on_it"]:
+        return (f"the design runs on {iid}, so its factory instruments are not available (the board is the target; a power cycle or the reload script "
+                "returns it to the factory image and ends the run)")
+    if m["state"] == "target_loaded":
+        return f"{iid} is loaded with build {m['build_id']}: its factory instruments are not running until a power cycle or the reload script restores them"
+    return None
+
+
 def plan_need(lab: Lab, need: Need) -> dict[str, Any]:
     """The methods for one need, best first, and what was left out and why.
 
@@ -329,6 +387,10 @@ def plan_need(lab: Lab, need: Need) -> dict[str, Any]:
         ok = [c for c, w in zip([c for c in caps if c.get("measure") == need.quantity], why) if w is None]
         if not ok:
             left_out.append({"instrument": iid, "reason": why[0] or "cannot"})
+            continue
+        busy = factory_unavailable(lab, iid)
+        if busy:                                              # brief 225: the same box cannot be the instrument and the target
+            left_out.append({"instrument": iid, "reason": busy})
             continue
         if not inst.get("onboarded"):
             left_out.append({"instrument": iid, "reason": "available after onboarding"})

@@ -14,6 +14,8 @@ The stage that runs a design's `hil.yaml` after the board build is [flow/hil.py]
 [designs/b30_hil_audio](../designs/b30_hil_audio) and its seeded-fault twin [designs/b30_hil_audio_pinfault](../designs/b30_hil_audio_pinfault).
 Measured results and what was and was not connected on 2026-11-11: [results/b30/README.md](../results/b30/README.md).
 
+Red Pitaya register windows, models and checks (brief 225): [redpitaya_regs.py](redpitaya_regs.py), [redpitaya_models.py](redpitaya_models.py), [redpitaya_checks.py](redpitaya_checks.py), [redpitaya_load.py](redpitaya_load.py).
+
 Rules that bind every run here: SRAM only (never flash, SD or eMMC; never eFUSE or BBRAM); wall power with at most 2.0 W
 predicted and Tj at most 85 C; no VGA hot-plug; one board job at a time through `_handoff/board.lock`
 (`hil/instruments/board_lock.py` takes it with exclusive create and releases only a lock carrying the same session prefix);

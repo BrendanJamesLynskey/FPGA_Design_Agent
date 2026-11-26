@@ -1,0 +1,50 @@
+# The reproducible examples (brief 195). Development tasks only: never a held-out task, never wavelet or DWT material.
+# `task` is a directory under the repository; its spec.md is what the agent sees, hidden/spec.yaml answers the interview oracle,
+# and hidden/ holds the acceptance bench that scores the result (benchmark/tools/run_task.py or the course entry).
+# Expected wall time and cost are NOT written here: they come from the committed reference runs (results/195_repro_examples/).
+schema: fda-examples/1
+pins:
+  harness: claude_code
+  cc_model: claude-sonnet-5-5
+  cc_effort: medium
+  oracle: claude_code
+  oracle_cc_model: claude-haiku-5-5
+  interview: oracle
+  review: "off"
+  verif_level: V2
+  harness_arm: H1
+  docs: "off"
+  profile: single
+  board: nexys_a7_100t
+  hdl: sv
+  stop_after: 6              # through timing closure: a post-route build, so resources and slack exist; no power, DRC or board stage
+  claude_cli_version: 2.1.321
+  claude_cli_sha256: 426c33815ca6645a772f722fbff10dbf2cbdb124a8aeab733c1365dbf8bbf61f   # the pinned copy of the CLI binary (eval_run_checklist.md step 2)
+  vivado_version: "2026.1"
+  max_usd: 6.0               # the run's own cost cap (the plan's estimate for a subscription run; provider-reported for a metered one)
+  seeds: none                # Claude Code on the subscription takes no seed and no temperature (docs/deterministic_mode.md)
+examples:
+  - name: gray_stepper
+    title: Gray-code stepper
+    task: benchmark/tasks/t1_gray_stepper
+    scorer: benchmark/tools/run_task.py
+    covers: a small counter with a debounced button, an automatic mode and a Gray-coded output; the whole count checked
+    kind: counter and output coding
+  - name: elevator_fsm
+    title: Four-floor lift controller
+    task: benchmark/tasks/t1_elevator_fsm
+    scorer: benchmark/tools/run_task.py
+    covers: a finite-state machine with call latching, direction rules and timed states
+    kind: finite-state machine
+  - name: median3x3
+    title: 3 x 3 median filter
+    task: benchmark/course/tasks/c9_median3x3
+    scorer: benchmark/course/tools/run_task.py
+    covers: a streaming block with a fixed one-clock latency, a window sorted in pure logic, gaps between windows
+    kind: streaming datapath
+  - name: pattern_sequencer
+    title: LED pattern sequencer
+    task: benchmark/tasks/t1_pattern_sequencer
+    scorer: benchmark/tools/run_task.py
+    covers: a programmable sequence of timed steps played in a loop or once, with a pause button and live changes to a step
+    kind: sequencer and timers

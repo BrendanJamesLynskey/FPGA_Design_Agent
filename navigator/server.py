@@ -30,6 +30,7 @@ from urllib.parse import parse_qs, urlparse
 
 from navigator import ask as NA
 from navigator import boardops, guards, measure, redact, runctl
+from navigator import examples as EX
 from navigator import console as NC
 from navigator import summary as NS
 from navigator import health as H
@@ -146,6 +147,11 @@ class App:
             off = one("offset")
             v = NC.read(self.runs_dir, one("id"), one("step"), int(off) if off.isdigit() else None) if self.known_run(one("id")) else None
             return self.json(200, v) if v else self.json(404, {"error": "no such step"})
+        if path == "/api/examples":
+            return self.json(200, {**EX.listing(self.root), "runs": EX.example_runs(self.runs_dir, PG.run_ids(self.runs_dir, 200)), "started": self.runctl.records(), "usage": self.health.usage(), "slots": self.health.locks()})
+        if path == "/api/examples/compare":
+            v = EX.comparison(self.runs_dir, one("id")) if self.known_run(one("id")) else None
+            return self.json(200, v) if v else self.json(404, {"error": "no example result in that run"})
         if path == "/api/start/options":
             return self.json(200, {**self.runctl.options(), "usage": self.health.usage(), "slots": self.health.locks(), "started": self.runctl.records()})
         if path == "/api/board":
@@ -303,7 +309,7 @@ class App:
                 "projects": len(S.design_dirs(self.root)), "latency_designs": S.latency_designs(self.root), "builds": len(S.builds(self.root)),
                 "captures": len(S.capture_files(self.root, self.extra)),
                 "synthetic_captures": sum(1 for c in measure.listing(self.root, self.extra) if c["synthetic"]),
-                "binds": f"{LOOPBACK}:{self.port}", "pages": ["Project", "Timing", "Runs", "Live", "Start", "Permissions", "Board", "Measurements", "Health", "Models"]}
+                "binds": f"{LOOPBACK}:{self.port}", "pages": ["Project", "Timing", "Runs", "Live", "Start", "Permissions", "Examples", "Board", "Measurements", "Health", "Models"]}
 
 
 def _default_gate(entry: str) -> Any:

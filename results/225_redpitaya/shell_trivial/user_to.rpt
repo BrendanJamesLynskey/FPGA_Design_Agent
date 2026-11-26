@@ -1,0 +1,83 @@
+Copyright 1986-2022 Xilinx, Inc. All Rights Reserved. Copyright 2022-2026 Advanced Micro Devices, Inc. All Rights Reserved.
+---------------------------------------------------------------------------------------------------------------------------------------------
+| Tool Version : Vivado v.2026.1 (lin64) Build 6511674 Tue Jun 16 11:01:26 MDT 2026
+| Date         : Thu Nov 26 06:25:58 2026
+| Host         : bren-ubuntu24-04 running 64-bit Ubuntu 24.04.4 LTS
+| Command      : report_timing -to [get_pins -hier -filter {NAME =~ i_user_block/*/D}] -max_paths 1 -setup -file user_to.rpt
+| Design       : red_pitaya_top
+| Device       : 7z010-clg400
+| Speed File   : -1  PRODUCTION 1.12 2019-11-22
+| Design State : Routed
+---------------------------------------------------------------------------------------------------------------------------------------------
+
+Timing Report
+
+Slack (MET) :             3.357ns  (required time - arrival time)
+  Source:                 sys_bus_interconnect/for_bus[7].inst_sys_bus_cdc/bus_m\\.addr_reg[4]/C
+                            (rising edge-triggered cell FDRE clocked by pll_adc_clk  {rise@0.000ns fall@4.000ns period=8.000ns})
+  Destination:            i_user_block/sys_rdata_reg[5]/D
+                            (rising edge-triggered cell FDRE clocked by pll_adc_clk  {rise@0.000ns fall@4.000ns period=8.000ns})
+  Path Group:             pll_adc_clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            8.000ns  (pll_adc_clk rise@8.000ns - pll_adc_clk rise@0.000ns)
+  Data Path Delay:        4.518ns  (logic 0.828ns (18.326%)  route 3.690ns (81.674%))
+  Logic Levels:           3  (LUT5=1 LUT6=2)
+  Clock Path Skew:        -0.137ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    5.377ns = ( 13.377 - 8.000 ) 
+    Source Clock Delay      (SCD):    5.971ns
+    Clock Pessimism Removal (CPR):    0.457ns
+  Clock Uncertainty:      0.069ns  ((TSJ^2 + DJ^2)^1/2) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Discrete Jitter          (DJ):    0.118ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock pll_adc_clk rise edge)
+                                                      0.000     0.000 r  <hidden>
+    U18                                               0.000     0.000 r  adc_clk_i[1]
+                         net (fo=0)                   0.000     0.000    adc_clk_i[1]
+    U18                  IBUFDS (Prop_ibufds_I_O)     0.983     0.983 r  i_clk/O
+                         net (fo=1, routed)           1.306     2.289    pll/adc_clk_in
+    PLLE2_ADV_X0Y0       PLLE2_ADV (Prop_plle2_adv_CLKIN1_CLKOUT0)
+                                                      0.089     2.378 r  pll/pll/CLKOUT0
+                         net (fo=1, routed)           1.754     4.132    pll_adc_clk
+    BUFGCTRL_X0Y0        BUFG (Prop_bufg_I_O)         0.101     4.233 r  bufg_adc_clk/O
+                         net (fo=10188, routed)       1.738     5.971    sys_bus_interconnect/for_bus[7].inst_sys_bus_cdc/clk
+    SLICE_X37Y61         FDRE                                         r  sys_bus_interconnect/for_bus[7].inst_sys_bus_cdc/bus_m\\.addr_reg[4]/C
+  -------------------------------------------------------------------    -------------------
+    SLICE_X37Y61         FDRE (Prop_fdre_C_Q)         0.456     6.427 f  sys_bus_interconnect/for_bus[7].inst_sys_bus_cdc/bus_m\\.addr_reg[4]/Q
+                         net (fo=64, routed)          2.043     8.470    sys_bus_interconnect/for_bus[7].inst_sys_bus_cdc/sys[7]\\.addr[4]
+    SLICE_X33Y59         LUT5 (Prop_lut5_I4_O)        0.124     8.594 r  sys_bus_interconnect/for_bus[7].inst_sys_bus_cdc/sys_rdata[5]_i_3__1/O
+                         net (fo=1, routed)           0.977     9.571    sys_bus_interconnect/for_bus[7].inst_sys_bus_cdc/sys_rdata[5]_i_3__1_n_0
+    SLICE_X34Y61         LUT6 (Prop_lut6_I5_O)        0.124     9.695 r  sys_bus_interconnect/for_bus[7].inst_sys_bus_cdc/sys_rdata[5]_i_2__1/O
+                         net (fo=1, routed)           0.670    10.365    sys_bus_interconnect/for_bus[7].inst_sys_bus_cdc/sys_rdata[5]_i_2__1_n_0
+    SLICE_X34Y61         LUT6 (Prop_lut6_I0_O)        0.124    10.489 r  sys_bus_interconnect/for_bus[7].inst_sys_bus_cdc/sys_rdata[5]_i_1__1/O
+                         net (fo=1, routed)           0.000    10.489    i_user_block/D[5]
+    SLICE_X34Y61         FDRE                                         r  i_user_block/sys_rdata_reg[5]/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock pll_adc_clk rise edge)
+                                                      8.000     8.000 r  <hidden>
+    U18                                               0.000     8.000 r  adc_clk_i[1]
+                         net (fo=0)                   0.000     8.000    adc_clk_i[1]
+    U18                  IBUFDS (Prop_ibufds_I_O)     0.940     8.940 r  i_clk/O
+                         net (fo=1, routed)           1.181    10.121    pll/adc_clk_in
+    PLLE2_ADV_X0Y0       PLLE2_ADV (Prop_plle2_adv_CLKIN1_CLKOUT0)
+                                                      0.084    10.205 r  pll/pll/CLKOUT0
+                         net (fo=1, routed)           1.594    11.799    pll_adc_clk
+    BUFGCTRL_X0Y0        BUFG (Prop_bufg_I_O)         0.091    11.890 r  bufg_adc_clk/O
+                         net (fo=10188, routed)       1.487    13.377    i_user_block/clk_i
+    SLICE_X34Y61         FDRE                                         r  i_user_block/sys_rdata_reg[5]/C
+                         clock pessimism              0.457    13.834    <hidden>
+                         clock uncertainty           -0.069    13.765    <hidden>
+    SLICE_X34Y61         FDRE (Setup_fdre_C_D)        0.081    13.846    i_user_block/sys_rdata_reg[5]
+  -------------------------------------------------------------------
+                         required time                         13.846    <hidden>
+                         arrival time                         -10.489    <hidden>
+  -------------------------------------------------------------------
+                         slack                                  3.357    <hidden>
+
+
+
+
