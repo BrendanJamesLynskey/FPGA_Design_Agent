@@ -353,24 +353,59 @@ STOP = {"the", "a", "an", "and", "or", "of", "to", "in", "on", "is", "are", "be"
         "edge", "value", "previous", "was", "has", "have", "happen", "same", "earlier", "ago"}
 NEGATION = re.compile(r"\b(never|not|no|neither|nor|cannot|can't|without|isn't|doesn't|stays? low|remains? low)\b|!|~", re.I)
 _TOK = re.compile(r"[a-z0-9]+")
-_NUM = re.compile(r"(?<![A-Za-z_'])\b(\d+)\b(?!\s*'[sS]?[bBdDhHoO])")
+_NUMLIT = re.compile(r"\b\d+\s*'\s*[sS]?([bBdDhHoO])\s*([0-9a-fA-F_xXzZ]+)|\b0[xX]([0-9a-fA-F_]+)\b|\b(\d+)\b")
 _REQID = re.compile(r"\b[A-Z]{2,5}-\d+\b")
+#: the short names hardware ports use, and the words a requirement uses for them (so `rst` in a property meets "reset" in the requirement)
+SYNONYMS = {"rst": ("reset",), "rstn": ("reset",), "clk": ("clock",), "we": ("write",), "wr": ("write",), "re": ("read",), "rd": ("read",),
+            "addr": ("address",), "wdata": ("write", "data"), "rdata": ("read", "data"), "en": ("enable",), "cnt": ("count",), "ctrl": ("control",),
+            "reg": ("register",), "tx": ("transmit",), "rx": ("receive",), "irq": ("interrupt",)}
+
+
+def _stem(t: str) -> str:
+    if t.isdigit():
+        return t
+    if len(t) > 4 and t.endswith("s") and not t.endswith("ss"):
+        t = t[:-1]
+    return t[:5]
 
 
 def _tokens(s: str) -> set[str]:
-    s = _REQID.sub(" ", s).replace("_", " ")
-    return {t[:5] if not t.isdigit() else t for t in _TOK.findall(s.lower()) if t not in STOP and (len(t) > 2 or t.isdigit())}
+    """Content words (plural cut, then five letters, as the requirements report does), names split at underscores, short port names widened
+    (``rst`` to reset), numbers read as numbers (``0x008``, ``12'h008`` and ``8`` are one token)."""
+    s = _REQID.sub(" ", s)
+    out: set[str] = set()
+    for lit in _NUMLIT.finditer(s):
+        v = _lit(lit)
+        if v is not None:
+            out.add(str(v))
+    s = _NUMLIT.sub(" ", s).replace("_", " ")
+    for t in _TOK.findall(s.lower()):
+        for w in SYNONYMS.get(t, (t,)):
+            if w not in STOP and (len(w) > 2 or w.isdigit()):
+                out.add(_stem(w))
+    return out
+
+
+def _lit(m: re.Match) -> int | None:
+    try:
+        if m.group(2) is not None:
+            base = {"b": 2, "d": 10, "h": 16, "o": 8}[m.group(1).lower()]
+            return int(m.group(2).replace("_", ""), base)
+        if m.group(3) is not None:
+            return int(m.group(3).replace("_", ""), 16)
+        return int(m.group(4))
+    except (ValueError, TypeError):                       # x or z digits
+        return None
 
 
 def _numbers(s: str) -> set[int]:
-    return {int(n) for n in _NUM.findall(_REQID.sub(" ", s))}
+    return {v for m in _NUMLIT.finditer(_REQID.sub(" ", s)) for v in [_lit(m)] if v is not None}
 
 
 def _prop_numbers(gen: dict[str, Any]) -> set[int]:
     """The numbers the property itself chooses: $past depths and constants of two or more (0 and 1 are logic levels, not figures)."""
-    n = {int(x) for x in re.findall(r",\s*(\d+)\s*\)", gen["ante"] + " " + gen["cons"])}
-    for e in (gen["ante"], gen["cons"]):
-        n |= {int(x) for x in _NUM.findall(_SIZED.sub(" ", e))}
+    n = {int(x) for x in re.findall(r",\s*(\d+)\s*\)", gen["ante"] + " " + gen["cons"]) if "$past" in gen["ante"] + gen["cons"]}
+    n |= _numbers(gen["ante"] + " " + gen["cons"])
     return {x for x in n if x >= 2}
 
 
@@ -403,8 +438,11 @@ def compare(req: dict[str, Any], gen: dict[str, Any], back: str, spec: dict[str,
     ports = set(notes)
     named = {s for s in gen["signals"] if re.search(rf"\b{re.escape(s)}\b", full)
              or (_tokens(s) and _tokens(s) <= _tokens(full)) or (_tokens(notes.get(s, "")) & _tokens(full))}
-    if gen["signals"] and not named and not (set(gen["signals"]) == {"rst"} and re.search(r"\breset\b", full, re.I)):
-        reasons.append("signals: the property uses " + ", ".join(gen["signals"]) + ", none of which the requirement names")
+    want_words = _tokens(full)
+    if gen["signals"] and not named and not (set(gen["signals"]) == {"rst"} and re.search(r"\breset\b", full, re.I)) \
+            and len(want_words & (sig_tokens | _tokens(back))) / max(1, len(want_words)) < PARTIAL_BELOW:
+        # a register requirement names a register, not the port that carries it, so the words must support the link too
+        reasons.append("signals: the property uses " + ", ".join(gen["signals"]) + ", none of which the requirement names or describes")
     if isinstance(l2, dict):
         for k in ("trigger", "response", "signal", "signals"):
             v = l2.get(k)
@@ -413,6 +451,7 @@ def compare(req: dict[str, Any], gen: dict[str, Any], back: str, spec: dict[str,
                     if s in ports and s not in gen["signals"]:
                         reasons.append(f"signals: the L2 field {k} names {s}, which the property does not use")
     rq_nums, bk_nums, pr_nums = _numbers(full), _numbers(back), _prop_numbers(gen)
+    rq_nums |= {int(w) for w in want_words if w.isdigit()}
     for n in sorted(pr_nums - rq_nums):
         reasons.append(f"numbers: the property uses {n}, which the requirement does not give")
     for n in sorted(bk_nums - rq_nums - pr_nums - {0, 1}):
@@ -508,7 +547,7 @@ def sources_of(design: Path) -> list[Path]:
 
 
 def sby_text(design: Path, spec: dict[str, Any], rid: str, gen: dict[str, Any], sby_dir: Path, srcs: list[Path],
-             tasks: tuple[str, ...] = ("bmc", "prove", "cover")) -> str:
+             tasks: tuple[str, ...] = ("bmc", "prove", "cover"), front: str = "native") -> str:
     """The .sby job. Paths in ``[files]`` are relative to ``sby_dir`` (the folder the job runs from). ``tasks`` lists the tasks the job has:
     a property that was only bounded-checked is installed without ``prove``, so the traceability matrix (which needs every listed task to
     pass) reads it as the bounded evidence it is."""
@@ -522,14 +561,22 @@ def sby_text(design: Path, spec: dict[str, Any], rid: str, gen: dict[str, Any], 
         f"# SymbiYosys: {rid} stated as a property (brief 218, flow/sva_req.py): bounded check, k-induction proof and the cover of its trigger.",
         f"# The property ({gen['kind']}): ante `{gen['ante']}`, cons `{gen['cons']}`. Generated from the requirement and the port list; see {top}.sv.",
         f"# req: {rid}",
+        *(["# Needs the OSS CAD Suite the repository pins (Yosys with the slang plugin): flow/formal.sh puts it first on PATH for a job that says `plugin -i slang`."]
+          if front == "slang" else []),
         "[tasks]", *tasks, "", "[options]", *[o for t in tasks for o in opts[t]], "", "[engines]", "smtbmc z3", "",
-        "[script]", *[f"read_verilog -formal -sv {p.name}" for p in srcs], f"read_verilog -formal -sv {top}.sv", f"prep -top {top}", "",
+        "[script]", *(["plugin -i slang", f"read_slang --top {top} " + " ".join([p.name for p in srcs] + [f"{top}.sv"])] if front == "slang" else
+                      [*[f"read_verilog -formal -sv {p.name}" for p in srcs], f"read_verilog -formal -sv {top}.sv"]), f"prep -top {top}", "",
         "[files]", *[rel(p) for p in srcs], f"{top}.sv", ""])
 
 
 # ---- running it ----------------------------------------------------------------------------------------------------------------------------------
 def formal_env() -> dict[str, str] | None:
-    """The environment with ``sby`` on PATH: the current one, else the owner's user-local install (``~/.local/opt/formal-deb/env.sh``)."""
+    """The environment with ``sby`` on PATH, in this order: the OSS CAD Suite the repository pins (``$FDA_OSS_CAD``, then ``~/.local/opt/oss-cad-suite``:
+    a current Yosys with the slang front end, the one CI uses), the current PATH, the owner's user-local install (``~/.local/opt/formal-deb/env.sh``:
+    Yosys 0.33, which reads less SystemVerilog)."""
+    for c in (os.environ.get("FDA_OSS_CAD"), str(Path.home() / ".local" / "opt" / "oss-cad-suite")):
+        if c and (Path(c) / "bin" / "sby").exists():
+            return dict(os.environ, PATH=f"{Path(c) / 'bin'}:{os.environ.get('PATH', '')}")
     if shutil.which("sby"):
         return dict(os.environ)
     sh = Path.home() / ".local" / "opt" / "formal-deb" / "env.sh"
@@ -541,6 +588,29 @@ def formal_env() -> dict[str, str] | None:
         return None
     env = dict(kv.split("=", 1) for kv in out.decode(errors="replace").split("\0") if "=" in kv)
     return env if shutil.which("sby", path=env.get("PATH")) else None
+
+
+_FRONT: dict[str, str] = {}
+
+
+def frontend(env: dict[str, str]) -> str:
+    """``slang`` when this Yosys loads the slang plugin (full SystemVerilog: parameters with types, packages, ``logic`` ports), else ``native``
+    (Yosys's own reader). The job is written for the front end of the tool that will prove it."""
+    key = env.get("PATH", "")
+    if key not in _FRONT:
+        try:
+            r = subprocess.run(["yosys", "-q", "-p", "plugin -i slang"], env=env, capture_output=True, timeout=60)
+            _FRONT[key] = "slang" if r.returncode == 0 else "native"
+        except (OSError, subprocess.SubprocessError):
+            _FRONT[key] = "native"
+    return _FRONT[key]
+
+
+def tool_version(env: dict[str, str]) -> str:
+    try:
+        return subprocess.run(["yosys", "-V"], env=env, capture_output=True, text=True, timeout=30).stdout.strip()
+    except (OSError, subprocess.SubprocessError):
+        return "unknown"
 
 
 def run_tasks(sby: Path, work: Path, env: dict[str, str], tasks: tuple[str, ...] = ("bmc", "prove", "cover"),
@@ -698,6 +768,7 @@ def process(design: Path, gen_llm: Callable[[str, str], str], back_llm: Callable
     base.mkdir(parents=True, exist_ok=True)
     old = read_evidence(design).get("requirements", {})
     env = formal_env() if formal else None
+    front = frontend(env) if env else "native"
     rows: dict[str, Any] = {}
     srcs = sources_of(design)
     rtl_key = hashlib.sha256(b"".join(p.name.encode() + b"\0" + p.read_bytes() for p in srcs if p.is_file())).hexdigest()[:16]
@@ -743,7 +814,7 @@ def process(design: Path, gen_llm: Callable[[str, str], str], back_llm: Callable
         work.mkdir(parents=True)
         (work / f"sva_{slug(rid)}.sv").write_text(wrapper_sv(design, spec, rid, gen))
         sby = work / f"sva_{slug(rid)}.sby"
-        sby.write_text(sby_text(design, spec, rid, gen, work, srcs))
+        sby.write_text(sby_text(design, spec, rid, gen, work, srcs, front=front))
         res = run_tasks(sby, work, env, prefix=prefix)
         j = judge(res)
         row.update(j)
@@ -759,7 +830,7 @@ def process(design: Path, gen_llm: Callable[[str, str], str], back_llm: Callable
             fdir.mkdir(parents=True, exist_ok=True)
             (fdir / f"sva_{slug(rid)}.sv").write_text(wrapper_sv(design, spec, rid, gen))
             keep = ("bmc", "prove", "cover") if j["status"] == "proved" else ("bmc", "cover")
-            (fdir / f"sva_{slug(rid)}.sby").write_text(sby_text(design, spec, rid, gen, fdir, srcs, keep))
+            (fdir / f"sva_{slug(rid)}.sby").write_text(sby_text(design, spec, rid, gen, fdir, srcs, keep, front))
             row["installed"] = f"verif/formal/sva_{slug(rid)}.sby"
             for t in keep:                    # the results the matrix reads (flow/formal.sh writes the same files when it runs the job)
                 dst = design / "build" / "verif" / "formal" / f"sva_{slug(rid)}_{t}"
@@ -767,7 +838,7 @@ def process(design: Path, gen_llm: Callable[[str, str], str], back_llm: Callable
                 shutil.copy(work / t / "status", dst / "status")
         rows[rid] = {**row, "status": j["status"]}
     rec = {"schema": SCHEMA, "design": design.name, "module": spec.get("top"), "module_note": module_note, "generated": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), "requirements": rows,
-           "skipped": skipped, "counts": counts(rows), "caveats": ["reset is asserted in the first cycle only (reset rows: free after the third)",
+           "skipped": skipped, "counts": counts(rows), "formal_tool": (tool_version(env) + f" ({front} front end)") if env else None, "caveats": ["reset is asserted in the first cycle only (reset rows: free after the third)",
                                                                     "one clock domain per property", "the property was written without the RTL"]}
     (base / EVIDENCE).write_text(json.dumps(rec, indent=1) + "\n")
     return rec

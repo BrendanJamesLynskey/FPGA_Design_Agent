@@ -18,10 +18,17 @@ for f in *.sby; do
     run=".${job}_local.sby"
     sed "s#^plugin -i ghdl\$#plugin -i ${FDA_GHDL_PLUGIN}#" "$f" > "$run"
   fi
+  # brief 218: a job that loads the slang plugin (the properties written from requirements, sva_*.sby, when the pinned tool was used) needs the
+  # OSS CAD Suite the repository pins ($FDA_OSS_CAD, else ~/.local/opt/oss-cad-suite); its bin goes first on PATH for that job only
+  pre=()
+  if grep -q '^plugin -i slang' "$f"; then
+    OSS="${FDA_OSS_CAD:-$HOME/.local/opt/oss-cad-suite}"
+    if [ -x "$OSS/bin/sby" ]; then pre=(env "PATH=$OSS/bin:$PATH"); fi
+  fi
   # the tasks the job lists (`sby --dumptasks`); bmc and cover where it lists none
-  tasks="$(sby --dumptasks "$run" 2>/dev/null | tr '\n' ' ')"
+  tasks="$("${pre[@]}" sby --dumptasks "$run" 2>/dev/null | tr '\n' ' ')"
   for task in ${tasks:-bmc cover}; do
-    sby -f -d "$OUT/${job}_${task}" "$run" "$task" >"$OUT/${job}_${task}.log" 2>&1 || true
+    "${pre[@]}" sby -f -d "$OUT/${job}_${task}" "$run" "$task" >"$OUT/${job}_${task}.log" 2>&1 || true
     echo "formal ${job}_${task}: $(head -1 "$OUT/${job}_${task}/status" 2>/dev/null || echo ABSENT)"
   done
   [ "$run" = "$f" ] || rm -f -- "$run"
