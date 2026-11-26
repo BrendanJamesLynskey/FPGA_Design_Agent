@@ -6,7 +6,17 @@
 <title>Worked example: a 10G trading path on the KR260 | FPGA Force</title>
 <meta name="description" content="One design end to end, seen as who did what: what the human specified, what the agent built, what verified it, what the board measured, and where human judgement mattered, each linked to its committed record.">
 <meta name="color-scheme" content="light dark">
-<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="icon" href="favicon.svg" type="image/svg+xml" sizes="any">
+<link rel="icon" href="icons/icon-32.png" type="image/png" sizes="32x32">
+<link rel="icon" href="icons/icon-16.png" type="image/png" sizes="16x16">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta property="og:title" content="Worked example: a 10G trading path on the KR260 | FPGA Force">
+<meta property="og:description" content="One design end to end, seen as who did what: what the human specified, what the agent built, what verified it, what the board measured, and where human judgement mattered, each linked to its committed record.">
+<meta property="og:type" content="website">
+<meta property="og:image" content="https://fpgaforce.vercel.app/icons/og-card.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
 <style>/* FPGA Force site: sober monochrome, dark and light, no glow. Same manner as the CVDP RTL Agent site. */
 :root {
   --bg: #f6f6f4; --panel: #ffffff; --rule: #d6d6d2; --ink: #161616; --ink-2: #4a4a4a; --ink-3: #6b6b6b;
@@ -52,10 +62,22 @@ p { margin: 0 0 1em; }
 .bar { position: sticky; top: 0; z-index: 10; background: var(--bg); border-bottom: 1px solid var(--rule);
   margin: 0 calc(-1 * max(16px, env(safe-area-inset-left))); padding: 0 max(16px, env(safe-area-inset-left)); }
 .bar .wrap { max-width: 1200px; display: flex; align-items: center; gap: 4px 14px; flex-wrap: wrap; min-height: 52px; }
-.brand { font-weight: 700; text-decoration: none; margin-right: auto; padding: 8px 0; }
+.brand { font-weight: 700; text-decoration: none; margin-right: auto; padding: 8px 0; display: inline-flex; align-items: center; gap: 10px; }
+.brand .mark { flex: 0 0 auto; color: var(--ink); }   /* brief 237: the mark is drawn in currentColor, so it follows the theme */
 .bar nav { display: flex; flex-wrap: wrap; gap: 0 4px; }
-.bar nav a { padding: 10px 6px; text-decoration: none; color: var(--ink-2); min-height: 44px; display: inline-flex; align-items: center; }
-.bar nav a[aria-current="page"] { color: var(--ink); box-shadow: inset 0 -2px 0 var(--ink); }
+/* brief 237: four groups, each a drawer of page links; a menu on wide screens, an open block under the bar on phones */
+.navgroup { position: relative; }
+.navgroup > summary { list-style: none; cursor: pointer; padding: 10px 10px; min-height: 44px; display: inline-flex; align-items: center; gap: 6px; color: var(--ink-2); }
+.navgroup > summary::-webkit-details-marker { display: none; }
+.navgroup > summary::after { content: ""; width: 6px; height: 6px; border: solid currentColor; border-width: 0 1.5px 1.5px 0; transform: rotate(45deg) translateY(-2px); }
+.navgroup[open] > summary::after { transform: rotate(-135deg) translateY(-2px); }
+.navgroup[open] > summary, .navgroup:hover > summary { color: var(--ink); }
+.navgroup.has-current > summary { color: var(--ink); box-shadow: inset 0 -2px 0 var(--ink); }
+.navmenu { position: absolute; top: 100%; left: 0; z-index: 20; min-width: 230px; background: var(--panel); border: 1px solid var(--rule); padding: 4px 0; box-shadow: 0 2px 6px rgba(0,0,0,.12); }
+.navmenu a { display: flex; align-items: center; padding: 8px 14px; min-height: 44px; text-decoration: none; color: var(--ink-2); }
+.navmenu a:hover { background: var(--bg); color: var(--ink); }
+.navmenu a.sub { padding-left: 30px; font-size: .92rem; min-height: 36px; }
+.navmenu a[aria-current="page"] { color: var(--ink); font-weight: 600; box-shadow: inset 3px 0 0 var(--ink); }
 button, select { font: inherit; color: var(--ink); background: var(--panel); border: 1px solid var(--rule); border-radius: 3px; min-height: 44px; min-width: 44px; padding: 0 12px; cursor: pointer; }
 button:hover { border-color: var(--ink-3); }
 button[aria-pressed="true"] { background: var(--ink); color: var(--bg); }
@@ -243,7 +265,7 @@ details.area > summary { grid-template-areas: "n l" "s l" "c l"; }
 details.area > summary::before { display: none; }
 details.area .an { grid-area: n; font-weight: 700; }
 details.area .an::before { content: "+ "; font-family: var(--f-mono); }
-details.area[open] .an::before { content: "- "; }
+details.area[open] > summary .an::before { content: "- "; }
 details.area .as { grid-area: s; color: var(--ink-2); font-size: .92rem; }
 details.area .ac { grid-area: c; color: var(--ink-3); font-size: .82rem; }
 details.area .tag.lvl { grid-area: l; align-self: start; }
@@ -445,26 +467,21 @@ ul.fixes .evl { display: block; font-size: .82rem; color: var(--ink-3); }
 
 /* phones: the page links become one row that scrolls sideways, so the first screen starts with the page */
 @media (max-width: 640px) {
-  .bar .wrap { flex-wrap: nowrap; gap: 0 8px; }
-  .bar nav { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: thin; min-width: 0; flex: 1 1 auto; }
-  .bar nav a { white-space: nowrap; }
-  .brand { margin-right: 4px; white-space: nowrap; }
+  .brand { white-space: nowrap; }
 }
 .toc { display: flex; flex-wrap: wrap; gap: 4px 10px; margin: 0 0 1.2em; color: var(--ink-3); }
 .toc a { color: var(--ink-2); }
 .chip-status { display: inline-block; border: 1px solid var(--ink-3); padding: 6px 12px; font-size: .92rem; color: var(--ink); max-width: 72ch; margin: 0 0 1em; }
 /* header (brief 50A page review): up to 1000 px the page links are one row that scrolls sideways, fading at the right
    edge as the cue; on phones that row sits under the brand and the theme button, so nothing overlaps it */
-@media (max-width: 1000px) {
-  .bar .wrap { flex-wrap: nowrap; }
-  .bar nav { flex-wrap: nowrap; overflow-x: auto; min-width: 0; flex: 1 1 auto; -webkit-mask-image: linear-gradient(to right, #000 85%, transparent); mask-image: linear-gradient(to right, #000 85%, transparent); padding-right: 22px; }
-  .bar nav a { white-space: nowrap; }
-  .bar .brand { white-space: nowrap; flex: 0 0 auto; }
-}
-@media (max-width: 640px) {
+@media (max-width: 760px) {      /* brief 237: no sideways scrolling; the brand and theme button share a row, the four groups sit under it, an open group is a block */
   .bar .wrap { flex-wrap: wrap; row-gap: 0; }
   .bar .brand { flex: 1 1 auto; }
   .bar nav { order: 3; flex: 1 0 100%; }
+  .navgroup { position: static; }
+  .navgroup > summary { padding: 10px 7px; font-size: .94rem; gap: 4px; }
+  .navmenu { position: static; box-shadow: none; border: 0; border-top: 1px solid var(--rule); min-width: 0; width: 100%; background: transparent; }
+  .navgroup[open] { flex: 1 0 100%; order: 9; }
 }
 
 /* showcase tables on phones: each row becomes a block of "header: value" lines, so no column is hidden behind a sideways
@@ -708,18 +725,30 @@ svg .hl { stroke: var(--warn); stroke-width: 0.9; opacity: .75; }
 svg .cell { fill: var(--ink); stroke: var(--rule); }
 svg text.on { fill: var(--bg); }
 svg text.wn { fill: var(--warn); }
+
+/* drawers on the long pages (brief 237, site/drawers.py): the section heading and a one-sentence teaser are the closed drawer */
+details.area.sec { margin: 0 0 8px; }
+details.area.sec > summary { grid-template-areas: "n" "s"; grid-template-columns: minmax(0, 1fr); padding: 10px 14px; }
+details.area.sec > summary h2.sech { margin: 0; font-size: 1.12rem; display: inline; }
+details.area.sec > summary .an, details.area.sec h2.sech { grid-area: n; }
+details.area.sec > summary h2.sech::before { content: "+ "; font-family: var(--f-mono); }
+details.area.sec[open] > summary h2.sech::before { content: "- "; }
+details.area.sec[open] > summary .as { display: none; }
+details.area.sec > .abody > h3:first-child { margin-top: .6em; }
+.toc span { color: var(--ink-3); }
+main#main { padding-top: 18px; }
 </style>
 </head>
 <body>
 <a class="visually-hidden" href="#main">Skip to content</a>
-<header class="bar"><div class="wrap"><a class="brand" href="index.html">FPGA Force</a><nav aria-label="Pages"><a href="why.html">Why</a><a href="agent.html">The agent</a><a class="sub" href="agent.html#harness">Harness</a><a href="story.html">How it was built</a><a href="worked-example.html" aria-current="page">Worked example</a><a href="inspect.html">Inspect it</a><a href="how.html">How it works</a><a href="verification.html">Verification</a><a href="traceability.html">Traceability</a><a href="verified.html">Verified</a><a href="flow-notes.html">Beyond the flow</a><a href="expertise.html">Expertise</a><a href="examples.html">Examples</a><a href="showcase.html">Showcase</a><a href="problems.html">Problems</a><a href="evaluation.html">Evaluation</a><a href="results.html">Results</a></nav><button id="theme" type="button" aria-label="Switch to dark theme">Dark</button></div></header>
+<header class="bar"><div class="wrap"><a class="brand" href="index.html"><svg class="mark" viewBox="0 0 64 64" width="28" height="28" aria-hidden="true" focusable="false"><rect x="4" y="12" width="30" height="40" rx="2" fill="none" stroke="currentColor" stroke-width="4"/><path d="M4 41 L11 46 L4 51" fill="none" stroke="currentColor" stroke-width="3"/><path d="M11 20 V37 M11 20 H16 M11 28 H15" fill="none" stroke="currentColor" stroke-width="3.6" stroke-linecap="square"/><path d="M22 20 V37 M22 20 H27 M22 28 H26" fill="none" stroke="currentColor" stroke-width="3.6" stroke-linecap="square"/><path d="M34 32 H50" stroke="currentColor" stroke-width="6"/><path d="M49 24 L62 32 L49 40 Z" fill="currentColor"/></svg><span>FPGA Force</span></a><nav aria-label="Pages"><details class="navgroup"><summary>What it is</summary><div class="navmenu"><a href="why.html">Why</a><a href="agent.html">The agent</a><a class="sub" href="agent.html#harness">Harness</a><a href="story.html">How it was built</a><a href="changes.html">What&#x27;s new</a></div></details><details class="navgroup"><summary>How it works</summary><div class="navmenu"><a href="how.html">How it works</a><a href="verification.html">Verification</a><a href="verified.html">Verified</a><a href="flow-notes.html">Beyond the flow</a><a href="expertise.html">Expertise</a><a href="inspect.html">Inspect it</a></div></details><details class="navgroup"><summary>Evidence</summary><div class="navmenu"><a href="traceability.html">Traceability</a><a href="evaluation.html">Evaluation</a><a href="results.html">Results</a><a href="problems.html">Problems</a></div></details><details class="navgroup has-current"><summary>Examples</summary><div class="navmenu"><a href="worked-example.html" aria-current="page">Worked example</a><a href="examples.html">Examples</a><a href="showcase.html">Showcase</a></div></details></nav><button id="theme" type="button" aria-label="Switch to dark theme">Dark</button></div></header>
 <main id="main" class="wrap">
 <p class="eyebrow">Worked example</p>
 <h1>A 10G link and a trading path on the KR260, seen as who did what</h1>
 <p class="lede">One design from request to board, with the work divided the way the project divides it. The person said what the design must do and judged whether the evidence was enough. The agent held the implementation: the PCS, the MAC, the decision path, the tests, the builds. Hardware verification, with instruments attached, was the layer that could settle what simulation could not.</p>
 <p class="small muted">Every number here is read from a committed record, linked from the line that uses it. Latencies are our own stamps inside the FPGA and are not comparable with any published figure unless the definitions match: we claim no parity with published results.</p>
 
-<h2 id="roles">Who did what</h2>
+<nav class="toc" aria-label="Sections of this page"><span>On this page:</span><a href="#roles">Who did what</a><a href="#evidence">What verified it</a><a href="#board">What the board measured</a><a href="#judgement">Where human judgement mattered</a><a href="#hardware-only">What only hardware could settle, and what is still waiting</a><a href="#gaps-and-limits">Gaps and limits</a></nav><div class="areactl" id="areactl" hidden><button type="button" id="expand-all">Expand all</button><button type="button" id="collapse-all">Collapse all</button></div><details class="area sec" id="roles" open><summary><h2 class="sech">Who did what</h2><span class="as">What the design does not do is stated in its own README: no interoperability proof with a network card, and the trading path is a small stand-in with one rule, not the full trading core.</span></summary><div class="abody">
 <div class="who">
 <div><h3>You specified</h3><ul>
 <li>a real 10GBASE-R link on the KR260's SFP+ cage, with our own PCS and MAC, because AMD's 10G Ethernet core is refused on the free Basic licence</li>
@@ -742,12 +771,12 @@ svg text.wn { fill: var(--warn); }
 </div>
 <p>What the design does not do is stated in its own README: no interoperability proof with a network card, and the trading path is a small stand-in with one rule, not the full trading core. Source: <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/designs/b96_kr260_10g/README.md"><code>designs/b96_kr260_10g/README.md</code></a>.</p>
 
-<h2 id="evidence">What verified it</h2>
+</div></details><details class="area sec" id="evidence"><summary><h2 class="sech">What verified it</h2><span class="as">Each requirement, against each kind of evidence that exists for it. A filled square is passed, a hatched square is measured (no pass line), and a dash is a kind of evidence not recorded for this design.</span></summary><div class="abody">
 <p>Each requirement, against each kind of evidence that exists for it. A filled square is passed, a hatched square is measured (no pass line), and a dash is a kind of evidence not recorded for this design. Open a cell for the figure and its record. The complete matrix, with every test and proof traced to its requirement, is on the <a href="traceability.html">traceability page</a>.</p>
 <div class="tablewrap" tabindex="0"><table class="evm" id="evm"><caption class="vh">Requirements of the KR260 10G design against kinds of evidence</caption><thead><tr><th scope="col">Requirement</th><th scope="col">Simulation</th><th scope="col">Formal</th><th scope="col">Timing</th><th scope="col">Clock crossings</th><th scope="col">Board</th></tr></thead><tbody><tr><th scope="row"><span class="rid">R1</span> Blocks and frames are exactly what an independent reference model says</th><td class="ev pass" data-order="0"><details><summary><span class="mk" aria-hidden="true">+</span><span class="vh">passed: </span><span class="sw">passed</span></summary><p>the whole-core bench passes 15 of 15 tests, frame bytes compared with the reference builders <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/results/b97c/README.md">record</a></p></details></td><td class="ev none" data-order="1"><span class="mk" aria-hidden="true">-</span><span class="vh">no evidence of this kind recorded</span></td><td class="ev none" data-order="2"><span class="mk" aria-hidden="true">-</span><span class="vh">no evidence of this kind recorded</span></td><td class="ev none" data-order="3"><span class="mk" aria-hidden="true">-</span><span class="vh">no evidence of this kind recorded</span></td><td class="ev pass" data-order="4"><details><summary><span class="mk" aria-hidden="true">+</span><span class="vh">passed: </span><span class="sw">passed</span></summary><p>500 of 500 orders came back with the right content <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/results/b97c/hw/20261118_194221/all3/stage3.json">record</a></p></details></td></tr><tr><th scope="row"><span class="rid">R2</span> A wrong or stale order is never sent unflagged</th><td class="ev pass" data-order="0"><details><summary><span class="mk" aria-hidden="true">+</span><span class="vh">passed: </span><span class="sw">passed</span></summary><p>the bench found the resync bug first (7 pass, 8 fail), then 15 of 15 after the fix <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/results/b97c/README.md">record</a></p></details></td><td class="ev none" data-order="1"><span class="mk" aria-hidden="true">-</span><span class="vh">no evidence of this kind recorded</span></td><td class="ev none" data-order="2"><span class="mk" aria-hidden="true">-</span><span class="vh">no evidence of this kind recorded</span></td><td class="ev none" data-order="3"><span class="mk" aria-hidden="true">-</span><span class="vh">no evidence of this kind recorded</span></td><td class="ev pass" data-order="4"><details><summary><span class="mk" aria-hidden="true">+</span><span class="vh">passed: </span><span class="sw">passed</span></summary><p>0 bad orders in 500 <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/results/b97c/hw/20261118_194221/all3/stage3.json">record</a></p></details></td></tr><tr><th scope="row"><span class="rid">R3</span> The default build is unchanged by the new rate-match option</th><td class="ev pass" data-order="0"><details><summary><span class="mk" aria-hidden="true">+</span><span class="vh">passed: </span><span class="sw">passed</span></summary><p>the same bench passes on the default build <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/results/b97c/README.md">record</a></p></details></td><td class="ev pass" data-order="1"><details><summary><span class="mk" aria-hidden="true">+</span><span class="vh">passed: </span><span class="sw">passed</span></summary><p>equivalence proof: 219 partitions proved equal; a planted fault is caught <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/results/b96c/eqy_default/README.md">record</a></p></details></td><td class="ev none" data-order="2"><span class="mk" aria-hidden="true">-</span><span class="vh">no evidence of this kind recorded</span></td><td class="ev none" data-order="3"><span class="mk" aria-hidden="true">-</span><span class="vh">no evidence of this kind recorded</span></td><td class="ev none" data-order="4"><span class="mk" aria-hidden="true">-</span><span class="vh">no evidence of this kind recorded</span></td></tr><tr><th scope="row"><span class="rid">R4</span> Timing is met at the transmit user clock, 161.13 MHz</th><td class="ev none" data-order="0"><span class="mk" aria-hidden="true">-</span><span class="vh">no evidence of this kind recorded</span></td><td class="ev none" data-order="1"><span class="mk" aria-hidden="true">-</span><span class="vh">no evidence of this kind recorded</span></td><td class="ev pass" data-order="2"><details><summary><span class="mk" aria-hidden="true">+</span><span class="vh">passed: </span><span class="sw">passed</span></summary><p>worst setup slack +0.164 ns, every one of 29 flow gates true <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/results/b96e/builds/rm_gp/digest.json">record</a></p></details></td><td class="ev none" data-order="3"><span class="mk" aria-hidden="true">-</span><span class="vh">no evidence of this kind recorded</span></td><td class="ev none" data-order="4"><span class="mk" aria-hidden="true">-</span><span class="vh">no evidence of this kind recorded</span></td></tr><tr><th scope="row"><span class="rid">R5</span> No clock crossing the tools cannot see, and no waiver</th><td class="ev none" data-order="0"><span class="mk" aria-hidden="true">-</span><span class="vh">no evidence of this kind recorded</span></td><td class="ev none" data-order="1"><span class="mk" aria-hidden="true">-</span><span class="vh">no evidence of this kind recorded</span></td><td class="ev none" data-order="2"><span class="mk" aria-hidden="true">-</span><span class="vh">no evidence of this kind recorded</span></td><td class="ev pass" data-order="3"><details><summary><span class="mk" aria-hidden="true">+</span><span class="vh">passed: </span><span class="sw">passed</span></summary><p>report_cdc: no critical row, no waiver; the variant with 38 critical rows was rejected <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/results/b96e/builds/rm_gp_direct/cdc_summary.txt">record</a></p></details></td><td class="ev none" data-order="4"><span class="mk" aria-hidden="true">-</span><span class="vh">no evidence of this kind recorded</span></td></tr><tr><th scope="row"><span class="rid">R6</span> Every latency is stated with its definition</th><td class="ev measured" data-order="0"><details><summary><span class="mk" aria-hidden="true">~</span><span class="vh">measured: </span><span class="sw">measured</span></summary><p>10.6 clocks from price word to order start block (GT stand-in) <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/results/b96e/core_lat_sim.json">record</a></p></details></td><td class="ev none" data-order="1"><span class="mk" aria-hidden="true">-</span><span class="vh">no evidence of this kind recorded</span></td><td class="ev none" data-order="2"><span class="mk" aria-hidden="true">-</span><span class="vh">no evidence of this kind recorded</span></td><td class="ev none" data-order="3"><span class="mk" aria-hidden="true">-</span><span class="vh">no evidence of this kind recorded</span></td><td class="ev measured" data-order="4"><details><summary><span class="mk" aria-hidden="true">~</span><span class="vh">measured: </span><span class="sw">measured</span></summary><p>echo 20, loop 46 clocks of 6.206 ns, from stamps inside the FPGA <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/results/b97c/hw/20261118_194221/all3/stage3.json">record</a></p></details></td></tr><tr><th scope="row"><span class="rid">R7</span> The receiver has margin (eye after the equaliser)</th><td class="ev none" data-order="0"><span class="mk" aria-hidden="true">-</span><span class="vh">no evidence of this kind recorded</span></td><td class="ev none" data-order="1"><span class="mk" aria-hidden="true">-</span><span class="vh">no evidence of this kind recorded</span></td><td class="ev none" data-order="2"><span class="mk" aria-hidden="true">-</span><span class="vh">no evidence of this kind recorded</span></td><td class="ev none" data-order="3"><span class="mk" aria-hidden="true">-</span><span class="vh">no evidence of this kind recorded</span></td><td class="ev measured" data-order="4"><details><summary><span class="mk" aria-hidden="true">~</span><span class="vh">measured: </span><span class="sw">measured</span></summary><p>width 0.71875 UI after the equaliser; one board, one module, fibre loopback <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/results/b96d/hw/20261120_105134/summary.txt">record</a></p></details></td></tr></tbody></table></div>
 <p class="small muted">Not recorded for this design: a UVM environment, and assertion-based formal proofs. The formal evidence is an equivalence proof between versions of the core, not a proof of the specification.</p>
 
-<h2 id="board">What the board measured</h2>
+</div></details><details class="area sec" id="board"><summary><h2 class="sech">What the board measured</h2><span class="as">Hardware verification here means the board with its instruments: counters and time stamps inside the FPGA read over JTAG, the transceiver&#x27;s eye-scan counters, the SYSMON temperature and voltage readings at the start and end of ...</span></summary><div class="abody">
 <p>Hardware verification here means the board with its instruments: counters and time stamps inside the FPGA read over JTAG, the transceiver's eye-scan counters, the SYSMON temperature and voltage readings at the start and end of every run, and the optical module's own readings. Echo <b>E</b> is a probe frame's trip from the transmit stamp to the receive stamp. Loop <b>L</b> is a feed frame to the order it triggers, in the same loopback. Tick-to-trade is <b>L &minus; E &minus; fibre</b>, with the fibre (0.83 ns, measured length) subtracted and the optical module's own delay <b>not</b> subtracted, because it is not known. One clock is 6.206 ns, which is also the resolution. Medians over 100 link restarts, fibre loopback, one board and one module.</p>
 <div class="tablewrap" tabindex="0"><table><thead><tr><th>Build</th><th class="num">Echo E (clocks)</th><th class="num">Loop L (clocks)</th><th class="num">L &minus; E (clocks)</th><th class="num">Tick-to-trade (ns)</th></tr></thead><tbody><tr><td>control (97C)<br><span class="muted small">the default build</span></td><td class="num">20</td><td class="num">50</td><td class="num">30</td><td class="num">185.3</td></tr><tr><td>agent_both (97C)<br><span class="muted small">two latency changes (brief 97)</span></td><td class="num">20</td><td class="num">48</td><td class="num">28</td><td class="num">172.9</td></tr><tr><td>all3 (97C)<br><span class="muted small">three latency changes (brief 97)</span></td><td class="num">20</td><td class="num">46</td><td class="num">26</td><td class="num">160.5</td></tr><tr><td>with the AMD-macro elastic buffer (96C)<br><span class="muted small">needed for a real network card</span></td><td class="num">24.5</td><td class="num">61</td><td class="num">36.5</td><td class="num">225.7</td></tr><tr><td>with our own elastic buffer (96E)<br><span class="muted small">the same job, less delay</span></td><td class="num">21</td><td class="num">54</td><td class="num">33</td><td class="num">204</td></tr></tbody></table></div>
 <p class="small muted">Records: <code>results/b97c/hw/</code>, <code>results/b96c/hw/</code>, <code>results/b96e/hw/</code>. On the fastest build, all 100 restarts locked (0 failed), and 500 of 500 orders came back with the right content, checked in hardware.</p>
@@ -760,7 +789,7 @@ svg text.wn { fill: var(--warn); }
 <li><b>Bypassing the transceiver's buffers (brief 96F1): not run on a board.</b> Pre-registered before any board time: E should fall by 2.9 to 4.5 clocks, and a fall of less than 1.5 clocks fails. The prediction rests on third-party figures for a different transceiver family and is unconfirmed for this one (<a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/results/b96f1/preregistration.md">pre-registration</a>).</li>
 </ul>
 
-<h2 id="judgement">Where human judgement mattered</h2>
+</div></details><details class="area sec" id="judgement"><summary><h2 class="sech">Where human judgement mattered</h2><span class="as">The first overnight eye scan took 11,253 points and counted no samples at any of them. Its summary said &quot;open 0&quot;, which reads like a closed eye.</span></summary><div class="abody">
 <div class="cols">
 <div class="card"><h3>The eye scan that counted nothing</h3>
 <p>The first overnight eye scan took 11,253 points and counted no samples at any of them. Its summary said "open 0", which reads like a closed eye. The agent's twin and its simulation stand-in had been built from the same reading of the guide as the driver, so no test of its own could catch the fault. An independent read of AMD's transceiver guide found the cause: on this device family the masks are 10 words, not five. The board found a second fault, the sampling clock phase, which no document-reading would have shown. The first measured eye is 0.71875 unit intervals wide after the equaliser, on one board and one module. Records: <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/results/b96d/hw/README.md"><code>results/b96d/hw/</code></a>.</p></div>
@@ -772,10 +801,10 @@ svg text.wn { fill: var(--warn); }
 <p>The buffer was added as a build option. The default build had to stay what the board had already verified. An equivalence proof shows it: 219 partitions proved equal, and a deliberately planted fault is caught. Records: <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/tree/main/results/b96c/eqy_default"><code>results/b96c/eqy_default/</code></a>.</p></div>
 </div>
 
-<h2 id="hardware-only">What only hardware could settle, and what is still waiting</h2>
+</div></details><details class="area sec" id="hardware-only"><summary><h2 class="sech">What only hardware could settle, and what is still waiting</h2><span class="as">A fibre loopback has no frequency offset between its two ends, so it cannot exercise the buffer&#x27;s rate-matching path.</span></summary><div class="abody">
 <p>A fibre loopback has no frequency offset between its two ends, so it cannot exercise the buffer's rate-matching path. The transceiver's phase-interpolator route was tried as a substitute and gave no relative offset, so rate matching under a real offset is <b>not demonstrated on hardware</b>; only simulation shows it. It needs a second reference clock or a 10G network card (<a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/designs/b96_kr260_10g/docs/real_offset_plan.md"><code>real_offset_plan.md</code></a>). The same goes for interoperability: a PCS talking to itself accepts its own symmetric mistakes, so only an external device proves it. Where an external element is involved, the hardware test may be the only verification there is, so the flow has to make room for it and for the wait.</p>
 
-<h2>Gaps and limits</h2>
+</div></details><details class="area sec" id="gaps-and-limits"><summary><h2 class="sech">Gaps and limits</h2><span class="as">Latency figures are from stamps inside the FPGA at one-clock resolution, in a fibre loopback, with the optical module&#x27;s delay inside them.</span></summary><div class="abody">
 <ul>
 <li>Latency figures are from stamps inside the FPGA at one-clock resolution, in a fibre loopback, with the optical module's delay inside them.</li>
 <li>The eye is the statistical eye after the equaliser, not the eye at the pins.</li>
@@ -783,7 +812,7 @@ svg text.wn { fill: var(--warn); }
 <li>No network card has been connected; no interoperability is claimed.</li>
 </ul>
 <p><a href="traceability.html">Traceability matrix</a> &middot; <a href="inspect.html">Inspect the implementation</a> &middot; <a href="index.html">The story in brief</a></p>
-
+</div></details>
 <div class="pager"><a href="story.html">&larr; How it was built</a><a href="inspect.html">Inspect it &rarr;</a></div>
 </main>
 <footer><div class="wrap"><p>Designed by Brendan Lynskey. Code and results: <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent">github.com/BrendanJamesLynskey/FPGA_Design_Agent</a> (all rights reserved; source visible for review, see LICENSE). Every number on these pages is read from a committed result file; development results are labelled as such and are not the held-out score.</p></div></footer>
@@ -809,6 +838,17 @@ svg text.wn { fill: var(--warn); }
     if (text != null) e.textContent = text;
     return e;
   }
+
+  /* header groups (brief 237): one open at a time; Escape or a click elsewhere closes it. Works without script as plain drawers. */
+  var groups = Array.prototype.slice.call(document.querySelectorAll(".bar .navgroup"));
+  groups.forEach(function (g) {
+    g.addEventListener("toggle", function () { if (g.open) groups.forEach(function (o) { if (o !== g) o.open = false; }); });
+  });
+  document.addEventListener("click", function (e) { groups.forEach(function (g) { if (g.open && !g.contains(e.target)) g.open = false; }); });
+  document.addEventListener("keydown", function (e) {
+    if (e.key !== "Escape") return;
+    groups.forEach(function (g) { if (g.open) { g.open = false; var sm = g.querySelector("summary"); if (sm) sm.focus(); } });
+  });
 
   /* theme toggle: remembered per viewer, optional */
   var tb = document.getElementById("theme");
@@ -1888,20 +1928,29 @@ svg text.wn { fill: var(--warn); }
 })();
 
 
-/* expertise drawers: expand all / collapse all (shown only with script) and a hash link opens its drawer */
+/* drawers: expand all / collapse all (shown only with script); a URL hash that points at a drawer, or at anything inside one, opens it
+   and the drawers around it (briefs 23 and 237) */
 (function () {
   var ctl = document.getElementById("areactl");
-  if (!ctl) return;
-  ctl.hidden = false;
-  var all = function () { return document.querySelectorAll("details.area"); };
-  document.getElementById("expand-all").addEventListener("click", function () { all().forEach(function (d) { d.open = true; }); });
-  document.getElementById("collapse-all").addEventListener("click", function () { all().forEach(function (d) { d.open = false; }); });
+  if (ctl) {
+    ctl.hidden = false;
+    var all = function () { return document.querySelectorAll("details.area"); };
+    document.getElementById("expand-all").addEventListener("click", function () { all().forEach(function (d) { d.open = true; }); });
+    document.getElementById("collapse-all").addEventListener("click", function () { all().forEach(function (d) { d.open = false; }); });
+  }
   function openHash() {
     var id = decodeURIComponent((location.hash || "").slice(1)), t = id && document.getElementById(id);
-    if (t && t.tagName === "DETAILS") { t.open = true; t.scrollIntoView(); }
+    if (!t) return;
+    var changed = false;
+    for (var n = t; n; n = n.parentElement) { if (n.tagName === "DETAILS" && !n.open && !n.closest(".navgroup")) { n.open = true; changed = true; } }
+    if (changed || t.tagName === "DETAILS") t.scrollIntoView();
   }
   openHash();
   window.addEventListener("hashchange", openHash);
+  document.addEventListener("click", function (e) {
+    var a = e.target.closest && e.target.closest('a[href^="#"]');
+    if (a && a.getAttribute("href") === location.hash) openHash();
+  });
 })();
 
 // brief 81: replay of a recorded counterexample: the slider hides the steps after the chosen one
