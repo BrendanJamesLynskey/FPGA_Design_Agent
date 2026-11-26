@@ -10,3 +10,4 @@ Written for brief 227 as the user's answers; it adds facts the request leaves op
 - GATE_LEN below 1000 is stored as 1000. DONE stays set until the next START.
 - SNAPSHOT latches MUX_COUNT across the clock domains with a handshake; any write value is accepted.
 - The CDC between the muxed domain and the bus clock is by documented crossings (a handshake for the snapshot, synchronised flags for status); constraints use set_max_delay -datapath_only, with no blanket clock groups.
+- Names and files: the top-level module is named `p6_glitchfree_mux_top` in `rtl/p6_glitchfree_mux_top.sv`; the register-port core (the logic behind the `h_*` port, with no vendor primitive) is a separate module named `p6_glitchfree_mux_core` in `rtl/p6_glitchfree_mux_core.sv`, with ports `clk`, `rst` (active high), `h_we`, `h_re`, `h_addr[11:0]`, `h_wdata[31:0]`, `h_rdata[31:0]` and the design's own signals. Files are SystemVerilog (`.sv`). The bench drives the core.

@@ -136,6 +136,7 @@ A repair (split a compound row into one row per statement, drop a duplicate) nee
 
 # ---- plumbing --------------------------------------------------------------------------------------------------------------------------
 _JSON = re.compile(r"\{.*\}", re.S)
+_LAST_REPLY: list[str] = []          # the last unreadable reader replies (the start of each), kept for the record of a tool fault
 
 
 def parse_json(text: str) -> dict[str, Any] | None:
@@ -282,8 +283,11 @@ def read(llm: LLM, spec: dict[str, Any], probes: list[dict[str, Any]]) -> dict[s
     """One reader: sees the requirements (English only) and the interface table, and the probes with their answer kinds."""
     pt = "\n".join(f"{p['id']} [{p.get('answer_kind')}{': ' + ' | '.join(map(str, p.get('choices') or [])) if p.get('answer_kind') == 'choice' else ''}] {p.get('scenario')} -- {p.get('question')}" for p in probes)
     user = f"Requirements:\n{rows_text(spec)}\n\nInterface:\n{interface_table(spec)}\n\nProbes:\n{pt}\n"
-    d = parse_json(llm(READER_SYSTEM, user))
+    raw = llm(READER_SYSTEM, user)
+    d = parse_json(raw)
     if d is None or not isinstance(d.get("answers"), list) or not d["answers"]:
+        _LAST_REPLY.append(str(raw))
+        del _LAST_REPLY[:-3]
         return None                                                 # an unreadable reply is a tool fault, never "unspecified" (which would look like a disagreement)
     return {str(a.get("id")): a.get("answer") for a in d["answers"] if isinstance(a, dict)}
 
@@ -491,6 +495,7 @@ def run_stage0(design: Path, spec: dict[str, Any], request: str, *, level: str, 
                     if b is None and budget.spend("reader_b_retry"):
                         b = read(llms.reader, spec, probes)
                 if a is None or b is None:
+                    rnd["reader_error"] = {"A": a is None, "B": b is None, "last_reply_start": _LAST_REPLY[-1][:300] if _LAST_REPLY else ""}
                     state["rounds"].append(rnd)
                     state["stop"] = "a reader returned no usable answers three times (a tool fault, not a requirements question)"
                     return _finish(design, spec, state, [], state["stop"], budget)

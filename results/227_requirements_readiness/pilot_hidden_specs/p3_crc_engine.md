@@ -8,3 +8,4 @@ Written for brief 227 as the user's answers; it adds facts the request leaves op
 - Pushes can arrive in consecutive clocks without a gap; the engine accepts one push per clock and has no busy or back-pressure signal.
 - Writes to read-only registers are ignored. Unmapped addresses read 0.
 - The engine processes four bytes per clock in one clock cycle; the data clock is the register bus clock, which must be at least 100 MHz (it is 156.25 MHz).
+- Names and files: the top-level module is named `p3_crc_engine_top` in `rtl/p3_crc_engine_top.sv`; the register-port core (the logic behind the `h_*` port, with no vendor primitive) is a separate module named `p3_crc_engine_core` in `rtl/p3_crc_engine_core.sv`, with ports `clk`, `rst` (active high), `h_we`, `h_re`, `h_addr[11:0]`, `h_wdata[31:0]`, `h_rdata[31:0]` and the design's own signals. Files are SystemVerilog (`.sv`). The bench drives the core.

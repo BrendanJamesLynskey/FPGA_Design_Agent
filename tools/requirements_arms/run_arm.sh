@@ -25,7 +25,7 @@ cd $W || exit 8
 export PATH=$S/bin:$PATH FDA_KNOWLEDGE=/home/brendan/Claude_sandbox/_worktrees/227-kb-skill FDA_PROMPTS_DIR=/home/brendan/Claude_sandbox/_worktrees/227-kb/prompts
 t0=$(date +%s)
 timeout -k 30 3300 systemd-run --user --scope -q -p MemoryMax=6G nice -n 15 \
-  /home/brendan/Claude_sandbox/FPGA_Design_Agent/.venv/bin/python -m agent run $IN/spec.md --stop-after 2 --no-shell --verif-level V2 \
+  /home/brendan/Claude_sandbox/FPGA_Design_Agent/.venv/bin/python -m agent run $IN/spec.md --stop-after 2 --no-shell --verif-level V2 --spec-tests \
   --harness claude_code --cc-model claude-sonnet-5-5 --cc-effort medium --board kr260 --review off --docs off --max-usd 8 --budget-scale 3 $FLAGS --name $TAG >> $L 2>&1
 rc=$?; t1=$(date +%s)
 echo "$(date '+%F %T') exit $rc wall_s=$((t1-t0))" | tee -a $L

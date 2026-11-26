@@ -379,7 +379,7 @@ def interface_problems(spec: dict[str, Any]) -> list[Problem]:
     for p in ports:
         n = str(p["name"])
         d = str(p.get("dir", p.get("direction", ""))).lower()
-        if d not in ("in", "input", "out", "output", "inout"):
+        if d not in ("in", "input", "out", "output", "inout") and not d.startswith("internal"):         # "internal" is a signal inside the top with no pin (the host register port)
             out.append(Problem("interface", "RDY-IF-01", f"port {n} has no direction", f"Is {n} an input, an output or inout?", topic="interface"))
         try:
             int(p.get("width", 1))
