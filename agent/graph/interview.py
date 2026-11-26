@@ -281,6 +281,98 @@ PROTOCOL_QUESTIONS: tuple[ProtocolQuestion, ...] = (
 )
 
 
+# ---- brief 241: the data-movement (DMA) intake -----------------------------------------------------------------------------------------------
+# A request that moves blocks of data between memory and a stream (a DMA, a scatter-gather ring, a capture into DDR, a frame buffer) gets six
+# standing questions the Clarifier may not have asked. Each has a default and the reason for it, so an interview that is off or an oracle that does
+# not know still records a documented choice. The list is ours; the background is the KB skills `dma-engine-selection` and
+# `dma-coherency-and-driver-contract` and AMD's AXI DMA (PG021), AXI CDMA (PG034) and the Zynq TRMs (UG585, UG1085).
+REQUEST_DMA = re.compile(
+    r"(?i:\bDMA\b|scatter[- ]gather|descriptor[s]? ring|ring buffer|frame[- ]?buffers?|burst(?:s)? (?:to|from) (?:DDR|DRAM|memory)|"
+    r"(?:capture|stream|write|read)\w* (?:\w+ ){0,4}(?:into|to|from) (?:the )?(?:DDR|DRAM|PS memory|system memory)|\bAXI (?:CDMA|VDMA|MCDMA|DMA)\b)")
+
+
+@dataclass(frozen=True)
+class DmaQuestion:
+    topic: str            # direction | size | port | completion | pressure | coherency
+    seen: str             # regex: an existing question on this topic means it is not asked again
+    text: str
+    default: str
+    reason: str
+
+
+DMA_QUESTIONS: tuple[DmaQuestion, ...] = (
+    DmaQuestion(
+        "direction", r"(?i)\b(?:memory to stream|stream to memory|MM2S|S2MM|direction|who owns|buffer ownership)",
+        "Which way does the data move (memory to stream, stream to memory, or memory to memory), and who owns a buffer at each moment: when may software "
+        "write it, when may the hardware, and what tells each side the hand-over has happened?",
+        "One direction per engine. Software owns a buffer until it publishes the descriptor (the head index), the hardware owns it until the descriptor's "
+        "status word shows DONE and the tail index has passed it, and software does not touch it in between.",
+        "A buffer written by both sides at once, or read before the hand-over, is the commonest DMA bug and nothing in the protocol checks it, so the contract is "
+        "fixed in writing before any RTL."),
+    DmaQuestion(
+        "size", r"(?i)\b(?:transfer size|packet length|frame size|fixed (?:size|length)|unknown length|bytes per (?:transfer|frame|packet)|tlast)",
+        "How large is one transfer, is it fixed or of unknown length (does the stream carry tlast to end it), and how often does one happen?",
+        "A fixed length known to software before the transfer, a whole number of memory-bus beats, one transfer at least every few thousand clocks; the stream's "
+        "tlast is not used to end a buffer.",
+        "Size and rate decide whether a descriptor ring is worth its overhead, whether a plain register-driven engine is enough, and whether the engine must "
+        "end a buffer on tlast (which needs a received-length report)."),
+    DmaQuestion(
+        "port", r"(?i)\b(?:HP[0-3]|HPC|ACP|S_AXI_HP|memory port|PS port|DDR controller|MIG|data width|bandwidth|MB/s|GB/s)",
+        "Which memory does it reach (PS DDR through which PS port, a MIG-driven DDR or on-chip RAM), and what sustained bandwidth and worst-case latency "
+        "must it meet?",
+        "PS DDR through a high-performance (HP) port at the memory bus's full width, with the bandwidth the stream needs plus 25 percent; no latency bound "
+        "beyond finishing before the next transfer starts.",
+        "The port fixes the data width, the burst limit (16 beats on a Zynq-7000 PS port, 256 on UltraScale+), whether the caches are snooped and the "
+        "ceiling the engine can reach; a bandwidth figure with no port is not a requirement."),
+    DmaQuestion(
+        "completion", r"(?i)\b(?:interrupt|coalesc\w*|polling|poll\b|doorbell|completion)",
+        "How does software learn a transfer has finished: an interrupt per transfer, a coalesced interrupt, or polling a status word, and what is the longest "
+        "it may wait?",
+        "One interrupt per drained ring, or every N completions, with the status word in each descriptor as the source of truth; software may also poll "
+        "the tail index.",
+        "An interrupt per small transfer can cost the processor more than the copy, while a coalesced one adds latency; the choice sets the interrupt "
+        "threshold and whether the engine needs an idle-flush rule."),
+    DmaQuestion(
+        "pressure", r"(?i)\b(?:back[- ]?pressure|overrun|underrun|stall|drop\w*|lossless|FIFO depth|sink (?:is )?not ready|source (?:is )?not ready)",
+        "What happens when the other side stalls: may the stream source be held off (tready low) without losing data, or does it arrive at a fixed rate that "
+        "cannot wait, and what must happen if memory is slow or answers an error?",
+        "The stream is held off with tready (no data is lost); a memory error is recorded in the descriptor's status word and the engine goes on, "
+        "while a failed descriptor fetch halts it until software clears the error.",
+        "A source that cannot wait (an ADC, a video input) needs a buffer deep enough to cover the worst memory stall and an overrun flag; one that can wait "
+        "needs only the handshake, and the two designs differ."),
+    DmaQuestion(
+        "coherency", r"(?i)\b(?:cache|coheren\w*|flush|invalidate|clean\b|snoop\w*|software cache)",
+        "If the buffers are in PS memory, who keeps the processors' caches consistent with what the PL reads and writes: software cleans and invalidates "
+        "around each transfer, a coherent port does it, or the buffers are uncached?",
+        "Software cleans (flushes) a buffer before the PL reads it and invalidates it after the PL writes it, on a non-coherent HP port; the contract is "
+        "written in spec.yaml as dma.cache_contract.",
+        "Without a stated contract the PL reads stale data or the processor reads stale cache lines, with no error anywhere; the `dma_coherency` check "
+        "flags a non-coherent port with no contract."),
+)
+
+
+def request_is_dma(request: str) -> bool:
+    """The request moves blocks of data between memory and a stream (a DMA, a ring of descriptors, a capture into DDR, a frame buffer)."""
+    return bool(REQUEST_DMA.search(request or ""))
+
+
+def ensure_dma_questions(request: str, spec: dict[str, Any]) -> tuple[dict[str, Any], list[str]]:
+    """Brief 241: for a data-movement request, add the six DMA intake questions the spec does not already ask (open or resolved), each with its default and
+    reason, to ``open_questions``. Returns (spec, topics added). Any other request, or a spec that has asked all six, is returned unchanged. The Interview's
+    question limit (12) still applies: later questions are defaulted by the limit and the record says so."""
+    if not request_is_dma(request):
+        return spec, []
+    asked = " \n ".join(str(q.get("question", "")) for q in [*(spec.get("open_questions") or []), *(spec.get("resolved_questions") or [])]
+                        if isinstance(q, dict))
+    add = [q for q in DMA_QUESTIONS if not re.search(q.seen, asked)]
+    if not add:
+        return spec, []
+    spec = dict(spec)
+    spec["open_questions"] = [*(spec.get("open_questions") or []),
+                              *({"question": q.text, "default": q.default, "reason": q.reason} for q in add)]
+    return spec, [q.topic for q in add]
+
+
 RESET_MODEL_SEEN = r"(?i)\breset model\b|\breprogram\w*|\breconfigur\w*"
 RESET_MODEL_QUESTION = ("This design has no reset input. Is every reset a reconfiguration of the FPGA (the device is reprogrammed, so every register "
                         "starts from its initial value), or does something restart the running design (then it needs a reset input)?")

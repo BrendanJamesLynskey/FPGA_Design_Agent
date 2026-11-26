@@ -1,0 +1,43 @@
+# SymbiYosys: sg_dma (brief 241), AXI rule proofs with the slang front end. One k-induction task per (DIR, DATA_W) at MAX_BURST 4, OUTSTANDING 2;
+# the cover tasks show that the assertions' antecedents are reached. The memory, the AXI4-Lite master and the stream are free and legal AXI4
+# (formal_sg_dma.sv), so the proofs hold for every descriptor the engine could read. Run: python3 ip_lib/sg_dma/formal/run_formal.py
+[tasks]
+m32 prove
+s32 prove
+m64 prove
+s64 prove
+m128 prove
+s128 prove
+g32m bmc
+g32s bmc
+m32c cover
+s32c cover
+
+[options]
+prove: mode prove
+prove: depth 14
+cover: mode cover
+cover: depth 70
+bmc: mode bmc
+bmc: depth 30
+
+[engines]
+smtbmc boolector
+
+[script]
+plugin -i slang
+m32: read_slang -DFORMAL sg_dma.sv formal_sg_dma.sv --top formal_sg_dma -G DATA_W=32 -G DIR=0 -G MAX_BURST=4 -G OUTSTANDING=2
+s32: read_slang -DFORMAL sg_dma.sv formal_sg_dma.sv --top formal_sg_dma -G DATA_W=32 -G DIR=1 -G MAX_BURST=4 -G OUTSTANDING=2
+m64: read_slang -DFORMAL sg_dma.sv formal_sg_dma.sv --top formal_sg_dma -G DATA_W=64 -G DIR=0 -G MAX_BURST=4 -G OUTSTANDING=2
+s64: read_slang -DFORMAL sg_dma.sv formal_sg_dma.sv --top formal_sg_dma -G DATA_W=64 -G DIR=1 -G MAX_BURST=4 -G OUTSTANDING=2
+m128: read_slang -DFORMAL sg_dma.sv formal_sg_dma.sv --top formal_sg_dma -G DATA_W=128 -G DIR=0 -G MAX_BURST=4 -G OUTSTANDING=2
+s128: read_slang -DFORMAL sg_dma.sv formal_sg_dma.sv --top formal_sg_dma -G DATA_W=128 -G DIR=1 -G MAX_BURST=4 -G OUTSTANDING=2
+m32c: read_slang -DFORMAL -DCOVER sg_dma.sv formal_sg_dma.sv --top formal_sg_dma -G DATA_W=32 -G DIR=0 -G MAX_BURST=4 -G OUTSTANDING=2
+s32c: read_slang -DFORMAL -DCOVER sg_dma.sv formal_sg_dma.sv --top formal_sg_dma -G DATA_W=32 -G DIR=1 -G MAX_BURST=4 -G OUTSTANDING=2
+g32m: read_slang -DFORMAL -DGHOST sg_dma.sv formal_sg_dma.sv --top formal_sg_dma -G DATA_W=32 -G DIR=0 -G MAX_BURST=4 -G OUTSTANDING=2
+g32s: read_slang -DFORMAL -DGHOST sg_dma.sv formal_sg_dma.sv --top formal_sg_dma -G DATA_W=32 -G DIR=1 -G MAX_BURST=4 -G OUTSTANDING=2
+prep -top formal_sg_dma
+
+[files]
+../rtl/sg_dma.sv
+formal_sg_dma.sv
