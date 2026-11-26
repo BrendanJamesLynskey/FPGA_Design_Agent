@@ -29,12 +29,12 @@ The regrade digest on the fixture's corner case names cycle 136, `d=0xf0, en=1, 
 | stage-2 visits to pass (primary) | 5.44 | 5.56 | +0.11 (-1.56 to +1.56; SD of differences 2.18); 1 better, 3 worse, 5 equal; sign test p = 0.62 | no detectable effect |
 | own stage-2 pass | 4/9 | 3/9 | -0.11 (-0.44 to +0.22) | no detectable effect |
 | plan cost USD | 3.12 | 2.67 | -0.45 (-1.26 to +0.33) | no detectable effect |
-| wall time s | 1690 | 840 | -850 (-2266 to +46); the control mean includes one 9769 s run (run 8) | no detectable effect |
+| wall time s | 1690 | 840 | -850 (-2266 to +46); the control mean includes one 6680 s run (run 8; agent-recorded time, used in the mean. The wrapper timed 9769 s from asking for the heavy slot to exit) | no detectable effect |
 
 Power stated in advance: about 1.7 visits detectable; the interval half-width observed is about 1.6. So a gain of one visit or less cannot be excluded; a large one is excluded.
 
 Run ids (results folder `runs/<n>_<design>_k<k>_<arm>`, agent run id in `RUN_ID.txt`):
-- control: 1 p3 k3 stage-1 limit; 6 p3 k1 stage-1 limit; 9 p3 k2 stage-1 limit; 11 p2 k2 stage-1 limit; 8 p1 k2 stage-2 limit (other gates; 9769 s); done: 10 p2 k3, 12 p2 k1, 14 p1 k1, 18 p1 k3.
+- control: 1 p3 k3 stage-1 limit; 6 p3 k1 stage-1 limit; 9 p3 k2 stage-1 limit; 11 p2 k2 stage-1 limit; 8 p1 k2 stage-2 limit (other gates; 6680 s agent time, 9769 s wrapper time); done: 10 p2 k3, 12 p2 k1, 14 p1 k1, 18 p1 k3.
 - treatment: 5 p2 k2, 7 p3 k2, 17 p3 k1 stage-1 limit; 2 p1 k3, 4 p1 k1, 15 p3 k3 stage-2 limit (lint); done: 3 p2 k3, 13 p1 k2, 16 p2 k1.
 
 Nulls first: **no detectable effect on any outcome.** Not a gain. Mechanism counts (treatment arm, routing events): the ledger fired in all 9 runs (entries 1 to 6 per run); R1 produced a digest in 2 runs (4 firings): in run 3 three times, each ending "Simulator shut down prematurely" with no bench site (the snapshot caught the simulator's own shutdown, not the failing assertion; 787 characters of ring data, not an informative first failing check) and in run 4 once with no snapshot (failure did not reproduce); so **R1 delivered no useful first-divergence digest in this A/B**; regrade ran in 3 runs and was `not_applicable` in all 3 (benches use register calls or step() with no inputs).
