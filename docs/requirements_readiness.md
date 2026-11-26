@@ -71,6 +71,7 @@ at a limit, or when nobody can answer, the run stops with `REQUIREMENTS_NEEDED.m
 | `REQUIREMENTS_NEEDED.md` | the open questions of a stopped run, with ids Q1, Q2, ... |
 | `requirements_answers.yaml` | **your** answers: `answers: {Q1: "...", Q2: {answer: "...", who: "you"}}`; the next run applies them first |
 | `requirements_confirmations.yaml` | your confirmations (`confirmed: {REQ-01: {who, when, shown: <packet hash>}}`); a confirmation of an earlier version of the packet is stale |
+| (command) `python -m flow.readiness showback <design>` and `python -m flow.readiness confirm <design> REQ-01,REQ-02 --who <you>` | the page to read before confirming, and the recording of your confirmation against the packet hash (the agent never runs `confirm` for you) |
 | `build/requirements/frozen.json` | the frozen set (hash, ids, version) and every return to stage 0 |
 | `build/requirements/req_ids.json` | the id ledger |
 
@@ -86,6 +87,10 @@ A run reports **requirements quality** (rounds, questions, reader agreement per 
 requirement) and **build and verify given the frozen requirements** (the agent's own checks against the independent ones, and their agreement). A failure is attributed to **one stage**: a requirement
 missing or wrong (stage 0), or the design not meeting a correct requirement (stage 2). A fact that is nowhere in the problem or the oracle's source is **benchmark-limited**, counted apart, never as an
 agent failure (`flow.readiness.attribute_failure`, `fact_coverage`, `two_scores`).
+
+## Interface checks against the confirmed contract only
+
+A check of the built design's ports against the requirements compares against the **confirmed** interface contract, never against the agent's own guess: in brief 226's data an elaboration check against the agent's own guess flagged 38 runs, 21 of which passed anyway.
 
 ## What a user could get wrong
 

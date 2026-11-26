@@ -432,3 +432,23 @@ def test_the_requirements_report_gets_a_vcrm_section_only_when_a_row_carries_bri
     assert "## Verification cross-reference matrix" in RR.to_markdown(rep)
     plain = RR.build_report(d, t, {"requirements": [row(id="REQ-01")], "name": "x"}, "")
     assert plain["vcrm"] is None and "cross-reference matrix" not in RR.to_markdown(plain)
+
+
+def test_showback_page_and_the_users_confirmation_are_recorded_against_the_packet_hash(tmp_path, capsys):
+    d = tmp_path / "d"
+    d.mkdir()
+    spec = {"name": "x", "requirements": [row(id="REQ-02", kind="timing", modal="shall", l2=copy.deepcopy(L2), worked=["start at 3: busy at 4"], never="busy low after an accepted start"),
+                                          row(id="REQ-03", text="Valid is low after reset.")]}
+    (d / "spec.yaml").write_text(yaml.safe_dump(spec))
+    md = R.showback_markdown(d)
+    assert "## REQ-02 (SHALL, timing)" in md and "Regenerated from the structured form: WHEN start is high and busy is low" in md and "Missing before you can confirm it" in md
+    doc = R.confirm(d, ["REQ-02"], "owner", when="2026-11-26T12:00:00Z")
+    assert doc["confirmed"]["REQ-02"]["shown"] == R.packet_hash(spec["requirements"][0]) and doc["edits_made"] == 0
+    conf = R.load_yaml(d / R.CONFIRMATIONS_FILE)
+    assert R.confirmation_problems(spec, level="strict", confirmations=conf)[0].id == "REQ-03"          # REQ-02 is confirmed; REQ-03 is not
+    import pytest as _p
+    with _p.raises(ValueError):
+        R.confirm(d, ["REQ-99"], "owner")
+    with _p.raises(ValueError):
+        R.confirm(d, ["REQ-02"], " ")
+    assert R.main(["confirm", str(d), "REQ-03", "--who", "owner"]) == 0 and "recorded 1 confirmation(s) by owner" in capsys.readouterr().out

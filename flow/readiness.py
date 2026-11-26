@@ -943,8 +943,62 @@ def check(design: Path, *, level: str = "standard") -> list[Problem]:
     return mechanical_problems(design, load_yaml(design / "spec.yaml"), level=level, sva=load_sva(design), confirmations=load_yaml(design / CONFIRMATIONS_FILE))
 
 
+def showback_markdown(design: Path) -> str:
+    """The show-back packet of every requirement of a design as one page for the user to read before confirming: the text regenerated from the structured layer, the
+    original English, the worked numbers, the must-never example, what is missing, and the hash a confirmation is recorded against."""
+    spec = load_yaml(Path(design) / "spec.yaml")
+    out = ["# Show-back: read each requirement and say yes, no or edit", "",
+           "Confirm only what you have read. A requirement you confirm is recorded with the hash of what you were shown; if the requirement changes afterwards the confirmation is stale.", ""]
+    for r in reqs_of(spec):
+        pk = showback(r)
+        out += [f"## {r['id']} ({(modal_of(r) or 'shall').upper()}, {r.get('kind') or 'kind not set'})", "", f"- You wrote: {pk['l1']}", f"- Regenerated from the structured form: {pk['regenerated'] or '(none yet)'}"]
+        out += [f"- Worked: {w}" for w in pk["worked"]] + [f"- Must never happen: {pk['never'] or '(none yet)'}"]
+        if pk["missing"]:
+            out.append("- **Missing before you can confirm it:** " + "; ".join(pk["missing"]))
+        out += [f"- Packet hash: `{pk['hash']}`", ""]
+    return "\n".join(out)
+
+
+def confirm(design: Path, ids: list[str], who: str, *, when: str | None = None) -> dict[str, Any]:
+    """Record that ``who`` confirmed these requirements, against the hash of the packet as it is now (``requirements_confirmations.yaml``). The caller is the user's
+    own command; the agent never calls it for them. ``edits_made`` and ``questions_asked`` of the file are the user's to keep honest; the all-OK flag reads them."""
+    if not norm(who):
+        raise ValueError("a confirmation names who confirmed")
+    design = Path(design)
+    spec = load_yaml(design / "spec.yaml")
+    by = {str(r["id"]): r for r in reqs_of(spec)}
+    unknown = [i for i in ids if i not in by]
+    if unknown:
+        raise ValueError(f"not requirements of this design: {', '.join(unknown)}")
+    p = design / CONFIRMATIONS_FILE
+    doc = load_yaml(p)
+    c = doc.setdefault("confirmed", {})
+    stamp = when or now()
+    for i in ids:
+        c[i] = {"who": who, "when": stamp, "shown": packet_hash(by[i])}
+    doc.setdefault("edits_made", 0)
+    doc.setdefault("questions_asked", 0)
+    p.write_text(yaml.safe_dump(doc, sort_keys=False))
+    return doc
+
+
 def main(argv: list[str] | None = None) -> int:
-    ap = argparse.ArgumentParser(description="The mechanical checks of the requirements readiness gate (no model). The model roles run in `python -m agent.graph.readiness`.")
+    argv = list(sys.argv[1:] if argv is None else argv)
+    if argv and argv[0] == "showback":
+        print(showback_markdown(Path(argv[1])))
+        return 0
+    if argv and argv[0] == "confirm":
+        ap = argparse.ArgumentParser(prog="flow.readiness confirm", description="Record your confirmation of requirements you have read in the show-back (requirements_confirmations.yaml).")
+        ap.add_argument("design")
+        ap.add_argument("ids", help="comma list of requirement ids")
+        ap.add_argument("--who", required=True, help="your name")
+        a = ap.parse_args(argv[1:])
+        doc = confirm(Path(a.design), [i for i in a.ids.split(",") if i], a.who)
+        risk = all_ok_risk(doc)
+        print(f"recorded {len(a.ids.split(','))} confirmation(s) by {a.who}" + (f"\nNOTE: {risk}" if risk else ""))
+        return 0
+    ap = argparse.ArgumentParser(description="The mechanical checks of the requirements readiness gate (no model). The model roles run in `python -m agent.graph.readiness`. "
+                                             "Also: `showback <design>` prints what to read before confirming; `confirm <design> REQ-01,REQ-02 --who NAME` records your confirmation.")
     ap.add_argument("design")
     ap.add_argument("--level", choices=LEVELS, default="standard")
     ap.add_argument("--json", action="store_true")

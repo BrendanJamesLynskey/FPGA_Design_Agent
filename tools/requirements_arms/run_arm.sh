@@ -16,8 +16,14 @@ ver=$($S/bin/claude --version | cut -d' ' -f1)
 pct=$($H/usage_check.sh 2>&1 | grep 'Current week (all models)' | grep -o '[0-9]*% used' | head -1 | tr -d '%used ')
 echo "$(date '+%F %T') $TAG weekly_before=${pct}%" | tee -a $L
 [ "${pct:-100}" -ge 90 ] && { echo "weekly usage >= 90: stop (owner plan 2026-11-26: stop at 92)" | tee -a $L; touch $S/STOP; exit 5; }
-load=$(cut -d' ' -f1 /proc/loadavg); free_gb=$(free -g | awk '/^Mem:/{print $7}')
-awk -v l=$load 'BEGIN{exit !(l<6)}' && [ "$free_gb" -gt 12 ] || { echo "WAIT_RESOURCES $TAG load=$load free=$free_gb" | tee -a $L; exit 6; }
+for try in $(seq 1 240); do                     # wait (up to 4 hours) for the machine: load under 6 and more than 12 GB free (a sim-only run needs no slot then)
+  [ -e $S/STOP ] && { echo "STOP flag set" | tee -a $L; exit 3; }
+  load=$(cut -d' ' -f1 /proc/loadavg); free_gb=$(free -g | awk '/^Mem:/{print $7}')
+  awk -v l=$load 'BEGIN{exit !(l<6)}' && [ "$free_gb" -gt 12 ] && break
+  [ $((try % 10)) -eq 1 ] && echo "$(date '+%F %T') WAIT_RESOURCES $TAG load=$load free=$free_gb" | tee -a $L
+  sleep 60
+done
+awk -v l=$load 'BEGIN{exit !(l<6)}' && [ "$free_gb" -gt 12 ] || { echo "RESOURCES_NEVER_FREE $TAG" | tee -a $L; exit 6; }
 IN=$S/pilots/$D; FLAGS="--interview off --requirements loose"
 if [ "$ARM" = C ]; then mkdir -p $S/pilots/${D}_C && cp -r $IN/data $S/pilots/${D}_C/ 2>/dev/null; cp $IN/hidden_spec.md $S/pilots/${D}_C/spec.md; IN=$S/pilots/${D}_C; fi
 [ "$ARM" = B ] && FLAGS="--interview oracle --oracle claude_code --oracle-cc-model claude-sonnet-5-5 --hidden-spec $IN/hidden_spec.md --readiness on --requirements loose"
