@@ -197,6 +197,11 @@ for a JSON record, any value that differs once seconds, the tool banner and time
 hashes, file hashes and the toolchain. A test the fresh run skipped or did not run (an xsim test on a runner) is *not re-run here*, never a difference. Board records, post-route digests and
 anything else a runner cannot regenerate show *not re-run* and keep their committed verdict.
 
+## The verification record (brief 144)
+
+The matrix is the input to a second, shorter statement: the verification record, `VERIFIED.md` and `verified.json` beside each design, arithmetic function and IP-library entry, with a
+computed label (`verified`, `verified except: ...`, `not verified: ...` or `not assessed`). What the label means and never means is in [verified.md](verified.md); the generator is `flow/verified.py`.
+
 ## Limits
 
 A fresh run shows that the committed record is what the current tree produces; it does not show the tests are the right tests. Records that need xsim, the full formal set or Vivado are only

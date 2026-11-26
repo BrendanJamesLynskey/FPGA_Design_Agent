@@ -74,8 +74,13 @@ Goldens, oldest first:
   is offered a new tool, so every hash other than ``tool_registry`` equals the brief 207 golden's.
 - ``b190_request_golden.json`` (brief 190, 2026-11-23): the ``check`` tool's name list gained ``fastpath`` (schema 1.24.0; an advisory source check). No stage or role
   is offered a new tool, so every hash other than ``tool_registry`` equals the brief 208 golden's.
-- ``b225_request_golden.json`` (brief 225, 2026-11-26): the registry gained ``drive_instrument`` (schema 1.25.0; the lab tool: it checks a drive request against the lab
-  file's limits and records it, and enables nothing). No stage or role is offered it, so every hash other than ``tool_registry`` equals the brief 190 golden's."""
+- ``b224_request_golden.json`` (brief 224, 2026-11-25): the stage-2 Designer's request gained the file-by-file instruction (``agent/graph/run.py``
+  ``FILE_BY_FILE_NOTE``, appended after the conventions, like the JTAG note) and, after a reply cut off at the output limit, the note of the files on disk and
+  the blocks still missing (``files_status_note``). Both are new request paths (``file_by_file_note``, ``files_status_note``); every other hash equals the brief 190
+  golden's. Runs before this change belong to the earlier goldens.
+- ``b225_request_golden.json`` (brief 225, 2026-11-26, on the tree with brief 224): the registry gained ``drive_instrument`` (schema 1.25.0; the lab tool: it checks a
+  drive request against the lab file's limits and records it, and enables nothing). No stage or role is offered it, so every hash other than ``tool_registry`` equals the
+  brief 224 golden's."""
 
 from __future__ import annotations
 
@@ -140,7 +145,8 @@ CHANGED_SINCE_EVAL1 = {"arm_constants": "brief 80: Claude Code 2.1.321 accepted 
                        "tools_rtl_8": "brief 71: check and gt_plan offered to the Designer",
                        "tools_rtl_9": "brief 71: check and gt_plan offered to the Designer"}
 #: request paths added since eval-1 (absent from its golden), and the brief that added each
-NEW_SINCE_EVAL1 = {"doc_system": "brief 68 C: the DOC step at the end of a run (agent.graph.document)"}
+NEW_SINCE_EVAL1 = {"doc_system": "brief 68 C: the DOC step at the end of a run (agent.graph.document)",
+                   "file_by_file_note": "brief 224: the stage-2 Designer writes one file per call", "files_status_note": "brief 224: files on disk and blocks missing after a cut-off reply"}
 
 
 def test_every_request_path_is_unchanged_from_the_golden() -> None:

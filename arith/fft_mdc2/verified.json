@@ -1,0 +1,528 @@
+{
+ "counts": {
+  "agreed_delegated": 0,
+  "agreed_human": 0,
+  "draft": 7,
+  "items": 9,
+  "requirements": 7,
+  "stale_items": 1,
+  "verified": 0
+ },
+ "criteria": [
+  {
+   "detail": "7 of 7 requirements are not in state verified: FMDC-F-MODEL (partially_verified), FMDC-F-EXACT (partially_verified), FMDC-F-LAT (partially_verified), FMDC-F-BENCH (partially_verified), FMDC-F-PACKAGE (stale), FMDC-F-GAPS (partially_verified), FMDC-F-HARNESS (partially_verified)",
+   "id": "evidence",
+   "ids": [
+    "FMDC-F-MODEL",
+    "FMDC-F-EXACT",
+    "FMDC-F-LAT",
+    "FMDC-F-BENCH",
+    "FMDC-F-PACKAGE",
+    "FMDC-F-GAPS",
+    "FMDC-F-HARNESS"
+   ],
+   "state": "unmet",
+   "title": "Every requirement has passing evidence"
+  },
+  {
+   "detail": "0 agreed by a human, 0 agreed by delegation, 7 draft, 0 marked agreed without a record",
+   "id": "agreement",
+   "ids": [
+    "FMDC-F-MODEL",
+    "FMDC-F-EXACT",
+    "FMDC-F-LAT",
+    "FMDC-F-BENCH",
+    "FMDC-F-PACKAGE",
+    "FMDC-F-GAPS",
+    "FMDC-F-HARNESS"
+   ],
+   "state": "unmet",
+   "title": "Every requirement is agreed (human, or delegated and labelled so)"
+  },
+  {
+   "detail": "not yet measured: the required method mix per requirement kind is brief 143a; the collector does not supply it yet",
+   "id": "method_mix",
+   "ids": [],
+   "state": "not_measured",
+   "title": "Every requirement meets its required method mix"
+  },
+  {
+   "detail": "not yet measured: the mutation score and floor are brief 143b; the collector does not supply them yet",
+   "id": "mutation",
+   "ids": [],
+   "state": "not_measured",
+   "title": "The bench passes the mutation floor"
+  },
+  {
+   "detail": "no SymbiYosys item in the testplan, so there is no proof to check for vacuity or depth (a Lean item is checked by the kernel, see its tier)",
+   "id": "formal_rigour",
+   "ids": [],
+   "state": "met",
+   "title": "The formal results pass the rigour checks"
+  },
+  {
+   "detail": "1 items are stale (a file they are about changed after the evidence was recorded)",
+   "id": "fresh",
+   "ids": [
+    "V-FMDC-PACKAGE"
+   ],
+   "state": "unmet",
+   "title": "The evidence is fresh"
+  }
+ ],
+ "declared": null,
+ "definition": "docs/verified.md",
+ "git_commit": "078b3651218f0040aba81ea265198cadbb340ce1",
+ "kind": "arith",
+ "label": "not verified: no requirement of 7 has passing evidence",
+ "label_kind": "not_verified",
+ "limits": [
+  "Verified never means interoperability with a device the design talks to unless a board measurement against that device is listed in the record; a design that checks its own output against its own model accepts its own symmetric mistakes.",
+  "Verified never means timing beyond the stated corner: a post-route timing result is for the part, speed grade, clock and tool version in its evidence file, not for other corners, temperatures or devices.",
+  "Verified never means beyond the widths and depths checked: a simulation covers the vectors it ran, a bounded formal result covers the stated depth only, and a per-width proof covers the widths it names; only a Lean proof marked all widths covers every width, and only for its model.",
+  "Verified never means the requirement is the right one: the text of a requirement is the human's check (or the planner's, where the record says delegated), and a record shows that checks exist and pass, not that nothing was left out.",
+  "Verified never means a hardware or board result unless a board measurement item is listed; a simulation is not the board.",
+  "Verified is about the files in the manifest at the hashes given. A change to any of them makes the record out of date (the CI check fails), and the evidence stale until it is re-recorded.",
+  "An agreement or acceptance recorded as delegated is the planner's decision on the owner's delegation, not a human sign-off; the record counts it apart."
+ ],
+ "manifest": {
+  "arith/fft/rtl/fft_sdf_r22.sv": "58d1227449d390af0f70aef7bb5bbcaa1bd76e701e7928961fec45dcd27e5072",
+  "arith/fft_cmul/rtl/fft_cmul_m3.sv": "8475634ed3f87a36645d4f2d3f82dac56e7b60b924b8169f67398bb113fc470c",
+  "arith/fft_cmul/rtl/fft_cmul_m4.sv": "826a27855314155fa138bf9c681c779129b02aa1d2e7f24b855abff10b8001f0",
+  "arith/fft_common/fft_bitrev.sv": "650b28bf48a4fd7b2ffb4b4b7ed597d96e0e4fcc32931357583013e11c287c35",
+  "arith/fft_common/fft_cos_rom.sv": "bcf1d079ba8a48d3757484ab8706051b46fa45046400eed1b7fe2ddd3cbbda38",
+  "arith/fft_common/fft_ref.py": "96a983692b9eac1d70ef32a874ace99a40c668cf5dcf746cfc93093f85fb54c5",
+  "arith/fft_common/fft_sdf_stage.sv": "3bce071db10fbbb3adf4f6f6e31680077ff2059f87fe21a3429ff821336ac801",
+  "arith/fft_common/fft_sdf_twmul.sv": "ced119e7c513deb23e392a199ef239d54a81ae4a5b647fb470c1daa9da3720b5",
+  "arith/fft_common/frames.py": "2f141de7810edf546dc6b25d39e4b7e8938e9f46c7cbb2683ef1f2a941ca3b5d",
+  "arith/fft_mdc2/build/par2/build.yaml": "a3a1135f9a0b81f953edff2e863d98ac239fe20ead8cdec3ff562cbbfdccfc5a",
+  "arith/fft_mdc2/harness/assertions.sv": "06088bae0742695d2df0311f440987f33264f539ef127d5887720d66b2c34b16",
+  "arith/fft_mdc2/harness/chk_top.sv": "a4be7ed0e38e6b1c49da45fa210c3a54fc43f3cee503ff596f0cd1892e162460",
+  "arith/fft_mdc2/harness/coverage.yaml": "948251bbe09b19fcc2f8bd39c3e38bb57735912f6ba29d7095959f6ea5095f90",
+  "arith/fft_mdc2/harness/fft_mdc2_cocotb.py": "9f5dac551a1422acf2bf66b2d823c63cc0ef4e9ac9c87b62da75b02cff95ab5d",
+  "arith/fft_mdc2/harness/model.py": "f77dd8a5f79db68e869d3ddc947bd73754b8c52537473fdea3716eae3036f509",
+  "arith/fft_mdc2/harness/run_harness.py": "5233ed3fab36c4ef54e2901c77234221eca3e781651934f91e0006197169b82c",
+  "arith/fft_mdc2/model.py": "afd5d2ee0064cdaa418514ef32ad89b268e0e2480c30b475d11aa20b6ef9aa3e",
+  "arith/fft_mdc2/rtl/fft_mdc2_par2.sv": "f26d7be5f35119972d2c3f7863b110479dbe56b58d54263215ae8d879cb75124",
+  "arith/fft_mdc2/spec.md": "f387adb72ebc44766582fcad07ea9e2b6401aa44df676b89b8d10ed8eba1f879",
+  "arith/fft_mdc2/spec.yaml": "72829a7bfc6588d9090e600e78af03d38d29c074d66a56799f43771722d6f1c1",
+  "arith/fft_mdc2/tests/fft_mdc2_cocotb.py": "12b011bfb667d9697212ac98f8a6aac6ef55891074fa2cdb7af6f69c369288b1",
+  "arith/fft_mdc2/verif/evidence_pins.yaml": "a6cdd2b3cd70341fa328844a356ad584e4ad9a22dc6973d0e150d8c8a5d9517e",
+  "arith/fft_mdc2/verif/mutants.yaml": "ccb3d1a98271b19677678465571a92e10d5dcafcb3c6ed6b1cdcad62bd514be7",
+  "arith/fft_mdc2/verif/results/mutation.json": "30bbd4f8a2e9c3f61fca8e175a38248d8719372d93d86abb0741a2473967adcd",
+  "arith/fft_mdc2/verif/results/pytest_junit.xml": "4e9dde068f830717904db9ebab3bad1b77050b4d5f400f061b9d75518eca741d",
+  "arith/fft_mdc2/verif/testplan.yaml": "b618a00c24be57bbf34f3d1225f90f797c93a9878ab90cc150a9efc33da5ee69",
+  "arith/fft_reorder/rtl/fft_reorder_pingpong.sv": "7867dd5a9c732d242eca668c17083b35190cd02cedbdf550920f7629175e9029",
+  "arith/fft_twiddle/rtl/fft_twiddle_quarter.sv": "f646b37f46b317abf8569372715d14be0ff9c7f0443e5740d703071145359f67"
+ },
+ "name": "fft_mdc2",
+ "notes": "Frequency-domain suite, function fft_mdc2 (brief 148). Everything here is before Vivado: the model, the RTL variants, simulation, formal properties and the prepared out-of-context build files. No performance requirement on LUTs, DSPs, Fmax or power exists because none has been measured; the Vivado runs (build/<variant>/build.yaml, queued in _handoff/fpga_agent/vivado_later_queue.md) will add them. Every requirement is a draft written by the agent; none is agreed by a human. There are no Lean statements (the packaged harness of this function, in harness/, is evidenced by the harness item). Generated by arith/tools/gen_testplan_fft.py.",
+ "path": "arith/fft_mdc2",
+ "reproduce": [
+  {
+   "cmd": "python -m pytest -q arith/fft_mdc2/tests",
+   "what": "the simulation tests"
+  }
+ ],
+ "requirements": [
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "FMDC-F-MODEL",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-FMDC-MODEL",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "arith/fft_mdc2/verif/results/pytest_junit.xml",
+     "record_sha256": "4e9dde068f830717904db9ebab3bad1b77050b4d5f400f061b9d75518eca741d",
+     "status": "pass",
+     "title": "The model against independent formulations and the pinned conventions"
+    }
+   ],
+   "items": [
+    "V-FMDC-MODEL"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": false,
+   "missing_methods": [
+    "a simulation check from a bench the implementing agent did not write"
+   ],
+   "mix_satisfied": false,
+   "own_tests_only": true,
+   "passing_methods": [
+    "sim_test"
+   ],
+   "rests_on_delegated": false,
+   "source": "arith/fft_mdc2/spec.md",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "partially_verified",
+   "text": "arith/fft_mdc2/model.py gives, for every input, the result that spec.md defines. It agrees with an independent formulation (NumPy's FFT (forward and inverse, both scaling modes, N = 16 to 1024, the pairs put back into natural order) and the identities of the pair order, the swap and the even/odd split), and the conventions that a user could guess wrong (spec.md, last section) are pinned by examples.",
+   "title": "The bit-exact model is right",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "FMDC-F-EXACT",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-FMDC-DIRECTED",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "arith/fft_mdc2/verif/results/pytest_junit.xml",
+     "record_sha256": "4e9dde068f830717904db9ebab3bad1b77050b4d5f400f061b9d75518eca741d",
+     "status": "pass",
+     "title": "Every variant against the model at the small points (Icarus + cocotb): directed or exhaustive stimuli"
+    },
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-FMDC-RANDOM",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "arith/fft_mdc2/verif/results/pytest_junit.xml",
+     "record_sha256": "4e9dde068f830717904db9ebab3bad1b77050b4d5f400f061b9d75518eca741d",
+     "status": "pass",
+     "title": "Every variant against the model at the large points: random stimuli (Icarus + cocotb)"
+    }
+   ],
+   "items": [
+    "V-FMDC-DIRECTED",
+    "V-FMDC-RANDOM"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": false,
+   "missing_methods": [
+    "a simulation check from a bench the implementing agent did not write"
+   ],
+   "mix_satisfied": false,
+   "own_tests_only": true,
+   "passing_methods": [
+    "sim_test"
+   ],
+   "rests_on_delegated": false,
+   "source": "arith/fft_mdc2/spec.md",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "partially_verified",
+   "text": "At every parameter point listed in spec.yaml (6 directed or exhaustive points, 4 random ones, across 1 variants), each variant's outputs equal the model's: the directed points drive impulses, tones, DC, Nyquist, a chirp and corner values as pairs (x[2m], x[2m+1]), forward and inverse, back to back and after the shortest legal gap (N/8); the random points drive random frames with random direction and legal gaps up to N = 4096. Each output frame of N/2 pairs equals the model bit for bit, the latency from in_sof to out_sof equals the formula and out_valid is N/2 consecutive clocks.",
+   "title": "Every variant is bit-exact against the model",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "FMDC-F-LAT",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-FMDC-LATENCY",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "arith/fft_mdc2/verif/results/pytest_junit.xml",
+     "record_sha256": "4e9dde068f830717904db9ebab3bad1b77050b4d5f400f061b9d75518eca741d",
+     "status": "pass",
+     "title": "The bench passes at the stated latency and fails two clocks off, for every variant"
+    }
+   ],
+   "items": [
+    "V-FMDC-LATENCY"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": false,
+   "missing_methods": [
+    "a simulation check from a bench the implementing agent did not write"
+   ],
+   "mix_satisfied": false,
+   "own_tests_only": true,
+   "passing_methods": [
+    "sim_test"
+   ],
+   "rests_on_delegated": false,
+   "source": "arith/fft_mdc2/spec.md",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "partially_verified",
+   "text": "Each variant's latency in clocks is the expression in spec.yaml (par2: (1<<LOGN)//2-1+(LOGN-1)+((LOGN-2)//2)*(TWSTAGES+MULSTAGES+1)+(0 if ORDER else (1<<LOGN)//2+1)+TWSTAGES+MULSTAGES+2), and the bench, run with a latency two clocks off, fails for every variant, so the passing runs prove the latency rather than assume it.",
+   "title": "Latency is as specified and the bench would notice if it were not",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "FMDC-F-BENCH",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-FMDC-MUTANT-TEST",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "arith/fft_mdc2/verif/results/pytest_junit.xml",
+     "record_sha256": "4e9dde068f830717904db9ebab3bad1b77050b4d5f400f061b9d75518eca741d",
+     "status": "pass",
+     "title": "The mutation run as a test: no mutant survives, none fails to build"
+    },
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-FMDC-MUTANT-SCORE",
+     "instrument": null,
+     "method": "sim_measurement",
+     "mutation_score": null,
+     "record": "arith/fft_mdc2/verif/results/mutation.json",
+     "record_sha256": "30bbd4f8a2e9c3f61fca8e175a38248d8719372d93d86abb0741a2473967adcd",
+     "status": "pass",
+     "title": "Mutants killed of valid mutants (the record of the last full run)"
+    }
+   ],
+   "items": [
+    "V-FMDC-MUTANT-TEST",
+    "V-FMDC-MUTANT-SCORE"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": false,
+   "missing_methods": [
+    "a simulation check from a bench the implementing agent did not write"
+   ],
+   "mix_satisfied": false,
+   "own_tests_only": true,
+   "passing_methods": [
+    "sim_measurement",
+    "sim_test"
+   ],
+   "rests_on_delegated": false,
+   "source": "arith/fft_mdc2/verif/mutants.yaml",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "partially_verified",
+   "text": "Every one of the mutants in verif/mutants.yaml (one exact text change each: an inverted condition, a wrong constant, a dropped connection, a wrong width) makes the cocotb bench fail, or is argued equivalent in the file's header; mutants that survive or do not build are reported, never hidden.",
+   "title": "The bench catches seeded faults",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "FMDC-F-PACKAGE",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "stale",
+     "id": "V-FMDC-PACKAGE",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "arith/fft_mdc2/verif/results/pytest_junit.xml",
+     "record_sha256": "4e9dde068f830717904db9ebab3bad1b77050b4d5f400f061b9d75518eca741d",
+     "stale_because": "changed since the evidence was recorded: arith/fft_mdc2/build/par2/build.yaml, arith/fft_mdc2/spec.md",
+     "status": "stale",
+     "title": "spec.yaml against the RTL headers, spec.md against spec.yaml, Verilator -Wall at every point, wrappers and build.yaml current and lint-clean"
+    }
+   ],
+   "items": [
+    "V-FMDC-PACKAGE"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": false,
+   "missing_methods": [],
+   "mix_satisfied": false,
+   "own_tests_only": false,
+   "passing_methods": [],
+   "rests_on_delegated": false,
+   "source": "arith/fft_mdc2/spec.yaml",
+   "spec_status": "draft",
+   "stale_items": 1,
+   "state": "stale",
+   "text": "spec.yaml states an interface contract (protocol, throughput, latency, reset, clock, stalls) and integration guidance (port timing, constraints to carry). Every variant passes Verilator -Wall at every point of spec.yaml; its ports and default parameters are the ones spec.yaml states; its header states the intended primitive use before any Vivado run; spec.md is the rendering of spec.yaml; the out-of-context wrapper and the build.yaml for each variant (Artix-7 xc7a100t and K26 xck26, prepared and not run) are current and lint-clean at every point they list, so a Vivado run can start from the repository alone.",
+   "title": "The RTL is lint-clean, and its files agree with the specification and with the Vivado build files",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "FMDC-F-GAPS",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-FMDC-GAPS",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "arith/fft_mdc2/verif/results/pytest_junit.xml",
+     "record_sha256": "4e9dde068f830717904db9ebab3bad1b77050b4d5f400f061b9d75518eca741d",
+     "status": "pass",
+     "title": "N/8 idle clocks work and N/8 - 1 do not"
+    }
+   ],
+   "items": [
+    "V-FMDC-GAPS"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": false,
+   "missing_methods": [
+    "a simulation check from a bench the implementing agent did not write"
+   ],
+   "mix_satisfied": false,
+   "own_tests_only": true,
+   "passing_methods": [
+    "sim_test"
+   ],
+   "rests_on_delegated": false,
+   "source": "arith/fft_mdc2/spec.md",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "partially_verified",
+   "text": "At N = 32, 64, 128 and 256 a source that leaves exactly N/8 idle clocks between frames gets every frame right, and one that leaves N/8 - 1 clocks corrupts at least one frame, so the stated rule is the real minimum, not a guess.",
+   "title": "The frame-gap rule (0 or at least N/8 clocks) is measured, not assumed",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "FMDC-F-HARNESS",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-FMDC-HARNESS",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "arith/fft_mdc2/verif/results/pytest_junit.xml",
+     "record_sha256": "4e9dde068f830717904db9ebab3bad1b77050b4d5f400f061b9d75518eca741d",
+     "status": "pass",
+     "title": "The harness against the repository's variants, a planted fault and a wrong latency"
+    }
+   ],
+   "items": [
+    "V-FMDC-HARNESS"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": false,
+   "missing_methods": [
+    "a simulation check from a bench the implementing agent did not write"
+   ],
+   "mix_satisfied": false,
+   "own_tests_only": true,
+   "passing_methods": [
+    "sim_test"
+   ],
+   "rests_on_delegated": false,
+   "source": "arith/fft_mdc2/harness/README.md",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "partially_verified",
+   "text": "arith/fft_mdc2/harness/ (model, bench, SystemVerilog checkers, coverage targets, standalone runner: owner decision 24) needs no other file of the repository. Run against each variant of this function with the checkers beside it, in every mode, it passes and meets every coverage target; against one planted fault (a mutant of verif/mutants.yaml), or with a latency two clocks off, it fails; its model, bench and checker files are the repository's own, generated by arith/tools/gen_harness_fft.py, so they cannot drift.",
+   "title": "The packaged harness runs standalone, passes on the repository's variants and catches faults",
+   "waivers": []
+  }
+ ],
+ "schema": "fda-verified/1",
+ "summary_line": "7 requirements (7 functional); 0 verified; 6 partially verified (the required mix of methods is not met); 1 stale; 0 of 7 requirements agreed by a human, 0 agreed on the owner's delegation (not human), 7 draft; 6 resting only on the implementing agent's own tests; 0 human and 0 delegated review(s) recorded."
+}

@@ -1,0 +1,109 @@
+{
+ "counts": {
+  "requirements": 0
+ },
+ "criteria": [
+  {
+   "detail": "no requirements recorded",
+   "id": "evidence",
+   "ids": [],
+   "state": "not_measured",
+   "title": "Every requirement has passing evidence"
+  },
+  {
+   "detail": "no requirements recorded",
+   "id": "agreement",
+   "ids": [],
+   "state": "not_measured",
+   "title": "Every requirement is agreed (human, or delegated and labelled so)"
+  },
+  {
+   "detail": "no requirements recorded",
+   "id": "method_mix",
+   "ids": [],
+   "state": "not_measured",
+   "title": "Every requirement meets its required method mix"
+  },
+  {
+   "detail": "no requirements recorded",
+   "id": "mutation",
+   "ids": [],
+   "state": "not_measured",
+   "title": "The bench passes the mutation floor"
+  },
+  {
+   "detail": "no requirements recorded",
+   "id": "formal_rigour",
+   "ids": [],
+   "state": "not_measured",
+   "title": "The formal results pass the rigour checks"
+  },
+  {
+   "detail": "no requirements recorded",
+   "id": "fresh",
+   "ids": [],
+   "state": "not_measured",
+   "title": "The evidence is fresh"
+  }
+ ],
+ "declared": {
+  "evidence": [
+   {
+    "activity": "simulation",
+    "id": "E1",
+    "record": "designs/b30_hil_audio/tests/test_hil_audio_rtl.py",
+    "result": "pass"
+   },
+   {
+    "activity": "build",
+    "id": "E2",
+    "record": "results/vivado_2026_1_remeasure/b30_hil_audio.json",
+    "result": "pass"
+   },
+   {
+    "activity": "board",
+    "id": "E3",
+    "record": "results/b30/hil_runs/b30_hil_audio.hil.json",
+    "result": "pass"
+   }
+  ],
+  "note": "the design's own declared evidence; not traced to requirements and not checked by this record",
+  "source": "handover.yaml",
+  "status": "board-verified"
+ },
+ "definition": "docs/verified.md",
+ "git_commit": "078b3651218f0040aba81ea265198cadbb340ce1",
+ "kind": "designs",
+ "label": "not assessed: no requirements recorded (no verif/testplan.yaml), so nothing here is traced to a requirement",
+ "label_kind": "not_assessed",
+ "limits": [
+  "Verified never means interoperability with a device the design talks to unless a board measurement against that device is listed in the record; a design that checks its own output against its own model accepts its own symmetric mistakes.",
+  "Verified never means timing beyond the stated corner: a post-route timing result is for the part, speed grade, clock and tool version in its evidence file, not for other corners, temperatures or devices.",
+  "Verified never means beyond the widths and depths checked: a simulation covers the vectors it ran, a bounded formal result covers the stated depth only, and a per-width proof covers the widths it names; only a Lean proof marked all widths covers every width, and only for its model.",
+  "Verified never means the requirement is the right one: the text of a requirement is the human's check (or the planner's, where the record says delegated), and a record shows that checks exist and pass, not that nothing was left out.",
+  "Verified never means a hardware or board result unless a board measurement item is listed; a simulation is not the board.",
+  "Verified is about the files in the manifest at the hashes given. A change to any of them makes the record out of date (the CI check fails), and the evidence stale until it is re-recorded.",
+  "An agreement or acceptance recorded as delegated is the planner's decision on the owner's delegation, not a human sign-off; the record counts it apart."
+ ],
+ "manifest": {
+  "designs/b30_hil_audio/handover.yaml": "d1ae9e4fb074d112598c6fa37a807c458ce61d10f327f5948417c83c0f2cbdc0",
+  "designs/b30_hil_audio/rtl/b30_hil_audio_top.sv": "308b6cba65b8aa2d1df5fc34051106d5b1c4c5a83fdb096030d5214894cddab7",
+  "designs/b30_hil_audio/tests/test_hil_audio_rtl.py": "074480dd34f86043e0de79c4ac596bc5fb203cbdb1236a8d89535ff2cfcd7ed8",
+  "results/b30/hil_runs/b30_hil_audio.hil.json": "f9a662c1e2f5eb07f59fb6894b2133f64818d544c4e498b4d6f50f93d1e88b90",
+  "results/vivado_2026_1_remeasure/b30_hil_audio.json": "d96edd32f12577509232e0288a1173d09ee40f25dbaffa9619f698511a31eb36"
+ },
+ "name": "b30_hil_audio",
+ "path": "designs/b30_hil_audio",
+ "reproduce": [
+  {
+   "cmd": "python3 -m pytest -q designs/b30_hil_audio/tests/test_hil_audio_rtl.py",
+   "what": "simulate every instrument against the golden models"
+  },
+  {
+   "cmd": "python3 flow/hil.py designs/b30_hil_audio",
+   "what": "program the SRAM and run the hardware-in-the-loop checks"
+  }
+ ],
+ "requirements": [],
+ "schema": "fda-verified/1"
+}

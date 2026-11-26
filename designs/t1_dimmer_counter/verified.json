@@ -1,0 +1,148 @@
+{
+ "counts": {
+  "requirements": 0
+ },
+ "criteria": [
+  {
+   "detail": "no requirements recorded",
+   "id": "evidence",
+   "ids": [],
+   "state": "not_measured",
+   "title": "Every requirement has passing evidence"
+  },
+  {
+   "detail": "no requirements recorded",
+   "id": "agreement",
+   "ids": [],
+   "state": "not_measured",
+   "title": "Every requirement is agreed (human, or delegated and labelled so)"
+  },
+  {
+   "detail": "no requirements recorded",
+   "id": "method_mix",
+   "ids": [],
+   "state": "not_measured",
+   "title": "Every requirement meets its required method mix"
+  },
+  {
+   "detail": "no requirements recorded",
+   "id": "mutation",
+   "ids": [],
+   "state": "not_measured",
+   "title": "The bench passes the mutation floor"
+  },
+  {
+   "detail": "no requirements recorded",
+   "id": "formal_rigour",
+   "ids": [],
+   "state": "not_measured",
+   "title": "The formal results pass the rigour checks"
+  },
+  {
+   "detail": "no requirements recorded",
+   "id": "fresh",
+   "ids": [],
+   "state": "not_measured",
+   "title": "The evidence is fresh"
+  }
+ ],
+ "declared": {
+  "evidence": [
+   {
+    "activity": "simulation",
+    "id": "E1",
+    "record": "designs/t1_dimmer_counter/tests/test_t1_rtl.py",
+    "result": "pass"
+   },
+   {
+    "activity": "simulation",
+    "id": "E2",
+    "record": "designs/t1_dimmer_counter/tests/test_t1_verif_rtl.py",
+    "result": "pass"
+   },
+   {
+    "activity": "formal",
+    "id": "E3",
+    "record": "results/04f/README.md",
+    "result": "pass"
+   },
+   {
+    "activity": "faults",
+    "id": "E4",
+    "record": "results/04f/mutation_t1.json",
+    "result": "pass"
+   },
+   {
+    "activity": "review",
+    "id": "E5",
+    "record": "results/53_traceability/t1_dimmer_counter_trace.json",
+    "result": "pass"
+   },
+   {
+    "activity": "build",
+    "id": "E6",
+    "record": "results/f0a_2026_1/t1_dimmer_counter_base.json",
+    "result": "pass"
+   },
+   {
+    "activity": "board",
+    "id": "E7",
+    "record": "results/f0b_2026_1/t1_dimmer_counter_bringup.json",
+    "result": "pass"
+   }
+  ],
+  "note": "the design's own declared evidence; not traced to requirements and not checked by this record",
+  "source": "handover.yaml",
+  "status": "board-verified"
+ },
+ "definition": "docs/verified.md",
+ "git_commit": "078b3651218f0040aba81ea265198cadbb340ce1",
+ "kind": "designs",
+ "label": "not assessed: no requirements recorded (no verif/testplan.yaml), so nothing here is traced to a requirement",
+ "label_kind": "not_assessed",
+ "limits": [
+  "Verified never means interoperability with a device the design talks to unless a board measurement against that device is listed in the record; a design that checks its own output against its own model accepts its own symmetric mistakes.",
+  "Verified never means timing beyond the stated corner: a post-route timing result is for the part, speed grade, clock and tool version in its evidence file, not for other corners, temperatures or devices.",
+  "Verified never means beyond the widths and depths checked: a simulation covers the vectors it ran, a bounded formal result covers the stated depth only, and a per-width proof covers the widths it names; only a Lean proof marked all widths covers every width, and only for its model.",
+  "Verified never means the requirement is the right one: the text of a requirement is the human's check (or the planner's, where the record says delegated), and a record shows that checks exist and pass, not that nothing was left out.",
+  "Verified never means a hardware or board result unless a board measurement item is listed; a simulation is not the board.",
+  "Verified is about the files in the manifest at the hashes given. A change to any of them makes the record out of date (the CI check fails), and the evidence stale until it is re-recorded.",
+  "An agreement or acceptance recorded as delegated is the planner's decision on the owner's delegation, not a human sign-off; the record counts it apart."
+ ],
+ "manifest": {
+  "designs/t1_dimmer_counter/handover.yaml": "9681537b01eac3df33397a2f2d909bcb86a1e301e65bf14e202429e207c00e3f",
+  "designs/t1_dimmer_counter/rtl/debounce.sv": "e7dd140726b542c3be05aa2494e332d7d2ee7bdb6d617c100001a3f651e8fbb3",
+  "designs/t1_dimmer_counter/rtl/dimmer_counter.sv": "2b37e3497cbf4e60982c3f5b231930d7a5ff6fced475616528cef00e020c0795",
+  "designs/t1_dimmer_counter/rtl/sevenseg_scan.sv": "406b05c7a2475ba2570736df2b575311c917fe04cf87c7aefc9538d446111168",
+  "designs/t1_dimmer_counter/rtl/t1_dimmer_counter_top.sv": "4ee0684c27aa952c2f6751f943fafc2fb4704544db7c6a57bf1be9b7e1ce28be",
+  "designs/t1_dimmer_counter/tests/test_t1_rtl.py": "f65d4511adc5219529fb9305b08690dae4fe8f8a35e4816c518197ab10a3618f",
+  "designs/t1_dimmer_counter/tests/test_t1_verif_rtl.py": "867a982673e8b7dc223d52c73bd9e0b8274d2c3e1163d721d28ba8d85c2ec908",
+  "results/04f/README.md": "d7cc186f734850b0e9d3fa1e9b099ba37b7c5e6bc02e90a2ba423346f4f9a0d2",
+  "results/04f/mutation_t1.json": "34ba91997266fe89d5fd306bc015629694d61a29bba596c8fc3bd1e9e28338ae",
+  "results/53_traceability/t1_dimmer_counter_trace.json": "9050d0b59e5719c364b39109bb5bbc09778b631c81e10581ac8e2288c6d93070",
+  "results/f0a_2026_1/t1_dimmer_counter_base.json": "71c1c9218c33ae9a66cf80a56e6d54f0c4810252dda048012549b670110fec90",
+  "results/f0b_2026_1/t1_dimmer_counter_bringup.json": "8e7ad647b894cc71b0e88a3de9e599f7eaf50208b640ee15f6c770e457aa0034"
+ },
+ "name": "t1_dimmer_counter",
+ "path": "designs/t1_dimmer_counter",
+ "reproduce": [
+  {
+   "cmd": "python3 -m pytest -q shell/tests/test_shell_rtl.py designs/t1_dimmer_counter/tests/test_t1_rtl.py",
+   "what": "simulate the RTL against the model"
+  },
+  {
+   "cmd": "SIM=verilator T1_SEEDS=1,2,3 python3 -m pytest -q designs/t1_dimmer_counter/tests/test_t1_verif_rtl.py",
+   "what": "verification bench with bound checkers, three seeds"
+  },
+  {
+   "cmd": "flow/formal.sh designs/t1_dimmer_counter",
+   "what": "formal proofs of the debouncer and the display scanner"
+  },
+  {
+   "cmd": "PYTHON=python3 designs/t1_dimmer_counter/tests/run_mutants.sh",
+   "what": "hand-written mutants must each fail the tests"
+  }
+ ],
+ "requirements": [],
+ "schema": "fda-verified/1"
+}

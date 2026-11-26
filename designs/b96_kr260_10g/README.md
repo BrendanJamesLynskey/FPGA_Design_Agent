@@ -2,6 +2,8 @@
 
 <!-- Generated from handover.yaml by flow/handover.py (brief 68). Edit handover.yaml, or the text between the prose markers, then run: python -m flow.handover write designs/b96_kr260_10g -->
 
+**Verification: not verified: 1 of 29 requirements fail.** [VERIFIED.md](VERIFIED.md) is the generated, hash-pinned record; [what the label means](../../docs/verified.md).
+
 A Kria KR260 design that carries our own 10GBASE-R PCS (64B/66B, scrambler, gearbox, block lock) and a 64-bit Ethernet MAC on one GTH lane at 10.3125 Gb/s, with the mock trading path of brief 58A behind it (a one-rule 64-bit decision in the same message format), because the AMD 10G Ethernet core is refused on the free Basic licence. Verified against an independent Python reference in simulation (the GT is a behavioural stand-in) and built to a bitstream on Vivado 2026.1 Basic with every flow gate passing in two variants. Brief 96C added a rate-matching elastic buffer as a build option (default off, the board-proven 97C receive path); the base and its rate-matched variants have run on a KR260 optical loopback, not yet against a network card or a second reference clock.
 
 Not in scope:
@@ -78,7 +80,7 @@ Interfaces:
 | the pyuvm regression of brief 158 (44 runs with the transmit-underrun test) on Verilator with coverage, then the 17 seeded bugs on Verilator; same build and rules as the brief 146 command; needs Verilator 5.048 (source ~/.local/opt/verilator-5048/env.sh), cocotb 2.0.1, pyuvm 5.0.0, cocotb-coverage; heavy slot for the build; the mutant run is the same command with --mutants-only and no PYUVM_COV (about 7 minutes) | `SIM=verilator PYUVM_COV=1 PYTHONPATH=. python designs/b96_kr260_10g/verif/pyuvm/scripts/run_regress.py --out /tmp/v158 --record results/158_cov_closure` | yes | about 4 min |
 | the SymbiYosys covers and proofs of the two mac64_tx interframe-gap conditions (brief 158); needs the OSS CAD Suite release the repository's CI pins (found through FDA_OSS_CAD or ~/.local/opt/oss-cad-suite); a few seconds of solver time, no heavy slot | `bash designs/b96_kr260_10g/verif/formal/run_ifg_formal.sh /tmp/mac64_tx_ifg` | no | about 1 min |
 
-Tool: Vivado 2026.1. Build ID of the inputs at handover: `aff38299` (`python flow/manifest.py show designs/b96_kr260_10g`: what a rebuild of today's sources and flow would carry; it changes when any build input or the flow changes, so it can differ from the build ID in an older evidence record). Knowledge-bank pin: `6185830`.
+Tool: Vivado 2026.1. Build ID of the inputs at handover: `53f1dedd` (`python flow/manifest.py show designs/b96_kr260_10g`: what a rebuild of today's sources and flow would carry; it changes when any build input or the flow changes, so it can differ from the build ID in an older evidence record). Knowledge-bank pin: `6185830`.
 
 | File | What |
 |---|---|

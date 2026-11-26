@@ -1,0 +1,113 @@
+{
+ "counts": {
+  "requirements": 0
+ },
+ "criteria": [
+  {
+   "detail": "no requirements recorded",
+   "id": "evidence",
+   "ids": [],
+   "state": "not_measured",
+   "title": "Every requirement has passing evidence"
+  },
+  {
+   "detail": "no requirements recorded",
+   "id": "agreement",
+   "ids": [],
+   "state": "not_measured",
+   "title": "Every requirement is agreed (human, or delegated and labelled so)"
+  },
+  {
+   "detail": "no requirements recorded",
+   "id": "method_mix",
+   "ids": [],
+   "state": "not_measured",
+   "title": "Every requirement meets its required method mix"
+  },
+  {
+   "detail": "no requirements recorded",
+   "id": "mutation",
+   "ids": [],
+   "state": "not_measured",
+   "title": "The bench passes the mutation floor"
+  },
+  {
+   "detail": "no requirements recorded",
+   "id": "formal_rigour",
+   "ids": [],
+   "state": "not_measured",
+   "title": "The formal results pass the rigour checks"
+  },
+  {
+   "detail": "no requirements recorded",
+   "id": "fresh",
+   "ids": [],
+   "state": "not_measured",
+   "title": "The evidence is fresh"
+  }
+ ],
+ "declared": {
+  "evidence": [
+   {
+    "activity": "simulation",
+    "id": "E1",
+    "record": "designs/b89_lutnet_gen/tests/test_b89_rtl.py",
+    "result": "pass"
+   },
+   {
+    "activity": "build",
+    "id": "E2",
+    "record": "results/b89/summary.json",
+    "result": "pass"
+   }
+  ],
+  "note": "the design's own declared evidence; not traced to requirements and not checked by this record",
+  "source": "handover.yaml",
+  "status": "built"
+ },
+ "definition": "docs/verified.md",
+ "git_commit": "078b3651218f0040aba81ea265198cadbb340ce1",
+ "kind": "designs",
+ "label": "not assessed: no requirements recorded (no verif/testplan.yaml), so nothing here is traced to a requirement",
+ "label_kind": "not_assessed",
+ "limits": [
+  "Verified never means interoperability with a device the design talks to unless a board measurement against that device is listed in the record; a design that checks its own output against its own model accepts its own symmetric mistakes.",
+  "Verified never means timing beyond the stated corner: a post-route timing result is for the part, speed grade, clock and tool version in its evidence file, not for other corners, temperatures or devices.",
+  "Verified never means beyond the widths and depths checked: a simulation covers the vectors it ran, a bounded formal result covers the stated depth only, and a per-width proof covers the widths it names; only a Lean proof marked all widths covers every width, and only for its model.",
+  "Verified never means the requirement is the right one: the text of a requirement is the human's check (or the planner's, where the record says delegated), and a record shows that checks exist and pass, not that nothing was left out.",
+  "Verified never means a hardware or board result unless a board measurement item is listed; a simulation is not the board.",
+  "Verified is about the files in the manifest at the hashes given. A change to any of them makes the record out of date (the CI check fails), and the evidence stale until it is re-recorded.",
+  "An agreement or acceptance recorded as delegated is the planner's decision on the owner's delegation, not a human sign-off; the record counts it apart."
+ ],
+ "manifest": {
+  "designs/b89_lutnet_gen/handover.yaml": "c4ee504adc462cbfaf4cc28064f3ce18b2c9408573d044fd8d07a7f2a76e6d1e",
+  "designs/b89_lutnet_gen/tests/test_b89_rtl.py": "3d9eb575046aa32b66d849e7a7aef544834538019beb309c4aace1af21202226",
+  "results/b89/summary.json": "b124c120004668faef392a5f0c2bbb95fd258c201e6cba1ab2094d57a8490197"
+ },
+ "name": "b89_lutnet_gen",
+ "path": "designs/b89_lutnet_gen",
+ "reproduce": [
+  {
+   "cmd": "python3 -m designs.b89_lutnet_gen.diag.diagnose",
+   "what": "diagnosis of the 87 network (train and validation only)"
+  },
+  {
+   "cmd": "python3 -m designs.b89_lutnet_gen.lutgen.explore r3",
+   "what": "a design round on validation (r1, r2, r3, fanin)"
+  },
+  {
+   "cmd": "python3 -m designs.b89_lutnet_gen.lutgen.cli train && python3 -m designs.b89_lutnet_gen.lutgen.cli rtl && python3 -m designs.b89_lutnet_gen.lutgen.evaluate",
+   "what": "train the frozen arms, emit the RTL, score the test split"
+  },
+  {
+   "cmd": "~/Claude_sandbox/_worktrees/89-treelut/venv/bin/python -m designs.b89_lutnet_gen.treelut_ref.run_treelut tune",
+   "what": "TreeLUT reference (its own venv)"
+  },
+  {
+   "cmd": "B89_RECORD=results/b89 python3 -m pytest -q designs/b89_lutnet_gen/tests/test_b89_rtl.py",
+   "what": "RTL against the twins, lint"
+  }
+ ],
+ "requirements": [],
+ "schema": "fda-verified/1"
+}

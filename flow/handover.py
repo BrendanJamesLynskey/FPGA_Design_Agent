@@ -638,13 +638,25 @@ def run_line(ar: dict) -> str:
     return ", ".join(bits)
 
 
+def verified_line(ddir: Path) -> str | None:
+    """Brief 144: the verification label, read from the generated record (verified.json, written by `python -m flow.verified`), never typed here."""
+    p = ddir / "verified.json"
+    if not p.exists():
+        return None
+    return json.loads(p.read_text())["label"]
+
+
 def render_readme(h: dict, ddir: Path, prose: dict, svgs: dict) -> str:
     rid = rel(ddir)
     byk = {m.get("key"): m for m in h["measurements"] if m.get("key")}
     L = [f"# {h['id']}: {h['title']}", "",
          f"<!-- Generated from handover.yaml by flow/handover.py (brief 68). Edit handover.yaml, or the text between the "
-         f"prose markers, then run: python -m flow.handover write {rid} -->", "", h["summary"].strip(), "",
-         "Not in scope:", ""]
+         f"prose markers, then run: python -m flow.handover write {rid} -->", ""]
+    vl = verified_line(ddir)
+    if vl:
+        L += [f"**Verification: {vl}.** [VERIFIED.md](VERIFIED.md) is the generated, hash-pinned record; "
+              f"[what the label means](../../docs/verified.md).", ""]
+    L += [h["summary"].strip(), "", "Not in scope:", ""]
     L += [f"- {s}" for s in h["scope_not"]]
     who = {"human": "written by hand", "agent": "produced by the agent", "human+agent": "written by hand with agent runs",
            "session": "written by a Claude Code session"}
@@ -776,6 +788,9 @@ def render_agent(h: dict, ddir: Path) -> str:
          f"source: {rid}/handover.yaml; human view: README.md; refresh: python -m flow.handover fresh {rid}",
          "", "## identity",
          f"kind={h['kind']} produced_by={h['produced_by']} part={t['part']} board={t['board']} top={t['top']} tool={t['tool']}"]
+    vl = verified_line(ddir)
+    if vl:
+        L.append(f"verified: {vl} (record: {rid}/VERIFIED.md, {rid}/verified.json; definition: docs/verified.md)")
     if h.get("agent_run"):
         L.append(f"agent_run={h['agent_run']['run_id']} record={h['agent_run']['record']}")
         if run_line(h["agent_run"]):

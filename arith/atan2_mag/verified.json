@@ -1,0 +1,648 @@
+{
+ "counts": {
+  "agreed_delegated": 0,
+  "agreed_human": 0,
+  "draft": 9,
+  "items": 12,
+  "requirements": 9,
+  "stale_items": 0,
+  "verified": 1
+ },
+ "criteria": [
+  {
+   "detail": "8 of 9 requirements are not in state verified: ATN-F-MODEL (partially_verified), ATN-F-EXACT (partially_verified), ATN-F-ACC (partially_verified), ATN-F-LAT (partially_verified), ATN-F-BENCH (partially_verified), ATN-F-HARNESS (partially_verified), ATN-F-PACKAGE (partially_verified), ATN-F-LEAN-CIRC (unapproved)",
+   "id": "evidence",
+   "ids": [
+    "ATN-F-MODEL",
+    "ATN-F-EXACT",
+    "ATN-F-ACC",
+    "ATN-F-LAT",
+    "ATN-F-BENCH",
+    "ATN-F-HARNESS",
+    "ATN-F-PACKAGE",
+    "ATN-F-LEAN-CIRC"
+   ],
+   "state": "unmet",
+   "title": "Every requirement has passing evidence"
+  },
+  {
+   "detail": "0 agreed by a human, 0 agreed by delegation, 9 draft, 0 marked agreed without a record",
+   "id": "agreement",
+   "ids": [
+    "ATN-F-MODEL",
+    "ATN-F-EXACT",
+    "ATN-F-ACC",
+    "ATN-F-LAT",
+    "ATN-F-EQUIV",
+    "ATN-F-BENCH",
+    "ATN-F-HARNESS",
+    "ATN-F-PACKAGE",
+    "ATN-F-LEAN-CIRC"
+   ],
+   "state": "unmet",
+   "title": "Every requirement is agreed (human, or delegated and labelled so)"
+  },
+  {
+   "detail": "not yet measured: the required method mix per requirement kind is brief 143a; the collector does not supply it yet",
+   "id": "method_mix",
+   "ids": [],
+   "state": "not_measured",
+   "title": "Every requirement meets its required method mix"
+  },
+  {
+   "detail": "not yet measured: the mutation score and floor are brief 143b; the collector does not supply them yet",
+   "id": "mutation",
+   "ids": [],
+   "state": "not_measured",
+   "title": "The bench passes the mutation floor"
+  },
+  {
+   "detail": "not yet measured: the vacuity, assumption and depth checks are brief 143c; the collector does not supply them yet",
+   "id": "formal_rigour",
+   "ids": [],
+   "state": "not_measured",
+   "title": "The formal results pass the rigour checks"
+  },
+  {
+   "detail": "no item is stale by its pins; the nightly fresh re-run comparison is brief 143d and not yet measured",
+   "id": "fresh",
+   "ids": [],
+   "state": "not_measured",
+   "title": "The evidence is fresh"
+  }
+ ],
+ "declared": null,
+ "definition": "docs/verified.md",
+ "git_commit": "078b3651218f0040aba81ea265198cadbb340ce1",
+ "kind": "arith",
+ "label": "verified except: 8 of 9 requirements without passing evidence; 9 of 9 requirements not agreed; required method mix not yet measured; mutation floor not yet measured; formal rigour not yet measured; fresh re-run not yet measured",
+ "label_kind": "verified_except",
+ "limits": [
+  "Verified never means interoperability with a device the design talks to unless a board measurement against that device is listed in the record; a design that checks its own output against its own model accepts its own symmetric mistakes.",
+  "Verified never means timing beyond the stated corner: a post-route timing result is for the part, speed grade, clock and tool version in its evidence file, not for other corners, temperatures or devices.",
+  "Verified never means beyond the widths and depths checked: a simulation covers the vectors it ran, a bounded formal result covers the stated depth only, and a per-width proof covers the widths it names; only a Lean proof marked all widths covers every width, and only for its model.",
+  "Verified never means the requirement is the right one: the text of a requirement is the human's check (or the planner's, where the record says delegated), and a record shows that checks exist and pass, not that nothing was left out.",
+  "Verified never means a hardware or board result unless a board measurement item is listed; a simulation is not the board.",
+  "Verified is about the files in the manifest at the hashes given. A change to any of them makes the record out of date (the CI check fails), and the evidence stale until it is re-recorded.",
+  "An agreement or acceptance recorded as delegated is the planner's decision on the owner's delegation, not a human sign-off; the record counts it apart."
+ ],
+ "manifest": {
+  "arith/atan2_mag/build/cordic/build.yaml": "0c9320b075ab79492b4a73ff9bc37b4b655773110cd66634aa19450c03a2d509",
+  "arith/atan2_mag/build/cordic_g2/build.yaml": "8962a175ad3b9bd6756277e732d6f49f389af03dd58be0e9266b4b37921c57d6",
+  "arith/atan2_mag/formal/atan2_fv.sv": "8fecb5f1ef3f84c83bec2914ec2bdad8363cc97cdad0f130347a9395c122ff75",
+  "arith/atan2_mag/formal/atan2_ref.sv": "64da2abf83f096cc40711e5553472d8f333feb63fc1b22964ab3d6a1face08e8",
+  "arith/atan2_mag/formal/jobs.yaml": "64caf84a61afbd1b5e2e18485971cc16000ecb79b418a2940ede6c1930237109",
+  "arith/atan2_mag/harness/assertions.sv": "07a670fd8c421311df069f3def7a3efd2c548432fcc652f101eb28db87f59000",
+  "arith/atan2_mag/harness/bench.py": "ab97410cb5dda3c4fc1ae1c695ada3fdd6a7cb45fb14adc56e8f0021d864977f",
+  "arith/atan2_mag/harness/chk_top.sv": "f09fad1ffca42867e2c14fca794a3099020d331ad015d5f29da2cc769593c617",
+  "arith/atan2_mag/harness/coverage.yaml": "82a89e0bb9422c15800198d073c204e58956bb6fb264e7d8811297320f5383a5",
+  "arith/atan2_mag/harness/model.py": "bb071a64b0d1118fb2599389953623b619be96f5f49594aec792c71aeb52801f",
+  "arith/atan2_mag/harness/run_harness.py": "c50fc1b4ab9870845bba2a56f93c811c2a6dba86e6e56f8b71ed3dbda45dbcfe",
+  "arith/atan2_mag/model.py": "a8c9411fc5809f8114c3a008d46a26abba6b91958fb682f869820703de1ffa69",
+  "arith/atan2_mag/rtl/atan2_cordic.sv": "0b85135433690b27c29c8ea06cbe8527982bfb83a4fe6b7d7d13217453e39635",
+  "arith/atan2_mag/rtl/atan2_cordic_g2.sv": "a74922a39fe3b08678e0a8781996187dd62bbc44b603051267f353da1c6a6b3f",
+  "arith/atan2_mag/spec.md": "8edf7aaf63ea0e2e69a0ae9cfa9bbfa7364ace13e33fc17908a8b130fc254619",
+  "arith/atan2_mag/spec.yaml": "226e828f199985d1de698d0bc3e424bbd0e8752f9e63b87ac4a6d17141c4f4b0",
+  "arith/atan2_mag/tests/atan2_mag_cocotb.py": "9b5bfa308b0c2e7ba33a18bf2c01dbe9ef02c13e3969c54f487b8994af72bad7",
+  "arith/atan2_mag/verif/evidence_pins.yaml": "1177c7e2df751eca0190a11d543bd1abcd0249144b911cbf031b6134b06ce03e",
+  "arith/atan2_mag/verif/lean_approvals.yaml": "cff46060eff3f3f449a74f650a3000c88e69b8869e70cc4fe7186d4512b0b553",
+  "arith/atan2_mag/verif/mutants.yaml": "e89b6aa0b30e426413497f92521180ffb4dce18757279be58696fd9464955b65",
+  "arith/atan2_mag/verif/results/mutation.json": "70463e6d1469491a00a9677c9b657fbc6cfbae57d3e333ccc50753d39b6f01c8",
+  "arith/atan2_mag/verif/results/pytest_junit.xml": "d6ec3a5c609d6c0ed49f28b6b4cbec849401d163884673b3049198ebe0f7fe37",
+  "arith/atan2_mag/verif/testplan.yaml": "744fd8cb50840308a221fb2ba83c429bdd63ad5d1a0f385fee2cfa59ac8952ae",
+  "arith/tools/fxlib.py": "87fd537c6a069055278b9a556c8de4b0bdc8bb441193abf5a21ebed4338e7a4d",
+  "formal/lean/records/build_record.json": "3d60b1f76ac87b74d5dcbe085c0eb8e43e0287d69d5fa557490a685624e6c4f6"
+ },
+ "name": "atan2_mag",
+ "notes": "Arithmetic library, function atan2_mag (brief 139d). Everything here is before Vivado: the model, the RTL variants, simulation, formal equivalence, Lean statements and the prepared out-of-context build files. No performance requirement exists because nothing about LUTs, DSPs, Fmax or power has been measured yet; the Vivado runs (build/<variant>/build.yaml) will add them. Every requirement is a draft written by the agent; none is agreed by a human. Lean statements are not approved. Generated by arith/tools/gen_testplan.py.",
+ "path": "arith/atan2_mag",
+ "reproduce": [
+  {
+   "cmd": "python -m pytest -q arith/atan2_mag/tests",
+   "what": "the simulation tests"
+  }
+ ],
+ "requirements": [
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "ATN-F-MODEL",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-ATN-MODEL",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "arith/atan2_mag/verif/results/pytest_junit.xml",
+     "record_sha256": "d6ec3a5c609d6c0ed49f28b6b4cbec849401d163884673b3049198ebe0f7fe37",
+     "status": "pass",
+     "title": "The model against independent formulations (exhaustive small, random large) and the pinned conventions"
+    }
+   ],
+   "items": [
+    "V-ATN-MODEL"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": false,
+   "missing_methods": [
+    "a simulation check from a bench the implementing agent did not write"
+   ],
+   "mix_satisfied": false,
+   "own_tests_only": true,
+   "passing_methods": [
+    "sim_test"
+   ],
+   "rests_on_delegated": false,
+   "source": "arith/atan2_mag/spec.md",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "partially_verified",
+   "text": "arith/atan2_mag/model.py gives, for every input, the result that spec.md defines. It agrees with an independent formulation (a floating-point CORDIC and the maths library's atan2 and hypot) on every input at small widths and with Python's integer arithmetic on random large-width inputs, and the conventions that a user could guess wrong (spec.md, last section) are pinned by examples.",
+   "title": "The bit-exact model is right",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "ATN-F-EXACT",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-ATN-EXHAUSTIVE",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "arith/atan2_mag/verif/results/pytest_junit.xml",
+     "record_sha256": "d6ec3a5c609d6c0ed49f28b6b4cbec849401d163884673b3049198ebe0f7fe37",
+     "status": "pass",
+     "title": "Every variant against the model, every input, at the small points (Icarus + cocotb)"
+    },
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-ATN-RANDOM",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "arith/atan2_mag/verif/results/pytest_junit.xml",
+     "record_sha256": "d6ec3a5c609d6c0ed49f28b6b4cbec849401d163884673b3049198ebe0f7fe37",
+     "status": "pass",
+     "title": "Every variant against the model at the large points: edge values, carry runs and random inputs (Icarus + cocotb)"
+    }
+   ],
+   "items": [
+    "V-ATN-EXHAUSTIVE",
+    "V-ATN-RANDOM"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": false,
+   "missing_methods": [
+    "a simulation check from a bench the implementing agent did not write"
+   ],
+   "mix_satisfied": false,
+   "own_tests_only": true,
+   "passing_methods": [
+    "sim_test"
+   ],
+   "rests_on_delegated": false,
+   "source": "arith/atan2_mag/spec.md",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "partially_verified",
+   "text": "At every parameter point listed in spec.yaml (10 exhaustive points, 7 random ones, across 2 variants), each variant's outputs equal its own model's (model.py, selected by variant) in every clock: every input is driven at the small points; edge values, table break points and random inputs at the large ones. The variants round differently and are not bit-identical to each other; the model of each is the bit-exact definition of that variant, and its distance from the exact function is the accuracy requirement.",
+   "title": "Every variant is bit-exact against its own model",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "ATN-F-ACC",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-ATN-ACCURACY",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "arith/atan2_mag/verif/results/pytest_junit.xml",
+     "record_sha256": "d6ec3a5c609d6c0ed49f28b6b4cbec849401d163884673b3049198ebe0f7fe37",
+     "status": "pass",
+     "title": "The model's error against the exact function over every input of every listed point, against the stated bounds"
+    }
+   ],
+   "items": [
+    "V-ATN-ACCURACY"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": false,
+   "missing_methods": [
+    "a simulation check from a bench the implementing agent did not write"
+   ],
+   "mix_satisfied": false,
+   "own_tests_only": true,
+   "passing_methods": [
+    "sim_test"
+   ],
+   "rests_on_delegated": false,
+   "source": "arith/atan2_mag/spec.md",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "partially_verified",
+   "text": "Each of the 3 accuracy points of spec.yaml states a bound in last places; the model's error against the exact function (the maths library, real arithmetic, unrounded) over EVERY input of that point is at most the bound and within 0.06 of it (so the bound is neither false nor loose). A point not listed has no stated bound.",
+   "title": "The error against the exact function is within the stated bound, at every listed point",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "ATN-F-LAT",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-ATN-LATENCY",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "arith/atan2_mag/verif/results/pytest_junit.xml",
+     "record_sha256": "d6ec3a5c609d6c0ed49f28b6b4cbec849401d163884673b3049198ebe0f7fe37",
+     "status": "pass",
+     "title": "The bench passes at the stated latency and fails two clocks off, for every variant"
+    }
+   ],
+   "items": [
+    "V-ATN-LATENCY"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": false,
+   "missing_methods": [
+    "a simulation check from a bench the implementing agent did not write"
+   ],
+   "mix_satisfied": false,
+   "own_tests_only": true,
+   "passing_methods": [
+    "sim_test"
+   ],
+   "rests_on_delegated": false,
+   "source": "arith/atan2_mag/spec.md",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "partially_verified",
+   "text": "Each variant's latency in clocks is the expression in spec.yaml (cordic: NIT + 2; cordic_g2: -(-NIT // GRP) + 2), and the bench, run with a latency two clocks off, fails for every variant, so the passing runs prove the latency rather than assume it.",
+   "title": "Latency is as specified and the bench would notice if it were not",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "ATN-F-EQUIV",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-ATN-FORMAL-PROOF",
+     "instrument": null,
+     "method": "formal",
+     "mutation_score": null,
+     "record": "arith/atan2_mag/verif/results/pytest_junit.xml",
+     "record_sha256": "d6ec3a5c609d6c0ed49f28b6b4cbec849401d163884673b3049198ebe0f7fe37",
+     "status": "pass",
+     "title": "k-induction proofs of the variants' error bounds against the exact function (5 jobs; widths in formal/jobs.yaml)"
+    },
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-ATN-FORMAL-REFUTE",
+     "instrument": null,
+     "method": "formal",
+     "mutation_score": null,
+     "record": "arith/atan2_mag/verif/results/pytest_junit.xml",
+     "record_sha256": "d6ec3a5c609d6c0ed49f28b6b4cbec849401d163884673b3049198ebe0f7fe37",
+     "status": "pass",
+     "title": "Each formal check refutes a planted fault (the check can fail)"
+    }
+   ],
+   "items": [
+    "V-ATN-FORMAL-PROOF",
+    "V-ATN-FORMAL-REFUTE"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": false,
+   "missing_methods": [],
+   "mix_satisfied": true,
+   "own_tests_only": false,
+   "passing_methods": [
+    "formal"
+   ],
+   "rests_on_delegated": false,
+   "source": "arith/atan2_mag/formal/jobs.yaml",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "verified",
+   "text": "SymbiYosys with the slang front end compares each variant, delayed by its latency, with the exact function on 8 input bits to 24 fractional bits (a reference ROM written from the maths library, formal/*_ref.sv) and asserts the error stays within the bound of the job, which is the model's measured error at that point plus one unit for the reference's own rounding. A proof is by k-induction (for all inputs, any run length) at the widths in formal/jobs.yaml; wider points are covered by the exhaustive scan of the accuracy requirement and by simulation, not by proof. The quadrant map and the variants' structural identities are inside the checks.",
+   "title": "The error against the exact function is bounded for all inputs, by proof, at a small input width",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "ATN-F-BENCH",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-ATN-MUTANT-TEST",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "arith/atan2_mag/verif/results/pytest_junit.xml",
+     "record_sha256": "d6ec3a5c609d6c0ed49f28b6b4cbec849401d163884673b3049198ebe0f7fe37",
+     "status": "pass",
+     "title": "The mutation run as a test: no mutant survives, none fails to build"
+    },
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-ATN-MUTANT-SCORE",
+     "instrument": null,
+     "method": "sim_measurement",
+     "mutation_score": null,
+     "record": "arith/atan2_mag/verif/results/mutation.json",
+     "record_sha256": "70463e6d1469491a00a9677c9b657fbc6cfbae57d3e333ccc50753d39b6f01c8",
+     "status": "pass",
+     "title": "Mutants killed of valid mutants (the record of the last full run)"
+    }
+   ],
+   "items": [
+    "V-ATN-MUTANT-TEST",
+    "V-ATN-MUTANT-SCORE"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": false,
+   "missing_methods": [
+    "a simulation check from a bench the implementing agent did not write"
+   ],
+   "mix_satisfied": false,
+   "own_tests_only": true,
+   "passing_methods": [
+    "sim_measurement",
+    "sim_test"
+   ],
+   "rests_on_delegated": false,
+   "source": "arith/atan2_mag/verif/mutants.yaml",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "partially_verified",
+   "text": "Every one of the mutants in verif/mutants.yaml (one exact text change each, in the variant's RTL: an inverted condition, a wrong constant, a dropped connection, a lost reset) makes the cocotb bench fail; mutants that survive or do not build are reported, never hidden.",
+   "title": "The bench catches seeded faults",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "ATN-F-HARNESS",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-ATN-HARNESS",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "arith/atan2_mag/verif/results/pytest_junit.xml",
+     "record_sha256": "d6ec3a5c609d6c0ed49f28b6b4cbec849401d163884673b3049198ebe0f7fe37",
+     "status": "pass",
+     "title": "The packaged harness run standalone on every variant (with the checker and the coverage targets) and on a planted fault"
+    }
+   ],
+   "items": [
+    "V-ATN-HARNESS"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": false,
+   "missing_methods": [
+    "a simulation check from a bench the implementing agent did not write"
+   ],
+   "mix_satisfied": false,
+   "own_tests_only": true,
+   "passing_methods": [
+    "sim_test"
+   ],
+   "rests_on_delegated": false,
+   "source": "arith/atan2_mag/harness/README.md",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "partially_verified",
+   "text": "arith/atan2_mag/harness holds the model, the cocotb bench, a SystemVerilog checker, coverage targets and a runner that needs nothing else from the repository. Run standalone against every variant (one small exhaustive point and one large random point each, with the checker beside the instance) it passes and the random runs meet every coverage target; run against a planted fault it fails, with and without the checker. Its generated files are the repository's own bench, so they cannot drift.",
+   "title": "The packaged verification harness is a standalone deliverable that works",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "ATN-F-PACKAGE",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-ATN-PACKAGE",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "arith/atan2_mag/verif/results/pytest_junit.xml",
+     "record_sha256": "d6ec3a5c609d6c0ed49f28b6b4cbec849401d163884673b3049198ebe0f7fe37",
+     "status": "pass",
+     "title": "spec.yaml against the RTL headers, spec.md against spec.yaml, Verilator -Wall at every point, wrappers and build.yaml current and lint-clean"
+    }
+   ],
+   "items": [
+    "V-ATN-PACKAGE"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": false,
+   "missing_methods": [
+    "a simulation check from a bench the implementing agent did not write"
+   ],
+   "mix_satisfied": false,
+   "own_tests_only": true,
+   "passing_methods": [
+    "sim_test"
+   ],
+   "rests_on_delegated": false,
+   "source": "arith/atan2_mag/spec.yaml",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "partially_verified",
+   "text": "spec.yaml states an interface contract (protocol, throughput, latency, reset, clock, stalls) and integration guidance (port timing, constraints to carry). Every variant passes Verilator -Wall at every point of spec.yaml; its ports and default parameters are the ones spec.yaml states; its header states the intended primitive use before any Vivado run; spec.md is the rendering of spec.yaml; the out-of-context wrapper and the build.yaml for each variant (Artix-7 xc7a100t and K26 xck26, prepared and not run) are current and lint-clean at every point they list, so a Vivado run can start from the repository alone.",
+   "title": "The RTL is lint-clean, and its files agree with the specification and with the Vivado build files",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "ATN-F-LEAN-CIRC",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-ATN-LEAN-CIRC",
+     "instrument": null,
+     "lean": {
+      "build_source": "recorded build (not re-run)",
+      "rtl_link": "transcription_untested",
+      "tier": "kernel_only"
+     },
+     "method": "formal_lean",
+     "mutation_score": null,
+     "record": "formal/lean/records/build_record.json",
+     "record_sha256": "3d60b1f76ac87b74d5dcbe085c0eb8e43e0287d69d5fa557490a685624e6c4f6",
+     "status": "unapproved",
+     "title": "A circular CORDIC step scales the squared length by a constant"
+    }
+   ],
+   "items": [
+    "V-ATN-LEAN-CIRC"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": false,
+   "missing_methods": [],
+   "mix_satisfied": false,
+   "own_tests_only": false,
+   "passing_methods": [],
+   "rests_on_delegated": false,
+   "source": "arith/atan2_mag/rtl/atan2_cordic.sv (the x and y adders of one stage)",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "unapproved",
+   "text": "For every direction d = +-1 and every shift (scaled by u = 2^i), the step (u x - d y, u y + d x) multiplies x^2 + y^2 by exactly u^2 + 1, whatever the data: the CORDIC gain is a data-independent constant. The statement is the specification and is NOT approved by a human (verif/lean_approvals.yaml is empty), so the proof is shown but not counted as verification. The Lean text is a hand transcription of the RTL's structure; it models no timing or clocking.",
+   "title": "A circular CORDIC step scales the squared length by a constant, for every width",
+   "waivers": []
+  }
+ ],
+ "schema": "fda-verified/1",
+ "summary_line": "9 requirements (9 functional); 1 verified; 7 partially verified (the required mix of methods is not met); 0 of 9 requirements agreed by a human, 0 agreed on the owner's delegation (not human), 9 draft; 7 resting only on the implementing agent's own tests; 0 human and 0 delegated review(s) recorded; 1 Lean proof item(s) (all widths): 0 with a human-approved statement, 0 with a statement accepted on the owner's delegation (not a human approval), 1 with statement not approved; 1 kernel only, 0 using a compiled decision procedure; build status from: recorded build (not re-run)."
+}

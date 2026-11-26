@@ -126,6 +126,8 @@ class Config:
     hdl: str = "sv"                 # brief 55: the design language, sv (SystemVerilog) | vhdl (VHDL-2008; the test shell stays SystemVerilog)
     design_plan: bool = False       # closure loop: stage 1 declares datapaths; flow/timing_plan.py maps and pipelines them before any build
     closure: str = "off"            # closure loop: on = stage 6 runs the closure controller (agent/graph/closure.py)
+    coverage_loop: str = "off"      # brief 218: on = at V3, rounds of coverage-directed stimulus inside the gate (agent/graph/covsva.py); off = today's V3
+    req_sva: str = "off"            # brief 218: on = an assertion written from each checkable requirement, back-translated, proved (flow/sva_req.py)
     docs: str = "off"               # brief 68 C: on = the document node writes handover.yaml, README.md, AGENT.md at the end (the CLI default is on)
     models_file: Path | None = None  # brief 108: the project's models.yaml (the project layer of the model table)
     model_config: dict | None = None  # brief 108: --model-config, the command-line layer in the models.yaml format
@@ -210,6 +212,7 @@ class Runtime:
     doc_llm: Callable[[str, str], str] | None = None        # brief 68 C: the DOC step's model call (None: the Designer's model)
     resolver: Any = None                                    # brief 108: every model call of this run goes through it (agent.models.Resolver)
     policy: Any = None                                      # brief 222: the run's permission policy (agent.core.permissions.Policy); every stage start and tool call consults it
+    cut_streak: dict = field(default_factory=dict)          # brief 224: role -> consecutive replies cut off at the output limit with no file written
 
 
 _RT: dict[str, Runtime] = {}
@@ -229,6 +232,105 @@ def repair_note(role: str, reasons: list[str]) -> str:
     """The extra prompt text of a repair visit: only this role's own failures, and the instruction to edit."""
     return (_p("graph/run/repair_note_1").format(role) + "\n".join(f"- {r[:2200]}" for r in reasons)
             + _p("graph/run/repair_note_2"))
+
+
+#: brief 224: how the Designer writes a long design. Code, not a private prompt (like JTAG_NOTE): appended to the stage-2 Designer's request only.
+FILE_BY_FILE_NOTE = """
+HOW TO WRITE THE FILES: one file per write_file call, smallest first (package or header files, then leaf modules, then the core, then the top).
+A reply has an output limit, and a reply that reaches it is cut off and its tool call is lost: a long design written in one reply is never written.
+After each file, go on to the next without summarising. Files that are already on disk stay; do not write them again unless they are wrong.
+"""
+
+#: consecutive replies cut off at the output limit, with no file written in between, that end the run (the stop reason names it)
+MAX_REPLY_CUTS = 2
+#: extra calls of the Designer inside one stage-2 visit after a reply was cut off (the files already written stay on disk)
+RTL_CONTINUATIONS = 3
+
+_MODULE_RE = re.compile(r"^\s*(?:module|entity)\s+([A-Za-z_]\w*)", re.M | re.I)
+
+
+class ReplyTooLong(Exception):
+    """Two replies in a row of one role were cut off at the output limit and no file was written in between (brief 224)."""
+
+
+def _arch_blocks(design: Path) -> list[str]:
+    """The block names of architecture.yaml (what the Designer committed to write); empty when there is none or it cannot be read."""
+    try:
+        doc = yaml.safe_load((design / "architecture.yaml").read_text()) or {}
+        return [str(b["name"]) for b in doc.get("blocks") or [] if isinstance(b, dict) and b.get("name")]
+    except (OSError, yaml.YAMLError, TypeError):
+        return []
+
+
+def _declared_modules(design: Path) -> set[str]:
+    """Every module or entity declared in the design's rtl/ and data/ (a supplied block kept in data/ counts as written)."""
+    names: set[str] = set()
+    for d in ("rtl", "data"):
+        for f in sorted((design / d).glob("*")) if (design / d).is_dir() else []:
+            if f.is_file() and f.suffix.lower() in (".sv", ".v", ".vhd", ".vhdl", ".svh"):
+                try:
+                    names |= set(_MODULE_RE.findall(f.read_text(errors="replace")))
+                except OSError:
+                    pass
+    return names
+
+
+def files_status(design: Path) -> tuple[list[str], list[str]]:
+    """(rtl files on disk, architecture blocks with no module declared yet), both sorted by name."""
+    rtl = sorted(p.name for p in (design / "rtl").iterdir() if p.is_file()) if (design / "rtl").is_dir() else []
+    have = _declared_modules(design)
+    return rtl, [b for b in _arch_blocks(design) if b not in have]
+
+
+def files_status_note(design: Path, cut: bool) -> str:
+    """The text a cut-off or continued Designer visit is handed: which files exist and which blocks are still missing, and to continue, not restart."""
+    rtl, missing = files_status(design)
+    return ("\n\nWHERE THE WRITING STANDS" + (" (your last reply was cut off at the output limit and its tool call was lost)" if cut else "") + ":\n"
+            + ("Files in rtl/ now: " + (", ".join(rtl) if rtl else "none") + ".\n")
+            + ("Blocks of architecture.yaml with no module written yet: " + ", ".join(missing) + ".\n" if missing else
+               ("All blocks of architecture.yaml have a module on disk.\n" if _arch_blocks(design) else ""))
+            + "Continue with the next missing file, one file per write_file call, smallest first. Do not start again and do not rewrite files that are on disk.\n")
+
+
+def _written_snapshot(design: Path, role: str) -> dict[str, tuple[int, int]]:
+    """{path: (size, mtime_ns)} of what a role writes, to tell whether a call wrote any file."""
+    dirs = {"rtl": ("rtl",), "tests": ("tests", "verif"), "model": ()}.get(role, ())
+    files = [p for d in dirs for p in sorted((design / d).rglob("*")) if p.is_file() and "__pycache__" not in p.parts]
+    if role == "model" and (design / "model.py").is_file():
+        files.append(design / "model.py")
+    out = {}
+    for p in files:
+        try:
+            st = p.stat()
+            out[str(p.relative_to(design))] = (st.st_size, st.st_mtime_ns)
+        except OSError:
+            pass
+    return out
+
+
+def run_writing_role(rt: "Runtime", role: str, prompt: str, allowed: tuple[str, ...], repair: bool) -> None:
+    """``run_role`` for a role that writes files (brief 224). A reply cut off at the output limit loses its tool call; the Designer is then
+    called again inside the visit (up to ``RTL_CONTINUATIONS`` times) with a note of the files on disk and the blocks still missing. Two
+    cut-off replies in a row of one role with no file written in between raise :class:`ReplyTooLong`."""
+    n_calls = (RTL_CONTINUATIONS + 1) if role == "rtl" else 1
+    cut_any = False
+    for k in range(n_calls):
+        t0, before = rt.meter.truncated, _written_snapshot(rt.design, role)
+        extra = files_status_note(rt.design, True) if k else (files_status_note(rt.design, False) if role == "rtl" and rt.meter.truncated else "")
+        run_role(rt, role, prompt + extra, allowed, repair or k > 0)
+        cut = rt.meter.truncated - t0
+        wrote = _written_snapshot(rt.design, role) != before
+        cut_any = cut_any or bool(cut)
+        if wrote:
+            rt.cut_streak[role] = 0
+        if cut and not wrote:
+            rt.cut_streak[role] = rt.cut_streak.get(role, 0) + cut
+        elif not cut:
+            rt.cut_streak[role] = 0
+        if rt.cut_streak.get(role, 0) >= MAX_REPLY_CUTS:
+            raise ReplyTooLong(role)
+        if not cut or rt.budget_notes or (role == "rtl" and wrote and not files_status(rt.design)[1] and _arch_blocks(rt.design)):
+            break
 
 
 SELF_CHECK_PASSES = 2          # 07a2 fix 7: repair passes the tests role gets inside one turn before it hands over
@@ -986,10 +1088,10 @@ def node_work(state: State) -> dict:
                 repair = reasons is not None
                 note = repair_note(role, reasons) if repair else ""
                 if role == "model":
-                    run_role(rt, "model", PROMPTS["model"].format(**fmt) + note + prompt_note("model"), role_allowed("model", 2), repair)
+                    run_writing_role(rt, "model", PROMPTS["model"].format(**fmt) + note + prompt_note("model"), role_allowed("model", 2), repair)
                 elif role == "tests":
                     mut = surviving_mutants_note(rt.design) if repair else ""        # 07a2 fix 7 (3)
-                    run_role(rt, "tests", PROMPTS["tests"].format(**fmt) + (note if repair else _p("graph/run/fresh_tests")) + mut
+                    run_writing_role(rt, "tests", PROMPTS["tests"].format(**fmt) + (note if repair else _p("graph/run/fresh_tests")) + mut
                                  + tests_checklist(rt, 2, repair) + prompt_note("tests") + conv_tests, role_allowed("tests", 2), repair)
                     selfcheck_tests_role(rt, lambda extra: run_role(            # 07a2 fix 7 (2): convention misses end here
                         rt, "tests", PROMPTS["tests"].format(**fmt) + repair_note("tests", extra) + mut
@@ -997,8 +1099,8 @@ def node_work(state: State) -> dict:
                 else:
                     own = "; ".join(r[:1500] for r in reasons) if repair else (
                         "; ".join(state.get("fails") or []) or "none")
-                    run_role(rt, "rtl", PROMPTS["rtl"].format(**{**fmt, "fails": own})
-                                 + (note if repair else "") + prompt_note("rtl") + conv0, role_allowed("rtl", 2), repair)
+                    run_writing_role(rt, "rtl", PROMPTS["rtl"].format(**{**fmt, "fails": own})
+                                     + (note if repair else "") + prompt_note("rtl") + conv0 + FILE_BY_FILE_NOTE, role_allowed("rtl", 2), repair)
         else:           # stage 9 too: the model writes probes.yaml and BRINGUP.md BEFORE the builds and the hardware pause
             run_role(rt, "rtl", PROMPTS["rtl"].format(**fmt) + conv + ((JTAG_HW_FORMAT if jtag else _p("graph/run/hw_format").format(**fmt)) if n == 9 else ""),
                          role_allowed("rtl", n))
@@ -1020,6 +1122,13 @@ def node_work(state: State) -> dict:
                  and "__pycache__" not in p.parts]
         ownership.record(rt.design, "agent", st.name, f"stage {n} work, visit {visits[str(n)]}",
                          f"{len(files)} files in the design", n=n)
+    except ReplyTooLong as e:                              # brief 224: say what stalled, not "stage 2 visited more than 6 times"
+        role = str(e)
+        rtl, missing = files_status(rt.design)
+        return {"visits": visits, "stop": f"reply too long: no file written; the {role} role's last {MAX_REPLY_CUTS} replies were cut off at the output limit "
+                                          "(max_tokens), and no file was written in between",
+                "stop_detail": {"kind": "reply_too_long", "stage": n, "role": role, "consecutive_cut_replies": rt.cut_streak.get(role),
+                                "truncated_calls": rt.meter.truncated, "rtl_files": rtl, "blocks_missing": missing}}
     except ArmBlocked as e:                                # the Claude Code arm cannot run (auth, CLI): stop, say why
         return {"visits": visits, "stop": f"claude_code blocked: {e}"}
     except BudgetExceeded as e:
@@ -1627,6 +1736,13 @@ def node_gate(state: State) -> dict:
                 ev["simulate"] = {"ok": False, "first_failure": cov.get("first_failure"), "text": cov["text"]}
                 detail.append("[simulate, verilator coverage run] " + cov["text"][-800:])
             ev["verif"] = d("verif_gates", dispatch(rt.session, "gates", {"kind": "verif"})).get("gates") or {}
+            from agent.graph import covsva                       # brief 218 (off by default): rounds of coverage-directed stimulus
+            covsva.coverage_gate(rt, ev, d, detail)
+            covsva.observe(rt, ev)                               # brief 218: the holes after this evaluation, recorded in either arm
+        if (rt.cfg.req_sva == "on" and ev["lint"]["ok"] and ev["simulate"]["ok"]
+                and (ev["verif"].get("reached") or "") >= "V2"):        # brief 218 (off by default): a property from each requirement
+            from agent.graph import covsva
+            ev["req_sva"] = covsva.sva_step(rt)
         ev["trace"] = trace_record(rt.design, rt.session.root)  # brief 53: the traceability matrix, recorded
         std = dispatch(rt.session, "gates", {"kind": "standards"})
         ev["standards"] = std.get("gates")

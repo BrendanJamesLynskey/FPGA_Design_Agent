@@ -2,6 +2,8 @@
 
 <!-- Generated from handover.yaml by flow/handover.py (brief 68). Edit handover.yaml, or the text between the prose markers, then run: python -m flow.handover write designs/b89_lutnet_gen -->
 
+**Verification: not assessed: no requirements recorded (no verif/testplan.yaml), so nothing here is traced to a requirement.** [VERIFIED.md](VERIFIED.md) is the generated, hash-pinned record; [what the label means](../../docs/verified.md).
+
 Our own generator of LUT networks for nanosecond inference. It trains a sparse network with its quantisers in the loop, enumerates every neuron into a truth table, and emits SystemVerilog plus a bit-exact Python twin, with a choice of pipelining. On the brief 87 synthetic order-flow data its best network beats the trivial rule and equals the 87 boosted trees on the test split; it is built out of context on the K26 and the Artix-7 100T beside TreeLUT, the published tree-to-LUT tool, as the reference.
 
 Not in scope:
@@ -87,7 +89,7 @@ Interfaces:
 | RTL against the twins, lint; needs Icarus Verilog 12, Verilator 5 (lint test skips without it) | `B89_RECORD=results/b89 python3 -m pytest -q designs/b89_lutnet_gen/tests/test_b89_rtl.py` | no | about 2 min |
 | out-of-context builds and clock search on both parts; needs Vivado 2026.1 and a heavy slot; repeat with --part xc7a100tcsg324-1 | `python3 -m designs.b89_lutnet_gen.ooc.ooc --part xck26-sfvc784-2LV-c --arms lg_add_comb lg_add_layer lg_small_comb lg_small_layer lg_b87_comb lg_b87_layer treelut_arm` | yes | about 90 min |
 
-Tool: Vivado 2026.1. Build ID of the inputs at handover: none (no Vivado build of this directory). Knowledge-bank pin: `5e2eab8`.
+Tool: Vivado 2026.1. Build ID of the inputs at handover: none (no Vivado build of this directory). Knowledge-bank pin: `6185830`.
 
 | File | What |
 |---|---|

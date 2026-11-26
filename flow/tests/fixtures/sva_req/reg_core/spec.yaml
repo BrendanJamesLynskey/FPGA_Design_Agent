@@ -1,0 +1,16 @@
+schema: fpga-design-agent/spec/v0
+name: reg_core
+top: top
+clocks:
+  - {name: clk25, freq_mhz: 25}
+  - {name: clk, freq_mhz: 100}
+reset: {name: rst, polarity: active_high, style: synchronous}
+ports:
+  - {name: clk25, direction: input, width: 1, board_pin_role: board clock}
+  - {name: led, direction: output, width: 2}
+  - {name: h_we, direction: internal, width: 1, board_pin_role: register port write pulse}
+  - {name: h_addr, direction: internal, width: 12}
+  - {name: h_wdata, direction: internal, width: 32, board_pin_role: register port write data}
+  - {name: h_rdata, direction: internal, width: 32, board_pin_role: register port read data}
+requirements:
+  - {id: REQ-01, text: "A write to address 8 shows the written data on h_rdata in the next cycle", proof: [simulation, formal]}

@@ -291,6 +291,7 @@ def config_from_json(c: dict):
                   hdl=c.get("hdl", "sv") or "sv",
                   design_plan=flag("design_plan"), closure=c.get("closure", "off") or "off",     # closure loop
                   docs=c.get("docs", "off") or "off",                                            # brief 68 C
+                  coverage_loop=c.get("coverage_loop", "off") or "off", req_sva=c.get("req_sva", "off") or "off",   # brief 218
                   models_file=Path(c["models_file"]) if c.get("models_file") not in (None, "None") else None,   # brief 108
                   model_config=c.get("model_config") or None, explicit=tuple(c.get("explicit") or ()),
                   allow_fable=str(c.get("allow_fable", False)) == "True",
@@ -653,6 +654,14 @@ def build_parser() -> argparse.ArgumentParser:
     r.add_argument("--closure", choices=["on", "off"], default="off",
                    help="after the build, loop on timing, area and power, re-checking simulation after every change, until all hold "
                         "or the loop stalls (stage 6; tested with fakes only; default off)")
+    r.add_argument("--coverage-loop", choices=["on", "off"], default="off",
+                   help="brief 218: at V3, when only stimulus-owned checks fail (bins, cover properties, line, toggle, mutation survivors), run rounds "
+                        "of coverage-directed stimulus inside the gate (the tests role is shown just the holes, the V3 evidence is rerun) until a "
+                        "plateau (no hole closed in two rounds), convergence or the round limit; every round is recorded (default off: today's V3)")
+    r.add_argument("--req-sva", choices=["on", "off"], default="off",
+                   help="brief 218: once V2 passes, write an SVA property for each checkable requirement from its text and the port list, "
+                        "read it back in English with a different model, compare in code, and prove or bounded-check it with a reachable "
+                        "cover of its trigger; a proved property becomes evidence on the requirement's row (needs sby; default off)")
     r.add_argument("--docs", choices=["on", "off"], default="on",
                    help="brief 68: at the end of the run the Designer writes handover.yaml and the flow renders README.md and "
                         "AGENT.md; the DOC gate (flow/handover.py checks) must pass for sign-off (doc.json)")
@@ -853,6 +862,7 @@ def _run_main(a, args: list[str], ap: argparse.ArgumentParser) -> int:
                      harness_arms=a.harness_arm, hdl=a.hdl,
                      design_plan=a.design_plan, closure=a.closure, docs=a.docs,          # closure loop; brief 68 C
                      permissions=permission_spec(a, name, ap),                          # brief 222
+                     coverage_loop=a.coverage_loop, req_sva=a.req_sva,                   # brief 218
                      **{**model_kwargs(a, args), "models_file": a.models_file or project_models_file(a.spec)})
         cfg.role_models()                                     # fail early on an unknown profile, role or forbidden model
         if a.max_usd is not None:

@@ -2,6 +2,8 @@
 
 <!-- Generated from handover.yaml by flow/handover.py (brief 68). Edit handover.yaml, or the text between the prose markers, then run: python -m flow.handover write designs/b102_managed_pr -->
 
+**Verification: not assessed: no requirements recorded (no verif/testplan.yaml), so nothing here is traced to a requirement.** [VERIFIED.md](VERIFIED.md) is the generated, hash-pinned record; [what the label means](../../docs/verified.md).
+
 A KR260 timing study that exists to demonstrate stage 2 of a managed project (brief 102). The block pcs_unit, brief 96's 64b/66b transmit path, arrives as a placed, routed and locked checkpoint made outside the project and is frozen; an owned stimulus and sink around it are placed and routed by Vivado. project.yaml records the block's keep-out region, the agent's tools refuse to place or constrain anything inside it, and the block's internal timing is measured at six placements, relocated by RapidWright and not.
 
 Not in scope:
@@ -63,7 +65,7 @@ Interfaces:
 | the scripted agent session; needs Python with PyYAML and jsonschema (the argument checks only; --rapidwright adds the real tools) | `python3 designs/b102_managed_pr/scripts/demo_managed_session.py` | no | about 1 min |
 | build and run the gates; needs local Vivado 2026.1 and a heavy slot (take_heavy_slot.sh) | `flow/run_vivado.sh designs/b102_managed_pr base` | yes | about 15 min |
 
-Tool: Vivado 2026.1. Build ID of the inputs at handover: `38b9f4e0` (`python flow/manifest.py show designs/b102_managed_pr`: what a rebuild of today's sources and flow would carry; it changes when any build input or the flow changes, so it can differ from the build ID in an older evidence record). Knowledge-bank pin: `5e2eab8`.
+Tool: Vivado 2026.1. Build ID of the inputs at handover: `404f9049` (`python flow/manifest.py show designs/b102_managed_pr`: what a rebuild of today's sources and flow would carry; it changes when any build input or the flow changes, so it can differ from the build ID in an older evidence record). Knowledge-bank pin: `6185830`.
 
 | File | What |
 |---|---|

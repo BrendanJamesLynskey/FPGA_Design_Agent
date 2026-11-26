@@ -145,8 +145,8 @@ def test_default_applies_to_every_non_opt_in_purpose_and_all_on_the_subscription
     t = table(layer("cli", {"default": {"endpoint": "claude_code", "model": "claude-haiku-5-5"}}))
     for p, spec in PURPOSES.items():
         e = t.entry(p)
-        if p in ("options", "proof", "doc_crossread"):    # briefs 104, 125 and 114: opt-in, but each has its own built-in entry on the subscription (Sonnet), which a default does not move
-            assert (e.kind, e.model) == ("claude_code", "claude-sonnet-5-5")
+        if p in ("options", "proof", "doc_crossread", "assertgen", "assertback"):    # briefs 104, 125, 114 and 218: opt-in, but each has its own built-in entry on the subscription (Sonnet), which a default does not move
+            assert (e.kind, e.model) == ("claude_code", "claude-haiku-5-5" if p == "assertback" else "claude-sonnet-5-5")   # 218: the reader is a different, cheaper model
         elif spec.get("opt_in"):
             assert e.model is None
         elif p == "latency":              # its call sites need tool calls through a chat endpoint: the default skips it, so the table stays valid
@@ -348,11 +348,7 @@ def test_the_anthropic_client_translates_messages_tools_and_replies() -> None:
     from agent.models.endpoints import AnthropicClient
     sent = {}
 
-    class Resp:
-        def __init__(self, d): self.d = d
-        def read(self): return json.dumps(self.d).encode()
-        def __enter__(self): return self
-        def __exit__(self, *a): return False
+    from agent.tests.sse_fake import StreamResp as Resp          # brief 224: every request is streamed
 
     def opener(req, timeout):
         sent["body"], sent["headers"], sent["url"] = json.loads(req.data), dict(req.header_items()), req.full_url

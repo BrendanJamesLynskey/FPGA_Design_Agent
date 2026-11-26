@@ -4,6 +4,8 @@ Register window over the board JTAG cable (BSCANE2 USER4): the host reads and wr
 
 Generated from `ip.yaml` by `flow/net/ipdoc.py`; do not edit by hand.
 
+**Verification: not assessed: no requirements recorded (no verif/testplan.yaml), so nothing here is traced to a requirement.** [VERIFIED.md](VERIFIED.md) is the generated, hash-pinned record; [what the label means](../../docs/verified.md).
+
 Status: the common map (jtag_regs_map) simulated with cocotb and Icarus Verilog 12; jtag_bus (BSCANE2 USER4 and two xpm_cdc crossings) is designs/b58a_trigger/rtl/jtag_bus.sv, whose host script read and wrote registers on the owner KR260 on 2026-11-17 (the K26 USER4 code 0x923 and 65-bit DR are in boards/kr260/board.yaml); this entry as a whole has not been built or run on a board.
 
 ## Parameters

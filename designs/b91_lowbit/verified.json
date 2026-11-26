@@ -1,0 +1,109 @@
+{
+ "counts": {
+  "requirements": 0
+ },
+ "criteria": [
+  {
+   "detail": "no requirements recorded",
+   "id": "evidence",
+   "ids": [],
+   "state": "not_measured",
+   "title": "Every requirement has passing evidence"
+  },
+  {
+   "detail": "no requirements recorded",
+   "id": "agreement",
+   "ids": [],
+   "state": "not_measured",
+   "title": "Every requirement is agreed (human, or delegated and labelled so)"
+  },
+  {
+   "detail": "no requirements recorded",
+   "id": "method_mix",
+   "ids": [],
+   "state": "not_measured",
+   "title": "Every requirement meets its required method mix"
+  },
+  {
+   "detail": "no requirements recorded",
+   "id": "mutation",
+   "ids": [],
+   "state": "not_measured",
+   "title": "The bench passes the mutation floor"
+  },
+  {
+   "detail": "no requirements recorded",
+   "id": "formal_rigour",
+   "ids": [],
+   "state": "not_measured",
+   "title": "The formal results pass the rigour checks"
+  },
+  {
+   "detail": "no requirements recorded",
+   "id": "fresh",
+   "ids": [],
+   "state": "not_measured",
+   "title": "The evidence is fresh"
+  }
+ ],
+ "declared": {
+  "evidence": [
+   {
+    "activity": "simulation",
+    "id": "E1",
+    "record": "designs/b91_lowbit/tests/test_b91_rtl.py",
+    "result": "pass"
+   },
+   {
+    "activity": "build",
+    "id": "E2",
+    "record": "results/b91/summary.json",
+    "result": "pass"
+   }
+  ],
+  "note": "the design's own declared evidence; not traced to requirements and not checked by this record",
+  "source": "handover.yaml",
+  "status": "built"
+ },
+ "definition": "docs/verified.md",
+ "git_commit": "078b3651218f0040aba81ea265198cadbb340ce1",
+ "kind": "designs",
+ "label": "not assessed: no requirements recorded (no verif/testplan.yaml), so nothing here is traced to a requirement",
+ "label_kind": "not_assessed",
+ "limits": [
+  "Verified never means interoperability with a device the design talks to unless a board measurement against that device is listed in the record; a design that checks its own output against its own model accepts its own symmetric mistakes.",
+  "Verified never means timing beyond the stated corner: a post-route timing result is for the part, speed grade, clock and tool version in its evidence file, not for other corners, temperatures or devices.",
+  "Verified never means beyond the widths and depths checked: a simulation covers the vectors it ran, a bounded formal result covers the stated depth only, and a per-width proof covers the widths it names; only a Lean proof marked all widths covers every width, and only for its model.",
+  "Verified never means the requirement is the right one: the text of a requirement is the human's check (or the planner's, where the record says delegated), and a record shows that checks exist and pass, not that nothing was left out.",
+  "Verified never means a hardware or board result unless a board measurement item is listed; a simulation is not the board.",
+  "Verified is about the files in the manifest at the hashes given. A change to any of them makes the record out of date (the CI check fails), and the evidence stale until it is re-recorded.",
+  "An agreement or acceptance recorded as delegated is the planner's decision on the owner's delegation, not a human sign-off; the record counts it apart."
+ ],
+ "manifest": {
+  "designs/b91_lowbit/handover.yaml": "e83faeef5f3490dcbd226e5b3e763854aab92153f553edeb879988e261559dba",
+  "designs/b91_lowbit/tests/test_b91_rtl.py": "ecaaa4a511e6512cfc73e29ccb160c185a164d183b95668833eb68eab92f836f",
+  "results/b91/summary.json": "3dfc25ab7e3753d722dd17cfbda5c5ece8df3cb8d8ff695f9789520963c18f99"
+ },
+ "name": "b91_lowbit",
+ "path": "designs/b91_lowbit",
+ "reproduce": [
+  {
+   "cmd": "python3 -m designs.b91_lowbit.lowbit.cli stage1 && python3 -m designs.b91_lowbit.lowbit.cli select && python3 -m designs.b91_lowbit.lowbit.cli stage2 && python3 -m designs.b91_lowbit.lowbit.cli freeze && python3 -m designs.b91_lowbit.lowbit.cli rtl",
+   "what": "train all stage 1 networks, select, sweep, freeze, emit RTL"
+  },
+  {
+   "cmd": "python3 -m designs.b91_lowbit.lowbit.evaluate && python3 -m designs.b91_lowbit.lowbit.seedmean",
+   "what": "score the test split (after frozen.json is committed)"
+  },
+  {
+   "cmd": "B91_RECORD=results/b91 python3 -m pytest -q designs/b91_lowbit/tests flow/tests/test_91_lowbit_rtl.py",
+   "what": "RTL against the twins, lint"
+  },
+  {
+   "cmd": "python3 results/b91/summary.py && python3 results/b91/tables.py",
+   "what": "summary, figures and tables"
+  }
+ ],
+ "requirements": [],
+ "schema": "fda-verified/1"
+}
