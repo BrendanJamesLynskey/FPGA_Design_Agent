@@ -51,7 +51,7 @@ KINDS = ("same", "next", "reset")
 MAX_PAST = 16
 PARTIAL_BELOW = 0.6      # a property whose back-translation covers less of the requirement's words is marked partial: evidence of part of the row
 BMC_DEPTH, PROVE_DEPTH, COVER_DEPTH = 24, 12, 24
-TASK_TIMEOUT_S = 600
+TASK_TIMEOUT_S = 180       # per task: a task that does not finish is an `error`, never evidence (z3 took over 4 minutes on a 32-bit CRC core where yices took one second)
 
 # ---- which rows ---------------------------------------------------------------------------------------------------------------------------
 #: wording of a requirement that is a cycle-level property of the ports (something an assertion can say)
@@ -546,6 +546,12 @@ def sources_of(design: Path) -> list[Path]:
         return files
 
 
+def data_files(design: Path) -> list[Path]:
+    """The design's ``data/`` files that are not HDL (a memory image the RTL reads with ``$readmemh``), which the job needs at ``data/<name>``."""
+    d = Path(design) / "data"
+    return sorted(p for p in d.iterdir() if p.is_file() and p.suffix.lower() not in (".sv", ".v", ".vhd", ".vhdl", ".svh")) if d.is_dir() else []
+
+
 def sby_text(design: Path, spec: dict[str, Any], rid: str, gen: dict[str, Any], sby_dir: Path, srcs: list[Path],
              tasks: tuple[str, ...] = ("bmc", "prove", "cover"), front: str = "native") -> str:
     """The .sby job. Paths in ``[files]`` are relative to ``sby_dir`` (the folder the job runs from). ``tasks`` lists the tasks the job has:
@@ -561,12 +567,14 @@ def sby_text(design: Path, spec: dict[str, Any], rid: str, gen: dict[str, Any], 
         f"# SymbiYosys: {rid} stated as a property (brief 218, flow/sva_req.py): bounded check, k-induction proof and the cover of its trigger.",
         f"# The property ({gen['kind']}): ante `{gen['ante']}`, cons `{gen['cons']}`. Generated from the requirement and the port list; see {top}.sv.",
         f"# req: {rid}",
+        "# SYNTHESIS is left undefined, so a design's own simulation stubs of vendor primitives (`ifndef SYNTHESIS`) are the models the proof uses; a stub is a modelling choice, not the primitive.",
         *(["# Needs the OSS CAD Suite the repository pins (Yosys with the slang plugin): flow/formal.sh puts it first on PATH for a job that says `plugin -i slang`."]
           if front == "slang" else []),
-        "[tasks]", *tasks, "", "[options]", *[o for t in tasks for o in opts[t]], "", "[engines]", "smtbmc z3", "",
-        "[script]", *(["plugin -i slang", f"read_slang --top {top} " + " ".join([p.name for p in srcs] + [f"{top}.sv"])] if front == "slang" else
-                      [*[f"read_verilog -formal -sv {p.name}" for p in srcs], f"read_verilog -formal -sv {top}.sv"]), f"prep -top {top}", "",
-        "[files]", *[rel(p) for p in srcs], f"{top}.sv", ""])
+        "[tasks]", *tasks, "", "[options]", *[o for t in tasks for o in opts[t]], "", "[engines]", "smtbmc yices" if front == "slang" else "smtbmc z3", "",
+        "[script]", *(["plugin -i slang", f"read_slang --top {top} -U SYNTHESIS " + " ".join([p.name for p in srcs] + [f"{top}.sv"])] if front == "slang" else
+                      [*[f"read_verilog -formal -nosynthesis -sv {p.name}" for p in srcs], f"read_verilog -formal -nosynthesis -sv {top}.sv"]), f"prep -top {top}", "",
+        "[files]", *[rel(p) for p in srcs], f"{top}.sv",
+        *[f"data/{p.name} {rel(p)}" for p in data_files(design)], ""])        # the design's data files (a ROM image read at elaboration) at the path its RTL names
 
 
 # ---- running it ----------------------------------------------------------------------------------------------------------------------------------
@@ -838,7 +846,7 @@ def process(design: Path, gen_llm: Callable[[str, str], str], back_llm: Callable
                 shutil.copy(work / t / "status", dst / "status")
         rows[rid] = {**row, "status": j["status"]}
     rec = {"schema": SCHEMA, "design": design.name, "module": spec.get("top"), "module_note": module_note, "generated": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), "requirements": rows,
-           "skipped": skipped, "counts": counts(rows), "formal_tool": (tool_version(env) + f" ({front} front end)") if env else None, "caveats": ["reset is asserted in the first cycle only (reset rows: free after the third)",
+           "skipped": skipped, "counts": counts(rows), "formal_tool": (tool_version(env) + f" ({front} front end)") if env else None, "caveats": ["a vendor primitive is the design's own simulation stub (SYNTHESIS undefined), not the primitive", "reset is asserted in the first cycle only (reset rows: free after the third)",
                                                                     "one clock domain per property", "the property was written without the RTL"]}
     (base / EVIDENCE).write_text(json.dumps(rec, indent=1) + "\n")
     return rec

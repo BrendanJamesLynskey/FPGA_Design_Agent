@@ -224,8 +224,12 @@ def test_a_requirement_unchanged_is_not_asked_again(tmp_path):
 
 
 # ---- formal: needs sby ------------------------------------------------------------------------------------------------------------------
-needs_sby = pytest.mark.skipif(S.formal_env() is None or shutil.which("z3") is None and S.formal_env() is not None and not shutil.which("z3", path=S.formal_env().get("PATH")),
-                               reason="needs sby and z3")
+def _have_formal() -> bool:
+    env = S.formal_env()
+    return env is not None and shutil.which("z3", path=env.get("PATH")) is not None
+
+
+needs_sby = pytest.mark.skipif(not _have_formal(), reason="needs sby and z3")
 
 FORMAL = {k: v for k, v in GOOD.items()}
 FORMAL["REQ-02"] = ('{"kind": "reset", "ante": "1", "cons": "!busy && !done"}', "In the cycle right after reset, busy and done are both low.")
