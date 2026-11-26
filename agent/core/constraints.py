@@ -220,12 +220,20 @@ def _base(name: str) -> str:
     return re.sub(r"\[[^\]]*\]$", "", str(name).strip())
 
 
+def _internal(entry: Any) -> bool:
+    """Brief 239: a spec port entry whose direction is ``internal`` is a signal between two blocks (for example the register bus
+    between the supplied ``jtag_bus`` and the core), not a pin of the top module, so FDA-CON-8 does not ask the top to have it."""
+    return isinstance(entry, dict) and str(entry.get("direction", "")).strip().lower() == "internal"
+
+
 def spec_port_names(spec: Any) -> list[str]:
-    """Port names of a spec.yaml (``ports:`` as a list of mappings with ``name``, or a mapping name -> ...)."""
+    """Port names of a spec.yaml (``ports:`` as a list of mappings with ``name``, or a mapping name -> ...), without the entries
+    declared ``direction: internal`` (brief 239: 20 of the 36 stage-2 runs of briefs 213 and 227 were held at lint by FDA-CON-8
+    for the internal register bus of the supplied ``jtag_bus``; the Designer cannot, and should not, add those to the top)."""
     ports = (spec or {}).get("ports") if isinstance(spec, dict) else None
     if isinstance(ports, dict):
-        return [_base(k) for k in ports]
-    return [_base(p["name"]) for p in ports or [] if isinstance(p, dict) and p.get("name")]
+        return [_base(k) for k, v in ports.items() if not _internal(v)]
+    return [_base(p["name"]) for p in ports or [] if isinstance(p, dict) and p.get("name") and not _internal(p)]
 
 
 def check_top_ports(top: str, top_ports: set[str] | None, spec_ports: list[str], xdc_ports: set[str] | None,
