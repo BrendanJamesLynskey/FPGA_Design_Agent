@@ -274,9 +274,30 @@ def _matrix_kb():
     return p if (p / "tools" / "family_matrix.py").exists() and (p / "family_matrix" / "areas").is_dir() else None
 
 
+def _pinned_bank_commit() -> str | None:
+    """The knowledge-bank commit knowledge/PACKS.md records ('Private repo commit: `<hash>`'): the bank the site data is generated from."""
+    m = re.search(r"Private repo commit: `([0-9a-f]{7,40})`", (SITE.parent / "knowledge" / "PACKS.md").read_text())
+    return m.group(1) if m else None
+
+
 @pytest.mark.skipif(_matrix_kb() is None, reason="no knowledge-bank checkout with family_matrix/ here")
 def test_family_diffs_match_the_bank_matrix(tmp_path):
+    """Brief 219 fix 4. site/data/family_diffs.json is generated from the bank at the commit knowledge/PACKS.md pins. The old test ran the
+    matrix tool from whatever branch the local checkout had out (the owner's working copy), so it failed whenever that checkout was not at
+    the pin although the data was right. Now the pinned commit is exported with git archive (the matrix tool checks its skills exist in the bank) and run. An explicit
+    FDA_FAMILY_MATRIX_KB still means 'use this checkout as it is'. A checkout that does not hold the pinned commit skips (stated)."""
     kb = _matrix_kb()
+    if "FDA_FAMILY_MATRIX_KB" not in os.environ:
+        pin = _pinned_bank_commit()
+        assert pin, "knowledge/PACKS.md has no 'Private repo commit' line"
+        if subprocess.run(["git", "-C", str(kb), "cat-file", "-e", pin + "^{commit}"], capture_output=True).returncode != 0:
+            pytest.skip(f"the knowledge-bank checkout does not hold the pinned commit {pin}")
+        exp = tmp_path / "bank"
+        exp.mkdir()
+        tar = subprocess.run(["git", "-C", str(kb), "archive", pin], capture_output=True)
+        assert tar.returncode == 0, tar.stderr
+        subprocess.run(["tar", "-x", "-C", str(exp)], input=tar.stdout, check=True)
+        kb = exp
     out = tmp_path / "fd.json"
     r = subprocess.run([sys.executable, str(kb / "tools" / "family_matrix.py"), "--site-json", str(out)], capture_output=True, text=True)
     assert r.returncode == 0, r.stderr

@@ -1,0 +1,38 @@
+Running as unit: run-u64638.scope; invocation ID: 61a73959a9a14a34ad3053b605a2b351
+INFO: [Common 17-3922] A valid Vivado Design Suite BASIC license has been detected. Your current license is active and will expire on 10-nov-2027.
+
+****** Vivado v2026.1 (64-bit)
+  **** SW Build 6511674 on Tue Jun 16 11:01:26 MDT 2026
+  **** IP Build 6504888 on Tue Jun 09 09:05:25 MDT 2026
+  **** SharedData Build 6501428 on Mon Jun 08 17:34:18 MDT 2026
+  **** Start of session at: Wed Nov 25 18:28:40 2026
+    ** Copyright 1986-2022 Xilinx, Inc. All Rights Reserved.
+    ** Copyright 2022-2026 Advanced Micro Devices, Inc. All Rights Reserved.
+
+source /tmp/claude-1000/-home-brendan-Claude-sandbox/b65cf40d-5157-4ddf-a1b1-68df8207e43b/scratchpad/bel2.tcl
+# link_design -part xck26-sfvc784-2LV-c
+Command: link_design -part xck26-sfvc784-2LV-c
+Design is defaulting to srcset: sources_1
+Design is defaulting to constrset: constrs_1
+INFO: [Device 21-403] Loading part xck26-sfvc784-2LV-c
+Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 2778.215 ; gain = 0.000 ; free physical = 3251 ; free virtual = 10323
+INFO: [Project 1-570] Preparing netlist for logic optimization
+INFO: [Opt 31-138] Pushed 0 inverter(s) to 0 load pin(s).
+Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 2778.215 ; gain = 0.000 ; free physical = 3178 ; free virtual = 10264
+INFO: [Project 1-111] Unisim Transformation Summary:
+No Unisim elements were transformed.
+
+4 Infos, 0 Warnings, 0 Critical Warnings and 0 Errors encountered.
+link_design completed successfully
+link_design: Time (s): cpu = 00:00:30 ; elapsed = 00:00:15 . Memory (MB): peak = 2778.250 ; gain = 1306.922 ; free physical = 3176 ; free virtual = 10263
+# foreach s [get_sites -quiet -filter {SITE_TYPE == GTHE4_COMMON}] { puts "COMMON $s [get_property CLOCK_REGION $s] bels=[lsort [get_bels -quiet -filter {TYPE =~ IBUFDS*} -of_objects $s]]" }
+COMMON GTHE4_COMMON_X0Y3 X2Y3 bels=GTHE4_COMMON_X0Y3/IBUFDS0_GTHE4 GTHE4_COMMON_X0Y3/IBUFDS1_GTHE4
+COMMON GTHE4_COMMON_X0Y2 X2Y2 bels=GTHE4_COMMON_X0Y2/IBUFDS0_GTHE4 GTHE4_COMMON_X0Y2/IBUFDS1_GTHE4
+COMMON GTHE4_COMMON_X0Y1 X2Y1 bels=GTHE4_COMMON_X0Y1/IBUFDS0_GTHE4 GTHE4_COMMON_X0Y1/IBUFDS1_GTHE4
+COMMON GTHE4_COMMON_X0Y0 X2Y0 bels=GTHE4_COMMON_X0Y0/IBUFDS0_GTHE4 GTHE4_COMMON_X0Y0/IBUFDS1_GTHE4
+# foreach p [get_package_pins -quiet -filter {PIN_FUNC =~ MGTREFCLK*}] { puts "REF $p [get_property PIN_FUNC $p] [get_sites -quiet -of_objects $p]" }
+REF Y5 MGTREFCLK0N_224 GTHE4_COMMON_X0Y1
+REF Y6 MGTREFCLK0P_224 GTHE4_COMMON_X0Y1
+REF V5 MGTREFCLK1N_224 GTHE4_COMMON_X0Y1
+REF V6 MGTREFCLK1P_224 GTHE4_COMMON_X0Y1
+INFO: [Common 17-206] Exiting Vivado at Wed Nov 25 18:28:59 2026...

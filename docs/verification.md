@@ -164,7 +164,9 @@ left unrun are listed as skipped and excluded. `score_pct` is killed / (killed +
 mutant (no visible behaviour change) shows as a survivor, so a score below 100 is not always a weak bench. The result
 lists each survivor in words (file, line, the change); `gates(kind=verif)` repeats up to five in the failing check's
 reason. The tool takes the machine's heavy-job lock (`$FDA_HEAVY_LOCK`) under a memory cap, and answers `busy, retry`
-when it is held. 
+when it is held. A run launched under `take_heavy_slot.sh` exports `FDA_HEAVY_SLOT=$HEAVY_LOCK` (the lock file it holds): the coverage and
+mutation steps then run inside that slot and take nothing (brief 219); with no slot held the protection is unchanged. The supplied
+files in the design's `data/` (for example `jtag_bus.sv`), and any copy of them in `rtl/`, are not mutation targets (`excluded_supplied` in the result). 
 
 ### The CDC checks (brief 16)
 
