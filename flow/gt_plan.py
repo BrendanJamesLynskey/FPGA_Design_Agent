@@ -22,6 +22,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import sys
 from pathlib import Path
 from typing import Any
@@ -128,6 +129,18 @@ def plan(link: dict[str, Any], board: dict[str, Any], part: str | None = None) -
     for k in ("rx", "tx"):
         xdc += [f"set_property PACKAGE_PIN {gt[k]['p']} [get_ports <{k}_p>]", f"set_property PACKAGE_PIN {gt[k]['n']} [get_ports <{k}_n>]"]
     out["xdc"] = "\n".join(xdc)
+    # brief 219 fix 5: where the reference clock sits, from the board's package pins and the part's pin table. There is no IBUFDS_GTE4 site
+    # on the part (209 pilot p1 run 3: LOC IBUFDS_GTE4_X1Y6 refused); the buffer is a bel of the GTHE4_COMMON site, placed by the pins.
+    pd = gt_data.load_part(part)
+    pin = (pd or {}).get("pins", {}).get(str(ref.get("p", "")))
+    if pin and pin.get("site"):
+        mm = re.match(r"MGTREFCLK([01])P", pin["func"])
+        bels = (pd or {}).get("ref_buffer_bels", {}).get(pin["site"]) or []
+        out["refclk"] = {"pins": [ref["p"], ref["n"]], "func": pin["func"], "site": pin["site"],
+                         "bel": bels[int(mm.group(1))] if mm and len(bels) > int(mm.group(1)) else None}
+        out["notes"].append(f"the reference-clock buffer needs no LOC: the pins {ref['p']}/{ref['n']} put it in site {pin['site']}"
+                            + (f", bel {out['refclk']['bel']}" if out["refclk"]["bel"] else "")
+                            + "; there is no IBUFDS_GTE4 site on this part, so a LOC with such a name fails the constraints stage")
     out["ok"] = not problems
     out["notes"].append("reference frequency and source are unconfirmed against the carrier schematic" if "unconfirmed" in ref["status"] else "")
     out["notes"] = [n for n in out["notes"] if n]

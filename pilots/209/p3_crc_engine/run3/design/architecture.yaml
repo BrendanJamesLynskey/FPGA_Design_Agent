@@ -1,0 +1,41 @@
+schema: fpga-design-agent/architecture/v1
+blocks:
+  - name: crc32_top
+    function: Thin top, instantiates MMCM, BUFGs, reset generator, jtag_bus and crc32_core
+  - name: reset_gen
+    function: Reset from MMCM locked, async assert and synchronous release, held 8 clk
+  - name: jtag_bus
+    function: Supplied JTAG register bus (BSCANE2 USER4), unmodified
+  - name: crc32_core
+    function: Register file, 4-bytes-per-clock reflected CRC-32, counters, LEDs
+interfaces:
+  - name: reg_port
+    between: [jtag_bus, crc32_core]
+    protocol: simple
+    prefix: h
+    module: crc32_core
+clock_domains:
+  - name: clk_25
+    clock: clk_25
+    freq_mhz: 25
+  - name: clk
+    clock: clk
+    freq_mhz: 100
+reset:
+  synchronisers: [reset_gen]
+crossings:
+  - from: clk_25
+    to: clk
+    signal: mmcm_locked
+    primitive: xpm_cdc_async_rst
+    inline_in: reset_gen
+  - from: clk_25
+    to: clk
+    signal: mmcm_locked_led
+    primitive: xpm_cdc_single
+    inline_in: crc32_top
+predicted_resources:
+  lut: [250, 700]
+  ff: [550, 800]
+  bram_tile: 0
+  dsp: 0

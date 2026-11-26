@@ -1,0 +1,142 @@
+schema: fpga-design-agent/testplan/v0
+design: p3_crc_engine
+spec: spec.yaml
+model: model.py
+bench:
+  modules: [crc_bench]
+  dir: tests
+checkers: verif/checkers
+formal_dir: verif/formal
+thresholds:
+  seeds_min: 3
+  functional_bins_pct: 100
+  cover_properties_pct: 100
+  line_pct: 95
+  toggle_pct: 80
+  mutation_score_pct: 80
+waivers:
+  code_coverage: []
+  functional_bins: []
+  cover_properties: []
+requirements:
+  - id: REQ-01
+    spec: ["behaviour.crc[0]", "behaviour.crc[2]", "registers.map.CRC", "registers.map.PUSH4", "timing.latency.crc_update"]
+    tests: [crc_bench.test_random_traffic, crc_bench.test_lengths, crc_bench.test_back_to_back]
+  - id: REQ-02
+    spec: ["behaviour.crc[4]"]
+    tests: [crc_bench.test_init, crc_bench.test_reset_values]
+  - id: REQ-03
+    spec: ["behaviour.counters[0]", "registers.map.BYTE_COUNT"]
+    tests: [crc_bench.test_lengths, crc_bench.test_random_traffic, crc_bench.test_back_to_back]
+  - id: REQ-04
+    spec: ["behaviour.crc[1]"]
+    tests: [crc_bench.test_lengths]
+  - id: REQ-05
+    spec: ["behaviour.crc[1]"]
+    tests: [crc_bench.test_byte_order]
+  - id: REQ-06
+    spec: ["behaviour.crc[3]", "registers.map.PUSH_N"]
+    tests: [crc_bench.test_push_n]
+  - id: REQ-07
+    spec: ["behaviour.crc[3]", "registers.map.TAIL_LEN"]
+    tests: [crc_bench.test_push_n]
+  - id: REQ-08
+    spec: ["behaviour.counters[1]", "registers.map.BUSY_CYCLES"]
+    tests: [crc_bench.test_back_to_back, crc_bench.test_lengths]
+  - id: REQ-09
+    spec: ["behaviour.crc[5]"]
+    tests: [crc_bench.test_back_to_back]
+  - id: REQ-10
+    spec: ["behaviour.counters[2]", "behaviour.counters[3]"]
+    tests: [crc_bench.test_init]
+  - id: REQ-11
+    spec: ["registers.map.CTRL"]
+    tests: [crc_bench.test_init]
+  - id: REQ-12
+    spec: ["registers.map.ID", "behaviour.registers_access[2]"]
+    tests: [crc_bench.test_reset_values, crc_bench.test_registers]
+  - id: REQ-13
+    spec: ["registers.map.BUILD"]
+    tests: [crc_bench.test_build_and_structure]
+  - id: REQ-14
+    spec: ["registers.map.SCRATCH"]
+    tests: [crc_bench.test_registers]
+  - id: REQ-15
+    spec: ["registers.unmapped"]
+    tests: [crc_bench.test_registers]
+  - id: REQ-16
+    spec: ["behaviour.registers_access[0]", "timing.latency.read_to_data"]
+    tests: [crc_bench.test_read_hold]
+  - id: REQ-24
+    spec: ["reset"]
+    tests: [crc_bench.test_reset_values]
+  - id: REQ-25
+    spec: ["behaviour.registers_access[1]"]
+    tests: [crc_bench.test_registers]
+  - id: REQ-26
+    spec: ["behaviour.registers_access[0]"]
+    tests: [crc_bench.test_read_hold]
+  - id: REQ-17
+    spec: ["timing.latency.write_to_effect"]
+    tests: [crc_bench.test_back_to_back]
+  - id: REQ-18
+    spec: []
+    tests: [crc_bench.test_build_and_structure]
+  - id: REQ-19
+    spec: ["behaviour.board[0]"]
+    tests: [crc_bench.test_sfp_tx_disable, crc_bench.test_reset_values]
+  - id: REQ-20
+    spec: []
+    tests: [crc_bench.test_build_and_structure]
+  - id: REQ-21
+    spec: ["behaviour.board[1]"]
+    tests: [crc_bench.test_build_and_structure]
+  - id: REQ-22
+    spec: ["behaviour.registers_access[1]"]
+    tests: [crc_bench.test_registers]
+  - id: REQ-23
+    spec: ["behaviour.registers_access[3]"]
+    tests: [crc_bench.test_push_n]
+proof:
+  - {requirement: REQ-01, method: simulation, artefact: crc_bench.test_random_traffic}
+  - {requirement: REQ-01, method: hardware, artefact: uart_tests}
+  - {requirement: REQ-02, method: simulation, artefact: crc_bench.test_init}
+  - {requirement: REQ-02, method: hardware, artefact: uart_tests}
+  - {requirement: REQ-03, method: simulation, artefact: crc_bench.test_lengths}
+  - {requirement: REQ-03, method: hardware, artefact: uart_tests}
+  - {requirement: REQ-04, method: simulation, artefact: crc_bench.test_lengths}
+  - {requirement: REQ-05, method: simulation, artefact: crc_bench.test_byte_order}
+  - {requirement: REQ-06, method: simulation, artefact: crc_bench.test_push_n}
+  - {requirement: REQ-07, method: simulation, artefact: crc_bench.test_push_n}
+  - {requirement: REQ-08, method: simulation, artefact: crc_bench.test_back_to_back}
+  - {requirement: REQ-08, method: hardware, artefact: uart_tests}
+  - {requirement: REQ-09, method: simulation, artefact: crc_bench.test_back_to_back}
+  - {requirement: REQ-10, method: simulation, artefact: crc_bench.test_init}
+  - {requirement: REQ-11, method: simulation, artefact: crc_bench.test_init}
+  - {requirement: REQ-12, method: simulation, artefact: crc_bench.test_reset_values}
+  - {requirement: REQ-12, method: hardware, artefact: uart_tests}
+  - {requirement: REQ-13, method: hardware, artefact: uart_tests}
+  - {requirement: REQ-14, method: simulation, artefact: crc_bench.test_registers}
+  - {requirement: REQ-14, method: hardware, artefact: uart_tests}
+  - {requirement: REQ-15, method: simulation, artefact: crc_bench.test_registers}
+  - {requirement: REQ-16, method: simulation, artefact: crc_bench.test_read_hold}
+  - {requirement: REQ-24, method: simulation, artefact: crc_bench.test_reset_values}
+  - {requirement: REQ-24, method: hardware, artefact: uart_tests}
+  - {requirement: REQ-25, method: simulation, artefact: crc_bench.test_registers}
+  - {requirement: REQ-26, method: simulation, artefact: crc_bench.test_read_hold}
+  - {requirement: REQ-17, method: simulation, artefact: crc_bench.test_back_to_back}
+  - {requirement: REQ-18, method: analysis, artefact: "post_route:setup"}
+  - {requirement: REQ-19, method: simulation, artefact: crc_bench.test_sfp_tx_disable}
+  - {requirement: REQ-19, method: hardware, artefact: uart_tests}
+  - {requirement: REQ-20, method: analysis, artefact: "post_synth:post_synth_resources_in_range"}
+  - {requirement: REQ-21, method: analysis, artefact: "post_synth:post_synth_resources_in_range"}
+  - {requirement: REQ-22, method: simulation, artefact: crc_bench.test_registers}
+  - {requirement: REQ-23, method: simulation, artefact: crc_bench.test_push_n}
+replan:
+  - {requirement: REQ-07, method: formal, replaced_by: simulation, artefact: crc_bench.test_push_n, why: SymbiYosys is not installed so the bounded proof is replaced by the model-checked directed test.}
+  - {requirement: REQ-10, method: formal, replaced_by: simulation, artefact: crc_bench.test_init, why: SymbiYosys is not installed so the bounded proof is replaced by the model-checked directed test.}
+  - {requirement: REQ-15, method: formal, replaced_by: simulation, artefact: crc_bench.test_registers, why: SymbiYosys is not installed so the unmapped-read property is checked in simulation.}
+  - {requirement: REQ-16, method: formal, replaced_by: simulation, artefact: crc_bench.test_read_hold, why: SymbiYosys is not installed so the read latency property is checked in simulation.}
+  - {requirement: REQ-25, method: formal, replaced_by: simulation, artefact: crc_bench.test_registers, why: SymbiYosys is not installed so the unmapped-write property is checked in simulation.}
+  - {requirement: REQ-26, method: formal, replaced_by: simulation, artefact: crc_bench.test_read_hold, why: SymbiYosys is not installed so the read hold property is checked in simulation.}
+  - {requirement: REQ-19, method: formal, replaced_by: simulation, artefact: crc_bench.test_sfp_tx_disable, why: SymbiYosys is not installed so the constant-output property is checked in simulation.}

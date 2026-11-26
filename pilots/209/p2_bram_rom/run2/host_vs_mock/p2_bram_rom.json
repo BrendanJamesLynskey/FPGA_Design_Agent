@@ -1,0 +1,105 @@
+{
+ "design": "p2_bram_rom",
+ "verdict": "PASS",
+ "aborted": null,
+ "expect_id": 546439169,
+ "expect_build": 305441741,
+ "stamp_time": "2026-11-25T17:26:08",
+ "criteria": [
+  {
+   "name": "id",
+   "pass": true,
+   "value": "20920001",
+   "expected": "20920001"
+  },
+  {
+   "name": "build_stamp",
+   "pass": true,
+   "value": "1234abcd",
+   "expected": "1234abcd"
+  },
+  {
+   "name": "scratch_readback",
+   "pass": true,
+   "value": [
+    "a5a5a5a5",
+    "5a5a5a5a",
+    "ffffffff",
+    "00000001",
+    "80000000",
+    "00000000"
+   ],
+   "expected": "what was written"
+  },
+  {
+   "name": "rom_matches_file",
+   "pass": true,
+   "value": "0 words differ",
+   "expected": "0 differ of 1024"
+  },
+  {
+   "name": "ram_powerup_values",
+   "pass": true,
+   "value": "0 words differ",
+   "expected": "0xC0DE0000 + i, 0 differ of 1024"
+  },
+  {
+   "name": "rom_random_access",
+   "pass": true,
+   "value": true,
+   "expected": true
+  },
+  {
+   "name": "ram_write_readback",
+   "pass": true,
+   "value": true,
+   "expected": true
+  },
+  {
+   "name": "march_200_passes_done",
+   "pass": true,
+   "value": 200,
+   "expected": 200
+  },
+  {
+   "name": "march_200_passes_errors",
+   "pass": true,
+   "value": "errs 0 first 0xffffffff",
+   "expected": "0 errors, first = 0xFFFFFFFF"
+  },
+  {
+   "name": "ram_all_zero_after_march",
+   "pass": true,
+   "value": 0,
+   "expected": "0 nonzero words"
+  },
+  {
+   "name": "march_injected_fault_detected",
+   "pass": true,
+   "value": "errs 3 first 0x0",
+   "expected": ">= 3 errors (one per pass at least), first address set"
+  },
+  {
+   "name": "march_clean_again_after_fault",
+   "pass": true,
+   "value": 0,
+   "expected": 0
+  }
+ ],
+ "data": {
+  "id": "20920001",
+  "build": "1234abcd",
+  "march_clean": {
+   "status": 13107202,
+   "passes_done": 200,
+   "errs": 0,
+   "first": 4294967295
+  },
+  "march_injected": {
+   "status": 196610,
+   "passes_done": 3,
+   "errs": 3,
+   "first": 0
+  }
+ }
+}

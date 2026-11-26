@@ -1,0 +1,43 @@
+[/tmp/claude-1000/w158/ff/r/unreach_prove] Removing directory '/tmp/claude-1000/w158/ff/r/unreach_prove'.
+[/tmp/claude-1000/w158/ff/r/unreach_prove] engine_0: smtbmc boolector
+[/tmp/claude-1000/w158/ff/r/unreach_prove] base: starting process "cd /tmp/claude-1000/w158/ff/r/unreach_prove/src; yosys -ql ../model/design.log ../model/design.ys"
+[/tmp/claude-1000/w158/ff/r/unreach_prove] base: finished (returncode=0)
+[/tmp/claude-1000/w158/ff/r/unreach_prove] prep: starting process "cd /tmp/claude-1000/w158/ff/r/unreach_prove/model; yosys -ql design_prep.log design_prep.ys"
+[/tmp/claude-1000/w158/ff/r/unreach_prove] prep: finished (returncode=0)
+[/tmp/claude-1000/w158/ff/r/unreach_prove] smt2: starting process "cd /tmp/claude-1000/w158/ff/r/unreach_prove/model; yosys -ql design_smt2.log design_smt2.ys"
+[/tmp/claude-1000/w158/ff/r/unreach_prove] smt2: finished (returncode=0)
+[/tmp/claude-1000/w158/ff/r/unreach_prove] engine_0.basecase: starting process "cd /tmp/claude-1000/w158/ff/r/unreach_prove; yosys-smtbmc -s boolector --presat --unroll --noprogress -t 8  --append 0 --dump-vcd engine_0/trace.vcd --dump-yw engine_0/trace.yw --dump-vlogtb engine_0/trace_tb.v --dump-smtc engine_0/trace.smtc model/design_smt2.smt2"
+[/tmp/claude-1000/w158/ff/r/unreach_prove] engine_0.induction: starting process "cd /tmp/claude-1000/w158/ff/r/unreach_prove; yosys-smtbmc -s boolector --presat --unroll -i --noprogress -t 8  --append 0 --dump-vcd engine_0/trace_induct.vcd --dump-yw engine_0/trace_induct.yw --dump-vlogtb engine_0/trace_induct_tb.v --dump-smtc engine_0/trace_induct.smtc model/design_smt2.smt2"
+[/tmp/claude-1000/w158/ff/r/unreach_prove] engine_0.basecase: ##   0:00:00  Solver: boolector
+[/tmp/claude-1000/w158/ff/r/unreach_prove] engine_0.induction: ##   0:00:00  Solver: boolector
+[/tmp/claude-1000/w158/ff/r/unreach_prove] engine_0.basecase: ##   0:00:00  Checking assumptions in step 0..
+[/tmp/claude-1000/w158/ff/r/unreach_prove] engine_0.basecase: ##   0:00:00  Checking assertions in step 0..
+[/tmp/claude-1000/w158/ff/r/unreach_prove] engine_0.induction: ##   0:00:00  Trying induction in step 8..
+[/tmp/claude-1000/w158/ff/r/unreach_prove] engine_0.induction: ##   0:00:00  Temporal induction successful.
+[/tmp/claude-1000/w158/ff/r/unreach_prove] engine_0.induction: ##   0:00:00  Status: passed
+[/tmp/claude-1000/w158/ff/r/unreach_prove] engine_0.basecase: ##   0:00:00  Checking assumptions in step 1..
+[/tmp/claude-1000/w158/ff/r/unreach_prove] engine_0.basecase: ##   0:00:00  Checking assertions in step 1..
+[/tmp/claude-1000/w158/ff/r/unreach_prove] engine_0.induction: finished (returncode=0)
+[/tmp/claude-1000/w158/ff/r/unreach_prove] engine_0.induction: Status returned by engine for induction: pass
+[/tmp/claude-1000/w158/ff/r/unreach_prove] engine_0.basecase: ##   0:00:00  Checking assumptions in step 2..
+[/tmp/claude-1000/w158/ff/r/unreach_prove] engine_0.basecase: ##   0:00:00  Checking assertions in step 2..
+[/tmp/claude-1000/w158/ff/r/unreach_prove] engine_0.basecase: ##   0:00:00  Checking assumptions in step 3..
+[/tmp/claude-1000/w158/ff/r/unreach_prove] engine_0.basecase: ##   0:00:00  Checking assertions in step 3..
+[/tmp/claude-1000/w158/ff/r/unreach_prove] engine_0.basecase: ##   0:00:00  Checking assumptions in step 4..
+[/tmp/claude-1000/w158/ff/r/unreach_prove] engine_0.basecase: ##   0:00:00  Checking assertions in step 4..
+[/tmp/claude-1000/w158/ff/r/unreach_prove] engine_0.basecase: ##   0:00:00  Checking assumptions in step 5..
+[/tmp/claude-1000/w158/ff/r/unreach_prove] engine_0.basecase: ##   0:00:00  Checking assertions in step 5..
+[/tmp/claude-1000/w158/ff/r/unreach_prove] engine_0.basecase: ##   0:00:00  Checking assumptions in step 6..
+[/tmp/claude-1000/w158/ff/r/unreach_prove] engine_0.basecase: ##   0:00:00  Checking assertions in step 6..
+[/tmp/claude-1000/w158/ff/r/unreach_prove] engine_0.basecase: ##   0:00:00  Checking assumptions in step 7..
+[/tmp/claude-1000/w158/ff/r/unreach_prove] engine_0.basecase: ##   0:00:00  Checking assertions in step 7..
+[/tmp/claude-1000/w158/ff/r/unreach_prove] engine_0.basecase: ##   0:00:00  Status: passed
+[/tmp/claude-1000/w158/ff/r/unreach_prove] engine_0.basecase: finished (returncode=0)
+[/tmp/claude-1000/w158/ff/r/unreach_prove] engine_0.basecase: Status returned by engine for basecase: pass
+[/tmp/claude-1000/w158/ff/r/unreach_prove] summary: Elapsed clock time [H:MM:SS (secs)]: 0:00:00 (0)
+[/tmp/claude-1000/w158/ff/r/unreach_prove] summary: Elapsed process time [H:MM:SS (secs)]: 0:00:00 (0)
+[/tmp/claude-1000/w158/ff/r/unreach_prove] summary: engine_0 (smtbmc boolector) returned pass for basecase
+[/tmp/claude-1000/w158/ff/r/unreach_prove] summary: engine_0 (smtbmc boolector) returned pass for induction
+[/tmp/claude-1000/w158/ff/r/unreach_prove] summary: engine_0 did not produce any traces
+[/tmp/claude-1000/w158/ff/r/unreach_prove] summary: successful proof by k-induction.
+[/tmp/claude-1000/w158/ff/r/unreach_prove] DONE (PASS, rc=0)

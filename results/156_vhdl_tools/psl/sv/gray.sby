@@ -1,0 +1,25 @@
+# Brief 156: the SystemVerilog twin's FORMAL assertions, proved with SymbiYosys (Yosys's own front end, -formal -DFORMAL)
+[tasks]
+bmc
+prove
+cover
+
+[options]
+bmc: mode bmc
+prove: mode prove
+prove: depth 8
+cover: mode cover
+depth 20
+
+[engines]
+smtbmc z3
+
+[script]
+read -formal -sv -DFORMAL bm_debounce.sv sync2.sv gray_stepper.sv gray_fv.sv
+prep -top gray_fv
+
+[files]
+../../../../benchmark/tasks/t1_gray_stepper/ref/rtl/bm_debounce.sv
+../../../../shell/rtl/sync2.sv
+gray_stepper.sv
+gray_fv.sv

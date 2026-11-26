@@ -32,6 +32,7 @@ class Scoreboard(uvm_component):
 
     def build_phase(self):
         self.usr = Sink("usr", self, self.write_usr)
+        self.usr_abort = Sink("usr_abort", self, self.write_abort)
         self.macw = Sink("macw", self, self.write_macw)
         self.pin = Sink("pin", self, self.write_pin)
         self.gtx = Sink("gtx", self, self.write_gtx)
@@ -48,6 +49,7 @@ class Scoreboard(uvm_component):
         self.exp_rx: dict = {}; self.dut_rx: dict = {}
         self.exp_frames: deque = deque(); self.dut_frames: deque = deque(); self.e2e_q: deque = deque()
         self.abort_ref = self.abort_dut = 0
+        self.injected_aborts = 0; self.exact_aborts = False; self.last_was_abort = False
         self.had_lock = False; self.slips_since_reset = 0; self.frame_open_ref = False
 
     # ---- bookkeeping
@@ -72,6 +74,13 @@ class Scoreboard(uvm_component):
             self.e2e_q.append((payload, poison))
         self.cmp_txmac()
 
+    def write_abort(self, payload) -> None:
+        """Fault injection (brief 158): the source stalled inside a frame after `payload` (whole words). Expected on the MAC's output: the words of refmodels.abort_words, with
+        no terminate; the frame does not count as offered (it is never sent end to end), and the receiver must abort it."""
+        self.sent_q.append((payload, "ABORT"))
+        self.injected_aborts += 1
+        self.cmp_txmac()
+
     def write_macw(self, t) -> None:
         cyc, rst, adv, d, c = t
         if rst:
@@ -89,21 +98,25 @@ class Scoreboard(uvm_component):
                     self.ok("TXMAC_IFG")
                     if self.gap_bytes < 12:
                         self.fail("TXMAC_IFG", f"interframe gap {self.gap_bytes} byte times, less than 12")
-                    cov.sample_ifg(self.gap_bytes, self.last_tl_mac)
+                    if not self.last_was_abort:
+                        cov.sample_ifg(self.gap_bytes, self.last_tl_mac)
             else:
                 self.fail("TXMAC", f"neither idle nor a start between frames: d={d:016x} c={c:02x}")
         else:
             self.cur_words.append(w)
             k = ref.term_lane(d, c)
-            if k >= 0:
-                self.in_frame, self.have_prev, self.gap_bytes, self.last_tl_mac = False, True, 8 - k, k
+            if w == (ref.ERR_D, 0xFF):                       # underrun: the frame ends with a word of error characters in place of the terminate
+                self.in_frame, self.have_prev, self.gap_bytes, self.last_was_abort = False, True, 8, True
+                self.obs_q.append(self.cur_words); self.cur_words = []
+            elif k >= 0:
+                self.in_frame, self.have_prev, self.gap_bytes, self.last_tl_mac, self.last_was_abort = False, True, 8 - k, k, False
                 self.obs_q.append(self.cur_words); self.cur_words = []
         self.cmp_txmac()
 
     def cmp_txmac(self) -> None:
         while self.sent_q and self.obs_q:
             (payload, poison), got = self.sent_q.popleft(), self.obs_q.popleft()
-            want = ref.frame_words(payload, False, poison)
+            want = ref.abort_words(payload) if poison == "ABORT" else ref.frame_words(payload, False, poison)
             self.ok("TXMAC")
             if got != want:
                 fd = next((i for i, (a, b) in enumerate(zip(got, want)) if a != b), -1)
@@ -221,6 +234,10 @@ class Scoreboard(uvm_component):
         if self.dut_frames:
             self.fail("RXMAC", f"{len(self.dut_frames)} frames reported by mac64_rx that the reference receiver did not find")
         self.ok("RXMAC")
+        if self.exact_aborts:                                # clean channel with injected underruns: every one, and only those, is aborted by the receiver
+            self.ok("RXMAC")
+            if self.abort_dut != self.injected_aborts:
+                self.fail("RXMAC", f"receiver aborts: {self.abort_dut}, underruns injected: {self.injected_aborts}")
         if self.abort_ref != self.abort_dut:
             self.fail("RXMAC", f"aborted frames: DUT {self.abort_dut}, model {self.abort_ref}")
         if self.e2e_en and self.e2e_q:

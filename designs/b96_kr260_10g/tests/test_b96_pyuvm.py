@@ -108,9 +108,10 @@ def test_mutant_list_applies(tmp_path: Path) -> None:
         assert r.returncode == 0, r.stdout + r.stderr
 
 
-def test_verilator_coverage_record_is_consistent() -> None:
-    """Brief 146: the committed Verilator coverage record (results/146_verilator_cov) is self-consistent and `cov_report.py` still computes it from a coverage.dat."""
-    rec = ROOT / "results" / "146_verilator_cov"
+@pytest.mark.parametrize("record,runs", [("146_verilator_cov", 42), ("158_cov_closure", 44)])
+def test_verilator_coverage_record_is_consistent(record: str, runs: int) -> None:
+    """Briefs 146 and 158: the committed Verilator coverage records (results/146_verilator_cov, results/158_cov_closure) are self-consistent and `cov_report.py` still computes them from a coverage.dat."""
+    rec = ROOT / "results" / record
     d = json.loads((rec / "coverage_summary.json").read_text())
     for kind in ("line", "branch", "expr", "toggle"):
         tot = sum(m[kind]["total"] for k, m in d["modules"].items() if k != "tb_pyuvm_top")
@@ -122,7 +123,18 @@ def test_verilator_coverage_record_is_consistent() -> None:
     for kind in ("line", "branch", "expr"):
         open_pts = sum(m[kind]["total"] - m[kind]["covered"] for k, m in d["modules"].items() if k != "tb_pyuvm_top")
         assert sum(1 for r in rows if r[0] == kind and r[1] != "tb_pyuvm_top") == open_pts, kind
-    assert "217/217 bins hit" in (rec / "summary.txt").read_text()
+    assert f"merged {runs} runs: 217/217 bins hit" in (rec / "summary.txt").read_text()
+
+
+def test_underrun_reference_words() -> None:
+    """Brief 158: what mac64_tx puts out when the source stalls after two words: the start word, the two words, a word of eight error characters; no FCS, no terminate."""
+    data = bytes(range(16))
+    w = ref.abort_words(data)
+    assert len(w) == 4 and w[0][1] == 0x01
+    assert w[0][0] & 0xFF == ref.START and w[0][0] >> 56 == 0xD5
+    assert w[1] == (int.from_bytes(data[:8], "little"), 0) and w[2] == (int.from_bytes(data[8:], "little"), 0)
+    assert w[3] == (int.from_bytes(bytes([ref.ERRC] * 8), "little"), 0xFF)
+    assert ref.term_lane(*w[3]) == -1
 
 
 def test_cov_report_reads_a_verilator_coverage_file(tmp_path: Path) -> None:

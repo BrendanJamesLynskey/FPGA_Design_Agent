@@ -1,0 +1,5 @@
+`ifdef VERILATOR
+`verilator_config
+// jtag_bus.sv is supplied read-only; its TDO and cmd_s[45] are unused in simulation/lint (BSCANE2 is synthesis only).
+lint_off -rule UNUSEDSIGNAL -file "*jtag_bus.sv"
+`endif

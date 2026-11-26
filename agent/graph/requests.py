@@ -57,7 +57,15 @@ def eval_mode(run_dir: Path) -> dict[str, Any]:
 
 
 def has_ended(run_dir: Path) -> bool:
-    return (Path(run_dir) / "summary.json").is_file()
+    """A run has ended when its summary.json exists and is not the record of a pause (brief 219 fix 7: a run paused for the programming
+    approval writes a summary marked ``paused`` and can still take requests at the next safe point)."""
+    f = Path(run_dir) / "summary.json"
+    if not f.is_file():
+        return False
+    try:
+        return not json.loads(f.read_text()).get("paused")
+    except (OSError, ValueError, AttributeError):
+        return True
 
 
 # --- the file -----------------------------------------------------------------------------------------------------------------

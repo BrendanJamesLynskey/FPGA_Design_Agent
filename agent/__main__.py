@@ -99,7 +99,7 @@ def drive_exit(res: dict) -> int:
         return EXIT_NEEDS_PERMISSION
     if str(res.get("stop") or "").startswith("permission denied"):
         return EXIT_PERMISSION_DENIED
-    return 0
+    return exit_status(res)         # brief 210: 3 as well when the run stopped on unresolved requirements (both mean "a person has to answer"; the JSON on stdout says which)
 
 
 def permission_spec(a, name: str | None, ap) -> dict:
@@ -165,6 +165,9 @@ def _drive(graph, rt, cfg_lg, first_input, replies: list) -> dict:
             break
         if not replies:
             (rt.run_dir / "pending.json").write_text(json.dumps({"paused": pending[0], "run_id": rt.run_id}, indent=1))     # brief 182: the navigator shows a pending question
+            if pending[0].get("kind") == "review" and pending[0].get("hardware"):      # brief 219 fix 7: a pause for the programming approval leaves the run record
+                from agent.graph.run import write_paused_record
+                write_paused_record(rt, snap.values, pending[0])
             out = {"paused": pending[0], "run_id": rt.run_id}
             if pending[0].get("kind") == "permission":                                      # brief 222: a headless run stops here, on purpose, with what it needs
                 out = {"status": NEEDS_PERMISSION, **out, "needs": pending[0].get("needs"), "how": pending[0].get("resume"),
@@ -183,6 +186,13 @@ def _drive(graph, rt, cfg_lg, first_input, replies: list) -> dict:
     (rt.run_dir / "summary.json").write_text(json.dumps(s, indent=1))
     print(json.dumps(s, indent=1))
     return s
+
+
+def exit_status(summary: dict | None) -> int:
+    """0, or ``agent.graph.requirements.EXIT_REQUIREMENTS`` (3) when the run stopped because requirements are unresolved: not a crash,
+    and distinct from usage errors (2), so a script can tell "answer these questions" from "the command was wrong" (brief 210)."""
+    from agent.graph import requirements as RQ
+    return RQ.EXIT_REQUIREMENTS if RQ.is_requirements_stop((summary or {}).get("stop")) else 0
 
 
 def task_no_shell(hidden_spec: Path | None) -> bool:
@@ -260,7 +270,7 @@ def config_from_json(c: dict):
     from agent.graph.run import Config
     def flag(k: str) -> bool:
         return str(c.get(k, False)) == "True"
-    return Config(spec_md=Path(c["spec_md"]), name=c["name"], board=c["board"], interview=c["interview"],
+    return Config(spec_md=Path(c["spec_md"]), name=c["name"], board=c["board"], interview=c["interview"], requirements=c.get("requirements") or "",
                   review=c["review"], model=c["model"],
                   hidden_spec=Path(c["hidden_spec"]) if c.get("hidden_spec") not in (None, "None") else None,
                   stop_after=None if c.get("stop_after") in (None, "None") else int(c["stop_after"]),
@@ -573,6 +583,11 @@ def build_parser() -> argparse.ArgumentParser:
     r.add_argument("--name", help="the design's name (default: the spec's directory name)")
     r.add_argument("--interview", choices=["on", "oracle", "off"], default="off",
                    help="on: the clarifier asks a person questions; oracle: a model answers them from --hidden-spec; off (default): it assumes")
+    r.add_argument("--requirements", choices=["loose", "standard", "strict"], default=None,
+                   help="how strict the interview is about unanswered questions (brief 210). loose: every gap is defaulted and listed in the handover; "
+                        "standard: a high-risk question must be answered or waived, else the run stops at clarify (exit 3); strict: every question must "
+                        "be answered or waived. Default: the request's own 'Requirements: <level>' line, else the design package, else the built-in "
+                        "default (docs/agent.md)")
     r.add_argument("--review", choices=["on", "off"], default="off", help="on: pause for a person's decision after every stage")
     r.add_argument("--model", default="openai/gpt-6-luna", help="the OpenRouter model of the default endpoint (see `models show` for every purpose)")
     r.add_argument("--hidden-spec", type=Path, help="the full spec an interview oracle answers from (evaluation runs)")
@@ -824,7 +839,7 @@ def _run_main(a, args: list[str], ap: argparse.ArgumentParser) -> int:
             vp = _prof.from_cli(a.verif_profile, a.verif_set, a.verif_level if any(x.startswith("--verif-level") for x in args) else None, a.spec_tests)
         except _prof.ProfileError as e:
             ap.error(str(e))
-        cfg = Config(spec_md=a.spec, name=name, board=a.board, interview=a.interview, review=a.review,
+        cfg = Config(spec_md=a.spec, name=name, board=a.board, interview=a.interview, review=a.review, requirements=a.requirements or "",
                      verif_profile=vp["profile"], verif_sets={k: v["value"] for k, v in vp["overrides"].items()},
                      verif_ask=a.verif_profile is None and a.interview in ("on", "oracle"), settings_file=a.settings,
                      settings_flags=({k: v for k, v in (('board', a.board if any(x.startswith('--board') for x in args) else None), ('profile', a.verif_profile)) if v} or None),

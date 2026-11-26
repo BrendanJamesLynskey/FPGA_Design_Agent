@@ -778,6 +778,7 @@ def draft(design: Path, run_dir: Path, *, run_id: str, board: str, gates_last: d
          "parameters": [{"name": str(k), "value": v, "legal": "WRITE", "note": "WRITE",
                          **({"_spec_timing": t} if (t := _spec_timing(spec, str(k))) else {})}
                         for k, v in (spec.get("parameters") or {}).items()] if isinstance(spec.get("parameters"), dict) else [],
+         **requirements_fields(design, spec),
          "files": _files(design) + _failed_review_pages(design, res),
          "commands": [
              {"what": "what changed since this handover (stale records, changed files, tool and knowledge-bank pins)",
@@ -806,6 +807,18 @@ def draft(design: Path, run_dir: Path, *, run_id: str, board: str, gates_last: d
                    "evidence_vivado": ("none" if not evv else "current" if evv == {rel_now} else "earlier"),
                    **({"gate_notes": gate_notes} if gate_notes else {})}}
     return h, required
+
+
+def requirements_fields(design: Path, spec: dict) -> dict:
+    """Brief 210: the code-owned handover fields of the requirements work: the report's name (when the run wrote one) and, when the spec
+    records interview answers, the assumptions the agent made (every defaulted or waived question with its risk class)."""
+    from agent.graph import requirements as RQ
+    out: dict[str, Any] = {}
+    if (design / "REQUIREMENTS_REPORT.md").is_file():
+        out["requirements_report"] = "REQUIREMENTS_REPORT.md"
+    if any(isinstance(q, dict) for q in spec.get("resolved_questions") or []):
+        out["assumptions"] = RQ.assumptions_of(spec)
+    return out
 
 
 def _first_visited(gates_last: dict | None) -> int:
@@ -934,6 +947,10 @@ def recheck(ddir: Path) -> list[str]:
     for k in ("model", "harness", "loops", "turns", "wall_s", "tokens", "cost_usd", "plan_cost_estimate_usd", "stop", "permissions"):
         if (h.get("agent_run") or {}).get(k) != d["agent_run"].get(k):
             errs.append(f"agent_run.{k}: {(h.get('agent_run') or {}).get(k)!r} is not the run record's {d['agent_run'].get(k)!r}")
+    new_run = str((h.get("agent_run") or {}).get("run_id", ""))[:8] >= "20261125"        # brief 210: handovers of runs from before it have neither field
+    for k in ("requirements_report", "assumptions"):          # code-owned; a hand edit that drops an assumption fails here
+        if k in d and (k in h or new_run) and h.get(k) != d[k]:
+            errs.append(f"{k}: not what the run's records give now (re-run the DOC step: python -m agent document <run-dir>)")
     errs += [f"state.gate_notes: {(h.get('state') or {}).get('gate_notes')!r} is not the run's {d['state'].get('gate_notes')!r}"] \
         if (h.get('state') or {}).get('gate_notes') != d['state'].get('gate_notes') else []
     if (h.get('registers') or None) != (d.get('registers') or None):

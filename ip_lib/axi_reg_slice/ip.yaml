@@ -1,0 +1,160 @@
+# ip.yaml for axi_reg_slice: the declared parameter space and contract (the library's reuse rules; brief 151).
+name: axi_reg_slice
+version: 0.1.0
+status: simulated clock by clock against the pipe_reg model on all five channels (cocotb, Icarus Verilog 12) at seven per-channel
+  mode mixes; 6 of 6 seeded faults caught; no formal proof of its own (every channel is a pipe_reg_core chain, proved in ip_lib/pipe_reg);
+  not built with Vivado yet (queued); not run on a board
+summary: 'AXI4 and AXI4-Lite register slices for all five channels (AW, W, B, AR, R): one pipe_reg chain per channel with its own
+  mode, so the channels are registered independently as in AMD''s AXI Register Slice. Modules axil_reg_slice and axi4_reg_slice.'
+top: axil_reg_slice
+rtl:
+- rtl/axil_reg_slice.sv
+- rtl/axi4_reg_slice.sv
+depends:
+- pipe_reg
+interfaces:
+- name: s_axi
+  type: axi4-lite
+  dir: slave
+  note: awaddr, awprot, wdata, wstrb, bresp, araddr, arprot, rdata, rresp; axi4_reg_slice (the second module) adds id, len, size,
+    burst, lock, cache, qos, wlast, rlast and does not carry region or user signals
+- name: m_axi
+  type: axi4-lite
+  dir: master
+register_map:
+  none: a register slice passes AXI4-Lite transfers through and has no registers of its own
+clocks:
+- name: aclk
+resets:
+- name: aresetn
+  polarity: low
+  style: synchronous
+parameters:
+  ADDR_W:
+    type: int
+    default: 32
+    range:
+    - 1
+    - 64
+    note: address width
+  DATA_W:
+    type: int
+    default: 32
+    set:
+    - 8
+    - 16
+    - 32
+    - 64
+    - 128
+    - 256
+    - 512
+    - 1024
+    note: data width in bits
+  N:
+    type: int
+    default: 1
+    range:
+    - 0
+    - 16
+    note: slices in series on every channel; 0 is a wire
+  MODE_AW:
+    type: int
+    default: 1
+    set:
+    - 0
+    - 1
+    - 2
+    - 3
+    - 4
+    note: pipe_reg mode of the AW channel
+  MODE_W:
+    type: int
+    default: 1
+    set:
+    - 0
+    - 1
+    - 2
+    - 3
+    - 4
+    note: mode of the W channel
+  MODE_B:
+    type: int
+    default: 1
+    set:
+    - 0
+    - 1
+    - 2
+    - 3
+    - 4
+    note: mode of the B channel
+  MODE_AR:
+    type: int
+    default: 1
+    set:
+    - 0
+    - 1
+    - 2
+    - 3
+    - 4
+    note: mode of the AR channel
+  MODE_R:
+    type: int
+    default: 1
+    set:
+    - 0
+    - 1
+    - 2
+    - 3
+    - 4
+    note: mode of the R channel
+constraints: []
+latency:
+  per channel: N clocks on each of the five channels in every mode (requests AW, W, AR slave to master; responses B, R master to
+    slave); the channels are independent and are not reordered against each other
+  ready: as pipe_reg for the chosen mode
+throughput: 'as pipe_reg per channel: one beat per clock except mode 3 (half), one beat per two clocks'
+guards:
+- N: 17
+- N: -1
+- MODE_AW: 5
+- MODE_R: -1
+sweep_tested:
+- N: 1
+- N: 2
+  MODE_AW: 2
+  MODE_W: 3
+  MODE_B: 4
+  MODE_AR: 0
+- N: 0
+- N: 3
+  ADDR_W: 12
+  DATA_W: 64
+  MODE_AW: 3
+  MODE_W: 3
+  MODE_B: 3
+  MODE_AR: 3
+  MODE_R: 3
+boundary:
+  registered_outputs: as pipe_reg for each channel (valid a flop in every mode)
+  cdc: none
+  part_specific: none
+limits: no region or user signals and no AXI3 wid; the five channels have separate reset-time behaviour only through their modes;
+  no outstanding-transaction logic (this is a register slice, not an interconnect)
+evidence:
+  summary: cocotb on all five channels at once, each channel against the pipe_reg model clock by clock with its own random source
+    and sink and an in-order scoreboard, and a check that no channel's valid depends on its ready
+  tests:
+  - ip_lib/axi_reg_slice/tb/test_axi_reg_slice_rtl.py
+  faults: ip_lib/axi_reg_slice/faults.yaml
+  results: results/b151/faults.json
+  simulator: Icarus Verilog 12, cocotb 2.0.1
+cost_table: 'pending: no out-of-context Vivado run yet (queued with the sweep); the cost of one channel is the pipe_reg cost at
+  its width'
+licence: MIT (this repository)
+gaps:
+- 'no protocol-level bench with an AXI4 checker on the five channels together: each channel is checked as a stream (valid, ready,
+  hold), not for AXI4 transaction rules such as write-data before address'
+- the AXI4 module is checked at default and small parameter points only
+next_steps:
+- Compare each mode with AMD's AXI Register Slice build (partition/vendor) and state the differences in this entry.
+- Add the AXI4 checker of axi_tx to the five-channel bench.

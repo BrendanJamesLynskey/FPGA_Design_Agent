@@ -1,0 +1,930 @@
+{
+ "run_id": "20261125-133549-a1e9",
+ "design": "p4_fir_dsp",
+ "model": "claude-sonnet-5-5",
+ "harness": "deepagents",
+ "harness_arm": "H1",
+ "profile": "single",
+ "role_models": {
+  "clarify": {
+   "harness": "deepagents",
+   "model": "claude-sonnet-5-5",
+   "effort": "medium"
+  },
+  "model": {
+   "harness": "deepagents",
+   "model": "claude-sonnet-5-5",
+   "effort": "medium"
+  },
+  "tests": {
+   "harness": "deepagents",
+   "model": "claude-sonnet-5-5",
+   "effort": "medium"
+  },
+  "rtl": {
+   "harness": "deepagents",
+   "model": "claude-sonnet-5-5",
+   "effort": "medium"
+  }
+ },
+ "model_table_hash": "f9a35a94b7b2e19e",
+ "oracle_model": "claude-sonnet-5-5",
+ "oracle": "openrouter",
+ "stage_overrides": [],
+ "knowledge_use": {
+  "rtl/board-and-device-planning": {
+   "board_constraints": {
+    "calls": 3
+   }
+  },
+  "tests/rtl-design-creation": {
+   "load_skill": {
+    "calls": 2,
+    "sections": [
+     "verification-stages"
+    ],
+    "skills": [
+     "procedures/verification-stages/v-hw-bringup/SKILL.md",
+     "procedures/verification-stages/v0-v1-testplan/SKILL.md",
+     "procedures/verification-stages/v2-tests-assertions-formal/SKILL.md",
+     "procedures/verification-stages/v3-coverage-closure/SKILL.md"
+    ],
+    "empty_calls": 0,
+    "procedures_fallback": [
+     "verification-stages"
+    ]
+   }
+  },
+  "rtl/rtl-design-creation": {
+   "load_skill": {
+    "calls": 3,
+    "sections": [
+     "verification-stages"
+    ],
+    "skills": [
+     "procedures/verification-stages/v-hw-bringup/SKILL.md",
+     "procedures/verification-stages/v0-v1-testplan/SKILL.md",
+     "procedures/verification-stages/v2-tests-assertions-formal/SKILL.md",
+     "procedures/verification-stages/v3-coverage-closure/SKILL.md"
+    ],
+    "empty_calls": 1,
+    "procedures_fallback": [
+     "verification-stages"
+    ]
+   },
+   "search_docs": {
+    "calls": 2,
+    "hits": [
+     "amd/7series_clocking_io#3",
+     "amd/7series_config_power_xadc#4",
+     "amd/UG949#3",
+     "ross/hls-matlab-to-cpp/SKILL.md#35",
+     "ross/vitis-embedded/references/boot-image.md#4",
+     "ross/vitis-embedded/references/boot-image.md#7",
+     "ross/vivado-rtl-elaboration-analysis/message-handlers.md#5",
+     "ross/vivado-rtl-elaboration-analysis/resolution/8-5832.md#1",
+     "ross/vivado-rtl-elaboration-analysis/resolution/8-7134.md#1"
+    ]
+   }
+  }
+ },
+ "knowledge_bank": {
+  "root": "209-kb",
+  "chosen_by": "FDA_KNOWLEDGE",
+  "present": true,
+  "loaded": true,
+  "head": "5e2eab8"
+ },
+ "turn_trace": [
+  {
+   "stage": "clarify",
+   "visit": 1,
+   "role": "clarify",
+   "repair": false,
+   "turns_allowed": 20,
+   "turns": 4,
+   "ended": "done",
+   "wall_s": 41.2,
+   "tools": {
+    "write_file": 1
+   },
+   "model_tool_calls": {
+    "edit_file": 1,
+    "ls": 1,
+    "read_file": 2,
+    "write_file": 1
+   },
+   "refused": {},
+   "files_written": [
+    "spec.yaml"
+   ],
+   "files_changed": [
+    "spec.yaml"
+   ]
+  },
+  {
+   "stage": "clarify",
+   "visit": 2,
+   "role": "clarify",
+   "repair": false,
+   "turns_allowed": 20,
+   "turns": 6,
+   "ended": "done",
+   "wall_s": 27.2,
+   "tools": {
+    "write_file": 1
+   },
+   "model_tool_calls": {
+    "edit_file": 8
+   },
+   "refused": {},
+   "files_written": [
+    "spec.yaml"
+   ],
+   "files_changed": [
+    "spec.yaml"
+   ]
+  },
+  {
+   "stage": "board-and-device-planning",
+   "visit": 1,
+   "role": "rtl",
+   "repair": false,
+   "turns_allowed": 30,
+   "turns": 5,
+   "ended": "done",
+   "wall_s": 26.5,
+   "tools": {
+    "ip_lookup": 1,
+    "gates": 1
+   },
+   "model_tool_calls": {
+    "fda_gates": 1,
+    "fda_ip_lookup": 1,
+    "ip_lookup": 1,
+    "ls": 2,
+    "read_file": 1,
+    "write_file": 2
+   },
+   "refused": {},
+   "files_written": [],
+   "files_changed": [
+    "ARCHITECTURE.md",
+    "architecture.yaml"
+   ]
+  },
+  {
+   "stage": "board-and-device-planning",
+   "visit": 2,
+   "role": "rtl",
+   "repair": false,
+   "turns_allowed": 30,
+   "turns": 8,
+   "ended": "done",
+   "wall_s": 15.3,
+   "tools": {
+    "board_constraints": 3,
+    "check_constraints": 3,
+    "read_file": 1
+   },
+   "model_tool_calls": {
+    "fda_board_constraints": 3,
+    "fda_check_constraints": 3,
+    "fda_read_file": 1,
+    "grep": 1
+   },
+   "refused": {},
+   "files_written": [],
+   "files_changed": [
+    "design.xdc"
+   ]
+  },
+  {
+   "stage": "rtl-design-creation",
+   "visit": 1,
+   "role": "model",
+   "repair": false,
+   "turns_allowed": 45,
+   "turns": 3,
+   "ended": "done",
+   "wall_s": 23.4,
+   "tools": {
+    "write_file": 1
+   },
+   "model_tool_calls": {
+    "glob": 1,
+    "write_file": 1
+   },
+   "refused": {},
+   "files_written": [
+    "model.py"
+   ],
+   "files_changed": [
+    "model.py"
+   ]
+  },
+  {
+   "stage": "rtl-design-creation",
+   "visit": 1,
+   "role": "tests",
+   "repair": false,
+   "turns_allowed": 52,
+   "turns": 3,
+   "ended": "done",
+   "wall_s": 102.8,
+   "tools": {
+    "spec_items": 1,
+    "load_skill": 1
+   },
+   "model_tool_calls": {
+    "fda_load_skill": 1,
+    "fda_spec_items": 1,
+    "glob": 1,
+    "ls": 2
+   },
+   "refused": {},
+   "files_written": [],
+   "files_changed": []
+  },
+  {
+   "stage": "rtl-design-creation",
+   "visit": 1,
+   "role": "tests",
+   "repair": true,
+   "turns_allowed": 49,
+   "turns": 8,
+   "ended": "done",
+   "wall_s": 94.1,
+   "tools": {
+    "spec_items": 1,
+    "load_skill": 1,
+    "write_file": 3
+   },
+   "model_tool_calls": {
+    "fda_load_skill": 1,
+    "fda_spec_items": 1,
+    "glob": 6,
+    "grep": 1,
+    "ls": 3,
+    "write_file": 4
+   },
+   "refused": {},
+   "files_written": [
+    "tests/fir_bench.py",
+    "tests/test_p4_fir_dsp_rtl.py",
+    "verif/testplan.yaml"
+   ],
+   "files_changed": [
+    "tests/fir_bench.py",
+    "tests/test_p4_fir_dsp_rtl.py",
+    "verif/testplan.yaml"
+   ]
+  },
+  {
+   "stage": "rtl-design-creation",
+   "visit": 1,
+   "role": "rtl",
+   "repair": false,
+   "turns_allowed": 66,
+   "turns": 4,
+   "ended": "done",
+   "wall_s": 147.3,
+   "tools": {
+    "list_files": 1
+   },
+   "model_tool_calls": {
+    "fda_list_files": 1,
+    "glob": 1,
+    "read_file": 11
+   },
+   "refused": {},
+   "files_written": [],
+   "files_changed": []
+  },
+  {
+   "stage": "rtl-design-creation",
+   "visit": 2,
+   "role": "tests",
+   "repair": true,
+   "turns_allowed": 55,
+   "turns": 4,
+   "ended": "done",
+   "wall_s": 13.7,
+   "tools": {
+    "write_file": 1
+   },
+   "model_tool_calls": {
+    "glob": 1,
+    "grep": 1,
+    "ls": 2,
+    "write_file": 1
+   },
+   "refused": {},
+   "files_written": [
+    "tests/test_p4_fir_dsp_rtl.py"
+   ],
+   "files_changed": [
+    "tests/test_p4_fir_dsp_rtl.py"
+   ]
+  },
+  {
+   "stage": "rtl-design-creation",
+   "visit": 2,
+   "role": "rtl",
+   "repair": false,
+   "turns_allowed": 76,
+   "turns": 6,
+   "ended": "done",
+   "wall_s": 179.7,
+   "tools": {
+    "list_files": 1,
+    "load_skill": 1,
+    "read_file": 1
+   },
+   "model_tool_calls": {
+    "fda_list_files": 1,
+    "fda_load_skill": 1,
+    "fda_read_file": 1,
+    "glob": 1,
+    "ls": 5,
+    "read_file": 11
+   },
+   "refused": {},
+   "files_written": [],
+   "files_changed": []
+  },
+  {
+   "stage": "rtl-design-creation",
+   "visit": 3,
+   "role": "tests",
+   "repair": true,
+   "turns_allowed": 55,
+   "turns": 5,
+   "ended": "done",
+   "wall_s": 18.6,
+   "tools": {
+    "write_file": 1
+   },
+   "model_tool_calls": {
+    "glob": 2,
+    "grep": 1,
+    "ls": 1,
+    "write_file": 1
+   },
+   "refused": {},
+   "files_written": [
+    "tests/test_p4_fir_dsp_rtl.py"
+   ],
+   "files_changed": [
+    "tests/test_p4_fir_dsp_rtl.py"
+   ]
+  },
+  {
+   "stage": "rtl-design-creation",
+   "visit": 3,
+   "role": "rtl",
+   "repair": false,
+   "turns_allowed": 75,
+   "turns": 4,
+   "ended": "done",
+   "wall_s": 239.7,
+   "tools": {
+    "list_files": 2,
+    "read_file": 2
+   },
+   "model_tool_calls": {
+    "fda_list_files": 2,
+    "fda_read_file": 2,
+    "read_file": 7
+   },
+   "refused": {},
+   "files_written": [],
+   "files_changed": []
+  },
+  {
+   "stage": "rtl-design-creation",
+   "visit": 4,
+   "role": "tests",
+   "repair": true,
+   "turns_allowed": 55,
+   "turns": 5,
+   "ended": "done",
+   "wall_s": 15.1,
+   "tools": {
+    "write_file": 1
+   },
+   "model_tool_calls": {
+    "glob": 1,
+    "grep": 1,
+    "ls": 2,
+    "write_file": 1
+   },
+   "refused": {},
+   "files_written": [
+    "tests/test_p4_fir_dsp_rtl.py"
+   ],
+   "files_changed": [
+    "tests/test_p4_fir_dsp_rtl.py"
+   ]
+  },
+  {
+   "stage": "rtl-design-creation",
+   "visit": 4,
+   "role": "rtl",
+   "repair": false,
+   "turns_allowed": 75,
+   "turns": 5,
+   "ended": "done",
+   "wall_s": 159.8,
+   "tools": {
+    "list_files": 1,
+    "load_skill": 1,
+    "search_docs": 1
+   },
+   "model_tool_calls": {
+    "fda_list_files": 1,
+    "fda_load_skill": 1,
+    "fda_search_docs": 1,
+    "glob": 1,
+    "read_file": 9
+   },
+   "refused": {},
+   "files_written": [],
+   "files_changed": []
+  },
+  {
+   "stage": "rtl-design-creation",
+   "visit": 5,
+   "role": "tests",
+   "repair": true,
+   "turns_allowed": 55,
+   "turns": 6,
+   "ended": "done",
+   "wall_s": 22.3,
+   "tools": {
+    "write_file": 1
+   },
+   "model_tool_calls": {
+    "glob": 3,
+    "grep": 2,
+    "ls": 2,
+    "write_file": 1
+   },
+   "refused": {},
+   "files_written": [
+    "tests/test_p4_fir_dsp_rtl.py"
+   ],
+   "files_changed": [
+    "tests/test_p4_fir_dsp_rtl.py"
+   ]
+  },
+  {
+   "stage": "rtl-design-creation",
+   "visit": 5,
+   "role": "rtl",
+   "repair": false,
+   "turns_allowed": 74,
+   "turns": 4,
+   "ended": "done",
+   "wall_s": 162.4,
+   "tools": {
+    "list_files": 1,
+    "search_docs": 1,
+    "load_skill": 1
+   },
+   "model_tool_calls": {
+    "fda_list_files": 1,
+    "fda_load_skill": 1,
+    "fda_search_docs": 1,
+    "read_file": 8
+   },
+   "refused": {},
+   "files_written": [],
+   "files_changed": []
+  },
+  {
+   "stage": "rtl-design-creation",
+   "visit": 6,
+   "role": "tests",
+   "repair": true,
+   "turns_allowed": 55,
+   "turns": 5,
+   "ended": "done",
+   "wall_s": 19.3,
+   "tools": {
+    "write_file": 1
+   },
+   "model_tool_calls": {
+    "glob": 2,
+    "grep": 1,
+    "ls": 2,
+    "write_file": 1
+   },
+   "refused": {},
+   "files_written": [
+    "tests/test_p4_fir_dsp_rtl.py"
+   ],
+   "files_changed": [
+    "tests/test_p4_fir_dsp_rtl.py"
+   ]
+  },
+  {
+   "stage": "rtl-design-creation",
+   "visit": 6,
+   "role": "rtl",
+   "repair": false,
+   "turns_allowed": 75,
+   "turns": 4,
+   "ended": "done",
+   "wall_s": 156.9,
+   "tools": {
+    "list_files": 1
+   },
+   "model_tool_calls": {
+    "fda_list_files": 1,
+    "read_file": 9
+   },
+   "refused": {},
+   "files_written": [],
+   "files_changed": []
+  }
+ ],
+ "per_role": {
+  "clarify": {
+   "calls": 2,
+   "turns": 10,
+   "tokens": 149525,
+   "wall_s": 68.4,
+   "cost_usd": 0.185347,
+   "plan_cost_estimate_usd": 0.0
+  },
+  "rtl": {
+   "calls": 8,
+   "turns": 40,
+   "tokens": 1367426,
+   "wall_s": 1087.6,
+   "cost_usd": 1.884953,
+   "plan_cost_estimate_usd": 0.0
+  },
+  "model": {
+   "calls": 1,
+   "turns": 3,
+   "tokens": 33777,
+   "wall_s": 23.4,
+   "cost_usd": 0.054168,
+   "plan_cost_estimate_usd": 0.0
+  },
+  "tests": {
+   "calls": 7,
+   "turns": 36,
+   "tokens": 1232011,
+   "wall_s": 285.9,
+   "cost_usd": 0.982764,
+   "plan_cost_estimate_usd": 0.0
+  }
+ },
+ "per_stage": {
+  "clarify": {
+   "calls": 2,
+   "turns": 10,
+   "tokens": 149525,
+   "wall_s": 68.4,
+   "cost_usd": 0.185347,
+   "plan_cost_estimate_usd": 0.0
+  },
+  "board-and-device-planning": {
+   "calls": 2,
+   "turns": 13,
+   "tokens": 353060,
+   "wall_s": 41.8,
+   "cost_usd": 0.201614,
+   "plan_cost_estimate_usd": 0.0
+  },
+  "rtl-design-creation": {
+   "calls": 14,
+   "turns": 66,
+   "tokens": 2280154,
+   "wall_s": 1355.1,
+   "cost_usd": 2.720271,
+   "plan_cost_estimate_usd": 0.0
+  }
+ },
+ "interview": "off",
+ "review": "off",
+ "stages_visited": [
+  0,
+  0,
+  1,
+  1,
+  2,
+  2,
+  2,
+  2,
+  2,
+  2,
+  2
+ ],
+ "loops": 8,
+ "rewinds": [],
+ "tokens": 2782739,
+ "cost_usd": 3.107232,
+ "unreported_cost_calls": 0,
+ "token_split": {
+  "input": 214,
+  "output": 180334,
+  "cache_write": 434684,
+  "cache_read": 2167507
+ },
+ "budget_scale": 3.5,
+ "truncated_calls": 7,
+ "turns": 89,
+ "wall_s": 1343.9,
+ "questions": {
+  "asked": 8,
+  "answered": 0,
+  "defaulted": 8,
+  "questions": [
+   {
+    "id": "q1",
+    "text": "What is the register map (offset, width, reset value and access of every register)?",
+    "default": "The map in spec.md (0x000 ID, 0x004 BUILD, 0x008 SCRATCH, 0x010 CTRL, 0x014 IN_PUSH, 0x018 OUT_POP, 0x01C STATUS, 0x020 SAT_COUNT, 0x024 SAMPLES_DONE), all 32 bits, resets 0 except ID",
+    "reason": "spec.md gives offsets; confirm they are final",
+    "answer": "The map in spec.md (0x000 ID, 0x004 BUILD, 0x008 SCRATCH, 0x010 CTRL, 0x014 IN_PUSH, 0x018 OUT_POP, 0x01C STATUS, 0x020 SAT_COUNT, 0x024 SAMPLES_DONE), all 32 bits, resets 0 except ID",
+    "status": "defaulted",
+    "by": "default",
+    "evidence": null
+   },
+   {
+    "id": "q2",
+    "text": "What happens to samples pushed while BUSY?",
+    "default": "Pushes during a run are accepted but not processed until the next RUN",
+    "reason": "the request says RUN processes what is in the FIFO, nothing about concurrent pushes",
+    "answer": "Pushes during a run are accepted but not processed until the next RUN",
+    "status": "defaulted",
+    "by": "default",
+    "evidence": null
+   },
+   {
+    "id": "q3",
+    "text": "What happens to a RUN written while BUSY, or with an empty input FIFO?",
+    "default": "Ignored while BUSY; with an empty FIFO it completes at once with no output",
+    "reason": "unspecified",
+    "answer": "Ignored while BUSY; with an empty FIFO it completes at once with no output",
+    "status": "defaulted",
+    "by": "default",
+    "evidence": null
+   },
+   {
+    "id": "q4",
+    "text": "What if the output FIFO would overflow (input plus output count above 1024)?",
+    "default": "RUN processes only as many samples as fit in the output FIFO free space",
+    "reason": "no output sample may be lost or the bit-exact check breaks",
+    "answer": "RUN processes only as many samples as fit in the output FIFO free space",
+    "status": "defaulted",
+    "by": "default",
+    "evidence": null
+   },
+   {
+    "id": "q5",
+    "text": "What if CLEAR and RUN are written together, or CLEAR while BUSY?",
+    "default": "CLEAR wins and aborts any run; RUN in the same write is ignored",
+    "reason": "unspecified",
+    "answer": "CLEAR wins and aborts any run; RUN in the same write is ignored",
+    "status": "defaulted",
+    "by": "default",
+    "evidence": null
+   },
+   {
+    "id": "q6",
+    "text": "What do the LEDs show?",
+    "default": "led[0] = BUSY, led[1] = MMCM locked",
+    "reason": "not specified",
+    "answer": "led[0] = BUSY, led[1] = MMCM locked",
+    "status": "defaulted",
+    "by": "default",
+    "evidence": null
+   },
+   {
+    "id": "q7",
+    "text": "Do SAT_COUNT and SAMPLES_DONE wrap at 32 bits?",
+    "default": "Yes, they wrap",
+    "reason": "width not stated",
+    "answer": "Yes, they wrap",
+    "status": "defaulted",
+    "by": "default",
+    "evidence": null
+   },
+   {
+    "id": "q8",
+    "text": "Does the bit-exact result need OUT_POP sign extension?",
+    "default": "No, bits 30:16 are 0, host takes bits 15:0",
+    "reason": "table gives bit 31 and bits 15:0 only",
+    "answer": "No, bits 30:16 are 0, host takes bits 15:0",
+    "status": "defaulted",
+    "by": "default",
+    "evidence": null
+   }
+  ]
+ },
+ "stop": "stage 2 visited more than 6 times; last failing gate: lint, simulate, design standards, verification V2; owned by the rtl/tests role; last failing assertion: V2 seeds_run: no seeded results: read runs/20261125-133549-a1e9/p4_fir_dsp/build/verif/sim/seed*/results.xml and found none. The gate expects runs/20261125-133549-a1e9/p4_fir_dsp/build/verif/sim/seed<N>/results.xml, one directory per seed. ; the same failure on 6 consecutive visits",
+ "stop_detail": {
+  "stage": 2,
+  "limit": 6,
+  "gates": [
+   "lint",
+   "simulate",
+   "design standards",
+   "verification V2"
+  ],
+  "roles": [
+   "rtl",
+   "tests"
+  ],
+  "owners_last_visit": [
+   "rtl",
+   "tests"
+  ],
+  "last_failing_assertion": "V2 seeds_run: no seeded results: read runs/20261125-133549-a1e9/p4_fir_dsp/build/verif/sim/seed*/results.xml and found none. The gate expects runs/20261125-133549-a1e9/p4_fir_dsp/build/verif/sim/seed<N>/results.xml, one directory per seed. ",
+  "same_signature_visits": 6,
+  "last_fails": [
+   "lint not passing",
+   "simulate not passing",
+   "standards STD-LATCH-01: not checked (no build.yaml top or sources to check)",
+   "standards STD-LOOP-01: not checked (no build.yaml top or sources to check)"
+  ]
+ },
+ "last_rtl_message": {
+  "stage": "rtl-design-creation",
+  "visit": 6,
+  "text": "[the reply was cut off at the output limit of 16000 tokens (thinking counts), so any tool call in it was dropped: do less in one reply, for example write a shorter file, then continue]"
+ },
+ "routing_events": [
+  {
+   "event": "clarify_constants_check",
+   "stage": "clarify",
+   "visit": 1,
+   "findings": [],
+   "failed": false
+  },
+  {
+   "event": "clarify_constants_check",
+   "stage": "clarify",
+   "visit": 2,
+   "findings": [],
+   "failed": false
+  }
+ ],
+ "clean_stop": false,
+ "constants": {
+  "ran": true,
+  "blocking": [],
+  "advice": []
+ },
+ "gates_last": {
+  "clarify": true,
+  "board-and-device-planning": true,
+  "rtl-design-creation": false
+ },
+ "approvals": [
+  {
+   "n": 0,
+   "decision": "approve",
+   "by": "auto",
+   "note": ""
+  },
+  {
+   "n": 0,
+   "decision": "approve",
+   "by": "auto",
+   "note": ""
+  },
+  {
+   "n": 1,
+   "decision": "approve",
+   "by": "auto",
+   "note": ""
+  },
+  {
+   "n": 1,
+   "decision": "approve",
+   "by": "auto",
+   "note": ""
+  },
+  {
+   "n": 2,
+   "decision": "approve",
+   "by": "auto",
+   "note": ""
+  },
+  {
+   "n": 2,
+   "decision": "approve",
+   "by": "auto",
+   "note": ""
+  },
+  {
+   "n": 2,
+   "decision": "approve",
+   "by": "auto",
+   "note": ""
+  },
+  {
+   "n": 2,
+   "decision": "approve",
+   "by": "auto",
+   "note": ""
+  },
+  {
+   "n": 2,
+   "decision": "approve",
+   "by": "auto",
+   "note": ""
+  },
+  {
+   "n": 2,
+   "decision": "approve",
+   "by": "auto",
+   "note": ""
+  },
+  {
+   "n": 2,
+   "decision": "approve",
+   "by": "auto",
+   "note": ""
+  }
+ ],
+ "bringup": null,
+ "doc": {
+  "ok": false,
+  "passes": 3,
+  "problems": [
+   "evidence[1].what: number 20261125-133549-a1e9/p4_fir_dsp/build/verif/sim/seed/results.xml, is not in a cited record, a design file, a structured field or numbers_allow",
+   "evidence[1].what: number 20261125-133549-a1e9/p4_fir_dsp/build/verif/sim/seed/results.xml, is not in a cited record, a design file, a structured field or numbers_allow",
+   "gaps[42].text: number 20261125-133549-a1e9/p4_fir_dsp/build/verif/sim/seed/results.xml, is not in a cited record, a design file, a structured field or numbers_allow",
+   "gaps[43].text: number 20261125-133549-a1e9/p4_fir_dsp/build/verif/sim/seed/results.xml, is not in a cited record, a design file, a structured field or numbers_allow",
+   "gaps[44].text: number 20261125-133549-a1e9/p4_fir_dsp/build/verif/sim/seed/results.xml, is not in a cited record, a design file, a structured field or numbers_allow",
+   "gaps[45].text: number 20261125-133549-a1e9/p4_fir_dsp/build/verif/sim/seed/results.xml, is not in a cited record, a design file, a structured field or numbers_allow",
+   "gaps[46].text: number 20261125-133549-a1e9/p4_fir_dsp/build/verif/sim/seed/results.xml, is not in a cited record, a design file, a structured field or numbers_allow",
+   "gaps[47].text: number 20261125-133549-a1e9/p4_fir_dsp/build/verif/sim/seed/results.xml, is not in a cited record, a design file, a structured field or numbers_allow",
+   "gaps[48].text: number 20261125-133549-a1e9/p4_fir_dsp/build/verif/sim/seed/results.xml, is not in a cited record, a design file, a structured field or numbers_allow"
+  ],
+  "required_gaps": [
+   "REQ-01",
+   "REQ-02",
+   "REQ-03",
+   "REQ-30",
+   "REQ-04",
+   "REQ-31",
+   "REQ-05",
+   "REQ-32",
+   "REQ-06",
+   "REQ-07",
+   "REQ-08",
+   "REQ-09",
+   "REQ-10",
+   "REQ-11",
+   "REQ-12",
+   "REQ-13",
+   "REQ-14",
+   "REQ-39",
+   "REQ-15",
+   "REQ-16",
+   "REQ-17",
+   "REQ-34",
+   "REQ-18",
+   "REQ-19",
+   "REQ-20",
+   "REQ-21",
+   "REQ-22",
+   "REQ-23",
+   "REQ-24",
+   "REQ-35",
+   "REQ-36",
+   "REQ-37",
+   "REQ-38",
+   "REQ-25",
+   "REQ-33",
+   "REQ-26",
+   "REQ-27",
+   "REQ-28",
+   "REQ-29",
+   "E1",
+   "E2",
+   "rtl-design-creation",
+   "constraints",
+   "synthesis",
+   "implementation",
+   "timing-closure",
+   "power-closure",
+   "drc-closure",
+   "configuration-and-debug",
+   "formal",
+   "resources",
+   "timing",
+   "power",
+   "latency",
+   "throughput"
+  ],
+  "signed_off": false
+ }
+}

@@ -1,0 +1,31 @@
+schema: fpga-design-agent/architecture/v1
+design: p2_mem_test
+blocks:
+- name: p2_mem_top
+  function: thin top; instantiates jtag_bus, POR reset generator, p2_mem_core; drives sfp_tx_disable=1
+- name: por_reset
+  function: 8-clock power-on reset counter, active-high synchronous rst
+- name: jtag_bus
+  function: supplied BSCANE2 USER4 bridge to the h_* register port (data/jtag_bus.sv, unmodified)
+- name: p2_mem_core
+  function: register map, ROM and RAM block RAMs, AUTOINC, March C- engine, LEDs
+- name: march_engine
+  function: March C- sequencer over 1024 RAM words, two backgrounds, error counting, fault injection
+interfaces:
+- name: jtag_reg_port
+  between: [jtag_bus, p2_mem_core]
+  protocol: simple
+  prefix: h
+  module: p2_mem_core
+clock_domains:
+- name: clk
+  clock: clk
+  freq_mhz: 25
+reset:
+  synchronisers: []
+crossings: []
+predicted_resources:
+  lut: [250, 700]
+  ff: [550, 950]
+  bram_tile: [2, 3]
+  dsp: 0

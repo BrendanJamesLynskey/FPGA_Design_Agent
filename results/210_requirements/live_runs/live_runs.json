@@ -1,0 +1,436 @@
+{
+ "full_loose": {
+  "run_id": "20261125-131451-a105",
+  "exit_status": 0,
+  "level": "loose",
+  "level_source": "command line",
+  "stop": "done",
+  "asked": 4,
+  "answered": 3,
+  "defaulted": 1,
+  "waived": 0,
+  "unresolved": 0,
+  "model": "claude-sonnet-5-5",
+  "harness": "claude_code",
+  "oracle_model": "claude-sonnet-5-5",
+  "tokens": 17835,
+  "wall_s": 1.0,
+  "cost_usd": 0.0,
+  "questions": [
+   {
+    "id": "q1",
+    "text": "What are the register offsets, width, reset value and access of every host register?",
+    "risk": "high",
+    "risk_rule": "register-map",
+    "status": "answered",
+    "by": "oracle",
+    "answer": "STATE: offset 0x00, RO, reset 0: bit 0 = LED 0 is lit",
+    "waiver": null
+   },
+   {
+    "id": "q2",
+    "text": "Should a press while lit restart the full 0.5 s window or add 0.5 s to the remaining time?",
+    "risk": "high",
+    "risk_rule": "behaviour",
+    "status": "answered",
+    "by": "oracle",
+    "answer": "Restart to the full 0.5 s (not additive): a press while lit restarts the 500 ms.",
+    "waiver": null
+   },
+   {
+    "id": "q3",
+    "text": "How exact must the half second be, and what debounce time is wanted?",
+    "risk": "high",
+    "risk_rule": "rate-and-latency",
+    "status": "answered",
+    "by": "oracle",
+    "answer": "Debounce: changes shorter than 5 ms are ignored, so the proposed 20 ms does not match. The LED goes out 500 ms after the last accepted press. The specification gives no tolerance for that 500 ms, and it does not give a clock frequency, so 50,000,000 cycles at 100 MHz is not specified.",
+    "waiver": null
+   },
+   {
+    "id": "q4",
+    "text": "Which host interface carries the register read?",
+    "risk": "high",
+    "risk_rule": "interface",
+    "status": "defaulted",
+    "by": "oracle",
+    "answer": "The USB-UART test shell, with the board reset button as design reset.",
+    "waiver": null
+   }
+  ]
+ },
+ "full_standard": {
+  "run_id": "20261125-131526-df7e",
+  "exit_status": 0,
+  "level": "standard",
+  "level_source": "command line",
+  "stop": "done",
+  "asked": 5,
+  "answered": 5,
+  "defaulted": 0,
+  "waived": 0,
+  "unresolved": 0,
+  "model": "claude-sonnet-5-5",
+  "harness": "claude_code",
+  "oracle_model": "claude-sonnet-5-5",
+  "tokens": 18118,
+  "wall_s": 0.8,
+  "cost_usd": 0.0,
+  "questions": [
+   {
+    "id": "q1",
+    "text": "What is the register map of the host interface (offset, width, reset value and access of every register)?",
+    "risk": "high",
+    "risk_rule": "register-map",
+    "status": "answered",
+    "by": "oracle",
+    "answer": "STATE: offset 0x00, RO, reset 0: bit 0 = LED 0 is lit",
+    "waiver": null
+   },
+   {
+    "id": "q2",
+    "text": "How exactly long is \"about half a second\" and what tolerance is allowed?",
+    "risk": "medium",
+    "risk_rule": "unmatched",
+    "status": "answered",
+    "by": "oracle",
+    "answer": "The LED goes out 500 ms after the last accepted press. The specification gives no tolerance for this interval. It also does not give the clock frequency, so it does not support the proposed 100 MHz, 50000000-cycle count or the \u00b11 cycle tolerance.",
+    "waiver": null
+   },
+   {
+    "id": "q3",
+    "text": "Does a press while lit restart the 0.5 s or add 0.5 s to the remaining time?",
+    "risk": "medium",
+    "risk_rule": "unmatched",
+    "status": "answered",
+    "by": "oracle",
+    "answer": "It restarts the 500 ms (the timer is reloaded to the full 500 ms, not extended).",
+    "waiver": null
+   },
+   {
+    "id": "q4",
+    "text": "What debounce time is wanted?",
+    "risk": "high",
+    "risk_rule": "rate-and-latency",
+    "status": "answered",
+    "by": "oracle",
+    "answer": "A change shorter than 5 ms is ignored, so the debounce time is 5 ms. The 20 ms default does not match the specification. The cycle count depends on the clock frequency, which is not specified.",
+    "waiver": null
+   },
+   {
+    "id": "q5",
+    "text": "Should the host be able to read other information, such as a press count?",
+    "risk": "high",
+    "risk_rule": "behaviour",
+    "status": "answered",
+    "by": "oracle",
+    "answer": "No. The register map contains only STATE at offset 0x00 (read-only), whose bit 0 shows whether LED 0 is lit. No press count or other readable information is specified.",
+    "waiver": null
+   }
+  ]
+ },
+ "vague_loose": {
+  "run_id": "20261125-131604-015a",
+  "exit_status": 0,
+  "level": "loose",
+  "level_source": "command line",
+  "stop": "done",
+  "asked": 5,
+  "answered": 3,
+  "defaulted": 2,
+  "waived": 0,
+  "unresolved": 0,
+  "model": "claude-sonnet-5-5",
+  "harness": "claude_code",
+  "oracle_model": "claude-sonnet-5-5",
+  "tokens": 27571,
+  "wall_s": 0.8,
+  "cost_usd": 0.0,
+  "questions": [
+   {
+    "id": "q1",
+    "text": "How long is \"a while\" exactly?",
+    "risk": "medium",
+    "risk_rule": "unmatched",
+    "status": "answered",
+    "by": "oracle",
+    "answer": "The LED stays lit for 500 ms after the last accepted press. The specification does not give the clock frequency, so the 100 MHz and 50000000-cycle figures are not specified.",
+    "waiver": null
+   },
+   {
+    "id": "q2",
+    "text": "Does a second press restart the full period or add to the remaining time?",
+    "risk": "high",
+    "risk_rule": "rate-and-latency",
+    "status": "answered",
+    "by": "oracle",
+    "answer": "A second press restarts the full 500 ms period (retrigger), it does not add to the remaining time.",
+    "waiver": null
+   },
+   {
+    "id": "q3",
+    "text": "What debounce time is needed?",
+    "risk": "high",
+    "risk_rule": "rate-and-latency",
+    "status": "answered",
+    "by": "oracle",
+    "answer": "A change shorter than 5 ms is ignored, so the debounce time is 5 ms. The proposed 20 ms default does not match the specification. (The clock frequency is not specified, so the cycle count cannot be given.)",
+    "waiver": null
+   },
+   {
+    "id": "q4",
+    "text": "What is the register map for host readback (offset, width, reset value and access of every register)?",
+    "risk": "high",
+    "risk_rule": "register-map",
+    "status": "defaulted",
+    "by": "oracle",
+    "answer": "One 32-bit register STATUS at 0x00, RO, reset 0, bit 0 = LED lit",
+    "waiver": null
+   },
+   {
+    "id": "q5",
+    "text": "Should the host also be able to trigger or clear the stretch?",
+    "risk": "high",
+    "risk_rule": "behaviour",
+    "status": "defaulted",
+    "by": "oracle",
+    "answer": "No, read-only",
+    "waiver": null
+   }
+  ]
+ },
+ "vague_standard": {
+  "run_id": "20261125-131649-1ff6",
+  "exit_status": 3,
+  "level": "standard",
+  "level_source": "command line",
+  "stop": "requirements: 3 unanswered question(s), 3 high risk: q4 [high] What is the host register map (offset, width, reset value and access o; q5 [high] Should the host be able to read other things, for example a press coun; q6 [high] Should the reset button clear the stretch? (see REQUIREMENTS_NEEDED.md)",
+  "asked": 6,
+  "answered": 3,
+  "defaulted": 0,
+  "waived": 0,
+  "unresolved": 3,
+  "model": "claude-sonnet-5-5",
+  "harness": "claude_code",
+  "oracle_model": "claude-sonnet-5-5",
+  "tokens": 13412,
+  "wall_s": 0.9,
+  "cost_usd": 0.0,
+  "questions": [
+   {
+    "id": "q1",
+    "text": "What exact stretch time is wanted, given \"about half a second\"?",
+    "risk": "medium",
+    "risk_rule": "unmatched",
+    "status": "answered",
+    "by": "oracle",
+    "answer": "500 ms. The LED goes out 500 ms after the last accepted press. The spec does not give the clock frequency, so the cycle count of 50000000 is not confirmed.",
+    "waiver": null
+   },
+   {
+    "id": "q2",
+    "text": "On a second press while lit, should the timer restart to the full time, or add time to the remainder?",
+    "risk": "high",
+    "risk_rule": "behaviour",
+    "status": "answered",
+    "by": "oracle",
+    "answer": "Restart to the full 500 ms (retrigger): a press while lit restarts the 500 ms, it does not add time to the remainder.",
+    "waiver": null
+   },
+   {
+    "id": "q3",
+    "text": "What debounce time is wanted?",
+    "risk": "high",
+    "risk_rule": "rate-and-latency",
+    "status": "answered",
+    "by": "oracle",
+    "answer": "Changes shorter than 5 ms are ignored, so the debounce time is 5 ms, not the proposed 20 ms.",
+    "waiver": null
+   },
+   {
+    "id": "q4",
+    "text": "What is the host register map (offset, width, reset value and access of every register)?",
+    "risk": "high",
+    "risk_rule": "register-map",
+    "status": "unresolved",
+    "by": "oracle",
+    "answer": null,
+    "waiver": null
+   },
+   {
+    "id": "q5",
+    "text": "Should the host be able to read other things, for example a press counter or a sticky 'pressed' flag?",
+    "risk": "high",
+    "risk_rule": "behaviour",
+    "status": "unresolved",
+    "by": "oracle",
+    "answer": null,
+    "waiver": null
+   },
+   {
+    "id": "q6",
+    "text": "Should the reset button clear the stretch?",
+    "risk": "high",
+    "risk_rule": "reset",
+    "status": "unresolved",
+    "by": "oracle",
+    "answer": null,
+    "waiver": null
+   }
+  ]
+ },
+ "vague_strict": {
+  "run_id": "20261125-131728-a079",
+  "exit_status": 3,
+  "level": "strict",
+  "level_source": "command line",
+  "stop": "requirements: 3 unanswered question(s), 3 high risk: q1 [high] What is the register map for host readback (offset, width, reset value; q3 [high] How exact is \"about half a second\" and what debounce time is wanted?; q4 [high] Does the press act on the press edge or the release edge? (see REQUIREMENTS_NEEDED.md)",
+  "asked": 4,
+  "answered": 1,
+  "defaulted": 0,
+  "waived": 0,
+  "unresolved": 3,
+  "model": "claude-sonnet-5-5",
+  "harness": "claude_code",
+  "oracle_model": "claude-sonnet-5-5",
+  "tokens": 13126,
+  "wall_s": 0.9,
+  "cost_usd": 0.0,
+  "questions": [
+   {
+    "id": "q1",
+    "text": "What is the register map for host readback (offset, width, reset value, access of every register)?",
+    "risk": "high",
+    "risk_rule": "register-map",
+    "status": "unresolved",
+    "by": "oracle",
+    "answer": null,
+    "waiver": null
+   },
+   {
+    "id": "q2",
+    "text": "What does a second press while lit do, extend or restart?",
+    "risk": "medium",
+    "risk_rule": "unmatched",
+    "status": "answered",
+    "by": "oracle",
+    "answer": "It restarts: a press while lit restarts the 500 ms timer, so the LED goes out 500 ms after the last accepted press.",
+    "waiver": null
+   },
+   {
+    "id": "q3",
+    "text": "How exact is \"about half a second\" and what debounce time is wanted?",
+    "risk": "high",
+    "risk_rule": "rate-and-latency",
+    "status": "unresolved",
+    "by": "oracle",
+    "answer": null,
+    "waiver": null
+   },
+   {
+    "id": "q4",
+    "text": "Does the press act on the press edge or the release edge?",
+    "risk": "high",
+    "risk_rule": "behaviour",
+    "status": "unresolved",
+    "by": "oracle",
+    "answer": null,
+    "waiver": null
+   }
+  ]
+ },
+ "vague_strict_waived": {
+  "run_id": "20261125-131804-f4f3",
+  "exit_status": 0,
+  "level": "strict",
+  "level_source": "command line",
+  "stop": "done",
+  "asked": 6,
+  "answered": 4,
+  "defaulted": 0,
+  "waived": 2,
+  "unresolved": 0,
+  "model": "claude-sonnet-5-5",
+  "harness": "claude_code",
+  "oracle_model": "claude-sonnet-5-5",
+  "tokens": 33322,
+  "wall_s": 43.8,
+  "cost_usd": 0.0,
+  "questions": [
+   {
+    "id": "q1",
+    "text": "What is the register map for host readback (offset, width, reset value and access of every register)?",
+    "risk": "high",
+    "risk_rule": "register-map",
+    "status": "waived",
+    "by": "oracle",
+    "answer": "One 32-bit register STATUS at offset 0x00, RO, reset 0, bit0 = LED lit.",
+    "waiver": {
+     "match": "*",
+     "value": "agent's default accepted",
+     "who": "Session executor for brief 210 (standing in for the user)",
+     "when": "2026-11-25",
+     "why": "the live run only shows the waiver path; a real user would read each default first",
+     "risk": "high"
+    }
+   },
+   {
+    "id": "q2",
+    "text": "What exactly is \"about half a second\" and what tolerance is acceptable?",
+    "risk": "medium",
+    "risk_rule": "unmatched",
+    "status": "answered",
+    "by": "oracle",
+    "answer": "The delay is 500 ms, measured from the last accepted press. The specification gives no tolerance. It also does not give the clock frequency, so the 100 MHz and 50000000-cycle figures are not confirmed.",
+    "waiver": null
+   },
+   {
+    "id": "q3",
+    "text": "What does \"stay lit a bit longer\" mean for a second press?",
+    "risk": "medium",
+    "risk_rule": "unmatched",
+    "status": "answered",
+    "by": "oracle",
+    "answer": "A press while the LED is lit restarts the 500 ms, so the full 500 ms restarts from the latest accepted press (retrigger, no accumulation).",
+    "waiver": null
+   },
+   {
+    "id": "q4",
+    "text": "How long is the debounce time?",
+    "risk": "high",
+    "risk_rule": "rate-and-latency",
+    "status": "answered",
+    "by": "oracle",
+    "answer": "The spec says BTNC is debounced so that a change shorter than 5 ms is ignored, so the debounce time is 5 ms. The proposed 20 ms default does not match the spec. The number of clock cycles is not specified, because the clock frequency is not given.",
+    "waiver": null
+   },
+   {
+    "id": "q5",
+    "text": "Should the LED light on press or on release, and does a held button repeat?",
+    "risk": "high",
+    "risk_rule": "behaviour",
+    "status": "answered",
+    "by": "oracle",
+    "answer": "The LED lights on the press, as the spec says. The spec does not say whether holding the button repeats or counts once, so that part is not specified.",
+    "waiver": null
+   },
+   {
+    "id": "q6",
+    "text": "Is the lit state sampled live or latched until read?",
+    "risk": "medium",
+    "risk_rule": "unmatched",
+    "status": "waived",
+    "by": "oracle",
+    "answer": "Live level, not latched.",
+    "waiver": {
+     "match": "*",
+     "value": "agent's default accepted",
+     "who": "Session executor for brief 210 (standing in for the user)",
+     "when": "2026-11-25",
+     "why": "the live run only shows the waiver path; a real user would read each default first",
+     "risk": "medium"
+    }
+   }
+  ]
+ }
+}

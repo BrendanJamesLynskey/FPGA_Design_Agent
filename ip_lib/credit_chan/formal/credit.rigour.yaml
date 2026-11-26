@@ -1,0 +1,14 @@
+schema: fpga-design-agent/formal_rigour/v1
+scope: "credit_chan at W = 4 for ten (CREDITS, LF, LB) points (1-5 credits, 0-3 forward and 0-2 return stages), the source free after one reset clock and offering a beat again if it was not accepted, the sink free. Every proof task is k-induction, so each assertion is proved for all depths at those points, not for every parameter value. The covers run at three of the ten points (3/1/1, 5/2/2, 4/3/0); the other seven use the same assertions, so an antecedent reached at one point is not shown reached at the others. At 1/0/0 (no stages) nothing is ever in flight: the conservation sum, the in-flight terms and the forward-stage invariant are trivially true there, and no cover task is run at that point (its antecedents are unreachable by construction)."
+antecedents:
+  cc_conserve: cc_flight__ante
+  cc_credits_max: cc_flight__ante
+  cc_cnt_max: cc_full__ante
+  cc_ready: cc_spent__ante
+  cc_valid: cc_buffered__ante
+  cc_no_overflow: cc_full__ante
+  cc_ptr_range: cc_wrap__ante
+  cc_ptr_gap: cc_wrap__ante
+  cc_count: cc_flight__ante
+  "h_stall_*": h_stall__ante
+sanity: [c_through]

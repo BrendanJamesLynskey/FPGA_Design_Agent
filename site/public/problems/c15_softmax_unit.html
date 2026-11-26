@@ -3,11 +3,11 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Softmax unit behind the test shell | FPGA Design Agent</title>
+<title>Softmax unit behind the test shell | FPGA Force</title>
 <meta name="description" content="Softmax unit behind the test shell: the spec, hidden tests, reference RTL, mutants and golden model of benchmark task c15_softmax_unit.">
 <meta name="color-scheme" content="light dark">
 <link rel="icon" href="../favicon.svg" type="image/svg+xml">
-<style>/* FPGA Design Agent site: sober monochrome, dark and light, no glow. Same manner as the CVDP RTL Agent site. */
+<style>/* FPGA Force site: sober monochrome, dark and light, no glow. Same manner as the CVDP RTL Agent site. */
 :root {
   --bg: #f6f6f4; --panel: #ffffff; --rule: #d6d6d2; --ink: #161616; --ink-2: #4a4a4a; --ink-3: #6b6b6b;
   --mark: #161616; --mute: #b9b9b4; --warn: #b3261e; --ok: #161616;
@@ -61,6 +61,7 @@ button:hover { border-color: var(--ink-3); }
 button[aria-pressed="true"] { background: var(--ink); color: var(--bg); }
 
 /* sections, cards */
+.tagline { font-size: 1.3rem; font-weight: 600; margin: .2rem 0 1rem; color: var(--ink); }
 .eyebrow { font: 600 .8rem var(--f-mono); text-transform: uppercase; letter-spacing: .08em; color: var(--ink-3); }
 .facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; margin: 22px 0; }
 .fact { border: 1px solid var(--rule); background: var(--panel); padding: 14px 16px; }
@@ -674,7 +675,7 @@ svg .bdtick { stroke: var(--ink-3); }
 @media (max-width: 520px) { .evm tbody th { min-width: 9em; } }
 @media (max-width: 520px) { .evm tbody th { white-space: normal; min-width: 8em; max-width: 9em; font-size: .8rem; } .evm td.ev { min-width: 4.2em; } .evm thead th { font-size: .72rem; } }
 
-/* brief 193: "Why this agent": the one-page summary */
+/* brief 193: "Why FPGA Force": the one-page summary */
 svg .boxyou { fill: var(--ink); stroke: var(--ink); }
 .whyhero h1 { font-size: clamp(1.35rem, 1rem + 1.6vw, 2rem); letter-spacing: -.01em; line-height: 1.3; max-width: 48ch; }
 .whyfig { margin: 18px 0 8px; }
@@ -711,7 +712,7 @@ svg text.wn { fill: var(--warn); }
 </head>
 <body>
 <a class="visually-hidden" href="#main">Skip to content</a>
-<header class="bar"><div class="wrap"><a class="brand" href="../index.html">FPGA Design Agent</a><nav aria-label="Pages"><a href="../why.html">Why</a><a href="../agent.html">The agent</a><a class="sub" href="../agent.html#harness">Harness</a><a href="../story.html">How it was built</a><a href="../worked-example.html">Worked example</a><a href="../inspect.html">Inspect it</a><a href="../how.html">How it works</a><a href="../verification.html">Verification</a><a href="../traceability.html">Traceability</a><a href="../flow-notes.html">Beyond the flow</a><a href="../expertise.html">Expertise</a><a href="../examples.html">Examples</a><a href="../showcase.html">Showcase</a><a href="../problems.html" aria-current="page">Problems</a><a href="../evaluation.html">Evaluation</a><a href="../results.html">Results</a></nav><button id="theme" type="button" aria-label="Switch to dark theme">Dark</button></div></header>
+<header class="bar"><div class="wrap"><a class="brand" href="../index.html">FPGA Force</a><nav aria-label="Pages"><a href="../why.html">Why</a><a href="../agent.html">The agent</a><a class="sub" href="../agent.html#harness">Harness</a><a href="../story.html">How it was built</a><a href="../worked-example.html">Worked example</a><a href="../inspect.html">Inspect it</a><a href="../how.html">How it works</a><a href="../verification.html">Verification</a><a href="../traceability.html">Traceability</a><a href="../flow-notes.html">Beyond the flow</a><a href="../expertise.html">Expertise</a><a href="../examples.html">Examples</a><a href="../showcase.html">Showcase</a><a href="../problems.html" aria-current="page">Problems</a><a href="../evaluation.html">Evaluation</a><a href="../results.html">Results</a></nav><button id="theme" type="button" aria-label="Switch to dark theme">Dark</button></div></header>
 <main id="main" class="wrap">
 <p class="crumbs small"><a href="../problems.html">Problems</a> / <a href="../problems.html#dom-I">I. Machine learning inference</a></p>
 <h1>Softmax unit behind the test shell</h1>
@@ -1213,7 +1214,7 @@ X0, GO, STATUS, OUT0 = 0x00, 0x10, 0x11, 0x20
 </main>
 <footer><div class="wrap"><p>Designed by Brendan Lynskey. Code and results: <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent">github.com/BrendanJamesLynskey/FPGA_Design_Agent</a> (all rights reserved; source visible for review, see LICENSE). Every number on these pages is read from a committed result file; development results are labelled as such and are not the held-out score.</p></div></footer>
 <script type="application/json" data-key="trace">{"captions":["Set 4, lane 0: score 0 (0.00 in real units) gets probability 19 out of 32768 (0.1 per cent).","Set 4, lane 1: score 256 (1.00 in real units) gets probability 51 out of 32768 (0.2 per cent).","Set 4, lane 2: score 512 (2.00 in real units) gets probability 140 out of 32768 (0.4 per cent).","Set 4, lane 3: score 768 (3.00 in real units) gets probability 380 out of 32768 (1.2 per cent).","Set 4, lane 4: score 1024 (4.00 in real units) gets probability 1032 out of 32768 (3.1 per cent).","Set 4, lane 5: score 1280 (5.00 in real units) gets probability 2804 out of 32768 (8.6 per cent).","Set 4, lane 6: score 1536 (6.00 in real units) gets probability 7623 out of 32768 (23.3 per cent).","Set 4, lane 7: score 1792 (7.00 in real units) gets probability 20720 out of 32768 (63.2 per cent).","Set 100, lane 0: score -935 (-3.65 in real units) gets probability 67 out of 32768 (0.2 per cent).","Set 100, lane 1: score 177 (0.69 in real units) gets probability 5177 out of 32768 (15.8 per cent).","Set 100, lane 2: score -494 (-1.93 in real units) gets probability 376 out of 32768 (1.1 per cent).","Set 100, lane 3: score -510 (-1.99 in real units) gets probability 354 out of 32768 (1.1 per cent).","Set 100, lane 4: score 460 (1.80 in real units) gets probability 15636 out of 32768 (47.7 per cent).","Set 100, lane 5: score 341 (1.33 in real units) gets probability 9823 out of 32768 (30.0 per cent).","Set 100, lane 6: score -314 (-1.23 in real units) gets probability 760 out of 32768 (2.3 per cent).","Set 100, lane 7: score -386 (-1.51 in real units) gets probability 574 out of 32768 (1.8 per cent)."],"signals":[{"kind":"bus","name":"set","radix":"dec","v":[4,4,4,4,4,4,4,4,100,100,100,100,100,100,100,100]},{"kind":"wave","name":"score x256","v":[0,256,512,768,1024,1280,1536,1792,-935,177,-494,-510,460,341,-314,-386]},{"hi":32768,"kind":"wave","lo":0,"name":"probability x32768","v":[19,51,140,380,1032,2804,7623,20720,67,5177,376,354,15636,9823,760,574]}],"stimulus":"Two score sets of 8 lanes from the model: set 4 and set 100. Each probability is the exponential of the lane's score divided by the sum over the lanes.","unit":"lane","x":[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]}</script>
-<script>/* FPGA Design Agent site. No dependencies. Every animation is frame(step) over a state list built from site/data/*.json. */
+<script>/* FPGA Force site. No dependencies. Every animation is frame(step) over a state list built from site/data/*.json. */
 (function () {
   "use strict";
   var D = {};
