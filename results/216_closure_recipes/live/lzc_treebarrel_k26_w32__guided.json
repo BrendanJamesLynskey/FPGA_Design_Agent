@@ -1,0 +1,77 @@
+{
+ "arm": "guided",
+ "design": "lzc_treebarrel_k26_w32",
+ "seed": 1,
+ "status": "ok",
+ "stop_reason": "timing met",
+ "wns_ns": 0.119,
+ "whs_ns": 0.075,
+ "wns_gain_ns": 0.605,
+ "lut": 139,
+ "ff": 137,
+ "vivado_runs": 1,
+ "fmax_mhz": 780.6,
+ "clock_ns": 1.4,
+ "part": "xck26-sfvc784-2LV-c",
+ "wall_s": 0.0,
+ "cpu_s_runs": 0,
+ "search": {
+  "best": "n1",
+  "best_wns_ns": 0.119,
+  "best_plan": {
+   "synth": [
+    [
+     "retiming",
+     null
+    ]
+   ],
+   "directives": {},
+   "phys_flags": {},
+   "force_replication": [],
+   "max_fanout": [],
+   "pblocks": [],
+   "applied": [
+    "retime"
+   ]
+  },
+  "runs": 1,
+  "stop": "timing met",
+  "hopeless": false,
+  "nodes": [
+   {
+    "id": "n0",
+    "parent": null,
+    "call": null,
+    "wns_ns": -0.486,
+    "whs_ns": 0.088,
+    "lut": 140,
+    "ff": 112,
+    "status": "ok",
+    "kept": true,
+    "verdict": "root"
+   },
+   {
+    "id": "n1",
+    "parent": "n0",
+    "call": {
+     "recipe": "retime",
+     "args": {
+      "where": "synth"
+     },
+     "reason": "5 logic levels: retiming moves registers across the logic",
+     "weight": 70.0,
+     "prior": 0.0545
+    },
+    "wns_ns": 0.119,
+    "whs_ns": 0.075,
+    "lut": 139,
+    "ff": 137,
+    "status": "ok",
+    "kept": true,
+    "verdict": "kept"
+   }
+  ],
+  "rolled_back": 0
+ },
+ "date": "2026-11-26T07:44:11"
+}

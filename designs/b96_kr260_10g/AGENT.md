@@ -10,7 +10,7 @@ A Kria KR260 design that carries our own 10GBASE-R PCS (64B/66B, scrambler, gear
 not: an interoperability proof: a PCS talking to itself accepts its own symmetric mistakes, only a network card proves it; the full 58A trading core (book, rule table, interlocks, ARP) at 64 bits: trade64 is a small stand-in with one rule; the reconciliation sublayer link-fault state machine, the BER monitor, an ARP or ICMP responder
 
 ## state
-stage=built vivado=2026.1 kb_pin=6185830 build_id=53f1dedd
+stage=built vivado=2026.1 kb_pin=eaf6794 build_id=53f1dedd
 gates: build_2026_1=pass
 
 ## interface
@@ -107,7 +107,7 @@ designs/b96_kr260_10g/rm_gp_itch/rtl/order_seg.sv 473fe555c6: the order frame as
 designs/b96_kr260_10g/rm_gp_itch/rtl/order_seg_tcpfast.sv 30fc090de0: the same module with tcp_fast in place of the stand-in: the hook, not in the build (brief 127)
 designs/b96_kr260_10g/rm_gp_itch/rtl/tx_mux.sv 60060254bf: transmit multiplexer in front of mac64_tx: frame source, replay memory, order stream with FIFO and head register (brief 127)
 designs/b96_kr260_10g/rm_gp_itch/rtl/itch_path.sv 3f8c04b0c0: core-clock wrapper of the ITCH path: host vectors, order poison policy, counters, latency statistics (brief 127)
-designs/b96_kr260_10g/rm_gp_itch/rtl/b96_core.sv 2ee04f6ca6: copy of rtl/b96_core.sv for build rm_gp_itch: RATE_MATCH = 1 only, the ITCH path and its registers 0x300 to 0x57C (brief 127)
+designs/b96_kr260_10g/rm_gp_itch/rtl/b96_core.sv 6516f5e10a: copy of rtl/b96_core.sv for build rm_gp_itch: RATE_MATCH = 1 only, the ITCH path and its registers 0x300 to 0x57C (brief 127)
 designs/b96_kr260_10g/rm_gp_itch/regmap_itch.py 2e77671345: register map of build rm_gp_itch as data, generates its datasheet (brief 127)
 designs/b96_kr260_10g/rm_gp_itch/docs/itch_integration.md dc4f9f826c: the ITCH/OUCH path inside the 10G design: path, latency, the late frame check, registers, hook for tcp_fast, results (brief 127)
 designs/b96_kr260_10g/rm_gp_itch/docs/board_test_plan.md f2994a478f: pre-registered board test of build rm_gp_itch (brief 127), not run

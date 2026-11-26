@@ -14,6 +14,8 @@ out-of-context build on the K26 (xck26-sfvc784-2LV-c, Vivado 2026.1). Synthetic 
 | `mutation.json` | every seeded fault of `designs/b119_tcp_fast/verif/mutants.yaml` against the whole bench: killed, survived, invalid, and which test killed each | `python3 designs/b119_tcp_fast/tests/run_mutants.py --jobs 2 --json results/b119/mutation.json` |
 | `ooc/tcp_fast.json` | post-route LUT, FF, block RAM, DSP, WNS, WHS and pulse-width slack at the required 10G core clock (6.2061 ns) and a faster one | `python3 -m designs.b119_tcp_fast.ooc.ooc` (heavy slot) |
 
+Re-recorded 2026-11-26 (brief 236): brief 176 (PR #303) rewrote the two lines that the seeded faults `seq_captured_wrong` and `id_not_captured` matched, so the nightly fresh-evidence run stopped with "does not apply exactly once". Both faults now match the new lines and keep their meaning (the captured sequence number or IP identification is wrong or zero on the path that sends new data). The result is unchanged, 73 of 73 killed, 0 survived, 0 invalid; the only change to `mutation.json` is that 176's test `t_giveback` now also appears among the tests that kill some faults. This is not a regression.
+
 ## Reproduce
 
 - Python 3.12, pyyaml, cocotb 2.0.1 and Icarus Verilog 12 for the bench; Verilator for the lint test; Vivado 2026.1 for the builds.

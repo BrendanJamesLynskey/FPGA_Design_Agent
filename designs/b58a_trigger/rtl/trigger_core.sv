@@ -490,7 +490,7 @@ module trigger_core #(
                         clr_cnt <= h_wdata[0]; clr_book <= h_wdata[1]; clr_hist <= h_wdata[2]; clr_halt <= h_wdata[3];
                         clr_kill_in <= h_wdata[4]; rules_commit <= h_wdata[5]; log_pop <= h_wdata[6];
                         soft_rst <= h_wdata[7];
-                        if (h_wdata[8]) begin max_qty <= s_max_qty; band <= s_band; max_pos <= s_max_pos; bucket <= s_bucket; refill <= s_refill; end    // COMMIT: all five in one clock
+                        if (h_wdata[8]) begin max_qty <= s_max_qty; band <= s_band; max_pos <= s_max_pos; bucket <= s_bucket; refill <= s_refill; end    // COMMIT: all five in one clock (idea from Edwards 2026, ch 12: stage the words, commit them together; written from scratch)
                     end
                     12'h010: my_mac[47:16] <= h_wdata;
                     12'h011: my_mac[15:0]  <= h_wdata[15:0];
