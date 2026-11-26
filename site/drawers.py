@@ -46,19 +46,38 @@ def slug(text: str, used: set) -> str:
     return s
 
 
-def teaser(rest: str, limit: int = 190) -> str:
-    m = re.match(r"\s*<p[^>]*>(.*?)</p>", rest, re.S)
-    if not m:
-        return ""
-    t = re.sub(r"\s+", " ", html.unescape(re.sub(r"<[^>]+>", "", m.group(1)))).strip()
-    s = re.match(r"(.+?[.!?])(\s|$)", t)
-    t = s.group(1) if s else t
-    if len(t) > limit:
-        t = t[:limit].rsplit(" ", 1)[0].rstrip(",;:") + " ..."
-    return t
+def teaser(rest: str, limit: int = 230, want: int = 90) -> str:
+    """One or two sentences from the section's own paragraphs (tag lines and tables are skipped), enough to say what the section shows."""
+    sents = []
+    for m in re.finditer(r"<p(?![^>]*class=\"(?:tags|next|evl|eyebrow)\")[^>]*>(.*?)</p>", rest, re.S):
+        t = re.sub(r"\s+", " ", html.unescape(re.sub(r"<[^>]+>", "", m.group(1)))).strip()
+        if len(t) < 25 or "{" in t or " \u00b7 " in t:
+            continue
+        sents += [x for x in re.findall(r".+?[.!?](?=\s|$)", t)] or [t]
+        if sum(len(x) for x in sents) >= want:
+            break
+    if sum(len(x) for x in sents) < want:        # no paragraph: a caption, a list item, a definition or a table row says what the section shows
+        for m in re.finditer(r"<(?:figcaption|li|dd)[^>]*>(.*?)</(?:figcaption|li|dd)>|<tr>(.*?)</tr>", rest, re.S):
+            if m.group(1) is None and "<td" not in (m.group(2) or ""):
+                continue
+            raw = m.group(1) or re.sub(r"</t[hd]>\s*<t[hd][^>]*>", ": ", m.group(2) or "")
+            t = re.sub(r"\s+", " ", html.unescape(re.sub(r"<[^>]+>", "", raw))).strip()
+            if len(t) >= 25 and "{" not in t:
+                sents += re.findall(r".+?[.!?](?=\s|$)", t) or [t]
+                break
+    out = ""
+    for x in sents:
+        if out and len(out) >= want:
+            break
+        if len(out) + len(x) + 1 > limit and out:
+            break
+        out = (out + " " + x.strip()).strip()
+    if len(out) > limit:
+        out = out[:limit].rsplit(" ", 1)[0].rstrip(",;:") + " ..."
+    return out
 
 
-def sectionize(body: str, open_ids=(), only=None, teasers=True, toc=True, controls=True, summary_of=None) -> str:
+def sectionize(body: str, open_ids=(), only=None, teasers=True, toc=True, controls=True, summary_of=None, no_teaser=()) -> str:
     """`open_ids`: drawers open on load. `only`: make drawers of just these headings (ids or slugs), leaving the rest as they are.
     `summary_of(rest) -> str`: an optional replacement for the teaser (the traceability page shows each design's verdict)."""
     p = _Depth()
@@ -79,7 +98,7 @@ def sectionize(body: str, open_ids=(), only=None, teasers=True, toc=True, contro
         if only is not None and sid not in only:
             out.append(sec)
             continue
-        tt = (summary_of(rest) if summary_of else teaser(rest)) if teasers else ""
+        tt = (summary_of(rest) if summary_of else teaser(rest)) if teasers and sid not in no_teaser else ""
         op = " open" if sid in open_ids else ""
         plain = html.unescape(re.sub(r"<[^>]+>", "", title))
         items.append((sid, plain))

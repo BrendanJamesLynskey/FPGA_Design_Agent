@@ -13,7 +13,7 @@
 <meta property="og:title" content="FPGA Force">
 <meta property="og:description" content="An agentic FPGA design environment: from a plain-English request to a bitstream proven on the board. Language-model agents write the spec, tests and RTL; code-run gates, hidden tests and the board judge them; every number is read from a committed result file.">
 <meta property="og:type" content="website">
-<meta property="og:image" content="https://fpga-design-agent.vercel.app/icons/og-card.png">
+<meta property="og:image" content="https://fpgaforce.vercel.app/icons/og-card.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
@@ -745,7 +745,7 @@ main#main { padding-top: 18px; }
 <main id="main" class="wrap">
 <section class="hero">
 <p class="eyebrow">FPGA Force</p>
-<p class="tagline">A force multiplier for FPGA teams: a whole team&#39;s work, from your spec to a checked bitstream.</p>
+<p class="tagline">A force multiplier: a whole team&#39;s work, from your spec to a checked bitstream.</p>
 <h1>You specify and judge. The agent implements. The board closes the loop.</h1>
 <p class="lede">What decides whether an FPGA design is right is what it was asked to do and whether the verification is thorough enough to trust. Those two jobs stay with the person. The agent holds the implementation know-how: it interviews you about what the request leaves out, writes the model, the tests and the SystemVerilog, and drives the simulators, Vivado 2026.1 and the board. You can look at any of it. You do not have to.</p>
 <p class="chip-status">So far on the board: the hand-built reference design passes every test; the one agent-built design programmed passed 3 of 3 serial-link tests and failed its logic-analyser captures. No held-out score yet.</p>
@@ -803,7 +803,7 @@ main#main { padding-top: 18px; }
 <div class="phost"><div class="lanes"></div><p class="cap" aria-live="polite">Every development run, sorted by what happened. With script on, the runs are added one at a time from their records.</p></div>
 </div><figcaption>One square per run, read from the run records. Filled: passed every hidden test (half-filled: a gate failed first and the agent repaired it; dashed: the run stopped early with every hidden test passing). Hatched: an escape. Outline: failed.</figcaption></figure>
 
-<details class="area sec" id="agentic"><summary><h2 class="sech">What is agentic about it, and what stops it</h2></summary><div class="abody">
+<details class="area sec" id="agentic"><summary><h2 class="sech">What is agentic about it, and what stops it</h2><span class="as">Inside the loop the agent&#x27;s own tests drive it: the stage-2 gates run the tests it wrote. On benchmark tasks a run is then scored only by hidden tests written in advance and checked by mutation testing, never by its own tests.</span></summary><div class="abody">
 <div class="who">
 <div><h3>The agents decide</h3><ul>
 <li>what to ask about a request before anything is written</li>

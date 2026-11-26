@@ -26,7 +26,7 @@ import logo  # noqa: E402  (the FPGA Force mark, brief 237)
 ROOT = HERE.parent
 DATA = HERE / "data"
 SRC = HERE / "src"
-SITE_URL = "https://fpga-design-agent.vercel.app"    # where the site is served now; Open Graph image links must be absolute (change when the site moves)
+SITE_URL = "https://fpgaforce.vercel.app"    # where the site is served; Open Graph image links must be absolute
 REPO = "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent"
 
 PAGES = [  # file, nav label, title, description, data keys inlined
@@ -407,7 +407,7 @@ DRAWERS = {
     "how.html": {"open_ids": {"a-real-run-step-by-step", "the-stages"}},
     "worked-example.html": {"open_ids": {"roles"}},
     "index.html": {"only": {"evidence", "loop", "hard", "agentic"}, "toc": False, "controls": False},
-    "changes.html": {"open_ids": {"control"}},
+    "changes.html": {"open_ids": {"control"}, "no_teaser": {"index"}},
 }
 
 

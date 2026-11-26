@@ -23,7 +23,7 @@ og = ('<!doctype html><meta charset="utf-8"><style>html,body{margin:0}body{width
       'font-family:system-ui,"Segoe UI",Roboto,Arial,sans-serif;display:flex;align-items:center;padding:0 110px;box-sizing:border-box;gap:56px}'
       'h1{font-size:104px;margin:0;line-height:1;letter-spacing:-.02em}p{font-size:34px;margin:22px 0 0;color:#4a4a4a;max-width:640px;line-height:1.3}</style>'
       f'<svg viewBox="0 0 64 64" width="300" height="300">{logo.mark("#161616")}</svg>'
-      '<div><h1>FPGA Force</h1><p>A force multiplier for FPGA teams: from your spec to a checked bitstream.</p></div>')
+      '<div><h1>FPGA Force</h1><p>A force multiplier: from your spec to a checked bitstream.</p></div>')
 jobs = [
     {"html": logo.small_svg(), "w": 16, "h": 16, "scale": 16, "out": "icon-16.png"},
     {"html": logo.solid_svg("#000", "#fff", 2), "w": 32, "h": 32, "scale": 32, "out": "icon-32.png"},
