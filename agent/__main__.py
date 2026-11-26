@@ -573,7 +573,10 @@ def build_parser() -> argparse.ArgumentParser:
                    help="brief 42: comma-separated harness arms, default H1 (owner decision 2026-11-12, made after the data): "
                         "H1 = context management (offload of large tool results, earlier summarisation), "
                         "H2 = hang protection (unbounded-wait check, wall limit from the bench's sim-time budget, structured "
-                        "hang result), H9 = typed digests; A0 = the baseline with no arm (pin it for comparisons with earlier runs)")
+                        "hang result), H9 = typed digests; brief 213 repair feedback, off unless named: R1 = the first failing check "
+                        "(RTL values over the last cycles, the model's value, the transaction in flight, the driver cone) in place of the raw "
+                        "simulator log tail, R2 = the failure ledger of earlier stage-2 visits, R3 = the fresh-stimulus regrade after stage 2 "
+                        "passes; A0 = the baseline with no arm (pin it for comparisons with earlier runs)")
     r.add_argument("--router-k", type=int, default=8, help="brief 36: skills in the router's shortlist")
     r.add_argument("--design-plan", action="store_true",
                    help="plan before building: stage 1 lists the datapaths, and the timing plan maps each operation to a DSP slice, "

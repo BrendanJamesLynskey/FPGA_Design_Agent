@@ -155,7 +155,8 @@ def stage2_owners(ev: dict[str, Any], repeat: int = 0, events: list[dict[str, An
         role, kind = classify_sim(ff, str(sim.get("text") or ""))
         head = (f"first failing test {ff['test']}: " + " | ".join(ff.get("message", [])) + (f" ({ff['where']})" if ff.get("where") else "")
                 + "".join("\n  cause: " + x for x in ff.get("cause", [])[:8])) if ff else ""
-        text = "[simulate] " + head + "\n" + str(sim.get("text") or "")[-1500:]
+        fc = (sim.get("first_check") or {}).get("text")           # brief 213 (R1): the first failing check replaces the raw log tail
+        text = "[simulate] " + head + "\n" + (fc if fc else str(sim.get("text") or "")[-1500:])
         add(role, text, f"sim:{(ff or {}).get('test')}:{'|'.join((ff or {}).get('message', [])[:1])[:120]}")
         if kind == "mismatch":
             mismatch_test, sim_text = (ff or {}).get("test"), text
@@ -181,6 +182,9 @@ def stage2_owners(ev: dict[str, Any], repeat: int = 0, events: list[dict[str, An
         owners.setdefault("tests", []).append(_p("graph/repair/stage2_owners_1").format(mismatch_test) + sim_text[:900])
     if mismatch_test and repeat >= 2 and "model" not in owners:
         owners["model"] = [_p("graph/repair/stage2_owners_2").format(mismatch_test)]
+    rg = ev.get("regrade") or {}
+    if rg.get("blocking") and rg.get("digest"):             # brief 213 (R3): a calibrated fresh-stimulus divergence on a design every gate accepted
+        add("rtl", str(rg["digest"])[:2600], "regrade")
     stt = ev.get("spec_test") or {}
     if stt.get("blocks") and not owners:             # 08f: the independent spec-only bench failed and triage blamed the design
         add("rtl", str(stt.get("evidence") or _p("graph/repair/stage2_owners_3"))[:1800], str(stt.get("sig") or "spectest"))
@@ -194,7 +198,7 @@ def stage2_owners(ev: dict[str, Any], repeat: int = 0, events: list[dict[str, An
 
 _GATE_OF_TAG = {"lint": "lint", "standards": "design standards", "constants": "derived constants", "contract": "model contract",
                 "model_present": "verification (model present)", "spectest": "spec test", "other": "other gates",
-                "sim": "simulate", "report_gates": "report gates"}
+                "sim": "simulate", "report_gates": "report gates", "regrade": "fresh-stimulus regrade"}
 
 
 def stop_diagnosis(n: int, limit: int, state: dict[str, Any]) -> tuple[str, dict[str, Any]]:
@@ -232,7 +236,8 @@ def stop_diagnosis(n: int, limit: int, state: dict[str, Any]) -> tuple[str, dict
     rep = int(state.get("repeat") or 0)
     detail = {"stage": n, "limit": limit, "gates": gates, "roles": roles, "owners_last_visit": sorted(owners),
               "last_failing_assertion": assertion or None, "same_signature_visits": rep + 1 if sig else None,
-              "last_fails": [str(f)[:200] for f in (state.get("fails") or [])[:4]]}
+              "last_fails": [str(f)[:200] for f in (state.get("fails") or [])[:4]],
+              **({"ledger": state["ledger"]} if state.get("ledger") else {})}
     why = f"stage {n} visited more than {limit} times; last failing gate: {', '.join(gates) or 'none recorded'}"
     if roles:
         why += f"; owned by the {'/'.join(roles)} role"

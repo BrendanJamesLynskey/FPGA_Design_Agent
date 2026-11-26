@@ -537,8 +537,12 @@ def simulate(s: Session, sim: str = "auto", coverage: bool = False) -> dict:
     # an old result is never read as the new one.
     results = s.design / "build" / "verif" / "sim"
     shutil.rmtree(results, ignore_errors=True)
+    rec_env: dict[str, str] = {}
+    if "R3" in s.harness_arms and not coverage:        # brief 213 (R3): record what the bench feeds model.Model, for the fresh-stimulus regrade
+        from flow.divergence import record_env
+        rec_env = record_env(s.design)
     r = s.runner.run("simulate", argv, s.root, {"SIM": sim, "FDA_SIM_RESULTS_DIR": _rel(s, results),
-                                                **({"FDA_COVERAGE": "1"} if coverage else {})},
+                                                **({"FDA_COVERAGE": "1"} if coverage else {}), **rec_env},
                      timeout=limit + 90 if h2 else limit)
     out = _text_out(r)
     res: dict[str, Any] = {"ok": r.returncode == 0}
