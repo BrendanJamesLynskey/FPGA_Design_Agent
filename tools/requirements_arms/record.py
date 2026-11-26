@@ -33,7 +33,7 @@ def wilson(k: int, n: int, z: float = 1.959964) -> tuple[float, float]:
     return ((c - r) / d, (c + r) / d)
 
 
-def classify(stop: str | None, summary: dict[str, Any]) -> str:
+def classify(stop: str | None, summary: dict[str, Any], spectest: dict[str, Any] | None = None) -> str:
     """The failure class of a run that did not reach the end of stage 2, from the stop reason and the last failing gate (code; the executor checks each by hand).
     Classes: interface, timing, reset, handshake, functional, testbench_wrong, tool, cut_off_reply, budget, requirement_missing (a stop at stage 0 with open questions), and
     spectest_unresolved (the independent bench and the RTL disagree and triage could not say which is wrong)."""
@@ -43,6 +43,11 @@ def classify(stop: str | None, summary: dict[str, Any]) -> str:
     if t.startswith("requirements:"):
         return "requirement_missing"
     if "spec-test" in t or "spectest" in t:
+        sp = spectest or {}
+        if sp.get("design_wrong"):
+            return "functional"            # the independent bench found the design wrong at least once
+        if sp.get("bench_wrong"):
+            return "testbench_wrong"       # the triage judged the independent bench wrong every time and the bench could not be repaired
         return "spectest_unresolved"      # the independent spec-only bench and the RTL disagree and triage could not say which is wrong: a requirement reading, the bench or the RTL (hand-labelled later)
     if summary.get("truncated_calls"):
         return "cut_off_reply"
@@ -57,6 +62,18 @@ def classify(stop: str | None, summary: dict[str, Any]) -> str:
     return "tool"
 
 
+KEEP = ("run_id", "design", "model", "harness", "claude_code_version", "plan_cost_estimate_usd", "stop", "stop_detail", "stages_visited", "loops", "tokens", "turns", "wall_s",
+        "truncated_calls", "per_role", "per_stage", "interview", "requirements", "review", "budget_scale")
+
+
+def trim_summary(s: dict[str, Any]) -> dict[str, Any]:
+    """The summary without the interview's question text: that text comes from the pinned private prompts and is never committed (agent/tests/test_99_prompts.py). The counts stay."""
+    out = {k: s[k] for k in KEEP if k in s}
+    q = s.get("questions") or {}
+    out["questions"] = {k: q.get(k) for k in ("asked", "answered", "defaulted", "waived", "unresolved", "level")}
+    return out
+
+
 def one(run: Path, arm: str, design: str, k: int) -> dict[str, Any]:
     d = run / f"b227_{arm}_{design}_r{k}"
     s = json.loads((run / "summary.json").read_text()) if (run / "summary.json").is_file() else {}
@@ -68,13 +85,14 @@ def one(run: Path, arm: str, design: str, k: int) -> dict[str, Any]:
     reached2 = 2 in stages and not stop
     own = gates.get("reached")
     spec = ""
-    sp = d / "build" / "spectest" / "result.json"
-    if sp.is_file():
-        spec = str(json.loads(sp.read_text()).get("verdict", ""))
-    gates_pass = reached2 and (spec in ("", "pass", "design_ok", "ok"))
+    sp = d / "build" / "spectest" / "state.json"
+    st: dict[str, Any] = json.loads(sp.read_text()) if sp.is_file() else {}
+    if st.get("fired"):
+        spec = f"{st.get('outcome')} (bench judged wrong {st.get('bench_wrong', 0)}, design judged wrong {st.get('design_wrong', 0)})"
+    gates_pass = reached2 and st.get("outcome") in (None, "passed", "pass", "clean") and not (st.get("fired") and not st.get("passed"))
     rounds = rd.get("rounds") or []
     return {"arm": arm, "design": design, "run": k, "run_id": run.name, "gates_pass": int(bool(gates_pass)), "reached_stage": max(stages) if stages else "", "stop": (stop or "")[:160],
-            "failure_class": "" if gates_pass else classify(stop, s), "spectest": spec, "own_checks": own or "", "tokens": s.get("tokens"), "plan_cost_usd": s.get("plan_cost_estimate_usd"),
+            "failure_class": "" if gates_pass else classify(stop, s, st), "spectest": spec, "own_checks": own or "", "tokens": s.get("tokens"), "plan_cost_usd": s.get("plan_cost_estimate_usd"),
             "wall_s": s.get("wall_s"), "turns": s.get("turns"), "visits_stage2": sum(1 for r in ru if r.get("stage") == "rtl-design-creation" and r.get("role") == "rtl"),
             "rounds": len(rounds) if rd else "", "questions": sum(len(r.get("questions") or []) for r in rounds) if rd else "",
             "answered": sum(sum(bool(q.get("answer")) for q in r.get("questions") or []) for r in rounds) if rd else "", "frozen": int(bool(rd.get("frozen"))) if rd else ""}
@@ -97,10 +115,11 @@ def main(argv: list[str] | None = None) -> int:
         rows.append(row)
         dst = a.out / arm / design / f"run{k}"
         dst.mkdir(parents=True, exist_ok=True)
-        for f in ("summary.json", "role_usage.jsonl"):
-            if (r / f).is_file():
-                shutil.copy(r / f, dst / f)
-        for rel in ("build/verif/verif_gates.json", "build/requirements/readiness.json", "build/requirements/frozen.json", "build/requirements/state.json", "spec.yaml",
+        if (r / "summary.json").is_file():
+            (dst / "summary.json").write_text(json.dumps(trim_summary(json.loads((r / "summary.json").read_text())), indent=1) + "\n")
+        if (r / "role_usage.jsonl").is_file():
+            shutil.copy(r / "role_usage.jsonl", dst / "role_usage.jsonl")
+        for rel in ("build/verif/verif_gates.json", "build/requirements/readiness.json", "build/requirements/frozen.json", "build/requirements/state.json",
                     "REQUIREMENTS_REPORT.md", "REQUIREMENTS_READINESS.md", "REQUIREMENTS_NEEDED.md"):
             src = r / f"b227_{arm}_{design}_r{k}" / rel
             if src.is_file():

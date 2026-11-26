@@ -1,0 +1,1870 @@
+{
+ "schema": "fpga-force/readiness/v1",
+ "level": "standard",
+ "limits": {
+  "max_rounds": 4,
+  "max_calls": 60,
+  "max_questions": 25
+ },
+ "checklist": "procedures/requirements-review/pre-build-review@sha256:c6081e7cd937",
+ "started": "2026-11-26T17:10:59Z",
+ "rounds": [
+  {
+   "n": 1,
+   "questions": [
+    {
+     "id": "Q1",
+     "text": "When INJECT_FAULT is set, at which RAM address does the test see a wrong value each pass (fixed address, or one that changes per pass), and which element and read does it affect? The value in MARCH_FIRST_ERR depends on this.",
+     "code": "RDY-REV-01",
+     "topic": "Errors and back-pressure",
+     "ids": [
+      "REQ-18",
+      "REQ-19"
+     ],
+     "blocking": true,
+     "source": "reviewer",
+     "answer": "The address is fixed at 5, with one wrong word seen per pass, and on the first pass MARCH_FIRST_ERR is set to 5. The specification does not say which March element or which read the fault affects. It only says the fault is injected in the checker's compare and never in the stored data.",
+     "by": "oracle",
+     "evidence": "INJECT_FAULT makes the test see one wrong word per pass at address 5; that error counts in MARCH_ERRS and, on the first pass, sets MARCH_FIRST_ERR to 5. The fault is injected only in the checker's compare, never in the stored data, so the RAM ends all zero as March C- leaves it."
+    },
+    {
+     "id": "Q2",
+     "text": "Does one pass run March C- once with the all-zero background and once with the all-one background, or does it alternate backgrounds from pass to pass? What order is used, given that RAM must read all zeros after the last pass?",
+     "code": "RDY-REV-01",
+     "topic": "Defaults and parameters",
+     "ids": [
+      "REQ-14",
+      "REQ-16",
+      "REQ-18",
+      "REQ-20"
+     ],
+     "blocking": true,
+     "source": "reviewer",
+     "answer": "Every pass runs March C- twice, first with the all-zero background and then with the all-one background. Backgrounds do not alternate from pass to pass. The specification does not say how the RAM ends up all zeros after the all-one background, so I cannot add anything on that.",
+     "by": "oracle",
+     "evidence": "- March C- is: up(w0); up(r0,w1); up(r1,w0); down(r0,w1); down(r1,w0); down(r0), with the all-zero background and then the all-one background as the data.  One pass is both backgrounds."
+    },
+    {
+     "id": "Q3",
+     "text": "What value is read (decimal)? (Scenario: Straight after configuration and reset release, with no writes, MEM_ADDR is set to 5 and RAM_DATA is read once with AUTOINC=0.) Two careful readers of the requirements disagree about this; what is the intended behaviour?",
+     "code": "RDY-READ-01",
+     "topic": "requirement",
+     "ids": [
+      "REQ-08",
+      "REQ-09",
+      "REQ-10"
+     ],
+     "blocking": true,
+     "source": "readers",
+     "answer": "3235774469 (0xC0DE0005). RAM word 5 holds 0xC0DE0000 + 5 straight after configuration, and a RAM_DATA read with AUTOINC=0 does not change MEM_ADDR.",
+     "by": "oracle",
+     "evidence": "- A RAM of 1,024 words of 32 bits. Its power-up contents must be defined: word *i* holds 0xC0DE0000 + *i* straight after configuration, before anyone writes to it."
+    },
+    {
+     "id": "Q4",
+     "text": "What value does h_rdata show? (Scenario: h_we and h_re asserted in the same clock to SCRATCH (old 0x1, writing 0x2).) Two careful readers of the requirements disagree about this; what is the intended behaviour?",
+     "code": "RDY-READ-01",
+     "topic": "requirement",
+     "ids": [
+      "REQ-06",
+      "REQ-05"
+     ],
+     "blocking": true,
+     "source": "readers",
+     "answer": null,
+     "by": null,
+     "evidence": null
+    },
+    {
+     "id": "Q5",
+     "text": "After reset, what does MARCH_STATUS bit 0 read and do the bits 31:16 retain 37? (Scenario: A 200-pass march test is running with 37 passes completed when reset is asserted for 8 clocks and released.) The requirements do not say; what should happen?",
+     "code": "RDY-READ-02",
+     "topic": "requirement",
+     "ids": [
+      "REQ-15",
+      "REQ-16",
+      "REQ-13"
+     ],
+     "blocking": true,
+     "source": "readers",
+     "answer": "After reset MARCH_STATUS reads 0, so BUSY (bit 0) is 0 and passes completed (bits 31:16) is 0. The count of 37 is not retained.",
+     "by": "oracle",
+     "evidence": "Reset: MEM_ADDR 0, MEM_CTRL 0 (AUTOINC off), MARCH_CTRL 0, MARCH_PASSES 1, MARCH_STATUS 0, MARCH_ERRS 0, MARCH_FIRST_ERR 0xFFFFFFFF."
+    },
+    {
+     "id": "Q6",
+     "text": "How many passes complete and does MARCH_STATUS bit 1 become 1? (Scenario: MARCH_PASSES is 0 and MARCH_CTRL bit 0 is written 1.) The requirements do not say; what should happen?",
+     "code": "RDY-READ-02",
+     "topic": "requirement",
+     "ids": [
+      "REQ-13",
+      "REQ-14"
+     ],
+     "blocking": true,
+     "source": "readers",
+     "answer": "One pass completes, because a MARCH_PASSES value of 0 is treated as 1. The register still reads back 0. MARCH_STATUS bit 1 (DONE) rises when that last pass finishes, and BUSY falls in the same clock.",
+     "by": "oracle",
+     "evidence": "- MARCH_PASSES of 0 is treated as 1; the register keeps the value written (the pass count used is max(1, value)). Values above 65,535 cannot be written (16 bits)."
+    },
+    {
+     "id": "Q7",
+     "text": "Does the test restart with counters cleared? (Scenario: MARCH_CTRL bit 0 is written 1 again while a march test is already running at pass 5.) The requirements do not say; what should happen?",
+     "code": "RDY-READ-02",
+     "topic": "requirement",
+     "ids": [
+      "REQ-13",
+      "REQ-15"
+     ],
+     "blocking": true,
+     "source": "readers",
+     "answer": "No. START while BUSY is ignored, so the running test continues and its counters are not cleared.",
+     "by": "oracle",
+     "evidence": "START while BUSY is ignored."
+    },
+    {
+     "id": "Q8",
+     "text": "What are MARCH_ERRS (decimal) and the value of MARCH_FIRST_ERR? (Scenario: A 3-pass run with INJECT_FAULT=1 completes; the fault word is at address 0x2A.) The requirements do not say; what should happen?",
+     "code": "RDY-READ-02",
+     "topic": "requirement",
+     "ids": [
+      "REQ-18",
+      "REQ-19",
+      "REQ-29"
+     ],
+     "blocking": true,
+     "source": "readers",
+     "answer": "MARCH_ERRS = 3 (one wrong word per pass, 3 passes) and MARCH_FIRST_ERR = 5 (0x00000005). The fault address is fixed at 5 by the specification, so the 0x2A in the scenario does not apply.",
+     "by": "oracle",
+     "evidence": "INJECT_FAULT makes the test see one wrong word per pass at address 5; that error counts in MARCH_ERRS and, on the first pass, sets MARCH_FIRST_ERR to 5."
+    },
+    {
+     "id": "Q9",
+     "text": "What value do MARCH_STATUS bits 31:16 show? (Scenario: A 70000-pass run is requested (MARCH_PASSES exceeds 16 bits) and completes.) The requirements do not say; what should happen?",
+     "code": "RDY-READ-02",
+     "topic": "requirement",
+     "ids": [
+      "REQ-17",
+      "REQ-16"
+     ],
+     "blocking": true,
+     "source": "readers",
+     "answer": "This scenario cannot occur. MARCH_PASSES is 16 bits, so a value above 65,535 cannot be written and a 70,000-pass run cannot be requested. Passes completed in MARCH_STATUS bits 31:16 therefore never has to represent more than 65,535.",
+     "by": "oracle",
+     "evidence": "Values above 65,535 cannot be written (16 bits)."
+    }
+   ],
+   "amendments": [
+    "REQ-14"
+   ],
+   "refused": [],
+   "repairs": {
+    "asked": [
+     {
+      "id": "REQ-03",
+      "code": "RDY-CLEAR-01",
+      "text": "requirement REQ-03 is compound ('and' joins two statements): split it into one requirement per checkable statement, each with its own id and proof method",
+      "question": "Please restate REQ-03 so that one statement can be checked: split it into one requirement per checkable statement, each with its own id and proof method",
+      "level": "standard",
+      "topic": "requirement",
+      "blocking": true,
+      "repair": true
+     },
+     {
+      "id": "REQ-04",
+      "code": "RDY-CLEAR-01",
+      "text": "requirement REQ-04 is compound ('and' joins two statements): split it into one requirement per checkable statement, each with its own id and proof method",
+      "question": "Please restate REQ-04 so that one statement can be checked: split it into one requirement per checkable statement, each with its own id and proof method",
+      "level": "standard",
+      "topic": "requirement",
+      "blocking": true,
+      "repair": true
+     },
+     {
+      "id": "REQ-05",
+      "code": "RDY-CLEAR-01",
+      "text": "requirement REQ-05 is compound ('and' joins two statements): split it into one requirement per checkable statement, each with its own id and proof method",
+      "question": "Please restate REQ-05 so that one statement can be checked: split it into one requirement per checkable statement, each with its own id and proof method",
+      "level": "standard",
+      "topic": "requirement",
+      "blocking": true,
+      "repair": true
+     },
+     {
+      "id": "REQ-09",
+      "code": "RDY-CLEAR-01",
+      "text": "requirement REQ-09 is compound ('and' joins two statements): split it into one requirement per checkable statement, each with its own id and proof method",
+      "question": "Please restate REQ-09 so that one statement can be checked: split it into one requirement per checkable statement, each with its own id and proof method",
+      "level": "standard",
+      "topic": "requirement",
+      "blocking": true,
+      "repair": true
+     },
+     {
+      "id": "REQ-19",
+      "code": "RDY-CLEAR-01",
+      "text": "requirement REQ-19 is compound (', and' joins two statements): split it into one requirement per checkable statement, each with its own id and proof method",
+      "question": "Please restate REQ-19 so that one statement can be checked: split it into one requirement per checkable statement, each with its own id and proof method",
+      "level": "standard",
+      "topic": "requirement",
+      "blocking": true,
+      "repair": true
+     }
+    ],
+    "revised": [
+     "REQ-03",
+     "REQ-04",
+     "REQ-05",
+     "REQ-09",
+     "REQ-19"
+    ],
+    "refused": []
+   },
+   "mechanical": [
+    {
+     "id": "interface",
+     "code": "RDY-IF-04",
+     "text": "output led has no reset value",
+     "question": "What does led drive during and just after reset?",
+     "level": "strict",
+     "topic": "reset strategy",
+     "blocking": true,
+     "repair": false
+    },
+    {
+     "id": "interface",
+     "code": "RDY-IF-05",
+     "text": "output led has no stated latency from a named input event",
+     "question": "How many cycles after which input event does led change (or is it combinational)?",
+     "level": "strict",
+     "topic": "throughput and latency",
+     "blocking": true,
+     "repair": false
+    },
+    {
+     "id": "interface",
+     "code": "RDY-IF-04",
+     "text": "output sfp_tx_disable has no reset value",
+     "question": "What does sfp_tx_disable drive during and just after reset?",
+     "level": "strict",
+     "topic": "reset strategy",
+     "blocking": true,
+     "repair": false
+    },
+    {
+     "id": "interface",
+     "code": "RDY-IF-05",
+     "text": "output sfp_tx_disable has no stated latency from a named input event",
+     "question": "How many cycles after which input event does sfp_tx_disable change (or is it combinational)?",
+     "level": "strict",
+     "topic": "throughput and latency",
+     "blocking": true,
+     "repair": false
+    }
+   ],
+   "review": {
+    "findings": [
+     {
+      "topic": "Errors and back-pressure",
+      "ids": [
+       "REQ-18",
+       "REQ-19"
+      ],
+      "missing_fact": "which address the injected fault hits, and how it corrupts the value (read side or write side)",
+      "question": "When INJECT_FAULT is set, at which RAM address does the test see a wrong value each pass (fixed address, or one that changes per pass), and which element and read does it affect? The value in MARCH_FIRST_ERR depends on this.",
+      "blocking": true,
+      "why": "Several designs give exactly 3 errors in 3 passes but a different MARCH_FIRST_ERR, and nothing in the request says which one is right."
+     },
+     {
+      "topic": "Defaults and parameters",
+      "ids": [
+       "REQ-14",
+       "REQ-16",
+       "REQ-18",
+       "REQ-20"
+      ],
+      "missing_fact": "what one pass consists of: both backgrounds (all-zero and all-one) per pass or one background per pass, and the order",
+      "question": "Does one pass run March C- once with the all-zero background and once with the all-one background, or does it alternate backgrounds from pass to pass? What order is used, given that RAM must read all zeros after the last pass?",
+      "blocking": true,
+      "why": "This changes the passes-completed count, how many faults are seen per pass, and the final RAM contents, all of which the script reads."
+     }
+    ],
+    "verdict": "not_ready",
+    "compliance": 0
+   },
+   "probes": {
+    "count": 13,
+    "categories": [
+     "back_pressure",
+     "boundary",
+     "invalid_input",
+     "mid_operation_reset",
+     "overflow",
+     "power_up",
+     "reset",
+     "simultaneous",
+     "unmapped"
+    ],
+    "problems": []
+   },
+   "agreement": {
+    "probes": 13,
+    "agreed": 6,
+    "rate": 0.4615,
+    "disagreements": [
+     {
+      "probe": "P4",
+      "scenario": "Straight after configuration and reset release, with no writes, MEM_ADDR is set to 5 and RAM_DATA is read once with AUTOINC=0.",
+      "question": "What value is read (decimal)?",
+      "category": "power_up",
+      "answers": {
+       "A": "3232235525",
+       "B": "3221225477"
+      },
+      "requirements": [
+       "REQ-08",
+       "REQ-09",
+       "REQ-10"
+      ]
+     },
+     {
+      "probe": "P7",
+      "scenario": "h_we and h_re asserted in the same clock to SCRATCH (old 0x1, writing 0x2).",
+      "question": "What value does h_rdata show?",
+      "category": "simultaneous",
+      "answers": {
+       "A": "unspecified",
+       "B": "undefined"
+      },
+      "requirements": [
+       "REQ-06",
+       "REQ-05"
+      ]
+     }
+    ],
+    "gaps": [
+     {
+      "probe": "P8",
+      "scenario": "A 200-pass march test is running with 37 passes completed when reset is asserted for 8 clocks and released.",
+      "question": "After reset, what does MARCH_STATUS bit 0 read and do the bits 31:16 retain 37?",
+      "answers": {
+       "A": "unspecified",
+       "B": "unspecified"
+      },
+      "requirements": [
+       "REQ-15",
+       "REQ-16",
+       "REQ-13"
+      ]
+     },
+     {
+      "probe": "P9",
+      "scenario": "MARCH_PASSES is 0 and MARCH_CTRL bit 0 is written 1.",
+      "question": "How many passes complete and does MARCH_STATUS bit 1 become 1?",
+      "answers": {
+       "A": "unspecified",
+       "B": "unspecified"
+      },
+      "requirements": [
+       "REQ-13",
+       "REQ-14"
+      ]
+     },
+     {
+      "probe": "P10",
+      "scenario": "MARCH_CTRL bit 0 is written 1 again while a march test is already running at pass 5.",
+      "question": "Does the test restart with counters cleared?",
+      "answers": {
+       "A": "unspecified",
+       "B": "unspecified"
+      },
+      "requirements": [
+       "REQ-13",
+       "REQ-15"
+      ]
+     },
+     {
+      "probe": "P11",
+      "scenario": "A 3-pass run with INJECT_FAULT=1 completes; the fault word is at address 0x2A.",
+      "question": "What are MARCH_ERRS (decimal) and the value of MARCH_FIRST_ERR?",
+      "answers": {
+       "A": "unspecified",
+       "B": "unspecified"
+      },
+      "requirements": [
+       "REQ-18",
+       "REQ-19",
+       "REQ-29"
+      ]
+     },
+     {
+      "probe": "P13",
+      "scenario": "A 70000-pass run is requested (MARCH_PASSES exceeds 16 bits) and completes.",
+      "question": "What value do MARCH_STATUS bits 31:16 show?",
+      "answers": {
+       "A": "unspecified",
+       "B": "unspecified"
+      },
+      "requirements": [
+       "REQ-17",
+       "REQ-16"
+      ]
+     }
+    ]
+   },
+   "probe_set": [
+    {
+     "id": "P1",
+     "category": "unmapped",
+     "answer_kind": "int",
+     "requirements": [
+      "REQ-04",
+      "REQ-26"
+     ]
+    },
+    {
+     "id": "P2",
+     "category": "unmapped",
+     "answer_kind": "bool",
+     "requirements": [
+      "REQ-26",
+      "REQ-03"
+     ]
+    },
+    {
+     "id": "P3",
+     "category": "reset",
+     "answer_kind": "int",
+     "requirements": [
+      "REQ-25",
+      "REQ-03"
+     ]
+    },
+    {
+     "id": "P4",
+     "category": "power_up",
+     "answer_kind": "int",
+     "requirements": [
+      "REQ-08",
+      "REQ-09",
+      "REQ-10"
+     ]
+    },
+    {
+     "id": "P5",
+     "category": "boundary",
+     "answer_kind": "int",
+     "requirements": [
+      "REQ-28",
+      "REQ-10"
+     ]
+    },
+    {
+     "id": "P6",
+     "category": "boundary",
+     "answer_kind": "bool",
+     "requirements": [
+      "REQ-06",
+      "REQ-05"
+     ]
+    },
+    {
+     "id": "P7",
+     "category": "simultaneous",
+     "answer_kind": "choice",
+     "requirements": [
+      "REQ-06",
+      "REQ-05"
+     ]
+    },
+    {
+     "id": "P8",
+     "category": "mid_operation_reset",
+     "answer_kind": "choice",
+     "requirements": [
+      "REQ-15",
+      "REQ-16",
+      "REQ-13"
+     ]
+    },
+    {
+     "id": "P9",
+     "category": "invalid_input",
+     "answer_kind": "choice",
+     "requirements": [
+      "REQ-13",
+      "REQ-14"
+     ]
+    },
+    {
+     "id": "P10",
+     "category": "simultaneous",
+     "answer_kind": "choice",
+     "requirements": [
+      "REQ-13",
+      "REQ-15"
+     ]
+    },
+    {
+     "id": "P11",
+     "category": "boundary",
+     "answer_kind": "choice",
+     "requirements": [
+      "REQ-18",
+      "REQ-19",
+      "REQ-29"
+     ]
+    },
+    {
+     "id": "P12",
+     "category": "back_pressure",
+     "answer_kind": "bool",
+     "requirements": [
+      "REQ-27",
+      "REQ-05"
+     ]
+    },
+    {
+     "id": "P13",
+     "category": "overflow",
+     "answer_kind": "choice",
+     "requirements": [
+      "REQ-17",
+      "REQ-16"
+     ]
+    }
+   ],
+   "probe_text": [
+    {
+     "id": "P1",
+     "category": "unmapped",
+     "requirements": [
+      "REQ-04",
+      "REQ-26"
+     ],
+     "scenario": "Host writes 0xDEADBEEF to unmapped address 0x3F0, then reads 0x3F0 and also reads SCRATCH at 0x008 (previously 0x12345678).",
+     "question": "What value does the read of 0x3F0 return?",
+     "answer_kind": "int"
+    },
+    {
+     "id": "P2",
+     "category": "unmapped",
+     "requirements": [
+      "REQ-26",
+      "REQ-03"
+     ],
+     "scenario": "SCRATCH holds 0x12345678. Host writes 0xFFFFFFFF to unmapped address 0x00C, then reads SCRATCH.",
+     "question": "Does SCRATCH still read 0x12345678?",
+     "answer_kind": "bool"
+    },
+    {
+     "id": "P3",
+     "category": "reset",
+     "requirements": [
+      "REQ-25",
+      "REQ-03"
+     ],
+     "scenario": "SCRATCH was written 0xA5A5A5A5, then the internal reset is asserted and released.",
+     "question": "What does SCRATCH read after reset?",
+     "answer_kind": "int"
+    },
+    {
+     "id": "P4",
+     "category": "power_up",
+     "requirements": [
+      "REQ-08",
+      "REQ-09",
+      "REQ-10"
+     ],
+     "scenario": "Straight after configuration and reset release, with no writes, MEM_ADDR is set to 5 and RAM_DATA is read once with AUTOINC=0.",
+     "question": "What value is read (decimal)?",
+     "answer_kind": "int"
+    },
+    {
+     "id": "P5",
+     "category": "boundary",
+     "requirements": [
+      "REQ-28",
+      "REQ-10"
+     ],
+     "scenario": "AUTOINC=1, MEM_ADDR=1023, one RAM_DATA read is performed.",
+     "question": "What is MEM_ADDR after the access?",
+     "answer_kind": "int"
+    },
+    {
+     "id": "P6",
+     "category": "boundary",
+     "requirements": [
+      "REQ-06",
+      "REQ-05"
+     ],
+     "scenario": "Host pulses h_we at clock N writing SCRATCH=0x11, then pulses h_re at clock N+1 for SCRATCH.",
+     "question": "Does the read data shown within 2 clocks of h_re equal 0x11 (yes) or the old value (no)?",
+     "answer_kind": "bool"
+    },
+    {
+     "id": "P7",
+     "category": "simultaneous",
+     "requirements": [
+      "REQ-06",
+      "REQ-05"
+     ],
+     "scenario": "h_we and h_re asserted in the same clock to SCRATCH (old 0x1, writing 0x2).",
+     "question": "What value does h_rdata show?",
+     "answer_kind": "choice",
+     "choices": [
+      "old value 0x1",
+      "new value 0x2",
+      "undefined"
+     ]
+    },
+    {
+     "id": "P8",
+     "category": "mid_operation_reset",
+     "requirements": [
+      "REQ-15",
+      "REQ-16",
+      "REQ-13"
+     ],
+     "scenario": "A 200-pass march test is running with 37 passes completed when reset is asserted for 8 clocks and released.",
+     "question": "After reset, what does MARCH_STATUS bit 0 read and do the bits 31:16 retain 37?",
+     "answer_kind": "choice",
+     "choices": [
+      "bit0=0, passes cleared to 0",
+      "bit0=0, passes remain 37",
+      "test resumes",
+      "unspecified"
+     ]
+    },
+    {
+     "id": "P9",
+     "category": "invalid_input",
+     "requirements": [
+      "REQ-13",
+      "REQ-14"
+     ],
+     "scenario": "MARCH_PASSES is 0 and MARCH_CTRL bit 0 is written 1.",
+     "question": "How many passes complete and does MARCH_STATUS bit 1 become 1?",
+     "answer_kind": "choice",
+     "choices": [
+      "0 passes, done bit set",
+      "test never ends",
+      "runs 1 pass",
+      "unspecified"
+     ]
+    },
+    {
+     "id": "P10",
+     "category": "simultaneous",
+     "requirements": [
+      "REQ-13",
+      "REQ-15"
+     ],
+     "scenario": "MARCH_CTRL bit 0 is written 1 again while a march test is already running at pass 5.",
+     "question": "Does the test restart with counters cleared?",
+     "answer_kind": "choice",
+     "choices": [
+      "restarts, counters cleared",
+      "ignored, continues",
+      "unspecified"
+     ]
+    },
+    {
+     "id": "P11",
+     "category": "boundary",
+     "requirements": [
+      "REQ-18",
+      "REQ-19",
+      "REQ-29"
+     ],
+     "scenario": "A 3-pass run with INJECT_FAULT=1 completes; the fault word is at address 0x2A.",
+     "question": "What are MARCH_ERRS (decimal) and the value of MARCH_FIRST_ERR?",
+     "answer_kind": "choice",
+     "choices": [
+      "3 and 0x2A",
+      "3 and 0xFFFFFFFF",
+      "1 and 0x2A",
+      "unspecified"
+     ]
+    },
+    {
+     "id": "P12",
+     "category": "back_pressure",
+     "requirements": [
+      "REQ-27",
+      "REQ-05"
+     ],
+     "scenario": "Host reads ID at 0x000, then h_re is deasserted for 10 clocks with no new read and no write.",
+     "question": "Does h_rdata still show 0x20920001 after those 10 clocks?",
+     "answer_kind": "bool"
+    },
+    {
+     "id": "P13",
+     "category": "overflow",
+     "requirements": [
+      "REQ-17",
+      "REQ-16"
+     ],
+     "scenario": "A 70000-pass run is requested (MARCH_PASSES exceeds 16 bits) and completes.",
+     "question": "What value do MARCH_STATUS bits 31:16 show?",
+     "answer_kind": "choice",
+     "choices": [
+      "70000 mod 65536 = 4464",
+      "saturates at 65535",
+      "unspecified"
+     ]
+    }
+   ],
+   "answers": {
+    "A": {
+     "P1": "0",
+     "P2": "yes",
+     "P3": "0",
+     "P4": "3232235525",
+     "P5": "0",
+     "P6": "yes",
+     "P7": "unspecified",
+     "P8": "unspecified",
+     "P9": "unspecified",
+     "P10": "unspecified",
+     "P11": "unspecified",
+     "P12": "yes",
+     "P13": "unspecified"
+    },
+    "B": {
+     "P1": "0",
+     "P2": "yes",
+     "P3": "0",
+     "P4": "3221225477",
+     "P5": "0",
+     "P6": "yes",
+     "P7": "undefined",
+     "P8": "unspecified",
+     "P9": "unspecified",
+     "P10": "unspecified",
+     "P11": "unspecified",
+     "P12": "yes",
+     "P13": "unspecified"
+    }
+   }
+  },
+  {
+   "n": 2,
+   "questions": [
+    {
+     "id": "Q10",
+     "text": "What is the top module name and file? The interface lists only clk, led and sfp_tx_disable, but the bench must drive h_we, h_re, h_addr, h_wdata and h_rdata directly. Which module exposes those ports, and what is its name?",
+     "code": "RDY-REV-01",
+     "topic": "Names, files and the build target",
+     "ids": [
+      "REQ-05",
+      "REQ-06",
+      "REQ-23"
+     ],
+     "blocking": true,
+     "source": "reviewer",
+     "answer": "The top-level module is `p2_bram_rom_top` in `rtl/p2_bram_rom_top.sv`. The module exposing the h_* register port is the separate core, `p2_bram_rom_core` in `rtl/p2_bram_rom_core.sv`. It has ports clk, rst (active high), h_we, h_re, h_addr[11:0], h_wdata[31:0], h_rdata[31:0] and the design's own signals. The bench drives the core.",
+     "by": "oracle",
+     "evidence": "- Names and files: the top-level module is named `p2_bram_rom_top` in `rtl/p2_bram_rom_top.sv`; the register-port core (the logic behind the `h_*` port, with no vendor primitive) is a separate module named `p2_bram_rom_core` in `rtl/p2_bram_rom_core.sv`, with ports `clk`, `rst` (active high), `h_we`, `h_re`, `h_addr[11:0]`, `h_wdata[31:0]`, `h_rdata[31:0]` and the design's own signals. Files are SystemVerilog (`.sv`). The bench drives the core."
+    },
+    {
+     "id": "Q11",
+     "text": "REQ-14 runs the all-zero background first and then the all-one background. March C- on an all-one background ends with every word holding all ones, yet REQ-20 requires every RAM word to read 0 afterwards. Which holds: should the one-background run first, should the zero background run last, or should a final clear be added? If the order varies between passes, state how.",
+     "code": "RDY-REV-01",
+     "topic": "Defaults and parameters",
+     "ids": [
+      "REQ-14",
+      "REQ-20"
+     ],
+     "blocking": true,
+     "source": "reviewer",
+     "answer": null,
+     "by": null,
+     "evidence": null
+    },
+    {
+     "id": "Q12",
+     "text": "Which value does h_rdata show for that read? (Scenario: At clock 0 h_we writes SCRATCH=0x11111111 (old 0x22222222) and h_re for SCRATCH is asserted at clock 0 too.) The requirements do not say; what should happen?",
+     "code": "RDY-READ-02",
+     "topic": "requirement",
+     "ids": [
+      "REQ-06",
+      "REQ-03",
+      "REQ-05"
+     ],
+     "blocking": true,
+     "source": "readers",
+     "answer": null,
+     "by": null,
+     "evidence": null
+    }
+   ],
+   "amendments": [],
+   "refused": [],
+   "repairs": {
+    "asked": [
+     {
+      "id": "REQ-14",
+      "code": "RDY-CLEAR-01",
+      "text": "requirement REQ-14 is compound (';' joins two statements): split it into one requirement per checkable statement, each with its own id and proof method",
+      "question": "Please restate REQ-14 so that one statement can be checked: split it into one requirement per checkable statement, each with its own id and proof method",
+      "level": "standard",
+      "topic": "requirement",
+      "blocking": true,
+      "repair": true
+     },
+     {
+      "id": "REQ-32",
+      "code": "RDY-CLEAR-01",
+      "text": "requirement REQ-32 is compound ('and' joins two statements): split it into one requirement per checkable statement, each with its own id and proof method",
+      "question": "Please restate REQ-32 so that one statement can be checked: split it into one requirement per checkable statement, each with its own id and proof method",
+      "level": "standard",
+      "topic": "requirement",
+      "blocking": true,
+      "repair": true
+     },
+     {
+      "id": "REQ-36",
+      "code": "RDY-CLEAR-01",
+      "text": "requirement REQ-36 is compound (', and' joins two statements): split it into one requirement per checkable statement, each with its own id and proof method",
+      "question": "Please restate REQ-36 so that one statement can be checked: split it into one requirement per checkable statement, each with its own id and proof method",
+      "level": "standard",
+      "topic": "requirement",
+      "blocking": true,
+      "repair": true
+     },
+     {
+      "id": "REQ-37",
+      "code": "RDY-CLEAR-01",
+      "text": "requirement REQ-37 is compound (', and' joins two statements): split it into one requirement per checkable statement, each with its own id and proof method",
+      "question": "Please restate REQ-37 so that one statement can be checked: split it into one requirement per checkable statement, each with its own id and proof method",
+      "level": "standard",
+      "topic": "requirement",
+      "blocking": true,
+      "repair": true
+     }
+    ],
+    "revised": [
+     "REQ-14",
+     "REQ-32",
+     "REQ-36",
+     "REQ-37"
+    ],
+    "refused": []
+   },
+   "mechanical": [
+    {
+     "id": "interface",
+     "code": "RDY-IF-04",
+     "text": "output led has no reset value",
+     "question": "What does led drive during and just after reset?",
+     "level": "strict",
+     "topic": "reset strategy",
+     "blocking": true,
+     "repair": false
+    },
+    {
+     "id": "interface",
+     "code": "RDY-IF-05",
+     "text": "output led has no stated latency from a named input event",
+     "question": "How many cycles after which input event does led change (or is it combinational)?",
+     "level": "strict",
+     "topic": "throughput and latency",
+     "blocking": true,
+     "repair": false
+    },
+    {
+     "id": "interface",
+     "code": "RDY-IF-04",
+     "text": "output sfp_tx_disable has no reset value",
+     "question": "What does sfp_tx_disable drive during and just after reset?",
+     "level": "strict",
+     "topic": "reset strategy",
+     "blocking": true,
+     "repair": false
+    },
+    {
+     "id": "interface",
+     "code": "RDY-IF-05",
+     "text": "output sfp_tx_disable has no stated latency from a named input event",
+     "question": "How many cycles after which input event does sfp_tx_disable change (or is it combinational)?",
+     "level": "strict",
+     "topic": "throughput and latency",
+     "blocking": true,
+     "repair": false
+    }
+   ],
+   "review": {
+    "findings": [
+     {
+      "topic": "Names, files and the build target",
+      "ids": [
+       "REQ-05",
+       "REQ-06",
+       "REQ-23"
+      ],
+      "missing_fact": "Top module name, its file, and whether the h_* register port is a port of the top or of a separate module",
+      "question": "What is the top module name and file? The interface lists only clk, led and sfp_tx_disable, but the bench must drive h_we, h_re, h_addr, h_wdata and h_rdata directly. Which module exposes those ports, and what is its name?",
+      "blocking": true,
+      "why": "The bench cannot connect to the register port without the module name and port list, and the simulation does not include jtag_bus."
+     },
+     {
+      "topic": "Defaults and parameters",
+      "ids": [
+       "REQ-14",
+       "REQ-20"
+      ],
+      "missing_fact": "Order of the zero and one backgrounds within a pass, or what the final RAM contents are",
+      "question": "REQ-14 runs the all-zero background first and then the all-one background. March C- on an all-one background ends with every word holding all ones, yet REQ-20 requires every RAM word to read 0 afterwards. Which holds: should the one-background run first, should the zero background run last, or should a final clear be added? If the order varies between passes, state how.",
+      "blocking": true,
+      "why": "The two requirements conflict, and the final RAM contents are read directly by the check script."
+     }
+    ],
+    "verdict": "not_ready",
+    "compliance": 0
+   },
+   "probes": {
+    "count": 13,
+    "categories": [
+     "boundary",
+     "invalid_input",
+     "mid_operation_reset",
+     "overflow",
+     "reset",
+     "simultaneous",
+     "unmapped"
+    ],
+    "problems": []
+   },
+   "agreement": {
+    "probes": 13,
+    "agreed": 12,
+    "rate": 0.9231,
+    "disagreements": [],
+    "gaps": [
+     {
+      "probe": "P11",
+      "scenario": "At clock 0 h_we writes SCRATCH=0x11111111 (old 0x22222222) and h_re for SCRATCH is asserted at clock 0 too.",
+      "question": "Which value does h_rdata show for that read?",
+      "answers": {
+       "A": "unspecified",
+       "B": "unspecified"
+      },
+      "requirements": [
+       "REQ-06",
+       "REQ-03",
+       "REQ-05"
+      ]
+     }
+    ]
+   },
+   "probe_set": [
+    {
+     "id": "P1",
+     "category": "reset",
+     "answer_kind": "int",
+     "requirements": [
+      "REQ-25",
+      "REQ-33",
+      "REQ-35"
+     ]
+    },
+    {
+     "id": "P2",
+     "category": "boundary",
+     "answer_kind": "int",
+     "requirements": [
+      "REQ-28",
+      "REQ-10",
+      "REQ-09"
+     ]
+    },
+    {
+     "id": "P3",
+     "category": "boundary",
+     "answer_kind": "int",
+     "requirements": [
+      "REQ-34",
+      "REQ-16",
+      "REQ-35"
+     ]
+    },
+    {
+     "id": "P4",
+     "category": "simultaneous",
+     "answer_kind": "bool",
+     "requirements": [
+      "REQ-37",
+      "REQ-42",
+      "REQ-13"
+     ]
+    },
+    {
+     "id": "P5",
+     "category": "overflow",
+     "answer_kind": "int",
+     "requirements": [
+      "REQ-38",
+      "REQ-16",
+      "REQ-14"
+     ]
+    },
+    {
+     "id": "P6",
+     "category": "unmapped",
+     "answer_kind": "int",
+     "requirements": [
+      "REQ-04",
+      "REQ-26"
+     ]
+    },
+    {
+     "id": "P7",
+     "category": "mid_operation_reset",
+     "answer_kind": "int",
+     "requirements": [
+      "REQ-33",
+      "REQ-15",
+      "REQ-36"
+     ]
+    },
+    {
+     "id": "P8",
+     "category": "invalid_input",
+     "answer_kind": "int",
+     "requirements": [
+      "REQ-30",
+      "REQ-31",
+      "REQ-18",
+      "REQ-19"
+     ]
+    },
+    {
+     "id": "P9",
+     "category": "boundary",
+     "answer_kind": "choice",
+     "requirements": [
+      "REQ-41",
+      "REQ-36",
+      "REQ-15"
+     ]
+    },
+    {
+     "id": "P10",
+     "category": "boundary",
+     "answer_kind": "int",
+     "requirements": [
+      "REQ-05",
+      "REQ-27",
+      "REQ-03"
+     ]
+    },
+    {
+     "id": "P11",
+     "category": "simultaneous",
+     "answer_kind": "choice",
+     "requirements": [
+      "REQ-06",
+      "REQ-03",
+      "REQ-05"
+     ]
+    },
+    {
+     "id": "P12",
+     "category": "boundary",
+     "answer_kind": "int",
+     "requirements": [
+      "REQ-20",
+      "REQ-12",
+      "REQ-14"
+     ]
+    },
+    {
+     "id": "P13",
+     "category": "boundary",
+     "answer_kind": "int",
+     "requirements": [
+      "REQ-39",
+      "REQ-14",
+      "REQ-20"
+     ]
+    }
+   ],
+   "probe_text": [
+    {
+     "id": "P1",
+     "category": "reset",
+     "requirements": [
+      "REQ-25",
+      "REQ-33",
+      "REQ-35"
+     ],
+     "scenario": "SCRATCH holds 0xDEADBEEF and MARCH_STATUS shows DONE=1 with 5 passes completed; the power-on reset is asserted again for 8 clocks.",
+     "question": "After reset releases, what does a read of SCRATCH return (hex value, as a decimal int)?",
+     "answer_kind": "int"
+    },
+    {
+     "id": "P2",
+     "category": "boundary",
+     "requirements": [
+      "REQ-28",
+      "REQ-10",
+      "REQ-09"
+     ],
+     "scenario": "AUTOINC = 1 and MEM_ADDR = 1023. One RAM_DATA read is performed.",
+     "question": "What is MEM_ADDR after the access?",
+     "answer_kind": "int"
+    },
+    {
+     "id": "P3",
+     "category": "boundary",
+     "requirements": [
+      "REQ-34",
+      "REQ-16",
+      "REQ-35"
+     ],
+     "scenario": "MARCH_PASSES is written with 0, then MARCH_CTRL bit 0 is written to 1, and the test runs to completion with no fault.",
+     "question": "What is the number in MARCH_STATUS bits 31:16 at the end, and what does MARCH_PASSES read back? Give the completed-pass count.",
+     "answer_kind": "int"
+    },
+    {
+     "id": "P4",
+     "category": "simultaneous",
+     "requirements": [
+      "REQ-37",
+      "REQ-42",
+      "REQ-13"
+     ],
+     "scenario": "A march test with MARCH_PASSES = 10 is running with 4 passes completed and 2 errors counted (INJECT_FAULT earlier set). The host writes 1 to MARCH_CTRL bit 0 again.",
+     "question": "Does the test restart, clearing the pass count and error counter?",
+     "answer_kind": "bool"
+    },
+    {
+     "id": "P5",
+     "category": "overflow",
+     "requirements": [
+      "REQ-38",
+      "REQ-16",
+      "REQ-14"
+     ],
+     "scenario": "MARCH_PASSES is written with 0x10000 (bit 16 set, lower 16 bits zero) and the test is started.",
+     "question": "How many passes does the test run, given that the register is 16 bits wide and 0 means 1 pass?",
+     "answer_kind": "int"
+    },
+    {
+     "id": "P6",
+     "category": "unmapped",
+     "requirements": [
+      "REQ-04",
+      "REQ-26"
+     ],
+     "scenario": "The host writes 0x12345678 to an unmapped address 0x3F0, then reads 0x3F0, then reads SCRATCH at 0x008 (previously 0xAAAA5555).",
+     "question": "What does the read of 0x3F0 return, and is SCRATCH changed? Give the value read from 0x3F0.",
+     "answer_kind": "int"
+    },
+    {
+     "id": "P7",
+     "category": "mid_operation_reset",
+     "requirements": [
+      "REQ-33",
+      "REQ-15",
+      "REQ-36"
+     ],
+     "scenario": "A march test is running (BUSY=1, 2 passes completed of 200) when the internal reset asserts for 8 clocks, then releases.",
+     "question": "After reset release, what does MARCH_STATUS read, as an integer?",
+     "answer_kind": "int"
+    },
+    {
+     "id": "P8",
+     "category": "invalid_input",
+     "requirements": [
+      "REQ-30",
+      "REQ-31",
+      "REQ-18",
+      "REQ-19"
+     ],
+     "scenario": "INJECT_FAULT = 1, MARCH_PASSES = 3, test started and completed.",
+     "question": "What are MARCH_ERRS and MARCH_FIRST_ERR (give MARCH_ERRS)?",
+     "answer_kind": "int"
+    },
+    {
+     "id": "P9",
+     "category": "boundary",
+     "requirements": [
+      "REQ-41",
+      "REQ-36",
+      "REQ-15"
+     ],
+     "scenario": "The last pass of a march test finishes at clock N.",
+     "question": "Can a read ever observe BUSY=0 and DONE=0, or BUSY=1 and DONE=1, at the transition?",
+     "answer_kind": "choice",
+     "choices": [
+      "BUSY=0 and DONE=0 possible",
+      "BUSY=1 and DONE=1 possible",
+      "neither, they change in same clock"
+     ]
+    },
+    {
+     "id": "P10",
+     "category": "boundary",
+     "requirements": [
+      "REQ-05",
+      "REQ-27",
+      "REQ-03"
+     ],
+     "scenario": "h_re is asserted at clock 0 for SCRATCH (0xAAAA5555), and no further reads are issued.",
+     "question": "What is the maximum number of clocks after h_re by which h_rdata must show the value, and does it keep showing it until the next read?",
+     "answer_kind": "int"
+    },
+    {
+     "id": "P11",
+     "category": "simultaneous",
+     "requirements": [
+      "REQ-06",
+      "REQ-03",
+      "REQ-05"
+     ],
+     "scenario": "At clock 0 h_we writes SCRATCH=0x11111111 (old 0x22222222) and h_re for SCRATCH is asserted at clock 0 too.",
+     "question": "Which value does h_rdata show for that read?",
+     "answer_kind": "choice",
+     "choices": [
+      "0x22222222",
+      "0x11111111",
+      "either is permitted"
+     ]
+    },
+    {
+     "id": "P12",
+     "category": "boundary",
+     "requirements": [
+      "REQ-20",
+      "REQ-12",
+      "REQ-14"
+     ],
+     "scenario": "RAM word 7 was written 0x12345678 by the host, then a march test of 1 pass completed with no fault.",
+     "question": "What does RAM word 7 read afterwards?",
+     "answer_kind": "int"
+    },
+    {
+     "id": "P13",
+     "category": "boundary",
+     "requirements": [
+      "REQ-39",
+      "REQ-14",
+      "REQ-20"
+     ],
+     "scenario": "A 2-pass march test runs with no fault. Each pass runs the zero background and then the one background.",
+     "question": "How many total March C- runs over the 1024 words happen across the 2 passes?",
+     "answer_kind": "int"
+    }
+   ],
+   "answers": {
+    "A": {
+     "P1": "0",
+     "P2": "0",
+     "P3": "1",
+     "P4": "no",
+     "P5": "1",
+     "P6": "0",
+     "P7": "0",
+     "P8": "3",
+     "P9": "neither, they change in same clock",
+     "P10": "2",
+     "P11": "unspecified",
+     "P12": "0",
+     "P13": "4"
+    },
+    "B": {
+     "P1": "0",
+     "P2": "0",
+     "P3": "1",
+     "P4": "no",
+     "P5": "1",
+     "P6": "0",
+     "P7": "0",
+     "P8": "3",
+     "P9": "neither, they change in same clock",
+     "P10": "2",
+     "P11": "unspecified",
+     "P12": "0",
+     "P13": "4"
+    }
+   }
+  },
+  {
+   "n": 3,
+   "questions": [
+    {
+     "id": "Q13",
+     "text": "What are MARCH_ERRS after the first run, and MARCH_FIRST_ERR after the second run (give MARCH_FIRST_ERR in decimal)? (Scenario: INJECT_FAULT = 1, MARCH_PASSES = 3, test runs to completion. Then a second test runs with INJECT_FAULT = 0 and MARCH_PASSES = 1.) Two careful readers of the requirements disagree about this; what is the intended behaviour?",
+     "code": "RDY-READ-01",
+     "topic": "requirement",
+     "ids": [
+      "REQ-18",
+      "REQ-30",
+      "REQ-19",
+      "REQ-31",
+      "REQ-29"
+     ],
+     "blocking": true,
+     "source": "readers",
+     "answer": null,
+     "by": null,
+     "evidence": null
+    },
+    {
+     "id": "Q14",
+     "text": "What value does RAM_DATA return (hex as decimal integer)? (Scenario: Straight after configuration, no writes. AUTOINC = 0, MEM_ADDR = 1023, host reads RAM_DATA.) Two careful readers of the requirements disagree about this; what is the intended behaviour?",
+     "code": "RDY-READ-01",
+     "topic": "requirement",
+     "ids": [
+      "REQ-08",
+      "REQ-07",
+      "REQ-10"
+     ],
+     "blocking": true,
+     "source": "readers",
+     "answer": "RAM_DATA returns 0xC0DE03FF, which is 3235775487 as a decimal integer. Word 1023 holds 0xC0DE0000 + 1023 straight after configuration. With AUTOINC = 0, the read does not change MEM_ADDR.",
+     "by": "oracle",
+     "evidence": "word *i* holds 0xC0DE0000 + *i* straight after configuration, before anyone writes to it."
+    },
+    {
+     "id": "Q15",
+     "text": "Does the read at T+1 return 0xAA? (Scenario: Host asserts h_we at address 0x008 with 0xAA at clock T, and h_re at 0x008 at clock T+1.) The requirements do not say; what should happen?",
+     "code": "RDY-READ-02",
+     "topic": "requirement",
+     "ids": [
+      "REQ-06",
+      "REQ-03",
+      "REQ-05"
+     ],
+     "blocking": true,
+     "source": "readers",
+     "answer": "Yes. A write at T takes effect at T+1, so a read pulsed at T+1 sees the written value 0xAA. h_rdata must show it within 2 clocks and hold it. SCRATCH is a plain RW register that reads back what was written.",
+     "by": "oracle",
+     "evidence": "A write takes effect the clock after `h_we`. After `h_re`, `h_rdata` must show the addressed register within 2 clocks and hold it. Unmapped"
+    }
+   ],
+   "amendments": [
+    "REQ-08",
+    "REQ-06"
+   ],
+   "refused": [],
+   "mechanical": [
+    {
+     "id": "interface",
+     "code": "RDY-IF-04",
+     "text": "output led has no reset value",
+     "question": "What does led drive during and just after reset?",
+     "level": "strict",
+     "topic": "reset strategy",
+     "blocking": true,
+     "repair": false
+    },
+    {
+     "id": "interface",
+     "code": "RDY-IF-05",
+     "text": "output led has no stated latency from a named input event",
+     "question": "How many cycles after which input event does led change (or is it combinational)?",
+     "level": "strict",
+     "topic": "throughput and latency",
+     "blocking": true,
+     "repair": false
+    },
+    {
+     "id": "interface",
+     "code": "RDY-IF-04",
+     "text": "output sfp_tx_disable has no reset value",
+     "question": "What does sfp_tx_disable drive during and just after reset?",
+     "level": "strict",
+     "topic": "reset strategy",
+     "blocking": true,
+     "repair": false
+    },
+    {
+     "id": "interface",
+     "code": "RDY-IF-05",
+     "text": "output sfp_tx_disable has no stated latency from a named input event",
+     "question": "How many cycles after which input event does sfp_tx_disable change (or is it combinational)?",
+     "level": "strict",
+     "topic": "throughput and latency",
+     "blocking": true,
+     "repair": false
+    }
+   ],
+   "review": {
+    "findings": [],
+    "verdict": "ready",
+    "compliance": 0
+   },
+   "probes": {
+    "count": 12,
+    "categories": [
+     "back_pressure",
+     "boundary",
+     "invalid_input",
+     "mid_operation_reset",
+     "overflow",
+     "power_up",
+     "reset",
+     "simultaneous",
+     "unmapped"
+    ],
+    "problems": []
+   },
+   "agreement": {
+    "probes": 12,
+    "agreed": 9,
+    "rate": 0.75,
+    "disagreements": [
+     {
+      "probe": "P7",
+      "scenario": "INJECT_FAULT = 1, MARCH_PASSES = 3, test runs to completion. Then a second test runs with INJECT_FAULT = 0 and MARCH_PASSES = 1.",
+      "question": "What are MARCH_ERRS after the first run, and MARCH_FIRST_ERR after the second run (give MARCH_FIRST_ERR in decimal)?",
+      "category": "overflow",
+      "answers": {
+       "A": "unspecified",
+       "B": "3"
+      },
+      "requirements": [
+       "REQ-18",
+       "REQ-30",
+       "REQ-19",
+       "REQ-31",
+       "REQ-29"
+      ]
+     },
+     {
+      "probe": "P9",
+      "scenario": "Straight after configuration, no writes. AUTOINC = 0, MEM_ADDR = 1023, host reads RAM_DATA.",
+      "question": "What value does RAM_DATA return (hex as decimal integer)?",
+      "category": "power_up",
+      "answers": {
+       "A": "3235774463",
+       "B": "3235823615"
+      },
+      "requirements": [
+       "REQ-08",
+       "REQ-07",
+       "REQ-10"
+      ]
+     }
+    ],
+    "gaps": [
+     {
+      "probe": "P11",
+      "scenario": "Host asserts h_we at address 0x008 with 0xAA at clock T, and h_re at 0x008 at clock T+1.",
+      "question": "Does the read at T+1 return 0xAA?",
+      "answers": {
+       "A": "unspecified",
+       "B": "unspecified"
+      },
+      "requirements": [
+       "REQ-06",
+       "REQ-03",
+       "REQ-05"
+      ]
+     }
+    ]
+   },
+   "probe_set": [
+    {
+     "id": "P1",
+     "category": "reset",
+     "answer_kind": "int",
+     "requirements": [
+      "REQ-25",
+      "REQ-03"
+     ]
+    },
+    {
+     "id": "P2",
+     "category": "unmapped",
+     "answer_kind": "int",
+     "requirements": [
+      "REQ-04",
+      "REQ-26"
+     ]
+    },
+    {
+     "id": "P3",
+     "category": "boundary",
+     "answer_kind": "int",
+     "requirements": [
+      "REQ-28",
+      "REQ-10",
+      "REQ-09"
+     ]
+    },
+    {
+     "id": "P4",
+     "category": "boundary",
+     "answer_kind": "int",
+     "requirements": [
+      "REQ-34",
+      "REQ-35",
+      "REQ-16",
+      "REQ-36"
+     ]
+    },
+    {
+     "id": "P5",
+     "category": "invalid_input",
+     "answer_kind": "bool",
+     "requirements": [
+      "REQ-37",
+      "REQ-42",
+      "REQ-16"
+     ]
+    },
+    {
+     "id": "P6",
+     "category": "simultaneous",
+     "answer_kind": "choice",
+     "requirements": [
+      "REQ-41",
+      "REQ-36",
+      "REQ-15"
+     ]
+    },
+    {
+     "id": "P7",
+     "category": "overflow",
+     "answer_kind": "int",
+     "requirements": [
+      "REQ-18",
+      "REQ-30",
+      "REQ-19",
+      "REQ-31",
+      "REQ-29"
+     ]
+    },
+    {
+     "id": "P8",
+     "category": "mid_operation_reset",
+     "answer_kind": "int",
+     "requirements": [
+      "REQ-33",
+      "REQ-15",
+      "REQ-13"
+     ]
+    },
+    {
+     "id": "P9",
+     "category": "power_up",
+     "answer_kind": "int",
+     "requirements": [
+      "REQ-08",
+      "REQ-07",
+      "REQ-10"
+     ]
+    },
+    {
+     "id": "P10",
+     "category": "boundary",
+     "answer_kind": "bool",
+     "requirements": [
+      "REQ-05",
+      "REQ-27"
+     ]
+    },
+    {
+     "id": "P11",
+     "category": "back_pressure",
+     "answer_kind": "bool",
+     "requirements": [
+      "REQ-06",
+      "REQ-03",
+      "REQ-05"
+     ]
+    },
+    {
+     "id": "P12",
+     "category": "boundary",
+     "answer_kind": "int",
+     "requirements": [
+      "REQ-20",
+      "REQ-12",
+      "REQ-14"
+     ]
+    }
+   ],
+   "probe_text": [
+    {
+     "id": "P1",
+     "category": "reset",
+     "requirements": [
+      "REQ-25",
+      "REQ-03"
+     ],
+     "scenario": "Firmware writes 0xDEADBEEF to SCRATCH (0x008), confirms the readback, then rst is asserted for 8 clocks and released. SCRATCH is read afterwards.",
+     "question": "What 32-bit value does SCRATCH read after reset (decimal)?",
+     "answer_kind": "int"
+    },
+    {
+     "id": "P2",
+     "category": "unmapped",
+     "requirements": [
+      "REQ-04",
+      "REQ-26"
+     ],
+     "scenario": "Host writes 0x12345678 to unmapped address 0x00C, then reads 0x00C, then reads SCRATCH at 0x008, which held 0x55 before the write.",
+     "question": "What is the value read from 0x00C (decimal)?",
+     "answer_kind": "int"
+    },
+    {
+     "id": "P3",
+     "category": "boundary",
+     "requirements": [
+      "REQ-28",
+      "REQ-10",
+      "REQ-09"
+     ],
+     "scenario": "AUTOINC = 1, MEM_ADDR = 1023. Host reads ROM_DATA once, then reads MEM_ADDR.",
+     "question": "What value does MEM_ADDR read after the single ROM_DATA read (decimal)?",
+     "answer_kind": "int"
+    },
+    {
+     "id": "P4",
+     "category": "boundary",
+     "requirements": [
+      "REQ-34",
+      "REQ-35",
+      "REQ-16",
+      "REQ-36"
+     ],
+     "scenario": "Host writes 0 to MARCH_PASSES, reads MARCH_PASSES back, starts the march test via MARCH_CTRL bit 0 and waits for DONE. MARCH_STATUS is then read.",
+     "question": "What is the value of MARCH_STATUS bits 31:16 after DONE (decimal)?",
+     "answer_kind": "int"
+    },
+    {
+     "id": "P5",
+     "category": "invalid_input",
+     "requirements": [
+      "REQ-37",
+      "REQ-42",
+      "REQ-16"
+     ],
+     "scenario": "A 200-pass march test is running with 50 passes completed. Host writes 1 to MARCH_CTRL bit 0 again.",
+     "question": "Does the running test restart, with counters cleared and passes completed returning to 0?",
+     "answer_kind": "bool"
+    },
+    {
+     "id": "P6",
+     "category": "simultaneous",
+     "requirements": [
+      "REQ-41",
+      "REQ-36",
+      "REQ-15"
+     ],
+     "scenario": "The last pass of a march test finishes at clock N, with MARCH_STATUS sampled every clock.",
+     "question": "Is there any clock where BUSY and DONE are both 1 or both 0 at the transition?",
+     "answer_kind": "choice",
+     "choices": [
+      "both 1 for one clock",
+      "both 0 for one clock",
+      "never, they switch in the same clock",
+      "unspecified order"
+     ]
+    },
+    {
+     "id": "P7",
+     "category": "overflow",
+     "requirements": [
+      "REQ-18",
+      "REQ-30",
+      "REQ-19",
+      "REQ-31",
+      "REQ-29"
+     ],
+     "scenario": "INJECT_FAULT = 1, MARCH_PASSES = 3, test runs to completion. Then a second test runs with INJECT_FAULT = 0 and MARCH_PASSES = 1.",
+     "question": "What are MARCH_ERRS after the first run, and MARCH_FIRST_ERR after the second run (give MARCH_FIRST_ERR in decimal)?",
+     "answer_kind": "int"
+    },
+    {
+     "id": "P8",
+     "category": "mid_operation_reset",
+     "requirements": [
+      "REQ-33",
+      "REQ-15",
+      "REQ-13"
+     ],
+     "scenario": "A march test is running with 10 passes completed when the internal reset is asserted; after release MARCH_STATUS is read without starting a new test.",
+     "question": "What does MARCH_STATUS read (decimal)?",
+     "answer_kind": "int"
+    },
+    {
+     "id": "P9",
+     "category": "power_up",
+     "requirements": [
+      "REQ-08",
+      "REQ-07",
+      "REQ-10"
+     ],
+     "scenario": "Straight after configuration, no writes. AUTOINC = 0, MEM_ADDR = 1023, host reads RAM_DATA.",
+     "question": "What value does RAM_DATA return (hex as decimal integer)?",
+     "answer_kind": "int"
+    },
+    {
+     "id": "P10",
+     "category": "boundary",
+     "requirements": [
+      "REQ-05",
+      "REQ-27"
+     ],
+     "scenario": "Host pulses h_re for one clock at address 0x000, then changes h_addr to 0x008 on the next clock with no h_re.",
+     "question": "Does h_rdata still show the ID register value 0x20920001 after being shown, in the clocks following?",
+     "answer_kind": "bool"
+    },
+    {
+     "id": "P11",
+     "category": "back_pressure",
+     "requirements": [
+      "REQ-06",
+      "REQ-03",
+      "REQ-05"
+     ],
+     "scenario": "Host asserts h_we at address 0x008 with 0xAA at clock T, and h_re at 0x008 at clock T+1.",
+     "question": "Does the read at T+1 return 0xAA?",
+     "answer_kind": "bool"
+    },
+    {
+     "id": "P12",
+     "category": "boundary",
+     "requirements": [
+      "REQ-20",
+      "REQ-12",
+      "REQ-14"
+     ],
+     "scenario": "Host writes 0xFFFFFFFF to RAM word 7, then runs a 1-pass march test to completion, then reads RAM word 7.",
+     "question": "What does RAM word 7 read (decimal)?",
+     "answer_kind": "int"
+    }
+   ],
+   "answers": {
+    "A": {
+     "P1": "0",
+     "P2": "0",
+     "P3": "0",
+     "P4": "1",
+     "P5": "no",
+     "P6": "never, they switch in the same clock",
+     "P7": "unspecified",
+     "P8": "0",
+     "P9": "3235774463",
+     "P10": "yes",
+     "P11": "unspecified",
+     "P12": "0"
+    },
+    "B": {
+     "P1": "0",
+     "P2": "0",
+     "P3": "0",
+     "P4": "1",
+     "P5": "no",
+     "P6": "never, they switch in the same clock",
+     "P7": "3 and 4294967295",
+     "P8": "0",
+     "P9": "3235823615",
+     "P10": "yes",
+     "P11": "unspecified",
+     "P12": "0"
+    }
+   }
+  },
+  {
+   "n": 4,
+   "questions": [
+    {
+     "id": "Q16",
+     "text": "the probe set is not usable: no probe of category 'reset', which applies to this design",
+     "code": "RDY-PROBE-01",
+     "topic": "requirement",
+     "ids": [],
+     "blocking": true,
+     "source": "readers",
+     "answer": "Reset behavior is specified. On reset: MEM_ADDR 0, MEM_CTRL 0 (AUTOINC off), MARCH_CTRL 0, MARCH_PASSES 1, MARCH_STATUS 0, MARCH_ERRS 0, MARCH_FIRST_ERR 0xFFFFFFFF. SCRATCH also resets to 0. The RAM contents are not reset by the bus reset and keep 0xC0DE0000 + i from configuration. Reset is active high on `rst`, and it is held for a few clocks at start.",
+     "by": "oracle",
+     "evidence": "- Reset: MEM_ADDR 0, MEM_CTRL 0 (AUTOINC off), MARCH_CTRL 0, MARCH_PASSES 1, MARCH_STATUS 0, MARCH_ERRS 0, MARCH_FIRST_ERR 0xFFFFFFFF. The RAM contents are not reset by the bus reset; they hold 0xC0DE0000 + i from configuration."
+    }
+   ],
+   "amendments": [],
+   "refused": [],
+   "mechanical": [
+    {
+     "id": "interface",
+     "code": "RDY-IF-04",
+     "text": "output led has no reset value",
+     "question": "What does led drive during and just after reset?",
+     "level": "strict",
+     "topic": "reset strategy",
+     "blocking": true,
+     "repair": false
+    },
+    {
+     "id": "interface",
+     "code": "RDY-IF-05",
+     "text": "output led has no stated latency from a named input event",
+     "question": "How many cycles after which input event does led change (or is it combinational)?",
+     "level": "strict",
+     "topic": "throughput and latency",
+     "blocking": true,
+     "repair": false
+    },
+    {
+     "id": "interface",
+     "code": "RDY-IF-04",
+     "text": "output sfp_tx_disable has no reset value",
+     "question": "What does sfp_tx_disable drive during and just after reset?",
+     "level": "strict",
+     "topic": "reset strategy",
+     "blocking": true,
+     "repair": false
+    },
+    {
+     "id": "interface",
+     "code": "RDY-IF-05",
+     "text": "output sfp_tx_disable has no stated latency from a named input event",
+     "question": "How many cycles after which input event does sfp_tx_disable change (or is it combinational)?",
+     "level": "strict",
+     "topic": "throughput and latency",
+     "blocking": true,
+     "repair": false
+    }
+   ],
+   "review": {
+    "findings": [],
+    "verdict": "ready",
+    "compliance": 0
+   },
+   "probes": {
+    "count": 13,
+    "categories": [
+     "boundary",
+     "invalid_input",
+     "mid_operation_reset",
+     "overflow",
+     "power_up",
+     "simultaneous",
+     "unmapped"
+    ],
+    "problems": [
+     "no probe of category 'reset', which applies to this design"
+    ]
+   }
+  }
+ ],
+ "frozen": null,
+ "stop": "the round limit (4) was reached with questions still open",
+ "answerer": "oracle",
+ "finished": "2026-11-26T17:14:57Z",
+ "model_calls": 20,
+ "calls_by_role": {
+  "amend": 4,
+  "probes": 4,
+  "reader_a": 3,
+  "reader_b": 3,
+  "repair": 2,
+  "review": 4
+ },
+ "open": []
+}

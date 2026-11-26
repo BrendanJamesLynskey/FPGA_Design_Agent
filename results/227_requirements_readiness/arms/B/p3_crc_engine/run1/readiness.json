@@ -1,0 +1,2337 @@
+{
+ "schema": "fpga-force/readiness/v1",
+ "level": "standard",
+ "limits": {
+  "max_rounds": 4,
+  "max_calls": 60,
+  "max_questions": 25
+ },
+ "checklist": "procedures/requirements-review/pre-build-review@sha256:c6081e7cd937",
+ "started": "2026-11-26T17:09:13Z",
+ "rounds": [
+  {
+   "n": 1,
+   "questions": [
+    {
+     "id": "Q1",
+     "text": "What is BUSY_CYCLES: does the tail push add a cycle (give the BUSY_CYCLES value)? (Scenario: After INIT, a message of 2 full words is pushed via PUSH4, followed by PUSH_N with TAIL_LEN 3 (5+... 11 bytes total).) The requirements do not say; what should happen?",
+     "code": "RDY-READ-02",
+     "topic": "requirement",
+     "ids": [
+      "REQ-07",
+      "REQ-10",
+      "REQ-06"
+     ],
+     "blocking": true,
+     "source": "readers",
+     "answer": "Yes, the tail push adds a cycle. BUSY_CYCLES counts one per clock in which a push is processed, and a PUSH_N with N>0 counts. The 2 PUSH4 words give 2 and the PUSH_N with TAIL_LEN 3 adds 1, so BUSY_CYCLES = 3 (BYTE_COUNT = 11).",
+     "by": "oracle",
+     "evidence": "- BYTE_COUNT is 32 bits and wraps. BUSY_CYCLES counts one per clock in which a push is processed (PUSH4 or PUSH_N with N>0), it is 32 bits and wraps; a PUSH_N with N = 0 does not count."
+    },
+    {
+     "id": "Q2",
+     "text": "Does the ID register still read 0x20930001 after the write? (Scenario: CTRL bit 0 was written to 1 and then INIT is issued. A write to ID at 0x000 with 0xFFFFFFFF is also performed.) The requirements do not say; what should happen?",
+     "code": "RDY-READ-02",
+     "topic": "requirement",
+     "ids": [
+      "REQ-22"
+     ],
+     "blocking": true,
+     "source": "readers",
+     "answer": "Yes. ID is read-only, so the write of 0xFFFFFFFF to 0x000 is ignored. INIT only clears the CRC state, BYTE_COUNT and BUSY_CYCLES, so ID keeps reading 0x20930001.",
+     "by": "oracle",
+     "evidence": "Writes to read-only registers are ignored."
+    }
+   ],
+   "amendments": [],
+   "refused": [],
+   "repairs": {
+    "asked": [
+     {
+      "id": "REQ-03",
+      "code": "RDY-CLEAR-01",
+      "text": "requirement REQ-03 is compound ('and' joins two statements): split it into one requirement per checkable statement, each with its own id and proof method",
+      "question": "Please restate REQ-03 so that one statement can be checked: split it into one requirement per checkable statement, each with its own id and proof method",
+      "level": "standard",
+      "topic": "requirement",
+      "blocking": true,
+      "repair": true
+     },
+     {
+      "id": "REQ-08",
+      "code": "RDY-CLEAR-01",
+      "text": "requirement REQ-08 is compound (', and' joins two statements): split it into one requirement per checkable statement, each with its own id and proof method",
+      "question": "Please restate REQ-08 so that one statement can be checked: split it into one requirement per checkable statement, each with its own id and proof method",
+      "level": "standard",
+      "topic": "requirement",
+      "blocking": true,
+      "repair": true
+     },
+     {
+      "id": "REQ-12",
+      "code": "RDY-CLEAR-01",
+      "text": "requirement REQ-12 is compound ('and' joins two statements): split it into one requirement per checkable statement, each with its own id and proof method",
+      "question": "Please restate REQ-12 so that one statement can be checked: split it into one requirement per checkable statement, each with its own id and proof method",
+      "level": "standard",
+      "topic": "requirement",
+      "blocking": true,
+      "repair": true
+     },
+     {
+      "id": "REQ-14",
+      "code": "RDY-CLEAR-01",
+      "text": "requirement REQ-14 is compound ('and' joins two statements): split it into one requirement per checkable statement, each with its own id and proof method",
+      "question": "Please restate REQ-14 so that one statement can be checked: split it into one requirement per checkable statement, each with its own id and proof method",
+      "level": "standard",
+      "topic": "requirement",
+      "blocking": true,
+      "repair": true
+     },
+     {
+      "id": "REQ-15",
+      "code": "RDY-CLEAR-01",
+      "text": "requirement REQ-15 is compound ('and' joins two statements): split it into one requirement per checkable statement, each with its own id and proof method",
+      "question": "Please restate REQ-15 so that one statement can be checked: split it into one requirement per checkable statement, each with its own id and proof method",
+      "level": "standard",
+      "topic": "requirement",
+      "blocking": true,
+      "repair": true
+     },
+     {
+      "id": "REQ-17",
+      "code": "RDY-CLEAR-01",
+      "text": "requirement REQ-17 is compound ('and' joins two statements): split it into one requirement per checkable statement, each with its own id and proof method",
+      "question": "Please restate REQ-17 so that one statement can be checked: split it into one requirement per checkable statement, each with its own id and proof method",
+      "level": "standard",
+      "topic": "requirement",
+      "blocking": true,
+      "repair": true
+     }
+    ],
+    "revised": [
+     "REQ-03",
+     "REQ-08",
+     "REQ-12",
+     "REQ-14",
+     "REQ-15",
+     "REQ-17"
+    ],
+    "refused": []
+   },
+   "mechanical": [
+    {
+     "id": "interface",
+     "code": "RDY-IF-03",
+     "text": "port led has no clock domain (the design has 2 clocks)",
+     "question": "Which clock is led synchronous to?",
+     "level": "strict",
+     "topic": "clocks and crossings",
+     "blocking": true,
+     "repair": false
+    },
+    {
+     "id": "interface",
+     "code": "RDY-IF-04",
+     "text": "output led has no reset value",
+     "question": "What does led drive during and just after reset?",
+     "level": "strict",
+     "topic": "reset strategy",
+     "blocking": true,
+     "repair": false
+    },
+    {
+     "id": "interface",
+     "code": "RDY-IF-05",
+     "text": "output led has no stated latency from a named input event",
+     "question": "How many cycles after which input event does led change (or is it combinational)?",
+     "level": "strict",
+     "topic": "throughput and latency",
+     "blocking": true,
+     "repair": false
+    },
+    {
+     "id": "interface",
+     "code": "RDY-IF-03",
+     "text": "port sfp_tx_disable has no clock domain (the design has 2 clocks)",
+     "question": "Which clock is sfp_tx_disable synchronous to?",
+     "level": "strict",
+     "topic": "clocks and crossings",
+     "blocking": true,
+     "repair": false
+    },
+    {
+     "id": "interface",
+     "code": "RDY-IF-04",
+     "text": "output sfp_tx_disable has no reset value",
+     "question": "What does sfp_tx_disable drive during and just after reset?",
+     "level": "strict",
+     "topic": "reset strategy",
+     "blocking": true,
+     "repair": false
+    },
+    {
+     "id": "interface",
+     "code": "RDY-IF-05",
+     "text": "output sfp_tx_disable has no stated latency from a named input event",
+     "question": "How many cycles after which input event does sfp_tx_disable change (or is it combinational)?",
+     "level": "strict",
+     "topic": "throughput and latency",
+     "blocking": true,
+     "repair": false
+    },
+    {
+     "id": "interface",
+     "code": "RDY-IF-03",
+     "text": "port jtag_bus.clk has no clock domain (the design has 2 clocks)",
+     "question": "Which clock is jtag_bus.clk synchronous to?",
+     "level": "strict",
+     "topic": "clocks and crossings",
+     "blocking": true,
+     "repair": false
+    },
+    {
+     "id": "interface",
+     "code": "RDY-IF-03",
+     "text": "port h_we has no clock domain (the design has 2 clocks)",
+     "question": "Which clock is h_we synchronous to?",
+     "level": "strict",
+     "topic": "clocks and crossings",
+     "blocking": true,
+     "repair": false
+    },
+    {
+     "id": "interface",
+     "code": "RDY-IF-03",
+     "text": "port h_re has no clock domain (the design has 2 clocks)",
+     "question": "Which clock is h_re synchronous to?",
+     "level": "strict",
+     "topic": "clocks and crossings",
+     "blocking": true,
+     "repair": false
+    },
+    {
+     "id": "interface",
+     "code": "RDY-IF-03",
+     "text": "port h_addr has no clock domain (the design has 2 clocks)",
+     "question": "Which clock is h_addr synchronous to?",
+     "level": "strict",
+     "topic": "clocks and crossings",
+     "blocking": true,
+     "repair": false
+    },
+    {
+     "id": "interface",
+     "code": "RDY-IF-03",
+     "text": "port h_wdata has no clock domain (the design has 2 clocks)",
+     "question": "Which clock is h_wdata synchronous to?",
+     "level": "strict",
+     "topic": "clocks and crossings",
+     "blocking": true,
+     "repair": false
+    },
+    {
+     "id": "interface",
+     "code": "RDY-IF-03",
+     "text": "port h_rdata has no clock domain (the design has 2 clocks)",
+     "question": "Which clock is h_rdata synchronous to?",
+     "level": "strict",
+     "topic": "clocks and crossings",
+     "blocking": true,
+     "repair": false
+    }
+   ],
+   "review": {
+    "findings": [],
+    "verdict": "ready",
+    "compliance": 0
+   },
+   "probes": {
+    "count": 13,
+    "categories": [
+     "back_pressure",
+     "boundary",
+     "invalid_input",
+     "mid_operation_reset",
+     "power_up",
+     "reset",
+     "simultaneous",
+     "unmapped"
+    ],
+    "problems": []
+   },
+   "agreement": {
+    "probes": 13,
+    "agreed": 11,
+    "rate": 0.8462,
+    "disagreements": [],
+    "gaps": [
+     {
+      "probe": "P5",
+      "scenario": "After INIT, a message of 2 full words is pushed via PUSH4, followed by PUSH_N with TAIL_LEN 3 (5+... 11 bytes total).",
+      "question": "What is BUSY_CYCLES: does the tail push add a cycle (give the BUSY_CYCLES value)?",
+      "answers": {
+       "A": "unspecified",
+       "B": "unspecified"
+      },
+      "requirements": [
+       "REQ-07",
+       "REQ-10",
+       "REQ-06"
+      ]
+     },
+     {
+      "probe": "P13",
+      "scenario": "CTRL bit 0 was written to 1 and then INIT is issued. A write to ID at 0x000 with 0xFFFFFFFF is also performed.",
+      "question": "Does the ID register still read 0x20930001 after the write?",
+      "answers": {
+       "A": "unspecified",
+       "B": "unspecified"
+      },
+      "requirements": [
+       "REQ-22"
+      ]
+     }
+    ]
+   },
+   "probe_set": [
+    {
+     "id": "P1",
+     "category": "reset",
+     "answer_kind": "choice",
+     "requirements": [
+      "REQ-19",
+      "REQ-03"
+     ]
+    },
+    {
+     "id": "P2",
+     "category": "power_up",
+     "answer_kind": "bool",
+     "requirements": [
+      "REQ-05",
+      "REQ-08",
+      "REQ-20",
+      "REQ-21"
+     ]
+    },
+    {
+     "id": "P3",
+     "category": "boundary",
+     "answer_kind": "int",
+     "requirements": [
+      "REQ-05",
+      "REQ-08"
+     ]
+    },
+    {
+     "id": "P4",
+     "category": "boundary",
+     "answer_kind": "int",
+     "requirements": [
+      "REQ-09",
+      "REQ-06",
+      "REQ-07"
+     ]
+    },
+    {
+     "id": "P5",
+     "category": "boundary",
+     "answer_kind": "int",
+     "requirements": [
+      "REQ-07",
+      "REQ-10",
+      "REQ-06"
+     ]
+    },
+    {
+     "id": "P6",
+     "category": "invalid_input",
+     "answer_kind": "choice",
+     "requirements": [
+      "REQ-10",
+      "REQ-09"
+     ]
+    },
+    {
+     "id": "P7",
+     "category": "simultaneous",
+     "answer_kind": "choice",
+     "requirements": [
+      "REQ-13",
+      "REQ-14",
+      "REQ-03"
+     ]
+    },
+    {
+     "id": "P8",
+     "category": "simultaneous",
+     "answer_kind": "choice",
+     "requirements": [
+      "REQ-08",
+      "REQ-11",
+      "REQ-20"
+     ]
+    },
+    {
+     "id": "P9",
+     "category": "unmapped",
+     "answer_kind": "int",
+     "requirements": [
+      "REQ-15",
+      "REQ-25"
+     ]
+    },
+    {
+     "id": "P10",
+     "category": "mid_operation_reset",
+     "answer_kind": "choice",
+     "requirements": [
+      "REQ-04",
+      "REQ-06",
+      "REQ-19"
+     ]
+    },
+    {
+     "id": "P11",
+     "category": "back_pressure",
+     "answer_kind": "int",
+     "requirements": [
+      "REQ-11",
+      "REQ-07"
+     ]
+    },
+    {
+     "id": "P12",
+     "category": "boundary",
+     "answer_kind": "choice",
+     "requirements": [
+      "REQ-14",
+      "REQ-24"
+     ]
+    },
+    {
+     "id": "P13",
+     "category": "invalid_input",
+     "answer_kind": "bool",
+     "requirements": [
+      "REQ-22"
+     ]
+    }
+   ],
+   "probe_text": [
+    {
+     "id": "P1",
+     "category": "reset",
+     "requirements": [
+      "REQ-19",
+      "REQ-03"
+     ],
+     "scenario": "SCRATCH was written with 0xDEADBEEF, then rst is asserted for several clk cycles and released. h_re is then issued on the SCRATCH address.",
+     "question": "What value does h_rdata show for SCRATCH after reset release?",
+     "answer_kind": "choice",
+     "choices": [
+      "0x00000000",
+      "0xDEADBEEF",
+      "undefined by requirements"
+     ]
+    },
+    {
+     "id": "P2",
+     "category": "power_up",
+     "requirements": [
+      "REQ-05",
+      "REQ-08",
+      "REQ-20",
+      "REQ-21"
+     ],
+     "scenario": "After power-up and reset release, with no INIT ever issued, the host reads CRC, BYTE_COUNT and BUSY_CYCLES.",
+     "question": "Do the requirements fix the values of CRC, BYTE_COUNT and BUSY_CYCLES before the first INIT?",
+     "answer_kind": "bool"
+    },
+    {
+     "id": "P3",
+     "category": "boundary",
+     "requirements": [
+      "REQ-05",
+      "REQ-08"
+     ],
+     "scenario": "INIT is issued and no push follows. The host reads CRC. The internal CRC state is 0xFFFFFFFF per INIT.",
+     "question": "What 32-bit value does the CRC register read (hex as integer value in decimal)?",
+     "answer_kind": "int"
+    },
+    {
+     "id": "P4",
+     "category": "boundary",
+     "requirements": [
+      "REQ-09",
+      "REQ-06",
+      "REQ-07"
+     ],
+     "scenario": "After INIT, one PUSH4 of 0x11223344 is done (BYTE_COUNT 4, BUSY_CYCLES 1). Then PUSH_N with TAIL_LEN 0 is issued with data 0xAABBCCDD.",
+     "question": "What are BYTE_COUNT and BUSY_CYCLES afterwards (give BUSY_CYCLES)?",
+     "answer_kind": "int"
+    },
+    {
+     "id": "P5",
+     "category": "boundary",
+     "requirements": [
+      "REQ-07",
+      "REQ-10",
+      "REQ-06"
+     ],
+     "scenario": "After INIT, a message of 2 full words is pushed via PUSH4, followed by PUSH_N with TAIL_LEN 3 (5+... 11 bytes total).",
+     "question": "What is BUSY_CYCLES: does the tail push add a cycle (give the BUSY_CYCLES value)?",
+     "answer_kind": "int"
+    },
+    {
+     "id": "P6",
+     "category": "invalid_input",
+     "requirements": [
+      "REQ-10",
+      "REQ-09"
+     ],
+     "scenario": "PUSH_N is issued with TAIL_LEN 4 (a value outside 0-3) and data 0x01020304.",
+     "question": "What happens to CRC and BYTE_COUNT?",
+     "answer_kind": "choice",
+     "choices": [
+      "treated as full 4-byte push",
+      "ignored, no change",
+      "treated as TAIL_LEN 0",
+      "undefined by requirements"
+     ]
+    },
+    {
+     "id": "P7",
+     "category": "simultaneous",
+     "requirements": [
+      "REQ-13",
+      "REQ-14",
+      "REQ-03"
+     ],
+     "scenario": "SCRATCH holds 0x1. In the same clk cycle h_we is asserted with h_wdata 0x2 to SCRATCH and h_re is asserted on SCRATCH.",
+     "question": "What value does h_rdata show for that read?",
+     "answer_kind": "choice",
+     "choices": [
+      "0x1 (old)",
+      "0x2 (new)",
+      "either allowed",
+      "undefined by requirements"
+     ]
+    },
+    {
+     "id": "P8",
+     "category": "simultaneous",
+     "requirements": [
+      "REQ-08",
+      "REQ-11",
+      "REQ-20"
+     ],
+     "scenario": "INIT is written in the same clk cycle as a PUSH4 of 0x12345678.",
+     "question": "Is the pushed word included in CRC and BYTE_COUNT after that cycle?",
+     "answer_kind": "choice",
+     "choices": [
+      "included",
+      "discarded",
+      "undefined by requirements"
+     ]
+    },
+    {
+     "id": "P9",
+     "category": "unmapped",
+     "requirements": [
+      "REQ-15",
+      "REQ-25"
+     ],
+     "scenario": "Write 0xFFFFFFFF to unmapped address 0x7F0, then read 0x7F0 and read SCRATCH (previously 0x55).",
+     "question": "What does the read of 0x7F0 return as an integer, and is SCRATCH changed (answer the 0x7F0 read value)?",
+     "answer_kind": "int"
+    },
+    {
+     "id": "P10",
+     "category": "mid_operation_reset",
+     "requirements": [
+      "REQ-04",
+      "REQ-06",
+      "REQ-19"
+     ],
+     "scenario": "During a stream of back-to-back PUSH4 words (3 words pushed so far), rst asserts for 4 clk cycles and is released. Then CRC and BYTE_COUNT are read without INIT.",
+     "question": "Does BYTE_COUNT read 0 after reset?",
+     "answer_kind": "choice",
+     "choices": [
+      "yes, 0",
+      "no, retains 3 words (12)",
+      "undefined by requirements"
+     ]
+    },
+    {
+     "id": "P11",
+     "category": "back_pressure",
+     "requirements": [
+      "REQ-11",
+      "REQ-07"
+     ],
+     "scenario": "1000 consecutive PUSH4 words are issued one per clk cycle starting right after INIT, with no gaps.",
+     "question": "What is BUSY_CYCLES after all 1000 are accepted?",
+     "answer_kind": "int"
+    },
+    {
+     "id": "P12",
+     "category": "boundary",
+     "requirements": [
+      "REQ-14",
+      "REQ-24"
+     ],
+     "scenario": "h_re is pulsed for one clk on the ID register at 0x000, then h_re deasserted and h_addr changed to 0x004 with no h_re.",
+     "question": "What does h_rdata show 5 clk cycles later?",
+     "answer_kind": "choice",
+     "choices": [
+      "0x20930001",
+      "0x00000000",
+      "BUILD value",
+      "undefined by requirements"
+     ]
+    },
+    {
+     "id": "P13",
+     "category": "invalid_input",
+     "requirements": [
+      "REQ-22"
+     ],
+     "scenario": "CTRL bit 0 was written to 1 and then INIT is issued. A write to ID at 0x000 with 0xFFFFFFFF is also performed.",
+     "question": "Does the ID register still read 0x20930001 after the write?",
+     "answer_kind": "bool"
+    }
+   ],
+   "answers": {
+    "A": {
+     "P1": "0x00000000",
+     "P2": "no",
+     "P3": "0",
+     "P4": "1",
+     "P5": "unspecified",
+     "P6": "undefined by requirements",
+     "P7": "undefined by requirements",
+     "P8": "undefined by requirements",
+     "P9": "0",
+     "P10": "undefined by requirements",
+     "P11": "1000",
+     "P12": "0x20930001",
+     "P13": "unspecified"
+    },
+    "B": {
+     "P1": "0x00000000",
+     "P2": "no",
+     "P3": "0",
+     "P4": "1",
+     "P5": "unspecified",
+     "P6": "undefined by requirements",
+     "P7": "undefined by requirements",
+     "P8": "undefined by requirements",
+     "P9": "0",
+     "P10": "undefined by requirements",
+     "P11": "1000",
+     "P12": "0x20930001",
+     "P13": "unspecified"
+    }
+   }
+  },
+  {
+   "n": 2,
+   "questions": [
+    {
+     "id": "Q3",
+     "text": "What does BYTE_COUNT read afterwards? (Scenario: BYTE_COUNT is at 0xFFFFFFFC and one more PUSH4 is issued.) The requirements do not say; what should happen?",
+     "code": "RDY-READ-02",
+     "topic": "requirement",
+     "ids": [
+      "REQ-06",
+      "REQ-20"
+     ],
+     "blocking": true,
+     "source": "readers",
+     "answer": "BYTE_COUNT wraps around to 0x00000000, since 0xFFFFFFFC + 4 = 0x100000000 and the counter is 32 bits.",
+     "by": "oracle",
+     "evidence": "BYTE_COUNT is 32 bits and wraps."
+    }
+   ],
+   "amendments": [],
+   "refused": [],
+   "repairs": {
+    "asked": [
+     {
+      "id": "REQ-28",
+      "code": "RDY-CLEAR-01",
+      "text": "requirement REQ-28 is compound ('and' joins two statements): split it into one requirement per checkable statement, each with its own id and proof method",
+      "question": "Please restate REQ-28 so that one statement can be checked: split it into one requirement per checkable statement, each with its own id and proof method",
+      "level": "standard",
+      "topic": "requirement",
+      "blocking": true,
+      "repair": true
+     }
+    ],
+    "revised": [
+     "REQ-28"
+    ],
+    "refused": []
+   },
+   "mechanical": [
+    {
+     "id": "interface",
+     "code": "RDY-IF-03",
+     "text": "port led has no clock domain (the design has 2 clocks)",
+     "question": "Which clock is led synchronous to?",
+     "level": "strict",
+     "topic": "clocks and crossings",
+     "blocking": true,
+     "repair": false
+    },
+    {
+     "id": "interface",
+     "code": "RDY-IF-04",
+     "text": "output led has no reset value",
+     "question": "What does led drive during and just after reset?",
+     "level": "strict",
+     "topic": "reset strategy",
+     "blocking": true,
+     "repair": false
+    },
+    {
+     "id": "interface",
+     "code": "RDY-IF-05",
+     "text": "output led has no stated latency from a named input event",
+     "question": "How many cycles after which input event does led change (or is it combinational)?",
+     "level": "strict",
+     "topic": "throughput and latency",
+     "blocking": true,
+     "repair": false
+    },
+    {
+     "id": "interface",
+     "code": "RDY-IF-03",
+     "text": "port sfp_tx_disable has no clock domain (the design has 2 clocks)",
+     "question": "Which clock is sfp_tx_disable synchronous to?",
+     "level": "strict",
+     "topic": "clocks and crossings",
+     "blocking": true,
+     "repair": false
+    },
+    {
+     "id": "interface",
+     "code": "RDY-IF-04",
+     "text": "output sfp_tx_disable has no reset value",
+     "question": "What does sfp_tx_disable drive during and just after reset?",
+     "level": "strict",
+     "topic": "reset strategy",
+     "blocking": true,
+     "repair": false
+    },
+    {
+     "id": "interface",
+     "code": "RDY-IF-05",
+     "text": "output sfp_tx_disable has no stated latency from a named input event",
+     "question": "How many cycles after which input event does sfp_tx_disable change (or is it combinational)?",
+     "level": "strict",
+     "topic": "throughput and latency",
+     "blocking": true,
+     "repair": false
+    },
+    {
+     "id": "interface",
+     "code": "RDY-IF-03",
+     "text": "port jtag_bus.clk has no clock domain (the design has 2 clocks)",
+     "question": "Which clock is jtag_bus.clk synchronous to?",
+     "level": "strict",
+     "topic": "clocks and crossings",
+     "blocking": true,
+     "repair": false
+    },
+    {
+     "id": "interface",
+     "code": "RDY-IF-03",
+     "text": "port h_we has no clock domain (the design has 2 clocks)",
+     "question": "Which clock is h_we synchronous to?",
+     "level": "strict",
+     "topic": "clocks and crossings",
+     "blocking": true,
+     "repair": false
+    },
+    {
+     "id": "interface",
+     "code": "RDY-IF-03",
+     "text": "port h_re has no clock domain (the design has 2 clocks)",
+     "question": "Which clock is h_re synchronous to?",
+     "level": "strict",
+     "topic": "clocks and crossings",
+     "blocking": true,
+     "repair": false
+    },
+    {
+     "id": "interface",
+     "code": "RDY-IF-03",
+     "text": "port h_addr has no clock domain (the design has 2 clocks)",
+     "question": "Which clock is h_addr synchronous to?",
+     "level": "strict",
+     "topic": "clocks and crossings",
+     "blocking": true,
+     "repair": false
+    },
+    {
+     "id": "interface",
+     "code": "RDY-IF-03",
+     "text": "port h_wdata has no clock domain (the design has 2 clocks)",
+     "question": "Which clock is h_wdata synchronous to?",
+     "level": "strict",
+     "topic": "clocks and crossings",
+     "blocking": true,
+     "repair": false
+    },
+    {
+     "id": "interface",
+     "code": "RDY-IF-03",
+     "text": "port h_rdata has no clock domain (the design has 2 clocks)",
+     "question": "Which clock is h_rdata synchronous to?",
+     "level": "strict",
+     "topic": "clocks and crossings",
+     "blocking": true,
+     "repair": false
+    }
+   ],
+   "review": {
+    "findings": [],
+    "verdict": "ready",
+    "compliance": 0
+   },
+   "probes": {
+    "count": 13,
+    "categories": [
+     "back_pressure",
+     "boundary",
+     "invalid_input",
+     "mid_operation_reset",
+     "overflow",
+     "power_up",
+     "reset",
+     "simultaneous",
+     "unmapped"
+    ],
+    "problems": []
+   },
+   "agreement": {
+    "probes": 13,
+    "agreed": 12,
+    "rate": 0.9231,
+    "disagreements": [],
+    "gaps": [
+     {
+      "probe": "P13",
+      "scenario": "BYTE_COUNT is at 0xFFFFFFFC and one more PUSH4 is issued.",
+      "question": "What does BYTE_COUNT read afterwards?",
+      "answers": {
+       "A": "unspecified",
+       "B": "unspecified"
+      },
+      "requirements": [
+       "REQ-06",
+       "REQ-20"
+      ]
+     }
+    ]
+   },
+   "probe_set": [
+    {
+     "id": "P1",
+     "category": "reset",
+     "answer_kind": "int",
+     "requirements": [
+      "REQ-19",
+      "REQ-03"
+     ]
+    },
+    {
+     "id": "P2",
+     "category": "boundary",
+     "answer_kind": "choice",
+     "requirements": [
+      "REQ-05",
+      "REQ-08",
+      "REQ-04"
+     ]
+    },
+    {
+     "id": "P3",
+     "category": "boundary",
+     "answer_kind": "int",
+     "requirements": [
+      "REQ-09",
+      "REQ-06",
+      "REQ-07"
+     ]
+    },
+    {
+     "id": "P4",
+     "category": "boundary",
+     "answer_kind": "int",
+     "requirements": [
+      "REQ-10",
+      "REQ-27",
+      "REQ-06"
+     ]
+    },
+    {
+     "id": "P5",
+     "category": "boundary",
+     "answer_kind": "choice",
+     "requirements": [
+      "REQ-10"
+     ]
+    },
+    {
+     "id": "P6",
+     "category": "simultaneous",
+     "answer_kind": "bool",
+     "requirements": [
+      "REQ-13",
+      "REQ-14",
+      "REQ-03"
+     ]
+    },
+    {
+     "id": "P7",
+     "category": "simultaneous",
+     "answer_kind": "int",
+     "requirements": [
+      "REQ-28",
+      "REQ-30",
+      "REQ-14"
+     ]
+    },
+    {
+     "id": "P8",
+     "category": "unmapped",
+     "answer_kind": "int",
+     "requirements": [
+      "REQ-15",
+      "REQ-25"
+     ]
+    },
+    {
+     "id": "P9",
+     "category": "mid_operation_reset",
+     "answer_kind": "bool",
+     "requirements": [
+      "REQ-19",
+      "REQ-06",
+      "REQ-08",
+      "REQ-20",
+      "REQ-21"
+     ]
+    },
+    {
+     "id": "P10",
+     "category": "power_up",
+     "answer_kind": "bool",
+     "requirements": [
+      "REQ-16",
+      "REQ-22"
+     ]
+    },
+    {
+     "id": "P11",
+     "category": "back_pressure",
+     "answer_kind": "int",
+     "requirements": [
+      "REQ-11",
+      "REQ-07",
+      "REQ-06"
+     ]
+    },
+    {
+     "id": "P12",
+     "category": "invalid_input",
+     "answer_kind": "bool",
+     "requirements": [
+      "REQ-10",
+      "REQ-27",
+      "REQ-09"
+     ]
+    },
+    {
+     "id": "P13",
+     "category": "overflow",
+     "answer_kind": "choice",
+     "requirements": [
+      "REQ-06",
+      "REQ-20"
+     ]
+    }
+   ],
+   "probe_text": [
+    {
+     "id": "P1",
+     "category": "reset",
+     "requirements": [
+      "REQ-19",
+      "REQ-03"
+     ],
+     "scenario": "SCRATCH was written with 0xDEADBEEF, then rst is asserted for several clk cycles and released. Then SCRATCH is read.",
+     "question": "What 32-bit value does SCRATCH read after reset?",
+     "answer_kind": "int"
+    },
+    {
+     "id": "P2",
+     "category": "boundary",
+     "requirements": [
+      "REQ-05",
+      "REQ-08",
+      "REQ-04"
+     ],
+     "scenario": "INIT is issued and no push follows. CRC is read immediately.",
+     "question": "What value does CRC read (0x00000000, 0xFFFFFFFF, or other)?",
+     "answer_kind": "choice",
+     "choices": [
+      "0x00000000",
+      "0xFFFFFFFF",
+      "0xFFFFFFFF inverted state is not visible; other"
+     ]
+    },
+    {
+     "id": "P3",
+     "category": "boundary",
+     "requirements": [
+      "REQ-09",
+      "REQ-06",
+      "REQ-07"
+     ],
+     "scenario": "After INIT, one PUSH4 of 0x11223344 is done, then a PUSH_N with TAIL_LEN 0 and wdata 0xAABBCCDD. BYTE_COUNT and BUSY_CYCLES are read.",
+     "question": "What is BUSY_CYCLES after the PUSH_N with TAIL_LEN 0?",
+     "answer_kind": "int"
+    },
+    {
+     "id": "P4",
+     "category": "boundary",
+     "requirements": [
+      "REQ-10",
+      "REQ-27",
+      "REQ-06"
+     ],
+     "scenario": "After INIT, a PUSH_N with TAIL_LEN 2 and data 0xAABBCCDD is pushed.",
+     "question": "What is BYTE_COUNT, and what is BUSY_CYCLES (give BYTE_COUNT*10+BUSY_CYCLES as a number)?",
+     "answer_kind": "int"
+    },
+    {
+     "id": "P5",
+     "category": "boundary",
+     "requirements": [
+      "REQ-10"
+     ],
+     "scenario": "After INIT, a PUSH_N with TAIL_LEN 3 and data 0xAABBCCDD is pushed.",
+     "question": "Which byte is consumed first and which bytes in total?",
+     "answer_kind": "choice",
+     "choices": [
+      "0xDD, 0xCC, 0xBB",
+      "0xAA, 0xBB, 0xCC",
+      "0xDD, 0xCC, 0xBB, 0xAA",
+      "0xCC, 0xBB, 0xAA"
+     ]
+    },
+    {
+     "id": "P6",
+     "category": "simultaneous",
+     "requirements": [
+      "REQ-13",
+      "REQ-14",
+      "REQ-03"
+     ],
+     "scenario": "At cycle t, h_we=1 writes SCRATCH=0x12345678 to its address. At cycle t+1, h_re=1 reads SCRATCH, which previously held 0.",
+     "question": "Does the read data shown within 2 clk of that h_re equal 0x12345678?",
+     "answer_kind": "bool"
+    },
+    {
+     "id": "P7",
+     "category": "simultaneous",
+     "requirements": [
+      "REQ-28",
+      "REQ-30",
+      "REQ-14"
+     ],
+     "scenario": "h_we=1 and h_re=1 are asserted in the same clk cycle at address 0x000 with h_wdata=0xFFFFFFFF.",
+     "question": "What value does h_rdata show for that read?",
+     "answer_kind": "int"
+    },
+    {
+     "id": "P8",
+     "category": "unmapped",
+     "requirements": [
+      "REQ-15",
+      "REQ-25"
+     ],
+     "scenario": "A write of 0x5A5A5A5A is made to unmapped address 0x7F0, then 0x7F0 is read and SCRATCH is read (previously 0x1).",
+     "question": "What do the read of 0x7F0 and SCRATCH return (give the 0x7F0 value)?",
+     "answer_kind": "int"
+    },
+    {
+     "id": "P9",
+     "category": "mid_operation_reset",
+     "requirements": [
+      "REQ-19",
+      "REQ-06",
+      "REQ-08",
+      "REQ-20",
+      "REQ-21"
+     ],
+     "scenario": "After INIT, 5 PUSH4 words are pushed (BYTE_COUNT 20), and rst is asserted in the middle of the 4th push, with no INIT after release. BYTE_COUNT, BUSY_CYCLES and CRC are then read.",
+     "question": "Do the requirements fix the values of BYTE_COUNT after reset release?",
+     "answer_kind": "bool"
+    },
+    {
+     "id": "P10",
+     "category": "power_up",
+     "requirements": [
+      "REQ-16",
+      "REQ-22"
+     ],
+     "scenario": "During MMCM unlock, rst held high, and just after release, sfp_tx_disable is sampled.",
+     "question": "Is sfp_tx_disable 1 at every sample including during reset?",
+     "answer_kind": "bool"
+    },
+    {
+     "id": "P11",
+     "category": "back_pressure",
+     "requirements": [
+      "REQ-11",
+      "REQ-07",
+      "REQ-06"
+     ],
+     "scenario": "After INIT, 64 consecutive PUSH4 are issued on 64 consecutive clk cycles, one per cycle.",
+     "question": "What are BYTE_COUNT and BUSY_CYCLES after the last push (give BYTE_COUNT*1000+BUSY_CYCLES)?",
+     "answer_kind": "int"
+    },
+    {
+     "id": "P12",
+     "category": "invalid_input",
+     "requirements": [
+      "REQ-10",
+      "REQ-27",
+      "REQ-09"
+     ],
+     "scenario": "A PUSH_N is issued with TAIL_LEN 4 (or a value above 3, if encodable) after INIT.",
+     "question": "Do the requirements define the resulting BYTE_COUNT?",
+     "answer_kind": "bool"
+    },
+    {
+     "id": "P13",
+     "category": "overflow",
+     "requirements": [
+      "REQ-06",
+      "REQ-20"
+     ],
+     "scenario": "BYTE_COUNT is at 0xFFFFFFFC and one more PUSH4 is issued.",
+     "question": "What does BYTE_COUNT read afterwards?",
+     "answer_kind": "choice",
+     "choices": [
+      "0x00000000 (wrap)",
+      "0xFFFFFFFF (saturate)",
+      "unspecified"
+     ]
+    }
+   ],
+   "answers": {
+    "A": {
+     "P1": "0",
+     "P2": "0x00000000",
+     "P3": "1",
+     "P4": "21",
+     "P5": "0xDD, 0xCC, 0xBB",
+     "P6": "yes",
+     "P7": "0x20930001",
+     "P8": "0",
+     "P9": "no",
+     "P10": "yes",
+     "P11": "256064",
+     "P12": "no",
+     "P13": "unspecified"
+    },
+    "B": {
+     "P1": "0",
+     "P2": "0x00000000",
+     "P3": "1",
+     "P4": "21",
+     "P5": "0xDD, 0xCC, 0xBB",
+     "P6": "yes",
+     "P7": "0x20930001",
+     "P8": "0",
+     "P9": "no",
+     "P10": "yes",
+     "P11": "256064",
+     "P12": "no",
+     "P13": "unspecified"
+    }
+   }
+  },
+  {
+   "n": 3,
+   "questions": [
+    {
+     "id": "Q4",
+     "text": "What does BYTE_COUNT read afterwards? (Scenario: BYTE_COUNT is 0xFFFFFFFD (after a prior PUSH_N with tail 1 from 0xFFFFFFFC) and one PUSH4 is issued.) Two careful readers of the requirements disagree about this; what is the intended behaviour?",
+     "code": "RDY-READ-01",
+     "topic": "requirement",
+     "ids": [
+      "REQ-31",
+      "REQ-06"
+     ],
+     "blocking": true,
+     "source": "readers",
+     "answer": "BYTE_COUNT wraps modulo 2^32, so 0xFFFFFFFD + 4 reads 0x00000001.",
+     "by": "oracle",
+     "evidence": "- BYTE_COUNT is 32 bits and wraps. BUSY_CYCLES counts one per clock in which a push is processed (PUSH4 or PUSH_N with N>0), it is 32 bits and wraps; a PUSH_N with N = 0 does not count."
+    },
+    {
+     "id": "Q5",
+     "text": "What does BUSY_CYCLES read after the wrapping push? (Scenario: BYTE_COUNT is 0xFFFFFFFC and one PUSH4 is issued making BYTE_COUNT wrap to 0. BUSY_CYCLES was 5 before the push.) The requirements do not say; what should happen?",
+     "code": "RDY-READ-02",
+     "topic": "requirement",
+     "ids": [
+      "REQ-31",
+      "REQ-07",
+      "REQ-27"
+     ],
+     "blocking": true,
+     "source": "readers",
+     "answer": "BUSY_CYCLES reads 6. The push is a PUSH4, which counts as one processed push, so BUSY_CYCLES goes from 5 to 6. The wrap of BYTE_COUNT to 0 does not affect BUSY_CYCLES, because it is a separate counter.",
+     "by": "oracle",
+     "evidence": "BYTE_COUNT is 32 bits and wraps. BUSY_CYCLES counts one per clock in which a push is processed (PUSH4 or PUSH_N with N>0), it is 32 bits and wraps; a PUSH_N with N = 0 does not count."
+    },
+    {
+     "id": "Q6",
+     "text": "Does h_rdata show the old value 0x00000001 (choose old) or new 0xCAFEF00D (choose new) or is it unspecified? (Scenario: h_we and h_re are asserted in the same clk cycle to SCRATCH address with h_wdata 0xCAFEF00D, SCRATCH previously held 0x00000001.) The requirements do not say; what should happen?",
+     "code": "RDY-READ-02",
+     "topic": "requirement",
+     "ids": [
+      "REQ-13",
+      "REQ-14",
+      "REQ-03"
+     ],
+     "blocking": true,
+     "source": "readers",
+     "answer": null,
+     "by": null,
+     "evidence": null
+    }
+   ],
+   "amendments": [],
+   "refused": [],
+   "mechanical": [
+    {
+     "id": "interface",
+     "code": "RDY-IF-03",
+     "text": "port led has no clock domain (the design has 2 clocks)",
+     "question": "Which clock is led synchronous to?",
+     "level": "strict",
+     "topic": "clocks and crossings",
+     "blocking": true,
+     "repair": false
+    },
+    {
+     "id": "interface",
+     "code": "RDY-IF-04",
+     "text": "output led has no reset value",
+     "question": "What does led drive during and just after reset?",
+     "level": "strict",
+     "topic": "reset strategy",
+     "blocking": true,
+     "repair": false
+    },
+    {
+     "id": "interface",
+     "code": "RDY-IF-05",
+     "text": "output led has no stated latency from a named input event",
+     "question": "How many cycles after which input event does led change (or is it combinational)?",
+     "level": "strict",
+     "topic": "throughput and latency",
+     "blocking": true,
+     "repair": false
+    },
+    {
+     "id": "interface",
+     "code": "RDY-IF-03",
+     "text": "port sfp_tx_disable has no clock domain (the design has 2 clocks)",
+     "question": "Which clock is sfp_tx_disable synchronous to?",
+     "level": "strict",
+     "topic": "clocks and crossings",
+     "blocking": true,
+     "repair": false
+    },
+    {
+     "id": "interface",
+     "code": "RDY-IF-04",
+     "text": "output sfp_tx_disable has no reset value",
+     "question": "What does sfp_tx_disable drive during and just after reset?",
+     "level": "strict",
+     "topic": "reset strategy",
+     "blocking": true,
+     "repair": false
+    },
+    {
+     "id": "interface",
+     "code": "RDY-IF-05",
+     "text": "output sfp_tx_disable has no stated latency from a named input event",
+     "question": "How many cycles after which input event does sfp_tx_disable change (or is it combinational)?",
+     "level": "strict",
+     "topic": "throughput and latency",
+     "blocking": true,
+     "repair": false
+    },
+    {
+     "id": "interface",
+     "code": "RDY-IF-03",
+     "text": "port jtag_bus.clk has no clock domain (the design has 2 clocks)",
+     "question": "Which clock is jtag_bus.clk synchronous to?",
+     "level": "strict",
+     "topic": "clocks and crossings",
+     "blocking": true,
+     "repair": false
+    },
+    {
+     "id": "interface",
+     "code": "RDY-IF-03",
+     "text": "port h_we has no clock domain (the design has 2 clocks)",
+     "question": "Which clock is h_we synchronous to?",
+     "level": "strict",
+     "topic": "clocks and crossings",
+     "blocking": true,
+     "repair": false
+    },
+    {
+     "id": "interface",
+     "code": "RDY-IF-03",
+     "text": "port h_re has no clock domain (the design has 2 clocks)",
+     "question": "Which clock is h_re synchronous to?",
+     "level": "strict",
+     "topic": "clocks and crossings",
+     "blocking": true,
+     "repair": false
+    },
+    {
+     "id": "interface",
+     "code": "RDY-IF-03",
+     "text": "port h_addr has no clock domain (the design has 2 clocks)",
+     "question": "Which clock is h_addr synchronous to?",
+     "level": "strict",
+     "topic": "clocks and crossings",
+     "blocking": true,
+     "repair": false
+    },
+    {
+     "id": "interface",
+     "code": "RDY-IF-03",
+     "text": "port h_wdata has no clock domain (the design has 2 clocks)",
+     "question": "Which clock is h_wdata synchronous to?",
+     "level": "strict",
+     "topic": "clocks and crossings",
+     "blocking": true,
+     "repair": false
+    },
+    {
+     "id": "interface",
+     "code": "RDY-IF-03",
+     "text": "port h_rdata has no clock domain (the design has 2 clocks)",
+     "question": "Which clock is h_rdata synchronous to?",
+     "level": "strict",
+     "topic": "clocks and crossings",
+     "blocking": true,
+     "repair": false
+    }
+   ],
+   "review": {
+    "findings": [],
+    "verdict": "ready",
+    "compliance": 0
+   },
+   "probes": {
+    "count": 13,
+    "categories": [
+     "back_pressure",
+     "boundary",
+     "invalid_input",
+     "mid_operation_reset",
+     "overflow",
+     "power_up",
+     "reset",
+     "simultaneous",
+     "unmapped"
+    ],
+    "problems": []
+   },
+   "agreement": {
+    "probes": 13,
+    "agreed": 10,
+    "rate": 0.7692,
+    "disagreements": [
+     {
+      "probe": "P6",
+      "scenario": "BYTE_COUNT is 0xFFFFFFFD (after a prior PUSH_N with tail 1 from 0xFFFFFFFC) and one PUSH4 is issued.",
+      "question": "What does BYTE_COUNT read afterwards?",
+      "category": "overflow",
+      "answers": {
+       "A": "1",
+       "B": "unspecified"
+      },
+      "requirements": [
+       "REQ-31",
+       "REQ-06"
+      ]
+     }
+    ],
+    "gaps": [
+     {
+      "probe": "P7",
+      "scenario": "BYTE_COUNT is 0xFFFFFFFC and one PUSH4 is issued making BYTE_COUNT wrap to 0. BUSY_CYCLES was 5 before the push.",
+      "question": "What does BUSY_CYCLES read after the wrapping push?",
+      "answers": {
+       "A": "unspecified",
+       "B": "unspecified"
+      },
+      "requirements": [
+       "REQ-31",
+       "REQ-07",
+       "REQ-27"
+      ]
+     },
+     {
+      "probe": "P10",
+      "scenario": "h_we and h_re are asserted in the same clk cycle to SCRATCH address with h_wdata 0xCAFEF00D, SCRATCH previously held 0x00000001.",
+      "question": "Does h_rdata show the old value 0x00000001 (choose old) or new 0xCAFEF00D (choose new) or is it unspecified?",
+      "answers": {
+       "A": "unspecified",
+       "B": "unspecified"
+      },
+      "requirements": [
+       "REQ-13",
+       "REQ-14",
+       "REQ-03"
+      ]
+     }
+    ]
+   },
+   "probe_set": [
+    {
+     "id": "P1",
+     "category": "reset",
+     "answer_kind": "int",
+     "requirements": [
+      "REQ-19",
+      "REQ-29",
+      "REQ-01"
+     ]
+    },
+    {
+     "id": "P2",
+     "category": "power_up",
+     "answer_kind": "bool",
+     "requirements": [
+      "REQ-05",
+      "REQ-08",
+      "REQ-20",
+      "REQ-21",
+      "REQ-22"
+     ]
+    },
+    {
+     "id": "P3",
+     "category": "boundary",
+     "answer_kind": "int",
+     "requirements": [
+      "REQ-05",
+      "REQ-08"
+     ]
+    },
+    {
+     "id": "P4",
+     "category": "boundary",
+     "answer_kind": "int",
+     "requirements": [
+      "REQ-09"
+     ]
+    },
+    {
+     "id": "P5",
+     "category": "boundary",
+     "answer_kind": "int",
+     "requirements": [
+      "REQ-10",
+      "REQ-27",
+      "REQ-06"
+     ]
+    },
+    {
+     "id": "P6",
+     "category": "overflow",
+     "answer_kind": "int",
+     "requirements": [
+      "REQ-31",
+      "REQ-06"
+     ]
+    },
+    {
+     "id": "P7",
+     "category": "overflow",
+     "answer_kind": "int",
+     "requirements": [
+      "REQ-31",
+      "REQ-07",
+      "REQ-27"
+     ]
+    },
+    {
+     "id": "P8",
+     "category": "unmapped",
+     "answer_kind": "int",
+     "requirements": [
+      "REQ-15",
+      "REQ-25"
+     ]
+    },
+    {
+     "id": "P9",
+     "category": "invalid_input",
+     "answer_kind": "int",
+     "requirements": [
+      "REQ-28",
+      "REQ-30"
+     ]
+    },
+    {
+     "id": "P10",
+     "category": "simultaneous",
+     "answer_kind": "choice",
+     "requirements": [
+      "REQ-13",
+      "REQ-14",
+      "REQ-03"
+     ]
+    },
+    {
+     "id": "P11",
+     "category": "mid_operation_reset",
+     "answer_kind": "bool",
+     "requirements": [
+      "REQ-19",
+      "REQ-08",
+      "REQ-20",
+      "REQ-06"
+     ]
+    },
+    {
+     "id": "P12",
+     "category": "back_pressure",
+     "answer_kind": "int",
+     "requirements": [
+      "REQ-11",
+      "REQ-07"
+     ]
+    },
+    {
+     "id": "P13",
+     "category": "boundary",
+     "answer_kind": "bool",
+     "requirements": [
+      "REQ-14",
+      "REQ-24"
+     ]
+    }
+   ],
+   "probe_text": [
+    {
+     "id": "P1",
+     "category": "reset",
+     "requirements": [
+      "REQ-19",
+      "REQ-29",
+      "REQ-01"
+     ],
+     "scenario": "SCRATCH was written with 0xDEADBEEF, then rst is asserted for several clk cycles and released. After release, SCRATCH and ID are read.",
+     "question": "What value does SCRATCH read after reset?",
+     "answer_kind": "int"
+    },
+    {
+     "id": "P2",
+     "category": "power_up",
+     "requirements": [
+      "REQ-05",
+      "REQ-08",
+      "REQ-20",
+      "REQ-21",
+      "REQ-22"
+     ],
+     "scenario": "Right after rst release, with no INIT ever issued, the host reads CRC, BYTE_COUNT and BUSY_CYCLES.",
+     "question": "Are the values of CRC, BYTE_COUNT and BUSY_CYCLES after reset without INIT defined by the requirements as 0 (yes) or left unspecified (no)?",
+     "answer_kind": "bool"
+    },
+    {
+     "id": "P3",
+     "category": "boundary",
+     "requirements": [
+      "REQ-05",
+      "REQ-08"
+     ],
+     "scenario": "INIT is issued and then no push occurs. The host reads CRC.",
+     "question": "What 32-bit value does CRC read (given the CRC state is 0xFFFFFFFF internally)?",
+     "answer_kind": "int"
+    },
+    {
+     "id": "P4",
+     "category": "boundary",
+     "requirements": [
+      "REQ-09"
+     ],
+     "scenario": "After INIT, 1 PUSH4 of word 0x11223344 is issued, then PUSH_N with TAIL_LEN 0 and data 0xAABBCCDD. BYTE_COUNT and BUSY_CYCLES are read.",
+     "question": "What is BYTE_COUNT after these operations?",
+     "answer_kind": "int"
+    },
+    {
+     "id": "P5",
+     "category": "boundary",
+     "requirements": [
+      "REQ-10",
+      "REQ-27",
+      "REQ-06"
+     ],
+     "scenario": "After INIT, 2 PUSH4 words, then PUSH_N with TAIL_LEN 3 and data 0x00DDCCBB.. data word 0x33221100 (low bytes first). Read BYTE_COUNT and BUSY_CYCLES.",
+     "question": "What is BUSY_CYCLES?",
+     "answer_kind": "int"
+    },
+    {
+     "id": "P6",
+     "category": "overflow",
+     "requirements": [
+      "REQ-31",
+      "REQ-06"
+     ],
+     "scenario": "BYTE_COUNT is 0xFFFFFFFD (after a prior PUSH_N with tail 1 from 0xFFFFFFFC) and one PUSH4 is issued.",
+     "question": "What does BYTE_COUNT read afterwards?",
+     "answer_kind": "int"
+    },
+    {
+     "id": "P7",
+     "category": "overflow",
+     "requirements": [
+      "REQ-31",
+      "REQ-07",
+      "REQ-27"
+     ],
+     "scenario": "BYTE_COUNT is 0xFFFFFFFC and one PUSH4 is issued making BYTE_COUNT wrap to 0. BUSY_CYCLES was 5 before the push.",
+     "question": "What does BUSY_CYCLES read after the wrapping push?",
+     "answer_kind": "int"
+    },
+    {
+     "id": "P8",
+     "category": "unmapped",
+     "requirements": [
+      "REQ-15",
+      "REQ-25"
+     ],
+     "scenario": "The host writes 0xFFFFFFFF to unmapped address 0x7F0, then reads address 0x7F0 and reads SCRATCH (previously 0x12345678).",
+     "question": "What does the read of 0x7F0 return?",
+     "answer_kind": "int"
+    },
+    {
+     "id": "P9",
+     "category": "invalid_input",
+     "requirements": [
+      "REQ-28",
+      "REQ-30"
+     ],
+     "scenario": "The host writes 0x00000000 to address 0x000 then reads it.",
+     "question": "What does the read return?",
+     "answer_kind": "int"
+    },
+    {
+     "id": "P10",
+     "category": "simultaneous",
+     "requirements": [
+      "REQ-13",
+      "REQ-14",
+      "REQ-03"
+     ],
+     "scenario": "h_we and h_re are asserted in the same clk cycle to SCRATCH address with h_wdata 0xCAFEF00D, SCRATCH previously held 0x00000001.",
+     "question": "Does h_rdata show the old value 0x00000001 (choose old) or new 0xCAFEF00D (choose new) or is it unspecified?",
+     "answer_kind": "choice",
+     "choices": [
+      "old",
+      "new",
+      "unspecified"
+     ]
+    },
+    {
+     "id": "P11",
+     "category": "mid_operation_reset",
+     "requirements": [
+      "REQ-19",
+      "REQ-08",
+      "REQ-20",
+      "REQ-06"
+     ],
+     "scenario": "After INIT, 10 PUSH4 words are issued, and rst is asserted on the cycle of the 6th push, then released. After release, BYTE_COUNT is read.",
+     "question": "Is BYTE_COUNT after reset specified as 0 by the requirements?",
+     "answer_kind": "bool"
+    },
+    {
+     "id": "P12",
+     "category": "back_pressure",
+     "requirements": [
+      "REQ-11",
+      "REQ-07"
+     ],
+     "scenario": "256 PUSH4 words are issued on 256 consecutive clk cycles, one per cycle, after INIT.",
+     "question": "What BUSY_CYCLES value is read after the last push, and BYTE_COUNT in bytes (give BYTE_COUNT)?",
+     "answer_kind": "int"
+    },
+    {
+     "id": "P13",
+     "category": "boundary",
+     "requirements": [
+      "REQ-14",
+      "REQ-24"
+     ],
+     "scenario": "h_re is asserted for one clk cycle at ID address 0x000 at cycle T, then h_re deasserted and no further access occurs.",
+     "question": "At cycle T+5, does h_rdata still hold 0x20930001?",
+     "answer_kind": "bool"
+    }
+   ],
+   "answers": {
+    "A": {
+     "P1": "0",
+     "P2": "no",
+     "P3": "0",
+     "P4": "4",
+     "P5": "3",
+     "P6": "1",
+     "P7": "unspecified",
+     "P8": "0",
+     "P9": "536936449",
+     "P10": "unspecified",
+     "P11": "no",
+     "P12": "256",
+     "P13": "yes"
+    },
+    "B": {
+     "P1": "0",
+     "P2": "no",
+     "P3": "0",
+     "P4": "4",
+     "P5": "3",
+     "P6": "unspecified",
+     "P7": "unspecified",
+     "P8": "0",
+     "P9": "536936449",
+     "P10": "unspecified",
+     "P11": "no",
+     "P12": "256",
+     "P13": "yes"
+    }
+   }
+  },
+  {
+   "n": 4,
+   "questions": [
+    {
+     "id": "Q7",
+     "text": "What value does the read return? (Scenario: A write of 0xFFFFFFFF to address 0x000 is issued, then 0x000 is read.) Two careful readers of the requirements disagree about this; what is the intended behaviour?",
+     "code": "RDY-READ-01",
+     "topic": "requirement",
+     "ids": [
+      "REQ-28",
+      "REQ-30"
+     ],
+     "blocking": true,
+     "source": "readers",
+     "answer": "0x20930001. The ID register at 0x000 is read-only, so the write of 0xFFFFFFFF is ignored and the read still returns the design ID.",
+     "by": "oracle",
+     "evidence": "- Writes to read-only registers are ignored. Unmapped addresses read 0."
+    },
+    {
+     "id": "Q8",
+     "text": "Does h_rdata show 0x11 (new value) rather than 0x22 within 2 clk after h_re? (Scenario: h_we is pulsed at cycle T writing 0x11 to SCRATCH, and h_re for SCRATCH is pulsed in the same cycle T (SCRATCH previously 0x22).) Two careful readers of the requirements disagree about this; what is the intended behaviour?",
+     "code": "RDY-READ-01",
+     "topic": "requirement",
+     "ids": [
+      "REQ-13",
+      "REQ-14",
+      "REQ-03"
+     ],
+     "blocking": true,
+     "source": "readers",
+     "answer": null,
+     "by": null,
+     "evidence": null
+    },
+    {
+     "id": "Q9",
+     "text": "What decimal value does BYTE_COUNT read afterwards? (Scenario: BYTE_COUNT is 0xFFFFFFFE and a PUSH_N with TAIL_LEN 3 is issued.) The requirements do not say; what should happen?",
+     "code": "RDY-READ-02",
+     "topic": "requirement",
+     "ids": [
+      "REQ-31",
+      "REQ-27",
+      "REQ-10"
+     ],
+     "blocking": true,
+     "source": "readers",
+     "answer": "1. BYTE_COUNT is 32 bits and wraps. A PUSH_N with TAIL_LEN 3 adds 3 bytes, so 0xFFFFFFFE + 3 = 0x1_00000001, which wraps to 0x00000001, i.e. decimal 1.",
+     "by": "oracle",
+     "evidence": "- BYTE_COUNT is 32 bits and wraps. BUSY_CYCLES counts one per clock in which a push is processed (PUSH4 or PUSH_N with N>0), it is 32 bits and wraps; a PUSH_N with N = 0 does not count."
+    }
+   ],
+   "amendments": [],
+   "refused": [],
+   "mechanical": [
+    {
+     "id": "interface",
+     "code": "RDY-IF-03",
+     "text": "port led has no clock domain (the design has 2 clocks)",
+     "question": "Which clock is led synchronous to?",
+     "level": "strict",
+     "topic": "clocks and crossings",
+     "blocking": true,
+     "repair": false
+    },
+    {
+     "id": "interface",
+     "code": "RDY-IF-04",
+     "text": "output led has no reset value",
+     "question": "What does led drive during and just after reset?",
+     "level": "strict",
+     "topic": "reset strategy",
+     "blocking": true,
+     "repair": false
+    },
+    {
+     "id": "interface",
+     "code": "RDY-IF-05",
+     "text": "output led has no stated latency from a named input event",
+     "question": "How many cycles after which input event does led change (or is it combinational)?",
+     "level": "strict",
+     "topic": "throughput and latency",
+     "blocking": true,
+     "repair": false
+    },
+    {
+     "id": "interface",
+     "code": "RDY-IF-03",
+     "text": "port sfp_tx_disable has no clock domain (the design has 2 clocks)",
+     "question": "Which clock is sfp_tx_disable synchronous to?",
+     "level": "strict",
+     "topic": "clocks and crossings",
+     "blocking": true,
+     "repair": false
+    },
+    {
+     "id": "interface",
+     "code": "RDY-IF-04",
+     "text": "output sfp_tx_disable has no reset value",
+     "question": "What does sfp_tx_disable drive during and just after reset?",
+     "level": "strict",
+     "topic": "reset strategy",
+     "blocking": true,
+     "repair": false
+    },
+    {
+     "id": "interface",
+     "code": "RDY-IF-05",
+     "text": "output sfp_tx_disable has no stated latency from a named input event",
+     "question": "How many cycles after which input event does sfp_tx_disable change (or is it combinational)?",
+     "level": "strict",
+     "topic": "throughput and latency",
+     "blocking": true,
+     "repair": false
+    },
+    {
+     "id": "interface",
+     "code": "RDY-IF-03",
+     "text": "port jtag_bus.clk has no clock domain (the design has 2 clocks)",
+     "question": "Which clock is jtag_bus.clk synchronous to?",
+     "level": "strict",
+     "topic": "clocks and crossings",
+     "blocking": true,
+     "repair": false
+    },
+    {
+     "id": "interface",
+     "code": "RDY-IF-03",
+     "text": "port h_we has no clock domain (the design has 2 clocks)",
+     "question": "Which clock is h_we synchronous to?",
+     "level": "strict",
+     "topic": "clocks and crossings",
+     "blocking": true,
+     "repair": false
+    },
+    {
+     "id": "interface",
+     "code": "RDY-IF-03",
+     "text": "port h_re has no clock domain (the design has 2 clocks)",
+     "question": "Which clock is h_re synchronous to?",
+     "level": "strict",
+     "topic": "clocks and crossings",
+     "blocking": true,
+     "repair": false
+    },
+    {
+     "id": "interface",
+     "code": "RDY-IF-03",
+     "text": "port h_addr has no clock domain (the design has 2 clocks)",
+     "question": "Which clock is h_addr synchronous to?",
+     "level": "strict",
+     "topic": "clocks and crossings",
+     "blocking": true,
+     "repair": false
+    },
+    {
+     "id": "interface",
+     "code": "RDY-IF-03",
+     "text": "port h_wdata has no clock domain (the design has 2 clocks)",
+     "question": "Which clock is h_wdata synchronous to?",
+     "level": "strict",
+     "topic": "clocks and crossings",
+     "blocking": true,
+     "repair": false
+    },
+    {
+     "id": "interface",
+     "code": "RDY-IF-03",
+     "text": "port h_rdata has no clock domain (the design has 2 clocks)",
+     "question": "Which clock is h_rdata synchronous to?",
+     "level": "strict",
+     "topic": "clocks and crossings",
+     "blocking": true,
+     "repair": false
+    }
+   ],
+   "review": {
+    "findings": [],
+    "verdict": "ready",
+    "compliance": 0
+   },
+   "probes": {
+    "count": 13,
+    "categories": [
+     "back_pressure",
+     "boundary",
+     "invalid_input",
+     "mid_operation_reset",
+     "overflow",
+     "power_up",
+     "reset",
+     "simultaneous",
+     "unmapped"
+    ],
+    "problems": []
+   },
+   "agreement": {
+    "probes": 13,
+    "agreed": 10,
+    "rate": 0.7692,
+    "disagreements": [
+     {
+      "probe": "P9",
+      "scenario": "A write of 0xFFFFFFFF to address 0x000 is issued, then 0x000 is read.",
+      "question": "What value does the read return?",
+      "category": "invalid_input",
+      "answers": {
+       "A": "536936449",
+       "B": "537264129"
+      },
+      "requirements": [
+       "REQ-28",
+       "REQ-30"
+      ]
+     },
+     {
+      "probe": "P10",
+      "scenario": "h_we is pulsed at cycle T writing 0x11 to SCRATCH, and h_re for SCRATCH is pulsed in the same cycle T (SCRATCH previously 0x22).",
+      "question": "Does h_rdata show 0x11 (new value) rather than 0x22 within 2 clk after h_re?",
+      "category": "simultaneous",
+      "answers": {
+       "A": "unspecified",
+       "B": "either is permitted"
+      },
+      "requirements": [
+       "REQ-13",
+       "REQ-14",
+       "REQ-03"
+      ]
+     }
+    ],
+    "gaps": [
+     {
+      "probe": "P7",
+      "scenario": "BYTE_COUNT is 0xFFFFFFFE and a PUSH_N with TAIL_LEN 3 is issued.",
+      "question": "What decimal value does BYTE_COUNT read afterwards?",
+      "answers": {
+       "A": "unspecified",
+       "B": "unspecified"
+      },
+      "requirements": [
+       "REQ-31",
+       "REQ-27",
+       "REQ-10"
+      ]
+     }
+    ]
+   },
+   "probe_set": [
+    {
+     "id": "P1",
+     "category": "reset",
+     "answer_kind": "int",
+     "requirements": [
+      "REQ-19",
+      "REQ-01"
+     ]
+    },
+    {
+     "id": "P2",
+     "category": "boundary",
+     "answer_kind": "choice",
+     "requirements": [
+      "REQ-05",
+      "REQ-08",
+      "REQ-20"
+     ]
+    },
+    {
+     "id": "P3",
+     "category": "boundary",
+     "answer_kind": "int",
+     "requirements": [
+      "REQ-27",
+      "REQ-10",
+      "REQ-06"
+     ]
+    },
+    {
+     "id": "P4",
+     "category": "boundary",
+     "answer_kind": "int",
+     "requirements": [
+      "REQ-09",
+      "REQ-27"
+     ]
+    },
+    {
+     "id": "P5",
+     "category": "overflow",
+     "answer_kind": "int",
+     "requirements": [
+      "REQ-31",
+      "REQ-33"
+     ]
+    },
+    {
+     "id": "P6",
+     "category": "overflow",
+     "answer_kind": "int",
+     "requirements": [
+      "REQ-32"
+     ]
+    },
+    {
+     "id": "P7",
+     "category": "overflow",
+     "answer_kind": "int",
+     "requirements": [
+      "REQ-31",
+      "REQ-27",
+      "REQ-10"
+     ]
+    },
+    {
+     "id": "P8",
+     "category": "unmapped",
+     "answer_kind": "bool",
+     "requirements": [
+      "REQ-15",
+      "REQ-25"
+     ]
+    },
+    {
+     "id": "P9",
+     "category": "invalid_input",
+     "answer_kind": "int",
+     "requirements": [
+      "REQ-28",
+      "REQ-30"
+     ]
+    },
+    {
+     "id": "P10",
+     "category": "simultaneous",
+     "answer_kind": "choice",
+     "requirements": [
+      "REQ-13",
+      "REQ-14",
+      "REQ-03"
+     ]
+    },
+    {
+     "id": "P11",
+     "category": "mid_operation_reset",
+     "answer_kind": "choice",
+     "requirements": [
+      "REQ-08",
+      "REQ-20",
+      "REQ-21",
+      "REQ-06"
+     ]
+    },
+    {
+     "id": "P12",
+     "category": "back_pressure",
+     "answer_kind": "int",
+     "requirements": [
+      "REQ-11",
+      "REQ-07"
+     ]
+    },
+    {
+     "id": "P13",
+     "category": "power_up",
+     "answer_kind": "int",
+     "requirements": [
+      "REQ-16",
+      "REQ-22"
+     ]
+    }
+   ],
+   "probe_text": [
+    {
+     "id": "P1",
+     "category": "reset",
+     "requirements": [
+      "REQ-19",
+      "REQ-01"
+     ],
+     "scenario": "SCRATCH was written with 0xDEADBEEF, then the internal rst is asserted for several clk cycles (MMCM unlock) and released. After release, SCRATCH is read.",
+     "question": "What value does SCRATCH read after reset release?",
+     "answer_kind": "int"
+    },
+    {
+     "id": "P2",
+     "category": "boundary",
+     "requirements": [
+      "REQ-05",
+      "REQ-08",
+      "REQ-20"
+     ],
+     "scenario": "After INIT, no PUSH is issued. CRC and BYTE_COUNT are read immediately.",
+     "question": "What value does CRC read (as hex integer)? Does it differ from the internal CRC state 0xFFFFFFFF?",
+     "answer_kind": "choice",
+     "choices": [
+      "CRC reads 0x00000000",
+      "CRC reads 0xFFFFFFFF",
+      "CRC reads 0xFFFFFFFF XOR 0 = undefined"
+     ]
+    },
+    {
+     "id": "P3",
+     "category": "boundary",
+     "requirements": [
+      "REQ-27",
+      "REQ-10",
+      "REQ-06"
+     ],
+     "scenario": "After INIT, 2 PUSH4 words are issued, then one PUSH_N with TAIL_LEN 3. BUSY_CYCLES is read.",
+     "question": "What is BUSY_CYCLES?",
+     "answer_kind": "int"
+    },
+    {
+     "id": "P4",
+     "category": "boundary",
+     "requirements": [
+      "REQ-09",
+      "REQ-27"
+     ],
+     "scenario": "After INIT and 3 PUSH4 words (BYTE_COUNT 12, BUSY_CYCLES 3), a PUSH_N with TAIL_LEN 0 is issued.",
+     "question": "What is BUSY_CYCLES afterwards?",
+     "answer_kind": "int"
+    },
+    {
+     "id": "P5",
+     "category": "overflow",
+     "requirements": [
+      "REQ-31",
+      "REQ-33"
+     ],
+     "scenario": "BYTE_COUNT is 0xFFFFFFFC and BUSY_CYCLES is 5; one PUSH4 is issued.",
+     "question": "What are BYTE_COUNT and BUSY_CYCLES afterwards (give BUSY_CYCLES)?",
+     "answer_kind": "int"
+    },
+    {
+     "id": "P6",
+     "category": "overflow",
+     "requirements": [
+      "REQ-32"
+     ],
+     "scenario": "BYTE_COUNT is 0xFFFFFFFD and one PUSH4 is issued.",
+     "question": "What decimal value does BYTE_COUNT read afterwards?",
+     "answer_kind": "int"
+    },
+    {
+     "id": "P7",
+     "category": "overflow",
+     "requirements": [
+      "REQ-31",
+      "REQ-27",
+      "REQ-10"
+     ],
+     "scenario": "BYTE_COUNT is 0xFFFFFFFE and a PUSH_N with TAIL_LEN 3 is issued.",
+     "question": "What decimal value does BYTE_COUNT read afterwards?",
+     "answer_kind": "int"
+    },
+    {
+     "id": "P8",
+     "category": "unmapped",
+     "requirements": [
+      "REQ-15",
+      "REQ-25"
+     ],
+     "scenario": "A write of 0x12345678 to unmapped address 0x7F0 is followed by a read of 0x7F0 and a read of SCRATCH (previously 0xAAAA5555).",
+     "question": "Does the read of 0x7F0 return 0 and SCRATCH remain 0xAAAA5555?",
+     "answer_kind": "bool"
+    },
+    {
+     "id": "P9",
+     "category": "invalid_input",
+     "requirements": [
+      "REQ-28",
+      "REQ-30"
+     ],
+     "scenario": "A write of 0xFFFFFFFF to address 0x000 is issued, then 0x000 is read.",
+     "question": "What value does the read return?",
+     "answer_kind": "int"
+    },
+    {
+     "id": "P10",
+     "category": "simultaneous",
+     "requirements": [
+      "REQ-13",
+      "REQ-14",
+      "REQ-03"
+     ],
+     "scenario": "h_we is pulsed at cycle T writing 0x11 to SCRATCH, and h_re for SCRATCH is pulsed in the same cycle T (SCRATCH previously 0x22).",
+     "question": "Does h_rdata show 0x11 (new value) rather than 0x22 within 2 clk after h_re?",
+     "answer_kind": "choice",
+     "choices": [
+      "shows 0x22 old value",
+      "shows 0x11 new value",
+      "either is permitted"
+     ]
+    },
+    {
+     "id": "P11",
+     "category": "mid_operation_reset",
+     "requirements": [
+      "REQ-08",
+      "REQ-20",
+      "REQ-21",
+      "REQ-06"
+     ],
+     "scenario": "After INIT, 10 PUSH4 words are issued; rst is asserted during the 11th push cycle, then released. CRC, BYTE_COUNT and BUSY_CYCLES are read after release, with no INIT.",
+     "question": "What does BYTE_COUNT read after reset release?",
+     "answer_kind": "choice",
+     "choices": [
+      "0",
+      "40",
+      "44",
+      "unspecified by requirements"
+     ]
+    },
+    {
+     "id": "P12",
+     "category": "back_pressure",
+     "requirements": [
+      "REQ-11",
+      "REQ-07"
+     ],
+     "scenario": "100 PUSH4 words are issued on 100 consecutive clk cycles right after INIT.",
+     "question": "What is BUSY_CYCLES after the last push, and are any pushes dropped?",
+     "answer_kind": "int"
+    },
+    {
+     "id": "P13",
+     "category": "power_up",
+     "requirements": [
+      "REQ-16",
+      "REQ-22"
+     ],
+     "scenario": "During MMCM unlock with rst held, before any INIT, sfp_tx_disable is sampled; later CTRL bit 0 is read after INIT.",
+     "question": "What are sfp_tx_disable during reset and CTRL bit 0 after INIT (give sfp_tx_disable value)?",
+     "answer_kind": "int"
+    }
+   ],
+   "answers": {
+    "A": {
+     "P1": "0",
+     "P2": "CRC reads 0x00000000",
+     "P3": "3",
+     "P4": "3",
+     "P5": "6",
+     "P6": "1",
+     "P7": "unspecified",
+     "P8": "yes",
+     "P9": "536936449",
+     "P10": "unspecified",
+     "P11": "unspecified by requirements",
+     "P12": "100",
+     "P13": "1"
+    },
+    "B": {
+     "P1": "0",
+     "P2": "CRC reads 0x00000000",
+     "P3": "3",
+     "P4": "3",
+     "P5": "6",
+     "P6": "1",
+     "P7": "unspecified",
+     "P8": "yes",
+     "P9": "537264129",
+     "P10": "either is permitted",
+     "P11": "unspecified by requirements",
+     "P12": "100",
+     "P13": "1"
+    }
+   }
+  }
+ ],
+ "frozen": null,
+ "stop": "the round limit (4) was reached with questions still open",
+ "answerer": "oracle",
+ "finished": "2026-11-26T17:12:08Z",
+ "model_calls": 22,
+ "calls_by_role": {
+  "amend": 4,
+  "probes": 4,
+  "reader_a": 4,
+  "reader_b": 4,
+  "repair": 2,
+  "review": 4
+ },
+ "open": [
+  {
+   "id": "Q8",
+   "text": "Does h_rdata show 0x11 (new value) rather than 0x22 within 2 clk after h_re? (Scenario: h_we is pulsed at cycle T writing 0x11 to SCRATCH, and h_re for SCRATCH is pulsed in the same cycle T (SCRATCH previously 0x22).) Two careful readers of the requirements disagree about this; what is the intended behaviour?",
+   "code": "RDY-READ-01",
+   "topic": "requirement",
+   "ids": [
+    "REQ-13",
+    "REQ-14",
+    "REQ-03"
+   ],
+   "blocking": true,
+   "source": "readers",
+   "answer": null,
+   "by": null,
+   "evidence": null
+  }
+ ]
+}

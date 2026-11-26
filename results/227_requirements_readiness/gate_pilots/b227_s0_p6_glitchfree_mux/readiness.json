@@ -1,0 +1,1464 @@
+{
+ "schema": "fpga-force/readiness/v1",
+ "level": "standard",
+ "limits": {
+  "max_rounds": 4,
+  "max_calls": 60,
+  "max_questions": 25
+ },
+ "checklist": "procedures/requirements-review/pre-build-review@sha256:c6081e7cd937",
+ "started": "2026-11-26T17:27:10Z",
+ "rounds": [
+  {
+   "n": 1,
+   "questions": [
+    {
+     "id": "Q1",
+     "text": "Please restate REQ-19 so that one statement can be checked: split it into one requirement per checkable statement, each with its own id and proof method",
+     "code": "RDY-CLEAR-01",
+     "topic": "requirement",
+     "ids": [
+      "REQ-19"
+     ],
+     "blocking": true,
+     "source": "code",
+     "answer": null,
+     "by": null,
+     "evidence": null
+    },
+    {
+     "id": "Q2",
+     "text": "Is the muxed counter latched into MUX_COUNT? (Scenario: The host writes to SNAPSHOT at address 0x03C (not exactly 0x038, but within the register region, data 0) .) Two careful readers of the requirements disagree about this; what is the intended behaviour?",
+     "code": "RDY-READ-01",
+     "topic": "requirement",
+     "ids": [
+      "REQ-21",
+      "REQ-20"
+     ],
+     "blocking": true,
+     "source": "readers",
+     "answer": "No. 0x03C is not a mapped register (the last mapped address is 0x038), so the write is ignored and MUX_COUNT is not latched. Only a write to 0x038 triggers SNAPSHOT.",
+     "by": "oracle",
+     "evidence": "Unmapped addresses read 0 and ignore writes."
+    },
+    {
+     "id": "Q3",
+     "text": "After reset release, what are BUSY and DONE: both 0, BUSY 0 with DONE 1, or measurement continues? (Scenario: A frequency measurement with GATE_LEN 25,000,000 is running (BUSY=1) when the internal power-on reset is asserted again, 10,000,000 clk_c3 cycles after START.) The requirements do not say; what should happen?",
+     "code": "RDY-READ-02",
+     "topic": "requirement",
+     "ids": [
+      "REQ-17",
+      "REQ-31",
+      "REQ-32",
+      "REQ-16"
+     ],
+     "blocking": true,
+     "source": "readers",
+     "answer": "Both BUSY and DONE are 0 after reset release. The reset values list FREQ_STATUS as 0, which clears BUSY (bit 0) and DONE (bit 1), so the measurement does not continue.",
+     "by": "oracle",
+     "evidence": "- Reset: SEL 0 (clock A), GATE_LEN 25,000,000, SWITCH_COUNT 0, MUX_ERRS 0, STATUS 0, FREQ_STATUS 0, FREQ_COUNT 0."
+    },
+    {
+     "id": "Q4",
+     "text": "How many clk_c3 cycles after the START write does BUSY first read 1, and does DONE become 1 at gate end (answer the number of clk_c3 cycles BUSY stays 1)? (Scenario: GATE_LEN is set to 1 and START is written once.) The requirements do not say; what should happen?",
+     "code": "RDY-READ-02",
+     "topic": "requirement",
+     "ids": [
+      "REQ-17",
+      "REQ-31",
+      "REQ-32"
+     ],
+     "blocking": true,
+     "source": "readers",
+     "answer": null,
+     "by": null,
+     "evidence": null
+    },
+    {
+     "id": "Q5",
+     "text": "By how much does SWITCH_COUNT increase in total, and is that determined by the requirements (answer the increase as a number)? (Scenario: While SEL=0 and ACTIVE_SEL=0, the host writes SEL=1, and 3 clk_c3 clocks later (switch still in progress, ACTIVE_SEL still 0) writes SEL=0.) The requirements do not say; what should happen?",
+     "code": "RDY-READ-02",
+     "topic": "requirement",
+     "ids": [
+      "REQ-14",
+      "REQ-15",
+      "REQ-09"
+     ],
+     "blocking": true,
+     "source": "readers",
+     "answer": "SWITCH_COUNT increases by 2. The first write (SEL=1) starts a switch to B, and it is never aborted, so it completes and counts once. The second write (SEL=0) arrives while SWITCHING is 1, so it is queued. When the first switch ends, the queued value 0 differs from the current selection (B), so it is acted on as a real switch back to A, which completes and counts once more. The requirements settle this.",
+     "by": "oracle",
+     "evidence": "A write to SEL while SWITCHING is 1 is queued: the last value written wins and is acted on when the current switch ends (a switch is never aborted)."
+    },
+    {
+     "id": "Q6",
+     "text": "Does h_rdata show 0xAAAA5555 for that read? (Scenario: The host pulses h_we writing 0xAAAA5555 to SCRATCH at clk_c3 cycle N, then pulses h_re for SCRATCH at cycle N+1.) The requirements do not say; what should happen?",
+     "code": "RDY-READ-02",
+     "topic": "requirement",
+     "ids": [
+      "REQ-05",
+      "REQ-06",
+      "REQ-29"
+     ],
+     "blocking": true,
+     "source": "readers",
+     "answer": "Yes. SCRATCH reads back what was written, and the write takes effect the clock after h_we. That is the same clock as the h_re pulse at N+1, and h_rdata only has to show the register within 2 clocks of h_re. So h_rdata must show 0xAAAA5555 for that read and hold it.",
+     "by": "oracle",
+     "evidence": "| 0x008 | SCRATCH | RW | 32 bits, reads back what was written, resets to 0 |"
+    },
+    {
+     "id": "Q7",
+     "text": "Does the running gate restart (gate end moves later)? (Scenario: The host writes FREQ_CTRL.START=1 while a measurement is already BUSY=1, 5,000,000 cycles into a default gate.) The requirements do not say; what should happen?",
+     "code": "RDY-READ-02",
+     "topic": "requirement",
+     "ids": [
+      "REQ-20",
+      "REQ-17"
+     ],
+     "blocking": true,
+     "source": "readers",
+     "answer": "No. FREQ_CTRL.START is ignored while BUSY, so the running gate does not restart and its end does not move later.",
+     "by": "oracle",
+     "evidence": "FREQ_CTRL.START is ignored while BUSY."
+    }
+   ],
+   "amendments": [
+    "REQ-21"
+   ],
+   "refused": [],
+   "repairs": {
+    "asked": [
+     {
+      "id": "REQ-03",
+      "code": "RDY-CLEAR-01",
+      "text": "requirement REQ-03 is compound ('and' joins two statements): split it into one requirement per checkable statement, each with its own id and proof method",
+      "question": "Please restate REQ-03 so that one statement can be checked: split it into one requirement per checkable statement, each with its own id and proof method",
+      "level": "standard",
+      "topic": "requirement",
+      "blocking": true,
+      "repair": true
+     },
+     {
+      "id": "REQ-04",
+      "code": "RDY-CLEAR-01",
+      "text": "requirement REQ-04 is compound ('and' joins two statements): split it into one requirement per checkable statement, each with its own id and proof method",
+      "question": "Please restate REQ-04 so that one statement can be checked: split it into one requirement per checkable statement, each with its own id and proof method",
+      "level": "standard",
+      "topic": "requirement",
+      "blocking": true,
+      "repair": true
+     },
+     {
+      "id": "REQ-05",
+      "code": "RDY-CLEAR-01",
+      "text": "requirement REQ-05 is compound ('and' joins two statements): split it into one requirement per checkable statement, each with its own id and proof method",
+      "question": "Please restate REQ-05 so that one statement can be checked: split it into one requirement per checkable statement, each with its own id and proof method",
+      "level": "standard",
+      "topic": "requirement",
+      "blocking": true,
+      "repair": true
+     },
+     {
+      "id": "REQ-07",
+      "code": "RDY-CLEAR-01",
+      "text": "requirement REQ-07 is compound ('and' joins two statements): split it into one requirement per checkable statement, each with its own id and proof method",
+      "question": "Please restate REQ-07 so that one statement can be checked: split it into one requirement per checkable statement, each with its own id and proof method",
+      "level": "standard",
+      "topic": "requirement",
+      "blocking": true,
+      "repair": true
+     },
+     {
+      "id": "REQ-17",
+      "code": "RDY-CLEAR-01",
+      "text": "requirement REQ-17 is compound ('and' joins two statements): split it into one requirement per checkable statement, each with its own id and proof method",
+      "question": "Please restate REQ-17 so that one statement can be checked: split it into one requirement per checkable statement, each with its own id and proof method",
+      "level": "standard",
+      "topic": "requirement",
+      "blocking": true,
+      "repair": true
+     },
+     {
+      "id": "REQ-19",
+      "code": "RDY-CLEAR-01",
+      "text": "requirement REQ-19 is compound ('and' joins two statements): split it into one requirement per checkable statement, each with its own id and proof method",
+      "question": "Please restate REQ-19 so that one statement can be checked: split it into one requirement per checkable statement, each with its own id and proof method",
+      "level": "standard",
+      "topic": "requirement",
+      "blocking": true,
+      "repair": true
+     }
+    ],
+    "revised": [
+     "REQ-03",
+     "REQ-04",
+     "REQ-05",
+     "REQ-07",
+     "REQ-17",
+     "REQ-19"
+    ],
+    "refused": []
+   },
+   "mechanical": [
+    {
+     "id": "REQ-19",
+     "code": "RDY-CLEAR-01",
+     "text": "requirement REQ-19 is compound ('and' joins two statements): split it into one requirement per checkable statement, each with its own id and proof method",
+     "question": "Please restate REQ-19 so that one statement can be checked: split it into one requirement per checkable statement, each with its own id and proof method",
+     "level": "standard",
+     "topic": "requirement",
+     "blocking": true,
+     "repair": true
+    },
+    {
+     "id": "interface",
+     "code": "RDY-IF-03",
+     "text": "port clk_25mhz has no clock domain (the design has 3 clocks)",
+     "question": "Which clock is clk_25mhz synchronous to?",
+     "level": "strict",
+     "topic": "clocks and crossings",
+     "blocking": true,
+     "repair": false
+    },
+    {
+     "id": "interface",
+     "code": "RDY-IF-03",
+     "text": "port gt_refclk_p has no clock domain (the design has 3 clocks)",
+     "question": "Which clock is gt_refclk_p synchronous to?",
+     "level": "strict",
+     "topic": "clocks and crossings",
+     "blocking": true,
+     "repair": false
+    },
+    {
+     "id": "interface",
+     "code": "RDY-IF-03",
+     "text": "port gt_refclk_n has no clock domain (the design has 3 clocks)",
+     "question": "Which clock is gt_refclk_n synchronous to?",
+     "level": "strict",
+     "topic": "clocks and crossings",
+     "blocking": true,
+     "repair": false
+    },
+    {
+     "id": "interface",
+     "code": "RDY-IF-03",
+     "text": "port led has no clock domain (the design has 3 clocks)",
+     "question": "Which clock is led synchronous to?",
+     "level": "strict",
+     "topic": "clocks and crossings",
+     "blocking": true,
+     "repair": false
+    },
+    {
+     "id": "interface",
+     "code": "RDY-IF-04",
+     "text": "output led has no reset value",
+     "question": "What does led drive during and just after reset?",
+     "level": "strict",
+     "topic": "reset strategy",
+     "blocking": true,
+     "repair": false
+    },
+    {
+     "id": "interface",
+     "code": "RDY-IF-05",
+     "text": "output led has no stated latency from a named input event",
+     "question": "How many cycles after which input event does led change (or is it combinational)?",
+     "level": "strict",
+     "topic": "throughput and latency",
+     "blocking": true,
+     "repair": false
+    },
+    {
+     "id": "interface",
+     "code": "RDY-IF-03",
+     "text": "port sfp_tx_disable has no clock domain (the design has 3 clocks)",
+     "question": "Which clock is sfp_tx_disable synchronous to?",
+     "level": "strict",
+     "topic": "clocks and crossings",
+     "blocking": true,
+     "repair": false
+    },
+    {
+     "id": "interface",
+     "code": "RDY-IF-04",
+     "text": "output sfp_tx_disable has no reset value",
+     "question": "What does sfp_tx_disable drive during and just after reset?",
+     "level": "strict",
+     "topic": "reset strategy",
+     "blocking": true,
+     "repair": false
+    },
+    {
+     "id": "interface",
+     "code": "RDY-IF-05",
+     "text": "output sfp_tx_disable has no stated latency from a named input event",
+     "question": "How many cycles after which input event does sfp_tx_disable change (or is it combinational)?",
+     "level": "strict",
+     "topic": "throughput and latency",
+     "blocking": true,
+     "repair": false
+    },
+    {
+     "id": "REQ-24",
+     "code": "RDY-NUM-01",
+     "text": "an arithmetic result with no stated number format or overflow behaviour",
+     "question": "For REQ-24: signed or unsigned, how many fractional bits, and what happens on overflow (wrap or saturate)?",
+     "level": "strict",
+     "topic": "numeric formats",
+     "blocking": true,
+     "repair": false
+    }
+   ],
+   "review": {
+    "findings": [],
+    "verdict": "ready",
+    "compliance": 0
+   },
+   "probes": {
+    "count": 13,
+    "categories": [
+     "boundary",
+     "invalid_input",
+     "mid_operation_reset",
+     "power_up",
+     "reset",
+     "simultaneous",
+     "unmapped"
+    ],
+    "problems": []
+   },
+   "agreement": {
+    "probes": 13,
+    "agreed": 7,
+    "rate": 0.5385,
+    "disagreements": [
+     {
+      "probe": "P10",
+      "scenario": "The host writes to SNAPSHOT at address 0x03C (not exactly 0x038, but within the register region, data 0) .",
+      "question": "Is the muxed counter latched into MUX_COUNT?",
+      "category": "simultaneous",
+      "answers": {
+       "A": "unspecified",
+       "B": "yes"
+      },
+      "requirements": [
+       "REQ-21",
+       "REQ-20"
+      ]
+     }
+    ],
+    "gaps": [
+     {
+      "probe": "P4",
+      "scenario": "A frequency measurement with GATE_LEN 25,000,000 is running (BUSY=1) when the internal power-on reset is asserted again, 10,000,000 clk_c3 cycles after START.",
+      "question": "After reset release, what are BUSY and DONE: both 0, BUSY 0 with DONE 1, or measurement continues?",
+      "answers": {
+       "A": "unspecified",
+       "B": "unspecified"
+      },
+      "requirements": [
+       "REQ-17",
+       "REQ-31",
+       "REQ-32",
+       "REQ-16"
+      ]
+     },
+     {
+      "probe": "P5",
+      "scenario": "GATE_LEN is set to 1 and START is written once.",
+      "question": "How many clk_c3 cycles after the START write does BUSY first read 1, and does DONE become 1 at gate end (answer the number of clk_c3 cycles BUSY stays 1)?",
+      "answers": {
+       "A": "unspecified",
+       "B": "unspecified"
+      },
+      "requirements": [
+       "REQ-17",
+       "REQ-31",
+       "REQ-32"
+      ]
+     },
+     {
+      "probe": "P8",
+      "scenario": "While SEL=0 and ACTIVE_SEL=0, the host writes SEL=1, and 3 clk_c3 clocks later (switch still in progress, ACTIVE_SEL still 0) writes SEL=0.",
+      "question": "By how much does SWITCH_COUNT increase in total, and is that determined by the requirements (answer the increase as a number)?",
+      "answers": {
+       "A": "unspecified",
+       "B": "unspecified"
+      },
+      "requirements": [
+       "REQ-14",
+       "REQ-15",
+       "REQ-09"
+      ]
+     },
+     {
+      "probe": "P9",
+      "scenario": "The host pulses h_we writing 0xAAAA5555 to SCRATCH at clk_c3 cycle N, then pulses h_re for SCRATCH at cycle N+1.",
+      "question": "Does h_rdata show 0xAAAA5555 for that read?",
+      "answers": {
+       "A": "unspecified",
+       "B": "unspecified"
+      },
+      "requirements": [
+       "REQ-05",
+       "REQ-06",
+       "REQ-29"
+      ]
+     },
+     {
+      "probe": "P11",
+      "scenario": "The host writes FREQ_CTRL.START=1 while a measurement is already BUSY=1, 5,000,000 cycles into a default gate.",
+      "question": "Does the running gate restart (gate end moves later)?",
+      "answers": {
+       "A": "unspecified",
+       "B": "unspecified"
+      },
+      "requirements": [
+       "REQ-20",
+       "REQ-17"
+      ]
+     }
+    ]
+   },
+   "probe_set": [
+    {
+     "id": "P1",
+     "category": "unmapped",
+     "answer_kind": "int",
+     "requirements": [
+      "REQ-04"
+     ]
+    },
+    {
+     "id": "P2",
+     "category": "unmapped",
+     "answer_kind": "bool",
+     "requirements": [
+      "REQ-28",
+      "REQ-03"
+     ]
+    },
+    {
+     "id": "P3",
+     "category": "power_up",
+     "answer_kind": "choice",
+     "requirements": [
+      "REQ-07",
+      "REQ-27",
+      "REQ-16",
+      "REQ-30"
+     ]
+    },
+    {
+     "id": "P4",
+     "category": "mid_operation_reset",
+     "answer_kind": "choice",
+     "requirements": [
+      "REQ-17",
+      "REQ-31",
+      "REQ-32",
+      "REQ-16"
+     ]
+    },
+    {
+     "id": "P5",
+     "category": "boundary",
+     "answer_kind": "int",
+     "requirements": [
+      "REQ-17",
+      "REQ-31",
+      "REQ-32"
+     ]
+    },
+    {
+     "id": "P6",
+     "category": "boundary",
+     "answer_kind": "choice",
+     "requirements": [
+      "REQ-19",
+      "REQ-33",
+      "REQ-18"
+     ]
+    },
+    {
+     "id": "P7",
+     "category": "simultaneous",
+     "answer_kind": "int",
+     "requirements": [
+      "REQ-12",
+      "REQ-13"
+     ]
+    },
+    {
+     "id": "P8",
+     "category": "simultaneous",
+     "answer_kind": "int",
+     "requirements": [
+      "REQ-14",
+      "REQ-15",
+      "REQ-09"
+     ]
+    },
+    {
+     "id": "P9",
+     "category": "boundary",
+     "answer_kind": "bool",
+     "requirements": [
+      "REQ-05",
+      "REQ-06",
+      "REQ-29"
+     ]
+    },
+    {
+     "id": "P10",
+     "category": "simultaneous",
+     "answer_kind": "bool",
+     "requirements": [
+      "REQ-21",
+      "REQ-20"
+     ]
+    },
+    {
+     "id": "P11",
+     "category": "invalid_input",
+     "answer_kind": "bool",
+     "requirements": [
+      "REQ-20",
+      "REQ-17"
+     ]
+    },
+    {
+     "id": "P12",
+     "category": "boundary",
+     "answer_kind": "int",
+     "requirements": [
+      "REQ-10"
+     ]
+    },
+    {
+     "id": "P13",
+     "category": "reset",
+     "answer_kind": "int",
+     "requirements": [
+      "REQ-22",
+      "REQ-23"
+     ]
+    }
+   ],
+   "probe_text": [
+    {
+     "id": "P1",
+     "category": "unmapped",
+     "requirements": [
+      "REQ-04"
+     ],
+     "scenario": "A host read is issued to address 0x100, which is not any defined register, while SCRATCH holds 0xDEADBEEF.",
+     "question": "What 32-bit value does h_rdata show (as a decimal number)?",
+     "answer_kind": "int"
+    },
+    {
+     "id": "P2",
+     "category": "unmapped",
+     "requirements": [
+      "REQ-28",
+      "REQ-03"
+     ],
+     "scenario": "SCRATCH holds 0x12345678. The host writes 0xFFFFFFFF to unmapped address 0x0FC, then reads SCRATCH at 0x008.",
+     "question": "Does SCRATCH read back 0x12345678?",
+     "answer_kind": "bool"
+    },
+    {
+     "id": "P3",
+     "category": "power_up",
+     "requirements": [
+      "REQ-07",
+      "REQ-27",
+      "REQ-16",
+      "REQ-30"
+     ],
+     "scenario": "Immediately after configuration and release of the internal 16-clock power-on reset, the host reads SCRATCH, SEL and GATE_LEN.",
+     "question": "What are the values of SCRATCH, SEL and GATE_LEN (give the three values)?",
+     "answer_kind": "choice",
+     "choices": [
+      "0, 0, 25000000",
+      "0, 0, undefined",
+      "undefined, 0, 25000000",
+      "0, 1, 25000000"
+     ]
+    },
+    {
+     "id": "P4",
+     "category": "mid_operation_reset",
+     "requirements": [
+      "REQ-17",
+      "REQ-31",
+      "REQ-32",
+      "REQ-16"
+     ],
+     "scenario": "A frequency measurement with GATE_LEN 25,000,000 is running (BUSY=1) when the internal power-on reset is asserted again, 10,000,000 clk_c3 cycles after START.",
+     "question": "After reset release, what are BUSY and DONE: both 0, BUSY 0 with DONE 1, or measurement continues?",
+     "answer_kind": "choice",
+     "choices": [
+      "BUSY=0, DONE=0",
+      "BUSY=0, DONE=1",
+      "BUSY=1 continues to completion",
+      "unspecified"
+     ]
+    },
+    {
+     "id": "P5",
+     "category": "boundary",
+     "requirements": [
+      "REQ-17",
+      "REQ-31",
+      "REQ-32"
+     ],
+     "scenario": "GATE_LEN is set to 1 and START is written once.",
+     "question": "How many clk_c3 cycles after the START write does BUSY first read 1, and does DONE become 1 at gate end (answer the number of clk_c3 cycles BUSY stays 1)?",
+     "answer_kind": "int"
+    },
+    {
+     "id": "P6",
+     "category": "boundary",
+     "requirements": [
+      "REQ-19",
+      "REQ-33",
+      "REQ-18"
+     ],
+     "scenario": "Default GATE_LEN, clock A (25 MHz) selected, measurement completes.",
+     "question": "Which FREQ_COUNT values are allowed: only 25,000,000; 24,999,999 to 25,000,001; or 24,999,998 to 25,000,002?",
+     "answer_kind": "choice",
+     "choices": [
+      "only 25000000",
+      "24999999 to 25000001",
+      "24999998 to 25000002"
+     ]
+    },
+    {
+     "id": "P7",
+     "category": "simultaneous",
+     "requirements": [
+      "REQ-12",
+      "REQ-13"
+     ],
+     "scenario": "On one clock, the Gray twin disagrees with the counter and the counter is also not previous + 1.",
+     "question": "By how much does MUX_ERRS increment on that clock (0, 1, or 2)?",
+     "answer_kind": "int"
+    },
+    {
+     "id": "P8",
+     "category": "simultaneous",
+     "requirements": [
+      "REQ-14",
+      "REQ-15",
+      "REQ-09"
+     ],
+     "scenario": "While SEL=0 and ACTIVE_SEL=0, the host writes SEL=1, and 3 clk_c3 clocks later (switch still in progress, ACTIVE_SEL still 0) writes SEL=0.",
+     "question": "By how much does SWITCH_COUNT increase in total, and is that determined by the requirements (answer the increase as a number)?",
+     "answer_kind": "int"
+    },
+    {
+     "id": "P9",
+     "category": "boundary",
+     "requirements": [
+      "REQ-05",
+      "REQ-06",
+      "REQ-29"
+     ],
+     "scenario": "The host pulses h_we writing 0xAAAA5555 to SCRATCH at clk_c3 cycle N, then pulses h_re for SCRATCH at cycle N+1.",
+     "question": "Does h_rdata show 0xAAAA5555 for that read?",
+     "answer_kind": "bool"
+    },
+    {
+     "id": "P10",
+     "category": "simultaneous",
+     "requirements": [
+      "REQ-21",
+      "REQ-20"
+     ],
+     "scenario": "The host writes to SNAPSHOT at address 0x03C (not exactly 0x038, but within the register region, data 0) .",
+     "question": "Is the muxed counter latched into MUX_COUNT?",
+     "answer_kind": "bool"
+    },
+    {
+     "id": "P11",
+     "category": "invalid_input",
+     "requirements": [
+      "REQ-20",
+      "REQ-17"
+     ],
+     "scenario": "The host writes FREQ_CTRL.START=1 while a measurement is already BUSY=1, 5,000,000 cycles into a default gate.",
+     "question": "Does the running gate restart (gate end moves later)?",
+     "answer_kind": "bool"
+    },
+    {
+     "id": "P12",
+     "category": "boundary",
+     "requirements": [
+      "REQ-10"
+     ],
+     "scenario": "B_DIV is read while clock B is configured as divide by 8 and again as divide by 1.",
+     "question": "What values are read in the two cases (give the value read for divide-by-8)?",
+     "answer_kind": "int"
+    },
+    {
+     "id": "P13",
+     "category": "reset",
+     "requirements": [
+      "REQ-22",
+      "REQ-23"
+     ],
+     "scenario": "During the 16 clocks of power-on reset and afterward, sfp_tx_disable is observed.",
+     "question": "What is sfp_tx_disable during the reset period?",
+     "answer_kind": "int"
+    }
+   ],
+   "answers": {
+    "A": {
+     "P1": "0",
+     "P2": "yes",
+     "P3": "0, 0, 25000000",
+     "P4": "unspecified",
+     "P5": "unspecified",
+     "P6": "24999999 to 25000001",
+     "P7": "2",
+     "P8": "unspecified",
+     "P9": "unspecified",
+     "P10": "unspecified",
+     "P11": "unspecified",
+     "P12": "8",
+     "P13": "1"
+    },
+    "B": {
+     "P1": "0",
+     "P2": "yes",
+     "P3": "0, 0, 25000000",
+     "P4": "unspecified",
+     "P5": "unspecified",
+     "P6": "24999999 to 25000001",
+     "P7": "2",
+     "P8": "unspecified",
+     "P9": "unspecified",
+     "P10": "yes",
+     "P11": "unspecified",
+     "P12": "8",
+     "P13": "1"
+    }
+   }
+  },
+  {
+   "n": 2,
+   "questions": [
+    {
+     "id": "Q8",
+     "text": "What is SWITCH_COUNT after the switch completes and settles? (Scenario: SEL=0 active. SEL is written 1 (switch starts). While SWITCHING is 1, SEL is written 1 again, then the switch completes. SWITCH_COUNT was 0 before.) The requirements do not say; what should happen?",
+     "code": "RDY-READ-02",
+     "topic": "requirement",
+     "ids": [
+      "REQ-35",
+      "REQ-38",
+      "REQ-14"
+     ],
+     "blocking": true,
+     "source": "readers",
+     "answer": "SWITCH_COUNT is 1. The first write to SEL starts one switch, which increments SWITCH_COUNT on completion. The second write of 1 is queued, and the last value written wins. When the switch ends, ACTIVE_SEL already equals 1, so the queued value is the same as the current selection. A same-value write is not a switch, so no second switch occurs.",
+     "by": "oracle",
+     "evidence": "A write to SEL while SWITCHING is 1 is queued: the last value written wins and is acted on when the current switch ends (a switch is never aborted)."
+    }
+   ],
+   "amendments": [],
+   "refused": [],
+   "repairs": {
+    "asked": [
+     {
+      "id": "REQ-19",
+      "code": "RDY-CLEAR-01",
+      "text": "requirement REQ-19 is compound ('and' joins two statements): split it into one requirement per checkable statement, each with its own id and proof method",
+      "question": "Please restate REQ-19 so that one statement can be checked: split it into one requirement per checkable statement, each with its own id and proof method",
+      "level": "standard",
+      "topic": "requirement",
+      "blocking": true,
+      "repair": true
+     },
+     {
+      "id": "REQ-35",
+      "code": "RDY-CLEAR-01",
+      "text": "requirement REQ-35 is compound (', and' joins two statements): split it into one requirement per checkable statement, each with its own id and proof method",
+      "question": "Please restate REQ-35 so that one statement can be checked: split it into one requirement per checkable statement, each with its own id and proof method",
+      "level": "standard",
+      "topic": "requirement",
+      "blocking": true,
+      "repair": true
+     },
+     {
+      "id": "REQ-36",
+      "code": "RDY-CLEAR-01",
+      "text": "requirement REQ-36 is compound ('and' joins two statements): split it into one requirement per checkable statement, each with its own id and proof method",
+      "question": "Please restate REQ-36 so that one statement can be checked: split it into one requirement per checkable statement, each with its own id and proof method",
+      "level": "standard",
+      "topic": "requirement",
+      "blocking": true,
+      "repair": true
+     }
+    ],
+    "revised": [
+     "REQ-19",
+     "REQ-35",
+     "REQ-36"
+    ],
+    "refused": []
+   },
+   "mechanical": [
+    {
+     "id": "interface",
+     "code": "RDY-IF-03",
+     "text": "port clk_25mhz has no clock domain (the design has 3 clocks)",
+     "question": "Which clock is clk_25mhz synchronous to?",
+     "level": "strict",
+     "topic": "clocks and crossings",
+     "blocking": true,
+     "repair": false
+    },
+    {
+     "id": "interface",
+     "code": "RDY-IF-03",
+     "text": "port gt_refclk_p has no clock domain (the design has 3 clocks)",
+     "question": "Which clock is gt_refclk_p synchronous to?",
+     "level": "strict",
+     "topic": "clocks and crossings",
+     "blocking": true,
+     "repair": false
+    },
+    {
+     "id": "interface",
+     "code": "RDY-IF-03",
+     "text": "port gt_refclk_n has no clock domain (the design has 3 clocks)",
+     "question": "Which clock is gt_refclk_n synchronous to?",
+     "level": "strict",
+     "topic": "clocks and crossings",
+     "blocking": true,
+     "repair": false
+    },
+    {
+     "id": "interface",
+     "code": "RDY-IF-03",
+     "text": "port led has no clock domain (the design has 3 clocks)",
+     "question": "Which clock is led synchronous to?",
+     "level": "strict",
+     "topic": "clocks and crossings",
+     "blocking": true,
+     "repair": false
+    },
+    {
+     "id": "interface",
+     "code": "RDY-IF-04",
+     "text": "output led has no reset value",
+     "question": "What does led drive during and just after reset?",
+     "level": "strict",
+     "topic": "reset strategy",
+     "blocking": true,
+     "repair": false
+    },
+    {
+     "id": "interface",
+     "code": "RDY-IF-05",
+     "text": "output led has no stated latency from a named input event",
+     "question": "How many cycles after which input event does led change (or is it combinational)?",
+     "level": "strict",
+     "topic": "throughput and latency",
+     "blocking": true,
+     "repair": false
+    },
+    {
+     "id": "interface",
+     "code": "RDY-IF-03",
+     "text": "port sfp_tx_disable has no clock domain (the design has 3 clocks)",
+     "question": "Which clock is sfp_tx_disable synchronous to?",
+     "level": "strict",
+     "topic": "clocks and crossings",
+     "blocking": true,
+     "repair": false
+    },
+    {
+     "id": "interface",
+     "code": "RDY-IF-04",
+     "text": "output sfp_tx_disable has no reset value",
+     "question": "What does sfp_tx_disable drive during and just after reset?",
+     "level": "strict",
+     "topic": "reset strategy",
+     "blocking": true,
+     "repair": false
+    },
+    {
+     "id": "interface",
+     "code": "RDY-IF-05",
+     "text": "output sfp_tx_disable has no stated latency from a named input event",
+     "question": "How many cycles after which input event does sfp_tx_disable change (or is it combinational)?",
+     "level": "strict",
+     "topic": "throughput and latency",
+     "blocking": true,
+     "repair": false
+    },
+    {
+     "id": "REQ-24",
+     "code": "RDY-NUM-01",
+     "text": "an arithmetic result with no stated number format or overflow behaviour",
+     "question": "For REQ-24: signed or unsigned, how many fractional bits, and what happens on overflow (wrap or saturate)?",
+     "level": "strict",
+     "topic": "numeric formats",
+     "blocking": true,
+     "repair": false
+    }
+   ],
+   "review": {
+    "findings": [],
+    "verdict": "ready",
+    "compliance": 0
+   },
+   "probes": {
+    "count": 13,
+    "categories": [
+     "back_pressure",
+     "boundary",
+     "invalid_input",
+     "mid_operation_reset",
+     "power_up",
+     "reset",
+     "simultaneous",
+     "unmapped"
+    ],
+    "problems": []
+   },
+   "agreement": {
+    "probes": 13,
+    "agreed": 12,
+    "rate": 0.9231,
+    "disagreements": [],
+    "gaps": [
+     {
+      "probe": "P6",
+      "scenario": "SEL=0 active. SEL is written 1 (switch starts). While SWITCHING is 1, SEL is written 1 again, then the switch completes. SWITCH_COUNT was 0 before.",
+      "question": "What is SWITCH_COUNT after the switch completes and settles?",
+      "answers": {
+       "A": "unspecified",
+       "B": "unspecified"
+      },
+      "requirements": [
+       "REQ-35",
+       "REQ-38",
+       "REQ-14"
+      ]
+     }
+    ]
+   },
+   "probe_set": [
+    {
+     "id": "P1",
+     "category": "power_up",
+     "answer_kind": "int",
+     "requirements": [
+      "REQ-07",
+      "REQ-16",
+      "REQ-27",
+      "REQ-30",
+      "REQ-34"
+     ]
+    },
+    {
+     "id": "P2",
+     "category": "reset",
+     "answer_kind": "int",
+     "requirements": [
+      "REQ-03",
+      "REQ-27"
+     ]
+    },
+    {
+     "id": "P3",
+     "category": "unmapped",
+     "answer_kind": "choice",
+     "requirements": [
+      "REQ-04",
+      "REQ-28"
+     ]
+    },
+    {
+     "id": "P4",
+     "category": "simultaneous",
+     "answer_kind": "bool",
+     "requirements": [
+      "REQ-06",
+      "REQ-36",
+      "REQ-03",
+      "REQ-05"
+     ]
+    },
+    {
+     "id": "P5",
+     "category": "back_pressure",
+     "answer_kind": "bool",
+     "requirements": [
+      "REQ-35",
+      "REQ-38",
+      "REQ-09",
+      "REQ-08"
+     ]
+    },
+    {
+     "id": "P6",
+     "category": "boundary",
+     "answer_kind": "int",
+     "requirements": [
+      "REQ-35",
+      "REQ-38",
+      "REQ-14"
+     ]
+    },
+    {
+     "id": "P7",
+     "category": "boundary",
+     "answer_kind": "int",
+     "requirements": [
+      "REQ-15",
+      "REQ-14"
+     ]
+    },
+    {
+     "id": "P8",
+     "category": "simultaneous",
+     "answer_kind": "int",
+     "requirements": [
+      "REQ-37",
+      "REQ-17",
+      "REQ-31",
+      "REQ-32"
+     ]
+    },
+    {
+     "id": "P9",
+     "category": "mid_operation_reset",
+     "answer_kind": "choice",
+     "requirements": [
+      "REQ-34",
+      "REQ-17"
+     ]
+    },
+    {
+     "id": "P10",
+     "category": "boundary",
+     "answer_kind": "int",
+     "requirements": [
+      "REQ-20",
+      "REQ-17"
+     ]
+    },
+    {
+     "id": "P11",
+     "category": "invalid_input",
+     "answer_kind": "choice",
+     "requirements": [
+      "REQ-21",
+      "REQ-12",
+      "REQ-13"
+     ]
+    },
+    {
+     "id": "P12",
+     "category": "simultaneous",
+     "answer_kind": "bool",
+     "requirements": [
+      "REQ-05",
+      "REQ-29",
+      "REQ-01",
+      "REQ-02"
+     ]
+    },
+    {
+     "id": "P13",
+     "category": "boundary",
+     "answer_kind": "bool",
+     "requirements": [
+      "REQ-10"
+     ]
+    }
+   ],
+   "probe_text": [
+    {
+     "id": "P1",
+     "category": "power_up",
+     "requirements": [
+      "REQ-07",
+      "REQ-16",
+      "REQ-27",
+      "REQ-30",
+      "REQ-34"
+     ],
+     "scenario": "Right after configuration, the power-on counter releases rst after 16 clk_c3 clocks. No register has been written.",
+     "question": "What is the value of GATE_LEN read right after rst release?",
+     "answer_kind": "int"
+    },
+    {
+     "id": "P2",
+     "category": "reset",
+     "requirements": [
+      "REQ-03",
+      "REQ-27"
+     ],
+     "scenario": "After rst release, SCRATCH is read at 0x008 before any write.",
+     "question": "What 32-bit value does h_rdata show (decimal)?",
+     "answer_kind": "int"
+    },
+    {
+     "id": "P3",
+     "category": "unmapped",
+     "requirements": [
+      "REQ-04",
+      "REQ-28"
+     ],
+     "scenario": "SCRATCH holds 0x12345678. A write of 0xFFFFFFFF is made to unmapped address 0x100, then 0x100 is read and then 0x008 is read.",
+     "question": "What are the values read from 0x100 and 0x008?",
+     "answer_kind": "choice",
+     "choices": [
+      "0x100=0, 0x008=0x12345678",
+      "0x100=0, 0x008=0xFFFFFFFF",
+      "0x100=0xFFFFFFFF, 0x008=0x12345678",
+      "0x100=0xFFFFFFFF, 0x008=0xFFFFFFFF"
+     ]
+    },
+    {
+     "id": "P4",
+     "category": "simultaneous",
+     "requirements": [
+      "REQ-06",
+      "REQ-36",
+      "REQ-03",
+      "REQ-05"
+     ],
+     "scenario": "h_we writes SCRATCH=0xAAAA5555 on clock N. h_re for SCRATCH is pulsed on clock N+1. The previous SCRATCH value was 0x1.",
+     "question": "Does h_rdata show 0xAAAA5555 for that read (not the old value 0x1)?",
+     "answer_kind": "bool"
+    },
+    {
+     "id": "P5",
+     "category": "back_pressure",
+     "requirements": [
+      "REQ-35",
+      "REQ-38",
+      "REQ-09",
+      "REQ-08"
+     ],
+     "scenario": "SEL=0 and ACTIVE_SEL=0. SEL is written 1 and a switch starts (SWITCHING=1). While SWITCHING is 1, SEL is written 0. The first switch then completes.",
+     "question": "After the first switch ends, does a second switch back to selection 0 occur (final ACTIVE_SEL=0)?",
+     "answer_kind": "bool"
+    },
+    {
+     "id": "P6",
+     "category": "boundary",
+     "requirements": [
+      "REQ-35",
+      "REQ-38",
+      "REQ-14"
+     ],
+     "scenario": "SEL=0 active. SEL is written 1 (switch starts). While SWITCHING is 1, SEL is written 1 again, then the switch completes. SWITCH_COUNT was 0 before.",
+     "question": "What is SWITCH_COUNT after the switch completes and settles?",
+     "answer_kind": "int"
+    },
+    {
+     "id": "P7",
+     "category": "boundary",
+     "requirements": [
+      "REQ-15",
+      "REQ-14"
+     ],
+     "scenario": "SEL=1 and ACTIVE_SEL=1, SWITCH_COUNT=5. SEL is written 1.",
+     "question": "What is SWITCH_COUNT afterward?",
+     "answer_kind": "int"
+    },
+    {
+     "id": "P8",
+     "category": "simultaneous",
+     "requirements": [
+      "REQ-37",
+      "REQ-17",
+      "REQ-31",
+      "REQ-32"
+     ],
+     "scenario": "GATE_LEN=1000. FREQ_CTRL.START=1 is written at clock 0, and START=1 is written again at clock 500 while BUSY=1.",
+     "question": "At approximately which clk_c3 clock count after the first START does BUSY fall to 0 (gate end)?",
+     "answer_kind": "int"
+    },
+    {
+     "id": "P9",
+     "category": "mid_operation_reset",
+     "requirements": [
+      "REQ-34",
+      "REQ-17"
+     ],
+     "scenario": "A frequency measurement is running (BUSY=1, 10,000,000 cycles into the 25,000,000 gate) when rst is asserted by the internal power-on counter and then released.",
+     "question": "After rst release, what are BUSY and DONE, and does the gate continue?",
+     "answer_kind": "choice",
+     "choices": [
+      "BUSY=0, DONE=0, gate stops",
+      "BUSY=0, DONE=1, gate stops",
+      "BUSY=1, DONE=0, gate continues",
+      "BUSY=0, DONE=0, gate continues"
+     ]
+    },
+    {
+     "id": "P10",
+     "category": "boundary",
+     "requirements": [
+      "REQ-20",
+      "REQ-17"
+     ],
+     "scenario": "FREQ_CTRL is written with START=1 and then read back on the next clock.",
+     "question": "What value does FREQ_CTRL.START read?",
+     "answer_kind": "int"
+    },
+    {
+     "id": "P11",
+     "category": "invalid_input",
+     "requirements": [
+      "REQ-21",
+      "REQ-12",
+      "REQ-13"
+     ],
+     "scenario": "A write to 0x038 is made while the muxed counter low 32 bits equal 0xFFFFFFFF, and the counter then wraps to 0x00000000 on the next muxed clock.",
+     "question": "What is MUX_COUNT after the snapshot, and does the wrap increment MUX_ERRS (counter is not previous+1 as a 32-bit value)?",
+     "answer_kind": "choice",
+     "choices": [
+      "MUX_COUNT=0xFFFFFFFF, MUX_ERRS unchanged",
+      "MUX_COUNT=0xFFFFFFFF, MUX_ERRS+1",
+      "MUX_COUNT=0, MUX_ERRS unchanged",
+      "MUX_COUNT=0, MUX_ERRS+1"
+     ]
+    },
+    {
+     "id": "P12",
+     "category": "simultaneous",
+     "requirements": [
+      "REQ-05",
+      "REQ-29",
+      "REQ-01",
+      "REQ-02"
+     ],
+     "scenario": "h_re is pulsed for address 0x000 on clock N, and no other read occurs afterward for 10 clocks.",
+     "question": "Does h_rdata equal 0x20960001 at clock N+2 and still at clock N+10?",
+     "answer_kind": "bool"
+    },
+    {
+     "id": "P13",
+     "category": "boundary",
+     "requirements": [
+      "REQ-10"
+     ],
+     "scenario": "Clock B is divided by B_DIV, and a read of B_DIV is made after configuration.",
+     "question": "Can B_DIV read 0 or a value above 8?",
+     "answer_kind": "bool"
+    }
+   ],
+   "answers": {
+    "A": {
+     "P1": "25000000",
+     "P2": "0",
+     "P3": "0x100=0, 0x008=0x12345678",
+     "P4": "yes",
+     "P5": "yes",
+     "P6": "unspecified",
+     "P7": "5",
+     "P8": "1000",
+     "P9": "BUSY=0, DONE=0, gate stops",
+     "P10": "0",
+     "P11": "MUX_COUNT=0xFFFFFFFF, MUX_ERRS unchanged",
+     "P12": "yes",
+     "P13": "no"
+    },
+    "B": {
+     "P1": "25000000",
+     "P2": "0",
+     "P3": "0x100=0, 0x008=0x12345678",
+     "P4": "yes",
+     "P5": "yes",
+     "P6": "unspecified",
+     "P7": "5",
+     "P8": "1000",
+     "P9": "BUSY=0, DONE=0, gate stops",
+     "P10": "0",
+     "P11": "MUX_COUNT=0xFFFFFFFF, MUX_ERRS unchanged",
+     "P12": "yes",
+     "P13": "no"
+    }
+   }
+  },
+  {
+   "n": 3,
+   "questions": [
+    {
+     "id": "Q9",
+     "text": "the probe set is not usable: no probe of category 'reset', which applies to this design",
+     "code": "RDY-PROBE-01",
+     "topic": "requirement",
+     "ids": [],
+     "blocking": true,
+     "source": "readers",
+     "answer": null,
+     "by": null,
+     "evidence": null
+    }
+   ],
+   "amendments": [],
+   "refused": [],
+   "mechanical": [
+    {
+     "id": "interface",
+     "code": "RDY-IF-03",
+     "text": "port clk_25mhz has no clock domain (the design has 3 clocks)",
+     "question": "Which clock is clk_25mhz synchronous to?",
+     "level": "strict",
+     "topic": "clocks and crossings",
+     "blocking": true,
+     "repair": false
+    },
+    {
+     "id": "interface",
+     "code": "RDY-IF-03",
+     "text": "port gt_refclk_p has no clock domain (the design has 3 clocks)",
+     "question": "Which clock is gt_refclk_p synchronous to?",
+     "level": "strict",
+     "topic": "clocks and crossings",
+     "blocking": true,
+     "repair": false
+    },
+    {
+     "id": "interface",
+     "code": "RDY-IF-03",
+     "text": "port gt_refclk_n has no clock domain (the design has 3 clocks)",
+     "question": "Which clock is gt_refclk_n synchronous to?",
+     "level": "strict",
+     "topic": "clocks and crossings",
+     "blocking": true,
+     "repair": false
+    },
+    {
+     "id": "interface",
+     "code": "RDY-IF-03",
+     "text": "port led has no clock domain (the design has 3 clocks)",
+     "question": "Which clock is led synchronous to?",
+     "level": "strict",
+     "topic": "clocks and crossings",
+     "blocking": true,
+     "repair": false
+    },
+    {
+     "id": "interface",
+     "code": "RDY-IF-04",
+     "text": "output led has no reset value",
+     "question": "What does led drive during and just after reset?",
+     "level": "strict",
+     "topic": "reset strategy",
+     "blocking": true,
+     "repair": false
+    },
+    {
+     "id": "interface",
+     "code": "RDY-IF-05",
+     "text": "output led has no stated latency from a named input event",
+     "question": "How many cycles after which input event does led change (or is it combinational)?",
+     "level": "strict",
+     "topic": "throughput and latency",
+     "blocking": true,
+     "repair": false
+    },
+    {
+     "id": "interface",
+     "code": "RDY-IF-03",
+     "text": "port sfp_tx_disable has no clock domain (the design has 3 clocks)",
+     "question": "Which clock is sfp_tx_disable synchronous to?",
+     "level": "strict",
+     "topic": "clocks and crossings",
+     "blocking": true,
+     "repair": false
+    },
+    {
+     "id": "interface",
+     "code": "RDY-IF-04",
+     "text": "output sfp_tx_disable has no reset value",
+     "question": "What does sfp_tx_disable drive during and just after reset?",
+     "level": "strict",
+     "topic": "reset strategy",
+     "blocking": true,
+     "repair": false
+    },
+    {
+     "id": "interface",
+     "code": "RDY-IF-05",
+     "text": "output sfp_tx_disable has no stated latency from a named input event",
+     "question": "How many cycles after which input event does sfp_tx_disable change (or is it combinational)?",
+     "level": "strict",
+     "topic": "throughput and latency",
+     "blocking": true,
+     "repair": false
+    },
+    {
+     "id": "REQ-24",
+     "code": "RDY-NUM-01",
+     "text": "an arithmetic result with no stated number format or overflow behaviour",
+     "question": "For REQ-24: signed or unsigned, how many fractional bits, and what happens on overflow (wrap or saturate)?",
+     "level": "strict",
+     "topic": "numeric formats",
+     "blocking": true,
+     "repair": false
+    }
+   ],
+   "review": {
+    "findings": [],
+    "verdict": "ready",
+    "compliance": 0
+   },
+   "probes": {
+    "count": 13,
+    "categories": [
+     "back_pressure",
+     "boundary",
+     "invalid_input",
+     "mid_operation_reset",
+     "power_up",
+     "simultaneous",
+     "unmapped"
+    ],
+    "problems": [
+     "no probe of category 'reset', which applies to this design"
+    ]
+   }
+  }
+ ],
+ "frozen": null,
+ "stop": "no answer was available for the open questions",
+ "answerer": "oracle",
+ "finished": "2026-11-26T17:29:42Z",
+ "model_calls": 14,
+ "calls_by_role": {
+  "amend": 2,
+  "probes": 3,
+  "reader_a": 2,
+  "reader_b": 2,
+  "repair": 2,
+  "review": 3
+ },
+ "open": [
+  {
+   "id": "Q9",
+   "text": "the probe set is not usable: no probe of category 'reset', which applies to this design",
+   "code": "RDY-PROBE-01",
+   "topic": "requirement",
+   "ids": [],
+   "blocking": true,
+   "source": "readers",
+   "answer": null,
+   "by": null,
+   "evidence": null
+  }
+ ]
+}
