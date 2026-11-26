@@ -37,3 +37,9 @@ pin, so a difference is a difference of this branch plus the changes between the
 
 State nulls first in the report. If the arm is stopped by the cap before the 9th run, the report says which runs were not made. A run that stops for a reason unrelated to constraints (a reply cut off, a standards loop) is
 counted as it is. Interventions during the arm: none.
+
+## Addendum 2026-11-26 10:49 GMT (from `date`), before any run
+
+origin/main moved while this was built: brief 234's PR #351 (4ee72255) merged. The branch now contains it (a merge commit), so the arm's agent also has 234's changes (writing limit 64000, turn cap by design size, fresh visits after a route back,
+stop diagnosis); the control ran without them. The intervention is therefore "brief 230 plus brief 234", and any difference cannot be attributed to 230 alone. Nothing else changes. Knowledge pin unchanged (5e2eab8).
+The code is frozen from here to the end of the arm; the agent_sha of each run is in its record. Unit tests, test_99_prompts and doccheck were run before this addendum.
