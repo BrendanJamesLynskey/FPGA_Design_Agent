@@ -26,9 +26,9 @@ for f in *.sby; do
     if [ -x "$OSS/bin/sby" ]; then pre=(env "PATH=$OSS/bin:$PATH"); fi
   fi
   # the tasks the job lists (`sby --dumptasks`); bmc and cover where it lists none
-  tasks="$("${pre[@]}" sby --dumptasks "$run" 2>/dev/null | tr '\n' ' ')"
+  tasks="$(${pre[@]+"${pre[@]}"} sby --dumptasks "$run" 2>/dev/null | tr '\n' ' ')"
   for task in ${tasks:-bmc cover}; do
-    "${pre[@]}" sby -f -d "$OUT/${job}_${task}" "$run" "$task" >"$OUT/${job}_${task}.log" 2>&1 || true
+    ${pre[@]+"${pre[@]}"} sby -f -d "$OUT/${job}_${task}" "$run" "$task" >"$OUT/${job}_${task}.log" 2>&1 || true
     echo "formal ${job}_${task}: $(head -1 "$OUT/${job}_${task}/status" 2>/dev/null || echo ABSENT)"
   done
   [ "$run" = "$f" ] || rm -f -- "$run"

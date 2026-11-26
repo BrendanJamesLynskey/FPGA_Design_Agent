@@ -211,7 +211,8 @@ def run_loop(design: Path, *, read_holes: Callable[[], list[dict[str, str]]], as
         if not resp.get("ok", True):
             stop = "tests_role: " + str(resp.get("error") or "did not run")[:200]
             rec = {"schema": SCHEMA, "round": n, "holes_before": [h["key"] for h in holes], "holes_after": [h["key"] for h in holes],
-                   "closed": [], "opened": [], "wall_s": round(clock() - t0, 1), "usage": None, "files": [], "stop": stop}
+                   "closed": [], "opened": [], "wall_s": round(clock() - t0, 1), "usage": (round(spent() - c0, 4) if spent and c0 is not None else None),
+                   "files": [], "stop": stop}
             record_round(design, rec)
             rounds.append(rec)
             break

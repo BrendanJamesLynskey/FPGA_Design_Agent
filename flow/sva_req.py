@@ -97,7 +97,10 @@ def reset_of(spec: dict[str, Any]) -> tuple[str | None, bool]:
     """(reset port, active_low)."""
     r = spec.get("reset") or {}
     port = (r.get("port") or r.get("name")) if isinstance(r, dict) else None
-    return (str(port) if port else None), "low" in str((r or {}).get("polarity", "active_low")).replace("-", "_") and "high" not in str((r or {}).get("polarity", ""))
+    pol = str((r or {}).get("polarity", "")).lower()
+    if not pol:                                   # not stated: by the name, as effective_spec does; active high otherwise
+        return (str(port) if port else None), bool(port) and str(port).lower().endswith(("_n", "n")) and str(port).lower() not in ("rst", "reset")
+    return (str(port) if port else None), "low" in pol and "high" not in pol
 
 
 # ---- the module the properties are about --------------------------------------------------------------------------------------------------
@@ -117,29 +120,30 @@ def rtl_modules(files: list[Path]) -> dict[str, list[dict[str, Any]]]:
             continue
         text = re.sub(r"^\s*`\w+.*$", " ", text, flags=re.M)                # ifdef / ifndef / else / endif lines: both branches stay
         for m in _MODULE.finditer(text):
-            ports, cur, ok = [], "in", True
+            ports, cur, cur_w, ok = [], "in", 1, True
             for item in re.split(r",", m.group(2)):
                 t = item.strip()
                 if not t:
                     continue
                 dm = re.match(r"(input|output|inout)\b", t)
                 if dm:
-                    cur = _DIRS[dm.group(1)]
+                    cur, cur_w = _DIRS[dm.group(1)], 1
                     t = t[dm.end():].strip()
+                elif not ports:
+                    ok = False                                     # a non-ANSI header (names only): the directions are in the body
+                    break
                 t = re.sub(r"^(?:logic|wire|reg|var|signed)\b\s*", "", t).strip()
                 wm = _PORTW.match(t)
                 if wm:
-                    w, t = abs(int(wm.group(1)) - int(wm.group(2))) + 1, t[wm.end():].strip()
+                    cur_w, t = abs(int(wm.group(1)) - int(wm.group(2))) + 1, t[wm.end():].strip()
                 elif t.startswith("["):
                     ok = False
                     break
-                else:
-                    w = 1
                 nm = re.match(r"(\w+)\s*$", t.split("=")[0].strip())
                 if not nm:
                     ok = False
                     break
-                ports.append({"name": nm.group(1), "dir": cur, "width": w})
+                ports.append({"name": nm.group(1), "dir": cur, "width": cur_w})
             if ok and ports:
                 mods.setdefault(m.group(1), ports)
     return mods
@@ -399,8 +403,12 @@ def _lit(m: re.Match) -> int | None:
         return None
 
 
+_WORDNUM = {"one": 1, "two": 2, "three": 3, "four": 4, "five": 5, "six": 6, "seven": 7, "eight": 8, "nine": 9, "ten": 10}
+
+
 def _numbers(s: str) -> set[int]:
-    return {v for m in _NUMLIT.finditer(_REQID.sub(" ", s)) for v in [_lit(m)] if v is not None}
+    out = {v for m in _NUMLIT.finditer(_REQID.sub(" ", s)) for v in [_lit(m)] if v is not None}
+    return out | {_WORDNUM[w] for w in re.findall(r"\b(" + "|".join(_WORDNUM) + r")\s+(?:clock\s+)?cycles?\b", s.lower())}
 
 
 def _prop_numbers(gen: dict[str, Any]) -> set[int]:
@@ -460,6 +468,11 @@ def compare(req: dict[str, Any], gen: dict[str, Any], back: str, spec: dict[str,
         reasons.append(f"numbers: the property uses {n}, which the requirement does not give")
     for n in sorted(bk_nums - rq_nums - pr_nums - {0, 1}):
         reasons.append(f"numbers: the back-translation states {n}, which neither the requirement nor the property gives")
+    low = req_text.lower()
+    if gen["kind"] == "next" and re.search(r"\b(same (clock )?cycle|simultaneous|combinational|at the same time)\b", low):
+        reasons.append("timing: the requirement says same cycle and the property is a next-cycle one")
+    if gen["kind"] == "same" and gen["past"] == 1 and "$past" not in gen["ante"] + gen["cons"] and re.search(r"\b(next|following) (clock )?cycle|one (clock )?cycle (later|after)\b", low):
+        reasons.append("timing: the requirement says the next cycle and the property is a same-cycle one")
     neg_req, neg_back = bool(NEGATION.search(_CODE_SPAN.sub(" ", req_text))), bool(NEGATION.search(_CODE_SPAN.sub(" ", back)))   # words, not the `!x` of a quoted expression
     if neg_req != neg_back:
         reasons.append("negation: the requirement " + ("forbids something" if neg_req else "does not forbid anything") +
@@ -851,6 +864,9 @@ def process(design: Path, gen_llm: Callable[[str, str], str], back_llm: Callable
                 dst.mkdir(parents=True, exist_ok=True)
                 shutil.copy(work / t / "status", dst / "status")
         rows[rid] = {**row, "status": j["status"]}
+    if ids:                                                  # a narrowed run keeps the other rows it did not touch
+        for rid, prev in old.items():
+            rows.setdefault(rid, prev)
     rec = {"schema": SCHEMA, "design": design.name, "module": spec.get("top"), "module_note": module_note, "generated": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), "requirements": rows,
            "skipped": skipped, "counts": counts(rows), "formal_tool": (tool_version(env) + f" ({front} front end)") if env else None, "caveats": ["a vendor primitive is the design's own simulation stub (SYNTHESIS undefined), not the primitive", "reset is asserted in the first cycle only (reset rows: free after the third)",
                                                                     "one clock domain per property", "the property was written without the RTL"]}

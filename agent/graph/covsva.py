@@ -74,6 +74,8 @@ def coverage_gate(rt: Any, ev: dict[str, Any], d: Any, detail: list[str]) -> dic
     def read_holes() -> list[dict[str, str]]:
         v = _verif(rt)
         ev["verif"] = v
+        if (v.get("reached") or "") >= "V3":              # V3 passes: holes that remain are not failures, so the loop is done
+            return []
         return CL.holes_of(v, _mutation(rt))
 
     def ask_tests(brief: str, n: int) -> dict[str, Any]:
@@ -81,7 +83,9 @@ def coverage_gate(rt: Any, ev: dict[str, Any], d: Any, detail: list[str]) -> dic
         try:
             written = R.run_role(rt, "tests", R.PROMPTS["tests"].format(**fmt) + R.repair_note("tests", [brief]) + R.tests_checklist(rt, 2, True) + conv_tests,
                                  R.role_allowed("tests", 2), True)
-        except R.BudgetExceeded as e:                      # a run limit: say so here, the next stage call stops the run properly
+        except R.BudgetExceeded as e:
+            if str(e).startswith("run "):                  # the real run limit stops the run, as everywhere else
+                raise
             return {"ok": False, "error": f"budget: {e}"}
         if len(rt.budget_notes) > before:
             return {"ok": False, "error": "budget: " + rt.budget_notes[-1]}
@@ -130,8 +134,11 @@ def sva_step(rt: Any) -> dict[str, Any] | None:
         return {"skipped": f"no model for the step: {e}"}
     formal_ok = sva_req.formal_env() is not None
     prefix = ["nice", "-n", "15"]
-    rec = sva_req.process(rt.design, gen, back, formal=formal_ok, prefix=prefix)
-    out = {"summary": sva_req.summary_line(rec), "counts": rec["counts"], "formal": formal_ok}
-    from agent.graph.run import log_routing_event
-    log_routing_event(rt, "req_sva", **{"counts": rec["counts"], "skipped": len(rec["skipped"]), "formal": formal_ok})
-    return out
+    try:
+        rec = sva_req.process(rt.design, gen, back, formal=formal_ok, prefix=prefix)
+        out = {"summary": sva_req.summary_line(rec), "counts": rec["counts"], "formal": formal_ok}
+        from agent.graph.run import log_routing_event
+        log_routing_event(rt, "req_sva", **{"counts": rec["counts"], "skipped": len(rec["skipped"]), "formal": formal_ok})
+        return out
+    except Exception as e:                                  # a model timeout, a bad spec.yaml: the step is a record, never a stage failure
+        return {"skipped": f"the step failed: {type(e).__name__}: {str(e)[:200]}"}

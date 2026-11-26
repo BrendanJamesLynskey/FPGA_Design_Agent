@@ -327,3 +327,13 @@ def test_a_property_of_a_register_core_is_proved_where_the_top_cannot_be_read(tm
                                 "Whenever h_we was high with h_addr equal to 8 in the previous cycle, h_rdata equals the h_wdata of that cycle.")})
     rec = S.process(d, g, b)
     assert rec["module"] == "reg_core" and rec["requirements"]["REQ-01"]["status"] == "proved", rec["requirements"]["REQ-01"]
+
+
+def test_review_fixes(tmp_path):
+    f = tmp_path / "m.sv"
+    f.write_text("module a (input logic [7:0] x, y, output z);\nendmodule\nmodule k(p, q);\n input p; output q;\nendmodule\n")
+    m = S.rtl_modules([f])
+    assert [(p["name"], p["width"]) for p in m["a"]] == [("x", 8), ("y", 8), ("z", 1)] and "k" not in m
+    assert S.reset_of({"reset": {"port": "rst"}}) == ("rst", False) and S.reset_of({"reset": {"port": "rst_n"}}) == ("rst_n", True)
+    c = S.compare({"id": "R", "text": "busy is high in the same cycle as start"}, gen(), "Whenever start was high and busy was low in the previous cycle, busy is high now.", SPEC)
+    assert any(r.startswith("timing") for r in c["reasons"])
