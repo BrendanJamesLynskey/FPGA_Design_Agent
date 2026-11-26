@@ -1042,6 +1042,10 @@ def check_constraints(s: Session) -> dict:
     if (s.design / "build.yaml").is_file():
         found += top_port_findings(s, load_build_cfg(s))      # 08a: FDA-CON-8 / FDA-CON-9
         more, notes = complete_findings(s, load_build_cfg(s))       # brief 230: FDA-CON-14 / FDA-CON-15, and what the flow writes itself
+        # completeness belongs to the constraints stage and later: the early stages' exit checks also run this tool, and a finding there loops a stage whose role
+        # cannot fix it (arm run v2: stage 1 visited more than 4 times on check_constraints). The build tool still refuses to start Vivado on a finding.
+        if getattr(s, "stage", "constraints") in ("clarify", "board-and-device-planning", "rtl-design-creation"):
+            more = []
         found += more
     out = "\n".join(f"{x['file']}:{x['line']}: {x['rule']} {x['message']}\n    {x['text']}" for x in found)
     return {"ok": not found, "output": (out or "no findings") + ("\n" + "\n".join(notes) if notes else ""), "findings": found}

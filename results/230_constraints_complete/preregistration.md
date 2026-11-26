@@ -53,3 +53,10 @@ Fix (committed before any further run): the flow no longer writes a false path f
 files exist and how to make a flow line go away. Also in this commit: flow/build_cache.py keys the flow-written XDC files by content and ignores the directory in their paths (CI test_33 failed without it).
 Decision: the aborted run stays in the ledger and counts toward the 50 USD cap; the arm restarts from p4 run 1 with the fixed agent, so the nine runs of the arm all use one version.
 The aborted run is reported separately as "v1, aborted", not as an arm run. Everything else in this pre-registration is unchanged. The code is frozen from here to the end of the arm.
+
+## Addendum 2026-11-26 15:03 GMT (from `date`): second defect; the arm restarts again
+
+The v2 run of p4 run 1 (agent a9e58791, record `pilots/230/p4_fir_dsp/v2_aborted_run1`, 7.77 USD) reached stage 4 once, then stopped: `stage 1 visited more than 4 times; last failing gate: check_constraints failed`.
+The stage-1 exit check runs `check_constraints`, which now also reported FDA-CON-14 (the design's top had two clock ports, `clk_25` and `clk25`, only one constrained: a true finding); the stage-1 role cannot fix
+constraints, so the stage looped. Fix: `check_constraints` reports FDA-CON-14/15 only from the constraints stage on; the `build` tool still refuses to start Vivado on one. The aborted run stays in the ledger and in the cap
+(now 15.27 USD spent before the restart, so about 34 USD, about four runs, remain). The arm restarts as v3 from p4 run 1; its runs are the arm. Everything else is unchanged; code frozen again.

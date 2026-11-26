@@ -304,3 +304,15 @@ def test_an_ignored_exception_note_points_at_the_flows_own_files(tmp_path):
     (d / "build" / "base" / "known_post.xdc").write_text("# x\n")
     note = tools._known_xdc_note(s, "base", "FAIL post_synth_exceptions_clean (EXC-IGNORED position 3")
     assert "known_post.xdc" in note and "skips any port" in note
+
+
+def test_check_constraints_reports_completeness_only_from_the_constraints_stage(tmp_path):
+    from agent.core import tools
+    root, d = make(tmp_path, xdc=XDC_FULL.replace("set_output_delay -clock [get_clocks sys] -max 3.0 [get_ports dout]\n", "").replace(
+        "set_output_delay -clock [get_clocks sys] -min 0.0 [get_ports dout]\n", ""), board_slow=[])
+    for stage, expect in (("board-and-device-planning", False), ("rtl-design-creation", False), ("constraints", True)):
+        s = SimpleNamespace(design=d, root=root, board="kr260", stage=stage, jail=None)
+        found, _ = tools.complete_findings(s, yaml.safe_load((d / "build.yaml").read_text()))
+        assert bool(found) is True                                         # the build tool's view is stage independent
+        gated = [] if stage in ("clarify", "board-and-device-planning", "rtl-design-creation") else found
+        assert bool(gated) is expect
