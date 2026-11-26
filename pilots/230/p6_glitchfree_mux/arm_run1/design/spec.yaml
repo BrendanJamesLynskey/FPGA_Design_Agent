@@ -1,0 +1,374 @@
+name: p6_clkmux
+title: P6 glitch-free clock multiplexer with self-checking muxed domain
+board: kr260
+part: xck26-sfvc784-2LV-c
+top: p6_clkmux_top
+clocks:
+- name: clk_c3
+  freq_mhz: 25
+  role: C3 25 MHz board clock; clock A; register bus and measurement gate clock
+- name: gt_refclk
+  freq_mhz: 156.25
+  role: SFP+ MGTREFCLK0 via IBUFDS_GTE4 and BUFG_GT divider; clock B source
+- name: clk_b
+  freq_mhz: 78.125
+  role: gt_refclk divided by B_DIV (default 2)
+- name: clk_mux
+  freq_mhz: 0
+  role: BUFGCTRL output, equals clk_a or clk_b; drives the muxed domain
+reset:
+  name: rst
+  polarity: active_high
+  sync: synchronous to clk_c3; held a few clocks at start by jtag_bus
+  note: muxed domain reset is synchronised into clk_mux; SEL resets to 0
+parameters:
+  DESIGN_ID: 546701313
+  B_DIV: 2
+  GATE_LEN_DEFAULT_CYCLES: 25000000
+  SYNC_STAGES: 2
+ports:
+- name: clk_c3
+  direction: input
+  width: 1
+  board_pin_role: C3 25 MHz clock
+- name: gt_refclk_p
+  direction: input
+  width: 1
+  board_pin_role: SFP+ MGTREFCLK0 P
+- name: gt_refclk_n
+  direction: input
+  width: 1
+  board_pin_role: SFP+ MGTREFCLK0 N
+- name: sfp_tx_disable
+  direction: output
+  width: 1
+  board_pin_role: SFP+ TX_DISABLE, held at 1
+- name: led
+  direction: output
+  width: 2
+  board_pin_role: user LEDs led[1:0]
+behaviour:
+  host_interface:
+  - jtag_bus.sv is used unchanged; its register port (h_we, h_re, h_addr[11:0], h_wdata,
+    h_rdata) runs in clk_c3
+  - A write takes effect the clock after h_we
+  - h_rdata shows the addressed register within 2 clocks of h_re and holds it
+  - Unmapped addresses read 0 and ignore writes
+  common_registers:
+  - ID at 0x000 reads 0x20960001
+  - BUILD at 0x004 reads USR_ACCESSE2 word
+  - SCRATCH at 0x008 reads back the last write, reset 0
+  clock_mux:
+  - BUFGCTRL-style glitch-free mux selects clk_a (SEL=0) or clk_b (SEL=1)
+  - STATUS.ACTIVE_SEL shows the clock actually driving the muxed domain, synchronised
+    to clk_c3
+  - STATUS.SWITCHING is 1 from the SEL change until ACTIVE_SEL equals SEL
+  - SWITCH_COUNT increments once per completed change of ACTIVE_SEL; a write of the
+    current SEL does not count
+  - B_DIV reads the divide applied to the GT reference clock
+  - sfp_tx_disable is constant 1; no GT transceiver channel is used
+  muxed_domain:
+  - A free-running 64-bit binary counter increments every clk_mux edge
+  - An independently coded Gray counter twin runs in parallel
+  - Every clock the twin is compared with the counter and the counter is checked to
+    be previous + 1
+  - Any mismatch increments MUX_ERRS (saturating at 0xFFFFFFFF)
+  - SNAPSHOT write latches the low 32 bits of the counter into MUX_COUNT, crossing
+    domains safely
+  freq_measure:
+  - FREQ_CTRL.START begins a gate of GATE_LEN clk_c3 cycles; START self-clears
+  - FREQ_STATUS.BUSY is 1 during the gate; DONE is set at the end and cleared by the
+    next START
+  - FREQ_COUNT holds the clk_mux rising edges counted in the last gate
+  leds:
+  - led[0] shows ACTIVE_SEL; led[1] shows SWITCHING
+registers:
+  map:
+  - offset: 0
+    name: ID
+    access: RO
+    reset: 546701313
+    bits: '[31:0] design ID'
+  - offset: 4
+    name: BUILD
+    access: RO
+    reset: 0
+    bits: '[31:0] USR_ACCESS word'
+  - offset: 8
+    name: SCRATCH
+    access: RW
+    reset: 0
+    bits: '[31:0] scratch'
+  - offset: 16
+    name: SEL
+    access: RW
+    reset: 0
+    bits: '[0] 0=clock A, 1=clock B'
+  - offset: 20
+    name: STATUS
+    access: RO
+    reset: 0
+    bits: '[0] SWITCHING, [1] ACTIVE_SEL'
+  - offset: 24
+    name: B_DIV
+    access: RO
+    reset: 2
+    bits: '[3:0] divide of GT clock, 1 to 8'
+  - offset: 28
+    name: GATE_LEN
+    access: RW
+    reset: 25000000
+    bits: '[31:0] gate length in clk_c3 cycles'
+  - offset: 32
+    name: FREQ_CTRL
+    access: RW
+    reset: 0
+    bits: '[0] START self-clearing'
+  - offset: 36
+    name: FREQ_STATUS
+    access: RO
+    reset: 0
+    bits: '[0] BUSY, [1] DONE'
+  - offset: 40
+    name: FREQ_COUNT
+    access: RO
+    reset: 0
+    bits: '[31:0] edges in last gate'
+  - offset: 44
+    name: MUX_ERRS
+    access: RO
+    reset: 0
+    bits: '[31:0] error count'
+  - offset: 48
+    name: MUX_COUNT
+    access: RO
+    reset: 0
+    bits: '[31:0] counter low bits at last SNAPSHOT'
+  - offset: 52
+    name: SWITCH_COUNT
+    access: RO
+    reset: 0
+    bits: '[31:0] switches carried out'
+  - offset: 56
+    name: SNAPSHOT
+    access: WO
+    reset: 0
+    bits: any write latches MUX_COUNT
+timing:
+  gate_cycles_clock: clk_c3
+  gate_note: GATE_LEN_DEFAULT_CYCLES 25000000 cycles of 25 MHz = 1 s
+  latency:
+    read: h_rdata valid within 2 clk_c3 cycles of h_re
+    write: register updated 1 clk_c3 cycle after h_we
+    switch: ACTIVE_SEL follows SEL after a few cycles of each clock (BUFGCTRL handshake)
+resources_expected:
+  luts: 400
+  ffs: 600
+  bufgctrl: 1
+  bufg_gt: 1
+  gt_channels: 0
+  brams: 0
+  dsps: 0
+requirements:
+- id: REQ-01
+  text: ID register at 0x000 reads 0x20960001
+  proof:
+  - simulation
+  - hardware
+- id: REQ-02
+  text: BUILD register at 0x004 reads the USR_ACCESSE2 word
+  proof:
+  - hardware
+- id: REQ-03
+  text: SCRATCH reads back the last written 32-bit value
+  proof:
+  - simulation
+  - hardware
+- id: REQ-24
+  text: SCRATCH reads 0 after configuration
+  proof:
+  - simulation
+  - hardware
+- id: REQ-04
+  text: Reads of unmapped addresses return 0
+  proof:
+  - simulation
+- id: REQ-25
+  text: Writes to unmapped addresses change no register
+  proof:
+  - simulation
+- id: REQ-05
+  text: h_rdata shows the addressed register within 2 clocks of h_re
+  proof:
+  - simulation
+  - formal
+- id: REQ-06
+  text: A write to SEL with value 1 makes ACTIVE_SEL become 1
+  proof:
+  - simulation
+  - hardware
+- id: REQ-26
+  text: SWITCHING returns to 0 once ACTIVE_SEL equals 1 after a write of 1 to SEL
+  proof:
+  - simulation
+  - hardware
+- id: REQ-07
+  text: A write to SEL with value 0 makes ACTIVE_SEL become 0
+  proof:
+  - simulation
+  - hardware
+- id: REQ-27
+  text: SWITCHING returns to 0 once ACTIVE_SEL equals 0 after a write of 0 to SEL
+  proof:
+  - simulation
+  - hardware
+- id: REQ-08
+  text: The muxed clock has no pulse narrower than the shorter of the two source clock
+    half-periods during a switch
+  proof:
+  - analysis
+  - hardware
+- id: REQ-09
+  text: MUX_ERRS is 0 after 1,000 random switches
+  proof:
+  - simulation
+  - hardware
+- id: REQ-10
+  text: SWITCH_COUNT equals the number of changes of ACTIVE_SEL after 1,000 random
+    SEL writes
+  proof:
+  - simulation
+  - hardware
+- id: REQ-11
+  text: A SEL write equal to the current selection does not change SWITCH_COUNT
+  proof:
+  - simulation
+- id: REQ-12
+  text: B_DIV reads an integer from 1 to 8
+  proof:
+  - simulation
+  - hardware
+- id: REQ-13
+  text: MUX_ERRS increments when the Gray twin disagrees with the counter
+  proof:
+  - simulation
+- id: REQ-14
+  text: MUX_ERRS increments when the counter is not previous + 1
+  proof:
+  - simulation
+- id: REQ-15
+  text: FREQ_COUNT equals the clk_mux edges in GATE_LEN clk_c3 cycles within plus
+    or minus 2 counts of the model
+  proof:
+  - simulation
+  - hardware
+- id: REQ-16
+  text: FREQ_STATUS.BUSY is 1 for GATE_LEN clk_c3 cycles after START
+  proof:
+  - simulation
+- id: REQ-17
+  text: FREQ_STATUS.DONE is 1 at the end of the gate
+  proof:
+  - simulation
+- id: REQ-18
+  text: GATE_LEN resets to 25,000,000
+  proof:
+  - simulation
+- id: REQ-19
+  text: A write to SNAPSHOT latches the low 32 bits of the muxed counter into MUX_COUNT
+  proof:
+  - simulation
+  - hardware
+- id: REQ-20
+  text: sfp_tx_disable is 1 at all times
+  proof:
+  - formal
+  - hardware
+- id: REQ-21
+  text: The design uses 0 GT transceiver channels
+  proof:
+  - analysis
+- id: REQ-22
+  text: Timing closes with worst negative slack of 0 ns or more on all constrained
+    clocks
+  proof:
+  - analysis
+- id: REQ-23
+  text: jtag_bus.sv is instantiated unmodified
+  proof:
+  - analysis
+assumptions:
+- text: Part is xck26-sfvc784-2LV-c
+  reason: KR260 carries the K26 SOM
+- text: Clocks A, B and the C3 clock are asynchronous to each other
+  reason: separate oscillators; every crossing is synchronised
+- text: Frequency count is accurate to plus or minus 2 edges
+  reason: gate and muxed clock are asynchronous
+- text: No simulation of jtag_bus.sv; tests drive the register port
+  reason: contains Xilinx primitives, per request
+- text: Pin locations come from the KR260 constraints knowledge, not guessed here
+  reason: spec.md gives no pin names
+open_questions: []
+resolved_questions:
+- question: Which divide should be applied to the GT reference clock for clock B?
+  answer: 2 (78.125 MHz), fixed at build time
+  status: defaulted
+  by: default
+  default_reason: request says 1 to 8 as suits the device; 2 leaves timing margin
+    in the muxed domain
+  risk: high
+- question: What happens when SEL is written while SWITCHING is 1?
+  answer: The new value is taken and the mux follows the latest SEL once the current
+    handshake ends
+  status: defaulted
+  by: default
+  default_reason: request does not say; the test waits so it is untested
+  risk: high
+- question: What happens when START is written while BUSY, or GATE_LEN is 0 or changed
+    during a gate?
+  answer: START while BUSY is ignored; GATE_LEN is sampled at START; GATE_LEN 0 is
+    treated as 1
+  status: defaulted
+  by: default
+  default_reason: request leaves it open
+  risk: high
+- question: Should SWITCH_COUNT count a write of the SEL value already selected?
+  answer: No, only real changes of ACTIVE_SEL count
+  status: defaulted
+  by: default
+  default_reason: the check says 'number of real changes'
+  risk: high
+- question: What do the LEDs show?
+  answer: led[0] = ACTIVE_SEL, led[1] = SWITCHING
+  status: defaulted
+  by: default
+  default_reason: request names the LEDs but gives no function
+  risk: medium
+- question: What is the exact register map?
+  answer: As listed in registers.map, taken from spec.md (all offsets given)
+  status: defaulted
+  by: default
+  default_reason: offsets are given in spec.md; confirming the map including reads
+    of write-only SNAPSHOT as 0
+  risk: high
+- question: Width of the muxed counter and error counter saturation?
+  answer: 64-bit counter, 32-bit saturating error count
+  status: defaulted
+  by: default
+  default_reason: request only says low 32 bits are read
+  risk: high
+- question: This design has no reset input. Is every reset a reconfiguration of the
+    FPGA (the device is reprogrammed, so every register starts from its initial value),
+    or does something restart the running design (then it needs a reset input)?
+  answer: 'Every reset is a reconfiguration of the FPGA (reset model: reprogram):
+    registers get initial values, control state included, and the design has no reset
+    input. Record it in spec.yaml as reset: {model: reprogram}; a design that restarts
+    while it runs is reset: {model: reset} with a reset port.'
+  status: defaulted
+  by: default
+  default_reason: 'With no reset input, a register can start only from its initial
+    value, which the FPGA loads at configuration (owner, 2026-11-26: particularly
+    useful for designs whose every reset reprograms the device). A design that must
+    restart while running needs a reset input and resets its control state; the two
+    models are checked by different rules (STD-INIT-02).'
+  risk: high
