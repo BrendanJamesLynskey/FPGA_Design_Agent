@@ -1,0 +1,169 @@
+schema: fpga-design-agent/testplan/v0
+design: p5_async_fifo
+spec: runs/20261126-210155-ee69/p5_async_fifo/spec.yaml
+model: runs/20261126-210155-ee69/p5_async_fifo/model.py
+bench:
+  modules: [p5_async_fifo_bench]
+  dir: runs/20261126-210155-ee69/p5_async_fifo/tests
+checkers: runs/20261126-210155-ee69/p5_async_fifo/verif/checkers
+formal_dir: runs/20261126-210155-ee69/p5_async_fifo/verif/formal
+thresholds:
+  seeds_min: 3
+  functional_bins_pct: 100
+  cover_properties_pct: 100
+  line_pct: 90
+  toggle_pct: 70
+  mutation_score_pct: 60
+waivers:
+  code_coverage: []
+  functional_bins: []
+  cover_properties: []
+requirements:
+  - id: REQ-01
+    spec: ["behaviour.identity[0]", "registers.map.ID"]
+    tests: [p5_async_fifo_bench.test_register_port]
+  - id: REQ-02
+    spec: ["behaviour.identity[1]", "registers.map.BUILD"]
+    tests: [p5_async_fifo_bench.test_register_port]
+  - id: REQ-03
+    spec: ["behaviour.identity[2]", "registers.map.SCRATCH"]
+    tests: [p5_async_fifo_bench.test_register_port, p5_async_fifo_bench.test_random_traffic]
+  - id: REQ-04
+    spec: ["behaviour.identity[3]", "registers.unmapped"]
+    tests: [p5_async_fifo_bench.test_register_port, p5_async_fifo_bench.test_random_traffic]
+  - id: REQ-30
+    spec: ["timing.latency.write_effect"]
+    tests: [p5_async_fifo_bench.test_register_port]
+  - id: REQ-05
+    spec: ["timing.latency.read_data"]
+    tests: [p5_async_fifo_bench.test_register_port]
+  - id: REQ-31
+    spec: ["reset"]
+    tests: [p5_async_fifo_bench.test_register_port]
+  - id: REQ-06
+    spec: ["registers.map.CTRL"]
+    tests: [p5_async_fifo_bench.test_stream_fast_read, p5_async_fifo_bench.test_slow_read_fill]
+  - id: REQ-07
+    spec: ["behaviour.writer[1]"]
+    tests: [p5_async_fifo_bench.test_stream_fast_read]
+  - id: REQ-08
+    spec: ["behaviour.writer[0]", "registers.map.WORDS_W"]
+    tests: [p5_async_fifo_bench.test_stream_fast_read, p5_async_fifo_bench.test_soak_no_errors]
+  - id: REQ-09
+    spec: ["behaviour.reader[0]", "behaviour.reader[2]", "registers.map.WORDS_R"]
+    tests: [p5_async_fifo_bench.test_stream_fast_read, p5_async_fifo_bench.test_random_traffic]
+  - id: REQ-10
+    spec: ["behaviour.reader[3]", "registers.map.DATA_ERRS"]
+    tests: [p5_async_fifo_bench.test_inject, p5_async_fifo_bench.test_random_traffic]
+  - id: REQ-11
+    spec: ["behaviour.writer[3]", "registers.map.OVERFLOWS"]
+    tests: [p5_async_fifo_bench.test_slow_read_fill, p5_async_fifo_bench.test_soak_no_errors]
+  - id: REQ-12
+    spec: ["behaviour.reader[4]", "registers.map.UNDERFLOWS"]
+    tests: [p5_async_fifo_bench.test_slow_read_fill, p5_async_fifo_bench.test_soak_no_errors]
+  - id: REQ-13
+    spec: ["behaviour.writer[2]", "registers.map.STALL_W"]
+    tests: [p5_async_fifo_bench.test_slow_read_fill]
+  - id: REQ-14
+    spec: ["behaviour.control[2]", "registers.map.OCC_MAX"]
+    tests: [p5_async_fifo_bench.test_slow_read_fill, p5_async_fifo_bench.test_stream_fast_read]
+  - id: REQ-15
+    spec: ["behaviour.reader[1]", "timing.latency.slow_read"]
+    tests: [p5_async_fifo_bench.test_slow_read_fill]
+  - id: REQ-16
+    spec: ["behaviour.reader[1]"]
+    tests: [p5_async_fifo_bench.test_slow_read_fill]
+  - id: REQ-17
+    spec: ["behaviour.inject[0]"]
+    tests: [p5_async_fifo_bench.test_inject]
+  - id: REQ-18
+    spec: ["behaviour.inject[0]"]
+    tests: [p5_async_fifo_bench.test_inject]
+  - id: REQ-19
+    spec: ["behaviour.snapshot[0]", "behaviour.snapshot[1]", "registers.map.SNAPSHOT"]
+    tests: [p5_async_fifo_bench.test_snapshot]
+  - id: REQ-20
+    spec: ["behaviour.control[0]", "behaviour.control[1]", "registers.map.CTRL"]
+    tests: [p5_async_fifo_bench.test_clear]
+  - id: REQ-21
+    spec: ["behaviour.control[0]"]
+    tests: [p5_async_fifo_bench.test_clear]
+  - id: REQ-22
+    spec: ["behaviour.control[3]"]
+    tests: [p5_async_fifo_bench.test_counter_wrap, p5_async_fifo_bench.test_snapshot]
+  - id: REQ-32
+    spec: ["behaviour.control[3]"]
+    tests: [p5_async_fifo_bench.test_counter_wrap]
+  - id: REQ-23
+    spec: ["behaviour.safety[0]"]
+    tests: [p5_async_fifo_bench.test_sfp_tx_disable_constant]
+  - id: REQ-24
+    spec: ["behaviour.safety[1]"]
+    tests: [p5_async_fifo_bench.test_sfp_tx_disable_constant]
+  - id: REQ-25
+    spec: ["reset"]
+    tests: [p5_async_fifo_bench.test_random_traffic]
+  - id: REQ-33
+    spec: ["reset"]
+    tests: [p5_async_fifo_bench.test_random_traffic]
+  - id: REQ-26
+    spec: ["reset"]
+    tests: [p5_async_fifo_bench.test_soak_no_errors]
+  - id: REQ-27
+    spec: ["reset"]
+    tests: [p5_async_fifo_bench.test_soak_no_errors]
+  - id: REQ-28
+    spec: ["reset"]
+    tests: [p5_async_fifo_bench.test_soak_no_errors]
+  - id: REQ-29
+    spec: ["reset"]
+    tests: [p5_async_fifo_bench.test_register_port]
+proof:
+  - {requirement: REQ-01, method: simulation, artefact: p5_async_fifo_bench.test_register_port}
+  - {requirement: REQ-01, method: hardware, artefact: uart_tests}
+  - {requirement: REQ-02, method: hardware, artefact: uart_tests}
+  - {requirement: REQ-03, method: simulation, artefact: p5_async_fifo_bench.test_register_port}
+  - {requirement: REQ-03, method: hardware, artefact: uart_tests}
+  - {requirement: REQ-04, method: simulation, artefact: p5_async_fifo_bench.test_register_port}
+  - {requirement: REQ-30, method: simulation, artefact: p5_async_fifo_bench.test_register_port}
+  - {requirement: REQ-05, method: simulation, artefact: p5_async_fifo_bench.test_register_port}
+  - {requirement: REQ-31, method: simulation, artefact: p5_async_fifo_bench.test_register_port}
+  - {requirement: REQ-06, method: simulation, artefact: p5_async_fifo_bench.test_slow_read_fill}
+  - {requirement: REQ-06, method: analysis, artefact: "post_synth:post_synth_resources_in_range"}
+  - {requirement: REQ-07, method: simulation, artefact: p5_async_fifo_bench.test_stream_fast_read}
+  - {requirement: REQ-08, method: simulation, artefact: p5_async_fifo_bench.test_soak_no_errors}
+  - {requirement: REQ-08, method: hardware, artefact: uart_tests}
+  - {requirement: REQ-09, method: simulation, artefact: p5_async_fifo_bench.test_stream_fast_read}
+  - {requirement: REQ-10, method: simulation, artefact: p5_async_fifo_bench.test_inject}
+  - {requirement: REQ-11, method: simulation, artefact: p5_async_fifo_bench.test_soak_no_errors}
+  - {requirement: REQ-11, method: hardware, artefact: uart_tests}
+  - {requirement: REQ-12, method: simulation, artefact: p5_async_fifo_bench.test_soak_no_errors}
+  - {requirement: REQ-12, method: hardware, artefact: uart_tests}
+  - {requirement: REQ-13, method: simulation, artefact: p5_async_fifo_bench.test_slow_read_fill}
+  - {requirement: REQ-14, method: simulation, artefact: p5_async_fifo_bench.test_slow_read_fill}
+  - {requirement: REQ-15, method: simulation, artefact: p5_async_fifo_bench.test_slow_read_fill}
+  - {requirement: REQ-16, method: simulation, artefact: p5_async_fifo_bench.test_slow_read_fill}
+  - {requirement: REQ-16, method: hardware, artefact: uart_tests}
+  - {requirement: REQ-17, method: simulation, artefact: p5_async_fifo_bench.test_inject}
+  - {requirement: REQ-17, method: hardware, artefact: uart_tests}
+  - {requirement: REQ-18, method: simulation, artefact: p5_async_fifo_bench.test_inject}
+  - {requirement: REQ-19, method: simulation, artefact: p5_async_fifo_bench.test_snapshot}
+  - {requirement: REQ-19, method: hardware, artefact: uart_tests}
+  - {requirement: REQ-20, method: simulation, artefact: p5_async_fifo_bench.test_clear}
+  - {requirement: REQ-21, method: simulation, artefact: p5_async_fifo_bench.test_clear}
+  - {requirement: REQ-22, method: simulation, artefact: p5_async_fifo_bench.test_counter_wrap}
+  - {requirement: REQ-32, method: simulation, artefact: p5_async_fifo_bench.test_counter_wrap}
+  - {requirement: REQ-23, method: simulation, artefact: p5_async_fifo_bench.test_sfp_tx_disable_constant}
+  - {requirement: REQ-23, method: analysis, artefact: "post_route:setup"}
+  - {requirement: REQ-24, method: analysis, artefact: "post_synth:post_synth_resources_in_range"}
+  - {requirement: REQ-25, method: analysis, artefact: "post_route:setup"}
+  - {requirement: REQ-33, method: analysis, artefact: "post_route:setup"}
+  - {requirement: REQ-26, method: analysis, artefact: "post_route:setup"}
+  - {requirement: REQ-27, method: hardware, artefact: uart_tests}
+  - {requirement: REQ-28, method: hardware, artefact: ila_captures}
+  - {requirement: REQ-29, method: analysis, artefact: "post_synth:post_synth_resources_in_range"}
+replan:
+  - {requirement: REQ-05, method: formal, replaced_by: simulation, artefact: p5_async_fifo_bench.test_register_port, why: "SymbiYosys is not installed, so the read-latency property is checked cycle by cycle in simulation."}
+  - {requirement: REQ-11, method: formal, replaced_by: simulation, artefact: p5_async_fifo_bench.test_soak_no_errors, why: "SymbiYosys is not installed; zero overflows is checked by long simulation with a full FIFO and slow reader."}
+  - {requirement: REQ-12, method: formal, replaced_by: simulation, artefact: p5_async_fifo_bench.test_soak_no_errors, why: "SymbiYosys is not installed; zero underflows is checked by long simulation."}
+  - {requirement: REQ-23, method: formal, replaced_by: simulation, artefact: p5_async_fifo_bench.test_sfp_tx_disable_constant, why: "SymbiYosys is not installed; the output is checked every clock in simulation."}

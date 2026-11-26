@@ -13,7 +13,7 @@ report the planner holds; nothing here is a significance claim.
 | `elab_probe/` | what Vivado reports on an elaborated design and a synthesised one: `elab_fixture.sv` (one of each clock source), `probe.tcl`, per-design `out/*/probe_rtl.txt`, `report_clocks_*.rpt`, `unclocked_pins_*.txt`; `run_summary.txt` is the trimmed driver log |
 | `false_positive_scan.json`, `false_positive_scan.py` | the completeness check on every committed design with an XDC |
 | `preregistration.md`, `control_224_arm2.json`, `arm_table.py` | the labelled arm's pre-registration (written before any run), the control's graded outcomes and the table script |
-| `arm_runs.json` | the labelled arm's per-run graded outcomes (see Reproduce) |
+| `arm_runs.json` | the labelled arm's per-run graded outcomes (5 runs; see Reproduce); the run records, the ledger (`cost_ledger.tsv`) and the aborted attempts are in `pilots/230/` |
 
 ## Reproduce
 
@@ -27,4 +27,4 @@ report the planner holds; nothing here is a significance claim.
 - The records scan classifies endpoints by instance and port name against each run's final design; it is not a re-run of each visit. Only p5 run 1 was replayed through Vivado.
 - The replay's remaining failing gate (TIMING-6 and TIMING-7, clock groups) is not written by any tool.
 - The elaborated-design check crashed Vivado on a PS design and is not part of the build.
-- The arm's runs are few and the control ran an older agent: the comparison is illustrative.
+- The arm has 5 runs, not 9: it stopped on the 50 USD cap (56.88 USD spent including two aborted attempts and one killed duplicate launch, 17.0 USD of the total). The control ran an older agent and without brief 234's changes: the comparison is illustrative, and what changed between the two is 230 plus 234.

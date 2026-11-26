@@ -1,0 +1,61 @@
+schema: fpga-design-agent/architecture/v1
+blocks:
+- name: p5_async_fifo_soak
+  function: thin top; instantiates jtag_bus, the core, IBUFDS_GTE4 for clk_rd, drives sfp_tx_disable=1
+- name: jtag_bus
+  function: BSCANE2 USER4 register bus (supplied, unmodified), clk_wr domain
+- name: soak_core
+  function: register map, control, snapshot, LEDs, writer PRBS-31, FIFO memory, reader checker
+- name: fifo_mem
+  function: 512x32 simple dual port RAM with gray-coded pointers and full/empty flags
+interfaces:
+- name: host_reg
+  between: [jtag_bus, soak_core]
+  protocol: simple
+  prefix: h
+  module: soak_core
+- name: led_out
+  between: [soak_core, p5_async_fifo_soak]
+  protocol: gpio
+  prefix: led
+  module: soak_core
+clock_domains:
+- name: clk_wr
+  clock: clk_25
+  freq_mhz: 25
+- name: clk_rd
+  clock: mgtrefclk0_p
+  freq_mhz: 156.25
+reset:
+  synchronisers: []
+crossings:
+- from: clk_wr
+  to: clk_rd
+  signal: write pointer (gray)
+  primitive: xpm_cdc_gray
+  inline_in: soak_core
+- from: clk_rd
+  to: clk_wr
+  signal: read pointer (gray)
+  primitive: xpm_cdc_gray
+  inline_in: soak_core
+- from: clk_wr
+  to: clk_rd
+  signal: RUN, SLOW_READ, clear-run control bits
+  primitive: xpm_cdc_array_single
+  inline_in: soak_core
+- from: clk_wr
+  to: clk_rd
+  signal: INJECT and CLEAR events
+  primitive: xpm_cdc_pulse
+  inline_in: soak_core
+- from: clk_rd
+  to: clk_wr
+  signal: reader counters snapshot (WORDS_R, DATA_ERRS, UNDERFLOWS)
+  primitive: xpm_cdc_handshake
+  inline_in: soak_core
+predicted_resources:
+  lut: [350, 1000]
+  ff: [900, 1700]
+  bram_tile: [0.5, 1]
+  dsp: 0
