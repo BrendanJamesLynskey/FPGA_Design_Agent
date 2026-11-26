@@ -10,7 +10,7 @@ A bench model of a low-latency trading path. A packet arrives on a PL Ethernet p
 not: a real market path: a mock. The message format is our own (docs/bench_feed_v1.md), the traffic sources are our own, and there is no exchange, broker or market data; a board result; no latency figure here was measured on hardware, and the PHYs, the cable and the real RGMII timing are outside every number; a proof of the whole design; only interlocks.sv has a k-induction proof, and the order slot and the MAC state machines have bounded checks
 
 ## state
-stage=built vivado=2026.1 kb_pin=6185830 build_id=55f1b6ca
+stage=built vivado=2026.1 kb_pin=eaf6794 build_id=4c77d949
 gates: build_2026_1=fail board_run=not-run
 
 ## interface
@@ -27,7 +27,7 @@ param NINST=256 legal=instrument count
 
 ## files
 designs/b58a_trigger/rtl/kr260_top.sv fca2846bea: board top (RGMII ports, clocks, JTAG bus, port B generator and loop timer)
-designs/b58a_trigger/rtl/trigger_core.sv e7c2642551: the path from frame parser to order control
+designs/b58a_trigger/rtl/trigger_core.sv 802883690b: the path from frame parser to order control
 designs/b58a_trigger/rtl/feed_rx.sv ccc1c62f8b: Ethernet, IPv4, UDP and Bench Feed parser, field by field
 designs/b58a_trigger/rtl/book.sv 216116a0a8: best bid and ask per instrument in block RAM
 designs/b58a_trigger/rtl/rules.sv bf046cfda6: 8 run-time rules checked at once

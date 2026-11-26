@@ -1,0 +1,961 @@
+{
+ "schema": "fpga-force/readiness/v1",
+ "level": "standard",
+ "limits": {
+  "max_rounds": 4,
+  "max_calls": 60,
+  "max_questions": 25
+ },
+ "checklist": "procedures/requirements-review/pre-build-review@sha256:c6081e7cd937",
+ "started": "2026-11-26T17:19:44Z",
+ "rounds": [
+  {
+   "n": 1,
+   "questions": [
+    {
+     "id": "Q1",
+     "text": "What is the full 32-bit value returned (as an integer in hex-agnostic decimal)? Is bit 31 equal to 1? (Scenario: After CLEAR the output FIFO is empty and OUT_POP is issued.) Two careful readers of the requirements disagree about this; what is the intended behaviour?",
+     "code": "RDY-READ-01",
+     "topic": "requirement",
+     "ids": [
+      "REQ-15",
+      "REQ-32",
+      "REQ-21"
+     ],
+     "blocking": true,
+     "source": "readers",
+     "answer": "OUT_POP of an empty FIFO returns 0 with bit 31 clear, so the full 32-bit value is 0 (decimal 0) and bit 31 is not 1. Nothing is removed by the read.",
+     "by": "oracle",
+     "evidence": "OUT_POP of an empty FIFO returns 0 (bit 31 clear) and removes nothing."
+    },
+    {
+     "id": "Q2",
+     "text": "What is SAT_COUNT after the RUN completes? (Scenario: After CLEAR, 4 samples are processed where the filter output before saturation would be 40000, -40000, 32767, and -32768 respectively.) Two careful readers of the requirements disagree about this; what is the intended behaviour?",
+     "code": "RDY-READ-01",
+     "topic": "requirement",
+     "ids": [
+      "REQ-06",
+      "REQ-22",
+      "REQ-23"
+     ],
+     "blocking": true,
+     "source": "readers",
+     "answer": "SAT_COUNT is 2. Only the outputs of 40000 and -40000 are clipped. 32767 and -32768 are already inside the 16-bit signed range, so they do not saturate and are not counted.",
+     "by": "oracle",
+     "evidence": "Saturation clips to -32768 and +32767 and increments SAT_COUNT once per saturated output; SAT_COUNT is 32 bits and wraps."
+    },
+    {
+     "id": "Q3",
+     "text": "On how many cycles after h_re at most does h_rdata first show 0x77, and does h_rdata still show 0x77 five cycles later? (Scenario: h_re is asserted for one clk_25 cycle on address 0x008 at cycle 0 with SCRATCH=0x77; no further reads follow.) Two careful readers of the requirements disagree about this; what is the intended behaviour?",
+     "code": "RDY-READ-01",
+     "topic": "requirement",
+     "ids": [
+      "REQ-05",
+      "REQ-29"
+     ],
+     "blocking": true,
+     "source": "readers",
+     "answer": "h_rdata must show 0x77 within at most 2 clocks after h_re, and it must hold it. With no further reads, it still shows 0x77 five cycles later.",
+     "by": "oracle",
+     "evidence": "After `h_re`, `h_rdata` must show the addressed register within 2 clocks and hold it."
+    },
+    {
+     "id": "Q4",
+     "text": "When RUN finishes, how many samples are in the output FIFO if 1500 total samples are pushed over time in chunks of 1024 and 476 each with RUN per chunk and no pops? (Scenario: Input FIFO holds 1024 samples, output FIFO is empty, and RUN is issued without any OUT_POP; the output FIFO capacity is 1024.) The requirements do not say; what should happen?",
+     "code": "RDY-READ-02",
+     "topic": "requirement",
+     "ids": [
+      "REQ-14",
+      "REQ-16",
+      "REQ-21"
+     ],
+     "blocking": true,
+     "source": "readers",
+     "answer": "The spec settles this. After the first RUN (1024 samples), the output FIFO holds 1024 outputs. With no pops, the second RUN has no room, so it processes 0 samples. The 476 samples stay in the input FIFO, and the output FIFO stays at 1024. Nothing is dropped or overwritten, and SAMPLES_DONE counts only the 1024 processed samples.",
+     "by": "oracle",
+     "evidence": "If a run would produce more outputs than there is room in the output FIFO, the run processes only as many samples as there is room for and leaves the rest in the input FIFO; SAMPLES_DONE counts what was processed. Nothing is dropped or overwritten."
+    },
+    {
+     "id": "Q5",
+     "text": "Does STATUS bit 0 ever read 1, and what is SAMPLES_DONE afterward? (Scenario: RUN is issued while the input FIFO is empty.) The requirements do not say; what should happen?",
+     "code": "RDY-READ-02",
+     "topic": "requirement",
+     "ids": [
+      "REQ-16",
+      "REQ-20"
+     ],
+     "blocking": true,
+     "source": "readers",
+     "answer": "STATUS bit 0 (BUSY) never reads 1 in this case: RUN with an empty input FIFO does nothing and BUSY stays 0. Because nothing is processed, SAMPLES_DONE is not incremented and keeps its previous value.",
+     "by": "oracle",
+     "evidence": "RUN with an empty input FIFO does nothing and BUSY stays 0."
+    },
+    {
+     "id": "Q6",
+     "text": "How many samples are processed (SAMPLES_DONE after completion)? (Scenario: CTRL is written with bits 0 (CLEAR) and 1 (RUN) both set to 1 while the input FIFO holds 8 samples.) The requirements do not say; what should happen?",
+     "code": "RDY-READ-02",
+     "topic": "requirement",
+     "ids": [
+      "REQ-19",
+      "REQ-18",
+      "REQ-20"
+     ],
+     "blocking": true,
+     "source": "readers",
+     "answer": "0. CLEAR wins over RUN written in the same clock, so the input FIFO is emptied, the run does not start, and SAMPLES_DONE stays 0 (CLEAR zeroes the counters).",
+     "by": "oracle",
+     "evidence": "- RUN while BUSY is ignored. RUN with an empty input FIFO does nothing and BUSY stays 0. CLEAR while BUSY stops the run at once and clears everything; CLEAR wins over RUN written in the same clock."
+    }
+   ],
+   "amendments": [
+    "REQ-15",
+    "REQ-22"
+   ],
+   "refused": [],
+   "repairs": {
+    "asked": [
+     {
+      "id": "REQ-03",
+      "code": "RDY-CLEAR-01",
+      "text": "requirement REQ-03 is compound ('and' joins two statements): split it into one requirement per checkable statement, each with its own id and proof method",
+      "question": "Please restate REQ-03 so that one statement can be checked: split it into one requirement per checkable statement, each with its own id and proof method",
+      "level": "standard",
+      "topic": "requirement",
+      "blocking": true,
+      "repair": true
+     },
+     {
+      "id": "REQ-04",
+      "code": "RDY-CLEAR-01",
+      "text": "requirement REQ-04 is compound ('and' joins two statements): split it into one requirement per checkable statement, each with its own id and proof method",
+      "question": "Please restate REQ-04 so that one statement can be checked: split it into one requirement per checkable statement, each with its own id and proof method",
+      "level": "standard",
+      "topic": "requirement",
+      "blocking": true,
+      "repair": true
+     },
+     {
+      "id": "REQ-05",
+      "code": "RDY-CLEAR-01",
+      "text": "requirement REQ-05 is compound ('and' joins two statements): split it into one requirement per checkable statement, each with its own id and proof method",
+      "question": "Please restate REQ-05 so that one statement can be checked: split it into one requirement per checkable statement, each with its own id and proof method",
+      "level": "standard",
+      "topic": "requirement",
+      "blocking": true,
+      "repair": true
+     },
+     {
+      "id": "REQ-11",
+      "code": "RDY-CLEAR-01",
+      "text": "requirement REQ-11 is compound ('and' joins two statements): split it into one requirement per checkable statement, each with its own id and proof method",
+      "question": "Please restate REQ-11 so that one statement can be checked: split it into one requirement per checkable statement, each with its own id and proof method",
+      "level": "standard",
+      "topic": "requirement",
+      "blocking": true,
+      "repair": true
+     },
+     {
+      "id": "REQ-13",
+      "code": "RDY-CLEAR-01",
+      "text": "requirement REQ-13 is compound ('and' joins two statements): split it into one requirement per checkable statement, each with its own id and proof method",
+      "question": "Please restate REQ-13 so that one statement can be checked: split it into one requirement per checkable statement, each with its own id and proof method",
+      "level": "standard",
+      "topic": "requirement",
+      "blocking": true,
+      "repair": true
+     },
+     {
+      "id": "REQ-14",
+      "code": "RDY-CLEAR-01",
+      "text": "requirement REQ-14 is compound ('and' joins two statements): split it into one requirement per checkable statement, each with its own id and proof method",
+      "question": "Please restate REQ-14 so that one statement can be checked: split it into one requirement per checkable statement, each with its own id and proof method",
+      "level": "standard",
+      "topic": "requirement",
+      "blocking": true,
+      "repair": true
+     },
+     {
+      "id": "REQ-25",
+      "code": "RDY-CLEAR-01",
+      "text": "requirement REQ-25 is compound ('and' joins two statements): split it into one requirement per checkable statement, each with its own id and proof method",
+      "question": "Please restate REQ-25 so that one statement can be checked: split it into one requirement per checkable statement, each with its own id and proof method",
+      "level": "standard",
+      "topic": "requirement",
+      "blocking": true,
+      "repair": true
+     }
+    ],
+    "revised": [
+     "REQ-03",
+     "REQ-04",
+     "REQ-05",
+     "REQ-11",
+     "REQ-13",
+     "REQ-14",
+     "REQ-25"
+    ],
+    "refused": []
+   },
+   "mechanical": [
+    {
+     "id": "interface",
+     "code": "RDY-IF-03",
+     "text": "port led has no clock domain (the design has 2 clocks)",
+     "question": "Which clock is led synchronous to?",
+     "level": "strict",
+     "topic": "clocks and crossings",
+     "blocking": true,
+     "repair": false
+    },
+    {
+     "id": "interface",
+     "code": "RDY-IF-04",
+     "text": "output led has no reset value",
+     "question": "What does led drive during and just after reset?",
+     "level": "strict",
+     "topic": "reset strategy",
+     "blocking": true,
+     "repair": false
+    },
+    {
+     "id": "interface",
+     "code": "RDY-IF-05",
+     "text": "output led has no stated latency from a named input event",
+     "question": "How many cycles after which input event does led change (or is it combinational)?",
+     "level": "strict",
+     "topic": "throughput and latency",
+     "blocking": true,
+     "repair": false
+    },
+    {
+     "id": "interface",
+     "code": "RDY-IF-03",
+     "text": "port sfp_tx_disable has no clock domain (the design has 2 clocks)",
+     "question": "Which clock is sfp_tx_disable synchronous to?",
+     "level": "strict",
+     "topic": "clocks and crossings",
+     "blocking": true,
+     "repair": false
+    },
+    {
+     "id": "interface",
+     "code": "RDY-IF-04",
+     "text": "output sfp_tx_disable has no reset value",
+     "question": "What does sfp_tx_disable drive during and just after reset?",
+     "level": "strict",
+     "topic": "reset strategy",
+     "blocking": true,
+     "repair": false
+    },
+    {
+     "id": "interface",
+     "code": "RDY-IF-05",
+     "text": "output sfp_tx_disable has no stated latency from a named input event",
+     "question": "How many cycles after which input event does sfp_tx_disable change (or is it combinational)?",
+     "level": "strict",
+     "topic": "throughput and latency",
+     "blocking": true,
+     "repair": false
+    },
+    {
+     "id": "REQ-09",
+     "code": "RDY-NUM-01",
+     "text": "an arithmetic result with no stated number format or overflow behaviour",
+     "question": "For REQ-09: signed or unsigned, how many fractional bits, and what happens on overflow (wrap or saturate)?",
+     "level": "strict",
+     "topic": "numeric formats",
+     "blocking": true,
+     "repair": false
+    },
+    {
+     "id": "REQ-15",
+     "code": "RDY-DEF-01",
+     "text": "a default the agent chose became this requirement and the user has not validated it",
+     "question": "The agent chose the basis of REQ-15 (a default). Do you confirm it as written?",
+     "level": "strict",
+     "topic": "requirement",
+     "blocking": true,
+     "repair": false
+    }
+   ],
+   "review": {
+    "findings": [],
+    "verdict": "ready",
+    "compliance": 0
+   },
+   "probes": {
+    "count": 12,
+    "categories": [
+     "back_pressure",
+     "boundary",
+     "invalid_input",
+     "mid_operation_reset",
+     "overflow",
+     "power_up",
+     "reset",
+     "simultaneous",
+     "unmapped"
+    ],
+    "problems": []
+   },
+   "agreement": {
+    "probes": 12,
+    "agreed": 6,
+    "rate": 0.5,
+    "disagreements": [
+     {
+      "probe": "P2",
+      "scenario": "After CLEAR the output FIFO is empty and OUT_POP is issued.",
+      "question": "What is the full 32-bit value returned (as an integer in hex-agnostic decimal)? Is bit 31 equal to 1?",
+      "category": "boundary",
+      "answers": {
+       "A": "no",
+       "B": "unspecified"
+      },
+      "requirements": [
+       "REQ-15",
+       "REQ-32",
+       "REQ-21"
+      ]
+     },
+     {
+      "probe": "P7",
+      "scenario": "After CLEAR, 4 samples are processed where the filter output before saturation would be 40000, -40000, 32767, and -32768 respectively.",
+      "question": "What is SAT_COUNT after the RUN completes?",
+      "category": "overflow",
+      "answers": {
+       "A": "2",
+       "B": "unspecified"
+      },
+      "requirements": [
+       "REQ-06",
+       "REQ-22",
+       "REQ-23"
+      ]
+     },
+     {
+      "probe": "P11",
+      "scenario": "h_re is asserted for one clk_25 cycle on address 0x008 at cycle 0 with SCRATCH=0x77; no further reads follow.",
+      "question": "On how many cycles after h_re at most does h_rdata first show 0x77, and does h_rdata still show 0x77 five cycles later?",
+      "category": "boundary",
+      "answers": {
+       "A": "yes",
+       "B": "unspecified"
+      },
+      "requirements": [
+       "REQ-05",
+       "REQ-29"
+      ]
+     }
+    ],
+    "gaps": [
+     {
+      "probe": "P8",
+      "scenario": "Input FIFO holds 1024 samples, output FIFO is empty, and RUN is issued without any OUT_POP; the output FIFO capacity is 1024.",
+      "question": "When RUN finishes, how many samples are in the output FIFO if 1500 total samples are pushed over time in chunks of 1024 and 476 each with RUN per chunk and no pops?",
+      "answers": {
+       "A": "unspecified",
+       "B": "unspecified"
+      },
+      "requirements": [
+       "REQ-14",
+       "REQ-16",
+       "REQ-21"
+      ]
+     },
+     {
+      "probe": "P9",
+      "scenario": "RUN is issued while the input FIFO is empty.",
+      "question": "Does STATUS bit 0 ever read 1, and what is SAMPLES_DONE afterward?",
+      "answers": {
+       "A": "unspecified",
+       "B": "unspecified"
+      },
+      "requirements": [
+       "REQ-16",
+       "REQ-20"
+      ]
+     },
+     {
+      "probe": "P10",
+      "scenario": "CTRL is written with bits 0 (CLEAR) and 1 (RUN) both set to 1 while the input FIFO holds 8 samples.",
+      "question": "How many samples are processed (SAMPLES_DONE after completion)?",
+      "answers": {
+       "A": "unspecified",
+       "B": "unspecified"
+      },
+      "requirements": [
+       "REQ-19",
+       "REQ-18",
+       "REQ-20"
+      ]
+     }
+    ]
+   },
+   "probe_set": [
+    {
+     "id": "P1",
+     "category": "boundary",
+     "answer_kind": "int",
+     "requirements": [
+      "REQ-31",
+      "REQ-13",
+      "REQ-21"
+     ]
+    },
+    {
+     "id": "P2",
+     "category": "boundary",
+     "answer_kind": "bool",
+     "requirements": [
+      "REQ-15",
+      "REQ-32",
+      "REQ-21"
+     ]
+    },
+    {
+     "id": "P3",
+     "category": "unmapped",
+     "answer_kind": "int",
+     "requirements": [
+      "REQ-04",
+      "REQ-28"
+     ]
+    },
+    {
+     "id": "P4",
+     "category": "reset",
+     "answer_kind": "int",
+     "requirements": [
+      "REQ-27",
+      "REQ-03"
+     ]
+    },
+    {
+     "id": "P5",
+     "category": "mid_operation_reset",
+     "answer_kind": "choice",
+     "requirements": [
+      "REQ-16",
+      "REQ-18",
+      "REQ-20",
+      "REQ-23",
+      "REQ-17"
+     ]
+    },
+    {
+     "id": "P6",
+     "category": "simultaneous",
+     "answer_kind": "choice",
+     "requirements": [
+      "REQ-31",
+      "REQ-16",
+      "REQ-21"
+     ]
+    },
+    {
+     "id": "P7",
+     "category": "overflow",
+     "answer_kind": "int",
+     "requirements": [
+      "REQ-06",
+      "REQ-22",
+      "REQ-23"
+     ]
+    },
+    {
+     "id": "P8",
+     "category": "back_pressure",
+     "answer_kind": "int",
+     "requirements": [
+      "REQ-14",
+      "REQ-16",
+      "REQ-21"
+     ]
+    },
+    {
+     "id": "P9",
+     "category": "invalid_input",
+     "answer_kind": "choice",
+     "requirements": [
+      "REQ-16",
+      "REQ-20"
+     ]
+    },
+    {
+     "id": "P10",
+     "category": "simultaneous",
+     "answer_kind": "int",
+     "requirements": [
+      "REQ-19",
+      "REQ-18",
+      "REQ-20"
+     ]
+    },
+    {
+     "id": "P11",
+     "category": "boundary",
+     "answer_kind": "bool",
+     "requirements": [
+      "REQ-05",
+      "REQ-29"
+     ]
+    },
+    {
+     "id": "P12",
+     "category": "power_up",
+     "answer_kind": "bool",
+     "requirements": [
+      "REQ-25",
+      "REQ-01",
+      "REQ-26"
+     ]
+    }
+   ],
+   "probe_text": [
+    {
+     "id": "P1",
+     "category": "boundary",
+     "requirements": [
+      "REQ-31",
+      "REQ-13",
+      "REQ-21"
+     ],
+     "scenario": "After CLEAR, 1024 IN_PUSH commands are accepted with no RUN, then a 1025th IN_PUSH with value 0x1234 is issued.",
+     "question": "What is the input FIFO count in STATUS bits 15:4 after the 1025th push?",
+     "answer_kind": "int"
+    },
+    {
+     "id": "P2",
+     "category": "boundary",
+     "requirements": [
+      "REQ-15",
+      "REQ-32",
+      "REQ-21"
+     ],
+     "scenario": "After CLEAR the output FIFO is empty and OUT_POP is issued.",
+     "question": "What is the full 32-bit value returned (as an integer in hex-agnostic decimal)? Is bit 31 equal to 1?",
+     "answer_kind": "bool"
+    },
+    {
+     "id": "P3",
+     "category": "unmapped",
+     "requirements": [
+      "REQ-04",
+      "REQ-28"
+     ],
+     "scenario": "A write of 0xDEADBEEF to unmapped address 0x7FC is followed by a read of 0x7FC, and then a read of SCRATCH at 0x008, which was previously 0x55.",
+     "question": "What value does the read of 0x7FC return?",
+     "answer_kind": "int"
+    },
+    {
+     "id": "P4",
+     "category": "reset",
+     "requirements": [
+      "REQ-27",
+      "REQ-03"
+     ],
+     "scenario": "SCRATCH is written with 0xCAFEBABE, then rst is asserted for 8 clk_25 cycles and released. SCRATCH is read.",
+     "question": "What value is read back from SCRATCH (decimal)?",
+     "answer_kind": "int"
+    },
+    {
+     "id": "P5",
+     "category": "mid_operation_reset",
+     "requirements": [
+      "REQ-16",
+      "REQ-18",
+      "REQ-20",
+      "REQ-23",
+      "REQ-17"
+     ],
+     "scenario": "A RUN is in progress with 1000 samples in the input FIFO, 400 processed, when rst is asserted for 8 cycles and then released.",
+     "question": "After release, what is the SAMPLES_DONE value and does STATUS bit 0 read 1 or 0? Does the filter history remain from before reset?",
+     "answer_kind": "choice",
+     "choices": [
+      "SAMPLES_DONE=0, STATUS0=0, history zeroed",
+      "SAMPLES_DONE=400, STATUS0=0, history kept",
+      "SAMPLES_DONE=0, STATUS0=1, run resumes",
+      "Unspecified by requirements"
+     ]
+    },
+    {
+     "id": "P6",
+     "category": "simultaneous",
+     "requirements": [
+      "REQ-31",
+      "REQ-16",
+      "REQ-21"
+     ],
+     "scenario": "The input FIFO holds 1024 samples and RUN is in progress; in the same clk_25 cycle where the first sample is consumed, an IN_PUSH is issued.",
+     "question": "Is the pushed sample accepted into the FIFO?",
+     "answer_kind": "choice",
+     "choices": [
+      "accepted",
+      "ignored",
+      "depends on clock-domain timing, not fixed"
+     ]
+    },
+    {
+     "id": "P7",
+     "category": "overflow",
+     "requirements": [
+      "REQ-06",
+      "REQ-22",
+      "REQ-23"
+     ],
+     "scenario": "After CLEAR, 4 samples are processed where the filter output before saturation would be 40000, -40000, 32767, and -32768 respectively.",
+     "question": "What is SAT_COUNT after the RUN completes?",
+     "answer_kind": "int"
+    },
+    {
+     "id": "P8",
+     "category": "back_pressure",
+     "requirements": [
+      "REQ-14",
+      "REQ-16",
+      "REQ-21"
+     ],
+     "scenario": "Input FIFO holds 1024 samples, output FIFO is empty, and RUN is issued without any OUT_POP; the output FIFO capacity is 1024.",
+     "question": "When RUN finishes, how many samples are in the output FIFO if 1500 total samples are pushed over time in chunks of 1024 and 476 each with RUN per chunk and no pops?",
+     "answer_kind": "int"
+    },
+    {
+     "id": "P9",
+     "category": "invalid_input",
+     "requirements": [
+      "REQ-16",
+      "REQ-20"
+     ],
+     "scenario": "RUN is issued while the input FIFO is empty.",
+     "question": "Does STATUS bit 0 ever read 1, and what is SAMPLES_DONE afterward?",
+     "answer_kind": "choice",
+     "choices": [
+      "bit0 stays 0, SAMPLES_DONE unchanged",
+      "bit0 pulses 1 briefly, SAMPLES_DONE unchanged",
+      "bit0 stays 1 until samples arrive",
+      "Unspecified"
+     ]
+    },
+    {
+     "id": "P10",
+     "category": "simultaneous",
+     "requirements": [
+      "REQ-19",
+      "REQ-18",
+      "REQ-20"
+     ],
+     "scenario": "CTRL is written with bits 0 (CLEAR) and 1 (RUN) both set to 1 while the input FIFO holds 8 samples.",
+     "question": "How many samples are processed (SAMPLES_DONE after completion)?",
+     "answer_kind": "int"
+    },
+    {
+     "id": "P11",
+     "category": "boundary",
+     "requirements": [
+      "REQ-05",
+      "REQ-29"
+     ],
+     "scenario": "h_re is asserted for one clk_25 cycle on address 0x008 at cycle 0 with SCRATCH=0x77; no further reads follow.",
+     "question": "On how many cycles after h_re at most does h_rdata first show 0x77, and does h_rdata still show 0x77 five cycles later?",
+     "answer_kind": "bool"
+    },
+    {
+     "id": "P12",
+     "category": "power_up",
+     "requirements": [
+      "REQ-25",
+      "REQ-01",
+      "REQ-26"
+     ],
+     "scenario": "At power-up, rst is held during the internal power-on counter and clk_dsp MMCM is not yet locked; a read of ID at 0x000 is attempted during this time.",
+     "question": "Is sfp_tx_disable 1 during this whole period including before MMCM lock?",
+     "answer_kind": "bool"
+    }
+   ],
+   "answers": {
+    "A": {
+     "P1": "1024",
+     "P2": "no",
+     "P3": "0",
+     "P4": "0",
+     "P5": "Unspecified by requirements",
+     "P6": "depends on clock-domain timing, not fixed",
+     "P7": "2",
+     "P8": "unspecified",
+     "P9": "Unspecified",
+     "P10": "unspecified",
+     "P11": "yes",
+     "P12": "yes"
+    },
+    "B": {
+     "P1": "1024",
+     "P2": "unspecified",
+     "P3": "0",
+     "P4": "0",
+     "P5": "Unspecified by requirements",
+     "P6": "depends on clock-domain timing, not fixed",
+     "P7": "unspecified",
+     "P8": "unspecified",
+     "P9": "Unspecified",
+     "P10": "unspecified",
+     "P11": "unspecified",
+     "P12": "yes"
+    }
+   }
+  },
+  {
+   "n": 2,
+   "questions": [
+    {
+     "id": "Q7",
+     "text": "Please restate REQ-22 so that one statement can be checked: split it into one requirement per checkable statement, each with its own id and proof method",
+     "code": "RDY-CLEAR-01",
+     "topic": "requirement",
+     "ids": [
+      "REQ-22"
+     ],
+     "blocking": true,
+     "source": "code",
+     "answer": null,
+     "by": null,
+     "evidence": null
+    },
+    {
+     "id": "Q8",
+     "text": "Please restate REQ-36 so that one statement can be checked: split it into one requirement per checkable statement, each with its own id and proof method",
+     "code": "RDY-CLEAR-01",
+     "topic": "requirement",
+     "ids": [
+      "REQ-36"
+     ],
+     "blocking": true,
+     "source": "code",
+     "answer": null,
+     "by": null,
+     "evidence": null
+    },
+    {
+     "id": "Q9",
+     "text": "the probe set is not usable: probe P7: category must be one of reset, boundary, simultaneous, overflow, back_pressure, unmapped, mid_operation_reset, invalid_input, power_up; no probe of category 'reset', which applies to this design",
+     "code": "RDY-PROBE-01",
+     "topic": "requirement",
+     "ids": [],
+     "blocking": true,
+     "source": "readers",
+     "answer": null,
+     "by": null,
+     "evidence": null
+    }
+   ],
+   "amendments": [],
+   "refused": [],
+   "repairs": {
+    "asked": [
+     {
+      "id": "REQ-22",
+      "code": "RDY-CLEAR-01",
+      "text": "requirement REQ-22 is compound (';' joins two statements): split it into one requirement per checkable statement, each with its own id and proof method",
+      "question": "Please restate REQ-22 so that one statement can be checked: split it into one requirement per checkable statement, each with its own id and proof method",
+      "level": "standard",
+      "topic": "requirement",
+      "blocking": true,
+      "repair": true
+     },
+     {
+      "id": "REQ-36",
+      "code": "RDY-CLEAR-01",
+      "text": "requirement REQ-36 is compound (';' joins two statements): split it into one requirement per checkable statement, each with its own id and proof method",
+      "question": "Please restate REQ-36 so that one statement can be checked: split it into one requirement per checkable statement, each with its own id and proof method",
+      "level": "standard",
+      "topic": "requirement",
+      "blocking": true,
+      "repair": true
+     }
+    ],
+    "revised": [],
+    "refused": []
+   },
+   "mechanical": [
+    {
+     "id": "REQ-22",
+     "code": "RDY-CLEAR-01",
+     "text": "requirement REQ-22 is compound (';' joins two statements): split it into one requirement per checkable statement, each with its own id and proof method",
+     "question": "Please restate REQ-22 so that one statement can be checked: split it into one requirement per checkable statement, each with its own id and proof method",
+     "level": "standard",
+     "topic": "requirement",
+     "blocking": true,
+     "repair": true
+    },
+    {
+     "id": "REQ-36",
+     "code": "RDY-CLEAR-01",
+     "text": "requirement REQ-36 is compound (';' joins two statements): split it into one requirement per checkable statement, each with its own id and proof method",
+     "question": "Please restate REQ-36 so that one statement can be checked: split it into one requirement per checkable statement, each with its own id and proof method",
+     "level": "standard",
+     "topic": "requirement",
+     "blocking": true,
+     "repair": true
+    },
+    {
+     "id": "interface",
+     "code": "RDY-IF-03",
+     "text": "port led has no clock domain (the design has 2 clocks)",
+     "question": "Which clock is led synchronous to?",
+     "level": "strict",
+     "topic": "clocks and crossings",
+     "blocking": true,
+     "repair": false
+    },
+    {
+     "id": "interface",
+     "code": "RDY-IF-04",
+     "text": "output led has no reset value",
+     "question": "What does led drive during and just after reset?",
+     "level": "strict",
+     "topic": "reset strategy",
+     "blocking": true,
+     "repair": false
+    },
+    {
+     "id": "interface",
+     "code": "RDY-IF-05",
+     "text": "output led has no stated latency from a named input event",
+     "question": "How many cycles after which input event does led change (or is it combinational)?",
+     "level": "strict",
+     "topic": "throughput and latency",
+     "blocking": true,
+     "repair": false
+    },
+    {
+     "id": "interface",
+     "code": "RDY-IF-03",
+     "text": "port sfp_tx_disable has no clock domain (the design has 2 clocks)",
+     "question": "Which clock is sfp_tx_disable synchronous to?",
+     "level": "strict",
+     "topic": "clocks and crossings",
+     "blocking": true,
+     "repair": false
+    },
+    {
+     "id": "interface",
+     "code": "RDY-IF-04",
+     "text": "output sfp_tx_disable has no reset value",
+     "question": "What does sfp_tx_disable drive during and just after reset?",
+     "level": "strict",
+     "topic": "reset strategy",
+     "blocking": true,
+     "repair": false
+    },
+    {
+     "id": "interface",
+     "code": "RDY-IF-05",
+     "text": "output sfp_tx_disable has no stated latency from a named input event",
+     "question": "How many cycles after which input event does sfp_tx_disable change (or is it combinational)?",
+     "level": "strict",
+     "topic": "throughput and latency",
+     "blocking": true,
+     "repair": false
+    },
+    {
+     "id": "REQ-09",
+     "code": "RDY-NUM-01",
+     "text": "an arithmetic result with no stated number format or overflow behaviour",
+     "question": "For REQ-09: signed or unsigned, how many fractional bits, and what happens on overflow (wrap or saturate)?",
+     "level": "strict",
+     "topic": "numeric formats",
+     "blocking": true,
+     "repair": false
+    },
+    {
+     "id": "REQ-15",
+     "code": "RDY-DEF-01",
+     "text": "a default the agent chose became this requirement and the user has not validated it",
+     "question": "The agent chose the basis of REQ-15 (a default). Do you confirm it as written?",
+     "level": "strict",
+     "topic": "requirement",
+     "blocking": true,
+     "repair": false
+    }
+   ],
+   "review": {
+    "findings": [],
+    "verdict": "ready",
+    "compliance": 0
+   },
+   "probes": {
+    "count": 13,
+    "categories": [
+     "back_pressure",
+     "boundary",
+     "empty",
+     "invalid_input",
+     "mid_operation_reset",
+     "overflow",
+     "power_up",
+     "simultaneous",
+     "unmapped"
+    ],
+    "problems": [
+     "probe P7: category must be one of reset, boundary, simultaneous, overflow, back_pressure, unmapped, mid_operation_reset, invalid_input, power_up",
+     "no probe of category 'reset', which applies to this design"
+    ]
+   }
+  }
+ ],
+ "frozen": null,
+ "stop": "no answer was available for the open questions",
+ "answerer": "oracle",
+ "finished": "2026-11-26T17:21:31Z",
+ "model_calls": 9,
+ "calls_by_role": {
+  "amend": 1,
+  "probes": 2,
+  "reader_a": 1,
+  "reader_b": 1,
+  "repair": 2,
+  "review": 2
+ },
+ "open": [
+  {
+   "id": "Q7",
+   "text": "Please restate REQ-22 so that one statement can be checked: split it into one requirement per checkable statement, each with its own id and proof method",
+   "code": "RDY-CLEAR-01",
+   "topic": "requirement",
+   "ids": [
+    "REQ-22"
+   ],
+   "blocking": true,
+   "source": "code",
+   "answer": null,
+   "by": null,
+   "evidence": null
+  },
+  {
+   "id": "Q8",
+   "text": "Please restate REQ-36 so that one statement can be checked: split it into one requirement per checkable statement, each with its own id and proof method",
+   "code": "RDY-CLEAR-01",
+   "topic": "requirement",
+   "ids": [
+    "REQ-36"
+   ],
+   "blocking": true,
+   "source": "code",
+   "answer": null,
+   "by": null,
+   "evidence": null
+  },
+  {
+   "id": "Q9",
+   "text": "the probe set is not usable: probe P7: category must be one of reset, boundary, simultaneous, overflow, back_pressure, unmapped, mid_operation_reset, invalid_input, power_up; no probe of category 'reset', which applies to this design",
+   "code": "RDY-PROBE-01",
+   "topic": "requirement",
+   "ids": [],
+   "blocking": true,
+   "source": "readers",
+   "answer": null,
+   "by": null,
+   "evidence": null
+  }
+ ]
+}

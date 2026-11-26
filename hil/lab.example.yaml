@@ -37,20 +37,23 @@ instruments:
   - id: redpitaya
     kind: oscilloscope
     make: Red Pitaya
-    model: STEMlab 125-14 (Zynq-7010)
-    onboarded: false                     # did not answer on the LAN in brief 30; address still to be given by the owner
+    model: STEMlab 125-14 (original generation v1.1, Zynq-7010)
+    is_board: redpitaya_stemlab_125_14     # brief 225: this box is also a target board (boards/redpitaya_stemlab_125_14). A design that runs on it is not measured by it.
+    mode: {state: factory_instrument}      # factory_instrument, or target_loaded with the build_id of the design loaded into it (its factory instruments are then gone)
+    onboarded: false                     # did not answer on the LAN in brief 30; the owner gives the address and turns the SCPI server on at onboarding (it is off by default)
     connection: {type: lan, address: "TO-BE-GIVEN-BY-OWNER"}
     control: {mode: scripted, driver: hil.instruments.redpitaya}
     channels:
-      - {name: IN1, kind: analog_in, sample_rate_sps: 125000000, range_v: [-1, 1], note: "LV jumper; +-20 V on HV. Check the jumper before connecting 3.3 V logic"}
-      - {name: IN2, kind: analog_in, sample_rate_sps: 125000000, range_v: [-1, 1]}
-      - {name: OUT1, kind: analog_out, range_v: [-1, 1]}
+      - {name: IN1, kind: analog_in, sample_rate_sps: 125000000, range_v: [-1, 1], note: "jumper LV on the owner's board (owner 2026-11-25); +-6 V absolute maximum on LV. Check the jumper before connecting 3.3 V logic"}
+      - {name: IN2, kind: analog_in, sample_rate_sps: 125000000, range_v: [-20, 20], note: "jumper HV on the owner's board (owner 2026-11-25); +-30 V absolute maximum on HV"}
+      - {name: OUT1, kind: analog_out, range_v: [-1, 1], note: "+-1 V into 50 ohm; the swing into a high-impedance input is not stated for the original generation"}
       - {name: OUT2, kind: analog_out, range_v: [-1, 1]}
     capabilities:
       - {measure: frequency, channels: [IN1, IN2], max_hz: 30000000, via: waveform zero crossings}
-      - {measure: voltage, channels: [IN1, IN2], range_v: [-1, 1]}
+      - {measure: voltage, channels: [IN1], range_v: [-1, 1]}
+      - {measure: voltage, channels: [IN2], range_v: [-20, 20]}
     outputs:
-      - {name: OUT1, kind: awg, max_v: 1.0, note: "the driver refuses above 1 V peak"}
+      - {name: OUT1, kind: awg, max_v: 1.0, note: "the driver refuses above 1 V peak; the self-test lead OUT1 to IN1 is fitted by the owner with the board unpowered"}
       - {name: OUT2, kind: awg, never_by_script: true}
   - id: pluto
     kind: sdr_transmitter

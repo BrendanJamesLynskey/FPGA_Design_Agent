@@ -129,6 +129,26 @@ USR_ACCESSE2 clocks, the board's transceiver reference clock pins and frequency;
 does not constrain; read after it); after a failed post-synthesis gate the `gates` output names each unconstrained endpoint's class and the line to add. `FDA_KNOWN_XDC=0` turns all of it off. Port classes, hard blocks, who writes which constraint,
 what a user could get wrong and the measurements: [docs/constraints_complete.md](constraints_complete.md). A port the spec calls slow that is really timed has its failure hidden by the false path: give `async: true` a `reason:`.
 
+## Repair feedback arms (brief 213: `--harness-arm H1,R1,R2,R3`; all off by default)
+
+Three opt-in features of the stage-2 repair loop (`agent/graph/feedback.py`, `flow/divergence.py`, `flow/lockstep.py`, `flow/regrade.py`, `flow/model_record.py`).
+They add no prompt text: the text is generated from evidence and placed in the existing repair-reason slots, so no prompt golden or pin changed.
+
+- **R1, first failing check.** When the simulate gate fails on an assertion, the harness re-runs the design's own bench once with a snapshot hook that stops at the first
+  failing cocotb test and writes the last 24 clock cycles of the top level's signals, the model's last 40 calls (`step`, `read_reg`, `write_reg`) with simulator times, the
+  assertion and the bench source line. The Designer's reason carries the check, the signals it names (RTL values per cycle beside the model's value), the transaction in
+  flight and the driver cone of the first wrong signal, in place of the raw log tail. The cone is a textual RTL dataflow walk (assignments, case labels, `if` guards,
+  depth 2), not a netlist; the digest says so. It states the divergence between two artefacts and does not assume the model or the bench is right.
+  Limit: the cycle table is the RTL's own clock cycles; whether the model's output for a name is aligned with the RTL is not checked (a model with latency differs by design).
+- **R2, failure ledger.** Each failed stage-2 visit adds an entry (gates, finding, first failing check, files whose contents changed since the previous gate evaluation) to
+  the run state (`ledger`), the run record (`repair_feedback`, routing events `ledger_entry`) and the stop detail; a repair visit is shown the earlier entries (not the
+  current one), and, after three consecutive visits with the same failure signature, told to check whether the failing check contradicts the request or a design standard.
+- **R3, fresh-stimulus regrade.** The simulate tool records the bench's calls to `Model`; after stage 2 would pass, `flow/regrade.py` replays the recorded stimulus in lock
+  step against the RTL (calibration) and, only if that agrees, drives new seeded sequences (values from the bench's own pool plus random and neighbour values, bursts and
+  holds, back-pressure on ready-like inputs, resets mid-stream; seed recorded). Statuses: `not_applicable` (the bench drove the model through `read_reg`/`write_reg` or
+  stepped with no inputs), `not_calibrated`, `pass`, `fail` (with a first-divergence digest), `error`. `flow/regrade.py BLOCKS` is False at every level: it reports and
+  never fails a gate (see `reports/213_repair_feedback_report.md` for the evidence).
+
 ## Separation (`agent/graph/roles.py`)
 
 | Sub-agent | Reads | Writes |
@@ -259,6 +279,13 @@ requirement's words and covers the fixes of RPT-LL-02 and RPT-CS-02 only.
 Tests: `agent/tests/test_210_requirements.py` (rules, levels, waivers, the stop and its exit status, the conflict on the recorded c15 report),
 `flow/tests/test_210_requirements_report.py` (the report on t1_dimmer_counter's reference run: a pending row, a failed row, regeneration after the board).
 
+### Readiness: stage 0 until the requirements are ready (brief 227)
+
+`--requirements` says what may be left unanswered; `--readiness on` says when the agent is **satisfied** with the answers: the mechanical checks pass, two fresh readers predict the same
+behaviour for the same probe set, no question is open, and the set is frozen (stages 1 onward read the frozen set). At the round or call limit, or with nobody to answer, the run stops
+with `REQUIREMENTS_NEEDED.md` and exit status 3. The gate, the roles, the files, the measure and **what a user could get wrong** (confirming a default without reading it, a probe set too small to
+find the ambiguity that matters, `within` against `after`, a vacuous property, an all-"OK" confirmation) are in [docs/requirements_readiness.md](requirements_readiness.md).
+
 ## The lab: instruments the agent can use (`hil/lab.py`, brief 221)
 
 The agent knew the board (`boards/*/board.yaml`) but not the bench, so a check that a scope, counter or logic analyser would settle in seconds was skipped or
@@ -325,6 +352,29 @@ needed); a dry run changes nothing.
 
 Tests: `hil/tests/test_221_lab.py` (file schema, merge, method choice, safety limits, adapters on fakes, steps, dry runs, manual prompts), `agent/tests/test_221_lab_interview.py`
 (gap questions, risk class, answers recorded, report column), `flow/tests/test_221_bringup_lab.py` (the bring-up step). Example: `results/221_lab_instruments`.
+
+## The Red Pitaya as a target and an instrument (brief 225)
+
+The owner's Red Pitaya STEMlab 125-14 (original generation, v1.1) is a board the agent can target (`--board redpitaya_stemlab_125_14`, [boards/redpitaya_stemlab_125_14](../boards/redpitaya_stemlab_125_14/README.md))
+and, in the same box, a lab instrument (brief 221's `redpitaya` entry). Two build modes (shell: the design is a block in the vendor's FPGA project, for instruments; bare: the agent owns the whole PL), volatile loading
+by a script the owner runs, and the rule that the box is never both at once.
+
+- **Board file.** Part, clock, fast ADC and DAC, E1 and E2, LEDs, the PS-side address window, power and loading, each with its source (the vendor's BSD-licensed FPGA repository at a pinned commit and its documentation read on 2026-11-26) or marked unconfirmed.
+  The Vivado 2026.1 Basic tier covers the part (brief 95's licence probe). A smoke design was built through the bitstream. A request naming another Red Pitaya model (Gen 2, PRO, Z7020, 4-Input, SDRlab) is not taken for this one (`other_models_after` in the catalogue).
+- **Shell builds.** `python3 tools/rp_shell.py prepare <dir> [--block FILE.sv --slot7 MODULE --slot6 MODULE]`, `build <dir>` (the vendor's script, one heavy slot, under a memory-capped scope), `package <dir> <out>` (`fpga.bit.bin`, `build.json`).
+  The block has the ports of [rp_user_block](../boards/redpitaya_stemlab_125_14/shell/rp_user_block.sv): the shell's bus (a one-cycle access, `ack` in the next cycle, `err` with `ack` on failure), IN1 and IN2 samples, and two DAC terms added after the factory generator and PID.
+- **Loading.** `python3 -m hil.redpitaya_load script <package> --block <name>` writes the owner's script (volatile load with `overlay.sh v0.94 <file>` or `fpgautil`, verification from the loader's files, on-board checks, `RESTORE=1`). `DRY_RUN=1` prints every board command and calls none.
+- **Mode in the lab file.** An instrument entry with `is_board: <board>` may carry `mode: {state: factory_instrument}` or `mode: {state: target_loaded, build_id: ...}`; the design's lab file or its `build.yaml` names the `target_board`, and may say `design_is_instrument: true`.
+  Such an instrument is never planned, asked about or run for a design that runs on it (or while it is loaded); the plan says why, and every run row has `instrument_mode`.
+- **The lab tool and `lab_limits`.** `drive_instrument` (permission action `drive_instrument_output`) is registered; the `lab_limits` never-rule calls `hil.lab.check_drive` over the lab merged for the design, so an over-limit request, an unknown or not-onboarded instrument,
+  an output a script may never enable, or a value the request omits is refused in every mode, `full` included. The tool records an approved request in `build/lab/drive_requests.json` and enables nothing; the owner-run bring-up script does.
+- **The `redpitaya_os` never-rule.** Writing the board's SD card, boot files or OS image, running its updater (`ecosystem-update`, `apt upgrade`), or turning its factory SCPI server on, is refused in every mode (in tool arguments, in a script, and for a file the agent writes).
+  `overlay.sh` and `fpgautil` are not matched.
+- **Self-test loop.** OUT1 into IN1 with a short lead (IN1 is on LV: +-1 V) lets a design generate and measure without another instrument. The owner fits the lead with the board unpowered; the pulse generator's self-test uses 0.25 V and refuses above 0.5 V.
+
+What a user could get wrong: loading a design and then expecting the factory oscilloscope (it is gone until a power cycle or `RESTORE=1`); a signal above +-1 V into IN1 (LV); a design driving OUT1 into something unprotected;
+reading an unmapped slot from Linux (the stub answers with a bus error and the PS's reaction is not documented); trusting the 125 MHz oscillator for a ppm claim (the vendor states no accuracy).
+Measured examples and their status: [results/225_redpitaya](../results/225_redpitaya/README.md).
 
 ## Review and rewind (`agent/graph/review.py`, `snapshot.py`)
 
@@ -407,7 +457,8 @@ Code checks, run before the mode is read (`never_violation`, `check_script`, `la
 - writing a boot image (`BOOT.BIN`, `.bif`, `.jic`);
 - programming eFUSE or BBRAM, or loading a key into a device;
 - enabling a laser anywhere except the design's own bring-up step;
-- driving an instrument output beyond the lab file's limits, or one the lab file lists as never enabled by a script (a limit the file does not state is zero, never assumed free; brief 221 calls `lab_limits_violation` before an output is enabled);
+- driving an instrument output beyond the lab file's limits, or one the lab file lists as never enabled by a script (a limit the file does not state is zero, never assumed free; brief 225: `never_violation` calls `hil.lab.check_drive` for the lab tool `drive_instrument` over the lab merged for the design);
+- changing the Red Pitaya's SD card, boot files or OS image, running its updater, or turning its factory SCPI server on (brief 225; a volatile `overlay.sh` or `fpgautil` load is not matched);
 - a cost cap above the hard cap (`HARD_CAP_USD`, $35: the FPGA share of the key).
 
 The scan covers the arguments of the tools that touch a board or an instrument and the path of any file the agent writes. It does not read file contents (an AES core's RTL may say `key`) or the

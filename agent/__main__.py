@@ -9,6 +9,7 @@
     python -m agent document <run-dir> [--cc-model M] [--replay doc_calls.jsonl]   (brief 68 C: the DOC step on a finished run)
     python -m agent project check|status|hash|gen-tests <dir> ...     (the project layer, project/cli.py)
     python -m agent ip search|rank|show|use ...                  (brief 150: the IP library, `python -m agent ip --help`)
+    python -m agent example list | run <name> | compare <run_dir> | tools <name>   (brief 195: reproducible examples with reference runs)
     python -m agent improve <design-dir> "<request>" [--more | --edit N "<change>" | --choose N]   (brief 104: analysis, then strategy options; --choose runs one)
 
     python -m agent doctor [--json] [--no-probe]        (brief 157: what this machine is missing before a first run; no key needed)
@@ -292,6 +293,7 @@ def config_from_json(c: dict):
                   design_plan=flag("design_plan"), closure=c.get("closure", "off") or "off",     # closure loop
                   docs=c.get("docs", "off") or "off",                                            # brief 68 C
                   coverage_loop=c.get("coverage_loop", "off") or "off", req_sva=c.get("req_sva", "off") or "off",   # brief 218
+                  readiness=c.get("readiness", "off") or "off", readiness_limits=dict(_literal(c.get("readiness_limits")) or {}),   # brief 227
                   models_file=Path(c["models_file"]) if c.get("models_file") not in (None, "None") else None,   # brief 108
                   model_config=c.get("model_config") or None, explicit=tuple(c.get("explicit") or ()),
                   allow_fable=str(c.get("allow_fable", False)) == "True",
@@ -646,7 +648,10 @@ def build_parser() -> argparse.ArgumentParser:
                    help="brief 42: comma-separated harness arms, default H1 (owner decision 2026-11-12, made after the data): "
                         "H1 = context management (offload of large tool results, earlier summarisation), "
                         "H2 = hang protection (unbounded-wait check, wall limit from the bench's sim-time budget, structured "
-                        "hang result), H9 = typed digests; A0 = the baseline with no arm (pin it for comparisons with earlier runs)")
+                        "hang result), H9 = typed digests; brief 213 repair feedback, off unless named: R1 = the first failing check "
+                        "(RTL values over the last cycles, the model's value, the transaction in flight, the driver cone) in place of the raw "
+                        "simulator log tail, R2 = the failure ledger of earlier stage-2 visits, R3 = the fresh-stimulus regrade after stage 2 "
+                        "passes; A0 = the baseline with no arm (pin it for comparisons with earlier runs)")
     r.add_argument("--router-k", type=int, default=8, help="brief 36: skills in the router's shortlist")
     r.add_argument("--design-plan", action="store_true",
                    help="plan before building: stage 1 lists the datapaths, and the timing plan maps each operation to a DSP slice, "
@@ -662,6 +667,14 @@ def build_parser() -> argparse.ArgumentParser:
                    help="brief 218: once V2 passes, write an SVA property for each checkable requirement from its text and the port list, "
                         "read it back in English with a different model, compare in code, and prove or bounded-check it with a reachable "
                         "cover of its trigger; a proved property becomes evidence on the requirement's row (needs sby; default off)")
+    r.add_argument("--readiness", choices=["on", "off"], default="off",
+                   help="brief 227: stage 0 iterates until the requirements are ready, then freezes them. Each round: the mechanical checks, the requirements "
+                        "reviewer, a probe set that two fresh readers answer from the requirements alone (a disagreement or a gap is a question), and, at "
+                        "--requirements strict, a third reader's structured layer. Questions go to the oracle (--interview oracle) or to "
+                        "requirements_answers.yaml; with nobody to answer, or at the round or call limit, the run stops with REQUIREMENTS_NEEDED.md "
+                        "(exit status 3) and never guesses (default off)")
+    r.add_argument("--readiness-rounds", type=int, default=4, help="brief 227: the stage-0 round limit (default 4)")
+    r.add_argument("--readiness-calls", type=int, default=60, help="brief 227: the stage-0 budget of model calls (default 60)")
     r.add_argument("--docs", choices=["on", "off"], default="on",
                    help="brief 68: at the end of the run the Designer writes handover.yaml and the flow renders README.md and "
                         "AGENT.md; the DOC gate (flow/handover.py checks) must pass for sign-off (doc.json)")
@@ -788,6 +801,8 @@ def build_parser() -> argparse.ArgumentParser:
     _latency_parser(sub)
     from flow.options.cli import add_parser as _improve_parser           # brief 104
     _improve_parser(sub)
+    from agent.repro.cli import add_parser as _example_parser            # brief 195
+    _example_parser(sub)
     sub.add_parser("doctor", help=newcomer.COMMANDS["doctor"][0], description=newcomer.COMMANDS["doctor"][1],
                    add_help=False)                      # dispatched in main() before this parser: listed here so --help shows it
     sub.add_parser("project", help=newcomer.COMMANDS["project"][0], add_help=False)
@@ -801,6 +816,9 @@ def _run_main(a, args: list[str], ap: argparse.ArgumentParser) -> int:
     from agent.graph.run import Config, build_graph, checkpointer_for, new_runtime
     if a.cmd in ("status", "ask", "request"):
         return live_cmd(a)
+    if a.cmd == "example":
+        from agent.repro.cli import main as example_main
+        return example_main(a)
     if a.cmd == "models":
         return models_cmd(a, args)
     if a.cmd == "latency":
@@ -863,6 +881,7 @@ def _run_main(a, args: list[str], ap: argparse.ArgumentParser) -> int:
                      design_plan=a.design_plan, closure=a.closure, docs=a.docs,          # closure loop; brief 68 C
                      permissions=permission_spec(a, name, ap),                          # brief 222
                      coverage_loop=a.coverage_loop, req_sva=a.req_sva,                   # brief 218
+                     readiness=a.readiness, readiness_limits={"max_rounds": a.readiness_rounds, "max_calls": a.readiness_calls},   # brief 227
                      **{**model_kwargs(a, args), "models_file": a.models_file or project_models_file(a.spec)})
         cfg.role_models()                                     # fail early on an unknown profile, role or forbidden model
         if a.max_usd is not None:

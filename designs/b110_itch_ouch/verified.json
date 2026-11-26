@@ -5,16 +5,22 @@
   "draft": 17,
   "items": 18,
   "requirements": 17,
-  "stale_items": 4,
-  "verified": 6
+  "stale_items": 14,
+  "verified": 0
  },
  "criteria": [
   {
-   "detail": "11 of 17 requirements are not in state verified: B110-F-RISK (partially_verified), B110-S-STRICT (partially_verified), B110-V-MUTATION (fail), B110-S-QTY (stale), B110-S-BANDREF (stale), B110-F-HOLDOFF (stale), B110-F-NOTIONAL (stale), B110-S-LIMITS-ATOMIC (partially_verified), B110-F-PARSE-INPLACE (partially_verified), B110-F-REJECT-BITS (partially_verified), B110-F-FEED-ARB (partially_verified)",
+   "detail": "17 of 17 requirements are not in state verified: B110-F-ORDER-BYTES (stale), B110-F-MOLD (stale), B110-F-BOOK (stale), B110-F-RISK (stale), B110-F-UDP (stale), B110-S-STRICT (stale), B110-F-SEQ-POISON (stale), B110-V-COVERAGE (stale), B110-V-MUTATION (fail), B110-S-QTY (stale), B110-S-BANDREF (stale), B110-F-HOLDOFF (stale), B110-F-NOTIONAL (stale), B110-S-LIMITS-ATOMIC (stale), B110-F-PARSE-INPLACE (partially_verified), B110-F-REJECT-BITS (partially_verified), B110-F-FEED-ARB (partially_verified)",
    "id": "evidence",
    "ids": [
+    "B110-F-ORDER-BYTES",
+    "B110-F-MOLD",
+    "B110-F-BOOK",
     "B110-F-RISK",
+    "B110-F-UDP",
     "B110-S-STRICT",
+    "B110-F-SEQ-POISON",
+    "B110-V-COVERAGE",
     "B110-V-MUTATION",
     "B110-S-QTY",
     "B110-S-BANDREF",
@@ -75,13 +81,23 @@
    "title": "The formal results pass the rigour checks"
   },
   {
-   "detail": "4 items are stale (a file they are about changed after the evidence was recorded)",
+   "detail": "14 items are stale (a file they are about changed after the evidence was recorded)",
    "id": "fresh",
    "ids": [
+    "V-UVM-ORDERS",
+    "V-UVM-MOLD",
+    "V-UVM-BOOK",
+    "V-UVM-RISK",
+    "V-UVM-UDP",
+    "V-UVM-STRICT",
+    "V-UVM-SEQ",
+    "V-UVM-SVA",
+    "V-UVM-COV",
     "V-FORMAL-BOOK-QTY",
     "V-SIM-QTY",
     "V-SIM-BANDREF",
-    "V-SIM-NOTIONAL"
+    "V-SIM-NOTIONAL",
+    "V-XSIM-LIMITS"
    ],
    "state": "unmet",
    "title": "The evidence is fresh"
@@ -89,7 +105,7 @@
  ],
  "declared": null,
  "definition": "docs/verified.md",
- "git_commit": "8b3b7767288b3aa2d84ddcc0f25af0284dd9a56f",
+ "git_commit": "7cadf47c721e2fcb55add43ca2f8a61a55d03e0c",
  "kind": "designs",
  "label": "not verified: 1 of 17 requirements fail",
  "label_kind": "not_verified",
@@ -103,7 +119,7 @@
   "An agreement or acceptance recorded as delegated is the planner's decision on the owner's delegation, not a human sign-off; the record counts it apart."
  ],
  "manifest": {
-  "designs/b110_itch_ouch/rtl/book_core.sv": "629dab43bf80ed61b9ab06944ca9b2bf4819a6a4a67f13368cb431c080acf3c3",
+  "designs/b110_itch_ouch/rtl/book_core.sv": "11d4625e34c1694b37fee5d868fb49ebd1f5853394264a27a7482beac6608b79",
   "designs/b110_itch_ouch/rtl/feed_arb.sv": "e523ff419e52e683b3d00a2c6e82c72aa3f09056d269ebf46edcd808a0a1420a",
   "designs/b110_itch_ouch/rtl/feed_arb_in.sv": "77db45af279cd13e12452f0201621955c01a593b5f21a38875bbba279988b408",
   "designs/b110_itch_ouch/rtl/itch_dec.sv": "816b19c5cc47df033006617f755525bf43df7adbda59c8abbdfaef9d24b37265",
@@ -112,10 +128,10 @@
   "designs/b110_itch_ouch/rtl/ouch_enter.sv": "95066c0f3caaf67b87eb40baf88d5704b6eec8387384d00014cbe93f3f64addd",
   "designs/b110_itch_ouch/rtl/risk_glue.sv": "9d3d031147f19db09506d5a2ac12b63ce8277cf536c15d0548a78b071ac6a1cc",
   "designs/b110_itch_ouch/verif/evidence_pins.yaml": "b8c3f9feaaa4522d88d21de1973b05f5708f7aa8343546162edc624b26d0afcc",
-  "designs/b110_itch_ouch/verif/formal/book_props.sv": "bb4cb2649e752cec051793abab5c291810fa913fd21937752f71f5a591ea0e01",
+  "designs/b110_itch_ouch/verif/formal/book_props.sv": "3845043d32762d10060967d62b74c46658433ac675c5d2f00c8f30fe369530ff",
   "designs/b110_itch_ouch/verif/mutants.yaml": "8502985b6cf5099bcde62eba588fd9f4b91f8adac53f5855262e5ad754cc236c",
   "designs/b110_itch_ouch/verif/testplan.yaml": "65bfff7784e601361564f06a5e0ea414b958f9d20fc6b4ce4d70311a5ed646f0",
-  "designs/b96_kr260_10g/rm_gp_itch/rtl/b96_core.sv": "2ee04f6ca6b40be38de985da6b48e22ae5401ebd75331531d65b6bdeea48257c",
+  "designs/b96_kr260_10g/rm_gp_itch/rtl/b96_core.sv": "6516f5e10ac14f478214398f3ad2fb652c78659ab0690786b512b1510e4e5b23",
   "designs/b96_kr260_10g/rm_gp_itch/rtl/itch_path.sv": "3f8c04b0c061b3e41f67640dde4fa603ee20c7866f264a97c68b69f932bbb600",
   "designs/b96_kr260_10g/rm_gp_itch/rtl/itch_top.sv": "5be8de2fca1c8f6aa511bde820eb1e433e693a9bb7dc8533f91f98ab225fe781",
   "designs/b96_kr260_10g/rm_gp_itch/rtl/order_seg.sv": "473fe555c60f81e9f484bcbf9c300d07d4c19f7e92ee57a30390d94e781dd841",
@@ -165,27 +181,29 @@
     {
      "bench_author": "independent bench",
      "depth": null,
-     "freshness": "fresh",
+     "freshness": "stale",
      "id": "V-UVM-ORDERS",
      "instrument": null,
      "method": "uvm_test",
      "mutation_score": null,
      "record": "results/191_trading_variants/uvm/summary.json",
      "record_sha256": "efc7d36560fcbb7b1b070287a0dd93a6b13346d342d735508357a43abfae1901",
-     "status": "pass",
+     "stale_because": "changed since the evidence was recorded: designs/b110_itch_ouch/rtl/book_core.sv",
+     "status": "stale",
      "title": "UVM scoreboard ORDERS check, every order frame byte for byte against the SV reference model (all sequences, all seeds)"
     },
     {
      "bench_author": "independent bench",
      "depth": null,
-     "freshness": "fresh",
+     "freshness": "stale",
      "id": "V-UVM-SVA",
      "instrument": null,
      "method": "assertion",
      "mutation_score": null,
      "record": "results/191_trading_variants/uvm/summary.json",
      "record_sha256": "efc7d36560fcbb7b1b070287a0dd93a6b13346d342d735508357a43abfae1901",
-     "status": "pass",
+     "stale_because": "changed since the evidence was recorded: designs/b110_itch_ouch/rtl/book_core.sv",
+     "status": "stale",
      "title": "SVAs on the transmit words, the order-frame stream and the status vector, zero failures in every run"
     }
    ],
@@ -196,17 +214,14 @@
    "kind": "functional",
    "lean_transcription_only": false,
    "missing_methods": [],
-   "mix_satisfied": true,
+   "mix_satisfied": false,
    "own_tests_only": false,
-   "passing_methods": [
-    "assertion",
-    "uvm_test"
-   ],
+   "passing_methods": [],
    "rests_on_delegated": false,
    "source": "designs/b110_itch_ouch/docs/spec_notes.md#3-ouch-50-hardware-rtlouch_entersv-section-21-type-o-enter-order",
    "spec_status": "draft",
-   "stale_items": 0,
-   "state": "verified",
+   "stale_items": 2,
+   "state": "stale",
    "text": "Each order frame with a good FCS equals the reference frame byte for byte (Ethernet, IPv4, TCP headers, SoupBinTCP 3.00 length and type, OUCH 5.0 Enter Order fields, ClOrdID, appendage), the orders come in order with UserRefNum rising by one per accepted candidate, and a frame with a wrong FCS is never an order.",
    "title": "Every order that leaves with a good frame check sequence is byte exact",
    "waivers": []
@@ -231,14 +246,15 @@
     {
      "bench_author": "independent bench",
      "depth": null,
-     "freshness": "fresh",
+     "freshness": "stale",
      "id": "V-UVM-MOLD",
      "instrument": null,
      "method": "uvm_test",
      "mutation_score": null,
      "record": "results/191_trading_variants/uvm/summary.json",
      "record_sha256": "efc7d36560fcbb7b1b070287a0dd93a6b13346d342d735508357a43abfae1901",
-     "status": "pass",
+     "stale_because": "changed since the evidence was recorded: designs/b110_itch_ouch/rtl/book_core.sv",
+     "status": "stale",
      "title": "UVM scoreboard COUNTERS and FLAGS at every checkpoint (Mold counters and flags, gaps, duplicates, overlaps, heartbeats, truncation)"
     }
    ],
@@ -248,16 +264,14 @@
    "kind": "functional",
    "lean_transcription_only": false,
    "missing_methods": [],
-   "mix_satisfied": true,
+   "mix_satisfied": false,
    "own_tests_only": false,
-   "passing_methods": [
-    "uvm_test"
-   ],
+   "passing_methods": [],
    "rests_on_delegated": false,
    "source": "designs/b110_itch_ouch/docs/itch_ouch.md#2-behaviour-in-detail",
    "spec_status": "draft",
-   "stale_items": 0,
-   "state": "verified",
+   "stale_items": 1,
+   "state": "stale",
    "text": "For every packet the packet, message, gap, missing, duplicate, overlap, session, heartbeat, end-of-session, short, truncated and bad-length counters and the gap, session-lock and end-of-session flags equal the reference model's at every checkpoint, with 1, 3 and 6 messages a packet and at every frame alignment.",
    "title": "MoldUDP64 sessions, sequence gaps, duplicates, overlaps, heartbeats and broken packets are counted and delivered as the reference says",
    "waivers": []
@@ -282,14 +296,15 @@
     {
      "bench_author": "independent bench",
      "depth": null,
-     "freshness": "fresh",
+     "freshness": "stale",
      "id": "V-UVM-BOOK",
      "instrument": null,
      "method": "uvm_test",
      "mutation_score": null,
      "record": "results/191_trading_variants/uvm/summary.json",
      "record_sha256": "efc7d36560fcbb7b1b070287a0dd93a6b13346d342d735508357a43abfae1901",
-     "status": "pass",
+     "stale_because": "changed since the evidence was recorded: designs/b110_itch_ouch/rtl/book_core.sv",
+     "status": "stale",
      "title": "UVM book edge-case sequence and random mix, counters and inexact flags against the reference model"
     }
    ],
@@ -299,16 +314,14 @@
    "kind": "functional",
    "lean_transcription_only": false,
    "missing_methods": [],
-   "mix_satisfied": true,
+   "mix_satisfied": false,
    "own_tests_only": false,
-   "passing_methods": [
-    "uvm_test"
-   ],
+   "passing_methods": [],
    "rests_on_delegated": false,
    "source": "designs/b110_itch_ouch/docs/itch_ouch.md#2-behaviour-in-detail",
    "spec_status": "draft",
-   "stale_items": 0,
-   "state": "verified",
+   "stale_items": 1,
+   "state": "stale",
    "text": "Message-type counters, malformed and skipped messages, unwatched locates, missing/duplicate/overflowing orders, ladder overflow and over-execution counters, the candidate count and the per-instrument inexact flags equal the reference model's, including the edge cases of an empty book, a full ladder, a table-index collision and a replace.",
    "title": "The ITCH decoder and the book keep the counters, the inexact flags and the candidates the reference model computes",
    "waivers": []
@@ -333,14 +346,15 @@
     {
      "bench_author": "independent bench",
      "depth": null,
-     "freshness": "fresh",
+     "freshness": "stale",
      "id": "V-UVM-RISK",
      "instrument": null,
      "method": "uvm_test",
      "mutation_score": null,
      "record": "results/191_trading_variants/uvm/summary.json",
      "record_sha256": "efc7d36560fcbb7b1b070287a0dd93a6b13346d342d735508357a43abfae1901",
-     "status": "pass",
+     "stale_because": "changed since the evidence was recorded: designs/b110_itch_ouch/rtl/book_core.sv",
+     "status": "stale",
      "title": "UVM risk sequence, every refusal counter and the orders that follow"
     }
    ],
@@ -349,19 +363,15 @@
    ],
    "kind": "safety",
    "lean_transcription_only": false,
-   "missing_methods": [
-    "a formal proof (SymbiYosys or Lean)"
-   ],
+   "missing_methods": [],
    "mix_satisfied": false,
    "own_tests_only": false,
-   "passing_methods": [
-    "uvm_test"
-   ],
+   "passing_methods": [],
    "rests_on_delegated": false,
    "source": "designs/b110_itch_ouch/docs/itch_ouch.md#2-behaviour-in-detail",
    "spec_status": "draft",
-   "stale_items": 0,
-   "state": "partially_verified",
+   "stale_items": 1,
+   "state": "stale",
    "text": "Not armed, kill switch, untrusted or gap-halted, inexact book, quantity, position limit per instrument, price band and missing bid refuse a candidate exactly as the reference does; the position and the order number advance only for an accepted candidate.",
    "title": "Every risk refusal is the first failing check, counted once, and no order starts on a refused candidate",
    "waivers": []
@@ -386,14 +396,15 @@
     {
      "bench_author": "independent bench",
      "depth": null,
-     "freshness": "fresh",
+     "freshness": "stale",
      "id": "V-UVM-UDP",
      "instrument": null,
      "method": "uvm_test",
      "mutation_score": null,
      "record": "results/191_trading_variants/uvm/summary.json",
      "record_sha256": "efc7d36560fcbb7b1b070287a0dd93a6b13346d342d735508357a43abfae1901",
-     "status": "pass",
+     "stale_because": "changed since the evidence was recorded: designs/b110_itch_ouch/rtl/book_core.sv",
+     "status": "stale",
      "title": "UVM header sequence, every drop reason, the multicast address and EN = 0, udp_strip counters against the reference model"
     }
    ],
@@ -403,16 +414,14 @@
    "kind": "functional",
    "lean_transcription_only": false,
    "missing_methods": [],
-   "mix_satisfied": true,
+   "mix_satisfied": false,
    "own_tests_only": false,
-   "passing_methods": [
-    "uvm_test"
-   ],
+   "passing_methods": [],
    "rests_on_delegated": false,
    "source": "designs/b96_kr260_10g/rm_gp_itch/docs/itch_integration.md#2-the-path-block-by-block",
    "spec_status": "draft",
-   "stale_items": 0,
-   "state": "verified",
+   "stale_items": 1,
+   "state": "stale",
    "text": "Destination MAC (unicast or the group's multicast address), EtherType, IPv4 version and header length, fragments, protocol, destination address and port, UDP length against the IP length, and the IPv4 header checksum; EN = 0 drops everything.",
    "title": "Frames are forwarded or dropped by the first failing header check, and each drop is counted",
    "waivers": []
@@ -437,27 +446,29 @@
     {
      "bench_author": "independent bench",
      "depth": null,
-     "freshness": "fresh",
+     "freshness": "stale",
      "id": "V-UVM-STRICT",
      "instrument": null,
      "method": "uvm_test",
      "mutation_score": null,
      "record": "results/191_trading_variants/uvm/summary.json",
      "record_sha256": "efc7d36560fcbb7b1b070287a0dd93a6b13346d342d735508357a43abfae1901",
-     "status": "pass",
+     "stale_because": "changed since the evidence was recorded: designs/b110_itch_ouch/rtl/book_core.sv",
+     "status": "stale",
      "title": "UVM bad-FCS and tail-distance sequences, STRICT and cut-through, orders classed must, may and must-not against the measured window"
     },
     {
      "bench_author": "independent bench",
      "depth": null,
-     "freshness": "fresh",
+     "freshness": "stale",
      "id": "V-UVM-SVA",
      "instrument": null,
      "method": "assertion",
      "mutation_score": null,
      "record": "results/191_trading_variants/uvm/summary.json",
      "record_sha256": "efc7d36560fcbb7b1b070287a0dd93a6b13346d342d735508357a43abfae1901",
-     "status": "pass",
+     "stale_because": "changed since the evidence was recorded: designs/b110_itch_ouch/rtl/book_core.sv",
+     "status": "stale",
      "title": "SVAs on the transmit words, the order-frame stream and the status vector, zero failures in every run"
     }
    ],
@@ -467,20 +478,15 @@
    ],
    "kind": "safety",
    "lean_transcription_only": false,
-   "missing_methods": [
-    "a formal proof (SymbiYosys or Lean)"
-   ],
+   "missing_methods": [],
    "mix_satisfied": false,
    "own_tests_only": false,
-   "passing_methods": [
-    "assertion",
-    "uvm_test"
-   ],
+   "passing_methods": [],
    "rests_on_delegated": false,
    "source": "designs/b96_kr260_10g/rm_gp_itch/docs/itch_integration.md#4-the-late-frame-check-and-what-happens-to-an-order-on-a-bad-frame",
    "spec_status": "draft",
-   "stale_items": 0,
-   "state": "partially_verified",
+   "stale_items": 2,
+   "state": "stale",
    "text": "With STRICT set (the default, owner decision 31) no order leaves with a good FCS when the frame that carried its message has a bad FCS, or when that frame's verdict is not yet known at the order's last word; such an order leaves with a wrong FCS. Cut-through is a documented option with a measured window.",
    "title": "Under STRICT an order is never sent on an unverified or bad frame",
    "waivers": []
@@ -505,14 +511,15 @@
     {
      "bench_author": "independent bench",
      "depth": null,
-     "freshness": "fresh",
+     "freshness": "stale",
      "id": "V-UVM-SEQ",
      "instrument": null,
      "method": "uvm_test",
      "mutation_score": null,
      "record": "results/191_trading_variants/uvm/summary.json",
      "record_sha256": "efc7d36560fcbb7b1b070287a0dd93a6b13346d342d735508357a43abfae1901",
-     "status": "pass",
+     "stale_because": "changed since the evidence was recorded: designs/b110_itch_ouch/rtl/book_core.sv",
+     "status": "stale",
      "title": "UVM sequence-number check on the datasheet's rule, exact and without a waiver in every run (brief 176 fixed the finding t_seq_poison made; the item still read the pre-fix fields until brief 188)"
     }
    ],
@@ -522,16 +529,14 @@
    "kind": "functional",
    "lean_transcription_only": false,
    "missing_methods": [],
-   "mix_satisfied": true,
+   "mix_satisfied": false,
    "own_tests_only": false,
-   "passing_methods": [
-    "uvm_test"
-   ],
+   "passing_methods": [],
    "rests_on_delegated": false,
    "source": "designs/b96_kr260_10g/rm_gp_itch/docs/itch_integration.md#5-registers-and-what-a-user-could-guess-wrong",
    "spec_status": "draft",
-   "stale_items": 0,
-   "state": "verified",
+   "stale_items": 1,
+   "state": "stale",
    "text": "The TCP sequence number of an order is the loaded number plus 59 for every segment that left with a good FCS; a frame poisoned (wrong FCS) by the multiplexer, because its trigger frame was bad or unverified, does not advance it.",
    "title": "A poisoned order frame consumes no TCP sequence number",
    "waivers": []
@@ -556,14 +561,15 @@
     {
      "bench_author": "independent bench",
      "depth": null,
-     "freshness": "fresh",
+     "freshness": "stale",
      "id": "V-UVM-COV",
      "instrument": null,
      "method": "coverage_bin",
      "mutation_score": null,
      "record": "results/191_trading_variants/uvm/summary.json",
      "record_sha256": "efc7d36560fcbb7b1b070287a0dd93a6b13346d342d735508357a43abfae1901",
-     "status": "pass",
+     "stale_because": "changed since the evidence was recorded: designs/b110_itch_ouch/rtl/book_core.sv",
+     "status": "stale",
      "title": "Closure of the bench's functional coverage plan over the recorded regression"
     }
    ],
@@ -573,16 +579,14 @@
    "kind": "functional",
    "lean_transcription_only": false,
    "missing_methods": [],
-   "mix_satisfied": true,
+   "mix_satisfied": false,
    "own_tests_only": false,
-   "passing_methods": [
-    "coverage_bin"
-   ],
+   "passing_methods": [],
    "rests_on_delegated": false,
    "source": "designs/b96_kr260_10g/rm_gp_itch/verif/uvm/README.md#functional-coverage",
    "spec_status": "draft",
-   "stale_items": 0,
-   "state": "verified",
+   "stale_items": 1,
+   "state": "stale",
    "text": "Every bin of the bench's coverage plan (message types, messages a packet, Mold events, header drops, book edge cases, risk refusals, order outcomes, bad-FCS crosses, frame alignments, backpressure) is hit by the recorded regression.",
    "title": "The bench's functional coverage plan is closed",
    "waivers": []
@@ -663,7 +667,7 @@
      "mutation_score": null,
      "record": "results/191_trading_variants/pytest_junit.xml",
      "record_sha256": "be267a11ab78090653eabcbd05cd0c4bc429fcf9edac9ab3c7ab631befba15da",
-     "stale_because": "changed since the evidence was recorded: designs/b110_itch_ouch/verif/formal/book_props.sv",
+     "stale_because": "changed since the evidence was recorded: designs/b110_itch_ouch/rtl/book_core.sv, designs/b110_itch_ouch/verif/formal/book_props.sv",
      "status": "stale",
      "title": "SymbiYosys proof of the book's quantity invariants Q1-Q6 by k-induction (depth 1, with two strengthening invariants over every ladder level and order-table entry; brief 191) at N_INST 2 LEVELS 4 and 8 (a power of two instruments), BMC from reset to depth 12, and the cover that saturation is reachable; a non-power-of-two instrument count is BMC only"
     },
@@ -871,14 +875,15 @@
     {
      "bench_author": "not recorded",
      "depth": null,
-     "freshness": "fresh",
+     "freshness": "stale",
      "id": "V-XSIM-LIMITS",
      "instrument": null,
      "method": "sim_measurement",
      "mutation_score": null,
      "record": "results/188_trading_safety/staged_limits_sim.json",
      "record_sha256": "f750bfa407beb82d79503c695fc2e2e268ddd7f23010c9450bee80229ccf9538",
-     "status": "pass",
+     "stale_because": "changed since the evidence was recorded: designs/b96_kr260_10g/rm_gp_itch/rtl/b96_core.sv",
+     "status": "stale",
      "title": "Whole core in xsim 2026.1; limit lowered but not committed leaves the old limits in force, COMMIT applies it"
     }
    ],
@@ -887,19 +892,15 @@
    ],
    "kind": "safety",
    "lean_transcription_only": false,
-   "missing_methods": [
-    "a formal proof (SymbiYosys or Lean)"
-   ],
+   "missing_methods": [],
    "mix_satisfied": false,
-   "own_tests_only": true,
-   "passing_methods": [
-    "sim_measurement"
-   ],
+   "own_tests_only": false,
+   "passing_methods": [],
    "rests_on_delegated": false,
    "source": "designs/b96_kr260_10g/rm_gp_itch/docs/itch_integration.md#5-registers-and-what-a-user-could-guess-wrong",
    "spec_status": "draft",
-   "stale_items": 0,
-   "state": "partially_verified",
+   "stale_items": 1,
+   "state": "stale",
    "text": "The risk limits are staged; a write fills a holding register and the live set changes only on COMMIT, in one clock, so the core never runs on a mix of old and new limits (brief 188, whole core in xsim).",
    "title": "A half-written set of risk limits never takes effect (rm_gp_itch registers)",
    "waivers": []
@@ -1065,5 +1066,5 @@
   }
  ],
  "schema": "fda-verified/1",
- "summary_line": "17 requirements (12 functional, 5 safety); 6 verified; 6 partially verified (the required mix of methods is not met); 4 stale; 1 failing; 0 of 17 requirements agreed by a human, 0 agreed on the owner's delegation (not human), 17 draft; 4 resting only on the implementing agent's own tests; 0 human and 0 delegated review(s) recorded."
+ "summary_line": "17 requirements (12 functional, 5 safety); 0 verified; 3 partially verified (the required mix of methods is not met); 13 stale; 1 failing; 0 of 17 requirements agreed by a human, 0 agreed on the owner's delegation (not human), 17 draft; 3 resting only on the implementing agent's own tests; 0 human and 0 delegated review(s) recorded."
 }
