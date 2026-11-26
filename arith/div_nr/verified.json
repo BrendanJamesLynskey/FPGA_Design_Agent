@@ -1,0 +1,661 @@
+{
+ "counts": {
+  "agreed_delegated": 0,
+  "agreed_human": 0,
+  "draft": 9,
+  "items": 13,
+  "requirements": 9,
+  "stale_items": 0,
+  "verified": 1
+ },
+ "criteria": [
+  {
+   "detail": "8 of 9 requirements are not in state verified: DIVNR-F-MODEL (partially_verified), DIVNR-F-RTL-EXH (partially_verified), DIVNR-F-RTL-RAND (partially_verified), DIVNR-F-LAT (partially_verified), DIVNR-F-LINT (partially_verified), DIVNR-F-MUTANT (partially_verified), DIVNR-F-LEAN-GS (unapproved), DIVNR-F-BUILD (partially_verified)",
+   "id": "evidence",
+   "ids": [
+    "DIVNR-F-MODEL",
+    "DIVNR-F-RTL-EXH",
+    "DIVNR-F-RTL-RAND",
+    "DIVNR-F-LAT",
+    "DIVNR-F-LINT",
+    "DIVNR-F-MUTANT",
+    "DIVNR-F-LEAN-GS",
+    "DIVNR-F-BUILD"
+   ],
+   "state": "unmet",
+   "title": "Every requirement has passing evidence"
+  },
+  {
+   "detail": "0 agreed by a human, 0 agreed by delegation, 9 draft, 0 marked agreed without a record",
+   "id": "agreement",
+   "ids": [
+    "DIVNR-F-MODEL",
+    "DIVNR-F-RTL-EXH",
+    "DIVNR-F-RTL-RAND",
+    "DIVNR-F-LAT",
+    "DIVNR-F-LINT",
+    "DIVNR-F-MUTANT",
+    "DIVNR-F-FORMAL-BOUND",
+    "DIVNR-F-LEAN-GS",
+    "DIVNR-F-BUILD"
+   ],
+   "state": "unmet",
+   "title": "Every requirement is agreed (human, or delegated and labelled so)"
+  },
+  {
+   "detail": "not yet measured: the required method mix per requirement kind is brief 143a; the collector does not supply it yet",
+   "id": "method_mix",
+   "ids": [],
+   "state": "not_measured",
+   "title": "Every requirement meets its required method mix"
+  },
+  {
+   "detail": "not yet measured: the mutation score and floor are brief 143b; the collector does not supply them yet",
+   "id": "mutation",
+   "ids": [],
+   "state": "not_measured",
+   "title": "The bench passes the mutation floor"
+  },
+  {
+   "detail": "not yet measured: the vacuity, assumption and depth checks are brief 143c; the collector does not supply them yet",
+   "id": "formal_rigour",
+   "ids": [],
+   "state": "not_measured",
+   "title": "The formal results pass the rigour checks"
+  },
+  {
+   "detail": "no item is stale by its pins; the nightly fresh re-run comparison is brief 143d and not yet measured",
+   "id": "fresh",
+   "ids": [],
+   "state": "not_measured",
+   "title": "The evidence is fresh"
+  }
+ ],
+ "declared": null,
+ "definition": "docs/verified.md",
+ "git_commit": "8b3b7767288b3aa2d84ddcc0f25af0284dd9a56f",
+ "kind": "arith",
+ "label": "verified except: 8 of 9 requirements without passing evidence; 9 of 9 requirements not agreed; required method mix not yet measured; mutation floor not yet measured; formal rigour not yet measured; fresh re-run not yet measured",
+ "label_kind": "verified_except",
+ "limits": [
+  "Verified never means interoperability with a device the design talks to unless a board measurement against that device is listed in the record; a design that checks its own output against its own model accepts its own symmetric mistakes.",
+  "Verified never means timing beyond the stated corner: a post-route timing result is for the part, speed grade, clock and tool version in its evidence file, not for other corners, temperatures or devices.",
+  "Verified never means beyond the widths and depths checked: a simulation covers the vectors it ran, a bounded formal result covers the stated depth only, and a per-width proof covers the widths it names; only a Lean proof marked all widths covers every width, and only for its model.",
+  "Verified never means the requirement is the right one: the text of a requirement is the human's check (or the planner's, where the record says delegated), and a record shows that checks exist and pass, not that nothing was left out.",
+  "Verified never means a hardware or board result unless a board measurement item is listed; a simulation is not the board.",
+  "Verified is about the files in the manifest at the hashes given. A change to any of them makes the record out of date (the CI check fails), and the evidence stale until it is re-recorded.",
+  "An agreement or acceptance recorded as delegated is the planner's decision on the owner's delegation, not a human sign-off; the record counts it apart.",
+  "1 formal items are bounded model checks; each holds to its stated depth only: V-DIVNR-FORMAL-FAULTS."
+ ],
+ "manifest": {
+  "arith/common/tb_stream.sv": "75069651847b6f85ee85134d3b169af35da174cd6d5872cfcb37b3055b77c96c",
+  "arith/div_nr/model.py": "135486ea9e38e75ef0f09e58e46c9d3746af540123200d841a524ec5e7386f61",
+  "arith/div_nr/rtl/div_nr_gs.sv": "c192496d57341e6181057caee7fb3db0342ae8aec4530f589975b36b760fb553",
+  "arith/div_nr/rtl/div_nr_iter.sv": "d40b4887866d7e2d74cd7db5b4118d1e0519f0342fa0a004ed93f68e74b28281",
+  "arith/div_nr/rtl/div_nr_newton.sv": "47c58dc775e1bcb35d77c5368919c9ff4b734920ae793c22f22aced835c06de3",
+  "arith/div_nr/rtl/div_nr_ooc.sv": "a6d62328498ca6bb42f3551046ad649fb56b122d686fed65fef0fc0fc86be5ee",
+  "arith/div_nr/rtl/div_nr_seed.sv": "fc74db002d2a501e70b9e3f0c2c75cf04e75eab0291c117c60a8e953788f2529",
+  "arith/div_nr/rtl/div_nr_sel.sv": "6e5b09a5dbc5639f2f61114c729818e66cc3d319f192fa2df1d52fcf3f1683eb",
+  "arith/div_nr/tb/tb_div_nr.sv": "4e1e7383ef0ca610b3968b8137c2c6a18b3b2c3f56bccdafebaf7b3a26731818",
+  "arith/div_nr/verif/evidence_pins.yaml": "4ba96b16fa16d4ea0f6e137897d1c2402f8304a20f59b9b9d08c36f1ce64aae6",
+  "arith/div_nr/verif/lean_approvals.yaml": "0fd3b24d014e499e68d89b4cecabcbc20bbf117ced399cd9cf6e503da4f4af51",
+  "arith/div_nr/verif/mutants.yaml": "39574d1ecac4cd9991302b1b3cfed031c87154b4ea95ecbbddb4d53e02411955",
+  "arith/div_nr/verif/testplan.yaml": "82f5d9f4faf60b4e98751019327030a67ecba6d7c10e4f20651ff94540f43603",
+  "formal/lean/records/build_record.json": "3d60b1f76ac87b74d5dcbe085c0eb8e43e0287d69d5fa557490a685624e6c4f6",
+  "results/139c_arith/div_nr_formal_record.json": "d1c4b1a9c804008114f5595f6a6c803cbba4250b71d1002b700136ec40fcff8a",
+  "results/139c_arith/div_nr_junit.xml": "08361b2ce5661f8996732a6f559f56075dd2d4bf392d0e7491925a908c40581a",
+  "results/139c_arith/div_nr_sim_record.json": "958746eb25171962a4df9220ac6dcc3e268b264bd0b09ae16c655496bdcc925d"
+ },
+ "name": "div_nr",
+ "notes": "Arithmetic library function div_nr (brief 139c). Every requirement is a draft written by the agent from the owner's request (spec_status: draft; only a human sets agreed). Evidence is generated by `python -m pytest arith/div_nr/tests --junitxml=results/139c_arith/div_nr_junit.xml` with ARITH_RECORD_DIR=results/139c_arith. The Lean items show 'statement not approved': lean_approvals.yaml is a human's. No Vivado run exists for this function (the build descriptions are prepared, not run), so there are no performance requirements.",
+ "path": "arith/div_nr",
+ "reproduce": [
+  {
+   "cmd": "python -m pytest -q arith/div_nr/tests",
+   "what": "the simulation tests"
+  }
+ ],
+ "requirements": [
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "DIVNR-F-MODEL",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-DIVNR-MODEL",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "results/139c_arith/div_nr_junit.xml",
+     "record_sha256": "08361b2ce5661f8996732a6f559f56075dd2d4bf392d0e7491925a908c40581a",
+     "status": "pass",
+     "title": "Model tests against exact arithmetic"
+    }
+   ],
+   "items": [
+    "V-DIVNR-MODEL"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": false,
+   "missing_methods": [
+    "a simulation check from a bench the implementing agent did not write"
+   ],
+   "mix_satisfied": false,
+   "own_tests_only": true,
+   "passing_methods": [
+    "sim_test"
+   ],
+   "rests_on_delegated": false,
+   "source": "arith/div_nr/spec.md#the-function",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "partially_verified",
+   "text": "For the reciprocal-multiply divider: both variants' error (exact quotient minus result, in units of the last place, by exact rational arithmetic) is within the spec's bound over every normalised pair at W = 8 (A = 2 to 6, IT = 1 to 3), W = 9 (A = 3 to 5, IT = 1 to 3) and W = 10 (A = 4, IT = 2), and over 15000 sampled pairs at ten (W, A, IT) points to W = 32; the Newton variant never exceeds the exact quotient; the residual and the iterates never overflow their widths (asserted at every step).",
+   "title": "The model is the specification: the error of both variants is within the stated bound",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "DIVNR-F-RTL-EXH",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-DIVNR-RTL-EXH",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "results/139c_arith/div_nr_junit.xml",
+     "record_sha256": "08361b2ce5661f8996732a6f559f56075dd2d4bf392d0e7491925a908c40581a",
+     "status": "pass",
+     "title": "Both variants are bit-exact against the model, for every pair at small widths"
+    }
+   ],
+   "items": [
+    "V-DIVNR-RTL-EXH"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": false,
+   "missing_methods": [
+    "a simulation check from a bench the implementing agent did not write"
+   ],
+   "mix_satisfied": false,
+   "own_tests_only": true,
+   "passing_methods": [
+    "sim_test"
+   ],
+   "rests_on_delegated": false,
+   "source": "arith/div_nr/spec.md#the-function",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "partially_verified",
+   "text": "Simulation (Icarus 14) of both variants against the model: every pair of normalised operands at W = 8 (A = 2 to 6, IT = 1 to 3) and W = 9 (A = 4, IT = 2), with input gaps; value, order and latency checked.",
+   "title": "Both variants are bit-exact against the model, for every pair at small widths",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "DIVNR-F-RTL-RAND",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-DIVNR-RTL-RAND",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "results/139c_arith/div_nr_junit.xml",
+     "record_sha256": "08361b2ce5661f8996732a6f559f56075dd2d4bf392d0e7491925a908c40581a",
+     "status": "pass",
+     "title": "Both variants are bit-exact against the model at large widths"
+    }
+   ],
+   "items": [
+    "V-DIVNR-RTL-RAND"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": false,
+   "missing_methods": [
+    "a simulation check from a bench the implementing agent did not write"
+   ],
+   "mix_satisfied": false,
+   "own_tests_only": true,
+   "passing_methods": [
+    "sim_test"
+   ],
+   "rests_on_delegated": false,
+   "source": "arith/div_nr/spec.md#the-function",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "partially_verified",
+   "text": "Simulation of both variants against the model with 4000 random and extreme pairs at W = 12, 16, 20, 24 and 32.",
+   "title": "Both variants are bit-exact against the model at large widths",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "DIVNR-F-LAT",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-DIVNR-LAT",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "results/139c_arith/div_nr_junit.xml",
+     "record_sha256": "08361b2ce5661f8996732a6f559f56075dd2d4bf392d0e7491925a908c40581a",
+     "status": "pass",
+     "title": "Latency measured per result"
+    }
+   ],
+   "items": [
+    "V-DIVNR-LAT"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": false,
+   "missing_methods": [
+    "a simulation check from a bench the implementing agent did not write"
+   ],
+   "mix_satisfied": false,
+   "own_tests_only": true,
+   "passing_methods": [
+    "sim_test"
+   ],
+   "rests_on_delegated": false,
+   "source": "arith/div_nr/spec.md#the-function",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "partially_verified",
+   "text": "The measured latency equals the spec (2 + 4 * IT for newton, 2 + 2 * IT for goldschmidt) for IT = 1 to 4 at W = 8, one result per clock with back-to-back inputs.",
+   "title": "Latency and throughput are what the spec states",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "DIVNR-F-LINT",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-DIVNR-LINT",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "results/139c_arith/div_nr_junit.xml",
+     "record_sha256": "08361b2ce5661f8996732a6f559f56075dd2d4bf392d0e7491925a908c40581a",
+     "status": "pass",
+     "title": "Verilator -Wall lint"
+    }
+   ],
+   "items": [
+    "V-DIVNR-LINT"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": false,
+   "missing_methods": [
+    "a simulation check from a bench the implementing agent did not write"
+   ],
+   "mix_satisfied": false,
+   "own_tests_only": true,
+   "passing_methods": [
+    "sim_test"
+   ],
+   "rests_on_delegated": false,
+   "source": "arith/div_nr/spec.md#the-function",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "partially_verified",
+   "text": "Verilator -Wall --lint-only reports nothing for either variant at W = 8, 10, 16, 24 and 32 (IT = 1 to 3).",
+   "title": "The RTL is Verilator -Wall clean",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "DIVNR-F-MUTANT",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-DIVNR-MUTANT-RUN",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "results/139c_arith/div_nr_junit.xml",
+     "record_sha256": "08361b2ce5661f8996732a6f559f56075dd2d4bf392d0e7491925a908c40581a",
+     "status": "pass",
+     "title": "The mutant check passes"
+    },
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-DIVNR-MUTANT-SCORE",
+     "instrument": null,
+     "method": "sim_measurement",
+     "mutation_score": null,
+     "record": "results/139c_arith/div_nr_sim_record.json",
+     "record_sha256": "958746eb25171962a4df9220ac6dcc3e268b264bd0b09ae16c655496bdcc925d",
+     "status": "pass",
+     "title": "Mutants killed / total"
+    }
+   ],
+   "items": [
+    "V-DIVNR-MUTANT-RUN",
+    "V-DIVNR-MUTANT-SCORE"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": false,
+   "missing_methods": [
+    "a simulation check from a bench the implementing agent did not write"
+   ],
+   "mix_satisfied": false,
+   "own_tests_only": true,
+   "passing_methods": [
+    "sim_measurement",
+    "sim_test"
+   ],
+   "rests_on_delegated": false,
+   "source": "arith/div_nr/spec.md#the-function",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "partially_verified",
+   "text": "Each of 16 seeded faults (one text change in the RTL, verif/mutants.yaml) makes the bench fail: killed/total = 16/16.",
+   "title": "The bench catches seeded faults",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "DIVNR-F-FORMAL-BOUND",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-DIVNR-FORMAL-BOUND-RUN",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "results/139c_arith/div_nr_junit.xml",
+     "record_sha256": "08361b2ce5661f8996732a6f559f56075dd2d4bf392d0e7491925a908c40581a",
+     "status": "pass",
+     "title": "The error-bound proofs and the fault-catching tests pass"
+    },
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-DIVNR-FORMAL-BOUND",
+     "instrument": null,
+     "method": "formal",
+     "mutation_score": null,
+     "record": "results/139c_arith/div_nr_formal_record.json",
+     "record_sha256": "d1c4b1a9c804008114f5595f6a6c803cbba4250b71d1002b700136ec40fcff8a",
+     "status": "pass",
+     "title": "Error-bound proofs: jobs proved by k-induction, none failed"
+    },
+    {
+     "bench_author": "not recorded",
+     "depth": "BMC, latency + 3 cycles",
+     "freshness": "fresh",
+     "id": "V-DIVNR-FORMAL-FAULTS",
+     "instrument": null,
+     "method": "formal",
+     "mutation_score": null,
+     "record": "results/139c_arith/div_nr_formal_record.json",
+     "record_sha256": "d1c4b1a9c804008114f5595f6a6c803cbba4250b71d1002b700136ec40fcff8a",
+     "status": "bounded",
+     "title": "Each seeded fault and an over-tight bound make the proof fail (bounded model checking)"
+    }
+   ],
+   "items": [
+    "V-DIVNR-FORMAL-BOUND-RUN",
+    "V-DIVNR-FORMAL-BOUND",
+    "V-DIVNR-FORMAL-FAULTS"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": false,
+   "missing_methods": [],
+   "mix_satisfied": true,
+   "own_tests_only": false,
+   "passing_methods": [
+    "formal",
+    "sim_test"
+   ],
+   "rests_on_delegated": false,
+   "source": "arith/div_nr/spec.md#the-function",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "verified",
+   "text": "SymbiYosys with the slang front end: each variant's result q satisfies the error characterisation (two products, no shared code with the RTL) for all input sequences from reset, proved by k-induction at an induction depth above the latency (the datapath is a feed-forward pipeline): 6 jobs (newton and goldschmidt at W = 8 for three (A, IT) points each). 7 faults or an over-tight bound make the proof fail (bounded model checking), which shows the harness is not vacuous. Not proved for other widths.",
+   "title": "Both variants meet their error bounds for all input sequences (SymbiYosys)",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "DIVNR-F-LEAN-GS",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-LEAN-DIVNR-GS-RATIO-INVARIANT",
+     "instrument": null,
+     "lean": {
+      "build_source": "recorded build (not re-run)",
+      "rtl_link": "model_only",
+      "tier": "kernel_only"
+     },
+     "method": "formal_lean",
+     "mutation_score": null,
+     "record": "formal/lean/records/build_record.json",
+     "record_sha256": "3d60b1f76ac87b74d5dcbe085c0eb8e43e0287d69d5fa557490a685624e6c4f6",
+     "status": "unapproved",
+     "title": "Goldschmidt keeps the ratio: n*b = d*a implies (n*r)*b = (d*r)*a, every integer value"
+    },
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-LEAN-DIVNR-GS-DENOMINATOR-RESIDUAL",
+     "instrument": null,
+     "lean": {
+      "build_source": "recorded build (not re-run)",
+      "rtl_link": "model_only",
+      "tier": "kernel_only"
+     },
+     "method": "formal_lean",
+     "mutation_score": null,
+     "record": "formal/lean/records/build_record.json",
+     "record_sha256": "3d60b1f76ac87b74d5dcbe085c0eb8e43e0287d69d5fa557490a685624e6c4f6",
+     "status": "unapproved",
+     "title": "The denominator update squares its distance from 1: S*S - d*(2S - d) = (S - d)**2"
+    }
+   ],
+   "items": [
+    "V-LEAN-DIVNR-GS-RATIO-INVARIANT",
+    "V-LEAN-DIVNR-GS-DENOMINATOR-RESIDUAL"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": false,
+   "missing_methods": [],
+   "mix_satisfied": false,
+   "own_tests_only": false,
+   "passing_methods": [],
+   "rests_on_delegated": false,
+   "source": "arith/div_nr/spec.md#verification-everything-before-vivado",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "unapproved",
+   "text": "For all integers: multiplying numerator and denominator by the same factor keeps n*b = d*a (so the numerator is the quotient when the denominator reaches 1.0), and the denominator update d(2S - d) has S*S - d*(2S - d) = (S - d)**2, hence never exceeds 1.0 once d <= S. Proved in Lean, statements not approved; the truncations of the RTL and the seed table's accuracy are not in Lean (they are measured and proved at fixed widths by SymbiYosys).",
+   "title": "The exact Goldschmidt iteration keeps the ratio and squares the denominator's distance from 1 (Lean)",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "DIVNR-F-BUILD",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-DIVNR-BUILD",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "results/139c_arith/div_nr_junit.xml",
+     "record_sha256": "08361b2ce5661f8996732a6f559f56075dd2d4bf392d0e7491925a908c40581a",
+     "status": "pass",
+     "title": "Build descriptions current and consistent; wrapper lint and simulation; packaged harness runs on the library instance"
+    }
+   ],
+   "items": [
+    "V-DIVNR-BUILD"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": false,
+   "missing_methods": [
+    "a simulation check from a bench the implementing agent did not write"
+   ],
+   "mix_satisfied": false,
+   "own_tests_only": true,
+   "passing_methods": [
+    "sim_test"
+   ],
+   "rests_on_delegated": false,
+   "source": "arith/div_nr/spec.md#prepared-for-vivado-not-run",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "partially_verified",
+   "text": "For every variant of the reciprocal-multiply divider there is a build.yaml and an out-of-context clock constraint for xc7a100t and xck26, current against arith/tools/gen_build.py, consistent with the RTL (top, parameters, sources), with the expected primitive use evaluated for each point; the out-of-context wrapper lints clean and is functionally exact for every variant; the packaged verification harness (harness/run.py) passes on the library instance with every coverage bin hit. No Vivado run has been made: this requirement is about preparation, not about area, Fmax or power.",
+   "title": "Out-of-context build descriptions are prepared for Artix-7 and K26 (not run)",
+   "waivers": []
+  }
+ ],
+ "schema": "fda-verified/1",
+ "summary_line": "9 requirements (9 functional); 1 verified; 7 partially verified (the required mix of methods is not met); 0 of 9 requirements agreed by a human, 0 agreed on the owner's delegation (not human), 9 draft; 7 resting only on the implementing agent's own tests; 0 human and 0 delegated review(s) recorded; 2 Lean proof item(s) (all widths): 0 with a human-approved statement, 0 with a statement accepted on the owner's delegation (not a human approval), 2 with statement not approved; 2 kernel only, 0 using a compiled decision procedure; build status from: recorded build (not re-run)."
+}

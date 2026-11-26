@@ -2,6 +2,8 @@
 
 <!-- Generated from handover.yaml by flow/handover.py (brief 68). Edit handover.yaml, or the text between the prose markers, then run: python -m flow.handover write designs/b92_history_attention -->
 
+**Verification: not assessed: no requirements recorded (no verif/testplan.yaml), so nothing here is traced to a requirement.** [VERIFIED.md](VERIFIED.md) is the generated, hash-pinned record; [what the label means](../../docs/verified.md).
+
 A gated study of whether order-flow history helps small integer classifiers on synthetic limit-order-book data, and what it costs in the fabric. A self-exciting generator (Hawkes-type arrivals, sign persistence, informed bursts) makes history matter; lagged features help the 87 trees (gate passed). On one common head, exponentially decaying sums and a learned fixed window each add about 0.015 test accuracy over the history-free head, while two softmax-free tiny attentions end about 0.012 below the decaying sums, so no attention block was built in Vivado. The stateful arms are bit-exact against a twin and built out of context on the K26 and the Artix-7 100T.
 
 Not in scope:
@@ -66,7 +68,7 @@ Interfaces:
 | out-of-context builds and clock search on both parts; needs Vivado 2026.1 and a heavy slot | `python3 -m designs.b92_history_attention.ooc.ooc --part xck26-sfvc784-2LV-c --arms b92_ref_current b92_a1_decay b92_a4_lut b92_a2_win8 b92_a2_win16 && python3 -m designs.b92_history_attention.ooc.ooc --part xc7a100tcsg324-1 --arms ... --start 30.0` | yes | about 240 min |
 | summary, figures and tables; needs python 3.12 | `python3 results/b92/summary.py && python3 results/b92/tables.py` | no | about 1 min |
 
-Tool: Vivado 2026.1. Build ID of the inputs at handover: none (no Vivado build of this directory). Knowledge-bank pin: `2338b83`.
+Tool: Vivado 2026.1. Build ID of the inputs at handover: none (no Vivado build of this directory). Knowledge-bank pin: `6185830`.
 
 | File | What |
 |---|---|

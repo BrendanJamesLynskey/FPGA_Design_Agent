@@ -18,6 +18,8 @@ from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parents[1]
+sys.path.insert(0, str(ROOT))
+from flow import fmax_cap  # noqa: E402  (brief 201: clock-buffer cap on the closed-clock Fmax)
 GEN = ROOT / "designs" / "b87_ml_trading" / "rtl" / "gen"
 # Out of context the clock is a port: no clock buffer, no MMCM jitter. A tiny design then "closes" at the flip-flops'
 # minimum period (0.55 ns), which no clock network delivers. Every latency is quoted at no faster than 2.0 ns
@@ -57,6 +59,7 @@ def build() -> dict:
                      "test_accuracy": a["mean"], "test_accuracy_ci95": a["ci95"],
                      "latency_clocks": lat, "initiation_interval": 1,
                      "closed_at_ns": oc["closed_at_ns"], "closed_at_mhz": oc["closed_at_mhz"],
+                     **fmax_cap.restate("k26", oc["closed_at_mhz"], "closed clock of the search (setup, hold, primitive pulse width)"),
                      "quoted_period_ns": max(oc["closed_at_ns"], FLOOR_NS) if oc["closed_at_ns"] else None,
                      "latency_ns": round(lat * max(oc["closed_at_ns"], FLOOR_NS), 2) if oc["closed_at_ns"] else None,
                      "lut": b.get("lut"), "ff": b.get("ff"), "dsp": b.get("dsp"), "bram_tiles": b.get("bram_tiles"),

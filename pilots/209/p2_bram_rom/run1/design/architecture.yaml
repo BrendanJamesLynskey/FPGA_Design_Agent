@@ -1,0 +1,28 @@
+schema: fpga-design-agent/architecture/v1
+blocks:
+  - name: p2_top
+    function: thin top; instantiates por generator, jtag_bus and p2_core, drives sfp_tx_disable=1
+  - name: por_reset
+    function: 8-clock power-on counter producing active-high synchronous rst
+  - name: jtag_bus
+    function: supplied BSCANE2 USER4 bridge to h_* register port (unchanged, data/jtag_bus.sv; its TCK crossings use xpm_cdc inside)
+  - name: p2_core
+    function: register map, ROM, RAM, MEM_ADDR autoinc, March C- engine, LEDs
+interfaces:
+  - name: host_regs
+    between: [jtag_bus, p2_core]
+    protocol: simple
+    prefix: h
+    module: p2_core
+clock_domains:
+  - name: clk
+    clock: clk
+    freq_mhz: 25
+reset:
+  synchronisers: []
+crossings: []
+predicted_resources:
+  lut: [250, 700]
+  ff: [500, 900]
+  bram_tile: [2, 4]
+  dsp: 0

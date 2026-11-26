@@ -70,8 +70,11 @@ class UsrDriver(uvm_driver):
             await RisingEdge(d.clk)
         n = f.len
         nw = (n + 7) // 8
+        if f.abort_after:                    # fault injection: whole words only, no s_last
+            assert 1 <= f.abort_after <= n // 8, "abort_after needs that many whole words in the payload"
+            nw = f.abort_after
         for i in range(nw):
-            last = i == nw - 1
+            last = i == nw - 1 and not f.abort_after
             d.s_valid.value = 1
             d.s_data.value = int.from_bytes(f.payload[i * 8:i * 8 + 8].ljust(8, b"\0"), "little")
             d.s_last.value = int(last)
@@ -82,11 +85,17 @@ class UsrDriver(uvm_driver):
                 if rd(d.s_ready):
                     break
         d.s_valid.value = 0; d.s_last.value = 0; d.s_poison.value = 0
+        if f.abort_after:                    # the source has stalled inside the frame: hold it low for exactly one clock at which mac64_tx advances (adv high), so that it sees the
+            while True:                      # stall and no longer; the next frame's valid then rises at once, which tests the gap the MAC leaves after an underrun
+                await RisingEdge(d.clk)
+                if rd(d.adv):
+                    break
 
 
 class UsrMonitor(uvm_monitor):
     def build_phase(self):
         self.ap = uvm_analysis_port("ap", self)          # one (payload, poison, gap) per frame whose last word the MAC took
+        self.ap_abort = uvm_analysis_port("ap_abort", self)  # fault injection (brief 158): the words the MAC took (a bytes) before the source stalled and mac64_tx raised `underrun`
         self.dut = ConfigDB().get(self, "", "dut")
 
     async def run_phase(self):
@@ -95,7 +104,10 @@ class UsrMonitor(uvm_monitor):
         while True:
             await RisingEdge(d.clk)
             v, r = rd(d.s_valid), rd(d.s_ready)
-            if v and r:
+            if rd(d.underrun) and in_frame:
+                self.ap_abort.write(bytes(buf))
+                buf = bytearray(); in_frame = False; idle = 0
+            elif v and r:
                 if not in_frame:
                     in_frame, gap = True, idle
                 last = rd(d.s_last)

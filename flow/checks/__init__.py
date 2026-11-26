@@ -60,6 +60,7 @@ BUILD_FILES = {
     "reset_scan": {"synth": "reset_scan_synth.tsv", "route": "reset_scan_synth.tsv"},
     "control_sets": {"synth": "control_sets_synth.rpt"},
     "mtbf": {"route": "mtbf.rpt"},               # brief 189: flow/mtbf.py parses it (advisory; UltraScale+ only)
+    "dsp_cells": {"synth": "dsp_cells_synth.txt", "route": "dsp_cells.txt"},      # brief 185: written by flow/build.tcl (flow/dsp_cells.tcl)
     # brief 204a: written by flow/build.tcl after synthesis and routing; the route scope reads the post-synthesis ones where the
     # guide asks for them before placement (logic levels, high-fanout nets)
     "logic_levels": {"synth": "logic_levels_synth.rpt", "route": "logic_levels_synth.rpt"},
@@ -705,6 +706,40 @@ def _dsp_ram(ctx: Ctx) -> dict[str, Any]:
     return _result(fs, parts, recs)
 
 
+def _dsp_regs_applies(design: Path) -> str | None:
+    """Only builds that recorded their DSP cells (flow/build.tcl since brief 185): an older build, or no build, has nothing to read."""
+    if not any(design.glob("build/*/dsp_cells*.txt")):
+        return "no dsp_cells*.txt in the build (made by flow/build.tcl since brief 185)"
+    return None
+
+
+def _dsp_regs(ctx: Ctx) -> dict[str, Any]:
+    """Advisory (brief 185): a DSP slice without the multiplier or output register at a period the measurements say it cannot meet, and Vivado's own
+    DPIP/DPOP rows. The limits are flow/dsp_regs_limits.json (regenerated from results/185_dsp_slices by tools/dsp_regs_limits.py)."""
+    if ctx.scope == "rtl":
+        return _not_run("needs a synthesised design (scope synth or route)")
+    import re
+    from flow import dsp_regs_check as D
+    cells = ctx.report("dsp_cells")
+    if cells is None:
+        return _not_run(ctx.not_run_reason("dsp_cells"))
+    ts = ctx.report("timing_summary")
+    period = None
+    if ts is not None:
+        rows = re.findall(r"^\s*\S+\s+\{[^}]*\}\s+([\d.]+)\s+[\d.]+", ts.read_text(errors="replace"), re.M)
+        period = min(float(x) for x in rows) if rows else None
+    drc = ctx.report("drc")
+    fs = []
+    if period is None:
+        parts = {"registers": "not run: no clock period in the timing summary"}
+    else:
+        parts = {"registers": "ran"}
+    for f in D.check(D.parse_cells(cells.read_text(errors="replace")) if period is not None else [], period or 0.0, drc.read_text(errors="replace") if drc else None):
+        fs.append({"tool": "dsp_regs", "code": f["code"], "severity": "advisory", "where": f["where"], "key": f"dsp_regs:{f['code']} {f['where']}",
+                   "message": f["message"], "blocking": False})
+    return _result(fs, parts, [cells])
+
+
 def _init_values(ctx: Ctx) -> dict[str, Any]:
     """Initial values that cost a hard block's register (brief 206, flow/checks/init_values.py): the session's netlist scan
     (init_scan) for INIT = 1 registers wired to a DSP, RAM or FIFO, and the build log for UltraRAM refused for initial
@@ -1092,6 +1127,9 @@ register(Check("dsp_ram_mapping", "records", POST, {"vivado": ("DPIP-*", "DPOP-*
                                                               "RMIR-*", "RMOR-*", "RROR-*")},
                "DSP and block-RAM mapping advice (AMD DPIP/DPOP/SYNTH/RBOR rows) and their utilisation", _dsp_ram,
                reports=("methodology", "drc", "utilization"), amd=True))
+register(Check("dsp_regs", "records", POST, {"dsp_regs": ("DSPREG-01", "DSPREG-02", "DSPREG-03", "DSPREG-04")},
+               "advisory (brief 185): a DSP slice with no multiplier or output register at a period the measured limits say it cannot meet, a period "
+               "below the slice's own minimum, and AMD's DPIP/DPOP rows (flow/dsp_regs_check.py)", _dsp_regs, reports=("timing_summary", "drc"), applies=_dsp_regs_applies))   # dsp_cells is written by flow/build.tcl, never by the Vivado session
 register(Check("init_values", "vivado", POST, {"init_values": ("INIT-HB-01", "INIT-URAM-01")},
                "initial values that cost a hard block's register on AMD parts (brief 206): INIT = 1 registers wired to a DSP, "
                "RAM or FIFO (our netlist scan) and UltraRAM refused for initial contents (Synth 8-12183); advisory "
@@ -1232,6 +1270,34 @@ def run_one(name: str, design: Path, scope: str, variant: str = "base", root: Pa
     return _finish(name, raw, rules(), waivers, bad)
 
 
+#: a report whose Vivado command can crash the process (report_clock_networks: a segfault in Vivado 2026.1, brief 208): it runs in a
+#: session of its own, after the others, so a crash costs only that report (brief 219 fix 2)
+CRASH_PRONE = ("clock_networks",)
+
+
+def run_sessions(vivado: Callable[[Path, Path, list[str]], tuple[int, str]], dcp: Path, out: Path, need: list[str], ctx: Ctx) -> dict[str, Any]:
+    """The Vivado sessions for ``need``: every ordinary report in one session, then each crash-prone report alone. A session that
+    ends badly leaves each report it did not write marked ``report unavailable`` (``<name>.not_run.txt``): never a pass."""
+    plain = [r for r in need if r not in CRASH_PRONE]
+    groups = ([plain] if plain else []) + [[r] for r in need if r in CRASH_PRONE]
+    ran: dict[str, Any] = {"reports": need, "rc": 0, "tail": "", "sessions": []}
+    for names in groups:
+        rc, text = vivado(dcp, out, names)
+        ran["sessions"].append({"reports": names, "rc": rc})
+        ran["tail"] = text[-400:]
+        if rc != 0:
+            ran["rc"] = rc
+            why = f"the Vivado session failed (rc {rc}): {text.strip()[-200:]}"
+            if len(groups) == 1:
+                ctx.cache["vivado_why"] = why
+            for r in names:                        # whatever the dead session did not write is unavailable, not passed
+                done = any((out / f"{r}.{e}").is_file() for e in ("rpt", "tsv"))
+                mark = out / f"{r}.not_run.txt"
+                if not done or mark.is_file():
+                    mark.write_text(f"report unavailable: {r} was not written, the Vivado session ended (rc {rc}) {text.strip()[-120:]}\n")
+    return ran
+
+
 def run(design: Path, names: list[str] | str = "all", scope: str = "auto", level: str = "summary", variant: str = "base",
         root: Path = ROOT, lint: Callable[[], dict[str, Any]] | None = None,
         vivado: Callable[[Path, Path, list[str]], tuple[int, str]] | None = None,
@@ -1264,10 +1330,7 @@ def run(design: Path, names: list[str] | str = "all", scope: str = "auto", level
             for r in need:                                  # never mix a new session's files with an old one's
                 for ext in ("rpt", "tsv", "not_run.txt"):
                     (ctx.out / f"{r}.{ext}").unlink(missing_ok=True)
-            rc, text = vivado(dcp, ctx.out, need)
-            vivado_ran = {"reports": need, "rc": rc, "tail": text[-400:]}
-            if rc != 0:
-                ctx.cache["vivado_why"] = f"the Vivado session failed (rc {rc}): {text.strip()[-200:]}"
+            vivado_ran = run_sessions(vivado, dcp, ctx.out, need, ctx)
     rs = rules()
     waivers, bad = load_waivers(design)
     source = [n for n in chosen if CHECKS[n].kind == "source"]

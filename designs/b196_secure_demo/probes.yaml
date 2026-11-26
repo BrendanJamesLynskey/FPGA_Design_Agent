@@ -1,0 +1,21 @@
+# ILA probes for the debug build of the production_secure demonstration (flow/debug.tcl inserts them after synthesis). This variant exists to show
+# that the production_secure check fails a build that carries a debug core (brief 196); it is never a production build.
+ila:
+  name: u_ila_0
+  clock_net: clk_25_IBUF_BUFG
+  depth: 1024
+  input_pipe_stages: 0
+probes:
+  - name: led
+    pins: "led_q_reg[*]/Q"
+    width: 2
+    why: the two LED outputs
+  - name: tick
+    pins: "tick_reg[*]/Q"
+    width: 16
+    why: the burst timer
+triggers:
+  - name: burst
+    condition: "tick == 0xFFFF"
+    position: 16
+    use: the clock before a burst starts

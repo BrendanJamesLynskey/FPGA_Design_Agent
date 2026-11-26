@@ -1,0 +1,202 @@
+# ip.yaml for credit_chan: the declared parameter space and contract (the library's reuse rules; brief 151).
+name: credit_chan
+version: 0.1.0
+status: simulated clock by clock against a Python model with an AXI4-Stream rule monitor (cocotb, Icarus Verilog 12) at 19 points
+  below, at and above the credit round trip; credit conservation, buffer bounds, order and the stream rules proved by k-induction
+  at W = 4 (SymbiYosys); 12 of 12 seeded faults caught; not built with Vivado yet (queued); not run on a board
+summary: 'Credit-based pipelined channel between two AXI4-Stream ports: LF plain register stages forward, a receiver buffer of
+  CREDITS entries, LB register stages for the credits coming back. Use it only where valid/ready does not fit (long pipelines,
+  bare forward wires); datasheet: ip_lib/credit_chan/DATASHEET.md.'
+top: credit_chan
+rtl:
+- rtl/credit_chan.sv
+depends: []
+interfaces:
+- name: s_axis
+  type: axi4-stream
+  dir: slave
+  tdata: W
+  note: 's_axis_tready is a flop of the credit count: low when no credit is left, in reset and for one clock after; sideband as
+    in pipe_reg'
+- name: m_axis
+  type: axi4-stream
+  dir: master
+  tdata: W
+  note: m_axis_tvalid is a flop; m_axis_tdata is a read of the receiver buffer (a mux behind the pointer flops)
+clocks:
+- name: aclk
+resets:
+- name: aresetn
+  polarity: low
+  style: synchronous
+parameters:
+  W:
+    type: int
+    default: 32
+    range:
+    - 1
+    - 1024
+    note: tdata width in bits
+  CREDITS:
+    type: int
+    default: 8
+    range:
+    - 1
+    - 1024
+    note: credits at reset = receiver buffer entries; full throughput needs CREDITS >= LF + LB + 2
+  LF:
+    type: int
+    default: 1
+    range:
+    - 0
+    - 8
+    note: 'forward register stages between sender and receiver buffer (0: straight into the buffer)'
+  LB:
+    type: int
+    default: 1
+    range:
+    - 0
+    - 8
+    note: 'register stages on the credit return (0: counted in the clock the beat leaves)'
+  TLAST_EN:
+    type: int
+    default: 0
+    set:
+    - 0
+    - 1
+    note: carry tlast
+  TKEEP_EN:
+    type: int
+    default: 0
+    set:
+    - 0
+    - 1
+    note: carry tkeep (W must be a multiple of 8)
+  TUSER_W:
+    type: int
+    default: 0
+    range:
+    - 0
+    - 64
+    note: width of tuser carried; 0 = none
+constraints:
+- TKEEP_EN == 0 or W % 8 == 0
+latency:
+  forward: LF + 1 clocks from the edge that accepts a beat into an empty channel to the first clock it is visible at m_axis (measured
+    at every point)
+  credit round trip: 'RTT = LF + LB + 2 clocks: the credit of a beat sent at edge t first lets a beat go at edge t + RTT when the
+    sink is always ready (measured at 19 points)'
+  bubbles: with CREDITS below RTT a source that is always valid sends CREDITS beats back to back and then waits RTT - CREDITS clocks;
+    the pattern repeats (measured)
+throughput: 'min(1, CREDITS / (LF + LB + 2)) beats per clock with an always-ready sink (measured); beats held when the sink stops:
+  CREDITS'
+guards:
+- W: 0
+- W: 1025
+- CREDITS: 0
+- CREDITS: 1025
+- LF: -1
+- LF: 9
+- LB: -1
+- LB: 9
+- TLAST_EN: 2
+- TUSER_W: 65
+sweep_tested:
+- W: 16
+  CREDITS: 1
+  LF: 0
+  LB: 0
+- W: 16
+  CREDITS: 2
+  LF: 0
+  LB: 0
+- W: 16
+  CREDITS: 1
+  LF: 1
+  LB: 1
+- W: 16
+  CREDITS: 3
+  LF: 1
+  LB: 1
+- W: 16
+  CREDITS: 4
+  LF: 1
+  LB: 1
+- W: 16
+  CREDITS: 8
+  LF: 1
+  LB: 1
+- W: 16
+  CREDITS: 3
+  LF: 2
+  LB: 2
+- W: 16
+  CREDITS: 9
+  LF: 2
+  LB: 2
+- W: 8
+  CREDITS: 5
+  LF: 3
+  LB: 0
+- W: 8
+  CREDITS: 5
+  LF: 0
+  LB: 3
+- W: 8
+  CREDITS: 16
+  LF: 4
+  LB: 4
+- W: 1
+  CREDITS: 4
+  LF: 1
+  LB: 1
+- W: 64
+  CREDITS: 5
+  LF: 2
+  LB: 1
+- W: 8
+  CREDITS: 1
+  LF: 8
+  LB: 8
+- W: 8
+  CREDITS: 18
+  LF: 8
+  LB: 8
+- W: 32
+  CREDITS: 6
+  LF: 2
+  LB: 2
+  TLAST_EN: 1
+  TKEEP_EN: 1
+  TUSER_W: 5
+boundary:
+  registered_outputs: s_axis_tready and m_axis_tvalid are flops; the forward wires and the credit return are plain register stages;
+    m_axis_tdata is a buffer read
+  cdc: none (one clock; the two ends are reset together, one reset)
+  part_specific: 'none (the receiver buffer is an array: LUT RAM or registers by the tool)'
+limits: one clock and one reset for both ends (the ends cannot yet be placed in separate reset domains); the receiver buffer holds
+  CREDITS entries even when the link is short; the link between the ends is not AXI (no ready); the two ends are not yet separate
+  modules, so they cannot be instantiated in two partitions apart; formal proofs at W = 4 with the sideband off
+evidence:
+  summary: 'cocotb against ip_lib/credit_chan/model.py clock by clock (s_tready, m_tvalid and data), an independent in-order scoreboard,
+    mid-run resets, the AXI4-Stream rule monitor on both ports; declared latency, credit round trip, throughput and capacity checked
+    against measured ones. Formal: credit conservation (credits + beats in flight + buffered + credits returning = CREDITS), counter
+    and pointer bounds, order and loss, stability while stalled, and the stream rules as SVA, by k-induction. Every assertion is labelled and paired
+    with a cover of its own antecedent; sidecars formal/credit.rigour.yaml and formal/credit_sva.rigour.yaml and records in results/143c (brief 202); at 1 credit with no
+    stages nothing is ever in flight, so the in-flight terms are trivial there and that point has no cover task'
+  tests:
+  - ip_lib/credit_chan/tb/test_credit_chan_rtl.py
+  - ip_lib/credit_chan/tb/test_credit_chan_formal.py
+  faults: ip_lib/credit_chan/faults.yaml
+  results: results/b151/faults.json, results/b151/credit_chan_measure.jsonl, results/b151/credit_chan_formal.json
+  simulator: Icarus Verilog 12, cocotb 2.0.1; SymbiYosys with boolector (OSS CAD Suite 20261112)
+cost_table: 'pending: out-of-context Vivado runs are queued (partition/sweep.py group q4); Yosys counts at one and two stages for
+  a 64-bit link are in results/b151/part_sys_yosys.json'
+licence: MIT (this repository)
+gaps:
+- 'no Vivado number: whether a credit link beats a chain of skid slices on area or Fmax is the question the queued q4 runs answer'
+- the sender and receiver halves are one module; separate credit_tx and credit_rx modules, to place in two partitions, are a follow-up
+next_steps:
+- Split the block into a sender and a receiver module so the halves can sit in separate partitions, and prove the same properties
+  on the pair.
+- Run the queued q4 points and decide, with numbers, the depth at which a credit link replaces a chain of skid slices.

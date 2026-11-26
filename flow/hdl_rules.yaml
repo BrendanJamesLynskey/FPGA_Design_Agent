@@ -15,7 +15,7 @@
 # A finding that no rule maps lands in the catch-all rule of its tool (HDL-LINT-00, HDL-VIV-00, HDL-STD-00), so nothing is lost.
 # Waivers: designs/<d>/lint/waivers.yaml, {rule, match (a glob over the finding key), reason, owner, date}.
 standard: FDA-HDL
-version: "1.12"            # 1.0 2026-11-12 (first release); 1.1 2026-11-14 (brief 71: reset rules split into HDL-RST-01..05,
+version: "1.14"            # 1.0 2026-11-12 (first release); 1.1 2026-11-14 (brief 71: reset rules split into HDL-RST-01..05,
                           # HDL-CLK-02, HDL-VER-01, HDL-IF-02/03, HDL-GT-01, HDL-DOC-01; check-suite tool keys; fix and skill);
                           # 1.2 2026-11-14 (brief 73: HDL-IF-04..06, the axi_profile check);
                           # 1.3 2026-11-14 (brief 70: REQP-1840 in HDL-RST-03, HDL-RST-06 AMD IP resets);
@@ -30,7 +30,9 @@ version: "1.12"            # 1.0 2026-11-12 (first release); 1.1 2026-11-14 (bri
                           # 1.10 2026-11-25 (brief 207: HDL-CDC-03 clock-crossing intent constrained and met)
                           # 1.11 2026-11-24 (brief 208: HDL-CLK-04 clock multiplexers, the clock_mux check)
                           # 1.12 2026-11-25 (brief 190: HDL-FAST-01 data-dependent wide shift or index on a fast path (advisory))
-date: 2026-11-24
+                          # 1.13 2026-11-25 (brief 185: HDL-DSP-01, the dsp_regs check, advisory)
+                          # 1.14 2026-11-26 (brief 231: STD-INIT-02 in HDL-SYN-06, the setting rtl.reset_model; HDL-STY-01 file named after its module)
+date: 2026-11-26
 rules:
   - id: HDL-SYN-01
     title: No latches
@@ -65,13 +67,18 @@ rules:
     fix: drive each signal from one always block or one assign
     skill: sequential-and-combinational-coding
   - id: HDL-SYN-06
-    title: Initial values follow the setting rtl.initial_values (default allow); ROM initialisation always passes
+    title: Initial values follow the setting rtl.initial_values (default allow) and agree with the reset; ROM initialisation always passes
     rationale: AMD (UG949) and Altera recommend defined power-up values, so initial values on registers and memories are allowed
       by default (setting rtl.initial_values - allow, warn or deny). They are a power-up state, not a reset, and the reset rules
       do not change. An initial block that does more than give power-up values (delays, $display, if or case sequences) is
-      flagged in synthesisable RTL, and deny restores the earlier ban.
-    checks: {standards: [STD-INIT-01]}
-    fix: keep initial blocks to constant power-up values (or $readmem for ROM), or set rtl.initial_values to match the project's choice
+      flagged in synthesisable RTL, and deny restores the earlier ban. A register never has both a reset and a different initial
+      value (two start states); control state (an FSM, a valid flag) keeps its reset, unless the design's reset is a
+      reconfiguration (setting rtl.reset_model = reprogram, owner 2026-11-26), when the initial values are the reset values.
+      Verilator's PROCASSINIT is switched off for this reason, since it fires on every register with an initial value, which this rule
+      refines.
+    checks: {standards: [STD-INIT-01, STD-INIT-02]}
+    fix: keep initial blocks to constant power-up values (or $readmem for ROM), give a register one start state (an initial value
+      where it has no reset, the reset value where it has), and reset control state, or set rtl.initial_values or rtl.reset_model to match the project's choice
     skill: synthesisable-subset-and-parameters
   - id: HDL-INIT-01
     title: An initial value of 1 does not sit on a register that belongs in a DSP or RAM block (advisory)
@@ -84,6 +91,15 @@ rules:
     fix: drop the initial value (or make it 0) on registers around a DSP or RAM unless their power-up value matters; give the
       block RAM's read and output registers the same value; load UltraRAM contents after configuration
     skill: power-up-values-amd-and-altera
+  - id: HDL-STY-01
+    title: A source file is named after the module it holds
+    rationale: Verilator's DECLFILENAME fires when a file's name differs from its first module (measured over the run records of
+      briefs up to 231, every sampled case was a naming mismatch, none a functional defect, since the flow lists its sources
+      and never searches for a module by file name). The name still matters to the next engineer and to tools that do search by
+      file name, so the file and the module agree.
+    checks: {verilator: [DECLFILENAME]}
+    fix: rename the file to <module>.sv (git mv), or move the module into the file that carries its name; for a top module the file is <top>.sv; one top module per file, with a helper module in its own file
+    skill: vivado-rtl-lint
   - id: HDL-WID-01
     title: Widths match
     rationale: A silent extension or truncation is the commonest arithmetic bug; the reader of the code cannot see it.
@@ -322,6 +338,13 @@ rules:
     checks: {stale: [STALE-EVID-01, STALE-CLAIM-01]}
     fix: rebuild or re-run the stage the finding names, then read its result; cite the fresh build ID
     skill: docs/agent_lessons.md
+  - id: HDL-DSP-01
+    title: A DSP slice has the registers its clock period needs (advisory)
+    rationale: Measured on Vivado 2026.1 (brief 185), a slice without its multiplier register, or without its output register, cannot meet the
+      period a fully registered slice meets; Vivado's own DRC flags only unregistered inputs and outputs, not how fast the slice then runs.
+    checks: {dsp_regs: [DSPREG-01, DSPREG-02, DSPREG-03, DSPREG-04]}
+    fix: add the register after the multiply (and the output register) in the RTL, or lengthen the clock period; a deliberately slow datapath may waive it with a reason
+    skill: artix7-dsp48e1
   - id: HDL-TIM-01
     title: Logic depth fits the clock period
     rationale: A path with too many logic levels for its clock cannot be fixed by placement (UG949 p.75, p.200, p.234). The distribution of logic

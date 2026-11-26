@@ -80,6 +80,30 @@ def _refs(expr: str, names: set[str]) -> bool:
     return any(re.search(rf"\b{re.escape(n)}\b", expr) for n in names)
 
 
+#: brief 219 fix 3: a first-stage vector is a Gray-coded bus when its driver cone holds a Gray signal: a name with "gray" or "gry",
+#: or a signal assigned from a Gray conversion (a ``*2gray``/``to_gray`` call, or ``x ^ (x >> 1)``). A static, textual call: a
+#: bus that is Gray only by a parameter choice is still taken as Gray here; cdc_inj_pkg's step limit keeps a binary one honest.
+_GRAY_NAME = re.compile(r"(?i)gray|gry")
+_GRAY_BUILD = re.compile(r"(?i)\w*2gray\w*\s*\(|to_gray\w*\s*\(|\b(\w+)\s*\^\s*\(\s*\1\s*>>\s*1\s*\)")
+_ASSIGN = re.compile(r"\b(?P<lhs>[A-Za-z_]\w*)\s*(?:\[[^\]]*\])?\s*(?<![=!<>])(?:<=|=)(?![=])\s*(?P<rhs>[^;]+);")
+
+
+def gray_signals(clean: str) -> set[str]:
+    """Names in ``clean`` (comment-free text) that carry a Gray code: Gray-named, built by a Gray conversion, or driven by one."""
+    drivers: dict[str, list[str]] = {}
+    for m in _ASSIGN.finditer(clean):
+        drivers.setdefault(m.group("lhs"), []).append(_split_top(m.group("rhs"))[0])
+    gray = {n for n in drivers if _GRAY_NAME.search(n)} | {n for n, es in drivers.items() if any(_GRAY_BUILD.search(e) for e in es)}
+    changed = True
+    while changed:
+        changed = False
+        for n, es in drivers.items():
+            if n not in gray and any(_refs(e, gray) for e in es):
+                gray.add(n)
+                changed = True
+    return gray | {w for w in re.findall(r"[A-Za-z_]\w*", clean) if _GRAY_NAME.search(w)}
+
+
 _CONST = re.compile(r"(?:\d*'[sS]?[bBoOdDhH][0-9a-fA-F_xXzZ]+|'[01xXzZ]|\d+)")
 _NBA = re.compile(r"(?P<lhs>\{[^{};]*\}|[A-Za-z_]\w*\s*(?:\[[^\];]*\])?)\s*<=\s*(?P<rhs>[^;]+);")
 
@@ -93,6 +117,7 @@ def inject_text(text: str, key0: int = 0) -> tuple[str, dict[str, Any]]:
         return text, info
     names = set(decls)
     clean = strip_comments(text)
+    grays = gray_signals(clean)
     done: set[str] = set()
     out, last = [], 0
     key = key0
@@ -130,6 +155,16 @@ def inject_text(text: str, key0: int = 0) -> tuple[str, dict[str, Any]]:
         if kind == "all" and not rng_of(name):
             return (f"begin : {blk} logic __nv; __nv = {rhs.strip()}; "
                     f"if (cdc_inj_pkg::hold(32'({k} * 256), __nv !== {name})) __nv = {name}; {name} <= __nv; end")
+        if kind == "all" and _refs(rhs, grays):
+            # a Gray bus (brief 219 fix 3): while its input moves by at most GRAY_STEPS bits between two destination edges (a fast source
+            # steps twice between two edges; each Gray step is one bit), the bus is held or taken as one: per-bit tearing would mix
+            # two steps, a value the source never held. A bigger move is no Gray step and is torn per bit as before.
+            return (f"begin : {blk} logic [$bits({name})-1:0] __nv; __nv = {rhs.strip()}; "
+                    f"if ($bits({name}) <= 64 && cdc_inj_pkg::bus_steps(32'({k} * 256), 64'(__nv)) <= cdc_inj_pkg::GRAY_STEPS) begin "
+                    f"if (cdc_inj_pkg::hold(32'({k} * 256), __nv !== {name})) __nv = {name}; end else "
+                    f"for (int __b = 0; __b < $bits({name}); __b++) "
+                    f"if (cdc_inj_pkg::hold(32'({k} * 256 + __b), __nv[__b] !== {name}[__b])) __nv[__b] = {name}[__b]; "
+                    f"{name} <= __nv; end")
         if kind == "all":
             return (f"begin : {blk} logic [$bits({name})-1:0] __nv; __nv = {rhs.strip()}; "
                     f"for (int __b = 0; __b < $bits({name}); __b++) "

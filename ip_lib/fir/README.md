@@ -4,6 +4,8 @@ FIR filter with runtime-loadable coefficients, full-precision output and valid/r
 
 Generated from `ip.yaml` by `flow/net/ipdoc.py`; do not edit by hand.
 
+**Verification: not assessed: no requirements recorded (no verif/testplan.yaml), so nothing here is traced to a requirement.** [VERIFIED.md](VERIFIED.md) is the generated, hash-pinned record; [what the label means](../../docs/verified.md).
+
 Status: simulated bit-exact against ip_lib/fir/model.py: every variant at four parameter points, a differential test across the variants, and an adversarial bench (coefficient beats between samples, reloads with results in flight, resets mid-stream); measured out of context on an Artix-7 (xc7a100t, Vivado 2026.1); not yet run on a board.
 
 ## Parameters

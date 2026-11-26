@@ -20,7 +20,7 @@ each time the service starts.
 | The `Host` header must be the loopback address and the port in use (DNS rebinding) | `App.host_ok` |
 | Every request needs the session token (HttpOnly, SameSite=Strict cookie) | `App.token_ok` |
 | Every request calls the access gate (`agent.access.require`), so a revoked or expired key stops it answering; the entry point calls `require_or_exit` | `server._common`, `__main__` |
-| An action (POST) needs the token in the header (the cookie alone is refused), `Content-Type: application/json`, the service's own `Origin`, and one of the fixed routes: the three health actions, `/api/run/start`, `/api/run/stop`, `/api/board/run`, and (Stage 3) `/api/run/ask`, `/api/run/request`, `/api/run/answer`; each of the last six also needs a confirmation field the page sends (and a key the route does not take is refused) | `do_POST`, `App.post` |
+| An action (POST) needs the token in the header (the cookie alone is refused), `Content-Type: application/json`, the service's own `Origin`, and one of the fixed routes: the three health actions, `/api/run/start`, `/api/run/stop`, `/api/board/run`, (Stage 3) `/api/run/ask`, `/api/run/request`, `/api/run/answer`, and (brief 222) `/api/permissions/save`; each of the last seven also needs a confirmation field the page sends (and a key the route does not take is refused) | `do_POST`, `App.post` |
 | No external font, script or image: the Content-Security-Policy names no host, and the shipped files contain no URL | `server.CSP_APP`, tests |
 | No endpoint returns a key, token or prompt text: readers copy named fields only, and every response passes `redact.scrub`; a run's prompts appear as names and SHA-256 hashes | `sources.py`, `redact.py` |
 | The request never names a file to open: capture ids and record paths are looked up in lists the service built, and records are limited to `results/`, a design's `project.yaml` and `latency_stages.yaml` | `measure.resolve`, `sources.read_record` |
@@ -38,6 +38,7 @@ It is not a defence against someone who can edit the code or read your terminal 
 | Health | live checks (see below) | local files, version queries, `/proc`, `/sys/bus/usb` |
 | Live | every run directory (started from this page or the command line): stage, visit, the stage track, provider-reported cost against the run's budget and the plan's estimate, gate results, the tail of the audit log; refreshes every 5 s | `runs/<id>/config.json`, `role_usage.jsonl`, `trace.jsonl`, `snapshots.json`, `<design>/build/audit.jsonl`, `summary.json` (`progress.py`) |
 | Start | start an agent run: a course task (`benchmark/course/tasks`) or a managed project change request, with arm, board, harness, model (from the resolved table), effort and a budget cap; shows the guards | `runctl.py` |
+| Permissions | (brief 222) what a run may do without asking: a mode picker (Plan, Ask, Auto within limits, Full auto), the table of the twelve gated actions with each mode's value and a per-action override, the fixed list of what is never allowed, and the command-line flags the settings amount to; saved per project | `agent/core/permissions.py`, `permissions.yaml` in the config folder |
 | Examples | (brief 195) a few development tasks with reference runs; re-run one with the pinned setup and compare it: what should match (tool results for the same RTL), what varies with the model (RTL, loops, tokens, cost, time), and the hidden-test verdict | `agent/repro/examples.yaml`, `results/195_repro_examples`, a run's `example_result.json` |
 | Board | locked, read-only actions on a board in `boards.yaml`: list JTAG targets, read the build ID and FEATURES, SYSMON, link status | `boardops.py` |
 | Models | brief 108's resolved model table, which layer set each value, and whether each endpoint's key is present | `python -m agent models show` |
@@ -226,3 +227,34 @@ stored as data and never reaches a command line, and text that starts with `-` i
 `python -m pytest navigator/tests/test_182_navigator_s3.py agent/tests/test_182_requests.py agent/tests/test_182_console.py` (a scripted model and fake runner stand in for the agent's tools; a fake stands in for the
 question's model call). `NODE_PATH=<node_modules> node navigator/shoot_stage3.js <url with token> <dir> <run id>` shoots the Live page at 1280 and 390 px with the console drawer shut and then open, and
 fails if the drawer polled while shut. Results: [results/182_navigator_s3](../results/182_navigator_s3/README.md).
+
+
+## Permission modes (brief 222)
+
+The **Permissions** page sets what a run may do without asking; the full description of the modes, the twelve actions and what is never allowed is in
+[docs/agent.md](../docs/agent.md#permission-modes-brief-222). What the Navigator adds:
+
+- **Saved per project** in `permissions.yaml` in the config folder (`~/.config/fpga_design_agent/`; the Navigator always uses this file, so `FDA_PERMISSIONS_FILE`, which moves the command line's file, makes the two differ): `mode`, `overrides` and `ask_above_usd`, for
+  every project (the top level) or one project (under `projects:`; a course task or a managed project, by name). `python -m agent` reads the same file, and the command line
+  (`--permissions`, `--allow`, `--deny`, `--ask`, `--ask-above-usd`) wins. With nothing saved the Navigator uses **Ask**; the command line alone uses Auto (what a run was before this brief).
+- **A run started from the Start page passes its mode on the command line** (`--permissions <mode>`, one `--allow`, `--deny` or `--ask` per override that differs from the mode, `--ask-above-usd`),
+  so the run record says "command line". The Start page's picker chooses another mode for that run only. A run started here stops after stage 8, so it never reaches the board whatever the mode.
+- **A permission question appears on the Live page**, in the same place as the agent's own questions: the actions it needs, in plain words, with *Allow and resume* and *Deny*. Allow resumes the
+  run with the usual guards (usage check, heavy slot); Deny ends it with the reason in its record. The answer is recorded with the time.
+- **The Board page's read-only actions follow the default settings' `read_board`**: Plan refuses them; Ask, Auto and Full still need the confirmation click the page already asks for (that click is the ask).
+- **One more POST route**, `/api/permissions/save` (`{project, mode, overrides, ask_above_usd, confirm: "save"}`): same rules as every action (token in the header, own Origin, JSON, access gate,
+  a key it does not take is refused, the project looked up in the list the service built, only values from the fixed lists). Saving changes the next run, not one already going.
+
+### What a user could guess wrong (permissions)
+
+- **The saved settings are not the settings of a running run.** A run keeps the mode it started with (it is in its `permissions.json`); resume it with `--permissions` to change that.
+- **Full auto from the Start page still does not touch the board** (stage 8 is the limit there). From the command line it does.
+- **A deny override can block a stage the run needs**: the run stops there, with the reason, and nothing is spent on that stage. Remove the override and resume.
+- **Save for "every project" does not change a project that has its own entry.** The project's entry wins.
+
+### Tests and screenshots (brief 222)
+
+`python -m pytest navigator/tests/test_222_navigator.py agent/tests/test_222_permission_modes.py`. `python3 -m navigator.tests.demo_222 --port 8795 --workdir <tmp>` serves the page with fakes (and a temporary
+config folder, so the owner's settings are untouched); `NODE_PATH=<node_modules> node navigator/shoot_222.js <url with token> <dir> <run id>` shoots the Permissions, Start and Live pages at 1280 and 390 px
+and fails on a page error, an overflow at 390 px or a request to another host. Screenshots: [docs/img/222_permissions_auto_with_deny_wide.png](../docs/img/222_permissions_auto_with_deny_wide.png),
+[docs/img/222_live_permission_question_wide.png](../docs/img/222_live_permission_question_wide.png).

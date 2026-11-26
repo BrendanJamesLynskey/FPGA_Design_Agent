@@ -1,0 +1,180 @@
+{
+ "sby": "results/156_vhdl_tools/psl/sv/gray.sby",
+ "schema": "fpga-design-agent/formal_rigour/v1",
+ "sources": {
+  "benchmark/tasks/t1_gray_stepper/ref/rtl/bm_debounce.sv": "bb439c819c2c039e3fa5511cb877b870c8fb63e8d6c4e97cce7df36123f86cae",
+  "results/156_vhdl_tools/psl/sv/gray.sby": "63537f10ae93e3373cb7a9264956d1bd2142ad054667f5bc354de2e672a99a02",
+  "results/156_vhdl_tools/psl/sv/gray_fv.sv": "97434019a3f3de685ada8d3c63809b43cecad8552ee6ac2465e4e71159b3f4a0",
+  "results/156_vhdl_tools/psl/sv/gray_stepper.sv": "28e1abac50b5e0a33dc2a0dd08f4a19732bd05aa764d87c8c9a098031dbf1cdc",
+  "shell/rtl/sync2.sv": "9103308bbb71cd224d958c434bddd7b3bd2647d49cc8e718df0c6acba49509ba"
+ },
+ "tasks": {
+  "bmc": {
+   "checks": [
+    {
+     "flavor": "cover",
+     "id": "cover_gray_changed",
+     "label": "cover_gray_changed",
+     "src": "gray_fv.sv:22",
+     "tautology": false
+    },
+    {
+     "flavor": "assume",
+     "id": "gray_fv.sv:19",
+     "label": null,
+     "src": "gray_fv.sv:19",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "req01_one_bit__ante",
+     "label": "req01_one_bit__ante",
+     "src": "gray_stepper.sv:79",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "req01_one_bit",
+     "label": "req01_one_bit",
+     "src": "gray_stepper.sv:75",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "inv_gray_of_bin__ante",
+     "label": "inv_gray_of_bin__ante",
+     "src": "gray_stepper.sv:80",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "inv_gray_of_bin",
+     "label": "inv_gray_of_bin",
+     "src": "gray_stepper.sv:76",
+     "tautology": false
+    }
+   ],
+   "covers": {},
+   "depth": 20,
+   "mode": "bmc",
+   "seconds": 3.7,
+   "status": "PASS"
+  },
+  "cover": {
+   "checks": [
+    {
+     "flavor": "cover",
+     "id": "cover_gray_changed",
+     "label": "cover_gray_changed",
+     "src": "gray_fv.sv:22",
+     "tautology": false
+    },
+    {
+     "flavor": "assume",
+     "id": "gray_fv.sv:19",
+     "label": null,
+     "src": "gray_fv.sv:19",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "req01_one_bit__ante",
+     "label": "req01_one_bit__ante",
+     "src": "gray_stepper.sv:79",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "req01_one_bit",
+     "label": "req01_one_bit",
+     "src": "gray_stepper.sv:75",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "inv_gray_of_bin__ante",
+     "label": "inv_gray_of_bin__ante",
+     "src": "gray_stepper.sv:80",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "inv_gray_of_bin",
+     "label": "inv_gray_of_bin",
+     "src": "gray_stepper.sv:76",
+     "tautology": false
+    }
+   ],
+   "covers": {
+    "cover_gray_changed": {
+     "reached": true,
+     "step": 2
+    },
+    "inv_gray_of_bin__ante": {
+     "reached": true,
+     "step": 2
+    },
+    "req01_one_bit__ante": {
+     "reached": true,
+     "step": 6
+    }
+   },
+   "depth": 20,
+   "mode": "cover",
+   "seconds": 0.5,
+   "status": "PASS"
+  },
+  "prove": {
+   "checks": [
+    {
+     "flavor": "cover",
+     "id": "cover_gray_changed",
+     "label": "cover_gray_changed",
+     "src": "gray_fv.sv:22",
+     "tautology": false
+    },
+    {
+     "flavor": "assume",
+     "id": "gray_fv.sv:19",
+     "label": null,
+     "src": "gray_fv.sv:19",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "req01_one_bit__ante",
+     "label": "req01_one_bit__ante",
+     "src": "gray_stepper.sv:79",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "req01_one_bit",
+     "label": "req01_one_bit",
+     "src": "gray_stepper.sv:75",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "inv_gray_of_bin__ante",
+     "label": "inv_gray_of_bin__ante",
+     "src": "gray_stepper.sv:80",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "inv_gray_of_bin",
+     "label": "inv_gray_of_bin",
+     "src": "gray_stepper.sv:76",
+     "tautology": false
+    }
+   ],
+   "covers": {},
+   "depth": 20,
+   "mode": "prove",
+   "seconds": 3.6,
+   "status": "PASS"
+  }
+ },
+ "tool": "Yosys 0.70+385 (git sha1 098e46a36, Release, Clang /usr/bin/clang++ 21.1.8)"
+}

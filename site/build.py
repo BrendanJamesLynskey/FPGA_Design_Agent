@@ -27,8 +27,8 @@ SRC = HERE / "src"
 REPO = "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent"
 
 PAGES = [  # file, nav label, title, description, data keys inlined
-    ("index.html", "Home", "FPGA Design Agent", "An agentic FPGA design environment: from a plain-English request to a bitstream proven on the board. Language-model agents write the spec, tests and RTL; code-run gates, hidden tests and the board judge them; every number is read from a committed result file.", ["loop", "dev", "kr260"]),
-    ("why.html", "Why", "Why this agent", "The one-page summary: what makes this agent different, in drawers that each open to what it means, an example from this project with its numbers, what it does not do yet, and where to read more.", []),
+    ("index.html", "Home", "FPGA Force", "An agentic FPGA design environment: from a plain-English request to a bitstream proven on the board. Language-model agents write the spec, tests and RTL; code-run gates, hidden tests and the board judge them; every number is read from a committed result file.", ["loop", "dev", "kr260"]),
+    ("why.html", "Why", "Why FPGA Force", "The one-page summary: what makes this agent different, in drawers that each open to what it means, an example from this project with its numbers, what it does not do yet, and where to read more.", []),
     ("agent.html", "The agent", "The agent", "The agent itself: a LangGraph controller over Deep Agents or Claude Code role agents, drawn from its code, with a recorded run replayed through the diagrams.", ["agent_graph"]),
     ("story.html", "How it was built", "How the agent was built", "How the agent was designed, measured and corrected: a timeline, an experiment card for every test including the nulls and the stopped evaluation, the method, the improvement loop and the lessons, with every number read from a committed result file.", []),
     ("worked-example.html", "Worked example", "Worked example: a 10G trading path on the KR260", "One design end to end, seen as who did what: what the human specified, what the agent built, what verified it, what the board measured, and where human judgement mattered, each linked to its committed record.", ["kr260"]),
@@ -36,6 +36,7 @@ PAGES = [  # file, nav label, title, description, data keys inlined
     ("how.html", "How it works", "How it works", "The stages, the verification gates V0 to V3, mutation testing, the knowledge bank and the tools, with a stage walk-through replayed from a real run record.", ["replay"]),
     ("verification.html", "Verification", "How the designs are verified", "Each verification technique the agent and the flow use, simulation, hidden tests, coverage, mutation testing, protocol checkers, formal proofs, clock-crossing checks, static checks, the board and traceability: what it finds and cannot find, where it runs, and the measured evidence, with every number read from a committed result file.", []),
     ("traceability.html", "Traceability", "What is specified, and what checks it", "Every requirement of a design against the checks that cover it, by method: simulation, formal, timing, the board. Each status is computed from the evidence files; gaps, stale evidence and requirements that only hardware can close are shown plainly.", []),
+    ("verified.html", "Verified", "Verified by construction", "What the verified label means: a generated, hash-pinned record of what is verified ships with every design, arithmetic function and IP-library entry, and the label is earned only when every criterion is met; otherwise it names what is missing.", []),
     ("flow-notes.html", "Beyond the flow", "Beyond the standard flow", "Where the agent's flow goes further than the standard Vivado flow: missing CDC constraints, crossings report_cdc cannot see, timing exceptions that hide failures, and more, each with its evidence and status.", ["flow_notes"]),
     ("expertise.html", "Expertise", "Areas of expertise", "What the agent knows, what its flow checks and what has been measured, area by area, in drawers; each area states how far its evidence goes.", []),
     ("examples.html", "Examples", "Examples", "Development tasks end to end: spec, clarify, gates, timing and area, and a hand-built design on the board.", ["board"]),
@@ -197,6 +198,9 @@ def block(name, d):
     if name == "verification_body":
         import verification_page
         return verification_page.body(d["verification"])
+    if name == "verified_body":
+        import verified_page
+        return verified_page.body(d["verified"])
     if name == "traceability_body":
         import traceability_page
         return traceability_page.body(d["traceability"])
@@ -382,7 +386,7 @@ def layout(fname, title, desc, body, keys, d, css, js, prefix="", current=None, 
         nxt = PAGES[idx + 1] if idx + 1 < len(PAGES) else None
         pager = '<div class="pager">' + (f'<a href="{prev[0]}">&larr; {html.escape(prev[1])}</a>' if prev else "<span></span>") + \
                 (f'<a href="{nxt[0]}">{html.escape(nxt[1])} &rarr;</a>' if nxt else "<span></span>") + "</div>"
-    full = title if fname == "index.html" else f"{title} | FPGA Design Agent"
+    full = title if fname == "index.html" else f"{title} | FPGA Force"
     return f"""<!doctype html>
 <html lang="en">
 <head>
@@ -396,7 +400,7 @@ def layout(fname, title, desc, body, keys, d, css, js, prefix="", current=None, 
 </head>
 <body>
 <a class="visually-hidden" href="#main">Skip to content</a>
-<header class="bar"><div class="wrap"><a class="brand" href="{prefix}index.html">FPGA Design Agent</a><nav aria-label="Pages">{nav}</nav><button id="theme" type="button" aria-label="Switch to dark theme">Dark</button></div></header>
+<header class="bar"><div class="wrap"><a class="brand" href="{prefix}index.html">FPGA Force</a><nav aria-label="Pages">{nav}</nav><button id="theme" type="button" aria-label="Switch to dark theme">Dark</button></div></header>
 <main id="main" class="wrap">
 {body}
 {pager}
@@ -457,7 +461,7 @@ def build(outdir: Path, d, check_numbers=True):
     js = (SRC / "app.js").read_text()
     # the showcase projects' own text never enters the number check (it would vouch for its own numbers); the showcase
     # pages are checked against the shared data plus each project's resolved values and hero data
-    shared = {k: v for k, v in d.items() if k not in ("tasks", "showcase", "story", "verification", "traceability", "why")}
+    shared = {k: v for k, v in d.items() if k not in ("tasks", "showcase", "story", "verification", "traceability", "why", "verified")}
     sc_values = {P["id"]: {"values": P["values"], "hero": P["hero"]["data"]}
                  for P in d.get("showcase", {}).get("projects", []) if P["status"] == "published"}
     if "catalogue" in d:
@@ -470,7 +474,8 @@ def build(outdir: Path, d, check_numbers=True):
                             else {"shared": shared, "story": d["story"]["check"]} if fname == "story.html"
                             else {"shared": shared, "verification": d["verification"]["check"]} if fname == "verification.html"
                             else {"shared": shared, "traceability": d["traceability"]["check"]} if fname == "traceability.html"
-                            else {"shared": shared, "why": d["why"]["check"]} if fname == "why.html" else shared)
+                            else {"shared": shared, "why": d["why"]["check"]} if fname == "why.html"
+                            else {"shared": shared, "verified": d["verified"]["check"]} if fname == "verified.html" else shared)
     if "catalogue" in d:
         order = task_order(d)
         for i, r in enumerate(order):
@@ -509,7 +514,7 @@ def build(outdir: Path, d, check_numbers=True):
         allow = allow_tokens()
         cache = {}
         for fname, page in pages.items():
-            key = fname if fname.startswith(("problems/", "showcase/", "blockdesign/")) or fname in ("showcase.html", "story.html", "verification.html", "traceability.html", "why.html") else "_shared"
+            key = fname if fname.startswith(("problems/", "showcase/", "blockdesign/")) or fname in ("showcase.html", "story.html", "verification.html", "traceability.html", "why.html", "verified.html") else "_shared"
             if key not in cache:
                 cache[key] = data_tokens(page_data[fname]) | allow
             ok = cache[key]

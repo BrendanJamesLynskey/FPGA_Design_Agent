@@ -4,6 +4,8 @@ DDS/AWG stimulus source: phase accumulator, sine table, triangle, saw and square
 
 Generated from `ip.yaml` by `flow/net/ipdoc.py`; do not edit by hand.
 
+**Verification: not assessed: no requirements recorded (no verif/testplan.yaml), so nothing here is traced to a requirement.** [VERIFIED.md](VERIFIED.md) is the generated, hash-pinned record; [what the label means](../../docs/verified.md).
+
 Status: simulated bit-exact against hil/instruments/models.py in both variants and measured out of context on an Artix-7 (xc7a100t, Vivado 2026.1); the 0.1.0 design (one table, before the variants) was measured on the Nexys A7-100T inside b30_hil_audio (1 kHz sine at the audio jack, 999.99 Hz, THD 1.32 %); the 0.2.0 variants have not been run on a board.
 
 ## Parameters

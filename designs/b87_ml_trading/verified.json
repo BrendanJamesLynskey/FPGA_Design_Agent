@@ -1,0 +1,122 @@
+{
+ "counts": {
+  "requirements": 0
+ },
+ "criteria": [
+  {
+   "detail": "no requirements recorded",
+   "id": "evidence",
+   "ids": [],
+   "state": "not_measured",
+   "title": "Every requirement has passing evidence"
+  },
+  {
+   "detail": "no requirements recorded",
+   "id": "agreement",
+   "ids": [],
+   "state": "not_measured",
+   "title": "Every requirement is agreed (human, or delegated and labelled so)"
+  },
+  {
+   "detail": "no requirements recorded",
+   "id": "method_mix",
+   "ids": [],
+   "state": "not_measured",
+   "title": "Every requirement meets its required method mix"
+  },
+  {
+   "detail": "no requirements recorded",
+   "id": "mutation",
+   "ids": [],
+   "state": "not_measured",
+   "title": "The bench passes the mutation floor"
+  },
+  {
+   "detail": "no requirements recorded",
+   "id": "formal_rigour",
+   "ids": [],
+   "state": "not_measured",
+   "title": "The formal results pass the rigour checks"
+  },
+  {
+   "detail": "no requirements recorded",
+   "id": "fresh",
+   "ids": [],
+   "state": "not_measured",
+   "title": "The evidence is fresh"
+  }
+ ],
+ "declared": {
+  "evidence": [
+   {
+    "activity": "simulation",
+    "id": "E1",
+    "record": "designs/b87_ml_trading/tests/test_b87_rtl.py",
+    "result": "pass"
+   },
+   {
+    "activity": "simulation",
+    "id": "E2",
+    "record": "results/b87/hls4ml_csim.json",
+    "result": "pass"
+   },
+   {
+    "activity": "simulation",
+    "id": "E3",
+    "record": "designs/b87_ml_trading/tests/test_b87_integ_rtl.py",
+    "result": "pass"
+   },
+   {
+    "activity": "build",
+    "id": "E4",
+    "record": "results/b87/summary.json",
+    "result": "pass"
+   }
+  ],
+  "note": "the design's own declared evidence; not traced to requirements and not checked by this record",
+  "source": "handover.yaml",
+  "status": "built"
+ },
+ "definition": "docs/verified.md",
+ "git_commit": "8b3b7767288b3aa2d84ddcc0f25af0284dd9a56f",
+ "kind": "designs",
+ "label": "not assessed: no requirements recorded (no verif/testplan.yaml), so nothing here is traced to a requirement",
+ "label_kind": "not_assessed",
+ "limits": [
+  "Verified never means interoperability with a device the design talks to unless a board measurement against that device is listed in the record; a design that checks its own output against its own model accepts its own symmetric mistakes.",
+  "Verified never means timing beyond the stated corner: a post-route timing result is for the part, speed grade, clock and tool version in its evidence file, not for other corners, temperatures or devices.",
+  "Verified never means beyond the widths and depths checked: a simulation covers the vectors it ran, a bounded formal result covers the stated depth only, and a per-width proof covers the widths it names; only a Lean proof marked all widths covers every width, and only for its model.",
+  "Verified never means the requirement is the right one: the text of a requirement is the human's check (or the planner's, where the record says delegated), and a record shows that checks exist and pass, not that nothing was left out.",
+  "Verified never means a hardware or board result unless a board measurement item is listed; a simulation is not the board.",
+  "Verified is about the files in the manifest at the hashes given. A change to any of them makes the record out of date (the CI check fails), and the evidence stale until it is re-recorded.",
+  "An agreement or acceptance recorded as delegated is the planner's decision on the owner's delegation, not a human sign-off; the record counts it apart."
+ ],
+ "manifest": {
+  "designs/b87_ml_trading/handover.yaml": "c771c9da64870abe8f48ef5ea6b3a3e69e548d5ab8aceb0ddf88ba40a4a0462c",
+  "designs/b87_ml_trading/rtl/ml_feat.sv": "74e91004bc80b9e8048234ef3e45f270e925727ed2137adeeeacc074dc38ee31",
+  "designs/b87_ml_trading/rtl/ml_gate.sv": "69ffe79a2065be60993d405f33a8f6ae53f3c5dab5816d59df02ff7ef11555b3",
+  "designs/b87_ml_trading/rtl/mlp_hls4ml_wrap.sv": "9ef46768d834ebdc94c13fe0b8ab5c0cdf17eda2318c883e5f4e0b6ae5c78acf",
+  "designs/b87_ml_trading/tests/test_b87_integ_rtl.py": "02050fb09d5b7dddb112c9f3f8e0876fd4d1b8649c1c259204e8949176c76afc",
+  "designs/b87_ml_trading/tests/test_b87_rtl.py": "2ffcf72e10dc6f629478d8c0681a365bdbb0c7ae57b726066516f02c01ee77d6",
+  "results/b87/hls4ml_csim.json": "d00b95f07901e8fcf7522aff696887064e87b813cb6bfc2265234d3e868cbb0e",
+  "results/b87/summary.json": "1625246873339838d43ba1bcaf66596d21148db693a9ed613a3dda8a312af3c6"
+ },
+ "name": "b87_ml_trading",
+ "path": "designs/b87_ml_trading",
+ "reproduce": [
+  {
+   "cmd": "python3 -m designs.b87_ml_trading.model.evaluate --out results/b87",
+   "what": "train and score every arm"
+  },
+  {
+   "cmd": "python3 -m designs.b87_ml_trading.model.gen_rtl && B87_RECORD=results/b87 python3 -m pytest -q designs/b87_ml_trading/tests/test_b87_rtl.py",
+   "what": "regenerate the RTL and check it against the models over the test split"
+  },
+  {
+   "cmd": "B87_RECORD=$PWD/results/b87/integration python3 -m pytest -q designs/b87_ml_trading/tests/test_b87_integ_rtl.py",
+   "what": "the 58A integration in simulation"
+  }
+ ],
+ "requirements": [],
+ "schema": "fda-verified/1"
+}

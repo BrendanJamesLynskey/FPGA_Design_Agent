@@ -29,6 +29,8 @@ import time
 from pathlib import Path
 from typing import Any, Callable
 
+from agent.graph import profiles as VP
+from agent.graph import settings as VS
 from navigator import guards, redact
 from navigator import progress as P
 from navigator import sources as S
@@ -109,8 +111,9 @@ def now_s() -> str:
 class RunControl:
     def __init__(self, root: Path, handoff: Path, runs_dir: Path, runner: Any, state_dir: Path, models_view: Callable[[], dict[str, Any]],
                  spawner: Spawner | None = None, killpg: Callable[[int, int], None] = os.killpg, python: str | None = None,
-                 gate: Callable[[str], Any] | None = None, usage_stop: int | None = None):
+                 gate: Callable[[str], Any] | None = None, usage_stop: int | None = None, perm_file: Path | None = None):
         self.root, self.handoff, self.runs_dir = Path(root), Path(handoff), Path(runs_dir)
+        self.perm_file = Path(perm_file) if perm_file else None        # brief 222: the saved permission settings (agent.core.permissions.config_path when None)
         self.runner, self.state_dir, self.models_view = runner, Path(state_dir), models_view
         self.spawner, self.killpg = spawner or Spawner(), killpg
         self.python = python or sys.executable
@@ -263,8 +266,97 @@ class RunControl:
                 comps[p["name"]] = [{"name": c.name, "ownership": c.ownership} for c in pr.components if c.ownership == "owned"]
         return {"tasks": sorted(self.tasks()), "projects": proj, "owned_components": comps, "boards": self.boards(), "arms": list(ARMS), "arm_note": "H1 is the CLI default; A0 (no arm) is chosen by ticking none; an arm applies to a task run (the resume command has no arm option)",
                 "efforts": list(EFFORTS), "models": self.allowed_models(), "model_table": mv, "max_usd": MAX_USD, "default_usd": DEFAULT_USD,
+                "profiles": self.profiles(), "switches": self.switches(),
+                "permissions": self.permission_options(),
                 "usage_stop_pct": guards.USAGE_STOP_PCT, "active_limit": MAX_ACTIVE, "never": "Fable, Opus, or an Anthropic model through OpenRouter; the owner's --allow-fable flag is never passed",
                 "guards": ["access gate", "usage check at or above the stop refuses", "one navigator run at a time", "a heavy slot through take_heavy_slot.sh, released when the run ends"]}
+
+    # -- permissions (brief 222) --------------------------------------------------------------------------------------------------------
+    def saved_permissions(self, name: str | None) -> dict[str, Any]:
+        """The settings saved for this project (or the default entry when ``name`` is None or has none), resolved with the Navigator's own default, Ask."""
+        from agent.core import permissions as P
+        spec = P.resolve(project=name, config_file=self.perm_file)
+        saved = spec["source"].startswith("config file")
+        if not saved:
+            spec = {**spec, "mode": "ask", "source": "the Navigator's default (Ask): nothing is saved for this project"}
+        return {**spec, "saved": saved}
+
+    def permission_options(self) -> dict[str, Any]:
+        from agent.core import permissions as P
+        names = sorted({*(x["name"] for x in S.project_list(self.root) if "error" not in x), *self.tasks()})
+        return {**P.view(), "projects": names, "defaults": {n or "": self.saved_permissions(n) for n in [None, *names]},
+                "note": "A run started here passes its mode and overrides to the command line, so the run record says so. A run started here stops after stage 8, so it never reaches the board."}
+
+    def permission_args(self, p: dict[str, Any], name: str | None, summary: dict[str, Any]) -> list[str]:
+        """``--permissions``, ``--allow``, ``--deny``, ``--ask`` and ``--ask-above-usd`` from the request (or, absent, the settings saved for this project); raises Refused."""
+        from agent.core import permissions as P
+        req = p.get("permissions")
+        if req is None:
+            spec = self.saved_permissions(name)
+        else:
+            if not isinstance(req, dict) or set(req) - {"mode", "overrides", "ask_above_usd"}:
+                raise Refused("permissions is an object with mode, overrides and ask_above_usd")
+            if req.get("mode") not in P.MODES:
+                raise Refused("pick a permission mode: " + ", ".join(P.MODE_ORDER))
+            ov = req.get("overrides") or {}
+            if not isinstance(ov, dict) or any(k not in P.BY_NAME or v not in P.VALUES for k, v in ov.items()):
+                raise Refused("an override is one of the listed actions set to allow, ask or deny")
+            ask_above = req.get("ask_above_usd", P.DEFAULT_ASK_ABOVE_USD)
+            if isinstance(ask_above, bool) or not isinstance(ask_above, (int, float)) or ask_above < 0 or ask_above > MAX_USD:
+                raise Refused(f"the ask-above amount is between 0 and ${MAX_USD:g}")
+            spec = {"mode": req["mode"], "overrides": dict(ov), "ask_above_usd": float(ask_above), "source": "chosen on the Start page"}
+        args = ["--permissions", spec["mode"], "--ask-above-usd", f"{float(spec['ask_above_usd']):g}"]
+        for flag, val in (("--allow", P.ALLOW), ("--ask", P.ASK), ("--deny", P.DENY)):
+            for k, v in sorted((spec.get("overrides") or {}).items()):
+                if v == val and v != P.MODES[spec["mode"]]["actions"][k]:
+                    args += [flag, k]
+        summary["permissions"] = {"mode": spec["mode"], "overrides": {k: v for k, v in (spec.get("overrides") or {}).items() if v != P.MODES[spec["mode"]]["actions"][k]},
+                                  "source": spec["source"], "ask_above_usd": float(spec["ask_above_usd"])}
+        return args
+
+    # -- verification profiles and confirmed settings (brief 194) ----------------------------------------------------------------------
+    def profiles(self) -> list[dict[str, Any]]:
+        """The picker's list, built here from agent.graph.profiles: a one-line summary, the switches, the extra time measured on the development design."""
+        from agent.graph import assurance as AS
+        return [{"name": n, "summary": VP.SUMMARY[n], "extra_time": AS.extra_time_text(n), "switches": VP.PROFILES[n], "not_wired": VP.resolve(n)["not_wired"]} for n in VP.PROFILES]
+
+    def switches(self) -> list[dict[str, Any]]:
+        """The drawer's controls: one per switch, with the allowed values (a range or a list), so the page invents none."""
+        return [{"name": s.name, "kind": s.kind, "doc": s.doc, "choices": list(s.choices), "lo": s.lo, "hi": s.hi, "wired": s.wired, "consumer": s.consumer} for s in VP.SWITCHES]
+
+    def verification(self, p: dict[str, Any], summary: dict[str, Any]) -> list[str]:
+        """The validated ``--verif-profile`` and ``--set`` arguments from the request; raises Refused. Values come from the schema, never from free text."""
+        name = p.get("profile", VP.DEFAULT_PROFILE)
+        if name not in VP.PROFILES:
+            raise Refused("pick a profile from the list")
+        sw = p.get("switches", {})
+        if not isinstance(sw, dict) or any(k not in VP.BY_NAME for k in sw):
+            raise Refused("switches must be an object of switch names from the list")
+        args = ["--verif-profile", name]
+        sets: dict[str, Any] = {}
+        try:
+            for k, v in sw.items():
+                if isinstance(v, bool):
+                    v = "on" if v else "off"
+                sets[k] = VP.parse_value(VP.BY_NAME[k], str(v))
+            rec = VP.resolve(name, sets)
+        except VP.ProfileError as e:
+            raise Refused(str(e))
+        for k in sw:
+            if rec["effective"][k] != VP.PROFILES[name][k]:       # only a real change is passed
+                v = rec["effective"][k]
+                args += ["--set", f"{k}={'on' if v is True else 'off' if v is False else v}"]
+        summary.update(profile=name, overrides=rec["overrides"])
+        return args
+
+    def settings_file(self, task: str, board: str, profile: str, summary: dict[str, Any]) -> dict[str, Any]:
+        """The proposals the agent reads from the task folder (brief 194). They are the spec interview's input: the run asks one question per setting,
+        with the proposed value as the default and its source as the reason, and the user answers on the Live page like any other question. This
+        page builds no second confirmation screen. The explicit board and profile chosen above become the proposed values."""
+        doc = VS.propose(self.tasks()[task].parent, board)
+        doc = VS.apply_flags(doc, board, profile)
+        summary["settings"] = "proposed to the interview: " + ", ".join(f"{k}={'ask' if e['status'] == 'ask' else 'proposed'}" for k, e in doc["settings"].items())
+        return doc
 
     # -- validation -----------------------------------------------------------------------------------------------------------------
     def build(self, p: dict[str, Any]) -> tuple[list[str], dict[str, Any]]:
@@ -311,7 +403,10 @@ class RunControl:
                 raise Refused(f"arms must be a list of {', '.join(ARMS)} (empty for the A0 baseline)")
             arg_arms = ",".join(arms) if arms else "A0"
             rel = specs[t].relative_to(self.root).as_posix()
+            summary["settings_doc"] = self.settings_file(t, board, p.get("profile", VP.DEFAULT_PROFILE), summary)      # brief 194: the interview's input
             argv += ["run", rel, "--board", board, "--harness", harness, *mflag, "--harness-arm", arg_arms, "--max-usd", f"{usd:g}", "--stop-after", str(NAV_STOP_AFTER)]
+            argv += self.verification(p, summary)
+            argv += self.permission_args(p, t, summary)
             summary.update(target=t, board=board, arm=arg_arms, spec=rel)
         elif kind == "project":
             name = p.get("project")
@@ -333,10 +428,11 @@ class RunControl:
                 raise Refused("no such managed project")
             if view.get("ask") or not view.get("will_touch"):
                 raise Refused("the agent would ask first: " + str(view.get("ask") or "the request names no component"))
-            argv += ["resume", f"designs/{name}", req]
+            argv += ["resume", f"designs/{name}", req]       # a resume reads the design's own pinned settings; no profile flags here
             if comps:
                 argv += ["--scope", ",".join(comps)]
             argv += ["--harness", harness, *mflag, "--max-usd", f"{usd:g}", "--stop-after", str(NAV_STOP_AFTER)]
+            argv += self.permission_args(p, name, summary)
             summary.update(target=name, components=list(view["will_touch"]), request=req[:120])
         else:
             raise Refused("kind must be task or project")
@@ -374,6 +470,12 @@ class RunControl:
             pend = json.loads((self.runs_dir / rid / "pending.json").read_text()).get("paused") or {}
         except (OSError, ValueError, AttributeError):
             pend = {}
+        if pend.get("kind") == "permission":                        # brief 222: the question is a permission; the answer is allow or deny, never free text
+            ans = p.get("answer")
+            if ans not in ("allow", "deny"):
+                raise Refused("a permission question is answered allow or deny")
+            argv = [self.python, "-m", "agent", "resume", rid, "--reply", json.dumps({"decision": ans, "by": "you (Navigator)"})]
+            return argv, {"kind": "answer", "target": rid, "hardware": "no hardware: the run resumes at its permission question", "answer": ans}
         if pend.get("kind") != "question":
             raise Refused("that run is not waiting for an answer to a question of its own")
         ans = p.get("answer")
@@ -420,6 +522,13 @@ class RunControl:
             if not ok:
                 raise Refused(why)
             sid = f"n-{time.strftime('%Y%m%d-%H%M%S')}-{secrets.token_hex(2)}"
+            doc = summary.pop("settings_doc", None)
+            if doc is not None:                                  # brief 194: the run reads the confirmed settings from a file it will re-check
+                import yaml
+                sf = self.runs_dir / "_navigator" / f"{sid}.settings.yaml"
+                sf.parent.mkdir(parents=True, exist_ok=True)
+                sf.write_text(yaml.safe_dump(doc, sort_keys=False))
+                argv = [*argv, "--settings", str(sf), "--interview", "on"]          # the questions go to the Live page, as any interview question does
             text = guards.lock_text(f"agent run {summary.get('target', '')[:40]} (Vivado impl, peak 6G)", RUN_HOURS)
             slot = guards.HeavySlot(self.handoff, self.runner, text)
             try:

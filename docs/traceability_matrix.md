@@ -47,7 +47,7 @@ The human specifies the requirements and checks that the verification is thoroug
 
 - `b110_itch_ouch`: 6 method mix missing, 5 no passing evidence, 4 own tests only, 4 stale evidence
 - `b119_tcp_fast`: 2 hardware open, 6 method mix missing, 18 no passing evidence, 6 own tests only, 22 stale evidence
-- `b96_kr260_10g`: 3 hardware open, 12 method mix missing, 4 no passing evidence, 9 own tests only, 14 stale evidence
+- `b96_kr260_10g`: 3 hardware open, 12 method mix missing, 4 no passing evidence, 9 own tests only, 18 stale evidence
 - `m141_ddr2_sched`: 1 hardware open, 3 method mix missing, 1 no passing evidence, 7 own tests only, 4 performance sim only
 - `t1_dimmer_counter`: 21 no passing evidence, 96 stale evidence
 - `arith_adder`: 2 lean statement unapproved, 5 method mix missing, 2 no passing evidence, 5 own tests only, 2 stale evidence

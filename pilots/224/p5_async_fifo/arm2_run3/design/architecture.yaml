@@ -1,0 +1,63 @@
+schema: fpga-design-agent/architecture/v1
+blocks:
+- name: top
+  function: thin top; instantiates jtag_bus, power-on reset generator, IBUFDS_GTE4 for gt_refclk, the core; drives sfp_tx_disable=1
+- name: jtag_bus
+  function: supplied BSCANE2 USER4 register bus (data/jtag_bus.sv, unchanged), clk_25 domain
+- name: fifo_core
+  function: register core in clk_25 domain with LEDs, CTRL, counters, snapshot, PRBS-31 writer, plus gt_refclk reader/checker
+- name: async_fifo
+  function: 512x32 asynchronous FIFO, Gray pointers (xpm_cdc_gray), simple dual-port RAM
+- name: reset_gen
+  function: power-on reset counter in clk_25, xpm_cdc_async_rst into gt_refclk domain
+interfaces:
+- name: host_regs
+  between: [jtag_bus, fifo_core]
+  protocol: simple
+  prefix: h
+  module: fifo_core
+- name: sfp_ctl
+  between: [top, board]
+  protocol: gpio
+  prefix: sfp
+  module: top
+clock_domains:
+- name: clk_25
+  clock: clk_25
+  freq_mhz: 25
+- name: gt_refclk
+  clock: gt_refclk_p
+  freq_mhz: 156.25
+reset:
+  synchronisers: [reset_gen]
+crossings:
+- from: clk_25
+  to: gt_refclk
+  signal: write pointer (gray)
+  primitive: xpm_cdc_gray
+  inline_in: async_fifo
+- from: gt_refclk
+  to: clk_25
+  signal: read pointer (gray)
+  primitive: xpm_cdc_gray
+  inline_in: async_fifo
+- from: clk_25
+  to: gt_refclk
+  signal: RUN, SLOW_READ, INJECT, CLEAR
+  primitive: xpm_cdc_array_single
+  inline_in: fifo_core
+- from: gt_refclk
+  to: clk_25
+  signal: reader counters snapshot
+  primitive: xpm_cdc_handshake
+  inline_in: fifo_core
+- from: clk_25
+  to: gt_refclk
+  signal: reset
+  primitive: xpm_cdc_async_rst
+  inline_in: reset_gen
+predicted_resources:
+  lut: [450, 1200]
+  ff: [800, 1700]
+  bram_tile: [0.5, 1]
+  dsp: 0

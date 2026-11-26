@@ -58,7 +58,7 @@ multi-module design, waits for the owner's approval of this page. Words used bel
 | AMD IP from design tools | FIR, CIC, BMG and DDS adapters: spec, then `.coe`/`CONFIG.*`, then a bit-exact xsim check, then OOC synthesis | `flow/ipgen/`, `docs/ipgen.md` | not a module type the agent can choose |
 | Version pin | `gates.json` records the Vivado version and the version the knowledge bank was measured on | `flow/version_pin.py` | none for this design (the cache key uses it) |
 | Tools for other clients | the core's tools as an MCP server for one design directory | `agent/mcp_server/server.py` | run control (`run`, `resume`, the review reply) is CLI-only; nothing at project level |
-| Heavy-job limits | the Vivado runner refuses to start above `FDA_VIVADO_MAX` (default 1) jobs or below `MIN_AVAIL_GB` (default 7) free; mutation takes the shared lock (`FDA_HEAVY_LOCK`) | `flow/run_vivado.sh` (`preflight`), `flow/mutate.py` | a scheduler across modules |
+| Heavy-job limits | the Vivado runner refuses to start above `FDA_VIVADO_MAX` (default 1) jobs or below `MIN_AVAIL_GB` (default 7) free; mutation takes the shared lock (`FDA_HEAVY_LOCK`), or runs inside the slot the run already holds (`FDA_HEAVY_SLOT`, brief 219) | `flow/run_vivado.sh` (`preflight`), `flow/mutate.py` | a scheduler across modules |
 
 Evidence so far covers single designs only: T1, the board self-checks and the course-tier development tasks. Eval-1 was
 stopped and reports nothing (README). No multi-module design has been shown.

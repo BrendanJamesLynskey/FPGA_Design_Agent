@@ -1,0 +1,109 @@
+# Seeded faults (run by flow/net/faults.py): each replaces `old` (exactly once) by `new` in a copy of rtl/;
+# the tests named in `test` must fail. The real RTL is never touched.
+runner: flow/net/faults.py          # the fault runner that owns this block's faults
+faults:
+  - name: comb_ready_ignores_take
+    file: pipe_reg_slice.sv
+    old: "assign s_ready = !m_valid || m_ready;"
+    new: "assign s_ready = !m_valid;"
+    class: performance
+    why: "the comb slice's s_ready no longer depends on m_ready: it works but at half throughput and with a different ready timing"
+    test: ip_lib/pipe_reg/tb/test_pipe_reg_rtl.py -k test_random_traffic
+  - name: comb_reset_keeps_valid
+    file: pipe_reg_slice.sv
+    old: "if (rst) m_valid <= 1'b0;"
+    new: "if (1'b0) m_valid <= 1'b0;"
+    class: reset
+    why: "reset does not clear the comb slice's valid: a beat survives a reset"
+    test: ip_lib/pipe_reg/tb/test_pipe_reg_rtl.py -k test_random_traffic
+  - name: half_ready_stale
+    file: pipe_reg_slice.sv
+    old: "s_ready <= !v_next;"
+    new: "s_ready <= !m_valid;"
+    class: protocol
+    why: "the half slice's ready register is computed from the old valid: it accepts a second beat into a full slice"
+    test: ip_lib/pipe_reg/tb/test_pipe_reg_rtl.py -k test_random_traffic
+  - name: half_drop_unready
+    file: pipe_reg_slice.sv
+    old: "else if (m_valid && m_ready) v_next = 1'b0;"
+    new: "else if (m_valid) v_next = 1'b0;"
+    class: data-loss
+    why: "the half slice empties itself without waiting for m_ready: a stalled beat is lost"
+    test: ip_lib/pipe_reg/tb/test_pipe_reg_rtl.py -k test_random_traffic
+  - name: skid_ready_too_late
+    file: pipe_reg_slice.sv
+    old: "wire s_ready_next = m_ready || (!t_valid && (!m_valid || !s_valid));"
+    new: "wire s_ready_next = m_ready || !t_valid;"
+    class: data-loss
+    why: "the skid buffer stays ready one clock too long: the side register is overwritten"
+    test: ip_lib/pipe_reg/tb/test_pipe_reg_rtl.py -k test_random_traffic
+  - name: skid_park_dropped
+    file: pipe_reg_slice.sv
+    old: "else                     t_valid <= s_valid;"
+    new: "else                     t_valid <= 1'b0;"
+    class: data-loss
+    why: "the skid buffer never parks the beat that arrives after m_ready falls: it is lost"
+    test: ip_lib/pipe_reg/tb/test_pipe_reg_rtl.py -k test_random_traffic
+  - name: skid_drain_wrong_source
+    file: pipe_reg_slice.sv
+    old: "m_data <= t_data;"
+    new: "m_data <= s_data;"
+    class: data-corruption
+    why: "the side register drains into the output register from the wrong source: the parked beat is replaced by the input"
+    test: ip_lib/pipe_reg/tb/test_pipe_reg_rtl.py -k test_random_traffic
+  - name: full_write_pointer_stuck
+    file: pipe_reg_slice.sv
+    old: "if (push) wp <= !wp;"
+    new: "if (push && !wp) wp <= !wp;"
+    class: data-loss
+    why: "the full slice's write pointer stops alternating: later beats overwrite the same entry"
+    test: ip_lib/pipe_reg/tb/test_pipe_reg_rtl.py -k test_random_traffic
+  - name: full_read_swapped
+    file: pipe_reg_slice.sv
+    old: "assign m_data = rp ? e1 : e0;"
+    new: "assign m_data = rp ? e0 : e1;"
+    class: data-corruption
+    why: "the full slice reads the entries in the wrong order: two beats swap"
+    test: ip_lib/pipe_reg/tb/test_pipe_reg_rtl.py -k test_random_traffic
+  - name: full_ready_overfill
+    file: pipe_reg_slice.sv
+    old: "s_ready <= (cnt_next != 2'd2);"
+    new: "s_ready <= (cnt_next != 2'd3);"
+    class: protocol
+    why: "the full slice never says not-ready: a third beat overwrites an unread one"
+    test: ip_lib/pipe_reg/tb/test_pipe_reg_rtl.py -k test_random_traffic
+  - name: fwd_enable_needs_ready
+    file: pipe_reg_slice.sv
+    old: "wire en = m_ready || !v[NS-1];"
+    new: "wire en = m_ready;"
+    class: deadlock
+    why: "the shared enable ignores an empty output: a sink that waits for valid before ready never sees the beat"
+    test: ip_lib/pipe_reg/tb/test_pipe_reg_rtl.py -k test_random_traffic
+  - name: fwd_first_stage_free_running
+    file: pipe_reg_slice.sv
+    old: "if (en) d[0 +: W] <= s_data;"
+    new: "d[0 +: W] <= s_data;"
+    class: data-corruption
+    why: "the first stage's data register loads on every clock, not only when enabled: a stalled beat is overwritten"
+    test: ip_lib/pipe_reg/tb/test_pipe_reg_rtl.py -k test_random_traffic
+  - name: chain_output_ready_ignored
+    file: pipe_reg.sv
+    old: "assign lr[N]   = m_ready;"
+    new: "assign lr[N]   = 1'b1;"
+    class: data-loss
+    why: "the last slice is told the sink is always ready: beats are lost while the sink stalls"
+    test: ip_lib/pipe_reg/tb/test_pipe_reg_rtl.py -k test_random_traffic
+  - name: wire_ready_constant
+    file: pipe_reg.sv
+    old: "assign s_ready = m_ready;"
+    new: "assign s_ready = 1'b1;"
+    class: data-loss
+    why: "the N = 0 wire tells the source it is ready whatever the sink says"
+    test: ip_lib/pipe_reg/tb/test_pipe_reg_rtl.py -k test_random_traffic
+  - name: fwd_valid_gated_by_ready
+    file: pipe_reg_slice.sv
+    old: "assign m_valid = v[NS-1];"
+    new: "assign m_valid = v[NS-1] && m_ready;"
+    class: protocol
+    why: "the output's tvalid depends on tready (forbidden by AXI4-Stream): the bench's tready flip within a clock sees it; the port rules cannot, because a gated valid never looks withdrawn"
+    test: ip_lib/pipe_reg/tb/test_pipe_reg_rtl.py -k test_random_traffic

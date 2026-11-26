@@ -89,6 +89,7 @@ def main(argv: list[str] | None = None) -> int:
         session = role_session(session, a.role)
     rd = os.environ.get("FDA_RUN_DIR")                            # brief 182: the arm names the run, so this process's tool runs leave console/<step>.log too
     if rd and Path(rd).is_dir():
+        session.permissions_run_dir = Path(rd)                    # brief 222: this process's tool calls obey the run's permission policy
         from agent.core import console
         console.install(session.runner, Path(rd), lambda: session.stage)
     anyio.run(serve, session, set(a.tools.split(",")) if a.tools else None)

@@ -58,9 +58,10 @@ def resolve(text: str) -> tuple[str | None, list[str]]:
         for k in filter(None, keys):
             m = re.search(rf" {re.escape(k)} (\S*)", t)
             if m:
-                found.append((b, k, bool(re.match(r"\d", m.group(1)))))
+                found.append((b, k, bool(re.match(r"\d", m.group(1))) or m.group(1) in {_norm(w) for w in e.get("other_models_after", [])}))
     # a shorter alias inside a longer matched one does not count; then a digit-led word after an alias ("arty s7 25",
-    # "nexys a7 50t") names another model the catalogue does not have, so that alias does not count either
+    # "nexys a7 50t") names another model the catalogue does not have, so that alias does not count either; so does a word the entry lists
+    # under other_models_after (brief 225: "stemlab 125 14 gen 2" is another board than the original generation)
     live = [(b, k, d) for b, k, d in found if not any(k != k2 and f" {k} " in f" {k2} " for _, k2, _ in found)]
     keep = {b for b, k, d in live if not d}
     if not keep:

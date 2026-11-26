@@ -4,6 +4,7 @@ the retrieval probe uses. Plain Python: no model, no Vivado, no simulator."""
 from __future__ import annotations
 
 import json
+import re
 import shutil
 from pathlib import Path
 
@@ -74,14 +75,16 @@ def test_every_entry_has_a_readable_instantiation_snippet() -> None:
     for b in iv.entries():
         sn = il.snippet(b)
         top = iv._yaml(b)["top"]
-        assert sn.lstrip().startswith(top) and (".clk(clk)" in sn.replace(" ", "") or ".aclk(aclk)" in sn.replace(" ", "")), b      # AXI entries name their clock aclk
+        # the clock is connected: the entry's clock port is `clk`, or `aclk` for the AMBA-style entries (pipe_reg, credit_chan, axi_reg_slice; brief 202)
+        assert sn.lstrip().startswith(top) and re.search(r"\.a?clk\(a?clk\)", sn.replace(" ", "")), b
         assert "could not be read" not in sn, b
 
 
 def test_verified_label_is_unknown_without_a_record_and_read_when_present(tmp_path: Path, monkeypatch) -> None:
-    assert il.verified_status("fir")["label"] == "unknown"
     ip = tmp_path / "ip_lib"
     (ip / "fir").mkdir(parents=True)
+    monkeypatch.setattr(il, "IP", ip)                      # brief 144 ships a record for every entry, so the absent case is a checkout without one
+    assert il.verified_status("fir")["label"] == "unknown"
     (ip / "fir" / "verified.json").write_text(json.dumps({"label_kind": "not_assessed", "label": "Not assessed: x",
                                                           "criteria": [{"title": "t", "state": "not_measured"}]}))
     monkeypatch.setattr(il, "IP", ip)

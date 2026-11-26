@@ -1,0 +1,292 @@
+{
+ "proofs": [
+  {
+   "task": "fwd1",
+   "status": "PASS",
+   "seconds": 0.4,
+   "kind": "k-induction proof"
+  },
+  {
+   "task": "fwd3",
+   "status": "PASS",
+   "seconds": 0.5,
+   "kind": "k-induction proof"
+  },
+  {
+   "task": "skid1",
+   "status": "PASS",
+   "seconds": 0.6,
+   "kind": "k-induction proof"
+  },
+  {
+   "task": "skid2",
+   "status": "PASS",
+   "seconds": 0.6,
+   "kind": "k-induction proof"
+  },
+  {
+   "task": "skid3",
+   "status": "PASS",
+   "seconds": 0.8,
+   "kind": "k-induction proof"
+  },
+  {
+   "task": "full1",
+   "status": "PASS",
+   "seconds": 0.6,
+   "kind": "k-induction proof"
+  },
+  {
+   "task": "full2",
+   "status": "PASS",
+   "seconds": 0.8,
+   "kind": "k-induction proof"
+  },
+  {
+   "task": "full3",
+   "status": "PASS",
+   "seconds": 0.9,
+   "kind": "k-induction proof"
+  },
+  {
+   "task": "half1",
+   "status": "PASS",
+   "seconds": 0.5,
+   "kind": "k-induction proof"
+  },
+  {
+   "task": "half2",
+   "status": "PASS",
+   "seconds": 0.5,
+   "kind": "k-induction proof"
+  },
+  {
+   "task": "comb1",
+   "status": "PASS",
+   "seconds": 0.4,
+   "kind": "k-induction proof"
+  },
+  {
+   "task": "comb2",
+   "status": "PASS",
+   "seconds": 0.5,
+   "kind": "k-induction proof"
+  },
+  {
+   "task": "comb3",
+   "status": "PASS",
+   "seconds": 0.6,
+   "kind": "k-induction proof"
+  },
+  {
+   "task": "wire0",
+   "status": "PASS",
+   "seconds": 0.4,
+   "kind": "k-induction proof"
+  },
+  {
+   "task": "skid2c",
+   "status": "PASS",
+   "seconds": 1.0,
+   "kind": "cover"
+  },
+  {
+   "task": "fwd3c",
+   "status": "PASS",
+   "seconds": 0.7,
+   "kind": "cover"
+  },
+  {
+   "task": "full2c",
+   "status": "PASS",
+   "seconds": 1.2,
+   "kind": "cover"
+  },
+  {
+   "task": "half2c",
+   "status": "PASS",
+   "seconds": 0.9,
+   "kind": "cover"
+  },
+  {
+   "task": "comb2c",
+   "status": "PASS",
+   "seconds": 0.8,
+   "kind": "cover"
+  },
+  {
+   "task": "wire0c",
+   "status": "PASS",
+   "seconds": 0.4,
+   "kind": "cover"
+  },
+  {
+   "task": "sva_fwd3",
+   "status": "PASS",
+   "seconds": 0.4,
+   "kind": "k-induction proof of the AXI4-Stream rules as SVA (slang)"
+  },
+  {
+   "task": "sva_skid1",
+   "status": "PASS",
+   "seconds": 0.5,
+   "kind": "k-induction proof of the AXI4-Stream rules as SVA (slang)"
+  },
+  {
+   "task": "sva_skid2",
+   "status": "PASS",
+   "seconds": 0.6,
+   "kind": "k-induction proof of the AXI4-Stream rules as SVA (slang)"
+  },
+  {
+   "task": "sva_full2",
+   "status": "PASS",
+   "seconds": 0.6,
+   "kind": "k-induction proof of the AXI4-Stream rules as SVA (slang)"
+  },
+  {
+   "task": "sva_half2",
+   "status": "PASS",
+   "seconds": 0.5,
+   "kind": "k-induction proof of the AXI4-Stream rules as SVA (slang)"
+  },
+  {
+   "task": "sva_comb2",
+   "status": "PASS",
+   "seconds": 0.5,
+   "kind": "k-induction proof of the AXI4-Stream rules as SVA (slang)"
+  },
+  {
+   "task": "sva_wire0",
+   "status": "PASS",
+   "seconds": 0.4,
+   "kind": "k-induction proof of the AXI4-Stream rules as SVA (slang)"
+  },
+  {
+   "task": "sva_fwd3c",
+   "status": "PASS",
+   "seconds": 0.7,
+   "kind": "cover"
+  },
+  {
+   "task": "sva_skid2c",
+   "status": "PASS",
+   "seconds": 1.0,
+   "kind": "cover"
+  },
+  {
+   "task": "sva_full2c",
+   "status": "PASS",
+   "seconds": 1.0,
+   "kind": "cover"
+  },
+  {
+   "task": "sva_half2c",
+   "status": "PASS",
+   "seconds": 0.9,
+   "kind": "cover"
+  },
+  {
+   "task": "sva_comb2c",
+   "status": "PASS",
+   "seconds": 0.9,
+   "kind": "cover"
+  },
+  {
+   "task": "sva_wire0c",
+   "status": "PASS",
+   "seconds": 0.4,
+   "kind": "cover"
+  }
+ ],
+ "faults": [
+  {
+   "name": "comb_ready_ignores_take",
+   "status": "not a safety bug",
+   "why": "a throughput bug: the slice is correct but slower"
+  },
+  {
+   "name": "comb_reset_keeps_valid",
+   "task": "comb2",
+   "status": "refuted",
+   "seconds": 0.5
+  },
+  {
+   "name": "half_ready_stale",
+   "task": "half2",
+   "status": "refuted",
+   "seconds": 0.5
+  },
+  {
+   "name": "half_drop_unready",
+   "task": "half2",
+   "status": "refuted",
+   "seconds": 0.6
+  },
+  {
+   "name": "skid_ready_too_late",
+   "task": "skid2",
+   "status": "refuted",
+   "seconds": 0.6
+  },
+  {
+   "name": "skid_park_dropped",
+   "task": "skid2",
+   "status": "refuted",
+   "seconds": 0.6
+  },
+  {
+   "name": "skid_drain_wrong_source",
+   "task": "skid2",
+   "status": "refuted",
+   "seconds": 0.6
+  },
+  {
+   "name": "full_write_pointer_stuck",
+   "task": "full2",
+   "status": "refuted",
+   "seconds": 0.6
+  },
+  {
+   "name": "full_read_swapped",
+   "task": "full2",
+   "status": "refuted",
+   "seconds": 0.5
+  },
+  {
+   "name": "full_ready_overfill",
+   "task": "full2",
+   "status": "refuted",
+   "seconds": 0.6
+  },
+  {
+   "name": "fwd_enable_needs_ready",
+   "status": "not a safety bug",
+   "why": "a liveness bug: a sink that waits for valid before ready waits for ever; no safety property is broken"
+  },
+  {
+   "name": "fwd_first_stage_free_running",
+   "task": "fwd3",
+   "status": "refuted",
+   "seconds": 0.5
+  },
+  {
+   "name": "chain_output_ready_ignored",
+   "task": "skid2",
+   "status": "refuted",
+   "seconds": 0.6
+  },
+  {
+   "name": "wire_ready_constant",
+   "task": "wire0",
+   "status": "refuted",
+   "seconds": 0.4
+  },
+  {
+   "name": "fwd_valid_gated_by_ready",
+   "status": "not a safety bug",
+   "why": "tvalid depending on tready: caught by the bench (tready flipped within a clock), not by the port rules, because a gated valid never looks withdrawn"
+  }
+ ],
+ "date": "2026-11-24 08:31"
+}

@@ -1,0 +1,8 @@
+# The oracle's whole knowledge of the request (not shown to the agent). It says nothing about the clock frequency, the reset, or the register width.
+behaviour:
+  - "A press of the centre button (BTNC) lights LED 0. The LED goes out 500 ms after the last accepted press."
+  - "A press while lit restarts the 500 ms."
+  - "BTNC is debounced: a change shorter than 5 ms is ignored."
+registers:
+  map:
+    - {name: STATE, offset: 0x00, access: RO, reset: 0, bits: "bit 0 = LED 0 is lit"}

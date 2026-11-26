@@ -1,0 +1,170 @@
+schema: fpga-design-agent/testplan/v0
+design: p4_fir_dsp
+spec: spec.yaml
+model: model.py
+bench:
+  modules: [bench_p4_fir_dsp]
+  dir: tests
+checkers: verif/checkers
+formal_dir: verif/formal
+thresholds:
+  seeds_min: 3
+  functional_bins_pct: 100
+  cover_properties_pct: 100
+  line_pct: 95
+  toggle_pct: 80
+  mutation_score_pct: 80
+waivers:
+  code_coverage: []
+  functional_bins: []
+  cover_properties: []
+requirements:
+  - id: REQ-01
+    spec: [registers.map.ID]
+    tests: [bench_p4_fir_dsp.test_reset_values, bench_p4_fir_dsp.test_scratch]
+  - id: REQ-02
+    spec: [registers.map.BUILD, "behaviour.bus[2]"]
+    tests: [bench_p4_fir_dsp.test_unmapped]
+  - id: REQ-03
+    spec: [registers.map.SCRATCH]
+    tests: [bench_p4_fir_dsp.test_scratch]
+  - id: REQ-31
+    spec: [reset]
+    tests: [bench_p4_fir_dsp.test_reset_values, bench_p4_fir_dsp.test_scratch]
+  - id: REQ-04
+    spec: [registers.unmapped, "behaviour.bus[1]"]
+    tests: [bench_p4_fir_dsp.test_unmapped]
+  - id: REQ-05
+    spec: [registers.unmapped]
+    tests: [bench_p4_fir_dsp.test_unmapped]
+  - id: REQ-06
+    spec: [timing.latency.register_read, timing.latency.register_write, "behaviour.bus[0]"]
+    tests: [bench_p4_fir_dsp.test_rdata_timing_hold]
+  - id: REQ-32
+    spec: ["behaviour.bus[0]"]
+    tests: [bench_p4_fir_dsp.test_rdata_timing_hold]
+  - id: REQ-07
+    spec: ["behaviour.filter[0]", "behaviour.filter[1]", "behaviour.filter[2]", timing.latency.filter_pipeline]
+    tests: [bench_p4_fir_dsp.test_impulse]
+  - id: REQ-08
+    spec: ["behaviour.filter[3]", "behaviour.filter[4]"]
+    tests: [bench_p4_fir_dsp.test_step, bench_p4_fir_dsp.test_saturation]
+  - id: REQ-09
+    spec: ["behaviour.run[0]"]
+    tests: [bench_p4_fir_dsp.test_random_chunks_10000, bench_p4_fir_dsp.test_random_ops]
+  - id: REQ-10
+    spec: ["behaviour.filter[2]"]
+    tests: [bench_p4_fir_dsp.test_impulse]
+  - id: REQ-11
+    spec: ["behaviour.filter[5]"]
+    tests: [bench_p4_fir_dsp.test_throughput]
+  - id: REQ-12
+    spec: ["behaviour.filter[5]"]
+    tests: [bench_p4_fir_dsp.test_throughput]
+  - id: REQ-13
+    spec: ["behaviour.fifos[0]"]
+    tests: [bench_p4_fir_dsp.test_fifo_capacity]
+  - id: REQ-33
+    spec: ["behaviour.fifos[1]", registers.map.IN_PUSH]
+    tests: [bench_p4_fir_dsp.test_fifo_capacity]
+  - id: REQ-14
+    spec: ["behaviour.fifos[0]"]
+    tests: [bench_p4_fir_dsp.test_fifo_capacity]
+  - id: REQ-15
+    spec: ["behaviour.fifos[2]", registers.map.OUT_POP]
+    tests: [bench_p4_fir_dsp.test_pop_semantics]
+  - id: REQ-16
+    spec: ["behaviour.fifos[2]"]
+    tests: [bench_p4_fir_dsp.test_pop_semantics, bench_p4_fir_dsp.test_reset_values]
+  - id: REQ-17
+    spec: ["behaviour.run[0]"]
+    tests: [bench_p4_fir_dsp.test_busy_status, bench_p4_fir_dsp.test_random_chunks_10000]
+  - id: REQ-18
+    spec: ["behaviour.filter[3]"]
+    tests: [bench_p4_fir_dsp.test_history_persists]
+  - id: REQ-19
+    spec: ["behaviour.clear[0]"]
+    tests: [bench_p4_fir_dsp.test_clear]
+  - id: REQ-20
+    spec: [registers.map.CTRL]
+    tests: [bench_p4_fir_dsp.test_clear]
+  - id: REQ-21
+    spec: ["behaviour.run[1]", "behaviour.pins[1]"]
+    tests: [bench_p4_fir_dsp.test_busy_status]
+  - id: REQ-22
+    spec: [registers.map.STATUS]
+    tests: [bench_p4_fir_dsp.test_busy_status, bench_p4_fir_dsp.test_fifo_capacity]
+  - id: REQ-34
+    spec: [registers.map.STATUS]
+    tests: [bench_p4_fir_dsp.test_pop_semantics, bench_p4_fir_dsp.test_fifo_capacity]
+  - id: REQ-23
+    spec: [registers.map.SAT_COUNT]
+    tests: [bench_p4_fir_dsp.test_saturation]
+  - id: REQ-24
+    spec: [registers.map.SAMPLES_DONE, "behaviour.run[2]"]
+    tests: [bench_p4_fir_dsp.test_random_chunks_10000, bench_p4_fir_dsp.test_clear]
+  - id: REQ-25
+    spec: ["behaviour.pins[0]"]
+    tests: [bench_p4_fir_dsp.test_sfp_constant, bench_p4_fir_dsp.test_reset_values]
+  - id: REQ-26
+    spec: ["behaviour.pins[0]"]
+    tests: [bench_p4_fir_dsp.test_sfp_constant]
+  - id: REQ-27
+    spec: ["behaviour.bus[0]"]
+    tests: [bench_p4_fir_dsp.test_rdata_timing_hold]
+  - id: REQ-28
+    spec: ["behaviour.filter[2]"]
+    tests: [bench_p4_fir_dsp.test_impulse]
+  - id: REQ-29
+    spec: ["behaviour.filter[5]"]
+    tests: [bench_p4_fir_dsp.test_throughput]
+  - id: REQ-30
+    spec: ["behaviour.filter[5]"]
+    tests: [bench_p4_fir_dsp.test_throughput]
+proof:
+  - {requirement: REQ-01, method: simulation, artefact: bench_p4_fir_dsp.test_reset_values}
+  - {requirement: REQ-01, method: hardware, artefact: uart_tests}
+  - {requirement: REQ-02, method: hardware, artefact: uart_tests}
+  - {requirement: REQ-03, method: simulation, artefact: bench_p4_fir_dsp.test_scratch}
+  - {requirement: REQ-03, method: hardware, artefact: uart_tests}
+  - {requirement: REQ-31, method: simulation, artefact: bench_p4_fir_dsp.test_scratch}
+  - {requirement: REQ-04, method: simulation, artefact: bench_p4_fir_dsp.test_unmapped}
+  - {requirement: REQ-05, method: simulation, artefact: bench_p4_fir_dsp.test_unmapped}
+  - {requirement: REQ-06, method: simulation, artefact: bench_p4_fir_dsp.test_rdata_timing_hold}
+  - {requirement: REQ-32, method: simulation, artefact: bench_p4_fir_dsp.test_rdata_timing_hold}
+  - {requirement: REQ-07, method: simulation, artefact: bench_p4_fir_dsp.test_impulse}
+  - {requirement: REQ-07, method: hardware, artefact: uart_tests}
+  - {requirement: REQ-08, method: simulation, artefact: bench_p4_fir_dsp.test_step}
+  - {requirement: REQ-08, method: hardware, artefact: uart_tests}
+  - {requirement: REQ-09, method: simulation, artefact: bench_p4_fir_dsp.test_random_chunks_10000}
+  - {requirement: REQ-09, method: hardware, artefact: uart_tests}
+  - {requirement: REQ-10, method: analysis, artefact: "post_synth:post_synth_resources_in_range"}
+  - {requirement: REQ-11, method: simulation, artefact: bench_p4_fir_dsp.test_throughput}
+  - {requirement: REQ-12, method: analysis, artefact: "post_route:setup"}
+  - {requirement: REQ-13, method: simulation, artefact: bench_p4_fir_dsp.test_fifo_capacity}
+  - {requirement: REQ-33, method: simulation, artefact: bench_p4_fir_dsp.test_fifo_capacity}
+  - {requirement: REQ-14, method: simulation, artefact: bench_p4_fir_dsp.test_fifo_capacity}
+  - {requirement: REQ-15, method: simulation, artefact: bench_p4_fir_dsp.test_pop_semantics}
+  - {requirement: REQ-16, method: simulation, artefact: bench_p4_fir_dsp.test_pop_semantics}
+  - {requirement: REQ-17, method: simulation, artefact: bench_p4_fir_dsp.test_busy_status}
+  - {requirement: REQ-17, method: hardware, artefact: uart_tests}
+  - {requirement: REQ-18, method: simulation, artefact: bench_p4_fir_dsp.test_history_persists}
+  - {requirement: REQ-19, method: simulation, artefact: bench_p4_fir_dsp.test_clear}
+  - {requirement: REQ-20, method: simulation, artefact: bench_p4_fir_dsp.test_clear}
+  - {requirement: REQ-21, method: simulation, artefact: bench_p4_fir_dsp.test_busy_status}
+  - {requirement: REQ-22, method: simulation, artefact: bench_p4_fir_dsp.test_busy_status}
+  - {requirement: REQ-34, method: simulation, artefact: bench_p4_fir_dsp.test_pop_semantics}
+  - {requirement: REQ-23, method: simulation, artefact: bench_p4_fir_dsp.test_saturation}
+  - {requirement: REQ-24, method: simulation, artefact: bench_p4_fir_dsp.test_random_chunks_10000}
+  - {requirement: REQ-25, method: hardware, artefact: uart_tests}
+  - {requirement: REQ-26, method: analysis, artefact: "post_synth:post_synth_resources_in_range"}
+  - {requirement: REQ-27, method: analysis, artefact: "post_synth:post_synth_resources_in_range"}
+  - {requirement: REQ-28, method: analysis, artefact: "post_synth:post_synth_resources_in_range"}
+  - {requirement: REQ-29, method: analysis, artefact: "post_route:setup"}
+  - {requirement: REQ-30, method: analysis, artefact: "post_route:setup"}
+replan:
+  - {requirement: REQ-06, method: formal, replaced_by: simulation, artefact: bench_p4_fir_dsp.test_rdata_timing_hold, why: "SymbiYosys is not installed here, so the read-latency property is checked in simulation."}
+  - {requirement: REQ-32, method: formal, replaced_by: simulation, artefact: bench_p4_fir_dsp.test_rdata_timing_hold, why: "SymbiYosys is not installed here, so the hold property is checked in simulation."}
+  - {requirement: REQ-13, method: formal, replaced_by: simulation, artefact: bench_p4_fir_dsp.test_fifo_capacity, why: "SymbiYosys is not installed here, so FIFO capacity is checked by filling 1024 entries in simulation."}
+  - {requirement: REQ-33, method: formal, replaced_by: simulation, artefact: bench_p4_fir_dsp.test_fifo_capacity, why: "SymbiYosys is not installed here, so push-when-full is checked in simulation."}
+  - {requirement: REQ-25, method: formal, replaced_by: simulation, artefact: bench_p4_fir_dsp.test_sfp_constant, why: "SymbiYosys is not installed here, so the constant pin is sampled in simulation and on hardware."}

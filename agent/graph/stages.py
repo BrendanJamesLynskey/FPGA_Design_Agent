@@ -62,6 +62,35 @@ def visit_limit(stage: int, run_limits: dict) -> int:
     base = int(run_limits["visits_per_stage"])
     return max(base, STAGE_VISITS.get(stage, 0)) if base >= RUN_LIMITS["visits_per_stage"] else base
 
+#: Brief 234: the run turn cap scales with the design's size, measured in architecture blocks. A turn is one model call. From the 224 arm
+#: (small designs of 4 to 6 blocks): the clean pass to stage 9 took 183 turns for 5 blocks (p4 run 2, 37 per block); runs that looped
+#: used 169 to 300 (49 to 60 per block). So 60 per block covers a looping run and the floor stays the old 300. The ceiling is 15
+#: blocks; the USD cap (not this one) is what limits a big design's spend.
+TURNS_PER_BLOCK = 60
+MAX_RUN_TURNS = 900
+
+
+def run_turn_cap(blocks: int) -> int:
+    """The run's turn cap for a design of ``blocks`` architecture blocks: ``max(300, 60 * blocks)``, at most 900."""
+    return min(MAX_RUN_TURNS, max(int(RUN_LIMITS["turns"]), TURNS_PER_BLOCK * int(blocks)))
+
+
+def visits_after_route(visits: dict, n: int, target: int) -> dict:
+    """Brief 234: the visit counts after stage ``n`` failed and was routed back to ``target`` (< n).
+
+    The stages the loop passes again (``target`` + 1 .. ``n`` - 1) start from zero: their earlier visits were spent repairing a
+    failure the later stage's change has now replaced, and entering them again is a re-check, not another repair attempt (p4 run 1,
+    20261125-174731-a2e5: stage 3 used its four visits on constraints, passed, then stage 4 sent the run back through stage 3 and the
+    fifth entry was refused before any gate ran). The two stages that are the loop itself keep their counts: ``n`` (the one that
+    failed) and ``target`` (the one asked to change what failed). So a loop that does not converge still ends: the highest stage in
+    any cycle is only reset by a failure of a still higher stage, which is not in the cycle, so its count only grows, and a route
+    back to one stage (brief 213's run, stage 2 to stage 1 four times) still stops on that stage's limit. A forward move or a retry
+    of the same stage changes nothing."""
+    if target >= n:
+        return dict(visits)
+    return {k: v for k, v in visits.items() if not target < int(k) < n}
+
+
 # gate name -> the stage names in flow/gates.py output it reads
 _FLOW_STAGES = {"stage_rtl": ["rtl"], "stage_post_synth": ["post_synth"], "stage_post_place": ["post_place"],
                 "stage_post_route": ["post_route"], "constraints_post_synth": ["post_synth"],

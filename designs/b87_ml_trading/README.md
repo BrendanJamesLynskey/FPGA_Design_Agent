@@ -2,6 +2,8 @@
 
 <!-- Generated from handover.yaml by flow/handover.py (brief 68). Edit handover.yaml, or the text between the prose markers, then run: python -m flow.handover write designs/b87_ml_trading -->
 
+**Verification: not assessed: no requirements recorded (no verif/testplan.yaml), so nothing here is traced to a requirement.** [VERIFIED.md](VERIFIED.md) is the generated, hash-pinned record; [what the label means](../../docs/verified.md).
+
 Small decision models for the 58A trading path, trained on synthetic order flow and built in the fabric of the K26 (Kria KR260). Boosted trees, an MLP built by hand and through hls4ml with Vitis HLS, and a LUT network are each checked bit for bit against their integer models over the whole test split, built out of context and routed, and the boosted trees sit behind the 58A rule table in simulation, switched by a register.
 
 Not in scope:
@@ -72,7 +74,7 @@ Interfaces:
 | hls4ml conversion, C simulation and Vitis HLS; needs hls4ml 1.3.0 and Vitis 2026.1 (vitis-run on PATH), a heavy slot | `python3 -m designs.b87_ml_trading.model.hls4ml_arm --synth --clock 2.0` | yes | about 3 min |
 | out-of-context builds and the clock search; needs Vivado 2026.1 and a heavy slot | `python3 -m designs.b87_ml_trading.ooc.ooc` | yes | about 60 min |
 
-Tool: Vivado 2026.1. Build ID of the inputs at handover: none (no Vivado build of this directory). Knowledge-bank pin: `5e2eab8`.
+Tool: Vivado 2026.1. Build ID of the inputs at handover: none (no Vivado build of this directory). Knowledge-bank pin: `6185830`.
 
 | File | What |
 |---|---|

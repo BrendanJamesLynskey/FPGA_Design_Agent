@@ -79,6 +79,9 @@ def shape_errors(spec: dict[str, Any]) -> list[str]:
     mapping (its ``latency``, if given, a mapping), ``goals`` (brief 159) a list of typed goals. Anything else is rejected here, with the shape named, instead of
     crashing the gates later."""
     errs, b, r, t = [], spec.get("behaviour"), spec.get("registers"), spec.get("timing")
+    rm = spec.get("reset").get("model") if isinstance(spec.get("reset"), dict) else None
+    if rm is not None and str(rm) not in ("reset", "reprogram"):            # brief 231: the reset model (STD-INIT-02)
+        errs.append("'reset.model' must be 'reset' (a reset input restarts the running design) or 'reprogram' (every reset reconfigures the FPGA)")
     if b and not (isinstance(b, dict) and all(isinstance(v, list) for v in b.values())):
         errs.append("'behaviour' must be a mapping of lists (group name -> list of statements)")
     if r:
@@ -93,6 +96,13 @@ def shape_errors(spec: dict[str, Any]) -> list[str]:
             errs.append("'timing.latency' must be a mapping of name -> text")
     from flow import goals as _goals               # brief 159: the typed goals block
     errs += _goals.errors(spec)
+    vp = spec.get("verif_profile")
+    if vp is not None:
+        from agent.graph import profiles
+        if vp not in profiles.PROFILES:
+            errs.append(f"'verif_profile' must be one of {', '.join(profiles.PROFILES)} (got {vp!r})")
+    if spec.get("timing_sim") is not None and not isinstance(spec["timing_sim"], bool):
+        errs.append("'timing_sim' must be true or false (true asks the thorough profiles for a post-route timing simulation)")
     return errs
 
 

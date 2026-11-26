@@ -21,4 +21,6 @@ def build() -> dict:
     for d in all_["designs"]:
         for i in d["items"]:
             i.pop("checks", None)
+    import verified                                    # brief 144: each design's verification label, for its panel
+    all_["verified"] = {r["path"]: r for r in verified.records()}
     return {"content": all_, "check": all_}
