@@ -1,0 +1,75 @@
+schema: fpga-design-agent/architecture/v1
+design: fir32_sym
+blocks:
+- name: fir32_top
+  function: Thin top; instantiates jtag_bus, reset generator, MMCM and the core; drives sfp_tx_disable=1
+- name: jtag_bus
+  function: Supplied BSCANE2 USER4 register bus (data/jtag_bus.sv, unchanged) giving h_we/h_re/h_addr/h_wdata
+- name: fir32_core
+  function: Register map (ID, BUILD, SCRATCH, CTRL, IN_PUSH, OUT_POP, STATUS, SAT_COUNT, SAMPLES_DONE), LEDs, run control
+- name: fir_dsp
+  function: 32-tap symmetric FIR, pre-add, 16 DSP48 multipliers, adder tree, round and saturate, 1 sample per clk_dsp
+- name: in_fifo
+  function: xpm_fifo_async 1024x16 input FIFO, clk write, clk_dsp read
+- name: out_fifo
+  function: xpm_fifo_async 1024x16 output FIFO, clk_dsp write, clk read
+- name: mmcm
+  function: MMCM 25 MHz x40 / 4 -> 250 MHz clk_dsp
+- name: rst_gen
+  function: Power-up reset for clk, and reset synchroniser into clk_dsp gated by MMCM locked
+interfaces:
+- name: reg_bus
+  between: [jtag_bus, fir32_core]
+  protocol: simple
+  prefix: h
+  module: fir32_core
+- name: in_stream
+  between: [in_fifo, fir_dsp]
+  protocol: simple
+  prefix: in
+  module: fir_dsp
+- name: out_stream
+  between: [fir_dsp, out_fifo]
+  protocol: simple
+  prefix: out
+  module: fir_dsp
+clock_domains:
+- name: clk25
+  clock: clk25
+  freq_mhz: 25
+- name: clk_dsp
+  clock: clk_dsp
+  freq_mhz: 250
+reset:
+  synchronisers: [xpm_cdc_async_rst]
+crossings:
+- from: clk25
+  to: clk_dsp
+  signal: in FIFO data and pointers
+  primitive: xpm_fifo_async
+  inline_in: fir32_core
+- from: clk_dsp
+  to: clk25
+  signal: out FIFO data and pointers
+  primitive: xpm_fifo_async
+  inline_in: fir32_core
+- from: clk25
+  to: clk_dsp
+  signal: run and clear request
+  primitive: xpm_cdc_pulse
+  inline_in: fir32_core
+- from: clk_dsp
+  to: clk25
+  signal: busy, sat_count, samples_done (quasi-static status)
+  primitive: xpm_cdc_array_single
+  inline_in: fir32_core
+- from: clk25
+  to: clk_dsp
+  signal: reset and MMCM locked
+  primitive: xpm_cdc_async_rst
+  inline_in: fir32_top
+predicted_resources:
+  lut: [350, 1500]
+  ff: [900, 2500]
+  bram_tile: [1, 4]
+  dsp: [16, 20]

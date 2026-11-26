@@ -1,0 +1,31 @@
+schema: fpga-design-agent/architecture/v1
+design: p4_fir32
+blocks:
+  - {name: fir32_top, function: "Thin top: MMCM (25 to 250 MHz), reset generator, jtag_bus, fir_core; drives sfp_tx_disable=1"}
+  - {name: jtag_bus, function: "Supplied BSCANE2 USER4 register bus (data/jtag_bus.sv, unchanged); h_we/h_re/h_addr/h_wdata/h_rdata on clk_bus"}
+  - {name: fir_core, function: "Register core: ID, BUILD, SCRATCH, CTRL, IN_PUSH, OUT_POP, STATUS, SAT_COUNT, SAMPLES_DONE, LEDs; run control"}
+  - {name: in_fifo, function: "Input FIFO 1024x16, xpm_fifo_async, clk_bus write, clk_dp read"}
+  - {name: out_fifo, function: "Output FIFO 1024x16, xpm_fifo_async, clk_dp write, clk_bus read"}
+  - {name: fir_datapath, function: "32-tap symmetric FIR at clk_dp: 16 pre-adds, 16 DSP48 multipliers, adder tree, round, shift 15, saturate to 16 bits, counters"}
+  - {name: reset_gen, function: "Synchronises rst into each domain; datapath reset held until MMCM locked"}
+interfaces:
+  - {name: host_reg_port, between: [jtag_bus, fir_core], protocol: simple, prefix: h, module: fir_core}
+  - {name: sample_in, between: [in_fifo, fir_datapath], protocol: simple, prefix: in, module: fir_datapath}
+  - {name: sample_out, between: [fir_datapath, out_fifo], protocol: simple, prefix: out, module: fir_datapath}
+clock_domains:
+  - {name: clk_25, clock: clk_25, freq_mhz: 25}
+  - {name: clk_dp, clock: clk_dp, freq_mhz: 250}
+reset:
+  synchronisers: [reset_gen]
+crossings:
+  - {from: clk_25, to: clk_dp, signal: "input FIFO data and flags", primitive: xpm_fifo_async, inline_in: in_fifo}
+  - {from: clk_dp, to: clk_25, signal: "output FIFO data and flags", primitive: xpm_fifo_async, inline_in: out_fifo}
+  - {from: clk_25, to: clk_dp, signal: "RUN and CLEAR commands", primitive: xpm_cdc_pulse, inline_in: fir_core}
+  - {from: clk_dp, to: clk_25, signal: "BUSY", primitive: xpm_cdc_single, inline_in: fir_core}
+  - {from: clk_dp, to: clk_25, signal: "SAT_COUNT and SAMPLES_DONE (quasi-static, via gray)", primitive: xpm_cdc_gray, inline_in: fir_core}
+  - {from: clk_25, to: clk_dp, signal: "rst", primitive: xpm_cdc_async_rst, inline_in: reset_gen}
+predicted_resources:
+  lut: [500, 1800]
+  ff: [900, 2600]
+  bram_tile: [2, 4]
+  dsp: [16, 18]

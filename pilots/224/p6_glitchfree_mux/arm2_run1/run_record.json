@@ -1,0 +1,332 @@
+{
+ "design": "p6_glitchfree_mux",
+ "run": 1,
+ "run_id": "20261125-203614-91c8",
+ "agent_sha": "300277464a83",
+ "model": [
+  "claude-sonnet-5-5"
+ ],
+ "endpoint": [
+  "anthropic_api"
+ ],
+ "api_calls": 172,
+ "real_usd": 5.4656,
+ "prompt_tokens": 6874532,
+ "completion_tokens": 239384,
+ "input_tokens": 388,
+ "cache_read_tokens": 5881002,
+ "cache_write_tokens": 993142,
+ "tokens_total": 7113916,
+ "truncated_calls": 0,
+ "cost_basis": [
+  "usage*price"
+ ],
+ "wall_s_after_slot": 3390,
+ "stage_visits": [
+  [
+   "clarify",
+   1,
+   "clarify",
+   "done",
+   4,
+   0.149
+  ],
+  [
+   "clarify",
+   2,
+   "clarify",
+   "done",
+   3,
+   0.056
+  ],
+  [
+   "board-and-device-planning",
+   1,
+   "rtl",
+   "done",
+   4,
+   0.1
+  ],
+  [
+   "board-and-device-planning",
+   2,
+   "rtl",
+   "done",
+   7,
+   0.076
+  ],
+  [
+   "rtl-design-creation",
+   1,
+   "model",
+   "done",
+   2,
+   0.049
+  ],
+  [
+   "rtl-design-creation",
+   1,
+   "tests",
+   "done",
+   7,
+   0.329
+  ],
+  [
+   "rtl-design-creation",
+   1,
+   "tests",
+   "done",
+   2,
+   0.079
+  ],
+  [
+   "rtl-design-creation",
+   1,
+   "rtl",
+   "stage_budget",
+   55,
+   2.346
+  ],
+  [
+   "rtl-design-creation",
+   2,
+   "rtl",
+   "done",
+   19,
+   0.287
+  ],
+  [
+   "rtl-design-creation",
+   3,
+   "rtl",
+   "done",
+   27,
+   0.629
+  ],
+  [
+   "rtl-design-creation",
+   4,
+   "rtl",
+   "done",
+   16,
+   0.347
+  ],
+  [
+   "rtl-design-creation",
+   5,
+   "rtl",
+   "done",
+   15,
+   0.348
+  ],
+  [
+   "rtl-design-creation",
+   6,
+   "rtl",
+   "done",
+   8,
+   0.197
+  ]
+ ],
+ "outcome": "stopped: stage 2 visited more than 6 times; last failing gate: design standards; owned by the rtl role; the same failure on 4 consecutive visits",
+ "reached_stage": 2,
+ "summary_stop": "stage 2 visited more than 6 times; last failing gate: design standards; owned by the rtl role; the same failure on 4 consecutive visits",
+ "interview": "off",
+ "cost_usd_agent": 4.990149,
+ "interview_note": "--interview off: the agent's defaults were taken, nothing asked or answered by hand",
+ "bitstream": {
+  "build_stamp": "efe61d17",
+  "exit_code": 0,
+  "vivado": "2026.1"
+ },
+ "build_id_usr_access": "a072a826",
+ "bitstream_built": false,
+ "verif_stages": {
+  "V0": true,
+  "V1": true,
+  "V2": true,
+  "V3": false,
+  "SIGNOFF": false,
+  "V-HW": false
+ },
+ "trace_pass": false,
+ "requirement_table": [
+  {
+   "id": "REQ-01",
+   "text": "ID register at 0x000 reads 0x20960001.",
+   "methods": {
+    "simulation": "pass",
+    "hardware": "pending"
+   }
+  },
+  {
+   "id": "REQ-02",
+   "text": "BUILD register at 0x004 reads the USR_ACCESSE2 word.",
+   "methods": {
+    "hardware": "pending"
+   }
+  },
+  {
+   "id": "REQ-03",
+   "text": "SCRATCH reads back the last written 32-bit value.",
+   "methods": {
+    "simulation": "pass",
+    "hardware": "pending"
+   }
+  },
+  {
+   "id": "REQ-04",
+   "text": "Unmapped addresses read 0.",
+   "methods": {
+    "simulation": "pass"
+   }
+  },
+  {
+   "id": "REQ-21",
+   "text": "SCRATCH reads 0 after reset.",
+   "methods": {
+    "simulation": "pass"
+   }
+  },
+  {
+   "id": "REQ-22",
+   "text": "A write to an unmapped address changes no register.",
+   "methods": {
+    "simulation": "pass"
+   }
+  },
+  {
+   "id": "REQ-05",
+   "text": "h_rdata shows the addressed register within 2 clocks of h_re.",
+   "methods": {
+    "simulation": "pass",
+    "formal": "pass"
+   }
+  },
+  {
+   "id": "REQ-06",
+   "text": "After SEL is written, ACTIVE_SEL equals SEL once SWITCHING returns to 0.",
+   "methods": {
+    "simulation": "pass",
+    "hardware": "pending"
+   }
+  },
+  {
+   "id": "REQ-07",
+   "text": "The muxed clock has no pulse narrower than the shorter source half-period during a switch.",
+   "methods": {
+    "analysis": "fail",
+    "hardware": "pending"
+   }
+  },
+  {
+   "id": "REQ-08",
+   "text": "MUX_ERRS stays 0 across 1,000 random switches.",
+   "methods": {
+    "simulation": "pass",
+    "hardware": "pending"
+   }
+  },
+  {
+   "id": "REQ-09",
+   "text": "MUX_ERRS increments by 1 for each clock where the twin disagrees with the counter.",
+   "methods": {
+    "simulation": "pass"
+   }
+  },
+  {
+   "id": "REQ-10",
+   "text": "SWITCH_COUNT equals the number of real changes of ACTIVE_SEL after 1,000 random SEL writes.",
+   "methods": {
+    "simulation": "pass",
+    "hardware": "pending"
+   }
+  },
+  {
+   "id": "REQ-11",
+   "text": "A SEL write equal to the current selection does not change SWITCH_COUNT.",
+   "methods": {
+    "simulation": "pass"
+   }
+  },
+  {
+   "id": "REQ-12",
+   "text": "B_DIV reads a value from 1 to 8 equal to the divide applied to the GT reference clock.",
+   "methods": {
+    "simulation": "pass",
+    "hardware": "pending"
+   }
+  },
+  {
+   "id": "REQ-13",
+   "text": "GATE_LEN resets to 25,000,000.",
+   "methods": {
+    "simulation": "pass"
+   }
+  },
+  {
+   "id": "REQ-14",
+   "text": "FREQ_COUNT after a gate of 25,000,000 clk_c3 cycles with clock A selected is 25,000,000 within plus or minus 2.",
+   "methods": {
+    "hardware": "pending"
+   }
+  },
+  {
+   "id": "REQ-15",
+   "text": "FREQ_STATUS BUSY is 1 from START until the gate ends.",
+   "methods": {
+    "simulation": "pass"
+   }
+  },
+  {
+   "id": "REQ-23",
+   "text": "FREQ_STATUS DONE is 1 once the gate has ended.",
+   "methods": {
+    "simulation": "pass"
+   }
+  },
+  {
+   "id": "REQ-16",
+   "text": "MUX_COUNT holds the low 32 bits of the muxed counter latched by a SNAPSHOT write.",
+   "methods": {
+    "simulation": "pass"
+   }
+  },
+  {
+   "id": "REQ-17",
+   "text": "sfp_tx_disable is 1 at all times.",
+   "methods": {
+    "simulation": "pass",
+    "analysis": "pass"
+   }
+  },
+  {
+   "id": "REQ-18",
+   "text": "The design uses 0 GT transceiver channels.",
+   "methods": {
+    "analysis": "pass"
+   }
+  },
+  {
+   "id": "REQ-19",
+   "text": "Timing closes on all clocks with worst slack of 0 ns or more.",
+   "methods": {
+    "analysis": "fail"
+   }
+  },
+  {
+   "id": "REQ-20",
+   "text": "data/jtag_bus.sv is used unmodified.",
+   "methods": {
+    "analysis": "pass"
+   }
+  }
+ ],
+ "requirement_method_results": {
+  "pass": 21,
+  "pending": 9,
+  "fail": 2
+ },
+ "requirements": 23,
+ "hw_checks_present": false
+}

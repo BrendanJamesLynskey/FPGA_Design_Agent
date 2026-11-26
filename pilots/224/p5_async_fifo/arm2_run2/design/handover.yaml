@@ -1,0 +1,466 @@
+# Brief 68 handover: the facts behind README.md and AGENT.md (docs/documentation_standard.md).
+# Measurement values and every sha256 are filled from the records by `python -m flow.handover fill`;
+# do not type them. Render with `python -m flow.handover write <this directory>`.
+schema: fda-handover/1
+id: p5_async_fifo
+title: P5 asynchronous FIFO soak (25 MHz writer, 156.25 MHz reader)
+kind: agent-run
+produced_by: agent
+summary: The design writes PRBS-31 words from a 25 MHz writer domain (clk_c3) into an asynchronous 32-bit FIFO and reads
+  and checks them in a 156.25 MHz reader domain (clk_gt156, from the SFP+ MGTREFCLK0 buffer, no GT channel). Counters for
+  words, errors, overflow, underflow, stalls and peak fill are read over the jtag_bus register port. The run reached V2
+  of V3 in verification and stopped at the constraints stage, where the Vivado post-synthesis exception check failed on
+  an invalid site name; no bitstream, timing, power or hardware result exists.
+scope_not:
+- Not a transceiver design. No GT channel is used, only the reference clock buffer, and SFP+ TX is held disabled.
+- Not a throughput or latency measurement. Neither was measured in this run.
+- Not hardware-verified. No board result is recorded.
+target:
+  part: xck26-sfvc784-2LV-c
+  board: kr260
+  tool: Vivado 2026.1
+  top: p5_async_fifo_soak
+clocks:
+- name: clk_c3
+  mhz: 25.0
+  source: runs/20261125-233045-dfe1/p5_async_fifo/design.xdc
+- name: gt_refclk_p
+  mhz: 156.25
+  source: runs/20261125-233045-dfe1/p5_async_fifo/design.xdc
+resets:
+- name: rst
+  active: high
+  note: Internal power-up generator in clk_c3 (rtl/p5_async_fifo_soak.sv), held for RESET_HOLD_CYCLES clocks, no pin. It
+    reaches clk_gt156 through xpm_cdc_async_rst.
+interfaces:
+- name: clk_c3
+  type: input clock, 25 MHz, pin C3 (LVCMOS18)
+  note: Writer clock and register-bus clock.
+- name: gt_refclk_p / gt_refclk_n
+  type: differential input clock, SFP+ MGTREFCLK0, 156.25 MHz
+  note: Enters an IBUFDS_GTE4; its ODIV2 output drives a BUFG_GT that clocks the reader.
+- name: led[1:0]
+  type: output, pins F8 and E8 (LVCMOS18)
+  note: led[0] is RUN; led[1] is set when a snapshotted DATA_ERRS, OVERFLOWS or UNDERFLOWS is non-zero.
+- name: sfp_tx_disable
+  type: output, pin Y10 (LVCMOS33)
+  note: Constant 1.
+- name: h_we / h_re / h_addr / h_wdata / h_rdata
+  type: internal register port (no pins), clk_c3
+  note: In the top these ports are declared but the live port is wired internally to jtag_bus; h_we, h_re, h_addr and h_wdata
+    are unused there.
+registers:
+- offset: 0
+  name: ID
+  access: RO
+  reset: 546635777
+  bits: '[31:0] design ID'
+- offset: 4
+  name: BUILD
+  access: RO
+  reset: 0
+  bits: '[31:0] USR_ACCESS word'
+- offset: 8
+  name: SCRATCH
+  access: RW
+  reset: 0
+  bits: '[31:0] scratch'
+- offset: 16
+  name: CTRL
+  access: RW
+  reset: 0
+  bits: '[0] RUN, [1] SLOW_READ, [2] CLEAR self-clearing only while RUN=0, [3] INJECT self-clearing'
+- offset: 20
+  name: WORDS_W
+  access: RO
+  reset: 0
+  bits: '[31:0] words written (snapshot)'
+- offset: 24
+  name: WORDS_R
+  access: RO
+  reset: 0
+  bits: '[31:0] words read and checked (snapshot)'
+- offset: 28
+  name: DATA_ERRS
+  access: RO
+  reset: 0
+  bits: '[31:0] mismatching words (snapshot)'
+- offset: 32
+  name: OVERFLOWS
+  access: RO
+  reset: 0
+  bits: '[31:0] writes while full (snapshot)'
+- offset: 36
+  name: UNDERFLOWS
+  access: RO
+  reset: 0
+  bits: '[31:0] reads while empty (snapshot)'
+- offset: 40
+  name: STALL_W
+  access: RO
+  reset: 0
+  bits: '[31:0] writer clocks held off (snapshot)'
+- offset: 44
+  name: OCC_MAX
+  access: RO
+  reset: 0
+  bits: '[31:0] highest fill in words (snapshot)'
+- offset: 48
+  name: SNAPSHOT
+  access: WO
+  reset: 0
+  bits: any write latches 0x014 to 0x02C; reads 0
+parameters:
+- name: FIFO_DEPTH_WORDS
+  value: 512
+  legal: 512 only as built
+  note: soak_core.sv instantiates soak_fifo with DEPTH 512, while soak_fifo.sv comments say 1024 words; see the fifo_depth
+    gap. Not a top-level parameter.
+- name: DATA_WIDTH
+  value: 32
+  legal: 32 only
+  note: Fixed in the RTL, not a top-level parameter.
+- name: PRBS_SEED
+  value: 2147483647
+  legal: non-zero 31-bit value
+  note: Seed 0x7FFFFFFF for both writer and reader sequences. Default of soak_core.
+- name: DESIGN_ID
+  value: 546635777
+  legal: any 32-bit value
+  note: Read from register ID (0x20950001). Default of soak_core.
+- name: SLOW_READ_PERIOD_CYCLES
+  value: 8
+  legal: 2 to 16 (the slow counter is 4 bits)
+  note: 'One read per 8 clk_gt156 clocks when SLOW_READ is 1, as the spec''s timing section says. Passed to the reader as
+    SLOW_PERIOD. Spec timing: one read per 8 clk_gt156 clocks when SLOW_READ is 1'
+- name: COUNTER_WIDTH
+  value: 32
+  legal: 32 only
+  note: Counters are fixed at 32 bits in the RTL and wrap; not a parameter.
+- name: RESET_HOLD_CYCLES
+  value: 8
+  legal: 0 to 31 (5-bit hold counter)
+  note: Power-up reset length in clk_c3 clocks.
+files:
+- path: runs/20261125-233045-dfe1/p5_async_fifo/spec.md
+  what: the request the run started from
+  sha256: feff9551509ac8f254d51fa34b90a79024fad47b0b34205bb839d79d41103962
+- path: runs/20261125-233045-dfe1/p5_async_fifo/spec.yaml
+  what: the specification the Clarifier wrote, approved automatically with no human review
+  sha256: 9062cca5bf2648ff24351656865feacfec7b075900cfb42252bff69754dd5a18
+- path: runs/20261125-233045-dfe1/p5_async_fifo/ARCHITECTURE.md
+  what: the architecture note, accepted automatically before any RTL (no human review)
+  sha256: a39e95b4af78fc6845ccf604db41c1146cc363f82f9167cd086aa367d401fd7f
+- path: runs/20261125-233045-dfe1/p5_async_fifo/architecture.yaml
+  what: 'the machine-checked architecture: blocks, clocks, predicted resources'
+  sha256: d555ab561515402a7b1d0fa39ddd5d1c5da9803fdf41a25829b63a3e586e7ca1
+- path: runs/20261125-233045-dfe1/p5_async_fifo/rtl/p5_async_fifo_soak.sv
+  what: RTL written by the Designer
+  sha256: e57f914d3880e9ad61012040561bfa24a7cce76cb3f8166ee52a919233c38763
+- path: runs/20261125-233045-dfe1/p5_async_fifo/rtl/prbs31_word.sv
+  what: RTL written by the Designer
+  sha256: 9c0d78ee910c7d441fc150a4fe66dcd8ca579b3cab7343da43f40ce7adf8bbf0
+- path: runs/20261125-233045-dfe1/p5_async_fifo/rtl/soak_core.sv
+  what: RTL written by the Designer
+  sha256: d63fb09c7505e93580feb6ef6e4eb2ef7db3e75df135731eb720bc94494fb431
+- path: runs/20261125-233045-dfe1/p5_async_fifo/rtl/soak_fifo.sv
+  what: RTL written by the Designer
+  sha256: ae0dd943f31d858ba0db95aa221876acca8d2fcead1dbe5d17625a164565dd0b
+- path: runs/20261125-233045-dfe1/p5_async_fifo/rtl/soak_reader.sv
+  what: RTL written by the Designer
+  sha256: 2daeb8dd18e588ec0046b9a8e107b6d89d37319bb4023fcaa284f621e2d6f3d3
+- path: runs/20261125-233045-dfe1/p5_async_fifo/rtl/xilinx_sim_stubs.sv
+  what: RTL written by the Designer
+  sha256: 6ff63deef2195bc758be3bef911edc70a50c3444418bf464f107e4e507f48e27
+- path: runs/20261125-233045-dfe1/p5_async_fifo/rtl/zz_lint_waive.sv
+  what: RTL written by the Designer
+  sha256: 875d04163e7c2285651ce693aa751365b897962e76ce18a1b3c2b983c6747c14
+- path: runs/20261125-233045-dfe1/p5_async_fifo/design.xdc
+  what: pin, I/O standard and timing constraints
+  sha256: 1901951723eac351383f67235b8f33eeecc7ab91bb54e8c583db099b9fe8a951
+- path: runs/20261125-233045-dfe1/p5_async_fifo/build.yaml
+  what: the build description read by the flow
+  sha256: 37745bf6e2440bf192e92b49e0dccb1dfebbbcd2fb2bcff673d6f7478e8e01b4
+- path: runs/20261125-233045-dfe1/p5_async_fifo/model.py
+  what: the Modeller's reference model of the visible behaviour
+  sha256: 5b88b2190166d462d78749759b2018f2adcf09ce3a4167d0c7f7a991894ea97e
+- path: runs/20261125-233045-dfe1/p5_async_fifo/tests/bench_p5_async_fifo.py
+  what: the Verifier's cocotb benches and pytest entries
+  sha256: db4b0826a81ec75fd86f5ca7d36b4380569dd37bf422ba59244e8010b076e71f
+- path: runs/20261125-233045-dfe1/p5_async_fifo/tests/test_p5_async_fifo_rtl.py
+  what: the Verifier's cocotb benches and pytest entries
+  sha256: 71ac30be07dca0f57d712a98e41c5395ec794996a4011d4fa4e9a5cba5804a88
+- path: runs/20261125-233045-dfe1/p5_async_fifo/verif/testplan.yaml
+  what: the test plan and mutant list read by the verification gates
+  sha256: 2a5fe7716fbf62c7df005e3424f5ae9df6a58271c93eb0e8ad8617b18a0ad7e7
+- path: runs/20261125-233045-dfe1/p5_async_fifo/verif/checkers/v_macros.svh
+  what: bound assertion and cover checkers
+  sha256: 013c1a5444e3dbd0eb2df54529d09272d8bf601d42ec066d54cadb9589d51083
+- path: runs/20261125-233045-dfe1/p5_async_fifo/build/review/03_constraints.html
+  what: 'the review page of stage constraints: its exit gates and their failures at the last visit'
+  sha256: 86dd988ba4117180302275ef7ad9c2b179b580bb82e96f9e48e549b7899e7513
+commands:
+- what: what changed since this handover (stale records, changed files, tool and knowledge-bank pins)
+  cmd: python -m flow.handover fresh runs/20261125-233045-dfe1/p5_async_fifo
+  heavy: false
+  minutes: null
+- what: pick the work up again from the earliest stage the change or the staleness needs
+  cmd: python -m agent resume runs/20261125-233045-dfe1/p5_async_fifo "<change request>"
+  heavy: true
+  minutes: null
+  needs: a model (see docs/agent.md); Vivado for any stage from synthesis on
+- what: run the Verifier's simulation tests
+  cmd: python -m pytest -q runs/20261125-233045-dfe1/p5_async_fifo/tests/test_p5_async_fifo_rtl.py
+  heavy: false
+  minutes: null
+  needs: Icarus Verilog and cocotb, or the simulation container
+- what: re-run the Verilator coverage simulation and the verification gates (line, toggle, functional and cover results)
+  cmd: SIM=verilator FDA_COVERAGE=1 FDA_SIM_RESULTS_DIR=runs/20261125-233045-dfe1/p5_async_fifo/build/verif/sim python -m
+    pytest -q -x runs/20261125-233045-dfe1/p5_async_fifo/tests/test_p5_async_fifo_rtl.py && python3 flow/verif_gates.py
+    runs/20261125-233045-dfe1/p5_async_fifo --runs runs/20261125-233045-dfe1/p5_async_fifo/build/verif/sim
+  heavy: false
+  minutes: null
+  needs: Verilator 5.036 or later and cocotb (the simulation container has them)
+- what: rebuild the bitstream with the flow
+  cmd: flow/run_vivado.sh runs/20261125-233045-dfe1/p5_async_fifo base
+  heavy: true
+  minutes: 2.3
+  needs: Vivado 2026.1 and a heavy slot; peak memory 3357 MiB (anonymous, the systemd scope)
+evidence:
+- id: E1
+  activity: review
+  result: partial
+  what: the specification and the architecture were approved automatically, with no human review (review off; the interview
+    oracle claude-sonnet-5-5 only answered the interview questions); the interview asked 8 questions, 0 answered and 8 defaulted
+  record: runs/20261125-233045-dfe1/summary.json
+  sha256: a177c1e23ef8720d3381c0f6ca653e995e46e06242315d3516b29ad5beb37fd2
+- id: E2
+  activity: simulation
+  result: partial
+  what: 'verification (flow/verif_gates.py) against the Modeller''s reference model reached V2 of V3; the run asked for
+    V2; V2 means simulation: seeded runs, a constrained-random test, bound assertions and formal tasks; V3 (coverage (line,
+    toggle, functional bins, cover properties), three seeds and the mutation score) did not pass: functional bins pct 0.0
+    (0/0) (needs 100); cover properties pct 0.0 (needs 100); line pct not measured (needs 90); toggle pct not measured (needs
+    75); mutation score pct not measured (needs 70); cdc structure clean missing (needs no unsafe crossing); cdc injection
+    clean missing (needs pass); no board result (V-HW) is recorded'
+  record: runs/20261125-233045-dfe1/p5_async_fifo/build/verif/verif_gates.json
+  sha256: 93a42aee7df1ec28c64947682a08f357dc72ef8be1647ddd10f72b583af607a8
+- id: E3
+  activity: build
+  result: fail
+  what: 'Vivado base build; flow stages that ran: rtl, post_synth'
+  record: runs/20261125-233045-dfe1/p5_async_fifo/build/base/gates.json
+  sha256: eb96806242df23914e67c451e8ad784211905783ae968aed3bd8f603a1a54dc9
+measurements:
+- id: M1
+  what: simulation seeds run
+  category: verification
+  unit: ''
+  record: runs/20261125-233045-dfe1/p5_async_fifo/build/verif/verif_gates.json
+  field: stages.V3.checks.seeds_run.value
+  conditions: Verilator coverage simulation of the RTL against the Modeller's model, every seed the bench ran
+  value: 3
+  sha256: 93a42aee7df1ec28c64947682a08f357dc72ef8be1647ddd10f72b583af607a8
+- id: M2
+  what: line coverage
+  category: verification
+  unit: '%'
+  record: runs/20261125-233045-dfe1/p5_async_fifo/build/verif/verif_gates.json
+  field: stages.V3.checks.line_pct.value
+  conditions: Verilator coverage simulation of the RTL against the Modeller's model, every seed the bench ran
+  value: not measured
+  sha256: 93a42aee7df1ec28c64947682a08f357dc72ef8be1647ddd10f72b583af607a8
+- id: M3
+  what: toggle coverage
+  category: verification
+  unit: '%'
+  record: runs/20261125-233045-dfe1/p5_async_fifo/build/verif/verif_gates.json
+  field: stages.V3.checks.toggle_pct.value
+  conditions: Verilator coverage simulation of the RTL against the Modeller's model, every seed the bench ran
+  value: not measured
+  sha256: 93a42aee7df1ec28c64947682a08f357dc72ef8be1647ddd10f72b583af607a8
+- id: M4
+  what: functional coverage bins hit
+  category: verification
+  unit: ''
+  record: runs/20261125-233045-dfe1/p5_async_fifo/build/verif/verif_gates.json
+  field: stages.V3.checks.functional_bins_pct.value
+  conditions: Verilator coverage simulation of the RTL against the Modeller's model, every seed the bench ran
+  value: 0.0 (0/0)
+  sha256: 93a42aee7df1ec28c64947682a08f357dc72ef8be1647ddd10f72b583af607a8
+- id: M5
+  what: cover properties hit
+  category: verification
+  unit: '%'
+  record: runs/20261125-233045-dfe1/p5_async_fifo/build/verif/verif_gates.json
+  field: stages.V3.checks.cover_properties_pct.value
+  conditions: Verilator coverage simulation of the RTL against the Modeller's model, every seed the bench ran
+  value: '0.0'
+  sha256: 93a42aee7df1ec28c64947682a08f357dc72ef8be1647ddd10f72b583af607a8
+- id: M6
+  what: model cost of the run, provider-reported
+  category: cost
+  unit: USD
+  record: runs/20261125-233045-dfe1/summary.json
+  field: cost_usd
+  conditions: every role and the interview oracle, as the run summary records it
+  value: 9.240963
+  sha256: a177c1e23ef8720d3381c0f6ca653e995e46e06242315d3516b29ad5beb37fd2
+gaps:
+- about: REQ-01
+  text: 'REQ-01 has no passing evidence for every proof method: hardware (uart_tests) is pending: no bring-up result'
+- about: REQ-02
+  text: 'REQ-02 has no passing evidence for every proof method: hardware (uart_tests) is pending: no bring-up result'
+- about: REQ-03
+  text: 'REQ-03 has no passing evidence for every proof method: hardware (uart_tests) is pending: no bring-up result'
+- about: REQ-08
+  text: 'REQ-08 has no passing evidence for every proof method: analysis (post_synth:post_synth_resources_in_range) is pending:
+    no flow gates result'
+- about: REQ-11
+  text: 'REQ-11 has no passing evidence for every proof method: hardware (uart_tests) is pending: no bring-up result'
+- about: REQ-36
+  text: 'REQ-36 has no passing evidence for every proof method: hardware (uart_tests) is pending: no bring-up result'
+- about: REQ-12
+  text: 'REQ-12 has no passing evidence for every proof method: hardware (uart_tests) is pending: no bring-up result'
+- about: REQ-35
+  text: 'REQ-35 has no passing evidence for every proof method: hardware (uart_tests) is pending: no bring-up result'
+- about: REQ-16
+  text: 'REQ-16 has no passing evidence for every proof method: hardware (uart_tests) is pending: no bring-up result'
+- about: REQ-18
+  text: 'REQ-18 has no passing evidence for every proof method: hardware (uart_tests) is pending: no bring-up result'
+- about: REQ-19
+  text: 'REQ-19 has no passing evidence for every proof method: hardware (uart_tests) is pending: no bring-up result'
+- about: REQ-20
+  text: 'REQ-20 has no passing evidence for every proof method: hardware (uart_tests) is pending: no bring-up result'
+- about: REQ-21
+  text: 'REQ-21 has no passing evidence for every proof method: hardware (ila_captures) is pending: no bring-up result'
+- about: REQ-23
+  text: 'REQ-23 has no passing evidence for every proof method: analysis (post_synth:post_synth_resources_in_range) is pending:
+    no flow gates result; hardware (uart_tests) is pending: no bring-up result'
+- about: REQ-24
+  text: 'REQ-24 has no passing evidence for every proof method: analysis (post_synth:post_synth_resources_in_range) is pending:
+    no flow gates result'
+- about: REQ-25
+  text: 'REQ-25 has no passing evidence for every proof method: analysis (post_route:setup) is pending: no flow gates result'
+- about: REQ-34
+  text: 'REQ-34 has no passing evidence for every proof method: analysis (post_route:setup) is pending: no flow gates result'
+- about: REQ-26
+  text: 'REQ-26 has no passing evidence for every proof method: analysis (post_route:setup) is pending: no flow gates result'
+- about: REQ-37
+  text: 'REQ-37 has no passing evidence for every proof method: analysis (post_route:setup) is pending: no flow gates result'
+- about: REQ-27
+  text: 'REQ-27 has no passing evidence for every proof method: analysis (post_route:setup) is pending: no flow gates result'
+- about: REQ-28
+  text: 'REQ-28 has no passing evidence for every proof method: analysis (post_route:setup) is pending: no flow gates result'
+- about: E1
+  text: 'review evidence is partial: the specification and the architecture were approved automatically, with no human review
+    (review off; the interview oracle claude-sonnet-5-5 only answered the interview questions); the interview asked 8 questions,
+    0 answered and 8 defaulted'
+- about: E2
+  text: 'simulation evidence is partial: verification reached V2 of V3 (the run asked for V2); the checks that did not pass
+    or did not run are listed in the evidence row'
+- about: E3
+  text: 'build evidence is fail: Vivado base build; flow stages that ran: rtl, post_synth'
+- about: constraints
+  text: 'stage constraints did not pass its gates in this run; at its last visit: post_synth:post_synth_methodology_no_critical
+    FAIL post_synth:post_synth_exceptions_clean (EXC-XDC-MSG design.xdc:21 set_property LOC IBUFDS_GTE4_X0Y1 [get_cells
+    { u_ibufds_gt }] Command failed: ''IBUFDS_GTE4_X0Y1'' is not a valid site name.) FAIL'
+- about: synthesis
+  text: 'stage synthesis was not run: the run stopped before this stage (budget: run turns limit 300 reached (300))'
+- about: implementation
+  text: 'stage implementation was not run: the run stopped before this stage (budget: run turns limit 300 reached (300))'
+- about: timing-closure
+  text: 'stage timing-closure was not run: the run stopped before this stage (budget: run turns limit 300 reached (300))'
+- about: power-closure
+  text: 'stage power-closure was not run: the run stopped before this stage (budget: run turns limit 300 reached (300))'
+- about: drc-closure
+  text: 'stage drc-closure was not run: the run stopped before this stage (budget: run turns limit 300 reached (300))'
+- about: configuration-and-debug
+  text: 'stage configuration-and-debug was not run: the run stopped before this stage (budget: run turns limit 300 reached
+    (300))'
+- about: formal
+  text: 'formal checks were planned for REQ-18, REQ-19, REQ-27 and did not run; each was replaced by a simulation check
+    (verif/testplan.yaml replan). Reason recorded: SymbiYosys is not installed, so the no-overflow property is shown in
+    simulation with the FIFO driven full, and by the hardware soak.'
+- about: resources
+  text: 'resources not measured: no current Vivado build of this design has been recorded'
+- about: timing
+  text: 'timing not measured: no current Vivado build of this design has been recorded'
+- about: power
+  text: 'power not measured: no current Vivado build of this design has been recorded'
+- about: latency
+  text: 'latency not measured: the run measured no latency; the spec''s latency promise is checked only by the benches'
+- about: throughput
+  text: 'throughput not measured: the run measured no throughput'
+- about: fifo_depth
+  text: soak_fifo.sv instantiates xpm_fifo_async with depth 512 passed in, but its file comment says 1024 x 32 in one RAMB36
+    and the macro uses FIFO_MEMORY_TYPE distributed, while the spec and ARCHITECTURE.md say one BRAM. The 512-word claim
+    (REQ-08) is not confirmed by a Vivado build.
+- about: xdc_site
+  text: design.xdc as built has LOC IBUFDS_GTE4_X0Y0 at line 21 (its comment names X0Y0), but the failing check quotes X0Y1
+    as an invalid site name. The XDC and the check disagree; re-run to confirm which site Vivado accepts.
+- about: spec_vs_rtl_registers
+  text: The RTL read mux (soak_core.sv) returns 0 for unmapped addresses, including 0x030 SNAPSHOT, and writes to unmapped
+    addresses change nothing. CTRL reads back only RUN and SLOW_READ; CLEAR and INJECT always read 0.
+- about: clear_priority
+  text: CLEAR is honoured only if written while RUN is 0 (clr_req = write to CTRL with bit 2, and not run). The same write
+    can set RUN, but the test uses the old RUN value. CLEAR also holds the FIFO in reset for 8 clk_c3 clocks, and the writer
+    is blocked meanwhile.
+- about: counters_run_gated
+  text: Stall, overflow and OCC_MAX counting is gated by RUN and by the FIFO not being in reset. The reader counts words
+    read independently of RUN.
+- about: snapshot_latency
+  text: A write to 0x030 does not latch at once. The request is delayed about 50 clocks (64 for the first snapshot after
+    reset) and aligned to an 8-clock grid, then crosses through a handshake, so the snapshot registers update tens of clocks
+    after the write. Reading too soon returns the previous snapshot. The spec does not state this delay.
+- about: read_latency
+  text: h_rdata is registered in soak_core.sv, so it updates one clk_c3 clock after h_re, inside the spec's 2-clock promise,
+    and holds until the next h_re. The jtag_bus latency was not counted here.
+- about: build_stamp
+  text: In simulation USR_ACCESSE2 is a stub returning 0, so BUILD is 0 in the benches; only hardware shows the real word.
+- about: sim_stubs
+  text: The benches use behavioural models of the Xilinx primitives and XPM macros (rtl/xilinx_sim_stubs.sv); their timing
+    is not the real macros' timing.
+next_steps:
+- Compare the cover results with the functional coverage (functional bins 0 of 0 and cover properties 0 percent are recorded)
+  before any new stimulus, then run the coverage, CDC and mutation checks that did not run to reach V3.
+- Resolve the IBUFDS_GTE4 LOC in design.xdc (the failing check names X0Y1 as an invalid site while the file shows X0Y0)
+  and re-run the base build with flow/run_vivado.sh.
+- Resolve the FIFO memory type and depth mismatch in soak_fifo.sv against the spec's one-BRAM expectation.
+- Continue through synthesis, implementation, timing, power and DRC closure, then bring up on the KR260 for the hardware
+  proofs.
+open_questions:
+- Should the snapshot delay of about 50 to 64 clocks be kept, or should the snapshot latch sooner?
+- Is distributed memory acceptable for the FIFO, or must it use one block RAM as the spec says?
+history:
+- date: '2026-11-25'
+  brief: agent run
+  note: 'produced by the agent graph; stages that passed: clarify, board-and-device-planning, rtl-design-creation'
+agent_run:
+  run_id: 20261125-233045-dfe1
+  record: runs/20261125-233045-dfe1/summary.json
+  model: claude-sonnet-5-5
+  harness: deepagents
+  stop: 'budget: run turns limit 300 reached (300)'
+  loops: 11
+  turns: 300
+  tokens: 13569382
+  wall_s: 6165.3
+  cost_usd: 9.240963
+state:
+  stage: simulated
+  gates:
+    clarify: pass
+    board-and-device-planning: pass
+    rtl-design-creation: pass
+    constraints: fail
+    synthesis: not-run
+    implementation: not-run
+    timing-closure: not-run
+    power-closure: not-run
+    drc-closure: not-run
+    configuration-and-debug: not-run
+  vivado: '2026.1'
+  kb_pin: '6185830'
+  build_id: 6e2a48db
+  evidence_vivado: current
