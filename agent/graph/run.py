@@ -126,6 +126,8 @@ class Config:
     hdl: str = "sv"                 # brief 55: the design language, sv (SystemVerilog) | vhdl (VHDL-2008; the test shell stays SystemVerilog)
     design_plan: bool = False       # closure loop: stage 1 declares datapaths; flow/timing_plan.py maps and pipelines them before any build
     closure: str = "off"            # closure loop: on = stage 6 runs the closure controller (agent/graph/closure.py)
+    coverage_loop: str = "off"      # brief 218: on = at V3, rounds of coverage-directed stimulus inside the gate (agent/graph/covsva.py); off = today's V3
+    req_sva: str = "off"            # brief 218: on = an assertion written from each checkable requirement, back-translated, proved (flow/sva_req.py)
     docs: str = "off"               # brief 68 C: on = the document node writes handover.yaml, README.md, AGENT.md at the end (the CLI default is on)
     models_file: Path | None = None  # brief 108: the project's models.yaml (the project layer of the model table)
     model_config: dict | None = None  # brief 108: --model-config, the command-line layer in the models.yaml format
@@ -1533,6 +1535,12 @@ def node_gate(state: State) -> dict:
                 ev["simulate"] = {"ok": False, "first_failure": cov.get("first_failure"), "text": cov["text"]}
                 detail.append("[simulate, verilator coverage run] " + cov["text"][-800:])
             ev["verif"] = d("verif_gates", dispatch(rt.session, "gates", {"kind": "verif"})).get("gates") or {}
+            from agent.graph import covsva                       # brief 218 (off by default): rounds of coverage-directed stimulus
+            covsva.coverage_gate(rt, ev, d, detail)
+        if (rt.cfg.req_sva == "on" and ev["lint"]["ok"] and ev["simulate"]["ok"]
+                and (ev["verif"].get("reached") or "") >= "V2"):        # brief 218 (off by default): a property from each requirement
+            from agent.graph import covsva
+            ev["req_sva"] = covsva.sva_step(rt)
         ev["trace"] = trace_record(rt.design, rt.session.root)  # brief 53: the traceability matrix, recorded
         std = dispatch(rt.session, "gates", {"kind": "standards"})
         ev["standards"] = std.get("gates")
