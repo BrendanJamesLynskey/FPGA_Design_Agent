@@ -310,6 +310,26 @@ def test_features_from_a_build_digest():
     assert (f.wns_ns, f.logic_levels, f.route_pct, f.max_fanout, f.fanout_nets, f.clock_ns) == (-0.2, 6, 61.0, 250, ("u/n1",), 5.0)
 
 
+PATH = """Slack (VIOLATED) :        -0.161ns  (required time - arrival time)
+  Source:                 a_q_reg[3]/C
+                            (rising edge-triggered cell FDRE clocked by clk  {rise@0.000ns fall@1.500ns period=3.000ns})
+  Destination:            u_dut/acc_reg[38]/D
+  Data Path Delay:        3.159ns  (logic 1.691ns (53.538%)  route 1.468ns (46.462%))
+  Logic Levels:           10  (CARRY8=6 LUT3=1 LUT6=3)
+    SLICE_X15Y98         FDRE (Prop_CFF_SLICEL_C_Q)
+                                                      0.114     0.155 r  a_q_reg[3]/Q
+                         net (fo=37, routed)          0.267     0.422    u_dut/a_q[3]
+                         net (fo=2, routed)           0.115     0.674    u_dut/acc0__275_carry_i_3_n_0
+"""
+
+
+def test_features_from_a_recorded_path_report():
+    f = S.Features.from_path_report(PATH, whs_ns=0.05)
+    assert (f.wns_ns, f.clock_ns, f.logic_levels, f.route_pct, f.max_fanout, f.fanout_nets, f.destination) == (
+        -0.161, 3.0, 10, 46.462, 37, ("u_dut/a_q[3]",), "u_dut/acc_reg[38]/D")
+    assert keys(f)[0] == "retime:synth"                                        # 10 logic levels: the retiming rule leads
+
+
 # ---- recorded reports: the search on the 178 outcomes --------------------------------------------------------------------------------------
 def test_search_on_recorded_lzc_outcomes_finds_a_passing_set_within_budget():
     d = json.loads((ROOT / "results/178_tournament/runs/lzc_treebarrel_k26_w32/impl_top2.json").read_text())

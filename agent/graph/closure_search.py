@@ -59,6 +59,22 @@ class Features:
                    fanout_nets=tuple(x for x in [f.get("max_fanout_net")] if x), route_pct=p.get("route_pct"),
                    destination=str(p.get("destination") or ""), clock_ns=t.get("period_ns"))
 
+    @classmethod
+    def from_path_report(cls, text: str, whs_ns: float | None = None, util_pct: float | None = None) -> "Features":
+        """From one ``report_timing -path_type full`` text (what the build writes as worst_path.rpt): slack, period, logic levels, routing share and the
+        highest-fanout net on the path with its name."""
+        import re
+        m = re.search(r"Slack \((?:VIOLATED|MET)\)\s*:\s*(-?[\d.]+)ns", text)
+        per = re.search(r"period=([\d.]+)ns", text)
+        lv = re.search(r"Logic Levels:\s+(\d+)", text)
+        rp = re.search(r"route\s+[\d.]+ns \(([\d.]+)%\)", text)
+        fo = [(int(a), b) for a, b in re.findall(r"net \(fo=(\d+),[^)]*\)\s+[\d.]+\s+[\d.]+\s+(\S+)", text)]
+        top = max(fo, default=(None, ""))
+        dst = re.search(r"Destination:\s+(\S+)", text)
+        return cls(wns_ns=float(m.group(1)) if m else None, whs_ns=whs_ns, logic_levels=int(lv.group(1)) if lv else None,
+                   max_fanout=top[0], fanout_nets=(top[1],) if top[1] else (), route_pct=float(rp.group(1)) if rp else None,
+                   destination=dst.group(1) if dst else "", util_pct=util_pct, clock_ns=float(per.group(1)) if per else None)
+
 
 # ---- rules: path class -> recipe calls, with a weight and the reason --------------------------------------------------------------
 def _calls(f: Features, family: str) -> list[tuple[str, dict[str, Any], float, str]]:
