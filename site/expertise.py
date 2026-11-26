@@ -18,6 +18,7 @@ and the evidence wording:
 """
 from __future__ import annotations
 
+import csv
 import fnmatch
 import glob
 import json
@@ -44,7 +45,9 @@ LEVEL_MEANS = {
 PROSE_OK = re.compile(r"Brief \d+|PR #\d+|Vivado \d+\.\d+|AXI4|AXI3|DSP48E?\d?|DSP48|MMCM|7-series|Zynq-7000|UltraScale\+?|"
                       r"IEEE-1735|AVAL-46|PLIO-3|BUFC-1|FDA-CON-\d(?:\s+to\s+FDA-CON-\d)?|STD-[A-Z]+-\d+|V[0-3](?: to V[0-3])?|"
                       r"CDC-\d+|M\d+[a-c]?|C\d+|UG\d+|PG\d+|XAPP\d+|PS7|PS8|K26|KR260|xc7[az]\d+[a-z]*\d*|Artix-7|SPI|I2C|HDMI|10G|"
-                      r"xpm_cdc_\w+|report_\w+|2025\.2")
+                      r"xpm_cdc_\w+|report_\w+|2025\.2|"
+                      # experimental conditions of a model run (a line of 6 in, 50 ohm, 22 ohm in series, 3.3 V, 12 mA, 5 pF), not results
+                      r"\d+(?:\.\d+)? (?:ohm|in|inch|inches|V|mA|pF)\b")
 NUM = re.compile(r"(?<![\w.#-])\d[\d,]*(?:\.\d+)?")
 
 
@@ -163,7 +166,19 @@ def _conds_ok(item, conds: str | None) -> bool:
     return all(_cond_ok(item, c) for c in (conds.split(",") if conds else []))
 
 
+def _num_or_str(v: str):
+    for conv in (int, float):
+        try:
+            return conv(v)
+        except ValueError:
+            pass
+    return v
+
+
 def _read(p: Path):
+    if p.suffix == ".csv":                  # brief 164: one document per row, numbers converted (a column is then a path like any other)
+        with p.open(newline="") as f:
+            return [{k: _num_or_str(v) for k, v in row.items()} for row in csv.DictReader(f)]
     if p.suffix == ".json":
         return json.loads(p.read_text())
     if p.suffix == ".jsonl":
@@ -186,20 +201,21 @@ def docs_of(item) -> list:
     """JSON documents of the item's sources that pass its `where` conditions (a .jsonl file contributes its lines)."""
     docs = []
     for p in files_of(item):
-        if p.suffix not in (".json", ".jsonl"):
+        if p.suffix not in (".json", ".jsonl", ".csv"):
             continue
         d = _read(p)
-        for x in (d if p.suffix == ".jsonl" else [d]):
+        for x in (d if p.suffix in (".jsonl", ".csv") else [d]):
             if _conds_ok(x, item.get("where")):
                 docs.append(x)
     return docs
 
 
 EXPR = """expression forms (value of one {n} placeholder), op[@list][:conditions] or get:path or re:regex:
-  n                    number of JSON documents (after `where`)
+  n                    number of JSON documents, or CSV rows (a document each, numbers converted), after `where`
   get:a.b.0.c          the value at a path in the first document
   count[@lst]:c1,c2    documents (or items of the list at path lst in every document) meeting all conditions
-  sum|max|min[@lst]:p  of the number at path p over the documents (or list items)
+  sum|max|min[@lst]:p[|c1,c2]  of the number at path p over the documents (or list items), keeping only those meeting the conditions after |
+  pick@lst:p|c1,c2     the value at path p of the one list item that meets the conditions (exactly one must)
   nfiles               number of source files
   nmatch:REGEX         number of source files whose text matches REGEX
   re:REGEX             first group of REGEX in the first source file's text
@@ -228,7 +244,12 @@ def evaluate(expr: str, item):
     items = [x for d in docs for x in (_path(d, lst) if lst else [d])]
     if op == "count":
         return sum(1 for x in items if _conds_ok(x, rest))
-    if op in ("sum", "max", "min"):
+    if op in ("sum", "max", "min", "pick"):
+        rest, _, conds = rest.partition("|")        # brief 185: "|conds" keeps only the items meeting them; pick = the one item that does
+        items = [x for x in items if _conds_ok(x, conds or None)]
+        if op == "pick":
+            assert len(items) == 1, (expr, "pick needs exactly one item, got", len(items))
+            return _path(items[0], rest)
         vals = [_path(x, rest) for x in items]
         return {"sum": sum, "max": max, "min": min}[op](vals)
     raise ValueError(expr)
@@ -249,6 +270,8 @@ def fmt(v) -> str:
 
 def render_evidence(item) -> dict:
     vals = [evaluate(e, item) for e in item.get("values", [])]
+    if item.get("round") is not None:            # a model result is shown to a stated number of decimals (brief 164)
+        vals = [round(v, item["round"]) if isinstance(v, float) else v for v in vals]
     for s in item.get("contains", []):
         assert any(s in p.read_text() for p in files_of(item)), (item["source"], "does not contain", s)
     text = item["text"]
@@ -304,6 +327,45 @@ def family_diffs() -> dict:
     return json.loads((HERE / "data" / "family_diffs.json").read_text())
 
 
+def family_of(a: dict, fd: dict) -> dict:
+    """The family rows and documents of an area. An area with ``family_from: {area, topics, docs}`` (briefs 185 and 164) shows the named rows of another
+    matrix area and the documents of that area whose name starts with one of ``docs``, because the bank's matrix has no area of its own for it."""
+    ff = a.get("family_from")
+    if not ff:
+        return {"rows": fd["areas"][a["id"]]["rows"], "docs": fd["areas"][a["id"]]["docs"]}
+    src = fd["areas"][ff["area"]]
+    rows = [r for t in ff["topics"] for r in src["rows"] if r["topic"] == t]
+    assert len(rows) == len(ff["topics"]), (a["id"], "a family_from topic is not in the matrix", ff["topics"])
+    docs = {f: [d for d in lst if any(d["doc"].startswith(x) for x in ff["docs"])] for f, lst in src["docs"].items()}
+    return {"rows": rows, "docs": {f: v for f, v in docs.items() if v}}
+
+
+def _fill(tmpl: str, vals: dict, where: str) -> str:
+    assert not prose_numbers(re.sub(r"\{\w+\}", " ", tmpl)), (where, "a number in a figure text", prose_numbers(re.sub(r"\{\w+\}", " ", tmpl)))
+    for k, v in vals.items():
+        tmpl = tmpl.replace("{%s}" % k, fmt(v))
+    assert not re.search(r"\{\w+\}", tmpl), (where, "unfilled placeholder", tmpl)
+    return tmpl
+
+
+def figures_of(a: dict) -> list[dict]:
+    """Plots for a drawer, drawn from committed result files (site/dsp_figures.py, site/si_figures.py: the module that knows the kind draws it); texts take their numbers from the plotted data."""
+    out = []
+    for fg in a.get("figures", []):
+        import sys
+        if str(HERE) not in sys.path:
+            sys.path.insert(0, str(HERE))
+        import dsp_figures
+        import si_figures
+        mod = si_figures if fg["kind"] in si_figures.KINDS else dsp_figures
+        d = mod.data(fg["kind"])
+        w = f'{a["id"]}/{fg["id"]}'
+        out.append({"id": fg["id"], "kind": fg["kind"], "title": _fill(fg["title"], d["vals"], w), "caption": _fill(fg["caption"], d["vals"], w),
+                    "how": _fill(fg["how"], d["vals"], w), "wrong": _fill(fg["wrong"], d["vals"], w), "data": d["data"],
+                    "sources": [link(x) for x in fg["sources"]]})
+    return out
+
+
 def build() -> dict:
     y = yaml.safe_load((HERE / "data" / "expertise.yaml").read_text())
     fd = family_diffs()
@@ -335,7 +397,7 @@ def build() -> dict:
                            "enforced": bool(c.get("enforced"))})
         ev = []
         for it in a.get("evidence", []):
-            assert it["kind"] in ("measured", "agent", "example"), it
+            assert it["kind"] in ("measured", "agent", "example", "model"), it
             tmpl = PROSE_OK.sub(" ", re.sub(r"\{\d+\}", " ", it["text"]))
             assert not NUM.findall(tmpl), (a["id"], "a number in an evidence template", NUM.findall(tmpl))
             ev.append(render_evidence(it))
@@ -346,7 +408,8 @@ def build() -> dict:
             cards.append({"href": c["href"], "label": c["label"]})
         for g in a["gaps"]:
             assert g
-        assert a["id"] in fd["areas"] and fd["areas"][a["id"]]["rows"], (a["id"], "no family-difference rows (brief 31)")
+        fam = family_of(a, fd)
+        assert fam["rows"], (a["id"], "no family-difference rows (brief 31)")
         sup = ["knowledge"]
         if any(e["kind"] == "measured" for e in ev):
             sup.append("measured")
@@ -366,7 +429,7 @@ def build() -> dict:
             "skills": [{"unit": u, "section": s, "items": [{"name": x["name"], "description": x["description"]} for x in v]}
                        for (u, s), v in groups.items()],
             "checks": checks, "evidence": ev, "cards": cards, "gaps": a["gaps"],
-            "family": {"rows": fd["areas"][a["id"]]["rows"], "docs": fd["areas"][a["id"]]["docs"]},
+            "family": fam, "figures": figures_of(a),
             "counts": {"skills": len(picked), "sections": len(groups), "checks": len(checks),
                        "enforced": sum(c["enforced"] for c in checks), "evidence": len(ev)},
         })

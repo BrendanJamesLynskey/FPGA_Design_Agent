@@ -1,0 +1,13 @@
+schema: fpga-design-agent/formal_rigour/v1
+scope: "the VHDL translation of the Gray-code stepper (gray_stepper.vhd with its debouncer and synchroniser) through the GHDL Yosys plugin, PSL properties, with the time constants shrunk (DEBOUNCE_CYCLES = 2, TICK_CYCLES = 2) and the first cycle assumed to be a reset cycle (the assumption is the first-cycle `assume rst = '1'`, so the proof is from reset and the induction step, which starts anywhere, is not blocked by it). prove is k-induction at depth 8 (every depth), bmc to depth 20 is kept as the faster check the fault runs of results/156_vhdl_tools use. The shrunk constants are a limit: the proof is for that configuration, not the shipped constants."
+# the GHDL plugin adds `<label>.cover` beside each PSL implication (the cover of its left side); the invariant has no left side and has an explicit cover
+antecedents:
+  req01_one_bit: req01_one_bit.cover
+  reset_values: reset_values.cover
+  steps_count: steps_count.cover
+  inv_gray_of_bin: inv_gray_of_bin_ante
+sanity: [cov_step, cov_wrap]
+depth:
+  bmc:
+    enough: false
+    why: "A bound, not a proof: depth 20 reaches the first step at cycle 4 and the wrap of the count at cycle 5 with the shrunk constants, but not every state; the same assertions are proved for all depths by the prove task (k-induction, depth 8), which is what the verdict rests on."

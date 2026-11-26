@@ -14,6 +14,8 @@ import sys
 from pathlib import Path
 
 R = Path(__file__).resolve().parent
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+from flow import fmax_cap  # noqa: E402  (brief 201: clock-buffer cap on the closed-clock Fmax)
 B87 = R.parent / "b87"
 FLOOR = 2.0
 PARTS = {"k26": "xck26-sfvc784-2LV-c", "a7": "xc7a100tcsg324-1"}
@@ -35,6 +37,7 @@ def hw():
                     a = dict(at[0], area_at_ns=FLOOR)
             out.setdefault(r["arm"], {})[tag] = None if not a else {
                 "clocks": r["latency_clocks"], "closed_at_ns": round(r["closed_at_ns"], 2), "fmax_mhz": r["closed_at_mhz"],
+                **fmax_cap.restate(tag, r["closed_at_mhz"], "closed clock of the search (setup, hold, primitive pulse width)"),
                 "latency_ns": round(r["latency_clocks"] * max(r["closed_at_ns"], FLOOR), 2),
                 "lut": a["lut"], "ff": a["ff"], "dsp": a["dsp"], "bram_tiles": a["bram_tiles"], "wns_ns": a["wns_ns"],
                 "wpws_ns": a["wpws_ns"], "tool": r["tool"],

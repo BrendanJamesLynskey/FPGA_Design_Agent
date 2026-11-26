@@ -500,7 +500,7 @@
   /* ---------- stage 3: plain-words status, requests, questions, console (brief 182) ---------- */
   function statusPanel(box, s) {
     box.textContent = "";
-    var rows = [["Done", s.done], ["Doing now", s.doing], ["Next", s.next], ["Blocked or waiting", s.blocked.length ? s.blocked.join("; ") : "nothing"], ["Cost", s.cost_line]];
+    var rows = [["Verification profile", s.profile ? s.profile.profile + (Object.keys(s.profile.overrides).length ? " with overrides " + Object.keys(s.profile.overrides).map(function (k) { return k + "=" + s.profile.overrides[k].value; }).join(", ") : " (no overrides)") + ", set by " + s.profile.set_by : "not recorded (a run from before profiles)"], ["Done", s.done], ["Doing now", s.doing], ["Next", s.next], ["Blocked or waiting", s.blocked.length ? s.blocked.join("; ") : "nothing"], ["Cost", s.cost_line]];
     add(box, [h("h3", null, "What is happening"),
       h("dl", null, rows.map(function (r) { return [h("dt", null, r[0]), h("dd", null, r[1])]; })),
       h("p", { class: "src" }, "Written from the run's records by code, not by a model. Sentence built " + age(Math.round(Math.max(0, Date.now() / 1000 - s.built_at))) + "; it changes when a stage ends or a request changes, and at least every " + s.refresh_min + " min.")]);
@@ -624,9 +624,30 @@
   function pageStart() {
     var root = h("div", null, h("h1", null, "Start"), loading()); main.textContent = ""; main.appendChild(root);
     api("/api/start/options").then(function (o) {
-      var f = state.start = state.start || { kind: "task", harness: "claude_code", effort: "medium", usd: o.default_usd, arms: ["H1"], components: [], request: "" };
+      var f = state.start = state.start || { kind: "task", harness: "claude_code", effort: "medium", usd: o.default_usd, arms: ["H1"], components: [], request: "", profile: "standard", switches: {}, settings: null };
       var out = h("div", { class: "panel", "aria-live": "polite" });
       function sel(label, opts, cur, on) { return h("label", null, label + " ", h("select", { on: { change: function () { on(this.value); } } }, opts.map(function (x) { return h("option", { value: x, selected: x === cur }, x); }))); }
+      function profileBlock() {
+        var cur = o.profiles.filter(function (p) { return p.name === f.profile; })[0] || o.profiles[0];
+        var ov = Object.keys(f.switches).length;
+        var drawer = h("details", { class: "drawer" }, h("summary", null, "Switches of this profile (" + (ov ? ov + " changed" : "none changed") + ")"),
+          h("p", { class: "mute" }, "Each switch is one verification method or reliability structure. A change is passed to the run as --set <switch>=<value> and recorded with the profile. A switch marked 'recorded only' is stored with the run; the flow does not run it yet. A value below a V3 floor is refused."),
+          o.switches.map(function (w) {
+            var base = cur.switches[w.name], val = (w.name in f.switches) ? f.switches[w.name] : base, ctl;
+            if (w.kind === "bool") ctl = h("input", { type: "checkbox", checked: !!val, on: { change: function () { setSw(w.name, this.checked, base); } } });
+            else if (w.kind === "int") ctl = h("input", { type: "number", min: String(w.lo), max: String(w.hi), value: String(val), on: { change: function () { setSw(w.name, parseInt(this.value, 10), base); } } });
+            else ctl = h("select", { on: { change: function () { setSw(w.name, this.value, base); } } }, w.choices.map(function (c) { return h("option", { value: c, selected: c === val }, c); }));
+            return h("label", { class: "inl", title: w.doc }, w.name + " ", ctl, h("span", { class: "mute" }, (val !== base ? "  (profile: " + base + ")" : "") + (w.wired ? "" : "  recorded only")));
+          }));
+        return h("fieldset", { class: "fullrow" }, h("legend", null, "Verification profile"),
+          sel("Profile", o.profiles.map(function (p) { return p.name; }), f.profile, function (v) { f.profile = v; f.switches = {}; render(); }),
+          h("p", null, cur.summary), h("p", { class: "mute" }, "Expected " + cur.extra_time), drawer);
+      }
+      function setSw(name, v, base) { if (v === base) delete f.switches[name]; else f.switches[name] = v; render(); }
+      function settingsNote() {
+        return h("p", { class: "mute fullrow" }, "Settings (board, part, speed grade, reference clocks, I/O standards, PHYs, interfaces, profile) are proposed by the agent from the task folder and asked as the first questions of the run: each with the proposed value as the default and its source as the reason. Answer them on the Live page; a setting with no value must be given.");
+      }
+      var go = null;
       function render() {
         var models = o.models[f.harness] || [];
         if (models.indexOf(f.model) < 0) f.model = models[0] || "";
@@ -634,7 +655,7 @@
         if (f.kind === "task") {
           if (!f.task) f.task = o.tasks[0];
           if (!f.board) f.board = o.boards.indexOf("nexys_a7_100t") >= 0 ? "nexys_a7_100t" : o.boards[0];
-          fields.push(sel("Task", o.tasks, f.task, function (v) { f.task = v; }), sel("Board", o.boards, f.board, function (v) { f.board = v; }),
+          fields.push(sel("Task", o.tasks, f.task, function (v) { f.task = v; render(); }), sel("Board", o.boards, f.board, function (v) { f.board = v; render(); }),
             h("fieldset", null, h("legend", null, "Harness arms (none ticked = the A0 baseline)"), o.arms.map(function (a) { return h("label", { class: "inl" }, h("input", { type: "checkbox", checked: f.arms.indexOf(a) >= 0, on: { change: function () { var i = f.arms.indexOf(a); if (this.checked && i < 0) f.arms.push(a); if (!this.checked && i >= 0) f.arms.splice(i, 1); } } }), a); }), h("p", { class: "mute" }, o.arm_note)));
         } else {
           var names = o.projects.map(function (p) { return p.name; });
@@ -644,12 +665,13 @@
             h("fieldset", null, h("legend", null, "Components the request may touch (none ticked: the agent resolves the scope from the request)"), cl.map(function (c) { return h("label", { class: "inl" }, h("input", { type: "checkbox", checked: f.components.indexOf(c.name) >= 0, on: { change: function () { var i = f.components.indexOf(c.name); if (this.checked && i < 0) f.components.push(c.name); if (!this.checked && i >= 0) f.components.splice(i, 1); } } }), c.name); })),
             h("label", null, "Change request ", h("input", { type: "text", class: "fullw", value: f.request, maxlength: 400, on: { input: function () { f.request = this.value; } } })));
         }
+        if (f.kind === "task") { fields.push(profileBlock(), settingsNote()); }
         fields.push(sel("Harness", ["claude_code", "deepagents"], f.harness, function (v) { f.harness = v; render(); }), sel("Model (from the resolved table)", models, f.model, function (v) { f.model = v; }),
           sel("Effort", o.efforts, f.effort, function (v) { f.effort = v; }),
           h("label", null, "Budget (USD, at most " + o.max_usd + ") ", h("input", { type: "number", min: "0.1", max: String(o.max_usd), step: "0.1", value: String(f.usd), on: { input: function () { f.usd = parseFloat(this.value); } } })));
-        var go = h("button", { type: "button", on: { click: function () {
+        go = h("button", { type: "button", on: { click: function () {
           var body = { kind: f.kind, harness: f.harness, model: f.model, effort: f.effort, max_usd: f.usd, confirm: "start" };
-          if (f.kind === "task") { body.task = f.task; body.board = f.board; body.arms = f.arms; } else { body.project = f.project; body.components = f.components; body.request = f.request; }
+          if (f.kind === "task") { body.task = f.task; body.board = f.board; body.arms = f.arms; body.profile = f.profile; body.switches = f.switches; } else { body.project = f.project; body.components = f.components; body.request = f.request; }
           if (!confirm("Start this run? It spends up to $" + f.usd + " (provider-reported), takes a heavy slot, and runs until it ends or you stop it.")) return;
           go.disabled = true; out.textContent = "Starting";
           post("/api/run/start", body).then(function (j) { out.textContent = ""; go.disabled = false;

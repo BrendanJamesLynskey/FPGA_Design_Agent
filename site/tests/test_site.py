@@ -128,6 +128,7 @@ import pytest  # noqa: E402
 import yaml  # noqa: E402
 
 import expertise  # noqa: E402
+ROOT_ = Path(__file__).resolve().parents[2]
 
 
 def _yaml():
@@ -217,7 +218,7 @@ def test_level_is_computed_from_the_items():
         if a["level"] == "measured":
             assert "measured" in kinds and a["counts"]["enforced"] == 0 and "agent" not in kinds
         if a["level"] == "knowledge":
-            assert not kinds - {"example"} and a["counts"]["enforced"] == 0
+            assert not kinds - {"example", "model"} and a["counts"]["enforced"] == 0       # model results (brief 164) never raise the level
     assert y["constraints"]["cap"]["level"] == "checked"
 
 
@@ -254,8 +255,9 @@ from html import escape as html_escape  # noqa: E402
 def test_every_drawer_lists_the_matrix_rows_for_its_area():
     fd = json.loads((SITE / "data" / "family_diffs.json").read_text())
     x = json.loads((SITE / "data" / "expertise.json").read_text())
+    y = {a["id"]: a for a in _yaml()["areas"]}
     for a in x["areas"]:
-        want = fd["areas"][a["id"]]
+        want = expertise.family_of(y[a["id"]], fd)          # an area with family_from (briefs 185 and 164) shows named rows of another matrix area
         assert a["family"]["rows"] == want["rows"] and a["family"]["rows"], a["id"]
         assert a["family"]["docs"] == want["docs"], a["id"]
         for r in a["family"]["rows"]:
@@ -599,3 +601,54 @@ def test_readmes_and_docs_name_only_vivado_2026_1():
     found = {rel: sorted(release_tokens(checked_text(rel, p))) for rel, p in published_files()
              if not rel.startswith("site/") and release_tokens(checked_text(rel, p))}
     assert not found, f"README/docs name another Vivado release: {found}"
+
+
+# ---- brief 185: the DSP-slice drawer -------------------------------------------------------------------------------------
+def test_dsp_slices_drawer_has_three_plots_and_is_measured_not_checked():
+    x = json.loads((SITE / "data" / "expertise.json").read_text())
+    a = next(a for a in x["areas"] if a["id"] == "dsp_slices")
+    assert a["level"] == "measured" if "level" in a else a["level_label"] == "Measured in Vivado"
+    assert [f["kind"] for f in a["figures"]] == ["mul_depth", "dot_pareto", "dsp_width"]
+    html = (SITE / "public" / "expertise.html").read_text()
+    seg = html[html.index('id="dsp_slices"'):]
+    assert seg.count('class="dspfig"') >= 3 and seg.count("<svg") >= 6        # a wide and a narrow drawing of each
+    assert "Checked by the flow" not in seg.split("</details>")[0]          # the advisory check does not raise the level
+
+
+def test_dsp_figure_numbers_are_the_committed_measurements():
+    import dsp_figures
+    d = dsp_figures.data("mul_depth")
+    for p in d["data"]["panels"]:
+        pts = json.loads((ROOT_ / "results" / "185_dsp_slices" / "data" / f'{p["key"]}.json').read_text())["points"]
+        ids = {(q["latency_clocks"], round(q["fmax_mhz"])) for q in pts if q["kind"] == "mul" and q["params"]["WA"] == 18 and q["params"]["RSTP"] == 0}
+        assert {(x["latency"], x["fmax"]) for x in p["dots"]} == ids
+    for kind in ("mul_depth", "dot_pareto", "dsp_width"):
+        for lay in ("wide", "narrow"):
+            svg = dsp_figures.render(kind, {"title": "t", "data": dsp_figures.data(kind)["data"]}, lay)
+            assert svg.startswith("<svg") and "NaN" not in svg and svg.count("<text") > 8
+
+
+# ---- brief 164: the signal-integrity drawer and its plots ---------------------------------------------------------------
+
+def test_signal_integrity_drawer_has_four_plots_and_stays_at_knowledge():
+    x = json.loads((SITE / "data" / "expertise.json").read_text())
+    a = [a for a in x["areas"] if a["id"] == "signal_integrity"][0]
+    assert a["level"] == "knowledge" and a["counts"]["enforced"] == 0 and a["cap_reason"] is None
+    assert [f["kind"] for f in a["figures"]] == ["waveforms", "sweep", "kr260", "rout"]
+    assert {e["kind"] for e in a["evidence"]} == {"model"}
+    html = (SITE / "public" / "expertise.html").read_text()
+    sec = html.split('id="signal_integrity"', 1)[1].split("</details>\n", 1)[0]
+    assert sec.count("<svg") == 8 and sec.count('class="lay-w"') == 4 and "Checked by the flow" not in sec     # a wide and a narrow drawing of each
+    for f in a["figures"]:
+        for k in ("title", "caption", "how", "wrong"):
+            assert f[k]
+
+
+def test_figures_are_drawn_from_the_committed_results():
+    import si_figures
+    w = si_figures.data("waveforms")
+    assert [p["standard"] for p in w["data"]["panels"]] == ["LVCMOS33", "LVCMOS18"] and w["vals"]["hr33_over_0"] > w["vals"]["hr33_over_47"]
+    sw = si_figures.data("sweep")["vals"]
+    assert sw["hr33_22_6"] == 0 and sw["hr33_47_6"] > 0 and sw["hp18_22_6"] > 0         # the 22 ohm rule is right for 1.8 V HP and wrong for 3.3 V HR on a long line
+    k = si_figures.data("kr260")["vals"]
+    assert k["a_xdc_t"] > k["a_assumed_t"] > 0 and k["a_optimal_t"] == 0 and k["b_optimal_r"] > 0

@@ -299,6 +299,12 @@ verification:
     title: Build lat_all3_bypass composes 97C's cuts with the bypass build's files, and its board driver's verdicts, references and lock prefix (brief 126)
     evidence: {file: results/116_traceability/b96_kr260_10g/pytest_junit.xml, reader: junit, tests: ["test_126_all3_bypass::*"]}
     checks: [designs/b96_kr260_10g/lat_all3_bypass/build.yaml]
+  - id: V-SIM-169-CUTS
+    requirements: [B96-F-BUILDS]
+    method: sim_test
+    title: Prototype latency cuts EARLY_MAC and FAST_PRE (lat_cuts169) keep their defaults off, are copies, and pass the 97C core bench in all four parameter combinations (brief 169)
+    evidence: {file: results/116_traceability/b96_kr260_10g/pytest_junit.xml, reader: junit, tests: ["test_169_cuts::*", "test_169_cuts_rtl::*"]}
+    checks: [designs/b96_kr260_10g/lat_cuts169/build.yaml]
   - id: V-SIM-BUILDS
     requirements: [B96-F-BUILDS]
     method: sim_test
@@ -350,21 +356,34 @@ verification:
   - id: V-COV-FUNC
     requirements: [B96-F-PCS, B96-F-MAC]
     method: coverage_bin
-    title: Functional coverage of the pyuvm bench of the PCS and MAC (brief 123 bench, brief 146 regression on Verilator 5.048; 42 runs, every one of the 217 bins hit; the Icarus run of brief 123 hit the same 217)
-    evidence: {file: results/146_verilator_cov/summary.txt, reader: text, regex: 'merged 42 runs: (\d+)/217 bins hit'}
+    title: Functional coverage of the pyuvm bench of the PCS and MAC (brief 123 bench, brief 158 regression on Verilator 5.048; 44 runs, every one of the 217 bins hit; the Icarus run of brief 123 hit the same 217)
+    evidence: {file: results/158_cov_closure/summary.txt, reader: text, regex: 'merged 44 runs: (\d+)/217 bins hit'}
     pass_when: [{op: ge, value: 217}]
     checks: [designs/b96_kr260_10g/verif/pyuvm/pcs_mac_pyuvm/cov.py]
   - id: V-COV-CODE
     requirements: [B96-F-PCS, B96-F-MAC]
     method: coverage_bin
-    title: RTL code coverage of pcs_tx, pcs_rx, mac64_tx, mac64_rx and b96_pkg by the same 42-run regression (Verilator 5.048 --coverage, merged; brief 146). Floors are the measured design-wide percentages rounded down (line 81.25, branch 85.34, expression 92.47, toggle 96.33); every open point is explained in results/146_verilator_cov/README.md (unreachable by design, one deliberately not driven, or a Verilator reporting artefact reproduced in a 15-line test)
-    evidence: {file: results/146_verilator_cov/coverage_summary.json, reader: json}
+    title: RTL code coverage of pcs_tx, pcs_rx, mac64_tx, mac64_rx and b96_pkg by the same 44-run regression (Verilator 5.048 --coverage, merged; brief 146, raised by brief 158's underrun test). Floors are the measured design-wide percentages rounded down to a whole number (82, 85, 92, 96; measured 82.5, 85.34, 92.47, 96.37; the line floor rose from 81 in brief 158); every open point is explained in results/146_verilator_cov/README.md and results/158_cov_closure/README.md (unreachable by design, proved so by formal covers in brief 158, or a Verilator reporting artefact reproduced in a 15-line test)
+    evidence: {file: results/158_cov_closure/coverage_summary.json, reader: json}
     pass_when:
-      - {field: design.line.percent, op: ge, value: 81}
+      - {field: design.line.percent, op: ge, value: 82}
       - {field: design.branch.percent, op: ge, value: 85}
       - {field: design.expr.percent, op: ge, value: 92}
       - {field: design.toggle.percent, op: ge, value: 96}
     checks: [designs/b96_kr260_10g/rtl/pcs_tx.sv, designs/b96_kr260_10g/rtl/pcs_rx.sv, designs/b96_kr260_10g/rtl/mac64_tx.sv, designs/b96_kr260_10g/rtl/mac64_rx.sv, designs/b96_kr260_10g/rtl/b96_pkg.sv]
+  - id: V-TX-UNDERRUN
+    requirements: [B96-F-MAC]
+    method: uvm_test
+    title: Transmit underrun of mac64_tx under the protocol checker's fault-injection mode (brief 158; test t_underrun, 12 underruns per seed). The source stalls inside a frame; expected on the output are the start word, the data words taken, one word of eight error characters (no FCS, no terminate, no eop), one idle word, then any new start; the receiver aborts exactly those frames. The recorded run is the 44-run regression; the count is the underruns the checker saw in injection mode
+    evidence: {file: results/158_cov_closure/protocol_cover.tsv, reader: text, regex: '^underrun_injected\t(\d+)'}
+    pass_when: [{op: ge, value: 24}]
+    checks: [designs/b96_kr260_10g/rtl/mac64_tx.sv, designs/b96_kr260_10g/verif/pyuvm/pcs_mac_pyuvm/seqs.py, designs/b96_kr260_10g/verif/pyuvm/pcs_mac_pyuvm/scoreboard.py, designs/b96_kr260_10g/verif/pyuvm/pcs_mac_pyuvm/checker.py]
+  - id: V-FORMAL-MAC-IFG
+    requirements: [B96-F-MAC]
+    method: formal
+    title: SymbiYosys covers and proofs of the two mac64_tx interframe-gap conditions code coverage found unreachable (brief 158, verif/formal/mac64_tx_ifg.sby). Both unreached, both proved unreachable by induction, the neighbouring arms reachable, and a planted wider n finds the first reachable
+    evidence: {file: results/116_traceability/b96_kr260_10g/pytest_junit.xml, reader: junit, tests: ["test_b158_ifg_formal::*"]}
+    checks: [designs/b96_kr260_10g/rtl/mac64_tx.sv, designs/b96_kr260_10g/verif/formal/mac64_tx_ifg.sby, designs/b96_kr260_10g/verif/formal/mac64_tx_ifg_props.sv]
   # ---- simulation measurements ---------------------------------------------------------------------------------------
   - id: V-SIMM-T2T
     requirements: [B96-P-T2T-DIGITAL]

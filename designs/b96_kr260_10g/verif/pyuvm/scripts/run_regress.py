@@ -27,10 +27,11 @@ DESIGN = PYUVM.parents[1]
 ROOT = DESIGN.parents[1]
 sys.path.insert(0, str(ROOT))
 
-DIRECTED = ["t_smoke", "t_lens", "t_gaps", "t_badfcs", "t_xg", "t_line_blocks", "t_hdr", "t_slip", "t_ber", "t_rxreset", "t_offsets"]
+DIRECTED = ["t_smoke", "t_lens", "t_gaps", "t_badfcs", "t_underrun", "t_xg", "t_line_blocks", "t_hdr", "t_slip", "t_ber", "t_rxreset", "t_offsets"]
 RANDOMT = ["t_rand", "t_rand_line"]
 MUT_TESTS = [("t_smoke", 1), ("t_lens", 1), ("t_xg", 1), ("t_line_blocks", 1), ("t_hdr", 1), ("t_badfcs", 1), ("t_gaps", 1), ("t_offsets", 1), ("t_rxreset", 1), ("t_slip", 1),
-             ("t_ber", 1), ("t_rand", 1), ("t_rand", 2), ("t_rand_line", 1), ("t_rand_line", 2)]
+             ("t_ber", 1), ("t_rand", 1), ("t_rand", 2), ("t_rand_line", 1), ("t_rand_line", 2),
+             ("t_underrun", 1)]          # brief 158: last in the order, so every earlier kill is the same as in brief 123's record
 
 
 def _load(name: str, path: Path):

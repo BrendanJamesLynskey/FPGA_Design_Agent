@@ -3,11 +3,11 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>4 x 4 row multiplier behind the test shell | FPGA Design Agent</title>
+<title>4 x 4 row multiplier behind the test shell | FPGA Force</title>
 <meta name="description" content="4 x 4 row multiplier behind the test shell: the spec, hidden tests, reference RTL, mutants and golden model of benchmark task c14_systolic_matmul.">
 <meta name="color-scheme" content="light dark">
 <link rel="icon" href="../favicon.svg" type="image/svg+xml">
-<style>/* FPGA Design Agent site: sober monochrome, dark and light, no glow. Same manner as the CVDP RTL Agent site. */
+<style>/* FPGA Force site: sober monochrome, dark and light, no glow. Same manner as the CVDP RTL Agent site. */
 :root {
   --bg: #f6f6f4; --panel: #ffffff; --rule: #d6d6d2; --ink: #161616; --ink-2: #4a4a4a; --ink-3: #6b6b6b;
   --mark: #161616; --mute: #b9b9b4; --warn: #b3261e; --ok: #161616;
@@ -61,6 +61,7 @@ button:hover { border-color: var(--ink-3); }
 button[aria-pressed="true"] { background: var(--ink); color: var(--bg); }
 
 /* sections, cards */
+.tagline { font-size: 1.3rem; font-weight: 600; margin: .2rem 0 1rem; color: var(--ink); }
 .eyebrow { font: 600 .8rem var(--f-mono); text-transform: uppercase; letter-spacing: .08em; color: var(--ink-3); }
 .facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; margin: 22px 0; }
 .fact { border: 1px solid var(--rule); background: var(--panel); padding: 14px 16px; }
@@ -674,7 +675,7 @@ svg .bdtick { stroke: var(--ink-3); }
 @media (max-width: 520px) { .evm tbody th { min-width: 9em; } }
 @media (max-width: 520px) { .evm tbody th { white-space: normal; min-width: 8em; max-width: 9em; font-size: .8rem; } .evm td.ev { min-width: 4.2em; } .evm thead th { font-size: .72rem; } }
 
-/* brief 193: "Why this agent": the one-page summary */
+/* brief 193: "Why FPGA Force": the one-page summary */
 svg .boxyou { fill: var(--ink); stroke: var(--ink); }
 .whyhero h1 { font-size: clamp(1.35rem, 1rem + 1.6vw, 2rem); letter-spacing: -.01em; line-height: 1.3; max-width: 48ch; }
 .whyfig { margin: 18px 0 8px; }
@@ -689,11 +690,29 @@ details.area.why .more-link { margin: .8em 0 0; font-weight: 600; }
 .whycta b { display: block; font-size: 1.1rem; }
 .whycta span { display: block; font-size: .92rem; color: var(--ink-2); margin-top: 2px; }
 .whycta a:hover span, .whycta a:focus-visible span { color: var(--bg); }
+/* brief 185: figures of the DSP-slice drawer (site/dsp_figures.py): a wide and a narrow drawing, one shown */
+.dspfig { margin: 1rem 0; }
+.dspfig .figt { font-weight: 600; margin-bottom: .4rem; }
+.dspfig .dsp-n { display: none; }
+@media (max-width: 640px) { .dspfig .dsp-w { display: none; } .dspfig .dsp-n { display: block; } }
+/* brief 164: the signal-integrity figures (inline SVG from site/si_figures.py; a wide and a narrow drawing, one shown) */
+.sifig { margin: 1.2em 0 1.6em; }
+.sifig .figt { font-weight: 700; color: var(--ink); margin: 0 0 4px; }
+.sifig svg { display: block; width: 100%; height: auto; }
+.sifig .lay-w svg { max-width: 720px; }
+.sifig .lay-n { display: none; }
+@media (max-width: 819px) { .sifig .lay-w { display: none; } .sifig .lay-n { display: block; max-width: 480px; } }
+.sifig .lay-w svg text { font-size: 11.5px; }
+.sifig .lay-n svg text { font-size: 14.5px; }
+svg .hl { stroke: var(--warn); stroke-width: 0.9; opacity: .75; }
+svg .cell { fill: var(--ink); stroke: var(--rule); }
+svg text.on { fill: var(--bg); }
+svg text.wn { fill: var(--warn); }
 </style>
 </head>
 <body>
 <a class="visually-hidden" href="#main">Skip to content</a>
-<header class="bar"><div class="wrap"><a class="brand" href="../index.html">FPGA Design Agent</a><nav aria-label="Pages"><a href="../why.html">Why</a><a href="../agent.html">The agent</a><a class="sub" href="../agent.html#harness">Harness</a><a href="../story.html">How it was built</a><a href="../worked-example.html">Worked example</a><a href="../inspect.html">Inspect it</a><a href="../how.html">How it works</a><a href="../verification.html">Verification</a><a href="../traceability.html">Traceability</a><a href="../flow-notes.html">Beyond the flow</a><a href="../expertise.html">Expertise</a><a href="../examples.html">Examples</a><a href="../showcase.html">Showcase</a><a href="../problems.html" aria-current="page">Problems</a><a href="../evaluation.html">Evaluation</a><a href="../results.html">Results</a></nav><button id="theme" type="button" aria-label="Switch to dark theme">Dark</button></div></header>
+<header class="bar"><div class="wrap"><a class="brand" href="../index.html">FPGA Force</a><nav aria-label="Pages"><a href="../why.html">Why</a><a href="../agent.html">The agent</a><a class="sub" href="../agent.html#harness">Harness</a><a href="../story.html">How it was built</a><a href="../worked-example.html">Worked example</a><a href="../inspect.html">Inspect it</a><a href="../how.html">How it works</a><a href="../verification.html">Verification</a><a href="../traceability.html">Traceability</a><a href="../flow-notes.html">Beyond the flow</a><a href="../expertise.html">Expertise</a><a href="../examples.html">Examples</a><a href="../showcase.html">Showcase</a><a href="../problems.html" aria-current="page">Problems</a><a href="../evaluation.html">Evaluation</a><a href="../results.html">Results</a></nav><button id="theme" type="button" aria-label="Switch to dark theme">Dark</button></div></header>
 <main id="main" class="wrap">
 <p class="crumbs small"><a href="../problems.html">Problems</a> / <a href="../problems.html#dom-I">I. Machine learning inference</a></p>
 <h1>4 x 4 row multiplier behind the test shell</h1>
@@ -1058,7 +1077,7 @@ W0, LOAD, ROW0, BURST, STATUS, LAT, COUNT, RES0 = 0x00, 0x04, 0x08, 0x18, 0x19, 
 </main>
 <footer><div class="wrap"><p>Designed by Brendan Lynskey. Code and results: <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent">github.com/BrendanJamesLynskey/FPGA_Design_Agent</a> (all rights reserved; source visible for review, see LICENSE). Every number on these pages is read from a committed result file; development results are labelled as such and are not the held-out score.</p></div></footer>
 <script type="application/json" data-key="trace">{"captions":["Clock 0: row 0 (-22 -123 -110 -48) goes in.","Clock 1: row 1 (-6 -120 -100 -53) goes in.","Clock 2: row 2 (60 -6 -69 45) goes in.","Clock 3: row 3 (110 54 15 72) goes in.","Clock 4: row 4 (6 48 -11 -23) goes in.","Clock 5: row 5 (53 32 -14 28) goes in.","Clock 6: row 6 (87 -10 105 86) goes in.","Clock 7: row 7 (122 -88 108 56) goes in; result row 0 comes out (-13343 3659 -22380 1475).","Clock 8: row 8 (96 33 102 79) goes in; result row 1 comes out (-13394 4174 -21349 633).","Clock 9: row 9 (-95 123 -119 -28) goes in; result row 2 comes out (-11886 -5379 -3564 7125).","Clock 10: result row 3 comes out (-4924 -5017 10079 4618).","Clock 11: result row 4 comes out (-784 -4883 3394 791).","Clock 12: result row 5 comes out (-4622 -4460 3696 3462).","Clock 13: result row 6 comes out (5418 7407 10353 -2506).","Clock 14: result row 7 comes out (1340 15080 1976 -6396).","Clock 15: result row 8 comes out (5283 3349 14379 -1508).","Clock 16: result row 9 comes out (-3645 -19536 1985 9683).","Clock 17: pipeline empty.","Clock 18: pipeline empty."],"hero":{"C":[[-13343,3659,-22380,1475],[-13394,4174,-21349,633],[-11886,-5379,-3564,7125],[-4924,-5017,10079,4618],[-784,-4883,3394,791],[-4622,-4460,3696,3462],[5418,7407,10353,-2506],[1340,15080,1976,-6396],[5283,3349,14379,-1508],[-3645,-19536,1985,9683]],"W":[[-74,-2,10,2],[21,-91,102,27],[110,75,73,-68],[6,-14,33,55]],"in":[0,1,2,3,4,5,6,7,8,9,null,null,null,null,null,null,null,null,null],"lat":7,"out":[null,null,null,null,null,null,null,0,1,2,3,4,5,6,7,8,9,null,null],"rows":[[-22,-123,-110,-48],[-6,-120,-100,-53],[60,-6,-69,45],[110,54,15,72],[6,48,-11,-23],[53,32,-14,28],[87,-10,105,86],[122,-88,108,56],[96,33,102,79],[-95,123,-119,-28]]},"signals":[{"kind":"bit","name":"row valid","v":[1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0]},{"kind":"text","name":"row in","v":["-22 -123 -110 -48","-6 -120 -100 -53","60 -6 -69 45","110 54 15 72","6 48 -11 -23","53 32 -14 28","87 -10 105 86","122 -88 108 56","96 33 102 79","-95 123 -119 -28","","","","","","","","",""]},{"kind":"bit","name":"out valid","v":[0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,0,0]},{"kind":"text","name":"result row","v":["","","","","","","","-13343 3659 -22380 1475","-13394 4174 -21349 633","-11886 -5379 -3564 7125","-4924 -5017 10079 4618","-784 -4883 3394 791","-4622 -4460 3696 3462","5418 7407 10353 -2506","1340 15080 1976 -6396","5283 3349 14379 -1508","-3645 -19536 1985 9683","",""]}],"stimulus":"The model's first 10 test rows of four signed 8-bit numbers, one row a clock, times its fixed 4 x 4 weight matrix; latency 7 clocks.","unit":"clock","x":[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18]}</script>
-<script>/* FPGA Design Agent site. No dependencies. Every animation is frame(step) over a state list built from site/data/*.json. */
+<script>/* FPGA Force site. No dependencies. Every animation is frame(step) over a state list built from site/data/*.json. */
 (function () {
   "use strict";
   var D = {};

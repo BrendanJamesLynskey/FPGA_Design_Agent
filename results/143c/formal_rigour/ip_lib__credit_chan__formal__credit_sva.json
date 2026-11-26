@@ -1,0 +1,974 @@
+{
+ "sby": "ip_lib/credit_chan/formal/credit_sva.sby",
+ "schema": "fpga-design-agent/formal_rigour/v1",
+ "sources": {
+  "ip_lib/credit_chan/formal/credit_sva.sby": "305d91144fc6c5ff0c60d69c105ac308b350d541643803f426cf3c9ccc43bad2",
+  "ip_lib/credit_chan/formal/formal_credit.sv": "2af3afecca4ba09b1f0f1f0e0126e154588beeba8072e17c2c4accda502b60c1",
+  "ip_lib/credit_chan/rtl/credit_chan.sv": "f8fa37f353d78f91421ebebf6cd232f00fedd4b8a2a979ab7b209b0ad4fa2c5c",
+  "ip_lib/pipe_reg/tb/axis_sva.sv": "6824f7c808f6cd2ad906e158d9eb3311b58a96c6161fc8cf958bf8c1c2e4ab7e"
+ },
+ "tasks": {
+  "sva_c1f0b0": {
+   "checks": [
+    {
+     "flavor": "assert",
+     "id": "h_stall_valid",
+     "label": "h_stall_valid",
+     "src": "formal_credit.sv:45",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "h_stall_data",
+     "label": "h_stall_data",
+     "src": "formal_credit.sv:46",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "h_stall__ante",
+     "label": "h_stall__ante",
+     "src": "formal_credit.sv:49",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "h_order__ante",
+     "label": "h_order__ante",
+     "src": "formal_credit.sv:48",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "h_order",
+     "label": "h_order",
+     "src": "formal_credit.sv:43",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "cc_wrap__ante",
+     "label": "cc_wrap__ante",
+     "src": "credit_chan.sv:268",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "cc_valid",
+     "label": "cc_valid",
+     "src": "credit_chan.sv:259",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "cc_spent__ante",
+     "label": "cc_spent__ante",
+     "src": "credit_chan.sv:266",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "cc_ready",
+     "label": "cc_ready",
+     "src": "credit_chan.sv:258",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "cc_ptr_range",
+     "label": "cc_ptr_range",
+     "src": "credit_chan.sv:261",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "cc_ptr_gap",
+     "label": "cc_ptr_gap",
+     "src": "credit_chan.sv:262",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "cc_no_overflow",
+     "label": "cc_no_overflow",
+     "src": "credit_chan.sv:260",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "cc_fwd_data__ante",
+     "label": "cc_fwd_data__ante",
+     "src": "credit_chan.sv:294",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "cc_fwd_data",
+     "label": "cc_fwd_data",
+     "src": "credit_chan.sv:292",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "cc_full__ante",
+     "label": "cc_full__ante",
+     "src": "credit_chan.sv:267",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "cc_flight__ante",
+     "label": "cc_flight__ante",
+     "src": "credit_chan.sv:264",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "cc_credits_max",
+     "label": "cc_credits_max",
+     "src": "credit_chan.sv:256",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "cc_count",
+     "label": "cc_count",
+     "src": "credit_chan.sv:263",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "cc_conserve",
+     "label": "cc_conserve",
+     "src": "credit_chan.sv:255",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "cc_cnt_max",
+     "label": "cc_cnt_max",
+     "src": "credit_chan.sv:257",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "cc_buffered__ante",
+     "label": "cc_buffered__ante",
+     "src": "credit_chan.sv:265",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "cc_buf_data__ante",
+     "label": "cc_buf_data__ante",
+     "src": "credit_chan.sv:295",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "cc_buf_data",
+     "label": "cc_buf_data",
+     "src": "credit_chan.sv:293",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "c_xfer",
+     "label": "c_xfer",
+     "src": "axis_sva.sv:46",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "c_stall",
+     "label": "c_stall",
+     "src": "axis_sva.sv:47",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "a_reset__ante",
+     "label": "a_reset__ante",
+     "src": "axis_sva.sv:42",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "a_reset",
+     "label": "a_reset",
+     "src": "axis_sva.sv:37",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "a_hold__ante",
+     "label": "a_hold__ante",
+     "src": "axis_sva.sv:41",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "a_hold",
+     "label": "a_hold",
+     "src": "axis_sva.sv:33",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "c_through",
+     "label": "c_through",
+     "src": "formal_credit.sv:51",
+     "tautology": false
+    },
+    {
+     "flavor": "assume",
+     "id": "formal_credit.sv:41",
+     "label": null,
+     "src": "formal_credit.sv:41",
+     "tautology": false
+    }
+   ],
+   "covers": {},
+   "depth": 16,
+   "mode": "prove",
+   "seconds": 0.5,
+   "status": "PASS"
+  },
+  "sva_c3f1b1": {
+   "checks": [
+    {
+     "flavor": "assert",
+     "id": "h_stall_valid",
+     "label": "h_stall_valid",
+     "src": "formal_credit.sv:45",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "h_stall_data",
+     "label": "h_stall_data",
+     "src": "formal_credit.sv:46",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "h_stall__ante",
+     "label": "h_stall__ante",
+     "src": "formal_credit.sv:49",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "h_order__ante",
+     "label": "h_order__ante",
+     "src": "formal_credit.sv:48",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "h_order",
+     "label": "h_order",
+     "src": "formal_credit.sv:43",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "cc_wrap__ante",
+     "label": "cc_wrap__ante",
+     "src": "credit_chan.sv:268",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "cc_valid",
+     "label": "cc_valid",
+     "src": "credit_chan.sv:259",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "cc_spent__ante",
+     "label": "cc_spent__ante",
+     "src": "credit_chan.sv:266",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "cc_ready",
+     "label": "cc_ready",
+     "src": "credit_chan.sv:258",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "cc_ptr_range",
+     "label": "cc_ptr_range",
+     "src": "credit_chan.sv:261",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "cc_ptr_gap",
+     "label": "cc_ptr_gap",
+     "src": "credit_chan.sv:262",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "cc_no_overflow",
+     "label": "cc_no_overflow",
+     "src": "credit_chan.sv:260",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "cc_fwd_data__ante",
+     "label": "cc_fwd_data__ante",
+     "src": "credit_chan.sv:294",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "cc_fwd_data",
+     "label": "cc_fwd_data",
+     "src": "credit_chan.sv:292",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "cc_full__ante",
+     "label": "cc_full__ante",
+     "src": "credit_chan.sv:267",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "cc_flight__ante",
+     "label": "cc_flight__ante",
+     "src": "credit_chan.sv:264",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "cc_credits_max",
+     "label": "cc_credits_max",
+     "src": "credit_chan.sv:256",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "cc_count",
+     "label": "cc_count",
+     "src": "credit_chan.sv:263",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "cc_conserve",
+     "label": "cc_conserve",
+     "src": "credit_chan.sv:255",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "cc_cnt_max",
+     "label": "cc_cnt_max",
+     "src": "credit_chan.sv:257",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "cc_buffered__ante",
+     "label": "cc_buffered__ante",
+     "src": "credit_chan.sv:265",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "cc_buf_data__ante",
+     "label": "cc_buf_data__ante",
+     "src": "credit_chan.sv:295",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "cc_buf_data",
+     "label": "cc_buf_data",
+     "src": "credit_chan.sv:293",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "c_xfer",
+     "label": "c_xfer",
+     "src": "axis_sva.sv:46",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "c_stall",
+     "label": "c_stall",
+     "src": "axis_sva.sv:47",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "a_reset__ante",
+     "label": "a_reset__ante",
+     "src": "axis_sva.sv:42",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "a_reset",
+     "label": "a_reset",
+     "src": "axis_sva.sv:37",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "a_hold__ante",
+     "label": "a_hold__ante",
+     "src": "axis_sva.sv:41",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "a_hold",
+     "label": "a_hold",
+     "src": "axis_sva.sv:33",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "c_through",
+     "label": "c_through",
+     "src": "formal_credit.sv:51",
+     "tautology": false
+    },
+    {
+     "flavor": "assume",
+     "id": "formal_credit.sv:41",
+     "label": null,
+     "src": "formal_credit.sv:41",
+     "tautology": false
+    }
+   ],
+   "covers": {},
+   "depth": 16,
+   "mode": "prove",
+   "seconds": 0.9,
+   "status": "PASS"
+  },
+  "sva_c3f1b1c": {
+   "checks": [
+    {
+     "flavor": "assert",
+     "id": "h_stall_valid",
+     "label": "h_stall_valid",
+     "src": "formal_credit.sv:45",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "h_stall_data",
+     "label": "h_stall_data",
+     "src": "formal_credit.sv:46",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "h_stall__ante",
+     "label": "h_stall__ante",
+     "src": "formal_credit.sv:49",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "h_order__ante",
+     "label": "h_order__ante",
+     "src": "formal_credit.sv:48",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "h_order",
+     "label": "h_order",
+     "src": "formal_credit.sv:43",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "cc_wrap__ante",
+     "label": "cc_wrap__ante",
+     "src": "credit_chan.sv:268",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "cc_valid",
+     "label": "cc_valid",
+     "src": "credit_chan.sv:259",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "cc_spent__ante",
+     "label": "cc_spent__ante",
+     "src": "credit_chan.sv:266",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "cc_ready",
+     "label": "cc_ready",
+     "src": "credit_chan.sv:258",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "cc_ptr_range",
+     "label": "cc_ptr_range",
+     "src": "credit_chan.sv:261",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "cc_ptr_gap",
+     "label": "cc_ptr_gap",
+     "src": "credit_chan.sv:262",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "cc_no_overflow",
+     "label": "cc_no_overflow",
+     "src": "credit_chan.sv:260",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "cc_fwd_data__ante",
+     "label": "cc_fwd_data__ante",
+     "src": "credit_chan.sv:294",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "cc_fwd_data",
+     "label": "cc_fwd_data",
+     "src": "credit_chan.sv:292",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "cc_full__ante",
+     "label": "cc_full__ante",
+     "src": "credit_chan.sv:267",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "cc_flight__ante",
+     "label": "cc_flight__ante",
+     "src": "credit_chan.sv:264",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "cc_credits_max",
+     "label": "cc_credits_max",
+     "src": "credit_chan.sv:256",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "cc_count",
+     "label": "cc_count",
+     "src": "credit_chan.sv:263",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "cc_conserve",
+     "label": "cc_conserve",
+     "src": "credit_chan.sv:255",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "cc_cnt_max",
+     "label": "cc_cnt_max",
+     "src": "credit_chan.sv:257",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "cc_buffered__ante",
+     "label": "cc_buffered__ante",
+     "src": "credit_chan.sv:265",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "cc_buf_data__ante",
+     "label": "cc_buf_data__ante",
+     "src": "credit_chan.sv:295",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "cc_buf_data",
+     "label": "cc_buf_data",
+     "src": "credit_chan.sv:293",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "c_xfer",
+     "label": "c_xfer",
+     "src": "axis_sva.sv:46",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "c_stall",
+     "label": "c_stall",
+     "src": "axis_sva.sv:47",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "a_reset__ante",
+     "label": "a_reset__ante",
+     "src": "axis_sva.sv:42",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "a_reset",
+     "label": "a_reset",
+     "src": "axis_sva.sv:37",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "a_hold__ante",
+     "label": "a_hold__ante",
+     "src": "axis_sva.sv:41",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "a_hold",
+     "label": "a_hold",
+     "src": "axis_sva.sv:33",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "c_through",
+     "label": "c_through",
+     "src": "formal_credit.sv:51",
+     "tautology": false
+    },
+    {
+     "flavor": "assume",
+     "id": "formal_credit.sv:41",
+     "label": null,
+     "src": "formal_credit.sv:41",
+     "tautology": false
+    }
+   ],
+   "covers": {
+    "a_hold__ante": {
+     "reached": true,
+     "step": 7
+    },
+    "a_reset__ante": {
+     "reached": true,
+     "step": 2
+    },
+    "c_stall": {
+     "reached": true,
+     "step": 6
+    },
+    "c_through": {
+     "reached": true,
+     "step": 9
+    },
+    "c_xfer": {
+     "reached": true,
+     "step": 5
+    },
+    "cc_buf_data__ante": {
+     "reached": true,
+     "step": 5
+    },
+    "cc_buffered__ante": {
+     "reached": true,
+     "step": 5
+    },
+    "cc_flight__ante": {
+     "reached": true,
+     "step": 4
+    },
+    "cc_full__ante": {
+     "reached": true,
+     "step": 7
+    },
+    "cc_fwd_data__ante": {
+     "reached": true,
+     "step": 4
+    },
+    "cc_spent__ante": {
+     "reached": true,
+     "step": 6
+    },
+    "cc_wrap__ante": {
+     "reached": true,
+     "step": 7
+    },
+    "h_order__ante": {
+     "reached": true,
+     "step": 5
+    },
+    "h_stall__ante": {
+     "reached": true,
+     "step": 6
+    }
+   },
+   "depth": 24,
+   "mode": "cover",
+   "seconds": 0.9,
+   "status": "PASS"
+  },
+  "sva_c5f2b2": {
+   "checks": [
+    {
+     "flavor": "assert",
+     "id": "h_stall_valid",
+     "label": "h_stall_valid",
+     "src": "formal_credit.sv:45",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "h_stall_data",
+     "label": "h_stall_data",
+     "src": "formal_credit.sv:46",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "h_stall__ante",
+     "label": "h_stall__ante",
+     "src": "formal_credit.sv:49",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "h_order__ante",
+     "label": "h_order__ante",
+     "src": "formal_credit.sv:48",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "h_order",
+     "label": "h_order",
+     "src": "formal_credit.sv:43",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "cc_wrap__ante",
+     "label": "cc_wrap__ante",
+     "src": "credit_chan.sv:268",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "cc_valid",
+     "label": "cc_valid",
+     "src": "credit_chan.sv:259",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "cc_spent__ante",
+     "label": "cc_spent__ante",
+     "src": "credit_chan.sv:266",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "cc_ready",
+     "label": "cc_ready",
+     "src": "credit_chan.sv:258",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "cc_ptr_range",
+     "label": "cc_ptr_range",
+     "src": "credit_chan.sv:261",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "cc_ptr_gap",
+     "label": "cc_ptr_gap",
+     "src": "credit_chan.sv:262",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "cc_no_overflow",
+     "label": "cc_no_overflow",
+     "src": "credit_chan.sv:260",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "cc_fwd_data__ante",
+     "label": "cc_fwd_data__ante",
+     "src": "credit_chan.sv:294",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "cc_fwd_data",
+     "label": "cc_fwd_data",
+     "src": "credit_chan.sv:292",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "cc_full__ante",
+     "label": "cc_full__ante",
+     "src": "credit_chan.sv:267",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "cc_flight__ante",
+     "label": "cc_flight__ante",
+     "src": "credit_chan.sv:264",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "cc_credits_max",
+     "label": "cc_credits_max",
+     "src": "credit_chan.sv:256",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "cc_count",
+     "label": "cc_count",
+     "src": "credit_chan.sv:263",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "cc_conserve",
+     "label": "cc_conserve",
+     "src": "credit_chan.sv:255",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "cc_cnt_max",
+     "label": "cc_cnt_max",
+     "src": "credit_chan.sv:257",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "cc_buffered__ante",
+     "label": "cc_buffered__ante",
+     "src": "credit_chan.sv:265",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "cc_buf_data__ante",
+     "label": "cc_buf_data__ante",
+     "src": "credit_chan.sv:295",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "cc_buf_data",
+     "label": "cc_buf_data",
+     "src": "credit_chan.sv:293",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "c_xfer",
+     "label": "c_xfer",
+     "src": "axis_sva.sv:46",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "c_stall",
+     "label": "c_stall",
+     "src": "axis_sva.sv:47",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "a_reset__ante",
+     "label": "a_reset__ante",
+     "src": "axis_sva.sv:42",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "a_reset",
+     "label": "a_reset",
+     "src": "axis_sva.sv:37",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "a_hold__ante",
+     "label": "a_hold__ante",
+     "src": "axis_sva.sv:41",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "a_hold",
+     "label": "a_hold",
+     "src": "axis_sva.sv:33",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "c_through",
+     "label": "c_through",
+     "src": "formal_credit.sv:51",
+     "tautology": false
+    },
+    {
+     "flavor": "assume",
+     "id": "formal_credit.sv:41",
+     "label": null,
+     "src": "formal_credit.sv:41",
+     "tautology": false
+    }
+   ],
+   "covers": {},
+   "depth": 16,
+   "mode": "prove",
+   "seconds": 1.5,
+   "status": "PASS"
+  }
+ },
+ "tool": "Yosys 0.70+385 (git sha1 098e46a36, Release, Clang /usr/bin/clang++ 21.1.8)"
+}

@@ -3,11 +3,11 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Electronic dice from an LFSR | FPGA Design Agent</title>
+<title>Electronic dice from an LFSR | FPGA Force</title>
 <meta name="description" content="Electronic dice from an LFSR: the spec, hidden tests, reference RTL, mutants and golden model of benchmark task t1_lfsr_dice.">
 <meta name="color-scheme" content="light dark">
 <link rel="icon" href="../favicon.svg" type="image/svg+xml">
-<style>/* FPGA Design Agent site: sober monochrome, dark and light, no glow. Same manner as the CVDP RTL Agent site. */
+<style>/* FPGA Force site: sober monochrome, dark and light, no glow. Same manner as the CVDP RTL Agent site. */
 :root {
   --bg: #f6f6f4; --panel: #ffffff; --rule: #d6d6d2; --ink: #161616; --ink-2: #4a4a4a; --ink-3: #6b6b6b;
   --mark: #161616; --mute: #b9b9b4; --warn: #b3261e; --ok: #161616;
@@ -61,6 +61,7 @@ button:hover { border-color: var(--ink-3); }
 button[aria-pressed="true"] { background: var(--ink); color: var(--bg); }
 
 /* sections, cards */
+.tagline { font-size: 1.3rem; font-weight: 600; margin: .2rem 0 1rem; color: var(--ink); }
 .eyebrow { font: 600 .8rem var(--f-mono); text-transform: uppercase; letter-spacing: .08em; color: var(--ink-3); }
 .facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; margin: 22px 0; }
 .fact { border: 1px solid var(--rule); background: var(--panel); padding: 14px 16px; }
@@ -674,7 +675,7 @@ svg .bdtick { stroke: var(--ink-3); }
 @media (max-width: 520px) { .evm tbody th { min-width: 9em; } }
 @media (max-width: 520px) { .evm tbody th { white-space: normal; min-width: 8em; max-width: 9em; font-size: .8rem; } .evm td.ev { min-width: 4.2em; } .evm thead th { font-size: .72rem; } }
 
-/* brief 193: "Why this agent": the one-page summary */
+/* brief 193: "Why FPGA Force": the one-page summary */
 svg .boxyou { fill: var(--ink); stroke: var(--ink); }
 .whyhero h1 { font-size: clamp(1.35rem, 1rem + 1.6vw, 2rem); letter-spacing: -.01em; line-height: 1.3; max-width: 48ch; }
 .whyfig { margin: 18px 0 8px; }
@@ -689,11 +690,29 @@ details.area.why .more-link { margin: .8em 0 0; font-weight: 600; }
 .whycta b { display: block; font-size: 1.1rem; }
 .whycta span { display: block; font-size: .92rem; color: var(--ink-2); margin-top: 2px; }
 .whycta a:hover span, .whycta a:focus-visible span { color: var(--bg); }
+/* brief 185: figures of the DSP-slice drawer (site/dsp_figures.py): a wide and a narrow drawing, one shown */
+.dspfig { margin: 1rem 0; }
+.dspfig .figt { font-weight: 600; margin-bottom: .4rem; }
+.dspfig .dsp-n { display: none; }
+@media (max-width: 640px) { .dspfig .dsp-w { display: none; } .dspfig .dsp-n { display: block; } }
+/* brief 164: the signal-integrity figures (inline SVG from site/si_figures.py; a wide and a narrow drawing, one shown) */
+.sifig { margin: 1.2em 0 1.6em; }
+.sifig .figt { font-weight: 700; color: var(--ink); margin: 0 0 4px; }
+.sifig svg { display: block; width: 100%; height: auto; }
+.sifig .lay-w svg { max-width: 720px; }
+.sifig .lay-n { display: none; }
+@media (max-width: 819px) { .sifig .lay-w { display: none; } .sifig .lay-n { display: block; max-width: 480px; } }
+.sifig .lay-w svg text { font-size: 11.5px; }
+.sifig .lay-n svg text { font-size: 14.5px; }
+svg .hl { stroke: var(--warn); stroke-width: 0.9; opacity: .75; }
+svg .cell { fill: var(--ink); stroke: var(--rule); }
+svg text.on { fill: var(--bg); }
+svg text.wn { fill: var(--warn); }
 </style>
 </head>
 <body>
 <a class="visually-hidden" href="#main">Skip to content</a>
-<header class="bar"><div class="wrap"><a class="brand" href="../index.html">FPGA Design Agent</a><nav aria-label="Pages"><a href="../why.html">Why</a><a href="../agent.html">The agent</a><a class="sub" href="../agent.html#harness">Harness</a><a href="../story.html">How it was built</a><a href="../worked-example.html">Worked example</a><a href="../inspect.html">Inspect it</a><a href="../how.html">How it works</a><a href="../verification.html">Verification</a><a href="../traceability.html">Traceability</a><a href="../flow-notes.html">Beyond the flow</a><a href="../expertise.html">Expertise</a><a href="../examples.html">Examples</a><a href="../showcase.html">Showcase</a><a href="../problems.html" aria-current="page">Problems</a><a href="../evaluation.html">Evaluation</a><a href="../results.html">Results</a></nav><button id="theme" type="button" aria-label="Switch to dark theme">Dark</button></div></header>
+<header class="bar"><div class="wrap"><a class="brand" href="../index.html">FPGA Force</a><nav aria-label="Pages"><a href="../why.html">Why</a><a href="../agent.html">The agent</a><a class="sub" href="../agent.html#harness">Harness</a><a href="../story.html">How it was built</a><a href="../worked-example.html">Worked example</a><a href="../inspect.html">Inspect it</a><a href="../how.html">How it works</a><a href="../verification.html">Verification</a><a href="../traceability.html">Traceability</a><a href="../flow-notes.html">Beyond the flow</a><a href="../expertise.html">Expertise</a><a href="../examples.html">Examples</a><a href="../showcase.html">Showcase</a><a href="../problems.html" aria-current="page">Problems</a><a href="../evaluation.html">Evaluation</a><a href="../results.html">Results</a></nav><button id="theme" type="button" aria-label="Switch to dark theme">Dark</button></div></header>
 <main id="main" class="wrap">
 <p class="crumbs small"><a href="../problems.html">Problems</a> / <a href="../problems.html#dom-A">A. Basic digital design drills</a></p>
 <h1>Electronic dice from an LFSR</h1>
@@ -1205,7 +1224,7 @@ GLYPHS = {1: <span class="hs">&quot;bc&quot;</span>, 2: <span class="hs">&quot;a
 </main>
 <footer><div class="wrap"><p>Designed by Brendan Lynskey. Code and results: <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent">github.com/BrendanJamesLynskey/FPGA_Design_Agent</a> (all rights reserved; source visible for review, see LICENSE). Every number on these pages is read from a committed result file; development results are labelled as such and are not the held-out score.</p></div></footer>
 <script type="application/json" data-key="trace">{"captions":["Start: the LFSR state is ACE1 (the reset value) and nothing has been rolled.","Press 1: the LFSR steps from ACE1 to E270, which rolls a 3. Rolls so far 1.","Press 2: the LFSR steps from E270 to 7138, which rolls a 5. Rolls so far 2.","Press 3: the LFSR steps from 7138 to 389C, which rolls a 3. Rolls so far 3.","Press 4: the LFSR steps from 389C to 1C4E, which rolls a 5. Rolls so far 4.","Press 5: the LFSR steps from 1C4E to 0E27, which rolls a 6. Rolls so far 5.","Press 6: the LFSR steps from 0E27 to B313, which rolls a 4. Rolls so far 6.","Event 7: a burst of 10 steps with no rolls moves the state from B313 to EB62.","Press 8: the LFSR steps from EB62 to 75B1, which rolls a 4. Rolls so far 7.","Press 9: the LFSR steps from 75B1 to 8ED8, which rolls a 5. Rolls so far 8.","Event 10: the seed ACE1 is loaded, so the state becomes ACE1.","Press 11: the LFSR steps from ACE1 to E270, which rolls a 3. Rolls so far 9.","Press 12: the LFSR steps from E270 to 7138, which rolls a 5. Rolls so far 10.","Press 13: the LFSR steps from 7138 to 389C, which rolls a 3. Rolls so far 11.","Event 14: the seed 0000 is loaded, so the state becomes 0001 (zero is replaced, so it never sticks at zero)."],"signals":[{"kind":"bus","name":"STATE","radix":"hex","v":[44257,57968,28984,14492,7246,3623,45843,60258,30129,36568,44257,57968,28984,14492,1],"width":16},{"kind":"bus","name":"ROLL","radix":"dec","v":[0,3,5,3,5,6,4,4,4,5,5,3,5,3,3]},{"kind":"bus","name":"HISTORY","radix":"hex","v":[0,3,53,851,13621,21334,13668,13668,22084,25669,25669,17491,17717,21331,21331],"width":16},{"kind":"bus","name":"ROLLS","radix":"dec","v":[0,1,2,3,4,5,6,6,7,8,8,9,10,11,11]}],"stimulus":"From the reset state, press the button six times, run a silent burst of 10 steps, press twice, reload the seed ACE1, press three times, then load a seed of zero.","unit":"event","x":[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14]}</script>
-<script>/* FPGA Design Agent site. No dependencies. Every animation is frame(step) over a state list built from site/data/*.json. */
+<script>/* FPGA Force site. No dependencies. Every animation is frame(step) over a state list built from site/data/*.json. */
 (function () {
   "use strict";
   var D = {};

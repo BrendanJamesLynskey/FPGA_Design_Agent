@@ -1,0 +1,29 @@
+# SymbiYosys with the slang front end: the AXI4-Stream rules as assertions (../../pipe_reg/tb/axis_sva.sv) on both ports of
+# credit_chan, proved by k-induction beside the data properties. Run: python3 ip_lib/credit_chan/formal/run_formal.py
+[tasks]
+sva_c3f1b1 prove
+sva_c5f2b2 prove
+sva_c1f0b0 prove
+sva_c3f1b1c cover
+
+[options]
+prove: mode prove
+prove: depth 16
+cover: mode cover
+cover: depth 24
+
+[engines]
+smtbmc boolector
+
+[script]
+plugin -i slang
+sva_c3f1b1: read_slang -DFORMAL -DSVA credit_chan.sv formal_credit.sv axis_sva.sv --top formal_credit -G CREDITS=3 -G LF=1 -G LB=1
+sva_c5f2b2: read_slang -DFORMAL -DSVA credit_chan.sv formal_credit.sv axis_sva.sv --top formal_credit -G CREDITS=5 -G LF=2 -G LB=2
+sva_c1f0b0: read_slang -DFORMAL -DSVA credit_chan.sv formal_credit.sv axis_sva.sv --top formal_credit -G CREDITS=1 -G LF=0 -G LB=0
+sva_c3f1b1c: read_slang -DFORMAL -DSVA credit_chan.sv formal_credit.sv axis_sva.sv --top formal_credit -G CREDITS=3 -G LF=1 -G LB=1
+prep -top formal_credit
+
+[files]
+../rtl/credit_chan.sv
+formal_credit.sv
+../../pipe_reg/tb/axis_sva.sv

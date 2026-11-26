@@ -1,0 +1,46 @@
+# Seeded faults (run by flow/net/faults.py): each replaces `old` (exactly once) by `new` in a copy of rtl/;
+# the tests named in `test` must fail. The real RTL is never touched.
+runner: flow/net/faults.py          # the fault runner that owns this block's faults
+faults:
+  - name: wstrb_wdata_swapped
+    file: axil_reg_slice.sv
+    old: "assign m_axi_wstrb = w_out[0 +: DATA_W/8];"
+    new: "assign m_axi_wstrb = w_out[DATA_W +: DATA_W/8];"
+    class: data-corruption
+    why: "the write strobe is taken from the wrong bits of the packed word"
+    test: ip_lib/axi_reg_slice/tb/test_axi_reg_slice_rtl.py
+  - name: bresp_dropped
+    file: axil_reg_slice.sv
+    old: "assign s_axi_bresp = b_out[0 +: 2];"
+    new: "assign s_axi_bresp = 2'b00;"
+    class: data-corruption
+    why: "the write response is replaced by OKAY"
+    test: ip_lib/axi_reg_slice/tb/test_axi_reg_slice_rtl.py
+  - name: rready_not_forwarded
+    file: axil_reg_slice.sv
+    old: ".m_valid(s_axi_rvalid), .m_ready(s_axi_rready)"
+    new: ".m_valid(s_axi_rvalid), .m_ready(1'b1)"
+    class: data-loss
+    why: "the read-data channel ignores the master's rready"
+    test: ip_lib/axi_reg_slice/tb/test_axi_reg_slice_rtl.py
+  - name: araddr_offset
+    file: axil_reg_slice.sv
+    old: "assign m_axi_araddr = ar_out[0 + (3) +: ADDR_W];"
+    new: "assign m_axi_araddr = ar_out[0 + (2) +: ADDR_W];"
+    class: data-corruption
+    why: "the read address is taken one bit off"
+    test: ip_lib/axi_reg_slice/tb/test_axi_reg_slice_rtl.py
+  - name: axi4_rlast_swapped
+    file: axi4_reg_slice.sv
+    old: "assign s_axi_rlast = r_out[0 +: 1];"
+    new: "assign s_axi_rlast = r_out[1 +: 1];"
+    class: data-corruption
+    why: "rlast is taken from rresp"
+    test: ip_lib/axi_reg_slice/tb/test_axi_reg_slice_rtl.py
+  - name: axi4_awlen_dropped
+    file: axi4_reg_slice.sv
+    old: "assign m_axi_awlen = aw_out[0 + (4) + (3) + (4) + (1) + (2) + (3) +: 8];"
+    new: "assign m_axi_awlen = 8'd0;"
+    class: data-corruption
+    why: "the burst length is forced to one beat"
+    test: ip_lib/axi_reg_slice/tb/test_axi_reg_slice_rtl.py
