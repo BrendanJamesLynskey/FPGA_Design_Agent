@@ -40,6 +40,9 @@ class Reply:
     cache_read_tokens: int = 0       # cache_read_input_tokens
     stop_reason: str | None = None   # brief 209b: the API's stop_reason ("max_tokens" means the reply was cut off)
     stream_retries: int = 0          # brief 224: streams that dropped and were asked for again before this reply arrived
+    thinking_tokens: int | None = None   # brief 234: usage.output_tokens_details.thinking_tokens when the API gives it (None: not reported)
+    thinking_blocks: int = 0             # brief 234: thinking blocks in the reply (their text is empty unless display is on)
+    visible_chars: int = 0               # brief 234: characters of text and tool-call arguments in the reply (output_tokens minus these is thinking)
     cost_basis: str | None = None    # "usage*price" when the cost was computed from usage and a price table, else None
 
 
@@ -94,6 +97,7 @@ class Meter:
     truncated: int = 0         # brief 209b: calls whose reply stopped at max_tokens
     usd_scale: float = 1.0     # brief 209b: multiplies every stage USD limit (the run cap is scaled by the caller); recorded in the run summary
     split: dict[str, int] = field(default_factory=lambda: {"input": 0, "output": 0, "cache_write": 0, "cache_read": 0})
+    turns_auto: int = 0        # brief 234: the run turn cap last set from the design's size (0: the cap is as configured)
     reserved: int = 0          # brief 05g: turns held back for the roles that run after the current one
 
     def start_stage(self, limits: dict[str, float]) -> None:

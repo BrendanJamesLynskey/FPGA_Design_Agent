@@ -104,7 +104,7 @@ def test_temperature_is_omitted_by_the_model_rule_and_kept_where_accepted() -> N
 def test_the_config_rules_and_the_resolver_wire_them() -> None:
     t = build_table(user_file=None)
     assert t.model_rule("claude-sonnet-5-5") == {"price": SONNET, "temperature": False, "matched": "claude-sonnet-5-5",
-                                                 "max_tokens": 16000, "writing_max_tokens": 32000, "effort": "medium", "timeout_s": 300}
+                                                 "max_tokens": 16000, "writing_max_tokens": 64000, "effort": "medium", "timeout_s": 300}
     assert t.model_rule("claude-haiku-5-5")["price"] == {"input": 0.10, "output": 0.50}
     assert t.model_rule("claude-sonnet-4-6")["temperature"] is True and t.model_rule("claude-sonnet-4-6")["price"] is None
     assert t.model_rule("claude-unknown-1")["temperature"] is False and t.model_rule("openai/x")["price"] is None
@@ -119,7 +119,7 @@ def test_the_config_rules_and_the_resolver_wire_them() -> None:
     os.environ["ANTHROPIC_API_KEY"] = "sk-test-0000000000"
     try:
         c = rs._build(t2.entry("rtl"), None)
-        assert (c.max_tokens, c.effort, c.timeout_s) == (32000, "medium", 300)      # brief 224: rtl writes whole files
+        assert (c.max_tokens, c.effort, c.timeout_s) == (64000, "medium", 300)      # brief 224: rtl writes whole files
     finally:
         del os.environ["ANTHROPIC_API_KEY"]
     assert c.price == SONNET and c.accepts_temperature is False
