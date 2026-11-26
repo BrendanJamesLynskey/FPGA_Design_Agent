@@ -4,7 +4,7 @@
 
 **Not assessed: no requirements recorded (no verif/testplan.yaml), so nothing here is traced to a requirement.**
 
-What the label means, what "verified" never means and how it is earned: [docs/verified.md](../../docs/verified.md). The label is computed from the testplan and the evidence files named below; it is never typed. Generated at git commit `8b3b7767288b3aa2d84ddcc0f25af0284dd9a56f` (informational: the hashes in the manifest, not the commit, are what the CI check compares).
+What the label means, what "verified" never means and how it is earned: [docs/verified.md](../../docs/verified.md). The label is computed from the testplan and the evidence files named below; it is never typed. Generated at git commit `212d8e802092e566a236f5f306d9f87808da2414` (informational: the hashes in the manifest, not the commit, are what the CI check compares).
 
 ## What was checked for the label
 
@@ -56,7 +56,7 @@ Every file this record covers, with its SHA-256 at generation (19 files). `absen
 | `designs/b58a_trigger/rtl/mdio_master.sv` | `4c09bd1833c7c0b8b8757b52c35087eeb9c165489278463eafd2a44038a3cf26` |
 | `designs/b58a_trigger/rtl/order_ctl.sv` | `db91763b3f836681d93ae5c57c9722a51b07fd6d20c36e391c901aa97578ef44` |
 | `designs/b58a_trigger/rtl/rules.sv` | `bf046cfda694711d6dee421864d365254fa64e3285e80ce3fc5d4800cb34cd14` |
-| `designs/b58a_trigger/rtl/trigger_core.sv` | `e7c26425518eb3bfdd7dc873f85b63d1af7d47977128edc2a3c4d90e57cf5833` |
+| `designs/b58a_trigger/rtl/trigger_core.sv` | `802883690b447b51fe3363aaf975dd1918eca6ed37f3938a3810905335da2b4f` |
 | `designs/b58a_trigger/tests/test_b58a_rtl.py` | `85faa7d8258c2fc819155f226ad53111295ad0b053141ea5f293ef728c14b670` |
 | `designs/b58a_trigger/tests/test_rev_adv_rtl.py` | `d3c1ce109d6da370a7321b9fd7977cc2cedd9c1f5d8d569c931badb2c5313472` |
 | `results/b58a/build/summary.json` | `ec22e14ccee950eeab4627d1dac80ec0f0eb449cc4101b1f3ed897b47b461847` |

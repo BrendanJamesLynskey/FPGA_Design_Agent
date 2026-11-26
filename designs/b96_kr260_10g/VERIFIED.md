@@ -4,20 +4,20 @@
 
 **Not verified: 1 of 29 requirements fail.**
 
-What the label means, what "verified" never means and how it is earned: [docs/verified.md](../../docs/verified.md). The label is computed from the testplan and the evidence files named below; it is never typed. Generated at git commit `8b3b7767288b3aa2d84ddcc0f25af0284dd9a56f` (informational: the hashes in the manifest, not the commit, are what the CI check compares).
+What the label means, what "verified" never means and how it is earned: [docs/verified.md](../../docs/verified.md). The label is computed from the testplan and the evidence files named below; it is never typed. Generated at git commit `212d8e802092e566a236f5f306d9f87808da2414` (informational: the hashes in the manifest, not the commit, are what the CI check compares).
 
-Traceability summary: 29 requirements (12 functional, 9 performance, 1 interface, 7 safety); 13 verified, of which 2 rest on delegated acceptances (the planner accepted the Lean statement on the owner's delegation; not human approvals); 12 partially verified (the required mix of methods is not met); 1 stale; 1 failing; 2 with no passing evidence; 2 with no passing evidence; 0 of 3 requirements that depend on an external element closed by hardware; performance verified: 5 on the board, 2 by post-route timing, 0 in simulation only; 0 of 29 requirements agreed by a human, 0 agreed on the owner's delegation (not human), 29 draft; 9 resting only on the implementing agent's own tests; 0 human and 0 delegated review(s) recorded; 4 Lean proof item(s) (all widths): 0 with a human-approved statement, 4 with a statement accepted on the owner's delegation (not a human approval), 0 with statement not approved; 4 kernel only, 0 using a compiled decision procedure; build status from: recorded build (not re-run).
+Traceability summary: 29 requirements (12 functional, 9 performance, 1 interface, 7 safety); 14 verified, of which 2 rest on delegated acceptances (the planner accepted the Lean statement on the owner's delegation; not human approvals); 11 partially verified (the required mix of methods is not met); 1 stale; 1 failing; 2 with no passing evidence; 2 with no passing evidence; 0 of 3 requirements that depend on an external element closed by hardware; performance verified: 5 on the board, 2 by post-route timing, 0 in simulation only; 0 of 29 requirements agreed by a human, 0 agreed on the owner's delegation (not human), 29 draft; 8 resting only on the implementing agent's own tests; 0 human and 0 delegated review(s) recorded; 4 Lean proof item(s) (all widths): 0 with a human-approved statement, 4 with a statement accepted on the owner's delegation (not a human approval), 0 with statement not approved; 4 kernel only, 0 using a compiled decision procedure; build status from: recorded build (not re-run).
 
 ## What was checked for the label
 
 | Criterion | Result | Detail |
 |---|---|---|
-| Every requirement has passing evidence | NOT met | 16 of 29 requirements are not in state verified: B96-F-MAC (partially_verified), B96-F-LOCK (partially_verified), B96-F-DEFAULT (partially_verified), B96-S-RATEMATCH (fail), B96-V-RM-BENCH (partially_verified), B96-F-OFFSET (partially_verified), B96-F-INTEROP (not_run), B96-S-DRIVER (partially_verified), B96-S-ROC (partially_verified), B96-S-CDC (partially_verified), B96-I-REGMAP (partially_verified), B96-F-BUILDS (partially_verified), B96-F-EYESCAN (partially_verified), B96-P-T2T-DIGITAL (stale), B96-P-THROUGHPUT (not_run), B96-F-DBGXVC (partially_verified) |
+| Every requirement has passing evidence | NOT met | 15 of 29 requirements are not in state verified: B96-F-LOCK (partially_verified), B96-F-DEFAULT (partially_verified), B96-S-RATEMATCH (fail), B96-V-RM-BENCH (partially_verified), B96-F-OFFSET (partially_verified), B96-F-INTEROP (not_run), B96-S-DRIVER (partially_verified), B96-S-ROC (partially_verified), B96-S-CDC (partially_verified), B96-I-REGMAP (partially_verified), B96-F-BUILDS (partially_verified), B96-F-EYESCAN (partially_verified), B96-P-T2T-DIGITAL (stale), B96-P-THROUGHPUT (not_run), B96-F-DBGXVC (partially_verified) |
 | Every requirement is agreed (human, or delegated and labelled so) | NOT met | 0 agreed by a human, 0 agreed by delegation, 29 draft, 0 marked agreed without a record |
 | Every requirement meets its required method mix | not yet measured (counts as not met) | not yet measured: the required method mix per requirement kind is brief 143a; the collector does not supply it yet |
 | The bench passes the mutation floor | not yet measured (counts as not met) | not yet measured: the mutation score and floor are brief 143b; the collector does not supply them yet |
 | The formal results pass the rigour checks | not yet measured (counts as not met) | not yet measured: the vacuity, assumption and depth checks are brief 143c; the collector does not supply them yet |
-| The evidence is fresh | NOT met | 18 items are stale (a file they are about changed after the evidence was recorded) |
+| The evidence is fresh | NOT met | 14 items are stale (a file they are about changed after the evidence was recorded) |
 
 ## Requirements
 
@@ -30,32 +30,32 @@ Per requirement: its text, kind, agreement, state and every evidence item with i
 - Method mix required by its kind: not yet measured (brief 143a). Mutation score of its bench: not yet measured (brief 143b).
 - Text: Scrambler, block encode and decode, gearbox and block lock produce the same bits as the bit-serial Python reference, at every bit offset, with idles, ordered sets and bit-error runs.
 - Source: `designs/b96_kr260_10g/docs/design.md#7-verification-plan`
-  - `V-SIM-PCSMAC` sim_test: **pass**, bench author: not recorded; fresh; record `results/116_traceability/b96_kr260_10g/pytest_junit.xml` (sha256 b22b0437a53c).
-  - `V-SIM-PCSMODEL` sim_test: **pass**, bench author: not recorded; fresh; record `results/116_traceability/b96_kr260_10g/pytest_junit.xml` (sha256 b22b0437a53c).
-  - `V-FORMAL-SVA-PLANNED` formal: **pass**, bench author: not recorded; fresh; record `results/116_traceability/b96_kr260_10g/pytest_junit.xml` (sha256 b22b0437a53c).
+  - `V-SIM-PCSMAC` sim_test: **pass**, bench author: not recorded; fresh; record `results/116_traceability/b96_kr260_10g/pytest_junit.xml` (sha256 d28fc34ecb98).
+  - `V-SIM-PCSMODEL` sim_test: **pass**, bench author: not recorded; fresh; record `results/116_traceability/b96_kr260_10g/pytest_junit.xml` (sha256 d28fc34ecb98).
+  - `V-FORMAL-SVA-PLANNED` formal: **pass**, bench author: not recorded; fresh; record `results/116_traceability/b96_kr260_10g/pytest_junit.xml` (sha256 d28fc34ecb98).
   - `V-SVA-PLANNED` assertion: **not_run**, bench author: not recorded; no evidence; no record.
-  - `V-UVM-PLANNED` uvm_test: **pass**, bench author: not recorded; fresh; record `results/116_traceability/b96_kr260_10g/pytest_junit.xml` (sha256 b22b0437a53c).
-  - `V-PYUVM` uvm_test: **pass**, bench author: not recorded; fresh; record `results/116_traceability/b96_kr260_10g/pytest_junit.xml` (sha256 b22b0437a53c).
+  - `V-UVM-PLANNED` uvm_test: **pass**, bench author: not recorded; fresh; record `results/116_traceability/b96_kr260_10g/pytest_junit.xml` (sha256 d28fc34ecb98).
+  - `V-PYUVM` uvm_test: **skipped**, bench author: not recorded; skipped; record `results/116_traceability/b96_kr260_10g/pytest_junit.xml` (sha256 d28fc34ecb98).
   - `V-COV-FUNC` coverage_bin: **pass**, bench author: not recorded; fresh; record `results/158_cov_closure/summary.txt` (sha256 8d8f465450e3).
   - `V-COV-CODE` coverage_bin: **pass**, bench author: not recorded; fresh; record `results/158_cov_closure/coverage_summary.json` (sha256 eea4c0c62a57).
   - `V-REVIEW-96` review: **not_run**, bench author: not recorded; no evidence; record `results/b96/README.md` (sha256 3fb82e2bc025).
 
 ### B96-F-MAC: 64-bit MAC frames correctly in both directions
 
-- Kind: functional. State: partially verified; lacks a simulation check from a bench the implementing agent did not write; rests only on the implementing agent's own tests.
+- Kind: functional. State: verified.
 - Agreement: draft: no agreement recorded.
 - Method mix required by its kind: not yet measured (brief 143a). Mutation score of its bench: not yet measured (brief 143b).
 - Text: Frames start in lane 0 and lane 4, every terminate lane and every length residue is handled, FCS is generated and checked, and a bad FCS is counted.
 - Source: `designs/b96_kr260_10g/docs/design.md#7-verification-plan`
-  - `V-SIM-PCSMAC` sim_test: **pass**, bench author: not recorded; fresh; record `results/116_traceability/b96_kr260_10g/pytest_junit.xml` (sha256 b22b0437a53c).
-  - `V-SIM-CORE-RM` sim_test: **pass**, bench author: not recorded; fresh; record `results/116_traceability/b96_kr260_10g/pytest_junit.xml` (sha256 b22b0437a53c).
+  - `V-SIM-PCSMAC` sim_test: **pass**, bench author: not recorded; fresh; record `results/116_traceability/b96_kr260_10g/pytest_junit.xml` (sha256 d28fc34ecb98).
+  - `V-SIM-CORE-RM` sim_test: **pass**, bench author: not recorded; fresh; record `results/116_traceability/b96_kr260_10g/pytest_junit.xml` (sha256 d28fc34ecb98).
   - `V-SVA-PLANNED` assertion: **not_run**, bench author: not recorded; no evidence; no record.
-  - `V-UVM-PLANNED` uvm_test: **pass**, bench author: not recorded; fresh; record `results/116_traceability/b96_kr260_10g/pytest_junit.xml` (sha256 b22b0437a53c).
-  - `V-PYUVM` uvm_test: **pass**, bench author: not recorded; fresh; record `results/116_traceability/b96_kr260_10g/pytest_junit.xml` (sha256 b22b0437a53c).
+  - `V-UVM-PLANNED` uvm_test: **pass**, bench author: not recorded; fresh; record `results/116_traceability/b96_kr260_10g/pytest_junit.xml` (sha256 d28fc34ecb98).
+  - `V-PYUVM` uvm_test: **skipped**, bench author: not recorded; skipped; record `results/116_traceability/b96_kr260_10g/pytest_junit.xml` (sha256 d28fc34ecb98).
   - `V-COV-FUNC` coverage_bin: **pass**, bench author: not recorded; fresh; record `results/158_cov_closure/summary.txt` (sha256 8d8f465450e3).
   - `V-COV-CODE` coverage_bin: **pass**, bench author: not recorded; fresh; record `results/158_cov_closure/coverage_summary.json` (sha256 eea4c0c62a57).
   - `V-TX-UNDERRUN` uvm_test: **pass**, bench author: not recorded; fresh; record `results/158_cov_closure/protocol_cover.tsv` (sha256 78415183384b).
-  - `V-FORMAL-MAC-IFG` formal: **stale**, bench author: not recorded; stale; record `results/116_traceability/b96_kr260_10g/pytest_junit.xml` (sha256 b22b0437a53c); stale because changed since the evidence was recorded: designs/b96_kr260_10g/verif/formal/mac64_tx_ifg.sby, designs/b96_kr260_10g/verif/formal/mac64_tx_ifg_props.sv.
+  - `V-FORMAL-MAC-IFG` formal: **pass**, bench author: not recorded; fresh; record `results/116_traceability/b96_kr260_10g/pytest_junit.xml` (sha256 d28fc34ecb98).
   - `V-REVIEW-96` review: **not_run**, bench author: not recorded; no evidence; record `results/b96/README.md` (sha256 3fb82e2bc025).
 
 ### B96-F-LOCK: Block lock is acquired from any bit offset and survives bit errors
@@ -65,9 +65,9 @@ Per requirement: its text, kind, agreement, state and every evidence item with i
 - Method mix required by its kind: not yet measured (brief 143a). Mutation score of its bench: not yet measured (brief 143b).
 - Text: The receive gearbox slips to the block boundary from any offset, and a run of bit errors loses lock only above the documented threshold.
 - Source: `designs/b96_kr260_10g/docs/design.md#28-block-lock-bit-slip-errors`
-  - `V-SIM-PCSMODEL` sim_test: **pass**, bench author: not recorded; fresh; record `results/116_traceability/b96_kr260_10g/pytest_junit.xml` (sha256 b22b0437a53c).
-  - `V-UVM-PLANNED` uvm_test: **pass**, bench author: not recorded; fresh; record `results/116_traceability/b96_kr260_10g/pytest_junit.xml` (sha256 b22b0437a53c).
-  - `V-PYUVM` uvm_test: **pass**, bench author: not recorded; fresh; record `results/116_traceability/b96_kr260_10g/pytest_junit.xml` (sha256 b22b0437a53c).
+  - `V-SIM-PCSMODEL` sim_test: **pass**, bench author: not recorded; fresh; record `results/116_traceability/b96_kr260_10g/pytest_junit.xml` (sha256 d28fc34ecb98).
+  - `V-UVM-PLANNED` uvm_test: **pass**, bench author: not recorded; fresh; record `results/116_traceability/b96_kr260_10g/pytest_junit.xml` (sha256 d28fc34ecb98).
+  - `V-PYUVM` uvm_test: **skipped**, bench author: not recorded; skipped; record `results/116_traceability/b96_kr260_10g/pytest_junit.xml` (sha256 d28fc34ecb98).
 
 ### B96-F-RESTART: The link locks after every receive-datapath restart
 
@@ -86,7 +86,7 @@ Per requirement: its text, kind, agreement, state and every evidence item with i
 - Method mix required by its kind: not yet measured (brief 143a). Mutation score of its bench: not yet measured (brief 143b).
 - Text: With RATE_MATCH = 0 the core is equivalent to the core of main 6909e43f (brief 97C) and passes that brief's bench.
 - Source: `designs/b96_kr260_10g/handover.yaml`
-  - `V-SIM-CORE-DEFAULT` sim_test: **pass**, bench author: not recorded; fresh; record `results/116_traceability/b96_kr260_10g/pytest_junit.xml` (sha256 b22b0437a53c).
+  - `V-SIM-CORE-DEFAULT` sim_test: **pass**, bench author: not recorded; fresh; record `results/116_traceability/b96_kr260_10g/pytest_junit.xml` (sha256 d28fc34ecb98).
   - `V-FORMAL-EQY-DEFAULT` formal: **stale**, bench author: not recorded; stale; record `results/b96c/eqy_default/result_default.txt` (sha256 0144f4bfb627); stale because changed since the evidence was recorded: designs/b96_kr260_10g/rtl/b96_core.sv, designs/b96_kr260_10g/rtl/rx_path.sv.
   - `V-HW-RESTARTS-97C` board_measurement: **stale**, bench author: not recorded; instrument jtag_registers; stale; record `results/b97c/hw/20261118_194221/control/stage3.json` (sha256 e77343e6c99c); stale because changed since the evidence was recorded: designs/b96_kr260_10g/rtl/b96_core.sv, designs/b96_kr260_10g/rtl/b96_pkg.sv, designs/b96_kr260_10g/rtl/hs_vec.sv, designs/b96_kr260_10g/rtl/pcs_rx.sv (+5 more).
 
@@ -97,10 +97,10 @@ Per requirement: its text, kind, agreement, state and every evidence item with i
 - Method mix required by its kind: not yet measured (brief 143a). Mutation score of its bench: not yet measured (brief 143b).
 - Text: The elastic buffer inserts and deletes idles only between frames, never under- or overflows silently, and every order sent is fired and passes its content check.
 - Source: `designs/b96_kr260_10g/docs/design.md#9-rate-matching-and-the-receive-to-core-crossing-brief-96c`
-  - `V-SIM-CORE-RM` sim_test: **pass**, bench author: not recorded; fresh; record `results/116_traceability/b96_kr260_10g/pytest_junit.xml` (sha256 b22b0437a53c).
-  - `V-SIM-RM` sim_test: **pass**, bench author: not recorded; fresh; record `results/116_traceability/b96_kr260_10g/pytest_junit.xml` (sha256 b22b0437a53c).
+  - `V-SIM-CORE-RM` sim_test: **pass**, bench author: not recorded; fresh; record `results/116_traceability/b96_kr260_10g/pytest_junit.xml` (sha256 d28fc34ecb98).
+  - `V-SIM-RM` sim_test: **pass**, bench author: not recorded; fresh; record `results/116_traceability/b96_kr260_10g/pytest_junit.xml` (sha256 d28fc34ecb98).
   - `V-RM-MUTATION` coverage_bin: **pass**, bench author: not recorded; fresh; record `results/152_b96_mutation/b96_rate_match_gp_seed2.json` (sha256 50cb1a6f5d64).
-  - `V-FORMAL-SVA-PLANNED` formal: **pass**, bench author: not recorded; fresh; record `results/116_traceability/b96_kr260_10g/pytest_junit.xml` (sha256 b22b0437a53c).
+  - `V-FORMAL-SVA-PLANNED` formal: **pass**, bench author: not recorded; fresh; record `results/116_traceability/b96_kr260_10g/pytest_junit.xml` (sha256 d28fc34ecb98).
   - `V-FORMAL-PROGRESS-PDR` formal: **fail**, bench author: not recorded; failing; record `results/191_trading_variants/formal_rm_gp_pdr.json` (sha256 3b7eabad0f6f).
   - `V-SVA-PLANNED` assertion: **not_run**, bench author: not recorded; no evidence; no record.
   - `V-SIMM-PPM` sim_measurement: **stale**, bench author: not recorded; stale; record `results/b96c/ppm_sim_ratematch.json` (sha256 653587125671); stale because changed since the evidence was recorded: designs/b96_kr260_10g/rtl/rate_match.sv, designs/b96_kr260_10g/rtl/rate_match_gp.sv, designs/b96_kr260_10g/rtl/rx_path.sv.
@@ -123,7 +123,7 @@ Per requirement: its text, kind, agreement, state and every evidence item with i
 - Method mix required by its kind: not yet measured (brief 143a). Mutation score of its bench: not yet measured (brief 143b).
 - Text: For any constant receive clock offset from -300 to +300 ppm relative to the transmit clock, no frame is lost or corrupted and the buffer neither overflows nor underflows. IEEE 802.3 allows +-100 ppm at each end, so two compliant ends differ by at most 200 ppm; +-300 ppm gives margin. A loopback has no offset, so a board test needs a second reference clock or another device on the link.
 - Source: `designs/b96_kr260_10g/docs/design.md#board-result-2026-11-19-kr260-and-an-optical-loopback-resultsb96cwhw20261119_080724`
-  - `V-SIM-PPM-PARTNER` sim_test: **pass**, bench author: not recorded; fresh; record `results/116_traceability/b96_kr260_10g/pytest_junit.xml` (sha256 b22b0437a53c).
+  - `V-SIM-PPM-PARTNER` sim_test: **pass**, bench author: not recorded; fresh; record `results/116_traceability/b96_kr260_10g/pytest_junit.xml` (sha256 d28fc34ecb98).
   - `V-SIMM-PPM` sim_measurement: **stale**, bench author: not recorded; stale; record `results/b96c/ppm_sim_ratematch.json` (sha256 653587125671); stale because changed since the evidence was recorded: designs/b96_kr260_10g/rtl/rate_match.sv, designs/b96_kr260_10g/rtl/rate_match_gp.sv, designs/b96_kr260_10g/rtl/rx_path.sv.
   - `V-HW-OFFSET-PLANNED` board_measurement: **not_run**, bench author: not recorded; instrument external_equipment; no evidence; no record.
 
@@ -143,8 +143,8 @@ Per requirement: its text, kind, agreement, state and every evidence item with i
 - Method mix required by its kind: not yet measured (brief 143a). Mutation score of its bench: not yet measured (brief 143b).
 - Text: Every armed decision yields exactly one order, a poisoned order never fires, and every fault counter stays 0.
 - Source: `designs/b96_kr260_10g/docs/design.md#25-the-trading-path-in-variant-b-trade64-not-a-widened-trigger_core`
-  - `V-SIM-CORE-DEFAULT` sim_test: **pass**, bench author: not recorded; fresh; record `results/116_traceability/b96_kr260_10g/pytest_junit.xml` (sha256 b22b0437a53c).
-  - `V-SIM-CORE-RM` sim_test: **pass**, bench author: not recorded; fresh; record `results/116_traceability/b96_kr260_10g/pytest_junit.xml` (sha256 b22b0437a53c).
+  - `V-SIM-CORE-DEFAULT` sim_test: **pass**, bench author: not recorded; fresh; record `results/116_traceability/b96_kr260_10g/pytest_junit.xml` (sha256 d28fc34ecb98).
+  - `V-SIM-CORE-RM` sim_test: **pass**, bench author: not recorded; fresh; record `results/116_traceability/b96_kr260_10g/pytest_junit.xml` (sha256 d28fc34ecb98).
   - `V-HW-RESTARTS-96E` board_measurement: **pass**, bench author: not recorded; instrument jtag_registers; fresh; record `results/b96e/hw/20261119_231251/rm_gp/stage3.json` (sha256 23f45435ee27).
   - `V-REVIEW-96` review: **not_run**, bench author: not recorded; no evidence; record `results/b96/README.md` (sha256 3fb82e2bc025).
 
@@ -155,8 +155,8 @@ Per requirement: its text, kind, agreement, state and every evidence item with i
 - Method mix required by its kind: not yet measured (brief 143a). Mutation score of its bench: not yet measured (brief 143b).
 - Text: A stale counter, a missing order, a counter that was not read, a wrong polarity or a link that never came up fails the run and names the cause; unsafe actions are refused without the lock.
 - Source: `designs/b96_kr260_10g/host/b96_bench.py`
-  - `V-SIM-DRIVER` sim_test: **pass**, bench author: not recorded; fresh; record `results/116_traceability/b96_kr260_10g/pytest_junit.xml` (sha256 b22b0437a53c).
-  - `V-SIM-126-ALL3` sim_test: **pass**, bench author: not recorded; fresh; record `results/116_traceability/b96_kr260_10g/pytest_junit.xml` (sha256 b22b0437a53c).
+  - `V-SIM-DRIVER` sim_test: **pass**, bench author: not recorded; fresh; record `results/116_traceability/b96_kr260_10g/pytest_junit.xml` (sha256 d28fc34ecb98).
+  - `V-SIM-126-ALL3` sim_test: **pass**, bench author: not recorded; fresh; record `results/116_traceability/b96_kr260_10g/pytest_junit.xml` (sha256 d28fc34ecb98).
 
 ### B96-S-LASER: The laser is off at reset and its polarity is confirmed
 
@@ -165,7 +165,7 @@ Per requirement: its text, kind, agreement, state and every evidence item with i
 - Method mix required by its kind: not yet measured (brief 143a). Mutation score of its bench: not yet measured (brief 143b).
 - Text: tx_disable is 1 at reset; the board run switches the laser on only after the polarity was read back.
 - Source: `designs/b96_kr260_10g/handover.yaml`
-  - `V-SIM-DRIVER` sim_test: **pass**, bench author: not recorded; fresh; record `results/116_traceability/b96_kr260_10g/pytest_junit.xml` (sha256 b22b0437a53c).
+  - `V-SIM-DRIVER` sim_test: **pass**, bench author: not recorded; fresh; record `results/116_traceability/b96_kr260_10g/pytest_junit.xml` (sha256 d28fc34ecb98).
   - `V-HW-LASER` board_measurement: **pass**, bench author: not recorded; instrument jtag_registers; fresh; record `results/b96e/hw/20261119_231251/rm_gp/stage3.json` (sha256 23f45435ee27).
 
 ### B96-S-ROC: Board runs stay inside the recommended operating conditions
@@ -175,7 +175,7 @@ Per requirement: its text, kind, agreement, state and every evidence item with i
 - Method mix required by its kind: not yet measured (brief 143a). Mutation score of its bench: not yet measured (brief 143b).
 - Text: Die temperature, VCCINT, VCCAUX and VCCBRAM read from SYSMON are inside the DS925 windows at the start and end of every board run.
 - Source: `_handoff/fpga_agent/fpga_agent_house_rules.md`
-  - `V-HW-SYSMON-96E` board_measurement: **stale**, bench author: not recorded; instrument sysmon; stale; record `results/b96e/hw/20261119_231251/rm_gp/session.json` (sha256 cd79277b3d7b); stale because no pin recorded (run: python -m flow.trace_v1 pin).
+  - `V-HW-SYSMON-96E` board_measurement: **pass**, bench author: not recorded; instrument sysmon; fresh; record `results/b96e/hw/20261119_231251/rm_gp/session.json` (sha256 cd79277b3d7b).
   - `V-HW-SYSMON-EYE` board_measurement: **pass**, bench author: not recorded; instrument sysmon; fresh; record `results/b96d/hw/20261120_105134/lpm_1.json` (sha256 cea525d207ca).
 
 ### B96-S-CDC: No critical clock-domain crossing
@@ -189,7 +189,7 @@ Per requirement: its text, kind, agreement, state and every evidence item with i
   - `V-TIM-CDC-RMGP` timing: **stale**, bench author: not recorded; stale; record `results/b96e/builds/rm_gp/digest.json` (sha256 fdc4edc0935a); stale because changed since the evidence was recorded: designs/b96_kr260_10g/rtl/b96_core.sv, designs/b96_kr260_10g/rtl/hs_vec.sv, designs/b96_kr260_10g/rtl/rate_match.sv, designs/b96_kr260_10g/rtl/rate_match_gp.sv (+1 more).
   - `V-TIM-CDC-BYPASS` timing: **pass**, bench author: not recorded; fresh; record `results/b96f1/builds/rm_gp_bypass/digest.json` (sha256 f49d9a7e1a08).
   - `V-XVC-CDC` timing: **pass**, bench author: not recorded; fresh; record `results/b131/builds/dbg_xvc/digest.json` (sha256 6cd508f9998e).
-  - `V-XVC-CDC-STRUCT` timing: **stale**, bench author: not recorded; stale; record `results/b140/builds/dbg_xvc/digest.json` (sha256 ad5c3a21cdf4); stale because the evidence file changed after it was pinned (run: python -m flow.trace_v1 pin).
+  - `V-XVC-CDC-STRUCT` timing: **pass**, bench author: not recorded; fresh; record `results/b140/builds/dbg_xvc/digest.json` (sha256 ad5c3a21cdf4).
 
 ### B96-I-REGMAP: The register map is generated from one source and decoded exactly
 
@@ -198,7 +198,7 @@ Per requirement: its text, kind, agreement, state and every evidence item with i
 - Method mix required by its kind: not yet measured (brief 143a). Mutation score of its bench: not yet measured (brief 143b).
 - Text: Every address in regmap.py is decoded, nothing else is, vector widths agree, and the datasheet states unmapped reads return 0, counters read from a snapshot and reads have no side effects.
 - Source: `designs/b96_kr260_10g/docs/register_map.md`
-  - `V-SIM-REGMAP` sim_test: **pass**, bench author: not recorded; fresh; record `results/116_traceability/b96_kr260_10g/pytest_junit.xml` (sha256 b22b0437a53c).
+  - `V-SIM-REGMAP` sim_test: **pass**, bench author: not recorded; fresh; record `results/116_traceability/b96_kr260_10g/pytest_junit.xml` (sha256 d28fc34ecb98).
 
 ### B96-F-BUILDS: Every build variant sets only the parameters it documents
 
@@ -207,9 +207,9 @@ Per requirement: its text, kind, agreement, state and every evidence item with i
 - Method mix required by its kind: not yet measured (brief 143a). Mutation score of its bench: not yet measured (brief 143b).
 - Text: The build files set parameters the core has, the base build keeps the 97C defaults, and each variant differs from the base only where documented.
 - Source: `designs/b96_kr260_10g/handover.yaml`
-  - `V-SIM-126-ALL3` sim_test: **pass**, bench author: not recorded; fresh; record `results/116_traceability/b96_kr260_10g/pytest_junit.xml` (sha256 b22b0437a53c).
-  - `V-SIM-169-CUTS` sim_test: **not_in_run**, bench author: not recorded; not_in_run; record `results/116_traceability/b96_kr260_10g/pytest_junit.xml` (sha256 b22b0437a53c).
-  - `V-SIM-BUILDS` sim_test: **pass**, bench author: not recorded; fresh; record `results/116_traceability/b96_kr260_10g/pytest_junit.xml` (sha256 b22b0437a53c).
+  - `V-SIM-126-ALL3` sim_test: **pass**, bench author: not recorded; fresh; record `results/116_traceability/b96_kr260_10g/pytest_junit.xml` (sha256 d28fc34ecb98).
+  - `V-SIM-169-CUTS` sim_test: **pass**, bench author: not recorded; fresh; record `results/116_traceability/b96_kr260_10g/pytest_junit.xml` (sha256 d28fc34ecb98).
+  - `V-SIM-BUILDS` sim_test: **pass**, bench author: not recorded; fresh; record `results/116_traceability/b96_kr260_10g/pytest_junit.xml` (sha256 d28fc34ecb98).
 
 ### B96-F-EYESCAN: The eye-scan sequencer drives the GT's DRP as its Python twin does
 
@@ -218,7 +218,7 @@ Per requirement: its text, kind, agreement, state and every evidence item with i
 - Method mix required by its kind: not yet measured (brief 143a). Mutation score of its bench: not yet measured (brief 143b).
 - Text: es_ctrl aborts a point on a DRP timeout, latches the point at start, restores every DRP word and is absent when EYESCAN = 0.
 - Source: `designs/b96_kr260_10g/docs/design.md#10-on-chip-rx-eye-scan-brief-96d-2026-11-19`
-  - `V-SIM-EYESCAN` sim_test: **pass**, bench author: not recorded; fresh; record `results/116_traceability/b96_kr260_10g/pytest_junit.xml` (sha256 b22b0437a53c).
+  - `V-SIM-EYESCAN` sim_test: **pass**, bench author: not recorded; fresh; record `results/116_traceability/b96_kr260_10g/pytest_junit.xml` (sha256 d28fc34ecb98).
 
 ### B96-P-LAT-E: Echo latency E
 
@@ -227,7 +227,7 @@ Per requirement: its text, kind, agreement, state and every evidence item with i
 - Method mix required by its kind: not yet measured (brief 143a). Mutation score of its bench: not yet measured (brief 143b).
 - Text: Regression bound drawn from the 96E board record; the owner sets the target.
 - Source: `designs/b96_kr260_10g/docs/design.md#6-loop-measurement-method-pre-registered-stage-3`
-  - `V-SIM-LATENCY-MODEL` sim_test: **pass**, bench author: not recorded; fresh; record `results/116_traceability/b96_kr260_10g/pytest_junit.xml` (sha256 b22b0437a53c).
+  - `V-SIM-LATENCY-MODEL` sim_test: **pass**, bench author: not recorded; fresh; record `results/116_traceability/b96_kr260_10g/pytest_junit.xml` (sha256 d28fc34ecb98).
   - `V-HW-LAT-E-96E` board_measurement: **pass**, bench author: not recorded; instrument latency_loop; fresh; record `results/b96e/hw/20261119_231251/rm_gp/stage3.json` (sha256 23f45435ee27).
   - `V-HW-LAT-E-97C` board_measurement: **stale**, bench author: not recorded; instrument latency_loop; stale; record `results/b97c/hw/20261118_194221/control/stage3.json` (sha256 e77343e6c99c); stale because changed since the evidence was recorded: designs/b96_kr260_10g/rtl/b96_core.sv, designs/b96_kr260_10g/rtl/b96_pkg.sv, designs/b96_kr260_10g/rtl/hs_vec.sv, designs/b96_kr260_10g/rtl/pcs_rx.sv (+5 more).
 
@@ -238,7 +238,7 @@ Per requirement: its text, kind, agreement, state and every evidence item with i
 - Method mix required by its kind: not yet measured (brief 143a). Mutation score of its bench: not yet measured (brief 143b).
 - Text: Regression bound drawn from the 96E board record (L = 2E + D); the owner sets the target.
 - Source: `designs/b96_kr260_10g/docs/design.md#6-loop-measurement-method-pre-registered-stage-3`
-  - `V-SIM-LATENCY-MODEL` sim_test: **pass**, bench author: not recorded; fresh; record `results/116_traceability/b96_kr260_10g/pytest_junit.xml` (sha256 b22b0437a53c).
+  - `V-SIM-LATENCY-MODEL` sim_test: **pass**, bench author: not recorded; fresh; record `results/116_traceability/b96_kr260_10g/pytest_junit.xml` (sha256 d28fc34ecb98).
   - `V-HW-LAT-L-96E` board_measurement: **pass**, bench author: not recorded; instrument latency_loop; fresh; record `results/b96e/hw/20261119_231251/rm_gp/stage3.json` (sha256 23f45435ee27).
   - `V-HW-LAT-L-97C` board_measurement: **stale**, bench author: not recorded; instrument latency_loop; stale; record `results/b97c/hw/20261118_194221/control/stage3.json` (sha256 e77343e6c99c); stale because changed since the evidence was recorded: designs/b96_kr260_10g/rtl/b96_core.sv, designs/b96_kr260_10g/rtl/b96_pkg.sv, designs/b96_kr260_10g/rtl/hs_vec.sv, designs/b96_kr260_10g/rtl/pcs_rx.sv (+5 more).
 
@@ -249,7 +249,7 @@ Per requirement: its text, kind, agreement, state and every evidence item with i
 - Method mix required by its kind: not yet measured (brief 143a). Mutation score of its bench: not yet measured (brief 143b).
 - Text: D = L - 2E; the 96F1 pre-registration expects it unchanged within 1 clock of 12.
 - Source: `results/b96f1/preregistration.md`
-  - `V-SIM-LATENCY-MODEL` sim_test: **pass**, bench author: not recorded; fresh; record `results/116_traceability/b96_kr260_10g/pytest_junit.xml` (sha256 b22b0437a53c).
+  - `V-SIM-LATENCY-MODEL` sim_test: **pass**, bench author: not recorded; fresh; record `results/116_traceability/b96_kr260_10g/pytest_junit.xml` (sha256 d28fc34ecb98).
   - `V-HW-LAT-D-96E` board_measurement: **pass**, bench author: not recorded; instrument latency_loop; fresh; record `results/b96e/hw/20261119_231251/rm_gp/stage3.json` (sha256 23f45435ee27).
 
 ### B96-P-T2T-DIGITAL: Digital tick-to-trade, GT port to GT port
@@ -323,9 +323,9 @@ Per requirement: its text, kind, agreement, state and every evidence item with i
   - `V-XVC-TIM-SETUP` timing: **pass**, bench author: not recorded; fresh; record `results/b131/builds/dbg_xvc/digest.json` (sha256 6cd508f9998e).
   - `V-XVC-TIM-HOLD` timing: **pass**, bench author: not recorded; fresh; record `results/b131/builds/dbg_xvc/digest.json` (sha256 6cd508f9998e).
   - `V-XVC-CDC` timing: **pass**, bench author: not recorded; fresh; record `results/b131/builds/dbg_xvc/digest.json` (sha256 6cd508f9998e).
-  - `V-XVC-CDC-STRUCT` timing: **stale**, bench author: not recorded; stale; record `results/b140/builds/dbg_xvc/digest.json` (sha256 ad5c3a21cdf4); stale because the evidence file changed after it was pinned (run: python -m flow.trace_v1 pin).
-  - `V-XVC-FLOW-GATES` timing: **stale**, bench author: not recorded; stale; record `results/b140/builds/dbg_xvc/gates.json` (sha256 63d0a2734eb2); stale because no pin recorded (run: python -m flow.trace_v1 pin).
-  - `V-XVC-VERDICT` sim_test: **pass**, bench author: not recorded; fresh; record `results/116_traceability/b96_kr260_10g/pytest_junit.xml` (sha256 b22b0437a53c).
+  - `V-XVC-CDC-STRUCT` timing: **pass**, bench author: not recorded; fresh; record `results/b140/builds/dbg_xvc/digest.json` (sha256 ad5c3a21cdf4).
+  - `V-XVC-FLOW-GATES` timing: **pass**, bench author: not recorded; fresh; record `results/b140/builds/dbg_xvc/gates.json` (sha256 63d0a2734eb2).
+  - `V-XVC-VERDICT` sim_test: **pass**, bench author: not recorded; fresh; record `results/116_traceability/b96_kr260_10g/pytest_junit.xml` (sha256 d28fc34ecb98).
   - `V-XVC-TRADING-PATH` timing: **pass**, bench author: not recorded; fresh; record `results/b131/compare/summary.json` (sha256 950b17ffa18c).
   - `V-HW-XVC-PLANNED` board_measurement: **not_run**, bench author: not recorded; instrument ila_capture; no evidence; no record.
 
@@ -409,7 +409,7 @@ Every file this record covers, with its SHA-256 at generation (77 files). `absen
 | `designs/b96_kr260_10g/rtl/rx_path_legacy.sv` | `4c9412a3ce8de3b3ee966add7b5b293e4c9b968a4ce2f1e063f62d537a24573f` |
 | `designs/b96_kr260_10g/rtl/trade64.sv` | `1999e01a3728a4834f701c66dcb0ba68004c70a8eee5b0045a6bc046fa256787` |
 | `designs/b96_kr260_10g/rtl/tx_path.sv` | `91039813b51cc71fadef8fe342b8e1535eea6c40d996604b95697fa5b577d0d8` |
-| `designs/b96_kr260_10g/verif/evidence_pins.yaml` | `ce5b24e1b978dc75a87e7faa1b3f9fb07338cbebcfa9647e8c079c9e3b22a5a7` |
+| `designs/b96_kr260_10g/verif/evidence_pins.yaml` | `8588d8eb18848c81f9a407b1369f753e56c3f8a370f6fd6317f7423ff9cab15d` |
 | `designs/b96_kr260_10g/verif/formal/mac64_tx_ifg.sby` | `05da100fd123e5b4c7ac025180f548e2a9ed1b6786fe021e43cc0fc58c45f5c8` |
 | `designs/b96_kr260_10g/verif/formal/mac64_tx_ifg_props.sv` | `0a1842d5e6dca381badf113bce2584c6f3a36cff607405ff6747c0df3fdb4205` |
 | `designs/b96_kr260_10g/verif/formal/rm_gp_props.sv` | `320efe07cb7c863283655a13da27e1a63881f12b6440de541aaa370f12ad8f36` |
@@ -420,7 +420,7 @@ Every file this record covers, with its SHA-256 at generation (77 files). `absen
 | `designs/b96_kr260_10g/verif/pyuvm/pcs_mac_pyuvm/seqs.py` | `e0cdae917f8cb9dae1390427b7b8dc67d3f2dd1475875d32740653f0784a9d71` |
 | `designs/b96_kr260_10g/verif/testplan.yaml` | `6448b4bc0fc7d93beaabaedef16e94464596fcc95db9a3266377baf8bb458708` |
 | `formal/lean/records/build_record.json` | `3d60b1f76ac87b74d5dcbe085c0eb8e43e0287d69d5fa557490a685624e6c4f6` |
-| `results/116_traceability/b96_kr260_10g/pytest_junit.xml` | `b22b0437a53cef4b05d688b32eaaddb2b266a3632e6702c1b7688911c63f5efb` |
+| `results/116_traceability/b96_kr260_10g/pytest_junit.xml` | `d28fc34ecb984ecd005e0c9ba87f0cb1584e1fbcb6e365447ffa19a17969310a` |
 | `results/152_b96_mutation/b96_rate_match_gp_seed2.json` | `50cb1a6f5d64a1d1921408650e391e60ce35da9d11a7fb49f1ca2b68f82508ff` |
 | `results/158_cov_closure/coverage_summary.json` | `eea4c0c62a577a6c86b0b420eb4c75fe3d21d6ec0864ff489d463293fdf0036b` |
 | `results/158_cov_closure/protocol_cover.tsv` | `78415183384bd3b3b85acd6f08287f1fdca133d6db8b39a43499c87d6f32e87c` |
