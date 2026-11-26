@@ -375,7 +375,7 @@ def portfolio_card() -> None:
         "id": "axi_transactor", "title": "An on-chip AXI traffic generator and protocol checker",
         "tagline": "A block beside the design under test that drives AXI4-Lite and AXI4-Stream traffic from a program loaded at run "
                    "time and checks named protocol rules in hardware",
-        "url": "https://fpga-design-agent.vercel.app/showcase/axi_transactor.html",
+        "url": "https://fpgaforce.vercel.app/showcase/axi_transactor.html",
         "facts": [
             {"text": f"A hardware checker flagged the expected rule in all {s['protocol_bug_runs']} runs with a seeded protocol bug "
                      f"({s['protocol_faults']} faults) on the Nexys A7; AMD's own AXI Protocol Checker on the same AXI4-Lite bus "
