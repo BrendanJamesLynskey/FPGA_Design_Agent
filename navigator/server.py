@@ -32,6 +32,7 @@ from navigator import ask as NA
 from navigator import boardops, guards, measure, redact, runctl
 from navigator import examples as EX
 from navigator import console as NC
+from navigator import stagemap as SM
 from navigator import summary as NS
 from navigator import health as H
 from navigator import progress as PG
@@ -41,7 +42,7 @@ HERE = Path(__file__).resolve().parent
 STATIC = HERE / "static"
 LOOPBACK = "127.0.0.1"
 COOKIE = "fda_nav"
-STATIC_FILES = {"/": "index.html", "/index.html": "index.html", "/app.js": "app.js", "/app.css": "app.css"}
+STATIC_FILES = {"/": "index.html", "/index.html": "index.html", "/app.js": "app.js", "/stagemap.js": "stagemap.js", "/app.css": "app.css"}
 CTYPE = {".html": "text/html; charset=utf-8", ".js": "text/javascript; charset=utf-8", ".css": "text/css; charset=utf-8"}
 #: CSP of the navigator's own pages: no inline script, no external host of any kind
 CSP_APP = "default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; frame-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'self'"
@@ -129,6 +130,9 @@ class App:
             return self.json(200, {"runs": PG.live_list(self.runs_dir, 15), "started": self.runctl.records(), "dir": "runs/"})
         if path == "/api/live/run":
             v = PG.run_progress(self.runs_dir, one("id"), tail=int(one("tail", "40")) if one("tail", "40").isdigit() else 40)
+            return self.json(200, v) if v else self.json(404, {"error": "no such run"})
+        if path == "/api/live/map":
+            v = SM.stage_map(self.runs_dir, one("id")) if self.known_run(one("id")) else None
             return self.json(200, v) if v else self.json(404, {"error": "no such run"})
         if path == "/api/live/summary":
             v = NS.summarise(self.runs_dir, one("id")) if self.known_run(one("id")) else None
