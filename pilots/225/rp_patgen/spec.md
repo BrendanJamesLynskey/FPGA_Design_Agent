@@ -94,6 +94,7 @@ nearest legal value as the register table says.
 
 ## This is a block, not the board's top
 
-The block has no pins of its own: the vendor's shell owns every pin and instantiates this block. So `design.xdc` holds **no pin constraints** (no PACKAGE_PIN, no
-IOSTANDARD) and no clock on a board pin: only a comment that the block is built inside the Red Pitaya shell, and, if the flow needs one, a `create_clock` on `clk`
-at 8.000 ns for an out-of-context run. The port names are the ones above, not the board file's.
+The block has no pins of its own: the vendor's shell owns every pin and every clock and instantiates this block. So `design.xdc` holds **only comments**: no
+PACKAGE_PIN, no IOSTANDARD, no `create_clock`, no `set_input_delay` or `set_output_delay` (the board-constraint check refuses a clock on any port that is not the
+board's clock input, and this block's `clk` is not a board pin). Say in the comments that the block is built inside the Red Pitaya shell, whose ADC clock is 125 MHz
+(8.000 ns). The port names are the ones above, not the board file's.
