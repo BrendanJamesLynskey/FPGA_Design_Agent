@@ -4,6 +4,8 @@ AXI4 and AXI4-Lite register slices for all five channels (AW, W, B, AR, R): one 
 
 Generated from `ip.yaml` by `flow/net/ipdoc.py`; do not edit by hand.
 
+**Verification: not assessed: no requirements recorded (no verif/testplan.yaml), so nothing here is traced to a requirement.** [VERIFIED.md](VERIFIED.md) is the generated, hash-pinned record; [what the label means](../../docs/verified.md).
+
 Status: simulated clock by clock against the pipe_reg model on all five channels (cocotb, Icarus Verilog 12) at seven per-channel mode mixes; 6 of 6 seeded faults caught; no formal proof of its own (every channel is a pipe_reg_core chain, proved in ip_lib/pipe_reg); not built with Vivado yet (queued); not run on a board.
 
 ## Parameters

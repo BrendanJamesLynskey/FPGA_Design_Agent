@@ -1,0 +1,486 @@
+{
+ "counts": {
+  "agreed_delegated": 0,
+  "agreed_human": 0,
+  "draft": 6,
+  "items": 8,
+  "requirements": 6,
+  "stale_items": 2,
+  "verified": 0
+ },
+ "criteria": [
+  {
+   "detail": "6 of 6 requirements are not in state verified: FAXIS-F-MODEL (partially_verified), FAXIS-F-EXACT (partially_verified), FAXIS-F-LAT (partially_verified), FAXIS-F-BENCH (partially_verified), FAXIS-F-PACKAGE (stale), FAXIS-F-AXIS (partially_verified)",
+   "id": "evidence",
+   "ids": [
+    "FAXIS-F-MODEL",
+    "FAXIS-F-EXACT",
+    "FAXIS-F-LAT",
+    "FAXIS-F-BENCH",
+    "FAXIS-F-PACKAGE",
+    "FAXIS-F-AXIS"
+   ],
+   "state": "unmet",
+   "title": "Every requirement has passing evidence"
+  },
+  {
+   "detail": "0 agreed by a human, 0 agreed by delegation, 6 draft, 0 marked agreed without a record",
+   "id": "agreement",
+   "ids": [
+    "FAXIS-F-MODEL",
+    "FAXIS-F-EXACT",
+    "FAXIS-F-LAT",
+    "FAXIS-F-BENCH",
+    "FAXIS-F-PACKAGE",
+    "FAXIS-F-AXIS"
+   ],
+   "state": "unmet",
+   "title": "Every requirement is agreed (human, or delegated and labelled so)"
+  },
+  {
+   "detail": "not yet measured: the required method mix per requirement kind is brief 143a; the collector does not supply it yet",
+   "id": "method_mix",
+   "ids": [],
+   "state": "not_measured",
+   "title": "Every requirement meets its required method mix"
+  },
+  {
+   "detail": "not yet measured: the mutation score and floor are brief 143b; the collector does not supply them yet",
+   "id": "mutation",
+   "ids": [],
+   "state": "not_measured",
+   "title": "The bench passes the mutation floor"
+  },
+  {
+   "detail": "no SymbiYosys item in the testplan, so there is no proof to check for vacuity or depth (a Lean item is checked by the kernel, see its tier)",
+   "id": "formal_rigour",
+   "ids": [],
+   "state": "met",
+   "title": "The formal results pass the rigour checks"
+  },
+  {
+   "detail": "2 items are stale (a file they are about changed after the evidence was recorded)",
+   "id": "fresh",
+   "ids": [
+    "V-FAXIS-MUTANT-SCORE",
+    "V-FAXIS-PACKAGE"
+   ],
+   "state": "unmet",
+   "title": "The evidence is fresh"
+  }
+ ],
+ "declared": null,
+ "definition": "docs/verified.md",
+ "git_commit": "45e89b74d901c4c9c23396e7fba792082709d6ea",
+ "kind": "arith",
+ "label": "not verified: no requirement of 6 has passing evidence",
+ "label_kind": "not_verified",
+ "limits": [
+  "Verified never means interoperability with a device the design talks to unless a board measurement against that device is listed in the record; a design that checks its own output against its own model accepts its own symmetric mistakes.",
+  "Verified never means timing beyond the stated corner: a post-route timing result is for the part, speed grade, clock and tool version in its evidence file, not for other corners, temperatures or devices.",
+  "Verified never means beyond the widths and depths checked: a simulation covers the vectors it ran, a bounded formal result covers the stated depth only, and a per-width proof covers the widths it names; only a Lean proof marked all widths covers every width, and only for its model.",
+  "Verified never means the requirement is the right one: the text of a requirement is the human's check (or the planner's, where the record says delegated), and a record shows that checks exist and pass, not that nothing was left out.",
+  "Verified never means a hardware or board result unless a board measurement item is listed; a simulation is not the board.",
+  "Verified is about the files in the manifest at the hashes given. A change to any of them makes the record out of date (the CI check fails), and the evidence stale until it is re-recorded.",
+  "An agreement or acceptance recorded as delegated is the planner's decision on the owner's delegation, not a human sign-off; the record counts it apart."
+ ],
+ "manifest": {
+  "arith/fft/rtl/fft_burst_r2.sv": "41fad471b2b13f2030cecf24aaf70ef01510874928046a9416f0dc6eae53de97",
+  "arith/fft/rtl/fft_sdf_r22.sv": "58d1227449d390af0f70aef7bb5bbcaa1bd76e701e7928961fec45dcd27e5072",
+  "arith/fft_axis/build/burst/build.yaml": "6ff94f9c40bc47370c0d4736bd7aa0fb7407d24b6749c41cdc5df565830371af",
+  "arith/fft_axis/build/sdf/build.yaml": "9b3c13cf54c2ae350b85ef97be1106ab7f3ff964a480f5fccad93ee78822216b",
+  "arith/fft_axis/model.py": "a535fab2845fa48041ab92a62c39458493bbe49d5355a427f77b4aee03734c0e",
+  "arith/fft_axis/rtl/fft_axis_burst.sv": "3c41585f325476ae8579cc8020991752ab903bce31fb84827b66641c74def872",
+  "arith/fft_axis/rtl/fft_axis_sdf.sv": "1ec25fbfbff54b4807c877fa80bdeaf0dce1fe576ea6496863944b0bedd412d0",
+  "arith/fft_axis/spec.md": "f8eb284782effb78a5f752e693f1eaafa191453abf8afa1fb56246d9753345ac",
+  "arith/fft_axis/spec.yaml": "705f52ce4a2d3c6be299d22932ab6e868d7fe9531d8321c21e8b8997ec81427a",
+  "arith/fft_axis/tests/fft_axis_cocotb.py": "5b26338de526173275b3b95387f308c8a68481a38552a92d334669b0170e3bef",
+  "arith/fft_axis/verif/evidence_pins.yaml": "b68f9ffaa667ce7c99a9e4c919e4feff36aa297a8b6f3fc86f249784a5200935",
+  "arith/fft_axis/verif/mutants.yaml": "760f3aadc79d88978bf3872b46456f38d2164ddd785af54a6936aad83030be6b",
+  "arith/fft_axis/verif/results/mutation.json": "73c389ec5b78eb4ab43fbef814e9e71474349b7af48f1d9370df9f44cfa38a59",
+  "arith/fft_axis/verif/results/pytest_junit.xml": "a7bab8cb30058baa71ff47db876cac62fcd26ed861b28b0294a5d43f9c3f65d4",
+  "arith/fft_axis/verif/testplan.yaml": "fb17b8b98a02644ad055fedd695b34d7809bada8af9cd1540ff9126fb0eed97f",
+  "arith/fft_cmul/rtl/fft_cmul_m3.sv": "8475634ed3f87a36645d4f2d3f82dac56e7b60b924b8169f67398bb113fc470c",
+  "arith/fft_cmul/rtl/fft_cmul_m4.sv": "826a27855314155fa138bf9c681c779129b02aa1d2e7f24b855abff10b8001f0",
+  "arith/fft_common/axis_checker.sv": "6608a719c010a9e77d12a3b712a4cee859239b8dd853327a5c0dddfde26bbccb",
+  "arith/fft_common/fft_bitrev.sv": "650b28bf48a4fd7b2ffb4b4b7ed597d96e0e4fcc32931357583013e11c287c35",
+  "arith/fft_common/fft_cos_rom.sv": "bcf1d079ba8a48d3757484ab8706051b46fa45046400eed1b7fe2ddd3cbbda38",
+  "arith/fft_common/fft_ref.py": "96a983692b9eac1d70ef32a874ace99a40c668cf5dcf746cfc93093f85fb54c5",
+  "arith/fft_common/fft_sdf_stage.sv": "3bce071db10fbbb3adf4f6f6e31680077ff2059f87fe21a3429ff821336ac801",
+  "arith/fft_common/fft_sdf_twmul.sv": "ced119e7c513deb23e392a199ef239d54a81ae4a5b647fb470c1daa9da3720b5",
+  "arith/fft_common/frames.py": "2f141de7810edf546dc6b25d39e4b7e8938e9f46c7cbb2683ef1f2a941ca3b5d",
+  "arith/fft_reorder/rtl/fft_reorder_pingpong.sv": "7867dd5a9c732d242eca668c17083b35190cd02cedbdf550920f7629175e9029",
+  "arith/fft_twiddle/rtl/fft_twiddle_quarter.sv": "f646b37f46b317abf8569372715d14be0ff9c7f0443e5740d703071145359f67"
+ },
+ "name": "fft_axis",
+ "notes": "Frequency-domain suite, function fft_axis (brief 148). Everything here is before Vivado: the model, the RTL variants, simulation, formal properties and the prepared out-of-context build files. No performance requirement on LUTs, DSPs, Fmax or power exists because none has been measured; the Vivado runs (build/<variant>/build.yaml, queued in _handoff/fpga_agent/vivado_later_queue.md) will add them. Every requirement is a draft written by the agent; none is agreed by a human. There are no Lean statements and no packaged harness for this suite (stated in the report). Generated by arith/tools/gen_testplan_fft.py.",
+ "path": "arith/fft_axis",
+ "reproduce": [
+  {
+   "cmd": "python -m pytest -q arith/fft_axis/tests",
+   "what": "the simulation tests"
+  }
+ ],
+ "requirements": [
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "FAXIS-F-MODEL",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-FAXIS-MODEL",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "arith/fft_axis/verif/results/pytest_junit.xml",
+     "record_sha256": "a7bab8cb30058baa71ff47db876cac62fcd26ed861b28b0294a5d43f9c3f65d4",
+     "status": "pass",
+     "title": "The model against independent formulations and the pinned conventions"
+    }
+   ],
+   "items": [
+    "V-FAXIS-MODEL"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": false,
+   "missing_methods": [
+    "a simulation check from a bench the implementing agent did not write"
+   ],
+   "mix_satisfied": false,
+   "own_tests_only": true,
+   "passing_methods": [
+    "sim_test"
+   ],
+   "rests_on_delegated": false,
+   "source": "arith/fft_axis/spec.md",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "partially_verified",
+   "text": "arith/fft_axis/model.py gives, for every input, the result that spec.md defines. It agrees with an independent formulation (the wrapped variants' own models (arith/fft/model.py) and the packing of {imaginary, real} words), and the conventions that a user could guess wrong (spec.md, last section) are pinned by examples.",
+   "title": "The bit-exact model is right",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "FAXIS-F-EXACT",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-FAXIS-DIRECTED",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "arith/fft_axis/verif/results/pytest_junit.xml",
+     "record_sha256": "a7bab8cb30058baa71ff47db876cac62fcd26ed861b28b0294a5d43f9c3f65d4",
+     "status": "pass",
+     "title": "Every variant against the model at the small points (Icarus + cocotb): directed or exhaustive stimuli"
+    },
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-FAXIS-RANDOM",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "arith/fft_axis/verif/results/pytest_junit.xml",
+     "record_sha256": "a7bab8cb30058baa71ff47db876cac62fcd26ed861b28b0294a5d43f9c3f65d4",
+     "status": "pass",
+     "title": "Every variant against the model at the large points: random stimuli (Icarus + cocotb)"
+    }
+   ],
+   "items": [
+    "V-FAXIS-DIRECTED",
+    "V-FAXIS-RANDOM"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": false,
+   "missing_methods": [
+    "a simulation check from a bench the implementing agent did not write"
+   ],
+   "mix_satisfied": false,
+   "own_tests_only": true,
+   "passing_methods": [
+    "sim_test"
+   ],
+   "rests_on_delegated": false,
+   "source": "arith/fft_axis/spec.md",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "partially_verified",
+   "text": "At every parameter point listed in spec.yaml (6 directed or exhaustive points, 4 random ones, across 2 variants), each variant's outputs equal the model's: the directed points send the FFT bench's frames as AXI4-Stream beats with no pauses (the first-beat latency equals the formula); the random points send random frames, the burst variant with random tvalid pauses inside and between frames and a sink that stalls 40 per cent of the clocks, the sdf variant with the legal gaps. Every output frame equals the model bit for bit, tlast is on the right beat, and the protocol checkers (valid stability, data stability, no unknowns, tlast position, no stall for sdf, no pause inside a frame for sdf) count no error.",
+   "title": "Every variant is bit-exact against the model",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "FAXIS-F-LAT",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-FAXIS-LATENCY",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "arith/fft_axis/verif/results/pytest_junit.xml",
+     "record_sha256": "a7bab8cb30058baa71ff47db876cac62fcd26ed861b28b0294a5d43f9c3f65d4",
+     "status": "pass",
+     "title": "The bench passes at the stated latency and fails two clocks off, for every variant"
+    }
+   ],
+   "items": [
+    "V-FAXIS-LATENCY"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": false,
+   "missing_methods": [
+    "a simulation check from a bench the implementing agent did not write"
+   ],
+   "mix_satisfied": false,
+   "own_tests_only": true,
+   "passing_methods": [
+    "sim_test"
+   ],
+   "rests_on_delegated": false,
+   "source": "arith/fft_axis/spec.md",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "partially_verified",
+   "text": "Each variant's latency in clocks is the expression in spec.yaml (sdf: (1<<LOGN)-1+LOGN+((LOGN-1)//2)*(TWSTAGES+MULSTAGES+1)+(0 if ORDER else (1<<LOGN)+1); burst: (1<<LOGN)+LOGN*((1<<LOGN)//2+MULSTAGES+3)+1), and the bench, run with a latency two clocks off, fails for every variant, so the passing runs prove the latency rather than assume it.",
+   "title": "Latency is as specified and the bench would notice if it were not",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "FAXIS-F-BENCH",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-FAXIS-MUTANT-TEST",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "arith/fft_axis/verif/results/pytest_junit.xml",
+     "record_sha256": "a7bab8cb30058baa71ff47db876cac62fcd26ed861b28b0294a5d43f9c3f65d4",
+     "status": "pass",
+     "title": "The mutation run as a test: no mutant survives, none fails to build"
+    },
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "stale",
+     "id": "V-FAXIS-MUTANT-SCORE",
+     "instrument": null,
+     "method": "sim_measurement",
+     "mutation_score": null,
+     "record": "arith/fft_axis/verif/results/mutation.json",
+     "record_sha256": "73c389ec5b78eb4ab43fbef814e9e71474349b7af48f1d9370df9f44cfa38a59",
+     "stale_because": "changed since the evidence was recorded: arith/fft/rtl/fft_burst_r2.sv, arith/fft/rtl/fft_sdf_r22.sv, arith/fft_common/fft_ref.py, arith/fft_common/fft_sdf_twmul.sv",
+     "status": "stale",
+     "title": "Mutants killed of valid mutants (the record of the last full run)"
+    }
+   ],
+   "items": [
+    "V-FAXIS-MUTANT-TEST",
+    "V-FAXIS-MUTANT-SCORE"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": false,
+   "missing_methods": [
+    "a simulation check from a bench the implementing agent did not write"
+   ],
+   "mix_satisfied": false,
+   "own_tests_only": true,
+   "passing_methods": [
+    "sim_test"
+   ],
+   "rests_on_delegated": false,
+   "source": "arith/fft_axis/verif/mutants.yaml",
+   "spec_status": "draft",
+   "stale_items": 1,
+   "state": "partially_verified",
+   "text": "Every one of the mutants in verif/mutants.yaml (one exact text change each: an inverted condition, a wrong constant, a dropped connection, a wrong width) makes the cocotb bench fail, or is argued equivalent in the file's header; mutants that survive or do not build are reported, never hidden.",
+   "title": "The bench catches seeded faults",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "FAXIS-F-PACKAGE",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "stale",
+     "id": "V-FAXIS-PACKAGE",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "arith/fft_axis/verif/results/pytest_junit.xml",
+     "record_sha256": "a7bab8cb30058baa71ff47db876cac62fcd26ed861b28b0294a5d43f9c3f65d4",
+     "stale_because": "changed since the evidence was recorded: arith/fft_axis/build/burst/build.yaml, arith/fft_axis/build/sdf/build.yaml, arith/fft_axis/spec.md",
+     "status": "stale",
+     "title": "spec.yaml against the RTL headers, spec.md against spec.yaml, Verilator -Wall at every point, wrappers and build.yaml current and lint-clean"
+    }
+   ],
+   "items": [
+    "V-FAXIS-PACKAGE"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": false,
+   "missing_methods": [],
+   "mix_satisfied": false,
+   "own_tests_only": false,
+   "passing_methods": [],
+   "rests_on_delegated": false,
+   "source": "arith/fft_axis/spec.yaml",
+   "spec_status": "draft",
+   "stale_items": 1,
+   "state": "stale",
+   "text": "spec.yaml states an interface contract (protocol, throughput, latency, reset, clock, stalls) and integration guidance (port timing, constraints to carry). Every variant passes Verilator -Wall at every point of spec.yaml; its ports and default parameters are the ones spec.yaml states; its header states the intended primitive use before any Vivado run; spec.md is the rendering of spec.yaml; the out-of-context wrapper and the build.yaml for each variant (Artix-7 xc7a100t and K26 xck26, prepared and not run) are current and lint-clean at every point they list, so a Vivado run can start from the repository alone.",
+   "title": "The RTL is lint-clean, and its files agree with the specification and with the Vivado build files",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "FAXIS-F-AXIS",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-FAXIS-RANDOM",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "arith/fft_axis/verif/results/pytest_junit.xml",
+     "record_sha256": "a7bab8cb30058baa71ff47db876cac62fcd26ed861b28b0294a5d43f9c3f65d4",
+     "status": "pass",
+     "title": "Every variant against the model at the large points: random stimuli (Icarus + cocotb)"
+    },
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-FAXIS-CHECKER",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "arith/fft_axis/verif/results/pytest_junit.xml",
+     "record_sha256": "a7bab8cb30058baa71ff47db876cac62fcd26ed861b28b0294a5d43f9c3f65d4",
+     "status": "pass",
+     "title": "The protocol checkers can fail (a stalled sink on sdf, a withdrawn tvalid on burst)"
+    }
+   ],
+   "items": [
+    "V-FAXIS-RANDOM",
+    "V-FAXIS-CHECKER"
+   ],
+   "kind": "interface",
+   "lean_transcription_only": false,
+   "missing_methods": [
+    "a simulation check from a bench the implementing agent did not write"
+   ],
+   "mix_satisfied": false,
+   "own_tests_only": true,
+   "passing_methods": [
+    "sim_test"
+   ],
+   "rests_on_delegated": false,
+   "source": "arith/fft_axis/spec.md",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "partially_verified",
+   "text": "On both streams of both variants the wrapper's SystemVerilog protocol checkers (fft_common/axis_checker.sv: valid stays high until accepted, tdata and tlast stable while stalled, no unknowns after reset, tlast on every N-th beat, no stall on the streaming variant, no pause inside a frame where the variant forbids it) count zero violations in every run of the directed and random benches, which stall the burst variant's sink and pause its source at random; tvalid is registered and independent of tready by construction (a mutant that makes it depend on tready is killed by the valid-stability rule). A deliberate-violation test shows each checker can fail. The back-pressure of each variant is stated in spec.yaml (sdf none, burst full).",
+   "title": "The AXI4-Stream handshake rules hold, and the checkers can fail",
+   "waivers": []
+  }
+ ],
+ "schema": "fda-verified/1",
+ "summary_line": "6 requirements (5 functional, 1 interface); 0 verified; 5 partially verified (the required mix of methods is not met); 1 stale; 0 of 6 requirements agreed by a human, 0 agreed on the owner's delegation (not human), 6 draft; 5 resting only on the implementing agent's own tests; 0 human and 0 delegated review(s) recorded."
+}

@@ -1,0 +1,1069 @@
+{
+ "counts": {
+  "agreed_delegated": 0,
+  "agreed_human": 0,
+  "draft": 17,
+  "items": 18,
+  "requirements": 17,
+  "stale_items": 4,
+  "verified": 6
+ },
+ "criteria": [
+  {
+   "detail": "11 of 17 requirements are not in state verified: B110-F-RISK (partially_verified), B110-S-STRICT (partially_verified), B110-V-MUTATION (fail), B110-S-QTY (stale), B110-S-BANDREF (stale), B110-F-HOLDOFF (stale), B110-F-NOTIONAL (stale), B110-S-LIMITS-ATOMIC (partially_verified), B110-F-PARSE-INPLACE (partially_verified), B110-F-REJECT-BITS (partially_verified), B110-F-FEED-ARB (partially_verified)",
+   "id": "evidence",
+   "ids": [
+    "B110-F-RISK",
+    "B110-S-STRICT",
+    "B110-V-MUTATION",
+    "B110-S-QTY",
+    "B110-S-BANDREF",
+    "B110-F-HOLDOFF",
+    "B110-F-NOTIONAL",
+    "B110-S-LIMITS-ATOMIC",
+    "B110-F-PARSE-INPLACE",
+    "B110-F-REJECT-BITS",
+    "B110-F-FEED-ARB"
+   ],
+   "state": "unmet",
+   "title": "Every requirement has passing evidence"
+  },
+  {
+   "detail": "0 agreed by a human, 0 agreed by delegation, 17 draft, 0 marked agreed without a record",
+   "id": "agreement",
+   "ids": [
+    "B110-F-ORDER-BYTES",
+    "B110-F-MOLD",
+    "B110-F-BOOK",
+    "B110-F-RISK",
+    "B110-F-UDP",
+    "B110-S-STRICT",
+    "B110-F-SEQ-POISON",
+    "B110-V-COVERAGE",
+    "B110-V-MUTATION",
+    "B110-S-QTY",
+    "B110-S-BANDREF",
+    "B110-F-HOLDOFF",
+    "B110-F-NOTIONAL",
+    "B110-S-LIMITS-ATOMIC",
+    "B110-F-PARSE-INPLACE",
+    "B110-F-REJECT-BITS",
+    "B110-F-FEED-ARB"
+   ],
+   "state": "unmet",
+   "title": "Every requirement is agreed (human, or delegated and labelled so)"
+  },
+  {
+   "detail": "not yet measured: the required method mix per requirement kind is brief 143a; the collector does not supply it yet",
+   "id": "method_mix",
+   "ids": [],
+   "state": "not_measured",
+   "title": "Every requirement meets its required method mix"
+  },
+  {
+   "detail": "not yet measured: the mutation score and floor are brief 143b; the collector does not supply them yet",
+   "id": "mutation",
+   "ids": [],
+   "state": "not_measured",
+   "title": "The bench passes the mutation floor"
+  },
+  {
+   "detail": "not yet measured: the vacuity, assumption and depth checks are brief 143c; the collector does not supply them yet",
+   "id": "formal_rigour",
+   "ids": [],
+   "state": "not_measured",
+   "title": "The formal results pass the rigour checks"
+  },
+  {
+   "detail": "4 items are stale (a file they are about changed after the evidence was recorded)",
+   "id": "fresh",
+   "ids": [
+    "V-FORMAL-BOOK-QTY",
+    "V-SIM-QTY",
+    "V-SIM-BANDREF",
+    "V-SIM-NOTIONAL"
+   ],
+   "state": "unmet",
+   "title": "The evidence is fresh"
+  }
+ ],
+ "declared": null,
+ "definition": "docs/verified.md",
+ "git_commit": "45e89b74d901c4c9c23396e7fba792082709d6ea",
+ "kind": "designs",
+ "label": "not verified: 1 of 17 requirements fail",
+ "label_kind": "not_verified",
+ "limits": [
+  "Verified never means interoperability with a device the design talks to unless a board measurement against that device is listed in the record; a design that checks its own output against its own model accepts its own symmetric mistakes.",
+  "Verified never means timing beyond the stated corner: a post-route timing result is for the part, speed grade, clock and tool version in its evidence file, not for other corners, temperatures or devices.",
+  "Verified never means beyond the widths and depths checked: a simulation covers the vectors it ran, a bounded formal result covers the stated depth only, and a per-width proof covers the widths it names; only a Lean proof marked all widths covers every width, and only for its model.",
+  "Verified never means the requirement is the right one: the text of a requirement is the human's check (or the planner's, where the record says delegated), and a record shows that checks exist and pass, not that nothing was left out.",
+  "Verified never means a hardware or board result unless a board measurement item is listed; a simulation is not the board.",
+  "Verified is about the files in the manifest at the hashes given. A change to any of them makes the record out of date (the CI check fails), and the evidence stale until it is re-recorded.",
+  "An agreement or acceptance recorded as delegated is the planner's decision on the owner's delegation, not a human sign-off; the record counts it apart."
+ ],
+ "manifest": {
+  "designs/b110_itch_ouch/rtl/book_core.sv": "629dab43bf80ed61b9ab06944ca9b2bf4819a6a4a67f13368cb431c080acf3c3",
+  "designs/b110_itch_ouch/rtl/feed_arb.sv": "e523ff419e52e683b3d00a2c6e82c72aa3f09056d269ebf46edcd808a0a1420a",
+  "designs/b110_itch_ouch/rtl/feed_arb_in.sv": "77db45af279cd13e12452f0201621955c01a593b5f21a38875bbba279988b408",
+  "designs/b110_itch_ouch/rtl/itch_dec.sv": "816b19c5cc47df033006617f755525bf43df7adbda59c8abbdfaef9d24b37265",
+  "designs/b110_itch_ouch/rtl/itch_ouch_top.sv": "8f5d552941866af7efa2a893b5d64ae7228f0c6ae36cbe296203146a77d75024",
+  "designs/b110_itch_ouch/rtl/mold_rx.sv": "2439cc5a50ff265598da6afbf6faba81e6004bea70f7e3585c6ab8718c344d66",
+  "designs/b110_itch_ouch/rtl/ouch_enter.sv": "95066c0f3caaf67b87eb40baf88d5704b6eec8387384d00014cbe93f3f64addd",
+  "designs/b110_itch_ouch/rtl/risk_glue.sv": "9d3d031147f19db09506d5a2ac12b63ce8277cf536c15d0548a78b071ac6a1cc",
+  "designs/b110_itch_ouch/verif/evidence_pins.yaml": "b8c3f9feaaa4522d88d21de1973b05f5708f7aa8343546162edc624b26d0afcc",
+  "designs/b110_itch_ouch/verif/formal/book_props.sv": "bb4cb2649e752cec051793abab5c291810fa913fd21937752f71f5a591ea0e01",
+  "designs/b110_itch_ouch/verif/mutants.yaml": "8502985b6cf5099bcde62eba588fd9f4b91f8adac53f5855262e5ad754cc236c",
+  "designs/b110_itch_ouch/verif/testplan.yaml": "65bfff7784e601361564f06a5e0ea414b958f9d20fc6b4ce4d70311a5ed646f0",
+  "designs/b96_kr260_10g/rm_gp_itch/rtl/b96_core.sv": "2ee04f6ca6b40be38de985da6b48e22ae5401ebd75331531d65b6bdeea48257c",
+  "designs/b96_kr260_10g/rm_gp_itch/rtl/itch_path.sv": "3f8c04b0c061b3e41f67640dde4fa603ee20c7866f264a97c68b69f932bbb600",
+  "designs/b96_kr260_10g/rm_gp_itch/rtl/itch_top.sv": "5be8de2fca1c8f6aa511bde820eb1e433e693a9bb7dc8533f91f98ab225fe781",
+  "designs/b96_kr260_10g/rm_gp_itch/rtl/order_seg.sv": "473fe555c60f81e9f484bcbf9c300d07d4c19f7e92ee57a30390d94e781dd841",
+  "designs/b96_kr260_10g/rm_gp_itch/rtl/tx_mux.sv": "60060254bf35df39db013b4a9cd347c13d241a22d7932966dd33ae05faabb7fb",
+  "designs/b96_kr260_10g/rm_gp_itch/rtl/udp_strip.sv": "18ecd60fabbb24dcc5b8337dd255272ddbf94adeb08a21af839e3e1c9b125cb5",
+  "results/170_itch_uvm/mutation_seed1.json": "6345bf1a4af7fd9d20118a0f1ce4f6e6fc332fe8d3f5e722ff0a7452097ec6fd",
+  "results/188_trading_safety/pytest_junit.xml": "586166cc870084588567f21ed2bdf1caceaae9b781f335b1001a336e4b40f0ad",
+  "results/188_trading_safety/staged_limits_sim.json": "f750bfa407beb82d79503c695fc2e2e268ddd7f23010c9450bee80229ccf9538",
+  "results/191_trading_variants/pytest_junit.xml": "be267a11ab78090653eabcbd05cd0c4bc429fcf9edac9ab3c7ab631befba15da",
+  "results/191_trading_variants/uvm/summary.json": "efc7d36560fcbb7b1b070287a0dd93a6b13346d342d735508357a43abfae1901"
+ },
+ "name": "b110_itch_ouch",
+ "notes": "Simulation only (xsim 2026.1, UVM 1.2; Icarus is not used by this bench). One recorded regression (results/191_trading_variants/uvm/summary.json) and one mutation record (results/170_itch_uvm/mutation_seed*.json). No board, no real feed, every message synthetic.",
+ "path": "designs/b110_itch_ouch",
+ "reproduce": [
+  {
+   "cmd": "python3 -m pytest -q designs/b110_itch_ouch/tests/test_b110_model.py designs/b110_itch_ouch/tests/test_b110_rtl.py designs/b110_itch_ouch/tests/test_b110_lint.py",
+   "what": "the whole bench (cocotb on Icarus), the model tests and the lint"
+  },
+  {
+   "cmd": "B110_RECORD=$PWD/results/b110 python3 -m pytest -q designs/b110_itch_ouch/tests/test_b110_rtl.py::test_all_benches",
+   "what": "the same with the measurement records written (latency, throughput, coverage, idle gap)"
+  },
+  {
+   "cmd": "python3 designs/b110_itch_ouch/tests/run_mutants.py --jobs 2 --json results/b110/mutation.json",
+   "what": "the seeded faults (every mutant of verif/mutants.yaml against the bench)"
+  }
+ ],
+ "requirements": [
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "B110-F-ORDER-BYTES",
+   "item_views": [
+    {
+     "bench_author": "independent bench",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-UVM-ORDERS",
+     "instrument": null,
+     "method": "uvm_test",
+     "mutation_score": null,
+     "record": "results/191_trading_variants/uvm/summary.json",
+     "record_sha256": "efc7d36560fcbb7b1b070287a0dd93a6b13346d342d735508357a43abfae1901",
+     "status": "pass",
+     "title": "UVM scoreboard ORDERS check, every order frame byte for byte against the SV reference model (all sequences, all seeds)"
+    },
+    {
+     "bench_author": "independent bench",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-UVM-SVA",
+     "instrument": null,
+     "method": "assertion",
+     "mutation_score": null,
+     "record": "results/191_trading_variants/uvm/summary.json",
+     "record_sha256": "efc7d36560fcbb7b1b070287a0dd93a6b13346d342d735508357a43abfae1901",
+     "status": "pass",
+     "title": "SVAs on the transmit words, the order-frame stream and the status vector, zero failures in every run"
+    }
+   ],
+   "items": [
+    "V-UVM-ORDERS",
+    "V-UVM-SVA"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": false,
+   "missing_methods": [],
+   "mix_satisfied": true,
+   "own_tests_only": false,
+   "passing_methods": [
+    "assertion",
+    "uvm_test"
+   ],
+   "rests_on_delegated": false,
+   "source": "designs/b110_itch_ouch/docs/spec_notes.md#3-ouch-50-hardware-rtlouch_entersv-section-21-type-o-enter-order",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "verified",
+   "text": "Each order frame with a good FCS equals the reference frame byte for byte (Ethernet, IPv4, TCP headers, SoupBinTCP 3.00 length and type, OUCH 5.0 Enter Order fields, ClOrdID, appendage), the orders come in order with UserRefNum rising by one per accepted candidate, and a frame with a wrong FCS is never an order.",
+   "title": "Every order that leaves with a good frame check sequence is byte exact",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "B110-F-MOLD",
+   "item_views": [
+    {
+     "bench_author": "independent bench",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-UVM-MOLD",
+     "instrument": null,
+     "method": "uvm_test",
+     "mutation_score": null,
+     "record": "results/191_trading_variants/uvm/summary.json",
+     "record_sha256": "efc7d36560fcbb7b1b070287a0dd93a6b13346d342d735508357a43abfae1901",
+     "status": "pass",
+     "title": "UVM scoreboard COUNTERS and FLAGS at every checkpoint (Mold counters and flags, gaps, duplicates, overlaps, heartbeats, truncation)"
+    }
+   ],
+   "items": [
+    "V-UVM-MOLD"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": false,
+   "missing_methods": [],
+   "mix_satisfied": true,
+   "own_tests_only": false,
+   "passing_methods": [
+    "uvm_test"
+   ],
+   "rests_on_delegated": false,
+   "source": "designs/b110_itch_ouch/docs/itch_ouch.md#2-behaviour-in-detail",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "verified",
+   "text": "For every packet the packet, message, gap, missing, duplicate, overlap, session, heartbeat, end-of-session, short, truncated and bad-length counters and the gap, session-lock and end-of-session flags equal the reference model's at every checkpoint, with 1, 3 and 6 messages a packet and at every frame alignment.",
+   "title": "MoldUDP64 sessions, sequence gaps, duplicates, overlaps, heartbeats and broken packets are counted and delivered as the reference says",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "B110-F-BOOK",
+   "item_views": [
+    {
+     "bench_author": "independent bench",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-UVM-BOOK",
+     "instrument": null,
+     "method": "uvm_test",
+     "mutation_score": null,
+     "record": "results/191_trading_variants/uvm/summary.json",
+     "record_sha256": "efc7d36560fcbb7b1b070287a0dd93a6b13346d342d735508357a43abfae1901",
+     "status": "pass",
+     "title": "UVM book edge-case sequence and random mix, counters and inexact flags against the reference model"
+    }
+   ],
+   "items": [
+    "V-UVM-BOOK"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": false,
+   "missing_methods": [],
+   "mix_satisfied": true,
+   "own_tests_only": false,
+   "passing_methods": [
+    "uvm_test"
+   ],
+   "rests_on_delegated": false,
+   "source": "designs/b110_itch_ouch/docs/itch_ouch.md#2-behaviour-in-detail",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "verified",
+   "text": "Message-type counters, malformed and skipped messages, unwatched locates, missing/duplicate/overflowing orders, ladder overflow and over-execution counters, the candidate count and the per-instrument inexact flags equal the reference model's, including the edge cases of an empty book, a full ladder, a table-index collision and a replace.",
+   "title": "The ITCH decoder and the book keep the counters, the inexact flags and the candidates the reference model computes",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "B110-F-RISK",
+   "item_views": [
+    {
+     "bench_author": "independent bench",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-UVM-RISK",
+     "instrument": null,
+     "method": "uvm_test",
+     "mutation_score": null,
+     "record": "results/191_trading_variants/uvm/summary.json",
+     "record_sha256": "efc7d36560fcbb7b1b070287a0dd93a6b13346d342d735508357a43abfae1901",
+     "status": "pass",
+     "title": "UVM risk sequence, every refusal counter and the orders that follow"
+    }
+   ],
+   "items": [
+    "V-UVM-RISK"
+   ],
+   "kind": "safety",
+   "lean_transcription_only": false,
+   "missing_methods": [
+    "a formal proof (SymbiYosys or Lean)"
+   ],
+   "mix_satisfied": false,
+   "own_tests_only": false,
+   "passing_methods": [
+    "uvm_test"
+   ],
+   "rests_on_delegated": false,
+   "source": "designs/b110_itch_ouch/docs/itch_ouch.md#2-behaviour-in-detail",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "partially_verified",
+   "text": "Not armed, kill switch, untrusted or gap-halted, inexact book, quantity, position limit per instrument, price band and missing bid refuse a candidate exactly as the reference does; the position and the order number advance only for an accepted candidate.",
+   "title": "Every risk refusal is the first failing check, counted once, and no order starts on a refused candidate",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "B110-F-UDP",
+   "item_views": [
+    {
+     "bench_author": "independent bench",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-UVM-UDP",
+     "instrument": null,
+     "method": "uvm_test",
+     "mutation_score": null,
+     "record": "results/191_trading_variants/uvm/summary.json",
+     "record_sha256": "efc7d36560fcbb7b1b070287a0dd93a6b13346d342d735508357a43abfae1901",
+     "status": "pass",
+     "title": "UVM header sequence, every drop reason, the multicast address and EN = 0, udp_strip counters against the reference model"
+    }
+   ],
+   "items": [
+    "V-UVM-UDP"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": false,
+   "missing_methods": [],
+   "mix_satisfied": true,
+   "own_tests_only": false,
+   "passing_methods": [
+    "uvm_test"
+   ],
+   "rests_on_delegated": false,
+   "source": "designs/b96_kr260_10g/rm_gp_itch/docs/itch_integration.md#2-the-path-block-by-block",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "verified",
+   "text": "Destination MAC (unicast or the group's multicast address), EtherType, IPv4 version and header length, fragments, protocol, destination address and port, UDP length against the IP length, and the IPv4 header checksum; EN = 0 drops everything.",
+   "title": "Frames are forwarded or dropped by the first failing header check, and each drop is counted",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "B110-S-STRICT",
+   "item_views": [
+    {
+     "bench_author": "independent bench",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-UVM-STRICT",
+     "instrument": null,
+     "method": "uvm_test",
+     "mutation_score": null,
+     "record": "results/191_trading_variants/uvm/summary.json",
+     "record_sha256": "efc7d36560fcbb7b1b070287a0dd93a6b13346d342d735508357a43abfae1901",
+     "status": "pass",
+     "title": "UVM bad-FCS and tail-distance sequences, STRICT and cut-through, orders classed must, may and must-not against the measured window"
+    },
+    {
+     "bench_author": "independent bench",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-UVM-SVA",
+     "instrument": null,
+     "method": "assertion",
+     "mutation_score": null,
+     "record": "results/191_trading_variants/uvm/summary.json",
+     "record_sha256": "efc7d36560fcbb7b1b070287a0dd93a6b13346d342d735508357a43abfae1901",
+     "status": "pass",
+     "title": "SVAs on the transmit words, the order-frame stream and the status vector, zero failures in every run"
+    }
+   ],
+   "items": [
+    "V-UVM-STRICT",
+    "V-UVM-SVA"
+   ],
+   "kind": "safety",
+   "lean_transcription_only": false,
+   "missing_methods": [
+    "a formal proof (SymbiYosys or Lean)"
+   ],
+   "mix_satisfied": false,
+   "own_tests_only": false,
+   "passing_methods": [
+    "assertion",
+    "uvm_test"
+   ],
+   "rests_on_delegated": false,
+   "source": "designs/b96_kr260_10g/rm_gp_itch/docs/itch_integration.md#4-the-late-frame-check-and-what-happens-to-an-order-on-a-bad-frame",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "partially_verified",
+   "text": "With STRICT set (the default, owner decision 31) no order leaves with a good FCS when the frame that carried its message has a bad FCS, or when that frame's verdict is not yet known at the order's last word; such an order leaves with a wrong FCS. Cut-through is a documented option with a measured window.",
+   "title": "Under STRICT an order is never sent on an unverified or bad frame",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "B110-F-SEQ-POISON",
+   "item_views": [
+    {
+     "bench_author": "independent bench",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-UVM-SEQ",
+     "instrument": null,
+     "method": "uvm_test",
+     "mutation_score": null,
+     "record": "results/191_trading_variants/uvm/summary.json",
+     "record_sha256": "efc7d36560fcbb7b1b070287a0dd93a6b13346d342d735508357a43abfae1901",
+     "status": "pass",
+     "title": "UVM sequence-number check on the datasheet's rule, exact and without a waiver in every run (brief 176 fixed the finding t_seq_poison made; the item still read the pre-fix fields until brief 188)"
+    }
+   ],
+   "items": [
+    "V-UVM-SEQ"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": false,
+   "missing_methods": [],
+   "mix_satisfied": true,
+   "own_tests_only": false,
+   "passing_methods": [
+    "uvm_test"
+   ],
+   "rests_on_delegated": false,
+   "source": "designs/b96_kr260_10g/rm_gp_itch/docs/itch_integration.md#5-registers-and-what-a-user-could-guess-wrong",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "verified",
+   "text": "The TCP sequence number of an order is the loaded number plus 59 for every segment that left with a good FCS; a frame poisoned (wrong FCS) by the multiplexer, because its trigger frame was bad or unverified, does not advance it.",
+   "title": "A poisoned order frame consumes no TCP sequence number",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "B110-V-COVERAGE",
+   "item_views": [
+    {
+     "bench_author": "independent bench",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-UVM-COV",
+     "instrument": null,
+     "method": "coverage_bin",
+     "mutation_score": null,
+     "record": "results/191_trading_variants/uvm/summary.json",
+     "record_sha256": "efc7d36560fcbb7b1b070287a0dd93a6b13346d342d735508357a43abfae1901",
+     "status": "pass",
+     "title": "Closure of the bench's functional coverage plan over the recorded regression"
+    }
+   ],
+   "items": [
+    "V-UVM-COV"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": false,
+   "missing_methods": [],
+   "mix_satisfied": true,
+   "own_tests_only": false,
+   "passing_methods": [
+    "coverage_bin"
+   ],
+   "rests_on_delegated": false,
+   "source": "designs/b96_kr260_10g/rm_gp_itch/verif/uvm/README.md#functional-coverage",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "verified",
+   "text": "Every bin of the bench's coverage plan (message types, messages a packet, Mold events, header drops, book edge cases, risk refusals, order outcomes, bad-FCS crosses, frame alignments, backpressure) is hit by the recorded regression.",
+   "title": "The bench's functional coverage plan is closed",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "B110-V-MUTATION",
+   "item_views": [
+    {
+     "bench_author": "independent bench",
+     "depth": null,
+     "freshness": "failing",
+     "id": "V-UVM-MUT",
+     "instrument": null,
+     "method": "sim_measurement",
+     "mutation_score": null,
+     "record": "results/170_itch_uvm/mutation_seed1.json",
+     "record_sha256": "6345bf1a4af7fd9d20118a0f1ce4f6e6fc332fe8d3f5e722ff0a7452097ec6fd",
+     "status": "fail",
+     "title": "Blind mutation sweep with the fixed tool (flow/mutation_score.py): score, worst case and undecided against the floor"
+    }
+   ],
+   "items": [
+    "V-UVM-MUT"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": false,
+   "missing_methods": [],
+   "mix_satisfied": false,
+   "own_tests_only": false,
+   "passing_methods": [],
+   "rests_on_delegated": false,
+   "source": "designs/b96_kr260_10g/rm_gp_itch/verif/uvm/README.md#mutation-score",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "fail",
+   "text": "A blind mutation sweep (mutants made from the RTL text and a seed only, equivalent mutants decided by a formal miter) scores at least 90 % even if every undecided mutant counted as a survivor.",
+   "title": "The bench kills at least 90 % of blind mutants of the path (worst case, over at least 30)",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "B110-S-QTY",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "stale",
+     "id": "V-FORMAL-BOOK-QTY",
+     "instrument": null,
+     "method": "formal",
+     "mutation_score": null,
+     "record": "results/191_trading_variants/pytest_junit.xml",
+     "record_sha256": "be267a11ab78090653eabcbd05cd0c4bc429fcf9edac9ab3c7ab631befba15da",
+     "stale_because": "changed since the evidence was recorded: designs/b110_itch_ouch/verif/formal/book_props.sv",
+     "status": "stale",
+     "title": "SymbiYosys proof of the book's quantity invariants Q1-Q6 by k-induction (depth 1, with two strengthening invariants over every ladder level and order-table entry; brief 191) at N_INST 2 LEVELS 4 and 8 (a power of two instruments), BMC from reset to depth 12, and the cover that saturation is reachable; a non-power-of-two instrument count is BMC only"
+    },
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "stale",
+     "id": "V-SIM-QTY",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "results/188_trading_safety/pytest_junit.xml",
+     "record_sha256": "586166cc870084588567f21ed2bdf1caceaae9b781f335b1001a336e4b40f0ad",
+     "stale_because": "changed since the evidence was recorded: designs/b110_itch_ouch/rtl/book_core.sv, designs/b110_itch_ouch/rtl/risk_glue.sv",
+     "status": "stale",
+     "title": "Saturating level size, zero-share Add and wrapping order price, against the model (the saturation test fails on the RTL before brief 188)"
+    }
+   ],
+   "items": [
+    "V-FORMAL-BOOK-QTY",
+    "V-SIM-QTY"
+   ],
+   "kind": "safety",
+   "lean_transcription_only": false,
+   "missing_methods": [],
+   "mix_satisfied": false,
+   "own_tests_only": false,
+   "passing_methods": [],
+   "rests_on_delegated": false,
+   "source": "designs/b110_itch_ouch/docs/itch_ouch.md#14-observation-and-counters",
+   "spec_status": "draft",
+   "stale_items": 2,
+   "state": "stale",
+   "text": "A level size that would pass 2^32 - 1 saturates and makes the instrument inexact (counted as lvovf); an Add of zero shares is never entered; an order price (candidate price plus offset) that passes 2^32 - 1 is refused as band; no ladder level or order-table entry is ever written live with zero size (brief 188, bounded proof from reset).",
+   "title": "No quantity or price accumulator wraps, and no live book entry has zero size",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "B110-S-BANDREF",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "stale",
+     "id": "V-SIM-BANDREF",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "results/188_trading_safety/pytest_junit.xml",
+     "record_sha256": "586166cc870084588567f21ed2bdf1caceaae9b781f335b1001a336e4b40f0ad",
+     "stale_because": "changed since the evidence was recorded: designs/b110_itch_ouch/rtl/risk_glue.sv",
+     "status": "stale",
+     "title": "Software band reference, its age limit and the hold-off (cocotb bench soft_reference, soft_reference_age, holdoff)"
+    }
+   ],
+   "items": [
+    "V-SIM-BANDREF"
+   ],
+   "kind": "safety",
+   "lean_transcription_only": false,
+   "missing_methods": [],
+   "mix_satisfied": false,
+   "own_tests_only": false,
+   "passing_methods": [],
+   "rests_on_delegated": false,
+   "source": "designs/b110_itch_ouch/docs/itch_ouch.md#13-configuration-static",
+   "spec_status": "draft",
+   "stale_items": 1,
+   "state": "stale",
+   "text": "With the software reference selected, the band is measured from the price software wrote and the book's bid is not consulted; a reference never loaded, or older than the age limit in core clocks, refuses every candidate as rej_band (brief 188).",
+   "title": "The price-band reference can come from software, independent of the strategy's own book, and is refused when too old",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "B110-F-HOLDOFF",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "stale",
+     "id": "V-SIM-BANDREF",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "results/188_trading_safety/pytest_junit.xml",
+     "record_sha256": "586166cc870084588567f21ed2bdf1caceaae9b781f335b1001a336e4b40f0ad",
+     "stale_because": "changed since the evidence was recorded: designs/b110_itch_ouch/rtl/risk_glue.sv",
+     "status": "stale",
+     "title": "Software band reference, its age limit and the hold-off (cocotb bench soft_reference, soft_reference_age, holdoff)"
+    }
+   ],
+   "items": [
+    "V-SIM-BANDREF"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": false,
+   "missing_methods": [],
+   "mix_satisfied": false,
+   "own_tests_only": false,
+   "passing_methods": [],
+   "rests_on_delegated": false,
+   "source": "designs/b110_itch_ouch/docs/itch_ouch.md#13-configuration-static",
+   "spec_status": "draft",
+   "stale_items": 1,
+   "state": "stale",
+   "text": "With a hold-off of N clocks, the next candidate of the same instrument inside N clocks is refused and counted as rej_busy, one after it is accepted, another instrument is unaffected, and speculation is not started during a hold-off (brief 188).",
+   "title": "After an accepted order an instrument is refused for the hold-off, other instruments are not",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "B110-F-NOTIONAL",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "stale",
+     "id": "V-SIM-NOTIONAL",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "results/188_trading_safety/pytest_junit.xml",
+     "record_sha256": "586166cc870084588567f21ed2bdf1caceaae9b781f335b1001a336e4b40f0ad",
+     "stale_because": "changed since the evidence was recorded: designs/b110_itch_ouch/rtl/risk_glue.sv",
+     "status": "stale",
+     "title": "Notional check in both builds against the model, the table-versus-multiply property, and equal latency in the three NOTIONAL_MODE builds"
+    }
+   ],
+   "items": [
+    "V-SIM-NOTIONAL"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": false,
+   "missing_methods": [],
+   "mix_satisfied": false,
+   "own_tests_only": false,
+   "passing_methods": [],
+   "rests_on_delegated": false,
+   "source": "designs/b110_itch_ouch/docs/itch_ouch.md#13-configuration-static",
+   "spec_status": "draft",
+   "stale_items": 1,
+   "state": "stale",
+   "text": "With NOTIONAL_MODE 1 an order whose price times quantity passes the limit is refused as rej_size; with mode 2 a table filled by software from the limit gives verdicts equal to the model's, never admits an order the multiply would refuse, and both add no clock between the book update and the first order word (brief 188).",
+   "title": "The notional check (multiply or software price-band table) refuses as the model says, at no extra clock, and the table is never weaker than the multiply",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "B110-S-LIMITS-ATOMIC",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-XSIM-LIMITS",
+     "instrument": null,
+     "method": "sim_measurement",
+     "mutation_score": null,
+     "record": "results/188_trading_safety/staged_limits_sim.json",
+     "record_sha256": "f750bfa407beb82d79503c695fc2e2e268ddd7f23010c9450bee80229ccf9538",
+     "status": "pass",
+     "title": "Whole core in xsim 2026.1; limit lowered but not committed leaves the old limits in force, COMMIT applies it"
+    }
+   ],
+   "items": [
+    "V-XSIM-LIMITS"
+   ],
+   "kind": "safety",
+   "lean_transcription_only": false,
+   "missing_methods": [
+    "a formal proof (SymbiYosys or Lean)"
+   ],
+   "mix_satisfied": false,
+   "own_tests_only": true,
+   "passing_methods": [
+    "sim_measurement"
+   ],
+   "rests_on_delegated": false,
+   "source": "designs/b96_kr260_10g/rm_gp_itch/docs/itch_integration.md#5-registers-and-what-a-user-could-guess-wrong",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "partially_verified",
+   "text": "The risk limits are staged; a write fills a holding register and the live set changes only on COMMIT, in one clock, so the core never runs on a mix of old and new limits (brief 188, whole core in xsim).",
+   "title": "A half-written set of risk limits never takes effect (rm_gp_itch registers)",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "B110-F-PARSE-INPLACE",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-SIM-PARSE-INPLACE",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "results/191_trading_variants/pytest_junit.xml",
+     "record_sha256": "be267a11ab78090653eabcbd05cd0c4bc429fcf9edac9ab3c7ab631befba15da",
+     "status": "pass",
+     "title": "Whole bench with the in-place decoder against the model, every type in every start lane (lane_by_type, both decoders), and the lane bins read where the messages lie"
+    }
+   ],
+   "items": [
+    "V-SIM-PARSE-INPLACE"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": false,
+   "missing_methods": [
+    "a simulation check from a bench the implementing agent did not write"
+   ],
+   "mix_satisfied": false,
+   "own_tests_only": true,
+   "passing_methods": [
+    "sim_test"
+   ],
+   "rests_on_delegated": false,
+   "source": "designs/b110_itch_ouch/docs/itch_ouch.md#4-parameters",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "partially_verified",
+   "text": "With PARSE_INPLACE 1 the decoder, built from eight copies with the start byte fixed, gives the events, counters and latency of the shifting decoder; each of the nine decoded types, a skipped type, a wrong length, a bad side and a zero share count are exercised in each of the eight byte lanes a message can start in (brief 191).",
+   "title": "Parsing a message where it lies gives the same events as shifting it to byte 0 first, for every message type in every start lane",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "B110-F-REJECT-BITS",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-SIM-REJECT-BITS",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "results/191_trading_variants/pytest_junit.xml",
+     "record_sha256": "be267a11ab78090653eabcbd05cd0c4bc429fcf9edac9ab3c7ab631befba15da",
+     "status": "pass",
+     "title": "Reject bits against the model's independent evaluation and verdict latency equal for every outcome, with and without speculation (reject_bits)"
+    }
+   ],
+   "items": [
+    "V-SIM-REJECT-BITS"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": false,
+   "missing_methods": [
+    "a simulation check from a bench the implementing agent did not write"
+   ],
+   "mix_satisfied": false,
+   "own_tests_only": true,
+   "passing_methods": [
+    "sim_test"
+   ],
+   "rests_on_delegated": false,
+   "source": "designs/b110_itch_ouch/docs/itch_ouch.md#15-per-check-reject-bits-brief-191",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "partially_verified",
+   "text": "The checks are evaluated side by side; vd_rej shows every failing check (all of them, not only the first), and the verdict record vd_v comes the same number of clocks after the last byte of the candidate for an accept, each single reject and several rejects, with and without speculation (brief 191).",
+   "title": "Each pre-trade check sets its own reject bit, and accept and reject take the same number of clocks",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "B110-F-FEED-ARB",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-SIM-FEED-ARB",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "results/191_trading_variants/pytest_junit.xml",
+     "record_sha256": "be267a11ab78090653eabcbd05cd0c4bc429fcf9edac9ab3c7ab631befba15da",
+     "status": "pass",
+     "title": "The A/B arbiter against the single-feed model in twelve tests (skews, losses, both-lost, fill window, heartbeats, bad frame, session, overlap, runts, bursts, interleave, deep skew, random, latency)"
+    }
+   ],
+   "items": [
+    "V-SIM-FEED-ARB"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": false,
+   "missing_methods": [
+    "a simulation check from a bench the implementing agent did not write"
+   ],
+   "mix_satisfied": false,
+   "own_tests_only": true,
+   "passing_methods": [
+    "sim_test"
+   ],
+   "rests_on_delegated": false,
+   "source": "designs/b110_itch_ouch/docs/feed_arb.md",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "partially_verified",
+   "text": "With DUAL_FEED 1 and both feeds complete the parser sees each packet once; a packet lost on one feed is filled from the other (when its header is in before the next packet's); a packet lost on both is a real gap; heartbeats, another session, runts, overlap and bad frames are handled as the datasheet states; the arbiter adds a fixed 4 clocks (brief 191).",
+   "title": "The A/B feed arbiter gives the parser one clean sequence from two feeds, first copy wins, the other feed fills a gap",
+   "waivers": []
+  }
+ ],
+ "schema": "fda-verified/1",
+ "summary_line": "17 requirements (12 functional, 5 safety); 6 verified; 6 partially verified (the required mix of methods is not met); 4 stale; 1 failing; 0 of 17 requirements agreed by a human, 0 agreed on the owner's delegation (not human), 17 draft; 4 resting only on the implementing agent's own tests; 0 human and 0 delegated review(s) recorded."
+}

@@ -1,0 +1,910 @@
+{
+ "counts": {
+  "agreed_delegated": 0,
+  "agreed_human": 0,
+  "draft": 12,
+  "items": 20,
+  "requirements": 12,
+  "stale_items": 1,
+  "verified": 2
+ },
+ "criteria": [
+  {
+   "detail": "10 of 12 requirements are not in state verified: FXR-F-MODEL (partially_verified), FXR-F-RTL-EXH (partially_verified), FXR-F-RTL-RAND (partially_verified), FXR-F-LAT (partially_verified), FXR-F-LINT (partially_verified), FXR-F-MUTANT (partially_verified), FXR-F-LEAN-CONV (unapproved), FXR-F-LEAN-HALFUP (unapproved), FXR-F-BUILD (partially_verified), FXR-P-OOC (stale)",
+   "id": "evidence",
+   "ids": [
+    "FXR-F-MODEL",
+    "FXR-F-RTL-EXH",
+    "FXR-F-RTL-RAND",
+    "FXR-F-LAT",
+    "FXR-F-LINT",
+    "FXR-F-MUTANT",
+    "FXR-F-LEAN-CONV",
+    "FXR-F-LEAN-HALFUP",
+    "FXR-F-BUILD",
+    "FXR-P-OOC"
+   ],
+   "state": "unmet",
+   "title": "Every requirement has passing evidence"
+  },
+  {
+   "detail": "0 agreed by a human, 0 agreed by delegation, 12 draft, 0 marked agreed without a record",
+   "id": "agreement",
+   "ids": [
+    "FXR-F-MODEL",
+    "FXR-F-RTL-EXH",
+    "FXR-F-RTL-RAND",
+    "FXR-F-LAT",
+    "FXR-F-LINT",
+    "FXR-F-MUTANT",
+    "FXR-F-FORMAL-REF",
+    "FXR-F-FORMAL-PAIR",
+    "FXR-F-LEAN-CONV",
+    "FXR-F-LEAN-HALFUP",
+    "FXR-F-BUILD",
+    "FXR-P-OOC"
+   ],
+   "state": "unmet",
+   "title": "Every requirement is agreed (human, or delegated and labelled so)"
+  },
+  {
+   "detail": "not yet measured: the required method mix per requirement kind is brief 143a; the collector does not supply it yet",
+   "id": "method_mix",
+   "ids": [],
+   "state": "not_measured",
+   "title": "Every requirement meets its required method mix"
+  },
+  {
+   "detail": "not yet measured: the mutation score and floor are brief 143b; the collector does not supply them yet",
+   "id": "mutation",
+   "ids": [],
+   "state": "not_measured",
+   "title": "The bench passes the mutation floor"
+  },
+  {
+   "detail": "not yet measured: the vacuity, assumption and depth checks are brief 143c; the collector does not supply them yet",
+   "id": "formal_rigour",
+   "ids": [],
+   "state": "not_measured",
+   "title": "The formal results pass the rigour checks"
+  },
+  {
+   "detail": "1 items are stale (a file they are about changed after the evidence was recorded)",
+   "id": "fresh",
+   "ids": [
+    "V-FXR-OOC"
+   ],
+   "state": "unmet",
+   "title": "The evidence is fresh"
+  }
+ ],
+ "declared": null,
+ "definition": "docs/verified.md",
+ "git_commit": "45e89b74d901c4c9c23396e7fba792082709d6ea",
+ "kind": "arith",
+ "label": "verified except: 10 of 12 requirements without passing evidence; 12 of 12 requirements not agreed; required method mix not yet measured; mutation floor not yet measured; formal rigour not yet measured; 1 stale or differing evidence items",
+ "label_kind": "verified_except",
+ "limits": [
+  "Verified never means interoperability with a device the design talks to unless a board measurement against that device is listed in the record; a design that checks its own output against its own model accepts its own symmetric mistakes.",
+  "Verified never means timing beyond the stated corner: a post-route timing result is for the part, speed grade, clock and tool version in its evidence file, not for other corners, temperatures or devices.",
+  "Verified never means beyond the widths and depths checked: a simulation covers the vectors it ran, a bounded formal result covers the stated depth only, and a per-width proof covers the widths it names; only a Lean proof marked all widths covers every width, and only for its model.",
+  "Verified never means the requirement is the right one: the text of a requirement is the human's check (or the planner's, where the record says delegated), and a record shows that checks exist and pass, not that nothing was left out.",
+  "Verified never means a hardware or board result unless a board measurement item is listed; a simulation is not the board.",
+  "Verified is about the files in the manifest at the hashes given. A change to any of them makes the record out of date (the CI check fails), and the evidence stale until it is re-recorded.",
+  "An agreement or acceptance recorded as delegated is the planner's decision on the owner's delegation, not a human sign-off; the record counts it apart.",
+  "1 formal items are bounded model checks; each holds to its stated depth only: V-FXR-FORMAL-FAULTS."
+ ],
+ "manifest": {
+  "arith/common/tb_stream.sv": "75069651847b6f85ee85134d3b169af35da174cd6d5872cfcb37b3055b77c96c",
+  "arith/fxp_round/build/fold_add/a7/build.yaml": "cee583e77cc4e0f2b4deafffa6f63276f2cf19cf1898fee792539a93e8aed40c",
+  "arith/fxp_round/build/fold_add/k26/build.yaml": "c6d025ca351ea8cb3929a81167f57a8c7d73fed48ba4c4f66b9877da0b6cf031",
+  "arith/fxp_round/build/inc_after/a7/build.yaml": "90258cf5e64289f6eddbc7456245c3f643efb303a52d1d932f5927c7fa467112",
+  "arith/fxp_round/build/inc_after/k26/build.yaml": "6c9d5daf9054805800ef3c30ec8e3e59c29706af3e67555d408fcd995c0a98e1",
+  "arith/fxp_round/build/two_stage/a7/build.yaml": "e8953df0d1e6f5b8a95156b5f8fe79ceb986145a92e61ba49274c4b6e3cbd09f",
+  "arith/fxp_round/build/two_stage/k26/build.yaml": "54f6993268ff06e6cc897a714dda221f826af488cca7b8950d708512186cab41",
+  "arith/fxp_round/formal/fxp_round_fv.sv": "7a7c94b644b766b47cdfdc178122bdb94e72f16db97fbe775b44b6c4e2b2941d",
+  "arith/fxp_round/model.py": "94236ab81a0d6aef584e039d04d7d5f8e5c3c25279bb30a9e7935bc3606d559f",
+  "arith/fxp_round/rtl/fxp_round_2st.sv": "3a8dc6a014a2ca4aaa1253f6a8cecbbb1f62e96462654b54959e16ab2bee79ec",
+  "arith/fxp_round/rtl/fxp_round_fold.sv": "facd52aa8afdc40f472d37e87e67b1a7b0a3f9aef156e70524dcaabd3a74febb",
+  "arith/fxp_round/rtl/fxp_round_inc.sv": "9497039eff0e1a150eae6801124047e27241f4e45a5602057c57d35693d7e8fc",
+  "arith/fxp_round/rtl/fxp_round_ooc.sv": "d6624963254ea95effb103033272718a4a81e630d2056b9303228c59c13479bd",
+  "arith/fxp_round/rtl/fxp_round_sel.sv": "d4889e7074d4287dd93009dc31791d987e503faf3c4785f8e5e83a0e8e108824",
+  "arith/fxp_round/rtl/fxp_sat.sv": "d8a0f84b5a8800d2af088b04d6070a888e14e12c95ef7fa7487e6e01e99119e7",
+  "arith/fxp_round/tb/tb_fxp_round.sv": "d42c0c0a4c68aa5239cc947beeb4be694c97c73f9e4c647e9df889b413b22de3",
+  "arith/fxp_round/verif/evidence_pins.yaml": "305f0d6c996066a5d8c135c66b80f5bec07daff11c5537243ac0b4c8e7ecdaf2",
+  "arith/fxp_round/verif/lean_approvals.yaml": "6ec5e6202f3b18d19d98252e93e7f3acf75432eaebcc98b645ce908ac268dbef",
+  "arith/fxp_round/verif/mutants.yaml": "fcaf76e2f53f73b60511c806c70ba38b5ba2aa2c28a96346bd34d4f0749f411e",
+  "arith/fxp_round/verif/results/vivado_surface.json": "8e8dde71b1b4d2b701f6cbb41c242d2fc2f27cada560c367ca0fd87522ef457d",
+  "arith/fxp_round/verif/testplan.yaml": "da830acb46c2128e0689311ff5ec3df04be79f8cd2f869eb7c1d43536b675bdc",
+  "formal/lean/records/build_record.json": "3d60b1f76ac87b74d5dcbe085c0eb8e43e0287d69d5fa557490a685624e6c4f6",
+  "results/139b_arith/fxp_round_formal_record.json": "06722a4149ce01c349a407656940f29c5280e566bbe09297a0bceaf02a2fe43d",
+  "results/139b_arith/fxp_round_junit.xml": "c3fba9268ffff770fba248a6d2a856b51b4703e405f5b16d05320d3e23f5e69c",
+  "results/139b_arith/fxp_round_sim_record.json": "5d394231b541e02b6c4ff87a37f1922a6e754bed901f80dee25fe57a589acd7e"
+ },
+ "name": "fxp_round",
+ "notes": "Arithmetic library function fxp_round (brief 139b). Every requirement is a draft written by the agent from the owner's request (spec_status: draft; only a human sets agreed). Evidence is generated by `python -m pytest arith/fxp_round/tests --junitxml=results/139b_arith/fxp_round_junit.xml` with ARITH_RECORD_DIR=results/139b_arith. The Lean items show 'statement not approved': lean_approvals.yaml is the owner's. The one performance requirement (brief 160) says every prepared out-of-context point has a routed Vivado result; no Fmax or area bound is agreed.",
+ "path": "arith/fxp_round",
+ "reproduce": [
+  {
+   "cmd": "python -m pytest -q arith/fxp_round/tests",
+   "what": "the simulation tests"
+  }
+ ],
+ "requirements": [
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "FXR-F-MODEL",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-FXR-MODEL",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "results/139b_arith/fxp_round_junit.xml",
+     "record_sha256": "c3fba9268ffff770fba248a6d2a856b51b4703e405f5b16d05320d3e23f5e69c",
+     "status": "pass",
+     "title": "Model tests against Python integer arithmetic"
+    }
+   ],
+   "items": [
+    "V-FXR-MODEL"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": false,
+   "missing_methods": [
+    "a simulation check from a bench the implementing agent did not write"
+   ],
+   "mix_satisfied": false,
+   "own_tests_only": true,
+   "passing_methods": [
+    "sim_test"
+   ],
+   "rests_on_delegated": false,
+   "source": "arith/fxp_round/spec.md#the-function",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "partially_verified",
+   "text": "For the rounding and saturation: the three rounding modes equal their definitions on exact fractions for every x, S and W_IN up to 9, the single-adder carry-in form equals the definition for every x, S and mode up to W_IN = 10, the error bounds hold, and saturation and wrap are as specified.",
+   "title": "The model is the specification: it equals integer arithmetic",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "FXR-F-RTL-EXH",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-FXR-RTL-EXH",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "results/139b_arith/fxp_round_junit.xml",
+     "record_sha256": "c3fba9268ffff770fba248a6d2a856b51b4703e405f5b16d05320d3e23f5e69c",
+     "status": "pass",
+     "title": "Exhaustive small widths, every variant"
+    }
+   ],
+   "items": [
+    "V-FXR-RTL-EXH"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": false,
+   "missing_methods": [
+    "a simulation check from a bench the implementing agent did not write"
+   ],
+   "mix_satisfied": false,
+   "own_tests_only": true,
+   "passing_methods": [
+    "sim_test"
+   ],
+   "rests_on_delegated": false,
+   "source": "arith/fxp_round/spec.md#the-function",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "partially_verified",
+   "text": "Simulation (Icarus 14) of every variant against the model: every input x at W_IN = 5 and 8 for every S, four W_OUT around the rounded width, three modes, wrap and saturate: 954 configurations over the three variants.",
+   "title": "Every variant is bit-exact against the model, exhaustively at small widths",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "FXR-F-RTL-RAND",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-FXR-RTL-RAND",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "results/139b_arith/fxp_round_junit.xml",
+     "record_sha256": "c3fba9268ffff770fba248a6d2a856b51b4703e405f5b16d05320d3e23f5e69c",
+     "status": "pass",
+     "title": "Random and edge vectors at large widths"
+    }
+   ],
+   "items": [
+    "V-FXR-RTL-RAND"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": false,
+   "missing_methods": [
+    "a simulation check from a bench the implementing agent did not write"
+   ],
+   "mix_satisfied": false,
+   "own_tests_only": true,
+   "passing_methods": [
+    "sim_test"
+   ],
+   "rests_on_delegated": false,
+   "source": "arith/fxp_round/spec.md#the-function",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "partially_verified",
+   "text": "Simulation of every variant against the model: edge, random and tie-pattern values at W_IN = 16, 24, 32 and 48, six random configurations per variant and width.",
+   "title": "Every variant is bit-exact against the model at large widths",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "FXR-F-LAT",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-FXR-LAT",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "results/139b_arith/fxp_round_junit.xml",
+     "record_sha256": "c3fba9268ffff770fba248a6d2a856b51b4703e405f5b16d05320d3e23f5e69c",
+     "status": "pass",
+     "title": "Latency measured per result"
+    }
+   ],
+   "items": [
+    "V-FXR-LAT"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": false,
+   "missing_methods": [
+    "a simulation check from a bench the implementing agent did not write"
+   ],
+   "mix_satisfied": false,
+   "own_tests_only": true,
+   "passing_methods": [
+    "sim_test"
+   ],
+   "rests_on_delegated": false,
+   "source": "arith/fxp_round/spec.md#the-function",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "partially_verified",
+   "text": "The measured latency equals the spec (1, 1, 2 clocks) for every variant, one result per clock.",
+   "title": "Latency and throughput are what the spec states",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "FXR-F-LINT",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-FXR-LINT",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "results/139b_arith/fxp_round_junit.xml",
+     "record_sha256": "c3fba9268ffff770fba248a6d2a856b51b4703e405f5b16d05320d3e23f5e69c",
+     "status": "pass",
+     "title": "Verilator -Wall lint"
+    }
+   ],
+   "items": [
+    "V-FXR-LINT"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": false,
+   "missing_methods": [
+    "a simulation check from a bench the implementing agent did not write"
+   ],
+   "mix_satisfied": false,
+   "own_tests_only": true,
+   "passing_methods": [
+    "sim_test"
+   ],
+   "rests_on_delegated": false,
+   "source": "arith/fxp_round/spec.md#the-function",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "partially_verified",
+   "text": "Verilator -Wall --lint-only reports nothing for any variant at the corner configurations (S = 0, 1, W_IN - 1; W_OUT 2, narrower, equal and wider than the rounded value; all modes, wrap and saturate).",
+   "title": "The RTL is Verilator -Wall clean",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "FXR-F-MUTANT",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-FXR-MUTANT-RUN",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "results/139b_arith/fxp_round_junit.xml",
+     "record_sha256": "c3fba9268ffff770fba248a6d2a856b51b4703e405f5b16d05320d3e23f5e69c",
+     "status": "pass",
+     "title": "The mutant check passes"
+    },
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-FXR-MUTANT-SCORE",
+     "instrument": null,
+     "method": "sim_measurement",
+     "mutation_score": null,
+     "record": "results/139b_arith/fxp_round_sim_record.json",
+     "record_sha256": "5d394231b541e02b6c4ff87a37f1922a6e754bed901f80dee25fe57a589acd7e",
+     "status": "pass",
+     "title": "Mutants killed / total"
+    }
+   ],
+   "items": [
+    "V-FXR-MUTANT-RUN",
+    "V-FXR-MUTANT-SCORE"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": false,
+   "missing_methods": [
+    "a simulation check from a bench the implementing agent did not write"
+   ],
+   "mix_satisfied": false,
+   "own_tests_only": true,
+   "passing_methods": [
+    "sim_measurement",
+    "sim_test"
+   ],
+   "rests_on_delegated": false,
+   "source": "arith/fxp_round/spec.md#the-function",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "partially_verified",
+   "text": "Each of 14 seeded faults (one text change in the RTL, verif/mutants.yaml) makes the bench fail: killed/total = 14/14.",
+   "title": "The bench catches seeded faults",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "FXR-F-FORMAL-REF",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-FXR-FORMAL-REF-RUN",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "results/139b_arith/fxp_round_junit.xml",
+     "record_sha256": "c3fba9268ffff770fba248a6d2a856b51b4703e405f5b16d05320d3e23f5e69c",
+     "status": "pass",
+     "title": "The formal reference and fault-catching tests pass"
+    },
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-FXR-FORMAL-REF",
+     "instrument": null,
+     "method": "formal",
+     "mutation_score": null,
+     "record": "results/139b_arith/fxp_round_formal_record.json",
+     "record_sha256": "06722a4149ce01c349a407656940f29c5280e566bbe09297a0bceaf02a2fe43d",
+     "status": "pass",
+     "title": "Reference proofs: jobs proved unbounded, none failed"
+    },
+    {
+     "bench_author": "not recorded",
+     "depth": "BMC, 8 to 16 cycles",
+     "freshness": "fresh",
+     "id": "V-FXR-FORMAL-FAULTS",
+     "instrument": null,
+     "method": "formal",
+     "mutation_score": null,
+     "record": "results/139b_arith/fxp_round_formal_record.json",
+     "record_sha256": "06722a4149ce01c349a407656940f29c5280e566bbe09297a0bceaf02a2fe43d",
+     "status": "bounded",
+     "title": "Six seeded faults each make the proof fail (bounded model checking)"
+    }
+   ],
+   "items": [
+    "V-FXR-FORMAL-REF-RUN",
+    "V-FXR-FORMAL-REF",
+    "V-FXR-FORMAL-FAULTS"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": false,
+   "missing_methods": [],
+   "mix_satisfied": true,
+   "own_tests_only": false,
+   "passing_methods": [
+    "formal",
+    "sim_test"
+   ],
+   "rests_on_delegated": false,
+   "source": "arith/fxp_round/spec.md#the-function",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "verified",
+   "text": "SymbiYosys with the slang front end: each variant equals a reference written from the definitions with wide signed arithmetic for all input sequences from reset: 3 variants x 8 configurations; unbounded (abc pdr). Six seeded faults are applied to the RTL and the same proof fails (bounded model checking finds the counterexample), which shows the harness is not vacuous.",
+   "title": "Every variant equals an independent reference (SymbiYosys)",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "FXR-F-FORMAL-PAIR",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-FXR-FORMAL-PAIR-RUN",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "results/139b_arith/fxp_round_junit.xml",
+     "record_sha256": "c3fba9268ffff770fba248a6d2a856b51b4703e405f5b16d05320d3e23f5e69c",
+     "status": "pass",
+     "title": "The variant-pair tests pass"
+    },
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-FXR-FORMAL-PAIR",
+     "instrument": null,
+     "method": "formal",
+     "mutation_score": null,
+     "record": "results/139b_arith/fxp_round_formal_record.json",
+     "record_sha256": "06722a4149ce01c349a407656940f29c5280e566bbe09297a0bceaf02a2fe43d",
+     "status": "pass",
+     "title": "Variant pairs proved equal, none failed"
+    }
+   ],
+   "items": [
+    "V-FXR-FORMAL-PAIR-RUN",
+    "V-FXR-FORMAL-PAIR"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": false,
+   "missing_methods": [],
+   "mix_satisfied": true,
+   "own_tests_only": false,
+   "passing_methods": [
+    "formal",
+    "sim_test"
+   ],
+   "rests_on_delegated": false,
+   "source": "arith/fxp_round/spec.md#the-function",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "verified",
+   "text": "SymbiYosys with the slang front end, no reference involved: the fold-add and the increment-after variants give the same output on the same inputs for the 8 configurations; unbounded (abc pdr).",
+   "title": "Variants of the function agree with each other (SymbiYosys)",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "FXR-F-LEAN-CONV",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-LEAN-FXR-CONV-FOLD",
+     "instrument": null,
+     "lean": {
+      "build_source": "recorded build (not re-run)",
+      "rtl_link": "transcription_tested",
+      "tier": "kernel_only"
+     },
+     "method": "formal_lean",
+     "mutation_score": null,
+     "record": "formal/lean/records/build_record.json",
+     "record_sha256": "3d60b1f76ac87b74d5dcbe085c0eb8e43e0287d69d5fa557490a685624e6c4f6",
+     "status": "unapproved",
+     "title": "The carry-in form of convergent rounding equals its definition, every x and every S >= 1"
+    },
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-LEAN-FXR-CONV-ERR",
+     "instrument": null,
+     "lean": {
+      "build_source": "recorded build (not re-run)",
+      "rtl_link": "model_only",
+      "tier": "kernel_only"
+     },
+     "method": "formal_lean",
+     "mutation_score": null,
+     "record": "formal/lean/records/build_record.json",
+     "record_sha256": "3d60b1f76ac87b74d5dcbe085c0eb8e43e0287d69d5fa557490a685624e6c4f6",
+     "status": "unapproved",
+     "title": "Convergent rounding errs by at most half a unit, every x and S"
+    },
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-LEAN-FXR-CONV-TIE",
+     "instrument": null,
+     "lean": {
+      "build_source": "recorded build (not re-run)",
+      "rtl_link": "model_only",
+      "tier": "kernel_only"
+     },
+     "method": "formal_lean",
+     "mutation_score": null,
+     "record": "formal/lean/records/build_record.json",
+     "record_sha256": "3d60b1f76ac87b74d5dcbe085c0eb8e43e0287d69d5fa557490a685624e6c4f6",
+     "status": "unapproved",
+     "title": "A convergent tie rounds to an even result, every x and S"
+    }
+   ],
+   "items": [
+    "V-LEAN-FXR-CONV-FOLD",
+    "V-LEAN-FXR-CONV-ERR",
+    "V-LEAN-FXR-CONV-TIE"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": false,
+   "missing_methods": [],
+   "mix_satisfied": false,
+   "own_tests_only": false,
+   "passing_methods": [],
+   "rests_on_delegated": false,
+   "source": "arith/fxp_round/spec.md#verification-everything-before-vivado",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "unapproved",
+   "text": "Convergent rounding computed by one addition of the constant 2^(S-1) - 1 and the result's LSB as a carry-in (what fxp_round_fold builds) equals the textbook definition for every integer x and every S >= 1; its error is at most half a unit; a tie goes to the even result. Proved in Lean, statements not approved. Saturation and wrap are not in the Lean model.",
+   "title": "Convergent rounding: carry-in form, error bound and tie-to-even for every S (Lean)",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "FXR-F-LEAN-HALFUP",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-LEAN-FXR-HALFUP-DEF",
+     "instrument": null,
+     "lean": {
+      "build_source": "recorded build (not re-run)",
+      "rtl_link": "model_only",
+      "tier": "kernel_only"
+     },
+     "method": "formal_lean",
+     "mutation_score": null,
+     "record": "formal/lean/records/build_record.json",
+     "record_sha256": "3d60b1f76ac87b74d5dcbe085c0eb8e43e0287d69d5fa557490a685624e6c4f6",
+     "status": "unapproved",
+     "title": "Round half up is the floor plus one exactly when the fraction is at least the half"
+    },
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-LEAN-FXR-HALFUP-ERR",
+     "instrument": null,
+     "lean": {
+      "build_source": "recorded build (not re-run)",
+      "rtl_link": "model_only",
+      "tier": "kernel_only"
+     },
+     "method": "formal_lean",
+     "mutation_score": null,
+     "record": "formal/lean/records/build_record.json",
+     "record_sha256": "3d60b1f76ac87b74d5dcbe085c0eb8e43e0287d69d5fa557490a685624e6c4f6",
+     "status": "unapproved",
+     "title": "Round half up errs by at most half a unit (and strictly less on the low side), every x and S"
+    },
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-LEAN-FXR-TRUNC-ERR",
+     "instrument": null,
+     "lean": {
+      "build_source": "recorded build (not re-run)",
+      "rtl_link": "model_only",
+      "tier": "kernel_only"
+     },
+     "method": "formal_lean",
+     "mutation_score": null,
+     "record": "formal/lean/records/build_record.json",
+     "record_sha256": "3d60b1f76ac87b74d5dcbe085c0eb8e43e0287d69d5fa557490a685624e6c4f6",
+     "status": "unapproved",
+     "title": "Truncation errs by less than one unit and never upward, every x and S"
+    }
+   ],
+   "items": [
+    "V-LEAN-FXR-HALFUP-DEF",
+    "V-LEAN-FXR-HALFUP-ERR",
+    "V-LEAN-FXR-TRUNC-ERR"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": false,
+   "missing_methods": [],
+   "mix_satisfied": false,
+   "own_tests_only": false,
+   "passing_methods": [],
+   "rests_on_delegated": false,
+   "source": "arith/fxp_round/spec.md#verification-everything-before-vivado",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "unapproved",
+   "text": "Round half up is floor + [fraction >= half] and errs by at most half a unit; truncation errs by less than one unit and never upward; every x, every S >= 1. Proved in Lean, statements not approved; pure arithmetic, no RTL link.",
+   "title": "Round half up and truncation: definition and error bounds for every S (Lean)",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "FXR-F-BUILD",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-FXR-BUILD",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "results/139b_arith/fxp_round_junit.xml",
+     "record_sha256": "c3fba9268ffff770fba248a6d2a856b51b4703e405f5b16d05320d3e23f5e69c",
+     "status": "pass",
+     "title": "Build descriptions current and consistent; wrapper lint and simulation; packaged harness runs on the library instance"
+    }
+   ],
+   "items": [
+    "V-FXR-BUILD"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": false,
+   "missing_methods": [
+    "a simulation check from a bench the implementing agent did not write"
+   ],
+   "mix_satisfied": false,
+   "own_tests_only": true,
+   "passing_methods": [
+    "sim_test"
+   ],
+   "rests_on_delegated": false,
+   "source": "arith/fxp_round/spec.md#vivado-builds-prepared-in-brief-139b-run-in-brief-160",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "partially_verified",
+   "text": "For every variant of the rounding and saturation there is a build.yaml and an out-of-context clock constraint for xc7a100t and xck26, current against arith/tools/gen_build.py, consistent with the RTL (top, parameters, sources), with the expected primitive use evaluated for each point; the out-of-context wrapper lints clean and is functionally exact for the always-ready variants; the packaged verification harness (harness/run.py, which a user reruns against their own instance) passes on the library instance with every coverage bin hit. This requirement is about preparation; the measured area, Fmax and power are in the brief 160 records.",
+   "title": "Out-of-context build descriptions are prepared for Artix-7 and K26 (prepared in brief 139b, run in brief 160)",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "FXR-P-OOC",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "stale",
+     "id": "V-FXR-OOC",
+     "instrument": null,
+     "method": "timing",
+     "mutation_score": null,
+     "record": "arith/fxp_round/verif/results/vivado_surface.json",
+     "record_sha256": "8e8dde71b1b4d2b701f6cbb41c242d2fc2f27cada560c367ca0fd87522ef457d",
+     "stale_because": "the evidence file changed after it was pinned (run: python -m flow.trace_v1 pin)",
+     "status": "stale",
+     "title": "The routed Vivado results of every prepared point (the records of the last run)"
+    }
+   ],
+   "items": [
+    "V-FXR-OOC"
+   ],
+   "kind": "performance",
+   "lean_transcription_only": false,
+   "missing_methods": [],
+   "mix_satisfied": false,
+   "own_tests_only": false,
+   "passing_methods": [],
+   "performance": {
+    "bound": 24,
+    "condition": "Vivado 2026.1 out-of-context, one thread, the clocks of the build files, brief 160",
+    "op": "ge",
+    "quantity": "prepared points with a routed out-of-context Vivado result",
+    "unit": "points"
+   },
+   "rests_on_delegated": false,
+   "source": "arith/fxp_round/spec.md",
+   "spec_status": "draft",
+   "stale_items": 1,
+   "state": "stale",
+   "text": "Each point of the build files of fxp_round (build/<variant>/build.yaml; 24 in all, both parts) goes through Vivado 2026.1 out-of-context synthesis, placement and routing and leaves a recorded result (utilisation, WNS, WHS, Fmax, logic levels, vectorless power) in verif/results/vivado_ooc_<variant>_<part>.json. The measured values and each point's pre-stated expectation are in the Measured table of spec.md and in verif/results/vivado_surface.json; this requirement states only that the measurement exists for every point, because no Fmax or area bound has been agreed.",
+   "title": "Every prepared point places and routes out of context on Artix-7 and K26",
+   "waivers": []
+  }
+ ],
+ "schema": "fda-verified/1",
+ "summary_line": "12 requirements (11 functional, 1 performance); 2 verified; 7 partially verified (the required mix of methods is not met); 1 stale; 0 of 12 requirements agreed by a human, 0 agreed on the owner's delegation (not human), 12 draft; 7 resting only on the implementing agent's own tests; 0 human and 0 delegated review(s) recorded; 6 Lean proof item(s) (all widths): 0 with a human-approved statement, 0 with a statement accepted on the owner's delegation (not a human approval), 6 with statement not approved; 6 kernel only, 0 using a compiled decision procedure; build status from: recorded build (not re-run)."
+}

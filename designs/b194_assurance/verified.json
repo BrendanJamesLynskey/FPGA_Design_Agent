@@ -1,0 +1,112 @@
+{
+ "counts": {
+  "requirements": 0
+ },
+ "criteria": [
+  {
+   "detail": "no requirements recorded",
+   "id": "evidence",
+   "ids": [],
+   "state": "not_measured",
+   "title": "Every requirement has passing evidence"
+  },
+  {
+   "detail": "no requirements recorded",
+   "id": "agreement",
+   "ids": [],
+   "state": "not_measured",
+   "title": "Every requirement is agreed (human, or delegated and labelled so)"
+  },
+  {
+   "detail": "no requirements recorded",
+   "id": "method_mix",
+   "ids": [],
+   "state": "not_measured",
+   "title": "Every requirement meets its required method mix"
+  },
+  {
+   "detail": "no requirements recorded",
+   "id": "mutation",
+   "ids": [],
+   "state": "not_measured",
+   "title": "The bench passes the mutation floor"
+  },
+  {
+   "detail": "no requirements recorded",
+   "id": "formal_rigour",
+   "ids": [],
+   "state": "not_measured",
+   "title": "The formal results pass the rigour checks"
+  },
+  {
+   "detail": "no requirements recorded",
+   "id": "fresh",
+   "ids": [],
+   "state": "not_measured",
+   "title": "The evidence is fresh"
+  }
+ ],
+ "declared": {
+  "evidence": [
+   {
+    "activity": "simulation",
+    "id": "E1",
+    "record": "designs/b194_assurance/tests/test_b194_rtl.py",
+    "result": "pass"
+   },
+   {
+    "activity": "simulation",
+    "id": "E2",
+    "record": "results/b194/faults.json",
+    "result": "pass"
+   },
+   {
+    "activity": "build",
+    "id": "E3",
+    "record": "results/b194/costs.json",
+    "result": "pass"
+   }
+  ],
+  "note": "the design's own declared evidence; not traced to requirements and not checked by this record",
+  "source": "handover.yaml",
+  "status": "simulated"
+ },
+ "definition": "docs/verified.md",
+ "git_commit": "45e89b74d901c4c9c23396e7fba792082709d6ea",
+ "kind": "designs",
+ "label": "not assessed: no requirements recorded (no verif/testplan.yaml), so nothing here is traced to a requirement",
+ "label_kind": "not_assessed",
+ "limits": [
+  "Verified never means interoperability with a device the design talks to unless a board measurement against that device is listed in the record; a design that checks its own output against its own model accepts its own symmetric mistakes.",
+  "Verified never means timing beyond the stated corner: a post-route timing result is for the part, speed grade, clock and tool version in its evidence file, not for other corners, temperatures or devices.",
+  "Verified never means beyond the widths and depths checked: a simulation covers the vectors it ran, a bounded formal result covers the stated depth only, and a per-width proof covers the widths it names; only a Lean proof marked all widths covers every width, and only for its model.",
+  "Verified never means the requirement is the right one: the text of a requirement is the human's check (or the planner's, where the record says delegated), and a record shows that checks exist and pass, not that nothing was left out.",
+  "Verified never means a hardware or board result unless a board measurement item is listed; a simulation is not the board.",
+  "Verified is about the files in the manifest at the hashes given. A change to any of them makes the record out of date (the CI check fails), and the evidence stale until it is re-recorded.",
+  "An agreement or acceptance recorded as delegated is the planner's decision on the owner's delegation, not a human sign-off; the record counts it apart."
+ ],
+ "manifest": {
+  "designs/b194_assurance/handover.yaml": "1a0ef5d43c6580e756a1e79c3c6c64209e3389469a154cc22cfc076eda569dc7",
+  "designs/b194_assurance/rtl/a194_core.sv": "9c1a73f8c35e83f59ee26c41a3178f6f4e749e04f9b2c263d848fd486a3aec71",
+  "designs/b194_assurance/rtl/a194_ctrl.sv": "e1d5114034ea44c65ab25cd41741886dc849d95f0603658412a0b9a4e5e26be7",
+  "designs/b194_assurance/rtl/a194_fifo.sv": "34960728882d785f8e0bf11bf6289c7fbb64d23e0f42783648889692ef5f7e80",
+  "designs/b194_assurance/rtl/a194_secded.sv": "55648e8a975c7899bc4d09bb60b996e3ea1e0d5f22113c62cd5adecdec9157e2",
+  "designs/b194_assurance/tests/test_b194_rtl.py": "addb99b7824cdb76d6a46166e7165973a7d71076fc6088c4fdf63e54e59cd863",
+  "results/b194/costs.json": "99c229db9a840fa67cb75c53f6d27fde6ac83ab669cb187736882f97ce2eb8f8",
+  "results/b194/faults.json": "80d72b120f22a3b9194757f84f0de34e636fa07d3d9bba7c9e6fd61a1cab2311"
+ },
+ "name": "b194_assurance",
+ "path": "designs/b194_assurance",
+ "reproduce": [
+  {
+   "cmd": "python3 -m pytest -q designs/b194_assurance/tests/test_b194_rtl.py",
+   "what": "functional bench, fault campaign and mutant checks under Icarus"
+  },
+  {
+   "cmd": "python3 designs/b194_assurance/tests/run_faults.py --trials 300 --seed 1",
+   "what": "the full seeded fault campaign (xsim for the ECC primitive variants)"
+  }
+ ],
+ "requirements": [],
+ "schema": "fda-verified/1"
+}

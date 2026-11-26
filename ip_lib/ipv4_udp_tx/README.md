@@ -4,6 +4,8 @@ UDP over IPv4 transmit: stores one payload, then sends Ethernet, IPv4 (header ch
 
 Generated from `ip.yaml` by `flow/net/ipdoc.py`; do not edit by hand.
 
+**Verification: not assessed: no requirements recorded (no verif/testplan.yaml), so nothing here is traced to a requirement.** [VERIFIED.md](VERIFIED.md) is the generated, hash-pinned record; [what the label means](../../docs/verified.md).
+
 Status: Meets 125 MHz out of context on xc7a100t-1 at every characterised point (Fmax estimates 142-149 MHz with block RAM; 143 MHz and, by +0.005 ns only, 125 MHz with LUT RAM at 1472 and 8972 bytes) and with margin on xck26-2LV (215-309 MHz). Version 0.2.0 sends the first header byte 7 clocks after the payload's last beat (was 4). Simulated against an RFC 791/768 model with scapy recomputing both checksums; built alone out of context with Vivado 2026.1 (single runs at 8 ns, estimates); not yet run on a board (the Nexys A7 network design carries it behind eth_mac_rmii; built, not yet run: a cable check comes first, see designs/b63d_nexys_net/host/PLAN.md).
 
 ## Parameters

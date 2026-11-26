@@ -1,0 +1,111 @@
+{
+ "counts": {
+  "requirements": 0
+ },
+ "criteria": [
+  {
+   "detail": "no requirements recorded",
+   "id": "evidence",
+   "ids": [],
+   "state": "not_measured",
+   "title": "Every requirement has passing evidence"
+  },
+  {
+   "detail": "no requirements recorded",
+   "id": "agreement",
+   "ids": [],
+   "state": "not_measured",
+   "title": "Every requirement is agreed (human, or delegated and labelled so)"
+  },
+  {
+   "detail": "no requirements recorded",
+   "id": "method_mix",
+   "ids": [],
+   "state": "not_measured",
+   "title": "Every requirement meets its required method mix"
+  },
+  {
+   "detail": "no requirements recorded",
+   "id": "mutation",
+   "ids": [],
+   "state": "not_measured",
+   "title": "The bench passes the mutation floor"
+  },
+  {
+   "detail": "no requirements recorded",
+   "id": "formal_rigour",
+   "ids": [],
+   "state": "not_measured",
+   "title": "The formal results pass the rigour checks"
+  },
+  {
+   "detail": "no requirements recorded",
+   "id": "fresh",
+   "ids": [],
+   "state": "not_measured",
+   "title": "The evidence is fresh"
+  }
+ ],
+ "declared": {
+  "evidence": [
+   {
+    "activity": "simulation",
+    "id": "E1",
+    "record": "designs/b2_mic_pdm/tests/test_mic_rtl.py",
+    "result": "pass"
+   },
+   {
+    "activity": "build",
+    "id": "E2",
+    "record": "results/vivado_2026_1_remeasure/b2_builds.json",
+    "result": "pass"
+   },
+   {
+    "activity": "board",
+    "id": "E3",
+    "record": "results/board_v2/b2_mic_pdm.json",
+    "result": "pass"
+   }
+  ],
+  "note": "the design's own declared evidence; not traced to requirements and not checked by this record",
+  "source": "handover.yaml",
+  "status": "board-verified"
+ },
+ "definition": "docs/verified.md",
+ "git_commit": "45e89b74d901c4c9c23396e7fba792082709d6ea",
+ "kind": "designs",
+ "label": "not assessed: no requirements recorded (no verif/testplan.yaml), so nothing here is traced to a requirement",
+ "label_kind": "not_assessed",
+ "limits": [
+  "Verified never means interoperability with a device the design talks to unless a board measurement against that device is listed in the record; a design that checks its own output against its own model accepts its own symmetric mistakes.",
+  "Verified never means timing beyond the stated corner: a post-route timing result is for the part, speed grade, clock and tool version in its evidence file, not for other corners, temperatures or devices.",
+  "Verified never means beyond the widths and depths checked: a simulation covers the vectors it ran, a bounded formal result covers the stated depth only, and a per-width proof covers the widths it names; only a Lean proof marked all widths covers every width, and only for its model.",
+  "Verified never means the requirement is the right one: the text of a requirement is the human's check (or the planner's, where the record says delegated), and a record shows that checks exist and pass, not that nothing was left out.",
+  "Verified never means a hardware or board result unless a board measurement item is listed; a simulation is not the board.",
+  "Verified is about the files in the manifest at the hashes given. A change to any of them makes the record out of date (the CI check fails), and the evidence stale until it is re-recorded.",
+  "An agreement or acceptance recorded as delegated is the planner's decision on the owner's delegation, not a human sign-off; the record counts it apart."
+ ],
+ "manifest": {
+  "designs/b2_mic_pdm/handover.yaml": "a3d2e567ae17e0c0616a6a55821e0d6b51270073e59fd09580f2bed67fee870b",
+  "designs/b2_mic_pdm/rtl/b2_mic_pdm_top.sv": "b3c762d55ac6b8f05a0f08ab85c671082fb9b4754a30b37d76f03ca154d4f5eb",
+  "designs/b2_mic_pdm/rtl/mic_regs.sv": "1d09870a808d3ad38a4ea9fbe2638b92629e5eda478825e99b6bf7ba49e56f33",
+  "designs/b2_mic_pdm/rtl/pdm_stats.sv": "a124aa465b922ff14f0a518ff5c0f94c58ded13ff9efc4893c2c8931ab814a48",
+  "designs/b2_mic_pdm/tests/test_mic_rtl.py": "a551fe6f8e0fb2ff3eaae9bece96c7ea71fa3977c6269cb1993d00e753e73f42",
+  "results/board_v2/b2_mic_pdm.json": "3edbd92219e56a3f7aaeddc9f0253d1d1bc4fa76c3e10a4926f101d7db9c6bcc",
+  "results/vivado_2026_1_remeasure/b2_builds.json": "2ab9aafe7a17bffd120d9ed952fbf962bbd7738f5982809abe26b876c11ccb3f"
+ },
+ "name": "b2_mic_pdm",
+ "path": "designs/b2_mic_pdm",
+ "reproduce": [
+  {
+   "cmd": "python3 -m pytest -q designs/b2_mic_pdm/tests/test_mic_rtl.py",
+   "what": "simulate against the microphone model"
+  },
+  {
+   "cmd": "python3 flow/board_check.py designs/b2_mic_pdm --runs 3",
+   "what": "power gate, program SRAM, self-check, three times"
+  }
+ ],
+ "requirements": [],
+ "schema": "fda-verified/1"
+}

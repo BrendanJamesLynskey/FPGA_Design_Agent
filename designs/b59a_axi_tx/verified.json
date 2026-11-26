@@ -1,0 +1,123 @@
+{
+ "counts": {
+  "requirements": 0
+ },
+ "criteria": [
+  {
+   "detail": "no requirements recorded",
+   "id": "evidence",
+   "ids": [],
+   "state": "not_measured",
+   "title": "Every requirement has passing evidence"
+  },
+  {
+   "detail": "no requirements recorded",
+   "id": "agreement",
+   "ids": [],
+   "state": "not_measured",
+   "title": "Every requirement is agreed (human, or delegated and labelled so)"
+  },
+  {
+   "detail": "no requirements recorded",
+   "id": "method_mix",
+   "ids": [],
+   "state": "not_measured",
+   "title": "Every requirement meets its required method mix"
+  },
+  {
+   "detail": "no requirements recorded",
+   "id": "mutation",
+   "ids": [],
+   "state": "not_measured",
+   "title": "The bench passes the mutation floor"
+  },
+  {
+   "detail": "no requirements recorded",
+   "id": "formal_rigour",
+   "ids": [],
+   "state": "not_measured",
+   "title": "The formal results pass the rigour checks"
+  },
+  {
+   "detail": "no requirements recorded",
+   "id": "fresh",
+   "ids": [],
+   "state": "not_measured",
+   "title": "The evidence is fresh"
+  }
+ ],
+ "declared": {
+  "evidence": [
+   {
+    "activity": "simulation",
+    "id": "E1",
+    "record": "axi_tx/tests/test_59a_rtl.py",
+    "result": "pass"
+   },
+   {
+    "activity": "formal",
+    "id": "E2",
+    "record": "results/59a_axi_tx/formal.json",
+    "result": "pass"
+   },
+   {
+    "activity": "faults",
+    "id": "E3",
+    "record": "results/59a_axi_tx/false_fire.json",
+    "result": "pass"
+   },
+   {
+    "activity": "build",
+    "id": "E4",
+    "record": "results/59a_axi_tx/board_build.json",
+    "result": "pass"
+   },
+   {
+    "activity": "board",
+    "id": "E5",
+    "record": "results/59a_axi_tx/board_run.json",
+    "result": "pass"
+   }
+  ],
+  "note": "the design's own declared evidence; not traced to requirements and not checked by this record",
+  "source": "handover.yaml",
+  "status": "board-verified"
+ },
+ "definition": "docs/verified.md",
+ "git_commit": "45e89b74d901c4c9c23396e7fba792082709d6ea",
+ "kind": "designs",
+ "label": "not assessed: no requirements recorded (no verif/testplan.yaml), so nothing here is traced to a requirement",
+ "label_kind": "not_assessed",
+ "limits": [
+  "Verified never means interoperability with a device the design talks to unless a board measurement against that device is listed in the record; a design that checks its own output against its own model accepts its own symmetric mistakes.",
+  "Verified never means timing beyond the stated corner: a post-route timing result is for the part, speed grade, clock and tool version in its evidence file, not for other corners, temperatures or devices.",
+  "Verified never means beyond the widths and depths checked: a simulation covers the vectors it ran, a bounded formal result covers the stated depth only, and a per-width proof covers the widths it names; only a Lean proof marked all widths covers every width, and only for its model.",
+  "Verified never means the requirement is the right one: the text of a requirement is the human's check (or the planner's, where the record says delegated), and a record shows that checks exist and pass, not that nothing was left out.",
+  "Verified never means a hardware or board result unless a board measurement item is listed; a simulation is not the board.",
+  "Verified is about the files in the manifest at the hashes given. A change to any of them makes the record out of date (the CI check fails), and the evidence stale until it is re-recorded.",
+  "An agreement or acceptance recorded as delegated is the planner's decision on the owner's delegation, not a human sign-off; the record counts it apart."
+ ],
+ "manifest": {
+  "axi_tx/tests/test_59a_rtl.py": "0ad2ec372f7cae8a8eee12217ebfdfd984c0bebef6b10a5445dd62c09e66c474",
+  "designs/b59a_axi_tx/handover.yaml": "b93b8981811322ab1ab8dfbe1f1ec84a9a68499255f8918c5bd8c5969b143b03",
+  "designs/b59a_axi_tx/rtl/b59a_axi_tx_top.sv": "4d042b962a8a181b6f2e144adc8dbbc22407c2382ac4bf7749ef68a7e91996b8",
+  "results/59a_axi_tx/board_build.json": "0a91499e629c80525d6576bc7e89f60b83e97e05b5b3da1716e3a189299cde31",
+  "results/59a_axi_tx/board_run.json": "ab761ea3eac25fea16a7e5886c6644a25fa3a313179cd9b262144c9ded59699e",
+  "results/59a_axi_tx/false_fire.json": "5202b178241e6b29c4aae3f3f000e840d57a77a56bfbc22978103aa6295f2e91",
+  "results/59a_axi_tx/formal.json": "1e66e6a1b029da68da83ba7da8faaa0bf4ae5e97f68855a6473edb58a80bd3b3"
+ },
+ "name": "b59a_axi_tx",
+ "path": "designs/b59a_axi_tx",
+ "reproduce": [
+  {
+   "cmd": "python -m pytest -q axi_tx/tests/test_59a_rtl.py",
+   "what": "simulate every program, seeded bug and memory fault"
+  },
+  {
+   "cmd": "python axi_tx/formal/run_formal.py --depth 20",
+   "what": "formal proofs and checker mutants to depth 20"
+  }
+ ],
+ "requirements": [],
+ "schema": "fda-verified/1"
+}

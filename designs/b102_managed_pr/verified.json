@@ -1,0 +1,135 @@
+{
+ "counts": {
+  "requirements": 0
+ },
+ "criteria": [
+  {
+   "detail": "no requirements recorded",
+   "id": "evidence",
+   "ids": [],
+   "state": "not_measured",
+   "title": "Every requirement has passing evidence"
+  },
+  {
+   "detail": "no requirements recorded",
+   "id": "agreement",
+   "ids": [],
+   "state": "not_measured",
+   "title": "Every requirement is agreed (human, or delegated and labelled so)"
+  },
+  {
+   "detail": "no requirements recorded",
+   "id": "method_mix",
+   "ids": [],
+   "state": "not_measured",
+   "title": "Every requirement meets its required method mix"
+  },
+  {
+   "detail": "no requirements recorded",
+   "id": "mutation",
+   "ids": [],
+   "state": "not_measured",
+   "title": "The bench passes the mutation floor"
+  },
+  {
+   "detail": "no requirements recorded",
+   "id": "formal_rigour",
+   "ids": [],
+   "state": "not_measured",
+   "title": "The formal results pass the rigour checks"
+  },
+  {
+   "detail": "no requirements recorded",
+   "id": "fresh",
+   "ids": [],
+   "state": "not_measured",
+   "title": "The evidence is fresh"
+  }
+ ],
+ "declared": {
+  "evidence": [
+   {
+    "activity": "simulation",
+    "id": "E1",
+    "record": "agent/tests/test_102_stage2.py",
+    "result": "pass"
+   },
+   {
+    "activity": "simulation",
+    "id": "E2",
+    "record": "results/102_managed_pr/import_check.json",
+    "result": "pass"
+   },
+   {
+    "activity": "faults",
+    "id": "E3",
+    "record": "results/102_managed_pr/import_fault.json",
+    "result": "pass"
+   },
+   {
+    "activity": "build",
+    "id": "E4",
+    "record": "results/102_managed_pr/placements/placement_evidence.json",
+    "result": "pass"
+   },
+   {
+    "activity": "build",
+    "id": "E5",
+    "record": "results/102_managed_pr/placements/placement_evidence_all.json",
+    "result": "fail"
+   },
+   {
+    "activity": "review",
+    "id": "E6",
+    "record": "results/102_managed_pr/demo_session.json",
+    "result": "pass"
+   },
+   {
+    "activity": "build",
+    "id": "E7",
+    "record": "results/102_managed_pr/boundary.json",
+    "result": "pass"
+   }
+  ],
+  "note": "the design's own declared evidence; not traced to requirements and not checked by this record",
+  "source": "handover.yaml",
+  "status": "built"
+ },
+ "definition": "docs/verified.md",
+ "git_commit": "45e89b74d901c4c9c23396e7fba792082709d6ea",
+ "kind": "designs",
+ "label": "not assessed: no requirements recorded (no verif/testplan.yaml), so nothing here is traced to a requirement",
+ "label_kind": "not_assessed",
+ "limits": [
+  "Verified never means interoperability with a device the design talks to unless a board measurement against that device is listed in the record; a design that checks its own output against its own model accepts its own symmetric mistakes.",
+  "Verified never means timing beyond the stated corner: a post-route timing result is for the part, speed grade, clock and tool version in its evidence file, not for other corners, temperatures or devices.",
+  "Verified never means beyond the widths and depths checked: a simulation covers the vectors it ran, a bounded formal result covers the stated depth only, and a per-width proof covers the widths it names; only a Lean proof marked all widths covers every width, and only for its model.",
+  "Verified never means the requirement is the right one: the text of a requirement is the human's check (or the planner's, where the record says delegated), and a record shows that checks exist and pass, not that nothing was left out.",
+  "Verified never means a hardware or board result unless a board measurement item is listed; a simulation is not the board.",
+  "Verified is about the files in the manifest at the hashes given. A change to any of them makes the record out of date (the CI check fails), and the evidence stale until it is re-recorded.",
+  "An agreement or acceptance recorded as delegated is the planner's decision on the owner's delegation, not a human sign-off; the record counts it apart."
+ ],
+ "manifest": {
+  "agent/tests/test_102_stage2.py": "a3c75a92a0592ca356244ed693b81d005e1952f571d03dfbdcb91cf3f625b2d9",
+  "designs/b102_managed_pr/handover.yaml": "b6443507d5182ac1299039ead25938d47f8ead1b0b3655982c5696fd86e28c9d",
+  "designs/b102_managed_pr/rtl/pr_sink.sv": "1763a9b5891be67427d449a773f3f8d2bc19522a3411e70666bc0af7103f5948",
+  "designs/b102_managed_pr/rtl/pr_src.sv": "349d147ce9e4c8d5ad11fd5bb4f861753c73af5bdbf68914edfbc7ba99eaed31",
+  "designs/b102_managed_pr/rtl/pr_top.sv": "ac0783fa4d30575e15198480ff8ae05e7e5b43a88a59eac1e554c37eeabd15be",
+  "results/102_managed_pr/boundary.json": "5168e2c230099a7871cde05482bb0df60c31c648c39b82f7663ee588ab6fa4ef",
+  "results/102_managed_pr/demo_session.json": "64cd49f4ea735cefba5d7f0cb5a54f4a349ee22b2a7b804fa324107751840f7c",
+  "results/102_managed_pr/import_check.json": "0b74a51c70304cf1f5d95a430364447ef4c7200ce3be824fe021d97183f77274",
+  "results/102_managed_pr/import_fault.json": "b666d18522001a65368b2177ec16ea556be9db754e73366ef916900f5b87226e",
+  "results/102_managed_pr/placements/placement_evidence.json": "a1300a0c62bc980ee4a5b96a5fe956f8002d57a089191d39387d3e921af7e17c",
+  "results/102_managed_pr/placements/placement_evidence_all.json": "9fd16b932e80c9eeaa3a6576d3497949b7d87c0c98b5679a945bf871c0b078fc"
+ },
+ "name": "b102_managed_pr",
+ "path": "designs/b102_managed_pr",
+ "reproduce": [
+  {
+   "cmd": "python3 designs/b102_managed_pr/scripts/demo_managed_session.py",
+   "what": "the scripted agent session"
+  }
+ ],
+ "requirements": [],
+ "schema": "fda-verified/1"
+}

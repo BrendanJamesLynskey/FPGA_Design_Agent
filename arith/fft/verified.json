@@ -1,0 +1,706 @@
+{
+ "counts": {
+  "agreed_delegated": 0,
+  "agreed_human": 0,
+  "draft": 10,
+  "items": 13,
+  "requirements": 10,
+  "stale_items": 2,
+  "verified": 1
+ },
+ "criteria": [
+  {
+   "detail": "9 of 10 requirements are not in state verified: FFT-F-MODEL (partially_verified), FFT-F-EXACT (partially_verified), FFT-F-LAT (partially_verified), FFT-F-BENCH (partially_verified), FFT-F-PACKAGE (stale), FFT-F-BACKPRESSURE (partially_verified), FFT-F-ACCURACY (partially_verified), FFT-F-ROUNDTRIP (partially_verified), FFT-F-FASTCONV (partially_verified)",
+   "id": "evidence",
+   "ids": [
+    "FFT-F-MODEL",
+    "FFT-F-EXACT",
+    "FFT-F-LAT",
+    "FFT-F-BENCH",
+    "FFT-F-PACKAGE",
+    "FFT-F-BACKPRESSURE",
+    "FFT-F-ACCURACY",
+    "FFT-F-ROUNDTRIP",
+    "FFT-F-FASTCONV"
+   ],
+   "state": "unmet",
+   "title": "Every requirement has passing evidence"
+  },
+  {
+   "detail": "0 agreed by a human, 0 agreed by delegation, 10 draft, 0 marked agreed without a record",
+   "id": "agreement",
+   "ids": [
+    "FFT-F-MODEL",
+    "FFT-F-EXACT",
+    "FFT-F-LAT",
+    "FFT-F-EQUIV",
+    "FFT-F-BENCH",
+    "FFT-F-PACKAGE",
+    "FFT-F-BACKPRESSURE",
+    "FFT-F-ACCURACY",
+    "FFT-F-ROUNDTRIP",
+    "FFT-F-FASTCONV"
+   ],
+   "state": "unmet",
+   "title": "Every requirement is agreed (human, or delegated and labelled so)"
+  },
+  {
+   "detail": "not yet measured: the required method mix per requirement kind is brief 143a; the collector does not supply it yet",
+   "id": "method_mix",
+   "ids": [],
+   "state": "not_measured",
+   "title": "Every requirement meets its required method mix"
+  },
+  {
+   "detail": "not yet measured: the mutation score and floor are brief 143b; the collector does not supply them yet",
+   "id": "mutation",
+   "ids": [],
+   "state": "not_measured",
+   "title": "The bench passes the mutation floor"
+  },
+  {
+   "detail": "not yet measured: the vacuity, assumption and depth checks are brief 143c; the collector does not supply them yet",
+   "id": "formal_rigour",
+   "ids": [],
+   "state": "not_measured",
+   "title": "The formal results pass the rigour checks"
+  },
+  {
+   "detail": "2 items are stale (a file they are about changed after the evidence was recorded)",
+   "id": "fresh",
+   "ids": [
+    "V-FFT-MUTANT-SCORE",
+    "V-FFT-PACKAGE"
+   ],
+   "state": "unmet",
+   "title": "The evidence is fresh"
+  }
+ ],
+ "declared": null,
+ "definition": "docs/verified.md",
+ "git_commit": "45e89b74d901c4c9c23396e7fba792082709d6ea",
+ "kind": "arith",
+ "label": "verified except: 9 of 10 requirements without passing evidence; 10 of 10 requirements not agreed; required method mix not yet measured; mutation floor not yet measured; formal rigour not yet measured; 2 stale or differing evidence items",
+ "label_kind": "verified_except",
+ "limits": [
+  "Verified never means interoperability with a device the design talks to unless a board measurement against that device is listed in the record; a design that checks its own output against its own model accepts its own symmetric mistakes.",
+  "Verified never means timing beyond the stated corner: a post-route timing result is for the part, speed grade, clock and tool version in its evidence file, not for other corners, temperatures or devices.",
+  "Verified never means beyond the widths and depths checked: a simulation covers the vectors it ran, a bounded formal result covers the stated depth only, and a per-width proof covers the widths it names; only a Lean proof marked all widths covers every width, and only for its model.",
+  "Verified never means the requirement is the right one: the text of a requirement is the human's check (or the planner's, where the record says delegated), and a record shows that checks exist and pass, not that nothing was left out.",
+  "Verified never means a hardware or board result unless a board measurement item is listed; a simulation is not the board.",
+  "Verified is about the files in the manifest at the hashes given. A change to any of them makes the record out of date (the CI check fails), and the evidence stale until it is re-recorded.",
+  "An agreement or acceptance recorded as delegated is the planner's decision on the owner's delegation, not a human sign-off; the record counts it apart.",
+  "1 formal items are bounded model checks; each holds to its stated depth only: V-FFT-FORMAL-BOUNDED."
+ ],
+ "manifest": {
+  "arith/fft/build/burst/build.yaml": "5c257aee0ff1f1210d79f62b190a5120ebb5679e1107fdab8c67d570b5a62405",
+  "arith/fft/build/sdf/build.yaml": "d66d3702945ec467900750dee91572b0f045ecfc1a0b7881d8d2c265458ebf38",
+  "arith/fft/formal/fft_sdf_stage_fv.sv": "f5332d77db39d0e3bd34ddc8a872a8ede916040d4ce91b0041cab4e1deba7198",
+  "arith/fft/formal/jobs.yaml": "278e4be5b245897ab86fa4494f054fed1ab68683f6b9a7cacb7206eb3375f064",
+  "arith/fft/model.py": "ca5138dd37266242a07d45ec71bc3de04ccef19e797c0b3f050ec0d3a07e2f80",
+  "arith/fft/rtl/fft_burst_r2.sv": "41fad471b2b13f2030cecf24aaf70ef01510874928046a9416f0dc6eae53de97",
+  "arith/fft/rtl/fft_sdf_r22.sv": "58d1227449d390af0f70aef7bb5bbcaa1bd76e701e7928961fec45dcd27e5072",
+  "arith/fft/spec.md": "dd15fe4c15cb6ef0e9bde988cfb5efe2ae0f0d74572d5d3ab6d73c3ec5294686",
+  "arith/fft/spec.yaml": "dcb58bf0675210d1c8c5250bb1bbab42dfe7af1c9753fa119a980c416a28ce22",
+  "arith/fft/tests/fft_cocotb.py": "9bc57d58ac042e4985b64ff1fda7398c1a959b5422136077a9819dd4f5463bbf",
+  "arith/fft/verif/evidence_pins.yaml": "240e0c73b9f1cdbe989efc91c3d2fddb3e7a6dd89074c7b5bce9d42ac63f7ae6",
+  "arith/fft/verif/mutants.yaml": "abd5e1d06f2f7f808156b9e7b1b9eb66421f3b9f7ec04f9511aeaf625a5c0cc5",
+  "arith/fft/verif/results/accuracy.json": "98794bc42292424626d4721a20ee75c1e3554df186fa5fd3188a4b644bddc79c",
+  "arith/fft/verif/results/mutation.json": "e5de753e20a22c5c82756e78f8ae7bc3ce03813bec505397a8eb584b6a4c469d",
+  "arith/fft/verif/results/pytest_junit.xml": "0852d6564fc3dee6a686f134013be851b8b6ca9ec5d8805d5191a8db90becb84",
+  "arith/fft/verif/testplan.yaml": "5aac5a6fb68ccdd787944c9d5d48cc9797eddec9742f2d19039767ebb656a807",
+  "arith/fft_cmul/rtl/fft_cmul_m3.sv": "8475634ed3f87a36645d4f2d3f82dac56e7b60b924b8169f67398bb113fc470c",
+  "arith/fft_cmul/rtl/fft_cmul_m4.sv": "826a27855314155fa138bf9c681c779129b02aa1d2e7f24b855abff10b8001f0",
+  "arith/fft_common/fastconv.py": "e743c24578aad0d23c89f307b4c1b06ab38ef79aaf72170c2f050c82a8ee2911",
+  "arith/fft_common/fft_bitrev.sv": "650b28bf48a4fd7b2ffb4b4b7ed597d96e0e4fcc32931357583013e11c287c35",
+  "arith/fft_common/fft_cos_rom.sv": "bcf1d079ba8a48d3757484ab8706051b46fa45046400eed1b7fe2ddd3cbbda38",
+  "arith/fft_common/fft_ref.py": "96a983692b9eac1d70ef32a874ace99a40c668cf5dcf746cfc93093f85fb54c5",
+  "arith/fft_common/fft_sdf_stage.sv": "3bce071db10fbbb3adf4f6f6e31680077ff2059f87fe21a3429ff821336ac801",
+  "arith/fft_common/fft_sdf_twmul.sv": "ced119e7c513deb23e392a199ef239d54a81ae4a5b647fb470c1daa9da3720b5",
+  "arith/fft_common/frames.py": "2f141de7810edf546dc6b25d39e4b7e8938e9f46c7cbb2683ef1f2a941ca3b5d",
+  "arith/fft_reorder/rtl/fft_reorder_pingpong.sv": "7867dd5a9c732d242eca668c17083b35190cd02cedbdf550920f7629175e9029",
+  "arith/fft_twiddle/rtl/fft_twiddle_quarter.sv": "f646b37f46b317abf8569372715d14be0ff9c7f0443e5740d703071145359f67",
+  "arith/tools/fft_accuracy.py": "b3f3f498f17ed40ee356ac354b689b635ab614aa7cbbc74ebe4cdba514b8a3d9"
+ },
+ "name": "fft",
+ "notes": "Frequency-domain suite, function fft (brief 148). Everything here is before Vivado: the model, the RTL variants, simulation, formal properties and the prepared out-of-context build files. No performance requirement on LUTs, DSPs, Fmax or power exists because none has been measured; the Vivado runs (build/<variant>/build.yaml, queued in _handoff/fpga_agent/vivado_later_queue.md) will add them. Every requirement is a draft written by the agent; none is agreed by a human. There are no Lean statements and no packaged harness for this suite (stated in the report). Generated by arith/tools/gen_testplan_fft.py.",
+ "path": "arith/fft",
+ "reproduce": [
+  {
+   "cmd": "python -m pytest -q arith/fft/tests",
+   "what": "the simulation tests"
+  }
+ ],
+ "requirements": [
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "FFT-F-MODEL",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-FFT-MODEL",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "arith/fft/verif/results/pytest_junit.xml",
+     "record_sha256": "0852d6564fc3dee6a686f134013be851b8b6ca9ec5d8805d5191a8db90becb84",
+     "status": "pass",
+     "title": "The model against independent formulations and the pinned conventions"
+    }
+   ],
+   "items": [
+    "V-FFT-MODEL"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": false,
+   "missing_methods": [
+    "a simulation check from a bench the implementing agent did not write"
+   ],
+   "mix_satisfied": false,
+   "own_tests_only": true,
+   "passing_methods": [
+    "sim_test"
+   ],
+   "rests_on_delegated": false,
+   "source": "arith/fft/spec.md",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "partially_verified",
+   "text": "arith/fft/model.py gives, for every input, the result that spec.md defines. It agrees with an independent formulation (NumPy's FFT (forward and inverse), checked for both variants at every N from 8 to 1024, and the identity that the inverse is the swap of a forward transform), and the conventions that a user could guess wrong (spec.md, last section) are pinned by examples.",
+   "title": "The bit-exact model is right",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "FFT-F-EXACT",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-FFT-DIRECTED",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "arith/fft/verif/results/pytest_junit.xml",
+     "record_sha256": "0852d6564fc3dee6a686f134013be851b8b6ca9ec5d8805d5191a8db90becb84",
+     "status": "pass",
+     "title": "Every variant against the model at the small points (Icarus + cocotb): directed or exhaustive stimuli"
+    },
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-FFT-RANDOM",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "arith/fft/verif/results/pytest_junit.xml",
+     "record_sha256": "0852d6564fc3dee6a686f134013be851b8b6ca9ec5d8805d5191a8db90becb84",
+     "status": "pass",
+     "title": "Every variant against the model at the large points: random stimuli (Icarus + cocotb)"
+    }
+   ],
+   "items": [
+    "V-FFT-DIRECTED",
+    "V-FFT-RANDOM"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": false,
+   "missing_methods": [
+    "a simulation check from a bench the implementing agent did not write"
+   ],
+   "mix_satisfied": false,
+   "own_tests_only": true,
+   "passing_methods": [
+    "sim_test"
+   ],
+   "rests_on_delegated": false,
+   "source": "arith/fft/spec.md",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "partially_verified",
+   "text": "At every parameter point listed in spec.yaml (12 directed or exhaustive points, 8 random ones, across 2 variants), each variant's outputs equal the model's: the directed points drive impulses at every position and tones at every bin (small N), DC, Nyquist, a chirp and corner values, forward and inverse, back to back and after the shortest legal gap; the random points drive random frames with random direction and legal gaps up to N = 4096. Each output frame equals the model bit for bit, the latency from in_sof to out_sof equals the formula, and out_valid is N consecutive clocks.",
+   "title": "Every variant is bit-exact against the model",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "FFT-F-LAT",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-FFT-LATENCY",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "arith/fft/verif/results/pytest_junit.xml",
+     "record_sha256": "0852d6564fc3dee6a686f134013be851b8b6ca9ec5d8805d5191a8db90becb84",
+     "status": "pass",
+     "title": "The bench passes at the stated latency and fails two clocks off, for every variant"
+    }
+   ],
+   "items": [
+    "V-FFT-LATENCY"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": false,
+   "missing_methods": [
+    "a simulation check from a bench the implementing agent did not write"
+   ],
+   "mix_satisfied": false,
+   "own_tests_only": true,
+   "passing_methods": [
+    "sim_test"
+   ],
+   "rests_on_delegated": false,
+   "source": "arith/fft/spec.md",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "partially_verified",
+   "text": "Each variant's latency in clocks is the expression in spec.yaml (sdf: (1<<LOGN)-1+LOGN+((LOGN-1)//2)*(TWSTAGES+MULSTAGES+1)+(0 if ORDER else (1<<LOGN)+1); burst: (1<<LOGN)+LOGN*((1<<LOGN)//2+MULSTAGES+3)+1), and the bench, run with a latency two clocks off, fails for every variant, so the passing runs prove the latency rather than assume it.",
+   "title": "Latency is as specified and the bench would notice if it were not",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "FFT-F-EQUIV",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": 14,
+     "freshness": "fresh",
+     "id": "V-FFT-FORMAL-BOUNDED",
+     "instrument": null,
+     "method": "formal",
+     "mutation_score": null,
+     "record": "arith/fft/verif/results/pytest_junit.xml",
+     "record_sha256": "0852d6564fc3dee6a686f134013be851b8b6ca9ec5d8805d5191a8db90becb84",
+     "status": "bounded",
+     "title": "Bounded model checks from an arbitrary state (5 jobs; depths in formal/jobs.yaml)"
+    },
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-FFT-FORMAL-REFUTE",
+     "instrument": null,
+     "method": "formal",
+     "mutation_score": null,
+     "record": "arith/fft/verif/results/pytest_junit.xml",
+     "record_sha256": "0852d6564fc3dee6a686f134013be851b8b6ca9ec5d8805d5191a8db90becb84",
+     "status": "pass",
+     "title": "Each formal check refutes a planted fault (the check can fail)"
+    }
+   ],
+   "items": [
+    "V-FFT-FORMAL-BOUNDED",
+    "V-FFT-FORMAL-REFUTE"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": false,
+   "missing_methods": [],
+   "mix_satisfied": true,
+   "own_tests_only": false,
+   "passing_methods": [
+    "formal"
+   ],
+   "rests_on_delegated": false,
+   "source": "arith/fft/formal/jobs.yaml",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "verified",
+   "text": "SymbiYosys with the slang front end checks the properties of formal/jobs.yaml: a proof is by k-induction (for all inputs, any run length) at the parameters listed there, a bounded check holds only to its stated depth. What the jobs say is in each job's `claim`; parameters beyond the listed ones are covered by simulation, not by proof.",
+   "title": "The properties named in formal/jobs.yaml hold, by proof where the tools allow",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "FFT-F-BENCH",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-FFT-MUTANT-TEST",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "arith/fft/verif/results/pytest_junit.xml",
+     "record_sha256": "0852d6564fc3dee6a686f134013be851b8b6ca9ec5d8805d5191a8db90becb84",
+     "status": "pass",
+     "title": "The mutation run as a test: no mutant survives, none fails to build"
+    },
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "stale",
+     "id": "V-FFT-MUTANT-SCORE",
+     "instrument": null,
+     "method": "sim_measurement",
+     "mutation_score": null,
+     "record": "arith/fft/verif/results/mutation.json",
+     "record_sha256": "e5de753e20a22c5c82756e78f8ae7bc3ce03813bec505397a8eb584b6a4c469d",
+     "stale_because": "changed since the evidence was recorded: arith/fft/rtl/fft_burst_r2.sv, arith/fft/rtl/fft_sdf_r22.sv, arith/fft/verif/mutants.yaml, arith/fft_common/fft_ref.py (+1 more)",
+     "status": "stale",
+     "title": "Mutants killed of valid mutants (the record of the last full run)"
+    }
+   ],
+   "items": [
+    "V-FFT-MUTANT-TEST",
+    "V-FFT-MUTANT-SCORE"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": false,
+   "missing_methods": [
+    "a simulation check from a bench the implementing agent did not write"
+   ],
+   "mix_satisfied": false,
+   "own_tests_only": true,
+   "passing_methods": [
+    "sim_test"
+   ],
+   "rests_on_delegated": false,
+   "source": "arith/fft/verif/mutants.yaml",
+   "spec_status": "draft",
+   "stale_items": 1,
+   "state": "partially_verified",
+   "text": "Every one of the mutants in verif/mutants.yaml (one exact text change each: an inverted condition, a wrong constant, a dropped connection, a wrong width) makes the cocotb bench fail, or is argued equivalent in the file's header; mutants that survive or do not build are reported, never hidden.",
+   "title": "The bench catches seeded faults",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "FFT-F-PACKAGE",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "stale",
+     "id": "V-FFT-PACKAGE",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "arith/fft/verif/results/pytest_junit.xml",
+     "record_sha256": "0852d6564fc3dee6a686f134013be851b8b6ca9ec5d8805d5191a8db90becb84",
+     "stale_because": "changed since the evidence was recorded: arith/fft/build/burst/build.yaml, arith/fft/build/sdf/build.yaml, arith/fft/spec.md",
+     "status": "stale",
+     "title": "spec.yaml against the RTL headers, spec.md against spec.yaml, Verilator -Wall at every point, wrappers and build.yaml current and lint-clean"
+    }
+   ],
+   "items": [
+    "V-FFT-PACKAGE"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": false,
+   "missing_methods": [],
+   "mix_satisfied": false,
+   "own_tests_only": false,
+   "passing_methods": [],
+   "rests_on_delegated": false,
+   "source": "arith/fft/spec.yaml",
+   "spec_status": "draft",
+   "stale_items": 1,
+   "state": "stale",
+   "text": "spec.yaml states an interface contract (protocol, throughput, latency, reset, clock, stalls) and integration guidance (port timing, constraints to carry). Every variant passes Verilator -Wall at every point of spec.yaml; its ports and default parameters are the ones spec.yaml states; its header states the intended primitive use before any Vivado run; spec.md is the rendering of spec.yaml; the out-of-context wrapper and the build.yaml for each variant (Artix-7 xc7a100t and K26 xck26, prepared and not run) are current and lint-clean at every point they list, so a Vivado run can start from the repository alone.",
+   "title": "The RTL is lint-clean, and its files agree with the specification and with the Vivado build files",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "FFT-F-BACKPRESSURE",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-FFT-BACKPRESSURE",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "arith/fft/verif/results/pytest_junit.xml",
+     "record_sha256": "0852d6564fc3dee6a686f134013be851b8b6ca9ec5d8805d5191a8db90becb84",
+     "status": "pass",
+     "title": "The burst variant under a randomly stalled sink"
+    }
+   ],
+   "items": [
+    "V-FFT-BACKPRESSURE"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": false,
+   "missing_methods": [
+    "a simulation check from a bench the implementing agent did not write"
+   ],
+   "mix_satisfied": false,
+   "own_tests_only": true,
+   "passing_methods": [
+    "sim_test"
+   ],
+   "rests_on_delegated": false,
+   "source": "arith/fft/spec.md",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "partially_verified",
+   "text": "With out_ready driven low at random (40 per cent of the clocks) the burst variant's output frames equal the model bit for bit, and out_valid, out_sof and the data stay unchanged in every clock in which out_valid is high and out_ready low. The sdf variant ignores out_ready (stated).",
+   "title": "The burst variant honours out_ready: stalling the sink changes nothing but the timing",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "FFT-F-ACCURACY",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-FFT-ACCURACY",
+     "instrument": null,
+     "method": "sim_measurement",
+     "mutation_score": null,
+     "record": "arith/fft/verif/results/accuracy.json",
+     "record_sha256": "98794bc42292424626d4721a20ee75c1e3554df186fa5fd3188a4b644bddc79c",
+     "status": "pass",
+     "title": "Worst error against NumPy at every recorded point (the record of the last run)"
+    }
+   ],
+   "items": [
+    "V-FFT-ACCURACY"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": false,
+   "missing_methods": [
+    "a simulation check from a bench the implementing agent did not write"
+   ],
+   "mix_satisfied": false,
+   "own_tests_only": true,
+   "passing_methods": [
+    "sim_measurement"
+   ],
+   "rests_on_delegated": false,
+   "source": "arith/fft/spec.md",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "partially_verified",
+   "text": "For each variant, scaling mode and several N and twiddle widths, the error of the model (which the RTL equals bit for bit) against the double-precision FFT of NumPy is recorded in verif/results/accuracy.json: worst and rms error in units of the output LSB, and the SQNR and SFDR for a full-scale tone. The recorded worst error of the scaled mode is at most 6 LSB at every recorded point, and the unscaled mode's SQNR for noise-like input is at least 80 dB at every recorded point with twiddles of 16 bits or more (the unscaled word is W + LOGN bits wide, so its error in output LSBs is large for narrow twiddles: the SQNR is the figure to read); these are the bounds the test enforces, and the figures are what the report states, with no claim beyond them.",
+   "title": "Accuracy against NumPy's FFT is measured and stated, per scaling mode",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "FFT-F-ROUNDTRIP",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-FFT-ROUNDTRIP",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "arith/fft/verif/results/pytest_junit.xml",
+     "record_sha256": "0852d6564fc3dee6a686f134013be851b8b6ca9ec5d8805d5191a8db90becb84",
+     "status": "pass",
+     "title": "Forward then inverse through the RTL returns the input; the inverse is the swap of a forward transform"
+    }
+   ],
+   "items": [
+    "V-FFT-ROUNDTRIP"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": false,
+   "missing_methods": [
+    "a simulation check from a bench the implementing agent did not write"
+   ],
+   "mix_satisfied": false,
+   "own_tests_only": true,
+   "passing_methods": [
+    "sim_test"
+   ],
+   "rests_on_delegated": false,
+   "source": "arith/fft/spec.md",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "partially_verified",
+   "text": "Through the RTL (both variants, the scaled mode), forward then inverse of the same frames returns the input divided by N (the scaled mode divides by N in both directions) to within 3 LSB, at the point of the round-trip test; the inverse is the swap of a forward transform, so forward and inverse results are related exactly by the swap.",
+   "title": "A forward transform followed by an inverse transform returns the input within the stated error",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "FFT-F-FASTCONV",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-FFT-FASTCONV",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "arith/fft/verif/results/pytest_junit.xml",
+     "record_sha256": "0852d6564fc3dee6a686f134013be851b8b6ca9ec5d8805d5191a8db90becb84",
+     "status": "pass",
+     "title": "Overlap-save and overlap-add models against direct convolution"
+    }
+   ],
+   "items": [
+    "V-FFT-FASTCONV"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": false,
+   "missing_methods": [
+    "a simulation check from a bench the implementing agent did not write"
+   ],
+   "mix_satisfied": false,
+   "own_tests_only": true,
+   "passing_methods": [
+    "sim_test"
+   ],
+   "rests_on_delegated": false,
+   "source": "docs/fft_suite_plan.md",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "partially_verified",
+   "text": "arith/fft_common/fastconv.py (overlap-save and overlap-add on the bit-exact FFT models, both variants) equals numpy.convolve of the same samples and taps to within 8 LSB of the output word (N = 128 to 512, L = 1 to 65 taps, W = 16, TW = 18, WH = 24, FH = 14), the two methods agree with each other within the same bound, a unit filter passes the signal within 3 LSB, and a complex input is filtered part by part. This is a Python model and an interface proposal (docs/fft_suite_plan.md section 5), not RTL: the fast-convolution block is the next phase.",
+   "title": "Fast convolution built on the FFT models equals direct convolution within the stated error (model only, phase 0)",
+   "waivers": []
+  }
+ ],
+ "schema": "fda-verified/1",
+ "summary_line": "10 requirements (10 functional); 1 verified; 8 partially verified (the required mix of methods is not met); 1 stale; 0 of 10 requirements agreed by a human, 0 agreed on the owner's delegation (not human), 10 draft; 8 resting only on the implementing agent's own tests; 0 human and 0 delegated review(s) recorded."
+}

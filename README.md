@@ -394,6 +394,10 @@ standard.
   [flow/fresh_evidence.py](flow/fresh_evidence.py) does the runs and the comparison, [tools/fresh_evidence_local.sh](tools/fresh_evidence_local.sh) the expensive set on the local PC
   (timer proposed in [tools/systemd/](tools/systemd/), not enabled), and `python -m flow.trace_v1 show --fresh DIR` marks an item "committed record differs from fresh run";
   see [docs/traceability_v1.md](docs/traceability_v1.md#fresh-evidence-brief-143d).
+- **"Verified" as the product's defining property (brief 144, owner decision 26).** Every design, arithmetic function and IP-library entry ships a generated, hash-pinned
+  verification record, `VERIFIED.md` and `verified.json`, with a computed label (`verified`, `verified except: ...`, `not verified: ...` or `not assessed`) that leads its README and its
+  hand-over. The definition, and what "verified" never means: [docs/verified.md](docs/verified.md); generator `python -m flow.verified`, checked in CI. Example:
+  [designs/b119_tcp_fast/VERIFIED.md](designs/b119_tcp_fast/VERIFIED.md); on the site's Verified page.
 - **Results:** the matrices of T1 and two agent-built development designs, and three deliberately broken runs that
   each fail the right gate: [results/53_traceability](results/53_traceability/README.md).
 

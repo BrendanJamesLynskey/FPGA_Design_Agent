@@ -4,6 +4,8 @@ PHY management (MDIO, IEEE 802.3 clause 22): the two-wire bus (MDC clock, MDIO d
 
 Generated from `ip.yaml` by `flow/net/ipdoc.py`; do not edit by hand.
 
+**Verification: not assessed: no requirements recorded (no verif/testplan.yaml), so nothing here is traced to a requirement.** [VERIFIED.md](VERIFIED.md) is the generated, hash-pinned record; [what the label means](../../docs/verified.md).
+
 Status: Meets 125 MHz out of context (285-307 MHz estimated at a 250 MHz target); simulated against a clause 22 PHY model at DIV 2, 5 and 32; frame timing proved by k-induction at DIV 2 (SymbiYosys); built alone on an Artix-7 with Vivado 2026.1; first written for designs/b58a_trigger (its own copy is used there); not yet run on a board as a library entry.
 
 ## Parameters

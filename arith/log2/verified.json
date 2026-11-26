@@ -1,0 +1,764 @@
+{
+ "counts": {
+  "agreed_delegated": 0,
+  "agreed_human": 0,
+  "draft": 11,
+  "items": 14,
+  "requirements": 11,
+  "stale_items": 0,
+  "verified": 1
+ },
+ "criteria": [
+  {
+   "detail": "10 of 11 requirements are not in state verified: LOG-F-MODEL (partially_verified), LOG-F-EXACT (partially_verified), LOG-F-ACC (partially_verified), LOG-F-LAT (partially_verified), LOG-F-BENCH (partially_verified), LOG-F-HARNESS (partially_verified), LOG-F-PACKAGE (partially_verified), LOG-F-LEAN-LERP (unapproved), LOG-F-LEAN-LERP-MONO (unapproved), LOG-F-LEAN-HYP (unapproved)",
+   "id": "evidence",
+   "ids": [
+    "LOG-F-MODEL",
+    "LOG-F-EXACT",
+    "LOG-F-ACC",
+    "LOG-F-LAT",
+    "LOG-F-BENCH",
+    "LOG-F-HARNESS",
+    "LOG-F-PACKAGE",
+    "LOG-F-LEAN-LERP",
+    "LOG-F-LEAN-LERP-MONO",
+    "LOG-F-LEAN-HYP"
+   ],
+   "state": "unmet",
+   "title": "Every requirement has passing evidence"
+  },
+  {
+   "detail": "0 agreed by a human, 0 agreed by delegation, 11 draft, 0 marked agreed without a record",
+   "id": "agreement",
+   "ids": [
+    "LOG-F-MODEL",
+    "LOG-F-EXACT",
+    "LOG-F-ACC",
+    "LOG-F-LAT",
+    "LOG-F-EQUIV",
+    "LOG-F-BENCH",
+    "LOG-F-HARNESS",
+    "LOG-F-PACKAGE",
+    "LOG-F-LEAN-LERP",
+    "LOG-F-LEAN-LERP-MONO",
+    "LOG-F-LEAN-HYP"
+   ],
+   "state": "unmet",
+   "title": "Every requirement is agreed (human, or delegated and labelled so)"
+  },
+  {
+   "detail": "not yet measured: the required method mix per requirement kind is brief 143a; the collector does not supply it yet",
+   "id": "method_mix",
+   "ids": [],
+   "state": "not_measured",
+   "title": "Every requirement meets its required method mix"
+  },
+  {
+   "detail": "not yet measured: the mutation score and floor are brief 143b; the collector does not supply them yet",
+   "id": "mutation",
+   "ids": [],
+   "state": "not_measured",
+   "title": "The bench passes the mutation floor"
+  },
+  {
+   "detail": "not yet measured: the vacuity, assumption and depth checks are brief 143c; the collector does not supply them yet",
+   "id": "formal_rigour",
+   "ids": [],
+   "state": "not_measured",
+   "title": "The formal results pass the rigour checks"
+  },
+  {
+   "detail": "no item is stale by its pins; the nightly fresh re-run comparison is brief 143d and not yet measured",
+   "id": "fresh",
+   "ids": [],
+   "state": "not_measured",
+   "title": "The evidence is fresh"
+  }
+ ],
+ "declared": null,
+ "definition": "docs/verified.md",
+ "git_commit": "45e89b74d901c4c9c23396e7fba792082709d6ea",
+ "kind": "arith",
+ "label": "verified except: 10 of 11 requirements without passing evidence; 11 of 11 requirements not agreed; required method mix not yet measured; mutation floor not yet measured; formal rigour not yet measured; fresh re-run not yet measured",
+ "label_kind": "verified_except",
+ "limits": [
+  "Verified never means interoperability with a device the design talks to unless a board measurement against that device is listed in the record; a design that checks its own output against its own model accepts its own symmetric mistakes.",
+  "Verified never means timing beyond the stated corner: a post-route timing result is for the part, speed grade, clock and tool version in its evidence file, not for other corners, temperatures or devices.",
+  "Verified never means beyond the widths and depths checked: a simulation covers the vectors it ran, a bounded formal result covers the stated depth only, and a per-width proof covers the widths it names; only a Lean proof marked all widths covers every width, and only for its model.",
+  "Verified never means the requirement is the right one: the text of a requirement is the human's check (or the planner's, where the record says delegated), and a record shows that checks exist and pass, not that nothing was left out.",
+  "Verified never means a hardware or board result unless a board measurement item is listed; a simulation is not the board.",
+  "Verified is about the files in the manifest at the hashes given. A change to any of them makes the record out of date (the CI check fails), and the evidence stale until it is re-recorded.",
+  "An agreement or acceptance recorded as delegated is the planner's decision on the owner's delegation, not a human sign-off; the record counts it apart."
+ ],
+ "manifest": {
+  "arith/log2/build/cordic/build.yaml": "0978eb439d70f402fcba39efedcd0471db944325e1d1f45036bf55129260a5b1",
+  "arith/log2/build/lerp/build.yaml": "21b61b72fa191f657d8f125ec128b308be33e098160d2d2c56c8c9e11466e146",
+  "arith/log2/build/poly2/build.yaml": "3d77ac47f6d9adc9b52e07606a080e8aba0193d7b1c136474806472c4e5d9f6f",
+  "arith/log2/build/table/build.yaml": "22619662b4887ea79c6b6b59d7f8375cf0b61cdbbbdd87a435ddc40d39d87970",
+  "arith/log2/formal/jobs.yaml": "83c01375203cd8145e67ee8b209626c3cf6a2f1a2dc0f37ff20e07f187ff03d7",
+  "arith/log2/formal/log2_fv.sv": "574e5a568c29d02fad30657354125a7543d2c6d4f5d75c2c3c7b378ddedb6f6d",
+  "arith/log2/formal/log2_ref.sv": "1695c564f89baabb23a13e488ef7b4a15fe179f3584c56bc44c6dec3dc59ad25",
+  "arith/log2/harness/assertions.sv": "2e263b371b5493fcc78d67ade359af69444cf65d16d47a64e5fccf4f86154a96",
+  "arith/log2/harness/bench.py": "ab97410cb5dda3c4fc1ae1c695ada3fdd6a7cb45fb14adc56e8f0021d864977f",
+  "arith/log2/harness/chk_top.sv": "66dad76d3a50bb69c47d0f5f070daabbb5bd2e3ffb2efec35c36ffb68b36531e",
+  "arith/log2/harness/coverage.yaml": "d59355a20b80217c627fca2eea41f60a6b165f501fc5634f808255e6ebfc8155",
+  "arith/log2/harness/model.py": "eb297376cc76f7d551c7eb715bbc3598b4a6c91efc03ea2fc25f211c90529113",
+  "arith/log2/harness/run_harness.py": "8d4bca6359eb2db542faf6b23b1d64fd8152dc309c1c942cf2e9cb6530026ca4",
+  "arith/log2/model.py": "c2133789ab4b5843f7894409d7e6c053243217277dd5e982c8018ea36f292e63",
+  "arith/log2/rtl/log2_cordic.sv": "31312890cec5f02d61ed13ad7e360677af3597816c8419352c0dae2cffcbe9c9",
+  "arith/log2/rtl/log2_lerp.sv": "85885d385d821da253534a348fd61f502d7597236108f87acc7b4775e1a5520d",
+  "arith/log2/rtl/log2_poly2.sv": "fe6aa11ac722af556bb59e0fd3b1f2b13d7bafd3fea7cc45ed9399d69707a625",
+  "arith/log2/rtl/log2_table.sv": "9c42fd034023e40351b60471be5ec130da769f63f007f36a595d7cc532445d61",
+  "arith/log2/spec.md": "f55d8e37d1b3e0a8f24c1741a1aa2fb36fa30bba06f9f1fcab5ecc30188cbed6",
+  "arith/log2/spec.yaml": "7fda293ddb7765d7aa14f610c41cb5a4517bd250ee9860b56f6781d5cba14478",
+  "arith/log2/tests/log2_cocotb.py": "ed58d6214de729946f60f7b84af650cc388131a97dd91584f3834dcdc3dc6b59",
+  "arith/log2/verif/evidence_pins.yaml": "deea9ab525dde6a9b09877b856a695f785737bbce87849606c88e7ba75a4638a",
+  "arith/log2/verif/lean_approvals.yaml": "06a06c215a745d5d3501481835fc6cc03dc9929a86cc4642b5dbe2953102b60f",
+  "arith/log2/verif/mutants.yaml": "a4645b468cf86f25f6be526939ca06a446b0d6f20484b110ab417204098d3a01",
+  "arith/log2/verif/results/mutation.json": "e8d926dd800f98fc7e71ef726e10acc787ab3d2092d323c070868670e875283e",
+  "arith/log2/verif/results/pytest_junit.xml": "637412c1770edf75adfc744d127dffebc195891d2d4ba233b023400bad0a466b",
+  "arith/log2/verif/testplan.yaml": "287afa45cdaa805dde82f17e44fead5cb608465c3b76aebd4536d054b53bcedb",
+  "arith/tools/fxlib.py": "87fd537c6a069055278b9a556c8de4b0bdc8bb441193abf5a21ebed4338e7a4d",
+  "formal/lean/records/build_record.json": "3d60b1f76ac87b74d5dcbe085c0eb8e43e0287d69d5fa557490a685624e6c4f6"
+ },
+ "name": "log2",
+ "notes": "Arithmetic library, function log2 (brief 139d). Everything here is before Vivado: the model, the RTL variants, simulation, formal equivalence, Lean statements and the prepared out-of-context build files. No performance requirement exists because nothing about LUTs, DSPs, Fmax or power has been measured yet; the Vivado runs (build/<variant>/build.yaml) will add them. Every requirement is a draft written by the agent; none is agreed by a human. Lean statements are not approved. Generated by arith/tools/gen_testplan.py.",
+ "path": "arith/log2",
+ "reproduce": [
+  {
+   "cmd": "python -m pytest -q arith/log2/tests",
+   "what": "the simulation tests"
+  }
+ ],
+ "requirements": [
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "LOG-F-MODEL",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-LOG-MODEL",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "arith/log2/verif/results/pytest_junit.xml",
+     "record_sha256": "637412c1770edf75adfc744d127dffebc195891d2d4ba233b023400bad0a466b",
+     "status": "pass",
+     "title": "The model against independent formulations (exhaustive small, random large) and the pinned conventions"
+    }
+   ],
+   "items": [
+    "V-LOG-MODEL"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": false,
+   "missing_methods": [
+    "a simulation check from a bench the implementing agent did not write"
+   ],
+   "mix_satisfied": false,
+   "own_tests_only": true,
+   "passing_methods": [
+    "sim_test"
+   ],
+   "rests_on_delegated": false,
+   "source": "arith/log2/spec.md",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "partially_verified",
+   "text": "arith/log2/model.py gives, for every input, the result that spec.md defines. It agrees with an independent formulation (exact rational (Fraction) evaluations of the interpolation and Horner formulas, a floating-point hyperbolic CORDIC, and the maths library's log2) on every input at small widths and with Python's integer arithmetic on random large-width inputs, and the conventions that a user could guess wrong (spec.md, last section) are pinned by examples.",
+   "title": "The bit-exact model is right",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "LOG-F-EXACT",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-LOG-EXHAUSTIVE",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "arith/log2/verif/results/pytest_junit.xml",
+     "record_sha256": "637412c1770edf75adfc744d127dffebc195891d2d4ba233b023400bad0a466b",
+     "status": "pass",
+     "title": "Every variant against the model, every input, at the small points (Icarus + cocotb)"
+    },
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-LOG-RANDOM",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "arith/log2/verif/results/pytest_junit.xml",
+     "record_sha256": "637412c1770edf75adfc744d127dffebc195891d2d4ba233b023400bad0a466b",
+     "status": "pass",
+     "title": "Every variant against the model at the large points: edge values, carry runs and random inputs (Icarus + cocotb)"
+    }
+   ],
+   "items": [
+    "V-LOG-EXHAUSTIVE",
+    "V-LOG-RANDOM"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": false,
+   "missing_methods": [
+    "a simulation check from a bench the implementing agent did not write"
+   ],
+   "mix_satisfied": false,
+   "own_tests_only": true,
+   "passing_methods": [
+    "sim_test"
+   ],
+   "rests_on_delegated": false,
+   "source": "arith/log2/spec.md",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "partially_verified",
+   "text": "At every parameter point listed in spec.yaml (24 exhaustive points, 12 random ones, across 4 variants), each variant's outputs equal its own model's (model.py, selected by variant) in every clock: every input is driven at the small points; edge values, table break points and random inputs at the large ones. The variants round differently and are not bit-identical to each other; the model of each is the bit-exact definition of that variant, and its distance from the exact function is the accuracy requirement.",
+   "title": "Every variant is bit-exact against its own model",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "LOG-F-ACC",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-LOG-ACCURACY",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "arith/log2/verif/results/pytest_junit.xml",
+     "record_sha256": "637412c1770edf75adfc744d127dffebc195891d2d4ba233b023400bad0a466b",
+     "status": "pass",
+     "title": "The model's error against the exact function over every input of every listed point, against the stated bounds"
+    }
+   ],
+   "items": [
+    "V-LOG-ACCURACY"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": false,
+   "missing_methods": [
+    "a simulation check from a bench the implementing agent did not write"
+   ],
+   "mix_satisfied": false,
+   "own_tests_only": true,
+   "passing_methods": [
+    "sim_test"
+   ],
+   "rests_on_delegated": false,
+   "source": "arith/log2/spec.md",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "partially_verified",
+   "text": "Each of the 12 accuracy points of spec.yaml states a bound in last places; the model's error against the exact function (the maths library, real arithmetic, unrounded) over EVERY input of that point is at most the bound and within 0.06 of it (so the bound is neither false nor loose). A point not listed has no stated bound.",
+   "title": "The error against the exact function is within the stated bound, at every listed point",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "LOG-F-LAT",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-LOG-LATENCY",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "arith/log2/verif/results/pytest_junit.xml",
+     "record_sha256": "637412c1770edf75adfc744d127dffebc195891d2d4ba233b023400bad0a466b",
+     "status": "pass",
+     "title": "The bench passes at the stated latency and fails two clocks off, for every variant"
+    }
+   ],
+   "items": [
+    "V-LOG-LATENCY"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": false,
+   "missing_methods": [
+    "a simulation check from a bench the implementing agent did not write"
+   ],
+   "mix_satisfied": false,
+   "own_tests_only": true,
+   "passing_methods": [
+    "sim_test"
+   ],
+   "rests_on_delegated": false,
+   "source": "arith/log2/spec.md",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "partially_verified",
+   "text": "Each variant's latency in clocks is the expression in spec.yaml (table: REG; lerp: 2; poly2: 3; cordic: NIT + 1), and the bench, run with a latency two clocks off, fails for every variant, so the passing runs prove the latency rather than assume it.",
+   "title": "Latency is as specified and the bench would notice if it were not",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "LOG-F-EQUIV",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-LOG-FORMAL-PROOF",
+     "instrument": null,
+     "method": "formal",
+     "mutation_score": null,
+     "record": "arith/log2/verif/results/pytest_junit.xml",
+     "record_sha256": "637412c1770edf75adfc744d127dffebc195891d2d4ba233b023400bad0a466b",
+     "status": "pass",
+     "title": "k-induction proofs of the variants' error bounds against the exact function (7 jobs; widths in formal/jobs.yaml)"
+    },
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-LOG-FORMAL-REFUTE",
+     "instrument": null,
+     "method": "formal",
+     "mutation_score": null,
+     "record": "arith/log2/verif/results/pytest_junit.xml",
+     "record_sha256": "637412c1770edf75adfc744d127dffebc195891d2d4ba233b023400bad0a466b",
+     "status": "pass",
+     "title": "Each formal check refutes a planted fault (the check can fail)"
+    }
+   ],
+   "items": [
+    "V-LOG-FORMAL-PROOF",
+    "V-LOG-FORMAL-REFUTE"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": false,
+   "missing_methods": [],
+   "mix_satisfied": true,
+   "own_tests_only": false,
+   "passing_methods": [
+    "formal"
+   ],
+   "rests_on_delegated": false,
+   "source": "arith/log2/formal/jobs.yaml",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "verified",
+   "text": "SymbiYosys with the slang front end compares each variant, delayed by its latency, with the exact function on 8 input bits to 24 fractional bits (a reference ROM written from the maths library, formal/*_ref.sv) and asserts the error stays within the bound of the job, which is the model's measured error at that point plus one unit for the reference's own rounding. A proof is by k-induction (for all inputs, any run length) at the widths in formal/jobs.yaml; wider points are covered by the exhaustive scan of the accuracy requirement and by simulation, not by proof. The quadrant map and the variants' structural identities are inside the checks.",
+   "title": "The error against the exact function is bounded for all inputs, by proof, at a small input width",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "LOG-F-BENCH",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-LOG-MUTANT-TEST",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "arith/log2/verif/results/pytest_junit.xml",
+     "record_sha256": "637412c1770edf75adfc744d127dffebc195891d2d4ba233b023400bad0a466b",
+     "status": "pass",
+     "title": "The mutation run as a test: no mutant survives, none fails to build"
+    },
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-LOG-MUTANT-SCORE",
+     "instrument": null,
+     "method": "sim_measurement",
+     "mutation_score": null,
+     "record": "arith/log2/verif/results/mutation.json",
+     "record_sha256": "e8d926dd800f98fc7e71ef726e10acc787ab3d2092d323c070868670e875283e",
+     "status": "pass",
+     "title": "Mutants killed of valid mutants (the record of the last full run)"
+    }
+   ],
+   "items": [
+    "V-LOG-MUTANT-TEST",
+    "V-LOG-MUTANT-SCORE"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": false,
+   "missing_methods": [
+    "a simulation check from a bench the implementing agent did not write"
+   ],
+   "mix_satisfied": false,
+   "own_tests_only": true,
+   "passing_methods": [
+    "sim_measurement",
+    "sim_test"
+   ],
+   "rests_on_delegated": false,
+   "source": "arith/log2/verif/mutants.yaml",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "partially_verified",
+   "text": "Every one of the mutants in verif/mutants.yaml (one exact text change each, in the variant's RTL: an inverted condition, a wrong constant, a dropped connection, a lost reset) makes the cocotb bench fail; mutants that survive or do not build are reported, never hidden.",
+   "title": "The bench catches seeded faults",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "LOG-F-HARNESS",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-LOG-HARNESS",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "arith/log2/verif/results/pytest_junit.xml",
+     "record_sha256": "637412c1770edf75adfc744d127dffebc195891d2d4ba233b023400bad0a466b",
+     "status": "pass",
+     "title": "The packaged harness run standalone on every variant (with the checker and the coverage targets) and on a planted fault"
+    }
+   ],
+   "items": [
+    "V-LOG-HARNESS"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": false,
+   "missing_methods": [
+    "a simulation check from a bench the implementing agent did not write"
+   ],
+   "mix_satisfied": false,
+   "own_tests_only": true,
+   "passing_methods": [
+    "sim_test"
+   ],
+   "rests_on_delegated": false,
+   "source": "arith/log2/harness/README.md",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "partially_verified",
+   "text": "arith/log2/harness holds the model, the cocotb bench, a SystemVerilog checker, coverage targets and a runner that needs nothing else from the repository. Run standalone against every variant (one small exhaustive point and one large random point each, with the checker beside the instance) it passes and the random runs meet every coverage target; run against a planted fault it fails, with and without the checker. Its generated files are the repository's own bench, so they cannot drift.",
+   "title": "The packaged verification harness is a standalone deliverable that works",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "LOG-F-PACKAGE",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-LOG-PACKAGE",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "arith/log2/verif/results/pytest_junit.xml",
+     "record_sha256": "637412c1770edf75adfc744d127dffebc195891d2d4ba233b023400bad0a466b",
+     "status": "pass",
+     "title": "spec.yaml against the RTL headers, spec.md against spec.yaml, Verilator -Wall at every point, wrappers and build.yaml current and lint-clean"
+    }
+   ],
+   "items": [
+    "V-LOG-PACKAGE"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": false,
+   "missing_methods": [
+    "a simulation check from a bench the implementing agent did not write"
+   ],
+   "mix_satisfied": false,
+   "own_tests_only": true,
+   "passing_methods": [
+    "sim_test"
+   ],
+   "rests_on_delegated": false,
+   "source": "arith/log2/spec.yaml",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "partially_verified",
+   "text": "spec.yaml states an interface contract (protocol, throughput, latency, reset, clock, stalls) and integration guidance (port timing, constraints to carry). Every variant passes Verilator -Wall at every point of spec.yaml; its ports and default parameters are the ones spec.yaml states; its header states the intended primitive use before any Vivado run; spec.md is the rendering of spec.yaml; the out-of-context wrapper and the build.yaml for each variant (Artix-7 xc7a100t and K26 xck26, prepared and not run) are current and lint-clean at every point they list, so a Vivado run can start from the repository alone.",
+   "title": "The RTL is lint-clean, and its files agree with the specification and with the Vivado build files",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "LOG-F-LEAN-LERP",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-LOG-LEAN-LERP",
+     "instrument": null,
+     "lean": {
+      "build_source": "recorded build (not re-run)",
+      "rtl_link": "transcription_untested",
+      "tier": "kernel_only"
+     },
+     "method": "formal_lean",
+     "mutation_score": null,
+     "record": "formal/lean/records/build_record.json",
+     "record_sha256": "3d60b1f76ac87b74d5dcbe085c0eb8e43e0287d69d5fa557490a685624e6c4f6",
+     "status": "unapproved",
+     "title": "Linear interpolation stays between the segment's end values"
+    }
+   ],
+   "items": [
+    "V-LOG-LEAN-LERP"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": false,
+   "missing_methods": [],
+   "mix_satisfied": false,
+   "own_tests_only": false,
+   "passing_methods": [],
+   "rests_on_delegated": false,
+   "source": "arith/log2/rtl/log2_lerp.sv (the product, sum and shift lines of the interpolation)",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "unapproved",
+   "text": "In a rising segment with break-point value c0 and slope s, the interpolated value (c0 * 2^D + s * d) / 2^D lies between c0 and c0 + s for every position d below 2^D and every D: the table variant cannot overshoot its segment. The statement is the specification and is NOT approved by a human (verif/lean_approvals.yaml is empty), so the proof is shown but not counted as verification. The Lean text is a hand transcription of the RTL's structure; it models no timing or clocking.",
+   "title": "Linear interpolation stays between the segment's end values, for every width",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "LOG-F-LEAN-LERP-MONO",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-LOG-LEAN-LERP-MONO",
+     "instrument": null,
+     "lean": {
+      "build_source": "recorded build (not re-run)",
+      "rtl_link": "transcription_untested",
+      "tier": "kernel_only"
+     },
+     "method": "formal_lean",
+     "mutation_score": null,
+     "record": "formal/lean/records/build_record.json",
+     "record_sha256": "3d60b1f76ac87b74d5dcbe085c0eb8e43e0287d69d5fa557490a685624e6c4f6",
+     "status": "unapproved",
+     "title": "Linear interpolation does not fall as the position grows"
+    }
+   ],
+   "items": [
+    "V-LOG-LEAN-LERP-MONO"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": false,
+   "missing_methods": [],
+   "mix_satisfied": false,
+   "own_tests_only": false,
+   "passing_methods": [],
+   "rests_on_delegated": false,
+   "source": "arith/log2/rtl/log2_lerp.sv (the product, sum and shift lines of the interpolation)",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "unapproved",
+   "text": "Within a segment of non-negative slope the interpolated value is non-decreasing in the position d, for every D, c0 and s. The statement is the specification and is NOT approved by a human (verif/lean_approvals.yaml is empty), so the proof is shown but not counted as verification. The Lean text is a hand transcription of the RTL's structure; it models no timing or clocking.",
+   "title": "Linear interpolation does not fall as the position grows, for every width",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "LOG-F-LEAN-HYP",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-LOG-LEAN-HYP",
+     "instrument": null,
+     "lean": {
+      "build_source": "recorded build (not re-run)",
+      "rtl_link": "transcription_untested",
+      "tier": "kernel_only"
+     },
+     "method": "formal_lean",
+     "mutation_score": null,
+     "record": "formal/lean/records/build_record.json",
+     "record_sha256": "3d60b1f76ac87b74d5dcbe085c0eb8e43e0287d69d5fa557490a685624e6c4f6",
+     "status": "unapproved",
+     "title": "A hyperbolic CORDIC step scales x^2 - y^2 by a constant"
+    }
+   ],
+   "items": [
+    "V-LOG-LEAN-HYP"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": false,
+   "missing_methods": [],
+   "mix_satisfied": false,
+   "own_tests_only": false,
+   "passing_methods": [],
+   "rests_on_delegated": false,
+   "source": "arith/log2/rtl/log2_cordic.sv (the x and y adders of one stage)",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "unapproved",
+   "text": "For every direction d = +-1 and every shift (scaled by u = 2^i), the step (u x + d y, u y + d x) multiplies x^2 - y^2 by exactly u^2 - 1, whatever the data: the hyperbolic gain is a data-independent constant. The statement is the specification and is NOT approved by a human (verif/lean_approvals.yaml is empty), so the proof is shown but not counted as verification. The Lean text is a hand transcription of the RTL's structure; it models no timing or clocking.",
+   "title": "A hyperbolic CORDIC step scales x^2 - y^2 by a constant, for every width",
+   "waivers": []
+  }
+ ],
+ "schema": "fda-verified/1",
+ "summary_line": "11 requirements (11 functional); 1 verified; 7 partially verified (the required mix of methods is not met); 0 of 11 requirements agreed by a human, 0 agreed on the owner's delegation (not human), 11 draft; 7 resting only on the implementing agent's own tests; 0 human and 0 delegated review(s) recorded; 3 Lean proof item(s) (all widths): 0 with a human-approved statement, 0 with a statement accepted on the owner's delegation (not a human approval), 3 with statement not approved; 3 kernel only, 0 using a compiled decision procedure; build status from: recorded build (not re-run)."
+}

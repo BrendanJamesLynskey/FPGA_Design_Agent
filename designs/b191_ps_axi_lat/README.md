@@ -2,6 +2,8 @@
 
 <!-- Generated from handover.yaml by flow/handover.py (brief 68). Edit handover.yaml, or the text between the prose markers, then run: python -m flow.handover write designs/b191_ps_axi_lat -->
 
+**Verification: not assessed: no requirements recorded (no verif/testplan.yaml), so nothing here is traced to a requirement.** [VERIFIED.md](VERIFIED.md) is the generated, hash-pinned record; [what the label means](../../docs/verified.md).
+
 A register block with a free-running counter that timestamps every AXI read request and every write it accepts, one on each of the Zynq UltraScale+ processor system's two AXI masters towards the fabric (M_AXI_HPM0_FPD and M_AXI_HPM0_LPD), and a host program that times 32-bit reads and writes of it from the Arm Cortex-A53 with the processor's own timer and with the fabric's counter. The probe is simulated against an edge-counting AXI master and seeded faults are caught; the host program and its judging script are tested without a board against a software stand-in. The board row (B-R8) is pre-registered; the programmable-logic image's build recipe is written and was not built, and nothing has run on a board.
 
 Not in scope:
@@ -64,7 +66,7 @@ Interfaces:
 | the seeded faults in the probe; needs as above | `python3 designs/b191_ps_axi_lat/tests/run_mutants.py --json results/191_trading_variants/mutation_probe.json` | no | about 1 min |
 | the board session (planner gives it at the board; not run); needs a built bitstream, bootgen, dtc, the board lock and the owner's board visit | `designs/b191_ps_axi_lat/board/ps_axi_lat_session.sh <board ssh target> <results dir> <built .bit> <build stamp>` | no | about 60 min |
 
-Tool: Vivado 2026.1. Build ID of the inputs at handover: `fbc74516` (`python flow/manifest.py show designs/b191_ps_axi_lat`: what a rebuild of today's sources and flow would carry; it changes when any build input or the flow changes, so it can differ from the build ID in an older evidence record). Knowledge-bank pin: `5e2eab8`.
+Tool: Vivado 2026.1. Build ID of the inputs at handover: `ce79cfb9` (`python flow/manifest.py show designs/b191_ps_axi_lat`: what a rebuild of today's sources and flow would carry; it changes when any build input or the flow changes, so it can differ from the build ID in an older evidence record). Knowledge-bank pin: `6185830`.
 
 | File | What |
 |---|---|

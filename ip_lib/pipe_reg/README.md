@@ -4,6 +4,8 @@ AXI4-Stream pipeline register with back-pressure: N register slices in series of
 
 Generated from `ip.yaml` by `flow/net/ipdoc.py`; do not edit by hand.
 
+**Verification: not assessed: no requirements recorded (no verif/testplan.yaml), so nothing here is traced to a requirement.** [VERIFIED.md](VERIFIED.md) is the generated, hash-pinned record; [what the label means](../../docs/verified.md).
+
 Status: simulated clock by clock against a Python model with an AXI4-Stream rule monitor (cocotb, Icarus Verilog 12) at 5 modes and several depths; data and AXI4-Stream rules proved by k-induction at W = 4 (SymbiYosys); 15 of 15 seeded faults caught by simulation; not built with Vivado yet (queued); not run on a board.
 
 ## Parameters

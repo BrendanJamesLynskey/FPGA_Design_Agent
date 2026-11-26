@@ -1,0 +1,115 @@
+{
+ "counts": {
+  "requirements": 0
+ },
+ "criteria": [
+  {
+   "detail": "no requirements recorded",
+   "id": "evidence",
+   "ids": [],
+   "state": "not_measured",
+   "title": "Every requirement has passing evidence"
+  },
+  {
+   "detail": "no requirements recorded",
+   "id": "agreement",
+   "ids": [],
+   "state": "not_measured",
+   "title": "Every requirement is agreed (human, or delegated and labelled so)"
+  },
+  {
+   "detail": "no requirements recorded",
+   "id": "method_mix",
+   "ids": [],
+   "state": "not_measured",
+   "title": "Every requirement meets its required method mix"
+  },
+  {
+   "detail": "no requirements recorded",
+   "id": "mutation",
+   "ids": [],
+   "state": "not_measured",
+   "title": "The bench passes the mutation floor"
+  },
+  {
+   "detail": "no requirements recorded",
+   "id": "formal_rigour",
+   "ids": [],
+   "state": "not_measured",
+   "title": "The formal results pass the rigour checks"
+  },
+  {
+   "detail": "no requirements recorded",
+   "id": "fresh",
+   "ids": [],
+   "state": "not_measured",
+   "title": "The evidence is fresh"
+  }
+ ],
+ "declared": {
+  "evidence": [
+   {
+    "activity": "review",
+    "id": "E1",
+    "record": "results/b100/summary.json",
+    "result": "pass"
+   },
+   {
+    "activity": "build",
+    "id": "E2",
+    "record": "results/b100/summary.json",
+    "result": "pass"
+   },
+   {
+    "activity": "lint",
+    "id": "E3",
+    "record": "agent/tests/test_100_rapidwright.py",
+    "result": "pass"
+   }
+  ],
+  "note": "the design's own declared evidence; not traced to requirements and not checked by this record",
+  "source": "handover.yaml",
+  "status": "built"
+ },
+ "definition": "docs/verified.md",
+ "git_commit": "45e89b74d901c4c9c23396e7fba792082709d6ea",
+ "kind": "designs",
+ "label": "not assessed: no requirements recorded (no verif/testplan.yaml), so nothing here is traced to a requirement",
+ "label_kind": "not_assessed",
+ "limits": [
+  "Verified never means interoperability with a device the design talks to unless a board measurement against that device is listed in the record; a design that checks its own output against its own model accepts its own symmetric mistakes.",
+  "Verified never means timing beyond the stated corner: a post-route timing result is for the part, speed grade, clock and tool version in its evidence file, not for other corners, temperatures or devices.",
+  "Verified never means beyond the widths and depths checked: a simulation covers the vectors it ran, a bounded formal result covers the stated depth only, and a per-width proof covers the widths it names; only a Lean proof marked all widths covers every width, and only for its model.",
+  "Verified never means the requirement is the right one: the text of a requirement is the human's check (or the planner's, where the record says delegated), and a record shows that checks exist and pass, not that nothing was left out.",
+  "Verified never means a hardware or board result unless a board measurement item is listed; a simulation is not the board.",
+  "Verified is about the files in the manifest at the hashes given. A change to any of them makes the record out of date (the CI check fails), and the evidence stale until it is re-recorded.",
+  "An agreement or acceptance recorded as delegated is the planner's decision on the owner's delegation, not a human sign-off; the record counts it apart."
+ ],
+ "manifest": {
+  "agent/tests/test_100_rapidwright.py": "ce04bcd03fb61cc24a2266d4e3ab1ce726f07a8ddc546d2ffbc2327265ec1e56",
+  "designs/b100_rapidwright/handover.yaml": "4ea0129cef7fdb6aaf95ee7ed1a6c8de920a24ad826cd70a9cead0381b02eefd",
+  "designs/b100_rapidwright/rtl/chain_top.sv": "0204d59663b9e09f43075ce562d8b9d8ecd871c4f7dff75e2afd972b203e2ac4",
+  "designs/b100_rapidwright/rtl/pcs_unit.sv": "c825d999f406543c7622aa98c40a92ff26c19bc23b88a95ecee07c4fa243422e",
+  "designs/b100_rapidwright/rtl/pcs_unit_bb.sv": "f5833ce9f9c664fb77a9f70224b54d52bd100fef1f7e63a307a58e565429ed0d",
+  "designs/b100_rapidwright/rtl/pcs_unit_e.sv": "637e0ceaa1be44246e283d671aad5ee4fc742301f2df352f32bfb7ce3aadfe08",
+  "designs/b100_rapidwright/rtl/pcs_unit_e_bb.sv": "1005e22638cf7e82a2bf50dbca4dd40929f2f366192ebc0b37720f8d14813fae",
+  "designs/b100_rapidwright/rtl/reloc_top.sv": "d307b0b8a788322121e3e3953a7ecd84421f1e8e64c3470504873afc279a007b",
+  "designs/b100_rapidwright/rtl/reloc_top_edit.sv": "3627d883f38b343c358451f3bc9d2dc066d0d424f255ffd4f2b166cbfc68bb51",
+  "designs/b100_rapidwright/rtl/s0_top.sv": "b829653c3e5520f464ed68191cdc823806d70140615f4e16473c983c0b7bb8c6",
+  "results/b100/summary.json": "e19da3632863e0adbf5abec0f57d2f7baef6f7bf9d16d59b84e060581278672b"
+ },
+ "name": "b100_rapidwright",
+ "path": "designs/b100_rapidwright",
+ "reproduce": [
+  {
+   "cmd": "tools/rapidwright_env/setup.sh",
+   "what": "install RapidWright into a git-ignored venv (no root; downloads the jar from AMD's GitHub release)"
+  },
+  {
+   "cmd": "python3 -m pytest -q designs/b100_rapidwright/tests agent/tests/test_100_rapidwright.py",
+   "what": "tests that need neither tool"
+  }
+ ],
+ "requirements": [],
+ "schema": "fda-verified/1"
+}
