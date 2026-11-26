@@ -1,0 +1,323 @@
+{
+ "spec_md": "pilots/224/p6_glitchfree_mux/spec.md",
+ "name": "p6_glitchfree_mux",
+ "board": "kr260",
+ "interview": "off",
+ "review": "off",
+ "model": "openai/gpt-6-luna",
+ "hidden_spec": "None",
+ "run_limits": {
+  "turns": 300,
+  "seconds": 21600,
+  "usd": 12.0,
+  "visits_per_stage": 4
+ },
+ "stop_after": "None",
+ "harness": "deepagents",
+ "cc_model": "claude-haiku-5-5",
+ "cc_effort": "medium",
+ "verif_level": "V2",
+ "profile": "single",
+ "roles": {},
+ "no_shell": "True",
+ "data_dir": "/home/brendan/Claude_sandbox/_worktrees/224-long-output/pilots/224/p6_glitchfree_mux/data",
+ "oracle": "openrouter",
+ "oracle_cc_model": "claude-haiku-5-5",
+ "spec_tests": "False",
+ "spectest_model": "claude-sonnet-5-5",
+ "spectest_effort": "medium",
+ "spectest_max_loops": "2",
+ "skill_routing": "off",
+ "router_model": "None",
+ "router_k": "8",
+ "harness_arms": "H1",
+ "hdl": "sv",
+ "design_plan": "False",
+ "closure": "off",
+ "docs": "on",
+ "models_file": null,
+ "model_config": {
+  "default": {
+   "endpoint": "anthropic_api",
+   "model": "claude-sonnet-5-5"
+  },
+  "budget_scale": 3.5
+ },
+ "explicit": [],
+ "allow_fable": false,
+ "replay_run": "False",
+ "verif_profile": "standard",
+ "verif_sets": "{'verif_level': 'V2'}",
+ "settings_flags": "{'board': 'kr260'}",
+ "settings_file": "None",
+ "verif_ask": "False",
+ "level1_seed": "None",
+ "role_models": {
+  "clarify": {
+   "harness": "deepagents",
+   "model": "claude-sonnet-5-5",
+   "effort": "medium"
+  },
+  "model": {
+   "harness": "deepagents",
+   "model": "claude-sonnet-5-5",
+   "effort": "medium"
+  },
+  "tests": {
+   "harness": "deepagents",
+   "model": "claude-sonnet-5-5",
+   "effort": "medium"
+  },
+  "rtl": {
+   "harness": "deepagents",
+   "model": "claude-sonnet-5-5",
+   "effort": "medium"
+  }
+ },
+ "oracle_model": "claude-sonnet-5-5",
+ "models": {
+  "purposes": {
+   "interpret": {
+    "purpose": "interpret",
+    "endpoint": "anthropic_api",
+    "kind": "anthropic_api",
+    "model": "claude-sonnet-5-5",
+    "options": {
+     "effort": "medium",
+     "max_tokens": 16000,
+     "retries": 1,
+     "timeout_s": 300
+    },
+    "deployment_note": "",
+    "base_url": "https://api.anthropic.com",
+    "key_env": "ANTHROPIC_API_KEY"
+   },
+   "oracle": {
+    "purpose": "oracle",
+    "endpoint": "anthropic_api",
+    "kind": "anthropic_api",
+    "model": "claude-sonnet-5-5",
+    "options": {
+     "effort": "medium",
+     "max_tokens": 16000,
+     "retries": 1,
+     "timeout_s": 300
+    },
+    "deployment_note": "",
+    "base_url": "https://api.anthropic.com",
+    "key_env": "ANTHROPIC_API_KEY"
+   },
+   "model": {
+    "purpose": "model",
+    "endpoint": "anthropic_api",
+    "kind": "anthropic_api",
+    "model": "claude-sonnet-5-5",
+    "options": {
+     "effort": "medium",
+     "max_tokens": 16000,
+     "retries": 1,
+     "timeout_s": 300
+    },
+    "deployment_note": "",
+    "base_url": "https://api.anthropic.com",
+    "key_env": "ANTHROPIC_API_KEY"
+   },
+   "tests": {
+    "purpose": "tests",
+    "endpoint": "anthropic_api",
+    "kind": "anthropic_api",
+    "model": "claude-sonnet-5-5",
+    "options": {
+     "effort": "medium",
+     "max_tokens": 32000,
+     "retries": 1,
+     "timeout_s": 300
+    },
+    "deployment_note": "",
+    "base_url": "https://api.anthropic.com",
+    "key_env": "ANTHROPIC_API_KEY"
+   },
+   "spectest": {
+    "purpose": "spectest",
+    "endpoint": "anthropic_api",
+    "kind": "anthropic_api",
+    "model": "claude-sonnet-5-5",
+    "options": {
+     "effort": "medium",
+     "max_tokens": 16000,
+     "retries": 1,
+     "timeout_s": 300
+    },
+    "deployment_note": "",
+    "base_url": "https://api.anthropic.com",
+    "key_env": "ANTHROPIC_API_KEY"
+   },
+   "rtl": {
+    "purpose": "rtl",
+    "endpoint": "anthropic_api",
+    "kind": "anthropic_api",
+    "model": "claude-sonnet-5-5",
+    "options": {
+     "effort": "medium",
+     "max_tokens": 32000,
+     "retries": 1,
+     "timeout_s": 300
+    },
+    "deployment_note": "",
+    "base_url": "https://api.anthropic.com",
+    "key_env": "ANTHROPIC_API_KEY"
+   },
+   "constraints": {
+    "purpose": "constraints",
+    "endpoint": "anthropic_api",
+    "kind": "anthropic_api",
+    "model": "claude-sonnet-5-5",
+    "options": {
+     "effort": "medium",
+     "max_tokens": 32000,
+     "retries": 1,
+     "timeout_s": 300
+    },
+    "deployment_note": "",
+    "base_url": "https://api.anthropic.com",
+    "key_env": "ANTHROPIC_API_KEY"
+   },
+   "closure": {
+    "purpose": "closure",
+    "endpoint": "anthropic_api",
+    "kind": "anthropic_api",
+    "model": "claude-sonnet-5-5",
+    "options": {
+     "effort": "medium",
+     "max_tokens": 16000,
+     "retries": 1,
+     "timeout_s": 300
+    },
+    "deployment_note": "",
+    "base_url": "https://api.anthropic.com",
+    "key_env": "ANTHROPIC_API_KEY"
+   },
+   "latency": {
+    "purpose": "latency",
+    "endpoint": "anthropic_api",
+    "kind": "anthropic_api",
+    "model": "claude-sonnet-5-5",
+    "options": {
+     "effort": "medium",
+     "max_tokens": 16000,
+     "retries": 1,
+     "timeout_s": 300
+    },
+    "deployment_note": "",
+    "base_url": "https://api.anthropic.com",
+    "key_env": "ANTHROPIC_API_KEY"
+   },
+   "review": {
+    "purpose": "review",
+    "endpoint": "anthropic_api",
+    "kind": "anthropic_api",
+    "model": "claude-sonnet-5-5",
+    "options": {
+     "effort": "medium",
+     "max_tokens": 16000,
+     "retries": 1,
+     "timeout_s": 300
+    },
+    "deployment_note": "",
+    "base_url": "https://api.anthropic.com",
+    "key_env": "ANTHROPIC_API_KEY"
+   },
+   "doc": {
+    "purpose": "doc",
+    "endpoint": "anthropic_api",
+    "kind": "anthropic_api",
+    "model": "claude-sonnet-5-5",
+    "options": {
+     "effort": "medium",
+     "max_tokens": 16000,
+     "retries": 1,
+     "timeout_s": 300
+    },
+    "deployment_note": "",
+    "base_url": "https://api.anthropic.com",
+    "key_env": "ANTHROPIC_API_KEY"
+   },
+   "route": {
+    "purpose": "route",
+    "endpoint": "openrouter",
+    "kind": "openrouter",
+    "model": null,
+    "options": {
+     "retries": 1,
+     "temperature": 0.2,
+     "timeout_s": 180
+    },
+    "deployment_note": "",
+    "base_url": "https://openrouter.ai/api/v1",
+    "key_env": "OPENROUTER_API_KEY"
+   },
+   "options": {
+    "purpose": "options",
+    "endpoint": "claude_code",
+    "kind": "claude_code",
+    "model": "claude-sonnet-5-5",
+    "options": {
+     "effort": "medium",
+     "timeout_s": 900
+    },
+    "deployment_note": ""
+   },
+   "proof": {
+    "purpose": "proof",
+    "endpoint": "claude_code",
+    "kind": "claude_code",
+    "model": "claude-sonnet-5-5",
+    "options": {
+     "effort": "medium",
+     "timeout_s": 1500
+    },
+    "deployment_note": ""
+   },
+   "doc_crossread": {
+    "purpose": "doc_crossread",
+    "endpoint": "claude_code",
+    "kind": "claude_code",
+    "model": "claude-sonnet-5-5",
+    "options": {
+     "effort": "medium",
+     "timeout_s": 900
+    },
+    "deployment_note": ""
+   },
+   "embed": {
+    "purpose": "embed",
+    "endpoint": "openrouter",
+    "kind": "openrouter",
+    "model": null,
+    "options": {
+     "retries": 1,
+     "temperature": 0.2,
+     "timeout_s": 180
+    },
+    "deployment_note": "",
+    "base_url": "https://openrouter.ai/api/v1",
+    "key_env": "OPENROUTER_API_KEY"
+   }
+  },
+  "layers": [
+   {
+    "layer": "cli",
+    "source": "command line",
+    "sha256": null
+   },
+   {
+    "layer": "cli",
+    "source": "command line",
+    "sha256": null
+   }
+  ],
+  "budget_scale": 3.5,
+  "hash": "9f0aacf632162e59"
+ },
+ "isolation": "ContainerRunner"
+}

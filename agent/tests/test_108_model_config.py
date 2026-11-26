@@ -348,11 +348,7 @@ def test_the_anthropic_client_translates_messages_tools_and_replies() -> None:
     from agent.models.endpoints import AnthropicClient
     sent = {}
 
-    class Resp:
-        def __init__(self, d): self.d = d
-        def read(self): return json.dumps(self.d).encode()
-        def __enter__(self): return self
-        def __exit__(self, *a): return False
+    from agent.tests.sse_fake import StreamResp as Resp          # brief 224: every request is streamed
 
     def opener(req, timeout):
         sent["body"], sent["headers"], sent["url"] = json.loads(req.data), dict(req.header_items()), req.full_url

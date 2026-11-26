@@ -1,0 +1,28 @@
+schema: fpga-design-agent/architecture/v1
+design: p5_async_fifo_soak
+blocks:
+  - {name: jtag_bus, function: "supplied BSCANE2 USER4 register bus, unchanged (data/jtag_bus.sv), clk_c3"}
+  - {name: reset_gen, function: "power-up reset counter in clk_c3 (RESET_HOLD_CYCLES), xpm_cdc_async_rst into clk_gt156"}
+  - {name: soak_core, function: "register map, control, writer PRBS-31, counters, snapshot, LEDs"}
+  - {name: soak_fifo, function: "512x32 xpm_fifo_async, one BRAM, Gray pointers inside the macro"}
+  - {name: soak_reader, function: "clk_gt156 reader, PRBS-31 checker, inject, read/underflow/occupancy counters"}
+  - {name: gt_clk, function: "IBUFDS_GTE4 + BUFG_GT (ODIV2) giving the 156.25 MHz reader clock, no GT channel"}
+interfaces:
+  - {name: host_regs, between: [jtag_bus, soak_core], protocol: simple, prefix: h, module: soak_core}
+  - {name: fifo_data, between: [soak_core, soak_reader], protocol: simple, prefix: fifo, module: soak_fifo}
+clock_domains:
+  - {name: clk_c3, clock: clk_c3, freq_mhz: 25}
+  - {name: clk_gt156, clock: gt_refclk_p, freq_mhz: 156.25}
+reset:
+  synchronisers: [xpm_cdc_async_rst]
+crossings:
+  - {from: clk_c3, to: clk_gt156, signal: "FIFO write data and Gray pointers", primitive: xpm_fifo_async, inline_in: soak_fifo}
+  - {from: clk_c3, to: clk_gt156, signal: "RUN, SLOW_READ", primitive: xpm_cdc_array_single, inline_in: soak_core}
+  - {from: clk_c3, to: clk_gt156, signal: "INJECT toggle, CLEAR toggle", primitive: xpm_cdc_pulse, inline_in: soak_core}
+  - {from: clk_gt156, to: clk_c3, signal: "reader counters for snapshot", primitive: xpm_cdc_handshake, inline_in: soak_core}
+  - {from: clk_c3, to: clk_gt156, signal: "reset", primitive: xpm_cdc_async_rst, inline_in: soak_core}
+predicted_resources:
+  lut: [350, 900]
+  ff: [900, 1500]
+  bram_tile: [1, 2]
+  dsp: 0

@@ -1,0 +1,348 @@
+name: p4_fir32
+title: 32-tap symmetric FIR low-pass filter with FIFOs and JTAG register access
+board: kr260
+part: xck26-sfvc784-2LV-c
+top: fir32_top
+clocks:
+- name: clk_25
+  freq_mhz: 25
+  pin: C3
+  role: board clock input
+- name: clk_dp
+  freq_mhz: 250
+  role: datapath clock from MMCM on clk_25 (250 MHz or faster)
+- name: clk_bus
+  freq_mhz: 25
+  role: register bus clock given to jtag_bus (free running, taken from clk_25)
+reset:
+  name: rst
+  polarity: active high
+  source: held by jtag_bus for a few clocks at start; synchronised into each clock
+    domain
+  note: datapath reset also held until the MMCM is locked
+parameters:
+  NUM_TAPS: 32
+  DATA_WIDTH: 16
+  COEFF_WIDTH: 16
+  ACC_WIDTH: 40
+  FIFO_DEPTH: 1024
+  ROUND_CONST: 16384
+  SHIFT: 15
+  DESIGN_ID: 546570241
+ports:
+- name: clk_25
+  direction: input
+  width: 1
+  role: board clock, pin C3
+- name: led
+  direction: output
+  width: 2
+  role: user LEDs led[1:0]
+- name: sfp_tx_disable
+  direction: output
+  width: 1
+  role: SFP+ tx disable, held at 1 always
+behaviour:
+  filter:
+  - Output y[n] = saturate16((sum over k=0..31 of h[k]*x[n-k] + 0x4000) >>> 15), exact
+    sum, arithmetic shift, saturate to -32768..32767.
+  - Coefficients h[k] come from data/coeffs.hex, 16-bit signed Q1.15, tap 0 first,
+    symmetric h[k]=h[31-k].
+  - 'Symmetry is used: x[n-k]+x[n-31+k] pre-added (17 bit) and 16 multipliers in DSP
+    slices.'
+  - Samples before the first one are 0; history persists between RUNs and is zeroed
+    only by CLEAR.
+  - Datapath accepts one sample per datapath clock.
+  fifos:
+  - Input FIFO 1024 x 16 bit, filled by writes to IN_PUSH; a push when full is ignored.
+  - Output FIFO 1024 x 16 bit, drained by reads of OUT_POP; a read removes the oldest
+    entry.
+  - FIFOs cross between clk_bus and clk_dp domains.
+  run:
+  - A write of 1 to CTRL bit 1 starts processing every sample in the input FIFO in
+    order, results go to the output FIFO.
+  - BUSY is 1 from RUN until the last result is in the output FIFO.
+  - Chunked runs without CLEAR give the same outputs as one single run.
+  counters:
+  - SAT_COUNT increments for each output whose value was clipped.
+  - SAMPLES_DONE increments for each sample processed.
+  - CLEAR empties both FIFOs, zeroes filter history, SAT_COUNT and SAMPLES_DONE.
+  bus:
+  - 'Register port from data/jtag_bus.sv (unchanged): h_we, h_re, h_addr[11:0], h_wdata,
+    h_rdata on clk_bus.'
+  - Write takes effect the clock after h_we; h_rdata shows the addressed register
+    within 2 clocks of h_re and holds.
+  - Unmapped addresses read 0 and ignore writes.
+  - ID reads 0x20940001; BUILD reads USR_ACCESSE2 word; SCRATCH reads back the written
+    32 bits, reset 0.
+  board:
+  - sfp_tx_disable driven 1 at all times; no GT transceiver used.
+registers:
+  map:
+  - offset: 0
+    name: ID
+    access: RO
+    reset: 546570241
+    bits: 31:0 design ID
+  - offset: 4
+    name: BUILD
+    access: RO
+    reset: 0
+    bits: 31:0 USR_ACCESS word
+  - offset: 8
+    name: SCRATCH
+    access: RW
+    reset: 0
+    bits: 31:0 scratch
+  - offset: 16
+    name: CTRL
+    access: RW
+    reset: 0
+    bits: 0 CLEAR self-clearing; 1 RUN self-clearing; others 0
+  - offset: 20
+    name: IN_PUSH
+    access: WO
+    reset: 0
+    bits: 15:0 sample pushed
+  - offset: 24
+    name: OUT_POP
+    access: RO
+    reset: 0
+    bits: 31 valid; 15:0 oldest output; read pops
+  - offset: 28
+    name: STATUS
+    access: RO
+    reset: 0
+    bits: 0 BUSY; 15:4 input count; 31:20 output count; rest 0
+  - offset: 32
+    name: SAT_COUNT
+    access: RO
+    reset: 0
+    bits: 31:0 saturated outputs
+  - offset: 36
+    name: SAMPLES_DONE
+    access: RO
+    reset: 0
+    bits: 31:0 samples processed
+timing:
+  datapath_clock: clk_dp from MMCM, at least 250 MHz, setup slack >= 0 (WNS >= 0)
+  throughput: 1 sample per clk_dp cycle
+  bus_read: h_rdata valid within 2 clk_bus cycles of h_re
+  latency:
+    fir_pipeline: fixed pipeline depth from input sample to output, to be set in design
+      (about 8 to 12 clk_dp cycles)
+    bus_write: 1 clk_bus cycle after h_we
+resources_expected:
+  dsp: 16
+  bram36: 4
+  lut: < 3000
+  ff: < 4000
+  note: FIFOs 2 x 1024x16 in BRAM (about 1 BRAM36 each plus history); DSP count 16
+    expected from symmetry
+assumptions:
+- assumption: Part is xck26-sfvc784-2LV-c (K26 SOM on KR260).
+  reason: KR260 carries the K26 module.
+- assumption: Datapath clock is 250 MHz from an MMCM fed by the 25 MHz clock; bus
+    clock is the 25 MHz clock directly.
+  reason: Request gives 250 MHz target and allows the bus on its own clock.
+- assumption: Accumulator is 40 bits.
+  reason: 16-bit data x 16-bit coefficients summed over 32 taps needs at most 37 bits,
+    so the sum is exact.
+- assumption: led[1:0] show BUSY and output FIFO not empty.
+  reason: Request names the LEDs but gives no function.
+- assumption: No AXI4-Lite block; the register port is the jtag_bus simple port.
+  reason: Request uses jtag_bus.sv, not AXI.
+open_questions: []
+requirements:
+- id: REQ-01
+  text: ID register at 0x000 reads 0x20940001.
+  proof:
+  - simulation
+  - hardware
+- id: REQ-02
+  text: BUILD register at 0x004 reads the USR_ACCESSE2 word.
+  proof:
+  - hardware
+- id: REQ-03
+  text: SCRATCH at 0x008 reads back the written 32-bit value.
+  proof:
+  - simulation
+  - hardware
+- id: REQ-30
+  text: SCRATCH at 0x008 reads 0 after reset.
+  proof:
+  - simulation
+  - hardware
+- id: REQ-04
+  text: Unmapped addresses read 0.
+  proof:
+  - simulation
+- id: REQ-05
+  text: Writes to unmapped addresses change no register.
+  proof:
+  - simulation
+- id: REQ-06
+  text: h_rdata shows the addressed register within 2 clk_bus cycles of h_re.
+  proof:
+  - simulation
+  - formal
+- id: REQ-31
+  text: h_rdata keeps the read value until the next h_re.
+  proof:
+  - simulation
+  - formal
+- id: REQ-07
+  text: Every output equals saturate16((sum h[k]*x[n-k] + 0x4000) >>> 15) bit for
+    bit against the Python model for an impulse.
+  proof:
+  - simulation
+  - hardware
+- id: REQ-08
+  text: Every output matches the Python model bit for bit for a step input.
+  proof:
+  - simulation
+  - hardware
+- id: REQ-09
+  text: Every output matches the Python model bit for bit for 10,000 random samples
+    sent in chunks of 1,000 without CLEAR.
+  proof:
+  - simulation
+  - hardware
+- id: REQ-10
+  text: Filter history persists across RUNs until CLEAR.
+  proof:
+  - simulation
+- id: REQ-11
+  text: The design uses 16 multipliers mapped to DSP slices by using coefficient symmetry.
+  proof:
+  - analysis
+- id: REQ-12
+  text: The datapath accepts one sample per clk_dp cycle.
+  proof:
+  - simulation
+- id: REQ-13
+  text: The datapath clock is at least 250 MHz with setup WNS >= 0.
+  proof:
+  - analysis
+- id: REQ-14
+  text: The input FIFO holds 1,024 samples.
+  proof:
+  - simulation
+  - formal
+- id: REQ-32
+  text: An IN_PUSH to a full input FIFO is ignored.
+  proof:
+  - simulation
+  - formal
+- id: REQ-15
+  text: The output FIFO holds 1,024 samples.
+  proof:
+  - simulation
+- id: REQ-16
+  text: A read of OUT_POP on a non-empty FIFO returns bit 31 = 1 and bits 15:0 = the
+    oldest output.
+  proof:
+  - simulation
+  - formal
+- id: REQ-34
+  text: A read of OUT_POP on a non-empty FIFO removes the oldest output.
+  proof:
+  - simulation
+  - formal
+- id: REQ-17
+  text: A read of OUT_POP on an empty output FIFO returns 0.
+  proof:
+  - simulation
+- id: REQ-18
+  text: RUN processes all input FIFO samples in order into the output FIFO.
+  proof:
+  - simulation
+  - hardware
+- id: REQ-19
+  text: CTRL bits 0 and 1 read back 0 after the write (self-clearing).
+  proof:
+  - simulation
+- id: REQ-20
+  text: CLEAR empties both FIFOs, zeroes filter history, SAT_COUNT and SAMPLES_DONE.
+  proof:
+  - simulation
+- id: REQ-21
+  text: STATUS bit 0 is 1 while a run is active and 0 otherwise.
+  proof:
+  - simulation
+- id: REQ-22
+  text: STATUS bits 15:4 hold the input FIFO count (0 to 1,024).
+  proof:
+  - simulation
+- id: REQ-33
+  text: STATUS bits 31:20 hold the output FIFO count (0 to 1,024).
+  proof:
+  - simulation
+- id: REQ-23
+  text: SAT_COUNT counts the outputs that saturated since CLEAR.
+  proof:
+  - simulation
+- id: REQ-24
+  text: SAMPLES_DONE counts the samples processed since CLEAR.
+  proof:
+  - simulation
+- id: REQ-25
+  text: sfp_tx_disable is 1 at all times.
+  proof:
+  - formal
+  - hardware
+- id: REQ-26
+  text: The design uses no GT transceiver channel.
+  proof:
+  - analysis
+- id: REQ-27
+  text: data/jtag_bus.sv is used unchanged.
+  proof:
+  - analysis
+- id: REQ-28
+  text: The build report lists the DSP slices used.
+  proof:
+  - analysis
+- id: REQ-35
+  text: The build report lists the datapath clock met.
+  proof:
+  - analysis
+- id: REQ-29
+  text: The datapath clock is derived from the 25 MHz clock on pin C3.
+  proof:
+  - analysis
+resolved_questions:
+- question: What if RUN is written while BUSY, or CLEAR while BUSY?
+  answer: RUN while BUSY is ignored; CLEAR while BUSY aborts the run and clears everything.
+  status: defaulted
+  by: default
+  default_reason: Request does not say; this is the simplest safe behaviour.
+- question: What if the output FIFO lacks room for all input samples at RUN?
+  answer: RUN processes only as many samples as the output FIFO has free space for,
+    the rest stay in the input FIFO.
+  status: defaulted
+  by: default
+  default_reason: Avoids losing results and keeps history consistent.
+- question: Do IN_PUSH writes during BUSY get accepted?
+  answer: Yes, accepted if the FIFO is not full, but not processed until the next
+    RUN.
+  status: defaulted
+  by: default
+  default_reason: Request is silent.
+- question: What do the two LEDs show?
+  answer: led[0]=BUSY, led[1]=output FIFO not empty.
+  status: defaulted
+  by: default
+  default_reason: Request gives no function.
+- question: Which pins do led[1:0] use?
+  answer: Take them from the KR260 board constraints.
+  status: defaulted
+  by: default
+  default_reason: Request does not list pin locations.
+- question: Does reading OUT_POP and STATUS at the same time of a RUN matter, i.e.
+    what do counts show mid-run?
+  answer: Counts show the current FIFO levels, synchronised across domains (may lag
+    by a few clocks).
+  status: defaulted
+  by: default
+  default_reason: Counts cross clock domains.

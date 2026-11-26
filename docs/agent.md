@@ -31,6 +31,14 @@ the response `usage` and the model's price table, never estimated (brief 209b, [
 The USD limits were sized for the default model (OpenRouter, a few hundredths of a USD per call, where the turn limits bind first); for a dearer model
 `--budget-scale N` (or `budget_scale:` in a models file) multiplies every stage's USD limit and the default run cap by `N`, so a stage can use its turns.
 An explicit `--max-usd` is kept as given. The run summary records `budget_scale` and `token_split` (input, output, cache write and cache read tokens).
+
+Long replies (brief 224, [model_config.md](model_config.md#anthropic-api-cost-caching-temperature-budgets-brief-209b)): the `anthropic_api` client streams every
+request; the `rtl`, `tests` and `constraints` purposes default to `writing_max_tokens` 32000 on `claude-sonnet-5-5` (the other purposes 16000), still set by
+`options: {max_tokens: N}`; a high limit with a low `--max-usd` stops a run early (a full cut-off reply is charged at the limit). The stage-2 Designer is told to
+write one file per call, smallest first. When a reply is cut off its tool call is lost, the files already written stay on disk, and the Designer is called
+again inside the same visit (at most 3 times) with a note of the files in `rtl/` and the `architecture.yaml` blocks that still have no module. Two cut-off
+replies of one role in a row with no file written between them (counted across visits) end the run with the stop reason `reply too long: no file written`
+(and `stop_detail.kind` `reply_too_long`) instead of "stage 2 visited more than 6 times". The Verifier gets the same stop rule but one call per visit.
 Vivado builds are reused when the sources are unchanged and the earlier build went far enough.
 
 ### Documentation and resume (brief 68 parts C and D)

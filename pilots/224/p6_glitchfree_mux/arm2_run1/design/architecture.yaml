@@ -1,0 +1,66 @@
+schema: fpga-design-agent/architecture/v1
+blocks:
+  - name: jtag_bus
+    function: BSCANE2 USER4 register bus, gives h_we/h_re/h_addr/h_wdata/h_rdata in clk_c3
+  - name: rst_gen
+    function: power-on counter in clk_c3, holds rst high 16 clocks
+  - name: p6_clkmux_core
+    function: register map, SEL/STATUS, switch counter, frequency gate, LEDs
+  - name: clk_mux
+    function: IBUFDS_GTE4 + BUFG_GT (div B_DIV) and BUFGCTRL selecting clock A or B
+  - name: mux_checker
+    function: in mux_clk, binary counter, Gray twin, error counter, saturating
+interfaces:
+  - name: regbus
+    between: [jtag_bus, p6_clkmux_core]
+    protocol: simple
+    prefix: h
+    module: p6_clkmux_core
+  - name: led_out
+    between: [p6_clkmux_core, p6_clkmux_top]
+    protocol: gpio
+    prefix: led
+    module: p6_clkmux_top
+clock_domains:
+  - name: clk_c3
+    clock: clk_c3
+    freq_mhz: 25
+  - name: gtref
+    clock: gtref_p
+    freq_mhz: 156.25
+  - name: mux_clk
+    clock: mux_clk
+    freq_mhz: 156.25
+reset:
+  synchronisers: [xpm_cdc_async_rst]
+crossings:
+  - from: mux_clk
+    to: clk_c3
+    signal: active_sel
+    primitive: xpm_cdc_single
+    inline_in: p6_clkmux_core
+  - from: clk_c3
+    to: mux_clk
+    signal: rst
+    primitive: xpm_cdc_async_rst
+    inline_in: p6_clkmux_core
+  - from: mux_clk
+    to: clk_c3
+    signal: err_count
+    primitive: xpm_cdc_array_single
+    inline_in: p6_clkmux_core
+  - from: mux_clk
+    to: clk_c3
+    signal: mux_counter_snapshot
+    primitive: xpm_cdc_handshake
+    inline_in: p6_clkmux_core
+  - from: mux_clk
+    to: clk_c3
+    signal: freq_edge_count
+    primitive: xpm_cdc_gray
+    inline_in: p6_clkmux_core
+predicted_resources:
+  lut: [250, 700]
+  ff: [600, 1100]
+  bram_tile: 0
+  dsp: 0

@@ -1,0 +1,54 @@
+schema: fpga-design-agent/architecture/v1
+design: p5_async_fifo_soak
+blocks:
+  - name: jtag_bus
+    function: BSCANE2 USER4 register bus (supplied, unchanged), clk = clk_c3
+  - name: rst_gen
+    function: startup counter (>= 8 clk_c3 cycles) and per-domain reset synchronisers
+  - name: fifo_core
+    function: register core; map, control, snapshot, writer PRBS-31, reader PRBS-31 checker, counters, LEDs
+  - name: async_fifo
+    function: 512x32 asynchronous FIFO, xpm_fifo_async, 2-stage synchronisers, gray pointers
+  - name: refclk_buf
+    function: IBUFDS_GTE4 plus BUFG_GT giving the gt_refclk0 reader clock
+interfaces:
+  - name: host_reg
+    between: [jtag_bus, fifo_core]
+    protocol: simple
+    prefix: h
+    module: fifo_core
+clock_domains:
+  - name: clk_c3
+    clock: clk_c3
+    freq_mhz: 25
+  - name: gt_refclk0
+    clock: gt_refclk0_p
+    freq_mhz: 156.25
+reset:
+  synchronisers: [rst_sync]
+crossings:
+  - from: clk_c3
+    to: gt_refclk0
+    signal: FIFO data and gray pointers
+    primitive: xpm_fifo_async
+    inline_in: async_fifo
+  - from: clk_c3
+    to: gt_refclk0
+    signal: control bits RUN, SLOW_READ, INJECT, CLEAR, snapshot request
+    primitive: xpm_cdc_array_single
+    inline_in: fifo_core
+  - from: gt_refclk0
+    to: clk_c3
+    signal: reader counters snapshot result
+    primitive: xpm_cdc_handshake
+    inline_in: fifo_core
+  - from: clk_c3
+    to: gt_refclk0
+    signal: reset release
+    primitive: xpm_cdc_async_rst
+    inline_in: rst_gen
+predicted_resources:
+  lut: [500, 1200]
+  ff: [800, 1800]
+  bram_tile: [1, 2]
+  dsp: 0
