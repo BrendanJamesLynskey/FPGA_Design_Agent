@@ -293,7 +293,7 @@ def config_from_json(c: dict):
                   design_plan=flag("design_plan"), closure=c.get("closure", "off") or "off",     # closure loop
                   docs=c.get("docs", "off") or "off",                                            # brief 68 C
                   coverage_loop=c.get("coverage_loop", "off") or "off", req_sva=c.get("req_sva", "off") or "off",   # brief 218
-                  readiness=c.get("readiness", "off") or "off", readiness_limits=dict(c.get("readiness_limits") or {}),   # brief 227
+                  readiness=c.get("readiness", "off") or "off", readiness_limits=dict(_literal(c.get("readiness_limits")) or {}),   # brief 227
                   models_file=Path(c["models_file"]) if c.get("models_file") not in (None, "None") else None,   # brief 108
                   model_config=c.get("model_config") or None, explicit=tuple(c.get("explicit") or ()),
                   allow_fable=str(c.get("allow_fable", False)) == "True",
