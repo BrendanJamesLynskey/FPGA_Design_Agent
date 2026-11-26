@@ -2,6 +2,8 @@
 
 <!-- Generated from handover.yaml by flow/handover.py (brief 68). Edit handover.yaml, or the text between the prose markers, then run: python -m flow.handover write designs/b196_secure_demo -->
 
+**Verification: not assessed: no requirements recorded (no verif/testplan.yaml), so nothing here is traced to a requirement.** [VERIFIED.md](VERIFIED.md) is the generated, hash-pinned record; [what the label means](../../docs/verified.md).
+
 A 25 MHz design for the Kria KR260 part that runs the brief-194 stream core and drives two LEDs, with a SYSMONE4 whose alarm thresholds come from the board's operating limits and feed a latched safe shutdown. It is built with the production_secure switch on, and the same design with one ILA added is built to show the check failing. Built only; never programmed and never on a board.
 
 Not in scope:
@@ -63,7 +65,7 @@ Interfaces:
 | sixteen readings through the SYSMONE4 simulation model; needs Vivado 2026.1 xsim | `python3 designs/b196_secure_demo/tests/run_sysmon_sim.py --out results/b196/sysmon_sim.json` | no | about 5 min |
 | the production build and the debug build; needs Vivado 2026.1 and a heavy slot (take_heavy_slot.sh); the debug build needs about 8 GB | `FDA_SECURITY='{"production_secure": true}' flow/run_vivado.sh designs/b196_secure_demo base; FDA_SECURITY='{"production_secure": true}' flow/run_vivado.sh designs/b196_secure_demo/dbg base` | yes | about 15 min |
 
-Tool: Vivado 2026.1. Build ID of the inputs at handover: `32f26e59` (`python flow/manifest.py show designs/b196_secure_demo`: what a rebuild of today's sources and flow would carry; it changes when any build input or the flow changes, so it can differ from the build ID in an older evidence record). Knowledge-bank pin: `5e2eab8`.
+Tool: Vivado 2026.1. Build ID of the inputs at handover: `727a9cb5` (`python flow/manifest.py show designs/b196_secure_demo`: what a rebuild of today's sources and flow would carry; it changes when any build input or the flow changes, so it can differ from the build ID in an older evidence record). Knowledge-bank pin: `6185830`.
 
 | File | What |
 |---|---|

@@ -1,0 +1,36 @@
+schema: fpga-design-agent/architecture/v1
+blocks:
+  - name: freq_meter_top
+    function: Thin top; IBUFDS_GTE4 + BUFG_GT for clk_ref, BUFG for clk_c3, jtag_bus, reset generator, core; drives sfp_tx_disable=1
+  - name: jtag_bus
+    function: Supplied BSCANE2 USER4 register bus (data/jtag_bus.sv, unchanged); produces clk-domain h_we/h_re/h_addr/h_wdata
+  - name: freq_meter_core
+    function: Register map, LED blinkers, START/GATE_LEN/result CDC, gate FSM in clk_ref, edge counter in clk_c3
+  - name: rst_sync_ref
+    function: Reset synchroniser into the clk_ref domain (xpm_cdc_async_rst)
+interfaces:
+  - name: reg_port
+    between: [jtag_bus, freq_meter_core]
+    protocol: simple
+    prefix: h
+    module: freq_meter_core
+clock_domains:
+  - name: clk_c3
+    clock: clk_c3
+    freq_mhz: 25
+  - name: clk_ref
+    clock: mgtrefclk0_p
+    freq_mhz: 156.25
+reset:
+  synchronisers: [rst_sync_ref]
+crossings:
+  - {from: clk_c3, to: clk_ref, signal: rst, primitive: xpm_cdc_async_rst, inline_in: freq_meter_top}
+  - {from: clk_c3, to: clk_ref, signal: start_and_gate_len, primitive: xpm_cdc_handshake, inline_in: freq_meter_core}
+  - {from: clk_ref, to: clk_c3, signal: gate_open, primitive: xpm_cdc_single, inline_in: freq_meter_core}
+  - {from: clk_ref, to: clk_c3, signal: result_count_gate_actual_done, primitive: xpm_cdc_handshake, inline_in: freq_meter_core}
+  - {from: clk_c3, to: clk_ref, signal: led_en, primitive: xpm_cdc_single, inline_in: freq_meter_core}
+predicted_resources:
+  lut: [350, 900]
+  ff: [800, 1600]
+  bram_tile: 0
+  dsp: 0

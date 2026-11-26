@@ -4,6 +4,8 @@ Tri-mode (10/100/1000 Mb/s) Ethernet MAC for a PHY with an RGMII (reduced gigabi
 
 Generated from `ip.yaml` by `flow/net/ipdoc.py`; do not edit by hand.
 
+**Verification: not assessed: no requirements recorded (no verif/testplan.yaml), so nothing here is traced to a requirement.** [VERIFIED.md](VERIFIED.md) is the generated, hash-pinned record; [what the label means](../../docs/verified.md).
+
 Status: Meets 125 MHz out of context with the block RAM buffer (139-141 MHz estimated); the LUT RAM buffer meets it only just in one run at 32768 bytes (WNS 0.04 ns, within run-to-run noise). Simulated (0.1.0 and 0.2.0 features, with an independent adversarial pause bench); formal checks of the frame FSMs (bounded) and the address filter; built alone on an Artix-7 with Vivado 2026.1; 0.1.0 synthesised and routed inside the KR260 trading-path design; not yet run on a board (its filter and statistics blocks are in the Nexys A7 network design behind eth_mac_rmii, built, not yet run).
 
 ## Parameters

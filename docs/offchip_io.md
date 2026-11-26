@@ -175,21 +175,26 @@ off_chip:
     external: {series_ohm: 22}            # parts already on the board: series_ohm, parallel_gnd_ohm, thevenin_ohm, ac_ohm
     priority: edge_rate                   # edge_rate | emi | balanced
     ui_ns: 8.0                            # unit interval, for the overshoot-duration limit (default 10 ns, assumed)
+    board_fixed: true                     # optional (brief 164): the board is finished, so its series resistor cannot change (default false)
 ```
+
+Above the groups, the spec's own `family:`, `part:` and `bank_type:` keys name the device (for example `family: zynquplus`, `part: xck26-sfvc784-2LV-c`, `bank_type: HP`); a group's `bank_type` overrides the spec's for that group.
 
 `agent/graph/spec_schema.validate` rejects unknown keys, a missing `load.c_pf` on an output, a non-positive length, a bad priority and duplicate names (`flow/offchip_check.off_chip_errors`).
 What a user could guess wrong:
 
 - `line: short` means "a lumped load": the model uses a 0.3 in line and the first-incident test does not apply. It does not mean "no capacitance": `load.c_pf` is still the load.
 - `load.c_pf` is the capacitance at the receiver pin and its stub, not the whole trace (the trace is the line). A multi-drop net sums its pin capacitances there, which is right only for short stubs.
-- `external.series_ohm` fixes the series resistor: the proposal then chooses only DRIVE and SLEW. Leave it out and the proposal may add one (it never adds a termination at the receiver).
+- `external.series_ohm` fixes the series resistor: the older single proposal then chooses only DRIVE and SLEW. Leave it out and that proposal may add one (it never adds a termination at the receiver). The two-answer proposal (section 8) always gives both readings, whatever the spec says: with the board's resistor (`external.series_ohm`, **0 ohm if the key is absent**) and with a free resistor.
+- `board_fixed: true` says which answer applies; it does not change either answer. Without it the check offers both and does not say which you need. It does not mean "the resistor exists": a board with no resistor is `board_fixed: true` with no `external.series_ohm`, and then the as-built answer assumes 0 ohm.
+- The check takes the device from the command line (`--family`, `--part`, `--bank-type`), else from the spec's `family:`, `part:` and `bank_type:`, else `artix7`, no part and HR. Before brief 164 it ignored the spec's keys, so a K26 spec run without the flags was judged with Zynq-7000 models.
 - A missing `DRIVE` or `SLEW` in the XDC is read as the tool default (12 mA, SLOW; UG471 and UG571 both say so). We have not yet read the default back from Vivado: the run is queued (the measure-the-vendor-first rule), so a different measured default would change those findings.
 - The recommended receiver limit is VCCO + 0.2 V and GND - 0.2 V (DS181 Table 2, DS925 Table 2); the duration tables (DS181 Table 4 for HR banks, DS925 Table 6 for HD and Table 7 for HP) allow more for a share of the unit interval. The check uses the tables, so a peak between 0.2 V and the table's first row only warns (`advisory`), and a peak the table does not allow for that share of the UI is `contradicts-model`.
 - Overshoot is computed without the receiver's clamp diodes. A real receiver clamps (at most 10 mA per pin, DS181 Table 2 note 8, 200 mA per bank, DS181 Table 4 note 1), which limits the peak and puts the energy in the supply. The unclamped figure is the safe reading, not the measured one.
 
 ## 8. The check and the proposal rule
 
-`python3 flow/offchip_check.py --spec spec.yaml --xdc design.xdc --family artix7 --bank-type HR [--propose]`. Every finding is advisory; `contradicts-model` marks an XDC value that the model says breaks a data-sheet limit, with the model's numbers and the driver's source (IBIS file, revision, model name) in the finding.
+`python3 flow/offchip_check.py --spec spec.yaml --xdc design.xdc [--family F --part P --bank-type B] [--no-propose] [--json out.json]`. The device comes from the spec's own keys unless a flag overrides them. Every finding is advisory; `contradicts-model` marks an XDC value that the model says breaks a data-sheet limit, with the model's numbers and the driver's source (IBIS file, revision, model name) in the finding.
 
 | Code | Raised when |
 |---|---|
@@ -206,6 +211,13 @@ What a user could guess wrong:
 **The proposal.** For one output group, among the allowed DRIVE and SLEW values and the E-series resistors 0, 10, 15, 22, 27, 33 and 47 ohm (or the one the spec fixes): shortlist by the
 static match (the largest relative distance of R_out + R_series from Z0 over corners and both directions), simulate the best fourteen at all three corners, keep the combinations with no flag and a
 non-negative first-incident margin, and rank by priority: `edge_rate` the fastest receiver edge, `emi` the slowest edge, `balanced` the smallest mismatch; ties go to no resistor, then the lower DRIVE.
+
+**Two answers per output group (brief 164, owner decision 30).** A finished board's series resistor (or its absence) cannot be changed, so the check prints and writes two answers for every output group (`OFFCHIP-PROPOSAL` lines, and `proposals[*].as_built` and `.optimal` in the JSON):
+
+1. **`as_built`: the best DRIVE and SLEW for the board as built.** The series resistor is the spec's `external.series_ohm`, or 0 ohm if there is none. Every allowed DRIVE and SLEW is simulated at all three corners; the passing ones are ranked by the group's priority. If none passes, the answer says so (`best` is null, the text says "NO setting meets every limit") and names the least bad setting (`least_bad`): the setting that meets the data sheet's 0.2 V overshoot and undershoot limit if any does, then the fewest other flags, then the smallest shortfall of the weak-corner edge against the house rule; `margin_to_limit_v` is 0.2 V minus its worst peak (negative: beyond the limit), and `fails` lists what it still fails.
+2. **`optimal`: the best series resistor with its DRIVE and SLEW, if the resistor can change.** The E-series values (0, 10, 15, 22, 27, 33 and 47 ohm) are all tried, as in the older proposal; `external.series_ohm` is ignored.
+
+`applies` is `as_built` when the group says `board_fixed: true` and `both` otherwise. DCI and `OUTPUT_IMPEDANCE` are not offered by either answer: the model has LVCMOS outputs only (`dci` in the JSON says so). `propose()` keeps its older behaviour (`mode="auto"`); `propose_two()` is the new function.
 
 **Reading the rule (what it proposes).**
 

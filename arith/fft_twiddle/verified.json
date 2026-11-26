@@ -1,0 +1,472 @@
+{
+ "counts": {
+  "agreed_delegated": 0,
+  "agreed_human": 0,
+  "draft": 6,
+  "items": 9,
+  "requirements": 6,
+  "stale_items": 1,
+  "verified": 1
+ },
+ "criteria": [
+  {
+   "detail": "5 of 6 requirements are not in state verified: FTW-F-MODEL (partially_verified), FTW-F-EXACT (partially_verified), FTW-F-LAT (partially_verified), FTW-F-BENCH (partially_verified), FTW-F-PACKAGE (stale)",
+   "id": "evidence",
+   "ids": [
+    "FTW-F-MODEL",
+    "FTW-F-EXACT",
+    "FTW-F-LAT",
+    "FTW-F-BENCH",
+    "FTW-F-PACKAGE"
+   ],
+   "state": "unmet",
+   "title": "Every requirement has passing evidence"
+  },
+  {
+   "detail": "0 agreed by a human, 0 agreed by delegation, 6 draft, 0 marked agreed without a record",
+   "id": "agreement",
+   "ids": [
+    "FTW-F-MODEL",
+    "FTW-F-EXACT",
+    "FTW-F-LAT",
+    "FTW-F-EQUIV",
+    "FTW-F-BENCH",
+    "FTW-F-PACKAGE"
+   ],
+   "state": "unmet",
+   "title": "Every requirement is agreed (human, or delegated and labelled so)"
+  },
+  {
+   "detail": "not yet measured: the required method mix per requirement kind is brief 143a; the collector does not supply it yet",
+   "id": "method_mix",
+   "ids": [],
+   "state": "not_measured",
+   "title": "Every requirement meets its required method mix"
+  },
+  {
+   "detail": "not yet measured: the mutation score and floor are brief 143b; the collector does not supply them yet",
+   "id": "mutation",
+   "ids": [],
+   "state": "not_measured",
+   "title": "The bench passes the mutation floor"
+  },
+  {
+   "detail": "not yet measured: the vacuity, assumption and depth checks are brief 143c; the collector does not supply them yet",
+   "id": "formal_rigour",
+   "ids": [],
+   "state": "not_measured",
+   "title": "The formal results pass the rigour checks"
+  },
+  {
+   "detail": "1 items are stale (a file they are about changed after the evidence was recorded)",
+   "id": "fresh",
+   "ids": [
+    "V-FTW-PACKAGE"
+   ],
+   "state": "unmet",
+   "title": "The evidence is fresh"
+  }
+ ],
+ "declared": null,
+ "definition": "docs/verified.md",
+ "git_commit": "d177bef65556fd364bd79e7057fca4be4c1a4eb1",
+ "kind": "arith",
+ "label": "verified except: 5 of 6 requirements without passing evidence; 6 of 6 requirements not agreed; required method mix not yet measured; mutation floor not yet measured; formal rigour not yet measured; 1 stale or differing evidence items",
+ "label_kind": "verified_except",
+ "limits": [
+  "Verified never means interoperability with a device the design talks to unless a board measurement against that device is listed in the record; a design that checks its own output against its own model accepts its own symmetric mistakes.",
+  "Verified never means timing beyond the stated corner: a post-route timing result is for the part, speed grade, clock and tool version in its evidence file, not for other corners, temperatures or devices.",
+  "Verified never means beyond the widths and depths checked: a simulation covers the vectors it ran, a bounded formal result covers the stated depth only, and a per-width proof covers the widths it names; only a Lean proof marked all widths covers every width, and only for its model.",
+  "Verified never means the requirement is the right one: the text of a requirement is the human's check (or the planner's, where the record says delegated), and a record shows that checks exist and pass, not that nothing was left out.",
+  "Verified never means a hardware or board result unless a board measurement item is listed; a simulation is not the board.",
+  "Verified is about the files in the manifest at the hashes given. A change to any of them makes the record out of date (the CI check fails), and the evidence stale until it is re-recorded.",
+  "An agreement or acceptance recorded as delegated is the planner's decision on the owner's delegation, not a human sign-off; the record counts it apart.",
+  "1 formal items are bounded model checks; each holds to its stated depth only: V-FTW-FORMAL-BOUNDED."
+ ],
+ "manifest": {
+  "arith/fft_common/fft_cos_rom.sv": "bcf1d079ba8a48d3757484ab8706051b46fa45046400eed1b7fe2ddd3cbbda38",
+  "arith/fft_common/fft_ref.py": "96a983692b9eac1d70ef32a874ace99a40c668cf5dcf746cfc93093f85fb54c5",
+  "arith/fft_twiddle/build/quarter/build.yaml": "70c5c8acb6752fbcb644b7d9839e2b9ad7fdf019ac8a6e97916319c91a22b448",
+  "arith/fft_twiddle/formal/fft_twiddle_fv.sv": "cd0078caccfc4ae3eac8558da96b557da8a09a0b0e2c7e16aeb811637da64e50",
+  "arith/fft_twiddle/formal/jobs.yaml": "dd1edc3ea0755c75521ddd739bc366595086c595d56710fed5b448735b44e28e",
+  "arith/fft_twiddle/model.py": "876354571717e7a04b0aa2400f2afd0ac64d4a23e9a5fdd2523a7767a57a877e",
+  "arith/fft_twiddle/rtl/fft_twiddle_quarter.sv": "f646b37f46b317abf8569372715d14be0ff9c7f0443e5740d703071145359f67",
+  "arith/fft_twiddle/spec.md": "dab4e7982208b96585eca123b5b2a44fcd634e7de982778c4fa044d9639d74f7",
+  "arith/fft_twiddle/spec.yaml": "c2cb3339c9b3889a8496e7fdbbb25acc8ca12bc601ccd1e98e93a369c86230cc",
+  "arith/fft_twiddle/tests/fft_twiddle_cocotb.py": "d7e3f90af9f663fc342e377a9b4232c09db6f59b1348e077e305fd1bf15d27ef",
+  "arith/fft_twiddle/verif/evidence_pins.yaml": "d4fb27a4abb12fb8e8af3e6bfa91be236ce3be2f9e27e6c88eb04da3cdde90a2",
+  "arith/fft_twiddle/verif/mutants.yaml": "3a52f31eb0bf04eb22e5c4f8cc0565412636ce95172dd9e603b550f5f9532c62",
+  "arith/fft_twiddle/verif/results/mutation.json": "01f3e0b72dcf851b519b581ce19fa118446f3fb9980f66a28ca98fecde052457",
+  "arith/fft_twiddle/verif/results/pytest_junit.xml": "70c2131849837b9233a2075c421fb6cc77b2e6644ad2c6470edcf2c8a186c525",
+  "arith/fft_twiddle/verif/testplan.yaml": "c1202750068d030c75d07067fe05374c739c0ec07e3da10512295a56de02722b"
+ },
+ "name": "fft_twiddle",
+ "notes": "Frequency-domain suite, function fft_twiddle (brief 148). Everything here is before Vivado: the model, the RTL variants, simulation, formal properties and the prepared out-of-context build files. No performance requirement on LUTs, DSPs, Fmax or power exists because none has been measured; the Vivado runs (build/<variant>/build.yaml, queued in _handoff/fpga_agent/vivado_later_queue.md) will add them. Every requirement is a draft written by the agent; none is agreed by a human. There are no Lean statements and no packaged harness for this suite (stated in the report). Generated by arith/tools/gen_testplan_fft.py.",
+ "path": "arith/fft_twiddle",
+ "reproduce": [
+  {
+   "cmd": "python -m pytest -q arith/fft_twiddle/tests",
+   "what": "the simulation tests"
+  }
+ ],
+ "requirements": [
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "FTW-F-MODEL",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-FTW-MODEL",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "arith/fft_twiddle/verif/results/pytest_junit.xml",
+     "record_sha256": "70c2131849837b9233a2075c421fb6cc77b2e6644ad2c6470edcf2c8a186c525",
+     "status": "pass",
+     "title": "The model against independent formulations and the pinned conventions"
+    }
+   ],
+   "items": [
+    "V-FTW-MODEL"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": false,
+   "missing_methods": [
+    "a simulation check from a bench the implementing agent did not write"
+   ],
+   "mix_satisfied": false,
+   "own_tests_only": true,
+   "passing_methods": [
+    "sim_test"
+   ],
+   "rests_on_delegated": false,
+   "source": "arith/fft_twiddle/spec.md",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "partially_verified",
+   "text": "arith/fft_twiddle/model.py gives, for every input, the result that spec.md defines. It agrees with an independent formulation (high-precision (60 decimal digit) cosines and sines of every angle, with the stated rounding error bound), and the conventions that a user could guess wrong (spec.md, last section) are pinned by examples.",
+   "title": "The bit-exact model is right",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "FTW-F-EXACT",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-FTW-DIRECTED",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "arith/fft_twiddle/verif/results/pytest_junit.xml",
+     "record_sha256": "70c2131849837b9233a2075c421fb6cc77b2e6644ad2c6470edcf2c8a186c525",
+     "status": "pass",
+     "title": "Every variant against the model at the small points (Icarus + cocotb): directed or exhaustive stimuli"
+    },
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-FTW-RANDOM",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "arith/fft_twiddle/verif/results/pytest_junit.xml",
+     "record_sha256": "70c2131849837b9233a2075c421fb6cc77b2e6644ad2c6470edcf2c8a186c525",
+     "status": "pass",
+     "title": "Every variant against the model at the large points: random stimuli (Icarus + cocotb)"
+    }
+   ],
+   "items": [
+    "V-FTW-DIRECTED",
+    "V-FTW-RANDOM"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": false,
+   "missing_methods": [
+    "a simulation check from a bench the implementing agent did not write"
+   ],
+   "mix_satisfied": false,
+   "own_tests_only": true,
+   "passing_methods": [
+    "sim_test"
+   ],
+   "rests_on_delegated": false,
+   "source": "arith/fft_twiddle/spec.md",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "partially_verified",
+   "text": "At every parameter point listed in spec.yaml (7 directed or exhaustive points, 3 random ones, across 1 variants), each variant's outputs equal the model's: every index of the circle is driven at every simulated point (up to the full 4096-point circle), and random indices at the others. The values are table entries, so there is no error bound beyond the stated rounding of the table.",
+   "title": "Every variant is bit-exact against the model",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "FTW-F-LAT",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-FTW-LATENCY",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "arith/fft_twiddle/verif/results/pytest_junit.xml",
+     "record_sha256": "70c2131849837b9233a2075c421fb6cc77b2e6644ad2c6470edcf2c8a186c525",
+     "status": "pass",
+     "title": "The bench passes at the stated latency and fails two clocks off, for every variant"
+    }
+   ],
+   "items": [
+    "V-FTW-LATENCY"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": false,
+   "missing_methods": [
+    "a simulation check from a bench the implementing agent did not write"
+   ],
+   "mix_satisfied": false,
+   "own_tests_only": true,
+   "passing_methods": [
+    "sim_test"
+   ],
+   "rests_on_delegated": false,
+   "source": "arith/fft_twiddle/spec.md",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "partially_verified",
+   "text": "Each variant's latency in clocks is the expression in spec.yaml (quarter: STAGES), and the bench, run with a latency two clocks off, fails for every variant, so the passing runs prove the latency rather than assume it.",
+   "title": "Latency is as specified and the bench would notice if it were not",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "FTW-F-EQUIV",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": 5,
+     "freshness": "fresh",
+     "id": "V-FTW-FORMAL-BOUNDED",
+     "instrument": null,
+     "method": "formal",
+     "mutation_score": null,
+     "record": "arith/fft_twiddle/verif/results/pytest_junit.xml",
+     "record_sha256": "70c2131849837b9233a2075c421fb6cc77b2e6644ad2c6470edcf2c8a186c525",
+     "status": "bounded",
+     "title": "Bounded model checks from an arbitrary state (4 jobs; depths in formal/jobs.yaml)"
+    },
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-FTW-FORMAL-REFUTE",
+     "instrument": null,
+     "method": "formal",
+     "mutation_score": null,
+     "record": "arith/fft_twiddle/verif/results/pytest_junit.xml",
+     "record_sha256": "70c2131849837b9233a2075c421fb6cc77b2e6644ad2c6470edcf2c8a186c525",
+     "status": "pass",
+     "title": "Each formal check refutes a planted fault (the check can fail)"
+    }
+   ],
+   "items": [
+    "V-FTW-FORMAL-BOUNDED",
+    "V-FTW-FORMAL-REFUTE"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": false,
+   "missing_methods": [],
+   "mix_satisfied": true,
+   "own_tests_only": false,
+   "passing_methods": [
+    "formal"
+   ],
+   "rests_on_delegated": false,
+   "source": "arith/fft_twiddle/formal/jobs.yaml",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "verified",
+   "text": "SymbiYosys with the slang front end checks the properties of formal/jobs.yaml: a proof is by k-induction (for all inputs, any run length) at the parameters listed there, a bounded check holds only to its stated depth. What the jobs say is in each job's `claim`; parameters beyond the listed ones are covered by simulation, not by proof.",
+   "title": "The properties named in formal/jobs.yaml hold, by proof where the tools allow",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "FTW-F-BENCH",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-FTW-MUTANT-TEST",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "arith/fft_twiddle/verif/results/pytest_junit.xml",
+     "record_sha256": "70c2131849837b9233a2075c421fb6cc77b2e6644ad2c6470edcf2c8a186c525",
+     "status": "pass",
+     "title": "The mutation run as a test: no mutant survives, none fails to build"
+    },
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-FTW-MUTANT-SCORE",
+     "instrument": null,
+     "method": "sim_measurement",
+     "mutation_score": null,
+     "record": "arith/fft_twiddle/verif/results/mutation.json",
+     "record_sha256": "01f3e0b72dcf851b519b581ce19fa118446f3fb9980f66a28ca98fecde052457",
+     "status": "pass",
+     "title": "Mutants killed of valid mutants (the record of the last full run)"
+    }
+   ],
+   "items": [
+    "V-FTW-MUTANT-TEST",
+    "V-FTW-MUTANT-SCORE"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": false,
+   "missing_methods": [
+    "a simulation check from a bench the implementing agent did not write"
+   ],
+   "mix_satisfied": false,
+   "own_tests_only": true,
+   "passing_methods": [
+    "sim_measurement",
+    "sim_test"
+   ],
+   "rests_on_delegated": false,
+   "source": "arith/fft_twiddle/verif/mutants.yaml",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "partially_verified",
+   "text": "Every one of the mutants in verif/mutants.yaml (one exact text change each: an inverted condition, a wrong constant, a dropped connection, a wrong width) makes the cocotb bench fail, or is argued equivalent in the file's header; mutants that survive or do not build are reported, never hidden.",
+   "title": "The bench catches seeded faults",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "FTW-F-PACKAGE",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "stale",
+     "id": "V-FTW-PACKAGE",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "arith/fft_twiddle/verif/results/pytest_junit.xml",
+     "record_sha256": "70c2131849837b9233a2075c421fb6cc77b2e6644ad2c6470edcf2c8a186c525",
+     "stale_because": "changed since the evidence was recorded: arith/fft_twiddle/build/quarter/build.yaml, arith/fft_twiddle/spec.md",
+     "status": "stale",
+     "title": "spec.yaml against the RTL headers, spec.md against spec.yaml, Verilator -Wall at every point, wrappers and build.yaml current and lint-clean"
+    }
+   ],
+   "items": [
+    "V-FTW-PACKAGE"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": false,
+   "missing_methods": [],
+   "mix_satisfied": false,
+   "own_tests_only": false,
+   "passing_methods": [],
+   "rests_on_delegated": false,
+   "source": "arith/fft_twiddle/spec.yaml",
+   "spec_status": "draft",
+   "stale_items": 1,
+   "state": "stale",
+   "text": "spec.yaml states an interface contract (protocol, throughput, latency, reset, clock, stalls) and integration guidance (port timing, constraints to carry). Every variant passes Verilator -Wall at every point of spec.yaml; its ports and default parameters are the ones spec.yaml states; its header states the intended primitive use before any Vivado run; spec.md is the rendering of spec.yaml; the out-of-context wrapper and the build.yaml for each variant (Artix-7 xc7a100t and K26 xck26, prepared and not run) are current and lint-clean at every point they list, so a Vivado run can start from the repository alone.",
+   "title": "The RTL is lint-clean, and its files agree with the specification and with the Vivado build files",
+   "waivers": []
+  }
+ ],
+ "schema": "fda-verified/1",
+ "summary_line": "6 requirements (6 functional); 1 verified; 4 partially verified (the required mix of methods is not met); 1 stale; 0 of 6 requirements agreed by a human, 0 agreed on the owner's delegation (not human), 6 draft; 4 resting only on the implementing agent's own tests; 0 human and 0 delegated review(s) recorded."
+}

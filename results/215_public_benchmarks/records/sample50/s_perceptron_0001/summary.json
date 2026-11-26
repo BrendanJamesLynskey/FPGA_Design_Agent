@@ -1,0 +1,149 @@
+{
+ "run_id": "20261125-165133-fd19",
+ "design": "s_perceptron_0001",
+ "model": "claude-sonnet-5-5",
+ "harness": "claude_code",
+ "claude_code_version": "2.1.321 (Claude Code)",
+ "plan_cost_estimate_usd": 2.8429,
+ "harness_arm": "H1",
+ "profile": "single",
+ "role_models": {
+  "clarify": {
+   "harness": "claude_code",
+   "model": "claude-sonnet-5-5",
+   "effort": "medium"
+  },
+  "model": {
+   "harness": "claude_code",
+   "model": "claude-sonnet-5-5",
+   "effort": "medium"
+  },
+  "tests": {
+   "harness": "claude_code",
+   "model": "claude-sonnet-5-5",
+   "effort": "medium"
+  },
+  "rtl": {
+   "harness": "claude_code",
+   "model": "claude-sonnet-5-5",
+   "effort": "medium"
+  }
+ },
+ "model_table_hash": "cf7e384e575f8c93",
+ "per_role": {
+  "clarify": {
+   "calls": 2,
+   "turns": 4,
+   "tokens": 58485,
+   "wall_s": 61.1,
+   "cost_usd": 0.0,
+   "plan_cost_estimate_usd": 0.2022
+  },
+  "rtl": {
+   "calls": 8,
+   "turns": 93,
+   "tokens": 2172576,
+   "wall_s": 596.5,
+   "cost_usd": 0.0,
+   "plan_cost_estimate_usd": 2.037
+  },
+  "model": {
+   "calls": 1,
+   "turns": 2,
+   "tokens": 17353,
+   "wall_s": 20.1,
+   "cost_usd": 0.0,
+   "plan_cost_estimate_usd": 0.056
+  },
+  "tests": {
+   "calls": 2,
+   "turns": 18,
+   "tokens": 391904,
+   "wall_s": 144.8,
+   "cost_usd": 0.0,
+   "plan_cost_estimate_usd": 0.5477
+  }
+ },
+ "per_stage": {
+  "clarify": {
+   "calls": 2,
+   "turns": 4,
+   "tokens": 58485,
+   "wall_s": 61.1,
+   "cost_usd": 0.0,
+   "plan_cost_estimate_usd": 0.2022
+  },
+  "board-and-device-planning": {
+   "calls": 2,
+   "turns": 10,
+   "tokens": 142531,
+   "wall_s": 29.5,
+   "cost_usd": 0.0,
+   "plan_cost_estimate_usd": 0.1587
+  },
+  "rtl-design-creation": {
+   "calls": 9,
+   "turns": 103,
+   "tokens": 2439302,
+   "wall_s": 731.9,
+   "cost_usd": 0.0,
+   "plan_cost_estimate_usd": 2.482
+  }
+ },
+ "stages_visited": [
+  0,
+  0,
+  1,
+  1,
+  2,
+  2,
+  2,
+  2,
+  2,
+  2,
+  2
+ ],
+ "loops": 8,
+ "tokens": 2640318,
+ "cost_usd": 0.0,
+ "unreported_cost_calls": 0,
+ "token_split": {
+  "input": 0,
+  "output": 0,
+  "cache_write": 0,
+  "cache_read": 0
+ },
+ "budget_scale": 2.0,
+ "turns": 117,
+ "wall_s": 722.8,
+ "stop": "stage 2 visited more than 6 times; last failing gate: simulate, design standards; owned by the rtl role; last failing assertion: test_perceptron_gates_rtl: Traceback (most recent call last): | File \"/home/brendan/Claude_sandbox/_worktrees/215-public-benchmarks/runs/20261125-165133-fd19/s_perceptron_0001/tests/perceptron_bench.py\", line 131, in test_and_training (runs",
+ "stop_detail": {
+  "stage": 2,
+  "limit": 6,
+  "gates": [
+   "simulate",
+   "design standards"
+  ],
+  "roles": [
+   "rtl"
+  ],
+  "owners_last_visit": [
+   "rtl"
+  ],
+  "last_failing_assertion": "test_perceptron_gates_rtl: Traceback (most recent call last): | File \"/home/brendan/Claude_sandbox/_worktrees/215-public-benchmarks/runs/20261125-165133-fd19/s_perceptron_0001/tests/perceptron_bench.py\", line 131, in test_and_training (runs",
+  "same_signature_visits": 1,
+  "last_fails": [
+   "simulate not passing",
+   "standards STD-RST-01: rtl/perceptron_gates.sv:49: module perceptron_gates: negedge rst_n in the sensitivity list of a sequential block: an asynchronous reset",
+   "rtl: did not run (no gates record)"
+  ]
+ },
+ "clean_stop": false,
+ "knowledge_bank": {
+  "root": "215-kb",
+  "chosen_by": "FDA_KNOWLEDGE",
+  "present": true,
+  "loaded": true,
+  "head": "6185830"
+ }
+}

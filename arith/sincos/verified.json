@@ -1,0 +1,818 @@
+{
+ "counts": {
+  "agreed_delegated": 0,
+  "agreed_human": 0,
+  "draft": 12,
+  "items": 15,
+  "requirements": 12,
+  "stale_items": 0,
+  "verified": 1
+ },
+ "criteria": [
+  {
+   "detail": "11 of 12 requirements are not in state verified: SIN-F-MODEL (partially_verified), SIN-F-EXACT (partially_verified), SIN-F-ACC (partially_verified), SIN-F-LAT (partially_verified), SIN-F-BENCH (partially_verified), SIN-F-HARNESS (partially_verified), SIN-F-PACKAGE (partially_verified), SIN-F-LEAN-QUAD-SPLIT (unapproved), SIN-F-LEAN-QUAD-JOIN (unapproved), SIN-F-LEAN-LERP (unapproved), SIN-F-LEAN-CIRC (unapproved)",
+   "id": "evidence",
+   "ids": [
+    "SIN-F-MODEL",
+    "SIN-F-EXACT",
+    "SIN-F-ACC",
+    "SIN-F-LAT",
+    "SIN-F-BENCH",
+    "SIN-F-HARNESS",
+    "SIN-F-PACKAGE",
+    "SIN-F-LEAN-QUAD-SPLIT",
+    "SIN-F-LEAN-QUAD-JOIN",
+    "SIN-F-LEAN-LERP",
+    "SIN-F-LEAN-CIRC"
+   ],
+   "state": "unmet",
+   "title": "Every requirement has passing evidence"
+  },
+  {
+   "detail": "0 agreed by a human, 0 agreed by delegation, 12 draft, 0 marked agreed without a record",
+   "id": "agreement",
+   "ids": [
+    "SIN-F-MODEL",
+    "SIN-F-EXACT",
+    "SIN-F-ACC",
+    "SIN-F-LAT",
+    "SIN-F-EQUIV",
+    "SIN-F-BENCH",
+    "SIN-F-HARNESS",
+    "SIN-F-PACKAGE",
+    "SIN-F-LEAN-QUAD-SPLIT",
+    "SIN-F-LEAN-QUAD-JOIN",
+    "SIN-F-LEAN-LERP",
+    "SIN-F-LEAN-CIRC"
+   ],
+   "state": "unmet",
+   "title": "Every requirement is agreed (human, or delegated and labelled so)"
+  },
+  {
+   "detail": "not yet measured: the required method mix per requirement kind is brief 143a; the collector does not supply it yet",
+   "id": "method_mix",
+   "ids": [],
+   "state": "not_measured",
+   "title": "Every requirement meets its required method mix"
+  },
+  {
+   "detail": "not yet measured: the mutation score and floor are brief 143b; the collector does not supply them yet",
+   "id": "mutation",
+   "ids": [],
+   "state": "not_measured",
+   "title": "The bench passes the mutation floor"
+  },
+  {
+   "detail": "not yet measured: the vacuity, assumption and depth checks are brief 143c; the collector does not supply them yet",
+   "id": "formal_rigour",
+   "ids": [],
+   "state": "not_measured",
+   "title": "The formal results pass the rigour checks"
+  },
+  {
+   "detail": "no item is stale by its pins; the nightly fresh re-run comparison is brief 143d and not yet measured",
+   "id": "fresh",
+   "ids": [],
+   "state": "not_measured",
+   "title": "The evidence is fresh"
+  }
+ ],
+ "declared": null,
+ "definition": "docs/verified.md",
+ "git_commit": "d177bef65556fd364bd79e7057fca4be4c1a4eb1",
+ "kind": "arith",
+ "label": "verified except: 11 of 12 requirements without passing evidence; 12 of 12 requirements not agreed; required method mix not yet measured; mutation floor not yet measured; formal rigour not yet measured; fresh re-run not yet measured",
+ "label_kind": "verified_except",
+ "limits": [
+  "Verified never means interoperability with a device the design talks to unless a board measurement against that device is listed in the record; a design that checks its own output against its own model accepts its own symmetric mistakes.",
+  "Verified never means timing beyond the stated corner: a post-route timing result is for the part, speed grade, clock and tool version in its evidence file, not for other corners, temperatures or devices.",
+  "Verified never means beyond the widths and depths checked: a simulation covers the vectors it ran, a bounded formal result covers the stated depth only, and a per-width proof covers the widths it names; only a Lean proof marked all widths covers every width, and only for its model.",
+  "Verified never means the requirement is the right one: the text of a requirement is the human's check (or the planner's, where the record says delegated), and a record shows that checks exist and pass, not that nothing was left out.",
+  "Verified never means a hardware or board result unless a board measurement item is listed; a simulation is not the board.",
+  "Verified is about the files in the manifest at the hashes given. A change to any of them makes the record out of date (the CI check fails), and the evidence stale until it is re-recorded.",
+  "An agreement or acceptance recorded as delegated is the planner's decision on the owner's delegation, not a human sign-off; the record counts it apart."
+ ],
+ "manifest": {
+  "arith/sincos/build/cordic/build.yaml": "3b145f2ee1acc4a7cb39c2b83600b2a7168d24e2fdbaf801e959efd40672d9bb",
+  "arith/sincos/build/lerp/build.yaml": "018fb568d1d4745da2e04637fbd60fff6568ba9597f527857ed8875e5df54808",
+  "arith/sincos/build/poly2/build.yaml": "539b4a3b10f0adb1090fa90903b5141a06df7bec9ec86ed6202bd95d9de73297",
+  "arith/sincos/formal/jobs.yaml": "dc6aaeb1da05f1ee4895344507bf77b017434d67bcd0e18a32a25f4eef1cdfe7",
+  "arith/sincos/formal/sincos_fv.sv": "47de65f242c0d1f3a54d3e479af48d16ca011e786bfdec90c4ca00d8f98bcb4d",
+  "arith/sincos/formal/sincos_ref.sv": "c34f0b3157db86c4b011a27f9fc3d0b7b6e5753798a824fc94c0cce4685e500f",
+  "arith/sincos/harness/assertions.sv": "722fab26f3e93b65d5e04735d6e9f22638baf835336c56d6a36954c2a1cf3e21",
+  "arith/sincos/harness/bench.py": "ab97410cb5dda3c4fc1ae1c695ada3fdd6a7cb45fb14adc56e8f0021d864977f",
+  "arith/sincos/harness/chk_top.sv": "3a2f6768b9e0d9cf169fef72c029a007e2c39f5f534f3745853e0474d0b07a5d",
+  "arith/sincos/harness/coverage.yaml": "8a31191d489d948e4b6348e14830944da5be20dc4a53cf8c4977a2b37a838a3d",
+  "arith/sincos/harness/model.py": "d3d9f6a7e80095d15dbfb667e7938f3dadf33a20699d640c52a53e9505e4fe83",
+  "arith/sincos/harness/run_harness.py": "7b5c4d8f3c281deaa036aafc68a9290a6caebbde5dfaa61b6a86fc6f027f1fb2",
+  "arith/sincos/model.py": "823f53d5e95b6dc209a5544b6cd3ebd78283db30b6dbd0ef2d8976ca2c001d9f",
+  "arith/sincos/rtl/sincos_cordic.sv": "1313630d7243e1d57ba291186ade2d4472898a0a3e8ccecb5653fa9f7b22445e",
+  "arith/sincos/rtl/sincos_lerp.sv": "2f230183941b9a4a4c5966f96ccee6b38c49e22d6cad5bf855d9fb222c85f48f",
+  "arith/sincos/rtl/sincos_poly2.sv": "1b06841336a735cec88079445487df8c115ca5f6e1e9bfd259cf04921a9d5477",
+  "arith/sincos/spec.md": "f8aad9407a60d8e921706528133b94bcfe955a3ee1d8ebe21992ed1e8db3f700",
+  "arith/sincos/spec.yaml": "67eca205e5946a1408ac65f00f39e84b85bfa9a2a74e5c7465294d39b2efa26a",
+  "arith/sincos/tests/sincos_cocotb.py": "965c581f172f93c3610ca35c9a2387d64fcb3db3011ae55909e8be6621200716",
+  "arith/sincos/verif/evidence_pins.yaml": "1bcee9f735599ac25ff7b83555928584ed0101a6cc040107a841b91856e52744",
+  "arith/sincos/verif/lean_approvals.yaml": "ea6cf9e9bdb77deaaa6837132036cb5757dd28d4e9ac71d2fc9d3fe0baeb91bf",
+  "arith/sincos/verif/mutants.yaml": "1a7a2a5c465ff0bb5a2fe11c57440cf8f0abf405df80d28c5e0f805abc2f1e60",
+  "arith/sincos/verif/results/mutation.json": "ba80b30cf12f9fef2bd642ee79ea67a376b08e46dc9fa9ad22a2d5b72ea18632",
+  "arith/sincos/verif/results/pytest_junit.xml": "b5a9e819122b53bf5f643dfbe9f10c987c8c6ee976ac0d9dc55b829e5cd047e8",
+  "arith/sincos/verif/testplan.yaml": "b11cbb21140265deb2909cece8ef35139aa22bb8c203c9f691b63e89c4f3d3e4",
+  "arith/tools/fxlib.py": "87fd537c6a069055278b9a556c8de4b0bdc8bb441193abf5a21ebed4338e7a4d",
+  "formal/lean/records/build_record.json": "3d60b1f76ac87b74d5dcbe085c0eb8e43e0287d69d5fa557490a685624e6c4f6"
+ },
+ "name": "sincos",
+ "notes": "Arithmetic library, function sincos (brief 139d). Everything here is before Vivado: the model, the RTL variants, simulation, formal equivalence, Lean statements and the prepared out-of-context build files. No performance requirement exists because nothing about LUTs, DSPs, Fmax or power has been measured yet; the Vivado runs (build/<variant>/build.yaml) will add them. Every requirement is a draft written by the agent; none is agreed by a human. Lean statements are not approved. Generated by arith/tools/gen_testplan.py.",
+ "path": "arith/sincos",
+ "reproduce": [
+  {
+   "cmd": "python -m pytest -q arith/sincos/tests",
+   "what": "the simulation tests"
+  }
+ ],
+ "requirements": [
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "SIN-F-MODEL",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-SIN-MODEL",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "arith/sincos/verif/results/pytest_junit.xml",
+     "record_sha256": "b5a9e819122b53bf5f643dfbe9f10c987c8c6ee976ac0d9dc55b829e5cd047e8",
+     "status": "pass",
+     "title": "The model against independent formulations (exhaustive small, random large) and the pinned conventions"
+    }
+   ],
+   "items": [
+    "V-SIN-MODEL"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": false,
+   "missing_methods": [
+    "a simulation check from a bench the implementing agent did not write"
+   ],
+   "mix_satisfied": false,
+   "own_tests_only": true,
+   "passing_methods": [
+    "sim_test"
+   ],
+   "rests_on_delegated": false,
+   "source": "arith/sincos/spec.md",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "partially_verified",
+   "text": "arith/sincos/model.py gives, for every input, the result that spec.md defines. It agrees with an independent formulation (an exact rational (Fraction) evaluation of the interpolation formula, a floating-point CORDIC, and the maths library's sin and cos) on every input at small widths and with Python's integer arithmetic on random large-width inputs, and the conventions that a user could guess wrong (spec.md, last section) are pinned by examples.",
+   "title": "The bit-exact model is right",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "SIN-F-EXACT",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-SIN-EXHAUSTIVE",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "arith/sincos/verif/results/pytest_junit.xml",
+     "record_sha256": "b5a9e819122b53bf5f643dfbe9f10c987c8c6ee976ac0d9dc55b829e5cd047e8",
+     "status": "pass",
+     "title": "Every variant against the model, every input, at the small points (Icarus + cocotb)"
+    },
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-SIN-RANDOM",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "arith/sincos/verif/results/pytest_junit.xml",
+     "record_sha256": "b5a9e819122b53bf5f643dfbe9f10c987c8c6ee976ac0d9dc55b829e5cd047e8",
+     "status": "pass",
+     "title": "Every variant against the model at the large points: edge values, carry runs and random inputs (Icarus + cocotb)"
+    }
+   ],
+   "items": [
+    "V-SIN-EXHAUSTIVE",
+    "V-SIN-RANDOM"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": false,
+   "missing_methods": [
+    "a simulation check from a bench the implementing agent did not write"
+   ],
+   "mix_satisfied": false,
+   "own_tests_only": true,
+   "passing_methods": [
+    "sim_test"
+   ],
+   "rests_on_delegated": false,
+   "source": "arith/sincos/spec.md",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "partially_verified",
+   "text": "At every parameter point listed in spec.yaml (16 exhaustive points, 9 random ones, across 3 variants), each variant's outputs equal its own model's (model.py, selected by variant) in every clock: every input is driven at the small points; edge values, table break points and random inputs at the large ones. The variants round differently and are not bit-identical to each other; the model of each is the bit-exact definition of that variant, and its distance from the exact function is the accuracy requirement.",
+   "title": "Every variant is bit-exact against its own model",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "SIN-F-ACC",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-SIN-ACCURACY",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "arith/sincos/verif/results/pytest_junit.xml",
+     "record_sha256": "b5a9e819122b53bf5f643dfbe9f10c987c8c6ee976ac0d9dc55b829e5cd047e8",
+     "status": "pass",
+     "title": "The model's error against the exact function over every input of every listed point, against the stated bounds"
+    }
+   ],
+   "items": [
+    "V-SIN-ACCURACY"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": false,
+   "missing_methods": [
+    "a simulation check from a bench the implementing agent did not write"
+   ],
+   "mix_satisfied": false,
+   "own_tests_only": true,
+   "passing_methods": [
+    "sim_test"
+   ],
+   "rests_on_delegated": false,
+   "source": "arith/sincos/spec.md",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "partially_verified",
+   "text": "Each of the 9 accuracy points of spec.yaml states a bound in last places; the model's error against the exact function (the maths library, real arithmetic, unrounded) over EVERY input of that point is at most the bound and within 0.06 of it (so the bound is neither false nor loose). A point not listed has no stated bound.",
+   "title": "The error against the exact function is within the stated bound, at every listed point",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "SIN-F-LAT",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-SIN-LATENCY",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "arith/sincos/verif/results/pytest_junit.xml",
+     "record_sha256": "b5a9e819122b53bf5f643dfbe9f10c987c8c6ee976ac0d9dc55b829e5cd047e8",
+     "status": "pass",
+     "title": "The bench passes at the stated latency and fails two clocks off, for every variant"
+    }
+   ],
+   "items": [
+    "V-SIN-LATENCY"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": false,
+   "missing_methods": [
+    "a simulation check from a bench the implementing agent did not write"
+   ],
+   "mix_satisfied": false,
+   "own_tests_only": true,
+   "passing_methods": [
+    "sim_test"
+   ],
+   "rests_on_delegated": false,
+   "source": "arith/sincos/spec.md",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "partially_verified",
+   "text": "Each variant's latency in clocks is the expression in spec.yaml (lerp: 2; poly2: 3; cordic: NIT), and the bench, run with a latency two clocks off, fails for every variant, so the passing runs prove the latency rather than assume it.",
+   "title": "Latency is as specified and the bench would notice if it were not",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "SIN-F-EQUIV",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-SIN-FORMAL-PROOF",
+     "instrument": null,
+     "method": "formal",
+     "mutation_score": null,
+     "record": "arith/sincos/verif/results/pytest_junit.xml",
+     "record_sha256": "b5a9e819122b53bf5f643dfbe9f10c987c8c6ee976ac0d9dc55b829e5cd047e8",
+     "status": "pass",
+     "title": "k-induction proofs of the variants' error bounds against the exact function (6 jobs; widths in formal/jobs.yaml)"
+    },
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-SIN-FORMAL-REFUTE",
+     "instrument": null,
+     "method": "formal",
+     "mutation_score": null,
+     "record": "arith/sincos/verif/results/pytest_junit.xml",
+     "record_sha256": "b5a9e819122b53bf5f643dfbe9f10c987c8c6ee976ac0d9dc55b829e5cd047e8",
+     "status": "pass",
+     "title": "Each formal check refutes a planted fault (the check can fail)"
+    }
+   ],
+   "items": [
+    "V-SIN-FORMAL-PROOF",
+    "V-SIN-FORMAL-REFUTE"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": false,
+   "missing_methods": [],
+   "mix_satisfied": true,
+   "own_tests_only": false,
+   "passing_methods": [
+    "formal"
+   ],
+   "rests_on_delegated": false,
+   "source": "arith/sincos/formal/jobs.yaml",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "verified",
+   "text": "SymbiYosys with the slang front end compares each variant, delayed by its latency, with the exact function on 8 input bits to 24 fractional bits (a reference ROM written from the maths library, formal/*_ref.sv) and asserts the error stays within the bound of the job, which is the model's measured error at that point plus one unit for the reference's own rounding. A proof is by k-induction (for all inputs, any run length) at the widths in formal/jobs.yaml; wider points are covered by the exhaustive scan of the accuracy requirement and by simulation, not by proof. The quadrant map and the variants' structural identities are inside the checks.",
+   "title": "The error against the exact function is bounded for all inputs, by proof, at a small input width",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "SIN-F-BENCH",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-SIN-MUTANT-TEST",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "arith/sincos/verif/results/pytest_junit.xml",
+     "record_sha256": "b5a9e819122b53bf5f643dfbe9f10c987c8c6ee976ac0d9dc55b829e5cd047e8",
+     "status": "pass",
+     "title": "The mutation run as a test: no mutant survives, none fails to build"
+    },
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-SIN-MUTANT-SCORE",
+     "instrument": null,
+     "method": "sim_measurement",
+     "mutation_score": null,
+     "record": "arith/sincos/verif/results/mutation.json",
+     "record_sha256": "ba80b30cf12f9fef2bd642ee79ea67a376b08e46dc9fa9ad22a2d5b72ea18632",
+     "status": "pass",
+     "title": "Mutants killed of valid mutants (the record of the last full run)"
+    }
+   ],
+   "items": [
+    "V-SIN-MUTANT-TEST",
+    "V-SIN-MUTANT-SCORE"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": false,
+   "missing_methods": [
+    "a simulation check from a bench the implementing agent did not write"
+   ],
+   "mix_satisfied": false,
+   "own_tests_only": true,
+   "passing_methods": [
+    "sim_measurement",
+    "sim_test"
+   ],
+   "rests_on_delegated": false,
+   "source": "arith/sincos/verif/mutants.yaml",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "partially_verified",
+   "text": "Every one of the mutants in verif/mutants.yaml (one exact text change each, in the variant's RTL: an inverted condition, a wrong constant, a dropped connection, a lost reset) makes the cocotb bench fail; mutants that survive or do not build are reported, never hidden.",
+   "title": "The bench catches seeded faults",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "SIN-F-HARNESS",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-SIN-HARNESS",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "arith/sincos/verif/results/pytest_junit.xml",
+     "record_sha256": "b5a9e819122b53bf5f643dfbe9f10c987c8c6ee976ac0d9dc55b829e5cd047e8",
+     "status": "pass",
+     "title": "The packaged harness run standalone on every variant (with the checker and the coverage targets) and on a planted fault"
+    }
+   ],
+   "items": [
+    "V-SIN-HARNESS"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": false,
+   "missing_methods": [
+    "a simulation check from a bench the implementing agent did not write"
+   ],
+   "mix_satisfied": false,
+   "own_tests_only": true,
+   "passing_methods": [
+    "sim_test"
+   ],
+   "rests_on_delegated": false,
+   "source": "arith/sincos/harness/README.md",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "partially_verified",
+   "text": "arith/sincos/harness holds the model, the cocotb bench, a SystemVerilog checker, coverage targets and a runner that needs nothing else from the repository. Run standalone against every variant (one small exhaustive point and one large random point each, with the checker beside the instance) it passes and the random runs meet every coverage target; run against a planted fault it fails, with and without the checker. Its generated files are the repository's own bench, so they cannot drift.",
+   "title": "The packaged verification harness is a standalone deliverable that works",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "SIN-F-PACKAGE",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-SIN-PACKAGE",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "arith/sincos/verif/results/pytest_junit.xml",
+     "record_sha256": "b5a9e819122b53bf5f643dfbe9f10c987c8c6ee976ac0d9dc55b829e5cd047e8",
+     "status": "pass",
+     "title": "spec.yaml against the RTL headers, spec.md against spec.yaml, Verilator -Wall at every point, wrappers and build.yaml current and lint-clean"
+    }
+   ],
+   "items": [
+    "V-SIN-PACKAGE"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": false,
+   "missing_methods": [
+    "a simulation check from a bench the implementing agent did not write"
+   ],
+   "mix_satisfied": false,
+   "own_tests_only": true,
+   "passing_methods": [
+    "sim_test"
+   ],
+   "rests_on_delegated": false,
+   "source": "arith/sincos/spec.yaml",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "partially_verified",
+   "text": "spec.yaml states an interface contract (protocol, throughput, latency, reset, clock, stalls) and integration guidance (port timing, constraints to carry). Every variant passes Verilator -Wall at every point of spec.yaml; its ports and default parameters are the ones spec.yaml states; its header states the intended primitive use before any Vivado run; spec.md is the rendering of spec.yaml; the out-of-context wrapper and the build.yaml for each variant (Artix-7 xc7a100t and K26 xck26, prepared and not run) are current and lint-clean at every point they list, so a Vivado run can start from the repository alone.",
+   "title": "The RTL is lint-clean, and its files agree with the specification and with the Vivado build files",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "SIN-F-LEAN-QUAD-SPLIT",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-SIN-LEAN-QUAD-SPLIT",
+     "instrument": null,
+     "lean": {
+      "build_source": "recorded build (not re-run)",
+      "rtl_link": "transcription_untested",
+      "tier": "kernel_only"
+     },
+     "method": "formal_lean",
+     "mutation_score": null,
+     "record": "formal/lean/records/build_record.json",
+     "record_sha256": "3d60b1f76ac87b74d5dcbe085c0eb8e43e0287d69d5fa557490a685624e6c4f6",
+     "status": "unapproved",
+     "title": "The phase splits into a quadrant and an angle without loss"
+    }
+   ],
+   "items": [
+    "V-SIN-LEAN-QUAD-SPLIT"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": false,
+   "missing_methods": [],
+   "mix_satisfied": false,
+   "own_tests_only": false,
+   "passing_methods": [],
+   "rests_on_delegated": false,
+   "source": "arith/sincos/rtl/sincos_lerp.sv (the bit-field split of the phase)",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "unapproved",
+   "text": "For every width k, a phase below 4 * 2^k splits into a quadrant (its top two bits) below 4 and an angle (the rest) so that quadrant * 2^k + angle is the phase again. The statement is the specification and is NOT approved by a human (verif/lean_approvals.yaml is empty), so the proof is shown but not counted as verification. The Lean text is a hand transcription of the RTL's structure; it models no timing or clocking.",
+   "title": "The phase splits into a quadrant and an angle without loss, for every width",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "SIN-F-LEAN-QUAD-JOIN",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-SIN-LEAN-QUAD-JOIN",
+     "instrument": null,
+     "lean": {
+      "build_source": "recorded build (not re-run)",
+      "rtl_link": "transcription_untested",
+      "tier": "kernel_only"
+     },
+     "method": "formal_lean",
+     "mutation_score": null,
+     "record": "formal/lean/records/build_record.json",
+     "record_sha256": "3d60b1f76ac87b74d5dcbe085c0eb8e43e0287d69d5fa557490a685624e6c4f6",
+     "status": "unapproved",
+     "title": "Every quadrant and angle pair is one phase"
+    }
+   ],
+   "items": [
+    "V-SIN-LEAN-QUAD-JOIN"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": false,
+   "missing_methods": [],
+   "mix_satisfied": false,
+   "own_tests_only": false,
+   "passing_methods": [],
+   "rests_on_delegated": false,
+   "source": "arith/sincos/rtl/sincos_lerp.sv (the bit-field split of the phase)",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "unapproved",
+   "text": "For every width k, any quadrant and any angle below 2^k put together split back into the same quadrant and the same angle: the split is a bijection. The statement is the specification and is NOT approved by a human (verif/lean_approvals.yaml is empty), so the proof is shown but not counted as verification. The Lean text is a hand transcription of the RTL's structure; it models no timing or clocking.",
+   "title": "Every quadrant and angle pair is one phase, for every width",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "SIN-F-LEAN-LERP",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-SIN-LEAN-LERP",
+     "instrument": null,
+     "lean": {
+      "build_source": "recorded build (not re-run)",
+      "rtl_link": "transcription_untested",
+      "tier": "kernel_only"
+     },
+     "method": "formal_lean",
+     "mutation_score": null,
+     "record": "formal/lean/records/build_record.json",
+     "record_sha256": "3d60b1f76ac87b74d5dcbe085c0eb8e43e0287d69d5fa557490a685624e6c4f6",
+     "status": "unapproved",
+     "title": "Linear interpolation stays between the segment's end values"
+    }
+   ],
+   "items": [
+    "V-SIN-LEAN-LERP"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": false,
+   "missing_methods": [],
+   "mix_satisfied": false,
+   "own_tests_only": false,
+   "passing_methods": [],
+   "rests_on_delegated": false,
+   "source": "arith/sincos/rtl/sincos_lerp.sv (the product, sum and shift lines of the interpolation)",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "unapproved",
+   "text": "In a rising segment with break-point value c0 and slope s, the interpolated value (c0 * 2^D + s * d) / 2^D lies between c0 and c0 + s for every position d below 2^D and every D: the table variant cannot overshoot its segment. The statement is the specification and is NOT approved by a human (verif/lean_approvals.yaml is empty), so the proof is shown but not counted as verification. The Lean text is a hand transcription of the RTL's structure; it models no timing or clocking.",
+   "title": "Linear interpolation stays between the segment's end values, for every width",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "SIN-F-LEAN-CIRC",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-SIN-LEAN-CIRC",
+     "instrument": null,
+     "lean": {
+      "build_source": "recorded build (not re-run)",
+      "rtl_link": "transcription_untested",
+      "tier": "kernel_only"
+     },
+     "method": "formal_lean",
+     "mutation_score": null,
+     "record": "formal/lean/records/build_record.json",
+     "record_sha256": "3d60b1f76ac87b74d5dcbe085c0eb8e43e0287d69d5fa557490a685624e6c4f6",
+     "status": "unapproved",
+     "title": "A circular CORDIC step scales the squared length by a constant"
+    }
+   ],
+   "items": [
+    "V-SIN-LEAN-CIRC"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": false,
+   "missing_methods": [],
+   "mix_satisfied": false,
+   "own_tests_only": false,
+   "passing_methods": [],
+   "rests_on_delegated": false,
+   "source": "arith/sincos/rtl/sincos_cordic.sv (the x and y adders of one stage)",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "unapproved",
+   "text": "For every direction d = +-1 and every shift (scaled by u = 2^i), the step (u x - d y, u y + d x) multiplies x^2 + y^2 by exactly u^2 + 1, whatever the data: the CORDIC gain is a data-independent constant. The statement is the specification and is NOT approved by a human (verif/lean_approvals.yaml is empty), so the proof is shown but not counted as verification. The Lean text is a hand transcription of the RTL's structure; it models no timing or clocking.",
+   "title": "A circular CORDIC step scales the squared length by a constant, for every width",
+   "waivers": []
+  }
+ ],
+ "schema": "fda-verified/1",
+ "summary_line": "12 requirements (12 functional); 1 verified; 7 partially verified (the required mix of methods is not met); 0 of 12 requirements agreed by a human, 0 agreed on the owner's delegation (not human), 12 draft; 7 resting only on the implementing agent's own tests; 0 human and 0 delegated review(s) recorded; 4 Lean proof item(s) (all widths): 0 with a human-approved statement, 0 with a statement accepted on the owner's delegation (not a human approval), 4 with statement not approved; 4 kernel only, 0 using a compiled decision procedure; build status from: recorded build (not re-run)."
+}

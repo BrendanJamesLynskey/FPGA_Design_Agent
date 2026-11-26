@@ -1,5 +1,7 @@
 # results/146_verilator_cov: RTL code coverage of the b96 PCS and MAC pyuvm bench with Verilator (brief 146)
 
+> Brief 158 (`results/158_cov_closure/`) later drove the underrun and proved the two ifg conditions unreachable; this record is kept as it was, and the testplan items read the 158 record now.
+
 The brief-123 pyuvm bench (`designs/b96_kr260_10g/verif/pyuvm`) run on **Verilator 5.048** (cocotb 2.0.1, pyuvm 5.0.0) with `--coverage`: line, branch, expression and toggle coverage of `pcs_tx`, `pcs_rx`, `mac64_tx`, `mac64_rx` and `b96_pkg`, merged over the full 42-run regression (eleven directed tests over 2 seeds, `t_rand` and `t_rand_line` over 10 seeds each). The xsim UVM bench of brief 112 has no code coverage (`xcrg` is refused on the Basic licence tier). No RTL file was changed.
 
 ## Reproduce

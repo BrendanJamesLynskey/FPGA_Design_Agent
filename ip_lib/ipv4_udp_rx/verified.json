@@ -1,0 +1,87 @@
+{
+ "counts": {
+  "requirements": 0
+ },
+ "criteria": [
+  {
+   "detail": "no requirements recorded",
+   "id": "evidence",
+   "ids": [],
+   "state": "not_measured",
+   "title": "Every requirement has passing evidence"
+  },
+  {
+   "detail": "no requirements recorded",
+   "id": "agreement",
+   "ids": [],
+   "state": "not_measured",
+   "title": "Every requirement is agreed (human, or delegated and labelled so)"
+  },
+  {
+   "detail": "no requirements recorded",
+   "id": "method_mix",
+   "ids": [],
+   "state": "not_measured",
+   "title": "Every requirement meets its required method mix"
+  },
+  {
+   "detail": "no requirements recorded",
+   "id": "mutation",
+   "ids": [],
+   "state": "not_measured",
+   "title": "The bench passes the mutation floor"
+  },
+  {
+   "detail": "no requirements recorded",
+   "id": "formal_rigour",
+   "ids": [],
+   "state": "not_measured",
+   "title": "The formal results pass the rigour checks"
+  },
+  {
+   "detail": "no requirements recorded",
+   "id": "fresh",
+   "ids": [],
+   "state": "not_measured",
+   "title": "The evidence is fresh"
+  }
+ ],
+ "declared": {
+  "note": "the entry's own declared status; not traced to requirements and not checked by this record",
+  "source": "ip.yaml",
+  "status": "Meets 125 MHz out of context on xc7a100t-1 (Fmax estimates 133 MHz at 4 and 8 ports) and with margin on xck26-2LV (216-244 MHz). Version 0.2.0 delays the last payload byte to 6 clocks after the frame's last input beat (was 2) and holds the input for 5 clocks after each frame (was 1). Simulated against an RFC 791/768 model with scapy checking the bench's frames; built alone out of context with Vivado 2026.1 (single runs at 8 ns, estimates); not yet run on a board (the Nexys A7 network design carries it behind eth_mac_rmii; built, not yet run: a cable check comes first, see designs/b63d_nexys_net/host/PLAN.md)"
+ },
+ "definition": "docs/verified.md",
+ "git_commit": "d177bef65556fd364bd79e7057fca4be4c1a4eb1",
+ "kind": "ip_lib",
+ "label": "not assessed: no requirements recorded (no verif/testplan.yaml), so nothing here is traced to a requirement",
+ "label_kind": "not_assessed",
+ "limits": [
+  "Verified never means interoperability with a device the design talks to unless a board measurement against that device is listed in the record; a design that checks its own output against its own model accepts its own symmetric mistakes.",
+  "Verified never means timing beyond the stated corner: a post-route timing result is for the part, speed grade, clock and tool version in its evidence file, not for other corners, temperatures or devices.",
+  "Verified never means beyond the widths and depths checked: a simulation covers the vectors it ran, a bounded formal result covers the stated depth only, and a per-width proof covers the widths it names; only a Lean proof marked all widths covers every width, and only for its model.",
+  "Verified never means the requirement is the right one: the text of a requirement is the human's check (or the planner's, where the record says delegated), and a record shows that checks exist and pass, not that nothing was left out.",
+  "Verified never means a hardware or board result unless a board measurement item is listed; a simulation is not the board.",
+  "Verified is about the files in the manifest at the hashes given. A change to any of them makes the record out of date (the CI check fails), and the evidence stale until it is re-recorded.",
+  "An agreement or acceptance recorded as delegated is the planner's decision on the owner's delegation, not a human sign-off; the record counts it apart."
+ ],
+ "manifest": {
+  "ip_lib/ipv4_udp_rx/char/xc7a100tcsg324-1.json": "3a94ecb2feb9ce2edef1ee417a1b95bb9c4a5bb9efeb8409d9ccb01f97d0e30c",
+  "ip_lib/ipv4_udp_rx/char/xck26-sfvc784-2LV-c.json": "ede075d695a2beb03efa9940db52dc91428f0fa8d75f51aa5121df1033835f20",
+  "ip_lib/ipv4_udp_rx/faults.yaml": "9e137f36df48e0368afa70d6ee9dc95d523d0298d768fd2b4b00289148fddd25",
+  "ip_lib/ipv4_udp_rx/ip.yaml": "b352c06ac00652c8cd9e26a1bb83036e7fddf727c1889a1ae4c072d0e45ae383",
+  "ip_lib/ipv4_udp_rx/model.py": "52ff6409b2add5f7671c2c741b5684ae6df419110f24cdbe30deab9e0ef9e65f",
+  "ip_lib/ipv4_udp_rx/rtl/ipv4_udp_rx.sv": "5f1be5e24a154dd1b00164a513db610f01eb6f39d116fdb6ff9fa072b0433f94",
+  "ip_lib/ipv4_udp_rx/tb/udp_rx_cocotb.py": "9e207d6cf01e3116e84d70124dae694f4da0d4bb5941cf59704bb8fa76758756"
+ },
+ "name": "ipv4_udp_rx",
+ "path": "ip_lib/ipv4_udp_rx",
+ "reproduce": [
+  {
+   "cmd": "python -m pytest -q ip_lib/ipv4_udp_rx/tb",
+   "what": "the simulation tests"
+  }
+ ],
+ "requirements": [],
+ "schema": "fda-verified/1"
+}

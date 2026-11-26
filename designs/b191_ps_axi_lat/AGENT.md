@@ -3,13 +3,14 @@ source: designs/b191_ps_axi_lat/handover.yaml; human view: README.md; refresh: p
 
 ## identity
 kind=demonstration produced_by=session part=xck26-sfvc784-2LV-c board=Kria KR260 (K26 SOM) top=ps_axi_lat_top (the PL image); axi_lat_probe (simulated alone) tool=Vivado 2026.1
+verified: not assessed: no requirements recorded (no verif/testplan.yaml), so nothing here is traced to a requirement (record: designs/b191_ps_axi_lat/VERIFIED.md, designs/b191_ps_axi_lat/verified.json; definition: docs/verified.md)
 
 ## summary
 A register block with a free-running counter that timestamps every AXI read request and every write it accepts, one on each of the Zynq UltraScale+ processor system's two AXI masters towards the fabric (M_AXI_HPM0_FPD and M_AXI_HPM0_LPD), and a host program that times 32-bit reads and writes of it from the Arm Cortex-A53 with the processor's own timer and with the fabric's counter. The probe is simulated against an edge-counting AXI master and seeded faults are caught; the host program and its judging script are tested without a board against a software stand-in. The board row (B-R8) is pre-registered; the programmable-logic image's build recipe is written and was not built, and nothing has run on a board.
 not: a measured result; no latency figure for the processor-to-fabric path exists yet, only the means of measuring it; a built bitstream; the image's recipe (build.yaml, the processor-system IP script) is untested, so its clock constraint, address assignment and the flow's gates are unchecked; the latency of the ACP or HP ports, DMA, cached accesses, wider accesses or a faster fabric clock than 100 MHz; a design that does anything else; the image has no I/O pins and no function besides the two probes
 
 ## state
-stage=simulated vivado=2026.1 kb_pin=5e2eab8 build_id=fbc74516
+stage=simulated vivado=2026.1 kb_pin=6185830 build_id=ce79cfb9
 gates: rtl_equals_model=pass lint=pass seeded_faults=pass build=not-run board_run=not-run
 
 ## interface

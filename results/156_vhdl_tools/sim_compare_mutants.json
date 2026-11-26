@@ -1,0 +1,977 @@
+{
+ "date": "2026-11-22 02:25:34 GMT",
+ "reps": 1,
+ "scale": 0.2,
+ "mutants": true,
+ "machine": "i7-3770 workstation",
+ "versions": {
+  "ghdl-4.1.0-mcode": "GHDL 4.1.0 (Ubuntu 4.1.0+dfsg-0ubuntu2.1) [Dunoon edition] | Compiled with GNAT Version: 13.3.0 | static elaboration, mcode JIT code generator",
+  "ghdl-7.0.0dev-llvm": "GHDL 7.0.0-dev (6.0.0.r729.g8e642a9a5.dirty) [Dunoon edition] | Compiled with GNAT Version: 14.3.0 | llvm 21.1.8 code generator",
+  "nvc-1.23.1-jit": "nvc 1.23.1 (1.23.1.r0.gfab54a9) (Using LLVM 18.1.3) | Copyright (C) 2011-2026  Nick Gasson | This program comes with ABSOLUTELY NO WARRANTY. This is free software, and",
+  "nvc-1.23.1-aot": "nvc 1.23.1 (1.23.1.r0.gfab54a9) (Using LLVM 18.1.3) | Copyright (C) 2011-2026  Nick Gasson | This program comes with ABSOLUTELY NO WARRANTY. This is free software, and"
+ },
+ "designs": {
+  "sync_fifo_regs": {
+   "ops": 8000,
+   "sims": {
+    "ghdl-4.1.0-mcode": {
+     "reps": [
+      {
+       "build_ok": true,
+       "build_s": 0.03399253904353827,
+       "start_s": 0.6693899750243872,
+       "start_rc": 0,
+       "start_xml": {
+        "tests": 1,
+        "fail": 0,
+        "message": null
+       },
+       "start_trace": {
+        "name": "sync_fifo_regs",
+        "clocks": 3,
+        "metavalue_clocks": 0,
+        "first_metavalue": null,
+        "sha256": "91b0241ff52e0eff6e27a673396bef730aa776b66053202e9368a3618cd01e8f"
+       },
+       "work_s": 0.49719145300332457,
+       "work_rc": 0,
+       "work_xml": {
+        "tests": 1,
+        "fail": 1,
+        "message": ""
+       },
+       "work_trace": {
+        "name": "sync_fifo_regs",
+        "clocks": 3,
+        "metavalue_clocks": 0,
+        "first_metavalue": null,
+        "sha256": "91b0241ff52e0eff6e27a673396bef730aa776b66053202e9368a3618cd01e8f"
+       },
+       "work_log_tail": "  Using Python 3.12.4 interpreter at /usr/bin/python3\n     -.--ns INFO     gpi                                ../gpi/GpiCommon.cpp:79   in gpi_print_registered_impl       VPI registered\n     0.00ns INFO     cocotb                             Running on GHDL version 4.1.0 (Ubuntu 4.1.0+dfsg-0ubuntu2.1) [Dunoon edition]\n     0.00ns WARNING  gpi                                vpi_iterate returned NULL for type vpiInstance for object NULL\n     0.00ns INFO     cocotb                             Seeding Python random module with 1795314335\n     0.00ns INFO     cocotb                             Initialized cocotb v2.0.1 from ~/.local/lib/python3.12/site-packages/cocotb\n     0.00ns INFO     cocotb                             Running tests\n     0.00ns INFO     cocotb.regression                  running bench_sync_fifo_regs.fifo_random (1/1)\n../../src/ieee2008/numeric_std-body.vhdl:1776:7:@0ms:(assertion warning): NUMERIC_STD.\"=\": metavalue detected, returning FALSE\n../../src/ieee2008/numeric_std-body.vhdl:1776:7:@0ms:(assertion warning): NUMERIC_STD.\"=\": metavalue detected, returning FALSE\n../../src/ieee2008/numeric_std-body.vhdl:1624:7:@0ms:(assertion warning): NUMERIC_STD.\">=\": metavalue detected, returning FALSE\n../../src/ieee2008/numeric_std-body.vhdl:3036:7:@0ms:(assertion warning): NUMERIC_STD.TO_INTEGER: metavalue detected, returning 0\n../../src/ieee2008/numeric_std-body.vhdl:3036:7:@0ms:(assertion warning): NUMERIC_STD.TO_INTEGER: metavalue detected, returning 0\n   475.00ns WARNING  ..otb.Test fifo_random.fifo_random op 18: read 3 got 0xb want 0x4\n                                                        assert 11 == 4\n                                                        Traceback (most recent call last):\n                                                          File \"results/156_vhdl_tools/benches/bench_sync_fifo_regs.py\", line 45, in fifo_random\n                                                            assert got == want, f\"op {i}: read {off} got {got:#x} want {want:#x}\"\n                                                        AssertionError: op 18: read 3 got 0xb want 0x4\n                                                        assert 11 == 4\n   475.00ns WARNING  cocotb.regression                  bench_sync_fifo_regs.fifo_random failed\n   475.00ns INFO     cocotb.regression                  ******************************************************************************************\n                                                        ** TEST                              STATUS  SIM TIME (ns)  REAL TIME (s)  RATIO (ns/s) **\n                                                        ******************************************************************************************\n                                                        ** bench_sync_fifo_regs.fifo_random   FAIL         475.00           0.01      41769.81  **\n                                                        ******************************************************************************************\n                                                        ** TESTS=1 PASS=0 FAIL=1 SKIP=0                    475.00           0.02      20132.32  **\n                                                        ******************************************************************************************\nloading VPI module '~/.local/lib/python3.12/site-packages/cocotb/libs/libcocotbvpi_ghdl.so'\nVPI module loaded!\n"
+      }
+     ],
+     "build_s_median": 0.03399253904353827,
+     "start_s_median": 0.6693899750243872,
+     "work_s_median": 0.49719145300332457,
+     "sim_s_median": -0.17219852202106267
+    },
+    "ghdl-7.0.0dev-llvm": {
+     "reps": [
+      {
+       "build_ok": true,
+       "build_s": 0.26419741101562977,
+       "start_s": 0.42284079105593264,
+       "start_rc": 0,
+       "start_xml": {
+        "tests": 1,
+        "fail": 0,
+        "message": null
+       },
+       "start_trace": {
+        "name": "sync_fifo_regs",
+        "clocks": 3,
+        "metavalue_clocks": 0,
+        "first_metavalue": null,
+        "sha256": "91b0241ff52e0eff6e27a673396bef730aa776b66053202e9368a3618cd01e8f"
+       },
+       "work_s": 0.46519391401670873,
+       "work_rc": 0,
+       "work_xml": {
+        "tests": 1,
+        "fail": 1,
+        "message": ""
+       },
+       "work_trace": {
+        "name": "sync_fifo_regs",
+        "clocks": 3,
+        "metavalue_clocks": 0,
+        "first_metavalue": null,
+        "sha256": "91b0241ff52e0eff6e27a673396bef730aa776b66053202e9368a3618cd01e8f"
+       },
+       "work_log_tail": "sing Python 3.12.4 interpreter at /usr/bin/python3\n     -.--ns INFO     gpi                                ../gpi/GpiCommon.cpp:79   in gpi_print_registered_impl       VPI registered\n     0.00ns INFO     cocotb                             Running on GHDL version 7.0.0-dev (6.0.0.r729.g8e642a9a5.dirty) [Dunoon edition]\n     0.00ns WARNING  gpi                                vpi_iterate returned NULL for type vpiInstance for object NULL\n     0.00ns INFO     cocotb                             Seeding Python random module with 1795314336\n     0.00ns INFO     cocotb                             Initialized cocotb v2.0.1 from ~/.local/lib/python3.12/site-packages/cocotb\n     0.00ns INFO     cocotb                             Running tests\n     0.00ns INFO     cocotb.regression                  running bench_sync_fifo_regs.fifo_random (1/1)\n   475.00ns WARNING  ..otb.Test fifo_random.fifo_random op 18: read 3 got 0xb want 0x4\n                                                        assert 11 == 4\n                                                        Traceback (most recent call last):\n                                                          File \"results/156_vhdl_tools/benches/bench_sync_fifo_regs.py\", line 45, in fifo_random\n                                                            assert got == want, f\"op {i}: read {off} got {got:#x} want {want:#x}\"\n                                                        AssertionError: op 18: read 3 got 0xb want 0x4\n                                                        assert 11 == 4\n   475.00ns WARNING  cocotb.regression                  bench_sync_fifo_regs.fifo_random failed\n   475.00ns INFO     cocotb.regression                  ******************************************************************************************\n                                                        ** TEST                              STATUS  SIM TIME (ns)  REAL TIME (s)  RATIO (ns/s) **\n                                                        ******************************************************************************************\n                                                        ** bench_sync_fifo_regs.fifo_random   FAIL         475.00           0.01      45965.77  **\n                                                        ******************************************************************************************\n                                                        ** TESTS=1 PASS=0 FAIL=1 SKIP=0                    475.00           0.02      24972.04  **\n                                                        ******************************************************************************************\n../../src/ieee2008/numeric_std-body.vhdl:1793:7:@0ms:(assertion warning): NUMERIC_STD.\"=\": metavalue detected, returning FALSE\n../../src/ieee2008/numeric_std-body.vhdl:1793:7:@0ms:(assertion warning): NUMERIC_STD.\"=\": metavalue detected, returning FALSE\n../../src/ieee2008/numeric_std-body.vhdl:1641:7:@0ms:(assertion warning): NUMERIC_STD.\">=\": metavalue detected, returning FALSE\n../../src/ieee2008/numeric_std-body.vhdl:3053:7:@0ms:(assertion warning): NUMERIC_STD.TO_INTEGER: metavalue detected, returning 0\n../../src/ieee2008/numeric_std-body.vhdl:3053:7:@0ms:(assertion warning): NUMERIC_STD.TO_INTEGER: metavalue detected, returning 0\nloading VPI module '~/.local/lib/python3.12/site-packages/cocotb/libs/libcocotbvpi_ghdl.so'\nVPI module loaded!\n"
+      }
+     ],
+     "build_s_median": 0.26419741101562977,
+     "start_s_median": 0.42284079105593264,
+     "work_s_median": 0.46519391401670873,
+     "sim_s_median": 0.04235312296077609
+    },
+    "nvc-1.23.1-jit": {
+     "reps": [
+      {
+       "build_ok": true,
+       "build_s": 0.024766064016148448,
+       "start_s": 0.450848841923289,
+       "start_rc": 0,
+       "start_xml": {
+        "tests": 1,
+        "fail": 0,
+        "message": null
+       },
+       "start_trace": {
+        "name": "sync_fifo_regs",
+        "clocks": 3,
+        "metavalue_clocks": 0,
+        "first_metavalue": null,
+        "sha256": "91b0241ff52e0eff6e27a673396bef730aa776b66053202e9368a3618cd01e8f"
+       },
+       "work_s": 0.4738078350201249,
+       "work_rc": 0,
+       "work_xml": {
+        "tests": 1,
+        "fail": 1,
+        "message": ""
+       },
+       "work_trace": {
+        "name": "sync_fifo_regs",
+        "clocks": 3,
+        "metavalue_clocks": 0,
+        "first_metavalue": null,
+        "sha256": "91b0241ff52e0eff6e27a673396bef730aa776b66053202e9368a3618cd01e8f"
+       },
+       "work_log_tail": "      Traceback (most recent call last):\n                                                          File \"results/156_vhdl_tools/benches/bench_sync_fifo_regs.py\", line 45, in fifo_random\n                                                            assert got == want, f\"op {i}: read {off} got {got:#x} want {want:#x}\"\n                                                        AssertionError: op 18: read 3 got 0xb want 0x4\n                                                        assert 11 == 4\n   475.00ns WARNING  cocotb.regression                  bench_sync_fifo_regs.fifo_random failed\n   475.00ns INFO     cocotb.regression                  ******************************************************************************************\n                                                        ** TEST                              STATUS  SIM TIME (ns)  REAL TIME (s)  RATIO (ns/s) **\n                                                        ******************************************************************************************\n                                                        ** bench_sync_fifo_regs.fifo_random   FAIL         475.00           0.01      35541.78  **\n                                                        ******************************************************************************************\n                                                        ** TESTS=1 PASS=0 FAIL=1 SKIP=0                    475.00           0.02      21256.36  **\n                                                        ******************************************************************************************\n** Note: loading plugin ~/.local/lib/python3.12/site-packages/cocotb/libs/libcocotbvhpi_nvc.so\n** Warning: 0ms+0: NUMERIC_STD.\"=\": metavalue detected, returning FALSE\n   Function \"=\" [UNRESOLVED_UNSIGNED, UNRESOLVED_UNSIGNED return BOOLEAN] at lib/ieee.08/numeric_std-body.vhdl:1760\n   Process :sync_fifo_regs:_p0 at build/156_sims/mutant__sync_fifo_regs/sync_fifo_regs.vhd:43\n** Warning: 0ms+0: NUMERIC_STD.\"=\": metavalue detected, returning FALSE\n   Function \"=\" [UNRESOLVED_UNSIGNED, UNRESOLVED_UNSIGNED return BOOLEAN] at lib/ieee.08/numeric_std-body.vhdl:1760\n   Process :sync_fifo_regs:_p1 at build/156_sims/mutant__sync_fifo_regs/sync_fifo_regs.vhd:44\n** Warning: 0ms+0: NUMERIC_STD.\">=\": metavalue detected, returning FALSE\n   Function \">=\" [UNRESOLVED_UNSIGNED, UNRESOLVED_UNSIGNED return BOOLEAN] at lib/ieee.08/numeric_std-body.vhdl:1608\n   Process :sync_fifo_regs:_p2 at build/156_sims/mutant__sync_fifo_regs/sync_fifo_regs.vhd:45\n** Warning: 0ms+0: NUMERIC_STD.TO_INTEGER: metavalue detected, returning 0\n   Function TO_INTEGER [UNRESOLVED_UNSIGNED return NATURAL] at lib/ieee.08/numeric_std-body.vhdl:3024\n   Process :sync_fifo_regs:_p5 at build/156_sims/mutant__sync_fifo_regs/sync_fifo_regs.vhd:50\n** Warning: 0ms+1: NUMERIC_STD.TO_INTEGER: metavalue detected, returning 0\n   Function TO_INTEGER [UNRESOLVED_UNSIGNED return NATURAL] at lib/ieee.08/numeric_std-body.vhdl:3024\n   Process :sync_fifo_regs:_p5 at build/156_sims/mutant__sync_fifo_regs/sync_fifo_regs.vhd:50\n** Note: 475ns+0: VHPI plugin requested end of simulation\n"
+      }
+     ],
+     "build_s_median": 0.024766064016148448,
+     "start_s_median": 0.450848841923289,
+     "work_s_median": 0.4738078350201249,
+     "sim_s_median": 0.02295899309683591
+    },
+    "nvc-1.23.1-aot": {
+     "reps": [
+      {
+       "build_ok": true,
+       "build_s": 0.0508186009246856,
+       "start_s": 0.4442772399634123,
+       "start_rc": 0,
+       "start_xml": {
+        "tests": 1,
+        "fail": 0,
+        "message": null
+       },
+       "start_trace": {
+        "name": "sync_fifo_regs",
+        "clocks": 3,
+        "metavalue_clocks": 0,
+        "first_metavalue": null,
+        "sha256": "91b0241ff52e0eff6e27a673396bef730aa776b66053202e9368a3618cd01e8f"
+       },
+       "work_s": 0.4568060049787164,
+       "work_rc": 0,
+       "work_xml": {
+        "tests": 1,
+        "fail": 1,
+        "message": ""
+       },
+       "work_trace": {
+        "name": "sync_fifo_regs",
+        "clocks": 3,
+        "metavalue_clocks": 0,
+        "first_metavalue": null,
+        "sha256": "91b0241ff52e0eff6e27a673396bef730aa776b66053202e9368a3618cd01e8f"
+       },
+       "work_log_tail": "      Traceback (most recent call last):\n                                                          File \"results/156_vhdl_tools/benches/bench_sync_fifo_regs.py\", line 45, in fifo_random\n                                                            assert got == want, f\"op {i}: read {off} got {got:#x} want {want:#x}\"\n                                                        AssertionError: op 18: read 3 got 0xb want 0x4\n                                                        assert 11 == 4\n   475.00ns WARNING  cocotb.regression                  bench_sync_fifo_regs.fifo_random failed\n   475.00ns INFO     cocotb.regression                  ******************************************************************************************\n                                                        ** TEST                              STATUS  SIM TIME (ns)  REAL TIME (s)  RATIO (ns/s) **\n                                                        ******************************************************************************************\n                                                        ** bench_sync_fifo_regs.fifo_random   FAIL         475.00           0.01      35491.13  **\n                                                        ******************************************************************************************\n                                                        ** TESTS=1 PASS=0 FAIL=1 SKIP=0                    475.00           0.02      20860.63  **\n                                                        ******************************************************************************************\n** Note: loading plugin ~/.local/lib/python3.12/site-packages/cocotb/libs/libcocotbvhpi_nvc.so\n** Warning: 0ms+0: NUMERIC_STD.\"=\": metavalue detected, returning FALSE\n   Function \"=\" [UNRESOLVED_UNSIGNED, UNRESOLVED_UNSIGNED return BOOLEAN] at lib/ieee.08/numeric_std-body.vhdl:1760\n   Process :sync_fifo_regs:_p0 at build/156_sims/mutant__sync_fifo_regs/sync_fifo_regs.vhd:43\n** Warning: 0ms+0: NUMERIC_STD.\"=\": metavalue detected, returning FALSE\n   Function \"=\" [UNRESOLVED_UNSIGNED, UNRESOLVED_UNSIGNED return BOOLEAN] at lib/ieee.08/numeric_std-body.vhdl:1760\n   Process :sync_fifo_regs:_p1 at build/156_sims/mutant__sync_fifo_regs/sync_fifo_regs.vhd:44\n** Warning: 0ms+0: NUMERIC_STD.\">=\": metavalue detected, returning FALSE\n   Function \">=\" [UNRESOLVED_UNSIGNED, UNRESOLVED_UNSIGNED return BOOLEAN] at lib/ieee.08/numeric_std-body.vhdl:1608\n   Process :sync_fifo_regs:_p2 at build/156_sims/mutant__sync_fifo_regs/sync_fifo_regs.vhd:45\n** Warning: 0ms+0: NUMERIC_STD.TO_INTEGER: metavalue detected, returning 0\n   Function TO_INTEGER [UNRESOLVED_UNSIGNED return NATURAL] at lib/ieee.08/numeric_std-body.vhdl:3024\n   Process :sync_fifo_regs:_p5 at build/156_sims/mutant__sync_fifo_regs/sync_fifo_regs.vhd:50\n** Warning: 0ms+1: NUMERIC_STD.TO_INTEGER: metavalue detected, returning 0\n   Function TO_INTEGER [UNRESOLVED_UNSIGNED return NATURAL] at lib/ieee.08/numeric_std-body.vhdl:3024\n   Process :sync_fifo_regs:_p5 at build/156_sims/mutant__sync_fifo_regs/sync_fifo_regs.vhd:50\n** Note: 475ns+0: VHPI plugin requested end of simulation\n"
+      }
+     ],
+     "build_s_median": 0.0508186009246856,
+     "start_s_median": 0.4442772399634123,
+     "work_s_median": 0.4568060049787164,
+     "sim_s_median": 0.012528765015304089
+    }
+   }
+  },
+  "gray_stepper": {
+   "ops": 300,
+   "sims": {
+    "ghdl-4.1.0-mcode": {
+     "reps": [
+      {
+       "build_ok": true,
+       "build_s": 0.036311111063696444,
+       "start_s": 0.491959742968902,
+       "start_rc": 0,
+       "start_xml": {
+        "tests": 1,
+        "fail": 0,
+        "message": null
+       },
+       "start_trace": {
+        "name": "gray_stepper",
+        "clocks": 11,
+        "metavalue_clocks": 0,
+        "first_metavalue": null,
+        "sha256": "32099f3c5bcdc81d5640deffd0f1648162052f43724dd42ea2d81e76beaba023"
+       },
+       "work_s": 0.4943422139622271,
+       "work_rc": 0,
+       "work_xml": {
+        "tests": 1,
+        "fail": 1,
+        "message": ""
+       },
+       "work_trace": {
+        "name": "gray_stepper",
+        "clocks": 11,
+        "metavalue_clocks": 0,
+        "first_metavalue": null,
+        "sha256": "32099f3c5bcdc81d5640deffd0f1648162052f43724dd42ea2d81e76beaba023"
+       },
+       "work_log_tail": "     -.--ns INFO     gpi                                ..mbed/gpi_embed.cpp:93   in _embed_init_python              Using Python 3.12.4 interpreter at /usr/bin/python3\n     -.--ns INFO     gpi                                ../gpi/GpiCommon.cpp:79   in gpi_print_registered_impl       VPI registered\n     0.00ns INFO     cocotb                             Running on GHDL version 4.1.0 (Ubuntu 4.1.0+dfsg-0ubuntu2.1) [Dunoon edition]\n     0.00ns WARNING  gpi                                vpi_iterate returned NULL for type vpiInstance for object NULL\n     0.00ns INFO     cocotb                             Seeding Python random module with 1795314339\n     0.00ns INFO     cocotb                             Initialized cocotb v2.0.1 from ~/.local/lib/python3.12/site-packages/cocotb\n     0.00ns INFO     cocotb                             Running tests\n     0.00ns INFO     cocotb.regression                  running bench_gray_stepper.gray_random (1/1)\n  1845.00ns WARNING  ..otb.Test gray_random.gray_random op 22: register 0 got 0x2d want 0x2f\n                                                        assert 45 == 47\n                                                        Traceback (most recent call last):\n                                                          File \"results/156_vhdl_tools/benches/bench_gray_stepper.py\", line 64, in gray_random\n                                                            assert got == want, f\"op {i}: register {off} got {got:#x} want {want:#x}\"\n                                                        AssertionError: op 22: register 0 got 0x2d want 0x2f\n                                                        assert 45 == 47\n  1845.00ns WARNING  cocotb.regression                  bench_gray_stepper.gray_random failed\n  1845.00ns INFO     cocotb.regression                  ****************************************************************************************\n                                                        ** TEST                            STATUS  SIM TIME (ns)  REAL TIME (s)  RATIO (ns/s) **\n                                                        ****************************************************************************************\n                                                        ** bench_gray_stepper.gray_random   FAIL        1845.00           0.03      58101.14  **\n                                                        ****************************************************************************************\n                                                        ** TESTS=1 PASS=0 FAIL=1 SKIP=0                 1845.00           0.04      45449.42  **\n                                                        ****************************************************************************************\nloading VPI module '~/.local/lib/python3.12/site-packages/cocotb/libs/libcocotbvpi_ghdl.so'\nVPI module loaded!\n"
+      }
+     ],
+     "build_s_median": 0.036311111063696444,
+     "start_s_median": 0.491959742968902,
+     "work_s_median": 0.4943422139622271,
+     "sim_s_median": 0.0023824709933251143
+    },
+    "ghdl-7.0.0dev-llvm": {
+     "reps": [
+      {
+       "build_ok": true,
+       "build_s": 0.6298336919862777,
+       "start_s": 0.5868127520661801,
+       "start_rc": 0,
+       "start_xml": {
+        "tests": 1,
+        "fail": 0,
+        "message": null
+       },
+       "start_trace": {
+        "name": "gray_stepper",
+        "clocks": 11,
+        "metavalue_clocks": 0,
+        "first_metavalue": null,
+        "sha256": "32099f3c5bcdc81d5640deffd0f1648162052f43724dd42ea2d81e76beaba023"
+       },
+       "work_s": 0.731751321000047,
+       "work_rc": 0,
+       "work_xml": {
+        "tests": 1,
+        "fail": 1,
+        "message": ""
+       },
+       "work_trace": {
+        "name": "gray_stepper",
+        "clocks": 11,
+        "metavalue_clocks": 0,
+        "first_metavalue": null,
+        "sha256": "32099f3c5bcdc81d5640deffd0f1648162052f43724dd42ea2d81e76beaba023"
+       },
+       "work_log_tail": "     -.--ns INFO     gpi                                ..mbed/gpi_embed.cpp:93   in _embed_init_python              Using Python 3.12.4 interpreter at /usr/bin/python3\n     -.--ns INFO     gpi                                ../gpi/GpiCommon.cpp:79   in gpi_print_registered_impl       VPI registered\n     0.00ns INFO     cocotb                             Running on GHDL version 7.0.0-dev (6.0.0.r729.g8e642a9a5.dirty) [Dunoon edition]\n     0.00ns WARNING  gpi                                vpi_iterate returned NULL for type vpiInstance for object NULL\n     0.00ns INFO     cocotb                             Seeding Python random module with 1795314341\n     0.00ns INFO     cocotb                             Initialized cocotb v2.0.1 from ~/.local/lib/python3.12/site-packages/cocotb\n     0.00ns INFO     cocotb                             Running tests\n     0.00ns INFO     cocotb.regression                  running bench_gray_stepper.gray_random (1/1)\n  1845.00ns WARNING  ..otb.Test gray_random.gray_random op 22: register 0 got 0x2d want 0x2f\n                                                        assert 45 == 47\n                                                        Traceback (most recent call last):\n                                                          File \"results/156_vhdl_tools/benches/bench_gray_stepper.py\", line 64, in gray_random\n                                                            assert got == want, f\"op {i}: register {off} got {got:#x} want {want:#x}\"\n                                                        AssertionError: op 22: register 0 got 0x2d want 0x2f\n                                                        assert 45 == 47\n  1845.00ns WARNING  cocotb.regression                  bench_gray_stepper.gray_random failed\n  1845.00ns INFO     cocotb.regression                  ****************************************************************************************\n                                                        ** TEST                            STATUS  SIM TIME (ns)  REAL TIME (s)  RATIO (ns/s) **\n                                                        ****************************************************************************************\n                                                        ** bench_gray_stepper.gray_random   FAIL        1845.00           0.06      32000.64  **\n                                                        ****************************************************************************************\n                                                        ** TESTS=1 PASS=0 FAIL=1 SKIP=0                 1845.00           0.08      23605.34  **\n                                                        ****************************************************************************************\nloading VPI module '~/.local/lib/python3.12/site-packages/cocotb/libs/libcocotbvpi_ghdl.so'\nVPI module loaded!\n"
+      }
+     ],
+     "build_s_median": 0.6298336919862777,
+     "start_s_median": 0.5868127520661801,
+     "work_s_median": 0.731751321000047,
+     "sim_s_median": 0.14493856893386692
+    },
+    "nvc-1.23.1-jit": {
+     "reps": [
+      {
+       "build_ok": true,
+       "build_s": 0.04159102798439562,
+       "start_s": 0.5545001659775153,
+       "start_rc": 0,
+       "start_xml": {
+        "tests": 1,
+        "fail": 0,
+        "message": null
+       },
+       "start_trace": {
+        "name": "gray_stepper",
+        "clocks": 11,
+        "metavalue_clocks": 0,
+        "first_metavalue": null,
+        "sha256": "32099f3c5bcdc81d5640deffd0f1648162052f43724dd42ea2d81e76beaba023"
+       },
+       "work_s": 0.7270311519969255,
+       "work_rc": 0,
+       "work_xml": {
+        "tests": 1,
+        "fail": 1,
+        "message": ""
+       },
+       "work_trace": {
+        "name": "gray_stepper",
+        "clocks": 11,
+        "metavalue_clocks": 0,
+        "first_metavalue": null,
+        "sha256": "32099f3c5bcdc81d5640deffd0f1648162052f43724dd42ea2d81e76beaba023"
+       },
+       "work_log_tail": "     -.--ns INFO     gpi                                ..mbed/gpi_embed.cpp:93   in _embed_init_python              Using Python 3.12.4 interpreter at /usr/bin/python3\n     -.--ns INFO     gpi                                ../gpi/GpiCommon.cpp:79   in gpi_print_registered_impl       VHPI registered\n     0.00ns INFO     cocotb                             Running on nvc version 1.23.1\n     0.00ns WARNING  gpi                                VHPI: Other iterator types not implemented yet\n     0.00ns INFO     cocotb                             Seeding Python random module with 1795314342\n     0.00ns INFO     cocotb                             Initialized cocotb v2.0.1 from ~/.local/lib/python3.12/site-packages/cocotb\n     0.00ns INFO     cocotb                             Running tests\n     0.00ns INFO     cocotb.regression                  running bench_gray_stepper.gray_random (1/1)\n  1845.00ns WARNING  ..otb.Test gray_random.gray_random op 22: register 0 got 0x2d want 0x2f\n                                                        assert 45 == 47\n                                                        Traceback (most recent call last):\n                                                          File \"results/156_vhdl_tools/benches/bench_gray_stepper.py\", line 64, in gray_random\n                                                            assert got == want, f\"op {i}: register {off} got {got:#x} want {want:#x}\"\n                                                        AssertionError: op 22: register 0 got 0x2d want 0x2f\n                                                        assert 45 == 47\n  1845.00ns WARNING  cocotb.regression                  bench_gray_stepper.gray_random failed\n  1845.00ns INFO     cocotb.regression                  ****************************************************************************************\n                                                        ** TEST                            STATUS  SIM TIME (ns)  REAL TIME (s)  RATIO (ns/s) **\n                                                        ****************************************************************************************\n                                                        ** bench_gray_stepper.gray_random   FAIL        1845.00           0.06      31912.22  **\n                                                        ****************************************************************************************\n                                                        ** TESTS=1 PASS=0 FAIL=1 SKIP=0                 1845.00           0.08      24022.14  **\n                                                        ****************************************************************************************\n** Note: loading plugin ~/.local/lib/python3.12/site-packages/cocotb/libs/libcocotbvhpi_nvc.so\n** Note: 1845ns+0: VHPI plugin requested end of simulation\n"
+      }
+     ],
+     "build_s_median": 0.04159102798439562,
+     "start_s_median": 0.5545001659775153,
+     "work_s_median": 0.7270311519969255,
+     "sim_s_median": 0.1725309860194102
+    },
+    "nvc-1.23.1-aot": {
+     "reps": [
+      {
+       "build_ok": true,
+       "build_s": 0.08153435704298317,
+       "start_s": 0.5413378120865673,
+       "start_rc": 0,
+       "start_xml": {
+        "tests": 1,
+        "fail": 0,
+        "message": null
+       },
+       "start_trace": {
+        "name": "gray_stepper",
+        "clocks": 11,
+        "metavalue_clocks": 0,
+        "first_metavalue": null,
+        "sha256": "32099f3c5bcdc81d5640deffd0f1648162052f43724dd42ea2d81e76beaba023"
+       },
+       "work_s": 0.5350341890007257,
+       "work_rc": 0,
+       "work_xml": {
+        "tests": 1,
+        "fail": 1,
+        "message": ""
+       },
+       "work_trace": {
+        "name": "gray_stepper",
+        "clocks": 11,
+        "metavalue_clocks": 0,
+        "first_metavalue": null,
+        "sha256": "32099f3c5bcdc81d5640deffd0f1648162052f43724dd42ea2d81e76beaba023"
+       },
+       "work_log_tail": "     -.--ns INFO     gpi                                ..mbed/gpi_embed.cpp:93   in _embed_init_python              Using Python 3.12.4 interpreter at /usr/bin/python3\n     -.--ns INFO     gpi                                ../gpi/GpiCommon.cpp:79   in gpi_print_registered_impl       VHPI registered\n     0.00ns INFO     cocotb                             Running on nvc version 1.23.1\n     0.00ns WARNING  gpi                                VHPI: Other iterator types not implemented yet\n     0.00ns INFO     cocotb                             Seeding Python random module with 1795314344\n     0.00ns INFO     cocotb                             Initialized cocotb v2.0.1 from ~/.local/lib/python3.12/site-packages/cocotb\n     0.00ns INFO     cocotb                             Running tests\n     0.00ns INFO     cocotb.regression                  running bench_gray_stepper.gray_random (1/1)\n  1845.00ns WARNING  ..otb.Test gray_random.gray_random op 22: register 0 got 0x2d want 0x2f\n                                                        assert 45 == 47\n                                                        Traceback (most recent call last):\n                                                          File \"results/156_vhdl_tools/benches/bench_gray_stepper.py\", line 64, in gray_random\n                                                            assert got == want, f\"op {i}: register {off} got {got:#x} want {want:#x}\"\n                                                        AssertionError: op 22: register 0 got 0x2d want 0x2f\n                                                        assert 45 == 47\n  1845.00ns WARNING  cocotb.regression                  bench_gray_stepper.gray_random failed\n  1845.00ns INFO     cocotb.regression                  ****************************************************************************************\n                                                        ** TEST                            STATUS  SIM TIME (ns)  REAL TIME (s)  RATIO (ns/s) **\n                                                        ****************************************************************************************\n                                                        ** bench_gray_stepper.gray_random   FAIL        1845.00           0.05      33925.87  **\n                                                        ****************************************************************************************\n                                                        ** TESTS=1 PASS=0 FAIL=1 SKIP=0                 1845.00           0.07      25754.96  **\n                                                        ****************************************************************************************\n** Note: loading plugin ~/.local/lib/python3.12/site-packages/cocotb/libs/libcocotbvhpi_nvc.so\n** Note: 1845ns+0: VHPI plugin requested end of simulation\n"
+      }
+     ],
+     "build_s_median": 0.08153435704298317,
+     "start_s_median": 0.5413378120865673,
+     "work_s_median": 0.5350341890007257,
+     "sim_s_median": -0.0063036230858415365
+    }
+   }
+  },
+  "debounce_bank": {
+   "ops": 800,
+   "sims": {
+    "ghdl-4.1.0-mcode": {
+     "reps": [
+      {
+       "build_ok": true,
+       "build_s": 0.036296060075983405,
+       "start_s": 0.47184919693972915,
+       "start_rc": 0,
+       "start_xml": {
+        "tests": 1,
+        "fail": 0,
+        "message": null
+       },
+       "start_trace": {
+        "name": "debounce_bank",
+        "clocks": 0,
+        "metavalue_clocks": 0,
+        "first_metavalue": null,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+       },
+       "work_s": 0.48296835005749017,
+       "work_rc": 0,
+       "work_xml": {
+        "tests": 1,
+        "fail": 1,
+        "message": ""
+       },
+       "work_trace": {
+        "name": "debounce_bank",
+        "clocks": 0,
+        "metavalue_clocks": 0,
+        "first_metavalue": null,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+       },
+       "work_log_tail": "     -.--ns INFO     gpi                                ..mbed/gpi_embed.cpp:93   in _embed_init_python              Using Python 3.12.4 interpreter at /usr/bin/python3\n     -.--ns INFO     gpi                                ../gpi/GpiCommon.cpp:79   in gpi_print_registered_impl       VPI registered\n     0.00ns INFO     cocotb                             Running on GHDL version 4.1.0 (Ubuntu 4.1.0+dfsg-0ubuntu2.1) [Dunoon edition]\n     0.00ns WARNING  gpi                                vpi_iterate returned NULL for type vpiInstance for object NULL\n     0.00ns INFO     cocotb                             Seeding Python random module with 1795314345\n     0.00ns INFO     cocotb                             Initialized cocotb v2.0.1 from ~/.local/lib/python3.12/site-packages/cocotb\n     0.00ns INFO     cocotb                             Running tests\n     0.00ns INFO     cocotb.regression                  running bench_debounce_bank.debounce_random (1/1)\n   665.00ns WARNING  .. debounce_random.debounce_random op 7: read 7 got 0x400 want 0x200 (switches settled at 0x04b6)\n                                                        assert 1024 == 512\n                                                        Traceback (most recent call last):\n                                                          File \"results/156_vhdl_tools/benches/bench_debounce_bank.py\", line 54, in debounce_random\n                                                            assert got == want, f\"op {i}: read {off} got {got:#x} want {want:#x} (switches settled at {sw:#06x})\"\n                                                        AssertionError: op 7: read 7 got 0x400 want 0x200 (switches settled at 0x04b6)\n                                                        assert 1024 == 512\n   665.00ns WARNING  cocotb.regression                  bench_debounce_bank.debounce_random failed\n   665.00ns INFO     cocotb.regression                  *********************************************************************************************\n                                                        ** TEST                                 STATUS  SIM TIME (ns)  REAL TIME (s)  RATIO (ns/s) **\n                                                        *********************************************************************************************\n                                                        ** bench_debounce_bank.debounce_random   FAIL         665.00           0.01      50859.05  **\n                                                        *********************************************************************************************\n                                                        ** TESTS=1 PASS=0 FAIL=1 SKIP=0                       665.00           0.02      29836.89  **\n                                                        *********************************************************************************************\nloading VPI module '~/.local/lib/python3.12/site-packages/cocotb/libs/libcocotbvpi_ghdl.so'\nVPI module loaded!\n"
+      }
+     ],
+     "build_s_median": 0.036296060075983405,
+     "start_s_median": 0.47184919693972915,
+     "work_s_median": 0.48296835005749017,
+     "sim_s_median": 0.011119153117761016
+    },
+    "ghdl-7.0.0dev-llvm": {
+     "reps": [
+      {
+       "build_ok": true,
+       "build_s": 0.4518025720026344,
+       "start_s": 0.4175725190434605,
+       "start_rc": 0,
+       "start_xml": {
+        "tests": 1,
+        "fail": 0,
+        "message": null
+       },
+       "start_trace": {
+        "name": "debounce_bank",
+        "clocks": 0,
+        "metavalue_clocks": 0,
+        "first_metavalue": null,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+       },
+       "work_s": 0.646413033013232,
+       "work_rc": 0,
+       "work_xml": {
+        "tests": 1,
+        "fail": 1,
+        "message": ""
+       },
+       "work_trace": {
+        "name": "debounce_bank",
+        "clocks": 0,
+        "metavalue_clocks": 0,
+        "first_metavalue": null,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+       },
+       "work_log_tail": "     -.--ns INFO     gpi                                ..mbed/gpi_embed.cpp:93   in _embed_init_python              Using Python 3.12.4 interpreter at /usr/bin/python3\n     -.--ns INFO     gpi                                ../gpi/GpiCommon.cpp:79   in gpi_print_registered_impl       VPI registered\n     0.00ns INFO     cocotb                             Running on GHDL version 7.0.0-dev (6.0.0.r729.g8e642a9a5.dirty) [Dunoon edition]\n     0.00ns WARNING  gpi                                vpi_iterate returned NULL for type vpiInstance for object NULL\n     0.00ns INFO     cocotb                             Seeding Python random module with 1795314346\n     0.00ns INFO     cocotb                             Initialized cocotb v2.0.1 from ~/.local/lib/python3.12/site-packages/cocotb\n     0.00ns INFO     cocotb                             Running tests\n     0.00ns INFO     cocotb.regression                  running bench_debounce_bank.debounce_random (1/1)\n   665.00ns WARNING  .. debounce_random.debounce_random op 7: read 7 got 0x400 want 0x200 (switches settled at 0x04b6)\n                                                        assert 1024 == 512\n                                                        Traceback (most recent call last):\n                                                          File \"results/156_vhdl_tools/benches/bench_debounce_bank.py\", line 54, in debounce_random\n                                                            assert got == want, f\"op {i}: read {off} got {got:#x} want {want:#x} (switches settled at {sw:#06x})\"\n                                                        AssertionError: op 7: read 7 got 0x400 want 0x200 (switches settled at 0x04b6)\n                                                        assert 1024 == 512\n   665.00ns WARNING  cocotb.regression                  bench_debounce_bank.debounce_random failed\n   665.00ns INFO     cocotb.regression                  *********************************************************************************************\n                                                        ** TEST                                 STATUS  SIM TIME (ns)  REAL TIME (s)  RATIO (ns/s) **\n                                                        *********************************************************************************************\n                                                        ** bench_debounce_bank.debounce_random   FAIL         665.00           0.02      29380.85  **\n                                                        *********************************************************************************************\n                                                        ** TESTS=1 PASS=0 FAIL=1 SKIP=0                       665.00           0.04      15777.51  **\n                                                        *********************************************************************************************\nloading VPI module '~/.local/lib/python3.12/site-packages/cocotb/libs/libcocotbvpi_ghdl.so'\nVPI module loaded!\n"
+      }
+     ],
+     "build_s_median": 0.4518025720026344,
+     "start_s_median": 0.4175725190434605,
+     "work_s_median": 0.646413033013232,
+     "sim_s_median": 0.22884051396977156
+    },
+    "nvc-1.23.1-jit": {
+     "reps": [
+      {
+       "build_ok": true,
+       "build_s": 0.05408256605733186,
+       "start_s": 1.1712209100369364,
+       "start_rc": 0,
+       "start_xml": {
+        "tests": 1,
+        "fail": 0,
+        "message": null
+       },
+       "start_trace": {
+        "name": "debounce_bank",
+        "clocks": 0,
+        "metavalue_clocks": 0,
+        "first_metavalue": null,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+       },
+       "work_s": 1.0986350870225579,
+       "work_rc": 0,
+       "work_xml": {
+        "tests": 1,
+        "fail": 1,
+        "message": ""
+       },
+       "work_trace": {
+        "name": "debounce_bank",
+        "clocks": 0,
+        "metavalue_clocks": 0,
+        "first_metavalue": null,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+       },
+       "work_log_tail": "     -.--ns INFO     gpi                                ..mbed/gpi_embed.cpp:93   in _embed_init_python              Using Python 3.12.4 interpreter at /usr/bin/python3\n     -.--ns INFO     gpi                                ../gpi/GpiCommon.cpp:79   in gpi_print_registered_impl       VHPI registered\n     0.00ns INFO     cocotb                             Running on nvc version 1.23.1\n     0.00ns WARNING  gpi                                VHPI: Other iterator types not implemented yet\n     0.00ns INFO     cocotb                             Seeding Python random module with 1795314348\n     0.00ns INFO     cocotb                             Initialized cocotb v2.0.1 from ~/.local/lib/python3.12/site-packages/cocotb\n     0.00ns INFO     cocotb                             Running tests\n     0.00ns INFO     cocotb.regression                  running bench_debounce_bank.debounce_random (1/1)\n   665.00ns WARNING  .. debounce_random.debounce_random op 7: read 7 got 0x400 want 0x200 (switches settled at 0x04b6)\n                                                        assert 1024 == 512\n                                                        Traceback (most recent call last):\n                                                          File \"results/156_vhdl_tools/benches/bench_debounce_bank.py\", line 54, in debounce_random\n                                                            assert got == want, f\"op {i}: read {off} got {got:#x} want {want:#x} (switches settled at {sw:#06x})\"\n                                                        AssertionError: op 7: read 7 got 0x400 want 0x200 (switches settled at 0x04b6)\n                                                        assert 1024 == 512\n   665.00ns WARNING  cocotb.regression                  bench_debounce_bank.debounce_random failed\n   665.00ns INFO     cocotb.regression                  *********************************************************************************************\n                                                        ** TEST                                 STATUS  SIM TIME (ns)  REAL TIME (s)  RATIO (ns/s) **\n                                                        *********************************************************************************************\n                                                        ** bench_debounce_bank.debounce_random   FAIL         665.00           0.05      12766.62  **\n                                                        *********************************************************************************************\n                                                        ** TESTS=1 PASS=0 FAIL=1 SKIP=0                       665.00           0.07       9344.22  **\n                                                        *********************************************************************************************\n** Note: loading plugin ~/.local/lib/python3.12/site-packages/cocotb/libs/libcocotbvhpi_nvc.so\n** Note: 665ns+0: VHPI plugin requested end of simulation\n"
+      }
+     ],
+     "build_s_median": 0.05408256605733186,
+     "start_s_median": 1.1712209100369364,
+     "work_s_median": 1.0986350870225579,
+     "sim_s_median": -0.07258582301437855
+    },
+    "nvc-1.23.1-aot": {
+     "reps": [
+      {
+       "build_ok": true,
+       "build_s": 0.1633528460515663,
+       "start_s": 0.9690747439162806,
+       "start_rc": 0,
+       "start_xml": {
+        "tests": 1,
+        "fail": 0,
+        "message": null
+       },
+       "start_trace": {
+        "name": "debounce_bank",
+        "clocks": 0,
+        "metavalue_clocks": 0,
+        "first_metavalue": null,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+       },
+       "work_s": 0.9603875200264156,
+       "work_rc": 0,
+       "work_xml": {
+        "tests": 1,
+        "fail": 1,
+        "message": ""
+       },
+       "work_trace": {
+        "name": "debounce_bank",
+        "clocks": 0,
+        "metavalue_clocks": 0,
+        "first_metavalue": null,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+       },
+       "work_log_tail": "     -.--ns INFO     gpi                                ..mbed/gpi_embed.cpp:93   in _embed_init_python              Using Python 3.12.4 interpreter at /usr/bin/python3\n     -.--ns INFO     gpi                                ../gpi/GpiCommon.cpp:79   in gpi_print_registered_impl       VHPI registered\n     0.00ns INFO     cocotb                             Running on nvc version 1.23.1\n     0.00ns WARNING  gpi                                VHPI: Other iterator types not implemented yet\n     0.00ns INFO     cocotb                             Seeding Python random module with 1795314350\n     0.00ns INFO     cocotb                             Initialized cocotb v2.0.1 from ~/.local/lib/python3.12/site-packages/cocotb\n     0.00ns INFO     cocotb                             Running tests\n     0.00ns INFO     cocotb.regression                  running bench_debounce_bank.debounce_random (1/1)\n   665.00ns WARNING  .. debounce_random.debounce_random op 7: read 7 got 0x400 want 0x200 (switches settled at 0x04b6)\n                                                        assert 1024 == 512\n                                                        Traceback (most recent call last):\n                                                          File \"results/156_vhdl_tools/benches/bench_debounce_bank.py\", line 54, in debounce_random\n                                                            assert got == want, f\"op {i}: read {off} got {got:#x} want {want:#x} (switches settled at {sw:#06x})\"\n                                                        AssertionError: op 7: read 7 got 0x400 want 0x200 (switches settled at 0x04b6)\n                                                        assert 1024 == 512\n   665.00ns WARNING  cocotb.regression                  bench_debounce_bank.debounce_random failed\n   665.00ns INFO     cocotb.regression                  *********************************************************************************************\n                                                        ** TEST                                 STATUS  SIM TIME (ns)  REAL TIME (s)  RATIO (ns/s) **\n                                                        *********************************************************************************************\n                                                        ** bench_debounce_bank.debounce_random   FAIL         665.00           0.06      11154.04  **\n                                                        *********************************************************************************************\n                                                        ** TESTS=1 PASS=0 FAIL=1 SKIP=0                       665.00           0.08       8587.87  **\n                                                        *********************************************************************************************\n** Note: loading plugin ~/.local/lib/python3.12/site-packages/cocotb/libs/libcocotbvhpi_nvc.so\n** Note: 665ns+0: VHPI plugin requested end of simulation\n"
+      }
+     ],
+     "build_s_median": 0.1633528460515663,
+     "start_s_median": 0.9690747439162806,
+     "work_s_median": 0.9603875200264156,
+     "sim_s_median": -0.008687223889864981
+    }
+   }
+  },
+  "elevator_fsm": {
+   "ops": 60,
+   "sims": {
+    "ghdl-4.1.0-mcode": {
+     "reps": [
+      {
+       "build_ok": true,
+       "build_s": 0.06319228303618729,
+       "start_s": 0.8016383439535275,
+       "start_rc": 0,
+       "start_xml": {
+        "tests": 1,
+        "fail": 0,
+        "message": null
+       },
+       "start_trace": {
+        "name": "elevator_fsm",
+        "clocks": 3,
+        "metavalue_clocks": 0,
+        "first_metavalue": null,
+        "sha256": "e46d0ac5ee2c8968616d44d0108a4c3720dca4611601ffe877048d6de8db07d2"
+       },
+       "work_s": 0.838238729047589,
+       "work_rc": 0,
+       "work_xml": {
+        "tests": 1,
+        "fail": 1,
+        "message": ""
+       },
+       "work_trace": {
+        "name": "elevator_fsm",
+        "clocks": 3,
+        "metavalue_clocks": 0,
+        "first_metavalue": null,
+        "sha256": "e46d0ac5ee2c8968616d44d0108a4c3720dca4611601ffe877048d6de8db07d2"
+       },
+       "work_log_tail": "     -.--ns INFO     gpi                                ..mbed/gpi_embed.cpp:93   in _embed_init_python              Using Python 3.12.4 interpreter at /usr/bin/python3\n     -.--ns INFO     gpi                                ../gpi/GpiCommon.cpp:79   in gpi_print_registered_impl       VPI registered\n     0.00ns INFO     cocotb                             Running on GHDL version 4.1.0 (Ubuntu 4.1.0+dfsg-0ubuntu2.1) [Dunoon edition]\n     0.00ns WARNING  gpi                                vpi_iterate returned NULL for type vpiInstance for object NULL\n     0.00ns INFO     cocotb                             Seeding Python random module with 1795314352\n     0.00ns INFO     cocotb                             Initialized cocotb v2.0.1 from ~/.local/lib/python3.12/site-packages/cocotb\n     0.00ns INFO     cocotb                             Running tests\n     0.00ns INFO     cocotb.regression                  running bench_elevator_fsm.elevator_calls (1/1)\n../../src/ieee2008/numeric_std-body.vhdl:1776:7:@0ms:(assertion warning): NUMERIC_STD.\"=\": metavalue detected, returning FALSE\n../../src/ieee2008/numeric_std-body.vhdl:3036:7:@0ms:(assertion warning): NUMERIC_STD.TO_INTEGER: metavalue detected, returning 0\n../../src/ieee2008/numeric_std-body.vhdl:1776:7:@0ms:(assertion warning): NUMERIC_STD.\"=\": metavalue detected, returning FALSE\n../../src/ieee2008/numeric_std-body.vhdl:3036:7:@0ms:(assertion warning): NUMERIC_STD.TO_INTEGER: metavalue detected, returning 0\n   925.00ns WARNING  ..st elevator_calls.elevator_calls call 0: moves\n                                                        assert 2 == 1\n                                                        Traceback (most recent call last):\n                                                          File \"results/156_vhdl_tools/benches/bench_elevator_fsm.py\", line 34, in elevator_calls\n                                                            assert await w.read(M.MOVES) == moves, f\"call {i}: moves\"\n                                                        AssertionError: call 0: moves\n                                                        assert 2 == 1\n   925.00ns WARNING  cocotb.regression                  bench_elevator_fsm.elevator_calls failed\n   925.00ns INFO     cocotb.regression                  *******************************************************************************************\n                                                        ** TEST                               STATUS  SIM TIME (ns)  REAL TIME (s)  RATIO (ns/s) **\n                                                        *******************************************************************************************\n                                                        ** bench_elevator_fsm.elevator_calls   FAIL         925.00           0.03      28534.15  **\n                                                        *******************************************************************************************\n                                                        ** TESTS=1 PASS=0 FAIL=1 SKIP=0                     925.00           0.04      22006.92  **\n                                                        *******************************************************************************************\nloading VPI module '~/.local/lib/python3.12/site-packages/cocotb/libs/libcocotbvpi_ghdl.so'\nVPI module loaded!\n"
+      }
+     ],
+     "build_s_median": 0.06319228303618729,
+     "start_s_median": 0.8016383439535275,
+     "work_s_median": 0.838238729047589,
+     "sim_s_median": 0.036600385094061494
+    },
+    "ghdl-7.0.0dev-llvm": {
+     "reps": [
+      {
+       "build_ok": true,
+       "build_s": 0.6561306830262765,
+       "start_s": 0.7669138419441879,
+       "start_rc": 0,
+       "start_xml": {
+        "tests": 1,
+        "fail": 0,
+        "message": null
+       },
+       "start_trace": {
+        "name": "elevator_fsm",
+        "clocks": 3,
+        "metavalue_clocks": 0,
+        "first_metavalue": null,
+        "sha256": "e46d0ac5ee2c8968616d44d0108a4c3720dca4611601ffe877048d6de8db07d2"
+       },
+       "work_s": 0.7491179240169004,
+       "work_rc": 0,
+       "work_xml": {
+        "tests": 1,
+        "fail": 1,
+        "message": ""
+       },
+       "work_trace": {
+        "name": "elevator_fsm",
+        "clocks": 3,
+        "metavalue_clocks": 0,
+        "first_metavalue": null,
+        "sha256": "e46d0ac5ee2c8968616d44d0108a4c3720dca4611601ffe877048d6de8db07d2"
+       },
+       "work_log_tail": "     -.--ns INFO     gpi                                ..mbed/gpi_embed.cpp:93   in _embed_init_python              Using Python 3.12.4 interpreter at /usr/bin/python3\n     -.--ns INFO     gpi                                ../gpi/GpiCommon.cpp:79   in gpi_print_registered_impl       VPI registered\n     0.00ns INFO     cocotb                             Running on GHDL version 7.0.0-dev (6.0.0.r729.g8e642a9a5.dirty) [Dunoon edition]\n     0.00ns WARNING  gpi                                vpi_iterate returned NULL for type vpiInstance for object NULL\n     0.00ns INFO     cocotb                             Seeding Python random module with 1795314354\n     0.00ns INFO     cocotb                             Initialized cocotb v2.0.1 from ~/.local/lib/python3.12/site-packages/cocotb\n     0.00ns INFO     cocotb                             Running tests\n     0.00ns INFO     cocotb.regression                  running bench_elevator_fsm.elevator_calls (1/1)\n   925.00ns WARNING  ..st elevator_calls.elevator_calls call 0: moves\n                                                        assert 2 == 1\n                                                        Traceback (most recent call last):\n                                                          File \"results/156_vhdl_tools/benches/bench_elevator_fsm.py\", line 34, in elevator_calls\n                                                            assert await w.read(M.MOVES) == moves, f\"call {i}: moves\"\n                                                        AssertionError: call 0: moves\n                                                        assert 2 == 1\n   925.00ns WARNING  cocotb.regression                  bench_elevator_fsm.elevator_calls failed\n   925.00ns INFO     cocotb.regression                  *******************************************************************************************\n                                                        ** TEST                               STATUS  SIM TIME (ns)  REAL TIME (s)  RATIO (ns/s) **\n                                                        *******************************************************************************************\n                                                        ** bench_elevator_fsm.elevator_calls   FAIL         925.00           0.03      32975.49  **\n                                                        *******************************************************************************************\n                                                        ** TESTS=1 PASS=0 FAIL=1 SKIP=0                     925.00           0.05      20040.14  **\n                                                        *******************************************************************************************\n../../src/ieee2008/numeric_std-body.vhdl:1793:7:@0ms:(assertion warning): NUMERIC_STD.\"=\": metavalue detected, returning FALSE\n../../src/ieee2008/numeric_std-body.vhdl:3053:7:@0ms:(assertion warning): NUMERIC_STD.TO_INTEGER: metavalue detected, returning 0\n../../src/ieee2008/numeric_std-body.vhdl:1793:7:@0ms:(assertion warning): NUMERIC_STD.\"=\": metavalue detected, returning FALSE\n../../src/ieee2008/numeric_std-body.vhdl:3053:7:@0ms:(assertion warning): NUMERIC_STD.TO_INTEGER: metavalue detected, returning 0\nloading VPI module '~/.local/lib/python3.12/site-packages/cocotb/libs/libcocotbvpi_ghdl.so'\nVPI module loaded!\n"
+      }
+     ],
+     "build_s_median": 0.6561306830262765,
+     "start_s_median": 0.7669138419441879,
+     "work_s_median": 0.7491179240169004,
+     "sim_s_median": -0.01779591792728752
+    },
+    "nvc-1.23.1-jit": {
+     "reps": [
+      {
+       "build_ok": true,
+       "build_s": 0.026535127079114318,
+       "start_s": 0.6883689289679751,
+       "start_rc": 0,
+       "start_xml": {
+        "tests": 1,
+        "fail": 0,
+        "message": null
+       },
+       "start_trace": {
+        "name": "elevator_fsm",
+        "clocks": 3,
+        "metavalue_clocks": 0,
+        "first_metavalue": null,
+        "sha256": "e46d0ac5ee2c8968616d44d0108a4c3720dca4611601ffe877048d6de8db07d2"
+       },
+       "work_s": 0.6294480989454314,
+       "work_rc": 0,
+       "work_xml": {
+        "tests": 1,
+        "fail": 1,
+        "message": ""
+       },
+       "work_trace": {
+        "name": "elevator_fsm",
+        "clocks": 3,
+        "metavalue_clocks": 0,
+        "first_metavalue": null,
+        "sha256": "e46d0ac5ee2c8968616d44d0108a4c3720dca4611601ffe877048d6de8db07d2"
+       },
+       "work_log_tail": "ite-packages/cocotb\n     0.00ns INFO     cocotb                             Running tests\n     0.00ns INFO     cocotb.regression                  running bench_elevator_fsm.elevator_calls (1/1)\n   925.00ns WARNING  ..st elevator_calls.elevator_calls call 0: moves\n                                                        assert 2 == 1\n                                                        Traceback (most recent call last):\n                                                          File \"results/156_vhdl_tools/benches/bench_elevator_fsm.py\", line 34, in elevator_calls\n                                                            assert await w.read(M.MOVES) == moves, f\"call {i}: moves\"\n                                                        AssertionError: call 0: moves\n                                                        assert 2 == 1\n   925.00ns WARNING  cocotb.regression                  bench_elevator_fsm.elevator_calls failed\n   925.00ns INFO     cocotb.regression                  *******************************************************************************************\n                                                        ** TEST                               STATUS  SIM TIME (ns)  REAL TIME (s)  RATIO (ns/s) **\n                                                        *******************************************************************************************\n                                                        ** bench_elevator_fsm.elevator_calls   FAIL         925.00           0.03      33429.24  **\n                                                        *******************************************************************************************\n                                                        ** TESTS=1 PASS=0 FAIL=1 SKIP=0                     925.00           0.04      25259.32  **\n                                                        *******************************************************************************************\n** Note: loading plugin ~/.local/lib/python3.12/site-packages/cocotb/libs/libcocotbvhpi_nvc.so\n** Warning: 0ms+0: NUMERIC_STD.\"=\": metavalue detected, returning FALSE\n   Function \"=\" [UNRESOLVED_UNSIGNED, UNRESOLVED_UNSIGNED return BOOLEAN] at lib/ieee.08/numeric_std-body.vhdl:1760\n   Process :elevator_fsm:_p0 at build/156_sims/mutant__elevator_fsm/elevator_fsm.vhd:75\n** Warning: 0ms+0: NUMERIC_STD.TO_INTEGER: metavalue detected, returning 0\n   Function TO_INTEGER [UNRESOLVED_UNSIGNED return NATURAL] at lib/ieee.08/numeric_std-body.vhdl:3024\n   Process :elevator_fsm:_p0 at build/156_sims/mutant__elevator_fsm/elevator_fsm.vhd:82\n** Warning: 0ms+3: NUMERIC_STD.\"=\": metavalue detected, returning FALSE\n   Function \"=\" [UNRESOLVED_UNSIGNED, UNRESOLVED_UNSIGNED return BOOLEAN] at lib/ieee.08/numeric_std-body.vhdl:1760\n   Process :elevator_fsm:_p0 at build/156_sims/mutant__elevator_fsm/elevator_fsm.vhd:75\n** Warning: 0ms+3: NUMERIC_STD.TO_INTEGER: metavalue detected, returning 0\n   Function TO_INTEGER [UNRESOLVED_UNSIGNED return NATURAL] at lib/ieee.08/numeric_std-body.vhdl:3024\n   Process :elevator_fsm:_p0 at build/156_sims/mutant__elevator_fsm/elevator_fsm.vhd:82\n** Note: 925ns+0: VHPI plugin requested end of simulation\n"
+      }
+     ],
+     "build_s_median": 0.026535127079114318,
+     "start_s_median": 0.6883689289679751,
+     "work_s_median": 0.6294480989454314,
+     "sim_s_median": -0.05892083002254367
+    },
+    "nvc-1.23.1-aot": {
+     "reps": [
+      {
+       "build_ok": true,
+       "build_s": 0.07300144305918366,
+       "start_s": 0.58570314606186,
+       "start_rc": 0,
+       "start_xml": {
+        "tests": 1,
+        "fail": 0,
+        "message": null
+       },
+       "start_trace": {
+        "name": "elevator_fsm",
+        "clocks": 3,
+        "metavalue_clocks": 0,
+        "first_metavalue": null,
+        "sha256": "e46d0ac5ee2c8968616d44d0108a4c3720dca4611601ffe877048d6de8db07d2"
+       },
+       "work_s": 0.5787321330280975,
+       "work_rc": 0,
+       "work_xml": {
+        "tests": 1,
+        "fail": 1,
+        "message": ""
+       },
+       "work_trace": {
+        "name": "elevator_fsm",
+        "clocks": 3,
+        "metavalue_clocks": 0,
+        "first_metavalue": null,
+        "sha256": "e46d0ac5ee2c8968616d44d0108a4c3720dca4611601ffe877048d6de8db07d2"
+       },
+       "work_log_tail": "ite-packages/cocotb\n     0.00ns INFO     cocotb                             Running tests\n     0.00ns INFO     cocotb.regression                  running bench_elevator_fsm.elevator_calls (1/1)\n   925.00ns WARNING  ..st elevator_calls.elevator_calls call 0: moves\n                                                        assert 2 == 1\n                                                        Traceback (most recent call last):\n                                                          File \"results/156_vhdl_tools/benches/bench_elevator_fsm.py\", line 34, in elevator_calls\n                                                            assert await w.read(M.MOVES) == moves, f\"call {i}: moves\"\n                                                        AssertionError: call 0: moves\n                                                        assert 2 == 1\n   925.00ns WARNING  cocotb.regression                  bench_elevator_fsm.elevator_calls failed\n   925.00ns INFO     cocotb.regression                  *******************************************************************************************\n                                                        ** TEST                               STATUS  SIM TIME (ns)  REAL TIME (s)  RATIO (ns/s) **\n                                                        *******************************************************************************************\n                                                        ** bench_elevator_fsm.elevator_calls   FAIL         925.00           0.03      28862.97  **\n                                                        *******************************************************************************************\n                                                        ** TESTS=1 PASS=0 FAIL=1 SKIP=0                     925.00           0.04      21882.42  **\n                                                        *******************************************************************************************\n** Note: loading plugin ~/.local/lib/python3.12/site-packages/cocotb/libs/libcocotbvhpi_nvc.so\n** Warning: 0ms+0: NUMERIC_STD.\"=\": metavalue detected, returning FALSE\n   Function \"=\" [UNRESOLVED_UNSIGNED, UNRESOLVED_UNSIGNED return BOOLEAN] at lib/ieee.08/numeric_std-body.vhdl:1760\n   Process :elevator_fsm:_p0 at build/156_sims/mutant__elevator_fsm/elevator_fsm.vhd:75\n** Warning: 0ms+0: NUMERIC_STD.TO_INTEGER: metavalue detected, returning 0\n   Function TO_INTEGER [UNRESOLVED_UNSIGNED return NATURAL] at lib/ieee.08/numeric_std-body.vhdl:3024\n   Process :elevator_fsm:_p0 at build/156_sims/mutant__elevator_fsm/elevator_fsm.vhd:82\n** Warning: 0ms+3: NUMERIC_STD.\"=\": metavalue detected, returning FALSE\n   Function \"=\" [UNRESOLVED_UNSIGNED, UNRESOLVED_UNSIGNED return BOOLEAN] at lib/ieee.08/numeric_std-body.vhdl:1760\n   Process :elevator_fsm:_p0 at build/156_sims/mutant__elevator_fsm/elevator_fsm.vhd:75\n** Warning: 0ms+3: NUMERIC_STD.TO_INTEGER: metavalue detected, returning 0\n   Function TO_INTEGER [UNRESOLVED_UNSIGNED return NATURAL] at lib/ieee.08/numeric_std-body.vhdl:3024\n   Process :elevator_fsm:_p0 at build/156_sims/mutant__elevator_fsm/elevator_fsm.vhd:82\n** Note: 925ns+0: VHPI plugin requested end of simulation\n"
+      }
+     ],
+     "build_s_median": 0.07300144305918366,
+     "start_s_median": 0.58570314606186,
+     "work_s_median": 0.5787321330280975,
+     "sim_s_median": -0.006971013033762574
+    }
+   }
+  },
+  "axil_regs": {
+   "ops": 1600,
+   "sims": {
+    "ghdl-4.1.0-mcode": {
+     "reps": [
+      {
+       "build_ok": true,
+       "build_s": 0.036245633964426816,
+       "start_s": 0.5574020829517394,
+       "start_rc": 0,
+       "start_xml": {
+        "tests": 1,
+        "fail": 0,
+        "message": null
+       },
+       "start_trace": {
+        "name": "axil_regs",
+        "clocks": 0,
+        "metavalue_clocks": 0,
+        "first_metavalue": null,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+       },
+       "work_s": 0.5254168249666691,
+       "work_rc": 0,
+       "work_xml": {
+        "tests": 1,
+        "fail": 1,
+        "message": ""
+       },
+       "work_trace": {
+        "name": "axil_regs",
+        "clocks": 0,
+        "metavalue_clocks": 0,
+        "first_metavalue": null,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+       },
+       "work_log_tail": "     -.--ns INFO     gpi                                ..mbed/gpi_embed.cpp:93   in _embed_init_python              Using Python 3.12.4 interpreter at /usr/bin/python3\n     -.--ns INFO     gpi                                ../gpi/GpiCommon.cpp:79   in gpi_print_registered_impl       VPI registered\n     0.00ns INFO     cocotb                             Running on GHDL version 4.1.0 (Ubuntu 4.1.0+dfsg-0ubuntu2.1) [Dunoon edition]\n     0.00ns WARNING  gpi                                vpi_iterate returned NULL for type vpiInstance for object NULL\n     0.00ns INFO     cocotb                             Seeding Python random module with 1795314358\n     0.00ns INFO     cocotb                             Initialized cocotb v2.0.1 from ~/.local/lib/python3.12/site-packages/cocotb\n     0.00ns INFO     cocotb                             Running tests\n     0.00ns INFO     cocotb.regression                  running bench_axil_regs.axil_random (1/1)\n   500.00ns WARNING  ..otb.Test axil_random.axil_random op 11: read reg 3 got 0x414c343c want 0xea4c3476\n                                                        assert 1095513148 == 3930862710\n                                                        Traceback (most recent call last):\n                                                          File \"results/156_vhdl_tools/benches/bench_axil_regs.py\", line 87, in axil_random\n                                                            assert got == want, f\"op {i}: read reg {a} got {got:#x} want {want:#x}\"\n                                                        AssertionError: op 11: read reg 3 got 0x414c343c want 0xea4c3476\n                                                        assert 1095513148 == 3930862710\n   500.00ns WARNING  cocotb.regression                  bench_axil_regs.axil_random failed\n   500.00ns INFO     cocotb.regression                  **************************************************************************************\n                                                        ** TEST                          STATUS  SIM TIME (ns)  REAL TIME (s)  RATIO (ns/s) **\n                                                        **************************************************************************************\n                                                        ** bench_axil_regs.axil_random    FAIL         500.00           0.01      37802.19  **\n                                                        **************************************************************************************\n                                                        ** TESTS=1 PASS=0 FAIL=1 SKIP=0                500.00           0.02      22674.12  **\n                                                        **************************************************************************************\nloading VPI module '~/.local/lib/python3.12/site-packages/cocotb/libs/libcocotbvpi_ghdl.so'\nVPI module loaded!\n"
+      }
+     ],
+     "build_s_median": 0.036245633964426816,
+     "start_s_median": 0.5574020829517394,
+     "work_s_median": 0.5254168249666691,
+     "sim_s_median": -0.03198525798507035
+    },
+    "ghdl-7.0.0dev-llvm": {
+     "reps": [
+      {
+       "build_ok": true,
+       "build_s": 0.33977049693930894,
+       "start_s": 0.44856381602585316,
+       "start_rc": 0,
+       "start_xml": {
+        "tests": 1,
+        "fail": 0,
+        "message": null
+       },
+       "start_trace": {
+        "name": "axil_regs",
+        "clocks": 0,
+        "metavalue_clocks": 0,
+        "first_metavalue": null,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+       },
+       "work_s": 0.46157334302552044,
+       "work_rc": 0,
+       "work_xml": {
+        "tests": 1,
+        "fail": 1,
+        "message": ""
+       },
+       "work_trace": {
+        "name": "axil_regs",
+        "clocks": 0,
+        "metavalue_clocks": 0,
+        "first_metavalue": null,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+       },
+       "work_log_tail": "     -.--ns INFO     gpi                                ..mbed/gpi_embed.cpp:93   in _embed_init_python              Using Python 3.12.4 interpreter at /usr/bin/python3\n     -.--ns INFO     gpi                                ../gpi/GpiCommon.cpp:79   in gpi_print_registered_impl       VPI registered\n     0.00ns INFO     cocotb                             Running on GHDL version 7.0.0-dev (6.0.0.r729.g8e642a9a5.dirty) [Dunoon edition]\n     0.00ns WARNING  gpi                                vpi_iterate returned NULL for type vpiInstance for object NULL\n     0.00ns INFO     cocotb                             Seeding Python random module with 1795314359\n     0.00ns INFO     cocotb                             Initialized cocotb v2.0.1 from ~/.local/lib/python3.12/site-packages/cocotb\n     0.00ns INFO     cocotb                             Running tests\n     0.00ns INFO     cocotb.regression                  running bench_axil_regs.axil_random (1/1)\n   500.00ns WARNING  ..otb.Test axil_random.axil_random op 11: read reg 3 got 0x414c343c want 0xea4c3476\n                                                        assert 1095513148 == 3930862710\n                                                        Traceback (most recent call last):\n                                                          File \"results/156_vhdl_tools/benches/bench_axil_regs.py\", line 87, in axil_random\n                                                            assert got == want, f\"op {i}: read reg {a} got {got:#x} want {want:#x}\"\n                                                        AssertionError: op 11: read reg 3 got 0x414c343c want 0xea4c3476\n                                                        assert 1095513148 == 3930862710\n   500.00ns WARNING  cocotb.regression                  bench_axil_regs.axil_random failed\n   500.00ns INFO     cocotb.regression                  **************************************************************************************\n                                                        ** TEST                          STATUS  SIM TIME (ns)  REAL TIME (s)  RATIO (ns/s) **\n                                                        **************************************************************************************\n                                                        ** bench_axil_regs.axil_random    FAIL         500.00           0.01      38660.74  **\n                                                        **************************************************************************************\n                                                        ** TESTS=1 PASS=0 FAIL=1 SKIP=0                500.00           0.02      22316.06  **\n                                                        **************************************************************************************\nloading VPI module '~/.local/lib/python3.12/site-packages/cocotb/libs/libcocotbvpi_ghdl.so'\nVPI module loaded!\n"
+      }
+     ],
+     "build_s_median": 0.33977049693930894,
+     "start_s_median": 0.44856381602585316,
+     "work_s_median": 0.46157334302552044,
+     "sim_s_median": 0.013009526999667287
+    },
+    "nvc-1.23.1-jit": {
+     "reps": [
+      {
+       "build_ok": true,
+       "build_s": 0.019228784018196166,
+       "start_s": 0.4838589229620993,
+       "start_rc": 0,
+       "start_xml": {
+        "tests": 1,
+        "fail": 0,
+        "message": null
+       },
+       "start_trace": {
+        "name": "axil_regs",
+        "clocks": 0,
+        "metavalue_clocks": 0,
+        "first_metavalue": null,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+       },
+       "work_s": 0.47816267306916416,
+       "work_rc": 0,
+       "work_xml": {
+        "tests": 1,
+        "fail": 1,
+        "message": ""
+       },
+       "work_trace": {
+        "name": "axil_regs",
+        "clocks": 0,
+        "metavalue_clocks": 0,
+        "first_metavalue": null,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+       },
+       "work_log_tail": "     -.--ns INFO     gpi                                ..mbed/gpi_embed.cpp:93   in _embed_init_python              Using Python 3.12.4 interpreter at /usr/bin/python3\n     -.--ns INFO     gpi                                ../gpi/GpiCommon.cpp:79   in gpi_print_registered_impl       VHPI registered\n     0.00ns INFO     cocotb                             Running on nvc version 1.23.1\n     0.00ns WARNING  gpi                                VHPI: Other iterator types not implemented yet\n     0.00ns INFO     cocotb                             Seeding Python random module with 1795314360\n     0.00ns INFO     cocotb                             Initialized cocotb v2.0.1 from ~/.local/lib/python3.12/site-packages/cocotb\n     0.00ns INFO     cocotb                             Running tests\n     0.00ns INFO     cocotb.regression                  running bench_axil_regs.axil_random (1/1)\n   500.00ns WARNING  ..otb.Test axil_random.axil_random op 11: read reg 3 got 0x414c343c want 0xea4c3476\n                                                        assert 1095513148 == 3930862710\n                                                        Traceback (most recent call last):\n                                                          File \"results/156_vhdl_tools/benches/bench_axil_regs.py\", line 87, in axil_random\n                                                            assert got == want, f\"op {i}: read reg {a} got {got:#x} want {want:#x}\"\n                                                        AssertionError: op 11: read reg 3 got 0x414c343c want 0xea4c3476\n                                                        assert 1095513148 == 3930862710\n   500.00ns WARNING  cocotb.regression                  bench_axil_regs.axil_random failed\n   500.00ns INFO     cocotb.regression                  **************************************************************************************\n                                                        ** TEST                          STATUS  SIM TIME (ns)  REAL TIME (s)  RATIO (ns/s) **\n                                                        **************************************************************************************\n                                                        ** bench_axil_regs.axil_random    FAIL         500.00           0.01      34745.22  **\n                                                        **************************************************************************************\n                                                        ** TESTS=1 PASS=0 FAIL=1 SKIP=0                500.00           0.03      18720.56  **\n                                                        **************************************************************************************\n** Note: loading plugin ~/.local/lib/python3.12/site-packages/cocotb/libs/libcocotbvhpi_nvc.so\n** Note: 500ns+1: VHPI plugin requested end of simulation\n"
+      }
+     ],
+     "build_s_median": 0.019228784018196166,
+     "start_s_median": 0.4838589229620993,
+     "work_s_median": 0.47816267306916416,
+     "sim_s_median": -0.005696249892935157
+    },
+    "nvc-1.23.1-aot": {
+     "reps": [
+      {
+       "build_ok": true,
+       "build_s": 0.04581469402182847,
+       "start_s": 0.4461874619591981,
+       "start_rc": 0,
+       "start_xml": {
+        "tests": 1,
+        "fail": 0,
+        "message": null
+       },
+       "start_trace": {
+        "name": "axil_regs",
+        "clocks": 0,
+        "metavalue_clocks": 0,
+        "first_metavalue": null,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+       },
+       "work_s": 0.4542790420819074,
+       "work_rc": 0,
+       "work_xml": {
+        "tests": 1,
+        "fail": 1,
+        "message": ""
+       },
+       "work_trace": {
+        "name": "axil_regs",
+        "clocks": 0,
+        "metavalue_clocks": 0,
+        "first_metavalue": null,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+       },
+       "work_log_tail": "     -.--ns INFO     gpi                                ..mbed/gpi_embed.cpp:93   in _embed_init_python              Using Python 3.12.4 interpreter at /usr/bin/python3\n     -.--ns INFO     gpi                                ../gpi/GpiCommon.cpp:79   in gpi_print_registered_impl       VHPI registered\n     0.00ns INFO     cocotb                             Running on nvc version 1.23.1\n     0.00ns WARNING  gpi                                VHPI: Other iterator types not implemented yet\n     0.00ns INFO     cocotb                             Seeding Python random module with 1795314361\n     0.00ns INFO     cocotb                             Initialized cocotb v2.0.1 from ~/.local/lib/python3.12/site-packages/cocotb\n     0.00ns INFO     cocotb                             Running tests\n     0.00ns INFO     cocotb.regression                  running bench_axil_regs.axil_random (1/1)\n   500.00ns WARNING  ..otb.Test axil_random.axil_random op 11: read reg 3 got 0x414c343c want 0xea4c3476\n                                                        assert 1095513148 == 3930862710\n                                                        Traceback (most recent call last):\n                                                          File \"results/156_vhdl_tools/benches/bench_axil_regs.py\", line 87, in axil_random\n                                                            assert got == want, f\"op {i}: read reg {a} got {got:#x} want {want:#x}\"\n                                                        AssertionError: op 11: read reg 3 got 0x414c343c want 0xea4c3476\n                                                        assert 1095513148 == 3930862710\n   500.00ns WARNING  cocotb.regression                  bench_axil_regs.axil_random failed\n   500.00ns INFO     cocotb.regression                  **************************************************************************************\n                                                        ** TEST                          STATUS  SIM TIME (ns)  REAL TIME (s)  RATIO (ns/s) **\n                                                        **************************************************************************************\n                                                        ** bench_axil_regs.axil_random    FAIL         500.00           0.02      31713.05  **\n                                                        **************************************************************************************\n                                                        ** TESTS=1 PASS=0 FAIL=1 SKIP=0                500.00           0.03      17979.54  **\n                                                        **************************************************************************************\n** Note: loading plugin ~/.local/lib/python3.12/site-packages/cocotb/libs/libcocotbvhpi_nvc.so\n** Note: 500ns+1: VHPI plugin requested end of simulation\n"
+      }
+     ],
+     "build_s_median": 0.04581469402182847,
+     "start_s_median": 0.4461874619591981,
+     "work_s_median": 0.4542790420819074,
+     "sim_s_median": 0.008091580122709274
+    }
+   }
+  },
+  "fir16": {
+   "ops": 1200,
+   "sims": {
+    "ghdl-4.1.0-mcode": {
+     "reps": [
+      {
+       "build_ok": true,
+       "build_s": 0.03681096702348441,
+       "start_s": 0.4868442800361663,
+       "start_rc": 0,
+       "start_xml": {
+        "tests": 1,
+        "fail": 1,
+        "message": ""
+       },
+       "start_log_tail": "     -.--ns INFO     gpi                                ..mbed/gpi_embed.cpp:93   in _embed_init_python              Using Python 3.12.4 interpreter at /usr/bin/python3\n     -.--ns INFO     gpi                                ../gpi/GpiCommon.cpp:79   in gpi_print_registered_impl       VPI registered\n     0.00ns INFO     cocotb                             Running on GHDL version 4.1.0 (Ubuntu 4.1.0+dfsg-0ubuntu2.1) [Dunoon edition]\n     0.00ns WARNING  gpi                                vpi_iterate returned NULL for type vpiInstance for object NULL\n     0.00ns INFO     cocotb                             Seeding Python random module with 1795314362\n     0.00ns INFO     cocotb                             Initialized cocotb v2.0.1 from ~/.local/lib/python3.12/site-packages/cocotb\n     0.00ns INFO     cocotb                             Running tests\n     0.00ns INFO     cocotb.regression                  running bench_fir16.fir_stream (1/1)\n   150.00ns WARNING  cocotb.Test fir_stream.fir_stream  assert -24 == -12\n                                                        Traceback (most recent call last):\n                                                          File \"results/156_vhdl_tools/benches/bench_fir16.py\", line 82, in fir_stream\n                                                            assert mon.out[0][1] == golden(COEF0, [1000] + [0] * 15)[0]\n                                                        AssertionError: assert -24 == -12\n   150.00ns WARNING  cocotb.regression                  bench_fir16.fir_stream failed\n   150.00ns INFO     cocotb.regression                  **************************************************************************************\n                                                        ** TEST                          STATUS  SIM TIME (ns)  REAL TIME (s)  RATIO (ns/s) **\n                                                        **************************************************************************************\n                                                        ** bench_fir16.fir_stream         FAIL         150.00           0.01      26347.23  **\n                                                        **************************************************************************************\n                                                        ** TESTS=1 PASS=0 FAIL=1 SKIP=0                150.00           0.01      10019.84  **\n                                                        **************************************************************************************\nloading VPI module '~/.local/lib/python3.12/site-packages/cocotb/libs/libcocotbvpi_ghdl.so'\nVPI module loaded!\n",
+       "work_s": 0.4738673960091546,
+       "work_rc": 0,
+       "work_xml": {
+        "tests": 1,
+        "fail": 1,
+        "message": ""
+       },
+       "work_log_tail": "     -.--ns INFO     gpi                                ..mbed/gpi_embed.cpp:93   in _embed_init_python              Using Python 3.12.4 interpreter at /usr/bin/python3\n     -.--ns INFO     gpi                                ../gpi/GpiCommon.cpp:79   in gpi_print_registered_impl       VPI registered\n     0.00ns INFO     cocotb                             Running on GHDL version 4.1.0 (Ubuntu 4.1.0+dfsg-0ubuntu2.1) [Dunoon edition]\n     0.00ns WARNING  gpi                                vpi_iterate returned NULL for type vpiInstance for object NULL\n     0.00ns INFO     cocotb                             Seeding Python random module with 1795314362\n     0.00ns INFO     cocotb                             Initialized cocotb v2.0.1 from ~/.local/lib/python3.12/site-packages/cocotb\n     0.00ns INFO     cocotb                             Running tests\n     0.00ns INFO     cocotb.regression                  running bench_fir16.fir_stream (1/1)\n   150.00ns WARNING  cocotb.Test fir_stream.fir_stream  assert -24 == -12\n                                                        Traceback (most recent call last):\n                                                          File \"results/156_vhdl_tools/benches/bench_fir16.py\", line 82, in fir_stream\n                                                            assert mon.out[0][1] == golden(COEF0, [1000] + [0] * 15)[0]\n                                                        AssertionError: assert -24 == -12\n   150.00ns WARNING  cocotb.regression                  bench_fir16.fir_stream failed\n   150.00ns INFO     cocotb.regression                  **************************************************************************************\n                                                        ** TEST                          STATUS  SIM TIME (ns)  REAL TIME (s)  RATIO (ns/s) **\n                                                        **************************************************************************************\n                                                        ** bench_fir16.fir_stream         FAIL         150.00           0.01      26470.28  **\n                                                        **************************************************************************************\n                                                        ** TESTS=1 PASS=0 FAIL=1 SKIP=0                150.00           0.02       9991.35  **\n                                                        **************************************************************************************\nloading VPI module '~/.local/lib/python3.12/site-packages/cocotb/libs/libcocotbvpi_ghdl.so'\nVPI module loaded!\n"
+      }
+     ],
+     "build_s_median": 0.03681096702348441,
+     "start_s_median": 0.4868442800361663,
+     "work_s_median": 0.4738673960091546,
+     "sim_s_median": -0.012976884027011693
+    },
+    "ghdl-7.0.0dev-llvm": {
+     "reps": [
+      {
+       "build_ok": true,
+       "build_s": 0.43724921403918415,
+       "start_s": 0.4365007779560983,
+       "start_rc": 0,
+       "start_xml": {
+        "tests": 1,
+        "fail": 1,
+        "message": ""
+       },
+       "start_log_tail": "     -.--ns INFO     gpi                                ..mbed/gpi_embed.cpp:93   in _embed_init_python              Using Python 3.12.4 interpreter at /usr/bin/python3\n     -.--ns INFO     gpi                                ../gpi/GpiCommon.cpp:79   in gpi_print_registered_impl       VPI registered\n     0.00ns INFO     cocotb                             Running on GHDL version 7.0.0-dev (6.0.0.r729.g8e642a9a5.dirty) [Dunoon edition]\n     0.00ns WARNING  gpi                                vpi_iterate returned NULL for type vpiInstance for object NULL\n     0.00ns INFO     cocotb                             Seeding Python random module with 1795314363\n     0.00ns INFO     cocotb                             Initialized cocotb v2.0.1 from ~/.local/lib/python3.12/site-packages/cocotb\n     0.00ns INFO     cocotb                             Running tests\n     0.00ns INFO     cocotb.regression                  running bench_fir16.fir_stream (1/1)\n   150.00ns WARNING  cocotb.Test fir_stream.fir_stream  assert -24 == -12\n                                                        Traceback (most recent call last):\n                                                          File \"results/156_vhdl_tools/benches/bench_fir16.py\", line 82, in fir_stream\n                                                            assert mon.out[0][1] == golden(COEF0, [1000] + [0] * 15)[0]\n                                                        AssertionError: assert -24 == -12\n   150.00ns WARNING  cocotb.regression                  bench_fir16.fir_stream failed\n   150.00ns INFO     cocotb.regression                  **************************************************************************************\n                                                        ** TEST                          STATUS  SIM TIME (ns)  REAL TIME (s)  RATIO (ns/s) **\n                                                        **************************************************************************************\n                                                        ** bench_fir16.fir_stream         FAIL         150.00           0.01      29293.92  **\n                                                        **************************************************************************************\n                                                        ** TESTS=1 PASS=0 FAIL=1 SKIP=0                150.00           0.01      10004.86  **\n                                                        **************************************************************************************\nloading VPI module '~/.local/lib/python3.12/site-packages/cocotb/libs/libcocotbvpi_ghdl.so'\nVPI module loaded!\n",
+       "work_s": 0.4664095640182495,
+       "work_rc": 0,
+       "work_xml": {
+        "tests": 1,
+        "fail": 1,
+        "message": ""
+       },
+       "work_log_tail": "     -.--ns INFO     gpi                                ..mbed/gpi_embed.cpp:93   in _embed_init_python              Using Python 3.12.4 interpreter at /usr/bin/python3\n     -.--ns INFO     gpi                                ../gpi/GpiCommon.cpp:79   in gpi_print_registered_impl       VPI registered\n     0.00ns INFO     cocotb                             Running on GHDL version 7.0.0-dev (6.0.0.r729.g8e642a9a5.dirty) [Dunoon edition]\n     0.00ns WARNING  gpi                                vpi_iterate returned NULL for type vpiInstance for object NULL\n     0.00ns INFO     cocotb                             Seeding Python random module with 1795314364\n     0.00ns INFO     cocotb                             Initialized cocotb v2.0.1 from ~/.local/lib/python3.12/site-packages/cocotb\n     0.00ns INFO     cocotb                             Running tests\n     0.00ns INFO     cocotb.regression                  running bench_fir16.fir_stream (1/1)\n   150.00ns WARNING  cocotb.Test fir_stream.fir_stream  assert -24 == -12\n                                                        Traceback (most recent call last):\n                                                          File \"results/156_vhdl_tools/benches/bench_fir16.py\", line 82, in fir_stream\n                                                            assert mon.out[0][1] == golden(COEF0, [1000] + [0] * 15)[0]\n                                                        AssertionError: assert -24 == -12\n   150.00ns WARNING  cocotb.regression                  bench_fir16.fir_stream failed\n   150.00ns INFO     cocotb.regression                  **************************************************************************************\n                                                        ** TEST                          STATUS  SIM TIME (ns)  REAL TIME (s)  RATIO (ns/s) **\n                                                        **************************************************************************************\n                                                        ** bench_fir16.fir_stream         FAIL         150.00           0.01      28899.66  **\n                                                        **************************************************************************************\n                                                        ** TESTS=1 PASS=0 FAIL=1 SKIP=0                150.00           0.01      10426.50  **\n                                                        **************************************************************************************\nloading VPI module '~/.local/lib/python3.12/site-packages/cocotb/libs/libcocotbvpi_ghdl.so'\nVPI module loaded!\n"
+      }
+     ],
+     "build_s_median": 0.43724921403918415,
+     "start_s_median": 0.4365007779560983,
+     "work_s_median": 0.4664095640182495,
+     "sim_s_median": 0.029908786062151194
+    },
+    "nvc-1.23.1-jit": {
+     "reps": [
+      {
+       "build_ok": true,
+       "build_s": 0.026920523028820753,
+       "start_s": 0.45396423304919153,
+       "start_rc": 0,
+       "start_xml": {
+        "tests": 1,
+        "fail": 1,
+        "message": ""
+       },
+       "start_log_tail": "     -.--ns INFO     gpi                                ..mbed/gpi_embed.cpp:93   in _embed_init_python              Using Python 3.12.4 interpreter at /usr/bin/python3\n     -.--ns INFO     gpi                                ../gpi/GpiCommon.cpp:79   in gpi_print_registered_impl       VHPI registered\n     0.00ns INFO     cocotb                             Running on nvc version 1.23.1\n     0.00ns WARNING  gpi                                VHPI: Other iterator types not implemented yet\n     0.00ns INFO     cocotb                             Seeding Python random module with 1795314364\n     0.00ns INFO     cocotb                             Initialized cocotb v2.0.1 from ~/.local/lib/python3.12/site-packages/cocotb\n     0.00ns INFO     cocotb                             Running tests\n     0.00ns INFO     cocotb.regression                  running bench_fir16.fir_stream (1/1)\n   150.00ns WARNING  cocotb.Test fir_stream.fir_stream  assert -24 == -12\n                                                        Traceback (most recent call last):\n                                                          File \"results/156_vhdl_tools/benches/bench_fir16.py\", line 82, in fir_stream\n                                                            assert mon.out[0][1] == golden(COEF0, [1000] + [0] * 15)[0]\n                                                        AssertionError: assert -24 == -12\n   150.00ns WARNING  cocotb.regression                  bench_fir16.fir_stream failed\n   150.00ns INFO     cocotb.regression                  **************************************************************************************\n                                                        ** TEST                          STATUS  SIM TIME (ns)  REAL TIME (s)  RATIO (ns/s) **\n                                                        **************************************************************************************\n                                                        ** bench_fir16.fir_stream         FAIL         150.00           0.01      24982.95  **\n                                                        **************************************************************************************\n                                                        ** TESTS=1 PASS=0 FAIL=1 SKIP=0                150.00           0.02       9690.79  **\n                                                        **************************************************************************************\n** Note: loading plugin ~/.local/lib/python3.12/site-packages/cocotb/libs/libcocotbvhpi_nvc.so\n** Note: 150ns+1: VHPI plugin requested end of simulation\n",
+       "work_s": 0.45077673299238086,
+       "work_rc": 0,
+       "work_xml": {
+        "tests": 1,
+        "fail": 1,
+        "message": ""
+       },
+       "work_log_tail": "     -.--ns INFO     gpi                                ..mbed/gpi_embed.cpp:93   in _embed_init_python              Using Python 3.12.4 interpreter at /usr/bin/python3\n     -.--ns INFO     gpi                                ../gpi/GpiCommon.cpp:79   in gpi_print_registered_impl       VHPI registered\n     0.00ns INFO     cocotb                             Running on nvc version 1.23.1\n     0.00ns WARNING  gpi                                VHPI: Other iterator types not implemented yet\n     0.00ns INFO     cocotb                             Seeding Python random module with 1795314365\n     0.00ns INFO     cocotb                             Initialized cocotb v2.0.1 from ~/.local/lib/python3.12/site-packages/cocotb\n     0.00ns INFO     cocotb                             Running tests\n     0.00ns INFO     cocotb.regression                  running bench_fir16.fir_stream (1/1)\n   150.00ns WARNING  cocotb.Test fir_stream.fir_stream  assert -24 == -12\n                                                        Traceback (most recent call last):\n                                                          File \"results/156_vhdl_tools/benches/bench_fir16.py\", line 82, in fir_stream\n                                                            assert mon.out[0][1] == golden(COEF0, [1000] + [0] * 15)[0]\n                                                        AssertionError: assert -24 == -12\n   150.00ns WARNING  cocotb.regression                  bench_fir16.fir_stream failed\n   150.00ns INFO     cocotb.regression                  **************************************************************************************\n                                                        ** TEST                          STATUS  SIM TIME (ns)  REAL TIME (s)  RATIO (ns/s) **\n                                                        **************************************************************************************\n                                                        ** bench_fir16.fir_stream         FAIL         150.00           0.01      24297.90  **\n                                                        **************************************************************************************\n                                                        ** TESTS=1 PASS=0 FAIL=1 SKIP=0                150.00           0.02       9660.59  **\n                                                        **************************************************************************************\n** Note: loading plugin ~/.local/lib/python3.12/site-packages/cocotb/libs/libcocotbvhpi_nvc.so\n** Note: 150ns+1: VHPI plugin requested end of simulation\n"
+      }
+     ],
+     "build_s_median": 0.026920523028820753,
+     "start_s_median": 0.45396423304919153,
+     "work_s_median": 0.45077673299238086,
+     "sim_s_median": -0.003187500056810677
+    },
+    "nvc-1.23.1-aot": {
+     "reps": [
+      {
+       "build_ok": true,
+       "build_s": 0.06625921302475035,
+       "start_s": 0.4627784469630569,
+       "start_rc": 0,
+       "start_xml": {
+        "tests": 1,
+        "fail": 1,
+        "message": ""
+       },
+       "start_log_tail": "     -.--ns INFO     gpi                                ..mbed/gpi_embed.cpp:93   in _embed_init_python              Using Python 3.12.4 interpreter at /usr/bin/python3\n     -.--ns INFO     gpi                                ../gpi/GpiCommon.cpp:79   in gpi_print_registered_impl       VHPI registered\n     0.00ns INFO     cocotb                             Running on nvc version 1.23.1\n     0.00ns WARNING  gpi                                VHPI: Other iterator types not implemented yet\n     0.00ns INFO     cocotb                             Seeding Python random module with 1795314365\n     0.00ns INFO     cocotb                             Initialized cocotb v2.0.1 from ~/.local/lib/python3.12/site-packages/cocotb\n     0.00ns INFO     cocotb                             Running tests\n     0.00ns INFO     cocotb.regression                  running bench_fir16.fir_stream (1/1)\n   150.00ns WARNING  cocotb.Test fir_stream.fir_stream  assert -24 == -12\n                                                        Traceback (most recent call last):\n                                                          File \"results/156_vhdl_tools/benches/bench_fir16.py\", line 82, in fir_stream\n                                                            assert mon.out[0][1] == golden(COEF0, [1000] + [0] * 15)[0]\n                                                        AssertionError: assert -24 == -12\n   150.00ns WARNING  cocotb.regression                  bench_fir16.fir_stream failed\n   150.00ns INFO     cocotb.regression                  **************************************************************************************\n                                                        ** TEST                          STATUS  SIM TIME (ns)  REAL TIME (s)  RATIO (ns/s) **\n                                                        **************************************************************************************\n                                                        ** bench_fir16.fir_stream         FAIL         150.00           0.01      24743.21  **\n                                                        **************************************************************************************\n                                                        ** TESTS=1 PASS=0 FAIL=1 SKIP=0                150.00           0.02       9781.64  **\n                                                        **************************************************************************************\n** Note: loading plugin ~/.local/lib/python3.12/site-packages/cocotb/libs/libcocotbvhpi_nvc.so\n** Note: 150ns+1: VHPI plugin requested end of simulation\n",
+       "work_s": 0.4841400809818879,
+       "work_rc": 0,
+       "work_xml": {
+        "tests": 1,
+        "fail": 1,
+        "message": ""
+       },
+       "work_log_tail": "     -.--ns INFO     gpi                                ..mbed/gpi_embed.cpp:93   in _embed_init_python              Using Python 3.12.4 interpreter at /usr/bin/python3\n     -.--ns INFO     gpi                                ../gpi/GpiCommon.cpp:79   in gpi_print_registered_impl       VHPI registered\n     0.00ns INFO     cocotb                             Running on nvc version 1.23.1\n     0.00ns WARNING  gpi                                VHPI: Other iterator types not implemented yet\n     0.00ns INFO     cocotb                             Seeding Python random module with 1795314366\n     0.00ns INFO     cocotb                             Initialized cocotb v2.0.1 from ~/.local/lib/python3.12/site-packages/cocotb\n     0.00ns INFO     cocotb                             Running tests\n     0.00ns INFO     cocotb.regression                  running bench_fir16.fir_stream (1/1)\n   150.00ns WARNING  cocotb.Test fir_stream.fir_stream  assert -24 == -12\n                                                        Traceback (most recent call last):\n                                                          File \"results/156_vhdl_tools/benches/bench_fir16.py\", line 82, in fir_stream\n                                                            assert mon.out[0][1] == golden(COEF0, [1000] + [0] * 15)[0]\n                                                        AssertionError: assert -24 == -12\n   150.00ns WARNING  cocotb.regression                  bench_fir16.fir_stream failed\n   150.00ns INFO     cocotb.regression                  **************************************************************************************\n                                                        ** TEST                          STATUS  SIM TIME (ns)  REAL TIME (s)  RATIO (ns/s) **\n                                                        **************************************************************************************\n                                                        ** bench_fir16.fir_stream         FAIL         150.00           0.01      17434.62  **\n                                                        **************************************************************************************\n                                                        ** TESTS=1 PASS=0 FAIL=1 SKIP=0                150.00           0.02       7498.31  **\n                                                        **************************************************************************************\n** Note: loading plugin ~/.local/lib/python3.12/site-packages/cocotb/libs/libcocotbvhpi_nvc.so\n** Note: 150ns+1: VHPI plugin requested end of simulation\n"
+      }
+     ],
+     "build_s_median": 0.06625921302475035,
+     "start_s_median": 0.4627784469630569,
+     "work_s_median": 0.4841400809818879,
+     "sim_s_median": 0.021361634018830955
+    }
+   }
+  }
+ }
+}

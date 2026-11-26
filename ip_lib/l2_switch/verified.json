@@ -1,0 +1,84 @@
+{
+ "counts": {
+  "requirements": 0
+ },
+ "criteria": [
+  {
+   "detail": "no requirements recorded",
+   "id": "evidence",
+   "ids": [],
+   "state": "not_measured",
+   "title": "Every requirement has passing evidence"
+  },
+  {
+   "detail": "no requirements recorded",
+   "id": "agreement",
+   "ids": [],
+   "state": "not_measured",
+   "title": "Every requirement is agreed (human, or delegated and labelled so)"
+  },
+  {
+   "detail": "no requirements recorded",
+   "id": "method_mix",
+   "ids": [],
+   "state": "not_measured",
+   "title": "Every requirement meets its required method mix"
+  },
+  {
+   "detail": "no requirements recorded",
+   "id": "mutation",
+   "ids": [],
+   "state": "not_measured",
+   "title": "The bench passes the mutation floor"
+  },
+  {
+   "detail": "no requirements recorded",
+   "id": "formal_rigour",
+   "ids": [],
+   "state": "not_measured",
+   "title": "The formal results pass the rigour checks"
+  },
+  {
+   "detail": "no requirements recorded",
+   "id": "fresh",
+   "ids": [],
+   "state": "not_measured",
+   "title": "The evidence is fresh"
+  }
+ ],
+ "declared": {
+  "note": "the entry's own declared status; not traced to requirements and not checked by this record",
+  "source": "ip.yaml",
+  "status": "simulated (brief 40); OOC cost table pending"
+ },
+ "definition": "docs/verified.md",
+ "git_commit": "d177bef65556fd364bd79e7057fca4be4c1a4eb1",
+ "kind": "ip_lib",
+ "label": "not assessed: no requirements recorded (no verif/testplan.yaml), so nothing here is traced to a requirement",
+ "label_kind": "not_assessed",
+ "limits": [
+  "Verified never means interoperability with a device the design talks to unless a board measurement against that device is listed in the record; a design that checks its own output against its own model accepts its own symmetric mistakes.",
+  "Verified never means timing beyond the stated corner: a post-route timing result is for the part, speed grade, clock and tool version in its evidence file, not for other corners, temperatures or devices.",
+  "Verified never means beyond the widths and depths checked: a simulation covers the vectors it ran, a bounded formal result covers the stated depth only, and a per-width proof covers the widths it names; only a Lean proof marked all widths covers every width, and only for its model.",
+  "Verified never means the requirement is the right one: the text of a requirement is the human's check (or the planner's, where the record says delegated), and a record shows that checks exist and pass, not that nothing was left out.",
+  "Verified never means a hardware or board result unless a board measurement item is listed; a simulation is not the board.",
+  "Verified is about the files in the manifest at the hashes given. A change to any of them makes the record out of date (the CI check fails), and the evidence stale until it is re-recorded.",
+  "An agreement or acceptance recorded as delegated is the planner's decision on the owner's delegation, not a human sign-off; the record counts it apart."
+ ],
+ "manifest": {
+  "ip_lib/l2_switch/faults.yaml": "b3922b448f5591195c1e0779309438a34477ddc103f85c5b722cf284b93edacb",
+  "ip_lib/l2_switch/ip.yaml": "16c916a2bf75ac2e22bca0e8cdf277f17b8c97ca107843bedfacf5f7f57cae82",
+  "ip_lib/l2_switch/rtl/l2_switch.sv": "9e4fd7b2f11f4e6b393b17fa58184703186b3c7f40b94ce788913425dbe7938b",
+  "ip_lib/l2_switch/tb/tb_l2_switch.sv": "4cd689e928d1dd7288e0d2d3b7475aa68d239df4d7abf10b1dee62d16ea380fb"
+ },
+ "name": "l2_switch",
+ "path": "ip_lib/l2_switch",
+ "reproduce": [
+  {
+   "cmd": "python -m pytest -q ip_lib/l2_switch/tb",
+   "what": "the simulation tests"
+  }
+ ],
+ "requirements": [],
+ "schema": "fda-verified/1"
+}

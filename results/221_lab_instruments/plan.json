@@ -1,0 +1,54 @@
+{
+ "schema": "fpga-force/lab-plan/v1",
+ "lab": {
+  "profile": "/home/brendan/Claude_sandbox/_worktrees/221-lab-instruments/results/221_lab_instruments/lab_profile_mock.yaml",
+  "design_file": "/tmp/tmp42m951bv/p1_clkmeter/lab.yaml",
+  "instruments": [
+   "counter"
+  ]
+ },
+ "lab_problems": [],
+ "requirements": [
+  {
+   "requirement": "REQ-13",
+   "text": "COUNT x 156.25 MHz / GATE_ACTUAL measures the C3 clock within 100 ppm of 25 MHz over five 1 s runs.",
+   "quantity": "frequency",
+   "target": "the C3 signal",
+   "expected": 25000000.0,
+   "tolerance_ppm": 100.0,
+   "methods": [
+    {
+     "method": "scripted",
+     "instrument": "counter",
+     "channel": "A",
+     "probes": "pin C3",
+     "accuracy_ppm": 1,
+     "independent": true,
+     "mock": true
+    },
+    {
+     "method": "on_chip",
+     "instrument": null,
+     "what": "the design's own count against its reference",
+     "independent": false
+    }
+   ],
+   "chosen": {
+    "method": "scripted",
+    "instrument": "counter",
+    "channel": "A",
+    "probes": "pin C3",
+    "accuracy_ppm": 1,
+    "independent": true,
+    "mock": true
+   },
+   "left_out": [],
+   "independent": true
+  }
+ ],
+ "summary": {
+  "needs": 1,
+  "independent_check": 1,
+  "on_chip_only": 0
+ }
+}

@@ -1,0 +1,711 @@
+{
+ "counts": {
+  "agreed_delegated": 0,
+  "agreed_human": 0,
+  "draft": 10,
+  "items": 14,
+  "requirements": 10,
+  "stale_items": 0,
+  "verified": 2
+ },
+ "criteria": [
+  {
+   "detail": "8 of 10 requirements are not in state verified: SQRT4-F-MODEL (partially_verified), SQRT4-F-RTL-EXH (partially_verified), SQRT4-F-RTL-RAND (partially_verified), SQRT4-F-LAT (partially_verified), SQRT4-F-LINT (partially_verified), SQRT4-F-MUTANT (partially_verified), SQRT4-F-LEAN-RECURRENCE (unapproved), SQRT4-F-BUILD (partially_verified)",
+   "id": "evidence",
+   "ids": [
+    "SQRT4-F-MODEL",
+    "SQRT4-F-RTL-EXH",
+    "SQRT4-F-RTL-RAND",
+    "SQRT4-F-LAT",
+    "SQRT4-F-LINT",
+    "SQRT4-F-MUTANT",
+    "SQRT4-F-LEAN-RECURRENCE",
+    "SQRT4-F-BUILD"
+   ],
+   "state": "unmet",
+   "title": "Every requirement has passing evidence"
+  },
+  {
+   "detail": "0 agreed by a human, 0 agreed by delegation, 10 draft, 0 marked agreed without a record",
+   "id": "agreement",
+   "ids": [
+    "SQRT4-F-MODEL",
+    "SQRT4-F-RTL-EXH",
+    "SQRT4-F-RTL-RAND",
+    "SQRT4-F-LAT",
+    "SQRT4-F-LINT",
+    "SQRT4-F-MUTANT",
+    "SQRT4-F-FORMAL-REF",
+    "SQRT4-F-FORMAL-ISQRT",
+    "SQRT4-F-LEAN-RECURRENCE",
+    "SQRT4-F-BUILD"
+   ],
+   "state": "unmet",
+   "title": "Every requirement is agreed (human, or delegated and labelled so)"
+  },
+  {
+   "detail": "not yet measured: the required method mix per requirement kind is brief 143a; the collector does not supply it yet",
+   "id": "method_mix",
+   "ids": [],
+   "state": "not_measured",
+   "title": "Every requirement meets its required method mix"
+  },
+  {
+   "detail": "not yet measured: the mutation score and floor are brief 143b; the collector does not supply them yet",
+   "id": "mutation",
+   "ids": [],
+   "state": "not_measured",
+   "title": "The bench passes the mutation floor"
+  },
+  {
+   "detail": "not yet measured: the vacuity, assumption and depth checks are brief 143c; the collector does not supply them yet",
+   "id": "formal_rigour",
+   "ids": [],
+   "state": "not_measured",
+   "title": "The formal results pass the rigour checks"
+  },
+  {
+   "detail": "no item is stale by its pins; the nightly fresh re-run comparison is brief 143d and not yet measured",
+   "id": "fresh",
+   "ids": [],
+   "state": "not_measured",
+   "title": "The evidence is fresh"
+  }
+ ],
+ "declared": null,
+ "definition": "docs/verified.md",
+ "git_commit": "d177bef65556fd364bd79e7057fca4be4c1a4eb1",
+ "kind": "arith",
+ "label": "verified except: 8 of 10 requirements without passing evidence; 10 of 10 requirements not agreed; required method mix not yet measured; mutation floor not yet measured; formal rigour not yet measured; fresh re-run not yet measured",
+ "label_kind": "verified_except",
+ "limits": [
+  "Verified never means interoperability with a device the design talks to unless a board measurement against that device is listed in the record; a design that checks its own output against its own model accepts its own symmetric mistakes.",
+  "Verified never means timing beyond the stated corner: a post-route timing result is for the part, speed grade, clock and tool version in its evidence file, not for other corners, temperatures or devices.",
+  "Verified never means beyond the widths and depths checked: a simulation covers the vectors it ran, a bounded formal result covers the stated depth only, and a per-width proof covers the widths it names; only a Lean proof marked all widths covers every width, and only for its model.",
+  "Verified never means the requirement is the right one: the text of a requirement is the human's check (or the planner's, where the record says delegated), and a record shows that checks exist and pass, not that nothing was left out.",
+  "Verified never means a hardware or board result unless a board measurement item is listed; a simulation is not the board.",
+  "Verified is about the files in the manifest at the hashes given. A change to any of them makes the record out of date (the CI check fails), and the evidence stale until it is re-recorded.",
+  "An agreement or acceptance recorded as delegated is the planner's decision on the owner's delegation, not a human sign-off; the record counts it apart.",
+  "1 formal items are bounded model checks; each holds to its stated depth only: V-SQRT4-FORMAL-FAULTS."
+ ],
+ "manifest": {
+  "arith/common/tb_stream.sv": "75069651847b6f85ee85134d3b169af35da174cd6d5872cfcb37b3055b77c96c",
+  "arith/isqrt/rtl/isqrt_restoring_pipe.sv": "77db656855e9831faee2b8a5133a30ee0d8bd74ca32d4fd755be23fb97673e80",
+  "arith/isqrt/rtl/isqrt_sel.sv": "217340c9e8a2664b715888a6c80874f4bbbc33ab4a4e9f3f7fd63b2a9772c5da",
+  "arith/sqrt_r4/formal/sqrt_r4_fv.sv": "bbd71f8922113ed0420dd05146958df13d25ec3c030b38416b23926c7d75e9ff",
+  "arith/sqrt_r4/formal/sqrt_r4_vs_isqrt_fv.sv": "72150566bf68ea1b648f050f19236a0ab636c1af452648a12566005d017d4020",
+  "arith/sqrt_r4/model.py": "d410bea3ffcb885476026d98e1bf2d1aa05a5c8cb498a105c2a24e781611a9ef",
+  "arith/sqrt_r4/rtl/sqrt_r4_iter.sv": "0aa92f2e8b4fa80ff7b96c144a589010ebedbc31b98182fb5d59e407931de2e7",
+  "arith/sqrt_r4/rtl/sqrt_r4_ooc.sv": "dfdf0981473a874d95ffa0e05aa0e589d19e0b193caa0e3e387c8c5b7103aa09",
+  "arith/sqrt_r4/rtl/sqrt_r4_pipe.sv": "67c822550e56765fb3b6e5fa5935520c84463c98a5c544f593cade2f12908ec7",
+  "arith/sqrt_r4/rtl/sqrt_r4_sel.sv": "ba6dc0142952d46e755fe6d1a9728bb5a45b42107c955cabef885e2b71f25434",
+  "arith/sqrt_r4/tb/tb_sqrt_r4.sv": "3938f3f298bf885ba3c42733c78757aaafaefb1808f9571fceb71fa332219520",
+  "arith/sqrt_r4/verif/evidence_pins.yaml": "d24ef15c4bdb91fa110065ba050784ce964c7f47e40a2242346dcdd801e10e86",
+  "arith/sqrt_r4/verif/lean_approvals.yaml": "0fd3b24d014e499e68d89b4cecabcbc20bbf117ced399cd9cf6e503da4f4af51",
+  "arith/sqrt_r4/verif/mutants.yaml": "4a4594930bc6f413be7a76c975b7af21c87211697b5682c189c44041982340c7",
+  "arith/sqrt_r4/verif/testplan.yaml": "ce5337ea3d7df0ad3a8adcff24e62695384f1d42e7276687b509ba80b9cd0ba1",
+  "formal/lean/records/build_record.json": "3d60b1f76ac87b74d5dcbe085c0eb8e43e0287d69d5fa557490a685624e6c4f6",
+  "results/139c_arith/sqrt_r4_formal_record.json": "df0c71112ab530c04c88e4ef28fa509aebee9ea06a02d25783e0c9894903b838",
+  "results/139c_arith/sqrt_r4_junit.xml": "b964e22c6c5f69e4bdb0ba4b0184dc57e2575adec84d87c7469adf6e96324e8d",
+  "results/139c_arith/sqrt_r4_sim_record.json": "38618510433120e7e06e1cd6d6cd4c906c4e03280b57e22ee5b5ed8b6e16e709"
+ },
+ "name": "sqrt_r4",
+ "notes": "Arithmetic library function sqrt_r4 (brief 139c). Every requirement is a draft written by the agent from the owner's request (spec_status: draft; only a human sets agreed). Evidence is generated by `python -m pytest arith/sqrt_r4/tests --junitxml=results/139c_arith/sqrt_r4_junit.xml` with ARITH_RECORD_DIR=results/139c_arith. The Lean items show 'statement not approved': lean_approvals.yaml is a human's. No Vivado run exists for this function (the build descriptions are prepared, not run), so there are no performance requirements.",
+ "path": "arith/sqrt_r4",
+ "reproduce": [
+  {
+   "cmd": "python -m pytest -q arith/sqrt_r4/tests",
+   "what": "the simulation tests"
+  }
+ ],
+ "requirements": [
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "SQRT4-F-MODEL",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-SQRT4-MODEL",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "results/139c_arith/sqrt_r4_junit.xml",
+     "record_sha256": "b964e22c6c5f69e4bdb0ba4b0184dc57e2575adec84d87c7469adf6e96324e8d",
+     "status": "pass",
+     "title": "Model tests against exact arithmetic"
+    }
+   ],
+   "items": [
+    "V-SQRT4-MODEL"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": false,
+   "missing_methods": [
+    "a simulation check from a bench the implementing agent did not write"
+   ],
+   "mix_satisfied": false,
+   "own_tests_only": true,
+   "passing_methods": [
+    "sim_test"
+   ],
+   "rests_on_delegated": false,
+   "source": "arith/sqrt_r4/spec.md#the-function",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "partially_verified",
+   "text": "For the radix-4 integer square root: the root and remainder equal math.isqrt for every radicand at W = 5 to 14 and for random values at W up to 200, are the same pairs and packing as arith/isqrt, and the radix-4 recurrence equals the root step by step with the register widths of the RTL asserted at every step (sh below 2**(QW+3), the three trial values below it, rem <= 2q).",
+   "title": "The model is the specification: it equals integer arithmetic",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "SQRT4-F-RTL-EXH",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-SQRT4-RTL-EXH",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "results/139c_arith/sqrt_r4_junit.xml",
+     "record_sha256": "b964e22c6c5f69e4bdb0ba4b0184dc57e2575adec84d87c7469adf6e96324e8d",
+     "status": "pass",
+     "title": "Every variant is bit-exact against the model, exhaustively at small widths"
+    }
+   ],
+   "items": [
+    "V-SQRT4-RTL-EXH"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": false,
+   "missing_methods": [
+    "a simulation check from a bench the implementing agent did not write"
+   ],
+   "mix_satisfied": false,
+   "own_tests_only": true,
+   "passing_methods": [
+    "sim_test"
+   ],
+   "rests_on_delegated": false,
+   "source": "arith/sqrt_r4/spec.md#the-function",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "partially_verified",
+   "text": "Simulation (Icarus 14) of both variants against the model: every radicand at W = 5 to 16 (odd and even), with input gaps; root, remainder, order and latency checked.",
+   "title": "Every variant is bit-exact against the model, exhaustively at small widths",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "SQRT4-F-RTL-RAND",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-SQRT4-RTL-RAND",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "results/139c_arith/sqrt_r4_junit.xml",
+     "record_sha256": "b964e22c6c5f69e4bdb0ba4b0184dc57e2575adec84d87c7469adf6e96324e8d",
+     "status": "pass",
+     "title": "Every variant is bit-exact against the model at large widths"
+    }
+   ],
+   "items": [
+    "V-SQRT4-RTL-RAND"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": false,
+   "missing_methods": [
+    "a simulation check from a bench the implementing agent did not write"
+   ],
+   "mix_satisfied": false,
+   "own_tests_only": true,
+   "passing_methods": [
+    "sim_test"
+   ],
+   "rests_on_delegated": false,
+   "source": "arith/sqrt_r4/spec.md#the-function",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "partially_verified",
+   "text": "Simulation of both variants against the model with 3000 random and near-square values (remainders 0 and 2 * root) at W = 24, 31, 32, 48 and 64.",
+   "title": "Every variant is bit-exact against the model at large widths",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "SQRT4-F-LAT",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-SQRT4-LAT",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "results/139c_arith/sqrt_r4_junit.xml",
+     "record_sha256": "b964e22c6c5f69e4bdb0ba4b0184dc57e2575adec84d87c7469adf6e96324e8d",
+     "status": "pass",
+     "title": "Latency measured per result"
+    }
+   ],
+   "items": [
+    "V-SQRT4-LAT"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": false,
+   "missing_methods": [
+    "a simulation check from a bench the implementing agent did not write"
+   ],
+   "mix_satisfied": false,
+   "own_tests_only": true,
+   "passing_methods": [
+    "sim_test"
+   ],
+   "rests_on_delegated": false,
+   "source": "arith/sqrt_r4/spec.md#the-function",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "partially_verified",
+   "text": "The measured latency equals the spec formula (RP + 1 and ceil(RP / PIPE), RP = ceil(RW / 2)) for PIPE = 1 to 5 at W = 13 (RP = 4) and PIPE = 3 and 4 at W = 24, one result per clock for the pipeline.",
+   "title": "Latency and throughput are what the spec states",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "SQRT4-F-LINT",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-SQRT4-LINT",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "results/139c_arith/sqrt_r4_junit.xml",
+     "record_sha256": "b964e22c6c5f69e4bdb0ba4b0184dc57e2575adec84d87c7469adf6e96324e8d",
+     "status": "pass",
+     "title": "Verilator -Wall lint"
+    }
+   ],
+   "items": [
+    "V-SQRT4-LINT"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": false,
+   "missing_methods": [
+    "a simulation check from a bench the implementing agent did not write"
+   ],
+   "mix_satisfied": false,
+   "own_tests_only": true,
+   "passing_methods": [
+    "sim_test"
+   ],
+   "rests_on_delegated": false,
+   "source": "arith/sqrt_r4/spec.md#the-function",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "partially_verified",
+   "text": "Verilator -Wall --lint-only reports nothing for either variant at W = 5, 6, 8, 13, 32 and 64 with PIPE = 1, 2 and 40.",
+   "title": "The RTL is Verilator -Wall clean",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "SQRT4-F-MUTANT",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-SQRT4-MUTANT-RUN",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "results/139c_arith/sqrt_r4_junit.xml",
+     "record_sha256": "b964e22c6c5f69e4bdb0ba4b0184dc57e2575adec84d87c7469adf6e96324e8d",
+     "status": "pass",
+     "title": "The mutant check passes"
+    },
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-SQRT4-MUTANT-SCORE",
+     "instrument": null,
+     "method": "sim_measurement",
+     "mutation_score": null,
+     "record": "results/139c_arith/sqrt_r4_sim_record.json",
+     "record_sha256": "38618510433120e7e06e1cd6d6cd4c906c4e03280b57e22ee5b5ed8b6e16e709",
+     "status": "pass",
+     "title": "Mutants killed / total"
+    }
+   ],
+   "items": [
+    "V-SQRT4-MUTANT-RUN",
+    "V-SQRT4-MUTANT-SCORE"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": false,
+   "missing_methods": [
+    "a simulation check from a bench the implementing agent did not write"
+   ],
+   "mix_satisfied": false,
+   "own_tests_only": true,
+   "passing_methods": [
+    "sim_measurement",
+    "sim_test"
+   ],
+   "rests_on_delegated": false,
+   "source": "arith/sqrt_r4/spec.md#the-function",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "partially_verified",
+   "text": "Each of 18 seeded faults (one text change in the RTL, verif/mutants.yaml) makes the bench fail: killed/total = 18/18.",
+   "title": "The bench catches seeded faults",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "SQRT4-F-FORMAL-REF",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-SQRT4-FORMAL-REF-RUN",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "results/139c_arith/sqrt_r4_junit.xml",
+     "record_sha256": "b964e22c6c5f69e4bdb0ba4b0184dc57e2575adec84d87c7469adf6e96324e8d",
+     "status": "pass",
+     "title": "The formal reference and fault-catching tests pass"
+    },
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-SQRT4-FORMAL-REF",
+     "instrument": null,
+     "method": "formal",
+     "mutation_score": null,
+     "record": "results/139c_arith/sqrt_r4_formal_record.json",
+     "record_sha256": "df0c71112ab530c04c88e4ef28fa509aebee9ea06a02d25783e0c9894903b838",
+     "status": "pass",
+     "title": "Reference proofs: jobs proved unbounded, none failed"
+    },
+    {
+     "bench_author": "not recorded",
+     "depth": "BMC, 16 cycles",
+     "freshness": "fresh",
+     "id": "V-SQRT4-FORMAL-FAULTS",
+     "instrument": null,
+     "method": "formal",
+     "mutation_score": null,
+     "record": "results/139c_arith/sqrt_r4_formal_record.json",
+     "record_sha256": "df0c71112ab530c04c88e4ef28fa509aebee9ea06a02d25783e0c9894903b838",
+     "status": "bounded",
+     "title": "6 seeded faults each make the proof fail (bounded model checking)"
+    }
+   ],
+   "items": [
+    "V-SQRT4-FORMAL-REF-RUN",
+    "V-SQRT4-FORMAL-REF",
+    "V-SQRT4-FORMAL-FAULTS"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": false,
+   "missing_methods": [],
+   "mix_satisfied": true,
+   "own_tests_only": false,
+   "passing_methods": [
+    "formal",
+    "sim_test"
+   ],
+   "rests_on_delegated": false,
+   "source": "arith/sqrt_r4/spec.md#the-function",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "verified",
+   "text": "SymbiYosys with the slang front end: each variant satisfies root^2 + rem = x and rem <= 2 * root (so root^2 <= x < (root+1)^2) for all input sequences from reset: 11 jobs at W = 6 to 14; unbounded (abc pdr). 6 seeded faults are applied to the RTL and the same proof fails (bounded model checking finds the counterexample), which shows the harness is not vacuous.",
+   "title": "Every variant equals an independent reference (SymbiYosys)",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "SQRT4-F-FORMAL-ISQRT",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-SQRT4-FORMAL-ISQRT-RUN",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "results/139c_arith/sqrt_r4_junit.xml",
+     "record_sha256": "b964e22c6c5f69e4bdb0ba4b0184dc57e2575adec84d87c7469adf6e96324e8d",
+     "status": "pass",
+     "title": "The variant-pair tests pass"
+    },
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-SQRT4-FORMAL-ISQRT",
+     "instrument": null,
+     "method": "formal",
+     "mutation_score": null,
+     "record": "results/139c_arith/sqrt_r4_formal_record.json",
+     "record_sha256": "df0c71112ab530c04c88e4ef28fa509aebee9ea06a02d25783e0c9894903b838",
+     "status": "pass",
+     "title": "Pipelines proved equal across the two functions, none failed"
+    }
+   ],
+   "items": [
+    "V-SQRT4-FORMAL-ISQRT-RUN",
+    "V-SQRT4-FORMAL-ISQRT"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": false,
+   "missing_methods": [],
+   "mix_satisfied": true,
+   "own_tests_only": false,
+   "passing_methods": [
+    "formal",
+    "sim_test"
+   ],
+   "rests_on_delegated": false,
+   "source": "arith/sqrt_r4/spec.md#the-function",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "verified",
+   "text": "SymbiYosys with the slang front end, no reference involved: sqrt_r4's pipeline and arith/isqrt's restoring pipeline (a different digit recurrence, written for the same specification, at its own latency, the shorter one delayed) give the same output on the same inputs, W = 8, 10, 12; unbounded (abc pdr): 3 jobs.",
+   "title": "The radix-4 pipeline agrees with the radix-2 pipeline of arith/isqrt (SymbiYosys)",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "SQRT4-F-LEAN-RECURRENCE",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-LEAN-SQRT4-RECURRENCE",
+     "instrument": null,
+     "lean": {
+      "build_source": "recorded build (not re-run)",
+      "rtl_link": "transcription_tested",
+      "tier": "kernel_only"
+     },
+     "method": "formal_lean",
+     "mutation_score": null,
+     "record": "formal/lean/records/build_record.json",
+     "record_sha256": "3d60b1f76ac87b74d5dcbe085c0eb8e43e0287d69d5fa557490a685624e6c4f6",
+     "status": "unapproved",
+     "title": "The radix-4 recurrence is a floor square root: root^2 + rem = x and rem <= 2 * root, every width"
+    }
+   ],
+   "items": [
+    "V-LEAN-SQRT4-RECURRENCE"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": false,
+   "missing_methods": [],
+   "mix_satisfied": false,
+   "own_tests_only": false,
+   "passing_methods": [],
+   "rests_on_delegated": false,
+   "source": "arith/sqrt_r4/spec.md#verification-everything-before-vivado",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "unapproved",
+   "text": "The radix-4 digit recurrence of sqrt_r4_iter.sv and sqrt_r4_pipe.sv yields root and rem with root^2 + rem = x and rem <= 2 * root for every number of steps, which determines the floor square root. Proved in Lean, statement not approved; the Lean text is a transcription of the RTL's step, cross-checked against the Python model for every 8-bit radicand and every 17th 12-bit radicand; register widths are not modelled.",
+   "title": "The radix-4 recurrence is a floor square root for every width (Lean)",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "SQRT4-F-BUILD",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-SQRT4-BUILD",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "results/139c_arith/sqrt_r4_junit.xml",
+     "record_sha256": "b964e22c6c5f69e4bdb0ba4b0184dc57e2575adec84d87c7469adf6e96324e8d",
+     "status": "pass",
+     "title": "Build descriptions current and consistent; wrapper lint and simulation; packaged harness runs on the library instance"
+    }
+   ],
+   "items": [
+    "V-SQRT4-BUILD"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": false,
+   "missing_methods": [
+    "a simulation check from a bench the implementing agent did not write"
+   ],
+   "mix_satisfied": false,
+   "own_tests_only": true,
+   "passing_methods": [
+    "sim_test"
+   ],
+   "rests_on_delegated": false,
+   "source": "arith/sqrt_r4/spec.md#prepared-for-vivado-not-run",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "partially_verified",
+   "text": "For every variant of the radix-4 square root there is a build.yaml and an out-of-context clock constraint for xc7a100t and xck26, current against arith/tools/gen_build.py, consistent with the RTL (top, parameters, sources), with the expected primitive use evaluated for each point; the out-of-context wrapper lints clean and is functionally exact for the pipelined variant; the packaged verification harness (harness/run.py) passes on the library instance with every coverage bin hit. No Vivado run has been made: this requirement is about preparation, not about area, Fmax or power.",
+   "title": "Out-of-context build descriptions are prepared for Artix-7 and K26 (not run)",
+   "waivers": []
+  }
+ ],
+ "schema": "fda-verified/1",
+ "summary_line": "10 requirements (10 functional); 2 verified; 7 partially verified (the required mix of methods is not met); 0 of 10 requirements agreed by a human, 0 agreed on the owner's delegation (not human), 10 draft; 7 resting only on the implementing agent's own tests; 0 human and 0 delegated review(s) recorded; 1 Lean proof item(s) (all widths): 0 with a human-approved statement, 0 with a statement accepted on the owner's delegation (not a human approval), 1 with statement not approved; 1 kernel only, 0 using a compiled decision procedure; build status from: recorded build (not re-run)."
+}

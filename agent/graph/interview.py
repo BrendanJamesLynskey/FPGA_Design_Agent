@@ -35,10 +35,15 @@ class Question:
     default: str
     reason: str
     answer: str | None = None
-    status: str = "open"                # open | answered | defaulted
+    status: str = "open"                # open | answered | defaulted | waived | unresolved (brief 210: the last two only at standard and strict)
     by: str | None = None               # human | oracle | default
     evidence: str | None = None         # the oracle's quoted line from the hidden spec
     fact: str | None = None             # brief 174: the board_facts.yaml key that answered it (by == "package")
+    risk: str = "medium"                # brief 210: low | medium | high (agent.graph.requirements.classify)
+    risk_rule: str = ""                 # the rule (or "clarifier") that set the class
+    risk_reason: str = ""
+    waiver: dict[str, Any] | None = None    # brief 210: the recorded user decision that let a default stand (who, when, why)
+    clarifier_risk: str | None = None   # brief 210: the class the Clarifier set on the open question, if any
 
 
 class Answerer(Protocol):
@@ -52,6 +57,8 @@ class Interview:
     questions: list[Question] = field(default_factory=list)
     max_questions: int = 12
     facts: list[dict[str, Any]] = field(default_factory=list)   # brief 174: board_facts.yaml rows of a design package
+    level: str = "loose"                                         # brief 210: loose | standard | strict (agent.graph.requirements)
+    waivers: list[Any] = field(default_factory=list)             # brief 210: agent.graph.requirements.Waiver rows
 
     def lookup(self, q: Question) -> dict[str, Any] | None:
         """A sourced fact of the design package that answers the question, or None (then the question is asked as before)."""
@@ -62,6 +69,8 @@ class Interview:
         """Ask one question. ``who=None`` (interview off) takes the default."""
         if not (q.text.strip() and q.default.strip() and q.reason.strip()):
             raise ValueError("a question needs text, a proposed default and the reason for it")
+        from agent.graph import requirements as R
+        q.risk, q.risk_rule, q.risk_reason = (k := R.classify(q.text, q.default, q.reason, q.clarifier_risk)).cls, k.rule, k.why
         known = self.lookup(q)
         if known is not None:             # brief 174: a fact with a cited source is not asked again; it does not count against the limit
             from agent.graph.package_facts import answer_text, evidence_text
@@ -80,24 +89,34 @@ class Interview:
                 q.answer, q.status, q.by, q.evidence = q.default, "defaulted", who.name, None
             else:
                 q.answer, q.status, q.by, q.evidence = a, "answered", who.name, ev
+        R.apply_policy(q, self.level, self.waivers)     # brief 210: at standard and strict a default may not stand for a question that must be resolved
         self.questions.append(q)
         return q
+
+    def unresolved(self) -> list[Question]:
+        """Brief 210: the questions the level does not let a default settle, and no waiver covers."""
+        return [q for q in self.questions if q.status == "unresolved"]
 
     def summary(self) -> dict[str, Any]:
         return {"asked": len(self.questions),
                 "answered": sum(q.status == "answered" for q in self.questions),
                 "defaulted": sum(q.status == "defaulted" for q in self.questions),
+                "waived": sum(q.status == "waived" for q in self.questions),
+                "unresolved": sum(q.status == "unresolved" for q in self.questions),
+                "level": self.level,
                 "questions": [asdict(q) for q in self.questions]}
 
     def resolve_into(self, spec: dict[str, Any]) -> dict[str, Any]:
         """Write the answers into spec.yaml: each question goes to ``resolved_questions`` with its answer and
         who gave it; ``open_questions`` keeps only questions never asked."""
-        asked = {q.text for q in self.questions}
+        asked = {q.text for q in self.questions if q.status != "unresolved"}     # an unresolved question stays open in spec.yaml
         spec = dict(spec)
         spec["open_questions"] = [o for o in spec.get("open_questions") or [] if o.get("question") not in asked]
         spec["resolved_questions"] = [*(spec.get("resolved_questions") or []),
                                       *({"question": q.text, "answer": q.answer, "status": q.status, "by": q.by,
-                                         "default_reason": q.reason} for q in self.questions)]
+                                         "default_reason": q.reason, "risk": q.risk,
+                                         **({"waiver": q.waiver} if q.waiver else {})}
+                                        for q in self.questions if q.status != "unresolved")]
         return spec
 
 
@@ -111,7 +130,9 @@ def merge_summaries(prev: dict[str, Any] | None, new: dict[str, Any]) -> dict[st
         if q.get("text") not in {x.get("text") for x in qs}:
             qs.append(q)
     return {"asked": len(qs), "answered": sum(q.get("status") == "answered" for q in qs),
-            "defaulted": sum(q.get("status") == "defaulted" for q in qs), "questions": qs}
+            "defaulted": sum(q.get("status") == "defaulted" for q in qs), "waived": sum(q.get("status") == "waived" for q in qs),
+            "unresolved": sum(q.get("status") == "unresolved" for q in qs), "level": new.get("level") or (prev or {}).get("level"), "questions": qs,
+            **{k: new[k] for k in ("level_source", "waiver_problems", "requirements_stop") if k in new}}
 
 
 def open_questions(spec: dict[str, Any] | None) -> list[str]:

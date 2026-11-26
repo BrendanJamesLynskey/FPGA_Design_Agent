@@ -1,0 +1,38 @@
+schema: fpga-design-agent/architecture/v1
+blocks:
+  - name: top
+    function: instantiates MMCM, reset_gen, jtag_bus, USR_ACCESSE2 and crc_core; drives sfp_tx_disable to 1
+  - name: reset_gen
+    function: holds rst while MMCM unlocked plus at least 4 clocks, synchronised to clk
+  - name: jtag_bus
+    function: supplied BSCANE2 USER4 register bus giving the h_* register port
+  - name: crc_core
+    function: register map, CRC-32 datapath at 4 bytes per clock, byte and busy counters, LEDs
+  - name: crc32_step
+    function: library CRC-32 word update (IMPL word)
+interfaces:
+  - name: regport
+    between: [jtag_bus, crc_core]
+    protocol: simple
+    prefix: h
+    module: crc_core
+clock_domains:
+  - name: clk25
+    clock: clk25
+    freq_mhz: 25
+  - name: clk
+    clock: clk
+    freq_mhz: 100
+reset:
+  synchronisers: [reset_gen]
+crossings:
+  - from: clk25
+    to: clk
+    signal: mmcm_locked
+    primitive: xpm_cdc_async_rst
+    inline_in: reset_gen
+predicted_resources:
+  lut: [300, 700]
+  ff: [550, 900]
+  bram_tile: 0
+  dsp: 0

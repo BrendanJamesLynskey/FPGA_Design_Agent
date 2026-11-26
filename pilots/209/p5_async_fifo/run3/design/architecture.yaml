@@ -1,0 +1,72 @@
+schema: fpga-design-agent/architecture/v1
+blocks:
+- name: top
+  function: thin top; IBUFDS_GTE4 + BUFG_GT for reference clock, power-on reset generator, jtag_bus, core, sfp_tx_disable tie
+- name: jtag_bus
+  function: supplied BSCANE2 USER4 register bus (unchanged), clk25 register port
+- name: reset_gen
+  function: 16-clock power-on counter in clk25 giving active-high rst; synchronised into gt_refclk
+- name: soak_core
+  function: register file, CTRL, snapshot control, counters, LED logic; the simulated toplevel
+- name: prbs_writer
+  function: clk25 PRBS-31 generator (32 bits per word), full gating, STALL_W, OVERFLOWS, OCC_MAX
+- name: async_fifo
+  function: 512x32 dual-clock FIFO, Gray pointers with two-flop synchronisers, one BRAM
+- name: prbs_checker
+  function: gt_refclk reader, PRBS-31 reference, compare, WORDS_R, DATA_ERRS, UNDERFLOWS, slow-read divider, INJECT
+interfaces:
+- name: host_reg
+  between: [jtag_bus, soak_core]
+  protocol: simple
+  prefix: h
+  module: soak_core
+- name: fifo_wr
+  between: [prbs_writer, async_fifo]
+  protocol: simple
+  prefix: wr
+  module: async_fifo
+- name: fifo_rd
+  between: [async_fifo, prbs_checker]
+  protocol: simple
+  prefix: rd
+  module: async_fifo
+clock_domains:
+- name: clk25
+  clock: clk25
+  freq_mhz: 25
+- name: gt_refclk
+  clock: gt_refclk_p
+  freq_mhz: 156.25
+reset:
+  synchronisers: [reset_sync]
+crossings:
+- from: clk25
+  to: gt_refclk
+  signal: rst
+  primitive: xpm_cdc_async_rst
+  inline_in: top
+- from: clk25
+  to: gt_refclk
+  signal: write Gray pointer
+  primitive: xpm_cdc_gray
+  inline_in: async_fifo
+- from: gt_refclk
+  to: clk25
+  signal: read Gray pointer
+  primitive: xpm_cdc_gray
+  inline_in: async_fifo
+- from: clk25
+  to: gt_refclk
+  signal: RUN, SLOW_READ, CLEAR, INJECT, SNAPSHOT request
+  primitive: xpm_cdc_handshake
+  inline_in: soak_core
+- from: gt_refclk
+  to: clk25
+  signal: reader counters snapshot
+  primitive: xpm_cdc_handshake
+  inline_in: soak_core
+predicted_resources:
+  lut: [450, 1300]
+  ff: [800, 1900]
+  bram_tile: [0.5, 2]
+  dsp: 0

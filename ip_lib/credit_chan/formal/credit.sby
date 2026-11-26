@@ -1,0 +1,49 @@
+# SymbiYosys: credit_chan, one k-induction proof per (CREDITS, LF, LB) at W = 4: credit conservation and bounds, no
+# overflow or underflow of the receiver buffer, no beat lost, repeated or reordered, the output holds while stalled.
+# Run: python3 ip_lib/credit_chan/formal/run_formal.py
+# The cover tasks (a `c` after the point) show that each assertion's antecedent is reached (credit.rigour.yaml). There is none for c1f0b0: with no
+# stages (LF = LB = 0) nothing is ever in flight, so the in-flight antecedents are unreachable there by construction (the proof stands; those terms are trivial).
+[tasks]
+c1f0b0 prove
+c2f0b0 prove
+c1f1b1 prove
+c2f1b1 prove
+c3f1b1 prove
+c4f1b1 prove
+c2f2b1 prove
+c3f0b2 prove
+c5f2b2 prove
+c4f3b0 prove
+c3f1b1c cover
+c5f2b2c cover
+c4f3b0c cover
+
+[options]
+prove: mode prove
+prove: depth 16
+cover: mode cover
+cover: depth 24
+
+[engines]
+smtbmc boolector
+
+[script]
+read_verilog -formal -DFORMAL -sv credit_chan.sv formal_credit.sv
+c1f0b0: chparam -set CREDITS 1 -set LF 0 -set LB 0 formal_credit
+c2f0b0: chparam -set CREDITS 2 -set LF 0 -set LB 0 formal_credit
+c1f1b1: chparam -set CREDITS 1 -set LF 1 -set LB 1 formal_credit
+c2f1b1: chparam -set CREDITS 2 -set LF 1 -set LB 1 formal_credit
+c3f1b1: chparam -set CREDITS 3 -set LF 1 -set LB 1 formal_credit
+c4f1b1: chparam -set CREDITS 4 -set LF 1 -set LB 1 formal_credit
+c2f2b1: chparam -set CREDITS 2 -set LF 2 -set LB 1 formal_credit
+c3f0b2: chparam -set CREDITS 3 -set LF 0 -set LB 2 formal_credit
+c5f2b2: chparam -set CREDITS 5 -set LF 2 -set LB 2 formal_credit
+c4f3b0: chparam -set CREDITS 4 -set LF 3 -set LB 0 formal_credit
+c3f1b1c: chparam -set CREDITS 3 -set LF 1 -set LB 1 formal_credit
+c5f2b2c: chparam -set CREDITS 5 -set LF 2 -set LB 2 formal_credit
+c4f3b0c: chparam -set CREDITS 4 -set LF 3 -set LB 0 formal_credit
+prep -top formal_credit
+
+[files]
+../rtl/credit_chan.sv
+formal_credit.sv

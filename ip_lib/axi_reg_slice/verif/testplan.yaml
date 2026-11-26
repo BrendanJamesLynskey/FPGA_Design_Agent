@@ -1,0 +1,34 @@
+schema: fpga-design-agent/testplan/v1
+entry: axi_reg_slice
+purpose: 'v1 testplan of a library entry (brief 151, decision 24): every requirement traces to the tests, formal tasks and seeded faults
+  that check it. Not yet part of the flow.trace_v1 roll-up (that reads designs/ and, in brief 139a, arith/); flow/tests/test_151_partition_testplans.py
+  checks that every name below resolves.'
+model: ip_lib/pipe_reg/model.py
+bench: ip_lib/axi_reg_slice/tb/test_axi_reg_slice_rtl.py
+formal_dir: ''
+requirements:
+- id: R01
+  requirement: Every channel carries its fields to the right place, in order, with the latency and ready timing of its mode (the pipe_reg
+    model).
+  tests:
+  - ip_lib/axi_reg_slice/tb/test_axi_reg_slice_rtl.py::test_five_channels
+  formal: []
+  faults:
+  - wstrb_wdata_swapped
+  - bresp_dropped
+  - rready_not_forwarded
+  - araddr_offset
+  - axi4_rlast_swapped
+  - axi4_awlen_dropped
+- id: R02
+  requirement: No channel's valid depends on its ready; a beat offered stays offered.
+  tests:
+  - ip_lib/axi_reg_slice/tb/test_axi_reg_slice_rtl.py::test_five_channels
+  formal: []
+  faults: []
+- id: R03
+  requirement: Parameters outside the declared space fail at elaboration.
+  tests:
+  - ip_lib/axi_reg_slice/tb/test_axi_reg_slice_rtl.py::test_guards
+  formal: []
+  faults: []

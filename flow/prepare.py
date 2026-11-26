@@ -36,6 +36,10 @@ try:
     from flow import ip_tcl_allow
 except ImportError:
     import ip_tcl_allow                 # type: ignore[no-redef]
+try:
+    from flow import xdc_sites
+except ImportError:
+    import xdc_sites                    # type: ignore[no-redef]
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -276,6 +280,10 @@ def main(argv: list[str] | None = None) -> int:
     srcs = vhdl.order_sources(srcs)                     # brief 55: VHDL after the SystemVerilog, packages first
     data = srcorder.data_files(design)                  # 07a2-prep: the task's data files, for $readmemh
     xdcs = expand(cfg["constraints"])
+    # brief 219 fix 5: a LOC the part has no site for fails here, at the constraints stage, with the board's valid choice, not in Vivado
+    xr = xdc_sites.check("\n".join(x.read_text(errors="replace") for x in xdcs), cfg["part"], board_for(cfg))
+    if xr["problems"]:
+        raise SystemExit("prepare: " + xdc_sites.message(xr["problems"]))
     # brief 59A: Tcl that creates AMD IP in the in-memory project (create_ip, global synthesis), sourced by build.tcl
     # after the sources are read; hashed with them, so a change to the IP configuration is a new build stamp
     # only Tcl listed with its SHA-256 in flow/ip_tcl_allow.yaml (maintainer-owned) may be sourced: no agent-written Tcl

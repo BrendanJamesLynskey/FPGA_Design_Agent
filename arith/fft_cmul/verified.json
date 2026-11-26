@@ -1,0 +1,472 @@
+{
+ "counts": {
+  "agreed_delegated": 0,
+  "agreed_human": 0,
+  "draft": 6,
+  "items": 9,
+  "requirements": 6,
+  "stale_items": 1,
+  "verified": 1
+ },
+ "criteria": [
+  {
+   "detail": "5 of 6 requirements are not in state verified: FCMUL-F-MODEL (partially_verified), FCMUL-F-EXACT (partially_verified), FCMUL-F-LAT (partially_verified), FCMUL-F-BENCH (partially_verified), FCMUL-F-PACKAGE (stale)",
+   "id": "evidence",
+   "ids": [
+    "FCMUL-F-MODEL",
+    "FCMUL-F-EXACT",
+    "FCMUL-F-LAT",
+    "FCMUL-F-BENCH",
+    "FCMUL-F-PACKAGE"
+   ],
+   "state": "unmet",
+   "title": "Every requirement has passing evidence"
+  },
+  {
+   "detail": "0 agreed by a human, 0 agreed by delegation, 6 draft, 0 marked agreed without a record",
+   "id": "agreement",
+   "ids": [
+    "FCMUL-F-MODEL",
+    "FCMUL-F-EXACT",
+    "FCMUL-F-LAT",
+    "FCMUL-F-EQUIV",
+    "FCMUL-F-BENCH",
+    "FCMUL-F-PACKAGE"
+   ],
+   "state": "unmet",
+   "title": "Every requirement is agreed (human, or delegated and labelled so)"
+  },
+  {
+   "detail": "not yet measured: the required method mix per requirement kind is brief 143a; the collector does not supply it yet",
+   "id": "method_mix",
+   "ids": [],
+   "state": "not_measured",
+   "title": "Every requirement meets its required method mix"
+  },
+  {
+   "detail": "not yet measured: the mutation score and floor are brief 143b; the collector does not supply them yet",
+   "id": "mutation",
+   "ids": [],
+   "state": "not_measured",
+   "title": "The bench passes the mutation floor"
+  },
+  {
+   "detail": "not yet measured: the vacuity, assumption and depth checks are brief 143c; the collector does not supply them yet",
+   "id": "formal_rigour",
+   "ids": [],
+   "state": "not_measured",
+   "title": "The formal results pass the rigour checks"
+  },
+  {
+   "detail": "1 items are stale (a file they are about changed after the evidence was recorded)",
+   "id": "fresh",
+   "ids": [
+    "V-FCMUL-PACKAGE"
+   ],
+   "state": "unmet",
+   "title": "The evidence is fresh"
+  }
+ ],
+ "declared": null,
+ "definition": "docs/verified.md",
+ "git_commit": "d177bef65556fd364bd79e7057fca4be4c1a4eb1",
+ "kind": "arith",
+ "label": "verified except: 5 of 6 requirements without passing evidence; 6 of 6 requirements not agreed; required method mix not yet measured; mutation floor not yet measured; formal rigour not yet measured; 1 stale or differing evidence items",
+ "label_kind": "verified_except",
+ "limits": [
+  "Verified never means interoperability with a device the design talks to unless a board measurement against that device is listed in the record; a design that checks its own output against its own model accepts its own symmetric mistakes.",
+  "Verified never means timing beyond the stated corner: a post-route timing result is for the part, speed grade, clock and tool version in its evidence file, not for other corners, temperatures or devices.",
+  "Verified never means beyond the widths and depths checked: a simulation covers the vectors it ran, a bounded formal result covers the stated depth only, and a per-width proof covers the widths it names; only a Lean proof marked all widths covers every width, and only for its model.",
+  "Verified never means the requirement is the right one: the text of a requirement is the human's check (or the planner's, where the record says delegated), and a record shows that checks exist and pass, not that nothing was left out.",
+  "Verified never means a hardware or board result unless a board measurement item is listed; a simulation is not the board.",
+  "Verified is about the files in the manifest at the hashes given. A change to any of them makes the record out of date (the CI check fails), and the evidence stale until it is re-recorded.",
+  "An agreement or acceptance recorded as delegated is the planner's decision on the owner's delegation, not a human sign-off; the record counts it apart."
+ ],
+ "manifest": {
+  "arith/fft_cmul/build/m3/build.yaml": "684ef5a6a4996ae742d4491ec839607e701fd7500c9c4af49baa3746a15f17eb",
+  "arith/fft_cmul/build/m4/build.yaml": "04025f25ee5d6d33c11b38f8efa49e61189a65a09e1eac111500949edaa6e234",
+  "arith/fft_cmul/formal/fft_cmul_fv.sv": "39551bfac3955705ad4a4ac5c16f5decdb63809fb2eab211400ad7a6f87f26ae",
+  "arith/fft_cmul/formal/jobs.yaml": "5d0724c6c1b324d2653eefbb3a2926fa446232ef1053dfb37e76bc947de64d8e",
+  "arith/fft_cmul/model.py": "e597dd35e6facb0dcae62aa69ca72fac0a6106e0a6aa3a4e90e8af59b729810b",
+  "arith/fft_cmul/rtl/fft_cmul_m3.sv": "8475634ed3f87a36645d4f2d3f82dac56e7b60b924b8169f67398bb113fc470c",
+  "arith/fft_cmul/rtl/fft_cmul_m4.sv": "826a27855314155fa138bf9c681c779129b02aa1d2e7f24b855abff10b8001f0",
+  "arith/fft_cmul/spec.md": "8470f543b6e285dbdd7dcf2594a8d2c24cd650ed2bda7be87f7e544ccd1e76a0",
+  "arith/fft_cmul/spec.yaml": "783a52d5200d8138c1ae041ddc8793f01d3e4fa5f04e6031f08a834cc8fd2347",
+  "arith/fft_cmul/tests/fft_cmul_cocotb.py": "9e6b3d9519d7f0533260c2307218d8b8eb41a520bf340d4d5ccc99147c940d65",
+  "arith/fft_cmul/verif/evidence_pins.yaml": "93e34e0d3a9cf686ce98fe7212999517224723efa242211d49969b8925dc318c",
+  "arith/fft_cmul/verif/mutants.yaml": "c0b13d2787e03bc348e17dea4f72769a019dea2620eec0417f9c92246075e939",
+  "arith/fft_cmul/verif/results/mutation.json": "7b7c12c03eb9b737deba29f2a92d4168af111212c32d747e1176ca995bb5f590",
+  "arith/fft_cmul/verif/results/pytest_junit.xml": "84fbf9bf7cafe30617379085faf41f187f43dcc6273dc9f630e536605ed014ba",
+  "arith/fft_cmul/verif/testplan.yaml": "710f814899f57248759b1aa517d79bcc6e3706374b95e82b21f205cfff5a3f63",
+  "arith/fft_common/fft_ref.py": "96a983692b9eac1d70ef32a874ace99a40c668cf5dcf746cfc93093f85fb54c5"
+ },
+ "name": "fft_cmul",
+ "notes": "Frequency-domain suite, function fft_cmul (brief 148). Everything here is before Vivado: the model, the RTL variants, simulation, formal properties and the prepared out-of-context build files. No performance requirement on LUTs, DSPs, Fmax or power exists because none has been measured; the Vivado runs (build/<variant>/build.yaml, queued in _handoff/fpga_agent/vivado_later_queue.md) will add them. Every requirement is a draft written by the agent; none is agreed by a human. There are no Lean statements and no packaged harness for this suite (stated in the report). Generated by arith/tools/gen_testplan_fft.py.",
+ "path": "arith/fft_cmul",
+ "reproduce": [
+  {
+   "cmd": "python -m pytest -q arith/fft_cmul/tests",
+   "what": "the simulation tests"
+  }
+ ],
+ "requirements": [
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "FCMUL-F-MODEL",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-FCMUL-MODEL",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "arith/fft_cmul/verif/results/pytest_junit.xml",
+     "record_sha256": "84fbf9bf7cafe30617379085faf41f187f43dcc6273dc9f630e536605ed014ba",
+     "status": "pass",
+     "title": "The model against independent formulations and the pinned conventions"
+    }
+   ],
+   "items": [
+    "V-FCMUL-MODEL"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": false,
+   "missing_methods": [
+    "a simulation check from a bench the implementing agent did not write"
+   ],
+   "mix_satisfied": false,
+   "own_tests_only": true,
+   "passing_methods": [
+    "sim_test"
+   ],
+   "rests_on_delegated": false,
+   "source": "arith/fft_cmul/spec.md",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "partially_verified",
+   "text": "arith/fft_cmul/model.py gives, for every input, the result that spec.md defines. It agrees with an independent formulation (a second formulation (the three-multiplication identity) in Python integers), and the conventions that a user could guess wrong (spec.md, last section) are pinned by examples.",
+   "title": "The bit-exact model is right",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "FCMUL-F-EXACT",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-FCMUL-DIRECTED",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "arith/fft_cmul/verif/results/pytest_junit.xml",
+     "record_sha256": "84fbf9bf7cafe30617379085faf41f187f43dcc6273dc9f630e536605ed014ba",
+     "status": "pass",
+     "title": "Every variant against the model at the small points (Icarus + cocotb): directed or exhaustive stimuli"
+    },
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-FCMUL-RANDOM",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "arith/fft_cmul/verif/results/pytest_junit.xml",
+     "record_sha256": "84fbf9bf7cafe30617379085faf41f187f43dcc6273dc9f630e536605ed014ba",
+     "status": "pass",
+     "title": "Every variant against the model at the large points: random stimuli (Icarus + cocotb)"
+    }
+   ],
+   "items": [
+    "V-FCMUL-DIRECTED",
+    "V-FCMUL-RANDOM"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": false,
+   "missing_methods": [
+    "a simulation check from a bench the implementing agent did not write"
+   ],
+   "mix_satisfied": false,
+   "own_tests_only": true,
+   "passing_methods": [
+    "sim_test"
+   ],
+   "rests_on_delegated": false,
+   "source": "arith/fft_cmul/spec.md",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "partially_verified",
+   "text": "At every parameter point listed in spec.yaml (10 directed or exhaustive points, 10 random ones, across 2 variants), each variant's outputs equal the model's: every input is driven at the small points (4 operands of 2 to 4 bits); edge values and random inputs at the large ones. The function is exact, so there is no error bound.",
+   "title": "Every variant is bit-exact against the model",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "FCMUL-F-LAT",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-FCMUL-LATENCY",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "arith/fft_cmul/verif/results/pytest_junit.xml",
+     "record_sha256": "84fbf9bf7cafe30617379085faf41f187f43dcc6273dc9f630e536605ed014ba",
+     "status": "pass",
+     "title": "The bench passes at the stated latency and fails two clocks off, for every variant"
+    }
+   ],
+   "items": [
+    "V-FCMUL-LATENCY"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": false,
+   "missing_methods": [
+    "a simulation check from a bench the implementing agent did not write"
+   ],
+   "mix_satisfied": false,
+   "own_tests_only": true,
+   "passing_methods": [
+    "sim_test"
+   ],
+   "rests_on_delegated": false,
+   "source": "arith/fft_cmul/spec.md",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "partially_verified",
+   "text": "Each variant's latency in clocks is the expression in spec.yaml (m4: STAGES; m3: STAGES), and the bench, run with a latency two clocks off, fails for every variant, so the passing runs prove the latency rather than assume it.",
+   "title": "Latency is as specified and the bench would notice if it were not",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "FCMUL-F-EQUIV",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-FCMUL-FORMAL-PROOF",
+     "instrument": null,
+     "method": "formal",
+     "mutation_score": null,
+     "record": "arith/fft_cmul/verif/results/pytest_junit.xml",
+     "record_sha256": "84fbf9bf7cafe30617379085faf41f187f43dcc6273dc9f630e536605ed014ba",
+     "status": "pass",
+     "title": "k-induction proofs (6 jobs; parameters in formal/jobs.yaml)"
+    },
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-FCMUL-FORMAL-REFUTE",
+     "instrument": null,
+     "method": "formal",
+     "mutation_score": null,
+     "record": "arith/fft_cmul/verif/results/pytest_junit.xml",
+     "record_sha256": "84fbf9bf7cafe30617379085faf41f187f43dcc6273dc9f630e536605ed014ba",
+     "status": "pass",
+     "title": "Each formal check refutes a planted fault (the check can fail)"
+    }
+   ],
+   "items": [
+    "V-FCMUL-FORMAL-PROOF",
+    "V-FCMUL-FORMAL-REFUTE"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": false,
+   "missing_methods": [],
+   "mix_satisfied": true,
+   "own_tests_only": false,
+   "passing_methods": [
+    "formal"
+   ],
+   "rests_on_delegated": false,
+   "source": "arith/fft_cmul/formal/jobs.yaml",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "verified",
+   "text": "SymbiYosys with the slang front end checks the properties of formal/jobs.yaml: a proof is by k-induction (for all inputs, any run length) at the parameters listed there, a bounded check holds only to its stated depth. What the jobs say is in each job's `claim`; parameters beyond the listed ones are covered by simulation, not by proof.",
+   "title": "The properties named in formal/jobs.yaml hold, by proof where the tools allow",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "FCMUL-F-BENCH",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-FCMUL-MUTANT-TEST",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "arith/fft_cmul/verif/results/pytest_junit.xml",
+     "record_sha256": "84fbf9bf7cafe30617379085faf41f187f43dcc6273dc9f630e536605ed014ba",
+     "status": "pass",
+     "title": "The mutation run as a test: no mutant survives, none fails to build"
+    },
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-FCMUL-MUTANT-SCORE",
+     "instrument": null,
+     "method": "sim_measurement",
+     "mutation_score": null,
+     "record": "arith/fft_cmul/verif/results/mutation.json",
+     "record_sha256": "7b7c12c03eb9b737deba29f2a92d4168af111212c32d747e1176ca995bb5f590",
+     "status": "pass",
+     "title": "Mutants killed of valid mutants (the record of the last full run)"
+    }
+   ],
+   "items": [
+    "V-FCMUL-MUTANT-TEST",
+    "V-FCMUL-MUTANT-SCORE"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": false,
+   "missing_methods": [
+    "a simulation check from a bench the implementing agent did not write"
+   ],
+   "mix_satisfied": false,
+   "own_tests_only": true,
+   "passing_methods": [
+    "sim_measurement",
+    "sim_test"
+   ],
+   "rests_on_delegated": false,
+   "source": "arith/fft_cmul/verif/mutants.yaml",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "partially_verified",
+   "text": "Every one of the mutants in verif/mutants.yaml (one exact text change each: an inverted condition, a wrong constant, a dropped connection, a wrong width) makes the cocotb bench fail, or is argued equivalent in the file's header; mutants that survive or do not build are reported, never hidden.",
+   "title": "The bench catches seeded faults",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "FCMUL-F-PACKAGE",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "stale",
+     "id": "V-FCMUL-PACKAGE",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "arith/fft_cmul/verif/results/pytest_junit.xml",
+     "record_sha256": "84fbf9bf7cafe30617379085faf41f187f43dcc6273dc9f630e536605ed014ba",
+     "stale_because": "changed since the evidence was recorded: arith/fft_cmul/build/m3/build.yaml, arith/fft_cmul/build/m4/build.yaml, arith/fft_cmul/spec.md",
+     "status": "stale",
+     "title": "spec.yaml against the RTL headers, spec.md against spec.yaml, Verilator -Wall at every point, wrappers and build.yaml current and lint-clean"
+    }
+   ],
+   "items": [
+    "V-FCMUL-PACKAGE"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": false,
+   "missing_methods": [],
+   "mix_satisfied": false,
+   "own_tests_only": false,
+   "passing_methods": [],
+   "rests_on_delegated": false,
+   "source": "arith/fft_cmul/spec.yaml",
+   "spec_status": "draft",
+   "stale_items": 1,
+   "state": "stale",
+   "text": "spec.yaml states an interface contract (protocol, throughput, latency, reset, clock, stalls) and integration guidance (port timing, constraints to carry). Every variant passes Verilator -Wall at every point of spec.yaml; its ports and default parameters are the ones spec.yaml states; its header states the intended primitive use before any Vivado run; spec.md is the rendering of spec.yaml; the out-of-context wrapper and the build.yaml for each variant (Artix-7 xc7a100t and K26 xck26, prepared and not run) are current and lint-clean at every point they list, so a Vivado run can start from the repository alone.",
+   "title": "The RTL is lint-clean, and its files agree with the specification and with the Vivado build files",
+   "waivers": []
+  }
+ ],
+ "schema": "fda-verified/1",
+ "summary_line": "6 requirements (6 functional); 1 verified; 4 partially verified (the required mix of methods is not met); 1 stale; 0 of 6 requirements agreed by a human, 0 agreed on the owner's delegation (not human), 6 draft; 4 resting only on the implementing agent's own tests; 0 human and 0 delegated review(s) recorded."
+}

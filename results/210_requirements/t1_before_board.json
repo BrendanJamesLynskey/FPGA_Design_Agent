@@ -1,0 +1,498 @@
+{
+ "schema": "fpga-force/requirements-report/v1",
+ "design": "t1_dimmer_counter",
+ "generated": "2026-11-25",
+ "level": "loose",
+ "level_source": "default",
+ "total": 11,
+ "passed": 7,
+ "pending": 4,
+ "failed": 0,
+ "unconfirmed_passes": 0,
+ "headline": "7 of 11 requirements verified and passed; 4 pending; 0 failed",
+ "unverified": [],
+ "requirements": [
+  {
+   "id": "REQ-01",
+   "text": "Each debounced press steps COUNT up or down by one or clears it, wrapping modulo 65536",
+   "origin": {
+    "kind": "spec",
+    "detail": "your request, near line 8",
+    "risk": null,
+    "unconfirmed": false
+   },
+   "result": "pass",
+   "reason": "",
+   "methods": [
+    {
+     "method": "simulation",
+     "status": "pass",
+     "evidence": [
+      {
+       "name": "t1_cocotb.bouncy_buttons_match_the_model",
+       "link": "tests/t1_cocotb.py#L112",
+       "result": "pass",
+       "how": "tag",
+       "detail": "passed on 3 seed(s)"
+      },
+      {
+       "name": "t1_cocotb.count_wraps_both_ways",
+       "link": "tests/t1_cocotb.py#L137",
+       "result": "pass",
+       "how": "tag",
+       "detail": "passed on 3 seed(s)"
+      },
+      {
+       "name": "t1_cocotb.random_operations_match_the_model",
+       "link": "tests/t1_cocotb.py#L246",
+       "result": "pass",
+       "how": "tag",
+       "detail": "passed on 3 seed(s)"
+      },
+      {
+       "name": "t1_verif.simultaneous_presses_priority",
+       "link": "tests/t1_verif.py#L36",
+       "result": "pass",
+       "how": "tag",
+       "detail": "passed on 3 seed(s)"
+      },
+      {
+       "name": "t1_verif.directed_closure_sweep",
+       "link": "tests/t1_verif.py#L62",
+       "result": "pass",
+       "how": "tag",
+       "detail": "passed on 3 seed(s)"
+      },
+      {
+       "name": "t1_verif.constrained_random_operations",
+       "link": "tests/t1_verif.py#L154",
+       "result": "pass",
+       "how": "tag",
+       "detail": "passed on 3 seed(s)"
+      }
+     ]
+    }
+   ],
+   "rests_on_unconfirmed": false,
+   "high_risk_default": false
+  },
+  {
+   "id": "REQ-02",
+   "text": "A button change shorter than the debounce time never makes a press",
+   "origin": {
+    "kind": "spec",
+    "detail": "your request, near line 9",
+    "risk": null,
+    "unconfirmed": false
+   },
+   "result": "pass",
+   "reason": "",
+   "methods": [
+    {
+     "method": "simulation",
+     "status": "pass",
+     "evidence": [
+      {
+       "name": "t1_cocotb.debounce_boundary_is_exact",
+       "link": "tests/t1_cocotb.py#L98",
+       "result": "pass",
+       "how": "tag",
+       "detail": "passed on 3 seed(s)"
+      },
+      {
+       "name": "t1_cocotb.bouncy_buttons_match_the_model",
+       "link": "tests/t1_cocotb.py#L112",
+       "result": "pass",
+       "how": "tag",
+       "detail": "passed on 3 seed(s)"
+      },
+      {
+       "name": "t1_verif.short_glitches_are_ignored",
+       "link": "tests/t1_verif.py#L50",
+       "result": "pass",
+       "how": "tag",
+       "detail": "passed on 3 seed(s)"
+      }
+     ]
+    },
+    {
+     "method": "formal",
+     "status": "pass",
+     "evidence": [
+      {
+       "name": "debounce",
+       "link": "verif/formal/debounce.sby",
+       "result": "pass",
+       "how": "tag",
+       "detail": "bmc=PASS, cover=PASS, prove=PASS"
+      }
+     ]
+    }
+   ],
+   "rests_on_unconfirmed": false,
+   "high_risk_default": false
+  },
+  {
+   "id": "REQ-03",
+   "text": "LED brightness is linear in the effective duty over one PWM period",
+   "origin": {
+    "kind": "unrecorded",
+    "detail": "the request or the Clarifier's reading of it (spec.yaml does not record which)",
+    "risk": null,
+    "unconfirmed": false
+   },
+   "result": "pass",
+   "reason": "",
+   "methods": [
+    {
+     "method": "simulation",
+     "status": "pass",
+     "evidence": [
+      {
+       "name": "t1_cocotb.pwm_on_time_matches_duty",
+       "link": "tests/t1_cocotb.py#L179",
+       "result": "pass",
+       "how": "tag",
+       "detail": "passed on 3 seed(s)"
+      }
+     ]
+    }
+   ],
+   "rests_on_unconfirmed": false,
+   "high_risk_default": false
+  },
+  {
+   "id": "REQ-04",
+   "text": "The display lights exactly one digit at a time, in order, showing COUNT and the duty in hex",
+   "origin": {
+    "kind": "spec",
+    "detail": "your request, near line 13",
+    "risk": null,
+    "unconfirmed": false
+   },
+   "result": "pass",
+   "reason": "",
+   "methods": [
+    {
+     "method": "simulation",
+     "status": "pass",
+     "evidence": [
+      {
+       "name": "t1_cocotb.display_shows_count_and_duty",
+       "link": "tests/t1_cocotb.py#L221",
+       "result": "pass",
+       "how": "tag",
+       "detail": "passed on 3 seed(s)"
+      },
+      {
+       "name": "t1_verif.directed_closure_sweep",
+       "link": "tests/t1_verif.py#L62",
+       "result": "pass",
+       "how": "tag",
+       "detail": "passed on 3 seed(s)"
+      }
+     ]
+    },
+    {
+     "method": "formal",
+     "status": "pass",
+     "evidence": [
+      {
+       "name": "scan",
+       "link": "verif/formal/scan.sby",
+       "result": "pass",
+       "how": "tag",
+       "detail": "bmc=PASS, cover=PASS, prove=PASS"
+      }
+     ]
+    }
+   ],
+   "rests_on_unconfirmed": false,
+   "high_risk_default": false
+  },
+  {
+   "id": "REQ-05",
+   "text": "The register window has the listed map and reset values",
+   "origin": {
+    "kind": "unrecorded",
+    "detail": "the request or the Clarifier's reading of it (spec.yaml does not record which)",
+    "risk": null,
+    "unconfirmed": false
+   },
+   "result": "pass",
+   "reason": "",
+   "methods": [
+    {
+     "method": "simulation",
+     "status": "pass",
+     "evidence": [
+      {
+       "name": "t1_cocotb.identity_and_reset_values",
+       "link": "tests/t1_cocotb.py#L87",
+       "result": "pass",
+       "how": "tag",
+       "detail": "passed on 3 seed(s)"
+      },
+      {
+       "name": "t1_cocotb.inputs_register_shows_levels",
+       "link": "tests/t1_cocotb.py#L151",
+       "result": "pass",
+       "how": "tag",
+       "detail": "passed on 3 seed(s)"
+      },
+      {
+       "name": "t1_cocotb.random_operations_match_the_model",
+       "link": "tests/t1_cocotb.py#L246",
+       "result": "pass",
+       "how": "tag",
+       "detail": "passed on 3 seed(s)"
+      },
+      {
+       "name": "t1_verif.directed_closure_sweep",
+       "link": "tests/t1_verif.py#L62",
+       "result": "pass",
+       "how": "tag",
+       "detail": "passed on 3 seed(s)"
+      },
+      {
+       "name": "t1_verif.reset_state_of_outputs",
+       "link": "tests/t1_verif.py#L88",
+       "result": "pass",
+       "how": "tag",
+       "detail": "passed on 3 seed(s)"
+      },
+      {
+       "name": "t1_verif.constrained_random_operations",
+       "link": "tests/t1_verif.py#L154",
+       "result": "pass",
+       "how": "tag",
+       "detail": "passed on 3 seed(s)"
+      }
+     ]
+    }
+   ],
+   "rests_on_unconfirmed": false,
+   "high_risk_default": false
+  },
+  {
+   "id": "REQ-06",
+   "text": "The design closes timing at 100 MHz with no unconstrained path",
+   "origin": {
+    "kind": "unrecorded",
+    "detail": "the request or the Clarifier's reading of it (spec.yaml does not record which)",
+    "risk": null,
+    "unconfirmed": false
+   },
+   "result": "pending",
+   "reason": "analysis evidence not produced yet",
+   "methods": [
+    {
+     "method": "analysis",
+     "status": "pending",
+     "evidence": [
+      {
+       "name": "post_route:setup",
+       "link": "",
+       "result": "pending",
+       "how": "testplan proof",
+       "detail": "no flow gates result"
+      },
+      {
+       "name": "post_route:hold",
+       "link": "",
+       "result": "pending",
+       "how": "testplan proof",
+       "detail": "no flow gates result"
+      },
+      {
+       "name": "post_route:no_unconstrained_endpoints",
+       "link": "",
+       "result": "pending",
+       "how": "testplan proof",
+       "detail": "no flow gates result"
+      }
+     ]
+    }
+   ],
+   "rests_on_unconfirmed": false,
+   "high_risk_default": false
+  },
+  {
+   "id": "REQ-07",
+   "text": "The design stays within its predicted LUT and FF ranges, with no BRAM or DSP",
+   "origin": {
+    "kind": "unrecorded",
+    "detail": "the request or the Clarifier's reading of it (spec.yaml does not record which)",
+    "risk": null,
+    "unconfirmed": false
+   },
+   "result": "pending",
+   "reason": "analysis evidence not produced yet",
+   "methods": [
+    {
+     "method": "analysis",
+     "status": "pending",
+     "evidence": [
+      {
+       "name": "post_synth:post_synth_resources_in_range",
+       "link": "",
+       "result": "pending",
+       "how": "testplan proof",
+       "detail": "no flow gates result"
+      }
+     ]
+    }
+   ],
+   "rests_on_unconfirmed": false,
+   "high_risk_default": false
+  },
+  {
+   "id": "REQ-08",
+   "text": "On the board the register window answers as the model predicts",
+   "origin": {
+    "kind": "unrecorded",
+    "detail": "the request or the Clarifier's reading of it (spec.yaml does not record which)",
+    "risk": null,
+    "unconfirmed": false
+   },
+   "result": "pending",
+   "reason": "hardware evidence not produced yet",
+   "methods": [
+    {
+     "method": "hardware",
+     "status": "pending",
+     "evidence": [
+      {
+       "name": "uart_tests:test_t1_registers_against_the_model",
+       "link": "",
+       "result": "pending",
+       "how": "testplan proof",
+       "detail": "no bring-up result"
+      }
+     ]
+    }
+   ],
+   "rests_on_unconfirmed": false,
+   "high_risk_default": false
+  },
+  {
+   "id": "REQ-09",
+   "text": "A shell write to COUNT on the same clock as a press wins over the press",
+   "origin": {
+    "kind": "unrecorded",
+    "detail": "the request or the Clarifier's reading of it (spec.yaml does not record which)",
+    "risk": null,
+    "unconfirmed": false
+   },
+   "result": "pass",
+   "reason": "",
+   "methods": [
+    {
+     "method": "simulation",
+     "status": "pass",
+     "evidence": [
+      {
+       "name": "t1_cocotb.register_write_and_press_on_the_same_clock",
+       "link": "tests/t1_cocotb.py#L276",
+       "result": "pass",
+       "how": "tag",
+       "detail": "passed on 3 seed(s)"
+      },
+      {
+       "name": "t1_verif.constrained_random_operations",
+       "link": "tests/t1_verif.py#L154",
+       "result": "pass",
+       "how": "tag",
+       "detail": "passed on 3 seed(s)"
+      }
+     ]
+    }
+   ],
+   "rests_on_unconfirmed": false,
+   "high_risk_default": false
+  },
+  {
+   "id": "REQ-10",
+   "text": "Releasing a button never makes a press",
+   "origin": {
+    "kind": "spec",
+    "detail": "your request, near line 9",
+    "risk": null,
+    "unconfirmed": false
+   },
+   "result": "pass",
+   "reason": "",
+   "methods": [
+    {
+     "method": "simulation",
+     "status": "pass",
+     "evidence": [
+      {
+       "name": "t1_cocotb.debounce_boundary_is_exact",
+       "link": "tests/t1_cocotb.py#L98",
+       "result": "pass",
+       "how": "tag",
+       "detail": "passed on 3 seed(s)"
+      }
+     ]
+    },
+    {
+     "method": "formal",
+     "status": "pass",
+     "evidence": [
+      {
+       "name": "debounce",
+       "link": "verif/formal/debounce.sby",
+       "result": "pass",
+       "how": "tag",
+       "detail": "bmc=PASS, cover=PASS, prove=PASS"
+      }
+     ]
+    }
+   ],
+   "rests_on_unconfirmed": false,
+   "high_risk_default": false
+  },
+  {
+   "id": "REQ-11",
+   "text": "On the board the ILA captures of the count write and the PWM agree with the model",
+   "origin": {
+    "kind": "unrecorded",
+    "detail": "the request or the Clarifier's reading of it (spec.yaml does not record which)",
+    "risk": null,
+    "unconfirmed": false
+   },
+   "result": "pending",
+   "reason": "hardware evidence not produced yet",
+   "methods": [
+    {
+     "method": "hardware",
+     "status": "pending",
+     "evidence": [
+      {
+       "name": "ila_captures",
+       "link": "",
+       "result": "pending",
+       "how": "testplan proof",
+       "detail": "no bring-up result"
+      }
+     ]
+    }
+   ],
+   "rests_on_unconfirmed": false,
+   "high_risk_default": false
+  }
+ ],
+ "conflicts": [],
+ "assumptions": [],
+ "evidence_sources": {
+  "runs": "flow/tests/data/ref_t1_sim",
+  "also": [],
+  "coverage": "flow/tests/data/ref_t1_sim",
+  "formal": "<outside repo>/tmp/tmpeqhmtkve/formal",
+  "gates": null,
+  "hw": null,
+  "baseline": null
+ },
+ "trace_pass": true
+}

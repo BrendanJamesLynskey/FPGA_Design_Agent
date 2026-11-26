@@ -1,0 +1,87 @@
+{
+ "counts": {
+  "requirements": 0
+ },
+ "criteria": [
+  {
+   "detail": "no requirements recorded",
+   "id": "evidence",
+   "ids": [],
+   "state": "not_measured",
+   "title": "Every requirement has passing evidence"
+  },
+  {
+   "detail": "no requirements recorded",
+   "id": "agreement",
+   "ids": [],
+   "state": "not_measured",
+   "title": "Every requirement is agreed (human, or delegated and labelled so)"
+  },
+  {
+   "detail": "no requirements recorded",
+   "id": "method_mix",
+   "ids": [],
+   "state": "not_measured",
+   "title": "Every requirement meets its required method mix"
+  },
+  {
+   "detail": "no requirements recorded",
+   "id": "mutation",
+   "ids": [],
+   "state": "not_measured",
+   "title": "The bench passes the mutation floor"
+  },
+  {
+   "detail": "no requirements recorded",
+   "id": "formal_rigour",
+   "ids": [],
+   "state": "not_measured",
+   "title": "The formal results pass the rigour checks"
+  },
+  {
+   "detail": "no requirements recorded",
+   "id": "fresh",
+   "ids": [],
+   "state": "not_measured",
+   "title": "The evidence is fresh"
+  }
+ ],
+ "declared": {
+  "note": "the entry's own declared status; not traced to requirements and not checked by this record",
+  "source": "ip.yaml",
+  "status": "simulated (brief 40); OOC cost table pending"
+ },
+ "definition": "docs/verified.md",
+ "git_commit": "d177bef65556fd364bd79e7057fca4be4c1a4eb1",
+ "kind": "ip_lib",
+ "label": "not assessed: no requirements recorded (no verif/testplan.yaml), so nothing here is traced to a requirement",
+ "label_kind": "not_assessed",
+ "limits": [
+  "Verified never means interoperability with a device the design talks to unless a board measurement against that device is listed in the record; a design that checks its own output against its own model accepts its own symmetric mistakes.",
+  "Verified never means timing beyond the stated corner: a post-route timing result is for the part, speed grade, clock and tool version in its evidence file, not for other corners, temperatures or devices.",
+  "Verified never means beyond the widths and depths checked: a simulation covers the vectors it ran, a bounded formal result covers the stated depth only, and a per-width proof covers the widths it names; only a Lean proof marked all widths covers every width, and only for its model.",
+  "Verified never means the requirement is the right one: the text of a requirement is the human's check (or the planner's, where the record says delegated), and a record shows that checks exist and pass, not that nothing was left out.",
+  "Verified never means a hardware or board result unless a board measurement item is listed; a simulation is not the board.",
+  "Verified is about the files in the manifest at the hashes given. A change to any of them makes the record out of date (the CI check fails), and the evidence stale until it is re-recorded.",
+  "An agreement or acceptance recorded as delegated is the planner's decision on the owner's delegation, not a human sign-off; the record counts it apart."
+ ],
+ "manifest": {
+  "ip_lib/eth_mac_rmii/faults.yaml": "05fcb62aa00366de3420568c7120e35788ae09fd76e1879634e44dddb424527c",
+  "ip_lib/eth_mac_rmii/ip.yaml": "4f7569172776653b6a594a7a0817d3f92e9027b289f0dbedd4c4158f00afd8c5",
+  "ip_lib/eth_mac_rmii/rtl/eth_crc32.sv": "7c463668a6fa22ca20d20f24e8fa40e308023d46f2f6034d8406f1e69c4ae74f",
+  "ip_lib/eth_mac_rmii/rtl/eth_mac_rmii.sv": "3b6ed4bf981e6daa52a721a53e2b71b45f9aa7dd2c33fcf743d7ec46ac4325c6",
+  "ip_lib/eth_mac_rmii/rtl/rmii_rx.sv": "a5e7517de8e445dc515d1106f8b9003ef9e5832e71d4a0fed3e77022a1aa1543",
+  "ip_lib/eth_mac_rmii/rtl/rmii_tx.sv": "028c6a973ea9062f38db0e59ed6fe44ec60faa3442d7b6b228c7b6a2bcc57eca",
+  "ip_lib/eth_mac_rmii/tb/tb_eth_mac_rmii.sv": "048e3cf1aa56877e7fc4adb8c460fa11f6de48498be4b462d48fe99706c45741"
+ },
+ "name": "eth_mac_rmii",
+ "path": "ip_lib/eth_mac_rmii",
+ "reproduce": [
+  {
+   "cmd": "python -m pytest -q ip_lib/eth_mac_rmii/tb",
+   "what": "the simulation tests"
+  }
+ ],
+ "requirements": [],
+ "schema": "fda-verified/1"
+}

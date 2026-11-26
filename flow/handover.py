@@ -546,6 +546,8 @@ def problems(ddir: Path, h: dict | None = None, readme: str | None = None) -> tu
         if not _clock_ok(c):
             errs.append(f"clock {c['name']}: {c['mhz']} MHz does not agree with {c['source']} (an XDC create_clock "
                         "on that port, or a results record)")
+    if h.get("requirements_report") and not (ddir / h["requirements_report"]).is_file():
+        errs.append(f"requirements_report: {h['requirements_report']} does not exist in the design directory")
     if h.get("agent_run") and not (ROOT / h["agent_run"]["record"]).exists():
         errs.append(f"agent_run: {h['agent_run']['record']} does not exist")
     # renderings
@@ -628,9 +630,20 @@ def run_line(ar: dict) -> str:
         bits.append(f"{fmt(ar['cost_usd'])} USD model cost (provider-reported)")
     if ar.get("plan_cost_estimate_usd") is not None:
         bits.append(f"{fmt(ar['plan_cost_estimate_usd'])} USD plan-cost estimate (not billed)")
+    if isinstance(ar.get("permissions"), dict) and ar["permissions"].get("mode"):       # brief 222
+        pm = ar["permissions"]
+        bits.append(f"permission mode {pm['mode']} ({len(pm.get('decisions') or [])} distinct gated decisions listed in handover.yaml)")
     if ar.get("stop"):
         bits.append(f"stopped because: {ar['stop']}")
     return ", ".join(bits)
+
+
+def verified_line(ddir: Path) -> str | None:
+    """Brief 144: the verification label, read from the generated record (verified.json, written by `python -m flow.verified`), never typed here."""
+    p = ddir / "verified.json"
+    if not p.exists():
+        return None
+    return json.loads(p.read_text())["label"]
 
 
 def render_readme(h: dict, ddir: Path, prose: dict, svgs: dict) -> str:
@@ -638,8 +651,12 @@ def render_readme(h: dict, ddir: Path, prose: dict, svgs: dict) -> str:
     byk = {m.get("key"): m for m in h["measurements"] if m.get("key")}
     L = [f"# {h['id']}: {h['title']}", "",
          f"<!-- Generated from handover.yaml by flow/handover.py (brief 68). Edit handover.yaml, or the text between the "
-         f"prose markers, then run: python -m flow.handover write {rid} -->", "", h["summary"].strip(), "",
-         "Not in scope:", ""]
+         f"prose markers, then run: python -m flow.handover write {rid} -->", ""]
+    vl = verified_line(ddir)
+    if vl:
+        L += [f"**Verification: {vl}.** [VERIFIED.md](VERIFIED.md) is the generated, hash-pinned record; "
+              f"[what the label means](../../docs/verified.md).", ""]
+    L += [h["summary"].strip(), "", "Not in scope:", ""]
     L += [f"- {s}" for s in h["scope_not"]]
     who = {"human": "written by hand", "agent": "produced by the agent", "human+agent": "written by hand with agent runs",
            "session": "written by a Claude Code session"}
@@ -707,6 +724,8 @@ def render_readme(h: dict, ddir: Path, prose: dict, svgs: dict) -> str:
     L += _block("build", prose)
     # verified
     L += ["", "## Verified", ""]
+    if h.get("requirements_report"):
+        L += [f"Requirement by requirement, with where each came from and its evidence: [{h['requirements_report']}]({h['requirements_report']}).", ""]
     if "verification.svg" in svgs:
         L += ["![Verification matrix: each activity and its result](docs/handover/verification.svg)", ""]
     L += ["| ID | Activity | Result | What | Evidence | Conditions |", "|---|---|---|---|---|---|"]
@@ -743,6 +762,12 @@ def render_readme(h: dict, ddir: Path, prose: dict, svgs: dict) -> str:
     L += ["", "## Known gaps and limits", ""]
     L += [f"- **{g['about']}**: {g['text']}" for g in h["gaps"]]
     L += _block("gaps", prose)
+    if h.get("assumptions"):                      # brief 210: the guesses the run made, in every requirements level
+        L += ["", "## Assumptions you did not confirm", "",
+              "The agent settled these questions with its own default (nobody answered, or the answer was waived). A passing test shows the design "
+              "matches the assumption, not that the assumption is what you want. Check the high-risk rows first.", "",
+              "| Risk | Question | The design used | How it was settled |", "|---|---|---|---|"]
+        L += [f"| {a['risk']} | {_cell(a['question'])} | {_cell(a['used'])} | {_cell(a['how'])} |" for a in h["assumptions"]]
     L += ["", "## Next steps", ""]
     L += [f"{i}. {s}" for i, s in enumerate(h["next_steps"], 1)]
     if h["open_questions"]:
@@ -763,6 +788,9 @@ def render_agent(h: dict, ddir: Path) -> str:
          f"source: {rid}/handover.yaml; human view: README.md; refresh: python -m flow.handover fresh {rid}",
          "", "## identity",
          f"kind={h['kind']} produced_by={h['produced_by']} part={t['part']} board={t['board']} top={t['top']} tool={t['tool']}"]
+    vl = verified_line(ddir)
+    if vl:
+        L.append(f"verified: {vl} (record: {rid}/VERIFIED.md, {rid}/verified.json; definition: docs/verified.md)")
     if h.get("agent_run"):
         L.append(f"agent_run={h['agent_run']['run_id']} record={h['agent_run']['record']}")
         if run_line(h["agent_run"]):
@@ -807,6 +835,10 @@ def render_agent(h: dict, ddir: Path) -> str:
         L += [f"off {e['item']}: {e['reason']}" for e in sec["not_enabled"]]
         L += [f"wrong? {s}" for s in sec["could_get_wrong"]]
         L += [f"keys: {sec['key_handling'].strip()}"]
+    if h.get("requirements_report"):
+        L += ["", "## requirements_report", h["requirements_report"]]
+    if h.get("assumptions"):
+        L += ["", "## assumptions_not_confirmed"] + [f"[{x['risk']}] {x['question']} -> {x['used']} ({x['how']})" for x in h["assumptions"]]
     L += ["", "## gaps"]
     groups: dict[str, list[dict]] = {}
     pointer = {e["id"]: f"{e['activity']} evidence is {e['result']}: " for e in h["evidence"]} if compact else {}

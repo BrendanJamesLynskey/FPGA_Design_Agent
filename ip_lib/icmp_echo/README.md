@@ -4,6 +4,8 @@ Answers ping (ICMP echo, RFC 792) for one IPv4 address: stores the frame, checks
 
 Generated from `ip.yaml` by `flow/net/ipdoc.py`; do not edit by hand.
 
+**Verification: not assessed: no requirements recorded (no verif/testplan.yaml), so nothing here is traced to a requirement.** [VERIFIED.md](VERIFIED.md) is the generated, hash-pinned record; [what the label means](../../docs/verified.md).
+
 Status: Meets 125 MHz out of context on xc7a100t-1 with the block RAM buffer (Fmax estimates 138 MHz at 2 KB and 16 KB) and the LUT RAM buffer at 2 KB (130 MHz); the LUT RAM buffer at 16 KB misses (104 MHz, WNS -1.6 ns). Meets it with margin on xck26-2LV (all points, 163-259 MHz). Version 0.2.0 adds one clock of reply latency (5, was 4). Simulated against a model that computes the reply's checksums from scratch, scapy as a second decoder; built alone out of context with Vivado 2026.1 (single runs at 8 ns, estimates); not yet run on a board (the Nexys A7 network design carries it behind eth_mac_rmii; built, not yet run: a cable check comes first, see designs/b63d_nexys_net/host/PLAN.md).
 
 ## Parameters

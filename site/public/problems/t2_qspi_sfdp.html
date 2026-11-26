@@ -3,11 +3,11 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Read the configuration flash&#x27;s ID and SFDP header | FPGA Design Agent</title>
+<title>Read the configuration flash&#x27;s ID and SFDP header | FPGA Force</title>
 <meta name="description" content="Read the configuration flash&#x27;s ID and SFDP header: the spec, hidden tests, reference RTL, mutants and golden model of benchmark task t2_qspi_sfdp.">
 <meta name="color-scheme" content="light dark">
 <link rel="icon" href="../favicon.svg" type="image/svg+xml">
-<style>/* FPGA Design Agent site: sober monochrome, dark and light, no glow. Same manner as the CVDP RTL Agent site. */
+<style>/* FPGA Force site: sober monochrome, dark and light, no glow. Same manner as the CVDP RTL Agent site. */
 :root {
   --bg: #f6f6f4; --panel: #ffffff; --rule: #d6d6d2; --ink: #161616; --ink-2: #4a4a4a; --ink-3: #6b6b6b;
   --mark: #161616; --mute: #b9b9b4; --warn: #b3261e; --ok: #161616;
@@ -61,6 +61,7 @@ button:hover { border-color: var(--ink-3); }
 button[aria-pressed="true"] { background: var(--ink); color: var(--bg); }
 
 /* sections, cards */
+.tagline { font-size: 1.3rem; font-weight: 600; margin: .2rem 0 1rem; color: var(--ink); }
 .eyebrow { font: 600 .8rem var(--f-mono); text-transform: uppercase; letter-spacing: .08em; color: var(--ink-3); }
 .facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; margin: 22px 0; }
 .fact { border: 1px solid var(--rule); background: var(--panel); padding: 14px 16px; }
@@ -674,7 +675,7 @@ svg .bdtick { stroke: var(--ink-3); }
 @media (max-width: 520px) { .evm tbody th { min-width: 9em; } }
 @media (max-width: 520px) { .evm tbody th { white-space: normal; min-width: 8em; max-width: 9em; font-size: .8rem; } .evm td.ev { min-width: 4.2em; } .evm thead th { font-size: .72rem; } }
 
-/* brief 193: "Why this agent": the one-page summary */
+/* brief 193: "Why FPGA Force": the one-page summary */
 svg .boxyou { fill: var(--ink); stroke: var(--ink); }
 .whyhero h1 { font-size: clamp(1.35rem, 1rem + 1.6vw, 2rem); letter-spacing: -.01em; line-height: 1.3; max-width: 48ch; }
 .whyfig { margin: 18px 0 8px; }
@@ -694,11 +695,24 @@ details.area.why .more-link { margin: .8em 0 0; font-weight: 600; }
 .dspfig .figt { font-weight: 600; margin-bottom: .4rem; }
 .dspfig .dsp-n { display: none; }
 @media (max-width: 640px) { .dspfig .dsp-w { display: none; } .dspfig .dsp-n { display: block; } }
+/* brief 164: the signal-integrity figures (inline SVG from site/si_figures.py; a wide and a narrow drawing, one shown) */
+.sifig { margin: 1.2em 0 1.6em; }
+.sifig .figt { font-weight: 700; color: var(--ink); margin: 0 0 4px; }
+.sifig svg { display: block; width: 100%; height: auto; }
+.sifig .lay-w svg { max-width: 720px; }
+.sifig .lay-n { display: none; }
+@media (max-width: 819px) { .sifig .lay-w { display: none; } .sifig .lay-n { display: block; max-width: 480px; } }
+.sifig .lay-w svg text { font-size: 11.5px; }
+.sifig .lay-n svg text { font-size: 14.5px; }
+svg .hl { stroke: var(--warn); stroke-width: 0.9; opacity: .75; }
+svg .cell { fill: var(--ink); stroke: var(--rule); }
+svg text.on { fill: var(--bg); }
+svg text.wn { fill: var(--warn); }
 </style>
 </head>
 <body>
 <a class="visually-hidden" href="#main">Skip to content</a>
-<header class="bar"><div class="wrap"><a class="brand" href="../index.html">FPGA Design Agent</a><nav aria-label="Pages"><a href="../why.html">Why</a><a href="../agent.html">The agent</a><a class="sub" href="../agent.html#harness">Harness</a><a href="../story.html">How it was built</a><a href="../worked-example.html">Worked example</a><a href="../inspect.html">Inspect it</a><a href="../how.html">How it works</a><a href="../verification.html">Verification</a><a href="../traceability.html">Traceability</a><a href="../flow-notes.html">Beyond the flow</a><a href="../expertise.html">Expertise</a><a href="../examples.html">Examples</a><a href="../showcase.html">Showcase</a><a href="../problems.html" aria-current="page">Problems</a><a href="../evaluation.html">Evaluation</a><a href="../results.html">Results</a></nav><button id="theme" type="button" aria-label="Switch to dark theme">Dark</button></div></header>
+<header class="bar"><div class="wrap"><a class="brand" href="../index.html">FPGA Force</a><nav aria-label="Pages"><a href="../why.html">Why</a><a href="../agent.html">The agent</a><a class="sub" href="../agent.html#harness">Harness</a><a href="../story.html">How it was built</a><a href="../worked-example.html">Worked example</a><a href="../inspect.html">Inspect it</a><a href="../how.html">How it works</a><a href="../verification.html">Verification</a><a href="../traceability.html">Traceability</a><a href="../verified.html">Verified</a><a href="../flow-notes.html">Beyond the flow</a><a href="../expertise.html">Expertise</a><a href="../examples.html">Examples</a><a href="../showcase.html">Showcase</a><a href="../problems.html" aria-current="page">Problems</a><a href="../evaluation.html">Evaluation</a><a href="../results.html">Results</a></nav><button id="theme" type="button" aria-label="Switch to dark theme">Dark</button></div></header>
 <main id="main" class="wrap">
 <p class="crumbs small"><a href="../problems.html">Problems</a> / <a href="../problems.html#dom-F">F. Interfaces and protocols</a></p>
 <h1>Read the configuration flash&#x27;s ID and SFDP header</h1>
@@ -1115,7 +1129,7 @@ BUSY, DONE, SIG_OK = 1, 2, 4
 </main>
 <footer><div class="wrap"><p>Designed by Brendan Lynskey. Code and results: <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent">github.com/BrendanJamesLynskey/FPGA_Design_Agent</a> (all rights reserved; source visible for review, see LICENSE). Every number on these pages is read from a committed result file; development results are labelled as such and are not the held-out score.</p></div></footer>
 <script type="application/json" data-key="trace">{"captions":["Step 0: Chip select is high: the flash is not selected. The start command has just been written.","Step 1: Chip select goes low for transaction 1.","Step 2: The master sends command byte 0x9f.","Step 3: The flash returns ID byte 0: 0x01.","Step 4: The flash returns ID byte 1: 0x20.","Step 5: The flash returns ID byte 2: 0x18.","Step 6: Chip select goes high, ending the transaction. The ID register now reads 012018.","Step 7: Chip select goes low for transaction 2.","Step 8: The master sends command byte 0x5a.","Step 9: The master sends address byte 0x00.","Step 10: The master sends address byte 0x00.","Step 11: The master sends address byte 0x00.","Step 12: Eight dummy clocks: the flash needs them to prepare its data; nothing useful is sent or read.","Step 13: The flash returns SFDP byte 0: 0x53.","Step 14: The flash returns SFDP byte 1: 0x46.","Step 15: The flash returns SFDP byte 2: 0x44.","Step 16: The flash returns SFDP byte 3: 0x50.","Step 17: The flash returns SFDP byte 4: 0x06.","Step 18: The flash returns SFDP byte 5: 0x01.","Step 19: The flash returns SFDP byte 6: 0x00.","Step 20: The flash returns SFDP byte 7: 0xff.","Step 21: The flash returns SFDP byte 8: 0x00.","Step 22: The flash returns SFDP byte 9: 0x06.","Step 23: The flash returns SFDP byte 10: 0x01.","Step 24: The flash returns SFDP byte 11: 0x10.","Step 25: The flash returns SFDP byte 12: 0x80.","Step 26: The flash returns SFDP byte 13: 0x00.","Step 27: The flash returns SFDP byte 14: 0x00.","Step 28: The flash returns SFDP byte 15: 0xff.","Step 29: Chip select goes high, ending the transaction. Status: done, signature matches (SFDP word 0 reads 50444653)."],"signals":[{"kind":"text","name":"phase","v":["idle","select","command","ID byte","ID byte","ID byte","deselect","select","command","address","address","address","dummy","SFDP byte","SFDP byte","SFDP byte","SFDP byte","SFDP byte","SFDP byte","SFDP byte","SFDP byte","SFDP byte","SFDP byte","SFDP byte","SFDP byte","SFDP byte","SFDP byte","SFDP byte","SFDP byte","deselect"]},{"kind":"bit","name":"QSPI_CSN","v":[1,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1]},{"kind":"bus","name":"MOSI byte","radix":"hex","v":[0,0,159,0,0,0,0,0,90,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"width":8},{"kind":"bus","name":"MISO byte","radix":"hex","v":[0,0,0,1,32,24,0,0,0,0,0,0,0,83,70,68,80,6,1,0,255,0,6,1,16,128,0,0,255,0],"width":8},{"kind":"bus","name":"ID","radix":"hex","v":[0,0,0,0,0,0,73752,73752,73752,73752,73752,73752,73752,73752,73752,73752,73752,73752,73752,73752,73752,73752,73752,73752,73752,73752,73752,73752,73752,73752],"width":24},{"kind":"bus","name":"SFDP0","radix":"hex","v":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1346651731],"width":32},{"kind":"bit","name":"SIG_OK","v":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1]}],"stimulus":"A start command is given; the flash is the bench's own flash model, answering ID 01 20 18 and an SFDP table whose first four bytes spell the signature. Two transactions follow, each shown byte by byte; MOSI is shown as 0 when the master sends nothing useful.","unit":"step","x":[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29]}</script>
-<script>/* FPGA Design Agent site. No dependencies. Every animation is frame(step) over a state list built from site/data/*.json. */
+<script>/* FPGA Force site. No dependencies. Every animation is frame(step) over a state list built from site/data/*.json. */
 (function () {
   "use strict";
   var D = {};

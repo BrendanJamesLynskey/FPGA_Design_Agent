@@ -2,6 +2,8 @@
 
 <!-- Generated from handover.yaml by flow/handover.py (brief 68). Edit handover.yaml, or the text between the prose markers, then run: python -m flow.handover write designs/b58a_trigger -->
 
+**Verification: not assessed: no requirements recorded (no verif/testplan.yaml), so nothing here is traced to a requirement.** [VERIFIED.md](VERIFIED.md) is the generated, hash-pinned record; [what the label means](../../docs/verified.md).
+
 A bench model of a low-latency trading path. A packet arrives on a PL Ethernet port, its fields are parsed while it is still arriving, a rule loaded at run time decides, hardware interlocks check the order, and in speculative mode the response leaves before the incoming frame has finished (undone by a poisoned frame check sequence if the frame was bad). Simulated, formally checked in part, and built with Vivado 2026.1; never run on a board.
 
 Not in scope:
@@ -121,7 +123,7 @@ Interfaces:
 | formal checks; needs SymbiYosys, yosys and z3 | `python3 -m pytest -q designs/b58a_trigger/tests/test_b58a_formal.py` | no | about 30 min |
 | build the KR260 bitstream; needs local Vivado 2026.1 and a heavy slot (take_heavy_slot.sh) | `flow/run_vivado.sh designs/b58a_trigger` | yes | about 23 min |
 
-Tool: Vivado 2026.1. Build ID of the inputs at handover: `6d677d7f` (`python flow/manifest.py show designs/b58a_trigger`: what a rebuild of today's sources and flow would carry; it changes when any build input or the flow changes, so it can differ from the build ID in an older evidence record). Knowledge-bank pin: `5e2eab8`.
+Tool: Vivado 2026.1. Build ID of the inputs at handover: `55f1b6ca` (`python flow/manifest.py show designs/b58a_trigger`: what a rebuild of today's sources and flow would carry; it changes when any build input or the flow changes, so it can differ from the build ID in an older evidence record). Knowledge-bank pin: `6185830`.
 
 | File | What |
 |---|---|

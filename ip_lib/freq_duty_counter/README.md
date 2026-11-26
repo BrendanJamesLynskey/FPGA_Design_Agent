@@ -4,6 +4,8 @@ Frequency and duty counter: edges and high clocks of an asynchronous input over 
 
 Generated from `ip.yaml` by `flow/net/ipdoc.py`; do not edit by hand.
 
+**Verification: not assessed: no requirements recorded (no verif/testplan.yaml), so nothing here is traced to a requirement.** [VERIFIED.md](VERIFIED.md) is the generated, hash-pinned record; [what the label means](../../docs/verified.md).
+
 Status: simulated and measured on the Nexys A7-100T inside b30_hil_audio (1000.0 Hz read for the 1 kHz tone).
 
 ## Parameters

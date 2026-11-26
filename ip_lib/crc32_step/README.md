@@ -4,6 +4,8 @@ One CRC-32 update (IEEE 802.3, reflected, polynomial 0xEDB88320) by a 32-bit wor
 
 Generated from `ip.yaml` by `flow/net/ipdoc.py`; do not edit by hand.
 
+**Verification: not assessed: no requirements recorded (no verif/testplan.yaml), so nothing here is traced to a requirement.** [VERIFIED.md](VERIFIED.md) is the generated, hash-pinned record; [what the label means](../../docs/verified.md).
+
 Status: simulated bit-exact against model.py and zlib in both variants; built into a pinned copy of the BRV32P RV32 core as a custom instruction and run there in simulation (results/64a_hwsw); not run on a board.
 
 ## Parameters

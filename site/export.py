@@ -488,6 +488,8 @@ def main():
     out["verification"] = verification.build()                          # brief 81: how the designs are verified, from site/verification/verification.yaml
     import traceability
     out["traceability"] = traceability.build()                          # brief 116: specification-to-evidence matrices, from flow/trace_v1.py
+    import verified
+    out["verified"] = verified.build()                                  # brief 144: the verification records' labels, from <dir>/verified.json
     import worked
     out["kr260"] = worked.build()                                       # brief 117: the worked example, from site/worked/worked.yaml and the committed records
     out["blockdesigns"] = blockdesigns()                                # brief 65A: every block design's graph, with its build
@@ -507,7 +509,7 @@ def main():
             else:
                 p.write_text(s)
     emit(out)
-    import why                                                          # brief 193: "Why this agent", site/why/why.yaml; reads the data files
+    import why                                                          # brief 193: "Why FPGA Force", site/why/why.yaml; reads the data files
     emit({"why": why.build()})                                          # written just above, so it comes last (one export run is enough)
     extra = sorted(set(p.stem for p in (OUT / "tasks").glob("*.json")) - set(pages))
     if extra:

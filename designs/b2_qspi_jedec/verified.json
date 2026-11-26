@@ -1,0 +1,111 @@
+{
+ "counts": {
+  "requirements": 0
+ },
+ "criteria": [
+  {
+   "detail": "no requirements recorded",
+   "id": "evidence",
+   "ids": [],
+   "state": "not_measured",
+   "title": "Every requirement has passing evidence"
+  },
+  {
+   "detail": "no requirements recorded",
+   "id": "agreement",
+   "ids": [],
+   "state": "not_measured",
+   "title": "Every requirement is agreed (human, or delegated and labelled so)"
+  },
+  {
+   "detail": "no requirements recorded",
+   "id": "method_mix",
+   "ids": [],
+   "state": "not_measured",
+   "title": "Every requirement meets its required method mix"
+  },
+  {
+   "detail": "no requirements recorded",
+   "id": "mutation",
+   "ids": [],
+   "state": "not_measured",
+   "title": "The bench passes the mutation floor"
+  },
+  {
+   "detail": "no requirements recorded",
+   "id": "formal_rigour",
+   "ids": [],
+   "state": "not_measured",
+   "title": "The formal results pass the rigour checks"
+  },
+  {
+   "detail": "no requirements recorded",
+   "id": "fresh",
+   "ids": [],
+   "state": "not_measured",
+   "title": "The evidence is fresh"
+  }
+ ],
+ "declared": {
+  "evidence": [
+   {
+    "activity": "simulation",
+    "id": "E1",
+    "record": "designs/b2_qspi_jedec/tests/test_qspi_rtl.py",
+    "result": "pass"
+   },
+   {
+    "activity": "build",
+    "id": "E2",
+    "record": "results/vivado_2026_1_remeasure/b2_builds.json",
+    "result": "pass"
+   },
+   {
+    "activity": "board",
+    "id": "E3",
+    "record": "results/board_v2/b2_qspi_jedec.json",
+    "result": "pass"
+   }
+  ],
+  "note": "the design's own declared evidence; not traced to requirements and not checked by this record",
+  "source": "handover.yaml",
+  "status": "board-verified"
+ },
+ "definition": "docs/verified.md",
+ "git_commit": "d177bef65556fd364bd79e7057fca4be4c1a4eb1",
+ "kind": "designs",
+ "label": "not assessed: no requirements recorded (no verif/testplan.yaml), so nothing here is traced to a requirement",
+ "label_kind": "not_assessed",
+ "limits": [
+  "Verified never means interoperability with a device the design talks to unless a board measurement against that device is listed in the record; a design that checks its own output against its own model accepts its own symmetric mistakes.",
+  "Verified never means timing beyond the stated corner: a post-route timing result is for the part, speed grade, clock and tool version in its evidence file, not for other corners, temperatures or devices.",
+  "Verified never means beyond the widths and depths checked: a simulation covers the vectors it ran, a bounded formal result covers the stated depth only, and a per-width proof covers the widths it names; only a Lean proof marked all widths covers every width, and only for its model.",
+  "Verified never means the requirement is the right one: the text of a requirement is the human's check (or the planner's, where the record says delegated), and a record shows that checks exist and pass, not that nothing was left out.",
+  "Verified never means a hardware or board result unless a board measurement item is listed; a simulation is not the board.",
+  "Verified is about the files in the manifest at the hashes given. A change to any of them makes the record out of date (the CI check fails), and the evidence stale until it is re-recorded.",
+  "An agreement or acceptance recorded as delegated is the planner's decision on the owner's delegation, not a human sign-off; the record counts it apart."
+ ],
+ "manifest": {
+  "designs/b2_qspi_jedec/handover.yaml": "e1276df0d5c99e2cbea56a6100ca993283bb168f433b4088c2f2a129f2417955",
+  "designs/b2_qspi_jedec/rtl/b2_qspi_jedec_top.sv": "0b04adcaaa577a1efa86330bdd7a6b7f19f480e064c242aa43d5df2fe73327a2",
+  "designs/b2_qspi_jedec/rtl/qspi_rdid.sv": "0a9931970150dcdc8b4a8630b54ed2aadf2e452a62735e321cd1fcba4657e86b",
+  "designs/b2_qspi_jedec/rtl/qspi_regs.sv": "54e88e7824b9e3684d44508ad5823fd2923a880df9b019ab9edc567c856645bf",
+  "designs/b2_qspi_jedec/tests/test_qspi_rtl.py": "8e33f960dbab1c79569e5364cbb9f5310c0f7fd8306988ae2d019eb508321c22",
+  "results/board_v2/b2_qspi_jedec.json": "57e6c720d34a3cc47955bfb0752acca2f0db6c6040ee75fa29f40907370ddcc4",
+  "results/vivado_2026_1_remeasure/b2_builds.json": "2ab9aafe7a17bffd120d9ed952fbf962bbd7738f5982809abe26b876c11ccb3f"
+ },
+ "name": "b2_qspi_jedec",
+ "path": "designs/b2_qspi_jedec",
+ "reproduce": [
+  {
+   "cmd": "python3 -m pytest -q designs/b2_qspi_jedec/tests/test_qspi_rtl.py",
+   "what": "source checks and simulation against the flash model"
+  },
+  {
+   "cmd": "python3 flow/board_check.py designs/b2_qspi_jedec --runs 3",
+   "what": "power gate, program SRAM, self-check, three times"
+  }
+ ],
+ "requirements": [],
+ "schema": "fda-verified/1"
+}

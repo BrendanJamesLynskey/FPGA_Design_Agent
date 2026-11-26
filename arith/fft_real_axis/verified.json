@@ -1,0 +1,587 @@
+{
+ "counts": {
+  "agreed_delegated": 0,
+  "agreed_human": 0,
+  "draft": 8,
+  "items": 10,
+  "requirements": 8,
+  "stale_items": 1,
+  "verified": 0
+ },
+ "criteria": [
+  {
+   "detail": "8 of 8 requirements are not in state verified: FRAXIS-F-MODEL (partially_verified), FRAXIS-F-EXACT (partially_verified), FRAXIS-F-LAT (partially_verified), FRAXIS-F-BENCH (partially_verified), FRAXIS-F-PACKAGE (stale), FRAXIS-F-AXIS (partially_verified), FRAXIS-F-GAP (partially_verified), FRAXIS-F-HARNESS (partially_verified)",
+   "id": "evidence",
+   "ids": [
+    "FRAXIS-F-MODEL",
+    "FRAXIS-F-EXACT",
+    "FRAXIS-F-LAT",
+    "FRAXIS-F-BENCH",
+    "FRAXIS-F-PACKAGE",
+    "FRAXIS-F-AXIS",
+    "FRAXIS-F-GAP",
+    "FRAXIS-F-HARNESS"
+   ],
+   "state": "unmet",
+   "title": "Every requirement has passing evidence"
+  },
+  {
+   "detail": "0 agreed by a human, 0 agreed by delegation, 8 draft, 0 marked agreed without a record",
+   "id": "agreement",
+   "ids": [
+    "FRAXIS-F-MODEL",
+    "FRAXIS-F-EXACT",
+    "FRAXIS-F-LAT",
+    "FRAXIS-F-BENCH",
+    "FRAXIS-F-PACKAGE",
+    "FRAXIS-F-AXIS",
+    "FRAXIS-F-GAP",
+    "FRAXIS-F-HARNESS"
+   ],
+   "state": "unmet",
+   "title": "Every requirement is agreed (human, or delegated and labelled so)"
+  },
+  {
+   "detail": "not yet measured: the required method mix per requirement kind is brief 143a; the collector does not supply it yet",
+   "id": "method_mix",
+   "ids": [],
+   "state": "not_measured",
+   "title": "Every requirement meets its required method mix"
+  },
+  {
+   "detail": "not yet measured: the mutation score and floor are brief 143b; the collector does not supply them yet",
+   "id": "mutation",
+   "ids": [],
+   "state": "not_measured",
+   "title": "The bench passes the mutation floor"
+  },
+  {
+   "detail": "no SymbiYosys item in the testplan, so there is no proof to check for vacuity or depth (a Lean item is checked by the kernel, see its tier)",
+   "id": "formal_rigour",
+   "ids": [],
+   "state": "met",
+   "title": "The formal results pass the rigour checks"
+  },
+  {
+   "detail": "1 items are stale (a file they are about changed after the evidence was recorded)",
+   "id": "fresh",
+   "ids": [
+    "V-FRAXIS-PACKAGE"
+   ],
+   "state": "unmet",
+   "title": "The evidence is fresh"
+  }
+ ],
+ "declared": null,
+ "definition": "docs/verified.md",
+ "git_commit": "d177bef65556fd364bd79e7057fca4be4c1a4eb1",
+ "kind": "arith",
+ "label": "not verified: no requirement of 8 has passing evidence",
+ "label_kind": "not_verified",
+ "limits": [
+  "Verified never means interoperability with a device the design talks to unless a board measurement against that device is listed in the record; a design that checks its own output against its own model accepts its own symmetric mistakes.",
+  "Verified never means timing beyond the stated corner: a post-route timing result is for the part, speed grade, clock and tool version in its evidence file, not for other corners, temperatures or devices.",
+  "Verified never means beyond the widths and depths checked: a simulation covers the vectors it ran, a bounded formal result covers the stated depth only, and a per-width proof covers the widths it names; only a Lean proof marked all widths covers every width, and only for its model.",
+  "Verified never means the requirement is the right one: the text of a requirement is the human's check (or the planner's, where the record says delegated), and a record shows that checks exist and pass, not that nothing was left out.",
+  "Verified never means a hardware or board result unless a board measurement item is listed; a simulation is not the board.",
+  "Verified is about the files in the manifest at the hashes given. A change to any of them makes the record out of date (the CI check fails), and the evidence stale until it is re-recorded.",
+  "An agreement or acceptance recorded as delegated is the planner's decision on the owner's delegation, not a human sign-off; the record counts it apart."
+ ],
+ "manifest": {
+  "arith/fft/rtl/fft_sdf_r22.sv": "58d1227449d390af0f70aef7bb5bbcaa1bd76e701e7928961fec45dcd27e5072",
+  "arith/fft_cmul/rtl/fft_cmul_m3.sv": "8475634ed3f87a36645d4f2d3f82dac56e7b60b924b8169f67398bb113fc470c",
+  "arith/fft_cmul/rtl/fft_cmul_m4.sv": "826a27855314155fa138bf9c681c779129b02aa1d2e7f24b855abff10b8001f0",
+  "arith/fft_common/axis_checker.sv": "6608a719c010a9e77d12a3b712a4cee859239b8dd853327a5c0dddfde26bbccb",
+  "arith/fft_common/fft_bitrev.sv": "650b28bf48a4fd7b2ffb4b4b7ed597d96e0e4fcc32931357583013e11c287c35",
+  "arith/fft_common/fft_cos_rom.sv": "bcf1d079ba8a48d3757484ab8706051b46fa45046400eed1b7fe2ddd3cbbda38",
+  "arith/fft_common/fft_ref.py": "96a983692b9eac1d70ef32a874ace99a40c668cf5dcf746cfc93093f85fb54c5",
+  "arith/fft_common/fft_sdf_stage.sv": "3bce071db10fbbb3adf4f6f6e31680077ff2059f87fe21a3429ff821336ac801",
+  "arith/fft_common/fft_sdf_twmul.sv": "ced119e7c513deb23e392a199ef239d54a81ae4a5b647fb470c1daa9da3720b5",
+  "arith/fft_common/frames.py": "2f141de7810edf546dc6b25d39e4b7e8938e9f46c7cbb2683ef1f2a941ca3b5d",
+  "arith/fft_real/model.py": "f9512894b57c7d63c709b55731a5a5efaaf1093d08ff761442c84566d0ffd67c",
+  "arith/fft_real/rtl/fft_real_post.sv": "e8017e48141f9cc1f568e04688e776548947c82356fb839ac6ea366dfccd5c51",
+  "arith/fft_real/tests/fft_real_cocotb.py": "8181642d18eadf5b00d5537a862567a35b93f4c6b50f4360b88f4582217bf582",
+  "arith/fft_real_axis/build/post/build.yaml": "dcc41115e079a3d0b4a6375aaab096c7218f4d212e4780ca88c5c447eacc5f7e",
+  "arith/fft_real_axis/harness/assertions.sv": "23c727ea900337ebad21d808ac163ff8f4154d4a220a1d0939049d4a45683d91",
+  "arith/fft_real_axis/harness/chk_top.sv": "9c6ece720dc21d475906ddf45c2033d71a5b66d3ee405c953de970f8e510e83b",
+  "arith/fft_real_axis/harness/coverage.yaml": "61ce2022dd86717d4e21db0666de93359a306e9dee7a7c51978cce8a14084394",
+  "arith/fft_real_axis/harness/fft_real_axis_cocotb.py": "c910e83f9d342a0f0988a76b9f2374be17df0743b91ff010e5d42c5cb00407f8",
+  "arith/fft_real_axis/harness/model.py": "8f29b3cb644d31e59597589432b55e70c31fa3e79894d49c51cc22c36eb339ba",
+  "arith/fft_real_axis/harness/run_harness.py": "48e81a12e90213ff70bdddde19542b2b29aa5b4d8c16db2ebc9f567f871c0436",
+  "arith/fft_real_axis/model.py": "d4c73a0b845d82e9acdb25f5a01ab0a0984b980de027c27c94b60e9c6c8bb992",
+  "arith/fft_real_axis/rtl/fft_real_axis_post.sv": "90ff577d887a0c01e771871f5c6d1a03935b5113d0d6c863b2368fae225bcdf7",
+  "arith/fft_real_axis/spec.md": "d7cb0924452dfb8382efb24ba71a84a0889eafca2cedc5abbed14326818738ed",
+  "arith/fft_real_axis/spec.yaml": "ed0736a63ef92bfc65a8cbb82f7e60d5c5f22fd21bb76f22b173ea6805e0d251",
+  "arith/fft_real_axis/tests/fft_real_axis_cocotb.py": "7e14176f662cf643908012f54522b94df26ae8103881fdf09feda5e5bed0ed4d",
+  "arith/fft_real_axis/verif/evidence_pins.yaml": "7fe46b636c3b33b12c2544b86427194c68e5f91f987785c3b95abe771f125cd5",
+  "arith/fft_real_axis/verif/mutants.yaml": "587b176a8fe0bdf4aa544a55025774532f49bc30e0f5999f4738543028f52ced",
+  "arith/fft_real_axis/verif/results/mutation.json": "b25865132a30a9a3876c6e4ba8c0a82fbf6aeccfb640f7024ab38c96b90ed6fc",
+  "arith/fft_real_axis/verif/results/pytest_junit.xml": "7a0b81c0265587279a8e2e82a20e444693418a11f0dee441de832386e6c38e91",
+  "arith/fft_real_axis/verif/testplan.yaml": "38d1450650a9f3c9254b68b99e56abb325ec86baa1aaa4654313df25fcaf6247",
+  "arith/fft_reorder/rtl/fft_reorder_pingpong.sv": "7867dd5a9c732d242eca668c17083b35190cd02cedbdf550920f7629175e9029",
+  "arith/fft_twiddle/rtl/fft_twiddle_quarter.sv": "f646b37f46b317abf8569372715d14be0ff9c7f0443e5740d703071145359f67"
+ },
+ "name": "fft_real_axis",
+ "notes": "Frequency-domain suite, function fft_real_axis (brief 148). Everything here is before Vivado: the model, the RTL variants, simulation, formal properties and the prepared out-of-context build files. No performance requirement on LUTs, DSPs, Fmax or power exists because none has been measured; the Vivado runs (build/<variant>/build.yaml, queued in _handoff/fpga_agent/vivado_later_queue.md) will add them. Every requirement is a draft written by the agent; none is agreed by a human. There are no Lean statements (the packaged harness of this function, in harness/, is evidenced by the harness item). Generated by arith/tools/gen_testplan_fft.py.",
+ "path": "arith/fft_real_axis",
+ "reproduce": [
+  {
+   "cmd": "python -m pytest -q arith/fft_real_axis/tests",
+   "what": "the simulation tests"
+  }
+ ],
+ "requirements": [
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "FRAXIS-F-MODEL",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-FRAXIS-MODEL",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "arith/fft_real_axis/verif/results/pytest_junit.xml",
+     "record_sha256": "7a0b81c0265587279a8e2e82a20e444693418a11f0dee441de832386e6c38e91",
+     "status": "pass",
+     "title": "The model against independent formulations and the pinned conventions"
+    }
+   ],
+   "items": [
+    "V-FRAXIS-MODEL"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": false,
+   "missing_methods": [
+    "a simulation check from a bench the implementing agent did not write"
+   ],
+   "mix_satisfied": false,
+   "own_tests_only": true,
+   "passing_methods": [
+    "sim_test"
+   ],
+   "rests_on_delegated": false,
+   "source": "arith/fft_real_axis/spec.md",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "partially_verified",
+   "text": "arith/fft_real_axis/model.py gives, for every input, the result that spec.md defines. It agrees with an independent formulation (the wrapped core's own model (arith/fft_real/model.py) and the packing of the AXI words (the even sample in the low half of the input word, the real part in the low half of the output word)), and the conventions that a user could guess wrong (spec.md, last section) are pinned by examples.",
+   "title": "The bit-exact model is right",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "FRAXIS-F-EXACT",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-FRAXIS-DIRECTED",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "arith/fft_real_axis/verif/results/pytest_junit.xml",
+     "record_sha256": "7a0b81c0265587279a8e2e82a20e444693418a11f0dee441de832386e6c38e91",
+     "status": "pass",
+     "title": "Every variant against the model at the small points (Icarus + cocotb): directed or exhaustive stimuli"
+    },
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-FRAXIS-RANDOM",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "arith/fft_real_axis/verif/results/pytest_junit.xml",
+     "record_sha256": "7a0b81c0265587279a8e2e82a20e444693418a11f0dee441de832386e6c38e91",
+     "status": "pass",
+     "title": "Every variant against the model at the large points: random stimuli (Icarus + cocotb)"
+    }
+   ],
+   "items": [
+    "V-FRAXIS-DIRECTED",
+    "V-FRAXIS-RANDOM"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": false,
+   "missing_methods": [
+    "a simulation check from a bench the implementing agent did not write"
+   ],
+   "mix_satisfied": false,
+   "own_tests_only": true,
+   "passing_methods": [
+    "sim_test"
+   ],
+   "rests_on_delegated": false,
+   "source": "arith/fft_real_axis/spec.md",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "partially_verified",
+   "text": "At every parameter point listed in spec.yaml (4 directed or exhaustive points, 3 random ones, across 1 variants), each variant's outputs equal the model's: the directed points send the real-FFT bench's frames as AXI4-Stream beats from a source that never pauses: the wrapper itself opens the gap, which the bench measures and requires to equal N/8 exactly, and the first-beat latency equals the formula; the random points send random real frames with random idle times up to N = 2048. Every output frame of N/2 + 1 bins equals the model bit for bit, tlast is on the right beat and the protocol checkers count no error.",
+   "title": "Every variant is bit-exact against the model",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "FRAXIS-F-LAT",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-FRAXIS-LATENCY",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "arith/fft_real_axis/verif/results/pytest_junit.xml",
+     "record_sha256": "7a0b81c0265587279a8e2e82a20e444693418a11f0dee441de832386e6c38e91",
+     "status": "pass",
+     "title": "The bench passes at the stated latency and fails two clocks off, for every variant"
+    }
+   ],
+   "items": [
+    "V-FRAXIS-LATENCY"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": false,
+   "missing_methods": [
+    "a simulation check from a bench the implementing agent did not write"
+   ],
+   "mix_satisfied": false,
+   "own_tests_only": true,
+   "passing_methods": [
+    "sim_test"
+   ],
+   "rests_on_delegated": false,
+   "source": "arith/fft_real_axis/spec.md",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "partially_verified",
+   "text": "Each variant's latency in clocks is the expression in spec.yaml (post: (1<<(LOGN-1))-1+(LOGN-1)+((LOGN-2)//2)*(TWSTAGES+MULSTAGES+1)+(1<<(LOGN-1))+MULSTAGES+3), and the bench, run with a latency two clocks off, fails for every variant, so the passing runs prove the latency rather than assume it.",
+   "title": "Latency is as specified and the bench would notice if it were not",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "FRAXIS-F-BENCH",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-FRAXIS-MUTANT-TEST",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "arith/fft_real_axis/verif/results/pytest_junit.xml",
+     "record_sha256": "7a0b81c0265587279a8e2e82a20e444693418a11f0dee441de832386e6c38e91",
+     "status": "pass",
+     "title": "The mutation run as a test: no mutant survives, none fails to build"
+    },
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-FRAXIS-MUTANT-SCORE",
+     "instrument": null,
+     "method": "sim_measurement",
+     "mutation_score": null,
+     "record": "arith/fft_real_axis/verif/results/mutation.json",
+     "record_sha256": "b25865132a30a9a3876c6e4ba8c0a82fbf6aeccfb640f7024ab38c96b90ed6fc",
+     "status": "pass",
+     "title": "Mutants killed of valid mutants (the record of the last full run)"
+    }
+   ],
+   "items": [
+    "V-FRAXIS-MUTANT-TEST",
+    "V-FRAXIS-MUTANT-SCORE"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": false,
+   "missing_methods": [
+    "a simulation check from a bench the implementing agent did not write"
+   ],
+   "mix_satisfied": false,
+   "own_tests_only": true,
+   "passing_methods": [
+    "sim_measurement",
+    "sim_test"
+   ],
+   "rests_on_delegated": false,
+   "source": "arith/fft_real_axis/verif/mutants.yaml",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "partially_verified",
+   "text": "Every one of the mutants in verif/mutants.yaml (one exact text change each: an inverted condition, a wrong constant, a dropped connection, a wrong width) makes the cocotb bench fail, or is argued equivalent in the file's header; mutants that survive or do not build are reported, never hidden.",
+   "title": "The bench catches seeded faults",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "FRAXIS-F-PACKAGE",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "stale",
+     "id": "V-FRAXIS-PACKAGE",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "arith/fft_real_axis/verif/results/pytest_junit.xml",
+     "record_sha256": "7a0b81c0265587279a8e2e82a20e444693418a11f0dee441de832386e6c38e91",
+     "stale_because": "changed since the evidence was recorded: arith/fft_real_axis/build/post/build.yaml, arith/fft_real_axis/spec.md",
+     "status": "stale",
+     "title": "spec.yaml against the RTL headers, spec.md against spec.yaml, Verilator -Wall at every point, wrappers and build.yaml current and lint-clean"
+    }
+   ],
+   "items": [
+    "V-FRAXIS-PACKAGE"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": false,
+   "missing_methods": [],
+   "mix_satisfied": false,
+   "own_tests_only": false,
+   "passing_methods": [],
+   "rests_on_delegated": false,
+   "source": "arith/fft_real_axis/spec.yaml",
+   "spec_status": "draft",
+   "stale_items": 1,
+   "state": "stale",
+   "text": "spec.yaml states an interface contract (protocol, throughput, latency, reset, clock, stalls) and integration guidance (port timing, constraints to carry). Every variant passes Verilator -Wall at every point of spec.yaml; its ports and default parameters are the ones spec.yaml states; its header states the intended primitive use before any Vivado run; spec.md is the rendering of spec.yaml; the out-of-context wrapper and the build.yaml for each variant (Artix-7 xc7a100t and K26 xck26, prepared and not run) are current and lint-clean at every point they list, so a Vivado run can start from the repository alone.",
+   "title": "The RTL is lint-clean, and its files agree with the specification and with the Vivado build files",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "FRAXIS-F-AXIS",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-FRAXIS-CHECKER",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "arith/fft_real_axis/verif/results/pytest_junit.xml",
+     "record_sha256": "7a0b81c0265587279a8e2e82a20e444693418a11f0dee441de832386e6c38e91",
+     "status": "pass",
+     "title": "The protocol checkers can fail (a pause inside a frame, a stalled sink)"
+    }
+   ],
+   "items": [
+    "V-FRAXIS-CHECKER"
+   ],
+   "kind": "interface",
+   "lean_transcription_only": false,
+   "missing_methods": [
+    "a simulation check from a bench the implementing agent did not write"
+   ],
+   "mix_satisfied": false,
+   "own_tests_only": true,
+   "passing_methods": [
+    "sim_test"
+   ],
+   "rests_on_delegated": false,
+   "source": "arith/fft_real_axis/spec.md",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "partially_verified",
+   "text": "On both streams the wrapper's SystemVerilog protocol checkers (fft_common/axis_checker.sv: valid stays high until accepted, tdata and tlast stable while stalled, no unknowns after reset, tlast on every (N/2)-th beat of the input and every (N/2 + 1)-th beat of the output, no stall on the output, no pause inside an input frame) count zero violations in every run of the directed and random benches, the source of which presents the next frame at once and waits on tready. A deliberate-violation test shows each checker can fail (a pause inside a frame, a stalled sink). tvalid is registered and independent of tready by construction.",
+   "title": "The AXI4-Stream rules hold on both streams, and the checkers can fail",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "FRAXIS-F-GAP",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-FRAXIS-GAP",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "arith/fft_real_axis/verif/results/pytest_junit.xml",
+     "record_sha256": "7a0b81c0265587279a8e2e82a20e444693418a11f0dee441de832386e6c38e91",
+     "status": "pass",
+     "title": "A source that never pauses sees exactly N/8 idle clocks between frames; every frame is right"
+    }
+   ],
+   "items": [
+    "V-FRAXIS-GAP"
+   ],
+   "kind": "interface",
+   "lean_transcription_only": false,
+   "missing_methods": [
+    "a simulation check from a bench the implementing agent did not write"
+   ],
+   "mix_satisfied": false,
+   "own_tests_only": true,
+   "passing_methods": [
+    "sim_test"
+   ],
+   "rests_on_delegated": false,
+   "source": "arith/fft_real_axis/spec.md",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "partially_verified",
+   "text": "After every beat with tlast on the input stream s_axis_tready is low for N/8 clocks (the measured gap rule of the real-input core), and a source that never pauses sees exactly N/8 idle clocks between its frames; every such frame is correct. Mutants that remove the gap, shorten it or lengthen it are killed.",
+   "title": "The wrapper enforces the transform's frame gap by back-pressure",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "FRAXIS-F-HARNESS",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-FRAXIS-HARNESS",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "arith/fft_real_axis/verif/results/pytest_junit.xml",
+     "record_sha256": "7a0b81c0265587279a8e2e82a20e444693418a11f0dee441de832386e6c38e91",
+     "status": "pass",
+     "title": "The harness against the repository's variants, a planted fault and a wrong latency"
+    }
+   ],
+   "items": [
+    "V-FRAXIS-HARNESS"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": false,
+   "missing_methods": [
+    "a simulation check from a bench the implementing agent did not write"
+   ],
+   "mix_satisfied": false,
+   "own_tests_only": true,
+   "passing_methods": [
+    "sim_test"
+   ],
+   "rests_on_delegated": false,
+   "source": "arith/fft_real_axis/harness/README.md",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "partially_verified",
+   "text": "arith/fft_real_axis/harness/ (model, bench, SystemVerilog checkers, coverage targets, standalone runner: owner decision 24) needs no other file of the repository. Run against each variant of this function with the checkers beside it, in every mode, it passes and meets every coverage target; against one planted fault (a mutant of verif/mutants.yaml), or with a latency two clocks off, it fails; its model, bench and checker files are the repository's own, generated by arith/tools/gen_harness_fft.py, so they cannot drift.",
+   "title": "The packaged harness runs standalone, passes on the repository's variants and catches faults",
+   "waivers": []
+  }
+ ],
+ "schema": "fda-verified/1",
+ "summary_line": "8 requirements (6 functional, 2 interface); 0 verified; 7 partially verified (the required mix of methods is not met); 1 stale; 0 of 8 requirements agreed by a human, 0 agreed on the owner's delegation (not human), 8 draft; 7 resting only on the implementing agent's own tests; 0 human and 0 delegated review(s) recorded."
+}

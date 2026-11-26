@@ -1,0 +1,86 @@
+{
+ "counts": {
+  "requirements": 0
+ },
+ "criteria": [
+  {
+   "detail": "no requirements recorded",
+   "id": "evidence",
+   "ids": [],
+   "state": "not_measured",
+   "title": "Every requirement has passing evidence"
+  },
+  {
+   "detail": "no requirements recorded",
+   "id": "agreement",
+   "ids": [],
+   "state": "not_measured",
+   "title": "Every requirement is agreed (human, or delegated and labelled so)"
+  },
+  {
+   "detail": "no requirements recorded",
+   "id": "method_mix",
+   "ids": [],
+   "state": "not_measured",
+   "title": "Every requirement meets its required method mix"
+  },
+  {
+   "detail": "no requirements recorded",
+   "id": "mutation",
+   "ids": [],
+   "state": "not_measured",
+   "title": "The bench passes the mutation floor"
+  },
+  {
+   "detail": "no requirements recorded",
+   "id": "formal_rigour",
+   "ids": [],
+   "state": "not_measured",
+   "title": "The formal results pass the rigour checks"
+  },
+  {
+   "detail": "no requirements recorded",
+   "id": "fresh",
+   "ids": [],
+   "state": "not_measured",
+   "title": "The evidence is fresh"
+  }
+ ],
+ "declared": {
+  "note": "the entry's own declared status; not traced to requirements and not checked by this record",
+  "source": "ip.yaml",
+  "status": "Meets 125 MHz out of context (285-307 MHz estimated at a 250 MHz target); simulated against a clause 22 PHY model at DIV 2, 5 and 32; frame timing proved by k-induction at DIV 2 (SymbiYosys); built alone on an Artix-7 with Vivado 2026.1; first written for designs/b58a_trigger (its own copy is used there); not yet run on a board as a library entry"
+ },
+ "definition": "docs/verified.md",
+ "git_commit": "d177bef65556fd364bd79e7057fca4be4c1a4eb1",
+ "kind": "ip_lib",
+ "label": "not assessed: no requirements recorded (no verif/testplan.yaml), so nothing here is traced to a requirement",
+ "label_kind": "not_assessed",
+ "limits": [
+  "Verified never means interoperability with a device the design talks to unless a board measurement against that device is listed in the record; a design that checks its own output against its own model accepts its own symmetric mistakes.",
+  "Verified never means timing beyond the stated corner: a post-route timing result is for the part, speed grade, clock and tool version in its evidence file, not for other corners, temperatures or devices.",
+  "Verified never means beyond the widths and depths checked: a simulation covers the vectors it ran, a bounded formal result covers the stated depth only, and a per-width proof covers the widths it names; only a Lean proof marked all widths covers every width, and only for its model.",
+  "Verified never means the requirement is the right one: the text of a requirement is the human's check (or the planner's, where the record says delegated), and a record shows that checks exist and pass, not that nothing was left out.",
+  "Verified never means a hardware or board result unless a board measurement item is listed; a simulation is not the board.",
+  "Verified is about the files in the manifest at the hashes given. A change to any of them makes the record out of date (the CI check fails), and the evidence stale until it is re-recorded.",
+  "An agreement or acceptance recorded as delegated is the planner's decision on the owner's delegation, not a human sign-off; the record counts it apart."
+ ],
+ "manifest": {
+  "ip_lib/mdio_master/char/xc7a100tcsg324-1.json": "66f67f26bb04faf1c2c791857b6a76ead8d728a641a044c4a4dd3b275ff2d4b7",
+  "ip_lib/mdio_master/faults.yaml": "b0efa9b2c1084cdb6ae8234907c230fa625ae97cb3fef162b0c135c40fbb1332",
+  "ip_lib/mdio_master/ip.yaml": "89c8b3349ec5935a1a5f2c3660cacde5c6c1b5f3e4e11f6b6c154cf7af284dec",
+  "ip_lib/mdio_master/model.py": "7ed2005c010735098e64e0a946cbe6b75e2b91c23da66ede2afb9f3d025a2f3f",
+  "ip_lib/mdio_master/rtl/mdio_master.sv": "8f5364dab58590b23a894cff088db575507d05348b4a5b62ccb5f42fb719f503",
+  "ip_lib/mdio_master/tb/mdio_cocotb.py": "a9e43dee1e2b0dd065165ba9d4920967e0215ccd06f556a3d1513761698051a5"
+ },
+ "name": "mdio_master",
+ "path": "ip_lib/mdio_master",
+ "reproduce": [
+  {
+   "cmd": "python -m pytest -q ip_lib/mdio_master/tb",
+   "what": "the simulation tests"
+  }
+ ],
+ "requirements": [],
+ "schema": "fda-verified/1"
+}

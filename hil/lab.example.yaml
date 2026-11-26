@@ -1,0 +1,132 @@
+# An example lab profile (brief 221). Copy it to ~/.config/fpga-force/lab.yaml (or point FDA_LAB_FILE at your copy) and edit it.
+# A real profile describes a private bench and is never committed: this file is the template, seeded from the owner's bench as
+# recorded on 2026-11-04 to 2026-11-09, with no address, serial number or credential in it.
+#
+# onboarded: false  -> offered to the interview only as "available after onboarding"; never chosen as a bring-up method.
+# control: scripted -> a driver in hil/instruments (or hil/lab_drivers.py) runs it; manual -> the owner types the reading.
+# outputs: every output a script could enable has a limit, or never_by_script: true. No limit and no flag is a validation error.
+# Numbers marked "unverified" come from a data sheet, not from a measurement here; accuracy_ppm is left out where nobody has measured it.
+schema: fpga-force/lab/v1
+instruments:
+  - id: m2k
+    kind: oscilloscope
+    make: Analog Devices
+    model: ADALM2000 (M2K)
+    onboarded: false                     # never connected to this PC yet (2026-11-25 USB list)
+    connection: {type: usb}
+    control: {mode: scripted, driver: hil.instruments.m2k}
+    channels:
+      - {name: CH1, kind: analog_in, sample_rate_sps: 100000000, range_v: [-25, 25], note: "12 bit; the +-2.5 V range is the high-gain one (unverified, data sheet)"}
+      - {name: CH2, kind: analog_in, sample_rate_sps: 100000000, range_v: [-25, 25]}
+      - {name: W1, kind: analog_out, range_v: [-5, 5]}
+      - {name: W2, kind: analog_out, range_v: [-5, 5]}
+      - {name: DIO0, kind: digital_io, sample_rate_sps: 100000000, note: "logic follows VDD_DIGITAL, 1.8 to 3.3 V; set 3.3 V for LVCMOS33 boards"}
+      - {name: DIO1, kind: digital_io, sample_rate_sps: 100000000}
+      - {name: DIO2, kind: digital_io, sample_rate_sps: 100000000}
+      - {name: DIO3, kind: digital_io, sample_rate_sps: 100000000}
+    capabilities:
+      - {measure: frequency, channels: [DIO0, DIO1, DIO2, DIO3], max_hz: 25000000, via: logic sampling at 100 MS/s (edge counting)}
+      - {measure: logic, channels: [DIO0, DIO1, DIO2, DIO3]}
+      - {measure: voltage, channels: [CH1, CH2], range_v: [-25, 25]}
+    outputs:
+      - {name: W1, kind: awg, max_v: 3.3, note: "owner confirms the limit per design"}
+      - {name: W2, kind: awg, never_by_script: true}
+      - {name: V+, kind: supply, never_by_script: true}
+      - {name: V-, kind: supply, never_by_script: true}
+    wiring_notes: "Used before with 3.3 V logic; Nexys JA1-4 to DIO0-3 with the board off while wiring; ZedBoard via the XM105 FMC breakout with VADJ 3.3 V."
+  - id: redpitaya
+    kind: oscilloscope
+    make: Red Pitaya
+    model: STEMlab 125-14 (Zynq-7010)
+    onboarded: false                     # did not answer on the LAN in brief 30; address still to be given by the owner
+    connection: {type: lan, address: "TO-BE-GIVEN-BY-OWNER"}
+    control: {mode: scripted, driver: hil.instruments.redpitaya}
+    channels:
+      - {name: IN1, kind: analog_in, sample_rate_sps: 125000000, range_v: [-1, 1], note: "LV jumper; +-20 V on HV. Check the jumper before connecting 3.3 V logic"}
+      - {name: IN2, kind: analog_in, sample_rate_sps: 125000000, range_v: [-1, 1]}
+      - {name: OUT1, kind: analog_out, range_v: [-1, 1]}
+      - {name: OUT2, kind: analog_out, range_v: [-1, 1]}
+    capabilities:
+      - {measure: frequency, channels: [IN1, IN2], max_hz: 30000000, via: waveform zero crossings}
+      - {measure: voltage, channels: [IN1, IN2], range_v: [-1, 1]}
+    outputs:
+      - {name: OUT1, kind: awg, max_v: 1.0, note: "the driver refuses above 1 V peak"}
+      - {name: OUT2, kind: awg, never_by_script: true}
+  - id: pluto
+    kind: sdr_transmitter
+    make: Analog Devices
+    model: ADALM-PLUTO (AD9363)
+    onboarded: false
+    connection: {type: usb}
+    control: {mode: scripted, driver: hil.instruments.pluto_sa}
+    channels:
+      - {name: TX, kind: rf_out}
+      - {name: RX, kind: rf_in}
+    capabilities: []
+    outputs:
+      - {name: TX, kind: rf_tx, max_dbm: -10, requires_attenuator_db: 30, note: "TX only into at least 30 dB of attenuation or a dummy load; RF is never radiated"}
+  - id: rtl_sdr
+    kind: sdr_receiver
+    make: RTL-SDR
+    model: RTL2832U receiver
+    onboarded: false
+    connection: {type: usb}
+    control: {mode: manual}
+    channels: [{name: RF, kind: rf_in, note: "always behind attenuation; safe input about +10 dBm, aim far lower"}]
+    capabilities: []
+  - id: ugreen_capture
+    kind: video_capture
+    make: UGREEN
+    model: HDMI to USB capture (UVC, /dev/video0)
+    onboarded: true                      # in the USB list on 2026-11-25
+    connection: {type: usb}
+    control: {mode: scripted, driver: uvc}
+    channels: [{name: HDMI, kind: video_in, note: "640x480 up to 1920x1080; 720p only per the 2026-11-10 note"}]
+    capabilities: [{measure: video, channels: [HDMI]}]
+  - id: umc22
+    kind: audio_capture
+    make: Behringer
+    model: UMC22 (with the Digilent Pmod I2S2 for stimulus)
+    onboarded: true
+    connection: {type: usb}
+    control: {mode: scripted, driver: hil.instruments.audio}
+    channels: [{name: IN2, kind: analog_in, note: "Hi-Z, gain about 50 %"}]
+    capabilities: [{measure: audio, channels: [IN2]}]
+  - id: sysmon
+    kind: on_chip
+    make: AMD
+    model: XADC / SYSMON over JTAG
+    onboarded: true
+    connection: {type: usb}
+    control: {mode: scripted, driver: hil.instruments.jtag_sysmon}
+    channels: [{name: TEMP, kind: sysmon}, {name: VCCINT, kind: sysmon}, {name: VCCAUX, kind: sysmon}, {name: VCCBRAM, kind: sysmon}]
+    capabilities: [{measure: voltage, channels: [VCCINT, VCCAUX, VCCBRAM], range_v: [0, 3.0], note: "supply rails of the device only"}]
+  - id: ila
+    kind: on_chip
+    make: AMD
+    model: vendor ILA (one instance, up to 5 probe ports on the Basic licence)
+    onboarded: true
+    connection: {type: usb}
+    control: {mode: scripted, driver: debug_core.instruments.VendorIla}
+    channels: [{name: probes, kind: ila}]
+    capabilities: [{measure: logic}]
+  - id: sfp_loopback
+    kind: sfp_loopback
+    make: fixture
+    model: SFP+ loopback lead with a 10G-LR module (KR260)
+    onboarded: true
+    connection: {type: none}
+    control: {mode: manual}
+    channels: [{name: sfp, kind: link}]
+    capabilities: [{measure: link, channels: [sfp]}]
+  - id: xm105
+    kind: breakout
+    make: Avnet
+    model: XM105 FMC breakout
+    onboarded: true
+    connection: {type: none}
+    control: {mode: manual}
+    channels: []
+    capabilities: []
+# Not on the bench (2026-11-25): a frequency counter, a bench supply, a standalone oscilloscope. Use the M2K or the Red Pitaya for those roles
+# once onboarded, and the plan says so.

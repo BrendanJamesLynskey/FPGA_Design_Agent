@@ -2,6 +2,8 @@
 
 <!-- Generated from handover.yaml by flow/handover.py (brief 68). Edit handover.yaml, or the text between the prose markers, then run: python -m flow.handover write designs/b119_tcp_fast -->
 
+**Verification: verified except: 24 of 27 requirements without passing evidence; 27 of 27 requirements not agreed; required method mix not yet measured; mutation floor not yet measured; 22 stale or differing evidence items.** [VERIFIED.md](VERIFIED.md) is the generated, hash-pinned record; [what the label means](../../docs/verified.md).
+
 A block that holds the TCP connection state which software hands it and sends each OUCH 5.0 order of brief 110 as one complete Ethernet, IPv4 and TCP frame, with sequence number, identification and both checksums finished incrementally from partial sums of a template. It supports the speculative start and abort of brief 110, where an aborted frame is poisoned and consumes no sequence space, refuses to send when it is not armed, its state is stale, the window is closed or the MSS is too small, and hands every sent segment back to software. A Python TCP owner and a software OUCH exchange test it end to end in simulation, seeded faults in the RTL are caught, and the block is built out of context for the KR260's part at the 10G core clock.
 
 Not in scope:
@@ -87,7 +89,7 @@ Interfaces:
 | the seeded faults (every mutant of verif/mutants.yaml against the bench); needs as above; each run uses its own build root, two at a time | `python3 designs/b119_tcp_fast/tests/run_mutants.py --jobs 2 --json results/b119/mutation.json` | no | about 20 min |
 | the out-of-context builds (two clocks); needs Vivado 2026.1 and a heavy slot (take_heavy_slot.sh) | `python3 -m designs.b119_tcp_fast.ooc.ooc --clocks 6.2061 5.0` | yes | about 30 min |
 
-Tool: Vivado 2026.1. Build ID of the inputs at handover: none (no Vivado build of this directory). Knowledge-bank pin: `5e2eab8`.
+Tool: Vivado 2026.1. Build ID of the inputs at handover: none (no Vivado build of this directory). Knowledge-bank pin: `6185830`.
 
 | File | What |
 |---|---|

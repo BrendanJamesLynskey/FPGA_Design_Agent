@@ -1,0 +1,16 @@
+open Hardcaml
+open Signal
+
+let circuit () : Circuit.t =
+  let clk = input "clk" 1 in
+  let rst_n = input "rst_n" 1 in
+  let step = input "step" 1 in
+  let dir = input "dir" 1 in
+  let spec = Reg_spec.create ~clock:clk () in
+  let count =
+    reg_fb spec ~width:10 ~f:(fun q ->
+      let next = mux2 dir (q -:. 1) (q +:. 1) in
+      mux2 (rst_n ==:. 0) (zero 10) (mux2 step next q))
+  in
+  let gray = count ^: srl count 1 in
+  Circuit.create_exn ~name:"gray_step" [ output "gray" gray ]

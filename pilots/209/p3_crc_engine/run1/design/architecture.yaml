@@ -1,0 +1,46 @@
+schema: fpga-design-agent/architecture/v1
+blocks:
+  - name: crc32_top
+    function: Board top; instantiates MMCM, reset generator, jtag_bus and crc32_core; drives sfp_tx_disable high
+  - name: jtag_bus
+    function: JTAG USER4 register bus (data/jtag_bus.sv, unchanged)
+  - name: crc32_rst_gen
+    function: Derives synchronous active-high rst from MMCM lock using xpm_cdc_async_rst
+  - name: crc32_core
+    function: Register map, CRC-32 datapath (4 bytes per clock), BYTE_COUNT, BUSY_CYCLES, LEDs
+interfaces:
+  - name: reg_port
+    between: [jtag_bus, crc32_core]
+    protocol: simple
+    prefix: h
+    module: crc32_core
+clock_domains:
+  - name: clk_25
+    clock: clk_25
+    freq_mhz: 25
+  - name: clk
+    clock: clk
+    freq_mhz: 125
+reset:
+  synchronisers: [crc32_rst_gen]
+crossings:
+  - from: async
+    to: clk
+    signal: mmcm_locked
+    primitive: xpm_cdc_async_rst
+    inline_in: crc32_rst_gen
+  - from: async
+    to: clk
+    signal: req_t
+    primitive: xpm_cdc_single
+    inline_in: crc32_top
+  - from: async
+    to: clk
+    signal: cmd
+    primitive: xpm_cdc_array_single
+    inline_in: crc32_top
+predicted_resources:
+  lut: [250, 700]
+  ff: [550, 850]
+  bram_tile: 0
+  dsp: 0

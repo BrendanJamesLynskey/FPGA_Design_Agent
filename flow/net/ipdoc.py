@@ -24,9 +24,10 @@ DSP = ["fir"]                                                                   
 NET63 = ["mdio_master", "arp_responder", "icmp_echo", "ipv4_udp_rx", "ipv4_udp_tx", "igmp_join"]  # brief 63D
 CPU = ["crc32_step"]                                                                         # brief 64A+: function units (custom instructions)
 INFRA = ["axil_xbar", "jtag_regs"]                                                                        # brief 65A: bus infrastructure
-ALL = NET + NET63 + HIL + DSP + CPU + INFRA
+PART = ["pipe_reg", "credit_chan", "axi_reg_slice"]                                         # brief 151: pipeline registers, credit link, AXI slices
+ALL = NET + NET63 + HIL + DSP + CPU + INFRA + PART
 FAULTS_JSON = {**{b: "b30" for b in HIL}, **{b: "b63a" for b in DSP}, **{b: "b64a" for b in CPU},
-               **{b: "65a_blockdesign" for b in INFRA}, **{b: "b63d" for b in NET63 + ["eth_mac_rgmii"]}}   # default: b40
+               **{b: "65a_blockdesign" for b in INFRA}, **{b: "b63d" for b in NET63 + ["eth_mac_rgmii"]}, **{b: "b151" for b in PART}}   # default: b40
 REQUIRED = ["name", "version", "summary", "top", "rtl", "depends", "interfaces", "clocks", "resets", "parameters",
             "constraints", "latency", "throughput", "guards", "sweep_tested", "evidence", "cost_table", "boundary",
             "limits", "licence", "next_steps"]
@@ -146,8 +147,12 @@ def readme(block: str) -> str:
     y = yaml.safe_load((IP / block / "ip.yaml").read_text())
     faults = IP / block / "faults.yaml"
     L = [f"# {block} {y['version']}", "", y["summary"], "",
-         "Generated from `ip.yaml` by `flow/net/ipdoc.py`; do not edit by hand.", "",
-         f"Status: {y['status']}.", "", "## Parameters", "", "| Name | Default | Allowed | Note |", "|---|---|---|---|"]
+         "Generated from `ip.yaml` by `flow/net/ipdoc.py`; do not edit by hand.", ""]
+    vj = IP / block / "verified.json"          # brief 144: the verification label, read from the generated record
+    if vj.exists():
+        L += [f"**Verification: {json.loads(vj.read_text())['label']}.** [VERIFIED.md](VERIFIED.md) is the generated, hash-pinned record; "
+              "[what the label means](../../docs/verified.md).", ""]
+    L += [f"Status: {y['status']}.", "", "## Parameters", "", "| Name | Default | Allowed | Note |", "|---|---|---|---|"]
     for k, s in (y["parameters"] or {}).items():
         allowed = (f"{s['range'][0]}..{s['range'][1]}" if "range" in s else ", ".join(map(str, s["set"])))
         if s.get("pow2"):
@@ -165,7 +170,8 @@ def readme(block: str) -> str:
         L.append(f"- `{i['name']}`: {i['type']}" + (f" ({extra})" if extra else "") +
                  (f"; {i['signals']}" if i.get("signals") else "") + (f". {i['note']}" if i.get("note") else ""))
     L += ["", "Clocks: " + ", ".join(f"`{c['name']}`" + (f" ({c['note']})" if c.get("note") else "") for c in y["clocks"]) +
-          ". Reset: `rst`, active high, synchronous."]
+          (". Reset: `rst`, active high, synchronous." if (y["resets"] or [{}])[0].get("name") == "rst" else
+                                                    ". Reset: " + ", ".join(f"`{r['name']}`, active {r['polarity']}, {r['style']}" for r in y["resets"]) + ".")]
     L += registers_section(block, y)
     L += ["", "## Latency and throughput", ""]
     L += [f"- {k}: {v}" for k, v in y["latency"].items()] + [f"- throughput: {y['throughput']}", "",
