@@ -344,6 +344,13 @@ standard.
   run records. Its gates name any requirement, test or coverage hole left without evidence (the gate table is in
   docs/traceability.md). [flow/trace_tag.py](flow/trace_tag.py) migrates an existing design from its testplan.
 - **Requirement quality.** The clarify stage rejects compound and vague requirements; T1's three compound ones were split.
+- **Requirements strictness and the requirements report (brief 210).** `--requirements loose|standard|strict` sets what the spec interview may
+  leave unanswered (each question has a risk class; a high-risk question must be answered or waived at standard, every question at strict; a waiver is a
+  recorded decision), the handover lists the assumptions you did not confirm in every level, and every run writes `REQUIREMENTS_REPORT.md`: each requirement,
+  where it came from, its evidence and pass, fail or pending. [agent/graph/requirements.py](agent/graph/requirements.py),
+  [flow/requirements_report.py](flow/requirements_report.py), [docs/agent.md](docs/agent.md#requirements-strictness-agentgraphrequirementspy-brief-210), results in
+  [results/210_requirements](results/210_requirements/README.md) (the re-scoring of recorded runs: [rescore.md](results/210_requirements/rescore.md), tool
+  [tools/requirements_rescore.py](tools/requirements_rescore.py)).
 - **Change record.** [flow/change_record.py](flow/change_record.py): input hashes, tool versions, knowledge-bank pin
   and flow commit (from the build manifest when present), and what changed since a baseline.
 - **Check suite (brief 71).** One agent tool, `check`, over a registry of every design check (lint, standards, resets,

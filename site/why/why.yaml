@@ -22,6 +22,18 @@ values:
   skills_used: {source: site/data/expertise.json, expr: 'get:skills_used'}
   # handing over
   max_questions: {source: agent/graph/interview.py, expr: 're:max_questions: int = (\d+)'}
+  # requirements strictness and the requirements report (brief 210)
+  rq_total: {source: results/210_requirements/t1_after_board.json, expr: 'get:total'}
+  rq_pass: {source: results/210_requirements/t1_after_board.json, expr: 'get:passed'}
+  rq_pending: {source: results/210_requirements/t1_after_board.json, expr: 'get:pending'}
+  rq_failed: {source: results/210_requirements/t1_after_board.json, expr: 'get:failed'}
+  rq_before_pass: {source: results/210_requirements/t1_before_board.json, expr: 'get:passed'}
+  rq_before_pending: {source: results/210_requirements/t1_before_board.json, expr: 'get:pending'}
+  rq_exit: {source: agent/graph/requirements.py, expr: 're:EXIT_REQUIREMENTS = (\d+)'}
+  rs_runs: {source: results/210_requirements/rescore.json, expr: 'get:groups.all.runs'}
+  rs_runs_high: {source: results/210_requirements/rescore.json, expr: 'get:groups.all.runs_with_a_high_default'}
+  rs_def: {source: results/210_requirements/rescore.json, expr: 'get:groups.all.questions_defaulted'}
+  rs_def_high: {source: results/210_requirements/rescore.json, expr: 'get:groups.all.defaulted_by_class.high'}
   # verification: the clock-crossing example and the formal count
   c_mut: {source: results/16_cdc_gate_2026_1/mutant_table.json, expr: 'count@rows:kind=mutant'}
   c_ok: {source: results/16_cdc_gate_2026_1/mutant_table.json, expr: 'count@rows:kind=correct'}
@@ -105,22 +117,24 @@ drawers:
     means:
       - "Each requirement in a specification carries an identifier and the kind of proof it needs. A traceability matrix then lists every check that covers it, computed from the recorded evidence files, not typed. A requirement with no passing evidence, evidence from the agent's own tests only, a missing method, or a result that is out of date shows as such."
       - "Only a human agrees a requirement. The agent can propose requirements and draft the plan, but a requirement counts as agreed only when a person says so; the matrix records who agreed, and marks an agreement a person delegated to a named reviewer as delegated."
+      - "Every run of FPGA Force also writes a requirements report, REQUIREMENTS_REPORT.md at the design root: one row per requirement with where it came from (a line of your request, an answer to one of its questions, a default with its risk class, or a waiver you recorded), the method and the evidence as links, and a result of pass, fail or pending. Pending means the evidence does not exist yet, for example a board check before the visit. A requirement that rests on a default you did not confirm is marked, so a pass is never read as confirming a guess, and a requirement that a gate's fix broke is marked failed with the reason. One command, python -m flow.requirements_report, rebuilds it after a board run, and the pending hardware rows turn into pass or fail from the bring-up record with no other edit."
     example:
-      text: "For the 10G trading path on the KR260 the matrix lists {b96_req} requirements: {b96_ver} verified and {b96_part} partially verified, with {b96_gaps} gaps listed, each saying what is missing or stale. Across all {tr_designs} designs in the repository the matrix covers {tr_reqs} requirements."
-      sources: [site/data/traceability.json]
-    not_yet: "Of those {tr_reqs} requirements, {tr_agreed} have been agreed by a human so far: {tr_draft} are drafts. The matrix therefore shows what the evidence covers, not yet that a person has accepted the specification."
+      text: "For the 10G trading path on the KR260 the matrix lists {b96_req} requirements: {b96_ver} verified and {b96_part} partially verified, with {b96_gaps} gaps listed, each saying what is missing or stale. Across all {tr_designs} designs in the repository the matrix covers {tr_reqs} requirements. The requirements report of the dimmer-counter design, built from its committed reference run, reads {rq_before_pass} of {rq_total} requirements passed with {rq_before_pending} pending before the board run, and {rq_pass} of {rq_total} passed with {rq_pending} pending and {rq_failed} failed after the bring-up record was added; the two still pending are the timing and resource checks, which need a build."
+      sources: [site/data/traceability.json, results/210_requirements/t1_before_board.json, results/210_requirements/t1_after_board.json]
+    not_yet: "Of those {tr_reqs} requirements, {tr_agreed} have been agreed by a human so far: {tr_draft} are drafts. The matrix therefore shows what the evidence covers, not yet that a person has accepted the specification. The requirements report is shown on a reference design, not yet on a board pilot's own results: the KR260 pilot's report replaces this example once its board results are in. Where a requirement came from is found by matching words against your request and the interview, so a requirement that matches neither is shown as unrecorded, not as a guess."
     link: {href: traceability.html, label: "Every requirement against its checks"}
   - id: handover
     title: You choose how much to hand over
     claim: You can leave the agent to work from a specification, or steer it at every stage, and the agent keeps a record of who did what.
     means:
       - "The interview is the first control. The agent asks about what the request leaves out, one question at a time, each with a proposed default and the reason for it, so a question you ignore has a recorded answer. Review is the second: when it is switched on, each stage ends with a page of its gates, files, timing and diagrams, and you can approve, edit with a prompt to one role, rewind to an earlier stage, or supply the architecture yourself."
+      - "How strict the interview is about an unanswered question is a setting, loose, standard or strict, separate from who answers. Each question gets a risk class: high if it changes behaviour, board safety or an interface others build against (a clock, a pin, a reset, a protocol, a number format, a rate), medium if it changes cost and not function, low if it is cosmetic. Loose fills every gap with its default and lists it. Standard does the same for low and medium, but a high-risk question must be answered or explicitly waived, or the run stops at the clarify stage with the list of what is needed and a distinct exit status, not a crash. Strict needs every question answered or waived. A waiver is a recorded decision: the question, the value chosen, who, when and why. In every level the handover carries a section, Assumptions you did not confirm, listing each defaulted question with its risk class, so even a loose run makes its guesses visible. At the standard and strict levels a fix that a gate asks for, such as pipelining a path, stops the run if it would break a requirement the request states; at loose it goes ahead and the requirements report marks that requirement failed."
       - "A rewind restores the files and checkpoints of that stage after checking their hashes. A change you make by hand while the run is paused is found, committed under your name and gated again. The run always stops for a person before anything is programmed onto the board."
       - "The Navigator, a local web page over the same command line, starts and stops a run, shows its live stage, cost and gates, and runs locked read-only board actions."
     example:
-      text: "The interview asks at most {max_questions} questions. Review can pause the run after each of the {stages} stages. In every recorded development run review was off and the spec counted as signed off once no question was open; that is the hands-off end of the range."
-      sources: [agent/graph/interview.py, site/data/agent_graph.json, docs/agent.md]
-    not_yet: "Answering interview questions and sending a request to a running agent from the Navigator is not built; today those go through the command line."
+      text: "The interview asks at most {max_questions} questions. Review can pause the run after each of the {stages} stages. In every recorded development run review was off and the spec counted as signed off once no question was open; that is the hands-off end of the range. Re-scoring {rs_runs} recorded runs with the risk classes, {rs_def_high} of the {rs_def} questions the agent answered with its own default were high risk, and {rs_runs_high} of the {rs_runs} runs had at least one."
+      sources: [agent/graph/interview.py, site/data/agent_graph.json, docs/agent.md, results/210_requirements/rescore.json]
+    not_yet: "Answering interview questions and sending a request to a running agent from the Navigator is not built; today those go through the command line. A run nobody answers stays at the loose level by default, because at standard nearly every such run would stop at clarify; the standard level is the default only with a person answering (exit status {rq_exit} when a run stops for unanswered requirements). The re-scoring cannot show that a high-risk default caused a failure: almost every run had one, so there is nothing to contrast with. The risk class comes from rules on the question's words; the Clarifier's own prompt does not set one yet."
     link: {href: agent.html, label: "The agent, its roles and a replayed run"}
   - id: referee
     title: Vivado is the referee

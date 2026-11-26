@@ -119,6 +119,13 @@ def _drive(graph, rt, cfg_lg, first_input, replies: list) -> dict:
     return s
 
 
+def exit_status(summary: dict | None) -> int:
+    """0, or ``agent.graph.requirements.EXIT_REQUIREMENTS`` (3) when the run stopped because requirements are unresolved: not a crash,
+    and distinct from usage errors (2), so a script can tell "answer these questions" from "the command was wrong" (brief 210)."""
+    from agent.graph import requirements as RQ
+    return RQ.EXIT_REQUIREMENTS if RQ.is_requirements_stop((summary or {}).get("stop")) else 0
+
+
 def task_no_shell(hidden_spec: Path | None) -> bool:
     """07a2-prep: a benchmark task's hidden/bench.yaml says ``no_shell: true`` (the subject is the USB-UART itself)."""
     import yaml
@@ -194,7 +201,7 @@ def config_from_json(c: dict):
     from agent.graph.run import Config
     def flag(k: str) -> bool:
         return str(c.get(k, False)) == "True"
-    return Config(spec_md=Path(c["spec_md"]), name=c["name"], board=c["board"], interview=c["interview"],
+    return Config(spec_md=Path(c["spec_md"]), name=c["name"], board=c["board"], interview=c["interview"], requirements=c.get("requirements") or "",
                   review=c["review"], model=c["model"],
                   hidden_spec=Path(c["hidden_spec"]) if c.get("hidden_spec") not in (None, "None") else None,
                   stop_after=None if c.get("stop_after") in (None, "None") else int(c["stop_after"]),
@@ -501,6 +508,11 @@ def build_parser() -> argparse.ArgumentParser:
     r.add_argument("--name", help="the design's name (default: the spec's directory name)")
     r.add_argument("--interview", choices=["on", "oracle", "off"], default="off",
                    help="on: the clarifier asks a person questions; oracle: a model answers them from --hidden-spec; off (default): it assumes")
+    r.add_argument("--requirements", choices=["loose", "standard", "strict"], default=None,
+                   help="how strict the interview is about unanswered questions (brief 210). loose: every gap is defaulted and listed in the handover; "
+                        "standard: a high-risk question must be answered or waived, else the run stops at clarify (exit 3); strict: every question must "
+                        "be answered or waived. Default: the request's own 'Requirements: <level>' line, else the design package, else the built-in "
+                        "default (docs/agent.md)")
     r.add_argument("--review", choices=["on", "off"], default="off", help="on: pause for a person's decision after every stage")
     r.add_argument("--model", default="openai/gpt-6-luna", help="the OpenRouter model of the default endpoint (see `models show` for every purpose)")
     r.add_argument("--hidden-spec", type=Path, help="the full spec an interview oracle answers from (evaluation runs)")
@@ -740,7 +752,7 @@ def _run_main(a, args: list[str], ap: argparse.ArgumentParser) -> int:
             vp = _prof.from_cli(a.verif_profile, a.verif_set, a.verif_level if any(x.startswith("--verif-level") for x in args) else None, a.spec_tests)
         except _prof.ProfileError as e:
             ap.error(str(e))
-        cfg = Config(spec_md=a.spec, name=name, board=a.board, interview=a.interview, review=a.review,
+        cfg = Config(spec_md=a.spec, name=name, board=a.board, interview=a.interview, review=a.review, requirements=a.requirements or "",
                      verif_profile=vp["profile"], verif_sets={k: v["value"] for k, v in vp["overrides"].items()},
                      verif_ask=a.verif_profile is None and a.interview in ("on", "oracle"), settings_file=a.settings,
                      settings_flags=({k: v for k, v in (('board', a.board if any(x.startswith('--board') for x in args) else None), ('profile', a.verif_profile)) if v} or None),
@@ -765,9 +777,9 @@ def _run_main(a, args: list[str], ap: argparse.ArgumentParser) -> int:
             print(f"deterministic: {e}", file=sys.stderr)
             return 2
         graph = build_graph(checkpointer_for(rt.run_dir), routing=cfg.skill_routing != "off")
-        _drive(graph, rt, {"configurable": {"thread_id": rt.run_id}},
-               {"run_id": rt.run_id, "stage": 0, "visits": {}, "history": []}, replies)
-        return 0
+        s = _drive(graph, rt, {"configurable": {"thread_id": rt.run_id}},
+                   {"run_id": rt.run_id, "stage": 0, "visits": {}, "history": []}, replies)
+        return exit_status(s)
     # resume
     run_dir = ROOT / "runs" / a.run_id
     c = json.loads((run_dir / "config.json").read_text())
@@ -824,8 +836,7 @@ def _run_main(a, args: list[str], ap: argparse.ArgumentParser) -> int:
             return 2
         lg = graph.update_state(target.config, {"stage": a.rewind, "fails": [], "stop": None}, as_node="advance")
         first = None
-    _drive(graph, rt, lg, first, replies)
-    return 0
+    return exit_status(_drive(graph, rt, lg, first, replies))
 
 
 def main(argv: list[str] | None = None) -> int:

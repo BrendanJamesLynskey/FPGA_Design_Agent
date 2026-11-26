@@ -146,6 +146,103 @@ that already has many open questions the later intake questions are defaulted an
 `agent/graph/interview.py`, in public code and not in the pinned private prompts (the register-map question's text is a private prompt); it names no protocol by brand. Moving it to the private prompt set is a planner decision (it needs a pin change). The idea of asking these six first is
 from Edwards 2026, ch 7; the wording, defaults and reasons are ours.
 
+## Requirements strictness (`agent/graph/requirements.py`, brief 210)
+
+`--interview` says who answers a question. `--requirements loose|standard|strict` says **what may be left unanswered**. Before brief 210 any
+question, from a clock frequency to a register name, was settled by its default when nobody answered, and the defaults were recorded but
+nobody had to read them.
+
+**Risk class.** Every question gets one, by rules on its words (`classify`; the rule that set it is recorded with the question):
+
+| Class | Meaning | Examples |
+|---|---|---|
+| `high` | changes behaviour, board safety or an interface others build against | a clock frequency or source, a pin or I/O standard, reset polarity and style, a protocol or handshake, a register map, a number format, a rate, delay or latency, what happens in a case the request left open |
+| `medium` | changes size, speed or power, not what the design does (also any question no rule names) | resource budget, pipeline depth, buffer depth |
+| `low` | cosmetic, or a choice of verification method | a name, a comment, an ordering |
+
+The Clarifier may set `risk` (and `risk_reason`) on an open question in spec.yaml. The higher of its class and the rules' class counts: it can
+raise a class, never lower one a rule set. Its prompt does not ask for one yet (prompts are pinned in the private knowledge repository, so a change
+needs a pin), so today the rules decide. The rules are words, not understanding: a question phrased without any of them is `medium`, and
+a `low` rule can be fooled by a name that is also a pin (the rules look for offsets, widths and pins first, but not for everything).
+
+**Levels.**
+
+| Level | `low` and `medium` question | `high` question |
+|---|---|---|
+| `loose` | defaulted and recorded | defaulted and recorded |
+| `standard` | defaulted and recorded | answered, or waived; otherwise the run stops at clarify |
+| `strict` | answered, or waived | answered, or waived |
+
+A run that stops writes `REQUIREMENTS_NEEDED.md` in the design directory (each question, the default the agent would have used and why it
+matters), keeps the question open in spec.yaml, builds nothing and **exits with status 3** (a usage error is 2, a crash is 1). To go on: put the answer in
+the request and run again, use `--interview on`, or record a waiver.
+
+**Waiver.** A recorded decision, not a default: the question (its id, words of it, or `*` with the class it covers), the value chosen (or "agent's
+default accepted"), who, when and why. At the interview, "accept default" or `{waive: true, why: ...}` records one. For a non-interactive run
+write `requirements_waivers.yaml` beside the request or in the design directory:
+
+```yaml
+waivers:
+  - match: clk_sys                       # an id (q3), words of the question, or "*" with `risk: low`
+    value: agent's default accepted      # or the value you choose
+    who: <name>
+    when: 2026-11-25
+    why: the bench oscillator is fixed at 10 MHz
+```
+
+A waiver with a missing field, a date that is not YYYY-MM-DD or a reason under eight characters is not used; the problem is listed in
+`REQUIREMENTS_NEEDED.md` and the run summary. Waivers and the level are written to `build/requirements/state.json`. `standard` lets a waiver settle a
+`high` question: an explicit decision is not a silent default, so only the unanswered-and-unwaived case stops the run.
+
+**Which level.** The command line wins; then a line `Requirements: strict` in the request, `requirements_strictness` in spec.yaml, or the design
+package's `requirements` field in `package.yaml`; then the default. `production_secure` and the higher verification profiles
+(`thorough`, `ip_release`, `high_dependability`) raise any result to at least `standard`. The default is `standard` with `--interview on` and `loose` otherwise,
+and always `loose` for a run with `--hidden-spec` (every benchmark run), so earlier numbers stay comparable. Why: re-scoring the recorded runs
+(`tools/requirements_rescore.py`, `results/210_requirements/rescore.md`) found a high-risk default in nearly every run, so `standard` as the default
+for a run nobody answers would stop nearly all of them at clarify. Under `standard` or `strict` the oracle's "not specified" on a high question is a
+stop, which is the honest result for a vague request.
+
+**What each level can get wrong.**
+
+- `loose` never stops, so a wrong default reaches the design. The handover and `REQUIREMENTS_REPORT.md` list every default with its class, and a pass on a
+  requirement that rests on a default is marked; nothing obliges you to read them.
+- `standard` decides by the class, and the class is by words. A question the rules call `medium` or `low` may matter to you (a `medium` "FIFO depth" can
+  decide whether the design fits); read the assumptions list. The question limit (twelve) still applies: a high question dropped by the limit is
+  unresolved, not defaulted.
+- `strict` makes you answer or waive every question, including verification-method ones; a `*` waiver for the `low` class settles them in one line. A waiver is
+  the user's word: it is recorded and shown, and it does not make the value right.
+- A waiver that only says "accepted" is recorded as such. The record shows who and when, not whether they understood the choice.
+
+**Assumptions you did not confirm.** In every level the handover (README.md, AGENT.md, `handover.yaml` `assumptions`) lists each question settled by
+a default or a waiver, with its class and how it was settled, highest class first. A handover from before brief 210 has none.
+
+**The requirements report (`flow/requirements_report.py`).** `REQUIREMENTS_REPORT.md` at the design root, linked from the README, has one row per
+requirement: id, text, **where it came from** (a line of the request, an answered question, a default with its class, a waiver, or "unrecorded": the request or
+the Clarifier's reading, which spec.yaml does not tell apart; a requirement may carry an explicit `origin`), the method(s), the evidence as links, and the
+result: `pass`, `fail` or `pending` (the evidence does not exist yet, for example a board check before the visit). The first line reads "N of M requirements
+verified and passed; K pending; F failed", and counts the passes that rest on a default you did not confirm. The agent's trace step rewrites it after every stage
+from stage 2 on, and `build/requirements/report.json` holds the same data. After a board run,
+
+```
+python -m flow.requirements_report <design> [--hw <bring-up JSON>]
+```
+
+rebuilds the matrix from the design's `build/` evidence and turns the pending hardware rows into pass or fail from `build/bringup/<design>_bringup.json`
+(or `--hw`), with no other edit (exit status 1 when a row failed). The handover is not regenerated by this: run `python -m agent document <run-dir>` or
+`python -m flow.handover write <design>` again, or `doccheck --strict` will flag it as stale. The origin of a requirement is found by matching its words against
+the interview and the request, so it is a pointer, not proof. The "traced to a test" line of the strict level is the `unverified` list of the report: requirements no
+test or check cites.
+
+**A fix against a requirement.** In brief 209a's live run the Designer met the report gate by pipelining a chain the request said must have no register, and
+left the conflict for someone else. Now a blocking report finding whose fix would break a stated requirement is checked against spec.yaml
+(`fix_conflicts`: pipelining against "no register", "combinational", "single cycle" and similar). At `standard` and `strict` the run stops, names the
+conflict in `REQUIREMENTS_NEEDED.md` and exits with status 3, unless a waiver names the requirement (`requirement: REQ-08`); at `loose` it goes ahead, records the
+conflict in `build/requirements/state.json` and the report marks that requirement `fail` with the reason, whether or not it was waived. The check is by the
+requirement's words and covers the fixes of RPT-LL-02 and RPT-CS-02 only.
+
+Tests: `agent/tests/test_210_requirements.py` (rules, levels, waivers, the stop and its exit status, the conflict on the recorded c15 report),
+`flow/tests/test_210_requirements_report.py` (the report on t1_dimmer_counter's reference run: a pending row, a failed row, regeneration after the board).
+
 ## Review and rewind (`agent/graph/review.py`, `snapshot.py`)
 
 Each stage end writes a self-contained page (light and dark, no external assets): gates, inputs and outputs, the
