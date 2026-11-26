@@ -853,7 +853,7 @@ def stage2_plan(rt: Runtime, state: State) -> dict[str, list[str] | None]:
             "tests": bool(list((d / "tests").glob("test_*_rtl.py"))) if (d / "tests").is_dir() else False,
             "rtl": bool(sources.design_rtl(d))}                # every language: a VHDL design's RTL exists too (brief 153)
     owners = dict(state.get("owners") or {})
-    if "R2" in rt.cfg.arms and owners:                 # brief 213: the repair visit is shown what earlier visits tried and why each failed
+    if "R2" in getattr(getattr(rt, "cfg", None), "arms", ()) and owners:                 # brief 213: the repair visit is shown what earlier visits tried and why each failed
         from agent.graph.feedback import with_ledger
         owners = with_ledger(owners, state.get("ledger"))
     plan: dict[str, list[str] | None] = {}

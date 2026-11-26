@@ -12,6 +12,7 @@ from agent.core.runner import RunResult
 from agent.core.session import ROOT, Session
 
 DATA = ROOT / "flow" / "tests" / "data"
+collect_ignore_glob = ["data/b213_counter/*/tests/*.py"]    # brief 213 fixture designs: run through the lock-step bench by test_213_repair_feedback.py, never collected
 
 
 class FakeRunner:
