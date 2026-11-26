@@ -1,0 +1,1818 @@
+{
+ "schema": "fpga-force/readiness/v1",
+ "level": "standard",
+ "limits": {
+  "max_rounds": 4,
+  "max_calls": 60,
+  "max_questions": 25
+ },
+ "checklist": "procedures/requirements-review/pre-build-review@sha256:c6081e7cd937",
+ "started": "2026-11-26T17:22:49Z",
+ "rounds": [
+  {
+   "n": 1,
+   "questions": [
+    {
+     "id": "Q1",
+     "text": "What OCC_MAX value is read in the snapshot (number of words)? (Scenario: RUN=1, SLOW_READ=1, the reader pops at most one word per 8 gtref cycles, so the FIFO fills to capacity. After a long time a snapshot is taken by writing 0x030.) Two careful readers of the requirements disagree about this; what is the intended behaviour?",
+     "code": "RDY-READ-01",
+     "topic": "requirement",
+     "ids": [
+      "REQ-08",
+      "REQ-31",
+      "REQ-18",
+      "REQ-07"
+     ],
+     "blocking": true,
+     "source": "readers",
+     "answer": "512. The FIFO fills to capacity, and OCC_MAX is the maximum occupancy seen from the writer side, in words. The FIFO depth is 512 words.",
+     "by": "oracle",
+     "evidence": "STALL_W counts writer clock cycles in which the writer had a word to write and the FIFO was full. OCC_MAX is the maximum of the FIFO's occupancy as seen from the writer side (conservative) over all time since CLEAR."
+    },
+    {
+     "id": "Q2",
+     "text": "Does the latched STALL_W value read equal 101 (rather than 100)? (Scenario: STALL_W is 100 and increments on every clk25 cycle (FIFO full, RUN=1). Software writes 0x030 at the same clk25 cycle that STALL_W would go from 100 to 101. Software later reads the STALL_W register in the latched range many cycles afterward.) The requirements do not say; what should happen?",
+     "code": "RDY-READ-02",
+     "topic": "requirement",
+     "ids": [
+      "REQ-15",
+      "REQ-30",
+      "REQ-17"
+     ],
+     "blocking": true,
+     "source": "readers",
+     "answer": null,
+     "by": null,
+     "evidence": null
+    }
+   ],
+   "amendments": [],
+   "refused": [],
+   "repairs": {
+    "asked": [
+     {
+      "id": "REQ-03",
+      "code": "RDY-CLEAR-01",
+      "text": "requirement REQ-03 is compound ('and' joins two statements): split it into one requirement per checkable statement, each with its own id and proof method",
+      "question": "Please restate REQ-03 so that one statement can be checked: split it into one requirement per checkable statement, each with its own id and proof method",
+      "level": "standard",
+      "topic": "requirement",
+      "blocking": true,
+      "repair": true
+     },
+     {
+      "id": "REQ-04",
+      "code": "RDY-CLEAR-01",
+      "text": "requirement REQ-04 is compound ('and' joins two statements): split it into one requirement per checkable statement, each with its own id and proof method",
+      "question": "Please restate REQ-04 so that one statement can be checked: split it into one requirement per checkable statement, each with its own id and proof method",
+      "level": "standard",
+      "topic": "requirement",
+      "blocking": true,
+      "repair": true
+     },
+     {
+      "id": "REQ-05",
+      "code": "RDY-CLEAR-01",
+      "text": "requirement REQ-05 is compound ('and' joins two statements): split it into one requirement per checkable statement, each with its own id and proof method",
+      "question": "Please restate REQ-05 so that one statement can be checked: split it into one requirement per checkable statement, each with its own id and proof method",
+      "level": "standard",
+      "topic": "requirement",
+      "blocking": true,
+      "repair": true
+     },
+     {
+      "id": "REQ-15",
+      "code": "RDY-CLEAR-01",
+      "text": "requirement REQ-15 is compound ('and' joins two statements): split it into one requirement per checkable statement, each with its own id and proof method",
+      "question": "Please restate REQ-15 so that one statement can be checked: split it into one requirement per checkable statement, each with its own id and proof method",
+      "level": "standard",
+      "topic": "requirement",
+      "blocking": true,
+      "repair": true
+     },
+     {
+      "id": "REQ-17",
+      "code": "RDY-CLEAR-01",
+      "text": "requirement REQ-17 is compound ('and' joins two statements): split it into one requirement per checkable statement, each with its own id and proof method",
+      "question": "Please restate REQ-17 so that one statement can be checked: split it into one requirement per checkable statement, each with its own id and proof method",
+      "level": "standard",
+      "topic": "requirement",
+      "blocking": true,
+      "repair": true
+     },
+     {
+      "id": "REQ-18",
+      "code": "RDY-CLEAR-01",
+      "text": "requirement REQ-18 is compound ('and' joins two statements): split it into one requirement per checkable statement, each with its own id and proof method",
+      "question": "Please restate REQ-18 so that one statement can be checked: split it into one requirement per checkable statement, each with its own id and proof method",
+      "level": "standard",
+      "topic": "requirement",
+      "blocking": true,
+      "repair": true
+     },
+     {
+      "id": "REQ-19",
+      "code": "RDY-CLEAR-01",
+      "text": "requirement REQ-19 is compound ('and' joins two statements): split it into one requirement per checkable statement, each with its own id and proof method",
+      "question": "Please restate REQ-19 so that one statement can be checked: split it into one requirement per checkable statement, each with its own id and proof method",
+      "level": "standard",
+      "topic": "requirement",
+      "blocking": true,
+      "repair": true
+     }
+    ],
+    "revised": [
+     "REQ-03",
+     "REQ-04",
+     "REQ-05",
+     "REQ-15",
+     "REQ-17",
+     "REQ-18",
+     "REQ-19"
+    ],
+    "refused": []
+   },
+   "mechanical": [
+    {
+     "id": "interface",
+     "code": "RDY-IF-03",
+     "text": "port gtref_p has no clock domain (the design has 3 clocks)",
+     "question": "Which clock is gtref_p synchronous to?",
+     "level": "strict",
+     "topic": "clocks and crossings",
+     "blocking": true,
+     "repair": false
+    },
+    {
+     "id": "interface",
+     "code": "RDY-IF-03",
+     "text": "port gtref_n has no clock domain (the design has 3 clocks)",
+     "question": "Which clock is gtref_n synchronous to?",
+     "level": "strict",
+     "topic": "clocks and crossings",
+     "blocking": true,
+     "repair": false
+    },
+    {
+     "id": "interface",
+     "code": "RDY-IF-03",
+     "text": "port led has no clock domain (the design has 3 clocks)",
+     "question": "Which clock is led synchronous to?",
+     "level": "strict",
+     "topic": "clocks and crossings",
+     "blocking": true,
+     "repair": false
+    },
+    {
+     "id": "interface",
+     "code": "RDY-IF-04",
+     "text": "output led has no reset value",
+     "question": "What does led drive during and just after reset?",
+     "level": "strict",
+     "topic": "reset strategy",
+     "blocking": true,
+     "repair": false
+    },
+    {
+     "id": "interface",
+     "code": "RDY-IF-05",
+     "text": "output led has no stated latency from a named input event",
+     "question": "How many cycles after which input event does led change (or is it combinational)?",
+     "level": "strict",
+     "topic": "throughput and latency",
+     "blocking": true,
+     "repair": false
+    },
+    {
+     "id": "interface",
+     "code": "RDY-IF-03",
+     "text": "port sfp_tx_disable has no clock domain (the design has 3 clocks)",
+     "question": "Which clock is sfp_tx_disable synchronous to?",
+     "level": "strict",
+     "topic": "clocks and crossings",
+     "blocking": true,
+     "repair": false
+    },
+    {
+     "id": "interface",
+     "code": "RDY-IF-04",
+     "text": "output sfp_tx_disable has no reset value",
+     "question": "What does sfp_tx_disable drive during and just after reset?",
+     "level": "strict",
+     "topic": "reset strategy",
+     "blocking": true,
+     "repair": false
+    },
+    {
+     "id": "interface",
+     "code": "RDY-IF-05",
+     "text": "output sfp_tx_disable has no stated latency from a named input event",
+     "question": "How many cycles after which input event does sfp_tx_disable change (or is it combinational)?",
+     "level": "strict",
+     "topic": "throughput and latency",
+     "blocking": true,
+     "repair": false
+    },
+    {
+     "id": "REQ-17",
+     "code": "RDY-DEF-01",
+     "text": "a default the agent chose became this requirement and the user has not validated it",
+     "question": "The agent chose the basis of REQ-17 (a default). Do you confirm it as written?",
+     "level": "strict",
+     "topic": "requirement",
+     "blocking": true,
+     "repair": false
+    }
+   ],
+   "review": {
+    "findings": [],
+    "verdict": "ready",
+    "compliance": 0
+   },
+   "probes": {
+    "count": 13,
+    "categories": [
+     "back_pressure",
+     "boundary",
+     "invalid_input",
+     "mid_operation_reset",
+     "overflow",
+     "power_up",
+     "reset",
+     "simultaneous",
+     "unmapped"
+    ],
+    "problems": []
+   },
+   "agreement": {
+    "probes": 13,
+    "agreed": 11,
+    "rate": 0.8462,
+    "disagreements": [
+     {
+      "probe": "P4",
+      "scenario": "RUN=1, SLOW_READ=1, the reader pops at most one word per 8 gtref cycles, so the FIFO fills to capacity. After a long time a snapshot is taken by writing 0x030.",
+      "question": "What OCC_MAX value is read in the snapshot (number of words)?",
+      "category": "boundary",
+      "answers": {
+       "A": "unspecified",
+       "B": "512"
+      },
+      "requirements": [
+       "REQ-08",
+       "REQ-31",
+       "REQ-18",
+       "REQ-07"
+      ]
+     }
+    ],
+    "gaps": [
+     {
+      "probe": "P6",
+      "scenario": "STALL_W is 100 and increments on every clk25 cycle (FIFO full, RUN=1). Software writes 0x030 at the same clk25 cycle that STALL_W would go from 100 to 101. Software later reads the STALL_W register in the latched range many cycles afterward.",
+      "question": "Does the latched STALL_W value read equal 101 (rather than 100)?",
+      "answers": {
+       "A": "unspecified",
+       "B": "unspecified"
+      },
+      "requirements": [
+       "REQ-15",
+       "REQ-30",
+       "REQ-17"
+      ]
+     }
+    ]
+   },
+   "probe_set": [
+    {
+     "id": "P1",
+     "category": "reset",
+     "answer_kind": "int",
+     "requirements": [
+      "REQ-27",
+      "REQ-03"
+     ]
+    },
+    {
+     "id": "P2",
+     "category": "unmapped",
+     "answer_kind": "int",
+     "requirements": [
+      "REQ-04",
+      "REQ-28"
+     ]
+    },
+    {
+     "id": "P3",
+     "category": "boundary",
+     "answer_kind": "bool",
+     "requirements": [
+      "REQ-05",
+      "REQ-29"
+     ]
+    },
+    {
+     "id": "P4",
+     "category": "boundary",
+     "answer_kind": "int",
+     "requirements": [
+      "REQ-08",
+      "REQ-31",
+      "REQ-18",
+      "REQ-07"
+     ]
+    },
+    {
+     "id": "P5",
+     "category": "simultaneous",
+     "answer_kind": "int",
+     "requirements": [
+      "REQ-12",
+      "REQ-13",
+      "REQ-11"
+     ]
+    },
+    {
+     "id": "P6",
+     "category": "simultaneous",
+     "answer_kind": "bool",
+     "requirements": [
+      "REQ-15",
+      "REQ-30",
+      "REQ-17"
+     ]
+    },
+    {
+     "id": "P7",
+     "category": "overflow",
+     "answer_kind": "int",
+     "requirements": [
+      "REQ-16"
+     ]
+    },
+    {
+     "id": "P8",
+     "category": "mid_operation_reset",
+     "answer_kind": "choice",
+     "requirements": [
+      "REQ-06",
+      "REQ-07",
+      "REQ-08",
+      "REQ-14"
+     ]
+    },
+    {
+     "id": "P9",
+     "category": "invalid_input",
+     "answer_kind": "choice",
+     "requirements": [
+      "REQ-14"
+     ]
+    },
+    {
+     "id": "P10",
+     "category": "back_pressure",
+     "answer_kind": "int",
+     "requirements": [
+      "REQ-07",
+      "REQ-17",
+      "REQ-08"
+     ]
+    },
+    {
+     "id": "P11",
+     "category": "power_up",
+     "answer_kind": "bool",
+     "requirements": [
+      "REQ-23",
+      "REQ-01",
+      "REQ-27"
+     ]
+    },
+    {
+     "id": "P12",
+     "category": "boundary",
+     "answer_kind": "int",
+     "requirements": [
+      "REQ-10",
+      "REQ-09"
+     ]
+    },
+    {
+     "id": "P13",
+     "category": "mid_operation_reset",
+     "answer_kind": "choice",
+     "requirements": [
+      "REQ-14",
+      "REQ-15",
+      "REQ-30"
+     ]
+    }
+   ],
+   "probe_text": [
+    {
+     "id": "P1",
+     "category": "reset",
+     "requirements": [
+      "REQ-27",
+      "REQ-03"
+     ],
+     "scenario": "Software writes 0xDEADBEEF to register 0x008, then rst is asserted for 8 clk25 cycles and released. Software then reads 0x008.",
+     "question": "What value does the read of 0x008 return?",
+     "answer_kind": "int"
+    },
+    {
+     "id": "P2",
+     "category": "unmapped",
+     "requirements": [
+      "REQ-04",
+      "REQ-28"
+     ],
+     "scenario": "Software writes 0x12345678 to unmapped address 0x0F0, then reads 0x0F0, then reads 0x008, which was last written with 0x00000055.",
+     "question": "What are the values read from 0x0F0 and then 0x008 (give the value read from 0x008)?",
+     "answer_kind": "int"
+    },
+    {
+     "id": "P3",
+     "category": "boundary",
+     "requirements": [
+      "REQ-05",
+      "REQ-29"
+     ],
+     "scenario": "h_re is pulsed for one clk25 cycle at cycle 0 addressing 0x000, and no further read or address change occurs afterward. The testbench samples h_rdata at cycle 2 and at cycle 10.",
+     "question": "Does h_rdata still equal 0x20950001 at cycle 10 (holds after being shown)?",
+     "answer_kind": "bool"
+    },
+    {
+     "id": "P4",
+     "category": "boundary",
+     "requirements": [
+      "REQ-08",
+      "REQ-31",
+      "REQ-18",
+      "REQ-07"
+     ],
+     "scenario": "RUN=1, SLOW_READ=1, the reader pops at most one word per 8 gtref cycles, so the FIFO fills to capacity. After a long time a snapshot is taken by writing 0x030.",
+     "question": "What OCC_MAX value is read in the snapshot (number of words)?",
+     "answer_kind": "int"
+    },
+    {
+     "id": "P5",
+     "category": "simultaneous",
+     "requirements": [
+      "REQ-12",
+      "REQ-13",
+      "REQ-11"
+     ],
+     "scenario": "INJECT is set while RUN=1 and a word is being popped and checked by the reader in the same gtref cycle the inject is first seen. Over the next 1000 words no further INJECT is written.",
+     "question": "What is the final increase in DATA_ERRS over these 1000 words?",
+     "answer_kind": "int"
+    },
+    {
+     "id": "P6",
+     "category": "simultaneous",
+     "requirements": [
+      "REQ-15",
+      "REQ-30",
+      "REQ-17"
+     ],
+     "scenario": "STALL_W is 100 and increments on every clk25 cycle (FIFO full, RUN=1). Software writes 0x030 at the same clk25 cycle that STALL_W would go from 100 to 101. Software later reads the STALL_W register in the latched range many cycles afterward.",
+     "question": "Does the latched STALL_W value read equal 101 (rather than 100)?",
+     "answer_kind": "bool"
+    },
+    {
+     "id": "P7",
+     "category": "overflow",
+     "requirements": [
+      "REQ-16"
+     ],
+     "scenario": "A counter holds 0xFFFFFFFF and then counts one more event.",
+     "question": "What value does the counter hold after the event?",
+     "answer_kind": "int"
+    },
+    {
+     "id": "P8",
+     "category": "mid_operation_reset",
+     "requirements": [
+      "REQ-06",
+      "REQ-07",
+      "REQ-08",
+      "REQ-14"
+     ],
+     "scenario": "RUN=1 and the writer has written 300 words, FIFO has 200 words, when rst is asserted for 8 clk25 cycles, then released and RUN set to 1 again.",
+     "question": "What is the first 32-bit word the writer writes into the FIFO after the restart (hex value, or state if it is not fixed)?",
+     "answer_kind": "choice",
+     "choices": [
+      "PRBS-31 first word from seed 0x7FFFFFFF",
+      "continues PRBS sequence from word 301",
+      "not determined by requirements"
+     ]
+    },
+    {
+     "id": "P9",
+     "category": "invalid_input",
+     "requirements": [
+      "REQ-14"
+     ],
+     "scenario": "With RUN=1 and counters nonzero, software sets CLEAR.",
+     "question": "What happens to CLEAR and the counters?",
+     "answer_kind": "choice",
+     "choices": [
+      "CLEAR is ignored, counters keep counting, CLEAR bit self-clears",
+      "CLEAR is ignored, counters keep counting, CLEAR bit stays set until RUN=0",
+      "counters cleared immediately",
+      "not determined by requirements"
+     ]
+    },
+    {
+     "id": "P10",
+     "category": "back_pressure",
+     "requirements": [
+      "REQ-07",
+      "REQ-17",
+      "REQ-08"
+     ],
+     "scenario": "RUN=1, FIFO holds 512 words (full) and the reader pops one word at a gtref edge; the writer's next clk25 cycle sees the FIFO not full.",
+     "question": "In the clk25 cycle where FIFO is full, by how much does STALL_W increment per cycle, and does WORDS_W increment in that cycle (give STALL_W increment)?",
+     "answer_kind": "int"
+    },
+    {
+     "id": "P11",
+     "category": "power_up",
+     "requirements": [
+      "REQ-23",
+      "REQ-01",
+      "REQ-27"
+     ],
+     "scenario": "Immediately after configuration, rst is held for 8 clk25 cycles, and during that period sfp_tx_disable is observed.",
+     "question": "Is sfp_tx_disable equal to 1 during the reset period?",
+     "answer_kind": "bool"
+    },
+    {
+     "id": "P12",
+     "category": "boundary",
+     "requirements": [
+      "REQ-10",
+      "REQ-09"
+     ],
+     "scenario": "SLOW_READ=1, FIFO is nonempty continuously, over exactly 80 gtref cycles starting immediately after a pop.",
+     "question": "What is the maximum number of words the reader may pop, and is the exact number fixed by the requirements (give the maximum number)?",
+     "answer_kind": "int"
+    },
+    {
+     "id": "P13",
+     "category": "mid_operation_reset",
+     "requirements": [
+      "REQ-14",
+      "REQ-15",
+      "REQ-30"
+     ],
+     "scenario": "Counters were latched by writing 0x030 with WORDS_W snapshot 5000, then rst is asserted and released, then software reads the latched WORDS_W register before any new write to 0x030.",
+     "question": "What value does the latched WORDS_W register return?",
+     "answer_kind": "choice",
+     "choices": [
+      "5000",
+      "0",
+      "not determined by requirements"
+     ]
+    }
+   ],
+   "answers": {
+    "A": {
+     "P1": "0",
+     "P2": "0 and 85",
+     "P3": "yes",
+     "P4": "unspecified",
+     "P5": "1",
+     "P6": "unspecified",
+     "P7": "0",
+     "P8": "not determined by requirements",
+     "P9": "not determined by requirements",
+     "P10": "1",
+     "P11": "yes",
+     "P12": "10",
+     "P13": "not determined by requirements"
+    },
+    "B": {
+     "P1": "0",
+     "P2": "0 and 85",
+     "P3": "yes",
+     "P4": "512",
+     "P5": "1",
+     "P6": "unspecified",
+     "P7": "0",
+     "P8": "not determined by requirements",
+     "P9": "not determined by requirements",
+     "P10": "1",
+     "P11": "yes",
+     "P12": "10",
+     "P13": "not determined by requirements"
+    }
+   }
+  },
+  {
+   "n": 2,
+   "questions": [
+    {
+     "id": "Q3",
+     "text": "If RUN is dropped and raised again without CLEAR, should both PRBS sequences, the counters and the FIFO contents carry on from where they stopped, or restart from seed 0x7FFFFFFF? And while RUN is 0, does the reader keep draining and checking the words already in the FIFO?",
+     "code": "RDY-REV-01",
+     "topic": "Interface contract",
+     "ids": [
+      "REQ-11",
+      "REQ-14"
+     ],
+     "blocking": true,
+     "source": "reviewer",
+     "answer": "On RUN 0 to 1 both the writer and the reader start from the seed 0x7FFFFFFF. On RUN 1 to 0 the writer stops first and the reader keeps reading and checking until the FIFO is empty, so the FIFO drains. The counters keep their values until CLEAR. The specification does not say anything more about restarting without CLEAR.",
+     "by": "oracle",
+     "evidence": "- RUN 0 to 1 starts both the writer and the reader from the seed; RUN 1 to 0 stops the writer first, then the reader keeps reading until the FIFO is empty. The counters keep their values until CLEAR."
+    },
+    {
+     "id": "Q4",
+     "text": "After reset, are the counters and the latched snapshot registers (0x014-0x02C) required to read 0 without any CLEAR? (Scenario: RUN=1 for 1 ms with counters non-zero and FIFO partly filled, then rst asserts for 8 clk25 cycles, then released with RUN=0 afterward.) The requirements do not say; what should happen?",
+     "code": "RDY-READ-02",
+     "topic": "requirement",
+     "ids": [
+      "REQ-14",
+      "REQ-11",
+      "REQ-06",
+      "REQ-15"
+     ],
+     "blocking": true,
+     "source": "readers",
+     "answer": "Per the reset specification, all counters are 0 after reset, and RUN, SLOW_READ and the FIFO contents are cleared too, so no CLEAR is needed for the counters themselves. The specification does not say what the snapshot holding registers (0x014-0x02C) read after reset until a SNAPSHOT write. That part is not specified.",
+     "by": "oracle",
+     "evidence": "Reset: RUN 0, SLOW_READ 0, all counters 0, both sequences at the seed 0x7FFFFFFF, the FIFO empty."
+    },
+    {
+     "id": "Q5",
+     "text": "Does CLEAR read back as 0 after its effect, and does it self-clear when set during RUN=1 (stay pending until RUN=0, or is discarded)? (Scenario: RUN=0, host sets CLEAR=1 while counters are non-zero, then RUN=1 later is not yet set. Host reads CLEAR bit one cycle after write is accepted and a few cycles later.) The requirements do not say; what should happen?",
+     "code": "RDY-READ-02",
+     "topic": "requirement",
+     "ids": [
+      "REQ-14"
+     ],
+     "blocking": true,
+     "source": "readers",
+     "answer": "A CLEAR written while RUN is 1 is ignored (discarded, not held pending until RUN goes to 0). CLEAR is a self-clearing bit, so it is not a sticky flag. The spec does not give the exact clock at which the bit reads back as 0 after a write made while RUN is 0, so that timing is not specified.",
+     "by": "oracle",
+     "evidence": "- CLEAR is accepted only while RUN is 0; a CLEAR written while RUN is 1 is ignored. CLEAR also empties the FIFO and restarts both sequences from the seed."
+    },
+    {
+     "id": "Q6",
+     "text": "Which word is flipped: the word popped in the cycle INJECT is set or the next word popped after INJECT is seen by the gtref domain? (Scenario: INJECT is set while the reader is popping a word on a gtref cycle and the FIFO is empty on the very next cycles, then a word arrives later.) The requirements do not say; what should happen?",
+     "code": "RDY-READ-02",
+     "topic": "requirement",
+     "ids": [
+      "REQ-12",
+      "REQ-13"
+     ],
+     "blocking": true,
+     "source": "readers",
+     "answer": "The flip applies to the next received word, with bit 0 flipped before the check, and only once. The specification does not say how a word popped in the exact same cycle that INJECT is set is treated, beyond calling the flipped word the 'next received word'.",
+     "by": "oracle",
+     "evidence": "INJECT flips bit 0 of the next received word before the check, once; DATA_ERRS then counts 1."
+    },
+    {
+     "id": "Q7",
+     "text": "Is the writer required to write one word on every clk25 cycle where the FIFO is not full, and is STALL_W incremented on each cycle the FIFO is full? Is STALL_W incremented in a cycle where a pop makes room but the FIFO was full at the start of the cycle? (Scenario: RUN=1, SLOW_READ=1, FIFO has just reached 512 words at cycle 0. Count clk25 cycles over the next 100 cycles with the reader popping one word per 8 gtref cycles (about 51.2 ns per pop, i.e. one pop per ~1.28 clk25 cycles... ).) The requirements do not say; what should happen?",
+     "code": "RDY-READ-02",
+     "topic": "requirement",
+     "ids": [
+      "REQ-07",
+      "REQ-17",
+      "REQ-08"
+     ],
+     "blocking": true,
+     "source": "readers",
+     "answer": "The writer writes one word on every writer clock while the FIFO is not full, and STALL_W counts writer clock cycles in which the writer had a word to write and the FIFO was full. The specification does not settle the edge case of a pop making room in a cycle that started full. It also does not say how the full flag, as seen from the writer side, behaves in that cycle. That part is not specified.",
+     "by": "oracle",
+     "evidence": "STALL_W counts writer clock cycles in which the writer had a word to write and the FIFO was full."
+    }
+   ],
+   "amendments": [
+    "REQ-17"
+   ],
+   "refused": [],
+   "mechanical": [
+    {
+     "id": "interface",
+     "code": "RDY-IF-03",
+     "text": "port gtref_p has no clock domain (the design has 3 clocks)",
+     "question": "Which clock is gtref_p synchronous to?",
+     "level": "strict",
+     "topic": "clocks and crossings",
+     "blocking": true,
+     "repair": false
+    },
+    {
+     "id": "interface",
+     "code": "RDY-IF-03",
+     "text": "port gtref_n has no clock domain (the design has 3 clocks)",
+     "question": "Which clock is gtref_n synchronous to?",
+     "level": "strict",
+     "topic": "clocks and crossings",
+     "blocking": true,
+     "repair": false
+    },
+    {
+     "id": "interface",
+     "code": "RDY-IF-03",
+     "text": "port led has no clock domain (the design has 3 clocks)",
+     "question": "Which clock is led synchronous to?",
+     "level": "strict",
+     "topic": "clocks and crossings",
+     "blocking": true,
+     "repair": false
+    },
+    {
+     "id": "interface",
+     "code": "RDY-IF-04",
+     "text": "output led has no reset value",
+     "question": "What does led drive during and just after reset?",
+     "level": "strict",
+     "topic": "reset strategy",
+     "blocking": true,
+     "repair": false
+    },
+    {
+     "id": "interface",
+     "code": "RDY-IF-05",
+     "text": "output led has no stated latency from a named input event",
+     "question": "How many cycles after which input event does led change (or is it combinational)?",
+     "level": "strict",
+     "topic": "throughput and latency",
+     "blocking": true,
+     "repair": false
+    },
+    {
+     "id": "interface",
+     "code": "RDY-IF-03",
+     "text": "port sfp_tx_disable has no clock domain (the design has 3 clocks)",
+     "question": "Which clock is sfp_tx_disable synchronous to?",
+     "level": "strict",
+     "topic": "clocks and crossings",
+     "blocking": true,
+     "repair": false
+    },
+    {
+     "id": "interface",
+     "code": "RDY-IF-04",
+     "text": "output sfp_tx_disable has no reset value",
+     "question": "What does sfp_tx_disable drive during and just after reset?",
+     "level": "strict",
+     "topic": "reset strategy",
+     "blocking": true,
+     "repair": false
+    },
+    {
+     "id": "interface",
+     "code": "RDY-IF-05",
+     "text": "output sfp_tx_disable has no stated latency from a named input event",
+     "question": "How many cycles after which input event does sfp_tx_disable change (or is it combinational)?",
+     "level": "strict",
+     "topic": "throughput and latency",
+     "blocking": true,
+     "repair": false
+    },
+    {
+     "id": "REQ-17",
+     "code": "RDY-DEF-01",
+     "text": "a default the agent chose became this requirement and the user has not validated it",
+     "question": "The agent chose the basis of REQ-17 (a default). Do you confirm it as written?",
+     "level": "strict",
+     "topic": "requirement",
+     "blocking": true,
+     "repair": false
+    }
+   ],
+   "review": {
+    "findings": [
+     {
+      "topic": "Interface contract",
+      "ids": [
+       "REQ-11",
+       "REQ-14"
+      ],
+      "missing_fact": "What RUN 1->0->1 without CLEAR does to the PRBS sequences, the FIFO contents and the counters",
+      "question": "If RUN is dropped and raised again without CLEAR, should both PRBS sequences, the counters and the FIFO contents carry on from where they stopped, or restart from seed 0x7FFFFFFF? And while RUN is 0, does the reader keep draining and checking the words already in the FIFO?",
+      "blocking": true,
+      "why": "REQ-11 says the reader's sequence starts from the seed 'when RUN begins', but REQ-14 says CLEAR is what restarts the sequences. The two readings give different counts and possibly data errors after a stop and restart, and the FIFO may hold words from the old sequence."
+     }
+    ],
+    "verdict": "not_ready",
+    "compliance": 0
+   },
+   "probes": {
+    "count": 13,
+    "categories": [
+     "back_pressure",
+     "boundary",
+     "invalid_input",
+     "mid_operation_reset",
+     "overflow",
+     "power_up",
+     "reset",
+     "simultaneous",
+     "unmapped"
+    ],
+    "problems": []
+   },
+   "agreement": {
+    "probes": 13,
+    "agreed": 9,
+    "rate": 0.6923,
+    "disagreements": [],
+    "gaps": [
+     {
+      "probe": "P3",
+      "scenario": "RUN=1 for 1 ms with counters non-zero and FIFO partly filled, then rst asserts for 8 clk25 cycles, then released with RUN=0 afterward.",
+      "question": "After reset, are the counters and the latched snapshot registers (0x014-0x02C) required to read 0 without any CLEAR?",
+      "answers": {
+       "A": "unspecified",
+       "B": "unspecified"
+      },
+      "requirements": [
+       "REQ-14",
+       "REQ-11",
+       "REQ-06",
+       "REQ-15"
+      ]
+     },
+     {
+      "probe": "P5",
+      "scenario": "RUN=0, host sets CLEAR=1 while counters are non-zero, then RUN=1 later is not yet set. Host reads CLEAR bit one cycle after write is accepted and a few cycles later.",
+      "question": "Does CLEAR read back as 0 after its effect, and does it self-clear when set during RUN=1 (stay pending until RUN=0, or is discarded)?",
+      "answers": {
+       "A": "unspecified",
+       "B": "unspecified"
+      },
+      "requirements": [
+       "REQ-14"
+      ]
+     },
+     {
+      "probe": "P7",
+      "scenario": "INJECT is set while the reader is popping a word on a gtref cycle and the FIFO is empty on the very next cycles, then a word arrives later.",
+      "question": "Which word is flipped: the word popped in the cycle INJECT is set or the next word popped after INJECT is seen by the gtref domain?",
+      "answers": {
+       "A": "unspecified",
+       "B": "unspecified"
+      },
+      "requirements": [
+       "REQ-12",
+       "REQ-13"
+      ]
+     },
+     {
+      "probe": "P8",
+      "scenario": "RUN=1, SLOW_READ=1, FIFO has just reached 512 words at cycle 0. Count clk25 cycles over the next 100 cycles with the reader popping one word per 8 gtref cycles (about 51.2 ns per pop, i.e. one pop per ~1.28 clk25 cycles... ).",
+      "question": "Is the writer required to write one word on every clk25 cycle where the FIFO is not full, and is STALL_W incremented on each cycle the FIFO is full? Is STALL_W incremented in a cycle where a pop makes room but the FIFO was full at the start of the cycle?",
+      "answers": {
+       "A": "unspecified",
+       "B": "unspecified"
+      },
+      "requirements": [
+       "REQ-07",
+       "REQ-17",
+       "REQ-08"
+      ]
+     }
+    ]
+   },
+   "probe_set": [
+    {
+     "id": "P1",
+     "category": "unmapped",
+     "answer_kind": "int",
+     "requirements": [
+      "REQ-04",
+      "REQ-28"
+     ]
+    },
+    {
+     "id": "P2",
+     "category": "reset",
+     "answer_kind": "int",
+     "requirements": [
+      "REQ-03",
+      "REQ-27"
+     ]
+    },
+    {
+     "id": "P3",
+     "category": "mid_operation_reset",
+     "answer_kind": "bool",
+     "requirements": [
+      "REQ-14",
+      "REQ-11",
+      "REQ-06",
+      "REQ-15"
+     ]
+    },
+    {
+     "id": "P4",
+     "category": "invalid_input",
+     "answer_kind": "bool",
+     "requirements": [
+      "REQ-14"
+     ]
+    },
+    {
+     "id": "P5",
+     "category": "invalid_input",
+     "answer_kind": "choice",
+     "requirements": [
+      "REQ-14"
+     ]
+    },
+    {
+     "id": "P6",
+     "category": "simultaneous",
+     "answer_kind": "choice",
+     "requirements": [
+      "REQ-15",
+      "REQ-30",
+      "REQ-16"
+     ]
+    },
+    {
+     "id": "P7",
+     "category": "simultaneous",
+     "answer_kind": "choice",
+     "requirements": [
+      "REQ-12",
+      "REQ-13"
+     ]
+    },
+    {
+     "id": "P8",
+     "category": "back_pressure",
+     "answer_kind": "bool",
+     "requirements": [
+      "REQ-07",
+      "REQ-17",
+      "REQ-08"
+     ]
+    },
+    {
+     "id": "P9",
+     "category": "boundary",
+     "answer_kind": "int",
+     "requirements": [
+      "REQ-31",
+      "REQ-18",
+      "REQ-33"
+     ]
+    },
+    {
+     "id": "P10",
+     "category": "boundary",
+     "answer_kind": "int",
+     "requirements": [
+      "REQ-05",
+      "REQ-29"
+     ]
+    },
+    {
+     "id": "P11",
+     "category": "unmapped",
+     "answer_kind": "bool",
+     "requirements": [
+      "REQ-04",
+      "REQ-30"
+     ]
+    },
+    {
+     "id": "P12",
+     "category": "power_up",
+     "answer_kind": "bool",
+     "requirements": [
+      "REQ-06",
+      "REQ-11",
+      "REQ-23"
+     ]
+    },
+    {
+     "id": "P13",
+     "category": "overflow",
+     "answer_kind": "int",
+     "requirements": [
+      "REQ-16",
+      "REQ-17"
+     ]
+    }
+   ],
+   "probe_text": [
+    {
+     "id": "P1",
+     "category": "unmapped",
+     "requirements": [
+      "REQ-04",
+      "REQ-28"
+     ],
+     "scenario": "Host writes 0xDEADBEEF to unmapped address 0x040, then reads 0x040, then reads 0x008 (previously written 0x12345678).",
+     "question": "After these accesses, what does the read of 0x040 return (as a decimal integer)?",
+     "answer_kind": "int"
+    },
+    {
+     "id": "P2",
+     "category": "reset",
+     "requirements": [
+      "REQ-03",
+      "REQ-27"
+     ],
+     "scenario": "Host writes 0xFFFFFFFF to 0x008, then rst is asserted for 8 clk25 cycles and released, then host reads 0x008.",
+     "question": "What value does 0x008 read (decimal)?",
+     "answer_kind": "int"
+    },
+    {
+     "id": "P3",
+     "category": "mid_operation_reset",
+     "requirements": [
+      "REQ-14",
+      "REQ-11",
+      "REQ-06",
+      "REQ-15"
+     ],
+     "scenario": "RUN=1 for 1 ms with counters non-zero and FIFO partly filled, then rst asserts for 8 clk25 cycles, then released with RUN=0 afterward.",
+     "question": "After reset, are the counters and the latched snapshot registers (0x014-0x02C) required to read 0 without any CLEAR?",
+     "answer_kind": "bool"
+    },
+    {
+     "id": "P4",
+     "category": "invalid_input",
+     "requirements": [
+      "REQ-14"
+     ],
+     "scenario": "RUN=1 and counters are non-zero; host sets CLEAR=1.",
+     "question": "Does CLEAR reset the counters and restart the PRBS sequences while RUN=1?",
+     "answer_kind": "bool"
+    },
+    {
+     "id": "P5",
+     "category": "invalid_input",
+     "requirements": [
+      "REQ-14"
+     ],
+     "scenario": "RUN=0, host sets CLEAR=1 while counters are non-zero, then RUN=1 later is not yet set. Host reads CLEAR bit one cycle after write is accepted and a few cycles later.",
+     "question": "Does CLEAR read back as 0 after its effect, and does it self-clear when set during RUN=1 (stay pending until RUN=0, or is discarded)?",
+     "answer_kind": "choice",
+     "choices": [
+      "clears immediately only when RUN=0; when set during RUN=1 it is ignored and does not remain set",
+      "clears immediately only when RUN=0; when set during RUN=1 it stays set until RUN=0 then acts",
+      "CLEAR bit stays set while RUN=1 and never self-clears",
+      "unspecified-different timing for each"
+     ]
+    },
+    {
+     "id": "P6",
+     "category": "simultaneous",
+     "requirements": [
+      "REQ-15",
+      "REQ-30",
+      "REQ-16"
+     ],
+     "scenario": "WORDS_W counter increments from 0xFFFFFFFF in the same clk25 cycle as the host writes 0x030.",
+     "question": "What does the latched WORDS_W read: 0xFFFFFFFF, or 0x00000000?",
+     "answer_kind": "choice",
+     "choices": [
+      "0xFFFFFFFF",
+      "0x00000000",
+      "either is acceptable"
+     ]
+    },
+    {
+     "id": "P7",
+     "category": "simultaneous",
+     "requirements": [
+      "REQ-12",
+      "REQ-13"
+     ],
+     "scenario": "INJECT is set while the reader is popping a word on a gtref cycle and the FIFO is empty on the very next cycles, then a word arrives later.",
+     "question": "Which word is flipped: the word popped in the cycle INJECT is set or the next word popped after INJECT is seen by the gtref domain?",
+     "answer_kind": "choice",
+     "choices": [
+      "word popped in the same cycle",
+      "next word popped after INJECT is seen",
+      "unspecified"
+     ]
+    },
+    {
+     "id": "P8",
+     "category": "back_pressure",
+     "requirements": [
+      "REQ-07",
+      "REQ-17",
+      "REQ-08"
+     ],
+     "scenario": "RUN=1, SLOW_READ=1, FIFO has just reached 512 words at cycle 0. Count clk25 cycles over the next 100 cycles with the reader popping one word per 8 gtref cycles (about 51.2 ns per pop, i.e. one pop per ~1.28 clk25 cycles... ).",
+     "question": "Is the writer required to write one word on every clk25 cycle where the FIFO is not full, and is STALL_W incremented on each cycle the FIFO is full? Is STALL_W incremented in a cycle where a pop makes room but the FIFO was full at the start of the cycle?",
+     "answer_kind": "bool"
+    },
+    {
+     "id": "P9",
+     "category": "boundary",
+     "requirements": [
+      "REQ-31",
+      "REQ-18",
+      "REQ-33"
+     ],
+     "scenario": "SLOW_READ=1, RUN=1, FIFO fills to 512 words, then the host writes 0x030.",
+     "question": "What does OCC_MAX read in the snapshot (decimal)?",
+     "answer_kind": "int"
+    },
+    {
+     "id": "P10",
+     "category": "boundary",
+     "requirements": [
+      "REQ-05",
+      "REQ-29"
+     ],
+     "scenario": "Host asserts h_re for 0x000 at cycle 0, then at cycle 1 asserts h_re for 0x004 without waiting.",
+     "question": "What is the maximum latency in clk25 cycles between h_re and valid h_rdata?",
+     "answer_kind": "int"
+    },
+    {
+     "id": "P11",
+     "category": "unmapped",
+     "requirements": [
+      "REQ-04",
+      "REQ-30"
+     ],
+     "scenario": "Host reads address 0x034 (just above 0x030) and address 0x010 (between 0x008 and 0x014), neither listed as mapped registers.",
+     "question": "Do both reads return 0?",
+     "answer_kind": "bool"
+    },
+    {
+     "id": "P12",
+     "category": "power_up",
+     "requirements": [
+      "REQ-06",
+      "REQ-11",
+      "REQ-23"
+     ],
+     "scenario": "Immediately after reset release and before RUN is ever set, the first word is generated when RUN=1 for the first time with seed 0x7FFFFFFF.",
+     "question": "Does sfp_tx_disable read 1 during reset assertion and after power-up configuration, i.e. at all times?",
+     "answer_kind": "bool"
+    },
+    {
+     "id": "P13",
+     "category": "overflow",
+     "requirements": [
+      "REQ-16",
+      "REQ-17"
+     ],
+     "scenario": "STALL_W is 0xFFFFFFFF and the FIFO is full during RUN=1 for one more clk25 cycle.",
+     "question": "What does STALL_W read after the cycle (decimal)?",
+     "answer_kind": "int"
+    }
+   ],
+   "answers": {
+    "A": {
+     "P1": "0",
+     "P2": "0",
+     "P3": "unspecified",
+     "P4": "no",
+     "P5": "unspecified",
+     "P6": "either is acceptable",
+     "P7": "unspecified",
+     "P8": "unspecified",
+     "P9": "512",
+     "P10": "2",
+     "P11": "yes",
+     "P12": "yes",
+     "P13": "0"
+    },
+    "B": {
+     "P1": "0",
+     "P2": "0",
+     "P3": "unspecified",
+     "P4": "no",
+     "P5": "unspecified",
+     "P6": "either is acceptable",
+     "P7": "unspecified",
+     "P8": "unspecified",
+     "P9": "512",
+     "P10": "2",
+     "P11": "yes",
+     "P12": "yes",
+     "P13": "0"
+    }
+   }
+  },
+  {
+   "n": 3,
+   "questions": [],
+   "amendments": [],
+   "refused": [],
+   "repairs": {
+    "asked": [
+     {
+      "id": "REQ-17",
+      "code": "RDY-CLEAR-01",
+      "text": "requirement REQ-17 is compound ('and' joins two statements): split it into one requirement per checkable statement, each with its own id and proof method",
+      "question": "Please restate REQ-17 so that one statement can be checked: split it into one requirement per checkable statement, each with its own id and proof method",
+      "level": "standard",
+      "topic": "requirement",
+      "blocking": true,
+      "repair": true
+     },
+     {
+      "id": "REQ-35",
+      "code": "RDY-CLEAR-01",
+      "text": "requirement REQ-35 is compound ('and' joins two statements): split it into one requirement per checkable statement, each with its own id and proof method",
+      "question": "Please restate REQ-35 so that one statement can be checked: split it into one requirement per checkable statement, each with its own id and proof method",
+      "level": "standard",
+      "topic": "requirement",
+      "blocking": true,
+      "repair": true
+     },
+     {
+      "id": "REQ-38",
+      "code": "RDY-CLEAR-01",
+      "text": "requirement REQ-38 is compound ('and' joins two statements): split it into one requirement per checkable statement, each with its own id and proof method",
+      "question": "Please restate REQ-38 so that one statement can be checked: split it into one requirement per checkable statement, each with its own id and proof method",
+      "level": "standard",
+      "topic": "requirement",
+      "blocking": true,
+      "repair": true
+     }
+    ],
+    "revised": [
+     "REQ-17",
+     "REQ-35",
+     "REQ-38"
+    ],
+    "refused": []
+   },
+   "mechanical": [
+    {
+     "id": "interface",
+     "code": "RDY-IF-03",
+     "text": "port gtref_p has no clock domain (the design has 3 clocks)",
+     "question": "Which clock is gtref_p synchronous to?",
+     "level": "strict",
+     "topic": "clocks and crossings",
+     "blocking": true,
+     "repair": false
+    },
+    {
+     "id": "interface",
+     "code": "RDY-IF-03",
+     "text": "port gtref_n has no clock domain (the design has 3 clocks)",
+     "question": "Which clock is gtref_n synchronous to?",
+     "level": "strict",
+     "topic": "clocks and crossings",
+     "blocking": true,
+     "repair": false
+    },
+    {
+     "id": "interface",
+     "code": "RDY-IF-03",
+     "text": "port led has no clock domain (the design has 3 clocks)",
+     "question": "Which clock is led synchronous to?",
+     "level": "strict",
+     "topic": "clocks and crossings",
+     "blocking": true,
+     "repair": false
+    },
+    {
+     "id": "interface",
+     "code": "RDY-IF-04",
+     "text": "output led has no reset value",
+     "question": "What does led drive during and just after reset?",
+     "level": "strict",
+     "topic": "reset strategy",
+     "blocking": true,
+     "repair": false
+    },
+    {
+     "id": "interface",
+     "code": "RDY-IF-05",
+     "text": "output led has no stated latency from a named input event",
+     "question": "How many cycles after which input event does led change (or is it combinational)?",
+     "level": "strict",
+     "topic": "throughput and latency",
+     "blocking": true,
+     "repair": false
+    },
+    {
+     "id": "interface",
+     "code": "RDY-IF-03",
+     "text": "port sfp_tx_disable has no clock domain (the design has 3 clocks)",
+     "question": "Which clock is sfp_tx_disable synchronous to?",
+     "level": "strict",
+     "topic": "clocks and crossings",
+     "blocking": true,
+     "repair": false
+    },
+    {
+     "id": "interface",
+     "code": "RDY-IF-04",
+     "text": "output sfp_tx_disable has no reset value",
+     "question": "What does sfp_tx_disable drive during and just after reset?",
+     "level": "strict",
+     "topic": "reset strategy",
+     "blocking": true,
+     "repair": false
+    },
+    {
+     "id": "interface",
+     "code": "RDY-IF-05",
+     "text": "output sfp_tx_disable has no stated latency from a named input event",
+     "question": "How many cycles after which input event does sfp_tx_disable change (or is it combinational)?",
+     "level": "strict",
+     "topic": "throughput and latency",
+     "blocking": true,
+     "repair": false
+    },
+    {
+     "id": "REQ-17",
+     "code": "RDY-DEF-01",
+     "text": "a default the agent chose became this requirement and the user has not validated it",
+     "question": "The agent chose the basis of REQ-17 (a default). Do you confirm it as written?",
+     "level": "strict",
+     "topic": "requirement",
+     "blocking": true,
+     "repair": false
+    }
+   ],
+   "review": {
+    "findings": [],
+    "verdict": "ready",
+    "compliance": 0
+   },
+   "probes": {
+    "count": 13,
+    "categories": [
+     "back_pressure",
+     "boundary",
+     "invalid_input",
+     "mid_operation_reset",
+     "overflow",
+     "power_up",
+     "reset",
+     "simultaneous",
+     "unmapped"
+    ],
+    "problems": []
+   },
+   "agreement": {
+    "probes": 13,
+    "agreed": 13,
+    "rate": 1.0,
+    "disagreements": [],
+    "gaps": []
+   },
+   "probe_set": [
+    {
+     "id": "P1",
+     "category": "reset",
+     "answer_kind": "int",
+     "requirements": [
+      "REQ-27",
+      "REQ-03"
+     ]
+    },
+    {
+     "id": "P2",
+     "category": "mid_operation_reset",
+     "answer_kind": "int",
+     "requirements": [
+      "REQ-38",
+      "REQ-39",
+      "REQ-37",
+      "REQ-44"
+     ]
+    },
+    {
+     "id": "P3",
+     "category": "unmapped",
+     "answer_kind": "choice",
+     "requirements": [
+      "REQ-04",
+      "REQ-28"
+     ]
+    },
+    {
+     "id": "P4",
+     "category": "boundary",
+     "answer_kind": "int",
+     "requirements": [
+      "REQ-05",
+      "REQ-29"
+     ]
+    },
+    {
+     "id": "P5",
+     "category": "overflow",
+     "answer_kind": "int",
+     "requirements": [
+      "REQ-16",
+      "REQ-15"
+     ]
+    },
+    {
+     "id": "P6",
+     "category": "back_pressure",
+     "answer_kind": "int",
+     "requirements": [
+      "REQ-17",
+      "REQ-42",
+      "REQ-07"
+     ]
+    },
+    {
+     "id": "P7",
+     "category": "boundary",
+     "answer_kind": "int",
+     "requirements": [
+      "REQ-33",
+      "REQ-31",
+      "REQ-18"
+     ]
+    },
+    {
+     "id": "P8",
+     "category": "simultaneous",
+     "answer_kind": "int",
+     "requirements": [
+      "REQ-12",
+      "REQ-13",
+      "REQ-41"
+     ]
+    },
+    {
+     "id": "P9",
+     "category": "mid_operation_reset",
+     "answer_kind": "int",
+     "requirements": [
+      "REQ-35",
+      "REQ-43",
+      "REQ-36"
+     ]
+    },
+    {
+     "id": "P10",
+     "category": "invalid_input",
+     "answer_kind": "choice",
+     "requirements": [
+      "REQ-40",
+      "REQ-14"
+     ]
+    },
+    {
+     "id": "P11",
+     "category": "power_up",
+     "answer_kind": "int",
+     "requirements": [
+      "REQ-23",
+      "REQ-37",
+      "REQ-38"
+     ]
+    },
+    {
+     "id": "P12",
+     "category": "boundary",
+     "answer_kind": "choice",
+     "requirements": [
+      "REQ-34",
+      "REQ-11",
+      "REQ-06"
+     ]
+    },
+    {
+     "id": "P13",
+     "category": "overflow",
+     "answer_kind": "int",
+     "requirements": [
+      "REQ-10",
+      "REQ-09"
+     ]
+    }
+   ],
+   "probe_text": [
+    {
+     "id": "P1",
+     "category": "reset",
+     "requirements": [
+      "REQ-27",
+      "REQ-03"
+     ],
+     "scenario": "Software writes 0xDEADBEEF to register 0x008, then rst is asserted for 8 clk25 cycles and released. Software then reads 0x008.",
+     "question": "What value does 0x008 read after reset?",
+     "answer_kind": "int"
+    },
+    {
+     "id": "P2",
+     "category": "mid_operation_reset",
+     "requirements": [
+      "REQ-38",
+      "REQ-39",
+      "REQ-37",
+      "REQ-44"
+     ],
+     "scenario": "RUN=1, SLOW_READ=1, FIFO holds 300 words, WORDS_W is non-zero. rst is asserted for 8 clk25 cycles in the middle of this operation and then released.",
+     "question": "After release, what is the FIFO occupancy in words immediately after reset (and is RUN still 1 or 0)? Give the FIFO occupancy.",
+     "answer_kind": "int"
+    },
+    {
+     "id": "P3",
+     "category": "unmapped",
+     "requirements": [
+      "REQ-04",
+      "REQ-28"
+     ],
+     "scenario": "Software writes 0x12345678 to unmapped address 0x040, then reads 0x040 and then reads 0x008, which previously held 0x5A.",
+     "question": "What are the values read from 0x040 and 0x008, as a pair (0x040, 0x008)?",
+     "answer_kind": "choice",
+     "choices": [
+      "(0, 0x5A)",
+      "(0x12345678, 0x5A)",
+      "(0, 0x12345678)",
+      "(0, 0)"
+     ]
+    },
+    {
+     "id": "P4",
+     "category": "boundary",
+     "requirements": [
+      "REQ-05",
+      "REQ-29"
+     ],
+     "scenario": "h_re is pulsed for one clk25 cycle at cycle 0 addressing 0x000, and no other access follows.",
+     "question": "At which clk25 cycle offset after h_re is the latest cycle at which h_rdata must show 0x20950001, and does it keep that value afterwards until the next access (give the latest cycle offset)?",
+     "answer_kind": "int"
+    },
+    {
+     "id": "P5",
+     "category": "overflow",
+     "requirements": [
+      "REQ-16",
+      "REQ-15"
+     ],
+     "scenario": "A counter is at 0xFFFFFFFF and the event that increments it occurs once more, then a write to 0x030 latches it.",
+     "question": "What value does the latched counter read?",
+     "answer_kind": "int"
+    },
+    {
+     "id": "P6",
+     "category": "back_pressure",
+     "requirements": [
+      "REQ-17",
+      "REQ-42",
+      "REQ-07"
+     ],
+     "scenario": "RUN=1, FIFO is full (512 words), the reader pops one word at a given gtref cycle making space, while the writer has a word ready. Over a window of 10 clk25 cycles with the FIFO full throughout and no pop, then separately with RUN=1 and FIFO full but writer has no word.",
+     "question": "By how much does STALL_W increase over the 10 clk25 cycles with FIFO full and the writer holding a word and no pops?",
+     "answer_kind": "int"
+    },
+    {
+     "id": "P7",
+     "category": "boundary",
+     "requirements": [
+      "REQ-33",
+      "REQ-31",
+      "REQ-18"
+     ],
+     "scenario": "RUN=1, SLOW_READ=1, long run until the FIFO has been full, then a write to 0x030 snapshots counters.",
+     "question": "What does the latched OCC_MAX read in words?",
+     "answer_kind": "int"
+    },
+    {
+     "id": "P8",
+     "category": "simultaneous",
+     "requirements": [
+      "REQ-12",
+      "REQ-13",
+      "REQ-41"
+     ],
+     "scenario": "INJECT is set once while RUN=1 and the reader pops words continuously. Several words are received after that.",
+     "question": "How many words are corrupted and how much does DATA_ERRS increase in total?",
+     "answer_kind": "int"
+    },
+    {
+     "id": "P9",
+     "category": "mid_operation_reset",
+     "requirements": [
+      "REQ-35",
+      "REQ-43",
+      "REQ-36"
+     ],
+     "scenario": "RUN goes 1 to 0 with 100 words in the FIFO, SLOW_READ=0, no CLEAR. The reader drains the FIFO.",
+     "question": "How many words does the reader check after RUN falls, and is WORDS counters unchanged otherwise? Give the number of words checked after RUN falls.",
+     "answer_kind": "int"
+    },
+    {
+     "id": "P10",
+     "category": "invalid_input",
+     "requirements": [
+      "REQ-40",
+      "REQ-14"
+     ],
+     "scenario": "CLEAR is written while RUN=1 with counters non-zero, then RUN goes to 0 with no further CLEAR write.",
+     "question": "What happens to the counters after RUN falls?",
+     "answer_kind": "choice",
+     "choices": [
+      "Cleared to 0 once RUN=0",
+      "Keep their values and CLEAR bit stays 0",
+      "Keep their values and CLEAR remains pending",
+      "Cleared one cycle after RUN falls"
+     ]
+    },
+    {
+     "id": "P11",
+     "category": "power_up",
+     "requirements": [
+      "REQ-23",
+      "REQ-37",
+      "REQ-38"
+     ],
+     "scenario": "Immediately after configuration with rst held for 8 clk25 cycles, then at the first cycle after release.",
+     "question": "What is the value of sfp_tx_disable during the reset-held period?",
+     "answer_kind": "int"
+    },
+    {
+     "id": "P12",
+     "category": "boundary",
+     "requirements": [
+      "REQ-34",
+      "REQ-11",
+      "REQ-06"
+     ],
+     "scenario": "RUN goes 0 to 1 without CLEAR after a previous run that ended with PRBS state advanced.",
+     "question": "What is the first PRBS word of writer and reader on this new run?",
+     "answer_kind": "choice",
+     "choices": [
+      "Both restart from seed 0x7FFFFFFF",
+      "Both continue from their previous state",
+      "Writer restarts, reader continues",
+      "Only restart if CLEAR was written"
+     ]
+    },
+    {
+     "id": "P13",
+     "category": "overflow",
+     "requirements": [
+      "REQ-10",
+      "REQ-09"
+     ],
+     "scenario": "SLOW_READ=1, FIFO not empty, over 64 gtref cycles.",
+     "question": "What is the maximum number of words the reader may pop in those 64 gtref cycles?",
+     "answer_kind": "int"
+    }
+   ],
+   "answers": {
+    "A": {
+     "P1": "0",
+     "P2": "0",
+     "P3": "(0, 0x5A)",
+     "P4": "2",
+     "P5": "0",
+     "P6": "10",
+     "P7": "512",
+     "P8": "1",
+     "P9": "100",
+     "P10": "Keep their values and CLEAR bit stays 0",
+     "P11": "1",
+     "P12": "Both restart from seed 0x7FFFFFFF",
+     "P13": "8"
+    },
+    "B": {
+     "P1": "0",
+     "P2": "0",
+     "P3": "(0, 0x5A)",
+     "P4": "2",
+     "P5": "0",
+     "P6": "10",
+     "P7": "512",
+     "P8": "1",
+     "P9": "100",
+     "P10": "Keep their values and CLEAR bit stays 0",
+     "P11": "1",
+     "P12": "Both restart from seed 0x7FFFFFFF",
+     "P13": "8"
+    }
+   }
+  }
+ ],
+ "frozen": {
+  "schema": "fpga-force/readiness/v1",
+  "frozen_at": "2026-11-26T17:25:57Z",
+  "version": 1,
+  "level": "standard",
+  "rounds": 3,
+  "why": "readiness gate passed",
+  "hash": "db913a16a8af450d9c76cf50",
+  "ids": [
+   "REQ-01",
+   "REQ-02",
+   "REQ-03",
+   "REQ-04",
+   "REQ-05",
+   "REQ-06",
+   "REQ-07",
+   "REQ-08",
+   "REQ-09",
+   "REQ-10",
+   "REQ-11",
+   "REQ-12",
+   "REQ-13",
+   "REQ-14",
+   "REQ-15",
+   "REQ-16",
+   "REQ-17",
+   "REQ-18",
+   "REQ-19",
+   "REQ-20",
+   "REQ-21",
+   "REQ-22",
+   "REQ-23",
+   "REQ-24",
+   "REQ-25",
+   "REQ-26",
+   "REQ-27",
+   "REQ-28",
+   "REQ-29",
+   "REQ-30",
+   "REQ-31",
+   "REQ-32",
+   "REQ-33",
+   "REQ-34",
+   "REQ-35",
+   "REQ-36",
+   "REQ-37",
+   "REQ-38",
+   "REQ-39",
+   "REQ-40",
+   "REQ-41",
+   "REQ-42",
+   "REQ-43",
+   "REQ-44"
+  ],
+  "reopened": [],
+  "status": "frozen",
+  "rows": {
+   "REQ-01": "365ba8b1b1882dfc",
+   "REQ-02": "9b650b37fa2a17f1",
+   "REQ-03": "d5a3439483ebf424",
+   "REQ-04": "87a4a8b63f53596e",
+   "REQ-05": "3e176db68897fe90",
+   "REQ-06": "d8e555f63bc167be",
+   "REQ-07": "931ea70125e769e8",
+   "REQ-08": "465de5038f5a17e9",
+   "REQ-09": "94310a1b51f9e3ea",
+   "REQ-10": "8585ec57c8946802",
+   "REQ-11": "3cb143204cb7c5b4",
+   "REQ-12": "dcb5401e38aae60d",
+   "REQ-13": "c1c055773f6e6431",
+   "REQ-14": "c388b9c675b89451",
+   "REQ-15": "3e416f2a24d1a5f6",
+   "REQ-16": "69d8f689e1834748",
+   "REQ-17": "0ee058a4820a6bf4",
+   "REQ-18": "bbe28f45053a5513",
+   "REQ-19": "8518908959aeb8bf",
+   "REQ-20": "bdbbcc59ba28b377",
+   "REQ-21": "53f327bc87233643",
+   "REQ-22": "7bf699c6d0313820",
+   "REQ-23": "0d1d2fee54f293ab",
+   "REQ-24": "07e2fc7e27563eef",
+   "REQ-25": "e25621d500920fe4",
+   "REQ-26": "eecd898e62f1d0de",
+   "REQ-27": "6d66cb149d381b6a",
+   "REQ-28": "d6f1a77e89e040c2",
+   "REQ-29": "cd4d0872cfb4f0d0",
+   "REQ-30": "e506e0cc8d387aba",
+   "REQ-31": "2781a7c2a58ecf7c",
+   "REQ-32": "be90b38d30dcbf5c",
+   "REQ-33": "b35841113dacb92b",
+   "REQ-34": "15e59e1b2ec47afe",
+   "REQ-35": "31c9ab2e1a318893",
+   "REQ-36": "952d80221b868d4d",
+   "REQ-37": "e7a8abe3edd0653e",
+   "REQ-38": "b8e99d4fed5aac4a",
+   "REQ-39": "c144395186082099",
+   "REQ-40": "cc984d507673d421",
+   "REQ-41": "77a9719c0f0a867f",
+   "REQ-42": "319a5abad90eb9b5",
+   "REQ-43": "de798747ff5ebfb8",
+   "REQ-44": "55c798d6f53625b8"
+  }
+ },
+ "stop": null,
+ "answerer": "oracle",
+ "finished": "2026-11-26T17:25:57Z",
+ "model_calls": 17,
+ "calls_by_role": {
+  "amend": 2,
+  "probes": 3,
+  "reader_a": 3,
+  "reader_b": 3,
+  "reader_b_retry": 1,
+  "repair": 2,
+  "review": 3
+ },
+ "open": []
+}

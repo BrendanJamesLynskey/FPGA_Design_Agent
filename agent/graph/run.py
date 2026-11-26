@@ -78,6 +78,7 @@ class State(TypedDict, total=False):
     stop: str
     stop_detail: dict   # brief 82P6 (P3): the facts behind a visit-limit stop (gates, roles, last failing assertion)
     interview: dict
+    readiness: dict     # brief 227: the stage-0 readiness result (frozen, rounds, stop)
     hw_approved: bool
     owners: dict        # stage 2: role -> the failure text that role owns (05c2: repair, do not regenerate)
     sig: str            # stage 2: signature of the last failure
@@ -130,6 +131,8 @@ class Config:
     closure: str = "off"            # closure loop: on = stage 6 runs the closure controller (agent/graph/closure.py)
     coverage_loop: str = "off"      # brief 218: on = at V3, rounds of coverage-directed stimulus inside the gate (agent/graph/covsva.py); off = today's V3
     req_sva: str = "off"            # brief 218: on = an assertion written from each checkable requirement, back-translated, proved (flow/sva_req.py)
+    readiness: str = "off"          # brief 227: on = stage 0 iterates until the requirements are ready (agent/graph/readiness.py), then freezes them
+    readiness_limits: dict = field(default_factory=dict)   # brief 227: max_rounds, max_calls, max_questions of the stage-0 stop rule
     docs: str = "off"               # brief 68 C: on = the document node writes handover.yaml, README.md, AGENT.md at the end (the CLI default is on)
     models_file: Path | None = None  # brief 108: the project's models.yaml (the project layer of the model table)
     model_config: dict | None = None  # brief 108: --model-config, the command-line layer in the models.yaml format
@@ -1331,6 +1334,17 @@ def _interview(rt: Runtime, spec: dict, state: State) -> tuple[dict, dict]:
     return spec, summ
 
 
+def _readiness(rt: Runtime, spec: dict) -> tuple[dict, dict]:
+    """Brief 227: the stage-0 readiness rounds after the interview. ``loose`` runs the standard checks (the gate is only asked for with ``--readiness on``).
+    Interview ``oracle`` answers from the hidden spec; otherwise a person's answers file (``requirements_answers.yaml``) is the answerer, and with none the
+    run stops with the open questions (exit status 3)."""
+    from agent.graph import readiness as RD
+    level, _src = requirements_level(rt, spec)
+    level = "strict" if level == "strict" else "standard"
+    who = SpecOracle(rt.cfg.hidden_spec, rt.oracle_llm or rt.resolver.oracle()) if rt.cfg.interview == "oracle" and rt.cfg.hidden_spec else None
+    return RD.gate_step(rt, spec, level, who)
+
+
 _ORDER = ["synth", "place", "route", "bitstream"]
 
 
@@ -1578,8 +1592,17 @@ def _requirements_summary(rt: Runtime) -> dict:
     """Brief 210: the level the run used and where it came from, and the conflicts it met (build/requirements/state.json)."""
     from agent.graph import requirements as RQ
     st = RQ.read_state(rt.design)
-    return {"level": st.get("level") or rt.cfg.requirements or None, "source": st.get("source"),
-            "conflicts": [{k: c.get(k) for k in ("requirement", "code", "fix_kind", "action")} for c in st.get("conflicts") or []]}
+    out = {"level": st.get("level") or rt.cfg.requirements or None, "source": st.get("source"),
+           "conflicts": [{k: c.get(k) for k in ("requirement", "code", "fix_kind", "action")} for c in st.get("conflicts") or []]}
+    if getattr(rt.cfg, "readiness", "off") == "on":                    # brief 227: the two-score report's first half (flow/readiness.py two_scores)
+        try:
+            import json as _json
+            from flow import readiness as RR
+            rd = _json.loads(rt.design.joinpath(*RR.STATE_DIR, RR.READINESS_FILE).read_text())
+            out["readiness"] = RR.two_scores(rd, None)["requirements_quality"]
+        except (OSError, ValueError):
+            out["readiness"] = {"frozen": False, "note": "no readiness record"}
+    return out
 
 
 def requirements_conflict_gate(rt: Runtime, ev: dict, out: dict, detail: list) -> None:
@@ -1718,6 +1741,11 @@ def node_gate(state: State) -> dict:
                 out["interview"] = summary
                 if summary.get("requirements_stop"):                  # brief 210: standard/strict: a question that must be resolved is not
                     out["stop"] = summary["requirements_stop"]
+                elif getattr(rt.cfg, "readiness", "off") == "on":      # brief 227: iterate until the readers agree and nothing is open, then freeze
+                    spec, rsum = _readiness(rt, spec)
+                    out["readiness"] = rsum["readiness"]
+                    if rsum.get("requirements_stop"):
+                        out["stop"] = rsum["requirements_stop"]
                 errs = validate(spec) + requirement_quality_errors(spec) + register_map_errors(req, spec)   # brief 53
                 cf = spec_constants_findings(rt)                   # brief 82P6: spec.yaml against the derived constants, at the clarify exit
                 errs += ["constants " + f"{f['code']} {f['where']}: {f['message']}" for f in cf]

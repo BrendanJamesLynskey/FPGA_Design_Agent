@@ -1,0 +1,963 @@
+{
+ "schema": "fpga-force/readiness/v1",
+ "level": "standard",
+ "limits": {
+  "max_rounds": 4,
+  "max_calls": 60,
+  "max_questions": 25
+ },
+ "checklist": "procedures/requirements-review/pre-build-review@sha256:c6081e7cd937",
+ "started": "2026-11-26T15:51:31Z",
+ "rounds": [
+  {
+   "n": 1,
+   "questions": [
+    {
+     "id": "Q1",
+     "text": "The core has no vendor primitive, so the BUILD word must reach it through a port, but the core port list does not include one. What is that port called and how wide is it (presumably 32 bits)? The bench drives the core, so it must know which port to drive.",
+     "code": "RDY-REV-01",
+     "topic": "Names, files and the build target",
+     "ids": [
+      "REQ-02",
+      "REQ-23"
+     ],
+     "blocking": true,
+     "source": "reviewer",
+     "answer": null,
+     "by": null,
+     "evidence": null
+    },
+    {
+     "id": "Q2",
+     "text": "What is GATE_ACTUAL after this measurement completes? (Scenario: The host writes START in the same clock cycle that it writes GATE_LEN = 5000 while not BUSY (GATE_LEN currently 2000). Both are issued in the same cycle on the bus.) Two careful readers of the requirements disagree about this; what is the intended behaviour?",
+     "code": "RDY-READ-01",
+     "topic": "requirement",
+     "ids": [
+      "REQ-09",
+      "REQ-10"
+     ],
+     "blocking": true,
+     "source": "readers",
+     "answer": null,
+     "by": null,
+     "evidence": null
+    },
+    {
+     "id": "Q3",
+     "text": "Is that START accepted, starting a new measurement? (Scenario: A START is issued exactly in the clock cycle in which DONE sets and BUSY clears at the end of the gate.) Two careful readers of the requirements disagree about this; what is the intended behaviour?",
+     "code": "RDY-READ-01",
+     "topic": "requirement",
+     "ids": [
+      "REQ-11",
+      "REQ-13"
+     ],
+     "blocking": true,
+     "source": "readers",
+     "answer": null,
+     "by": null,
+     "evidence": null
+    },
+    {
+     "id": "Q4",
+     "text": "In cycle 3, what does h_rdata show: ID, BUILD, or something else? (Scenario: The host issues h_re for address 0x000 in cycle 0 and h_re for 0x004 in cycle 1 (back-to-back reads).) Two careful readers of the requirements disagree about this; what is the intended behaviour?",
+     "code": "RDY-READ-01",
+     "topic": "requirement",
+     "ids": [
+      "REQ-04",
+      "REQ-25"
+     ],
+     "blocking": true,
+     "source": "readers",
+     "answer": null,
+     "by": null,
+     "evidence": null
+    },
+    {
+     "id": "Q5",
+     "text": "What value is read back? (Scenario: The host writes 0x12345678 to the ID register at 0x000 and reads it back.) Two careful readers of the requirements disagree about this; what is the intended behaviour?",
+     "code": "RDY-READ-01",
+     "topic": "requirement",
+     "ids": [
+      "REQ-06",
+      "REQ-01"
+     ],
+     "blocking": true,
+     "source": "readers",
+     "answer": null,
+     "by": null,
+     "evidence": null
+    },
+    {
+     "id": "Q6",
+     "text": "After reset releases, what is MEAS_DONE? (Scenario: A 1 s gate is half done with BUSY=1, DONE=0, MEAS_DONE=3 when rst asserts for 16 clk_ref cycles.) Two careful readers of the requirements disagree about this; what is the intended behaviour?",
+     "code": "RDY-READ-01",
+     "topic": "requirement",
+     "ids": [
+      "REQ-10",
+      "REQ-27",
+      "REQ-29"
+     ],
+     "blocking": true,
+     "source": "readers",
+     "answer": null,
+     "by": null,
+     "evidence": null
+    },
+    {
+     "id": "Q7",
+     "text": "What is led[0] on the next cycles after the write takes effect, and when LED_EN returns to 1, does the toggle counter restart from zero? (Scenario: LED_EN is 1 and LED 0 is currently 1; the host then writes LED_EN = 0.) The requirements do not say; what should happen?",
+     "code": "RDY-READ-02",
+     "topic": "requirement",
+     "ids": [
+      "REQ-32",
+      "REQ-18",
+      "REQ-19"
+     ],
+     "blocking": true,
+     "source": "readers",
+     "answer": null,
+     "by": null,
+     "evidence": null
+    }
+   ],
+   "amendments": [],
+   "refused": [],
+   "repairs": {
+    "asked": [
+     {
+      "id": "REQ-03",
+      "code": "RDY-CLEAR-01",
+      "text": "requirement REQ-03 is compound ('and' joins two statements): split it into one requirement per checkable statement, each with its own id and proof method",
+      "question": "Please restate REQ-03 so that one statement can be checked: split it into one requirement per checkable statement, each with its own id and proof method",
+      "level": "standard",
+      "topic": "requirement",
+      "blocking": true,
+      "repair": true
+     },
+     {
+      "id": "REQ-04",
+      "code": "RDY-CLEAR-01",
+      "text": "requirement REQ-04 is compound ('and' joins two statements): split it into one requirement per checkable statement, each with its own id and proof method",
+      "question": "Please restate REQ-04 so that one statement can be checked: split it into one requirement per checkable statement, each with its own id and proof method",
+      "level": "standard",
+      "topic": "requirement",
+      "blocking": true,
+      "repair": true
+     },
+     {
+      "id": "REQ-05",
+      "code": "RDY-CLEAR-01",
+      "text": "requirement REQ-05 is compound ('and' joins two statements): split it into one requirement per checkable statement, each with its own id and proof method",
+      "question": "Please restate REQ-05 so that one statement can be checked: split it into one requirement per checkable statement, each with its own id and proof method",
+      "level": "standard",
+      "topic": "requirement",
+      "blocking": true,
+      "repair": true
+     },
+     {
+      "id": "REQ-07",
+      "code": "RDY-CLEAR-01",
+      "text": "requirement REQ-07 is compound ('and' joins two statements): split it into one requirement per checkable statement, each with its own id and proof method",
+      "question": "Please restate REQ-07 so that one statement can be checked: split it into one requirement per checkable statement, each with its own id and proof method",
+      "level": "standard",
+      "topic": "requirement",
+      "blocking": true,
+      "repair": true
+     },
+     {
+      "id": "REQ-08",
+      "code": "RDY-CLEAR-01",
+      "text": "requirement REQ-08 is compound ('and' joins two statements): split it into one requirement per checkable statement, each with its own id and proof method",
+      "question": "Please restate REQ-08 so that one statement can be checked: split it into one requirement per checkable statement, each with its own id and proof method",
+      "level": "standard",
+      "topic": "requirement",
+      "blocking": true,
+      "repair": true
+     },
+     {
+      "id": "REQ-13",
+      "code": "RDY-CLEAR-01",
+      "text": "requirement REQ-13 is compound ('and' joins two statements): split it into one requirement per checkable statement, each with its own id and proof method",
+      "question": "Please restate REQ-13 so that one statement can be checked: split it into one requirement per checkable statement, each with its own id and proof method",
+      "level": "standard",
+      "topic": "requirement",
+      "blocking": true,
+      "repair": true
+     },
+     {
+      "id": "REQ-15",
+      "code": "RDY-CLEAR-01",
+      "text": "requirement REQ-15 is compound ('and' joins two statements): split it into one requirement per checkable statement, each with its own id and proof method",
+      "question": "Please restate REQ-15 so that one statement can be checked: split it into one requirement per checkable statement, each with its own id and proof method",
+      "level": "standard",
+      "topic": "requirement",
+      "blocking": true,
+      "repair": true
+     },
+     {
+      "id": "REQ-18",
+      "code": "RDY-CLEAR-01",
+      "text": "requirement REQ-18 is compound ('and' joins two statements): split it into one requirement per checkable statement, each with its own id and proof method",
+      "question": "Please restate REQ-18 so that one statement can be checked: split it into one requirement per checkable statement, each with its own id and proof method",
+      "level": "standard",
+      "topic": "requirement",
+      "blocking": true,
+      "repair": true
+     },
+     {
+      "id": "REQ-19",
+      "code": "RDY-CLEAR-01",
+      "text": "requirement REQ-19 is compound ('and' joins two statements): split it into one requirement per checkable statement, each with its own id and proof method",
+      "question": "Please restate REQ-19 so that one statement can be checked: split it into one requirement per checkable statement, each with its own id and proof method",
+      "level": "standard",
+      "topic": "requirement",
+      "blocking": true,
+      "repair": true
+     }
+    ],
+    "revised": [
+     "REQ-03",
+     "REQ-04",
+     "REQ-05",
+     "REQ-07",
+     "REQ-08",
+     "REQ-13",
+     "REQ-15",
+     "REQ-18",
+     "REQ-19"
+    ],
+    "refused": []
+   },
+   "mechanical": [
+    {
+     "id": "interface",
+     "code": "RDY-IF-03",
+     "text": "port clk_ref_p has no clock domain (the design has 2 clocks)",
+     "question": "Which clock is clk_ref_p synchronous to?",
+     "level": "strict",
+     "topic": "clocks and crossings",
+     "blocking": true,
+     "repair": false
+    },
+    {
+     "id": "interface",
+     "code": "RDY-IF-03",
+     "text": "port clk_ref_n has no clock domain (the design has 2 clocks)",
+     "question": "Which clock is clk_ref_n synchronous to?",
+     "level": "strict",
+     "topic": "clocks and crossings",
+     "blocking": true,
+     "repair": false
+    },
+    {
+     "id": "interface",
+     "code": "RDY-IF-03",
+     "text": "port led has no clock domain (the design has 2 clocks)",
+     "question": "Which clock is led synchronous to?",
+     "level": "strict",
+     "topic": "clocks and crossings",
+     "blocking": true,
+     "repair": false
+    },
+    {
+     "id": "interface",
+     "code": "RDY-IF-04",
+     "text": "output led has no reset value",
+     "question": "What does led drive during and just after reset?",
+     "level": "strict",
+     "topic": "reset strategy",
+     "blocking": true,
+     "repair": false
+    },
+    {
+     "id": "interface",
+     "code": "RDY-IF-05",
+     "text": "output led has no stated latency from a named input event",
+     "question": "How many cycles after which input event does led change (or is it combinational)?",
+     "level": "strict",
+     "topic": "throughput and latency",
+     "blocking": true,
+     "repair": false
+    },
+    {
+     "id": "interface",
+     "code": "RDY-IF-03",
+     "text": "port sfp_tx_disable has no clock domain (the design has 2 clocks)",
+     "question": "Which clock is sfp_tx_disable synchronous to?",
+     "level": "strict",
+     "topic": "clocks and crossings",
+     "blocking": true,
+     "repair": false
+    },
+    {
+     "id": "interface",
+     "code": "RDY-IF-04",
+     "text": "output sfp_tx_disable has no reset value",
+     "question": "What does sfp_tx_disable drive during and just after reset?",
+     "level": "strict",
+     "topic": "reset strategy",
+     "blocking": true,
+     "repair": false
+    },
+    {
+     "id": "interface",
+     "code": "RDY-IF-05",
+     "text": "output sfp_tx_disable has no stated latency from a named input event",
+     "question": "How many cycles after which input event does sfp_tx_disable change (or is it combinational)?",
+     "level": "strict",
+     "topic": "throughput and latency",
+     "blocking": true,
+     "repair": false
+    },
+    {
+     "id": "interface",
+     "code": "RDY-IF-03",
+     "text": "port core: clk, rst, h_we, h_re, h_addr[11:0], h_wdata[31:0], h_rdata[31:0], c3_clk, led[1:0] has no clock domain (the design has 2 clocks)",
+     "question": "Which clock is core: clk, rst, h_we, h_re, h_addr[11:0], h_wdata[31:0], h_rdata[31:0], c3_clk, led[1:0] synchronous to?",
+     "level": "strict",
+     "topic": "clocks and crossings",
+     "blocking": true,
+     "repair": false
+    },
+    {
+     "id": "REQ-05",
+     "code": "RDY-DEF-01",
+     "text": "a default the agent chose became this requirement and the user has not validated it",
+     "question": "The agent chose the basis of REQ-05 (a default). Do you confirm it as written?",
+     "level": "strict",
+     "topic": "requirement",
+     "blocking": true,
+     "repair": false
+    },
+    {
+     "id": "REQ-06",
+     "code": "RDY-DEF-01",
+     "text": "a default the agent chose became this requirement and the user has not validated it",
+     "question": "The agent chose the basis of REQ-06 (a default). Do you confirm it as written?",
+     "level": "strict",
+     "topic": "requirement",
+     "blocking": true,
+     "repair": false
+    },
+    {
+     "id": "REQ-09",
+     "code": "RDY-DEF-01",
+     "text": "a default the agent chose became this requirement and the user has not validated it",
+     "question": "The agent chose the basis of REQ-09 (a default). Do you confirm it as written?",
+     "level": "strict",
+     "topic": "requirement",
+     "blocking": true,
+     "repair": false
+    },
+    {
+     "id": "REQ-11",
+     "code": "RDY-DEF-01",
+     "text": "a default the agent chose became this requirement and the user has not validated it",
+     "question": "The agent chose the basis of REQ-11 (a default). Do you confirm it as written?",
+     "level": "strict",
+     "topic": "requirement",
+     "blocking": true,
+     "repair": false
+    },
+    {
+     "id": "REQ-17",
+     "code": "RDY-DEF-01",
+     "text": "a default the agent chose became this requirement and the user has not validated it",
+     "question": "The agent chose the basis of REQ-17 (a default). Do you confirm it as written?",
+     "level": "strict",
+     "topic": "requirement",
+     "blocking": true,
+     "repair": false
+    },
+    {
+     "id": "REQ-18",
+     "code": "RDY-DEF-01",
+     "text": "a default the agent chose became this requirement and the user has not validated it",
+     "question": "The agent chose the basis of REQ-18 (a default). Do you confirm it as written?",
+     "level": "strict",
+     "topic": "requirement",
+     "blocking": true,
+     "repair": false
+    }
+   ],
+   "review": {
+    "findings": [
+     {
+      "topic": "Names, files and the build target",
+      "ids": [
+       "REQ-02",
+       "REQ-23"
+      ],
+      "missing_fact": "name, width and polarity of the core input port that carries the USR_ACCESSE2 word into p1_clkmeter_core",
+      "question": "The core has no vendor primitive, so the BUILD word must reach it through a port, but the core port list does not include one. What is that port called and how wide is it (presumably 32 bits)? The bench drives the core, so it must know which port to drive.",
+      "blocking": true,
+      "why": "Without the port name the bench cannot drive the core, and a guessed name fails compilation or the BUILD read check."
+     }
+    ],
+    "verdict": "not_ready",
+    "compliance": 0
+   },
+   "probes": {
+    "count": 13,
+    "categories": [
+     "back_pressure",
+     "boundary",
+     "invalid_input",
+     "mid_operation_reset",
+     "overflow",
+     "power_up",
+     "reset",
+     "simultaneous",
+     "unmapped"
+    ],
+    "problems": []
+   },
+   "agreement": {
+    "probes": 13,
+    "agreed": 7,
+    "rate": 0.5385,
+    "disagreements": [
+     {
+      "probe": "P4",
+      "scenario": "The host writes START in the same clock cycle that it writes GATE_LEN = 5000 while not BUSY (GATE_LEN currently 2000). Both are issued in the same cycle on the bus.",
+      "question": "What is GATE_ACTUAL after this measurement completes?",
+      "category": "simultaneous",
+      "answers": {
+       "A": "unspecified",
+       "B": "write and start cannot occur together"
+      },
+      "requirements": [
+       "REQ-09",
+       "REQ-10"
+      ]
+     },
+     {
+      "probe": "P5",
+      "scenario": "A START is issued exactly in the clock cycle in which DONE sets and BUSY clears at the end of the gate.",
+      "question": "Is that START accepted, starting a new measurement?",
+      "category": "simultaneous",
+      "answers": {
+       "A": "unspecified",
+       "B": "undefined"
+      },
+      "requirements": [
+       "REQ-11",
+       "REQ-13"
+      ]
+     },
+     {
+      "probe": "P6",
+      "scenario": "The host issues h_re for address 0x000 in cycle 0 and h_re for 0x004 in cycle 1 (back-to-back reads).",
+      "question": "In cycle 3, what does h_rdata show: ID, BUILD, or something else?",
+      "category": "back_pressure",
+      "answers": {
+       "A": "unspecified",
+       "B": "build"
+      },
+      "requirements": [
+       "REQ-04",
+       "REQ-25"
+      ]
+     },
+     {
+      "probe": "P8",
+      "scenario": "The host writes 0x12345678 to the ID register at 0x000 and reads it back.",
+      "question": "What value is read back?",
+      "category": "unmapped",
+      "answers": {
+       "A": "536936449",
+       "B": "0"
+      },
+      "requirements": [
+       "REQ-06",
+       "REQ-01"
+      ]
+     },
+     {
+      "probe": "P9",
+      "scenario": "A 1 s gate is half done with BUSY=1, DONE=0, MEAS_DONE=3 when rst asserts for 16 clk_ref cycles.",
+      "question": "After reset releases, what is MEAS_DONE?",
+      "category": "mid_operation_reset",
+      "answers": {
+       "A": "unspecified",
+       "B": "0"
+      },
+      "requirements": [
+       "REQ-10",
+       "REQ-27",
+       "REQ-29"
+      ]
+     }
+    ],
+    "gaps": [
+     {
+      "probe": "P12",
+      "scenario": "LED_EN is 1 and LED 0 is currently 1; the host then writes LED_EN = 0.",
+      "question": "What is led[0] on the next cycles after the write takes effect, and when LED_EN returns to 1, does the toggle counter restart from zero?",
+      "answers": {
+       "A": "unspecified",
+       "B": "unspecified"
+      },
+      "requirements": [
+       "REQ-32",
+       "REQ-18",
+       "REQ-19"
+      ]
+     }
+    ]
+   },
+   "probe_set": [
+    {
+     "id": "P1",
+     "category": "reset",
+     "answer_kind": "choice",
+     "requirements": [
+      "REQ-07",
+      "REQ-27"
+     ]
+    },
+    {
+     "id": "P2",
+     "category": "boundary",
+     "answer_kind": "int",
+     "requirements": [
+      "REQ-08",
+      "REQ-28"
+     ]
+    },
+    {
+     "id": "P3",
+     "category": "boundary",
+     "answer_kind": "int",
+     "requirements": [
+      "REQ-08"
+     ]
+    },
+    {
+     "id": "P4",
+     "category": "simultaneous",
+     "answer_kind": "choice",
+     "requirements": [
+      "REQ-09",
+      "REQ-10"
+     ]
+    },
+    {
+     "id": "P5",
+     "category": "simultaneous",
+     "answer_kind": "choice",
+     "requirements": [
+      "REQ-11",
+      "REQ-13"
+     ]
+    },
+    {
+     "id": "P6",
+     "category": "back_pressure",
+     "answer_kind": "choice",
+     "requirements": [
+      "REQ-04",
+      "REQ-25"
+     ]
+    },
+    {
+     "id": "P7",
+     "category": "unmapped",
+     "answer_kind": "int",
+     "requirements": [
+      "REQ-05",
+      "REQ-26"
+     ]
+    },
+    {
+     "id": "P8",
+     "category": "unmapped",
+     "answer_kind": "int",
+     "requirements": [
+      "REQ-06",
+      "REQ-01"
+     ]
+    },
+    {
+     "id": "P9",
+     "category": "mid_operation_reset",
+     "answer_kind": "int",
+     "requirements": [
+      "REQ-10",
+      "REQ-27",
+      "REQ-29"
+     ]
+    },
+    {
+     "id": "P10",
+     "category": "overflow",
+     "answer_kind": "int",
+     "requirements": [
+      "REQ-30",
+      "REQ-15"
+     ]
+    },
+    {
+     "id": "P11",
+     "category": "boundary",
+     "answer_kind": "int",
+     "requirements": [
+      "REQ-12",
+      "REQ-14",
+      "REQ-08"
+     ]
+    },
+    {
+     "id": "P12",
+     "category": "invalid_input",
+     "answer_kind": "choice",
+     "requirements": [
+      "REQ-32",
+      "REQ-18",
+      "REQ-19"
+     ]
+    },
+    {
+     "id": "P13",
+     "category": "power_up",
+     "answer_kind": "choice",
+     "requirements": [
+      "REQ-20",
+      "REQ-19"
+     ]
+    }
+   ],
+   "probe_text": [
+    {
+     "id": "P1",
+     "category": "reset",
+     "requirements": [
+      "REQ-07",
+      "REQ-27"
+     ],
+     "scenario": "Immediately after the power-on reset releases, the host reads GATE_LEN at its address, and also reads GATE_ACTUAL, COUNT, MEAS_DONE, BUSY and DONE.",
+     "question": "What does GATE_LEN read, given REQ-07 says 156250000 and REQ-27 says every other register except ID is 0?",
+     "answer_kind": "choice",
+     "choices": [
+      "156250000",
+      "0",
+      "implementation-defined"
+     ]
+    },
+    {
+     "id": "P2",
+     "category": "boundary",
+     "requirements": [
+      "REQ-08",
+      "REQ-28"
+     ],
+     "scenario": "While not BUSY, the host writes GATE_LEN = 999, then reads GATE_LEN. Separately, it writes 1000 and reads, and writes 1001 and reads.",
+     "question": "What value does GATE_LEN read back after writing 999?",
+     "answer_kind": "int"
+    },
+    {
+     "id": "P3",
+     "category": "boundary",
+     "requirements": [
+      "REQ-08"
+     ],
+     "scenario": "While not BUSY, the host writes GATE_LEN = 0 and then reads it back.",
+     "question": "What value does GATE_LEN read back?",
+     "answer_kind": "int"
+    },
+    {
+     "id": "P4",
+     "category": "simultaneous",
+     "requirements": [
+      "REQ-09",
+      "REQ-10"
+     ],
+     "scenario": "The host writes START in the same clock cycle that it writes GATE_LEN = 5000 while not BUSY (GATE_LEN currently 2000). Both are issued in the same cycle on the bus.",
+     "question": "What is GATE_ACTUAL after this measurement completes?",
+     "answer_kind": "choice",
+     "choices": [
+      "2000",
+      "5000",
+      "write and start cannot occur together"
+     ]
+    },
+    {
+     "id": "P5",
+     "category": "simultaneous",
+     "requirements": [
+      "REQ-11",
+      "REQ-13"
+     ],
+     "scenario": "A START is issued exactly in the clock cycle in which DONE sets and BUSY clears at the end of the gate.",
+     "question": "Is that START accepted, starting a new measurement?",
+     "answer_kind": "choice",
+     "choices": [
+      "accepted",
+      "ignored",
+      "undefined"
+     ]
+    },
+    {
+     "id": "P6",
+     "category": "back_pressure",
+     "requirements": [
+      "REQ-04",
+      "REQ-25"
+     ],
+     "scenario": "The host issues h_re for address 0x000 in cycle 0 and h_re for 0x004 in cycle 1 (back-to-back reads).",
+     "question": "In cycle 3, what does h_rdata show: ID, BUILD, or something else?",
+     "answer_kind": "choice",
+     "choices": [
+      "ID",
+      "BUILD",
+      "unspecified"
+     ]
+    },
+    {
+     "id": "P7",
+     "category": "unmapped",
+     "requirements": [
+      "REQ-05",
+      "REQ-26"
+     ],
+     "scenario": "The host writes 0xFFFFFFFF to unmapped address 0x7F0 then reads 0x7F0.",
+     "question": "What value is read back, and is any mapped register altered?",
+     "answer_kind": "int"
+    },
+    {
+     "id": "P8",
+     "category": "unmapped",
+     "requirements": [
+      "REQ-06",
+      "REQ-01"
+     ],
+     "scenario": "The host writes 0x12345678 to the ID register at 0x000 and reads it back.",
+     "question": "What value is read back?",
+     "answer_kind": "int"
+    },
+    {
+     "id": "P9",
+     "category": "mid_operation_reset",
+     "requirements": [
+      "REQ-10",
+      "REQ-27",
+      "REQ-29"
+     ],
+     "scenario": "A 1 s gate is half done with BUSY=1, DONE=0, MEAS_DONE=3 when rst asserts for 16 clk_ref cycles.",
+     "question": "After reset releases, what is MEAS_DONE?",
+     "answer_kind": "int"
+    },
+    {
+     "id": "P10",
+     "category": "overflow",
+     "requirements": [
+      "REQ-30",
+      "REQ-15"
+     ],
+     "scenario": "MEAS_DONE is 0xFFFFFFFF and one more measurement completes.",
+     "question": "What does MEAS_DONE read afterwards?",
+     "answer_kind": "int"
+    },
+    {
+     "id": "P11",
+     "category": "boundary",
+     "requirements": [
+      "REQ-12",
+      "REQ-14",
+      "REQ-08"
+     ],
+     "scenario": "GATE_LEN is 1000 (register-clock cycles), START accepted, and clk_c3 runs at exactly the same frequency as the register clock.",
+     "question": "What COUNT value is expected (allowing the stated tolerance, give the nominal value)?",
+     "answer_kind": "int"
+    },
+    {
+     "id": "P12",
+     "category": "invalid_input",
+     "requirements": [
+      "REQ-32",
+      "REQ-18",
+      "REQ-19"
+     ],
+     "scenario": "LED_EN is 1 and LED 0 is currently 1; the host then writes LED_EN = 0.",
+     "question": "What is led[0] on the next cycles after the write takes effect, and when LED_EN returns to 1, does the toggle counter restart from zero?",
+     "answer_kind": "choice",
+     "choices": [
+      "led 0, counter restarts",
+      "led 0, counter continues",
+      "led holds 1",
+      "unspecified"
+     ]
+    },
+    {
+     "id": "P13",
+     "category": "power_up",
+     "requirements": [
+      "REQ-20",
+      "REQ-19"
+     ],
+     "scenario": "During the 16 clk_ref cycles of power-on reset hold after configuration, sample sfp_tx_disable and led.",
+     "question": "What is sfp_tx_disable during that interval?",
+     "answer_kind": "choice",
+     "choices": [
+      "1",
+      "0",
+      "undefined until reset releases"
+     ]
+    }
+   ],
+   "answers": {
+    "A": {
+     "P1": "156250000",
+     "P2": "1000",
+     "P3": "1000",
+     "P4": "unspecified",
+     "P5": "unspecified",
+     "P6": "unspecified",
+     "P7": "0",
+     "P8": "536936449",
+     "P9": "unspecified",
+     "P10": "0",
+     "P11": "1000",
+     "P12": "unspecified",
+     "P13": "1"
+    },
+    "B": {
+     "P1": "156250000",
+     "P2": "1000",
+     "P3": "1000",
+     "P4": "write and start cannot occur together",
+     "P5": "undefined",
+     "P6": "BUILD",
+     "P7": "0",
+     "P8": "0x20910001",
+     "P9": "0",
+     "P10": "0",
+     "P11": "1000",
+     "P12": "unspecified",
+     "P13": "1"
+    }
+   }
+  }
+ ],
+ "frozen": null,
+ "stop": "no answer was available for the open questions",
+ "answerer": null,
+ "finished": "2026-11-26T15:52:12Z",
+ "model_calls": 5,
+ "calls_by_role": {
+  "probes": 1,
+  "reader_a": 1,
+  "reader_b": 1,
+  "repair": 1,
+  "review": 1
+ },
+ "open": [
+  {
+   "id": "Q1",
+   "text": "The core has no vendor primitive, so the BUILD word must reach it through a port, but the core port list does not include one. What is that port called and how wide is it (presumably 32 bits)? The bench drives the core, so it must know which port to drive.",
+   "code": "RDY-REV-01",
+   "topic": "Names, files and the build target",
+   "ids": [
+    "REQ-02",
+    "REQ-23"
+   ],
+   "blocking": true,
+   "source": "reviewer",
+   "answer": null,
+   "by": null,
+   "evidence": null
+  },
+  {
+   "id": "Q2",
+   "text": "What is GATE_ACTUAL after this measurement completes? (Scenario: The host writes START in the same clock cycle that it writes GATE_LEN = 5000 while not BUSY (GATE_LEN currently 2000). Both are issued in the same cycle on the bus.) Two careful readers of the requirements disagree about this; what is the intended behaviour?",
+   "code": "RDY-READ-01",
+   "topic": "requirement",
+   "ids": [
+    "REQ-09",
+    "REQ-10"
+   ],
+   "blocking": true,
+   "source": "readers",
+   "answer": null,
+   "by": null,
+   "evidence": null
+  },
+  {
+   "id": "Q3",
+   "text": "Is that START accepted, starting a new measurement? (Scenario: A START is issued exactly in the clock cycle in which DONE sets and BUSY clears at the end of the gate.) Two careful readers of the requirements disagree about this; what is the intended behaviour?",
+   "code": "RDY-READ-01",
+   "topic": "requirement",
+   "ids": [
+    "REQ-11",
+    "REQ-13"
+   ],
+   "blocking": true,
+   "source": "readers",
+   "answer": null,
+   "by": null,
+   "evidence": null
+  },
+  {
+   "id": "Q4",
+   "text": "In cycle 3, what does h_rdata show: ID, BUILD, or something else? (Scenario: The host issues h_re for address 0x000 in cycle 0 and h_re for 0x004 in cycle 1 (back-to-back reads).) Two careful readers of the requirements disagree about this; what is the intended behaviour?",
+   "code": "RDY-READ-01",
+   "topic": "requirement",
+   "ids": [
+    "REQ-04",
+    "REQ-25"
+   ],
+   "blocking": true,
+   "source": "readers",
+   "answer": null,
+   "by": null,
+   "evidence": null
+  },
+  {
+   "id": "Q5",
+   "text": "What value is read back? (Scenario: The host writes 0x12345678 to the ID register at 0x000 and reads it back.) Two careful readers of the requirements disagree about this; what is the intended behaviour?",
+   "code": "RDY-READ-01",
+   "topic": "requirement",
+   "ids": [
+    "REQ-06",
+    "REQ-01"
+   ],
+   "blocking": true,
+   "source": "readers",
+   "answer": null,
+   "by": null,
+   "evidence": null
+  },
+  {
+   "id": "Q6",
+   "text": "After reset releases, what is MEAS_DONE? (Scenario: A 1 s gate is half done with BUSY=1, DONE=0, MEAS_DONE=3 when rst asserts for 16 clk_ref cycles.) Two careful readers of the requirements disagree about this; what is the intended behaviour?",
+   "code": "RDY-READ-01",
+   "topic": "requirement",
+   "ids": [
+    "REQ-10",
+    "REQ-27",
+    "REQ-29"
+   ],
+   "blocking": true,
+   "source": "readers",
+   "answer": null,
+   "by": null,
+   "evidence": null
+  },
+  {
+   "id": "Q7",
+   "text": "What is led[0] on the next cycles after the write takes effect, and when LED_EN returns to 1, does the toggle counter restart from zero? (Scenario: LED_EN is 1 and LED 0 is currently 1; the host then writes LED_EN = 0.) The requirements do not say; what should happen?",
+   "code": "RDY-READ-02",
+   "topic": "requirement",
+   "ids": [
+    "REQ-32",
+    "REQ-18",
+    "REQ-19"
+   ],
+   "blocking": true,
+   "source": "readers",
+   "answer": null,
+   "by": null,
+   "evidence": null
+  }
+ ]
+}

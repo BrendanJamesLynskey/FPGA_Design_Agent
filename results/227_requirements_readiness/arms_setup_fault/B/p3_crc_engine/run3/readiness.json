@@ -1,0 +1,846 @@
+{
+ "schema": "fpga-force/readiness/v1",
+ "level": "standard",
+ "limits": {
+  "max_rounds": 4,
+  "max_calls": 60,
+  "max_questions": 25
+ },
+ "checklist": "procedures/requirements-review/pre-build-review@sha256:c6081e7cd937",
+ "started": "2026-11-26T16:20:27Z",
+ "rounds": [
+  {
+   "n": 1,
+   "questions": [
+    {
+     "id": "Q1",
+     "text": "What does the read of 0x7F0 return, in hex, and is SCRATCH still 0xCAFEBABE? (Scenario: SCRATCH holds 0xCAFEBABE. A write of 0xDEADBEEF is made to unmapped address 0x7F0, then SCRATCH is read, then 0x7F0 is read.) Two careful readers of the requirements disagree about this; what is the intended behaviour?",
+     "code": "RDY-READ-01",
+     "topic": "requirement",
+     "ids": [
+      "REQ-14",
+      "REQ-23"
+     ],
+     "blocking": true,
+     "source": "readers",
+     "answer": "Reading 0x7F0 returns 0x00000000. The write to 0x7F0 is ignored, so SCRATCH still reads 0xCAFEBABE.",
+     "by": "oracle",
+     "evidence": "- Writes to read-only registers are ignored. Unmapped addresses read 0."
+    },
+    {
+     "id": "Q2",
+     "text": "How many bytes are pushed into the CRC and counted in BYTE_COUNT? (Scenario: PUSH_N is issued with TAIL_LEN = 4 (or a value above 3, e.g. 7) and wdata = 0x11223344.) The requirements do not say; what should happen?",
+     "code": "RDY-READ-02",
+     "topic": "requirement",
+     "ids": [
+      "REQ-10"
+     ],
+     "blocking": true,
+     "source": "readers",
+     "answer": "TAIL_LEN cannot hold a value above 3, because only bits 1:0 are stored. Writing 4 stores 0, so PUSH_N pushes nothing and BYTE_COUNT does not change. Writing 7 stores 3, so PUSH_N pushes the low 3 bytes of the word (0x44, 0x33, 0x22 in that order) and BYTE_COUNT increases by 3.",
+     "by": "oracle",
+     "evidence": "TAIL_LEN values above 3 cannot be written: the upper bits are ignored (only bits 1:0 are stored)."
+    },
+    {
+     "id": "Q3",
+     "text": "What does CRC read after reset: 0xFFFFFFFF, 0x00000000, or unspecified without INIT? (Scenario: SCRATCH holds 0x12345678 and a message is half pushed (5 words, CRC non-initial). rst is asserted for several clocks, then released and RST_HOLD_CYCLES elapse.) The requirements do not say; what should happen?",
+     "code": "RDY-READ-02",
+     "topic": "requirement",
+     "ids": [
+      "REQ-22",
+      "REQ-07",
+      "REQ-13"
+     ],
+     "blocking": true,
+     "source": "readers",
+     "answer": "After reset, CRC reads 0x00000000. Reset puts the internal CRC state back to the start value 0xFFFFFFFF, and the final XOR is applied on read, so no INIT is needed. The half-pushed message is discarded by the reset, and BYTE_COUNT, BUSY_CYCLES, TAIL_LEN and CTRL also go to 0.",
+     "by": "oracle",
+     "evidence": "- Reset: CRC state is the start value 0xFFFFFFFF internally, so CRC reads 0x00000000 for no bytes (the final XOR is applied on read); BYTE_COUNT 0, BUSY_CYCLES 0, TAIL_LEN 0, CTRL 0."
+    },
+    {
+     "id": "Q4",
+     "text": "After both, does BYTE_COUNT read 4 (push applied after init) or 0 (init wins) or other? (Scenario: On the same clock, an INIT write (CTRL bit 0 = 1) and a PUSH4 with wdata 0x01020304 are presented.) The requirements do not say; what should happen?",
+     "code": "RDY-READ-02",
+     "topic": "requirement",
+     "ids": [
+      "REQ-07",
+      "REQ-05"
+     ],
+     "blocking": true,
+     "source": "readers",
+     "answer": "BYTE_COUNT reads 0. INIT wins over a PUSH4 or PUSH_N in the same clock, and the push is dropped.",
+     "by": "oracle",
+     "evidence": "INIT written takes effect in the clock after the write and clears CRC state, BYTE_COUNT and BUSY_CYCLES; it wins over a PUSH4 or PUSH_N in the same clock (the push is dropped)."
+    },
+    {
+     "id": "Q5",
+     "text": "Which value does h_rdata show: old 0x11110000 or new 0xAAAA5555? (Scenario: On the same clock h_we writes SCRATCH = 0xAAAA5555 and h_re reads SCRATCH, whose previous value was 0x11110000.) The requirements do not say; what should happen?",
+     "code": "RDY-READ-02",
+     "topic": "requirement",
+     "ids": [
+      "REQ-15",
+      "REQ-24",
+      "REQ-16"
+     ],
+     "blocking": true,
+     "source": "readers",
+     "answer": null,
+     "by": null,
+     "evidence": null
+    },
+    {
+     "id": "Q6",
+     "text": "What does CTRL bit 1 read, 0 or 1? (Scenario: CTRL is written with 0x00000003 (bit 0 = 1 and bit 1 = 1) and then read the next clock after the write completes.) The requirements do not say; what should happen?",
+     "code": "RDY-READ-02",
+     "topic": "requirement",
+     "ids": [
+      "REQ-08",
+      "REQ-07"
+     ],
+     "blocking": true,
+     "source": "readers",
+     "answer": null,
+     "by": null,
+     "evidence": null
+    }
+   ],
+   "amendments": [],
+   "refused": [],
+   "repairs": {
+    "asked": [
+     {
+      "id": "REQ-06",
+      "code": "RDY-CLEAR-01",
+      "text": "requirement REQ-06 is compound ('and' joins two statements): split it into one requirement per checkable statement, each with its own id and proof method",
+      "question": "Please restate REQ-06 so that one statement can be checked: split it into one requirement per checkable statement, each with its own id and proof method",
+      "level": "standard",
+      "topic": "requirement",
+      "blocking": true,
+      "repair": true
+     },
+     {
+      "id": "REQ-13",
+      "code": "RDY-CLEAR-01",
+      "text": "requirement REQ-13 is compound ('and' joins two statements): split it into one requirement per checkable statement, each with its own id and proof method",
+      "question": "Please restate REQ-13 so that one statement can be checked: split it into one requirement per checkable statement, each with its own id and proof method",
+      "level": "standard",
+      "topic": "requirement",
+      "blocking": true,
+      "repair": true
+     },
+     {
+      "id": "REQ-14",
+      "code": "RDY-CLEAR-01",
+      "text": "requirement REQ-14 is compound ('and' joins two statements): split it into one requirement per checkable statement, each with its own id and proof method",
+      "question": "Please restate REQ-14 so that one statement can be checked: split it into one requirement per checkable statement, each with its own id and proof method",
+      "level": "standard",
+      "topic": "requirement",
+      "blocking": true,
+      "repair": true
+     },
+     {
+      "id": "REQ-15",
+      "code": "RDY-CLEAR-01",
+      "text": "requirement REQ-15 is compound ('and' joins two statements): split it into one requirement per checkable statement, each with its own id and proof method",
+      "question": "Please restate REQ-15 so that one statement can be checked: split it into one requirement per checkable statement, each with its own id and proof method",
+      "level": "standard",
+      "topic": "requirement",
+      "blocking": true,
+      "repair": true
+     }
+    ],
+    "revised": [
+     "REQ-06",
+     "REQ-13",
+     "REQ-14",
+     "REQ-15"
+    ],
+    "refused": []
+   },
+   "mechanical": [
+    {
+     "id": "REQ-06",
+     "code": "RDY-KIND-01",
+     "text": "kind 'performance' is not one of interface, timing, protocol, functional, reset, budget, board, other",
+     "question": "What kind of requirement is REQ-06?",
+     "level": "strict",
+     "topic": "requirement",
+     "blocking": true,
+     "repair": false
+    },
+    {
+     "id": "REQ-21",
+     "code": "RDY-KIND-01",
+     "text": "kind 'performance' is not one of interface, timing, protocol, functional, reset, budget, board, other",
+     "question": "What kind of requirement is REQ-21?",
+     "level": "strict",
+     "topic": "requirement",
+     "blocking": true,
+     "repair": false
+    },
+    {
+     "id": "interface",
+     "code": "RDY-IF-04",
+     "text": "output led has no reset value",
+     "question": "What does led drive during and just after reset?",
+     "level": "strict",
+     "topic": "reset strategy",
+     "blocking": true,
+     "repair": false
+    },
+    {
+     "id": "interface",
+     "code": "RDY-IF-05",
+     "text": "output led has no stated latency from a named input event",
+     "question": "How many cycles after which input event does led change (or is it combinational)?",
+     "level": "strict",
+     "topic": "throughput and latency",
+     "blocking": true,
+     "repair": false
+    },
+    {
+     "id": "interface",
+     "code": "RDY-IF-04",
+     "text": "output sfp_tx_disable has no reset value",
+     "question": "What does sfp_tx_disable drive during and just after reset?",
+     "level": "strict",
+     "topic": "reset strategy",
+     "blocking": true,
+     "repair": false
+    },
+    {
+     "id": "interface",
+     "code": "RDY-IF-05",
+     "text": "output sfp_tx_disable has no stated latency from a named input event",
+     "question": "How many cycles after which input event does sfp_tx_disable change (or is it combinational)?",
+     "level": "strict",
+     "topic": "throughput and latency",
+     "blocking": true,
+     "repair": false
+    }
+   ],
+   "review": {
+    "findings": [],
+    "verdict": "ready",
+    "compliance": 0
+   },
+   "probes": {
+    "count": 12,
+    "categories": [
+     "back_pressure",
+     "boundary",
+     "invalid_input",
+     "mid_operation_reset",
+     "power_up",
+     "reset",
+     "simultaneous",
+     "unmapped"
+    ],
+    "problems": []
+   },
+   "agreement": {
+    "probes": 12,
+    "agreed": 6,
+    "rate": 0.5,
+    "disagreements": [
+     {
+      "probe": "P6",
+      "scenario": "SCRATCH holds 0xCAFEBABE. A write of 0xDEADBEEF is made to unmapped address 0x7F0, then SCRATCH is read, then 0x7F0 is read.",
+      "question": "What does the read of 0x7F0 return, in hex, and is SCRATCH still 0xCAFEBABE?",
+      "category": "unmapped",
+      "answers": {
+       "A": "0x00000000 and scratch unchanged",
+       "B": "unspecified"
+      },
+      "requirements": [
+       "REQ-14",
+       "REQ-23"
+      ]
+     }
+    ],
+    "gaps": [
+     {
+      "probe": "P4",
+      "scenario": "PUSH_N is issued with TAIL_LEN = 4 (or a value above 3, e.g. 7) and wdata = 0x11223344.",
+      "question": "How many bytes are pushed into the CRC and counted in BYTE_COUNT?",
+      "answers": {
+       "A": "unspecified",
+       "B": "unspecified"
+      },
+      "requirements": [
+       "REQ-10"
+      ]
+     },
+     {
+      "probe": "P7",
+      "scenario": "SCRATCH holds 0x12345678 and a message is half pushed (5 words, CRC non-initial). rst is asserted for several clocks, then released and RST_HOLD_CYCLES elapse.",
+      "question": "What does CRC read after reset: 0xFFFFFFFF, 0x00000000, or unspecified without INIT?",
+      "answers": {
+       "A": "unspecified",
+       "B": "unspecified"
+      },
+      "requirements": [
+       "REQ-22",
+       "REQ-07",
+       "REQ-13"
+      ]
+     },
+     {
+      "probe": "P8",
+      "scenario": "On the same clock, an INIT write (CTRL bit 0 = 1) and a PUSH4 with wdata 0x01020304 are presented.",
+      "question": "After both, does BYTE_COUNT read 4 (push applied after init) or 0 (init wins) or other?",
+      "answers": {
+       "A": "unspecified",
+       "B": "unspecified"
+      },
+      "requirements": [
+       "REQ-07",
+       "REQ-05"
+      ]
+     },
+     {
+      "probe": "P9",
+      "scenario": "On the same clock h_we writes SCRATCH = 0xAAAA5555 and h_re reads SCRATCH, whose previous value was 0x11110000.",
+      "question": "Which value does h_rdata show: old 0x11110000 or new 0xAAAA5555?",
+      "answers": {
+       "A": "unspecified",
+       "B": "unspecified"
+      },
+      "requirements": [
+       "REQ-15",
+       "REQ-24",
+       "REQ-16"
+      ]
+     },
+     {
+      "probe": "P11",
+      "scenario": "CTRL is written with 0x00000003 (bit 0 = 1 and bit 1 = 1) and then read the next clock after the write completes.",
+      "question": "What does CTRL bit 1 read, 0 or 1?",
+      "answers": {
+       "A": "unspecified",
+       "B": "unspecified"
+      },
+      "requirements": [
+       "REQ-08",
+       "REQ-07"
+      ]
+     }
+    ]
+   },
+   "probe_set": [
+    {
+     "id": "P1",
+     "category": "boundary",
+     "answer_kind": "choice",
+     "requirements": [
+      "REQ-02",
+      "REQ-03",
+      "REQ-04",
+      "REQ-07"
+     ]
+    },
+    {
+     "id": "P2",
+     "category": "boundary",
+     "answer_kind": "int",
+     "requirements": [
+      "REQ-01",
+      "REQ-03",
+      "REQ-04"
+     ]
+    },
+    {
+     "id": "P3",
+     "category": "boundary",
+     "answer_kind": "int",
+     "requirements": [
+      "REQ-03",
+      "REQ-04",
+      "REQ-10"
+     ]
+    },
+    {
+     "id": "P4",
+     "category": "invalid_input",
+     "answer_kind": "int",
+     "requirements": [
+      "REQ-10"
+     ]
+    },
+    {
+     "id": "P5",
+     "category": "boundary",
+     "answer_kind": "int",
+     "requirements": [
+      "REQ-09",
+      "REQ-04"
+     ]
+    },
+    {
+     "id": "P6",
+     "category": "unmapped",
+     "answer_kind": "choice",
+     "requirements": [
+      "REQ-14",
+      "REQ-23"
+     ]
+    },
+    {
+     "id": "P7",
+     "category": "mid_operation_reset",
+     "answer_kind": "choice",
+     "requirements": [
+      "REQ-22",
+      "REQ-07",
+      "REQ-13"
+     ]
+    },
+    {
+     "id": "P8",
+     "category": "simultaneous",
+     "answer_kind": "choice",
+     "requirements": [
+      "REQ-07",
+      "REQ-05"
+     ]
+    },
+    {
+     "id": "P9",
+     "category": "simultaneous",
+     "answer_kind": "choice",
+     "requirements": [
+      "REQ-15",
+      "REQ-24",
+      "REQ-16"
+     ]
+    },
+    {
+     "id": "P10",
+     "category": "back_pressure",
+     "answer_kind": "int",
+     "requirements": [
+      "REQ-05",
+      "REQ-04"
+     ]
+    },
+    {
+     "id": "P11",
+     "category": "reset",
+     "answer_kind": "choice",
+     "requirements": [
+      "REQ-08",
+      "REQ-07"
+     ]
+    },
+    {
+     "id": "P12",
+     "category": "power_up",
+     "answer_kind": "bool",
+     "requirements": [
+      "REQ-17",
+      "REQ-07"
+     ]
+    }
+   ],
+   "probe_text": [
+    {
+     "id": "P1",
+     "category": "boundary",
+     "requirements": [
+      "REQ-02",
+      "REQ-03",
+      "REQ-04",
+      "REQ-07"
+     ],
+     "scenario": "After reset, INIT is written (CTRL bit 0 = 1) and no PUSH4 or PUSH_N is issued. CRC is then read.",
+     "question": "What 32-bit value does the CRC register read, in hex: 0x00000000 or 0xFFFFFFFF?",
+     "answer_kind": "choice",
+     "choices": [
+      "0x00000000",
+      "0xFFFFFFFF",
+      "0x00000000 only if read before INIT, else 0xFFFFFFFF"
+     ]
+    },
+    {
+     "id": "P2",
+     "category": "boundary",
+     "requirements": [
+      "REQ-01",
+      "REQ-03",
+      "REQ-04"
+     ],
+     "scenario": "After INIT, a 400-byte message is pushed as 100 PUSH4 operations, one per clock for the first 16 and then with gaps.",
+     "question": "What value does BYTE_COUNT read after the message?",
+     "answer_kind": "int"
+    },
+    {
+     "id": "P3",
+     "category": "boundary",
+     "requirements": [
+      "REQ-03",
+      "REQ-04",
+      "REQ-10"
+     ],
+     "scenario": "After INIT, 3 PUSH4 operations are issued followed by one PUSH_N with TAIL_LEN = 3 (a 15-byte message).",
+     "question": "What values do BYTE_COUNT and BUSY_CYCLES read? Give BUSY_CYCLES only.",
+     "answer_kind": "int"
+    },
+    {
+     "id": "P4",
+     "category": "invalid_input",
+     "requirements": [
+      "REQ-10"
+     ],
+     "scenario": "PUSH_N is issued with TAIL_LEN = 4 (or a value above 3, e.g. 7) and wdata = 0x11223344.",
+     "question": "How many bytes are pushed into the CRC and counted in BYTE_COUNT?",
+     "answer_kind": "int"
+    },
+    {
+     "id": "P5",
+     "category": "boundary",
+     "requirements": [
+      "REQ-09",
+      "REQ-04"
+     ],
+     "scenario": "After INIT, 2 PUSH4 operations (8 bytes) are done, then PUSH_N with TAIL_LEN = 0 and wdata = 0xFFFFFFFF.",
+     "question": "What does BYTE_COUNT read after the PUSH_N?",
+     "answer_kind": "int"
+    },
+    {
+     "id": "P6",
+     "category": "unmapped",
+     "requirements": [
+      "REQ-14",
+      "REQ-23"
+     ],
+     "scenario": "SCRATCH holds 0xCAFEBABE. A write of 0xDEADBEEF is made to unmapped address 0x7F0, then SCRATCH is read, then 0x7F0 is read.",
+     "question": "What does the read of 0x7F0 return, in hex, and is SCRATCH still 0xCAFEBABE?",
+     "answer_kind": "choice",
+     "choices": [
+      "0x00000000 and SCRATCH unchanged",
+      "0xDEADBEEF and SCRATCH unchanged",
+      "0x00000000 and SCRATCH changed",
+      "unspecified"
+     ]
+    },
+    {
+     "id": "P7",
+     "category": "mid_operation_reset",
+     "requirements": [
+      "REQ-22",
+      "REQ-07",
+      "REQ-13"
+     ],
+     "scenario": "SCRATCH holds 0x12345678 and a message is half pushed (5 words, CRC non-initial). rst is asserted for several clocks, then released and RST_HOLD_CYCLES elapse.",
+     "question": "What does CRC read after reset: 0xFFFFFFFF, 0x00000000, or unspecified without INIT?",
+     "answer_kind": "choice",
+     "choices": [
+      "0xFFFFFFFF",
+      "0x00000000",
+      "retains pre-reset value",
+      "unspecified"
+     ]
+    },
+    {
+     "id": "P8",
+     "category": "simultaneous",
+     "requirements": [
+      "REQ-07",
+      "REQ-05"
+     ],
+     "scenario": "On the same clock, an INIT write (CTRL bit 0 = 1) and a PUSH4 with wdata 0x01020304 are presented.",
+     "question": "After both, does BYTE_COUNT read 4 (push applied after init) or 0 (init wins) or other?",
+     "answer_kind": "choice",
+     "choices": [
+      "4",
+      "0",
+      "unspecified"
+     ]
+    },
+    {
+     "id": "P9",
+     "category": "simultaneous",
+     "requirements": [
+      "REQ-15",
+      "REQ-24",
+      "REQ-16"
+     ],
+     "scenario": "On the same clock h_we writes SCRATCH = 0xAAAA5555 and h_re reads SCRATCH, whose previous value was 0x11110000.",
+     "question": "Which value does h_rdata show: old 0x11110000 or new 0xAAAA5555?",
+     "answer_kind": "choice",
+     "choices": [
+      "0x11110000",
+      "0xAAAA5555",
+      "unspecified"
+     ]
+    },
+    {
+     "id": "P10",
+     "category": "back_pressure",
+     "requirements": [
+      "REQ-05",
+      "REQ-04"
+     ],
+     "scenario": "16 PUSH4 operations are issued on 16 consecutive clocks after INIT, then BUSY_CYCLES is read after the datapath goes idle.",
+     "question": "What does BUSY_CYCLES read?",
+     "answer_kind": "int"
+    },
+    {
+     "id": "P11",
+     "category": "reset",
+     "requirements": [
+      "REQ-08",
+      "REQ-07"
+     ],
+     "scenario": "CTRL is written with 0x00000003 (bit 0 = 1 and bit 1 = 1) and then read the next clock after the write completes.",
+     "question": "What does CTRL bit 1 read, 0 or 1?",
+     "answer_kind": "choice",
+     "choices": [
+      "0",
+      "1",
+      "unspecified"
+     ]
+    },
+    {
+     "id": "P12",
+     "category": "power_up",
+     "requirements": [
+      "REQ-17",
+      "REQ-07"
+     ],
+     "scenario": "rst is high while the MMCM is unlocked at power-up; BUILD is read right after reset release and CRC is read without any INIT.",
+     "question": "What is sfp_tx_disable's value during reset, and is it 1?",
+     "answer_kind": "bool"
+    }
+   ],
+   "answers": {
+    "A": {
+     "P1": "0xFFFFFFFF",
+     "P2": "400",
+     "P3": "3",
+     "P4": "unspecified",
+     "P5": "8",
+     "P6": "0x00000000 and SCRATCH unchanged",
+     "P7": "unspecified",
+     "P8": "unspecified",
+     "P9": "unspecified",
+     "P10": "16",
+     "P11": "unspecified",
+     "P12": "true"
+    },
+    "B": {
+     "P1": "0xFFFFFFFF",
+     "P2": "400",
+     "P3": "3",
+     "P4": "unspecified",
+     "P5": "8",
+     "P6": "unspecified",
+     "P7": "unspecified",
+     "P8": "unspecified",
+     "P9": "unspecified",
+     "P10": "16",
+     "P11": "unspecified",
+     "P12": "yes"
+    }
+   }
+  },
+  {
+   "n": 2,
+   "questions": [],
+   "amendments": [],
+   "refused": [],
+   "repairs": {
+    "asked": [
+     {
+      "id": "REQ-25",
+      "code": "RDY-CLEAR-01",
+      "text": "requirement REQ-25 is compound ('and' joins two statements): split it into one requirement per checkable statement, each with its own id and proof method",
+      "question": "Please restate REQ-25 so that one statement can be checked: split it into one requirement per checkable statement, each with its own id and proof method",
+      "level": "standard",
+      "topic": "requirement",
+      "blocking": true,
+      "repair": true
+     },
+     {
+      "id": "REQ-28",
+      "code": "RDY-CLEAR-01",
+      "text": "requirement REQ-28 is compound ('and' joins two statements): split it into one requirement per checkable statement, each with its own id and proof method",
+      "question": "Please restate REQ-28 so that one statement can be checked: split it into one requirement per checkable statement, each with its own id and proof method",
+      "level": "standard",
+      "topic": "requirement",
+      "blocking": true,
+      "repair": true
+     }
+    ],
+    "revised": [
+     "REQ-25",
+     "REQ-28"
+    ],
+    "refused": []
+   },
+   "mechanical": [
+    {
+     "id": "REQ-06",
+     "code": "RDY-KIND-01",
+     "text": "kind 'performance' is not one of interface, timing, protocol, functional, reset, budget, board, other",
+     "question": "What kind of requirement is REQ-06?",
+     "level": "strict",
+     "topic": "requirement",
+     "blocking": true,
+     "repair": false
+    },
+    {
+     "id": "REQ-21",
+     "code": "RDY-KIND-01",
+     "text": "kind 'performance' is not one of interface, timing, protocol, functional, reset, budget, board, other",
+     "question": "What kind of requirement is REQ-21?",
+     "level": "strict",
+     "topic": "requirement",
+     "blocking": true,
+     "repair": false
+    },
+    {
+     "id": "interface",
+     "code": "RDY-IF-04",
+     "text": "output led has no reset value",
+     "question": "What does led drive during and just after reset?",
+     "level": "strict",
+     "topic": "reset strategy",
+     "blocking": true,
+     "repair": false
+    },
+    {
+     "id": "interface",
+     "code": "RDY-IF-05",
+     "text": "output led has no stated latency from a named input event",
+     "question": "How many cycles after which input event does led change (or is it combinational)?",
+     "level": "strict",
+     "topic": "throughput and latency",
+     "blocking": true,
+     "repair": false
+    },
+    {
+     "id": "interface",
+     "code": "RDY-IF-04",
+     "text": "output sfp_tx_disable has no reset value",
+     "question": "What does sfp_tx_disable drive during and just after reset?",
+     "level": "strict",
+     "topic": "reset strategy",
+     "blocking": true,
+     "repair": false
+    },
+    {
+     "id": "interface",
+     "code": "RDY-IF-05",
+     "text": "output sfp_tx_disable has no stated latency from a named input event",
+     "question": "How many cycles after which input event does sfp_tx_disable change (or is it combinational)?",
+     "level": "strict",
+     "topic": "throughput and latency",
+     "blocking": true,
+     "repair": false
+    }
+   ],
+   "review": {
+    "findings": [],
+    "verdict": "ready",
+    "compliance": 0
+   },
+   "probes": {
+    "count": 0,
+    "categories": [],
+    "problems": [
+     "no probe of category 'reset', which applies to this design",
+     "no probe of category 'unmapped', which applies to this design"
+    ]
+   }
+  }
+ ],
+ "frozen": {
+  "schema": "fpga-force/readiness/v1",
+  "frozen_at": "2026-11-26T16:21:58Z",
+  "version": 1,
+  "level": "standard",
+  "rounds": 2,
+  "why": "readiness gate passed",
+  "hash": "1f82de333d7d8b8245041973",
+  "ids": [
+   "REQ-01",
+   "REQ-02",
+   "REQ-03",
+   "REQ-04",
+   "REQ-05",
+   "REQ-06",
+   "REQ-07",
+   "REQ-08",
+   "REQ-09",
+   "REQ-10",
+   "REQ-11",
+   "REQ-12",
+   "REQ-13",
+   "REQ-14",
+   "REQ-15",
+   "REQ-16",
+   "REQ-17",
+   "REQ-18",
+   "REQ-19",
+   "REQ-20",
+   "REQ-21",
+   "REQ-22",
+   "REQ-23",
+   "REQ-24",
+   "REQ-25",
+   "REQ-26",
+   "REQ-27",
+   "REQ-28",
+   "REQ-29",
+   "REQ-30"
+  ],
+  "reopened": [],
+  "status": "frozen",
+  "rows": {
+   "REQ-01": "07427cfca78f997d",
+   "REQ-02": "5692e00a18cdafd8",
+   "REQ-03": "b8e01cd7bb67b8c0",
+   "REQ-04": "fa86a7b87a15922a",
+   "REQ-05": "48e4445f56b46d2c",
+   "REQ-06": "0da4406f91b6dd98",
+   "REQ-07": "44b0e1e449bee21c",
+   "REQ-08": "fff70c180d46b700",
+   "REQ-09": "ede990449babc301",
+   "REQ-10": "933b0f230256e46b",
+   "REQ-11": "6f88e16ef31d965a",
+   "REQ-12": "3d8d979821b5f693",
+   "REQ-13": "67c75226d010e645",
+   "REQ-14": "87a4a8b63f53596e",
+   "REQ-15": "f5e16ca2d8dc2fcd",
+   "REQ-16": "76b0aa6ef129e046",
+   "REQ-17": "0d1d2fee54f293ab",
+   "REQ-18": "1f4791590cd43a3a",
+   "REQ-19": "da2417216c38f2b2",
+   "REQ-20": "3146d1ff524617a5",
+   "REQ-21": "66c0b23b5eac0c51",
+   "REQ-22": "529792b810c30455",
+   "REQ-23": "d6f1a77e89e040c2",
+   "REQ-24": "0ccb54ab23da297d",
+   "REQ-25": "5f7258ee71b3dcaa",
+   "REQ-26": "b6ba6e8204c42c38",
+   "REQ-27": "962f89ee4dc5511b",
+   "REQ-28": "b7b0b4ba63ed7d0a",
+   "REQ-29": "66983b8a8825b73d",
+   "REQ-30": "ab21a4ffb4778162"
+  }
+ },
+ "stop": null,
+ "answerer": "oracle",
+ "finished": "2026-11-26T16:21:58Z",
+ "model_calls": 9,
+ "calls_by_role": {
+  "amend": 1,
+  "probes": 2,
+  "reader_a": 1,
+  "reader_b": 1,
+  "repair": 2,
+  "review": 2
+ },
+ "open": []
+}

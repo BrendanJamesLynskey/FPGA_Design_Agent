@@ -1,0 +1,47 @@
+{
+ "_note": "recorded replies (Sonnet 5.5 low as generator, Haiku 5.5 low as back-translator), 2026-11-26, brief 227; the statuses below are what the flow made of them",
+ "replies": {
+  "REQ-01": {
+   "generator": "{\"kind\": \"reset\", \"ante\": \"1\", \"cons\": \"!busy && !valid\", \"why\": \"On the edge right after a cycle with rst high, busy and valid must both be low.\"}",
+   "back": "In the cycle right after reset was high, busy and valid are both low (`!busy && !valid` is true)."
+  },
+  "REQ-02": {
+   "generator": "{\"kind\": \"next\", \"ante\": \"start && !busy\", \"cons\": \"busy\", \"why\": \"If start is high while busy is low on one clk_ref edge, busy is high on the next edge.\"}",
+   "back": "Whenever `start && !busy` was true in the previous clock cycle, `busy` is true in the current clock cycle."
+  },
+  "REQ-03": {
+   "generator": "{\"kind\":\"same\",\"ante\":\"$fell(busy)\",\"cons\":\"$past(busy,1) && $past(busy,2) && $past(busy,3) && $past(busy,4) && $past(busy,5) && $past(busy,6) && $past(busy,7) && $past(busy,8) && !$past(busy,9)\",\"why\":\"When busy falls, it was high for exactly the 8 previous clk_ref cycles and low the cycle before that, so the high pulse lasted exactly 8 cycles.\"}",
+   "back": "Whenever `busy` falls (`$fell(busy)`), `busy` was high in each of the 8 preceding clock cycles (`$past(busy,1)` through `$past(busy,8)`) and low 9 clock cycles earlier (`!$past(busy,9)`)."
+  },
+  "REQ-04": {
+   "generator": "{\"kind\": \"same\", \"ante\": \"$fell(busy)\", \"cons\": \"valid\", \"why\": \"On a falling edge of busy (busy was 1 previous cycle, now 0), valid must be high in that same cycle.\"}",
+   "back": "Whenever `$fell(busy)` is true in a clock cycle, `valid` is true in that same clock cycle."
+  },
+  "REQ-05": {
+   "generator": "{\"kind\": \"next\", \"ante\": \"reg_rd\", \"cons\": \"reg_rvalid\", \"why\": \"reg_rvalid must be high one clk_ref cycle after any cycle where reg_rd was high.\"}",
+   "back": "Whenever reg_rd was true in the previous clock cycle, reg_rvalid is true now."
+  },
+  "REQ-06": {
+   "generator": "{\"kind\": \"next\", \"ante\": \"start && busy\", \"cons\": \"!valid\", \"why\": \"One cycle after an edge where start and busy are both high, valid must be low.\"}",
+   "back": "If `start` and `busy` were both high in the previous clock cycle, then `valid` must be low now."
+  },
+  "REQ-07": {
+   "generator": "{\"kind\": \"next\", \"ante\": \"count == 32'hFFFFFFFF\", \"cons\": \"ovf\", \"why\": \"One clk_ref cycle after count equals 4294967295, ovf must be high.\"}",
+   "back": "Whenever `count` was equal to 32'hFFFFFFFF in the previous clock cycle, `ovf` must be high in the current clock cycle."
+  },
+  "REQ-08": {
+   "generator": "{\"kind\": \"none\", \"why\": \"The requirement compares count with the number of clk_in rising edges inside the window. No port gives that edge count or the window length, and the property would need a reference counter of clk_in edges, which cannot be written with the allowed operators. The only ports that hint at the window are busy and valid, so it would also depend on the unstated meaning of the window.\"}",
+   "back": ""
+  }
+ },
+ "statuses": {
+  "REQ-01": "proved",
+  "REQ-02": "proved",
+  "REQ-03": "mismatch",
+  "REQ-04": "proved",
+  "REQ-05": "proved",
+  "REQ-06": "mismatch",
+  "REQ-07": "vacuous",
+  "REQ-08": "unusable"
+ }
+}
