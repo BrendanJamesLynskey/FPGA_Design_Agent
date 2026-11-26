@@ -3,13 +3,14 @@ source: designs/b194_assurance/handover.yaml; human view: README.md; refresh: py
 
 ## identity
 kind=demonstration produced_by=session part=xc7a100tcsg324-1 board=none (out of context) top=a194_core tool=Vivado 2026.1
+verified: not assessed: no requirements recorded (no verif/testplan.yaml), so nothing here is traced to a requirement (record: designs/b194_assurance/VERIFIED.md, designs/b194_assurance/verified.json; definition: docs/verified.md)
 
 ## summary
 A burst sequencer in front of a 512 x 64 FIFO with an accumulating checksum, AXI4-Stream handshakes. Each reliability structure is a parameter (ECC 0/1/2, parity, safe-state FSM, TMR on the remaining-words counter, watchdog) so that its area, Fmax, latency and what it catches in a seeded single-event-upset simulation are measured against the plain design. It is the demonstration design of the verification profiles and is not a held-out benchmark task.
 not: a held-out or benchmark task; it was written for the measurements of docs/assurance.md; a board design; it has no pins, no constraints and was only built out of context; a failure-rate figure; the fault injection is seeded single bit flips in simulation
 
 ## state
-stage=simulated vivado=2026.1 kb_pin=5e2eab8 build_id=none
+stage=simulated vivado=2026.1 kb_pin=6185830 build_id=none
 
 ## interface
 clk aclk 200MHz

@@ -13,6 +13,7 @@ from pathlib import Path
 
 import pytest
 
+os.environ.setdefault("FDA_LAB_FILE", "none")                  # brief 221: no test reads the owner's lab profile (a private bench file in the user's config folder)
 sys.path.insert(0, str(Path(__file__).resolve().parent))      # importlib import mode does not add the root
 from tools.git_guard import describe_change, repo_state
 

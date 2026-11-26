@@ -4,6 +4,8 @@ Code-density histogram for converter tests: counts samples by their top BIN_W bi
 
 Generated from `ip.yaml` by `flow/net/ipdoc.py`; do not edit by hand.
 
+**Verification: not assessed: no requirements recorded (no verif/testplan.yaml), so nothing here is traced to a requirement.** [VERIFIED.md](VERIFIED.md) is the generated, hash-pinned record; [what the label means](../../docs/verified.md).
+
 Status: simulated bit-exact against hil/instruments/models.py in both variants and measured out of context on an Artix-7 (xc7a100t, Vivado 2026.1); not yet run on a board (needs an on-chip or external converter input).
 
 ## Parameters

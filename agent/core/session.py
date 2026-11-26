@@ -63,6 +63,9 @@ class Session:
     #: brief 196: the run directory whose ``policy.json`` pins the run's settings (outside the design directory, so no role reaches it); the
     #: ``build`` tool passes the pinned security request to the flow in ``FDA_SECURITY``. None: no pin (a hand-run session).
     policy_run_dir: Path | None = None
+    #: brief 222: the run directory whose ``permissions.json`` is the run's permission policy; every tool call is checked against it
+    #: (``agent.core.permissions.tool_gate``). None: a hand-run session, which still passes the never-rules.
+    permissions_run_dir: Path | None = None
 
     def __post_init__(self) -> None:
         self.design = Path(self.design).resolve()

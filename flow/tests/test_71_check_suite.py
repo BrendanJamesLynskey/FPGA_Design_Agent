@@ -265,8 +265,9 @@ def test_vivado_session_is_one_call_for_all_missing_reports(tmp_path: Path) -> N
     rep = C.run(d, "all", "synth", vivado=fake)
     # brief 204a and 206: the report-driven checks and init_scan ask for their reports in the same one session
     # brief 208: clock_mux, and the clock_interaction it reads (this mini build has none)
-    assert calls == [["clock_interaction", "clock_mux", "clock_networks", "clock_utilization", "cmt", "congestion", "control_sets", "high_fanout",
-                      "init_scan", "logic_levels", "reset_scan"]]
+    # brief 219 fix 2: report_clock_networks (a Vivado 2026.1 crash risk) runs last, in a session of its own
+    assert calls == [["clock_interaction", "clock_mux", "clock_utilization", "cmt", "congestion", "control_sets", "high_fanout",
+                      "init_scan", "logic_levels", "reset_scan"], ["clock_networks"]]
     st = {c["check"]: c for c in rep["checks"]}
     assert st["resets"]["status"] == "pass" and not st["resets"]["incomplete"]
     assert st["clocking"]["parts"]["cmt"].startswith("not run: cmt not run")

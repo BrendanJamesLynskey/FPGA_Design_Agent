@@ -4,6 +4,8 @@ AXI4-Lite crossbar, N_M masters to N_S slaves: a write and a read arbiter per sl
 
 Generated from `ip.yaml` by `flow/net/ipdoc.py`; do not edit by hand.
 
+**Verification: not assessed: no requirements recorded (no verif/testplan.yaml), so nothing here is traced to a requirement.** [VERIFIED.md](VERIFIED.md) is the generated, hash-pinned record; [what the label means](../../docs/verified.md).
+
 Status: simulated (with the AXI4-Lite protocol checker axi_tx/rtl/axil_checker.sv on every link); built inside designs/b65a_axil_soc.
 
 ## Parameters

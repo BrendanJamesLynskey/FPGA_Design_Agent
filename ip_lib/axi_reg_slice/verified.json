@@ -1,0 +1,86 @@
+{
+ "counts": {
+  "requirements": 0
+ },
+ "criteria": [
+  {
+   "detail": "no requirements recorded",
+   "id": "evidence",
+   "ids": [],
+   "state": "not_measured",
+   "title": "Every requirement has passing evidence"
+  },
+  {
+   "detail": "no requirements recorded",
+   "id": "agreement",
+   "ids": [],
+   "state": "not_measured",
+   "title": "Every requirement is agreed (human, or delegated and labelled so)"
+  },
+  {
+   "detail": "no requirements recorded",
+   "id": "method_mix",
+   "ids": [],
+   "state": "not_measured",
+   "title": "Every requirement meets its required method mix"
+  },
+  {
+   "detail": "no requirements recorded",
+   "id": "mutation",
+   "ids": [],
+   "state": "not_measured",
+   "title": "The bench passes the mutation floor"
+  },
+  {
+   "detail": "no requirements recorded",
+   "id": "formal_rigour",
+   "ids": [],
+   "state": "not_measured",
+   "title": "The formal results pass the rigour checks"
+  },
+  {
+   "detail": "no requirements recorded",
+   "id": "fresh",
+   "ids": [],
+   "state": "not_measured",
+   "title": "The evidence is fresh"
+  }
+ ],
+ "declared": {
+  "note": "the entry's own declared status; not traced to requirements and not checked by this record",
+  "source": "ip.yaml",
+  "status": "simulated clock by clock against the pipe_reg model on all five channels (cocotb, Icarus Verilog 12) at seven per-channel mode mixes; 6 of 6 seeded faults caught; no formal proof of its own (every channel is a pipe_reg_core chain, proved in ip_lib/pipe_reg); not built with Vivado yet (queued); not run on a board"
+ },
+ "definition": "docs/verified.md",
+ "git_commit": "078b3651218f0040aba81ea265198cadbb340ce1",
+ "kind": "ip_lib",
+ "label": "not assessed: no requirements recorded (no verif/testplan.yaml), so nothing here is traced to a requirement",
+ "label_kind": "not_assessed",
+ "limits": [
+  "Verified never means interoperability with a device the design talks to unless a board measurement against that device is listed in the record; a design that checks its own output against its own model accepts its own symmetric mistakes.",
+  "Verified never means timing beyond the stated corner: a post-route timing result is for the part, speed grade, clock and tool version in its evidence file, not for other corners, temperatures or devices.",
+  "Verified never means beyond the widths and depths checked: a simulation covers the vectors it ran, a bounded formal result covers the stated depth only, and a per-width proof covers the widths it names; only a Lean proof marked all widths covers every width, and only for its model.",
+  "Verified never means the requirement is the right one: the text of a requirement is the human's check (or the planner's, where the record says delegated), and a record shows that checks exist and pass, not that nothing was left out.",
+  "Verified never means a hardware or board result unless a board measurement item is listed; a simulation is not the board.",
+  "Verified is about the files in the manifest at the hashes given. A change to any of them makes the record out of date (the CI check fails), and the evidence stale until it is re-recorded.",
+  "An agreement or acceptance recorded as delegated is the planner's decision on the owner's delegation, not a human sign-off; the record counts it apart."
+ ],
+ "manifest": {
+  "ip_lib/axi_reg_slice/faults.yaml": "91d894f68e3fccaa67462229f8710ac39d9571b51c1944408bcc3a8b6f37270a",
+  "ip_lib/axi_reg_slice/ip.yaml": "85a1f015ff93da8a84cdb2552ce4165100929cc7eee577f5fcbbd7fdefd6ceee",
+  "ip_lib/axi_reg_slice/rtl/axi4_reg_slice.sv": "c065132083cf4f8642b949dd121a3185fa77bd783383d016408711f2f0103386",
+  "ip_lib/axi_reg_slice/rtl/axil_reg_slice.sv": "d8f019eddb178d05305aec93719acf8e7bc4659ae9f53114c9b169e501191762",
+  "ip_lib/axi_reg_slice/tb/axi_slice_cocotb.py": "889cf548c60bd17d8a2c960dc88d255bf0860df12008b4bbb0c6f5f7d3f72b01",
+  "ip_lib/axi_reg_slice/tb/test_axi_reg_slice_rtl.py": "3ccd9122a0745a606994319011248f78f686fe7d0de3698b8f31ebd7e00f16bd"
+ },
+ "name": "axi_reg_slice",
+ "path": "ip_lib/axi_reg_slice",
+ "reproduce": [
+  {
+   "cmd": "python -m pytest -q ip_lib/axi_reg_slice/tb",
+   "what": "the simulation tests"
+  }
+ ],
+ "requirements": [],
+ "schema": "fda-verified/1"
+}

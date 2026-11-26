@@ -10,6 +10,9 @@
   read) and the model's price table in the model config (``models:`` in ``agent.models.config``): never from a guess. A model with no
   price keeps ``cost=None`` (the per-call ceiling) and warns once. The stable prefix is marked for prompt caching, and ``temperature``
   is left out for models the config says reject it.
+  Brief 224: every request streams (``"stream": true``, server-sent events read with the same ``urllib`` call), so a long reply is not
+  killed by ``timeout_s`` (which is then the idle time between two events, not the length of the reply). A stream that drops, or
+  that ends without ``message_stop``, is asked for again once (``retries``) and then raised as an error, never returned as a reply.
 - :class:`ClaudeCodeChat`: a messages -> Reply adapter over one tool-less headless ``claude -p`` call (the subscription's
   "API-like mode"), for call sites that only need text.
 
@@ -19,6 +22,7 @@ may also come from the owner's mode-600 file, as before. A key is never printed,
 
 from __future__ import annotations
 
+import http.client
 import json
 import os
 import sys
@@ -133,8 +137,81 @@ def usage_cost(usage: dict[str, Any], price: dict[str, float] | None) -> float |
                   + n("cache_read_input_tokens") * p_r) / 1e6, 8)
 
 
+class StreamDropped(RuntimeError):
+    """A streamed reply that ended early, carried an error event, or could not be assembled (brief 224)."""
+
+
+#: error events of a stream that are worth one more attempt (the API's overloaded and internal errors); any other is raised at once
+_RETRY_STREAM_ERRORS = ("overloaded_error", "api_error")
+
+
+def assemble_stream(lines) -> dict[str, Any]:
+    """The Messages API's server-sent events, as the non-streaming response body (``content``, ``usage``, ``stop_reason``). ``lines`` is
+    anything that yields the response lines (bytes or str). Usage: ``message_start`` carries the input and cache tokens, each
+    ``message_delta`` the output tokens so far; the last value of each field wins. Raises :class:`StreamDropped` when the stream has an
+    error event, ends before ``message_stop``, or a tool call that was not cut off at the limit has arguments that are not JSON."""
+    blocks: dict[int, dict[str, Any]] = {}
+    usage: dict[str, int] = {}
+    stop: str | None = None
+    done = False
+    for raw in lines:
+        line = (raw.decode("utf-8", "replace") if isinstance(raw, bytes) else raw).strip()
+        if not line.startswith("data:"):
+            continue
+        try:
+            ev = json.loads(line[5:].strip())
+        except ValueError:
+            raise StreamDropped("a stream event was not JSON") from None
+        t = ev.get("type")
+        if t == "message_start":
+            usage.update({k: int(v) for k, v in ((ev.get("message") or {}).get("usage") or {}).items() if isinstance(v, int)})
+        elif t == "content_block_start":
+            b = dict(ev.get("content_block") or {})
+            if b.get("type") == "tool_use":
+                b["_json"] = ""
+            elif b.get("type") == "text":
+                b["text"] = b.get("text") or ""
+            blocks[int(ev.get("index", len(blocks)))] = b
+        elif t == "content_block_delta":
+            b = blocks.get(int(ev.get("index", -1)))
+            d = ev.get("delta") or {}
+            if b is None:
+                continue
+            if d.get("type") == "text_delta" and b.get("type") == "text":
+                b["text"] += d.get("text") or ""
+            elif d.get("type") == "input_json_delta" and b.get("type") == "tool_use":
+                b["_json"] += d.get("partial_json") or ""
+            # thinking and signature deltas are not kept: a reply's thinking is not replayed to the next call
+        elif t == "message_delta":
+            stop = (ev.get("delta") or {}).get("stop_reason") or stop
+            usage.update({k: int(v) for k, v in (ev.get("usage") or {}).items() if isinstance(v, int)})
+        elif t == "message_stop":
+            done = True
+        elif t == "error":
+            err = ev.get("error") or {}
+            e = StreamDropped(f"stream error event: {err.get('type')}: {str(err.get('message'))[:200]}")
+            e.retry = err.get("type") in _RETRY_STREAM_ERRORS                       # type: ignore[attr-defined]
+            raise e
+    if not done:
+        raise StreamDropped("the stream ended before message_stop")
+    content: list[dict[str, Any]] = []
+    for i in sorted(blocks):
+        b = blocks[i]
+        if b.get("type") == "tool_use":
+            try:
+                b["input"] = json.loads(b.pop("_json") or "{}")
+            except ValueError:
+                if stop != "max_tokens":                                              # a call cut off at the limit is dropped by the caller
+                    raise StreamDropped("a tool call's arguments were not complete JSON") from None
+                b["input"] = {}
+            content.append(b)
+        elif b.get("type") == "text":
+            content.append(b)
+    return {"content": content, "usage": usage, "stop_reason": stop}
+
+
 class AnthropicClient:
-    """The Messages API over plain HTTPS. ``opener`` is the injection point of the tests."""
+    """The Messages API over plain HTTPS, streamed. ``opener`` is the injection point of the tests."""
 
     def __init__(self, model: str, *, base_url: str = "https://api.anthropic.com", key_env: str | None = "ANTHROPIC_API_KEY", timeout_s: float = 180.0,
                  temperature: float | None = 0.2, max_tokens: int = 8192, stop: list[str] | None = None, thinking_budget: int | None = None,
@@ -205,7 +282,7 @@ class AnthropicClient:
         system, msgs, tl = self.to_anthropic(messages, tools)
         if self.cache:
             system, msgs, tl = self.mark_cache(system, msgs, tl)
-        body: dict[str, Any] = {"model": self.model, "max_tokens": self.max_tokens, "messages": msgs}
+        body: dict[str, Any] = {"model": self.model, "max_tokens": self.max_tokens, "messages": msgs, "stream": True}      # brief 224: always streamed
         if system:
             body["system"] = system
         if tl:
@@ -225,13 +302,19 @@ class AnthropicClient:
         for attempt in range(self.retries + 1):
             try:
                 with self._open(req, timeout=self.timeout_s) as resp:
-                    d = json.loads(resp.read().decode())
+                    d = assemble_stream(resp)
                 break
             except urllib.error.HTTPError as e:
                 last = RuntimeError(f"Anthropic API HTTP {e.code}: {e.read().decode(errors='replace')[:300]}")
                 if e.code < 500 and e.code != 429:
                     raise last from None
-            except (urllib.error.URLError, TimeoutError) as e:
+            except StreamDropped as e:                                                # brief 224: a dropped stream is retried, then an error
+                self.stream_drops = getattr(self, "stream_drops", 0) + 1
+                print(f"FDA_STREAM_DROPPED attempt {attempt + 1}: {e}", file=sys.stderr, flush=True)
+                last = RuntimeError(f"Anthropic API stream dropped: {e}")
+                if getattr(e, "retry", True) is False:
+                    raise last from None
+            except (urllib.error.URLError, TimeoutError, ConnectionError, http.client.HTTPException) as e:
                 last = RuntimeError(f"Anthropic API unreachable: {type(e).__name__}")
         else:
             raise last or RuntimeError("Anthropic API call failed")
@@ -250,11 +333,11 @@ class AnthropicClient:
             # larger (above ~16000 the API wants streaming). A cut-off tool call has incomplete arguments, so it is dropped, and the role is told.
             calls = []
             text = (text + "\n\n" if text else "") + (f"[the reply was cut off at the output limit of {self.max_tokens} tokens (thinking counts), so any tool call "
-                                                      "in it was dropped: do less in one reply, for example write a shorter file, then continue]")
+                                                      "in it was dropped: do less in one reply: write one file per tool call, smallest first, then continue]")
             print(f"FDA_TRUNCATED: {self.model} reply stopped at max_tokens={self.max_tokens}", file=sys.stderr, flush=True)
         return Reply(text=text, tool_calls=calls, prompt_tokens=i + w + r, completion_tokens=int(u.get("output_tokens") or 0), cost=cost,
                      seconds=round(time.monotonic() - t0, 2), provider="anthropic", input_tokens=i, cache_write_tokens=w, cache_read_tokens=r,
-                     cost_basis="usage*price" if cost is not None else None, stop_reason=stop)
+                     cost_basis="usage*price" if cost is not None else None, stop_reason=stop, stream_retries=attempt)
 
 
 class ClaudeCodeChat:

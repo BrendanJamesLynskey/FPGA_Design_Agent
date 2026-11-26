@@ -3,13 +3,14 @@ source: designs/b102_managed_pr/handover.yaml; human view: README.md; refresh: p
 
 ## identity
 kind=demonstration produced_by=session part=xck26-sfvc784-2LV-c board=Kria KR260 top=pr_top tool=Vivado 2026.1
+verified: not assessed: no requirements recorded (no verif/testplan.yaml), so nothing here is traced to a requirement (record: designs/b102_managed_pr/VERIFIED.md, designs/b102_managed_pr/verified.json; definition: docs/verified.md)
 
 ## summary
 A KR260 timing study that exists to demonstrate stage 2 of a managed project (brief 102). The block pcs_unit, brief 96's 64b/66b transmit path, arrives as a placed, routed and locked checkpoint made outside the project and is frozen; an owned stimulus and sink around it are placed and routed by Vivado. project.yaml records the block's keep-out region, the agent's tools refuse to place or constrain anything inside it, and the block's internal timing is measured at six placements, relocated by RapidWright and not.
 not: a 10G Ethernet design; the block is the 64b/66b encoder and scrambler between a shift register and an XOR sink, with three input pins; a board design; it was not programmed, and the 250 MHz constraint is on the 25 MHz oscillator pin for a timing study; a claim that relocation preserves a block's timing everywhere; the results say where it does and where it does not
 
 ## state
-stage=built vivado=2026.1 kb_pin=5e2eab8 build_id=38b9f4e0
+stage=built vivado=2026.1 kb_pin=6185830 build_id=404f9049
 gates: import_checks=pass build_2026_1=pass boundary_checks=pass
 
 ## interface

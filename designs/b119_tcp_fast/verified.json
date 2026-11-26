@@ -1,0 +1,2088 @@
+{
+ "counts": {
+  "agreed_delegated": 0,
+  "agreed_human": 0,
+  "draft": 27,
+  "items": 35,
+  "requirements": 27,
+  "stale_items": 22,
+  "verified": 3
+ },
+ "criteria": [
+  {
+   "detail": "24 of 27 requirements are not in state verified: B119-F-SEGMENT (partially_verified), B119-F-CKSUM-RTL (partially_verified), B119-F-HANDBACK (partially_verified), B119-F-E2E (partially_verified), B119-F-LINT (stale), B119-I-ORDERPORT (stale), B119-I-REGBUS (stale), B119-S-ABORT (stale), B119-S-REFUSE (partially_verified), B119-S-SEQSPACE (partially_verified), B119-S-SUMGUARD (stale), B119-S-FAULTS (stale), B119-F-MACPAIR (not_run), B119-F-REALPEER (not_run), B119-P-FIRSTBYTE (stale), B119-P-IPCKSUM (stale), B119-P-TCPCKSUM (stale), B119-P-SEGMENT (stale), B119-P-RATE (stale), B119-P-TOP-SPEC (stale), B119-P-TOP-VERDICT (stale), B119-P-TIMING (stale), B119-P-HOLD (stale), B119-P-AREA (stale)",
+   "id": "evidence",
+   "ids": [
+    "B119-F-SEGMENT",
+    "B119-F-CKSUM-RTL",
+    "B119-F-HANDBACK",
+    "B119-F-E2E",
+    "B119-F-LINT",
+    "B119-I-ORDERPORT",
+    "B119-I-REGBUS",
+    "B119-S-ABORT",
+    "B119-S-REFUSE",
+    "B119-S-SEQSPACE",
+    "B119-S-SUMGUARD",
+    "B119-S-FAULTS",
+    "B119-F-MACPAIR",
+    "B119-F-REALPEER",
+    "B119-P-FIRSTBYTE",
+    "B119-P-IPCKSUM",
+    "B119-P-TCPCKSUM",
+    "B119-P-SEGMENT",
+    "B119-P-RATE",
+    "B119-P-TOP-SPEC",
+    "B119-P-TOP-VERDICT",
+    "B119-P-TIMING",
+    "B119-P-HOLD",
+    "B119-P-AREA"
+   ],
+   "state": "unmet",
+   "title": "Every requirement has passing evidence"
+  },
+  {
+   "detail": "0 agreed by a human, 0 agreed by delegation, 27 draft, 0 marked agreed without a record",
+   "id": "agreement",
+   "ids": [
+    "B119-F-SEGMENT",
+    "B119-F-CKSUM-RTL",
+    "B119-F-HANDBACK",
+    "B119-F-E2E",
+    "B119-F-LINT",
+    "B119-I-ORDERPORT",
+    "B119-I-REGBUS",
+    "B119-S-ABORT",
+    "B119-S-REFUSE",
+    "B119-S-SEQSPACE",
+    "B119-S-SUMGUARD",
+    "B119-S-FAULTS",
+    "B119-F-MACPAIR",
+    "B119-F-REALPEER",
+    "B119-P-FIRSTBYTE",
+    "B119-P-IPCKSUM",
+    "B119-P-TCPCKSUM",
+    "B119-P-SEGMENT",
+    "B119-P-RATE",
+    "B119-P-TOP-SPEC",
+    "B119-P-TOP-VERDICT",
+    "B119-P-TIMING",
+    "B119-P-HOLD",
+    "B119-P-AREA",
+    "B119-F-CKSUM-IP",
+    "B119-F-CKSUM-TCP",
+    "B119-F-CKSUM-MODEL"
+   ],
+   "state": "unmet",
+   "title": "Every requirement is agreed (human, or delegated and labelled so)"
+  },
+  {
+   "detail": "not yet measured: the required method mix per requirement kind is brief 143a; the collector does not supply it yet",
+   "id": "method_mix",
+   "ids": [],
+   "state": "not_measured",
+   "title": "Every requirement meets its required method mix"
+  },
+  {
+   "detail": "not yet measured: the mutation score and floor are brief 143b; the collector does not supply them yet",
+   "id": "mutation",
+   "ids": [],
+   "state": "not_measured",
+   "title": "The bench passes the mutation floor"
+  },
+  {
+   "detail": "no SymbiYosys item in the testplan, so there is no proof to check for vacuity or depth (a Lean item is checked by the kernel, see its tier)",
+   "id": "formal_rigour",
+   "ids": [],
+   "state": "met",
+   "title": "The formal results pass the rigour checks"
+  },
+  {
+   "detail": "22 items are stale (a file they are about changed after the evidence was recorded)",
+   "id": "fresh",
+   "ids": [
+    "V-SIM-BENCH",
+    "V-SIM-TOP",
+    "V-LINT",
+    "V-SIMM-RANDOM",
+    "V-SIMM-ABORT",
+    "V-SIMM-REFUSE",
+    "V-SIMM-MIX",
+    "V-SIMM-E2E",
+    "V-SIMM-TOP-POISON",
+    "V-SIMM-FIRSTBYTE",
+    "V-SIMM-IPCKSUM",
+    "V-SIMM-TCPCKSUM",
+    "V-SIMM-SEGMENT",
+    "V-SIMM-RATE",
+    "V-SIMM-TOP-SPEC",
+    "V-SIMM-TOP-VERDICT",
+    "V-MUT",
+    "V-TIM-SETUP",
+    "V-TIM-PULSE",
+    "V-TIM-HOLD",
+    "V-RES-LUT",
+    "V-RES-OTHER"
+   ],
+   "state": "unmet",
+   "title": "The evidence is fresh"
+  }
+ ],
+ "declared": null,
+ "definition": "docs/verified.md",
+ "git_commit": "078b3651218f0040aba81ea265198cadbb340ce1",
+ "kind": "designs",
+ "label": "verified except: 24 of 27 requirements without passing evidence; 27 of 27 requirements not agreed; required method mix not yet measured; mutation floor not yet measured; 22 stale or differing evidence items",
+ "label_kind": "verified_except",
+ "limits": [
+  "Verified never means interoperability with a device the design talks to unless a board measurement against that device is listed in the record; a design that checks its own output against its own model accepts its own symmetric mistakes.",
+  "Verified never means timing beyond the stated corner: a post-route timing result is for the part, speed grade, clock and tool version in its evidence file, not for other corners, temperatures or devices.",
+  "Verified never means beyond the widths and depths checked: a simulation covers the vectors it ran, a bounded formal result covers the stated depth only, and a per-width proof covers the widths it names; only a Lean proof marked all widths covers every width, and only for its model.",
+  "Verified never means the requirement is the right one: the text of a requirement is the human's check (or the planner's, where the record says delegated), and a record shows that checks exist and pass, not that nothing was left out.",
+  "Verified never means a hardware or board result unless a board measurement item is listed; a simulation is not the board.",
+  "Verified is about the files in the manifest at the hashes given. A change to any of them makes the record out of date (the CI check fails), and the evidence stale until it is re-recorded.",
+  "An agreement or acceptance recorded as delegated is the planner's decision on the owner's delegation, not a human sign-off; the record counts it apart.",
+  "2 requirements depend on an element outside the design and have not been closed by hardware, so they hold in simulation only: B119-F-MACPAIR, B119-F-REALPEER.",
+  "Lean proofs here are of a transcription of the RTL, not of the RTL itself: B119-F-CKSUM-IP, B119-F-CKSUM-TCP, B119-F-CKSUM-MODEL."
+ ],
+ "manifest": {
+  "designs/b119_tcp_fast/lint/lint_waivers.vlt": "446bebef6120f7665469e272ff2122fb48889ded1983947d912bff71875b033c",
+  "designs/b119_tcp_fast/model/hwmodel.py": "5bdd61efa51c1e18d280b05688dbc76737b2324ce41224c605c363ea9f11a84d",
+  "designs/b119_tcp_fast/model/orders.py": "f2009e9338149fa4ce66b3089a65f9b017c16f53c4eb6c8efec8b7987347732c",
+  "designs/b119_tcp_fast/model/softtcp.py": "1f6b650e44a0681afc303a61e0f565158fd5981605781c11ac38fed10c6b684a",
+  "designs/b119_tcp_fast/model/soup.py": "fb5ab8e196ed41a621feb3c1f559c88178a1c995ce13aafe8c5fff81757690a8",
+  "designs/b119_tcp_fast/model/tcpref.py": "f6ca3aecbc5ba38e97ee5b4416f57a04c6cf4139c3a8a6553ce54aefe8a720d4",
+  "designs/b119_tcp_fast/rtl/itch_ouch_tcp_top.sv": "dce6ad68f3905ebb843783fe6e2e5fb626e9b6cdabbdb0b7e448d54df4c81f9e",
+  "designs/b119_tcp_fast/rtl/tcp_fast.sv": "0a9b9e0de854cae1418c554fe2b81de6fc781027363364530864773557df42c2",
+  "designs/b119_tcp_fast/tests/b119_cocotb.py": "6e94d3d68ce9acf3845176579d3720784ba354232818c79c2c53ed95f4e565a0",
+  "designs/b119_tcp_fast/tests/b119_top_cocotb.py": "cb474289815aea60ee5f3609fa0964acb14126df7aaac3b58c8d7192de88a3d0",
+  "designs/b119_tcp_fast/tests/netsim.py": "3632074a2823a167196f1983356232b3ea153e49615edcf300f04b5274ea64f0",
+  "designs/b119_tcp_fast/verif/evidence_pins.yaml": "57fb2f0a53c3040595067e4073c80cad4fc6699c073c3a55af6ff58adf15b197",
+  "designs/b119_tcp_fast/verif/lean_approvals.yaml": "8e2459068d8cc5a1c44041b8934720a6b57e22ac68e16d86cc765fe1d096d679",
+  "designs/b119_tcp_fast/verif/mutants.yaml": "317671f03eda90115e908bdeaedc9a26bec2294f5d4ad940df004240d6ed37ca",
+  "designs/b119_tcp_fast/verif/testplan.yaml": "1778f8272e1b38975dd4e38b04e065e471d19d8d5a04304d2f99430476fc8952",
+  "formal/lean/records/build_record.json": "3d60b1f76ac87b74d5dcbe085c0eb8e43e0287d69d5fa557490a685624e6c4f6",
+  "results/116_traceability/b119_tcp_fast/pytest_junit.xml": "561c2aeeff4af47882152d938f56bbf8add755ca879071c078fcb0d76db5d07f",
+  "results/b119/bench_sim.json": "8dcf52c49d0de31f6f2d937a96e2e405ca97ade1ac73025b61b43c5994dd92ca",
+  "results/b119/mutation.json": "f187b63a6979754ceeb321750567cafb8c2464d841f1ceafd7238b4988a750a3",
+  "results/b119/ooc/tcp_fast.json": "284f533ef5852bb0c7410c28920d8b5315a9430088b3ad6a4d629017db47fb0f",
+  "results/b119/top_sim.json": "71c94f32fee59aaab7ae1ca59ac282695ac1d1199360aa3541d37cffb87aa3ff"
+ },
+ "name": "b119_tcp_fast",
+ "notes": "Simulation (cocotb on Icarus Verilog 12, one recorded pytest run) and out-of-context Vivado 2026.1 results only. No board run, no MAC of the 96 design in the simulation, no real TCP peer, no real exchange; every order is synthetic. Requirements that need those are hooks and show as not run.",
+ "path": "designs/b119_tcp_fast",
+ "reproduce": [
+  {
+   "cmd": "python3 -m pytest -q designs/b119_tcp_fast/tests/test_b119_model.py designs/b119_tcp_fast/tests/test_b119_rtl.py designs/b119_tcp_fast/tests/test_b119_lint.py",
+   "what": "the whole bench (cocotb on Icarus), the Python-side tests and the lint"
+  },
+  {
+   "cmd": "B119_RECORD=$PWD/results/b119 python3 -m pytest -q designs/b119_tcp_fast/tests/test_b119_rtl.py",
+   "what": "the same with the measurement records written (latency in clocks, outcomes, end-to-end figures)"
+  },
+  {
+   "cmd": "python3 designs/b119_tcp_fast/tests/run_mutants.py --jobs 2 --json results/b119/mutation.json",
+   "what": "the seeded faults (every mutant of verif/mutants.yaml against the bench)"
+  }
+ ],
+ "requirements": [
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "B119-F-SEGMENT",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-MODEL-SEGMENT",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "results/116_traceability/b119_tcp_fast/pytest_junit.xml",
+     "record_sha256": "561c2aeeff4af47882152d938f56bbf8add755ca879071c078fcb0d76db5d07f",
+     "status": "pass",
+     "title": "The reference frame is 113 bytes for an order; SoupBinTCP and OUCH packers"
+    },
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "stale",
+     "id": "V-SIM-BENCH",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "results/116_traceability/b119_tcp_fast/pytest_junit.xml",
+     "record_sha256": "561c2aeeff4af47882152d938f56bbf8add755ca879071c078fcb0d76db5d07f",
+     "stale_because": "changed since the evidence was recorded: designs/b119_tcp_fast/rtl/tcp_fast.sv, designs/b119_tcp_fast/tests/b119_cocotb.py",
+     "status": "stale",
+     "title": "The block against the reference in cocotb, 19 tests in one simulation (smoke, random segments, checksum corners, fold carries, timing, abort at every offset and without a gap, speculative verdicts, refusals, register semantics, configuration change, continuity with software, random mix, end-to-end session, dropped segment, heartbeats, aborted orders, small window, rejected login)"
+    },
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "stale",
+     "id": "V-SIMM-RANDOM",
+     "instrument": null,
+     "method": "sim_measurement",
+     "mutation_score": null,
+     "record": "results/b119/bench_sim.json",
+     "record_sha256": "8dcf52c49d0de31f6f2d937a96e2e405ca97ade1ac73025b61b43c5994dd92ca",
+     "stale_because": "changed since the evidence was recorded: designs/b119_tcp_fast/rtl/tcp_fast.sv",
+     "status": "stale",
+     "title": "450 random segments (random connections, orders and states, sequence numbers at the wrap) compared byte for byte"
+    },
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "stale",
+     "id": "V-SIMM-MIX",
+     "instrument": null,
+     "method": "sim_measurement",
+     "mutation_score": null,
+     "record": "results/b119/bench_sim.json",
+     "record_sha256": "8dcf52c49d0de31f6f2d937a96e2e405ca97ade1ac73025b61b43c5994dd92ca",
+     "stale_because": "changed since the evidence was recorded: designs/b119_tcp_fast/rtl/tcp_fast.sv",
+     "status": "stale",
+     "title": "A long random mix reaches every outcome (sent, aborted, no verdict, cancelled in the go clock)"
+    },
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "stale",
+     "id": "V-MUT",
+     "instrument": null,
+     "method": "sim_measurement",
+     "mutation_score": null,
+     "record": "results/b119/mutation.json",
+     "record_sha256": "f187b63a6979754ceeb321750567cafb8c2464d841f1ceafd7238b4988a750a3",
+     "stale_because": "changed since the evidence was recorded: designs/b119_tcp_fast/rtl/tcp_fast.sv",
+     "status": "stale",
+     "title": "73 seeded faults (constants, operators and conditions across the checksum, the segment, the verdict, the refusals and the registers), the whole bench per fault"
+    }
+   ],
+   "items": [
+    "V-MODEL-SEGMENT",
+    "V-SIM-BENCH",
+    "V-SIMM-RANDOM",
+    "V-SIMM-MIX",
+    "V-MUT"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": false,
+   "missing_methods": [
+    "a simulation check from a bench the implementing agent did not write"
+   ],
+   "mix_satisfied": false,
+   "own_tests_only": true,
+   "passing_methods": [
+    "sim_test"
+   ],
+   "rests_on_delegated": false,
+   "source": "designs/b119_tcp_fast/docs/tcp_fast.md#21-the-segment",
+   "spec_status": "draft",
+   "stale_items": 4,
+   "state": "partially_verified",
+   "text": "For any connection state and order, the block sends 15 words (113 bytes without the frame check sequence) whose bytes equal the Python reference, with sequence number, acknowledgement number, window and IP identification captured at the go edge, the SoupBinTCP Unsequenced Data packet of brief 110 as payload, no TCP options and the PSH and ACK flags, including sequence numbers at the 32-bit wrap.",
+   "title": "Each order leaves as one complete 113-byte Ethernet, IPv4 and TCP frame, byte exact against the reference",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "B119-F-CKSUM-RTL",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-MODEL-CKSUM",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "results/116_traceability/b119_tcp_fast/pytest_junit.xml",
+     "record_sha256": "561c2aeeff4af47882152d938f56bbf8add755ca879071c078fcb0d76db5d07f",
+     "status": "pass",
+     "title": "Checksum reference against outside vectors (RFC 1071 example, a published IPv4 header, odd lengths, in-place sum, TCP pseudo-header)"
+    },
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "stale",
+     "id": "V-SIM-BENCH",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "results/116_traceability/b119_tcp_fast/pytest_junit.xml",
+     "record_sha256": "561c2aeeff4af47882152d938f56bbf8add755ca879071c078fcb0d76db5d07f",
+     "stale_because": "changed since the evidence was recorded: designs/b119_tcp_fast/rtl/tcp_fast.sv, designs/b119_tcp_fast/tests/b119_cocotb.py",
+     "status": "stale",
+     "title": "The block against the reference in cocotb, 19 tests in one simulation (smoke, random segments, checksum corners, fold carries, timing, abort at every offset and without a gap, speculative verdicts, refusals, register semantics, configuration change, continuity with software, random mix, end-to-end session, dropped segment, heartbeats, aborted orders, small window, rejected login)"
+    },
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "stale",
+     "id": "V-SIMM-RANDOM",
+     "instrument": null,
+     "method": "sim_measurement",
+     "mutation_score": null,
+     "record": "results/b119/bench_sim.json",
+     "record_sha256": "8dcf52c49d0de31f6f2d937a96e2e405ca97ade1ac73025b61b43c5994dd92ca",
+     "stale_because": "changed since the evidence was recorded: designs/b119_tcp_fast/rtl/tcp_fast.sv",
+     "status": "stale",
+     "title": "450 random segments (random connections, orders and states, sequence numbers at the wrap) compared byte for byte"
+    },
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "stale",
+     "id": "V-MUT",
+     "instrument": null,
+     "method": "sim_measurement",
+     "mutation_score": null,
+     "record": "results/b119/mutation.json",
+     "record_sha256": "f187b63a6979754ceeb321750567cafb8c2464d841f1ceafd7238b4988a750a3",
+     "stale_because": "changed since the evidence was recorded: designs/b119_tcp_fast/rtl/tcp_fast.sv",
+     "status": "stale",
+     "title": "73 seeded faults (constants, operators and conditions across the checksum, the segment, the verdict, the refusals and the registers), the whole bench per fault"
+    }
+   ],
+   "items": [
+    "V-MODEL-CKSUM",
+    "V-SIM-BENCH",
+    "V-SIMM-RANDOM",
+    "V-MUT"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": false,
+   "missing_methods": [
+    "a simulation check from a bench the implementing agent did not write"
+   ],
+   "mix_satisfied": false,
+   "own_tests_only": true,
+   "passing_methods": [
+    "sim_test"
+   ],
+   "rests_on_delegated": false,
+   "source": "designs/b119_tcp_fast/docs/tcp_fast.md#22-checksums-incremental-not-recomputed",
+   "spec_status": "draft",
+   "stale_items": 3,
+   "state": "partially_verified",
+   "text": "The IPv4 header checksum and the TCP checksum of every segment sent equal the reference's, which is itself checked against outside vectors (RFC 1071, a published IPv4 header), including carries in the fold, sums that wrap, a TCP checksum that comes out 0 and a segment whose headers sum to all ones. This is checked by simulation of chosen and random cases; the all-inputs statements are B119-F-CKSUM-IP, -TCP and -MODEL.",
+   "title": "Both checksums on the wire are the RFC 1071 checksums, at the corner cases",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "B119-F-HANDBACK",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-MODEL-SEQSPACE",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "results/116_traceability/b119_tcp_fast/pytest_junit.xml",
+     "record_sha256": "561c2aeeff4af47882152d938f56bbf8add755ca879071c078fcb0d76db5d07f",
+     "status": "pass",
+     "title": "A dropped fast-path segment is retransmitted by software; a heartbeat takes the sequence space and gives it back; software sends nothing while the block is armed and idle"
+    },
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "stale",
+     "id": "V-SIM-BENCH",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "results/116_traceability/b119_tcp_fast/pytest_junit.xml",
+     "record_sha256": "561c2aeeff4af47882152d938f56bbf8add755ca879071c078fcb0d76db5d07f",
+     "stale_because": "changed since the evidence was recorded: designs/b119_tcp_fast/rtl/tcp_fast.sv, designs/b119_tcp_fast/tests/b119_cocotb.py",
+     "status": "stale",
+     "title": "The block against the reference in cocotb, 19 tests in one simulation (smoke, random segments, checksum corners, fold carries, timing, abort at every offset and without a gap, speculative verdicts, refusals, register semantics, configuration change, continuity with software, random mix, end-to-end session, dropped segment, heartbeats, aborted orders, small window, rejected login)"
+    },
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "stale",
+     "id": "V-SIMM-E2E",
+     "instrument": null,
+     "method": "sim_measurement",
+     "mutation_score": null,
+     "record": "results/b119/bench_sim.json",
+     "record_sha256": "8dcf52c49d0de31f6f2d937a96e2e405ca97ade1ac73025b61b43c5994dd92ca",
+     "stale_because": "changed since the evidence was recorded: designs/b119_tcp_fast/rtl/tcp_fast.sv",
+     "status": "stale",
+     "title": "End-to-end session, dropped segment, heartbeats, aborted orders and small window, with the software exchange"
+    }
+   ],
+   "items": [
+    "V-MODEL-SEQSPACE",
+    "V-SIM-BENCH",
+    "V-SIMM-E2E"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": false,
+   "missing_methods": [
+    "a simulation check from a bench the implementing agent did not write"
+   ],
+   "mix_satisfied": false,
+   "own_tests_only": true,
+   "passing_methods": [
+    "sim_test"
+   ],
+   "rests_on_delegated": false,
+   "source": "designs/b119_tcp_fast/docs/tcp_fast.md#13-hand-back-to-software-rec_",
+   "spec_status": "draft",
+   "stale_items": 2,
+   "state": "partially_verified",
+   "text": "One record (rec_v, rec_seq, rec_len, rec_id, rec_pay) for each unpoisoned segment in the clock of its last word, and none for a poisoned one, so software can retransmit from the records; a segment dropped on the wire is retransmitted by software with the same bytes.",
+   "title": "Every segment that left is handed back to software, and none that was poisoned",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "B119-F-E2E",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-MODEL-ENDPOINT",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "results/116_traceability/b119_tcp_fast/pytest_junit.xml",
+     "record_sha256": "561c2aeeff4af47882152d938f56bbf8add755ca879071c078fcb0d76db5d07f",
+     "status": "pass",
+     "title": "TCP endpoint (handshake, acknowledgements, out-of-order, bad checksum, foreign frames, pure ACKs) and the exchange (login, orders, replies, rejections)"
+    },
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "stale",
+     "id": "V-SIM-BENCH",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "results/116_traceability/b119_tcp_fast/pytest_junit.xml",
+     "record_sha256": "561c2aeeff4af47882152d938f56bbf8add755ca879071c078fcb0d76db5d07f",
+     "stale_because": "changed since the evidence was recorded: designs/b119_tcp_fast/rtl/tcp_fast.sv, designs/b119_tcp_fast/tests/b119_cocotb.py",
+     "status": "stale",
+     "title": "The block against the reference in cocotb, 19 tests in one simulation (smoke, random segments, checksum corners, fold carries, timing, abort at every offset and without a gap, speculative verdicts, refusals, register semantics, configuration change, continuity with software, random mix, end-to-end session, dropped segment, heartbeats, aborted orders, small window, rejected login)"
+    },
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "stale",
+     "id": "V-SIMM-E2E",
+     "instrument": null,
+     "method": "sim_measurement",
+     "mutation_score": null,
+     "record": "results/b119/bench_sim.json",
+     "record_sha256": "8dcf52c49d0de31f6f2d937a96e2e405ca97ade1ac73025b61b43c5994dd92ca",
+     "stale_because": "changed since the evidence was recorded: designs/b119_tcp_fast/rtl/tcp_fast.sv",
+     "status": "stale",
+     "title": "End-to-end session, dropped segment, heartbeats, aborted orders and small window, with the software exchange"
+    }
+   ],
+   "items": [
+    "V-MODEL-ENDPOINT",
+    "V-SIM-BENCH",
+    "V-SIMM-E2E"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": false,
+   "missing_methods": [
+    "a simulation check from a bench the implementing agent did not write"
+   ],
+   "mix_satisfied": false,
+   "own_tests_only": true,
+   "passing_methods": [
+    "sim_test"
+   ],
+   "rests_on_delegated": false,
+   "source": "designs/b119_tcp_fast/docs/software_side.md#what-the-tests-show",
+   "spec_status": "draft",
+   "stale_items": 2,
+   "state": "partially_verified",
+   "text": "Handshake, SoupBinTCP login, orders, acknowledgements, a dropped segment, heartbeats, a small window and a rejected login all behave as the software side documents, with the exchange seeing every order exactly once and in order.",
+   "title": "A Python TCP owner and a software OUCH exchange run a whole session through the block",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "B119-F-LINT",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "stale",
+     "id": "V-LINT",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "results/116_traceability/b119_tcp_fast/pytest_junit.xml",
+     "record_sha256": "561c2aeeff4af47882152d938f56bbf8add755ca879071c078fcb0d76db5d07f",
+     "stale_because": "changed since the evidence was recorded: designs/b119_tcp_fast/rtl/tcp_fast.sv",
+     "status": "stale",
+     "title": "Verilator -Wall lint of tcp_fast.sv and the frame builder inside it"
+    }
+   ],
+   "items": [
+    "V-LINT"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": false,
+   "missing_methods": [],
+   "mix_satisfied": false,
+   "own_tests_only": false,
+   "passing_methods": [],
+   "rests_on_delegated": false,
+   "source": "designs/b119_tcp_fast/README.md#verified",
+   "spec_status": "draft",
+   "stale_items": 1,
+   "state": "stale",
+   "text": "Verilator -Wall over tcp_fast.sv and the frame builder inside it reports no warnings, with the waivers in lint/lint_waivers.vlt.",
+   "title": "The RTL lints clean",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "B119-I-ORDERPORT",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "stale",
+     "id": "V-SIM-TOP",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "results/116_traceability/b119_tcp_fast/pytest_junit.xml",
+     "record_sha256": "561c2aeeff4af47882152d938f56bbf8add755ca879071c078fcb0d76db5d07f",
+     "stale_because": "changed since the evidence was recorded: designs/b119_tcp_fast/rtl/itch_ouch_tcp_top.sv, designs/b119_tcp_fast/rtl/tcp_fast.sv",
+     "status": "stale",
+     "title": "Brief 110's path with tcp_fast in place of its stub port, against brief 110's reference model"
+    },
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "stale",
+     "id": "V-SIMM-TOP-POISON",
+     "instrument": null,
+     "method": "sim_measurement",
+     "mutation_score": null,
+     "record": "results/b119/top_sim.json",
+     "record_sha256": "71c94f32fee59aaab7ae1ca59ac282695ac1d1199360aa3541d37cffb87aa3ff",
+     "stale_because": "changed since the evidence was recorded: designs/b119_tcp_fast/rtl/itch_ouch_tcp_top.sv, designs/b119_tcp_fast/rtl/tcp_fast.sv",
+     "status": "stale",
+     "title": "Behind the risk logic, refused speculative orders leave poisoned and non-speculative ones are never poisoned"
+    }
+   ],
+   "items": [
+    "V-SIM-TOP",
+    "V-SIMM-TOP-POISON"
+   ],
+   "kind": "interface",
+   "lean_transcription_only": false,
+   "missing_methods": [],
+   "mix_satisfied": false,
+   "own_tests_only": false,
+   "passing_methods": [],
+   "rests_on_delegated": false,
+   "source": "designs/b119_tcp_fast/README.md#verified",
+   "spec_status": "draft",
+   "stale_items": 2,
+   "state": "stale",
+   "text": "With tcp_fast in place of ouch_enter, brief 110's path against brief 110's reference model sends the same orders, with the same payload bytes, valid checksums and gapless sequence numbers; speculative orders that the risk logic refuses leave poisoned.",
+   "title": "The block replaces the order port of brief 110 and works behind its risk logic",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "B119-I-REGBUS",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "stale",
+     "id": "V-SIM-BENCH",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "results/116_traceability/b119_tcp_fast/pytest_junit.xml",
+     "record_sha256": "561c2aeeff4af47882152d938f56bbf8add755ca879071c078fcb0d76db5d07f",
+     "stale_because": "changed since the evidence was recorded: designs/b119_tcp_fast/rtl/tcp_fast.sv, designs/b119_tcp_fast/tests/b119_cocotb.py",
+     "status": "stale",
+     "title": "The block against the reference in cocotb, 19 tests in one simulation (smoke, random segments, checksum corners, fold carries, timing, abort at every offset and without a gap, speculative verdicts, refusals, register semantics, configuration change, continuity with software, random mix, end-to-end session, dropped segment, heartbeats, aborted orders, small window, rejected login)"
+    },
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "stale",
+     "id": "V-MUT",
+     "instrument": null,
+     "method": "sim_measurement",
+     "mutation_score": null,
+     "record": "results/b119/mutation.json",
+     "record_sha256": "f187b63a6979754ceeb321750567cafb8c2464d841f1ceafd7238b4988a750a3",
+     "stale_because": "changed since the evidence was recorded: designs/b119_tcp_fast/rtl/tcp_fast.sv",
+     "status": "stale",
+     "title": "73 seeded faults (constants, operators and conditions across the checksum, the segment, the verdict, the refusals and the registers), the whole bench per fault"
+    }
+   ],
+   "items": [
+    "V-SIM-BENCH",
+    "V-MUT"
+   ],
+   "kind": "interface",
+   "lean_transcription_only": false,
+   "missing_methods": [],
+   "mix_satisfied": false,
+   "own_tests_only": false,
+   "passing_methods": [],
+   "rests_on_delegated": false,
+   "source": "designs/b119_tcp_fast/docs/tcp_fast.md#14-register-bus-sw_",
+   "spec_status": "draft",
+   "stale_items": 2,
+   "state": "stale",
+   "text": "Writes to static fields invalidate the template and are ignored and counted while a segment is in flight; live fields are accepted at any time and restart the staleness age; reads show the registers before the next edge; unmapped addresses read 0; the 14 counters count what the datasheet says and clear on CLR_CNT.",
+   "title": "The register bus and counters behave as the datasheet states",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "B119-S-ABORT",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "stale",
+     "id": "V-SIM-BENCH",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "results/116_traceability/b119_tcp_fast/pytest_junit.xml",
+     "record_sha256": "561c2aeeff4af47882152d938f56bbf8add755ca879071c078fcb0d76db5d07f",
+     "stale_because": "changed since the evidence was recorded: designs/b119_tcp_fast/rtl/tcp_fast.sv, designs/b119_tcp_fast/tests/b119_cocotb.py",
+     "status": "stale",
+     "title": "The block against the reference in cocotb, 19 tests in one simulation (smoke, random segments, checksum corners, fold carries, timing, abort at every offset and without a gap, speculative verdicts, refusals, register semantics, configuration change, continuity with software, random mix, end-to-end session, dropped segment, heartbeats, aborted orders, small window, rejected login)"
+    },
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "stale",
+     "id": "V-SIMM-ABORT",
+     "instrument": null,
+     "method": "sim_measurement",
+     "mutation_score": null,
+     "record": "results/b119/bench_sim.json",
+     "record_sha256": "8dcf52c49d0de31f6f2d937a96e2e405ca97ade1ac73025b61b43c5994dd92ca",
+     "stale_because": "changed since the evidence was recorded: designs/b119_tcp_fast/rtl/tcp_fast.sv",
+     "status": "stale",
+     "title": "Outcome at every abort offset (0 cancels, 1 to 14 abort, 15 and later are late and the segment is sent)"
+    },
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "stale",
+     "id": "V-SIMM-MIX",
+     "instrument": null,
+     "method": "sim_measurement",
+     "mutation_score": null,
+     "record": "results/b119/bench_sim.json",
+     "record_sha256": "8dcf52c49d0de31f6f2d937a96e2e405ca97ade1ac73025b61b43c5994dd92ca",
+     "stale_because": "changed since the evidence was recorded: designs/b119_tcp_fast/rtl/tcp_fast.sv",
+     "status": "stale",
+     "title": "A long random mix reaches every outcome (sent, aborted, no verdict, cancelled in the go clock)"
+    },
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "stale",
+     "id": "V-SIMM-TOP-POISON",
+     "instrument": null,
+     "method": "sim_measurement",
+     "mutation_score": null,
+     "record": "results/b119/top_sim.json",
+     "record_sha256": "71c94f32fee59aaab7ae1ca59ac282695ac1d1199360aa3541d37cffb87aa3ff",
+     "stale_because": "changed since the evidence was recorded: designs/b119_tcp_fast/rtl/itch_ouch_tcp_top.sv, designs/b119_tcp_fast/rtl/tcp_fast.sv",
+     "status": "stale",
+     "title": "Behind the risk logic, refused speculative orders leave poisoned and non-speculative ones are never poisoned"
+    },
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "stale",
+     "id": "V-MUT",
+     "instrument": null,
+     "method": "sim_measurement",
+     "mutation_score": null,
+     "record": "results/b119/mutation.json",
+     "record_sha256": "f187b63a6979754ceeb321750567cafb8c2464d841f1ceafd7238b4988a750a3",
+     "stale_because": "changed since the evidence was recorded: designs/b119_tcp_fast/rtl/tcp_fast.sv",
+     "status": "stale",
+     "title": "73 seeded faults (constants, operators and conditions across the checksum, the segment, the verdict, the refusals and the registers), the whole bench per fault"
+    }
+   ],
+   "items": [
+    "V-SIM-BENCH",
+    "V-SIMM-ABORT",
+    "V-SIMM-MIX",
+    "V-SIMM-TOP-POISON",
+    "V-MUT"
+   ],
+   "kind": "safety",
+   "lean_transcription_only": false,
+   "missing_methods": [],
+   "mix_satisfied": false,
+   "own_tests_only": false,
+   "passing_methods": [],
+   "rests_on_delegated": false,
+   "source": "designs/b119_tcp_fast/docs/tcp_fast.md#24-speculative-start-abort-verdict",
+   "spec_status": "draft",
+   "stale_items": 5,
+   "state": "stale",
+   "text": "An abort at any of edges 1 to 14 ends the frame with o_poison, leaves SND_NXT and IP_ID as before and produces no record; an abort at edge 0 cancels the go; a speculative segment with no verdict by edge 14 is poisoned; an abort wins over a commit; an abort after the frame left is late, counted and ignored.",
+   "title": "An aborted or unverdicted segment is poisoned and consumes no sequence space",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "B119-S-REFUSE",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-MODEL-REFUSE",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "results/116_traceability/b119_tcp_fast/pytest_junit.xml",
+     "record_sha256": "561c2aeeff4af47882152d938f56bbf8add755ca879071c078fcb0d76db5d07f",
+     "status": "pass",
+     "title": "The untimed stand-in refuses as the datasheet says (every code, window of exactly one segment, stale, disarmed)"
+    },
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "stale",
+     "id": "V-SIM-BENCH",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "results/116_traceability/b119_tcp_fast/pytest_junit.xml",
+     "record_sha256": "561c2aeeff4af47882152d938f56bbf8add755ca879071c078fcb0d76db5d07f",
+     "stale_because": "changed since the evidence was recorded: designs/b119_tcp_fast/rtl/tcp_fast.sv, designs/b119_tcp_fast/tests/b119_cocotb.py",
+     "status": "stale",
+     "title": "The block against the reference in cocotb, 19 tests in one simulation (smoke, random segments, checksum corners, fold carries, timing, abort at every offset and without a gap, speculative verdicts, refusals, register semantics, configuration change, continuity with software, random mix, end-to-end session, dropped segment, heartbeats, aborted orders, small window, rejected login)"
+    },
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "stale",
+     "id": "V-SIMM-REFUSE",
+     "instrument": null,
+     "method": "sim_measurement",
+     "mutation_score": null,
+     "record": "results/b119/bench_sim.json",
+     "record_sha256": "8dcf52c49d0de31f6f2d937a96e2e405ca97ade1ac73025b61b43c5994dd92ca",
+     "stale_because": "changed since the evidence was recorded: designs/b119_tcp_fast/rtl/tcp_fast.sv",
+     "status": "stale",
+     "title": "The five refusal codes and the random mix's outcomes (refused, aborted, no verdict, sent)"
+    },
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "stale",
+     "id": "V-MUT",
+     "instrument": null,
+     "method": "sim_measurement",
+     "mutation_score": null,
+     "record": "results/b119/mutation.json",
+     "record_sha256": "f187b63a6979754ceeb321750567cafb8c2464d841f1ceafd7238b4988a750a3",
+     "stale_because": "changed since the evidence was recorded: designs/b119_tcp_fast/rtl/tcp_fast.sv",
+     "status": "stale",
+     "title": "73 seeded faults (constants, operators and conditions across the checksum, the segment, the verdict, the refusals and the registers), the whole bench per fault"
+    }
+   ],
+   "items": [
+    "V-MODEL-REFUSE",
+    "V-SIM-BENCH",
+    "V-SIMM-REFUSE",
+    "V-MUT"
+   ],
+   "kind": "safety",
+   "lean_transcription_only": false,
+   "missing_methods": [
+    "a formal proof (SymbiYosys or Lean)"
+   ],
+   "mix_satisfied": false,
+   "own_tests_only": true,
+   "passing_methods": [
+    "sim_test"
+   ],
+   "rests_on_delegated": false,
+   "source": "designs/b119_tcp_fast/docs/tcp_fast.md#25-refusals",
+   "spec_status": "draft",
+   "stale_items": 3,
+   "state": "partially_verified",
+   "text": "Checked in the order busy, not armed, template not valid or state stale, window closed, MSS below 59, an order is refused with the matching code and counter, nothing leaves and no state changes; a window of exactly 59 bytes admits one segment and one byte less admits none.",
+   "title": "The block refuses to send when it is not armed, stale, window-closed, too small or busy",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "B119-S-SEQSPACE",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-MODEL-SEQSPACE",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "results/116_traceability/b119_tcp_fast/pytest_junit.xml",
+     "record_sha256": "561c2aeeff4af47882152d938f56bbf8add755ca879071c078fcb0d76db5d07f",
+     "status": "pass",
+     "title": "A dropped fast-path segment is retransmitted by software; a heartbeat takes the sequence space and gives it back; software sends nothing while the block is armed and idle"
+    },
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "stale",
+     "id": "V-SIM-BENCH",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "results/116_traceability/b119_tcp_fast/pytest_junit.xml",
+     "record_sha256": "561c2aeeff4af47882152d938f56bbf8add755ca879071c078fcb0d76db5d07f",
+     "stale_because": "changed since the evidence was recorded: designs/b119_tcp_fast/rtl/tcp_fast.sv, designs/b119_tcp_fast/tests/b119_cocotb.py",
+     "status": "stale",
+     "title": "The block against the reference in cocotb, 19 tests in one simulation (smoke, random segments, checksum corners, fold carries, timing, abort at every offset and without a gap, speculative verdicts, refusals, register semantics, configuration change, continuity with software, random mix, end-to-end session, dropped segment, heartbeats, aborted orders, small window, rejected login)"
+    },
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "stale",
+     "id": "V-SIMM-E2E",
+     "instrument": null,
+     "method": "sim_measurement",
+     "mutation_score": null,
+     "record": "results/b119/bench_sim.json",
+     "record_sha256": "8dcf52c49d0de31f6f2d937a96e2e405ca97ade1ac73025b61b43c5994dd92ca",
+     "stale_because": "changed since the evidence was recorded: designs/b119_tcp_fast/rtl/tcp_fast.sv",
+     "status": "stale",
+     "title": "End-to-end session, dropped segment, heartbeats, aborted orders and small window, with the software exchange"
+    }
+   ],
+   "items": [
+    "V-MODEL-SEQSPACE",
+    "V-SIM-BENCH",
+    "V-SIMM-E2E"
+   ],
+   "kind": "safety",
+   "lean_transcription_only": false,
+   "missing_methods": [
+    "a formal proof (SymbiYosys or Lean)"
+   ],
+   "mix_satisfied": false,
+   "own_tests_only": true,
+   "passing_methods": [
+    "sim_test"
+   ],
+   "rests_on_delegated": false,
+   "source": "designs/b119_tcp_fast/docs/tcp_fast.md#3-what-software-must-do-and-when",
+   "spec_status": "draft",
+   "stale_items": 2,
+   "state": "partially_verified",
+   "text": "Hardware and software share one sequence space. After a heartbeat takes it and gives it back, after an abort, after a refusal and after a retransmission, the peer's received stream has no gap and no duplicate, and nothing is sent by software while the block is armed and idle.",
+   "title": "The peer sees no gap and no duplicate in the sequence space",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "B119-S-SUMGUARD",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "stale",
+     "id": "V-SIM-BENCH",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "results/116_traceability/b119_tcp_fast/pytest_junit.xml",
+     "record_sha256": "561c2aeeff4af47882152d938f56bbf8add755ca879071c078fcb0d76db5d07f",
+     "stale_because": "changed since the evidence was recorded: designs/b119_tcp_fast/rtl/tcp_fast.sv, designs/b119_tcp_fast/tests/b119_cocotb.py",
+     "status": "stale",
+     "title": "The block against the reference in cocotb, 19 tests in one simulation (smoke, random segments, checksum corners, fold carries, timing, abort at every offset and without a gap, speculative verdicts, refusals, register semantics, configuration change, continuity with software, random mix, end-to-end session, dropped segment, heartbeats, aborted orders, small window, rejected login)"
+    },
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "stale",
+     "id": "V-SIMM-MIX",
+     "instrument": null,
+     "method": "sim_measurement",
+     "mutation_score": null,
+     "record": "results/b119/bench_sim.json",
+     "record_sha256": "8dcf52c49d0de31f6f2d937a96e2e405ca97ade1ac73025b61b43c5994dd92ca",
+     "stale_because": "changed since the evidence was recorded: designs/b119_tcp_fast/rtl/tcp_fast.sv",
+     "status": "stale",
+     "title": "A long random mix reaches every outcome (sent, aborted, no verdict, cancelled in the go clock)"
+    }
+   ],
+   "items": [
+    "V-SIM-BENCH",
+    "V-SIMM-MIX"
+   ],
+   "kind": "safety",
+   "lean_transcription_only": false,
+   "missing_methods": [],
+   "mix_satisfied": false,
+   "own_tests_only": false,
+   "passing_methods": [],
+   "rests_on_delegated": false,
+   "source": "designs/b119_tcp_fast/docs/tcp_fast.md#22-checksums-incremental-not-recomputed",
+   "spec_status": "draft",
+   "stale_items": 2,
+   "state": "stale",
+   "text": "The block sums the payload words ouch_enter actually emits and compares the total with the early one the checksum used; a difference (for example a configuration change in flight) poisons the segment and counts sumerr, so a wrong checksum is never sent as valid.",
+   "title": "A segment whose payload disagrees with the checksum that was sent is poisoned",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "B119-S-FAULTS",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "stale",
+     "id": "V-MUT",
+     "instrument": null,
+     "method": "sim_measurement",
+     "mutation_score": null,
+     "record": "results/b119/mutation.json",
+     "record_sha256": "f187b63a6979754ceeb321750567cafb8c2464d841f1ceafd7238b4988a750a3",
+     "stale_because": "changed since the evidence was recorded: designs/b119_tcp_fast/rtl/tcp_fast.sv",
+     "status": "stale",
+     "title": "73 seeded faults (constants, operators and conditions across the checksum, the segment, the verdict, the refusals and the registers), the whole bench per fault"
+    }
+   ],
+   "items": [
+    "V-MUT"
+   ],
+   "kind": "safety",
+   "lean_transcription_only": false,
+   "missing_methods": [],
+   "mix_satisfied": false,
+   "own_tests_only": false,
+   "passing_methods": [],
+   "rests_on_delegated": false,
+   "source": "designs/b119_tcp_fast/verif/mutants.yaml",
+   "spec_status": "draft",
+   "stale_items": 1,
+   "state": "stale",
+   "text": "Every one of the seeded faults of verif/mutants.yaml that builds fails the bench (mutation score 100 percent, 73 of 73). The set is the agent's own; whether it is wide enough is the human's check.",
+   "title": "A seeded fault anywhere in the checksum, segment, verdict, refusal or register logic is caught",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "external": "the 96 design's MAC (mac64_tx) and, for the board, the KR260",
+   "hardware_closure": "open",
+   "hardware_only": true,
+   "hardware_verified": false,
+   "id": "B119-F-MACPAIR",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "no evidence",
+     "id": "V-SIM-MACPAIR",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": null,
+     "record_sha256": null,
+     "status": "not_run",
+     "title": "tcp_fast with mac64_tx of the 96 design (phase 2 of docs/phase2_integration.md)"
+    }
+   ],
+   "items": [
+    "V-SIM-MACPAIR"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": false,
+   "missing_methods": [],
+   "mix_satisfied": false,
+   "own_tests_only": false,
+   "passing_methods": [],
+   "rests_on_delegated": false,
+   "source": "designs/b119_tcp_fast/docs/phase2_integration.md",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "not_run",
+   "text": "tcp_fast and mac64_tx of designs/b96_kr260_10g simulated together. A 15-word segment is accepted without a pause, a short poisoned frame is padded as needed and its frame check sequence is wrong, and a good segment's is right. Not simulated yet.",
+   "title": "The 96 design's MAC accepts the block's words every clock and corrupts the frame check sequence on o_poison",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "external": "a real TCP peer on a second machine or namespace",
+   "hardware_closure": "open",
+   "hardware_only": true,
+   "hardware_verified": false,
+   "id": "B119-F-REALPEER",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "no evidence",
+     "id": "V-EXT-REALPEER",
+     "instrument": "external_equipment",
+     "method": "board_measurement",
+     "mutation_score": null,
+     "record": null,
+     "record_sha256": null,
+     "status": "not_run",
+     "title": "Owner against a real TCP peer, capture compared with the bench's frames"
+    }
+   ],
+   "items": [
+    "V-EXT-REALPEER"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": false,
+   "missing_methods": [],
+   "mix_satisfied": false,
+   "own_tests_only": false,
+   "passing_methods": [],
+   "rests_on_delegated": false,
+   "source": "designs/b119_tcp_fast/README.md#next-steps",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "not_run",
+   "text": "Software owner against a real TCP stack (a second machine or a network namespace) with a capture compared with the bench's frames. Handshake, data, acknowledgements and the window agree. Not done yet.",
+   "title": "The owner completes a session with a real TCP peer and the frames match the bench's",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "B119-P-FIRSTBYTE",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "stale",
+     "id": "V-SIMM-FIRSTBYTE",
+     "instrument": null,
+     "method": "sim_measurement",
+     "mutation_score": null,
+     "record": "results/b119/bench_sim.json",
+     "record_sha256": "8dcf52c49d0de31f6f2d937a96e2e405ca97ade1ac73025b61b43c5994dd92ca",
+     "stale_because": "changed since the evidence was recorded: designs/b119_tcp_fast/rtl/tcp_fast.sv",
+     "status": "stale",
+     "title": "First byte, clocks after go"
+    }
+   ],
+   "items": [
+    "V-SIMM-FIRSTBYTE"
+   ],
+   "kind": "performance",
+   "lean_transcription_only": false,
+   "missing_methods": [],
+   "mix_satisfied": false,
+   "own_tests_only": false,
+   "passing_methods": [],
+   "performance": {
+    "bound": 1,
+    "condition": "simulation, one clock, block alone",
+    "op": "le",
+    "quantity": "clocks from go to the first byte of the frame",
+    "unit": "clocks"
+   },
+   "rests_on_delegated": false,
+   "source": "designs/b119_tcp_fast/docs/tcp_fast.md#4-latency-and-rate",
+   "spec_status": "draft",
+   "stale_items": 1,
+   "state": "stale",
+   "text": "Regression bound drawn from the bench record; the owner sets the target. The same clock in which brief 110's stub port shows its first word.",
+   "title": "First byte of the frame, clocks after go",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "B119-P-IPCKSUM",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "stale",
+     "id": "V-SIMM-IPCKSUM",
+     "instrument": null,
+     "method": "sim_measurement",
+     "mutation_score": null,
+     "record": "results/b119/bench_sim.json",
+     "record_sha256": "8dcf52c49d0de31f6f2d937a96e2e405ca97ade1ac73025b61b43c5994dd92ca",
+     "stale_because": "changed since the evidence was recorded: designs/b119_tcp_fast/rtl/tcp_fast.sv",
+     "status": "stale",
+     "title": "IPv4 checksum field, clocks after go"
+    }
+   ],
+   "items": [
+    "V-SIMM-IPCKSUM"
+   ],
+   "kind": "performance",
+   "lean_transcription_only": false,
+   "missing_methods": [],
+   "mix_satisfied": false,
+   "own_tests_only": false,
+   "passing_methods": [],
+   "performance": {
+    "bound": 4,
+    "condition": "simulation, one clock, block alone",
+    "op": "le",
+    "quantity": "clocks from go to the last byte of the IPv4 checksum field",
+    "unit": "clocks"
+   },
+   "rests_on_delegated": false,
+   "source": "designs/b119_tcp_fast/docs/tcp_fast.md#23-timing-of-a-segment",
+   "spec_status": "draft",
+   "stale_items": 1,
+   "state": "stale",
+   "text": "Regression bound drawn from the bench record; the owner sets the target.",
+   "title": "IPv4 checksum field complete, clocks after go",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "B119-P-TCPCKSUM",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "stale",
+     "id": "V-SIMM-TCPCKSUM",
+     "instrument": null,
+     "method": "sim_measurement",
+     "mutation_score": null,
+     "record": "results/b119/bench_sim.json",
+     "record_sha256": "8dcf52c49d0de31f6f2d937a96e2e405ca97ade1ac73025b61b43c5994dd92ca",
+     "stale_because": "changed since the evidence was recorded: designs/b119_tcp_fast/rtl/tcp_fast.sv",
+     "status": "stale",
+     "title": "TCP checksum field, clocks after go"
+    }
+   ],
+   "items": [
+    "V-SIMM-TCPCKSUM"
+   ],
+   "kind": "performance",
+   "lean_transcription_only": false,
+   "missing_methods": [],
+   "mix_satisfied": false,
+   "own_tests_only": false,
+   "passing_methods": [],
+   "performance": {
+    "bound": 7,
+    "condition": "simulation, one clock, block alone",
+    "op": "le",
+    "quantity": "clocks from go to the last byte of the TCP checksum field",
+    "unit": "clocks"
+   },
+   "rests_on_delegated": false,
+   "source": "designs/b119_tcp_fast/docs/tcp_fast.md#23-timing-of-a-segment",
+   "spec_status": "draft",
+   "stale_items": 1,
+   "state": "stale",
+   "text": "Regression bound drawn from the bench record; the owner sets the target. It is inside the header's own transmission time.",
+   "title": "TCP checksum field complete, clocks after go",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "B119-P-SEGMENT",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "stale",
+     "id": "V-SIMM-SEGMENT",
+     "instrument": null,
+     "method": "sim_measurement",
+     "mutation_score": null,
+     "record": "results/b119/bench_sim.json",
+     "record_sha256": "8dcf52c49d0de31f6f2d937a96e2e405ca97ade1ac73025b61b43c5994dd92ca",
+     "stale_because": "changed since the evidence was recorded: designs/b119_tcp_fast/rtl/tcp_fast.sv",
+     "status": "stale",
+     "title": "Last byte of the segment, clocks after go"
+    }
+   ],
+   "items": [
+    "V-SIMM-SEGMENT"
+   ],
+   "kind": "performance",
+   "lean_transcription_only": false,
+   "missing_methods": [],
+   "mix_satisfied": false,
+   "own_tests_only": false,
+   "passing_methods": [],
+   "performance": {
+    "bound": 15,
+    "condition": "simulation, one clock, block alone",
+    "op": "le",
+    "quantity": "clocks from go to the last byte of the segment",
+    "unit": "clocks"
+   },
+   "rests_on_delegated": false,
+   "source": "designs/b119_tcp_fast/docs/tcp_fast.md#4-latency-and-rate",
+   "spec_status": "draft",
+   "stale_items": 1,
+   "state": "stale",
+   "text": "Regression bound drawn from the bench record; the owner sets the target.",
+   "title": "Whole segment out, clocks after go",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "B119-P-RATE",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "stale",
+     "id": "V-SIMM-RATE",
+     "instrument": null,
+     "method": "sim_measurement",
+     "mutation_score": null,
+     "record": "results/b119/bench_sim.json",
+     "record_sha256": "8dcf52c49d0de31f6f2d937a96e2e405ca97ade1ac73025b61b43c5994dd92ca",
+     "stale_because": "changed since the evidence was recorded: designs/b119_tcp_fast/rtl/tcp_fast.sv",
+     "status": "stale",
+     "title": "Clocks between the starts of two segments sent back to back"
+    }
+   ],
+   "items": [
+    "V-SIMM-RATE"
+   ],
+   "kind": "performance",
+   "lean_transcription_only": false,
+   "missing_methods": [],
+   "mix_satisfied": false,
+   "own_tests_only": false,
+   "passing_methods": [],
+   "performance": {
+    "bound": 15,
+    "condition": "simulation, one clock, block alone",
+    "op": "le",
+    "quantity": "clocks between the starts of two segments sent back to back",
+    "unit": "clocks"
+   },
+   "rests_on_delegated": false,
+   "source": "designs/b119_tcp_fast/docs/tcp_fast.md#4-latency-and-rate",
+   "spec_status": "draft",
+   "stale_items": 1,
+   "state": "stale",
+   "text": "Regression bound drawn from the bench record; the owner sets the target. The block is busy for the whole segment and drops a go meanwhile.",
+   "title": "Segment rate, clocks between starts",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "B119-P-TOP-SPEC",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "stale",
+     "id": "V-SIMM-TOP-SPEC",
+     "instrument": null,
+     "method": "sim_measurement",
+     "mutation_score": null,
+     "record": "results/b119/top_sim.json",
+     "record_sha256": "71c94f32fee59aaab7ae1ca59ac282695ac1d1199360aa3541d37cffb87aa3ff",
+     "stale_because": "changed since the evidence was recorded: designs/b119_tcp_fast/rtl/itch_ouch_tcp_top.sv, designs/b119_tcp_fast/rtl/tcp_fast.sv",
+     "status": "stale",
+     "title": "Speculative start behind brief 110's risk logic"
+    }
+   ],
+   "items": [
+    "V-SIMM-TOP-SPEC"
+   ],
+   "kind": "performance",
+   "lean_transcription_only": false,
+   "missing_methods": [],
+   "mix_satisfied": false,
+   "own_tests_only": false,
+   "passing_methods": [],
+   "performance": {
+    "bound": 3,
+    "condition": "simulation of brief 110's path with the block behind it, one clock, frame idle",
+    "op": "le",
+    "quantity": "clocks from the last byte of a triggering ITCH message to the first byte of the Ethernet frame",
+    "speculative start": null,
+    "unit": "clocks"
+   },
+   "rests_on_delegated": false,
+   "source": "designs/b119_tcp_fast/docs/tcp_fast.md#4-latency-and-rate",
+   "spec_status": "draft",
+   "stale_items": 1,
+   "state": "stale",
+   "text": "Regression bound drawn from the top-level record; the owner sets the target. Only when the frame is idle and no earlier candidate is in flight.",
+   "title": "Speculative start behind brief 110's risk logic, clocks from the last ITCH byte",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "B119-P-TOP-VERDICT",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "stale",
+     "id": "V-SIMM-TOP-VERDICT",
+     "instrument": null,
+     "method": "sim_measurement",
+     "mutation_score": null,
+     "record": "results/b119/top_sim.json",
+     "record_sha256": "71c94f32fee59aaab7ae1ca59ac282695ac1d1199360aa3541d37cffb87aa3ff",
+     "stale_because": "changed since the evidence was recorded: designs/b119_tcp_fast/rtl/itch_ouch_tcp_top.sv, designs/b119_tcp_fast/rtl/tcp_fast.sv",
+     "status": "stale",
+     "title": "Start at the verdict behind brief 110's risk logic"
+    }
+   ],
+   "items": [
+    "V-SIMM-TOP-VERDICT"
+   ],
+   "kind": "performance",
+   "lean_transcription_only": false,
+   "missing_methods": [],
+   "mix_satisfied": false,
+   "own_tests_only": false,
+   "passing_methods": [],
+   "performance": {
+    "bound": 8,
+    "condition": "simulation of brief 110's path with the block behind it, one clock, frame idle",
+    "frame started at the risk verdict": null,
+    "op": "le",
+    "quantity": "clocks from the last byte of a triggering ITCH message to the first byte of the Ethernet frame",
+    "unit": "clocks"
+   },
+   "rests_on_delegated": false,
+   "source": "designs/b119_tcp_fast/docs/tcp_fast.md#4-latency-and-rate",
+   "spec_status": "draft",
+   "stale_items": 1,
+   "state": "stale",
+   "text": "Regression bound drawn from the top-level record; the owner sets the target.",
+   "title": "Start at the verdict behind brief 110's risk logic, clocks from the last ITCH byte",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "B119-P-TIMING",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "stale",
+     "id": "V-TIM-SETUP",
+     "instrument": null,
+     "method": "timing",
+     "mutation_score": null,
+     "record": "results/b119/ooc/tcp_fast.json",
+     "record_sha256": "284f533ef5852bb0c7410c28920d8b5315a9430088b3ad6a4d629017db47fb0f",
+     "stale_because": "changed since the evidence was recorded: designs/b119_tcp_fast/rtl/tcp_fast.sv",
+     "status": "stale",
+     "title": "Worst setup slack at 6.2061 ns, post-route"
+    },
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "stale",
+     "id": "V-TIM-PULSE",
+     "instrument": null,
+     "method": "timing",
+     "mutation_score": null,
+     "record": "results/b119/ooc/tcp_fast.json",
+     "record_sha256": "284f533ef5852bb0c7410c28920d8b5315a9430088b3ad6a4d629017db47fb0f",
+     "stale_because": "changed since the evidence was recorded: designs/b119_tcp_fast/rtl/tcp_fast.sv",
+     "status": "stale",
+     "title": "Pulse width slack at 6.2061 ns, and a faster clock (5 ns) also closed"
+    }
+   ],
+   "items": [
+    "V-TIM-SETUP",
+    "V-TIM-PULSE"
+   ],
+   "kind": "performance",
+   "lean_transcription_only": false,
+   "missing_methods": [],
+   "mix_satisfied": false,
+   "own_tests_only": false,
+   "passing_methods": [],
+   "performance": {
+    "bound": 0,
+    "condition": "Vivado 2026.1, xck26-sfvc784-2LV-c, out of context, post-route, period 6.2061 ns",
+    "op": "ge",
+    "quantity": "worst setup slack",
+    "unit": "ns"
+   },
+   "rests_on_delegated": false,
+   "source": "designs/b119_tcp_fast/README.md#technical-parameters",
+   "spec_status": "draft",
+   "stale_items": 2,
+   "state": "stale",
+   "text": "The required clock is 6.2061 ns, the 4-decimal rounding of 161.1328125 MHz. Out of context there is no clock buffer or jitter and the inputs are registered in the wrapper; inside the 10G core the clock and placement can differ.",
+   "title": "Post-route setup slack at the 10G core clock, out of context",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "B119-P-HOLD",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "stale",
+     "id": "V-TIM-HOLD",
+     "instrument": null,
+     "method": "timing",
+     "mutation_score": null,
+     "record": "results/b119/ooc/tcp_fast.json",
+     "record_sha256": "284f533ef5852bb0c7410c28920d8b5315a9430088b3ad6a4d629017db47fb0f",
+     "stale_because": "changed since the evidence was recorded: designs/b119_tcp_fast/rtl/tcp_fast.sv",
+     "status": "stale",
+     "title": "Worst hold slack at 6.2061 ns, post-route"
+    }
+   ],
+   "items": [
+    "V-TIM-HOLD"
+   ],
+   "kind": "performance",
+   "lean_transcription_only": false,
+   "missing_methods": [],
+   "mix_satisfied": false,
+   "own_tests_only": false,
+   "passing_methods": [],
+   "performance": {
+    "bound": 0,
+    "condition": "Vivado 2026.1, xck26-sfvc784-2LV-c, out of context, post-route, period 6.2061 ns",
+    "op": "ge",
+    "quantity": "worst hold slack",
+    "unit": "ns"
+   },
+   "rests_on_delegated": false,
+   "source": "designs/b119_tcp_fast/README.md#technical-parameters",
+   "spec_status": "draft",
+   "stale_items": 1,
+   "state": "stale",
+   "text": "As B119-P-TIMING.",
+   "title": "Post-route hold slack at the 10G core clock, out of context",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "B119-P-AREA",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "stale",
+     "id": "V-RES-LUT",
+     "instrument": null,
+     "method": "timing",
+     "mutation_score": null,
+     "record": "results/b119/ooc/tcp_fast.json",
+     "record_sha256": "284f533ef5852bb0c7410c28920d8b5315a9430088b3ad6a4d629017db47fb0f",
+     "stale_because": "changed since the evidence was recorded: designs/b119_tcp_fast/rtl/tcp_fast.sv",
+     "status": "stale",
+     "title": "LUTs of tcp_fast (frame builder included), post-route"
+    },
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "stale",
+     "id": "V-RES-OTHER",
+     "instrument": null,
+     "method": "timing",
+     "mutation_score": null,
+     "record": "results/b119/ooc/tcp_fast.json",
+     "record_sha256": "284f533ef5852bb0c7410c28920d8b5315a9430088b3ad6a4d629017db47fb0f",
+     "stale_because": "changed since the evidence was recorded: designs/b119_tcp_fast/rtl/tcp_fast.sv",
+     "status": "stale",
+     "title": "Registers, block RAM and DSP of tcp_fast (2907 FF, 0 tiles, 0 DSP)"
+    }
+   ],
+   "items": [
+    "V-RES-LUT",
+    "V-RES-OTHER"
+   ],
+   "kind": "performance",
+   "lean_transcription_only": false,
+   "missing_methods": [],
+   "mix_satisfied": false,
+   "own_tests_only": false,
+   "passing_methods": [],
+   "performance": {
+    "bound": 1546,
+    "condition": "Vivado 2026.1, xck26-sfvc784-2LV-c, out of context, period 6.2061 ns",
+    "op": "le",
+    "quantity": "LUTs of tcp_fast including the frame builder inside it",
+    "unit": "LUT"
+   },
+   "rests_on_delegated": false,
+   "source": "designs/b119_tcp_fast/README.md#technical-parameters",
+   "spec_status": "draft",
+   "stale_items": 2,
+   "state": "stale",
+   "text": "Regression bound drawn from the out-of-context build, frame builder included; the owner sets the target. Registers, block RAM and DSP are checked in the same record.",
+   "title": "LUTs of tcp_fast at the required clock",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "B119-F-CKSUM-IP",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-LEAN-CKSUM-IP",
+     "instrument": null,
+     "lean": {
+      "approver_kind": "agent_delegated",
+      "build_source": "recorded build (not re-run)",
+      "rtl_link": "transcription_tested",
+      "tier": "compiled_decision_procedure"
+     },
+     "method": "formal_lean",
+     "mutation_score": null,
+     "record": "formal/lean/records/build_record.json",
+     "record_sha256": "3d60b1f76ac87b74d5dcbe085c0eb8e43e0287d69d5fa557490a685624e6c4f6",
+     "status": "pass",
+     "title": "IPv4 header checksum equals the Internet checksum"
+    },
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-LEAN-CKSUM-IP-RX",
+     "instrument": null,
+     "lean": {
+      "approver_kind": "agent_delegated",
+      "build_source": "recorded build (not re-run)",
+      "rtl_link": "transcription_tested",
+      "tier": "compiled_decision_procedure"
+     },
+     "method": "formal_lean",
+     "mutation_score": null,
+     "record": "formal/lean/records/build_record.json",
+     "record_sha256": "3d60b1f76ac87b74d5dcbe085c0eb8e43e0287d69d5fa557490a685624e6c4f6",
+     "status": "pass",
+     "title": "The filled-in header sums to 0xFFFF (receiver check)"
+    }
+   ],
+   "items": [
+    "V-LEAN-CKSUM-IP",
+    "V-LEAN-CKSUM-IP-RX"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": true,
+   "missing_methods": [],
+   "mix_satisfied": true,
+   "own_tests_only": false,
+   "passing_methods": [
+    "formal_lean"
+   ],
+   "rests_on_delegated": true,
+   "source": "brief 119 (PR 245), designs/b119_tcp_fast/rtl/tcp_fast.sv; results/124_lean/README.md",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "verified",
+   "text": "Brief 119's tcp_fast.sv builds the IPv4 header checksum from a precomputed template plus the changing fields. For all TTL, address and identification values it equals the complement of the ones' complement sum of the header, and the filled-in header sums to 0xFFFF.",
+   "title": "The IPv4 header checksum of the TCP fast path equals the Internet checksum, for all inputs",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "B119-F-CKSUM-TCP",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-LEAN-CKSUM-TCP",
+     "instrument": null,
+     "lean": {
+      "approver_kind": "agent_delegated",
+      "build_source": "recorded build (not re-run)",
+      "rtl_link": "transcription_tested",
+      "tier": "compiled_decision_procedure"
+     },
+     "method": "formal_lean",
+     "mutation_score": null,
+     "record": "formal/lean/records/build_record.json",
+     "record_sha256": "3d60b1f76ac87b74d5dcbe085c0eb8e43e0287d69d5fa557490a685624e6c4f6",
+     "status": "pass",
+     "title": "TCP checksum equals the Internet checksum, payloads up to 30 words"
+    }
+   ],
+   "items": [
+    "V-LEAN-CKSUM-TCP"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": true,
+   "missing_methods": [],
+   "mix_satisfied": true,
+   "own_tests_only": false,
+   "passing_methods": [
+    "formal_lean"
+   ],
+   "rests_on_delegated": true,
+   "source": "brief 119 (PR 245), designs/b119_tcp_fast/rtl/tcp_fast.sv; results/124_lean/README.md",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "verified",
+   "text": "For all addresses, ports, sequence and acknowledgement numbers, windows and payloads of up to 30 sixteen-bit words, the checksum the RTL equations produce equals the complement of the ones' complement sum over pseudo-header, header and payload. The byte-pair swapping, the streaming receive check and the timing are not modelled.",
+   "title": "The TCP checksum of the TCP fast path equals the Internet checksum, for all inputs and payloads up to 30 words",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "B119-F-CKSUM-MODEL",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-LEAN-CKSUM-SUM",
+     "instrument": null,
+     "lean": {
+      "approver_kind": "agent_delegated",
+      "build_source": "recorded build (not re-run)",
+      "rtl_link": "model_only",
+      "tier": "kernel_only"
+     },
+     "method": "formal_lean",
+     "mutation_score": null,
+     "record": "formal/lean/records/build_record.json",
+     "record_sha256": "3d60b1f76ac87b74d5dcbe085c0eb8e43e0287d69d5fa557490a685624e6c4f6",
+     "status": "pass",
+     "title": "Ones complement sum equals the natural-number sum mod 65535"
+    },
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-LEAN-CKSUM-INC",
+     "instrument": null,
+     "lean": {
+      "approver_kind": "agent_delegated",
+      "build_source": "recorded build (not re-run)",
+      "rtl_link": "model_only",
+      "tier": "kernel_only"
+     },
+     "method": "formal_lean",
+     "mutation_score": null,
+     "record": "formal/lean/records/build_record.json",
+     "record_sha256": "3d60b1f76ac87b74d5dcbe085c0eb8e43e0287d69d5fa557490a685624e6c4f6",
+     "status": "pass",
+     "title": "RFC 1624 equation 3 is correct for headers of any length"
+    },
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-LEAN-CKSUM-INC-ZERO",
+     "instrument": null,
+     "lean": {
+      "approver_kind": "agent_delegated",
+      "build_source": "recorded build (not re-run)",
+      "rtl_link": "model_only",
+      "tier": "kernel_only"
+     },
+     "method": "formal_lean",
+     "mutation_score": null,
+     "record": "formal/lean/records/build_record.json",
+     "record_sha256": "3d60b1f76ac87b74d5dcbe085c0eb8e43e0287d69d5fa557490a685624e6c4f6",
+     "status": "pass",
+     "title": "The all-zero header corner gives 0x0000"
+    }
+   ],
+   "items": [
+    "V-LEAN-CKSUM-SUM",
+    "V-LEAN-CKSUM-INC",
+    "V-LEAN-CKSUM-INC-ZERO"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": true,
+   "missing_methods": [],
+   "mix_satisfied": true,
+   "own_tests_only": false,
+   "passing_methods": [
+    "formal_lean"
+   ],
+   "rests_on_delegated": true,
+   "source": "results/124_lean/README.md",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "verified",
+   "text": "The ones' complement sum of any list of 16-bit words equals the natural-number sum reduced mod 65535, and RFC 1624 equation 3 (incremental update) is correct for a header of any length when the new header is not all zero words; for an all-zero header it gives 0x0000. No current RTL patches a checksum in place; this is the arithmetic the fast path's template-plus-fields form relies on.",
+   "title": "The ones' complement arithmetic the checksum equations rest on is correct, for lists of any length",
+   "waivers": []
+  }
+ ],
+ "schema": "fda-verified/1",
+ "summary_line": "27 requirements (10 functional, 10 performance, 2 interface, 5 safety); 3 verified, of which 3 rest on delegated acceptances (the planner accepted the Lean statement on the owner's delegation; not human approvals); 6 partially verified (the required mix of methods is not met); 16 stale; 2 with no passing evidence; 2 with no passing evidence; 0 of 2 requirements that depend on an external element closed by hardware; 0 of 27 requirements agreed by a human, 0 agreed on the owner's delegation (not human), 27 draft; 6 resting only on the implementing agent's own tests; 0 human and 0 delegated review(s) recorded; 6 Lean proof item(s) (all widths): 0 with a human-approved statement, 6 with a statement accepted on the owner's delegation (not a human approval), 0 with statement not approved; 3 kernel only, 3 using a compiled decision procedure; build status from: recorded build (not re-run)."
+}

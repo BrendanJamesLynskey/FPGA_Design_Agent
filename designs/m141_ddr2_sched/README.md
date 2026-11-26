@@ -2,6 +2,8 @@
 
 <!-- Generated from handover.yaml by flow/handover.py (brief 68). Edit handover.yaml, or the text between the prose markers, then run: python -m flow.handover write designs/m141_ddr2_sched -->
 
+**Verification: verified except: 4 of 11 requirements without passing evidence; 11 of 11 requirements not agreed; required method mix not yet measured; mutation floor not yet measured; formal rigour not yet measured; fresh re-run not yet measured.** [VERIFIED.md](VERIFIED.md) is the generated, hash-pinned record; [what the label means](../../docs/verified.md).
+
 A request queue in front of a DDR2 command bus for the Micron MT47H64M16 on the Nexys A7, with two policies chosen by a parameter, latency-first for few random reads and bandwidth-first for streams, an abstract command interface that maps to AMD's PHY-only interface or to the MIG native interface, and the JEDEC timing rules enforced by per-bank counters. The rules are proved on the command stream by SymbiYosys against an independent monitor, and the scheduler is measured against a behavioural DDR2 model written from the data sheet.
 
 Not in scope:
@@ -83,7 +85,7 @@ Interfaces:
 | the proofs, covers and mutants of the CI set; needs the OSS CAD Suite release 2026-11-12 (SymbiYosys, Yosys with the slang plugin, Boolector, ABC); FDA_OSS_CAD or ~/.local/opt/oss-cad-suite | `python3 -m pytest -q designs/m141_ddr2_sched/tests/test_m141_formal.py` | no | about 20 min |
 | the measured simulation runs of results/b141; needs Icarus Verilog 12; single process, nice it on a shared machine | `python3 designs/m141_ddr2_sched/tests/m141_measure.py --json results/b141/sim_summary.json` | no | about 60 min |
 
-Tool: Vivado 2026.1. Build ID of the inputs at handover: none (no Vivado build of this directory). Knowledge-bank pin: `5e2eab8`.
+Tool: Vivado 2026.1. Build ID of the inputs at handover: none (no Vivado build of this directory). Knowledge-bank pin: `6185830`.
 
 | File | What |
 |---|---|

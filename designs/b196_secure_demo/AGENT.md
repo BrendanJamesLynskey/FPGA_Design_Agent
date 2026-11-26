@@ -3,13 +3,14 @@ source: designs/b196_secure_demo/handover.yaml; human view: README.md; refresh: 
 
 ## identity
 kind=demonstration produced_by=session part=xck26-sfvc784-2LV-c board=kr260 top=b196_top tool=Vivado 2026.1
+verified: not assessed: no requirements recorded (no verif/testplan.yaml), so nothing here is traced to a requirement (record: designs/b196_secure_demo/VERIFIED.md, designs/b196_secure_demo/verified.json; definition: docs/verified.md)
 
 ## summary
 A 25 MHz design for the Kria KR260 part that runs the brief-194 stream core and drives two LEDs, with a SYSMONE4 whose alarm thresholds come from the board's operating limits and feed a latched safe shutdown. It is built with the production_secure switch on, and the same design with one ILA added is built to show the check failing. Built only; never programmed and never on a board.
 not: a held-out or benchmark task; it was written to demonstrate and measure the production_secure check; a statement that the part is secure against an attacker; nothing was measured against one and no certification or side-channel claim is made; a board design; it was never programmed and no hardware measurement exists; bitstream encryption or authentication, which on a Zynq MPSoC are boot-image steps that belong to the owner
 
 ## state
-stage=built vivado=2026.1 kb_pin=5e2eab8 build_id=32f26e59
+stage=built vivado=2026.1 kb_pin=6185830 build_id=727a9cb5
 gates: security_profile_met=pass
 
 ## interface
