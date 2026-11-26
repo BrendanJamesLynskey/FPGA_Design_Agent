@@ -1,0 +1,97 @@
+{
+ "arm": "shuffled217",
+ "design": "lzc_treebarrel_k26_w32",
+ "seed": 1,
+ "status": "ok",
+ "stop_reason": "timing met",
+ "wns_ns": 0.119,
+ "whs_ns": 0.075,
+ "wns_gain_ns": 0.605,
+ "lut": 139,
+ "ff": 137,
+ "vivado_runs": 2,
+ "fmax_mhz": 780.6,
+ "clock_ns": 1.4,
+ "part": "xck26-sfvc784-2LV-c",
+ "wall_s": 1289.4,
+ "cpu_s_runs": 1276,
+ "search": {
+  "best": "n2",
+  "best_wns_ns": 0.119,
+  "best_plan": {
+   "synth": [
+    [
+     "retiming",
+     null
+    ]
+   ],
+   "directives": {},
+   "phys_flags": {},
+   "force_replication": [],
+   "max_fanout": [],
+   "pblocks": [],
+   "applied": [
+    "retime"
+   ]
+  },
+  "runs": 2,
+  "stop": "timing met",
+  "hopeless": false,
+  "nodes": [
+   {
+    "id": "n0",
+    "parent": null,
+    "call": null,
+    "wns_ns": -0.486,
+    "whs_ns": 0.088,
+    "lut": 140,
+    "ff": 112,
+    "status": "ok",
+    "kept": true,
+    "verdict": "root"
+   },
+   {
+    "id": "n1",
+    "parent": "n0",
+    "call": {
+     "recipe": "amd_strategy",
+     "args": {
+      "name": "Performance_NetDelay_high"
+     },
+     "reason": "the general performance sweep",
+     "weight": 27.0,
+     "prior": 0.0
+    },
+    "wns_ns": -0.456,
+    "whs_ns": 0.102,
+    "lut": 147,
+    "ff": 122,
+    "status": "ok",
+    "kept": false,
+    "verdict": "rolled back: not better than its parent"
+   },
+   {
+    "id": "n2",
+    "parent": "n0",
+    "call": {
+     "recipe": "retime",
+     "args": {
+      "where": "synth"
+     },
+     "reason": "5 logic levels: retiming moves registers across the logic",
+     "weight": 70.0,
+     "prior": 0.0
+    },
+    "wns_ns": 0.119,
+    "whs_ns": 0.075,
+    "lut": 139,
+    "ff": 137,
+    "status": "ok",
+    "kept": true,
+    "verdict": "kept"
+   }
+  ],
+  "rolled_back": 1
+ },
+ "date": "2026-11-26T07:44:11"
+}
