@@ -3599,6 +3599,12 @@
      },
      {
       "gate": false,
+      "id": "V-FORMAL-MAC-IFG",
+      "text": "changed since the evidence was recorded: designs/b96_kr260_10g/verif/formal/mac64_tx_ifg.sby, designs/b96_kr260_10g/verif/formal/mac64_tx_ifg_props.sv",
+      "type": "stale_evidence"
+     },
+     {
+      "gate": false,
       "id": "V-SIMM-T2T",
       "text": "changed since the evidence was recorded: designs/b96_kr260_10g/rtl/b96_core.sv, designs/b96_kr260_10g/rtl/hs_vec.sv, designs/b96_kr260_10g/rtl/rate_match.sv, designs/b96_kr260_10g/rtl/rate_match_gp.sv (+1 more)",
       "type": "stale_evidence"
@@ -3665,6 +3671,12 @@
      },
      {
       "gate": false,
+      "id": "V-HW-SYSMON-96E",
+      "text": "no pin recorded (run: python -m flow.trace_v1 pin)",
+      "type": "stale_evidence"
+     },
+     {
+      "gate": false,
       "id": "V-HW-LAT-E-97C",
       "text": "changed since the evidence was recorded: designs/b96_kr260_10g/rtl/b96_core.sv, designs/b96_kr260_10g/rtl/b96_pkg.sv, designs/b96_kr260_10g/rtl/hs_vec.sv, designs/b96_kr260_10g/rtl/pcs_rx.sv (+5 more)",
       "type": "stale_evidence"
@@ -3673,6 +3685,18 @@
       "gate": false,
       "id": "V-HW-LAT-L-97C",
       "text": "changed since the evidence was recorded: designs/b96_kr260_10g/rtl/b96_core.sv, designs/b96_kr260_10g/rtl/b96_pkg.sv, designs/b96_kr260_10g/rtl/hs_vec.sv, designs/b96_kr260_10g/rtl/pcs_rx.sv (+5 more)",
+      "type": "stale_evidence"
+     },
+     {
+      "gate": false,
+      "id": "V-XVC-CDC-STRUCT",
+      "text": "the evidence file changed after it was pinned (run: python -m flow.trace_v1 pin)",
+      "type": "stale_evidence"
+     },
+     {
+      "gate": false,
+      "id": "V-XVC-FLOW-GATES",
+      "text": "no pin recorded (run: python -m flow.trace_v1 pin)",
       "type": "stale_evidence"
      }
     ],
@@ -3898,6 +3922,24 @@
       "written_by": null
      },
      {
+      "detail": "not in the recorded run: test_169_cuts::*, test_169_cuts_rtl::*",
+      "evidence": {
+       "exists": true,
+       "file": "results/116_traceability/b96_kr260_10g/pytest_junit.xml"
+      },
+      "id": "V-SIM-169-CUTS",
+      "instrument": null,
+      "method": "sim_test",
+      "planned": null,
+      "requirements": [
+       "B96-F-BUILDS"
+      ],
+      "status": "not_in_run",
+      "title": "Prototype latency cuts EARLY_MAC and FAST_PRE (lat_cuts169) keep their defaults off, are copies, and pass the 97C core bench in all four parameter combinations (brief 169)",
+      "value": "0 of 2 tests passed",
+      "written_by": null
+     },
+     {
       "detail": "5 test(s) passed in the recorded run",
       "evidence": {
        "exists": true,
@@ -4046,7 +4088,7 @@
       "written_by": null
      },
      {
-      "detail": "7 test(s) passed in the recorded run",
+      "detail": "11 test(s) passed in the recorded run",
       "evidence": {
        "exists": true,
        "file": "results/116_traceability/b96_kr260_10g/pytest_junit.xml"
@@ -4062,14 +4104,14 @@
       ],
       "status": "pass",
       "title": "pyuvm-on-cocotb twin of the UVM bench of the PCS and MAC (brief 123; designs/b96_kr260_10g/verif/pyuvm/); the recorded run is the reference-model checks, one smoke run in Icarus and one seeded-bug kill; the full regression is run by hand",
-      "value": "7 of 7 tests passed",
+      "value": "11 of 11 tests passed",
       "written_by": null
      },
      {
       "detail": "value = 217",
       "evidence": {
        "exists": true,
-       "file": "results/146_verilator_cov/summary.txt"
+       "file": "results/158_cov_closure/summary.txt"
       },
       "id": "V-COV-FUNC",
       "instrument": null,
@@ -4080,15 +4122,15 @@
        "B96-F-MAC"
       ],
       "status": "pass",
-      "title": "Functional coverage of the pyuvm bench of the PCS and MAC (brief 123 bench, brief 146 regression on Verilator 5.048; 42 runs, every one of the 217 bins hit; the Icarus run of brief 123 hit the same 217)",
+      "title": "Functional coverage of the pyuvm bench of the PCS and MAC (brief 123 bench, brief 158 regression on Verilator 5.048; 44 runs, every one of the 217 bins hit; the Icarus run of brief 123 hit the same 217)",
       "value": 217.0,
       "written_by": null
      },
      {
-      "detail": "design.line.percent = 81.25; design.branch.percent = 85.34; design.expr.percent = 92.47; design.toggle.percent = 96.33",
+      "detail": "design.line.percent = 82.5; design.branch.percent = 85.34; design.expr.percent = 92.47; design.toggle.percent = 96.37",
       "evidence": {
        "exists": true,
-       "file": "results/146_verilator_cov/coverage_summary.json"
+       "file": "results/158_cov_closure/coverage_summary.json"
       },
       "id": "V-COV-CODE",
       "instrument": null,
@@ -4099,8 +4141,45 @@
        "B96-F-MAC"
       ],
       "status": "pass",
-      "title": "RTL code coverage of pcs_tx, pcs_rx, mac64_tx, mac64_rx and b96_pkg by the same 42-run regression (Verilator 5.048 --coverage, merged; brief 146). Floors are the measured design-wide percentages rounded down (line 81.25, branch 85.34, expression 92.47, toggle 96.33); every open point is explained in results/146_verilator_cov/README.md (unreachable by design, one deliberately not driven, or a Verilator reporting artefact reproduced in a 15-line test)",
+      "title": "RTL code coverage of pcs_tx, pcs_rx, mac64_tx, mac64_rx and b96_pkg by the same 44-run regression (Verilator 5.048 --coverage, merged; brief 146, raised by brief 158's underrun test). Floors are the measured design-wide percentages rounded down to a whole number (82, 85, 92, 96; measured 82.5, 85.34, 92.47, 96.37; the line floor rose from 81 in brief 158); every open point is explained in results/146_verilator_cov/README.md and results/158_cov_closure/README.md (unreachable by design, proved so by formal covers in brief 158, or a Verilator reporting artefact reproduced in a 15-line test)",
       "value": true,
+      "written_by": null
+     },
+     {
+      "detail": "value = 24",
+      "evidence": {
+       "exists": true,
+       "file": "results/158_cov_closure/protocol_cover.tsv"
+      },
+      "id": "V-TX-UNDERRUN",
+      "instrument": null,
+      "method": "uvm_test",
+      "planned": null,
+      "requirements": [
+       "B96-F-MAC"
+      ],
+      "status": "pass",
+      "title": "Transmit underrun of mac64_tx under the protocol checker's fault-injection mode (brief 158; test t_underrun, 12 underruns per seed). The source stalls inside a frame; expected on the output are the start word, the data words taken, one word of eight error characters (no FCS, no terminate, no eop), one idle word, then any new start; the receiver aborts exactly those frames. The recorded run is the 44-run regression; the count is the underruns the checker saw in injection mode",
+      "value": 24.0,
+      "written_by": null
+     },
+     {
+      "detail": "4 test(s) passed in the recorded run",
+      "evidence": {
+       "exists": true,
+       "file": "results/116_traceability/b96_kr260_10g/pytest_junit.xml"
+      },
+      "id": "V-FORMAL-MAC-IFG",
+      "instrument": null,
+      "method": "formal",
+      "planned": null,
+      "requirements": [
+       "B96-F-MAC"
+      ],
+      "stale_because": "changed since the evidence was recorded: designs/b96_kr260_10g/verif/formal/mac64_tx_ifg.sby, designs/b96_kr260_10g/verif/formal/mac64_tx_ifg_props.sv",
+      "status": "stale",
+      "title": "SymbiYosys covers and proofs of the two mac64_tx interframe-gap conditions code coverage found unreachable (brief 158, verif/formal/mac64_tx_ifg.sby). Both unreached, both proved unreachable by induction, the neighbouring arms reachable, and a planted wider n finds the first reachable",
+      "value": "4 of 4 tests passed",
       "written_by": null
      },
      {
@@ -4426,7 +4505,8 @@
       "requirements": [
        "B96-S-ROC"
       ],
-      "status": "pass",
+      "stale_because": "no pin recorded (run: python -m flow.trace_v1 pin)",
+      "status": "stale",
       "title": "SYSMON at the start and end of the 96E run",
       "value": true,
       "written_by": null
@@ -4711,7 +4791,8 @@
        "B96-S-CDC",
        "B96-F-DBGXVC"
       ],
-      "status": "pass",
+      "stale_because": "the evidence file changed after it was pinned (run: python -m flow.trace_v1 pin)",
+      "status": "stale",
       "title": "The flow's post-synthesis CDC structure gate on dbg_xvc (brief 140: AMD's CDC-15 waiver for the XPM handshake left report_cdc no row for the 2203 hs_vec crossings; the flow now reads their exception from the timing exceptions)",
       "value": true,
       "written_by": null
@@ -4729,7 +4810,8 @@
       "requirements": [
        "B96-F-DBGXVC"
       ],
-      "status": "pass",
+      "stale_because": "no pin recorded (run: python -m flow.trace_v1 pin)",
+      "status": "stale",
       "title": "Every flow gate of build dbg_xvc, synthesis to bitstream (brief 140: six that failed in brief 131 now pass, by flow fixes and no waiver; the eyescan and default builds are unchanged)",
       "value": true,
       "written_by": null
@@ -5029,6 +5111,8 @@
        "V-PYUVM",
        "V-COV-FUNC",
        "V-COV-CODE",
+       "V-TX-UNDERRUN",
+       "V-FORMAL-MAC-IFG",
        "V-REVIEW-96"
       ],
       "kind": "functional",
@@ -5046,7 +5130,7 @@
       "rests_on_delegated": false,
       "source": "designs/b96_kr260_10g/docs/design.md#7-verification-plan",
       "spec_status": "draft",
-      "stale_items": 0,
+      "stale_items": 1,
       "state": "partially_verified",
       "text": "Frames start in lane 0 and lane 4, every terminate lane and every length residue is handled, FCS is generated and checked, and a bad FCS is counted.",
       "title": "64-bit MAC frames correctly in both directions",
@@ -5425,7 +5509,7 @@
       "rests_on_delegated": false,
       "source": "_handoff/fpga_agent/fpga_agent_house_rules.md",
       "spec_status": "draft",
-      "stale_items": 0,
+      "stale_items": 1,
       "state": "partially_verified",
       "text": "Die temperature, VCCINT, VCCAUX and VCCBRAM read from SYSMON are inside the DS925 windows at the start and end of every board run.",
       "title": "Board runs stay inside the recommended operating conditions",
@@ -5463,7 +5547,7 @@
       "rests_on_delegated": false,
       "source": "designs/b96_kr260_10g/docs/design.md#26-where-the-decision-lives-and-how-it-crosses-clocks-as-built-for-brief-96-superseded-by-section-9-brief-96c",
       "spec_status": "draft",
-      "stale_items": 2,
+      "stale_items": 3,
       "state": "partially_verified",
       "text": "report_cdc shows no Critical item and every crossing has the documented synchroniser structure.",
       "title": "No critical clock-domain crossing",
@@ -5515,6 +5599,7 @@
       "id": "B96-F-BUILDS",
       "items": [
        "V-SIM-126-ALL3",
+       "V-SIM-169-CUTS",
        "V-SIM-BUILDS"
       ],
       "kind": "functional",
@@ -5959,7 +6044,7 @@
       "rests_on_delegated": false,
       "source": "designs/b96_kr260_10g/dbg_xvc/docs/dbg_xvc.md",
       "spec_status": "draft",
-      "stale_items": 0,
+      "stale_items": 2,
       "state": "partially_verified",
       "text": "Build dbg_xvc (the eyescan build plus a PS-AXI Debug Bridge and one ILA) closes timing and report_cdc, adds no cell to and removes no cell from the core's hierarchy except the read-only taps, and, on the board, Vivado finds and captures from the ILA over XVC while Linux keeps running. Never part of a build whose latency is measured.",
       "title": "A debug build reaches an ILA over the network and leaves the trading path alone",
@@ -6059,9 +6144,9 @@
        "fail": 0,
        "not_in_run": 0,
        "not_run": 4,
-       "pass": 9,
+       "pass": 8,
        "skipped": 0,
-       "stale": 4,
+       "stale": 5,
        "unapproved": 0
       },
       "coverage_bin": {
@@ -6081,7 +6166,7 @@
        "not_run": 0,
        "pass": 1,
        "skipped": 0,
-       "stale": 1,
+       "stale": 2,
        "unapproved": 0
       },
       "formal_lean": {
@@ -6117,7 +6202,7 @@
       "sim_test": {
        "bounded": 0,
        "fail": 0,
-       "not_in_run": 0,
+       "not_in_run": 1,
        "not_run": 0,
        "pass": 13,
        "skipped": 0,
@@ -6129,9 +6214,9 @@
        "fail": 0,
        "not_in_run": 0,
        "not_run": 0,
-       "pass": 9,
+       "pass": 7,
        "skipped": 0,
-       "stale": 6,
+       "stale": 8,
        "unapproved": 0
       },
       "uvm_test": {
@@ -6139,7 +6224,7 @@
        "fail": 0,
        "not_in_run": 0,
        "not_run": 0,
-       "pass": 2,
+       "pass": 3,
        "skipped": 0,
        "stale": 0,
        "unapproved": 0
@@ -6160,10 +6245,10 @@
       "method_mix_missing": 12,
       "no_passing_evidence": 4,
       "own_tests_only": 9,
-      "stale_evidence": 14
+      "stale_evidence": 18
      },
      "human_reviews": 0,
-     "items": 62,
+     "items": 65,
      "lean": {
       "approved": 0,
       "build_sources": [
@@ -39826,6 +39911,12 @@
      },
      {
       "gate": false,
+      "id": "V-FORMAL-MAC-IFG",
+      "text": "changed since the evidence was recorded: designs/b96_kr260_10g/verif/formal/mac64_tx_ifg.sby, designs/b96_kr260_10g/verif/formal/mac64_tx_ifg_props.sv",
+      "type": "stale_evidence"
+     },
+     {
+      "gate": false,
       "id": "V-SIMM-T2T",
       "text": "changed since the evidence was recorded: designs/b96_kr260_10g/rtl/b96_core.sv, designs/b96_kr260_10g/rtl/hs_vec.sv, designs/b96_kr260_10g/rtl/rate_match.sv, designs/b96_kr260_10g/rtl/rate_match_gp.sv (+1 more)",
       "type": "stale_evidence"
@@ -39892,6 +39983,12 @@
      },
      {
       "gate": false,
+      "id": "V-HW-SYSMON-96E",
+      "text": "no pin recorded (run: python -m flow.trace_v1 pin)",
+      "type": "stale_evidence"
+     },
+     {
+      "gate": false,
       "id": "V-HW-LAT-E-97C",
       "text": "changed since the evidence was recorded: designs/b96_kr260_10g/rtl/b96_core.sv, designs/b96_kr260_10g/rtl/b96_pkg.sv, designs/b96_kr260_10g/rtl/hs_vec.sv, designs/b96_kr260_10g/rtl/pcs_rx.sv (+5 more)",
       "type": "stale_evidence"
@@ -39900,6 +39997,18 @@
       "gate": false,
       "id": "V-HW-LAT-L-97C",
       "text": "changed since the evidence was recorded: designs/b96_kr260_10g/rtl/b96_core.sv, designs/b96_kr260_10g/rtl/b96_pkg.sv, designs/b96_kr260_10g/rtl/hs_vec.sv, designs/b96_kr260_10g/rtl/pcs_rx.sv (+5 more)",
+      "type": "stale_evidence"
+     },
+     {
+      "gate": false,
+      "id": "V-XVC-CDC-STRUCT",
+      "text": "the evidence file changed after it was pinned (run: python -m flow.trace_v1 pin)",
+      "type": "stale_evidence"
+     },
+     {
+      "gate": false,
+      "id": "V-XVC-FLOW-GATES",
+      "text": "no pin recorded (run: python -m flow.trace_v1 pin)",
       "type": "stale_evidence"
      }
     ],
@@ -40125,6 +40234,24 @@
       "written_by": null
      },
      {
+      "detail": "not in the recorded run: test_169_cuts::*, test_169_cuts_rtl::*",
+      "evidence": {
+       "exists": true,
+       "file": "results/116_traceability/b96_kr260_10g/pytest_junit.xml"
+      },
+      "id": "V-SIM-169-CUTS",
+      "instrument": null,
+      "method": "sim_test",
+      "planned": null,
+      "requirements": [
+       "B96-F-BUILDS"
+      ],
+      "status": "not_in_run",
+      "title": "Prototype latency cuts EARLY_MAC and FAST_PRE (lat_cuts169) keep their defaults off, are copies, and pass the 97C core bench in all four parameter combinations (brief 169)",
+      "value": "0 of 2 tests passed",
+      "written_by": null
+     },
+     {
       "detail": "5 test(s) passed in the recorded run",
       "evidence": {
        "exists": true,
@@ -40273,7 +40400,7 @@
       "written_by": null
      },
      {
-      "detail": "7 test(s) passed in the recorded run",
+      "detail": "11 test(s) passed in the recorded run",
       "evidence": {
        "exists": true,
        "file": "results/116_traceability/b96_kr260_10g/pytest_junit.xml"
@@ -40289,14 +40416,14 @@
       ],
       "status": "pass",
       "title": "pyuvm-on-cocotb twin of the UVM bench of the PCS and MAC (brief 123; designs/b96_kr260_10g/verif/pyuvm/); the recorded run is the reference-model checks, one smoke run in Icarus and one seeded-bug kill; the full regression is run by hand",
-      "value": "7 of 7 tests passed",
+      "value": "11 of 11 tests passed",
       "written_by": null
      },
      {
       "detail": "value = 217",
       "evidence": {
        "exists": true,
-       "file": "results/146_verilator_cov/summary.txt"
+       "file": "results/158_cov_closure/summary.txt"
       },
       "id": "V-COV-FUNC",
       "instrument": null,
@@ -40307,15 +40434,15 @@
        "B96-F-MAC"
       ],
       "status": "pass",
-      "title": "Functional coverage of the pyuvm bench of the PCS and MAC (brief 123 bench, brief 146 regression on Verilator 5.048; 42 runs, every one of the 217 bins hit; the Icarus run of brief 123 hit the same 217)",
+      "title": "Functional coverage of the pyuvm bench of the PCS and MAC (brief 123 bench, brief 158 regression on Verilator 5.048; 44 runs, every one of the 217 bins hit; the Icarus run of brief 123 hit the same 217)",
       "value": 217.0,
       "written_by": null
      },
      {
-      "detail": "design.line.percent = 81.25; design.branch.percent = 85.34; design.expr.percent = 92.47; design.toggle.percent = 96.33",
+      "detail": "design.line.percent = 82.5; design.branch.percent = 85.34; design.expr.percent = 92.47; design.toggle.percent = 96.37",
       "evidence": {
        "exists": true,
-       "file": "results/146_verilator_cov/coverage_summary.json"
+       "file": "results/158_cov_closure/coverage_summary.json"
       },
       "id": "V-COV-CODE",
       "instrument": null,
@@ -40326,8 +40453,45 @@
        "B96-F-MAC"
       ],
       "status": "pass",
-      "title": "RTL code coverage of pcs_tx, pcs_rx, mac64_tx, mac64_rx and b96_pkg by the same 42-run regression (Verilator 5.048 --coverage, merged; brief 146). Floors are the measured design-wide percentages rounded down (line 81.25, branch 85.34, expression 92.47, toggle 96.33); every open point is explained in results/146_verilator_cov/README.md (unreachable by design, one deliberately not driven, or a Verilator reporting artefact reproduced in a 15-line test)",
+      "title": "RTL code coverage of pcs_tx, pcs_rx, mac64_tx, mac64_rx and b96_pkg by the same 44-run regression (Verilator 5.048 --coverage, merged; brief 146, raised by brief 158's underrun test). Floors are the measured design-wide percentages rounded down to a whole number (82, 85, 92, 96; measured 82.5, 85.34, 92.47, 96.37; the line floor rose from 81 in brief 158); every open point is explained in results/146_verilator_cov/README.md and results/158_cov_closure/README.md (unreachable by design, proved so by formal covers in brief 158, or a Verilator reporting artefact reproduced in a 15-line test)",
       "value": true,
+      "written_by": null
+     },
+     {
+      "detail": "value = 24",
+      "evidence": {
+       "exists": true,
+       "file": "results/158_cov_closure/protocol_cover.tsv"
+      },
+      "id": "V-TX-UNDERRUN",
+      "instrument": null,
+      "method": "uvm_test",
+      "planned": null,
+      "requirements": [
+       "B96-F-MAC"
+      ],
+      "status": "pass",
+      "title": "Transmit underrun of mac64_tx under the protocol checker's fault-injection mode (brief 158; test t_underrun, 12 underruns per seed). The source stalls inside a frame; expected on the output are the start word, the data words taken, one word of eight error characters (no FCS, no terminate, no eop), one idle word, then any new start; the receiver aborts exactly those frames. The recorded run is the 44-run regression; the count is the underruns the checker saw in injection mode",
+      "value": 24.0,
+      "written_by": null
+     },
+     {
+      "detail": "4 test(s) passed in the recorded run",
+      "evidence": {
+       "exists": true,
+       "file": "results/116_traceability/b96_kr260_10g/pytest_junit.xml"
+      },
+      "id": "V-FORMAL-MAC-IFG",
+      "instrument": null,
+      "method": "formal",
+      "planned": null,
+      "requirements": [
+       "B96-F-MAC"
+      ],
+      "stale_because": "changed since the evidence was recorded: designs/b96_kr260_10g/verif/formal/mac64_tx_ifg.sby, designs/b96_kr260_10g/verif/formal/mac64_tx_ifg_props.sv",
+      "status": "stale",
+      "title": "SymbiYosys covers and proofs of the two mac64_tx interframe-gap conditions code coverage found unreachable (brief 158, verif/formal/mac64_tx_ifg.sby). Both unreached, both proved unreachable by induction, the neighbouring arms reachable, and a planted wider n finds the first reachable",
+      "value": "4 of 4 tests passed",
       "written_by": null
      },
      {
@@ -40653,7 +40817,8 @@
       "requirements": [
        "B96-S-ROC"
       ],
-      "status": "pass",
+      "stale_because": "no pin recorded (run: python -m flow.trace_v1 pin)",
+      "status": "stale",
       "title": "SYSMON at the start and end of the 96E run",
       "value": true,
       "written_by": null
@@ -40938,7 +41103,8 @@
        "B96-S-CDC",
        "B96-F-DBGXVC"
       ],
-      "status": "pass",
+      "stale_because": "the evidence file changed after it was pinned (run: python -m flow.trace_v1 pin)",
+      "status": "stale",
       "title": "The flow's post-synthesis CDC structure gate on dbg_xvc (brief 140: AMD's CDC-15 waiver for the XPM handshake left report_cdc no row for the 2203 hs_vec crossings; the flow now reads their exception from the timing exceptions)",
       "value": true,
       "written_by": null
@@ -40956,7 +41122,8 @@
       "requirements": [
        "B96-F-DBGXVC"
       ],
-      "status": "pass",
+      "stale_because": "no pin recorded (run: python -m flow.trace_v1 pin)",
+      "status": "stale",
       "title": "Every flow gate of build dbg_xvc, synthesis to bitstream (brief 140: six that failed in brief 131 now pass, by flow fixes and no waiver; the eyescan and default builds are unchanged)",
       "value": true,
       "written_by": null
@@ -41256,6 +41423,8 @@
        "V-PYUVM",
        "V-COV-FUNC",
        "V-COV-CODE",
+       "V-TX-UNDERRUN",
+       "V-FORMAL-MAC-IFG",
        "V-REVIEW-96"
       ],
       "kind": "functional",
@@ -41273,7 +41442,7 @@
       "rests_on_delegated": false,
       "source": "designs/b96_kr260_10g/docs/design.md#7-verification-plan",
       "spec_status": "draft",
-      "stale_items": 0,
+      "stale_items": 1,
       "state": "partially_verified",
       "text": "Frames start in lane 0 and lane 4, every terminate lane and every length residue is handled, FCS is generated and checked, and a bad FCS is counted.",
       "title": "64-bit MAC frames correctly in both directions",
@@ -41652,7 +41821,7 @@
       "rests_on_delegated": false,
       "source": "_handoff/fpga_agent/fpga_agent_house_rules.md",
       "spec_status": "draft",
-      "stale_items": 0,
+      "stale_items": 1,
       "state": "partially_verified",
       "text": "Die temperature, VCCINT, VCCAUX and VCCBRAM read from SYSMON are inside the DS925 windows at the start and end of every board run.",
       "title": "Board runs stay inside the recommended operating conditions",
@@ -41690,7 +41859,7 @@
       "rests_on_delegated": false,
       "source": "designs/b96_kr260_10g/docs/design.md#26-where-the-decision-lives-and-how-it-crosses-clocks-as-built-for-brief-96-superseded-by-section-9-brief-96c",
       "spec_status": "draft",
-      "stale_items": 2,
+      "stale_items": 3,
       "state": "partially_verified",
       "text": "report_cdc shows no Critical item and every crossing has the documented synchroniser structure.",
       "title": "No critical clock-domain crossing",
@@ -41742,6 +41911,7 @@
       "id": "B96-F-BUILDS",
       "items": [
        "V-SIM-126-ALL3",
+       "V-SIM-169-CUTS",
        "V-SIM-BUILDS"
       ],
       "kind": "functional",
@@ -42186,7 +42356,7 @@
       "rests_on_delegated": false,
       "source": "designs/b96_kr260_10g/dbg_xvc/docs/dbg_xvc.md",
       "spec_status": "draft",
-      "stale_items": 0,
+      "stale_items": 2,
       "state": "partially_verified",
       "text": "Build dbg_xvc (the eyescan build plus a PS-AXI Debug Bridge and one ILA) closes timing and report_cdc, adds no cell to and removes no cell from the core's hierarchy except the read-only taps, and, on the board, Vivado finds and captures from the ILA over XVC while Linux keeps running. Never part of a build whose latency is measured.",
       "title": "A debug build reaches an ILA over the network and leaves the trading path alone",
@@ -42286,9 +42456,9 @@
        "fail": 0,
        "not_in_run": 0,
        "not_run": 4,
-       "pass": 9,
+       "pass": 8,
        "skipped": 0,
-       "stale": 4,
+       "stale": 5,
        "unapproved": 0
       },
       "coverage_bin": {
@@ -42308,7 +42478,7 @@
        "not_run": 0,
        "pass": 1,
        "skipped": 0,
-       "stale": 1,
+       "stale": 2,
        "unapproved": 0
       },
       "formal_lean": {
@@ -42344,7 +42514,7 @@
       "sim_test": {
        "bounded": 0,
        "fail": 0,
-       "not_in_run": 0,
+       "not_in_run": 1,
        "not_run": 0,
        "pass": 13,
        "skipped": 0,
@@ -42356,9 +42526,9 @@
        "fail": 0,
        "not_in_run": 0,
        "not_run": 0,
-       "pass": 9,
+       "pass": 7,
        "skipped": 0,
-       "stale": 6,
+       "stale": 8,
        "unapproved": 0
       },
       "uvm_test": {
@@ -42366,7 +42536,7 @@
        "fail": 0,
        "not_in_run": 0,
        "not_run": 0,
-       "pass": 2,
+       "pass": 3,
        "skipped": 0,
        "stale": 0,
        "unapproved": 0
@@ -42387,10 +42557,10 @@
       "method_mix_missing": 12,
       "no_passing_evidence": 4,
       "own_tests_only": 9,
-      "stale_evidence": 14
+      "stale_evidence": 18
      },
      "human_reviews": 0,
-     "items": 62,
+     "items": 65,
      "lean": {
       "approved": 0,
       "build_sources": [

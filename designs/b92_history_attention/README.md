@@ -66,7 +66,7 @@ Interfaces:
 | out-of-context builds and clock search on both parts; needs Vivado 2026.1 and a heavy slot | `python3 -m designs.b92_history_attention.ooc.ooc --part xck26-sfvc784-2LV-c --arms b92_ref_current b92_a1_decay b92_a4_lut b92_a2_win8 b92_a2_win16 && python3 -m designs.b92_history_attention.ooc.ooc --part xc7a100tcsg324-1 --arms ... --start 30.0` | yes | about 240 min |
 | summary, figures and tables; needs python 3.12 | `python3 results/b92/summary.py && python3 results/b92/tables.py` | no | about 1 min |
 
-Tool: Vivado 2026.1. Build ID of the inputs at handover: none (no Vivado build of this directory). Knowledge-bank pin: `2338b83`.
+Tool: Vivado 2026.1. Build ID of the inputs at handover: none (no Vivado build of this directory). Knowledge-bank pin: `5e2eab8`.
 
 | File | What |
 |---|---|

@@ -40,3 +40,7 @@ There was no board run. All data are synthetic.
   as pre-registered. The pre-registration said no attention RTL would be built; "built" there meant Vivado, and the simulation-only generation is a deviation
   stated in the report.
 - Many paired intervals (10 sessions, nine degrees of freedom) are uncorrected for multiple comparison.
+
+## Change log
+
+- 2026-11-24 (brief 201): `summary.json` rows carry `fmax_capped_mhz`, `fmax_bound` and `fmax_clock_buffer_mhz` beside the raw closed-clock `fmax_mhz`, capped at the part's clock-buffer minimum period ([flow/fmax_cap.py](../../flow/fmax_cap.py), [results/201_fmax_cap](../201_fmax_cap/README.md); K26 -2LV 725.2 MHz, Artix-7 -1 464.0 MHz). No figure in this folder is above its limit, so no value changes.

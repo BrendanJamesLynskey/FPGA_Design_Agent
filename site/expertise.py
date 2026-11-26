@@ -18,6 +18,7 @@ and the evidence wording:
 """
 from __future__ import annotations
 
+import csv
 import fnmatch
 import glob
 import json
@@ -44,7 +45,9 @@ LEVEL_MEANS = {
 PROSE_OK = re.compile(r"Brief \d+|PR #\d+|Vivado \d+\.\d+|AXI4|AXI3|DSP48E?\d?|DSP48|MMCM|7-series|Zynq-7000|UltraScale\+?|"
                       r"IEEE-1735|AVAL-46|PLIO-3|BUFC-1|FDA-CON-\d(?:\s+to\s+FDA-CON-\d)?|STD-[A-Z]+-\d+|V[0-3](?: to V[0-3])?|"
                       r"CDC-\d+|M\d+[a-c]?|C\d+|UG\d+|PG\d+|XAPP\d+|PS7|PS8|K26|KR260|xc7[az]\d+[a-z]*\d*|Artix-7|SPI|I2C|HDMI|10G|"
-                      r"xpm_cdc_\w+|report_\w+|2025\.2")
+                      r"xpm_cdc_\w+|report_\w+|2025\.2|"
+                      # experimental conditions of a model run (a line of 6 in, 50 ohm, 22 ohm in series, 3.3 V, 12 mA, 5 pF), not results
+                      r"\d+(?:\.\d+)? (?:ohm|in|inch|inches|V|mA|pF)\b")
 NUM = re.compile(r"(?<![\w.#-])\d[\d,]*(?:\.\d+)?")
 
 
@@ -163,7 +166,19 @@ def _conds_ok(item, conds: str | None) -> bool:
     return all(_cond_ok(item, c) for c in (conds.split(",") if conds else []))
 
 
+def _num_or_str(v: str):
+    for conv in (int, float):
+        try:
+            return conv(v)
+        except ValueError:
+            pass
+    return v
+
+
 def _read(p: Path):
+    if p.suffix == ".csv":                  # brief 164: one document per row, numbers converted (a column is then a path like any other)
+        with p.open(newline="") as f:
+            return [{k: _num_or_str(v) for k, v in row.items()} for row in csv.DictReader(f)]
     if p.suffix == ".json":
         return json.loads(p.read_text())
     if p.suffix == ".jsonl":
@@ -186,17 +201,17 @@ def docs_of(item) -> list:
     """JSON documents of the item's sources that pass its `where` conditions (a .jsonl file contributes its lines)."""
     docs = []
     for p in files_of(item):
-        if p.suffix not in (".json", ".jsonl"):
+        if p.suffix not in (".json", ".jsonl", ".csv"):
             continue
         d = _read(p)
-        for x in (d if p.suffix == ".jsonl" else [d]):
+        for x in (d if p.suffix in (".jsonl", ".csv") else [d]):
             if _conds_ok(x, item.get("where")):
                 docs.append(x)
     return docs
 
 
 EXPR = """expression forms (value of one {n} placeholder), op[@list][:conditions] or get:path or re:regex:
-  n                    number of JSON documents (after `where`)
+  n                    number of JSON documents, or CSV rows (a document each, numbers converted), after `where`
   get:a.b.0.c          the value at a path in the first document
   count[@lst]:c1,c2    documents (or items of the list at path lst in every document) meeting all conditions
   sum|max|min[@lst]:p[|c1,c2]  of the number at path p over the documents (or list items), keeping only those meeting the conditions after |
@@ -255,6 +270,8 @@ def fmt(v) -> str:
 
 def render_evidence(item) -> dict:
     vals = [evaluate(e, item) for e in item.get("values", [])]
+    if item.get("round") is not None:            # a model result is shown to a stated number of decimals (brief 164)
+        vals = [round(v, item["round"]) if isinstance(v, float) else v for v in vals]
     for s in item.get("contains", []):
         assert any(s in p.read_text() for p in files_of(item)), (item["source"], "does not contain", s)
     text = item["text"]
@@ -311,7 +328,7 @@ def family_diffs() -> dict:
 
 
 def family_of(a: dict, fd: dict) -> dict:
-    """The family rows and documents of an area. An area with ``family_from: {area, topics, docs}`` (brief 185) shows the named rows of another
+    """The family rows and documents of an area. An area with ``family_from: {area, topics, docs}`` (briefs 185 and 164) shows the named rows of another
     matrix area and the documents of that area whose name starts with one of ``docs``, because the bank's matrix has no area of its own for it."""
     ff = a.get("family_from")
     if not ff:
@@ -332,16 +349,18 @@ def _fill(tmpl: str, vals: dict, where: str) -> str:
 
 
 def figures_of(a: dict) -> list[dict]:
-    """Plots for a drawer, drawn from committed result files (site/dsp_figures.py); texts take their numbers from the plotted data."""
+    """Plots for a drawer, drawn from committed result files (site/dsp_figures.py, site/si_figures.py: the module that knows the kind draws it); texts take their numbers from the plotted data."""
     out = []
     for fg in a.get("figures", []):
         import sys
         if str(HERE) not in sys.path:
             sys.path.insert(0, str(HERE))
         import dsp_figures
-        d = dsp_figures.data(fg["kind"])
+        import si_figures
+        mod = si_figures if fg["kind"] in si_figures.KINDS else dsp_figures
+        d = mod.data(fg["kind"])
         w = f'{a["id"]}/{fg["id"]}'
-        out.append({"id": fg["id"], "kind": fg["kind"], "title": fg["title"], "caption": _fill(fg["caption"], d["vals"], w),
+        out.append({"id": fg["id"], "kind": fg["kind"], "title": _fill(fg["title"], d["vals"], w), "caption": _fill(fg["caption"], d["vals"], w),
                     "how": _fill(fg["how"], d["vals"], w), "wrong": _fill(fg["wrong"], d["vals"], w), "data": d["data"],
                     "sources": [link(x) for x in fg["sources"]]})
     return out
@@ -378,7 +397,7 @@ def build() -> dict:
                            "enforced": bool(c.get("enforced"))})
         ev = []
         for it in a.get("evidence", []):
-            assert it["kind"] in ("measured", "agent", "example"), it
+            assert it["kind"] in ("measured", "agent", "example", "model"), it
             tmpl = PROSE_OK.sub(" ", re.sub(r"\{\d+\}", " ", it["text"]))
             assert not NUM.findall(tmpl), (a["id"], "a number in an evidence template", NUM.findall(tmpl))
             ev.append(render_evidence(it))

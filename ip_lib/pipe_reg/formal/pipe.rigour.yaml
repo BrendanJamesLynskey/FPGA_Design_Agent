@@ -1,0 +1,20 @@
+schema: fpga-design-agent/formal_rigour/v1
+scope: "pipe_reg at W = 4 (a beat's data is its place in the stream), one job per (MODE, N): FWD 1 and 3, SKID 1-3, FULL 1-3, HALF 1-2, COMB 1-3 and the N = 0 wire; the source is free after one reset clock and obeys the AXI4-Stream rule that an offered beat is offered again, the sink is free (any m_ready). Every proof task is k-induction, so every assertion is proved for all depths of that configuration; the configurations are the finite set listed, not every N."
+# the antecedent of each assertion is the state in which it could be broken; one cover serves a group (read by a person, not proved)
+antecedents:
+  "comb_*": comb_holds__ante
+  "half_count": half_holds__ante
+  "half_data": half_holds__ante
+  "half_ready_empty": half_ready__ante
+  "skid_count": skid_holds__ante
+  "skid_data": skid_holds__ante
+  "skid_t_*": skid_spill__ante
+  "full_count": full_holds__ante
+  "full_cnt_max": full_holds__ante
+  "full_valid": full_holds__ante
+  "full_wp": full_holds__ante
+  "full_data": full_holds__ante
+  "full_ready_room": full_ready__ante
+  "full_second": full_two__ante
+  "h_stall_*": h_stall__ante
+sanity: [c_through]

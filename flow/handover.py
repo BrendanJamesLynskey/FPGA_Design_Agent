@@ -546,6 +546,8 @@ def problems(ddir: Path, h: dict | None = None, readme: str | None = None) -> tu
         if not _clock_ok(c):
             errs.append(f"clock {c['name']}: {c['mhz']} MHz does not agree with {c['source']} (an XDC create_clock "
                         "on that port, or a results record)")
+    if h.get("requirements_report") and not (ddir / h["requirements_report"]).is_file():
+        errs.append(f"requirements_report: {h['requirements_report']} does not exist in the design directory")
     if h.get("agent_run") and not (ROOT / h["agent_run"]["record"]).exists():
         errs.append(f"agent_run: {h['agent_run']['record']} does not exist")
     # renderings
@@ -707,6 +709,8 @@ def render_readme(h: dict, ddir: Path, prose: dict, svgs: dict) -> str:
     L += _block("build", prose)
     # verified
     L += ["", "## Verified", ""]
+    if h.get("requirements_report"):
+        L += [f"Requirement by requirement, with where each came from and its evidence: [{h['requirements_report']}]({h['requirements_report']}).", ""]
     if "verification.svg" in svgs:
         L += ["![Verification matrix: each activity and its result](docs/handover/verification.svg)", ""]
     L += ["| ID | Activity | Result | What | Evidence | Conditions |", "|---|---|---|---|---|---|"]
@@ -743,6 +747,12 @@ def render_readme(h: dict, ddir: Path, prose: dict, svgs: dict) -> str:
     L += ["", "## Known gaps and limits", ""]
     L += [f"- **{g['about']}**: {g['text']}" for g in h["gaps"]]
     L += _block("gaps", prose)
+    if h.get("assumptions"):                      # brief 210: the guesses the run made, in every requirements level
+        L += ["", "## Assumptions you did not confirm", "",
+              "The agent settled these questions with its own default (nobody answered, or the answer was waived). A passing test shows the design "
+              "matches the assumption, not that the assumption is what you want. Check the high-risk rows first.", "",
+              "| Risk | Question | The design used | How it was settled |", "|---|---|---|---|"]
+        L += [f"| {a['risk']} | {_cell(a['question'])} | {_cell(a['used'])} | {_cell(a['how'])} |" for a in h["assumptions"]]
     L += ["", "## Next steps", ""]
     L += [f"{i}. {s}" for i, s in enumerate(h["next_steps"], 1)]
     if h["open_questions"]:
@@ -807,6 +817,10 @@ def render_agent(h: dict, ddir: Path) -> str:
         L += [f"off {e['item']}: {e['reason']}" for e in sec["not_enabled"]]
         L += [f"wrong? {s}" for s in sec["could_get_wrong"]]
         L += [f"keys: {sec['key_handling'].strip()}"]
+    if h.get("requirements_report"):
+        L += ["", "## requirements_report", h["requirements_report"]]
+    if h.get("assumptions"):
+        L += ["", "## assumptions_not_confirmed"] + [f"[{x['risk']}] {x['question']} -> {x['used']} ({x['how']})" for x in h["assumptions"]]
     L += ["", "## gaps"]
     groups: dict[str, list[dict]] = {}
     pointer = {e["id"]: f"{e['activity']} evidence is {e['result']}: " for e in h["evidence"]} if compact else {}

@@ -44,7 +44,7 @@ summary, figures and tables (~1min): python3 results/b91/summary.py && python3 r
 
 ## records (path sha256-prefix; claims below cite R<n>)
 R1 designs/b91_lowbit/tests/test_b91_rtl.py ecaaa4a511
-R2 results/b91/summary.json 39837661bc
+R2 results/b91/summary.json 3dfc25ab7e
 R3 results/b91/accuracy.json f2b0902973
 R4 results/b91/accuracy_seedmean.json f0841f2ed7
 

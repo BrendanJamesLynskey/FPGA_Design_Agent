@@ -1,0 +1,36 @@
+[/tmp/claude-1000/w158/ctl/o_unreach_prove] Removing directory '/tmp/claude-1000/w158/ctl/o_unreach_prove'.
+[/tmp/claude-1000/w158/ctl/o_unreach_prove] engine_0: smtbmc boolector
+[/tmp/claude-1000/w158/ctl/o_unreach_prove] base: starting process "cd /tmp/claude-1000/w158/ctl/o_unreach_prove/src; yosys -ql ../model/design.log ../model/design.ys"
+[/tmp/claude-1000/w158/ctl/o_unreach_prove] base: finished (returncode=0)
+[/tmp/claude-1000/w158/ctl/o_unreach_prove] prep: starting process "cd /tmp/claude-1000/w158/ctl/o_unreach_prove/model; yosys -ql design_prep.log design_prep.ys"
+[/tmp/claude-1000/w158/ctl/o_unreach_prove] prep: finished (returncode=0)
+[/tmp/claude-1000/w158/ctl/o_unreach_prove] smt2: starting process "cd /tmp/claude-1000/w158/ctl/o_unreach_prove/model; yosys -ql design_smt2.log design_smt2.ys"
+[/tmp/claude-1000/w158/ctl/o_unreach_prove] smt2: finished (returncode=0)
+[/tmp/claude-1000/w158/ctl/o_unreach_prove] engine_0.basecase: starting process "cd /tmp/claude-1000/w158/ctl/o_unreach_prove; yosys-smtbmc -s boolector --presat --unroll --noprogress -t 8  --append 0 --dump-vcd engine_0/trace.vcd --dump-yw engine_0/trace.yw --dump-vlogtb engine_0/trace_tb.v --dump-smtc engine_0/trace.smtc model/design_smt2.smt2"
+[/tmp/claude-1000/w158/ctl/o_unreach_prove] engine_0.induction: starting process "cd /tmp/claude-1000/w158/ctl/o_unreach_prove; yosys-smtbmc -s boolector --presat --unroll -i --noprogress -t 8  --append 0 --dump-vcd engine_0/trace_induct.vcd --dump-yw engine_0/trace_induct.yw --dump-vlogtb engine_0/trace_induct_tb.v --dump-smtc engine_0/trace_induct.smtc model/design_smt2.smt2"
+[/tmp/claude-1000/w158/ctl/o_unreach_prove] engine_0.basecase: ##   0:00:00  Solver: boolector
+[/tmp/claude-1000/w158/ctl/o_unreach_prove] engine_0.induction: ##   0:00:00  Solver: boolector
+[/tmp/claude-1000/w158/ctl/o_unreach_prove] engine_0.basecase: ##   0:00:00  Checking assumptions in step 0..
+[/tmp/claude-1000/w158/ctl/o_unreach_prove] engine_0.basecase: ##   0:00:00  Checking assertions in step 0..
+[/tmp/claude-1000/w158/ctl/o_unreach_prove] engine_0.induction: ##   0:00:00  Trying induction in step 8..
+[/tmp/claude-1000/w158/ctl/o_unreach_prove] engine_0.basecase: ##   0:00:00  BMC failed!
+[/tmp/claude-1000/w158/ctl/o_unreach_prove] engine_0.basecase: ##   0:00:00  Assert failed in mac64_tx_fv_top: dut.u_props.P_RANGE
+[/tmp/claude-1000/w158/ctl/o_unreach_prove] engine_0.basecase: ##   0:00:00  Writing trace to VCD file: engine_0/trace.vcd
+[/tmp/claude-1000/w158/ctl/o_unreach_prove] engine_0.induction: ##   0:00:00  Trying induction in step 7..
+[/tmp/claude-1000/w158/ctl/o_unreach_prove] engine_0.basecase: ##   0:00:00  Writing trace to Verilog testbench: engine_0/trace_tb.v
+[/tmp/claude-1000/w158/ctl/o_unreach_prove] engine_0.basecase: ##   0:00:00  Writing trace to constraints file: engine_0/trace.smtc
+[/tmp/claude-1000/w158/ctl/o_unreach_prove] engine_0.induction: ##   0:00:00  Trying induction in step 6..
+[/tmp/claude-1000/w158/ctl/o_unreach_prove] engine_0.basecase: ##   0:00:00  Writing trace to Yosys witness file: engine_0/trace.yw
+[/tmp/claude-1000/w158/ctl/o_unreach_prove] engine_0.basecase: ##   0:00:00  Status: failed
+[/tmp/claude-1000/w158/ctl/o_unreach_prove] engine_0.induction: ##   0:00:00  Trying induction in step 5..
+[/tmp/claude-1000/w158/ctl/o_unreach_prove] engine_0.induction: ##   0:00:00  Trying induction in step 4..
+[/tmp/claude-1000/w158/ctl/o_unreach_prove] engine_0.basecase: finished (returncode=1)
+[/tmp/claude-1000/w158/ctl/o_unreach_prove] engine_0.basecase: Status returned by engine for basecase: FAIL
+[/tmp/claude-1000/w158/ctl/o_unreach_prove] engine_0.induction: terminating process
+[/tmp/claude-1000/w158/ctl/o_unreach_prove] summary: Elapsed clock time [H:MM:SS (secs)]: 0:00:00 (0)
+[/tmp/claude-1000/w158/ctl/o_unreach_prove] summary: Elapsed process time [H:MM:SS (secs)]: 0:00:00 (0)
+[/tmp/claude-1000/w158/ctl/o_unreach_prove] summary: engine_0 (smtbmc boolector) returned FAIL for basecase
+[/tmp/claude-1000/w158/ctl/o_unreach_prove] summary: counterexample trace [basecase]: /tmp/claude-1000/w158/ctl/o_unreach_prove/engine_0/trace.vcd
+[/tmp/claude-1000/w158/ctl/o_unreach_prove] summary:   failed assertion mac64_tx_fv_top.\dut.u_props.P_RANGE at mac64_tx_ifg_props.sv:34.17-34.52
+[/tmp/claude-1000/w158/ctl/o_unreach_prove] DONE (FAIL, rc=2)
+The following tasks failed: ['unreach_prove']

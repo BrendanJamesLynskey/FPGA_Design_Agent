@@ -80,6 +80,13 @@ def frame_words(data: bytes, lane4: bool = False, poison: bool = False, fcs_xor:
     return [(int.from_bytes(s[i:i + 8], "little"), sum(b << j for j, b in enumerate(cs[i:i + 8]))) for i in range(0, len(s), 8)]
 
 
+def abort_words(data: bytes) -> list[tuple[int, int]]:
+    """What mac64_tx puts out when the source stalls inside a frame (brief 158; the RTL's underrun arm): the start word, the whole data words it had taken, then one word of
+    eight error characters (control mask 0xFF). No FCS, no terminate; the error word stands in the interframe gap (8 byte times) and one idle word follows before any new start."""
+    pre = int.from_bytes(bytes([START] + [0x55] * 6 + [0xD5]), "little")
+    return [(pre, 0x01)] + [(int.from_bytes(data[i:i + 8], "little"), 0x00) for i in range(0, len(data), 8)] + [(ERR_D, 0xFF)]
+
+
 def term_lane(d: int, c: int) -> int:
     for k in range(8):
         if c == (0xFF << k) & 0xFF and lane(d, k) == TERM:

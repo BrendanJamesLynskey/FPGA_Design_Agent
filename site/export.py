@@ -507,7 +507,7 @@ def main():
             else:
                 p.write_text(s)
     emit(out)
-    import why                                                          # brief 193: "Why this agent", site/why/why.yaml; reads the data files
+    import why                                                          # brief 193: "Why FPGA Force", site/why/why.yaml; reads the data files
     emit({"why": why.build()})                                          # written just above, so it comes last (one export run is enough)
     extra = sorted(set(p.stem for p in (OUT / "tasks").glob("*.json")) - set(pages))
     if extra:

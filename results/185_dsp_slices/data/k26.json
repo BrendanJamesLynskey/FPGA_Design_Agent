@@ -6,7 +6,7 @@
  "tool": "Vivado 2026.1 (build 6511674)",
  "date": "2026-11-23",
  "brief": 185,
- "flow": "out-of-context synth_design, opt_design, place_design, route_design; one thread; clock on port clk only; kept (DONT_TOUCH) registers on every port of the wrapper, so the timed path is register to register through the module under test; I/O paths unconstrained; Fmax = min(1000 / (clock_ns - WNS), 1000 / the largest 'Min Period' required in the timing summary) after routing, one run at that clock (an estimate); a setup-limited Fmax above the slice's own minimum period is not reachable",
+ "flow": "out-of-context synth_design, opt_design, place_design, route_design; one thread; clock on port clk only; kept (DONT_TOUCH) registers on every port of the wrapper, so the timed path is register to register through the module under test; I/O paths unconstrained; Fmax = min(1000 / (clock_ns - WNS), 1000 / the largest 'Min Period' required in the timing summary, 1000 / the BUFG minimum period measured in results/199_dsp_fmax) after routing, one run at that clock (an estimate); a setup-limited Fmax above the slice's own minimum period is not reachable",
  "points": [
   {
    "status": "ok",
@@ -433,7 +433,8 @@
      "BMULTSEL": "B"
     }
    ],
-   "methodology_dsp": []
+   "methodology_dsp": [],
+   "fmax_clock_buffer_mhz": 725.2
   },
   {
    "status": "ok",
@@ -860,7 +861,8 @@
      "BMULTSEL": "B"
     }
    ],
-   "methodology_dsp": []
+   "methodology_dsp": [],
+   "fmax_clock_buffer_mhz": 725.2
   },
   {
    "status": "ok",
@@ -1289,7 +1291,8 @@
    ],
    "methodology_dsp": [
     "drc.rpt: | DPOP-3    | Warning  | PREG Output pipelining | 7      |"
-   ]
+   ],
+   "fmax_clock_buffer_mhz": 725.2
   },
   {
    "status": "ok",
@@ -1718,7 +1721,8 @@
    ],
    "methodology_dsp": [
     "drc.rpt: | DPOP-3    | Warning  | PREG Output pipelining | 16     |"
-   ]
+   ],
+   "fmax_clock_buffer_mhz": 725.2
   },
   {
    "status": "ok",
@@ -1734,7 +1738,7 @@
    "whs_ns": 0.059,
    "wpws_ns": 0.15,
    "fmax_setup_mhz": 836.8,
-   "fmax_mhz": 836.8,
+   "fmax_mhz": 725.2,
    "id": "dot_W16_K4_STYLE0_TR1",
    "kind": "dot",
    "params": {
@@ -1758,7 +1762,7 @@
    "min_period_cell": "DSP_OUTPUT/CLK",
    "fmax_ipchar_mhz": 836.8,
    "fmax_min_period_mhz": 1176.5,
-   "fmax_bound": "setup slack at the target clock",
+   "fmax_bound": "clock-buffer minimum period (BUFG)",
    "dsp_cells": [
     {
      "cell": "u_dut/g_cascade.g_k[0].g_f.pq_reg[0]",
@@ -1857,7 +1861,8 @@
      "BMULTSEL": "B"
     }
    ],
-   "methodology_dsp": []
+   "methodology_dsp": [],
+   "fmax_clock_buffer_mhz": 725.2
   },
   {
    "status": "ok",
@@ -1996,7 +2001,8 @@
      "BMULTSEL": "B"
     }
    ],
-   "methodology_dsp": []
+   "methodology_dsp": [],
+   "fmax_clock_buffer_mhz": 725.2
   },
   {
    "status": "ok",
@@ -2137,7 +2143,8 @@
    ],
    "methodology_dsp": [
     "drc.rpt: | DPOP-3    | Warning  | PREG Output pipelining | 2      |"
-   ]
+   ],
+   "fmax_clock_buffer_mhz": 725.2
   },
   {
    "status": "ok",
@@ -2278,7 +2285,8 @@
    ],
    "methodology_dsp": [
     "drc.rpt: | DPOP-3    | Warning  | PREG Output pipelining | 2      |"
-   ]
+   ],
+   "fmax_clock_buffer_mhz": 725.2
   },
   {
    "status": "ok",
@@ -2513,7 +2521,8 @@
      "BMULTSEL": "B"
     }
    ],
-   "methodology_dsp": []
+   "methodology_dsp": [],
+   "fmax_clock_buffer_mhz": 725.2
   },
   {
    "status": "ok",
@@ -2748,7 +2757,8 @@
      "BMULTSEL": "B"
     }
    ],
-   "methodology_dsp": []
+   "methodology_dsp": [],
+   "fmax_clock_buffer_mhz": 725.2
   },
   {
    "status": "ok",
@@ -2985,7 +2995,8 @@
    ],
    "methodology_dsp": [
     "drc.rpt: | DPOP-3    | Warning  | PREG Output pipelining | 4      |"
-   ]
+   ],
+   "fmax_clock_buffer_mhz": 725.2
   },
   {
    "status": "ok",
@@ -3222,7 +3233,8 @@
    ],
    "methodology_dsp": [
     "drc.rpt: | DPOP-3    | Warning  | PREG Output pipelining | 7      |"
-   ]
+   ],
+   "fmax_clock_buffer_mhz": 725.2
   },
   {
    "status": "ok",
@@ -3295,7 +3307,8 @@
     "drc.rpt: | DPIP-2    | Warning  | Input pipelining       | 2      |",
     "drc.rpt: | DPOP-3    | Warning  | PREG Output pipelining | 1      |",
     "drc.rpt: | DPOP-4    | Warning  | MREG Output pipelining | 1      |"
-   ]
+   ],
+   "fmax_clock_buffer_mhz": 725.2
   },
   {
    "status": "ok",
@@ -3367,7 +3380,8 @@
    "methodology_dsp": [
     "drc.rpt: | DPIP-2    | Warning  | Input pipelining       | 2      |",
     "drc.rpt: | DPOP-3    | Warning  | PREG Output pipelining | 1      |"
-   ]
+   ],
+   "fmax_clock_buffer_mhz": 725.2
   },
   {
    "status": "ok",
@@ -3439,7 +3453,8 @@
    "methodology_dsp": [
     "drc.rpt: | DPIP-2    | Warning  | Input pipelining       | 2      |",
     "drc.rpt: | DPOP-3    | Warning  | PREG Output pipelining | 1      |"
-   ]
+   ],
+   "fmax_clock_buffer_mhz": 725.2
   },
   {
    "status": "ok",
@@ -3511,7 +3526,8 @@
    "methodology_dsp": [
     "drc.rpt: | DPIP-2    | Warning  | Input pipelining       | 2      |",
     "drc.rpt: | DPOP-4    | Warning  | MREG Output pipelining | 1      |"
-   ]
+   ],
+   "fmax_clock_buffer_mhz": 725.2
   },
   {
    "status": "ok",
@@ -3583,7 +3599,8 @@
    "methodology_dsp": [
     "drc.rpt: | DPIP-2    | Warning  | Input pipelining       | 2      |",
     "drc.rpt: | DPOP-3    | Warning  | PREG Output pipelining | 1      |"
-   ]
+   ],
+   "fmax_clock_buffer_mhz": 725.2
   },
   {
    "status": "ok",
@@ -3654,7 +3671,8 @@
    ],
    "methodology_dsp": [
     "drc.rpt: | DPIP-2    | Warning  | Input pipelining  | 2      |"
-   ]
+   ],
+   "fmax_clock_buffer_mhz": 725.2
   },
   {
    "status": "ok",
@@ -3726,7 +3744,8 @@
    "methodology_dsp": [
     "drc.rpt: | DPOP-3    | Warning  | PREG Output pipelining | 1      |",
     "drc.rpt: | DPOP-4    | Warning  | MREG Output pipelining | 1      |"
-   ]
+   ],
+   "fmax_clock_buffer_mhz": 725.2
   },
   {
    "status": "ok",
@@ -3797,7 +3816,8 @@
    ],
    "methodology_dsp": [
     "drc.rpt: | DPOP-3    | Warning  | PREG Output pipelining | 1      |"
-   ]
+   ],
+   "fmax_clock_buffer_mhz": 725.2
   },
   {
    "status": "ok",
@@ -3868,7 +3888,8 @@
    ],
    "methodology_dsp": [
     "drc.rpt: | DPOP-3    | Warning  | PREG Output pipelining | 1      |"
-   ]
+   ],
+   "fmax_clock_buffer_mhz": 725.2
   },
   {
    "status": "ok",
@@ -3884,7 +3905,7 @@
    "whs_ns": 0.115,
    "wpws_ns": 0.15,
    "fmax_setup_mhz": 836.8,
-   "fmax_mhz": 836.8,
+   "fmax_mhz": 725.2,
    "id": "mul_WA18_WB18_NA1_NM1_NP1_RSTP0",
    "kind": "mul",
    "params": {
@@ -3910,7 +3931,7 @@
    "min_period_cell": "DSP_OUTPUT/CLK",
    "fmax_ipchar_mhz": 836.8,
    "fmax_min_period_mhz": 1176.5,
-   "fmax_bound": "setup slack at the target clock",
+   "fmax_bound": "clock-buffer minimum period (BUFG)",
    "dsp_cells": [
     {
      "cell": "u_dut/g_p.p_reg",
@@ -3937,7 +3958,8 @@
      "BMULTSEL": "B"
     }
    ],
-   "methodology_dsp": []
+   "methodology_dsp": [],
+   "fmax_clock_buffer_mhz": 725.2
   },
   {
    "status": "ok",
@@ -3953,7 +3975,7 @@
    "whs_ns": 0.115,
    "wpws_ns": 0.15,
    "fmax_setup_mhz": 836.8,
-   "fmax_mhz": 836.8,
+   "fmax_mhz": 725.2,
    "id": "mul_WA18_WB18_NA1_NM1_NP1_RSTP1",
    "kind": "mul",
    "params": {
@@ -3979,7 +4001,7 @@
    "min_period_cell": "DSP_OUTPUT/CLK",
    "fmax_ipchar_mhz": 836.8,
    "fmax_min_period_mhz": 1176.5,
-   "fmax_bound": "setup slack at the target clock",
+   "fmax_bound": "clock-buffer minimum period (BUFG)",
    "dsp_cells": [
     {
      "cell": "u_dut/g_ps.p_reg",
@@ -4006,7 +4028,8 @@
      "BMULTSEL": "B"
     }
    ],
-   "methodology_dsp": []
+   "methodology_dsp": [],
+   "fmax_clock_buffer_mhz": 725.2
   },
   {
    "status": "ok",
@@ -4022,7 +4045,7 @@
    "whs_ns": 0.115,
    "wpws_ns": 0.15,
    "fmax_setup_mhz": 836.8,
-   "fmax_mhz": 836.8,
+   "fmax_mhz": 725.2,
    "id": "mul_WA18_WB18_NA1_NM1_NP1_RSTP2",
    "kind": "mul",
    "params": {
@@ -4048,7 +4071,7 @@
    "min_period_cell": "DSP_OUTPUT/CLK",
    "fmax_ipchar_mhz": 836.8,
    "fmax_min_period_mhz": 1176.5,
-   "fmax_bound": "setup slack at the target clock",
+   "fmax_bound": "clock-buffer minimum period (BUFG)",
    "dsp_cells": [
     {
      "cell": "u_dut/g_m.m_r_reg",
@@ -4075,7 +4098,8 @@
      "BMULTSEL": "B"
     }
    ],
-   "methodology_dsp": []
+   "methodology_dsp": [],
+   "fmax_clock_buffer_mhz": 725.2
   },
   {
    "status": "ok",
@@ -4147,7 +4171,8 @@
    "methodology_dsp": [
     "drc.rpt: | DPOP-3    | Warning  | PREG Output pipelining | 1      |",
     "drc.rpt: | DPOP-4    | Warning  | MREG Output pipelining | 1      |"
-   ]
+   ],
+   "fmax_clock_buffer_mhz": 725.2
   },
   {
    "status": "ok",
@@ -4218,7 +4243,8 @@
    ],
    "methodology_dsp": [
     "drc.rpt: | DPOP-3    | Warning  | PREG Output pipelining | 1      |"
-   ]
+   ],
+   "fmax_clock_buffer_mhz": 725.2
   },
   {
    "status": "ok",
@@ -4289,7 +4315,8 @@
    ],
    "methodology_dsp": [
     "drc.rpt: | DPOP-3    | Warning  | PREG Output pipelining | 1      |"
-   ]
+   ],
+   "fmax_clock_buffer_mhz": 725.2
   },
   {
    "status": "ok",
@@ -4305,7 +4332,7 @@
    "whs_ns": 0.115,
    "wpws_ns": 0.15,
    "fmax_setup_mhz": 836.8,
-   "fmax_mhz": 836.8,
+   "fmax_mhz": 725.2,
    "id": "mul_WA18_WB18_NA2_NM1_NP1_RSTP0",
    "kind": "mul",
    "params": {
@@ -4331,7 +4358,7 @@
    "min_period_cell": "DSP_OUTPUT/CLK",
    "fmax_ipchar_mhz": 836.8,
    "fmax_min_period_mhz": 1176.5,
-   "fmax_bound": "setup slack at the target clock",
+   "fmax_bound": "clock-buffer minimum period (BUFG)",
    "dsp_cells": [
     {
      "cell": "u_dut/g_p.p_reg",
@@ -4358,7 +4385,8 @@
      "BMULTSEL": "B"
     }
    ],
-   "methodology_dsp": []
+   "methodology_dsp": [],
+   "fmax_clock_buffer_mhz": 725.2
   },
   {
    "status": "ok",
@@ -4374,7 +4402,7 @@
    "whs_ns": 0.115,
    "wpws_ns": 0.15,
    "fmax_setup_mhz": 836.8,
-   "fmax_mhz": 836.8,
+   "fmax_mhz": 725.2,
    "id": "mul_WA27_WB18_NA1_NM1_NP1_RSTP0",
    "kind": "mul",
    "params": {
@@ -4400,7 +4428,7 @@
    "min_period_cell": "DSP_OUTPUT/CLK",
    "fmax_ipchar_mhz": 836.8,
    "fmax_min_period_mhz": 1176.5,
-   "fmax_bound": "setup slack at the target clock",
+   "fmax_bound": "clock-buffer minimum period (BUFG)",
    "dsp_cells": [
     {
      "cell": "u_dut/g_p.p_reg",
@@ -4427,7 +4455,8 @@
      "BMULTSEL": "B"
     }
    ],
-   "methodology_dsp": []
+   "methodology_dsp": [],
+   "fmax_clock_buffer_mhz": 725.2
   },
   {
    "status": "ok",
@@ -4443,7 +4472,7 @@
    "whs_ns": 0.115,
    "wpws_ns": 0.15,
    "fmax_setup_mhz": 836.8,
-   "fmax_mhz": 836.8,
+   "fmax_mhz": 725.2,
    "id": "mul_WA27_WB18_NA2_NM1_NP1_RSTP0",
    "kind": "mul",
    "params": {
@@ -4469,7 +4498,7 @@
    "min_period_cell": "DSP_OUTPUT/CLK",
    "fmax_ipchar_mhz": 836.8,
    "fmax_min_period_mhz": 1176.5,
-   "fmax_bound": "setup slack at the target clock",
+   "fmax_bound": "clock-buffer minimum period (BUFG)",
    "dsp_cells": [
     {
      "cell": "u_dut/g_p.p_reg",
@@ -4496,7 +4525,8 @@
      "BMULTSEL": "B"
     }
    ],
-   "methodology_dsp": []
+   "methodology_dsp": [],
+   "fmax_clock_buffer_mhz": 725.2
   },
   {
    "status": "ok",
@@ -4512,7 +4542,7 @@
    "whs_ns": 0.046,
    "wpws_ns": 0.15,
    "fmax_setup_mhz": 836.8,
-   "fmax_mhz": 836.8,
+   "fmax_mhz": 725.2,
    "id": "preadd_WA24_WB18_VAR0",
    "kind": "preadd",
    "params": {
@@ -4535,7 +4565,7 @@
    "min_period_cell": "DSP_OUTPUT/CLK",
    "fmax_ipchar_mhz": 836.8,
    "fmax_min_period_mhz": 1176.5,
-   "fmax_bound": "setup slack at the target clock",
+   "fmax_bound": "clock-buffer minimum period (BUFG)",
    "dsp_cells": [
     {
      "cell": "u_dut/g_v0.p_reg",
@@ -4562,7 +4592,8 @@
      "BMULTSEL": "B"
     }
    ],
-   "methodology_dsp": []
+   "methodology_dsp": [],
+   "fmax_clock_buffer_mhz": 725.2
   },
   {
    "status": "ok",
@@ -4628,7 +4659,8 @@
      "BMULTSEL": "B"
     }
    ],
-   "methodology_dsp": []
+   "methodology_dsp": [],
+   "fmax_clock_buffer_mhz": 725.2
   },
   {
    "status": "ok",
@@ -4644,7 +4676,7 @@
    "whs_ns": 0.059,
    "wpws_ns": 0.225,
    "fmax_setup_mhz": 1126.1,
-   "fmax_mhz": 1126.1,
+   "fmax_mhz": 725.2,
    "id": "simdpat_MODE0",
    "kind": "simdpat",
    "params": {
@@ -4665,9 +4697,10 @@
    "min_period_cell": "FDRE/C",
    "fmax_ipchar_mhz": 1126.1,
    "fmax_min_period_mhz": 1818.2,
-   "fmax_bound": "setup slack at the target clock",
+   "fmax_bound": "clock-buffer minimum period (BUFG)",
    "dsp_cells": [],
-   "methodology_dsp": []
+   "methodology_dsp": [],
+   "fmax_clock_buffer_mhz": 725.2
   },
   {
    "status": "ok",
@@ -4683,7 +4716,7 @@
    "whs_ns": 0.115,
    "wpws_ns": 0.15,
    "fmax_setup_mhz": 742.9,
-   "fmax_mhz": 742.9,
+   "fmax_mhz": 725.2,
    "id": "simdpat_MODE1",
    "kind": "simdpat",
    "params": {
@@ -4704,7 +4737,7 @@
    "min_period_cell": "DSP_OUTPUT/CLK",
    "fmax_ipchar_mhz": 742.9,
    "fmax_min_period_mhz": 1176.5,
-   "fmax_bound": "setup slack at the target clock",
+   "fmax_bound": "clock-buffer minimum period (BUFG)",
    "dsp_cells": [
     {
      "cell": "u_dut/g_pat.acc_reg",
@@ -4731,7 +4764,8 @@
      "BMULTSEL": "B"
     }
    ],
-   "methodology_dsp": []
+   "methodology_dsp": [],
+   "fmax_clock_buffer_mhz": 725.2
   },
   {
    "status": "ok",
@@ -4825,7 +4859,8 @@
    ],
    "methodology_dsp": [
     "drc.rpt: | DPOP-3    | Warning  | PREG Output pipelining | 1      |"
-   ]
+   ],
+   "fmax_clock_buffer_mhz": 725.2
   },
   {
    "status": "ok",
@@ -4919,7 +4954,8 @@
    ],
    "methodology_dsp": [
     "drc.rpt: | DPOP-3    | Warning  | PREG Output pipelining | 1      |"
-   ]
+   ],
+   "fmax_clock_buffer_mhz": 725.2
   },
   {
    "status": "ok",
@@ -4935,7 +4971,7 @@
    "whs_ns": 0.087,
    "wpws_ns": 0.15,
    "fmax_setup_mhz": 793.7,
-   "fmax_mhz": 793.7,
+   "fmax_mhz": 725.2,
    "id": "wide_WA27_WB27_STYLE1_NA1_LB26",
    "kind": "wide",
    "params": {
@@ -4960,7 +4996,7 @@
    "min_period_cell": "DSP_OUTPUT/CLK",
    "fmax_ipchar_mhz": 793.7,
    "fmax_min_period_mhz": 1176.5,
-   "fmax_bound": "setup slack at the target clock",
+   "fmax_bound": "clock-buffer minimum period (BUFG)",
    "dsp_cells": [
     {
      "cell": "u_dut/g_cascade.g_chain[0].g_stage[0].pq_reg[0]",
@@ -5011,7 +5047,8 @@
      "BMULTSEL": "B"
     }
    ],
-   "methodology_dsp": []
+   "methodology_dsp": [],
+   "fmax_clock_buffer_mhz": 725.2
   },
   {
    "status": "ok",
@@ -5105,7 +5142,8 @@
    ],
    "methodology_dsp": [
     "drc.rpt: | DPOP-3    | Warning  | PREG Output pipelining | 1      |"
-   ]
+   ],
+   "fmax_clock_buffer_mhz": 725.2
   },
   {
    "status": "ok",
@@ -5248,7 +5286,8 @@
    "methodology_dsp": [
     "drc.rpt: | DPOP-3    | Warning  | PREG Output pipelining | 2      |",
     "drc.rpt: | DPOP-4    | Warning  | MREG Output pipelining | 4      |"
-   ]
+   ],
+   "fmax_clock_buffer_mhz": 725.2
   },
   {
    "status": "ok",
@@ -5391,7 +5430,8 @@
    "methodology_dsp": [
     "drc.rpt: | DPOP-3    | Warning  | PREG Output pipelining | 2      |",
     "drc.rpt: | DPOP-4    | Warning  | MREG Output pipelining | 4      |"
-   ]
+   ],
+   "fmax_clock_buffer_mhz": 725.2
   },
   {
    "status": "ok",
@@ -5533,7 +5573,8 @@
    ],
    "methodology_dsp": [
     "drc.rpt: | DPIP-2    | Warning  | Input pipelining  | 1      |"
-   ]
+   ],
+   "fmax_clock_buffer_mhz": 725.2
   },
   {
    "status": "ok",
@@ -5675,7 +5716,8 @@
    ],
    "methodology_dsp": [
     "drc.rpt: | DPOP-3    | Warning  | PREG Output pipelining | 1      |"
-   ]
+   ],
+   "fmax_clock_buffer_mhz": 725.2
   },
   {
    "status": "ok",
@@ -5769,7 +5811,8 @@
    ],
    "methodology_dsp": [
     "drc.rpt: | DPOP-3    | Warning  | PREG Output pipelining | 1      |"
-   ]
+   ],
+   "fmax_clock_buffer_mhz": 725.2
   },
   {
    "status": "ok",
@@ -5863,7 +5906,8 @@
    ],
    "methodology_dsp": [
     "drc.rpt: | DPOP-3    | Warning  | PREG Output pipelining | 1      |"
-   ]
+   ],
+   "fmax_clock_buffer_mhz": 725.2
   },
   {
    "status": "ok",
@@ -5879,7 +5923,7 @@
    "whs_ns": 0.103,
    "wpws_ns": 0.15,
    "fmax_setup_mhz": 793.7,
-   "fmax_mhz": 793.7,
+   "fmax_mhz": 725.2,
    "id": "wide_WA35_WB25_STYLE1_NA1_LB26",
    "kind": "wide",
    "params": {
@@ -5904,7 +5948,7 @@
    "min_period_cell": "DSP_OUTPUT/CLK",
    "fmax_ipchar_mhz": 793.7,
    "fmax_min_period_mhz": 1176.5,
-   "fmax_bound": "setup slack at the target clock",
+   "fmax_bound": "clock-buffer minimum period (BUFG)",
    "dsp_cells": [
     {
      "cell": "u_dut/g_cascade.g_chain[0].g_stage[0].pq_reg[0]",
@@ -5955,7 +5999,8 @@
      "BMULTSEL": "B"
     }
    ],
-   "methodology_dsp": []
+   "methodology_dsp": [],
+   "fmax_clock_buffer_mhz": 725.2
   },
   {
    "status": "ok",
@@ -6049,7 +6094,8 @@
    ],
    "methodology_dsp": [
     "drc.rpt: | DPOP-3    | Warning  | PREG Output pipelining | 1      |"
-   ]
+   ],
+   "fmax_clock_buffer_mhz": 725.2
   },
   {
    "status": "ok",
@@ -6192,7 +6238,8 @@
    "methodology_dsp": [
     "drc.rpt: | DPOP-3    | Warning  | PREG Output pipelining | 2      |",
     "drc.rpt: | DPOP-4    | Warning  | MREG Output pipelining | 4      |"
-   ]
+   ],
+   "fmax_clock_buffer_mhz": 725.2
   },
   {
    "status": "ok",
@@ -6335,7 +6382,8 @@
    "methodology_dsp": [
     "drc.rpt: | DPOP-3    | Warning  | PREG Output pipelining | 2      |",
     "drc.rpt: | DPOP-4    | Warning  | MREG Output pipelining | 4      |"
-   ]
+   ],
+   "fmax_clock_buffer_mhz": 725.2
   },
   {
    "status": "ok",
@@ -6525,7 +6573,8 @@
    ],
    "methodology_dsp": [
     "drc.rpt: | DPIP-2    | Warning  | Input pipelining  | 1      |"
-   ]
+   ],
+   "fmax_clock_buffer_mhz": 725.2
   },
   {
    "status": "ok",
@@ -6715,7 +6764,8 @@
    ],
    "methodology_dsp": [
     "drc.rpt: | DPOP-3    | Warning  | PREG Output pipelining | 1      |"
-   ]
+   ],
+   "fmax_clock_buffer_mhz": 725.2
   },
   {
    "status": "ok",
@@ -6978,7 +7028,8 @@
    "methodology_dsp": [
     "drc.rpt: | DPOP-3    | Warning  | PREG Output pipelining | 2      |",
     "drc.rpt: | DPOP-4    | Warning  | MREG Output pipelining | 5      |"
-   ]
+   ],
+   "fmax_clock_buffer_mhz": 725.2
   },
   {
    "status": "ok",
@@ -7241,7 +7292,8 @@
    "methodology_dsp": [
     "drc.rpt: | DPOP-3    | Warning  | PREG Output pipelining | 2      |",
     "drc.rpt: | DPOP-4    | Warning  | MREG Output pipelining | 5      |"
-   ]
+   ],
+   "fmax_clock_buffer_mhz": 725.2
   },
   {
    "status": "ok",
@@ -7431,7 +7483,8 @@
    ],
    "methodology_dsp": [
     "drc.rpt: | DPIP-2    | Warning  | Input pipelining  | 1      |"
-   ]
+   ],
+   "fmax_clock_buffer_mhz": 725.2
   },
   {
    "status": "ok",
@@ -7621,7 +7674,8 @@
    ],
    "methodology_dsp": [
     "drc.rpt: | DPOP-3    | Warning  | PREG Output pipelining | 1      |"
-   ]
+   ],
+   "fmax_clock_buffer_mhz": 725.2
   },
   {
    "status": "ok",
@@ -8052,7 +8106,8 @@
    "methodology_dsp": [
     "drc.rpt: | DPOP-3    | Warning  | PREG Output pipelining | 6      |",
     "drc.rpt: | DPOP-4    | Warning  | MREG Output pipelining | 10     |"
-   ]
+   ],
+   "fmax_clock_buffer_mhz": 725.2
   },
   {
    "status": "ok",
@@ -8483,7 +8538,8 @@
    "methodology_dsp": [
     "drc.rpt: | DPOP-3    | Warning  | PREG Output pipelining | 6      |",
     "drc.rpt: | DPOP-4    | Warning  | MREG Output pipelining | 10     |"
-   ]
+   ],
+   "fmax_clock_buffer_mhz": 725.2
   },
   {
    "status": "ok",
@@ -8818,7 +8874,8 @@
    "methodology_dsp": [
     "drc.rpt: | DPIP-2    | Warning  | Input pipelining       | 1      |",
     "drc.rpt: | DPOP-3    | Warning  | PREG Output pipelining | 1      |"
-   ]
+   ],
+   "fmax_clock_buffer_mhz": 725.2
   },
   {
    "status": "ok",
@@ -9152,7 +9209,9 @@
    ],
    "methodology_dsp": [
     "drc.rpt: | DPOP-3    | Warning  | PREG Output pipelining | 1      |"
-   ]
+   ],
+   "fmax_clock_buffer_mhz": 725.2
   }
- ]
+ ],
+ "brief_199": "fmax_mhz now also capped by the clock-buffer minimum period (BUF_MIN_PERIOD_NS); fmax_setup_mhz and fmax_min_period_mhz are unchanged"
 }
