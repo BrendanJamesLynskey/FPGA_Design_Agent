@@ -22,6 +22,7 @@ from __future__ import annotations
 import collections
 import importlib.abc
 import json
+import logging
 import os
 import sys
 import traceback
@@ -32,9 +33,11 @@ MAX_LINES = 60_000
 MODEL_RING = 40
 DUT_RING = 24
 MAX_SIGNALS = 48
+LOG_RING = 20
 _state: dict[str, Any] = {"lines": 0, "full": False, "seq": 0, "started": False, "design": None, "names": []}
 _model_ring: collections.deque = collections.deque(maxlen=MODEL_RING)
 _dut_ring: collections.deque = collections.deque(maxlen=DUT_RING)
+_log_ring: collections.deque = collections.deque(maxlen=LOG_RING)
 
 
 def _jsonable(o: Any) -> Any:
@@ -109,20 +112,25 @@ async def _sampler(dut: Any, clk_name: str, names: list[str]) -> None:
     if clk is None:
         return
     handles = [(n, getattr(dut, n)) for n in names if getattr(dut, n, None) is not None]
-    cyc = 0
-    while True:
-        await RisingEdge(clk)
-        await ReadOnly()
-        row = {}
-        for n, h in handles:
-            try:
-                row[n] = int(h.value)
-            except ValueError:
-                row[n] = str(h.value)
-            except Exception:
-                pass
-        _dut_ring.append({"cycle": cyc, "t": _now_ns(), "sig": row})
-        cyc += 1
+    cyc = _state.get("cycle", 0)
+    _state["alive"] = True
+    try:
+        while True:
+            await RisingEdge(clk)
+            await ReadOnly()
+            row = {}
+            for n, h in handles:
+                try:
+                    row[n] = int(h.value)
+                except ValueError:
+                    row[n] = str(h.value)
+                except Exception:
+                    pass
+            _dut_ring.append({"cycle": cyc, "t": _now_ns(), "sig": row})
+            cyc += 1
+            _state["cycle"] = cyc
+    finally:
+        _state["alive"] = False
 
 
 def _start_sampler() -> None:
@@ -132,10 +140,33 @@ def _start_sampler() -> None:
         import cocotb
         dut = cocotb.top
         names = _sample_names(dut)
-        cocotb.start_soon(_sampler(dut, _clock_name(_state["design"]), names))
+        _state["clock"] = _clock_name(_state["design"])
+        cocotb.start_soon(_sampler(dut, _state["clock"], names))
         _state["started"], _state["names"] = True, names
     except Exception:
         pass
+
+
+def _restart_sampler() -> None:
+    """cocotb cancels the tasks a test started when that test ends, and the sampler was started inside the first test: start it again for each later
+    test (called when the next test is scheduled), so that "no clock edge since this test began" is something the sampler can state (brief 217, item 0)."""
+    if not _state["started"] or _state.get("alive") or not os.environ.get("FDA_DIAG_SNAPSHOT"):
+        return
+    try:
+        import cocotb
+        cocotb.start_soon(_sampler(cocotb.top, _state["clock"], _state["names"]))
+    except Exception:
+        pass
+
+
+class _LogRing(logging.Handler):
+    """The last WARNING-or-above log records (name, simulator time, text): a simulator-level stop usually has no exception of its own, and what the
+    simulation logged just before it is the only evidence there is."""
+    def emit(self, record: logging.LogRecord) -> None:
+        try:
+            _log_ring.append({"t": _now_ns(), "level": record.levelname, "logger": record.name, "msg": record.getMessage()[:300]})
+        except Exception:
+            pass
 
 
 def wrap(model_module: Any) -> None:
@@ -229,6 +260,14 @@ def _patch_failure_hook() -> None:
         orig = cls._record_test_failed
         if getattr(orig, "_fda_hooked", False):
             return
+        o_sched = cls._schedule_next_test
+
+        def sched(self, *a, **k):
+            r = o_sched(self, *a, **k)
+            _restart_sampler()
+            return r
+        cls._schedule_next_test = sched
+        logging.getLogger().addHandler(_LogRing(level=logging.WARNING))
 
         def hooked(self, wall_time_s, sim_time_ns, result, msg):
             try:
@@ -237,7 +276,8 @@ def _patch_failure_hook() -> None:
                     snap = {"schema": "fda/failure-snapshot/v1", "test": getattr(self._test, "name", None), "sim_time_ns": float(sim_time_ns),
                             "exception": type(result).__name__ if result is not None else None, "message": str(result)[:600] if result is not None else (msg or ""),
                             "site": _failure_site(result), "model_ring": list(_model_ring), "dut_ring": list(_dut_ring),
-                            "signals": _state["names"]}
+                            "signals": _state["names"], "test_start_ns": float(getattr(self, "_start_sim_time", 0.0) or 0.0),
+                            "clock": _state.get("clock"), "log_ring": list(_log_ring)}
                     Path(path).write_text(json.dumps(snap, default=_jsonable))
                     orig(self, wall_time_s, sim_time_ns, result, msg)
                     try:
