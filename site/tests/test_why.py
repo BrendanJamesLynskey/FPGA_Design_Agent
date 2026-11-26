@@ -55,7 +55,8 @@ def test_why_is_the_first_nav_item_everywhere_and_linked_from_the_landing_page()
     pages = _pages()
     for fn, p in pages.items():
         nav = re.search(r'<nav aria-label="Pages">(.*?)</nav>', p, re.S).group(1)
-        assert nav.startswith('<a href="' + ("../" if "/" in fn else "") + 'why.html"'), fn
+        first = re.search(r'<div class="navmenu">(<a [^>]*>)', nav).group(1)      # brief 237: the nav is four groups; Why is the first link of the first
+        assert first.startswith('<a href="' + ("../" if "/" in fn else "") + 'why.html"'), fn
     home = pages["index.html"]
     assert 'id="why-cta"' in home and home.index('id="why-cta"') < home.index('id="premise"')
 

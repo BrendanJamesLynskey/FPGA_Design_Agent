@@ -1,0 +1,215 @@
+# What changed in the agent since 23 November 2026 (brief 237). Rendered by site/changes.py into site/src/changes.html's body.
+# Prose holds no typed numbers: a figure is a {name} placeholder whose value is read from a committed file by one of site/expertise.py's
+# expressions (the same rule and the same expressions as the story page). Every PR must be in changes/merged_prs.json and every path must exist.
+# Headlines are in plain words and name the model; a result that was not measured is said to be so.
+text:
+  intro: "These are the changes to FPGA Force from 23 November 2026, each with what it does in plain words, what was shown (a headline from a committed record, with the model that did the work), what it does not show, and the evidence. {changes_n} merged pull requests are covered. Nothing here is a held-out score: no held-out evaluation of FPGA Force has been run."
+  how_to_read: "Each change is a drawer. The first line says what changed; the result line says what a record shows and which model produced it; the limits line says what that result cannot tell you. The pull request links go to the change itself; the evidence links go to the committed files that every figure here is read from."
+values:
+  kr_reached: {source: results/209_kr260_pilot/README.md, expr: 're:Reached a bitstream[^:]*: (\d+) of \d+ runs'}
+  kr_runs: {source: results/209_kr260_pilot/README.md, expr: 're:Reached a bitstream[^:]*: \d+ of (\d+) runs'}
+  kr_cut_runs: {source: results/209_kr260_pilot/README.md, expr: 're:All (\d+) runs of p4, p5 and p6 failed'}
+  kr_cost: {source: results/209_kr260_pilot/README.md, expr: 're:Cost: ([\d.]+) USD real'}
+  kr_second_spent: {source: pilots/224/STOPPED, expr: 're:cumulative real dollars ([\d.]+) above'}
+  kr_second_cap: {source: pilots/224/STOPPED, expr: 're:above (\d+)'}
+  cvdp_sample: {source: results/215_public_benchmarks/README.md, expr: 're:stratified sample of (\d+) of the \d+ problems'}
+  cvdp_all: {source: results/215_public_benchmarks/README.md, expr: 're:stratified sample of \d+ of the (\d+) problems'}
+  req_t1_a: {source: results/210_requirements/README.md, expr: 're:The first has (\d+) of \d+ requirements passed'}
+  req_t1_n: {source: results/210_requirements/README.md, expr: 're:The first has \d+ of (\d+) requirements passed'}
+  req_t1_b: {source: results/210_requirements/README.md, expr: 're:the second (\d+) of \d+ passed'}
+  sva_after: {source: results/218_coverage_sva/README.md, expr: 're:\*\*After:\*\* (\d+) requirement rows'}
+  sva_cand: {source: results/218_coverage_sva/README.md, expr: 're:out of (\d+) candidate rows'}
+  sva_designs: {source: results/218_coverage_sva/README.md, expr: 're:three pilot designs'}
+  seu_variants: {source: results/b194/README.md, expr: 're:(\d+) variants x \d+ targets x \d+ trials'}
+  seu_targets: {source: results/b194/README.md, expr: 're:\d+ variants x (\d+) targets x \d+ trials'}
+  seu_trials: {source: results/b194/README.md, expr: 're:\d+ variants x \d+ targets x (\d+) trials'}
+  rep_runs: {source: results/195_repro_examples/README.md, expr: 're:\(all (\d+) runs\)'}
+  rec_guided: {source: results/216_closure_recipes/README.md, expr: 're:at 6 runs is ([\d.]+) ns guided'}
+  rec_menu: {source: results/216_closure_recipes/README.md, expr: 're:at 6 runs is [\d.]+ ns guided, ([\d.]+) menu order'}
+  rec_random: {source: results/216_closure_recipes/README.md, expr: 're:menu order, ([\d.]+) random'}
+  tour_cpu: {source: results/178_tournament/two_step/README.md, expr: 're:five full tournaments \(([\d.]+) percent\)'}
+  tour_seed_runs: {source: results/178_tournament/seeds/README.md, expr: 're:(\d+) runs, all completed'}
+  dsp_cap: {source: results/199_dsp_fmax/README.md, expr: 're:\*\*BUFGCE/I [\d.]+ = ([\d.]+)\*\*'}
+  dsp_setup: {source: results/199_dsp_fmax/README.md, expr: 're:setup-derived Fmax (\d+)'}
+  yosys_rho: {source: results/231_yosys_depth/summary.json, expr: 'get:spearman'}
+  yosys_n: {source: results/231_yosys_depth/summary.json, expr: 'get:n_cases'}
+yosys_note: ""
+groups:
+- id: control
+  title: Controlling and watching the agent
+  intro: "How a person sets how much the agent may do, watches it, and can repeat it."
+  items:
+  - id: permissions
+    title: Permission modes
+    prs: [345]
+    changed: "The agent now runs in one of four permission modes, set when you start it in the Navigator: plan (it writes the architecture and stops without being asked anything), ask (it stops to ask before an action that needs your say), auto within limits, and full auto. Every decision is written to a permissions log."
+    result: "One real run per mode of a small Gray-code counter for the Nexys A7, driven by Claude Code (claude-sonnet-5-5; the plan run used claude-haiku-5-5). Plan wrote the architecture and stopped, never asked, and left the architecture unapproved. Ask stopped for knowledge-bank use, the architecture, and editing files plus running Vivado, (then only the per-stage review approvals). Auto and full asked nothing."
+    limits: "None of the four runs reached the board step, so the records say what each mode asked and did, not how good the design was. Full auto stopped at a constraints gate before the stages where it differs from auto. The answers to the ask run's questions were scripted."
+    evidence: [results/222_permission_modes/README.md, docs/agent.md]
+    pages: [{href: agent.html#harness, label: "The agent: harness engineering"}]
+  - id: navigator
+    title: The Navigator in stage 3, and the profile picker
+    prs: [310, 316]
+    changed: "While a run is going the Navigator now gives regular updates, shows a live console, lets you ask the agent a question, and lets you queue a change to the design for the agent to take up at a safe point between stages. A profile picker and drawer in the start page choose the verification profile, and the settings chosen are confirmed inside the requirements interview."
+    result: "Two real agent runs of a development task (claude-sonnet-5-5, Claude Code, no Vivado): in each, one design request and one question were sent while the agent worked, and the records show the request waiting for a safe point, being acknowledged and applied at the end of a stage, and the question answered from the run's records with citations."
+    limits: "Two runs on one unscored development task; one was stopped by the tester during stage 2. That the request reached the model's writer is one observation, not evidence that it changed the design. The question and request were typed by the person running the test."
+    evidence: [results/182_navigator_s3/README.md, results/b194_navigator/README.md, navigator/README.md]
+    pages: [{href: why.html#handover, label: "Why FPGA Force: handing over"}]
+  - id: limits
+    title: Run limits and long replies
+    prs: [342, 351, 337]
+    changed: "Replies from the Anthropic API are now streamed, so a long answer is not cut off by a wait time. The writing roles have a larger output limit, the RTL is written file by file, a reply that stalls ends with its own stop reason, a stop for visiting a stage too often now shows the gate that was failing, and the turn limit follows the size of the design, and thinking tokens are recorded per call. The Anthropic API is also a first-class way to run the agent, with cost read from the usage the API reports."
+    result: "The reason for the change is a measured failure: in the KR260 pilot (claude-sonnet-5-5) all {kr_cut_runs} runs of the three larger designs failed the same way, because the Designer's whole-design reply was cut off at the output limit and the files were never written."
+    limits: "The re-run of those three designs after the fix was started and then stopped by its own cost stop, at {kr_second_spent} dollars against a cap of {kr_second_cap}, so no result is claimed for the fix itself."
+    evidence: [docs/model_config.md, results/209_kr260_pilot/README.md, pilots/224/STOPPED]
+    pages: [{href: agent.html#harness, label: "The agent: harness engineering"}]
+  - id: examples
+    title: Reproducible examples
+    prs: [321]
+    changed: "Four small development tasks now ship with a pinned setup (model, tool versions, knowledge bank commit, scoring) and a reference run, with an examples page in the Navigator and a python -m agent example command to repeat one."
+    result: "Each task was run three times (claude-sonnet-5-5; claude-haiku-5-5 played the interview oracle): {rep_runs} runs, with a record of which results repeat."
+    limits: "A subscription run has no seed or temperature to pin, so a repeat is expected to differ; the record says which parts did. Cost shown is the plan's estimate, not a bill."
+    evidence: [results/195_repro_examples/README.md, docs/reproducible_examples.md]
+    pages: [{href: examples.html, label: "Examples"}]
+- id: requirements
+  title: Requirements, verification and assurance
+  intro: "What the agent is asked to build, how it is checked against that, and how much reliability it can add."
+  items:
+  - id: strictness
+    title: Requirements strictness and the requirements report
+    prs: [340]
+    changed: "The agent now classes every open question from the clarify stage by risk. At loose, it defaults and goes on; at standard, it stops when a high-risk question is unresolved and lists it in REQUIREMENTS_NEEDED.md; at strict it also stops on lower-risk ones. A waiver file lets a person settle a question on record. A requirements report shows each requirement against its checks, and a failing check can be fixed against the requirement it names."
+    result: "Six live clarify-stage runs of one vague request (claude-sonnet-5-5, with a model standing in for the person): loose defaulted the high-risk questions and went on, while standard and strict stopped with three unresolved. The report built for the t1 design from its committed records shows {req_t1_a} of {req_t1_n} requirements passed before the board bring-up record and {req_t1_b} after."
+    limits: "The six runs are not paired, because the clarifier writes different questions each time; the waiver in the demonstration was written by the test's executor standing in for a user. The report's two pending items need a build the reference run does not have."
+    evidence: [results/210_requirements/README.md, results/210_requirements/REQUIREMENTS_REPORT_t1.md, docs/agent.md]
+    pages: [{href: why.html#verification, label: "Why FPGA Force: verification"}, {href: traceability.html, label: "Traceability"}]
+  - id: coverage_sva
+    title: Coverage-directed stimulus and assertions written from requirements
+    prs: [346]
+    changed: "Two opt-in steps for the verification flow. One writes a formal property from each requirement that can be checked on the ports, has a second model read the property back in English, compares the two in code, and proves it with a reachable trigger. The other runs rounds of coverage-directed stimulus inside the stage-2 gate."
+    result: "The assertion step was run twice on each of {sva_designs}: of {sva_cand} candidate requirement rows in a run set, {sva_after} ended with a proved or bounded property, against none before (claude-sonnet-5-5 wrote the property, claude-haiku-5-5 read it back)."
+    limits: "The coverage loop was not measured in a live agent run; the launcher is committed and pre-registered but did not run. Most candidate requirements were unusable because the pilots' requirements describe registers without giving addresses or bit encodings. Three designs cannot separate a gain from chance."
+    evidence: [results/218_coverage_sva/README.md, results/218_coverage_sva/preregistration.md, docs/coverage_sva.md]
+    pages: [{href: verification.html#techniques, label: "Verification: the techniques"}]
+  - id: verified_records
+    title: The verification record for every design (VERIFIED.md)
+    prs: [271]
+    changed: "Every design, arithmetic function and IP-library entry now ships a generated VERIFIED.md: each requirement, its evidence, who agreed it, the limits, and the hash of every file it covers. The label is computed, and it says verified only when every criterion is met; otherwise it says verified except and names what is missing."
+    result: "Most records today say verified except, and say what is missing: for example no requirement is yet agreed by a human, and the required method mix and the mutation floor are not yet measured by the collector."
+    limits: "The label is a statement about evidence on file, not a proof the design is right."
+    evidence: [arith/adder/VERIFIED.md, designs/b119_tcp_fast/VERIFIED.md, designs/b110_itch_ouch/VERIFIED.md]
+    pages: [{href: verified.html, label: "Verified by construction"}, {href: traceability.html, label: "Traceability"}]
+  - id: assurance
+    title: Verification profiles and reliability structures
+    prs: [315, 316]
+    changed: "A verification profile sets how much checking a design gets (prototype, standard and thorough, with presets for an IP release, high dependability and low latency), and the interview confirms it. Reliability structures (error-correcting memory, triple modular redundancy, safe state machines) can be added and are costed."
+    result: "On one development design for the xc7a100t, a seeded single-event-upset campaign of {seu_variants} variants, {seu_targets} targets and {seu_trials} trials each shows what each structure catches; the cost in area, slack and latency of each is recorded (Vivado 2026.1)."
+    limits: "One small design, one run per variant, one seed: no spread between runs is known. Seven-series only, no board measurement."
+    evidence: [results/b194/README.md, docs/assurance.md]
+    pages: [{href: expertise.html#verification, label: "Expertise: verification"}]
+  - id: security
+    title: Design security for a production build
+    prs: [317]
+    changed: "A production_secure setting adds build-time checks for a design that ships, for example that no debug core is left in. Encrypting the boot image on the K26 stays a step the owner of the board takes."
+    result: "A demonstration design for the K26 part, b196_secure_demo, is built with the setting on, and the same design with one logic analyser (ILA) core added is built to show the check failing."
+    limits: "The designs were only built, never programmed. Nothing was measured against an attacker and no certification or side-channel claim is made."
+    evidence: [designs/b196_secure_demo/README.md, docs/assurance.md]
+    pages: []
+- id: hardware
+  title: Hardware, instruments and the first pilot
+  intro: "The board is the last judge; these changes bring more of the bench into the agent's plan, and report plainly how far the first pilot got."
+  items:
+  - id: lab
+    title: "The lab: instruments in the design package and the interview"
+    prs: [347]
+    changed: "A lab file lists the instruments a person owns, such as a frequency counter. The interview asks how each is wired to the design, and the agent plans a bring-up step that uses an instrument as an independent check where one can measure the requirement."
+    result: "On the KR260 pilot's clock-meter design, the plan with a mock counter chooses the counter as an independent check of the clock frequency; with the owner's seeded bench, where nothing onboarded can measure it, the requirement stays hardware-pending."
+    limits: "The counter in the example is a mock, marked as such. Nothing touched an instrument or a board, and no reading in the records is evidence about a real clock."
+    evidence: [results/221_lab_instruments/README.md, docs/agent.md]
+    pages: [{href: expertise.html#hil, label: "Expertise: hardware in the loop"}]
+  - id: redpitaya
+    title: Red Pitaya STEMlab 125-14 as a target board and an instrument
+    prs: [350]
+    changed: "The Red Pitaya is now a board the agent can target, using the vendor's shell with the agent's block patched in, and a lab instrument. The agent wrote two custom instruments for it: a frequency and period meter, and a pulse and pattern generator."
+    result: "The shell builds with Vivado 2026.1 with the blocks in, and the unpatched shell was built too, to say whose timing result it is. The agent's runs were real Claude Code runs (claude-haiku-5-5 for the roles). An independent cross-check written from the spec, not from the agent's tests, found a spec gap that the agent's own verification had passed."
+    limits: "Nothing was run on the board: every hardware result is pending the owner's board visit."
+    evidence: [results/225_redpitaya/README.md, boards/redpitaya_stemlab_125_14/README.md, docs/board_catalogue.md]
+    pages: [{href: expertise.html#hil, label: "Expertise: hardware in the loop"}]
+  - id: kr260
+    title: The KR260 pilot
+    prs: [341, 336]
+    changed: "Six small designs, each from a short written spec, were taken by the agent toward the owner's KR260, with the agent prepared first (bring-up over the JTAG bus, report gates, an Anthropic key file)."
+    result: "{kr_reached} of {kr_runs} runs (claude-sonnet-5-5 for every role) reached a bitstream; the hardware run is pending, so no design has been shown to work on the board. The {kr_cut_runs} runs of the three larger designs failed at a reply-length limit that is a setting of the agent, which the run-limits change addresses. Real cost: {kr_cost} dollars."
+    limits: "A bitstream is not a pass: the count that matters, designs that work on hardware first time, is filled in only after the owner's run. No person intervened during the counted runs."
+    evidence: [results/209_kr260_pilot/README.md, pilots/209/interventions.yaml]
+    pages: [{href: worked-example.html, label: "Worked example: a 10G trading path on the KR260"}]
+- id: closure
+  title: Timing closure and device facts
+  intro: "How the agent closes timing, and what was measured about devices and tools along the way."
+  items:
+  - id: recipes
+    title: Closure recipes and a knowledge-guided search
+    prs: [354]
+    changed: "Typed timing-closure recipes with validators and rollback, a guard on the Tcl the agent writes for stage 6, and a search over the recipes that uses the knowledge bank to choose the order."
+    result: "Nulls first: on five recorded blocks the guided order was no better than the tournament's menu order or a random order. Mean best gain in routed worst slack at six runs was {rec_guided} ns guided, {rec_menu} menu order and {rec_random} random (Vivado 2026.1)."
+    limits: "Development evidence on five designs; the gains that appeared came from one recipe, retiming in synthesis, which the earlier tournament had already found."
+    evidence: [results/216_closure_recipes/README.md, docs/closure_recipes.md]
+    pages: [{href: expertise.html#constraints, label: "Expertise: constraints and timing closure"}]
+  - id: tournament
+    title: The candidate tournament
+    prs: [304, 324, 327]
+    changed: "A tool that tries several synthesis and implementation settings on a block and keeps the one with the best timing, with a triage step, then a check of how much of the gain is real, and a cheaper two-step version."
+    result: "Nulls first: the two-step version is not shown better or worse than the full tournament, and it uses {tour_cpu} percent of its CPU time. To see whether gains are real, {tour_seed_runs} place-and-route runs with a perturbed clock period were repeated (Vivado 2026.1): the gain over the default is real and large on two blocks, real but small on one, not shown on one and absent on one, and no block shows the menu beating the best AMD strategy set outside the noise."
+    limits: "Five small blocks, one run per candidate; Vivado 2026.1 has no seed to set, so the spread comes from a clock-period perturbation."
+    evidence: [results/178_tournament/README.md, results/178_tournament/seeds/README.md, results/178_tournament/two_step/README.md, docs/tournament.md]
+    pages: [{href: expertise.html#constraints, label: "Expertise: constraints and timing closure"}]
+  - id: dsp
+    title: DSP slices, and the clock-buffer cap on Fmax
+    prs: [314, 319, 322, 325]
+    changed: "DSP slices are an area of expertise, with confirmed house rules and an advisory dsp_regs check. A DSP's published Fmax now includes the clock buffer's minimum period, and every published Fmax was audited against that cap."
+    result: "On the K26, an out-of-context run's setup-derived Fmax of {dsp_setup} MHz is higher than a real design can clock: the clock buffer's minimum period caps it at {dsp_cap} MHz (Vivado 2026.1)."
+    limits: "Out-of-context runs on a few parts; one run per row."
+    evidence: [results/185_dsp_slices/README.md, results/199_dsp_fmax/README.md, results/201_fmax_cap/README.md]
+    pages: [{href: expertise.html#dsp_slices, label: "Expertise: DSP slices"}]
+  - id: clocks
+    title: Clock muxes, clock-crossing margin and register start values
+    prs: [329, 330, 332, 334, 335]
+    changed: "A clock_mux check finds clock multiplexers and how they are constrained; a clock-crossing margin method, with a cdc_margin check, serves both AMD and Altera; initial values in RTL became a setting (default allow); an init_values check warns where an initial value of one keeps a register out of a DSP or block RAM."
+    result: "Measured on Vivado 2026.1 and Quartus Prime Lite: on AMD parts every fabric flip-flop takes an initial value of zero or one for free; on Altera the core registers power up at zero, and a one costs inverters, except in the I/O registers."
+    limits: "Two AMD families and three Altera ones; the clock-crossing method is measured on a small set of probe designs."
+    evidence: [results/208/README.md, results/207_cdc_margin/README.md, results/206_power_up/README.md, docs/cdc_margin_method.md]
+    pages: [{href: expertise.html#clocking, label: "Expertise: clocking"}, {href: expertise.html#cdc, label: "Expertise: clock-domain crossings"}, {href: flow-notes.html, label: "Beyond the flow"}]
+- id: technique
+  title: Technique and public benchmarks
+  intro: "Method taken from a published book, and how a public benchmark is used."
+  items:
+  - id: appendix_d
+    title: "Appendix D technique: the init and reset rule and the lint policy"
+    prs: [348]
+    changed: "From the technique in Edwards, FPGA Design for Low-Latency Trading (2026), Appendix D, the standard now says a register has one start state (an initial value where it has no reset, the reset value where it has), keeps the reset on control state, and allows an all-initial-values design when every reset reconfigures the FPGA. The lint policy follows (a source file is named after its module), and an advisory logic-depth estimate was built. The wording, defaults and code are ours; the book is cited and not quoted."
+    result: "The Yosys depth estimate was compared against Vivado's synthesis logic levels on {yosys_n} K26 cases: rank correlation {yosys_rho}. It stays advisory and nothing in the flow calls it."
+    limits: "One part, one flow; the estimate ranks designs but does not replace Vivado's report."
+    evidence: [docs/hdl_coding_standard.md, results/231_yosys_depth/README.md]
+    pages: [{href: expertise.html#rtl, label: "Expertise: RTL"}]
+  - id: cvdp
+    title: "The public CVDP benchmark: inspiration and a labelled test set"
+    prs: [343]
+    changed: "A one-off baseline of the agent's first three stages (clarify, plan, RTL with its own simulation; no Vivado, no board) on a stratified sample of {cvdp_sample} of the {cvdp_all} problems in a public code-generation set, scored only by that set's own hidden tests, one run of claude-sonnet-5-5."
+    result: "The figures in the records are public and contamination-exposed, and they are development figures. They are not an evaluation score of FPGA Force: FPGA Force builds requirements with the person until they are unambiguous, which these problems cannot represent, and many of them leave out facts their tests check."
+    limits: "This benchmark is not used as an ongoing evaluation. It serves as inspiration and, with labels, as a test set for the agent's requirements reviewer."
+    evidence: [results/215_public_benchmarks/README.md, results/215_public_benchmarks/prereg.md]
+    pages: [{href: evaluation.html, label: "How it is evaluated"}]
+smaller:
+  intro: "Smaller changes that alter what the agent does or what it has shown. Each links to its pull request and, where there is one, its record."
+  items:
+  - {prs: [311], text: "Trading-path safety fixes: a saturating order book, staged limits that take effect on a commit, a software reference for price bands, a notional check and a hold-off.", evidence: [designs/b110_itch_ouch/VERIFIED.md]}
+  - {prs: [312], text: "Trading-path variants (an in-place decoder, reject bits, an A/B arbiter), induction and property-directed proofs, and a probe of the PS-AXI latency.", evidence: [designs/b110_itch_ouch/VERIFIED.md]}
+  - {prs: [306], text: "The b58a_trigger design moved to the KR260's own PHY, and its transmit constraints were repaired; the build is recorded as missing transmit setup timing by a few picoseconds on one port.", evidence: [designs/b58a_trigger/README.md]}
+  - {prs: [307], text: "Intake questions for the interview, a fast-path lint, a reference stream and cycle-cost sizing in the knowledge material.", evidence: [docs/agent.md]}
+  - {prs: [308, 328], text: "Nine advisory verification and measurement rules, none of them a gate, and report-driven gates from the methodology gap study.", evidence: [docs/verification_measurement_rules.md]}
+  - {prs: [305], text: "Stage 1 accepts an rtl glob before the RTL exists.", evidence: [docs/agent.md]}
+  - {prs: [309], text: "A reference study of AMD's UL3524 low-latency benchmarks; nothing was re-measured.", evidence: [docs/agent.md]}
+  - {prs: [338, 352], text: "The knowledge bank is pinned to a newer commit each time it grows, so a run records which version it read.", evidence: [docs/agent.md]}
+  - {prs: [339], text: "The public name is FPGA Force, in the documents and on this site.", evidence: [README.md]}
+  - {prs: [344], text: "Eight small fixes: a slot deadlock, a clock_networks crash, Gray-code injection, LOC sites, lint waivers, the paused record and mutation targets.", evidence: [docs/agent.md]}
+  - {prs: [355], text: "Fresh-evidence fixes: the b119 fault records and the b96 record were refreshed, a test for the 224 pilot folder was added, and citations of the book technique were added to the sources.", evidence: [designs/b119_tcp_fast/VERIFIED.md]}
