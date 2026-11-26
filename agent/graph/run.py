@@ -52,7 +52,7 @@ from agent.graph import ownership
 from agent.graph.snapshot import Snapshots
 from agent.graph.spec_schema import (PROOF_METHODS, requirement_quality_errors, SpecError, clock_hz, load_spec, propose_proof, rate_params,
                                      validate)
-from agent.graph.stages import MACHINE, RUN_LIMITS, classify, exit_check, route_failure, visit_limit
+from agent.graph.stages import MACHINE, RUN_LIMITS, classify, exit_check, route_failure, run_turn_cap, visit_limit, visits_after_route
 from flow import architecture as arch_mod
 from flow import srcorder
 
@@ -1029,6 +1029,21 @@ def permission_entry(rt: Runtime, state: State, n: int) -> dict | None:
     return None
 
 
+def scale_turn_cap(rt: Runtime, n: int) -> None:
+    """Brief 234: from stage 2 on, a run whose turn cap is still the default takes ``run_turn_cap(blocks of architecture.yaml)``. An
+    explicit cap (any other number) stays as given; the cap is never lowered below what it was."""
+    if n < 2:
+        return
+    lim = rt.meter.run_limits
+    cur = int(lim.get("turns", 0))
+    if cur not in (int(RUN_LIMITS["turns"]), rt.meter.turns_auto):
+        return
+    cap = run_turn_cap(len(_arch_blocks(rt.design)))
+    if cap > cur:
+        lim["turns"] = rt.meter.turns_auto = cap
+        log_routing_event(rt, "run_turn_cap_scaled", blocks=len(_arch_blocks(rt.design)), turns_cap=cap)
+
+
 def node_work(state: State) -> dict:
     rt, n = _rt(state), state["stage"]
     if state.get("hand_edit_only"):                    # the owner edited by hand: gate their files, do not rewrite them
@@ -1043,6 +1058,7 @@ def node_work(state: State) -> dict:
     if visits[str(n)] > limit:
         why, detail = stop_diagnosis(n, limit, state)         # brief 82P6 (P3): say which gate, which role, which assertion
         return {"visits": visits, "stop": why, "stop_detail": detail}
+    scale_turn_cap(rt, n)
     rt.meter.start_stage(st.limits)
     rt.session.stage = st.name
     rt.visit, rt.budget_notes = visits[str(n)], []
@@ -1906,7 +1922,8 @@ def node_review(state: State) -> dict:
         rv.write_page(rt.design, n, st.name, {**info, "approval": decision})
     hist.append({"n": n, "stage": st.name, "page": str(page), "passed": passed, "approval": decision,
                  "snapshot": snap["commit"], "visit": info["visits"], "used": dict(rt.meter.stage),
-                 **({"gated": False} if ungated else {})})
+                 **({"gated": False} if ungated else {}),
+                 **({"fails": [str(f)[:300] for f in (state.get("fails") or [])[:6]]} if not passed and not ungated else {})})   # brief 234
     if n >= 2:                                    # brief 53: refresh the matrix with this stage's evidence for the index
         trace_record(rt.design, rt.session.root)
     rv.write_index(rt.design, hist, rt.cfg.role_models())
@@ -2088,10 +2105,20 @@ def _advance_core(rt: Runtime, n: int, state: State) -> dict:
     if fails:
         if fails == ["reviewer asked for changes"]:
             return {"stage": n}
-        target = route_failure(MACHINE[n], classify(MACHINE[n], fails))
+        cause = classify(MACHINE[n], fails)
+        target = route_failure(MACHINE[n], cause)
         if n == 2 and target == 0 and any("held by spec.yaml" in f for f in fails):
             log_routing_event(rt, "const_id_routed_to_spec_yaml_owner", to_stage=0)       # brief 82P6
-        return {"stage": target}
+        old_v = state.get("visits") or {}
+        visits = visits_after_route(old_v, n, target)               # brief 234: a loop back re-validates the stages it passes again
+        if visits != old_v:
+            log_routing_event(rt, "route_back_fresh_visits", from_stage=n, to_stage=target,
+                              reset=[k for k in sorted(old_v) if visits.get(k) != old_v.get(k)])
+        upd: dict[str, Any] = {"stage": target, "visits": visits}
+        if hist and hist[-1].get("gated", True):
+            hist = [*hist[:-1], {**hist[-1], "cause": cause, "routed_to": {"stage": target, "stage_name": MACHINE[target].name}}]   # brief 234: where this failure went
+            upd["history"] = hist
+        return upd
     if n == 9 or (rt.cfg.stop_after is not None and n >= rt.cfg.stop_after):
         return {"stop": stop_status(rt)}
     return {"stage": n + 1}

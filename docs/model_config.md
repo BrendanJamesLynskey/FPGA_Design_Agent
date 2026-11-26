@@ -103,18 +103,19 @@ charged, a line `FDA_TRUNCATED` is printed, the `model_calls.jsonl` row has `sto
 **Long replies: streaming, the writing roles' limit, file by file (brief 224).** Every `anthropic_api` request is **streamed** (server-sent events through the
 same `urllib` call; no second code path), so a long reply is not killed by `timeout_s`, which now is the longest wait between two events (300 s for
 `claude-sonnet-5-5`), not the length of a reply. Usage and cost are taken from the stream (input and cache tokens from the first event, output tokens from
-the last) and recorded per call as before. A stream that drops, ends before `message_stop`, or carries an `overloaded_error`/`api_error` event is asked
+the last) and recorded per call as before; from brief 234 a row also carries `thinking_tokens` (the API's `usage.output_tokens_details.thinking_tokens`, only when the response gives it), `thinking_blocks` and `visible_chars` (characters of text and tool-call arguments in the reply; output tokens that are not visible text are thinking). A stream that drops, ends before `message_stop`, or carries an `overloaded_error`/`api_error` event is asked
 for again once (`retries`), logged as `FDA_STREAM_DROPPED`, counted in `stream_retries` of the `model_calls.jsonl` row, and after the second failure raised as an
 error: a partial reply is never returned as a success (the dropped attempt's tokens are billed by the API but not in the run's cost; the cost
 guard sees them only through the account). The writing purposes (`rtl`, `tests`, `constraints`) take the model's `writing_max_tokens` in place of
-`max_tokens`: built in for `claude-sonnet-5-5`, **32000** (twice the 16000 of the other purposes; the pilot's 16000 limit cut off every whole-design reply of the
-FIR, async FIFO and glitch-free mux designs after about 134 s). It is not the largest value the model may accept: the cost of one full 32000-token reply is
-32000 x 10 USD per million = 0.32 USD, which a stage USD budget (scaled by `budget_scale`) and the run cap still bound. Order of precedence: a purpose's own
+`max_tokens`: built in for `claude-sonnet-5-5`, **64000** (four times the 16000 of the other purposes; brief 224 set 32000 after the pilot's 16000 limit cut off every whole-design reply of the
+FIR, async FIFO and glitch-free mux designs after about 134 s, and brief 234 doubled it because 4 of 999 Designer calls of the 224 arm still stopped at 32000 while the
+largest finished RTL file was 9.7 KB: the reply was mostly thinking, see `reports/234_run_limits_report.md`). It is not the largest value the model may accept (128K): the cost of one full 64000-token reply is
+64000 x 10 USD per million = 0.64 USD, which a stage USD budget (scaled by `budget_scale`) and the run cap still bound. Order of precedence: a purpose's own
 `options: {max_tokens: N}` (config or CLI), then `writing_max_tokens` (writing purposes only), then the model's `max_tokens`, then the kind default. A `models:`
 layer that sets `max_tokens` without `writing_max_tokens` means it for every purpose (it removes the built-in writing limit).
 
 What a user could get wrong: (1) a high `max_tokens` with a low per-run cap (`--max-usd`) stops a run early, because one cut-off reply costs the full limit
-(0.32 USD at 32000, 0.64 at 64000) and the Meter charges it; raise `budget_scale` or the cap with the limit. (2) A limit the model does not accept is a
+(0.32 USD at 32000, 0.64 at 64000, the built-in writing limit) and the Meter charges it; raise `budget_scale` or the cap with the limit. (2) A limit the model does not accept is a
 non-retried HTTP 400 on the first call. (3) The Verifier (`tests`) writes its files through an in-memory backend that is copied to disk when the role
 ends, so a cut-off there loses every file of the reply; only the Designer is called again inside the visit.
 

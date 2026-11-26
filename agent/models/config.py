@@ -95,7 +95,7 @@ ANTHROPIC_TEMPERATURE_OK = ("claude-haiku-4-5", "claude-sonnet-4-6", "claude-son
 WRITING_PURPOSES = ("rtl", "tests", "constraints")
 BUILTIN_MODELS: dict[str, dict[str, Any]] = {
     "claude-sonnet-5-5": {"price": {"input": 2.00, "output": 10.00, "cache_write": 2.50, "cache_read": 0.10}, "temperature": False,
-                          "max_tokens": 16000, "writing_max_tokens": 32000, "effort": "medium", "timeout_s": 300},
+                          "max_tokens": 16000, "writing_max_tokens": 64000, "effort": "medium", "timeout_s": 300},
     "claude-haiku-5-5": {"price": {"input": 0.10, "output": 0.50}, "temperature": False},
     **{m: {"temperature": True} for m in ANTHROPIC_TEMPERATURE_OK},
 }

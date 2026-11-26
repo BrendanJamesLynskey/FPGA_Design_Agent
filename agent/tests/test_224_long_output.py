@@ -115,8 +115,8 @@ def test_a_complete_call_with_arguments_that_are_not_json_is_a_dropped_stream() 
 def test_the_writing_roles_get_the_larger_limit_and_an_explicit_option_wins() -> None:
     cli = {"endpoint": "anthropic_api", "model": "claude-sonnet-5-5"}
     t = build_table(user_file=None, cli={"purposes": {p: cli for p in ("rtl", "tests", "interpret", "model")}})
-    assert [t.entry(p).options["max_tokens"] for p in ("rtl", "tests", "interpret", "model")] == [32000, 32000, 16000, 16000]
-    assert t.entry("rtl", "constraints").options["max_tokens"] == 32000
+    assert [t.entry(p).options["max_tokens"] for p in ("rtl", "tests", "interpret", "model")] == [64000, 64000, 16000, 16000]
+    assert t.entry("rtl", "constraints").options["max_tokens"] == 64000
     o = build_table(user_file=None, cli={"purposes": {"rtl": {**cli, "options": {"max_tokens": 48000}}}}).entry("rtl").options
     assert o["max_tokens"] == 48000
     o = build_table(user_file=None, cli={"models": {"claude-sonnet-5-5": {"writing_max_tokens": 60000}}, "purposes": {"rtl": cli}}).entry("rtl").options
@@ -131,7 +131,7 @@ def test_the_client_built_for_the_designer_carries_the_limit(monkeypatch) -> Non
     from agent.models.resolver import Resolver
     monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-test-0000000000")                   # construction needs a key: a fake one, never sent
     t = build_table(user_file=None, cli={"purposes": {"rtl": {"endpoint": "anthropic_api", "model": "claude-sonnet-5-5"}}})
-    assert Resolver(t)._build(t.entry("rtl"), None).max_tokens == 32000
+    assert Resolver(t)._build(t.entry("rtl"), None).max_tokens == 64000
 
 
 # --- the Designer writes file by file ---------------------------------------------------------------------------------
