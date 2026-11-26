@@ -67,8 +67,12 @@ def spec_of(design: Path) -> dict[str, Any]:
     return yaml.safe_load((Path(design) / "spec.yaml").read_text()) or {}
 
 
+_DIRS = {"in": "in", "input": "in", "out": "out", "output": "out", "inout": "inout", "internal": "internal", "wire": "internal"}
+
+
 def ports_of(spec: dict[str, Any]) -> list[dict[str, Any]]:
-    """The top module's ports as ``{name, dir, width}``; a port whose width is not a number carries ``width: None``."""
+    """The module's ports as ``{name, dir, width, clock, note}``. ``dir`` is in, out, inout or internal (a spec's net that has no pin: a register
+    port inside the top); the spec may write ``dir`` or ``direction``, ``in`` or ``input``. A port whose width is not a number has ``width: None``."""
     out = []
     for p in spec.get("ports") or []:
         if not isinstance(p, dict) or not p.get("name"):
@@ -78,19 +82,129 @@ def ports_of(spec: dict[str, Any]) -> list[dict[str, Any]]:
             w = int(w)
         except (TypeError, ValueError):
             w = None
-        out.append({"name": str(p["name"]), "dir": str(p.get("dir", "in")), "width": w, "clock": p.get("clock"), "note": str(p.get("note") or "")})
+        d = _DIRS.get(str(p.get("dir", p.get("direction", "in"))).lower(), "in")
+        out.append({"name": str(p["name"]), "dir": d, "width": w, "clock": p.get("clock"),
+                    "note": str(p.get("note") or p.get("board_pin_role") or p.get("pin_role") or p.get("role") or "")})
     return out
 
 
 def clocks_of(spec: dict[str, Any]) -> list[dict[str, Any]]:
-    return [c for c in spec.get("clocks") or [] if isinstance(c, dict) and c.get("port")]
+    """The clocks as ``{name, port, ...}``: a spec that names only ``name`` (the clock is the port of that name) is accepted."""
+    return [{**c, "port": c.get("port") or c["name"]} for c in spec.get("clocks") or [] if isinstance(c, dict) and (c.get("port") or c.get("name"))]
 
 
 def reset_of(spec: dict[str, Any]) -> tuple[str | None, bool]:
     """(reset port, active_low)."""
     r = spec.get("reset") or {}
-    port = r.get("port") if isinstance(r, dict) else None
-    return (str(port) if port else None), str((r or {}).get("polarity", "active_low")).startswith("active_low")
+    port = (r.get("port") or r.get("name")) if isinstance(r, dict) else None
+    return (str(port) if port else None), "low" in str((r or {}).get("polarity", "active_low")).replace("-", "_") and "high" not in str((r or {}).get("polarity", ""))
+
+
+# ---- the module the properties are about --------------------------------------------------------------------------------------------------
+_COMMENT = re.compile(r"//[^\n]*|/\*.*?\*/", re.S)
+_MODULE = re.compile(r"\bmodule\s+(?:automatic\s+)?(\w+)\s*(?:#\s*\(.*?\)\s*)?\((.*?)\)\s*;", re.S)
+_PORTW = re.compile(r"\[\s*(\d+)\s*:\s*(\d+)\s*\]")
+
+
+def rtl_modules(files: list[Path]) -> dict[str, list[dict[str, Any]]]:
+    """``{module: [{name, dir, width}]}`` from the ANSI port lists of the HDL files (interfaces only: nothing of a module's body is read).
+    A module with a port whose width is not a plain ``[N:M]`` is left out."""
+    mods: dict[str, list[dict[str, Any]]] = {}
+    for f in files:
+        try:
+            text = _COMMENT.sub(" ", Path(f).read_text(errors="replace"))
+        except OSError:
+            continue
+        text = re.sub(r"^\s*`\w+.*$", " ", text, flags=re.M)                # ifdef / ifndef / else / endif lines: both branches stay
+        for m in _MODULE.finditer(text):
+            ports, cur, ok = [], "in", True
+            for item in re.split(r",", m.group(2)):
+                t = item.strip()
+                if not t:
+                    continue
+                dm = re.match(r"(input|output|inout)\b", t)
+                if dm:
+                    cur = _DIRS[dm.group(1)]
+                    t = t[dm.end():].strip()
+                t = re.sub(r"^(?:logic|wire|reg|var|signed)\b\s*", "", t).strip()
+                wm = _PORTW.match(t)
+                if wm:
+                    w, t = abs(int(wm.group(1)) - int(wm.group(2))) + 1, t[wm.end():].strip()
+                elif t.startswith("["):
+                    ok = False
+                    break
+                else:
+                    w = 1
+                nm = re.match(r"(\w+)\s*$", t.split("=")[0].strip())
+                if not nm:
+                    ok = False
+                    break
+                ports.append({"name": nm.group(1), "dir": cur, "width": w})
+            if ok and ports:
+                mods.setdefault(m.group(1), ports)
+    return mods
+
+
+_KW = {"module", "endmodule", "if", "else", "for", "while", "always", "always_ff", "always_comb", "always_latch", "assign", "case", "casez", "endcase", "function",
+       "endfunction", "task", "endtask", "begin", "end", "generate", "endgenerate", "initial", "input", "output", "inout", "logic", "wire", "reg", "parameter",
+       "localparam", "genvar", "integer", "int", "bit", "typedef", "enum", "struct", "return", "assert", "assume", "cover", "property", "import", "package",
+       "endpackage", "default", "automatic", "static", "var", "signed", "unsigned", "posedge", "negedge", "or", "and", "not"}
+_INST = re.compile(r"(?m)^\s*([A-Za-z_]\w*)(?:\s*#\s*\([^;]*?\)\s*|\s+)([A-Za-z_]\w*)\s*\(")
+
+
+def undefined_cells(files: list[Path]) -> dict[str, set[str]]:
+    """``{module: cell types it instantiates that no file defines}`` (Xilinx primitives such as MMCME4_BASE, or anything missing). Open-source Yosys
+    cannot elaborate a module with such a cell, so a module without them is preferred as the one to state properties about."""
+    texts, defined = {}, set()
+    for f in files:
+        try:
+            t = _COMMENT.sub(" ", Path(f).read_text(errors="replace"))
+        except OSError:
+            continue
+        for m in re.finditer(r"\bmodule\s+(?:automatic\s+)?(\w+)", t):
+            defined.add(m.group(1))
+        for m in re.finditer(r"\bmodule\s+(?:automatic\s+)?(\w+)(.*?)\bendmodule\b", t, re.S):
+            texts.setdefault(m.group(1), m.group(2))
+    out = {}
+    for name, body in texts.items():
+        body = re.sub(r"^\s*`\w+.*$", " ", body, flags=re.M)
+        out[name] = {c for c, _ in _INST.findall(body) if c not in _KW and c not in defined}
+    return out
+
+
+def effective_spec(design: Path, spec: dict[str, Any]) -> tuple[dict[str, Any], str]:
+    """``(spec', how)``: the spec with ``top`` and ``ports`` of the module the properties are about, and a sentence saying which module and why.
+
+    The spec's ``top`` is used when it exists in the RTL and its ports cover the spec's. Otherwise (a register core behind a bus module, where
+    the spec lists the register port as internal nets) the RTL module whose ports match the most spec port names is used: those ports are where the
+    requirement can be seen. The clock and reset ports are the ones of that module named by the spec (``clk`` when the spec lists two clocks, one
+    derived from the other)."""
+    files = sources_of(design)
+    mods, unknown = rtl_modules(files), undefined_cells(files)
+    want = {p["name"] for p in ports_of(spec)}
+    top = str(spec.get("top") or spec.get("name") or "")
+
+    def score(name: str) -> int:
+        return len({p["name"] for p in mods[name]} & want)
+    best = max(mods, key=lambda n: (score(n) >= 2 and not unknown.get(n), score(n), n == top, -len(mods[n])), default=None)
+    if best is None or score(best) < 2:
+        return spec, "the spec's own top and port list (no RTL module's ports match them)"
+    ports = []
+    note = {p["name"]: p["note"] for p in ports_of(spec)}
+    for p in mods[best]:
+        ports.append({**p, "dir": {"in": "in", "out": "out"}.get(p["dir"], p["dir"]), "note": note.get(p["name"], "")})
+    names = {p["name"] for p in ports}
+    clocks = [c for c in clocks_of(spec) if c["port"] in names] or [{"name": n, "port": n} for n in ("clk", "clock", "clk_i") if n in names][:1]
+    if "clk" in names:                           # the register-port clock first: a second clock input (a reference clock) is a free input of the wrapper
+        clocks = [next((c for c in clocks if c["port"] == "clk"), {"name": "clk", "port": "clk"}), *[c for c in clocks if c["port"] != "clk"]]
+    rport, low = reset_of(spec)
+    if rport not in names:
+        rport = next((n for n in ("rst", "reset", "rst_n", "resetn", "reset_n") if n in names), None)
+        low = bool(rport and rport.endswith(("_n", "n")) and rport != "rst")
+    return ({**spec, "top": best, "ports": [{"name": p["name"], "dir": p["dir"], "width": p["width"], "note": p["note"]} for p in ports], "clocks": clocks,
+             "reset": {"port": rport, "polarity": "active_low" if low else "active_high"} if rport else {}},
+            f"module `{best}`" + ("" if best == top else f" (the spec's top `{top}` has primitives and a bus the properties cannot see through; "
+                                                          f"this module carries {score(best)} of the spec's ports)"))
 
 
 def has_clock_relation(spec: dict[str, Any]) -> bool:
@@ -577,8 +691,9 @@ def process(design: Path, gen_llm: Callable[[str, str], str], back_llm: Callable
     reader that did not write the property). A requirement whose key (text, L2, ports) is unchanged and whose result is already recorded
     is not asked again. Returns the evidence record."""
     design = Path(design).resolve()
-    spec = spec_of(design)
-    cands, skipped = select(spec, ids)
+    ospec = spec_of(design)
+    cands, skipped = select(ospec, ids)
+    spec, module_note = effective_spec(design, ospec)       # the module the properties are about; ``ospec`` keeps the requirements
     base = sva_dir(design)
     base.mkdir(parents=True, exist_ok=True)
     old = read_evidence(design).get("requirements", {})
@@ -651,7 +766,7 @@ def process(design: Path, gen_llm: Callable[[str, str], str], back_llm: Callable
                 dst.mkdir(parents=True, exist_ok=True)
                 shutil.copy(work / t / "status", dst / "status")
         rows[rid] = {**row, "status": j["status"]}
-    rec = {"schema": SCHEMA, "design": design.name, "generated": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), "requirements": rows,
+    rec = {"schema": SCHEMA, "design": design.name, "module": spec.get("top"), "module_note": module_note, "generated": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), "requirements": rows,
            "skipped": skipped, "counts": counts(rows), "caveats": ["reset is asserted in the first cycle only (reset rows: free after the third)",
                                                                     "one clock domain per property", "the property was written without the RTL"]}
     (base / EVIDENCE).write_text(json.dumps(rec, indent=1) + "\n")

@@ -277,3 +277,33 @@ def test_a_changed_design_withdraws_an_installed_proof(tmp_path):
     rec = S.process(d, g, b, ids=["REQ-01"])
     assert rec["requirements"]["REQ-01"]["status"] == "failed"
     assert not (d / "verif" / "formal" / "sva_REQ_01.sby").exists()                            # the earlier proof is not kept on trust
+
+
+# ---- the module the properties are about ------------------------------------------------------------------------------------------------
+CORE = Path(__file__).parent / "fixtures" / "sva_req" / "reg_core"
+
+
+def test_a_register_core_behind_a_primitive_is_the_module_of_the_properties():
+    spec = yaml.safe_load((CORE / "spec.yaml").read_text())
+    es, how = S.effective_spec(CORE, spec)
+    assert es["top"] == "reg_core" and "has primitives" in how
+    ports = {p["name"]: (p["dir"], p["width"]) for p in es["ports"]}
+    assert ports == {"clk": ("in", 1), "rst": ("in", 1), "h_we": ("in", 1), "h_addr": ("in", 12), "h_wdata": ("in", 32), "h_rdata": ("out", 32)}
+    assert [c["port"] for c in es["clocks"]] == ["clk"] and S.reset_of(es) == ("rst", False)
+    assert next(p for p in es["ports"] if p["name"] == "h_we")["note"] == "register port write pulse"      # the spec's description follows the port
+    assert S.undefined_cells(sorted((CORE / "rtl").glob("*.sv"))) == {"reg_core": set(), "top": {"MMCME4_BASE"}}
+
+
+def test_the_spec_top_is_kept_when_it_can_be_elaborated():
+    es, how = S.effective_spec(FIX, SPEC)
+    assert es["top"] == "pulse_ext" and "has primitives" not in how
+
+
+@needs_sby
+def test_a_property_of_a_register_core_is_proved_where_the_top_cannot_be_read(tmp_path):
+    d = tmp_path / "reg_core"
+    shutil.copytree(CORE, d)
+    g, b = scripted({"REQ-01": ('{"kind": "next", "ante": "h_we && h_addr == 12\'d8", "cons": "h_rdata == $past(h_wdata)", "why": "w"}',
+                                "Whenever h_we was high with h_addr equal to 8 in the previous cycle, h_rdata equals the h_wdata of that cycle.")})
+    rec = S.process(d, g, b)
+    assert rec["module"] == "reg_core" and rec["requirements"]["REQ-01"]["status"] == "proved", rec["requirements"]["REQ-01"]
