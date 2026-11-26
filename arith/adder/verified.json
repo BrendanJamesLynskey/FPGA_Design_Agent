@@ -1,0 +1,709 @@
+{
+ "counts": {
+  "agreed_delegated": 0,
+  "agreed_human": 0,
+  "draft": 10,
+  "items": 13,
+  "requirements": 10,
+  "stale_items": 2,
+  "verified": 1
+ },
+ "criteria": [
+  {
+   "detail": "9 of 10 requirements are not in state verified: ADD-F-MODEL (partially_verified), ADD-F-EXACT (partially_verified), ADD-F-LAT (partially_verified), ADD-F-BENCH (partially_verified), ADD-F-HARNESS (partially_verified), ADD-F-PACKAGE (stale), ADD-F-LEAN-CS (unapproved), ADD-F-LEAN-SUB (unapproved), ADD-P-OOC (stale)",
+   "id": "evidence",
+   "ids": [
+    "ADD-F-MODEL",
+    "ADD-F-EXACT",
+    "ADD-F-LAT",
+    "ADD-F-BENCH",
+    "ADD-F-HARNESS",
+    "ADD-F-PACKAGE",
+    "ADD-F-LEAN-CS",
+    "ADD-F-LEAN-SUB",
+    "ADD-P-OOC"
+   ],
+   "state": "unmet",
+   "title": "Every requirement has passing evidence"
+  },
+  {
+   "detail": "0 agreed by a human, 0 agreed by delegation, 10 draft, 0 marked agreed without a record",
+   "id": "agreement",
+   "ids": [
+    "ADD-F-MODEL",
+    "ADD-F-EXACT",
+    "ADD-F-LAT",
+    "ADD-F-EQUIV",
+    "ADD-F-BENCH",
+    "ADD-F-HARNESS",
+    "ADD-F-PACKAGE",
+    "ADD-F-LEAN-CS",
+    "ADD-F-LEAN-SUB",
+    "ADD-P-OOC"
+   ],
+   "state": "unmet",
+   "title": "Every requirement is agreed (human, or delegated and labelled so)"
+  },
+  {
+   "detail": "not yet measured: the required method mix per requirement kind is brief 143a; the collector does not supply it yet",
+   "id": "method_mix",
+   "ids": [],
+   "state": "not_measured",
+   "title": "Every requirement meets its required method mix"
+  },
+  {
+   "detail": "not yet measured: the mutation score and floor are brief 143b; the collector does not supply them yet",
+   "id": "mutation",
+   "ids": [],
+   "state": "not_measured",
+   "title": "The bench passes the mutation floor"
+  },
+  {
+   "detail": "not yet measured: the vacuity, assumption and depth checks are brief 143c; the collector does not supply them yet",
+   "id": "formal_rigour",
+   "ids": [],
+   "state": "not_measured",
+   "title": "The formal results pass the rigour checks"
+  },
+  {
+   "detail": "2 items are stale (a file they are about changed after the evidence was recorded)",
+   "id": "fresh",
+   "ids": [
+    "V-ADD-PACKAGE",
+    "V-ADD-OOC"
+   ],
+   "state": "unmet",
+   "title": "The evidence is fresh"
+  }
+ ],
+ "declared": null,
+ "definition": "docs/verified.md",
+ "git_commit": "8b3b7767288b3aa2d84ddcc0f25af0284dd9a56f",
+ "kind": "arith",
+ "label": "verified except: 9 of 10 requirements without passing evidence; 10 of 10 requirements not agreed; required method mix not yet measured; mutation floor not yet measured; formal rigour not yet measured; 2 stale or differing evidence items",
+ "label_kind": "verified_except",
+ "limits": [
+  "Verified never means interoperability with a device the design talks to unless a board measurement against that device is listed in the record; a design that checks its own output against its own model accepts its own symmetric mistakes.",
+  "Verified never means timing beyond the stated corner: a post-route timing result is for the part, speed grade, clock and tool version in its evidence file, not for other corners, temperatures or devices.",
+  "Verified never means beyond the widths and depths checked: a simulation covers the vectors it ran, a bounded formal result covers the stated depth only, and a per-width proof covers the widths it names; only a Lean proof marked all widths covers every width, and only for its model.",
+  "Verified never means the requirement is the right one: the text of a requirement is the human's check (or the planner's, where the record says delegated), and a record shows that checks exist and pass, not that nothing was left out.",
+  "Verified never means a hardware or board result unless a board measurement item is listed; a simulation is not the board.",
+  "Verified is about the files in the manifest at the hashes given. A change to any of them makes the record out of date (the CI check fails), and the evidence stale until it is re-recorded.",
+  "An agreement or acceptance recorded as delegated is the planner's decision on the owner's delegation, not a human sign-off; the record counts it apart."
+ ],
+ "manifest": {
+  "arith/adder/build/carry_select/build.yaml": "629f7366fa494fba7f093d4785eb984fb6fa3de2e609f4da289ea8ad7dd3f437",
+  "arith/adder/build/pipelined/build.yaml": "3a8606163f2d21eae0ac46973b58558047f7e2dc1ed0872aa5db6a8514f93e50",
+  "arith/adder/build/ripple/build.yaml": "519d32922f840072374e63f23884bb37ed3724b76676f9f43961e55e72ed0a01",
+  "arith/adder/formal/adder_fv.sv": "9d77711f46e284aa4e9d7485c2a3975fdbc39babbff9cc9b073b2fdb720804fa",
+  "arith/adder/formal/jobs.yaml": "8a8502c39e7f472d95b3ed27aa1a93aac43ef0621d958676d574ed2c69cf6976",
+  "arith/adder/harness/assertions.sv": "a5363ad15d9c9a4b9b4069169540c97ce895a68f115290e9e0e48c62d7c64825",
+  "arith/adder/harness/bench.py": "ab97410cb5dda3c4fc1ae1c695ada3fdd6a7cb45fb14adc56e8f0021d864977f",
+  "arith/adder/harness/chk_top.sv": "f059c13d6dbfe68f08cfa34bee83900ff87dd07b85d855ce872a6c89b745c1df",
+  "arith/adder/harness/coverage.yaml": "18732c80189d771c09d71a24c4ffe09ee2257587f4e6323af7dbb2311d99158d",
+  "arith/adder/harness/model.py": "5c546684e3fab3ce7355cf2f95eda17adfc8d64c386fa60d4d7945c71a333005",
+  "arith/adder/harness/run_harness.py": "7a4cf381c0796d3c0b3aacaef2f61e326398b68b284acd7f60841b4651ed56a1",
+  "arith/adder/model.py": "5c546684e3fab3ce7355cf2f95eda17adfc8d64c386fa60d4d7945c71a333005",
+  "arith/adder/rtl/adder_carry_select.sv": "c4c4e409a54029e1ef8b1eb2b11fbfd0c5ba2ca6f5aa1bab82bbb06febc87201",
+  "arith/adder/rtl/adder_pipelined.sv": "6a066c8eb640bb132eee67ece9dcffd64aafa4633b773ce20d7af2e688207993",
+  "arith/adder/rtl/adder_ripple.sv": "a9c3cc34f3048732e762e62e7eb6433b7f70fcb849b270430718784f1a7cf1b0",
+  "arith/adder/spec.md": "5272b9258c23bfa62f207320f0188823af39c1034a7eb7e296263e3e879b171d",
+  "arith/adder/spec.yaml": "1c0fcb408e2824f4ad51e261fef8248964187280f5ee52c23a55ed32049f838d",
+  "arith/adder/tests/adder_cocotb.py": "1f5b138713c1aef2900d844e0ee990e6b070d74d955cb3bd597636c47e31c588",
+  "arith/adder/verif/evidence_pins.yaml": "7cb8db6b6096e795235a5217c7f4ba37f9a470c4343419212e18bdea2c456c03",
+  "arith/adder/verif/lean_approvals.yaml": "c3cc7159752c2857aff90cb1dec78dc31347ee84c2e7d718b3f4168876ca9f82",
+  "arith/adder/verif/mutants.yaml": "dc80cbc3d11e47b787a16380223c8298f3f6d19433ea298f8af1e82518c6495d",
+  "arith/adder/verif/results/mutation.json": "1deed4f24b0d004adeec62983b77e7f8dafee2e085fd64fe89050a36fe005aa9",
+  "arith/adder/verif/results/pytest_junit.xml": "1dde0dcb3f6d0bbd6a8d81b8ce452826523500b147685e7232e55b0faf757c85",
+  "arith/adder/verif/results/vivado_surface.json": "819d6530479cdfdaa6cac715c205c46545f45e35b8355017974bc2c49a5c5332",
+  "arith/adder/verif/testplan.yaml": "14879bfadb89dc56942cbc78432cf2c59964b85a18bf7345ebf6bb9d5ec3b4d9",
+  "formal/lean/records/build_record.json": "3d60b1f76ac87b74d5dcbe085c0eb8e43e0287d69d5fa557490a685624e6c4f6"
+ },
+ "name": "adder",
+ "notes": "Arithmetic library, function adder (brief 139a). Everything here except the performance requirement is before Vivado: the model, the RTL variants, simulation, formal equivalence, Lean statements and the prepared out-of-context build files. The one performance requirement (brief 160) says every prepared out-of-context point has a routed Vivado result; no Fmax or area bound is agreed. Every requirement is a draft written by the agent; none is agreed by a human. Lean statements are not approved. Generated by arith/tools/gen_testplan.py.",
+ "path": "arith/adder",
+ "reproduce": [
+  {
+   "cmd": "python -m pytest -q arith/adder/tests",
+   "what": "the simulation tests"
+  }
+ ],
+ "requirements": [
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "ADD-F-MODEL",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-ADD-MODEL",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "arith/adder/verif/results/pytest_junit.xml",
+     "record_sha256": "1dde0dcb3f6d0bbd6a8d81b8ce452826523500b147685e7232e55b0faf757c85",
+     "status": "pass",
+     "title": "The model against independent formulations (exhaustive small, random large) and the pinned conventions"
+    }
+   ],
+   "items": [
+    "V-ADD-MODEL"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": false,
+   "missing_methods": [
+    "a simulation check from a bench the implementing agent did not write"
+   ],
+   "mix_satisfied": false,
+   "own_tests_only": true,
+   "passing_methods": [
+    "sim_test"
+   ],
+   "rests_on_delegated": false,
+   "source": "arith/adder/spec.md",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "partially_verified",
+   "text": "arith/adder/model.py gives, for every input, the result that spec.md defines. It agrees with an independent formulation (a bit-serial chain of full adders) on every input at small widths and with Python's integer arithmetic on random large-width inputs, and the conventions that a user could guess wrong (spec.md, last section) are pinned by examples.",
+   "title": "The bit-exact model is right",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "ADD-F-EXACT",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-ADD-EXHAUSTIVE",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "arith/adder/verif/results/pytest_junit.xml",
+     "record_sha256": "1dde0dcb3f6d0bbd6a8d81b8ce452826523500b147685e7232e55b0faf757c85",
+     "status": "pass",
+     "title": "Every variant against the model, every input, at the small points (Icarus + cocotb)"
+    },
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-ADD-RANDOM",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "arith/adder/verif/results/pytest_junit.xml",
+     "record_sha256": "1dde0dcb3f6d0bbd6a8d81b8ce452826523500b147685e7232e55b0faf757c85",
+     "status": "pass",
+     "title": "Every variant against the model at the large points: edge values, carry runs and random inputs (Icarus + cocotb)"
+    }
+   ],
+   "items": [
+    "V-ADD-EXHAUSTIVE",
+    "V-ADD-RANDOM"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": false,
+   "missing_methods": [
+    "a simulation check from a bench the implementing agent did not write"
+   ],
+   "mix_satisfied": false,
+   "own_tests_only": true,
+   "passing_methods": [
+    "sim_test"
+   ],
+   "rests_on_delegated": false,
+   "source": "arith/adder/spec.md",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "partially_verified",
+   "text": "At every parameter point listed in spec.yaml (16 exhaustive points, 14 random ones, across 3 variants), each variant's outputs equal the model's in every clock: every input is driven at the small points; edge values, runs of ones, and random inputs at the large ones. The function is exact, so there is no error bound.",
+   "title": "Every variant is bit-exact against the model",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "ADD-F-LAT",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-ADD-LATENCY",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "arith/adder/verif/results/pytest_junit.xml",
+     "record_sha256": "1dde0dcb3f6d0bbd6a8d81b8ce452826523500b147685e7232e55b0faf757c85",
+     "status": "pass",
+     "title": "The bench passes at the stated latency and fails two clocks off, for every variant"
+    }
+   ],
+   "items": [
+    "V-ADD-LATENCY"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": false,
+   "missing_methods": [
+    "a simulation check from a bench the implementing agent did not write"
+   ],
+   "mix_satisfied": false,
+   "own_tests_only": true,
+   "passing_methods": [
+    "sim_test"
+   ],
+   "rests_on_delegated": false,
+   "source": "arith/adder/spec.md",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "partially_verified",
+   "text": "Each variant's latency in clocks is the expression in spec.yaml (ripple: 0; carry_select: 0; pipelined: STAGES), and the bench, run with a latency two clocks off, fails for every variant, so the passing runs prove the latency rather than assume it.",
+   "title": "Latency is as specified and the bench would notice if it were not",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "ADD-F-EQUIV",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-ADD-FORMAL-PROOF",
+     "instrument": null,
+     "method": "formal",
+     "mutation_score": null,
+     "record": "arith/adder/verif/results/pytest_junit.xml",
+     "record_sha256": "1dde0dcb3f6d0bbd6a8d81b8ce452826523500b147685e7232e55b0faf757c85",
+     "status": "pass",
+     "title": "k-induction proofs of the variants against the reference (5 jobs; widths in formal/jobs.yaml)"
+    },
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-ADD-FORMAL-REFUTE",
+     "instrument": null,
+     "method": "formal",
+     "mutation_score": null,
+     "record": "arith/adder/verif/results/pytest_junit.xml",
+     "record_sha256": "1dde0dcb3f6d0bbd6a8d81b8ce452826523500b147685e7232e55b0faf757c85",
+     "status": "pass",
+     "title": "Each formal check refutes a planted fault (the check can fail)"
+    }
+   ],
+   "items": [
+    "V-ADD-FORMAL-PROOF",
+    "V-ADD-FORMAL-REFUTE"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": false,
+   "missing_methods": [],
+   "mix_satisfied": true,
+   "own_tests_only": false,
+   "passing_methods": [
+    "formal"
+   ],
+   "rests_on_delegated": false,
+   "source": "arith/adder/formal/jobs.yaml",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "verified",
+   "text": "SymbiYosys with the slang front end checks the variants against each other and a plain reference (a single `+` or `*`, or the specification written as RTL). The jobs in formal/jobs.yaml name the widths; a proof is by k-induction (for all inputs, any run length) at the widths listed there, a bounded check holds only to its stated depth. Widths beyond the listed ones are covered by simulation, not by proof.",
+   "title": "The variants are equivalent to a plain reference, by proof where the tools allow",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "ADD-F-BENCH",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-ADD-MUTANT-TEST",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "arith/adder/verif/results/pytest_junit.xml",
+     "record_sha256": "1dde0dcb3f6d0bbd6a8d81b8ce452826523500b147685e7232e55b0faf757c85",
+     "status": "pass",
+     "title": "The mutation run as a test: no mutant survives, none fails to build"
+    },
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-ADD-MUTANT-SCORE",
+     "instrument": null,
+     "method": "sim_measurement",
+     "mutation_score": null,
+     "record": "arith/adder/verif/results/mutation.json",
+     "record_sha256": "1deed4f24b0d004adeec62983b77e7f8dafee2e085fd64fe89050a36fe005aa9",
+     "status": "pass",
+     "title": "Mutants killed of valid mutants (the record of the last full run)"
+    }
+   ],
+   "items": [
+    "V-ADD-MUTANT-TEST",
+    "V-ADD-MUTANT-SCORE"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": false,
+   "missing_methods": [
+    "a simulation check from a bench the implementing agent did not write"
+   ],
+   "mix_satisfied": false,
+   "own_tests_only": true,
+   "passing_methods": [
+    "sim_measurement",
+    "sim_test"
+   ],
+   "rests_on_delegated": false,
+   "source": "arith/adder/verif/mutants.yaml",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "partially_verified",
+   "text": "Every one of the mutants in verif/mutants.yaml (one exact text change each, in the variant's RTL: an inverted condition, a wrong constant, a dropped connection, a lost reset) makes the cocotb bench fail; mutants that survive or do not build are reported, never hidden.",
+   "title": "The bench catches seeded faults",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "ADD-F-HARNESS",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-ADD-HARNESS",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "arith/adder/verif/results/pytest_junit.xml",
+     "record_sha256": "1dde0dcb3f6d0bbd6a8d81b8ce452826523500b147685e7232e55b0faf757c85",
+     "status": "pass",
+     "title": "The packaged harness run standalone on every variant (with the checker and the coverage targets) and on a planted fault"
+    }
+   ],
+   "items": [
+    "V-ADD-HARNESS"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": false,
+   "missing_methods": [
+    "a simulation check from a bench the implementing agent did not write"
+   ],
+   "mix_satisfied": false,
+   "own_tests_only": true,
+   "passing_methods": [
+    "sim_test"
+   ],
+   "rests_on_delegated": false,
+   "source": "arith/adder/harness/README.md",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "partially_verified",
+   "text": "arith/adder/harness holds the model, the cocotb bench, a SystemVerilog checker, coverage targets and a runner that needs nothing else from the repository. Run standalone against every variant (one small exhaustive point and one large random point each, with the checker beside the instance) it passes and the random runs meet every coverage target; run against a planted fault it fails, with and without the checker. Its generated files are the repository's own bench, so they cannot drift.",
+   "title": "The packaged verification harness is a standalone deliverable that works",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "ADD-F-PACKAGE",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "stale",
+     "id": "V-ADD-PACKAGE",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "arith/adder/verif/results/pytest_junit.xml",
+     "record_sha256": "1dde0dcb3f6d0bbd6a8d81b8ce452826523500b147685e7232e55b0faf757c85",
+     "stale_because": "changed since the evidence was recorded: arith/adder/spec.md",
+     "status": "stale",
+     "title": "spec.yaml against the RTL headers, spec.md against spec.yaml, Verilator -Wall at every point, wrappers and build.yaml current and lint-clean"
+    }
+   ],
+   "items": [
+    "V-ADD-PACKAGE"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": false,
+   "missing_methods": [],
+   "mix_satisfied": false,
+   "own_tests_only": false,
+   "passing_methods": [],
+   "rests_on_delegated": false,
+   "source": "arith/adder/spec.yaml",
+   "spec_status": "draft",
+   "stale_items": 1,
+   "state": "stale",
+   "text": "spec.yaml states an interface contract (protocol, throughput, latency, reset, clock, stalls) and integration guidance (port timing, constraints to carry). Every variant passes Verilator -Wall at every point of spec.yaml; its ports and default parameters are the ones spec.yaml states; its header states the intended primitive use before any Vivado run; spec.md is the rendering of spec.yaml; the out-of-context wrapper and the build.yaml for each variant (Artix-7 xc7a100t and K26 xck26, prepared in 139a and run in brief 160) are current and lint-clean at every point they list, so a Vivado run can start from the repository alone.",
+   "title": "The RTL is lint-clean, and its files agree with the specification and with the Vivado build files",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "ADD-F-LEAN-CS",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-ADD-LEAN-CS",
+     "instrument": null,
+     "lean": {
+      "build_source": "recorded build (not re-run)",
+      "rtl_link": "transcription_untested",
+      "tier": "kernel_only"
+     },
+     "method": "formal_lean",
+     "mutation_score": null,
+     "record": "formal/lean/records/build_record.json",
+     "record_sha256": "3d60b1f76ac87b74d5dcbe085c0eb8e43e0287d69d5fa557490a685624e6c4f6",
+     "status": "unapproved",
+     "title": "Carry-select composition adds"
+    }
+   ],
+   "items": [
+    "V-ADD-LEAN-CS"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": false,
+   "missing_methods": [],
+   "mix_satisfied": false,
+   "own_tests_only": false,
+   "passing_methods": [],
+   "rests_on_delegated": false,
+   "source": "arith/adder/rtl/adder_carry_select.sv (g_first and g_sel blocks, two blocks)",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "unapproved",
+   "text": "A carry-select adder (a low block, and a high block computed for carry in 0 and 1 and selected by the low block's carry out) returns the same sum and carry out as plain addition, for every block widths m and k and every pair of operands. The statement is the specification and is NOT approved by a human (verif/lean_approvals.yaml is empty), so the proof is shown but not counted as verification. The Lean text is a hand transcription of the RTL's structure; it models no timing or clocking.",
+   "title": "Carry-select composition adds, for every width",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "ADD-F-LEAN-SUB",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-ADD-LEAN-SUB",
+     "instrument": null,
+     "lean": {
+      "build_source": "recorded build (not re-run)",
+      "rtl_link": "transcription_untested",
+      "tier": "kernel_only"
+     },
+     "method": "formal_lean",
+     "mutation_score": null,
+     "record": "formal/lean/records/build_record.json",
+     "record_sha256": "3d60b1f76ac87b74d5dcbe085c0eb8e43e0287d69d5fa557490a685624e6c4f6",
+     "status": "unapproved",
+     "title": "Subtraction is addition of the complements"
+    }
+   ],
+   "items": [
+    "V-ADD-LEAN-SUB"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": false,
+   "missing_methods": [],
+   "mix_satisfied": false,
+   "own_tests_only": false,
+   "passing_methods": [],
+   "rests_on_delegated": false,
+   "source": "arith/adder/rtl/adder_ripple.sv (be, ce, the one adder)",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "unapproved",
+   "text": "For every width n, a + ~b + ~bin on n bits equals a - b - bin modulo 2^n, and its carry out is 1 exactly when there is no borrow: the identity every variant's subtract path rests on. The statement is the specification and is NOT approved by a human (verif/lean_approvals.yaml is empty), so the proof is shown but not counted as verification. The Lean text is a hand transcription of the RTL's structure; it models no timing or clocking.",
+   "title": "Subtraction is addition of the complements, for every width",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "ADD-P-OOC",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "stale",
+     "id": "V-ADD-OOC",
+     "instrument": null,
+     "method": "timing",
+     "mutation_score": null,
+     "record": "arith/adder/verif/results/vivado_surface.json",
+     "record_sha256": "819d6530479cdfdaa6cac715c205c46545f45e35b8355017974bc2c49a5c5332",
+     "stale_because": "the evidence file changed after it was pinned (run: python -m flow.trace_v1 pin)",
+     "status": "stale",
+     "title": "The routed Vivado results of every prepared point (the records of the last run)"
+    }
+   ],
+   "items": [
+    "V-ADD-OOC"
+   ],
+   "kind": "performance",
+   "lean_transcription_only": false,
+   "missing_methods": [],
+   "mix_satisfied": false,
+   "own_tests_only": false,
+   "passing_methods": [],
+   "performance": {
+    "bound": 20,
+    "condition": "Vivado 2026.1 out-of-context, one thread, the clocks of the build files, brief 160",
+    "op": "ge",
+    "quantity": "prepared points with a routed out-of-context Vivado result",
+    "unit": "points"
+   },
+   "rests_on_delegated": false,
+   "source": "arith/adder/spec.md",
+   "spec_status": "draft",
+   "stale_items": 1,
+   "state": "stale",
+   "text": "Each point of the build files of adder (build/<variant>/build.yaml; 20 in all, both parts) goes through Vivado 2026.1 out-of-context synthesis, placement and routing and leaves a recorded result (utilisation, WNS, WHS, Fmax, logic levels, vectorless power) in verif/results/vivado_ooc_<variant>_<part>.json. The measured values and each point's pre-stated expectation are in the Measured table of spec.md and in verif/results/vivado_surface.json; this requirement states only that the measurement exists for every point, because no Fmax or area bound has been agreed.",
+   "title": "Every prepared point places and routes out of context on Artix-7 and K26",
+   "waivers": []
+  }
+ ],
+ "schema": "fda-verified/1",
+ "summary_line": "10 requirements (9 functional, 1 performance); 1 verified; 5 partially verified (the required mix of methods is not met); 2 stale; 0 of 10 requirements agreed by a human, 0 agreed on the owner's delegation (not human), 10 draft; 5 resting only on the implementing agent's own tests; 0 human and 0 delegated review(s) recorded; 2 Lean proof item(s) (all widths): 0 with a human-approved statement, 0 with a statement accepted on the owner's delegation (not a human approval), 2 with statement not approved; 2 kernel only, 0 using a compiled decision procedure; build status from: recorded build (not re-run)."
+}

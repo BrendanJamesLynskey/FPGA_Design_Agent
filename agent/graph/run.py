@@ -41,7 +41,7 @@ from agent.core.runner import ContainerRunner, LocalRunner, container_available
 from agent.core.session import ROOT
 from agent.graph import review as rv
 from agent.graph.contract import contract_argv, parse_result
-from agent.graph.interview import (Interview, Question, SpecOracle, apply_register_answer, ensure_protocol_questions, ensure_register_question, merge_summaries,
+from agent.graph.interview import (Interview, Question, SpecOracle, apply_register_answer, ensure_protocol_questions, ensure_register_question, ensure_reset_model_question, merge_summaries,
                                    register_map_errors)
 from agent.graph.llm import BudgetExceeded, Meter, chat_model
 from agent.graph.roles import ROLES, RoleJail, role_inputs, role_session
@@ -52,7 +52,7 @@ from agent.graph import ownership
 from agent.graph.snapshot import Snapshots
 from agent.graph.spec_schema import (PROOF_METHODS, requirement_quality_errors, SpecError, clock_hz, load_spec, propose_proof, rate_params,
                                      validate)
-from agent.graph.stages import MACHINE, RUN_LIMITS, classify, exit_check, route_failure, visit_limit
+from agent.graph.stages import MACHINE, RUN_LIMITS, classify, exit_check, route_failure, run_turn_cap, visit_limit, visits_after_route
 from flow import architecture as arch_mod
 from flow import srcorder
 
@@ -128,6 +128,8 @@ class Config:
     hdl: str = "sv"                 # brief 55: the design language, sv (SystemVerilog) | vhdl (VHDL-2008; the test shell stays SystemVerilog)
     design_plan: bool = False       # closure loop: stage 1 declares datapaths; flow/timing_plan.py maps and pipelines them before any build
     closure: str = "off"            # closure loop: on = stage 6 runs the closure controller (agent/graph/closure.py)
+    coverage_loop: str = "off"      # brief 218: on = at V3, rounds of coverage-directed stimulus inside the gate (agent/graph/covsva.py); off = today's V3
+    req_sva: str = "off"            # brief 218: on = an assertion written from each checkable requirement, back-translated, proved (flow/sva_req.py)
     docs: str = "off"               # brief 68 C: on = the document node writes handover.yaml, README.md, AGENT.md at the end (the CLI default is on)
     models_file: Path | None = None  # brief 108: the project's models.yaml (the project layer of the model table)
     model_config: dict | None = None  # brief 108: --model-config, the command-line layer in the models.yaml format
@@ -140,6 +142,7 @@ class Config:
     settings_file: Path | None = None  # brief 194: proposed_settings.yaml, the interview's input; each setting becomes a question (agent.graph.settings)
     verif_ask: bool = False         # brief 194: the interview proposes a profile (only when none was given on the command line)
     level1_seed: int | None = None  # brief 107: --deterministic at level 1: temperature 0 (and this seed) on every purpose that can take it
+    permissions: dict | None = None  # brief 222: the permission policy spec (mode, overrides, source, ask_above_usd; agent.core.permissions); None: the default mode
 
     @property
     def arms(self) -> tuple[str, ...]:
@@ -210,6 +213,8 @@ class Runtime:
     skill_notes: list = field(default_factory=list)
     doc_llm: Callable[[str, str], str] | None = None        # brief 68 C: the DOC step's model call (None: the Designer's model)
     resolver: Any = None                                    # brief 108: every model call of this run goes through it (agent.models.Resolver)
+    policy: Any = None                                      # brief 222: the run's permission policy (agent.core.permissions.Policy); every stage start and tool call consults it
+    cut_streak: dict = field(default_factory=dict)          # brief 224: role -> consecutive replies cut off at the output limit with no file written
 
 
 _RT: dict[str, Runtime] = {}
@@ -229,6 +234,105 @@ def repair_note(role: str, reasons: list[str]) -> str:
     """The extra prompt text of a repair visit: only this role's own failures, and the instruction to edit."""
     return (_p("graph/run/repair_note_1").format(role) + "\n".join(f"- {r[:2200]}" for r in reasons)
             + _p("graph/run/repair_note_2"))
+
+
+#: brief 224: how the Designer writes a long design. Code, not a private prompt (like JTAG_NOTE): appended to the stage-2 Designer's request only.
+FILE_BY_FILE_NOTE = """
+HOW TO WRITE THE FILES: one file per write_file call, smallest first (package or header files, then leaf modules, then the core, then the top).
+A reply has an output limit, and a reply that reaches it is cut off and its tool call is lost: a long design written in one reply is never written.
+After each file, go on to the next without summarising. Files that are already on disk stay; do not write them again unless they are wrong.
+"""
+
+#: consecutive replies cut off at the output limit, with no file written in between, that end the run (the stop reason names it)
+MAX_REPLY_CUTS = 2
+#: extra calls of the Designer inside one stage-2 visit after a reply was cut off (the files already written stay on disk)
+RTL_CONTINUATIONS = 3
+
+_MODULE_RE = re.compile(r"^\s*(?:module|entity)\s+([A-Za-z_]\w*)", re.M | re.I)
+
+
+class ReplyTooLong(Exception):
+    """Two replies in a row of one role were cut off at the output limit and no file was written in between (brief 224)."""
+
+
+def _arch_blocks(design: Path) -> list[str]:
+    """The block names of architecture.yaml (what the Designer committed to write); empty when there is none or it cannot be read."""
+    try:
+        doc = yaml.safe_load((design / "architecture.yaml").read_text()) or {}
+        return [str(b["name"]) for b in doc.get("blocks") or [] if isinstance(b, dict) and b.get("name")]
+    except (OSError, yaml.YAMLError, TypeError):
+        return []
+
+
+def _declared_modules(design: Path) -> set[str]:
+    """Every module or entity declared in the design's rtl/ and data/ (a supplied block kept in data/ counts as written)."""
+    names: set[str] = set()
+    for d in ("rtl", "data"):
+        for f in sorted((design / d).glob("*")) if (design / d).is_dir() else []:
+            if f.is_file() and f.suffix.lower() in (".sv", ".v", ".vhd", ".vhdl", ".svh"):
+                try:
+                    names |= set(_MODULE_RE.findall(f.read_text(errors="replace")))
+                except OSError:
+                    pass
+    return names
+
+
+def files_status(design: Path) -> tuple[list[str], list[str]]:
+    """(rtl files on disk, architecture blocks with no module declared yet), both sorted by name."""
+    rtl = sorted(p.name for p in (design / "rtl").iterdir() if p.is_file()) if (design / "rtl").is_dir() else []
+    have = _declared_modules(design)
+    return rtl, [b for b in _arch_blocks(design) if b not in have]
+
+
+def files_status_note(design: Path, cut: bool) -> str:
+    """The text a cut-off or continued Designer visit is handed: which files exist and which blocks are still missing, and to continue, not restart."""
+    rtl, missing = files_status(design)
+    return ("\n\nWHERE THE WRITING STANDS" + (" (your last reply was cut off at the output limit and its tool call was lost)" if cut else "") + ":\n"
+            + ("Files in rtl/ now: " + (", ".join(rtl) if rtl else "none") + ".\n")
+            + ("Blocks of architecture.yaml with no module written yet: " + ", ".join(missing) + ".\n" if missing else
+               ("All blocks of architecture.yaml have a module on disk.\n" if _arch_blocks(design) else ""))
+            + "Continue with the next missing file, one file per write_file call, smallest first. Do not start again and do not rewrite files that are on disk.\n")
+
+
+def _written_snapshot(design: Path, role: str) -> dict[str, tuple[int, int]]:
+    """{path: (size, mtime_ns)} of what a role writes, to tell whether a call wrote any file."""
+    dirs = {"rtl": ("rtl",), "tests": ("tests", "verif"), "model": ()}.get(role, ())
+    files = [p for d in dirs for p in sorted((design / d).rglob("*")) if p.is_file() and "__pycache__" not in p.parts]
+    if role == "model" and (design / "model.py").is_file():
+        files.append(design / "model.py")
+    out = {}
+    for p in files:
+        try:
+            st = p.stat()
+            out[str(p.relative_to(design))] = (st.st_size, st.st_mtime_ns)
+        except OSError:
+            pass
+    return out
+
+
+def run_writing_role(rt: "Runtime", role: str, prompt: str, allowed: tuple[str, ...], repair: bool) -> None:
+    """``run_role`` for a role that writes files (brief 224). A reply cut off at the output limit loses its tool call; the Designer is then
+    called again inside the visit (up to ``RTL_CONTINUATIONS`` times) with a note of the files on disk and the blocks still missing. Two
+    cut-off replies in a row of one role with no file written in between raise :class:`ReplyTooLong`."""
+    n_calls = (RTL_CONTINUATIONS + 1) if role == "rtl" else 1
+    cut_any = False
+    for k in range(n_calls):
+        t0, before = rt.meter.truncated, _written_snapshot(rt.design, role)
+        extra = files_status_note(rt.design, True) if k else (files_status_note(rt.design, False) if role == "rtl" and rt.meter.truncated else "")
+        run_role(rt, role, prompt + extra, allowed, repair or k > 0)
+        cut = rt.meter.truncated - t0
+        wrote = _written_snapshot(rt.design, role) != before
+        cut_any = cut_any or bool(cut)
+        if wrote:
+            rt.cut_streak[role] = 0
+        if cut and not wrote:
+            rt.cut_streak[role] = rt.cut_streak.get(role, 0) + cut
+        elif not cut:
+            rt.cut_streak[role] = 0
+        if rt.cut_streak.get(role, 0) >= MAX_REPLY_CUTS:
+            raise ReplyTooLong(role)
+        if not cut or rt.budget_notes or (role == "rtl" and wrote and not files_status(rt.design)[1] and _arch_blocks(rt.design)):
+            break
 
 
 SELF_CHECK_PASSES = 2          # 07a2 fix 7: repair passes the tests role gets inside one turn before it hands over
@@ -869,17 +973,99 @@ def stage2_plan(rt: Runtime, state: State) -> dict[str, list[str] | None]:
     return plan
 
 
+def _policy(rt: Any) -> Any:
+    """The run's permission policy (brief 222); a runtime without one (a test double) has none, and nothing is gated."""
+    return getattr(rt, "policy", None)
+
+
+def _perm_stop(rt: Runtime, n: int, why: list[str], needs: list[str]) -> dict:
+    from agent.core import permissions as P
+    msg = "permission denied: " + "; ".join(why)
+    _run_event(rt, "permission_stop", MACHINE[n].name, n=n, needs=needs, why=msg[:300])
+    return {"stop": msg, "stop_detail": {"permission": {"mode": _policy(rt).mode, "needs": needs, "why": why,
+                                                        "change": "python -m agent resume " + rt.run_id + " --permissions ask|auto|full, or --allow <action>"}}}
+
+
+def permission_entry(rt: Runtime, state: State, n: int) -> dict | None:
+    """Brief 222: what stage ``n`` needs is looked up in the run's policy. A ``deny`` returns the update that stops the run; an ``ask`` pauses on a
+    ``permission`` interrupt (the Navigator's question panel, or a headless stop that lists what is needed); an ``allow`` is logged and the stage goes on.
+    The board actions are asked at the stage-9 hardware approval, not here, so the owner is asked about the board once, with the bitstream in front of them."""
+    pol = _policy(rt)
+    if pol is None:
+        return None
+    from agent.core import permissions as P
+    from langgraph.types import interrupt
+    st = MACHINE[n]
+    actions = list(P.stage_actions(n, st.tools))
+    if float(rt.meter.run.get("usd") or 0) >= pol.ask_above_usd:
+        actions.append("spend_model_money")
+    ask, deny = [], []
+    for a in actions:
+        d = pol.decide(a, n, f"stage {n} {st.name}", log=False)
+        if a in P.HW_APPROVAL_ACTIONS and d.result == P.ASK:
+            continue                                         # asked at the hardware approval
+        if d.result == P.DENY:
+            pol.record(d, n, f"stage {n} {st.name}")
+            deny.append((a, d.by))
+        elif d.result == P.ASK:
+            pol.record(d, n, f"stage {n} {st.name}")
+            ask.append(a)
+        else:
+            pol.record(d, n, f"stage {n} {st.name}")
+    if deny:
+        return _perm_stop(rt, n, [f"{P.BY_NAME[a].label} ({a}) is {P.DENY}ed by {by}" for a, by in deny], [a for a, _ in deny])
+    if not ask:
+        return None
+    reply = interrupt({"kind": "permission", "stage": n, "stage_name": st.name, "mode": pol.mode, "needs": ask,
+                       "actions": [{"action": a, "label": P.BY_NAME[a].label, "plain": P.BY_NAME[a].plain} for a in ask],
+                       "resume": f"python -m agent resume {rt.run_id} --reply '{{\"decision\": \"allow\"}}'"})
+    if not isinstance(reply, dict):
+        reply = {"decision": "deny"}
+    by = str(reply.get("by") or "you")[:40]
+    yes = set(reply.get("allow") or []) if isinstance(reply.get("allow"), list) else set()
+    if reply.get("decision") == "allow":
+        yes |= set(ask)
+    yes &= set(ask)
+    no = [a for a in ask if a not in yes]
+    if yes:
+        pol.grant(sorted(yes), by, n, f"asked at stage {n} {st.name}")
+    if no:
+        pol.refuse(no, by, n, f"asked at stage {n} {st.name}")
+        return _perm_stop(rt, n, [f"{P.BY_NAME[a].label} ({a}) was declined by {by}" for a in no], no)
+    _run_event(rt, "permission_granted", st.name, n=n, actions=sorted(yes), by=by)
+    return None
+
+
+def scale_turn_cap(rt: Runtime, n: int) -> None:
+    """Brief 234: from stage 2 on, a run whose turn cap is still the default takes ``run_turn_cap(blocks of architecture.yaml)``. An
+    explicit cap (any other number) stays as given; the cap is never lowered below what it was."""
+    if n < 2:
+        return
+    lim = rt.meter.run_limits
+    cur = int(lim.get("turns", 0))
+    if cur not in (int(RUN_LIMITS["turns"]), rt.meter.turns_auto):
+        return
+    cap = run_turn_cap(len(_arch_blocks(rt.design)))
+    if cap > cur:
+        lim["turns"] = rt.meter.turns_auto = cap
+        log_routing_event(rt, "run_turn_cap_scaled", blocks=len(_arch_blocks(rt.design)), turns_cap=cap)
+
+
 def node_work(state: State) -> dict:
     rt, n = _rt(state), state["stage"]
     if state.get("hand_edit_only"):                    # the owner edited by hand: gate their files, do not rewrite them
         return {"hand_edit_only": False, "note": ""}
     st = MACHINE[n]
+    stop = permission_entry(rt, state, n)             # brief 222: a denied or declined permission ends the run here, before anything is spent; an ask pauses it
+    if stop is not None:
+        return stop
     visits = dict(state.get("visits") or {})
     visits[str(n)] = visits.get(str(n), 0) + 1
     limit = visit_limit(n, rt.cfg.run_limits)
     if visits[str(n)] > limit:
         why, detail = stop_diagnosis(n, limit, state)         # brief 82P6 (P3): say which gate, which role, which assertion
         return {"visits": visits, "stop": why, "stop_detail": detail}
+    scale_turn_cap(rt, n)
     rt.meter.start_stage(st.limits)
     rt.session.stage = st.name
     rt.visit, rt.budget_notes = visits[str(n)], []
@@ -923,10 +1109,10 @@ def node_work(state: State) -> dict:
                 repair = reasons is not None
                 note = repair_note(role, reasons) if repair else ""
                 if role == "model":
-                    run_role(rt, "model", PROMPTS["model"].format(**fmt) + note + prompt_note("model"), role_allowed("model", 2), repair)
+                    run_writing_role(rt, "model", PROMPTS["model"].format(**fmt) + note + prompt_note("model"), role_allowed("model", 2), repair)
                 elif role == "tests":
                     mut = surviving_mutants_note(rt.design) if repair else ""        # 07a2 fix 7 (3)
-                    run_role(rt, "tests", PROMPTS["tests"].format(**fmt) + (note if repair else _p("graph/run/fresh_tests")) + mut
+                    run_writing_role(rt, "tests", PROMPTS["tests"].format(**fmt) + (note if repair else _p("graph/run/fresh_tests")) + mut
                                  + tests_checklist(rt, 2, repair) + prompt_note("tests") + conv_tests, role_allowed("tests", 2), repair)
                     selfcheck_tests_role(rt, lambda extra: run_role(            # 07a2 fix 7 (2): convention misses end here
                         rt, "tests", PROMPTS["tests"].format(**fmt) + repair_note("tests", extra) + mut
@@ -934,8 +1120,8 @@ def node_work(state: State) -> dict:
                 else:
                     own = "; ".join(r[:1500] for r in reasons) if repair else (
                         "; ".join(state.get("fails") or []) or "none")
-                    run_role(rt, "rtl", PROMPTS["rtl"].format(**{**fmt, "fails": own})
-                                 + (note if repair else "") + prompt_note("rtl") + conv0, role_allowed("rtl", 2), repair)
+                    run_writing_role(rt, "rtl", PROMPTS["rtl"].format(**{**fmt, "fails": own})
+                                     + (note if repair else "") + prompt_note("rtl") + conv0 + FILE_BY_FILE_NOTE, role_allowed("rtl", 2), repair)
         else:           # stage 9 too: the model writes probes.yaml and BRINGUP.md BEFORE the builds and the hardware pause
             run_role(rt, "rtl", PROMPTS["rtl"].format(**fmt) + conv + ((JTAG_HW_FORMAT if jtag else _p("graph/run/hw_format").format(**fmt)) if n == 9 else ""),
                          role_allowed("rtl", n))
@@ -950,10 +1136,20 @@ def node_work(state: State) -> dict:
                     run_role(rt, "tests", PROMPTS["hwtests"].format(**{**fmt, "fails": "; ".join(own)})
                                  + tests_checklist(rt, 9, True) + (JTAG_HW_FORMAT if jtag else _p("graph/run/hw_format").format(**fmt)) + _p("graph/contract/model_contract"), role_allowed("tests", 9),
                                  repair=True)        # never "fresh": a fresh tests write deletes the stage-2 benches
+        if n == 9:                                       # brief 221: instrument steps for the requirements an instrument can check (no lab file: nothing written)
+            from hil import lab_bringup
+            lab_bringup.apply_to_design(rt.design, _spec(rt))
         files = [p for p in rt.design.rglob("*") if p.is_file() and "build" not in p.relative_to(rt.design).parts
                  and "__pycache__" not in p.parts]
         ownership.record(rt.design, "agent", st.name, f"stage {n} work, visit {visits[str(n)]}",
                          f"{len(files)} files in the design", n=n)
+    except ReplyTooLong as e:                              # brief 224: say what stalled, not "stage 2 visited more than 6 times"
+        role = str(e)
+        rtl, missing = files_status(rt.design)
+        return {"visits": visits, "stop": f"reply too long: no file written; the {role} role's last {MAX_REPLY_CUTS} replies were cut off at the output limit "
+                                          "(max_tokens), and no file was written in between",
+                "stop_detail": {"kind": "reply_too_long", "stage": n, "role": role, "consecutive_cut_replies": rt.cut_streak.get(role),
+                                "truncated_calls": rt.meter.truncated, "rtl_files": rtl, "blocks_missing": missing}}
     except ArmBlocked as e:                                # the Claude Code arm cannot run (auth, CLI): stop, say why
         return {"visits": visits, "stop": f"claude_code blocked: {e}"}
     except BudgetExceeded as e:
@@ -1119,6 +1315,8 @@ def _interview(rt: Runtime, spec: dict, state: State) -> tuple[dict, dict]:
             ask_one(Question(id=f"s{i + 1}", text=qt, default=qd, reason=qr))
         spec["dependability"] = [{"question": q.text, "answer": q.answer, "status": q.status} for q in iv.questions if q.id.startswith("s")]
     (rt.design / "spec.yaml").write_text(yaml.safe_dump(spec, sort_keys=False))
+    from agent.graph.lab_interview import record_answers as _lab_record
+    _lab_record(rt.design, spec.get("resolved_questions") or [])     # brief 221: the answers about the bench go into the design's lab.yaml, with provenance
     summ = iv.summary()
     summ["level_source"] = level_src
     RQ.write_state(rt.design, level=level, source=level_src, waivers=[w.as_dict() for w in iv.waivers], waiver_problems=wprobs)
@@ -1456,6 +1654,24 @@ def spec_test_gate(rt: Runtime) -> dict:
     return spectest.gate(rt.design, rt.cfg.board, rt.session.runner, role, tri, max_loops=rt.cfg.spectest_max_loops)
 
 
+def hw_authorised(rt: Runtime, state: State) -> bool:
+    """Brief 222: may stage 9 touch the board now? Yes when a person approved at the hardware pause, or when the mode allows both programming and register
+    writes (Full auto, or an override). Either way the decision and who made it go into the run's log, and the run is granted the board actions its
+    tools check at each call."""
+    from agent.core import permissions as P
+    pol = _policy(rt)
+    if state.get("hw_approved"):
+        if pol is not None and not all(a in pol.granted for a in P.HW_APPROVAL_ACTIONS):
+            pol.grant(P.HW_APPROVAL_ACTIONS, "the stage-9 hardware approval", 9, "approved at the hardware pause")
+        return True
+    if pol is not None and pol.hw_by_rule():
+        for a in P.HW_APPROVAL_ACTIONS:
+            pol.record(pol.decide(a, 9, log=False), 9, "bring-up on the board, no approval pause")
+        pol.grant(P.HW_APPROVAL_ACTIONS, pol.decide(P.HW_APPROVAL_ACTIONS[0], 9, log=False).by, 9, "allowed without a pause")
+        return True
+    return False
+
+
 def node_gate(state: State) -> dict:
     rt, n = _rt(state), state["stage"]
     if state.get("stop"):
@@ -1464,6 +1680,7 @@ def node_gate(state: State) -> dict:
     out: dict[str, Any] = {}
     rt.session.stage = st.name
     detail: list[str] = []
+    hw_ok = False
 
     def d(name, r):
         if not r.get("ok"):
@@ -1489,6 +1706,9 @@ def node_gate(state: State) -> dict:
             req = (rt.design / "spec.md").read_text() if (rt.design / "spec.md").is_file() else ""
             spec, _asked = ensure_register_question(req, spec)       # 07a2 fix 7: the harness asks for the register map itself
             spec, _proto = ensure_protocol_questions(req, spec)      # brief 190: the six new-protocol intake questions, with defaults and reasons
+            from agent.graph.lab_interview import ensure_lab_questions
+            spec, _lab_q = ensure_lab_questions(rt.design, spec, person=rt.cfg.interview == "on")    # brief 221: only the gaps in the lab, with defaults and reasons
+            spec, _rm = ensure_reset_model_question(spec)            # brief 231: no reset input -> ask the reset model (reset or reprogram)
             errs = register_map_errors(req, spec)           # 07a2 fix 1: ask for the register map before the interview
             if errs:
                 ev["spec"], ev["signed_off"], ev["spec_errors"] = spec, False, errs
@@ -1546,6 +1766,13 @@ def node_gate(state: State) -> dict:
                 ev["simulate"] = {"ok": False, "first_failure": cov.get("first_failure"), "text": cov["text"]}
                 detail.append("[simulate, verilator coverage run] " + cov["text"][-800:])
             ev["verif"] = d("verif_gates", dispatch(rt.session, "gates", {"kind": "verif"})).get("gates") or {}
+            from agent.graph import covsva                       # brief 218 (off by default): rounds of coverage-directed stimulus
+            covsva.coverage_gate(rt, ev, d, detail)
+            covsva.observe(rt, ev)                               # brief 218: the holes after this evaluation, recorded in either arm
+        if (rt.cfg.req_sva == "on" and ev["lint"]["ok"] and ev["simulate"]["ok"]
+                and (ev["verif"].get("reached") or "") >= "V2"):        # brief 218 (off by default): a property from each requirement
+            from agent.graph import covsva
+            ev["req_sva"] = covsva.sva_step(rt)
         ev["trace"] = trace_record(rt.design, rt.session.root)  # brief 53: the traceability matrix, recorded
         std = dispatch(rt.session, "gates", {"kind": "standards"})
         ev["standards"] = std.get("gates")
@@ -1605,7 +1832,8 @@ def node_gate(state: State) -> dict:
         ev["gates_base"] = _build(rt, "bitstream")["gates"]
         if not jtag9:                                                  # a JTAG-bus design has no ILA build
             ev["gates_ila"] = _build(rt, "bitstream", "ila")["gates"]
-        if state.get("hw_approved"):
+        hw_ok = hw_authorised(rt, state)                               # brief 222: the approval a person gave, or a mode that allows it
+        if hw_ok:
             rt.session.stage = st.name
             br = dispatch(rt.session, "bringup", {}) or {}
             ev["bringup"] = br.get("bringup") or {"pass": False, "failed_step": br.get("rule") or "bringup",
@@ -1615,7 +1843,7 @@ def node_gate(state: State) -> dict:
         ev["build_output"] = rt.last_build_output           # the repair visit's Designer is shown it (05d live run 3)
         detail.append("[build] " + rt.last_build_output)
         rt.last_build_output = ""
-    if n == 9 and not state.get("hw_approved"):
+    if n == 9 and not hw_ok:
         from dataclasses import replace as _replace
         ok, fails = exit_check(_replace(st, gates=tuple(g for g in st.gates if g not in ("bringup", "signoff")
                                                         and not (g == "bitstream_ila" and transport_of(rt) == "jtag_bus"))), ev)
@@ -1712,9 +1940,11 @@ def node_review(state: State) -> dict:
     hand_only = False
     supplied = None
     reply: dict = {}
-    if rt.cfg.review == "on" or hw_pause:
+    ask_review = bool(_policy(rt) is not None and passed and not ungated and _policy(rt).review_required(n))      # brief 222: the mode asks for this stage's approval
+    if rt.cfg.review == "on" or hw_pause or ask_review:
         reply = interrupt({"kind": "review", "stage": n, "stage_name": st.name, "page": str(page),
-                           "passed": passed, "fails": state.get("fails"), "hardware": hw_pause})
+                           "passed": passed, "fails": state.get("fails"), "hardware": hw_pause,
+                           **({"permission": ["approve_architecture"] * (n == 1) + ["approve_stage"]} if ask_review else {})})
         decision = {"decision": reply.get("decision", "approve"), "by": reply.get("by", "human"),
                     "note": reply.get("note", ""), "to": reply.get("to"), "role": reply.get("role")}
         if decision["decision"] == "supply" and n == 1:             # the owner supplies the architecture
@@ -1739,7 +1969,8 @@ def node_review(state: State) -> dict:
         rv.write_page(rt.design, n, st.name, {**info, "approval": decision})
     hist.append({"n": n, "stage": st.name, "page": str(page), "passed": passed, "approval": decision,
                  "snapshot": snap["commit"], "visit": info["visits"], "used": dict(rt.meter.stage),
-                 **({"gated": False} if ungated else {})})
+                 **({"gated": False} if ungated else {}),
+                 **({"fails": [str(f)[:300] for f in (state.get("fails") or [])[:6]]} if not passed and not ungated else {})})   # brief 234
     if n >= 2:                                    # brief 53: refresh the matrix with this stage's evidence for the index
         trace_record(rt.design, rt.session.root)
     rv.write_index(rt.design, hist, rt.cfg.role_models())
@@ -1747,7 +1978,14 @@ def node_review(state: State) -> dict:
         f.write(f"\n## review {n:02d} {st.name}\n\n{decision['decision']} by {decision['by']}"
                 f"{': ' + decision['note'] if decision.get('note') else ''} (gates {'pass' if passed else 'fail'})\n")
     upd: dict[str, Any] = {"history": hist, "hand_edit_only": False}
-    if rt.cfg.review == "on" or hw_pause:
+    if _policy(rt) is not None and (ask_review or hw_pause):                 # brief 222: the person's answer is a permission decision, kept with the rest
+        from agent.core import permissions as P
+        acts = list(P.HW_APPROVAL_ACTIONS) if hw_pause else (["approve_architecture"] * (n == 1)) + ["approve_stage"]
+        for a in acts:
+            _policy(rt).record(P.Decision(a, P.ALLOW if decision["decision"] in ("approve", "supply") else P.ASK, f"answered by {decision['by']}"), n,
+                             f"stage {n} {st.name}: {decision['decision']}" + (f" ({decision['note'][:60]})" if decision.get("note") else ""),
+                             result="approved" if decision["decision"] in ("approve", "supply") else decision["decision"])
+    if rt.cfg.review == "on" or hw_pause or ask_review:
         who = _who(decision["by"])
         what = {"approve": "approved", "edit": "asked for changes", "rewind": f"rewound to stage {decision.get('to')}",
                 "supply": "supplied the architecture"}.get(decision["decision"], decision["decision"])
@@ -1757,7 +1995,14 @@ def node_review(state: State) -> dict:
     elif passed:
         ownership.record(rt.design, "auto", st.name, "approved (review off)", "", n=n)
     # the architecture approval (Taylor addition 2): before any RTL, by the owner or, with review off, automatic
-    if n == 1 and passed and decision["decision"] == "approve":
+    plan_only = bool(n == 1 and passed and decision["decision"] == "approve" and _policy(rt) is not None
+                     and _policy(rt).decide("approve_architecture", n, "the architecture's approval").result == "deny")
+    if plan_only:                                                      # brief 222: Plan mode (or a deny): the architecture is written and left for a person to approve
+        upd["stop"] = ("plan complete: the architecture is written and waiting for you; approving it is " + "denied by "
+                       + _policy(rt).decide("approve_architecture", n, log=False).by + ". Resume in another mode to go on: python -m agent resume "
+                       + rt.run_id + " --permissions ask")
+        _write_plan_estimate(rt)
+    if n == 1 and passed and decision["decision"] == "approve" and not plan_only:
         who = _who(decision["by"])
         by_owner = any(r["who"] == "owner" and r["what"] in ("hand edit", "supplied architecture") and r["n"] == 1
                        for r in ownership.load(rt.design))
@@ -1783,8 +2028,19 @@ def node_review(state: State) -> dict:
         return {**upd, "note": decision.get("note", ""), "note_role": decision.get("role") or "", "hand_edit_only": hand_only,
                 "fails": ["reviewer asked for changes"]}
     if hw_pause:
-        return {**upd, "hw_approved": decision["decision"] == "approve"}
+        ok = decision["decision"] == "approve"
+        if ok and _policy(rt) is not None:
+            from agent.core import permissions as P
+            _policy(rt).grant(P.HW_APPROVAL_ACTIONS, f"{_who(decision['by'])} ({decision['by']}) at the stage-9 hardware approval", n, "programming and bring-up")
+        return {**upd, "hw_approved": ok}
     return upd
+
+
+def _write_plan_estimate(rt: Runtime) -> None:
+    """Plan mode's estimate of time and cost: the stage limits and the run caps, labelled as limits (``agent.core.permissions.plan_estimate``)."""
+    from agent.core import permissions as P
+    est = P.plan_estimate(rt.cfg.run_limits, MACHINE, rt.cfg.stop_after)
+    (rt.run_dir / "plan_estimate.json").write_text(json.dumps(est, indent=1))
 
 
 def _stage_diff(rt: Runtime, n: int) -> list[dict]:
@@ -1896,10 +2152,20 @@ def _advance_core(rt: Runtime, n: int, state: State) -> dict:
     if fails:
         if fails == ["reviewer asked for changes"]:
             return {"stage": n}
-        target = route_failure(MACHINE[n], classify(MACHINE[n], fails))
+        cause = classify(MACHINE[n], fails)
+        target = route_failure(MACHINE[n], cause)
         if n == 2 and target == 0 and any("held by spec.yaml" in f for f in fails):
             log_routing_event(rt, "const_id_routed_to_spec_yaml_owner", to_stage=0)       # brief 82P6
-        return {"stage": target}
+        old_v = state.get("visits") or {}
+        visits = visits_after_route(old_v, n, target)               # brief 234: a loop back re-validates the stages it passes again
+        if visits != old_v:
+            log_routing_event(rt, "route_back_fresh_visits", from_stage=n, to_stage=target,
+                              reset=[k for k in sorted(old_v) if visits.get(k) != old_v.get(k)])
+        upd: dict[str, Any] = {"stage": target, "visits": visits}
+        if hist and hist[-1].get("gated", True):
+            hist = [*hist[:-1], {**hist[-1], "cause": cause, "routed_to": {"stage": target, "stage_name": MACHINE[target].name}}]   # brief 234: where this failure went
+            upd["history"] = hist
+        return upd
     if n == 9 or (rt.cfg.stop_after is not None and n >= rt.cfg.stop_after):
         return {"stop": stop_status(rt)}
     return {"stage": n + 1}
@@ -2033,6 +2299,10 @@ def new_runtime(cfg: Config, client: Callable | None = None, run_id: str | None 
                 tape_spec: dict | None = None) -> Runtime:
     from agent.access import require_or_exit      # brief 94: every run is created here
     require_or_exit("new_runtime")
+    from agent.core import permissions as _perm_cap       # brief 222: a cost cap above the hard cap is refused in every mode, before anything is created
+    bad_cap = _perm_cap.check_hard_cap(cfg.run_limits.get("usd"))
+    if bad_cap:
+        raise _perm_cap.NeverRefused("hard_cap", bad_cap)
     if not cfg.no_shell and transport_of(cfg) == "jtag_bus":     # brief 209a: a board with no UART has no test shell to build in
         cfg.no_shell = True
     run_id = run_id or time.strftime("%Y%m%d-%H%M%S-") + uuid.uuid4().hex[:4]
@@ -2077,7 +2347,7 @@ def new_runtime(cfg: Config, client: Callable | None = None, run_id: str | None 
     except Exception:                                      # CI: no private knowledge bank
         bank = None
     sess = Session(design=design, board=cfg.board, runner=runner, bank=bank, skill_routing=cfg.skill_routing,
-                   harness_arms=cfg.arms, policy_run_dir=run_dir)
+                   harness_arms=cfg.arms, policy_run_dir=run_dir, permissions_run_dir=run_dir)
     from agent.models.resolver import Resolver
     table = cfg.model_table()
     tape, det = None, None
@@ -2100,8 +2370,14 @@ def new_runtime(cfg: Config, client: Callable | None = None, run_id: str | None 
     scale = float(table.budget_scale)                         # brief 209b: budget_scale of the model config / --budget-scale
     if scale != 1.0 and cfg.run_limits.get("usd") == RUN_LIMITS["usd"]:      # the default run cap follows the scale; an explicit --max-usd does not
         cfg.run_limits["usd"] = round(RUN_LIMITS["usd"] * scale, 6)
+        bad_scaled = _perm_cap.check_hard_cap(cfg.run_limits["usd"])          # brief 222: the scaled default cap is held to the hard cap too
+        if bad_scaled:
+            raise _perm_cap.NeverRefused("hard_cap", bad_scaled)
+    from agent.core import permissions as _perm          # brief 222: the run's permission policy; a resume keeps the run's own (its grants and refusals included)
+    policy = _perm.Policy.load(run_dir) or _perm.Policy.from_spec(cfg.permissions, run_dir)
     rt = Runtime(cfg, run_id, run_dir, design, sess, client, Meter(cfg.run_limits, usd_scale=scale), Snapshots(run_dir, design),
-                 oracle_llm=oracle_llm, resolver=resolver)
+                 oracle_llm=oracle_llm, resolver=resolver, policy=policy)
+    policy.save()
     _RT[run_id] = rt
     _pin_run(rt)
     prior = None
@@ -2117,7 +2393,7 @@ def new_runtime(cfg: Config, client: Callable | None = None, run_id: str | None 
                                                      "oracle_model": oracle_model_name(cfg),
                                                      "models_file": str(cfg.models_file) if cfg.models_file else None,
                                                      "model_config": cfg.model_config or {}, "explicit": list(cfg.explicit),
-                                                     "allow_fable": cfg.allow_fable, "models": table.record(),
+                                                     "allow_fable": cfg.allow_fable, "models": table.record(), "permissions": policy.spec(),
                                                      **({"determinism": det} if det else {}),
                                                      "isolation": type(runner).__name__}, indent=1))
     return rt
@@ -2299,6 +2575,8 @@ def summary(rt: Runtime, state: dict) -> dict:
             "constants": constants_summary(rt),
             "gates_last": {h["stage"]: h["passed"] for h in hist if h.get("gated", True)},   # 68F: not an entry that ran no gate
             "approvals": [{"n": h["n"], **h["approval"]} for h in hist],
+            "permissions": __import__("agent.core.permissions", fromlist=["x"]).summarise(rt.run_dir, _policy(rt)),      # brief 222: the mode and every gated decision
+            **({"plan_estimate": json.loads((rt.run_dir / "plan_estimate.json").read_text())} if (rt.run_dir / "plan_estimate.json").is_file() else {}),
             "bringup": ((state.get("evidence") or {}).get("bringup") or {}).get("pass"),
             **({"spec_test": __import__("agent.graph.spectest", fromlist=["x"]).record(rt.design)} if rt.cfg.spec_tests else {})}
 

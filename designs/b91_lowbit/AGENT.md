@@ -3,13 +3,14 @@ source: designs/b91_lowbit/handover.yaml; human view: README.md; refresh: python
 
 ## identity
 kind=showcase produced_by=session part=xck26-sfvc784-2LV-c board=Kria KR260 (K26 SOM); also xc7a100tcsg324-1 (Nexys A7) out of context top=ooc_wrap (one generated network with an input register), out of context tool=Vivado 2026.1
+verified: not assessed: no requirements recorded (no verif/testplan.yaml), so nothing here is traced to a requirement (record: designs/b91_lowbit/VERIFIED.md, designs/b91_lowbit/verified.json; definition: docs/verified.md)
 
 ## summary
 A generator and a measurement of eight weight formats for tiny integer networks: binary, ternary, INT4, an MXFP4-style E2M1 format with a power-of-two scale, our power-of-two format log4 (with and without a zero) and a two-term log4+1. Each is trained with its quantiser in the loop, exported to integers, checked against a bit-exact Python twin and generated RTL, and built out of context on the K26 and the Artix-7 100T. On the brief 87 synthetic order flow the 4-bit-weight formats match the 89 LUT network and the 87 trees on accuracy but need about four times the LUTs, so no format is on the accuracy-against-area or accuracy-against-latency front.
 not: real market data; the data are brief 87's seeded synthetic order flow with a planted signal; a board run or a full-design build; every hardware number is an out-of-context, post-route Vivado 2026.1 build; weights held in block RAM (the phase-2 student): phase 1 weights are constants; docs/stage2_plan.md is a plan only; a general-purpose tool; the argmax is written for three classes and the networks have at most two hidden layers
 
 ## state
-stage=built vivado=2026.1 kb_pin=5e2eab8 build_id=None
+stage=built vivado=2026.1 kb_pin=6185830 build_id=None
 gates: rtl_equals_twin=pass ooc_build_2026_1=pass board_run=not-run
 
 ## interface

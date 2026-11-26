@@ -138,7 +138,7 @@ def test_no_pin_clash_unless_declared(board):
 def test_io_standards_are_known_to_vivado(board):
     stds = {s for _p, s in master(board).values()}
     known = {"LVCMOS12", "LVCMOS15", "LVCMOS18", "LVCMOS25", "LVCMOS33", "LVDS", "LVDS_25", "TMDS_33", "DIFF_SSTL12", "DIFF_SSTL15", "DIFF_SSTL135",
-             "SSTL15", "SSTL135", "SSTL12", "DIFF_HSUL_12", "HSUL_12", "LVDS_25", "DIFF_SSTL15_T_DCI", "DIFF_SSTL135_T_DCI", "LVCMOS18_JEDEC", "MIPI_DPHY_DCI"}
+             "SSTL15", "SSTL135", "SSTL12", "DIFF_HSUL_12", "HSUL_12", "LVDS_25", "DIFF_SSTL15_T_DCI", "DIFF_SSTL135_T_DCI", "LVCMOS18_JEDEC", "MIPI_DPHY_DCI", "DIFF_HSTL_I_18"}
     assert stds <= known, f"{board}: I/O standards {stds - known} are not in the checked list"
 
 

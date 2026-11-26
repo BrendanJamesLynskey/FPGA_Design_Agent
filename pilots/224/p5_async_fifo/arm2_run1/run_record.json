@@ -1,0 +1,503 @@
+{
+ "design": "p5_async_fifo",
+ "run": 1,
+ "run_id": "20261125-193550-9069",
+ "agent_sha": "300277464a83",
+ "model": [
+  "claude-sonnet-5-5"
+ ],
+ "endpoint": [
+  "anthropic_api"
+ ],
+ "api_calls": 253,
+ "real_usd": 7.7623,
+ "prompt_tokens": 10852411,
+ "completion_tokens": 351513,
+ "input_tokens": 560,
+ "cache_read_tokens": 9534830,
+ "cache_write_tokens": 1317021,
+ "tokens_total": 11203924,
+ "truncated_calls": 1,
+ "cost_basis": [
+  "usage*price"
+ ],
+ "wall_s_after_slot": 3624,
+ "stage_visits": [
+  [
+   "clarify",
+   1,
+   "clarify",
+   "done",
+   4,
+   0.164
+  ],
+  [
+   "clarify",
+   2,
+   "clarify",
+   "done",
+   5,
+   0.069
+  ],
+  [
+   "board-and-device-planning",
+   1,
+   "rtl",
+   "done",
+   4,
+   0.1
+  ],
+  [
+   "board-and-device-planning",
+   2,
+   "rtl",
+   "done",
+   6,
+   0.074
+  ],
+  [
+   "rtl-design-creation",
+   1,
+   "model",
+   "done",
+   2,
+   0.055
+  ],
+  [
+   "rtl-design-creation",
+   1,
+   "tests",
+   "done",
+   6,
+   0.37
+  ],
+  [
+   "rtl-design-creation",
+   1,
+   "rtl",
+   "done",
+   5,
+   0.468
+  ],
+  [
+   "rtl-design-creation",
+   1,
+   "rtl",
+   "stage_budget",
+   40,
+   1.919
+  ],
+  [
+   "rtl-design-creation",
+   2,
+   "rtl",
+   "done",
+   43,
+   1.043
+  ],
+  [
+   "rtl-design-creation",
+   3,
+   "rtl",
+   "done",
+   5,
+   0.13
+  ],
+  [
+   "rtl-design-creation",
+   4,
+   "tests",
+   "done",
+   2,
+   0.113
+  ],
+  [
+   "rtl-design-creation",
+   4,
+   "rtl",
+   "done",
+   4,
+   0.197
+  ],
+  [
+   "rtl-design-creation",
+   5,
+   "model",
+   "done",
+   5,
+   0.051
+  ],
+  [
+   "rtl-design-creation",
+   5,
+   "tests",
+   "done",
+   2,
+   0.093
+  ],
+  [
+   "rtl-design-creation",
+   5,
+   "rtl",
+   "done",
+   8,
+   0.144
+  ],
+  [
+   "constraints",
+   1,
+   "rtl",
+   "done",
+   19,
+   0.258
+  ],
+  [
+   "constraints",
+   2,
+   "rtl",
+   "stage_budget",
+   30,
+   0.686
+  ],
+  [
+   "constraints",
+   3,
+   "rtl",
+   "stage_budget",
+   30,
+   0.798
+  ],
+  [
+   "constraints",
+   4,
+   "rtl",
+   "stage_budget",
+   30,
+   0.402
+  ]
+ ],
+ "outcome": "stopped: stage 3 visited more than 4 times; last failing gate: post_synth:post_synth_no_unconstrained_endpoints (register pins with no clock (1): u_usr/C, post_synth:post_synth_methodology_no_critical",
+ "reached_stage": 3,
+ "summary_stop": "stage 3 visited more than 4 times; last failing gate: post_synth:post_synth_no_unconstrained_endpoints (register pins with no clock (1): u_usr/C, post_synth:post_synth_methodology_no_critical",
+ "interview": "off",
+ "cost_usd_agent": 7.136177,
+ "interview_note": "--interview off: the agent's defaults were taken, nothing asked or answered by hand",
+ "timing_after_route": {
+  "WNS_ns": 0.136,
+  "TNS_ns": 0.0,
+  "WHS_ns": 0.014
+ },
+ "utilisation": {
+  "LUT": "858",
+  "FF": "1878",
+  "BRAM_tiles": "0",
+  "DSP": "0"
+ },
+ "bitstream": {
+  "build_stamp": "508f2e25",
+  "exit_code": 0,
+  "vivado": "2026.1"
+ },
+ "build_id_usr_access": "039891b3",
+ "bitstream_built": false,
+ "verif_stages": {
+  "V0": true,
+  "V1": true,
+  "V2": true,
+  "V3": false,
+  "SIGNOFF": false,
+  "V-HW": false
+ },
+ "trace_pass": false,
+ "requirement_table": [
+  {
+   "id": "REQ-01",
+   "text": "ID register at 0x000 reads 0x20950001",
+   "methods": {
+    "simulation": "pass",
+    "hardware": "pending"
+   }
+  },
+  {
+   "id": "REQ-02",
+   "text": "BUILD register at 0x004 reads the USR_ACCESSE2 word matching the build record",
+   "methods": {
+    "hardware": "pending"
+   }
+  },
+  {
+   "id": "REQ-03",
+   "text": "SCRATCH at 0x008 reads back the written 32-bit value",
+   "methods": {
+    "simulation": "pass",
+    "hardware": "pending"
+   }
+  },
+  {
+   "id": "REQ-04",
+   "text": "SCRATCH resets to 0",
+   "methods": {
+    "simulation": "pass"
+   }
+  },
+  {
+   "id": "REQ-05",
+   "text": "Reads of unmapped addresses return 0",
+   "methods": {
+    "simulation": "pass"
+   }
+  },
+  {
+   "id": "REQ-06",
+   "text": "Writes to unmapped addresses change no register",
+   "methods": {
+    "simulation": "pass"
+   }
+  },
+  {
+   "id": "REQ-07",
+   "text": "h_rdata shows the addressed register within 2 clk_c3 cycles of h_re",
+   "methods": {
+    "simulation": "pass"
+   }
+  },
+  {
+   "id": "REQ-08",
+   "text": "The FIFO is 512 words of 32 bits between clk_c3 and gt_refclk0",
+   "methods": {
+    "simulation": "pass",
+    "analysis": "fail"
+   }
+  },
+  {
+   "id": "REQ-09",
+   "text": "The writer sequence is PRBS-31 x^31 + x^28 + 1 with 32 new bits per word and seed 0x7FFFFFFF",
+   "methods": {
+    "simulation": "pass"
+   }
+  },
+  {
+   "id": "REQ-10",
+   "text": "The writer writes one word on every clk_c3 cycle while RUN is 1 and the FIFO is not full",
+   "methods": {
+    "simulation": "pass",
+    "hardware": "pending"
+   }
+  },
+  {
+   "id": "REQ-11",
+   "text": "The reader pops a word on every gt_refclk0 cycle while the FIFO is not empty and SLOW_READ is 0",
+   "methods": {
+    "simulation": "pass"
+   }
+  },
+  {
+   "id": "REQ-12",
+   "text": "With SLOW_READ set the reader pops at most one word per 8 gt_refclk0 cycles",
+   "methods": {
+    "simulation": "pass",
+    "hardware": "pending"
+   }
+  },
+  {
+   "id": "REQ-13",
+   "text": "With SLOW_READ set STALL_W counts the clk_c3 cycles with RUN 1 and FIFO full and ends greater than 0",
+   "methods": {
+    "simulation": "pass",
+    "hardware": "pending"
+   }
+  },
+  {
+   "id": "REQ-14",
+   "text": "The reader checks each word against its own PRBS-31 copy started from seed 0x7FFFFFFF at RUN start",
+   "methods": {
+    "simulation": "pass"
+   }
+  },
+  {
+   "id": "REQ-15",
+   "text": "INJECT flips one bit of exactly one received word",
+   "methods": {
+    "simulation": "pass",
+    "hardware": "pending"
+   }
+  },
+  {
+   "id": "REQ-16",
+   "text": "DATA_ERRS increases by exactly 1 after one INJECT",
+   "methods": {
+    "simulation": "pass",
+    "hardware": "pending"
+   }
+  },
+  {
+   "id": "REQ-17",
+   "text": "INJECT self-clears after the one flip",
+   "methods": {
+    "simulation": "pass"
+   }
+  },
+  {
+   "id": "REQ-18",
+   "text": "CLEAR zeroes all counters when RUN is 0",
+   "methods": {
+    "simulation": "pass"
+   }
+  },
+  {
+   "id": "REQ-19",
+   "text": "CLEAR written while RUN is 1 changes no counter",
+   "methods": {
+    "simulation": "pass"
+   }
+  },
+  {
+   "id": "REQ-20",
+   "text": "CLEAR is self-clearing",
+   "methods": {
+    "simulation": "pass"
+   }
+  },
+  {
+   "id": "REQ-21",
+   "text": "OVERFLOWS stays 0 in all operation",
+   "methods": {
+    "formal": "pass",
+    "simulation": "pass",
+    "hardware": "pending"
+   }
+  },
+  {
+   "id": "REQ-22",
+   "text": "UNDERFLOWS stays 0 in all operation",
+   "methods": {
+    "formal": "pass",
+    "simulation": "pass",
+    "hardware": "pending"
+   }
+  },
+  {
+   "id": "REQ-23",
+   "text": "DATA_ERRS stays 0 over a 10 minute run without INJECT",
+   "methods": {
+    "hardware": "pending"
+   }
+  },
+  {
+   "id": "REQ-24",
+   "text": "A write to SNAPSHOT at 0x030 latches registers 0x014 to 0x02C together",
+   "methods": {
+    "simulation": "pass",
+    "hardware": "pending"
+   }
+  },
+  {
+   "id": "REQ-25",
+   "text": "Registers 0x014 to 0x02C hold constant values between SNAPSHOT writes",
+   "methods": {
+    "simulation": "pass"
+   }
+  },
+  {
+   "id": "REQ-26",
+   "text": "All counters wrap at 32 bits",
+   "methods": {
+    "simulation": "pass"
+   }
+  },
+  {
+   "id": "REQ-27",
+   "text": "OCC_MAX holds the highest FIFO fill seen in words",
+   "methods": {
+    "simulation": "pass"
+   }
+  },
+  {
+   "id": "REQ-28",
+   "text": "OCC_MAX never exceeds 512",
+   "methods": {
+    "formal": "pass",
+    "simulation": "pass"
+   }
+  },
+  {
+   "id": "REQ-29",
+   "text": "Gray-coded FIFO pointers change by one bit per step",
+   "methods": {
+    "formal": "fail"
+   }
+  },
+  {
+   "id": "REQ-30",
+   "text": "clk_c3 is in a different asynchronous clock group from gt_refclk0",
+   "methods": {
+    "analysis": "pass"
+   }
+  },
+  {
+   "id": "REQ-31",
+   "text": "Every CDC path has a set_max_delay -datapath_only constraint",
+   "methods": {
+    "analysis": "pass"
+   }
+  },
+  {
+   "id": "REQ-32",
+   "text": "Timing closes with WNS at or above 0 ns on all constrained paths",
+   "methods": {
+    "analysis": "pass"
+   }
+  },
+  {
+   "id": "REQ-33",
+   "text": "sfp_tx_disable is driven to 1 at all times",
+   "methods": {
+    "simulation": "pass",
+    "analysis": "fail",
+    "hardware": "pending"
+   }
+  },
+  {
+   "id": "REQ-34",
+   "text": "The design instantiates no GT transceiver channel",
+   "methods": {
+    "analysis": "fail"
+   }
+  },
+  {
+   "id": "REQ-35",
+   "text": "data/jtag_bus.sv is used unchanged with clk connected to clk_c3",
+   "methods": {
+    "analysis": "fail"
+   }
+  },
+  {
+   "id": "REQ-36",
+   "text": "WORDS_W advances at 25 million words per second within 1 percent when not stalled",
+   "methods": {
+    "hardware": "pending"
+   }
+  },
+  {
+   "id": "REQ-37",
+   "text": "h_rdata holds the addressed register value until the next h_re",
+   "methods": {
+    "simulation": "pass"
+   }
+  },
+  {
+   "id": "REQ-38",
+   "text": "CLEAR restarts both PRBS sequences from seed 0x7FFFFFFF when RUN is 0",
+   "methods": {
+    "simulation": "pass"
+   }
+  }
+ ],
+ "requirement_method_results": {
+  "pass": 35,
+  "pending": 14,
+  "fail": 5
+ },
+ "requirements": 38,
+ "hw_checks_present": false
+}

@@ -111,8 +111,9 @@ def now_s() -> str:
 class RunControl:
     def __init__(self, root: Path, handoff: Path, runs_dir: Path, runner: Any, state_dir: Path, models_view: Callable[[], dict[str, Any]],
                  spawner: Spawner | None = None, killpg: Callable[[int, int], None] = os.killpg, python: str | None = None,
-                 gate: Callable[[str], Any] | None = None, usage_stop: int | None = None):
+                 gate: Callable[[str], Any] | None = None, usage_stop: int | None = None, perm_file: Path | None = None):
         self.root, self.handoff, self.runs_dir = Path(root), Path(handoff), Path(runs_dir)
+        self.perm_file = Path(perm_file) if perm_file else None        # brief 222: the saved permission settings (agent.core.permissions.config_path when None)
         self.runner, self.state_dir, self.models_view = runner, Path(state_dir), models_view
         self.spawner, self.killpg = spawner or Spawner(), killpg
         self.python = python or sys.executable
@@ -266,8 +267,52 @@ class RunControl:
         return {"tasks": sorted(self.tasks()), "projects": proj, "owned_components": comps, "boards": self.boards(), "arms": list(ARMS), "arm_note": "H1 is the CLI default; A0 (no arm) is chosen by ticking none; an arm applies to a task run (the resume command has no arm option)",
                 "efforts": list(EFFORTS), "models": self.allowed_models(), "model_table": mv, "max_usd": MAX_USD, "default_usd": DEFAULT_USD,
                 "profiles": self.profiles(), "switches": self.switches(),
+                "permissions": self.permission_options(),
                 "usage_stop_pct": guards.USAGE_STOP_PCT, "active_limit": MAX_ACTIVE, "never": "Fable, Opus, or an Anthropic model through OpenRouter; the owner's --allow-fable flag is never passed",
                 "guards": ["access gate", "usage check at or above the stop refuses", "one navigator run at a time", "a heavy slot through take_heavy_slot.sh, released when the run ends"]}
+
+    # -- permissions (brief 222) --------------------------------------------------------------------------------------------------------
+    def saved_permissions(self, name: str | None) -> dict[str, Any]:
+        """The settings saved for this project (or the default entry when ``name`` is None or has none), resolved with the Navigator's own default, Ask."""
+        from agent.core import permissions as P
+        spec = P.resolve(project=name, config_file=self.perm_file)
+        saved = spec["source"].startswith("config file")
+        if not saved:
+            spec = {**spec, "mode": "ask", "source": "the Navigator's default (Ask): nothing is saved for this project"}
+        return {**spec, "saved": saved}
+
+    def permission_options(self) -> dict[str, Any]:
+        from agent.core import permissions as P
+        names = sorted({*(x["name"] for x in S.project_list(self.root) if "error" not in x), *self.tasks()})
+        return {**P.view(), "projects": names, "defaults": {n or "": self.saved_permissions(n) for n in [None, *names]},
+                "note": "A run started here passes its mode and overrides to the command line, so the run record says so. A run started here stops after stage 8, so it never reaches the board."}
+
+    def permission_args(self, p: dict[str, Any], name: str | None, summary: dict[str, Any]) -> list[str]:
+        """``--permissions``, ``--allow``, ``--deny``, ``--ask`` and ``--ask-above-usd`` from the request (or, absent, the settings saved for this project); raises Refused."""
+        from agent.core import permissions as P
+        req = p.get("permissions")
+        if req is None:
+            spec = self.saved_permissions(name)
+        else:
+            if not isinstance(req, dict) or set(req) - {"mode", "overrides", "ask_above_usd"}:
+                raise Refused("permissions is an object with mode, overrides and ask_above_usd")
+            if req.get("mode") not in P.MODES:
+                raise Refused("pick a permission mode: " + ", ".join(P.MODE_ORDER))
+            ov = req.get("overrides") or {}
+            if not isinstance(ov, dict) or any(k not in P.BY_NAME or v not in P.VALUES for k, v in ov.items()):
+                raise Refused("an override is one of the listed actions set to allow, ask or deny")
+            ask_above = req.get("ask_above_usd", P.DEFAULT_ASK_ABOVE_USD)
+            if isinstance(ask_above, bool) or not isinstance(ask_above, (int, float)) or ask_above < 0 or ask_above > MAX_USD:
+                raise Refused(f"the ask-above amount is between 0 and ${MAX_USD:g}")
+            spec = {"mode": req["mode"], "overrides": dict(ov), "ask_above_usd": float(ask_above), "source": "chosen on the Start page"}
+        args = ["--permissions", spec["mode"], "--ask-above-usd", f"{float(spec['ask_above_usd']):g}"]
+        for flag, val in (("--allow", P.ALLOW), ("--ask", P.ASK), ("--deny", P.DENY)):
+            for k, v in sorted((spec.get("overrides") or {}).items()):
+                if v == val and v != P.MODES[spec["mode"]]["actions"][k]:
+                    args += [flag, k]
+        summary["permissions"] = {"mode": spec["mode"], "overrides": {k: v for k, v in (spec.get("overrides") or {}).items() if v != P.MODES[spec["mode"]]["actions"][k]},
+                                  "source": spec["source"], "ask_above_usd": float(spec["ask_above_usd"])}
+        return args
 
     # -- verification profiles and confirmed settings (brief 194) ----------------------------------------------------------------------
     def profiles(self) -> list[dict[str, Any]]:
@@ -321,6 +366,8 @@ class RunControl:
         kind = p.get("kind")
         if kind == "answer":
             return self.build_answer(p)
+        if kind == "example":
+            return self.build_example(p)
         harness = p.get("harness", "claude_code")
         if harness not in ("claude_code", "deepagents"):
             raise Refused("harness must be claude_code or deepagents")
@@ -359,6 +406,7 @@ class RunControl:
             summary["settings_doc"] = self.settings_file(t, board, p.get("profile", VP.DEFAULT_PROFILE), summary)      # brief 194: the interview's input
             argv += ["run", rel, "--board", board, "--harness", harness, *mflag, "--harness-arm", arg_arms, "--max-usd", f"{usd:g}", "--stop-after", str(NAV_STOP_AFTER)]
             argv += self.verification(p, summary)
+            argv += self.permission_args(p, t, summary)
             summary.update(target=t, board=board, arm=arg_arms, spec=rel)
         elif kind == "project":
             name = p.get("project")
@@ -384,12 +432,33 @@ class RunControl:
             if comps:
                 argv += ["--scope", ",".join(comps)]
             argv += ["--harness", harness, *mflag, "--max-usd", f"{usd:g}", "--stop-after", str(NAV_STOP_AFTER)]
+            argv += self.permission_args(p, name, summary)
             summary.update(target=name, components=list(view["will_touch"]), request=req[:120])
         else:
             raise Refused("kind must be task or project")
         if any(a == "--allow-fable" for a in argv):                                  # never reachable; a tripwire
             raise Refused("--allow-fable is never passed")
         return argv, summary
+
+    def build_example(self, p: dict[str, Any]) -> tuple[list[str], dict[str, Any]]:
+        """Brief 195: re-run a reproducible example with its pinned setup. The browser sends the example's name and, optionally, a lower cost cap: model, effort, harness, arm
+        and stop stage are the pins' (``agent/repro/examples.yaml``) and cannot be changed here, which is the point. The command is ``agent example run <name> --no-slot`` (the navigator
+        holds the slot); the child runs the pre-flight again and refuses, naming the check, when a pin does not hold."""
+        from agent.repro import registry as RR
+        try:
+            reg = RR.load()
+        except Exception as e:                                           # noqa: BLE001
+            raise Refused("the examples file cannot be read: " + redact.brief(str(e), 80))
+        name = p.get("example")
+        if not isinstance(name, str) or name not in {e["name"] for e in reg["examples"]}:
+            raise Refused("pick an example from the list")
+        cap = float(reg["pins"]["max_usd"])
+        usd = p.get("max_usd", cap)
+        if isinstance(usd, bool) or not isinstance(usd, (int, float)) or not (0 < float(usd) <= cap):
+            raise Refused(f"the budget must be above 0 and at most the pinned ${cap:g}")
+        argv = [self.python, "-m", "agent", "example", "run", name, "--no-slot", "--max-usd", f"{float(usd):g}"]
+        return argv, {"kind": "example", "target": f"ex_{name}", "example": name, "max_usd": float(usd), "hardware": "no hardware: the pinned setup stops after timing closure (stage 6)",
+                      "harness": reg["pins"]["harness"], "model": reg["pins"]["cc_model"], "effort": reg["pins"]["cc_effort"]}
 
     def build_answer(self, p: dict[str, Any]) -> tuple[list[str], dict[str, Any]]:
         """Brief 182: resume a run that paused on a question of its own, with the user's answer: ``python -m agent resume <run id> --reply '{"answer": ...}'``.
@@ -401,6 +470,12 @@ class RunControl:
             pend = json.loads((self.runs_dir / rid / "pending.json").read_text()).get("paused") or {}
         except (OSError, ValueError, AttributeError):
             pend = {}
+        if pend.get("kind") == "permission":                        # brief 222: the question is a permission; the answer is allow or deny, never free text
+            ans = p.get("answer")
+            if ans not in ("allow", "deny"):
+                raise Refused("a permission question is answered allow or deny")
+            argv = [self.python, "-m", "agent", "resume", rid, "--reply", json.dumps({"decision": ans, "by": "you (Navigator)"})]
+            return argv, {"kind": "answer", "target": rid, "hardware": "no hardware: the run resumes at its permission question", "answer": ans}
         if pend.get("kind") != "question":
             raise Refused("that run is not waiting for an answer to a question of its own")
         ans = p.get("answer")

@@ -285,6 +285,33 @@ def list_files(s: Session, path: str = ".") -> dict:
 
 # --- the flow ---------------------------------------------------------------------------------------------------------
 
+#: Verilator warnings the lint tool switches off (brief 231): PROCASSINIT fires on every register with an initial value that a clocked
+#: block also writes, which rtl.initial_values: allow (the default) permits; STD-INIT-01 and STD-INIT-02 (flow/standards_check.py) check
+#: initial values and resets instead, with the reset model in view.
+LINT_OFF = ["-Wno-PROCASSINIT"]
+#: one-line repair notes appended to the lint output for a warning whose fix is not obvious from Verilator's text (brief 231)
+LINT_HINTS = {"DECLFILENAME": "[lint note: DECLFILENAME (HDL-STY-01) is a naming mismatch, not a logic defect. Rename the file to <module>.sv "
+                              "(the first module it holds), or move the module into the file named after it, and update the build.yaml "
+                              "sources glob if it lists the file by name.]"}
+
+
+#: rules switched off for the design's own simulation-only vendor stand-ins (rtl/*sim_stubs*.sv, written between `ifndef SYNTHESIS`): they copy a
+#: primitive's whole parameter list and port list, so most of it is unused by construction (brief 231: 290 of 291 UNUSEDPARAM lines in the run
+#: records came from such a file)
+STUB_FILE = "sim_stubs"
+STUB_RULES = ("UNUSEDPARAM", "UNUSEDSIGNAL", "DECLFILENAME")
+
+
+def stub_waiver_vlt(srcs: list[str]) -> str:
+    """A Verilator config (``.vlt``) text that switches STUB_RULES off for each source file whose name holds ``sim_stubs``; empty if none."""
+    rows = "".join(f'lint_off -rule {r} -file "{p}"\n' for p in srcs if STUB_FILE in Path(p).name for r in STUB_RULES)
+    return "`verilator_config\n" + rows if rows else ""
+
+
+def lint_hints(out: str) -> str:
+    return "".join("\n" + h for code, h in LINT_HINTS.items() if f"%Warning-{code}" in out)
+
+
 @tool("lint", "Verilator --lint-only -Wall on the design (the build.yaml sources).", {})   # brief 55: GHDL for a VHDL design (_lint_vhdl; the description is unchanged so the request golden holds)
 def lint(s: Session) -> dict:
     cfg = load_build_cfg(s)
@@ -296,9 +323,17 @@ def lint(s: Session) -> dict:
         srcs = srcorder.drop_shell(srcs)
     srcs = [str(p) for p in srcorder.order_sv(srcs)]   # 07a2-prep: packages and interfaces first, not name order
     stubs = sorted(glob.glob(str(s.design / "lint" / "*.sv")))
-    argv = ["verilator", "--lint-only", "-Wall", "--top-module", cfg["top"], *srcs, *stubs]
+    vlt = stub_waiver_vlt(srcs)                         # brief 231: the design's own simulation stubs are not linted for unused parameters
+    vlt_path: list[str] = []
+    if vlt:
+        wd = s.design / "build" / "lint"
+        wd.mkdir(parents=True, exist_ok=True)
+        (wd / "stub_waivers.vlt").write_text(vlt)
+        vlt_path = [str(wd / "stub_waivers.vlt")]
+    argv = ["verilator", "--lint-only", "-Wall", *LINT_OFF, "--top-module", cfg["top"], *vlt_path, *srcs, *stubs]
     r = s.runner.run("lint", argv, s.root, timeout=300)
     out, ok = _text_out(r), r.returncode == 0
+    out += lint_hints(out)
     waived_clean = False
     if not ok:                                          # brief 219 fix 6: lint/waivers.yaml applies here, as it does at the stage gate
         from flow.lint_ruleset import waive_verilator_text
@@ -560,6 +595,12 @@ def simulate(s: Session, sim: str = "auto", coverage: bool = False) -> dict:
                    + "".join("\n  cause: " + e for e in ff.get("cause") or [])
                    + "".join("\n  log: " + e for e in ff.get("log_errors") or []) + "\n[end first failure]\n" + out)
     res.update({"output": out, "returncode": r.returncode, "sim": sim, "seconds_run": r.seconds})
+    if r.returncode == 0:                   # brief 231 item 2: a bench with no assertion passes whatever the design does (advisory)
+        from agent.core.cocotb_lint import bench_hygiene_text, no_assertion_bench
+        vac = [v for v in (no_assertion_bench(t) for t in sorted((s.design / "tests").rglob("*.py"))) if v]
+        if vac:
+            res["bench_hygiene"] = vac
+            res["output"] += "\n" + bench_hygiene_text(vac, s.design)
     _stamp(s, "sim")
     if r.returncode == 0 and not coverage:
         record_sim_baseline(s.design, sim, r.seconds)
@@ -1318,3 +1359,4 @@ from agent.core import options_tools as _options_tools  # noqa: E402,F401  (brie
 from agent.core import crossread_tools as _crossread_tools  # noqa: E402,F401  (brief 114: registers doc_crossread)
 from agent.core import rapidwright_tools as _rw_tools  # noqa: E402,F401  (brief 100: registers rw_status, rw_relocate_block, rw_place_chain, rw_route, rw_referee)
 from agent.core import oss_tools as _oss_tools  # noqa: E402,F401  (brief 101: registers oss_synth and eqy_check)
+from agent.core import lab_tools as _lab_tools  # noqa: E402,F401  (brief 225: registers drive_instrument, the lab tool brief 221 left a slot for)

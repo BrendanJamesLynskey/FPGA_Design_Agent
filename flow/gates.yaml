@@ -14,5 +14,8 @@ resource_sanity:
 # initial blocks or register initial values. ROM initialisation ($readmemh/$readmemb) passes in every mode. A design may
 # set its own in architecture.yaml (rtl: {initial_values: ...}); a run may override both with --set rtl.initial_values=....
 # Initial values are a power-up state, not a reset: the reset rules do not change.
+# rtl.reset_model (brief 231, owner 2026-11-26): reset (the default) or reprogram (every reset reconfigures the FPGA, so the initial values
+# are the reset values). See docs/design_standards.md, STD-INIT-02.
 rtl:
   initial_values: allow
+  reset_model: reset

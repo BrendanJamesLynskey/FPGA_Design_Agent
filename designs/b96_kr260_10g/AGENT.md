@@ -3,13 +3,14 @@ source: designs/b96_kr260_10g/handover.yaml; human view: README.md; refresh: pyt
 
 ## identity
 kind=example produced_by=session part=xck26-sfvc784-2LV-c board=Kria KR260 top=kr260_10g_top tool=Vivado 2026.1
+verified: not verified: 1 of 29 requirements fail (record: designs/b96_kr260_10g/VERIFIED.md, designs/b96_kr260_10g/verified.json; definition: docs/verified.md)
 
 ## summary
 A Kria KR260 design that carries our own 10GBASE-R PCS (64B/66B, scrambler, gearbox, block lock) and a 64-bit Ethernet MAC on one GTH lane at 10.3125 Gb/s, with the mock trading path of brief 58A behind it (a one-rule 64-bit decision in the same message format), because the AMD 10G Ethernet core is refused on the free Basic licence. Verified against an independent Python reference in simulation (the GT is a behavioural stand-in) and built to a bitstream on Vivado 2026.1 Basic with every flow gate passing in two variants. Brief 96C added a rate-matching elastic buffer as a build option (default off, the board-proven 97C receive path); the base and its rate-matched variants have run on a KR260 optical loopback, not yet against a network card or a second reference clock.
 not: an interoperability proof: a PCS talking to itself accepts its own symmetric mistakes, only a network card proves it; the full 58A trading core (book, rule table, interlocks, ARP) at 64 bits: trade64 is a small stand-in with one rule; the reconciliation sublayer link-fault state machine, the BER monitor, an ARP or ICMP responder
 
 ## state
-stage=built vivado=2026.1 kb_pin=6185830 build_id=aff38299
+stage=built vivado=2026.1 kb_pin=eaf6794 build_id=53f1dedd
 gates: build_2026_1=pass
 
 ## interface
@@ -106,7 +107,7 @@ designs/b96_kr260_10g/rm_gp_itch/rtl/order_seg.sv 473fe555c6: the order frame as
 designs/b96_kr260_10g/rm_gp_itch/rtl/order_seg_tcpfast.sv 30fc090de0: the same module with tcp_fast in place of the stand-in: the hook, not in the build (brief 127)
 designs/b96_kr260_10g/rm_gp_itch/rtl/tx_mux.sv 60060254bf: transmit multiplexer in front of mac64_tx: frame source, replay memory, order stream with FIFO and head register (brief 127)
 designs/b96_kr260_10g/rm_gp_itch/rtl/itch_path.sv 3f8c04b0c0: core-clock wrapper of the ITCH path: host vectors, order poison policy, counters, latency statistics (brief 127)
-designs/b96_kr260_10g/rm_gp_itch/rtl/b96_core.sv 2ee04f6ca6: copy of rtl/b96_core.sv for build rm_gp_itch: RATE_MATCH = 1 only, the ITCH path and its registers 0x300 to 0x57C (brief 127)
+designs/b96_kr260_10g/rm_gp_itch/rtl/b96_core.sv 6516f5e10a: copy of rtl/b96_core.sv for build rm_gp_itch: RATE_MATCH = 1 only, the ITCH path and its registers 0x300 to 0x57C (brief 127)
 designs/b96_kr260_10g/rm_gp_itch/regmap_itch.py 2e77671345: register map of build rm_gp_itch as data, generates its datasheet (brief 127)
 designs/b96_kr260_10g/rm_gp_itch/docs/itch_integration.md dc4f9f826c: the ITCH/OUCH path inside the 10G design: path, latency, the late frame check, registers, hook for tcp_fast, results (brief 127)
 designs/b96_kr260_10g/rm_gp_itch/docs/board_test_plan.md f2994a478f: pre-registered board test of build rm_gp_itch (brief 127), not run

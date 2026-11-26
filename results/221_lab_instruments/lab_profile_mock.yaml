@@ -1,0 +1,17 @@
+# A lab profile for the example only: one MOCK frequency counter (brief 221). It stands in for a bench counter so the plan, the steps, the
+# dry run and the report row can be shown without any instrument. Nothing here describes a real instrument; a mock reading is never evidence.
+schema: fpga-force/lab/v1
+instruments:
+  - id: counter
+    kind: frequency_counter
+    make: mock
+    model: mock frequency counter
+    onboarded: true
+    mock: true
+    connection: {type: none}
+    control: {mode: scripted, driver: mock}
+    channels: [{name: A}, {name: B}]
+    capabilities:
+      - {measure: frequency, channels: [A, B], max_hz: 100000000, accuracy_ppm: 1}
+    outputs:
+      - {name: AWG, kind: awg, never_by_script: true}

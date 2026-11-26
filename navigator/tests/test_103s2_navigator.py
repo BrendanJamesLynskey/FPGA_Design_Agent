@@ -587,7 +587,7 @@ def test_the_server_exposes_no_post_route_that_could_write():
     src = (ROOT / "navigator" / "server.py").read_text()
     routes = set(re.findall(r'path == "(/api/[a-z/_]+)"', src[src.index("def post"):src.index("def action")]))
     routes |= set(re.findall(r'"(/api/run/(?:ask|request|answer))"', src[src.index("def post"):src.index("def action")]))     # brief 182: the stage 3 routes (guards tested in test_182_navigator_s3.py)
-    assert routes == {"/api/run/start", "/api/run/stop", "/api/board/run", "/api/run/ask", "/api/run/request", "/api/run/answer"}
+    assert routes == {"/api/run/start", "/api/run/stop", "/api/board/run", "/api/run/ask", "/api/run/request", "/api/run/answer", "/api/permissions/save"}     # brief 222: save the permission settings
     assert "innerHTML" not in (ROOT / "navigator" / "static" / "app.js").read_text()                # server text reaches the DOM only as text nodes
 
 

@@ -1,0 +1,29 @@
+schema: fpga-design-agent/architecture/v1
+design: fir32_sym
+blocks:
+  - {name: fir32_top, function: "Thin top: power-on reset generator, MMCM 25->250 MHz, jtag_bus, fir32_core, sfp_tx_disable=1"}
+  - {name: jtag_bus, function: "Supplied BSCANE2 USER4 register bus (data/jtag_bus.sv, unchanged)"}
+  - {name: rst_gen, function: "Power-on counter, holds rst high RST_HOLD_CYCLES clk_25 cycles"}
+  - {name: fir32_core, function: "Register map, control, input and output FIFOs, LEDs"}
+  - {name: fir_dsp, function: "32-tap symmetric FIR on 16 DSP48E2, pre-add, round, saturate, SAT/sample counters, clk_dsp"}
+interfaces:
+  - {name: host_reg, between: [jtag_bus, fir32_core], protocol: simple, prefix: h, module: fir32_core}
+  - {name: sample_in, between: [fir32_core, fir_dsp], protocol: simple, prefix: in, module: fir_dsp}
+  - {name: sample_out, between: [fir_dsp, fir32_core], protocol: simple, prefix: out, module: fir_dsp}
+clock_domains:
+  - {name: clk_25, clock: clk_25, freq_mhz: 25}
+  - {name: clk_dsp, clock: clk_dsp, freq_mhz: 250}
+reset:
+  synchronisers: [rst_gen, xpm_cdc_async_rst]
+crossings:
+  - {from: clk_25, to: clk_dsp, signal: input FIFO samples, primitive: xpm_fifo_async, inline_in: fir32_core}
+  - {from: clk_dsp, to: clk_25, signal: output FIFO samples, primitive: xpm_fifo_async, inline_in: fir32_core}
+  - {from: clk_25, to: clk_dsp, signal: run and clear pulses, primitive: xpm_cdc_pulse, inline_in: fir32_core}
+  - {from: clk_dsp, to: clk_25, signal: busy, primitive: xpm_cdc_single, inline_in: fir32_core}
+  - {from: clk_dsp, to: clk_25, signal: sat_count and samples_done, primitive: xpm_cdc_gray, inline_in: fir32_core}
+  - {from: clk_25, to: clk_dsp, signal: reset into clk_dsp, primitive: xpm_cdc_async_rst, inline_in: fir32_top}
+predicted_resources:
+  lut: [600, 2000]
+  ff: [1200, 3000]
+  bram_tile: [2, 6]
+  dsp: [16, 20]

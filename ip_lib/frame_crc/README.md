@@ -4,6 +4,8 @@ Frame CRC and statistics for video: CRC-32 (IEEE 802.3), pixel count and pixel s
 
 Generated from `ip.yaml` by `flow/net/ipdoc.py`; do not edit by hand.
 
+**Verification: not assessed: no requirements recorded (no verif/testplan.yaml), so nothing here is traced to a requirement.** [VERIFIED.md](VERIFIED.md) is the generated, hash-pinned record; [what the label means](../../docs/verified.md).
+
 Status: simulated bit-exact against zlib.crc32; measured on the Nexys A7-100T inside b30_hil_audio (the model's CRC read back, a seeded one-bit pixel fault counted).
 
 ## Parameters

@@ -104,7 +104,7 @@ def verilator_findings(design: Path) -> tuple[list[dict[str, Any]] | None, str]:
     stubs = sorted(str(p) for p in (design / "lint").glob("*.sv"))
     if not srcs:
         return None, "build.yaml lists no sources that exist"
-    cmd = [exe, "--lint-only", "-Wall", "-Wno-fatal", "--top-module", str(b["top"]), *srcs, *stubs]
+    cmd = [exe, "--lint-only", "-Wall", "-Wno-PROCASSINIT", "-Wno-fatal", "--top-module", str(b["top"]), *srcs, *stubs]
     r = subprocess.run(cmd, capture_output=True, text=True, cwd=ROOT, timeout=600)
     out = []
     for line in (r.stderr or "").splitlines():

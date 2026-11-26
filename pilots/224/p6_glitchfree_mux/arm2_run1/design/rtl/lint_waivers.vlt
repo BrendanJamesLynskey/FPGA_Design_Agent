@@ -1,0 +1,6 @@
+`ifdef VERILATOR
+`verilator_config
+// data/jtag_bus.sv is the supplied bus, read-only: waive its two known unused-signal warnings
+// (tdo is only driven in the SYNTHESIS branch; cmd_s[45] is the read flag the core does not need).
+lint_off -rule UNUSEDSIGNAL -file "*/data/jtag_bus.sv"
+`endif

@@ -91,7 +91,7 @@ def test_fixed_commands(session) -> None:
         r = dispatch(session, tool, args)
         assert r["ok"], (tool, r["output"])
     kinds = dict((k, a) for k, a in session.runner.calls)
-    assert kinds["lint"][:4] == ["verilator", "--lint-only", "-Wall", "--top-module"]
+    assert kinds["lint"][:5] == ["verilator", "--lint-only", "-Wall", "-Wno-PROCASSINIT", "--top-module"]   # brief 231: PROCASSINIT off (STD-INIT-02 replaces it)
     assert kinds["build"][0].endswith("flow/run_vivado.sh") and kinds["build"][2] == "base"
     assert "-m" in kinds["simulate"] and "pytest" in kinds["simulate"]
     assert dispatch(session, "build", {"until": "synth", "variant": "ila"})["refused"]

@@ -154,6 +154,44 @@ def _result(row: dict[str, Any], conflict: dict[str, Any] | None) -> tuple[str, 
     return "fail", "; ".join(why)
 
 
+# ---- the lab (brief 221) --------------------------------------------------------------------------------------------------------------
+def lab_rows(design: Path) -> dict[str, dict[str, Any]]:
+    """``{requirement id: {...}}`` from ``build/lab/plan.json`` (the method chosen by stage 9) and ``build/lab/results.json`` (a run of the instrument
+    steps). ``status`` is ``none`` (on-chip only), ``pending`` (an instrument check is planned and has not run), ``pass``, ``fail``, or ``dry_run`` (the
+    agent's own run against mock instruments: it shows the plumbing works and is never evidence). Empty when the design has no lab plan."""
+    pj, rj = Path(design).joinpath("build", "lab", "plan.json"), Path(design).joinpath("build", "lab", "results.json")
+    if not pj.is_file():
+        return {}
+    plan = json.loads(pj.read_text())
+    res = json.loads(rj.read_text()) if rj.is_file() else {}
+    out: dict[str, dict[str, Any]] = {}
+    for r in plan.get("requirements") or []:
+        m = r["chosen"]
+        row = {"method": m["method"], "instrument": m.get("instrument"), "channel": m.get("channel"), "probes": m.get("probes"),
+               "left_out": r.get("left_out") or [], "status": "none" if m["method"] == "on_chip" else "pending", "value": None, "unit": None, "expected": r.get("expected")}
+        got = [x for x in res.get("rows") or [] if x.get("requirement") == r["requirement"] and x.get("kind") == "measure"]
+        if got and row["status"] != "none":
+            g = got[-1]
+            row.update(status=g["result"] if g["result"] in ("pass", "fail", "dry_run") else "fail", value=g.get("value"), unit=g.get("unit"), error_ppm=g.get("error_ppm"),
+                       typed=g.get("typed"), detail=g.get("detail"))
+            if res.get("mode") == "dry_run" or g.get("mock"):             # a mock reading is never evidence, whichever way it was run
+                row["status"] = "dry_run"
+        out[r["requirement"]] = row
+    return out
+
+
+def lab_text(lab: dict[str, Any]) -> str:
+    """The Method-column line of a requirement's instrument check."""
+    if lab["status"] == "none":
+        why = "; ".join(f"{x['instrument']}: {x['reason']}" for x in lab["left_out"])
+        return "instrument: none, on-chip only" + (f" ({why})" if why else "")
+    if lab["status"] == "dry_run":                                  # a mock reading is shown as a dry run and no value: it is never evidence
+        return f"instrument ({lab['instrument']} {lab['channel']} on {lab['probes']}, {lab['method']}): dry run against a mock, not evidence; to be run by the owner"
+    v, u = lab.get("value"), lab.get("unit")
+    val = "" if v is None else (f" read {v / 1e6:.7g} MHz" if u == "Hz" and abs(v) >= 1e6 else f" read {v:.7g} {u}")
+    return f"instrument ({lab['instrument']} {lab['channel']} on {lab['probes']}, {lab['method']}): {lab['status']}{val}"
+
+
 # ---- the report -----------------------------------------------------------------------------------------------------------------------
 def build_report(design: Path, t: dict[str, Any], spec: dict[str, Any], request: str, state: dict[str, Any] | None = None) -> dict[str, Any]:
     """The report as data (``report.json``). ``t`` is ``flow.traceability.build``'s record."""
@@ -161,14 +199,23 @@ def build_report(design: Path, t: dict[str, Any], spec: dict[str, Any], request:
     conflicts = {c["requirement"]: c for c in state.get("conflicts") or []}
     by_id = {str(r.get("id")): r for r in spec.get("requirements") or [] if isinstance(r, dict)}
     rows = []
+    labs = lab_rows(design)
     for r in t.get("requirements") or []:
         src = by_id.get(r["id"], {"id": r["id"], "text": r["text"]})
         og = origin_of(src, spec, request)
         res, why = _result(r, conflicts.get(r["id"]))
+        lab = labs.get(r["id"])
+        if lab and lab["status"] == "fail" and res != "fail":                  # an independent instrument check that fails fails the requirement
+            res, why = "fail", f"the independent instrument check failed ({lab['instrument']} read {lab.get('value')} {lab.get('unit')}, "\
+                               f"{lab.get('error_ppm', 0):+.0f} ppm from the expected value)" if lab.get("error_ppm") is not None else "the independent instrument check failed"
         rows.append({"id": r["id"], "text": r["text"], "origin": og, "result": res, "reason": why,
                      "methods": [{"method": m["method"], "status": m["status"], "evidence": _evidence(design, t, m)} for m in r["methods"]],
+                     **({"lab": lab} if lab else {}),
                      "rests_on_unconfirmed": res == "pass" and og["unconfirmed"],
                      "high_risk_default": og["kind"] in ("default", "waiver") and og.get("risk") == "high"})
+    sva = _sva_rows(design)                                # brief 218: the assertion written from each requirement, with what became of it
+    for r in rows:
+        r["assertion"] = sva.get(r["id"])
     n = {k: sum(r["result"] == k for r in rows) for k in ("pass", "pending", "fail")}
     from agent.graph import requirements as RQ
     return {"schema": SCHEMA, "design": design.name, "generated": _dt.datetime.now(_dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
@@ -176,10 +223,38 @@ def build_report(design: Path, t: dict[str, Any], spec: dict[str, Any], request:
             "total": len(rows), "passed": n["pass"], "pending": n["pending"], "failed": n["fail"],
             "unconfirmed_passes": sum(r["rests_on_unconfirmed"] for r in rows),
             "headline": headline(len(rows), n["pass"], n["pending"], n["fail"]),
+            "assertions": _sva_summary(rows, sva),
             "unverified": [r["id"] for r in rows if not any(m["evidence"] for m in r["methods"])],
             "requirements": rows, "conflicts": list(conflicts.values()),
             "assumptions": RQ.assumptions_of(spec),
             "evidence_sources": t.get("evidence_sources"), "trace_pass": t.get("pass")}
+
+
+def _sva_rows(design: Path) -> dict[str, dict[str, Any]]:
+    """The requirement-to-assertion record (``flow/sva_req.py``) by requirement id, reduced to what the report shows; empty when none was made."""
+    try:
+        rec = json.loads(design.joinpath("build", "verif", "sva", "evidence.json").read_text())
+    except (OSError, ValueError):
+        return {}
+    out = {}
+    for rid, r in (rec.get("requirements") or {}).items():
+        p = r.get("property") or {}
+        out[rid] = {"status": r.get("status"), "evidence": r.get("status") in ("proved", "bounded"), "why": r.get("why", ""),
+                    "property": (f"{p.get('kind')}: when `{p.get('ante')}` then `{p.get('cons')}`" if p else ""),
+                    "back_translation": r.get("back_translation", ""), "partial": bool((r.get("comparison") or {}).get("partial")),
+                    "cover_trace": r.get("cover_trace"), "job": r.get("installed")}
+    for sk in rec.get("skipped") or []:
+        out.setdefault(sk["id"], {"status": "skipped", "evidence": False, "why": sk["reason"], "property": "", "back_translation": "",
+                                  "partial": False, "cover_trace": None, "job": None})
+    return out
+
+
+def _sva_summary(rows: list[dict[str, Any]], sva: dict[str, dict[str, Any]]) -> dict[str, Any]:
+    c: dict[str, int] = {}
+    for a in sva.values():
+        c[a["status"]] = c.get(a["status"], 0) + 1
+    ev = [r["id"] for r in rows if (r.get("assertion") or {}).get("evidence")]
+    return {"tried": sum(1 for a in sva.values() if a["status"] != "skipped"), "with_evidence": len(ev), "ids_with_evidence": ev, "by_status": c}
 
 
 def headline(m: int, ok: int, pending: int, failed: int) -> str:
@@ -206,11 +281,25 @@ def to_markdown(rep: dict[str, Any]) -> str:
         came = f"{og['kind']}: {og['detail']}" + (f" ({og['risk']} risk)" if og.get("risk") and og["kind"] in ("default", "waiver", "answered") else "")
         if og["unconfirmed"]:
             came += " **[not confirmed" + (", high risk" if r["high_risk_default"] else "") + "]**"
-        meth = "<br>".join(f"{m['method']}: {m['status']}" for m in r["methods"]) or "none"
+        meth = "<br>".join([f"{m['method']}: {m['status']}" for m in r["methods"]] + ([lab_text(r["lab"])] if r.get("lab") else [])) or "none"
         ev = "<br>".join((", ".join(f"[{_c(e['name'])}]({e['link']}) {e['result']}" if e["link"] else f"{_c(e['name'])} {e['result']}" for e in m["evidence"]) or "none")
                          for m in r["methods"]) or "none"
         res = r["result"] + (f" ({_c(r['reason'])})" if r["reason"] else "") + (" **[on an unconfirmed default]**" if r["rests_on_unconfirmed"] else "")
         out.append(f"| {r['id']} | {_c(r['text'])} | {_c(came)} | {_c(meth)} | {ev} | {res} |")
+    sv = rep.get("assertions") or {}
+    if sv.get("by_status"):
+        out += ["", "## Assertions written from the requirements", "",
+                f"{sv['with_evidence']} of {len(rep['requirements'])} requirements have a property that was written from the requirement, "
+                "read back in English by a second reader, and proved or bounded-checked with its trigger shown reachable "
+                "(a proof whose trigger can never happen is vacuous and is not counted). The property is a check of part of the row at most: "
+                "what you confirm is still the requirement's own words.", "",
+                "| Id | What became of it | The property | Read back in English |", "|---|---|---|---|"]
+        for r in rep["requirements"]:
+            a = r.get("assertion")
+            if not a or a["status"] == "skipped":
+                continue
+            what = a["status"] + (" (part of the requirement)" if a.get("partial") and a["evidence"] else "") + (f": {a['why']}" if a["why"] else "")
+            out.append(f"| {r['id']} | {_c(what)} | {_c(a['property'])} | {_c(a['back_translation'])} |")
     if rep["conflicts"]:
         out += ["", "## A fix that conflicts with a requirement", ""]
         out += [f"- {c['requirement']} ({_c(c.get('requirement_text'))}): the fix for {c['code']} ({c['fix_kind']}) {c['why']}. "

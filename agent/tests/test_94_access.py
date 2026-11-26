@@ -118,6 +118,9 @@ def test_arm_config_never_holds_the_key(monkeypatch, tmp_path):
 
 #: Scripts that import the agent package but do not run the agent (no model, no tools); each with its reason.
 NOT_RUNNING_THE_AGENT = {
+    "flow/closure_recipe_run.py": "runs one Vivado candidate from a recipe plan; no model, no tools (brief 216)",
+    "tools/qor/run_216_eval.py": "brief 216 evaluation driver: Vivado runs of recipe plans, no model (brief 216)",
+    "tools/qor/closure_recipe_replay.py": "brief 216 replay of the recipe order on recorded outcomes; no model (brief 216)",
     "tools/access/set_key_hash.py": "manages the key file; reads the key to hash it",
     "agent/tools/harness_audit.py": "builds the harness over a stub client; no model, no tools",
     "results/36_skill_routing/measure.py": "an old measurement script under results/ (frozen record)",
@@ -129,6 +132,7 @@ NOT_RUNNING_THE_AGENT = {
     "flow/tests/test_55_vhdl_rtl.py": "a test module", "flow/tests/fixtures/timing_exceptions/make_table.py": "fixture generator",
     "tools/vhdl_translate.py": "translator",
     "tools/vhdl_parity_probe.py": "measures which readers of the RTL read VHDL (brief 153); imports the spec-test module for its RTL list only; no model, no tools", "benchmark/drills/lib/grade_io.py": "grader", "benchmark/drills/lib/grade_constraints.py": "grader",
+    "hil/redpitaya_load.py": "writes the owner's Red Pitaya load script and runs it against a model; imports only the never-list's script check (agent.core.permissions.check_script); no model, no tools (brief 225)",
     "tools/board_smoke.py": "writes a smoke design from a board file through the constraints writer; no model, no tools (brief 95)",
     "flow/managed_import.py": "import checks of a managed project's netlists (brief 102); no model, no tools",
     "flow/managed_rtl_import.py": "import checks of a managed project's third-party RTL blocks (brief 102 stage 3); no model, no tools",

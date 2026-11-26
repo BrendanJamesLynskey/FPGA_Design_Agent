@@ -1,0 +1,2767 @@
+{
+ "counts": {
+  "agreed_delegated": 0,
+  "agreed_human": 0,
+  "draft": 29,
+  "items": 65,
+  "requirements": 29,
+  "stale_items": 14,
+  "verified": 14
+ },
+ "criteria": [
+  {
+   "detail": "15 of 29 requirements are not in state verified: B96-F-LOCK (partially_verified), B96-F-DEFAULT (partially_verified), B96-S-RATEMATCH (fail), B96-V-RM-BENCH (partially_verified), B96-F-OFFSET (partially_verified), B96-F-INTEROP (not_run), B96-S-DRIVER (partially_verified), B96-S-ROC (partially_verified), B96-S-CDC (partially_verified), B96-I-REGMAP (partially_verified), B96-F-BUILDS (partially_verified), B96-F-EYESCAN (partially_verified), B96-P-T2T-DIGITAL (stale), B96-P-THROUGHPUT (not_run), B96-F-DBGXVC (partially_verified)",
+   "id": "evidence",
+   "ids": [
+    "B96-F-LOCK",
+    "B96-F-DEFAULT",
+    "B96-S-RATEMATCH",
+    "B96-V-RM-BENCH",
+    "B96-F-OFFSET",
+    "B96-F-INTEROP",
+    "B96-S-DRIVER",
+    "B96-S-ROC",
+    "B96-S-CDC",
+    "B96-I-REGMAP",
+    "B96-F-BUILDS",
+    "B96-F-EYESCAN",
+    "B96-P-T2T-DIGITAL",
+    "B96-P-THROUGHPUT",
+    "B96-F-DBGXVC"
+   ],
+   "state": "unmet",
+   "title": "Every requirement has passing evidence"
+  },
+  {
+   "detail": "0 agreed by a human, 0 agreed by delegation, 29 draft, 0 marked agreed without a record",
+   "id": "agreement",
+   "ids": [
+    "B96-F-PCS",
+    "B96-F-MAC",
+    "B96-F-LOCK",
+    "B96-F-RESTART",
+    "B96-F-DEFAULT",
+    "B96-S-RATEMATCH",
+    "B96-V-RM-BENCH",
+    "B96-F-OFFSET",
+    "B96-F-INTEROP",
+    "B96-S-ORDERS",
+    "B96-S-DRIVER",
+    "B96-S-LASER",
+    "B96-S-ROC",
+    "B96-S-CDC",
+    "B96-I-REGMAP",
+    "B96-F-BUILDS",
+    "B96-F-EYESCAN",
+    "B96-P-LAT-E",
+    "B96-P-LAT-L",
+    "B96-P-LAT-D",
+    "B96-P-T2T-DIGITAL",
+    "B96-P-TIMING",
+    "B96-P-HOLD",
+    "B96-P-EYE",
+    "B96-P-BYPASS",
+    "B96-P-THROUGHPUT",
+    "B96-F-DBGXVC",
+    "B96-F-LEAN-GRAY-STEP",
+    "B96-F-LEAN-GRAY-DECODE"
+   ],
+   "state": "unmet",
+   "title": "Every requirement is agreed (human, or delegated and labelled so)"
+  },
+  {
+   "detail": "not yet measured: the required method mix per requirement kind is brief 143a; the collector does not supply it yet",
+   "id": "method_mix",
+   "ids": [],
+   "state": "not_measured",
+   "title": "Every requirement meets its required method mix"
+  },
+  {
+   "detail": "not yet measured: the mutation score and floor are brief 143b; the collector does not supply them yet",
+   "id": "mutation",
+   "ids": [],
+   "state": "not_measured",
+   "title": "The bench passes the mutation floor"
+  },
+  {
+   "detail": "not yet measured: the vacuity, assumption and depth checks are brief 143c; the collector does not supply them yet",
+   "id": "formal_rigour",
+   "ids": [],
+   "state": "not_measured",
+   "title": "The formal results pass the rigour checks"
+  },
+  {
+   "detail": "14 items are stale (a file they are about changed after the evidence was recorded)",
+   "id": "fresh",
+   "ids": [
+    "V-FORMAL-EQY-DEFAULT",
+    "V-SIMM-T2T",
+    "V-SIMM-PPM",
+    "V-SIMM-BYPASS-SEQ",
+    "V-TIM-SETUP-DEFAULT",
+    "V-TIM-SETUP-RMGP",
+    "V-TIM-HOLD-DEFAULT",
+    "V-TIM-HOLD-RMGP",
+    "V-TIM-CDC-DEFAULT",
+    "V-TIM-CDC-RMGP",
+    "V-HW-RESTARTS-97C",
+    "V-HW-RATEMATCH-96C",
+    "V-HW-LAT-E-97C",
+    "V-HW-LAT-L-97C"
+   ],
+   "state": "unmet",
+   "title": "The evidence is fresh"
+  }
+ ],
+ "declared": null,
+ "definition": "docs/verified.md",
+ "git_commit": "7cadf47c721e2fcb55add43ca2f8a61a55d03e0c",
+ "kind": "designs",
+ "label": "not verified: 1 of 29 requirements fail",
+ "label_kind": "not_verified",
+ "limits": [
+  "Verified never means interoperability with a device the design talks to unless a board measurement against that device is listed in the record; a design that checks its own output against its own model accepts its own symmetric mistakes.",
+  "Verified never means timing beyond the stated corner: a post-route timing result is for the part, speed grade, clock and tool version in its evidence file, not for other corners, temperatures or devices.",
+  "Verified never means beyond the widths and depths checked: a simulation covers the vectors it ran, a bounded formal result covers the stated depth only, and a per-width proof covers the widths it names; only a Lean proof marked all widths covers every width, and only for its model.",
+  "Verified never means the requirement is the right one: the text of a requirement is the human's check (or the planner's, where the record says delegated), and a record shows that checks exist and pass, not that nothing was left out.",
+  "Verified never means a hardware or board result unless a board measurement item is listed; a simulation is not the board.",
+  "Verified is about the files in the manifest at the hashes given. A change to any of them makes the record out of date (the CI check fails), and the evidence stale until it is re-recorded.",
+  "An agreement or acceptance recorded as delegated is the planner's decision on the owner's delegation, not a human sign-off; the record counts it apart.",
+  "3 requirements depend on an element outside the design and have not been closed by hardware, so they hold in simulation only: B96-F-OFFSET, B96-F-INTEROP, B96-P-THROUGHPUT.",
+  "2 performance requirements are verified by post-route timing at one corner: B96-P-TIMING, B96-P-HOLD.",
+  "Lean proofs here are of a transcription of the RTL, not of the RTL itself: B96-F-LEAN-GRAY-STEP, B96-F-LEAN-GRAY-DECODE."
+ ],
+ "manifest": {
+  "designs/b58a_trigger/rtl/jtag_bus.sv": "5a6042e567c4e7f2ca34bb01810459650f56f1bb3850434b427f2e4e6edd40b1",
+  "designs/b96_kr260_10g/dbg_xvc/build.yaml": "241abf02aa94e194e24cd7630e32d8adc48a821e7b3dac9c3e01699edc269b60",
+  "designs/b96_kr260_10g/dbg_xvc/model/xvc_verdict.py": "6e5f94a16926eba46a1fcfedf561fff1035cdc3dee231d520b748b573bb2eb40",
+  "designs/b96_kr260_10g/dbg_xvc/rtl/b96_core.sv": "f97848c5f7d49743757e3c410e81ce128952682cc8974e9856a42c6e1637948a",
+  "designs/b96_kr260_10g/dbg_xvc/rtl/kr260_10g_top.sv": "ca47f11df28e829f3e4a874a0e63771cb1886bdf90cc515101caae54499c62ef",
+  "designs/b96_kr260_10g/dbg_xvc/rtl/xvc_debug.sv": "13459b988dedcc31fdf6702b1bad3b4fa5cd69ca9090751b98d6bec290ba7fe0",
+  "designs/b96_kr260_10g/dbg_xvc/scripts/dump_netlist_timing.tcl": "d2746b1b03f939855174233b2e73c6d3fd65fa8079e3ef8a2e9d4c10e6e32944",
+  "designs/b96_kr260_10g/design.xdc": "4dec8c5ba8f6dccc6273f45d40a7d95a6668f5fe09350c0a0d80cc6c07ea1118",
+  "designs/b96_kr260_10g/docs/register_map.md": "d2846103ad9f272c61ce8c19447647d40564796dd4c67900e9c989dcf0a0bae1",
+  "designs/b96_kr260_10g/es.xdc": "9f571dada72bcee3dcc3d06baeb96ae5afc504079fc2f156a7f30cde56227573",
+  "designs/b96_kr260_10g/host/b96_bench.py": "8272501f6406eb25e26c4c43a8a9d37ec87c7e9bf3efb7b6496a2ccf7454e413",
+  "designs/b96_kr260_10g/host/b96c_ppm.py": "a5a5b3d64ee29423b64260c57029f8bedfceaf6deb8974f939ac3be0a5615f96",
+  "designs/b96_kr260_10g/host/b96f1_bypass.py": "8e94dd345a2f031e3d01134a89e567aadfb6ac37feb9a3d28b3ca0e51cafa8b7",
+  "designs/b96_kr260_10g/ip/amd_ip.tcl": "bcd2156cc8a8b7febc34c4313df572e38c0baba76eb28dbf56c99b3d6231ae6d",
+  "designs/b96_kr260_10g/ip/amd_ip_bypass.tcl": "2b44c98771bbb25bbb1fcd35dcd0e72a44360a8ef81a6887391271537c0bfef9",
+  "designs/b96_kr260_10g/lat_all3_bypass/build.yaml": "bbb4d85334c8fa42217212d9a734f0bd54b5752378ea60894b27a64b82394127",
+  "designs/b96_kr260_10g/lat_cuts169/build.yaml": "00460ebb064b31f7caaac8649c2e38fd2392919e7622fc0a7e0822ac194a1c4f",
+  "designs/b96_kr260_10g/latency_stages.yaml": "9f6167614a1c93cce2223c3305f650cea287020887ee6887802c2dc25eb76d66",
+  "designs/b96_kr260_10g/model/pcs.py": "92790d45d722112f604dbb5dbe70e8e76533ab06f54e8157d28f362a5398554f",
+  "designs/b96_kr260_10g/regmap.py": "020260c536b5e86394e3132eef6f97d1e6b700e8e9a18e70f468d00fd76250e2",
+  "designs/b96_kr260_10g/rm_gp/build.yaml": "1815da81b314bdd5ae63494d1584c03d67383cea7d8037f06efd4b3758985827",
+  "designs/b96_kr260_10g/rm_gp_bypass/build.yaml": "5c06f36c3a76906388b8ad18844ae5ad3f7e51572f99a6264dbeb80e367eb184",
+  "designs/b96_kr260_10g/rm_gp_bypass/rtl/b96_core.sv": "82d6c4423879c993086ebb0e937cab87fc484486f4a418ad57604d2cd521ecb4",
+  "designs/b96_kr260_10g/rm_gp_bypass/rtl/gt_bp_ctl.sv": "71963d3f2f143fd56755e6eb8ff536f892ba05c51d8e4e365545ffc75717c328",
+  "designs/b96_kr260_10g/rm_gp_bypass/rtl/gt_bp_gate.sv": "5e384b6757a9df15c64934aba8fc3f3825cbd30202ef6dbaa743074b6f2ae0bf",
+  "designs/b96_kr260_10g/rtl/b96_core.sv": "bc8ac81d24ec3fab22a049bbd2076fc19dec8576b7b6c27a5b90c58e56fc5dd9",
+  "designs/b96_kr260_10g/rtl/b96_pkg.sv": "ac2ee00c42c8be41a66dae4c04b565c55ed01910aa4c8f12ea7919adaeb77e7c",
+  "designs/b96_kr260_10g/rtl/es_ctrl.sv": "671362a1c02eff42f9dc8af2c6919b854a62b3a93e7702d65ed7f6bf278e8e3e",
+  "designs/b96_kr260_10g/rtl/frame_src.sv": "a745598f6ad7460641a6fcd41a7505fca5d97d6bf2e46389e476201f772f86c0",
+  "designs/b96_kr260_10g/rtl/hs_vec.sv": "e0fc43a9b50c1f4dfb2dd1d6576774ebfc4bce1d921d923a21d3beb2794f11b1",
+  "designs/b96_kr260_10g/rtl/kr260_10g_top.sv": "3d4ca01e5aeee041094f783747a4ce3202fb8cadb42b53d67128ad6be3d35f68",
+  "designs/b96_kr260_10g/rtl/mac64_rx.sv": "35a0ed74f5449979bdbbfa0c57d66e8c8ce127f6132c53690212653a5a97ee8c",
+  "designs/b96_kr260_10g/rtl/mac64_tx.sv": "0cbc07b0268f1c0d3e4c916808bb87930fc6c17d3c60eba2cc90e17ad945246a",
+  "designs/b96_kr260_10g/rtl/pcs_rx.sv": "161c35209b39e014a62c3f4624ea52b99ef3316abc7250a7f5b132e19a651c0a",
+  "designs/b96_kr260_10g/rtl/pcs_tx.sv": "e0e68141d910f428c25b37d8c8cc1c73ad0bb6c79fe6dd8d69307b9c430dc45d",
+  "designs/b96_kr260_10g/rtl/rate_match.sv": "f16fa46d1d7c045a8aecb41c20ba42bc120f7b78807363fa6464cb7a48a79686",
+  "designs/b96_kr260_10g/rtl/rate_match_gp.sv": "09ba730191a05f348c4b512e0203fad604872ef66608f925caab1c2c600c5653",
+  "designs/b96_kr260_10g/rtl/rx_path.sv": "926b9f9901221444fd74bffa5ba7e556d2c3603bc4394f3e382a58e6ec19e539",
+  "designs/b96_kr260_10g/rtl/rx_path_legacy.sv": "4c9412a3ce8de3b3ee966add7b5b293e4c9b968a4ce2f1e063f62d537a24573f",
+  "designs/b96_kr260_10g/rtl/trade64.sv": "1999e01a3728a4834f701c66dcb0ba68004c70a8eee5b0045a6bc046fa256787",
+  "designs/b96_kr260_10g/rtl/tx_path.sv": "91039813b51cc71fadef8fe342b8e1535eea6c40d996604b95697fa5b577d0d8",
+  "designs/b96_kr260_10g/verif/evidence_pins.yaml": "8588d8eb18848c81f9a407b1369f753e56c3f8a370f6fd6317f7423ff9cab15d",
+  "designs/b96_kr260_10g/verif/formal/mac64_tx_ifg.sby": "05da100fd123e5b4c7ac025180f548e2a9ed1b6786fe021e43cc0fc58c45f5c8",
+  "designs/b96_kr260_10g/verif/formal/mac64_tx_ifg_props.sv": "0a1842d5e6dca381badf113bce2584c6f3a36cff607405ff6747c0df3fdb4205",
+  "designs/b96_kr260_10g/verif/formal/rm_gp_props.sv": "320efe07cb7c863283655a13da27e1a63881f12b6440de541aaa370f12ad8f36",
+  "designs/b96_kr260_10g/verif/lean_approvals.yaml": "e512919f20d7c51684ea61a20ae1d2e90c57cff140cda4482979e22e39d64013",
+  "designs/b96_kr260_10g/verif/pyuvm/pcs_mac_pyuvm/checker.py": "9cd31ab2c0037e0bdd2da9f7b6cd20d41abf5aa49c093623669838e74fa965ce",
+  "designs/b96_kr260_10g/verif/pyuvm/pcs_mac_pyuvm/cov.py": "3eb7e24ee7cfd616026cd1bc9ab3dc438993312081f7b0b3210bafc6a3394c2c",
+  "designs/b96_kr260_10g/verif/pyuvm/pcs_mac_pyuvm/scoreboard.py": "f8700b6538b4a69fe4f8f85a744d33c98ed48568c5ab8948f8e9706e81ebbe09",
+  "designs/b96_kr260_10g/verif/pyuvm/pcs_mac_pyuvm/seqs.py": "e0cdae917f8cb9dae1390427b7b8dc67d3f2dd1475875d32740653f0784a9d71",
+  "designs/b96_kr260_10g/verif/testplan.yaml": "6448b4bc0fc7d93beaabaedef16e94464596fcc95db9a3266377baf8bb458708",
+  "formal/lean/records/build_record.json": "3d60b1f76ac87b74d5dcbe085c0eb8e43e0287d69d5fa557490a685624e6c4f6",
+  "results/116_traceability/b96_kr260_10g/pytest_junit.xml": "d28fc34ecb984ecd005e0c9ba87f0cb1584e1fbcb6e365447ffa19a17969310a",
+  "results/152_b96_mutation/b96_rate_match_gp_seed2.json": "50cb1a6f5d64a1d1921408650e391e60ce35da9d11a7fb49f1ca2b68f82508ff",
+  "results/158_cov_closure/coverage_summary.json": "eea4c0c62a577a6c86b0b420eb4c75fe3d21d6ec0864ff489d463293fdf0036b",
+  "results/158_cov_closure/protocol_cover.tsv": "78415183384bd3b3b85acd6f08287f1fdca133d6db8b39a43499c87d6f32e87c",
+  "results/158_cov_closure/summary.txt": "8d8f465450e39750342979fbed9db86da609bb73370f262e80f62889672f40d4",
+  "results/191_trading_variants/formal_rm_gp_pdr.json": "3b7eabad0f6f8198e1a8d31eeb45a8b575c62dc82c278f8f90e0f890b1093e51",
+  "results/b131/builds/dbg_xvc/digest.json": "6cd508f9998e95f91d7debd76e4bc269e3a921357e156ff08b2e49ece705be9c",
+  "results/b131/compare/summary.json": "950b17ffa18c0b33ed515977796e123a2c5a3bd091d24285f82311c3f17cbbe8",
+  "results/b140/builds/dbg_xvc/digest.json": "ad5c3a21cdf4b5262cd2aca8ebbd5b47ea8b65616cbb39ec008faa14371eb622",
+  "results/b140/builds/dbg_xvc/gates.json": "63d0a2734eb2df55ae966332ad0b2560cee8a0b0b4df6887362077d9d362368b",
+  "results/b96/README.md": "3fb82e2bc0256f1a8ee33ffecafd1a863184e2e3cea1cb533d0cb658fe120f06",
+  "results/b96c/builds/control/digest.json": "f4c148e6e13ba7ea7ff6a7c4f2ff446c859bba0d0d49d62c5b8d982b953dc9bd",
+  "results/b96c/eqy_default/result_default.txt": "0144f4bfb627e468c863b02826a9f80c1d82f8e0ca142c56d2d7ba6b24c90280",
+  "results/b96c/hw/20261119_080724/control/stage3.json": "269183b66c18343ad18679a8df240526870c45af74a0fcea32a7c3a1a1a374e3",
+  "results/b96c/ppm_sim_ratematch.json": "6535871256717308c36078eede4da800e67c7eaee1327991349be34f89dfc2f9",
+  "results/b96d/hw/20261120_105134/lpm_1.json": "cea525d207cac5284163fef2e4da9978a235b06ca75a7e2811ddde7d6928b308",
+  "results/b96d/hw/20261120_105134/summary.txt": "a4c117e7963373eaa30ae81e1c25a90f9ece25f968145dc14bbbc117c22d0b65",
+  "results/b96e/builds/rm_gp/digest.json": "fdc4edc0935ad555d9099277e65ff2ef4a58676ec0096db0946140804ce95f9d",
+  "results/b96e/core_lat_sim.json": "77fb782b78af4c9f598f019b6f552970cdb30bdc6e28111db5ac0335b54c73ed",
+  "results/b96e/hw/20261119_231251/rm_gp/session.json": "cd79277b3d7b1a9df68d42fc707990fef90b697b1019e0a83545f77327ddce32",
+  "results/b96e/hw/20261119_231251/rm_gp/stage3.json": "23f45435ee27d90cf456cf5003499c8503e6ce80f08e1ac72a9f0589ff40bb2a",
+  "results/b96f1/builds/rm_gp_bypass/digest.json": "f49d9a7e1a0827e729628b2985e04fb9b5debc2907345275c5fa3a6ceacd7dac",
+  "results/b96f1/bypass_seq/result.txt": "457378d737a4382242b69cf84b2db58aacf9a88707d0cba642934a5b1b091dd8",
+  "results/b96f1/hw/20261120_215255/rm_gp_bypass/stage3.json": "d1ffccba2b5649a0db609ca0e8a0ab609805f7fb6b12df3e9abdb80b0c233ff7",
+  "results/b97c/hw/20261118_194221/control/stage3.json": "e77343e6c99c90b667c0d3036d758fb55d8347b15801800474e82794d451ebe7"
+ },
+ "name": "b96_kr260_10g",
+ "notes": "Variants. Unless a requirement says otherwise, \"the default build\" is RATE_MATCH = 0 (the board-proven 97C receive path) and \"the rate-matched build\" is rm_gp (RATE_MATCH = 1, RM_OWN = 1). Board evidence is one KR260 on a short optical loopback; nothing has run against a network card. Briefs 112 (UVM bench), 115 (formal proofs of the rate matcher) and 123 (pyuvm bench) are merged and their tests are in the recorded run; the bound SVA checkers in simulation have no evidence and are shown as not run; the functional and code coverage of the pyuvm bench on Verilator (brief 146) is recorded.",
+ "path": "designs/b96_kr260_10g",
+ "reproduce": [
+  {
+   "cmd": "python -m pytest -q designs/b96_kr260_10g/tests",
+   "what": "simulate the PCS, MAC and core against the Python reference"
+  },
+  {
+   "cmd": "designs/b96_kr260_10g/verif/uvm/scripts/run_regress.sh --mutants --record results/112_uvm_pcs_mac",
+   "what": "the UVM 1.2 regression of the PCS and MAC in xsim (every test over its seeds, coverage merge, seeded bugs)"
+  },
+  {
+   "cmd": "PYTHONPATH=. python designs/b96_kr260_10g/verif/pyuvm/scripts/run_regress.py --mutants --record results/123_pyuvm_pcs_mac",
+   "what": "the pyuvm regression of the PCS and MAC in Icarus (every test over its seeds, coverage merge, seeded bugs); needs pyuvm 5.0.0 and cocotb-coverage in a venv that sees cocotb 2.0.1"
+  },
+  {
+   "cmd": "bash designs/b96_kr260_10g/verif/formal/run_ifg_formal.sh /tmp/mac64_tx_ifg",
+   "what": "the SymbiYosys covers and proofs of the two mac64_tx interframe-gap conditions (brief 158)"
+  }
+ ],
+ "requirements": [
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "B96-F-PCS",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-SIM-PCSMAC",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "results/116_traceability/b96_kr260_10g/pytest_junit.xml",
+     "record_sha256": "d28fc34ecb984ecd005e0c9ba87f0cb1584e1fbcb6e365447ffa19a17969310a",
+     "status": "pass",
+     "title": "PCS and MAC cocotb bench against the bit-serial reference"
+    },
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-SIM-PCSMODEL",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "results/116_traceability/b96_kr260_10g/pytest_junit.xml",
+     "record_sha256": "d28fc34ecb984ecd005e0c9ba87f0cb1584e1fbcb6e365447ffa19a17969310a",
+     "status": "pass",
+     "title": "Python reference properties (LFSR, descrambler self-sync, block codes, lock time, bit errors)"
+    },
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-FORMAL-SVA-PLANNED",
+     "instrument": null,
+     "method": "formal",
+     "mutation_score": null,
+     "record": "results/116_traceability/b96_kr260_10g/pytest_junit.xml",
+     "record_sha256": "d28fc34ecb984ecd005e0c9ba87f0cb1584e1fbcb6e365447ffa19a17969310a",
+     "status": "pass",
+     "title": "SVA properties of the gray-pointer rate matcher with SymbiYosys (brief 115; designs/b96_kr260_10g/verif/formal/, results/b115); safety by k-induction, progress by BMC in this item (V-FORMAL-PROGRESS-PDR closes it unbounded); the recorded run re-proves every CI job, mutants included"
+    },
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "no evidence",
+     "id": "V-SVA-PLANNED",
+     "instrument": null,
+     "method": "assertion",
+     "mutation_score": null,
+     "record": null,
+     "record_sha256": null,
+     "status": "not_run",
+     "title": "Bound SVA checkers in simulation (brief 115)"
+    },
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-UVM-PLANNED",
+     "instrument": null,
+     "method": "uvm_test",
+     "mutation_score": null,
+     "record": "results/116_traceability/b96_kr260_10g/pytest_junit.xml",
+     "record_sha256": "d28fc34ecb984ecd005e0c9ba87f0cb1584e1fbcb6e365447ffa19a17969310a",
+     "status": "pass",
+     "title": "UVM 1.2 bench of the PCS and MAC in xsim 2026.1 (brief 112, merged as"
+    },
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "skipped",
+     "id": "V-PYUVM",
+     "instrument": null,
+     "method": "uvm_test",
+     "mutation_score": null,
+     "record": "results/116_traceability/b96_kr260_10g/pytest_junit.xml",
+     "record_sha256": "d28fc34ecb984ecd005e0c9ba87f0cb1584e1fbcb6e365447ffa19a17969310a",
+     "status": "skipped",
+     "title": "pyuvm-on-cocotb twin of the UVM bench of the PCS and MAC (brief 123; designs/b96_kr260_10g/verif/pyuvm/); the recorded run is the reference-model checks, one smoke run in Icarus and one seeded-bug kill; the full regression is run by hand"
+    },
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-COV-FUNC",
+     "instrument": null,
+     "method": "coverage_bin",
+     "mutation_score": null,
+     "record": "results/158_cov_closure/summary.txt",
+     "record_sha256": "8d8f465450e39750342979fbed9db86da609bb73370f262e80f62889672f40d4",
+     "status": "pass",
+     "title": "Functional coverage of the pyuvm bench of the PCS and MAC (brief 123 bench, brief 158 regression on Verilator 5.048; 44 runs, every one of the 217 bins hit; the Icarus run of brief 123 hit the same 217)"
+    },
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-COV-CODE",
+     "instrument": null,
+     "method": "coverage_bin",
+     "mutation_score": null,
+     "record": "results/158_cov_closure/coverage_summary.json",
+     "record_sha256": "eea4c0c62a577a6c86b0b420eb4c75fe3d21d6ec0864ff489d463293fdf0036b",
+     "status": "pass",
+     "title": "RTL code coverage of pcs_tx, pcs_rx, mac64_tx, mac64_rx and b96_pkg by the same 44-run regression (Verilator 5.048 --coverage, merged; brief 146, raised by brief 158's underrun test). Floors are the measured design-wide percentages rounded down to a whole number (82, 85, 92, 96; measured 82.5, 85.34, 92.47, 96.37; the line floor rose from 81 in brief 158); every open point is explained in results/146_verilator_cov/README.md and results/158_cov_closure/README.md (unreachable by design, proved so by formal covers in brief 158, or a Verilator reporting artefact reproduced in a 15-line test)"
+    },
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "no evidence",
+     "id": "V-REVIEW-96",
+     "instrument": null,
+     "method": "review",
+     "mutation_score": null,
+     "record": "results/b96/README.md",
+     "record_sha256": "3fb82e2bc0256f1a8ee33ffecafd1a863184e2e3cea1cb533d0cb658fe120f06",
+     "status": "not_run",
+     "title": "One independent correctness review and one fix round (an agent, not a human)"
+    }
+   ],
+   "items": [
+    "V-SIM-PCSMAC",
+    "V-SIM-PCSMODEL",
+    "V-FORMAL-SVA-PLANNED",
+    "V-SVA-PLANNED",
+    "V-UVM-PLANNED",
+    "V-PYUVM",
+    "V-COV-FUNC",
+    "V-COV-CODE",
+    "V-REVIEW-96"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": false,
+   "missing_methods": [],
+   "mix_satisfied": true,
+   "own_tests_only": false,
+   "passing_methods": [
+    "coverage_bin",
+    "formal",
+    "sim_test",
+    "uvm_test"
+   ],
+   "rests_on_delegated": false,
+   "source": "designs/b96_kr260_10g/docs/design.md#7-verification-plan",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "verified",
+   "text": "Scrambler, block encode and decode, gearbox and block lock produce the same bits as the bit-serial Python reference, at every bit offset, with idles, ordered sets and bit-error runs.",
+   "title": "PCS encodes and decodes 64B/66B bit-exactly against an independent model",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "B96-F-MAC",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-SIM-PCSMAC",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "results/116_traceability/b96_kr260_10g/pytest_junit.xml",
+     "record_sha256": "d28fc34ecb984ecd005e0c9ba87f0cb1584e1fbcb6e365447ffa19a17969310a",
+     "status": "pass",
+     "title": "PCS and MAC cocotb bench against the bit-serial reference"
+    },
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-SIM-CORE-RM",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "results/116_traceability/b96_kr260_10g/pytest_junit.xml",
+     "record_sha256": "d28fc34ecb984ecd005e0c9ba87f0cb1584e1fbcb6e365447ffa19a17969310a",
+     "status": "pass",
+     "title": "Whole core with the elastic buffers (macro and own gray-pointer)"
+    },
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "no evidence",
+     "id": "V-SVA-PLANNED",
+     "instrument": null,
+     "method": "assertion",
+     "mutation_score": null,
+     "record": null,
+     "record_sha256": null,
+     "status": "not_run",
+     "title": "Bound SVA checkers in simulation (brief 115)"
+    },
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-UVM-PLANNED",
+     "instrument": null,
+     "method": "uvm_test",
+     "mutation_score": null,
+     "record": "results/116_traceability/b96_kr260_10g/pytest_junit.xml",
+     "record_sha256": "d28fc34ecb984ecd005e0c9ba87f0cb1584e1fbcb6e365447ffa19a17969310a",
+     "status": "pass",
+     "title": "UVM 1.2 bench of the PCS and MAC in xsim 2026.1 (brief 112, merged as"
+    },
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "skipped",
+     "id": "V-PYUVM",
+     "instrument": null,
+     "method": "uvm_test",
+     "mutation_score": null,
+     "record": "results/116_traceability/b96_kr260_10g/pytest_junit.xml",
+     "record_sha256": "d28fc34ecb984ecd005e0c9ba87f0cb1584e1fbcb6e365447ffa19a17969310a",
+     "status": "skipped",
+     "title": "pyuvm-on-cocotb twin of the UVM bench of the PCS and MAC (brief 123; designs/b96_kr260_10g/verif/pyuvm/); the recorded run is the reference-model checks, one smoke run in Icarus and one seeded-bug kill; the full regression is run by hand"
+    },
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-COV-FUNC",
+     "instrument": null,
+     "method": "coverage_bin",
+     "mutation_score": null,
+     "record": "results/158_cov_closure/summary.txt",
+     "record_sha256": "8d8f465450e39750342979fbed9db86da609bb73370f262e80f62889672f40d4",
+     "status": "pass",
+     "title": "Functional coverage of the pyuvm bench of the PCS and MAC (brief 123 bench, brief 158 regression on Verilator 5.048; 44 runs, every one of the 217 bins hit; the Icarus run of brief 123 hit the same 217)"
+    },
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-COV-CODE",
+     "instrument": null,
+     "method": "coverage_bin",
+     "mutation_score": null,
+     "record": "results/158_cov_closure/coverage_summary.json",
+     "record_sha256": "eea4c0c62a577a6c86b0b420eb4c75fe3d21d6ec0864ff489d463293fdf0036b",
+     "status": "pass",
+     "title": "RTL code coverage of pcs_tx, pcs_rx, mac64_tx, mac64_rx and b96_pkg by the same 44-run regression (Verilator 5.048 --coverage, merged; brief 146, raised by brief 158's underrun test). Floors are the measured design-wide percentages rounded down to a whole number (82, 85, 92, 96; measured 82.5, 85.34, 92.47, 96.37; the line floor rose from 81 in brief 158); every open point is explained in results/146_verilator_cov/README.md and results/158_cov_closure/README.md (unreachable by design, proved so by formal covers in brief 158, or a Verilator reporting artefact reproduced in a 15-line test)"
+    },
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-TX-UNDERRUN",
+     "instrument": null,
+     "method": "uvm_test",
+     "mutation_score": null,
+     "record": "results/158_cov_closure/protocol_cover.tsv",
+     "record_sha256": "78415183384bd3b3b85acd6f08287f1fdca133d6db8b39a43499c87d6f32e87c",
+     "status": "pass",
+     "title": "Transmit underrun of mac64_tx under the protocol checker's fault-injection mode (brief 158; test t_underrun, 12 underruns per seed). The source stalls inside a frame; expected on the output are the start word, the data words taken, one word of eight error characters (no FCS, no terminate, no eop), one idle word, then any new start; the receiver aborts exactly those frames. The recorded run is the 44-run regression; the count is the underruns the checker saw in injection mode"
+    },
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-FORMAL-MAC-IFG",
+     "instrument": null,
+     "method": "formal",
+     "mutation_score": null,
+     "record": "results/116_traceability/b96_kr260_10g/pytest_junit.xml",
+     "record_sha256": "d28fc34ecb984ecd005e0c9ba87f0cb1584e1fbcb6e365447ffa19a17969310a",
+     "status": "pass",
+     "title": "SymbiYosys covers and proofs of the two mac64_tx interframe-gap conditions code coverage found unreachable (brief 158, verif/formal/mac64_tx_ifg.sby). Both unreached, both proved unreachable by induction, the neighbouring arms reachable, and a planted wider n finds the first reachable"
+    },
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "no evidence",
+     "id": "V-REVIEW-96",
+     "instrument": null,
+     "method": "review",
+     "mutation_score": null,
+     "record": "results/b96/README.md",
+     "record_sha256": "3fb82e2bc0256f1a8ee33ffecafd1a863184e2e3cea1cb533d0cb658fe120f06",
+     "status": "not_run",
+     "title": "One independent correctness review and one fix round (an agent, not a human)"
+    }
+   ],
+   "items": [
+    "V-SIM-PCSMAC",
+    "V-SIM-CORE-RM",
+    "V-SVA-PLANNED",
+    "V-UVM-PLANNED",
+    "V-PYUVM",
+    "V-COV-FUNC",
+    "V-COV-CODE",
+    "V-TX-UNDERRUN",
+    "V-FORMAL-MAC-IFG",
+    "V-REVIEW-96"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": false,
+   "missing_methods": [],
+   "mix_satisfied": true,
+   "own_tests_only": false,
+   "passing_methods": [
+    "coverage_bin",
+    "formal",
+    "sim_test",
+    "uvm_test"
+   ],
+   "rests_on_delegated": false,
+   "source": "designs/b96_kr260_10g/docs/design.md#7-verification-plan",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "verified",
+   "text": "Frames start in lane 0 and lane 4, every terminate lane and every length residue is handled, FCS is generated and checked, and a bad FCS is counted.",
+   "title": "64-bit MAC frames correctly in both directions",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "B96-F-LOCK",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-SIM-PCSMODEL",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "results/116_traceability/b96_kr260_10g/pytest_junit.xml",
+     "record_sha256": "d28fc34ecb984ecd005e0c9ba87f0cb1584e1fbcb6e365447ffa19a17969310a",
+     "status": "pass",
+     "title": "Python reference properties (LFSR, descrambler self-sync, block codes, lock time, bit errors)"
+    },
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-UVM-PLANNED",
+     "instrument": null,
+     "method": "uvm_test",
+     "mutation_score": null,
+     "record": "results/116_traceability/b96_kr260_10g/pytest_junit.xml",
+     "record_sha256": "d28fc34ecb984ecd005e0c9ba87f0cb1584e1fbcb6e365447ffa19a17969310a",
+     "status": "pass",
+     "title": "UVM 1.2 bench of the PCS and MAC in xsim 2026.1 (brief 112, merged as"
+    },
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "skipped",
+     "id": "V-PYUVM",
+     "instrument": null,
+     "method": "uvm_test",
+     "mutation_score": null,
+     "record": "results/116_traceability/b96_kr260_10g/pytest_junit.xml",
+     "record_sha256": "d28fc34ecb984ecd005e0c9ba87f0cb1584e1fbcb6e365447ffa19a17969310a",
+     "status": "skipped",
+     "title": "pyuvm-on-cocotb twin of the UVM bench of the PCS and MAC (brief 123; designs/b96_kr260_10g/verif/pyuvm/); the recorded run is the reference-model checks, one smoke run in Icarus and one seeded-bug kill; the full regression is run by hand"
+    }
+   ],
+   "items": [
+    "V-SIM-PCSMODEL",
+    "V-UVM-PLANNED",
+    "V-PYUVM"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": false,
+   "missing_methods": [
+    "a simulation check from a bench the implementing agent did not write"
+   ],
+   "mix_satisfied": false,
+   "own_tests_only": true,
+   "passing_methods": [
+    "sim_test",
+    "uvm_test"
+   ],
+   "rests_on_delegated": false,
+   "source": "designs/b96_kr260_10g/docs/design.md#28-block-lock-bit-slip-errors",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "partially_verified",
+   "text": "The receive gearbox slips to the block boundary from any offset, and a run of bit errors loses lock only above the documented threshold.",
+   "title": "Block lock is acquired from any bit offset and survives bit errors",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": true,
+   "id": "B96-F-RESTART",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-HW-RESTARTS-96E",
+     "instrument": "jtag_registers",
+     "method": "board_measurement",
+     "mutation_score": null,
+     "record": "results/b96e/hw/20261119_231251/rm_gp/stage3.json",
+     "record_sha256": "23f45435ee27d90cf456cf5003499c8503e6ce80f08e1ac72a9f0589ff40bb2a",
+     "status": "pass",
+     "title": "100 receive restarts on build rm_gp, counters read over JTAG"
+    },
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "stale",
+     "id": "V-HW-RESTARTS-97C",
+     "instrument": "jtag_registers",
+     "method": "board_measurement",
+     "mutation_score": null,
+     "record": "results/b97c/hw/20261118_194221/control/stage3.json",
+     "record_sha256": "e77343e6c99c90b667c0d3036d758fb55d8347b15801800474e82794d451ebe7",
+     "stale_because": "changed since the evidence was recorded: designs/b96_kr260_10g/rtl/b96_core.sv, designs/b96_kr260_10g/rtl/b96_pkg.sv, designs/b96_kr260_10g/rtl/hs_vec.sv, designs/b96_kr260_10g/rtl/pcs_rx.sv (+5 more)",
+     "status": "stale",
+     "title": "100 receive restarts on the default build (brief 97C)"
+    }
+   ],
+   "items": [
+    "V-HW-RESTARTS-96E",
+    "V-HW-RESTARTS-97C"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": false,
+   "missing_methods": [],
+   "mix_satisfied": true,
+   "own_tests_only": false,
+   "passing_methods": [
+    "board_measurement"
+   ],
+   "rests_on_delegated": false,
+   "source": "designs/b96_kr260_10g/docs/design.md#6-loop-measurement-method-pre-registered-stage-3",
+   "spec_status": "draft",
+   "stale_items": 1,
+   "state": "verified",
+   "text": "At least 100 receive-datapath restarts on the board, each one locks and no restart corrupts a frame.",
+   "title": "The link locks after every receive-datapath restart",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "B96-F-DEFAULT",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-SIM-CORE-DEFAULT",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "results/116_traceability/b96_kr260_10g/pytest_junit.xml",
+     "record_sha256": "d28fc34ecb984ecd005e0c9ba87f0cb1584e1fbcb6e365447ffa19a17969310a",
+     "status": "pass",
+     "title": "Whole core, RATE_MATCH = 0, under 97C's own bench"
+    },
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "stale",
+     "id": "V-FORMAL-EQY-DEFAULT",
+     "instrument": null,
+     "method": "formal",
+     "mutation_score": null,
+     "record": "results/b96c/eqy_default/result_default.txt",
+     "record_sha256": "0144f4bfb627e468c863b02826a9f80c1d82f8e0ca142c56d2d7ba6b24c90280",
+     "stale_because": "changed since the evidence was recorded: designs/b96_kr260_10g/rtl/b96_core.sv, designs/b96_kr260_10g/rtl/rx_path.sv",
+     "status": "stale",
+     "title": "eqy equivalence of the RATE_MATCH = 0 core with main 6909e43f's core (a planted change fails it)"
+    },
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "stale",
+     "id": "V-HW-RESTARTS-97C",
+     "instrument": "jtag_registers",
+     "method": "board_measurement",
+     "mutation_score": null,
+     "record": "results/b97c/hw/20261118_194221/control/stage3.json",
+     "record_sha256": "e77343e6c99c90b667c0d3036d758fb55d8347b15801800474e82794d451ebe7",
+     "stale_because": "changed since the evidence was recorded: designs/b96_kr260_10g/rtl/b96_core.sv, designs/b96_kr260_10g/rtl/b96_pkg.sv, designs/b96_kr260_10g/rtl/hs_vec.sv, designs/b96_kr260_10g/rtl/pcs_rx.sv (+5 more)",
+     "status": "stale",
+     "title": "100 receive restarts on the default build (brief 97C)"
+    }
+   ],
+   "items": [
+    "V-SIM-CORE-DEFAULT",
+    "V-FORMAL-EQY-DEFAULT",
+    "V-HW-RESTARTS-97C"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": false,
+   "missing_methods": [
+    "a simulation check from a bench the implementing agent did not write"
+   ],
+   "mix_satisfied": false,
+   "own_tests_only": true,
+   "passing_methods": [
+    "sim_test"
+   ],
+   "rests_on_delegated": false,
+   "source": "designs/b96_kr260_10g/handover.yaml",
+   "spec_status": "draft",
+   "stale_items": 2,
+   "state": "partially_verified",
+   "text": "With RATE_MATCH = 0 the core is equivalent to the core of main 6909e43f (brief 97C) and passes that brief's bench.",
+   "title": "The default build keeps the board-proven receive path",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "B96-S-RATEMATCH",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-SIM-CORE-RM",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "results/116_traceability/b96_kr260_10g/pytest_junit.xml",
+     "record_sha256": "d28fc34ecb984ecd005e0c9ba87f0cb1584e1fbcb6e365447ffa19a17969310a",
+     "status": "pass",
+     "title": "Whole core with the elastic buffers (macro and own gray-pointer)"
+    },
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-SIM-RM",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "results/116_traceability/b96_kr260_10g/pytest_junit.xml",
+     "record_sha256": "d28fc34ecb984ecd005e0c9ba87f0cb1584e1fbcb6e365447ffa19a17969310a",
+     "status": "pass",
+     "title": "Rate matcher benches (macro, own buffer, direct-read variant, the MIN_KEEP limit)"
+    },
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-RM-MUTATION",
+     "instrument": null,
+     "method": "coverage_bin",
+     "mutation_score": null,
+     "record": "results/152_b96_mutation/b96_rate_match_gp_seed2.json",
+     "record_sha256": "50cb1a6f5d64a1d1921408650e391e60ce35da9d11a7fb49f1ca2b68f82508ff",
+     "status": "pass",
+     "title": "Mutation score of the rate matcher's bench (brief 152; seed 2, 30 blind mutants, all nine cases of test_rate_match_gp_cocotb; the formal miter decides survivors); seed 1 and the as-found counts are in results/152_b96_mutation"
+    },
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-FORMAL-SVA-PLANNED",
+     "instrument": null,
+     "method": "formal",
+     "mutation_score": null,
+     "record": "results/116_traceability/b96_kr260_10g/pytest_junit.xml",
+     "record_sha256": "d28fc34ecb984ecd005e0c9ba87f0cb1584e1fbcb6e365447ffa19a17969310a",
+     "status": "pass",
+     "title": "SVA properties of the gray-pointer rate matcher with SymbiYosys (brief 115; designs/b96_kr260_10g/verif/formal/, results/b115); safety by k-induction, progress by BMC in this item (V-FORMAL-PROGRESS-PDR closes it unbounded); the recorded run re-proves every CI job, mutants included"
+    },
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "failing",
+     "id": "V-FORMAL-PROGRESS-PDR",
+     "instrument": null,
+     "method": "formal",
+     "mutation_score": null,
+     "record": "results/191_trading_variants/formal_rm_gp_pdr.json",
+     "record_sha256": "3b7eabad0f6f8198e1a8d31eeb45a8b575c62dc82c278f8f90e0f890b1093e51",
+     "status": "fail",
+     "title": "The progress ranking function of the gray-pointer rate matcher (a written block is consumed within a bounded number of read clocks, R1 and R2) proved unbounded by IC3/PDR at AW 1 and 2, the safety set re-proved by the same engine, and the no-slot-clock mutant caught (brief 191; designs/b96_kr260_10g/verif/formal, results/191_trading_variants)"
+    },
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "no evidence",
+     "id": "V-SVA-PLANNED",
+     "instrument": null,
+     "method": "assertion",
+     "mutation_score": null,
+     "record": null,
+     "record_sha256": null,
+     "status": "not_run",
+     "title": "Bound SVA checkers in simulation (brief 115)"
+    },
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "stale",
+     "id": "V-SIMM-PPM",
+     "instrument": null,
+     "method": "sim_measurement",
+     "mutation_score": null,
+     "record": "results/b96c/ppm_sim_ratematch.json",
+     "record_sha256": "6535871256717308c36078eede4da800e67c7eaee1327991349be34f89dfc2f9",
+     "stale_because": "changed since the evidence was recorded: designs/b96_kr260_10g/rtl/rate_match.sv, designs/b96_kr260_10g/rtl/rate_match_gp.sv, designs/b96_kr260_10g/rtl/rx_path.sv",
+     "status": "stale",
+     "title": "Simulated partner at test points -300, -100, 0, +100 and +300 ppm across the required range, 400 frames each"
+    },
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "stale",
+     "id": "V-SIMM-BYPASS-SEQ",
+     "instrument": null,
+     "method": "sim_measurement",
+     "mutation_score": null,
+     "record": "results/b96f1/bypass_seq/result.txt",
+     "record_sha256": "457378d737a4382242b69cf84b2db58aacf9a88707d0cba642934a5b1b091dd8",
+     "stale_because": "changed since the evidence was recorded: designs/b96_kr260_10g/rm_gp_bypass/rtl/b96_core.sv, designs/b96_kr260_10g/rm_gp_bypass/rtl/gt_bp_gate.sv",
+     "status": "stale",
+     "title": "Buffer-bypass run gate against a stand-in transceiver in xsim, 28 checks"
+    },
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "stale",
+     "id": "V-HW-RATEMATCH-96C",
+     "instrument": "jtag_registers",
+     "method": "board_measurement",
+     "mutation_score": null,
+     "record": "results/b96c/hw/20261119_080724/control/stage3.json",
+     "record_sha256": "269183b66c18343ad18679a8df240526870c45af74a0fcea32a7c3a1a1a374e3",
+     "stale_because": "changed since the evidence was recorded: designs/b96_kr260_10g/rtl/rate_match.sv, designs/b96_kr260_10g/rtl/rate_match_gp.sv, designs/b96_kr260_10g/rtl/rx_path.sv",
+     "status": "stale",
+     "title": "Rate-matched build, 100 restarts, safety counters 0 (at 0 ppm only)"
+    }
+   ],
+   "items": [
+    "V-SIM-CORE-RM",
+    "V-SIM-RM",
+    "V-RM-MUTATION",
+    "V-FORMAL-SVA-PLANNED",
+    "V-FORMAL-PROGRESS-PDR",
+    "V-SVA-PLANNED",
+    "V-SIMM-PPM",
+    "V-SIMM-BYPASS-SEQ",
+    "V-HW-RATEMATCH-96C"
+   ],
+   "kind": "safety",
+   "lean_transcription_only": false,
+   "missing_methods": [],
+   "mix_satisfied": true,
+   "own_tests_only": false,
+   "passing_methods": [
+    "coverage_bin",
+    "formal",
+    "sim_test"
+   ],
+   "rests_on_delegated": false,
+   "source": "designs/b96_kr260_10g/docs/design.md#9-rate-matching-and-the-receive-to-core-crossing-brief-96c",
+   "spec_status": "draft",
+   "stale_items": 3,
+   "state": "fail",
+   "text": "The elastic buffer inserts and deletes idles only between frames, never under- or overflows silently, and every order sent is fired and passes its content check.",
+   "title": "Rate matching never corrupts a frame",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "B96-V-RM-BENCH",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-RM-MUTATION",
+     "instrument": null,
+     "method": "coverage_bin",
+     "mutation_score": null,
+     "record": "results/152_b96_mutation/b96_rate_match_gp_seed2.json",
+     "record_sha256": "50cb1a6f5d64a1d1921408650e391e60ce35da9d11a7fb49f1ca2b68f82508ff",
+     "status": "pass",
+     "title": "Mutation score of the rate matcher's bench (brief 152; seed 2, 30 blind mutants, all nine cases of test_rate_match_gp_cocotb; the formal miter decides survivors); seed 1 and the as-found counts are in results/152_b96_mutation"
+    }
+   ],
+   "items": [
+    "V-RM-MUTATION"
+   ],
+   "kind": "safety",
+   "lean_transcription_only": false,
+   "missing_methods": [
+    "a formal proof (SymbiYosys or Lean)"
+   ],
+   "mix_satisfied": false,
+   "own_tests_only": true,
+   "passing_methods": [
+    "coverage_bin"
+   ],
+   "rests_on_delegated": false,
+   "source": "results/152_b96_mutation/README.md",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "partially_verified",
+   "text": "A blind sample of at least 30 one-line changes to rate_match_gp.sv (flow/mutation_blind.py, 23 operator classes), with survivors decided by a formal miter, scores a worst case of at least 90 percent (every undecided mutant and bench timeout counted as a survivor). The floor is the planner's, delegated by the owner (decision 23, brief 152); whether it is high enough is the human's check.",
+   "title": "The rate matcher's simulation bench catches seeded bugs",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "external": "a second reference clock or a 10G network card (a loopback has no frequency offset)",
+   "hardware_closure": "open",
+   "hardware_only": true,
+   "hardware_verified": false,
+   "id": "B96-F-OFFSET",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-SIM-PPM-PARTNER",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "results/116_traceability/b96_kr260_10g/pytest_junit.xml",
+     "record_sha256": "d28fc34ecb984ecd005e0c9ba87f0cb1584e1fbcb6e365447ffa19a17969310a",
+     "status": "pass",
+     "title": "Simulated partner at a frequency offset (cocotb)"
+    },
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "stale",
+     "id": "V-SIMM-PPM",
+     "instrument": null,
+     "method": "sim_measurement",
+     "mutation_score": null,
+     "record": "results/b96c/ppm_sim_ratematch.json",
+     "record_sha256": "6535871256717308c36078eede4da800e67c7eaee1327991349be34f89dfc2f9",
+     "stale_because": "changed since the evidence was recorded: designs/b96_kr260_10g/rtl/rate_match.sv, designs/b96_kr260_10g/rtl/rate_match_gp.sv, designs/b96_kr260_10g/rtl/rx_path.sv",
+     "status": "stale",
+     "title": "Simulated partner at test points -300, -100, 0, +100 and +300 ppm across the required range, 400 frames each"
+    },
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "no evidence",
+     "id": "V-HW-OFFSET-PLANNED",
+     "instrument": "external_equipment",
+     "method": "board_measurement",
+     "mutation_score": null,
+     "record": null,
+     "record_sha256": null,
+     "status": "not_run",
+     "title": "Receive clock offset by a second reference clock or a second device"
+    }
+   ],
+   "items": [
+    "V-SIM-PPM-PARTNER",
+    "V-SIMM-PPM",
+    "V-HW-OFFSET-PLANNED"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": false,
+   "missing_methods": [
+    "a simulation check from a bench the implementing agent did not write"
+   ],
+   "mix_satisfied": false,
+   "own_tests_only": true,
+   "passing_methods": [
+    "sim_test"
+   ],
+   "rests_on_delegated": false,
+   "source": "designs/b96_kr260_10g/docs/design.md#board-result-2026-11-19-kr260-and-an-optical-loopback-resultsb96cwhw20261119_080724",
+   "spec_status": "draft",
+   "stale_items": 1,
+   "state": "partially_verified",
+   "text": "For any constant receive clock offset from -300 to +300 ppm relative to the transmit clock, no frame is lost or corrupted and the buffer neither overflows nor underflows. IEEE 802.3 allows +-100 ppm at each end, so two compliant ends differ by at most 200 ppm; +-300 ppm gives margin. A loopback has no offset, so a board test needs a second reference clock or another device on the link.",
+   "title": "Rate matching holds under a real frequency offset",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "external": "a 10G network card and cable",
+   "hardware_closure": "open",
+   "hardware_only": true,
+   "hardware_verified": false,
+   "id": "B96-F-INTEROP",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "no evidence",
+     "id": "V-HW-INTEROP-PLANNED",
+     "instrument": "external_equipment",
+     "method": "board_measurement",
+     "mutation_score": null,
+     "record": null,
+     "record_sha256": null,
+     "status": "not_run",
+     "title": "Frames exchanged with a 10G network card (docs/board_run_plan.md NIC steps)"
+    }
+   ],
+   "items": [
+    "V-HW-INTEROP-PLANNED"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": false,
+   "missing_methods": [],
+   "mix_satisfied": false,
+   "own_tests_only": false,
+   "passing_methods": [],
+   "rests_on_delegated": false,
+   "source": "designs/b96_kr260_10g/handover.yaml",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "not_run",
+   "text": "The PCS and MAC exchange frames with an independent 10GBASE-R implementation. A PCS talking to itself accepts its own symmetric mistakes, so only another implementation proves the block formats and scrambler order.",
+   "title": "Interoperates with a standard 10GBASE-R network card",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": true,
+   "id": "B96-S-ORDERS",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-SIM-CORE-DEFAULT",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "results/116_traceability/b96_kr260_10g/pytest_junit.xml",
+     "record_sha256": "d28fc34ecb984ecd005e0c9ba87f0cb1584e1fbcb6e365447ffa19a17969310a",
+     "status": "pass",
+     "title": "Whole core, RATE_MATCH = 0, under 97C's own bench"
+    },
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-SIM-CORE-RM",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "results/116_traceability/b96_kr260_10g/pytest_junit.xml",
+     "record_sha256": "d28fc34ecb984ecd005e0c9ba87f0cb1584e1fbcb6e365447ffa19a17969310a",
+     "status": "pass",
+     "title": "Whole core with the elastic buffers (macro and own gray-pointer)"
+    },
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-HW-RESTARTS-96E",
+     "instrument": "jtag_registers",
+     "method": "board_measurement",
+     "mutation_score": null,
+     "record": "results/b96e/hw/20261119_231251/rm_gp/stage3.json",
+     "record_sha256": "23f45435ee27d90cf456cf5003499c8503e6ce80f08e1ac72a9f0589ff40bb2a",
+     "status": "pass",
+     "title": "100 receive restarts on build rm_gp, counters read over JTAG"
+    },
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "no evidence",
+     "id": "V-REVIEW-96",
+     "instrument": null,
+     "method": "review",
+     "mutation_score": null,
+     "record": "results/b96/README.md",
+     "record_sha256": "3fb82e2bc0256f1a8ee33ffecafd1a863184e2e3cea1cb533d0cb658fe120f06",
+     "status": "not_run",
+     "title": "One independent correctness review and one fix round (an agent, not a human)"
+    }
+   ],
+   "items": [
+    "V-SIM-CORE-DEFAULT",
+    "V-SIM-CORE-RM",
+    "V-HW-RESTARTS-96E",
+    "V-REVIEW-96"
+   ],
+   "kind": "safety",
+   "lean_transcription_only": false,
+   "missing_methods": [],
+   "mix_satisfied": true,
+   "own_tests_only": false,
+   "passing_methods": [
+    "board_measurement",
+    "sim_test"
+   ],
+   "rests_on_delegated": false,
+   "source": "designs/b96_kr260_10g/docs/design.md#25-the-trading-path-in-variant-b-trade64-not-a-widened-trigger_core",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "verified",
+   "text": "Every armed decision yields exactly one order, a poisoned order never fires, and every fault counter stays 0.",
+   "title": "Orders are sent only for valid decisions, none is lost or poisoned",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "B96-S-DRIVER",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-SIM-DRIVER",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "results/116_traceability/b96_kr260_10g/pytest_junit.xml",
+     "record_sha256": "d28fc34ecb984ecd005e0c9ba87f0cb1584e1fbcb6e365447ffa19a17969310a",
+     "status": "pass",
+     "title": "Board bench, ppm and bypass drivers judged on a fake board (every safety counter, polarity, lock, verdicts)"
+    },
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-SIM-126-ALL3",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "results/116_traceability/b96_kr260_10g/pytest_junit.xml",
+     "record_sha256": "d28fc34ecb984ecd005e0c9ba87f0cb1584e1fbcb6e365447ffa19a17969310a",
+     "status": "pass",
+     "title": "Build lat_all3_bypass composes 97C's cuts with the bypass build's files, and its board driver's verdicts, references and lock prefix (brief 126)"
+    }
+   ],
+   "items": [
+    "V-SIM-DRIVER",
+    "V-SIM-126-ALL3"
+   ],
+   "kind": "safety",
+   "lean_transcription_only": false,
+   "missing_methods": [
+    "a formal proof (SymbiYosys or Lean)"
+   ],
+   "mix_satisfied": false,
+   "own_tests_only": true,
+   "passing_methods": [
+    "sim_test"
+   ],
+   "rests_on_delegated": false,
+   "source": "designs/b96_kr260_10g/host/b96_bench.py",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "partially_verified",
+   "text": "A stale counter, a missing order, a counter that was not read, a wrong polarity or a link that never came up fails the run and names the cause; unsafe actions are refused without the lock.",
+   "title": "The board drivers cannot report OK when a safety check fails",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": true,
+   "id": "B96-S-LASER",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-SIM-DRIVER",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "results/116_traceability/b96_kr260_10g/pytest_junit.xml",
+     "record_sha256": "d28fc34ecb984ecd005e0c9ba87f0cb1584e1fbcb6e365447ffa19a17969310a",
+     "status": "pass",
+     "title": "Board bench, ppm and bypass drivers judged on a fake board (every safety counter, polarity, lock, verdicts)"
+    },
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-HW-LASER",
+     "instrument": "jtag_registers",
+     "method": "board_measurement",
+     "mutation_score": null,
+     "record": "results/b96e/hw/20261119_231251/rm_gp/stage3.json",
+     "record_sha256": "23f45435ee27d90cf456cf5003499c8503e6ce80f08e1ac72a9f0589ff40bb2a",
+     "status": "pass",
+     "title": "Laser polarity read back before the laser was enabled"
+    }
+   ],
+   "items": [
+    "V-SIM-DRIVER",
+    "V-HW-LASER"
+   ],
+   "kind": "safety",
+   "lean_transcription_only": false,
+   "missing_methods": [],
+   "mix_satisfied": true,
+   "own_tests_only": false,
+   "passing_methods": [
+    "board_measurement",
+    "sim_test"
+   ],
+   "rests_on_delegated": false,
+   "source": "designs/b96_kr260_10g/handover.yaml",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "verified",
+   "text": "tx_disable is 1 at reset; the board run switches the laser on only after the polarity was read back.",
+   "title": "The laser is off at reset and its polarity is confirmed",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": true,
+   "id": "B96-S-ROC",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-HW-SYSMON-96E",
+     "instrument": "sysmon",
+     "method": "board_measurement",
+     "mutation_score": null,
+     "record": "results/b96e/hw/20261119_231251/rm_gp/session.json",
+     "record_sha256": "cd79277b3d7b1a9df68d42fc707990fef90b697b1019e0a83545f77327ddce32",
+     "status": "pass",
+     "title": "SYSMON at the start and end of the 96E run"
+    },
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-HW-SYSMON-EYE",
+     "instrument": "sysmon",
+     "method": "board_measurement",
+     "mutation_score": null,
+     "record": "results/b96d/hw/20261120_105134/lpm_1.json",
+     "record_sha256": "cea525d207cac5284163fef2e4da9978a235b06ca75a7e2811ddde7d6928b308",
+     "status": "pass",
+     "title": "SYSMON at the start and end of the first measured eye scan"
+    }
+   ],
+   "items": [
+    "V-HW-SYSMON-96E",
+    "V-HW-SYSMON-EYE"
+   ],
+   "kind": "safety",
+   "lean_transcription_only": false,
+   "missing_methods": [
+    "a simulation check"
+   ],
+   "mix_satisfied": false,
+   "own_tests_only": false,
+   "passing_methods": [
+    "board_measurement"
+   ],
+   "rests_on_delegated": false,
+   "source": "_handoff/fpga_agent/fpga_agent_house_rules.md",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "partially_verified",
+   "text": "Die temperature, VCCINT, VCCAUX and VCCBRAM read from SYSMON are inside the DS925 windows at the start and end of every board run.",
+   "title": "Board runs stay inside the recommended operating conditions",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "B96-S-CDC",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "stale",
+     "id": "V-TIM-CDC-DEFAULT",
+     "instrument": null,
+     "method": "timing",
+     "mutation_score": null,
+     "record": "results/b96c/builds/control/digest.json",
+     "record_sha256": "f4c148e6e13ba7ea7ff6a7c4f2ff446c859bba0d0d49d62c5b8d982b953dc9bd",
+     "stale_because": "changed since the evidence was recorded: designs/b96_kr260_10g/rtl/b96_core.sv, designs/b96_kr260_10g/rtl/hs_vec.sv, designs/b96_kr260_10g/rtl/rate_match.sv, designs/b96_kr260_10g/rtl/rate_match_gp.sv (+1 more)",
+     "status": "stale",
+     "title": "report_cdc gates, default build (no critical, structure clean)"
+    },
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "stale",
+     "id": "V-TIM-CDC-RMGP",
+     "instrument": null,
+     "method": "timing",
+     "mutation_score": null,
+     "record": "results/b96e/builds/rm_gp/digest.json",
+     "record_sha256": "fdc4edc0935ad555d9099277e65ff2ef4a58676ec0096db0946140804ce95f9d",
+     "stale_because": "changed since the evidence was recorded: designs/b96_kr260_10g/rtl/b96_core.sv, designs/b96_kr260_10g/rtl/hs_vec.sv, designs/b96_kr260_10g/rtl/rate_match.sv, designs/b96_kr260_10g/rtl/rate_match_gp.sv (+1 more)",
+     "status": "stale",
+     "title": "report_cdc gates, build rm_gp"
+    },
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-TIM-CDC-BYPASS",
+     "instrument": null,
+     "method": "timing",
+     "mutation_score": null,
+     "record": "results/b96f1/builds/rm_gp_bypass/digest.json",
+     "record_sha256": "f49d9a7e1a0827e729628b2985e04fb9b5debc2907345275c5fa3a6ceacd7dac",
+     "status": "pass",
+     "title": "report_cdc gates, build rm_gp_bypass"
+    },
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-XVC-CDC",
+     "instrument": null,
+     "method": "timing",
+     "mutation_score": null,
+     "record": "results/b131/builds/dbg_xvc/digest.json",
+     "record_sha256": "6cd508f9998e95f91d7debd76e4bc269e3a921357e156ff08b2e49ece705be9c",
+     "status": "pass",
+     "title": "report_cdc after routing, build dbg_xvc (no critical item)"
+    },
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-XVC-CDC-STRUCT",
+     "instrument": null,
+     "method": "timing",
+     "mutation_score": null,
+     "record": "results/b140/builds/dbg_xvc/digest.json",
+     "record_sha256": "ad5c3a21cdf4b5262cd2aca8ebbd5b47ea8b65616cbb39ec008faa14371eb622",
+     "status": "pass",
+     "title": "The flow's post-synthesis CDC structure gate on dbg_xvc (brief 140: AMD's CDC-15 waiver for the XPM handshake left report_cdc no row for the 2203 hs_vec crossings; the flow now reads their exception from the timing exceptions)"
+    }
+   ],
+   "items": [
+    "V-TIM-CDC-DEFAULT",
+    "V-TIM-CDC-RMGP",
+    "V-TIM-CDC-BYPASS",
+    "V-XVC-CDC",
+    "V-XVC-CDC-STRUCT"
+   ],
+   "kind": "safety",
+   "lean_transcription_only": false,
+   "missing_methods": [
+    "a simulation check",
+    "a formal proof (SymbiYosys or Lean)"
+   ],
+   "mix_satisfied": false,
+   "own_tests_only": false,
+   "passing_methods": [
+    "timing"
+   ],
+   "rests_on_delegated": false,
+   "source": "designs/b96_kr260_10g/docs/design.md#26-where-the-decision-lives-and-how-it-crosses-clocks-as-built-for-brief-96-superseded-by-section-9-brief-96c",
+   "spec_status": "draft",
+   "stale_items": 2,
+   "state": "partially_verified",
+   "text": "report_cdc shows no Critical item and every crossing has the documented synchroniser structure.",
+   "title": "No critical clock-domain crossing",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "B96-I-REGMAP",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-SIM-REGMAP",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "results/116_traceability/b96_kr260_10g/pytest_junit.xml",
+     "record_sha256": "d28fc34ecb984ecd005e0c9ba87f0cb1584e1fbcb6e365447ffa19a17969310a",
+     "status": "pass",
+     "title": "Register map is current, decoded exactly, widths agree, stated rules hold"
+    }
+   ],
+   "items": [
+    "V-SIM-REGMAP"
+   ],
+   "kind": "interface",
+   "lean_transcription_only": false,
+   "missing_methods": [
+    "a simulation check from a bench the implementing agent did not write"
+   ],
+   "mix_satisfied": false,
+   "own_tests_only": true,
+   "passing_methods": [
+    "sim_test"
+   ],
+   "rests_on_delegated": false,
+   "source": "designs/b96_kr260_10g/docs/register_map.md",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "partially_verified",
+   "text": "Every address in regmap.py is decoded, nothing else is, vector widths agree, and the datasheet states unmapped reads return 0, counters read from a snapshot and reads have no side effects.",
+   "title": "The register map is generated from one source and decoded exactly",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "B96-F-BUILDS",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-SIM-126-ALL3",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "results/116_traceability/b96_kr260_10g/pytest_junit.xml",
+     "record_sha256": "d28fc34ecb984ecd005e0c9ba87f0cb1584e1fbcb6e365447ffa19a17969310a",
+     "status": "pass",
+     "title": "Build lat_all3_bypass composes 97C's cuts with the bypass build's files, and its board driver's verdicts, references and lock prefix (brief 126)"
+    },
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-SIM-169-CUTS",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "results/116_traceability/b96_kr260_10g/pytest_junit.xml",
+     "record_sha256": "d28fc34ecb984ecd005e0c9ba87f0cb1584e1fbcb6e365447ffa19a17969310a",
+     "status": "pass",
+     "title": "Prototype latency cuts EARLY_MAC and FAST_PRE (lat_cuts169) keep their defaults off, are copies, and pass the 97C core bench in all four parameter combinations (brief 169)"
+    },
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-SIM-BUILDS",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "results/116_traceability/b96_kr260_10g/pytest_junit.xml",
+     "record_sha256": "d28fc34ecb984ecd005e0c9ba87f0cb1584e1fbcb6e365447ffa19a17969310a",
+     "status": "pass",
+     "title": "Build parameter consistency"
+    }
+   ],
+   "items": [
+    "V-SIM-126-ALL3",
+    "V-SIM-169-CUTS",
+    "V-SIM-BUILDS"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": false,
+   "missing_methods": [
+    "a simulation check from a bench the implementing agent did not write"
+   ],
+   "mix_satisfied": false,
+   "own_tests_only": true,
+   "passing_methods": [
+    "sim_test"
+   ],
+   "rests_on_delegated": false,
+   "source": "designs/b96_kr260_10g/handover.yaml",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "partially_verified",
+   "text": "The build files set parameters the core has, the base build keeps the 97C defaults, and each variant differs from the base only where documented.",
+   "title": "Every build variant sets only the parameters it documents",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "B96-F-EYESCAN",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-SIM-EYESCAN",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "results/116_traceability/b96_kr260_10g/pytest_junit.xml",
+     "record_sha256": "d28fc34ecb984ecd005e0c9ba87f0cb1584e1fbcb6e365447ffa19a17969310a",
+     "status": "pass",
+     "title": "Eye-scan sequencer against its twin and a DRP stand-in"
+    }
+   ],
+   "items": [
+    "V-SIM-EYESCAN"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": false,
+   "missing_methods": [
+    "a simulation check from a bench the implementing agent did not write"
+   ],
+   "mix_satisfied": false,
+   "own_tests_only": true,
+   "passing_methods": [
+    "sim_test"
+   ],
+   "rests_on_delegated": false,
+   "source": "designs/b96_kr260_10g/docs/design.md#10-on-chip-rx-eye-scan-brief-96d-2026-11-19",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "partially_verified",
+   "text": "es_ctrl aborts a point on a DRP timeout, latches the point at start, restores every DRP word and is absent when EYESCAN = 0.",
+   "title": "The eye-scan sequencer drives the GT's DRP as its Python twin does",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": "board",
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": true,
+   "id": "B96-P-LAT-E",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-SIM-LATENCY-MODEL",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "results/116_traceability/b96_kr260_10g/pytest_junit.xml",
+     "record_sha256": "d28fc34ecb984ecd005e0c9ba87f0cb1584e1fbcb6e365447ffa19a17969310a",
+     "status": "pass",
+     "title": "Latency stage file reproduces the recorded numbers; board and simulation never added into one figure"
+    },
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-HW-LAT-E-96E",
+     "instrument": "latency_loop",
+     "method": "board_measurement",
+     "mutation_score": null,
+     "record": "results/b96e/hw/20261119_231251/rm_gp/stage3.json",
+     "record_sha256": "23f45435ee27d90cf456cf5003499c8503e6ce80f08e1ac72a9f0589ff40bb2a",
+     "status": "pass",
+     "title": "Build rm_gp, 100 restarts, median of per-link minima"
+    },
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "stale",
+     "id": "V-HW-LAT-E-97C",
+     "instrument": "latency_loop",
+     "method": "board_measurement",
+     "mutation_score": null,
+     "record": "results/b97c/hw/20261118_194221/control/stage3.json",
+     "record_sha256": "e77343e6c99c90b667c0d3036d758fb55d8347b15801800474e82794d451ebe7",
+     "stale_because": "changed since the evidence was recorded: designs/b96_kr260_10g/rtl/b96_core.sv, designs/b96_kr260_10g/rtl/b96_pkg.sv, designs/b96_kr260_10g/rtl/hs_vec.sv, designs/b96_kr260_10g/rtl/pcs_rx.sv (+5 more)",
+     "status": "stale",
+     "title": "Default build (97C), 100 restarts"
+    }
+   ],
+   "items": [
+    "V-SIM-LATENCY-MODEL",
+    "V-HW-LAT-E-96E",
+    "V-HW-LAT-E-97C"
+   ],
+   "kind": "performance",
+   "lean_transcription_only": false,
+   "missing_methods": [],
+   "mix_satisfied": true,
+   "own_tests_only": false,
+   "passing_methods": [
+    "board_measurement",
+    "sim_test"
+   ],
+   "performance": {
+    "bound": 22,
+    "condition": "clock 6.206 ns, 100 link restarts, KR260 optical fibre loopback, fibre lead 0.17 m",
+    "op": "le",
+    "quantity": "echo latency E (median of per-link minima)",
+    "unit": "clocks"
+   },
+   "rests_on_delegated": false,
+   "source": "designs/b96_kr260_10g/docs/design.md#6-loop-measurement-method-pre-registered-stage-3",
+   "spec_status": "draft",
+   "stale_items": 1,
+   "state": "verified",
+   "text": "Regression bound drawn from the 96E board record; the owner sets the target.",
+   "title": "Echo latency E",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": "board",
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": true,
+   "id": "B96-P-LAT-L",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-SIM-LATENCY-MODEL",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "results/116_traceability/b96_kr260_10g/pytest_junit.xml",
+     "record_sha256": "d28fc34ecb984ecd005e0c9ba87f0cb1584e1fbcb6e365447ffa19a17969310a",
+     "status": "pass",
+     "title": "Latency stage file reproduces the recorded numbers; board and simulation never added into one figure"
+    },
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-HW-LAT-L-96E",
+     "instrument": "latency_loop",
+     "method": "board_measurement",
+     "mutation_score": null,
+     "record": "results/b96e/hw/20261119_231251/rm_gp/stage3.json",
+     "record_sha256": "23f45435ee27d90cf456cf5003499c8503e6ce80f08e1ac72a9f0589ff40bb2a",
+     "status": "pass",
+     "title": "Build rm_gp, 100 restarts"
+    },
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "stale",
+     "id": "V-HW-LAT-L-97C",
+     "instrument": "latency_loop",
+     "method": "board_measurement",
+     "mutation_score": null,
+     "record": "results/b97c/hw/20261118_194221/control/stage3.json",
+     "record_sha256": "e77343e6c99c90b667c0d3036d758fb55d8347b15801800474e82794d451ebe7",
+     "stale_because": "changed since the evidence was recorded: designs/b96_kr260_10g/rtl/b96_core.sv, designs/b96_kr260_10g/rtl/b96_pkg.sv, designs/b96_kr260_10g/rtl/hs_vec.sv, designs/b96_kr260_10g/rtl/pcs_rx.sv (+5 more)",
+     "status": "stale",
+     "title": "Default build (97C), 100 restarts"
+    }
+   ],
+   "items": [
+    "V-SIM-LATENCY-MODEL",
+    "V-HW-LAT-L-96E",
+    "V-HW-LAT-L-97C"
+   ],
+   "kind": "performance",
+   "lean_transcription_only": false,
+   "missing_methods": [],
+   "mix_satisfied": true,
+   "own_tests_only": false,
+   "passing_methods": [
+    "board_measurement",
+    "sim_test"
+   ],
+   "performance": {
+    "bound": 55,
+    "condition": "clock 6.206 ns, 100 link restarts, KR260 optical fibre loopback, fibre lead 0.17 m",
+    "op": "le",
+    "quantity": "trading-loop latency L (median of per-link minima)",
+    "unit": "clocks"
+   },
+   "rests_on_delegated": false,
+   "source": "designs/b96_kr260_10g/docs/design.md#6-loop-measurement-method-pre-registered-stage-3",
+   "spec_status": "draft",
+   "stale_items": 1,
+   "state": "verified",
+   "text": "Regression bound drawn from the 96E board record (L = 2E + D); the owner sets the target.",
+   "title": "Trading-loop latency L",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": "board",
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": true,
+   "id": "B96-P-LAT-D",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-SIM-LATENCY-MODEL",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "results/116_traceability/b96_kr260_10g/pytest_junit.xml",
+     "record_sha256": "d28fc34ecb984ecd005e0c9ba87f0cb1584e1fbcb6e365447ffa19a17969310a",
+     "status": "pass",
+     "title": "Latency stage file reproduces the recorded numbers; board and simulation never added into one figure"
+    },
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-HW-LAT-D-96E",
+     "instrument": "latency_loop",
+     "method": "board_measurement",
+     "mutation_score": null,
+     "record": "results/b96e/hw/20261119_231251/rm_gp/stage3.json",
+     "record_sha256": "23f45435ee27d90cf456cf5003499c8503e6ce80f08e1ac72a9f0589ff40bb2a",
+     "status": "pass",
+     "title": "Build rm_gp, D = L - 2E from the medians of minima"
+    }
+   ],
+   "items": [
+    "V-SIM-LATENCY-MODEL",
+    "V-HW-LAT-D-96E"
+   ],
+   "kind": "performance",
+   "lean_transcription_only": false,
+   "missing_methods": [],
+   "mix_satisfied": true,
+   "own_tests_only": false,
+   "passing_methods": [
+    "board_measurement",
+    "sim_test"
+   ],
+   "performance": {
+    "bound": 13,
+    "condition": "clock 6.206 ns, 100 link restarts, KR260 optical fibre loopback",
+    "op": "le",
+    "quantity": "decision latency D (L - 2E from medians of minima)",
+    "unit": "clocks"
+   },
+   "rests_on_delegated": false,
+   "source": "results/b96f1/preregistration.md",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "verified",
+   "text": "D = L - 2E; the 96F1 pre-registration expects it unchanged within 1 clock of 12.",
+   "title": "Decision latency D",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "B96-P-T2T-DIGITAL",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "stale",
+     "id": "V-SIMM-T2T",
+     "instrument": null,
+     "method": "sim_measurement",
+     "mutation_score": null,
+     "record": "results/b96e/core_lat_sim.json",
+     "record_sha256": "77fb782b78af4c9f598f019b6f552970cdb30bdc6e28111db5ac0335b54c73ed",
+     "stale_because": "changed since the evidence was recorded: designs/b96_kr260_10g/rtl/b96_core.sv, designs/b96_kr260_10g/rtl/hs_vec.sv, designs/b96_kr260_10g/rtl/rate_match.sv, designs/b96_kr260_10g/rtl/rate_match_gp.sv (+1 more)",
+     "status": "stale",
+     "title": "xsim, whole core, own gray-pointer buffer, phase 1550 ps"
+    }
+   ],
+   "items": [
+    "V-SIMM-T2T"
+   ],
+   "kind": "performance",
+   "lean_transcription_only": false,
+   "missing_methods": [],
+   "mix_satisfied": false,
+   "own_tests_only": false,
+   "passing_methods": [],
+   "performance": {
+    "GT receive word to GT transmit order start (mean over 8 orders)": null,
+    "bound": 14,
+    "condition": "xsim, RATE_MATCH = 1, RM_OWN = 1, clock phase 1550 ps",
+    "op": "le",
+    "quantity": "tick-to-trade",
+    "unit": "clocks"
+   },
+   "rests_on_delegated": false,
+   "source": "docs/latency_definitions.md",
+   "spec_status": "draft",
+   "stale_items": 1,
+   "state": "stale",
+   "text": "Whole core in xsim with AMD's real XPM macros and the GT stand-in, own gray-pointer buffer; the GT, optics and clock-crossing phase are not in the simulation. Regression bound drawn from the 96E record.",
+   "title": "Digital tick-to-trade, GT port to GT port",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": "timing",
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "B96-P-TIMING",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "stale",
+     "id": "V-TIM-SETUP-DEFAULT",
+     "instrument": null,
+     "method": "timing",
+     "mutation_score": null,
+     "record": "results/b96c/builds/control/digest.json",
+     "record_sha256": "f4c148e6e13ba7ea7ff6a7c4f2ff446c859bba0d0d49d62c5b8d982b953dc9bd",
+     "stale_because": "changed since the evidence was recorded: designs/b96_kr260_10g/rtl/b96_core.sv, designs/b96_kr260_10g/rtl/hs_vec.sv, designs/b96_kr260_10g/rtl/rate_match.sv, designs/b96_kr260_10g/rtl/rate_match_gp.sv (+1 more)",
+     "status": "stale",
+     "title": "Default build, routed"
+    },
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "stale",
+     "id": "V-TIM-SETUP-RMGP",
+     "instrument": null,
+     "method": "timing",
+     "mutation_score": null,
+     "record": "results/b96e/builds/rm_gp/digest.json",
+     "record_sha256": "fdc4edc0935ad555d9099277e65ff2ef4a58676ec0096db0946140804ce95f9d",
+     "stale_because": "changed since the evidence was recorded: designs/b96_kr260_10g/rtl/b96_core.sv, designs/b96_kr260_10g/rtl/hs_vec.sv, designs/b96_kr260_10g/rtl/rate_match.sv, designs/b96_kr260_10g/rtl/rate_match_gp.sv (+1 more)",
+     "status": "stale",
+     "title": "Build rm_gp, routed"
+    },
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-TIM-SETUP-BYPASS",
+     "instrument": null,
+     "method": "timing",
+     "mutation_score": null,
+     "record": "results/b96f1/builds/rm_gp_bypass/digest.json",
+     "record_sha256": "f49d9a7e1a0827e729628b2985e04fb9b5debc2907345275c5fa3a6ceacd7dac",
+     "status": "pass",
+     "title": "Build rm_gp_bypass, routed"
+    },
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-XVC-TIM-SETUP",
+     "instrument": null,
+     "method": "timing",
+     "mutation_score": null,
+     "record": "results/b131/builds/dbg_xvc/digest.json",
+     "record_sha256": "6cd508f9998e95f91d7debd76e4bc269e3a921357e156ff08b2e49ece705be9c",
+     "status": "pass",
+     "title": "Build dbg_xvc, routed"
+    }
+   ],
+   "items": [
+    "V-TIM-SETUP-DEFAULT",
+    "V-TIM-SETUP-RMGP",
+    "V-TIM-SETUP-BYPASS",
+    "V-XVC-TIM-SETUP"
+   ],
+   "kind": "performance",
+   "lean_transcription_only": false,
+   "missing_methods": [],
+   "mix_satisfied": true,
+   "own_tests_only": false,
+   "passing_methods": [
+    "timing"
+   ],
+   "performance": {
+    "bound": 0,
+    "condition": "routed, Vivado 2026.1, user clocks 161.133 MHz and 100 MHz",
+    "op": "ge",
+    "quantity": "worst setup slack (WNS)",
+    "unit": "ns"
+   },
+   "rests_on_delegated": false,
+   "source": "designs/b96_kr260_10g/handover.yaml",
+   "spec_status": "draft",
+   "stale_items": 2,
+   "state": "verified",
+   "text": "Every build closes timing on the 161.133 MHz and 100 MHz user clocks.",
+   "title": "Post-route setup slack",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": "timing",
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "B96-P-HOLD",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "stale",
+     "id": "V-TIM-HOLD-DEFAULT",
+     "instrument": null,
+     "method": "timing",
+     "mutation_score": null,
+     "record": "results/b96c/builds/control/digest.json",
+     "record_sha256": "f4c148e6e13ba7ea7ff6a7c4f2ff446c859bba0d0d49d62c5b8d982b953dc9bd",
+     "stale_because": "changed since the evidence was recorded: designs/b96_kr260_10g/rtl/b96_core.sv, designs/b96_kr260_10g/rtl/hs_vec.sv, designs/b96_kr260_10g/rtl/rate_match.sv, designs/b96_kr260_10g/rtl/rate_match_gp.sv (+1 more)",
+     "status": "stale",
+     "title": "Default build, routed"
+    },
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "stale",
+     "id": "V-TIM-HOLD-RMGP",
+     "instrument": null,
+     "method": "timing",
+     "mutation_score": null,
+     "record": "results/b96e/builds/rm_gp/digest.json",
+     "record_sha256": "fdc4edc0935ad555d9099277e65ff2ef4a58676ec0096db0946140804ce95f9d",
+     "stale_because": "changed since the evidence was recorded: designs/b96_kr260_10g/rtl/b96_core.sv, designs/b96_kr260_10g/rtl/hs_vec.sv, designs/b96_kr260_10g/rtl/rate_match.sv, designs/b96_kr260_10g/rtl/rate_match_gp.sv (+1 more)",
+     "status": "stale",
+     "title": "Build rm_gp, routed"
+    },
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-TIM-HOLD-BYPASS",
+     "instrument": null,
+     "method": "timing",
+     "mutation_score": null,
+     "record": "results/b96f1/builds/rm_gp_bypass/digest.json",
+     "record_sha256": "f49d9a7e1a0827e729628b2985e04fb9b5debc2907345275c5fa3a6ceacd7dac",
+     "status": "pass",
+     "title": "Build rm_gp_bypass, routed"
+    },
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-XVC-TIM-HOLD",
+     "instrument": null,
+     "method": "timing",
+     "mutation_score": null,
+     "record": "results/b131/builds/dbg_xvc/digest.json",
+     "record_sha256": "6cd508f9998e95f91d7debd76e4bc269e3a921357e156ff08b2e49ece705be9c",
+     "status": "pass",
+     "title": "Build dbg_xvc, routed"
+    }
+   ],
+   "items": [
+    "V-TIM-HOLD-DEFAULT",
+    "V-TIM-HOLD-RMGP",
+    "V-TIM-HOLD-BYPASS",
+    "V-XVC-TIM-HOLD"
+   ],
+   "kind": "performance",
+   "lean_transcription_only": false,
+   "missing_methods": [],
+   "mix_satisfied": true,
+   "own_tests_only": false,
+   "passing_methods": [
+    "timing"
+   ],
+   "performance": {
+    "bound": 0,
+    "condition": "routed, Vivado 2026.1",
+    "op": "ge",
+    "quantity": "worst hold slack (WHS)",
+    "unit": "ns"
+   },
+   "rests_on_delegated": false,
+   "source": "designs/b96_kr260_10g/handover.yaml",
+   "spec_status": "draft",
+   "stale_items": 2,
+   "state": "verified",
+   "text": "Every build closes hold on all clocks.",
+   "title": "Post-route hold slack",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": "board",
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": true,
+   "id": "B96-P-EYE",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-HW-EYE",
+     "instrument": "eye_scan",
+     "method": "board_measurement",
+     "mutation_score": null,
+     "record": "results/b96d/hw/20261120_105134/summary.txt",
+     "record_sha256": "a4c117e7963373eaa30ae81e1c25a90f9ece25f968145dc14bbbc117c22d0b65",
+     "status": "pass",
+     "title": "First measured receive eye (LPM, first of four repeats), 1023 points"
+    }
+   ],
+   "items": [
+    "V-HW-EYE"
+   ],
+   "kind": "performance",
+   "lean_transcription_only": false,
+   "missing_methods": [],
+   "mix_satisfied": true,
+   "own_tests_only": false,
+   "passing_methods": [
+    "board_measurement"
+   ],
+   "performance": {
+    "bound": 0.5,
+    "condition": "KR260 fibre loopback, one module, room temperature, eye-scan build",
+    "op": "ge",
+    "quantity": "eye width at BER 1e-9 (LPM equaliser)",
+    "unit": "UI"
+   },
+   "rests_on_delegated": false,
+   "source": "designs/b96_kr260_10g/docs/design.md#10-on-chip-rx-eye-scan-brief-96d-2026-11-19",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "verified",
+   "text": "Horizontal eye opening after the equaliser, read by the on-chip eye scan on the board. Draft bound for a short loopback; the owner sets the target.",
+   "title": "Receive eye margin",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": "board",
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": true,
+   "id": "B96-P-BYPASS",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "stale",
+     "id": "V-SIMM-BYPASS-SEQ",
+     "instrument": null,
+     "method": "sim_measurement",
+     "mutation_score": null,
+     "record": "results/b96f1/bypass_seq/result.txt",
+     "record_sha256": "457378d737a4382242b69cf84b2db58aacf9a88707d0cba642934a5b1b091dd8",
+     "stale_because": "changed since the evidence was recorded: designs/b96_kr260_10g/rm_gp_bypass/rtl/b96_core.sv, designs/b96_kr260_10g/rm_gp_bypass/rtl/gt_bp_gate.sv",
+     "status": "stale",
+     "title": "Buffer-bypass run gate against a stand-in transceiver in xsim, 28 checks"
+    },
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-HW-BYPASS",
+     "instrument": "latency_loop",
+     "method": "board_measurement",
+     "mutation_score": null,
+     "record": "results/b96f1/hw/20261120_215255/rm_gp_bypass/stage3.json",
+     "record_sha256": "d1ffccba2b5649a0db609ca0e8a0ab609805f7fb6b12df3e9abdb80b0c233ff7",
+     "status": "pass",
+     "title": "Build rm_gp_bypass on the KR260, 100 receive restarts (pre-registered, board run 2026-11-21, stamp 86037ce1)"
+    }
+   ],
+   "items": [
+    "V-SIMM-BYPASS-SEQ",
+    "V-HW-BYPASS"
+   ],
+   "kind": "performance",
+   "lean_transcription_only": false,
+   "missing_methods": [],
+   "mix_satisfied": true,
+   "own_tests_only": false,
+   "passing_methods": [
+    "board_measurement"
+   ],
+   "performance": {
+    "bound": 19.5,
+    "condition": "build rm_gp_bypass, 100 receive restarts, KR260 optical fibre loopback, fibre lead 0.17 m",
+    "op": "le",
+    "quantity": "echo latency E (median of per-link minima)",
+    "unit": "clocks"
+   },
+   "rests_on_delegated": false,
+   "source": "results/b96f1/preregistration.md",
+   "spec_status": "draft",
+   "stale_items": 1,
+   "state": "verified",
+   "text": "Build rm_gp_bypass must lower E by at least 1.5 clocks against rm_gp (21.0), else the bypass did not take effect. Pre-registered before any board time. Measured 2026-11-21 (stamp 86037ce1) as E = 17.0 clocks, 4.0 lower, inside the predicted 2.9 to 4.5 (results/b96f1/README.md).",
+   "title": "GT buffer bypass shortens the echo path (pre-registered)",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "external": "a 10G network card or a line-rate traffic generator",
+   "hardware_closure": "open",
+   "hardware_only": true,
+   "hardware_verified": false,
+   "id": "B96-P-THROUGHPUT",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "no evidence",
+     "id": "V-HW-THROUGHPUT-PLANNED",
+     "instrument": "external_equipment",
+     "method": "board_measurement",
+     "mutation_score": null,
+     "record": null,
+     "record_sha256": null,
+     "status": "not_run",
+     "title": "Line-rate burst from a traffic source"
+    }
+   ],
+   "items": [
+    "V-HW-THROUGHPUT-PLANNED"
+   ],
+   "kind": "performance",
+   "lean_transcription_only": false,
+   "missing_methods": [],
+   "mix_satisfied": false,
+   "own_tests_only": false,
+   "passing_methods": [],
+   "performance": {
+    "bound": 0,
+    "condition": "1518-byte frames, 10 s burst, against a 10G network card",
+    "op": "eq",
+    "quantity": "frames lost in a line-rate burst",
+    "unit": "frames"
+   },
+   "rests_on_delegated": false,
+   "source": "designs/b96_kr260_10g/handover.yaml",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "not_run",
+   "text": "A burst at line rate loses no frame. Nothing has been measured; the line and payload rates stand on configuration and gearbox arithmetic only.",
+   "title": "Line-rate throughput without loss",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "B96-F-DBGXVC",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-XVC-TIM-SETUP",
+     "instrument": null,
+     "method": "timing",
+     "mutation_score": null,
+     "record": "results/b131/builds/dbg_xvc/digest.json",
+     "record_sha256": "6cd508f9998e95f91d7debd76e4bc269e3a921357e156ff08b2e49ece705be9c",
+     "status": "pass",
+     "title": "Build dbg_xvc, routed"
+    },
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-XVC-TIM-HOLD",
+     "instrument": null,
+     "method": "timing",
+     "mutation_score": null,
+     "record": "results/b131/builds/dbg_xvc/digest.json",
+     "record_sha256": "6cd508f9998e95f91d7debd76e4bc269e3a921357e156ff08b2e49ece705be9c",
+     "status": "pass",
+     "title": "Build dbg_xvc, routed"
+    },
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-XVC-CDC",
+     "instrument": null,
+     "method": "timing",
+     "mutation_score": null,
+     "record": "results/b131/builds/dbg_xvc/digest.json",
+     "record_sha256": "6cd508f9998e95f91d7debd76e4bc269e3a921357e156ff08b2e49ece705be9c",
+     "status": "pass",
+     "title": "report_cdc after routing, build dbg_xvc (no critical item)"
+    },
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-XVC-CDC-STRUCT",
+     "instrument": null,
+     "method": "timing",
+     "mutation_score": null,
+     "record": "results/b140/builds/dbg_xvc/digest.json",
+     "record_sha256": "ad5c3a21cdf4b5262cd2aca8ebbd5b47ea8b65616cbb39ec008faa14371eb622",
+     "status": "pass",
+     "title": "The flow's post-synthesis CDC structure gate on dbg_xvc (brief 140: AMD's CDC-15 waiver for the XPM handshake left report_cdc no row for the 2203 hs_vec crossings; the flow now reads their exception from the timing exceptions)"
+    },
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-XVC-FLOW-GATES",
+     "instrument": null,
+     "method": "timing",
+     "mutation_score": null,
+     "record": "results/b140/builds/dbg_xvc/gates.json",
+     "record_sha256": "63d0a2734eb2df55ae966332ad0b2560cee8a0b0b4df6887362077d9d362368b",
+     "status": "pass",
+     "title": "Every flow gate of build dbg_xvc, synthesis to bitstream (brief 140: six that failed in brief 131 now pass, by flow fixes and no waiver; the eyescan and default builds are unchanged)"
+    },
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-XVC-VERDICT",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "results/116_traceability/b96_kr260_10g/pytest_junit.xml",
+     "record_sha256": "d28fc34ecb984ecd005e0c9ba87f0cb1584e1fbcb6e365447ffa19a17969310a",
+     "status": "pass",
+     "title": "The board test's pre-registered verdict fails on each broken criterion; the debug build differs from the parent only in the debug files"
+    },
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-XVC-TRADING-PATH",
+     "instrument": null,
+     "method": "timing",
+     "mutation_score": null,
+     "record": "results/b131/compare/summary.json",
+     "record_sha256": "950b17ffa18c0b33ed515977796e123a2c5a3bd091d24285f82311c3f17cbbe8",
+     "status": "pass",
+     "title": "Parent (eyescan) against dbg_xvc, same flow, same commit: the core's cells, and the worst slack of paths through the trading path"
+    },
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "no evidence",
+     "id": "V-HW-XVC-PLANNED",
+     "instrument": "ila_capture",
+     "method": "board_measurement",
+     "mutation_score": null,
+     "record": null,
+     "record_sha256": null,
+     "status": "not_run",
+     "title": "ILA found and captured over XVC while Linux runs (pre-registered, dbg_xvc/board/xvc_board_session.sh)"
+    }
+   ],
+   "items": [
+    "V-XVC-TIM-SETUP",
+    "V-XVC-TIM-HOLD",
+    "V-XVC-CDC",
+    "V-XVC-CDC-STRUCT",
+    "V-XVC-FLOW-GATES",
+    "V-XVC-VERDICT",
+    "V-XVC-TRADING-PATH",
+    "V-HW-XVC-PLANNED"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": false,
+   "missing_methods": [
+    "a simulation check from a bench the implementing agent did not write"
+   ],
+   "mix_satisfied": false,
+   "own_tests_only": false,
+   "passing_methods": [
+    "sim_test",
+    "timing"
+   ],
+   "rests_on_delegated": false,
+   "source": "designs/b96_kr260_10g/dbg_xvc/docs/dbg_xvc.md",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "partially_verified",
+   "text": "Build dbg_xvc (the eyescan build plus a PS-AXI Debug Bridge and one ILA) closes timing and report_cdc, adds no cell to and removes no cell from the core's hierarchy except the read-only taps, and, on the board, Vivado finds and captures from the ILA over XVC while Linux keeps running. Never part of a build whose latency is measured.",
+   "title": "A debug build reaches an ILA over the network and leaves the trading path alone",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "B96-F-LEAN-GRAY-STEP",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-LEAN-GRAY-STEP",
+     "instrument": null,
+     "lean": {
+      "approver_kind": "agent_delegated",
+      "build_source": "recorded build (not re-run)",
+      "rtl_link": "transcription_tested",
+      "tier": "kernel_only"
+     },
+     "method": "formal_lean",
+     "mutation_score": null,
+     "record": "formal/lean/records/build_record.json",
+     "record_sha256": "3d60b1f76ac87b74d5dcbe085c0eb8e43e0287d69d5fa557490a685624e6c4f6",
+     "status": "pass",
+     "title": "One bit changes per count, wrap included, every width"
+    }
+   ],
+   "items": [
+    "V-LEAN-GRAY-STEP"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": true,
+   "missing_methods": [],
+   "mix_satisfied": true,
+   "own_tests_only": false,
+   "passing_methods": [
+    "formal_lean"
+   ],
+   "rests_on_delegated": true,
+   "source": "designs/b96_kr260_10g/rtl/rate_match_gp.sv (pointer crossings u_wp and u_rp, xpm_cdc_gray)",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "verified",
+   "text": "The write and read pointers of rate_match_gp count modulo 2^CW and cross by gray code. For every width CW > 0 and every value, the gray codes of b and b + 1 (including the wrap from 2^CW - 1 to 0) differ in exactly one bit, so a sample taken while the pointer moves is the old or the new code.",
+   "title": "A pointer's gray code changes in exactly one bit per count, at every width",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "B96-F-LEAN-GRAY-DECODE",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-LEAN-GRAY-DECODE",
+     "instrument": null,
+     "lean": {
+      "approver_kind": "agent_delegated",
+      "build_source": "recorded build (not re-run)",
+      "rtl_link": "transcription_tested",
+      "tier": "kernel_only"
+     },
+     "method": "formal_lean",
+     "mutation_score": null,
+     "record": "formal/lean/records/build_record.json",
+     "record_sha256": "3d60b1f76ac87b74d5dcbe085c0eb8e43e0287d69d5fa557490a685624e6c4f6",
+     "status": "pass",
+     "title": "Decode after encode is the identity, every width"
+    },
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-LEAN-GRAY-ENCODE",
+     "instrument": null,
+     "lean": {
+      "approver_kind": "agent_delegated",
+      "build_source": "recorded build (not re-run)",
+      "rtl_link": "transcription_tested",
+      "tier": "kernel_only"
+     },
+     "method": "formal_lean",
+     "mutation_score": null,
+     "record": "formal/lean/records/build_record.json",
+     "record_sha256": "3d60b1f76ac87b74d5dcbe085c0eb8e43e0287d69d5fa557490a685624e6c4f6",
+     "status": "pass",
+     "title": "Encode after decode is the identity, every width"
+    },
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-LEAN-GRAY-SAMPLE",
+     "instrument": null,
+     "lean": {
+      "approver_kind": "agent_delegated",
+      "build_source": "recorded build (not re-run)",
+      "rtl_link": "transcription_tested",
+      "tier": "kernel_only"
+     },
+     "method": "formal_lean",
+     "mutation_score": null,
+     "record": "formal/lean/records/build_record.json",
+     "record_sha256": "3d60b1f76ac87b74d5dcbe085c0eb8e43e0287d69d5fa557490a685624e6c4f6",
+     "status": "pass",
+     "title": "A code sampled mid-step decodes to the old or the new count"
+    }
+   ],
+   "items": [
+    "V-LEAN-GRAY-DECODE",
+    "V-LEAN-GRAY-ENCODE",
+    "V-LEAN-GRAY-SAMPLE"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": true,
+   "missing_methods": [],
+   "mix_satisfied": true,
+   "own_tests_only": false,
+   "passing_methods": [
+    "formal_lean"
+   ],
+   "rests_on_delegated": true,
+   "source": "designs/b96_kr260_10g/rtl/rate_match_gp.sv (pointer crossings u_wp and u_rp, xpm_cdc_gray)",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "verified",
+   "text": "For every width and value, the decoder of the pointer crossing returns the count the encoder was given; and a sampled code that is the old or the new code decodes to the old or the new count.",
+   "title": "Gray decoding inverts gray encoding, at every width",
+   "waivers": []
+  }
+ ],
+ "schema": "fda-verified/1",
+ "summary_line": "29 requirements (12 functional, 9 performance, 1 interface, 7 safety); 14 verified, of which 2 rest on delegated acceptances (the planner accepted the Lean statement on the owner's delegation; not human approvals); 11 partially verified (the required mix of methods is not met); 1 stale; 1 failing; 2 with no passing evidence; 2 with no passing evidence; 0 of 3 requirements that depend on an external element closed by hardware; performance verified: 5 on the board, 2 by post-route timing, 0 in simulation only; 0 of 29 requirements agreed by a human, 0 agreed on the owner's delegation (not human), 29 draft; 8 resting only on the implementing agent's own tests; 0 human and 0 delegated review(s) recorded; 4 Lean proof item(s) (all widths): 0 with a human-approved statement, 4 with a statement accepted on the owner's delegation (not a human approval), 0 with statement not approved; 4 kernel only, 0 using a compiled decision procedure; build status from: recorded build (not re-run)."
+}

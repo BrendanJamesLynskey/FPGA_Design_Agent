@@ -46,6 +46,12 @@ def collect() -> dict[str, str]:
     out["model_contract"] = _h(__import__("agent.graph.contract", fromlist=["x"]).MODEL_CONTRACT)
     out["floors_text"] = _h(gr.floors_text())
     out["repair_note"] = _h(gr.repair_note("tests", ["a failure", "another"]))
+    try:                                       # brief 224: the Designer's file-by-file instruction and the continuation note (absent before brief 224)
+        out["file_by_file_note"] = _h(gr.FILE_BY_FILE_NOTE)
+        d = Path("/nonexistent_design")
+        out["files_status_note"] = _h([gr.files_status_note(d, True), gr.files_status_note(d, False)])
+    except AttributeError:
+        pass
     out["oracle_system"] = _h(interview.SpecOracle.SYSTEM)
     try:                                       # brief 68 C: the DOC step's prompt (absent before brief 68)
         from agent.graph import document

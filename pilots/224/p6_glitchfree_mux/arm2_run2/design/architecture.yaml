@@ -1,0 +1,24 @@
+schema: fpga-design-agent/architecture/v1
+blocks:
+- {name: jtag_bus, function: BSCANE2 USER4 register bus bridge}
+- {name: rst_gen, function: power-on reset held 8 clk cycles}
+- {name: clkmux_core, function: registers, switch control, gate timer, muxed domain checker}
+- {name: clk_mux_cells, function: IBUFDS_GTE4, BUFG_GT and BUFGCTRL clock mux}
+interfaces:
+- {name: reg_port, between: [jtag_bus, clkmux_core], protocol: simple, prefix: h, module: clkmux_core}
+clock_domains:
+- {name: clk, clock: clk, freq_mhz: 25}
+- {name: clk_mux, clock: clk_mux, freq_mhz: 156.25}
+reset:
+  synchronisers: [rst_gen]
+crossings:
+- {from: clk_mux, to: clk, signal: err_count, primitive: xpm_cdc_gray, inline_in: clkmux_core}
+- {from: clk_mux, to: clk, signal: freq_count, primitive: xpm_cdc_handshake, inline_in: clkmux_core}
+- {from: clk, to: clk_mux, signal: snapshot, primitive: xpm_cdc_handshake, inline_in: clkmux_core}
+- {from: clk_mux, to: clk, signal: active_sel, primitive: xpm_cdc_single, inline_in: clkmux_core}
+- {from: clk, to: clk_mux, signal: rst, primitive: xpm_cdc_async_rst, inline_in: clkmux_core}
+predicted_resources:
+  lut: [550, 900]
+  ff: [900, 1400]
+  bram_tile: 0
+  dsp: 0

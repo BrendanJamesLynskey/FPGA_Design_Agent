@@ -1,0 +1,71 @@
+{
+ "schema": "fpga-design-agent/rp-check/v1",
+ "block": "rp_patgen",
+ "mock": true,
+ "evidence": false,
+ "rows": [
+  {
+   "check": "id",
+   "result": "pass",
+   "detail": "ID register reads 0xfda10201, expected 0xfda10201 (rp_patgen)"
+  },
+  {
+   "check": "reset_values",
+   "result": "pass",
+   "detail": "all RW registers at their reset values"
+  },
+  {
+   "check": "scratch",
+   "result": "pass",
+   "detail": "five patterns read back"
+  },
+  {
+   "check": "limit_ceiling",
+   "result": "pass",
+   "detail": "LIMIT after writing 0x7FFF reads 7372 (the ceiling is 7372 = 0.9 V)"
+  },
+  {
+   "check": "clamp_period",
+   "result": "pass",
+   "detail": "PERIOD: wrote 0, read 2, expected 2"
+  },
+  {
+   "check": "clamp_count",
+   "result": "pass",
+   "detail": "COUNT: wrote 0, read 1, expected 1"
+  },
+  {
+   "check": "clamp_pat_len",
+   "result": "pass",
+   "detail": "PAT_LEN: wrote 99, read 16, expected 16"
+  },
+  {
+   "check": "clamp_sample_div",
+   "result": "pass",
+   "detail": "SAMPLE_DIV: wrote 0, read 1, expected 1"
+  },
+  {
+   "check": "clamp_mode",
+   "result": "pass",
+   "detail": "MODE: wrote 7, read 0, expected 0"
+  },
+  {
+   "check": "level_signed14",
+   "result": "pass",
+   "detail": "LEVEL_HI after 0x1FFF reads 0x1fff"
+  },
+  {
+   "check": "idle_status",
+   "result": "pass",
+   "detail": "STATUS reads 0x0: not RUNNING after load, nothing started"
+  },
+  {
+   "check": "patgen_output",
+   "result": "pass",
+   "detail": "not run: no confirmation to move OUT1 was given (the run script asks for it)",
+   "skipped": true
+  }
+ ],
+ "accesses": 66,
+ "pass": true
+}

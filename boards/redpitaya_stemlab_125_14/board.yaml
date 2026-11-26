@@ -1,0 +1,178 @@
+# Red Pitaya STEMlab 125-14, original generation, board v1.1: board file (fpga-design-agent/board/v2). Facts name their sources (ids under
+# `sources`); an unconfirmed fact says so and why. Written by hand from the cited documents; see boards/SCHEMA.md and README.md here.
+schema: fpga-design-agent/board/v2
+name: redpitaya_stemlab_125_14
+display_name: Red Pitaya STEMlab 125-14 (original generation, v1.1)
+vendor: Red Pitaya d.o.o.
+family: Zynq-7000
+part: xc7z010clg400-1
+board_revision: "the owner's board is v1.1 (web UI footer 'STEMlab 125-14 v1.1', owner screenshot 2026-11-25); the vendor board file 1.1 lists revisions 1.0 and 1.1 as compatible"
+master_xdc: redpitaya_stemlab_125_14-pins.xdc
+master_xdc_source:
+  kind: derived
+  tool: tools/board_pins_import.py
+  spec: boards/redpitaya_stemlab_125_14/pins_import.yaml
+  note: our own listing of documented pin locations (the vendor's BSD-licensed constraints and board file, pinned to a commit), not a copy of a vendor file
+sources:
+  RPFPGA:
+    title: Red Pitaya FPGA repository (shell v0.94, shared RTL, constraints, board file, build scripts); BSD 3-clause, copyright Red Pitaya d.o.o.
+    version: RedPitaya/RedPitaya-FPGA @ 728a4f37e9c0a9b5ba1d9b7a0d44c38bbd2dc674 (commit of 2026-07-20; files sdc/red_pitaya.xdc, brd/redpitaya/1.1/part0_pins.xml, prj/v0.94/rtl/red_pitaya_top.sv, rtl/rtl/sys_bus_interconnect.sv, red_pitaya_vivado_Z10.tcl)
+    url: https://github.com/RedPitaya/RedPitaya-FPGA
+  RPDOC_BOARD:
+    title: Red Pitaya documentation, STEMlab 125-14 (original generation) hardware page
+    version: "read 2026-11-26 (page footer 2026); HTML sha256 82bd20c6a04fc8b57a2435fb8a1012fb6dc90228e945c06ed638cecf4ee3666e"
+    url: https://redpitaya.readthedocs.io/en/latest/developerGuide/hardware/ORIG_GEN/125-14/top.html
+  RPDOC_ORIGHW:
+    title: Red Pitaya documentation, common hardware specifications (original generation)
+    version: "read 2026-11-26; HTML sha256 4bbead77cf94b86a82601e7336e62e3d3bca0a6e167d19894ab0f99af1889b43"
+    url: https://redpitaya.readthedocs.io/en/latest/developerGuide/hardware/ORIG_GEN/hw_specs/hw_specs.html
+  RPDOC_OVERLAY:
+    title: Red Pitaya documentation, overlay utility (FPGA configuration), OS 2.07-43 and newer
+    version: "read 2026-11-26; HTML sha256 5d5620b30a963dd35beb17bfa1e56d31d471295618f9f672d27af1399729c54b"
+    url: https://redpitaya.readthedocs.io/en/latest/appsFeatures/command_line_tools/utils/overlay_util.html
+  OWNER:
+    title: The owner's record of the board in the planner's board-visit plan (2026-11-25 entries)
+    version: "2026-11-25 17:45 to 18:02 (jumpers, hostname, OS 3.00-57, web UI footer)"
+    url: https://redpitaya.com/stemlab-125-14/
+clock:
+  port: adc_clk_p
+  port_n: adc_clk_n
+  pin: U18
+  pin_n: U19
+  differential: true
+  iostandard: DIFF_HSTL_I_18
+  freq_mhz: 125
+  period_ns_in_vendor_xdc: 8.0
+  source:
+  - RPFPGA
+  - RPDOC_BOARD
+resources:
+  clk_p: adc_clk_p
+  clk_n: adc_clk_n
+  led:
+  - led[0]
+  - led[1]
+  - led[2]
+  - led[3]
+  - led[4]
+  - led[5]
+  - led[6]
+  - led[7]
+  dio_p:
+  - exp_p_io[0]
+  - exp_p_io[1]
+  - exp_p_io[2]
+  - exp_p_io[3]
+  - exp_p_io[4]
+  - exp_p_io[5]
+  - exp_p_io[6]
+  - exp_p_io[7]
+  dio_n:
+  - exp_n_io[0]
+  - exp_n_io[1]
+  - exp_n_io[2]
+  - exp_n_io[3]
+  - exp_n_io[4]
+  - exp_n_io[5]
+  - exp_n_io[6]
+  - exp_n_io[7]
+facts:
+- item: part
+  value: xc7z010clg400-1 (Zynq-7000, speed grade -1); dual-core Cortex-A9; the vendor's build script and board file both name this part
+  source:
+  - RPFPGA
+  - RPDOC_BOARD
+- item: licence
+  value: the installed Vivado 2026.1 Basic tier routed a one-flop design on xc7z010clg400-1 (results/95_boards/licence_probe.json, brief 95), so no paid licence is needed for this part
+  source:
+  - RPFPGA
+- item: PL clock
+  value: no PL oscillator of its own for user logic; a 125 MHz oscillator drives the ADC clock inputs, which the shell takes as a differential pair on U18 (P, adc_clk_i[1]) and U19 (N, adc_clk_i[0]) in DIFF_HSTL_I_18 and constrains with an 8.000 ns clock; the PS has its own clock for FCLK0 to FCLK3
+  source:
+  - RPFPGA
+  - RPDOC_BOARD
+- item: fast ADC
+  value: LTC2145-14, two channels, 14 bit, 125 MS/s; data on two 16-bit LVCMOS18 buses (adc_dat_i[0] for IN1, adc_dat_i[1] for IN2) of which the shell uses the top 14 bits and flips the slope to two's complement; a duty-cycle-stabiliser pin adc_cdcs_o (V18) and an optional ADC clock-source output (adc_clk_o, N20 and P20, unused by the shell) are also wired
+  source:
+  - RPFPGA
+  - RPDOC_BOARD
+- item: fast DAC
+  value: AD9767, two channels, 14 bit, 125 MS/s; one multiplexed 14-bit LVCMOS33 data bus (dac_dat_o) with write, select, clock and reset (dac_wrt_o, dac_sel_o, dac_clk_o, dac_rst_o); the shell drives them through ODDR primitives, channel B on one clock edge and channel A on the other
+  source:
+  - RPFPGA
+  - RPDOC_BOARD
+- item: analogue front end
+  value: IN1 and IN2 SMA, 1 Mohm / 10 pF, DC coupled, full scale +-1 V (jumper LV) or +-20 V (jumper HV), absolute maximum +-6 V (LV) or +-30 V (HV), bandwidth DC to 60 MHz; OUT1 and OUT2 SMA, +-1 V into 50 ohm, DC coupled, short-circuit protected, bandwidth DC to 60 MHz; all share the power-supply ground
+  source:
+  - RPDOC_BOARD
+  - RPDOC_ORIGHW
+- item: input jumpers
+  value: the board file lists jumpers IN1 and IN2 with default LV. OWNER-CONFIRMED 2026-11-25 for the owner's board are IN1 = LV (+-1 V) and IN2 = HV (+-20 V). This is a fact about this board as set, not about the product; the owner moves the jumpers with the board unpowered
+  source:
+  - RPFPGA
+  - OWNER
+  confirmed_by: owner
+  confirmed_on: '2026-11-25'
+- item: extension connector E1
+  value: 2 x 13 IDC, 2.54 mm; 16 single-ended LVCMOS33 lines DIO0_P/N to DIO7_P/N on G17, G18, H16, H17, J18, H18, K17, K18, L14, L15, L16, L17, K16, J16, M14, M15 (the shell calls them exp_p_io[n] and exp_n_io[n]; DIO0_P is also the external trigger and DIO0_N the trigger output; DIO6 and DIO7 double as CAN); absolute maximum -0.40 V to 3.3 V + 0.55 V, drive under 8 mA; the +3V3 pins are limited to 0.5 A shared with USB
+  source:
+  - RPDOC_BOARD
+  - RPFPGA
+- item: extension connector E2
+  value: +5 V, -3.4 V (100 mA), SPI/UART/I2C on PS MIO pins (not PL), four slow analogue inputs (XADC, 0 to 7 V, 12 bit, 100 kS/s) on the pairs B19/A20, C20/B20, E17/D18, E18/E19, four slow PWM outputs (0 to 1.8 V, 8 bit) on T10, T11, P15, U13 (left out of the master XDC; they sit behind filters)
+  source:
+  - RPDOC_BOARD
+  - RPFPGA
+- item: user LEDs
+  value: eight PL LEDs led[0] to led[7] on F16, F17, G15, H15, K14, G14, J15, J14 (LVCMOS33, slew slow, drive 4 mA in the vendor XDC); four status LEDs (blue FPGA loaded, green power, red heartbeat, orange SD access) are not user LEDs
+  source:
+  - RPFPGA
+  - RPDOC_ORIGHW
+- item: memory
+  value: 512 MB DDR3 (MT41J256M16HA-125 on a 16-bit bus in the vendor build); micro-SD card slot; QSPI flash S25FL128SAGNFI001 not populated on standard boards
+  source:
+  - RPDOC_BOARD
+  - RPFPGA
+- item: PS-side address window
+  value: the shell's PS AXI GP0 master reaches a system bus that the shell splits into eight 1 MiB slots from 0x40000000 (slot n at 0x40n00000, 20-bit slave addresses, bus clock the 125 MHz ADC clock); in shell v0.94 slots 0 to 5 are used (housekeeping, scope, ASG, PID, analogue mixed signals, daisy) and slots 6 and 7 are stubs
+  source:
+  - RPFPGA
+- item: loading a bitstream
+  value: OS 2.07-43 and newer load it at run time with overlay.sh (or fpgautil) through the Linux FPGA manager from a file named fpga.bit.bin (plus a device-tree overlay fpga.dtbo); the loaded configuration is volatile and a power cycle returns the board to the image its boot files select; the blue LED shows a loaded bitstream
+  source:
+  - RPDOC_OVERLAY
+  - RPDOC_ORIGHW
+- item: power
+  value: 5 V DC, isolated, at most 2 A, micro USB; the recommended supply is KA23-0502000DES; a PC USB port or a thin lead can cause reboots; operating 0 to +55 C with the supplied heatsink; software shuts the board down near 85 C (the Zynq limit)
+  source:
+  - RPDOC_ORIGHW
+- item: DAC output swing into a high-impedance input
+  status: unconfirmed
+  reason: the original-generation hardware page states +-1 V into 50 ohm only; the Gen 2 page states two values (+-2 V into Hi-Z and +-1 V into 50 ohm) and says the original is +-1 V, so the open-circuit swing of the original is not given. A loopback self-test from OUT1 to IN1 (1 Mohm) must start at a small amplitude and treat a reading at full scale as clipped
+- item: LED polarity
+  status: unconfirmed
+  reason: the vendor XDC gives pins and drive strength, not polarity; the owner's own count-on-LED bitstreams of 2021 (backup in _bench/redpitaya_sd_backup_2026-11-25) would show it but were not read here
+slow_ports:
+- led\[\d+\]
+- exp_[pn]_io\[\d+\]
+- vin[pn]_i\[\d+\]
+- dac_rst_o
+thermal:
+  airflow_lfm: 0
+  heatsink: none
+  board: medium
+  board_layers: 8to11
+  ambient_c: 40
+  status: assumption
+  reason: the stack-up and the heatsink's thermal resistance are not published; still air and no heat sink is the pessimistic bound. The vendor states 0 to +55 C operation with the supplied heatsink and a shutdown at 85 C
+hardware_use:
+  owned: true
+  rule: 'the Red Pitaya rule recorded by brief 225 (the planner to confirm it into the house rules): 5 V DC isolated supply of 2 A or 2.1 A on the micro USB, never a PC port; the agent never touches the board; every board step is a script the owner runs at a visit; a custom bitstream is loaded into the volatile PL configuration only, with overlay.sh or fpgautil, and a power cycle returns the factory image; never write the SD card or its boot partition, never replace boot.bin, never change the OS image, never run the OS updater, never enable the factory SCPI server from a script; IN1 is on LV (+-1 V) so nothing above +-1 V goes into IN1, and a design never drives OUT1 into anything unprotected. Never transfer this rule to another board.'
+smoke:
+  clk_hz: 125000000
+  banner: Red Pitaya
+pin_aliases:
+  source:
+  - RPFPGA
+  reason: no physical pin is listed under two names
+  pins: []
