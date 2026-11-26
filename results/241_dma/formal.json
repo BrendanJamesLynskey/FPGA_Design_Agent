@@ -1,0 +1,103 @@
+{
+ "proofs": [
+  {
+   "task": "m32",
+   "kind": "k-induction",
+   "status": "PASS",
+   "seconds": 1.9
+  },
+  {
+   "task": "s32",
+   "kind": "k-induction",
+   "status": "PASS",
+   "seconds": 1.9
+  },
+  {
+   "task": "m64",
+   "kind": "k-induction",
+   "status": "PASS",
+   "seconds": 2.5
+  },
+  {
+   "task": "s64",
+   "kind": "k-induction",
+   "status": "PASS",
+   "seconds": 2.7
+  },
+  {
+   "task": "m128",
+   "kind": "k-induction",
+   "status": "PASS",
+   "seconds": 2.7
+  },
+  {
+   "task": "s128",
+   "kind": "k-induction",
+   "status": "PASS",
+   "seconds": 3.1
+  },
+  {
+   "task": "g32m",
+   "kind": "bounded (bmc depth 30)",
+   "status": "PASS",
+   "seconds": 112.2
+  },
+  {
+   "task": "g32s",
+   "kind": "bounded (bmc depth 30)",
+   "status": "PASS",
+   "seconds": 457.3
+  },
+  {
+   "task": "m32c",
+   "kind": "cover",
+   "status": "PASS",
+   "seconds": 2.4
+  },
+  {
+   "task": "s32c",
+   "kind": "cover",
+   "status": "PASS",
+   "seconds": 3.5
+  }
+ ],
+ "faults": [
+  {
+   "name": "no_4k_split",
+   "tasks": {
+    "m32": "FAIL",
+    "s32": "FAIL"
+   },
+   "refuted": true
+  },
+  {
+   "name": "wlast_early",
+   "tasks": {
+    "g32s": "FAIL"
+   },
+   "refuted": true
+  },
+  {
+   "name": "outstanding_one_over",
+   "tasks": {
+    "g32m": "FAIL",
+    "g32s": "FAIL"
+   },
+   "refuted": true
+  },
+  {
+   "name": "w_before_aw",
+   "tasks": {
+    "g32s": "FAIL"
+   },
+   "refuted": true
+  },
+  {
+   "name": "status_w_before_aw",
+   "tasks": {
+    "g32m": "FAIL"
+   },
+   "refuted": true
+  }
+ ]
+}

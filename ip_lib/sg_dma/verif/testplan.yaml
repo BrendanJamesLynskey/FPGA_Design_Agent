@@ -1,0 +1,106 @@
+schema: fpga-design-agent/testplan/v1
+entry: sg_dma
+purpose: 'v1 testplan of a library entry (brief 241): every requirement traces to the tests, formal tasks and seeded faults that check it.
+  flow/tests/test_151_partition_testplans.py checks that every name below resolves.'
+model: ip_lib/sg_dma/model.py
+bench: ip_lib/sg_dma/tb/test_sg_dma_rtl.py
+formal_dir: ip_lib/sg_dma/formal
+requirements:
+- id: R01
+  requirement: The data moved is the data in the source buffers (MM2S) or in the stream (S2MM), in order, with tlast on the last beat of each descriptor's buffer, and no byte beside a buffer is written.
+  tests:
+  - ip_lib/sg_dma/tb/test_sg_dma_rtl.py::test_engine
+  formal: []
+  faults:
+  - tlast_every_burst
+  - rready_ignores_sink
+  - strobe_lane
+- id: R02
+  requirement: Every burst is INCR, as wide as the data bus (4 bytes for the status write), at most MAX_BURST beats, aligned, and inside one 4 KB page; the burst list equals the model's split of the buffer.
+  tests:
+  - ip_lib/sg_dma/tb/test_sg_dma_rtl.py::test_engine
+  formal:
+  - m32
+  - s32
+  - m64
+  - s64
+  - m128
+  - s128
+  faults:
+  - no_4k_split
+  - arlen_off_by_one
+  - ring_base_unaligned
+  - misaligned_address_accepted
+- id: R03
+  requirement: Once VALID is high on any channel the engine drives (AR, AW, W, the stream port, the AXI4-Lite B and R) it stays high with its payload unchanged until READY.
+  tests:
+  - ip_lib/sg_dma/tb/test_sg_dma_rtl.py::test_engine
+  formal:
+  - m32
+  - s32
+  - m64
+  - s64
+  - m128
+  - s128
+  faults: []
+- id: R04
+  requirement: Write data is offered only for a burst whose address was accepted (the status write too), and wlast is on exactly the last beat of the burst.
+  tests:
+  - ip_lib/sg_dma/tb/test_sg_dma_rtl.py::test_engine
+  formal:
+  - g32m
+  - g32s
+  faults:
+  - w_before_aw
+  - status_w_before_aw
+  - wlast_early
+- id: R05
+  requirement: No more than OUTSTANDING data bursts are in flight.
+  tests:
+  - ip_lib/sg_dma/tb/test_sg_dma_rtl.py::test_engine
+  formal:
+  - g32m
+  - g32s
+  faults:
+  - outstanding_one_over
+- id: R06
+  requirement: Descriptors are taken in ring order and wrap at RING_SIZE; each is completed with its status word in place (DONE, bytes moved, BAD when nothing moved); TAIL and DONE_COUNT advance once per descriptor.
+  tests:
+  - ip_lib/sg_dma/tb/test_sg_dma_rtl.py::test_engine
+  formal: []
+  faults:
+  - ring_wrap
+  - tail_not_advanced
+  - status_address
+  - done_count_double
+  - bad_reports_bytes
+- id: R07
+  requirement: SLVERR and DECERR on a data beat are recorded in the descriptor's status and the ERR register and the engine goes on; a failed descriptor fetch or status write halts it with TAIL unchanged and the memory's read channel drained.
+  tests:
+  - ip_lib/sg_dma/tb/test_sg_dma_rtl.py::test_engine
+  formal: []
+  faults:
+  - slverr_read_ignored
+  - slverr_write_ignored
+  - status_fail_not_halting
+  - desc_fetch_not_drained
+- id: R08
+  requirement: The interrupt fires every IRQ_THRESH completions, when the ring drains, and at once for an IOC descriptor; it is acknowledged by writing 1 to STATUS.IRQ and gated by CTRL.IRQ_EN.
+  tests:
+  - ip_lib/sg_dma/tb/test_sg_dma_rtl.py::test_engine
+  formal: []
+  faults:
+  - irq_threshold_off_by_one
+  - ioc_ignored
+- id: R09
+  requirement: The register map behaves as the datasheet states it (reset values, read-only registers, write-1-to-clear bits, holes read 0 and ignore writes).
+  tests:
+  - ip_lib/sg_dma/tb/test_sg_dma_rtl.py::test_engine
+  formal: []
+  faults: []
+- id: R10
+  requirement: Parameters outside the declared space fail at elaboration.
+  tests:
+  - ip_lib/sg_dma/tb/test_sg_dma_rtl.py::test_guards
+  formal: []
+  faults: []

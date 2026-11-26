@@ -2232,6 +2232,202 @@
    "summary": "AXI4, AXI4-Lite and AXI4-Stream handshakes, bursts, bridges and crossing clocks, AMD's AXI IP, and the PS-PL ports of Zynq-7000 and UltraScale+."
   },
   {
+   "about": "A DMA engine moves blocks of data between memory and a stream, or between two memories, without the processor touching each word. The area covers the choice of engine (AMD's AXI DMA, central, multichannel and video DMA, the PCIe bridges, or a small engine written for the job), how descriptors, burst length and the number of bursts in flight set the throughput, the page-boundary rule every burst must keep, how a transfer's end is reported to software, and, on the Zynq processors, whether the caches see what the fabric reads and writes. The agent knows this from skills, asks the standing intake questions when a request moves blocks of data, and has an advisory check that flags a design reaching processor memory through a port that does not snoop the caches without a stated software contract. The library holds one engine of our own, simulated and proved against the AXI rules, and measured in simulation only: no board run exists yet.",
+   "cap_reason": null,
+   "cards": [],
+   "checks": [
+    {
+     "enforced": false,
+     "file": "flow/checks/dma_coherency.py",
+     "gate": "DMA-COH-01",
+     "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/flow/checks/dma_coherency.py",
+     "what": "Advisory, from the spec's dma section and the port names in the sources: a design that reaches processor memory through a high-performance port, which does not snoop the caches, with no declared software cache contract; and a hardware-coherent contract declared on ports that are not coherent. Never fails a run."
+    },
+    {
+     "enforced": false,
+     "file": "agent/graph/interview.py",
+     "gate": "DMA_QUESTIONS",
+     "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/agent/graph/interview.py",
+     "what": "Six standing questions added to the interview of a request that moves blocks of data: direction and buffer ownership, size and rate, the memory port, completion and interrupts, back pressure and errors, and the cache contract, each with a default and the reason for it."
+    }
+   ],
+   "counts": {
+    "checks": 2,
+    "enforced": 0,
+    "evidence": 3,
+    "sections": 6,
+    "skills": 10
+   },
+   "evidence": [
+    {
+     "kind": "model",
+     "sources": [
+      {
+       "path": "results/241_dma/summary.json",
+       "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/results/241_dma/summary.json"
+      }
+     ],
+     "text": "In simulation against a memory with 20 clocks of read latency, our scatter-gather engine reads 0.2 of the memory port's limit for descriptors of 64 bytes, 0.94 for 4096 bytes and 0.98 for 16,384 bytes, with four bursts in flight; with one burst in flight it stays at 0.44. Descriptor overhead, not the data, sets the small-transfer figure."
+    },
+    {
+     "kind": "model",
+     "sources": [
+      {
+       "path": "results/241_dma/faults.json",
+       "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/results/241_dma/faults.json"
+      }
+     ],
+     "text": "20 of 22 seeded faults in the engine (a burst across a page boundary, a wrong length, a lost beat under back pressure, an ignored error response, a late interrupt and others) were caught by the simulation bench."
+    },
+    {
+     "kind": "model",
+     "sources": [
+      {
+       "path": "results/241_dma/formal.json",
+       "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/results/241_dma/formal.json"
+      }
+     ],
+     "text": "6 of 6 proofs by k-induction passed: the valid-held-until-ready rules on every channel the engine drives, burst size, alignment and the page-boundary rule, at three data widths in both directions; write data after its address and the burst limit are proved to a bounded depth only."
+    }
+   ],
+   "family": {
+    "docs": {
+     "common": [
+      {
+       "doc": "UG1037 v4.0 (AXI reference)",
+       "use": "AXI reference (protocol rules shared by both)"
+      }
+     ],
+     "zynq7000_ps": [
+      {
+       "doc": "UG585 (Zynq-7000 TRM, docs.amd.com 2026-02-06)",
+       "use": "GP/HP/ACP ports, AXI3, HP FIFOs and QoS"
+      }
+     ],
+     "zynqmp_ps": [
+      {
+       "doc": "UG1085 v2.5 (Zynq UltraScale+ TRM)",
+       "use": "HPM/HPC/HP/ACP/ACE ports and coherency"
+      }
+     ]
+    },
+    "rows": [
+     {
+      "confirmed": "doc",
+      "summary": "Zynq-7000 offers M/S_AXI_GP (32-bit), S_AXI_HP0-3 (64-bit) and S_AXI_ACP; Zynq UltraScale+ offers HPM0/1_FPD, HPM0_LPD, HPC0/1, HP0-3, ACP, ACE and S_AXI_LPD, up to 128 bits.",
+      "topic": "PS-PL AXI port set"
+     },
+     {
+      "confirmed": "doc",
+      "summary": "The Zynq-7000 PS ports are AXI3 (16-beat bursts, write IDs); the Zynq UltraScale+ PS ports are AXI4, so interconnect conversion needs differ.",
+      "topic": "AXI protocol version at the PS boundary"
+     },
+     {
+      "confirmed": "doc",
+      "summary": "Zynq-7000: one I/O-coherent port (ACP), 32-byte lines; Zynq UltraScale+: HPC0/1 coherent only when the master marks its transfers and CCI snooping is on, 64-byte lines, a line-only ACP.",
+      "topic": "Cache coherency of PL DMA buffers"
+     },
+     {
+      "confirmed": "tool",
+      "summary": "Zynq-7000: the ACP beat an HP DMA with software cache maintenance at every size from 16 bytes to 1 MB (HP time beyond the fabric job ran near 0.3 GB/s); ZU+ HPC and ACP are not measured.",
+      "topic": "ACP against HP for CPU-produced buffers"
+     }
+    ]
+   },
+   "figures": [],
+   "gaps": [
+    "No board run: throughput and latency are simulation figures against a memory model of ours, with fixed latency and no other masters; the board measurement is pre-registered and not run.",
+    "AMD's DMA cores were not run: the comparison is with a behavioural model built from the product guide's published numbers, and the guide does not state its test bench's memory.",
+    "The engine has no descriptor prefetch, handles one descriptor at a time, does not end a receive on the stream's last-beat flag, and moves whole beats only.",
+    "The agent has not been run on a DMA task yet (it waits for the brief that fixes the harness it would run on); whether it picks and wires the engine correctly is not known.",
+    "The knowledge-bank skills on engine choice and the cache contract are in a pull request and not yet at the pin, so the drawer lists the skills already at the pin."
+   ],
+   "id": "dma",
+   "level": "knowledge",
+   "level_label": "Knowledge only",
+   "level_n": 1,
+   "name": "Data movement and DMA",
+   "skills": [
+    {
+     "items": [
+      {
+       "description": "Moving data between memory and AXI4-Stream with the AMD AXI DMA IP (PG021): simple (direct register) versus scatter-gather mode, the register programming order ...",
+       "name": "amd-axi-dma-simple-and-sg"
+      }
+     ],
+     "section": "ip-cores",
+     "unit": "vendor/amba_axi"
+    },
+    {
+     "items": [
+      {
+       "description": "Generating or checking AXI4 (full) burst addresses and lengths: INCR, WRAP and FIXED, AxLEN and AxSIZE, the 4 KB boundary rule, splitting long transfers, WLAST and RLAST placement ...",
+       "name": "axi4-bursts-addressing-and-4kb-rule"
+      }
+     ],
+     "section": "amba",
+     "unit": "vendor/amba_axi"
+    },
+    {
+     "items": [
+      {
+       "description": "Direct-mapped or set-associative caches, tag/index/offset, write and replacement policies, hit/miss timing, DMA engines.",
+       "name": "caches-and-memory-systems"
+      }
+     ],
+     "section": "caches-and-dma",
+     "unit": "functions"
+    },
+    {
+     "items": [
+      {
+       "description": "Moving data between a CPU and a fabric block: AXI-Stream with simple or scatter-gather DMA, descriptor rings with producer and consumer indices, doorbells, the publish-then-ring ordering ...",
+       "name": "stream-dma-doorbells-and-interrupts"
+      },
+      {
+       "description": "A PL master (DMA or accelerator) shares buffers with the Arm cores of a Zynq-7000 or Zynq UltraScale+: which port (HP, HPC, ACP, ACE) is coherent and on what conditions ...",
+       "name": "zynq-cache-coherency-for-dma"
+      }
+     ],
+     "section": "hw-sw-codesign",
+     "unit": "vendor/hw_sw_codesign"
+    },
+    {
+     "items": [
+      {
+       "description": "Choosing between software, an HP-port DMA with cache maintenance and an ACP DMA for a 4 KB to 1 MB buffer on a Zynq-7000 ...",
+       "name": "zynq7000-acp-vs-hp-measured-crossover"
+      },
+      {
+       "description": "Sizing or debugging PL masters on the Zynq-7000 HP and ACP ports: AXI3 limits, 32 versus 64-bit mode, command expansion versus upsizing and the AxCACHE[1] bit, write store-and-forward ...",
+       "name": "zynq7000-hp-and-acp-port-behaviour"
+      },
+      {
+       "description": "Connecting PL logic to the Zynq-7000 PS over AXI: GP master ports and their address windows, GP slaves, HP ports to DDR, the ACP, widths.",
+       "name": "zynq7000-ps-pl-axi-ports"
+      }
+     ],
+     "section": "dram",
+     "unit": "family/zynq7000"
+    },
+    {
+     "items": [
+      {
+       "description": "Choosing and configuring a Zynq UltraScale+ PS-PL AXI port: the confirmed table of data widths, ID and address widths, PS-side AXI3 versus PL-side AXI4 ...",
+       "name": "zynqmp-ps-pl-axi-interface-table"
+      },
+      {
+       "description": "Connecting K26 PL logic to the Zynq UltraScale+ PS over AXI: HPM masters, HPC/HP slave ports to DDR, LPD ports, widths and what to choose.",
+       "name": "zynqmp-ps-pl-axi-ports"
+      }
+     ],
+     "section": "dram",
+     "unit": "family/zynq_ultrascale_plus"
+    }
+   ],
+   "summary": "Moving blocks of data between memory and a stream, choosing between AMD's DMA cores and a small engine of our own, descriptors, bursts and the page-boundary rule, interrupts, and the software cache contract on the Zynq ports."
+  },
+  {
    "about": "AMD supplies free IP cores, such as filters, signal generators, FFTs and memories, that are normally set up through GUI wizards. The agent has no GUI, so the flow drives the wizards from scripts and reads back what they generated. That lets their checks be tested without the GUI.",
    "cap_reason": null,
    "cards": [
@@ -26094,7 +26290,7 @@
  },
  "levels": [
   {
-   "areas": 2,
+   "areas": 3,
    "id": "knowledge",
    "label": "Knowledge only",
    "means": "Skills in the knowledge bank and nothing measured or enforced for this area yet."
@@ -26120,5 +26316,5 @@
  ],
  "pin": "eaf6794",
  "skills_total": 292,
- "skills_used": 216
+ "skills_used": 218
 }

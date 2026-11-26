@@ -209,6 +209,7 @@ class Bench:
         self.sink: list[tuple[int, int]] = []  # (data, last) beats received (DIR = 0)
         self.log: list[tuple[int, str]] = []   # (clock, event) for the measurements
         self.irq_clocks: list[int] = []
+        self.irq_done: list[int] = []         # DONE_COUNT (read from the design) at each rising edge of irq
         self.stream_viol: list[str] = []
         self.prev_irq = 0
         self.snk_hold = None
@@ -286,6 +287,7 @@ class Bench:
         irq = v(d.irq)
         if irq and not self.prev_irq:
             self.irq_clocks.append(now)
+            self.irq_done.append(v(d.done_cnt))
         self.prev_irq = irq
         self.mem.edge(now, mv)
         # event log for the measurements: the first beat and the last beat of data, the status write
@@ -343,7 +345,7 @@ def lay_buffers(bb, lengths, start_off=0x10000, align=None):
     return out
 
 
-async def run_ring(b: Bench, lengths, ring_size, starts=None, thr=1, ioc=None, chunk=None, poll=6, limit=400000):
+async def run_ring(b: Bench, lengths, ring_size, starts=None, thr=1, ioc=None, chunk=None, poll=6, limit=120000):
     """Software: lay buffers, write descriptors, set up the engine, publish HEAD in chunks that fit the ring (free slots come from the TAIL
     register, the driver contract), wait for each chunk. Returns (the data moved, the status words in order)."""
     bb, DIR = b.bb, b.P["DIR"]
@@ -570,42 +572,43 @@ async def bad_descriptors(dut):
 
 @cocotb.test()
 async def interrupts(dut):
-    """Coalescing: one interrupt per IRQ_THRESH completions, one when the ring drains, one at once on an IOC descriptor; acknowledge by W1C."""
+    """Coalescing: an interrupt at once for an IOC descriptor, one per IRQ_THRESH completions while the ring is not empty, one when the ring drains;
+    acknowledge by W1C; IRQ_EN gates the pin. DONE_COUNT at each rising edge of irq tells which completion raised it."""
     b = Bench(dut)
     await b.start()
     prefill(b)
     bb = b.bb
-    ln = [2 * bb] * 7
+    ln = [2 * bb] * 8
     st = lay_buffers(bb, ln)
-    ioc = [False] * 7
-    ioc[1] = True
     pat = bytes(b.rng.getrandbits(8) for _ in range(sum(ln)))
     if b.P["DIR"] == 0:
         for i, (a, n) in enumerate(zip(st, ln)):
             b.mem.mem[a - MEM_BASE:a - MEM_BASE + n] = pat[i * 2 * bb:(i + 1) * 2 * bb]
     else:
         b.src = M.words(pat, bb)
-    await b.setup(16, thr=3)
-    for i in (0, 1):                                  # the IOC on descriptor 1 fires at once (2 completions < 3)
-        b.write_desc(i, st[i], ln[i], ioc[i])
-    await b.wr(M.HEAD, 2)
-    for _ in range(400):
+    await b.setup(16, thr=5)
+    for i in (0, 1, 2):                               # three published at once, the first with IOC, IRQ_THRESH 5: the interrupt comes with the first completion
+        b.write_desc(i, st[i], ln[i], ioc=(i == 0))
+    await b.wr(M.HEAD, 3)
+    for _ in range(500):
         await b.tick()
-    assert len(b.irq_clocks) == 1 and (await b.rd(M.STATUS)) & 4
+    assert b.irq_done == [1], b.irq_done
+    assert (await b.rd(M.STATUS)) & 4
     await b.wr(M.STATUS, 4)
     assert not (await b.rd(M.STATUS)) & 4 and v(dut.irq) == 0
-    for i in range(2, 6):                             # four published at once: an interrupt after the 3rd (the count), a second after the 4th (the ring drained)
+    await b.wr(M.IRQ_THRESH, 3)
+    for i in range(3, 7):                             # four published at once, IRQ_THRESH 3: one interrupt, with the 3rd of them (completion 6), before the ring drains
         b.write_desc(i, st[i], ln[i])
-    await b.wr(M.HEAD, 6)
+    await b.wr(M.HEAD, 7)
     for _ in range(800):
         await b.tick()
-    assert len(b.irq_clocks) == 2, b.irq_clocks
+    assert b.irq_done == [1, 6], b.irq_done
     await b.wr(M.STATUS, 4)
-    b.write_desc(6, st[6], ln[6])                     # a lone descriptor fires because the ring drains
-    await b.wr(M.HEAD, 7)
+    b.write_desc(7, st[7], ln[7])                     # a lone descriptor fires because the ring drains
+    await b.wr(M.HEAD, 8)
     for _ in range(300):
         await b.tick()
-    assert len(b.irq_clocks) == 3 and v(dut.irq) == 1
+    assert b.irq_done == [1, 6, 8] and v(dut.irq) == 1, b.irq_done
     await b.wr(M.CTRL, 1)                             # IRQ_EN off: the pin drops, the status bit stays
     assert v(dut.irq) == 0 and (await b.rd(M.STATUS)) & 4
     b.check_clean()
@@ -654,9 +657,11 @@ async def measure(dut):
     beats = [t for t, k in ev if k in ("rbeat", "wbeat")]
     first_ar = [t for t, k in ev if k == "ar_desc"][0]
     lastb = [t for t, k in ev if k == "b"][-1]
+    first_data_addr = [t for t, k in ev if k in ("ar", "aw")][0]
     out = {"P": b.P, "n": n, "size": size, "rlat": p["rlat"], "wlat": p["wlat"], "beat_bytes": b.bb, "data_beats": len(beats),
            "head_to_first_ar": first_ar - head_t, "head_to_last_b": lastb - head_t, "first_beat": beats[0] - head_t, "last_beat": beats[-1] - head_t,
-           "span_beats": beats[-1] - beats[0] + 1, "total_clocks": lastb - head_t}
+           "span_beats": beats[-1] - beats[0] + 1, "total_clocks": lastb - head_t,
+           "first_data_addr": first_data_addr - head_t, "first_data_addr_to_last_beat": beats[-1] - first_data_addr + 1}
     if os.environ.get("SGD_OUT"):
         with open(os.environ["SGD_OUT"], "a") as f:
             f.write(json.dumps(out) + "\n")

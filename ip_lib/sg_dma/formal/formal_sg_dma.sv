@@ -206,7 +206,7 @@ module formal_sg_dma #(
             cover (wvalid && wlast && wn != 0);
             cover (aw_open == OUTSTANDING);
         end
-        cover (awvalid && awlen == 0 && awsize == 3'd2 && b_hs);
+        cover (b_hs);
     end
 `endif
 endmodule

@@ -89,7 +89,7 @@ register_map:
     offset: 0x24
     summary: Error record. Bits 3 and 1:0 describe the latest data error; bit 2 means a descriptor fetch or a status write failed.
     fields:
-    - {name: CODE, lsb: 0, width: 2, access: W1C, reset: 0, summary: the latest non-OKAY data response (2 SLVERR, 3 DECERR)}
+    - {name: CODE, lsb: 0, width: 2, access: W1C, reset: 0, summary: 'the latest non-OKAY data response: 2 SLVERR or 3 DECERR'}
     - {name: HALT_CAUSE, lsb: 2, width: 1, access: W1C, reset: 0, summary: a descriptor fetch or status write failed}
     - {name: DATA_ERR, lsb: 3, width: 1, access: W1C, reset: 0, summary: some data beat answered SLVERR or DECERR}
 clocks:
@@ -222,3 +222,14 @@ next_steps:
 - Run the pre-registered KR260 measurement through the owner (docs/241_dma_prereg.md).
 - Add descriptor prefetch and compare the small-descriptor throughput with the measured baseline.
 - Add a tlast-terminated S2MM mode and a status word that reports the bytes received.
+characterisation:
+  part: xck26-sfvc784-2LV-c
+  clock_ns: 4.0
+  clock_port: aclk
+  points:
+  - {DIR: 0, DATA_W: 32}
+  - {DIR: 1, DATA_W: 32}
+  - {DIR: 0, DATA_W: 64}
+  - {DIR: 1, DATA_W: 64}
+  - {DIR: 0, DATA_W: 128}
+  - {DIR: 1, DATA_W: 128}

@@ -50,6 +50,12 @@ board run yet.
 | [credit_chan](credit_chan/README.md) | credit-based channel between two AXI4-Stream ports, with forward and return register stages; for the cases valid/ready does not fit | 19 points below, at and above the credit round trip, 12 seeded faults, conservation and order proved |
 | [axi_reg_slice](axi_reg_slice/README.md) | AXI4 and AXI4-Lite register slices, one pipe_reg chain per channel with its own mode | five channels at once against the model, 6 seeded faults |
 
+## Data movement: scatter-gather DMA
+
+| Entry | What | Tests |
+|---|---|---|
+| [sg_dma](sg_dma/README.md) | scatter-gather DMA between an AXI4 memory-mapped master and an AXI4-Stream port (memory to stream or stream to memory, one per instance): a ring of 16-byte descriptors in memory, AXI4-Lite control, INCR bursts cut at 4 KB, several bursts in flight, status written back, interrupt coalescing; datasheet with the driver contract, [DATASHEET.md](sg_dma/DATASHEET.md) | ten parameter points against a memory model with back pressure and SLVERR/DECERR (cocotb), AXI hold rules, burst size and the 4 KB rule proved by k-induction at 32, 64 and 128 bits, 22 seeded faults; measured in simulation only, [results/241_dma](../results/241_dma/README.md) |
+
 ## Networking and packet processing
 
 Byte-wide AXI-Stream blocks, simulated bit-exact against Python golden models with pcap traffic. Status: simulated
