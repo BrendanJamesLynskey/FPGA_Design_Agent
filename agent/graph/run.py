@@ -83,6 +83,8 @@ class State(TypedDict, total=False):
     owners: dict        # stage 2: role -> the failure text that role owns (05c2: repair, do not regenerate)
     sig: str            # stage 2: signature of the last failure
     repeat: int         # stage 2: consecutive visits with an unchanged signature
+    ledger: list        # brief 213 (R2): stage 2, one entry per failed visit (gates, finding, first failing check, files the repair before it changed)
+    fp: dict            # brief 213 (R2): fingerprint of the repair roles' files at the last stage-2 gate evaluation
     note_role: str      # the owner's edit prompt goes to this role (default: the stage's writer)
     arch_source: str    # who wrote the approved architecture: agent | owner
     hand_edit_only: bool  # the owner edited by hand and gave no prompt: re-run the gates on their files, no agent turn
@@ -958,6 +960,9 @@ def stage2_plan(rt: Runtime, state: State) -> dict[str, list[str] | None]:
             "tests": bool(list((d / "tests").glob("test_*_rtl.py"))) if (d / "tests").is_dir() else False,
             "rtl": bool(sources.design_rtl(d))}                # every language: a VHDL design's RTL exists too (brief 153)
     owners = dict(state.get("owners") or {})
+    if "R2" in getattr(getattr(rt, "cfg", None), "arms", ()) and owners:                 # brief 213: the repair visit is shown what earlier visits tried and why each failed
+        from agent.graph.feedback import with_ledger
+        owners = with_ledger(owners, state.get("ledger"))
     plan: dict[str, list[str] | None] = {}
     for role in ("model", "tests", "rtl"):
         if not have[role]:
@@ -1769,6 +1774,14 @@ def node_gate(state: State) -> dict:
         ev["contract"] = _contract(rt, detail)
         if ev["contract"]["ok"]:                       # fail fast: no simulate on a model the tests cannot load
             ev["simulate"] = simulate_gate(rt.session, d)
+            if "R1" in rt.cfg.arms and not ev["simulate"].get("ok") and ev["simulate"].get("first_failure"):
+                from agent.graph.repair import classify_sim
+                if classify_sim(ev["simulate"]["first_failure"], str(ev["simulate"].get("text") or ""))[1] == "mismatch":
+                    from agent.graph import feedback as _fb
+                    from flow import sources as _src
+                    ev["simulate"]["first_check"] = _fb.first_failing_check(rt.session, rt.design, ev["simulate"], list(_src.design_rtl(rt.design)))
+                    log_routing_event(rt, "first_failing_check", **{k: v for k, v in ev["simulate"]["first_check"].items() if k != "text"},
+                                      digest_chars=len(ev["simulate"]["first_check"]["text"]))
         else:
             ev["simulate"] = {"ok": False}
         ev["verif"] = d("verif_gates", dispatch(rt.session, "gates", {"kind": "verif"})).get("gates") or {}
@@ -1869,6 +1882,24 @@ def node_gate(state: State) -> dict:
                                else st, ev)
     if n == 2 and ok and (ev.get("spec_test") or {}).get("blocks"):      # 08f: the independent bench failed and triage blamed the design
         ok, fails = False, ["spec test: an independent bench written from the request alone fails against the design"]
+    if n == 2 and ok and "R3" in rt.cfg.arms:   # brief 213 (R3): the fresh-stimulus regrade of a design every gate accepted
+        from flow import regrade as _rg
+        from flow import sources as _src
+        from agent.graph import feedback as _fb
+        rg = _rg.run_regrade(rt.design, _fb.session_run(rt.session), sim=_fb.sim_name((ev.get("simulate") or {}).get("sim")),
+                             rtl_files=list(_src.design_rtl(rt.design)), py=None)
+        rg["blocking"] = _rg.blocks(rg, rt.cfg.verif_level)
+        ev["regrade"] = rg
+        log_routing_event(rt, "regrade", **{k: v for k, v in rg.items() if k != "digest"})
+        if rg["blocking"]:
+            ok, fails = False, ["fresh-stimulus regrade: " + str(rg.get("digest") or "")[:200].replace("\n", " ")]
+            detail.append(str(rg.get("digest") or "")[:1800])
+        elif rg["status"] == "fail":
+            detail.append("[regrade, reported, not blocking at " + rt.cfg.verif_level + "] " + str(rg.get("digest") or "")[:600])
+    if n == 2 and "R2" in rt.cfg.arms:          # brief 213 (R2): this visit's entry in the failure ledger
+        from agent.graph import feedback as _fb
+        fp = _fb.fingerprint(rt.design)
+        out["fp"] = fp
     if n == 2:                                   # 05c2 fix 1: the roles that own this visit's failures, and the repeat count
         if ok:
             out.update(owners={}, sig="", repeat=0)
@@ -1881,6 +1912,12 @@ def node_gate(state: State) -> dict:
             for e in events:
                 log_routing_event(rt, e.pop("event"), repeat=rep, **e)
             out.update(owners=owners, sig=sig, repeat=rep)
+            if "R2" in rt.cfg.arms:
+                from agent.graph import feedback as _fb
+                entry = _fb.ledger_entry(rt.visit, sig, owners, ev, fails, _fb.changed_files(state.get("fp"), out["fp"]),
+                                         (ev.get("simulate") or {}).get("first_check"))
+                out["ledger"] = [*(state.get("ledger") or []), entry]
+                log_routing_event(rt, "ledger_entry", **{k: v for k, v in entry.items() if k != "sig"})
     return {**out, "evidence": ev, "fails": [] if ok else fails, "detail": "\n".join(detail)}
 
 
@@ -2557,6 +2594,9 @@ def summary(rt: Runtime, state: dict) -> dict:
             "questions": (state.get("interview") or {}), "stop": state.get("stop"), "stop_detail": state.get("stop_detail"),
             "last_rtl_message": (getattr(rt, "last_role_message", None) or {}).get("rtl"),
             "routing_events": routing_events(rt),
+            **({"repair_feedback": {"arms": [a for a in rt.cfg.arms if a in ("R1", "R2", "R3")], "ledger": state.get("ledger") or [],
+                                    "regrade": (((state.get("evidence") or {}).get("regrade")) or None)}}
+               if any(a in rt.cfg.arms for a in ("R1", "R2", "R3")) else {}),
             "clean_stop": state.get("stop") == "done",
             "verification_profile": {**_profile_record(rt.cfg), "policy_breaches": __import__("agent.graph.profiles", fromlist=["x"]).check_pin(
                 rt.run_dir, rt.cfg.verif_profile, rt.cfg.verif_sets, rt.design)},
