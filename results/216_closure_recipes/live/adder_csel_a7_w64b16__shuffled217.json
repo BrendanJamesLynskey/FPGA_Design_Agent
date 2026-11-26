@@ -1,0 +1,162 @@
+{
+ "arm": "shuffled217",
+ "design": "adder_csel_a7_w64b16",
+ "seed": 1,
+ "status": "ok",
+ "stop_reason": "no further recipe applies",
+ "wns_ns": -0.309,
+ "whs_ns": 0.248,
+ "wns_gain_ns": 0.117,
+ "lut": 116,
+ "ff": 199,
+ "vivado_runs": 5,
+ "fmax_mhz": 188.4,
+ "clock_ns": 5.0,
+ "part": "xc7a100tcsg324-1",
+ "wall_s": 292.8,
+ "cpu_s_runs": 287,
+ "search": {
+  "best": "n3",
+  "best_wns_ns": -0.309,
+  "best_plan": {
+   "synth": [],
+   "directives": {
+    "opt": "Explore",
+    "place": "WLDrivenBlockPlacement",
+    "phys": "Explore",
+    "route": "Explore"
+   },
+   "phys_flags": {},
+   "force_replication": [],
+   "max_fanout": [],
+   "pblocks": [],
+   "applied": [
+    "amd_strategy"
+   ]
+  },
+  "runs": 5,
+  "stop": "no further recipe applies",
+  "hopeless": false,
+  "nodes": [
+   {
+    "id": "n0",
+    "parent": null,
+    "call": null,
+    "wns_ns": -0.426,
+    "whs_ns": 0.232,
+    "lut": 114,
+    "ff": 196,
+    "status": "ok",
+    "kept": true,
+    "verdict": "root"
+   },
+   {
+    "id": "n1",
+    "parent": "n0",
+    "call": {
+     "recipe": "amd_strategy",
+     "args": {
+      "name": "Performance_NetDelay_high"
+     },
+     "reason": "the general performance sweep",
+     "weight": 27.0,
+     "prior": 0.0
+    },
+    "wns_ns": -0.411,
+    "whs_ns": 0.232,
+    "lut": 116,
+    "ff": 198,
+    "status": "ok",
+    "kept": false,
+    "verdict": "rolled back: not better than its parent"
+   },
+   {
+    "id": "n2",
+    "parent": "n0",
+    "call": {
+     "recipe": "retime",
+     "args": {
+      "where": "synth"
+     },
+     "reason": "8 logic levels: retiming moves registers across the logic",
+     "weight": 70.0,
+     "prior": 0.0
+    },
+    "wns_ns": -0.426,
+    "whs_ns": 0.232,
+    "lut": 114,
+    "ff": 196,
+    "status": "ok",
+    "kept": false,
+    "verdict": "rolled back: not better than its parent"
+   },
+   {
+    "id": "n3",
+    "parent": "n0",
+    "call": {
+     "recipe": "amd_strategy",
+     "args": {
+      "name": "Performance_WLBlockPlacement"
+     },
+     "reason": "the general performance sweep",
+     "weight": 25.0,
+     "prior": 0.0
+    },
+    "wns_ns": -0.309,
+    "whs_ns": 0.248,
+    "lut": 116,
+    "ff": 199,
+    "status": "ok",
+    "kept": true,
+    "verdict": "kept"
+   },
+   {
+    "id": "n4",
+    "parent": "n3",
+    "call": {
+     "recipe": "retime",
+     "args": {
+      "where": "synth"
+     },
+     "reason": "8 logic levels: retiming moves registers across the logic",
+     "weight": 70.0,
+     "prior": 0.0
+    },
+    "wns_ns": -0.309,
+    "whs_ns": 0.248,
+    "lut": 116,
+    "ff": 199,
+    "status": "ok",
+    "kept": false,
+    "verdict": "rolled back: not better than its parent"
+   },
+   {
+    "id": "n5",
+    "parent": "n3",
+    "call": {
+     "recipe": "phys_opt_options",
+     "args": {
+      "step": "post",
+      "flags": [
+       "placement_opt",
+       "rewire",
+       "critical_cell_opt"
+      ]
+     },
+     "reason": "a post-route phys_opt pass on the routed checkpoint (cheap: no re-placement)",
+     "weight": 25.0,
+     "prior": 0.0
+    },
+    "wns_ns": -0.309,
+    "whs_ns": 0.248,
+    "lut": 116,
+    "ff": 199,
+    "status": "ok",
+    "kept": false,
+    "verdict": "rolled back: not better than its parent"
+   }
+  ],
+  "rolled_back": 4
+ },
+ "date": "2026-11-26T07:10:51"
+}
