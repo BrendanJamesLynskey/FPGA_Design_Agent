@@ -1,0 +1,39 @@
+# Brief 218: pre-registration
+
+Written Thu Nov 26 02:17 GMT 2026 (`date`), before any scored run. Code state: branch `b218-coverage-sva` at 2b9828fb (the pipeline and the loop, flags off by default). Weekly usage 47 % at the start (`_handoff/usage_check.sh`); stop at 75 % with `BLOCKED:`.
+
+What this measures is exploratory, not a test of a hypothesis: 3 designs is far below what a pass rate needs. The power line is stated first so nobody reads more into it than it holds.
+
+## Power line
+
+Planning figure from `reports/226_cvdp_lessons_report.md` section 4 (CVDP's variances, one agent and one benchmark; FPGA Force's are unmeasured): with n designs and k runs per arm, the smallest effect detectable on a pass rate at 80 % power, alpha 0.05 two-sided is 8.0 to 8.8 points at n = 50, k = 3, and scales as sqrt(50 / n): **6 designs at k = 3 about 23 to 26 points; 12 packages 16 to 18.** Here n = 3 designs and k = 1 run per arm: scale again by sqrt(3 / 6) and for k = 1 instead of 3 (factor about 1.7): the smallest detectable effect on a pass rate is **above 60 points, i.e. nothing short of a collapse or a leap**. So the pass rate is reported and not interpreted. The primary outcomes are graded (continuous), and the result is read as a description of what the two steps do on three designs, with the intervals the paired bootstrap gives (`tools/run_stats`), never as "no effect" or "an effect".
+
+## Part A: requirement to assertion (`flow/sva_req.py`)
+
+* **Designs (3, chosen by a rule fixed before looking at any result):** the first run of each of `p1_clkmeter`, `p2_bram_rom`, `p3_crc_engine` of the 209 pilot that reached stage 9 (`pilots/209/<d>/run<k>/design/`): p1 run 1, p2 run 1, p3 run 2 (p3 run 1 stopped at lint). They are the three pilot designs the agent got through V2; p4 to p6 never did (brief 224), so they have no design to state properties about.
+* **Before:** requirements with a proved property under the flow as it was: counted from each design's own `verif/formal/` and the pilot's `run_record.json` `requirement_method_results` (the pilot ran at `--verif-level V2`, which has no formal step for an agent design; expected 0).
+* **After:** the pipeline on the same design: generator Sonnet 5.5 (effort low), reader Haiku 5.5 (a different model, effort low), both through the Claude Code CLI on the plan; comparison in code; `sby` (Yosys 0.33, z3) tasks bmc depth 24, prove depth 12, cover depth 24 (the defaults in `flow/sva_req.py`, fixed now).
+* **Runs:** 2 independent pipeline runs per design (the generator's output varies), so 6 runs. Run order randomised with `random.seed(218)`.
+* **Primary (graded):** per design and run, the number of requirement rows with a proved or bounded property whose trigger is reachable ("with evidence"), among the candidate rows. **Secondary:** the share of candidates, the count of each outcome (proved, bounded, vacuous, failed, mismatch, unusable, error, simulation-only), and the model calls made.
+* **Discard rule (fixed now):** a property whose back-translation disagrees by the code check in `compare` is discarded with its reason and counted as `mismatch`; it is never retried with a hint. A `failed` property is reported with its counterexample and never installed.
+* **What counts as a requirement "with a proved property":** `proved` (k-induction closes at depth 12) **and** the cover of its trigger passes. A `bounded` result (holds to depth 24, induction does not close) is reported separately and counted in the primary column only as "with evidence", never as "proved".
+* **Not measured:** whether a generated property is what the user meant (only the user can say; the report shows the English back-translation beside the requirement). FVEval NL2SVA-Human (79 items) as a public check: **not run**, because its licence and its form (a module-free NL-to-SVA task whose signals are given in prose) were not checked in this brief; recorded as a gap, not as a skip for convenience.
+
+## Part B: coverage-directed stimulus (`--coverage-loop on`)
+
+* **Arms:** A0 = today's V3 (`--coverage-loop off`); A1 = the loop (`--coverage-loop on`). Nothing else differs: the agent at the same commit, `--harness claude_code --cc-model claude-sonnet-5-5 --verif-level V3 --stop-after 2 --board kr260 --review off --interview off --budget-scale 3.5 --max-usd 12`, the pilot's own `spec.md` and `data/`. (`--req-sva` is off in both: an arm that changed two things at once would be exploratory, and Part A measures that step alone.)
+* **Designs (3):** the same three pilot designs. They were selected for reaching V2 in the 209 pilot (a different configuration, `--verif-level V2`), not for their V3 outcome, so the control is not a set picked for failing (regression to the mean).
+* **Runs:** 1 run per design and arm (6 runs), in a random order drawn now with `random.seed(218)`: p2 A1, p3 A0, p3 A1, p1 A0, p1 A1, p2 A0. A run stopped by the plan's limit, a rate limit, a refused or never-taken heavy slot or a stop that is not the agent's own (infrastructure) is recorded with its own stop reason and re-run, never scored as a failure.
+* **Pace and slots:** one agent run at a time. Each run takes a heavy slot through `take_heavy_slot.sh` (text `218: ...`, `peak 4G` from `resources/vivado_peak.py`, `Vivado impl`) and runs under `systemd-run --user --scope -p MemoryMax=6G nice -n 15`. Because the run's own V3 coverage and mutation steps take `heavy_slot.lock` (brief 219, PR #344, not merged in this branch), `FDA_HEAVY_LOCK` points at a private file inside the run's worktree, as the 209 pilot did; the slot the run holds is the machine's admission.
+* **Primary (graded), per run:** (1) holes open at the first stage-2 gate evaluation that has V3 evidence and at the last one, from `build/verif/coverage_visits.jsonl` (recorded in both arms); (2) holes closed per million tokens between the two (tokens from the run's meter: input plus output); (3) whether V3 was reached at stage-2 exit. **Secondary:** stage-2 visits used, the mutation score at the last evaluation, total tokens and plan-equivalent dollars, wall time, the loop's rounds and its stop reason (A1).
+* **Stop rules of the loop (fixed now):** at most 3 rounds per gate evaluation; stop on a plateau (no hole closed in 2 rounds in a row), on convergence (no hole left), on the stage or run budget, or when the new stimulus breaks V2 (the ordinary repair visit owns that).
+* **Reading:** for each design the two arms' values side by side, then a paired bootstrap over the 3 designs for holes closed per million tokens and for tokens (`tools/run_stats`). The bootstrap interval over 3 pairs is wide by construction; it is shown so the width is visible.
+* **A hole that does not exist is not a result:** if the control arm reaches V3 on its first evaluation (no holes), that design contributes nothing to the loop's comparison and is reported as "no holes in A0", not as a tie.
+
+## Part C: why V3 stalled on the mutation score (209a)
+
+Documentary: the recorded 209a runs (`results/209a_pilot_ready/README.md`), the mutation tool's code and any mutation or coverage data that exists, with the 209 pilot's V3 state. No run. Stated as evidence read, with what it does not show.
+
+## Run hygiene (house rules, eval checklist)
+
+Claude Code CLI 2.1.321 (the installed version the agent's preflight accepts), no update during the runs (`DISABLE_AUTOUPDATER` is set in the owner's settings; checked, not changed). Verilator 5.048 and Vivado 2025.2 as installed; Python venv as is. No `apt`, no `pip`. Plan-limit and rate-limit stops are re-run. The control arm is run afresh in this experiment, not reused from the pilot.

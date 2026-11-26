@@ -1537,6 +1537,7 @@ def node_gate(state: State) -> dict:
             ev["verif"] = d("verif_gates", dispatch(rt.session, "gates", {"kind": "verif"})).get("gates") or {}
             from agent.graph import covsva                       # brief 218 (off by default): rounds of coverage-directed stimulus
             covsva.coverage_gate(rt, ev, d, detail)
+            covsva.observe(rt, ev)                               # brief 218: the holes after this evaluation, recorded in either arm
         if (rt.cfg.req_sva == "on" and ev["lint"]["ok"] and ev["simulate"]["ok"]
                 and (ev["verif"].get("reached") or "") >= "V2"):        # brief 218 (off by default): a property from each requirement
             from agent.graph import covsva

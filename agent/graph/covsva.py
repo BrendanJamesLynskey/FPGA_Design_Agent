@@ -38,6 +38,25 @@ def _mutation(rt: Any) -> dict[str, Any] | None:
         return None
 
 
+def observe(rt: Any, ev: dict[str, Any]) -> None:
+    """Passive, whatever the flags: one line per stage-2 gate evaluation that has V3 evidence, in ``build/verif/coverage_visits.jsonl`` (the holes
+    open then, and the run's cumulative tokens). It is how an arm without the loop is measured the same way as one with it: holes closed per
+    million tokens between two evaluations. Never raises, never changes a result."""
+    try:
+        v = ev.get("verif") or {}
+        if not ((v.get("stages") or {}).get("V3")):
+            return
+        hs = CL.holes_of(v, _mutation(rt))
+        p = rt.design / "build" / "verif" / "coverage_visits.jsonl"
+        p.parent.mkdir(parents=True, exist_ok=True)
+        with p.open("a") as f:
+            f.write(json.dumps({"visit": getattr(rt, "visit", None), "tokens": int(rt.meter.run.get("tokens", 0)), "usd": round(float(rt.meter.run.get("usd", 0.0)), 4),
+                                "reached": v.get("reached"), "holes": [h["key"] for h in hs], "counts": CL.counts(hs),
+                                "mutation_score_pct": (_mutation(rt) or {}).get("score_pct"), "loop": bool(ev.get("coverage_loop"))}, sort_keys=True) + "\n")
+    except Exception:                                      # a record, not a gate
+        return
+
+
 def coverage_gate(rt: Any, ev: dict[str, Any], d: Any, detail: list[str]) -> dict[str, Any] | None:
     """Run the loop for this gate evaluation. Returns None when it does not apply (flag off, not V3, V2 not reached, or V3 fails on something
     the tests cannot change). Otherwise updates ``ev`` (``verif``, ``v3_evidence``, ``simulate``) and returns the loop's summary, which is also
