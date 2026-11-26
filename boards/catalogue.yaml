@@ -3,6 +3,7 @@
 #   display, aliases : how a request names the board (whole words, lower case); an alias shared by two boards makes the request ambiguous
 #   targetable       : the agent can write the board's constraints (a master XDC with a clock the design can use)
 #   licence_tier     : free | paid, measured by results/95_boards/licence_probe.json against the installed Vivado 2026.1 (Basic tier)
+#   other_models_after : words that, right after an alias, name another model the catalogue lacks (brief 225: "gen 2" after "stemlab 125-14")
 #   default_for_part : the board a build.yaml with only `part:` means (flow/prepare.py board_for); needed where two boards share a part
 #   legacy           : board.yaml predates schema v2 (no per-fact sources); its sources are in its README and inventory
 #   evidence         : built = earlier gates.json records; hardware = run records on the owner's board
@@ -176,3 +177,11 @@ boards:
     trust: documented
     smoke_note: "no user LED, button or free-running clock on a PL pin; the radio interface needs the AD9363 configured by the PS"
     scope: "radio-interface pins from Analog Devices' reference design; the owner has one but no run used it"
+  redpitaya_stemlab_125_14:
+    display: Red Pitaya STEMlab 125-14 (original generation)
+    aliases: [red pitaya, redpitaya, red pitaya stemlab, stemlab 125 14, red pitaya stemlab 125 14, stemlab125 14]
+    other_models_after: [gen, pro, z7020, ln, ext, ti, 4in, 4input]
+    targetable: true
+    licence_tier: free
+    trust: documented
+    scope: "the owner's board (original STEMlab 125-14 v1.1, rp-f00c16): board file from the vendor's BSD-licensed constraints and board file pinned to a commit, and the vendor's hardware pages; also an instrument in the lab file (brief 221). Not run on the board."

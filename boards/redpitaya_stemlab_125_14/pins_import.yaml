@@ -1,0 +1,33 @@
+board: redpitaya_stemlab_125_14
+out: boards/redpitaya_stemlab_125_14/redpitaya_stemlab_125_14-pins.xdc
+title: "Red Pitaya STEMlab 125-14, original generation (xc7z010clg400-1): PL pins"
+sources:
+  - {id: RPFPGA_XDC, url: https://raw.githubusercontent.com/RedPitaya/RedPitaya-FPGA/728a4f37e9c0a9b5ba1d9b7a0d44c38bbd2dc674/sdc/red_pitaya.xdc, sha256: ec5aa406fefde8dbe0ebde42e9bbee96e512a427f1c282f6e07e183ba482f0f6, format: xdc, licence: "Red Pitaya d.o.o., BSD 3-clause (LICENSE of the RedPitaya-FPGA repository, covering the fpga directory); only pin facts are listed, nothing is copied", use: "pin locations and port names of the shell"}
+  - {id: RPFPGA_BRD, url: https://raw.githubusercontent.com/RedPitaya/RedPitaya-FPGA/728a4f37e9c0a9b5ba1d9b7a0d44c38bbd2dc674/brd/redpitaya/1.1/part0_pins.xml, sha256: 46369ef3fad3e95b71eeace32431181e451707a5846e9eddf8b3e4383fdd94de, format: board-store-xml, licence: "Red Pitaya d.o.o., BSD 3-clause (same repository); only pin facts are listed", use: "the I/O standard of each pin it lists (board file version 1.1, xc7z010clg400-1)"}
+exclude:
+  - '^daisy_'          # SATA daisy-chain pins: the vendor XDC says DIFF_HSTL_I_18, its board file says LVCMOS33 and calls them undocumented
+  - '^dac_pwm_o'       # slow PWM DACs go to the E2 connector through RC filters; listed as resources by the shell, not by a standard of their own here
+  - '^adc_clk_o'       # optional ADC clock source output (unused by the shell)
+rename:
+  - ['^adc_clk_i\[1\]$', 'adc_clk_p']
+  - ['^adc_clk_i\[0\]$', 'adc_clk_n']
+  - ['^adc_dat_i\[0\]\[(\d+)\]$', 'adc1_dat[\1]']      # the vendor's adc_dat_i[0][n] (IN1); the agent's resource names take one index
+  - ['^adc_dat_i\[1\]\[(\d+)\]$', 'adc2_dat[\1]']      # the vendor's adc_dat_i[1][n] (IN2)
+  - ['^led_o\[(\d)\]$', 'led[\1]']
+iostandard:
+  std_from_pin: true
+  by_name:
+    - ['^dac_', 'LVCMOS33']
+    - ['^vin[pn]_i', 'LVCMOS33']
+  by_name_reason: "dac_dat_o[*] and the dac_*_o control pins: the vendor XDC sets LVCMOS33 on them with a wildcard (dac_dat_o[*], dac_*_o); vinp_i and vinn_i: the vendor XDC sets LVCMOS33 on the XADC pins with a wildcard"
+  only: [LVCMOS33, LVCMOS18, DIFF_HSTL_I_18]
+  only_reason: "the vendor XDC and board file give no other standard for the pins listed here"
+section_by:
+  - ['^adc_clk_[pn]$', 'PL clock (125 MHz, differential, from the ADC clock tree)']
+  - ['^led\[', 'LEDs']
+  - ['^exp_p_io', 'Extension connector E1, positive lines (DIOn_P)']
+  - ['^exp_n_io', 'Extension connector E1, negative lines (DIOn_N)']
+  - ['^adc[12]_dat', "Fast ADC data (LTC2145-14), LVCMOS18; adc1_dat is the vendor shell's adc_dat_i[0] (IN1), adc2_dat its adc_dat_i[1] (IN2)"]
+  - ['^adc_cdcs_o', 'ADC clock duty-cycle stabiliser']
+  - ['^dac_', 'Fast DAC (AD9767), LVCMOS33']
+  - ['^vin[pn]_i', 'XADC inputs (E2 connector slow analogue inputs)']
