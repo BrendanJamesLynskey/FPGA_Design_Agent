@@ -1,4 +1,4 @@
-# Brief 216: pre-registration (written 2026-11-26 06:40 GMT, before any scored Vivado run)
+# Brief 216: pre-registration (drafted 2026-11-26, `date` read 06:35:57 GMT; committed 87a0e697, before any scored Vivado run)
 
 Stamped from `date`. Committed before the first live run; the replay (`replay.json`, no Vivado) was run first, while the code was being built, and is
 reported as a development result, not as the confirming test of anything here.
