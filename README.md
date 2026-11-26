@@ -45,6 +45,7 @@ evaluation, the method and the improvement loop): the site's "How it was built" 
 measured lessons in [docs/agent_lessons.md](docs/agent_lessons.md).
 
 What makes this agent different, as a one-page summary in drawers (each a claim that opens to what it means, an example from this project with its numbers read from committed records, what it does not do yet, and a link to the deeper page): the site's "Why" page, linked first in the navigation and from the top of the home page, source `site/why/why.yaml` ([why.py](site/why.py) -> `site/data/why.json`, [why_page.py](site/why_page.py)); a deep link such as `why.html#verification` opens that drawer.
+What changed in the agent since 23 November 2026, one drawer per change with its record and evidence: the site's "What's new" page, source [site/changes/changes.yaml](site/changes/changes.yaml) (built by [site/changes.py](site/changes.py)). The FPGA Force mark is [site/logo.py](site/logo.py); the icons are made by [site/make_icons.py](site/make_icons.py), the long pages' drawers by [site/drawers.py](site/drawers.py), and the 237 screenshots of every page are in [results/237_site/](results/237_site).
 
 How the designs are verified (simulation, hidden tests, coverage, mutation testing, protocol checkers, formal proofs, clock-crossing checks, static checks, the board and traceability, each with what it cannot find and its measured evidence): the site's "Verification" page, source `site/verification/verification.yaml`.
 

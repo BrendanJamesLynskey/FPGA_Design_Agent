@@ -6,7 +6,17 @@
 <title>NTT engine behind the test shell | FPGA Force</title>
 <meta name="description" content="NTT engine behind the test shell: the spec, hidden tests, reference RTL, mutants and golden model of benchmark task c16_ntt_engine.">
 <meta name="color-scheme" content="light dark">
-<link rel="icon" href="../favicon.svg" type="image/svg+xml">
+<link rel="icon" href="../favicon.svg" type="image/svg+xml" sizes="any">
+<link rel="icon" href="../icons/icon-32.png" type="image/png" sizes="32x32">
+<link rel="icon" href="../icons/icon-16.png" type="image/png" sizes="16x16">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<meta property="og:title" content="NTT engine behind the test shell | FPGA Force">
+<meta property="og:description" content="NTT engine behind the test shell: the spec, hidden tests, reference RTL, mutants and golden model of benchmark task c16_ntt_engine.">
+<meta property="og:type" content="website">
+<meta property="og:image" content="https://fpga-design-agent.vercel.app/icons/og-card.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
 <style>/* FPGA Force site: sober monochrome, dark and light, no glow. Same manner as the CVDP RTL Agent site. */
 :root {
   --bg: #f6f6f4; --panel: #ffffff; --rule: #d6d6d2; --ink: #161616; --ink-2: #4a4a4a; --ink-3: #6b6b6b;
@@ -52,10 +62,22 @@ p { margin: 0 0 1em; }
 .bar { position: sticky; top: 0; z-index: 10; background: var(--bg); border-bottom: 1px solid var(--rule);
   margin: 0 calc(-1 * max(16px, env(safe-area-inset-left))); padding: 0 max(16px, env(safe-area-inset-left)); }
 .bar .wrap { max-width: 1200px; display: flex; align-items: center; gap: 4px 14px; flex-wrap: wrap; min-height: 52px; }
-.brand { font-weight: 700; text-decoration: none; margin-right: auto; padding: 8px 0; }
+.brand { font-weight: 700; text-decoration: none; margin-right: auto; padding: 8px 0; display: inline-flex; align-items: center; gap: 10px; }
+.brand .mark { flex: 0 0 auto; color: var(--ink); }   /* brief 237: the mark is drawn in currentColor, so it follows the theme */
 .bar nav { display: flex; flex-wrap: wrap; gap: 0 4px; }
-.bar nav a { padding: 10px 6px; text-decoration: none; color: var(--ink-2); min-height: 44px; display: inline-flex; align-items: center; }
-.bar nav a[aria-current="page"] { color: var(--ink); box-shadow: inset 0 -2px 0 var(--ink); }
+/* brief 237: four groups, each a drawer of page links; a menu on wide screens, an open block under the bar on phones */
+.navgroup { position: relative; }
+.navgroup > summary { list-style: none; cursor: pointer; padding: 10px 10px; min-height: 44px; display: inline-flex; align-items: center; gap: 6px; color: var(--ink-2); }
+.navgroup > summary::-webkit-details-marker { display: none; }
+.navgroup > summary::after { content: ""; width: 6px; height: 6px; border: solid currentColor; border-width: 0 1.5px 1.5px 0; transform: rotate(45deg) translateY(-2px); }
+.navgroup[open] > summary::after { transform: rotate(-135deg) translateY(-2px); }
+.navgroup[open] > summary, .navgroup:hover > summary { color: var(--ink); }
+.navgroup.has-current > summary { color: var(--ink); box-shadow: inset 0 -2px 0 var(--ink); }
+.navmenu { position: absolute; top: 100%; left: 0; z-index: 20; min-width: 230px; background: var(--panel); border: 1px solid var(--rule); padding: 4px 0; box-shadow: 0 2px 6px rgba(0,0,0,.12); }
+.navmenu a { display: flex; align-items: center; padding: 8px 14px; min-height: 44px; text-decoration: none; color: var(--ink-2); }
+.navmenu a:hover { background: var(--bg); color: var(--ink); }
+.navmenu a.sub { padding-left: 30px; font-size: .92rem; min-height: 36px; }
+.navmenu a[aria-current="page"] { color: var(--ink); font-weight: 600; box-shadow: inset 3px 0 0 var(--ink); }
 button, select { font: inherit; color: var(--ink); background: var(--panel); border: 1px solid var(--rule); border-radius: 3px; min-height: 44px; min-width: 44px; padding: 0 12px; cursor: pointer; }
 button:hover { border-color: var(--ink-3); }
 button[aria-pressed="true"] { background: var(--ink); color: var(--bg); }
@@ -243,7 +265,7 @@ details.area > summary { grid-template-areas: "n l" "s l" "c l"; }
 details.area > summary::before { display: none; }
 details.area .an { grid-area: n; font-weight: 700; }
 details.area .an::before { content: "+ "; font-family: var(--f-mono); }
-details.area[open] .an::before { content: "- "; }
+details.area[open] > summary .an::before { content: "- "; }
 details.area .as { grid-area: s; color: var(--ink-2); font-size: .92rem; }
 details.area .ac { grid-area: c; color: var(--ink-3); font-size: .82rem; }
 details.area .tag.lvl { grid-area: l; align-self: start; }
@@ -445,26 +467,21 @@ ul.fixes .evl { display: block; font-size: .82rem; color: var(--ink-3); }
 
 /* phones: the page links become one row that scrolls sideways, so the first screen starts with the page */
 @media (max-width: 640px) {
-  .bar .wrap { flex-wrap: nowrap; gap: 0 8px; }
-  .bar nav { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: thin; min-width: 0; flex: 1 1 auto; }
-  .bar nav a { white-space: nowrap; }
-  .brand { margin-right: 4px; white-space: nowrap; }
+  .brand { white-space: nowrap; }
 }
 .toc { display: flex; flex-wrap: wrap; gap: 4px 10px; margin: 0 0 1.2em; color: var(--ink-3); }
 .toc a { color: var(--ink-2); }
 .chip-status { display: inline-block; border: 1px solid var(--ink-3); padding: 6px 12px; font-size: .92rem; color: var(--ink); max-width: 72ch; margin: 0 0 1em; }
 /* header (brief 50A page review): up to 1000 px the page links are one row that scrolls sideways, fading at the right
    edge as the cue; on phones that row sits under the brand and the theme button, so nothing overlaps it */
-@media (max-width: 1000px) {
-  .bar .wrap { flex-wrap: nowrap; }
-  .bar nav { flex-wrap: nowrap; overflow-x: auto; min-width: 0; flex: 1 1 auto; -webkit-mask-image: linear-gradient(to right, #000 85%, transparent); mask-image: linear-gradient(to right, #000 85%, transparent); padding-right: 22px; }
-  .bar nav a { white-space: nowrap; }
-  .bar .brand { white-space: nowrap; flex: 0 0 auto; }
-}
-@media (max-width: 640px) {
+@media (max-width: 760px) {      /* brief 237: no sideways scrolling; the brand and theme button share a row, the four groups sit under it, an open group is a block */
   .bar .wrap { flex-wrap: wrap; row-gap: 0; }
   .bar .brand { flex: 1 1 auto; }
   .bar nav { order: 3; flex: 1 0 100%; }
+  .navgroup { position: static; }
+  .navgroup > summary { padding: 10px 7px; font-size: .94rem; gap: 4px; }
+  .navmenu { position: static; box-shadow: none; border: 0; border-top: 1px solid var(--rule); min-width: 0; width: 100%; background: transparent; }
+  .navgroup[open] { flex: 1 0 100%; order: 9; }
 }
 
 /* showcase tables on phones: each row becomes a block of "header: value" lines, so no column is hidden behind a sideways
@@ -708,11 +725,23 @@ svg .hl { stroke: var(--warn); stroke-width: 0.9; opacity: .75; }
 svg .cell { fill: var(--ink); stroke: var(--rule); }
 svg text.on { fill: var(--bg); }
 svg text.wn { fill: var(--warn); }
+
+/* drawers on the long pages (brief 237, site/drawers.py): the section heading and a one-sentence teaser are the closed drawer */
+details.area.sec { margin: 0 0 8px; }
+details.area.sec > summary { grid-template-areas: "n" "s"; grid-template-columns: minmax(0, 1fr); padding: 10px 14px; }
+details.area.sec > summary h2.sech { margin: 0; font-size: 1.12rem; display: inline; }
+details.area.sec > summary .an, details.area.sec h2.sech { grid-area: n; }
+details.area.sec > summary h2.sech::before { content: "+ "; font-family: var(--f-mono); }
+details.area.sec[open] > summary h2.sech::before { content: "- "; }
+details.area.sec[open] > summary .as { display: none; }
+details.area.sec > .abody > h3:first-child { margin-top: .6em; }
+.toc span { color: var(--ink-3); }
+main#main { padding-top: 18px; }
 </style>
 </head>
 <body>
 <a class="visually-hidden" href="#main">Skip to content</a>
-<header class="bar"><div class="wrap"><a class="brand" href="../index.html">FPGA Force</a><nav aria-label="Pages"><a href="../why.html">Why</a><a href="../agent.html">The agent</a><a class="sub" href="../agent.html#harness">Harness</a><a href="../story.html">How it was built</a><a href="../worked-example.html">Worked example</a><a href="../inspect.html">Inspect it</a><a href="../how.html">How it works</a><a href="../verification.html">Verification</a><a href="../traceability.html">Traceability</a><a href="../verified.html">Verified</a><a href="../flow-notes.html">Beyond the flow</a><a href="../expertise.html">Expertise</a><a href="../examples.html">Examples</a><a href="../showcase.html">Showcase</a><a href="../problems.html" aria-current="page">Problems</a><a href="../evaluation.html">Evaluation</a><a href="../results.html">Results</a></nav><button id="theme" type="button" aria-label="Switch to dark theme">Dark</button></div></header>
+<header class="bar"><div class="wrap"><a class="brand" href="../index.html"><svg class="mark" viewBox="0 0 64 64" width="28" height="28" aria-hidden="true" focusable="false"><rect x="4" y="12" width="30" height="40" rx="2" fill="none" stroke="currentColor" stroke-width="4"/><path d="M4 41 L11 46 L4 51" fill="none" stroke="currentColor" stroke-width="3"/><path d="M11 20 V37 M11 20 H16 M11 28 H15" fill="none" stroke="currentColor" stroke-width="3.6" stroke-linecap="square"/><path d="M22 20 V37 M22 20 H27 M22 28 H26" fill="none" stroke="currentColor" stroke-width="3.6" stroke-linecap="square"/><path d="M34 32 H50" stroke="currentColor" stroke-width="6"/><path d="M49 24 L62 32 L49 40 Z" fill="currentColor"/></svg><span>FPGA Force</span></a><nav aria-label="Pages"><details class="navgroup"><summary>What it is</summary><div class="navmenu"><a href="../why.html">Why</a><a href="../agent.html">The agent</a><a class="sub" href="../agent.html#harness">Harness</a><a href="../story.html">How it was built</a><a href="../changes.html">What&#x27;s new</a></div></details><details class="navgroup"><summary>How it works</summary><div class="navmenu"><a href="../how.html">How it works</a><a href="../verification.html">Verification</a><a href="../verified.html">Verified</a><a href="../flow-notes.html">Beyond the flow</a><a href="../expertise.html">Expertise</a><a href="../inspect.html">Inspect it</a></div></details><details class="navgroup has-current"><summary>Evidence</summary><div class="navmenu"><a href="../traceability.html">Traceability</a><a href="../evaluation.html">Evaluation</a><a href="../results.html">Results</a><a href="../problems.html" aria-current="page">Problems</a></div></details><details class="navgroup"><summary>Examples</summary><div class="navmenu"><a href="../worked-example.html">Worked example</a><a href="../examples.html">Examples</a><a href="../showcase.html">Showcase</a></div></details></nav><button id="theme" type="button" aria-label="Switch to dark theme">Dark</button></div></header>
 <main id="main" class="wrap">
 <p class="crumbs small"><a href="../problems.html">Problems</a> / <a href="../problems.html#dom-D">D. Cryptography and security</a></p>
 <h1>NTT engine behind the test shell</h1>
@@ -1270,6 +1299,17 @@ LD_PTR, RD_PTR, LD_DATA, START_FWD, START_INV, STATUS, RD_DATA, CYCLES = range(8
     if (text != null) e.textContent = text;
     return e;
   }
+
+  /* header groups (brief 237): one open at a time; Escape or a click elsewhere closes it. Works without script as plain drawers. */
+  var groups = Array.prototype.slice.call(document.querySelectorAll(".bar .navgroup"));
+  groups.forEach(function (g) {
+    g.addEventListener("toggle", function () { if (g.open) groups.forEach(function (o) { if (o !== g) o.open = false; }); });
+  });
+  document.addEventListener("click", function (e) { groups.forEach(function (g) { if (g.open && !g.contains(e.target)) g.open = false; }); });
+  document.addEventListener("keydown", function (e) {
+    if (e.key !== "Escape") return;
+    groups.forEach(function (g) { if (g.open) { g.open = false; var sm = g.querySelector("summary"); if (sm) sm.focus(); } });
+  });
 
   /* theme toggle: remembered per viewer, optional */
   var tb = document.getElementById("theme");
@@ -2349,20 +2389,29 @@ LD_PTR, RD_PTR, LD_DATA, START_FWD, START_INV, STATUS, RD_DATA, CYCLES = range(8
 })();
 
 
-/* expertise drawers: expand all / collapse all (shown only with script) and a hash link opens its drawer */
+/* drawers: expand all / collapse all (shown only with script); a URL hash that points at a drawer, or at anything inside one, opens it
+   and the drawers around it (briefs 23 and 237) */
 (function () {
   var ctl = document.getElementById("areactl");
-  if (!ctl) return;
-  ctl.hidden = false;
-  var all = function () { return document.querySelectorAll("details.area"); };
-  document.getElementById("expand-all").addEventListener("click", function () { all().forEach(function (d) { d.open = true; }); });
-  document.getElementById("collapse-all").addEventListener("click", function () { all().forEach(function (d) { d.open = false; }); });
+  if (ctl) {
+    ctl.hidden = false;
+    var all = function () { return document.querySelectorAll("details.area"); };
+    document.getElementById("expand-all").addEventListener("click", function () { all().forEach(function (d) { d.open = true; }); });
+    document.getElementById("collapse-all").addEventListener("click", function () { all().forEach(function (d) { d.open = false; }); });
+  }
   function openHash() {
     var id = decodeURIComponent((location.hash || "").slice(1)), t = id && document.getElementById(id);
-    if (t && t.tagName === "DETAILS") { t.open = true; t.scrollIntoView(); }
+    if (!t) return;
+    var changed = false;
+    for (var n = t; n; n = n.parentElement) { if (n.tagName === "DETAILS" && !n.open && !n.closest(".navgroup")) { n.open = true; changed = true; } }
+    if (changed || t.tagName === "DETAILS") t.scrollIntoView();
   }
   openHash();
   window.addEventListener("hashchange", openHash);
+  document.addEventListener("click", function (e) {
+    var a = e.target.closest && e.target.closest('a[href^="#"]');
+    if (a && a.getAttribute("href") === location.hash) openHash();
+  });
 })();
 
 // brief 81: replay of a recorded counterexample: the slider hides the steps after the chosen one

@@ -6,7 +6,17 @@
 <title>Beyond the standard flow | FPGA Force</title>
 <meta name="description" content="Where the agent&#x27;s flow goes further than the standard Vivado flow: missing CDC constraints, crossings report_cdc cannot see, timing exceptions that hide failures, and more, each with its evidence and status.">
 <meta name="color-scheme" content="light dark">
-<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="icon" href="favicon.svg" type="image/svg+xml" sizes="any">
+<link rel="icon" href="icons/icon-32.png" type="image/png" sizes="32x32">
+<link rel="icon" href="icons/icon-16.png" type="image/png" sizes="16x16">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta property="og:title" content="Beyond the standard flow | FPGA Force">
+<meta property="og:description" content="Where the agent&#x27;s flow goes further than the standard Vivado flow: missing CDC constraints, crossings report_cdc cannot see, timing exceptions that hide failures, and more, each with its evidence and status.">
+<meta property="og:type" content="website">
+<meta property="og:image" content="https://fpga-design-agent.vercel.app/icons/og-card.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
 <style>/* FPGA Force site: sober monochrome, dark and light, no glow. Same manner as the CVDP RTL Agent site. */
 :root {
   --bg: #f6f6f4; --panel: #ffffff; --rule: #d6d6d2; --ink: #161616; --ink-2: #4a4a4a; --ink-3: #6b6b6b;
@@ -52,10 +62,22 @@ p { margin: 0 0 1em; }
 .bar { position: sticky; top: 0; z-index: 10; background: var(--bg); border-bottom: 1px solid var(--rule);
   margin: 0 calc(-1 * max(16px, env(safe-area-inset-left))); padding: 0 max(16px, env(safe-area-inset-left)); }
 .bar .wrap { max-width: 1200px; display: flex; align-items: center; gap: 4px 14px; flex-wrap: wrap; min-height: 52px; }
-.brand { font-weight: 700; text-decoration: none; margin-right: auto; padding: 8px 0; }
+.brand { font-weight: 700; text-decoration: none; margin-right: auto; padding: 8px 0; display: inline-flex; align-items: center; gap: 10px; }
+.brand .mark { flex: 0 0 auto; color: var(--ink); }   /* brief 237: the mark is drawn in currentColor, so it follows the theme */
 .bar nav { display: flex; flex-wrap: wrap; gap: 0 4px; }
-.bar nav a { padding: 10px 6px; text-decoration: none; color: var(--ink-2); min-height: 44px; display: inline-flex; align-items: center; }
-.bar nav a[aria-current="page"] { color: var(--ink); box-shadow: inset 0 -2px 0 var(--ink); }
+/* brief 237: four groups, each a drawer of page links; a menu on wide screens, an open block under the bar on phones */
+.navgroup { position: relative; }
+.navgroup > summary { list-style: none; cursor: pointer; padding: 10px 10px; min-height: 44px; display: inline-flex; align-items: center; gap: 6px; color: var(--ink-2); }
+.navgroup > summary::-webkit-details-marker { display: none; }
+.navgroup > summary::after { content: ""; width: 6px; height: 6px; border: solid currentColor; border-width: 0 1.5px 1.5px 0; transform: rotate(45deg) translateY(-2px); }
+.navgroup[open] > summary::after { transform: rotate(-135deg) translateY(-2px); }
+.navgroup[open] > summary, .navgroup:hover > summary { color: var(--ink); }
+.navgroup.has-current > summary { color: var(--ink); box-shadow: inset 0 -2px 0 var(--ink); }
+.navmenu { position: absolute; top: 100%; left: 0; z-index: 20; min-width: 230px; background: var(--panel); border: 1px solid var(--rule); padding: 4px 0; box-shadow: 0 2px 6px rgba(0,0,0,.12); }
+.navmenu a { display: flex; align-items: center; padding: 8px 14px; min-height: 44px; text-decoration: none; color: var(--ink-2); }
+.navmenu a:hover { background: var(--bg); color: var(--ink); }
+.navmenu a.sub { padding-left: 30px; font-size: .92rem; min-height: 36px; }
+.navmenu a[aria-current="page"] { color: var(--ink); font-weight: 600; box-shadow: inset 3px 0 0 var(--ink); }
 button, select { font: inherit; color: var(--ink); background: var(--panel); border: 1px solid var(--rule); border-radius: 3px; min-height: 44px; min-width: 44px; padding: 0 12px; cursor: pointer; }
 button:hover { border-color: var(--ink-3); }
 button[aria-pressed="true"] { background: var(--ink); color: var(--bg); }
@@ -243,7 +265,7 @@ details.area > summary { grid-template-areas: "n l" "s l" "c l"; }
 details.area > summary::before { display: none; }
 details.area .an { grid-area: n; font-weight: 700; }
 details.area .an::before { content: "+ "; font-family: var(--f-mono); }
-details.area[open] .an::before { content: "- "; }
+details.area[open] > summary .an::before { content: "- "; }
 details.area .as { grid-area: s; color: var(--ink-2); font-size: .92rem; }
 details.area .ac { grid-area: c; color: var(--ink-3); font-size: .82rem; }
 details.area .tag.lvl { grid-area: l; align-self: start; }
@@ -445,26 +467,21 @@ ul.fixes .evl { display: block; font-size: .82rem; color: var(--ink-3); }
 
 /* phones: the page links become one row that scrolls sideways, so the first screen starts with the page */
 @media (max-width: 640px) {
-  .bar .wrap { flex-wrap: nowrap; gap: 0 8px; }
-  .bar nav { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: thin; min-width: 0; flex: 1 1 auto; }
-  .bar nav a { white-space: nowrap; }
-  .brand { margin-right: 4px; white-space: nowrap; }
+  .brand { white-space: nowrap; }
 }
 .toc { display: flex; flex-wrap: wrap; gap: 4px 10px; margin: 0 0 1.2em; color: var(--ink-3); }
 .toc a { color: var(--ink-2); }
 .chip-status { display: inline-block; border: 1px solid var(--ink-3); padding: 6px 12px; font-size: .92rem; color: var(--ink); max-width: 72ch; margin: 0 0 1em; }
 /* header (brief 50A page review): up to 1000 px the page links are one row that scrolls sideways, fading at the right
    edge as the cue; on phones that row sits under the brand and the theme button, so nothing overlaps it */
-@media (max-width: 1000px) {
-  .bar .wrap { flex-wrap: nowrap; }
-  .bar nav { flex-wrap: nowrap; overflow-x: auto; min-width: 0; flex: 1 1 auto; -webkit-mask-image: linear-gradient(to right, #000 85%, transparent); mask-image: linear-gradient(to right, #000 85%, transparent); padding-right: 22px; }
-  .bar nav a { white-space: nowrap; }
-  .bar .brand { white-space: nowrap; flex: 0 0 auto; }
-}
-@media (max-width: 640px) {
+@media (max-width: 760px) {      /* brief 237: no sideways scrolling; the brand and theme button share a row, the four groups sit under it, an open group is a block */
   .bar .wrap { flex-wrap: wrap; row-gap: 0; }
   .bar .brand { flex: 1 1 auto; }
   .bar nav { order: 3; flex: 1 0 100%; }
+  .navgroup { position: static; }
+  .navgroup > summary { padding: 10px 7px; font-size: .94rem; gap: 4px; }
+  .navmenu { position: static; box-shadow: none; border: 0; border-top: 1px solid var(--rule); min-width: 0; width: 100%; background: transparent; }
+  .navgroup[open] { flex: 1 0 100%; order: 9; }
 }
 
 /* showcase tables on phones: each row becomes a block of "header: value" lines, so no column is hidden behind a sideways
@@ -708,11 +725,23 @@ svg .hl { stroke: var(--warn); stroke-width: 0.9; opacity: .75; }
 svg .cell { fill: var(--ink); stroke: var(--rule); }
 svg text.on { fill: var(--bg); }
 svg text.wn { fill: var(--warn); }
+
+/* drawers on the long pages (brief 237, site/drawers.py): the section heading and a one-sentence teaser are the closed drawer */
+details.area.sec { margin: 0 0 8px; }
+details.area.sec > summary { grid-template-areas: "n" "s"; grid-template-columns: minmax(0, 1fr); padding: 10px 14px; }
+details.area.sec > summary h2.sech { margin: 0; font-size: 1.12rem; display: inline; }
+details.area.sec > summary .an, details.area.sec h2.sech { grid-area: n; }
+details.area.sec > summary h2.sech::before { content: "+ "; font-family: var(--f-mono); }
+details.area.sec[open] > summary h2.sech::before { content: "- "; }
+details.area.sec[open] > summary .as { display: none; }
+details.area.sec > .abody > h3:first-child { margin-top: .6em; }
+.toc span { color: var(--ink-3); }
+main#main { padding-top: 18px; }
 </style>
 </head>
 <body>
 <a class="visually-hidden" href="#main">Skip to content</a>
-<header class="bar"><div class="wrap"><a class="brand" href="index.html">FPGA Force</a><nav aria-label="Pages"><a href="why.html">Why</a><a href="agent.html">The agent</a><a class="sub" href="agent.html#harness">Harness</a><a href="story.html">How it was built</a><a href="worked-example.html">Worked example</a><a href="inspect.html">Inspect it</a><a href="how.html">How it works</a><a href="verification.html">Verification</a><a href="traceability.html">Traceability</a><a href="verified.html">Verified</a><a href="flow-notes.html" aria-current="page">Beyond the flow</a><a href="expertise.html">Expertise</a><a href="examples.html">Examples</a><a href="showcase.html">Showcase</a><a href="problems.html">Problems</a><a href="evaluation.html">Evaluation</a><a href="results.html">Results</a></nav><button id="theme" type="button" aria-label="Switch to dark theme">Dark</button></div></header>
+<header class="bar"><div class="wrap"><a class="brand" href="index.html"><svg class="mark" viewBox="0 0 64 64" width="28" height="28" aria-hidden="true" focusable="false"><rect x="4" y="12" width="30" height="40" rx="2" fill="none" stroke="currentColor" stroke-width="4"/><path d="M4 41 L11 46 L4 51" fill="none" stroke="currentColor" stroke-width="3"/><path d="M11 20 V37 M11 20 H16 M11 28 H15" fill="none" stroke="currentColor" stroke-width="3.6" stroke-linecap="square"/><path d="M22 20 V37 M22 20 H27 M22 28 H26" fill="none" stroke="currentColor" stroke-width="3.6" stroke-linecap="square"/><path d="M34 32 H50" stroke="currentColor" stroke-width="6"/><path d="M49 24 L62 32 L49 40 Z" fill="currentColor"/></svg><span>FPGA Force</span></a><nav aria-label="Pages"><details class="navgroup"><summary>What it is</summary><div class="navmenu"><a href="why.html">Why</a><a href="agent.html">The agent</a><a class="sub" href="agent.html#harness">Harness</a><a href="story.html">How it was built</a><a href="changes.html">What&#x27;s new</a></div></details><details class="navgroup has-current"><summary>How it works</summary><div class="navmenu"><a href="how.html">How it works</a><a href="verification.html">Verification</a><a href="verified.html">Verified</a><a href="flow-notes.html" aria-current="page">Beyond the flow</a><a href="expertise.html">Expertise</a><a href="inspect.html">Inspect it</a></div></details><details class="navgroup"><summary>Evidence</summary><div class="navmenu"><a href="traceability.html">Traceability</a><a href="evaluation.html">Evaluation</a><a href="results.html">Results</a><a href="problems.html">Problems</a></div></details><details class="navgroup"><summary>Examples</summary><div class="navmenu"><a href="worked-example.html">Worked example</a><a href="examples.html">Examples</a><a href="showcase.html">Showcase</a></div></details></nav><button id="theme" type="button" aria-label="Switch to dark theme">Dark</button></div></header>
 <main id="main" class="wrap">
 <h1>Beyond the standard flow</h1>
 <p class="lede">The agent drives Vivado from scripts, with no GUI, and in that mode Vivado sometimes does less than a design needs. Each card tells one such story: what goes wrong, why, what the flow does, and what has been measured.</p>
@@ -728,8 +757,7 @@ svg text.wn { fill: var(--warn); }
 <tr><td><a href="#xsim">8</a></td><td>AMD's IP models need a simulator the tests cannot drive</td><td>Not built (planned)</td></tr>
 </tbody></table></div>
 
-<article class="card" id="xpm-cdc">
-<h2>1. AMD's crossing macros lose their timing exceptions</h2>
+<div class="areactl" id="areactl" hidden><button type="button" id="expand-all">Expand all</button><button type="button" id="collapse-all">Collapse all</button></div><details class="area sec" id="xpm-cdc"><summary><h2 class="sech">1. AMD's crossing macros lose their timing exceptions</h2><span class="as">Measuredone probe design, two macros</span></summary><div class="abody">
 <p class="tags"><span class="tag built">Measured</span><span class="muted small">one probe design, two macros</span></p>
 <p>AMD's ready-made <a href="how.html#term-cdc">clock-crossing</a> circuits, the XPM macros, rely on timing exceptions shipped in separate constraint files. In the scripted flow those files were not applied, so Vivado timed each crossing as an ordinary path between unrelated clocks and a correct design failed timing. Neither Vivado's crossing report nor the agent's crossing gate noticed, because neither reports an exception that is missing. The only sign was negative <a href="how.html#term-slack">slack</a>, and the easy cure, a blanket exception, is the one that hides real bugs (<a href="#exceptions">card 3</a>).</p>
 <p>The flow now re-applies AMD's rules by cell name straight after synthesis; a design without the macros gets no exception. On a probe design with a 10 ns and a 7 ns clock (Vivado 2026.1), setup slack on the crossing went from -1.364 ns, with 5 failing endpoints, to 8.891 ns.</p>
@@ -764,10 +792,9 @@ svg text.wn { fill: var(--warn); }
 <div class="tablewrap" tabindex="0"><table><thead><tr><th>Measure</th><th>Without the fix</th><th>With xpm_cdc.tcl</th></tr></thead><tbody><tr><td>report_cdc, xpm_cdc_single row</td><td>none (no exception)</td><td>False Path</td></tr><tr><td>report_cdc, xpm_cdc_gray row</td><td>none (no exception)</td><td>Max Delay Datapath Only</td></tr><tr><td>clk_a to clk_b setup WNS (ns)</td><td>-1.364</td><td>+8.891</td></tr><tr><td>Failing endpoints on that path</td><td>5</td><td>0</td></tr></tbody></table></div>
 <p class="small">Sources: deviation 8 in <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/docs/methodology.md"><code>docs/methodology.md</code></a>; <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/tree/main/flow/tests/fixtures/xpm_probe"><code>flow/tests/fixtures/xpm_probe</code></a> (the probe and how to repeat it); <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/results/vivado_2026_1_remeasure/xpm_probe.json"><code>results/vivado_2026_1_remeasure/xpm_probe.json</code></a> (each number and where it was read).</p>
 </details>
-</article>
+</div></details>
 
-<article class="card" id="cdc-gate">
-<h2>2. Vivado's crossing report passes some unsafe crossings</h2>
+<details class="area sec" id="cdc-gate"><summary><h2 class="sech">2. Vivado's crossing report passes some unsafe crossings</h2><span class="as">Measuredon test designs; no agent run or board result yet</span></summary><div class="abody">
 <p class="tags"><span class="tag built">Measured</span><span class="muted small">on test designs; no agent run or board result yet</span></p>
 <p>A crossing can be wrong while every synchroniser in it looks valid: a binary counter crossed bit by bit, a one-cycle pulse into a synchroniser meant for slow levels, two flags synchronised apart and then compared. Vivado's <code>report_cdc</code> checks structure and constraints; it does not run the design. The agent's crossing gate used to rest on that report alone.</p>
 <p>The gate now adds two checks. After synthesis it classifies every flip-flop fed from another clock, as a synchroniser chain, an AMD macro, a constrained Gray bus or handshake, a reset bridge, or unsafe. Then it reruns the design's own tests with each first synchroniser stage, and each AMD macro, sometimes holding its old value for an extra cycle, as a late-resolving flop would. A design that passes the plain run but fails this one fails the gate.</p>
@@ -786,10 +813,9 @@ svg text.wn { fill: var(--warn); }
 <p>On the rig, <code>report_cdc</code> passes M3, M5, M6a, M7, M9 and M11 as valid synchronisers and gives M1 only a warning. The old gate was its Critical rows plus a text check inside one module. The new checks sit in the V3 gate; M9 and M11 are the one-sided resets it does not cover.</p>
 <p class="small">Sources: <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/results/16_cdc_gate_2026_1/mutant_table.md"><code>results/16_cdc_gate_2026_1/mutant_table.md</code></a>; <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/tree/main/flow/tests/fixtures/cdc_mutants"><code>flow/tests/fixtures/cdc_mutants</code></a>; <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/flow/cdc_structure.py"><code>flow/cdc_structure.py</code></a>; <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/flow/cdc_inject.py"><code>flow/cdc_inject.py</code></a>; <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/tree/main/hil/cdc_soak"><code>hil/cdc_soak</code></a> and its <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/hil/cdc_soak/results/cdc_rig_sim.json"><code>cdc_rig_sim.json</code></a>.</p>
 </details>
-</article>
+</div></details>
 
-<article class="card" id="exceptions">
-<h2>3. Over-broad timing exceptions hide real failures</h2>
+<details class="area sec" id="exceptions"><summary><h2 class="sech">3. Over-broad timing exceptions hide real failures</h2><span class="as">Gate measuredgrading tasks not built</span></summary><div class="abody">
 <p class="tags"><span class="tag built">Gate measured</span><span class="muted small">grading tasks not built</span></p>
 <p>A model that cannot meet timing has an easy way out: declare the failing path a false path, a multicycle path or part of an asynchronous clock group. Vivado applies any exception it is given, and the timing summary reads clean. Its methodology checks catch some cases, but a passing slack figure alone cannot tell a real pass from a hidden failure.</p>
 <p>The flow now has a gate for this. After synthesis and after routing it fails a run with an exception that Vivado ignored or that covers no path, a constraint message from an XDC line, or a multicycle path whose registers do not share a real clock enable; a separate check before Vivado asks for a stated reason beside every false path. It was measured on small designs with one exception mistake each: the results are in <a href="expertise.html#constraints">Expertise, constraints</a>.</p>
@@ -797,42 +823,37 @@ svg text.wn { fill: var(--warn); }
 <div class="cols"><div class="fig"><svg viewBox="0 0 400 124" role="img" aria-label="Without an exception: a path that fails setup" ><text x="6" y="16" class="big">Without an exception</text><rect class="boxink" x="14" y="36" width="64" height="30"/><text x="22" y="55">launch</text><rect class="box" x="132" y="36" width="116" height="30"/><text x="146" y="55">logic, too slow</text><rect class="boxink" x="302" y="36" width="64" height="30"/><text x="308" y="55">capture</text><line class="ink" x1="78" y1="51" x2="132" y2="51"/><line class="ink" x1="248" y1="51" x2="302" y2="51"/><text x="10" y="92">no exception on this path</text><text x="10" y="112">timing report: negative slack, violation listed</text></svg></div><div class="fig"><svg viewBox="0 0 400 124" role="img" aria-label="With a blanket false path: a path that fails setup" ><text x="6" y="16" class="big">With a blanket false path</text><rect class="boxink" x="14" y="36" width="64" height="30"/><text x="22" y="55">launch</text><rect class="box" x="132" y="36" width="116" height="30"/><text x="146" y="55">logic, too slow</text><rect class="boxink" x="302" y="36" width="64" height="30"/><text x="308" y="55">capture</text><line class="ink" x1="78" y1="51" x2="132" y2="51"/><line class="ink" x1="248" y1="51" x2="302" y2="51"/><rect class="dash" x="6" y="26" width="368" height="50"/><text x="10" y="92">set_false_path covers this path</text><text x="10" y="112">timing report: path not timed, no violation listed</text></svg></div></div>
 <p class="small muted">The check in outline: one failing path, with and without a false path over it. No measured values.</p>
 <p>The grading tasks are written down but not built or run, so the agent has not yet been scored on this. Among the methodology checks that catch some cases are TIMING-46 and TIMING-47.</p>
-</article>
+</div></details>
 
-<article class="card" id="gates">
-<h2>4. A missing report or a skipped test looks like a pass</h2>
+<details class="area sec" id="gates"><summary><h2 class="sech">4. A missing report or a skipped test looks like a pass</h2><span class="as">Builtcovered by unit tests; no live run of the changed gates</span></summary><div class="abody">
 <p class="tags"><span class="tag built">Built</span><span class="muted small">covered by unit tests; no live run of the changed gates</span></p>
 <p>A quality review of the flow found three ways a weak run could pass. A missing report made its gate skip, and a skipped gate counted as a pass. A cocotb test marked as skipped counted towards the planned tests. A test marked as expected to fail turned a real failure into a pass. All three now fail (a missing report, once the build has written its run record), and a scan of the test source flags the markers. After routing, Vivado's quality-of-results score (<code>report_qor_assessment</code>) must also be at least 4 out of 5.</p>
 <p class="small">Sources: <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/flow/gates.py"><code>flow/gates.py</code></a>; <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/flow/verif_gates.py"><code>flow/verif_gates.py</code></a>; tests under <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/tree/main/flow/tests"><code>flow/tests</code></a>.</p>
-</article>
+</div></details>
 
-<article class="card" id="pblock">
-<h2>5. Placement regions made after synthesis are only hints</h2>
+<details class="area sec" id="pblock"><summary><h2 class="sech">5. Placement regions made after synthesis are only hints</h2><span class="as">Not re-measured</span></summary><div class="abody">
 <p class="tags"><span class="tag plan">Not re-measured</span></p>
 <p>A pblock is a region of the chip that some cells must be placed in. The soak rig makes its pblocks by script after synthesis, to put each crossing at a known distance. Pblocks made at that point came out soft, a hint to the placer: destination cells landed outside their region until the rig set <code>IS_SOFT</code> to <code>FALSE</code>. It now does so for every pblock. (This was seen on the rig before the move to Vivado 2026.1 and has not been repeated, so no count is given; the card stays because the fix costs one property and the advice stands.) The agent's own flow makes none, and pblocks in its constraint file are read before synthesis, where they are hard by default; any future step that makes them later must set the property too.</p>
 <p class="small">Source: the build scripts in <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/tree/main/hil/cdc_soak/tcl"><code>hil/cdc_soak/tcl</code></a>.</p>
-</article>
+</div></details>
 
-<article class="card" id="mig">
-<h2>6. Scripted DDR controller generation skips the pin check</h2>
+<details class="area sec" id="mig"><summary><h2 class="sech">6. Scripted DDR controller generation skips the pin check</h2><span class="as">Measuredtwo seeded faults, through placement; rule checker built</span></summary><div class="abody">
 <p class="tags"><span class="tag built">Measured</span><span class="muted small">two seeded faults, through placement; rule checker built</span></p>
 <p>AMD's DDR controller wizard, the MIG, checks a pinout against the memory's byte-group and bank rules before it generates the core. Generating the same core from a script, as the agent must, skips that check. A pinout with a byte-group fault generated silently, with the bad pins in the constraints file; one with a pin used twice also generated silently, and one data pin's line was dropped. The knowledge bank's own pin-rule checker flagged both and passed the good pinout.</p>
 <p>Could Vivado catch the faults later, when the design is built? The good pinout and both faulty ones were taken through the controller's example design: synthesis, placement and the design-rule checks. The byte-group fault came out identical to the good pinout and was not rejected, because the generator derives the byte lanes from whatever pins it is given, so the design is consistent with the wrong pins. The duplicated pin raised no error either, only warnings naming the missing data pin and one more unplaced port than the good build. So the build is at best a weak second opinion, and the rule checker stays the gate. Routing was not run for the faults.</p>
 <p class="small">Sources: section 2 of <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/docs/project_mode_parity.md"><code>docs/project_mode_parity.md</code></a> and <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/tree/main/results/project_parity_2026_1/mig_impl"><code>results/project_parity_2026_1/mig_impl</code></a> (the build of the example design, <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/flow/mig_impl_check.tcl"><code>flow/mig_impl_check.tcl</code></a>); pin-check results in the private knowledge repository (<code>tools/pin_xdc_check</code>, <code>mig_pin_rules.py</code>) and the pin-planning grading design.</p>
-</article>
+</div></details>
 
-<article class="card" id="ssn">
-<h2>7. The switching-noise report is missing on some parts</h2>
+<details class="area sec" id="ssn"><summary><h2 class="sech">7. The switching-noise report is missing on some parts</h2><span class="as">Measuredavailability only; no substitute built</span></summary><div class="abody">
 <p class="tags"><span class="tag built">Measured</span><span class="muted small">availability only; no substitute built</span></p>
 <p>Simultaneous switching noise limits how many fast outputs can share an I/O bank, and Vivado's <code>report_ssn</code> estimates the margin. It works on the Artix-7 100T and on the Zynq-7000 part checked, and it flagged a deliberately overloaded bank. On the Kria K26 it is not available. The pin checks use it where they can; the other pin checks run on every part. Nothing yet replaces the noise margin on the K26.</p>
 <p class="small">Source: pin-check results in the private knowledge repository (<code>tools/pin_xdc_check</code>).</p>
-</article>
+</div></details>
 
-<article class="card" id="xsim">
-<h2>8. AMD's IP models need a simulator the tests cannot drive</h2>
+<details class="area sec" id="xsim"><summary><h2 class="sech">8. AMD's IP models need a simulator the tests cannot drive</h2><span class="as">Not built</span></summary><div class="abody">
 <p class="tags"><span class="tag plan">Not built</span></p>
 <p>AMD's DSP cores (FIR, FFT, DDS and others) ship encrypted simulation models that only AMD's xsim and licensed commercial simulators can run. The free simulators the agent uses cannot, and the cocotb test framework has no xsim back end. The plan is a harness that works through files: Python writes the stimulus and a seeded back-pressure pattern, a generic test bench replays it in xsim, and Python compares every output word with AMD's bit-accurate C model where one exists. A synthesis run at the target clock checks timing and resources. The harness is specified in the expertise survey but not built: no code or measurements yet.</p>
-</article>
+</div></details>
 <p class="next">Next: <a href="expertise.html">Expertise</a> sets out what the agent knows and checks in each area of FPGA design, and how far the evidence goes.</p>
 
 <div class="pager"><a href="verified.html">&larr; Verified</a><a href="expertise.html">Expertise &rarr;</a></div>
@@ -860,6 +881,17 @@ svg text.wn { fill: var(--warn); }
     if (text != null) e.textContent = text;
     return e;
   }
+
+  /* header groups (brief 237): one open at a time; Escape or a click elsewhere closes it. Works without script as plain drawers. */
+  var groups = Array.prototype.slice.call(document.querySelectorAll(".bar .navgroup"));
+  groups.forEach(function (g) {
+    g.addEventListener("toggle", function () { if (g.open) groups.forEach(function (o) { if (o !== g) o.open = false; }); });
+  });
+  document.addEventListener("click", function (e) { groups.forEach(function (g) { if (g.open && !g.contains(e.target)) g.open = false; }); });
+  document.addEventListener("keydown", function (e) {
+    if (e.key !== "Escape") return;
+    groups.forEach(function (g) { if (g.open) { g.open = false; var sm = g.querySelector("summary"); if (sm) sm.focus(); } });
+  });
 
   /* theme toggle: remembered per viewer, optional */
   var tb = document.getElementById("theme");
@@ -1939,20 +1971,29 @@ svg text.wn { fill: var(--warn); }
 })();
 
 
-/* expertise drawers: expand all / collapse all (shown only with script) and a hash link opens its drawer */
+/* drawers: expand all / collapse all (shown only with script); a URL hash that points at a drawer, or at anything inside one, opens it
+   and the drawers around it (briefs 23 and 237) */
 (function () {
   var ctl = document.getElementById("areactl");
-  if (!ctl) return;
-  ctl.hidden = false;
-  var all = function () { return document.querySelectorAll("details.area"); };
-  document.getElementById("expand-all").addEventListener("click", function () { all().forEach(function (d) { d.open = true; }); });
-  document.getElementById("collapse-all").addEventListener("click", function () { all().forEach(function (d) { d.open = false; }); });
+  if (ctl) {
+    ctl.hidden = false;
+    var all = function () { return document.querySelectorAll("details.area"); };
+    document.getElementById("expand-all").addEventListener("click", function () { all().forEach(function (d) { d.open = true; }); });
+    document.getElementById("collapse-all").addEventListener("click", function () { all().forEach(function (d) { d.open = false; }); });
+  }
   function openHash() {
     var id = decodeURIComponent((location.hash || "").slice(1)), t = id && document.getElementById(id);
-    if (t && t.tagName === "DETAILS") { t.open = true; t.scrollIntoView(); }
+    if (!t) return;
+    var changed = false;
+    for (var n = t; n; n = n.parentElement) { if (n.tagName === "DETAILS" && !n.open && !n.closest(".navgroup")) { n.open = true; changed = true; } }
+    if (changed || t.tagName === "DETAILS") t.scrollIntoView();
   }
   openHash();
   window.addEventListener("hashchange", openHash);
+  document.addEventListener("click", function (e) {
+    var a = e.target.closest && e.target.closest('a[href^="#"]');
+    if (a && a.getAttribute("href") === location.hash) openHash();
+  });
 })();
 
 // brief 81: replay of a recorded counterexample: the slider hides the steps after the chosen one

@@ -21,15 +21,19 @@ import sys
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
+sys.path.insert(0, str(HERE))
+import logo  # noqa: E402  (the FPGA Force mark, brief 237)
 ROOT = HERE.parent
 DATA = HERE / "data"
 SRC = HERE / "src"
+SITE_URL = "https://fpga-design-agent.vercel.app"    # where the site is served now; Open Graph image links must be absolute (change when the site moves)
 REPO = "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent"
 
 PAGES = [  # file, nav label, title, description, data keys inlined
     ("index.html", "Home", "FPGA Force", "An agentic FPGA design environment: from a plain-English request to a bitstream proven on the board. Language-model agents write the spec, tests and RTL; code-run gates, hidden tests and the board judge them; every number is read from a committed result file.", ["loop", "dev", "kr260"]),
     ("why.html", "Why", "Why FPGA Force", "The one-page summary: what makes this agent different, in drawers that each open to what it means, an example from this project with its numbers, what it does not do yet, and where to read more.", []),
     ("agent.html", "The agent", "The agent", "The agent itself: a LangGraph controller over Deep Agents or Claude Code role agents, drawn from its code, with a recorded run replayed through the diagrams.", ["agent_graph"]),
+    ("changes.html", "What's new", "What changed in the agent since 23 November", "Every merged change to the agent since 23 November 2026, in plain words: what it does, what a committed record shows and with which model, what it does not show, and the evidence, each linked to its pull request.", []),
     ("story.html", "How it was built", "How the agent was built", "How the agent was designed, measured and corrected: a timeline, an experiment card for every test including the nulls and the stopped evaluation, the method, the improvement loop and the lessons, with every number read from a committed result file.", []),
     ("worked-example.html", "Worked example", "Worked example: a 10G trading path on the KR260", "One design end to end, seen as who did what: what the human specified, what the agent built, what verified it, what the board measured, and where human judgement mattered, each linked to its committed record.", ["kr260"]),
     ("inspect.html", "Inspect it", "Inspect the implementation", "Everything the agent writes is open to inspection but need not be read: where the RTL, generated documents, reports, checkpoints and run records are, and how to open them.", []),
@@ -207,6 +211,9 @@ def block(name, d):
     if name == "why_body":
         import why_page
         return why_page.body(d["why"]["content"])
+    if name == "changes_body":
+        import changes_page
+        return changes_page.body(d["changes"]["content"])
     if name == "story_body":
         import story_page
         return story_page.body(d["story"])
@@ -374,10 +381,51 @@ def render_template(text, d):
     return re.sub(r"\{\{([\w.]+)\}\}", lambda m: html.escape(fmt(lookup(d, m.group(1)))), text)
 
 
+NAV_GROUPS = [   # brief 237: one header nav, the pages in four groups (file names; labels come from PAGES)
+    ("What it is", ["why.html", "agent.html", "story.html", "changes.html"]),
+    ("How it works", ["how.html", "verification.html", "verified.html", "flow-notes.html", "expertise.html", "inspect.html"]),
+    ("Evidence", ["traceability.html", "evaluation.html", "results.html", "problems.html"]),
+    ("Examples", ["worked-example.html", "examples.html", "showcase.html"]),
+]
+
+
+def _trace_summary(rest):
+    """A design's drawer on the traceability page shows the verdict line of its verification record under the design name."""
+    m = re.search(r"<p><b>(.*?)</b>", rest, re.S)
+    t = html.unescape(re.sub(r"<[^>]+>", "", m.group(1))) if m else ""
+    return t if len(t) <= 190 else t[:190].rsplit(" ", 1)[0] + " ..."
+
+
+# brief 237: the pages whose sections become drawers (site/drawers.py): which drawers are open on load, and (only) which headings are drawn as drawers
+DRAWERS = {
+    "agent.html": {"open_ids": {"architecture"}},
+    "story.html": {"open_ids": {"lessons", "limits"}},
+    "verification.html": {"open_ids": {"map", "catches", "limits"}},
+    "flow-notes.html": {"articles": True},
+    "verified.html": {"open_ids": {"the-label", "the-criteria"}},
+    "traceability.html": {"summary_of": _trace_summary},
+    "how.html": {"open_ids": {"a-real-run-step-by-step", "the-stages"}},
+    "worked-example.html": {"open_ids": {"roles"}},
+    "index.html": {"only": {"evidence", "loop", "hard", "agentic"}, "toc": False, "controls": False},
+    "changes.html": {"open_ids": {"control"}},
+}
+
+
+def nav_html(prefix, cur):
+    label = {p[0]: p[1] for p in PAGES}
+    assert sorted(f for _, g in NAV_GROUPS for f in g) == sorted(f for f in label if f != "index.html"), "every page is in one nav group"
+    out = []
+    for i, (name, files) in enumerate(NAV_GROUPS):
+        links = "".join(f'<a href="{prefix}{f}"{" aria-current=\"page\"" if f == cur else ""}>{html.escape(label[f])}</a>' +
+                        "".join(f'<a class="sub" href="{prefix}{h}">{html.escape(w)}</a>' for a, h, w in NAV_SUB if a == f) for f in files)
+        here = ' class="navgroup has-current"' if cur in files else ' class="navgroup"'
+        out.append(f'<details{here}><summary>{html.escape(name)}</summary><div class="navmenu">{links}</div></details>')
+    return "".join(out)
+
+
 def layout(fname, title, desc, body, keys, d, css, js, prefix="", current=None, pager=None):
     cur = current or fname
-    nav = "".join(f'<a href="{prefix}{f}"{" aria-current=\"page\"" if f == cur else ""}>{html.escape(n)}</a>' +
-                  "".join(f'<a class="sub" href="{prefix}{h}">{html.escape(w)}</a>' for a, h, w in NAV_SUB if a == f) for f, n, *_ in PAGES if f != "index.html")
+    nav = nav_html(prefix, cur)
     scripts = "".join(f'<script type="application/json" data-key="{k}">{json.dumps(d[k], separators=(",", ":")).replace("</", "<\\/")}</script>'
                       for k in keys if k in d)
     if pager is None:
@@ -395,12 +443,22 @@ def layout(fname, title, desc, body, keys, d, css, js, prefix="", current=None, 
 <title>{html.escape(full)}</title>
 <meta name="description" content="{html.escape(desc)}">
 <meta name="color-scheme" content="light dark">
-<link rel="icon" href="{prefix}favicon.svg" type="image/svg+xml">
+<link rel="icon" href="{prefix}favicon.svg" type="image/svg+xml" sizes="any">
+<link rel="icon" href="{prefix}icons/icon-32.png" type="image/png" sizes="32x32">
+<link rel="icon" href="{prefix}icons/icon-16.png" type="image/png" sizes="16x16">
+<link rel="apple-touch-icon" href="{prefix}icons/apple-touch-icon.png">
+<meta property="og:title" content="{html.escape(full)}">
+<meta property="og:description" content="{html.escape(desc)}">
+<meta property="og:type" content="website">
+<meta property="og:image" content="{SITE_URL}/icons/og-card.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
 <style>{css}</style>
 </head>
 <body>
 <a class="visually-hidden" href="#main">Skip to content</a>
-<header class="bar"><div class="wrap"><a class="brand" href="{prefix}index.html">FPGA Force</a><nav aria-label="Pages">{nav}</nav><button id="theme" type="button" aria-label="Switch to dark theme">Dark</button></div></header>
+<header class="bar"><div class="wrap"><a class="brand" href="{prefix}index.html">{logo.inline_svg()}<span>FPGA Force</span></a><nav aria-label="Pages">{nav}</nav><button id="theme" type="button" aria-label="Switch to dark theme">Dark</button></div></header>
 <main id="main" class="wrap">
 {body}
 {pager}
@@ -461,7 +519,7 @@ def build(outdir: Path, d, check_numbers=True):
     js = (SRC / "app.js").read_text()
     # the showcase projects' own text never enters the number check (it would vouch for its own numbers); the showcase
     # pages are checked against the shared data plus each project's resolved values and hero data
-    shared = {k: v for k, v in d.items() if k not in ("tasks", "showcase", "story", "verification", "traceability", "why", "verified")}
+    shared = {k: v for k, v in d.items() if k not in ("tasks", "showcase", "story", "verification", "traceability", "why", "verified", "changes")}
     sc_values = {P["id"]: {"values": P["values"], "hero": P["hero"]["data"]}
                  for P in d.get("showcase", {}).get("projects", []) if P["status"] == "published"}
     if "catalogue" in d:
@@ -469,12 +527,17 @@ def build(outdir: Path, d, check_numbers=True):
     pages, page_data = {}, {}
     for fname, label, title, desc, keys in PAGES:
         body = render_template((SRC / fname).read_text(), d)
+        if fname in DRAWERS:
+            import drawers
+            cfg = dict(DRAWERS[fname])
+            body = drawers.articles(body) if cfg.pop("articles", False) else drawers.sectionize(body, **cfg)
         pages[fname] = layout(fname, title, desc, body, keys, shared, css, js)
         page_data[fname] = ({"shared": shared, "showcase_values": sc_values} if fname == "showcase.html"
                             else {"shared": shared, "story": d["story"]["check"]} if fname == "story.html"
                             else {"shared": shared, "verification": d["verification"]["check"]} if fname == "verification.html"
                             else {"shared": shared, "traceability": d["traceability"]["check"]} if fname == "traceability.html"
                             else {"shared": shared, "why": d["why"]["check"]} if fname == "why.html"
+                            else {"shared": shared, "changes": d["changes"]["check"]} if fname == "changes.html"
                             else {"shared": shared, "verified": d["verified"]["check"]} if fname == "verified.html" else shared)
     if "catalogue" in d:
         order = task_order(d)
@@ -514,7 +577,7 @@ def build(outdir: Path, d, check_numbers=True):
         allow = allow_tokens()
         cache = {}
         for fname, page in pages.items():
-            key = fname if fname.startswith(("problems/", "showcase/", "blockdesign/")) or fname in ("showcase.html", "story.html", "verification.html", "traceability.html", "why.html", "verified.html") else "_shared"
+            key = fname if fname.startswith(("problems/", "showcase/", "blockdesign/")) or fname in ("showcase.html", "story.html", "verification.html", "traceability.html", "why.html", "verified.html", "changes.html") else "_shared"
             if key not in cache:
                 cache[key] = data_tokens(page_data[fname]) | allow
             ok = cache[key]
@@ -541,7 +604,8 @@ def leftover_placeholders(page: str) -> list[str]:
 
 def static_files(d):
     """Binary and download files written beside the pages: the code of each development task, for its Download links."""
-    out = {"favicon.svg": (SRC / "favicon.svg").read_bytes(), "t1_on_nexys_a7.jpg": (ROOT / "docs/img/t1_on_nexys_a7.jpg").read_bytes(),
+    out = {"favicon.svg": (SRC / "favicon.svg").read_bytes(),
+           **{f"icons/{p.name}": p.read_bytes() for p in sorted((SRC / "icons").glob("*.png"))}, "t1_on_nexys_a7.jpg": (ROOT / "docs/img/t1_on_nexys_a7.jpg").read_bytes(),
            "vercel.json": b'{"cleanUrls": true, "trailingSlash": false}\n'}
     for tid, T in d.get("tasks", {}).items():
         for grp in T["files"].values():
