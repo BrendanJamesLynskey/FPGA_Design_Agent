@@ -116,6 +116,10 @@ def ledger_text(ledger: list[dict[str, Any]] | None, limit: int = LEDGER_SHOW) -
         if e.get("first_failing_check"):
             t += f"; first failing check {e['first_failing_check']}"
         lines.append((t + same)[:ENTRY_CHARS])
+    run = 1 + sum(1 for e in reversed(prev) if e.get("sig") == cur.get("sig")) if prev and prev[-1].get("sig") == cur.get("sig") else 1
+    if run >= 3:          # the classification of 215's disagreements: a failure repeated 3+ visits is often a bench or standard in conflict with the request
+        lines.append(f"[this failure has now repeated on {run} consecutive visits] Before editing again, check whether the failing check itself contradicts the request text "
+                     "or a design-standard (for example a reset style the request does not ask for, or the reverse): say which side the evidence supports.")
     return "\n".join(lines)
 
 

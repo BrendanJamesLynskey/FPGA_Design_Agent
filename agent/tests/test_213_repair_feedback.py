@@ -114,6 +114,9 @@ def test_ledger_grows_and_shows_earlier_visits():
     assert "first failing check b.py:7" in txt
     led.append(fb.ledger_entry(4, "rtl:standards", owners, ev, ["fail"], ["rtl/b.sv"]))
     assert "visit 3" in fb.ledger_text(led) and "(the same failure as now)" in fb.ledger_text(led).split("visit 3")[1]
+    assert "repeated on" not in fb.ledger_text(led[:3])
+    led3 = [fb.ledger_entry(v, "rtl:standards", owners, ev, ["f"], []) for v in (1, 2, 3)]
+    assert "repeated on 3 consecutive visits" in fb.ledger_text(led3)
     wl = fb.with_ledger({"rtl": ["own reason"], "tests": ["t"]}, led)
     assert wl["rtl"][0] == "own reason" and "earlier visits" in wl["rtl"][1] and "earlier visits" in wl["tests"][1]
     assert fb.with_ledger({"rtl": ["r"]}, led[:1]) == {"rtl": ["r"]}
