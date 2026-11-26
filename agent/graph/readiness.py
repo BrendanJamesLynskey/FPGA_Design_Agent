@@ -420,6 +420,7 @@ def run_stage0(design: Path, spec: dict[str, Any], request: str, *, level: str, 
     prev = R.load_yaml(design / R.STATE_DIR[0] / R.STATE_DIR[1] / "readiness_open.yaml") if answers else {}
     open_qs: list[Q] = [Q(**{k: v for k, v in q.items() if k in Q.__dataclass_fields__}) for q in (prev.get("open") or [])]
     probes: list[dict[str, Any]] | None = None
+    probes_for = ""
     asked_total = 0
     R.update_ledger(design, spec)                  # every id of the starting set is on record before any amendment: a deleted id stays retired
     for n in range(1, limits.max_rounds + 1):
@@ -474,9 +475,10 @@ def run_stage0(design: Path, spec: dict[str, Any], request: str, *, level: str, 
         # 3. probes and readers
         ag = None
         if R.reqs_of(spec) and budget.calls + 3 <= limits.max_calls:
-            if probes is None or rnd["amendments"]:
+            if probes is None or probes_for != R.rows_hash(spec):          # the rows changed since the probes were written (an answer or a repair): write them again
                 budget.spend("probes")
                 probes, perr = write_probes(llms.review, spec)
+                probes_for = R.rows_hash(spec)
                 rnd["probes"] = {"count": len(probes), "categories": sorted({str(p.get("category")) for p in probes}), "problems": perr}
             if probes and not rnd.get("probes", {}).get("problems", []):
                 budget.spend("reader_a")

@@ -124,6 +124,7 @@ NOT_RUNNING_THE_AGENT = {
     "debug_core/demo_t1.py": "a demo that replays recorded calls",
     "designs/b58a_trigger/host/nl_rule.py": "a host-side tool using only the model client",
     "flow/requirements_report.py": "reads a design's run records and writes its requirements report (brief 210); no model, no tools",
+    "flow/readiness.py": "the mechanical checks of the requirements readiness gate (brief 227); imports the spec schema's quality rules only; no model, no tools (the model roles are agent/graph/readiness.py, which calls the gate)",
     "tools/requirements_rescore.py": "re-scores recorded interview questions with the risk rules (brief 210); read only; no model, no tools",
     "flow/doccheck.py": "documentation checker", "flow/mutate.py": "mutation tool", "flow/standards_check.py": "lint-like checker",
     "flow/tests/test_55_vhdl_rtl.py": "a test module", "flow/tests/fixtures/timing_exceptions/make_table.py": "fixture generator",

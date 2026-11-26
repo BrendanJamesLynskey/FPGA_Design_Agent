@@ -781,6 +781,26 @@ def _c(x: Any) -> str:
     return str(x if x is not None else "").replace("|", "\\|").replace("\n", " ")
 
 
+def independence_of(report_row: dict[str, Any]) -> str:
+    """Which checks of a requirement were independent of the RTL's author, from the evidence a report row names: a property written without the RTL and read back by a
+    different model (``sva_`` jobs), the board or an instrument (hardware methods), and the flow's own reports (analysis). The agent's own testbench is never counted as
+    independent: it shares the agent's reading of the requirement."""
+    parts = []
+    for m in report_row.get("methods") or []:
+        names = [str(e.get("name", "")) for e in m.get("evidence") or []]
+        if m.get("method") == "formal" and any(n.startswith("sva_") for n in names):
+            parts.append("property written without the RTL, read back by a different model")
+        elif m.get("method") == "formal":
+            parts.append("formal job (bound checker, written by the tests role)")
+        elif m.get("method") == "hardware":
+            parts.append("board or instrument" + ("" if m.get("status") == "pass" else " (pending)"))
+        elif m.get("method") == "analysis":
+            parts.append("the flow's own reports")
+        elif m.get("method") in ("simulation", "coverage"):
+            parts.append("own testbench: NOT independent")
+    return "; ".join(dict.fromkeys(parts)) or "none"
+
+
 def vcrm_markdown(spec: dict[str, Any], report: dict[str, Any] | None = None, *, independent: dict[str, str] | None = None) -> str:
     """The requirements as a VCRM: id, SHALL/SHOULD/WILL, text, verification method (Test, Analysis, Inspection, Demonstration), the evidence named, validated by the
     user, verified, the early compliance assessment and which checks were independent of the RTL's author. ``report`` is the requirements report data

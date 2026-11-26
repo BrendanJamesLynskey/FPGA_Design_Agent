@@ -416,3 +416,19 @@ def test_the_frequency_meter_example_goes_through_the_formal_flow(tmp_path):
     assert "RDY-L3-02" in codes(R.l3_problems(r7, spec, out))
     r2 = next(r for r in spec["requirements"] if r["id"] == "REQ-02")
     assert R.l3_problems(r2, spec, out) == []
+
+
+def test_the_requirements_report_gets_a_vcrm_section_only_when_a_row_carries_brief_227_fields(tmp_path):
+    from flow import requirements_report as RR
+    spec = {"requirements": [row(id="REQ-01", modal="shall", method="Test", compliance="compliant")], "name": "x"}
+    d = tmp_path / "d"
+    d.mkdir()
+    rows = [{"id": "REQ-01", "text": "t", "origin": {"kind": "spec", "detail": "d", "unconfirmed": False}, "result": "pass", "reason": "", "rests_on_unconfirmed": False, "high_risk_default": False,
+             "methods": [{"method": "simulation", "status": "pass", "evidence": [{"name": "test_x", "link": "", "result": "pass"}]}, {"method": "formal", "status": "pass", "evidence": [{"name": "sva_REQ_01", "link": "", "result": "pass"}]}]}]
+    assert R.independence_of(rows[0]) == "own testbench: NOT independent; property written without the RTL, read back by a different model"
+    t = {"requirements": [{"id": "REQ-01", "text": "Busy is low", "status": "pass", "methods": [{"method": "simulation", "status": "pass", "verifications": []}]}], "evidence_sources": {}, "pass": True}
+    rep = RR.build_report(d, t, spec, "")
+    assert "| REQ-01 | SHALL | After reset, busy is low. | Test |" in rep["vcrm"] and "| compliant |" in rep["vcrm"]
+    assert "## Verification cross-reference matrix" in RR.to_markdown(rep)
+    plain = RR.build_report(d, t, {"requirements": [row(id="REQ-01")], "name": "x"}, "")
+    assert plain["vcrm"] is None and "cross-reference matrix" not in RR.to_markdown(plain)

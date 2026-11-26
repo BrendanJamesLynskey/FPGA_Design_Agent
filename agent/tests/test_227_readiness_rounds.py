@@ -138,6 +138,7 @@ def test_a_disagreement_becomes_a_question_the_oracle_answers_and_the_next_round
     assert r1["amendments"] == ["REQ-06"] and r2["agreement"]["rate"] == 1.0
     assert next(r for r in res.spec["requirements"] if r["id"] == "REQ-06")["text"].endswith("does not restart.")
     assert R.read_ledger(d)["ids"]["REQ-06"]["deleted"] is False and res.state["frozen"]["rounds"] == 2
+    assert [k for k, _ in f.calls].count("probes") == 2          # the rows changed after round 1, so the probes were written again for round 2
 
 
 def test_with_nobody_to_answer_the_run_stops_with_the_questions_and_never_guesses(tmp_path):
