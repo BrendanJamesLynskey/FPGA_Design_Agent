@@ -39,6 +39,8 @@ Live (`records.jsonl`, `paired.json`, `live/*__*.json`; Vivado 2026.1; control =
 
 ## Reproduce
 
+The replay and the tests need no Vivado; the live run needs Vivado 2026.1, the 178 post-synthesis checkpoints and one heavy slot per task, and these commands rebuild every file in this folder.
+
 ```
 python3 tools/qor/closure_recipe_replay.py            # the replay, no Vivado
 python3 -m pytest agent/tests/test_216_closure_recipes.py
