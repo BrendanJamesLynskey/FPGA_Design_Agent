@@ -88,6 +88,27 @@ Rules:
 - compliance (only when asked for): your judgement from analysis, not evidence, of whether each requirement can be met on the stated board, part and budget. For partial, non_compliant or tbc give a risk with an owner and a mitigation.
 - verdict is "not_ready" if and only if at least one finding is blocking."""
 
+REVIEWER_SYSTEM_V2 = """You are the requirements reviewer: an experienced FPGA engineer who reads a set of requirements before anyone builds the design, and says what must be settled first.
+You are shown the request, the requirements, the interface summary and a checklist. You never see any RTL.
+Answer with ONE JSON object and nothing else:
+{"findings": [{"topic": "<a checklist topic>", "ids": ["<requirement ids, or empty>"], "missing_fact": "<the missing fact in a few words>", "question": "<one question to put to the user>", "blocking": true|false, "why": "<one line>"}],
+ "assumptions": [{"topic": "<a checklist topic>", "assumed": "<the value or behaviour you would assume, in one line>"}],
+ "compliance": [{"id": "<requirement id>", "status": "compliant"|"partial"|"non_compliant"|"tbc", "why": "<one line>", "risk": {"owner": "<who>", "mitigation": "<prototype | change the implementation | challenge the requirement and its margins>"}}],
+ "verdict": "ready"|"not_ready"}
+Sort every gap you find into one of three classes before you write it down:
+1. BLOCKING finding: the request leaves two or more reasonable designs that differ in something a port, a file name, a register, a report or a test can observe, AND nothing the request gives (its text, tables, examples, names or ordinary engineering convention) chooses between them. A wrong guess here would go unnoticed until a check fails.
+2. ASSUMPTION: a conventional default would settle it (outputs reset to zero, an enable that is active high, binary encoding, synchronous reset, the obvious reading of an example, a tolerance nobody needs to state). Do not ask. Write it in assumptions with the value you would assume. Do not also make it a finding.
+3. Not worth writing: a preference, a style, a name that is easy to change, anything the request already states.
+Rules:
+- Before you mark a finding blocking, read the request again for the fact: tables, examples, parameter lists and wording that implies a rule all count as stating it. A fact that is stated is never a finding.
+- Ask only about the design the request describes; never invent a requirement, never propose an answer as if it were given, never ask about the implementation.
+- Name the missing fact precisely (the value, the cycle count, the polarity, the file), not the topic.
+- At most 5 blocking findings. With more candidates, keep the ones whose wrong guess would be hardest to notice (a silently wrong value, latency, name or file) and move the rest to assumptions. An empty findings list with verdict "ready" is the right answer when nothing needs settling.
+- compliance (only when asked for): your judgement from analysis, not evidence, of whether each requirement can be met on the stated board, part and budget; for partial, non_compliant or tbc give a risk with an owner and a mitigation.
+- verdict is "not_ready" if and only if at least one finding is blocking."""
+
+REVIEWERS = {"v1": REVIEWER_SYSTEM, "v2": REVIEWER_SYSTEM_V2}
+
 PROBE_SYSTEM = """You write probe scenarios for a hardware requirements set. Two other readers will each predict, from the requirements alone, what a correct design does in each scenario; where they differ, the requirements are ambiguous. You do not answer the probes.
 Answer with ONE JSON object and nothing else: {"probes": [{"id": "P1", "category": "reset|boundary|simultaneous|overflow|back_pressure|unmapped|mid_operation_reset|invalid_input|power_up", "requirements": ["<ids>"], "scenario": "<a concrete situation, with the values>", "question": "<what a reader must predict>", "answer_kind": "bool"|"int"|"choice", "choices": ["<for choice only, at least two>"]}]}
 Rules: 8 to 14 probes, one per situation; concrete values, not generalities; cover reset, boundary values, simultaneous events, overflow or saturation, back-pressure or stalls when the interface has them, unmapped or reserved accesses when there are registers, a reset in the middle of an operation, and an invalid input. A bool answer is yes or no; an int answer is a number (a cycle count, a value); a choice lists the possible behaviours. Ask for the behaviour the requirements fix, not for an opinion."""
@@ -139,6 +160,8 @@ class Q:
     ids: list[str] = field(default_factory=list)
     blocking: bool = True
     source: str = "code"          # code | reviewer | readers
+    default: str = ""             # the oracle reads ``q.default``: there is none here (a question asked in stage 0 has no proposed default; the agent never guesses)
+    reason: str = ""
     answer: str | None = None
     by: str | None = None
     evidence: str | None = None
@@ -190,11 +213,11 @@ def rows_text(spec: dict[str, Any], *, structured: bool = False) -> str:
 
 
 # ---- the roles ---------------------------------------------------------------------------------------------------------------------------
-def review(llm: LLM, request: str, spec: dict[str, Any], checklist: str, *, want_compliance: bool, board: str = "") -> dict[str, Any]:
+def review(llm: LLM, request: str, spec: dict[str, Any], checklist: str, *, want_compliance: bool, board: str = "", system: str | None = None) -> dict[str, Any]:
     user = (f"Request:\n{request.strip()}\n\nRequirements:\n{rows_text(spec)}\n\nInterface:\n{interface_table(spec)}\n\n"
             + (f"Board: {board}\n\n" if board else "") + f"Checklist:\n{checklist}\n\n"
             + ("Also give the compliance assessment of every requirement.\n" if want_compliance else "Do not give a compliance assessment (leave compliance empty).\n"))
-    d = parse_json(llm(REVIEWER_SYSTEM, user)) or {}
+    d = parse_json(llm(system or REVIEWER_SYSTEM, user)) or {}
     return clean_review(d)
 
 
@@ -209,7 +232,8 @@ def clean_review(d: dict[str, Any]) -> dict[str, Any]:
         if isinstance(c, dict) and c.get("id") and c.get("status") in R.COMPLIANCE:
             comp.append({"id": str(c["id"]), "status": c["status"], "why": R.norm(c.get("why")), "risk": c.get("risk") if isinstance(c.get("risk"), dict) else {}})
     blocking_any = any(f["blocking"] for f in fs)
-    return {"findings": fs, "compliance": comp, "verdict": "not_ready" if blocking_any else "ready"}      # the verdict follows the findings, whatever the model wrote
+    assumed = [{"topic": str(a.get("topic") or ""), "assumed": R.norm(a.get("assumed"))} for a in d.get("assumptions") or [] if isinstance(a, dict) and R.norm(a.get("assumed"))]
+    return {"findings": fs, "assumptions": assumed, "compliance": comp, "verdict": "not_ready" if blocking_any else "ready"}      # the verdict follows the findings, whatever the model wrote
 
 
 def problem_text(prompt: str, files: dict[str, str], produce: list[str], *, per_file: int = 15000, total: int = 60000) -> str:
@@ -229,11 +253,11 @@ def problem_text(prompt: str, files: dict[str, str], produce: list[str], *, per_
     return "\n".join(out)
 
 
-def review_problem(llm: LLM, text: str, checklist: str) -> dict[str, Any]:
+def review_problem(llm: LLM, text: str, checklist: str, *, system: str | None = None) -> dict[str, Any]:
     """The reviewer on a request alone (no requirement rows, no interface table): used by the reviewer test set. Same system prompt, same cleaning."""
     user = (f"Request (this is the whole of what the builder receives):\n{text}\n\nRequirements: none are written beyond the request.\n\n"
             f"Checklist:\n{checklist}\n\nDo not give a compliance assessment (leave compliance empty).\n")
-    return clean_review(parse_json(llm(REVIEWER_SYSTEM, user)) or {})
+    return clean_review(parse_json(llm(system or REVIEWER_SYSTEM, user)) or {})
 
 
 def write_probes(llm: LLM, spec: dict[str, Any]) -> tuple[list[dict[str, Any]], list[str]]:
@@ -509,6 +533,21 @@ def load_answers(design: Path, *dirs: Path) -> dict[str, Any]:
 
 
 # ---- the run hook and the command line ---------------------------------------------------------------------------------------------------
+def mark_derived(spec: dict[str, Any], request: str) -> dict[str, Any]:
+    """A requirement that rests on a default the agent chose (nobody answered the question it came from) is **derived**: it is labelled so and must be
+    validated by the user (``flow.readiness.confirmation_problems``). The link is the brief-210 report's ``origin_of`` (words shared with a resolved question
+    whose status is defaulted or waived); a row that states its own ``origin`` or ``derived`` is left as written."""
+    from flow import requirements_report as RR
+    spec = json.loads(json.dumps(spec))
+    for r in R.reqs_of(spec):
+        if r.get("origin") or r.get("derived") is not None:
+            continue
+        og = RR.origin_of(r, spec, request)
+        if og["kind"] in ("default", "waiver"):
+            r["origin"], r["derived"] = {"kind": "default", "detail": og["detail"]}, True
+    return spec
+
+
 def gate_step(rt: Any, spec: dict[str, Any], level: str, answerer: Answerer | None) -> tuple[dict[str, Any], dict[str, Any]]:
     """The stage-0 hook of ``agent run --readiness on`` (after the interview). Returns ``(spec, summary)``; ``summary['requirements_stop']`` is set when the
     gate did not pass. The models are the purposes ``reqreview``, ``reqreader`` and ``reqreader3``."""
@@ -522,6 +561,7 @@ def gate_step(rt: Any, spec: dict[str, Any], level: str, answerer: Answerer | No
             return spec, {"readiness": {"frozen": True, "rounds": 0, "stop": None, "level": level, "skipped": "the frozen set is unchanged"}}
         R.reopen(rt.design, spec, why="requirements changed after the freeze", ids=ch, who="a later stage")
     request = (rt.design / "spec.md").read_text(errors="replace") if (rt.design / "spec.md").is_file() else ""
+    spec = mark_derived(spec, request)
     lim = R.Limits(**{k: int(v) for k, v in (getattr(rt.cfg, "readiness_limits", None) or {}).items() if k in R.Limits.__dataclass_fields__})
     res = run_stage0(rt.design, spec, request, level=level, llms=llms, answerer=answerer, limits=lim, board=getattr(rt.cfg, "board", ""), answers=load_answers(rt.design))
     write_records(rt.design, res)

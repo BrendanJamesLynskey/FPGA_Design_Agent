@@ -265,3 +265,29 @@ def test_readiness_is_off_by_default_and_round_trips_through_the_saved_config():
     base = {"spec_md": "s.md", "name": "n", "board": "b", "interview": "off", "review": "off", "model": "m"}
     c = config_from_json({**base, "readiness": "on", "readiness_limits": {"max_rounds": 2}})
     assert (c.readiness, c.readiness_limits) == ("on", {"max_rounds": 2}) and config_from_json(base).readiness == "off"
+
+
+def test_a_requirement_resting_on_an_unanswered_question_is_marked_derived():
+    spec = {"requirements": [{"id": "REQ-01", "text": "A write of GATE_LEN below 1000 is clamped to 1000.", "proof": ["simulation"]},
+                             {"id": "REQ-02", "text": "Busy is low after reset.", "proof": ["simulation"], "origin": "the request"}],
+            "resolved_questions": [{"question": "What happens when GATE_LEN is written below 1000?", "answer": "Clamp to 1000.", "status": "defaulted", "by": "oracle", "risk": "high"}]}
+    out = G.mark_derived(spec, "Busy is low after reset.")
+    assert out["requirements"][0]["derived"] is True and out["requirements"][0]["origin"]["kind"] == "default" and "derived" not in out["requirements"][1]
+    assert R.unconfirmed_defaults(out) == ["REQ-01"] and "derived" not in spec["requirements"][0]
+
+
+def test_the_spec_oracle_can_answer_a_stage_0_question_and_a_quote_not_in_the_hidden_spec_is_refused(tmp_path):
+    from agent.graph.interview import SpecOracle
+    hidden = tmp_path / "hidden.md"
+    hidden.write_text("The window does not restart when start arrives while busy.\n")
+    replies = iter([{"answer": "No restart.", "quote": "The window does not restart when start arrives while busy."}, {"answer": "Yes, it restarts.", "quote": "made up"}])
+    o = SpecOracle(hidden, lambda system, user: next(replies))
+    q = G.Q(id="Q1", text="Does a start while busy restart the window?")
+    assert o.answer(q) == ("No restart.", "The window does not restart when start arrives while busy.")
+    assert o.answer(q) == ("not specified", None)
+    d = fresh(tmp_path)
+    f = Fake(review=[{"findings": [{"topic": "requirement", "question": "Does a start while busy restart the window?", "blocking": True}]}, {"findings": []}],
+             amend={"upsert": [{"id": "REQ-06", "text": "When start is high while busy is high, the window does not restart.", "proof": ["simulation"]}]})
+    o2 = SpecOracle(hidden, lambda system, user: {"answer": "No restart.", "quote": "The window does not restart when start arrives while busy."})
+    res = G.run_stage0(d, spec_of_fixture(), REQUEST, level="standard", llms=f.llms(), answerer=o2, limits=R.Limits(max_rounds=2))
+    assert res.frozen and res.state["rounds"][0]["questions"][0]["by"] == "oracle"

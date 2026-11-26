@@ -48,7 +48,7 @@ def named(keys: list[str], review: dict[str, Any]) -> bool:
     return any(re.search(k, text) for k in keys)
 
 
-def run_one(i: str, cond: str, k: int, problems: dict[str, dict[str, Any]], checklist: tuple[str, str], model: str, private: Path, keys: dict[str, list[str]]) -> dict[str, Any] | None:
+def run_one(i: str, cond: str, k: int, problems: dict[str, dict[str, Any]], checklist: tuple[str, str], model: str, private: Path, keys: dict[str, list[str]], system: str = "") -> dict[str, Any] | None:
     from agent.models import claude_cli
     rp = private / "replies" / cond / f"{i}.{k}.json"
     if rp.is_file():
@@ -61,7 +61,7 @@ def run_one(i: str, cond: str, k: int, problems: dict[str, dict[str, Any]], chec
                 f"Checklist:\n{checklist[0]}\n\nDo not give a compliance assessment (leave compliance empty).\n")
         t0 = time.time()
         try:
-            res = claude_cli.text_call(G.REVIEWER_SYSTEM, user, model=model, effort="medium", timeout_s=900)
+            res = claude_cli.text_call(system or G.REVIEWER_SYSTEM, user, model=model, effort="medium", timeout_s=900)
         except Exception as e:                                       # a plan limit or a timeout: not scored, re-run later
             (private / "errors.log").open("a").write(f"{time.strftime('%F %T')} {cond} {i} run {k}: {type(e).__name__}: {str(e)[:200]}\n")
             return None
@@ -88,6 +88,7 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--out", required=True, type=Path)
     ap.add_argument("--ids", default=str(Path(__file__).with_name("ids.yaml")))
     ap.add_argument("--condition", choices=["kb", "fallback"], required=True)
+    ap.add_argument("--reviewer", choices=sorted(G.REVIEWERS), default="v1", help="the system prompt: v1 is the pre-registered one; v2 is the post-hoc calibrated one (recorded as condition <cond>_v2)")
     ap.add_argument("--runs", type=int, default=1)
     ap.add_argument("--model", default="claude-sonnet-5-5")
     ap.add_argument("--workers", type=int, default=3)
@@ -103,9 +104,10 @@ def main(argv: list[str] | None = None) -> int:
     if a.condition == "kb" and not checklist[1].startswith(G.KB_SKILL_ID):
         print("the knowledge-bank skill is not at hand (set FDA_KNOWLEDGE): refusing to run the kb condition on the fallback", file=sys.stderr)
         return 2
+    cond = a.condition if a.reviewer == "v1" else f"{a.condition}_{a.reviewer}"
     jobs = [(i, g, k) for g in a.groups.split(",") for i in ids["groups"][g]["ids"] for k in range(1, a.runs + 1) if i in problems]
-    done = {(r["id"], int(r["run"])) for r in csv.DictReader(a.out.read_text().splitlines())} if a.out.is_file() else set()
-    jobs = [j for j in jobs if (j[0], j[2]) not in done]
+    done = {(r["id"], r["condition"], int(r["run"])) for r in csv.DictReader(a.out.read_text().splitlines())} if a.out.is_file() else set()
+    jobs = [j for j in jobs if (j[0], cond, j[2]) not in done]
     gof = {i: g for g, v in ids["groups"].items() for i in v["ids"]}
     new = a.out.is_file() is False
     a.out.parent.mkdir(parents=True, exist_ok=True)
@@ -117,7 +119,7 @@ def main(argv: list[str] | None = None) -> int:
         def work(j):
             if a.stop_file and a.stop_file.exists():
                 return None
-            return run_one(j[0], a.condition, j[2], problems, checklist, a.model, a.private, keys)
+            return run_one(j[0], cond, j[2], problems, checklist, a.model, a.private, keys, G.REVIEWERS[a.reviewer])
         with ThreadPoolExecutor(max_workers=a.workers) as ex:
             for row in ex.map(work, jobs):
                 if row is not None:

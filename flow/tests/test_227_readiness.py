@@ -381,7 +381,13 @@ def test_an_oracle_note_with_a_test_vector_is_refused():
 
 
 # ---- the frequency meter through the formal flow, with recorded replies ---------------------------------------------------------------------
-@pytest.mark.skipif(shutil.which("sby") is None and __import__("flow.sva_req", fromlist=["x"]).formal_env() is None, reason="needs the formal tools")
+def _have_formal() -> bool:
+    from flow import sva_req as S
+    env = S.formal_env()
+    return env is not None and shutil.which("z3", path=env.get("PATH")) is not None
+
+
+@pytest.mark.skipif(not _have_formal(), reason="needs sby and z3")
 def test_the_frequency_meter_example_goes_through_the_formal_flow(tmp_path):
     from flow import sva_req as S
     d = tmp_path / "fm"

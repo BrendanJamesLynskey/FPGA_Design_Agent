@@ -58,3 +58,14 @@ flag-everything), not which prompt is better. The `kb` against `fallback` differ
 Claude Code 2.1.321 pinned (`_scratch_227/bin/claude`, SHA-256 `426c33815ca6645a772f722fbff10dbf2cbdb124a8aeab733c1365dbf8bbf61f`, first on PATH), `DISABLE_AUTOUPDATER=1` set in `~/.claude/settings.json`; version checked before each launch;
 3 calls at a time; a failed call (plan limit, timeout, reply that is not JSON) is logged privately, **not scored**, and re-run. Weekly usage is read at the start and about every 30 minutes; stop at 92 % (owner plan 2026-11-26).
 Problem text and replies stay in `_handoff/fpga_agent/227_private/`; only ids and our outputs are committed.
+
+## Amendment 1 (2026-11-26, after the v1 run on `kb` and before any v2 run): a calibrated prompt as an exploratory arm
+
+What was seen first: the pre-registered v1 reviewer on the `kb` condition, run 1 of A to F: it flagged 16 of the 23 negatives (specificity 7/23), 8 of the 9 scorable fact-missing positives, and gave about 6 blocking findings per problem. It over-asks. The v1 result stands as the
+pre-registered result and is reported first, whatever v2 does. (Two negatives, the E group, were run first as a smoke test of the plumbing and also flagged; they are in the v1 result as run 1.)
+
+v2 is an **exploratory, post-hoc** arm. It changes only the reviewer's system prompt (`REVIEWER_SYSTEM_V2`): blocking is reserved for a gap where two reasonable designs differ at a port, file, register, report or test and nothing in the request chooses between them; a gap a
+conventional default would settle goes into a non-blocking `assumptions` list with the value assumed; at most 5 blocking findings; a stated fact is never a finding. The wording was written from that principle, not from any problem's text: the only problem replies read before writing it were two E problems' findings.
+It is run as conditions `kb_v2` (2 runs, A to F; G once) and `fallback_v2` (1 run, A to F), scored by the same code and the same keys, and labelled **post hoc and not confirmatory**: the set had been seen, so a good v2 result is a hypothesis for a fresh set (the planner's later labelled problems, or the held-out candidates once
+diagnosed), never a pass. The pass line is not applied to v2; its numbers are shown beside v1's.
+Unlabelled use: v2 is also run once on the agentic problems that are in no group (their ids are not committed) to see the share it flags; this is a flag rate, not a score.
