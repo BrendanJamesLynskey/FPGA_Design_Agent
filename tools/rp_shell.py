@@ -111,7 +111,7 @@ def fetch(work: Path) -> None:
         raise SystemExit("fetched commit is not the pin")
 
 
-def prepare(work: Path, blocks: list[Path], module7: str = "rp_user_block", module6: str | None = None) -> Path:
+def prepare(work: Path, blocks: list[Path], module7: str = "rp_user_block", module6: str | None = None, baseline: bool = False) -> Path:
     work.mkdir(parents=True, exist_ok=True)
     fetch(work)
     v = work / "vendor"
@@ -122,9 +122,10 @@ def prepare(work: Path, blocks: list[Path], module7: str = "rp_user_block", modu
     if new.exists():
         shutil.rmtree(new)
     shutil.copytree(base, new, ignore=shutil.ignore_patterns("out", "build", "sdk", ".Xil", "project"))
-    (new / TOP_REL).write_text(apply_patch(top0.read_text(), module7, module6))
-    for b in blocks or [BLOCK_DEFAULT]:
-        shutil.copy(b, new / "rtl" / Path(b).name)
+    if not baseline:                                  # baseline: the vendor's own top, only the version lines changed (to attribute a result to the vendor or to the patch)
+        (new / TOP_REL).write_text(apply_patch(top0.read_text(), module7, module6))
+        for b in blocks or [BLOCK_DEFAULT]:
+            shutil.copy(b, new / "rtl" / Path(b).name)
     bd = new / "ip" / "system.tcl"
     t = bd.read_text()
     if t.count(BD_VERSION[0]) != 1:
@@ -159,6 +160,31 @@ def build(work: Path, mem: str = "8G") -> int:
     return rc
 
 
+def parse_reports(o: Path) -> dict:
+    """Timing, utilisation and power from the build's own reports (numbers as the tool printed them; nothing computed here)."""
+    r: dict = {}
+    t = (o / "red_pitaya_top_timing_summary_routed.rpt")
+    if t.is_file():
+        m = re.search(r"WNS\(ns\).*?\n\s*-+.*?\n\s*(-?[\d.]+)\s+(-?[\d.]+)\s+(\d+)\s+(\d+)\s+(-?[\d.]+)\s+(-?[\d.]+)\s+(\d+)\s+(\d+)", t.read_text(errors="replace"), re.S)
+        if m:
+            wns, tns, tnsf, tnst, whs, ths, thsf, thst = m.groups()
+            r["timing"] = {"wns_ns": float(wns), "tns_ns": float(tns), "tns_failing_endpoints": int(tnsf), "tns_total_endpoints": int(tnst), "whs_ns": float(whs),
+                           "ths_failing_endpoints": int(thsf), "timing_met": float(wns) >= 0 and int(tnsf) == 0 and float(whs) >= 0}
+    u = o / "red_pitaya_top_utilization_placed.rpt"
+    if u.is_file():
+        tx = u.read_text(errors="replace")
+        def cell(label):
+            m = re.search(r"\|\s*" + re.escape(label) + r"\s*\|\s*(\d+)\s*\|[^|]*\|[^|]*\|\s*(\d+)\s*\|", tx)
+            return {"used": int(m.group(1)), "available": int(m.group(2))} if m else None
+        r["utilization"] = {"slice_luts": cell("Slice LUTs"), "slice_registers": cell("Slice Registers"), "block_ram_tiles": cell("Block RAM Tile"), "dsps": cell("DSPs")}
+    pw = o / "red_pitaya_top_power_routed.rpt"
+    if pw.is_file():
+        tx = pw.read_text(errors="replace")
+        a, b = re.search(r"Total On-Chip Power \(W\)\s*\|\s*([\d.]+)", tx), re.search(r"Junction Temperature \(C\)\s*\|\s*([\d.]+)", tx)
+        r["power"] = {"total_on_chip_w": float(a.group(1)) if a else None, "junction_c": float(b.group(1)) if b else None}
+    return r
+
+
 def package(work: Path, out: Path) -> dict:
     v = work / "vendor" / "prj" / NEW_PRJ
     o = v / "out"
@@ -174,8 +200,9 @@ def package(work: Path, out: Path) -> dict:
     info = {"schema": "fpga-design-agent/rp-shell-build/v1", "vendor_repo": REPO, "vendor_commit": COMMIT, "base_project": BASE_PRJ, "model": "Z10",
             "part": "xc7z010clg400-1", "slot": SLOT, "slot_address": f"0x40{SLOT}00000", "top_sha256_before": TOP_SHA256,
             "top_sha256_after": sha256(v / TOP_REL), "bd_script_version_line": "changed from 2025.1 to the running Vivado version in prj/fda_shell/ip/system.tcl and the IP scripts under ip/ip/",
-            "vivado_version": next(iter(re.findall(r"Vivado v(\\d{4}\\.\\d)", (work / "build.log").read_text(errors="replace"))), None), "blocks": {p.name: sha256(p) for p in sorted((v / "rtl").glob("rp_*.sv"))},
+            "vivado_version": next(iter(re.findall(r"Vivado v(\d{4}\.\d)", (work / "build.log").read_text(errors="replace"))), None), "blocks": {p.name: sha256(p) for p in sorted((v / "rtl").glob("rp_*.sv"))},
             "bit_bin_sha256": sha256(out / "fpga.bit.bin"), "bit_bin_bytes": (out / "fpga.bit.bin").stat().st_size, "build_id": sha256(out / "fpga.bit.bin")[:8]}
+    info.update(parse_reports(o))
     (out / "build.json").write_text(json.dumps(info, indent=1) + "\n")
     return info
 
@@ -188,6 +215,7 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--block", type=Path, action="append", default=[], help="a block's SystemVerilog file (default: the trivial rp_user_block)")
     p.add_argument("--slot7", default="rp_user_block", help="the module for slot 7 (0x40700000)")
     p.add_argument("--slot6", default=None, help="the module for slot 6 (0x40600000), optional")
+    p.add_argument("--baseline", action="store_true", help="no patch and no block: the vendor's own top (version lines changed only)")
     p = sub.add_parser("build")
     p.add_argument("workdir", type=Path)
     p.add_argument("--mem", default="8G")
@@ -197,7 +225,7 @@ def main(argv: list[str] | None = None) -> int:
     sub.add_parser("check")
     a = ap.parse_args(argv)
     if a.cmd == "prepare":
-        print(prepare(a.workdir, a.block, a.slot7, a.slot6))
+        print(prepare(a.workdir, a.block, a.slot7, a.slot6, a.baseline))
     elif a.cmd == "build":
         return build(a.workdir, a.mem)
     elif a.cmd == "package":

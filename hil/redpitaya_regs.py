@@ -107,6 +107,7 @@ COMMON_NOTES = (
     "what the PS does with the error is not documented. A write to a read-only register is ignored and answers with an error.",
     "Reset (the shell's adc_rstn, released some cycles after the PLL locks) returns every register to its reset value. A power cycle or a reload of the factory image ends the design.",
     "Reads have no side effects. A write takes effect on the next adc_clk cycle (125 MHz); the register bus runs on the same clock, so no read-back delay is needed.",
+    "Every signed 14-bit register (thresholds, levels, pattern samples) takes the low 14 bits of the 32-bit write as a two's-complement number and reads back sign-extended to 32 bits; a write of the 32-bit word -4000 (0xFFFFF060) and of 0x00003060 are the same. Bits 31 to 14 of a write are ignored.",
 )
 
 FREQCOUNT = RegMap("rp_freqcount", 0xFDA10101, (
@@ -136,15 +137,15 @@ PATGEN = RegMap("rp_patgen", 0xFDA10201, (
     Reg("MODE", 0x0C, "RW", 0, "0 pulse: LEVEL_HI for WIDTH cycles then LEVEL_LO for the rest of each PERIOD; 1 pattern: PAT_LEN samples, each held SAMPLE_DIV cycles, repeated; other values store as 0"),
     Reg("PERIOD", 0x10, "RW", 1250, "pulse period in adc_clk cycles, 2 to 2^32-1 (a write below 2 stores 2); default 1250 is 100 kHz"),
     Reg("WIDTH", 0x14, "RW", 625, "cycles of LEVEL_HI in each period, 1 to PERIOD-1 (a write outside stores the nearest legal value at the next START)"),
-    Reg("LEVEL_HI", 0x18, "RW", 2048, "signed 14 bit, counts: +-8192 is +-1 V into 50 ohm on OUT1; reset +2048 (+0.25 V)"),
-    Reg("LEVEL_LO", 0x1C, "RW", 0, "signed 14 bit, counts; reset 0"),
+    Reg("LEVEL_HI", 0x18, "RW", 2048, "signed 14 bit, counts: the low 14 bits of the write are the two's-complement value (write -4000 as 0x00003060, or any word whose low 14 bits are that), read back sign-extended to 32 bits; +-8192 is +-1 V into 50 ohm on OUT1; reset +2048 (+0.25 V)"),
+    Reg("LEVEL_LO", 0x1C, "RW", 0, "signed 14 bit, counts, same write and read-back convention as LEVEL_HI; reset 0"),
     Reg("COUNT", 0x20, "RW", 1, "periods (pulse) or pattern passes (pattern) to emit when CONT is 0, 1 to 65535 (a write of 0 stores 1)"),
     Reg("LIMIT", 0x24, "RW", 4096, "ceiling on the magnitude of every level and sample sent to OUT1, in counts; a write above 7372 (0.9 V) stores 7372; reset 4096 (0.5 V)"),
     Reg("STATUS", 0x28, "RO", 0, "bit 0 RUNNING; bit 1 DONE (cleared by START, set when COUNT periods have been emitted or STOP was written); bit 2 CLAMPED (a level or sample exceeded LIMIT since START and was cut to it)"),
     Reg("PERIODS_DONE", 0x2C, "RO", 0, "periods or passes completed since START"),
     Reg("PAT_LEN", 0x30, "RW", 16, "pattern samples used, 1 to 16 (a write of 0 stores 1, above 16 stores 16)"),
     Reg("SAMPLE_DIV", 0x34, "RW", 1, "adc_clk cycles each pattern sample is held, 1 to 65535 (a write of 0 stores 1)"),
-) + tuple(Reg(f"PAT{i}", 0x40 + 4 * i, "RW", 0, f"pattern sample {i}, signed 14 bit counts") for i in range(16)), COMMON_NOTES + (
+) + tuple(Reg(f"PAT{i}", 0x40 + 4 * i, "RW", 0, f"pattern sample {i}, signed 14 bit counts, same write and read-back convention as LEVEL_HI") for i in range(16)), COMMON_NOTES + (
     "OUT1 is the shell's DAC channel A; OUT2 (channel B) is not driven by this block (the factory ASG and PID are idle in this image), so it stays at 0.",
     "Every level and every pattern sample is cut to +-LIMIT on its way to the DAC, whatever the registers hold; the cut sets STATUS.CLAMPED. The output is 0 at reset, after STOP and when the sequence is done.",
     "Counts to volts: the DAC takes 14 bits for +-1 V into 50 ohm (8192 counts per volt). Into a high-impedance input the original generation's swing is not stated: start small and look.",

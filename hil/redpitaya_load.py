@@ -49,7 +49,11 @@ def render_script(package: Path, block: str, *, expect_hz: float | None = None, 
     build_id, size = info["build_id"], binf.stat().st_size
     load = (f'rp "fpgautil -b {REMOTE_DIR}/fpga.bit.bin -f Full"' if bare else f'rp "overlay.sh {FACTORY_FPGA} {REMOTE_DIR}/fpga.bit.bin"')
     expect = f" --expect-hz {expect_hz!r}" if expect_hz else ""
-    q = shlex.quote
+    t = info.get("timing") or {}
+    warn = ""
+    if t.get("timing_met") is False:
+        warn = (f" NOTE: this build's timing is NOT met (WNS {t.get('wns_ns')} ns, {t.get('tns_failing_endpoints')} failing endpoints; see build.json). "
+                "Read the results README before loading: the failing paths measured so far are in the vendor's own generator FIFO, not in the user block.")
     return f"""#!/usr/bin/env bash
 # Red Pitaya load-and-check for build {build_id} ({block}, {"bare" if bare else "inside the vendor shell"}). Written by the agent (brief 225); RUN BY THE OWNER, AT A BOARD VISIT.
 # The agent has not run this script and has not touched the board. It loads the design into the volatile PL configuration only: a power cycle, or RESTORE=1,
@@ -92,7 +96,7 @@ if command -v md5sum >/dev/null 2>&1; then
   [ "$(md5sum "$BIN" | cut -d' ' -f1)" = "$EXPECT_MD5" ] || fail "md5 of $BIN differs from the one this script was written for ($EXPECT_MD5)"
 fi
 
-ask "Red Pitaya $RP: the board is the owner's STEMlab 125-14 v1.1 on its 5 V 2 A supply, jumpers IN1 = LV (+-1 V) and IN2 = HV (+-20 V) as recorded, nothing above +-1 V on IN1, OUT1 into nothing that is unprotected. Loading REPLACES the factory image until a power cycle or RESTORE=1. Load build $BUILD_ID?" || fail "not confirmed; nothing was done"
+ask "Red Pitaya $RP: the board is the owner's STEMlab 125-14 v1.1 on its 5 V 2 A supply, jumpers IN1 = LV (+-1 V) and IN2 = HV (+-20 V) as recorded, nothing above +-1 V on IN1, OUT1 into nothing that is unprotected. Loading REPLACES the factory image until a power cycle or RESTORE=1.{warn} Load build $BUILD_ID?" || fail "not confirmed; nothing was done"
 
 rp "mkdir -p $REMOTE" || fail "cannot reach $RP"
 put "$BIN" "$PKG/redpitaya_checks.py" "$PKG/redpitaya_regs.py" || fail "copy failed"
