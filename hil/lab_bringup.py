@@ -182,10 +182,14 @@ def run_steps(steps: list[dict[str, Any]], lab: L.Lab, *, dry_run: bool = True, 
             iid, ch = s["instrument"], s.get("channel")
             row: dict[str, Any] = {"step": s["id"], "requirement": s.get("requirement"), "instrument": iid, "channel": ch, "kind": s["kind"],
                                    "method": mode_all or s["method"], "planned_method": s["method"], "action": DRIVE_ACTION if s["kind"] == "drive" else None,
-                                   "created": time.strftime("%Y-%m-%dT%H:%M:%S")}
+                                   "instrument_mode": L.instrument_mode(lab, iid), "created": time.strftime("%Y-%m-%dT%H:%M:%S")}
             rows.append(row)
             try:
                 inst = lab.get(iid)
+                busy = L.factory_unavailable(lab, iid)
+                if busy and not dry_run:                              # brief 225: a hand-edited step cannot measure with an instrument that is the target
+                    row.update(result="refused", detail=busy)
+                    continue
                 if s["kind"] == "confirm":
                     if dry_run:
                         row.update(result="dry_run", detail="would ask: " + s["prompt"])
