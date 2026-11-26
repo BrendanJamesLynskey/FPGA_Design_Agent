@@ -4,7 +4,7 @@
 
 **Verified except: 8 of 10 requirements without passing evidence; 10 of 10 requirements not agreed; required method mix not yet measured; mutation floor not yet measured; formal rigour not yet measured; fresh re-run not yet measured.**
 
-What the label means, what "verified" never means and how it is earned: [docs/verified.md](../../docs/verified.md). The label is computed from the testplan and the evidence files named below; it is never typed. Generated at git commit `51dfe82191cd59c99857973f44b8b57ec9363fb5` (informational: the hashes in the manifest, not the commit, are what the CI check compares).
+What the label means, what "verified" never means and how it is earned: [docs/verified.md](../../docs/verified.md). The label is computed from the testplan and the evidence files named below; it is never typed. Generated at git commit `45e89b74d901c4c9c23396e7fba792082709d6ea` (informational: the hashes in the manifest, not the commit, are what the CI check compares).
 
 Traceability summary: 10 requirements (9 functional, 1 performance); 2 verified; 6 partially verified (the required mix of methods is not met); performance verified: 0 on the board, 1 by post-route timing, 0 in simulation only; 0 of 10 requirements agreed by a human, 0 agreed on the owner's delegation (not human), 10 draft; 6 resting only on the implementing agent's own tests; 0 human and 0 delegated review(s) recorded; 2 Lean proof item(s) (all widths): 0 with a human-approved statement, 0 with a statement accepted on the owner's delegation (not a human approval), 2 with statement not approved; 2 kernel only, 0 using a compiled decision procedure; build status from: recorded build (not re-run).
 

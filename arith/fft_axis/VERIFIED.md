@@ -4,7 +4,7 @@
 
 **Not verified: no requirement of 6 has passing evidence.**
 
-What the label means, what "verified" never means and how it is earned: [docs/verified.md](../../docs/verified.md). The label is computed from the testplan and the evidence files named below; it is never typed. Generated at git commit `51dfe82191cd59c99857973f44b8b57ec9363fb5` (informational: the hashes in the manifest, not the commit, are what the CI check compares).
+What the label means, what "verified" never means and how it is earned: [docs/verified.md](../../docs/verified.md). The label is computed from the testplan and the evidence files named below; it is never typed. Generated at git commit `45e89b74d901c4c9c23396e7fba792082709d6ea` (informational: the hashes in the manifest, not the commit, are what the CI check compares).
 
 Traceability summary: 6 requirements (5 functional, 1 interface); 0 verified; 5 partially verified (the required mix of methods is not met); 1 stale; 0 of 6 requirements agreed by a human, 0 agreed on the owner's delegation (not human), 6 draft; 5 resting only on the implementing agent's own tests; 0 human and 0 delegated review(s) recorded.
 
