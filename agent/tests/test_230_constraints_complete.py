@@ -159,8 +159,7 @@ def test_jtag_and_usr_clocks_are_written_from_the_primitives(tmp_path):
     pre = KC.known_pre_xdc(ctx, KC.constraint_text(d, ctx.cfg, root))
     assert "create_clock -name jtag_tck -period 33.333 [get_pins u_jtag/u_bscan/INTERNAL_TCK]" in pre   # the path follows the instance
     assert "create_clock -name usr_cclk -period 10.000 [get_pins u_usr/CCLK]" in pre
-    assert "set_false_path -from [get_clocks usr_cclk]" in pre
-    assert "constant afterwards" in pre                                              # the reason sits above the false path
+    assert "set_false_path" not in pre      # measured (arm run 1): a false path from usr_cclk is EXC-IGNORED when DATA goes through an xpm_cdc macro, and the model cannot edit the flow's file
 
 
 def test_a_clock_the_design_already_defines_on_the_pin_is_not_written_twice(tmp_path):
@@ -293,3 +292,15 @@ def test_the_board_clock_input_gets_its_create_clock_when_the_design_places_it_b
     pre = KC.known_pre_xdc(ctx, KC.constraint_text(d, ctx.cfg, root))
     assert "create_clock -name clk_c3 -period 40.000 [get_ports {clk_c3}]" in pre
     assert not [f for f in KC.findings(d, root) if "clk_c3" in f["text"]]
+
+
+def test_an_ignored_exception_note_points_at_the_flows_own_files(tmp_path):
+    from agent.core import tools
+    root, d = make(tmp_path)
+    (d / "build" / "base").mkdir(parents=True)
+    s = SimpleNamespace(design=d, root=root, board="kr260")
+    assert tools._known_xdc_note(s, "base", "all fine") == ""
+    assert tools._known_xdc_note(s, "base", "EXC-IGNORED position 3") == ""            # no known files written: nothing to say
+    (d / "build" / "base" / "known_post.xdc").write_text("# x\n")
+    note = tools._known_xdc_note(s, "base", "FAIL post_synth_exceptions_clean (EXC-IGNORED position 3")
+    assert "known_post.xdc" in note and "skips any port" in note

@@ -43,7 +43,7 @@ HARD_BLOCKS: dict[str, dict[str, Any]] = {
     },
     "usr_accesse2": {
         "prims": ["USR_ACCESSE2"], "kind": "clock source (configuration clock)",
-        "needs": "a clock on the CCLK pin (the primitive is a clocked cell with an internal clock); the DATA word is constant after configuration, so paths from it are cut with a reason",
+        "needs": "a clock on the CCLK pin (the primitive is a clocked cell with an internal clock); the DATA word is constant after configuration, but whether paths from the clock need a cut depends on where DATA goes (an xpm_cdc macro already cuts them: a second false path is reported EXC-IGNORED, measured), so the crossing is the design's",
         "supplier": "flow (known_pre.xdc)",
         "line": "create_clock -name usr_cclk -period 10.000 [get_pins {i}/CCLK]",
         "evidence": "measured (Vivado 2026.1, xck26): after synthesis check_timing no_clock lists u_usr/CCLK (fixture and 224 p5 run 1); at elaboration the CCLK pin is NOT among the registers' clock pins, so only the static primitive check sees it; 209 and 224 designs that closed define a clock on CCLK",
@@ -546,9 +546,6 @@ def known_pre_xdc(ctx: Ctx, xdc: list[tuple[str, str]] | None = None) -> str:
     for b in k["blocks"]:
         lines.append(f"# {b['type']} {b['path']}: {b['needs']}")
         lines.append(b["line"])
-        if b["key"] == "usr_accesse2":
-            lines.append("# USR_ACCESS data is written at configuration and constant afterwards: paths from the configuration clock are not timed")
-            lines.append(f"set_false_path -from [get_clocks {b['clock']}]")
     return "\n".join(lines) + "\n" if lines else ""
 
 

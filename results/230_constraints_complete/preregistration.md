@@ -43,3 +43,13 @@ counted as it is. Interventions during the arm: none.
 origin/main moved while this was built: brief 234's PR #351 (4ee72255) merged. The branch now contains it (a merge commit), so the arm's agent also has 234's changes (writing limit 64000, turn cap by design size, fresh visits after a route back,
 stop diagnosis); the control ran without them. The intervention is therefore "brief 230 plus brief 234", and any difference cannot be attributed to 230 alone. Nothing else changes. Knowledge pin unchanged (5e2eab8).
 The code is frozen from here to the end of the arm; the agent_sha of each run is in its record. Unit tests, test_99_prompts and doccheck were run before this addendum.
+
+## Addendum 2026-11-26 12:35 GMT (from `date`): the first run found a defect; the arm restarts
+
+The arm's first run (p4 run 1, agent 8685b4556d5f, record `pilots/230/p4_fir_dsp/v1_aborted_run1`) stopped at 7.50 USD on `post_synth_exceptions_clean`:
+`set_false_path -from [get_clocks usr_cclk]`, a line the flow wrote into known_pre.xdc, was reported EXC-IGNORED ("Totally overridden path by FP 7": the `xpm_cdc`
+macro the design reads the USR_ACCESS word through already cuts those paths), and the model cannot edit the flow's file. That is a defect of the intervention, not an outcome of the model.
+Fix (committed before any further run): the flow no longer writes a false path from `usr_cclk`; after a failed gate with EXC-IGNORED the `gates` output says which flow
+files exist and how to make a flow line go away. Also in this commit: flow/build_cache.py keys the flow-written XDC files by content and ignores the directory in their paths (CI test_33 failed without it).
+Decision: the aborted run stays in the ledger and counts toward the 50 USD cap; the arm restarts from p4 run 1 with the fixed agent, so the nine runs of the arm all use one version.
+The aborted run is reported separately as "v1, aborted", not as an arm run. Everything else in this pre-registration is unchanged. The code is frozen from here to the end of the arm.

@@ -887,7 +887,7 @@ def gates(s: Session, kind: str = "stages", variant: str = "base") -> dict:
     res = {"ok": r.returncode == 0, "output": _text_out(r), "returncode": r.returncode, "variant": variant,
            "gates": data, "first_failed_stage": (data or {}).get("first_failed_stage"),
            "stages_ran": {k: v.get("ran") for k, v in ((data or {}).get("stages") or {}).items()}}
-    res["output"] = str(res["output"]) + _unconstrained_advice(s, data)        # brief 230: each unconstrained endpoint with its class and the line to add
+    res["output"] = str(res["output"]) + _unconstrained_advice(s, data) + _known_xdc_note(s, variant, res["output"])        # brief 230: each unconstrained endpoint with its class and the line to add
     return _stale_note(s, res, f"build:{variant}")
 
 
@@ -909,6 +909,19 @@ def _unconstrained_advice(s: Session, data: Any) -> str:
         return ("\nunconstrained endpoints explained (class and line to add):\n  " + "\n  ".join(lines)) if lines else ""
     except Exception as e:                           # noqa: BLE001
         return f"\n(the unconstrained-endpoint explanation did not run: {type(e).__name__}: {e})"
+
+
+def _known_xdc_note(s: Session, variant: str, text: Any) -> str:
+    """Brief 230: an ignored exception can be one of the flow's own lines (known_pre.xdc, known_post.xdc in the build directory), which the model
+    cannot edit. Say so and say how to make the flow's line go away: the flow leaves a port or clock pin alone once design.xdc constrains it."""
+    if "EXC-IGNORED" not in str(text) or os.environ.get("FDA_KNOWN_XDC", "1") == "0":
+        return ""
+    files = [f.name for f in (s.design / "build" / variant / "known_pre.xdc", s.design / "build" / variant / "known_post.xdc") if f.is_file()]
+    if not files:
+        return ""
+    return (f"\nnote: the flow writes {', '.join(files)} in build/{variant}/ (read before and after design.xdc); an ignored exception may be one of its lines. The flow "
+            "skips any port (placeholder delay and false path) or clock pin that design.xdc already constrains: write your own constraint for it (a false path "
+            "listing a port that carries a path, with the delay) and the flow's line is not written on the next build.")
 
 
 def _stamp(s: Session, kind: str) -> None:

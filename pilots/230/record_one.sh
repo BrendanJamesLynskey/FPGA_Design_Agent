@@ -11,7 +11,7 @@ PYTHONPATH=. $PY pilots/230/record_run.py "$R" "$ID" "$K" "runs/_logs/arm_${ID}_
 cp $R/summary.json $R/role_usage.jsonl $R/model_calls.jsonl $R/config.json $R/run_record.json "$D/" 2>/dev/null
 cp runs/_logs/arm_${ID}_r${K}.log "$D/agent_stdout.log"
 for f in build/trace/trace.md build/trace/trace.json build/base/manifest.json build/base/run.json build/base/timing_summary.rpt build/base/utilization.rpt build/base/prepare.json build/base/known_pre.xdc build/base/known_post.xdc build/base/check_timing_synth.rpt build/verif/verif_gates.json build/architecture.json; do [ -f "$DD/$f" ] && { mkdir -p "$D/$(dirname $f)"; cp "$DD/$f" "$D/$f"; }; done
-rsync -a --exclude build --exclude __pycache__ --exclude sim_build "$DD/" "$D/design/" 2>/dev/null
+rsync -a --exclude build --exclude spec.md --exclude __pycache__ --exclude sim_build "$DD/" "$D/design/" 2>/dev/null
 python3 - "$ID" "$K" "$RID" "$SHA" "$D/run_record.json" >> "$LED" <<'PY'
 import json,sys
 i,k,rid,sha,p=sys.argv[1:6]; d=json.load(open(p))

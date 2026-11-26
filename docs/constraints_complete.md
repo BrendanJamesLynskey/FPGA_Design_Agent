@@ -32,7 +32,7 @@ and the gate counts it (measured: 224 arm p5 run 1, `led[0]`, `led[1]`). So a sl
 
 - **The flow writes** (`flow/prepare.py` -> `<build>/known_pre.xdc`, read before the design's XDC, and `<build>/known_post.xdc`, read after it):
   - the clock of each `BSCANE2` in the RTL (the JTAG TCK, `create_clock -name jtag_tck -period 33.333` on `<instance path>/INTERNAL_TCK`): this covers the supplied `jtag_bus` wherever the module came from (`data/` or `designs/`);
-  - the clock of each `USR_ACCESSE2` (`create_clock -name usr_cclk -period 10.000 [get_pins <inst>/CCLK]`) and a commented false path from it (the USR_ACCESS word is constant after configuration);
+  - the clock of each `USR_ACCESSE2` (`create_clock -name usr_cclk -period 10.000 [get_pins <inst>/CCLK]`); the crossing out of it is the design's (see below);
   - for each slow or `async: true` port the design's XDC does not already constrain: the placeholder delay against the board clock's port and the false path, each with its reason; one command per kind, listing the ports together (a false path on a constant output alone is reported `EXC-IGNORED`, measured);
   - for the one transceiver reference clock pair of a one-lane board: `PACKAGE_PIN` on both pins and the `create_clock` at the board's frequency, unless the design's XDC already has them.
   A clock the design's own XDC already defines on the same pin is left alone (nothing is written twice). `FDA_KNOWN_XDC=0` turns the files off.
@@ -59,9 +59,10 @@ and the gate counts it (measured: 224 arm p5 run 1, `led[0]`, `led[1]`). So a sl
 
 - **A port the spec calls slow that is actually timed.** `slow_ports` (board file) and `async: true` (spec) cut the port from timing with a false path, which hides a real failure if the port is in fact synchronous to a clock. The board file's list is a fact about the board (LEDs, an SFP+ cage's status pins);
   for a spec's `async: true` give a `reason:` on the port. The false path's comment carries it; with no reason the comment says "no reason given: add one to the spec" and the constraint is still written, so the missing reason is visible in the XDC and in `known_post.xdc` in the build directory.
-- **The model's own clock on the same pin replaces the flow's.** Vivado keeps one clock per source without `-add`; the flow skips a pin the design's XDC already clocks, so the design's clock (name, period) wins and the flow's false path from `usr_cclk` is not written either.
+- **The model's own clock on the same pin replaces the flow's.** Vivado keeps one clock per source without `-add`; the flow skips a pin the design's XDC already clocks, so the design's clock (name, period) wins.
 - **An XDC that builds port lists in Tcl** (`set`, `foreach`, `$var`) cannot be read as text: no `FDA-CON-14` is raised for it, and the post-synthesis gate is the only check.
 - **`inout` ports** are covered by either delay in the pre-synthesis check; `check_timing` wants both an input and an output delay, so the post-synthesis gate can still list one.
+- **No false path from `usr_cclk`.** A first version of the flow wrote `set_false_path -from [get_clocks usr_cclk]` (the USR_ACCESS word is constant after configuration). In the labelled arm's first run (p4, `pilots/230/p4_fir_dsp/arm_run1`) it was reported `EXC-IGNORED`, "Totally overridden path": the `xpm_cdc` macro the design reads the word through already cuts those paths, and the model cannot edit a file the flow writes. It was removed; where the word goes to plain registers, TIMING-6/7 and the clock groups are the design's to write. After a failed `post_synth_exceptions_clean` the `gates` output says which flow files exist and how to make a flow line go away (constrain the port yourself).
 - **The period 10.000 ns of `usr_cclk`** is a choice for a clock that carries no timed path (its paths are cut); it is not a measured configuration clock rate.
 - **A constant output** (such as a tied-off laser disable) may be dropped from `check_timing`'s list by Vivado; the pre-synthesis rule still asks for a class, because the constant is not known from the files.
 
