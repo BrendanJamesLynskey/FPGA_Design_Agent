@@ -103,6 +103,9 @@ def _drive(graph, rt, cfg_lg, first_input, replies: list) -> dict:
             break
         if not replies:
             (rt.run_dir / "pending.json").write_text(json.dumps({"paused": pending[0], "run_id": rt.run_id}, indent=1))     # brief 182: the navigator shows a pending question
+            if pending[0].get("kind") == "review" and pending[0].get("hardware"):      # brief 219 fix 7: a pause for the programming approval leaves the run record
+                from agent.graph.run import write_paused_record
+                write_paused_record(rt, snap.values, pending[0])
             print(json.dumps({"paused": pending[0], "run_id": rt.run_id}, indent=1))
             return {"paused": pending[0]}
         reply = replies.pop(0)

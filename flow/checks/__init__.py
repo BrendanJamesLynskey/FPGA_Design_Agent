@@ -1270,6 +1270,34 @@ def run_one(name: str, design: Path, scope: str, variant: str = "base", root: Pa
     return _finish(name, raw, rules(), waivers, bad)
 
 
+#: a report whose Vivado command can crash the process (report_clock_networks: a segfault in Vivado 2026.1, brief 208): it runs in a
+#: session of its own, after the others, so a crash costs only that report (brief 219 fix 2)
+CRASH_PRONE = ("clock_networks",)
+
+
+def run_sessions(vivado: Callable[[Path, Path, list[str]], tuple[int, str]], dcp: Path, out: Path, need: list[str], ctx: Ctx) -> dict[str, Any]:
+    """The Vivado sessions for ``need``: every ordinary report in one session, then each crash-prone report alone. A session that
+    ends badly leaves each report it did not write marked ``report unavailable`` (``<name>.not_run.txt``): never a pass."""
+    plain = [r for r in need if r not in CRASH_PRONE]
+    groups = ([plain] if plain else []) + [[r] for r in need if r in CRASH_PRONE]
+    ran: dict[str, Any] = {"reports": need, "rc": 0, "tail": "", "sessions": []}
+    for names in groups:
+        rc, text = vivado(dcp, out, names)
+        ran["sessions"].append({"reports": names, "rc": rc})
+        ran["tail"] = text[-400:]
+        if rc != 0:
+            ran["rc"] = rc
+            why = f"the Vivado session failed (rc {rc}): {text.strip()[-200:]}"
+            if len(groups) == 1:
+                ctx.cache["vivado_why"] = why
+            for r in names:                        # whatever the dead session did not write is unavailable, not passed
+                done = any((out / f"{r}.{e}").is_file() for e in ("rpt", "tsv"))
+                mark = out / f"{r}.not_run.txt"
+                if not done or mark.is_file():
+                    mark.write_text(f"report unavailable: {r} was not written, the Vivado session ended (rc {rc}) {text.strip()[-120:]}\n")
+    return ran
+
+
 def run(design: Path, names: list[str] | str = "all", scope: str = "auto", level: str = "summary", variant: str = "base",
         root: Path = ROOT, lint: Callable[[], dict[str, Any]] | None = None,
         vivado: Callable[[Path, Path, list[str]], tuple[int, str]] | None = None,
@@ -1302,10 +1330,7 @@ def run(design: Path, names: list[str] | str = "all", scope: str = "auto", level
             for r in need:                                  # never mix a new session's files with an old one's
                 for ext in ("rpt", "tsv", "not_run.txt"):
                     (ctx.out / f"{r}.{ext}").unlink(missing_ok=True)
-            rc, text = vivado(dcp, ctx.out, need)
-            vivado_ran = {"reports": need, "rc": rc, "tail": text[-400:]}
-            if rc != 0:
-                ctx.cache["vivado_why"] = f"the Vivado session failed (rc {rc}): {text.strip()[-200:]}"
+            vivado_ran = run_sessions(vivado, dcp, ctx.out, need, ctx)
     rs = rules()
     waivers, bad = load_waivers(design)
     source = [n for n in chosen if CHECKS[n].kind == "source"]

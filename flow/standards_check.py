@@ -847,7 +847,10 @@ class Check:
                      + ", ".join(f"{r.get('id', r.get('rule'))} x{r['count']}" for r in ((ps.get("methodology") or {}).get("rules") or [])
                                  if r.get("severity") == "Critical Warning"))
         cn = bdir / "clock_networks_synth.rpt"
-        if not cn.is_file():
+        cn_mark = bdir / "clock_networks_synth.not_run.txt"
+        if cn_mark.is_file():                  # brief 219 fix 2: the report crashed Vivado; a partial file is never read
+            self.not_run["STD-CLK-03"] = cn_mark.read_text(errors="replace").strip()[:200]
+        elif not cn.is_file():
             self.not_run["STD-CLK-03"] = "clock_networks_synth.rpt is absent"
         else:
             declared = arch_mod.declared_clocks(self.arch)

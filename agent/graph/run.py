@@ -1780,7 +1780,14 @@ def node_document(state: State) -> dict:
     stop = state.get("stop") or ""
     if rt.cfg.docs != "on" or stop.startswith("claude_code blocked"):
         return {}
+    return {"doc": _doc_step(rt, state, stop)}
+
+
+def _doc_step(rt: Runtime, state: dict, stop: str, paused: dict | None = None) -> dict:
+    """summary.json (frozen first), then the DOC step; ``paused`` (brief 219 fix 7) marks both as the record of a run that has not ended."""
     s = summary(rt, state)
+    if paused:
+        s.update(paused=paused, stop=stop, clean_stop=False)
     if state.get("resumed_from"):                          # brief 68 D: what the DOC step and doccheck need to re-derive
         s.update(resumed_from=state["resumed_from"], gates_carried=list(state.get("carried") or []))
     (rt.run_dir / "summary.json").write_text(json.dumps(s, indent=1))
@@ -1794,10 +1801,30 @@ def node_document(state: State) -> dict:
                                 log=rt.run_dir / "doc_calls.jsonl")
     except Exception as e:                                 # noqa: BLE001 (the run has ended; record why the docs did not)
         res = {"ok": False, "passes": 0, "problems": [f"DOC step error: {type(e).__name__}: {e}"[:600]]}
-    res["signed_off"] = bool(res["ok"] and gl.get(MACHINE[-1].name) is True and all(
+    res["signed_off"] = bool(not paused and res["ok"] and gl.get(MACHINE[-1].name) is True and all(
         gl.get(s.name) is True or s.name in (state.get("carried") or ()) for s in MACHINE))
+    if paused:
+        res["paused"] = paused
     (rt.run_dir / "doc.json").write_text(json.dumps(res, indent=1))
-    return {"doc": res}
+    return res
+
+
+PAUSE_STOP = "paused: awaiting the owner's approval to program the board (stage 9)"
+
+
+def write_paused_record(rt: Runtime, state: dict, pending: dict) -> dict:
+    """Brief 219 fix 7 (209 pilot: a run paused at the programming approval left no summary.json and no DOC step). At that pause the run
+    record gets the same files as a finished run, marked ``paused``: summary.json (``paused``, ``clean_stop`` false, ``stop`` the pause) and,
+    with docs on, the DOC step (doc.json, ``signed_off`` false). Resuming the run writes the final record over them."""
+    paused = {"kind": "hardware approval", "stage": pending.get("stage"), "stage_name": pending.get("stage_name"),
+              "fails": pending.get("fails"), "resume": f"python -m agent resume {rt.run_id} --reply '{{\"decision\": \"approve\"}}'"}
+    if rt.cfg.docs == "on":
+        _doc_step(rt, state, PAUSE_STOP, paused)
+    else:
+        s = summary(rt, state)
+        s.update(paused=paused, stop=PAUSE_STOP, clean_stop=False)
+        (rt.run_dir / "summary.json").write_text(json.dumps(s, indent=1))
+    return paused
 
 
 def _run_event(rt: Runtime, name: str, stage: str | None = None, **fields: Any) -> None:

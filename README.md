@@ -217,6 +217,7 @@ Basic licence tier, not passed.
 Clock-domain crossings follow one method for Vivado and Quartus (brief 207): each crossing has a latency bound, a skew bound and an
 MTBF target, set as per-crossing bounds rather than as a clock uncertainty margin; `flow/cdc_margin.py` checks that they are present and
 met ([docs/cdc_margin_method.md](docs/cdc_margin_method.md), measured in [results/207_cdc_margin](results/207_cdc_margin/README.md)).
+Brief 219 fixed eight small defects from briefs 207, 208, 209a and the 209 pilot (heavy-slot deadlock, a Vivado crash in `report_clock_networks`, a Gray-bus false positive in `cdc_inject`, LOC site names, lint waivers, a record at the programming pause, mutation targets); the records are in [results/219_small_fixes](results/219_small_fixes/README.md).
 
 ## Knowledge packs
 The agent's know-how is a set of frozen, hashed knowledge layers in Agent Skills format: generic RTL skills, an AMD

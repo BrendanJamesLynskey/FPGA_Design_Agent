@@ -299,6 +299,18 @@ def lint(s: Session) -> dict:
     argv = ["verilator", "--lint-only", "-Wall", "--top-module", cfg["top"], *srcs, *stubs]
     r = s.runner.run("lint", argv, s.root, timeout=300)
     out, ok = _text_out(r), r.returncode == 0
+    waived_clean = False
+    if not ok:                                          # brief 219 fix 6: lint/waivers.yaml applies here, as it does at the stage gate
+        from flow.lint_ruleset import waive_verilator_text
+        wv = waive_verilator_text(out, s.design, s.root)
+        if wv["waived"] or wv["bad_waivers"]:
+            ok = waived_clean = bool(wv["waived"]) and not wv["open"] and not wv["unparsed"]
+            out += (f"\n[lint/waivers.yaml applied: {len(wv['waived'])} finding(s) waived, {len(wv['open'])} open"
+                    + ("; the run is clean" if ok else "; the open findings still fail") + "]")
+            out += "".join(f"\n  waived {k}: {why[:100]}" for k, why in wv["waived"][:10])
+            out += "".join(f"\n  OPEN {k}" for k in wv["open"][:10])
+            out += "".join(f"\n  not waivable: {u}" for u in wv["unparsed"][:5])
+            out += "".join(f"\n  BAD waiver: {b}" for b in wv["bad_waivers"])
     ic = _icarus_elaborate(s, cfg["top"], srcs)           # 07a2 fix 5 D: the simulator the tests run on must accept it too
     if ic is not None and ic.returncode != 0:
         ok = False
@@ -309,7 +321,8 @@ def lint(s: Session) -> dict:
     if found:
         ok = False
         out += ("\n" if out else "") + "\n".join(f"{x['rule']} {x['message']}" for x in found)
-    return {"ok": ok, "output": out, "returncode": r.returncode if r.returncode else (ic.returncode if ic else 0),
+    vrc = 0 if (r.returncode and waived_clean) else r.returncode     # a run whose every finding is waived reports Verilator's rc as 0
+    return {"ok": ok, "output": out, "returncode": vrc if vrc else (ic.returncode if ic else 0),
             "seconds_run": r.seconds + (ic.seconds if ic else 0)}
 
 

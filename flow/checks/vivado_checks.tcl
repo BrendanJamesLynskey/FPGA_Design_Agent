@@ -267,10 +267,17 @@ proc fda_report {name out} {
         return
     }
     set t0 [clock milliseconds]
+    # brief 219 fix 2: a marker first, deleted when the report completes. A report that kills the process (report_clock_networks
+    # segfaulted Vivado 2026.1) leaves it behind: the reader sees "report unavailable", never a partial file taken as a pass.
+    set mark [open $out/$name.not_run.txt w]
+    puts $mark "report unavailable: $name did not complete (the Vivado session ended inside it); not a pass"
+    close $mark
     if {[catch {uplevel #0 $cmd} err]} {
         set f [open $out/$name.not_run.txt w]
         puts $f "$name not run: $err"
         close $f
+    } else {
+        file delete $out/$name.not_run.txt
     }
     puts "FDA-CHECK $name [expr {[clock milliseconds] - $t0}] ms"
 }
@@ -280,6 +287,10 @@ if {![info exists ::fda_checks_lib]} {
     set_param general.maxThreads 1
     file mkdir $out
     open_checkpoint $dcp
-    foreach n [split $names ","] { fda_report $n $out }
+    # report_clock_networks last (brief 219 fix 2): a crash in it costs only that report
+    set order {}
+    foreach n [split $names ","] { if {$n ne "clock_networks"} { lappend order $n } }
+    if {"clock_networks" in [split $names ","]} { lappend order clock_networks }
+    foreach n $order { fda_report $n $out }
     puts "FDA-CHECKS-DONE"
 }
