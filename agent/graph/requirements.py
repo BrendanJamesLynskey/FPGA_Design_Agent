@@ -61,6 +61,7 @@ def _r(i: str, risk: str, rx: str, why: str) -> Rule:
 
 #: ordered: the first rule that matches decides, so the lower classes come first only where they are exact (a proof-method question)
 RULES: tuple[Rule, ...] = (
+    _r("lab-bench", "low", r"\[lab:(?:connect|record)", "which instrument checks a requirement is a choice of verification method; the design is the same either way (brief 221)"),
     _r("verification-method", "low", r"\bproof method|\bwhich (?:verification|test) method", "a choice of verification method, not of behaviour"),
     _r("clock", "high", r"\bclocks?\b|\bclk\w*|\bMHz\b|\bGHz\b|\bPLL\b|\bMMCM\b|\boscillator\b|\bfrequenc\w+|\bclock source",
        "a clock frequency or source changes timing and every rate derived from it"),

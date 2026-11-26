@@ -352,6 +352,12 @@ standard.
   [flow/requirements_report.py](flow/requirements_report.py), [docs/agent.md](docs/agent.md#requirements-strictness-agentgraphrequirementspy-brief-210), results in
   [results/210_requirements](results/210_requirements/README.md) (the re-scoring of recorded runs: [rescore.md](results/210_requirements/rescore.md), tool
   [tools/requirements_rescore.py](tools/requirements_rescore.py)).
+- **The lab: instruments the agent can use (brief 221).** A lab file records the bench (instruments, channels, limits, which are onboarded, which a script may drive and
+  which only the owner may touch); the interview asks only about gaps; stage 9 chooses, per requirement, a scripted instrument, a manual reading or the on-chip
+  method and writes the steps into `BRINGUP.md`; every output a script could enable has a limit or is never enabled; the owner runs every instrument step and
+  the agent only dry-runs them against mocks. [hil/lab.py](hil/lab.py), [hil/lab_bringup.py](hil/lab_bringup.py), [hil/lab_drivers.py](hil/lab_drivers.py),
+  [hil/lab.example.yaml](hil/lab.example.yaml), [agent/graph/lab_interview.py](agent/graph/lab_interview.py),
+  [docs/agent.md](docs/agent.md#the-lab-instruments-the-agent-can-use-hillabpy-brief-221), results in [results/221_lab_instruments](results/221_lab_instruments/README.md).
 - **Change record.** [flow/change_record.py](flow/change_record.py): input hashes, tool versions, knowledge-bank pin
   and flow commit (from the build manifest when present), and what changed since a baseline.
 - **Check suite (brief 71).** One agent tool, `check`, over a registry of every design check (lint, standards, resets,
