@@ -297,6 +297,7 @@ def config_from_json(c: dict):
                   model_config=c.get("model_config") or None, explicit=tuple(c.get("explicit") or ()),
                   allow_fable=str(c.get("allow_fable", False)) == "True",
                   level1_seed=int(c["level1_seed"]) if c.get("level1_seed") not in (None, "None") else None,
+                  routing=c.get("routing", "off") or "off", kway=int(c.get("kway", 0) or 0),         # brief 214
                   permissions=_literal(c.get("permissions")))                                    # brief 222
 
 
@@ -651,6 +652,12 @@ def build_parser() -> argparse.ArgumentParser:
                         "(RTL values over the last cycles, the model's value, the transaction in flight, the driver cone) in place of the raw "
                         "simulator log tail, R2 = the failure ledger of earlier stage-2 visits, R3 = the fresh-stimulus regrade after stage 2 "
                         "passes; A0 = the baseline with no arm (pin it for comparisons with earlier runs)")
+    r.add_argument("--routing", choices=["off", "on"], default="off",
+                   help="brief 214: on = the routing table (agent/models/routing.py) picks a model tier per call (a lint or design-standards repair on the cheap "
+                        "tier) and the same failure on two visits of a stage escalates the next visit to the strong tier; claude_code endpoints only; off = today's models")
+    r.add_argument("--kway", type=int, default=0, metavar="K",
+                   help="brief 214: K > 1 = after two failed visits of stage 2, K independent attempts from the same snapshot, each evaluated by the stage's gates, "
+                        "the best kept (a check the Designer did not write ranks first) and every candidate logged in kway.jsonl; 0 = off")
     r.add_argument("--router-k", type=int, default=8, help="brief 36: skills in the router's shortlist")
     r.add_argument("--design-plan", action="store_true",
                    help="plan before building: stage 1 lists the datapaths, and the timing plan maps each operation to a DSP slice, "
@@ -872,6 +879,7 @@ def _run_main(a, args: list[str], ap: argparse.ArgumentParser) -> int:
                      design_plan=a.design_plan, closure=a.closure, docs=a.docs,          # closure loop; brief 68 C
                      permissions=permission_spec(a, name, ap),                          # brief 222
                      coverage_loop=a.coverage_loop, req_sva=a.req_sva,                   # brief 218
+                     routing=a.routing, kway=a.kway,                                     # brief 214
                      **{**model_kwargs(a, args), "models_file": a.models_file or project_models_file(a.spec)})
         cfg.role_models()                                     # fail early on an unknown profile, role or forbidden model
         if a.max_usd is not None:

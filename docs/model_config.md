@@ -221,3 +221,8 @@ reply is in any of them. Calls on a `claude_code` endpoint are also in the exist
 the tests and fails on: constructing a model client, importing an LLM SDK, looking up the `claude` binary, a `claude -p` argv, or any of the
 `claude` isolation flags. A new call has to go through `Resolver` (`chat`, `text`, `oracle`, or `agent_spec` for a role) and be added to
 `agent/models/inventory.py`, which another test checks against the files and the purpose list.
+
+## Routing by stage and escalation (brief 214)
+
+The per-call tier table (cheap, standard, strong), escalation after a repeated failure, and k-way attempts are in [role_models.md](role_models.md#cost-routing-by-stage-and-k-way-attempts-brief-214).
+They are flags (`--routing on`, `--kway K`), off by default, and change no entry of this table; the DOC step's model is still the `doc` purpose here.
