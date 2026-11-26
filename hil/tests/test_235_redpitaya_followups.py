@@ -33,3 +33,23 @@ def test_the_failure_is_the_time_zero_decode(tmp_path: Path) -> None:
     assert "XCHECK FAIL 1" in out and "ID read 00000000 err x" in out                  # as recorded in brief 225
     assert "XCHECK PASS" in run(tmp_path, tb, re.sub(r"always @\(\*\)", "always_comb", rtl))      # the decode runs at time 0
     assert "XCHECK PASS" in run(tmp_path, tb.replace("addr = 0,", "addr = 32'hFFFF0,"), rtl)        # or a first read away from the initial address
+
+
+def test_the_overlay_is_added_after_the_vendors_constraints_and_only_once() -> None:
+    from tools import rp_shell
+    src = "add_files -fileset constrs_1 sdc/red_pitaya.xdc\nset gith [exec git log -1]\nlaunch_runs impl_1\n"
+    out = rp_shell.overlay_tcl(src)
+    assert out.index("sdc/red_pitaya.xdc") < out.index("sdc/fda_overlay.xdc") < out.index("set gith")
+    assert "PROCESSING_ORDER LATE" in out and out.count("fda_overlay.xdc") == 2
+    with pytest.raises(SystemExit):
+        rp_shell.overlay_tcl(src + "set gith [exec git log]\n")
+    with pytest.raises(SystemExit):
+        rp_shell.overlay_tcl("nothing\n")
+
+
+def test_the_overlay_names_only_flat_netlist_cells_and_carries_its_reasons() -> None:
+    t = (ROOT / "boards" / "redpitaya_stemlab_125_14" / "shell" / "fda_overlay.xdc").read_text()
+    code = [l for l in t.splitlines() if l.strip() and not l.lstrip().startswith("#")]
+    assert any("get_cells -quiet -hierarchical -filter" in l for l in code)            # leaf cells: a hierarchical cell is not a valid start or end point
+    assert sum(l.startswith("set_false_path") for l in code) == 2
+    assert "NOT make the vendor instruments work" in t or "do NOT make the vendor instruments work" in t.replace("\n# ", " ")

@@ -14,6 +14,7 @@
 # The vendor's arbitrary-generator and oscilloscope logic, and the two AXI master bridges that carry their deep memory (HP2 and HP3), are not used by
 # this image; their registers stay at the reset value 0 (generator off, scope not triggered) because nothing writes them. The block-to-DAC term
 # (user_dac) is a separate path and stays timed.
-set fda_vendor_instr [get_cells -quiet {i_asg i_scope ps/axi_master_2 ps/axi_master_3}]
+# The synthesised netlist is flat, so the instruments are named by the leaf cells under their hierarchy names.
+set fda_vendor_instr [get_cells -quiet -hierarchical -filter {NAME =~ i_asg/* || NAME =~ i_scope/* || NAME =~ ps/axi_master_2/* || NAME =~ ps/axi_master_3/*}]
 set_false_path -from $fda_vendor_instr
 set_false_path -to   $fda_vendor_instr

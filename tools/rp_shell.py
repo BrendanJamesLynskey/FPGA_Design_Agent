@@ -144,14 +144,20 @@ def prepare(work: Path, blocks: list[Path], module7: str = "rp_user_block", modu
     tcl = tcl.replace("tclapp::install -quiet ultrafast", "# tclapp::install -quiet ultrafast   (removed by tools/rp_shell.py: it needs the network)")
     if overlay is not None:                  # brief 235: our own constraints, read after the vendor's (never an edit of the vendor's files)
         shutil.copy(overlay, new / "sdc" / OVERLAY_NAME)
-        marker = "set gith [exec git log"
-        if tcl.count(marker) != 1:
-            raise SystemExit(f"{VIVADO_TCL}: the marker {marker!r} is not there exactly once; the shell changed since the pin")
-        tcl = tcl.replace(marker, f"add_files -fileset constrs_1 sdc/{OVERLAY_NAME}      ;# fda_shell: our constraints overlay (tools/rp_shell.py --overlay)\n"
-                                  f"set_property PROCESSING_ORDER LATE [get_files {OVERLAY_NAME}]\n" + marker)
+        tcl = overlay_tcl(tcl)
     (v / "fda_vivado_Z10.tcl").write_text(tcl)
     (work / "overlay.json").write_text(json.dumps({"overlay": OVERLAY_NAME, "sha256": sha256(overlay)} if overlay is not None else {}))
     return new
+
+
+def overlay_tcl(tcl: str, name: str = OVERLAY_NAME) -> str:
+    """The vendor's build script with our constraints overlay added after its own constraint files (read late, so it can refer to anything they define).
+    Raises SystemExit if the marker line is not there exactly once (the shell changed since the pin)."""
+    marker = "set gith [exec git log"
+    if tcl.count(marker) != 1:
+        raise SystemExit(f"{VIVADO_TCL}: the marker {marker!r} is not there exactly once; the shell changed since the pin")
+    return tcl.replace(marker, f"add_files -fileset constrs_1 sdc/{name}      ;# fda_shell: our constraints overlay (tools/rp_shell.py --overlay)\n"
+                               f"set_property PROCESSING_ORDER LATE [get_files {name}]\n" + marker)
 
 
 def build_argv(work: Path, mem: str = "8G", unit: str | None = None, vivado: str | None = None) -> list[str]:
