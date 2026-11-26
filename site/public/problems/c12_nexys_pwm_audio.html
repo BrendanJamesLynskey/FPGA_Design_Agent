@@ -3,11 +3,11 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Safe PWM audio output stage for the Nexys A7 speaker jack | FPGA Design Agent</title>
+<title>Safe PWM audio output stage for the Nexys A7 speaker jack | FPGA Force</title>
 <meta name="description" content="Safe PWM audio output stage for the Nexys A7 speaker jack: the spec, hidden tests, reference RTL, mutants and golden model of benchmark task c12_nexys_pwm_audio.">
 <meta name="color-scheme" content="light dark">
 <link rel="icon" href="../favicon.svg" type="image/svg+xml">
-<style>/* FPGA Design Agent site: sober monochrome, dark and light, no glow. Same manner as the CVDP RTL Agent site. */
+<style>/* FPGA Force site: sober monochrome, dark and light, no glow. Same manner as the CVDP RTL Agent site. */
 :root {
   --bg: #f6f6f4; --panel: #ffffff; --rule: #d6d6d2; --ink: #161616; --ink-2: #4a4a4a; --ink-3: #6b6b6b;
   --mark: #161616; --mute: #b9b9b4; --warn: #b3261e; --ok: #161616;
@@ -61,6 +61,7 @@ button:hover { border-color: var(--ink-3); }
 button[aria-pressed="true"] { background: var(--ink); color: var(--bg); }
 
 /* sections, cards */
+.tagline { font-size: 1.3rem; font-weight: 600; margin: .2rem 0 1rem; color: var(--ink); }
 .eyebrow { font: 600 .8rem var(--f-mono); text-transform: uppercase; letter-spacing: .08em; color: var(--ink-3); }
 .facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; margin: 22px 0; }
 .fact { border: 1px solid var(--rule); background: var(--panel); padding: 14px 16px; }
@@ -674,7 +675,7 @@ svg .bdtick { stroke: var(--ink-3); }
 @media (max-width: 520px) { .evm tbody th { min-width: 9em; } }
 @media (max-width: 520px) { .evm tbody th { white-space: normal; min-width: 8em; max-width: 9em; font-size: .8rem; } .evm td.ev { min-width: 4.2em; } .evm thead th { font-size: .72rem; } }
 
-/* brief 193: "Why this agent": the one-page summary */
+/* brief 193: "Why FPGA Force": the one-page summary */
 svg .boxyou { fill: var(--ink); stroke: var(--ink); }
 .whyhero h1 { font-size: clamp(1.35rem, 1rem + 1.6vw, 2rem); letter-spacing: -.01em; line-height: 1.3; max-width: 48ch; }
 .whyfig { margin: 18px 0 8px; }
@@ -711,7 +712,7 @@ svg text.wn { fill: var(--warn); }
 </head>
 <body>
 <a class="visually-hidden" href="#main">Skip to content</a>
-<header class="bar"><div class="wrap"><a class="brand" href="../index.html">FPGA Design Agent</a><nav aria-label="Pages"><a href="../why.html">Why</a><a href="../agent.html">The agent</a><a class="sub" href="../agent.html#harness">Harness</a><a href="../story.html">How it was built</a><a href="../worked-example.html">Worked example</a><a href="../inspect.html">Inspect it</a><a href="../how.html">How it works</a><a href="../verification.html">Verification</a><a href="../traceability.html">Traceability</a><a href="../flow-notes.html">Beyond the flow</a><a href="../expertise.html">Expertise</a><a href="../examples.html">Examples</a><a href="../showcase.html">Showcase</a><a href="../problems.html" aria-current="page">Problems</a><a href="../evaluation.html">Evaluation</a><a href="../results.html">Results</a></nav><button id="theme" type="button" aria-label="Switch to dark theme">Dark</button></div></header>
+<header class="bar"><div class="wrap"><a class="brand" href="../index.html">FPGA Force</a><nav aria-label="Pages"><a href="../why.html">Why</a><a href="../agent.html">The agent</a><a class="sub" href="../agent.html#harness">Harness</a><a href="../story.html">How it was built</a><a href="../worked-example.html">Worked example</a><a href="../inspect.html">Inspect it</a><a href="../how.html">How it works</a><a href="../verification.html">Verification</a><a href="../traceability.html">Traceability</a><a href="../flow-notes.html">Beyond the flow</a><a href="../expertise.html">Expertise</a><a href="../examples.html">Examples</a><a href="../showcase.html">Showcase</a><a href="../problems.html" aria-current="page">Problems</a><a href="../evaluation.html">Evaluation</a><a href="../results.html">Results</a></nav><button id="theme" type="button" aria-label="Switch to dark theme">Dark</button></div></header>
 <main id="main" class="wrap">
 <p class="crumbs small"><a href="../problems.html">Problems</a> / <a href="../problems.html#dom-O">O. Audio</a></p>
 <h1>Safe PWM audio output stage for the Nexys A7 speaker jack</h1>
@@ -951,7 +952,7 @@ SAMPLE, GAIN, SOUT = 0x00, 0x01, 0x02
 </main>
 <footer><div class="wrap"><p>Designed by Brendan Lynskey. Code and results: <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent">github.com/BrendanJamesLynskey/FPGA_Design_Agent</a> (all rights reserved; source visible for review, see LICENSE). Every number on these pages is read from a committed result file; development results are labelled as such and are not the held-out score.</p></div></footer>
 <script type="application/json" data-key="trace">{"captions":["Step 0: Reset (gain back to the default). Sample 0 gives sample_out 0 and the pin is pulled low for 512 of 1024 clocks.","Step 1: Sample 32767 gives sample_out 2067 and the pin is pulled low for 496 of 1024 clocks.","Step 2: Sample -32768 gives sample_out -2068 and the pin is pulled low for 529 of 1024 clocks.","Step 3: Gain write 65535. Sample 32767 gives sample_out 8191 and the pin is pulled low for 449 of 1024 clocks.","Step 4: Sample -32768 gives sample_out -8192 and the pin is pulled low for 576 of 1024 clocks.","Step 5: Gain write 4000. Sample 20000 gives sample_out 2441 and the pin is pulled low for 493 of 1024 clocks.","Step 6: Gain write 8192. Sample 12345 gives sample_out 3086 and the pin is pulled low for 488 of 1024 clocks.","Step 7: Gain write 8193. Sample 10000 gives sample_out 2500 and the pin is pulled low for 493 of 1024 clocks.","Step 8: Reset (gain back to the default). Sample 32767 gives sample_out 2067 and the pin is pulled low for 496 of 1024 clocks.","Step 9: Sample 0 gives sample_out 0 and the pin is pulled low for 512 of 1024 clocks.","Step 10: Sample -1 gives sample_out -1 and the pin is pulled low for 513 of 1024 clocks.","Step 11: Sample 100 gives sample_out 6 and the pin is pulled low for 512 of 1024 clocks.","Step 12: Sample -20000 gives sample_out -1263 and the pin is pulled low for 522 of 1024 clocks."],"signals":[{"hi":32767,"kind":"wave","lo":-32768,"name":"sample","v":[0,32767,-32768,32767,-32768,20000,12345,10000,32767,0,-1,100,-20000]},{"kind":"text","name":"gain action","v":["reset","none","none","write 65535","none","write 4000","write 8192","write 8193","reset","none","none","none","none"]},{"hi":4096,"kind":"wave","lo":-4096,"name":"sample_out","v":[0,2067,-2068,8191,-8192,2441,3086,2500,2067,0,-1,6,-1263]},{"kind":"bus","name":"clocks low per period","radix":"dec","v":[512,496,529,449,576,493,488,493,496,512,513,512,522],"width":11}],"stimulus":"The model's script of resets, gain writes (up to 65535, against a limit of 8192) and held samples, followed by 4 more samples at the last gain.","unit":"step","x":[0,1,2,3,4,5,6,7,8,9,10,11,12]}</script>
-<script>/* FPGA Design Agent site. No dependencies. Every animation is frame(step) over a state list built from site/data/*.json. */
+<script>/* FPGA Force site. No dependencies. Every animation is frame(step) over a state list built from site/data/*.json. */
 (function () {
   "use strict";
   var D = {};

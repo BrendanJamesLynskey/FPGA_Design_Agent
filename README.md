@@ -1,4 +1,8 @@
-# FPGA_Design_Agent
+# FPGA Force
+
+**A force multiplier for FPGA teams: a whole team's work, from your spec to a checked bitstream.**
+
+FPGA Force was developed as the FPGA Design Agent; the repository and the Python package keep that name.
 
 **An agentic FPGA design environment: from a plain-English request to a bitstream proven on the board.**
 Site: **[fpga-design-agent.vercel.app](https://fpga-design-agent.vercel.app)** (built from [site/](site)).
