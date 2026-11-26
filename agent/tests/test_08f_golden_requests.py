@@ -83,7 +83,10 @@ Goldens, oldest first:
   ``conventions_text_noshell_True`` differ from the brief 224 golden. Runs before this change belong to the earlier goldens.
 - ``b225_request_golden.json`` (brief 225, 2026-11-26, on the tree with briefs 224 and 231): the registry gained ``drive_instrument`` (schema 1.25.0; the lab tool: it checks a
   drive request against the lab file's limits and records it, and enables nothing). No stage or role is offered it, so every hash other than ``tool_registry`` equals the
-  brief 231 golden's."""
+  brief 231 golden's.
+- ``b239_request_golden.json`` (brief 239, 2026-11-26): the stage-2 Designer's request gained the list of what the stage-2 gates check (``agent/graph/run.py``
+  ``stage2_rules_note``, built from ``flow/hdl_rules.yaml``, appended after the conventions like ``FILE_BY_FILE_NOTE``). One new request path
+  (``stage2_rules_note``); every other hash equals the brief 225 golden's. Runs before this change belong to the earlier goldens."""
 
 from __future__ import annotations
 
@@ -94,7 +97,7 @@ from agent.tests.request_golden import collect
 
 FIXTURES = Path(__file__).parent / "fixtures"
 EVAL1 = FIXTURES / "eval1_request_golden.json"
-GOLDEN = FIXTURES / "b225_request_golden.json"          # the newest golden
+GOLDEN = FIXTURES / "b239_request_golden.json"          # the newest golden
 #: the hashes that differ from eval-1's, and the brief that changed each (an intended change is listed here, with why)
 CHANGED_SINCE_EVAL1 = {"arm_constants": "brief 80: Claude Code 2.1.321 accepted (ACCEPTED_CLI; the tool-text check passed)",
                        "tool_registry": "brief 36: skill_index, skill_excerpt, load_skill(name=); brief 42 H9: report_digest; "
@@ -149,7 +152,8 @@ CHANGED_SINCE_EVAL1 = {"arm_constants": "brief 80: Claude Code 2.1.321 accepted 
                        "tools_rtl_9": "brief 71: check and gt_plan offered to the Designer"}
 #: request paths added since eval-1 (absent from its golden), and the brief that added each
 NEW_SINCE_EVAL1 = {"doc_system": "brief 68 C: the DOC step at the end of a run (agent.graph.document)",
-                   "file_by_file_note": "brief 224: the stage-2 Designer writes one file per call", "files_status_note": "brief 224: files on disk and blocks missing after a cut-off reply"}
+                   "file_by_file_note": "brief 224: the stage-2 Designer writes one file per call", "files_status_note": "brief 224: files on disk and blocks missing after a cut-off reply",
+                   "stage2_rules_note": "brief 239: what the stage-2 gates check, shown to the Designer before it writes RTL"}
 
 
 def test_every_request_path_is_unchanged_from_the_golden() -> None:
