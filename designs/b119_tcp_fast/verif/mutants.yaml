@@ -195,8 +195,8 @@ mutants:
   why: IP identification advances by two
 - name: seq_captured_wrong
   file: tcp_fast.sv
-  old: seq_c <= snd_nxt;
-  new: seq_c <= snd_nxt + 32'd1;
+  old: "seq_c <= tx_unsent ? snd_nxt - {16'd0, PAYLEN} : snd_nxt;"
+  new: "seq_c <= tx_unsent ? snd_nxt - {16'd0, PAYLEN} : snd_nxt + 32'd1;"
   class: operator
   why: segment's sequence number off by one
 - name: ack_not_captured
@@ -213,8 +213,8 @@ mutants:
   why: advertised window not carried
 - name: id_not_captured
   file: tcp_fast.sv
-  old: id_c <= ip_id;
-  new: id_c <= '0;
+  old: "id_c <= tx_unsent ? ip_id - 16'd1 : ip_id;"
+  new: "id_c <= tx_unsent ? ip_id - 16'd1 : '0;"
   class: operator
   why: IP identification not taken from the register
 - name: abort_not_poisoning

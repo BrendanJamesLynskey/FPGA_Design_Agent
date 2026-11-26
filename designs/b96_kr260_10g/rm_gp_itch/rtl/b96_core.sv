@@ -164,7 +164,7 @@ module b96_core #(
     // ---------------------------------------------------------------- brief 127: the ITCH path's registers and vectors
     // CFG2 (host -> core clock) is the register words below, STAT2 (core clock -> host) the counters and stamps of itch_path; both are coherent copies by hs_vec like cfg and the status vectors.
     logic [31:0] c2 [NCW];
-    logic [31:0] c2s [NCW];                         // brief 188: staged copies of the limit words (host writes land here; one IT_CMD COMMIT copies them all to c2 in one clock)
+    logic [31:0] c2s [NCW];                         // brief 188: staged copies of the limit words (host writes land here; one IT_CMD COMMIT copies them all to c2 in one clock; idea from Edwards 2026, ch 12, written from scratch)
     function automatic logic is_staged(input int w);
         return w == C_THR || w == C_QTY || w == C_MAXQTY || w == C_MAXPOS || w == C_BAND || w == C_PXOFF || w == C_REFPX || w == C_REFAGE;
     endfunction

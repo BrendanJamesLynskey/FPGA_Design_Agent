@@ -300,7 +300,7 @@ module book_core #(
         if (d3_v) begin
             if (d3_add) begin
                 if (any_hit) begin
-                    // the level size saturates at 2^32 - 1 instead of wrapping; the instrument is then inexact (sat3 sets it, counted as lvovf)
+                    // the level size saturates at 2^32 - 1 instead of wrapping; the instrument is then inexact (sat3 sets it, counted as lvovf); idea from Edwards 2026, ch 9 and ch 13 (saturate a quantity, prove it cannot wrap), written from scratch
                     lv_we[l_hit] = 1'b1; sat3 = sz_sum[32];
                     lv_wd = {1'b1, d3_px, sz_sum[32] ? 32'hFFFF_FFFF : sz_sum[31:0]};
                 end

@@ -1,4 +1,5 @@
 // book_props.sv (brief 188): quantity invariants of book_core.sv, attached by bind (book_bind.sv); the RTL is not edited.
+// Idea from Edwards 2026, ch 13 (a formal proof that found a quantity wrap): the properties Q1-Q6 and the induction are our own, written from scratch.
 //
 // Form: yosys-slang reads only clocked Boolean concurrent assertions, so each property is the Boolean form of the SVA written beside it (the same convention as designs/b96_kr260_10g/verif/formal/rm_gp_props.sv).
 
