@@ -42,7 +42,7 @@ the 58A integration in simulation (~1min): B87_RECORD=$PWD/results/b87/integrati
 R1 designs/b87_ml_trading/tests/test_b87_rtl.py 2ffcf72e10
 R2 results/b87/hls4ml_csim.json d00b95f079
 R3 designs/b87_ml_trading/tests/test_b87_integ_rtl.py 02050fb09d
-R4 results/b87/summary.json 427edff04e
+R4 results/b87/summary.json 1625246873
 R5 results/b87/accuracy.json dad79e6188
 R6 results/b87/ooc/gbt_comb.json bd70057950
 R7 results/b87/integration/integration_latency_sim.json 0b7136ae81

@@ -1,0 +1,104 @@
+{
+ "netlists": {
+  "u": {
+   "funcsim_pass": true,
+   "funcsim_s": 17.0,
+   "why": "",
+   "eqy": {
+    "status": "ERROR",
+    "strategy": "name",
+    "s": 0.5,
+    "message": "ERROR: Reading sources failed."
+   }
+  },
+  "all": {
+   "funcsim_pass": true,
+   "funcsim_s": 17.9,
+   "why": ""
+  },
+  "ecc_prim": {
+   "funcsim_pass": true,
+   "funcsim_s": 17.9,
+   "why": ""
+  },
+  "ctrl_u": {
+   "eqy": {
+    "status": "PASS",
+    "strategy": "group",
+    "s": 62.4,
+    "message": "name strategy: FAIL (5 of 7 partition(s) not proved); group strategy: one partition (all state), abc pdr: proved from the post-reset state"
+   }
+  },
+  "ctrl_all": {
+   "eqy": {
+    "status": "FAIL",
+    "strategy": "group",
+    "s": 23.2,
+    "message": "name strategy: FAIL (6 of 7 partition(s) not proved); group strategy: 1 of 1 partition(s) not proved"
+   }
+  }
+ },
+ "netlist_seed_sweep": {
+  "seeds": 8,
+  "all_pass": true,
+  "s": 131.1
+ },
+ "planted": [
+  {
+   "kind": "lut_init",
+   "which": 0,
+   "what": "flipped INIT bit 0 of LUT \\FSM_sequential_g_plain.sq[0]_i_1: 000000004F4A4540 -> 000000004f4a4541",
+   "eqy": "FAIL",
+   "core_what": "flipped INIT bit 0 of LUT \\checksum[63]_i_1: B -> a",
+   "bench_caught": false,
+   "bench_s": 16.2,
+   "bench_why": ""
+  },
+  {
+   "kind": "lut_init",
+   "which": 3,
+   "what": "flipped INIT bit 21 of LUT \\FSM_sequential_g_plain.sq[1]_i_3: 0000000100000000 -> 0000000100200000",
+   "eqy": "FAIL",
+   "core_what": "flipped INIT bit 21 of LUT \\FSM_sequential_g_plain.sq[1]_i_1: EE6A6A6A00000000 -> ee6a6a6a00200000",
+   "bench_caught": false,
+   "bench_s": 16.4,
+   "bench_why": ""
+  },
+  {
+   "kind": "swap_regs",
+   "which": 0,
+   "what": "swapped the D inputs of registers \\FSM_sequential_g_plain.sq_reg[0] and \\FSM_sequential_g_plain.sq_reg[1]",
+   "eqy": "FAIL",
+   "core_what": "swapped the D inputs of registers bus_v_reg and \\checksum_reg[0]",
+   "bench_caught": true,
+   "bench_s": 43.2,
+   "bench_why": "TB FAIL: 0 words out, expected 1"
+  },
+  {
+   "kind": "reset_drop",
+   "which": 0,
+   "what": "register \\g_single.r_reg[0]: reset pin R tied low",
+   "eqy": "PASS",
+   "core_what": "register \\checksum_reg[0]: reset pin R tied low",
+   "bench_caught": true,
+   "bench_s": 19.5,
+   "bench_why": "TB FAIL: checksum bc73567905e86f08 expected bc73567905e86f07"
+  },
+  {
+   "kind": "reset_drop",
+   "which": 2,
+   "what": "register \\g_single.r_reg[11]: reset pin R tied low",
+   "eqy": "PASS",
+   "core_what": "register \\checksum_reg[11]: reset pin R tied low",
+   "bench_caught": true,
+   "bench_s": 16.9,
+   "bench_why": "TB FAIL: checksum 0a3e0c19a611be32 expected 0a3e0c19a611b632"
+  }
+ ],
+ "timesim_u": {
+  "pass": true,
+  "s": 18.9,
+  "why": "",
+  "bursts": 10
+ }
+}

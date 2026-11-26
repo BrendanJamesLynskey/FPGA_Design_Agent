@@ -36,10 +36,18 @@ def test_base_build_keeps_the_97c_defaults() -> None:
     assert got["RATE_MATCH"] == 0 and got.get("GO_REG", 1) == 1 and got.get("RM_OWN", 0) == 0
 
 
+def _top_params(path: Path) -> set:
+    return set(re.findall(r"parameter\s+(?:bit|logic\s*\[[^\]]*\]|int)\s+(\w+)", path.read_text()))
+
+
 def test_every_build_sets_only_parameters_the_core_has() -> None:
-    top = (DESIGN / "rtl" / "kr260_10g_top.sv").read_text()
-    params = set(re.findall(r"parameter\s+(?:bit|logic\s*\[[^\]]*\]|int)\s+(\w+)", top))
+    """A generic the top module does not declare is dropped by synth_design (a warning, 'Unused top level parameter/generic'), so the build would silently not have the option (brief 203:
+    lat_cuts169's first build). A build that lists its own kr260_10g_top.sv is judged against that file, every other build against the shared top."""
+    shared = _top_params(DESIGN / "rtl" / "kr260_10g_top.sv")
     for f in DESIGN.glob("*/build.yaml"):
+        own = [DESIGN.parents[1] / s for s in yaml.safe_load(f.read_text()).get("sources", []) if s.endswith("/kr260_10g_top.sv")]
+        params = _top_params(own[0]) if own else shared
+        assert len(own) <= 1, f
         for k in _generics(f):
             assert k in params, (f, k)
 

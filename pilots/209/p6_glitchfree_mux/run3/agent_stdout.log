@@ -1,0 +1,923 @@
+start 2026-11-25 16:50:15
+c8538181fddc94559d0f955474928ec1fc36e124
+209: p6_glitchfree_mux run 2 record (20261125-161633-50bb)
+slot /home/brendan/Claude_sandbox/_handoff/heavy_slot.lock taken 2026-11-25 16:50:15
+FDA_TRUNCATED: claude-sonnet-5-5 reply stopped at max_tokens=16000
+FDA_TRUNCATED: claude-sonnet-5-5 reply stopped at max_tokens=16000
+FDA_TRUNCATED: claude-sonnet-5-5 reply stopped at max_tokens=16000
+FDA_TRUNCATED: claude-sonnet-5-5 reply stopped at max_tokens=16000
+FDA_TRUNCATED: claude-sonnet-5-5 reply stopped at max_tokens=16000
+FDA_TRUNCATED: claude-sonnet-5-5 reply stopped at max_tokens=16000
+FDA_TRUNCATED: claude-sonnet-5-5 reply stopped at max_tokens=16000
+{
+ "run_id": "20261125-165016-2a4e",
+ "design": "p6_glitchfree_mux",
+ "model": "claude-sonnet-5-5",
+ "harness": "deepagents",
+ "harness_arm": "H1",
+ "profile": "single",
+ "role_models": {
+  "clarify": {
+   "harness": "deepagents",
+   "model": "claude-sonnet-5-5",
+   "effort": "medium"
+  },
+  "model": {
+   "harness": "deepagents",
+   "model": "claude-sonnet-5-5",
+   "effort": "medium"
+  },
+  "tests": {
+   "harness": "deepagents",
+   "model": "claude-sonnet-5-5",
+   "effort": "medium"
+  },
+  "rtl": {
+   "harness": "deepagents",
+   "model": "claude-sonnet-5-5",
+   "effort": "medium"
+  }
+ },
+ "model_table_hash": "f9a35a94b7b2e19e",
+ "oracle_model": "claude-sonnet-5-5",
+ "oracle": "openrouter",
+ "stage_overrides": [],
+ "knowledge_use": {
+  "rtl/board-and-device-planning": {
+   "board_constraints": {
+    "calls": 5
+   },
+   "search_docs": {
+    "calls": 1,
+    "hits": [
+     "amd/7series_device_clocking_drp#3",
+     "ross/vivado-timing-methodology-checks/references/GENERAL_GUIDELINES.md#4",
+     "ross/vivado-timing-methodology-checks/references/TIMING-7.md#4",
+     "ross/vivado-timing-methodology-checks/references/TIMING-7.md#6",
+     "ross/vivado-timing-methodology-checks/references/TIMING-8.md#7"
+    ]
+   }
+  },
+  "tests/rtl-design-creation": {
+   "load_skill": {
+    "calls": 1,
+    "sections": [
+     "verification-stages"
+    ],
+    "skills": [
+     "procedures/verification-stages/v-hw-bringup/SKILL.md",
+     "procedures/verification-stages/v0-v1-testplan/SKILL.md",
+     "procedures/verification-stages/v2-tests-assertions-formal/SKILL.md",
+     "procedures/verification-stages/v3-coverage-closure/SKILL.md"
+    ],
+    "empty_calls": 0,
+    "procedures_fallback": [
+     "verification-stages"
+    ]
+   }
+  },
+  "rtl/rtl-design-creation": {
+   "search_docs": {
+    "calls": 1,
+    "hits": [
+     "amd/7series_clocking_io#1",
+     "amd/7series_clocking_io#5",
+     "amd/7series_config_power_xadc#2",
+     "amd/vivado_flow_guides#5",
+     "ross/vivado-timing-methodology-checks/references/TIMING-4.md#5"
+    ]
+   }
+  }
+ },
+ "knowledge_bank": {
+  "root": "209-kb",
+  "chosen_by": "FDA_KNOWLEDGE",
+  "present": true,
+  "loaded": true,
+  "head": "5e2eab8"
+ },
+ "turn_trace": [
+  {
+   "stage": "clarify",
+   "visit": 1,
+   "role": "clarify",
+   "repair": false,
+   "turns_allowed": 20,
+   "turns": 4,
+   "ended": "done",
+   "wall_s": 63.6,
+   "tools": {
+    "write_file": 1
+   },
+   "model_tool_calls": {
+    "ls": 1,
+    "read_file": 1,
+    "write_file": 2
+   },
+   "refused": {},
+   "files_written": [
+    "spec.yaml"
+   ],
+   "files_changed": [
+    "spec.yaml"
+   ]
+  },
+  {
+   "stage": "clarify",
+   "visit": 2,
+   "role": "clarify",
+   "repair": false,
+   "turns_allowed": 20,
+   "turns": 3,
+   "ended": "done",
+   "wall_s": 15.6,
+   "tools": {
+    "write_file": 1
+   },
+   "model_tool_calls": {
+    "edit_file": 4
+   },
+   "refused": {},
+   "files_written": [
+    "spec.yaml"
+   ],
+   "files_changed": [
+    "spec.yaml"
+   ]
+  },
+  {
+   "stage": "board-and-device-planning",
+   "visit": 1,
+   "role": "rtl",
+   "repair": false,
+   "turns_allowed": 30,
+   "turns": 5,
+   "ended": "done",
+   "wall_s": 27.7,
+   "tools": {
+    "list_files": 1,
+    "board_constraints": 1,
+    "gates": 1
+   },
+   "model_tool_calls": {
+    "fda_board_constraints": 1,
+    "fda_gates": 1,
+    "fda_list_files": 1,
+    "read_file": 1,
+    "write_file": 2
+   },
+   "refused": {},
+   "files_written": [],
+   "files_changed": [
+    "ARCHITECTURE.md",
+    "architecture.yaml"
+   ]
+  },
+  {
+   "stage": "board-and-device-planning",
+   "visit": 2,
+   "role": "rtl",
+   "repair": false,
+   "turns_allowed": 30,
+   "turns": 8,
+   "ended": "done",
+   "wall_s": 21.3,
+   "tools": {
+    "board_constraints": 4,
+    "check_constraints": 3,
+    "search_docs": 1
+   },
+   "model_tool_calls": {
+    "fda_board_constraints": 4,
+    "fda_check_constraints": 3,
+    "fda_search_docs": 1,
+    "grep": 2
+   },
+   "refused": {},
+   "files_written": [],
+   "files_changed": [
+    "design.xdc"
+   ]
+  },
+  {
+   "stage": "rtl-design-creation",
+   "visit": 1,
+   "role": "model",
+   "repair": false,
+   "turns_allowed": 45,
+   "turns": 2,
+   "ended": "done",
+   "wall_s": 20.4,
+   "tools": {
+    "write_file": 1
+   },
+   "model_tool_calls": {
+    "write_file": 1
+   },
+   "refused": {},
+   "files_written": [
+    "model.py"
+   ],
+   "files_changed": [
+    "model.py"
+   ]
+  },
+  {
+   "stage": "rtl-design-creation",
+   "visit": 1,
+   "role": "tests",
+   "repair": false,
+   "turns_allowed": 53,
+   "turns": 4,
+   "ended": "done",
+   "wall_s": 117.8,
+   "tools": {
+    "spec_items": 1,
+    "load_skill": 1
+   },
+   "model_tool_calls": {
+    "fda_load_skill": 1,
+    "fda_spec_items": 1,
+    "glob": 2,
+    "grep": 1,
+    "ls": 1
+   },
+   "refused": {},
+   "files_written": [],
+   "files_changed": []
+  },
+  {
+   "stage": "rtl-design-creation",
+   "visit": 1,
+   "role": "tests",
+   "repair": true,
+   "turns_allowed": 49,
+   "turns": 5,
+   "ended": "done",
+   "wall_s": 57.1,
+   "tools": {
+    "spec_items": 1,
+    "write_file": 3
+   },
+   "model_tool_calls": {
+    "fda_spec_items": 1,
+    "glob": 1,
+    "grep": 1,
+    "ls": 2,
+    "write_file": 3
+   },
+   "refused": {},
+   "files_written": [
+    "tests/test_p6_glitchfree_mux_bench.py",
+    "tests/test_p6_glitchfree_mux_rtl.py",
+    "verif/testplan.yaml"
+   ],
+   "files_changed": [
+    "tests/test_p6_glitchfree_mux_bench.py",
+    "tests/test_p6_glitchfree_mux_rtl.py",
+    "verif/testplan.yaml"
+   ]
+  },
+  {
+   "stage": "rtl-design-creation",
+   "visit": 1,
+   "role": "tests",
+   "repair": true,
+   "turns_allowed": 44,
+   "turns": 7,
+   "ended": "done",
+   "wall_s": 23.5,
+   "tools": {
+    "write_file": 1
+   },
+   "model_tool_calls": {
+    "edit_file": 8,
+    "grep": 1,
+    "read_file": 1
+   },
+   "refused": {},
+   "files_written": [
+    "verif/testplan.yaml"
+   ],
+   "files_changed": [
+    "verif/testplan.yaml"
+   ]
+  },
+  {
+   "stage": "rtl-design-creation",
+   "visit": 1,
+   "role": "rtl",
+   "repair": false,
+   "turns_allowed": 62,
+   "turns": 8,
+   "ended": "done",
+   "wall_s": 381.8,
+   "tools": {
+    "list_files": 1,
+    "search_docs": 1
+   },
+   "model_tool_calls": {
+    "fda_list_files": 1,
+    "fda_search_docs": 1,
+    "glob": 2,
+    "grep": 4,
+    "load_skill": 1,
+    "read_file": 8
+   },
+   "refused": {},
+   "files_written": [],
+   "files_changed": []
+  },
+  {
+   "stage": "rtl-design-creation",
+   "visit": 2,
+   "role": "tests",
+   "repair": true,
+   "turns_allowed": 55,
+   "turns": 4,
+   "ended": "done",
+   "wall_s": 13.6,
+   "tools": {
+    "write_file": 1
+   },
+   "model_tool_calls": {
+    "edit_file": 1,
+    "glob": 2,
+    "grep": 1,
+    "ls": 1
+   },
+   "refused": {},
+   "files_written": [
+    "tests/test_p6_glitchfree_mux_rtl.py"
+   ],
+   "files_changed": [
+    "tests/test_p6_glitchfree_mux_rtl.py"
+   ]
+  },
+  {
+   "stage": "rtl-design-creation",
+   "visit": 2,
+   "role": "rtl",
+   "repair": false,
+   "turns_allowed": 76,
+   "turns": 4,
+   "ended": "done",
+   "wall_s": 136.8,
+   "tools": {
+    "list_files": 1
+   },
+   "model_tool_calls": {
+    "fda_list_files": 1,
+    "ls": 5,
+    "read_file": 8
+   },
+   "refused": {
+    "path-jail": 1
+   },
+   "files_written": [],
+   "files_changed": []
+  },
+  {
+   "stage": "rtl-design-creation",
+   "visit": 3,
+   "role": "tests",
+   "repair": true,
+   "turns_allowed": 55,
+   "turns": 4,
+   "ended": "done",
+   "wall_s": 16.7,
+   "tools": {
+    "write_file": 1
+   },
+   "model_tool_calls": {
+    "edit_file": 1,
+    "glob": 1,
+    "grep": 1,
+    "ls": 2
+   },
+   "refused": {},
+   "files_written": [
+    "tests/test_p6_glitchfree_mux_rtl.py"
+   ],
+   "files_changed": [
+    "tests/test_p6_glitchfree_mux_rtl.py"
+   ]
+  },
+  {
+   "stage": "rtl-design-creation",
+   "visit": 3,
+   "role": "rtl",
+   "repair": false,
+   "turns_allowed": 76,
+   "turns": 6,
+   "ended": "done",
+   "wall_s": 143.3,
+   "tools": {
+    "read_file": 3,
+    "list_files": 1
+   },
+   "model_tool_calls": {
+    "fda_list_files": 1,
+    "fda_read_file": 3,
+    "ls": 5,
+    "read_file": 7
+   },
+   "refused": {
+    "path-jail": 1
+   },
+   "files_written": [],
+   "files_changed": []
+  },
+  {
+   "stage": "rtl-design-creation",
+   "visit": 4,
+   "role": "tests",
+   "repair": true,
+   "turns_allowed": 55,
+   "turns": 5,
+   "ended": "done",
+   "wall_s": 22.4,
+   "tools": {
+    "write_file": 1
+   },
+   "model_tool_calls": {
+    "glob": 2,
+    "grep": 1,
+    "ls": 2,
+    "write_file": 1
+   },
+   "refused": {},
+   "files_written": [
+    "tests/test_p6_glitchfree_mux_rtl.py"
+   ],
+   "files_changed": [
+    "tests/test_p6_glitchfree_mux_rtl.py"
+   ]
+  },
+  {
+   "stage": "rtl-design-creation",
+   "visit": 4,
+   "role": "rtl",
+   "repair": false,
+   "turns_allowed": 75,
+   "turns": 6,
+   "ended": "done",
+   "wall_s": 274.6,
+   "tools": {
+    "list_files": 1
+   },
+   "model_tool_calls": {
+    "fda_list_files": 1,
+    "glob": 2,
+    "grep": 2,
+    "ls": 1,
+    "read_file": 9
+   },
+   "refused": {},
+   "files_written": [],
+   "files_changed": []
+  },
+  {
+   "stage": "rtl-design-creation",
+   "visit": 5,
+   "role": "tests",
+   "repair": true,
+   "turns_allowed": 55,
+   "turns": 6,
+   "ended": "done",
+   "wall_s": 23.6,
+   "tools": {
+    "write_file": 1
+   },
+   "model_tool_calls": {
+    "edit_file": 1,
+    "glob": 1,
+    "grep": 2,
+    "ls": 2
+   },
+   "refused": {},
+   "files_written": [
+    "tests/test_p6_glitchfree_mux_rtl.py"
+   ],
+   "files_changed": [
+    "tests/test_p6_glitchfree_mux_rtl.py"
+   ]
+  },
+  {
+   "stage": "rtl-design-creation",
+   "visit": 5,
+   "role": "rtl",
+   "repair": false,
+   "turns_allowed": 74,
+   "turns": 3,
+   "ended": "done",
+   "wall_s": 135.1,
+   "tools": {
+    "list_files": 1
+   },
+   "model_tool_calls": {
+    "fda_list_files": 1,
+    "read_file": 6
+   },
+   "refused": {},
+   "files_written": [],
+   "files_changed": []
+  },
+  {
+   "stage": "rtl-design-creation",
+   "visit": 6,
+   "role": "tests",
+   "repair": true,
+   "turns_allowed": 55,
+   "turns": 7,
+   "ended": "done",
+   "wall_s": 25.7,
+   "tools": {},
+   "model_tool_calls": {
+    "edit_file": 2,
+    "glob": 2,
+    "grep": 1,
+    "ls": 3
+   },
+   "refused": {},
+   "files_written": [],
+   "files_changed": []
+  },
+  {
+   "stage": "rtl-design-creation",
+   "visit": 6,
+   "role": "rtl",
+   "repair": false,
+   "turns_allowed": 73,
+   "turns": 8,
+   "ended": "done",
+   "wall_s": 348.6,
+   "tools": {
+    "list_files": 2,
+    "read_file": 1
+   },
+   "model_tool_calls": {
+    "fda_list_files": 2,
+    "fda_read_file": 1,
+    "glob": 2,
+    "grep": 3,
+    "read_file": 9
+   },
+   "refused": {},
+   "files_written": [],
+   "files_changed": []
+  }
+ ],
+ "per_role": {
+  "clarify": {
+   "calls": 2,
+   "turns": 7,
+   "tokens": 103534,
+   "wall_s": 79.2,
+   "cost_usd": 0.218746,
+   "plan_cost_estimate_usd": 0.0
+  },
+  "rtl": {
+   "calls": 8,
+   "turns": 48,
+   "tokens": 1678550,
+   "wall_s": 1469.2,
+   "cost_usd": 2.389758,
+   "plan_cost_estimate_usd": 0.0
+  },
+  "model": {
+   "calls": 1,
+   "turns": 2,
+   "tokens": 22679,
+   "wall_s": 20.4,
+   "cost_usd": 0.049115,
+   "plan_cost_estimate_usd": 0.0
+  },
+  "tests": {
+   "calls": 8,
+   "turns": 42,
+   "tokens": 1359975,
+   "wall_s": 300.4,
+   "cost_usd": 1.029827,
+   "plan_cost_estimate_usd": 0.0
+  }
+ },
+ "per_stage": {
+  "clarify": {
+   "calls": 2,
+   "turns": 7,
+   "tokens": 103534,
+   "wall_s": 79.2,
+   "cost_usd": 0.218746,
+   "plan_cost_estimate_usd": 0.0
+  },
+  "board-and-device-planning": {
+   "calls": 2,
+   "turns": 13,
+   "tokens": 362742,
+   "wall_s": 49.0,
+   "cost_usd": 0.213363,
+   "plan_cost_estimate_usd": 0.0
+  },
+  "rtl-design-creation": {
+   "calls": 15,
+   "turns": 79,
+   "tokens": 2698462,
+   "wall_s": 1741.0,
+   "cost_usd": 3.255337,
+   "plan_cost_estimate_usd": 0.0
+  }
+ },
+ "interview": "off",
+ "review": "off",
+ "stages_visited": [
+  0,
+  0,
+  1,
+  1,
+  2,
+  2,
+  2,
+  2,
+  2,
+  2,
+  2
+ ],
+ "loops": 8,
+ "rewinds": [],
+ "tokens": 3164738,
+ "cost_usd": 3.687446,
+ "unreported_cost_calls": 0,
+ "token_split": {
+  "input": 236,
+  "output": 233526,
+  "cache_write": 441088,
+  "cache_read": 2489888
+ },
+ "budget_scale": 3.5,
+ "truncated_calls": 7,
+ "turns": 99,
+ "wall_s": 1747.4,
+ "questions": {
+  "asked": 7,
+  "answered": 0,
+  "defaulted": 7,
+  "questions": [
+   {
+    "id": "q1",
+    "text": "Which divide from 1 to 8 should clock B use?",
+    "default": "1 (156.25 MHz undivided)",
+    "reason": "The request says as suits the device, and 1 is the simplest with the largest ratio against 25 MHz.",
+    "answer": "1 (156.25 MHz undivided)",
+    "status": "defaulted",
+    "by": "default",
+    "evidence": null
+   },
+   {
+    "id": "q2",
+    "text": "Is the register map exactly the table in the request (offset, width, reset value and access of every register)?",
+    "default": "Yes, the map in registers.map as in spec.md, all 32-bit at 4-byte steps",
+    "reason": "Offsets are given, this confirms no change.",
+    "answer": "Yes, the map in registers.map as in spec.md, all 32-bit at 4-byte steps",
+    "status": "defaulted",
+    "by": "default",
+    "evidence": null
+   },
+   {
+    "id": "q3",
+    "text": "What does a SEL write do while SWITCHING is 1?",
+    "default": "The new value is taken and the mux follows the latest SEL once the current change ends",
+    "reason": "The request leaves it open.",
+    "answer": "The new value is taken and the mux follows the latest SEL once the current change ends",
+    "status": "defaulted",
+    "by": "default",
+    "evidence": null
+   },
+   {
+    "id": "q4",
+    "text": "What does START do if GATE_LEN is 0?",
+    "default": "Gate of 1 cycle (0 treated as 1)",
+    "reason": "Avoids a stuck BUSY.",
+    "answer": "Gate of 1 cycle (0 treated as 1)",
+    "status": "defaulted",
+    "by": "default",
+    "evidence": null
+   },
+   {
+    "id": "q5",
+    "text": "What is FREQ_COUNT if clk_mux is switched during a gate?",
+    "default": "Count whatever edges occur and flag no error",
+    "reason": "The request does not say.",
+    "answer": "Count whatever edges occur and flag no error",
+    "status": "defaulted",
+    "by": "default",
+    "evidence": null
+   },
+   {
+    "id": "q6",
+    "text": "Do SWITCH_COUNT and MUX_ERRS clear on anything but reset?",
+    "default": "No, only on rst",
+    "reason": "No clear register exists in the map.",
+    "answer": "No, only on rst",
+    "status": "defaulted",
+    "by": "default",
+    "evidence": null
+   },
+   {
+    "id": "q7",
+    "text": "Which pins are MGTREFCLK0 and the LEDs?",
+    "default": "Take them from the KR260 board constraints",
+    "reason": "Pin names are not in the request.",
+    "answer": "Take them from the KR260 board constraints",
+    "status": "defaulted",
+    "by": "default",
+    "evidence": null
+   }
+  ]
+ },
+ "stop": "stage 2 visited more than 6 times; last failing gate: lint, simulate, design standards, verification V2; owned by the rtl/tests role; last failing assertion: V2 seeds_run: no seeded results: read runs/20261125-165016-2a4e/p6_glitchfree_mux/build/verif/sim/seed*/results.xml and found none. The gate expects runs/20261125-165016-2a4e/p6_glitchfree_mux/build/verif/sim/seed<N>/results.xml, one direct; the same failure on 6 consecutive visits",
+ "stop_detail": {
+  "stage": 2,
+  "limit": 6,
+  "gates": [
+   "lint",
+   "simulate",
+   "design standards",
+   "verification V2"
+  ],
+  "roles": [
+   "rtl",
+   "tests"
+  ],
+  "owners_last_visit": [
+   "rtl",
+   "tests"
+  ],
+  "last_failing_assertion": "V2 seeds_run: no seeded results: read runs/20261125-165016-2a4e/p6_glitchfree_mux/build/verif/sim/seed*/results.xml and found none. The gate expects runs/20261125-165016-2a4e/p6_glitchfree_mux/build/verif/sim/seed<N>/results.xml, one direct",
+  "same_signature_visits": 6,
+  "last_fails": [
+   "lint not passing",
+   "simulate not passing",
+   "standards STD-LATCH-01: not checked (no build.yaml top or sources to check)",
+   "standards STD-LOOP-01: not checked (no build.yaml top or sources to check)"
+  ]
+ },
+ "last_rtl_message": {
+  "stage": "rtl-design-creation",
+  "visit": 6,
+  "text": "[the reply was cut off at the output limit of 16000 tokens (thinking counts), so any tool call in it was dropped: do less in one reply, for example write a shorter file, then continue]"
+ },
+ "routing_events": [
+  {
+   "event": "clarify_constants_check",
+   "stage": "clarify",
+   "visit": 1,
+   "findings": [],
+   "failed": false
+  },
+  {
+   "event": "clarify_constants_check",
+   "stage": "clarify",
+   "visit": 2,
+   "findings": [],
+   "failed": false
+  }
+ ],
+ "clean_stop": false,
+ "constants": {
+  "ran": true,
+  "blocking": [],
+  "advice": []
+ },
+ "gates_last": {
+  "clarify": true,
+  "board-and-device-planning": true,
+  "rtl-design-creation": false
+ },
+ "approvals": [
+  {
+   "n": 0,
+   "decision": "approve",
+   "by": "auto",
+   "note": ""
+  },
+  {
+   "n": 0,
+   "decision": "approve",
+   "by": "auto",
+   "note": ""
+  },
+  {
+   "n": 1,
+   "decision": "approve",
+   "by": "auto",
+   "note": ""
+  },
+  {
+   "n": 1,
+   "decision": "approve",
+   "by": "auto",
+   "note": ""
+  },
+  {
+   "n": 2,
+   "decision": "approve",
+   "by": "auto",
+   "note": ""
+  },
+  {
+   "n": 2,
+   "decision": "approve",
+   "by": "auto",
+   "note": ""
+  },
+  {
+   "n": 2,
+   "decision": "approve",
+   "by": "auto",
+   "note": ""
+  },
+  {
+   "n": 2,
+   "decision": "approve",
+   "by": "auto",
+   "note": ""
+  },
+  {
+   "n": 2,
+   "decision": "approve",
+   "by": "auto",
+   "note": ""
+  },
+  {
+   "n": 2,
+   "decision": "approve",
+   "by": "auto",
+   "note": ""
+  },
+  {
+   "n": 2,
+   "decision": "approve",
+   "by": "auto",
+   "note": ""
+  }
+ ],
+ "bringup": null,
+ "doc": {
+  "ok": false,
+  "passes": 3,
+  "problems": [
+   "the reply could not be used: mapping values are not allowed here\n  in \"<unicode string>\", line 427, column 62:\n     ... than 6 times; last failing gates: lint, simulate, design standar ... \n                                         ^"
+  ],
+  "required_gaps": [
+   "REQ-01",
+   "REQ-02",
+   "REQ-03",
+   "REQ-25",
+   "REQ-04",
+   "REQ-26",
+   "REQ-05",
+   "REQ-27",
+   "REQ-06",
+   "REQ-28",
+   "REQ-07",
+   "REQ-08",
+   "REQ-09",
+   "REQ-10",
+   "REQ-11",
+   "REQ-12",
+   "REQ-13",
+   "REQ-14",
+   "REQ-15",
+   "REQ-16",
+   "REQ-29",
+   "REQ-17",
+   "REQ-18",
+   "REQ-19",
+   "REQ-20",
+   "REQ-21",
+   "REQ-22",
+   "REQ-23",
+   "REQ-24",
+   "E1",
+   "E2",
+   "rtl-design-creation",
+   "constraints",
+   "synthesis",
+   "implementation",
+   "timing-closure",
+   "power-closure",
+   "drc-closure",
+   "configuration-and-debug",
+   "formal",
+   "simulated_parameters",
+   "resources",
+   "timing",
+   "power",
+   "latency",
+   "throughput"
+  ],
+  "signed_off": false
+ }
+}
+exit 0 2026-11-25 17:24:12

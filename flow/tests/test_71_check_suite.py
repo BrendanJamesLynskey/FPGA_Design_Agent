@@ -48,7 +48,7 @@ def test_every_rule_is_covered_by_a_check_or_marked_manual() -> None:
 def test_rule_set_shape_fix_and_skill() -> None:
     rs = LR.load_rules()
     assert not LR.rule_problems(rs)
-    assert rs["version"] == "1.12"         # brief 190: HDL-FAST-01 (brief 208: 1.11, brief 207: 1.10, brief 204a: 1.9)
+    assert rs["version"] == "1.13"         # brief 185: HDL-DSP-01 (brief 190: 1.12, brief 208: 1.11, brief 207: 1.10, brief 204a: 1.9)
     for r in rs["rules"]:
         assert str(r.get("fix") or "").strip(), f"{r['id']}: no fix"
         sk = str(r.get("skill") or "")
@@ -302,9 +302,8 @@ def test_agent_check_tool_is_registered_and_offered_to_the_designer() -> None:
     import agent.core.tools  # noqa: F401
     from agent.core.registry import TOOLS
     from agent.graph import run as RUN
-    # brief 204a: the report-driven checks are run by the CLI and the sign-off, but are not yet offered to the Designer: the tool schema is part of
-    # the frozen request golden (agent/tests/test_08f_golden_requests.py), so offering them is a new evaluation and the planner's decision
-    not_offered = {"logic_levels", "clock_tree", "fanout", "synth_log", "congestion", "ip_status"}
+    # briefs 185 and 204a: suite-only advisory checks (dsp_regs; the report-driven ones) are not offered to the Designer: the tool's schema is pinned by the golden requests and the MCP snapshot
+    not_offered = {"dsp_regs", "logic_levels", "clock_tree", "fanout", "synth_log", "congestion", "ip_status"}
     assert "check" in TOOLS and set(TOOLS["check"].input_schema["properties"]["names"]["items"]["enum"]) == {"all", *C.CHECKS} - not_offered
     for n in range(1, 10):
         assert "check" in RUN.effective_tools("rtl", n, "V3")

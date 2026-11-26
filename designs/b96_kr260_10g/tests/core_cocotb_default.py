@@ -197,14 +197,17 @@ async def poison_case(dut, trigger_wi, expect_err):
     capture(dut, words)
     await h.w(0x018, 2)
     hit = False
+    wi_m = 0       # brief 169: trade64's word index, rebuilt from the registered MAC word (m_v, m_sof) so the injection point does not move when EARLY_MAC runs trade64 a clock ahead
     for _ in range(4000):
         await RisingEdge(dut.refclk)
-        if int(dut.u.g_old.u_rx.u_td.wi.value) == trigger_wi:
+        if wi_m == trigger_wi:
             dut.u.u_gt.corrupt_xor.value = 1 << 20
             await RisingEdge(dut.refclk)
             dut.u.u_gt.corrupt_xor.value = 0
             hit = True
             break
+        if int(dut.u.g_old.u_rx.m_v.value):
+            wi_m = min((0 if int(dut.u.g_old.u_rx.m_sof.value) else wi_m) + 1, 15)
     assert hit
     await Timer(6000, unit="ns")
     await h.snap()
@@ -251,13 +254,13 @@ async def tick_to_trade_digital(dut):
         await Timer(100, unit="ps")
         k += 1
         td = dut.u.g_old.u_rx.u_td
-        if "w7" not in ev and int(dut.u.g_old.u_rx.m_v.value) and int(td.wi.value) == 7 and int(td.is_feed.value):
+        if "w7" not in ev and int(dut.u.g_old.u_rx.m_v.value) and int(td.wi.value) == 7 + int(os.environ.get("B169_WI_SHIFT", "0")) and int(td.is_feed.value):
             ev["w7_at_mac"] = k
         if "fire" not in ev and int(td.fire.value):
             ev["fire_reg"] = k
         if "go" not in ev and int(dut.u.g_old.u_tx.go_p.value):
             ev["go_pulse_tx"] = k
-        if "sop" not in ev and int(dut.u.g_old.u_tx.sop.value) and int(dut.u.g_old.u_tx.cur_kind.value) == 0:
+        if "sop" not in ev and int(dut.u.g_old.u_tx.sop.value) and int(dut.u.g_old.u_tx.bus_kind.value) == 0:
             ev["sop_mac_reg"] = k
             break
     assert {"w7_at_mac", "fire_reg", "go_pulse_tx", "sop_mac_reg"} <= set(ev), ev
@@ -459,7 +462,7 @@ async def order_content_check_catches_a_wrong_order(dut):
     hit = False
     for _ in range(4000):
         await RisingEdge(dut.refclk)
-        if int(dut.u.g_old.u_tx.sop.value) and int(dut.u.g_old.u_tx.cur_kind.value) == 0:
+        if int(dut.u.g_old.u_tx.sop.value) and int(dut.u.g_old.u_tx.bus_kind.value) == 0:
             hit = True
             break
     assert hit

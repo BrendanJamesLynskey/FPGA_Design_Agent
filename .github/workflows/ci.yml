@@ -190,7 +190,11 @@ jobs:
       - name: Safety by k-induction (AW 4, 2, 1; one bit of each class of the entry), bounded progress, covers, and one mutant per key property
         run: |
           $FDA_OSS_CAD/bin/yosys -V
-          python -m pytest -q designs/b96_kr260_10g/tests/test_b115_formal.py
+          python -m pytest -q designs/b96_kr260_10g/tests/test_b115_formal.py designs/b96_kr260_10g/tests/test_b158_ifg_formal.py
+      - name: Partitioning blocks (brief 151) - pipe_reg and credit_chan proofs by k-induction (data, order, credits, the AXI4-Stream rules as SVA) and the planted faults refuted
+        run: |
+          python -m pytest -q ip_lib/pipe_reg/tb/test_pipe_reg_formal.py ip_lib/credit_chan/tb/test_credit_chan_formal.py
+
       - name: Formal rigour (brief 143c) - the judge, an end-to-end vacuity check, the mutation tool, and every shipped proof's record against its files
         run: python -m pytest -q flow/tests/test_143c_formal_rigour.py
 
@@ -309,6 +313,10 @@ jobs:
           python -m pytest -q ip_lib/axil_xbar/tb/test_axil_xbar_rtl.py
           python hil/ip_faults.py --blocks axil_xbar
           python -m pytest -q designs/b65a_axil_soc/tests/test_b65a_rtl.py
+      - name: Partitioning blocks (brief 151) - pipe_reg, credit_chan and the AXI slices against their models clock by clock with the AXI4-Stream rule monitor; the synthetic system's latency, throughput and data; seeded faults
+        run: |
+          python -m pytest -q ip_lib/pipe_reg/tb/test_pipe_reg_rtl.py ip_lib/credit_chan/tb/test_credit_chan_rtl.py ip_lib/axi_reg_slice/tb/test_axi_reg_slice_rtl.py partition/tests/test_partition_sim.py flow/tests/test_151_partition_testplans.py
+          python flow/net/faults.py --only "$(python -c "import yaml;print(','.join(m['name'] for b in ('pipe_reg','credit_chan','axi_reg_slice') for m in yaml.safe_load(open(f'ip_lib/{b}/faults.yaml'))['faults']))")"
       - name: AXI missing-response rule (brief 71) - seeded faults for axil_resp_rules (Icarus)
         run: python -m pytest -q axi_tx/tests/test_71_resp_rules_rtl.py
       - name: GT serdes design (brief 56A) - the fabric PRBS generator and checker against a model, the register block against a stand-in for the GT Wizard (Icarus)
@@ -343,6 +351,27 @@ jobs:
         with:
           name: sim-logs
           path: build/sim/*/sim.log
+
+  b169-cuts:
+    name: Prototype latency cuts (brief 169) - the 97C core bench in one parameter combination (cocotb + Icarus; split from the RTL job, about 10 minutes per combination)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        combo: [base, early, fast, both]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y iverilog
+          pip install pyyaml pyserial pytest cocotb==2.0.1 numpy==2.4.3
+      - name: Core bench with EARLY_MAC / FAST_PRE (combination ${{ matrix.combo }})
+        run: python -m pytest -q "designs/b96_kr260_10g/tests/test_169_cuts_rtl.py" -k "${{ matrix.combo }}"
 
   bench-v1:
     name: Benchmark v1 development tasks - reference RTL, every mutant killed, every trap fires (split from the RTL job, 2026-11-16)

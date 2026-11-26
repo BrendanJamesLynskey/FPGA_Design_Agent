@@ -1,0 +1,27 @@
+schema: fpga-design-agent/architecture/v1
+blocks:
+  - {name: jtag_bus, function: "BSCANE2 USER4 register bus (supplied, unchanged); gives rst, h_we, h_re, h_addr, h_wdata, h_rdata"}
+  - {name: reset_gen, function: "Active-high reset synchronised into the gt_refclk domain (xpm_cdc_async_rst)"}
+  - {name: p5_async_fifo_core, function: "Register map, control, snapshot, writer PRBS-31, counters in clk domain"}
+  - {name: xpm_fifo_async, function: "512 x 32 asynchronous FIFO (XPM, Gray pointers inside)"}
+  - {name: reader_checker, function: "gt_refclk domain reader, slow-read divider, PRBS-31 check, inject, counters"}
+  - {name: snapshot_cdc, function: "xpm_cdc_handshake carrying the counter set from gt_refclk to clk"}
+  - {name: gt_refclk_buf, function: "IBUFDS_GTE4 reference buffer and BUFG_GT; no GT channel"}
+interfaces:
+  - {name: host_port, between: [jtag_bus, p5_async_fifo_core], protocol: simple, prefix: h, module: p5_async_fifo_core}
+  - {name: fifo_data, between: [p5_async_fifo_core, reader_checker], protocol: simple, prefix: fifo, module: p5_async_fifo_core}
+clock_domains:
+  - {name: clk, clock: clk, freq_mhz: 25}
+  - {name: gt_refclk, clock: gt_refclk_p, freq_mhz: 156.25}
+reset:
+  synchronisers: [reset_gen]
+crossings:
+  - {from: clk, to: gt_refclk, signal: rst, primitive: xpm_cdc_async_rst, inline_in: reset_gen}
+  - {from: clk, to: gt_refclk, signal: fifo_data_and_pointers, primitive: xpm_fifo_async, inline_in: p5_async_fifo_core}
+  - {from: clk, to: gt_refclk, signal: run_slow_clear_inject_control, primitive: xpm_cdc_array_single, inline_in: p5_async_fifo_core}
+  - {from: gt_refclk, to: clk, signal: counter_snapshot_set, primitive: xpm_cdc_handshake, inline_in: p5_async_fifo_core}
+predicted_resources:
+  lut: [450, 900]
+  ff: [800, 1400]
+  bram_tile: [1, 2]
+  dsp: 0

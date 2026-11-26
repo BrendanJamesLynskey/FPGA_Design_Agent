@@ -1,0 +1,474 @@
+{
+ "design": "p2_bram_rom",
+ "run": 2,
+ "run_id": "20261125-084516-80da",
+ "agent_sha": "cc6597b64bb3",
+ "model": [
+  "claude-sonnet-5-5"
+ ],
+ "endpoint": [
+  "anthropic_api"
+ ],
+ "api_calls": 194,
+ "real_usd": 3.9397,
+ "prompt_tokens": 7004134,
+ "completion_tokens": 144496,
+ "input_tokens": 428,
+ "cache_read_tokens": 6256392,
+ "cache_write_tokens": 747314,
+ "tokens_total": 7148630,
+ "truncated_calls": 0,
+ "cost_basis": [
+  "usage*price"
+ ],
+ "wall_s_after_slot": 3011,
+ "stage_visits": [
+  [
+   "clarify",
+   1,
+   "clarify",
+   "done",
+   4,
+   0.103
+  ],
+  [
+   "clarify",
+   2,
+   "clarify",
+   "done",
+   9,
+   0.11
+  ],
+  [
+   "board-and-device-planning",
+   1,
+   "rtl",
+   "done",
+   8,
+   0.133
+  ],
+  [
+   "board-and-device-planning",
+   2,
+   "rtl",
+   "done",
+   7,
+   0.082
+  ],
+  [
+   "rtl-design-creation",
+   1,
+   "model",
+   "done",
+   3,
+   0.058
+  ],
+  [
+   "rtl-design-creation",
+   1,
+   "tests",
+   "done",
+   10,
+   0.552
+  ],
+  [
+   "rtl-design-creation",
+   1,
+   "rtl",
+   "stage_budget",
+   67,
+   1.584
+  ],
+  [
+   "board-and-device-planning",
+   3,
+   "rtl",
+   "done",
+   4,
+   0.092
+  ],
+  [
+   "board-and-device-planning",
+   4,
+   "rtl",
+   "done",
+   6,
+   0.085
+  ],
+  [
+   "rtl-design-creation",
+   2,
+   "rtl",
+   "done",
+   9,
+   0.135
+  ],
+  [
+   "constraints",
+   1,
+   "rtl",
+   "done",
+   19,
+   0.247
+  ],
+  [
+   "constraints",
+   2,
+   "rtl",
+   "done",
+   14,
+   0.221
+  ],
+  [
+   "synthesis",
+   1,
+   "rtl",
+   "done",
+   8,
+   0.117
+  ],
+  [
+   "implementation",
+   1,
+   "rtl",
+   "done",
+   5,
+   0.079
+  ],
+  [
+   "timing-closure",
+   1,
+   "rtl",
+   "done",
+   4,
+   0.059
+  ],
+  [
+   "power-closure",
+   1,
+   "rtl",
+   "done",
+   3,
+   0.061
+  ],
+  [
+   "drc-closure",
+   1,
+   "rtl",
+   "done",
+   3,
+   0.059
+  ],
+  [
+   "configuration-and-debug",
+   1,
+   "rtl",
+   "done",
+   11,
+   0.162
+  ]
+ ],
+ "outcome": "reached stage 9: paused awaiting approval to program the board (never approved; the pilot does not touch the board)",
+ "reached_stage": 9,
+ "interview_note": "--interview off: the agent's defaults were taken, nothing asked or answered by hand",
+ "timing_after_route": {
+  "WNS_ns": 35.028,
+  "TNS_ns": 0.0,
+  "WHS_ns": 0.023
+ },
+ "utilisation": {
+  "LUT": "304",
+  "FF": "617",
+  "BRAM_tiles": "2",
+  "DSP": "0"
+ },
+ "bitstream": {
+  "build_stamp": "21cd3088",
+  "exit_code": 0,
+  "vivado": "2026.1"
+ },
+ "build_id_usr_access": "aec0f95d",
+ "bitstream_built": true,
+ "verif_stages": {
+  "V0": true,
+  "V1": true,
+  "V2": true,
+  "V3": false,
+  "SIGNOFF": false,
+  "V-HW": false
+ },
+ "bringup_ready": {
+  "ok": true,
+  "problems": []
+ },
+ "trace_pass": true,
+ "requirement_table": [
+  {
+   "id": "REQ-01",
+   "text": "Register 0x000 reads 0x20920001.",
+   "methods": {
+    "simulation": "pass",
+    "hardware": "pending"
+   }
+  },
+  {
+   "id": "REQ-02",
+   "text": "Register 0x004 reads the USR_ACCESS word of the bitstream.",
+   "methods": {
+    "hardware": "pending"
+   }
+  },
+  {
+   "id": "REQ-03",
+   "text": "SCRATCH at 0x008 reads back the written 32-bit value.",
+   "methods": {
+    "simulation": "pass",
+    "hardware": "pending"
+   }
+  },
+  {
+   "id": "REQ-04",
+   "text": "Reading ROM_DATA for addresses 0 to 1023 returns the 1024 words of data/rom_init.hex.",
+   "methods": {
+    "simulation": "pass",
+    "hardware": "pending"
+   }
+  },
+  {
+   "id": "REQ-05",
+   "text": "Straight after configuration RAM word i reads 0xC0DE0000 + i for i in 0 to 1023.",
+   "methods": {
+    "simulation": "pass",
+    "hardware": "pending"
+   }
+  },
+  {
+   "id": "REQ-06",
+   "text": "A RAM_DATA write then read at the same MEM_ADDR returns the written word.",
+   "methods": {
+    "simulation": "pass",
+    "hardware": "pending"
+   }
+  },
+  {
+   "id": "REQ-07",
+   "text": "With AUTOINC set, each ROM_DATA read adds 1 to MEM_ADDR.",
+   "methods": {
+    "simulation": "pass"
+   }
+  },
+  {
+   "id": "REQ-08",
+   "text": "With AUTOINC set, each RAM_DATA read or write adds 1 to MEM_ADDR.",
+   "methods": {
+    "simulation": "pass"
+   }
+  },
+  {
+   "id": "REQ-09",
+   "text": "With AUTOINC clear, MEM_ADDR is unchanged by ROM_DATA and RAM_DATA accesses.",
+   "methods": {
+    "simulation": "pass"
+   }
+  },
+  {
+   "id": "REQ-10",
+   "text": "MEM_ADDR holds 10 bits and bits 31:10 read 0.",
+   "methods": {
+    "simulation": "pass"
+   }
+  },
+  {
+   "id": "REQ-11",
+   "text": "Writing START clears MARCH_ERRS to 0.",
+   "methods": {
+    "simulation": "pass"
+   }
+  },
+  {
+   "id": "REQ-12",
+   "text": "START reads back 0 after the write clock.",
+   "methods": {
+    "simulation": "pass"
+   }
+  },
+  {
+   "id": "REQ-13",
+   "text": "A March C- run of N passes without fault ends with MARCH_ERRS 0, passes completed N and DONE 1.",
+   "methods": {
+    "simulation": "pass",
+    "hardware": "pending"
+   }
+  },
+  {
+   "id": "REQ-14",
+   "text": "A run of 3 passes with INJECT_FAULT set ends with MARCH_ERRS 3.",
+   "methods": {
+    "simulation": "pass",
+    "hardware": "pending"
+   }
+  },
+  {
+   "id": "REQ-15",
+   "text": "MARCH_FIRST_ERR holds the address of the first wrong word.",
+   "methods": {
+    "simulation": "pass"
+   }
+  },
+  {
+   "id": "REQ-16",
+   "text": "After a completed run all 1024 RAM words read 0.",
+   "methods": {
+    "simulation": "pass",
+    "hardware": "pending"
+   }
+  },
+  {
+   "id": "REQ-17",
+   "text": "BUSY is 1 from START until the last pass completes and 0 afterwards.",
+   "methods": {
+    "simulation": "pass"
+   }
+  },
+  {
+   "id": "REQ-18",
+   "text": "A 200 pass run executes on chip without host accesses.",
+   "methods": {
+    "hardware": "pending"
+   }
+  },
+  {
+   "id": "REQ-19",
+   "text": "Unmapped addresses read 0.",
+   "methods": {
+    "simulation": "pass",
+    "formal": "pass"
+   }
+  },
+  {
+   "id": "REQ-20",
+   "text": "h_rdata shows the addressed register within 2 clk after h_re.",
+   "methods": {
+    "simulation": "pass",
+    "formal": "pass"
+   }
+  },
+  {
+   "id": "REQ-21",
+   "text": "A write takes effect 1 clk after h_we.",
+   "methods": {
+    "simulation": "pass"
+   }
+  },
+  {
+   "id": "REQ-22",
+   "text": "sfp_tx_disable is constant 1.",
+   "methods": {
+    "formal": "pass",
+    "analysis": "pass"
+   }
+  },
+  {
+   "id": "REQ-23",
+   "text": "The design uses 0 GT transceiver channels.",
+   "methods": {
+    "analysis": "pass"
+   }
+  },
+  {
+   "id": "REQ-24",
+   "text": "data/jtag_bus.sv is instantiated unmodified.",
+   "methods": {
+    "analysis": "pass"
+   }
+  },
+  {
+   "id": "REQ-25",
+   "text": "Timing closes at 25 MHz with WNS at or above 0 ns.",
+   "methods": {
+    "analysis": "pass"
+   }
+  },
+  {
+   "id": "REQ-26",
+   "text": "SCRATCH is 0 after reset.",
+   "methods": {
+    "simulation": "pass",
+    "hardware": "pending"
+   }
+  },
+  {
+   "id": "REQ-27",
+   "text": "With AUTOINC set, a ROM_DATA read at MEM_ADDR 1023 sets MEM_ADDR to 0.",
+   "methods": {
+    "simulation": "pass"
+   }
+  },
+  {
+   "id": "REQ-28",
+   "text": "With AUTOINC set, a RAM_DATA access at MEM_ADDR 1023 sets MEM_ADDR to 0.",
+   "methods": {
+    "simulation": "pass"
+   }
+  },
+  {
+   "id": "REQ-29",
+   "text": "Writing START clears passes completed to 0.",
+   "methods": {
+    "simulation": "pass"
+   }
+  },
+  {
+   "id": "REQ-30",
+   "text": "Writing START clears DONE to 0.",
+   "methods": {
+    "simulation": "pass"
+   }
+  },
+  {
+   "id": "REQ-31",
+   "text": "Writing START sets MARCH_FIRST_ERR to 0xFFFFFFFF.",
+   "methods": {
+    "simulation": "pass"
+   }
+  },
+  {
+   "id": "REQ-32",
+   "text": "MARCH_FIRST_ERR reads 0xFFFFFFFF when no word read wrong.",
+   "methods": {
+    "simulation": "pass"
+   }
+  },
+  {
+   "id": "REQ-33",
+   "text": "Writes to unmapped addresses change no register.",
+   "methods": {
+    "simulation": "pass",
+    "formal": "pass"
+   }
+  },
+  {
+   "id": "REQ-34",
+   "text": "h_rdata keeps the read value until the next h_re.",
+   "methods": {
+    "simulation": "pass",
+    "formal": "pass"
+   }
+  }
+ ],
+ "requirement_method_results": {
+  "pass": 37,
+  "pending": 11
+ },
+ "requirements": 34,
+ "hw_checks_present": true,
+ "generated_hw_checks_vs_own_mock": {
+  "checks": 17,
+  "failed": []
+ },
+ "pilot_host_check_vs_design_mock": {
+  "verdict": "PASS",
+  "failed": [],
+  "aborted": null
+ }
+}

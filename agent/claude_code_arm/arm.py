@@ -79,6 +79,8 @@ def mcp_config(rt, plan: dict[str, Any]) -> dict[str, Any]:
     """The strict MCP config: our server only, jailed to this role and stage, exposing only the stage's tools."""
     names = list(dict.fromkeys([*plan["file_tools"], *plan["core_tools"]]))
     env = {"PYTHONPATH": str(ROOT), "PATH": os.environ.get("PATH", ""), "HOME": os.environ.get("HOME", "")}
+    if getattr(rt, "run_dir", None):
+        env["FDA_RUN_DIR"] = str(rt.run_dir)                      # brief 182: the live console: the server's tool runs leave console/<step>.log
     for k in ("FDA_TOOLS_FILE", "FDA_BOARDS_FILE", "FDA_KNOWLEDGE", "FDA_SKILL_INDEX_URL"):
         if os.environ.get(k):
             env[k] = os.environ[k]
@@ -211,8 +213,10 @@ def run_subagent_cc(rt, plan: dict[str, Any]) -> dict[str, str]:
     (out_dir / f"{tag}.prompt.json").write_text(json.dumps(
         _prompts.record(user_message=plan["user_message"], system_prompt=plan["system_prompt"]), indent=1))
     t0, timed_out = time.time(), False
+    from agent.core import console as _console           # brief 182: the live console follows the stream as it is written
+    live = _console.begin(rt.run_dir, f"model: {plan['role']}", tag, kind="claude_stream", stage=plan["stage"])
     try:
-        p = claude_cli.run(argv, cwd=work, env=isolated_env(work, token), timeout=wall)
+        p = claude_cli.run(argv, cwd=work, env=isolated_env(work, token), timeout=wall, stdout_file=live)
         out, err = p.stdout, p.stderr
     except subprocess.TimeoutExpired as e:
         timed_out = True
@@ -221,6 +225,7 @@ def run_subagent_cc(rt, plan: dict[str, Any]) -> dict[str, str]:
     finally:
         shutil.rmtree(work, ignore_errors=True)
     secs = round(time.time() - t0, 1)
+    _console.end(rt.run_dir, tag, secs)
     lines = out.splitlines()
     trace = Trace(rt.run_dir / "trace.jsonl", harness="claude_code")
     info = parse_stream(lines, trace, plan["stage"], secs)

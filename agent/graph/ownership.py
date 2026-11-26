@@ -22,7 +22,7 @@ from agent.graph.snapshot import manifest
 LEDGER = Path("build") / "who_did_what.json"
 START, END = "<!-- who-did-what:start -->", "<!-- who-did-what:end -->"
 WHO = ("owner", "agent", "auto")
-IGNORED = ("BUILD_NOTE.md",)
+IGNORED = ("BUILD_NOTE.md", "REQUIREMENTS_REPORT.md", "REQUIREMENTS_NEEDED.md")      # files the harness writes itself (brief 210)
 
 
 def hand_edits(design: Path, last_manifest: dict[str, str]) -> list[str]:

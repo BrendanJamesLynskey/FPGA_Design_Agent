@@ -60,6 +60,7 @@ BUILD_FILES = {
     "reset_scan": {"synth": "reset_scan_synth.tsv", "route": "reset_scan_synth.tsv"},
     "control_sets": {"synth": "control_sets_synth.rpt"},
     "mtbf": {"route": "mtbf.rpt"},               # brief 189: flow/mtbf.py parses it (advisory; UltraScale+ only)
+    "dsp_cells": {"synth": "dsp_cells_synth.txt", "route": "dsp_cells.txt"},      # brief 185: written by flow/build.tcl (flow/dsp_cells.tcl)
     # brief 204a: written by flow/build.tcl after synthesis and routing; the route scope reads the post-synthesis ones where the
     # guide asks for them before placement (logic levels, high-fanout nets)
     "logic_levels": {"synth": "logic_levels_synth.rpt", "route": "logic_levels_synth.rpt"},
@@ -705,6 +706,40 @@ def _dsp_ram(ctx: Ctx) -> dict[str, Any]:
     return _result(fs, parts, recs)
 
 
+def _dsp_regs_applies(design: Path) -> str | None:
+    """Only builds that recorded their DSP cells (flow/build.tcl since brief 185): an older build, or no build, has nothing to read."""
+    if not any(design.glob("build/*/dsp_cells*.txt")):
+        return "no dsp_cells*.txt in the build (made by flow/build.tcl since brief 185)"
+    return None
+
+
+def _dsp_regs(ctx: Ctx) -> dict[str, Any]:
+    """Advisory (brief 185): a DSP slice without the multiplier or output register at a period the measurements say it cannot meet, and Vivado's own
+    DPIP/DPOP rows. The limits are flow/dsp_regs_limits.json (regenerated from results/185_dsp_slices by tools/dsp_regs_limits.py)."""
+    if ctx.scope == "rtl":
+        return _not_run("needs a synthesised design (scope synth or route)")
+    import re
+    from flow import dsp_regs_check as D
+    cells = ctx.report("dsp_cells")
+    if cells is None:
+        return _not_run(ctx.not_run_reason("dsp_cells"))
+    ts = ctx.report("timing_summary")
+    period = None
+    if ts is not None:
+        rows = re.findall(r"^\s*\S+\s+\{[^}]*\}\s+([\d.]+)\s+[\d.]+", ts.read_text(errors="replace"), re.M)
+        period = min(float(x) for x in rows) if rows else None
+    drc = ctx.report("drc")
+    fs = []
+    if period is None:
+        parts = {"registers": "not run: no clock period in the timing summary"}
+    else:
+        parts = {"registers": "ran"}
+    for f in D.check(D.parse_cells(cells.read_text(errors="replace")) if period is not None else [], period or 0.0, drc.read_text(errors="replace") if drc else None):
+        fs.append({"tool": "dsp_regs", "code": f["code"], "severity": "advisory", "where": f["where"], "key": f"dsp_regs:{f['code']} {f['where']}",
+                   "message": f["message"], "blocking": False})
+    return _result(fs, parts, [cells])
+
+
 def _init_values(ctx: Ctx) -> dict[str, Any]:
     """Initial values that cost a hard block's register (brief 206, flow/checks/init_values.py): the session's netlist scan
     (init_scan) for INIT = 1 registers wired to a DSP, RAM or FIFO, and the build log for UltraRAM refused for initial
@@ -1092,6 +1127,9 @@ register(Check("dsp_ram_mapping", "records", POST, {"vivado": ("DPIP-*", "DPOP-*
                                                               "RMIR-*", "RMOR-*", "RROR-*")},
                "DSP and block-RAM mapping advice (AMD DPIP/DPOP/SYNTH/RBOR rows) and their utilisation", _dsp_ram,
                reports=("methodology", "drc", "utilization"), amd=True))
+register(Check("dsp_regs", "records", POST, {"dsp_regs": ("DSPREG-01", "DSPREG-02", "DSPREG-03", "DSPREG-04")},
+               "advisory (brief 185): a DSP slice with no multiplier or output register at a period the measured limits say it cannot meet, a period "
+               "below the slice's own minimum, and AMD's DPIP/DPOP rows (flow/dsp_regs_check.py)", _dsp_regs, reports=("timing_summary", "drc"), applies=_dsp_regs_applies))   # dsp_cells is written by flow/build.tcl, never by the Vivado session
 register(Check("init_values", "vivado", POST, {"init_values": ("INIT-HB-01", "INIT-URAM-01")},
                "initial values that cost a hard block's register on AMD parts (brief 206): INIT = 1 registers wired to a DSP, "
                "RAM or FIFO (our netlist scan) and UltraRAM refused for initial contents (Synth 8-12183); advisory "

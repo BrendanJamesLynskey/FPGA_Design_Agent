@@ -1,0 +1,26 @@
+schema: fpga-design-agent/architecture/v1
+blocks:
+  - {name: jtag_bus, function: "supplied BSCANE2 USER4 register bus, unchanged (data/jtag_bus.sv); gives rst and h_* port on clk"}
+  - {name: p4_fir32_top, function: "thin top: jtag_bus, MMCM (25 to 250 MHz), reset synchronisers, core, sfp_tx_disable=1"}
+  - {name: fir_regs, function: "register core on clk: common map, CTRL, IN_PUSH, OUT_POP, STATUS, counters, LEDs, CDC of run/clear"}
+  - {name: xpm_fifo_async in/out, function: "1024x16 input and output FIFOs crossing clk and clk_dsp (one BRAM36 each)"}
+  - {name: fir_datapath, function: "clk_dsp 32-tap symmetric FIR: 16 pre-adders, 16 DSP48E2 multipliers, adder tree, round, shift, saturate, 1 sample per cycle"}
+interfaces:
+  - {name: host_regs, between: [jtag_bus, fir_regs], protocol: simple, prefix: h, module: fir_regs}
+clock_domains:
+  - {name: clk, clock: clk, freq_mhz: 25}
+  - {name: clk_dsp, clock: clk_dsp, freq_mhz: 250}
+reset:
+  synchronisers: [xpm_cdc_async_rst]
+crossings:
+  - {from: clk, to: clk_dsp, signal: input sample FIFO, primitive: xpm_fifo_async, inline_in: fir_regs}
+  - {from: clk_dsp, to: clk, signal: output sample FIFO, primitive: xpm_fifo_async, inline_in: fir_regs}
+  - {from: clk, to: clk_dsp, signal: run and clear request, primitive: xpm_cdc_pulse, inline_in: fir_regs}
+  - {from: clk_dsp, to: clk, signal: busy and sat/done counters status, primitive: xpm_cdc_array_single, inline_in: fir_regs}
+  - {from: clk, to: clk_dsp, signal: reset, primitive: xpm_cdc_async_rst, inline_in: p4_fir32_top}
+  - {from: async, to: clk, signal: mmcm locked, primitive: xpm_cdc_single, inline_in: p4_fir32_top}
+predicted_resources:
+  lut: [700, 2400]
+  ff: [900, 3200]
+  bram_tile: [2, 4]
+  dsp: [16, 20]

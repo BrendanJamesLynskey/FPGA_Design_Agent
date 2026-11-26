@@ -1,0 +1,419 @@
+{
+ "design": "p6_glitchfree_mux",
+ "run": 3,
+ "run_id": "20261125-165016-2a4e",
+ "agent_sha": "cc6597b64bb3",
+ "model": [
+  "claude-sonnet-5-5"
+ ],
+ "endpoint": [
+  "anthropic_api"
+ ],
+ "api_calls": 102,
+ "real_usd": 4.0863,
+ "prompt_tokens": 2990850,
+ "completion_tokens": 259245,
+ "input_tokens": 248,
+ "cache_read_tokens": 2492990,
+ "cache_write_tokens": 497612,
+ "tokens_total": 3250095,
+ "truncated_calls": 7,
+ "cost_basis": [
+  "usage*price"
+ ],
+ "wall_s_after_slot": 2037,
+ "stage_visits": [
+  [
+   "clarify",
+   1,
+   "clarify",
+   "done",
+   4,
+   0.154
+  ],
+  [
+   "clarify",
+   2,
+   "clarify",
+   "done",
+   3,
+   0.065
+  ],
+  [
+   "board-and-device-planning",
+   1,
+   "rtl",
+   "done",
+   5,
+   0.114
+  ],
+  [
+   "board-and-device-planning",
+   2,
+   "rtl",
+   "done",
+   8,
+   0.1
+  ],
+  [
+   "rtl-design-creation",
+   1,
+   "model",
+   "done",
+   2,
+   0.049
+  ],
+  [
+   "rtl-design-creation",
+   1,
+   "tests",
+   "done",
+   4,
+   0.259
+  ],
+  [
+   "rtl-design-creation",
+   1,
+   "tests",
+   "done",
+   5,
+   0.183
+  ],
+  [
+   "rtl-design-creation",
+   1,
+   "tests",
+   "done",
+   7,
+   0.12
+  ],
+  [
+   "rtl-design-creation",
+   1,
+   "rtl",
+   "done",
+   8,
+   0.605
+  ],
+  [
+   "rtl-design-creation",
+   2,
+   "tests",
+   "done",
+   4,
+   0.099
+  ],
+  [
+   "rtl-design-creation",
+   2,
+   "rtl",
+   "done",
+   4,
+   0.256
+  ],
+  [
+   "rtl-design-creation",
+   3,
+   "tests",
+   "done",
+   4,
+   0.082
+  ],
+  [
+   "rtl-design-creation",
+   3,
+   "rtl",
+   "done",
+   6,
+   0.231
+  ],
+  [
+   "rtl-design-creation",
+   4,
+   "tests",
+   "done",
+   5,
+   0.093
+  ],
+  [
+   "rtl-design-creation",
+   4,
+   "rtl",
+   "done",
+   6,
+   0.396
+  ],
+  [
+   "rtl-design-creation",
+   5,
+   "tests",
+   "done",
+   6,
+   0.095
+  ],
+  [
+   "rtl-design-creation",
+   5,
+   "rtl",
+   "done",
+   3,
+   0.194
+  ],
+  [
+   "rtl-design-creation",
+   6,
+   "tests",
+   "done",
+   7,
+   0.098
+  ],
+  [
+   "rtl-design-creation",
+   6,
+   "rtl",
+   "done",
+   8,
+   0.495
+  ]
+ ],
+ "outcome": "stopped: stage 2 visited more than 6 times; last failing gate: lint, simulate, design standards, verification V2; owned by the rtl/tests role; last failing assertion: V2 seeds_run: no seeded results: read runs/20261125-165016-2a4e/p6_glitchfree_mux/build/verif/sim/seed*/results.xml and found none. The gate expects runs/20261125-165016-2a4e/p6_glitchfree_mux/build/verif/sim/seed<N>/results.xml, one direct; the same failure on 6 consecutive visits",
+ "reached_stage": 2,
+ "summary_stop": "stage 2 visited more than 6 times; last failing gate: lint, simulate, design standards, verification V2; owned by the rtl/tests role; last failing assertion: V2 seeds_run: no seeded results: read runs/20261125-165016-2a4e/p6_glitchfree_mux/build/verif/sim/seed*/results.xml and found none. The gate expects runs/20261125-165016-2a4e/p6_glitchfree_mux/build/verif/sim/seed<N>/results.xml, one direct; the same failure on 6 consecutive visits",
+ "interview": "off",
+ "cost_usd_agent": 3.687446,
+ "interview_note": "--interview off: the agent's defaults were taken, nothing asked or answered by hand",
+ "bitstream_built": false,
+ "verif_stages": {
+  "V0": true,
+  "V1": true,
+  "V2": false,
+  "V3": null,
+  "SIGNOFF": false,
+  "V-HW": false
+ },
+ "trace_pass": false,
+ "requirement_table": [
+  {
+   "id": "REQ-01",
+   "text": "ID register at 0x000 reads 0x20960001.",
+   "methods": {
+    "simulation": "pending",
+    "hardware": "pending"
+   }
+  },
+  {
+   "id": "REQ-02",
+   "text": "BUILD register at 0x004 reads the USR_ACCESSE2 word.",
+   "methods": {
+    "hardware": "pending"
+   }
+  },
+  {
+   "id": "REQ-03",
+   "text": "SCRATCH at 0x008 reads back the written 32-bit value.",
+   "methods": {
+    "simulation": "pending"
+   }
+  },
+  {
+   "id": "REQ-25",
+   "text": "SCRATCH resets to 0.",
+   "methods": {
+    "simulation": "pending"
+   }
+  },
+  {
+   "id": "REQ-04",
+   "text": "Unmapped addresses read 0.",
+   "methods": {
+    "simulation": "pending"
+   }
+  },
+  {
+   "id": "REQ-26",
+   "text": "Writes to unmapped addresses change no register.",
+   "methods": {
+    "simulation": "pending"
+   }
+  },
+  {
+   "id": "REQ-05",
+   "text": "h_rdata shows the addressed register within 2 clocks of h_re.",
+   "methods": {
+    "simulation": "pending",
+    "formal": "pending"
+   }
+  },
+  {
+   "id": "REQ-27",
+   "text": "h_rdata holds its value until the next h_re.",
+   "methods": {
+    "simulation": "pending",
+    "formal": "pending"
+   }
+  },
+  {
+   "id": "REQ-06",
+   "text": "SEL resets to 0.",
+   "methods": {
+    "simulation": "pending",
+    "hardware": "pending"
+   }
+  },
+  {
+   "id": "REQ-28",
+   "text": "SEL 0 selects clock A and SEL 1 selects clock B.",
+   "methods": {
+    "simulation": "pending",
+    "hardware": "pending"
+   }
+  },
+  {
+   "id": "REQ-07",
+   "text": "STATUS bit 1 ACTIVE_SEL equals the clock driving the muxed domain.",
+   "methods": {
+    "simulation": "pending",
+    "hardware": "pending"
+   }
+  },
+  {
+   "id": "REQ-08",
+   "text": "STATUS bit 0 SWITCHING is 1 from a SEL change until ACTIVE_SEL equals SEL.",
+   "methods": {
+    "simulation": "pending"
+   }
+  },
+  {
+   "id": "REQ-09",
+   "text": "B_DIV reads a value from 1 to 8 equal to the divide applied to the GT reference clock.",
+   "methods": {
+    "simulation": "pending",
+    "hardware": "pending"
+   }
+  },
+  {
+   "id": "REQ-10",
+   "text": "The muxed clock has no glitch or runt pulse across a switch.",
+   "methods": {
+    "simulation": "pending",
+    "analysis": "pending"
+   }
+  },
+  {
+   "id": "REQ-11",
+   "text": "MUX_ERRS stays 0 across 1,000 random switches.",
+   "methods": {
+    "simulation": "pending",
+    "hardware": "pending"
+   }
+  },
+  {
+   "id": "REQ-12",
+   "text": "Any mismatch between the binary counter and its Gray twin adds 1 to MUX_ERRS.",
+   "methods": {
+    "simulation": "pending"
+   }
+  },
+  {
+   "id": "REQ-13",
+   "text": "A counter step that is not exactly +1 adds 1 to MUX_ERRS.",
+   "methods": {
+    "simulation": "pending",
+    "formal": "pending"
+   }
+  },
+  {
+   "id": "REQ-14",
+   "text": "SWITCH_COUNT increments by 1 per change of ACTIVE_SEL.",
+   "methods": {
+    "simulation": "pending",
+    "hardware": "pending"
+   }
+  },
+  {
+   "id": "REQ-15",
+   "text": "A SEL write equal to the current selection leaves SWITCH_COUNT unchanged.",
+   "methods": {
+    "simulation": "pending"
+   }
+  },
+  {
+   "id": "REQ-16",
+   "text": "GATE_LEN resets to 25,000,000.",
+   "methods": {
+    "simulation": "pending"
+   }
+  },
+  {
+   "id": "REQ-29",
+   "text": "GATE_LEN reads back the written 32-bit value.",
+   "methods": {
+    "simulation": "pending"
+   }
+  },
+  {
+   "id": "REQ-17",
+   "text": "START sets BUSY for exactly GATE_LEN C3 cycles then sets DONE.",
+   "methods": {
+    "simulation": "pending"
+   }
+  },
+  {
+   "id": "REQ-18",
+   "text": "FREQ_COUNT equals the muxed-clock rising edges in the gate, within 1 edge.",
+   "methods": {
+    "simulation": "pending",
+    "hardware": "pending"
+   }
+  },
+  {
+   "id": "REQ-19",
+   "text": "START self-clears after one clock.",
+   "methods": {
+    "simulation": "pending"
+   }
+  },
+  {
+   "id": "REQ-20",
+   "text": "A write to SNAPSHOT latches the low 32 bits of the muxed counter into MUX_COUNT.",
+   "methods": {
+    "simulation": "pending"
+   }
+  },
+  {
+   "id": "REQ-21",
+   "text": "sfp_tx_disable is 1 at all times.",
+   "methods": {
+    "simulation": "pending",
+    "formal": "pending",
+    "analysis": "pending"
+   }
+  },
+  {
+   "id": "REQ-22",
+   "text": "The design uses no GT transceiver channel.",
+   "methods": {
+    "analysis": "pending"
+   }
+  },
+  {
+   "id": "REQ-23",
+   "text": "The clk_c3 domain meets timing at 25 MHz with WNS at or above 0.",
+   "methods": {
+    "analysis": "pending"
+   }
+  },
+  {
+   "id": "REQ-24",
+   "text": "jtag_bus.sv is instantiated unchanged.",
+   "methods": {
+    "analysis": "pending"
+   }
+  }
+ ],
+ "requirement_method_results": {
+  "pending": 43
+ },
+ "requirements": 29,
+ "hw_checks_present": false
+}

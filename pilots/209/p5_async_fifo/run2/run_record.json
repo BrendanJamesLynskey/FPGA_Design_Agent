@@ -1,0 +1,468 @@
+{
+ "design": "p5_async_fifo",
+ "run": 2,
+ "run_id": "20261125-143655-7b11",
+ "agent_sha": "cc6597b64bb3",
+ "model": [
+  "claude-sonnet-5-5"
+ ],
+ "endpoint": [
+  "anthropic_api"
+ ],
+ "api_calls": 107,
+ "real_usd": 4.5157,
+ "prompt_tokens": 3217941,
+ "completion_tokens": 287877,
+ "input_tokens": 260,
+ "cache_read_tokens": 2669908,
+ "cache_write_tokens": 547773,
+ "tokens_total": 3505818,
+ "truncated_calls": 7,
+ "cost_basis": [
+  "usage*price"
+ ],
+ "wall_s_after_slot": 2175,
+ "stage_visits": [
+  [
+   "clarify",
+   1,
+   "clarify",
+   "done",
+   4,
+   0.16
+  ],
+  [
+   "clarify",
+   2,
+   "clarify",
+   "done",
+   8,
+   0.113
+  ],
+  [
+   "clarify",
+   3,
+   "clarify",
+   "done",
+   2,
+   0.033
+  ],
+  [
+   "board-and-device-planning",
+   1,
+   "rtl",
+   "done",
+   5,
+   0.115
+  ],
+  [
+   "board-and-device-planning",
+   2,
+   "rtl",
+   "done",
+   5,
+   0.07
+  ],
+  [
+   "rtl-design-creation",
+   1,
+   "model",
+   "done",
+   2,
+   0.058
+  ],
+  [
+   "rtl-design-creation",
+   1,
+   "tests",
+   "done",
+   3,
+   0.257
+  ],
+  [
+   "rtl-design-creation",
+   1,
+   "tests",
+   "done",
+   6,
+   0.247
+  ],
+  [
+   "rtl-design-creation",
+   1,
+   "tests",
+   "done",
+   5,
+   0.138
+  ],
+  [
+   "rtl-design-creation",
+   1,
+   "rtl",
+   "done",
+   4,
+   0.351
+  ],
+  [
+   "rtl-design-creation",
+   2,
+   "tests",
+   "done",
+   6,
+   0.107
+  ],
+  [
+   "rtl-design-creation",
+   2,
+   "rtl",
+   "done",
+   6,
+   0.285
+  ],
+  [
+   "rtl-design-creation",
+   3,
+   "tests",
+   "done",
+   5,
+   0.091
+  ],
+  [
+   "rtl-design-creation",
+   3,
+   "rtl",
+   "done",
+   8,
+   0.315
+  ],
+  [
+   "rtl-design-creation",
+   4,
+   "tests",
+   "done",
+   5,
+   0.09
+  ],
+  [
+   "rtl-design-creation",
+   4,
+   "rtl",
+   "done",
+   8,
+   0.554
+  ],
+  [
+   "rtl-design-creation",
+   5,
+   "tests",
+   "done",
+   5,
+   0.117
+  ],
+  [
+   "rtl-design-creation",
+   5,
+   "rtl",
+   "done",
+   11,
+   0.639
+  ],
+  [
+   "rtl-design-creation",
+   6,
+   "tests",
+   "done",
+   3,
+   0.1
+  ],
+  [
+   "rtl-design-creation",
+   6,
+   "rtl",
+   "done",
+   3,
+   0.199
+  ]
+ ],
+ "outcome": "stopped: stage 2 visited more than 6 times; last failing gate: lint, simulate, design standards, verification V2; owned by the rtl/tests role; last failing assertion: V2 seeds_run: no seeded results: read runs/20261125-143655-7b11/p5_async_fifo/build/verif/sim/seed*/results.xml and found none. The gate expects runs/20261125-143655-7b11/p5_async_fifo/build/verif/sim/seed<N>/results.xml, one directory per ; the same failure on 6 consecutive visits",
+ "reached_stage": 2,
+ "summary_stop": "stage 2 visited more than 6 times; last failing gate: lint, simulate, design standards, verification V2; owned by the rtl/tests role; last failing assertion: V2 seeds_run: no seeded results: read runs/20261125-143655-7b11/p5_async_fifo/build/verif/sim/seed*/results.xml and found none. The gate expects runs/20261125-143655-7b11/p5_async_fifo/build/verif/sim/seed<N>/results.xml, one directory per ; the same failure on 6 consecutive visits",
+ "interview": "off",
+ "cost_usd_agent": 4.039232,
+ "interview_note": "--interview off: the agent's defaults were taken, nothing asked or answered by hand",
+ "bitstream_built": false,
+ "verif_stages": {
+  "V0": true,
+  "V1": true,
+  "V2": false,
+  "V3": null,
+  "SIGNOFF": false,
+  "V-HW": false
+ },
+ "trace_pass": false,
+ "requirement_table": [
+  {
+   "id": "REQ-01",
+   "text": "Register 0x000 reads 0x20950001.",
+   "methods": {
+    "simulation": "pending",
+    "hardware": "pending"
+   }
+  },
+  {
+   "id": "REQ-02",
+   "text": "Register 0x004 reads the bitstream USR_ACCESS word.",
+   "methods": {
+    "hardware": "pending"
+   }
+  },
+  {
+   "id": "REQ-03",
+   "text": "SCRATCH at 0x008 reads 0 after reset.",
+   "methods": {
+    "simulation": "pending",
+    "hardware": "pending"
+   }
+  },
+  {
+   "id": "REQ-04",
+   "text": "Unmapped addresses read 0.",
+   "methods": {
+    "simulation": "pending"
+   }
+  },
+  {
+   "id": "REQ-29",
+   "text": "Writes to unmapped addresses change no register.",
+   "methods": {
+    "simulation": "pending"
+   }
+  },
+  {
+   "id": "REQ-30",
+   "text": "SCRATCH at 0x008 reads back the last value written.",
+   "methods": {
+    "simulation": "pending",
+    "hardware": "pending"
+   }
+  },
+  {
+   "id": "REQ-05",
+   "text": "h_rdata shows the addressed register within 2 clk_25 clocks of h_re.",
+   "methods": {
+    "simulation": "pending"
+   }
+  },
+  {
+   "id": "REQ-31",
+   "text": "h_rdata holds its value until the next h_re.",
+   "methods": {
+    "simulation": "pending"
+   }
+  },
+  {
+   "id": "REQ-06",
+   "text": "The writer produces PRBS-31 x^31 + x^28 + 1 with 32 new bits per word from seed 0x7FFFFFFF.",
+   "methods": {
+    "simulation": "pending"
+   }
+  },
+  {
+   "id": "REQ-07",
+   "text": "While RUN is 1 and the FIFO is not full the writer writes one word on every clk_25 clock.",
+   "methods": {
+    "simulation": "pending",
+    "hardware": "pending"
+   }
+  },
+  {
+   "id": "REQ-08",
+   "text": "The asynchronous FIFO holds 512 words of 32 bits.",
+   "methods": {
+    "simulation": "pending",
+    "analysis": "pending"
+   }
+  },
+  {
+   "id": "REQ-09",
+   "text": "The reader checks each popped word against its own PRBS-31 copy started from seed 0x7FFFFFFF at RUN start.",
+   "methods": {
+    "simulation": "pending"
+   }
+  },
+  {
+   "id": "REQ-10",
+   "text": "DATA_ERRS stays 0 over a 10 minute run without INJECT.",
+   "methods": {
+    "hardware": "pending"
+   }
+  },
+  {
+   "id": "REQ-11",
+   "text": "OVERFLOWS stays 0 over a 10 minute run.",
+   "methods": {
+    "formal": "pending",
+    "hardware": "pending"
+   }
+  },
+  {
+   "id": "REQ-12",
+   "text": "UNDERFLOWS stays 0 over a 10 minute run.",
+   "methods": {
+    "formal": "pending",
+    "hardware": "pending"
+   }
+  },
+  {
+   "id": "REQ-13",
+   "text": "With SLOW_READ 1 the reader pops at most one word per 8 clk_gt156 clocks.",
+   "methods": {
+    "simulation": "pending"
+   }
+  },
+  {
+   "id": "REQ-14",
+   "text": "With SLOW_READ 1 the FIFO reaches full and STALL_W increments by 1 per held writer clock.",
+   "methods": {
+    "simulation": "pending",
+    "hardware": "pending"
+   }
+  },
+  {
+   "id": "REQ-15",
+   "text": "INJECT flips one bit of exactly one received word, giving DATA_ERRS +1.",
+   "methods": {
+    "simulation": "pending",
+    "hardware": "pending"
+   }
+  },
+  {
+   "id": "REQ-16",
+   "text": "INJECT self-clears after the one flipped word.",
+   "methods": {
+    "simulation": "pending"
+   }
+  },
+  {
+   "id": "REQ-17",
+   "text": "CLEAR written while RUN is 0 resets all seven counters to 0.",
+   "methods": {
+    "simulation": "pending"
+   }
+  },
+  {
+   "id": "REQ-34",
+   "text": "CLEAR written while RUN is 0 restarts both sequences from the seed.",
+   "methods": {
+    "simulation": "pending"
+   }
+  },
+  {
+   "id": "REQ-35",
+   "text": "CLEAR written while RUN is 1 is ignored.",
+   "methods": {
+    "simulation": "pending"
+   }
+  },
+  {
+   "id": "REQ-18",
+   "text": "CLEAR is self-clearing.",
+   "methods": {
+    "simulation": "pending"
+   }
+  },
+  {
+   "id": "REQ-19",
+   "text": "A write to 0x030 latches all seven counters at one instant.",
+   "methods": {
+    "simulation": "pending",
+    "hardware": "pending"
+   }
+  },
+  {
+   "id": "REQ-20",
+   "text": "Registers 0x014 to 0x02C read the snapshot values, not the live counters.",
+   "methods": {
+    "simulation": "pending"
+   }
+  },
+  {
+   "id": "REQ-21",
+   "text": "All counters wrap at 2^32.",
+   "methods": {
+    "simulation": "pending",
+    "formal": "pending"
+   }
+  },
+  {
+   "id": "REQ-22",
+   "text": "OCC_MAX is the highest fill seen, at most 512.",
+   "methods": {
+    "simulation": "pending",
+    "formal": "pending"
+   }
+  },
+  {
+   "id": "REQ-23",
+   "text": "WORDS_W advances at 25 MHz while RUN is 1 and the FIFO is not full.",
+   "methods": {
+    "hardware": "pending"
+   }
+  },
+  {
+   "id": "REQ-24",
+   "text": "sfp_tx_disable is 1 at all times.",
+   "methods": {
+    "simulation": "pending",
+    "analysis": "pending"
+   }
+  },
+  {
+   "id": "REQ-25",
+   "text": "The design instantiates 0 GT transceiver channels.",
+   "methods": {
+    "analysis": "pending"
+   }
+  },
+  {
+   "id": "REQ-32",
+   "text": "The only GT primitive used is the GT reference clock buffer.",
+   "methods": {
+    "analysis": "pending"
+   }
+  },
+  {
+   "id": "REQ-26",
+   "text": "The clock pair clk_25 / clk_gt156 is declared asynchronous in the constraints.",
+   "methods": {
+    "analysis": "pending"
+   }
+  },
+  {
+   "id": "REQ-33",
+   "text": "The CDC report lists the clk_25 to clk_gt156 paths.",
+   "methods": {
+    "analysis": "pending"
+   }
+  },
+  {
+   "id": "REQ-27",
+   "text": "Worst negative slack is at least 0 ns on both clocks.",
+   "methods": {
+    "analysis": "pending"
+   }
+  },
+  {
+   "id": "REQ-28",
+   "text": "data/jtag_bus.sv is used unchanged.",
+   "methods": {
+    "analysis": "pending"
+   }
+  }
+ ],
+ "requirement_method_results": {
+  "pending": 48
+ },
+ "requirements": 35,
+ "hw_checks_present": false
+}

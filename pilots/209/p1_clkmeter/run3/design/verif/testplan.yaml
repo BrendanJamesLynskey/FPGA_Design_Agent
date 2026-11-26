@@ -1,0 +1,154 @@
+schema: fpga-design-agent/testplan/v0
+design: p1_clkmeter
+spec: spec.yaml
+model: model.py
+bench:
+  modules: [bench_p1_clkmeter]
+  dir: tests
+checkers: verif/checkers
+formal_dir: verif/formal
+thresholds:
+  seeds_min: 3
+  functional_bins_pct: 100
+  cover_properties_pct: 100
+  line_pct: 90
+  toggle_pct: 70
+  mutation_score_pct: 70
+waivers:
+  code_coverage: []
+  functional_bins: []
+  cover_properties: []
+requirements:
+- id: REQ-01
+  spec: ["registers.map.ID"]
+  tests: [bench_p1_clkmeter.test_reset_values]
+- id: REQ-02
+  spec: ["registers.map.BUILD", "behaviour.register_port[4]"]
+  tests: [bench_p1_clkmeter.test_unmapped_and_ro]
+- id: REQ-03
+  spec: ["registers.map.SCRATCH"]
+  tests: [bench_p1_clkmeter.test_scratch_rw, bench_p1_clkmeter.test_random_traffic]
+- id: REQ-28
+  spec: ["reset"]
+  tests: [bench_p1_clkmeter.test_reset_values]
+- id: REQ-04
+  spec: ["registers.map.GATE_LEN"]
+  tests: [bench_p1_clkmeter.test_reset_values]
+- id: REQ-05
+  spec: ["behaviour.measurement[0]", "registers.map.CTRL", "timing.latency.start_to_busy"]
+  tests: [bench_p1_clkmeter.test_measure_basic, bench_p1_clkmeter.test_random_traffic]
+- id: REQ-06
+  spec: ["behaviour.measurement[5]"]
+  tests: [bench_p1_clkmeter.test_start_while_busy]
+- id: REQ-07
+  spec: ["registers.map.CTRL"]
+  tests: [bench_p1_clkmeter.test_measure_basic]
+- id: REQ-08
+  spec: ["behaviour.measurement[4]", "registers.map.GATE_ACTUAL", "behaviour.measurement[1]"]
+  tests: [bench_p1_clkmeter.test_measure_basic]
+- id: REQ-09
+  spec: ["behaviour.measurement[2]", "registers.map.COUNT"]
+  tests: [bench_p1_clkmeter.test_measure_basic]
+- id: REQ-10
+  spec: ["behaviour.measurement[3]", "registers.map.MEAS_DONE", "timing.latency.result"]
+  tests: [bench_p1_clkmeter.test_measure_basic, bench_p1_clkmeter.test_start_while_busy]
+- id: REQ-11
+  spec: ["registers.map.STATUS"]
+  tests: [bench_p1_clkmeter.test_measure_basic, bench_p1_clkmeter.test_start_while_busy]
+- id: REQ-27
+  spec: ["behaviour.measurement[6]"]
+  tests: [bench_p1_clkmeter.test_measure_basic]
+- id: REQ-12
+  spec: ["behaviour.measurement[0]"]
+  tests: [bench_p1_clkmeter.test_gate_min_clamp]
+- id: REQ-13
+  spec: ["behaviour.measurement[2]"]
+  tests: [bench_p1_clkmeter.test_measure_basic]
+- id: REQ-14
+  spec: ["behaviour.measurement[4]"]
+  tests: [bench_p1_clkmeter.test_measure_basic]
+- id: REQ-15
+  spec: ["behaviour.leds[0]"]
+  tests: [bench_p1_clkmeter.test_reset_values, bench_p1_clkmeter.test_leds]
+- id: REQ-16
+  spec: ["behaviour.leds[1]"]
+  tests: [bench_p1_clkmeter.test_leds]
+- id: REQ-17
+  spec: ["behaviour.leds[2]"]
+  tests: [bench_p1_clkmeter.test_leds]
+- id: REQ-18
+  spec: ["behaviour.leds[0]"]
+  tests: [bench_p1_clkmeter.test_leds]
+- id: REQ-19
+  spec: ["behaviour.sfp[0]"]
+  tests: [bench_p1_clkmeter.test_sfp_constant]
+- id: REQ-20
+  spec: ["behaviour.sfp[0]"]
+  tests: [bench_p1_clkmeter.test_sfp_constant]
+- id: REQ-21
+  spec: ["behaviour.register_port[1]", "timing.latency.read"]
+  tests: [bench_p1_clkmeter.test_read_latency_hold]
+- id: REQ-29
+  spec: ["behaviour.register_port[1]"]
+  tests: [bench_p1_clkmeter.test_read_latency_hold]
+- id: REQ-22
+  spec: ["registers.unmapped", "behaviour.register_port[2]"]
+  tests: [bench_p1_clkmeter.test_unmapped_and_ro]
+- id: REQ-23
+  spec: ["behaviour.register_port[3]", "behaviour.register_port[2]"]
+  tests: [bench_p1_clkmeter.test_unmapped_and_ro]
+- id: REQ-24
+  spec: ["behaviour.register_port[0]", "timing.latency.write"]
+  tests: [bench_p1_clkmeter.test_scratch_rw]
+- id: REQ-25
+  spec: ["behaviour.register_port[4]"]
+  tests: [bench_p1_clkmeter.test_unmapped_and_ro]
+- id: REQ-26
+  spec: ["timing.latency.result"]
+  tests: [bench_p1_clkmeter.test_measure_basic]
+proof:
+- {requirement: REQ-01, method: simulation, artefact: bench_p1_clkmeter.test_reset_values}
+- {requirement: REQ-01, method: hardware, artefact: uart_tests}
+- {requirement: REQ-02, method: hardware, artefact: uart_tests}
+- {requirement: REQ-03, method: simulation, artefact: bench_p1_clkmeter.test_scratch_rw}
+- {requirement: REQ-03, method: hardware, artefact: uart_tests}
+- {requirement: REQ-28, method: simulation, artefact: bench_p1_clkmeter.test_reset_values}
+- {requirement: REQ-04, method: simulation, artefact: bench_p1_clkmeter.test_reset_values}
+- {requirement: REQ-05, method: simulation, artefact: bench_p1_clkmeter.test_measure_basic}
+- {requirement: REQ-06, method: simulation, artefact: bench_p1_clkmeter.test_start_while_busy}
+- {requirement: REQ-07, method: simulation, artefact: bench_p1_clkmeter.test_measure_basic}
+- {requirement: REQ-08, method: simulation, artefact: bench_p1_clkmeter.test_measure_basic}
+- {requirement: REQ-08, method: hardware, artefact: uart_tests}
+- {requirement: REQ-09, method: simulation, artefact: bench_p1_clkmeter.test_measure_basic}
+- {requirement: REQ-10, method: simulation, artefact: bench_p1_clkmeter.test_measure_basic}
+- {requirement: REQ-11, method: simulation, artefact: bench_p1_clkmeter.test_measure_basic}
+- {requirement: REQ-27, method: simulation, artefact: bench_p1_clkmeter.test_measure_basic}
+- {requirement: REQ-12, method: simulation, artefact: bench_p1_clkmeter.test_gate_min_clamp}
+- {requirement: REQ-13, method: hardware, artefact: uart_tests}
+- {requirement: REQ-14, method: hardware, artefact: uart_tests}
+- {requirement: REQ-15, method: simulation, artefact: bench_p1_clkmeter.test_leds}
+- {requirement: REQ-15, method: hardware, artefact: ila_captures}
+- {requirement: REQ-16, method: simulation, artefact: bench_p1_clkmeter.test_leds}
+- {requirement: REQ-16, method: hardware, artefact: ila_captures}
+- {requirement: REQ-17, method: simulation, artefact: bench_p1_clkmeter.test_leds}
+- {requirement: REQ-17, method: hardware, artefact: ila_captures}
+- {requirement: REQ-18, method: simulation, artefact: bench_p1_clkmeter.test_leds}
+- {requirement: REQ-19, method: hardware, artefact: uart_tests}
+- {requirement: REQ-20, method: analysis, artefact: "post_synth:post_synth_resources_in_range"}
+- {requirement: REQ-21, method: simulation, artefact: bench_p1_clkmeter.test_read_latency_hold}
+- {requirement: REQ-29, method: simulation, artefact: bench_p1_clkmeter.test_read_latency_hold}
+- {requirement: REQ-22, method: simulation, artefact: bench_p1_clkmeter.test_unmapped_and_ro}
+- {requirement: REQ-23, method: simulation, artefact: bench_p1_clkmeter.test_unmapped_and_ro}
+- {requirement: REQ-24, method: simulation, artefact: bench_p1_clkmeter.test_scratch_rw}
+- {requirement: REQ-25, method: analysis, artefact: "post_synth:post_synth_resources_in_range"}
+- {requirement: REQ-26, method: analysis, artefact: "post_route:setup"}
+replan:
+- {requirement: REQ-06, method: formal, replaced_by: simulation, artefact: bench_p1_clkmeter.test_start_while_busy, why: SymbiYosys is not installed here so START-while-BUSY is checked by directed simulation against the model.}
+- {requirement: REQ-10, method: formal, replaced_by: simulation, artefact: bench_p1_clkmeter.test_measure_basic, why: SymbiYosys is not installed here so the MEAS_DONE increment is checked in simulation.}
+- {requirement: REQ-11, method: formal, replaced_by: simulation, artefact: bench_p1_clkmeter.test_measure_basic, why: SymbiYosys is not installed here so BUSY behaviour is checked in simulation.}
+- {requirement: REQ-27, method: formal, replaced_by: simulation, artefact: bench_p1_clkmeter.test_measure_basic, why: SymbiYosys is not installed here so DONE validity is checked in simulation.}
+- {requirement: REQ-19, method: formal, replaced_by: simulation, artefact: bench_p1_clkmeter.test_sfp_constant, why: SymbiYosys is not installed here so constant sfp_tx_disable is checked in simulation.}
+- {requirement: REQ-21, method: formal, replaced_by: simulation, artefact: bench_p1_clkmeter.test_read_latency_hold, why: SymbiYosys is not installed here so read latency is checked in simulation.}
+- {requirement: REQ-29, method: formal, replaced_by: simulation, artefact: bench_p1_clkmeter.test_read_latency_hold, why: SymbiYosys is not installed here so the hold property is checked in simulation.}
+- {requirement: REQ-22, method: formal, replaced_by: simulation, artefact: bench_p1_clkmeter.test_unmapped_and_ro, why: SymbiYosys is not installed here so unmapped reads are checked in simulation.}
+- {requirement: REQ-23, method: formal, replaced_by: simulation, artefact: bench_p1_clkmeter.test_unmapped_and_ro, why: SymbiYosys is not installed here so ignored writes are checked in simulation.}

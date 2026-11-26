@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+# Brief 209: copy one finished run's records into pilots/209/<id>/run<k>/, append the ledger line, commit and push.  record_one.sh <id> <k> <run id>
+set -uo pipefail
+ID="$1"; K="$2"; RID="$3"
+ROOT=/home/brendan/Claude_sandbox/_worktrees/209-kr260-pilot; cd "$ROOT"
+PY=/home/brendan/Claude_sandbox/FPGA_Design_Agent/.venv/bin/python
+R=runs/$RID; D=pilots/209/$ID/run$K; DD=$R/$ID; LED=pilots/209/cost_ledger.tsv
+SHA=$(git log -1 --format=%H -- agent | cut -c1-12)
+mkdir -p "$D"
+PYTHONPATH=. $PY pilots/209/run_record.py "$R" "$ID" "$K" "runs/_logs/${ID}_r${K}.log" "$SHA" > "$D/record_stdout.txt" 2>&1
+cp $R/summary.json $R/role_usage.jsonl $R/model_calls.jsonl $R/config.json $R/run_record.json "$D/" 2>/dev/null
+cp -r $R/host_vs_mock "$D/" 2>/dev/null
+cp runs/_logs/${ID}_r${K}.log "$D/agent_stdout.log"
+for f in build/trace/trace.md build/trace/trace.json build/base/manifest.json build/base/run.json build/base/timing_summary.rpt build/base/utilization.rpt build/verif/verif_gates.json build/bringup_ready.json build/architecture.json; do [ -f "$DD/$f" ] && { mkdir -p "$D/$(dirname $f)"; cp "$DD/$f" "$D/$f"; }; done
+rsync -a --exclude build --exclude __pycache__ --exclude sim_build "$DD/" "$D/design/" 2>/dev/null
+python3 - "$ID" "$K" "$RID" "$SHA" "$D/run_record.json" >> "$LED" <<'PY'
+import json,sys
+i,k,rid,sha,p=sys.argv[1:6]; d=json.load(open(p))
+print("\t".join(map(str,[i,k,rid,sha,d.get("real_usd"),d.get("tokens_total"),d.get("truncated_calls"),(d.get("outcome") or "")[:110].replace("\t"," ")])))
+PY
+git add -A pilots; git commit -qm "209: $ID run $K record ($RID)
+
+Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01SHVDMMSkFUpQfjmfYnAbny"; git push -q

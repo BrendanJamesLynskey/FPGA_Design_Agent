@@ -15,6 +15,7 @@ schema below (`schema: fpga-design-agent/board/v2`). `flow/tests/test_95_boards.
 | `resources` | `board_constraints` | named aliases and ordered buses over master-XDC ports; a list is an ordered bus, element 0 first |
 | `slow_ports` | `flow/io_check.py` | regexes of user I/O with no timing relationship to a clock |
 | `thermal` | `flow/build.tcl` via `flow/prepare.py` | the environment `report_power` is run in |
+| `operating_limits` | `flow/security.py` (`sysmon-init`, the build check of brief 196) | optional: `tj_alarm_c`, `vccint_v`, `vccaux_v`, `vccbram_v` ([min, max]), `sysmon_temp_error_c` and `source`; the limits the SYSMON alarms of a `production_secure` build are set from |
 | `uart` | `check_top_ports` | `fpga_rx` and `fpga_tx` ports (the board's side), `default_baud`; a board without a PL UART says `pl_uart: none` |
 
 ## What the catalogue adds

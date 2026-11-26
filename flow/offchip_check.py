@@ -1,7 +1,11 @@
 #!/usr/bin/env python3
 """The off-chip I/O choice check (brief 155): standard, DRIVE, SLEW and termination from the load and the line.
 
-    python3 flow/offchip_check.py --spec spec.yaml --xdc design.xdc [--xdc more.xdc] [--family artix7] [--bank-type HR] [--propose]
+    python3 flow/offchip_check.py --spec spec.yaml --xdc design.xdc [--xdc more.xdc] [--family artix7] [--part P] [--bank-type HR] [--no-propose]
+
+Family, part and bank type come from the command line, else from the spec's own ``family:`` / ``part:`` / ``bank_type:`` keys (brief 164).
+Two answers per output group (owner decision 30): the best DRIVE/SLEW for the board as built and the optimal setup if the series resistor can change
+(``board_fixed: true`` in a group says only the first applies).
 
 Advisory until the owner approves it (planner-delegated approval is fine, decision 23): every finding says ``advisory``.
 
@@ -66,7 +70,8 @@ try:
 except ImportError:                      # run as a script: flow/ is on sys.path
     import offchip_model as M
 
-GROUP_KEYS = ("name", "ports", "direction", "iostandard", "vcco", "bank", "bank_type", "line", "load", "external", "priority", "ui_ns", "max_rise_ns", "min_drive_ma")
+GROUP_KEYS = ("name", "ports", "direction", "iostandard", "vcco", "bank", "bank_type", "line", "load", "external", "priority", "ui_ns", "max_rise_ns", "min_drive_ma",
+              "board_fixed")
 #: a proposal needs this much first-incident margin (V) over VIH/VIL at the worst corner, and a receiver 20-80 % time at the weak corner no longer than
 #: this share of the unit interval unless the group gives ``max_rise_ns`` (both are house assumptions, written here so they can be changed in one place)
 FIRST_WAVE_GUARD_V = 0.10
@@ -182,6 +187,8 @@ def off_chip_errors(groups: Any) -> list[str]:
         for k in ("ui_ns", "max_rise_ns", "min_drive_ma"):
             if k in g and not (isinstance(g[k], (int, float)) and g[k] > 0):
                 errs.append(f"{w}: {k} must be a positive number")
+        if "board_fixed" in g and not isinstance(g["board_fixed"], bool):
+            errs.append(f"{w}: board_fixed must be true or false")
         if "bank_type" in g and g["bank_type"] not in ("HR", "HP", "HD"):
             errs.append(f"{w}: bank_type must be HR, HP or HD")
         ext = g.get("external")
@@ -350,14 +357,20 @@ def candidates(fc: str, bank_type: str, std: str, priority: str, min_drive: floa
     return [(d, s) for d in drives for s in slews]
 
 
-def propose(group: dict[str, Any], fc: str, bank_type: str, std: str | None = None, max_sims: int = 14) -> dict[str, Any]:
+def propose(group: dict[str, Any], fc: str, bank_type: str, std: str | None = None, max_sims: int = 14, mode: str = "auto") -> dict[str, Any]:
     """The configuration to put in the XDC (and on the board) for one output group, or the reason there is none.
 
     Shortlist by the static match (output resistance plus series resistor against Z0 at all corners), simulate the best ``max_sims`` and
     keep those that pass every limit at every corner; rank by priority: ``edge_rate`` prefers the fastest receiver edge, a lumped load (``line: short``) the gentlest output (SLOW, lowest DRIVE), ``emi`` the
     slowest strong-corner edge among those whose weak-corner receiver 20-80 % time meets ``max_rise_ns`` (default a quarter of the UI), ``balanced`` the smallest
     worst-case mismatch; a proposal needs a first-incident margin of at least ``FIRST_WAVE_GUARD_V`` at every corner; ties go to no series
-    resistor, then the lower DRIVE."""
+    resistor, then the lower DRIVE.
+
+    ``mode`` (brief 164, owner decision 30): ``auto`` keeps the older rule (``external.series_ohm`` fixes the resistor, otherwise it is chosen);
+    ``as_built`` always keeps the board's resistor (``external.series_ohm``, 0 ohm if none) and tries every allowed DRIVE and SLEW; ``free`` chooses the
+    resistor too (the E-series values, 0 ohm allowed) and ignores ``external.series_ohm``. When nothing passes, ``least_bad`` names the setting with the
+    smallest worst overshoot or undershoot and its margin to the 0.2 V limit (negative: beyond it)."""
+    assert mode in ("auto", "as_built", "free"), mode
     std = std or group.get("iostandard") or "LVCMOS33"
     line = group.get("line", "short")
     short = line == "short"
@@ -370,6 +383,10 @@ def propose(group: dict[str, Any], fc: str, bank_type: str, std: str | None = No
     limits = rx_limits(fc, bank_type)
     mfam = model_family(fc, bank_type)
     fixed_rs = float(ext["series_ohm"]) if ext.get("series_ohm") is not None else None
+    if mode == "as_built":
+        fixed_rs = fixed_rs if fixed_rs is not None else 0.0
+    elif mode == "free":
+        fixed_rs = None
     ext_t = tuple(sorted((k, v) for k, v in ext.items() if k != "series_ohm"))
     term = "none"
     shortlist = []
@@ -389,7 +406,7 @@ def propose(group: dict[str, Any], fc: str, bank_type: str, std: str | None = No
             mm = max(mm, abs(rl["r_pu"] + rs - z0) / z0, abs(rl["r_pd"] + rs - z0) / z0)
         scored.append((mm, drive, slew, rs))
     scored.sort(key=lambda x: (x[0], x[3], x[1]))
-    if short:
+    if short or mode == "as_built":
         max_sims = len(scored)                  # every allowed DRIVE and SLEW: few, and the static match means nothing without a line
     # the shortlist must include every slew of the best drive/Rs pairs, so take the best by mismatch but keep distinct (drive, rs) pairs
     results = []
@@ -400,7 +417,12 @@ def propose(group: dict[str, Any], fc: str, bank_type: str, std: str | None = No
         rise_weak = ev["rx_rise_2080_ns"]["min"]
         ok = (not flags and (short or ev["min_first_incident_margin_always_v"] >= FIRST_WAVE_GUARD_V)
               and (rise_weak is None or rise_weak <= max_rise))
+        fi_short = (not short) and ev["min_first_incident_margin_always_v"] < FIRST_WAVE_GUARD_V
+        edge_excess = max(0.0, (rise_weak or 0.0) - max_rise)
+        why = ([] if not flags else sorted({f[0] for f in flags})) + (["first-incident margin under the guard"] if fi_short and not flags else []) \
+            + ([f"weak-corner edge {rise_weak:.2f} ns over the {max_rise:g} ns allowed"] if edge_excess > 0 else [])
         results.append({"drive": drive, "slew": slew, "rs_ohm": rs, "static_mismatch": round(mm, 3), "pass": ok, "flags": [f[0] for f in flags],
+                        "fails": why, "edge_excess_ns": round(edge_excess, 3), "max_rise_ns": max_rise,
                         "worst_over_v": round(ev["worst_over_vcco_v"], 3), "worst_under_v": round(ev["worst_under_gnd_v"], 3),
                         "first_incident_margin_v": ev["min_first_incident_margin_v"], "ringback_margin_v": ev["min_ringback_margin_v"],
                         "settle_ns": round(ev["max_settle_ns"], 2), "rx_rise_2080_ns": ev["rx_rise_2080_ns"], "source": ev["source"]})
@@ -414,8 +436,16 @@ def propose(group: dict[str, Any], fc: str, bank_type: str, std: str | None = No
         good.sort(key=lambda r: (-(r["rx_rise_2080_ns"]["max"] or 0), r["rs_ohm"] > 0, r["drive"]))
     else:
         good.sort(key=lambda r: (r["static_mismatch"], r["rs_ohm"] > 0, r["drive"]))
+    least_bad = None
+    if not good and results:
+        def _bad(r):      # data-sheet overshoot first, then the other flags, then the edge-time shortfall (house assumption)
+            ds = max(r["worst_over_v"], r["worst_under_v"]) - limits["roc_over"]
+            return (ds > 0, max(ds, 0.0), len([f for f in r["flags"] if f != "OFFCHIP-OVERSHOOT"]), r["edge_excess_ns"], r["rs_ohm"], r["drive"])
+        lb = min(results, key=_bad)
+        least_bad = dict(lb, margin_to_limit_v=round(limits["roc_over"] - max(lb["worst_over_v"], lb["worst_under_v"]), 3),
+                         meets_data_sheet_overshoot=max(lb["worst_over_v"], lb["worst_under_v"]) <= limits["roc_over"])
     return {"group": group.get("name"), "iostandard": std, "z0_ohm": z0, "length_in": None if short else length, "c_pf": c_pf,
-            "priority": pri, "best": good[0] if good else None, "all_passing": good, "simulated": results,
+            "priority": pri, "mode": mode, "best": good[0] if good else None, "all_passing": good, "simulated": results, "least_bad": least_bad,
             "reason": None if good else "no allowed DRIVE/SLEW/series-resistor combination passes every limit at every corner: terminate the line "
                                         "(parallel, Thevenin or AC at the receiver), shorten it, or use a different standard"}
 
@@ -530,18 +560,74 @@ def check(spec: dict[str, Any], xdc_text: str, fc: str, bank_type: str = "HR", d
     return {"findings": [f.as_dict() for f in findings], "groups": len(groups), "ports_checked": len(covered), "advisory": True}
 
 
+DCI_NOTE = ("DCI and OUTPUT_IMPEDANCE are not offered: LVCMOS outputs only. Calibrated drivers (LVDCI, SSTL/HSTL/POD with OUTPUT_IMPEDANCE) are reported "
+            "in docs/offchip_io.md section 1 but not simulated in the time domain.")
+
+
+def propose_two(group: dict[str, Any], fc: str, bank_type: str, std: str | None = None) -> dict[str, Any]:
+    """Two answers for one output group (owner decision 30): ``as_built`` (the best DRIVE/SLEW with the board's own series resistor,
+    ``external.series_ohm``, 0 ohm if none) and ``optimal`` (the best series resistor with its DRIVE/SLEW, if the resistor can change).
+    ``applies`` says which one the spec means: ``as_built`` when the group says ``board_fixed: true``, otherwise ``both``."""
+    asb = propose(group, fc, bank_type, std, mode="as_built")
+    opt = propose(group, fc, bank_type, std, mode="free")
+    return {"group": group.get("name"), "board_fixed": bool(group.get("board_fixed", False)),
+            "applies": "as_built" if group.get("board_fixed") else "both",
+            "board_series_ohm": float((group.get("external") or {}).get("series_ohm") or 0.0),
+            "as_built": asb, "optimal": opt, "dci": DCI_NOTE}
+
+
 def propose_all(spec: dict[str, Any], fc: str, bank_type: str = "HR") -> list[dict[str, Any]]:
+    """One older-style proposal per output group (kept for the 155 tools); the two-answer form is ``propose_two_all``."""
     return [propose(g, fc, g.get("bank_type", bank_type)) for g in (spec.get("off_chip") or []) if g.get("direction", "output") != "input"]
+
+
+def propose_two_all(spec: dict[str, Any], fc: str, bank_type: str = "HR") -> list[dict[str, Any]]:
+    return [propose_two(g, fc, g.get("bank_type", bank_type)) for g in (spec.get("off_chip") or []) if g.get("direction", "output") != "input"]
+
+
+def _one(p: dict[str, Any] | None) -> str:
+    if not p:
+        return "none"
+    r = f"DRIVE {p['drive']} SLEW {p['slew']}, series {p['rs_ohm']:g} ohm"
+    return (f"{r} (overshoot {p['worst_over_v']:+.2f} V, undershoot {p['worst_under_v']:+.2f} V beyond the rail, "
+            f"edge {p['rx_rise_2080_ns']['min']:.2f} ns at the weak corner)")
+
+
+def proposal_text(t: dict[str, Any]) -> list[str]:
+    """Plain lines for one ``propose_two`` result: the as-built answer, then the optimal one, then which applies."""
+    lines = []
+    for key, label in (("as_built", f"best for the board as built (series {t['board_series_ohm']:g} ohm, not changed)"),
+                       ("optimal", "optimal if the series resistor can be changed")):
+        p = t[key]
+        if p["best"]:
+            lines.append(f"OFFCHIP-PROPOSAL [advisory] {t['group']}: {label}: {_one(p['best'])}; {len(p['all_passing'])} passing combination(s).")
+        elif p["least_bad"]:
+            lb = p["least_bad"]
+            lines.append(f"OFFCHIP-PROPOSAL [advisory] {t['group']}: {label}: NO setting meets every limit. Least bad: {_one(lb)}; margin to the 0.2 V "
+                         f"over/undershoot limit {lb['margin_to_limit_v']:+.2f} V ({'met' if lb['meets_data_sheet_overshoot'] else 'exceeded'}); "
+                         f"it fails: {'; '.join(lb['fails']) or 'a first-incident or ringback test'}.")
+        else:
+            lines.append(f"OFFCHIP-PROPOSAL [advisory] {t['group']}: {label}: no allowed setting could be simulated.")
+    lines.append(f"OFFCHIP-PROPOSAL [advisory] {t['group']}: " + ("the spec says the board is fixed: the as-built answer applies." if t["board_fixed"]
+                 else "the spec does not say the board is fixed: both answers are offered; the first needs no board change."))
+    return lines
+
+
+def resolve_target(spec: dict[str, Any], family: str | None, part: str | None, bank_type: str | None) -> tuple[str, str, str]:
+    """Family, part and bank type: a command-line value wins, then the spec's own ``family:``, ``part:`` and ``bank_type:`` keys, then the old
+    defaults (artix7, no part, HR). Before brief 164 the spec's keys were ignored, so a K26 spec was judged with Zynq-7000 models."""
+    return (family or spec.get("family") or "artix7", part or spec.get("part") or "", bank_type or spec.get("bank_type") or "HR")
 
 
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     ap.add_argument("--spec", required=True)
     ap.add_argument("--xdc", action="append", default=[])
-    ap.add_argument("--family", default="artix7")
-    ap.add_argument("--part", default="")
-    ap.add_argument("--bank-type", default="HR")
-    ap.add_argument("--propose", action="store_true")
+    ap.add_argument("--family", default=None, help="default: the spec's `family:` key, else artix7")
+    ap.add_argument("--part", default=None, help="default: the spec's `part:` key")
+    ap.add_argument("--bank-type", default=None, help="default: the spec's `bank_type:` key, else HR")
+    ap.add_argument("--propose", action="store_true", help="(default on) two answers per output port group: as built and optimal")
+    ap.add_argument("--no-propose", action="store_true", help="findings only")
     ap.add_argument("--json", default=None)
     a = ap.parse_args(argv)
     spec = yaml.safe_load(Path(a.spec).read_text()) or {}
@@ -549,16 +635,19 @@ def main(argv: list[str] | None = None) -> int:
     if errs:
         print("\n".join(errs))
         return 2
-    fc = family_class(a.family, a.part)
+    family, part, bank_type = resolve_target(spec, a.family, a.part, a.bank_type)
+    fc = family_class(family, part)
     text = "\n".join(Path(x).read_text() for x in a.xdc)
-    res = check(spec, text, fc, a.bank_type)
-    out: dict[str, Any] = {"check": res}
-    if a.propose:
-        out["proposals"] = propose_all(spec, fc, a.bank_type)
+    res = check(spec, text, fc, bank_type)
+    out: dict[str, Any] = {"check": res, "target": {"family": family, "part": part, "bank_type": bank_type, "family_class": fc}}
+    if not a.no_propose:
+        out["proposals"] = propose_two_all(spec, fc, bank_type)
     for f in res["findings"]:
         print(f"{f['code']} [{f['severity']}] {f['text']}")
     if not res["findings"]:
         print("OFFCHIP: no findings (advisory)")
+    for t in out.get("proposals", []):
+        print("\n".join(proposal_text(t)))
     if a.json:
         Path(a.json).write_text(json.dumps(out, indent=1, default=str))
     return 0

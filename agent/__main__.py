@@ -99,11 +99,14 @@ def _drive(graph, rt, cfg_lg, first_input, replies: list) -> dict:
         snap = graph.get_state(cfg_lg)
         pending = [i.value for t in snap.tasks for i in (t.interrupts or [])]
         if not pending:
+            (rt.run_dir / "pending.json").unlink(missing_ok=True)
             break
         if not replies:
+            (rt.run_dir / "pending.json").write_text(json.dumps({"paused": pending[0], "run_id": rt.run_id}, indent=1))     # brief 182: the navigator shows a pending question
             print(json.dumps({"paused": pending[0], "run_id": rt.run_id}, indent=1))
             return {"paused": pending[0]}
         reply = replies.pop(0)
+        (rt.run_dir / "pending.json").unlink(missing_ok=True)
         print(json.dumps({"interrupt": pending[0].get("kind"), "stage": pending[0].get("stage"), "reply": reply}))
         inp = Command(resume=reply)
     if snap.values.get("doc") and (rt.run_dir / "summary.json").is_file():    # brief 68 C: frozen by the document node
@@ -114,6 +117,13 @@ def _drive(graph, rt, cfg_lg, first_input, replies: list) -> dict:
     (rt.run_dir / "summary.json").write_text(json.dumps(s, indent=1))
     print(json.dumps(s, indent=1))
     return s
+
+
+def exit_status(summary: dict | None) -> int:
+    """0, or ``agent.graph.requirements.EXIT_REQUIREMENTS`` (3) when the run stopped because requirements are unresolved: not a crash,
+    and distinct from usage errors (2), so a script can tell "answer these questions" from "the command was wrong" (brief 210)."""
+    from agent.graph import requirements as RQ
+    return RQ.EXIT_REQUIREMENTS if RQ.is_requirements_stop((summary or {}).get("stop")) else 0
 
 
 def task_no_shell(hidden_spec: Path | None) -> bool:
@@ -178,17 +188,27 @@ def project_models_file(spec: Path) -> Path | None:
     return f if f.is_file() else None
 
 
+def _literal(v):
+    """brief 194: config.json stores every field with str(); a dict field comes back through literal_eval (None for absent or 'None')."""
+    import ast
+    if v in (None, "None", ""):
+        return None
+    return v if isinstance(v, dict) else ast.literal_eval(v)
+
+
 def config_from_json(c: dict):
     """The Config of a run from its config.json (``resume``); runs from before 05f have no profile: ``single``."""
     from agent.graph.run import Config
     def flag(k: str) -> bool:
         return str(c.get(k, False)) == "True"
-    return Config(spec_md=Path(c["spec_md"]), name=c["name"], board=c["board"], interview=c["interview"],
+    return Config(spec_md=Path(c["spec_md"]), name=c["name"], board=c["board"], interview=c["interview"], requirements=c.get("requirements") or "",
                   review=c["review"], model=c["model"],
                   hidden_spec=Path(c["hidden_spec"]) if c.get("hidden_spec") not in (None, "None") else None,
                   stop_after=None if c.get("stop_after") in (None, "None") else int(c["stop_after"]),
                   harness=c.get("harness", "deepagents"), cc_model=c.get("cc_model", "claude-haiku-5-5"),
                   cc_effort=c.get("cc_effort", "medium"), verif_level=c.get("verif_level", "V3"),
+                  verif_profile=c.get("verif_profile", "standard"), verif_sets=_literal(c.get("verif_sets")),
+                  settings_file=Path(c["settings_file"]) if c.get("settings_file") not in (None, "None", "") else None, settings_flags=_literal(c.get("settings_flags")),
                   profile=c.get("profile", "single"), roles=c.get("roles") or None,
                   no_shell=flag("no_shell"),
                   data_dir=Path(c["data_dir"]) if c.get("data_dir") not in (None, "None") else None,
@@ -387,6 +407,79 @@ def revise_cmd(a) -> int:
     return pickup_cmd(b)
 
 
+def live_cmd(a) -> int:
+    """Brief 182: status, ask and request. The navigator's Live page calls the same code (navigator/summary.py, console.py, ask.py; agent/graph/requests.py)."""
+    import time as _t
+    from navigator import ask as nask
+    from navigator import console as ncon
+    from navigator import summary as nsum
+    rd = Path(a.run_dir).resolve()
+    runs, rid = rd.parent, rd.name
+    if a.cmd == "status":
+        def show() -> dict | None:
+            s = nsum.summarise(runs, rid)
+            if s is None:
+                print("no such run directory", file=sys.stderr)
+                return None
+            print(json.dumps(s, indent=1, default=str) if a.json else s["sentence"] + "\n" + "".join(f"  request {r['id']} ({r['label']}): {r['status']}" + (f", {r['reason']}" if r["reason"] else "") + "\n" for r in s["requests"]), end="")
+            return s
+        if a.console:
+            lst = ncon.steps(runs, rid)
+            if lst is None:
+                print("no such run directory", file=sys.stderr)
+                return 2
+            for x in lst["steps"]:
+                print(f"{x['id']:<34} {x['label']:<26} {'running' if x['active'] else 'ended  '} {x['size']:>9} bytes  {x['source']}")
+            if lst["restriction"]:
+                print("(" + lst["restriction"] + ")")
+            pick = a.step or next((x["id"] for x in reversed(lst["steps"]) if x["active"]), (lst["steps"][-1]["id"] if lst["steps"] else None))
+            out = ncon.read(runs, rid, pick) if pick else None
+            if out:
+                print(f"--- {out['label']} ({out['source']}), last {len(out['lines'])} lines ---")
+                print("\n".join(out["lines"][-60:]))
+            return 0
+        s = show()
+        if s is None:
+            return 2
+        while a.follow and s and s["status"] != "finished":
+            last = s["sentence"]
+            _t.sleep(5)
+            s = nsum.summarise(runs, rid)
+            if s and s["sentence"] != last:
+                show()
+        return 0
+    if a.cmd == "ask":
+        try:
+            r = nask.ask(runs, rid, a.question)
+        except nask.AskError as e:
+            print("ask refused: " + str(e), file=sys.stderr)
+            return 2
+        print(r["a"])
+        print(f"\nrecords given: {', '.join(r['records_read'])}; cited: {', '.join(r['cited']) or 'none'}" + (f"; cites records it was not given: {', '.join(r['cites_unknown'])}" if r["cites_unknown"] else ""))
+        print(f"model {r['model']}; cost {r['plan_estimate_usd'] if r['cost_usd'] is None else r['cost_usd']} ({r['cost_note']}); this run's questions: {r['qa_spent_usd']} of {r['qa_cap_usd']} USD, {r['qa_count']} of {r['qa_max']}")
+        return 0
+    from agent.core.session import STAGES
+    from agent.graph import requests as rq
+    ctl, stage = (None, None)
+    if a.control:
+        ctl = a.control[0]
+        if len(a.control) > 2 or (ctl.replace("-", "_") == "stop_after") != (len(a.control) == 2):
+            print("request refused: use --control pause | abort | stop-after N", file=sys.stderr)
+            return 2
+        try:
+            stage = int(a.control[1]) if len(a.control) == 2 else None
+        except ValueError:
+            print("request refused: N must be a stage number", file=sys.stderr)
+            return 2
+    try:
+        r = rq.submit(rd, control=ctl, stage=stage, design=a.design, stages=tuple(STAGES))
+    except rq.RequestError as e:
+        print("request refused: " + str(e), file=sys.stderr)
+        return 2
+    print(f"request {r['id']} queued: {rq.describe(r)}\n  applies: {r['applies']}\n  affects: {r['affects']}")
+    return 0
+
+
 def review_cmd(a) -> int:
     from flow.review import review
     from flow.review.judge import UNSET as J_UNSET
@@ -415,6 +508,11 @@ def build_parser() -> argparse.ArgumentParser:
     r.add_argument("--name", help="the design's name (default: the spec's directory name)")
     r.add_argument("--interview", choices=["on", "oracle", "off"], default="off",
                    help="on: the clarifier asks a person questions; oracle: a model answers them from --hidden-spec; off (default): it assumes")
+    r.add_argument("--requirements", choices=["loose", "standard", "strict"], default=None,
+                   help="how strict the interview is about unanswered questions (brief 210). loose: every gap is defaulted and listed in the handover; "
+                        "standard: a high-risk question must be answered or waived, else the run stops at clarify (exit 3); strict: every question must "
+                        "be answered or waived. Default: the request's own 'Requirements: <level>' line, else the design package, else the built-in "
+                        "default (docs/agent.md)")
     r.add_argument("--review", choices=["on", "off"], default="off", help="on: pause for a person's decision after every stage")
     r.add_argument("--model", default="openai/gpt-6-luna", help="the OpenRouter model of the default endpoint (see `models show` for every purpose)")
     r.add_argument("--hidden-spec", type=Path, help="the full spec an interview oracle answers from (evaluation runs)")
@@ -454,6 +552,17 @@ def build_parser() -> argparse.ArgumentParser:
     r.add_argument("--verif-level", choices=["V1", "V2", "V3"], default="V3",
                    help="verification stage stage 2 must reach (default V3, the methodology; V1/V2 only for a cheaper run: "
                         "V3 needs multi-seed runs; the graph itself runs the Verilator coverage run and the mutation run)")
+    r.add_argument("--verif-profile", choices=["prototype", "standard", "thorough", "ip_release", "high_dependability", "low_latency"],
+                   help="brief 194: the verification profile, a preset of per-method switches (docs/assurance.md). Not --profile, which is the "
+                        "model routing of brief 05f. Default: standard (today's behaviour); with --interview on or oracle and no profile given, "
+                        "the interview proposes one")
+    r.add_argument("--settings", type=Path, metavar="FILE",
+                   help="brief 194: a proposed_settings.yaml (agent propose <folder>). Each setting becomes a question of the spec interview, whose default "
+                        "is the proposed value and whose reason names its source; the run cannot leave the interview with an unconfirmed setting. An "
+                        "explicit --board or --verif-profile becomes the proposed value")
+    r.add_argument("--set", dest="verif_set", action="append", default=[], metavar="SWITCH=VALUE",
+                   help="brief 194: override one switch of the profile, e.g. --set seeds=5 --set timing_sim=on (repeatable); --verif-level and "
+                        "--spec-tests are overrides of their switches and are recorded as such")
     r.add_argument("--skill-routing", choices=["off", "router"], default="off",
                    help="brief 36: router = a skill shortlist before each stage, skill_index/skill_excerpt, ranked load_skill")
     r.add_argument("--router-model", help="brief 36: OpenRouter model of the router's section classifier (default: rules only)")
@@ -536,6 +645,12 @@ def build_parser() -> argparse.ArgumentParser:
     for act in sub._name_parser_map["resume"]._actions:
         if act.dest in ("replies", "reply", "replay", "record", "deterministic", "tape", "record_tape", "replay_tape"):
             rvp._add_action(act)
+    pp = sub.add_parser("propose", help="brief 194: read an input folder and write proposed_settings.yaml (board, part, clocks, I/O standards, PHYs, interfaces, "
+                                        "profile), each value with its source. It is the interview's input (agent run --settings FILE); nothing is confirmed here")
+    pp.add_argument("folder", type=Path)
+    pp.add_argument("--board", help="a catalogue board to use when the folder does not name one")
+    pp.add_argument("--out", type=Path, help="default: <folder>/proposed_settings.yaml")
+    
     dc = sub.add_parser("document", help="brief 68 C: the DOC step on a finished run directory")
     dc.add_argument("run_dir", type=Path)
     dc.add_argument("--board", default="nexys_a7_100t", type=board_name)
@@ -559,6 +674,20 @@ def build_parser() -> argparse.ArgumentParser:
     md.add_argument("--allow-fable", action="store_true")
     md.add_argument("--json", action="store_true", help="show: the resolved table as JSON (the run-record form)")
     md.add_argument("--probe", action="store_true", help="check: also make one minimal call per endpoint in use (spends tokens)")
+    st = sub.add_parser("status", help="brief 182: a run's status in plain words (no model call); --console for the live console")
+    st.add_argument("run_dir", type=Path)
+    st.add_argument("--follow", action="store_true", help="print the status again whenever it changes, until the run ends")
+    st.add_argument("--console", action="store_true", help="list the console steps and show the tail of one (--step ID, default the running or latest)")
+    st.add_argument("--step")
+    st.add_argument("--json", action="store_true")
+    ak = sub.add_parser("ask", help="brief 182: ask a read-only model a question about a run, answered from that run's records only (logged in qa.jsonl)")
+    ak.add_argument("run_dir", type=Path)
+    ak.add_argument("question")
+    rq_ = sub.add_parser("request", help="brief 182: queue a mid-run request, applied at the run's next safe point (a stage boundary)")
+    rq_.add_argument("run_dir", type=Path)
+    g_ = rq_.add_mutually_exclusive_group(required=True)
+    g_.add_argument("--control", nargs="+", metavar=("ACTION", "N"), help="pause | abort | stop-after N")
+    g_.add_argument("--design", help="free text: a change for the design, e.g. 'use block RAM for the FIFO' (refused for a scored run)")
     from agent.graph.latency_loop import add_parser as _latency_parser    # brief 97
     _latency_parser(sub)
     from flow.options.cli import add_parser as _improve_parser           # brief 104
@@ -574,6 +703,8 @@ def _run_main(a, args: list[str], ap: argparse.ArgumentParser) -> int:
     """Everything after the access gate (or after an exemption): the parsed command line ``a`` runs."""
     from agent.graph.role_models import parse_roles
     from agent.graph.run import Config, build_graph, checkpointer_for, new_runtime
+    if a.cmd in ("status", "ask", "request"):
+        return live_cmd(a)
     if a.cmd == "models":
         return models_cmd(a, args)
     if a.cmd == "latency":
@@ -582,6 +713,15 @@ def _run_main(a, args: list[str], ap: argparse.ArgumentParser) -> int:
     if a.cmd == "improve":
         from flow.options.cli import improve_cmd
         return improve_cmd(a, main)
+    if a.cmd == "propose":
+        from agent.graph import settings as _st
+        try:
+            out = _st.propose(a.folder, a.board)
+        except _st.SettingsError as e:
+            ap.error(str(e))
+        dest = _st.write(a.folder, out, a.out)
+        print(f"wrote {dest}: " + ", ".join(f"{k}={e['status']}" for k, e in out["settings"].items()))
+        return 0
     if a.cmd == "review":
         return review_cmd(a)
     if a.cmd == "document":
@@ -597,12 +737,30 @@ def _run_main(a, args: list[str], ap: argparse.ArgumentParser) -> int:
         if a.interview == "oracle" and not a.hidden_spec:
             ap.error("--interview oracle needs --hidden-spec")
         name = a.name or a.spec.resolve().parent.name
-        cfg = Config(spec_md=a.spec, name=name, board=a.board, interview=a.interview, review=a.review,
+        from agent.graph import profiles as _prof
+        settings_doc = None
+        if a.settings:                                        # brief 194: the proposals are the interview's input
+            from agent.graph import settings as _st
+            try:
+                settings_doc = _st.apply_flags(_st.load_proposals(a.settings), a.board if any(x.startswith("--board") for x in args) else None, a.verif_profile)
+            except (_st.SettingsError, OSError) as e:
+                ap.error(str(e))
+            sb = settings_doc["settings"]["board"]["value"]
+            if sb and not any(x.startswith("--board") for x in args):
+                a.board = sb
+        try:                                                  # brief 194: a bad profile or switch fails before anything runs
+            vp = _prof.from_cli(a.verif_profile, a.verif_set, a.verif_level if any(x.startswith("--verif-level") for x in args) else None, a.spec_tests)
+        except _prof.ProfileError as e:
+            ap.error(str(e))
+        cfg = Config(spec_md=a.spec, name=name, board=a.board, interview=a.interview, review=a.review, requirements=a.requirements or "",
+                     verif_profile=vp["profile"], verif_sets={k: v["value"] for k, v in vp["overrides"].items()},
+                     verif_ask=a.verif_profile is None and a.interview in ("on", "oracle"), settings_file=a.settings,
+                     settings_flags=({k: v for k, v in (('board', a.board if any(x.startswith('--board') for x in args) else None), ('profile', a.verif_profile)) if v} or None),
                      model=a.model, hidden_spec=a.hidden_spec, stop_after=a.stop_after,
                      harness=a.harness, cc_model=a.cc_model, cc_effort=a.cc_effort,
-                     verif_level=a.verif_level, profile=a.profile, roles=parse_roles(a.roles),
+                     verif_level=vp['cfg']['verif_level'], profile=a.profile, roles=parse_roles(a.roles),
                      no_shell=a.no_shell or task_no_shell(a.hidden_spec), data_dir=a.data_dir or task_data_dir(a.spec),
-                     oracle=a.oracle, oracle_cc_model=a.oracle_cc_model, spec_tests=a.spec_tests,
+                     oracle=a.oracle, oracle_cc_model=a.oracle_cc_model, spec_tests=vp['cfg']['spec_tests'],
                      spectest_model=a.spectest_model, spectest_max_loops=a.spectest_max_loops,
                      skill_routing=a.skill_routing, router_model=a.router_model, router_k=a.router_k,
                      harness_arms=a.harness_arm, hdl=a.hdl,
@@ -619,9 +777,9 @@ def _run_main(a, args: list[str], ap: argparse.ArgumentParser) -> int:
             print(f"deterministic: {e}", file=sys.stderr)
             return 2
         graph = build_graph(checkpointer_for(rt.run_dir), routing=cfg.skill_routing != "off")
-        _drive(graph, rt, {"configurable": {"thread_id": rt.run_id}},
-               {"run_id": rt.run_id, "stage": 0, "visits": {}, "history": []}, replies)
-        return 0
+        s = _drive(graph, rt, {"configurable": {"thread_id": rt.run_id}},
+                   {"run_id": rt.run_id, "stage": 0, "visits": {}, "history": []}, replies)
+        return exit_status(s)
     # resume
     run_dir = ROOT / "runs" / a.run_id
     c = json.loads((run_dir / "config.json").read_text())
@@ -678,8 +836,7 @@ def _run_main(a, args: list[str], ap: argparse.ArgumentParser) -> int:
             return 2
         lg = graph.update_state(target.config, {"stage": a.rewind, "fails": [], "stop": None}, as_node="advance")
         first = None
-    _drive(graph, rt, lg, first, replies)
-    return 0
+    return exit_status(_drive(graph, rt, lg, first, replies))
 
 
 def main(argv: list[str] | None = None) -> int:

@@ -1,0 +1,456 @@
+# Brief 68 handover: the facts behind README.md and AGENT.md (docs/documentation_standard.md).
+# Measurement values and every sha256 are filled from the records by `python -m flow.handover fill`;
+# do not type them. Render with `python -m flow.handover write <this directory>`.
+schema: fda-handover/1
+id: p1_clkmeter
+title: P1 clock frequency meter (25 MHz C3 clock against the 156.25 MHz SFP+ reference)
+kind: agent-run
+produced_by: agent
+summary: The design measures the 25 MHz C3 clock against the 156.25 MHz MGTREFCLK0 reference on the KR260. A host starts
+  a gate of a programmed number of reference cycles through a JTAG register port (jtag_bus), the design counts C3 edges
+  inside the gate, and it reports COUNT and GATE_ACTUAL so the host can compute the frequency. Two LEDs show the two clocks.
+  The run reached verification level V2 of V3 and stopped at the constraints stage, where design.xdc:13 failed in Vivado.
+  No synthesis, implementation or bitstream result exists, and the specification and architecture were approved automatically
+  with no human review.
+scope_not:
+- Not a transceiver design. No GT channel is instantiated, and the reference clock only goes through IBUFDS_GTE4 and BUFG_GT.
+- Not a general frequency counter. It has one fixed input (the C3 clock) and one fixed ruler (the SFP+ reference).
+- Not built, routed or tested on hardware in this run.
+target:
+  part: xck26-sfvc784-2LV-c
+  board: kr260
+  tool: Vivado 2026.1
+  top: freq_meter_top
+clocks:
+- name: clk_c3_in
+  mhz: 25.0
+  source: runs/20261125-064524-4d2a/p1_clkmeter/design.xdc
+- name: mgtrefclk0_p
+  mhz: 156.25
+  source: runs/20261125-064524-4d2a/p1_clkmeter/design.xdc
+resets:
+- name: rst
+  active: high
+  note: Internal and synchronous to clk_c3. An 8-bit power-up shift register in freq_meter_top.sv holds it for 8 clk_c3
+    cycles, and there is no reset pin. It is passed through xpm_cdc_async_rst into clk_ref.
+interfaces:
+- name: clk_c3_in
+  type: input clock, 25 MHz, pin C3, LVCMOS18
+  note: Buffered by BUFG. Drives jtag_bus, the register file, the edge counter and LED0.
+- name: mgtrefclk0_p / mgtrefclk0_n
+  type: input differential clock, 156.25 MHz, SFP+ MGTREFCLK0
+  note: Goes through IBUFDS_GTE4 (ODIV2) and BUFG_GT to give clk_ref. design.xdc constrains only mgtrefclk0_p, with a 6.40
+    ns period.
+- name: led
+  type: output, 2 bits, LVCMOS18
+  note: led[0] is on pin F8 and is driven from clk_c3. led[1] is on pin E8 and is driven from clk_ref. Both are 0 while
+    CTRL.LED_EN is 0.
+- name: sfp_tx_disable
+  type: output, 1 bit, pin Y10, LVCMOS33
+  note: Constant 1 (laser off).
+- name: h_we, h_re, h_addr, h_wdata, h_rdata
+  type: spec-declared register-port names, top-level ports
+  note: In the spec these are internal. The RTL exposes them as top-level ports that are unused, except that h_rdata mirrors
+    the internal jtag_bus read data. They have no pins in design.xdc, which gives them input and output delays only.
+registers:
+- offset: 0
+  name: ID
+  access: RO
+  reset: 546373633
+  bits: '[31:0] design ID'
+- offset: 4
+  name: BUILD
+  access: RO
+  reset: 0
+  bits: '[31:0] USR_ACCESSE2 word'
+- offset: 8
+  name: SCRATCH
+  access: RW
+  reset: 0
+  bits: '[31:0] read back what was written'
+- offset: 16
+  name: GATE_LEN
+  access: RW
+  reset: 156250000
+  bits: '[31:0] gate length in clk_ref cycles'
+- offset: 20
+  name: CTRL
+  access: RW
+  reset: 0
+  bits: '[0] START self-clearing, ignored while busy; [1] LED_EN'
+- offset: 24
+  name: STATUS
+  access: RO
+  reset: 0
+  bits: '[0] BUSY; [1] DONE'
+- offset: 28
+  name: COUNT
+  access: RO
+  reset: 0
+  bits: '[31:0] clk_c3 rising edges in last gate'
+- offset: 32
+  name: GATE_ACTUAL
+  access: RO
+  reset: 0
+  bits: '[31:0] clk_ref cycles in last gate'
+- offset: 36
+  name: MEAS_DONE
+  access: RO
+  reset: 0
+  bits: '[31:0] completed measurements'
+parameters:
+- name: DESIGN_ID
+  value: 546373633
+  legal: any 32-bit value; 546373633 is 0x20910001
+  note: Read back in the ID register.
+- name: GATE_DEFAULT_CYCLES
+  value: 156250000
+  legal: 1 up to the largest 32-bit value; values below GATE_MIN_CYCLES are clamped at START
+  note: Reset value of GATE_LEN. The spec gives 156,250,000 clk_ref cycles = 1 s.
+- name: GATE_MIN_CYCLES
+  value: 1000
+  legal: 1 up to the largest 32-bit value
+  note: 'Minimum gate, 1,000 clk_ref cycles = 6.4 us per the spec. A shorter GATE_LEN is clamped at START, while GATE_LEN
+    reads back as written. Spec timing: 156,250,000 clk_ref cycles = 1 s'
+- name: LED_C3_HALF_PERIOD_CYCLES
+  value: 12500000
+  legal: 1 or more
+  note: led[0] half period in clk_c3 cycles. The benches ran it at 24, so the spec's value was not simulated.
+- name: LED_REF_HALF_PERIOD_CYCLES
+  value: 78125000
+  legal: 1 or more
+  note: led[1] half period in clk_ref cycles. The benches ran it at 125, so the spec's value was not simulated.
+- name: REG_WIDTH
+  value: 32
+  legal: 32 only; the RTL hard-codes 32-bit registers and has no such parameter
+  note: Register width, taken from the spec.
+- name: COUNT_WIDTH
+  value: 32
+  legal: 32 only; the RTL hard-codes a 32-bit counter and has no such parameter
+  note: Width of the edge counter, taken from the spec.
+files:
+- path: runs/20261125-064524-4d2a/p1_clkmeter/spec.md
+  what: the request the run started from
+  sha256: 3e94deaa84caf603d6e5816428f85f939fc8539aca3954e5e6094fc571d062b0
+- path: runs/20261125-064524-4d2a/p1_clkmeter/spec.yaml
+  what: the specification the Clarifier wrote, approved automatically with no human review
+  sha256: b6f445b642c65f75bc8713371885e7e8e0160acf50ee7acfa5fe87fb57c924d8
+- path: runs/20261125-064524-4d2a/p1_clkmeter/ARCHITECTURE.md
+  what: the architecture note, accepted automatically before any RTL (no human review)
+  sha256: 6123854b68860fe541f72f48a2aae66cbffe6e1bbf65f6368d70ba59c41f5dc7
+- path: runs/20261125-064524-4d2a/p1_clkmeter/architecture.yaml
+  what: 'the machine-checked architecture: blocks, clocks, predicted resources'
+  sha256: d5bdf6922540ab028d98acbd7e64a2052dd2897293b389484538f9b60c41e762
+- path: runs/20261125-064524-4d2a/p1_clkmeter/rtl/freq_meter_core.sv
+  what: RTL written by the Designer
+  sha256: c3701c333acc4580287f670dfb622508d57c9e3a0b0349def582ac8ceed20eb8
+- path: runs/20261125-064524-4d2a/p1_clkmeter/rtl/freq_meter_top.sv
+  what: RTL written by the Designer
+  sha256: 9a9d74e1347fc5a822a997d51ad144be87404b1f1a5e1bdd0f51b735563bf074
+- path: runs/20261125-064524-4d2a/p1_clkmeter/rtl/lint_waive.vlt
+  what: RTL written by the Designer
+  sha256: 46785b145e4a88fd167fa78835334a196f05460dfab5868a9e239b29d3dadd2d
+- path: runs/20261125-064524-4d2a/p1_clkmeter/rtl/xilinx_sim_stubs.sv
+  what: RTL written by the Designer
+  sha256: 17eb064cb7e7b39df5872bd97fb48bd49c305e50afff959debb0157c15d7c883
+- path: runs/20261125-064524-4d2a/p1_clkmeter/design.xdc
+  what: pin, I/O standard and timing constraints
+  sha256: d82081240c63cc2ffc616c1d548b3f72a959136aea82520bc2e1859d592c9bfd
+- path: runs/20261125-064524-4d2a/p1_clkmeter/build.yaml
+  what: the build description read by the flow
+  sha256: 17e7ce4ccf452fd4029bd33b4d9a5b80d42972e072e5e90c02636c1b309ae5eb
+- path: runs/20261125-064524-4d2a/p1_clkmeter/model.py
+  what: the Modeller's reference model of the visible behaviour
+  sha256: bce4f22f0eb53e336c54e09ab704bdee2b48b94a0be1da98cc2d4f1edaf257b5
+- path: runs/20261125-064524-4d2a/p1_clkmeter/tests/bench_p1_clkmeter.py
+  what: the Verifier's cocotb benches and pytest entries
+  sha256: 57f7728b183d064fed9413bdceb71dbf6a49b1bd940f58a9d5e905feba564f47
+- path: runs/20261125-064524-4d2a/p1_clkmeter/tests/test_p1_clkmeter_rtl.py
+  what: the Verifier's cocotb benches and pytest entries
+  sha256: 52fe13d4c6111d9e839191ff0e436d1049dc561c8c2ef20ed3ad5688617ec252
+- path: runs/20261125-064524-4d2a/p1_clkmeter/verif/testplan.yaml
+  what: the test plan and mutant list read by the verification gates
+  sha256: adfdefdc1aba1c6f984f07893c046738aac20875b224653a0c3857c4efa7a2fa
+- path: runs/20261125-064524-4d2a/p1_clkmeter/verif/checkers/v_macros.svh
+  what: bound assertion and cover checkers
+  sha256: 013c1a5444e3dbd0eb2df54529d09272d8bf601d42ec066d54cadb9589d51083
+- path: runs/20261125-064524-4d2a/p1_clkmeter/build/review/03_constraints.html
+  what: 'the review page of stage constraints: its exit gates and their failures at the last visit'
+  sha256: 0a5ffd212eb64475bcdb771e9d7984ccd4017ce99e2410e1f67d4c626c9a15e0
+commands:
+- what: what changed since this handover (stale records, changed files, tool and knowledge-bank pins)
+  cmd: python -m flow.handover fresh runs/20261125-064524-4d2a/p1_clkmeter
+  heavy: false
+  minutes: null
+- what: pick the work up again from the earliest stage the change or the staleness needs
+  cmd: python -m agent resume runs/20261125-064524-4d2a/p1_clkmeter "<change request>"
+  heavy: true
+  minutes: null
+  needs: a model (see docs/agent.md); Vivado for any stage from synthesis on
+- what: run the Verifier's simulation tests
+  cmd: python -m pytest -q runs/20261125-064524-4d2a/p1_clkmeter/tests/test_p1_clkmeter_rtl.py
+  heavy: false
+  minutes: null
+  needs: Icarus Verilog and cocotb, or the simulation container
+- what: re-run the Verilator coverage simulation and the verification gates (line, toggle, functional and cover results)
+  cmd: SIM=verilator FDA_COVERAGE=1 FDA_SIM_RESULTS_DIR=runs/20261125-064524-4d2a/p1_clkmeter/build/verif/sim python -m
+    pytest -q -x runs/20261125-064524-4d2a/p1_clkmeter/tests/test_p1_clkmeter_rtl.py && python3 flow/verif_gates.py runs/20261125-064524-4d2a/p1_clkmeter
+    --runs runs/20261125-064524-4d2a/p1_clkmeter/build/verif/sim
+  heavy: false
+  minutes: null
+  needs: Verilator 5.036 or later and cocotb (the simulation container has them)
+- what: rebuild the bitstream with the flow
+  cmd: flow/run_vivado.sh runs/20261125-064524-4d2a/p1_clkmeter base
+  heavy: true
+  minutes: 2.1
+  needs: Vivado 2026.1 and a heavy slot; peak memory 3349 MiB (anonymous, the systemd scope)
+evidence:
+- id: E1
+  activity: review
+  result: partial
+  what: the specification and the architecture were approved automatically, with no human review (review off; the interview
+    oracle claude-sonnet-5-5 only answered the interview questions); the interview asked 6 questions, 0 answered and 6 defaulted
+  record: runs/20261125-064524-4d2a/summary.json
+  sha256: 028bc0ebcf6734d63fcb174f01acd334a63a6bc2bb492599c94a1724a6ce8320
+- id: E2
+  activity: simulation
+  result: partial
+  what: 'verification (flow/verif_gates.py) against the Modeller''s reference model reached V2 of V3; the run asked for
+    V2; V2 means simulation: seeded runs, a constrained-random test, bound assertions and formal tasks; V3 (coverage (line,
+    toggle, functional bins, cover properties), three seeds and the mutation score) did not pass: functional bins pct 0.0
+    (0/0) (needs 100); cover properties pct 0.0 (needs 100); line pct not measured (needs 90); toggle pct not measured (needs
+    75); mutation score pct not measured (needs 70); cdc structure clean missing (needs no unsafe crossing); cdc injection
+    clean missing (needs pass); no board result (V-HW) is recorded'
+  record: runs/20261125-064524-4d2a/p1_clkmeter/build/verif/verif_gates.json
+  sha256: c12c53cf434389c88d7fd4ac194e358efd78db83679ef76a729e0ecb2bd89768
+- id: E3
+  activity: build
+  result: fail
+  what: 'Vivado base build; flow stages that ran: rtl, post_synth'
+  record: runs/20261125-064524-4d2a/p1_clkmeter/build/base/gates.json
+  sha256: a2ba2986e6782c4eba8548b36c84a21aa10e5d82f981f501b5b69940fc51f79d
+measurements:
+- id: M1
+  what: simulation seeds run
+  category: verification
+  unit: ''
+  record: runs/20261125-064524-4d2a/p1_clkmeter/build/verif/verif_gates.json
+  field: stages.V3.checks.seeds_run.value
+  conditions: Verilator coverage simulation of the RTL against the Modeller's model, every seed the bench ran
+  value: 3
+  sha256: c12c53cf434389c88d7fd4ac194e358efd78db83679ef76a729e0ecb2bd89768
+- id: M2
+  what: line coverage
+  category: verification
+  unit: '%'
+  record: runs/20261125-064524-4d2a/p1_clkmeter/build/verif/verif_gates.json
+  field: stages.V3.checks.line_pct.value
+  conditions: Verilator coverage simulation of the RTL against the Modeller's model, every seed the bench ran
+  value: not measured
+  sha256: c12c53cf434389c88d7fd4ac194e358efd78db83679ef76a729e0ecb2bd89768
+- id: M3
+  what: toggle coverage
+  category: verification
+  unit: '%'
+  record: runs/20261125-064524-4d2a/p1_clkmeter/build/verif/verif_gates.json
+  field: stages.V3.checks.toggle_pct.value
+  conditions: Verilator coverage simulation of the RTL against the Modeller's model, every seed the bench ran
+  value: not measured
+  sha256: c12c53cf434389c88d7fd4ac194e358efd78db83679ef76a729e0ecb2bd89768
+- id: M4
+  what: functional coverage bins hit
+  category: verification
+  unit: ''
+  record: runs/20261125-064524-4d2a/p1_clkmeter/build/verif/verif_gates.json
+  field: stages.V3.checks.functional_bins_pct.value
+  conditions: Verilator coverage simulation of the RTL against the Modeller's model, every seed the bench ran
+  value: 0.0 (0/0)
+  sha256: c12c53cf434389c88d7fd4ac194e358efd78db83679ef76a729e0ecb2bd89768
+- id: M5
+  what: cover properties hit
+  category: verification
+  unit: '%'
+  record: runs/20261125-064524-4d2a/p1_clkmeter/build/verif/verif_gates.json
+  field: stages.V3.checks.cover_properties_pct.value
+  conditions: Verilator coverage simulation of the RTL against the Modeller's model, every seed the bench ran
+  value: '0.0'
+  sha256: c12c53cf434389c88d7fd4ac194e358efd78db83679ef76a729e0ecb2bd89768
+- id: M6
+  what: model cost of the run, provider-reported
+  category: cost
+  unit: USD
+  record: runs/20261125-064524-4d2a/summary.json
+  field: cost_usd
+  conditions: every role and the interview oracle, as the run summary records it
+  value: 5.283825
+  sha256: 028bc0ebcf6734d63fcb174f01acd334a63a6bc2bb492599c94a1724a6ce8320
+gaps:
+- about: REQ-01
+  text: 'REQ-01 has no passing evidence for every proof method: hardware (uart_tests) is pending: no bring-up result'
+- about: REQ-02
+  text: 'REQ-02 has no passing evidence for every proof method: hardware (uart_tests) is pending: no bring-up result'
+- about: REQ-03
+  text: 'REQ-03 has no passing evidence for every proof method: hardware (uart_tests) is pending: no bring-up result'
+- about: REQ-08
+  text: 'REQ-08 has no passing evidence for every proof method: hardware (uart_tests) is pending: no bring-up result'
+- about: REQ-13
+  text: 'REQ-13 has no passing evidence for every proof method: hardware (uart_tests) is pending: no bring-up result'
+- about: REQ-14
+  text: 'REQ-14 has no passing evidence for every proof method: hardware (uart_tests) is pending: no bring-up result'
+- about: REQ-15
+  text: 'REQ-15 has no passing evidence for every proof method: hardware (ila_captures) is pending: no bring-up result'
+- about: REQ-16
+  text: 'REQ-16 has no passing evidence for every proof method: hardware (ila_captures) is pending: no bring-up result'
+- about: REQ-17
+  text: 'REQ-17 has no passing evidence for every proof method: hardware (ila_captures) is pending: no bring-up result'
+- about: REQ-19
+  text: 'REQ-19 has no passing evidence for every proof method: hardware (uart_tests) is pending: no bring-up result'
+- about: REQ-20
+  text: 'REQ-20 has no passing evidence for every proof method: analysis (post_synth:post_synth_resources_in_range) is pending:
+    no flow gates result'
+- about: REQ-25
+  text: 'REQ-25 has no passing evidence for every proof method: analysis (post_synth:post_synth_resources_in_range) is pending:
+    no flow gates result'
+- about: REQ-26
+  text: 'REQ-26 has no passing evidence for every proof method: analysis (post_route:setup) is pending: no flow gates result'
+- about: E1
+  text: 'review evidence is partial: the specification and the architecture were approved automatically, with no human review
+    (review off; the interview oracle claude-sonnet-5-5 only answered the interview questions); the interview asked 6 questions,
+    0 answered and 6 defaulted'
+- about: E2
+  text: 'simulation evidence is partial: verification reached V2 of V3 (the run asked for V2); the checks that did not pass
+    or did not run are listed in the evidence row'
+- about: E3
+  text: 'build evidence is fail: Vivado base build; flow stages that ran: rtl, post_synth'
+- about: constraints
+  text: 'stage constraints did not pass its gates in this run; at its last visit: post_synth:post_synth_methodology_no_critical
+    FAIL post_synth:post_synth_exceptions_clean (EXC-XDC-MSG design.xdc:13 set_property LOC IBUFDS_GTE4_X1Y6 [get_cells
+    { u_ibufds_gt }] Command failed: ''IBUFDS_GTE4_X1Y6'' is not a valid site name.) FAIL'
+- about: synthesis
+  text: 'stage synthesis was not run: the run stopped before this stage (stage 3 visited more than 4 times; last failing
+    gate: post_synth:post_synth_methodology_no_critical, post_synth:post_synth_exceptions_clean (EXC-XDC-MSG design.xdc:13
+    set_property LOC IBUFDS_)'
+- about: implementation
+  text: 'stage implementation was not run: the run stopped before this stage (stage 3 visited more than 4 times; last failing
+    gate: post_synth:post_synth_methodology_no_critical, post_synth:post_synth_exceptions_clean (EXC-XDC-MSG design.xdc:13
+    set_property LOC IBUFDS_)'
+- about: timing-closure
+  text: 'stage timing-closure was not run: the run stopped before this stage (stage 3 visited more than 4 times; last failing
+    gate: post_synth:post_synth_methodology_no_critical, post_synth:post_synth_exceptions_clean (EXC-XDC-MSG design.xdc:13
+    set_property LOC IBUFDS_)'
+- about: power-closure
+  text: 'stage power-closure was not run: the run stopped before this stage (stage 3 visited more than 4 times; last failing
+    gate: post_synth:post_synth_methodology_no_critical, post_synth:post_synth_exceptions_clean (EXC-XDC-MSG design.xdc:13
+    set_property LOC IBUFDS_)'
+- about: drc-closure
+  text: 'stage drc-closure was not run: the run stopped before this stage (stage 3 visited more than 4 times; last failing
+    gate: post_synth:post_synth_methodology_no_critical, post_synth:post_synth_exceptions_clean (EXC-XDC-MSG design.xdc:13
+    set_property LOC IBUFDS_)'
+- about: configuration-and-debug
+  text: 'stage configuration-and-debug was not run: the run stopped before this stage (stage 3 visited more than 4 times;
+    last failing gate: post_synth:post_synth_methodology_no_critical, post_synth:post_synth_exceptions_clean (EXC-XDC-MSG
+    design.xdc:13 set_property LOC IBUFDS_)'
+- about: formal
+  text: 'formal checks were planned for REQ-06, REQ-10, REQ-11, REQ-27, REQ-19, REQ-21, REQ-29, REQ-22, REQ-23 and did not
+    run; each was replaced by a simulation check (verif/testplan.yaml replan). Reason recorded: SymbiYosys is not installed
+    here so START-while-BUSY is checked by directed simulation against the model.'
+- about: simulated_parameters
+  text: 'the benches simulate at values other than the spec''s (scaled for simulation speed or otherwise): LED_C3_HALF_PERIOD_CYCLES
+    is simulated at 24 (runs/20261125-064524-4d2a/p1_clkmeter/tests/test_p1_clkmeter_rtl.py:14) while spec.yaml gives 12500000;
+    LED_REF_HALF_PERIOD_CYCLES is simulated at 125 (runs/20261125-064524-4d2a/p1_clkmeter/tests/test_p1_clkmeter_rtl.py:14)
+    while spec.yaml gives 78125000. Behaviour that depends on the spec''s value, such as a divider''s timing against the
+    clock, was not simulated at that value; it is stated here, not shown, unless another record covers it'
+- about: resources
+  text: 'resources not measured: no current Vivado build of this design has been recorded'
+- about: timing
+  text: 'timing not measured: no current Vivado build of this design has been recorded'
+- about: power
+  text: 'power not measured: no current Vivado build of this design has been recorded'
+- about: latency
+  text: 'latency not measured: the run measured no latency; the spec''s latency promise is checked only by the benches'
+- about: throughput
+  text: 'throughput not measured: the run measured no throughput'
+- about: xdc_site
+  text: design.xdc:13 places u_ibufds_gt on IBUFDS_GTE4_X1Y6, and Vivado rejected it as not a valid site name. The file's
+    own comment says REFCLK0 is site X1Y0, so the comment and the LOC disagree. This is the blocker for the constraints
+    stage.
+- about: cover_vs_bins
+  text: Functional bins are reported 0 of 0 and cover properties 0 percent. The cover and functional results are not usable
+    as evidence yet, and the two must be compared before new stimulus is written.
+- about: read_latency
+  text: The spec promises h_rdata within 2 clocks of h_re. The RTL (freq_meter_core.sv) registers h_rdata on the clock after
+    h_re, which is 1 clk_c3 cycle. The benches check it, and no run measured it.
+- about: result_snapshot
+  text: COUNT, GATE_ACTUAL and MEAS_DONE read through a snapshot (count_h, actual_h, meas_h) that is refreshed only when
+    STATUS is read while BUSY is 0. A host must read STATUS before reading the results. A read of COUNT without a prior
+    STATUS read can return the older values. The spec does not describe this.
+- about: ctrl_readback
+  text: CTRL reads back only LED_EN in bit 1, and bit 0 always reads 0. Any write to CTRL sets LED_EN from h_wdata[1], so
+    a START write with bit 1 clear turns the LEDs off.
+- about: start_clamp
+  text: GATE_LEN below 1000 is clamped to 1000 at START (a default answer from the interview, implemented in freq_meter_core.sv).
+    GATE_LEN writes while BUSY are stored but do not affect the running gate.
+- about: unmapped_access
+  text: Unmapped addresses, including 0x00C, read 0. Writes to RO or unmapped addresses are ignored because the write decode
+    matches only 0x008, 0x010 and 0x014.
+- about: reset_values
+  text: After reset COUNT, GATE_ACTUAL, MEAS_DONE, STATUS, SCRATCH and CTRL read 0, and GATE_LEN reads 156250000. START
+    does not clear COUNT or GATE_ACTUAL, and MEAS_DONE clears only at reset.
+- about: reset_style
+  text: The spec says the reset is synchronous. The RTL uses a synchronous reset in clk_c3 and a CDC-synchronised reset
+    in clk_ref, as the spec says. The power-up shift register relies on an initial value (8'hFF) rather than a pin.
+- about: top_ports
+  text: Spec.yaml lists h_* as internal, but freq_meter_top.sv declares them as top-level ports, and design.xdc gives them
+    no pin. Whether they should stay as ports is undecided.
+- about: xdc_cdc
+  text: design.xdc has no clock-group exception between sys_clk_pin and clk_ref_pin, so the spec's asynchronous constraint
+    (REQ-26) relies on the XPM scoped max delays. ARCHITECTURE.md says set_clock_groups -asynchronous is used. The XDC disagrees
+    with it.
+next_steps:
+- Fix design.xdc:13 first. Determine the valid IBUFDS_GTE4 site for the SFP+ MGTREFCLK0 on the xck26 and correct the LOC,
+  or remove it and let the placer choose it. Then re-run the constraints stage with python -m agent resume.
+- Compare the cover results with the functional coverage before any new stimulus; find out why the bins show 0 of 0.
+- Once the build passes, run synthesis, implementation and timing closure, then measure resources, timing and power.
+- Reach V3, which needs line, toggle and functional coverage, three seeds and the mutation score, plus CDC checks.
+- Run the hardware bring-up for the pending hardware requirements, and measure five 1 s readings for REQ-13 and REQ-14.
+- Add a bench that runs the LED dividers at the spec's half periods, or record why that is not needed.
+open_questions:
+- Which IBUFDS_GTE4 site is correct for the SFP+ MGTREFCLK0 on this board?
+- Should the h_* names stay as unused top-level ports, or be removed from freq_meter_top?
+- Should the result registers read live values instead of the STATUS-gated snapshot?
+history:
+- date: '2026-11-25'
+  brief: agent run
+  note: 'produced by the agent graph; stages that passed: clarify, board-and-device-planning, rtl-design-creation'
+agent_run:
+  run_id: 20261125-064524-4d2a
+  record: runs/20261125-064524-4d2a/summary.json
+  model: claude-sonnet-5-5
+  harness: deepagents
+  stop: 'stage 3 visited more than 4 times; last failing gate: post_synth:post_synth_methodology_no_critical, post_synth:post_synth_exceptions_clean
+    (EXC-XDC-MSG design.xdc:13 set_property LOC IBUFDS_'
+  loops: 8
+  turns: 217
+  tokens: 9312752
+  wall_s: 3491.5
+  cost_usd: 5.283825
+numbers_allow:
+- token: '14'
+  reason: line number of a file the flow cites in a gap or open question it wrote
+state:
+  stage: simulated
+  gates:
+    clarify: pass
+    board-and-device-planning: pass
+    rtl-design-creation: pass
+    constraints: fail
+    synthesis: not-run
+    implementation: not-run
+    timing-closure: not-run
+    power-closure: not-run
+    drc-closure: not-run
+    configuration-and-debug: not-run
+  vivado: '2026.1'
+  kb_pin: 5e2eab8
+  build_id: 769e8681
+  evidence_vivado: current
