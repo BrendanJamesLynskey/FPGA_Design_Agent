@@ -107,4 +107,4 @@ may come from the memory side and not the core. The AXI DMA was not run (no simu
 
 ## Cost
 
-Out-of-context Vivado 2026.1 on `xck26-sfvc784-2LV-c` (KR260) and `xc7z020clg484-1`: `results/241_dma/ooc.json` (see the README for the table).
+Out-of-context Vivado 2026.1 on `xck26-sfvc784-2LV-c` (KR260) and `xc7z020clg484-1`, both directions at 32, 64 and 128 bits: `results/241_dma/ooc.json`; the table and the timing finding (the engine runs near 100 MHz on the Zynq-7000, and meets 4 ns on the K26) are in `results/241_dma/README.md`.

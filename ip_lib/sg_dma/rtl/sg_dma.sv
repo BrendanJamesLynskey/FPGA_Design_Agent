@@ -229,8 +229,6 @@ module sg_dma #(
         endcase
     endfunction
 
-    // completion of a descriptor (status write answered)
-    wire cmpl = (st == S_WB) && b_hs && (m_axi_bresp == 2'b00);
     wire [15:0] n_done = since_irq + 16'd1;
     wire fire = x_ioc || (n_done >= ((irq_thr == 16'd0) ? 16'd1 : irq_thr)) || (tail_next == head);
 

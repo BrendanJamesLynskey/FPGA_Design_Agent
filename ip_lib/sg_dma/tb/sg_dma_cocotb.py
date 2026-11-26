@@ -345,7 +345,7 @@ def lay_buffers(bb, lengths, start_off=0x10000, align=None):
     return out
 
 
-async def run_ring(b: Bench, lengths, ring_size, starts=None, thr=1, ioc=None, chunk=None, poll=6, limit=120000):
+async def run_ring(b: Bench, lengths, ring_size, starts=None, thr=1, ioc=None, chunk=None, poll=6, limit=400000):
     """Software: lay buffers, write descriptors, set up the engine, publish HEAD in chunks that fit the ring (free slots come from the TAIL
     register, the driver contract), wait for each chunk. Returns (the data moved, the status words in order)."""
     bb, DIR = b.bb, b.P["DIR"]

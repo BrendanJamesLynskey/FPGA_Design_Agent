@@ -3,7 +3,7 @@ name: sg_dma
 version: 0.1.0
 status: simulated at ten (direction, width, burst, outstanding) points against a memory model with back pressure, SLVERR and DECERR windows and an
   AXI rule monitor (cocotb, Icarus Verilog 14); the AXI hold rules, the 4 KB rule, burst size and alignment proved by k-induction at 32, 64 and 128 bits
-  (SymbiYosys, slang), burst bookkeeping proved to depth 40; 22 of 22 seeded faults caught; out-of-context Vivado 2026.1 cost on xck26 and xc7z020;
+  (SymbiYosys, slang), burst bookkeeping proved to depth 40; 22 of 22 seeded faults caught; out-of-context Vivado 2026.1 cost on xck26 and xc7z020 (about 570-640 LUTs, 285 MHz and more on the K26, near 100 MHz on the Zynq-7000);
   not run on a board
 summary: 'scatter-gather DMA engine between an AXI4 memory-mapped master and one AXI4-Stream port: a ring of 16-byte descriptors in memory, an AXI4-Lite
   control port, INCR bursts that never cross a 4 KB boundary, several bursts in flight, status written back into the descriptor, interrupt coalescing.
@@ -211,14 +211,16 @@ evidence:
   faults: ip_lib/sg_dma/faults.yaml
   results: results/241_dma/faults.json
   simulator: Icarus Verilog 14 (OSS CAD Suite 2026-11-12), cocotb 2.0.1
-cost_table: 'results/241_dma/ooc.json (out-of-context Vivado 2026.1 on xck26 and xc7z020, default parameters and DATA_W 64 and 128)'
+cost_table: 'results/241_dma/ooc.json and char/ (out-of-context Vivado 2026.1 on xck26 and xc7z020, both directions at DATA_W 32, 64 and 128: about 570 to 640 LUTs, 440 to 500 flip-flops, no block RAM or DSP)'
 licence: MIT (this repository)
 gaps:
 - 'no descriptor prefetch: a descriptor costs a full fetch and status round trip, so descriptors below about a thousand bytes lose most of the port bandwidth (measured in DATASHEET.md)'
+- 'timing: the burst-length function sits in the path to the data-side counters, 14 logic levels, so the engine runs near 100 MHz on a Zynq-7000 (-1) and meets 4 ns on the K26 with margin; registering the burst length would shorten it (results/241_dma/README.md)'
 - 'no board run: the KR260 throughput and latency measurement is pre-registered (docs/241_dma_prereg.md) and has not been run'
 - 'the memory model is ours; no run against AMD interconnect or a PS port has been made, so back pressure and latency of the real Zynq HP and HPC ports are not covered'
 - 'S2MM does not end a descriptor on tlast, so a packet shorter than its buffer needs the software to know the length; a packet-oriented S2MM engine is a follow-up'
 next_steps:
+- Register the burst length once per burst to shorten the critical path, then re-run the proofs and the seeded faults.
 - Run the pre-registered KR260 measurement through the owner (docs/241_dma_prereg.md).
 - Add descriptor prefetch and compare the small-descriptor throughput with the measured baseline.
 - Add a tlast-terminated S2MM mode and a status word that reports the bytes received.

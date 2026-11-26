@@ -1,5 +1,5 @@
 {
- "caught": 20,
+ "caught": 22,
  "valid": 22,
  "faults": [
   {
@@ -8,8 +8,8 @@
    "class": "protocol",
    "why": "a burst is not cut at the 4 KB boundary",
    "status": "caught",
-   "seconds": 6.3,
-   "pytest": "1 failed in 5.31s"
+   "seconds": 5.9,
+   "pytest": "1 failed in 4.94s"
   },
   {
    "name": "arlen_off_by_one",
@@ -17,8 +17,8 @@
    "class": "protocol",
    "why": "the read burst length field is not beats minus one",
    "status": "caught",
-   "seconds": 6.2,
-   "pytest": "1 failed in 4.71s"
+   "seconds": 4.2,
+   "pytest": "1 failed in 3.30s"
   },
   {
    "name": "tlast_every_burst",
@@ -26,8 +26,8 @@
    "class": "data-corruption",
    "why": "tlast on the last beat of every burst, not of every descriptor",
    "status": "caught",
-   "seconds": 17.0,
-   "pytest": "1 failed in 16.04s"
+   "seconds": 16.8,
+   "pytest": "1 failed in 15.85s"
   },
   {
    "name": "wlast_early",
@@ -35,8 +35,8 @@
    "class": "protocol",
    "why": "wlast one beat early",
    "status": "caught",
-   "seconds": 3.9,
-   "pytest": "1 failed in 2.98s"
+   "seconds": 4.1,
+   "pytest": "1 failed in 3.06s"
   },
   {
    "name": "status_address",
@@ -44,8 +44,8 @@
    "class": "data-corruption",
    "why": "the status word is written over the length word",
    "status": "caught",
-   "seconds": 20.9,
-   "pytest": "1 failed in 19.90s"
+   "seconds": 18.6,
+   "pytest": "1 failed in 17.62s"
   },
   {
    "name": "ring_wrap",
@@ -53,8 +53,8 @@
    "class": "data-corruption",
    "why": "the ring has one entry too many before it wraps",
    "status": "caught",
-   "seconds": 41.9,
-   "pytest": "1 failed in 40.75s"
+   "seconds": 39.7,
+   "pytest": "1 failed in 38.66s"
   },
   {
    "name": "slverr_read_ignored",
@@ -62,8 +62,8 @@
    "class": "error-handling",
    "why": "SLVERR on a read beat is not reported, only DECERR",
    "status": "caught",
-   "seconds": 44.5,
-   "pytest": "1 failed in 43.45s"
+   "seconds": 37.7,
+   "pytest": "1 failed in 36.74s"
   },
   {
    "name": "slverr_write_ignored",
@@ -71,8 +71,8 @@
    "class": "error-handling",
    "why": "SLVERR on a write response is not reported, only DECERR",
    "status": "caught",
-   "seconds": 40.0,
-   "pytest": "1 failed in 38.72s"
+   "seconds": 37.3,
+   "pytest": "1 failed in 36.43s"
   },
   {
    "name": "rready_ignores_sink",
@@ -80,8 +80,8 @@
    "class": "data-loss",
    "why": "read data is accepted whether or not the stream sink is ready, so a beat is lost under back pressure",
    "status": "caught",
-   "seconds": 8.7,
-   "pytest": "1 failed in 7.59s"
+   "seconds": 7.7,
+   "pytest": "1 failed in 6.77s"
   },
   {
    "name": "outstanding_one_over",
@@ -89,26 +89,26 @@
    "class": "protocol",
    "why": "one more burst in flight than OUTSTANDING allows",
    "status": "caught",
-   "seconds": 16.3,
-   "pytest": "1 failed in 15.31s"
+   "seconds": 17.6,
+   "pytest": "1 failed in 16.47s"
   },
   {
    "name": "irq_threshold_off_by_one",
    "block": "sg_dma",
    "class": "interrupt",
    "why": "the interrupt fires one completion late",
-   "status": "SURVIVED",
-   "seconds": 38.0,
-   "pytest": "1 passed in 37.06s"
+   "status": "caught",
+   "seconds": 38.1,
+   "pytest": "1 failed in 37.17s"
   },
   {
    "name": "ioc_ignored",
    "block": "sg_dma",
    "class": "interrupt",
    "why": "the interrupt-on-completion flag of a descriptor does nothing",
-   "status": "SURVIVED",
+   "status": "caught",
    "seconds": 38.0,
-   "pytest": "1 passed in 37.07s"
+   "pytest": "1 failed in 36.92s"
   },
   {
    "name": "bad_reports_bytes",
@@ -116,8 +116,8 @@
    "class": "data-corruption",
    "why": "a descriptor that moved nothing reports its length as moved",
    "status": "caught",
-   "seconds": 37.4,
-   "pytest": "1 failed in 36.50s"
+   "seconds": 40.4,
+   "pytest": "1 failed in 39.46s"
   },
   {
    "name": "misaligned_address_accepted",
@@ -125,8 +125,8 @@
    "class": "protocol",
    "why": "a buffer address that is not beat aligned is accepted and issued",
    "status": "caught",
-   "seconds": 37.2,
-   "pytest": "1 failed in 36.34s"
+   "seconds": 38.8,
+   "pytest": "1 failed in 37.85s"
   },
   {
    "name": "status_fail_not_halting",
@@ -134,8 +134,8 @@
    "class": "error-handling",
    "why": "a failed status write does not halt the engine",
    "status": "caught",
-   "seconds": 39.0,
-   "pytest": "1 failed in 38.06s"
+   "seconds": 38.0,
+   "pytest": "1 failed in 37.02s"
   },
   {
    "name": "desc_fetch_not_drained",
@@ -143,8 +143,8 @@
    "class": "protocol",
    "why": "a failed descriptor fetch stops reading after the first bad beat, leaving the rest of the burst in the memory's read channel",
    "status": "caught",
-   "seconds": 37.5,
-   "pytest": "1 failed in 36.51s"
+   "seconds": 37.3,
+   "pytest": "1 failed in 36.41s"
   },
   {
    "name": "w_before_aw",
@@ -153,7 +153,7 @@
    "why": "stream data is written before any burst address has been issued",
    "status": "caught",
    "seconds": 3.8,
-   "pytest": "1 failed in 2.85s"
+   "pytest": "1 failed in 2.88s"
   },
   {
    "name": "status_w_before_aw",
@@ -161,8 +161,8 @@
    "class": "protocol",
    "why": "the status data is offered before its address has been accepted",
    "status": "caught",
-   "seconds": 7.4,
-   "pytest": "1 failed in 6.49s"
+   "seconds": 8.5,
+   "pytest": "1 failed in 7.56s"
   },
   {
    "name": "tail_not_advanced",
@@ -170,8 +170,8 @@
    "class": "data-loss",
    "why": "the consumer index never moves",
    "status": "caught",
-   "seconds": 334.9,
-   "pytest": "1 failed in 333.87s (0:05:33)"
+   "seconds": 369.5,
+   "pytest": "1 failed in 368.63s (0:06:08)"
   },
   {
    "name": "done_count_double",
@@ -179,8 +179,8 @@
    "class": "data-corruption",
    "why": "the completion counter counts two",
    "status": "caught",
-   "seconds": 40.3,
-   "pytest": "1 failed in 39.23s"
+   "seconds": 38.8,
+   "pytest": "1 failed in 37.84s"
   },
   {
    "name": "strobe_lane",
@@ -188,8 +188,8 @@
    "class": "data-corruption",
    "why": "the status write's byte strobes ignore which 32-bit lane of a wide beat holds the word",
    "status": "caught",
-   "seconds": 11.5,
-   "pytest": "1 failed in 10.46s"
+   "seconds": 12.6,
+   "pytest": "1 failed in 11.59s"
   },
   {
    "name": "ring_base_unaligned",
@@ -197,8 +197,8 @@
    "class": "protocol",
    "why": "a ring base that is not 16-byte aligned is taken as it is, so a descriptor fetch can cross a 4 KB boundary",
    "status": "caught",
-   "seconds": 40.2,
-   "pytest": "1 failed in 39.18s"
+   "seconds": 39.1,
+   "pytest": "1 failed in 38.08s"
   }
  ]
 }

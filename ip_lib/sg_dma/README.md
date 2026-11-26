@@ -4,7 +4,9 @@ scatter-gather DMA engine between an AXI4 memory-mapped master and one AXI4-Stre
 
 Generated from `ip.yaml` by `flow/net/ipdoc.py`; do not edit by hand.
 
-Status: simulated at ten (direction, width, burst, outstanding) points against a memory model with back pressure, SLVERR and DECERR windows and an AXI rule monitor (cocotb, Icarus Verilog 14); the AXI hold rules, the 4 KB rule, burst size and alignment proved by k-induction at 32, 64 and 128 bits (SymbiYosys, slang), burst bookkeeping proved to depth 40; 22 of 22 seeded faults caught; out-of-context Vivado 2026.1 cost on xck26 and xc7z020; not run on a board.
+**Verification: not assessed: no requirements recorded (no verif/testplan.yaml), so nothing here is traced to a requirement.** [VERIFIED.md](VERIFIED.md) is the generated, hash-pinned record; [what the label means](../../docs/verified.md).
+
+Status: simulated at ten (direction, width, burst, outstanding) points against a memory model with back pressure, SLVERR and DECERR windows and an AXI rule monitor (cocotb, Icarus Verilog 14); the AXI hold rules, the 4 KB rule, burst size and alignment proved by k-induction at 32, 64 and 128 bits (SymbiYosys, slang), burst bookkeeping proved to depth 40; 22 of 22 seeded faults caught; out-of-context Vivado 2026.1 cost on xck26 and xc7z020 (about 570-640 LUTs, 285 MHz and more on the K26, near 100 MHz on the Zynq-7000); not run on a board.
 
 ## Parameters
 
@@ -175,32 +177,45 @@ Seeded faults (`faults.yaml`, run by `flow/net/faults.py`):
 
 | Fault | What it breaks | Result |
 |---|---|---|
-| `no_4k_split` | a burst is not cut at the 4 KB boundary | not run |
-| `arlen_off_by_one` | the read burst length field is not beats minus one | not run |
-| `tlast_every_burst` | tlast on the last beat of every burst, not of every descriptor | not run |
-| `wlast_early` | wlast one beat early | not run |
-| `status_address` | the status word is written over the length word | not run |
-| `ring_wrap` | the ring has one entry too many before it wraps | not run |
-| `slverr_read_ignored` | SLVERR on a read beat is not reported, only DECERR | not run |
-| `slverr_write_ignored` | SLVERR on a write response is not reported, only DECERR | not run |
-| `rready_ignores_sink` | read data is accepted whether or not the stream sink is ready, so a beat is lost under back pressure | not run |
-| `outstanding_one_over` | one more burst in flight than OUTSTANDING allows | not run |
-| `irq_threshold_off_by_one` | the interrupt fires one completion late | not run |
-| `ioc_ignored` | the interrupt-on-completion flag of a descriptor does nothing | not run |
-| `bad_reports_bytes` | a descriptor that moved nothing reports its length as moved | not run |
-| `misaligned_address_accepted` | a buffer address that is not beat aligned is accepted and issued | not run |
-| `status_fail_not_halting` | a failed status write does not halt the engine | not run |
-| `desc_fetch_not_drained` | a failed descriptor fetch stops reading after the first bad beat, leaving the rest of the burst in the memory's read channel | not run |
-| `w_before_aw` | stream data is written before any burst address has been issued | not run |
-| `status_w_before_aw` | the status data is offered before its address has been accepted | not run |
-| `tail_not_advanced` | the consumer index never moves | not run |
-| `done_count_double` | the completion counter counts two | not run |
-| `strobe_lane` | the status write's byte strobes ignore which 32-bit lane of a wide beat holds the word | not run |
-| `ring_base_unaligned` | a ring base that is not 16-byte aligned is taken as it is, so a descriptor fetch can cross a 4 KB boundary | not run |
+| `no_4k_split` | a burst is not cut at the 4 KB boundary | caught |
+| `arlen_off_by_one` | the read burst length field is not beats minus one | caught |
+| `tlast_every_burst` | tlast on the last beat of every burst, not of every descriptor | caught |
+| `wlast_early` | wlast one beat early | caught |
+| `status_address` | the status word is written over the length word | caught |
+| `ring_wrap` | the ring has one entry too many before it wraps | caught |
+| `slverr_read_ignored` | SLVERR on a read beat is not reported, only DECERR | caught |
+| `slverr_write_ignored` | SLVERR on a write response is not reported, only DECERR | caught |
+| `rready_ignores_sink` | read data is accepted whether or not the stream sink is ready, so a beat is lost under back pressure | caught |
+| `outstanding_one_over` | one more burst in flight than OUTSTANDING allows | caught |
+| `irq_threshold_off_by_one` | the interrupt fires one completion late | caught |
+| `ioc_ignored` | the interrupt-on-completion flag of a descriptor does nothing | caught |
+| `bad_reports_bytes` | a descriptor that moved nothing reports its length as moved | caught |
+| `misaligned_address_accepted` | a buffer address that is not beat aligned is accepted and issued | caught |
+| `status_fail_not_halting` | a failed status write does not halt the engine | caught |
+| `desc_fetch_not_drained` | a failed descriptor fetch stops reading after the first bad beat, leaving the rest of the burst in the memory's read channel | caught |
+| `w_before_aw` | stream data is written before any burst address has been issued | caught |
+| `status_w_before_aw` | the status data is offered before its address has been accepted | caught |
+| `tail_not_advanced` | the consumer index never moves | caught |
+| `done_count_double` | the completion counter counts two | caught |
+| `strobe_lane` | the status write's byte strobes ignore which 32-bit lane of a wide beat holds the word | caught |
+| `ring_base_unaligned` | a ring base that is not 16-byte aligned is taken as it is, so a descriptor fetch can cross a 4 KB boundary | caught |
 
 ## Cost (out of context)
 
-Not measured yet.
+Built alone (out of context) on an Artix-7, xck26-sfvc784-2LV-c, for a 4.0 ns clock (250 MHz), Vivado 2026.1 (build 6511674); source: [char/xck26-sfvc784-2LV-c.json](char/xck26-sfvc784-2LV-c.json). Not run on a board.
+
+| ADDR_W | DATA_W | MAX_BURST | OUTSTANDING | DIR | AXCACHE | LUT | FF | LUT RAM | Block RAM tiles | DSP | WNS (ns) | Fmax estimate (MHz) | Dynamic power (W) |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| 32 | 32 | 16 | 4 | 0 | 3 | 571 | 501 | 0 | 0 | 0 | 0.492 | 285.1 | 0.006 |
+| 32 | 32 | 16 | 4 | 1 | 3 | 566 | 504 | 0 | 0 | 0 | 0.504 | 286.0 | 0.007 |
+| 32 | 64 | 16 | 4 | 0 | 3 | 601 | 450 | 0 | 0 | 0 | 0.602 | 294.3 | 0.006 |
+| 32 | 64 | 16 | 4 | 1 | 3 | 578 | 452 | 0 | 0 | 0 | 0.661 | 299.5 | 0.007 |
+| 32 | 128 | 16 | 4 | 0 | 3 | 588 | 439 | 0 | 0 | 0 | 0.638 | 297.4 | 0.006 |
+| 32 | 128 | 16 | 4 | 1 | 3 | 583 | 442 | 0 | 0 | 0 | 0.696 | 302.7 | 0.007 |
+
+Defaults: ADDR_W 32, DATA_W 32, MAX_BURST 16, OUTSTANDING 4, DIR 0, AXCACHE 3. WNS is the worst negative slack (the timing margin at the target clock; below zero the target is missed).
+
+Fmax is estimated from one routed run at the target clock (1000 / (period - WNS)); dynamic power is vectorless (default toggle rates). Regenerate with `python3 -m flow.ipchar sg_dma` (Vivado, minutes per point).
 
 ## Boundary and reuse
 
@@ -211,7 +226,7 @@ Not measured yet.
 
 ## Cost table
 
-results/241_dma/ooc.json (out-of-context Vivado 2026.1 on xck26 and xc7z020, default parameters and DATA_W 64 and 128).
+results/241_dma/ooc.json and char/ (out-of-context Vivado 2026.1 on xck26 and xc7z020, both directions at DATA_W 32, 64 and 128: about 570 to 640 LUTs, 440 to 500 flip-flops, no block RAM or DSP).
 
 Licence: MIT (this repository).
 
@@ -219,17 +234,18 @@ Licence: MIT (this repository).
 
 - One descriptor at a time (no descriptor prefetch); one direction per instance; no data realignment (buffer address and length are whole beats); no IDs; S2MM takes exactly the descriptor's length from the stream and ignores tlast; the stream-to-memory path passes s_axis and m_axi handshakes through combinationally.
 - Board: no board run of this entry is recorded; its evidence is simulation and out-of-context builds.
-- Seeded faults not run: `no_4k_split`, `arlen_off_by_one`, `tlast_every_burst`, `wlast_early`, `status_address`, `ring_wrap`, `slverr_read_ignored`, `slverr_write_ignored`, `rready_ignores_sink`, `outstanding_one_over`, `irq_threshold_off_by_one`, `ioc_ignored`, `bad_reports_bytes`, `misaligned_address_accepted`, `status_fail_not_halting`, `desc_fetch_not_drained`, `w_before_aw`, `status_w_before_aw`, `tail_not_advanced`, `done_count_double`, `strobe_lane`, `ring_base_unaligned`.
 - No descriptor prefetch: a descriptor costs a full fetch and status round trip, so descriptors below about a thousand bytes lose most of the port bandwidth (measured in DATASHEET.md).
+- Timing: the burst-length function sits in the path to the data-side counters, 14 logic levels, so the engine runs near 100 MHz on a Zynq-7000 (-1) and meets 4 ns on the K26 with margin; registering the burst length would shorten it (results/241_dma/README.md).
 - No board run: the KR260 throughput and latency measurement is pre-registered (docs/241_dma_prereg.md) and has not been run.
 - The memory model is ours; no run against AMD interconnect or a PS port has been made, so back pressure and latency of the real Zynq HP and HPC ports are not covered.
 - S2MM does not end a descriptor on tlast, so a packet shorter than its buffer needs the software to know the length; a packet-oriented S2MM engine is a follow-up.
 
 ## Next steps
 
-1. Run the pre-registered KR260 measurement through the owner (docs/241_dma_prereg.md).
-2. Add descriptor prefetch and compare the small-descriptor throughput with the measured baseline.
-3. Add a tlast-terminated S2MM mode and a status word that reports the bytes received.
+1. Register the burst length once per burst to shorten the critical path, then re-run the proofs and the seeded faults.
+2. Run the pre-registered KR260 measurement through the owner (docs/241_dma_prereg.md).
+3. Add descriptor prefetch and compare the small-descriptor throughput with the measured baseline.
+4. Add a tlast-terminated S2MM mode and a status word that reports the bytes received.
 
 ## History
 
