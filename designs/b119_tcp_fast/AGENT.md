@@ -10,7 +10,7 @@ A block that holds the TCP connection state which software hands it and sends ea
 not: real market data, a real exchange or a real network; every order comes from our own generator and no frame is ever sent anywhere; a board run, power, or timing inside the 10G core; the numbers are simulation and an out-of-context Vivado 2026.1 build; receiving, parsing or acknowledging anything; software owns the receive side and writes the acknowledgement state into the block; TCP options, selective acknowledgement, window scaling, several connections or a hardware retransmission; the MAC, the frame check sequence and the transmit multiplexer; the block's words go to a MAC that does not exist here (docs/phase2_integration.md is a plan)
 
 ## state
-stage=built vivado=2026.1 kb_pin=6185830 build_id=None
+stage=built vivado=2026.1 kb_pin=eaf6794 build_id=None
 gates: rtl_equals_model=pass lint=pass seeded_faults=pass ooc_build_2026_1=pass board_run=not-run
 
 ## interface
@@ -50,7 +50,7 @@ the seeded faults (every mutant of verif/mutants.yaml against the bench) (~20min
 R1 designs/b119_tcp_fast/tests/test_b119_rtl.py 76d186b184
 R2 designs/b119_tcp_fast/tests/test_b119_model.py 7515e2264b
 R3 designs/b119_tcp_fast/tests/test_b119_lint.py 7e15fe26fa
-R4 results/b119/mutation.json f187b63a69
+R4 results/b119/mutation.json 060d260994
 R5 results/b119/top_sim.json 71c94f32fe
 R6 results/b119/ooc/tcp_fast.json 284f533ef5
 R7 results/b119/bench_sim.json 8dcf52c49d

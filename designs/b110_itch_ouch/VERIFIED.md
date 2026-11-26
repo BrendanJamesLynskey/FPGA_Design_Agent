@@ -4,7 +4,7 @@
 
 **Not verified: 1 of 17 requirements fail.**
 
-What the label means, what "verified" never means and how it is earned: [docs/verified.md](../../docs/verified.md). The label is computed from the testplan and the evidence files named below; it is never typed. Generated at git commit `212d8e802092e566a236f5f306d9f87808da2414` (informational: the hashes in the manifest, not the commit, are what the CI check compares).
+What the label means, what "verified" never means and how it is earned: [docs/verified.md](../../docs/verified.md). The label is computed from the testplan and the evidence files named below; it is never typed. Generated at git commit `7cadf47c721e2fcb55add43ca2f8a61a55d03e0c` (informational: the hashes in the manifest, not the commit, are what the CI check compares).
 
 Traceability summary: 17 requirements (12 functional, 5 safety); 0 verified; 3 partially verified (the required mix of methods is not met); 13 stale; 1 failing; 0 of 17 requirements agreed by a human, 0 agreed on the owner's delegation (not human), 17 draft; 3 resting only on the implementing agent's own tests; 0 human and 0 delegated review(s) recorded.
 

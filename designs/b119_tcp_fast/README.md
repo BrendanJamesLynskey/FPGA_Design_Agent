@@ -89,7 +89,7 @@ Interfaces:
 | the seeded faults (every mutant of verif/mutants.yaml against the bench); needs as above; each run uses its own build root, two at a time | `python3 designs/b119_tcp_fast/tests/run_mutants.py --jobs 2 --json results/b119/mutation.json` | no | about 20 min |
 | the out-of-context builds (two clocks); needs Vivado 2026.1 and a heavy slot (take_heavy_slot.sh) | `python3 -m designs.b119_tcp_fast.ooc.ooc --clocks 6.2061 5.0` | yes | about 30 min |
 
-Tool: Vivado 2026.1. Build ID of the inputs at handover: none (no Vivado build of this directory). Knowledge-bank pin: `6185830`.
+Tool: Vivado 2026.1. Build ID of the inputs at handover: none (no Vivado build of this directory). Knowledge-bank pin: `eaf6794`.
 
 | File | What |
 |---|---|

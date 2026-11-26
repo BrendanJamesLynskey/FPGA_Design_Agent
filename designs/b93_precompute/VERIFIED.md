@@ -4,7 +4,7 @@
 
 **Not assessed: no requirements recorded (no verif/testplan.yaml), so nothing here is traced to a requirement.**
 
-What the label means, what "verified" never means and how it is earned: [docs/verified.md](../../docs/verified.md). The label is computed from the testplan and the evidence files named below; it is never typed. Generated at git commit `8b3b7767288b3aa2d84ddcc0f25af0284dd9a56f` (informational: the hashes in the manifest, not the commit, are what the CI check compares).
+What the label means, what "verified" never means and how it is earned: [docs/verified.md](../../docs/verified.md). The label is computed from the testplan and the evidence files named below; it is never typed. Generated at git commit `7cadf47c721e2fcb55add43ca2f8a61a55d03e0c` (informational: the hashes in the manifest, not the commit, are what the CI check compares).
 
 ## What was checked for the label
 
@@ -40,7 +40,7 @@ Every file this record covers, with its SHA-256 at generation (5 files). `absent
 
 | File | SHA-256 |
 |---|---|
-| `designs/b93_precompute/handover.yaml` | `50aba28d689d061c96ea9ad63d0833551347bae603491f54dbde5b794374f0d2` |
+| `designs/b93_precompute/handover.yaml` | `fa7ab7a7718c393e5158c9d6a05dcea7382c30690a27670aaf755b32b39faa62` |
 | `designs/b93_precompute/rtl/ml_feat_pre.sv` | `8745a2f49b72d0bb07199339fb4bd31c1244aae530eaff89fb0b8322cec99a0d` |
 | `designs/b93_precompute/rtl/ml_gate_pre.sv` | `b69f63825bf712bfcbf684db4fdc44f570703b9eac40a85962235809f90b044b` |
 | `designs/b93_precompute/tests/test_b93_pe_rtl.py` | `06d5a9a3a125a46ee0115c261afdd05fbca3eeeef97acbf63484bd699fb4d36c` |
