@@ -121,9 +121,14 @@ L2_SYSTEM = """You write the structured form of one hardware requirement from it
 Answer with ONE JSON object and nothing else: {"scope": "<the state or mode in which it applies, or empty>", "condition": "<the event or condition that triggers it>", "component": "<what responds>", "timing": {"kind": "immediately|within|after|for|until|always|eventually", "n": <number or [low, high] or null>, "clock": "<a clock of the design>", "from": "<the event the count starts from>"}, "response": "<what holds or happens>"}
 "within n" means some time in 1..n cycles; "after n" means exactly n cycles later; a tick is one cycle of the stated clock. If the English does not say, write "unspecified" in that field: do not guess."""
 
-AMEND_SYSTEM = """You update a hardware requirements set from the user's answers to questions. You are shown the current rows, the questions and the answers.
+FORMALISE_SYSTEM = """You write the structure of hardware requirements for review, from their English sentences, the interface table and the request. You see no RTL.
+Answer with ONE JSON object and nothing else: {"goals": [{"id": "G1", "text": "<a goal of the user, from the request>"}], "rows": [{"id": "<requirement id>", "kind": "interface|timing|protocol|functional|reset|budget|board|other", "modal": "shall|should|will", "method": "Test|Analysis|Inspection|Demonstration", "evidence": "<what will be named as the evidence>", "trace_up": "<a goal id>", "l2": {"scope": "<state in which it applies, or always>", "condition": "<the triggering event or condition, or empty for a state>", "component": "<what responds>", "timing": {"kind": "immediately|within|after|for|until|always|eventually", "n": <number, [low, high] or null>, "clock": "<a clock of the design>", "from": "<the event the count starts from>"}, "response": "<what holds or happens>"}, "worked": ["<one worked example with numbers>"], "never": "<one thing that must never happen>", "l3": {"sva": true} | {"check": "<name>"} | {"sim_only": "<why>"}}]}
+Rules: use ONLY what the English and the request say; where they do not say, write "unspecified" in that field and do not guess. The user will confirm every row from what you write, so it must say what the sentence says. "within n" means some time in 1..n cycles, "after n" exactly n cycles later. l2 and l3 only for kind timing, protocol, reset or functional; a budget, board or interface row has none. l3 sva means a property can be written from l2; sim_only when two unrelated clocks are involved and no relation is stated, or the row is about values over time. The goals come from the request, not from the rows."""
+
+AMEND_SYSTEM = """You update a hardware requirements set from the user's answers to questions, and carry out repairs the checks ask for. You are shown the current rows, the ids already used, the questions with the answers, and the repairs.
 Answer with ONE JSON object and nothing else: {"upsert": [{"id": "<existing id, or a new id>", "text": "<one checkable statement>", "proof": ["simulation"|"formal"|"hardware"|"analysis"], "kind": "...", "modal": "shall|should|will", "source": "answer <question id>", "l2": {...}, "worked": ["..."], "never": "..."}], "delete": ["<ids>"], "reason": "<one line>"}
-Rules: change only what an answer decides; keep every other row as it is (do not list it). A row you change keeps its id. A new requirement takes a NEW id, never the id of a deleted row. Use the user's answer as given; never add a fact no answer or row states. One property per row. Do not name an implementation. If an answer is "not specified", leave the matter open: change nothing for it."""
+Rules: change only what an answer decides; keep every other row as it is (do not list it). A row you change keeps its id. A new requirement takes a NEW id, never the id of a deleted row. Use the user's answer as given; never add a fact no answer or row states. One property per row. Do not name an implementation. If an answer is "not specified", leave the matter open: change nothing for it.
+A repair (split a compound row into one row per statement, drop a duplicate) needs no answer: do it from the rows as written and add no fact. The first part keeps the row's id; each further part takes a new id that is not in the list of ids already used."""
 
 
 # ---- plumbing --------------------------------------------------------------------------------------------------------------------------
@@ -282,9 +287,68 @@ def third_reader_l2(llm: LLM, row: dict[str, Any], spec: dict[str, Any]) -> dict
     return d if isinstance(d, dict) and d else None
 
 
-def amend(llm: LLM, spec: dict[str, Any], qa: list[Q]) -> dict[str, Any]:
-    qt = "\n".join(f"{q.id}: Q: {q.text}\n    A: {q.answer}" for q in qa)
-    return parse_json(llm(AMEND_SYSTEM, f"Current rows:\n{yaml.safe_dump(R.reqs_of(spec), sort_keys=False)}\nQuestions and answers:\n{qt}\n")) or {}
+def formalise(llm: LLM, request: str, spec: dict[str, Any]) -> dict[str, Any]:
+    user = f"Request:\n{request.strip()}\n\nRequirements:\n{rows_text(spec)}\n\nInterface:\n{interface_table(spec)}\n"
+    return parse_json(llm(FORMALISE_SYSTEM, user)) or {}
+
+
+def apply_formalisation(spec: dict[str, Any], out: dict[str, Any]) -> tuple[dict[str, Any], list[str]]:
+    """Fill the structure the formaliser proposed into rows that lack it. Code checks every field (an enumerated kind, modal, method and timing kind) and never overwrites a
+    field a person or an earlier round wrote. The result is a **proposal** the user validates: a row it touches is marked ``formalised_by: agent``. Returns (spec, refused)."""
+    spec = json.loads(json.dumps(spec))
+    refused: list[str] = []
+    if not spec.get("goals"):
+        gs = [{"id": str(g["id"]), "text": R.norm(g.get("text"))} for g in out.get("goals") or [] if isinstance(g, dict) and g.get("id") and R.norm(g.get("text"))]
+        if gs:
+            spec["goals"] = gs
+    by = {str(r["id"]): r for r in R.reqs_of(spec)}
+    goal_ids = {str(g["id"]) for g in spec.get("goals") or []}
+    for f in out.get("rows") or []:
+        r = by.get(str(f.get("id"))) if isinstance(f, dict) else None
+        if r is None:
+            continue
+        touched = False
+        for k, ok in (("kind", R.KINDS), ("modal", R.MODALS), ("method", R.METHODS)):
+            v = f.get(k)
+            v = v.capitalize() if k == "method" and isinstance(v, str) else v
+            if r.get(k) is None and v is not None:
+                if v in ok:
+                    r[k], touched = v, True
+                else:
+                    refused.append(f"{r['id']}: {k} {v!r} is not one of {', '.join(ok)}")
+        if r.get("evidence") is None and R.norm(f.get("evidence")):
+            r["evidence"], touched = R.norm(f["evidence"]), True
+        if r.get("trace_up") is None and f.get("trace_up") is not None:
+            if str(f["trace_up"]) in goal_ids:
+                r["trace_up"], touched = str(f["trace_up"]), True
+            else:
+                refused.append(f"{r['id']}: trace_up {f['trace_up']!r} is not a goal")
+        l2 = f.get("l2")
+        if r.get("l2") is None and isinstance(l2, dict) and l2:
+            t = l2.get("timing") if isinstance(l2.get("timing"), dict) else {}
+            if str(t.get("kind")) in R.TIMING_KINDS:
+                r["l2"], touched = {k: l2[k] for k in R.L2_FIELDS if k in l2}, True
+            else:
+                refused.append(f"{r['id']}: l2.timing.kind {t.get('kind')!r} is not one of {', '.join(R.TIMING_KINDS)}")
+        if r.get("worked") is None and isinstance(f.get("worked"), list) and f["worked"]:
+            r["worked"], touched = [R.norm(w) for w in f["worked"] if R.norm(w)], True
+        if r.get("never") is None and R.norm(f.get("never")):
+            r["never"], touched = R.norm(f["never"]), True
+        if r.get("l3") is None and isinstance(f.get("l3"), dict) and f["l3"]:
+            r["l3"], touched = f["l3"], True
+        if r.get("source") is None and not r.get("origin"):
+            r["source"], touched = "the request, structured by the agent (to be confirmed)", True
+        if touched:
+            r["formalised_by"] = "agent"
+    return spec, refused
+
+
+def amend(llm: LLM, spec: dict[str, Any], qa: list[Q], repairs: list[str] | None = None, used_ids: list[str] | None = None) -> dict[str, Any]:
+    qt = "\n".join(f"{q.id}: Q: {q.text}\n    A: {q.answer}" for q in qa) or "(none)"
+    rp = "\n".join(f"- {t}" for t in repairs or []) or "(none)"
+    ids = ", ".join(sorted(set(used_ids or []) | {str(r["id"]) for r in R.reqs_of(spec)})) or "(none)"
+    return parse_json(llm(AMEND_SYSTEM, f"Current rows:\n{yaml.safe_dump(R.reqs_of(spec), sort_keys=False)}\nIds already used (never reuse): {ids}\n\n"
+                                       f"Questions and answers:\n{qt}\n\nRepairs:\n{rp}\n")) or {}
 
 
 def apply_amendment(spec: dict[str, Any], led: dict[str, Any], am: dict[str, Any]) -> tuple[dict[str, Any], list[str], list[str]]:
@@ -368,12 +432,21 @@ def run_stage0(design: Path, spec: dict[str, Any], request: str, *, level: str, 
                 rnd["questions"] += [q.as_dict() for q in given]
                 rnd["amendments"], rnd["refused"] = rev, ref
             open_qs = [q for q in open_qs if not q.answer]
-        led = R.read_ledger(design)
-        # 1. the mechanical checks
+        # 0b. strict: the structure of each row (kind, modal, layer 2, worked numbers) is proposed by the agent; it is never taken for the user's confirmation
+        if level == "strict" and any(r.get("l2") is None or r.get("kind") is None or r.get("modal") is None for r in R.reqs_of(spec)) and budget.spend("formalise"):
+            spec, ref = apply_formalisation(spec, formalise(llms.review, request, spec))
+            rnd["formalised"] = {"refused": ref}
+        # 1. the mechanical checks; a defect the agent can repair from the rows as written (a compound row, a duplicate) is repaired, not put to the user
         mech = R.mechanical_problems(design, spec, level=level, sva=sva, confirmations=conf)
+        fixes = [p for p in mech if p.repair and p.blocks(level)]
+        if fixes and budget.spend("repair"):
+            spec, rev, ref = _amend_apply(design, spec, llms.review, [], rnd, [f"{p.id}: {p.text}" for p in fixes])
+            R.update_ledger(design, spec, revised=rev)
+            rnd["repairs"] = {"asked": [p.as_dict() for p in fixes], "revised": rev, "refused": ref}
+            mech = R.mechanical_problems(design, spec, level=level, sva=sva, confirmations=conf)
         rnd["mechanical"] = [p.as_dict() for p in mech]
         qs: list[Q] = [Q(id="", text=p.question, code=p.code, topic=p.topic, ids=[p.id] if p.id not in ("interface", "set", "trace") else [], blocking=p.blocks(level), source="code")
-                       for p in mech if p.blocks(level)]
+                       for p in mech if p.blocks(level)]                     # a repair that did not work is asked of the user
         # 2. the reviewer (round 1, and again when rows changed)
         if budget.spend("review"):
             rv = review(llms.review, request, spec, checklist[0], want_compliance=level == "strict" and not any(isinstance(r.get("compliance"), (dict, str)) for r in R.reqs_of(spec)), board=board)
@@ -461,9 +534,10 @@ def run_stage0(design: Path, spec: dict[str, Any], request: str, *, level: str, 
     return _finish(design, spec, state, open_qs, state["stop"], budget)
 
 
-def _amend_apply(design: Path, spec: dict[str, Any], llm: LLM, answered: list[Q], rnd: dict[str, Any]) -> tuple[dict[str, Any], list[str], list[str]]:
-    am = amend(llm, spec, answered)
-    spec2, rev, ref = apply_amendment(spec, R.read_ledger(design), am)
+def _amend_apply(design: Path, spec: dict[str, Any], llm: LLM, answered: list[Q], rnd: dict[str, Any], repairs: list[str] | None = None) -> tuple[dict[str, Any], list[str], list[str]]:
+    led = R.read_ledger(design)
+    am = amend(llm, spec, answered, repairs, list((led.get("ids") or {}).keys()))
+    spec2, rev, ref = apply_amendment(spec, led, am)
     return spec2, rev, ref
 
 

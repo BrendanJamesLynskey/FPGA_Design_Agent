@@ -55,7 +55,7 @@ def first_run(rows: list[dict[str, Any]], cond: str) -> dict[str, dict[str, Any]
 def score(rows: list[dict[str, Any]], ids: dict[str, Any], cond: str) -> dict[str, Any]:
     g = ids["groups"]
     runs = first_run(rows, cond)
-    grp = lambda *names: [runs[i] for n in names for i in g[n]["ids"] if i in runs]
+    grp = lambda *names: [r for r in runs.values() if r["group"] in names] if "U" in names else [runs[i] for n in names for i in g[n]["ids"] if i in runs]
     fm, border, impl = grp("A", "D"), grp("B"), grp("C")
     neg_hard, neg_easy = grp("E"), grp("F")
     neg = neg_hard + neg_easy
@@ -69,7 +69,7 @@ def score(rows: list[dict[str, Any]], ids: dict[str, Any], cond: str) -> dict[st
                          "easy_flagged": sum(r["flagged"] for r in neg_easy), "easy_n": len(neg_easy)},
            "precision_fact_missing": (tp / (tp + fp)) if tp + fp else None, "prevalence": len(fm) / (len(fm) + len(neg)) if fm or neg else None,
            "blocking_questions_on_negatives": sum(r["n_blocking"] for r in neg), "blocking_questions_on_positives_unnamed": sum(r["n_blocking"] for r in pos_all if not (r["flagged"] and r["named"])),
-           "g_flagged": rec(grp("G")), "findings_per_problem": (sum(r["n_findings"] for r in runs.values()) / len(runs)) if runs else None,
+           "g_flagged": rec(grp("G")), "u_flagged": rec(grp("U")), "findings_per_problem": (sum(r["n_findings"] for r in runs.values()) / len(runs)) if runs else None,
            "input_tokens": sum(int(r["input_tokens"] or 0) for r in runs.values()), "output_tokens": sum(int(r["output_tokens"] or 0) for r in runs.values())}
     by = {}
     for r in rows:
@@ -96,6 +96,7 @@ def render(s: dict[str, Any]) -> str:
          f"| Blocking questions that changed nothing: on negatives / on positives without the fact named | {s['blocking_questions_on_negatives']} / {s['blocking_questions_on_positives_unnamed']} |",
          f"| Run-to-run: same flag on both runs | {s['run_to_run']['same_flag']}/{s['run_to_run']['problems']} |",
          f"| Group G (undiagnosed candidates): flagged | {s['g_flagged']['flagged']}/{s['g_flagged']['n']} (not scored) |",
+         f"| Unlabelled agentic problems (U, no group): flagged | {s['u_flagged']['flagged']}/{s['u_flagged']['n']} (a flag rate, not a score) |",
          f"| Findings per problem (mean) | {s['findings_per_problem']:.2f} |" if s["findings_per_problem"] is not None else "| Findings per problem | n/a |",
          f"| Tokens (input / output), run 1 | {s['input_tokens']:,} / {s['output_tokens']:,} |", ""]
     return "\n".join(L)

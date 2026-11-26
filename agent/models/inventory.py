@@ -68,7 +68,7 @@ SITES: list[dict[str, object]] = [
      "prompts": ["public: flow/sva_req.py GEN_SYSTEM", "public: flow/sva_req.py BACK_SYSTEM"], "before": "new in brief 218"},
     {"file": "agent/graph/readiness.py", "fn": "gate_step and main (the reviewer, probe writer and amender; the readers; the third reader)", "purposes": ["reqreview", "reqreader", "reqreader3"],
      "needs": "text", "prompts": ["public: agent/graph/readiness.py REVIEWER_SYSTEM", "public: agent/graph/readiness.py PROBE_SYSTEM", "public: agent/graph/readiness.py READER_SYSTEM",
-                                   "public: agent/graph/readiness.py L2_SYSTEM", "public: agent/graph/readiness.py AMEND_SYSTEM"], "before": "new in brief 227"},
+                                   "public: agent/graph/readiness.py L2_SYSTEM", "public: agent/graph/readiness.py AMEND_SYSTEM", "public: agent/graph/readiness.py FORMALISE_SYSTEM", "public: agent/graph/readiness.py REVIEWER_SYSTEM_V2"], "before": "new in brief 227"},
     {"file": "formal/lean/tools/prove.py", "fn": "main", "purposes": ["proof"], "needs": "text", "prompts": ["public: formal/lean/tools/prove.py SYSTEM"],
      "before": "new in brief 125 (the general proof driver; brief 124's llm_prove.py overrode the rtl purpose)"},
     {"file": "tools/hardcaml/probe/probe.py", "fn": "ask", "purposes": ["rtl"], "needs": "text", "prompts": ["public: tools/hardcaml/probe/probe.py SYSTEM"],

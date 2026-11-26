@@ -76,10 +76,11 @@ class Problem:
     level: str = "standard"      # the lowest level at which it blocks
     topic: str = "requirement"   # the reviewer checklist topic it belongs to, if any
     blocking: bool = True
+    repair: bool = False         # a defect the agent can fix from the rows as written (split a compound row, drop a duplicate): it is repaired, not put to the user
 
     def as_dict(self) -> dict[str, Any]:
         return {"id": self.id, "code": self.code, "text": self.text, "question": self.question, "level": self.level, "topic": self.topic,
-                "blocking": self.blocking}
+                "blocking": self.blocking, "repair": self.repair}
 
     def blocks(self, level: str) -> bool:
         return self.blocking and LEVELS.index(level) >= LEVELS.index(self.level)
@@ -154,7 +155,8 @@ def six_properties(row: dict[str, Any], spec: dict[str, Any], *, level: str = "s
     rid, text = str(row["id"]), norm(row.get("text"))
     out: list[Problem] = []
     for msg in SS.requirement_quality_errors({"requirements": [{"id": rid, "text": text}]}):     # simple and clear: atomic, no vague word
-        out.append(Problem(rid, "RDY-CLEAR-01", msg, f"Please restate {rid} so that one statement can be checked: {msg.split(': ', 1)[-1]}"))
+        vague = " is vague " in msg
+        out.append(Problem(rid, "RDY-CLEAR-01", msg, f"Please restate {rid} so that one statement can be checked: {msg.split(': ', 1)[-1]}", repair=not vague))
     if modal_of(row) is None and level == "strict":
         out.append(Problem(rid, "RDY-MODAL-01", "no SHALL, SHOULD or WILL", f"Is {rid} mandatory (SHALL: verified), desirable (SHOULD: reviewed with you) or "
                            "descriptive (WILL: never verified)?", level="strict"))
@@ -387,7 +389,7 @@ def interface_problems(spec: dict[str, Any]) -> list[Problem]:
             continue
         note = str(p.get("note", ""))
         if multi and not norm(p.get("clock")):
-            out.append(Problem("interface", "RDY-IF-03", f"port {n} has no clock domain (the design has {len(clock_ports)} clocks)", f"Which clock is {n} synchronous to?", topic="clocks and crossings"))
+            out.append(Problem("interface", "RDY-IF-03", f"port {n} has no clock domain (the design has {len(clock_ports)} clocks)", f"Which clock is {n} synchronous to?", level="strict", topic="clocks and crossings"))
         if d in ("out", "output"):
             if p.get("reset_value") is None and not re.search(r"\b(combinational|no reset|unreset|wire|constant|static)\b", note, re.I):
                 out.append(Problem("interface", "RDY-IF-04", f"output {n} has no reset value", f"What does {n} drive during and just after reset?", level="strict", topic="reset strategy"))
@@ -436,7 +438,7 @@ def consistency_problems(spec: dict[str, Any]) -> list[Problem]:
         rid = str(r["id"])
         key = norm(r.get("text")).lower()
         if key in texts:
-            out.append(Problem(rid, "RDY-CONS-01", f"the same wording as {texts[key]}", f"{rid} repeats {texts[key]}: drop one, or say what differs."))
+            out.append(Problem(rid, "RDY-CONS-01", f"the same wording as {texts[key]}", f"{rid} repeats {texts[key]}: drop one, or say what differs.", repair=True))
         texts[key] = rid
         text = norm(r.get("text"))
         if _CONDITIONAL.search(text):                                   # a quantity "when X" and the same quantity "when Y" may differ: not a clash

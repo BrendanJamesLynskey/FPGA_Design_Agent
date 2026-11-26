@@ -37,7 +37,7 @@ class Fake:
     """Scripted replies by role (recognised from the system prompt); every call is recorded with its user message. ``readers`` is a function
     ``(reader call index, amendments made so far) -> reply dict``; the default has both readers give the same answers."""
 
-    def __init__(self, review=None, readers=None, amend=None, probes=None, l3=None):
+    def __init__(self, review=None, readers=None, amend=None, probes=None, l3=None, formal=None):
         self.calls: list[tuple[str, str]] = []
         self.review_r = review or [{"findings": [], "compliance": [], "verdict": "ready"}]
         same = {"answers": [{"id": f"P{i}", "answer": a} for i, a in enumerate(["yes", "no", "yes", "3", "yes"], 1)]}
@@ -45,10 +45,11 @@ class Fake:
         self.amend_r = amend or {"upsert": [], "delete": []}
         self.probes = probes or PROBES
         self.l3 = l3
+        self.formal = formal or {}
         self.n = {"review": 0, "reader": 0, "amend": 0}
 
     def __call__(self, system, user):
-        for role, marker in (("review", "requirements reviewer"), ("probes", "write probe scenarios"), ("reader", "careful reader"), ("reader3", "structured form"), ("amend", "update a hardware requirements set")):
+        for role, marker in (("review", "requirements reviewer"), ("probes", "write probe scenarios"), ("reader", "careful reader"), ("reader3", "structured form"), ("amend", "update a hardware requirements set"), ("formalise", "structure of hardware requirements")):
             if marker in system:
                 break
         else:
@@ -65,6 +66,8 @@ class Fake:
             return "```json\n" + json.dumps(self.amend_r) + "\n```"
         if role == "reader3":
             return json.dumps(self.l3)
+        if role == "formalise":
+            return json.dumps(self.formal)
         i = self.n["reader"]
         self.n["reader"] += 1
         return json.dumps(self.readers(i, self.n["amend"]))
@@ -291,3 +294,61 @@ def test_the_spec_oracle_can_answer_a_stage_0_question_and_a_quote_not_in_the_hi
     o2 = SpecOracle(hidden, lambda system, user: {"answer": "No restart.", "quote": "The window does not restart when start arrives while busy."})
     res = G.run_stage0(d, spec_of_fixture(), REQUEST, level="standard", llms=f.llms(), answerer=o2, limits=R.Limits(max_rounds=2))
     assert res.frozen and res.state["rounds"][0]["questions"][0]["by"] == "oracle"
+
+
+def test_a_compound_row_is_repaired_by_the_amender_without_asking_the_user_and_the_new_row_gets_a_new_id(tmp_path):
+    d = fresh(tmp_path)
+    spec = spec_of_fixture()
+    spec["requirements"].append({"id": "REQ-09", "text": "Busy goes high and valid goes low after start.", "proof": ["simulation"]})
+    f = Fake(amend={"upsert": [{"id": "REQ-09", "text": "Busy goes high after start.", "proof": ["simulation"]}, {"id": "REQ-10", "text": "Valid goes low after start.", "proof": ["simulation"]}], "delete": []})
+    res = G.run_stage0(d, spec, REQUEST, level="standard", llms=f.llms(), limits=R.Limits(max_rounds=2))
+    assert res.frozen
+    r1 = res.state["rounds"][0]
+    assert r1["repairs"]["revised"][0] == "REQ-09" and r1["questions"] == [] and r1["repairs"]["refused"] == []
+    ids = [r["id"] for r in res.spec["requirements"]]
+    assert "REQ-10" in ids and f.calls[0][0] == "amend" and "Busy goes high and valid goes low" in f.calls[0][1] and "Ids already used" in f.calls[0][1]
+    assert res.state["calls_by_role"]["repair"] == 1
+
+
+def test_a_repair_that_did_not_work_is_put_to_the_user_as_a_question(tmp_path):
+    d = fresh(tmp_path)
+    spec = spec_of_fixture()
+    spec["requirements"].append({"id": "REQ-09", "text": "Busy goes high and valid goes low after start.", "proof": ["simulation"]})
+    f = Fake(amend={"upsert": [], "delete": []})                     # the amender changes nothing
+    res = G.run_stage0(d, spec, REQUEST, level="standard", llms=f.llms(), answerer=None)
+    assert not res.frozen and any(q.code == "RDY-CLEAR-01" for q in res.open_questions)
+
+
+FORMAL = {"goals": [{"id": "G1", "text": "measure clk_in against clk_ref"}, {"id": "G2", "text": "read the result"}],
+          "rows": [{"id": "REQ-02", "kind": "timing", "modal": "shall", "method": "test", "evidence": "test_start_busy", "trace_up": "G1",
+                    "l2": {"scope": "always", "condition": "start is high and busy is low", "component": "the meter", "timing": {"kind": "after", "n": 1, "clock": "clk_ref", "from": "start"}, "response": "busy is high"},
+                    "worked": ["start at cycle 3: busy high at cycle 4"], "never": "busy low in the cycle after an accepted start", "l3": {"sva": True}},
+                   {"id": "REQ-03", "kind": "sideways", "modal": "must", "trace_up": "G9", "l2": {"timing": {"kind": "soon"}}}]}
+
+
+def test_at_strict_the_agent_proposes_the_structure_and_code_refuses_what_is_not_valid_and_never_overwrites(tmp_path):
+    spec = spec_of_fixture()
+    for r in spec["requirements"]:
+        for k in ("kind", "modal", "trace_up", "source"):
+            r.pop(k, None)
+    spec["requirements"][1]["modal"] = "should"                                  # written by a person: not overwritten
+    out, ref = G.apply_formalisation(spec, FORMAL)
+    r2, r3 = out["requirements"][1], out["requirements"][2]
+    assert r2["modal"] == "should" and r2["kind"] == "timing" and r2["method"] == "Test" and r2["l2"]["timing"]["kind"] == "after" and r2["formalised_by"] == "agent"
+    assert out["goals"][0]["id"] == "G1" and r2["trace_up"] == "G1" and r2["source"].endswith("(to be confirmed)")
+    assert "kind" not in r3 and "modal" not in r3 and "l2" not in r3
+    assert any("kind 'sideways'" in x for x in ref) and any("modal 'must'" in x for x in ref) and any("trace_up 'G9'" in x for x in ref) and any("l2.timing.kind 'soon'" in x for x in ref)
+    assert spec["requirements"][1].get("l2") is None                              # the input is not changed in place
+
+
+def test_strict_never_freezes_without_the_users_validation_even_when_every_layer_is_written(tmp_path):
+    d = fresh(tmp_path)
+    f = Fake(formal=FORMAL)
+    spec = spec_of_fixture()
+    for r in spec["requirements"]:
+        for k in ("kind", "modal", "trace_up", "source"):
+            r.pop(k, None)
+    res = G.run_stage0(d, spec, REQUEST, level="strict", llms=f.llms(), answerer=None, limits=R.Limits(max_rounds=1))
+    assert not res.frozen and res.state["rounds"][0]["formalised"]["refused"]
+    codes = {q["code"] for q in res.state["rounds"][0]["questions"]}
+    assert "RDY-VAL-01" in codes and res.state["calls_by_role"]["formalise"] == 1

@@ -105,6 +105,8 @@ def main(argv: list[str] | None = None) -> int:
         print("the knowledge-bank skill is not at hand (set FDA_KNOWLEDGE): refusing to run the kb condition on the fallback", file=sys.stderr)
         return 2
     cond = a.condition if a.reviewer == "v1" else f"{a.condition}_{a.reviewer}"
+    labelled = {i for v in ids["groups"].values() for i in v["ids"]} | set(ids.get("excluded") or [])
+    ids = {**ids, "groups": {**ids["groups"], "U": {"ids": sorted(i for i in load_jsonl(a.agentic) if i not in labelled)}}}     # U: the agentic problems in no group (unlabelled; their ids are not committed)
     jobs = [(i, g, k) for g in a.groups.split(",") for i in ids["groups"][g]["ids"] for k in range(1, a.runs + 1) if i in problems]
     done = {(r["id"], r["condition"], int(r["run"])) for r in csv.DictReader(a.out.read_text().splitlines())} if a.out.is_file() else set()
     jobs = [j for j in jobs if (j[0], cond, j[2]) not in done]

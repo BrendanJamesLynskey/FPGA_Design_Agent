@@ -44,9 +44,10 @@ def test_a_clean_row_has_no_core_problem_at_standard(tmp_path):
     assert [p for p in R.six_properties(row(), spec) if p.blocks("standard")] == []
 
 
-def test_vague_and_compound_rows_are_not_simple_and_clear():
-    assert "RDY-CLEAR-01" in codes(R.six_properties(row(text="The design should be fast."), {}))
-    assert "RDY-CLEAR-01" in codes(R.six_properties(row(text="Busy goes high and valid goes low after start."), {}))
+def test_vague_and_compound_rows_are_not_simple_and_clear_and_only_the_compound_one_is_repaired_without_the_user():
+    vague = [p for p in R.six_properties(row(text="The design should be fast."), {}) if p.code == "RDY-CLEAR-01"]
+    comp = [p for p in R.six_properties(row(text="Busy goes high and valid goes low after start."), {}) if p.code == "RDY-CLEAR-01"]
+    assert vague and comp and not vague[0].repair and comp[0].repair
 
 
 def test_no_verification_method_is_a_question_and_proof_maps_to_a_method():
