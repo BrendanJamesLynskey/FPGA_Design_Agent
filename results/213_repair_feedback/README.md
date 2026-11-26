@@ -13,3 +13,6 @@ Status: complete; the report is [report.md](report.md) (also in _handoff/fpga_ag
 
 ## Known gaps and limits
 Exploratory bundle on 3 designs x 3 replicates (smallest detectable effect about 1.7 stage-2 visits); own-check verdicts only; R1 snapshot reported "Simulator shut down prematurely" in 3 of its 4 firings; the regrade was not applicable to any pilot design (benches use register calls); see [report.md](report.md).
+
+## Records
+`runs/<n>_<design>_k<k>_<arm>/`: summary.json, role_usage.jsonl, routing_events.jsonl, config.json, driver.log, meta.txt, RUN_ID.txt and the delivered design files (rtl, tests, verif, model.py, spec.yaml). `ab_runs.csv` and `paired_analysis.txt`: the analysis; `sweep/regrade_sweep.jsonl`: the regrade sweep.
