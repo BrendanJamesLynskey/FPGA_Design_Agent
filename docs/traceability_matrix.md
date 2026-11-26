@@ -6,8 +6,8 @@ The human specifies the requirements and checks that the verification is thoroug
 
 | Design | Summary | Matrix |
 |---|---|---|
-| `b110_itch_ouch` | 17 requirements (12 functional, 5 safety); 0 verified; 3 partially verified (the required mix of methods is not met); 13 stale; 1 failing; 0 of 17 requirements agreed by a human, 0 agreed on the owner's delegation (not human), 17 draft; 3 resting only on the implementing agent's own tests; 0 human and 0 delegated review(s) recorded. | [matrix](../designs/b110_itch_ouch/verif/matrix.md) ([html](../designs/b110_itch_ouch/verif/matrix.html)) |
+| `t1_dimmer_counter` | 21 requirements (21 functional); 0 verified; 21 stale; 0 of 21 requirements agreed by a human, 0 agreed on the owner's delegation (not human), 21 draft; 0 human and 0 delegated review(s) recorded. | [matrix](../designs/t1_dimmer_counter/verif/matrix.md) ([html](../designs/t1_dimmer_counter/verif/matrix.html)) |
 
 ## Gaps by design
 
-- `b110_itch_ouch`: 3 method mix missing, 14 no passing evidence, 3 own tests only, 14 stale evidence
+- `t1_dimmer_counter`: 21 no passing evidence, 96 stale evidence
