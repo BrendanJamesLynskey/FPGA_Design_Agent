@@ -213,6 +213,9 @@ def build_report(design: Path, t: dict[str, Any], spec: dict[str, Any], request:
                      **({"lab": lab} if lab else {}),
                      "rests_on_unconfirmed": res == "pass" and og["unconfirmed"],
                      "high_risk_default": og["kind"] in ("default", "waiver") and og.get("risk") == "high"})
+    sva = _sva_rows(design)                                # brief 218: the assertion written from each requirement, with what became of it
+    for r in rows:
+        r["assertion"] = sva.get(r["id"])
     n = {k: sum(r["result"] == k for r in rows) for k in ("pass", "pending", "fail")}
     from agent.graph import requirements as RQ
     return {"schema": SCHEMA, "design": design.name, "generated": _dt.datetime.now(_dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
@@ -220,10 +223,38 @@ def build_report(design: Path, t: dict[str, Any], spec: dict[str, Any], request:
             "total": len(rows), "passed": n["pass"], "pending": n["pending"], "failed": n["fail"],
             "unconfirmed_passes": sum(r["rests_on_unconfirmed"] for r in rows),
             "headline": headline(len(rows), n["pass"], n["pending"], n["fail"]),
+            "assertions": _sva_summary(rows, sva),
             "unverified": [r["id"] for r in rows if not any(m["evidence"] for m in r["methods"])],
             "requirements": rows, "conflicts": list(conflicts.values()),
             "assumptions": RQ.assumptions_of(spec),
             "evidence_sources": t.get("evidence_sources"), "trace_pass": t.get("pass")}
+
+
+def _sva_rows(design: Path) -> dict[str, dict[str, Any]]:
+    """The requirement-to-assertion record (``flow/sva_req.py``) by requirement id, reduced to what the report shows; empty when none was made."""
+    try:
+        rec = json.loads(design.joinpath("build", "verif", "sva", "evidence.json").read_text())
+    except (OSError, ValueError):
+        return {}
+    out = {}
+    for rid, r in (rec.get("requirements") or {}).items():
+        p = r.get("property") or {}
+        out[rid] = {"status": r.get("status"), "evidence": r.get("status") in ("proved", "bounded"), "why": r.get("why", ""),
+                    "property": (f"{p.get('kind')}: when `{p.get('ante')}` then `{p.get('cons')}`" if p else ""),
+                    "back_translation": r.get("back_translation", ""), "partial": bool((r.get("comparison") or {}).get("partial")),
+                    "cover_trace": r.get("cover_trace"), "job": r.get("installed")}
+    for sk in rec.get("skipped") or []:
+        out.setdefault(sk["id"], {"status": "skipped", "evidence": False, "why": sk["reason"], "property": "", "back_translation": "",
+                                  "partial": False, "cover_trace": None, "job": None})
+    return out
+
+
+def _sva_summary(rows: list[dict[str, Any]], sva: dict[str, dict[str, Any]]) -> dict[str, Any]:
+    c: dict[str, int] = {}
+    for a in sva.values():
+        c[a["status"]] = c.get(a["status"], 0) + 1
+    ev = [r["id"] for r in rows if (r.get("assertion") or {}).get("evidence")]
+    return {"tried": sum(1 for a in sva.values() if a["status"] != "skipped"), "with_evidence": len(ev), "ids_with_evidence": ev, "by_status": c}
 
 
 def headline(m: int, ok: int, pending: int, failed: int) -> str:
@@ -255,6 +286,20 @@ def to_markdown(rep: dict[str, Any]) -> str:
                          for m in r["methods"]) or "none"
         res = r["result"] + (f" ({_c(r['reason'])})" if r["reason"] else "") + (" **[on an unconfirmed default]**" if r["rests_on_unconfirmed"] else "")
         out.append(f"| {r['id']} | {_c(r['text'])} | {_c(came)} | {_c(meth)} | {ev} | {res} |")
+    sv = rep.get("assertions") or {}
+    if sv.get("by_status"):
+        out += ["", "## Assertions written from the requirements", "",
+                f"{sv['with_evidence']} of {len(rep['requirements'])} requirements have a property that was written from the requirement, "
+                "read back in English by a second reader, and proved or bounded-checked with its trigger shown reachable "
+                "(a proof whose trigger can never happen is vacuous and is not counted). The property is a check of part of the row at most: "
+                "what you confirm is still the requirement's own words.", "",
+                "| Id | What became of it | The property | Read back in English |", "|---|---|---|---|"]
+        for r in rep["requirements"]:
+            a = r.get("assertion")
+            if not a or a["status"] == "skipped":
+                continue
+            what = a["status"] + (" (part of the requirement)" if a.get("partial") and a["evidence"] else "") + (f": {a['why']}" if a["why"] else "")
+            out.append(f"| {r['id']} | {_c(what)} | {_c(a['property'])} | {_c(a['back_translation'])} |")
     if rep["conflicts"]:
         out += ["", "## A fix that conflicts with a requirement", ""]
         out += [f"- {c['requirement']} ({_c(c.get('requirement_text'))}): the fix for {c['code']} ({c['fix_kind']}) {c['why']}. "

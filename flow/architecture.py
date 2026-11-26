@@ -41,6 +41,8 @@ CDC_PRIMITIVES = ("sync_2ff", "sync2", "pulse_cdc", "reset_sync", "gray_pointer"
                   "xpm_cdc_async_rst", "xpm_fifo_async")
 #: ``rtl.initial_values`` (brief 205, owner decision 38); flow/standards_check.py STD-INIT-01 reads it
 INITIAL_VALUES_MODES = ("allow", "warn", "deny")
+#: ``rtl.reset_model`` (brief 231, owner 2026-11-26); flow/standards_check.py STD-INIT-02 reads it
+RESET_MODELS = ("reset", "reprogram")
 #: ``clock_muxes`` (brief 208): the clock-buffer primitives a declared clock mux may use (BUFGMUX, which switches on its CE
 #: pins, is not one: a select that misses CE setup can glitch, UG472 ch. 2), and the reasons a run-time clock mux is
 #: acceptable (Altera Design Recommendations 18.1, 1.2.2.4: fixed after configuration, test only, the clocked logic is
@@ -54,7 +56,7 @@ FILES = ("architecture.yaml", "ARCHITECTURE.md")
 
 def gates_config(path: Path | None = None) -> dict[str, Any]:
     """``flow/gates.yaml``: thresholds the flow owns (the resource sanity factor). Missing file: the defaults."""
-    cfg = {"resource_sanity": {"factor": 2.0, "resources": list(RESOURCES)}, "rtl": {"initial_values": "allow"}}
+    cfg = {"resource_sanity": {"factor": 2.0, "resources": list(RESOURCES)}, "rtl": {"initial_values": "allow", "reset_model": "reset"}}
     p = path or GATES_YAML
     if p.is_file():
         data = yaml.safe_load(p.read_text()) or {}
@@ -88,6 +90,8 @@ def check_architecture(data: Any) -> list[str]:
     if rtl is not None and (not isinstance(rtl, dict) or str(rtl.get("initial_values", "allow")) not in INITIAL_VALUES_MODES):
         errs.append(f"'rtl' must be a mapping whose 'initial_values' is one of {', '.join(INITIAL_VALUES_MODES)} "
                     "(brief 205: how the design's initial values are treated; the flow default is in flow/gates.yaml)")
+    elif isinstance(rtl, dict) and str(rtl.get("reset_model", "reset")) not in RESET_MODELS:
+        errs.append(f"'rtl.reset_model' must be one of {', '.join(RESET_MODELS)} (brief 231: reprogram when every reset reconfigures the FPGA)")
     ifs = data.get("interfaces")
     if not isinstance(ifs, list):
         errs.append("'interfaces' must be a list (it may be empty: each entry {name, between: [a, b], protocol, "

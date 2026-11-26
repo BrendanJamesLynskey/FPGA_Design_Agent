@@ -1,0 +1,228 @@
+{
+ "schema": "fpga-force/req-sva/v1",
+ "design": "b",
+ "module": "crc_core",
+ "module_note": "module `crc_core` (the spec's top `top` has primitives and a bus the properties cannot see through; this module carries 7 of the spec's ports)",
+ "generated": "2026-11-26T02:30:43Z",
+ "requirements": {
+  "REQ-20": {
+   "id": "REQ-20",
+   "text": "SCRATCH at 0x008 reads 0 after reset.",
+   "key": "915a737dc29d8f1d",
+   "rtl_key": "80c010559859cd06",
+   "generator_reply": "{\"kind\":\"same\",\"ante\":\"$past(rst) && h_re && h_addr == 12'h008\",\"cons\":\"h_rdata == 32'h0\",\"why\":\"In the cycle right after reset, a read of address 0x008 (SCRATCH) must return 0. This assumes h_rdata responds in the same cycle as h_re, which the requirement does not state.\"}",
+   "property": {
+    "kind": "same",
+    "ante": "$past(rst) && h_re && h_addr == 12'h008",
+    "cons": "h_rdata == 32'h0",
+    "why": "In the cycle right after reset, a read of address 0x008 (SCRATCH) must return 0. This assumes h_rdata responds in the same cycle as h_re, which the requirement does not state.",
+    "signals": [
+     "h_addr",
+     "h_rdata",
+     "h_re",
+     "rst"
+    ]
+   },
+   "back_translation": "Whenever `$past(rst)` is true and `h_re` is true and `h_addr` equals 12'h008 in a clock cycle, `h_rdata` equals 32'h0 in that same cycle.",
+   "comparison": {
+    "match": true,
+    "reasons": [],
+    "requirement_covered": 0.67,
+    "translation_covered": 0.75,
+    "partial": false,
+    "property_numbers": [
+     8
+    ]
+   },
+   "status": "vacuous",
+   "evidence": false,
+   "tasks": {
+    "bmc": "PASS",
+    "prove": "PASS",
+    "cover": "FAIL"
+   },
+   "why": "the trigger is never reached within 24 cycles: the proof is empty",
+   "seconds": 1.9,
+   "job": "sva_REQ_20"
+  },
+  "REQ-04": {
+   "id": "REQ-04",
+   "text": "CRC after any message pushed since INIT equals zlib.crc32 of those bytes.",
+   "key": "0769d22d7a5e41ce",
+   "rtl_key": "80c010559859cd06",
+   "generator_reply": "{\"kind\": \"none\", \"why\": \"The requirement compares the CRC to zlib.crc32 of all bytes pushed since INIT, which needs an unbounded history of the message and a CRC reference model. The ports give no register map for INIT, push or the CRC, and no boolean or $past expression can state this.\"}",
+   "status": "unusable",
+   "why": "the generator says it cannot be stated on the ports: The requirement compares the CRC to zlib.crc32 of all bytes pushed since INIT, which needs an unbounded history of the message and a CRC reference model. The ports give no register map for INIT, push "
+  },
+  "REQ-08": {
+   "id": "REQ-08",
+   "text": "PUSH4 writes on consecutive clocks are each accepted.",
+   "key": "3fa4a6f6f39305cc",
+   "rtl_key": "80c010559859cd06",
+   "generator_reply": "{\"kind\": \"none\", \"why\": \"The requirement gives no PUSH4 address or encoding on h_addr/h_wdata, and no port shows whether a write was accepted (h_rdata, led and sfp_tx_disable are not tied to it), so it cannot be stated on the ports.\"}",
+   "status": "unusable",
+   "why": "the generator says it cannot be stated on the ports: The requirement gives no PUSH4 address or encoding on h_addr/h_wdata, and no port shows whether a write was accepted (h_rdata, led and sfp_tx_disable are not tied to it), so it cannot be stated on the"
+  },
+  "REQ-09": {
+   "id": "REQ-09",
+   "text": "PUSH_N pushes the low TAIL_LEN bytes, with TAIL_LEN 0 pushing nothing.",
+   "key": "1d5605538e7e0342",
+   "rtl_key": "80c010559859cd06",
+   "generator_reply": "{\"kind\": \"none\", \"why\": \"The requirement refers to PUSH_N, TAIL_LEN and pushed bytes, which are internal commands and state. None of them is a listed port, and the ports (h_we, h_addr, h_wdata, h_rdata, led, sfp_tx_disable) give no defined mapping to them, so the requirement cannot be stated on the ports.\"}",
+   "status": "unusable",
+   "why": "the generator says it cannot be stated on the ports: The requirement refers to PUSH_N, TAIL_LEN and pushed bytes, which are internal commands and state. None of them is a listed port, and the ports (h_we, h_addr, h_wdata, h_rdata, led, sfp_tx_disable) g"
+  },
+  "REQ-11": {
+   "id": "REQ-11",
+   "text": "CTRL bit 0 reads 0 the clock after the INIT write.",
+   "key": "82061cfd2ea478b0",
+   "rtl_key": "80c010559859cd06",
+   "generator_reply": "The requirement does not give the CTRL register address or the INIT write encoding. Stating it on the ports would mean inventing both, so I can't write it.\n\n{\"kind\": \"none\", \"why\": \"The requirement does not give the CTRL address, the INIT write value or the bit position, so the INIT write cannot be identified on h_we/h_addr/h_wdata without inventing numbers.\"}",
+   "status": "unusable",
+   "why": "the generator says it cannot be stated on the ports: The requirement does not give the CTRL address, the INIT write value or the bit position, so the INIT write cannot be identified on h_we/h_addr/h_wdata without inventing numbers."
+  },
+  "REQ-13": {
+   "id": "REQ-13",
+   "text": "h_rdata shows the addressed register within 2 clocks of h_re.",
+   "key": "592780030e5c5c5b",
+   "rtl_key": "80c010559859cd06",
+   "generator_reply": "{\"kind\": \"none\", \"why\": \"The requirement says h_rdata shows the addressed register within 2 clocks of h_re, but it gives no register map or expected read value. The ports alone do not say what h_rdata should equal, so no property can be written without inventing a value.\"}",
+   "status": "unusable",
+   "why": "the generator says it cannot be stated on the ports: The requirement says h_rdata shows the addressed register within 2 clocks of h_re, but it gives no register map or expected read value. The ports alone do not say what h_rdata should equal, so no prop"
+  },
+  "REQ-22": {
+   "id": "REQ-22",
+   "text": "h_rdata holds its value until the next h_re.",
+   "key": "ba4945f43c3e3c5b",
+   "rtl_key": "80c010559859cd06",
+   "generator_reply": "The property says: if there was no h_re on the previous edge, then h_rdata now equals its previous value. Because \"next\" checks that ante was true on the previous edge, the antecedent is !h_re and the consequent is h_rdata == $past(h_rdata). That means h_rdata cannot change in the cycle after a cycle with no h_re.\n\nStated precisely, \"until the next h_re\" could mean the value changes when h_re is asserted, with the new value appearing one cycle later. This form allows that, because the change is only forbidden after a cycle where h_re was low. The requirement gives no latency, so this is the weakest reading that still captures the hold.\n\n{\"kind\": \"next\", \"ante\": \"!h_re\", \"cons\": \"h_rdata == $past(h_rdata)\", \"why\": \"If h_re was low on the previous edge, h_rdata now equals its value from that previous edge, so it only changes after an h_re.\"}",
+   "property": {
+    "kind": "next",
+    "ante": "!h_re",
+    "cons": "h_rdata == $past(h_rdata)",
+    "why": "If h_re was low on the previous edge, h_rdata now equals its value from that previous edge, so it only changes after an h_re.",
+    "signals": [
+     "h_rdata",
+     "h_re"
+    ]
+   },
+   "back_translation": "If `h_re` was low in the previous clock cycle, then `h_rdata` is equal to its value from one clock cycle earlier (`$past(h_rdata)`) in the current cycle.",
+   "comparison": {
+    "match": true,
+    "reasons": [],
+    "requirement_covered": 0.4,
+    "translation_covered": 0.33,
+    "partial": true,
+    "property_numbers": []
+   },
+   "status": "proved",
+   "evidence": true,
+   "tasks": {
+    "bmc": "PASS",
+    "prove": "PASS",
+    "cover": "PASS"
+   },
+   "why": "proved by k-induction (depth 12); the trigger is reachable",
+   "seconds": 2.0,
+   "job": "sva_REQ_22",
+   "cover_trace": "build/verif/sva/REQ_22/cover_trace.wavedrom.json",
+   "installed": "verif/formal/sva_REQ_22.sby"
+  },
+  "REQ-14": {
+   "id": "REQ-14",
+   "text": "A write takes effect the clock after h_we.",
+   "key": "65c62eb453854ce8",
+   "rtl_key": "80c010559859cd06",
+   "generator_reply": "{\"kind\": \"none\", \"why\": \"The requirement does not say which register or output a write changes, or at which address. The ports alone do not show the effect, and h_rdata also depends on an unstated read latency, so it cannot be stated without inventing details.\"}",
+   "status": "unusable",
+   "why": "the generator says it cannot be stated on the ports: The requirement does not say which register or output a write changes, or at which address. The ports alone do not show the effect, and h_rdata also depends on an unstated read latency, so it cannot b"
+  },
+  "REQ-25": {
+   "id": "REQ-25",
+   "text": "The same 1,000 random messages give a BYTE_COUNT equal to the message length.",
+   "key": "a714c5908fdee5f5",
+   "rtl_key": "80c010559859cd06",
+   "generator_reply": "{\"kind\": \"none\", \"why\": \"The requirement refers to BYTE_COUNT, a message length and a set of 1,000 random messages. None of these are visible on the ports. The only data path is the host bus (h_addr, h_wdata, h_rdata), and the BYTE_COUNT register address and the message length are not given. So the requirement cannot be stated on the ports without inventing details.\"}",
+   "status": "unusable",
+   "why": "the generator says it cannot be stated on the ports: The requirement refers to BYTE_COUNT, a message length and a set of 1,000 random messages. None of these are visible on the ports. The only data path is the host bus (h_addr, h_wdata, h_rdata), and th"
+  }
+ },
+ "skipped": [
+  {
+   "id": "REQ-01",
+   "reason": "no cycle-level condition or response in the wording (checked by simulation or analysis)"
+  },
+  {
+   "id": "REQ-02",
+   "reason": "proof method is hardware only: not a property of the ports"
+  },
+  {
+   "id": "REQ-03",
+   "reason": "no cycle-level condition or response in the wording (checked by simulation or analysis)"
+  },
+  {
+   "id": "REQ-05",
+   "reason": "no cycle-level condition or response in the wording (checked by simulation or analysis)"
+  },
+  {
+   "id": "REQ-06",
+   "reason": "no cycle-level condition or response in the wording (checked by simulation or analysis)"
+  },
+  {
+   "id": "REQ-07",
+   "reason": "no cycle-level condition or response in the wording (checked by simulation or analysis)"
+  },
+  {
+   "id": "REQ-10",
+   "reason": "no cycle-level condition or response in the wording (checked by simulation or analysis)"
+  },
+  {
+   "id": "REQ-23",
+   "reason": "no cycle-level condition or response in the wording (checked by simulation or analysis)"
+  },
+  {
+   "id": "REQ-24",
+   "reason": "no cycle-level condition or response in the wording (checked by simulation or analysis)"
+  },
+  {
+   "id": "REQ-12",
+   "reason": "no cycle-level condition or response in the wording (checked by simulation or analysis)"
+  },
+  {
+   "id": "REQ-21",
+   "reason": "no cycle-level condition or response in the wording (checked by simulation or analysis)"
+  },
+  {
+   "id": "REQ-15",
+   "reason": "proof method is analysis only: not a property of the ports"
+  },
+  {
+   "id": "REQ-16",
+   "reason": "proof method is analysis only: not a property of the ports"
+  },
+  {
+   "id": "REQ-17",
+   "reason": "no cycle-level condition or response in the wording (checked by simulation or analysis)"
+  },
+  {
+   "id": "REQ-18",
+   "reason": "proof method is analysis only: not a property of the ports"
+  },
+  {
+   "id": "REQ-19",
+   "reason": "no cycle-level condition or response in the wording (checked by simulation or analysis)"
+  }
+ ],
+ "counts": {
+  "vacuous": 1,
+  "unusable": 7,
+  "proved": 1
+ },
+ "formal_tool": "Yosys 0.70+385 (git sha1 098e46a36, Release, Clang /usr/bin/clang++ 21.1.8) (slang front end)",
+ "caveats": [
+  "a vendor primitive is the design's own simulation stub (SYNTHESIS undefined), not the primitive",
+  "reset is asserted in the first cycle only (reset rows: free after the third)",
+  "one clock domain per property",
+  "the property was written without the RTL"
+ ]
+}
