@@ -2,7 +2,7 @@
 source: designs/b30_hil_audio/handover.yaml; human view: README.md; refresh: python -m flow.handover fresh designs/b30_hil_audio
 
 ## identity
-kind=demonstration produced_by=human part=xc7a100tcsg324-1 board=Nexys A7-100T top=b30_hil_audio_top tool=Vivado 2026.1
+kind=demonstration produced_by=session part=xc7a100tcsg324-1 board=Nexys A7-100T top=b30_hil_audio_top tool=Vivado 2026.1
 verified: not assessed: no requirements recorded (no verif/testplan.yaml), so nothing here is traced to a requirement (record: designs/b30_hil_audio/VERIFIED.md, designs/b30_hil_audio/verified.json; definition: docs/verified.md)
 
 ## summary
@@ -10,7 +10,7 @@ One design on the Nexys A7 that carries four library instruments (a tone generat
 not: a product design; its job is to give the hardware-in-the-loop checks a known answer on every path; a test of the instruments' own correctness; the library blocks are tested in ip_lib and hil/tests; the video, analogue-input, M2K, Pluto, RTL-SDR and Red Pitaya paths, which no run covered
 
 ## state
-stage=board-verified vivado=2026.1 kb_pin=1fc7ed8 build_id=efa287bc
+stage=board-verified vivado=2026.1 kb_pin=6185830 build_id=6043e723
 gates: build_2026_1=pass hil_board=pass
 
 ## interface

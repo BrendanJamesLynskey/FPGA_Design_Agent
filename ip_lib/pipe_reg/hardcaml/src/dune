@@ -1,0 +1,11 @@
+(library
+ (name pipe_reg_hc)
+ (modules pipe_reg_hc)
+ (libraries hardcaml)
+ (preprocess
+  (pps ppx_jane)))
+
+(executable
+ (name gen)
+ (modules gen str_replace)
+ (libraries hardcaml pipe_reg_hc))

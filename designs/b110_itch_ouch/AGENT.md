@@ -2,15 +2,15 @@
 source: designs/b110_itch_ouch/handover.yaml; human view: README.md; refresh: python -m flow.handover fresh designs/b110_itch_ouch
 
 ## identity
-kind=showcase produced_by=human part=xck26-sfvc784-2LV-c board=Kria KR260 (K26 SOM) top=itch_ouch_top (wrapped with input registers in ooc_wrap for the out-of-context build) tool=Vivado 2026.1
-verified: not assessed: no requirements recorded (no verif/testplan.yaml), so nothing here is traced to a requirement (record: designs/b110_itch_ouch/VERIFIED.md, designs/b110_itch_ouch/verified.json; definition: docs/verified.md)
+kind=showcase produced_by=session part=xck26-sfvc784-2LV-c board=Kria KR260 (K26 SOM) top=itch_ouch_top (wrapped with input registers in ooc_wrap for the out-of-context build) tool=Vivado 2026.1
+verified: not verified: 1 of 17 requirements fail (record: designs/b110_itch_ouch/VERIFIED.md, designs/b110_itch_ouch/verified.json; definition: docs/verified.md)
 
 ## summary
 A trading path in the formats a real venue speaks, in simulation. UDP payload words carrying MoldUDP64 and Nasdaq TotalView-ITCH 5.0 are decoded, a small top-of-book is kept for a few instruments, a pre-trade risk check with a kill switch decides, and an OUCH 5.0 Enter Order is built in a SoupBinTCP 3.00 packet and handed to a stub port, optionally started before the risk verdict and cancelled if it fails. A Python reference model and a seeded synthetic generator check the RTL bit for bit, seeded faults in the RTL are all caught, and the block is built out of context for the KR260's part at the 10G core clock.
 not: real market data or a real exchange; every message comes from our own seeded generator and no order is ever sent anywhere; TCP, SoupBinTCP login, heartbeats or order responses; the frame goes to a stub port (docs/tcp_plan.md is a plan); Ethernet, IP or UDP handling and the FCS check; the path starts at the UDP payload (docs/phase2_integration.md is a plan); a full-depth book or every instrument; a few instruments with a bounded number of price levels, and a stated way to fail; a board run, power, or timing inside the 10G core; the numbers are simulation and an out-of-context Vivado 2026.1 build
 
 ## state
-stage=built vivado=2026.1 kb_pin=93d158c build_id=None
+stage=built vivado=2026.1 kb_pin=6185830 build_id=None
 gates: rtl_equals_model=pass lint=pass seeded_faults=pass ooc_build_2026_1=pass board_run=not-run
 
 ## interface
@@ -19,25 +19,35 @@ rst rst active-high: synchronous; resets every register including the counters a
 if payload input s_v, s_d[63:0], s_sof, s_eof, s_keep[7:0], s_err (UDP payload words): byte 0 in bits 7:0; keep is low-contiguous on the last word; the messages of a packet are delivered before its frame check is known doc=designs/b110_itch_ouch/docs/itch_ouch.md
 if order frame output o_v, o_d[63:0], o_sof, o_eof, o_keep[7:0], o_abort (stub port): eight words, never paused; o_abort cancels the frame in flight (speculative start only) doc=designs/b110_itch_ouch/docs/itch_ouch.md
 if configuration and clears cfg_* static inputs and one-clock clr_* pulses: configuration is static while traffic runs; clr_book starts a table sweep during which events are dropped and counted doc=designs/b110_itch_ouch/docs/itch_ouch.md
+if B feed (brief 191) sb_v, sb_d[63:0], sb_sof, sb_eof, sb_keep[7:0], sb_err (the second UDP payload stream): used only with DUAL_FEED 1 (tie to 0 otherwise); first copy of each packet wins, the other feed fills a gap if its header is in before the first feed's next packet; adds 4 clocks doc=designs/b110_itch_ouch/docs/feed_arb.md
+if reject bits (brief 191) vd_v, vd_pass, vd_rej[7:0], rej_seen[7:0], cnt_ab (feed arbiter counters): vd_v is one clock after the verdict, the same number of clocks for every outcome; vd_rej has one bit per check and shows all that failed doc=designs/b110_itch_ouch/docs/itch_ouch.md
 if observation flags, cnt (45 counters of 32 bits), tu_* top-of-book update record, tob_* registers: counters wrap, never saturate; every counter is defined in the datasheet doc=designs/b110_itch_ouch/docs/itch_ouch.md
 param N_INST=4 legal=2 to 8
 param LEVELS=8 legal=4 or 8
 param ORD_AW=8 legal=4 to 16 (tested at 5, 6, 8 and 10)
+param PARSE_INPLACE=0 legal=0 or 1
+param DUAL_FEED=0 legal=0 or 1
+param ARB_AW=5 legal=4 to 10
 
 ## files
+designs/b110_itch_ouch/rtl/feed_arb.sv e523ff419e: A/B feed arbiter (brief 191)
+designs/b110_itch_ouch/rtl/feed_arb_in.sv 77db45af27: one feed's input stage of the arbiter
+designs/b110_itch_ouch/tests/b110_ab_cocotb.py 35e9b845e1: cocotb bench of the A/B feed arbiter
+designs/b110_itch_ouch/docs/feed_arb.md a7fae9c158: datasheet of the A/B feed arbiter
+designs/b110_itch_ouch/verif/formal/run_book_formal.py cdbe36627e: k-induction record runner for the book's quantity invariants, with ablations and seeded faults
 designs/b110_itch_ouch/rtl/mold_rx.sv 2439cc5a50: MoldUDP64 receiver
-designs/b110_itch_ouch/rtl/itch_dec.sv 43c7f717f1: ITCH 5.0 decoder
-designs/b110_itch_ouch/rtl/book_core.sv 4f9ea037d5: order table, ladders, top of book
-designs/b110_itch_ouch/rtl/risk_glue.sv 2cde343aec: decision, risk checks, kill switch, order queue
+designs/b110_itch_ouch/rtl/itch_dec.sv 816b19c5cc: ITCH 5.0 decoder
+designs/b110_itch_ouch/rtl/book_core.sv 629dab43bf: order table, ladders, top of book
+designs/b110_itch_ouch/rtl/risk_glue.sv 9d3d031147: decision, risk checks, kill switch, order queue
 designs/b110_itch_ouch/rtl/ouch_enter.sv 95066c0f3c: OUCH 5.0 Enter Order in SoupBinTCP framing
-designs/b110_itch_ouch/rtl/itch_ouch_top.sv 6f9da05065: top level
+designs/b110_itch_ouch/rtl/itch_ouch_top.sv 8f5d552941: top level
 designs/b110_itch_ouch/model/proto.py ae43fca45e: packers for the four protocols, from the specifications
-designs/b110_itch_ouch/model/ref.py 92ebceb812: reference model (untimed, exact)
+designs/b110_itch_ouch/model/ref.py 39011988ef: reference model (untimed, exact)
 designs/b110_itch_ouch/model/gen.py 7a5ed6f04b: seeded synthetic ITCH over MoldUDP64 generator
-designs/b110_itch_ouch/tests/b110_cocotb.py e8b7915b02: cocotb bench
-designs/b110_itch_ouch/tests/run_mutants.py d7d017acd5: seeded-fault runner
-designs/b110_itch_ouch/ooc/ooc.py 13550cc38a: out-of-context build driver
-designs/b110_itch_ouch/docs/itch_ouch.md 21f329f7ca: datasheet
+designs/b110_itch_ouch/tests/b110_cocotb.py 75f4e34aa7: cocotb bench
+designs/b110_itch_ouch/tests/run_mutants.py 320ce1f1f4: seeded-fault runner
+designs/b110_itch_ouch/ooc/ooc.py 55cd7509f0: out-of-context build driver
+designs/b110_itch_ouch/docs/itch_ouch.md 939660686e: datasheet
 designs/b110_itch_ouch/docs/spec_notes.md 5ce86ae4a2: field layouts and where each comes from
 designs/b110_itch_ouch/docs/tcp_plan.md 95463d9cfc: TCP options and the phase 2 recommendation
 designs/b110_itch_ouch/docs/phase2_integration.md a15fee8877: integration plan for the KR260 design, the host bench and the board test
@@ -49,9 +59,9 @@ the seeded faults (every mutant of verif/mutants.yaml against the bench) (~25min
 [heavy] the out-of-context builds (three clocks) (~30min): python3 -m designs.b110_itch_ouch.ooc.ooc --clocks 6.2061 5.0 4.4
 
 ## records (path sha256-prefix; claims below cite R<n>)
-R1 designs/b110_itch_ouch/tests/test_b110_rtl.py ed9179dc6e
-R2 designs/b110_itch_ouch/tests/test_b110_model.py 0ac06f1af3
-R3 designs/b110_itch_ouch/tests/test_b110_lint.py 3028d8b5b4
+R1 designs/b110_itch_ouch/tests/test_b110_rtl.py 0643e7cfe2
+R2 designs/b110_itch_ouch/tests/test_b110_model.py 248e083213
+R3 designs/b110_itch_ouch/tests/test_b110_lint.py 29645bead1
 R4 results/b110/mutation.json 2c13eb56b0
 R5 results/b110/coverage_sim.json 69836756e5
 R6 results/b110/ooc/itch_ouch_top.json 4d84f7e2e8

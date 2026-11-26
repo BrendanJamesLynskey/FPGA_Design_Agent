@@ -123,6 +123,41 @@ def verilator_findings(design: Path) -> tuple[list[dict[str, Any]] | None, str]:
     return out, note
 
 
+def waive_verilator_text(text: str, design: Path, root: Path = ROOT) -> dict[str, Any]:
+    """Brief 219 fix 6. The design's ``lint/waivers.yaml`` applied to a raw Verilator run (the Designer's ``lint`` tool): the same
+    finding keys, rule mapping and waiver match as :func:`evaluate`. Returns ``{"waived": [(key, reason)], "open": [key], "unparsed": [line],
+    "bad_waivers": [...]}``: ``open`` are findings no waiver covers, ``unparsed`` are error lines with no file and line (a real error, never
+    waived). A run is clean only when it has findings, none open and none unparsed."""
+    from flow.traceability import match_item
+    rs = load_rules()
+    waivers, bad = load_waivers(design)
+    waived: list[tuple[str, str]] = []
+    open_: list[str] = []
+    unparsed: list[str] = []
+    for line in text.splitlines():
+        line = line.strip()
+        m = _VL.match(line)
+        if not m:
+            if line.startswith("%Error") and "Exiting due to" not in line:
+                unparsed.append(line[:200])
+            continue
+        sev, code, f, ln, _msg = m.groups()
+        try:
+            pf = Path(f)
+            f = (pf if pf.is_absolute() else root / pf).resolve().relative_to(root.resolve()).as_posix()   # Verilator prints the path as given: relative to the run's cwd (the root)
+        except ValueError:
+            pass
+        code = code or ("ERROR" if sev == "Error" else "WARNING")
+        key = f"verilator:{code} {f}:{ln}"
+        rule = rule_for(rs, "verilator", code)
+        w = next((w for w in waivers if w["rule"] == rule and match_item(key, str(w["match"]))), None)
+        if w:
+            waived.append((key, str(w["reason"])))
+        else:
+            open_.append(key)
+    return {"waived": waived, "open": open_, "unparsed": unparsed, "bad_waivers": bad}
+
+
 def vivado_findings(gates: dict[str, Any]) -> list[dict[str, Any]]:
     """Rule findings at Warning or above from every stage's methodology, DRC and CDC lists (and the top-level copies)."""
     seen: dict[str, dict[str, Any]] = {}

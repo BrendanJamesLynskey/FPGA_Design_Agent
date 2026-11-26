@@ -4,7 +4,7 @@
 
 **Not assessed: no requirements recorded (no verif/testplan.yaml), so nothing here is traced to a requirement.**
 
-What the label means, what "verified" never means and how it is earned: [docs/verified.md](../../docs/verified.md). The label is computed from the testplan and the evidence files named below; it is never typed. Generated at git commit `a8359042aac759be0a4d6b05186709bdb7bb093c` (informational: the hashes in the manifest, not the commit, are what the CI check compares).
+What the label means, what "verified" never means and how it is earned: [docs/verified.md](../../docs/verified.md). The label is computed from the testplan and the evidence files named below; it is never typed. Generated at git commit `51dfe82191cd59c99857973f44b8b57ec9363fb5` (informational: the hashes in the manifest, not the commit, are what the CI check compares).
 
 ## What was checked for the label
 
@@ -46,7 +46,7 @@ Every file this record covers, with its SHA-256 at generation (11 files). `absen
 | File | SHA-256 |
 |---|---|
 | `agent/tests/test_102_stage2.py` | `a3c75a92a0592ca356244ed693b81d005e1952f571d03dfbdcb91cf3f625b2d9` |
-| `designs/b102_managed_pr/handover.yaml` | `9288ba295ff8addfa8a0e4efa815e5fa4b1dff432d36a9beba24334e0c2c3bf5` |
+| `designs/b102_managed_pr/handover.yaml` | `b6443507d5182ac1299039ead25938d47f8ead1b0b3655982c5696fd86e28c9d` |
 | `designs/b102_managed_pr/rtl/pr_sink.sv` | `1763a9b5891be67427d449a773f3f8d2bc19522a3411e70666bc0af7103f5948` |
 | `designs/b102_managed_pr/rtl/pr_src.sv` | `349d147ce9e4c8d5ad11fd5bb4f861753c73af5bdbf68914edfbc7ba99eaed31` |
 | `designs/b102_managed_pr/rtl/pr_top.sv` | `ac0783fa4d30575e15198480ff8ae05e7e5b43a88a59eac1e554c37eeabd15be` |

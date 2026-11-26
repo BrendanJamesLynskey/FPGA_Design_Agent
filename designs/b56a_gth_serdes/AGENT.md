@@ -2,7 +2,7 @@
 source: designs/b56a_gth_serdes/handover.yaml; human view: README.md; refresh: python -m flow.handover fresh designs/b56a_gth_serdes
 
 ## identity
-kind=example produced_by=human part=xck26-sfvc784-2LV-c board=Kria KR260 top=kr260_gth_top tool=Vivado 2026.1
+kind=example produced_by=session part=xck26-sfvc784-2LV-c board=Kria KR260 top=kr260_gth_top tool=Vivado 2026.1
 verified: not assessed: no requirements recorded (no verif/testplan.yaml), so nothing here is traced to a requirement (record: designs/b56a_gth_serdes/VERIFIED.md, designs/b56a_gth_serdes/verified.json; definition: docs/verified.md)
 
 ## summary
@@ -10,7 +10,7 @@ A Kria KR260 design that drives one UltraScale+ GTH transceiver (quad 224, chann
 not: a protocol or a link layer (RAW data, PRBS only); no Aurora or Ethernet core (10G/25G Ethernet is refused by the Basic licence); multi-lane work, meaning channel bonding, lane deskew, PCIe x4 and 40G are simulation-only on this one-lane board
 
 ## state
-stage=built vivado=2026.1 kb_pin=93d158c build_id=cef3b1f4
+stage=built vivado=2026.1 kb_pin=6185830 build_id=50d5febf
 gates: build_2026_1=pass
 
 ## interface

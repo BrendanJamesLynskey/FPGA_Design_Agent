@@ -1,0 +1,435 @@
+# Brief 68 handover: the facts behind README.md and AGENT.md (docs/documentation_standard.md).
+# Measurement values and every sha256 are filled from the records by `python -m flow.handover fill`;
+# do not type them. Render with `python -m flow.handover write <this directory>`.
+schema: fda-handover/1
+id: p3_crc_engine
+title: CRC-32 engine (Ethernet, 4 bytes per clock) with JTAG register access
+kind: agent-run
+produced_by: agent
+summary: The design computes a reflected CRC-32 (the zlib.crc32 variant) over bytes pushed through a JTAG-accessed register
+  map (jtag_bus) on the KR260. A PUSH4 write consumes four bytes in one clock and a PUSH_N write consumes 1 to 3 tail bytes.
+  The core also keeps byte and busy-cycle counters. The run stopped at the rtl-design-creation stage, whose lint gate failed
+  on 5 consecutive visits. Nothing was synthesised, implemented or run on a board, and verification reached V2 of V3. The
+  specification and architecture were approved automatically, with no human review.
+scope_not:
+- Not a general CRC engine, the polynomial, init and final XOR are fixed to the Ethernet CRC-32 values in the RTL.
+- Not a streaming or AXI data path, data enters only through the single JTAG register port, one write per clock.
+- Not built, timed or tested on hardware, no Vivado build or board result exists.
+- Uses no GT transceiver, sfp_tx_disable is a constant output.
+target:
+  part: xck26-sfvc784-2LV-c
+  board: kr260
+  tool: Vivado 2026.1
+  top: crc32_top
+clocks:
+- name: clk_25
+  mhz: 25.0
+  source: runs/20261125-102852-3fd4/p3_crc_engine/design.xdc
+resets:
+- name: rst
+  active: high
+  note: Internal and synchronous, not a board pin. crc32_rst_gen asserts it while the MMCM is unlocked and releases it through
+    xpm_cdc_async_rst with 4 synchroniser stages.
+interfaces:
+- name: clk_25
+  type: input, 25 MHz board clock on pin C3 (LVCMOS18)
+  note: Feeds the MMCM (x40 / 8) that makes the 125 MHz design clock. design.xdc defines the 40 ns period on this port.
+- name: led
+  type: output, 2 bits, F8 and E8 (LVCMOS18)
+  note: led[0] is the MMCM lock, led[1] is bit 24 of a free-running heartbeat counter.
+- name: sfp_tx_disable
+  type: output, 1 bit, Y10 (LVCMOS33)
+  note: Driven 1 at all times in crc32_top.sv.
+- name: h_we, h_re, h_addr, h_wdata, h_rdata
+  type: register port, 1, 1, 12, 32 and 32 bits
+  note: The spec calls these internal, but crc32_top.sv exposes them as top-level outputs. They link jtag_bus and crc32_core,
+    and h_rdata is driven by the core.
+registers:
+- offset: 0
+  name: ID
+  access: RO
+  reset: 546504705
+  bits: 31:0 design ID
+- offset: 4
+  name: BUILD
+  access: RO
+  reset: 0
+  bits: 31:0 USR_ACCESS word
+- offset: 8
+  name: SCRATCH
+  access: RW
+  reset: 0
+  bits: 31:0 scratch
+- offset: 16
+  name: CTRL
+  access: RW
+  reset: 0
+  bits: 0 INIT self-clearing; 31:1 reserved
+- offset: 20
+  name: PUSH4
+  access: WO
+  reset: 0
+  bits: 31:0 four data bytes
+- offset: 24
+  name: PUSH_N
+  access: WO
+  reset: 0
+  bits: 31:0 data, low TAIL_LEN bytes used
+- offset: 28
+  name: TAIL_LEN
+  access: RW
+  reset: 0
+  bits: 1:0 N 0 to 3
+- offset: 32
+  name: CRC
+  access: RO
+  reset: 0
+  bits: 31:0 finalised CRC-32
+- offset: 36
+  name: BYTE_COUNT
+  access: RO
+  reset: 0
+  bits: 31:0 bytes pushed
+- offset: 40
+  name: BUSY_CYCLES
+  access: RO
+  reset: 0
+  bits: 31:0 busy clocks
+parameters:
+- name: DESIGN_ID
+  value: 546504705
+  legal: any 32-bit value, spec value 0x20930001
+  note: Value read from the ID register at offset 0.
+- name: CRC_POLY
+  value: 79764919
+  legal: fixed at 0x04C11DB7
+  note: Not a parameter of crc32_core. The RTL hard-codes the bit-reflected form of this polynomial in the local constant
+    RPOLY, so changing this value changes nothing.
+- name: CRC_INIT
+  value: 4294967295
+  legal: any 32-bit value, spec value 0xFFFFFFFF
+  note: Initial CRC state, restored by INIT.
+- name: CRC_XOROUT
+  value: 4294967295
+  legal: any 32-bit value, spec value 0xFFFFFFFF
+  note: Applied when the CRC register is read.
+- name: DATA_BYTES_PER_CLK
+  value: 4
+  legal: 4 only
+  note: Spec throughput is one PUSH4 per clock. It is not a parameter in the RTL.
+- name: TAIL_LEN_MAX
+  value: 3
+  legal: 3 only
+  note: TAIL_LEN stores 2 bits, so 3 is the maximum.
+- name: READ_LATENCY_CYCLES
+  value: 1
+  legal: 1 (the spec limit is 2)
+  note: Spec gives h_rdata valid 1 clock after h_re. The RTL registers h_rdata once, which matches, but jtag_bus latency
+    was not measured.
+- name: CLK_FREQ_CYCLES
+  value: 1
+  legal: 1 only
+  note: Spec rounding of the 125 MHz design clock against the 25 MHz board clock. It is not used in the RTL. The spec's
+    rate is 125 MHz; the benches did not time it.
+files:
+- path: runs/20261125-102852-3fd4/p3_crc_engine/spec.md
+  what: the request the run started from
+  sha256: 7848f5826333ffe53a4a43136f775d7d5ad662d7d39f416c689e9333f7ba1f11
+- path: runs/20261125-102852-3fd4/p3_crc_engine/spec.yaml
+  what: the specification the Clarifier wrote, approved automatically with no human review
+  sha256: 17c9b80fbaaccd455458121c14c1140cbab83bd186803af30cce800af9050b4b
+- path: runs/20261125-102852-3fd4/p3_crc_engine/ARCHITECTURE.md
+  what: the architecture note, accepted automatically before any RTL (no human review)
+  sha256: 4c3e7f01192f1ef7c919e1b4f796b22712c75a21091707219789e21db47f9d7e
+- path: runs/20261125-102852-3fd4/p3_crc_engine/architecture.yaml
+  what: 'the machine-checked architecture: blocks, clocks, predicted resources'
+  sha256: 7f39dda9c7691bdd73413a9aa9c9b6de549c2a8af99c7cdcba255399eeb75029
+- path: runs/20261125-102852-3fd4/p3_crc_engine/rtl/crc32_core.sv
+  what: RTL written by the Designer
+  sha256: 9a521a1fb5bc1092bbbf0018a2c5ac3eb4965624f75e5eb9bc04dc26e435a4a4
+- path: runs/20261125-102852-3fd4/p3_crc_engine/rtl/crc32_rst_gen.sv
+  what: RTL written by the Designer
+  sha256: 9b08da3fa4e36f5136dc256af934b2285e4183b37f7e47b00180a4d2a564412b
+- path: runs/20261125-102852-3fd4/p3_crc_engine/rtl/crc32_top.sv
+  what: RTL written by the Designer
+  sha256: 301dfabce043614c79bb95568fb3b695d48108b2f929d6c5009abab1bf498783
+- path: runs/20261125-102852-3fd4/p3_crc_engine/rtl/xilinx_sim_stubs.sv
+  what: RTL written by the Designer
+  sha256: 8e68a49ab01f5a62add141f630184b3cec1d4aefb518fbc75a4809bda62471df
+- path: runs/20261125-102852-3fd4/p3_crc_engine/design.xdc
+  what: pin, I/O standard and timing constraints
+  sha256: 5e9d0535062f593af8b09d73e7b1601fb4ec16e3d35984c831bb0911d13f4e86
+- path: runs/20261125-102852-3fd4/p3_crc_engine/build.yaml
+  what: the build description read by the flow
+  sha256: 257c3bdde517198ce908b413a0d0d637761d7b1c6977e554ae4b4ba5023444e0
+- path: runs/20261125-102852-3fd4/p3_crc_engine/model.py
+  what: the Modeller's reference model of the visible behaviour
+  sha256: 6288fe9c6d1f77d38bc3161de20b275c4aafc526a7e567de94402c44904266f5
+- path: runs/20261125-102852-3fd4/p3_crc_engine/tests/crc_bench.py
+  what: the Verifier's cocotb benches and pytest entries
+  sha256: 3f24f750704680a9cfa43a9c73ee63e7ad43e96930584a79371ff73d8a0ccdbc
+- path: runs/20261125-102852-3fd4/p3_crc_engine/tests/test_p3_crc_engine_rtl.py
+  what: the Verifier's cocotb benches and pytest entries
+  sha256: b6d6f04981baae6c17f3aeaa6794e9d53acad5908b889e6a14d4b4e5b7277e1f
+- path: runs/20261125-102852-3fd4/p3_crc_engine/verif/testplan.yaml
+  what: the test plan and mutant list read by the verification gates
+  sha256: e773c60a834a1789f05ec773c197f970f21c17101e770abdbbe70ed90267f8f1
+- path: runs/20261125-102852-3fd4/p3_crc_engine/verif/checkers/v_macros.svh
+  what: bound assertion and cover checkers
+  sha256: 013c1a5444e3dbd0eb2df54529d09272d8bf601d42ec066d54cadb9589d51083
+- path: runs/20261125-102852-3fd4/p3_crc_engine/build/review/02_rtl-design-creation.html
+  what: 'the review page of stage rtl-design-creation: its exit gates and their failures at the last visit'
+  sha256: bac3a669c6ca297a58088103e3e1593a06c3a4ee504739ee175768b01b05e5b0
+commands:
+- what: what changed since this handover (stale records, changed files, tool and knowledge-bank pins)
+  cmd: python -m flow.handover fresh runs/20261125-102852-3fd4/p3_crc_engine
+  heavy: false
+  minutes: null
+- what: pick the work up again from the earliest stage the change or the staleness needs
+  cmd: python -m agent resume runs/20261125-102852-3fd4/p3_crc_engine "<change request>"
+  heavy: true
+  minutes: null
+  needs: a model (see docs/agent.md); Vivado for any stage from synthesis on
+- what: run the Verifier's simulation tests
+  cmd: python -m pytest -q runs/20261125-102852-3fd4/p3_crc_engine/tests/test_p3_crc_engine_rtl.py
+  heavy: false
+  minutes: null
+  needs: Icarus Verilog and cocotb, or the simulation container
+- what: re-run the Verilator coverage simulation and the verification gates (line, toggle, functional and cover results)
+  cmd: SIM=verilator FDA_COVERAGE=1 FDA_SIM_RESULTS_DIR=runs/20261125-102852-3fd4/p3_crc_engine/build/verif/sim python -m
+    pytest -q -x runs/20261125-102852-3fd4/p3_crc_engine/tests/test_p3_crc_engine_rtl.py && python3 flow/verif_gates.py
+    runs/20261125-102852-3fd4/p3_crc_engine --runs runs/20261125-102852-3fd4/p3_crc_engine/build/verif/sim
+  heavy: false
+  minutes: null
+  needs: Verilator 5.036 or later and cocotb (the simulation container has them)
+- what: rebuild the bitstream with the flow
+  cmd: flow/run_vivado.sh runs/20261125-102852-3fd4/p3_crc_engine base
+  heavy: true
+  minutes: null
+  needs: Vivado 2026.1 and a heavy slot
+evidence:
+- id: E1
+  activity: review
+  result: partial
+  what: the specification and the architecture were approved automatically, with no human review (review off; the interview
+    oracle claude-sonnet-5-5 only answered the interview questions); the interview asked 8 questions, 0 answered and 8 defaulted
+  record: runs/20261125-102852-3fd4/summary.json
+  sha256: 508857e7a64726b191324cecd615ab7a07ac13dda0f5ce34f4678dcf31772ead
+- id: E2
+  activity: simulation
+  result: partial
+  what: 'verification (flow/verif_gates.py) against the Modeller''s reference model reached V2 of V3; the run asked for
+    V2; V2 means simulation: seeded runs, a constrained-random test, bound assertions and formal tasks; V3 (coverage (line,
+    toggle, functional bins, cover properties), three seeds and the mutation score) did not pass: functional bins pct 0.0
+    (0/0) (needs 100); cover properties pct 0.0 (needs 100); line pct not measured (needs 90); toggle pct not measured (needs
+    75); mutation score pct not measured (needs 70); cdc structure clean missing (needs no unsafe crossing); cdc injection
+    clean missing (needs pass); no board result (V-HW) is recorded'
+  record: runs/20261125-102852-3fd4/p3_crc_engine/build/verif/verif_gates.json
+  sha256: ec15875c969d63043c6966b52e1885bb336315ea58b29ea0b3ad7234db3d0107
+measurements:
+- id: M1
+  what: simulation seeds run
+  category: verification
+  unit: ''
+  record: runs/20261125-102852-3fd4/p3_crc_engine/build/verif/verif_gates.json
+  field: stages.V3.checks.seeds_run.value
+  conditions: Verilator coverage simulation of the RTL against the Modeller's model, every seed the bench ran
+  value: 3
+  sha256: ec15875c969d63043c6966b52e1885bb336315ea58b29ea0b3ad7234db3d0107
+- id: M2
+  what: line coverage
+  category: verification
+  unit: '%'
+  record: runs/20261125-102852-3fd4/p3_crc_engine/build/verif/verif_gates.json
+  field: stages.V3.checks.line_pct.value
+  conditions: Verilator coverage simulation of the RTL against the Modeller's model, every seed the bench ran
+  value: not measured
+  sha256: ec15875c969d63043c6966b52e1885bb336315ea58b29ea0b3ad7234db3d0107
+- id: M3
+  what: toggle coverage
+  category: verification
+  unit: '%'
+  record: runs/20261125-102852-3fd4/p3_crc_engine/build/verif/verif_gates.json
+  field: stages.V3.checks.toggle_pct.value
+  conditions: Verilator coverage simulation of the RTL against the Modeller's model, every seed the bench ran
+  value: not measured
+  sha256: ec15875c969d63043c6966b52e1885bb336315ea58b29ea0b3ad7234db3d0107
+- id: M4
+  what: functional coverage bins hit
+  category: verification
+  unit: ''
+  record: runs/20261125-102852-3fd4/p3_crc_engine/build/verif/verif_gates.json
+  field: stages.V3.checks.functional_bins_pct.value
+  conditions: Verilator coverage simulation of the RTL against the Modeller's model, every seed the bench ran
+  value: 0.0 (0/0)
+  sha256: ec15875c969d63043c6966b52e1885bb336315ea58b29ea0b3ad7234db3d0107
+- id: M5
+  what: cover properties hit
+  category: verification
+  unit: '%'
+  record: runs/20261125-102852-3fd4/p3_crc_engine/build/verif/verif_gates.json
+  field: stages.V3.checks.cover_properties_pct.value
+  conditions: Verilator coverage simulation of the RTL against the Modeller's model, every seed the bench ran
+  value: '0.0'
+  sha256: ec15875c969d63043c6966b52e1885bb336315ea58b29ea0b3ad7234db3d0107
+- id: M6
+  what: model cost of the run, provider-reported
+  category: cost
+  unit: USD
+  record: runs/20261125-102852-3fd4/summary.json
+  field: cost_usd
+  conditions: every role and the interview oracle, as the run summary records it
+  value: 2.671223
+  sha256: 508857e7a64726b191324cecd615ab7a07ac13dda0f5ce34f4678dcf31772ead
+gaps:
+- about: REQ-01
+  text: 'REQ-01 has no passing evidence for every proof method: hardware (uart_tests) is pending: no bring-up result'
+- about: REQ-02
+  text: 'REQ-02 has no passing evidence for every proof method: hardware (uart_tests) is pending: no bring-up result'
+- about: REQ-07
+  text: 'REQ-07 has no passing evidence for every proof method: hardware (uart_tests) is pending: no bring-up result'
+- about: REQ-11
+  text: 'REQ-11 has no passing evidence for every proof method: analysis (post_route:setup) is pending: no flow gates result'
+- about: REQ-23
+  text: 'REQ-23 has no passing evidence for every proof method: analysis (post_route:setup) is pending: no flow gates result'
+- about: REQ-12
+  text: 'REQ-12 has no passing evidence for every proof method: hardware (uart_tests) is pending: no bring-up result'
+- about: REQ-13
+  text: 'REQ-13 has no passing evidence for every proof method: hardware (uart_tests) is pending: no bring-up result'
+- about: REQ-14
+  text: 'REQ-14 has no passing evidence for every proof method: hardware (uart_tests) is pending: no bring-up result'
+- about: REQ-24
+  text: 'REQ-24 has no passing evidence for every proof method: hardware (uart_tests) is pending: no bring-up result'
+- about: REQ-18
+  text: 'REQ-18 has no passing evidence for every proof method: analysis (post_synth:post_synth_resources_in_range) is pending:
+    no flow gates result'
+- about: REQ-19
+  text: 'REQ-19 has no passing evidence for every proof method: analysis (post_synth:post_synth_resources_in_range) is pending:
+    no flow gates result'
+- about: REQ-20
+  text: 'REQ-20 has no passing evidence for every proof method: analysis (post_synth:post_synth_resources_in_range) is pending:
+    no flow gates result'
+- about: E1
+  text: 'review evidence is partial: the specification and the architecture were approved automatically, with no human review
+    (review off; the interview oracle claude-sonnet-5-5 only answered the interview questions); the interview asked 8 questions,
+    0 answered and 8 defaulted'
+- about: E2
+  text: 'simulation evidence is partial: verification reached V2 of V3 (the run asked for V2); the checks that did not pass
+    or did not run are listed in the evidence row'
+- about: rtl-design-creation
+  text: 'stage rtl-design-creation did not pass its gates in this run; at its last visit: lint not passing FAIL rtl: did
+    not run (no gates record) FAIL'
+- about: constraints
+  text: 'stage constraints was not run: the run stopped before this stage (stage 2 visited more than 6 times; last failing
+    gate: lint; owned by the rtl role; the same failure on 5 consecutive visits)'
+- about: synthesis
+  text: 'stage synthesis was not run: the run stopped before this stage (stage 2 visited more than 6 times; last failing
+    gate: lint; owned by the rtl role; the same failure on 5 consecutive visits)'
+- about: implementation
+  text: 'stage implementation was not run: the run stopped before this stage (stage 2 visited more than 6 times; last failing
+    gate: lint; owned by the rtl role; the same failure on 5 consecutive visits)'
+- about: timing-closure
+  text: 'stage timing-closure was not run: the run stopped before this stage (stage 2 visited more than 6 times; last failing
+    gate: lint; owned by the rtl role; the same failure on 5 consecutive visits)'
+- about: power-closure
+  text: 'stage power-closure was not run: the run stopped before this stage (stage 2 visited more than 6 times; last failing
+    gate: lint; owned by the rtl role; the same failure on 5 consecutive visits)'
+- about: drc-closure
+  text: 'stage drc-closure was not run: the run stopped before this stage (stage 2 visited more than 6 times; last failing
+    gate: lint; owned by the rtl role; the same failure on 5 consecutive visits)'
+- about: configuration-and-debug
+  text: 'stage configuration-and-debug was not run: the run stopped before this stage (stage 2 visited more than 6 times;
+    last failing gate: lint; owned by the rtl role; the same failure on 5 consecutive visits)'
+- about: formal
+  text: 'formal checks were planned for REQ-09, REQ-21, REQ-22, REQ-15, REQ-25, REQ-16, REQ-26, REQ-18 and did not run;
+    each was replaced by a simulation check (verif/testplan.yaml replan). Reason recorded: SymbiYosys is not installed here
+    so INIT is checked by directed simulation against the model.'
+- about: resources
+  text: 'resources not measured: no current Vivado build of this design has been recorded'
+- about: timing
+  text: 'timing not measured: no current Vivado build of this design has been recorded'
+- about: power
+  text: 'power not measured: no current Vivado build of this design has been recorded'
+- about: latency
+  text: 'latency not measured: the run measured no latency; the spec''s latency promise is checked only by the benches'
+- about: throughput
+  text: 'throughput not measured: the run measured no throughput'
+- about: cover_vs_functional
+  text: Functional bins and cover properties both read 0 of 0 in verif_gates.json, so no coverage was gathered. Line, toggle
+    and mutation results are not measured.
+- about: crc_empty_read
+  text: In crc32_core.sv the CRC register reads 0 whenever BYTE_COUNT is 0, not only for an empty message. After INIT, or
+    after a PUSH_N with TAIL_LEN 0, it reads 0 instead of the finalised state. A 4 GiB wrap of BYTE_COUNT back to 0 would
+    also read 0.
+- about: init_priority
+  text: INIT wins over a push in the same clock (crc32_core.sv). Only one register write happens per clock, so the two cannot
+    coincide on the register port.
+- about: unmapped_and_ro_access
+  text: Reads of unmapped addresses return 0, including 0x00C, 0x014, 0x018 and above 0x028, so PUSH4 and PUSH_N read 0.
+    Writes to RO registers do nothing. CTRL always reads 0.
+- about: tail_len_write
+  text: TAIL_LEN stores only bits 1:0 of the write. A PUSH_N uses the value stored before that clock.
+- about: push_latency
+  text: A write updates the CRC, counters, SCRATCH and TAIL_LEN on the next clock edge, 1 clock after h_we. A read loads
+    h_rdata 1 clock after h_re and holds it until the next h_re, and reset clears it to 0. jtag_bus delay is not counted.
+- about: busy_cycles
+  text: BUSY_CYCLES adds 1 per push with at least 1 byte, and PUSH_N with TAIL_LEN 0 adds nothing. Counters are 32 bits
+    and wrap.
+- about: build_register
+  text: In simulation the USR_ACCESSE2 stub gives BUILD = 0, so the BUILD value (REQ-13) can only be checked on hardware.
+- about: spec_vs_rtl_ports
+  text: spec.yaml lists h_we, h_re, h_addr, h_wdata and h_rdata as internal, but crc32_top.sv declares them as top-level
+    outputs. design.xdc has no pins for them. This disagreement is unresolved and may block implementation.
+- about: spec_vs_rtl_core_params
+  text: crc32_core.sv takes only DESIGN_ID, CRC_INIT and CRC_XOROUT as parameters. CRC_POLY, DATA_BYTES_PER_CLK, TAIL_LEN_MAX,
+    READ_LATENCY_CYCLES and CLK_FREQ_CYCLES are not RTL parameters.
+- about: jtag_bus_source
+  text: The spec assumes jtag_bus.sv was not visible, so its port names follow the request. It is not among the listed files,
+    and the lint failure may involve it.
+next_steps:
+- Fix the lint failure of rtl-design-creation first. Read the review page build/review/02_rtl-design-creation.html for the
+  failing rule, and check the jtag_bus instance and the h_* ports in crc32_top.sv.
+- Decide whether h_we, h_re, h_addr, h_wdata and h_rdata stay as top-level outputs, and update crc32_top.sv, design.xdc
+  or spec.yaml so they agree.
+- Decide whether CRC must read 0 only for an empty message, and change the BYTE_COUNT test in crc32_core.sv or the spec.
+- Compare the cover results with the functional coverage before any new stimulus, then re-run the Verilator coverage command
+  and the verification gates.
+- Resume with python -m agent resume to reach constraints, synthesis and implementation, then measure resources, timing
+  (WNS at or above 0 ns) and power.
+- Run the hardware tests for the REQ items that have a hardware proof method.
+open_questions:
+- Should the CRC register read 0 only for an empty message, as the spec says, or whenever BYTE_COUNT is 0, as the RTL does?
+- Should the register-port signals be top-level ports, given that the spec calls them internal?
+history:
+- date: '2026-11-25'
+  brief: agent run
+  note: 'produced by the agent graph; stages that passed: clarify, board-and-device-planning'
+agent_run:
+  run_id: 20261125-102852-3fd4
+  record: runs/20261125-102852-3fd4/summary.json
+  model: claude-sonnet-5-5
+  harness: deepagents
+  stop: 'stage 2 visited more than 6 times; last failing gate: lint; owned by the rtl role; the same failure on 5 consecutive
+    visits'
+  loops: 8
+  turns: 155
+  tokens: 5449218
+  wall_s: 1002.0
+  cost_usd: 2.671223
+state:
+  stage: rtl
+  gates:
+    clarify: pass
+    board-and-device-planning: pass
+    rtl-design-creation: fail
+    constraints: not-run
+    synthesis: not-run
+    implementation: not-run
+    timing-closure: not-run
+    power-closure: not-run
+    drc-closure: not-run
+    configuration-and-debug: not-run
+  vivado: '2026.1'
+  kb_pin: 5e2eab8
+  build_id: 798b2b70
+  evidence_vivado: none

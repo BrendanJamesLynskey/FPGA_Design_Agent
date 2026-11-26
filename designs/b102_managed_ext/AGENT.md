@@ -2,7 +2,7 @@
 source: designs/b102_managed_ext/handover.yaml; human view: README.md; refresh: python -m flow.handover fresh designs/b102_managed_ext
 
 ## identity
-kind=demonstration produced_by=human part=xck26-sfvc784-2LV-c board=Kria KR260 top=fcs_top tool=Vivado 2026.1
+kind=demonstration produced_by=session part=xck26-sfvc784-2LV-c board=Kria KR260 top=fcs_top tool=Vivado 2026.1
 verified: not assessed: no requirements recorded (no verif/testplan.yaml), so nothing here is traced to a requirement (record: designs/b102_managed_ext/VERIFIED.md, designs/b102_managed_ext/verified.json; definition: docs/verified.md)
 
 ## summary
@@ -10,7 +10,7 @@ A KR260 self-test of an Ethernet FCS stage that integrates one real third-party 
 not: a 10G Ethernet FCS check; the block is instantiated at 16 data bits a clock, not the 64-bit word of the 96 design; a board design; it was not programmed, and the 161 MHz clock constraint is on the 25 MHz oscillator pin for a timing study
 
 ## state
-stage=built vivado=2026.1 kb_pin=93d158c build_id=19e88489
+stage=built vivado=2026.1 kb_pin=6185830 build_id=eaccdf6d
 gates: import_checks=pass build_2026_1=pass boundary_checks=pass
 
 ## interface

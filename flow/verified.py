@@ -251,7 +251,7 @@ def record(d: Path) -> dict[str, Any]:
                            "definition": "docs/verified.md", "criteria": [], "requirements": [], "declared": None}
     plan = d / "verif" / "testplan.yaml"
     files: list[str] = []
-    if plan.exists():
+    if plan.exists() and all("kind" in r for r in (yaml.safe_load(plan.read_text()).get("requirements") or [])):      # a library entry whose testplan has no requirement kinds (brief 151's own format) is not rolled up by the collector yet
         c = T.collect(d)
         items = {i["id"]: i for i in c["items"]}
         reqs = []

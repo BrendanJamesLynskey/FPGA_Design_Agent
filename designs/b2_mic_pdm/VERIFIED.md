@@ -4,7 +4,7 @@
 
 **Not assessed: no requirements recorded (no verif/testplan.yaml), so nothing here is traced to a requirement.**
 
-What the label means, what "verified" never means and how it is earned: [docs/verified.md](../../docs/verified.md). The label is computed from the testplan and the evidence files named below; it is never typed. Generated at git commit `a8359042aac759be0a4d6b05186709bdb7bb093c` (informational: the hashes in the manifest, not the commit, are what the CI check compares).
+What the label means, what "verified" never means and how it is earned: [docs/verified.md](../../docs/verified.md). The label is computed from the testplan and the evidence files named below; it is never typed. Generated at git commit `51dfe82191cd59c99857973f44b8b57ec9363fb5` (informational: the hashes in the manifest, not the commit, are what the CI check compares).
 
 ## What was checked for the label
 
@@ -41,7 +41,7 @@ Every file this record covers, with its SHA-256 at generation (7 files). `absent
 
 | File | SHA-256 |
 |---|---|
-| `designs/b2_mic_pdm/handover.yaml` | `0b354eef2a743ce2bcc03598f492d4c1962540e0bce4edf348dc59e578739610` |
+| `designs/b2_mic_pdm/handover.yaml` | `a3d2e567ae17e0c0616a6a55821e0d6b51270073e59fd09580f2bed67fee870b` |
 | `designs/b2_mic_pdm/rtl/b2_mic_pdm_top.sv` | `b3c762d55ac6b8f05a0f08ab85c671082fb9b4754a30b37d76f03ca154d4f5eb` |
 | `designs/b2_mic_pdm/rtl/mic_regs.sv` | `1d09870a808d3ad38a4ea9fbe2638b92629e5eda478825e99b6bf7ba49e56f33` |
 | `designs/b2_mic_pdm/rtl/pdm_stats.sv` | `a124aa465b922ff14f0a518ff5c0f94c58ded13ff9efc4893c2c8931ab814a48` |

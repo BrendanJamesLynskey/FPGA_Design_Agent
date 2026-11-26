@@ -2,7 +2,7 @@
 source: designs/b2_qspi_jedec/handover.yaml; human view: README.md; refresh: python -m flow.handover fresh designs/b2_qspi_jedec
 
 ## identity
-kind=board-selfcheck produced_by=human part=xc7a100tcsg324-1 board=Nexys A7-100T top=b2_qspi_jedec_top tool=Vivado 2026.1
+kind=board-selfcheck produced_by=session part=xc7a100tcsg324-1 board=Nexys A7-100T top=b2_qspi_jedec_top tool=Vivado 2026.1
 verified: not assessed: no requirements recorded (no verif/testplan.yaml), so nothing here is traced to a requirement (record: designs/b2_qspi_jedec/VERIFIED.md, designs/b2_qspi_jedec/verified.json; definition: docs/verified.md)
 
 ## summary
@@ -10,7 +10,7 @@ Reads the JEDEC ID of the Nexys A7's configuration flash (S25FL128S or S25FL127S
 not: a flash memory test: it reads only the ID, so it says nothing about the flash contents, erase, program or quad-mode operation; an agent benchmark task; it was written by hand to prove the board inventory on hardware
 
 ## state
-stage=board-verified vivado=2026.1 kb_pin=1fc7ed8 build_id=ac857e6b
+stage=board-verified vivado=2026.1 kb_pin=6185830 build_id=f70087b5
 gates: build_2026_1=pass board_selfcheck=pass
 
 ## interface

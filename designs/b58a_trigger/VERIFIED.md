@@ -4,7 +4,7 @@
 
 **Not assessed: no requirements recorded (no verif/testplan.yaml), so nothing here is traced to a requirement.**
 
-What the label means, what "verified" never means and how it is earned: [docs/verified.md](../../docs/verified.md). The label is computed from the testplan and the evidence files named below; it is never typed. Generated at git commit `a8359042aac759be0a4d6b05186709bdb7bb093c` (informational: the hashes in the manifest, not the commit, are what the CI check compares).
+What the label means, what "verified" never means and how it is earned: [docs/verified.md](../../docs/verified.md). The label is computed from the testplan and the evidence files named below; it is never typed. Generated at git commit `51dfe82191cd59c99857973f44b8b57ec9363fb5` (informational: the hashes in the manifest, not the commit, are what the CI check compares).
 
 ## What was checked for the label
 
@@ -45,21 +45,21 @@ Every file this record covers, with its SHA-256 at generation (19 files). `absen
 
 | File | SHA-256 |
 |---|---|
-| `designs/b58a_trigger/handover.yaml` | `03517942fbebd9ea744da0be51695d802c272f2eada537852268b72b7195c993` |
+| `designs/b58a_trigger/handover.yaml` | `ae8b0b708bfd68e4bca59f019039faa7ebade3278c92859e197ed756dd852529` |
 | `designs/b58a_trigger/rtl/book.sv` | `216116a0a865b79554d425b6bca939a9f15dab8a833391c7403d1467e7285aa4` |
 | `designs/b58a_trigger/rtl/feed_gen.sv` | `73d6161ebb18d1f7eda5e807d056d52d48dd78fde100f35ec27ad78dd4d72046` |
 | `designs/b58a_trigger/rtl/feed_rx.sv` | `ccc1c62f8b710bf480a435f66fbd5e54b7b9d6c81928bf013330a35b0618670a` |
 | `designs/b58a_trigger/rtl/interlocks.sv` | `37a99e59c69e5e2976afcfb9f3466f72a850456daef4569716b37fb6f1d10e89` |
 | `designs/b58a_trigger/rtl/jtag_bus.sv` | `5a6042e567c4e7f2ca34bb01810459650f56f1bb3850434b427f2e4e6edd40b1` |
-| `designs/b58a_trigger/rtl/kr260_top.sv` | `37a255dedd28c53d7a5fb5d64603b4f8c8503b7697f9e15ceb194d962eaf3a3c` |
+| `designs/b58a_trigger/rtl/kr260_top.sv` | `fca2846beacdbb98559532c63da1d02125d814f0e823b5efeaaec043c1677811` |
 | `designs/b58a_trigger/rtl/lat_hist.sv` | `bff5f32de787fdbf2ae739eed67f4d1f2764224b4dd90e03c01050a3ee856a38` |
 | `designs/b58a_trigger/rtl/mdio_master.sv` | `4c09bd1833c7c0b8b8757b52c35087eeb9c165489278463eafd2a44038a3cf26` |
 | `designs/b58a_trigger/rtl/order_ctl.sv` | `db91763b3f836681d93ae5c57c9722a51b07fd6d20c36e391c901aa97578ef44` |
 | `designs/b58a_trigger/rtl/rules.sv` | `bf046cfda694711d6dee421864d365254fa64e3285e80ce3fc5d4800cb34cd14` |
-| `designs/b58a_trigger/rtl/trigger_core.sv` | `cf7c64d60a10a6ad309a5f796b9451f4574fab61ad3d54302e1027700b776cdc` |
+| `designs/b58a_trigger/rtl/trigger_core.sv` | `e7c26425518eb3bfdd7dc873f85b63d1af7d47977128edc2a3c4d90e57cf5833` |
 | `designs/b58a_trigger/tests/test_b58a_rtl.py` | `85faa7d8258c2fc819155f226ad53111295ad0b053141ea5f293ef728c14b670` |
 | `designs/b58a_trigger/tests/test_rev_adv_rtl.py` | `d3c1ce109d6da370a7321b9fd7977cc2cedd9c1f5d8d569c931badb2c5313472` |
-| `results/b58a/build/summary.json` | `dde54251b4f6d5a5d5e863af0c0219e3f823cfba2368007559df58d5851ae6af` |
+| `results/b58a/build/summary.json` | `ec22e14ccee950eeab4627d1dac80ec0f0eb449cc4101b1f3ed897b47b461847` |
 | `results/b58a/formal.json` | `a1d4d11567a58562e831bed2085ade3f3ef6feda41f78ae3e1751524a1d6da42` |
 | `results/b58a/mac_rgmii_faults.json` | `1ec1e53e3e422b31ff3912c37beba3196ca68436ac4731addb9311da2e617c6d` |
 | `results/b58a/nl_rules.json` | `0e81038cbe2d6aadcad8fa5e26771e90eb42eda3939cc370c7d6ccdaa42497e1` |

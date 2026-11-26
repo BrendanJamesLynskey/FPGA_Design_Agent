@@ -12,7 +12,7 @@ Not in scope:
 - a board run or a full-design build of ML_PRE 1 to 3; every hardware number is an out-of-context, post-route Vivado 2026.1 block build
 - a model that uses the message's own price; none exists in this programme, and every arm must equal the 87 integer model
 
-Kind: showcase; written by hand. State: built. For an agent: [AGENT.md](AGENT.md).
+Kind: showcase; written by a Claude Code session. State: built. For an agent: [AGENT.md](AGENT.md).
 
 <!-- prose:what -->
 **Purpose:** find out how much of the decision model can be done before the last byte arrives, and what it costs.
@@ -76,7 +76,7 @@ Interfaces:
 | the model behind trigger_core for one ML_ARM and ML_PRE; needs Icarus Verilog 12, cocotb 2.0.1; repeat for ML_ARM 1 and 4, ML_PRE 0 to 3 | `B93_ML_ARM=1 B93_ML_PRE=1 B93_RECORD=results/b93 python3 -m pytest -q designs/b93_precompute/tests/test_b93_integ_rtl.py` | no | about 1 min |
 | out-of-context builds and clock search on both parts; needs Vivado 2026.1 and a heavy slot; repeat with --part xc7a100tcsg324-1 | `python3 -m designs.b93_precompute.ooc.ooc --part xck26-sfvc784-2LV-c --arms gbt_comb lg_small_comb gbt_pe gbt_pe2 lgs_pe lgs_pe2 ml_feat ml_feat_pre` | yes | about 180 min |
 
-Tool: Vivado 2026.1. Build ID of the inputs at handover: none (no Vivado build of this directory). Knowledge-bank pin: `5c10d51`.
+Tool: Vivado 2026.1. Build ID of the inputs at handover: none (no Vivado build of this directory). Knowledge-bank pin: `6185830`.
 
 | File | What |
 |---|---|

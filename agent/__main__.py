@@ -8,7 +8,15 @@
     python -m agent review <design-dir> [--out DIR] [--intent FILE] [--improvements FILE] [--no-judge]   (brief 84: review an existing design, read-only)
     python -m agent document <run-dir> [--cc-model M] [--replay doc_calls.jsonl]   (brief 68 C: the DOC step on a finished run)
     python -m agent project check|status|hash|gen-tests <dir> ...     (the project layer, project/cli.py)
+    python -m agent ip search|rank|show|use ...                  (brief 150: the IP library, `python -m agent ip --help`)
     python -m agent improve <design-dir> "<request>" [--more | --edit N "<change>" | --choose N]   (brief 104: analysis, then strategy options; --choose runs one)
+
+    python -m agent doctor [--json] [--no-probe]        (brief 157: what this machine is missing before a first run; no key needed)
+    python -m agent models show                          (brief 157: the model table; no key needed)
+
+Without the access key only these run: ``--help`` at any level, ``doctor``, ``models show`` and ``resume <design-dir> ... --dry-run``
+(``agent/newcomer.py``, the single place that decides it; ``agent/tests/test_157_newcomer_cli.py`` proves everything else still stops at
+the gate). Every other command exits 2 with one line naming FDA_ACCESS_KEY.
 
 A paused run (an interview question or a stage review) prints what it waits for; answer with ``resume --reply``
 ({"answer": ...} for a question; {"decision": "approve"|"edit"|"rewind", "note": ..., "to": N} for a review).
@@ -24,8 +32,23 @@ import json
 import sys
 from pathlib import Path
 
-from agent.core.boards import board_arg, board_name
-from agent.core.session import ROOT
+ROOT = Path(__file__).resolve().parents[1]           # the checkout (agent.core.session.ROOT is the same path; no import, so --help and doctor need no extras)
+
+
+def newcomer_is_design_resume(run_id: str) -> bool:
+    from agent.newcomer import is_design_resume
+    return is_design_resume(run_id)
+
+
+def board_arg(text: str):
+    """``--board``: a board id or the words of a request (agent.core.boards, imported when the option is used)."""
+    from agent.core.boards import board_arg as f
+    return f(text)
+
+
+def board_name(text: str):
+    from agent.core.boards import board_name as f
+    return f(text)
 
 
 def scope_for_record(design: Path) -> dict | None:
@@ -66,6 +89,68 @@ def with_scope(s: dict, design: Path) -> dict:
     return s
 
 
+NEEDS_PERMISSION = "needs_permission"
+EXIT_NEEDS_PERMISSION, EXIT_PERMISSION_DENIED = 3, 4        # brief 222: distinct from success (0) and a usage error (2)
+
+
+def drive_exit(res: dict) -> int:
+    """The exit code of a driven run: 3 when it stopped to ask for a permission nobody was there to give, 4 when a permission was refused, else 0."""
+    if res.get("status") == NEEDS_PERMISSION:
+        return EXIT_NEEDS_PERMISSION
+    if str(res.get("stop") or "").startswith("permission denied"):
+        return EXIT_PERMISSION_DENIED
+    return exit_status(res)         # brief 210: 3 as well when the run stopped on unresolved requirements (both mean "a person has to answer"; the JSON on stdout says which)
+
+
+def permission_spec(a, name: str | None, ap) -> dict:
+    """The run's permission policy from the command line and the config file (the command line wins); a bad name is a usage error."""
+    from agent.core import permissions as _perm
+    try:
+        return _perm.resolve(a.permissions, a.allow, a.deny, a.ask_above_usd, project=name, cli_ask=a.ask)
+    except ValueError as e:
+        ap.error(str(e))
+
+
+def resume_permissions(a, rt, c: dict) -> int | None:
+    """On ``resume``: flags on the command line change the run's policy (a new mode drops what the old one was granted); a higher cost cap needs
+    ``raise_budget``. Returns an exit code when the resume must not go on, else None."""
+    from agent.core import permissions as _perm
+    pol = getattr(rt, "policy", None)
+    if pol is None:                                           # a runtime without a policy (a test double): nothing to change or check
+        return None
+    if a.permissions or a.allow or a.deny or a.ask or a.ask_above_usd is not None:
+        spec = pol.spec()
+        if a.permissions and a.permissions != pol.mode:
+            spec.update(mode=a.permissions, overrides={})
+        spec["source"] = "command line (resume)"
+        for n in a.ask:
+            spec["overrides"][n] = _perm.ASK
+        for n in a.allow:
+            spec["overrides"][n] = _perm.ALLOW
+        for n in a.deny:
+            spec["overrides"][n] = _perm.DENY
+        if a.ask_above_usd is not None:
+            spec["ask_above_usd"] = a.ask_above_usd
+        pol.change_mode(spec)
+        print(json.dumps({"permissions": {"mode": pol.mode, "overrides": pol.overrides, "source": pol.source}}))
+    prior = (c.get("run_limits") or {}).get("usd")
+    prior_scale = float((c.get("models") or {}).get("budget_scale") or 1.0)
+    raising = (a.max_usd is not None and prior is not None and float(a.max_usd) > float(prior)) or (a.budget_scale is not None and float(a.budget_scale) > prior_scale)
+    if raising:
+        d = pol.decide("raise_budget", None, f"cost cap {prior} -> {a.max_usd}, scale {prior_scale} -> {a.budget_scale}")
+        if d.result == _perm.DENY:
+            print(json.dumps({"status": "permission_denied", "needs": ["raise_budget"], "why": d.by, "run_id": rt.run_id}, indent=1))
+            return EXIT_PERMISSION_DENIED
+        if d.result == _perm.ASK:
+            print(json.dumps({"status": NEEDS_PERMISSION, "needs": ["raise_budget"], "run_id": rt.run_id,
+                              "how": f"python -m agent resume {rt.run_id} --allow raise_budget --max-usd {a.max_usd}" if a.max_usd is not None else
+                              f"python -m agent resume {rt.run_id} --allow raise_budget --budget-scale {a.budget_scale}"}, indent=1))
+            return EXIT_NEEDS_PERMISSION
+        if d.by.startswith("override") or d.by.startswith("mode"):
+            pol.grant(["raise_budget"], d.by, None, "a higher cost cap")
+    return None
+
+
 def _drive(graph, rt, cfg_lg, first_input, replies: list) -> dict:
     from langgraph.types import Command
 
@@ -76,11 +161,21 @@ def _drive(graph, rt, cfg_lg, first_input, replies: list) -> dict:
         snap = graph.get_state(cfg_lg)
         pending = [i.value for t in snap.tasks for i in (t.interrupts or [])]
         if not pending:
+            (rt.run_dir / "pending.json").unlink(missing_ok=True)
             break
         if not replies:
-            print(json.dumps({"paused": pending[0], "run_id": rt.run_id}, indent=1))
-            return {"paused": pending[0]}
+            (rt.run_dir / "pending.json").write_text(json.dumps({"paused": pending[0], "run_id": rt.run_id}, indent=1))     # brief 182: the navigator shows a pending question
+            if pending[0].get("kind") == "review" and pending[0].get("hardware"):      # brief 219 fix 7: a pause for the programming approval leaves the run record
+                from agent.graph.run import write_paused_record
+                write_paused_record(rt, snap.values, pending[0])
+            out = {"paused": pending[0], "run_id": rt.run_id}
+            if pending[0].get("kind") == "permission":                                      # brief 222: a headless run stops here, on purpose, with what it needs
+                out = {"status": NEEDS_PERMISSION, **out, "needs": pending[0].get("needs"), "how": pending[0].get("resume"),
+                       "or": "python -m agent resume " + rt.run_id + " --allow <action> (or --permissions auto|full)"}
+            print(json.dumps(out, indent=1))
+            return {"paused": pending[0], **({"status": NEEDS_PERMISSION} if pending[0].get("kind") == "permission" else {})}
         reply = replies.pop(0)
+        (rt.run_dir / "pending.json").unlink(missing_ok=True)
         print(json.dumps({"interrupt": pending[0].get("kind"), "stage": pending[0].get("stage"), "reply": reply}))
         inp = Command(resume=reply)
     if snap.values.get("doc") and (rt.run_dir / "summary.json").is_file():    # brief 68 C: frozen by the document node
@@ -91,6 +186,13 @@ def _drive(graph, rt, cfg_lg, first_input, replies: list) -> dict:
     (rt.run_dir / "summary.json").write_text(json.dumps(s, indent=1))
     print(json.dumps(s, indent=1))
     return s
+
+
+def exit_status(summary: dict | None) -> int:
+    """0, or ``agent.graph.requirements.EXIT_REQUIREMENTS`` (3) when the run stopped because requirements are unresolved: not a crash,
+    and distinct from usage errors (2), so a script can tell "answer these questions" from "the command was wrong" (brief 210)."""
+    from agent.graph import requirements as RQ
+    return RQ.EXIT_REQUIREMENTS if RQ.is_requirements_stop((summary or {}).get("stop")) else 0
 
 
 def task_no_shell(hidden_spec: Path | None) -> bool:
@@ -115,7 +217,10 @@ def model_kwargs(a, argv: list[str]) -> dict:
     """The Config fields of the model configuration: the project file, ``--model-config``, which model flags were given, the owner's Fable flag."""
     from agent.models.config import parse_cli_json
     given = tuple(sorted({v for f, v in MODEL_FLAGS.items() if any(x == f or x.startswith(f + "=") for x in argv)}))
-    return dict(models_file=getattr(a, "models_file", None), model_config=parse_cli_json(getattr(a, "model_config", None)) or None,
+    mc = parse_cli_json(getattr(a, "model_config", None))
+    if getattr(a, "budget_scale", None) is not None:          # brief 209b: --budget-scale is one more key of the command-line layer
+        mc = parse_cli_json({**mc, "budget_scale": a.budget_scale})
+    return dict(models_file=getattr(a, "models_file", None), model_config=mc or None,
                 explicit=given, allow_fable=bool(getattr(a, "allow_fable", False)), replay_run=bool(getattr(a, "replay", None)))
 
 
@@ -152,17 +257,27 @@ def project_models_file(spec: Path) -> Path | None:
     return f if f.is_file() else None
 
 
+def _literal(v):
+    """brief 194: config.json stores every field with str(); a dict field comes back through literal_eval (None for absent or 'None')."""
+    import ast
+    if v in (None, "None", ""):
+        return None
+    return v if isinstance(v, dict) else ast.literal_eval(v)
+
+
 def config_from_json(c: dict):
     """The Config of a run from its config.json (``resume``); runs from before 05f have no profile: ``single``."""
     from agent.graph.run import Config
     def flag(k: str) -> bool:
         return str(c.get(k, False)) == "True"
-    return Config(spec_md=Path(c["spec_md"]), name=c["name"], board=c["board"], interview=c["interview"],
+    return Config(spec_md=Path(c["spec_md"]), name=c["name"], board=c["board"], interview=c["interview"], requirements=c.get("requirements") or "",
                   review=c["review"], model=c["model"],
                   hidden_spec=Path(c["hidden_spec"]) if c.get("hidden_spec") not in (None, "None") else None,
                   stop_after=None if c.get("stop_after") in (None, "None") else int(c["stop_after"]),
                   harness=c.get("harness", "deepagents"), cc_model=c.get("cc_model", "claude-haiku-5-5"),
                   cc_effort=c.get("cc_effort", "medium"), verif_level=c.get("verif_level", "V3"),
+                  verif_profile=c.get("verif_profile", "standard"), verif_sets=_literal(c.get("verif_sets")),
+                  settings_file=Path(c["settings_file"]) if c.get("settings_file") not in (None, "None", "") else None, settings_flags=_literal(c.get("settings_flags")),
                   profile=c.get("profile", "single"), roles=c.get("roles") or None,
                   no_shell=flag("no_shell"),
                   data_dir=Path(c["data_dir"]) if c.get("data_dir") not in (None, "None") else None,
@@ -179,7 +294,8 @@ def config_from_json(c: dict):
                   models_file=Path(c["models_file"]) if c.get("models_file") not in (None, "None") else None,   # brief 108
                   model_config=c.get("model_config") or None, explicit=tuple(c.get("explicit") or ()),
                   allow_fable=str(c.get("allow_fable", False)) == "True",
-                  level1_seed=int(c["level1_seed"]) if c.get("level1_seed") not in (None, "None") else None)
+                  level1_seed=int(c["level1_seed"]) if c.get("level1_seed") not in (None, "None") else None,
+                  permissions=_literal(c.get("permissions")))                                    # brief 222
 
 
 def models_cmd(a, argv: list[str]) -> int:
@@ -197,6 +313,8 @@ def models_cmd(a, argv: list[str]) -> int:
     if a.action == "show":
         print(json.dumps(table.record(), indent=1) if a.json else table.show())
         return 0
+    from agent.access import require_or_exit      # brief 157: `check` (and --probe, which spends tokens) is not the exempt `show`
+    require_or_exit("python -m agent models check")
     print(table.show())
     print(f"\nthe table is valid ({len(table.entries())} entries, hash {table.hash})")
     if not a.probe:
@@ -253,9 +371,12 @@ def pickup_cmd(a) -> int:
         print(json.dumps({**report, "resume": "refused: the handover has errors; fix them first"}, indent=1))
         return 2
     try:
-        entry = pickup.entry_stage(ld["handover"], fresh, a.change, a.kind, a.from_stage)
+        entry = getattr(a, "entry_override", None) or pickup.entry_stage(ld["handover"], fresh, a.change, a.kind, a.from_stage)   # brief 159: revise gives its own
     except pickup.PickupError as e:
         print(f"resume: {e}", file=sys.stderr)
+        return 2
+    if entry.get("question"):                        # brief 149: nothing matched; a question, not stage 0
+        print(json.dumps({**report, "resume": "no entry stage: a question", "question": entry["question"]}, indent=1))
         return 2
     report["entry"] = {"stage": entry["stage"], "kind": entry["kind"], "notes": entry.get("notes") or [],
                        "reasons": [{"stage": s, "why": w} for s, w in entry["reasons"]]}
@@ -273,6 +394,8 @@ def pickup_cmd(a) -> int:
         report["resume"] = "dry run" if a.dry_run else "nothing to re-run: the handover is current"
         print(json.dumps(report, indent=1))
         return 0
+    from agent.access import require_or_exit      # brief 157: past the dry run this resume calls models and writes a run: the gate again,
+    require_or_exit("python -m agent resume")     # in case main() let the command line through without a key
     hb = (ld["handover"].get("target") or {}).get("board")
     board = a.board or (hb if hb and (ROOT / "boards" / str(hb)).is_dir() else "nexys_a7_100t")
     ar = ld["handover"].get("agent_run") or {}
@@ -281,13 +404,23 @@ def pickup_cmd(a) -> int:
     report["settings"] = {"board": board, "verif_level": verif}
     cfg = Config(spec_md=ddir / "spec.md", name=ddir.name, board=board, model=a.model, stop_after=a.stop_after,
                  harness=a.harness, cc_model=a.cc_model, cc_effort=a.cc_effort, verif_level=verif,
-                 profile=a.profile, roles=parse_roles(a.roles), docs=a.docs, **model_kwargs(a, sys.argv[1:]))
+                 profile=a.profile, roles=parse_roles(a.roles), docs=a.docs, permissions=permission_spec(a, ddir.name, build_parser()),
+                 **model_kwargs(a, sys.argv[1:]))
     cfg.role_models()
     if a.max_usd is not None:
         cfg.run_limits["usd"] = a.max_usd
-    rt = new_runtime(cfg, None, replay=a.replay, record=a.record)
+    from agent.core.permissions import NeverRefused
+    try:
+        rt = new_runtime(cfg, None, replay=a.replay, record=a.record)
+    except NeverRefused as e:                                # brief 222: a cost cap above the hard cap
+        print(f"resume: {e}", file=sys.stderr)
+        return 2
     try:
         state = pickup.prepare(ddir, rt, entry, a.change)
+        if getattr(a, "revise_goals", None) is not None:           # brief 159: the typed goals (and a retarget) go into the run's copy, never the source
+            from agent.graph import revise as _rv
+            report["revise_written"] = _rv.write_goals(Path(rt.design), a.revise_goals, getattr(a, "revise_retarget", None),
+                                                       (ld["handover"].get("target") or {}).get("part"))
     except pickup.PickupError as e:
         print(f"resume: {e}", file=sys.stderr)
         return 2
@@ -311,7 +444,114 @@ def pickup_cmd(a) -> int:
     print(json.dumps(report, indent=1))
     replies = json.loads(a.replies.read_text()) if a.replies else []
     graph = build_graph(checkpointer_for(rt.run_dir), routing=cfg.skill_routing != "off")
-    _drive(graph, rt, {"configurable": {"thread_id": rt.run_id}}, state, replies)
+    return drive_exit(_drive(graph, rt, {"configurable": {"thread_id": rt.run_id}}, state, replies))
+
+
+def revise_cmd(a) -> int:
+    """Brief 159: ``agent revise <design> --goal ... [--retarget ...]``: the plan (agent.graph.revise), then, unless --dry-run, the run."""
+    from agent.graph import goals as G
+    from agent.graph import pickup
+    from agent.graph import revise as R
+    ddir = Path(a.design).resolve()
+    try:
+        goals = [G.parse_goal(t, source=a.source) for t in a.goal]
+        ld = pickup.load(ddir)
+        pl = R.plan(ddir, ld, goals, a.retarget)
+    except (G.GoalError, R.ReviseError, pickup.PickupError) as e:
+        print(f"revise: {e}", file=sys.stderr)
+        return 2
+    if ld["fresh"]["errors"]:
+        print(json.dumps({"revise": "refused: the handover has errors; fix them first", "errors": ld["fresh"]["errors"]}, indent=1))
+        return 2
+    out = R.public(pl)
+    if a.dry_run or pl["entry"]["stage"] >= pickup.DOC_ONLY:
+        out["revise"] = "dry run" if a.dry_run else "nothing to re-run: the committed evidence already meets every goal and the handover is current"
+        print(json.dumps(out, indent=1, default=str))
+        return 0
+    print(json.dumps(out, indent=1, default=str))
+    text = "; ".join([c["goal"] for c in out["changes"]] + ([f"retarget to {a.retarget}"] if a.retarget else []))
+    b = argparse.Namespace(**vars(a))
+    b.run_id, b.change, b.kind, b.from_stage, b.scope, b.strategy_file, b.rewind, b.stop_after = (
+        str(ddir), "revise: " + text, None, None, None, None, None, getattr(a, "stop_after", None))
+    b.entry_override = {"stage": pl["entry"]["stage"], "kind": pl["entry"]["kind"],
+                        "reasons": [(r["stage"], r["why"]) for r in pl["entry"]["reasons"]], "notes": pl["entry"]["notes"]}
+    b.revise_goals = pl["_after"]
+    b.revise_retarget = (pl["retarget"] or {}).get("to") if pl["retarget"] and pl["retarget"].get("stage") is not None else None
+    if b.revise_retarget and b.revise_retarget.get("board") and not getattr(a, "board", None):
+        b.board = b.revise_retarget["board"]
+    return pickup_cmd(b)
+
+
+def live_cmd(a) -> int:
+    """Brief 182: status, ask and request. The navigator's Live page calls the same code (navigator/summary.py, console.py, ask.py; agent/graph/requests.py)."""
+    import time as _t
+    from navigator import ask as nask
+    from navigator import console as ncon
+    from navigator import summary as nsum
+    rd = Path(a.run_dir).resolve()
+    runs, rid = rd.parent, rd.name
+    if a.cmd == "status":
+        def show() -> dict | None:
+            s = nsum.summarise(runs, rid)
+            if s is None:
+                print("no such run directory", file=sys.stderr)
+                return None
+            print(json.dumps(s, indent=1, default=str) if a.json else s["sentence"] + "\n" + "".join(f"  request {r['id']} ({r['label']}): {r['status']}" + (f", {r['reason']}" if r["reason"] else "") + "\n" for r in s["requests"]), end="")
+            return s
+        if a.console:
+            lst = ncon.steps(runs, rid)
+            if lst is None:
+                print("no such run directory", file=sys.stderr)
+                return 2
+            for x in lst["steps"]:
+                print(f"{x['id']:<34} {x['label']:<26} {'running' if x['active'] else 'ended  '} {x['size']:>9} bytes  {x['source']}")
+            if lst["restriction"]:
+                print("(" + lst["restriction"] + ")")
+            pick = a.step or next((x["id"] for x in reversed(lst["steps"]) if x["active"]), (lst["steps"][-1]["id"] if lst["steps"] else None))
+            out = ncon.read(runs, rid, pick) if pick else None
+            if out:
+                print(f"--- {out['label']} ({out['source']}), last {len(out['lines'])} lines ---")
+                print("\n".join(out["lines"][-60:]))
+            return 0
+        s = show()
+        if s is None:
+            return 2
+        while a.follow and s and s["status"] != "finished":
+            last = s["sentence"]
+            _t.sleep(5)
+            s = nsum.summarise(runs, rid)
+            if s and s["sentence"] != last:
+                show()
+        return 0
+    if a.cmd == "ask":
+        try:
+            r = nask.ask(runs, rid, a.question)
+        except nask.AskError as e:
+            print("ask refused: " + str(e), file=sys.stderr)
+            return 2
+        print(r["a"])
+        print(f"\nrecords given: {', '.join(r['records_read'])}; cited: {', '.join(r['cited']) or 'none'}" + (f"; cites records it was not given: {', '.join(r['cites_unknown'])}" if r["cites_unknown"] else ""))
+        print(f"model {r['model']}; cost {r['plan_estimate_usd'] if r['cost_usd'] is None else r['cost_usd']} ({r['cost_note']}); this run's questions: {r['qa_spent_usd']} of {r['qa_cap_usd']} USD, {r['qa_count']} of {r['qa_max']}")
+        return 0
+    from agent.core.session import STAGES
+    from agent.graph import requests as rq
+    ctl, stage = (None, None)
+    if a.control:
+        ctl = a.control[0]
+        if len(a.control) > 2 or (ctl.replace("-", "_") == "stop_after") != (len(a.control) == 2):
+            print("request refused: use --control pause | abort | stop-after N", file=sys.stderr)
+            return 2
+        try:
+            stage = int(a.control[1]) if len(a.control) == 2 else None
+        except ValueError:
+            print("request refused: N must be a stage number", file=sys.stderr)
+            return 2
+    try:
+        r = rq.submit(rd, control=ctl, stage=stage, design=a.design, stages=tuple(STAGES))
+    except rq.RequestError as e:
+        print("request refused: " + str(e), file=sys.stderr)
+        return 2
+    print(f"request {r['id']} queued: {rq.describe(r)}\n  applies: {r['applies']}\n  affects: {r['affects']}")
     return 0
 
 
@@ -328,27 +568,33 @@ def review_cmd(a) -> int:
     return 0 if rep["design"]["unchanged"] else 2
 
 
-def main(argv: list[str] | None = None) -> int:
-    args = sys.argv[1:] if argv is None else argv
-    if args[:1] == ["project"]:                      # brief 27B: the project layer (project/), not part of the agent graph
-        from project.cli import main as project_main
-        return project_main(args[1:])
-    from agent.access import require_or_exit      # brief 94: run, resume and document all start here
-    require_or_exit("python -m agent")
-    from agent.graph.role_models import parse_roles
-    from agent.graph.run import Config, build_graph, checkpointer_for, new_runtime
-    ap = argparse.ArgumentParser(prog="python -m agent")
-    sub = ap.add_subparsers(dest="cmd", required=True)
-    r = sub.add_parser("run")
-    r.add_argument("spec", type=Path)
+def build_parser() -> argparse.ArgumentParser:
+    """The command line. Building it reads no key and no private file; ``--help`` is argparse's own, so it prints and exits 0 before the
+    access gate (brief 157). Which commands need the key is in ``agent.newcomer.COMMANDS`` and in the epilog."""
+    from agent import newcomer
+    ap = argparse.ArgumentParser(prog="python -m agent", description=newcomer.TOP_DESCRIPTION, epilog=newcomer.TOP_EPILOG,
+                                 formatter_class=argparse.RawDescriptionHelpFormatter)
+    sub = ap.add_subparsers(dest="cmd", required=True, metavar="command")
+    r = sub.add_parser("run", help=newcomer.COMMANDS["run"][0], description=newcomer.COMMANDS["run"][1], epilog=newcomer.RUN_EPILOG,
+                       formatter_class=argparse.RawDescriptionHelpFormatter)
+    r.add_argument("spec", type=Path, help="the plain-English spec (spec.md); a task directory's data/ and bench.yaml sit beside it")
     r.add_argument("--board", default="nexys_a7_100t", type=board_arg,
                    help="a board id or the words of a request (boards/catalogue.yaml; docs/board_catalogue.md)")
-    r.add_argument("--name")
-    r.add_argument("--interview", choices=["on", "oracle", "off"], default="off")
-    r.add_argument("--review", choices=["on", "off"], default="off")
-    r.add_argument("--model", default="openai/gpt-6-luna")
-    r.add_argument("--hidden-spec", type=Path)
-    r.add_argument("--stop-after", type=int)
+    r.add_argument("--name", help="the design's name (default: the spec's directory name)")
+    r.add_argument("--interview", choices=["on", "oracle", "off"], default="off",
+                   help="on: the clarifier asks a person questions; oracle: a model answers them from --hidden-spec; off (default): it assumes")
+    r.add_argument("--requirements", choices=["loose", "standard", "strict"], default=None,
+                   help="how strict the interview is about unanswered questions (brief 210). loose: every gap is defaulted and listed in the handover; "
+                        "standard: a high-risk question must be answered or waived, else the run stops at clarify (exit 3); strict: every question must "
+                        "be answered or waived. Default: the request's own 'Requirements: <level>' line, else the design package, else the built-in "
+                        "default (docs/agent.md)")
+    r.add_argument("--review", choices=["on", "off"], default="off", help="on: pause for a person's decision after every stage")
+    r.add_argument("--model", default="openai/gpt-6-luna", help="the OpenRouter model of the default endpoint (see `models show` for every purpose)")
+    r.add_argument("--hidden-spec", type=Path, help="the full spec an interview oracle answers from (evaluation runs)")
+    r.add_argument("--stop-after", type=int, metavar="N",
+                   help="stop after stage N passes; stages count from 0: 0 clarify, 1 board-and-device-planning, 2 rtl-design-creation, "
+                        "3 constraints, 4 synthesis, 5 implementation, 6 timing-closure, 7 power-closure, 8 drc-closure, "
+                        "9 configuration-and-debug. 0-2 need no Vivado; the default (no flag) runs to 9")
     r.add_argument("--harness", choices=["deepagents", "claude_code"], default="deepagents",
                    help="claude_code: each sub-agent turn is a headless `claude -p` on the Max plan (05c)")
     r.add_argument("--cc-model", default="claude-haiku-5-5", help="Claude Code model id (--harness claude_code)")
@@ -362,7 +608,8 @@ def main(argv: list[str] | None = None) -> int:
                                    "roles (record keys): clarify (Clarifier), model (Modeller), tests (Verifier), rtl (Designer)")
     r.add_argument("--no-shell", action="store_true",
                    help="the subject is the USB-UART itself: build, lint and simulate without the test shell "
-                        "(07a2-prep; also set when --hidden-spec sits next to a bench.yaml with no_shell: true)")
+                        "(07a2-prep; also set when --hidden-spec sits next to a bench.yaml with no_shell: true, and for a board "
+                        "with no UART such as the KR260, from its board file: brief 209a)")
     r.add_argument("--data-dir", type=Path,
                    help="the task's data/ files (weights, images ...), copied to <design>/data (07a2-prep; default: "
                         "data/ next to spec.md, when it exists)")
@@ -375,9 +622,22 @@ def main(argv: list[str] | None = None) -> int:
     r.add_argument("--spectest-model", default="claude-sonnet-5-5", help="Claude Code model of the spec-test role and its triage")
     r.add_argument("--spectest-max-loops", type=int, default=2, help="design_wrong round trips per run before 'unresolved'")
     r.add_argument("--max-usd", type=float, help="run cost cap (provider-reported); default RUN_LIMITS")
+    r.add_argument("--budget-scale", type=float, help="brief 209b: multiplies every stage USD budget and the default run cap (for a dearer model; "
+                   "default 1, or `budget_scale:` in a models file); an explicit --max-usd stays as given")
     r.add_argument("--verif-level", choices=["V1", "V2", "V3"], default="V3",
                    help="verification stage stage 2 must reach (default V3, the methodology; V1/V2 only for a cheaper run: "
                         "V3 needs multi-seed runs; the graph itself runs the Verilator coverage run and the mutation run)")
+    r.add_argument("--verif-profile", choices=["prototype", "standard", "thorough", "ip_release", "high_dependability", "low_latency"],
+                   help="brief 194: the verification profile, a preset of per-method switches (docs/assurance.md). Not --profile, which is the "
+                        "model routing of brief 05f. Default: standard (today's behaviour); with --interview on or oracle and no profile given, "
+                        "the interview proposes one")
+    r.add_argument("--settings", type=Path, metavar="FILE",
+                   help="brief 194: a proposed_settings.yaml (agent propose <folder>). Each setting becomes a question of the spec interview, whose default "
+                        "is the proposed value and whose reason names its source; the run cannot leave the interview with an unconfirmed setting. An "
+                        "explicit --board or --verif-profile becomes the proposed value")
+    r.add_argument("--set", dest="verif_set", action="append", default=[], metavar="SWITCH=VALUE",
+                   help="brief 194: override one switch of the profile, e.g. --set seeds=5 --set timing_sim=on (repeatable); --verif-level and "
+                        "--spec-tests are overrides of their switches and are recorded as such")
     r.add_argument("--skill-routing", choices=["off", "router"], default="off",
                    help="brief 36: router = a skill shortlist before each stage, skill_index/skill_excerpt, ranked load_skill")
     r.add_argument("--router-model", help="brief 36: OpenRouter model of the router's section classifier (default: rules only)")
@@ -404,9 +664,10 @@ def main(argv: list[str] | None = None) -> int:
     r.add_argument("--hdl", choices=["sv", "vhdl"], default="sv",
                    help="the design language; vhdl = VHDL-2008 RTL (GHDL lint, GHDL netlist or GHDL simulation, "
                         "read_vhdl -vhdl2008 in Vivado); the test shell stays SystemVerilog")
-    for p in (r, sub.add_parser("resume")):
-        p.add_argument("--replies", type=Path)
-        p.add_argument("--reply")
+    for p in (r, sub.add_parser("resume", help=newcomer.COMMANDS["resume"][0], description=newcomer.COMMANDS["resume"][1],
+                                epilog=newcomer.RESUME_EPILOG, formatter_class=argparse.RawDescriptionHelpFormatter)):
+        p.add_argument("--replies", type=Path, help="a JSON list of replies fed in order to the questions and reviews that pause the run")
+        p.add_argument("--reply", help="one JSON reply to the question or review the run is paused on")
         p.add_argument("--replay", help="LLM replay fixture (no network)")
         p.add_argument("--record", help="record LLM calls to this fixture")
         p.add_argument("--deterministic", action="store_true",
@@ -415,19 +676,38 @@ def main(argv: list[str] | None = None) -> int:
         p.add_argument("--tape", help="with --deterministic: the tape directory (default ~/.local/share/fpga_design_agent/tapes/<design name>)")
         p.add_argument("--record-tape", help="brief 107: record every model call to this tape directory (private; outside the repo or git-ignored)")
         p.add_argument("--replay-tape", help="brief 107: serve every model call from this tape directory (level 2); a missing call is an error")
+        from agent.core import permissions as _perm
+        p.add_argument("--permissions", choices=list(_perm.MODE_ORDER), metavar="MODE",
+                       help="brief 222: what the run may do without asking: plan | ask | auto | full (default: the config file's mode, else auto). "
+                            "Plan reads and plans only; Ask runs simulation itself and asks before every other gated action; Auto asks only before the board, "
+                            "registers, instruments and a higher budget; Full also does those, inside the lab file's limits. Flash, boot images, eFUSE, BBRAM and keys are never allowed. See docs/agent.md")
+        p.add_argument("--allow", action="append", default=[], choices=list(_perm.ACTION_NAMES), metavar="ACTION",
+                       help="brief 222: allow one gated action whatever the mode says (repeatable; the actions are listed in docs/agent.md)")
+        p.add_argument("--ask", action="append", default=[], choices=list(_perm.ACTION_NAMES), metavar="ACTION",
+                       help="brief 222: ask before one gated action whatever the mode says (repeatable)")
+        p.add_argument("--deny", action="append", default=[], choices=list(_perm.ACTION_NAMES), metavar="ACTION",
+                       help="brief 222: deny one gated action whatever the mode says (repeatable); a run that needs it stops with the reason")
+        p.add_argument("--ask-above-usd", type=float, metavar="N", help="brief 222: ask before spending model money past this run total in USD (default 1.00)")
     rs = sub._name_parser_map["resume"]
-    rs.add_argument("run_id", help="a run id under runs/, or a design directory with handover.yaml (brief 68 D)")
-    rs.add_argument("change", nargs="?", help="design resume: the change request")
-    rs.add_argument("--rewind", type=int)
+    rs.add_argument("run_id", help="a run id under runs/, or a design directory containing handover.yaml; a name that is not such a "
+                                   "directory is taken as a run id")
+    rs.add_argument("change", nargs="?", help="design resume: the change request, in plain words. Its class sets the entry stage (earliest match wins): "
+                    "spec 0; area, latency, retarget, arch 1; language, mapping, rtl 2; fmax, power, constraints 3; timing 6; board 9. "
+                    "A request that matches no class is a question (exit 2), not stage 0; documentation-only is never guessed (use --kind docs). "
+                    "--dry-run shows the class, the stage and the matched words")
+    rs.add_argument("--rewind", type=int, metavar="N", help="run resume: restore the end of stage N (files, .dcp, checkpoint; hash-checked) and continue there")
     rs.add_argument("--max-usd", type=float, help="cost cap for this resumed process (the meter starts at 0)")
     rs.add_argument("--kind", choices=sorted(__import__("agent.graph.pickup", fromlist=["x"]).STAGE_OF_KIND),
-                    help="design resume: the change's class, instead of the keyword classifier")
+                    help="design resume: the change's class, instead of the keyword classifier (each class has a fixed entry stage; "
+                         "`resume ... --dry-run` prints the class, the stage and the matched words)")
     rs.add_argument("--from-stage", type=int, help="design resume: enter at this stage, overriding the rule")
-    rs.add_argument("--dry-run", action="store_true", help="design resume: report the freshness and the entry stage only")
+    rs.add_argument("--dry-run", action="store_true",
+                    help="design resume only: report the freshness and the entry stage, then stop; needs no key, writes nothing, calls no model. "
+                         "For a run id it does nothing (the run continues, with the key)")
     rs.add_argument("--scope", help="design resume of a managed project: the components or hierarchy paths this request may touch "
                                     "(comma separated; default: resolved from the change text, else every owned component)")
     rs.add_argument("--strategy-file", type=Path, help="design resume: the strategy.json `agent improve --choose` saved (the options offered and the choice go into the run record)")
-    rs.add_argument("--stop-after", type=int)
+    rs.add_argument("--stop-after", type=int, metavar="N", help="stop after stage N passes (stages count from 0; see `run --help`)")
     rs.add_argument("--board", type=board_name, help="design resume: default the handover's target.board when it names a board directory")
     rs.add_argument("--model", default="openai/gpt-6-luna")
     rs.add_argument("--harness", choices=["deepagents", "claude_code"], default="deepagents")
@@ -439,8 +719,25 @@ def main(argv: list[str] | None = None) -> int:
     rs.add_argument("--docs", choices=["on", "off"], default="on")
     rs.add_argument("--models-file", type=Path, help="design resume: the project's model table (a run resume reads the run's own)")
     rs.add_argument("--model-config", help="design resume: JSON command-line layer of the model table")
+    rs.add_argument("--budget-scale", type=float, help="brief 209b: multiplies every stage USD budget and the default run cap")
     rs.add_argument("--allow-fable", action="store_true", help="the owner's flag: permits Fable on a claude_code endpoint")
     rs.add_argument("--allow-model-change", action="store_true", help="resume a run although its model table hash has changed")
+    from agent.graph.revise import add_parser as _revise_parser         # brief 159
+    _revise_parser(sub)
+    rvp = sub._name_parser_map["revise"]
+    for act in rs._actions:                                             # the run options are the resume command's, shared
+        if act.dest in ("max_usd", "board", "stop_after", "model", "harness", "cc_model", "cc_effort", "profile", "roles", "verif_level", "docs",
+                        "models_file", "model_config", "allow_fable", "allow_model_change", "budget_scale"):
+            rvp._add_action(act)
+    for act in sub._name_parser_map["resume"]._actions:
+        if act.dest in ("replies", "reply", "replay", "record", "deterministic", "tape", "record_tape", "replay_tape"):
+            rvp._add_action(act)
+    pp = sub.add_parser("propose", help="brief 194: read an input folder and write proposed_settings.yaml (board, part, clocks, I/O standards, PHYs, interfaces, "
+                                        "profile), each value with its source. It is the interview's input (agent run --settings FILE); nothing is confirmed here")
+    pp.add_argument("folder", type=Path)
+    pp.add_argument("--board", help="a catalogue board to use when the folder does not name one")
+    pp.add_argument("--out", type=Path, help="default: <folder>/proposed_settings.yaml")
+    
     dc = sub.add_parser("document", help="brief 68 C: the DOC step on a finished run directory")
     dc.add_argument("run_dir", type=Path)
     dc.add_argument("--board", default="nexys_a7_100t", type=board_name)
@@ -464,11 +761,37 @@ def main(argv: list[str] | None = None) -> int:
     md.add_argument("--allow-fable", action="store_true")
     md.add_argument("--json", action="store_true", help="show: the resolved table as JSON (the run-record form)")
     md.add_argument("--probe", action="store_true", help="check: also make one minimal call per endpoint in use (spends tokens)")
+    st = sub.add_parser("status", help="brief 182: a run's status in plain words (no model call); --console for the live console")
+    st.add_argument("run_dir", type=Path)
+    st.add_argument("--follow", action="store_true", help="print the status again whenever it changes, until the run ends")
+    st.add_argument("--console", action="store_true", help="list the console steps and show the tail of one (--step ID, default the running or latest)")
+    st.add_argument("--step")
+    st.add_argument("--json", action="store_true")
+    ak = sub.add_parser("ask", help="brief 182: ask a read-only model a question about a run, answered from that run's records only (logged in qa.jsonl)")
+    ak.add_argument("run_dir", type=Path)
+    ak.add_argument("question")
+    rq_ = sub.add_parser("request", help="brief 182: queue a mid-run request, applied at the run's next safe point (a stage boundary)")
+    rq_.add_argument("run_dir", type=Path)
+    g_ = rq_.add_mutually_exclusive_group(required=True)
+    g_.add_argument("--control", nargs="+", metavar=("ACTION", "N"), help="pause | abort | stop-after N")
+    g_.add_argument("--design", help="free text: a change for the design, e.g. 'use block RAM for the FIFO' (refused for a scored run)")
     from agent.graph.latency_loop import add_parser as _latency_parser    # brief 97
     _latency_parser(sub)
     from flow.options.cli import add_parser as _improve_parser           # brief 104
     _improve_parser(sub)
-    a = ap.parse_args(argv)
+    sub.add_parser("doctor", help=newcomer.COMMANDS["doctor"][0], description=newcomer.COMMANDS["doctor"][1],
+                   add_help=False)                      # dispatched in main() before this parser: listed here so --help shows it
+    sub.add_parser("project", help=newcomer.COMMANDS["project"][0], add_help=False)
+    sub.add_parser("ip", help="the IP library: search, rank, show, use (brief 150; plain Python, no model, no Vivado; needs the key)", add_help=False)   # dispatched in main()
+    return ap
+
+
+def _run_main(a, args: list[str], ap: argparse.ArgumentParser) -> int:
+    """Everything after the access gate (or after an exemption): the parsed command line ``a`` runs."""
+    from agent.graph.role_models import parse_roles
+    from agent.graph.run import Config, build_graph, checkpointer_for, new_runtime
+    if a.cmd in ("status", "ask", "request"):
+        return live_cmd(a)
     if a.cmd == "models":
         return models_cmd(a, args)
     if a.cmd == "latency":
@@ -477,11 +800,22 @@ def main(argv: list[str] | None = None) -> int:
     if a.cmd == "improve":
         from flow.options.cli import improve_cmd
         return improve_cmd(a, main)
+    if a.cmd == "propose":
+        from agent.graph import settings as _st
+        try:
+            out = _st.propose(a.folder, a.board)
+        except _st.SettingsError as e:
+            ap.error(str(e))
+        dest = _st.write(a.folder, out, a.out)
+        print(f"wrote {dest}: " + ", ".join(f"{k}={e['status']}" for k, e in out["settings"].items()))
+        return 0
     if a.cmd == "review":
         return review_cmd(a)
     if a.cmd == "document":
         return document_cmd(a)
-    if a.cmd == "resume" and (Path(a.run_id) / "handover.yaml").is_file():
+    if a.cmd == "revise":
+        return revise_cmd(a)
+    if a.cmd == "resume" and newcomer_is_design_resume(a.run_id):
         return pickup_cmd(a)
     replies = json.loads(a.replies.read_text()) if a.replies else []
     if a.reply:
@@ -490,20 +824,40 @@ def main(argv: list[str] | None = None) -> int:
         if a.interview == "oracle" and not a.hidden_spec:
             ap.error("--interview oracle needs --hidden-spec")
         name = a.name or a.spec.resolve().parent.name
-        cfg = Config(spec_md=a.spec, name=name, board=a.board, interview=a.interview, review=a.review,
+        from agent.graph import profiles as _prof
+        settings_doc = None
+        if a.settings:                                        # brief 194: the proposals are the interview's input
+            from agent.graph import settings as _st
+            try:
+                settings_doc = _st.apply_flags(_st.load_proposals(a.settings), a.board if any(x.startswith("--board") for x in args) else None, a.verif_profile)
+            except (_st.SettingsError, OSError) as e:
+                ap.error(str(e))
+            sb = settings_doc["settings"]["board"]["value"]
+            if sb and not any(x.startswith("--board") for x in args):
+                a.board = sb
+        try:                                                  # brief 194: a bad profile or switch fails before anything runs
+            vp = _prof.from_cli(a.verif_profile, a.verif_set, a.verif_level if any(x.startswith("--verif-level") for x in args) else None, a.spec_tests)
+        except _prof.ProfileError as e:
+            ap.error(str(e))
+        cfg = Config(spec_md=a.spec, name=name, board=a.board, interview=a.interview, review=a.review, requirements=a.requirements or "",
+                     verif_profile=vp["profile"], verif_sets={k: v["value"] for k, v in vp["overrides"].items()},
+                     verif_ask=a.verif_profile is None and a.interview in ("on", "oracle"), settings_file=a.settings,
+                     settings_flags=({k: v for k, v in (('board', a.board if any(x.startswith('--board') for x in args) else None), ('profile', a.verif_profile)) if v} or None),
                      model=a.model, hidden_spec=a.hidden_spec, stop_after=a.stop_after,
                      harness=a.harness, cc_model=a.cc_model, cc_effort=a.cc_effort,
-                     verif_level=a.verif_level, profile=a.profile, roles=parse_roles(a.roles),
+                     verif_level=vp['cfg']['verif_level'], profile=a.profile, roles=parse_roles(a.roles),
                      no_shell=a.no_shell or task_no_shell(a.hidden_spec), data_dir=a.data_dir or task_data_dir(a.spec),
-                     oracle=a.oracle, oracle_cc_model=a.oracle_cc_model, spec_tests=a.spec_tests,
+                     oracle=a.oracle, oracle_cc_model=a.oracle_cc_model, spec_tests=vp['cfg']['spec_tests'],
                      spectest_model=a.spectest_model, spectest_max_loops=a.spectest_max_loops,
                      skill_routing=a.skill_routing, router_model=a.router_model, router_k=a.router_k,
                      harness_arms=a.harness_arm, hdl=a.hdl,
                      design_plan=a.design_plan, closure=a.closure, docs=a.docs,          # closure loop; brief 68 C
+                     permissions=permission_spec(a, name, ap),                          # brief 222
                      **{**model_kwargs(a, args), "models_file": a.models_file or project_models_file(a.spec)})
         cfg.role_models()                                     # fail early on an unknown profile, role or forbidden model
         if a.max_usd is not None:
             cfg.run_limits["usd"] = a.max_usd
+        from agent.core.permissions import NeverRefused
         from agent.models.tape import DeterminismError
         try:
             tspec = tape_spec_from(a, cfg)
@@ -511,10 +865,12 @@ def main(argv: list[str] | None = None) -> int:
         except DeterminismError as e:
             print(f"deterministic: {e}", file=sys.stderr)
             return 2
+        except NeverRefused as e:                             # brief 222: a cost cap above the hard cap, never allowed in any mode
+            print(f"run: {e}", file=sys.stderr)
+            return 2
         graph = build_graph(checkpointer_for(rt.run_dir), routing=cfg.skill_routing != "off")
-        _drive(graph, rt, {"configurable": {"thread_id": rt.run_id}},
-               {"run_id": rt.run_id, "stage": 0, "visits": {}, "history": []}, replies)
-        return 0
+        return drive_exit(_drive(graph, rt, {"configurable": {"thread_id": rt.run_id}},
+                                 {"run_id": rt.run_id, "stage": 0, "visits": {}, "history": []}, replies))
     # resume
     run_dir = ROOT / "runs" / a.run_id
     c = json.loads((run_dir / "config.json").read_text())
@@ -527,6 +883,7 @@ def main(argv: list[str] | None = None) -> int:
         print(f"resume: the model configuration changed since the run started (table hash {was} then, {cfg.model_table().hash} now); "
               "restore the models.yaml files, or pass --allow-model-change", file=sys.stderr)
         return 2
+    from agent.core.permissions import NeverRefused
     from agent.models.tape import DeterminismError
     try:
         tspec = tape_spec_from(a, cfg)
@@ -534,6 +891,12 @@ def main(argv: list[str] | None = None) -> int:
     except DeterminismError as e:
         print(f"deterministic: {e}", file=sys.stderr)
         return 2
+    except NeverRefused as e:                                 # brief 222: a cost cap above the hard cap
+        print(f"resume: {e}", file=sys.stderr)
+        return 2
+    stop_code = resume_permissions(a, rt, c)                  # brief 222: flags that change the mode; a higher cost cap needs raise_budget
+    if stop_code is not None:
+        return stop_code
     from agent.core import managed                    # brief 102F: a managed project's run continues the request it started with
     try:
         mproj = managed.load(Path(rt.design))
@@ -571,8 +934,40 @@ def main(argv: list[str] | None = None) -> int:
             return 2
         lg = graph.update_state(target.config, {"stage": a.rewind, "fails": [], "stop": None}, as_node="advance")
         first = None
-    _drive(graph, rt, lg, first, replies)
-    return 0
+    return drive_exit(_drive(graph, rt, lg, first, replies))
+
+
+def main(argv: list[str] | None = None) -> int:
+    args = sys.argv[1:] if argv is None else argv
+    if args[:1] == ["project"]:                      # brief 27B: the project layer (project/), not part of the agent graph
+        from project.cli import main as project_main
+        return project_main(args[1:])
+    from agent import newcomer
+    if args[:1] == ["ip"]:                           # brief 150: the IP-library retriever (plain Python: no model, no Vivado); its own --help prints before the gate
+        from agent.ip_cmd import main as ip_main
+        if not (set(args[1:2]) & {"-h", "--help"}):
+            from agent.access import require_or_exit
+            require_or_exit("python -m agent ip")
+        return ip_main(args[1:])
+    if args[:1] == ["doctor"]:                       # brief 157: reads no private file without the key; never prints the key
+        return newcomer.doctor_main(args[1:])
+    try:
+        ap = build_parser()
+        a = ap.parse_args(args)                      # --help and usage errors end here, before the gate: they print text only
+    except ImportError as e:                         # an extra is not installed: help still answers; anything else is gated first
+        if not newcomer.is_missing_package(e):
+            raise                                    # a first-party import error is a bug: keep its traceback
+        return newcomer.without_extras(args, e)
+    from agent.access import require_or_exit      # brief 94: run, resume and document all start here
+    why = newcomer.ungated(a)                        # brief 157: the only commands that run without a key, each with its reason
+    if why is None:
+        require_or_exit("python -m agent")
+    try:
+        return _run_main(a, args, ap)
+    except ImportError as e:
+        if not newcomer.is_missing_package(e):
+            raise
+        return newcomer.missing_extra(a, e)
 
 
 if __name__ == "__main__":

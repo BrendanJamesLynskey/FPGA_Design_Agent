@@ -65,6 +65,11 @@ class VseqBase(uvm_sequence):
     async def frame(self, l: int, p: bool = False, g: int = 0, pt: str = "PAT_RANDOM", noise: bool = False) -> None:
         await self._send(self.env.usr.sqr, FrameItem(payload=make_payload(self.rng, l, pt), pat=pt, poison=p, noise_poison=noise, gap=g))
 
+    async def abort_frame(self, words: int, g: int = 0, l: int = 0) -> None:
+        """Fault injection (brief 158): offer `words` whole data words of a frame, then stall the source: mac64_tx underruns."""
+        l = l or max(60, 8 * words + 8)
+        await self._send(self.env.usr.sqr, FrameItem(payload=make_payload(self.rng, l, "PAT_RANDOM"), abort_after=words, gap=g))
+
     async def rand_frame(self, lo: int, hi: int, glo: int = 0, ghi: int = 40, poison_pct: int = 10) -> None:
         r = self.rng
         pt = r.choices(PATTERNS, weights=[8, 1, 1, 1, 1])[0]
@@ -123,6 +128,29 @@ class VseqLens(VseqBase):
             await self.frame(b, 0, i % 4)
         for l in range(60, 76):
             await self.frame(l, 0, 0)
+        # two frames longer than 16 KiB, then a short one so the length registers fall back (brief 146: Verilator toggle coverage showed bits 14 and 15 of the receive length counters never moved)
+        for b in [32800, 16400, 61]:
+            await self.frame(b, 0, 1)
+        await self.drain(); self.e2e(False)
+
+
+class VseqUnderrun(VseqBase):
+    """Fault injection (brief 158): the source stalls inside a frame, which the protocol checker forbids in normal runs (`no_underrun`). The checker is put in fault-injection mode with
+    the number of underruns to expect; the scoreboard expects, for each, the start word, the data words taken, one word of error characters (no FCS, no terminate, no eop), then an
+    idle word before anything else; the receiver aborts the frame (and only these); good frames before, between and straight after still come through unchanged."""
+    async def body(self):
+        words = [1, 2, 3, 1, 8, 4, 2, 5, 1, 12]
+        self.env.chk.inject_underruns(len(words) + 2)
+        self.env.sb.exact_aborts = True
+        await self.wait_lock(); self.e2e(False)
+        await self.frame(64, 0, 0)                              # a good frame first
+        for i, w in enumerate(words):
+            await self.abort_frame(w, g=i % 3)                  # the stall begins 1..12 words into the frame, at different phases of the one-in-33 pause
+            await self.frame(60 + (i * 11) % 80, i % 4 == 0, 0)  # and a good (or poisoned) frame straight after: the MAC must recover with no gap of its own
+        await self.abort_frame(3, g=0); await self.abort_frame(2, g=0)   # two in a row
+        await self.frame(61, 0, 0); await self.frame(1514, 0, 2)
+        for _ in range(6):
+            await self.rand_frame(60, 200, 0, 5, 10)
         await self.drain(); self.e2e(False)
 
 
@@ -177,6 +205,15 @@ class VseqXg(VseqBase):
         for k in range(8):
             d = ref.IDLE_D & ~(0xFF << (8 * k)) | (ref.TERM << (8 * k))
             await self.xg([(d, 0xFF)], f"lone terminate lane {k}")
+        # all-control words that carry error characters, and terminates followed by an error character or by another control character in a higher lane
+        # (brief 146: Verilator expression coverage of enc66 showed those combinations never reached pcs_tx)
+        for k in range(8):
+            await self.xg([(ref.IDLE_D & ~(0xFF << (8 * k)) | (ref.ERRC << (8 * k)), 0xFF)], f"error character in lane {k} of an all-control word")
+        await self.xg([(int.from_bytes(bytes([ref.ERRC] * 8), "little"), 0xFF)], "all error characters")
+        for k in range(7):
+            base = ref.IDLE_D & ~(0xFF << (8 * k)) | (ref.TERM << (8 * k))
+            await self.xg([(base & ~(0xFF << (8 * (k + 1))) | (ref.ERRC << (8 * (k + 1))), (0xFF << k) & 0xFF)], f"terminate lane {k}, error character after it")
+            await self.xg([(base & ~(0xFF << (8 * (k + 1))) | (0x9C << (8 * (k + 1))), (0xFF << k) & 0xFF)], f"terminate lane {k}, other control character after it")
         # start followed at once by a terminate, in lane 0 and lane 4 (a frame with no data)
         for k in range(8):
             t = (ref.IDLE_D & ~(0xFF << (8 * k)) | (ref.TERM << (8 * k)), (0xFF << k) & 0xFF)
@@ -226,6 +263,11 @@ class VseqLineBlocks(VseqBase):
             for i in range(k):
                 d = d & ~(0xFF << (8 * i)) | (self.rng.getrandbits(8) << (8 * i))
             await lb([ref.encode_rtl(d, (0xFF << k) & 0xFF)])
+        # a lane-4 start block straight followed by a terminate block of each lane: a frame with no data (brief 146: Verilator branch coverage of mac64_rx)
+        for k in range(8):
+            t = (ref.IDLE_D & ~(0xFF << (8 * k)) | (ref.TERM << (8 * k)), (0xFF << k) & 0xFF)
+            await lb(bo([(int.from_bytes(bytes([ref.IDLE] * 4 + [ref.START, 0x55, 0x55, 0x55]), "little"), 0x1F), t]))
+            await lb(ib(2))
         q = bo(fw(rb(90), False, False)); q.insert(4, self.bad_type_block()); await lb(q)
         q = bo(fw(rb(90), True, False)); q.insert(3, self.bad_sh_block()); await lb(q)
         q = bo(fw(rb(90), False, False)); q = q[0:2] + q; await lb(q)                      # a second start inside the frame

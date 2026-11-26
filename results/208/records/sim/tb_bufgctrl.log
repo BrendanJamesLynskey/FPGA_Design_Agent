@@ -1,0 +1,23 @@
+
+****** xsim v2026.1 (64-bit)
+  **** SW Build 6511674 on Tue Jun 16 11:01:26 MDT 2026
+  **** IP Build 6504888 on Tue Jun 09 09:05:25 MDT 2026
+  **** SharedData Build 6501428 on Mon Jun 08 17:34:18 MDT 2026
+  **** Start of session at: Tue Nov 24 17:42:05 2026
+    ** Copyright 1986-2022 Xilinx, Inc. All Rights Reserved.
+    ** Copyright 2022-2026 Advanced Micro Devices, Inc. All Rights Reserved.
+
+source xsim.dir/tb_bufgctrl_s/xsim_script.tcl
+# xsim {tb_bufgctrl_s} -autoloadwcfg -runall
+Time resolution is 1 ps
+run -all
+SCEN e1_switch_running rising_edges_in_140ns ctrl=10 mux=10 muxc=10 runts ctrl=0 mux=0 muxc=0
+SCEN e2a_i0_stopped_low_then_switch rising_edges_in_140ns ctrl=0 mux=10 muxc=0 (10 = switched, 0 = locked up)
+SCEN e2c_ignore0_asserted rising_edges_in_140ns ctrl=10 (BUFGMUX/BUFGMUX_CTRL have no IGNORE pin: mux=10 muxc=0)
+SCEN e2b_i0_stopped_high_then_switch rising_edges_in_140ns ctrl=0 mux=0 muxc=0
+SCEN e2d_ignore0_after_high_stop rising_edges_in_140ns ctrl=10
+SCEN e3_select_near_edges runts ctrl=0 mux=0 muxc=0
+$finish called at time : 2766990 ps : File "/home/brendan/Claude_sandbox/_worktrees/208-clock-mux/results/208/sim/tb_bufgctrl.v" Line 77
+exit
+INFO: xsimkernel Simulation Memory Usage: 144088 KB (Peak: 209624 KB), Simulation CPU Usage: 1770 ms
+INFO: [Common 17-206] Exiting xsim at Tue Nov 24 17:42:09 2026...

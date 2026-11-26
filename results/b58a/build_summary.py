@@ -69,11 +69,12 @@ def summary() -> dict:
                               "all_constraints_met": bool(t.get("timing_met"))},
         "rgmii_io_slack_ns": {"source": "io_paths_route.txt, worst per port, direction and check", **io},
         "rgmii_constraints": {
-            "rx": "centre-aligned, PHY RX delay on (register 20.7 = 1; the 88E1111 datasheet's 1.2/1.2 ns); -max 2.8, "
-                  "-min 1.2 on both edges; IDELAYE3 1000 ps on each data input",
-            "tx": "edge-aligned forwarded TXC, PHY TX delay on (register 20.1 = 1); the 88E1111 datasheet window (a change "
-                  "up to 0.9 ns after its edge, no earlier than 1.3 ns before the next) less an assumed 0.1 ns board "
-                  "skew: -max 3.2, -min +1.2 on both edges"},
+            "rx": "centre-aligned, PHY RX delay on (DP83867 RGMIICTL bit 0 = 1, RGMIIDCTL[3:0] = 2.0 ns; the datasheet's "
+                  "1.2/1.2 ns); -max 2.8, -min 1.2 on both edges; IDELAYE3 1000 ps on each data input",
+            "tx": "edge-aligned forwarded TXC, PHY TX delay 1.75 ns (RGMIIDCTL[7:4] = 0110); the DP83867 datasheet's 1.0 to "
+                  "2.6 ns clock-after-data window gives a change up to 0.75 ns after its edge, no earlier than 0.85 ns "
+                  "before the next, less the carrier skew bound (0.05 ns port A, 0.09 ns port B): port A -max 3.30, "
+                  "-min +0.80; port B -max 3.34, -min +0.76, on both edges"},
         "utilisation": util((HERE / "utilization.rpt").read_text()),
         "power": {"total_on_chip_w": g["power"]["total_w"], "junction_c": g["power_environment"]["junction_c"],
                   "environment": "still air, no heat sink, 40 C ambient: the pessimistic bound (boards/kr260/board.yaml)"},

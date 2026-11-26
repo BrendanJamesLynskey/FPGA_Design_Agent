@@ -1,0 +1,111 @@
+schema: fpga-design-agent/testplan/v1
+entry: pipe_reg
+purpose: 'v1 testplan of a library entry (brief 151, decision 24): every requirement traces to the tests, formal tasks and seeded faults
+  that check it. Not yet part of the flow.trace_v1 roll-up (that reads designs/ and, in brief 139a, arith/); flow/tests/test_151_partition_testplans.py
+  checks that every name below resolves.'
+model: ip_lib/pipe_reg/model.py
+bench: ip_lib/pipe_reg/tb/test_pipe_reg_rtl.py
+formal_dir: ip_lib/pipe_reg/formal
+requirements:
+- id: R01
+  requirement: No beat is lost, repeated or reordered by any mode at any N (reset clears the chain, back-pressure never loses a beat).
+  tests:
+  - ip_lib/pipe_reg/tb/test_pipe_reg_rtl.py::test_random_traffic
+  formal:
+  - skid1
+  - skid2
+  - skid3
+  - full1
+  - full2
+  - full3
+  - half1
+  - half2
+  - comb1
+  - comb2
+  - comb3
+  - fwd1
+  - fwd3
+  - wire0
+  faults:
+  - half_drop_unready
+  - skid_park_dropped
+  - skid_drain_wrong_source
+  - full_write_pointer_stuck
+  - full_read_swapped
+  - chain_output_ready_ignored
+  - wire_ready_constant
+  - fwd_first_stage_free_running
+- id: R02
+  requirement: Latency is N clocks (0 for N = 0), counted from the accepting edge into an empty chain.
+  tests:
+  - ip_lib/pipe_reg/tb/test_pipe_reg_rtl.py::test_measure_declared
+  formal: []
+  faults: []
+- id: R03
+  requirement: Throughput is one beat per clock, except one per two clocks in mode HALF.
+  tests:
+  - ip_lib/pipe_reg/tb/test_pipe_reg_rtl.py::test_measure_declared
+  formal: []
+  faults:
+  - comb_ready_ignores_take
+- id: R04
+  requirement: The chain holds N beats (2N in SKID and FULL) when the sink stops.
+  tests:
+  - ip_lib/pipe_reg/tb/test_pipe_reg_rtl.py::test_measure_declared
+  formal:
+  - skid2
+  - full2
+  faults:
+  - skid_ready_too_late
+  - full_ready_overfill
+  - half_ready_stale
+- id: R05
+  requirement: The ready response is 0 clocks in FWD and COMB, N in SKID, FULL and HALF; s_axis_tready is a flop in SKID, FULL and HALF.
+  tests:
+  - ip_lib/pipe_reg/tb/test_pipe_reg_rtl.py::test_measure_declared
+  - ip_lib/pipe_reg/tb/test_pipe_reg_rtl.py::test_random_traffic
+  formal: []
+  faults:
+  - comb_ready_ignores_take
+  - fwd_enable_needs_ready
+- id: R06
+  requirement: 'AXI4-Stream rules: a beat offered and not taken stays offered unchanged; tvalid is low in reset and at the first edge
+    after it; tvalid does not depend on tready.'
+  tests:
+  - ip_lib/pipe_reg/tb/test_pipe_reg_rtl.py::test_random_traffic
+  formal:
+  - sva_fwd3
+  - sva_skid1
+  - sva_skid2
+  - sva_full2
+  - sva_half2
+  - sva_comb2
+  - sva_wire0
+  faults:
+  - fwd_valid_gated_by_ready
+- id: R07
+  requirement: A reset in mid-traffic clears the chain and no beat that was in it leaves afterwards.
+  tests:
+  - ip_lib/pipe_reg/tb/test_pipe_reg_rtl.py::test_random_traffic
+  formal: []
+  faults:
+  - comb_reset_keeps_valid
+- id: R08
+  requirement: tlast, tkeep and tuser (when enabled) travel with their beat; a sideband that is off is not carried.
+  tests:
+  - ip_lib/pipe_reg/tb/test_pipe_reg_rtl.py::test_random_traffic
+  formal: []
+  faults: []
+- id: R09
+  requirement: Parameters outside the declared space fail at elaboration.
+  tests:
+  - ip_lib/pipe_reg/tb/test_pipe_reg_rtl.py::test_guards
+  formal: []
+  faults: []
+- id: R10
+  requirement: A sink that waits for valid before ready still receives a beat (no deadlock in FWD).
+  tests:
+  - ip_lib/pipe_reg/tb/test_pipe_reg_rtl.py::test_random_traffic
+  formal: []
+  faults:
+  - fwd_enable_needs_ready

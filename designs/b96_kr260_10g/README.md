@@ -2,7 +2,7 @@
 
 <!-- Generated from handover.yaml by flow/handover.py (brief 68). Edit handover.yaml, or the text between the prose markers, then run: python -m flow.handover write designs/b96_kr260_10g -->
 
-**Verification: verified except: 4 of 27 requirements without passing evidence; 27 of 27 requirements not agreed; required method mix not yet measured; mutation floor not yet measured; formal rigour not yet measured; 16 stale or differing evidence items.** [VERIFIED.md](VERIFIED.md) is the generated, hash-pinned record; [what the label means](../../docs/verified.md).
+**Verification: not verified: 1 of 29 requirements fail.** [VERIFIED.md](VERIFIED.md) is the generated, hash-pinned record; [what the label means](../../docs/verified.md).
 
 A Kria KR260 design that carries our own 10GBASE-R PCS (64B/66B, scrambler, gearbox, block lock) and a 64-bit Ethernet MAC on one GTH lane at 10.3125 Gb/s, with the mock trading path of brief 58A behind it (a one-rule 64-bit decision in the same message format), because the AMD 10G Ethernet core is refused on the free Basic licence. Verified against an independent Python reference in simulation (the GT is a behavioural stand-in) and built to a bitstream on Vivado 2026.1 Basic with every flow gate passing in two variants. Brief 96C added a rate-matching elastic buffer as a build option (default off, the board-proven 97C receive path); the base and its rate-matched variants have run on a KR260 optical loopback, not yet against a network card or a second reference clock.
 
@@ -12,7 +12,7 @@ Not in scope:
 - the full 58A trading core (book, rule table, interlocks, ARP) at 64 bits: trade64 is a small stand-in with one rule
 - the reconciliation sublayer link-fault state machine, the BER monitor, an ARP or ICMP responder
 
-Kind: example; written by hand. State: built. For an agent: [AGENT.md](AGENT.md).
+Kind: example; written by a Claude Code session. State: built. For an agent: [AGENT.md](AGENT.md).
 
 ![Block diagram: the design's blocks and the links between them](docs/handover/architecture.svg)
 
@@ -76,12 +76,28 @@ Interfaces:
 | build variant (a), the near-end loopback self-test; needs as above | `flow/run_vivado.sh designs/b96_kr260_10g/selftest base` | yes | about 22 min |
 | the UVM 1.2 regression of the PCS and MAC in xsim (every test over its seeds, coverage merge, seeded bugs); needs Vivado 2026.1 xsim (Basic tier is enough); a simulation-only run, no heavy slot while the load is under 6 and more than 12 GB is free | `designs/b96_kr260_10g/verif/uvm/scripts/run_regress.sh --mutants --record results/112_uvm_pcs_mac` | no | about 40 min |
 | the pyuvm regression of the PCS and MAC in Icarus (every test over its seeds, coverage merge, seeded bugs); needs pyuvm 5.0.0 and cocotb-coverage in a venv that sees cocotb 2.0.1; needs Icarus Verilog 12, cocotb 2.0.1, pyuvm 5.0.0, cocotb-coverage; a simulation-only run, no heavy slot while the load is under 6 and more than 12 GB is free | `PYTHONPATH=. python designs/b96_kr260_10g/verif/pyuvm/scripts/run_regress.py --mutants --record results/123_pyuvm_pcs_mac` | no | about 15 min |
+| the pyuvm regression of the PCS and MAC on Verilator with line, branch, expression and toggle coverage, merged and reported per module (brief 146); needs Verilator 5.036 or newer (cocotb 2.0.1 refuses the 5.020 of Ubuntu), so it is not in CI; needs Verilator 5.048 (source ~/.local/opt/verilator-5048/env.sh), cocotb 2.0.1, pyuvm 5.0.0, cocotb-coverage; the Verilator build takes a heavy slot (systemd-run MemoryMax=8G), the runs are simulation only; then verilator_coverage --write and scripts/cov_report.py (results/146_verilator_cov/README.md) | `SIM=verilator PYUVM_COV=1 PYTHONPATH=. python designs/b96_kr260_10g/verif/pyuvm/scripts/run_regress.py --out /tmp/v146 --record results/146_verilator_cov` | yes | about 6 min |
+| the pyuvm regression of brief 158 (44 runs with the transmit-underrun test) on Verilator with coverage, then the 17 seeded bugs on Verilator; same build and rules as the brief 146 command; needs Verilator 5.048 (source ~/.local/opt/verilator-5048/env.sh), cocotb 2.0.1, pyuvm 5.0.0, cocotb-coverage; heavy slot for the build; the mutant run is the same command with --mutants-only and no PYUVM_COV (about 7 minutes) | `SIM=verilator PYUVM_COV=1 PYTHONPATH=. python designs/b96_kr260_10g/verif/pyuvm/scripts/run_regress.py --out /tmp/v158 --record results/158_cov_closure` | yes | about 4 min |
+| the SymbiYosys covers and proofs of the two mac64_tx interframe-gap conditions (brief 158); needs the OSS CAD Suite release the repository's CI pins (found through FDA_OSS_CAD or ~/.local/opt/oss-cad-suite); a few seconds of solver time, no heavy slot | `bash designs/b96_kr260_10g/verif/formal/run_ifg_formal.sh /tmp/mac64_tx_ifg` | no | about 1 min |
 
-Tool: Vivado 2026.1. Build ID of the inputs at handover: `815a2b02` (`python flow/manifest.py show designs/b96_kr260_10g`: what a rebuild of today's sources and flow would carry; it changes when any build input or the flow changes, so it can differ from the build ID in an older evidence record). Knowledge-bank pin: `93d158c`.
+Tool: Vivado 2026.1. Build ID of the inputs at handover: `53f1dedd` (`python flow/manifest.py show designs/b96_kr260_10g`: what a rebuild of today's sources and flow would carry; it changes when any build input or the flow changes, so it can differ from the build ID in an older evidence record). Knowledge-bank pin: `6185830`.
 
 | File | What |
 |---|---|
-| [`designs/b96_kr260_10g/verif/pyuvm/README.md`](verif/pyuvm/README.md) | how the pyuvm (Python UVM on cocotb and Icarus) bench for the PCS and MAC is built, run and limited; the same job as the SystemVerilog UVM bench (brief 123) |
+| [`designs/b96_kr260_10g/dbg_xvc/rtl/xvc_debug.sv`](dbg_xvc/rtl/xvc_debug.sv) | the debug path of build dbg_xvc: PS AXI master, AXI4 to AXI4-Lite converter, Debug Bridge (AXI to BSCAN) and one ILA on status taps (brief 131) |
+| [`designs/b96_kr260_10g/dbg_xvc/rtl/b96_core.sv`](dbg_xvc/rtl/b96_core.sv) | copy of rtl/b96_core.sv for build dbg_xvc with three read-only tap ports for the debug ILA (brief 131) |
+| [`designs/b96_kr260_10g/dbg_xvc/rtl/kr260_10g_top.sv`](dbg_xvc/rtl/kr260_10g_top.sv) | copy of rtl/kr260_10g_top.sv for build dbg_xvc with the debug path instantiated (brief 131) |
+| [`designs/b96_kr260_10g/dbg_xvc/build.yaml`](dbg_xvc/build.yaml) | how flow/run_vivado.sh builds dbg_xvc (the eyescan build plus the debug path, brief 131) |
+| [`designs/b96_kr260_10g/ip/amd_ip_xvc.tcl`](ip/amd_ip_xvc.tcl) | the AMD IP of build dbg_xvc: Zynq UltraScale+ PS, AXI Protocol Converter, Debug Bridge, ILA (brief 131) |
+| [`designs/b96_kr260_10g/dbg_xvc/docs/dbg_xvc.md`](dbg_xvc/docs/dbg_xvc.md) | what build dbg_xvc is, what the ILA watches and why, what the debug logic changes, measured against the parent build (brief 131) |
+| [`designs/b96_kr260_10g/dbg_xvc/docs/xvc_board_side.md`](dbg_xvc/docs/xvc_board_side.md) | how XVC would run on the KR260's Ubuntu: which variant fits, the overlay, the Vivado connection; written, not run (brief 131) |
+| [`designs/b96_kr260_10g/dbg_xvc/docs/xvc_board_test.md`](dbg_xvc/docs/xvc_board_test.md) | the pre-registered board test for build dbg_xvc: criteria written before any board time (brief 131) |
+| [`designs/b96_kr260_10g/dbg_xvc/board/pl-dbg-xvc.dtsi`](dbg_xvc/board/pl-dbg-xvc.dtsi) | device-tree overlay fragment for the debug bridge on the KR260; not loaded on a board (brief 131) |
+| [`designs/b96_kr260_10g/dbg_xvc/board/xvc_board_session.sh`](dbg_xvc/board/xvc_board_session.sh) | the board-session script for the dbg_xvc test, given by the planner at the board; not run (brief 131) |
+| [`designs/b96_kr260_10g/dbg_xvc/board/xvc_capture.tcl`](dbg_xvc/board/xvc_capture.tcl) | Vivado hardware-manager side of the dbg_xvc board test: XVC connection and ILA captures; not run (brief 131) |
+| [`designs/b96_kr260_10g/dbg_xvc/model/xvc_verdict.py`](dbg_xvc/model/xvc_verdict.py) | the pre-registered verdict of the dbg_xvc board test (brief 131) |
+| [`designs/b96_kr260_10g/dbg_xvc/scripts/dump_netlist_timing.tcl`](dbg_xvc/scripts/dump_netlist_timing.tcl) | dumps a routed build's core cells and slacks so the debug build can be compared with its parent (brief 131) |
+| [`designs/b96_kr260_10g/verif/pyuvm/README.md`](verif/pyuvm/README.md) | how the pyuvm (Python UVM on cocotb, Icarus or Verilator) bench for the PCS and MAC is built, run and limited, with its code coverage on Verilator; the same job as the SystemVerilog UVM bench (briefs 123 and 146) |
 | [`designs/b96_kr260_10g/verif/pyuvm/COMPARISON.md`](verif/pyuvm/COMPARISON.md) | the measured comparison of the pyuvm and the SystemVerilog UVM bench, where each fits the project, and a section for the verification course (brief 123) |
 | [`designs/b96_kr260_10g/verif/uvm/README.md`](verif/uvm/README.md) | how the UVM 1.2 bench for the PCS and MAC is built, what each part checks, the coverage and the seeded bugs (brief 112) |
 | [`designs/b96_kr260_10g/rm_gp_bypass/rtl/b96_core.sv`](rm_gp_bypass/rtl/b96_core.sv) | copy of rtl/b96_core.sv for build rm_gp_bypass with the GT buffer-bypass controllers connected, run gates and (brief 96F1b) the alignment timeout and retry status in GT_BUF |
@@ -111,6 +127,8 @@ Tool: Vivado 2026.1. Build ID of the inputs at handover: `815a2b02` (`python flo
 | [`designs/b96_kr260_10g/rtl/b96_pkg.sv`](rtl/b96_pkg.sv) | block codes, scrambler, CRC-32 functions |
 | [`designs/b96_kr260_10g/rtl/pcs_tx.sv`](rtl/pcs_tx.sv) | transmit PCS (encode, scramble, gearbox) |
 | [`designs/b96_kr260_10g/rtl/pcs_rx.sv`](rtl/pcs_rx.sv) | receive PCS (gearbox with slip, block lock, descramble, decode) |
+| [`designs/b96_kr260_10g/verif/formal/mac64_tx_ifg.sby`](verif/formal/mac64_tx_ifg.sby) | SymbiYosys tasks for the two mac64_tx interframe-gap conditions code coverage found unreachable - covers unreached, proofs by induction, reachable neighbours as a control (brief 158) |
+| [`results/158_cov_closure/README.md`](../../results/158_cov_closure/README.md) | the brief 158 record - the underrun test and its scoreboard rule, coverage after it, the formal results and the 17 seeded bugs on Verilator |
 | [`designs/b96_kr260_10g/rtl/mac64_tx.sv`](rtl/mac64_tx.sv) | 64-bit MAC transmitter |
 | [`designs/b96_kr260_10g/rtl/mac64_rx.sv`](rtl/mac64_rx.sv) | 64-bit MAC receiver |
 | [`designs/b96_kr260_10g/rtl/frame_src.sv`](rtl/frame_src.sv) | frame builder for orders, feed, probe and test frames |
@@ -250,6 +268,8 @@ Open questions:
 
 | Date | Brief | PR | What |
 |---|---|---|---|
+| 2026-11-22 | - | - | brief 158: the transmit underrun of mac64_tx driven under a fault-injection mode of the protocol checker (test t_underrun, scoreboard rule: the data taken, one error word, no FCS or terminate, the gap; the receiver aborts exactly those frames), line coverage 81.25 % to 82.5 %, toggle 96.33 % to 96.37 %; SymbiYosys covers and proofs that the two interframe-gap conditions of mac64_tx that no simulation reaches are unreachable; the 17 seeded bugs run on Verilator with the same verdicts as Icarus; no RTL change |
+| 2026-11-22 | - | - | brief 146: RTL code coverage of the PCS and MAC from the pyuvm bench on Verilator 5.048 (81.25 % line, 85.34 % branch, 92.47 % expression, 96.33 % toggle design-wide, every open point explained; same results as Icarus, 2.9 times faster to run); three additions of stimulus; testplan items V-COV-FUNC and V-COV-CODE; no RTL change |
 | 2026-11-21 | - | - | brief 127: build rm_gp_itch, brief 110's MoldUDP64/ITCH/book/risk/OUCH path inside the 10G design (udp_strip adapter with a late FCS verdict, transmit multiplexer, replay memory and capture ring, stand-in for tcp_fast with a hook); bit-exact against 110's model in xsim and Icarus; built with timing met; board test pre-registered and script written, nothing run on a board |
 | 2026-11-21 | - | - | brief 126: build lat_all3_bypass (the default receive path, the 97C latency cuts and the GT buffer bypass together), all 29 gates, WNS +0.066 ns, report_cdc no critical; simulated in xsim; board test pre-registered from the two measured runs (E 16.0, L 38.0, D 6.0, tick-to-trade 22 clocks) and script written; nothing run on a board |
 | 2026-11-20 | - | - | brief 96F1b: build rm_gp_bypass with AMD-style synchronised controller reset and a 30 ms TX / 130 ms RX alignment timeout with 3 retries then a gave-up flag (GT_BUF bits 29:16); all 29 gates, timing met, report_cdc no critical; gave-up added as a fail line before any board time; nothing run on a board |

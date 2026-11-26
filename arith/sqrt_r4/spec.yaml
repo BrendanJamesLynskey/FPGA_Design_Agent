@@ -1,0 +1,50 @@
+# Machine-readable specification of the radix-4 integer square root (brief 139c). Human-readable form: spec.md. spec_status is set by a human only.
+function: sqrt_r4
+spec_version: 1
+spec_status: draft
+summary: Floor square root of an unsigned W-bit integer, with the remainder, two root bits per step (radix-4 digit recurrence).
+parameters:
+  W: {meaning: radicand width in bits, range: "5 or more", derived: "RW = ceil(W/2), the root width; RP = ceil(RW/2), the number of radix-4 steps"}
+  PIPE: {meaning: "unrolled variant only: radix-4 steps per register stage", range: "1 to RP"}
+interface:
+  clock: "clk (rising edge)"
+  reset: "rst (synchronous, active high; clears only the valid flags and the iterative variant's busy state)"
+  in: {in_valid: 1, in_ready: "1 for the unrolled variant; low while the iterative variant is busy", in_data: "x, W bits, unsigned"}
+  out: {out_valid: 1, out_data: "{root, rem}: root RW bits, rem RW + 1 bits, both unsigned; meaningful only while out_valid is high"}
+function_definition: "root = floor(sqrt(x)), rem = x - root**2, so 0 <= rem <= 2 * root; x = 0 gives (0, 0). Identical to arith/isqrt: the two functions can be swapped for each other at the same W."
+error_bound: exact
+latency_definition: "clock edges from the accepting edge to the edge that samples out_valid high"
+variants:
+  - id: iter
+    module: sqrt_r4_iter
+    selector: {VARIANT: 0}
+    protocol: "valid/ready on the input (a transfer is in_valid and in_ready on a rising edge; in_ready is low while a result is being computed and is high again in the cycle out_valid is high), out_valid one clock wide, no back-pressure on the output, results in input order"
+    reset_clock_assumptions: "one clock, rising edge; rst is synchronous and must be held for at least one clock before the first in_valid (the formal harness assumes reset in the first cycle only); outputs and in_ready are defined from the first clock after reset; data-path registers are not reset"
+    latency: "RP + 1"
+    throughput: "one root per RP + 1 clocks (about half of isqrt_restoring_iter's RW + 1)"
+    expected_primitives: {carry4: "3*ceil((QW+4)/4) + 2*ceil((QW+3)/4)", dsp48: 0, bram: 0, ff: "4*RP + 2*QW + 1 + ceil(log2(RP+1)) + 2"}
+    trade_off: half the clocks of the radix-2 iterative root for three parallel trial subtractors and a 24q+9 adder
+    points: [{W: 16}, {W: 32}]
+  - id: pipe
+    module: sqrt_r4_pipe
+    selector: {VARIANT: 1}
+    protocol: "valid only: in_ready is constant 1, fixed latency, one result per clock, no stall or enable (a free-running pipeline); out_valid is in_valid delayed by the latency, results in input order"
+    reset_clock_assumptions: "one clock, rising edge; rst is synchronous and must be held for at least one clock before the first in_valid (the formal harness assumes reset in the first cycle only); outputs and in_ready are defined from the first clock after reset; data-path registers are not reset"
+    latency: "ceil(RP / PIPE)"
+    throughput: one root per clock
+    expected_primitives: {carry4: "RP * (3*ceil((QW+4)/4) + 2*ceil((QW+3)/4))", dsp48: 0, bram: 0, ff: "ceil(RP/PIPE) * (2*QW + 1) + (ceil(RP/PIPE) - 1) * 4*RP + ceil(RP/PIPE)"}
+    trade_off: PIPE sets the register spacing; the unrolled radix-4 root has half the stages of isqrt_restoring_pipe at PIPE = 1 and about three times the subtractors per stage
+    points: [{W: 16, PIPE: 1}, {W: 16, PIPE: 2}, {W: 32, PIPE: 1}, {W: 32, PIPE: 2}, {W: 32, PIPE: 8}]
+integration:
+  port_timing: "All inputs are sampled on the rising edge and all outputs change after it; there is no combinational path from in_data or in_valid to out_data or out_valid in any variant except that the unrolled pipeline's first stage logic is between the input pins and the first register, so register the inputs (the out-of-context wrapper does) when the source is slow. in_ready of the iterative variant is a registered state and may drive a source's enable directly."
+  constraints_to_carry: "One clock constraint on clk. No multicycle or false-path exceptions are needed or valid: every path is single-cycle register to register. rst is synchronous: do not give it an asynchronous or set_false_path treatment. Do not retime across the valid pipeline of the unrolled variant without re-running the harness (latency is part of the contract). Out-of-context numbers (Fmax, area, power) are not yet measured: see build/<variant>/<fabric>/build.yaml, prepared and not run."
+  after_integration: "Rerun the packaged harness against your instance (harness/README.md): it checks values, order and the measured latency of every result and reports coverage of the target bins."
+what_a_user_could_guess_wrong:
+  - "The result is the floor, as for isqrt: sqrt(15) gives 3 with remainder 6. The remainder is returned because the recurrence produces it free; it is at most 2 * root."
+  - "The digit set is {0,1,2,3} and non-redundant: the remainder is an ordinary binary number, not carry-save, and there is no final correction. 'Radix-4' here means two result bits per step, not the redundant SRT digit set {-2..2} that a radix-4 divider uses; that redundant square root is not in this entry."
+  - "W below 5 is not supported (the first step needs RP >= 2 in this coding); use isqrt for W = 3 or 4."
+  - "An odd W is allowed: the radicand is zero-extended to 4 * RP bits, so a 9-bit radicand has a 5-bit root. When RW is odd the internal root has one more bit than the output; the top bit is always zero and is not output."
+  - "The root is RW bits and the remainder RW + 1 bits; out_data packs them as {root, rem}, root in the high bits."
+  - "The iterative variant accepts an input only while in_ready is high; out_valid is one clock wide and out_data is overwritten by the next accepted input on the edge that samples it."
+  - "Reset drops results in flight; the data registers are not cleared (never read without a valid)."
+requirements: [SQRT4-F-MODEL, SQRT4-F-RTL-EXH, SQRT4-F-RTL-RAND, SQRT4-F-LAT, SQRT4-F-LINT, SQRT4-F-MUTANT, SQRT4-F-FORMAL-REF, SQRT4-F-FORMAL-ISQRT, SQRT4-F-LEAN-RECURRENCE, SQRT4-F-BUILD]

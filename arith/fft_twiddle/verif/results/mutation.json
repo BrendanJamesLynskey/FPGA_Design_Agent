@@ -1,0 +1,97 @@
+{
+ "function": "fft_twiddle",
+ "mutants": 10,
+ "valid": 10,
+ "killed": 10,
+ "survived": [],
+ "invalid": [],
+ "score_pct": 100.0,
+ "per_variant": {
+  "quarter": {
+   "valid": 10,
+   "killed": 10
+  }
+ },
+ "results": [
+  {
+   "name": "q1_cos_sign",
+   "variant": "quarter",
+   "class": "constant",
+   "status": "killed",
+   "detail": "exhaustive {'LOGC': 6, 'TW': 16, 'STAGES': 1}",
+   "why": "second quadrant cosine has the wrong sign"
+  },
+  {
+   "name": "q2_sin_sign",
+   "variant": "quarter",
+   "class": "constant",
+   "status": "killed",
+   "detail": "exhaustive {'LOGC': 6, 'TW': 16, 'STAGES': 1}",
+   "why": "third quadrant sine has the wrong sign"
+  },
+  {
+   "name": "q3_swap",
+   "variant": "quarter",
+   "class": "constant",
+   "status": "killed",
+   "detail": "exhaustive {'LOGC': 6, 'TW': 16, 'STAGES': 1}",
+   "why": "fourth quadrant sine has the wrong sign"
+  },
+  {
+   "name": "sign_of_wi",
+   "variant": "quarter",
+   "class": "operator",
+   "status": "killed",
+   "detail": "exhaustive {'LOGC': 6, 'TW': 16, 'STAGES': 1}",
+   "why": "wi is +sin instead of -sin"
+  },
+  {
+   "name": "truncate",
+   "variant": "quarter",
+   "class": "operator",
+   "status": "killed",
+   "detail": "exhaustive {'LOGC': 6, 'TW': 16, 'STAGES': 1}",
+   "why": "the cosine is truncated instead of rounded half up"
+  },
+  {
+   "name": "mirror",
+   "variant": "quarter",
+   "class": "constant",
+   "status": "killed",
+   "detail": "exhaustive {'LOGC': 6, 'TW': 16, 'STAGES': 1}",
+   "why": "the mirrored table index is off by one"
+  },
+  {
+   "name": "index_scale",
+   "variant": "quarter",
+   "class": "operator",
+   "status": "killed",
+   "detail": "exhaustive {'LOGC': 6, 'TW': 16, 'STAGES': 1}",
+   "why": "the index is not scaled up to the master circle"
+  },
+  {
+   "name": "quadrant_delay",
+   "variant": "quarter",
+   "class": "connection",
+   "status": "killed",
+   "detail": "exhaustive {'LOGC': 6, 'TW': 16, 'STAGES': 1}",
+   "why": "the quadrant is not delayed with the ROM read"
+  },
+  {
+   "name": "output_rank",
+   "variant": "quarter",
+   "class": "latency",
+   "status": "killed",
+   "detail": "exhaustive {'LOGC': 12, 'TW': 18, 'STAGES': 2}",
+   "why": "the cosine output skips its register"
+  },
+  {
+   "name": "rom_value",
+   "variant": "quarter",
+   "class": "constant",
+   "status": "killed",
+   "detail": "exhaustive {'LOGC': 12, 'TW': 28, 'STAGES': 1}",
+   "why": "one table entry (cos 45 degrees) is 16 counts off (a 28-bit twiddle sees it)"
+  }
+ ]
+}

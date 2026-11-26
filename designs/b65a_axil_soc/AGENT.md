@@ -2,7 +2,7 @@
 source: designs/b65a_axil_soc/handover.yaml; human view: README.md; refresh: python -m flow.handover fresh designs/b65a_axil_soc
 
 ## identity
-kind=example produced_by=human part=xc7a100tcsg324-1 board=Nexys A7-100T top=b65a_axil_soc_top tool=Vivado 2026.1
+kind=example produced_by=session part=xc7a100tcsg324-1 board=Nexys A7-100T top=b65a_axil_soc_top tool=Vivado 2026.1
 verified: not assessed: no requirements recorded (no verif/testplan.yaml), so nothing here is traced to a requirement (record: designs/b65a_axil_soc/VERIFIED.md, designs/b65a_axil_soc/verified.json; definition: docs/verified.md)
 
 ## summary
@@ -10,7 +10,7 @@ The brief 65A sample block design. A DDS tone generator and a frequency and duty
 not: a showcase or a board-verified design; the bitstream was built, not programmed; a general interconnect; generation covers AXI4-Lite only, 32-bit data and one clock domain
 
 ## state
-stage=built vivado=2026.1 kb_pin=20d73e8 build_id=d5b615b6
+stage=built vivado=2026.1 kb_pin=6185830 build_id=d8667d83
 gates: build_2026_1=pass board_run=not-run
 
 ## interface

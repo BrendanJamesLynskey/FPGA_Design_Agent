@@ -16,7 +16,7 @@ from typing import Any, Callable
 
 from agent.core.security import SecurityError, redact, redact_obj, validate_args
 
-SCHEMA_VERSION = "1.19.0"        # bump the minor version for an added optional argument or tool, the major for a break
+SCHEMA_VERSION = "1.24.0"        # bump the minor version for an added optional argument or tool, the major for a break
 MAX_OUTPUT = 20_000             # characters of raw output returned to the model; the full text stays in build/ files
 
 
@@ -94,6 +94,8 @@ def dispatch(session, name: str, args: dict[str, Any] | None) -> dict[str, Any]:
             raise SecurityError("unknown-tool", f"no tool named {name!r}")
         tl = TOOLS[name]
         validate_args(tl.schema(), args)
+        from agent.core import permissions as _perm        # brief 222: the never-rules, then the run's own permission policy
+        _perm.tool_gate(session, name, args)
         pol = getattr(session.jail, "policy", None)
         if pol is not None and name not in NO_WRITE_LOCK_TOOLS:   # brief 102F: frozen, excluded and waiver files are read-only while a tool runs
             with pol.write_lock():

@@ -4,7 +4,7 @@
 
 **Not assessed: no requirements recorded (no verif/testplan.yaml), so nothing here is traced to a requirement.**
 
-What the label means, what "verified" never means and how it is earned: [docs/verified.md](../../docs/verified.md). The label is computed from the testplan and the evidence files named below; it is never typed. Generated at git commit `a8359042aac759be0a4d6b05186709bdb7bb093c` (informational: the hashes in the manifest, not the commit, are what the CI check compares).
+What the label means, what "verified" never means and how it is earned: [docs/verified.md](../../docs/verified.md). The label is computed from the testplan and the evidence files named below; it is never typed. Generated at git commit `51dfe82191cd59c99857973f44b8b57ec9363fb5` (informational: the hashes in the manifest, not the commit, are what the CI check compares).
 
 ## What was checked for the label
 
@@ -41,7 +41,7 @@ Every file this record covers, with its SHA-256 at generation (7 files). `absent
 
 | File | SHA-256 |
 |---|---|
-| `designs/b2_acl_adxl362/handover.yaml` | `47d1b25dfb3c6c1af7b1b1d0a100bc81839390bd15b1d2080900205672d845c2` |
+| `designs/b2_acl_adxl362/handover.yaml` | `81a84ba20d14be6cc2b963df2813cc053e3d78e835f7474d2c626547f130e9bb` |
 | `designs/b2_acl_adxl362/rtl/acl_regs.sv` | `6496778f1f147867b745326eeb861d0d560b0244b474023bd977d647de5ff374` |
 | `designs/b2_acl_adxl362/rtl/b2_acl_adxl362_top.sv` | `b8ae5fc066c876061e38c364b51e5651aade714034cf586b0de84fa44d42028d` |
 | `designs/b2_acl_adxl362/rtl/spi_burst.sv` | `37b7defb72fbee1a3badbadfe1c06a5d60f5aec263f1fe93dc2d01bf3db1001c` |

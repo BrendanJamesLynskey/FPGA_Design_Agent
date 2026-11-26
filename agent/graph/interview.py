@@ -35,9 +35,15 @@ class Question:
     default: str
     reason: str
     answer: str | None = None
-    status: str = "open"                # open | answered | defaulted
+    status: str = "open"                # open | answered | defaulted | waived | unresolved (brief 210: the last two only at standard and strict)
     by: str | None = None               # human | oracle | default
     evidence: str | None = None         # the oracle's quoted line from the hidden spec
+    fact: str | None = None             # brief 174: the board_facts.yaml key that answered it (by == "package")
+    risk: str = "medium"                # brief 210: low | medium | high (agent.graph.requirements.classify)
+    risk_rule: str = ""                 # the rule (or "clarifier") that set the class
+    risk_reason: str = ""
+    waiver: dict[str, Any] | None = None    # brief 210: the recorded user decision that let a default stand (who, when, why)
+    clarifier_risk: str | None = None   # brief 210: the class the Clarifier set on the open question, if any
 
 
 class Answerer(Protocol):
@@ -50,11 +56,27 @@ class Answerer(Protocol):
 class Interview:
     questions: list[Question] = field(default_factory=list)
     max_questions: int = 12
+    facts: list[dict[str, Any]] = field(default_factory=list)   # brief 174: board_facts.yaml rows of a design package
+    level: str = "loose"                                         # brief 210: loose | standard | strict (agent.graph.requirements)
+    waivers: list[Any] = field(default_factory=list)             # brief 210: agent.graph.requirements.Waiver rows
+
+    def lookup(self, q: Question) -> dict[str, Any] | None:
+        """A sourced fact of the design package that answers the question, or None (then the question is asked as before)."""
+        from agent.graph.package_facts import fact_for
+        return fact_for(q.text, self.facts) if self.facts else None
 
     def ask(self, q: Question, who: Answerer | None) -> Question:
         """Ask one question. ``who=None`` (interview off) takes the default."""
         if not (q.text.strip() and q.default.strip() and q.reason.strip()):
             raise ValueError("a question needs text, a proposed default and the reason for it")
+        from agent.graph import requirements as R
+        q.risk, q.risk_rule, q.risk_reason = (k := R.classify(q.text, q.default, q.reason, q.clarifier_risk)).cls, k.rule, k.why
+        known = self.lookup(q)
+        if known is not None:             # brief 174: a fact with a cited source is not asked again; it does not count against the limit
+            from agent.graph.package_facts import answer_text, evidence_text
+            q.answer, q.status, q.by, q.fact, q.evidence = answer_text(known), "answered", "package", known["key"], evidence_text(known)
+            self.questions.append(q)
+            return q
         if len(self.questions) >= self.max_questions:
             # a limit degrades, never crashes the run (a live run died here): the user is not asked, the default is
             # taken, and the record says it was the limit
@@ -67,24 +89,34 @@ class Interview:
                 q.answer, q.status, q.by, q.evidence = q.default, "defaulted", who.name, None
             else:
                 q.answer, q.status, q.by, q.evidence = a, "answered", who.name, ev
+        R.apply_policy(q, self.level, self.waivers)     # brief 210: at standard and strict a default may not stand for a question that must be resolved
         self.questions.append(q)
         return q
+
+    def unresolved(self) -> list[Question]:
+        """Brief 210: the questions the level does not let a default settle, and no waiver covers."""
+        return [q for q in self.questions if q.status == "unresolved"]
 
     def summary(self) -> dict[str, Any]:
         return {"asked": len(self.questions),
                 "answered": sum(q.status == "answered" for q in self.questions),
                 "defaulted": sum(q.status == "defaulted" for q in self.questions),
+                "waived": sum(q.status == "waived" for q in self.questions),
+                "unresolved": sum(q.status == "unresolved" for q in self.questions),
+                "level": self.level,
                 "questions": [asdict(q) for q in self.questions]}
 
     def resolve_into(self, spec: dict[str, Any]) -> dict[str, Any]:
         """Write the answers into spec.yaml: each question goes to ``resolved_questions`` with its answer and
         who gave it; ``open_questions`` keeps only questions never asked."""
-        asked = {q.text for q in self.questions}
+        asked = {q.text for q in self.questions if q.status != "unresolved"}     # an unresolved question stays open in spec.yaml
         spec = dict(spec)
         spec["open_questions"] = [o for o in spec.get("open_questions") or [] if o.get("question") not in asked]
         spec["resolved_questions"] = [*(spec.get("resolved_questions") or []),
                                       *({"question": q.text, "answer": q.answer, "status": q.status, "by": q.by,
-                                         "default_reason": q.reason} for q in self.questions)]
+                                         "default_reason": q.reason, "risk": q.risk,
+                                         **({"waiver": q.waiver} if q.waiver else {})}
+                                        for q in self.questions if q.status != "unresolved")]
         return spec
 
 
@@ -98,7 +130,9 @@ def merge_summaries(prev: dict[str, Any] | None, new: dict[str, Any]) -> dict[st
         if q.get("text") not in {x.get("text") for x in qs}:
             qs.append(q)
     return {"asked": len(qs), "answered": sum(q.get("status") == "answered" for q in qs),
-            "defaulted": sum(q.get("status") == "defaulted" for q in qs), "questions": qs}
+            "defaulted": sum(q.get("status") == "defaulted" for q in qs), "waived": sum(q.get("status") == "waived" for q in qs),
+            "unresolved": sum(q.get("status") == "unresolved" for q in qs), "level": new.get("level") or (prev or {}).get("level"), "questions": qs,
+            **{k: new[k] for k in ("level_source", "waiver_problems", "requirements_stop") if k in new}}
 
 
 def open_questions(spec: dict[str, Any] | None) -> list[str]:
@@ -175,6 +209,98 @@ def ensure_register_question(request: str, spec: dict[str, Any]) -> tuple[dict[s
         "default": proposed_register_default(spec),
         "reason": _p("graph/interview/ensure_register_question_2")}]
     return spec, True
+
+
+# ---- brief 190 (item 10): the new-protocol intake -------------------------------------------------------------------------------------------
+# A request for a block that speaks an exchange or messaging protocol (a market-data feed, an order-entry session, a framed binary protocol)
+# gets six standing questions the Clarifier may not have asked: how a session is set up, how messages are delimited, how each field is encoded,
+# the largest message, how sequence numbers behave and how a gap is recovered. Each carries a default and the reason for it, so an interview
+# that is off or an oracle that does not know still produces a documented choice. The list is ours, written for this agent; the idea of asking
+# for these six things first, and building the golden model and byte map before any RTL, is from Edwards 2026, ch 7. The question text is
+# in this public file, not in the pinned private prompts (the register-map question is a private prompt); it names no protocol by brand.
+REQUEST_PROTOCOL = re.compile(
+    r"(?i:\b(?:wire[- ]format|message[- ](?:format|feed|types?|set)|binary[- ](?:feed|protocol|messages?)|market[- ]data|feed[- ]handler|"
+    r"order[- ]entry|(?:stock|trading|exchange)[- ](?:feed|protocol|messages?|venue)|datagrams?|MoldUDP\w*|SoupBinTCP|sequence[- ]numbers?)\b)"
+    r"|\b(?:ITCH|OUCH|FIX|SBE)\b")           # the acronyms are matched in capitals only: the word "fix" is not a protocol
+# a bare "protocol" or "framing" is not enough: a request for an SPI or UART block would get questions that do not apply
+
+
+@dataclass(frozen=True)
+class ProtocolQuestion:
+    topic: str            # session | delimiting | encodings | largest | sequencing | gaps
+    seen: str             # regex: an existing question on this topic means it is not asked again
+    text: str
+    default: str
+    reason: str
+
+
+PROTOCOL_QUESTIONS: tuple[ProtocolQuestion, ...] = (
+    ProtocolQuestion(
+        "session", r"(?i)\b(?:sessions?|log(?:in|on|out)|heartbeats?|keep-?alive|reconnect)",
+        "How is a session set up, kept alive and ended: is there a login, an identity, heartbeats, a logout, and what happens on a reconnect?",
+        "One session for the whole run, already established before the first message; no login or logout message is modelled; heartbeats are "
+        "accepted and ignored; a reconnect is a reset of the block.",
+        "The smallest model that can be checked end to end. A session state machine is built only when the spec states one, because every state "
+        "added is a path the golden model and the testbench must also cover."),
+    ProtocolQuestion(
+        "delimiting", r"(?i)\b(?:delimit\w*|length[- ]prefix\w*|message length|terminator|packet boundar\w*|span\w* (?:two )?packets?)",
+        "How is one message separated from the next: a length prefix, a fixed size per message type, a terminator or a packet boundary? May "
+        "several messages share a packet, and may one message span two packets?",
+        "Each message starts with a length field that gives the bytes after it; several messages may share a packet; no message spans two packets.",
+        "Delimiting decides where every later field is found. Messages that straddle the datapath word, or share a packet, are where decoders go "
+        "wrong, so the choice is fixed in writing before the byte map is."),
+    ProtocolQuestion(
+        "encodings", r"(?i)\b(?:endian\w*|byte[- ]order|encod\w+|field widths?|fixed[- ]point|space[- ]padded|signedness)",
+        "For every field: its width, byte order, signedness and encoding (binary integer, fixed-point with a stated scale, text padded with spaces "
+        "on the left or right, or a flag bit)?",
+        "Binary fields are big-endian and unsigned; prices are integers with the decimal scale the spec states; text is left-justified and padded "
+        "with spaces; every field is listed in a byte map (name, offset, length, encoding) before any RTL is written.",
+        "Network byte order is the usual choice for these protocols, but it has to be confirmed field by field: a wrong order or scale shows up "
+        "only as plausible-looking wrong values. The byte map is the one table the golden model, the decoder and the test stimulus all read."),
+    ProtocolQuestion(
+        "largest", r"(?i)\b(?:largest|maximum|max\.?) (?:message|packet|frame|payload)|\bMTU\b",
+        "What is the largest message in bytes, and the largest packet or frame the block must accept?",
+        "The largest message in the spec's own message table; if the spec gives none, a packet of at most 1,500 bytes of payload and a message "
+        "of at most 255 bytes.",
+        "It sets the buffer depth, the datapath width and the number of clocks a message can take, so it is a design input and not a detail "
+        "found during test."),
+    ProtocolQuestion(
+        "sequencing", r"(?i)\bsequenc\w*|\bnumbered\b",
+        "How are messages numbered: per message or per packet, starting at what value, wrapping or not, and shared across sessions or not?",
+        "The packet header carries the sequence number of its first message; the next packet's number is that value plus the message count; "
+        "numbering starts at 1 and does not wrap during a run; one counter per session.",
+        "Gap and duplicate detection are arithmetic on these numbers, so the counting rule has to be exact. A per-packet and a per-message "
+        "convention differ by the message count and look alike on a short test."),
+    ProtocolQuestion(
+        "gaps", r"(?i)\b(?:gaps?|retransmi\w+|re-?request\w*|duplicates?|overlap\w*|recover\w*)",
+        "What must the block do on a gap, a duplicate or an overlap: drop, request a retransmission, or continue and flag it?",
+        "Drop duplicates and the repeated part of an overlap and count them; on a gap stop applying messages, raise a flag and count it until "
+        "software re-synchronises; no retransmission request is made in hardware.",
+        "A silently applied gap makes downstream state wrong with no sign of it. Stopping and flagging is safe and observable, and the counters "
+        "make each case testable."),
+)
+
+
+def request_is_protocol(request: str) -> bool:
+    """The request names an exchange or messaging protocol (market data, order entry, a framed binary protocol, sequence numbers)."""
+    return bool(REQUEST_PROTOCOL.search(request or ""))
+
+
+def ensure_protocol_questions(request: str, spec: dict[str, Any]) -> tuple[dict[str, Any], list[str]]:
+    """Brief 190: for a protocol request, add the six intake questions the spec does not already ask (open or resolved), each with its default
+    and reason, to ``open_questions``. Returns (spec, topics added). A request with no protocol wording, or a spec that has asked all six, is
+    returned unchanged. The Interview's question limit (12) still applies: later questions are defaulted by the limit and the record says so."""
+    if not request_is_protocol(request):
+        return spec, []
+    asked = " \n ".join(str(q.get("question", "")) for q in [*(spec.get("open_questions") or []), *(spec.get("resolved_questions") or [])]
+                        if isinstance(q, dict))
+    add = [q for q in PROTOCOL_QUESTIONS if not re.search(q.seen, asked)]
+    if not add:
+        return spec, []
+    spec = dict(spec)
+    spec["open_questions"] = [*(spec.get("open_questions") or []),
+                              *({"question": q.text, "default": q.default, "reason": q.reason} for q in add)]
+    return spec, [q.topic for q in add]
 
 
 def _offset_int(t: str) -> int | None:

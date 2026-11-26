@@ -36,6 +36,10 @@ try:
     from flow import ip_tcl_allow
 except ImportError:
     import ip_tcl_allow                 # type: ignore[no-redef]
+try:
+    from flow import xdc_sites
+except ImportError:
+    import xdc_sites                    # type: ignore[no-redef]
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -201,6 +205,35 @@ def netlist_tcl(netlists: list[dict[str, Any]], root: Path = ROOT) -> list[str]:
 
 
 
+def security_tcl(cfg: dict, part: str, out: Path) -> list[str]:
+    """Brief 196: the production_secure request (flow/security.py: ``FDA_SECURITY`` from the run's pin, else build.yaml ``security``) as lines of
+    inputs.tcl, so the flow key and the build ID cover it, and ``<out>/security_request.json`` for the gates. No request, no lines: an ordinary
+    build's inputs.tcl is unchanged."""
+    try:
+        from flow import security
+    except ImportError:                 # run as a script: flow/ itself is on sys.path
+        import security                 # type: ignore[no-redef]
+    try:
+        res = security.resolve(cfg)
+    except security.SecurityError as e:
+        raise SystemExit(f"prepare: {e}") from None
+    if res["source"] == "none" or (res["source"] == "pin" and not res["request"]["production_secure"] and not res["policy_conflict"]):
+        return []                       # no request, or the run's pin says off and nothing disagrees: the build is an ordinary one
+    sw = res["switches"]
+    props: list[tuple[str, str]] = []
+    if res["request"]["production_secure"]:
+        try:
+            props = security.tcl_assignments(sw, security.family_of(part))
+        except security.SecurityError as e:
+            raise SystemExit(f"prepare: {e}") from None
+    rec = {**res, "part": part, "properties": props}
+    (out / "security_request.json").write_text(json.dumps(rec, indent=1, sort_keys=True) + "\n")
+    flat = " ".join(f"{{{p}}} {{{v}}}" for p, v in props)
+    return [f"set security_on {int(bool(res['request']['production_secure']))}",
+            f"set security_props [list {flat}]",
+            "set security_switches {" + " ".join(f"{k} {int(v)}" for k, v in sorted(sw.items())) + "}"]
+
+
 STOP_AFTER = ("synth", "place", "route", "bitstream")
 
 
@@ -247,6 +280,10 @@ def main(argv: list[str] | None = None) -> int:
     srcs = vhdl.order_sources(srcs)                     # brief 55: VHDL after the SystemVerilog, packages first
     data = srcorder.data_files(design)                  # 07a2-prep: the task's data files, for $readmemh
     xdcs = expand(cfg["constraints"])
+    # brief 219 fix 5: a LOC the part has no site for fails here, at the constraints stage, with the board's valid choice, not in Vivado
+    xr = xdc_sites.check("\n".join(x.read_text(errors="replace") for x in xdcs), cfg["part"], board_for(cfg))
+    if xr["problems"]:
+        raise SystemExit("prepare: " + xdc_sites.message(xr["problems"]))
     # brief 59A: Tcl that creates AMD IP in the in-memory project (create_ip, global synthesis), sourced by build.tcl
     # after the sources are read; hashed with them, so a change to the IP configuration is a new build stamp
     # only Tcl listed with its SHA-256 in flow/ip_tcl_allow.yaml (maintainer-owned) may be sourced: no agent-written Tcl
@@ -300,6 +337,8 @@ def main(argv: list[str] | None = None) -> int:
            f"set power_env {{{power_env_tcl(board_for(cfg))}}}",
            f"set stop_after {{{stop_after()}}}",
            f"set timing_margin_ns {timing_margin(cfg, xdcs):g}"]
+    sec = security_tcl(cfg, cfg["part"], out)
+    tcl += sec
     if ila:
         (out / "probes.tcl").write_text(probes_tcl(ROOT / cfg["probes"]))
         tcl.append(f"set probes_tcl {{{out / 'probes.tcl'}}}")

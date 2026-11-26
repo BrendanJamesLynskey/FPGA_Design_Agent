@@ -20,11 +20,13 @@ def make_payload(rng, n: int, pat: str) -> bytes:
 
 class FrameItem(uvm_sequence_item):
     """One Ethernet frame offered to mac64_tx: payload bytes (the MAC adds preamble, FCS, terminate and the gap), the poison flag (a deliberately bad FCS),
-    and the idle clocks the driver leaves before the first word."""
+    and the idle clocks the driver leaves before the first word. `abort_after` > 0 makes it a fault-injection item: the first `abort_after` words of the payload
+    only, then the source stalls (mac64_tx's `underrun`); the payload must hold at least 8 * abort_after bytes."""
 
-    def __init__(self, name="frame_item", payload=b"", pat="PAT_RANDOM", poison=False, noise_poison=False, gap=0):
+    def __init__(self, name="frame_item", payload=b"", pat="PAT_RANDOM", poison=False, noise_poison=False, gap=0, abort_after=0):
         super().__init__(name)
         self.payload, self.pat, self.poison, self.noise_poison, self.gap = bytes(payload), pat, bool(poison), bool(noise_poison), gap
+        self.abort_after = abort_after        # fault injection (brief 158): offer this many whole words (at least 1), then drop s_valid with no s_last: a transmit underrun
 
     @property
     def len(self) -> int:

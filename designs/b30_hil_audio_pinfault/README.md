@@ -11,7 +11,7 @@ Not in scope:
 - a working design; the audio output is deliberately miswired and the design is not meant to pass the check at the jack
 - a general fault library; it seeds one fault, a wrong pin, to show the class of defect that simulation and in-FPGA self-checks cannot see
 
-Kind: demonstration; written by hand. State: built. For an agent: [AGENT.md](AGENT.md).
+Kind: demonstration; written by a Claude Code session. State: built. For an agent: [AGENT.md](AGENT.md).
 
 <!-- prose:what -->
 ### What the fault is
@@ -68,7 +68,7 @@ Interfaces:
 | build and run the gates; needs local Vivado 2026.1 and a heavy slot (take_heavy_slot.sh) | `flow/run_vivado.sh designs/b30_hil_audio_pinfault base` | yes | about 4 min |
 | program the SRAM and run the hardware-in-the-loop checks (expected overall result fail, from the audio check); needs the Nexys A7 on wall power, the board lock, and an audio interface cabled from the Nexys audio jack | `python3 flow/hil.py designs/b30_hil_audio_pinfault` | no | about 1 min |
 
-Tool: Vivado 2026.1. Build ID of the inputs at handover: `d2f00de4` (`python flow/manifest.py show designs/b30_hil_audio_pinfault`: what a rebuild of today's sources and flow would carry; it changes when any build input or the flow changes, so it can differ from the build ID in an older evidence record). Knowledge-bank pin: `1fc7ed8`.
+Tool: Vivado 2026.1. Build ID of the inputs at handover: `4ab0c933` (`python flow/manifest.py show designs/b30_hil_audio_pinfault`: what a rebuild of today's sources and flow would carry; it changes when any build input or the flow changes, so it can differ from the build ID in an older evidence record). Knowledge-bank pin: `6185830`.
 
 | File | What |
 |---|---|

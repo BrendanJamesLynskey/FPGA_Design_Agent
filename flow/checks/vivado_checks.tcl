@@ -5,9 +5,10 @@
 # Opens ONE checkpoint (post_synth.dcp or post_route.dcp) once and runs every requested report in it, in sequence,
 # writing <out_dir>/<name>.rpt (or reset_scan.tsv). A report the licence tier or the tool refuses writes
 # <out_dir>/<name>.not_run.txt with Vivado's message instead, so the Python side can say why it did not run.
-# AMD's own reports come first (report_methodology, report_drc, report_cdc, report_control_sets, ...); the only
-# report of ours is reset_scan: one row per register whose reset pin is not tied to a constant, with the reset's
-# root driver traced through buffers and LUT1 inverters (flow/checks/resets.py classifies the rows).
+# AMD's own reports come first (report_methodology, report_drc, report_cdc, report_control_sets, ...); our own
+# reports are reset_scan (one row per register whose reset pin is not tied to a constant, with the reset's root driver
+# traced through buffers and LUT1 inverters; flow/checks/resets.py classifies the rows) and init_scan (brief 206: one
+# row per INIT = 1 register wired straight to a DSP, RAM or FIFO; flow/checks/init_values.py classifies them).
 #
 # Sourced with ::fda_checks_lib set (the seeded-fault runner), it only defines the procs.
 
@@ -168,6 +169,55 @@ proc fda_reset_scan {fname} {
     file rename -force $fname.part $fname
 }
 
+proc fda_init_block {pin} {
+    # {block block_ref pin} when a leaf pin belongs to a hard block, else "". UltraScale+ DSP48E2 is a macro of DSP_*
+    # leaf cells: report the macro (its name and DSP48E2), not the leaf.
+    set b [get_cells -quiet -of_objects $pin]
+    set r [get_property REF_NAME $b]
+    if {![regexp {^(DSP|RAMB|URAM|FIFO)} $r]} { return "" }
+    set bn [get_property NAME $b]
+    if {[regexp {^(.*)/DSP_[A-Z_]+_INST$} $bn -> top]} {
+        set m [get_cells -quiet -hier -filter "NAME == \"$top\""]
+        if {$m ne ""} { set bn $top; set r [get_property REF_NAME $m] }
+    }
+    return [list $bn $r [get_property REF_PIN_NAME $pin]]
+}
+
+proc fda_init_scan {fname} {
+    # brief 206: one TSV row per flip-flop with INIT = 1 that connects straight (no logic between) to a hard block (DSP,
+    # block RAM, UltraRAM, FIFO): its D driven by the block's output, or its Q loading the block's input. Measured on
+    # Vivado 2026.1 (results/206_power_up): such a register is never absorbed into the block's pipeline or output
+    # register, because those registers power up 0 (DSP, UltraRAM) or hold one INIT per port (block RAM); it stays in the
+    # fabric with no warning. flow/checks/init_values.py classifies the rows. Written to .part and renamed at the end.
+    set f [open $fname.part w]
+    puts $f [join {cell ref init dir block block_ref block_pin} "\t"]
+    foreach c [get_cells -hier -quiet -filter {IS_PRIMITIVE && REF_NAME =~ FD*}] {
+        if {[get_property INIT $c] ne "1'b1"} continue
+        set rows {}
+        set dnet [get_nets -quiet -of_objects [get_pins -quiet $c/D]]
+        if {$dnet ne ""} {
+            foreach p [get_pins -quiet -leaf -of_objects $dnet -filter {DIRECTION == OUT}] {
+                set x [fda_init_block $p]
+                if {$x ne ""} { lappend rows [concat from $x] }
+            }
+        }
+        set qnet [get_nets -quiet -of_objects [get_pins -quiet $c/Q]]
+        if {$qnet ne ""} {
+            foreach p [get_pins -quiet -leaf -of_objects $qnet -filter {DIRECTION == IN}] {
+                # only a DSP has input registers a register could be absorbed into (a RAM's address and data inputs have none)
+                set x [fda_init_block $p]
+                if {$x ne "" && [string match DSP* [lindex $x 1]]} { lappend rows [concat to $x] }
+            }
+        }
+        foreach x $rows {
+            lassign $x dir b r pn
+            puts $f [join [list $c [get_property REF_NAME $c] 1 $dir $b $r $pn] "\t"]
+        }
+    }
+    close $f
+    file rename -force $fname.part $fname
+}
+
 proc fda_rule_catalogue {fname} {
     # every methodology and DRC rule this Vivado release knows: id, severity, description (verifies the rule ids we map)
     set f [open $fname w]
@@ -189,15 +239,25 @@ proc fda_report {name out} {
         control_sets      [list report_control_sets -verbose -file $out/control_sets.rpt] \
         high_fanout       [list report_high_fanout_nets -timing -load_types -max_nets 25 -file $out/high_fanout.rpt] \
         qor_suggestions   [list report_qor_suggestions -file $out/qor_suggestions.rpt] \
+        logic_levels      [list report_design_analysis -logic_level_distribution -logic_level_dist_paths 5000 -file $out/logic_levels.rpt] \
+        clock_utilization [list report_clock_utilization -file $out/clock_utilization.rpt] \
+        clock_networks    [list report_clock_networks -file $out/clock_networks.rpt] \
+        congestion        [list report_design_analysis -congestion -file $out/congestion.rpt] \
         clock_interaction [list report_clock_interaction -delay_type min_max -file $out/clock_interaction.rpt] \
         timing_summary    [list report_timing_summary -max_paths 10 -report_unconstrained -file $out/timing_summary.rpt] \
         utilization       [list report_utilization -file $out/utilization.rpt]]
     if {$name eq "reset_scan"} {
         set cmd [list fda_reset_scan $out/reset_scan.tsv]
+    } elseif {$name eq "init_scan"} {
+        set cmd [list fda_init_scan $out/init_scan.tsv]
     } elseif {$name eq "cmt"} {
         # flow/cmt_check.tcl (brief 18): VCO and PFD legality of hand-instantiated MMCME2/PLLE2 (7-series)
         source [file join $::fda_checks_dir .. cmt_check.tcl]
         set cmd [list cmt_check $out/cmt.rpt]
+    } elseif {$name eq "clock_mux"} {
+        # flow/clock_mux_dump.tcl (brief 208): clock-buffer muxes, their clocks and control pins, LUTs on clock paths
+        source [file join $::fda_checks_dir .. clock_mux_dump.tcl]
+        set cmd [list clock_mux_dump $out/clock_mux.tsv]
     } elseif {$name eq "rule_catalogue"} {
         set cmd [list fda_rule_catalogue $out/rule_catalogue.tsv]
     } elseif {[dict exists $cmds $name]} {
@@ -207,10 +267,17 @@ proc fda_report {name out} {
         return
     }
     set t0 [clock milliseconds]
+    # brief 219 fix 2: a marker first, deleted when the report completes. A report that kills the process (report_clock_networks
+    # segfaulted Vivado 2026.1) leaves it behind: the reader sees "report unavailable", never a partial file taken as a pass.
+    set mark [open $out/$name.not_run.txt w]
+    puts $mark "report unavailable: $name did not complete (the Vivado session ended inside it); not a pass"
+    close $mark
     if {[catch {uplevel #0 $cmd} err]} {
         set f [open $out/$name.not_run.txt w]
         puts $f "$name not run: $err"
         close $f
+    } else {
+        file delete $out/$name.not_run.txt
     }
     puts "FDA-CHECK $name [expr {[clock milliseconds] - $t0}] ms"
 }
@@ -220,6 +287,10 @@ if {![info exists ::fda_checks_lib]} {
     set_param general.maxThreads 1
     file mkdir $out
     open_checkpoint $dcp
-    foreach n [split $names ","] { fda_report $n $out }
+    # report_clock_networks last (brief 219 fix 2): a crash in it costs only that report
+    set order {}
+    foreach n [split $names ","] { if {$n ne "clock_networks"} { lappend order $n } }
+    if {"clock_networks" in [split $names ","]} { lappend order clock_networks }
+    foreach n $order { fda_report $n $out }
     puts "FDA-CHECKS-DONE"
 }

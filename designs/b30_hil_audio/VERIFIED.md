@@ -4,7 +4,7 @@
 
 **Not assessed: no requirements recorded (no verif/testplan.yaml), so nothing here is traced to a requirement.**
 
-What the label means, what "verified" never means and how it is earned: [docs/verified.md](../../docs/verified.md). The label is computed from the testplan and the evidence files named below; it is never typed. Generated at git commit `a8359042aac759be0a4d6b05186709bdb7bb093c` (informational: the hashes in the manifest, not the commit, are what the CI check compares).
+What the label means, what "verified" never means and how it is earned: [docs/verified.md](../../docs/verified.md). The label is computed from the testplan and the evidence files named below; it is never typed. Generated at git commit `51dfe82191cd59c99857973f44b8b57ec9363fb5` (informational: the hashes in the manifest, not the commit, are what the CI check compares).
 
 ## What was checked for the label
 
@@ -41,7 +41,7 @@ Every file this record covers, with its SHA-256 at generation (5 files). `absent
 
 | File | SHA-256 |
 |---|---|
-| `designs/b30_hil_audio/handover.yaml` | `44f401441a790fac652ca5234a8322218dbc70eba7a62afcc4cca35e2c111275` |
+| `designs/b30_hil_audio/handover.yaml` | `d1ae9e4fb074d112598c6fa37a807c458ce61d10f327f5948417c83c0f2cbdc0` |
 | `designs/b30_hil_audio/rtl/b30_hil_audio_top.sv` | `308b6cba65b8aa2d1df5fc34051106d5b1c4c5a83fdb096030d5214894cddab7` |
 | `designs/b30_hil_audio/tests/test_hil_audio_rtl.py` | `074480dd34f86043e0de79c4ac596bc5fb203cbdb1236a8d89535ff2cfcd7ed8` |
 | `results/b30/hil_runs/b30_hil_audio.hil.json` | `f9a662c1e2f5eb07f59fb6894b2133f64818d544c4e498b4d6f50f93d1e88b90` |

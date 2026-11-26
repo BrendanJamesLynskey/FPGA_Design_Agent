@@ -54,7 +54,7 @@ Score a VHDL design against a task's hidden tests: `python -m flow.vhdl_score <t
 | design standards | a scan of the RTL | the same scan of the GHDL netlist (signal initial values removed: they are INIT values) |
 | mutation | operators on `.sv` | VHDL operators in [flow/mutate.py](../flow/mutate.py), GHDL analysis as the compile check, `--sim ghdl` for a shell-less block |
 | formal | SymbiYosys | SymbiYosys through the GHDL Yosys plugin, PSL properties ([fixture](../flow/tests/fixtures/vhdl_formal)) |
-| code coverage | Verilator | none: GHDL's mcode back end has none |
+| code coverage | Verilator | statement lines from GHDL 4.1.0's `--coverage` (a hit flag per line, no merge command that works) or from NVC's `--cover` (statement, branch, toggle, expression; merges); [measured](../results/156_vhdl_tools/README.md) |
 | Vivado | `read_verilog -sv` | `read_vhdl -vhdl2008` ([flow/build.tcl](../flow/build.tcl)); VHDL after the SystemVerilog, packages first |
 | sandbox image | `fda-sim:2` | `fda-sim:2-ghdl` ([agent/container/Dockerfile.vhdl](../agent/container/Dockerfile.vhdl)) |
 
@@ -75,10 +75,41 @@ block that passes its test natively under GHDL fails it as a netlist under Icaru
 investigated). Use the native route
 for a block without the shell.
 
-Tools: GHDL 4.1.0 (Ubuntu 24.04 package `ghdl` 4.1.0+dfsg-0ubuntu2.1, mcode back end; the same pinned package in CI and in the
-image). Locally also VUnit 4.7.1, OSVVM 2026.09, and the GHDL Yosys plugin (Ubuntu `yosys-plugin-ghdl`); `flow/formal.sh` uses
+Tools:
+
+| Tool | Version | Where | Source and checksum |
+|---|---|---|---|
+| GHDL | 4.1.0 (mcode) | Ubuntu 24.04 package `ghdl` 4.1.0+dfsg-0ubuntu2.1; the pin in CI and in the image; `~/.local/bin/ghdl` here | distribution package |
+| GHDL | 7.0.0-dev (6.0.0.r729.g8e642a9a5, LLVM 21.1.8) | OSS CAD Suite, `~/.local/opt/oss-cad-suite` | measured only; not a pin |
+| NVC | 1.23.1 (LLVM 18.1.3) | `~/.local/opt/nvc-1.23.1` (the official release `.deb` for Ubuntu 24.04, extracted without root; `source ~/.local/opt/nvc-1.23.1/env.sh`) | https://github.com/nickg/nvc/releases/tag/r1.23.1, `nvc_1.23.1-1_amd64_ubuntu-24.04.deb`, sha256 `836b86c93d7ac0fa6d6313b651c0409476f04f59718fb270515e6bc6232477cd` |
+| cocotb | 2.0.1 | pip | VPI for GHDL, VHPI for NVC |
+
+Locally also VUnit 4.7.1, OSVVM 2026.09, and the GHDL Yosys plugin (Ubuntu `yosys-plugin-ghdl`); `flow/formal.sh` uses
 `$FDA_GHDL_PLUGIN` for a job's `plugin -i ghdl` when the plugin is not in Yosys's own plugin directory. CI runs the formal test
 only where SymbiYosys is installed (it is not in the CI image), so VHDL formal is checked locally.
+
+NVC is installed and measured, not yet in the flow: the flow's VHDL simulation is still GHDL. What the measurement found, and what
+to do with it, is in [results/156_vhdl_tools](../results/156_vhdl_tools/README.md) (brief 156): the same six cocotb benches pass on all
+three simulators with identical per-clock traces; with cocotb in the loop the simulator is not the bottleneck, but a pure-VHDL
+testbench ran 95 times faster on NVC than on GHDL mcode; PSL works in both simulators and in SymbiYosys, with different subsets.
+
+## What the checks do with VHDL
+
+Before brief 153 several checks and gates found their RTL with a `*.sv` glob, so a VHDL design had no files to read and passed
+([results/153_vhdl_parity](../results/153_vhdl_parity/README.md): 12 of 17 readers did this). Now every reader asks
+[flow/sources.py](../flow/sources.py) for the design's files by language, and a reader that cannot read VHDL says so: the check is
+PARTIAL or NOT RUN with `no reader for .vhd (...)`, never a clean pass. `python -m flow.sources [design]` prints the table (and the
+design's files by language); its `--help` lists what a user could guess wrong. In short:
+
+- **Read in VHDL:** the lint (GHDL, when the build's top is a VHDL entity), the design standards, the reset check, the XPM
+  `SIM_ASSERT_CHK` check, the derived constants (the shell's `DESIGN_ID` in the `generic map`, as a literal or a literal constant), the
+  CDC detection, the spec-test role (through the GHDL netlist), the evidence keys, the trace matrix (`-- req:` tags and
+  `-- std-waive:` waivers), the build-stamp check and the review's top.
+- **No reader, said so:** the AXI profile check (it compares generated SystemVerilog blocks; the generator writes no VHDL), the FSM
+  coverage (the state table is a SystemVerilog `typedef enum`), the managed RTL import, and the schematic pages.
+- **Fails closed:** the CDC injection run. A VHDL design with a clock-domain crossing fails it, because there is no injector for VHDL;
+  this is not a defect in the design.
+- **A SystemVerilog top over VHDL entities** has no lint that reads both languages: the lint is NOT RUN.
 
 ## Measured
 

@@ -2,7 +2,7 @@
 source: designs/b87_ml_trading/handover.yaml; human view: README.md; refresh: python -m flow.handover fresh designs/b87_ml_trading
 
 ## identity
-kind=showcase produced_by=human part=xck26-sfvc784-2LV-c board=Kria KR260 (K26 SOM) top=ooc_wrap (one arm with an input register), out of context; trigger_core with ML_ARM = 1 in simulation tool=Vivado 2026.1
+kind=showcase produced_by=session part=xck26-sfvc784-2LV-c board=Kria KR260 (K26 SOM) top=ooc_wrap (one arm with an input register), out of context; trigger_core with ML_ARM = 1 in simulation tool=Vivado 2026.1
 verified: not assessed: no requirements recorded (no verif/testplan.yaml), so nothing here is traced to a requirement (record: designs/b87_ml_trading/VERIFIED.md, designs/b87_ml_trading/verified.json; definition: docs/verified.md)
 
 ## summary
@@ -10,7 +10,7 @@ Small decision models for the 58A trading path, trained on synthetic order flow 
 not: real market data or a real exchange; the order flow comes from our own seeded generator with a planted signal; a board run; every number here is from simulation or an out-of-context Vivado 2026.1 build; a trading result; the back-test's fill model is an assumption and its differences are within noise
 
 ## state
-stage=built vivado=2026.1 kb_pin=2338b83 build_id=None
+stage=built vivado=2026.1 kb_pin=6185830 build_id=None
 gates: rtl_equals_model=pass ooc_build_2026_1=pass board_run=not-run
 
 ## interface
@@ -43,7 +43,7 @@ the 58A integration in simulation (~1min): B87_RECORD=$PWD/results/b87/integrati
 R1 designs/b87_ml_trading/tests/test_b87_rtl.py 2ffcf72e10
 R2 results/b87/hls4ml_csim.json d00b95f079
 R3 designs/b87_ml_trading/tests/test_b87_integ_rtl.py 02050fb09d
-R4 results/b87/summary.json 427edff04e
+R4 results/b87/summary.json 1625246873
 R5 results/b87/accuracy.json dad79e6188
 R6 results/b87/ooc/gbt_comb.json bd70057950
 R7 results/b87/integration/integration_latency_sim.json 0b7136ae81

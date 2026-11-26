@@ -4,7 +4,7 @@
 
 **Not assessed: no requirements recorded (no verif/testplan.yaml), so nothing here is traced to a requirement.**
 
-What the label means, what "verified" never means and how it is earned: [docs/verified.md](../../docs/verified.md). The label is computed from the testplan and the evidence files named below; it is never typed. Generated at git commit `a8359042aac759be0a4d6b05186709bdb7bb093c` (informational: the hashes in the manifest, not the commit, are what the CI check compares).
+What the label means, what "verified" never means and how it is earned: [docs/verified.md](../../docs/verified.md). The label is computed from the testplan and the evidence files named below; it is never typed. Generated at git commit `51dfe82191cd59c99857973f44b8b57ec9363fb5` (informational: the hashes in the manifest, not the commit, are what the CI check compares).
 
 ## What was checked for the label
 
@@ -41,7 +41,7 @@ Every file this record covers, with its SHA-256 at generation (6 files). `absent
 | `ip_lib/mdio_master/faults.yaml` | `b0efa9b2c1084cdb6ae8234907c230fa625ae97cb3fef162b0c135c40fbb1332` |
 | `ip_lib/mdio_master/ip.yaml` | `89c8b3349ec5935a1a5f2c3660cacde5c6c1b5f3e4e11f6b6c154cf7af284dec` |
 | `ip_lib/mdio_master/model.py` | `7ed2005c010735098e64e0a946cbe6b75e2b91c23da66ede2afb9f3d025a2f3f` |
-| `ip_lib/mdio_master/rtl/mdio_master.sv` | `a98f933078c000202d93e8c152ce4cc3a6ca25d2f0a054db6bbfbb4c24d4c808` |
+| `ip_lib/mdio_master/rtl/mdio_master.sv` | `8f5364dab58590b23a894cff088db575507d05348b4a5b62ccb5f42fb719f503` |
 | `ip_lib/mdio_master/tb/mdio_cocotb.py` | `a9e43dee1e2b0dd065165ba9d4920967e0215ccd06f556a3d1513761698051a5` |
 
 ## Reproduce

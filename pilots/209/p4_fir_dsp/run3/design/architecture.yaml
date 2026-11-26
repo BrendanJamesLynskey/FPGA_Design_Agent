@@ -1,0 +1,28 @@
+schema: fpga-design-agent/architecture/v1
+blocks:
+  - {name: jtag_bus, function: "BSCANE2 USER4 register bus, supplied data/jtag_bus.sv"}
+  - {name: fir32_core, function: "register map, CTRL/STATUS, LEDs, CDC of commands and status"}
+  - {name: in_fifo, function: "1024x16 xpm_fifo_async, clk25 to clk_dsp"}
+  - {name: out_fifo, function: "1024x16 xpm_fifo_async, clk_dsp to clk25"}
+  - {name: fir_datapath, function: "run controller, pre-add, 16 DSP multipliers, round, saturate"}
+  - {name: clk_gen, function: "MMCM 25 MHz x10 to 250 MHz, BUFG, reset synchroniser"}
+interfaces:
+  - {name: reg_port, between: [jtag_bus, fir32_core], protocol: simple, prefix: h, module: fir32_core}
+  - {name: led_out, between: [fir32_core, board], protocol: gpio, prefix: led, module: fir32_top}
+clock_domains:
+  - {name: clk25, clock: clk25, freq_mhz: 25}
+  - {name: clk_dsp, clock: clk_dsp, freq_mhz: 250}
+reset:
+  synchronisers: [reset_sync]
+crossings:
+  - {from: clk25, to: clk_dsp, signal: input FIFO data, primitive: xpm_fifo_async, inline_in: fir32_core}
+  - {from: clk_dsp, to: clk25, signal: output FIFO data, primitive: xpm_fifo_async, inline_in: fir32_core}
+  - {from: clk25, to: clk_dsp, signal: run and clear pulses, primitive: xpm_cdc_pulse, inline_in: fir32_core}
+  - {from: clk_dsp, to: clk25, signal: busy, primitive: xpm_cdc_single, inline_in: fir32_core}
+  - {from: clk_dsp, to: clk25, signal: sat_count and samples_done, primitive: xpm_cdc_array_single, inline_in: fir32_core}
+  - {from: clk25, to: clk_dsp, signal: reset, primitive: xpm_cdc_async_rst, inline_in: reset_sync}
+predicted_resources:
+  lut: [400, 2000]
+  ff: [700, 2200]
+  bram_tile: [1, 4]
+  dsp: [16, 24]

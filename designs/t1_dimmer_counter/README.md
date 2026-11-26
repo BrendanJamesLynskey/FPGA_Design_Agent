@@ -2,7 +2,7 @@
 
 <!-- Generated from handover.yaml by flow/handover.py (brief 68). Edit handover.yaml, or the text between the prose markers, then run: python -m flow.handover write designs/t1_dimmer_counter -->
 
-**Verification: not verified: no requirement of 21 has passing evidence.** [VERIFIED.md](VERIFIED.md) is the generated, hash-pinned record; [what the label means](../../docs/verified.md).
+**Verification: not assessed: no requirements recorded (no verif/testplan.yaml), so nothing here is traced to a requirement.** [VERIFIED.md](VERIFIED.md) is the generated, hash-pinned record; [what the label means](../../docs/verified.md).
 
 A 16-bit up/down/clear counter on the Nexys A7-100T. Debounced buttons step it, the LEDs show it under PWM brightness (register or switches), the 7-segment display shows count and brightness in hex, and every register is reachable over the USB-UART through the test shell. The hand-written reference design for task T1.
 
@@ -12,7 +12,7 @@ Not in scope:
 - a gamma-corrected or auto-repeating dimmer; brightness is linear in the duty and one press is one step
 - a claim of compliance with any standard; the traceability record is DO-254-style evidence only
 
-Kind: example; written by hand. State: board-verified. For an agent: [AGENT.md](AGENT.md).
+Kind: example; written by a Claude Code session. State: board-verified. For an agent: [AGENT.md](AGENT.md).
 
 ![Block diagram: the design's blocks and the links between them](docs/handover/architecture.svg)
 
@@ -75,7 +75,7 @@ Interfaces:
 | build the base and the ILA bitstreams; needs local Vivado 2026.1 and a heavy slot (take_heavy_slot.sh) | `flow/run_vivado.sh designs/t1_dimmer_counter both` | yes | about 10 min |
 | board bring-up, UART tests and ILA captures against the model; needs the Nexys A7-100T on wall power, both builds present and the board lock | `python3 flow/bringup.py designs/t1_dimmer_counter` | no | about 3 min |
 
-Tool: Vivado 2026.1. Build ID of the inputs at handover: `7eeb3bf5` (`python flow/manifest.py show designs/t1_dimmer_counter`: what a rebuild of today's sources and flow would carry; it changes when any build input or the flow changes, so it can differ from the build ID in an older evidence record). Knowledge-bank pin: `0959c27`.
+Tool: Vivado 2026.1. Build ID of the inputs at handover: `2e8d0179` (`python flow/manifest.py show designs/t1_dimmer_counter`: what a rebuild of today's sources and flow would carry; it changes when any build input or the flow changes, so it can differ from the build ID in an older evidence record). Knowledge-bank pin: `6185830`.
 
 | File | What |
 |---|---|

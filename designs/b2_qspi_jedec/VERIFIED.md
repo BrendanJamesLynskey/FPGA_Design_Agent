@@ -4,7 +4,7 @@
 
 **Not assessed: no requirements recorded (no verif/testplan.yaml), so nothing here is traced to a requirement.**
 
-What the label means, what "verified" never means and how it is earned: [docs/verified.md](../../docs/verified.md). The label is computed from the testplan and the evidence files named below; it is never typed. Generated at git commit `a8359042aac759be0a4d6b05186709bdb7bb093c` (informational: the hashes in the manifest, not the commit, are what the CI check compares).
+What the label means, what "verified" never means and how it is earned: [docs/verified.md](../../docs/verified.md). The label is computed from the testplan and the evidence files named below; it is never typed. Generated at git commit `51dfe82191cd59c99857973f44b8b57ec9363fb5` (informational: the hashes in the manifest, not the commit, are what the CI check compares).
 
 ## What was checked for the label
 
@@ -41,7 +41,7 @@ Every file this record covers, with its SHA-256 at generation (7 files). `absent
 
 | File | SHA-256 |
 |---|---|
-| `designs/b2_qspi_jedec/handover.yaml` | `9cd245fa0e53a58dd688a5845e20a2b2c66572e190eb100c4d6ce40590416b59` |
+| `designs/b2_qspi_jedec/handover.yaml` | `e1276df0d5c99e2cbea56a6100ca993283bb168f433b4088c2f2a129f2417955` |
 | `designs/b2_qspi_jedec/rtl/b2_qspi_jedec_top.sv` | `0b04adcaaa577a1efa86330bdd7a6b7f19f480e064c242aa43d5df2fe73327a2` |
 | `designs/b2_qspi_jedec/rtl/qspi_rdid.sv` | `0a9931970150dcdc8b4a8630b54ed2aadf2e452a62735e321cd1fcba4657e86b` |
 | `designs/b2_qspi_jedec/rtl/qspi_regs.sv` | `54e88e7824b9e3684d44508ad5823fd2923a880df9b019ab9edc567c856645bf` |

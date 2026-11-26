@@ -1,0 +1,88 @@
+{
+ "counts": {
+  "requirements": 0
+ },
+ "criteria": [
+  {
+   "detail": "no requirements recorded",
+   "id": "evidence",
+   "ids": [],
+   "state": "not_measured",
+   "title": "Every requirement has passing evidence"
+  },
+  {
+   "detail": "no requirements recorded",
+   "id": "agreement",
+   "ids": [],
+   "state": "not_measured",
+   "title": "Every requirement is agreed (human, or delegated and labelled so)"
+  },
+  {
+   "detail": "no requirements recorded",
+   "id": "method_mix",
+   "ids": [],
+   "state": "not_measured",
+   "title": "Every requirement meets its required method mix"
+  },
+  {
+   "detail": "no requirements recorded",
+   "id": "mutation",
+   "ids": [],
+   "state": "not_measured",
+   "title": "The bench passes the mutation floor"
+  },
+  {
+   "detail": "no requirements recorded",
+   "id": "formal_rigour",
+   "ids": [],
+   "state": "not_measured",
+   "title": "The formal results pass the rigour checks"
+  },
+  {
+   "detail": "no requirements recorded",
+   "id": "fresh",
+   "ids": [],
+   "state": "not_measured",
+   "title": "The evidence is fresh"
+  }
+ ],
+ "declared": {
+  "note": "the entry's own declared status; not traced to requirements and not checked by this record",
+  "source": "ip.yaml",
+  "status": "simulated clock by clock against a Python model with an AXI4-Stream rule monitor (cocotb, Icarus Verilog 12) at 19 points below, at and above the credit round trip; credit conservation, buffer bounds, order and the stream rules proved by k-induction at W = 4 (SymbiYosys); 12 of 12 seeded faults caught; not built with Vivado yet (queued); not run on a board"
+ },
+ "definition": "docs/verified.md",
+ "git_commit": "51dfe82191cd59c99857973f44b8b57ec9363fb5",
+ "kind": "ip_lib",
+ "label": "not assessed: no requirements recorded (no verif/testplan.yaml), so nothing here is traced to a requirement",
+ "label_kind": "not_assessed",
+ "limits": [
+  "Verified never means interoperability with a device the design talks to unless a board measurement against that device is listed in the record; a design that checks its own output against its own model accepts its own symmetric mistakes.",
+  "Verified never means timing beyond the stated corner: a post-route timing result is for the part, speed grade, clock and tool version in its evidence file, not for other corners, temperatures or devices.",
+  "Verified never means beyond the widths and depths checked: a simulation covers the vectors it ran, a bounded formal result covers the stated depth only, and a per-width proof covers the widths it names; only a Lean proof marked all widths covers every width, and only for its model.",
+  "Verified never means the requirement is the right one: the text of a requirement is the human's check (or the planner's, where the record says delegated), and a record shows that checks exist and pass, not that nothing was left out.",
+  "Verified never means a hardware or board result unless a board measurement item is listed; a simulation is not the board.",
+  "Verified is about the files in the manifest at the hashes given. A change to any of them makes the record out of date (the CI check fails), and the evidence stale until it is re-recorded.",
+  "An agreement or acceptance recorded as delegated is the planner's decision on the owner's delegation, not a human sign-off; the record counts it apart."
+ ],
+ "manifest": {
+  "ip_lib/credit_chan/faults.yaml": "938a1e1fbc1a50adea20be723a370dc17f9fe1056b12d856c46393adb984137d",
+  "ip_lib/credit_chan/ip.yaml": "25f69bdad0f94458ccb403a549ca476b8a53e02d4f1e3437e99dcbd844ec710a",
+  "ip_lib/credit_chan/model.py": "1af925e2de934f9b2c2760d4b4f5a3e1e0ceb4edd1b5c3ccf3411198ec571686",
+  "ip_lib/credit_chan/rtl/credit_chan.sv": "f8fa37f353d78f91421ebebf6cd232f00fedd4b8a2a979ab7b209b0ad4fa2c5c",
+  "ip_lib/credit_chan/tb/credit_axis_tb.sv": "92032d5a3740868a9b3f957b73407ce343424bb929fb82f0f148244e3ab1847d",
+  "ip_lib/credit_chan/tb/credit_cocotb.py": "d2c68f244dbe54b7271c1da39d856e887fd5777df4b7632866e45aed92bc7754",
+  "ip_lib/credit_chan/tb/test_credit_chan_formal.py": "e6c463c70816ab3e549aba1512a70171d80a5a2275095a22c9bfc8283d70b0ca",
+  "ip_lib/credit_chan/tb/test_credit_chan_rtl.py": "3fc91c57ecb0bd50f8a6ff702a4620daad5ec027e161aa31fa5a80a3370bb6bd"
+ },
+ "name": "credit_chan",
+ "path": "ip_lib/credit_chan",
+ "reproduce": [
+  {
+   "cmd": "python -m pytest -q ip_lib/credit_chan/tb",
+   "what": "the simulation tests"
+  }
+ ],
+ "requirements": [],
+ "schema": "fda-verified/1"
+}

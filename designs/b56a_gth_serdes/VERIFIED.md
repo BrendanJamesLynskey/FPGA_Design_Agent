@@ -4,7 +4,7 @@
 
 **Not assessed: no requirements recorded (no verif/testplan.yaml), so nothing here is traced to a requirement.**
 
-What the label means, what "verified" never means and how it is earned: [docs/verified.md](../../docs/verified.md). The label is computed from the testplan and the evidence files named below; it is never typed. Generated at git commit `a8359042aac759be0a4d6b05186709bdb7bb093c` (informational: the hashes in the manifest, not the commit, are what the CI check compares).
+What the label means, what "verified" never means and how it is earned: [docs/verified.md](../../docs/verified.md). The label is computed from the testplan and the evidence files named below; it is never typed. Generated at git commit `51dfe82191cd59c99857973f44b8b57ec9363fb5` (informational: the hashes in the manifest, not the commit, are what the CI check compares).
 
 ## What was checked for the label
 
@@ -41,7 +41,7 @@ Every file this record covers, with its SHA-256 at generation (7 files). `absent
 
 | File | SHA-256 |
 |---|---|
-| `designs/b56a_gth_serdes/handover.yaml` | `53deadf4473c8191ae7453478222699f75f9c15bb2ca6e540f577b805c5d7594` |
+| `designs/b56a_gth_serdes/handover.yaml` | `2e1ac7fff74d6188307b594f50052739b42928ede358efc3f380ce26126cec54` |
 | `designs/b56a_gth_serdes/rtl/gth_serdes_core.sv` | `72153c37b1e083376716d399f671b5b271d53a304aa743e3a2ff693375709dee` |
 | `designs/b56a_gth_serdes/rtl/kr260_gth_top.sv` | `655dc1e1036ac6a42d687bd1f27745469708b1b394c6c363f738c44dbf60ff30` |
 | `designs/b56a_gth_serdes/rtl/prbs64.sv` | `9b8dfb6fd156e6fcb4fa2b07d1b0238af6ade0951785bfa8382cec8ee47870da` |

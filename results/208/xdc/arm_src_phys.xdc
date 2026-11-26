@@ -1,0 +1,2 @@
+# groups on the SOURCE clocks, -physically_exclusive (UG949: correct only when the clocks meet nowhere but the mux fanout)
+set_clock_groups -name mux_src -physically_exclusive -group [get_clocks -of_objects [get_pins -of_objects [get_cells -hier -filter {NAME =~ *u_mux}] -filter {REF_PIN_NAME == I0}]] -group [get_clocks -of_objects [get_pins -of_objects [get_cells -hier -filter {NAME =~ *u_mux}] -filter {REF_PIN_NAME == I1}]]

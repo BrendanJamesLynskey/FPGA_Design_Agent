@@ -4,7 +4,7 @@
 
 **Not assessed: no requirements recorded (no verif/testplan.yaml), so nothing here is traced to a requirement.**
 
-What the label means, what "verified" never means and how it is earned: [docs/verified.md](../../docs/verified.md). The label is computed from the testplan and the evidence files named below; it is never typed. Generated at git commit `a8359042aac759be0a4d6b05186709bdb7bb093c` (informational: the hashes in the manifest, not the commit, are what the CI check compares).
+What the label means, what "verified" never means and how it is earned: [docs/verified.md](../../docs/verified.md). The label is computed from the testplan and the evidence files named below; it is never typed. Generated at git commit `51dfe82191cd59c99857973f44b8b57ec9363fb5` (informational: the hashes in the manifest, not the commit, are what the CI check compares).
 
 ## What was checked for the label
 
@@ -43,7 +43,7 @@ Every file this record covers, with its SHA-256 at generation (7 files). `absent
 
 | File | SHA-256 |
 |---|---|
-| `designs/b63d_nexys_net/handover.yaml` | `7baedba1dfd1a6d1408b3e741748d90d6806590c9225b5db0e7cd19bb00dbb35` |
+| `designs/b63d_nexys_net/handover.yaml` | `c48d275dea4538749a36db9267a02f440b1e2224423a662852a9437b741b78d8` |
 | `designs/b63d_nexys_net/rtl/b63d_nexys_net_top.sv` | `a98078554475a17e89fdff88e99a98aac235d501643f8640fc3f02f924d800e4` |
 | `designs/b63d_nexys_net/tests/test_b63d_host_safety.py` | `a7a4d918059d66a697aa2548b417a78d75c59ff01fabfe8933fe5141c2985dce` |
 | `designs/b63d_nexys_net/tests/test_b63d_nexys_net_rtl.py` | `60427e5970ce4537e8553f21ae769fd3c3ff9423c83ff5dda001a2ec25f03eba` |

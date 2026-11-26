@@ -1,0 +1,148 @@
+{
+ "run_id": "20261125-165013-9360",
+ "design": "s_fsm_seq_detector_0001",
+ "model": "claude-sonnet-5-5",
+ "harness": "claude_code",
+ "claude_code_version": "2.1.321 (Claude Code)",
+ "plan_cost_estimate_usd": 1.7541,
+ "harness_arm": "H1",
+ "profile": "single",
+ "role_models": {
+  "clarify": {
+   "harness": "claude_code",
+   "model": "claude-sonnet-5-5",
+   "effort": "medium"
+  },
+  "model": {
+   "harness": "claude_code",
+   "model": "claude-sonnet-5-5",
+   "effort": "medium"
+  },
+  "tests": {
+   "harness": "claude_code",
+   "model": "claude-sonnet-5-5",
+   "effort": "medium"
+  },
+  "rtl": {
+   "harness": "claude_code",
+   "model": "claude-sonnet-5-5",
+   "effort": "medium"
+  }
+ },
+ "model_table_hash": "cf7e384e575f8c93",
+ "per_role": {
+  "clarify": {
+   "calls": 1,
+   "turns": 2,
+   "tokens": 14999,
+   "wall_s": 22.3,
+   "cost_usd": 0.0,
+   "plan_cost_estimate_usd": 0.0488
+  },
+  "rtl": {
+   "calls": 8,
+   "turns": 89,
+   "tokens": 1470943,
+   "wall_s": 373.5,
+   "cost_usd": 0.0,
+   "plan_cost_estimate_usd": 1.3317
+  },
+  "model": {
+   "calls": 1,
+   "turns": 2,
+   "tokens": 10654,
+   "wall_s": 13.2,
+   "cost_usd": 0.0,
+   "plan_cost_estimate_usd": 0.0302
+  },
+  "tests": {
+   "calls": 2,
+   "turns": 13,
+   "tokens": 182388,
+   "wall_s": 84.6,
+   "cost_usd": 0.0,
+   "plan_cost_estimate_usd": 0.3434
+  }
+ },
+ "per_stage": {
+  "clarify": {
+   "calls": 1,
+   "turns": 2,
+   "tokens": 14999,
+   "wall_s": 22.3,
+   "cost_usd": 0.0,
+   "plan_cost_estimate_usd": 0.0488
+  },
+  "board-and-device-planning": {
+   "calls": 2,
+   "turns": 14,
+   "tokens": 166801,
+   "wall_s": 34.3,
+   "cost_usd": 0.0,
+   "plan_cost_estimate_usd": 0.1664
+  },
+  "rtl-design-creation": {
+   "calls": 9,
+   "turns": 90,
+   "tokens": 1497184,
+   "wall_s": 437.0,
+   "cost_usd": 0.0,
+   "plan_cost_estimate_usd": 1.5389
+  }
+ },
+ "stages_visited": [
+  0,
+  1,
+  1,
+  2,
+  2,
+  2,
+  2,
+  2,
+  2,
+  2
+ ],
+ "loops": 7,
+ "tokens": 1678984,
+ "cost_usd": 0.0,
+ "unreported_cost_calls": 0,
+ "token_split": {
+  "input": 0,
+  "output": 0,
+  "cache_write": 0,
+  "cache_read": 0
+ },
+ "budget_scale": 2.0,
+ "turns": 106,
+ "wall_s": 473.0,
+ "stop": "stage 2 visited more than 6 times; last failing gate: simulate, design standards; owned by the rtl role; last failing assertion: test_rtl[1]: [5185000] %Error: fsm_seq_detector_checker.sv:28: Assertion failed in fsm_seq_detector.u_chk.A_match_pulse: 'assert' failed. | %Error: /home/brendan/Claude_sandbox/_worktrees/215-public-benchmarks/runs/20261125-165013-9360/s_fs",
+ "stop_detail": {
+  "stage": 2,
+  "limit": 6,
+  "gates": [
+   "simulate",
+   "design standards"
+  ],
+  "roles": [
+   "rtl"
+  ],
+  "owners_last_visit": [
+   "rtl"
+  ],
+  "last_failing_assertion": "test_rtl[1]: [5185000] %Error: fsm_seq_detector_checker.sv:28: Assertion failed in fsm_seq_detector.u_chk.A_match_pulse: 'assert' failed. | %Error: /home/brendan/Claude_sandbox/_worktrees/215-public-benchmarks/runs/20261125-165013-9360/s_fs",
+  "same_signature_visits": 1,
+  "last_fails": [
+   "simulate not passing",
+   "standards STD-RST-01: rtl/fsm_seq_detector.sv:46: module fsm_seq_detector: posedge rst_in in the sensitivity list of a sequential block: an asynchronous reset",
+   "rtl: did not run (no gates record)"
+  ]
+ },
+ "clean_stop": false,
+ "knowledge_bank": {
+  "root": "215-kb",
+  "chosen_by": "FDA_KNOWLEDGE",
+  "present": true,
+  "loaded": true,
+  "head": "6185830"
+ }
+}

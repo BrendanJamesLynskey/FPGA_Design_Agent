@@ -572,7 +572,8 @@ DATAPATHS_CONVENTION = """
   with op one of mul {a_bits, b_bits} (signed operand widths), add {bits, inputs}, compare {bits},
   table {index_bits, width}, mux {inputs, width}, memory {depth, width}, delay {depth, width}, fifo {depth, width},
   logic {levels}, shift, or ip {block, params, need_ii, objective, fallback} for a function the IP library has with
-  measured variants (`python3 -m flow.ipvariants --search <words>`; the gate picks the variant with flow.ipvariants.choose
+  measured variants (find the entry with the `ip_lookup` tool, action search: `block` is the entry's name and `params` the
+  parameter point; the gate picks the variant with flow.ipvariants.choose
   and plans `fallback`, a list of the ops above, when no variant is known to fit); list them in order along the chain, and mark an op that runs beside the previous one with
   `parallel: true`. Do not choose resources or pipeline depth yourself: the gate computes them from the device family's
   measured delay model (hard resources first: multiplies on DSP slices, memories in block RAM, short delays in SRLs)

@@ -2,7 +2,7 @@
 source: designs/b59a_axi_tx/handover.yaml; human view: README.md; refresh: python -m flow.handover fresh designs/b59a_axi_tx
 
 ## identity
-kind=showcase produced_by=human part=xc7a100tcsg324-1 board=Nexys A7-100T top=b59a_axi_tx_top tool=Vivado 2026.1
+kind=showcase produced_by=session part=xc7a100tcsg324-1 board=Nexys A7-100T top=b59a_axi_tx_top tool=Vivado 2026.1
 verified: not assessed: no requirements recorded (no verif/testplan.yaml), so nothing here is traced to a requirement (record: designs/b59a_axi_tx/VERIFIED.md, designs/b59a_axi_tx/verified.json; definition: docs/verified.md)
 
 ## summary
@@ -10,7 +10,7 @@ Board demonstration of an on-chip AXI4-Lite and AXI4-Stream traffic generator, p
 not: full AXI4 (bursts, IDs, several transactions in flight), a slave side, a DMA target or a soak mode; a hunt for bugs in a third-party core; the peripheral, the FIFO and their bugs are ours and deliberately simple
 
 ## state
-stage=board-verified vivado=2026.1 kb_pin=20d73e8 build_id=55b4d5dd
+stage=board-verified vivado=2026.1 kb_pin=6185830 build_id=efca570e
 gates: build_2026_1=pass board_plan=pass
 
 ## interface

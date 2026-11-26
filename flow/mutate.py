@@ -89,9 +89,21 @@ def lock_path() -> Path | None:
     return d / "heavy_slot.lock" if d.is_dir() else None
 
 
+def held_slot() -> Path | None:
+    """Brief 219 fix 1. The heavy-slot lock file this process already holds, named by $FDA_HEAVY_SLOT (the launcher exports it
+    after ``take_heavy_slot.sh --env``: ``export FDA_HEAVY_SLOT=$HEAVY_LOCK``), or None. A name whose file is not there (a stale
+    variable) is not a held slot, so the protection stays on."""
+    env = os.environ.get("FDA_HEAVY_SLOT", "")
+    return Path(env) if env and Path(env).is_file() else None
+
+
 def take_lock(job: str, wait_s: float, expect_s: float) -> tuple[Path | None, str]:
     """Create the lock file (one line: session, job, start, expected end) or wait up to ``wait_s`` for its holder.
-    Returns (path, "") when taken (path None: no lock in use here) or (None, holder line) when still held."""
+    Returns (path, "") when taken (path None: no lock in use here) or (None, holder line) when still held.
+    A run that already holds a slot (``held_slot()``) runs its heavy step inside that slot: nothing is taken or released here
+    (it returns (None, "")), so a run launched under ``take_heavy_slot.sh`` no longer waits on its own lock."""
+    if held_slot() is not None:
+        return None, ""
     p = lock_path()
     if p is None:
         return None, ""
@@ -155,10 +167,42 @@ _SKIP_LINE = re.compile(r"^\s*(//|/\*|\*|`|import\b|parameter\b|localparam\b|mod
                         r"|\bassert\b|\bassume\b|\bV_(SAME|NEXT|RST|COVER)\b|\$(display|error|fatal|info|finish)")
 
 
-def generate_candidates(rtl: Path) -> list[dict]:
-    """Every operator mutation of the design's rtl/*.sv code lines, in a fixed order (file, line, operator, position)."""
-    out: list[dict] = []
+_MODULE = re.compile(r"(?m)^\s*(?:module|entity)\s+(\w+)", re.I)
+
+
+def supplied_files(design: Path) -> list[Path]:
+    """Brief 219 fix 8: the HDL files the request supplied, kept in the design's ``data/`` (for example the JTAG register bus ``jtag_bus.sv``).
+    They are not the design under test: a mutation score over them measures a file nobody here wrote."""
+    d = design / "data"
+    return sorted(p for p in d.iterdir() if p.suffix in (".sv", ".v") or vhdl.is_vhdl(p)) if d.is_dir() else []
+
+
+def supplied_copies(design: Path, rtl: Path) -> dict[str, str]:
+    """{rtl file name: why} for every rtl/ file that is a copy of a supplied file: byte-identical to one, or defining only modules that a
+    supplied file defines. Such a copy is not a mutation target either (the agent is told to keep the file in data/, but a copy in rtl/ is
+    still the supplied file)."""
+    sup = supplied_files(design)
+    if not sup:
+        return {}
+    texts = {p.name: p.read_text(errors="replace") for p in sup}
+    mods = {m.lower() for t in texts.values() for m in _MODULE.findall(t)}
+    out: dict[str, str] = {}
     for f in sorted(p for p in rtl.iterdir() if p.suffix == ".sv" or vhdl.is_vhdl(p)):
+        t = f.read_text(errors="replace")
+        same = next((n for n, x in texts.items() if x == t), None)
+        own = {m.lower() for m in _MODULE.findall(t)}
+        if same:
+            out[f.name] = f"identical to the supplied data/{same}"
+        elif own and own <= mods:
+            out[f.name] = "defines only modules of the supplied data/ files"
+    return out
+
+
+def generate_candidates(rtl: Path, skip: set[str] | frozenset[str] = frozenset()) -> list[dict]:
+    """Every operator mutation of the design's rtl/*.sv code lines, in a fixed order (file, line, operator, position).
+    ``skip``: file names left out (supplied files, ``supplied_copies``)."""
+    out: list[dict] = []
+    for f in sorted(p for p in rtl.iterdir() if (p.suffix == ".sv" or vhdl.is_vhdl(p)) and p.name not in skip):
         is_v = vhdl.is_vhdl(f)
         ops, skip, cmt = (OPERATORS_VHDL, _SKIP_LINE_VHDL, "--") if is_v else (OPERATORS, _SKIP_LINE, "//")
         for n, raw in enumerate(f.read_text(errors="replace").splitlines(), 1):
@@ -329,6 +373,25 @@ def generic(design: Path, a) -> int:
             lock.unlink(missing_ok=True)
 
 
+def vendored_sources(design: Path) -> list[Path]:
+    """Brief 209a: the build.yaml sources that are not the design's own rtl/ files (a supplied module kept in ``data/``, such as the JTAG
+    register bus the request provides): they are not mutated, but a mutant of rtl/ must be compiled with them or the top that instantiates
+    them does not resolve and every mutant looks invalid. Paths in build.yaml are relative to the repository root."""
+    import glob as _glob
+    try:
+        pats = (yaml.safe_load((design / "build.yaml").read_text()) or {}).get("sources") or []
+    except (OSError, yaml.YAMLError):
+        return []
+    own = (design / "rtl").resolve()
+    out: list[Path] = []
+    for pat in pats if isinstance(pats, list) else [pats]:
+        for f in sorted(_glob.glob(str(ROOT / pat))):
+            p = Path(f).resolve()
+            if p.suffix in (".sv", ".v") and own not in p.parents and not srcorder.is_shell_source(p) and p not in out:
+                out.append(p)
+    return out
+
+
 def _generic_locked(design: Path, a, rtl: Path, out_json: Path, t_start: float, runner=None) -> int:
     mdir_root = design / "build" / "mutants"
     shell = [] if srcorder.no_shell(design) else sorted((ROOT / "shell" / "rtl").glob("*.sv"))     # 07a2-prep
@@ -352,7 +415,9 @@ def _generic_locked(design: Path, a, rtl: Path, out_json: Path, t_start: float, 
     per_mutant = a.mutant_timeout_s or int(min(600, max(30, 4 * base_s)))
     # 2. the mutants
     source = "verif/mutants.yaml" if (design / "verif" / "mutants.yaml").is_file() else "generated"
-    pool = mutants_from_yaml(design) if source == "verif/mutants.yaml" else generate_candidates(rtl)
+    excluded = supplied_copies(design, rtl)                  # brief 219 fix 8: supplied bus files are not mutation targets
+    pool = ([m for m in mutants_from_yaml(design) if m["file"] not in excluded] if source == "verif/mutants.yaml"
+            else generate_candidates(rtl, set(excluded)))
     rng = random.Random(a.seed)
     sample_n, wall_s = plan_caps(base_s, a.max_mutants, len(pool), a.wall_s)
     chosen = sorted(rng.sample(pool, min(sample_n, len(pool))), key=lambda m: pool.index(m))
@@ -373,7 +438,7 @@ def _generic_locked(design: Path, a, rtl: Path, out_json: Path, t_start: float, 
             rows.append(row | {"status": "invalid", "note": "the text to change was not found exactly once"})
             continue
         (d / m["file"]).write_text(new)
-        files = srcorder.order_sv(shell + sorted(p for p in d.iterdir() if p.suffix == ".sv" or vhdl.is_vhdl(p)))
+        files = srcorder.order_sv(shell + sorted(p for p in d.iterdir() if p.suffix == ".sv" or vhdl.is_vhdl(p)) + vendored_sources(design))
         if compile_ok(files, runner) is False or (sim == "verilator" and compile_ok_verilator(files, top, runner) is False):
             rows.append(row | {"status": "invalid", "note": "the mutated RTL does not compile"})
             shutil.rmtree(d, ignore_errors=True)
@@ -390,6 +455,7 @@ def _generic_locked(design: Path, a, rtl: Path, out_json: Path, t_start: float, 
            "baseline_seconds": base_s, "sim": sim, "sim_note": sim_note, "sandbox": "container" if runner is not None else "host",
            "caps": {"max_mutants": a.max_mutants, "sample": sample_n, "wall_s": wall_s, "wall_auto": a.wall_s is None,
                     "mutant_timeout_s": per_mutant, "min_evaluated": min(MIN_EVALUATED, len(pool))},
+           "excluded_supplied": excluded,
            "candidates": len(pool), "sampled": len(chosen), "evaluated": evaluated, "killed": len(killed),
            "survived": len(surv), "timed_out": len(tmo), "skipped": len(by("skipped")), "invalid": len(by("invalid")),
            "score_pct": round(100 * len(killed) / evaluated, 2) if evaluated else 0.0,

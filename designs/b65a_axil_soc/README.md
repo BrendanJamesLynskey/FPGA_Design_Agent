@@ -11,7 +11,7 @@ Not in scope:
 - a showcase or a board-verified design; the bitstream was built, not programmed
 - a general interconnect; generation covers AXI4-Lite only, 32-bit data and one clock domain
 
-Kind: example; written by hand. State: built. For an agent: [AGENT.md](AGENT.md).
+Kind: example; written by a Claude Code session. State: built. For an agent: [AGENT.md](AGENT.md).
 
 ![Block diagram: the design's blocks and the links between them](docs/handover/architecture.svg)
 
@@ -75,7 +75,7 @@ Interfaces:
 | simulate end to end; needs Icarus Verilog 12 and cocotb 2.0.1 | `python -m pytest -q designs/b65a_axil_soc/tests/test_b65a_rtl.py` | no | about 1 min |
 | build; needs local Vivado 2026.1 and a heavy slot (take_heavy_slot.sh) | `flow/run_vivado.sh designs/b65a_axil_soc` | yes | about 4 min |
 
-Tool: Vivado 2026.1. Build ID of the inputs at handover: `d5b615b6` (`python flow/manifest.py show designs/b65a_axil_soc`: what a rebuild of today's sources and flow would carry; it changes when any build input or the flow changes, so it can differ from the build ID in an older evidence record). Knowledge-bank pin: `20d73e8`.
+Tool: Vivado 2026.1. Build ID of the inputs at handover: `d8667d83` (`python flow/manifest.py show designs/b65a_axil_soc`: what a rebuild of today's sources and flow would carry; it changes when any build input or the flow changes, so it can differ from the build ID in an older evidence record). Knowledge-bank pin: `6185830`.
 
 | File | What |
 |---|---|

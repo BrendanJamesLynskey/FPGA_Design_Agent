@@ -51,10 +51,13 @@ def parse_paths(text: str) -> dict[str, Any]:
         raise ValueError("not a cdc_paths report (no '# cdc_paths v1' header)")
     if "# end" not in text:
         raise ValueError("cdc_paths report is incomplete (no '# end' line: flow/cdc_paths.tcl stopped before the end)")
-    clocks, paths, errors = {}, [], []
+    clocks, paths, errors, xexc = {}, [], [], {}
     for line in text.splitlines():
         if line.startswith("ERROR|"):
             errors.append(line[6:])
+        elif line.startswith("XEXC|"):
+            _, inst, exc = line.split("|")[:3]
+            xexc[inst] = exc
         elif line.startswith("CLOCK|"):
             _, n, per, root = line.split("|")[:4]
             clocks[n] = {"period": float(per or 0), "root": root}
@@ -64,7 +67,7 @@ def parse_paths(text: str) -> dict[str, Any]:
             paths.append({"cell": f[1], "ref": f[2], "pin": f[3], "clk": f[4], "async_reg": f[5] in ("1", "TRUE"),
                           "src": f[6], "src_ref": f[7], "src_clk": f[8], "nstart": int(f[9] or 0), "chain": int(f[10] or 0),
                           "nloads": int(f[11] or 0), "sinks": [s for s in f[12].split(",") if s]})
-    return {"clocks": clocks, "paths": paths, "errors": errors}
+    return {"clocks": clocks, "paths": paths, "errors": errors, "xexc": xexc}
 
 
 def parse_cdc_rows(text: str) -> list[dict[str, Any]]:
@@ -93,6 +96,17 @@ def base(name: str) -> str:
     return re.sub(r"\[[\d:]+\]$", "", name)
 
 
+#: AMD's debug cores by the cell names the tool gives them: the debug hub is the top-level cell ``dbg_hub`` (``dbg_hub/inst/BSCANID.u_xsdbm_id/...``) and
+#: the ILA's logic sits under ``.../inst/ila_core_inst/``. Brief 140: with the hub implemented at the synthesis stage (flow/build.tcl) the netlist holds
+#: the hub's own TCK-to-clock crossings (143 in dbg_xvc, all under ``dbg_hub/inst/``); AMD's cores carry their own CDC waivers and exceptions, and a crossing
+#: counts as AMD's only when BOTH ends are inside these names. A crossing from our logic into a debug core is still checked.
+DEBUG_IP = re.compile(r"^dbg_hub/inst/|/inst/ila_core_inst/")
+
+
+def is_debug_ip(cell: str) -> bool:
+    return bool(DEBUG_IP.search(cell))
+
+
 def xpm_kind(cell: str) -> str | None:
     """The XPM macro a cell belongs to, from the names AMD's macros give their flops."""
     for pat, kind in (("xpm_fifo", "xpm_fifo"), ("dest_graysync_ff", "xpm_gray"), ("src_gray_ff", "xpm_gray"),
@@ -119,6 +133,10 @@ def classify(paths: dict[str, Any], rows: list[dict[str, Any]], waivers: list[di
         p["src_base"] = base(p["src"])
         k = (p["clk"], p["base"], p["src_base"])
         p["exception"] = exc.get(k, "")
+        if not p["exception"]:
+            # brief 140: no report_cdc row (AMD's scoped XPM constraints waive CDC-15 for the handshake): the exception the timing really has
+            inst = p["cell"].rsplit("/", 1)[0] if "/" in p["cell"] else ""
+            p["exception"] = paths.get("xexc", {}).get(inst, "")
         p["rules"] = ruleids.get(k, [])
         p["xpm"] = xpm_kind(p["cell"]) or xpm_kind(p["src"])
     groups: dict[tuple, list[dict]] = {}
@@ -136,6 +154,9 @@ def classify(paths: dict[str, Any], rows: list[dict[str, Any]], waivers: list[di
     verdict: dict[int, tuple[str, str, str]] = {}      # id(path) -> (class, rule, why)
     for p in P:
         i = id(p)
+        if is_debug_ip(p["cell"]) and is_debug_ip(p["src"]):
+            verdict[i] = ("debug ip", "", "inside AMD's debug hub or ILA core: AMD's own clock crossings (TCK to design clock), not ours to restructure")
+            continue
         if p["pin"] in ("CLR", "PRE"):
             if p["async_reg"] or p["xpm"] == "xpm_async_rst":
                 verdict[i] = ("reset bridge", "", "asynchronous reset into an ASYNC_REG bridge flop")
@@ -160,7 +181,12 @@ def classify(paths: dict[str, Any], rows: list[dict[str, Any]], waivers: list[di
             continue
         if not is_chain(p):
             hand = "Max Delay Datapath Only" in p["exception"] and (p["src_clk"], p["clk"]) in pairs_ok
-            if hand and p["ref"] in ("FDRE", "FDSE", "FDCE", "FDPE"):
+            if p["async_reg"] and p["ref"] in ("FDRE", "FDSE", "FDCE", "FDPE"):
+                # brief 207: an ASYNC_REG flop is a synchroniser stage by declaration; a chain shorter than 2 is a missing stage even when the
+                # crossing carries a max-delay bound (measured: a one-stage level synchroniser with set_max_delay -datapath_only was classed as a
+                # handshake data path and passed, while report_cdc raised CDC-1)
+                verdict[i] = ("unsafe", "U2", "no synchroniser: the ASYNC_REG chain behind this capture flop is shorter than 2")
+            elif hand and p["ref"] in ("FDRE", "FDSE", "FDCE", "FDPE"):
                 verdict[i] = ("handshake", "", "hand-built handshake data path: max-delay exception, control crosses through a synchroniser")
             elif p["ref"] in ("FDRE", "FDSE", "FDCE", "FDPE") and not p["async_reg"]:
                 verdict[i] = ("unsafe", "U2", "no synchroniser: the capture flop is not the first of an ASYNC_REG chain "

@@ -4,7 +4,7 @@
 
 **Not assessed: no requirements recorded (no verif/testplan.yaml), so nothing here is traced to a requirement.**
 
-What the label means, what "verified" never means and how it is earned: [docs/verified.md](../../docs/verified.md). The label is computed from the testplan and the evidence files named below; it is never typed. Generated at git commit `a8359042aac759be0a4d6b05186709bdb7bb093c` (informational: the hashes in the manifest, not the commit, are what the CI check compares).
+What the label means, what "verified" never means and how it is earned: [docs/verified.md](../../docs/verified.md). The label is computed from the testplan and the evidence files named below; it is never typed. Generated at git commit `51dfe82191cd59c99857973f44b8b57ec9363fb5` (informational: the hashes in the manifest, not the commit, are what the CI check compares).
 
 ## What was checked for the label
 
@@ -42,14 +42,14 @@ Every file this record covers, with its SHA-256 at generation (8 files). `absent
 
 | File | SHA-256 |
 |---|---|
-| `designs/b87_ml_trading/handover.yaml` | `9d8cc15a0fde93d2e7f713412b7082b7e0319b5f40d889e62e362f6ab623cb9b` |
+| `designs/b87_ml_trading/handover.yaml` | `c771c9da64870abe8f48ef5ea6b3a3e69e548d5ab8aceb0ddf88ba40a4a0462c` |
 | `designs/b87_ml_trading/rtl/ml_feat.sv` | `74e91004bc80b9e8048234ef3e45f270e925727ed2137adeeeacc074dc38ee31` |
 | `designs/b87_ml_trading/rtl/ml_gate.sv` | `69ffe79a2065be60993d405f33a8f6ae53f3c5dab5816d59df02ff7ef11555b3` |
 | `designs/b87_ml_trading/rtl/mlp_hls4ml_wrap.sv` | `9ef46768d834ebdc94c13fe0b8ab5c0cdf17eda2318c883e5f4e0b6ae5c78acf` |
 | `designs/b87_ml_trading/tests/test_b87_integ_rtl.py` | `02050fb09d5b7dddb112c9f3f8e0876fd4d1b8649c1c259204e8949176c76afc` |
 | `designs/b87_ml_trading/tests/test_b87_rtl.py` | `2ffcf72e10dc6f629478d8c0681a365bdbb0c7ae57b726066516f02c01ee77d6` |
 | `results/b87/hls4ml_csim.json` | `d00b95f07901e8fcf7522aff696887064e87b813cb6bfc2265234d3e868cbb0e` |
-| `results/b87/summary.json` | `427edff04ea5aae367aa90641e06d603afcd62aa1350481117a848db18db0ad2` |
+| `results/b87/summary.json` | `1625246873339838d43ba1bcaf66596d21148db693a9ed613a3dda8a312af3c6` |
 
 ## Reproduce
 

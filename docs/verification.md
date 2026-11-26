@@ -164,7 +164,9 @@ left unrun are listed as skipped and excluded. `score_pct` is killed / (killed +
 mutant (no visible behaviour change) shows as a survivor, so a score below 100 is not always a weak bench. The result
 lists each survivor in words (file, line, the change); `gates(kind=verif)` repeats up to five in the failing check's
 reason. The tool takes the machine's heavy-job lock (`$FDA_HEAVY_LOCK`) under a memory cap, and answers `busy, retry`
-when it is held. 
+when it is held. A run launched under `take_heavy_slot.sh` exports `FDA_HEAVY_SLOT=$HEAVY_LOCK` (the lock file it holds): the coverage and
+mutation steps then run inside that slot and take nothing (brief 219); with no slot held the protection is unchanged. The supplied
+files in the design's `data/` (for example `jtag_bus.sv`), and any copy of them in `rtl/`, are not mutation targets (`excluded_supplied` in the result). 
 
 ### The CDC checks (brief 16)
 
@@ -226,3 +228,23 @@ mistakes (a PTR count, a wrong port name). Full table: `reports/08f_eval2_build_
   Checking is the model comparison and the assertions.
 - Mutation testing of the agent's own benches (against RTL written elsewhere) is the check later benches will be
   measured with; the T1 numbers are in [results/04f](../results/04f/README.md).
+
+## Stage-2 repair routing and stop reasons (brief 82P6)
+
+`agent/graph/repair.py: stage2_owners` decides which role is handed which failure text at each stage-2 visit. Three behaviours came
+from the 82P4 and 82P5 runs (owner decisions 19 and 20):
+
+- **A failing simulation covers its consequences.** While the simulation fails, the V2 checks `failing_tests`, `planned_tests_missing`,
+  `constrained_random_test_ran` and `assertions_bound_zero_failures` are not handed to the Verifier (the bench's owner): they are what a failing test
+  looks like from the verification gate. When the same failure survives a repair, the Verifier always gets the repeat hint (check that the bench
+  drives the ports as the spec says) with the failing assertion, whatever else it already owns. Other plan gaps still go to the Verifier.
+- **A diagnosing stop reason.** A stage that runs out of visits stops with `stage N visited more than L times; last failing gate: ...; owned by
+  the ... role; last failing assertion: ...; the same failure on K consecutive visits`. `summary.json` has the same facts as `stop_detail` and the
+  RTL role's last final message (the first 300 and last 1700 characters when it is longer than 2000) as `last_rtl_message`; that message is
+  model output and stays in the private run archive, not in committed records.
+- **Constants at the clarify exit, and routing to the owner.** `flow/derived_constants.py: spec_yaml_findings` fails the clarify stage when spec.yaml
+  contradicts the derived design ID (`CONST-ID-03`) or the board clock period (`CONST-CLK-02`). A `CONST-ID-01` that is still there at the next stage-2
+  visit goes to each owner whose file writes the wrong value as a design ID (Modeller, Verifier; the Modeller's text never mentions the RTL), and back to
+  the clarify stage when spec.yaml writes it. Which artefact "writes the value as a design ID" is a heuristic (a line with the value and a
+  design-ID word); an endpoint's own identification word with the same number is not counted unless its line says design ID.
+- `routing_events.jsonl` in the run directory (and `routing_events` in `summary.json`) records each of these firing, so a run record says whether it did.

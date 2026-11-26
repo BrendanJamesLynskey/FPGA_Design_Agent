@@ -12,7 +12,7 @@ Not in scope:
 - a board result; no latency figure here was measured on hardware, and the PHYs, the cable and the real RGMII timing are outside every number
 - a proof of the whole design; only interlocks.sv has a k-induction proof, and the order slot and the MAC state machines have bounded checks
 
-Kind: showcase; written by hand. State: built. For an agent: [AGENT.md](AGENT.md).
+Kind: showcase; written by a Claude Code session. State: built. For an agent: [AGENT.md](AGENT.md).
 
 <!-- prose:what -->
 A packet arrives on a PL Ethernet port of the Kria KR260; its fields are parsed while it is still arriving; a rule
@@ -91,7 +91,7 @@ Resets:
 
 Interfaces:
 
-- `RGMII ports A and B` (RGMII at 1000 Mb/s, LVCMOS18; port A (PHY2, J10B) is the trading port, port B (PHY3, J10A) the generator and loop timer) ([datasheet](../../ip_lib/eth_mac_rgmii/README.md)): receive is centre-aligned with the PHY's RX delay on and a 1000 ps IDELAY on each input; transmit is edge-aligned with the PHY's TX delay on. Constraints come from the PHY datasheet and are in design.xdc
+- `RGMII ports A and B` (RGMII at 1000 Mb/s, LVCMOS18; port A (PHY2, J10B) is the trading port, port B (PHY3, J10A) the generator and loop timer) ([datasheet](../../ip_lib/eth_mac_rgmii/README.md)): the PHYs are TI DP83867 (MDIO addresses 2 and 3); receive is centre-aligned with the PHY's RX delay on and a 1000 ps IDELAY on each input; transmit is edge-aligned with the PHY's TX delay on (1.75 ns). Constraints come from the PHY datasheet and are in design.xdc, derived in docs/phy_dp83867.md
 - `host register bus` (32-bit registers over the JTAG cable (BSCANE2), word addresses 0x000 to 0xFFF) ([datasheet](docs/register_map.md)): control, addresses, interlock limits, rule table, counters, order log, book and two latency histograms; a read returns data two clocks after the address. The JTAG script has not run on a board
 - `message format` (Bench Feed v1 over UDP, Ethernet and IPv4) ([datasheet](docs/bench_feed_v1.md)): our own format; UDP checksums are not checked or generated, and IPv4 options, VLAN tags and fragments are rejected
 
@@ -103,8 +103,8 @@ Interfaces:
 
 | Quantity | Value | Source |
 |---|---|---|
-| Resources | LUTs: 7225 LUT; flip-flops: 10318 FF; block RAM tiles: 6.5 tile | M1, M2, M3 |
-| Timing | worst setup slack: 0.102 ns; worst hold slack: 0.01 ns | M4, M5 |
+| Resources | LUTs: 7305 LUT; flip-flops: 10347 FF; block RAM tiles: 6.5 tile | M1, M2, M3 |
+| Timing | worst setup slack: -0.003 ns; worst hold slack: 0.012 ns | M4, M5 |
 | Power | total on-chip power estimate: 0.501 W | M6 |
 | Latency | decision latency, speculative, price field complete to first response byte: 8 clocks; decision latency, safe mode, one-message frame: 18 clocks; frame-start latency, speculative, SFD in to first response byte: 65 clocks; decision latency when the whole frame is stored and assembled after the decision (BUILD_MODE 2): 75 clocks; histogram A, minimum, port B loop in simulation: 65 clocks | M7, M8, M9, M10, M11 |
 | Throughput | not measured | [Known gaps](#known-gaps-and-limits) |
@@ -123,7 +123,7 @@ Interfaces:
 | formal checks; needs SymbiYosys, yosys and z3 | `python3 -m pytest -q designs/b58a_trigger/tests/test_b58a_formal.py` | no | about 30 min |
 | build the KR260 bitstream; needs local Vivado 2026.1 and a heavy slot (take_heavy_slot.sh) | `flow/run_vivado.sh designs/b58a_trigger` | yes | about 23 min |
 
-Tool: Vivado 2026.1. Build ID of the inputs at handover: `3efc922f` (`python flow/manifest.py show designs/b58a_trigger`: what a rebuild of today's sources and flow would carry; it changes when any build input or the flow changes, so it can differ from the build ID in an older evidence record). Knowledge-bank pin: `93d158c`.
+Tool: Vivado 2026.1. Build ID of the inputs at handover: `55f1b6ca` (`python flow/manifest.py show designs/b58a_trigger`: what a rebuild of today's sources and flow would carry; it changes when any build input or the flow changes, so it can differ from the build ID in an older evidence record). Knowledge-bank pin: `6185830`.
 
 | File | What |
 |---|---|
@@ -148,20 +148,22 @@ Tool: Vivado 2026.1. Build ID of the inputs at handover: `3efc922f` (`python flo
 <!-- prose:build -->
 ### Build notes (Vivado 2026.1, xck26-sfvc784-2LV-c)
 
-Routed and written to a bitstream (`results/b58a/build/`, `summary.json`): the sizes and power are in the Measured section. **Every gate passes** (`summary.json`, generated from
-`gates.json`): worst setup slack +0.102 ns, worst hold slack +0.010 ns.
+Routed and written to a bitstream (`results/b58a/build/`, `summary.json`): the sizes and power are in the Measured section. **One gate fails: post-route `setup`, by 0.003 ns**
+(`summary.json`, generated from `gates.json`): worst setup slack -0.003 ns (port B transmit, `b_txd[0]`), worst hold slack +0.012 ns. Every other gate passes. The bitstream
+was written; it has not been loaded on a board.
 
 | RGMII worst slack (ns) | Port A setup | Port A hold | Port B setup | Port B hold |
 |---|---|---|---|---|
 | Receive (centre-aligned, PHY RX delay on, 1000 ps IDELAY on each input) | +0.360 | +0.697 | +0.642 | +0.238 |
-| Transmit (TXC edge-aligned, PHY TX delay on, the PHY's own window less 0.1 ns assumed board skew) | +0.102 | +0.533 | +0.137 | +0.516 |
+| Transmit (TXC edge-aligned, PHY TX delay 1.75 ns, the PHY's own window less the carrier skew bound) | +0.002 | +0.133 | -0.003 | +0.076 |
 
-The constraints and their derivation are in `design.xdc`: no false paths or other exceptions on the RGMII ports, and
-no methodology warning about them. Both directions use the PHY's own timing from its datasheet (Marvell 88E1111,
-MV-S100649-00 Rev. M, section 4.12.2), with its internal delays on (register 20 bits 7 and 1). On transmit that
-window lets a data change come up to 0.9 ns after its TXC edge and no earlier than 1.3 ns before the next; RGMII
-v2.0's generic window was used by an earlier build; the record of that build is not kept. The KR260's TXC-to-TXD trace skew is not
-in our notes: the constraints take an **assumed** 0.1 ns off both sides of the window. A centred TXC from a 90-degree
+The constraints and their derivation are in `design.xdc` and [docs/phy_dp83867.md](docs/phy_dp83867.md): no false paths or other exceptions on the RGMII ports, and
+no methodology warning about them. Both directions use the PHY's own timing from the TI DP83867 datasheet (SNLS484J), with its internal delays on (RGMIICTL, RGMIIDCTL;
+the KR260 straps leave the defaults). On transmit the datasheet's 1.0 to 2.6 ns clock-after-data window, with the PHY adding 1.75 ns to TXC, lets a data change come up to 0.75 ns
+after its TXC edge and no earlier than 0.85 ns before the next; the carrier's TXC-to-TXD trace skew bound (0.05 ns port A, 0.09 ns port B, from the carrier trace lengths, not
+the SOM) is taken off both sides. **The transmit window is missed by 3 ps on port B and met by 2 ps on port A**: the spread of the FPGA's four data outputs and the control output against the
+forwarded clock uses nearly all of it, and the architecture was not changed to chase the last 3 ps. The window the design had before this brief was for a Marvell PHY the board does not carry (0.9 ns after, 1.3 ns before). An earlier build before the constraint fix ran with the transmit output delays silently dropped (the
+generated-clock source pin name no longer matched after the ip_lib refactor, CRITICAL 12-4739), so its transmit slacks meant nothing. A centred TXC from a 90-degree
 MMCM output (PHY TX delay off) was also built and did not close, with a worst setup slack of -0.433 ns (`results/b58a/build_tx_centred_trial/summary.json`).
 
 Build with `flow/run_vivado.sh designs/b58a_trigger` under a heavy slot, then `python3 results/b58a/build_summary.py`. The simulation records are made by `B58A_RECORD=results/b58a pytest designs/b58a_trigger/tests/test_b58a_rtl.py`; see [results/b58a/README.md](../../results/b58a/README.md).
@@ -181,7 +183,7 @@ Build with `flow/run_vivado.sh designs/b58a_trigger` under a heavy slot, then `p
 | E6 | review | pass | ten recorded sentences for the natural-language rule step, checked offline against meanings written by hand; one expectation was changed after the model's reply was seen (recorded in the file) | [`results/b58a/nl_rules.json`](../../results/b58a/nl_rules.json) | - |
 | E7 | build | pass | KR260 build on Vivado 2026.1; every gate passes through bitstream (built, not programmed) | [`results/b58a/build/summary.json`](../../results/b58a/build/summary.json) | - |
 
-Gates at handover: `build_2026_1` pass, `board_run` not-run.
+Gates at handover: `build_2026_1` fail, `board_run` not-run.
 
 <!-- prose:verified -->
 ### How it is checked
@@ -229,11 +231,11 @@ Every value is read from the record by `python -m flow.handover fill`, not typed
 
 | ID | What | Value | Runs | Source | Conditions |
 |---|---|---|---|---|---|
-| M1 | LUTs | 7225 LUT | 1 | [`results/b58a/build/summary.json`](../../results/b58a/build/summary.json) `utilisation.CLB LUTs.used` | routed build, Vivado 2026.1, xck26-sfvc784-2LV-c, whole design |
-| M2 | flip-flops | 10318 FF | 1 | [`results/b58a/build/summary.json`](../../results/b58a/build/summary.json) `utilisation.CLB Registers.used` | as M1 |
+| M1 | LUTs | 7305 LUT | 1 | [`results/b58a/build/summary.json`](../../results/b58a/build/summary.json) `utilisation.CLB LUTs.used` | routed build, Vivado 2026.1, xck26-sfvc784-2LV-c, whole design |
+| M2 | flip-flops | 10347 FF | 1 | [`results/b58a/build/summary.json`](../../results/b58a/build/summary.json) `utilisation.CLB Registers.used` | as M1 |
 | M3 | block RAM tiles | 6.5 tile | 1 | [`results/b58a/build/summary.json`](../../results/b58a/build/summary.json) `utilisation.Block RAM Tile.used` | as M1 |
-| M4 | worst setup slack | 0.102 ns | 1 | [`results/b58a/build/summary.json`](../../results/b58a/build/summary.json) `timing_post_route.wns_ns` | routed, all clocks including the RGMII source-synchronous paths; the transmit window assumes 0.1 ns of board skew |
-| M5 | worst hold slack | 0.01 ns | 1 | [`results/b58a/build/summary.json`](../../results/b58a/build/summary.json) `timing_post_route.whs_ns` | as M4 |
+| M4 | worst setup slack | -0.003 ns | 1 | [`results/b58a/build/summary.json`](../../results/b58a/build/summary.json) `timing_post_route.wns_ns` | routed, all clocks including the RGMII source-synchronous paths; the transmit window is the DP83867's, less the carrier skew bound (0.05 ns port A, 0.09 ns port B); the failing endpoint is b_txd[0], by 3 ps |
+| M5 | worst hold slack | 0.012 ns | 1 | [`results/b58a/build/summary.json`](../../results/b58a/build/summary.json) `timing_post_route.whs_ns` | as M4 |
 | M6 | total on-chip power estimate | 0.501 W | 1 | [`results/b58a/build/summary.json`](../../results/b58a/build/summary.json) `power.total_on_chip_w` | report_power after routing, vectorless, still air with no heat sink at 40 C ambient (the pessimistic bound); not a measurement |
 | M7 | decision latency, speculative, price field complete to first response byte | 8 clocks | 1 | [`results/b58a/latency_sim.json`](../../results/b58a/latency_sim.json) `modes.speculative_1msg.decision_to_first_byte` | simulation, core side at 125 MHz (8 ns a clock), checksum computed before the decision; before the RGMII registers and the pins |
 | M8 | decision latency, safe mode, one-message frame | 18 clocks | 1 | [`results/b58a/latency_sim.json`](../../results/b58a/latency_sim.json) `modes.safe_1msg.decision_to_first_byte` | as M7; safe mode waits for the good frame check sequence |
@@ -277,12 +279,13 @@ measurement.
 
 ## Known gaps and limits
 
+- **build_2026_1**: The Vivado 2026.1 build fails one gate, post-route setup, by 3 ps on port B transmit (b_txd[0], slack -0.003 ns; port A +0.002 ns). Brief 175 did not change the architecture; the options are in the brief 175 report. Every other gate passes.
 - **board_run**: No board run has happened and no KR260 programming path exists in the flow yet. The JTAG register script has not run on a board. docs/board_run_plan.md lists the steps.
 - **throughput**: Not measured. Only latency was recorded; no record states a sustained order or frame rate.
 - **E3**: Only interlocks.sv is proved (k-induction). order_ctl.sv (30 clocks) and the MAC receive and transmit state machines (20 and 40 clocks) are bounded checks; order backlogs and the saturation of its 16-bit age counter are outside the bound.
 - **latency**: Every latency figure is simulation. The receive clock crossing, the RGMII registers, the pins, the PHY chips and the cable are outside it, and the crossing FIFO is a simulation model of the Xilinx XPM macro, so its real latency is unmeasured.
 - **operating conditions**: No SYSMON temperature or rail readings exist because nothing ran on a board; the board run plan reads them.
-- **build**: The transmit window assumes 0.1 ns of TXC-to-TXD skew on the KR260, which is not in our notes; the schematic or the layout report would confirm it. Worst transmit setup slack is the smallest margin in the build.
+- **build**: The transmit window rests on our reading of the DP83867 datasheet's 1.0 to 2.6 ns clock-after-data figure as the total at the PHY, and on a carrier skew bound (0.05 ns port A, 0.09 ns port B) from the carrier trace lengths; the SOM routing is unknown. The build misses that window by 3 ps on port B (met by 2 ps on port A); the board delay sweep (board_run_plan.md step 5b) tests the window itself.
 - **behaviour**: One order slot, at most one request per frame. A bad frame's book updates are not rolled back. No UDP checksum checks. The kill is a register only because the KR260 has no PL push button.
 - **tick-to-config**: The 2,125-clock tick-to-config figure includes 2,000 clocks of software time that is assumed, not measured; it shows the mechanism.
 
@@ -290,8 +293,8 @@ measurement.
 ### Limits
 
 - No board run; the JTAG register script has not run on a board; no KR260 programming path in the flow yet.
-- The transmit constraints assume at most 0.1 ns of TXC-to-TXD skew on the KR260 (not in our notes; the schematic or
-  the board's layout report would confirm it).
+- The transmit window is missed by 3 ps on port B (post-route setup); it rests on our reading of the DP83867's 1.0 to 2.6 ns figure
+  and a carrier skew bound of 0.05 ns (A) and 0.09 ns (B); the SOM routing is unknown. The board delay sweep tests it.
 - One order slot: at most one order request per received frame, none while the slot is busy. A soft reset (PULSE
   bit 7) forgets which frame last made a request, so that frame may make one more; it never removes an undo.
 - A bad frame's book updates are not rolled back: a bad frame becomes a sequence gap at the next packet, and with
@@ -321,6 +324,7 @@ Open questions:
 |---|---|---|---|
 | 2026-11-12 | 58a | - | built, simulated and formally checked; Vivado 2026.1 build closes with all gates passing; not run on a board |
 | 2026-11-13 | 68 | - | handover written to the documentation standard |
+| 2026-11-23 | 175 | - | PHY corrected from the assumed Marvell 88E1111 to the KR260's TI DP83867 (BOM and schematic); transmit constraints re-derived and the dead transmit constraints repaired; rebuilt, every gate passes except post-route setup, by 3 ps on port B transmit; not run on a board |
 
 <!-- prose:history -->
 <!-- /prose:history -->

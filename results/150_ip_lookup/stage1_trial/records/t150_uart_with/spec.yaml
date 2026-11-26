@@ -1,0 +1,281 @@
+name: seg1_counter
+title: Seven-segment decimal counter with UART test shell
+board: nexys_a7_100t
+part: xc7a100tcsg324-1
+top: top
+clocks:
+- name: clk
+  port: clk
+  period_ns: 10
+  comment: 100 MHz board oscillator, pin E3 (CLK100MHZ)
+reset:
+  name: cpu_reset
+  port: cpu_resetn
+  polarity: active low
+  sync: true
+  comment: CPU RESET button, pin C12, active low on the board; synchronised into clk
+    and used as an active high internal reset
+parameters:
+  ONE_SEC_CYCLES: 100000000
+  DEBOUNCE_CYCLES: 1000000
+  SCAN_CYCLES: 100000
+  BAUD_DIV_CYCLES: 868
+  COUNT_DIGITS: 4
+ports:
+- name: clk
+  direction: input
+  width: 1
+  role: 100 MHz clock, pin E3
+- name: cpu_resetn
+  direction: input
+  width: 1
+  role: CPU RESET button, pin C12, active low
+- name: btnc
+  direction: input
+  width: 1
+  role: centre push button, pin N17, active high, clears the count
+- name: seg
+  direction: output
+  width: 8
+  role: seven-segment cathodes CA CB CC CD CE CF CG DP, pins T10 R10 K16 K13 P15 T11
+    L18 H15, active low
+- name: an
+  direction: output
+  width: 8
+  role: digit anodes AN0 to AN7, pins J17 J18 T9 J14 P14 T14 K2 U13, active low
+- name: uart_rxd
+  direction: input
+  width: 1
+  role: USB-UART receive from host into FPGA, pin C4
+- name: uart_txd
+  direction: output
+  width: 1
+  role: USB-UART transmit from FPGA to host, pin D4
+behaviour:
+  counter:
+  - a one-cycle tick pulse is produced every ONE_SEC_CYCLES clk cycles
+  - the count is held in COUNT_DIGITS decimal digits with range 0000 to 9999
+  - the count increments by one on each tick
+  - the count wraps from 9999 to 0000 on the next tick
+  - reset sets the count and the tick counter to 0
+  clear_button:
+  - 'btnc is synchronised and debounced: a press registers only after btnc stays high
+    for DEBOUNCE_CYCLES consecutive clk cycles'
+  - a registered btnc press sets the count to 0 and restarts the tick counter from
+    0
+  - btnc does not change the tick period
+  display:
+  - 'the binary count is converted to four BCD digits: thousands, hundreds, tens and
+    units'
+  - 'digits are multiplexed: each anode is enabled for one slot of SCAN_CYCLES clk
+    cycles and the four digit slots rotate'
+  - anodes AN4 to AN7 are held inactive (high)
+  - leading zeros are displayed, so the count 42 shows 0042
+  - 'seg is active low: a segment bit of 0 lights that segment'
+  - decimal point is held off (seg DP bit held at 1)
+  uart_shell:
+  - serial format is 8 data bits, no parity, 1 stop bit at BAUD_DIV_CYCLES clk cycles
+    per bit
+  - a read of a register returns the value in the register map for that offset
+  - the design ID register returns the ASCII bytes of SEG1
+  - the framing of read requests is defined by the open question on the shell protocol
+registers:
+  map:
+  - offset: '0x00'
+    name: ID
+    access: RO
+    reset: '0x53454731'
+    bits: 31:0 ASCII bytes of SEG1, byte 3 is S, byte 0 is 1
+  - offset: '0x04'
+    name: COUNT
+    access: RO
+    reset: '0x00000000'
+    bits: 15:0 binary value of the count, range 0 to 9999
+timing:
+  latency:
+    tick_to_display: count update is visible on seg within 2 SCAN_CYCLES after the
+      tick
+    clear_to_count: count is 0 within DEBOUNCE_CYCLES plus 2 clk cycles after btnc
+      goes high
+    reset_to_count: count is 0 within 2 clk cycles after cpu_resetn goes low
+  constraints:
+    clock: clk at 10 ns period, timing must close with no negative slack
+    io: all outputs registered before the pins
+resources_expected:
+  lut: 200
+  ff: 150
+  bram: 0
+  dsp: 0
+  comment: 'rough estimate: 32-bit tick counter, 4 BCD digit counters, scan counter,
+    debouncer, UART transmitter and receiver, register read mux'
+interfaces_note: no AXI4-Lite block; the UART test shell is the only register access
+  path
+assumptions:
+- text: pin assignments come from the Digilent Nexys A7-100T master constraints file
+  reason: the pins listed in ports are the board pins for that file; the flow will
+    fail on any mismatch
+- text: the seven-segment display is common anode and active low, and the anodes are
+    active low
+  reason: this is how the Nexys A7 seven-segment display is wired
+- text: btnc and the USB-UART lines are asynchronous and are synchronised before use
+  reason: they come from outside the clk domain and would otherwise violate timing
+    or cause metastability
+- text: one count step per second is exact to the 100 MHz oscillator with no correction
+  reason: the oscillator is the only clock source and no tolerance is specified in
+    the request
+- text: the count is binary inside the design and converted to BCD for display only
+  reason: a binary counter is the smallest structure and BCD conversion is needed
+    only for the four displayed digits
+- text: the UART shell is read-only and cannot write or clear registers
+  reason: the request asks only for reading the count over the shell
+open_questions: []
+requirements:
+- id: REQ-01
+  text: After cpu_resetn goes low the count is 0000 within 2 clk cycles
+  proof:
+  - simulation
+  - hardware
+- id: REQ-02
+  text: The count increases by exactly one on each one-second tick
+  proof:
+  - simulation
+- id: REQ-03
+  text: The count wraps from 9999 to 0000 on the next tick
+  proof:
+  - simulation
+  - formal
+- id: REQ-04
+  text: The tick period is ONE_SEC_CYCLES clk cycles
+  proof:
+  - simulation
+- id: REQ-05
+  text: A btnc press held for DEBOUNCE_CYCLES clk cycles sets the count to 0
+  proof:
+  - simulation
+  - hardware
+- id: REQ-06
+  text: A btnc pulse shorter than DEBOUNCE_CYCLES clk cycles does not change the count
+  proof:
+  - simulation
+- id: REQ-07
+  text: cpu_resetn low sets the count to 0
+  proof:
+  - simulation
+  - formal
+- id: REQ-08
+  text: cpu_resetn low sets the tick counter to 0
+  proof:
+  - simulation
+  - formal
+- id: REQ-09
+  text: Each of the four enabled digits shows its BCD digit of the count with leading
+    zeros
+  proof:
+  - simulation
+  - hardware
+- id: REQ-10
+  text: seg is active low, a segment bit of 0 lights that segment
+  proof:
+  - simulation
+  - hardware
+- id: REQ-11
+  text: an is active low for the enabled digit slot, one digit at a time
+  proof:
+  - simulation
+  - hardware
+- id: REQ-12
+  text: AN4 to AN7 are held high at all times
+  proof:
+  - simulation
+  - hardware
+- id: REQ-13
+  text: A UART read of the ID register returns 0x53454731
+  proof:
+  - simulation
+  - hardware
+- id: REQ-14
+  text: A UART read of the COUNT register returns the current binary count
+  proof:
+  - simulation
+  - hardware
+- id: REQ-15
+  text: The UART transmitter sends 8 data bits, no parity and 1 stop bit at BAUD_DIV_CYCLES
+    clk cycles per bit
+  proof:
+  - simulation
+- id: REQ-16
+  text: Timing closes at 10 ns clk period with no negative setup slack
+  proof:
+  - analysis
+- id: REQ-17
+  text: The design uses no BRAM blocks and no DSP blocks
+  proof:
+  - analysis
+resolved_questions:
+- question: What is the register map (offset, width, reset value and access of every
+    register) for the UART test shell?
+  answer: 0x00 ID, 32 bit, RO, reset 0x53454731 (ASCII SEG1); 0x04 COUNT, 32 bit with
+    bits 15:0 used, RO, reset 0x00000000 (binary count)
+  status: defaulted
+  by: default
+  default_reason: the request names shell register reads and the design ID but gives
+    no offsets, so the proposed two-register map is used until answered
+- question: What is the framing of a shell read request and response?
+  answer: one request byte 0x72 (ASCII r) followed by one offset byte; response is
+    four bytes, most significant first
+  status: defaulted
+  by: default
+  default_reason: the request does not define the protocol and a simple fixed frame
+    is the smallest one that reads a 32 bit register
+- question: How many digits does the counter display and what is the maximum count?
+  answer: 4 digits, range 0000 to 9999, wrap to 0000
+  status: defaulted
+  by: default
+  default_reason: the request says decimal display but gives no width; four digits
+    fits the count range and leaves AN4 to AN7 off
+- question: Are leading zeros displayed or blanked?
+  answer: leading zeros are displayed, so 42 shows 0042
+  status: defaulted
+  by: default
+  default_reason: a fixed four-digit counter reads most clearly with zeros, and blanking
+    would need an extra rule
+- question: What are the UART baud rate, data bits, parity and stop bits?
+  answer: 115200 baud, 8 data bits, no parity, 1 stop bit, BAUD_DIV_CYCLES 868
+  status: defaulted
+  by: default
+  default_reason: 115200 8N1 is the usual default for the Nexys USB-UART bridge and
+    the request gives no rate
+- question: Does the centre button clear only the count, or also restart the one-second
+    phase?
+  answer: clear sets the count to 0 and restarts the tick counter so the next increment
+    is one full second later
+  status: defaulted
+  by: default
+  default_reason: restarting the phase makes the first second after a clear exactly
+    one second long
+- question: What debounce time is used for btnc?
+  answer: DEBOUNCE_CYCLES 1000000 (10 ms at 100 MHz)
+  status: defaulted
+  by: default
+  default_reason: 10 ms is a common mechanical bounce window and the request gives
+    no value
+- question: Can the count be cleared from the UART shell as well as by btnc?
+  answer: no, the shell is read only
+  status: defaulted
+  by: default
+  default_reason: the request asks only for reading the count over the shell
+- question: Is the count stable during a multi-byte read or can it change between
+    bytes?
+  answer: 'no snapshot: the 16 bit count may change between bytes of a read, with
+    the value read from the live register'
+  status: defaulted
+  by: default
+  default_reason: a snapshot register would add state the request does not ask for;
+    a one-second update rate makes a mid-read change rare
+- question: What is the digit scan rate?
+  answer: SCAN_CYCLES 100000 (1 ms per digit slot, 4 ms per four-digit frame, about
+    250 full frames per second)
+  status: defaulted
+  by: default
+  default_reason: 1 ms per slot avoids visible flicker with four digits and the request
+    gives no value

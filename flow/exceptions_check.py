@@ -45,6 +45,14 @@ cell pattern in them is inside ``*ila_core_inst/...``. Both must hold: the Posit
 of our XDC files, and every ``NAME =~`` pattern of the From/Through/To text names a debug core (``DEBUG_CORE_TOKENS``).
 A row at one of our positions fails as before whatever its text; a row beyond them that names anything else fails.
 
+EXC-IGNORED-XPM-SCOPED (information only, brief 140): when Vivado applies AMD's own scoped XPM constraint files (measured in dbg_xvc, a build with a Debug
+Bridge, an ILA and a PS8: "Project 1-1714: 48 XPM XDC files have been applied"), one row per XPM instance appears after our XDC files, and an instance
+whose first stage has no path, or whose paths our own XDC already covers with an exception (``set_false_path -from`` the SFP input ports), shows as
+ignored: AMD's redundant row, not a lost constraint. Classified only when the row is exactly one of AMD's XPM templates (``XPM_SCOPED``, taken from
+data/ip/xpm/xpm_cdc/tcl/*.tcl), its Position is beyond our XDC files, and its status is "Non-existent path" or "Totally overridden path by <row>"
+with that row not itself ignored (an exception does cover the endpoints). The flow's own copy of these rules (flow/xpm_cdc.tcl) is not applied beside
+AMD's, so it can no longer override them. An ignored AMD row of any other status, or any row with other text, fails as before.
+
 Each failure names the exception's XDC file and line where it can be found: report_exceptions numbers exceptions by
 ``Position``, the order in which timing constraints were read (``xdc_positions``, checked against the fixtures of
 brief 20), and the log names file and line for its messages. Raw tool text only, no fix hints.
@@ -68,7 +76,16 @@ TIMING_COMMANDS = ("create_clock", "create_generated_clock", "set_input_delay", 
                    "set_data_check", "set_external_delay", "set_propagated_clock")
 EXCEPTION_COMMANDS = ("set_false_path", "set_multicycle_path", "set_max_delay", "set_min_delay", "set_clock_groups")
 # Cell-name fragments of AMD's debug cores. ILA/dbg_hub measured (brief 45); VIO taken from the core's naming, not measured.
-DEBUG_CORE_TOKENS = ("ila_core_inst", "u_ila_", "dbg_hub", "ltlib_v", "u_vio", "vio_inst")
+DEBUG_CORE_TOKENS = ("ila_core_inst", "u_ila_", "dbg_hub", "ltlib_v", "u_vio", "vio_inst",
+                     "sync_reg1_reg")   # brief 140: the Debug Bridge's axi_jtag.xdc (set_false_path -to *sync_reg1_reg*: no such cell in this configuration; measured on dbg_xvc)
+# brief 140: AMD's scoped XPM constraint rows (From, Through, To with whitespace removed), as the report prints them
+XPM_SCOPED = {
+    ("*", "*", "[get_cells{syncstages_ff_reg[0]}]"),                    # xpm_cdc_single, xpm_cdc_sync_rst
+    ("*", "*", "[get_cells{syncstages_ff_reg[0][*]}]"),                 # xpm_cdc_array_single
+    ("[get_cellssrc_hsdata_ff_reg*]", "*", "[get_cellsdest_hsdata_ff_reg*]"),        # xpm_cdc_handshake
+    ("[get_cellssrc_gray_ff_reg*]", "*", "[get_cells{dest_graysync_ff_reg[0]*}]"),   # xpm_cdc_gray
+}
+_OVERRIDDEN = re.compile(r"Totally overridden path by \w+ (\d+)")
 # brief 56A: cells inside AMD's UltraScale Transceivers Wizard (gtwizard_ultrascale 1.7): its reset helper and bit synchronisers.
 # The wizard's own scoped XDC has a false path to the reset synchronisers' first flops whose pattern does not resolve in a
 # global-synthesis build ("Invalid endpoint"); its Position is numbered from 1 in the IP's own file, so it collides with ours.
@@ -162,6 +179,21 @@ def is_debug_ip_exception(row: dict[str, Any], last_own_position: int) -> bool:
         return False
     pats = _name_patterns(row)
     return bool(pats) and all(any(t in p for t in DEBUG_CORE_TOKENS) for p in pats)
+
+
+def is_xpm_scoped_exception(row: dict[str, Any], last_own_position: int, ignored_positions: set[int]) -> bool:
+    """Brief 140: an ignored row that is one of AMD's XPM scoped templates (``XPM_SCOPED``) beyond our XDC files, ignored because its
+    instance has no path or because another effective exception covers it (see the module docstring)."""
+    if row["position"] <= last_own_position:
+        return False
+    key = tuple(re.sub(r"\s+", "", row.get(c, "")) for c in ("From", "Through", "To"))
+    if key not in XPM_SCOPED:
+        return False
+    st = (row.get("Status") or "").strip()
+    if st == "Non-existent path":
+        return True
+    m = _OVERRIDDEN.match(st)
+    return bool(m) and int(m.group(1)) not in ignored_positions
 
 
 def is_gt_wizard_exception(row: dict[str, Any]) -> bool:
@@ -418,6 +450,13 @@ def evaluate(build_dir: Path, stage: str = "synth", xdc_files: list[Path] | None
             info.append({"rule": "EXC-IGNORED-DEBUG-IP", "position": r["position"], "status": r.get("Status"),
                          "vivado": {k: v for k, v in r.items() if k in ("From", "Through", "To", "Setup", "Hold")}})
     ign = [r for r in ign if r["position"] not in debug_ip]
+    ign_pos = {r["position"] for r in ign}
+    xpm_rows = [r for r in ign if is_xpm_scoped_exception(r, last_own, ign_pos)]
+    for r in xpm_rows:
+        info.append({"rule": "EXC-IGNORED-XPM-SCOPED", "position": r["position"], "status": r.get("Status"),
+                     "vivado": {k: v for k, v in r.items() if k in ("From", "Through", "To", "Setup", "Hold")}})
+    ign = [r for r in ign if r not in xpm_rows]
+    debug_ip |= {r["position"] for r in xpm_rows}      # their coverage-0 entries are excused with the debug-core ones (same set below)
     has_wiz = any("gtwizard_ultrascale" in x.read_text(errors="replace")[:20000] for x in sorted((d / "ip").glob("*/*.xci"))) if (d / "ip").is_dir() else False
     gt_rows = [r for r in ign if has_wiz and is_gt_wizard_exception(r)]       # only in a build that has a GT Wizard core
     for r in gt_rows:

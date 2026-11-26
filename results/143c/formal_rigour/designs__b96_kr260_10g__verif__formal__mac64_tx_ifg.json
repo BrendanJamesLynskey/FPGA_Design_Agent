@@ -1,0 +1,207 @@
+{
+ "sby": "designs/b96_kr260_10g/verif/formal/mac64_tx_ifg.sby",
+ "schema": "fpga-design-agent/formal_rigour/v1",
+ "sources": {
+  "designs/b96_kr260_10g/rtl/b96_pkg.sv": "ac2ee00c42c8be41a66dae4c04b565c55ed01910aa4c8f12ea7919adaeb77e7c",
+  "designs/b96_kr260_10g/rtl/mac64_tx.sv": "0cbc07b0268f1c0d3e4c916808bb87930fc6c17d3c60eba2cc90e17ad945246a",
+  "designs/b96_kr260_10g/verif/formal/mac64_tx_fv_top.sv": "976947952efb78f6b07d87219679637d426cb3c72ba225dd5eb85315dac1518c",
+  "designs/b96_kr260_10g/verif/formal/mac64_tx_ifg.sby": "05da100fd123e5b4c7ac025180f548e2a9ed1b6786fe021e43cc0fc58c45f5c8",
+  "designs/b96_kr260_10g/verif/formal/mac64_tx_ifg_bind.sv": "f8d662961d373478826a013069a2afceaa03a801c71cc2a3d36ad25cf4c0a30b",
+  "designs/b96_kr260_10g/verif/formal/mac64_tx_ifg_props.sv": "0a1842d5e6dca381badf113bce2584c6f3a36cff607405ff6747c0df3fdb4205"
+ },
+ "tasks": {
+  "reach_cover": {
+   "checks": [
+    {
+     "flavor": "cover",
+     "id": "R_SPILL_1",
+     "label": "R_SPILL_1",
+     "src": "mac64_tx_ifg_props.sv:40",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "R_N8",
+     "label": "R_N8",
+     "src": "mac64_tx_ifg_props.sv:45",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "R_N5",
+     "label": "R_N5",
+     "src": "mac64_tx_ifg_props.sv:44",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "R_N4",
+     "label": "R_N4",
+     "src": "mac64_tx_ifg_props.sv:43",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "R_N1",
+     "label": "R_N1",
+     "src": "mac64_tx_ifg_props.sv:42",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "R_FITS_2",
+     "label": "R_FITS_2",
+     "src": "mac64_tx_ifg_props.sv:41",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "P_RANGE__ante",
+     "label": "P_RANGE__ante",
+     "src": "mac64_tx_ifg_props.sv:47",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "P_ARM_B__ante",
+     "label": "P_ARM_B__ante",
+     "src": "mac64_tx_ifg_props.sv:49",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "P_ARM_A__ante",
+     "label": "P_ARM_A__ante",
+     "src": "mac64_tx_ifg_props.sv:48",
+     "tautology": false
+    },
+    {
+     "flavor": "assume",
+     "id": "mac64_tx_ifg_props.sv:20",
+     "label": null,
+     "src": "mac64_tx_ifg_props.sv:20",
+     "tautology": false
+    }
+   ],
+   "covers": {
+    "P_ARM_A__ante": {
+     "reached": true,
+     "step": 3
+    },
+    "P_ARM_B__ante": {
+     "reached": true,
+     "step": 3
+    },
+    "P_RANGE__ante": {
+     "reached": true,
+     "step": 3
+    },
+    "R_FITS_2": {
+     "reached": true,
+     "step": 3
+    },
+    "R_N1": {
+     "reached": true,
+     "step": 3
+    },
+    "R_N4": {
+     "reached": true,
+     "step": 3
+    },
+    "R_N5": {
+     "reached": true,
+     "step": 3
+    },
+    "R_N8": {
+     "reached": true,
+     "step": 3
+    },
+    "R_SPILL_1": {
+     "reached": true,
+     "step": 3
+    }
+   },
+   "depth": 12,
+   "mode": "cover",
+   "seconds": 0.9,
+   "status": "PASS"
+  },
+  "unreach_cover": {
+   "checks": [
+    {
+     "flavor": "cover",
+     "id": "UNREACH_B",
+     "label": "UNREACH_B",
+     "src": "mac64_tx_ifg_props.sv:31",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "UNREACH_A",
+     "label": "UNREACH_A",
+     "src": "mac64_tx_ifg_props.sv:30",
+     "tautology": false
+    },
+    {
+     "flavor": "assume",
+     "id": "mac64_tx_ifg_props.sv:20",
+     "label": null,
+     "src": "mac64_tx_ifg_props.sv:20",
+     "tautology": false
+    }
+   ],
+   "covers": {
+    "UNREACH_A": {
+     "reached": false,
+     "step": null
+    },
+    "UNREACH_B": {
+     "reached": false,
+     "step": null
+    }
+   },
+   "depth": 12,
+   "mode": "cover",
+   "seconds": 0.7,
+   "status": "FAIL"
+  },
+  "unreach_prove": {
+   "checks": [
+    {
+     "flavor": "assert",
+     "id": "P_RANGE",
+     "label": "P_RANGE",
+     "src": "mac64_tx_ifg_props.sv:34",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "P_ARM_B",
+     "label": "P_ARM_B",
+     "src": "mac64_tx_ifg_props.sv:36",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "P_ARM_A",
+     "label": "P_ARM_A",
+     "src": "mac64_tx_ifg_props.sv:35",
+     "tautology": false
+    },
+    {
+     "flavor": "assume",
+     "id": "mac64_tx_ifg_props.sv:20",
+     "label": null,
+     "src": "mac64_tx_ifg_props.sv:20",
+     "tautology": false
+    }
+   ],
+   "covers": {},
+   "depth": 8,
+   "mode": "prove",
+   "seconds": 0.7,
+   "status": "PASS"
+  }
+ },
+ "tool": "Yosys 0.70+385 (git sha1 098e46a36, Release, Clang /usr/bin/clang++ 21.1.8)"
+}

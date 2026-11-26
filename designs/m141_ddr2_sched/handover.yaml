@@ -1,0 +1,315 @@
+# Brief 68 handover: the facts behind README.md and AGENT.md (docs/documentation_standard.md).
+# Measurement values and every sha256 are filled from the records by `python -m flow.handover fill`;
+# do not type them. Render with `python -m flow.handover write <this directory>`.
+schema: fda-handover/1
+id: m141_ddr2_sched
+title: An application-optimised DDR2 command scheduler with two policies and formal timing proofs
+kind: showcase
+produced_by: session
+summary: A request queue in front of a DDR2 command bus for the Micron MT47H64M16 on the Nexys A7, with two policies chosen
+  by a parameter, latency-first for few random reads and bandwidth-first for streams, an abstract command interface that
+  maps to AMD's PHY-only interface or to the MIG native interface, and the JEDEC timing rules enforced by per-bank counters.
+  The rules are proved on the command stream by SymbiYosys against an independent monitor, and the scheduler is measured
+  against a behavioural DDR2 model written from the data sheet.
+scope_not:
+- a data path, a PHY, a MIG core, DDR2 initialisation or calibration, ZQ, on-die termination, power-down or self-refresh;
+  the scheduler issues commands and the data bursts follow them at fixed latencies
+- any Vivado build or board run; both heavy slots were taken by other sessions during the work, and the build plan and the
+  pre-registered board test are written but not run
+- the four-wide command packing a controller clock slower than the memory clock needs; the scheduler decides one command
+  per memory clock
+target:
+  part: xc7a100tcsg324-1
+  board: Digilent Nexys A7-100T (one Micron MT47H64M16HR-25 DDR2 part, x16, single rank)
+  top: ddr2_sched
+  tool: Vivado 2026.1
+  note: simulation and formal only in phase 0; no build.yaml and no constraints; the memory clock the board allows is a
+    period of 3077 ps (reference manual Table 3.1.1)
+clocks:
+- name: clk
+  mhz: 325
+  source: results/b141/sim_summary.json
+  note: the memory clock period the Nexys A7 reference manual recommends for the MIG (3077 ps); the scheduler decides one
+    command a clock, a figure no build supports yet
+resets:
+- name: rst
+  active: high
+  note: synchronous; clears the queue, every timer and the refresh state; applied once before en rises and never while the
+    part is in use, because a reset in the middle would forget the open banks of a real part
+interfaces:
+- name: request
+  type: req_v, req_rdy, req_wr, req_addr, req_tag
+  doc: designs/m141_ddr2_sched/docs/blocks.md
+  note: a valid and ready handshake for one BL8 burst by burst address; req_rdy does not depend on req_v; tags must be unique
+    among queued requests
+- name: command
+  type: cmd_v, cmd_op, cmd_bank, cmd_row, cmd_col, cmd_tag
+  doc: designs/m141_ddr2_sched/docs/blocks.md
+  note: one registered DDR2 command a clock (ACTIVATE, READ, WRITE, PRECHARGE, PRECHARGE ALL, REFRESH); the data burst follows
+    a READ by the read latency and a WRITE by the write latency; there is no completion signal
+- name: control
+  type: en, ref_defer
+  doc: designs/m141_ddr2_sched/docs/blocks.md
+  note: en rises once when the PHY says the part is initialised and precharged; ref_defer postpones refresh within the allowance
+    and never past it
+parameters:
+- name: POLICY
+  value: 0 latency-first (default), 1 bandwidth-first
+  legal: 0 or 1
+  note: 0 reads first, writes in batches, eager precharge, refresh in idle time; 1 open page, first-ready first-come first-served,
+    direction runs
+- name: QD
+  value: 8 (default)
+  legal: 2 and up, verified in simulation to 33
+  note: queue entries; a deeper queue lets the bandwidth policy batch longer
+- name: MAP
+  value: 0 (default), 1, 2
+  legal: 0 to 2
+  note: address map, page-interleaved, bank-group interleaved, or every burst to the next bank
+- name: AGE_LIM
+  value: 1024 (default)
+  legal: above the wait of a request in a full queue
+  note: an oldest request this old is served alone; set lower, the queue degrades toward first-come first-served (measured)
+- name: REF_POST
+  value: 4 (default)
+  legal: 0 to 6
+  note: refreshes that may be postponed; JEDEC's allowance is 8 and is not checked against the standard's text here
+- name: timing parameters T_RCD to T_REFI, RL, WL, BL2
+  value: MT47H64M16-25 at a clock period of 2500 ps by default; tests/m141_timing.py derives them for a period
+  legal: whole clocks below 256 (counters are 8 bits), RL = WL + 1, tREFI at least four times the longest refresh sequence
+  note: elaboration errors name a violated range
+files:
+- path: designs/m141_ddr2_sched/rtl/ddr2_sched.sv
+  what: the scheduler
+  sha256: 8bf988b3a00e056050d3fc83c81acc5a5068585b13113eba878c79fe24455b07
+- path: designs/m141_ddr2_sched/rtl/ddr2_addrmap.sv
+  what: burst address to row, bank and column
+  sha256: e833a654701faa427668c9770b70c289d5a6e94de181dcb73701f1f277d8aeeb
+- path: designs/m141_ddr2_sched/tb/tb_ddr2.sv
+  what: bench with the behavioural DDR2 timing model
+  sha256: 3a3dee9c616abad8c538a81f9c93b15934f2617ac0a88a27ca02c15222896d39
+- path: designs/m141_ddr2_sched/verif/formal/ddr2_props.sv
+  what: timing rules, helper invariants, ordering, refresh and bounded-response properties
+  sha256: dbbc2b0420dd8e0845d7a34e6d58aff94f0b529c1d20b13c8a40affd0dea7c4e
+- path: designs/m141_ddr2_sched/verif/formal/run_formal.py
+  what: runner of the proofs, covers and mutants
+  sha256: f2345744854aa324f598833f8ec5c0d6c613746bdf287f58fa3d6826c1105827
+- path: designs/m141_ddr2_sched/tests/m141_measure.py
+  what: runs the bench for a policy, map, pattern and timing profile and reduces the output to numbers
+  sha256: 70562c2700ec9da2976dce14c488adfe14b3dad4d87d191be24c704049a4e3f5
+- path: designs/m141_ddr2_sched/tests/m141_timing.py
+  what: data sheet values and the conversion to clocks for each timing profile
+  sha256: 268fa31dbbe92cbd358f7cfc3534cb23bf521839cc5e6d1b846b789db4499b04
+commands:
+- what: bench against the model, seeded faults, lint
+  cmd: python3 -m pytest -q designs/m141_ddr2_sched/tests/test_m141_clean_rtl.py designs/m141_ddr2_sched/tests/test_m141_faults_rtl.py
+    designs/m141_ddr2_sched/tests/test_m141_lint_rtl.py
+  heavy: false
+  minutes: 12
+  needs: Icarus Verilog 12; Verilator 5 for the lint test (it skips without it)
+- what: the proofs, covers and mutants of the CI set
+  cmd: python3 -m pytest -q designs/m141_ddr2_sched/tests/test_m141_formal.py
+  heavy: false
+  minutes: 20
+  needs: the OSS CAD Suite release 2026-11-12 (SymbiYosys, Yosys with the slang plugin, Boolector, ABC); FDA_OSS_CAD or
+    ~/.local/opt/oss-cad-suite
+- what: the measured simulation runs of results/b141
+  cmd: python3 designs/m141_ddr2_sched/tests/m141_measure.py --json results/b141/sim_summary.json
+  heavy: false
+  minutes: 60
+  needs: Icarus Verilog 12; single process, nice it on a shared machine
+evidence:
+- id: E1
+  activity: simulation
+  result: pass
+  how: ci
+  what: both policies, six traffic patterns, two timing profiles and three address maps against the behavioural DDR2 model
+    with no violation, every request served once, order kept, refresh gap within the JEDEC limit and the longest wait within
+    the bound
+  record: designs/m141_ddr2_sched/tests/test_m141_clean_rtl.py
+  sha256: 2099ffaf57bf0de0fd5b5825155d5405422249abd1312edf96570ac512d618c0
+- id: E2
+  activity: faults
+  result: pass
+  how: ci
+  what: sixteen seeded faults in a copy of the RTL are each caught by the bench
+  record: designs/m141_ddr2_sched/tests/test_m141_faults_rtl.py
+  sha256: be03ea22a8f2725fb3d3c037cd1a530d86efbd9b8e8033288a3d75944815ff03
+- id: E3
+  activity: formal
+  result: pass
+  how: ci
+  what: the timing rules and request order proved by k-induction with helper invariants at the real data sheet constants
+    and at small ones, the refresh debt bound proved, the covers reached and fourteen mutants caught by named assertions
+  record: designs/m141_ddr2_sched/tests/test_m141_formal.py
+  sha256: ac0787b084bba2b610e9a45ad224d32f4d79399fa9b9a984d931fd298206cffc
+- id: E4
+  activity: formal
+  result: pass
+  what: the full formal set including the bounded-response check at the proved bound plus six clocks, run to completion
+    with the verdict of every job recorded
+  record: results/b141/formal_full.json
+  sha256: ac86f9315c4eaf496e286a7faa1f68ffbba2ad0bcc521b74f04f03f23db81471
+- id: E5
+  activity: simulation
+  result: pass
+  what: every measured run of the results folder finished with zero violations of the DDR2 model
+  record: results/b141/sim_summary.json
+  sha256: af8f1a7bfee74409b5be4699c42bd02577b6dfecdf0877a265d2920252f95407
+- id: E6
+  activity: lint
+  result: pass
+  how: ci
+  what: Verilator -Wall clean on both modules
+  record: designs/m141_ddr2_sched/tests/test_m141_lint_rtl.py
+  sha256: 3ef61f54ecda85e3976126dff5e029fbe9dcfd88a151b46daebc4daeee6dd66b
+measurements:
+- id: M1
+  what: median read latency, latency-first, light random reads
+  category: latency
+  key: lat_rand_read_p0_median
+  unit: clocks
+  record: results/b141/sim_summary.json
+  field: runs.lat_rand_read_p0.lat_clk.p50
+  conditions: POLICY 0, random reads, mean gap between requests 40 clocks, nexys_650 profile (clock period 3077 ps, CL 5),
+    Icarus simulation of the command bus, no PHY
+  value: 12
+  sha256: af8f1a7bfee74409b5be4699c42bd02577b6dfecdf0877a265d2920252f95407
+- id: M2
+  what: 99.9th percentile read latency, latency-first, light random reads
+  category: latency
+  key: lat_rand_read_p0_p999
+  unit: clocks
+  record: results/b141/sim_summary.json
+  field: runs.lat_rand_read_p0.lat_clk.p999
+  conditions: as M1
+  value: 53
+  sha256: af8f1a7bfee74409b5be4699c42bd02577b6dfecdf0877a265d2920252f95407
+- id: M3
+  what: median read latency, bandwidth-first, light random reads
+  category: latency
+  key: lat_rand_read_p1_median
+  unit: clocks
+  record: results/b141/sim_summary.json
+  field: runs.lat_rand_read_p1.lat_clk.p50
+  conditions: as M1 with POLICY 1
+  value: 17
+  sha256: af8f1a7bfee74409b5be4699c42bd02577b6dfecdf0877a265d2920252f95407
+- id: M4
+  what: data-bus utilisation, bandwidth-first, sequential reads, page-interleaved map
+  category: throughput
+  key: bw_seq_read_map0_p1_util
+  unit: fraction
+  record: results/b141/sim_summary.json
+  field: runs.bw_seq_read_map0_p1.util
+  conditions: POLICY 1, sequential reads, MAP 0, queue of 8 entries, nexys_650 profile, Icarus simulation of the command
+    bus
+  value: 0.9798
+  sha256: af8f1a7bfee74409b5be4699c42bd02577b6dfecdf0877a265d2920252f95407
+- id: M5
+  what: data-bus utilisation, bandwidth-first, copy stream (read stream plus write stream), every burst to the next bank
+  category: throughput
+  key: bw_copy_map2_p1_util
+  unit: fraction
+  record: results/b141/sim_summary.json
+  field: runs.bw_copy_map2_p1.util
+  conditions: POLICY 1, alternating read and write streams, MAP 2, queue of 8 entries, nexys_650 profile, Icarus simulation
+  value: 0.8614
+  sha256: af8f1a7bfee74409b5be4699c42bd02577b6dfecdf0877a265d2920252f95407
+- id: M6
+  what: longest wait of any request in a saturated mixed run, latency-first
+  category: latency
+  key: sat_mix_p0_wait_max
+  unit: clocks
+  record: results/b141/sim_summary.json
+  field: runs.bw_rand_mix_sat_p0.wait_max
+  conditions: POLICY 0, random reads and writes as fast as accepted, queue of 8 entries, nexys_650 profile
+  value: 264
+  sha256: af8f1a7bfee74409b5be4699c42bd02577b6dfecdf0877a265d2920252f95407
+- id: M7
+  what: maximum read latency of reads accepted inside a refresh-deferral window, latency-first, postponement 4
+  category: latency
+  key: window_post4_max_in_window
+  unit: clocks
+  record: results/b141/sim_summary.json
+  field: runs.refresh_window_p0_post4.lat_clk_win.max
+  conditions: POLICY 0, REF_POST 4, ref_defer high for 5000 of every 12000 clocks, random reads at light load, nexys_650
+    profile, Icarus simulation of the command bus
+  value: 28
+  sha256: af8f1a7bfee74409b5be4699c42bd02577b6dfecdf0877a265d2920252f95407
+- id: M8
+  what: maximum read latency of reads accepted inside the same window with no postponement allowance
+  category: latency
+  key: window_post0_max_in_window
+  unit: clocks
+  record: results/b141/sim_summary.json
+  field: runs.refresh_window_p0_post0.lat_clk_win.max
+  conditions: as M7 with REF_POST 0
+  value: 73
+  sha256: af8f1a7bfee74409b5be4699c42bd02577b6dfecdf0877a265d2920252f95407
+- id: M9
+  what: maximum read latency of reads accepted outside the window with postponement 4 (the cost moved out of the window)
+  category: latency
+  key: window_post4_max_outside
+  unit: clocks
+  record: results/b141/sim_summary.json
+  field: runs.refresh_window_p0_post4.lat_clk_out.max
+  conditions: as M7
+  value: 91
+  sha256: af8f1a7bfee74409b5be4699c42bd02577b6dfecdf0877a265d2920252f95407
+gaps:
+- about: resources
+  text: Not measured; no Vivado run was made because both heavy slots were taken by other sessions, so there is no LUT,
+    flip-flop or block RAM figure for the scheduler.
+- about: timing
+  text: Not measured; no out-of-context or full build exists, so the closed clock of the decision logic is unknown. The
+    scheduler decides one command a clock and its combinational scan of the queue and the timer file is expected to close
+    well below the memory clock.
+- about: power
+  text: Not measured; no build and no board.
+- about: board_run
+  text: Not run on a board and not built with MIG; the pre-registered board test and the build plan are in docs/memory_controller_plan.md
+    sections 11 and 12.
+- about: model
+  text: The DDR2 model and the formal monitor encode one reading of the Micron data sheet by the author of the scheduler;
+    no vendor model was used, and JEDEC's refresh postponement allowance was not checked against the standard's text.
+- about: bounded_response
+  text: The bounded-response property is a bounded model check from reset at small parameters, not a proof for all time;
+    at real parameters the bound is measured in simulation only.
+- about: phy_interface
+  text: The AMD PHY-only interface needs periodic reads, the temperature sample enable, FIFO flow control and up to four
+    commands per controller clock; none is built, and the scheduler's one-command-a-clock decision is not what a controller
+    clock four times slower needs.
+- about: behaviour
+  text: 'Guessable wrongly: no data path and no completion signal; spacings are those of the registered output; a read waits
+    for an older write to its address and is never forwarded the write''s data; tags must be unique among queued requests
+    and nothing checks it; a reset in the middle of operation is unsupported; an AGE_LIM below the wait of a request in
+    a full queue makes the queue first-come first-served; tRC is implied by tRAS plus tRP at the data sheet values.'
+next_steps:
+- Run an out-of-context Vivado build of ddr2_sched on the Artix-7 100T and the K26 for several queue depths, to put resources
+  and a closed clock on the block, in a heavy slot.
+- Find out whether the generated MIG sources can drop the controller and keep the PHY, then build the first design with
+  the PHY interface, periodic reads and the temperature enable.
+- Make the decision four-wide so one controller clock carries up to four commands, and re-run the proofs and the measurements
+  on it.
+- Run the pre-registered board test once the build exists.
+open_questions:
+- Does the MIG controller leave a row open after a read? The first hypothesis of the board test (the eager-precharge gain)
+  depends on it.
+- Is a four-wide decision better built as four scheduler copies on interleaved banks or as one wider arbiter?
+history:
+- date: '2026-11-21'
+  brief: '141'
+  note: phase 0, the study and plan, scheduler RTL with two policies, behavioural DDR2 model and bench, formal proofs of
+    the timing rules with helper invariants, request order, refresh debt and bounded response, measured policies, library
+    entry form, build plan and pre-registered board test
+numbers_allow: []
+state:
+  stage: simulated
+  gates:
+    sim_vs_model: pass
+    formal_rules: pass
+    board_run: not-run
+  vivado: '2026.1'
+  kb_pin: '6185830'
+  build_id: null

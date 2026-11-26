@@ -4,7 +4,7 @@
 
 **Not assessed: no requirements recorded (no verif/testplan.yaml), so nothing here is traced to a requirement.**
 
-What the label means, what "verified" never means and how it is earned: [docs/verified.md](../../docs/verified.md). The label is computed from the testplan and the evidence files named below; it is never typed. Generated at git commit `a8359042aac759be0a4d6b05186709bdb7bb093c` (informational: the hashes in the manifest, not the commit, are what the CI check compares).
+What the label means, what "verified" never means and how it is earned: [docs/verified.md](../../docs/verified.md). The label is computed from the testplan and the evidence files named below; it is never typed. Generated at git commit `51dfe82191cd59c99857973f44b8b57ec9363fb5` (informational: the hashes in the manifest, not the commit, are what the CI check compares).
 
 ## What was checked for the label
 
@@ -44,7 +44,7 @@ Every file this record covers, with its SHA-256 at generation (7 files). `absent
 | File | SHA-256 |
 |---|---|
 | `axi_tx/tests/test_59a_rtl.py` | `0ad2ec372f7cae8a8eee12217ebfdfd984c0bebef6b10a5445dd62c09e66c474` |
-| `designs/b59a_axi_tx/handover.yaml` | `070d5f5e219a35f2242438aafc8caf319bc9d84838c126be117ef989b0d2368a` |
+| `designs/b59a_axi_tx/handover.yaml` | `b93b8981811322ab1ab8dfbe1f1ec84a9a68499255f8918c5bd8c5969b143b03` |
 | `designs/b59a_axi_tx/rtl/b59a_axi_tx_top.sv` | `4d042b962a8a181b6f2e144adc8dbbc22407c2382ac4bf7749ef68a7e91996b8` |
 | `results/59a_axi_tx/board_build.json` | `0a91499e629c80525d6576bc7e89f60b83e97e05b5b3da1716e3a189299cde31` |
 | `results/59a_axi_tx/board_run.json` | `ab761ea3eac25fea16a7e5886c6644a25fa3a313179cd9b262144c9ded59699e` |

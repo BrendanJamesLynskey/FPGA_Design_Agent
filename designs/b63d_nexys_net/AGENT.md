@@ -2,7 +2,7 @@
 source: designs/b63d_nexys_net/handover.yaml; human view: README.md; refresh: python -m flow.handover fresh designs/b63d_nexys_net
 
 ## identity
-kind=demonstration produced_by=human part=xc7a100tcsg324-1 board=Nexys A7-100T top=b63d_nexys_net_top tool=Vivado 2026.1
+kind=demonstration produced_by=session part=xc7a100tcsg324-1 board=Nexys A7-100T top=b63d_nexys_net_top tool=Vivado 2026.1
 verified: not assessed: no requirements recorded (no verif/testplan.yaml), so nothing here is traced to a requirement (record: designs/b63d_nexys_net/VERIFIED.md, designs/b63d_nexys_net/verified.json; definition: docs/verified.md)
 
 ## summary
@@ -10,7 +10,7 @@ Answers ARP and ping, receives and sends UDP, joins IGMP multicast groups and co
 not: a gigabit design; the RGMII MAC in ip_lib cannot run on this board, whose PHY is RMII; a board-verified design; no board run exists
 
 ## state
-stage=built vivado=2026.1 kb_pin=1fc7ed8 build_id=5d855695
+stage=built vivado=2026.1 kb_pin=6185830 build_id=befd2e43
 gates: build_2026_1=pass board_run=not-run
 
 ## interface

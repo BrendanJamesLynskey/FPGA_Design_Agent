@@ -1,0 +1,678 @@
+{
+ "counts": {
+  "agreed_delegated": 0,
+  "agreed_human": 0,
+  "draft": 9,
+  "items": 13,
+  "requirements": 9,
+  "stale_items": 0,
+  "verified": 1
+ },
+ "criteria": [
+  {
+   "detail": "8 of 9 requirements are not in state verified: FMAXIS-F-MODEL (partially_verified), FMAXIS-F-EXACT (partially_verified), FMAXIS-F-LAT (partially_verified), FMAXIS-F-BENCH (partially_verified), FMAXIS-F-PACKAGE (partially_verified), FMAXIS-F-AXIS (partially_verified), FMAXIS-F-GAP (partially_verified), FMAXIS-F-EXPONENT (partially_verified)",
+   "id": "evidence",
+   "ids": [
+    "FMAXIS-F-MODEL",
+    "FMAXIS-F-EXACT",
+    "FMAXIS-F-LAT",
+    "FMAXIS-F-BENCH",
+    "FMAXIS-F-PACKAGE",
+    "FMAXIS-F-AXIS",
+    "FMAXIS-F-GAP",
+    "FMAXIS-F-EXPONENT"
+   ],
+   "state": "unmet",
+   "title": "Every requirement has passing evidence"
+  },
+  {
+   "detail": "0 agreed by a human, 0 agreed by delegation, 9 draft, 0 marked agreed without a record",
+   "id": "agreement",
+   "ids": [
+    "FMAXIS-F-MODEL",
+    "FMAXIS-F-EXACT",
+    "FMAXIS-F-LAT",
+    "FMAXIS-F-EQUIV",
+    "FMAXIS-F-BENCH",
+    "FMAXIS-F-PACKAGE",
+    "FMAXIS-F-AXIS",
+    "FMAXIS-F-GAP",
+    "FMAXIS-F-EXPONENT"
+   ],
+   "state": "unmet",
+   "title": "Every requirement is agreed (human, or delegated and labelled so)"
+  },
+  {
+   "detail": "not yet measured: the required method mix per requirement kind is brief 143a; the collector does not supply it yet",
+   "id": "method_mix",
+   "ids": [],
+   "state": "not_measured",
+   "title": "Every requirement meets its required method mix"
+  },
+  {
+   "detail": "not yet measured: the mutation score and floor are brief 143b; the collector does not supply them yet",
+   "id": "mutation",
+   "ids": [],
+   "state": "not_measured",
+   "title": "The bench passes the mutation floor"
+  },
+  {
+   "detail": "not yet measured: the vacuity, assumption and depth checks are brief 143c; the collector does not supply them yet",
+   "id": "formal_rigour",
+   "ids": [],
+   "state": "not_measured",
+   "title": "The formal results pass the rigour checks"
+  },
+  {
+   "detail": "no item is stale by its pins; the nightly fresh re-run comparison is brief 143d and not yet measured",
+   "id": "fresh",
+   "ids": [],
+   "state": "not_measured",
+   "title": "The evidence is fresh"
+  }
+ ],
+ "declared": null,
+ "definition": "docs/verified.md",
+ "git_commit": "51dfe82191cd59c99857973f44b8b57ec9363fb5",
+ "kind": "arith",
+ "label": "verified except: 8 of 9 requirements without passing evidence; 9 of 9 requirements not agreed; required method mix not yet measured; mutation floor not yet measured; formal rigour not yet measured; fresh re-run not yet measured",
+ "label_kind": "verified_except",
+ "limits": [
+  "Verified never means interoperability with a device the design talks to unless a board measurement against that device is listed in the record; a design that checks its own output against its own model accepts its own symmetric mistakes.",
+  "Verified never means timing beyond the stated corner: a post-route timing result is for the part, speed grade, clock and tool version in its evidence file, not for other corners, temperatures or devices.",
+  "Verified never means beyond the widths and depths checked: a simulation covers the vectors it ran, a bounded formal result covers the stated depth only, and a per-width proof covers the widths it names; only a Lean proof marked all widths covers every width, and only for its model.",
+  "Verified never means the requirement is the right one: the text of a requirement is the human's check (or the planner's, where the record says delegated), and a record shows that checks exist and pass, not that nothing was left out.",
+  "Verified never means a hardware or board result unless a board measurement item is listed; a simulation is not the board.",
+  "Verified is about the files in the manifest at the hashes given. A change to any of them makes the record out of date (the CI check fails), and the evidence stale until it is re-recorded.",
+  "An agreement or acceptance recorded as delegated is the planner's decision on the owner's delegation, not a human sign-off; the record counts it apart."
+ ],
+ "manifest": {
+  "arith/fft/rtl/fft_sdf_r22.sv": "58d1227449d390af0f70aef7bb5bbcaa1bd76e701e7928961fec45dcd27e5072",
+  "arith/fft_cmul/rtl/fft_cmul_m3.sv": "8475634ed3f87a36645d4f2d3f82dac56e7b60b924b8169f67398bb113fc470c",
+  "arith/fft_cmul/rtl/fft_cmul_m4.sv": "826a27855314155fa138bf9c681c779129b02aa1d2e7f24b855abff10b8001f0",
+  "arith/fft_common/axis_checker.sv": "6608a719c010a9e77d12a3b712a4cee859239b8dd853327a5c0dddfde26bbccb",
+  "arith/fft_common/fft_bfp_out_pair.sv": "d22cc39f35c6b1a5db98ae300a1e8e6de71e8d60ec8fff26a9efb800efe5dec7",
+  "arith/fft_common/fft_bitrev.sv": "650b28bf48a4fd7b2ffb4b4b7ed597d96e0e4fcc32931357583013e11c287c35",
+  "arith/fft_common/fft_cos_rom.sv": "bcf1d079ba8a48d3757484ab8706051b46fa45046400eed1b7fe2ddd3cbbda38",
+  "arith/fft_common/fft_ref.py": "96a983692b9eac1d70ef32a874ace99a40c668cf5dcf746cfc93093f85fb54c5",
+  "arith/fft_common/fft_sdf_stage.sv": "3bce071db10fbbb3adf4f6f6e31680077ff2059f87fe21a3429ff821336ac801",
+  "arith/fft_common/fft_sdf_twmul.sv": "ced119e7c513deb23e392a199ef239d54a81ae4a5b647fb470c1daa9da3720b5",
+  "arith/fft_common/frames.py": "2f141de7810edf546dc6b25d39e4b7e8938e9f46c7cbb2683ef1f2a941ca3b5d",
+  "arith/fft_mdc2/rtl/fft_mdc2_par2.sv": "f26d7be5f35119972d2c3f7863b110479dbe56b58d54263215ae8d879cb75124",
+  "arith/fft_mdc2_axis/build/par2/build.yaml": "a1f6a81c66c9b85c6e9afaa51e2d0c99a404f729d638e67f10cd43f2e8b29368",
+  "arith/fft_mdc2_axis/formal/fft_mdc2_axis_ctl_fv.sv": "45201b1dbedae891aa903a38e68edbc581b73bbb87cdf658c9b93f6e951a575b",
+  "arith/fft_mdc2_axis/formal/jobs.yaml": "e9ee3d0cc7ff7848effcc784ce49b98568deb1d73eb6f0b2f395f3bd7bbe35b2",
+  "arith/fft_mdc2_axis/model.py": "462e565a7039374d51e38e11b897b0d24de10de85ade7f71a1bae54df57f386e",
+  "arith/fft_mdc2_axis/rtl/fft_mdc2_axis_ctl.sv": "530e4a13a534514449fabe5c4ebb5266fc7e42eeb1815fd911140b731af624ca",
+  "arith/fft_mdc2_axis/rtl/fft_mdc2_axis_par2.sv": "342f9221ab6c1f9440691cdc62e0d21426046f1bf886895c8678756b0f98567c",
+  "arith/fft_mdc2_axis/spec.md": "3261690690f465580e72960e6b3c78da23bea491505259eb646baf8d727cf3dd",
+  "arith/fft_mdc2_axis/spec.yaml": "17f34bdf92be29b1f2d39c627c053bfc188ef22e144e1c4456b66f7de93493e5",
+  "arith/fft_mdc2_axis/tests/fft_mdc2_axis_cocotb.py": "a716e9e8b9f56b0d6480fbc6da7e7e62bcdfe7e0f0e688c662be6b18babe40e6",
+  "arith/fft_mdc2_axis/verif/evidence_pins.yaml": "9a4e0e93fb5c7d9c9065f3e86e16524e084e12a967b3648dc348fec75bda75d5",
+  "arith/fft_mdc2_axis/verif/mutants.yaml": "743000dba520c7f21381b7e6350f548b386cf6a6a3f49d88039c446302b47b3a",
+  "arith/fft_mdc2_axis/verif/results/mutation.json": "d66a21014895f911f62c4f1e20526166e9fffc1d60bd7688ae61e55cf932ec25",
+  "arith/fft_mdc2_axis/verif/results/pytest_junit.xml": "9787b9bcd42b4148e791e32f07beccb581e9ad43713ee117c81c60c64be19c4f",
+  "arith/fft_mdc2_axis/verif/testplan.yaml": "b76f7c0cd42eda6383a18143196ace94661b1179cd29b1d07c9eeff5a28203c4",
+  "arith/fft_reorder/rtl/fft_reorder_pingpong.sv": "7867dd5a9c732d242eca668c17083b35190cd02cedbdf550920f7629175e9029",
+  "arith/fft_twiddle/rtl/fft_twiddle_quarter.sv": "f646b37f46b317abf8569372715d14be0ff9c7f0443e5740d703071145359f67"
+ },
+ "name": "fft_mdc2_axis",
+ "notes": "Frequency-domain suite, function fft_mdc2_axis (brief 148). Everything here is before Vivado: the model, the RTL variants, simulation, formal properties and the prepared out-of-context build files. No performance requirement on LUTs, DSPs, Fmax or power exists because none has been measured; the Vivado runs (build/<variant>/build.yaml, queued in _handoff/fpga_agent/vivado_later_queue.md) will add them. Every requirement is a draft written by the agent; none is agreed by a human. There are no Lean statements and no packaged harness for this suite (stated in the report). Generated by arith/tools/gen_testplan_fft.py.",
+ "path": "arith/fft_mdc2_axis",
+ "reproduce": [
+  {
+   "cmd": "python -m pytest -q arith/fft_mdc2_axis/tests",
+   "what": "the simulation tests"
+  }
+ ],
+ "requirements": [
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "FMAXIS-F-MODEL",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-FMAXIS-MODEL",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "arith/fft_mdc2_axis/verif/results/pytest_junit.xml",
+     "record_sha256": "9787b9bcd42b4148e791e32f07beccb581e9ad43713ee117c81c60c64be19c4f",
+     "status": "pass",
+     "title": "The model against independent formulations and the pinned conventions"
+    }
+   ],
+   "items": [
+    "V-FMAXIS-MODEL"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": false,
+   "missing_methods": [
+    "a simulation check from a bench the implementing agent did not write"
+   ],
+   "mix_satisfied": false,
+   "own_tests_only": true,
+   "passing_methods": [
+    "sim_test"
+   ],
+   "rests_on_delegated": false,
+   "source": "arith/fft_mdc2_axis/spec.md",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "partially_verified",
+   "text": "arith/fft_mdc2_axis/model.py gives, for every input, the result that spec.md defines. It agrees with an independent formulation (the 2-parallel core's own model (arith/fft_common/fft_ref.py mdc2_frame at SCALE = 0), the block-floating-point rule shared with arith/fft_bfp (a brute-force exponent search is in that function's tests), and the packing of the AXI words (sample 0 in the low half, real part in the low half of a sample)), and the conventions that a user could guess wrong (spec.md, last section) are pinned by examples.",
+   "title": "The bit-exact model is right",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "FMAXIS-F-EXACT",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-FMAXIS-DIRECTED",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "arith/fft_mdc2_axis/verif/results/pytest_junit.xml",
+     "record_sha256": "9787b9bcd42b4148e791e32f07beccb581e9ad43713ee117c81c60c64be19c4f",
+     "status": "pass",
+     "title": "Every variant against the model at the small points (Icarus + cocotb): directed or exhaustive stimuli"
+    },
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-FMAXIS-RANDOM",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "arith/fft_mdc2_axis/verif/results/pytest_junit.xml",
+     "record_sha256": "9787b9bcd42b4148e791e32f07beccb581e9ad43713ee117c81c60c64be19c4f",
+     "status": "pass",
+     "title": "Every variant against the model at the large points: random stimuli (Icarus + cocotb)"
+    }
+   ],
+   "items": [
+    "V-FMAXIS-DIRECTED",
+    "V-FMAXIS-RANDOM"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": false,
+   "missing_methods": [
+    "a simulation check from a bench the implementing agent did not write"
+   ],
+   "mix_satisfied": false,
+   "own_tests_only": true,
+   "passing_methods": [
+    "sim_test"
+   ],
+   "rests_on_delegated": false,
+   "source": "arith/fft_mdc2_axis/spec.md",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "partially_verified",
+   "text": "At every parameter point listed in spec.yaml (5 directed or exhaustive points, 3 random ones, across 1 variants), each variant's outputs equal the model's: the directed points send the bench's frames (impulses, tones, DC, Nyquist, a chirp, corner values, and frames whose largest part is 2**m - 1 so that the normalisation saturates), forward and inverse, from a source that never pauses into a sink that is always ready: every output frame equals the model bit for bit, the exponent on tuser equals the model's on every beat, the first-beat latency equals the formula, the idle clocks between frames are 0 or at least N/8, and the frame period equals N/2 when NB * N/2 >= latency + N/2; the random points send random frames with random idle clocks (including 1 to N/8 - 1, which the wrapper must turn into a legal gap) into a sink that is always ready and into one with random tready.",
+   "title": "Every variant is bit-exact against the model",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "FMAXIS-F-LAT",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-FMAXIS-LATENCY",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "arith/fft_mdc2_axis/verif/results/pytest_junit.xml",
+     "record_sha256": "9787b9bcd42b4148e791e32f07beccb581e9ad43713ee117c81c60c64be19c4f",
+     "status": "pass",
+     "title": "The bench passes at the stated latency and fails two clocks off, for every variant"
+    }
+   ],
+   "items": [
+    "V-FMAXIS-LATENCY"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": false,
+   "missing_methods": [
+    "a simulation check from a bench the implementing agent did not write"
+   ],
+   "mix_satisfied": false,
+   "own_tests_only": true,
+   "passing_methods": [
+    "sim_test"
+   ],
+   "rests_on_delegated": false,
+   "source": "arith/fft_mdc2_axis/spec.md",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "partially_verified",
+   "text": "Each variant's latency in clocks is the expression in spec.yaml (par2: (1<<LOGN)//2-1+(LOGN-1)+((LOGN-2)//2)*(TWSTAGES+MULSTAGES+1)+TWSTAGES+MULSTAGES+2+(1<<LOGN)//2+2), and the bench, run with a latency two clocks off, fails for every variant, so the passing runs prove the latency rather than assume it.",
+   "title": "Latency is as specified and the bench would notice if it were not",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "FMAXIS-F-EQUIV",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-FMAXIS-FORMAL-PROOF",
+     "instrument": null,
+     "method": "formal",
+     "mutation_score": null,
+     "record": "arith/fft_mdc2_axis/verif/results/pytest_junit.xml",
+     "record_sha256": "9787b9bcd42b4148e791e32f07beccb581e9ad43713ee117c81c60c64be19c4f",
+     "status": "pass",
+     "title": "k-induction proofs (6 jobs; parameters in formal/jobs.yaml)"
+    },
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-FMAXIS-FORMAL-REFUTE",
+     "instrument": null,
+     "method": "formal",
+     "mutation_score": null,
+     "record": "arith/fft_mdc2_axis/verif/results/pytest_junit.xml",
+     "record_sha256": "9787b9bcd42b4148e791e32f07beccb581e9ad43713ee117c81c60c64be19c4f",
+     "status": "pass",
+     "title": "Each formal check refutes a planted fault (the check can fail)"
+    }
+   ],
+   "items": [
+    "V-FMAXIS-FORMAL-PROOF",
+    "V-FMAXIS-FORMAL-REFUTE"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": false,
+   "missing_methods": [],
+   "mix_satisfied": true,
+   "own_tests_only": false,
+   "passing_methods": [
+    "formal"
+   ],
+   "rests_on_delegated": false,
+   "source": "arith/fft_mdc2_axis/formal/jobs.yaml",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "verified",
+   "text": "SymbiYosys with the slang front end checks the properties of formal/jobs.yaml: a proof is by k-induction (for all inputs, any run length) at the parameters listed there, a bounded check holds only to its stated depth. What the jobs say is in each job's `claim`; parameters beyond the listed ones are covered by simulation, not by proof.",
+   "title": "The properties named in formal/jobs.yaml hold, by proof where the tools allow",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "FMAXIS-F-BENCH",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-FMAXIS-MUTANT-TEST",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "arith/fft_mdc2_axis/verif/results/pytest_junit.xml",
+     "record_sha256": "9787b9bcd42b4148e791e32f07beccb581e9ad43713ee117c81c60c64be19c4f",
+     "status": "pass",
+     "title": "The mutation run as a test: no mutant survives, none fails to build"
+    },
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-FMAXIS-MUTANT-SCORE",
+     "instrument": null,
+     "method": "sim_measurement",
+     "mutation_score": null,
+     "record": "arith/fft_mdc2_axis/verif/results/mutation.json",
+     "record_sha256": "d66a21014895f911f62c4f1e20526166e9fffc1d60bd7688ae61e55cf932ec25",
+     "status": "pass",
+     "title": "Mutants killed of valid mutants (the record of the last full run)"
+    }
+   ],
+   "items": [
+    "V-FMAXIS-MUTANT-TEST",
+    "V-FMAXIS-MUTANT-SCORE"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": false,
+   "missing_methods": [
+    "a simulation check from a bench the implementing agent did not write"
+   ],
+   "mix_satisfied": false,
+   "own_tests_only": true,
+   "passing_methods": [
+    "sim_measurement",
+    "sim_test"
+   ],
+   "rests_on_delegated": false,
+   "source": "arith/fft_mdc2_axis/verif/mutants.yaml",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "partially_verified",
+   "text": "Every one of the mutants in verif/mutants.yaml (one exact text change each: an inverted condition, a wrong constant, a dropped connection, a wrong width) makes the cocotb bench fail, or is argued equivalent in the file's header; mutants that survive or do not build are reported, never hidden.",
+   "title": "The bench catches seeded faults",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "FMAXIS-F-PACKAGE",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-FMAXIS-PACKAGE",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "arith/fft_mdc2_axis/verif/results/pytest_junit.xml",
+     "record_sha256": "9787b9bcd42b4148e791e32f07beccb581e9ad43713ee117c81c60c64be19c4f",
+     "status": "pass",
+     "title": "spec.yaml against the RTL headers, spec.md against spec.yaml, Verilator -Wall at every point, wrappers and build.yaml current and lint-clean"
+    }
+   ],
+   "items": [
+    "V-FMAXIS-PACKAGE"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": false,
+   "missing_methods": [
+    "a simulation check from a bench the implementing agent did not write"
+   ],
+   "mix_satisfied": false,
+   "own_tests_only": true,
+   "passing_methods": [
+    "sim_test"
+   ],
+   "rests_on_delegated": false,
+   "source": "arith/fft_mdc2_axis/spec.yaml",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "partially_verified",
+   "text": "spec.yaml states an interface contract (protocol, throughput, latency, reset, clock, stalls) and integration guidance (port timing, constraints to carry). Every variant passes Verilator -Wall at every point of spec.yaml; its ports and default parameters are the ones spec.yaml states; its header states the intended primitive use before any Vivado run; spec.md is the rendering of spec.yaml; the out-of-context wrapper and the build.yaml for each variant (Artix-7 xc7a100t and K26 xck26, prepared and not run) are current and lint-clean at every point they list, so a Vivado run can start from the repository alone.",
+   "title": "The RTL is lint-clean, and its files agree with the specification and with the Vivado build files",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "FMAXIS-F-AXIS",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-FMAXIS-CHECKER",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "arith/fft_mdc2_axis/verif/results/pytest_junit.xml",
+     "record_sha256": "9787b9bcd42b4148e791e32f07beccb581e9ad43713ee117c81c60c64be19c4f",
+     "status": "pass",
+     "title": "The protocol checkers can fail (a pause inside a frame, a withdrawn tvalid)"
+    },
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-FMAXIS-BACKPRESSURE",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "arith/fft_mdc2_axis/verif/results/pytest_junit.xml",
+     "record_sha256": "9787b9bcd42b4148e791e32f07beccb581e9ad43713ee117c81c60c64be19c4f",
+     "status": "pass",
+     "title": "A sink that stalls for three frame times and one that is ready one clock in four: no frame lost, the offered beat held, the source held off by the credit"
+    }
+   ],
+   "items": [
+    "V-FMAXIS-CHECKER",
+    "V-FMAXIS-BACKPRESSURE"
+   ],
+   "kind": "interface",
+   "lean_transcription_only": false,
+   "missing_methods": [
+    "a simulation check from a bench the implementing agent did not write"
+   ],
+   "mix_satisfied": false,
+   "own_tests_only": true,
+   "passing_methods": [
+    "sim_test"
+   ],
+   "rests_on_delegated": false,
+   "source": "arith/fft_mdc2_axis/spec.md",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "partially_verified",
+   "text": "On both streams the wrapper's SystemVerilog protocol checkers (fft_common/axis_checker.sv: valid stays high until accepted, tdata, tuser and tlast stable while stalled, no unknowns after reset, tlast on every (N/2)-th beat, no pause inside an input frame) count zero violations in every run of the directed, random, back-pressure and gap benches, including random tready and a sink that holds tready low for three frame times; the checker bench shows that a pause inside a frame and a withdrawn tvalid are counted.",
+   "title": "The AXI4-Stream rules hold on both streams, also with a sink that stalls, and the checkers can fail",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "FMAXIS-F-GAP",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-FMAXIS-GAPS",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "arith/fft_mdc2_axis/verif/results/pytest_junit.xml",
+     "record_sha256": "9787b9bcd42b4148e791e32f07beccb581e9ad43713ee117c81c60c64be19c4f",
+     "status": "pass",
+     "title": "The idle clocks between frames under every source idle from 0 to N/8 + 1"
+    },
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-FMAXIS-BACKPRESSURE",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "arith/fft_mdc2_axis/verif/results/pytest_junit.xml",
+     "record_sha256": "9787b9bcd42b4148e791e32f07beccb581e9ad43713ee117c81c60c64be19c4f",
+     "status": "pass",
+     "title": "A sink that stalls for three frame times and one that is ready one clock in four: no frame lost, the offered beat held, the source held off by the credit"
+    }
+   ],
+   "items": [
+    "V-FMAXIS-GAPS",
+    "V-FMAXIS-BACKPRESSURE"
+   ],
+   "kind": "interface",
+   "lean_transcription_only": false,
+   "missing_methods": [
+    "a simulation check from a bench the implementing agent did not write"
+   ],
+   "mix_satisfied": false,
+   "own_tests_only": true,
+   "passing_methods": [
+    "sim_test"
+   ],
+   "rests_on_delegated": false,
+   "source": "arith/fft_mdc2_axis/spec.md",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "partially_verified",
+   "text": "After every beat with tlast s_axis_tready is high for one clock (a frame may follow with no idle clock) and, when no beat is transferred in it, low for N/8 - 1 clocks; the bench measures the idle clocks between every pair of frames under source idles of 0, 1 .. N/8 + 1 clocks and requires 0 or at least N/8, and exactly max(source idle, N/8) for a source idle of 1 or more. At a frame start s_axis_tready is low while NB frames are in the block, so with a sink that stalls for three frame times no frame is lost or altered (every output frame equals the model). With NB * N/2 >= latency + N/2 and a ready sink the frame period is N/2.",
+   "title": "Whatever the source does, the core sees 0 or at least N/8 idle clocks between frames, and nothing is lost to the output store",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "FMAXIS-F-EXPONENT",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-FMAXIS-EXPONENT",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "arith/fft_mdc2_axis/verif/results/pytest_junit.xml",
+     "record_sha256": "9787b9bcd42b4148e791e32f07beccb581e9ad43713ee117c81c60c64be19c4f",
+     "status": "pass",
+     "title": "Exponent and normalised words against the model, saturation frames included"
+    }
+   ],
+   "items": [
+    "V-FMAXIS-EXPONENT"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": false,
+   "missing_methods": [
+    "a simulation check from a bench the implementing agent did not write"
+   ],
+   "mix_satisfied": false,
+   "own_tests_only": true,
+   "passing_methods": [
+    "sim_test"
+   ],
+   "rests_on_delegated": false,
+   "source": "arith/fft_mdc2_axis/spec.md",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "partially_verified",
+   "text": "Every output frame's m_axis_tuser equals the model's exponent on every beat (the first beat is the contract), and every output part equals the model's normalised word: including frames whose largest part makes the rounding carry (saturation), frames of very different level back to back (so the exponent of one frame never leaks into the next), and the inverse transform.",
+   "title": "The block exponent is on tuser from the first beat and the words are normalised to W bits",
+   "waivers": []
+  }
+ ],
+ "schema": "fda-verified/1",
+ "summary_line": "9 requirements (7 functional, 2 interface); 1 verified; 8 partially verified (the required mix of methods is not met); 0 of 9 requirements agreed by a human, 0 agreed on the owner's delegation (not human), 9 draft; 8 resting only on the implementing agent's own tests; 0 human and 0 delegated review(s) recorded."
+}

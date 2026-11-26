@@ -4,7 +4,7 @@
 
 **Not assessed: no requirements recorded (no verif/testplan.yaml), so nothing here is traced to a requirement.**
 
-What the label means, what "verified" never means and how it is earned: [docs/verified.md](../../docs/verified.md). The label is computed from the testplan and the evidence files named below; it is never typed. Generated at git commit `a8359042aac759be0a4d6b05186709bdb7bb093c` (informational: the hashes in the manifest, not the commit, are what the CI check compares).
+What the label means, what "verified" never means and how it is earned: [docs/verified.md](../../docs/verified.md). The label is computed from the testplan and the evidence files named below; it is never typed. Generated at git commit `51dfe82191cd59c99857973f44b8b57ec9363fb5` (informational: the hashes in the manifest, not the commit, are what the CI check compares).
 
 ## What was checked for the label
 
@@ -43,7 +43,7 @@ Every file this record covers, with its SHA-256 at generation (6 files). `absent
 
 | File | SHA-256 |
 |---|---|
-| `designs/b65a_axil_soc/handover.yaml` | `ff26f6285a212316ef589dfe526d4c3c94ef02ca52a556e42bb2d0d3b13685d6` |
+| `designs/b65a_axil_soc/handover.yaml` | `8cffda9316543acc19f2974ac0c49f8e9e9c2825d85980e96d7d3557e8ed4801` |
 | `designs/b65a_axil_soc/tests/test_b65a_rtl.py` | `583424fc10773bfa88930da27ffb1a419db86d4485b63e8513a43b6eaabdd419` |
 | `flow/blockdesign/tests/test_65a_blockdesign.py` | `87d41b298c9eb4dbdf436cf602e585cea91af303552ab7a786b9095df220097a` |
 | `results/65a_blockdesign/faults.json` | `987ffa05708a304d15c4fd435f3924b62281f3483402c23c6377c0f435a54e6c` |

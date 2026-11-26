@@ -1,0 +1,764 @@
+{
+ "counts": {
+  "agreed_delegated": 0,
+  "agreed_human": 0,
+  "draft": 11,
+  "items": 14,
+  "requirements": 11,
+  "stale_items": 0,
+  "verified": 1
+ },
+ "criteria": [
+  {
+   "detail": "10 of 11 requirements are not in state verified: EXP-F-MODEL (partially_verified), EXP-F-EXACT (partially_verified), EXP-F-ACC (partially_verified), EXP-F-LAT (partially_verified), EXP-F-BENCH (partially_verified), EXP-F-HARNESS (partially_verified), EXP-F-PACKAGE (partially_verified), EXP-F-LEAN-LERP (unapproved), EXP-F-LEAN-LERP-MONO (unapproved), EXP-F-LEAN-HYP (unapproved)",
+   "id": "evidence",
+   "ids": [
+    "EXP-F-MODEL",
+    "EXP-F-EXACT",
+    "EXP-F-ACC",
+    "EXP-F-LAT",
+    "EXP-F-BENCH",
+    "EXP-F-HARNESS",
+    "EXP-F-PACKAGE",
+    "EXP-F-LEAN-LERP",
+    "EXP-F-LEAN-LERP-MONO",
+    "EXP-F-LEAN-HYP"
+   ],
+   "state": "unmet",
+   "title": "Every requirement has passing evidence"
+  },
+  {
+   "detail": "0 agreed by a human, 0 agreed by delegation, 11 draft, 0 marked agreed without a record",
+   "id": "agreement",
+   "ids": [
+    "EXP-F-MODEL",
+    "EXP-F-EXACT",
+    "EXP-F-ACC",
+    "EXP-F-LAT",
+    "EXP-F-EQUIV",
+    "EXP-F-BENCH",
+    "EXP-F-HARNESS",
+    "EXP-F-PACKAGE",
+    "EXP-F-LEAN-LERP",
+    "EXP-F-LEAN-LERP-MONO",
+    "EXP-F-LEAN-HYP"
+   ],
+   "state": "unmet",
+   "title": "Every requirement is agreed (human, or delegated and labelled so)"
+  },
+  {
+   "detail": "not yet measured: the required method mix per requirement kind is brief 143a; the collector does not supply it yet",
+   "id": "method_mix",
+   "ids": [],
+   "state": "not_measured",
+   "title": "Every requirement meets its required method mix"
+  },
+  {
+   "detail": "not yet measured: the mutation score and floor are brief 143b; the collector does not supply them yet",
+   "id": "mutation",
+   "ids": [],
+   "state": "not_measured",
+   "title": "The bench passes the mutation floor"
+  },
+  {
+   "detail": "not yet measured: the vacuity, assumption and depth checks are brief 143c; the collector does not supply them yet",
+   "id": "formal_rigour",
+   "ids": [],
+   "state": "not_measured",
+   "title": "The formal results pass the rigour checks"
+  },
+  {
+   "detail": "no item is stale by its pins; the nightly fresh re-run comparison is brief 143d and not yet measured",
+   "id": "fresh",
+   "ids": [],
+   "state": "not_measured",
+   "title": "The evidence is fresh"
+  }
+ ],
+ "declared": null,
+ "definition": "docs/verified.md",
+ "git_commit": "51dfe82191cd59c99857973f44b8b57ec9363fb5",
+ "kind": "arith",
+ "label": "verified except: 10 of 11 requirements without passing evidence; 11 of 11 requirements not agreed; required method mix not yet measured; mutation floor not yet measured; formal rigour not yet measured; fresh re-run not yet measured",
+ "label_kind": "verified_except",
+ "limits": [
+  "Verified never means interoperability with a device the design talks to unless a board measurement against that device is listed in the record; a design that checks its own output against its own model accepts its own symmetric mistakes.",
+  "Verified never means timing beyond the stated corner: a post-route timing result is for the part, speed grade, clock and tool version in its evidence file, not for other corners, temperatures or devices.",
+  "Verified never means beyond the widths and depths checked: a simulation covers the vectors it ran, a bounded formal result covers the stated depth only, and a per-width proof covers the widths it names; only a Lean proof marked all widths covers every width, and only for its model.",
+  "Verified never means the requirement is the right one: the text of a requirement is the human's check (or the planner's, where the record says delegated), and a record shows that checks exist and pass, not that nothing was left out.",
+  "Verified never means a hardware or board result unless a board measurement item is listed; a simulation is not the board.",
+  "Verified is about the files in the manifest at the hashes given. A change to any of them makes the record out of date (the CI check fails), and the evidence stale until it is re-recorded.",
+  "An agreement or acceptance recorded as delegated is the planner's decision on the owner's delegation, not a human sign-off; the record counts it apart."
+ ],
+ "manifest": {
+  "arith/exp2/build/cordic/build.yaml": "646213c458b72bfd15c6bb5df3d9607c34f027db28d9739a58eaad77beab2137",
+  "arith/exp2/build/lerp/build.yaml": "ea4cea2050713352d0eccf036ccdaa83b83cff75bf0f90669096c9baac8866e7",
+  "arith/exp2/build/poly2/build.yaml": "a961b4c569752b6fb6b34d9b20fd40a73f2640ad12debe1a2630ec0ae06e2d19",
+  "arith/exp2/build/table/build.yaml": "301de96664654ae2cb2a68b0dd1f2861e7588396abb23ec854d886dc92dac84f",
+  "arith/exp2/formal/exp2_fv.sv": "09a4daf7c2bd2ac25d8f429b79471063c60ddb9d1fb892389167da9b6dd3dfda",
+  "arith/exp2/formal/exp2_ref.sv": "2ff3a0a5b1c5891cea8debe8212d461b0f0b9d30de8728e7959f135ad2676dfb",
+  "arith/exp2/formal/jobs.yaml": "6437e0de5e370241f29fd821991aa2ff8779c708d2296cf12d869a179e5c4a73",
+  "arith/exp2/harness/assertions.sv": "7b18d8f464c603f5439de1f742250cdee44e37c9b3c3d9e63164cfc277f00316",
+  "arith/exp2/harness/bench.py": "ab97410cb5dda3c4fc1ae1c695ada3fdd6a7cb45fb14adc56e8f0021d864977f",
+  "arith/exp2/harness/chk_top.sv": "a0a8a0b8182503bbf8885cf80e11f3d9252f4fc6ebfd9d7bf0b108fae0a166da",
+  "arith/exp2/harness/coverage.yaml": "b34ca1bf60dcd3215f29798e5fad6fe3e1d094776b966ee1d9f532a8b5e8af5b",
+  "arith/exp2/harness/model.py": "49c3d9987d04544f091c769743632bf269e495dc6e522ca1e2f3bb58976a8932",
+  "arith/exp2/harness/run_harness.py": "463ee7d612a42dac72e753c7cfdd14044d7fe4cb1a7d1973ac4fb227c652e6bc",
+  "arith/exp2/model.py": "346f545de9d35ad119d979edb2b86947f5a36eacd45648e9f65f95d2d924d075",
+  "arith/exp2/rtl/exp2_cordic.sv": "c3c2e80079fb06f9ee2dbf077ee6e14fd565ee2b63b939a77da1e862f74b5895",
+  "arith/exp2/rtl/exp2_lerp.sv": "1ae4180e0623c6689475a04a05e74597200a093b683ca01db0460c868c48a88b",
+  "arith/exp2/rtl/exp2_poly2.sv": "91b8df1828a9c3f04da50f32444e50ec29328e2684c96c0c09a2144f977bd0c1",
+  "arith/exp2/rtl/exp2_table.sv": "3513fc008e9e70d0ae87c7db651e4aad0106c095278e86c3eafbfbdab437f21e",
+  "arith/exp2/spec.md": "8eb5426383ff6e18c6da325c75d79fef469f18628cdc99b75f5b4b0e512e0da4",
+  "arith/exp2/spec.yaml": "6f2807c292825168e2c5cbb4b313bcafa9ffa213cf1e20b3b39205ab8738dc64",
+  "arith/exp2/tests/exp2_cocotb.py": "341fc2ee38a63acacccebb21273b7281471b6be511d35f3a60b60a85880cda9b",
+  "arith/exp2/verif/evidence_pins.yaml": "42a9a34ed02cd57432cf4dc0329575d1c99214147fa96aeb7b3d74a871f77ef4",
+  "arith/exp2/verif/lean_approvals.yaml": "aefa41a9912d299b5f20600f8819229eb1b589d14cab11deffe127319c0dfc1b",
+  "arith/exp2/verif/mutants.yaml": "c1b98a2f782bab53014faab3e3eaa5d9bee92cec9b23693076c73dd0b8e770c2",
+  "arith/exp2/verif/results/mutation.json": "191071d617b9ca4cb51fb6273c1f3a3f9a656bbdcc11cfb5f3d9387248080c54",
+  "arith/exp2/verif/results/pytest_junit.xml": "ec6928587ee0509d8f5ca239bc91d4479ffb5974832c5aad41ba42edf863512c",
+  "arith/exp2/verif/testplan.yaml": "6d9b2dd0ae83c7a4ee1f9254119894f3d617a9cf0705ad6ec475a4c476106795",
+  "arith/tools/fxlib.py": "87fd537c6a069055278b9a556c8de4b0bdc8bb441193abf5a21ebed4338e7a4d",
+  "formal/lean/records/build_record.json": "3d60b1f76ac87b74d5dcbe085c0eb8e43e0287d69d5fa557490a685624e6c4f6"
+ },
+ "name": "exp2",
+ "notes": "Arithmetic library, function exp2 (brief 139d). Everything here is before Vivado: the model, the RTL variants, simulation, formal equivalence, Lean statements and the prepared out-of-context build files. No performance requirement exists because nothing about LUTs, DSPs, Fmax or power has been measured yet; the Vivado runs (build/<variant>/build.yaml) will add them. Every requirement is a draft written by the agent; none is agreed by a human. Lean statements are not approved. Generated by arith/tools/gen_testplan.py.",
+ "path": "arith/exp2",
+ "reproduce": [
+  {
+   "cmd": "python -m pytest -q arith/exp2/tests",
+   "what": "the simulation tests"
+  }
+ ],
+ "requirements": [
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "EXP-F-MODEL",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-EXP-MODEL",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "arith/exp2/verif/results/pytest_junit.xml",
+     "record_sha256": "ec6928587ee0509d8f5ca239bc91d4479ffb5974832c5aad41ba42edf863512c",
+     "status": "pass",
+     "title": "The model against independent formulations (exhaustive small, random large) and the pinned conventions"
+    }
+   ],
+   "items": [
+    "V-EXP-MODEL"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": false,
+   "missing_methods": [
+    "a simulation check from a bench the implementing agent did not write"
+   ],
+   "mix_satisfied": false,
+   "own_tests_only": true,
+   "passing_methods": [
+    "sim_test"
+   ],
+   "rests_on_delegated": false,
+   "source": "arith/exp2/spec.md",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "partially_verified",
+   "text": "arith/exp2/model.py gives, for every input, the result that spec.md defines. It agrees with an independent formulation (exact rational (Fraction) evaluations of the interpolation and Horner formulas, a floating-point hyperbolic CORDIC, and the maths library's 2**x) on every input at small widths and with Python's integer arithmetic on random large-width inputs, and the conventions that a user could guess wrong (spec.md, last section) are pinned by examples.",
+   "title": "The bit-exact model is right",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "EXP-F-EXACT",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-EXP-EXHAUSTIVE",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "arith/exp2/verif/results/pytest_junit.xml",
+     "record_sha256": "ec6928587ee0509d8f5ca239bc91d4479ffb5974832c5aad41ba42edf863512c",
+     "status": "pass",
+     "title": "Every variant against the model, every input, at the small points (Icarus + cocotb)"
+    },
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-EXP-RANDOM",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "arith/exp2/verif/results/pytest_junit.xml",
+     "record_sha256": "ec6928587ee0509d8f5ca239bc91d4479ffb5974832c5aad41ba42edf863512c",
+     "status": "pass",
+     "title": "Every variant against the model at the large points: edge values, carry runs and random inputs (Icarus + cocotb)"
+    }
+   ],
+   "items": [
+    "V-EXP-EXHAUSTIVE",
+    "V-EXP-RANDOM"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": false,
+   "missing_methods": [
+    "a simulation check from a bench the implementing agent did not write"
+   ],
+   "mix_satisfied": false,
+   "own_tests_only": true,
+   "passing_methods": [
+    "sim_test"
+   ],
+   "rests_on_delegated": false,
+   "source": "arith/exp2/spec.md",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "partially_verified",
+   "text": "At every parameter point listed in spec.yaml (24 exhaustive points, 12 random ones, across 4 variants), each variant's outputs equal its own model's (model.py, selected by variant) in every clock: every input is driven at the small points; edge values, table break points and random inputs at the large ones. The variants round differently and are not bit-identical to each other; the model of each is the bit-exact definition of that variant, and its distance from the exact function is the accuracy requirement.",
+   "title": "Every variant is bit-exact against its own model",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "EXP-F-ACC",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-EXP-ACCURACY",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "arith/exp2/verif/results/pytest_junit.xml",
+     "record_sha256": "ec6928587ee0509d8f5ca239bc91d4479ffb5974832c5aad41ba42edf863512c",
+     "status": "pass",
+     "title": "The model's error against the exact function over every input of every listed point, against the stated bounds"
+    }
+   ],
+   "items": [
+    "V-EXP-ACCURACY"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": false,
+   "missing_methods": [
+    "a simulation check from a bench the implementing agent did not write"
+   ],
+   "mix_satisfied": false,
+   "own_tests_only": true,
+   "passing_methods": [
+    "sim_test"
+   ],
+   "rests_on_delegated": false,
+   "source": "arith/exp2/spec.md",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "partially_verified",
+   "text": "Each of the 12 accuracy points of spec.yaml states a bound in last places; the model's error against the exact function (the maths library, real arithmetic, unrounded) over EVERY input of that point is at most the bound and within 0.06 of it (so the bound is neither false nor loose). A point not listed has no stated bound.",
+   "title": "The error against the exact function is within the stated bound, at every listed point",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "EXP-F-LAT",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-EXP-LATENCY",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "arith/exp2/verif/results/pytest_junit.xml",
+     "record_sha256": "ec6928587ee0509d8f5ca239bc91d4479ffb5974832c5aad41ba42edf863512c",
+     "status": "pass",
+     "title": "The bench passes at the stated latency and fails two clocks off, for every variant"
+    }
+   ],
+   "items": [
+    "V-EXP-LATENCY"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": false,
+   "missing_methods": [
+    "a simulation check from a bench the implementing agent did not write"
+   ],
+   "mix_satisfied": false,
+   "own_tests_only": true,
+   "passing_methods": [
+    "sim_test"
+   ],
+   "rests_on_delegated": false,
+   "source": "arith/exp2/spec.md",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "partially_verified",
+   "text": "Each variant's latency in clocks is the expression in spec.yaml (table: REG; lerp: 2; poly2: 3; cordic: NIT + 1), and the bench, run with a latency two clocks off, fails for every variant, so the passing runs prove the latency rather than assume it.",
+   "title": "Latency is as specified and the bench would notice if it were not",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "EXP-F-EQUIV",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-EXP-FORMAL-PROOF",
+     "instrument": null,
+     "method": "formal",
+     "mutation_score": null,
+     "record": "arith/exp2/verif/results/pytest_junit.xml",
+     "record_sha256": "ec6928587ee0509d8f5ca239bc91d4479ffb5974832c5aad41ba42edf863512c",
+     "status": "pass",
+     "title": "k-induction proofs of the variants' error bounds against the exact function (7 jobs; widths in formal/jobs.yaml)"
+    },
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-EXP-FORMAL-REFUTE",
+     "instrument": null,
+     "method": "formal",
+     "mutation_score": null,
+     "record": "arith/exp2/verif/results/pytest_junit.xml",
+     "record_sha256": "ec6928587ee0509d8f5ca239bc91d4479ffb5974832c5aad41ba42edf863512c",
+     "status": "pass",
+     "title": "Each formal check refutes a planted fault (the check can fail)"
+    }
+   ],
+   "items": [
+    "V-EXP-FORMAL-PROOF",
+    "V-EXP-FORMAL-REFUTE"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": false,
+   "missing_methods": [],
+   "mix_satisfied": true,
+   "own_tests_only": false,
+   "passing_methods": [
+    "formal"
+   ],
+   "rests_on_delegated": false,
+   "source": "arith/exp2/formal/jobs.yaml",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "verified",
+   "text": "SymbiYosys with the slang front end compares each variant, delayed by its latency, with the exact function on 8 input bits to 24 fractional bits (a reference ROM written from the maths library, formal/*_ref.sv) and asserts the error stays within the bound of the job, which is the model's measured error at that point plus one unit for the reference's own rounding. A proof is by k-induction (for all inputs, any run length) at the widths in formal/jobs.yaml; wider points are covered by the exhaustive scan of the accuracy requirement and by simulation, not by proof. The quadrant map and the variants' structural identities are inside the checks.",
+   "title": "The error against the exact function is bounded for all inputs, by proof, at a small input width",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "EXP-F-BENCH",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-EXP-MUTANT-TEST",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "arith/exp2/verif/results/pytest_junit.xml",
+     "record_sha256": "ec6928587ee0509d8f5ca239bc91d4479ffb5974832c5aad41ba42edf863512c",
+     "status": "pass",
+     "title": "The mutation run as a test: no mutant survives, none fails to build"
+    },
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-EXP-MUTANT-SCORE",
+     "instrument": null,
+     "method": "sim_measurement",
+     "mutation_score": null,
+     "record": "arith/exp2/verif/results/mutation.json",
+     "record_sha256": "191071d617b9ca4cb51fb6273c1f3a3f9a656bbdcc11cfb5f3d9387248080c54",
+     "status": "pass",
+     "title": "Mutants killed of valid mutants (the record of the last full run)"
+    }
+   ],
+   "items": [
+    "V-EXP-MUTANT-TEST",
+    "V-EXP-MUTANT-SCORE"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": false,
+   "missing_methods": [
+    "a simulation check from a bench the implementing agent did not write"
+   ],
+   "mix_satisfied": false,
+   "own_tests_only": true,
+   "passing_methods": [
+    "sim_measurement",
+    "sim_test"
+   ],
+   "rests_on_delegated": false,
+   "source": "arith/exp2/verif/mutants.yaml",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "partially_verified",
+   "text": "Every one of the mutants in verif/mutants.yaml (one exact text change each, in the variant's RTL: an inverted condition, a wrong constant, a dropped connection, a lost reset) makes the cocotb bench fail; mutants that survive or do not build are reported, never hidden.",
+   "title": "The bench catches seeded faults",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "EXP-F-HARNESS",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-EXP-HARNESS",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "arith/exp2/verif/results/pytest_junit.xml",
+     "record_sha256": "ec6928587ee0509d8f5ca239bc91d4479ffb5974832c5aad41ba42edf863512c",
+     "status": "pass",
+     "title": "The packaged harness run standalone on every variant (with the checker and the coverage targets) and on a planted fault"
+    }
+   ],
+   "items": [
+    "V-EXP-HARNESS"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": false,
+   "missing_methods": [
+    "a simulation check from a bench the implementing agent did not write"
+   ],
+   "mix_satisfied": false,
+   "own_tests_only": true,
+   "passing_methods": [
+    "sim_test"
+   ],
+   "rests_on_delegated": false,
+   "source": "arith/exp2/harness/README.md",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "partially_verified",
+   "text": "arith/exp2/harness holds the model, the cocotb bench, a SystemVerilog checker, coverage targets and a runner that needs nothing else from the repository. Run standalone against every variant (one small exhaustive point and one large random point each, with the checker beside the instance) it passes and the random runs meet every coverage target; run against a planted fault it fails, with and without the checker. Its generated files are the repository's own bench, so they cannot drift.",
+   "title": "The packaged verification harness is a standalone deliverable that works",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "EXP-F-PACKAGE",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-EXP-PACKAGE",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "arith/exp2/verif/results/pytest_junit.xml",
+     "record_sha256": "ec6928587ee0509d8f5ca239bc91d4479ffb5974832c5aad41ba42edf863512c",
+     "status": "pass",
+     "title": "spec.yaml against the RTL headers, spec.md against spec.yaml, Verilator -Wall at every point, wrappers and build.yaml current and lint-clean"
+    }
+   ],
+   "items": [
+    "V-EXP-PACKAGE"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": false,
+   "missing_methods": [
+    "a simulation check from a bench the implementing agent did not write"
+   ],
+   "mix_satisfied": false,
+   "own_tests_only": true,
+   "passing_methods": [
+    "sim_test"
+   ],
+   "rests_on_delegated": false,
+   "source": "arith/exp2/spec.yaml",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "partially_verified",
+   "text": "spec.yaml states an interface contract (protocol, throughput, latency, reset, clock, stalls) and integration guidance (port timing, constraints to carry). Every variant passes Verilator -Wall at every point of spec.yaml; its ports and default parameters are the ones spec.yaml states; its header states the intended primitive use before any Vivado run; spec.md is the rendering of spec.yaml; the out-of-context wrapper and the build.yaml for each variant (Artix-7 xc7a100t and K26 xck26, prepared and not run) are current and lint-clean at every point they list, so a Vivado run can start from the repository alone.",
+   "title": "The RTL is lint-clean, and its files agree with the specification and with the Vivado build files",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "EXP-F-LEAN-LERP",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-EXP-LEAN-LERP",
+     "instrument": null,
+     "lean": {
+      "build_source": "recorded build (not re-run)",
+      "rtl_link": "transcription_untested",
+      "tier": "kernel_only"
+     },
+     "method": "formal_lean",
+     "mutation_score": null,
+     "record": "formal/lean/records/build_record.json",
+     "record_sha256": "3d60b1f76ac87b74d5dcbe085c0eb8e43e0287d69d5fa557490a685624e6c4f6",
+     "status": "unapproved",
+     "title": "Linear interpolation stays between the segment's end values"
+    }
+   ],
+   "items": [
+    "V-EXP-LEAN-LERP"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": false,
+   "missing_methods": [],
+   "mix_satisfied": false,
+   "own_tests_only": false,
+   "passing_methods": [],
+   "rests_on_delegated": false,
+   "source": "arith/exp2/rtl/exp2_lerp.sv (the product, sum and shift lines of the interpolation)",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "unapproved",
+   "text": "In a rising segment with break-point value c0 and slope s, the interpolated value (c0 * 2^D + s * d) / 2^D lies between c0 and c0 + s for every position d below 2^D and every D: the table variant cannot overshoot its segment. The statement is the specification and is NOT approved by a human (verif/lean_approvals.yaml is empty), so the proof is shown but not counted as verification. The Lean text is a hand transcription of the RTL's structure; it models no timing or clocking.",
+   "title": "Linear interpolation stays between the segment's end values, for every width",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "EXP-F-LEAN-LERP-MONO",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-EXP-LEAN-LERP-MONO",
+     "instrument": null,
+     "lean": {
+      "build_source": "recorded build (not re-run)",
+      "rtl_link": "transcription_untested",
+      "tier": "kernel_only"
+     },
+     "method": "formal_lean",
+     "mutation_score": null,
+     "record": "formal/lean/records/build_record.json",
+     "record_sha256": "3d60b1f76ac87b74d5dcbe085c0eb8e43e0287d69d5fa557490a685624e6c4f6",
+     "status": "unapproved",
+     "title": "Linear interpolation does not fall as the position grows"
+    }
+   ],
+   "items": [
+    "V-EXP-LEAN-LERP-MONO"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": false,
+   "missing_methods": [],
+   "mix_satisfied": false,
+   "own_tests_only": false,
+   "passing_methods": [],
+   "rests_on_delegated": false,
+   "source": "arith/exp2/rtl/exp2_lerp.sv (the product, sum and shift lines of the interpolation)",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "unapproved",
+   "text": "Within a segment of non-negative slope the interpolated value is non-decreasing in the position d, for every D, c0 and s. The statement is the specification and is NOT approved by a human (verif/lean_approvals.yaml is empty), so the proof is shown but not counted as verification. The Lean text is a hand transcription of the RTL's structure; it models no timing or clocking.",
+   "title": "Linear interpolation does not fall as the position grows, for every width",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "EXP-F-LEAN-HYP",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-EXP-LEAN-HYP",
+     "instrument": null,
+     "lean": {
+      "build_source": "recorded build (not re-run)",
+      "rtl_link": "transcription_untested",
+      "tier": "kernel_only"
+     },
+     "method": "formal_lean",
+     "mutation_score": null,
+     "record": "formal/lean/records/build_record.json",
+     "record_sha256": "3d60b1f76ac87b74d5dcbe085c0eb8e43e0287d69d5fa557490a685624e6c4f6",
+     "status": "unapproved",
+     "title": "A hyperbolic CORDIC step scales x^2 - y^2 by a constant"
+    }
+   ],
+   "items": [
+    "V-EXP-LEAN-HYP"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": false,
+   "missing_methods": [],
+   "mix_satisfied": false,
+   "own_tests_only": false,
+   "passing_methods": [],
+   "rests_on_delegated": false,
+   "source": "arith/exp2/rtl/exp2_cordic.sv (the x and y adders of one stage)",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "unapproved",
+   "text": "For every direction d = +-1 and every shift (scaled by u = 2^i), the step (u x + d y, u y + d x) multiplies x^2 - y^2 by exactly u^2 - 1, whatever the data: the hyperbolic gain is a data-independent constant. The statement is the specification and is NOT approved by a human (verif/lean_approvals.yaml is empty), so the proof is shown but not counted as verification. The Lean text is a hand transcription of the RTL's structure; it models no timing or clocking.",
+   "title": "A hyperbolic CORDIC step scales x^2 - y^2 by a constant, for every width",
+   "waivers": []
+  }
+ ],
+ "schema": "fda-verified/1",
+ "summary_line": "11 requirements (11 functional); 1 verified; 7 partially verified (the required mix of methods is not met); 0 of 11 requirements agreed by a human, 0 agreed on the owner's delegation (not human), 11 draft; 7 resting only on the implementing agent's own tests; 0 human and 0 delegated review(s) recorded; 3 Lean proof item(s) (all widths): 0 with a human-approved statement, 0 with a statement accepted on the owner's delegation (not a human approval), 3 with statement not approved; 3 kernel only, 0 using a compiled decision procedure; build status from: recorded build (not re-run)."
+}

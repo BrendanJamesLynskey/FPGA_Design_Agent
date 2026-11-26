@@ -1,0 +1,494 @@
+# Brief 68 handover: the facts behind README.md and AGENT.md (docs/documentation_standard.md).
+# Measurement values and every sha256 are filled from the records by `python -m flow.handover fill`;
+# do not type them. Render with `python -m flow.handover write <this directory>`.
+schema: fda-handover/1
+id: p5_async_fifo
+title: Asynchronous FIFO soak with PRBS-31 checking across two unrelated clocks
+kind: agent-run
+produced_by: agent
+summary: The design writes PRBS-31 words from a 25 MHz writer into a 512 x 32 asynchronous FIFO and pops them in a 156.25
+  MHz reader that checks each word against its own PRBS copy. Counters for words, errors, overflow, underflow, stalls and
+  peak fill are read through a snapshot register on the jtag_bus register port. The run stopped at rtl-design-creation,
+  which failed its gates (lint, simulation, design standards and verification V2). Only V1 was reached, and no Vivado build
+  exists.
+scope_not:
+- Not a transceiver design, no GT channel is used; only the reference clock buffer is taken from the SFP+ clock pin pair.
+- Not a verified or built design; no bitstream, timing, resource or power result exists.
+- Not a throughput or latency measurement tool; none was measured.
+target:
+  part: xck26-sfvc784-2LV-c
+  board: kr260
+  tool: Vivado 2026.1
+  top: p5_async_fifo_soak
+clocks:
+- name: clk_25
+  mhz: 25.0
+  source: runs/20261125-143655-7b11/p5_async_fifo/design.xdc
+resets:
+- name: rst
+  active: high
+  note: Internal power-on counter in clk_25 held for 16 clocks (POR_CYCLES); it is synchronised into clk_gt156 with async
+    assert and sync release (spec.yaml, ARCHITECTURE.md). The RTL itself was not shown to the Designer for this handover,
+    so this is taken from the spec.
+interfaces:
+- name: clk_c3
+  type: input, 25 MHz clock, 1 bit
+  note: Writer and register-port clock. design.xdc names the port clk_25 on pin C3 (LVCMOS18), while spec.yaml names it
+    clk_c3.
+- name: gt_refclk0_p / gt_refclk0_n
+  type: input, differential clock pair, 156.25 MHz
+  note: SFP+ MGTREFCLK0 through IBUFDS_GTE4 and BUFG_GT, reader clock. design.xdc has no pin or clock constraint for these
+    ports.
+- name: led
+  type: output, 2 bits
+  note: led[0] shows RUN and led[1] a sticky error flag (an assumption of the run). Pins F8 and E8, LVCMOS18, from design.xdc.
+- name: sfp_tx_disable
+  type: output, 1 bit
+  note: Constant 1, laser off. Pin Y10, LVCMOS33, from design.xdc.
+registers:
+- offset: 0
+  name: ID
+  access: RO
+  reset: 546635777
+  bits: '[31:0] design ID'
+- offset: 4
+  name: BUILD
+  access: RO
+  reset: 0
+  bits: '[31:0] USR_ACCESSE2 word'
+- offset: 8
+  name: SCRATCH
+  access: RW
+  reset: 0
+  bits: '[31:0] read-back'
+- offset: 16
+  name: CTRL
+  access: RW
+  reset: 0
+  bits: '[0] RUN, [1] SLOW_READ, [2] CLEAR self-clearing (only while RUN 0), [3] INJECT self-clearing'
+- offset: 20
+  name: WORDS_W
+  access: RO
+  reset: 0
+  bits: '[31:0] words written (snapshot)'
+- offset: 24
+  name: WORDS_R
+  access: RO
+  reset: 0
+  bits: '[31:0] words read and checked (snapshot)'
+- offset: 28
+  name: DATA_ERRS
+  access: RO
+  reset: 0
+  bits: '[31:0] mismatching words (snapshot)'
+- offset: 32
+  name: OVERFLOWS
+  access: RO
+  reset: 0
+  bits: '[31:0] snapshot'
+- offset: 36
+  name: UNDERFLOWS
+  access: RO
+  reset: 0
+  bits: '[31:0] snapshot'
+- offset: 40
+  name: STALL_W
+  access: RO
+  reset: 0
+  bits: '[31:0] writer clocks held off (snapshot)'
+- offset: 44
+  name: OCC_MAX
+  access: RO
+  reset: 0
+  bits: '[31:0] highest fill in words (snapshot)'
+- offset: 48
+  name: SNAPSHOT
+  access: WO
+  reset: 0
+  bits: any write latches 0x014 to 0x02C; reads 0
+parameters:
+- name: FIFO_DEPTH
+  value: 512
+  legal: positive power of two; 512 is the specified value
+  note: FIFO depth in words; one BRAM36 is expected. Only the spec value is documented; the benches' parameter values are
+    not recorded here.
+- name: DATA_WIDTH
+  value: 32
+  legal: 32 only (PRBS step is 32 bits per word)
+  note: Word width of the FIFO and PRBS.
+- name: PRBS_SEED
+  value: 2147483647
+  legal: non-zero 31-bit value
+  note: Seed 0x7FFFFFFF for both the writer and the reader PRBS-31 copies.
+- name: DESIGN_ID
+  value: 546635777
+  legal: any 32-bit value
+  note: Read back at register 0x000 as 0x20950001.
+- name: SLOW_READ_DIV_CYCLES
+  value: 8
+  legal: 1 or more
+  note: With SLOW_READ 1 the reader pops at most one word per 8 clk_gt156 clocks (6.4 ns period).
+- name: POR_CYCLES
+  value: 16
+  legal: 1 or more
+  note: Length of the power-on reset in clk_25 clocks (40 ns period).
+- name: SYNC_STAGES
+  value: 2
+  legal: 2 or more
+  note: Synchroniser stages on the Gray-coded FIFO pointers.
+- name: SNAP_SYNC_STAGES
+  value: 2
+  legal: 2 or more
+  note: Synchroniser stages on the snapshot handshake from the reader domain.
+files:
+- path: runs/20261125-143655-7b11/p5_async_fifo/spec.md
+  what: the request the run started from
+  sha256: feff9551509ac8f254d51fa34b90a79024fad47b0b34205bb839d79d41103962
+- path: runs/20261125-143655-7b11/p5_async_fifo/spec.yaml
+  what: the specification the Clarifier wrote, approved automatically with no human review
+  sha256: e12f8ad314e26c6334758e4f2092177574ab6e9220248e37379e7e43a368b907
+- path: runs/20261125-143655-7b11/p5_async_fifo/ARCHITECTURE.md
+  what: the architecture note, accepted automatically before any RTL (no human review)
+  sha256: fab0f1170ae5f460dff64c8abdf7a2c2e5b51e850a3503d527e0230dc7967f1f
+- path: runs/20261125-143655-7b11/p5_async_fifo/architecture.yaml
+  what: 'the machine-checked architecture: blocks, clocks, predicted resources'
+  sha256: 74fe1abc733997e48ccd455da423290ced5d39c0144549b2a0516ab6ab54e687
+- path: runs/20261125-143655-7b11/p5_async_fifo/design.xdc
+  what: pin, I/O standard and timing constraints
+  sha256: 713c2601cace00d2201beca5d75a68cd5722273fef65fae3ab57bd8371ab52d3
+- path: runs/20261125-143655-7b11/p5_async_fifo/model.py
+  what: the Modeller's reference model of the visible behaviour
+  sha256: 1550ac42b882d1aa2fffd0bbb8628985431c02d107736cb4d3ac77a5e4a5fced
+- path: runs/20261125-143655-7b11/p5_async_fifo/tests/p5_bench.py
+  what: the Verifier's cocotb benches and pytest entries
+  sha256: 1a2eb11c4d408e63beaefffcbf4b49ea74b96d1180b0242b029bcb84468af06e
+- path: runs/20261125-143655-7b11/p5_async_fifo/tests/test_p5_async_fifo_rtl.py
+  what: the Verifier's cocotb benches and pytest entries
+  sha256: 147b09fa56447cefaf96bdadc0c861a09bf8ede92e141c1e5548761aa9a535a6
+- path: runs/20261125-143655-7b11/p5_async_fifo/verif/testplan.yaml
+  what: the test plan and mutant list read by the verification gates
+  sha256: 577d9df19eb08e161aab69fbc3f8bea4c33562013e1e8b35702aa4aa8beef5a2
+- path: runs/20261125-143655-7b11/p5_async_fifo/verif/checkers/v_macros.svh
+  what: bound assertion and cover checkers
+  sha256: 013c1a5444e3dbd0eb2df54529d09272d8bf601d42ec066d54cadb9589d51083
+- path: runs/20261125-143655-7b11/p5_async_fifo/build/review/02_rtl-design-creation.html
+  what: 'the review page of stage rtl-design-creation: its exit gates and their failures at the last visit'
+  sha256: 344dc9f82829cbf3abff897395fb01ffdbd8b35cede119fbd3a477a1a36c7776
+commands:
+- what: what changed since this handover (stale records, changed files, tool and knowledge-bank pins)
+  cmd: python -m flow.handover fresh runs/20261125-143655-7b11/p5_async_fifo
+  heavy: false
+  minutes: null
+- what: pick the work up again from the earliest stage the change or the staleness needs
+  cmd: python -m agent resume runs/20261125-143655-7b11/p5_async_fifo "<change request>"
+  heavy: true
+  minutes: null
+  needs: a model (see docs/agent.md); Vivado for any stage from synthesis on
+- what: run the Verifier's simulation tests
+  cmd: python -m pytest -q runs/20261125-143655-7b11/p5_async_fifo/tests/test_p5_async_fifo_rtl.py
+  heavy: false
+  minutes: null
+  needs: Icarus Verilog and cocotb, or the simulation container
+- what: re-run the Verilator coverage simulation and the verification gates (line, toggle, functional and cover results)
+  cmd: SIM=verilator FDA_COVERAGE=1 FDA_SIM_RESULTS_DIR=runs/20261125-143655-7b11/p5_async_fifo/build/verif/sim python -m
+    pytest -q -x runs/20261125-143655-7b11/p5_async_fifo/tests/test_p5_async_fifo_rtl.py && python3 flow/verif_gates.py
+    runs/20261125-143655-7b11/p5_async_fifo --runs runs/20261125-143655-7b11/p5_async_fifo/build/verif/sim
+  heavy: false
+  minutes: null
+  needs: Verilator 5.036 or later and cocotb (the simulation container has them)
+- what: rebuild the bitstream with the flow
+  cmd: flow/run_vivado.sh runs/20261125-143655-7b11/p5_async_fifo base
+  heavy: true
+  minutes: null
+  needs: Vivado 2026.1 and a heavy slot
+evidence:
+- id: E1
+  activity: review
+  result: partial
+  what: the specification and the architecture were approved automatically, with no human review (review off; the interview
+    oracle claude-sonnet-5-5 only answered the interview questions); the interview asked 8 questions, 0 answered and 8 defaulted
+  record: runs/20261125-143655-7b11/summary.json
+  sha256: 02f68582962c6f173cb3cb7848118c6b54011c7675f04ae773befa577d3e0a78
+- id: E2
+  activity: simulation
+  result: partial
+  what: 'verification (flow/verif_gates.py) against the Modeller''s reference model reached V1 of V3; the run asked for
+    V2; V1 means every spec item is traced to a check and the benches use the blind model; V2 (simulation: seeded runs,
+    a constrained-random test, bound assertions and formal tasks) did not pass: seeds run no seeded results: read runs/20261125-143655-7b11/p5_async_fifo/build/verif/sim/seed*/results.xml
+    and found none. The gate expects runs/20261125-143655-7b11/p5_async_fifo/build/verif/sim/seed<N>/results.xml, one directory
+    per seed. The flow''s simulation step writes it when the bench runs through flow.cocotb_run.run(name, toplevel, sources,
+    test_module, test_dir, parameters=..., seed=N) in tests/test_*_rtl.py: call run() once per seed (for example seed=1,
+    2, 3; a seed left out counts as seed 1) with the module(s) listed in bench.modules; the flow runs it and checks again.
+    A bench that runs the simulator some other way leaves nothing there. (needs >=1 seed); constrained random test ran not
+    evaluated (no seeded results) (needs True); assertions bound zero failures not evaluated (no seeded results) (needs
+    bound in the run; no failure); V3 (coverage (line, toggle, functional bins, cover properties), three seeds and the mutation
+    score) did not pass: seeds run no seeded results: read runs/20261125-143655-7b11/p5_async_fifo/build/verif/sim/seed*/results.xml
+    and found none. The gate expects runs/20261125-143655-7b11/p5_async_fifo/build/verif/sim/seed<N>/results.xml, one directory
+    per seed. The flow''s simulation step writes it when the bench runs through flow.cocotb_run.run(name, toplevel, sources,
+    test_module, test_dir, parameters=..., seed=N) in tests/test_*_rtl.py: call run() once per seed (for example seed=1,
+    2, 3; a seed left out counts as seed 1) with the module(s) listed in bench.modules; the flow runs it and checks again.
+    A bench that runs the simulator some other way leaves nothing there. (needs >=3); functional bins pct not evaluated
+    (no seeded results) (needs 100); cover properties pct not evaluated (no seeded results) (needs 100); line pct not evaluated
+    (no seeded results) (needs 90); toggle pct not evaluated (no seeded results) (needs 75); mutation score pct not measured
+    (needs 70); cdc structure clean missing (needs no unsafe crossing); cdc injection clean missing (needs pass); no board
+    result (V-HW) is recorded'
+  record: runs/20261125-143655-7b11/p5_async_fifo/build/verif/verif_gates.json
+  sha256: fd3a7c9147ed6aa219d675659c1b321f6a3979bce00f4c526f25da58973c1beb
+measurements:
+- id: M1
+  what: model cost of the run, provider-reported
+  category: cost
+  unit: USD
+  record: runs/20261125-143655-7b11/summary.json
+  field: cost_usd
+  conditions: every role and the interview oracle, as the run summary records it
+  value: 4.039232
+  sha256: 02f68582962c6f173cb3cb7848118c6b54011c7675f04ae773befa577d3e0a78
+gaps:
+- about: REQ-01
+  text: 'REQ-01 has no passing evidence for every proof method: simulation (p5_bench.test_register_basics) is pending: no
+    simulation results; hardware (uart_tests:id) is pending: no bring-up result'
+- about: REQ-02
+  text: 'REQ-02 has no passing evidence for every proof method: hardware (uart_tests:build) is pending: no bring-up result'
+- about: REQ-03
+  text: 'REQ-03 has no passing evidence for every proof method: simulation (p5_bench.test_register_basics) is pending: no
+    simulation results; hardware (uart_tests:scratch) is pending: no bring-up result'
+- about: REQ-04
+  text: 'REQ-04 has no passing evidence for every proof method: simulation (p5_bench.test_register_basics) is pending: no
+    simulation results'
+- about: REQ-29
+  text: 'REQ-29 has no passing evidence for every proof method: simulation (p5_bench.test_register_basics) is pending: no
+    simulation results'
+- about: REQ-30
+  text: 'REQ-30 has no passing evidence for every proof method: simulation (p5_bench.test_register_basics) is pending: no
+    simulation results; hardware (uart_tests:scratch) is pending: no bring-up result'
+- about: REQ-05
+  text: 'REQ-05 has no passing evidence for every proof method: simulation (p5_bench.test_register_basics) is pending: no
+    simulation results'
+- about: REQ-31
+  text: 'REQ-31 has no passing evidence for every proof method: simulation (p5_bench.test_register_basics) is pending: no
+    simulation results'
+- about: REQ-06
+  text: 'REQ-06 has no passing evidence for every proof method: simulation (p5_bench.test_prbs_run) is pending: no simulation
+    results'
+- about: REQ-07
+  text: 'REQ-07 has no passing evidence for every proof method: simulation (p5_bench.test_prbs_run) is pending: no simulation
+    results; hardware (uart_tests:run) is pending: no bring-up result'
+- about: REQ-08
+  text: 'REQ-08 has no passing evidence for every proof method: simulation (p5_bench.test_slow_read_stall) is pending: no
+    simulation results; analysis (post_synth:post_synth_resources_in_range) is pending: no flow gates result'
+- about: REQ-09
+  text: 'REQ-09 has no passing evidence for every proof method: simulation (p5_bench.test_prbs_run) is pending: no simulation
+    results'
+- about: REQ-10
+  text: 'REQ-10 has no passing evidence for every proof method: hardware (uart_tests:soak) is pending: no bring-up result'
+- about: REQ-11
+  text: 'REQ-11 has no passing evidence for every proof method: formal (p5_bench.test_slow_read_stall) is pending: re-planned
+    from formal to simulation (SymbiYosys is not installed here so the overflow check is re-planned to simulation with a
+    full FIFO stall.): no simulation results; hardware (uart_tests:soak) is pending: no bring-up result'
+- about: REQ-12
+  text: 'REQ-12 has no passing evidence for every proof method: formal (p5_bench.test_prbs_run) is pending: re-planned from
+    formal to simulation (SymbiYosys is not installed here so the underflow check is re-planned to simulation.): no simulation
+    results; hardware (uart_tests:soak) is pending: no bring-up result'
+- about: REQ-13
+  text: 'REQ-13 has no passing evidence for every proof method: simulation (p5_bench.test_slow_read_stall) is pending: no
+    simulation results'
+- about: REQ-14
+  text: 'REQ-14 has no passing evidence for every proof method: simulation (p5_bench.test_slow_read_stall) is pending: no
+    simulation results; hardware (uart_tests:slow_read) is pending: no bring-up result'
+- about: REQ-15
+  text: 'REQ-15 has no passing evidence for every proof method: simulation (p5_bench.test_inject) is pending: no simulation
+    results; hardware (uart_tests:inject) is pending: no bring-up result'
+- about: REQ-16
+  text: 'REQ-16 has no passing evidence for every proof method: simulation (p5_bench.test_inject) is pending: no simulation
+    results'
+- about: REQ-17
+  text: 'REQ-17 has no passing evidence for every proof method: simulation (p5_bench.test_clear) is pending: no simulation
+    results'
+- about: REQ-34
+  text: 'REQ-34 has no passing evidence for every proof method: simulation (p5_bench.test_clear) is pending: no simulation
+    results'
+- about: REQ-35
+  text: 'REQ-35 has no passing evidence for every proof method: simulation (p5_bench.test_clear) is pending: no simulation
+    results'
+- about: REQ-18
+  text: 'REQ-18 has no passing evidence for every proof method: simulation (p5_bench.test_clear) is pending: no simulation
+    results'
+- about: REQ-19
+  text: 'REQ-19 has no passing evidence for every proof method: simulation (p5_bench.test_clear) is pending: no simulation
+    results; hardware (uart_tests:snapshot) is pending: no bring-up result'
+- about: REQ-20
+  text: 'REQ-20 has no passing evidence for every proof method: simulation (p5_bench.test_clear) is pending: no simulation
+    results'
+- about: REQ-21
+  text: 'REQ-21 has no passing evidence for every proof method: simulation (p5_bench.test_counter_width) is pending: no
+    simulation results; formal (p5_bench.test_counter_width) is pending: re-planned from formal to simulation (SymbiYosys
+    is not installed here so counter width is re-planned to simulation.): no simulation results'
+- about: REQ-22
+  text: 'REQ-22 has no passing evidence for every proof method: simulation (p5_bench.test_slow_read_stall) is pending: no
+    simulation results; formal (p5_bench.test_slow_read_stall) is pending: re-planned from formal to simulation (SymbiYosys
+    is not installed here so the OCC_MAX bound is re-planned to simulation.): no simulation results'
+- about: REQ-23
+  text: 'REQ-23 has no passing evidence for every proof method: hardware (uart_tests:run) is pending: no bring-up result'
+- about: REQ-24
+  text: 'REQ-24 has no passing evidence for every proof method: simulation (p5_bench.test_register_basics) is pending: no
+    simulation results; analysis (post_synth:post_synth_resources_in_range) is pending: no flow gates result'
+- about: REQ-25
+  text: 'REQ-25 has no passing evidence for every proof method: analysis (post_synth:post_synth_resources_in_range) is pending:
+    no flow gates result'
+- about: REQ-32
+  text: 'REQ-32 has no passing evidence for every proof method: analysis (post_synth:post_synth_resources_in_range) is pending:
+    no flow gates result'
+- about: REQ-26
+  text: 'REQ-26 has no passing evidence for every proof method: analysis (post_route:setup) is pending: no flow gates result'
+- about: REQ-33
+  text: 'REQ-33 has no passing evidence for every proof method: analysis (post_route:setup) is pending: no flow gates result'
+- about: REQ-27
+  text: 'REQ-27 has no passing evidence for every proof method: analysis (post_route:setup) is pending: no flow gates result'
+- about: REQ-28
+  text: 'REQ-28 has no passing evidence for every proof method: analysis (post_synth:post_synth_resources_in_range) is pending:
+    no flow gates result'
+- about: E1
+  text: 'review evidence is partial: the specification and the architecture were approved automatically, with no human review
+    (review off; the interview oracle claude-sonnet-5-5 only answered the interview questions); the interview asked 8 questions,
+    0 answered and 8 defaulted'
+- about: E2
+  text: 'simulation evidence is partial: verification reached V1 of V3 (the run asked for V2); the checks that did not pass
+    or did not run are listed in the evidence row'
+- about: rtl-design-creation
+  text: 'stage rtl-design-creation did not pass its gates in this run; at its last visit: lint not passing FAIL simulate
+    not passing FAIL standards STD-LATCH-01: not checked (no build.yaml top or sources to check) FAIL standards STD-LOOP-01:
+    not checked (no build.yaml top or sources to check) FAIL standards STD-CDC-01: architecture.yaml:1: crossings[0]: inline_in
+    p5_async_fifo_soak is not a module of this design or the shell FAIL standards STD-CDC-01: architecture.yaml:1: crossings[1]:
+    ...'
+- about: constraints
+  text: 'stage constraints was not run: the run stopped before this stage (stage 2 visited more than 6 times; last failing
+    gate: lint, simulate, design standards, verification V2; owned by the rtl/tests role; last failing assertion: V2 seeds_run:
+    no seeded results: read runs/20261125-143655-7b11/p5_async_fifo/build/verif/sim/seed*/results.xml and found none. The
+    gate expects runs/20261125-143655-7b11/p5_async_fifo/build/verif/sim/seed<N>/results.xml, one directory per ; the same
+    failure on 6 consecutive visits)'
+- about: synthesis
+  text: 'stage synthesis was not run: the run stopped before this stage (stage 2 visited more than 6 times; last failing
+    gate: lint, simulate, design standards, verification V2; owned by the rtl/tests role; last failing assertion: V2 seeds_run:
+    no seeded results: read runs/20261125-143655-7b11/p5_async_fifo/build/verif/sim/seed*/results.xml and found none. The
+    gate expects runs/20261125-143655-7b11/p5_async_fifo/build/verif/sim/seed<N>/results.xml, one directory per ; the same
+    failure on 6 consecutive visits)'
+- about: implementation
+  text: 'stage implementation was not run: the run stopped before this stage (stage 2 visited more than 6 times; last failing
+    gate: lint, simulate, design standards, verification V2; owned by the rtl/tests role; last failing assertion: V2 seeds_run:
+    no seeded results: read runs/20261125-143655-7b11/p5_async_fifo/build/verif/sim/seed*/results.xml and found none. The
+    gate expects runs/20261125-143655-7b11/p5_async_fifo/build/verif/sim/seed<N>/results.xml, one directory per ; the same
+    failure on 6 consecutive visits)'
+- about: timing-closure
+  text: 'stage timing-closure was not run: the run stopped before this stage (stage 2 visited more than 6 times; last failing
+    gate: lint, simulate, design standards, verification V2; owned by the rtl/tests role; last failing assertion: V2 seeds_run:
+    no seeded results: read runs/20261125-143655-7b11/p5_async_fifo/build/verif/sim/seed*/results.xml and found none. The
+    gate expects runs/20261125-143655-7b11/p5_async_fifo/build/verif/sim/seed<N>/results.xml, one directory per ; the same
+    failure on 6 consecutive visits)'
+- about: power-closure
+  text: 'stage power-closure was not run: the run stopped before this stage (stage 2 visited more than 6 times; last failing
+    gate: lint, simulate, design standards, verification V2; owned by the rtl/tests role; last failing assertion: V2 seeds_run:
+    no seeded results: read runs/20261125-143655-7b11/p5_async_fifo/build/verif/sim/seed*/results.xml and found none. The
+    gate expects runs/20261125-143655-7b11/p5_async_fifo/build/verif/sim/seed<N>/results.xml, one directory per ; the same
+    failure on 6 consecutive visits)'
+- about: drc-closure
+  text: 'stage drc-closure was not run: the run stopped before this stage (stage 2 visited more than 6 times; last failing
+    gate: lint, simulate, design standards, verification V2; owned by the rtl/tests role; last failing assertion: V2 seeds_run:
+    no seeded results: read runs/20261125-143655-7b11/p5_async_fifo/build/verif/sim/seed*/results.xml and found none. The
+    gate expects runs/20261125-143655-7b11/p5_async_fifo/build/verif/sim/seed<N>/results.xml, one directory per ; the same
+    failure on 6 consecutive visits)'
+- about: configuration-and-debug
+  text: 'stage configuration-and-debug was not run: the run stopped before this stage (stage 2 visited more than 6 times;
+    last failing gate: lint, simulate, design standards, verification V2; owned by the rtl/tests role; last failing assertion:
+    V2 seeds_run: no seeded results: read runs/20261125-143655-7b11/p5_async_fifo/build/verif/sim/seed*/results.xml and
+    found none. The gate expects runs/20261125-143655-7b11/p5_async_fifo/build/verif/sim/seed<N>/results.xml, one directory
+    per ; the same failure on 6 consecutive visits)'
+- about: formal
+  text: 'formal checks were planned for REQ-11, REQ-12, REQ-21, REQ-22 and did not run; each was replaced by a simulation
+    check (verif/testplan.yaml replan). Reason recorded: SymbiYosys is not installed here so the overflow check is re-planned
+    to simulation with a full FIFO stall.'
+- about: resources
+  text: 'resources not measured: no current Vivado build of this design has been recorded'
+- about: timing
+  text: 'timing not measured: no current Vivado build of this design has been recorded'
+- about: power
+  text: 'power not measured: no current Vivado build of this design has been recorded'
+- about: latency
+  text: 'latency not measured: the run measured no latency; the spec''s latency promise is checked only by the benches'
+- about: throughput
+  text: 'throughput not measured: the run measured no throughput'
+- about: xdc_vs_spec
+  text: design.xdc constrains only clk_25 (pin C3, 40 ns), led, and sfp_tx_disable. It has no constraint for gt_refclk0_p/n,
+    no clk_gt156 clock and no clock-group or max-delay between the clocks, although spec.yaml and ARCHITECTURE.md promise
+    them (REQ-26). The XDC names the 25 MHz port clk_25, while the spec names it clk_c3. The XDC is what was built.
+- about: architecture_inconsistency
+  text: The gate failure STD-CDC-01 reports that architecture.yaml names inline_in p5_async_fifo_soak, which is not a module
+    of the design or shell. The crossing description needs correcting before the design gates can pass.
+- about: reset_values
+  text: Every register resets to the value in the register table; BUILD reads 0 in simulation because USR_ACCESSE2 is not
+    simulated. Unmapped addresses read 0 and ignore writes (spec.yaml, not checked against RTL, as no simulation ran).
+- about: control_priorities
+  text: Per the interview defaults, which no review confirmed, CLEAR written while RUN is 1 is ignored and does not stay
+    set. INJECT written while RUN is 0 stays pending and flips bit 0 of the first word received after RUN. RUN to 0 stops
+    both sides and CLEAR flushes the FIFO.
+- about: snapshot_semantics
+  text: Registers 0x014 to 0x02C return the snapshot values, not live counters, so a SNAPSHOT write is needed before each
+    read. The reader-side counters arrive through a request/acknowledge handshake, so they are stable only a few clk_25
+    clocks after the write. A read inside that window may give the older values.
+- about: latency_count
+  text: The spec promises h_rdata within 2 clk_25 clocks of h_re and a write effect 1 clock after h_we. These were not counted
+    from the RTL and were not simulated, so they are unconfirmed.
+- about: occ_max_side
+  text: OCC_MAX is the write-side fill (write pointer minus the synchronised read pointer), a conservative estimate that
+    can differ from the read-side fill by a few words. This was an assumption of the run.
+next_steps:
+- Fix the rtl-design-creation failures first. Make the bench run through flow.cocotb_run.run once per seed (1, 2, 3) so
+  the per-seed results.xml files appear under build/verif/sim, correct the lint and simulate failures, and correct the architecture.yaml
+  crossing that names p5_async_fifo_soak.
+- Re-run the simulation and the verification gates. When cover properties and functional bins are both reported, compare
+  the cover results with the functional coverage before adding any new stimulus.
+- Add the missing constraints to design.xdc (the gt_refclk0 clock at 156.25 MHz and the asynchronous clock groups or max-delay
+  between clk_25 and clk_gt156) and reconcile the port name clk_25 with the spec's clk_c3.
+- Install a formal tool or accept the simulation replans for REQ-11, REQ-12, REQ-21 and REQ-22, and record that decision.
+- With the gates passing, resume with python -m agent resume to run constraints, synthesis and implementation, then measure
+  resources, timing and power.
+- Plan the hardware bring-up tests (id, build, scratch, run, soak, slow_read, inject, snapshot) and run them once a bitstream
+  exists.
+open_questions:
+- Should led[0] and led[1] show RUN and the sticky error flag, as assumed by the run? The request does not define them.
+- Should INJECT written while RUN is 0 stay pending, as defaulted, or be ignored?
+history:
+- date: '2026-11-25'
+  brief: agent run
+  note: 'produced by the agent graph; stages that passed: clarify, board-and-device-planning'
+agent_run:
+  run_id: 20261125-143655-7b11
+  record: runs/20261125-143655-7b11/summary.json
+  model: claude-sonnet-5-5
+  harness: deepagents
+  stop: 'stage 2 visited more than 6 times; last failing gate: lint, simulate, design standards, verification V2; owned
+    by the rtl/tests role; last failing assertion: V2 seeds_run: no seeded results: read runs/20261125-143655-7b11/p5_async_fifo/build/verif/sim/seed*/results.xml
+    and found none. The gate expects runs/20261125-143655-7b11/p5_async_fifo/build/verif/sim/seed<N>/results.xml, one directory
+    per ; the same failure on 6 consecutive visits'
+  loops: 9
+  turns: 104
+  tokens: 3414979
+  wall_s: 1865.1
+  cost_usd: 4.039232
+state:
+  stage: spec
+  gates:
+    clarify: pass
+    board-and-device-planning: pass
+    rtl-design-creation: fail
+    constraints: not-run
+    synthesis: not-run
+    implementation: not-run
+    timing-closure: not-run
+    power-closure: not-run
+    drc-closure: not-run
+    configuration-and-debug: not-run
+  vivado: '2026.1'
+  kb_pin: 5e2eab8
+  build_id: null
+  evidence_vivado: none

@@ -1,6 +1,6 @@
 "use strict";
 (function () {
-  var PAGES = [["project", "Project"], ["timing", "Timing"], ["runs", "Runs"], ["live", "Live"], ["start", "Start"], ["board", "Board"], ["measure", "Measurements"], ["trace", "Traceability"], ["health", "Health"], ["models", "Models"]];
+  var PAGES = [["project", "Project"], ["timing", "Timing"], ["runs", "Runs"], ["live", "Live"], ["start", "Start"], ["permissions", "Permissions"], ["board", "Board"], ["measure", "Measurements"], ["trace", "Traceability"], ["health", "Health"], ["models", "Models"]];
   var main = document.getElementById("main");
   var state = { theme: "dark", scope: {}, request: "", project: null, measureTab: "eye", capA: null, capB: null, session: 0, lastFocus: null };
 
@@ -497,11 +497,119 @@
       p.audit_tail.length ? table(["tool", "stage", "ok", "result"], p.audit_tail.slice().reverse().map(function (a) { return [a.tool, a.stage || "", a.refused ? "refused" : a.ok === null ? "" : a.ok ? "ok" : "failed", a.line]; })) : h("p", { class: "mute" }, "The audit log has no rows yet."),
       h("p", { class: "src" }, "read from " + p.source.dir + " (" + p.source.files.join(", ") + "); nothing is written"));
   }
+  /* ---------- stage 3: plain-words status, requests, questions, console (brief 182) ---------- */
+  function statusPanel(box, s) {
+    box.textContent = "";
+    var rows = [["Verification profile", s.profile ? s.profile.profile + (Object.keys(s.profile.overrides).length ? " with overrides " + Object.keys(s.profile.overrides).map(function (k) { return k + "=" + s.profile.overrides[k].value; }).join(", ") : " (no overrides)") + ", set by " + s.profile.set_by : "not recorded (a run from before profiles)"], ["Done", s.done], ["Doing now", s.doing], ["Next", s.next], ["Blocked or waiting", s.blocked.length ? s.blocked.join("; ") : "nothing"], ["Cost", s.cost_line]];
+    add(box, [h("h3", null, "What is happening"),
+      h("dl", null, rows.map(function (r) { return [h("dt", null, r[0]), h("dd", null, r[1])]; })),
+      h("p", { class: "src" }, "Written from the run's records by code, not by a model. Sentence built " + age(Math.round(Math.max(0, Date.now() / 1000 - s.built_at))) + "; it changes when a stage ends or a request changes, and at least every " + s.refresh_min + " min.")]);
+    if (s.pending && s.pending.kind === "permission") {
+      var pout = h("div", { "aria-live": "polite" });
+      function answerPerm(v) {
+        if (!confirm((v === "allow" ? "Allow these actions and resume run " : "Deny these actions (the run stops) for run ") + s.id + "? " + (v === "allow" ? "It resumes with the usual guards (usage check and a heavy slot)." : ""))) return;
+        post("/api/run/answer", { id: s.id, answer: v, confirm: "answer" }).then(function (j) { pout.textContent = j.ok ? (v === "allow" ? "Resumed: " : "Answered, the run stops: ") + j.id : "Not resumed: " + (j.refused || "refused"); });
+      }
+      add(box, h("div", { class: "banner", id: "perm-question" }, h("strong", null, "The agent asks permission (mode " + (s.pending.mode || "?") + ", stage " + s.pending.stage + " " + (s.pending.stage_name || "") + "): "),
+        h("ul", null, (s.pending.actions || []).map(function (a) { return h("li", null, h("strong", null, a.label), " (", h("code", null, a.action), "). ", a.plain); })),
+        h("p", { class: "mute" }, "Allow lets the run do these things for the rest of the run. Deny stops the run here, with the reason in its record. The answer is saved with the run, with the time."),
+        h("div", { class: "toolbar" }, h("button", { type: "button", on: { click: function () { answerPerm("allow"); } } }, "Allow and resume"), h("button", { type: "button", on: { click: function () { answerPerm("deny"); } } }, "Deny"), pout)));
+    }
+    if (s.pending && s.pending.kind === "question") {
+      var inp = h("input", { type: "text", value: s.pending.default || "", "aria-label": "Your answer", class: "fullw" }), out = h("div", { "aria-live": "polite" });
+      add(box, h("div", { class: "banner" }, h("strong", null, "The agent asks: "), s.pending.ask, h("p", { class: "mute" }, "Default: " + (s.pending.default || "(none)") + (s.pending.why ? ". Why it asks: " + s.pending.why : "")), inp,
+        h("button", { type: "button", class: "mt", on: { click: function () {
+          if (!confirm("Answer and resume run " + s.id + "? It resumes with the usual guards (usage check and a heavy slot).")) return;
+          post("/api/run/answer", { id: s.id, answer: inp.value, confirm: "answer" }).then(function (j) { out.textContent = j.ok ? "Resumed: " + j.id : "Not resumed: " + (j.refused || "refused"); });
+        } } }, "Answer and resume"), out));
+    }
+  }
+  function requestsPanel(runId) {
+    var kind = h("select", { "aria-label": "Kind of request" }, h("option", { value: "design" }, "Design change (free text)"), h("option", { value: "pause" }, "Pause at the next safe point"),
+      h("option", { value: "stop_after" }, "Stop after a stage"), h("option", { value: "abort" }, "Abort at the next safe point"));
+    var stage = h("select", { "aria-label": "Stage to stop after", hidden: true }), txt = h("textarea", { rows: 2, maxlength: 500, class: "fullw", "aria-label": "Design request", placeholder: "for example: use block RAM for the FIFO" }), out = h("div", { "aria-live": "polite" }), list = h("div", null);
+    function sync() { stage.hidden = kind.value !== "stop_after"; txt.hidden = kind.value !== "design"; }
+    kind.addEventListener("change", sync);
+    api("/api/live/run?id=" + encodeURIComponent(runId)).then(function (p) { p.stages.forEach(function (n, i) { stage.appendChild(h("option", { value: i }, i + " " + n)); }); });
+    sync();
+    var box = h("div", { class: "panel mt2" }, h("h3", null, "Ask the agent to change something"),
+      h("p", { class: "mute" }, "A request waits for the next safe point (the end of the stage that is running, after its gate and review); it is never applied in the middle of a tool call. A design change can rewind the run to an earlier stage if its words name one. Not available for design changes on scored runs."),
+      h("div", { class: "toolbar" }, kind, stage), txt,
+      h("button", { type: "button", class: "mt", on: { click: function () {
+        var k = kind.value, body = { id: runId, confirm: "request" };
+        if (k === "design") { body.kind = "design"; body.text = txt.value; } else { body.kind = "control"; body.action = k; if (k === "stop_after") body.stage = parseInt(stage.value, 10); }
+        var what = k === "design" ? "send this design request: " + txt.value : k === "stop_after" ? "stop after stage " + stage.value : k === "pause" ? "pause the run at the next safe point" : "abort the run at the next safe point";
+        if (!confirm("Queue a request to " + what + "?")) return;
+        post("/api/run/request", body).then(function (j) { out.textContent = j.ok ? "Queued " + j.request.id + ". Applies: " + j.request.applies + ". Affects: " + j.request.affects : "Not queued: " + (j.refused || j.error); if (j.ok) txt.value = ""; refresh(); });
+      } } }, "Queue request"), out, h("h3", { class: "mt2" }, "Requests"), list);
+    function refresh() {
+      api("/api/live/requests?id=" + encodeURIComponent(runId)).then(function (d) {
+        list.textContent = "";
+        add(list, d.requests.length ? table(["id", "request", "status", "applies at / outcome", "affects"], d.requests.slice().reverse().map(function (r) {
+          return [r.id, r.label, r.status, r.reason || r.applies, r.affects]; })) : h("p", { class: "mute" }, "No requests yet."));
+        if (d.mode.scored) add(list, h("p", { class: "banner" }, "Scored run: " + d.mode.why + ". Design requests and questions are refused; pause, stop-after and abort are allowed."));
+      });
+    }
+    refresh();
+    return { el: box, refresh: refresh };
+  }
+  function askPanel(runId) {
+    var q = h("textarea", { rows: 2, maxlength: 500, class: "fullw", "aria-label": "Your question", placeholder: "for example: why did stage 2 run twice?" }), out = h("div", { "aria-live": "polite" }), hist = h("div", null);
+    var box = h("div", { class: "panel mt2" }, h("h3", null, "Ask about this run"),
+      h("p", { class: "mute" }, "A separate read-only model call answers from this run's records only (the same redacted records as this page); it cannot change the design or the run. Each answer lists the records it read and cited. Questions have their own small cap, apart from the run's budget. An answer is a model's reading, not a record: check the cited records."),
+      q, h("button", { type: "button", class: "mt", on: { click: function () {
+        if (!confirm("Ask this question? It makes one model call (Claude Code on the subscription by default).")) return;
+        out.textContent = "Asking..."; post("/api/run/ask", { id: runId, question: q.value, confirm: "ask" }).then(function (j) {
+          out.textContent = j.ok ? "" : "Not asked: " + (j.refused || j.error); if (j.ok) q.value = ""; load();
+        }, function (e) { out.textContent = "Failed: " + e.message; });
+      } } }, "Ask"), out, hist);
+    function load() {
+      api("/api/live/requests?id=" + encodeURIComponent(runId)).then(function (d) {
+        hist.textContent = "";
+        add(hist, d.qa.slice().reverse().map(function (r) {
+          return h("div", { class: "qa" }, h("p", null, h("strong", null, "Q: "), r.q), h("p", null, h("strong", null, "A: "), r.a),
+            h("p", { class: "src" }, "records read: " + (r.records_read || []).join(", ") + "; cited: " + ((r.cited || []).join(", ") || "none") + "; " + (r.model || "") + "; cost " + (r.cost_usd !== null && r.cost_usd !== undefined ? "$" + Number(r.cost_usd).toFixed(3) + " (provider-reported)" : r.plan_estimate_usd ? "$" + Number(r.plan_estimate_usd).toFixed(3) + " (plan estimate)" : "not reported") + "; " + r.when));
+        }));
+        add(hist, h("p", { class: "src" }, "questions: $" + d.qa_spent_usd.toFixed(2) + " of $" + d.qa_cap_usd.toFixed(2) + " cap, " + d.qa.length + " of " + d.qa_max + " asked"));
+      });
+    }
+    load();
+    return { el: box, refresh: load };
+  }
+  function consolePanel(runId) {
+    var det = h("details", { class: "console mt2" }), sum = h("summary", null, "Console (closed by default; reads the run's output files only while open)"), pick = h("select", { "aria-label": "Step" }), lab = h("p", { class: "src" }), pre = h("pre", { class: "cmd console-out", tabindex: 0, "aria-label": "Console output" });
+    var offset = null, cur = null, timer = null, started = false;
+    add(det, [sum, h("p", { class: "mute" }, "The model's streamed output and tool calls (arguments summarised), Vivado's log, the simulator's and the formal tool's output, test runs. Prompts are never shown. Secrets are redacted. Scored or held-out runs show tool names and progress lines only."), h("div", { class: "toolbar" }, pick), lab, pre]);
+    function poll() {
+      if (!det.open || !document.body.contains(det)) return;                 // shut, or the page moved to another run: stop reading
+      api("/api/console/steps?id=" + encodeURIComponent(runId)).then(function (d) {
+        var keep = pick.value; pick.textContent = "";
+        d.steps.slice().reverse().forEach(function (x) { pick.appendChild(h("option", { value: x.id }, (x.active ? "running: " : "") + x.label + "  [" + x.id + "]")); });
+        if (!d.steps.length) { lab.textContent = "No console output yet."; return; }
+        if (!started) { pick.value = (d.steps.filter(function (x) { return x.active; })[0] || d.steps[d.steps.length - 1]).id; started = true; }
+        else if (keep) pick.value = keep;
+        if (pick.value !== cur) { cur = pick.value; offset = null; pre.textContent = ""; }
+        var q = "/api/console/read?id=" + encodeURIComponent(runId) + "&step=" + encodeURIComponent(cur) + (offset === null ? "" : "&offset=" + offset);
+        return api(q).then(function (r) {
+          lab.textContent = r.label + " | " + (r.active ? "running since " + new Date(r.started * 1000).toLocaleTimeString() : "ended") + " | source " + r.source + (r.restricted ? " | restricted: tool names and progress lines only" + (r.withheld ? " (" + r.withheld + " lines withheld)" : "") : "") + (r.tail_only && offset === null ? " | showing the last 256 KB" : "");
+          if (r.lines.length) { var atEnd = pre.scrollTop + pre.clientHeight >= pre.scrollHeight - 20; pre.textContent += r.lines.join("\n") + "\n"; if (pre.textContent.length > 400000) pre.textContent = pre.textContent.slice(-300000); if (atEnd) pre.scrollTop = pre.scrollHeight; }
+          offset = r.next_offset;
+        });
+      }).catch(function () {});
+    }
+    pick.addEventListener("change", poll);
+    det.addEventListener("toggle", function () { if (det.open) poll(); });
+    every(2000, function () { if (det.open && !document.hidden && document.body.contains(det)) poll(); });
+    return { el: det, refresh: function () {} };
+  }
   function pageLive() {
-    var root = h("div", null, h("h1", null, "Live"), loading()), sel = state.liveRun || null, detail = h("div", { "aria-live": "polite" });
+    var root = h("div", null, h("h1", null, "Live"), loading()), sel = state.liveRun || null, detail = h("div", { "aria-live": "polite" }), statusBox = h("div", { class: "panel mt2" }), panels = h("div", null), shown = null, parts = [];
     main.textContent = ""; main.appendChild(root);
     function loadDetail() {
-      if (!sel) { detail.textContent = ""; return; }
+      if (!sel) { detail.textContent = ""; statusBox.textContent = ""; panels.textContent = ""; shown = null; return; }
+      if (shown !== sel) { shown = sel; parts = [requestsPanel(sel), askPanel(sel), consolePanel(sel)]; panels.textContent = ""; add(panels, parts.map(function (x) { return x.el; })); }
+      else parts.forEach(function (x) { x.refresh(); });
+      api("/api/live/summary?id=" + encodeURIComponent(sel)).then(function (s) { statusPanel(statusBox, s); }, function () {});
       api("/api/live/run?id=" + encodeURIComponent(sel)).then(function (p) { detail.textContent = ""; add(detail, [h("h2", null, p.id + (p.name ? "  " + p.name : "")), runDetail(p)]); }, function (e) { detail.textContent = ""; add(detail, fail(e)); });
     }
     function load() {
@@ -516,7 +624,7 @@
           d.runs.length ? table(["run", "design", "status", "stage", "visit", "cost", "budget", "last write"], d.runs.map(function (r) {
             return { cells: [r.id, r.name || "", stat(r.status === "active" ? "ok" : r.status === "finished" ? "unknown" : "warn"), r.stage || "", r.visit === null ? "" : String(r.visit), usd(r.cost.reported_usd), usd(r.cost.budget_usd), age(r.last_write_age_s)], onclick: function () { sel = state.liveRun = r.id; loadDetail(); } };
           }), { num: [4] }) : h("p", null, "No run directories yet."), h("p", { class: "mute" }, "Click a run for its stages, gates and audit log.")]);
-        root.textContent = ""; add(root, [h("h1", null, "Live"), list, detail]); loadDetail();
+        root.textContent = ""; add(root, [h("h1", null, "Live"), list, statusBox, detail, panels]); loadDetail();
       }, function (e) { root.textContent = ""; add(root, [h("h1", null, "Live"), fail(e)]); });
     }
     load();
@@ -527,9 +635,36 @@
   function pageStart() {
     var root = h("div", null, h("h1", null, "Start"), loading()); main.textContent = ""; main.appendChild(root);
     api("/api/start/options").then(function (o) {
-      var f = state.start = state.start || { kind: "task", harness: "claude_code", effort: "medium", usd: o.default_usd, arms: ["H1"], components: [], request: "" };
+      var f = state.start = state.start || { kind: "task", harness: "claude_code", effort: "medium", usd: o.default_usd, arms: ["H1"], components: [], request: "", profile: "standard", switches: {}, settings: null };
       var out = h("div", { class: "panel", "aria-live": "polite" });
       function sel(label, opts, cur, on) { return h("label", null, label + " ", h("select", { on: { change: function () { on(this.value); } } }, opts.map(function (x) { return h("option", { value: x, selected: x === cur }, x); }))); }
+      function profileBlock() {
+        var cur = o.profiles.filter(function (p) { return p.name === f.profile; })[0] || o.profiles[0];
+        var ov = Object.keys(f.switches).length;
+        var drawer = h("details", { class: "drawer" }, h("summary", null, "Switches of this profile (" + (ov ? ov + " changed" : "none changed") + ")"),
+          h("p", { class: "mute" }, "Each switch is one verification method or reliability structure. A change is passed to the run as --set <switch>=<value> and recorded with the profile. A switch marked 'recorded only' is stored with the run; the flow does not run it yet. A value below a V3 floor is refused."),
+          o.switches.map(function (w) {
+            var base = cur.switches[w.name], val = (w.name in f.switches) ? f.switches[w.name] : base, ctl;
+            if (w.kind === "bool") ctl = h("input", { type: "checkbox", checked: !!val, on: { change: function () { setSw(w.name, this.checked, base); } } });
+            else if (w.kind === "int") ctl = h("input", { type: "number", min: String(w.lo), max: String(w.hi), value: String(val), on: { change: function () { setSw(w.name, parseInt(this.value, 10), base); } } });
+            else ctl = h("select", { on: { change: function () { setSw(w.name, this.value, base); } } }, w.choices.map(function (c) { return h("option", { value: c, selected: c === val }, c); }));
+            return h("label", { class: "inl", title: w.doc }, w.name + " ", ctl, h("span", { class: "mute" }, (val !== base ? "  (profile: " + base + ")" : "") + (w.wired ? "" : "  recorded only")));
+          }));
+        return h("fieldset", { class: "fullrow" }, h("legend", null, "Verification profile"),
+          sel("Profile", o.profiles.map(function (p) { return p.name; }), f.profile, function (v) { f.profile = v; f.switches = {}; render(); }),
+          h("p", null, cur.summary), h("p", { class: "mute" }, "Expected " + cur.extra_time), drawer);
+      }
+      function setSw(name, v, base) { if (v === base) delete f.switches[name]; else f.switches[name] = v; render(); }
+      function settingsNote() {
+        return h("p", { class: "mute fullrow" }, "Settings (board, part, speed grade, reference clocks, I/O standards, PHYs, interfaces, profile) are proposed by the agent from the task folder and asked as the first questions of the run: each with the proposed value as the default and its source as the reason. Answer them on the Live page; a setting with no value must be given.");
+      }
+      function permPicker() {
+        var name = f.kind === "task" ? f.task : f.project, sv = (o.permissions.defaults[name] || o.permissions.defaults[""] || {});
+        var opts = [h("option", { value: "", selected: !f.permMode }, "saved for this project: " + (sv.mode || "ask") + (sv.saved ? "" : " (the default)"))].concat(o.permissions.modes.map(function (m) { return h("option", { value: m.name, selected: f.permMode === m.name }, m.label + " (this run only)"); }));
+        return h("label", { class: "fullrow" }, "Permission mode ", h("select", { "aria-label": "Permission mode", on: { change: function () { f.permMode = this.value; render(); } } }, opts),
+          h("span", { class: "mute" }, "  " + (o.permissions.modes.filter(function (m) { return m.name === (f.permMode || sv.mode || "ask"); })[0] || { plain: "" }).plain + " Set per project on the "), h("a", { href: "#/permissions" }, "Permissions page"), ".");
+      }
+      var go = null;
       function render() {
         var models = o.models[f.harness] || [];
         if (models.indexOf(f.model) < 0) f.model = models[0] || "";
@@ -537,7 +672,7 @@
         if (f.kind === "task") {
           if (!f.task) f.task = o.tasks[0];
           if (!f.board) f.board = o.boards.indexOf("nexys_a7_100t") >= 0 ? "nexys_a7_100t" : o.boards[0];
-          fields.push(sel("Task", o.tasks, f.task, function (v) { f.task = v; }), sel("Board", o.boards, f.board, function (v) { f.board = v; }),
+          fields.push(sel("Task", o.tasks, f.task, function (v) { f.task = v; render(); }), sel("Board", o.boards, f.board, function (v) { f.board = v; render(); }),
             h("fieldset", null, h("legend", null, "Harness arms (none ticked = the A0 baseline)"), o.arms.map(function (a) { return h("label", { class: "inl" }, h("input", { type: "checkbox", checked: f.arms.indexOf(a) >= 0, on: { change: function () { var i = f.arms.indexOf(a); if (this.checked && i < 0) f.arms.push(a); if (!this.checked && i >= 0) f.arms.splice(i, 1); } } }), a); }), h("p", { class: "mute" }, o.arm_note)));
         } else {
           var names = o.projects.map(function (p) { return p.name; });
@@ -547,12 +682,15 @@
             h("fieldset", null, h("legend", null, "Components the request may touch (none ticked: the agent resolves the scope from the request)"), cl.map(function (c) { return h("label", { class: "inl" }, h("input", { type: "checkbox", checked: f.components.indexOf(c.name) >= 0, on: { change: function () { var i = f.components.indexOf(c.name); if (this.checked && i < 0) f.components.push(c.name); if (!this.checked && i >= 0) f.components.splice(i, 1); } } }), c.name); })),
             h("label", null, "Change request ", h("input", { type: "text", class: "fullw", value: f.request, maxlength: 400, on: { input: function () { f.request = this.value; } } })));
         }
+        if (f.kind === "task") { fields.push(profileBlock(), settingsNote()); }
         fields.push(sel("Harness", ["claude_code", "deepagents"], f.harness, function (v) { f.harness = v; render(); }), sel("Model (from the resolved table)", models, f.model, function (v) { f.model = v; }),
           sel("Effort", o.efforts, f.effort, function (v) { f.effort = v; }),
+          permPicker(),
           h("label", null, "Budget (USD, at most " + o.max_usd + ") ", h("input", { type: "number", min: "0.1", max: String(o.max_usd), step: "0.1", value: String(f.usd), on: { input: function () { f.usd = parseFloat(this.value); } } })));
-        var go = h("button", { type: "button", on: { click: function () {
+        go = h("button", { type: "button", on: { click: function () {
           var body = { kind: f.kind, harness: f.harness, model: f.model, effort: f.effort, max_usd: f.usd, confirm: "start" };
-          if (f.kind === "task") { body.task = f.task; body.board = f.board; body.arms = f.arms; } else { body.project = f.project; body.components = f.components; body.request = f.request; }
+          if (f.kind === "task") { body.task = f.task; body.board = f.board; body.arms = f.arms; body.profile = f.profile; body.switches = f.switches; } else { body.project = f.project; body.components = f.components; body.request = f.request; }
+          if (f.permMode) body.permissions = { mode: f.permMode, overrides: {} };
           if (!confirm("Start this run? It spends up to $" + f.usd + " (provider-reported), takes a heavy slot, and runs until it ends or you stop it.")) return;
           go.disabled = true; out.textContent = "Starting";
           post("/api/run/start", body).then(function (j) { out.textContent = ""; go.disabled = false;
@@ -581,6 +719,7 @@
       root.textContent = "";
       add(root, [h("h1", null, "Board"), h("p", { class: "mute" }, "Read-only actions on a board attached to this PC. Each one takes board.lock and a heavy slot, reads, and releases both. None of them programs a device, writes a register, sets a hardware property, or touches the laser, the flash or the eFUSE."),
         h("div", { class: "kpi" }, h("div", null, h("b", null, d.lock.held ? "held" : "free"), "board.lock" + (d.lock.held ? ": " + d.lock.held_by : ""))),
+        d.permission && d.permission.result === "deny" ? h("div", { class: "banner" }, h("strong", null, "Board actions are off. "), "The saved permission settings (" + d.permission.by + ") deny read-only board actions. Change them on the ", h("a", { href: "#/permissions" }, "Permissions page"), ".") : null,
         d.boards.length ? d.boards.map(function (b) {
           var res = h("div", { "aria-live": "polite" });
           var btns = b.actions.map(function (a) { return h("button", { type: "button", title: "takes board.lock and a heavy slot; a Vivado session of up to a minute", on: { click: function (ev) {
@@ -609,11 +748,11 @@
 
   /* ---------- traceability (brief 116) ---------- */
   var TRACE_METHODS = [["sim_test", "sim test"], ["uvm_test", "UVM"], ["assertion", "SVA"], ["formal", "formal"], ["formal_lean", "Lean"], ["coverage_bin", "coverage"], ["timing", "timing"], ["sim_measurement", "sim measure"], ["board_measurement", "board"], ["review", "review"]];
-  var TRACE_STATE = { verified: "verified", fail: "FAILS", not_run: "not run", stale: "stale", bounded: "bounded only", no_measurement: "no measurement", unapproved: "proved, statement not approved" };
+  var TRACE_STATE = { verified: "verified", fail: "FAILS", not_run: "not run", not_in_run: "not in the recorded run", skipped: "skipped in the recorded run", stale: "stale", bounded: "bounded only", no_measurement: "no measurement", unapproved: "proved, statement not approved" };
   var TRACE_TIER = { kernel_only: "kernel only", compiled_decision_procedure: "kernel plus a compiled decision procedure", unsound: "unsound" };
   var TRACE_LINK = { rtl_generated: "RTL-generated model", transcription_tested: "transcription tested", transcription_untested: "transcription untested", model_only: "no RTL link" };
   function traceStatus(i) {
-    var t = i.status === "unapproved" ? "statement not approved" : i.status.replace("_", " ");
+    var t = i.status === "unapproved" ? "statement not approved" : i.status === "not_in_run" ? "not in the recorded run" : i.status.replace("_", " ");
     if (i.method === "formal_lean" && i.lean) t += " [" + [i.status === "pass" ? (i.lean.approver_kind === "agent_delegated" ? "statement accepted on delegation, not a human approval" : "statement approved by a human") : "", TRACE_TIER[i.lean.tier] || "no build", TRACE_LINK[i.lean.rtl_link] || "no RTL link", (i.lean.build_source || "").replace(" (not re-run)", "")].filter(Boolean).join("; ") + "]";
     return t;
   }
@@ -665,8 +804,54 @@
       }), {})]);
   }
 
+  /* ---------- permissions (brief 222) ---------- */
+  function pagePermissions() {
+    var root = h("div", null, h("h1", null, "Permissions"), loading()); main.textContent = ""; main.appendChild(root);
+    var st = state.perm = state.perm || { project: "", draft: null, said: null };
+    function badge(v) { return h("span", { class: "st " + (v === "allow" ? "ok" : v === "ask" ? "warn" : "fail") }, v); }
+    function load() { st.draft = null; api("/api/permissions?project=" + encodeURIComponent(st.project)).then(draw, function (e) { root.textContent = ""; add(root, [h("h1", null, "Permissions"), fail(e)]); }); }
+    function draw(d) {
+      var cur = st.draft = st.draft || { mode: d.settings.mode, overrides: JSON.parse(JSON.stringify(d.settings.overrides || {})), ask: d.settings.ask_above_usd };
+      var out = h("div", { "aria-live": "polite" });
+      function preset(a) { return d.actions.filter(function (x) { return x.name === a; })[0].modes[cur.mode]; }
+      function now(a) { return cur.overrides[a] || preset(a); }
+      function redraw() { root.textContent = ""; draw(d); }
+      var modes = h("div", { class: "tabs", role: "group", "aria-label": "Permission mode" }, d.modes.map(function (m) {
+        return h("button", { type: "button", "aria-pressed": m.name === cur.mode ? "true" : "false", on: { click: function () { cur.mode = m.name; cur.overrides = {}; redraw(); } } }, m.label);
+      }));
+      var proj = h("select", { "aria-label": "Project", on: { change: function () { st.project = this.value; st.said = null; load(); } } },
+        [h("option", { value: "", selected: !st.project }, "default for every project")].concat(d.projects.map(function (n) { return h("option", { value: n, selected: n === st.project }, n); })));
+      var rows = d.actions.map(function (a) {
+        var ov = h("select", { "aria-label": "Override for " + a.label, on: { change: function () { if (this.value) cur.overrides[a.name] = this.value; else delete cur.overrides[a.name]; redraw(); } } },
+          [h("option", { value: "", selected: !cur.overrides[a.name] }, "as the mode")].concat(["allow", "ask", "deny"].map(function (v) { return h("option", { value: v, selected: cur.overrides[a.name] === v }, v); })));
+        return [h("div", null, h("strong", null, a.label), h("div", { class: "mono mute" }, a.name), a.board ? h("span", { class: "tag" }, "board or bench") : null), a.plain,
+          badge(a.modes.plan), badge(a.modes.ask), badge(a.modes.auto), badge(a.modes.full), ov, badge(now(a.name))];
+      });
+      var chg = Object.keys(cur.overrides).filter(function (k) { return cur.overrides[k] !== preset(k); });
+      var cli = "python -m agent run <spec.md> --permissions " + cur.mode + chg.map(function (k) { return " --" + cur.overrides[k] + " " + k; }).join("") + (cur.ask !== d.ask_above_usd ? " --ask-above-usd " + cur.ask : "");
+      var save = h("button", { type: "button", on: { click: function () {
+        if (!confirm("Save mode " + cur.mode + (chg.length ? " with " + chg.length + " override" + (chg.length > 1 ? "s" : "") : "") + " for " + (st.project || "every project") + "? Runs started after this use it; a run already going keeps its own.")) return;
+        post("/api/permissions/save", { project: st.project || null, mode: cur.mode, overrides: cur.overrides, ask_above_usd: cur.ask, confirm: "save" }).then(function (j) {
+          if (j.ok) { st.said = "Saved to " + j.file + "."; st.draft = null; root.textContent = ""; draw(j); } else out.textContent = "Not saved: " + (j.refused || "refused"); });
+      } } }, "Save for " + (st.project || "every project"));
+      root.textContent = "";
+      add(root, [h("h1", null, "Permissions"),
+        h("p", { class: "mute" }, "What a run may do without asking. A mode is a preset over the actions below; an override changes one action. The settings are saved per project in " + d.file + ", which the command line reads too; the command line wins."),
+        h("div", { class: "toolbar" }, h("label", null, "Project ", proj), h("span", { class: "mute" }, "settings now: " + d.settings.source)),
+        modes, h("p", null, d.modes.filter(function (m) { return m.name === cur.mode; })[0].plain),
+        h("div", { class: "scroll" }, table(["action", "what yes means", "Plan", "Ask", "Auto", "Full", "your override", "now"], rows, {})),
+        h("label", { class: "mt" }, "Ask before spending past this run total (USD) ", h("input", { type: "number", min: "0", max: "10", step: "0.1", value: String(cur.ask), on: { input: function () { cur.ask = parseFloat(this.value); }, change: redraw } })),
+        h("p", { class: "mute" }, "Spending always stops at the run's budget cap, and no run is given a cap above $" + d.hard_cap_usd + ". A run started from the Start page stops after stage 8, so it never reaches the board; Full auto reaches the board only from the command line."),
+        h("div", { class: "toolbar" }, save), out, st.said ? h("p", { role: "status" }, st.said) : null,
+        h("p", { class: "mute" }, "The same settings on the command line:"), h("pre", { class: "cmd" }, cli),
+        h("div", { class: "panel mt", id: "never" }, h("h2", { class: "flush" }, "Never allowed, in any mode"), h("p", { class: "mute" }, "These are checks in the code, run before any mode or override is read. There is nothing to switch."),
+          h("ul", null, d.never.map(function (n) { return h("li", null, n.rule); })))]);
+    }
+    load();
+  }
+
   /* ---------- router ---------- */
-  var ROUTES = { project: pageProject, timing: pageTiming, runs: pageRuns, live: pageLive, start: pageStart, board: pageBoard, measure: pageMeasure, trace: pageTrace, health: pageHealth, models: pageModels };
+  var ROUTES = { project: pageProject, timing: pageTiming, runs: pageRuns, live: pageLive, start: pageStart, permissions: pagePermissions, board: pageBoard, measure: pageMeasure, trace: pageTrace, health: pageHealth, models: pageModels };
   function route() {
     var k = (location.hash || "#/project").replace(/^#\//, "");
     if (!ROUTES[k]) k = "project";

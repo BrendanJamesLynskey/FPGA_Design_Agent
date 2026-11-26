@@ -2,7 +2,7 @@
 source: designs/b102_managed_pr/handover.yaml; human view: README.md; refresh: python -m flow.handover fresh designs/b102_managed_pr
 
 ## identity
-kind=demonstration produced_by=human part=xck26-sfvc784-2LV-c board=Kria KR260 top=pr_top tool=Vivado 2026.1
+kind=demonstration produced_by=session part=xck26-sfvc784-2LV-c board=Kria KR260 top=pr_top tool=Vivado 2026.1
 verified: not assessed: no requirements recorded (no verif/testplan.yaml), so nothing here is traced to a requirement (record: designs/b102_managed_pr/VERIFIED.md, designs/b102_managed_pr/verified.json; definition: docs/verified.md)
 
 ## summary
@@ -10,7 +10,7 @@ A KR260 timing study that exists to demonstrate stage 2 of a managed project (br
 not: a 10G Ethernet design; the block is the 64b/66b encoder and scrambler between a shift register and an XOR sink, with three input pins; a board design; it was not programmed, and the 250 MHz constraint is on the 25 MHz oscillator pin for a timing study; a claim that relocation preserves a block's timing everywhere; the results say where it does and where it does not
 
 ## state
-stage=built vivado=2026.1 kb_pin=93d158c build_id=7874befe
+stage=built vivado=2026.1 kb_pin=6185830 build_id=404f9049
 gates: import_checks=pass build_2026_1=pass boundary_checks=pass
 
 ## interface

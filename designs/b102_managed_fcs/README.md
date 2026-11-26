@@ -11,7 +11,7 @@ Not in scope:
 - a 10G Ethernet FCS check; the CRC block takes sixteen bits a clock, not the 64-bit word of the 96 design, because the open equivalence engines could not prove 64 bits
 - a board design; it was not programmed, and the 161 MHz clock constraint is on the 25 MHz oscillator pin for a timing study
 
-Kind: demonstration; written by hand. State: built. For an agent: [AGENT.md](AGENT.md).
+Kind: demonstration; written by a Claude Code session. State: built. For an agent: [AGENT.md](AGENT.md).
 
 <!-- prose:what -->
 <!-- /prose:what -->
@@ -63,7 +63,7 @@ Interfaces:
 | the scripted agent session on a scratch copy; needs Python with PyYAML and jsonschema | `python3 designs/b102_managed_fcs/scripts/demo_managed_session.py` | no | about 1 min |
 | build and run the gates; needs local Vivado 2026.1 and a heavy slot (take_heavy_slot.sh) | `flow/run_vivado.sh designs/b102_managed_fcs base` | yes | about 12 min |
 
-Tool: Vivado 2026.1. Build ID of the inputs at handover: `fd07818d` (`python flow/manifest.py show designs/b102_managed_fcs`: what a rebuild of today's sources and flow would carry; it changes when any build input or the flow changes, so it can differ from the build ID in an older evidence record). Knowledge-bank pin: `93d158c`.
+Tool: Vivado 2026.1. Build ID of the inputs at handover: `19e1ee08` (`python flow/manifest.py show designs/b102_managed_fcs`: what a rebuild of today's sources and flow would carry; it changes when any build input or the flow changes, so it can differ from the build ID in an older evidence record). Knowledge-bank pin: `6185830`.
 
 | File | What |
 |---|---|

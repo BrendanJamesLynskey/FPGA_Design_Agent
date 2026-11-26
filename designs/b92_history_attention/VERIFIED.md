@@ -4,7 +4,7 @@
 
 **Not assessed: no requirements recorded (no verif/testplan.yaml), so nothing here is traced to a requirement.**
 
-What the label means, what "verified" never means and how it is earned: [docs/verified.md](../../docs/verified.md). The label is computed from the testplan and the evidence files named below; it is never typed. Generated at git commit `a8359042aac759be0a4d6b05186709bdb7bb093c` (informational: the hashes in the manifest, not the commit, are what the CI check compares).
+What the label means, what "verified" never means and how it is earned: [docs/verified.md](../../docs/verified.md). The label is computed from the testplan and the evidence files named below; it is never typed. Generated at git commit `51dfe82191cd59c99857973f44b8b57ec9363fb5` (informational: the hashes in the manifest, not the commit, are what the CI check compares).
 
 ## What was checked for the label
 
@@ -40,9 +40,9 @@ Every file this record covers, with its SHA-256 at generation (3 files). `absent
 
 | File | SHA-256 |
 |---|---|
-| `designs/b92_history_attention/handover.yaml` | `811bfe63e136e4e51a896756968139ee78fbfe385a9c514a3e07b333f9caef3c` |
+| `designs/b92_history_attention/handover.yaml` | `7bb5687584462502ebb9d5e7632ed8f80eb364975629a0f888ef21bb63b73053` |
 | `designs/b92_history_attention/tests/test_b92_rtl.py` | `44817e5f086817d76a72c6f35233e9e8646d377c9b35740783cfd4d1ad1794b4` |
-| `results/b92/summary.json` | `784bedbf706f29595cdd4b589bfe8b4f110bd84ae4624431a47321fc62052d19` |
+| `results/b92/summary.json` | `d5bf9a75c6af7a01be6698c1262817f074feda5154a297fc881a56096157a318` |
 
 ## Reproduce
 

@@ -4,7 +4,7 @@
 
 **Not assessed: no requirements recorded (no verif/testplan.yaml), so nothing here is traced to a requirement.**
 
-What the label means, what "verified" never means and how it is earned: [docs/verified.md](../../docs/verified.md). The label is computed from the testplan and the evidence files named below; it is never typed. Generated at git commit `a8359042aac759be0a4d6b05186709bdb7bb093c` (informational: the hashes in the manifest, not the commit, are what the CI check compares).
+What the label means, what "verified" never means and how it is earned: [docs/verified.md](../../docs/verified.md). The label is computed from the testplan and the evidence files named below; it is never typed. Generated at git commit `51dfe82191cd59c99857973f44b8b57ec9363fb5` (informational: the hashes in the manifest, not the commit, are what the CI check compares).
 
 ## What was checked for the label
 
@@ -40,9 +40,9 @@ Every file this record covers, with its SHA-256 at generation (3 files). `absent
 
 | File | SHA-256 |
 |---|---|
-| `designs/b89_lutnet_gen/handover.yaml` | `8efb7b6619d78c1d293c1339da5d83f10a90ccbec8147d3031d19515f4d927d2` |
+| `designs/b89_lutnet_gen/handover.yaml` | `c4ee504adc462cbfaf4cc28064f3ce18b2c9408573d044fd8d07a7f2a76e6d1e` |
 | `designs/b89_lutnet_gen/tests/test_b89_rtl.py` | `3d9eb575046aa32b66d849e7a7aef544834538019beb309c4aace1af21202226` |
-| `results/b89/summary.json` | `48b73dd7e43cef15383113c4970fbdc272a9f4561e9b019431df3a2f81945ba4` |
+| `results/b89/summary.json` | `b124c120004668faef392a5f0c2bbb95fd258c201e6cba1ab2094d57a8490197` |
 
 ## Reproduce
 

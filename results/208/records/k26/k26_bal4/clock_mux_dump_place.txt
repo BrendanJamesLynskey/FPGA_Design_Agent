@@ -1,0 +1,48 @@
+PART	xck26-sfvc784-2LV-c	zynquplus	us
+MUX	g_bal4.u_l1a	BUFGCTRL	BUFGCTRL	2
+MUXIN	g_bal4.u_l1a	I0	g_us.u_mmcm	MMCME4_ADV	c_0
+MUXIN	g_bal4.u_l1a	I1	g_us.u_mmcm	MMCME4_ADV	c_1
+MUXOUT	g_bal4.u_l1a	c_0,c_1
+MUXOCLK	g_bal4.u_l1a	c_1	clkref
+MUXOCLK	g_bal4.u_l1a	c_0	clkref
+MUXCTL	g_bal4.u_l1a	CE0	1	VCC	VCC
+MUXCTL	g_bal4.u_l1a	CE1	1	VCC	VCC
+MUXCTL	g_bal4.u_l1a	IGNORE0	0	GND	GND
+MUXCTL	g_bal4.u_l1a	IGNORE1	0	GND	GND
+MUXCTL	g_bal4.u_l1a	S0	-	sel_IBUF[0]_inst/IBUFCTRL_INST	IBUFCTRL
+MUXCTL	g_bal4.u_l1a	S1	-	sel_IBUF[0]_inst/IBUFCTRL_INST	IBUFCTRL
+FANOUT	g_bal4.u_l1a	17
+INTER	g_bal4.u_l1a	A	0	-
+INTER	g_bal4.u_l1a	C	0	-
+MUX	g_bal4.u_l1b	BUFGCTRL	BUFGCTRL	2
+MUXIN	g_bal4.u_l1b	I0	g_us.u_mmcm	MMCME4_ADV	c_2
+MUXIN	g_bal4.u_l1b	I1	g_us.u_mmcm	MMCME4_ADV	c_3
+MUXOUT	g_bal4.u_l1b	c_2,c_3
+MUXOCLK	g_bal4.u_l1b	c_3	clkref
+MUXOCLK	g_bal4.u_l1b	c_2	clkref
+MUXCTL	g_bal4.u_l1b	CE0	1	VCC	VCC
+MUXCTL	g_bal4.u_l1b	CE1	1	VCC	VCC
+MUXCTL	g_bal4.u_l1b	IGNORE0	0	GND	GND
+MUXCTL	g_bal4.u_l1b	IGNORE1	0	GND	GND
+MUXCTL	g_bal4.u_l1b	S0	-	sel_IBUF[1]_inst/IBUFCTRL_INST	IBUFCTRL
+MUXCTL	g_bal4.u_l1b	S1	-	sel_IBUF[1]_inst/IBUFCTRL_INST	IBUFCTRL
+FANOUT	g_bal4.u_l1b	17
+INTER	g_bal4.u_l1b	A	0	-
+INTER	g_bal4.u_l1b	C	0	-
+MUX	g_bal4.u_l2	BUFGCTRL	BUFGCTRL	2
+MUXIN	g_bal4.u_l2	I0	g_bal4.u_l1a	BUFGCTRL	c_0,c_1
+MUXIN	g_bal4.u_l2	I1	g_bal4.u_l1b	BUFGCTRL	c_2,c_3
+MUXOUT	g_bal4.u_l2	c_0,c_1,c_2,c_3
+MUXOCLK	g_bal4.u_l2	c_3	clkref
+MUXOCLK	g_bal4.u_l2	c_2	clkref
+MUXOCLK	g_bal4.u_l2	c_1	clkref
+MUXOCLK	g_bal4.u_l2	c_0	clkref
+MUXCTL	g_bal4.u_l2	CE0	1	VCC	VCC
+MUXCTL	g_bal4.u_l2	CE1	1	VCC	VCC
+MUXCTL	g_bal4.u_l2	IGNORE0	0	GND	GND
+MUXCTL	g_bal4.u_l2	IGNORE1	0	GND	GND
+MUXCTL	g_bal4.u_l2	S0	-	sel_IBUF[2]_inst/IBUFCTRL_INST	IBUFCTRL
+MUXCTL	g_bal4.u_l2	S1	-	sel_IBUF[2]_inst/IBUFCTRL_INST	IBUFCTRL
+FANOUT	g_bal4.u_l2	17
+INTER	g_bal4.u_l2	A	0	-
+INTER	g_bal4.u_l2	C	0	-

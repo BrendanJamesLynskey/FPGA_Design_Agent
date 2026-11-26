@@ -4,7 +4,7 @@
 
 **Not assessed: no requirements recorded (no verif/testplan.yaml), so nothing here is traced to a requirement.**
 
-What the label means, what "verified" never means and how it is earned: [docs/verified.md](../../docs/verified.md). The label is computed from the testplan and the evidence files named below; it is never typed. Generated at git commit `a8359042aac759be0a4d6b05186709bdb7bb093c` (informational: the hashes in the manifest, not the commit, are what the CI check compares).
+What the label means, what "verified" never means and how it is earned: [docs/verified.md](../../docs/verified.md). The label is computed from the testplan and the evidence files named below; it is never typed. Generated at git commit `51dfe82191cd59c99857973f44b8b57ec9363fb5` (informational: the hashes in the manifest, not the commit, are what the CI check compares).
 
 ## What was checked for the label
 
@@ -42,7 +42,7 @@ Every file this record covers, with its SHA-256 at generation (7 files). `absent
 
 | File | SHA-256 |
 |---|---|
-| `designs/b64b_zedboard/handover.yaml` | `a70985c61b0b3ae90d0844af975a92b5774660b16f5e0c0acfbc9daffa69ef00` |
+| `designs/b64b_zedboard/handover.yaml` | `ad1b022ac2cbb450550ce24c125827dfbf750a77e68494ce32249df028112e44` |
 | `designs/b64b_zedboard/rtl/zb_accel.sv` | `aab15b8e30a9ddbbc977e38667e3b9b9f8ce45d7e54e02e0194180acdd2ef005` |
 | `designs/b64b_zedboard/rtl/zb_ctrl.sv` | `16dce53dabb5a8f754be8038254c02deb39c7ffef03210b1899b18bbd07fce32` |
 | `designs/b64b_zedboard/tb/zb_accel_tb.sv` | `12e8e58d33d1c4819aabec1dda57d76ae92a5f2ad94c8b82be07821834aa4e69` |

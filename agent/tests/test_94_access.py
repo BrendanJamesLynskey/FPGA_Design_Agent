@@ -123,9 +123,12 @@ NOT_RUNNING_THE_AGENT = {
     "results/36_skill_routing/measure.py": "an old measurement script under results/ (frozen record)",
     "debug_core/demo_t1.py": "a demo that replays recorded calls",
     "designs/b58a_trigger/host/nl_rule.py": "a host-side tool using only the model client",
+    "flow/requirements_report.py": "reads a design's run records and writes its requirements report (brief 210); no model, no tools",
+    "tools/requirements_rescore.py": "re-scores recorded interview questions with the risk rules (brief 210); read only; no model, no tools",
     "flow/doccheck.py": "documentation checker", "flow/mutate.py": "mutation tool", "flow/standards_check.py": "lint-like checker",
     "flow/tests/test_55_vhdl_rtl.py": "a test module", "flow/tests/fixtures/timing_exceptions/make_table.py": "fixture generator",
-    "tools/vhdl_translate.py": "translator", "benchmark/drills/lib/grade_io.py": "grader", "benchmark/drills/lib/grade_constraints.py": "grader",
+    "tools/vhdl_translate.py": "translator",
+    "tools/vhdl_parity_probe.py": "measures which readers of the RTL read VHDL (brief 153); imports the spec-test module for its RTL list only; no model, no tools", "benchmark/drills/lib/grade_io.py": "grader", "benchmark/drills/lib/grade_constraints.py": "grader",
     "tools/board_smoke.py": "writes a smoke design from a board file through the constraints writer; no model, no tools (brief 95)",
     "flow/managed_import.py": "import checks of a managed project's netlists (brief 102); no model, no tools",
     "flow/managed_rtl_import.py": "import checks of a managed project's third-party RTL blocks (brief 102 stage 3); no model, no tools",
@@ -221,6 +224,32 @@ def test_dotenv_comments_and_malformed_expiry(tmp_path):
 def test_session_oracle_and_project_spec_are_gated():
     for rel, fn in (("agent/core/session.py", "__post_init__"), ("agent/claude_code_arm/oracle.py", "cc_oracle"),
                     ("project/cli.py", "_spec")):
+        tree = ast.parse((ROOT / rel).read_text())
+        f = next(n for n in ast.walk(tree) if isinstance(n, ast.FunctionDef) and n.name == fn)
+        assert _calls_gate(ast.Module(body=f.body, type_ignores=[])), f"{rel}:{fn}"
+
+
+# --- brief 157: what runs without a key, and nothing more -------------------------------------------------------
+
+def test_only_help_doctor_models_show_and_design_dry_run_run_without_a_key():
+    """The exemptions are one function (``agent.newcomer.ungated``); a command line outside the documented two is refused. The
+    command lines themselves, run for real, are in ``test_157_newcomer_cli.py``."""
+    from types import SimpleNamespace
+    from agent import newcomer
+    yes = {("models", "show", False, "x"), ("models", "show", True, "x"), ("resume", None, True, "designs/b110_itch_ouch"),
+           ("resume", "show", True, "designs/b110_itch_ouch"), ("resume", "check", True, "designs/b110_itch_ouch")}
+    for cmd in ("run", "resume", "document", "review", "models", "latency", "improve", "project", "doctor"):
+        for action in (None, "show", "check"):
+            for dry in (False, True):
+                for rid in ("x", "designs/b110_itch_ouch"):
+                    got = newcomer.ungated(SimpleNamespace(cmd=cmd, action=action, dry_run=dry, run_id=rid)) is not None
+                    want = (cmd, action, dry, rid) in yes or (cmd == "models" and action == "show") or \
+                           (cmd == "resume" and dry and rid == "designs/b110_itch_ouch")
+                    assert got == want, (cmd, action, dry, rid)
+
+
+def test_a_model_calling_function_is_still_gated_inside_when_main_lets_a_command_through():
+    for rel, fn in (("agent/__main__.py", "pickup_cmd"), ("agent/__main__.py", "models_cmd")):
         tree = ast.parse((ROOT / rel).read_text())
         f = next(n for n in ast.walk(tree) if isinstance(n, ast.FunctionDef) and n.name == fn)
         assert _calls_gate(ast.Module(body=f.body, type_ignores=[])), f"{rel}:{fn}"

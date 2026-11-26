@@ -4,7 +4,7 @@
 
 **Not assessed: no requirements recorded (no verif/testplan.yaml), so nothing here is traced to a requirement.**
 
-What the label means, what "verified" never means and how it is earned: [docs/verified.md](../../docs/verified.md). The label is computed from the testplan and the evidence files named below; it is never typed. Generated at git commit `a8359042aac759be0a4d6b05186709bdb7bb093c` (informational: the hashes in the manifest, not the commit, are what the CI check compares).
+What the label means, what "verified" never means and how it is earned: [docs/verified.md](../../docs/verified.md). The label is computed from the testplan and the evidence files named below; it is never typed. Generated at git commit `51dfe82191cd59c99857973f44b8b57ec9363fb5` (informational: the hashes in the manifest, not the commit, are what the CI check compares).
 
 ## What was checked for the label
 
@@ -44,7 +44,7 @@ Every file this record covers, with its SHA-256 at generation (8 files). `absent
 | File | SHA-256 |
 |---|---|
 | `agent/tests/test_102_managed.py` | `66813399dc868a6dd6a3b3edc00059f71ccd698fd0f103458fbaa91e290b296f` |
-| `designs/b102_managed_fcs/handover.yaml` | `0a6597a470108364cd450d257de94bc2bc52d66816301d5777e81369693e28e7` |
+| `designs/b102_managed_fcs/handover.yaml` | `9a1602d819452fa57555ce4a5eeba1a2b4e3a13fd0c8df05b07234f539212757` |
 | `designs/b102_managed_fcs/rtl/fcs_ctrl.sv` | `2e11253b3f3351a8772a0fe5121044c4861e47f30b1788f34aef786c1d2e8bbb` |
 | `designs/b102_managed_fcs/rtl/fcs_top.sv` | `5cf2f929feb8d0e2a8d5198597e0cca8722d9bb997dc3d371d8bf312e4afd069` |
 | `results/102_managed/boundary.json` | `73755c3cf4a51c6834ac0cf7798fea55348be2cea781717682d0a9ea6594358f` |

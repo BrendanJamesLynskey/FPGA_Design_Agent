@@ -2,7 +2,7 @@
 source: designs/b100_rapidwright/handover.yaml; human view: README.md; refresh: python -m flow.handover fresh designs/b100_rapidwright
 
 ## identity
-kind=showcase produced_by=human part=xck26-sfvc784-2LV-c board=Kria KR260 top=chain_top (the chain); reloc_top (the block runs); s0_top (stage 0, also xc7a100tcsg324-1) tool=Vivado 2026.1
+kind=showcase produced_by=session part=xck26-sfvc784-2LV-c board=Kria KR260 top=chain_top (the chain); reloc_top (the block runs); s0_top (stage 0, also xc7a100tcsg324-1) tool=Vivado 2026.1
 verified: not assessed: no requirements recorded (no verif/testplan.yaml), so nothing here is traced to a requirement (record: designs/b100_rapidwright/VERIFIED.md, designs/b100_rapidwright/verified.json; definition: docs/verified.md)
 
 ## summary
@@ -10,7 +10,7 @@ Three RapidWright capabilities built as tested agent tools and compared with Viv
 not: a board run; no bitstream of the chain was made or loaded, and the chain's GT is a bare primitive without a reference clock or reset sequence; a claim that RapidWright's placer or router is better or worse than Vivado's in general; this is one chain, one part, our first-cut placer and a handful of period perturbations; the full brief 96 design; the chain is brief 96's own MAC and PCS RTL with a bare GT, not the GT Wizard design
 
 ## state
-stage=built vivado=2026.1 kb_pin=93d158c build_id=None
+stage=built vivado=2026.1 kb_pin=6185830 build_id=None
 gates: rapidwright_roundtrip=pass comparison_vivado_2026_1=pass
 
 ## interface

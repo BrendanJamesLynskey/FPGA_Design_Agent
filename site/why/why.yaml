@@ -1,0 +1,204 @@
+# The "Why FPGA Force" page (brief 193). Prose holds no typed numbers: every figure is a {name} read from a committed file.
+# A value is {source, expr}: expr is one of site/expertise.py's expressions (python3 -c "import expertise; print(expertise.EXPR)").
+# `expect: {path, is}` pins a value read by list position to the item it must be (the build fails if the order changes).
+# `derived` values are computed by site/why.py from the named committed file, by the stated formula.
+# Claims rest on what is merged into main; work still in review is left out or marked as not built.
+intro:
+  answer: "An FPGA engineer's flow, run by an agent and judged by evidence."
+  note: "It does the implementation work of an FPGA engineer and shows each result against your specification, with the simulators, Vivado and, where one is attached, a board, so your time goes to what the design must do and to whether the evidence is enough. This is the one-page summary: {drawer_n} drawers, each a claim that opens to what it means, an example from this project with its numbers, what it does not do yet, and where to read more. These are development results; no held-out score exists yet."
+diagram_caption: "Who does what. The two solid boxes are yours. A failed gate sends the work back to the agent; a gap in the evidence, or a wrong specification, sends it back to you."
+values:
+  # knowledge and practice
+  skills: {source: site/data/expertise.json, expr: 'get:skills_total'}
+  sections: {source: site/data/packs.json, expr: 'get:sections'}
+  stages: {source: site/data/agent_graph.json, expr: 'count@stages'}
+  uf_stages: {source: site/data/agent_graph.json, expr: 'count@stages:ultrafast=true'}
+  # areas of expertise
+  areas: {source: site/data/expertise.json, expr: 'count@areas'}
+  lv_knowledge: {source: site/data/expertise.json, expr: 'get:levels.0.areas'}
+  lv_measured: {source: site/data/expertise.json, expr: 'get:levels.1.areas'}
+  lv_checked: {source: site/data/expertise.json, expr: 'get:levels.2.areas'}
+  lv_agent: {source: site/data/expertise.json, expr: 'get:levels.3.areas'}
+  skills_used: {source: site/data/expertise.json, expr: 'get:skills_used'}
+  # handing over
+  max_questions: {source: agent/graph/interview.py, expr: 're:max_questions: int = (\d+)'}
+  # requirements strictness and the requirements report (brief 210)
+  rq_total: {source: results/210_requirements/t1_after_board.json, expr: 'get:total'}
+  rq_pass: {source: results/210_requirements/t1_after_board.json, expr: 'get:passed'}
+  rq_pending: {source: results/210_requirements/t1_after_board.json, expr: 'get:pending'}
+  rq_failed: {source: results/210_requirements/t1_after_board.json, expr: 'get:failed'}
+  rq_before_pass: {source: results/210_requirements/t1_before_board.json, expr: 'get:passed'}
+  rq_before_pending: {source: results/210_requirements/t1_before_board.json, expr: 'get:pending'}
+  rq_exit: {source: agent/graph/requirements.py, expr: 're:EXIT_REQUIREMENTS = (\d+)'}
+  rs_runs: {source: results/210_requirements/rescore.json, expr: 'get:groups.all.runs'}
+  rs_runs_high: {source: results/210_requirements/rescore.json, expr: 'get:groups.all.runs_with_a_high_default'}
+  rs_def: {source: results/210_requirements/rescore.json, expr: 'get:groups.all.questions_defaulted'}
+  rs_def_high: {source: results/210_requirements/rescore.json, expr: 'get:groups.all.defaulted_by_class.high'}
+  # verification: the clock-crossing example and the formal count
+  c_mut: {source: results/16_cdc_gate_2026_1/mutant_table.json, expr: 'count@rows:kind=mutant'}
+  c_ok: {source: results/16_cdc_gate_2026_1/mutant_table.json, expr: 'count@rows:kind=correct'}
+  c_tool: {source: results/16_cdc_gate_2026_1/mutant_table.json, expr: 'count@rows:kind=mutant,report_cdc_alone_flags=true'}
+  c_gate: {source: results/16_cdc_gate_2026_1/mutant_table.json, expr: 'count@rows:kind=mutant,gate_flags=true'}
+  c_false: {source: results/16_cdc_gate_2026_1/mutant_table.json, expr: 'count@rows:kind=correct,gate_flags=true'}
+  fn_pass: {source: site/data/verification.json, expr: 'get:content.values.fn_pass'}
+  fn_jobs: {source: site/data/verification.json, expr: 'get:content.values.fn_jobs'}
+  u_tool: {source: site/data/verification.json, expr: 'get:content.values.u_tool'}
+  t_cocotb: {source: site/data/verification.json, expr: 'get:content.values.t_cocotb'}
+  t_verilator: {source: site/data/verification.json, expr: 'get:content.values.t_verilator'}
+  m_n: {source: site/data/verification.json, expr: 'get:content.values.m_n'}
+  m_first: {source: site/data/verification.json, expr: 'get:content.values.m_first'}
+  m_final: {source: site/data/verification.json, expr: 'get:content.values.m_final'}
+  # traceability
+  tr_designs: {source: site/data/traceability.json, expr: 'get:content.total.designs'}
+  tr_reqs: {source: site/data/traceability.json, expr: 'get:content.total.requirements'}
+  tr_agreed: {source: site/data/traceability.json, expr: 'sum@content.designs:summary.agreement.agreed_human'}
+  tr_draft: {source: site/data/traceability.json, expr: 'sum@content.designs:summary.agreement.draft'}
+  b96_req: {source: site/data/traceability.json, expr: 'get:content.designs.2.summary.requirements', expect: {path: content.designs.2.design, is: b96_kr260_10g}}
+  b96_ver: {source: site/data/traceability.json, expr: 'get:content.designs.2.summary.by_state.verified', expect: {path: content.designs.2.design, is: b96_kr260_10g}}
+  b96_part: {source: site/data/traceability.json, expr: 'get:content.designs.2.summary.by_state.partially_verified', expect: {path: content.designs.2.design, is: b96_kr260_10g}}
+  b96_gaps: {source: site/data/traceability.json, expr: 'count@content.designs.2.gaps', expect: {path: content.designs.2.design, is: b96_kr260_10g}}
+  # the referee: two variants of one design (read from the worked-example data, each fact traced there to its record)
+  gp_gates: {source: site/data/kr260.json, expr: 'get:facts.gp_gates_all'}
+  gp_wns: {source: site/data/kr260.json, expr: 'get:facts.gp_wns'}
+  direct_cdc1: {source: site/data/kr260.json, expr: 'get:facts.direct_cdc1'}
+  direct_wns: {source: site/data/kr260.json, expr: 'get:facts.direct_wns'}
+  # measured, not claimed
+  exp_n: {source: site/data/story.json, expr: 'get:content.values.exp_n'}
+  v_win: {source: site/data/story.json, expr: 'get:content.values.v_win'}
+  v_mixed: {source: site/data/story.json, expr: 'get:content.values.v_mixed'}
+  v_null: {source: site/data/story.json, expr: 'get:content.values.v_null'}
+  v_negative: {source: site/data/story.json, expr: 'get:content.values.v_negative'}
+  v_inconclusive: {source: site/data/story.json, expr: 'get:content.values.v_inconclusive'}
+  v_stopped: {source: site/data/story.json, expr: 'get:content.values.v_stopped'}
+  prereg: {source: 'results/*/preregistration.md', expr: 'nfiles'}
+  # latency
+  all3_ttt: {source: site/data/kr260.json, expr: 'get:facts.all3_ttt'}
+  all3_L: {source: site/data/kr260.json, expr: 'get:facts.all3_L'}
+  all3_E: {source: site/data/kr260.json, expr: 'get:facts.all3_E'}
+  pred97_all3: {source: site/data/kr260.json, expr: 'get:facts.pred97_all3'}
+  fibre_ns: {source: site/data/kr260.json, expr: 'get:facts.fibre_ns'}
+  pred96c_lo: {source: site/data/kr260.json, expr: 'get:facts.pred96c_lo'}
+  pred96c_hi: {source: site/data/kr260.json, expr: 'get:facts.pred96c_hi'}
+  miss96c_lo: {source: site/data/kr260.json, expr: 'get:facts.miss96c_lo'}
+  miss96c_hi: {source: site/data/kr260.json, expr: 'get:facts.miss96c_hi'}
+  # your design, not only a new one
+  refused: {source: results/102_managed/demo_session.json, expr: 'count@steps:refused=true'}
+  # gets better
+  findings_n: {source: site/data/story.json, expr: 'get:content.values.findings_n'}
+  causes_n: {source: site/data/story.json, expr: 'get:content.values.causes_n'}
+  ip_n: {source: 'ip_lib/*/ip.yaml', expr: 'nfiles'}
+drawers:
+  - id: practice
+    title: An FPGA engineer's practice, built in
+    claim: It carries the working knowledge of the craft, not only the syntax of the language, and its flow follows AMD's own method stage by stage.
+    means:
+      - "Writing HDL that simulates is the easy part of FPGA work. What takes years is knowing what the tools will not tell you: which clock crossings need a synchroniser, why a reset style costs timing, what differs between a 7-series part and an UltraScale+ part, and in what order to close timing, power and design-rule problems."
+      - "The agent has that knowledge as a knowledge bank of short skills it loads when a task needs them, written in our own words from AMD's documentation and from measurements we made. AMD's published recommendations are the default: generated RTL follows them unless that is impossible, and a departure is named with its reason. The stages of the flow follow AMD's UltraFast methodology (UG949), and each stage ends in a gate that code checks."
+      - "Where advice differs by device family, the bank records the difference with its source and says whether a tool run confirmed it or only the guides do, so the agent does not apply a rule from one family to another."
+    example:
+      text: "The bank holds {skills} skills in {sections} sections, pinned to one commit. The flow has {stages} stages, {uf_stages} of them marked as UltraFast stages, each with its own exit gate. The family matrix records {fm_rows} differences between {fm_fam} device families, {fm_tool} of them confirmed by running the tool."
+      sources: [site/data/expertise.json, site/data/packs.json, site/data/agent_graph.json, site/data/family_diffs.json]
+    not_yet: "Depth follows what we own and have measured: Artix-7, Zynq-7000 and the Zynq UltraScale+ K26 are covered in depth; most other boards have a one-skill entry. The bank is private, so the page cites it by pin and does not show its text."
+    link: {href: expertise.html, label: "Areas of expertise, with the skills behind each"}
+  - id: verification
+    title: Every verification method that fits, in simulation and on the board
+    claim: A design is checked by several independent kinds of evidence, because each kind misses what another catches.
+    means:
+      - "A test the same model wrote shares that model's misreading of the specification, so the agent's own tests never count as a pass. The methods used are directed and self-checking simulation, constrained-random stimulus with functional and code coverage, UVM and pyuvm benches, cocotb tests, assertions and protocol checkers, formal proof (bounded model checking, k-induction and property-directed reachability, run with SymbiYosys and Yosys), Lean for selected proofs, mutation testing of the tests themselves, static and clock-crossing checks, and hardware in the loop on the board with instruments attached."
+      - "Each method is used where it can find something the others cannot. The verification page says, method by method, what it catches, what it cannot, and the measured evidence."
+    example:
+      text: "{c_mut} faulty clock-crossing designs were built, with {c_ok} correct ones for contrast. AMD's report_cdc on its own flagged {c_tool} of the {c_mut} faults. The flow's gate, which adds a structural check and an injected simulation, flagged {c_gate}, with {c_false} false alarms on the {c_ok} correct designs. Separately, {fn_pass} of {fn_jobs} formal jobs on the network blocks pass ({u_tool})."
+      sources: [results/16_cdc_gate_2026_1/mutant_table.json, site/data/verification.json]
+    not_yet: "Each method has been shown on some designs, not every method on every design. The formal runs are bounded for some blocks, and the verification page says which; the mutation figures come from hand-written faults on one reference design."
+    link: {href: verification.html, label: "How the designs are verified, method by method"}
+  - id: traceability
+    title: Traceable from your specification to the evidence
+    claim: Every requirement names how it will be shown to hold, and a table lists the evidence for each, with the gaps left visible.
+    means:
+      - "Each requirement in a specification carries an identifier and the kind of proof it needs. A traceability matrix then lists every check that covers it, computed from the recorded evidence files, not typed. A requirement with no passing evidence, evidence from the agent's own tests only, a missing method, or a result that is out of date shows as such."
+      - "Only a human agrees a requirement. The agent can propose requirements and draft the plan, but a requirement counts as agreed only when a person says so; the matrix records who agreed, and marks an agreement a person delegated to a named reviewer as delegated."
+      - "Every run of FPGA Force also writes a requirements report, REQUIREMENTS_REPORT.md at the design root: one row per requirement with where it came from (a line of your request, an answer to one of its questions, a default with its risk class, or a waiver you recorded), the method and the evidence as links, and a result of pass, fail or pending. Pending means the evidence does not exist yet, for example a board check before the visit. A requirement that rests on a default you did not confirm is marked, so a pass is never read as confirming a guess, and a requirement that a gate's fix broke is marked failed with the reason. One command, python -m flow.requirements_report, rebuilds it after a board run, and the pending hardware rows turn into pass or fail from the bring-up record with no other edit."
+    example:
+      text: "For the 10G trading path on the KR260 the matrix lists {b96_req} requirements: {b96_ver} verified and {b96_part} partially verified, with {b96_gaps} gaps listed, each saying what is missing or stale. Across all {tr_designs} designs in the repository the matrix covers {tr_reqs} requirements. The requirements report of the dimmer-counter design, built from its committed reference run, reads {rq_before_pass} of {rq_total} requirements passed with {rq_before_pending} pending before the board run, and {rq_pass} of {rq_total} passed with {rq_pending} pending and {rq_failed} failed after the bring-up record was added; the two still pending are the timing and resource checks, which need a build."
+      sources: [site/data/traceability.json, results/210_requirements/t1_before_board.json, results/210_requirements/t1_after_board.json]
+    not_yet: "Of those {tr_reqs} requirements, {tr_agreed} have been agreed by a human so far: {tr_draft} are drafts. The matrix therefore shows what the evidence covers, not yet that a person has accepted the specification. The requirements report is shown on a reference design, not yet on a board pilot's own results: the KR260 pilot's report replaces this example once its board results are in. Where a requirement came from is found by matching words against your request and the interview, so a requirement that matches neither is shown as unrecorded, not as a guess."
+    link: {href: traceability.html, label: "Every requirement against its checks"}
+  - id: handover
+    title: You choose how much to hand over
+    claim: You can leave the agent to work from a specification, or steer it at every stage, and the agent keeps a record of who did what.
+    means:
+      - "The interview is the first control. The agent asks about what the request leaves out, one question at a time, each with a proposed default and the reason for it, so a question you ignore has a recorded answer. Review is the second: when it is switched on, each stage ends with a page of its gates, files, timing and diagrams, and you can approve, edit with a prompt to one role, rewind to an earlier stage, or supply the architecture yourself."
+      - "How strict the interview is about an unanswered question is a setting, loose, standard or strict, separate from who answers. Each question gets a risk class: high if it changes behaviour, board safety or an interface others build against (a clock, a pin, a reset, a protocol, a number format, a rate), medium if it changes cost and not function, low if it is cosmetic. Loose fills every gap with its default and lists it. Standard does the same for low and medium, but a high-risk question must be answered or explicitly waived, or the run stops at the clarify stage with the list of what is needed and a distinct exit status, not a crash. Strict needs every question answered or waived. A waiver is a recorded decision: the question, the value chosen, who, when and why. In every level the handover carries a section, Assumptions you did not confirm, listing each defaulted question with its risk class, so even a loose run makes its guesses visible. At the standard and strict levels a fix that a gate asks for, such as pipelining a path, stops the run if it would break a requirement the request states; at loose it goes ahead and the requirements report marks that requirement failed."
+      - "A rewind restores the files and checkpoints of that stage after checking their hashes. A change you make by hand while the run is paused is found, committed under your name and gated again. The run always stops for a person before anything is programmed onto the board."
+      - "The Navigator, a local web page over the same command line, starts and stops a run, shows its live stage, cost and gates, and runs locked read-only board actions."
+    example:
+      text: "The interview asks at most {max_questions} questions. Review can pause the run after each of the {stages} stages. In every recorded development run review was off and the spec counted as signed off once no question was open; that is the hands-off end of the range. Re-scoring {rs_runs} recorded runs with the risk classes, {rs_def_high} of the {rs_def} questions the agent answered with its own default were high risk, and {rs_runs_high} of the {rs_runs} runs had at least one."
+      sources: [agent/graph/interview.py, site/data/agent_graph.json, docs/agent.md, results/210_requirements/rescore.json]
+    not_yet: "Answering interview questions and sending a request to a running agent from the Navigator is not built; today those go through the command line. A run nobody answers stays at the loose level by default, because at standard nearly every such run would stop at clarify; the standard level is the default only with a person answering (exit status {rq_exit} when a run stops for unanswered requirements). The re-scoring cannot show that a high-risk default caused a failure: almost every run had one, so there is nothing to contrast with. The risk class comes from rules on the question's words; the Clarifier's own prompt does not set one yet."
+    link: {href: agent.html, label: "The agent, its roles and a replayed run"}
+  - id: referee
+    title: Vivado is the referee
+    claim: Code reads the tools' reports and decides every stage exit; a model cannot argue a failed gate into a pass.
+    means:
+      - "A language model writes and repairs designs, but it never judges them. Each stage ends in a gate that reads Vivado 2026.1's reports, the simulators' results or a checker's output, and the controller moves on only when the gate says so. A failure goes back to the role that owns the fix, with a limit on visits so a run cannot loop for ever."
+      - "A failed gate stays a failed gate in the record. A variant that fails is reported as failed, not repaired in the write-up."
+    example:
+      text: "Two builds of the project's own elastic buffer for the KR260 differ in how its pointers cross between clock domains. The one that reads them directly met timing (worst setup slack +{direct_wns} ns) and was faster in simulation, but report_cdc listed {direct_cdc1} critical rows, its clock-crossing gates failed and it was rejected. The build that was kept has every one of its {gp_gates} flow gates true, worst setup slack +{gp_wns} ns, and no waiver."
+      sources: [site/data/kr260.json, site/worked/worked.yaml]
+    not_yet: "Gates judge what they are built to check. A property no gate covers is not judged, which is why the verification and traceability drawers matter as well. Vivado cannot run in the public continuous integration, so the Vivado results are committed records from the owner's machine."
+    link: {href: how.html, label: "The stages, the gates and the tools"}
+  - id: expertise
+    title: Many areas of expertise, each with its evidence
+    claim: Each area states how far its evidence goes, computed from committed files, and never claims more than they show.
+    means:
+      - "The agent's knowledge is grouped into areas such as clock crossings, constraints and timing closure, memory, AXI and the Zynq processing system, arithmetic and hardware in the loop. For each area the expertise page gives a level, computed from the items it holds: knowledge only, measured in Vivado, checked by the flow, or shown in agent runs. An area can be capped below its evidence, with the reason shown."
+      - "The level is a statement about evidence, not about quality. An area at the top level has been exercised in recorded agent runs; one at the bottom has skills in the bank and nothing measured yet."
+    example:
+      text: "Of {areas} areas, {lv_agent} are shown in agent runs, {lv_checked} are checked by the flow, {lv_measured} are measured in Vivado and {lv_knowledge} is knowledge only. The bank's {skills} skills include {skills_used} that the areas use."
+      sources: [site/data/expertise.json]
+    not_yet: "The area with knowledge only has no measured result behind it yet. Several areas at a higher level still list what has not been shown."
+    link: {href: expertise.html, label: "Every area with its level and gaps"}
+  - id: measured
+    title: Measured, not claimed
+    claim: Every number on the site names its record, nulls and negative results are published, and held-out evaluation is kept separate from development.
+    means:
+      - "A figure appears only if the build can read it from a committed result file; the site build fails when a number is not in the data. Experiments are written up with their nulls, their negative results and their stopped runs, because a result that is only reported when it is good teaches nothing."
+      - "Development tasks are used to find and fix the agent's faults, so their results are a record of the work. A separate held-out set is scored by hidden tests, with the method fixed before the first scored run. Board runs state their prediction before they run."
+    example:
+      text: "The how-it-was-built page records {exp_n} experiments: {v_win} wins, {v_mixed} mixed, {v_null} with no detectable effect, {v_negative} negative, {v_inconclusive} inconclusive and {v_stopped} stopped before any score was analysed. {prereg} results folders hold a pre-registration file."
+      sources: [site/data/story.json]
+    not_yet: "There is no held-out score yet: the first attempt was stopped before any result was analysed. The development results are not a score."
+    link: {href: story.html, label: "How the agent was built, with every experiment"}
+  - id: latency
+    title: Latency you can account for, clock by clock
+    claim: A latency figure states its start and end events, what lies on the path and how it was measured, so it can be compared only with like.
+    means:
+      - "The trading path on the KR260 has a latency budget, stage by stage, from the first bit of a frame arriving at the transceiver pins to the first bit of an order leaving them. The board figure is the loop time L minus the echo time E minus the fibre's own delay, counted in clocks of the transmit user clock from timestamps inside the FPGA."
+      - "Predictions are written down before the board run, and the misses are recorded with the hits."
+    example:
+      text: "Before the board run the loop time of the build with every latency cut was predicted at {pred97_all3} clocks, and the board measured {all3_L}, with an echo time of {all3_E}. That gives a board tick-to-trade of {all3_ttt} ns, with {fibre_ns} ns of fibre subtracted and the optical module's own delay not subtracted. An earlier prediction of {pred96c_lo} to {pred96c_hi} clocks for the base build was missed by {miss96c_lo} to {miss96c_hi}, and the miss is in the record."
+      sources: [site/data/kr260.json, docs/latency_definitions.md]
+    not_yet: "The counter resolves one clock and sits inside the FPGA, so the figure is not comparable with a wire-level benchmark. One board, one module and a fibre loopback were used."
+    link: {href: worked-example.html, label: "The worked example: one design from specification to board"}
+  - id: package
+    title: Works on your design, not only from scratch
+    claim: An existing design can be handed over with parts the agent may not touch, and the tool refuses the edits that would cross that line.
+    means:
+      - "A project is described by a manifest: which components are owned and open to change, which are frozen (a delivered netlist, say) and which are excluded. A request is resolved to the components it concerns, and the agent can write only inside that scope. A request that names a frozen part gets a question instead of an edit."
+      - "Imported blocks are checked against the supplier's own source, by simulation and by equivalence proof, so a change inside the delivered boundary is detected."
+    example:
+      text: "In a scripted session on the managed example, the request to make the CRC faster was answered with a question, because the CRC is frozen. A scoped request edited only the owned controller, and {refused} attempts to write the frozen netlist, an excluded block, the out-of-scope top, a port, a build source or the manifest were all refused."
+      sources: [results/102_managed/demo_session.json, docs/managed_projects.md]
+    not_yet: "The session is a script calling the agent's real tool surface; no model drove it, so it tests the rules and not a model's behaviour under them. The delivered block is narrow, and wider ones were not proved in the time allowed."
+    link: {href: inspect.html, label: "Where the implementation is and how to open it"}
+  - id: improves
+    title: It gets better with each project
+    claim: Each showcase ends with a review of where the agent fell short, a fix and a re-run, and what is learnt is written into the knowledge bank and the checks.
+    means:
+      - "Building a real design shows what the agent lacks: a tool it missed, a check that came too late, knowledge it did not have. After each showcase the shortfalls are listed and classed by cause. Each fix goes in as a change with a pull request, and the failed tasks are re-run to show the effect."
+      - "Measured results become knowledge-bank claims, so a later run can use them. The project's own library of reusable blocks grows the same way, each block with a declared parameter space and tests at several points."
+    example:
+      text: "The how-it-was-built page lists {findings_n} faults found in the agent and its checks, classed into {causes_n} causes and each fixed by a recorded pull request. The project's own IP library holds {ip_n} blocks."
+      sources: [site/data/story.json]
+    not_yet: "The library's implementation variants are measured out of context on Artix-7 only, and none has run on a board yet. The effect of the retrospectives on a held-out score is not measured."
+    link: {href: story.html, label: "The findings, their causes and their fixes"}

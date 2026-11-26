@@ -1,0 +1,237 @@
+{
+ "function": "fp_add",
+ "mutants": 27,
+ "valid": 27,
+ "killed": 27,
+ "survived": [],
+ "invalid": [],
+ "score_pct": 100.0,
+ "per_variant": {
+  "single_path": {
+   "valid": 19,
+   "killed": 19
+  },
+  "dual_path": {
+   "valid": 8,
+   "killed": 8
+  }
+ },
+ "results": [
+  {
+   "name": "sp_no_sticky",
+   "variant": "single_path",
+   "class": "connection",
+   "status": "killed",
+   "detail": "exhaustive {'EXP': 3, 'MAN': 2, 'SUBNORM': 1, 'STAGES': 0}",
+   "why": "the bits shifted out of the aligner are not kept as a sticky bit"
+  },
+  {
+   "name": "sp_sub_swapped",
+   "variant": "single_path",
+   "class": "operator",
+   "status": "killed",
+   "detail": "exhaustive {'EXP': 3, 'MAN': 2, 'SUBNORM': 1, 'STAGES': 0}",
+   "why": "add and subtract exchanged"
+  },
+  {
+   "name": "sp_zero_sign",
+   "variant": "single_path",
+   "class": "condition",
+   "status": "killed",
+   "detail": "exhaustive {'EXP': 3, 'MAN': 2, 'SUBNORM': 1, 'STAGES': 0}",
+   "why": "an exact cancellation takes the sign of the larger operand instead of +0"
+  },
+  {
+   "name": "sp_exponent_off",
+   "variant": "single_path",
+   "class": "constant",
+   "status": "killed",
+   "detail": "exhaustive {'EXP': 3, 'MAN': 2, 'SUBNORM': 1, 'STAGES': 0}",
+   "why": "the result exponent is one too small"
+  },
+  {
+   "name": "sp_no_daz",
+   "variant": "single_path",
+   "class": "condition",
+   "status": "killed",
+   "detail": "exhaustive {'EXP': 3, 'MAN': 2, 'SUBNORM': 0, 'STAGES': 2}",
+   "why": "flush-to-zero does not flush a subnormal first operand"
+  },
+  {
+   "name": "sp_eff_exp",
+   "variant": "single_path",
+   "class": "condition",
+   "status": "killed",
+   "detail": "exhaustive {'EXP': 3, 'MAN': 2, 'SUBNORM': 1, 'STAGES': 0}",
+   "why": "a subnormal larger operand keeps exponent 0 instead of 1"
+  },
+  {
+   "name": "sp_inf_inf_same",
+   "variant": "single_path",
+   "class": "condition",
+   "status": "killed",
+   "detail": "exhaustive {'EXP': 3, 'MAN': 2, 'SUBNORM': 1, 'STAGES': 0}",
+   "why": "infinity plus infinity of the same sign is NaN"
+  },
+  {
+   "name": "sp_nan_sign",
+   "variant": "single_path",
+   "class": "constant",
+   "status": "killed",
+   "detail": "exhaustive {'EXP': 3, 'MAN': 2, 'SUBNORM': 1, 'STAGES': 0}",
+   "why": "the canonical NaN has its sign set"
+  },
+  {
+   "name": "sp_align_clamp",
+   "variant": "single_path",
+   "class": "constant",
+   "status": "killed",
+   "detail": "exhaustive {'EXP': 3, 'MAN': 2, 'SUBNORM': 1, 'STAGES': 0}",
+   "why": "a very small operand is not shifted entirely into the sticky bit"
+  },
+  {
+   "name": "sp_rank1_operand",
+   "variant": "single_path",
+   "class": "connection",
+   "status": "killed",
+   "detail": "exhaustive {'EXP': 3, 'MAN': 2, 'SUBNORM': 0, 'STAGES': 2}",
+   "why": "the first rank register loses the larger operand"
+  },
+  {
+   "name": "sp_out_reg_or",
+   "variant": "single_path",
+   "class": "operator",
+   "status": "killed",
+   "detail": "exhaustive {'EXP': 3, 'MAN': 2, 'SUBNORM': 0, 'STAGES': 2}",
+   "why": "the output register accumulates instead of loading"
+  },
+  {
+   "name": "sp_rank2_sum",
+   "variant": "single_path",
+   "class": "connection",
+   "status": "killed",
+   "detail": "randomised {'EXP': 8, 'MAN': 23, 'SUBNORM': 1, 'STAGES': 3}",
+   "why": "the second rank register never loads the sum"
+  },
+  {
+   "name": "du_near_range",
+   "variant": "dual_path",
+   "class": "constant",
+   "status": "killed",
+   "detail": "exhaustive {'EXP': 3, 'MAN': 2, 'SUBNORM': 1, 'STAGES': 0}",
+   "why": "the near path is used for an exponent difference of 2, which its aligner does not handle"
+  },
+  {
+   "name": "du_far_shift2",
+   "variant": "dual_path",
+   "class": "constant",
+   "status": "killed",
+   "detail": "exhaustive {'EXP': 3, 'MAN': 2, 'SUBNORM': 1, 'STAGES': 0}",
+   "why": "the far path's two-place normalisation shifts one place"
+  },
+  {
+   "name": "du_far_test",
+   "variant": "dual_path",
+   "class": "condition",
+   "status": "killed",
+   "detail": "exhaustive {'EXP': 3, 'MAN': 2, 'SUBNORM': 1, 'STAGES': 0}",
+   "why": "the far path tests the wrong bit for a one-place shift"
+  },
+  {
+   "name": "du_near_align",
+   "variant": "dual_path",
+   "class": "constant",
+   "status": "killed",
+   "detail": "exhaustive {'EXP': 3, 'MAN': 2, 'SUBNORM': 1, 'STAGES': 0}",
+   "why": "the near path's one-place alignment shifts two places"
+  },
+  {
+   "name": "du_select_swapped",
+   "variant": "dual_path",
+   "class": "operator",
+   "status": "killed",
+   "detail": "exhaustive {'EXP': 3, 'MAN': 2, 'SUBNORM': 1, 'STAGES': 0}",
+   "why": "the path selector is inverted for the significand"
+  },
+  {
+   "name": "du_no_sticky",
+   "variant": "dual_path",
+   "class": "connection",
+   "status": "killed",
+   "detail": "exhaustive {'EXP': 3, 'MAN': 2, 'SUBNORM': 1, 'STAGES': 0}",
+   "why": "the far path's aligner does not keep a sticky bit"
+  },
+  {
+   "name": "pk_ties_down",
+   "variant": "single_path",
+   "class": "condition",
+   "status": "killed",
+   "detail": "exhaustive {'EXP': 3, 'MAN': 2, 'SUBNORM': 1, 'STAGES': 0}",
+   "why": "a tie always rounds down instead of to even"
+  },
+  {
+   "name": "pk_ties_up",
+   "variant": "dual_path",
+   "class": "condition",
+   "status": "killed",
+   "detail": "exhaustive {'EXP': 3, 'MAN': 2, 'SUBNORM': 1, 'STAGES': 0}",
+   "why": "a tie always rounds up instead of to even"
+  },
+  {
+   "name": "pk_no_round",
+   "variant": "single_path",
+   "class": "operator",
+   "status": "killed",
+   "detail": "exhaustive {'EXP': 3, 'MAN': 2, 'SUBNORM': 1, 'STAGES': 0}",
+   "why": "the result is truncated"
+  },
+  {
+   "name": "pk_guard_bit",
+   "variant": "single_path",
+   "class": "constant",
+   "status": "killed",
+   "detail": "exhaustive {'EXP': 3, 'MAN': 2, 'SUBNORM': 1, 'STAGES': 0}",
+   "why": "the guard bit is the bit below the real one"
+  },
+  {
+   "name": "pk_denorm_threshold",
+   "variant": "single_path",
+   "class": "condition",
+   "status": "killed",
+   "detail": "exhaustive {'EXP': 3, 'MAN': 2, 'SUBNORM': 1, 'STAGES': 0}",
+   "why": "a result with biased exponent 0 is not denormalised"
+  },
+  {
+   "name": "pk_denorm_shift",
+   "variant": "dual_path",
+   "class": "constant",
+   "status": "killed",
+   "detail": "exhaustive {'EXP': 3, 'MAN': 2, 'SUBNORM': 1, 'STAGES': 0}",
+   "why": "a subnormal result is shifted one place too far"
+  },
+  {
+   "name": "pk_overflow_compare",
+   "variant": "single_path",
+   "class": "condition",
+   "status": "killed",
+   "detail": "exhaustive {'EXP': 3, 'MAN': 2, 'SUBNORM': 1, 'STAGES': 0}",
+   "why": "a rounded exponent of all ones is not turned into an infinity"
+  },
+  {
+   "name": "pk_flush_compare",
+   "variant": "single_path",
+   "class": "condition",
+   "status": "killed",
+   "detail": "exhaustive {'EXP': 3, 'MAN': 2, 'SUBNORM': 0, 'STAGES': 2}",
+   "why": "flush-to-zero leaves a result with exponent field 0 as a subnormal pattern"
+  },
+  {
+   "name": "nm_first_one",
+   "variant": "single_path",
+   "class": "condition",
+   "status": "killed",
+   "detail": "exhaustive {'EXP': 3, 'MAN': 2, 'SUBNORM': 1, 'STAGES': 0}",
+   "why": "the leading-zero count takes the lowest set bit instead of the highest"
+  }
+ ]
+}

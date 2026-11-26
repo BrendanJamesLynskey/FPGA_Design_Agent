@@ -4,7 +4,7 @@
 
 **Not assessed: no requirements recorded (no verif/testplan.yaml), so nothing here is traced to a requirement.**
 
-What the label means, what "verified" never means and how it is earned: [docs/verified.md](../../docs/verified.md). The label is computed from the testplan and the evidence files named below; it is never typed. Generated at git commit `a8359042aac759be0a4d6b05186709bdb7bb093c` (informational: the hashes in the manifest, not the commit, are what the CI check compares).
+What the label means, what "verified" never means and how it is earned: [docs/verified.md](../../docs/verified.md). The label is computed from the testplan and the evidence files named below; it is never typed. Generated at git commit `51dfe82191cd59c99857973f44b8b57ec9363fb5` (informational: the hashes in the manifest, not the commit, are what the CI check compares).
 
 ## What was checked for the label
 
@@ -41,7 +41,7 @@ Every file this record covers, with its SHA-256 at generation (7 files). `absent
 
 | File | SHA-256 |
 |---|---|
-| `designs/b2_tmp_adt7420/handover.yaml` | `9b2fed680c63df29b9230ab5b4e400a897eee0b945cdb9e9ccaea8d1eabfc9f9` |
+| `designs/b2_tmp_adt7420/handover.yaml` | `2ddcc42f5a465b3c34c3e541990d1dcf0da820d16186c0032bf3a195c816ea0a` |
 | `designs/b2_tmp_adt7420/rtl/b2_tmp_adt7420_top.sv` | `d517769e4f46528fb700a2e708963dfe24420e2a0e1b55d779f42e85034c80a5` |
 | `designs/b2_tmp_adt7420/rtl/i2c_ptr_read.sv` | `59cc6685aad975b6e17ab36f6940f4f12e9b13e06d9f274b3e26830c2ed35c21` |
 | `designs/b2_tmp_adt7420/rtl/tmp_regs.sv` | `6eb149b90313812666d63385a9b4474c7d91b4a792aaa8eedd6dc45efa94adea` |

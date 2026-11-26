@@ -1,0 +1,836 @@
+{
+ "counts": {
+  "agreed_delegated": 0,
+  "agreed_human": 0,
+  "draft": 11,
+  "items": 10,
+  "requirements": 11,
+  "stale_items": 0,
+  "verified": 7
+ },
+ "criteria": [
+  {
+   "detail": "4 of 11 requirements are not in state verified: M141-F-SERVICE (partially_verified), M141-F-BOUND (partially_verified), M141-F-LINT (partially_verified), M141-P-BOARD (not_run)",
+   "id": "evidence",
+   "ids": [
+    "M141-F-SERVICE",
+    "M141-F-BOUND",
+    "M141-F-LINT",
+    "M141-P-BOARD"
+   ],
+   "state": "unmet",
+   "title": "Every requirement has passing evidence"
+  },
+  {
+   "detail": "0 agreed by a human, 0 agreed by delegation, 11 draft, 0 marked agreed without a record",
+   "id": "agreement",
+   "ids": [
+    "M141-S-TIMING",
+    "M141-S-ORDER",
+    "M141-S-REFRESH",
+    "M141-F-SERVICE",
+    "M141-F-BOUND",
+    "M141-F-LINT",
+    "M141-P-LAT",
+    "M141-P-LATTAIL",
+    "M141-P-WINDOW",
+    "M141-P-BW",
+    "M141-P-BOARD"
+   ],
+   "state": "unmet",
+   "title": "Every requirement is agreed (human, or delegated and labelled so)"
+  },
+  {
+   "detail": "not yet measured: the required method mix per requirement kind is brief 143a; the collector does not supply it yet",
+   "id": "method_mix",
+   "ids": [],
+   "state": "not_measured",
+   "title": "Every requirement meets its required method mix"
+  },
+  {
+   "detail": "not yet measured: the mutation score and floor are brief 143b; the collector does not supply them yet",
+   "id": "mutation",
+   "ids": [],
+   "state": "not_measured",
+   "title": "The bench passes the mutation floor"
+  },
+  {
+   "detail": "not yet measured: the vacuity, assumption and depth checks are brief 143c; the collector does not supply them yet",
+   "id": "formal_rigour",
+   "ids": [],
+   "state": "not_measured",
+   "title": "The formal results pass the rigour checks"
+  },
+  {
+   "detail": "no item is stale by its pins; the nightly fresh re-run comparison is brief 143d and not yet measured",
+   "id": "fresh",
+   "ids": [],
+   "state": "not_measured",
+   "title": "The evidence is fresh"
+  }
+ ],
+ "declared": null,
+ "definition": "docs/verified.md",
+ "git_commit": "51dfe82191cd59c99857973f44b8b57ec9363fb5",
+ "kind": "designs",
+ "label": "verified except: 4 of 11 requirements without passing evidence; 11 of 11 requirements not agreed; required method mix not yet measured; mutation floor not yet measured; formal rigour not yet measured; fresh re-run not yet measured",
+ "label_kind": "verified_except",
+ "limits": [
+  "Verified never means interoperability with a device the design talks to unless a board measurement against that device is listed in the record; a design that checks its own output against its own model accepts its own symmetric mistakes.",
+  "Verified never means timing beyond the stated corner: a post-route timing result is for the part, speed grade, clock and tool version in its evidence file, not for other corners, temperatures or devices.",
+  "Verified never means beyond the widths and depths checked: a simulation covers the vectors it ran, a bounded formal result covers the stated depth only, and a per-width proof covers the widths it names; only a Lean proof marked all widths covers every width, and only for its model.",
+  "Verified never means the requirement is the right one: the text of a requirement is the human's check (or the planner's, where the record says delegated), and a record shows that checks exist and pass, not that nothing was left out.",
+  "Verified never means a hardware or board result unless a board measurement item is listed; a simulation is not the board.",
+  "Verified is about the files in the manifest at the hashes given. A change to any of them makes the record out of date (the CI check fails), and the evidence stale until it is re-recorded.",
+  "An agreement or acceptance recorded as delegated is the planner's decision on the owner's delegation, not a human sign-off; the record counts it apart.",
+  "1 requirements depend on an element outside the design and have not been closed by hardware, so they hold in simulation only: M141-P-BOARD.",
+  "1 formal items are bounded model checks; each holds to its stated depth only: V-FORMAL-BOUND.",
+  "4 performance requirements are verified in simulation only, not measured on the board: M141-P-LAT, M141-P-LATTAIL, M141-P-WINDOW, M141-P-BW."
+ ],
+ "manifest": {
+  "designs/m141_ddr2_sched/rtl/ddr2_addrmap.sv": "e833a654701faa427668c9770b70c289d5a6e94de181dcb73701f1f277d8aeeb",
+  "designs/m141_ddr2_sched/rtl/ddr2_sched.sv": "8bf988b3a00e056050d3fc83c81acc5a5068585b13113eba878c79fe24455b07",
+  "designs/m141_ddr2_sched/verif/evidence_pins.yaml": "ef4790c506ef543870cdd7e3d0dfff2ba84b3b769f6b7f9640a4af5eea22d604",
+  "designs/m141_ddr2_sched/verif/testplan.yaml": "56e6e72c474aafd316b080f35bfc1ee8620bda63bbc8a4dd029ffdaa7bd2afaa",
+  "results/116_traceability/m141_ddr2_sched/pytest_junit.xml": "1c2b65265ade61e980c9de25488ed94cb74fb7b93740f6637df2b7dfea66d451",
+  "results/b141/formal_full.json": "ac86f9315c4eaf496e286a7faa1f68ffbba2ad0bcc521b74f04f03f23db81471",
+  "results/b141/sim_summary.json": "af8f1a7bfee74409b5be4699c42bd02577b6dfecdf0877a265d2920252f95407"
+ },
+ "name": "m141_ddr2_sched",
+ "notes": "Simulation and formal only (phase 0): the scheduler is checked against a behavioural DDR2 command-rule model written from the data sheet, and its rules are proved on its own command output. No PHY, no MIG, no board: the board items are hooks (planned) with the pre-registration in docs/memory_controller_plan.md section 12. \"Latency\" is clocks from the request handshake to the first data beat at the nexys_650 profile (tCK 3077 ps, CL 5).",
+ "path": "designs/m141_ddr2_sched",
+ "reproduce": [
+  {
+   "cmd": "python3 -m pytest -q designs/m141_ddr2_sched/tests/test_m141_clean_rtl.py designs/m141_ddr2_sched/tests/test_m141_faults_rtl.py designs/m141_ddr2_sched/tests/test_m141_lint_rtl.py",
+   "what": "bench against the model, seeded faults, lint"
+  },
+  {
+   "cmd": "python3 -m pytest -q designs/m141_ddr2_sched/tests/test_m141_formal.py",
+   "what": "the proofs, covers and mutants of the CI set"
+  },
+  {
+   "cmd": "python3 designs/m141_ddr2_sched/tests/m141_measure.py --json results/b141/sim_summary.json",
+   "what": "the measured simulation runs of results/b141"
+  }
+ ],
+ "requirements": [
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "M141-S-TIMING",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-SIM-CLEAN",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "results/116_traceability/m141_ddr2_sched/pytest_junit.xml",
+     "record_sha256": "1c2b65265ade61e980c9de25488ed94cb74fb7b93740f6637df2b7dfea66d451",
+     "status": "pass",
+     "title": "Both policies, six traffic patterns, two timing profiles and three address maps against the behavioural DDR2 model: zero violations, every request served once, order kept, refresh gap within 9 x tREFI, longest wait within the bound"
+    },
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-SIM-FAULTS",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "results/116_traceability/m141_ddr2_sched/pytest_junit.xml",
+     "record_sha256": "1c2b65265ade61e980c9de25488ed94cb74fb7b93740f6637df2b7dfea66d451",
+     "status": "pass",
+     "title": "Sixteen seeded faults in a copy of the RTL (a timing constant short, the dependency check removed, refresh disabled, a wrong bank on the command bus, a wrong row opened) are each caught by the bench"
+    },
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-FORMAL-RULES",
+     "instrument": null,
+     "method": "formal",
+     "mutation_score": null,
+     "record": "results/116_traceability/m141_ddr2_sched/pytest_junit.xml",
+     "record_sha256": "1c2b65265ade61e980c9de25488ed94cb74fb7b93740f6637df2b7dfea66d451",
+     "status": "pass",
+     "title": "SymbiYosys proofs of the timing rules and request order (k-induction with helper invariants, depth 3, at the real data sheet constants and at small ones, both policies), the refresh debt (property-directed reachability), covers, and one mutant per rule that a named assertion catches"
+    }
+   ],
+   "items": [
+    "V-SIM-CLEAN",
+    "V-SIM-FAULTS",
+    "V-FORMAL-RULES"
+   ],
+   "kind": "safety",
+   "lean_transcription_only": false,
+   "missing_methods": [],
+   "mix_satisfied": true,
+   "own_tests_only": false,
+   "passing_methods": [
+    "formal",
+    "sim_test"
+   ],
+   "rests_on_delegated": false,
+   "source": "docs/memory_controller_plan.md#2-the-part-and-the-rules-that-matter",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "verified",
+   "text": "For every request sequence and both policies, the command bus never breaks tRCD, tRP and tRPA, tRAS, tRC, tRRD, tFAW, tWR, tWTR, tRTP, tRFC, the read-to-write and write-to-read spacings, the one-command state rules (ACTIVATE to a closed bank, a column command to an open bank, REFRESH with every bank closed), nor the data-bus rules (no overlap, one idle clock between a read and a write burst).",
+   "title": "No DDR2 timing rule is ever violated on the command stream",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "M141-S-ORDER",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-SIM-CLEAN",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "results/116_traceability/m141_ddr2_sched/pytest_junit.xml",
+     "record_sha256": "1c2b65265ade61e980c9de25488ed94cb74fb7b93740f6637df2b7dfea66d451",
+     "status": "pass",
+     "title": "Both policies, six traffic patterns, two timing profiles and three address maps against the behavioural DDR2 model: zero violations, every request served once, order kept, refresh gap within 9 x tREFI, longest wait within the bound"
+    },
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-SIM-FAULTS",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "results/116_traceability/m141_ddr2_sched/pytest_junit.xml",
+     "record_sha256": "1c2b65265ade61e980c9de25488ed94cb74fb7b93740f6637df2b7dfea66d451",
+     "status": "pass",
+     "title": "Sixteen seeded faults in a copy of the RTL (a timing constant short, the dependency check removed, refresh disabled, a wrong bank on the command bus, a wrong row opened) are each caught by the bench"
+    },
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-FORMAL-RULES",
+     "instrument": null,
+     "method": "formal",
+     "mutation_score": null,
+     "record": "results/116_traceability/m141_ddr2_sched/pytest_junit.xml",
+     "record_sha256": "1c2b65265ade61e980c9de25488ed94cb74fb7b93740f6637df2b7dfea66d451",
+     "status": "pass",
+     "title": "SymbiYosys proofs of the timing rules and request order (k-induction with helper invariants, depth 3, at the real data sheet constants and at small ones, both policies), the refresh debt (property-directed reachability), covers, and one mutant per rule that a named assertion catches"
+    }
+   ],
+   "items": [
+    "V-SIM-CLEAN",
+    "V-SIM-FAULTS",
+    "V-FORMAL-RULES"
+   ],
+   "kind": "safety",
+   "lean_transcription_only": false,
+   "missing_methods": [],
+   "mix_satisfied": true,
+   "own_tests_only": false,
+   "passing_methods": [
+    "formal",
+    "sim_test"
+   ],
+   "rests_on_delegated": false,
+   "source": "docs/memory_controller_plan.md#7-the-scheduler-v0",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "verified",
+   "text": "Read-after-write, write-after-write and write-after-read order to one burst address is kept; other requests complete in any order.",
+   "title": "A request never overtakes an older request to the same burst address when either is a write",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "M141-S-REFRESH",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-SIM-CLEAN",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "results/116_traceability/m141_ddr2_sched/pytest_junit.xml",
+     "record_sha256": "1c2b65265ade61e980c9de25488ed94cb74fb7b93740f6637df2b7dfea66d451",
+     "status": "pass",
+     "title": "Both policies, six traffic patterns, two timing profiles and three address maps against the behavioural DDR2 model: zero violations, every request served once, order kept, refresh gap within 9 x tREFI, longest wait within the bound"
+    },
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-SIM-FAULTS",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "results/116_traceability/m141_ddr2_sched/pytest_junit.xml",
+     "record_sha256": "1c2b65265ade61e980c9de25488ed94cb74fb7b93740f6637df2b7dfea66d451",
+     "status": "pass",
+     "title": "Sixteen seeded faults in a copy of the RTL (a timing constant short, the dependency check removed, refresh disabled, a wrong bank on the command bus, a wrong row opened) are each caught by the bench"
+    },
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-FORMAL-RULES",
+     "instrument": null,
+     "method": "formal",
+     "mutation_score": null,
+     "record": "results/116_traceability/m141_ddr2_sched/pytest_junit.xml",
+     "record_sha256": "1c2b65265ade61e980c9de25488ed94cb74fb7b93740f6637df2b7dfea66d451",
+     "status": "pass",
+     "title": "SymbiYosys proofs of the timing rules and request order (k-induction with helper invariants, depth 3, at the real data sheet constants and at small ones, both policies), the refresh debt (property-directed reachability), covers, and one mutant per rule that a named assertion catches"
+    }
+   ],
+   "items": [
+    "V-SIM-CLEAN",
+    "V-SIM-FAULTS",
+    "V-FORMAL-RULES"
+   ],
+   "kind": "safety",
+   "lean_transcription_only": false,
+   "missing_methods": [],
+   "mix_satisfied": true,
+   "own_tests_only": false,
+   "passing_methods": [
+    "formal",
+    "sim_test"
+   ],
+   "rests_on_delegated": false,
+   "source": "docs/memory_controller_plan.md#2-the-part-and-the-rules-that-matter",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "verified",
+   "text": "At most REF_POST + 2 refreshes are outstanding at any time, and the gap between two REFRESH commands never exceeds 9 x tREFI (JEDEC's limit with eight postponed); a REFRESH is issued only when one is due.",
+   "title": "Refresh is never starved",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "M141-F-SERVICE",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-SIM-CLEAN",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "results/116_traceability/m141_ddr2_sched/pytest_junit.xml",
+     "record_sha256": "1c2b65265ade61e980c9de25488ed94cb74fb7b93740f6637df2b7dfea66d451",
+     "status": "pass",
+     "title": "Both policies, six traffic patterns, two timing profiles and three address maps against the behavioural DDR2 model: zero violations, every request served once, order kept, refresh gap within 9 x tREFI, longest wait within the bound"
+    },
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-SIM-FAULTS",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "results/116_traceability/m141_ddr2_sched/pytest_junit.xml",
+     "record_sha256": "1c2b65265ade61e980c9de25488ed94cb74fb7b93740f6637df2b7dfea66d451",
+     "status": "pass",
+     "title": "Sixteen seeded faults in a copy of the RTL (a timing constant short, the dependency check removed, refresh disabled, a wrong bank on the command bus, a wrong row opened) are each caught by the bench"
+    }
+   ],
+   "items": [
+    "V-SIM-CLEAN",
+    "V-SIM-FAULTS"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": false,
+   "missing_methods": [
+    "a simulation check from a bench the implementing agent did not write"
+   ],
+   "mix_satisfied": false,
+   "own_tests_only": true,
+   "passing_methods": [
+    "sim_test"
+   ],
+   "rests_on_delegated": false,
+   "source": "docs/blocks.md",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "partially_verified",
+   "text": "Each accepted request gets one column command carrying its tag, the bank and column of its address, in the direction asked, on a bank whose open row is the request's row.",
+   "title": "Every request is served exactly once with its own bank, row, column and direction",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "M141-F-BOUND",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-SIM-CLEAN",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "results/116_traceability/m141_ddr2_sched/pytest_junit.xml",
+     "record_sha256": "1c2b65265ade61e980c9de25488ed94cb74fb7b93740f6637df2b7dfea66d451",
+     "status": "pass",
+     "title": "Both policies, six traffic patterns, two timing profiles and three address maps against the behavioural DDR2 model: zero violations, every request served once, order kept, refresh gap within 9 x tREFI, longest wait within the bound"
+    },
+    {
+     "bench_author": "not recorded",
+     "depth": 98,
+     "freshness": "fresh",
+     "id": "V-FORMAL-BOUND",
+     "instrument": null,
+     "method": "formal",
+     "mutation_score": null,
+     "record": "results/b141/formal_full.json",
+     "record_sha256": "ac86f9315c4eaf496e286a7faa1f68ffbba2ad0bcc521b74f04f03f23db81471",
+     "status": "bounded",
+     "title": "Bounded response of a tracked request, bounded model check to the proved bound plus six clocks at small parameters (a check from reset, not a proof for all time)"
+    }
+   ],
+   "items": [
+    "V-SIM-CLEAN",
+    "V-FORMAL-BOUND"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": false,
+   "missing_methods": [
+    "a simulation check from a bench the implementing agent did not write"
+   ],
+   "mix_satisfied": false,
+   "own_tests_only": true,
+   "passing_methods": [
+    "sim_test"
+   ],
+   "rests_on_delegated": false,
+   "source": "docs/memory_controller_plan.md#7-the-scheduler-v0",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "partially_verified",
+   "text": "A request waits at most AGE_LIM + QD x R_MAX + the refresh cost clocks (verif/formal/run_formal.py:bound), under both policies. Proved at small parameters by bounded model check; measured at the real parameters.",
+   "title": "Every request is served within a bounded wait",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "M141-F-LINT",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-LINT",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "results/116_traceability/m141_ddr2_sched/pytest_junit.xml",
+     "record_sha256": "1c2b65265ade61e980c9de25488ed94cb74fb7b93740f6637df2b7dfea66d451",
+     "status": "pass",
+     "title": "Verilator 5 -Wall clean on both modules"
+    }
+   ],
+   "items": [
+    "V-LINT"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": false,
+   "missing_methods": [
+    "a simulation check from a bench the implementing agent did not write"
+   ],
+   "mix_satisfied": false,
+   "own_tests_only": true,
+   "passing_methods": [
+    "sim_test"
+   ],
+   "rests_on_delegated": false,
+   "source": "docs/hdl_coding_standard.md",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "partially_verified",
+   "text": "Verilator 5 --lint-only -Wall reports nothing on ddr2_sched and ddr2_addrmap; synchronous reset only, no initial blocks, no latches, no derived clocks.",
+   "title": "The RTL is Verilator -Wall clean and follows the HDL standard's structural rules",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": "simulation",
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "M141-P-LAT",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-SIM-LAT",
+     "instrument": null,
+     "method": "sim_measurement",
+     "mutation_score": null,
+     "record": "results/b141/sim_summary.json",
+     "record_sha256": "af8f1a7bfee74409b5be4699c42bd02577b6dfecdf0877a265d2920252f95407",
+     "status": "pass",
+     "title": "Median read latency, latency-first policy, light random reads"
+    }
+   ],
+   "items": [
+    "V-SIM-LAT"
+   ],
+   "kind": "performance",
+   "lean_transcription_only": false,
+   "missing_methods": [],
+   "mix_satisfied": true,
+   "own_tests_only": true,
+   "passing_methods": [
+    "sim_measurement"
+   ],
+   "performance": {
+    "bound": 13,
+    "condition": "POLICY 0, random reads, mean gap 40 clocks, nexys_650 profile (tCK 3077 ps, CL 5), simulation, 3000 reads",
+    "op": "le",
+    "quantity": "median read latency",
+    "unit": "clocks"
+   },
+   "rests_on_delegated": false,
+   "source": "docs/memory_controller_plan.md#10-results",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "verified",
+   "text": "Random reads at light load (one request every 40 clocks on average) find a precharged bank, so a read pays ACTIVATE, tRCD and the read latency and nothing else. The bound is a regression bound from the recorded run, not a target.",
+   "title": "Median read latency of the latency-first policy on light random reads",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": "simulation",
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "M141-P-LATTAIL",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-SIM-LATTAIL",
+     "instrument": null,
+     "method": "sim_measurement",
+     "mutation_score": null,
+     "record": "results/b141/sim_summary.json",
+     "record_sha256": "af8f1a7bfee74409b5be4699c42bd02577b6dfecdf0877a265d2920252f95407",
+     "status": "pass",
+     "title": "99.9th percentile read latency, latency-first policy, light random reads"
+    }
+   ],
+   "items": [
+    "V-SIM-LATTAIL"
+   ],
+   "kind": "performance",
+   "lean_transcription_only": false,
+   "missing_methods": [],
+   "mix_satisfied": true,
+   "own_tests_only": true,
+   "passing_methods": [
+    "sim_measurement"
+   ],
+   "performance": {
+    "bound": 60,
+    "condition": "POLICY 0, random reads, mean gap 40 clocks, REF_POST 4, nexys_650 profile, simulation, 3000 reads",
+    "op": "le",
+    "quantity": "99.9th percentile read latency",
+    "unit": "clocks"
+   },
+   "rests_on_delegated": false,
+   "source": "docs/memory_controller_plan.md#10-results",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "verified",
+   "text": "The 99.9th percentile of the read latency at light load stays within a refresh's worth of the median (a refresh in progress when a read arrives is the tail). Regression bound, not a target.",
+   "title": "Tail of the read latency of the latency-first policy on light random reads",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": "simulation",
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "M141-P-WINDOW",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-SIM-WINDOW",
+     "instrument": null,
+     "method": "sim_measurement",
+     "mutation_score": null,
+     "record": "results/b141/sim_summary.json",
+     "record_sha256": "af8f1a7bfee74409b5be4699c42bd02577b6dfecdf0877a265d2920252f95407",
+     "status": "pass",
+     "title": "Maximum read latency inside a refresh-deferral window, latency-first, REF_POST 4"
+    }
+   ],
+   "items": [
+    "V-SIM-WINDOW"
+   ],
+   "kind": "performance",
+   "lean_transcription_only": false,
+   "missing_methods": [],
+   "mix_satisfied": true,
+   "own_tests_only": true,
+   "passing_methods": [
+    "sim_measurement"
+   ],
+   "performance": {
+    "bound": 40,
+    "condition": "POLICY 0, REF_POST 4, ref_defer high for 5000 of every 12000 clocks, random reads at light load, nexys_650 profile, simulation, 6000 reads",
+    "op": "le",
+    "quantity": "maximum read latency inside the window",
+    "unit": "clocks"
+   },
+   "rests_on_delegated": false,
+   "source": "docs/memory_controller_plan.md#10-results",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "verified",
+   "text": "While ref_defer is high and the postponement allowance is not used up, refreshes that fall due are postponed, so the reads accepted in the window see no tRFC wait (the cost moves to reads after the window). Regression bound, not a target.",
+   "title": "No read inside a refresh-deferral window waits for a refresh",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": "simulation",
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "M141-P-BW",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-SIM-BW",
+     "instrument": null,
+     "method": "sim_measurement",
+     "mutation_score": null,
+     "record": "results/b141/sim_summary.json",
+     "record_sha256": "af8f1a7bfee74409b5be4699c42bd02577b6dfecdf0877a265d2920252f95407",
+     "status": "pass",
+     "title": "Data-bus utilisation, bandwidth-first policy, sequential reads, page-interleaved map"
+    }
+   ],
+   "items": [
+    "V-SIM-BW"
+   ],
+   "kind": "performance",
+   "lean_transcription_only": false,
+   "missing_methods": [],
+   "mix_satisfied": true,
+   "own_tests_only": true,
+   "passing_methods": [
+    "sim_measurement"
+   ],
+   "performance": {
+    "bound": 0.95,
+    "condition": "POLICY 1, sequential reads, map 0, QD 8, nexys_650 profile, simulation, 4000 reads",
+    "op": "ge",
+    "quantity": "data-bus utilisation",
+    "unit": "fraction"
+   },
+   "rests_on_delegated": false,
+   "source": "docs/memory_controller_plan.md#10-results",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "verified",
+   "text": "A sequential read stream keeps the data bus busy: utilisation (data clocks over elapsed clocks) at least 0.95 with the page-interleaved map. Regression bound, not a target.",
+   "title": "Streaming read bandwidth of the bandwidth-first policy",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "external": "a Nexys A7-100T on wall power, a generated MIG core with the PHY interface, and a Vivado build (heavy slot)",
+   "hardware_closure": "open",
+   "hardware_only": true,
+   "hardware_verified": false,
+   "id": "M141-P-BOARD",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "no evidence",
+     "id": "V-BOARD-PLANNED",
+     "instrument": "latency_loop",
+     "method": "board_measurement",
+     "mutation_score": null,
+     "record": null,
+     "record_sha256": null,
+     "status": "not_run",
+     "title": "The pre-registered board test (docs/memory_controller_plan.md section 12): not run"
+    }
+   ],
+   "items": [
+    "V-BOARD-PLANNED"
+   ],
+   "kind": "performance",
+   "lean_transcription_only": false,
+   "missing_methods": [],
+   "mix_satisfied": false,
+   "own_tests_only": false,
+   "passing_methods": [],
+   "performance": {
+    "bound": -1,
+    "condition": "POLICY 0 on the PHY against MIG ordering NORM, random reads, light load, board, at least 5 runs (the pre-registered H1)",
+    "op": "le",
+    "quantity": "median read latency difference to MIG NORM",
+    "unit": "controller clocks"
+   },
+   "rests_on_delegated": false,
+   "source": "docs/memory_controller_plan.md#12-pre-registered-board-test-prepared-not-run",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "not_run",
+   "text": "The five pre-registered hypotheses of docs/memory_controller_plan.md section 12 (median, tail, bandwidth, integrity, predictability against MIG ordering NORM and STRICT, and LiteDRAM if practical).",
+   "title": "Latency and bandwidth against MIG's own controller on the board",
+   "waivers": []
+  }
+ ],
+ "schema": "fda-verified/1",
+ "summary_line": "11 requirements (3 functional, 5 performance, 3 safety); 7 verified; 3 partially verified (the required mix of methods is not met); 1 with no passing evidence; 1 with no passing evidence; 0 of 1 requirements that depend on an external element closed by hardware; performance verified: 0 on the board, 0 by post-route timing, 4 in simulation only; 0 of 11 requirements agreed by a human, 0 agreed on the owner's delegation (not human), 11 draft; 7 resting only on the implementing agent's own tests; 0 human and 0 delegated review(s) recorded."
+}

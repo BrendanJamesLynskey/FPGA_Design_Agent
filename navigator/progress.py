@@ -137,6 +137,8 @@ def run_progress(runs_dir: Path, run_id: str, tail: int = 40, now: float | None 
     snaps = _json(rd / "snapshots.json")
     done = [{"n": s.get("n"), "stage": s.get("stage")} for s in snaps if isinstance(s, dict)] if isinstance(snaps, list) else []
     mt = [p.stat().st_mtime for p in (rd / "role_usage.jsonl", rd / "trace.jsonl", rd / "claude_code_calls.jsonl", rd / "model_calls.jsonl", audit_p) if p is not None and p.is_file()]
+    if (rd / "console").is_dir():                                       # brief 182: a tool that is writing its log (Vivado, the simulator) means the run is working
+        mt += [c.stat().st_mtime for c in sorted((rd / "console").glob("*.log"))[-3:] if c.is_file() and not c.is_symlink()]
     last_write = max(mt) if mt else None
     age = None if last_write is None else max(0.0, now - last_write)
     if isinstance(summary, dict):
