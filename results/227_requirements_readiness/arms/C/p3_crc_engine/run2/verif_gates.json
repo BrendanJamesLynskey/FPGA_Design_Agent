@@ -1,0 +1,912 @@
+{
+  "design": "b227_C_p3_crc_engine_r2",
+  "stages": {
+    "V0": {
+      "checks": {
+        "testplan_present": {
+          "value": true,
+          "threshold": true,
+          "pass": true
+        },
+        "model_present": {
+          "value": true,
+          "threshold": true,
+          "pass": true
+        },
+        "bench_modules_present": {
+          "value": [
+            "bench_p3_crc"
+          ],
+          "threshold": "all files exist",
+          "pass": true
+        }
+      },
+      "pass": true
+    },
+    "V1": {
+      "checks": {
+        "requirements_have_proof_method": {
+          "value": [],
+          "threshold": [],
+          "pass": true
+        },
+        "proof_methods_discharged": {
+          "value": [],
+          "threshold": [],
+          "pass": true
+        },
+        "proof_references_resolve": {
+          "value": [],
+          "threshold": [],
+          "pass": true
+        },
+        "spec_items_traced": {
+          "value": "32/32",
+          "threshold": "all",
+          "pass": true
+        },
+        "untraced_items": {
+          "value": [],
+          "threshold": [],
+          "pass": true
+        },
+        "unknown_spec_refs": {
+          "value": [],
+          "threshold": [],
+          "pass": true
+        },
+        "requirements_without_a_check": {
+          "value": [],
+          "threshold": [],
+          "pass": true
+        },
+        "unresolved_references": {
+          "value": [],
+          "threshold": [],
+          "pass": true
+        },
+        "bench_uses_blind_model": {
+          "value": true,
+          "threshold": true,
+          "pass": true
+        }
+      },
+      "pass": true
+    },
+    "V2": {
+      "checks": {
+        "seeds_run": {
+          "value": [
+            1,
+            2,
+            3
+          ],
+          "threshold": ">=1",
+          "pass": true
+        },
+        "planned_tests_missing": {
+          "value": [],
+          "threshold": [],
+          "pass": true
+        },
+        "failing_tests": {
+          "value": [],
+          "threshold": [],
+          "pass": true
+        },
+        "constrained_random_test_ran": {
+          "value": true,
+          "threshold": true,
+          "pass": true
+        },
+        "assertions_bound_zero_failures": {
+          "value": [
+            "A_RDATA_HOLD"
+          ],
+          "threshold": "bound in the run; no failure",
+          "pass": true
+        },
+        "other_simulators_failing": {
+          "value": [],
+          "threshold": [],
+          "pass": true
+        },
+        "formal_tasks_not_passing": {
+          "value": [],
+          "threshold": [],
+          "pass": true
+        }
+      },
+      "pass": true
+    },
+    "V3": {
+      "checks": {
+        "seeds_run": {
+          "value": 3,
+          "threshold": ">=3",
+          "pass": true
+        },
+        "all_seeds_pass": {
+          "value": [],
+          "threshold": [],
+          "pass": true
+        },
+        "functional_bins_pct": {
+          "value": "0.0 (0/0)",
+          "threshold": 100,
+          "pass": false,
+          "why": "no functional bins planned: put cover-point names in `bins:` of the testplan requirements. name cover points in the `bins:` of the testplan requirements, sample them in the bench, and export them in the bench's last test with `coverage_db.export_to_yaml(os.environ[\"FDA_COV_OUT\"])` (cocotb-coverage); the flow keeps the file as seed<N>/coverage_func.yml"
+        },
+        "functional_bins_unhit": {
+          "value": [],
+          "threshold": [],
+          "pass": false,
+          "why": "no functional bins planned: put cover-point names in `bins:` of the testplan requirements. name cover points in the `bins:` of the testplan requirements, sample them in the bench, and export them in the bench's last test with `coverage_db.export_to_yaml(os.environ[\"FDA_COV_OUT\"])` (cocotb-coverage); the flow keeps the file as seed<N>/coverage_func.yml"
+        },
+        "cover_properties_pct": {
+          "value": "0.0",
+          "threshold": 100,
+          "pass": false,
+          "why": "not measured: no code-coverage data: the flow records line, toggle and cover-property coverage itself, in a Verilator run of your bench, once V0 to V2 pass (the bench must run through flow.cocotb_run.run, which writes seed<N>/coverage.dat)"
+        },
+        "cover_properties_unhit": {
+          "value": [
+            "C_INIT",
+            "C_PUSH4",
+            "C_PUSHN",
+            "C_PUSH_B2B",
+            "C_READ",
+            "C_RO_WRITE",
+            "C_UNMAPPED_WRITE"
+          ],
+          "threshold": [],
+          "pass": false,
+          "why": "not measured: no code-coverage data: the flow records line, toggle and cover-property coverage itself, in a Verilator run of your bench, once V0 to V2 pass (the bench must run through flow.cocotb_run.run, which writes seed<N>/coverage.dat)"
+        },
+        "line_pct": {
+          "value": "not measured",
+          "threshold": 95,
+          "pass": false,
+          "why": "not measured: no code-coverage data: the flow records line, toggle and cover-property coverage itself, in a Verilator run of your bench, once V0 to V2 pass (the bench must run through flow.cocotb_run.run, which writes seed<N>/coverage.dat)"
+        },
+        "toggle_pct": {
+          "value": "not measured",
+          "threshold": 80,
+          "pass": false,
+          "why": "not measured: no code-coverage data: the flow records line, toggle and cover-property coverage itself, in a Verilator run of your bench, once V0 to V2 pass (the bench must run through flow.cocotb_run.run, which writes seed<N>/coverage.dat)"
+        },
+        "waivers_without_reason": {
+          "value": 0,
+          "threshold": 0,
+          "pass": true
+        },
+        "mutation_score_pct": {
+          "value": "not measured",
+          "threshold": 80,
+          "pass": false,
+          "why": "not measured: the flow runs the mutation step itself once V2 passes (a capped, seeded sample of changes to the RTL, each run against your tests); no result exists yet"
+        },
+        "cdc_structure_clean": {
+          "value": "missing",
+          "threshold": "no unsafe crossing",
+          "pass": false,
+          "why": "no structural CDC result: build the design through the post-synthesis stage (flow/build.tcl writes cdc_paths_synth.rpt) and pass its gates.json as --gates"
+        },
+        "cdc_injection_clean": {
+          "value": "missing",
+          "threshold": "pass",
+          "pass": false,
+          "why": "no CDC injection result: run flow/cdc_inject_run.py <design> (the harness does this in v3_evidence) and pass build/verif/cdc_inject.json as --cdc-inject"
+        }
+      },
+      "pass": false
+    },
+    "SIGNOFF": {
+      "checks": {
+        "every_method_has_passing_evidence": {
+          "value": [
+            "REQ-05:hardware=pending",
+            "REQ-20:hardware=pending",
+            "REQ-21:hardware=pending",
+            "REQ-22:hardware=pending",
+            "REQ-23:hardware=pending",
+            "REQ-24:analysis=pending",
+            "REQ-25:analysis=pending",
+            "REQ-26:analysis=pending",
+            "REQ-26:hardware=pending",
+            "REQ-27:analysis=pending",
+            "REQ-28:hardware=pending",
+            "REQ-29:hardware=pending",
+            "REQ-30:analysis=pending"
+          ],
+          "threshold": [],
+          "pass": false
+        }
+      },
+      "pass": false
+    },
+    "V-HW": {
+      "checks": {
+        "bringup_result_present": {
+          "value": false,
+          "threshold": true,
+          "pass": false
+        }
+      },
+      "pass": false
+    }
+  },
+  "code_coverage": {},
+  "code_coverage_unhit": {},
+  "mutation": null,
+  "traceability": [
+    {
+      "requirement": "REQ-01",
+      "text": "CRC after any message of 0 to 600 bytes equals zlib.crc32 of that message.",
+      "method": "simulation",
+      "artefact": "bench_p3_crc.test_crc_vs_zlib",
+      "result": "pass",
+      "detail": "passed on 3 seed(s)"
+    },
+    {
+      "requirement": "REQ-02",
+      "text": "CRC reads 0x00000000 after reset.",
+      "method": "simulation",
+      "artefact": "bench_p3_crc.test_reset_values",
+      "result": "pass",
+      "detail": "passed on 3 seed(s)"
+    },
+    {
+      "requirement": "REQ-02",
+      "text": "CRC reads 0x00000000 after reset.",
+      "method": "formal",
+      "artefact": "bench_p3_crc.test_reset_values",
+      "result": "pass",
+      "detail": "re-planned from formal to simulation (SymbiYosys is not installed here so the reset check is done by simulation against the model.): passed on 3 seed(s)"
+    },
+    {
+      "requirement": "REQ-03",
+      "text": "CRC reads 0x00000000 after INIT with no bytes pushed.",
+      "method": "simulation",
+      "artefact": "bench_p3_crc.test_init",
+      "result": "pass",
+      "detail": "passed on 3 seed(s)"
+    },
+    {
+      "requirement": "REQ-03",
+      "text": "CRC reads 0x00000000 after INIT with no bytes pushed.",
+      "method": "formal",
+      "artefact": "bench_p3_crc.test_init",
+      "result": "pass",
+      "detail": "re-planned from formal to simulation (SymbiYosys is not installed here so INIT-to-zero is checked by simulation.): passed on 3 seed(s)"
+    },
+    {
+      "requirement": "REQ-04",
+      "text": "BYTE_COUNT equals the number of bytes pushed since INIT.",
+      "method": "simulation",
+      "artefact": "bench_p3_crc.test_crc_vs_zlib",
+      "result": "pass",
+      "detail": "passed on 3 seed(s)"
+    },
+    {
+      "requirement": "REQ-04",
+      "text": "BYTE_COUNT equals the number of bytes pushed since INIT.",
+      "method": "formal",
+      "artefact": "bench_p3_crc.test_crc_vs_zlib",
+      "result": "pass",
+      "detail": "re-planned from formal to simulation (SymbiYosys is not installed here so the byte count is checked by simulation.): passed on 3 seed(s)"
+    },
+    {
+      "requirement": "REQ-05",
+      "text": "BUSY_CYCLES equals N for a message of N full words pushed back to back.",
+      "method": "simulation",
+      "artefact": "bench_p3_crc.test_back_to_back_pushes",
+      "result": "pass",
+      "detail": "passed on 3 seed(s)"
+    },
+    {
+      "requirement": "REQ-05",
+      "text": "BUSY_CYCLES equals N for a message of N full words pushed back to back.",
+      "method": "hardware",
+      "artefact": "uart_tests",
+      "result": "pending",
+      "detail": "no bring-up result"
+    },
+    {
+      "requirement": "REQ-06",
+      "text": "PUSH_N with TAIL_LEN 0 leaves CRC unchanged.",
+      "method": "simulation",
+      "artefact": "bench_p3_crc.test_push_n_zero",
+      "result": "pass",
+      "detail": "passed on 3 seed(s)"
+    },
+    {
+      "requirement": "REQ-07",
+      "text": "PUSH_N with TAIL_LEN 0 leaves BYTE_COUNT unchanged.",
+      "method": "simulation",
+      "artefact": "bench_p3_crc.test_push_n_zero",
+      "result": "pass",
+      "detail": "passed on 3 seed(s)"
+    },
+    {
+      "requirement": "REQ-08",
+      "text": "PUSH_N with TAIL_LEN 0 leaves BUSY_CYCLES unchanged.",
+      "method": "simulation",
+      "artefact": "bench_p3_crc.test_push_n_zero",
+      "result": "pass",
+      "detail": "passed on 3 seed(s)"
+    },
+    {
+      "requirement": "REQ-09",
+      "text": "TAIL_LEN stores bits 1:0 only, a write of 0x7 reads back 0x3.",
+      "method": "simulation",
+      "artefact": "bench_p3_crc.test_register_access",
+      "result": "pass",
+      "detail": "passed on 3 seed(s)"
+    },
+    {
+      "requirement": "REQ-10",
+      "text": "INIT written in the same clock as a push drops the push.",
+      "method": "simulation",
+      "artefact": "bench_p3_crc.test_init_vs_push_adjacent",
+      "result": "pass",
+      "detail": "passed on 3 seed(s)"
+    },
+    {
+      "requirement": "REQ-10",
+      "text": "INIT written in the same clock as a push drops the push.",
+      "method": "formal",
+      "artefact": "bench_p3_crc.test_init_vs_push_adjacent",
+      "result": "pass",
+      "detail": "re-planned from formal to simulation (SymbiYosys is not installed here so the INIT-versus-push ordering is checked by simulation.): passed on 3 seed(s)"
+    },
+    {
+      "requirement": "REQ-11",
+      "text": "INIT sets CRC state to 0xFFFFFFFF one clock after the write.",
+      "method": "simulation",
+      "artefact": "bench_p3_crc.test_init",
+      "result": "pass",
+      "detail": "passed on 3 seed(s)"
+    },
+    {
+      "requirement": "REQ-12",
+      "text": "INIT sets BYTE_COUNT to 0 one clock after the write.",
+      "method": "simulation",
+      "artefact": "bench_p3_crc.test_init",
+      "result": "pass",
+      "detail": "passed on 3 seed(s)"
+    },
+    {
+      "requirement": "REQ-13",
+      "text": "INIT sets BUSY_CYCLES to 0 one clock after the write.",
+      "method": "simulation",
+      "artefact": "bench_p3_crc.test_init",
+      "result": "pass",
+      "detail": "passed on 3 seed(s)"
+    },
+    {
+      "requirement": "REQ-14",
+      "text": "The core accepts a push in every clock for 1000 consecutive clocks with no loss.",
+      "method": "simulation",
+      "artefact": "bench_p3_crc.test_back_to_back_pushes",
+      "result": "pass",
+      "detail": "passed on 3 seed(s)"
+    },
+    {
+      "requirement": "REQ-15",
+      "text": "h_rdata shows the addressed register within 2 clocks of h_re.",
+      "method": "simulation",
+      "artefact": "bench_p3_crc.test_read_latency_hold",
+      "result": "pass",
+      "detail": "passed on 3 seed(s)"
+    },
+    {
+      "requirement": "REQ-15",
+      "text": "h_rdata shows the addressed register within 2 clocks of h_re.",
+      "method": "formal",
+      "artefact": "bench_p3_crc.test_read_latency_hold",
+      "result": "pass",
+      "detail": "re-planned from formal to simulation (SymbiYosys is not installed here so read latency is checked by simulation.): passed on 3 seed(s)"
+    },
+    {
+      "requirement": "REQ-16",
+      "text": "h_rdata holds its value until the next h_re.",
+      "method": "simulation",
+      "artefact": "bench_p3_crc.test_read_latency_hold",
+      "result": "pass",
+      "detail": "passed on 3 seed(s)"
+    },
+    {
+      "requirement": "REQ-16",
+      "text": "h_rdata holds its value until the next h_re.",
+      "method": "formal",
+      "artefact": "bench_p3_crc.test_read_latency_hold",
+      "result": "pass",
+      "detail": "re-planned from formal to simulation (SymbiYosys is not installed here so read hold is checked by simulation and assertion A_RDATA_HOLD.): passed on 3 seed(s)"
+    },
+    {
+      "requirement": "REQ-17",
+      "text": "A read of an unmapped address returns 0.",
+      "method": "simulation",
+      "artefact": "bench_p3_crc.test_register_access",
+      "result": "pass",
+      "detail": "passed on 3 seed(s)"
+    },
+    {
+      "requirement": "REQ-18",
+      "text": "A write to an unmapped address changes no register.",
+      "method": "simulation",
+      "artefact": "bench_p3_crc.test_register_access",
+      "result": "pass",
+      "detail": "passed on 3 seed(s)"
+    },
+    {
+      "requirement": "REQ-19",
+      "text": "A write to an RO register changes no register.",
+      "method": "simulation",
+      "artefact": "bench_p3_crc.test_register_access",
+      "result": "pass",
+      "detail": "passed on 3 seed(s)"
+    },
+    {
+      "requirement": "REQ-20",
+      "text": "ID reads 0x20930001.",
+      "method": "simulation",
+      "artefact": "bench_p3_crc.test_reset_values",
+      "result": "pass",
+      "detail": "passed on 3 seed(s)"
+    },
+    {
+      "requirement": "REQ-20",
+      "text": "ID reads 0x20930001.",
+      "method": "hardware",
+      "artefact": "uart_tests",
+      "result": "pending",
+      "detail": "no bring-up result"
+    },
+    {
+      "requirement": "REQ-21",
+      "text": "SCRATCH reads back the last written 32-bit value.",
+      "method": "simulation",
+      "artefact": "bench_p3_crc.test_register_access",
+      "result": "pass",
+      "detail": "passed on 3 seed(s)"
+    },
+    {
+      "requirement": "REQ-21",
+      "text": "SCRATCH reads back the last written 32-bit value.",
+      "method": "hardware",
+      "artefact": "uart_tests",
+      "result": "pending",
+      "detail": "no bring-up result"
+    },
+    {
+      "requirement": "REQ-22",
+      "text": "SCRATCH reads 0 after reset.",
+      "method": "simulation",
+      "artefact": "bench_p3_crc.test_reset_values",
+      "result": "pass",
+      "detail": "passed on 3 seed(s)"
+    },
+    {
+      "requirement": "REQ-22",
+      "text": "SCRATCH reads 0 after reset.",
+      "method": "hardware",
+      "artefact": "uart_tests",
+      "result": "pending",
+      "detail": "no bring-up result"
+    },
+    {
+      "requirement": "REQ-23",
+      "text": "BUILD reads the USR_ACCESSE2 word of the bitstream.",
+      "method": "hardware",
+      "artefact": "uart_tests",
+      "result": "pending",
+      "detail": "no bring-up result"
+    },
+    {
+      "requirement": "REQ-24",
+      "text": "The register bus clock is 156.25 MHz.",
+      "method": "analysis",
+      "artefact": "post_route:setup",
+      "result": "pending",
+      "detail": "no flow gates result"
+    },
+    {
+      "requirement": "REQ-25",
+      "text": "Setup timing is met with WNS >= 0 ns at 156.25 MHz.",
+      "method": "analysis",
+      "artefact": "post_route:setup",
+      "result": "pending",
+      "detail": "no flow gates result"
+    },
+    {
+      "requirement": "REQ-26",
+      "text": "sfp_tx_disable is constant 1.",
+      "method": "analysis",
+      "artefact": "post_synth:post_synth_resources_in_range",
+      "result": "pending",
+      "detail": "no flow gates result"
+    },
+    {
+      "requirement": "REQ-26",
+      "text": "sfp_tx_disable is constant 1.",
+      "method": "hardware",
+      "artefact": "uart_tests",
+      "result": "pending",
+      "detail": "no bring-up result"
+    },
+    {
+      "requirement": "REQ-27",
+      "text": "The design uses 0 GT transceiver channels.",
+      "method": "analysis",
+      "artefact": "post_synth:post_synth_resources_in_range",
+      "result": "pending",
+      "detail": "no flow gates result"
+    },
+    {
+      "requirement": "REQ-28",
+      "text": "1000 random messages over JTAG match zlib.crc32 for CRC every time.",
+      "method": "hardware",
+      "artefact": "uart_tests",
+      "result": "pending",
+      "detail": "no bring-up result"
+    },
+    {
+      "requirement": "REQ-29",
+      "text": "1000 random messages over JTAG match the byte count in BYTE_COUNT every time.",
+      "method": "hardware",
+      "artefact": "uart_tests",
+      "result": "pending",
+      "detail": "no bring-up result"
+    },
+    {
+      "requirement": "REQ-30",
+      "text": "data/jtag_bus.sv is used unchanged.",
+      "method": "analysis",
+      "artefact": "post_synth:post_synth_resources_in_range",
+      "result": "pending",
+      "detail": "no flow gates result"
+    },
+    {
+      "requirement": "REQ-31",
+      "text": "BYTE_COUNT wraps modulo 2^32.",
+      "method": "formal",
+      "artefact": "bench_p3_crc.test_counters_accumulate",
+      "result": "pass",
+      "detail": "re-planned from formal to simulation (SymbiYosys is not installed here and a 2^32 wrap is unreachable in simulation so only counter width above 16 bits is checked; wrap stays a residual risk.): passed on 3 seed(s)"
+    },
+    {
+      "requirement": "REQ-32",
+      "text": "BUSY_CYCLES wraps modulo 2^32.",
+      "method": "formal",
+      "artefact": "bench_p3_crc.test_counters_accumulate",
+      "result": "pass",
+      "detail": "re-planned from formal to simulation (SymbiYosys is not installed here and a 2^32 wrap is unreachable in simulation so only counter width above 16 bits is checked; wrap stays a residual risk.): passed on 3 seed(s)"
+    }
+  ],
+  "coverage_detail": {
+    "bins": {},
+    "requirements": [
+      {
+        "id": "REQ-01",
+        "spec": [
+          "behaviour.crc[0]",
+          "behaviour.crc[2]",
+          "behaviour.crc[3]",
+          "registers.map.PUSH4",
+          "registers.map.PUSH_N",
+          "registers.map.CRC"
+        ],
+        "tests": [
+          "bench_p3_crc.test_crc_vs_zlib",
+          "bench_p3_crc.test_back_to_back_pushes",
+          "bench_p3_crc.test_random_traffic"
+        ],
+        "bins": {}
+      },
+      {
+        "id": "REQ-02",
+        "spec": [
+          "behaviour.crc[1]",
+          "reset"
+        ],
+        "tests": [
+          "bench_p3_crc.test_reset_values"
+        ],
+        "bins": {}
+      },
+      {
+        "id": "REQ-03",
+        "spec": [
+          "registers.map.CTRL"
+        ],
+        "tests": [
+          "bench_p3_crc.test_init"
+        ],
+        "bins": {}
+      },
+      {
+        "id": "REQ-04",
+        "spec": [
+          "behaviour.control[3]",
+          "registers.map.BYTE_COUNT"
+        ],
+        "tests": [
+          "bench_p3_crc.test_crc_vs_zlib",
+          "bench_p3_crc.test_counters_accumulate",
+          "bench_p3_crc.test_random_traffic"
+        ],
+        "bins": {}
+      },
+      {
+        "id": "REQ-05",
+        "spec": [
+          "registers.map.BUSY_CYCLES"
+        ],
+        "tests": [
+          "bench_p3_crc.test_back_to_back_pushes",
+          "bench_p3_crc.test_counters_accumulate"
+        ],
+        "bins": {}
+      },
+      {
+        "id": "REQ-06",
+        "spec": [
+          "registers.map.TAIL_LEN"
+        ],
+        "tests": [
+          "bench_p3_crc.test_push_n_zero"
+        ],
+        "bins": {}
+      },
+      {
+        "id": "REQ-07",
+        "spec": [],
+        "tests": [
+          "bench_p3_crc.test_push_n_zero"
+        ],
+        "bins": {}
+      },
+      {
+        "id": "REQ-08",
+        "spec": [
+          "behaviour.control[4]"
+        ],
+        "tests": [
+          "bench_p3_crc.test_push_n_zero"
+        ],
+        "bins": {}
+      },
+      {
+        "id": "REQ-09",
+        "spec": [
+          "behaviour.control[2]"
+        ],
+        "tests": [
+          "bench_p3_crc.test_register_access"
+        ],
+        "bins": {}
+      },
+      {
+        "id": "REQ-10",
+        "spec": [
+          "behaviour.control[1]"
+        ],
+        "tests": [
+          "bench_p3_crc.test_init_vs_push_adjacent",
+          "bench_p3_crc.test_random_traffic"
+        ],
+        "bins": {}
+      },
+      {
+        "id": "REQ-11",
+        "spec": [
+          "behaviour.control[0]",
+          "timing.latency.init"
+        ],
+        "tests": [
+          "bench_p3_crc.test_init"
+        ],
+        "bins": {}
+      },
+      {
+        "id": "REQ-12",
+        "spec": [
+          "behaviour.crc[4]"
+        ],
+        "tests": [
+          "bench_p3_crc.test_init"
+        ],
+        "bins": {}
+      },
+      {
+        "id": "REQ-13",
+        "spec": [
+          "timing.latency.push_to_visible"
+        ],
+        "tests": [
+          "bench_p3_crc.test_init",
+          "bench_p3_crc.test_back_to_back_pushes"
+        ],
+        "bins": {}
+      },
+      {
+        "id": "REQ-14",
+        "spec": [
+          "behaviour.crc[5]"
+        ],
+        "tests": [
+          "bench_p3_crc.test_back_to_back_pushes"
+        ],
+        "bins": {}
+      },
+      {
+        "id": "REQ-15",
+        "spec": [
+          "behaviour.bus[0]",
+          "timing.latency.read"
+        ],
+        "tests": [
+          "bench_p3_crc.test_read_latency_hold"
+        ],
+        "bins": {}
+      },
+      {
+        "id": "REQ-16",
+        "spec": [],
+        "tests": [
+          "bench_p3_crc.test_read_latency_hold"
+        ],
+        "bins": {}
+      },
+      {
+        "id": "REQ-17",
+        "spec": [
+          "registers.unmapped",
+          "behaviour.bus[1]"
+        ],
+        "tests": [
+          "bench_p3_crc.test_register_access"
+        ],
+        "bins": {}
+      },
+      {
+        "id": "REQ-18",
+        "spec": [],
+        "tests": [
+          "bench_p3_crc.test_register_access"
+        ],
+        "bins": {}
+      },
+      {
+        "id": "REQ-19",
+        "spec": [
+          "registers.map.BUILD"
+        ],
+        "tests": [
+          "bench_p3_crc.test_register_access"
+        ],
+        "bins": {}
+      },
+      {
+        "id": "REQ-20",
+        "spec": [
+          "registers.map.ID",
+          "behaviour.bus[2]"
+        ],
+        "tests": [
+          "bench_p3_crc.test_reset_values",
+          "bench_p3_crc.test_register_access"
+        ],
+        "bins": {}
+      },
+      {
+        "id": "REQ-21",
+        "spec": [
+          "registers.map.SCRATCH"
+        ],
+        "tests": [
+          "bench_p3_crc.test_register_access"
+        ],
+        "bins": {}
+      },
+      {
+        "id": "REQ-22",
+        "spec": [],
+        "tests": [
+          "bench_p3_crc.test_reset_values"
+        ],
+        "bins": {}
+      },
+      {
+        "id": "REQ-23",
+        "spec": [],
+        "tests": [
+          "bench_p3_crc.test_reset_values"
+        ],
+        "bins": {}
+      },
+      {
+        "id": "REQ-24",
+        "spec": [
+          "behaviour.top[2]"
+        ],
+        "tests": [
+          "bench_p3_crc.test_static_top_checks"
+        ],
+        "bins": {}
+      },
+      {
+        "id": "REQ-25",
+        "spec": [],
+        "tests": [
+          "bench_p3_crc.test_static_top_checks"
+        ],
+        "bins": {}
+      },
+      {
+        "id": "REQ-26",
+        "spec": [
+          "behaviour.top[1]"
+        ],
+        "tests": [
+          "bench_p3_crc.test_static_top_checks"
+        ],
+        "bins": {}
+      },
+      {
+        "id": "REQ-27",
+        "spec": [],
+        "tests": [
+          "bench_p3_crc.test_static_top_checks"
+        ],
+        "bins": {}
+      },
+      {
+        "id": "REQ-28",
+        "spec": [],
+        "tests": [
+          "bench_p3_crc.test_random_traffic"
+        ],
+        "bins": {}
+      },
+      {
+        "id": "REQ-29",
+        "spec": [],
+        "tests": [
+          "bench_p3_crc.test_random_traffic"
+        ],
+        "bins": {}
+      },
+      {
+        "id": "REQ-30",
+        "spec": [
+          "behaviour.top[0]"
+        ],
+        "tests": [
+          "bench_p3_crc.test_static_top_checks"
+        ],
+        "bins": {}
+      },
+      {
+        "id": "REQ-31",
+        "spec": [],
+        "tests": [
+          "bench_p3_crc.test_counters_accumulate"
+        ],
+        "bins": {}
+      },
+      {
+        "id": "REQ-32",
+        "spec": [],
+        "tests": [
+          "bench_p3_crc.test_counters_accumulate"
+        ],
+        "bins": {}
+      }
+    ]
+  },
+  "reached": "V2",
+  "first_failed": "V3"
+}

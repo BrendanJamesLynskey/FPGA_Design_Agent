@@ -1,0 +1,952 @@
+{
+ "schema": "fpga-force/readiness/v1",
+ "level": "standard",
+ "limits": {
+  "max_rounds": 4,
+  "max_calls": 60,
+  "max_questions": 25
+ },
+ "checklist": "procedures/requirements-review/pre-build-review@sha256:c6081e7cd937",
+ "started": "2026-11-26T17:31:49Z",
+ "rounds": [
+  {
+   "n": 1,
+   "questions": [
+    {
+     "id": "Q1",
+     "text": "The core has no vendor primitive, so BUILD (0x004) must enter it through a port. What is that port called and how wide is it (for example a 32-bit input carrying the USR_ACCESS word)? Does the core also drive the led[1:0] outputs, or does the top?",
+     "code": "RDY-REV-01",
+     "topic": "Names, files and the build target",
+     "ids": [
+      "REQ-02",
+      "REQ-26"
+     ],
+     "blocking": true,
+     "source": "reviewer",
+     "answer": null,
+     "by": null,
+     "evidence": null
+    },
+    {
+     "id": "Q2",
+     "text": "What is MEM_ADDR after the ROM_DATA read, i.e. the value used for the following RAM_DATA read? (Scenario: AUTOINC set, MEM_ADDR = 1023, one ROM_DATA read is performed, then a RAM_DATA read is performed immediately after.) Two careful readers of the requirements disagree about this; what is the intended behaviour?",
+     "code": "RDY-READ-01",
+     "topic": "requirement",
+     "ids": [
+      "REQ-10",
+      "REQ-34",
+      "REQ-13"
+     ],
+     "blocking": true,
+     "source": "readers",
+     "answer": null,
+     "by": null,
+     "evidence": null
+    },
+    {
+     "id": "Q3",
+     "text": "What value is returned by the RAM_DATA read? (Scenario: Host writes RAM word 7 = 0x12345678, then rst is pulsed for 3 clocks, then MEM_ADDR is set to 7 and RAM_DATA read with BUSY=0.) Two careful readers of the requirements disagree about this; what is the intended behaviour?",
+     "code": "RDY-READ-01",
+     "topic": "requirement",
+     "ids": [
+      "REQ-16",
+      "REQ-14",
+      "REQ-05"
+     ],
+     "blocking": true,
+     "source": "readers",
+     "answer": null,
+     "by": null,
+     "evidence": null
+    },
+    {
+     "id": "Q4",
+     "text": "What value is read back? (Scenario: Host writes 0xFFFFFC05 to MEM_ADDR, then reads MEM_ADDR back.) Two careful readers of the requirements disagree about this; what is the intended behaviour?",
+     "code": "RDY-READ-01",
+     "topic": "requirement",
+     "ids": [
+      "REQ-09"
+     ],
+     "blocking": true,
+     "source": "readers",
+     "answer": null,
+     "by": null,
+     "evidence": null
+    },
+    {
+     "id": "Q5",
+     "text": "What value does h_rdata present for that read, in the first allowed read response? (Scenario: SCRATCH holds 0x11111111. Host asserts h_we writing 0x22222222 to 0x008 on clock N and h_re reading 0x008 on clock N+1 (the clock just after the write).) Two careful readers of the requirements disagree about this; what is the intended behaviour?",
+     "code": "RDY-READ-01",
+     "topic": "requirement",
+     "ids": [
+      "REQ-06",
+      "REQ-07",
+      "REQ-03"
+     ],
+     "blocking": true,
+     "source": "readers",
+     "answer": null,
+     "by": null,
+     "evidence": null
+    },
+    {
+     "id": "Q6",
+     "text": "Which RAM word receives the write and what is MEM_ADDR afterward (give MEM_ADDR)? (Scenario: AUTOINC set, MEM_ADDR=1023, host writes RAM_DATA=0xDEADBEEF, BUSY=0.) Two careful readers of the requirements disagree about this; what is the intended behaviour?",
+     "code": "RDY-READ-01",
+     "topic": "requirement",
+     "ids": [
+      "REQ-13",
+      "REQ-14"
+     ],
+     "blocking": true,
+     "source": "readers",
+     "answer": null,
+     "by": null,
+     "evidence": null
+    },
+    {
+     "id": "Q7",
+     "text": "What is the value of MARCH_STATUS bits 31:16 (passes completed) after reset? (Scenario: A 200-pass march run is mid-test (BUSY=1, passes completed 57) when rst is asserted for 3 clocks and released. After release the host reads MARCH_STATUS and MARCH_ERRS.) The requirements do not say; what should happen?",
+     "code": "RDY-READ-02",
+     "topic": "requirement",
+     "ids": [
+      "REQ-16",
+      "REQ-15",
+      "REQ-35"
+     ],
+     "blocking": true,
+     "source": "readers",
+     "answer": null,
+     "by": null,
+     "evidence": null
+    },
+    {
+     "id": "Q8",
+     "text": "Does MEM_ADDR advance by 1 as a result of the ignored write while BUSY is 1? (Scenario: BUSY=1 during a march run; host writes RAM_DATA=0xAAAA5555 at MEM_ADDR 3 with AUTOINC set, then reads RAM_DATA.) The requirements do not say; what should happen?",
+     "code": "RDY-READ-02",
+     "topic": "requirement",
+     "ids": [
+      "REQ-35",
+      "REQ-15"
+     ],
+     "blocking": true,
+     "source": "readers",
+     "answer": null,
+     "by": null,
+     "evidence": null
+    }
+   ],
+   "amendments": [],
+   "refused": [],
+   "repairs": {
+    "asked": [
+     {
+      "id": "REQ-03",
+      "code": "RDY-CLEAR-01",
+      "text": "requirement REQ-03 is compound ('and' joins two statements): split it into one requirement per checkable statement, each with its own id and proof method",
+      "question": "Please restate REQ-03 so that one statement can be checked: split it into one requirement per checkable statement, each with its own id and proof method",
+      "level": "standard",
+      "topic": "requirement",
+      "blocking": true,
+      "repair": true
+     },
+     {
+      "id": "REQ-06",
+      "code": "RDY-CLEAR-01",
+      "text": "requirement REQ-06 is compound ('and' joins two statements): split it into one requirement per checkable statement, each with its own id and proof method",
+      "question": "Please restate REQ-06 so that one statement can be checked: split it into one requirement per checkable statement, each with its own id and proof method",
+      "level": "standard",
+      "topic": "requirement",
+      "blocking": true,
+      "repair": true
+     },
+     {
+      "id": "REQ-08",
+      "code": "RDY-CLEAR-01",
+      "text": "requirement REQ-08 is compound ('and' joins two statements): split it into one requirement per checkable statement, each with its own id and proof method",
+      "question": "Please restate REQ-08 so that one statement can be checked: split it into one requirement per checkable statement, each with its own id and proof method",
+      "level": "standard",
+      "topic": "requirement",
+      "blocking": true,
+      "repair": true
+     },
+     {
+      "id": "REQ-10",
+      "code": "RDY-CLEAR-01",
+      "text": "requirement REQ-10 is compound (', and' joins two statements): split it into one requirement per checkable statement, each with its own id and proof method",
+      "question": "Please restate REQ-10 so that one statement can be checked: split it into one requirement per checkable statement, each with its own id and proof method",
+      "level": "standard",
+      "topic": "requirement",
+      "blocking": true,
+      "repair": true
+     },
+     {
+      "id": "REQ-15",
+      "code": "RDY-CLEAR-01",
+      "text": "requirement REQ-15 is compound ('and' joins two statements): split it into one requirement per checkable statement, each with its own id and proof method",
+      "question": "Please restate REQ-15 so that one statement can be checked: split it into one requirement per checkable statement, each with its own id and proof method",
+      "level": "standard",
+      "topic": "requirement",
+      "blocking": true,
+      "repair": true
+     },
+     {
+      "id": "REQ-17",
+      "code": "RDY-CLEAR-01",
+      "text": "requirement REQ-17 is compound (';' joins two statements): split it into one requirement per checkable statement, each with its own id and proof method",
+      "question": "Please restate REQ-17 so that one statement can be checked: split it into one requirement per checkable statement, each with its own id and proof method",
+      "level": "standard",
+      "topic": "requirement",
+      "blocking": true,
+      "repair": true
+     },
+     {
+      "id": "REQ-20",
+      "code": "RDY-CLEAR-01",
+      "text": "requirement REQ-20 is compound (', and' joins two statements): split it into one requirement per checkable statement, each with its own id and proof method",
+      "question": "Please restate REQ-20 so that one statement can be checked: split it into one requirement per checkable statement, each with its own id and proof method",
+      "level": "standard",
+      "topic": "requirement",
+      "blocking": true,
+      "repair": true
+     },
+     {
+      "id": "REQ-21",
+      "code": "RDY-CLEAR-01",
+      "text": "requirement REQ-21 is compound ('and' joins two statements): split it into one requirement per checkable statement, each with its own id and proof method",
+      "question": "Please restate REQ-21 so that one statement can be checked: split it into one requirement per checkable statement, each with its own id and proof method",
+      "level": "standard",
+      "topic": "requirement",
+      "blocking": true,
+      "repair": true
+     },
+     {
+      "id": "REQ-25",
+      "code": "RDY-CLEAR-01",
+      "text": "requirement REQ-25 is compound ('and' joins two statements): split it into one requirement per checkable statement, each with its own id and proof method",
+      "question": "Please restate REQ-25 so that one statement can be checked: split it into one requirement per checkable statement, each with its own id and proof method",
+      "level": "standard",
+      "topic": "requirement",
+      "blocking": true,
+      "repair": true
+     }
+    ],
+    "revised": [
+     "REQ-03",
+     "REQ-06",
+     "REQ-08",
+     "REQ-10",
+     "REQ-15",
+     "REQ-17",
+     "REQ-20",
+     "REQ-21",
+     "REQ-25"
+    ],
+    "refused": []
+   },
+   "mechanical": [
+    {
+     "id": "interface",
+     "code": "RDY-IF-04",
+     "text": "output led has no reset value",
+     "question": "What does led drive during and just after reset?",
+     "level": "strict",
+     "topic": "reset strategy",
+     "blocking": true,
+     "repair": false
+    },
+    {
+     "id": "interface",
+     "code": "RDY-IF-05",
+     "text": "output led has no stated latency from a named input event",
+     "question": "How many cycles after which input event does led change (or is it combinational)?",
+     "level": "strict",
+     "topic": "throughput and latency",
+     "blocking": true,
+     "repair": false
+    },
+    {
+     "id": "interface",
+     "code": "RDY-IF-04",
+     "text": "output sfp_tx_disable has no reset value",
+     "question": "What does sfp_tx_disable drive during and just after reset?",
+     "level": "strict",
+     "topic": "reset strategy",
+     "blocking": true,
+     "repair": false
+    },
+    {
+     "id": "interface",
+     "code": "RDY-IF-05",
+     "text": "output sfp_tx_disable has no stated latency from a named input event",
+     "question": "How many cycles after which input event does sfp_tx_disable change (or is it combinational)?",
+     "level": "strict",
+     "topic": "throughput and latency",
+     "blocking": true,
+     "repair": false
+    },
+    {
+     "id": "interface",
+     "code": "RDY-IF-04",
+     "text": "output core: h_rdata has no reset value",
+     "question": "What does core: h_rdata drive during and just after reset?",
+     "level": "strict",
+     "topic": "reset strategy",
+     "blocking": true,
+     "repair": false
+    },
+    {
+     "id": "interface",
+     "code": "RDY-IF-05",
+     "text": "output core: h_rdata has no stated latency from a named input event",
+     "question": "How many cycles after which input event does core: h_rdata change (or is it combinational)?",
+     "level": "strict",
+     "topic": "throughput and latency",
+     "blocking": true,
+     "repair": false
+    },
+    {
+     "id": "REQ-01",
+     "code": "RDY-DEF-01",
+     "text": "a default the agent chose became this requirement and the user has not validated it",
+     "question": "The agent chose the basis of REQ-01 (a default). Do you confirm it as written?",
+     "level": "strict",
+     "topic": "requirement",
+     "blocking": true,
+     "repair": false
+    },
+    {
+     "id": "REQ-03",
+     "code": "RDY-DEF-01",
+     "text": "a default the agent chose became this requirement and the user has not validated it",
+     "question": "The agent chose the basis of REQ-03 (a default). Do you confirm it as written?",
+     "level": "strict",
+     "topic": "requirement",
+     "blocking": true,
+     "repair": false
+    },
+    {
+     "id": "REQ-11",
+     "code": "RDY-DEF-01",
+     "text": "a default the agent chose became this requirement and the user has not validated it",
+     "question": "The agent chose the basis of REQ-11 (a default). Do you confirm it as written?",
+     "level": "strict",
+     "topic": "requirement",
+     "blocking": true,
+     "repair": false
+    },
+    {
+     "id": "REQ-19",
+     "code": "RDY-DEF-01",
+     "text": "a default the agent chose became this requirement and the user has not validated it",
+     "question": "The agent chose the basis of REQ-19 (a default). Do you confirm it as written?",
+     "level": "strict",
+     "topic": "requirement",
+     "blocking": true,
+     "repair": false
+    }
+   ],
+   "review": {
+    "findings": [
+     {
+      "topic": "Names, files and the build target",
+      "ids": [
+       "REQ-02",
+       "REQ-26"
+      ],
+      "missing_fact": "Names and widths of the core's extra ports: how the USR_ACCESS word reaches p2_bram_rom_core (BUILD), and how led[1:0] is driven",
+      "question": "The core has no vendor primitive, so BUILD (0x004) must enter it through a port. What is that port called and how wide is it (for example a 32-bit input carrying the USR_ACCESS word)? Does the core also drive the led[1:0] outputs, or does the top?",
+      "blocking": true,
+      "why": "The bench drives only the core. Without the exact port name it cannot supply a BUILD value, and a wrong name fails the compile or the BUILD check."
+     }
+    ],
+    "verdict": "not_ready",
+    "compliance": 0
+   },
+   "probes": {
+    "count": 13,
+    "categories": [
+     "back_pressure",
+     "boundary",
+     "invalid_input",
+     "mid_operation_reset",
+     "overflow",
+     "power_up",
+     "reset",
+     "simultaneous",
+     "unmapped"
+    ],
+    "problems": []
+   },
+   "agreement": {
+    "probes": 13,
+    "agreed": 6,
+    "rate": 0.4615,
+    "disagreements": [
+     {
+      "probe": "P1",
+      "scenario": "AUTOINC set, MEM_ADDR = 1023, one ROM_DATA read is performed, then a RAM_DATA read is performed immediately after.",
+      "question": "What is MEM_ADDR after the ROM_DATA read, i.e. the value used for the following RAM_DATA read?",
+      "category": "boundary",
+      "answers": {
+       "A": "unspecified",
+       "B": "0"
+      },
+      "requirements": [
+       "REQ-10",
+       "REQ-34",
+       "REQ-13"
+      ]
+     },
+     {
+      "probe": "P4",
+      "scenario": "Host writes RAM word 7 = 0x12345678, then rst is pulsed for 3 clocks, then MEM_ADDR is set to 7 and RAM_DATA read with BUSY=0.",
+      "question": "What value is returned by the RAM_DATA read?",
+      "category": "reset",
+      "answers": {
+       "A": "undefined",
+       "B": "unspecified"
+      },
+      "requirements": [
+       "REQ-16",
+       "REQ-14",
+       "REQ-05"
+      ]
+     },
+     {
+      "probe": "P8",
+      "scenario": "Host writes 0xFFFFFC05 to MEM_ADDR, then reads MEM_ADDR back.",
+      "question": "What value is read back?",
+      "category": "boundary",
+      "answers": {
+       "A": "1029",
+       "B": "5"
+      },
+      "requirements": [
+       "REQ-09"
+      ]
+     },
+     {
+      "probe": "P9",
+      "scenario": "SCRATCH holds 0x11111111. Host asserts h_we writing 0x22222222 to 0x008 on clock N and h_re reading 0x008 on clock N+1 (the clock just after the write).",
+      "question": "What value does h_rdata present for that read, in the first allowed read response?",
+      "category": "simultaneous",
+      "answers": {
+       "A": "either permitted",
+       "B": "0x22222222"
+      },
+      "requirements": [
+       "REQ-06",
+       "REQ-07",
+       "REQ-03"
+      ]
+     },
+     {
+      "probe": "P10",
+      "scenario": "AUTOINC set, MEM_ADDR=1023, host writes RAM_DATA=0xDEADBEEF, BUSY=0.",
+      "question": "Which RAM word receives the write and what is MEM_ADDR afterward (give MEM_ADDR)?",
+      "category": "overflow",
+      "answers": {
+       "A": "0",
+       "B": "1023"
+      },
+      "requirements": [
+       "REQ-13",
+       "REQ-14"
+      ]
+     }
+    ],
+    "gaps": [
+     {
+      "probe": "P3",
+      "scenario": "A 200-pass march run is mid-test (BUSY=1, passes completed 57) when rst is asserted for 3 clocks and released. After release the host reads MARCH_STATUS and MARCH_ERRS.",
+      "question": "What is the value of MARCH_STATUS bits 31:16 (passes completed) after reset?",
+      "answers": {
+       "A": "unspecified",
+       "B": "unspecified"
+      },
+      "requirements": [
+       "REQ-16",
+       "REQ-15",
+       "REQ-35"
+      ]
+     },
+     {
+      "probe": "P5",
+      "scenario": "BUSY=1 during a march run; host writes RAM_DATA=0xAAAA5555 at MEM_ADDR 3 with AUTOINC set, then reads RAM_DATA.",
+      "question": "Does MEM_ADDR advance by 1 as a result of the ignored write while BUSY is 1?",
+      "answers": {
+       "A": "unspecified",
+       "B": "unspecified"
+      },
+      "requirements": [
+       "REQ-35",
+       "REQ-15"
+      ]
+     }
+    ]
+   },
+   "probe_set": [
+    {
+     "id": "P1",
+     "category": "boundary",
+     "answer_kind": "int",
+     "requirements": [
+      "REQ-10",
+      "REQ-34",
+      "REQ-13"
+     ]
+    },
+    {
+     "id": "P2",
+     "category": "simultaneous",
+     "answer_kind": "bool",
+     "requirements": [
+      "REQ-19",
+      "REQ-45",
+      "REQ-20"
+     ]
+    },
+    {
+     "id": "P3",
+     "category": "mid_operation_reset",
+     "answer_kind": "int",
+     "requirements": [
+      "REQ-16",
+      "REQ-15",
+      "REQ-35"
+     ]
+    },
+    {
+     "id": "P4",
+     "category": "reset",
+     "answer_kind": "choice",
+     "requirements": [
+      "REQ-16",
+      "REQ-14",
+      "REQ-05"
+     ]
+    },
+    {
+     "id": "P5",
+     "category": "back_pressure",
+     "answer_kind": "bool",
+     "requirements": [
+      "REQ-35",
+      "REQ-15"
+     ]
+    },
+    {
+     "id": "P6",
+     "category": "unmapped",
+     "answer_kind": "int",
+     "requirements": [
+      "REQ-08",
+      "REQ-33"
+     ]
+    },
+    {
+     "id": "P7",
+     "category": "invalid_input",
+     "answer_kind": "int",
+     "requirements": [
+      "REQ-25",
+      "REQ-47",
+      "REQ-18"
+     ]
+    },
+    {
+     "id": "P8",
+     "category": "boundary",
+     "answer_kind": "int",
+     "requirements": [
+      "REQ-09"
+     ]
+    },
+    {
+     "id": "P9",
+     "category": "simultaneous",
+     "answer_kind": "choice",
+     "requirements": [
+      "REQ-06",
+      "REQ-07",
+      "REQ-03"
+     ]
+    },
+    {
+     "id": "P10",
+     "category": "overflow",
+     "answer_kind": "int",
+     "requirements": [
+      "REQ-13",
+      "REQ-14"
+     ]
+    },
+    {
+     "id": "P11",
+     "category": "simultaneous",
+     "answer_kind": "bool",
+     "requirements": [
+      "REQ-21",
+      "REQ-46",
+      "REQ-18"
+     ]
+    },
+    {
+     "id": "P12",
+     "category": "boundary",
+     "answer_kind": "int",
+     "requirements": [
+      "REQ-23",
+      "REQ-24",
+      "REQ-20"
+     ]
+    },
+    {
+     "id": "P13",
+     "category": "power_up",
+     "answer_kind": "int",
+     "requirements": [
+      "REQ-31",
+      "REQ-16",
+      "REQ-04"
+     ]
+    }
+   ],
+   "probe_text": [
+    {
+     "id": "P1",
+     "category": "boundary",
+     "requirements": [
+      "REQ-10",
+      "REQ-34",
+      "REQ-13"
+     ],
+     "scenario": "AUTOINC set, MEM_ADDR = 1023, one ROM_DATA read is performed, then a RAM_DATA read is performed immediately after.",
+     "question": "What is MEM_ADDR after the ROM_DATA read, i.e. the value used for the following RAM_DATA read?",
+     "answer_kind": "int"
+    },
+    {
+     "id": "P2",
+     "category": "simultaneous",
+     "requirements": [
+      "REQ-19",
+      "REQ-45",
+      "REQ-20"
+     ],
+     "scenario": "A march run is in progress (BUSY=1) with MARCH_ERRS = 2 from an injected fault; the host writes START again while BUSY is 1.",
+     "question": "Is MARCH_ERRS cleared to 0 by this second START?",
+     "answer_kind": "bool"
+    },
+    {
+     "id": "P3",
+     "category": "mid_operation_reset",
+     "requirements": [
+      "REQ-16",
+      "REQ-15",
+      "REQ-35"
+     ],
+     "scenario": "A 200-pass march run is mid-test (BUSY=1, passes completed 57) when rst is asserted for 3 clocks and released. After release the host reads MARCH_STATUS and MARCH_ERRS.",
+     "question": "What is the value of MARCH_STATUS bits 31:16 (passes completed) after reset?",
+     "answer_kind": "int"
+    },
+    {
+     "id": "P4",
+     "category": "reset",
+     "requirements": [
+      "REQ-16",
+      "REQ-14",
+      "REQ-05"
+     ],
+     "scenario": "Host writes RAM word 7 = 0x12345678, then rst is pulsed for 3 clocks, then MEM_ADDR is set to 7 and RAM_DATA read with BUSY=0.",
+     "question": "What value is returned by the RAM_DATA read?",
+     "answer_kind": "choice",
+     "choices": [
+      "0x12345678",
+      "0xC0DE0007",
+      "0x00000000",
+      "undefined"
+     ]
+    },
+    {
+     "id": "P5",
+     "category": "back_pressure",
+     "requirements": [
+      "REQ-35",
+      "REQ-15"
+     ],
+     "scenario": "BUSY=1 during a march run; host writes RAM_DATA=0xAAAA5555 at MEM_ADDR 3 with AUTOINC set, then reads RAM_DATA.",
+     "question": "Does MEM_ADDR advance by 1 as a result of the ignored write while BUSY is 1?",
+     "answer_kind": "bool"
+    },
+    {
+     "id": "P6",
+     "category": "unmapped",
+     "requirements": [
+      "REQ-08",
+      "REQ-33"
+     ],
+     "scenario": "Host writes 0xFFFFFFFF to unmapped address 0x7F0 and then reads address 0x7F0 and the SCRATCH register at 0x008.",
+     "question": "What does the read of 0x7F0 return?",
+     "answer_kind": "int"
+    },
+    {
+     "id": "P7",
+     "category": "invalid_input",
+     "requirements": [
+      "REQ-25",
+      "REQ-47",
+      "REQ-18"
+     ],
+     "scenario": "MARCH_PASSES is written 0, START issued when idle, run completes.",
+     "question": "What is MARCH_STATUS bits 31:16 at completion?",
+     "answer_kind": "int"
+    },
+    {
+     "id": "P8",
+     "category": "boundary",
+     "requirements": [
+      "REQ-09"
+     ],
+     "scenario": "Host writes 0xFFFFFC05 to MEM_ADDR, then reads MEM_ADDR back.",
+     "question": "What value is read back?",
+     "answer_kind": "int"
+    },
+    {
+     "id": "P9",
+     "category": "simultaneous",
+     "requirements": [
+      "REQ-06",
+      "REQ-07",
+      "REQ-03"
+     ],
+     "scenario": "SCRATCH holds 0x11111111. Host asserts h_we writing 0x22222222 to 0x008 on clock N and h_re reading 0x008 on clock N+1 (the clock just after the write).",
+     "question": "What value does h_rdata present for that read, in the first allowed read response?",
+     "answer_kind": "choice",
+     "choices": [
+      "0x11111111",
+      "0x22222222",
+      "either permitted",
+      "0"
+     ]
+    },
+    {
+     "id": "P10",
+     "category": "overflow",
+     "requirements": [
+      "REQ-13",
+      "REQ-14"
+     ],
+     "scenario": "AUTOINC set, MEM_ADDR=1023, host writes RAM_DATA=0xDEADBEEF, BUSY=0.",
+     "question": "Which RAM word receives the write and what is MEM_ADDR afterward (give MEM_ADDR)?",
+     "answer_kind": "int"
+    },
+    {
+     "id": "P11",
+     "category": "simultaneous",
+     "requirements": [
+      "REQ-21",
+      "REQ-46",
+      "REQ-18"
+     ],
+     "scenario": "The final pass of a 1-pass run completes on clock T. Host reads MARCH_STATUS on clock T+1.",
+     "question": "Are BUSY=0, DONE=1 and passes completed=1 all visible in that read?",
+     "answer_kind": "bool"
+    },
+    {
+     "id": "P12",
+     "category": "boundary",
+     "requirements": [
+      "REQ-23",
+      "REQ-24",
+      "REQ-20"
+     ],
+     "scenario": "INJECT_FAULT set, MARCH_PASSES=3, START issued when idle, run completes.",
+     "question": "What is MARCH_ERRS at completion, and does RAM word 5 hold 0?",
+     "answer_kind": "int"
+    },
+    {
+     "id": "P13",
+     "category": "power_up",
+     "requirements": [
+      "REQ-31",
+      "REQ-16",
+      "REQ-04"
+     ],
+     "scenario": "Right after configuration and the initial reset, before any write, host reads SCRATCH at 0x008, then MARCH_FIRST_ERR.",
+     "question": "What is the value of SCRATCH?",
+     "answer_kind": "int"
+    }
+   ],
+   "answers": {
+    "A": {
+     "P1": "unspecified",
+     "P2": "no",
+     "P3": "unspecified",
+     "P4": "undefined",
+     "P5": "unspecified",
+     "P6": "0",
+     "P7": "1",
+     "P8": "1029",
+     "P9": "either permitted",
+     "P10": "0",
+     "P11": "yes",
+     "P12": "3",
+     "P13": "0"
+    },
+    "B": {
+     "P1": "0",
+     "P2": "no",
+     "P3": "unspecified",
+     "P4": "unspecified",
+     "P5": "unspecified",
+     "P6": "0",
+     "P7": "1",
+     "P8": "5",
+     "P9": "0x22222222",
+     "P10": "1023, MEM_ADDR 0",
+     "P11": "yes",
+     "P12": "3, yes",
+     "P13": "0"
+    }
+   }
+  }
+ ],
+ "frozen": null,
+ "stop": "no answer was available for the open questions",
+ "answerer": null,
+ "finished": "2026-11-26T17:32:39Z",
+ "model_calls": 5,
+ "calls_by_role": {
+  "probes": 1,
+  "reader_a": 1,
+  "reader_b": 1,
+  "repair": 1,
+  "review": 1
+ },
+ "open": [
+  {
+   "id": "Q1",
+   "text": "The core has no vendor primitive, so BUILD (0x004) must enter it through a port. What is that port called and how wide is it (for example a 32-bit input carrying the USR_ACCESS word)? Does the core also drive the led[1:0] outputs, or does the top?",
+   "code": "RDY-REV-01",
+   "topic": "Names, files and the build target",
+   "ids": [
+    "REQ-02",
+    "REQ-26"
+   ],
+   "blocking": true,
+   "source": "reviewer",
+   "answer": null,
+   "by": null,
+   "evidence": null
+  },
+  {
+   "id": "Q2",
+   "text": "What is MEM_ADDR after the ROM_DATA read, i.e. the value used for the following RAM_DATA read? (Scenario: AUTOINC set, MEM_ADDR = 1023, one ROM_DATA read is performed, then a RAM_DATA read is performed immediately after.) Two careful readers of the requirements disagree about this; what is the intended behaviour?",
+   "code": "RDY-READ-01",
+   "topic": "requirement",
+   "ids": [
+    "REQ-10",
+    "REQ-34",
+    "REQ-13"
+   ],
+   "blocking": true,
+   "source": "readers",
+   "answer": null,
+   "by": null,
+   "evidence": null
+  },
+  {
+   "id": "Q3",
+   "text": "What value is returned by the RAM_DATA read? (Scenario: Host writes RAM word 7 = 0x12345678, then rst is pulsed for 3 clocks, then MEM_ADDR is set to 7 and RAM_DATA read with BUSY=0.) Two careful readers of the requirements disagree about this; what is the intended behaviour?",
+   "code": "RDY-READ-01",
+   "topic": "requirement",
+   "ids": [
+    "REQ-16",
+    "REQ-14",
+    "REQ-05"
+   ],
+   "blocking": true,
+   "source": "readers",
+   "answer": null,
+   "by": null,
+   "evidence": null
+  },
+  {
+   "id": "Q4",
+   "text": "What value is read back? (Scenario: Host writes 0xFFFFFC05 to MEM_ADDR, then reads MEM_ADDR back.) Two careful readers of the requirements disagree about this; what is the intended behaviour?",
+   "code": "RDY-READ-01",
+   "topic": "requirement",
+   "ids": [
+    "REQ-09"
+   ],
+   "blocking": true,
+   "source": "readers",
+   "answer": null,
+   "by": null,
+   "evidence": null
+  },
+  {
+   "id": "Q5",
+   "text": "What value does h_rdata present for that read, in the first allowed read response? (Scenario: SCRATCH holds 0x11111111. Host asserts h_we writing 0x22222222 to 0x008 on clock N and h_re reading 0x008 on clock N+1 (the clock just after the write).) Two careful readers of the requirements disagree about this; what is the intended behaviour?",
+   "code": "RDY-READ-01",
+   "topic": "requirement",
+   "ids": [
+    "REQ-06",
+    "REQ-07",
+    "REQ-03"
+   ],
+   "blocking": true,
+   "source": "readers",
+   "answer": null,
+   "by": null,
+   "evidence": null
+  },
+  {
+   "id": "Q6",
+   "text": "Which RAM word receives the write and what is MEM_ADDR afterward (give MEM_ADDR)? (Scenario: AUTOINC set, MEM_ADDR=1023, host writes RAM_DATA=0xDEADBEEF, BUSY=0.) Two careful readers of the requirements disagree about this; what is the intended behaviour?",
+   "code": "RDY-READ-01",
+   "topic": "requirement",
+   "ids": [
+    "REQ-13",
+    "REQ-14"
+   ],
+   "blocking": true,
+   "source": "readers",
+   "answer": null,
+   "by": null,
+   "evidence": null
+  },
+  {
+   "id": "Q7",
+   "text": "What is the value of MARCH_STATUS bits 31:16 (passes completed) after reset? (Scenario: A 200-pass march run is mid-test (BUSY=1, passes completed 57) when rst is asserted for 3 clocks and released. After release the host reads MARCH_STATUS and MARCH_ERRS.) The requirements do not say; what should happen?",
+   "code": "RDY-READ-02",
+   "topic": "requirement",
+   "ids": [
+    "REQ-16",
+    "REQ-15",
+    "REQ-35"
+   ],
+   "blocking": true,
+   "source": "readers",
+   "answer": null,
+   "by": null,
+   "evidence": null
+  },
+  {
+   "id": "Q8",
+   "text": "Does MEM_ADDR advance by 1 as a result of the ignored write while BUSY is 1? (Scenario: BUSY=1 during a march run; host writes RAM_DATA=0xAAAA5555 at MEM_ADDR 3 with AUTOINC set, then reads RAM_DATA.) The requirements do not say; what should happen?",
+   "code": "RDY-READ-02",
+   "topic": "requirement",
+   "ids": [
+    "REQ-35",
+    "REQ-15"
+   ],
+   "blocking": true,
+   "source": "readers",
+   "answer": null,
+   "by": null,
+   "evidence": null
+  }
+ ]
+}

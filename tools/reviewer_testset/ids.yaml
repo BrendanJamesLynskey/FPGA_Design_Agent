@@ -1,0 +1,48 @@
+# Brief 227: the requirements reviewer's labelled test set, as ids only (problem text and the facts each problem lacks stay private).
+# Source of the labels: reports/226_cvdp_lessons_report.md section 7 (the CVDP project's counterfactual re-runs and rules fixed in advance).
+# Positives (the reviewer should flag the problem and name the missing fact), negatives (it must not flag), candidates (undiagnosed: described, never scored).
+dataset: nvidia/cvdp-benchmark-dataset (agentic split for A to F, the non-agentic held-out hundred for G)
+groups:
+  A:   # benchmark-limited, strong evidence: a fact the hidden test needs is nowhere in the problem
+    polarity: positive
+    stratum: fact_missing
+    ids: [cvdp_agentic_traffic_light_controller_0001, cvdp_agentic_sync_serial_communication_0001, cvdp_agentic_cache_controller_0001,
+          cvdp_agentic_secure_apb_history_shift_register_0001, cvdp_agentic_dynamic_equalizer_0008, cvdp_agentic_rc5_0001, cvdp_agentic_elevator_control_0004]
+  B:   # benchmark-limited, borderline (no counterfactual found, or a non-deterministic test): reported apart, not in the headline
+    polarity: positive
+    stratum: borderline
+    ids: [cvdp_agentic_dynamic_equalizer_0001, cvdp_agentic_phase_rotation_0015]
+  C:   # the hidden test reads names inside the implementation: a finding about the test, scored apart
+    polarity: positive
+    stratum: test_reaches_into_implementation
+    ids: [cvdp_agentic_digital_stopwatch_0001, cvdp_agentic_phase_rotation_0010, cvdp_agentic_phase_rotation_0028, cvdp_agentic_phase_rotation_0031,
+          cvdp_agentic_phase_rotation_0038, cvdp_agentic_poly_decimator_0001]
+  D:   # compiled-path and file facts
+    polarity: positive
+    stratum: fact_missing
+    ids: [cvdp_agentic_sigma_delta_audio_0001, cvdp_agentic_spi_complex_mult_0002, cvdp_agentic_DES_0003]
+  E:   # agent-limited controls: the fact is stated, the agents missed it (must not be flagged)
+    polarity: negative
+    stratum: hard_negative
+    ids: [cvdp_agentic_hdbn_codec_0001, cvdp_agentic_phase_rotation_0013]
+  F:   # sound-problem controls: solved in every run of every arm, none flagged
+    polarity: negative
+    stratum: easy_negative
+    ids: [cvdp_agentic_AES_encryption_decryption_0018, cvdp_agentic_Min_Hamming_Distance_Finder_0001, cvdp_agentic_PCIe_endpoint_0001,
+          cvdp_agentic_async_fifo_compute_ram_application_0006, cvdp_agentic_async_filo_0001, cvdp_agentic_axis_to_uart_0001, cvdp_agentic_axis_to_uart_0004,
+          cvdp_agentic_barrel_shifter_0001, cvdp_agentic_barrel_shifter_0002, cvdp_agentic_binary_to_gray_0003, cvdp_agentic_byte_enable_ram_0002,
+          cvdp_agentic_caesar_cipher_0001, cvdp_agentic_cellular_automata_0002, cvdp_agentic_cic_decimator_0001, cvdp_agentic_cipher_0001,
+          cvdp_agentic_cont_adder_0001, cvdp_agentic_dma_xfer_engine_0001, cvdp_agentic_event_scheduler_0001, cvdp_agentic_multiplexer_0001,
+          cvdp_agentic_signed_comparator_0001, cvdp_agentic_swizzler_0005]
+  G:   # held-out candidates: never solved by 34 runs; undiagnosed, so described only (a flag is not a hit, a pass is not a miss)
+    polarity: candidate
+    stratum: undiagnosed
+    ids: [cvdp_copilot_apb_gpio_0005, cvdp_copilot_configurable_digital_low_pass_filter_0011, cvdp_copilot_digital_dice_roller_0001, cvdp_copilot_serial_in_parallel_out_0011,
+          cvdp_copilot_bus_arbiter_0001, cvdp_copilot_ethernet_packet_parser_0001, cvdp_copilot_findfasterclock_0001, cvdp_copilot_ir_receiver_0001,
+          cvdp_copilot_axi_stream_downscale_0001, cvdp_copilot_binary_search_tree_sorting_0014, cvdp_copilot_fifo_async_0001, cvdp_copilot_hebbian_rule_0012,
+          cvdp_copilot_interrupt_controller_0014, cvdp_copilot_ir_receiver_0005, cvdp_copilot_microcode_sequencer_0001, cvdp_copilot_neuromorphic_array_0001,
+          cvdp_copilot_perceptron_0006, cvdp_copilot_ping_pong_buffer_0001, cvdp_copilot_reed_solomon_encoder_and_decoder_0005, cvdp_copilot_run_length_0007,
+          cvdp_copilot_serial_in_parallel_out_0014, cvdp_copilot_simple_spi_0001, cvdp_copilot_sprite_0004, cvdp_copilot_vending_machine_0001, cvdp_copilot_wb2ahb_0001]
+excluded:
+  # in both D (a compiled-file fact) and E (agent-limited, borderline) in report 226: counted on neither side
+  - cvdp_agentic_binary_search_tree_algorithms_0014
