@@ -3,7 +3,7 @@ source: designs/b119_tcp_fast/handover.yaml; human view: README.md; refresh: pyt
 
 ## identity
 kind=showcase produced_by=session part=xck26-sfvc784-2LV-c board=Kria KR260 (K26 SOM) top=tcp_fast (wrapped with input registers in ooc_wrap for the out-of-context build) tool=Vivado 2026.1
-verified: verified except: 24 of 27 requirements without passing evidence; 27 of 27 requirements not agreed; required method mix not yet measured; mutation floor not yet measured; 22 stale or differing evidence items (record: designs/b119_tcp_fast/VERIFIED.md, designs/b119_tcp_fast/verified.json; definition: docs/verified.md)
+verified: verified except: 24 of 27 requirements without passing evidence; 27 of 27 requirements not agreed; required method mix not yet measured; mutation floor not yet measured; 21 stale or differing evidence items (record: designs/b119_tcp_fast/VERIFIED.md, designs/b119_tcp_fast/verified.json; definition: docs/verified.md)
 
 ## summary
 A block that holds the TCP connection state which software hands it and sends each OUCH 5.0 order of brief 110 as one complete Ethernet, IPv4 and TCP frame, with sequence number, identification and both checksums finished incrementally from partial sums of a template. It supports the speculative start and abort of brief 110, where an aborted frame is poisoned and consumes no sequence space, refuses to send when it is not armed, its state is stale, the window is closed or the MSS is too small, and hands every sent segment back to software. A Python TCP owner and a software OUCH exchange test it end to end in simulation, seeded faults in the RTL are caught, and the block is built out of context for the KR260's part at the 10G core clock.
