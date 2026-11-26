@@ -45,6 +45,10 @@ def run_one(plan: R.ImplPlan, start_dcp: Path, wd: Path, peak_g: float, clock_ns
     t0 = time.time()
     p = subprocess.run(T._child_cmd(tcl, log, peak_g + 1), stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=timeout_s)
     out = T.parse(wd)
+    if out.get("status") == "not run":                        # a Tcl error Vivado reported is a result of that recipe (measured), a kill is not
+        err = next((ln.strip() for ln in log.read_text(errors="replace").splitlines() if ln.startswith("ERROR:")), "") if log.exists() else ""
+        if err:
+            out = {"status": "error: " + err[:200], "error_from_vivado": True}
     if p.returncode != 0 and out.get("status") == "ok":
         out["status"] = f"vivado exit {p.returncode}"
     out.update({"clock_ns": clock_ns, "wall_s": round(time.time() - t0, 1), "plan": plan.to_dict()})

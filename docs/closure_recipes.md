@@ -19,7 +19,7 @@ not wired into the stage-6 loop by default** (see "Where it plugs in").
 | `amd_strategy` | impl | `name` (33 measured AMD strategy sets) | the five directives of one AMD implementation strategy | read from Vivado 2026.1 by `flow.tournament strategies` |
 | `impl_set` | impl | `name` (explore, extra_timing, extra_netdelay, aggressive, congestion) | the tournament's named directive sets (kept equal to `flow/tournament.py IMPL_MENU` by a test) | docs/tournament.md |
 | `phys_opt_options` | post_route | `step` (phys, post), `flags` (fanout_opt, placement_opt, rewire, critical_cell_opt, dsp/bram/shift_register_opt, retime, critical_pin_opt, clock_opt, bram_enable_opt, hold_fix) | `phys_opt_design` option flags after placement or after routing; `hold_fix` only alone | UG904 |
-| `fanout_replicate` | post_route | `nets` (at most 8 plain names) | `phys_opt_design -fanout_opt -force_replication_on_nets` on the named nets | UG904 |
+| `fanout_replicate` | post_route | `nets` (at most 8 plain names) | `phys_opt_design -fanout_opt -force_replication_on_nets` after placement (Vivado 2026.1 refuses `-fanout_opt` after routing: measured) | UG904 |
 | `max_fanout` | constraint | `nets`, `limit` (16 to 2000) | `MAX_FANOUT` on named nets before placement | UG903 |
 | `retime` | synth | `where` (synth: `-retiming`; phys: `-retime`) | retiming | UG901, UG904 |
 | `register_duplication` | synth | `method` (keep_equivalent, force_replication), `nets` | `-keep_equivalent_registers`, or forced replication | UG901, UG904 |

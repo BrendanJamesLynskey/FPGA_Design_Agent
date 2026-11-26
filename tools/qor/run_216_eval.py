@@ -13,6 +13,7 @@ stop reason and is run again on the next ``run``; it is never scored.
 from __future__ import annotations
 
 import datetime
+import hashlib
 import json
 import os
 import random
@@ -125,8 +126,8 @@ def run_task(design: str, arm: str) -> dict:
         if key in cache:
             out = dict(cache[key], cached=True)
         else:
-            out = CR.run_one(plan, synth[k], LIVE / design / "work" / f"p{len(cache)}", PEAK_G, ctx.clock_ns)
-            if out.get("status", "ok").startswith("vivado exit") or out.get("status") == "not run":
+            out = CR.run_one(plan, synth[k], LIVE / design / "work" / hashlib.sha1(key.encode()).hexdigest()[:10], PEAK_G, ctx.clock_ns)
+            if (out.get("status", "ok").startswith("vivado exit") or out.get("status") == "not run") and not out.get("error_from_vivado"):
                 stop["reason"] = "memory_cap_or_vivado_killed"
                 raise RuntimeError(out["status"])
             cache[key] = out

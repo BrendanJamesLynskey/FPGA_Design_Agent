@@ -49,6 +49,9 @@ SLR_ONLY = ("SSI_BalanceSLLs", "SSI_BalanceSLRs", "SSI_HighUtilSLRs", "SSI_Sprea
 #: ``phys_opt_design`` option flags a recipe may enable (UG904 ``phys_opt_design``; family matrix: "the rest of phys_opt_design is common")
 PHYS_FLAGS = ("fanout_opt", "placement_opt", "rewire", "critical_cell_opt", "dsp_register_opt", "bram_register_opt", "shift_register_opt",
               "retime", "critical_pin_opt", "clock_opt", "bram_enable_opt", "hold_fix")
+#: flags Vivado 2026.1 refuses after routing, measured 2026-11-26 (brief 216, adder A7: "Option -fanout_opt is specified but not supported yet for
+#: post-route physical synthesis"); the other flags are not known to be refused there, and an error a run reports is recorded as that recipe's result
+POST_ROUTE_REFUSED = ("fanout_opt",)
 #: ``synth_design`` options a recipe may set: key -> allowed values (None: a flag with no value)
 SYNTH_OPTIONS: dict[str, tuple[Any, ...]] = {
     "flatten_hierarchy": ("full", "none", "rebuilt"),
@@ -291,6 +294,8 @@ def _pre_phys(p, a, c):
     if a.get("step") in p.d() and a.get("flags"):
         out.append(f"{a.get('step')} already has a directive; options and a directive are separate recipes, one per step")
     fl = a.get("flags") or []
+    if a.get("step") == "post":
+        out += [f"{f} is refused by Vivado 2026.1 after routing (measured)" for f in fl if f in POST_ROUTE_REFUSED]
     if "hold_fix" in fl and len(fl) > 1:
         out.append("hold_fix is offered alone (it is a repair pass for hold, not a setup optimisation)")
     return out
@@ -300,7 +305,7 @@ def _pre_phys(p, a, c):
 def _apply_replicate(p, a, c):
     nets = tuple(dict.fromkeys(p.force_replication + tuple(a["nets"])))
     pf = dict(p.phys_flags)
-    pf["post"] = tuple(sorted(set(pf.get("post", ())) | {"fanout_opt"}))
+    pf["phys"] = tuple(sorted(set(pf.get("phys", ())) | {"fanout_opt"}))
     return _with_applied(p, "fanout_replicate", force_replication=nets, phys_flags=tuple(sorted(pf.items())))
 
 
@@ -308,8 +313,8 @@ def _pre_replicate(p, a, c):
     out = []
     if c.nets:
         out += [f"net {n} is not in the build's reports" for n in a.get("nets", []) if n not in c.nets]
-    if "post" in p.d():
-        out.append("the post-route step already has a directive")
+    if "phys" in p.d():
+        out.append("the phys step (after placement) already has a directive")
     return out
 
 
@@ -345,7 +350,7 @@ def _apply_dup(p, a, c):
     if a["method"] == "keep_equivalent":
         return _with_applied(p, "register_duplication", synth=tuple(sorted(dict(p.synth, keep_equivalent_registers=None).items())))
     pf = dict(p.phys_flags)
-    pf["post"] = tuple(sorted(set(pf.get("post", ())) | {"fanout_opt"}))
+    pf["phys"] = tuple(sorted(set(pf.get("phys", ())) | {"fanout_opt"}))
     return _with_applied(p, "register_duplication", force_replication=tuple(dict.fromkeys(p.force_replication + tuple(a["nets"]))),
                          phys_flags=tuple(sorted(pf.items())))
 
@@ -412,7 +417,7 @@ RECIPES: dict[str, Recipe] = {r.id: r for r in (
     Recipe("phys_opt_options", "phys_opt_design option flags after placement or routing", "post_route",
            (Param("step", "enum", ("phys", "post")), Param("flags", "flags", PHYS_FLAGS)), _apply_phys, _pre_phys,
            source="UG904 phys_opt_design; family matrix areas/toolflow.yaml (common to 7-series and UltraScale+)"),
-    Recipe("fanout_replicate", "replicate the drivers of named high-fanout nets (post-route phys_opt)", "post_route",
+    Recipe("fanout_replicate", "replicate the drivers of named high-fanout nets (phys_opt after placement)", "post_route",
            (Param("nets", "names", max_items=8),), _apply_replicate, _pre_replicate, source="UG904 phys_opt_design -force_replication_on_nets"),
     Recipe("max_fanout", "MAX_FANOUT on named nets before placement (a constraint, no clock change)", "constraint",
            (Param("nets", "names", max_items=8), Param("limit", "int", lo=16, hi=2000)), _apply_maxfanout, _pre_maxfanout,
@@ -515,7 +520,7 @@ def _phys_line(step: str, plan: ImplPlan) -> list[str]:
         parts.append(f"-directive {d}")
     for f in fl:
         parts.append(f"-{f}")
-    if step == "post" and plan.force_replication:
+    if step == "phys" and plan.force_replication:
         parts.append("-force_replication_on_nets [get_nets -quiet " + _q(" ".join(plan.force_replication)) + "]")
     return [" ".join(parts)]
 

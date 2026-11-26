@@ -104,7 +104,7 @@ def _calls(f: Features, family: str) -> list[tuple[str, dict[str, Any], float, s
     out += [("amd_strategy", {"name": n}, 30 - i, "the general performance sweep") for i, n in enumerate(
         ("Performance_Explore", "Performance_ExtraTimingOpt", "Performance_RefinePlacement", "Performance_NetDelay_high", "Performance_ExplorePostRoutePhysOpt",
          "Performance_WLBlockPlacement"))]
-    out.append(("phys_opt_options", {"step": "post", "flags": ["fanout_opt", "placement_opt", "rewire", "critical_cell_opt"]}, 25,
+    out.append(("phys_opt_options", {"step": "post", "flags": ["placement_opt", "rewire", "critical_cell_opt"]}, 25,
                 "a post-route phys_opt pass on the routed checkpoint (cheap: no re-placement)"))
     if w < -0.3 and not logic_bound:
         out.append(("retime", {"where": "phys"}, 20, "a large miss with no clear path class: phys_opt retiming"))

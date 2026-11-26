@@ -51,6 +51,7 @@ def test_named_sets_equal_the_tournament_menu():
     ("phys_opt_options", {"step": "route", "flags": ["rewire"]}, "not one of"),
     ("phys_opt_options", {"step": "post", "flags": ["rewire", "hold_fix"]}, "hold_fix is offered alone"),
     ("phys_opt_options", {"step": "post", "flags": ["bogus"]}, "not one of"),
+    ("phys_opt_options", {"step": "post", "flags": ["fanout_opt"]}, "refused by Vivado 2026.1 after routing"),
     ("fanout_replicate", {"nets": ["a; exec rm -rf /"]}, "not a plain net"),
     ("fanout_replicate", {"nets": ["n{1}"]}, "not a plain net"),
     ("fanout_replicate", {"nets": []}, "non-empty list"),
@@ -102,12 +103,20 @@ def test_plans_are_immutable_and_apply_is_pure():
 # ---- the one renderer, and the stage-6 guard -------------------------------------------------------------------------------------------------
 def test_render_contains_only_template_commands_and_no_clock_change():
     p = R.apply_recipe(R.ImplPlan(), "amd_strategy", {"name": "Performance_ExtraTimingOpt"}, CTX7)
-    p = R.apply_recipe(p, "phys_opt_options", {"step": "post", "flags": ["fanout_opt", "rewire"]}, CTX7)
+    p = R.apply_recipe(p, "phys_opt_options", {"step": "post", "flags": ["placement_opt", "rewire"]}, CTX7)
     p = R.apply_recipe(p, "max_fanout", {"nets": ["u/cnt[3]"], "limit": 100}, CTX7)
     tcl = R.render_impl_tcl(p, "/x/a.dcp", "/o")
-    assert "place_design -directive ExtraTimingOpt" in tcl and "phys_opt_design -fanout_opt -rewire" in tcl
+    assert "place_design -directive ExtraTimingOpt" in tcl and "phys_opt_design -placement_opt -rewire" in tcl
     assert "set_property MAX_FANOUT 100 [get_nets -quiet {u/cnt[3]}]" in tcl
     assert "clock_uncertainty" not in tcl and "false_path" not in tcl and "create_clock" not in tcl
+
+
+def test_replication_renders_at_the_phys_step_not_after_routing():
+    p = R.apply_recipe(R.ImplPlan(), "fanout_replicate", {"nets": ["u/n1"]}, CTX7)
+    tcl = R.render_impl_tcl(p, "/x/a.dcp", "/o")
+    lines = tcl.splitlines()
+    i = next(i for i, ln in enumerate(lines) if "force_replication_on_nets" in ln)
+    assert lines[i].startswith("phys_opt_design -fanout_opt") and lines[i - 1].startswith("place_design") and lines[i + 1].startswith("route_design")
 
 
 def test_default_plan_renders_the_default_flow():
