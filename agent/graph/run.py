@@ -945,6 +945,9 @@ def node_work(state: State) -> dict:
                     run_role(rt, "tests", PROMPTS["hwtests"].format(**{**fmt, "fails": "; ".join(own)})
                                  + tests_checklist(rt, 9, True) + (JTAG_HW_FORMAT if jtag else _p("graph/run/hw_format").format(**fmt)) + _p("graph/contract/model_contract"), role_allowed("tests", 9),
                                  repair=True)        # never "fresh": a fresh tests write deletes the stage-2 benches
+        if n == 9:                                       # brief 221: instrument steps for the requirements an instrument can check (no lab file: nothing written)
+            from hil import lab_bringup
+            lab_bringup.apply_to_design(rt.design, _spec(rt))
         files = [p for p in rt.design.rglob("*") if p.is_file() and "build" not in p.relative_to(rt.design).parts
                  and "__pycache__" not in p.parts]
         ownership.record(rt.design, "agent", st.name, f"stage {n} work, visit {visits[str(n)]}",
@@ -1114,6 +1117,8 @@ def _interview(rt: Runtime, spec: dict, state: State) -> tuple[dict, dict]:
             ask_one(Question(id=f"s{i + 1}", text=qt, default=qd, reason=qr))
         spec["dependability"] = [{"question": q.text, "answer": q.answer, "status": q.status} for q in iv.questions if q.id.startswith("s")]
     (rt.design / "spec.yaml").write_text(yaml.safe_dump(spec, sort_keys=False))
+    from agent.graph.lab_interview import record_answers as _lab_record
+    _lab_record(rt.design, spec.get("resolved_questions") or [])     # brief 221: the answers about the bench go into the design's lab.yaml, with provenance
     summ = iv.summary()
     summ["level_source"] = level_src
     RQ.write_state(rt.design, level=level, source=level_src, waivers=[w.as_dict() for w in iv.waivers], waiver_problems=wprobs)
@@ -1484,6 +1489,8 @@ def node_gate(state: State) -> dict:
             req = (rt.design / "spec.md").read_text() if (rt.design / "spec.md").is_file() else ""
             spec, _asked = ensure_register_question(req, spec)       # 07a2 fix 7: the harness asks for the register map itself
             spec, _proto = ensure_protocol_questions(req, spec)      # brief 190: the six new-protocol intake questions, with defaults and reasons
+            from agent.graph.lab_interview import ensure_lab_questions
+            spec, _lab_q = ensure_lab_questions(rt.design, spec, person=rt.cfg.interview == "on")    # brief 221: only the gaps in the lab, with defaults and reasons
             errs = register_map_errors(req, spec)           # 07a2 fix 1: ask for the register map before the interview
             if errs:
                 ev["spec"], ev["signed_off"], ev["spec_errors"] = spec, False, errs
