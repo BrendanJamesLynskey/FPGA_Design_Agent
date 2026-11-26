@@ -78,9 +78,12 @@ Goldens, oldest first:
   ``FILE_BY_FILE_NOTE``, appended after the conventions, like the JTAG note) and, after a reply cut off at the output limit, the note of the files on disk and
   the blocks still missing (``files_status_note``). Both are new request paths (``file_by_file_note``, ``files_status_note``); every other hash equals the brief 190
   golden's. Runs before this change belong to the earlier goldens.
-- ``b225_request_golden.json`` (brief 225, 2026-11-26, on the tree with brief 224): the registry gained ``drive_instrument`` (schema 1.25.0; the lab tool: it checks a
+- ``b231_request_golden.json`` (brief 231, 2026-11-26, owner decision on initial values and resets): the Designer's conventions list the design-standards rules
+  (``_standards_summary`` from ``flow/standards_check.py`` ``RULES``) and ``STD-INIT-02`` is new. Only ``conventions_text_noshell_False`` and
+  ``conventions_text_noshell_True`` differ from the brief 224 golden. Runs before this change belong to the earlier goldens.
+- ``b225_request_golden.json`` (brief 225, 2026-11-26, on the tree with briefs 224 and 231): the registry gained ``drive_instrument`` (schema 1.25.0; the lab tool: it checks a
   drive request against the lab file's limits and records it, and enables nothing). No stage or role is offered it, so every hash other than ``tool_registry`` equals the
-  brief 224 golden's."""
+  brief 231 golden's."""
 
 from __future__ import annotations
 
@@ -102,8 +105,8 @@ CHANGED_SINCE_EVAL1 = {"arm_constants": "brief 80: Claude Code 2.1.321 accepted 
                                   "brief 71: the check tool (rtl); brief 73: the interface profile (clarify, rtl); "
                                   "brief 70: the Designer's reset paragraph (rtl)",
                        "conventions": "brief 68: role names (Tests (Verifier))",
-                       "conventions_text_noshell_False": "brief 68: as conventions; brief 205: the STD-INIT-01 rule text (rtl.initial_values)",
-                       "conventions_text_noshell_True": "brief 68: as conventions; brief 205: the STD-INIT-01 rule text (rtl.initial_values)",
+                       "conventions_text_noshell_False": "brief 68: as conventions; brief 205: the STD-INIT-01 rule text (rtl.initial_values); brief 231: STD-INIT-02",
+                       "conventions_text_noshell_True": "brief 68: as conventions; brief 205: the STD-INIT-01 rule text (rtl.initial_values); brief 231: STD-INIT-02",
                        "tests_conventions_text_noshell_False": "brief 68: as conventions",
                        "tests_conventions_text_noshell_True": "brief 68: as conventions",
                        "hw_format": "brief 68: reference model for blind model",

@@ -281,6 +281,41 @@ PROTOCOL_QUESTIONS: tuple[ProtocolQuestion, ...] = (
 )
 
 
+RESET_MODEL_SEEN = r"(?i)\breset model\b|\breprogram\w*|\breconfigur\w*"
+RESET_MODEL_QUESTION = ("This design has no reset input. Is every reset a reconfiguration of the FPGA (the device is reprogrammed, so every register "
+                        "starts from its initial value), or does something restart the running design (then it needs a reset input)?")
+RESET_MODEL_DEFAULT = ("Every reset is a reconfiguration of the FPGA (reset model: reprogram): registers get initial values, control state "
+                       "included, and the design has no reset input. Record it in spec.yaml as reset: {model: reprogram}; a design that restarts while it runs "
+                       "is reset: {model: reset} with a reset port.")
+RESET_MODEL_REASON = ("With no reset input, a register can start only from its initial value, which the FPGA loads at configuration (owner, "
+                      "2026-11-26: particularly useful for designs whose every reset reprograms the device). A design that must restart while "
+                      "running needs a reset input and resets its control state; the two models are checked by different rules (STD-INIT-02).")
+
+
+def has_reset_input(spec: dict[str, Any]) -> bool:
+    """The spec names a reset port. ``reset: none`` / ``reset: {port: none}`` / no port at all means no reset input."""
+    r = spec.get("reset")
+    if isinstance(r, dict):
+        port = r.get("port")
+        return bool(port) and str(port).strip().lower() not in ("none", "n/a", "no", "-", "null")
+    return bool(r) and str(r).strip().lower() not in ("none", "n/a", "no", "-", "null")
+
+
+def ensure_reset_model_question(spec: dict[str, Any]) -> tuple[dict[str, Any], bool]:
+    """Brief 231 (owner, 2026-11-26): a spec with no reset input gets the reset-model question (reset or reprogram), with its default and
+    reason, unless the spec already states the model (``reset.model``) or asked it. Returns (spec, whether it was added)."""
+    if has_reset_input(spec) or (isinstance(spec.get("reset"), dict) and spec["reset"].get("model")):
+        return spec, False
+    asked = " \n ".join(str(q.get("question", "")) for q in [*(spec.get("open_questions") or []), *(spec.get("resolved_questions") or [])]
+                        if isinstance(q, dict))
+    if re.search(RESET_MODEL_SEEN, asked):
+        return spec, False
+    spec = dict(spec)
+    spec["open_questions"] = [*(spec.get("open_questions") or []),
+                              {"question": RESET_MODEL_QUESTION, "default": RESET_MODEL_DEFAULT, "reason": RESET_MODEL_REASON}]
+    return spec, True
+
+
 def request_is_protocol(request: str) -> bool:
     """The request names an exchange or messaging protocol (market data, order entry, a framed binary protocol, sequence numbers)."""
     return bool(REQUEST_PROTOCOL.search(request or ""))
