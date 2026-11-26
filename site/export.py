@@ -509,6 +509,8 @@ def main():
             else:
                 p.write_text(s)
     emit(out)
+    import changes
+    emit({"changes": changes.build()})                                  # brief 237: what changed since 23 November, from site/changes/changes.yaml
     import why                                                          # brief 193: "Why FPGA Force", site/why/why.yaml; reads the data files
     emit({"why": why.build()})                                          # written just above, so it comes last (one export run is enough)
     extra = sorted(set(p.stem for p in (OUT / "tasks").glob("*.json")) - set(pages))
