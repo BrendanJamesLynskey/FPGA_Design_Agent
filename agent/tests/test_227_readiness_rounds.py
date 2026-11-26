@@ -352,3 +352,28 @@ def test_strict_never_freezes_without_the_users_validation_even_when_every_layer
     assert not res.frozen and res.state["rounds"][0]["formalised"]["refused"]
     codes = {q["code"] for q in res.state["rounds"][0]["questions"]}
     assert "RDY-VAL-01" in codes and res.state["calls_by_role"]["formalise"] == 1
+
+
+def test_an_unreadable_reader_or_reviewer_reply_is_a_tool_fault_never_a_disagreement_or_a_pass(tmp_path):
+    d = fresh(tmp_path)
+    f = Fake()
+    orig = f.__call__
+    state = {"bad": 0}
+
+    def call(system, user):
+        if "careful reader" in system and state["bad"] < 1:                  # the second reader's first reply is garbage; its retry is fine
+            state["bad"] += 1
+            f.calls.append(("reader", user))
+            f.n["reader"] += 1
+            return "I cannot answer"
+        return orig(system, user)
+    res = G.run_stage0(d, spec_of_fixture(), REQUEST, level="standard", llms=G.LLMs(review=call, reader=call))
+    assert res.frozen and res.state["rounds"][0]["agreement"]["rate"] == 1.0 and res.state["calls_by_role"].get("reader_a_retry") == 1
+    # three unreadable replies in a row: a stop that says so, with no question to the user
+    f2 = Fake()
+    bad = lambda system, user: "nope" if "careful reader" in system else f2(system, user)
+    res2 = G.run_stage0(fresh(tmp_path / "x") if False else d, spec_of_fixture(), REQUEST, level="standard", llms=G.LLMs(review=bad, reader=bad), limits=R.Limits(max_rounds=1))
+    assert not res2.frozen and "tool fault" in res2.stop and res2.open_questions == []
+    # the reviewer: an unreadable reply is not "ready"
+    assert G.review(lambda s, u: "garbage", "r", spec_of_fixture(), "c", want_compliance=False) is None
+    assert G.review(lambda s, u: '{"findings": []}', "r", spec_of_fixture(), "c", want_compliance=False)["verdict"] == "ready"

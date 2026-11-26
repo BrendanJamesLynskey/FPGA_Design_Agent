@@ -108,6 +108,9 @@ Rules:
 - verdict is "not_ready" if and only if at least one finding is blocking."""
 
 REVIEWERS = {"v1": REVIEWER_SYSTEM, "v2": REVIEWER_SYSTEM_V2}
+#: the product's reviewer. v1 was pre-registered and over-asks (it flagged 16 of 23 sound problems of the reviewer test set, 3.3 blocking questions each); v2 was written after seeing that and is an
+#: exploratory, not confirmed, improvement (results/227_requirements_readiness/README.md). The test set keeps both so the comparison stays reproducible.
+DEFAULT_REVIEWER = "v2"
 
 PROBE_SYSTEM = """You write probe scenarios for a hardware requirements set. Two other readers will each predict, from the requirements alone, what a correct design does in each scenario; where they differ, the requirements are ambiguous. You do not answer the probes.
 Answer with ONE JSON object and nothing else: {"probes": [{"id": "P1", "category": "reset|boundary|simultaneous|overflow|back_pressure|unmapped|mid_operation_reset|invalid_input|power_up", "requirements": ["<ids>"], "scenario": "<a concrete situation, with the values>", "question": "<what a reader must predict>", "answer_kind": "bool"|"int"|"choice", "choices": ["<for choice only, at least two>"]}]}
@@ -218,12 +221,13 @@ def rows_text(spec: dict[str, Any], *, structured: bool = False) -> str:
 
 
 # ---- the roles ---------------------------------------------------------------------------------------------------------------------------
-def review(llm: LLM, request: str, spec: dict[str, Any], checklist: str, *, want_compliance: bool, board: str = "", system: str | None = None) -> dict[str, Any]:
+def review(llm: LLM, request: str, spec: dict[str, Any], checklist: str, *, want_compliance: bool, board: str = "", system: str | None = None) -> dict[str, Any] | None:
+    """The review, or None when the reply had no usable findings list (a tool fault: an unreadable reply is never "ready")."""
     user = (f"Request:\n{request.strip()}\n\nRequirements:\n{rows_text(spec)}\n\nInterface:\n{interface_table(spec)}\n\n"
             + (f"Board: {board}\n\n" if board else "") + f"Checklist:\n{checklist}\n\n"
             + ("Also give the compliance assessment of every requirement.\n" if want_compliance else "Do not give a compliance assessment (leave compliance empty).\n"))
-    d = parse_json(llm(system or REVIEWER_SYSTEM, user)) or {}
-    return clean_review(d)
+    d = parse_json(llm(system or REVIEWERS[DEFAULT_REVIEWER], user))
+    return clean_review(d) if d is not None and "findings" in d else None
 
 
 def clean_review(d: dict[str, Any]) -> dict[str, Any]:
@@ -274,12 +278,14 @@ def write_probes(llm: LLM, spec: dict[str, Any]) -> tuple[list[dict[str, Any]], 
     return probes, R.probe_problems(probes, spec)
 
 
-def read(llm: LLM, spec: dict[str, Any], probes: list[dict[str, Any]]) -> dict[str, Any]:
+def read(llm: LLM, spec: dict[str, Any], probes: list[dict[str, Any]]) -> dict[str, Any] | None:
     """One reader: sees the requirements (English only) and the interface table, and the probes with their answer kinds."""
     pt = "\n".join(f"{p['id']} [{p.get('answer_kind')}{': ' + ' | '.join(map(str, p.get('choices') or [])) if p.get('answer_kind') == 'choice' else ''}] {p.get('scenario')} -- {p.get('question')}" for p in probes)
     user = f"Requirements:\n{rows_text(spec)}\n\nInterface:\n{interface_table(spec)}\n\nProbes:\n{pt}\n"
-    d = parse_json(llm(READER_SYSTEM, user)) or {}
-    return {str(a.get("id")): a.get("answer") for a in d.get("answers") or [] if isinstance(a, dict)}
+    d = parse_json(llm(READER_SYSTEM, user))
+    if d is None or not isinstance(d.get("answers"), list) or not d["answers"]:
+        return None                                                 # an unreadable reply is a tool fault, never "unspecified" (which would look like a disagreement)
+    return {str(a.get("id")): a.get("answer") for a in d["answers"] if isinstance(a, dict)}
 
 
 def third_reader_l2(llm: LLM, row: dict[str, Any], spec: dict[str, Any]) -> dict[str, Any] | None:
@@ -449,7 +455,14 @@ def run_stage0(design: Path, spec: dict[str, Any], request: str, *, level: str, 
                        for p in mech if p.blocks(level)]                     # a repair that did not work is asked of the user
         # 2. the reviewer (round 1, and again when rows changed)
         if budget.spend("review"):
-            rv = review(llms.review, request, spec, checklist[0], want_compliance=level == "strict" and not any(isinstance(r.get("compliance"), (dict, str)) for r in R.reqs_of(spec)), board=board)
+            want = level == "strict" and not any(isinstance(r.get("compliance"), (dict, str)) for r in R.reqs_of(spec))
+            rv = review(llms.review, request, spec, checklist[0], want_compliance=want, board=board)
+            if rv is None and budget.spend("review_retry"):
+                rv = review(llms.review, request, spec, checklist[0], want_compliance=want, board=board)
+            if rv is None:
+                state["rounds"].append(rnd)
+                state["stop"] = "the reviewer returned no usable reply twice (a tool fault, not a requirements question)"
+                return _finish(design, spec, state, [], state["stop"], budget)
             rnd["review"] = {"findings": rv["findings"], "verdict": rv["verdict"], "compliance": len(rv["compliance"])}
             for f in rv["findings"]:
                 if f["blocking"]:
@@ -470,6 +483,15 @@ def run_stage0(design: Path, spec: dict[str, Any], request: str, *, level: str, 
                 a = read(llms.reader, spec, probes)
                 budget.spend("reader_b")
                 b = read(llms.reader, spec, probes)
+                for _ in range(2):                                       # an unreadable reply is asked again (a fresh call), at most twice per reader
+                    if a is None and budget.spend("reader_a_retry"):
+                        a = read(llms.reader, spec, probes)
+                    if b is None and budget.spend("reader_b_retry"):
+                        b = read(llms.reader, spec, probes)
+                if a is None or b is None:
+                    state["rounds"].append(rnd)
+                    state["stop"] = "a reader returned no usable answers three times (a tool fault, not a requirements question)"
+                    return _finish(design, spec, state, [], state["stop"], budget)
                 ag = R.compare_readers(probes, {"A": a, "B": b})
                 rnd["agreement"] = ag.as_dict()
                 rnd["probe_set"] = [{k: p.get(k) for k in ("id", "category", "answer_kind", "requirements")} for p in probes]       # the probe text stays in readiness.json only
