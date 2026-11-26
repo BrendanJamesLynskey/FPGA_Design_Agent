@@ -1,0 +1,343 @@
+name: p3_crc32
+title: 'P3: CRC-32 engine (Ethernet CRC-32, 4 bytes per clock, JTAG register bus)'
+board: kr260
+part: xck26-sfvc784-2LV-c
+top: crc32_top
+clocks:
+- name: clk25
+  port: clk25
+  frequency: 25 MHz input, C3 pin, single-ended
+  role: input reference
+- name: clk
+  source: MMCM from clk25 (x40 / 10)
+  frequency: 100 MHz
+  role: core clock for the register port and CRC datapath (jtag_bus clk)
+reset:
+  model: reprogram
+  name: rst
+  polarity: active-high
+  type: synchronous
+  source: 'internal: asserted while the MMCM is not locked, then held for 8 further
+    clk cycles'
+  note: jtag_bus needs rst held for a few clocks at start; no reset port on the board;
+    every reset is a reconfiguration of the FPGA, registers start from their initial
+    values
+parameters:
+  DESIGN_ID: 546504705
+  MMCM_CLKFBOUT_MULT: 40
+  MMCM_CLKOUT_DIVIDE: 10
+  MMCM_DIVCLK_DIVIDE: 1
+  RST_HOLD_CYCLES: 8
+  READ_LATENCY_CYCLES: 1
+  CRC_POLY: 79764919
+  CRC_INIT: 4294967295
+  CRC_XOROUT: 4294967295
+  TAIL_LEN_MAX: 3
+ports:
+- name: clk25
+  direction: input
+  width: 1
+  board_pin_role: 25 MHz clock, pin C3
+- name: led
+  direction: output
+  width: 2
+  board_pin_role: user LEDs led[1:0]
+behaviour:
+  bus:
+  - jtag_bus (data/jtag_bus.sv, used unchanged) provides h_we, h_re, h_addr[11:0],
+    h_wdata[31:0] in the clk domain and takes h_rdata[31:0].
+  - A write to a mapped register takes effect the clock after h_we.
+  - After h_re, h_rdata shows the addressed register within 2 clocks (this design
+    registers it in 1 clock) and holds it until the next h_re.
+  - Unmapped addresses read 0 and ignore writes.
+  - All registers are 32 bits at 4-byte steps; h_addr[1:0] are ignored.
+  common_registers:
+  - ID (0x000) reads 0x20930001.
+  - BUILD (0x004) reads the USR_ACCESSE2 DATA word.
+  - SCRATCH (0x008) is RW 32 bits, resets to 0.
+  crc:
+  - CRC-32 polynomial 0x04C11DB7 reflected (0xEDB88320), init 0xFFFFFFFF, final XOR
+    0xFFFFFFFF; equals zlib.crc32 of the bytes in push order.
+  - 'PUSH4 write: the four bytes of h_wdata are consumed in order bits 7:0 first,
+    in a single clock cycle of the datapath.'
+  - 'PUSH_N write: the low N bytes (N = TAIL_LEN) of h_wdata are consumed, bits 7:0
+    first; N=0 pushes nothing.'
+  - 'CTRL bit 0 write 1 (INIT): internal CRC state returns to 0xFFFFFFFF, BYTE_COUNT
+    and BUSY_CYCLES to 0; bit reads back 0 (self-clearing).'
+  - CRC register reads the running state XOR 0xFFFFFFFF at any time; with no bytes
+    pushed it reads 0x00000000.
+  - BYTE_COUNT increments by 4 per PUSH4 and by N per PUSH_N.
+  - BUSY_CYCLES increments by 1 for each clock in which the datapath consumes bytes
+    (one per PUSH4, one per PUSH_N with N>0, none for N=0).
+  - The datapath accepts one PUSH4 per clock with no stall (4 bytes per clock at 100
+    MHz = 400 MB/s).
+  leds:
+  - led[0] is high when the MMCM is locked and rst is deasserted.
+  - led[1] toggles on each INIT.
+registers:
+  map:
+  - offset: 0
+    name: ID
+    access: RO
+    reset: 546504705
+    bits: 31:0 design ID
+  - offset: 4
+    name: BUILD
+    access: RO
+    reset: 0
+    bits: 31:0 USR_ACCESSE2 word
+  - offset: 8
+    name: SCRATCH
+    access: RW
+    reset: 0
+    bits: 31:0 data
+  - offset: 16
+    name: CTRL
+    access: RW
+    reset: 0
+    bits: 0 INIT (self-clearing); 31:1 reserved, read 0
+  - offset: 20
+    name: PUSH4
+    access: WO
+    reset: 0
+    bits: 31:0 four bytes, bits 7:0 first; reads 0
+  - offset: 24
+    name: PUSH_N
+    access: WO
+    reset: 0
+    bits: 31:0 up to three bytes, bits 7:0 first; reads 0
+  - offset: 28
+    name: TAIL_LEN
+    access: RW
+    reset: 0
+    bits: 1:0 N (0 to 3); 31:2 read 0
+  - offset: 32
+    name: CRC
+    access: RO
+    reset: 0
+    bits: 31:0 finished CRC-32
+  - offset: 36
+    name: BYTE_COUNT
+    access: RO
+    reset: 0
+    bits: 31:0 bytes pushed since INIT
+  - offset: 40
+    name: BUSY_CYCLES
+    access: RO
+    reset: 0
+    bits: 31:0 busy clocks since INIT
+timing:
+  clock: clk 100 MHz (10 ns); input clk25 40 ns
+  throughput: one 32-bit PUSH4 word per clk cycle
+  latency:
+    register_write: 1 clk after h_we
+    register_read: h_rdata valid 1 clk after h_re (limit 2)
+    crc_update: CRC register reflects a push 1 clk after the write takes effect
+  constraints: create_clock 40 ns on clk25; MMCM-derived 10 ns clk must meet setup/hold
+    (WNS >= 0); jtag_bus TCK domain crossings are handled by its xpm_cdc cells
+resources_expected:
+  luts: about 400
+  ffs: about 400
+  bram: 0
+  dsp: 0
+  mmcm: 1
+  other: BSCANE2 (in jtag_bus), USR_ACCESSE2
+requirements:
+- id: REQ-01
+  text: ID register at 0x000 reads 0x20930001.
+  proof:
+  - simulation
+  - hardware
+- id: REQ-02
+  text: BUILD register at 0x004 reads the USR_ACCESSE2 word of the bitstream.
+  proof:
+  - hardware
+- id: REQ-03
+  text: SCRATCH at 0x008 reads back the written 32-bit value.
+  proof:
+  - simulation
+  - hardware
+- id: REQ-04
+  text: CRC after INIT with no bytes pushed reads 0x00000000.
+  proof:
+  - simulation
+- id: REQ-05
+  text: For each of 1000 random messages (lengths 0, 1, 2, 3, 4, 5, 7, 8, 63, 64,
+    65, a few hundred bytes, then random) CRC equals zlib.crc32 of the message.
+  proof:
+  - simulation
+  - hardware
+- id: REQ-06
+  text: For each of those messages BYTE_COUNT equals the message length in bytes.
+  proof:
+  - simulation
+  - hardware
+- id: REQ-07
+  text: A message of N full words leaves BUSY_CYCLES equal to N.
+  proof:
+  - simulation
+  - hardware
+- id: REQ-08
+  text: The datapath accepts one PUSH4 per clock cycle on back-to-back h_we pulses
+    with a CRC identical to zlib.crc32.
+  proof:
+  - simulation
+  - formal
+- id: REQ-09
+  text: INIT sets CRC to the start value 0xFFFFFFFF internally, so the CRC register
+    reads 0x00000000.
+  proof:
+  - simulation
+  - formal
+- id: REQ-10
+  text: PUSH_N with TAIL_LEN 0 leaves CRC, BYTE_COUNT and BUSY_CYCLES unchanged.
+  proof:
+  - simulation
+  - formal
+- id: REQ-11
+  text: PUSH_N with TAIL_LEN 1, 2 or 3 consumes exactly the low N bytes, bits 7:0
+    first.
+  proof:
+  - simulation
+- id: REQ-12
+  text: h_rdata shows the addressed register at most 2 clocks after h_re.
+  proof:
+  - simulation
+  - formal
+- id: REQ-13
+  text: Reads of unmapped addresses return 0.
+  proof:
+  - simulation
+  - formal
+- id: REQ-14
+  text: The core clock is at least 100 MHz.
+  proof:
+  - analysis
+- id: REQ-15
+  text: data/jtag_bus.sv is used unchanged.
+  proof:
+  - analysis
+- id: REQ-16
+  text: No GT transceiver channel is used.
+  proof:
+  - analysis
+- id: REQ-17
+  text: SCRATCH reads 0 after reset.
+  proof:
+  - simulation
+  - hardware
+- id: REQ-18
+  text: INIT sets BYTE_COUNT to 0.
+  proof:
+  - simulation
+  - formal
+- id: REQ-19
+  text: INIT sets BUSY_CYCLES to 0.
+  proof:
+  - simulation
+  - formal
+- id: REQ-20
+  text: CTRL bit 0 reads 0 after an INIT write.
+  proof:
+  - simulation
+- id: REQ-21
+  text: h_rdata holds the read value until the next h_re.
+  proof:
+  - simulation
+  - formal
+- id: REQ-22
+  text: Writes to unmapped addresses change no register.
+  proof:
+  - simulation
+  - formal
+- id: REQ-23
+  text: The post-route design meets timing at the core clock with WNS >= 0.
+  proof:
+  - analysis
+- id: REQ-24
+  text: The core clock drives jtag_bus clk.
+  proof:
+  - analysis
+- id: REQ-25
+  text: sfp_tx_disable is never driven to a value other than 1.
+  proof:
+  - analysis
+open_questions: []
+assumptions:
+- text: A write to a mapped register while a read is outstanding is not exercised.
+  reason: The JTAG host issues one command at a time, several clocks apart.
+- text: The BUILD reset/sim value is 0 in simulation, since USR_ACCESSE2 is a primitive.
+  reason: The simulation does not include Xilinx primitives.
+- text: CRC and BYTE_COUNT reads during a push may be one clock stale.
+  reason: The host reads far more slowly than the clock, so no race occurs.
+- text: BYTE_COUNT and BUSY_CYCLES are 32-bit and wrap on overflow.
+  reason: Registers are 32 bits and 2^32 bytes is not reached in a test.
+resolved_questions:
+- question: Which clock and how is 100 MHz made from the 25 MHz C3 pin?
+  answer: MMCM x40 / 10 gives 100 MHz.
+  status: defaulted
+  by: default
+  default_reason: The request needs at least 100 MHz and only a 25 MHz input exists;
+    100 MHz meets the minimum with margin.
+  risk: high
+- question: Is the C3 clock single-ended LVCMOS33?
+  answer: Yes, single-ended LVCMOS33.
+  status: defaulted
+  by: default
+  default_reason: The request names one pin C3 only.
+  risk: high
+- question: Does a PUSH_N with N>0 count as one busy cycle and N=0 as none?
+  answer: Yes, 1 busy cycle for N>0, 0 for N=0.
+  status: defaulted
+  by: default
+  default_reason: The request only defines BUSY_CYCLES for full words; this is the
+    natural datapath-activity count.
+  risk: high
+- question: What do values above 3 written to TAIL_LEN do?
+  answer: Only bits 1:0 are stored, upper bits read 0.
+  status: defaulted
+  by: default
+  default_reason: The request defines N as 0 to 3 only.
+  risk: medium
+- question: What do the LEDs show?
+  answer: led[0] = locked and out of reset, led[1] toggles on each INIT.
+  status: defaulted
+  by: default
+  default_reason: The request gives the LEDs but no function.
+  risk: medium
+- question: Should sfp_tx_disable be driven?
+  answer: No, the pin is not used.
+  status: defaulted
+  by: default
+  default_reason: The request makes it optional and the design needs no SFP.
+  risk: high
+- question: Are reads of write-only registers PUSH4 and PUSH_N 0?
+  answer: Yes, they read 0 and the write path is unaffected.
+  status: defaulted
+  by: default
+  default_reason: WO access is stated with no read value.
+  risk: high
+- question: Do the register offsets in the request form the full register map?
+  answer: 'Yes: 0x000 ID, 0x004 BUILD, 0x008 SCRATCH, 0x010 CTRL, 0x014 PUSH4, 0x018
+    PUSH_N, 0x01C TAIL_LEN, 0x020 CRC, 0x024 BYTE_COUNT, 0x028 BUSY_CYCLES, all 32
+    bits.'
+  status: defaulted
+  by: default
+  default_reason: The request lists them; this confirms width, reset values and access
+    as written in registers.map.
+  risk: high
+- question: This design has no reset input. Is every reset a reconfiguration of the
+    FPGA (the device is reprogrammed, so every register starts from its initial value),
+    or does something restart the running design (then it needs a reset input)?
+  answer: 'Every reset is a reconfiguration of the FPGA (reset model: reprogram):
+    registers get initial values, control state included, and the design has no reset
+    input. Record it in spec.yaml as reset: {model: reprogram}; a design that restarts
+    while it runs is reset: {model: reset} with a reset port.'
+  status: defaulted
+  by: default
+  default_reason: 'With no reset input, a register can start only from its initial
+    value, which the FPGA loads at configuration (owner, 2026-11-26: particularly
+    useful for designs whose every reset reprograms the device). A design that must
+    restart while running needs a reset input and resets its control state; the two
+    models are checked by different rules (STD-INIT-02).'
+  risk: high

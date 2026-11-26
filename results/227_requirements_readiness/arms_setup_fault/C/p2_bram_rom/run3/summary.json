@@ -1,0 +1,829 @@
+{
+ "run_id": "20261126-154601-a9f9",
+ "design": "b227_C_p2_bram_rom_r3",
+ "model": "claude-sonnet-5-5",
+ "harness": "claude_code",
+ "claude_code_version": "2.1.321 (Claude Code)",
+ "plan_cost_estimate_usd": 2.6767,
+ "oracle_model": "openai/gpt-6-luna",
+ "harness_arm": "H1",
+ "profile": "single",
+ "role_models": {
+  "clarify": {
+   "harness": "claude_code",
+   "model": "claude-sonnet-5-5",
+   "effort": "medium"
+  },
+  "model": {
+   "harness": "claude_code",
+   "model": "claude-sonnet-5-5",
+   "effort": "medium"
+  },
+  "tests": {
+   "harness": "claude_code",
+   "model": "claude-sonnet-5-5",
+   "effort": "medium"
+  },
+  "rtl": {
+   "harness": "claude_code",
+   "model": "claude-sonnet-5-5",
+   "effort": "medium"
+  }
+ },
+ "model_table_hash": "62d89fcdfc5c2756",
+ "oracle": "openrouter",
+ "stage_overrides": [],
+ "knowledge_use": {
+  "rtl/board-and-device-planning": {
+   "board_constraints": {
+    "calls": 4
+   }
+  },
+  "tests/rtl-design-creation": {
+   "load_skill": {
+    "calls": 1,
+    "sections": [
+     "verification-stages"
+    ],
+    "skills": [
+     "procedures/verification-stages/v-hw-bringup/SKILL.md",
+     "procedures/verification-stages/v0-v1-testplan/SKILL.md",
+     "procedures/verification-stages/v2-tests-assertions-formal/SKILL.md",
+     "procedures/verification-stages/v3-coverage-closure/SKILL.md"
+    ],
+    "empty_calls": 0,
+    "procedures_fallback": [
+     "verification-stages"
+    ]
+   }
+  },
+  "rtl/rtl-design-creation": {
+   "load_skill": {
+    "calls": 1,
+    "sections": [],
+    "skills": [],
+    "empty_calls": 1
+   },
+   "search_docs": {
+    "calls": 3,
+    "hits": [
+     "ross/vivado-rtl-elaboration-analysis/resolution/8-10511.md#1",
+     "ross/vivado-rtl-elaboration-analysis/resolution/8-11119.md#1",
+     "ross/vivado-rtl-elaboration-analysis/resolution/8-248.md#1",
+     "ross/vivado-rtl-elaboration-analysis/resolution/8-3917.md#1",
+     "ross/vivado-rtl-elaboration-analysis/resolution/8-9174.md#1",
+     "ross/vivado-rtl-elaboration-analysis/resolution/8-9923.md#1"
+    ]
+   }
+  }
+ },
+ "knowledge_bank": {
+  "root": "227-kb-skill",
+  "chosen_by": "FDA_KNOWLEDGE",
+  "present": true,
+  "loaded": true,
+  "head": "39f5f3a"
+ },
+ "turn_trace": [
+  {
+   "stage": "clarify",
+   "visit": 1,
+   "role": "clarify",
+   "repair": false,
+   "turns_allowed": 20,
+   "turns": 4,
+   "ended": "done",
+   "wall_s": 49.6,
+   "tools": {},
+   "model_tool_calls": {},
+   "refused": {},
+   "files_written": [
+    "spec.yaml"
+   ],
+   "files_changed": [
+    "spec.yaml"
+   ]
+  },
+  {
+   "stage": "clarify",
+   "visit": 2,
+   "role": "clarify",
+   "repair": false,
+   "turns_allowed": 20,
+   "turns": 2,
+   "ended": "done",
+   "wall_s": 40.9,
+   "tools": {},
+   "model_tool_calls": {},
+   "refused": {},
+   "files_written": [
+    "spec.yaml"
+   ],
+   "files_changed": [
+    "spec.yaml"
+   ]
+  },
+  {
+   "stage": "board-and-device-planning",
+   "visit": 1,
+   "role": "rtl",
+   "repair": false,
+   "turns_allowed": 30,
+   "turns": 5,
+   "ended": "done",
+   "wall_s": 14.6,
+   "tools": {},
+   "model_tool_calls": {},
+   "refused": {},
+   "files_written": [
+    "ARCHITECTURE.md",
+    "architecture.yaml"
+   ],
+   "files_changed": [
+    "ARCHITECTURE.md",
+    "architecture.yaml"
+   ]
+  },
+  {
+   "stage": "board-and-device-planning",
+   "visit": 2,
+   "role": "rtl",
+   "repair": false,
+   "turns_allowed": 30,
+   "turns": 10,
+   "ended": "done",
+   "wall_s": 16.3,
+   "tools": {},
+   "model_tool_calls": {},
+   "refused": {},
+   "files_written": [
+    "design.xdc"
+   ],
+   "files_changed": [
+    "design.xdc"
+   ]
+  },
+  {
+   "stage": "rtl-design-creation",
+   "visit": 1,
+   "role": "model",
+   "repair": false,
+   "turns_allowed": 45,
+   "turns": 3,
+   "ended": "done",
+   "wall_s": 45.3,
+   "tools": {},
+   "model_tool_calls": {},
+   "refused": {},
+   "files_written": [
+    "model.py"
+   ],
+   "files_changed": [
+    "model.py"
+   ]
+  },
+  {
+   "stage": "rtl-design-creation",
+   "visit": 1,
+   "role": "tests",
+   "repair": false,
+   "turns_allowed": 52,
+   "turns": 13,
+   "ended": "done",
+   "wall_s": 217.9,
+   "tools": {},
+   "model_tool_calls": {},
+   "refused": {},
+   "files_written": [
+    "tests/p2_bench.py",
+    "tests/test_b227_C_p2_bram_rom_r3_rtl.py",
+    "verif/checkers/p2_bram_rom_bind.sv",
+    "verif/checkers/p2_bram_rom_checker.sv",
+    "verif/testplan.yaml"
+   ],
+   "files_changed": [
+    "tests/p2_bench.py",
+    "tests/test_b227_C_p2_bram_rom_r3_rtl.py",
+    "verif/checkers/p2_bram_rom_bind.sv",
+    "verif/checkers/p2_bram_rom_checker.sv",
+    "verif/testplan.yaml"
+   ]
+  },
+  {
+   "stage": "rtl-design-creation",
+   "visit": 1,
+   "role": "tests",
+   "repair": true,
+   "turns_allowed": 39,
+   "turns": 2,
+   "ended": "done",
+   "wall_s": 34.8,
+   "tools": {},
+   "model_tool_calls": {},
+   "refused": {},
+   "files_written": [
+    "verif/testplan.yaml"
+   ],
+   "files_changed": [
+    "verif/testplan.yaml"
+   ]
+  },
+  {
+   "stage": "rtl-design-creation",
+   "visit": 1,
+   "role": "rtl",
+   "repair": false,
+   "turns_allowed": 62,
+   "turns": 28,
+   "ended": "done",
+   "wall_s": 500.6,
+   "tools": {},
+   "model_tool_calls": {},
+   "refused": {},
+   "files_written": [
+    "build.yaml",
+    "design.xdc",
+    "rtl/p2_bram_rom_core.sv",
+    "rtl/p2_bram_rom_top.sv",
+    "rtl/xilinx_sim_stubs.sv"
+   ],
+   "files_changed": [
+    "build.yaml",
+    "design.xdc",
+    "rtl/p2_bram_rom_core.sv",
+    "rtl/p2_bram_rom_top.sv",
+    "rtl/xilinx_sim_stubs.sv"
+   ]
+  },
+  {
+   "stage": "rtl-design-creation",
+   "visit": 2,
+   "role": "rtl",
+   "repair": true,
+   "turns_allowed": 80,
+   "turns": 8,
+   "ended": "done",
+   "wall_s": 29.8,
+   "tools": {},
+   "model_tool_calls": {},
+   "refused": {},
+   "files_written": [
+    "rtl/p2_bram_rom_top.sv"
+   ],
+   "files_changed": [
+    "rtl/p2_bram_rom_top.sv"
+   ]
+  },
+  {
+   "stage": "rtl-design-creation",
+   "visit": 3,
+   "role": "rtl",
+   "repair": true,
+   "turns_allowed": 80,
+   "turns": 6,
+   "ended": "done",
+   "wall_s": 19.9,
+   "tools": {},
+   "model_tool_calls": {},
+   "refused": {},
+   "files_written": [],
+   "files_changed": []
+  },
+  {
+   "stage": "rtl-design-creation",
+   "visit": 4,
+   "role": "rtl",
+   "repair": true,
+   "turns_allowed": 80,
+   "turns": 9,
+   "ended": "done",
+   "wall_s": 31.8,
+   "tools": {},
+   "model_tool_calls": {},
+   "refused": {},
+   "files_written": [
+    "rtl/p2_bram_rom_top.sv"
+   ],
+   "files_changed": [
+    "rtl/p2_bram_rom_top.sv"
+   ]
+  },
+  {
+   "stage": "rtl-design-creation",
+   "visit": 5,
+   "role": "rtl",
+   "repair": true,
+   "turns_allowed": 80,
+   "turns": 8,
+   "ended": "done",
+   "wall_s": 27.3,
+   "tools": {},
+   "model_tool_calls": {},
+   "refused": {},
+   "files_written": [
+    "rtl/p2_bram_rom_top.sv"
+   ],
+   "files_changed": [
+    "rtl/p2_bram_rom_top.sv"
+   ]
+  },
+  {
+   "stage": "rtl-design-creation",
+   "visit": 6,
+   "role": "rtl",
+   "repair": true,
+   "turns_allowed": 80,
+   "turns": 8,
+   "ended": "done",
+   "wall_s": 25.3,
+   "tools": {},
+   "model_tool_calls": {},
+   "refused": {},
+   "files_written": [
+    "rtl/p2_bram_rom_top.sv"
+   ],
+   "files_changed": [
+    "rtl/p2_bram_rom_top.sv"
+   ]
+  }
+ ],
+ "per_role": {
+  "clarify": {
+   "calls": 2,
+   "turns": 6,
+   "tokens": 80545,
+   "wall_s": 90.5,
+   "cost_usd": 0.0,
+   "plan_cost_estimate_usd": 0.2735
+  },
+  "rtl": {
+   "calls": 8,
+   "turns": 82,
+   "tokens": 2012041,
+   "wall_s": 665.6,
+   "cost_usd": 0.0,
+   "plan_cost_estimate_usd": 1.4019
+  },
+  "model": {
+   "calls": 1,
+   "turns": 3,
+   "tokens": 39545,
+   "wall_s": 45.3,
+   "cost_usd": 0.0,
+   "plan_cost_estimate_usd": 0.1163
+  },
+  "tests": {
+   "calls": 2,
+   "turns": 15,
+   "tokens": 513904,
+   "wall_s": 252.7,
+   "cost_usd": 0.0,
+   "plan_cost_estimate_usd": 0.885
+  }
+ },
+ "per_stage": {
+  "clarify": {
+   "calls": 2,
+   "turns": 6,
+   "tokens": 80545,
+   "wall_s": 90.5,
+   "cost_usd": 0.0,
+   "plan_cost_estimate_usd": 0.2735
+  },
+  "board-and-device-planning": {
+   "calls": 2,
+   "turns": 15,
+   "tokens": 229815,
+   "wall_s": 30.9,
+   "cost_usd": 0.0,
+   "plan_cost_estimate_usd": 0.2199
+  },
+  "rtl-design-creation": {
+   "calls": 9,
+   "turns": 85,
+   "tokens": 2335675,
+   "wall_s": 932.7,
+   "cost_usd": 0.0,
+   "plan_cost_estimate_usd": 2.1833
+  }
+ },
+ "interview": "off",
+ "requirements": {
+  "level": "loose",
+  "source": "command line",
+  "conflicts": []
+ },
+ "user_requests": {
+  "control": 0,
+  "design": 0,
+  "applied": 0,
+  "declined": 0,
+  "questions_asked": 0,
+  "user_interventions": 0
+ },
+ "review": "off",
+ "stages_visited": [
+  0,
+  0,
+  1,
+  1,
+  2,
+  2,
+  2,
+  2,
+  2,
+  2,
+  2
+ ],
+ "loops": 8,
+ "rewinds": [],
+ "tokens": 2646035,
+ "cost_usd": 0.0,
+ "unreported_cost_calls": 0,
+ "token_split": {
+  "input": 0,
+  "output": 0,
+  "cache_write": 0,
+  "cache_read": 0
+ },
+ "budget_scale": 3.0,
+ "truncated_calls": 0,
+ "turns": 106,
+ "wall_s": 2048.9,
+ "questions": {
+  "asked": 6,
+  "answered": 0,
+  "defaulted": 6,
+  "waived": 0,
+  "unresolved": 0,
+  "level": "loose",
+  "questions": [
+   {
+    "id": "q1",
+    "text": "What do the two user LEDs show?",
+    "default": "led[0] = BUSY, led[1] = MARCH_ERRS != 0",
+    "reason": "the request names the LEDs but gives no behaviour.",
+    "answer": "led[0] = BUSY, led[1] = MARCH_ERRS != 0",
+    "status": "defaulted",
+    "by": "default",
+    "evidence": null,
+    "fact": null,
+    "risk": "medium",
+    "risk_rule": "unmatched",
+    "risk_reason": "no rule names it a behaviour, an interface or a cosmetic choice: treated as a cost choice",
+    "waiver": null,
+    "clarifier_risk": null
+   },
+   {
+    "id": "q2",
+    "text": "Which memory read is used for the INJECT_FAULT at address 5 when each pass has many reads of address 5?",
+    "default": "the first read of address 5 in the pass, so exactly one error per pass",
+    "reason": "the request says one wrong value at one address each pass.",
+    "answer": "the first read of address 5 in the pass, so exactly one error per pass",
+    "status": "defaulted",
+    "by": "default",
+    "evidence": null,
+    "fact": null,
+    "risk": "high",
+    "risk_rule": "interface",
+    "risk_reason": "an interface or register map is what other code is written against",
+    "waiver": null,
+    "clarifier_risk": null
+   },
+   {
+    "id": "q3",
+    "text": "What does BUILD read in simulation?",
+    "default": "a core input build_word, driven by the bench; USR_ACCESSE2 in the top",
+    "reason": "the primitive is not available in simulation.",
+    "answer": "a core input build_word, driven by the bench; USR_ACCESSE2 in the top",
+    "status": "defaulted",
+    "by": "default",
+    "evidence": null,
+    "fact": null,
+    "risk": "medium",
+    "risk_rule": "unmatched",
+    "risk_reason": "no rule names it a behaviour, an interface or a cosmetic choice: treated as a cost choice",
+    "waiver": null,
+    "clarifier_risk": null
+   },
+   {
+    "id": "q4",
+    "text": "Does a write to MARCH_PASSES or MARCH_CTRL.INJECT_FAULT during BUSY take effect?",
+    "default": "the register stores it but the running test latches passes and the fault bit at START",
+    "reason": "the request does not say.",
+    "answer": "the register stores it but the running test latches passes and the fault bit at START",
+    "status": "defaulted",
+    "by": "default",
+    "evidence": null,
+    "fact": null,
+    "risk": "medium",
+    "risk_rule": "unmatched",
+    "risk_reason": "no rule names it a behaviour, an interface or a cosmetic choice: treated as a cost choice",
+    "waiver": null,
+    "clarifier_risk": null
+   },
+   {
+    "id": "q5",
+    "text": "Should the register map be confirmed as the given one?",
+    "default": "use the offsets in the request table: 0x000-0x008 common and 0x010-0x030 as listed",
+    "reason": "offsets are given in the request; recorded for the harness.",
+    "answer": "use the offsets in the request table: 0x000-0x008 common and 0x010-0x030 as listed",
+    "status": "defaulted",
+    "by": "default",
+    "evidence": null,
+    "fact": null,
+    "risk": "high",
+    "risk_rule": "register-map",
+    "risk_reason": "the register map is what host software and the test shell are written against",
+    "waiver": null,
+    "clarifier_risk": null
+   },
+   {
+    "id": "q6",
+    "text": "This design has no reset input. Is every reset a reconfiguration of the FPGA (the device is reprogrammed, so every register starts from its initial value), or does something restart the running design (then it needs a reset input)?",
+    "default": "Every reset is a reconfiguration of the FPGA (reset model: reprogram): registers get initial values, control state included, and the design has no reset input. Record it in spec.yaml as reset: {model: reprogram}; a design that restarts while it runs is reset: {model: reset} with a reset port.",
+    "reason": "With no reset input, a register can start only from its initial value, which the FPGA loads at configuration (owner, 2026-11-26: particularly useful for designs whose every reset reprograms the device). A design that must restart while running needs a reset input and resets its control state; the two models are checked by different rules (STD-INIT-02).",
+    "answer": "Every reset is a reconfiguration of the FPGA (reset model: reprogram): registers get initial values, control state included, and the design has no reset input. Record it in spec.yaml as reset: {model: reprogram}; a design that restarts while it runs is reset: {model: reset} with a reset port.",
+    "status": "defaulted",
+    "by": "default",
+    "evidence": null,
+    "fact": null,
+    "risk": "high",
+    "risk_rule": "reset",
+    "risk_reason": "a reset's polarity, style or value decides the start-up state and the interface",
+    "waiver": null,
+    "clarifier_risk": null
+   }
+  ],
+  "level_source": "command line"
+ },
+ "stop": "stage 2 visited more than 6 times; last failing gate: lint; owned by the rtl role; the same failure on 6 consecutive visits",
+ "stop_detail": {
+  "stage": 2,
+  "limit": 6,
+  "gates": [
+   "lint"
+  ],
+  "roles": [
+   "rtl"
+  ],
+  "owners_last_visit": [
+   "rtl"
+  ],
+  "last_failing_assertion": null,
+  "same_signature_visits": 6,
+  "last_fails": [
+   "lint not passing",
+   "rtl: did not run (no gates record)"
+  ],
+  "last_failed_gate": {
+   "stage": 2,
+   "stage_name": "rtl-design-creation",
+   "visit": 6,
+   "fails": [
+    "lint not passing",
+    "rtl: did not run (no gates record)"
+   ],
+   "routed_to": {
+    "stage": 2,
+    "stage_name": "rtl-design-creation"
+   }
+  }
+ },
+ "last_rtl_message": {
+  "stage": "rtl-design-creation",
+  "visit": 6,
+  "text": "The RTL does not fix these FDA-CON-8 failures, so they are still open. I restored `p2_bram_rom_top.sv` to its original text, and no RTL file has changed.\n\nThe spec declares `core.rst`, `core.h_we`, `core.h_re`, `core.h_addr`, `core.h_wdata`, `core.h_rdata` and `core.led` as ports of the core module. The top-level ports are `clk`, `led` and `sfp_tx_disable`. The core already has all of its ports, and the top already drives them from `jtag_bus`.\n\nI tried adding `h_we`, `h_re`, `h_addr`, `h_wdata` and `h_rdata` as ports on the top. Lint still reported every one of the seven `core.*` names missing, so the check is matching the literal `core.` names, which no top port can have. The extra ports would also have been top-level pins with no board pin and no I/O timing, so I took them out again.\n\nThat leaves two options:\n- **Fix the check:** make FDA-CON-8 skip `core.`-prefixed spec ports, or look them up in `p2_bram_rom_core` instead of the top.\n- **Fix the spec:** move the `core.*` entries out of the spec's `ports:` list, for example into a separate core-port list. That is a spec change, outside this stage.\n\nThe earlier lint output also showed two Verilator warnings in `data/jtag_bus.sv` (unused `tdo` and `cmd_s[45]`). That file must stay byte-identical, so I left it alone.\n\nDONE"
+ },
+ "routing_events": [
+  {
+   "event": "clarify_constants_check",
+   "stage": "clarify",
+   "visit": 1,
+   "findings": [],
+   "failed": false
+  },
+  {
+   "event": "clarify_constants_check",
+   "stage": "clarify",
+   "visit": 2,
+   "findings": [],
+   "failed": false
+  }
+ ],
+ "clean_stop": false,
+ "verification_profile": {
+  "profile": "standard",
+  "overrides": {
+   "verif_level": {
+    "profile_value": "V3",
+    "value": "V2"
+   },
+   "indep_spec_test": {
+    "profile_value": false,
+    "value": true
+   }
+  },
+  "effective": {
+   "lint": true,
+   "directed_sim": true,
+   "verif_level": "V2",
+   "random_sim": true,
+   "coverage_target": 100,
+   "mutation_floor": 70,
+   "seeds": 3,
+   "indep_spec_test": true,
+   "formal_depth_scale": 1,
+   "formal_induction": false,
+   "formal_pdr": false,
+   "lean_proof": false,
+   "uvm": "none",
+   "post_synth_sim": false,
+   "equivalence": false,
+   "timing_sim": "off",
+   "fault_injection": false,
+   "dependability": "none",
+   "latency_checks": false,
+   "board_hil": "smoke",
+   "repeats": 1,
+   "production_secure": false,
+   "sec_encrypt": true,
+   "sec_authenticate": true,
+   "sec_readback_off": true,
+   "sec_strip_debug": true,
+   "sec_sysmon_shutdown": true
+  },
+  "not_wired": [],
+  "ip_release_gaps": [
+   "verif_level: V2 (ip_release: V3)",
+   "mutation_floor: 70 (ip_release: 85)",
+   "seeds: 3 (ip_release: 8)",
+   "formal_depth_scale: 1 (ip_release: 4)",
+   "formal_induction: False (ip_release: True)",
+   "formal_pdr: False (ip_release: True)",
+   "uvm: none (ip_release: pyuvm)",
+   "post_synth_sim: False (ip_release: True)",
+   "equivalence: False (ip_release: True)",
+   "timing_sim: off (ip_release: auto)"
+  ],
+  "method_mix_gaps": [],
+  "advisory": "profile standard with 2 override(s)",
+  "policy_breaches": []
+ },
+ "constants": {
+  "ran": true,
+  "blocking": [],
+  "advice": []
+ },
+ "gates_last": {
+  "clarify": true,
+  "board-and-device-planning": true,
+  "rtl-design-creation": false
+ },
+ "approvals": [
+  {
+   "n": 0,
+   "decision": "approve",
+   "by": "auto",
+   "note": ""
+  },
+  {
+   "n": 0,
+   "decision": "approve",
+   "by": "auto",
+   "note": ""
+  },
+  {
+   "n": 1,
+   "decision": "approve",
+   "by": "auto",
+   "note": ""
+  },
+  {
+   "n": 1,
+   "decision": "approve",
+   "by": "auto",
+   "note": ""
+  },
+  {
+   "n": 2,
+   "decision": "approve",
+   "by": "auto",
+   "note": ""
+  },
+  {
+   "n": 2,
+   "decision": "approve",
+   "by": "auto",
+   "note": ""
+  },
+  {
+   "n": 2,
+   "decision": "approve",
+   "by": "auto",
+   "note": ""
+  },
+  {
+   "n": 2,
+   "decision": "approve",
+   "by": "auto",
+   "note": ""
+  },
+  {
+   "n": 2,
+   "decision": "approve",
+   "by": "auto",
+   "note": ""
+  },
+  {
+   "n": 2,
+   "decision": "approve",
+   "by": "auto",
+   "note": ""
+  },
+  {
+   "n": 2,
+   "decision": "approve",
+   "by": "auto",
+   "note": ""
+  }
+ ],
+ "permissions": {
+  "mode": "auto",
+  "source": "default (auto: the behaviour before brief 222)",
+  "overrides": {},
+  "ask_above_usd": 1.0,
+  "mode_changes": [],
+  "granted": {},
+  "refused": {},
+  "decisions": [
+   {
+    "action": "use_knowledge_bank",
+    "result": "allowed",
+    "by": "mode auto",
+    "stage": 0,
+    "first": "2026-11-26 15:46:01",
+    "last": "2026-11-26 15:46:51",
+    "count": 2
+   },
+   {
+    "action": "use_knowledge_bank",
+    "result": "allowed",
+    "by": "mode auto",
+    "stage": 1,
+    "first": "2026-11-26 15:47:33",
+    "last": "2026-11-26 15:47:47",
+    "count": 2
+   },
+   {
+    "action": "approve_architecture",
+    "result": "allowed",
+    "by": "mode auto",
+    "stage": 1,
+    "first": "2026-11-26 15:48:04",
+    "last": "2026-11-26 15:48:04",
+    "count": 1
+   },
+   {
+    "action": "use_knowledge_bank",
+    "result": "allowed",
+    "by": "mode auto",
+    "stage": 2,
+    "first": "2026-11-26 15:48:04",
+    "last": "2026-11-26 16:23:57",
+    "count": 7
+   },
+   {
+    "action": "edit_design_files",
+    "result": "allowed",
+    "by": "mode auto",
+    "stage": 2,
+    "first": "2026-11-26 15:48:04",
+    "last": "2026-11-26 16:23:57",
+    "count": 7
+   },
+   {
+    "action": "run_simulation",
+    "result": "allowed",
+    "by": "mode auto",
+    "stage": 2,
+    "first": "2026-11-26 15:48:04",
+    "last": "2026-11-26 16:23:57",
+    "count": 7
+   },
+   {
+    "action": "run_vivado",
+    "result": "allowed",
+    "by": "mode auto",
+    "stage": 2,
+    "first": "2026-11-26 15:48:04",
+    "last": "2026-11-26 16:23:57",
+    "count": 7
+   }
+  ]
+ },
+ "bringup": null,
+ "spec_test": {
+  "fired": false
+ }
+}

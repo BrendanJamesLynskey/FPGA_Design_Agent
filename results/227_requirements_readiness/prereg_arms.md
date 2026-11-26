@@ -30,3 +30,11 @@ Stamped 2026-11-26 14:57 GMT (`date`), executor Sonnet 5.5. Owner decision 2026-
 ## Stop rules
 
 Weekly usage 92 % (owner plan 2026-11-26): read before each launch (`run_arm.sh` refuses at 90 % and writes the STOP flag); a run stopped by the plan limit is recorded `rate_limited` and re-run, never scored. A run that hits the harness's own limits is a result (a failure of its class), never re-run.
+
+## Amendment 1 (2026-11-26, after the first 21 arm runs and the first stage-0 batches): a setup fault, and the re-run
+
+All 21 first arm runs (A 9, C 9, B 3) ended at a gate, none passing, with the same failure on most: `check_constraints` (FDA-CON-8) reported every spec port that was missing from the top, including the register-core ports that the
+Clarifier marks as `core:`. The cause was a flag, not the requirements: **the runs were started with `--no-shell`**, which the 209 pilot runs did not use; the pilots' designs reach their host through the JTAG register bus and the shell flag changes what the
+Clarifier and the constraints check treat as top ports. (Two of the A and B runs failed at the spec-test verdict instead.) The first batch is kept as evidence of the fault in `arms_setup_fault/` and `gate_pilots_setup_fault/`
+(0 of 21 arm runs passing the gates; they say nothing about requirements) and is **not** used for any arm comparison. All arms and gate runs were re-run without `--no-shell` and with 209's caps (`--max-usd 12 --budget-scale 3.5`); everything else in this
+pre-registration is unchanged. The C documents and the hidden specs were not changed by this fault. The first arm run (A p3 run 1, started 14:56, before this file was stamped) was a plumbing run on the same design; it was superseded, with its records, by the re-run.

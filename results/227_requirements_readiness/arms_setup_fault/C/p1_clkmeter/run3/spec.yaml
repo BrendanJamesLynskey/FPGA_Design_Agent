@@ -1,0 +1,360 @@
+name: p1_clkmeter
+title: 'P1: clock frequency meter (25 MHz C3 clock measured against the 156.25 MHz
+  SFP GT reference clock)'
+board: kr260
+part: xck26-sfvc784-2LV-c
+top: p1_clkmeter_top
+interfaces: {}
+clocks:
+- name: refclk
+  role: MGTREFCLK0 of the SFP+ quad via IBUFDS_GTE4 (ODIV2 output through BUFG_GT
+    or equivalent); register bus clock and ruler
+  freq_mhz: 156.25
+- name: clk25
+  role: 25 MHz clock on pin C3; measured clock, asynchronous to refclk; also drives
+    LED 0
+  freq_mhz: 25
+reset:
+  name: rst
+  polarity: active_high
+  model: reprogram
+  note: No external reset pin; every reset is a reconfiguration of the FPGA. The top
+    generates a power-on reset held for at least 8 refclk cycles, synchronous to refclk.
+    A separate synchronised reset is used in the clk25 domain for LED 0.
+parameters:
+  DESIGN_ID: '0x20910001'
+  GATE_LEN_DEFAULT: 156250000
+  GATE_LEN_MIN: 1000
+  LED0_HALF_PERIOD_CYCLES: 12500000
+  LED1_HALF_PERIOD_CYCLES: 78125000
+  READ_LATENCY_CYCLES: 2
+  SYNC_FLOPS: 2
+ports:
+- name: refclk_p
+  direction: in
+  width: 1
+  board_pin_role: SFP+ GT reference clock MGTREFCLK0 P (156.25 MHz)
+- name: refclk_n
+  direction: in
+  width: 1
+  board_pin_role: SFP+ GT reference clock MGTREFCLK0 N
+- name: clk25
+  direction: in
+  width: 1
+  board_pin_role: 25 MHz clock, pin C3
+- name: led
+  direction: out
+  width: 2
+  board_pin_role: user LEDs led[1:0]
+- name: sfp_tx_disable
+  direction: out
+  width: 1
+  board_pin_role: SFP+ tx disable, constant 1 (laser off)
+- name: 'core: clk, rst, h_we, h_re, h_addr[11:0], h_wdata[31:0], h_rdata[31:0]'
+  direction: inout
+  width: 1
+  board_pin_role: internal register port of p1_clkmeter_core (not board pins), driven
+    by data/jtag_bus.sv (unchanged)
+behaviour:
+  measurement:
+  - START (CTRL bit 0) written while not BUSY and GATE_LEN valid starts one measurement;
+    BUSY=1 within 2 refclk cycles and DONE=0 at once.
+  - The gate is GATE_LEN refclk cycles; rising edges of clk25, after a two-flop synchroniser
+    into refclk, are counted over the gate.
+  - At the last gate cycle COUNT and GATE_ACTUAL are loaded with the final results,
+    DONE=1, BUSY=0 and MEAS_DONE increments, all in the same clock.
+  - GATE_ACTUAL equals the GATE_LEN accepted at start; COUNT is 32 bits, no saturation;
+    +/-1 edge tolerance.
+  - START written while BUSY is ignored and does not restart the gate; START bit reads
+    back 0 (self-clearing).
+  - DONE stays 1 until the next accepted START.
+  - MEAS_DONE wraps at 32 bits.
+  registers_access:
+  - GATE_LEN write below 1000 is stored as 1000; reads return the clamped value; writes
+    while BUSY are ignored.
+  - Writes to read-only registers and unmapped addresses are ignored; unmapped addresses
+    read 0.
+  - A write takes effect the clock after h_we; h_rdata shows the addressed register
+    2 clocks after h_re and holds until the next h_re.
+  - BUILD reads the USR_ACCESSE2 word (in top; core receives it as an input).
+  - SCRATCH is 32-bit RW, resets to 0.
+  leds:
+  - LED_EN (CTRL bit 1) is 0 after reset; both LEDs are 0 while LED_EN is 0.
+  - While LED_EN is 1, LED 0 toggles every 12,500,000 clk25 cycles and LED 1 every
+    78,125,000 refclk cycles.
+  sfp:
+  - sfp_tx_disable is 1 from reset and always; no GT transceiver channel is used,
+    only the reference clock buffer.
+registers:
+  map:
+  - offset: '0x000'
+    name: ID
+    access: RO
+    reset: '0x20910001'
+    bits: '[31:0] design ID'
+  - offset: '0x004'
+    name: BUILD
+    access: RO
+    reset: USR_ACCESS word
+    bits: '[31:0] USR_ACCESSE2'
+  - offset: '0x008'
+    name: SCRATCH
+    access: RW
+    reset: '0x00000000'
+    bits: '[31:0] data'
+  - offset: '0x010'
+    name: GATE_LEN
+    access: RW
+    reset: '156250000'
+    bits: '[31:0] gate length in refclk cycles, minimum 1000 (clamped)'
+  - offset: '0x014'
+    name: CTRL
+    access: RW
+    reset: '0x00000000'
+    bits: '[0] START self-clearing, ignored while busy; [1] LED_EN'
+  - offset: '0x018'
+    name: STATUS
+    access: RO
+    reset: '0x00000000'
+    bits: '[0] BUSY; [1] DONE'
+  - offset: '0x01C'
+    name: COUNT
+    access: RO
+    reset: '0x00000000'
+    bits: '[31:0] clk25 edges in last gate'
+  - offset: '0x020'
+    name: GATE_ACTUAL
+    access: RO
+    reset: '0x00000000'
+    bits: '[31:0] refclk cycles in last gate'
+  - offset: '0x024'
+    name: MEAS_DONE
+    access: RO
+    reset: '0x00000000'
+    bits: '[31:0] completed measurements'
+timing:
+  refclk_period_ns: 6.4
+  clk25_period_ns: 40
+  latency:
+    read: h_rdata valid 2 refclk cycles after h_re, held until next h_re
+    write: register updated 1 refclk cycle after h_we
+    busy_after_start: BUSY=1 within 2 refclk cycles of the START write, DONE=0 at
+      once
+    gate: GATE_LEN refclk cycles (1 s at default)
+  constraints: Meet timing at 156.25 MHz; clk25 to refclk crossing is a documented
+    asynchronous crossing (two-flop synchroniser, set_false_path or max-delay on it);
+    jtag_bus crossings are inside its xpm_cdc cells.
+resources_expected:
+  luts: < 400
+  ffs: < 500
+  bram: 0
+  dsp: 0
+  gt_channels: 0
+  other: IBUFDS_GTE4, BUFG_GT, BUFG, USR_ACCESSE2, BSCANE2 (in jtag_bus)
+requirements:
+- id: REQ-01
+  text: ID register at 0x000 reads 0x20910001.
+  proof:
+  - simulation
+  - hardware
+- id: REQ-02
+  text: BUILD register at 0x004 reads the USR_ACCESSE2 word.
+  proof:
+  - hardware
+- id: REQ-03
+  text: SCRATCH at 0x008 reads back the last value written.
+  proof:
+  - simulation
+  - hardware
+- id: REQ-04
+  text: After reset GATE_LEN reads 156250000.
+  proof:
+  - simulation
+- id: REQ-05
+  text: A GATE_LEN write below 1000 reads back as 1000.
+  proof:
+  - simulation
+- id: REQ-06
+  text: A GATE_LEN write while BUSY is 1 leaves GATE_LEN unchanged.
+  proof:
+  - simulation
+- id: REQ-07
+  text: START while BUSY is 0 sets BUSY to 1 within 2 clocks.
+  proof:
+  - simulation
+  - formal
+- id: REQ-08
+  text: START while BUSY is 1 does not restart the gate.
+  proof:
+  - simulation
+  - formal
+- id: REQ-09
+  text: GATE_ACTUAL equals the GATE_LEN value in force at START after a completed
+    measurement.
+  proof:
+  - simulation
+  - formal
+  - hardware
+- id: REQ-10
+  text: DONE is set in the same clock that COUNT and GATE_ACTUAL take their final
+    values.
+  proof:
+  - simulation
+  - formal
+- id: REQ-11
+  text: DONE stays 1 until the next accepted START.
+  proof:
+  - simulation
+  - formal
+- id: REQ-12
+  text: COUNT equals the number of synchronised clk25 rising edges in the gate within
+    plus or minus 1 edge.
+  proof:
+  - simulation
+- id: REQ-13
+  text: MEAS_DONE increments by 1 per completed measurement.
+  proof:
+  - simulation
+  - formal
+- id: REQ-14
+  text: Writes to RO registers leave every register unchanged.
+  proof:
+  - simulation
+- id: REQ-15
+  text: h_rdata shows the addressed register 2 clocks after h_re.
+  proof:
+  - simulation
+  - formal
+- id: REQ-16
+  text: LED_EN is 0 after reset.
+  proof:
+  - simulation
+  - hardware
+- id: REQ-17
+  text: With LED_EN 1, LED 0 toggles every 12500000 clk25 cycles.
+  proof:
+  - simulation
+  - hardware
+- id: REQ-18
+  text: With LED_EN 1, LED 1 toggles every 78125000 refclk cycles.
+  proof:
+  - simulation
+  - hardware
+- id: REQ-19
+  text: sfp_tx_disable is 1 at all times from reset on.
+  proof:
+  - simulation
+  - formal
+  - hardware
+- id: REQ-20
+  text: The design uses 0 GT transceiver channels.
+  proof:
+  - analysis
+- id: REQ-21
+  text: Timing is met at 156.25 MHz with no unconstrained clock crossing.
+  proof:
+  - analysis
+- id: REQ-22
+  text: Five one-second measurements give frequency COUNT x 156.25 MHz / GATE_ACTUAL
+    within 100 ppm of 25 MHz.
+  proof:
+  - hardware
+- id: REQ-23
+  text: data/jtag_bus.sv is used unchanged.
+  proof:
+  - analysis
+- id: REQ-24
+  text: SCRATCH reads 0 after reset.
+  proof:
+  - simulation
+  - hardware
+- id: REQ-25
+  text: After reset COUNT, GATE_ACTUAL, MEAS_DONE, STATUS and CTRL read 0.
+  proof:
+  - simulation
+- id: REQ-26
+  text: START while BUSY is 0 sets DONE to 0 at once.
+  proof:
+  - simulation
+  - formal
+- id: REQ-27
+  text: MEAS_DONE wraps at 32 bits.
+  proof:
+  - simulation
+  - formal
+- id: REQ-28
+  text: h_rdata holds its value until the next h_re.
+  proof:
+  - simulation
+  - formal
+- id: REQ-29
+  text: Both LEDs are 0 while LED_EN is 0.
+  proof:
+  - simulation
+  - hardware
+- id: REQ-30
+  text: Unmapped addresses read 0.
+  proof:
+  - simulation
+- id: REQ-31
+  text: Writes to unmapped addresses leave every register unchanged.
+  proof:
+  - simulation
+assumptions:
+- text: The register bus clock is refclk and the core runs entirely in refclk, except
+    the LED 0 divider in clk25.
+  reason: Stated in the request.
+- text: GATE_LEN accepted at START is latched so GATE_ACTUAL equals it.
+  reason: Writes to GATE_LEN are ignored while BUSY, so this is equivalent and simple.
+- text: The 156.25 MHz reference enters via IBUFDS_GTE4 and a BUFG_GT (or ODIV2 path)
+    with no GT channel.
+  reason: Only the GT reference clock buffer is allowed.
+- text: Power-on reset is generated internally (no reset pin).
+  reason: Request gives no reset input; jtag_bus needs rst held a few clocks.
+- text: The clk25 LED 0 gating by LED_EN is synchronised into the clk25 domain.
+  reason: LED_EN lives in refclk domain.
+open_questions: []
+resolved_questions:
+- question: Exact package pins for refclk_p/refclk_n and for led[1:0], sfp_tx_disable
+    (C3 is given)?
+  answer: Take them from the KR260 board file for MGTREFCLK0 of the SFP quad, user
+    LEDs and SFP tx disable.
+  status: defaulted
+  by: default
+  default_reason: The request names roles but not pin locations.
+  risk: high
+- question: What does a START do when GATE_LEN has never been written?
+  answer: Run with the reset value 156250000.
+  status: defaulted
+  by: default
+  default_reason: Request says default one second.
+  risk: medium
+- question: Does a write of CTRL with START also store LED_EN from the same write?
+  answer: Yes, bit 1 is stored on every CTRL write; bit 0 never stored.
+  status: defaulted
+  by: default
+  default_reason: Unspecified, this is the natural behaviour.
+  risk: medium
+- question: Do LED phases reset to 0 when LED_EN goes 0 then 1?
+  answer: Dividers free-run; only the output is gated by LED_EN, and LED state is
+    0 after reset.
+  status: defaulted
+  by: default
+  default_reason: Request only says LEDs are 0 with LED_EN 0.
+  risk: high
+- question: Is the register map as listed in the request final (offset, width, reset
+    value, access of every register)?
+  answer: Yes, the map in registers.map above, all 32-bit on 4-byte steps.
+  status: defaulted
+  by: default
+  default_reason: The request lists offsets; confirming before RTL.
+  risk: high
+- question: This design has no reset input. Is every reset a reconfiguration of the
+    FPGA, or does something restart the running design?
+  answer: 'Every reset is a reconfiguration of the FPGA (reset model: reprogram):
+    registers get initial values and the design has no reset input.'
+  status: defaulted
+  by: default
+  default_reason: With no reset input, a register can start only from its initial
+    value, which the FPGA loads at configuration.
+  risk: high

@@ -1,0 +1,496 @@
+name: crc32_engine
+title: 'P3: Ethernet CRC-32 engine with JTAG register bus'
+board: kr260
+part: xck26-sfvc784-2LV-c
+top: crc32_top
+clocks:
+- name: clk_in
+  pin: C3
+  freq_mhz: 25
+  role: board oscillator input
+- name: clk
+  freq_mhz: 125
+  role: core clock, generated from clk_in by an MMCM (VCO 1000 MHz, divide 8), drives
+    jtag_bus and all registers
+reset:
+  name: rst
+  polarity: active-high
+  sync: synchronous to clk
+  source: held while the MMCM is not locked, then released after a few clocks
+parameters:
+  CLK_FREQ_NOTE: 125
+  DESIGN_ID: 546504705
+  CRC_POLY: 79764919
+  CRC_INIT: 4294967295
+  CRC_XOROUT: 4294967295
+  DATA_BYTES_PER_CLK: 4
+  RESET_HOLD_CYCLES: 8
+  SFP_TX_DISABLE_VALUE: 1
+ports:
+- name: clk_in
+  direction: in
+  width: 1
+  board_pin_role: 25 MHz clock, pin C3
+- name: led
+  direction: out
+  width: 2
+  board_pin_role: user LEDs led[1:0]
+- name: sfp_tx_disable
+  direction: out
+  width: 1
+  board_pin_role: SFP+ tx disable, held 1 (laser off)
+- name: h_we
+  direction: internal
+  width: 1
+  board_pin_role: jtag_bus register port write pulse
+- name: h_re
+  direction: internal
+  width: 1
+  board_pin_role: jtag_bus register port read pulse
+- name: h_addr
+  direction: internal
+  width: 12
+  board_pin_role: jtag_bus byte address
+- name: h_wdata
+  direction: internal
+  width: 32
+  board_pin_role: jtag_bus write data
+- name: h_rdata
+  direction: internal
+  width: 32
+  board_pin_role: jtag_bus read data
+behaviour:
+  crc:
+  - Reflected CRC-32, polynomial 0x04C11DB7, init 0xFFFFFFFF, final XOR 0xFFFFFFFF,
+    equal to zlib.crc32 of the bytes pushed since INIT.
+  - PUSH4 writes feed bytes wdata[7:0], [15:8], [23:16], [31:24] in that order, all
+    four in one clock.
+  - PUSH_N feeds the low TAIL_LEN bytes of wdata, bits 7:0 first. TAIL_LEN 0 pushes
+    nothing.
+  - CRC reads the finished value (final XOR applied); an empty message reads 0x00000000.
+  - INIT (CTRL bit 0) restores the CRC state to 0xFFFFFFFF and clears BYTE_COUNT and
+    BUSY_CYCLES, then the bit clears itself.
+  counters:
+  - BYTE_COUNT adds 4 per PUSH4 and TAIL_LEN per PUSH_N.
+  - BUSY_CYCLES adds 1 for each clock in which the CRC datapath processes a push (PUSH4,
+    or PUSH_N with TAIL_LEN above 0).
+  - A message of N full words gives BUSY_CYCLES = N.
+  bus:
+  - A write takes effect the clock after h_we. After h_re, h_rdata shows the addressed
+    register within 2 clocks and holds it.
+  - Unmapped addresses read 0 and ignore writes. Write-only registers read 0. Writes
+    to RO registers are ignored.
+  - jtag_bus.sv is used unchanged; simulation drives the h_* register port directly.
+  - A push sent in the same clock as INIT is not expected; INIT wins if it happens.
+  board:
+  - ID reads 0x20930001. BUILD reads the USR_ACCESSE2 word. SCRATCH is 32 bits RW,
+    resets to 0.
+  - sfp_tx_disable is driven 1 at all times. No GT transceiver is used.
+  - led[1:0] show a heartbeat on led[0] and the lower bit of BUSY_CYCLES activity
+    on led[1] (cosmetic).
+registers:
+  map:
+  - offset: 0
+    name: ID
+    access: RO
+    reset: 546504705
+    bits: 31:0 design ID
+  - offset: 4
+    name: BUILD
+    access: RO
+    reset: 0
+    bits: 31:0 USR_ACCESS word
+  - offset: 8
+    name: SCRATCH
+    access: RW
+    reset: 0
+    bits: 31:0 data
+  - offset: 16
+    name: CTRL
+    access: RW
+    reset: 0
+    bits: 0 INIT self-clearing; 31:1 reserved, read 0
+  - offset: 20
+    name: PUSH4
+    access: WO
+    reset: 0
+    bits: 31:0 four bytes, bits 7:0 first
+  - offset: 24
+    name: PUSH_N
+    access: WO
+    reset: 0
+    bits: 31:0 low TAIL_LEN bytes used
+  - offset: 28
+    name: TAIL_LEN
+    access: RW
+    reset: 0
+    bits: 1:0 N, 0 to 3; 31:2 read 0
+  - offset: 32
+    name: CRC
+    access: RO
+    reset: 0
+    bits: 31:0 finished CRC-32
+  - offset: 36
+    name: BYTE_COUNT
+    access: RO
+    reset: 0
+    bits: 31:0 bytes pushed
+  - offset: 40
+    name: BUSY_CYCLES
+    access: RO
+    reset: 0
+    bits: 31:0 busy clocks
+timing:
+  clock: 125 MHz core clock (8 ns period), at least the 100 MHz requested
+  throughput: 4 bytes per clock, 500 MB/s at 125 MHz
+  latency:
+    write_effect: 1 clock after h_we
+    read_data: valid within 2 clocks after h_re and held
+    push4_to_crc: CRC register updated 1 clock after h_we
+resources_expected:
+  lut: 400
+  ff: 300
+  bram: 0
+  dsp: 0
+  mmcm: 1
+  other: BSCANE2 and USR_ACCESSE2 primitives
+assumptions:
+- assumption: Core clock is 125 MHz from an MMCM on the 25 MHz input.
+  reason: The request needs at least 100 MHz and only a 25 MHz pin exists; 125 MHz
+    has VCO 1000 MHz and meets timing easily for a 32-bit CRC.
+- assumption: A PUSH_N with N 1 to 3 counts as one busy cycle, PUSH_N with N 0 counts
+    none.
+  reason: The datapath processes one push per clock; the request checks BUSY_CYCLES
+    only for full-word messages.
+- assumption: Writing CTRL stores only bit 0 as a pulse; CTRL reads 0.
+  reason: INIT is self-clearing.
+- assumption: TAIL_LEN values 4 to 7 are not written; only bits 1:0 are stored.
+  reason: The request limits N to 0 to 3.
+- assumption: BYTE_COUNT and BUSY_CYCLES are 32-bit and wrap.
+  reason: Registers are 32 bits.
+open_questions: []
+requirements:
+- id: REQ-01
+  text: CRC after any message equals zlib.crc32 of the bytes pushed, for 1000 random
+    messages.
+  proof:
+  - simulation
+  - hardware
+- id: REQ-02
+  text: CRC reads 0x00000000 after INIT with no bytes pushed.
+  proof:
+  - simulation
+- id: REQ-03
+  text: BYTE_COUNT equals the number of bytes pushed since INIT.
+  proof:
+  - simulation
+  - hardware
+- id: REQ-04
+  text: A message of N full words gives BUSY_CYCLES = N.
+  proof:
+  - simulation
+  - hardware
+- id: REQ-05
+  text: The datapath accepts one 4-byte PUSH4 per clock with no stall.
+  proof:
+  - simulation
+  - formal
+- id: REQ-06
+  text: The core clock is at least 100 MHz.
+  proof:
+  - analysis
+- id: REQ-07
+  text: INIT sets CRC state to 0xFFFFFFFF.
+  proof:
+  - simulation
+- id: REQ-08
+  text: PUSH_N with TAIL_LEN 0 changes no state.
+  proof:
+  - simulation
+- id: REQ-09
+  text: PUSH_N pushes the low TAIL_LEN bytes of wdata, bits 7:0 first, for TAIL_LEN
+    1, 2 and 3.
+  proof:
+  - simulation
+- id: REQ-10
+  text: ID reads 0x20930001.
+  proof:
+  - simulation
+  - hardware
+- id: REQ-11
+  text: BUILD reads the USR_ACCESSE2 word of the bitstream.
+  proof:
+  - hardware
+- id: REQ-12
+  text: SCRATCH reads back the written 32-bit value.
+  proof:
+  - simulation
+  - hardware
+- id: REQ-13
+  text: After h_re, h_rdata shows the addressed register within 2 clocks.
+  proof:
+  - simulation
+  - formal
+- id: REQ-14
+  text: Reads of unmapped addresses return 0.
+  proof:
+  - simulation
+  - formal
+- id: REQ-15
+  text: A write takes effect the clock after h_we.
+  proof:
+  - simulation
+- id: REQ-16
+  text: sfp_tx_disable is 1 at all times.
+  proof:
+  - formal
+  - hardware
+- id: REQ-17
+  text: The design uses no GT transceiver channel.
+  proof:
+  - analysis
+- id: REQ-18
+  text: data/jtag_bus.sv is instantiated unchanged.
+  proof:
+  - analysis
+- id: REQ-19
+  text: Timing slack is not negative.
+  proof:
+  - analysis
+- id: REQ-20
+  text: INIT clears BYTE_COUNT.
+  proof:
+  - simulation
+- id: REQ-21
+  text: INIT clears BUSY_CYCLES.
+  proof:
+  - simulation
+- id: REQ-22
+  text: CTRL bit 0 reads 0 after INIT.
+  proof:
+  - simulation
+- id: REQ-23
+  text: SCRATCH resets to 0.
+  proof:
+  - simulation
+  - hardware
+- id: REQ-24
+  text: After h_re, h_rdata keeps showing the value of the register addressed when
+    h_re was pulsed, even if h_addr changes while h_re is low.
+  proof:
+  - simulation
+  - formal
+  kind: functional
+  modal: shall
+  source: answer Q3
+  worked:
+  - 'h_re pulsed for one clock on ID (0x20930001), then h_addr changes to another
+    register: h_rdata still shows 0x20930001.'
+  never: h_rdata switches to the register at the new h_addr or goes to 0.
+- id: REQ-25
+  text: Writes to unmapped addresses change no register.
+  proof:
+  - simulation
+  - formal
+- id: REQ-26
+  text: CTRL bit 0 reads 0 after reset when no INIT has been issued.
+  proof:
+  - simulation
+  kind: functional
+  modal: shall
+  source: answer Q1
+  worked:
+  - After reset release with no INIT and no writes, a read of CTRL returns bit 0 =
+    0.
+  never: CTRL bit 0 reads 1 after reset without INIT.
+- id: REQ-27
+  text: Each PUSH_N with TAIL_LEN greater than 0 adds 1 to BUSY_CYCLES.
+  proof:
+  - simulation
+  - hardware
+  kind: functional
+  modal: shall
+  source: answer Q4
+  worked:
+  - 'After INIT, 5 PUSH4 then one PUSH_N with TAIL_LEN 2: BUSY_CYCLES reads 6.'
+  never: A PUSH_N with TAIL_LEN greater than 0 is not counted in BUSY_CYCLES.
+- id: REQ-28
+  text: When INIT and a PUSH4 occur on the same clock edge, INIT takes priority and
+    the pushed word is dropped, so BYTE_COUNT reads 0.
+  proof:
+  - simulation
+  - formal
+  kind: functional
+  modal: shall
+  source: answer Q5
+  l2: {}
+  worked:
+  - 'INIT is written on the same clock edge that a PUSH4 is presented: afterwards
+    BYTE_COUNT reads 0.'
+  never: The word pushed on the same clock as INIT is counted in BYTE_COUNT.
+- id: REQ-29
+  text: When INIT and a PUSH4 occur on the same clock edge, INIT takes priority and
+    the pushed word is dropped, so BUSY_CYCLES reads 0.
+  proof:
+  - simulation
+  - formal
+  kind: functional
+  modal: shall
+  source: answer Q5
+  l2: {}
+  worked:
+  - 'INIT is written on the same clock edge that a PUSH4 is presented: afterwards
+    BUSY_CYCLES reads 0.'
+  never: The word pushed on the same clock as INIT is counted in BUSY_CYCLES.
+- id: REQ-30
+  text: When INIT and a PUSH4 occur on the same clock edge, INIT takes priority and
+    the pushed word is dropped, so the CRC state is the same as after INIT alone.
+  proof:
+  - simulation
+  - formal
+  kind: functional
+  modal: shall
+  source: answer Q5
+  l2: {}
+  worked:
+  - 'INIT is written on the same clock edge that a PUSH4 is presented: afterwards
+    the CRC state equals the state after INIT with no push.'
+  never: The word pushed on the same clock as INIT changes the CRC state.
+- id: REQ-31
+  text: A read of SCRATCH in the clock immediately after the h_we that wrote it returns
+    the written value.
+  proof:
+  - simulation
+  - formal
+  kind: functional
+  modal: shall
+  source: answer Q6
+  worked:
+  - 'h_we writes SCRATCH=0xA and h_re reads SCRATCH in the very next clock: the read
+    returns 0xA.'
+  never: The read in the clock right after the write returns the old SCRATCH value.
+- id: REQ-32
+  text: Writing TAIL_LEN stores only bits 1:0 of the written value.
+  proof:
+  - simulation
+  kind: functional
+  modal: shall
+  source: answer Q7
+  worked:
+  - 'TAIL_LEN is written with 4: TAIL_LEN becomes 0, a following PUSH_N pushes nothing
+    and BYTE_COUNT still reads 0 after INIT.'
+  never: A TAIL_LEN value of 4 or more is stored or makes PUSH_N push bytes.
+- id: REQ-33
+  text: BYTE_COUNT reads 0 after reset when no INIT has been issued.
+  proof:
+  - simulation
+  kind: functional
+  modal: shall
+  source: answer Q8
+  worked:
+  - After reset release with no INIT, a read of BYTE_COUNT returns 0, even if earlier
+    pushes had been made before reset.
+  never: BYTE_COUNT keeps a pre-reset value after reset without INIT.
+- id: REQ-34
+  text: BYTE_COUNT wraps around as a 32-bit counter.
+  proof:
+  - simulation
+  - formal
+  kind: functional
+  modal: shall
+  source: answer Q9
+  worked:
+  - 'BYTE_COUNT is 0xFFFFFFFC and one more PUSH4 is issued: BYTE_COUNT reads 0x00000000.'
+  never: BYTE_COUNT saturates at 0xFFFFFFFF or stays at 0xFFFFFFFC after the push.
+resolved_questions:
+- question: Does a PUSH_N with N 1 to 3 add 1 to BUSY_CYCLES?
+  answer: Yes. BUSY_CYCLES counts one per clock in which a push is processed, and
+    that includes a PUSH_N with N from 1 to 3. Only a PUSH_N with N = 0 does not count.
+  status: answered
+  by: oracle
+  default_reason: The request fixes BUSY_CYCLES only for full words.
+  risk: medium
+- question: What clock frequency do you want?
+  answer: 156.25 MHz. The data clock is the register bus clock, which must be at least
+    100 MHz, so the proposed 125 MHz default is not what the spec states.
+  status: answered
+  by: oracle
+  default_reason: At least 100 MHz is required; the C3 clock is 25 MHz.
+  risk: high
+- question: What do the LEDs show?
+  answer: led[0] heartbeat, led[1] busy activity.
+  status: defaulted
+  by: oracle
+  default_reason: The request gives no LED function.
+  risk: medium
+- question: Confirm the register map (offset, width, reset value and access of every
+    register).
+  answer: Yes, with the map taken from the spec tables, not from a file called registers.map
+    (the spec does not mention that file). All registers are 32 bits wide on 4-byte
+    steps. 0x000 ID is RO and reads 0x20930001. 0x004 BUILD is RO and holds the USR_ACCESS
+    word. 0x008 SCRATCH is RW and resets to 0. 0x010 CTRL is RW (bit 0 INIT, self-clearing)
+    and resets to 0. 0x014 PUSH4 is WO. 0x018 PUSH_N is WO. 0x01C TAIL_LEN is RW,
+    stores only bits 1:0 and resets to 0. 0x020 CRC is RO and reads 0x00000000 at
+    reset (internal state 0xFFFFFFFF, final XOR applied on read). 0x024 BYTE_COUNT
+    is RO and resets to 0. 0x028 BUSY_CYCLES is RO and resets to 0. Unmapped addresses
+    read 0 and ignore writes. Writes to read-only registers are ignored.
+  status: answered
+  by: oracle
+  default_reason: Offsets are named in the request; confirm no others are needed.
+  risk: high
+- question: This design has no reset input. Is every reset a reconfiguration of the
+    FPGA (the device is reprogrammed, so every register starts from its initial value),
+    or does something restart the running design (then it needs a reset input)?
+  answer: 'No, the default does not hold. The design has a reset input: `rst`, active
+    high, which is held for a few clocks at start. The core module `p3_crc_engine_core`
+    has `rst` among its ports, and the reset values are specified (CRC state 0xFFFFFFFF,
+    BYTE_COUNT 0, BUSY_CYCLES 0, TAIL_LEN 0, CTRL 0). The specification does not say
+    whether reset can also be applied while the design is running, so I cannot settle
+    that part.'
+  status: answered
+  by: oracle
+  default_reason: 'With no reset input, a register can start only from its initial
+    value, which the FPGA loads at configuration (owner, 2026-11-26: particularly
+    useful for designs whose every reset reprograms the device). A design that must
+    restart while running needs a reset input and resets its control state; the two
+    models are checked by different rules (STD-INIT-02).'
+  risk: high
+- question: 'Which verification profile should this run use? Profiles: prototype:
+    fastest: lint and directed tests to V1; no coverage, no formal, no netlist checks;
+    standard: today''s default: V3 with the floors, constrained-random, bounded formal
+    on the control logic, board smoke run; thorough: standard plus the netlist checks
+    (functional simulation of the synthesised netlist, equivalence), 8 seeds, deeper
+    formal; ip_release: thorough plus an independent spec bench, mutation floor 85,
+    induction and PDR proofs, pyuvm bench: what a library ''verified'' label needs;
+    high_dependability: thorough plus the structures the interview chose (ECC, parity,
+    safe FSM, TMR, watchdog) and fault-injection simulation; low_latency: standard
+    plus the latency budget checks and the latency-path documentation rule. Answer
+    with a profile name.'
+  answer: standard
+  status: defaulted
+  by: oracle
+  default_reason: 'nothing in the spec asks for more or less; standard is the default
+    and what runs today. measured on the development design: 9 s of checks against
+    9 s for standard (model time not included)'
+  risk: low
+- question: 'Is this a production build that must be hard to copy, read back or debug?
+    A yes turns on: readback security and JTAG access to the system monitor and the
+    BSCAN block off, no debug core or debug port in the built design, and system-monitor
+    alarms wired to a latched safe shutdown; the build then fails a gate for each
+    of these that Vivado''s own outputs do not show. Bitstream encryption and authentication
+    are requested too, but on a Zynq MPSoC (the KR260) they are boot-image steps that
+    are yours: the record lists them as handed over, never as done. You keep the key:
+    the agent never makes, stores or programs one (eFUSE and BBRAM are yours). Answer
+    yes or no.'
+  answer: 'no'
+  status: defaulted
+  by: oracle
+  default_reason: 'nothing in the spec asks for a protected or production build. cost:
+    not measured yet'
+  risk: high
+production_secure:
+  answer: 'no'
+  status: defaulted
+  value: false
+verif_profile: standard
+dependability: []

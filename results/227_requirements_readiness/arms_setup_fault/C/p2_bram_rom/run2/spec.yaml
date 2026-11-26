@@ -1,0 +1,416 @@
+name: p2_bram_rom
+title: 'P2: ROM, RAM and a March C- memory test'
+board: kr260
+part: xck26-sfvc784-2LV-c
+top: p2_bram_rom_top
+interfaces: {}
+clocks:
+- name: clk
+  port: clk
+  frequency: 25 MHz
+  pin: C3
+  note: free-running; register bus and memory clock
+reset:
+  name: rst
+  polarity: active high
+  note: core input rst; top generates it for a few clocks at start (power-up counter);
+    held for at least 4 clocks
+parameters:
+  ROM_DEPTH: 1024
+  RAM_DEPTH: 1024
+  DATA_WIDTH: 32
+  ADDR_WIDTH: 10
+  RAM_INIT_BASE: 3235774464
+  DESIGN_ID: 546439169
+  FAULT_ADDR: 5
+  RESET_CYCLES: 8
+  READ_LATENCY_CYCLES: 2
+ports:
+- name: clk
+  direction: input
+  width: 1
+  board_pin_role: 25 MHz clock, pin C3
+- name: led
+  direction: output
+  width: 2
+  board_pin_role: user LEDs led[1:0]
+- name: sfp_tx_disable
+  direction: output
+  width: 1
+  board_pin_role: SFP+ tx disable, driven constant 1
+- name: rst
+  direction: input
+  width: 1
+  board_pin_role: core only; active high reset
+- name: h_we
+  direction: input
+  width: 1
+  board_pin_role: core only; register port write pulse from jtag_bus
+- name: h_re
+  direction: input
+  width: 1
+  board_pin_role: core only; register port read pulse
+- name: h_addr
+  direction: input
+  width: 12
+  board_pin_role: core only; byte address
+- name: h_wdata
+  direction: input
+  width: 32
+  board_pin_role: core only; write data
+- name: h_rdata
+  direction: output
+  width: 32
+  board_pin_role: core only; read data valid 2 clocks after h_re
+behaviour:
+  rom:
+  - 1024x32 ROM initialised with $readmemh from data/rom_init.hex at configuration.
+  - ROM_DATA read returns the word at MEM_ADDR; writes are ignored.
+  ram:
+  - 1024x32 RAM; word i holds 0xC0DE0000 + i after configuration, before any write
+    (initial block / INIT).
+  - RAM contents are not changed by rst.
+  host_access:
+  - MEM_ADDR holds 10 bits; upper write bits ignored, read as 0.
+  - With AUTOINC a ROM_DATA read or any RAM_DATA access uses the old MEM_ADDR then
+    adds 1, wrapping 1023 to 0.
+  - Without AUTOINC MEM_ADDR is unchanged by data accesses.
+  - 'RAM_DATA access while BUSY: write ignored, read returns 0, MEM_ADDR not incremented;
+    MEM_ADDR writes still work.'
+  - Unmapped addresses read 0 and ignore writes.
+  - h_rdata is registered and valid 2 clocks after h_re, held until next read.
+  march:
+  - 'March C-: up(w0); up(r0,w1); up(r1,w0); down(r0,w1); down(r1,w0); down(r0), run
+    with all-zero background then all-one background (data inverted); one pass is
+    both backgrounds.'
+  - Pass count used is max(1, MARCH_PASSES).
+  - START while BUSY is ignored; START self-clears and clears MARCH_ERRS, MARCH_FIRST_ERR
+    (to 0xFFFFFFFF), passes completed and DONE.
+  - BUSY is high for the whole test; DONE rises and BUSY falls in the same clock when
+    the last pass ends.
+  - Each read compare mismatch increments MARCH_ERRS; first mismatch address stored
+    in MARCH_FIRST_ERR.
+  - INJECT_FAULT forces a mismatch in the compare only at address 5, once per pass;
+    stored data is never corrupted, RAM ends all zero.
+  common:
+  - ID reads 0x20920001; BUILD reads USR_ACCESSE2 word; SCRATCH is 32-bit RW reset
+    0.
+  - sfp_tx_disable is constant 1; no GT transceiver used.
+  - Top instantiates data/jtag_bus.sv unchanged and the core p2_bram_rom_core (no
+    vendor primitive).
+registers:
+  map:
+  - offset: 0
+    name: ID
+    access: RO
+    reset: 546439169
+    bits: 31:0 design ID
+  - offset: 4
+    name: BUILD
+    access: RO
+    reset: 0
+    bits: 31:0 USR_ACCESS word
+  - offset: 8
+    name: SCRATCH
+    access: RW
+    reset: 0
+    bits: 31:0 scratch
+  - offset: 16
+    name: MEM_ADDR
+    access: RW
+    reset: 0
+    bits: 9:0 word address
+  - offset: 20
+    name: ROM_DATA
+    access: RO
+    reset: 0
+    bits: 31:0 ROM word at MEM_ADDR
+  - offset: 24
+    name: RAM_DATA
+    access: RW
+    reset: 0
+    bits: 31:0 RAM word at MEM_ADDR
+  - offset: 28
+    name: MEM_CTRL
+    access: RW
+    reset: 0
+    bits: 0 AUTOINC
+  - offset: 32
+    name: MARCH_CTRL
+    access: RW
+    reset: 0
+    bits: 0 START (self-clearing), 1 INJECT_FAULT
+  - offset: 36
+    name: MARCH_PASSES
+    access: RW
+    reset: 1
+    bits: 15:0 passes (0 treated as 1)
+  - offset: 40
+    name: MARCH_STATUS
+    access: RO
+    reset: 0
+    bits: 0 BUSY, 1 DONE, 31:16 passes completed
+  - offset: 44
+    name: MARCH_ERRS
+    access: RO
+    reset: 0
+    bits: 31:0 error count
+  - offset: 48
+    name: MARCH_FIRST_ERR
+    access: RO
+    reset: 4294967295
+    bits: 31:0 first wrong address
+timing:
+  clock: 25 MHz, 40 ns period
+  latency:
+    register_read: h_rdata valid 2 clocks after h_re and held
+    register_write: takes effect 1 clock after h_we
+    bram_read: 1 clock
+    march_busy_to_done: BUSY falls and DONE rises in the same clock
+resources_expected:
+  BRAM36: 2 to 3 (ROM 1024x32 and RAM 1024x32 are one 36Kb block each)
+  LUT: under 800
+  FF: under 600
+  DSP: 0
+  GT: 0
+requirements:
+- id: REQ-01
+  text: Register 0x000 reads 0x20920001.
+  proof:
+  - simulation
+  - hardware
+- id: REQ-02
+  text: Register 0x008 reads back the last value written.
+  proof:
+  - simulation
+  - hardware
+- id: REQ-29
+  text: Register 0x008 reads 0 after reset.
+  proof:
+  - simulation
+- id: REQ-03
+  text: Register 0x004 reads the USR_ACCESSE2 word of the bitstream.
+  proof:
+  - hardware
+- id: REQ-04
+  text: After configuration ROM word i equals line i of data/rom_init.hex for i in
+    0..1023.
+  proof:
+  - simulation
+  - hardware
+- id: REQ-05
+  text: Before any write, RAM word i equals 0xC0DE0000 + i for i in 0..1023.
+  proof:
+  - simulation
+  - hardware
+- id: REQ-06
+  text: A write to RAM_DATA stores the value at MEM_ADDR.
+  proof:
+  - simulation
+  - hardware
+- id: REQ-30
+  text: A RAM_DATA read after a write at the same MEM_ADDR returns the written value.
+  proof:
+  - simulation
+  - hardware
+- id: REQ-07
+  text: With AUTOINC set, each ROM_DATA read or RAM_DATA access increments MEM_ADDR
+    by 1 after use.
+  proof:
+  - simulation
+- id: REQ-08
+  text: MEM_ADDR wraps from 1023 to 0 with AUTOINC.
+  proof:
+  - simulation
+  - formal
+- id: REQ-09
+  text: With AUTOINC clear, MEM_ADDR does not change on data accesses.
+  proof:
+  - simulation
+- id: REQ-10
+  text: Writes to ROM_DATA are ignored.
+  proof:
+  - simulation
+- id: REQ-11
+  text: Bits 31:10 of a MEM_ADDR write are ignored and read as 0.
+  proof:
+  - simulation
+- id: REQ-12
+  text: h_rdata shows the addressed register within 2 clocks of h_re.
+  proof:
+  - simulation
+  - formal
+- id: REQ-31
+  text: h_rdata holds its value until the next h_re.
+  proof:
+  - simulation
+  - formal
+- id: REQ-13
+  text: Unmapped addresses read 0.
+  proof:
+  - simulation
+- id: REQ-32
+  text: Writes to unmapped addresses change no register.
+  proof:
+  - simulation
+- id: REQ-14
+  text: 'Reset values match the table: MEM_ADDR 0, MEM_CTRL 0, MARCH_CTRL 0, MARCH_PASSES
+    1, MARCH_STATUS 0, MARCH_ERRS 0, MARCH_FIRST_ERR 0xFFFFFFFF.'
+  proof:
+  - simulation
+- id: REQ-15
+  text: rst does not change RAM contents.
+  proof:
+  - simulation
+- id: REQ-16
+  text: A March C- test with no fault over 200 passes ends with MARCH_ERRS equal to
+    0.
+  proof:
+  - simulation
+  - hardware
+- id: REQ-33
+  text: A March C- test with no fault over 200 passes ends with MARCH_FIRST_ERR equal
+    to 0xFFFFFFFF.
+  proof:
+  - simulation
+  - hardware
+- id: REQ-17
+  text: With INJECT_FAULT set, a 3-pass test ends with MARCH_ERRS equal to 3.
+  proof:
+  - simulation
+  - hardware
+- id: REQ-18
+  text: With INJECT_FAULT set, MARCH_FIRST_ERR equals 5 after the first pass.
+  proof:
+  - simulation
+  - hardware
+- id: REQ-19
+  text: The injected fault alters only the compare, never the stored data.
+  proof:
+  - simulation
+  - hardware
+- id: REQ-34
+  text: The RAM holds all zeros after the test completes.
+  proof:
+  - simulation
+  - hardware
+- id: REQ-20
+  text: MARCH_STATUS bits 31:16 count completed passes.
+  proof:
+  - simulation
+- id: REQ-35
+  text: At DONE, MARCH_STATUS bits 31:16 equal max(1, MARCH_PASSES).
+  proof:
+  - simulation
+- id: REQ-21
+  text: BUSY is high from START until the last pass ends.
+  proof:
+  - simulation
+  - formal
+- id: REQ-36
+  text: BUSY falls in the same clock in which DONE rises.
+  proof:
+  - simulation
+  - formal
+- id: REQ-22
+  text: START while BUSY is ignored.
+  proof:
+  - simulation
+- id: REQ-23
+  text: START clears MARCH_ERRS to 0.
+  proof:
+  - simulation
+- id: REQ-37
+  text: START sets MARCH_FIRST_ERR to 0xFFFFFFFF.
+  proof:
+  - simulation
+- id: REQ-38
+  text: START clears the passes completed field to 0.
+  proof:
+  - simulation
+- id: REQ-39
+  text: START clears DONE.
+  proof:
+  - simulation
+- id: REQ-24
+  text: A MARCH_PASSES value of 0 runs exactly 1 pass.
+  proof:
+  - simulation
+- id: REQ-40
+  text: A MARCH_PASSES value of 0 reads back as 0.
+  proof:
+  - simulation
+- id: REQ-25
+  text: While BUSY, a RAM_DATA write is ignored.
+  proof:
+  - simulation
+- id: REQ-41
+  text: While BUSY, a RAM_DATA read returns 0.
+  proof:
+  - simulation
+- id: REQ-26
+  text: sfp_tx_disable is 1 at all times.
+  proof:
+  - analysis
+  - hardware
+- id: REQ-42
+  text: The design uses 0 GT transceiver channels.
+  proof:
+  - analysis
+- id: REQ-27
+  text: The design meets timing at 25 MHz with data/jtag_bus.sv unchanged.
+  proof:
+  - analysis
+- id: REQ-28
+  text: ROM and RAM map to block RAM.
+  proof:
+  - analysis
+assumptions:
+- assumption: Fault injection yields one counted error per pass at address 5 (per
+    user's text), taking one compare per pass.
+  reason: User says one wrong word per pass; with two backgrounds the compare at address
+    5 is chosen once per pass.
+- assumption: Top creates rst from a power-up counter of RESET_CYCLES clocks.
+  reason: User says hold rst a few clocks at start; no reset button specified.
+- assumption: Part is xck26-sfvc784-2LV-c.
+  reason: Kria KR260 K26 SOM.
+- assumption: Fresh read data of RAM is sampled from block RAM with 1 clock latency,
+    so the bus read FSM adds one register stage.
+  reason: Meets the 2-clock h_rdata bound.
+open_questions: []
+resolved_questions:
+- question: What should led[1:0] show?
+  answer: led[0] = BUSY, led[1] = DONE
+  status: defaulted
+  by: default
+  default_reason: Request names LEDs but gives no behaviour.
+  risk: high
+- question: In which exact pass compare does INJECT_FAULT fire (the March C- has several
+    compares at address 5 per pass)?
+  answer: Exactly one forced mismatch per pass, in the first read of address 5 of
+    the first background; MARCH_ERRS grows by 1 per pass
+  status: defaulted
+  by: default
+  default_reason: Request says one wrong word per pass at address 5.
+  risk: high
+- question: Is the register map as listed in the request the final one?
+  answer: Yes, offsets 0x000-0x030 exactly as in the request table
+  status: defaulted
+  by: default
+  default_reason: Offsets are given; confirming the map the harness copies into registers.map.
+  risk: high
+- question: This design has no reset input. Is every reset a reconfiguration of the
+    FPGA (the device is reprogrammed, so every register starts from its initial value),
+    or does something restart the running design (then it needs a reset input)?
+  answer: 'Every reset is a reconfiguration of the FPGA (reset model: reprogram):
+    registers get initial values, control state included, and the design has no reset
+    input. Record it in spec.yaml as reset: {model: reprogram}; a design that restarts
+    while it runs is reset: {model: reset} with a reset port.'
+  status: defaulted
+  by: default
+  default_reason: 'With no reset input, a register can start only from its initial
+    value, which the FPGA loads at configuration (owner, 2026-11-26: particularly
+    useful for designs whose every reset reprograms the device). A design that must
+    restart while running needs a reset input and resets its control state; the two
+    models are checked by different rules (STD-INIT-02).'
+  risk: high

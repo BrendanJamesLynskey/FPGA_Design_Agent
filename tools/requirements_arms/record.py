@@ -35,12 +35,15 @@ def wilson(k: int, n: int, z: float = 1.959964) -> tuple[float, float]:
 
 def classify(stop: str | None, summary: dict[str, Any]) -> str:
     """The failure class of a run that did not reach the end of stage 2, from the stop reason and the last failing gate (code; the executor checks each by hand).
-    Classes: interface, timing, reset, handshake, functional, testbench_wrong, tool, cut_off_reply, budget, requirement_missing (a stop at stage 0 with open questions)."""
+    Classes: interface, timing, reset, handshake, functional, testbench_wrong, tool, cut_off_reply, budget, requirement_missing (a stop at stage 0 with open questions), and
+    spectest_unresolved (the independent bench and the RTL disagree and triage could not say which is wrong)."""
     t = (stop or "").lower()
     if not t:
         return ""
     if t.startswith("requirements:"):
         return "requirement_missing"
+    if "spec-test" in t or "spectest" in t:
+        return "spectest_unresolved"      # the independent spec-only bench and the RTL disagree and triage could not say which is wrong: a requirement reading, the bench or the RTL (hand-labelled later)
     if summary.get("truncated_calls"):
         return "cut_off_reply"
     if "budget" in t or "cost cap" in t or "usd" in t:

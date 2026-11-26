@@ -9,7 +9,8 @@ set -u
 ARM=$1; D=$2; K=$3
 S=${SCRATCH:-/home/brendan/Claude_sandbox/_scratch_227}; H=/home/brendan/Claude_sandbox/_handoff
 W=${WORKTREE:-/home/brendan/Claude_sandbox/_worktrees/227-requirements-readiness}
-TAG=b227_${ARM}_${D}_r${K}; L=$S/logs/$TAG.log; mkdir -p $S/logs
+TAG=b227_${ARM}_${D}_r${K}; L=$S/logs/$TAG.log; mkdir -p $S/logs $S/claims
+mkdir $S/claims/$TAG 2>/dev/null || { echo "already claimed: $TAG"; exit 9; }     # one runner per tag, so two queues can share the list
 [ -e $S/STOP ] && { echo "STOP flag set" | tee -a $L; exit 3; }
 ver=$($S/bin/claude --version | cut -d' ' -f1)
 [ "$ver" = 2.1.321 ] || { echo "PREFLIGHT_FAIL $TAG: CLI $ver" | tee -a $L; touch $S/STOP; exit 4; }
@@ -31,8 +32,8 @@ cd $W || exit 8
 export PATH=$S/bin:$PATH FDA_KNOWLEDGE=/home/brendan/Claude_sandbox/_worktrees/227-kb-skill FDA_PROMPTS_DIR=/home/brendan/Claude_sandbox/_worktrees/227-kb/prompts
 t0=$(date +%s)
 timeout -k 30 3300 systemd-run --user --scope -q -p MemoryMax=6G nice -n 15 \
-  /home/brendan/Claude_sandbox/FPGA_Design_Agent/.venv/bin/python -m agent run $IN/spec.md --stop-after 2 --no-shell --verif-level V2 --spec-tests \
-  --harness claude_code --cc-model claude-sonnet-5-5 --cc-effort medium --board kr260 --review off --docs off --max-usd 8 --budget-scale 3 $FLAGS --name $TAG >> $L 2>&1
+  /home/brendan/Claude_sandbox/FPGA_Design_Agent/.venv/bin/python -m agent run $IN/spec.md --stop-after 2 --verif-level V2 --spec-tests \
+  --harness claude_code --cc-model claude-sonnet-5-5 --cc-effort medium --board kr260 --review off --docs off --max-usd 12 --budget-scale 3.5 $FLAGS --name $TAG >> $L 2>&1
 rc=$?; t1=$(date +%s)
 echo "$(date '+%F %T') exit $rc wall_s=$((t1-t0))" | tee -a $L
 pct2=$($H/usage_check.sh 2>&1 | grep 'Current week (all models)' | grep -o '[0-9]*% used' | head -1 | tr -d '%used ')

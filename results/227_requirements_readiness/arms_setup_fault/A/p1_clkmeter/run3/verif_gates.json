@@ -1,0 +1,1016 @@
+{
+  "design": "b227_A_p1_clkmeter_r3",
+  "stages": {
+    "V0": {
+      "checks": {
+        "testplan_present": {
+          "value": true,
+          "threshold": true,
+          "pass": true
+        },
+        "model_present": {
+          "value": true,
+          "threshold": true,
+          "pass": true
+        },
+        "bench_modules_present": {
+          "value": [
+            "clkmeter_bench"
+          ],
+          "threshold": "all files exist",
+          "pass": true
+        }
+      },
+      "pass": true
+    },
+    "V1": {
+      "checks": {
+        "requirements_have_proof_method": {
+          "value": [],
+          "threshold": [],
+          "pass": true
+        },
+        "proof_methods_discharged": {
+          "value": [],
+          "threshold": [],
+          "pass": true
+        },
+        "proof_references_resolve": {
+          "value": [],
+          "threshold": [],
+          "pass": true
+        },
+        "spec_items_traced": {
+          "value": "31/31",
+          "threshold": "all",
+          "pass": true
+        },
+        "untraced_items": {
+          "value": [],
+          "threshold": [],
+          "pass": true
+        },
+        "unknown_spec_refs": {
+          "value": [],
+          "threshold": [],
+          "pass": true
+        },
+        "requirements_without_a_check": {
+          "value": [],
+          "threshold": [],
+          "pass": true
+        },
+        "unresolved_references": {
+          "value": [],
+          "threshold": [],
+          "pass": true
+        },
+        "bench_uses_blind_model": {
+          "value": true,
+          "threshold": true,
+          "pass": true
+        }
+      },
+      "pass": true
+    },
+    "V2": {
+      "checks": {
+        "seeds_run": {
+          "value": [
+            1,
+            2,
+            3
+          ],
+          "threshold": ">=1",
+          "pass": true
+        },
+        "planned_tests_missing": {
+          "value": [],
+          "threshold": [],
+          "pass": true
+        },
+        "failing_tests": {
+          "value": [],
+          "threshold": [],
+          "pass": true
+        },
+        "constrained_random_test_ran": {
+          "value": true,
+          "threshold": true,
+          "pass": true
+        },
+        "assertions_bound_zero_failures": {
+          "value": [],
+          "threshold": "bound in the run; no failure",
+          "pass": true
+        },
+        "other_simulators_failing": {
+          "value": [],
+          "threshold": [],
+          "pass": true
+        },
+        "formal_tasks_not_passing": {
+          "value": [],
+          "threshold": [],
+          "pass": true
+        }
+      },
+      "pass": true
+    },
+    "V3": {
+      "checks": {
+        "seeds_run": {
+          "value": 3,
+          "threshold": ">=3",
+          "pass": true
+        },
+        "all_seeds_pass": {
+          "value": [],
+          "threshold": [],
+          "pass": true
+        },
+        "functional_bins_pct": {
+          "value": "0.0 (0/0)",
+          "threshold": 100,
+          "pass": false,
+          "why": "no functional bins planned: put cover-point names in `bins:` of the testplan requirements. name cover points in the `bins:` of the testplan requirements, sample them in the bench, and export them in the bench's last test with `coverage_db.export_to_yaml(os.environ[\"FDA_COV_OUT\"])` (cocotb-coverage); the flow keeps the file as seed<N>/coverage_func.yml"
+        },
+        "functional_bins_unhit": {
+          "value": [],
+          "threshold": [],
+          "pass": false,
+          "why": "no functional bins planned: put cover-point names in `bins:` of the testplan requirements. name cover points in the `bins:` of the testplan requirements, sample them in the bench, and export them in the bench's last test with `coverage_db.export_to_yaml(os.environ[\"FDA_COV_OUT\"])` (cocotb-coverage); the flow keeps the file as seed<N>/coverage_func.yml"
+        },
+        "cover_properties_pct": {
+          "value": "0.0",
+          "threshold": 100,
+          "pass": false,
+          "why": "not measured: no code-coverage data: the flow records line, toggle and cover-property coverage itself, in a Verilator run of your bench, once V0 to V2 pass (the bench must run through flow.cocotb_run.run, which writes seed<N>/coverage.dat)"
+        },
+        "cover_properties_unhit": {
+          "value": [],
+          "threshold": [],
+          "pass": false,
+          "why": "not measured: no code-coverage data: the flow records line, toggle and cover-property coverage itself, in a Verilator run of your bench, once V0 to V2 pass (the bench must run through flow.cocotb_run.run, which writes seed<N>/coverage.dat)"
+        },
+        "line_pct": {
+          "value": "not measured",
+          "threshold": 95,
+          "pass": false,
+          "why": "not measured: no code-coverage data: the flow records line, toggle and cover-property coverage itself, in a Verilator run of your bench, once V0 to V2 pass (the bench must run through flow.cocotb_run.run, which writes seed<N>/coverage.dat)"
+        },
+        "toggle_pct": {
+          "value": "not measured",
+          "threshold": 80,
+          "pass": false,
+          "why": "not measured: no code-coverage data: the flow records line, toggle and cover-property coverage itself, in a Verilator run of your bench, once V0 to V2 pass (the bench must run through flow.cocotb_run.run, which writes seed<N>/coverage.dat)"
+        },
+        "waivers_without_reason": {
+          "value": 0,
+          "threshold": 0,
+          "pass": true
+        },
+        "mutation_score_pct": {
+          "value": "not measured",
+          "threshold": 80,
+          "pass": false,
+          "why": "not measured: the flow runs the mutation step itself once V2 passes (a capped, seeded sample of changes to the RTL, each run against your tests); no result exists yet"
+        },
+        "cdc_structure_clean": {
+          "value": "missing",
+          "threshold": "no unsafe crossing",
+          "pass": false,
+          "why": "no structural CDC result: build the design through the post-synthesis stage (flow/build.tcl writes cdc_paths_synth.rpt) and pass its gates.json as --gates"
+        },
+        "cdc_injection_clean": {
+          "value": "missing",
+          "threshold": "pass",
+          "pass": false,
+          "why": "no CDC injection result: run flow/cdc_inject_run.py <design> (the harness does this in v3_evidence) and pass build/verif/cdc_inject.json as --cdc-inject"
+        }
+      },
+      "pass": false
+    },
+    "SIGNOFF": {
+      "checks": {
+        "every_method_has_passing_evidence": {
+          "value": [
+            "REQ-01:hardware=pending",
+            "REQ-02:hardware=pending",
+            "REQ-03:hardware=pending",
+            "REQ-16:hardware=pending",
+            "REQ-21:hardware=pending",
+            "REQ-22:hardware=pending",
+            "REQ-23:hardware=pending",
+            "REQ-24:hardware=pending",
+            "REQ-25:hardware=pending",
+            "REQ-28:hardware=pending",
+            "REQ-29:analysis=pending",
+            "REQ-30:analysis=pending",
+            "REQ-31:analysis=pending",
+            "REQ-32:analysis=pending",
+            "REQ-33:analysis=pending"
+          ],
+          "threshold": [],
+          "pass": false
+        }
+      },
+      "pass": false
+    },
+    "V-HW": {
+      "checks": {
+        "bringup_result_present": {
+          "value": false,
+          "threshold": true,
+          "pass": false
+        }
+      },
+      "pass": false
+    }
+  },
+  "code_coverage": {},
+  "code_coverage_unhit": {},
+  "mutation": null,
+  "traceability": [
+    {
+      "requirement": "REQ-01",
+      "text": "Register ID at 0x000 reads 0x20910001.",
+      "method": "simulation",
+      "artefact": "clkmeter_bench.test_reset_and_ids",
+      "result": "pass",
+      "detail": "passed on 3 seed(s)"
+    },
+    {
+      "requirement": "REQ-01",
+      "text": "Register ID at 0x000 reads 0x20910001.",
+      "method": "hardware",
+      "artefact": "uart_tests",
+      "result": "pending",
+      "detail": "no bring-up result"
+    },
+    {
+      "requirement": "REQ-02",
+      "text": "Register BUILD at 0x004 reads the USR_ACCESSE2 word.",
+      "method": "hardware",
+      "artefact": "uart_tests",
+      "result": "pending",
+      "detail": "no bring-up result"
+    },
+    {
+      "requirement": "REQ-03",
+      "text": "Register SCRATCH at 0x008 reads back the written 32-bit value.",
+      "method": "simulation",
+      "artefact": "clkmeter_bench.test_scratch",
+      "result": "pass",
+      "detail": "passed on 3 seed(s)"
+    },
+    {
+      "requirement": "REQ-03",
+      "text": "Register SCRATCH at 0x008 reads back the written 32-bit value.",
+      "method": "hardware",
+      "artefact": "uart_tests",
+      "result": "pending",
+      "detail": "no bring-up result"
+    },
+    {
+      "requirement": "REQ-04",
+      "text": "Register SCRATCH resets to 0.",
+      "method": "simulation",
+      "artefact": "clkmeter_bench.test_reset_and_ids",
+      "result": "pass",
+      "detail": "passed on 3 seed(s)"
+    },
+    {
+      "requirement": "REQ-05",
+      "text": "Reads of unmapped addresses return 0.",
+      "method": "simulation",
+      "artefact": "clkmeter_bench.test_unmapped",
+      "result": "pass",
+      "detail": "passed on 3 seed(s)"
+    },
+    {
+      "requirement": "REQ-05",
+      "text": "Reads of unmapped addresses return 0.",
+      "method": "formal",
+      "artefact": "clkmeter_bench.test_unmapped",
+      "result": "pass",
+      "detail": "re-planned from formal to simulation (SymbiYosys is not installed here, so unmapped reads are checked by directed and random simulation against the model.): passed on 3 seed(s)"
+    },
+    {
+      "requirement": "REQ-06",
+      "text": "Writes to unmapped addresses change no register.",
+      "method": "simulation",
+      "artefact": "clkmeter_bench.test_unmapped",
+      "result": "pass",
+      "detail": "passed on 3 seed(s)"
+    },
+    {
+      "requirement": "REQ-06",
+      "text": "Writes to unmapped addresses change no register.",
+      "method": "formal",
+      "artefact": "clkmeter_bench.test_unmapped",
+      "result": "pass",
+      "detail": "re-planned from formal to simulation (SymbiYosys is not installed here, so unmapped writes are checked by simulation.): passed on 3 seed(s)"
+    },
+    {
+      "requirement": "REQ-07",
+      "text": "h_rdata shows the addressed register within 2 clk_ref cycles after h_re.",
+      "method": "simulation",
+      "artefact": "clkmeter_bench.test_read_timing_hold",
+      "result": "pass",
+      "detail": "passed on 3 seed(s)"
+    },
+    {
+      "requirement": "REQ-07",
+      "text": "h_rdata shows the addressed register within 2 clk_ref cycles after h_re.",
+      "method": "formal",
+      "artefact": "clkmeter_bench.test_read_timing_hold",
+      "result": "pass",
+      "detail": "re-planned from formal to simulation (SymbiYosys is not installed here, so read latency is checked by simulation.): passed on 3 seed(s)"
+    },
+    {
+      "requirement": "REQ-08",
+      "text": "h_rdata holds its value until the next h_re.",
+      "method": "simulation",
+      "artefact": "clkmeter_bench.test_read_timing_hold",
+      "result": "pass",
+      "detail": "passed on 3 seed(s)"
+    },
+    {
+      "requirement": "REQ-08",
+      "text": "h_rdata holds its value until the next h_re.",
+      "method": "formal",
+      "artefact": "clkmeter_bench.test_read_timing_hold",
+      "result": "pass",
+      "detail": "re-planned from formal to simulation (SymbiYosys is not installed here, so read-data hold is checked by simulation.): passed on 3 seed(s)"
+    },
+    {
+      "requirement": "REQ-09",
+      "text": "A write takes effect 1 clk_ref cycle after h_we.",
+      "method": "simulation",
+      "artefact": "clkmeter_bench.test_write_latency",
+      "result": "pass",
+      "detail": "passed on 3 seed(s)"
+    },
+    {
+      "requirement": "REQ-10",
+      "text": "GATE_LEN resets to 156250000.",
+      "method": "simulation",
+      "artefact": "clkmeter_bench.test_reset_and_ids",
+      "result": "pass",
+      "detail": "passed on 3 seed(s)"
+    },
+    {
+      "requirement": "REQ-11",
+      "text": "A GATE_LEN value below 1000 is stored as 1000.",
+      "method": "simulation",
+      "artefact": "clkmeter_bench.test_gate_len_clamp",
+      "result": "pass",
+      "detail": "passed on 3 seed(s)"
+    },
+    {
+      "requirement": "REQ-12",
+      "text": "Writing CTRL.START=1 while BUSY=0 sets BUSY=1.",
+      "method": "simulation",
+      "artefact": "clkmeter_bench.test_measurement_basic",
+      "result": "pass",
+      "detail": "passed on 3 seed(s)"
+    },
+    {
+      "requirement": "REQ-12",
+      "text": "Writing CTRL.START=1 while BUSY=0 sets BUSY=1.",
+      "method": "formal",
+      "artefact": "clkmeter_bench.test_measurement_basic",
+      "result": "pass",
+      "detail": "re-planned from formal to simulation (SymbiYosys is not installed here, so START to BUSY is checked by simulation.): passed on 3 seed(s)"
+    },
+    {
+      "requirement": "REQ-13",
+      "text": "Writing CTRL.START=1 while BUSY=0 clears DONE.",
+      "method": "simulation",
+      "artefact": "clkmeter_bench.test_measurement_basic",
+      "result": "pass",
+      "detail": "passed on 3 seed(s)"
+    },
+    {
+      "requirement": "REQ-13",
+      "text": "Writing CTRL.START=1 while BUSY=0 clears DONE.",
+      "method": "formal",
+      "artefact": "clkmeter_bench.test_measurement_basic",
+      "result": "pass",
+      "detail": "re-planned from formal to simulation (SymbiYosys is not installed here, so START clearing DONE is checked by simulation.): passed on 3 seed(s)"
+    },
+    {
+      "requirement": "REQ-14",
+      "text": "Writing CTRL.START=1 while BUSY=1 has no effect.",
+      "method": "simulation",
+      "artefact": "clkmeter_bench.test_start_while_busy",
+      "result": "pass",
+      "detail": "passed on 3 seed(s)"
+    },
+    {
+      "requirement": "REQ-14",
+      "text": "Writing CTRL.START=1 while BUSY=1 has no effect.",
+      "method": "formal",
+      "artefact": "clkmeter_bench.test_start_while_busy",
+      "result": "pass",
+      "detail": "re-planned from formal to simulation (SymbiYosys is not installed here, so START while busy is checked by simulation.): passed on 3 seed(s)"
+    },
+    {
+      "requirement": "REQ-15",
+      "text": "CTRL.START reads 0 after being written.",
+      "method": "simulation",
+      "artefact": "clkmeter_bench.test_measurement_basic",
+      "result": "pass",
+      "detail": "passed on 3 seed(s)"
+    },
+    {
+      "requirement": "REQ-16",
+      "text": "After a measurement GATE_ACTUAL equals the GATE_LEN value in force at START.",
+      "method": "simulation",
+      "artefact": "clkmeter_bench.test_start_while_busy",
+      "result": "pass",
+      "detail": "passed on 3 seed(s)"
+    },
+    {
+      "requirement": "REQ-16",
+      "text": "After a measurement GATE_ACTUAL equals the GATE_LEN value in force at START.",
+      "method": "formal",
+      "artefact": "clkmeter_bench.test_gate_lengths",
+      "result": "pass",
+      "detail": "re-planned from formal to simulation (SymbiYosys is not installed here, so GATE_ACTUAL is checked by simulation over several gate lengths.): passed on 3 seed(s)"
+    },
+    {
+      "requirement": "REQ-16",
+      "text": "After a measurement GATE_ACTUAL equals the GATE_LEN value in force at START.",
+      "method": "hardware",
+      "artefact": "uart_tests",
+      "result": "pending",
+      "detail": "no bring-up result"
+    },
+    {
+      "requirement": "REQ-17",
+      "text": "After a measurement COUNT equals the number of clk_c3 rising edges inside the gate, within +/-1.",
+      "method": "simulation",
+      "artefact": "clkmeter_bench.test_measurement_basic",
+      "result": "pass",
+      "detail": "passed on 3 seed(s)"
+    },
+    {
+      "requirement": "REQ-18",
+      "text": "On completion BUSY=0 and DONE=1.",
+      "method": "simulation",
+      "artefact": "clkmeter_bench.test_measurement_basic",
+      "result": "pass",
+      "detail": "passed on 3 seed(s)"
+    },
+    {
+      "requirement": "REQ-18",
+      "text": "On completion BUSY=0 and DONE=1.",
+      "method": "formal",
+      "artefact": "clkmeter_bench.test_measurement_basic",
+      "result": "pass",
+      "detail": "re-planned from formal to simulation (SymbiYosys is not installed here, so completion status is checked by simulation.): passed on 3 seed(s)"
+    },
+    {
+      "requirement": "REQ-19",
+      "text": "On completion MEAS_DONE increments by 1.",
+      "method": "simulation",
+      "artefact": "clkmeter_bench.test_measurement_basic",
+      "result": "pass",
+      "detail": "passed on 3 seed(s)"
+    },
+    {
+      "requirement": "REQ-19",
+      "text": "On completion MEAS_DONE increments by 1.",
+      "method": "formal",
+      "artefact": "clkmeter_bench.test_measurement_basic",
+      "result": "pass",
+      "detail": "re-planned from formal to simulation (SymbiYosys is not installed here, so MEAS_DONE increment is checked by simulation.): passed on 3 seed(s)"
+    },
+    {
+      "requirement": "REQ-20",
+      "text": "MEAS_DONE resets to 0.",
+      "method": "simulation",
+      "artefact": "clkmeter_bench.test_reset_and_ids",
+      "result": "pass",
+      "detail": "passed on 3 seed(s)"
+    },
+    {
+      "requirement": "REQ-21",
+      "text": "Five 1 s measurements give COUNT x 156.25 MHz / GATE_ACTUAL within 100 ppm of 25 MHz.",
+      "method": "hardware",
+      "artefact": "uart_tests",
+      "result": "pending",
+      "detail": "no bring-up result"
+    },
+    {
+      "requirement": "REQ-22",
+      "text": "The five 1 s readings agree with each other within 2 ppm.",
+      "method": "hardware",
+      "artefact": "uart_tests",
+      "result": "pending",
+      "detail": "no bring-up result"
+    },
+    {
+      "requirement": "REQ-23",
+      "text": "Measurements with other gate lengths of at least 1000 cycles report GATE_ACTUAL equal to GATE_LEN.",
+      "method": "simulation",
+      "artefact": "clkmeter_bench.test_gate_lengths",
+      "result": "pass",
+      "detail": "passed on 3 seed(s)"
+    },
+    {
+      "requirement": "REQ-23",
+      "text": "Measurements with other gate lengths of at least 1000 cycles report GATE_ACTUAL equal to GATE_LEN.",
+      "method": "hardware",
+      "artefact": "uart_tests",
+      "result": "pending",
+      "detail": "no bring-up result"
+    },
+    {
+      "requirement": "REQ-24",
+      "text": "led[0] toggles every 12500000 clk_c3 cycles when LED_EN=1.",
+      "method": "simulation",
+      "artefact": "clkmeter_bench.test_led",
+      "result": "pass",
+      "detail": "passed on 3 seed(s)"
+    },
+    {
+      "requirement": "REQ-24",
+      "text": "led[0] toggles every 12500000 clk_c3 cycles when LED_EN=1.",
+      "method": "hardware",
+      "artefact": "ila_captures",
+      "result": "pending",
+      "detail": "no bring-up result"
+    },
+    {
+      "requirement": "REQ-25",
+      "text": "led[1] toggles every 78125000 clk_ref cycles when LED_EN=1.",
+      "method": "simulation",
+      "artefact": "clkmeter_bench.test_led",
+      "result": "pass",
+      "detail": "passed on 3 seed(s)"
+    },
+    {
+      "requirement": "REQ-25",
+      "text": "led[1] toggles every 78125000 clk_ref cycles when LED_EN=1.",
+      "method": "hardware",
+      "artefact": "ila_captures",
+      "result": "pending",
+      "detail": "no bring-up result"
+    },
+    {
+      "requirement": "REQ-26",
+      "text": "Both LEDs are 0 when LED_EN=0.",
+      "method": "simulation",
+      "artefact": "clkmeter_bench.test_led",
+      "result": "pass",
+      "detail": "passed on 3 seed(s)"
+    },
+    {
+      "requirement": "REQ-26",
+      "text": "Both LEDs are 0 when LED_EN=0.",
+      "method": "formal",
+      "artefact": "clkmeter_bench.test_led",
+      "result": "pass",
+      "detail": "re-planned from formal to simulation (SymbiYosys is not installed here, so LEDs low with LED_EN=0 is checked by simulation.): passed on 3 seed(s)"
+    },
+    {
+      "requirement": "REQ-27",
+      "text": "Both LEDs are 0 after reset.",
+      "method": "simulation",
+      "artefact": "clkmeter_bench.test_reset_and_ids",
+      "result": "pass",
+      "detail": "passed on 3 seed(s)"
+    },
+    {
+      "requirement": "REQ-27",
+      "text": "Both LEDs are 0 after reset.",
+      "method": "formal",
+      "artefact": "clkmeter_bench.test_reset_and_ids",
+      "result": "pass",
+      "detail": "re-planned from formal to simulation (SymbiYosys is not installed here, so LEDs low after reset is checked by simulation.): passed on 3 seed(s)"
+    },
+    {
+      "requirement": "REQ-28",
+      "text": "sfp_tx_disable is 1 at all times.",
+      "method": "formal",
+      "artefact": "clkmeter_bench.test_sfp_tx_disable",
+      "result": "pass",
+      "detail": "re-planned from formal to simulation (SymbiYosys is not installed here, so the constant-1 output is checked by simulation on every clock.): passed on 3 seed(s)"
+    },
+    {
+      "requirement": "REQ-28",
+      "text": "sfp_tx_disable is 1 at all times.",
+      "method": "hardware",
+      "artefact": "uart_tests",
+      "result": "pending",
+      "detail": "no bring-up result"
+    },
+    {
+      "requirement": "REQ-29",
+      "text": "The design uses 0 GT transceiver channels.",
+      "method": "analysis",
+      "artefact": "post_synth:post_synth_resources_in_range",
+      "result": "pending",
+      "detail": "no flow gates result"
+    },
+    {
+      "requirement": "REQ-30",
+      "text": "data/jtag_bus.sv is instantiated unchanged.",
+      "method": "analysis",
+      "artefact": "post_synth:post_synth_resources_in_range",
+      "result": "pending",
+      "detail": "no flow gates result"
+    },
+    {
+      "requirement": "REQ-31",
+      "text": "Timing closes on clk_ref with zero failing endpoints.",
+      "method": "analysis",
+      "artefact": "post_route:setup",
+      "result": "pending",
+      "detail": "no flow gates result"
+    },
+    {
+      "requirement": "REQ-32",
+      "text": "Timing closes on clk_c3 with zero failing endpoints.",
+      "method": "analysis",
+      "artefact": "post_route:setup",
+      "result": "pending",
+      "detail": "no flow gates result"
+    },
+    {
+      "requirement": "REQ-33",
+      "text": "Every clock-domain crossing between clk_ref and clk_c3 carries a timing constraint.",
+      "method": "analysis",
+      "artefact": "post_route:setup",
+      "result": "pending",
+      "detail": "no flow gates result"
+    }
+  ],
+  "coverage_detail": {
+    "bins": {},
+    "requirements": [
+      {
+        "id": "REQ-01",
+        "spec": [
+          "behaviour.register_bus[0]",
+          "registers.map.ID"
+        ],
+        "tests": [
+          "clkmeter_bench.test_reset_and_ids",
+          "clkmeter_bench.test_random_traffic"
+        ],
+        "bins": {}
+      },
+      {
+        "id": "REQ-02",
+        "spec": [
+          "registers.map.BUILD"
+        ],
+        "tests": [
+          "clkmeter_bench.test_reset_and_ids"
+        ],
+        "bins": {}
+      },
+      {
+        "id": "REQ-03",
+        "spec": [
+          "behaviour.register_bus[4]",
+          "registers.map.SCRATCH"
+        ],
+        "tests": [
+          "clkmeter_bench.test_scratch",
+          "clkmeter_bench.test_random_traffic"
+        ],
+        "bins": {}
+      },
+      {
+        "id": "REQ-04",
+        "spec": [
+          "reset"
+        ],
+        "tests": [
+          "clkmeter_bench.test_reset_and_ids",
+          "clkmeter_bench.test_scratch"
+        ],
+        "bins": {}
+      },
+      {
+        "id": "REQ-05",
+        "spec": [
+          "registers.unmapped",
+          "behaviour.register_bus[3]"
+        ],
+        "tests": [
+          "clkmeter_bench.test_unmapped",
+          "clkmeter_bench.test_random_traffic"
+        ],
+        "bins": {}
+      },
+      {
+        "id": "REQ-06",
+        "spec": [
+          "registers.unmapped",
+          "behaviour.register_bus[3]"
+        ],
+        "tests": [
+          "clkmeter_bench.test_unmapped",
+          "clkmeter_bench.test_random_traffic"
+        ],
+        "bins": {}
+      },
+      {
+        "id": "REQ-07",
+        "spec": [
+          "timing.latency.register_read",
+          "behaviour.register_bus[2]"
+        ],
+        "tests": [
+          "clkmeter_bench.test_read_timing_hold"
+        ],
+        "bins": {}
+      },
+      {
+        "id": "REQ-08",
+        "spec": [
+          "behaviour.register_bus[2]"
+        ],
+        "tests": [
+          "clkmeter_bench.test_read_timing_hold"
+        ],
+        "bins": {}
+      },
+      {
+        "id": "REQ-09",
+        "spec": [
+          "behaviour.register_bus[1]",
+          "timing.latency.register_write"
+        ],
+        "tests": [
+          "clkmeter_bench.test_write_latency"
+        ],
+        "bins": {}
+      },
+      {
+        "id": "REQ-10",
+        "spec": [
+          "registers.map.GATE_LEN"
+        ],
+        "tests": [
+          "clkmeter_bench.test_reset_and_ids"
+        ],
+        "bins": {}
+      },
+      {
+        "id": "REQ-11",
+        "spec": [
+          "behaviour.measurement[6]"
+        ],
+        "tests": [
+          "clkmeter_bench.test_gate_len_clamp"
+        ],
+        "bins": {}
+      },
+      {
+        "id": "REQ-12",
+        "spec": [
+          "behaviour.measurement[0]",
+          "registers.map.CTRL"
+        ],
+        "tests": [
+          "clkmeter_bench.test_measurement_basic",
+          "clkmeter_bench.test_random_traffic"
+        ],
+        "bins": {}
+      },
+      {
+        "id": "REQ-13",
+        "spec": [
+          "behaviour.measurement[0]"
+        ],
+        "tests": [
+          "clkmeter_bench.test_measurement_basic"
+        ],
+        "bins": {}
+      },
+      {
+        "id": "REQ-14",
+        "spec": [
+          "behaviour.measurement[1]"
+        ],
+        "tests": [
+          "clkmeter_bench.test_start_while_busy",
+          "clkmeter_bench.test_random_traffic"
+        ],
+        "bins": {}
+      },
+      {
+        "id": "REQ-15",
+        "spec": [
+          "behaviour.measurement[7]"
+        ],
+        "tests": [
+          "clkmeter_bench.test_measurement_basic"
+        ],
+        "bins": {}
+      },
+      {
+        "id": "REQ-16",
+        "spec": [
+          "behaviour.measurement[4]",
+          "registers.map.GATE_ACTUAL"
+        ],
+        "tests": [
+          "clkmeter_bench.test_measurement_basic",
+          "clkmeter_bench.test_start_while_busy",
+          "clkmeter_bench.test_gate_lengths"
+        ],
+        "bins": {}
+      },
+      {
+        "id": "REQ-17",
+        "spec": [
+          "behaviour.measurement[2]",
+          "registers.map.COUNT"
+        ],
+        "tests": [
+          "clkmeter_bench.test_measurement_basic",
+          "clkmeter_bench.test_gate_lengths"
+        ],
+        "bins": {}
+      },
+      {
+        "id": "REQ-18",
+        "spec": [
+          "behaviour.measurement[3]",
+          "registers.map.STATUS",
+          "timing.latency.measurement_done"
+        ],
+        "tests": [
+          "clkmeter_bench.test_measurement_basic",
+          "clkmeter_bench.test_random_traffic"
+        ],
+        "bins": {}
+      },
+      {
+        "id": "REQ-19",
+        "spec": [
+          "registers.map.MEAS_DONE",
+          "behaviour.measurement[3]"
+        ],
+        "tests": [
+          "clkmeter_bench.test_measurement_basic"
+        ],
+        "bins": {}
+      },
+      {
+        "id": "REQ-20",
+        "spec": [
+          "registers.map.MEAS_DONE"
+        ],
+        "tests": [
+          "clkmeter_bench.test_reset_and_ids",
+          "clkmeter_bench.test_measurement_basic"
+        ],
+        "bins": {}
+      },
+      {
+        "id": "REQ-21",
+        "spec": [
+          "behaviour.measurement[5]"
+        ],
+        "tests": [
+          "clkmeter_bench.test_measurement_basic"
+        ],
+        "bins": {}
+      },
+      {
+        "id": "REQ-22",
+        "spec": [
+          "behaviour.measurement[5]"
+        ],
+        "tests": [
+          "clkmeter_bench.test_measurement_basic"
+        ],
+        "bins": {}
+      },
+      {
+        "id": "REQ-23",
+        "spec": [
+          "behaviour.measurement[4]",
+          "behaviour.measurement[5]"
+        ],
+        "tests": [
+          "clkmeter_bench.test_gate_lengths"
+        ],
+        "bins": {}
+      },
+      {
+        "id": "REQ-24",
+        "spec": [
+          "behaviour.leds[0]"
+        ],
+        "tests": [
+          "clkmeter_bench.test_led"
+        ],
+        "bins": {}
+      },
+      {
+        "id": "REQ-25",
+        "spec": [
+          "behaviour.leds[1]"
+        ],
+        "tests": [
+          "clkmeter_bench.test_led"
+        ],
+        "bins": {}
+      },
+      {
+        "id": "REQ-26",
+        "spec": [
+          "behaviour.leds[2]"
+        ],
+        "tests": [
+          "clkmeter_bench.test_led"
+        ],
+        "bins": {}
+      },
+      {
+        "id": "REQ-27",
+        "spec": [
+          "behaviour.leds[2]",
+          "reset"
+        ],
+        "tests": [
+          "clkmeter_bench.test_reset_and_ids",
+          "clkmeter_bench.test_led"
+        ],
+        "bins": {}
+      },
+      {
+        "id": "REQ-28",
+        "spec": [
+          "behaviour.sfp[0]"
+        ],
+        "tests": [
+          "clkmeter_bench.test_sfp_tx_disable"
+        ],
+        "bins": {}
+      },
+      {
+        "id": "REQ-29",
+        "spec": [
+          "behaviour.sfp[0]"
+        ],
+        "tests": [
+          "clkmeter_bench.test_sfp_tx_disable"
+        ],
+        "bins": {}
+      },
+      {
+        "id": "REQ-30",
+        "spec": [
+          "behaviour.register_bus[0]"
+        ],
+        "tests": [
+          "clkmeter_bench.test_reset_and_ids"
+        ],
+        "bins": {}
+      },
+      {
+        "id": "REQ-31",
+        "spec": [
+          "behaviour.measurement[2]"
+        ],
+        "tests": [
+          "clkmeter_bench.test_measurement_basic"
+        ],
+        "bins": {}
+      },
+      {
+        "id": "REQ-32",
+        "spec": [
+          "behaviour.measurement[2]"
+        ],
+        "tests": [
+          "clkmeter_bench.test_measurement_basic"
+        ],
+        "bins": {}
+      },
+      {
+        "id": "REQ-33",
+        "spec": [
+          "behaviour.measurement[2]"
+        ],
+        "tests": [
+          "clkmeter_bench.test_measurement_basic"
+        ],
+        "bins": {}
+      }
+    ]
+  },
+  "reached": "V2",
+  "first_failed": "V3"
+}
