@@ -4,7 +4,7 @@
 
 **Verified except: 5 of 6 requirements without passing evidence; 6 of 6 requirements not agreed; required method mix not yet measured; mutation floor not yet measured; formal rigour not yet measured; 2 stale or differing evidence items.**
 
-What the label means, what "verified" never means and how it is earned: [docs/verified.md](../../docs/verified.md). The label is computed from the testplan and the evidence files named below; it is never typed. Generated at git commit `d177bef65556fd364bd79e7057fca4be4c1a4eb1` (informational: the hashes in the manifest, not the commit, are what the CI check compares).
+What the label means, what "verified" never means and how it is earned: [docs/verified.md](../../docs/verified.md). The label is computed from the testplan and the evidence files named below; it is never typed. Generated at git commit `078b3651218f0040aba81ea265198cadbb340ce1` (informational: the hashes in the manifest, not the commit, are what the CI check compares).
 
 Traceability summary: 6 requirements (6 functional); 1 verified; 4 partially verified (the required mix of methods is not met); 1 stale; 0 of 6 requirements agreed by a human, 0 agreed on the owner's delegation (not human), 6 draft; 4 resting only on the implementing agent's own tests; 0 human and 0 delegated review(s) recorded.
 

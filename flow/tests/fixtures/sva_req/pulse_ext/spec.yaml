@@ -1,0 +1,24 @@
+# Fixture for brief 218's tests: a small design whose spec has the requirement kinds the generator must handle.
+schema: fpga-design-agent/spec/v0
+name: pulse_ext
+top: pulse_ext
+clocks:
+  - {name: sys_clk, port: clk, freq_mhz: 100}
+reset:
+  port: rst_n
+  polarity: active_low
+  kind: synchronous
+ports:
+  - {name: clk,   dir: in,  width: 1}
+  - {name: rst_n, dir: in,  width: 1}
+  - {name: start, dir: in,  width: 1, note: start request}
+  - {name: busy,  dir: out, width: 1, note: the extension is running}
+  - {name: done,  dir: out, width: 1, note: one-cycle pulse when the extension ends}
+requirements:
+  - {id: REQ-01, text: "When start is high while busy is low, busy is high in the next cycle", proof: [simulation, formal]}
+  - {id: REQ-02, text: "After reset, busy and done are low", proof: [simulation, formal]}
+  - {id: REQ-03, text: "Done is high exactly 4 cycles after an accepted start", proof: [simulation]}
+  - {id: REQ-04, text: "Done is high while busy and done are both high", proof: [simulation]}
+  - {id: REQ-05, text: "The design uses at most 20 LUTs and closes timing at 100 MHz", proof: [analysis]}
+  - {id: REQ-06, text: "The board's LED colour is documented in the README", proof: [analysis]}
+  - {id: REQ-07, text: "Done is high exactly 5 cycles after an accepted start", proof: [simulation, formal]}
