@@ -32,7 +32,7 @@ def row(runs_root: Path, design: str, k: str, arm: str, run_id: str, stop_overri
     reached = max(visited) if visited else ""
     return {"id": design, "seed": k, "label": arm, "pass": "1" if passed else "0", "indep": "", "stop_reason": stop_override or stop[:60],
             "cost_usd": s.get("plan_cost_estimate_usd") if s.get("plan_cost_estimate_usd") is not None else s.get("cost_usd"),
-            "wall_time_s": s.get("wall_s"), "stage2_visits": (n2 if passed else max(n2, STAGE2_LIMIT) + 1), "stage_reached": reached,
+            "wall_time_s": s.get("wall_s"), "stage2_visits": (n2 if passed else STAGE2_LIMIT + 1), "stage_reached": reached,
             "vivado_runs": "", "run_id": run_id}
 
 
