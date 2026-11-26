@@ -446,6 +446,11 @@ def test_the_script_command_writes_the_file_and_copies_the_check_files_beside_th
     assert (pkg / "redpitaya_checks.py").is_file() and (pkg / "redpitaya_regs.py").is_file()
 
 
+def test_a_block_in_slot_6_is_checked_at_its_own_base(pkg):
+    assert "--base 0x40600000" in LD.render_script(pkg, "rp_patgen", slot=6) and "--base" not in LD.render_script(pkg, "rp_patgen")
+    assert R.SLOT_BASES == {7: 0x40700000, 6: 0x40600000}
+
+
 def test_the_checks_import_from_a_bare_directory(tmp_path):
     """On the board the two files sit side by side with no package: the fallback import must work."""
     for f in ("redpitaya_checks.py", "redpitaya_regs.py"):

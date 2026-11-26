@@ -23,6 +23,7 @@ from dataclasses import dataclass
 from typing import Callable, Protocol
 
 SLOT_BASE = 0x40700000          # system-bus slot 7 of shell v0.94: the first byte of the user block
+SLOT_BASES = {7: 0x40700000, 6: 0x40600000}      # slot 6 is the second block position of tools/rp_shell.py
 SLOT_SIZE = 0x100000            # 1 MiB per slot
 
 
@@ -102,7 +103,7 @@ class RegMap:
 
 
 COMMON_NOTES = (
-    "Registers are 32 bits on 4-byte steps from the slot base 0x40700000; the offsets below are from that base.",
+    "Registers are 32 bits on 4-byte steps from the base of the slot the block sits in: 0x40700000 for slot 7 and 0x40600000 for slot 6 (the shell build says which); the offsets below are from that base.",
     "An offset with no register, and any offset from the end of the map to 0xFFFFF, answers with a bus error (the shell's err line) and reads 0. Do not read them from Linux: "
     "what the PS does with the error is not documented. A write to a read-only register is ignored and answers with an error.",
     "Reset (the shell's adc_rstn, released some cycles after the PLL locks) returns every register to its reset value. A power cycle or a reload of the factory image ends the design.",
@@ -162,7 +163,7 @@ def sext14(v: int) -> int:
 
 def datasheet(m: RegMap) -> str:
     """The register table and the behaviour notes of a block, as Markdown, made from the map (so the text cannot drift from the maps the tests use)."""
-    out = [f"### {m.block}: registers (slot base 0x40700000)", "", "| Offset | Name | Access | Reset | Meaning |", "|---|---|---|---|---|"]
+    out = [f"### {m.block}: registers (offsets from the block's slot base: 0x40700000 for slot 7, 0x40600000 for slot 6)", "", "| Offset | Name | Access | Reset | Meaning |", "|---|---|---|---|---|"]
     for r in m.regs:
         out.append(f"| 0x{r.offset:02X} | {r.name} | {r.access} | 0x{r.reset:08X} | {r.doc} |")
     out += ["", "Behaviour a user could guess wrong:", ""] + [f"- {n}" for n in m.notes]

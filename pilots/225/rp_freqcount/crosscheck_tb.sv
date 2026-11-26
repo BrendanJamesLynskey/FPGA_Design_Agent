@@ -1,5 +1,5 @@
 // Independent cross-check of the agent's rp_freqcount (brief 225): written by the executor from the spec and hil/redpitaya_models.py, not by the agent, not from
-// the agent's tests. A sine on adc_a at 1 MHz, 125 MHz clock; checks the registers' stated behaviour. iverilog -g2012 crosscheck_tb.sv rtl/rp_freqcount.sv; vvp.
+// the agent's tests. A sine on adc_a at 1 MHz, 125 MHz clock; checks the registers' stated behaviour. iverilog -g2012 crosscheck_tb.sv agent_r1_rtl/rp_freqcount.sv; vvp.
 module tb;
   logic clk = 0, rstn = 0;
   logic [31:0] addr = 0, wdata = 0, rdata; logic wen = 0, ren = 0, err, ack;
@@ -10,17 +10,22 @@ module tb;
   real freq = 1.0e6, amp = 4000.0, t = 0.0;
   always @(posedge clk) begin t = t + 8.0e-9; a <= $rtoi(amp * $sin(6.283185307179586 * freq * t)); end
   int fails = 0;
-  task wr(input [31:0] ad, input [31:0] d, output logic e);
-    @(negedge clk); addr = ad; wdata = d; wen = 1; @(negedge clk); wen = 0; #1 e = err;
+  int lat = 0;
+  task acc(input [31:0] ad, input [31:0] dd, input bit w, output [31:0] q, output logic e);
+    int n;
+    @(negedge clk); addr = ad; wdata = dd; wen = w; ren = !w; n = 0;
+    @(negedge clk); wen = 0; ren = 0;
+    while (!ack && n < 4) begin @(negedge clk); n++; end
+    #1 q = rdata; e = err; lat = n + 1;
+    if (!ack) begin $display("no ack"); fails++; end
   endtask
-  task rd(input [31:0] ad, output [31:0] d, output logic e);
-    @(negedge clk); addr = ad; ren = 1; @(negedge clk); ren = 0; #1 d = rdata; e = err;
-  endtask
+  task wr(input [31:0] ad, input [31:0] dd, output logic e); logic [31:0] q; acc(ad, dd, 1, q, e); endtask
+  task rd(input [31:0] ad, output [31:0] q, output logic e); acc(ad, 0, 0, q, e); endtask
   task chk(input string what, input bit ok); if (!ok) begin $display("FAIL: %s", what); fails++; end endtask
   logic [31:0] d, edges, actual, span, n0, n1; logic e; real fg, fr;
   initial begin
     repeat (4) @(posedge clk); rstn = 1;
-    rd(32'h00, d, e); chk("ID", d === 32'hFDA10101 && !e);
+    rd(32'h00, d, e); chk("ID", d === 32'hFDA10101 && !e); $display("ID read %h err %b", d, e); $display("access latency %0d", lat);
     rd(32'h0C, d, e); chk("GATE_LEN reset", d === 32'd125000000);
     rd(32'h10, d, e); chk("THR_HIGH reset", d === 32'd256);
     rd(32'h14, d, e); chk("THR_LOW reset", d === 32'hFFFFFF00);

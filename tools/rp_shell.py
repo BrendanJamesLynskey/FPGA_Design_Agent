@@ -122,10 +122,13 @@ def prepare(work: Path, blocks: list[Path], module7: str = "rp_user_block", modu
     if new.exists():
         shutil.rmtree(new)
     shutil.copytree(base, new, ignore=shutil.ignore_patterns("out", "build", "sdk", ".Xil", "project"))
+    added: list[str] = []
     if not baseline:                                  # baseline: the vendor's own top, only the version lines changed (to attribute a result to the vendor or to the patch)
         (new / TOP_REL).write_text(apply_patch(top0.read_text(), module7, module6))
         for b in blocks or [BLOCK_DEFAULT]:
             shutil.copy(b, new / "rtl" / Path(b).name)
+            added.append(Path(b).name)
+    (work / "blocks.json").write_text(json.dumps(added))
     bd = new / "ip" / "system.tcl"
     t = bd.read_text()
     if t.count(BD_VERSION[0]) != 1:
@@ -200,7 +203,7 @@ def package(work: Path, out: Path) -> dict:
     info = {"schema": "fpga-design-agent/rp-shell-build/v1", "vendor_repo": REPO, "vendor_commit": COMMIT, "base_project": BASE_PRJ, "model": "Z10",
             "part": "xc7z010clg400-1", "slot": SLOT, "slot_address": f"0x40{SLOT}00000", "top_sha256_before": TOP_SHA256,
             "top_sha256_after": sha256(v / TOP_REL), "bd_script_version_line": "changed from 2025.1 to the running Vivado version in prj/fda_shell/ip/system.tcl and the IP scripts under ip/ip/",
-            "vivado_version": next(iter(re.findall(r"Vivado v(\d{4}\.\d)", (work / "build.log").read_text(errors="replace"))), None), "blocks": {p.name: sha256(p) for p in sorted((v / "rtl").glob("rp_*.sv"))},
+            "vivado_version": next(iter(re.findall(r"Vivado v(\d{4}\.\d)", (work / "build.log").read_text(errors="replace"))), None), "blocks": {n: sha256(v / "rtl" / n) for n in (json.loads((work / "blocks.json").read_text()) if (work / "blocks.json").is_file() else [])},
             "bit_bin_sha256": sha256(out / "fpga.bit.bin"), "bit_bin_bytes": (out / "fpga.bit.bin").stat().st_size, "build_id": sha256(out / "fpga.bit.bin")[:8]}
     info.update(parse_reports(o))
     (out / "build.json").write_text(json.dumps(info, indent=1) + "\n")

@@ -1,0 +1,10 @@
+[dry run] would ask: Red Pitaya root@rp-f00c16.local: the board is the owner's STEMlab 125-14 v1.1 on its 5 V 2 A supply, jumpers IN1 = LV (+-1 V) and IN2 = HV (+-20 V) as recorded, nothing above +-1 V on IN1, OUT1 into nothing that is unprotected. Loading REPLACES the factory image until a power cycle or RESTORE=1. NOTE: this build's timing is NOT met (WNS -5.659 ns, 2992 failing endpoints; see build.json). Read the results README before loading: the failing paths measured so far are in the vendor's own generator FIFO, not in the user block. Load build 3a50020d? (answered: yes)
+[dry run] on root@rp-f00c16.local: mkdir -p /tmp/fda_load
+[dry run] copy <scratch>/rp_out_combo/fpga.bit.bin <scratch>/rp_out_combo/redpitaya_checks.py <scratch>/rp_out_combo/redpitaya_regs.py to root@rp-f00c16.local:/tmp/fda_load/
+[dry run] on root@rp-f00c16.local: overlay.sh v0.94 /tmp/fda_load/fpga.bit.bin
+--- what the loader reports
+[dry run] on root@rp-f00c16.local: cat /sys/class/fpga_manager/fpga0/state; cat /tmp/update_fpga.txt; cat /tmp/loaded_fpga.inf
+--- the checks (on the board, through /dev/mem, inside the block's register map only)
+[dry run] on root@rp-f00c16.local: cd /tmp/fda_load && python3 redpitaya_checks.py rp_freqcount 
+check record: /dev/stdout
+[dry run] done; nothing was loaded

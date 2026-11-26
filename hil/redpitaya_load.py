@@ -30,7 +30,7 @@ from pathlib import Path
 
 from hil import redpitaya_checks as C
 from hil import redpitaya_models as M
-from hil.redpitaya_regs import MAPS, MockWindow
+from hil.redpitaya_regs import MAPS, SLOT_BASES, MockWindow
 
 HOST = "rp-f00c16.local"                  # the owner's board (record of 2026-11-25); the script takes RP=<user@host> to override
 FACTORY_FPGA = "v0.94"                    # the factory shell's name for overlay.sh (Red Pitaya OS 3.00 lists v0.94 among its standard images)
@@ -42,13 +42,13 @@ def md5(p: Path) -> str:
     return hashlib.md5(Path(p).read_bytes()).hexdigest()           # the loader prints an md5 of the loaded file; it is a check of the copy, not of security
 
 
-def render_script(package: Path, block: str, *, expect_hz: float | None = None, bare: bool = False) -> str:
+def render_script(package: Path, block: str, *, expect_hz: float | None = None, bare: bool = False, slot: int = 7) -> str:
     """The owner's script for the package in ``package`` (``fpga.bit.bin`` and ``build.json``)."""
     info = json.loads((Path(package) / "build.json").read_text())
     binf = Path(package) / "fpga.bit.bin"
     build_id, size = info["build_id"], binf.stat().st_size
     load = (f'rp "fpgautil -b {REMOTE_DIR}/fpga.bit.bin -f Full"' if bare else f'rp "overlay.sh {FACTORY_FPGA} {REMOTE_DIR}/fpga.bit.bin"')
-    expect = f" --expect-hz {expect_hz!r}" if expect_hz else ""
+    expect = (f" --expect-hz {expect_hz!r}" if expect_hz else "") + (f" --base {SLOT_BASES[slot]:#x}" if slot != 7 else "")
     t = info.get("timing") or {}
     warn = ""
     if t.get("timing_met") is False:
@@ -154,6 +154,7 @@ def main(argv: list[str] | None = None) -> int:
     s.add_argument("--block", choices=sorted(MAPS), required=True)
     s.add_argument("--expect-hz", type=float)
     s.add_argument("--bare", action="store_true")
+    s.add_argument("--slot", type=int, choices=sorted(SLOT_BASES), default=7, help="the shell slot the block is in (7: 0x40700000, 6: 0x40600000)")
     s.add_argument("-o", "--out", type=Path)
     d = sub.add_parser("dry-run")
     d.add_argument("--block", choices=sorted(MAPS), required=True)
@@ -162,7 +163,7 @@ def main(argv: list[str] | None = None) -> int:
     a = ap.parse_args(argv)
     if a.cmd == "script":
         from agent.core import permissions as P
-        text = render_script(a.package, a.block, expect_hz=a.expect_hz, bare=a.bare)
+        text = render_script(a.package, a.block, expect_hz=a.expect_hz, bare=a.bare, slot=a.slot)
         bad = P.check_script(text)
         if bad:
             print("refused: the script breaks the never-list:", bad, file=sys.stderr)

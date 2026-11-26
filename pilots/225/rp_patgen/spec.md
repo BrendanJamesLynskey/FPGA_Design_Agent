@@ -72,7 +72,7 @@ tie `dac_b` to 0. `adc_a` and `adc_b` are not used.
 Behaviour a user could guess wrong:
 
 
-- Registers are 32 bits on 4-byte steps from the slot base 0x40700000; the offsets below are from that base.
+- Registers are 32 bits on 4-byte steps from the base of the slot the block sits in: 0x40700000 for slot 7 and 0x40600000 for slot 6 (the shell build says which); the offsets below are from that base.
 - An offset with no register, and any offset from the end of the map to 0xFFFFF, answers with a bus error (the shell's err line) and reads 0. Do not read them from Linux: what the PS does with the error is not documented. A write to a read-only register is ignored and answers with an error.
 - Reset (the shell's adc_rstn, released some cycles after the PLL locks) returns every register to its reset value. A power cycle or a reload of the factory image ends the design.
 - Reads have no side effects. A write takes effect on the next adc_clk cycle (125 MHz); the register bus runs on the same clock, so no read-back delay is needed.
