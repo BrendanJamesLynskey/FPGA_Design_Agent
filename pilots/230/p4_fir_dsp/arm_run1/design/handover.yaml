@@ -1,0 +1,527 @@
+# Brief 68 handover: the facts behind README.md and AGENT.md (docs/documentation_standard.md).
+# Measurement values and every sha256 are filled from the records by `python -m flow.handover fill`;
+# do not type them. Render with `python -m flow.handover write <this directory>`.
+schema: fda-handover/1
+id: p4_fir_dsp
+title: 32-tap symmetric FIR low-pass filter with JTAG register bus (KR260)
+kind: agent-run
+produced_by: agent
+summary: The design is a 32-tap symmetric FIR filter on the KR260. Samples are pushed through a JTAG register bus into an
+  input memory, a RUN command streams them through a pre-add plus 16-multiplier datapath on a 250 MHz clock made by an MMCM
+  from the 25 MHz board clock, and the saturated 16-bit results are read back from an output memory. The run stopped at
+  rtl-design-creation, which did not pass its gates (a setup path on the reset synchroniser in the post-synthesis timing
+  report). Verification reached V2 of V3, and no routed build, power or hardware result exists. The specification and architecture
+  were approved automatically, with no human review.
+scope_not:
+- Not a general FIR; the 32 coefficients are fixed at build time and symmetric.
+- No transceiver is used and sfp_tx_disable is held at 1.
+- No AXI or other bus is offered; the only host path is the JTAG register bus (data/jtag_bus.sv).
+- Not verified on hardware, and no timing closure at 250 MHz is shown.
+target:
+  part: xck26-sfvc784-2LV-c
+  board: kr260
+  tool: Vivado 2026.1
+  top: fir32_top
+clocks:
+- name: clk_25
+  mhz: 25.0
+  source: runs/20261126-152242-3f5c/p4_fir_dsp/design.xdc
+resets:
+- name: rst
+  active: high
+  note: Internal only, there is no reset port. rtl/reset_gen.sv holds it for RESET_CYCLES clk_25 cycles after the MMCM locks.
+    rtl/reset_sync.sv (xpm_cdc_async_rst) derives the clk_dp reset, which asserts asynchronously and releases synchronously.
+    Registers have initial values (reprogram model).
+interfaces:
+- name: clk_25
+  type: input clock, 25 MHz, pin C3 LVCMOS18
+  note: Board clock; the MMCM makes clk_dp (250 MHz) from it in rtl/fir32_top.sv.
+- name: led
+  type: output, 2 bits, F8 and E8 LVCMOS18
+  note: led[0] is BUSY and led[1] is sticky saturation since CLEAR (rtl/fir32_core.sv).
+- name: sfp_tx_disable
+  type: output, 1 bit, Y10 LVCMOS33
+  note: Constant 1.
+registers:
+- offset: 0
+  name: ID
+  access: RO
+  reset: 546570241
+  bits: 31:0 design ID
+- offset: 4
+  name: BUILD
+  access: RO
+  reset: 0
+  bits: 31:0 USR_ACCESS word
+- offset: 8
+  name: SCRATCH
+  access: RW
+  reset: 0
+  bits: 31:0 read back value
+- offset: 16
+  name: CTRL
+  access: RW
+  reset: 0
+  bits: 0 CLEAR self-clearing, 1 RUN self-clearing
+- offset: 20
+  name: IN_PUSH
+  access: WO
+  reset: 0
+  bits: 15:0 sample
+- offset: 24
+  name: OUT_POP
+  access: RO
+  reset: 0
+  bits: 31 valid, 15:0 oldest output, read pops
+- offset: 28
+  name: STATUS
+  access: RO
+  reset: 0
+  bits: 0 BUSY, 15:4 input FIFO count, 31:20 output FIFO count
+- offset: 32
+  name: SAT_COUNT
+  access: RO
+  reset: 0
+  bits: 31:0 saturated outputs since CLEAR
+- offset: 36
+  name: SAMPLES_DONE
+  access: RO
+  reset: 0
+  bits: 31:0 samples processed since CLEAR
+parameters:
+- name: NUM_TAPS
+  value: 32
+  legal: fixed at 32
+  note: Not a module parameter in the RTL; the datapath is hard-wired to 32 taps.
+- name: UNIQUE_COEFFS
+  value: 16
+  legal: fixed at 16
+  note: Equals NUM_TAPS/2; the coefficients are literals in rtl/fir_datapath.sv.
+- name: DATA_WIDTH
+  value: 16
+  legal: fixed at 16
+  note: Signed samples; the register map and FIFOs assume 16 bits.
+- name: COEFF_WIDTH
+  value: 16
+  legal: fixed at 16
+  note: Signed coefficients.
+- name: FIFO_DEPTH
+  value: 1024
+  legal: fixed at 1024
+  note: Both sample memories use 10-bit addresses, and the 11-bit counts assume 1024.
+- name: ROUND_CONST
+  value: 16384
+  legal: fixed at 16384 (0x4000)
+  note: Added before the shift in rtl/fir_datapath.sv.
+- name: SHIFT
+  value: 15
+  legal: fixed at 15
+  note: Arithmetic shift right.
+- name: RESET_CYCLES
+  value: 16
+  legal: 1 to 31 (5-bit counter)
+  note: Set on reset_gen in rtl/fir32_top.sv. Reset stays active until the MMCM is locked and then for this many clk_25
+    cycles.
+- name: DESIGN_ID
+  value: 546570241
+  legal: any 32-bit value
+  note: Equals 0x20940001; read from the ID register.
+files:
+- path: runs/20261126-152242-3f5c/p4_fir_dsp/spec.md
+  what: the request the run started from
+  sha256: 7efe165f5f079d09f9d8b88ccd59bb08a40efe9e8956ba4fa94494f11c647a20
+- path: runs/20261126-152242-3f5c/p4_fir_dsp/spec.yaml
+  what: the specification the Clarifier wrote, approved automatically with no human review
+  sha256: e95700bd4f38811d6bd64d965006dad407c3fe87fe6f5b5de6c6c0a9481f40f1
+- path: runs/20261126-152242-3f5c/p4_fir_dsp/ARCHITECTURE.md
+  what: the architecture note, accepted automatically before any RTL (no human review)
+  sha256: c6a41834f741387fa8bf1c94f32a28c961e28c5f4a59e7d6a125a6218cf43d9b
+- path: runs/20261126-152242-3f5c/p4_fir_dsp/architecture.yaml
+  what: 'the machine-checked architecture: blocks, clocks, predicted resources'
+  sha256: 40cb4689bb1b2f8d15795473ed0f28bec3e3ce3ed9f3fe5e6aefdfe3afd0fa5c
+- path: runs/20261126-152242-3f5c/p4_fir_dsp/rtl/fir32_core.sv
+  what: RTL written by the Designer
+  sha256: 620074f6d56e6ea0fb2e82ee2cc6aa8394114aec99bf039f76350b7e82316767
+- path: runs/20261126-152242-3f5c/p4_fir_dsp/rtl/fir32_top.sv
+  what: RTL written by the Designer
+  sha256: 255a040a9f0079e83a27d1d5d2d266f5aca99388ec7fdded896f4e6056f93d50
+- path: runs/20261126-152242-3f5c/p4_fir_dsp/rtl/fir_datapath.sv
+  what: RTL written by the Designer
+  sha256: 5751fc599172f48b5c2d7c2500f134d0e5012b7b27be276eaeae761875d5797e
+- path: runs/20261126-152242-3f5c/p4_fir_dsp/rtl/lint_waivers.sv
+  what: RTL written by the Designer
+  sha256: c5e87e4c3806fc4e13854109d681f01fc0098000d4ab5f41601a4ceb823bcb6b
+- path: runs/20261126-152242-3f5c/p4_fir_dsp/rtl/reset_gen.sv
+  what: RTL written by the Designer
+  sha256: 2c2a480d6e445d7851c21ef500acbaaab6bb74d1204efad89791211f0d779cee
+- path: runs/20261126-152242-3f5c/p4_fir_dsp/rtl/reset_sync.sv
+  what: RTL written by the Designer
+  sha256: 7d52a58c7ed11e4f8ed9ee12b54fe32c19ad1aff292d20b6075f5f817e7c5e2f
+- path: runs/20261126-152242-3f5c/p4_fir_dsp/rtl/xilinx_sim_stubs.sv
+  what: RTL written by the Designer
+  sha256: 8ddd957da528388d5f75b141f35db095b5587770b9d9f6b421e857267807a41d
+- path: runs/20261126-152242-3f5c/p4_fir_dsp/design.xdc
+  what: pin, I/O standard and timing constraints
+  sha256: 713c2601cace00d2201beca5d75a68cd5722273fef65fae3ab57bd8371ab52d3
+- path: runs/20261126-152242-3f5c/p4_fir_dsp/build.yaml
+  what: the build description read by the flow
+  sha256: c2b73740da9f17e5798dc95a69d0a1d9625dd1ba2a805cb6d12d615c8033ce69
+- path: runs/20261126-152242-3f5c/p4_fir_dsp/model.py
+  what: the Modeller's reference model of the visible behaviour
+  sha256: 72af5479fe07d194cd15a3f1650f89ed0e135e26ab9bcb426dd5699eaf2a344f
+- path: runs/20261126-152242-3f5c/p4_fir_dsp/tests/fir_bench.py
+  what: the Verifier's cocotb benches and pytest entries
+  sha256: 416567c74563deb6871aa7bb5269c4a901ad3e059ab58b44ed0fd066a388ed2e
+- path: runs/20261126-152242-3f5c/p4_fir_dsp/tests/test_p4_fir_dsp_rtl.py
+  what: the Verifier's cocotb benches and pytest entries
+  sha256: 43d59442d42cb245f3dfefb1b6aaca2a7803cc54150c9100026fe65b089f6793
+- path: runs/20261126-152242-3f5c/p4_fir_dsp/verif/testplan.yaml
+  what: the test plan and mutant list read by the verification gates
+  sha256: e75e45eeff3a20f54a8c1368e7a1dbb8d89ff9c1a4cfd0048605d2c0dc0611ef
+- path: runs/20261126-152242-3f5c/p4_fir_dsp/verif/checkers/v_macros.svh
+  what: bound assertion and cover checkers
+  sha256: 013c1a5444e3dbd0eb2df54529d09272d8bf601d42ec066d54cadb9589d51083
+- path: runs/20261126-152242-3f5c/p4_fir_dsp/build/review/02_rtl-design-creation.html
+  what: 'the review page of stage rtl-design-creation: its exit gates and their failures at the last visit'
+  sha256: 33e7b34123b38a8a325277b36148438bdd545c4c8b2a5d5b40d9c78c9d4c86d8
+commands:
+- what: what changed since this handover (stale records, changed files, tool and knowledge-bank pins)
+  cmd: python -m flow.handover fresh runs/20261126-152242-3f5c/p4_fir_dsp
+  heavy: false
+  minutes: null
+- what: pick the work up again from the earliest stage the change or the staleness needs
+  cmd: python -m agent resume runs/20261126-152242-3f5c/p4_fir_dsp "<change request>"
+  heavy: true
+  minutes: null
+  needs: a model (see docs/agent.md); Vivado for any stage from synthesis on
+- what: run the Verifier's simulation tests
+  cmd: python -m pytest -q runs/20261126-152242-3f5c/p4_fir_dsp/tests/test_p4_fir_dsp_rtl.py
+  heavy: false
+  minutes: null
+  needs: Icarus Verilog and cocotb, or the simulation container
+- what: re-run the Verilator coverage simulation and the verification gates (line, toggle, functional and cover results)
+  cmd: SIM=verilator FDA_COVERAGE=1 FDA_SIM_RESULTS_DIR=runs/20261126-152242-3f5c/p4_fir_dsp/build/verif/sim python -m pytest
+    -q -x runs/20261126-152242-3f5c/p4_fir_dsp/tests/test_p4_fir_dsp_rtl.py && python3 flow/verif_gates.py runs/20261126-152242-3f5c/p4_fir_dsp
+    --runs runs/20261126-152242-3f5c/p4_fir_dsp/build/verif/sim
+  heavy: false
+  minutes: null
+  needs: Verilator 5.036 or later and cocotb (the simulation container has them)
+- what: rebuild the bitstream with the flow
+  cmd: flow/run_vivado.sh runs/20261126-152242-3f5c/p4_fir_dsp base
+  heavy: true
+  minutes: 3.0
+  needs: Vivado 2026.1 and a heavy slot; peak memory 3516 MiB (anonymous, the systemd scope)
+evidence:
+- id: E1
+  activity: review
+  result: partial
+  what: the specification and the architecture were approved automatically, with no human review (review off; the interview
+    oracle claude-sonnet-5-5 only answered the interview questions); the interview asked 8 questions, 0 answered and 8 defaulted
+  record: runs/20261126-152242-3f5c/summary.json
+  sha256: 3858e9b24ed52f4277d176a175d5bd9e2db0e52cab113e52ed6e1a86db2a9764
+- id: E2
+  activity: simulation
+  result: partial
+  what: 'verification (flow/verif_gates.py) against the Modeller''s reference model reached V2 of V3; the run asked for
+    V2; V2 means simulation: seeded runs, a constrained-random test, bound assertions and formal tasks; V3 (coverage (line,
+    toggle, functional bins, cover properties), three seeds and the mutation score) did not pass: functional bins pct 0.0
+    (0/0) (needs 100); cover properties pct 0.0 (needs 100); line pct not measured (needs 90); toggle pct not measured (needs
+    75); mutation score pct not measured (needs 80); cdc structure clean missing (needs no unsafe crossing); cdc injection
+    clean missing (needs pass); no board result (V-HW) is recorded'
+  record: runs/20261126-152242-3f5c/p4_fir_dsp/build/verif/verif_gates.json
+  sha256: 06f09538a93db9f281f7e6b5eb48c83026649562b38ba165a880a7d04a24d843
+- id: E3
+  activity: build
+  result: fail
+  what: 'Vivado base build; flow stages that ran: rtl, post_synth'
+  record: runs/20261126-152242-3f5c/p4_fir_dsp/build/base/gates.json
+  sha256: 395caf26eae6f264fed7d24221e627672e6e4aea821a58bf898644762308ccf4
+measurements:
+- id: M1
+  what: simulation seeds run
+  category: verification
+  unit: ''
+  record: runs/20261126-152242-3f5c/p4_fir_dsp/build/verif/verif_gates.json
+  field: stages.V3.checks.seeds_run.value
+  conditions: Verilator coverage simulation of the RTL against the Modeller's model, every seed the bench ran
+  value: 3
+  sha256: 06f09538a93db9f281f7e6b5eb48c83026649562b38ba165a880a7d04a24d843
+- id: M2
+  what: line coverage
+  category: verification
+  unit: '%'
+  record: runs/20261126-152242-3f5c/p4_fir_dsp/build/verif/verif_gates.json
+  field: stages.V3.checks.line_pct.value
+  conditions: Verilator coverage simulation of the RTL against the Modeller's model, every seed the bench ran
+  value: not measured
+  sha256: 06f09538a93db9f281f7e6b5eb48c83026649562b38ba165a880a7d04a24d843
+- id: M3
+  what: toggle coverage
+  category: verification
+  unit: '%'
+  record: runs/20261126-152242-3f5c/p4_fir_dsp/build/verif/verif_gates.json
+  field: stages.V3.checks.toggle_pct.value
+  conditions: Verilator coverage simulation of the RTL against the Modeller's model, every seed the bench ran
+  value: not measured
+  sha256: 06f09538a93db9f281f7e6b5eb48c83026649562b38ba165a880a7d04a24d843
+- id: M4
+  what: functional coverage bins hit
+  category: verification
+  unit: ''
+  record: runs/20261126-152242-3f5c/p4_fir_dsp/build/verif/verif_gates.json
+  field: stages.V3.checks.functional_bins_pct.value
+  conditions: Verilator coverage simulation of the RTL against the Modeller's model, every seed the bench ran
+  value: 0.0 (0/0)
+  sha256: 06f09538a93db9f281f7e6b5eb48c83026649562b38ba165a880a7d04a24d843
+- id: M5
+  what: cover properties hit
+  category: verification
+  unit: '%'
+  record: runs/20261126-152242-3f5c/p4_fir_dsp/build/verif/verif_gates.json
+  field: stages.V3.checks.cover_properties_pct.value
+  conditions: Verilator coverage simulation of the RTL against the Modeller's model, every seed the bench ran
+  value: '0.0'
+  sha256: 06f09538a93db9f281f7e6b5eb48c83026649562b38ba165a880a7d04a24d843
+- id: M6
+  what: model cost of the run, provider-reported
+  category: cost
+  unit: USD
+  record: runs/20261126-152242-3f5c/summary.json
+  field: cost_usd
+  conditions: every role and the interview oracle, as the run summary records it
+  value: 5.111906
+  sha256: 3858e9b24ed52f4277d176a175d5bd9e2db0e52cab113e52ed6e1a86db2a9764
+gaps:
+- about: REQ-01
+  text: 'REQ-01 has no passing evidence for every proof method: hardware (uart_tests) is pending: no bring-up result'
+- about: REQ-02
+  text: 'REQ-02 has no passing evidence for every proof method: hardware (uart_tests) is pending: no bring-up result'
+- about: REQ-03
+  text: 'REQ-03 has no passing evidence for every proof method: hardware (uart_tests) is pending: no bring-up result'
+- about: REQ-06
+  text: 'REQ-06 has no passing evidence for every proof method: hardware (uart_tests) is pending: no bring-up result'
+- about: REQ-07
+  text: 'REQ-07 has no passing evidence for every proof method: hardware (uart_tests) is pending: no bring-up result'
+- about: REQ-08
+  text: 'REQ-08 has no passing evidence for every proof method: hardware (uart_tests) is pending: no bring-up result'
+- about: REQ-09
+  text: 'REQ-09 has no passing evidence for every proof method: hardware (uart_tests) is pending: no bring-up result'
+- about: REQ-11
+  text: 'REQ-11 has no passing evidence for every proof method: analysis (post_synth:post_synth_resources_in_range) is pending:
+    no flow gates result'
+- about: REQ-12
+  text: 'REQ-12 has no passing evidence for every proof method: analysis (post_synth:post_synth_resources_in_range) is pending:
+    no flow gates result'
+- about: REQ-38
+  text: 'REQ-38 has no passing evidence for every proof method: analysis (post_synth:post_synth_resources_in_range) is pending:
+    no flow gates result'
+- about: REQ-14
+  text: 'REQ-14 has no passing evidence for every proof method: analysis (post_route:setup) is pending: no flow gates result'
+- about: REQ-15
+  text: 'REQ-15 has no passing evidence for every proof method: analysis (post_route:setup) is pending: no flow gates result'
+- about: REQ-16
+  text: 'REQ-16 has no passing evidence for every proof method: analysis (post_route:setup) is pending: no flow gates result'
+- about: REQ-19
+  text: 'REQ-19 has no passing evidence for every proof method: hardware (uart_tests) is pending: no bring-up result'
+- about: REQ-30
+  text: 'REQ-30 has no passing evidence for every proof method: analysis (post_synth:post_synth_resources_in_range) is pending:
+    no flow gates result; hardware (uart_tests) is pending: no bring-up result'
+- about: REQ-31
+  text: 'REQ-31 has no passing evidence for every proof method: analysis (post_synth:post_synth_resources_in_range) is pending:
+    no flow gates result'
+- about: REQ-32
+  text: 'REQ-32 has no passing evidence for every proof method: analysis (post_synth:post_synth_resources_in_range) is pending:
+    no flow gates result'
+- about: E1
+  text: 'review evidence is partial: the specification and the architecture were approved automatically, with no human review
+    (review off; the interview oracle claude-sonnet-5-5 only answered the interview questions); the interview asked 8 questions,
+    0 answered and 8 defaulted'
+- about: E2
+  text: 'simulation evidence is partial: verification reached V2 of V3 (the run asked for V2); the checks that did not pass
+    or did not run are listed in the evidence row'
+- about: E3
+  text: 'build evidence is fail: Vivado base build; flow stages that ran: rtl, post_synth'
+- about: rtl-design-creation
+  text: 'stage rtl-design-creation did not pass its gates in this run; at its last visit: report gate RPT-LL-02 timing_summary_synth.rpt:u_rst/rst_reg/C->u_core/u_rsync/u_rst/arststages_ff_reg[0]/PRE:
+    setup path u_rst/rst_reg/C to u_core/u_rsync/u_rst/arststages_ff_reg[0]/PRE (sys_clk_pin, requirement 0.0 ns) has slack
+    -0.477 ns with 0.157 ns of net delay; with the net delay removed it is still -0.320 ns, so no placement can close it
+    (UG949 p.200): 0 logic levels, logic delay 0.084 ns. ...'
+- about: constraints
+  text: 'stage constraints was not run: the run stopped before this stage (stage 2 visited more than 6 times; last failing
+    gate: report gates; owned by the rtl role)'
+- about: synthesis
+  text: 'stage synthesis was not run: the run stopped before this stage (stage 2 visited more than 6 times; last failing
+    gate: report gates; owned by the rtl role)'
+- about: implementation
+  text: 'stage implementation was not run: the run stopped before this stage (stage 2 visited more than 6 times; last failing
+    gate: report gates; owned by the rtl role)'
+- about: timing-closure
+  text: 'stage timing-closure was not run: the run stopped before this stage (stage 2 visited more than 6 times; last failing
+    gate: report gates; owned by the rtl role)'
+- about: power-closure
+  text: 'stage power-closure was not run: the run stopped before this stage (stage 2 visited more than 6 times; last failing
+    gate: report gates; owned by the rtl role)'
+- about: drc-closure
+  text: 'stage drc-closure was not run: the run stopped before this stage (stage 2 visited more than 6 times; last failing
+    gate: report gates; owned by the rtl role)'
+- about: configuration-and-debug
+  text: 'stage configuration-and-debug was not run: the run stopped before this stage (stage 2 visited more than 6 times;
+    last failing gate: report gates; owned by the rtl role)'
+- about: formal
+  text: 'formal checks were planned for REQ-23, REQ-40, REQ-33 and did not run; each was replaced by a simulation check
+    (verif/testplan.yaml replan). Reason recorded: SymbiYosys is not installed here, so the input-count check is done by
+    model-compared simulation at empty, partial and full.'
+- about: resources
+  text: 'resources not measured: no current Vivado build of this design has been recorded'
+- about: timing
+  text: 'timing not measured: no current Vivado build of this design has been recorded'
+- about: power
+  text: 'power not measured: no current Vivado build of this design has been recorded'
+- about: latency
+  text: 'latency not measured: the run measured no latency; the spec''s latency promise is checked only by the benches'
+- about: throughput
+  text: 'throughput not measured: the run measured no throughput'
+- about: coefficients
+  text: The coefficients are literals in rtl/fir_datapath.sv, not read from data/coeffs.hex via $readmemh as spec.yaml and
+    ARCHITECTURE.md say. This run did not check that they match the file.
+- about: filter_latency
+  text: Counting the RTL, the datapath takes 11 clk_dp cycles from v_in to v_out (rtl/fir_datapath.sv). Reads of the input
+    memory add one more cycle, and results reach the host through the handshake CDC. No total latency was measured.
+- about: clock_ratio
+  text: ARCHITECTURE.md describes the MMCM as VCO 1000 MHz with x40 and divide 4, and the RTL sets CLKFBOUT_MULT_F 40.0
+    and CLKOUT0_DIVIDE_F 4.0. spec.yaml calls it 25 MHz x 10. The RTL gives 250 MHz.
+- about: cdc_style
+  text: spec.yaml and ARCHITECTURE.md describe async FIFOs. The RTL uses dual-clock xpm_memory_sdpram blocks plus xpm_cdc_handshake
+    for commands and done messages (rtl/fir32_core.sv), and the CDC structure and injection checks have no result.
+- about: reset_style
+  text: spec.yaml describes a reset port with polarity and sync_to, but the top level has no reset input and the interview
+    chose the reprogram model. In the RTL, rst is generated internally and used synchronously on clk_25, and clk_dp logic
+    uses a synchronised copy.
+- about: reset_timing
+  text: The post-synthesis timing report shows a negative setup slack from u_rst/rst_reg to the clk_dp reset synchroniser's
+    first flop (-0.477 ns), which no placement can close. This is the open failure at rtl-design-creation.
+- about: run_semantics
+  text: RUN is ignored while BUSY and when CLEAR is also written in the same write (CLEAR has priority). RUN is also ignored
+    if n_calc is 0. The batch is min(input count, free output space), and leftover samples stay in the input FIFO.
+- about: clear_while_busy
+  text: CLEAR aborts the run, empties both FIFOs, zeroes counters and the sticky LED, and sends a clear message to clk_dp,
+    which drops samples in flight and zeroes history.
+- about: unmapped_access
+  text: Reads of any unmapped address return 0 and writes to unmapped addresses do nothing. Write-only IN_PUSH reads 0,
+    and CTRL reads 0 because there is no read case for it.
+- about: read_side_effects
+  text: Reading OUT_POP at 0x018 pops the oldest entry only when the output count is non-zero; an empty read returns 0 with
+    bit 31 clear. Only a read pops.
+- about: counters
+  text: SAT_COUNT and SAMPLES_DONE are 32-bit and wrap. They are updated when a run finishes, not per sample, so they can
+    lag the output FIFO count.
+- about: simulation_stubs
+  text: rtl/xilinx_sim_stubs.sv provides simulation models of the MMCM, BUFG, USR_ACCESSE2 and XPM blocks, so BUILD reads
+    0 and the clock ratio is 1:1 in simulation. These do not represent the real primitives.
+next_steps:
+- Fix the earliest failure first, at rtl-design-creation. The setup path from the reset register in reset_gen to the clk_dp
+  reset synchroniser is a clk_25 to clk_dp crossing with a 40 ns requirement in the report. Look at how the rst crossing
+  is constrained and structured, then rebuild.
+- Compare the cover results with the functional coverage before any new stimulus, since functional bins show 0 of 0 and
+  cover properties show 0 percent. Then re-run the Verilator coverage command to get line, toggle, seed and mutation results.
+- Check the literal coefficients in rtl/fir_datapath.sv against data/coeffs.hex, and decide whether the spec should say
+  literals.
+- Once the RTL gates pass, continue with constraints, synthesis, implementation and timing closure at 250 MHz, then bring
+  up on the board.
+open_questions:
+- Should the reset crossing to clk_dp be restructured, or constrained, to remove the failing synthesis path?
+- Is the 11-cycle datapath depth, plus the handshake delay, acceptable as the filter latency the spec leaves open?
+history:
+- date: '2026-11-26'
+  brief: agent run
+  note: 'produced by the agent graph; stages that passed: clarify, board-and-device-planning'
+agent_run:
+  run_id: 20261126-152242-3f5c
+  record: runs/20261126-152242-3f5c/summary.json
+  model: claude-sonnet-5-5
+  harness: deepagents
+  stop: 'stage 2 visited more than 6 times; last failing gate: report gates; owned by the rtl role'
+  loops: 8
+  turns: 121
+  tokens: 5290559
+  wall_s: 2537.7
+  cost_usd: 5.111906
+  permissions:
+    mode: auto
+    source: 'default (auto: the behaviour before brief 222)'
+    overrides: {}
+    decisions:
+    - allowed use_knowledge_bank by mode auto at stage clarify (2 times)
+    - allowed use_knowledge_bank by mode auto at stage board-and-device-planning (2 times)
+    - allowed approve_architecture by mode auto at stage board-and-device-planning
+    - allowed use_knowledge_bank by mode auto at stage rtl-design-creation (7 times)
+    - allowed edit_design_files by mode auto at stage rtl-design-creation (7 times)
+    - allowed run_simulation by mode auto at stage rtl-design-creation (7 times)
+    - allowed run_vivado by mode auto at stage rtl-design-creation (7 times)
+    - allowed spend_model_money by mode auto at stage rtl-design-creation (6 times)
+state:
+  stage: rtl
+  gates:
+    clarify: pass
+    board-and-device-planning: pass
+    rtl-design-creation: fail
+    constraints: not-run
+    synthesis: not-run
+    implementation: not-run
+    timing-closure: not-run
+    power-closure: not-run
+    drc-closure: not-run
+    configuration-and-debug: not-run
+  vivado: '2026.1'
+  kb_pin: eaf6794
+  build_id: c99205ef
+  evidence_vivado: current
+requirements_report: REQUIREMENTS_REPORT.md
+assumptions:
+- question: What is the register map (offset, width, reset value and access of every register)?
+  risk: high
+  used: 'The map in registers.map: ID 0x000, BUILD 0x004, SCRATCH 0x008, CTRL 0x010, IN_PUSH 0x014, OUT_POP 0x018, STATUS
+    0x01C, SAT_COUNT 0x020, SAMPLES_DONE 0x024, all 32 bits, resets 0 except ID.'
+  how: 'defaulted: nobody answered'
+  reason: The request lists these offsets in its tables, so they are taken as given and confirmed here.
+- question: What does a read of SAT_COUNT or SAMPLES_DONE do on overflow?
+  risk: high
+  used: 32-bit counters that wrap.
+  how: 'defaulted: nobody answered'
+  reason: Not stated, and wrap is unreachable in practice.
+- question: What happens if IN_PUSH is written while BUSY?
+  risk: high
+  used: The push is accepted if the FIFO is not full, and it is not part of the running batch.
+  how: 'defaulted: nobody answered'
+  reason: RUN processes what is in the FIFO at the RUN time, and the request does not define later pushes.
+- question: What happens if the output FIFO would overflow during RUN?
+  risk: high
+  used: Not possible when the output FIFO is empty at RUN. RUN is limited to the free output space, and leftover input stays
+    in the input FIFO.
+  how: 'defaulted: nobody answered'
+  reason: The request sizes both FIFOs at 1024 but does not say what happens when outputs were not drained.
+- question: What happens if CLEAR is written while BUSY?
+  risk: high
+  used: CLEAR aborts the run and empties everything.
+  how: 'defaulted: nobody answered'
+  reason: Not defined by the request.
+- question: What is the exact filter latency in clocks?
+  risk: high
+  used: Any fixed pipeline depth, since only results through the FIFO are observed.
+  how: 'defaulted: nobody answered'
+  reason: The request checks output values only.
+- question: This design has no reset input. Is every reset a reconfiguration of the FPGA (the device is reprogrammed, so
+    every register starts from its initial value), or does something restart the running design (then it needs a reset input)?
+  risk: high
+  used: 'Every reset is a reconfiguration of the FPGA (reset model: reprogram): registers get initial values, control state
+    included, and the design has no reset input. Record it in spec.yaml as reset: {model: reprogram}; a design that restarts
+    while it runs is reset: {model: reset} with a reset port.'
+  how: 'defaulted: nobody answered'
+  reason: 'With no reset input, a register can start only from its initial value, which the FPGA loads at configuration
+    (owner, 2026-11-26: particularly useful for designs whose every reset reprograms the device). A design that must restart
+    while running needs a reset input and resets its control state; the two models are checked by different rules (STD-INIT-02).'
+- question: What do the two LEDs show?
+  risk: medium
+  used: led[0] = BUSY, led[1] = 1 once any output has saturated since CLEAR.
+  how: 'defaulted: nobody answered'
+  reason: The request names the LEDs but gives no function.
