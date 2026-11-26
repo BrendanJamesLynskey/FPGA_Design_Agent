@@ -12,7 +12,8 @@ The interview reads the lab (``hil/lab.py``) and asks only about gaps:
 Answers are recorded like every interview answer (who, default, reason). A connect answer has one form, ``<instrument>: <CHANNEL> -> <pin or probe point>``
 (several joined by ``;``), or ``not connected``; :func:`record_answers` writes the connections into the design's ``lab.yaml`` with their provenance. An
 answer in any other form is not guessed at: it is recorded in ``build/lab/answer_problems.json``, the instrument stays "not connected for this design",
-and the stage-9 plan says so. An instrument that is not onboarded is never asked about: the plan lists it as "available after onboarding".
+and the stage-9 plan says so. An instrument that is not onboarded is never asked about: the plan lists it as "available after onboarding". An instrument that
+is the board the design runs on (brief 225: the Red Pitaya as target) is never asked about either: the plan says its factory instruments are not available.
 
 The question text carries the ``[lab:...]`` tag, which the requirement-risk rules (``agent.graph.requirements``) read as a low-risk verification-method
 choice, so a default never stops a run at ``standard``.
@@ -51,6 +52,8 @@ def questions(lab: L.Lab, needs: list[L.Need], *, asked: str = "", person: bool 
     for iid, inst in sorted(lab.instruments.items()):
         if inst.get("kind") == "on_chip" or not inst.get("onboarded"):
             continue                                          # not onboarded: offered in the plan only ("available after onboarding")
+        if L.factory_unavailable(lab, iid):
+            continue                                          # brief 225: the design runs on this box (or it is loaded), so it is the target, not an instrument
         for n in needs:
             caps = [c for c in inst.get("capabilities") or [] if isinstance(c, dict) and c.get("measure") == n.quantity and L._covers(c, n) is None]
             if not caps or lab.connected(iid):

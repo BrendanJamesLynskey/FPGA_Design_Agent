@@ -1,0 +1,211 @@
+#!/usr/bin/env python3
+"""Build a design into the Red Pitaya vendor shell (brief 225): the "shell" way to build for the STEMlab 125-14, as opposed to "bare".
+
+    python3 tools/rp_shell.py prepare <workdir> [--block FILE.sv ...]     # fetch the vendor repository at the pinned commit, add the blocks, patch the top
+    python3 tools/rp_shell.py build   <workdir> [--mem 8G]                # run the vendor's Vivado script on it (one heavy slot, under a systemd scope)
+    python3 tools/rp_shell.py package <workdir> <outdir>                  # fpga.bit.bin, the reports and build.json (the build id, the pins, the hashes)
+    python3 tools/rp_shell.py check                                       # the patch's markers against the text the pin was made from (no network)
+
+What "inside the shell" means here. The vendor's FPGA project (RedPitaya/RedPitaya-FPGA, shell v0.94, BSD 3-clause) keeps the register map, the ADC and
+DAC front end, the calibration registers and the oscilloscope and generator. The vendor top has eight 1 MiB system-bus slots at 0x40000000; slots 0 to 5
+are used and slot 7 is a stub (``sys_bus_stub``) that answers every access with an error. This tool replaces that stub with ``rp_user_block`` (our own
+file, ``boards/redpitaya_stemlab_125_14/shell/rp_user_block.sv``, or any block with the same ports) and adds the block's ``dac_a`` and ``dac_b`` to the
+sum the shell sends to the DAC. Everything else is the vendor's text, unchanged. Nothing of the vendor's is committed here: the repository is fetched at
+the pinned commit into a work directory, the top file's SHA-256 is checked before the patch, and each patch marker must match exactly once, so a
+vendor change makes the tool stop and say so rather than build something else.
+
+Loading is not done here. ``fpga.bit.bin`` is loaded by the owner's script (``hil/redpitaya_load.py`` writes it), with ``overlay.sh`` keeping the shell's
+own device tree. A power cycle returns the factory image.
+"""
+
+from __future__ import annotations
+
+import argparse
+import hashlib
+import json
+import os
+import re
+import shutil
+import subprocess
+import sys
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+REPO = "https://github.com/RedPitaya/RedPitaya-FPGA.git"
+COMMIT = "728a4f37e9c0a9b5ba1d9b7a0d44c38bbd2dc674"            # the pin (also boards/redpitaya_stemlab_125_14/board.yaml, source RPFPGA)
+BASE_PRJ = "v0.94"
+NEW_PRJ = "fda_shell"
+TOP_REL = "rtl/red_pitaya_top.sv"
+TOP_SHA256 = "fa9d2a5c09702c6ca3d3bf43bb9f43af9ea06cde4642c143dce39b2818096065"          # prj/v0.94/rtl/red_pitaya_top.sv at COMMIT
+BLOCK_DEFAULT = ROOT / "boards" / "redpitaya_stemlab_125_14" / "shell" / "rp_user_block.sv"
+SLOT = 7
+VIVADO_TCL = "red_pitaya_vivado_Z10.tcl"
+
+#: (marker in the vendor top, replacement): each marker must occur exactly once. The first adds the block's DAC term to the sum, the second declares it, the
+#: third replaces the slot-7 stub with the block. Indentation is the vendor's.
+PATCH = (
+    ("assign dac_a_sum = asg_dat[0] + pid_dat[0];", "assign dac_a_sum = asg_dat[0] + pid_dat[0] + user_dac[0];     // fda_shell: the user block's term"),
+    ("assign dac_b_sum = asg_dat[1] + pid_dat[1];", "assign dac_b_sum = asg_dat[1] + pid_dat[1] + user_dac[1];     // fda_shell: the user block's term"),
+    ("SBA_T [2-1:0]            pid_dat;", "SBA_T [2-1:0]            pid_dat;\nSBG_T [2-1:0]            user_dac;                                     // fda_shell: DAC terms of the user block"),
+    ("  sys_bus_stub sys_bus_stub_7 (sys[7]);",
+     "  rp_user_block i_user_block (                                          // fda_shell: slot 7 (0x40700000), replaces sys_bus_stub_7\n"
+     "    .clk (adc_clk), .rstn (adc_rstn),\n"
+     "    .sys_addr (sys[7].addr), .sys_wdata (sys[7].wdata), .sys_wen (sys[7].wen), .sys_ren (sys[7].ren),\n"
+     "    .sys_rdata (sys[7].rdata), .sys_err (sys[7].err), .sys_ack (sys[7].ack),\n"
+     "    .adc_a (adc_dat[0]), .adc_b (adc_dat[1]), .dac_a (user_dac[0]), .dac_b (user_dac[1]));"),
+)
+
+
+#: the vendor's block-design script refuses a Vivado other than the 2025.1 it was written with (its own version check, not a feature it needs). The tool changes
+#: that one line to accept the running version, and records it in build.json ("bd_script_version_line"): the result is a 2026.1 build of the vendor's design.
+BD_VERSION = ("set scripts_vivado_version 2025.1", "set scripts_vivado_version [version -short]     ;# fda_shell: the vendor's BD script is written for 2025.1; accept the running version")
+
+
+#: the optional second block, in slot 6 (0x40600000, a stub in the Z10 build; slot 6 is used only by the Gen 2 build). Applied after PATCH, on its text.
+PATCH6 = (
+    ("assign dac_a_sum = asg_dat[0] + pid_dat[0] + user_dac[0];", "assign dac_a_sum = asg_dat[0] + pid_dat[0] + user_dac[0] + user6_dac[0];"),
+    ("assign dac_b_sum = asg_dat[1] + pid_dat[1] + user_dac[1];", "assign dac_b_sum = asg_dat[1] + pid_dat[1] + user_dac[1] + user6_dac[1];"),
+    ("SBG_T [2-1:0]            user_dac;", "SBG_T [2-1:0]            user_dac, user6_dac;"),
+    ("  sys_bus_stub sys_bus_stub_6 (sys[6]);",
+     "  {module6} i_user6_block (                                              // fda_shell: slot 6 (0x40600000), replaces sys_bus_stub_6\n"
+     "    .clk (adc_clk), .rstn (adc_rstn),\n"
+     "    .sys_addr (sys[6].addr), .sys_wdata (sys[6].wdata), .sys_wen (sys[6].wen), .sys_ren (sys[6].ren),\n"
+     "    .sys_rdata (sys[6].rdata), .sys_err (sys[6].err), .sys_ack (sys[6].ack),\n"
+     "    .adc_a (adc_dat[0]), .adc_b (adc_dat[1]), .dac_a (user6_dac[0]), .dac_b (user6_dac[1]));"),
+)
+
+
+def apply_patch(text: str, module7: str = "rp_user_block", module6: str | None = None) -> str:
+    """The vendor top with the user block (module ``module7``) in slot 7 and, if ``module6`` is given, a second block in slot 6. Raises ValueError naming
+    the marker if one does not occur exactly once."""
+    patches = [(a, b.replace("rp_user_block", module7)) for a, b in PATCH]
+    if module6:
+        patches += [(a, b.replace("{module6}", module6)) for a, b in PATCH6]
+    for old, new in patches:
+        n = text.count(old)
+        if n != 1:
+            raise ValueError(f"the vendor top has {n} occurrences of {old!r}, not 1: the shell changed since the pin {COMMIT[:10]}; re-read it before patching")
+        text = text.replace(old, new)
+    return text
+
+
+def sha256(p: Path) -> str:
+    return hashlib.sha256(Path(p).read_bytes()).hexdigest()
+
+
+def run(argv: list[str], cwd: Path | None = None, **kw) -> subprocess.CompletedProcess:
+    return subprocess.run(argv, cwd=cwd, check=True, capture_output=True, text=True, **kw)
+
+
+def fetch(work: Path) -> None:
+    """The vendor repository at the pinned commit in ``work/vendor`` (a git checkout: the vendor script reads ``git log``)."""
+    v = work / "vendor"
+    if (v / ".git").is_dir() and run(["git", "rev-parse", "HEAD"], v).stdout.strip() == COMMIT:
+        return
+    v.mkdir(parents=True, exist_ok=True)
+    run(["git", "init", "-q"], v)
+    run(["git", "remote", "add", "origin", REPO], v)
+    run(["git", "fetch", "-q", "--depth", "1", "origin", COMMIT], v)
+    run(["git", "checkout", "-q", "FETCH_HEAD"], v)
+    if run(["git", "rev-parse", "HEAD"], v).stdout.strip() != COMMIT:
+        raise SystemExit("fetched commit is not the pin")
+
+
+def prepare(work: Path, blocks: list[Path], module7: str = "rp_user_block", module6: str | None = None) -> Path:
+    work.mkdir(parents=True, exist_ok=True)
+    fetch(work)
+    v = work / "vendor"
+    base, new = v / "prj" / BASE_PRJ, v / "prj" / NEW_PRJ
+    top0 = base / TOP_REL
+    if sha256(top0) != TOP_SHA256:
+        raise SystemExit(f"{top0} is not the file the pin was made from (sha256 {sha256(top0)})")
+    if new.exists():
+        shutil.rmtree(new)
+    shutil.copytree(base, new, ignore=shutil.ignore_patterns("out", "build", "sdk", ".Xil", "project"))
+    (new / TOP_REL).write_text(apply_patch(top0.read_text(), module7, module6))
+    for b in blocks or [BLOCK_DEFAULT]:
+        shutil.copy(b, new / "rtl" / Path(b).name)
+    bd = new / "ip" / "system.tcl"
+    t = bd.read_text()
+    if t.count(BD_VERSION[0]) != 1:
+        raise SystemExit(f"{bd}: the version line {BD_VERSION[0]!r} is not there exactly once; the shell changed since the pin")
+    bd.write_text(t.replace(*BD_VERSION))
+    for ipt in sorted((v / "ip" / "ip").glob("*/*.tcl")):          # the shared IP scripts (asg_dat_fifo, sync_fifo) carry the same 2025.1 check
+        t = ipt.read_text()
+        if t.count(BD_VERSION[0]) == 1:
+            ipt.write_text(t.replace(*BD_VERSION))
+    # the vendor script installs a Tcl-store app over the network; the build does not need it (it is the UltraFast rule set, not part of the result)
+    tcl = (v / VIVADO_TCL).read_text()
+    (v / "fda_vivado_Z10.tcl").write_text(tcl.replace("tclapp::install -quiet ultrafast", "# tclapp::install -quiet ultrafast   (removed by tools/rp_shell.py: it needs the network)"))
+    return new
+
+
+def build_argv(work: Path, mem: str = "8G", unit: str | None = None) -> list[str]:
+    """The command the build runs: Vivado batch on the vendor script, inside a transient systemd scope with a memory cap, at nice 15."""
+    vivado = subprocess.run([sys.executable, str(ROOT / "flow" / "version_pin.py"), "--vivado"], capture_output=True, text=True).stdout.strip()
+    inner = ["nice", "-n", "15", vivado, "-nojournal", "-nolog", "-mode", "batch", "-source", "fda_vivado_Z10.tcl", "-tclargs", NEW_PRJ]
+    scope = ["systemd-run", "--user", "--scope", "--quiet", "-p", f"MemoryMax={mem}"] + (["--unit", unit] if unit else [])
+    return scope + inner
+
+
+def build(work: Path, mem: str = "8G") -> int:
+    v = work / "vendor"
+    if not (v / "prj" / NEW_PRJ).is_dir():
+        raise SystemExit("run prepare first")
+    log = work / "build.log"
+    with log.open("w") as fh:
+        rc = subprocess.run(build_argv(work, mem, unit=f"fda-rp-shell-{os.getpid()}"), cwd=v, stdout=fh, stderr=subprocess.STDOUT).returncode
+    print(f"vivado exit {rc}; log {log}")
+    return rc
+
+
+def package(work: Path, out: Path) -> dict:
+    v = work / "vendor" / "prj" / NEW_PRJ
+    o = v / "out"
+    binf = o / "red_pitaya.bin"
+    if not binf.is_file():
+        raise SystemExit(f"no {binf}: the build did not finish")
+    out.mkdir(parents=True, exist_ok=True)
+    shutil.copy(binf, out / "fpga.bit.bin")                 # the name overlay.sh and fpgautil expect (Red Pitaya's documentation)
+    shutil.copy(o / "red_pitaya.bit", out / "fpga.bit")
+    for rpt in sorted(o.glob("*.rpt")):
+        if re.search(r"(timing_summary|utilization|power|drc|methodology)", rpt.name):
+            shutil.copy(rpt, out / rpt.name)
+    info = {"schema": "fpga-design-agent/rp-shell-build/v1", "vendor_repo": REPO, "vendor_commit": COMMIT, "base_project": BASE_PRJ, "model": "Z10",
+            "part": "xc7z010clg400-1", "slot": SLOT, "slot_address": f"0x40{SLOT}00000", "top_sha256_before": TOP_SHA256,
+            "top_sha256_after": sha256(v / TOP_REL), "bd_script_version_line": "changed from 2025.1 to the running Vivado version in prj/fda_shell/ip/system.tcl and the IP scripts under ip/ip/",
+            "vivado_version": next(iter(re.findall(r"Vivado v(\\d{4}\\.\\d)", (work / "build.log").read_text(errors="replace"))), None), "blocks": {p.name: sha256(p) for p in sorted((v / "rtl").glob("rp_*.sv"))},
+            "bit_bin_sha256": sha256(out / "fpga.bit.bin"), "bit_bin_bytes": (out / "fpga.bit.bin").stat().st_size, "build_id": sha256(out / "fpga.bit.bin")[:8]}
+    (out / "build.json").write_text(json.dumps(info, indent=1) + "\n")
+    return info
+
+
+def main(argv: list[str] | None = None) -> int:
+    ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0], formatter_class=argparse.RawDescriptionHelpFormatter)
+    sub = ap.add_subparsers(dest="cmd", required=True)
+    p = sub.add_parser("prepare")
+    p.add_argument("workdir", type=Path)
+    p.add_argument("--block", type=Path, action="append", default=[], help="a block's SystemVerilog file (default: the trivial rp_user_block)")
+    p.add_argument("--slot7", default="rp_user_block", help="the module for slot 7 (0x40700000)")
+    p.add_argument("--slot6", default=None, help="the module for slot 6 (0x40600000), optional")
+    p = sub.add_parser("build")
+    p.add_argument("workdir", type=Path)
+    p.add_argument("--mem", default="8G")
+    p = sub.add_parser("package")
+    p.add_argument("workdir", type=Path)
+    p.add_argument("outdir", type=Path)
+    sub.add_parser("check")
+    a = ap.parse_args(argv)
+    if a.cmd == "prepare":
+        print(prepare(a.workdir, a.block, a.slot7, a.slot6))
+    elif a.cmd == "build":
+        return build(a.workdir, a.mem)
+    elif a.cmd == "package":
+        print(json.dumps(package(a.workdir, a.outdir), indent=1))
+    else:
+        print("markers:", len(PATCH), "pin:", COMMIT[:10])
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
