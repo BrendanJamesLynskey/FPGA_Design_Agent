@@ -491,6 +491,12 @@ def gate_step(rt: Any, spec: dict[str, Any], level: str, answerer: Answerer | No
     log = rt.run_dir / "claude_code_calls.jsonl"
     llms = LLMs(review=rt.resolver.text("reqreview", label="reqreview", claude_log=log), reader=rt.resolver.text("reqreader", label="reqreader", claude_log=log),
                 reader3=rt.resolver.text("reqreader3", label="reqreader3", claude_log=log))
+    fr = R.read_frozen(rt.design)
+    if fr and fr.get("hash"):                                   # frozen already: unchanged is ready; a change returns to stage 0 and is recorded
+        ch = R.changed_since_freeze(rt.design, spec)
+        if not ch:
+            return spec, {"readiness": {"frozen": True, "rounds": 0, "stop": None, "level": level, "skipped": "the frozen set is unchanged"}}
+        R.reopen(rt.design, spec, why="requirements changed after the freeze", ids=ch, who="a later stage")
     request = (rt.design / "spec.md").read_text(errors="replace") if (rt.design / "spec.md").is_file() else ""
     lim = R.Limits(**{k: int(v) for k, v in (getattr(rt.cfg, "readiness_limits", None) or {}).items() if k in R.Limits.__dataclass_fields__})
     res = run_stage0(rt.design, spec, request, level=level, llms=llms, answerer=answerer, limits=lim, board=getattr(rt.cfg, "board", ""), answers=load_answers(rt.design))

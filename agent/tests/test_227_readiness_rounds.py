@@ -224,3 +224,44 @@ def test_the_checklist_comes_from_the_knowledge_bank_skill_when_it_is_at_hand(tm
 def test_json_in_a_fence_or_a_sentence_is_read_and_garbage_is_none():
     assert G.parse_json('Here you go: {"a": 1} thanks') == {"a": 1} and G.parse_json("```json\n{\"a\": 2}\n```") == {"a": 2}
     assert G.parse_json("no json") is None and G.parse_json("[1, 2]") is None
+
+
+# ---- the run hook ---------------------------------------------------------------------------------------------------------------------------
+def _rt(tmp_path, d, f, **cfg):
+    from types import SimpleNamespace
+    resolver = SimpleNamespace(text=lambda purpose, **kw: f)
+    return SimpleNamespace(cfg=SimpleNamespace(board="nexys_a7_100t", readiness="on", readiness_limits={"max_rounds": 2}, **cfg), design=d, run_dir=tmp_path, resolver=resolver)
+
+
+def test_the_run_hook_freezes_skips_when_unchanged_and_returns_to_stage_0_on_a_change(tmp_path):
+    d, f = fresh(tmp_path), Fake()
+    rt = _rt(tmp_path, d, f)
+    spec, summ = G.gate_step(rt, spec_of_fixture(), "standard", None)
+    assert summ["readiness"]["frozen"] is True and "requirements_stop" not in summ
+    assert (d / "build" / "requirements" / "frozen.json").is_file() and (d / "REQUIREMENTS_READINESS.md").is_file()
+    n = len(f.calls)
+    spec2, summ2 = G.gate_step(rt, spec, "standard", None)                                   # unchanged: no model call
+    assert summ2["readiness"]["skipped"] == "the frozen set is unchanged" and len(f.calls) == n
+    changed = copy.deepcopy(spec)
+    changed["requirements"][0]["text"] = "After reset, busy, valid and ovf are low."
+    _, summ3 = G.gate_step(rt, changed, "standard", None)
+    fr = R.read_frozen(d)
+    assert summ3["readiness"]["frozen"] is True and fr["reopened"][0]["ids"] == ["REQ-01"] and fr["version"] == 2 and len(f.calls) > n
+
+
+def test_the_run_hook_reports_a_stop_that_the_run_turns_into_exit_status_3(tmp_path):
+    d = fresh(tmp_path)
+    f = Fake(review=[{"findings": [{"topic": "reset strategy", "question": "What does count hold in reset?", "blocking": True}]}])
+    _, summ = G.gate_step(_rt(tmp_path, d, f), spec_of_fixture(), "standard", None)
+    from agent.__main__ import exit_status
+    assert summ["readiness"]["frozen"] is False and summ["requirements_stop"].startswith("requirements: readiness:")
+    assert exit_status({"stop": summ["requirements_stop"]}) == 3 and (d / "REQUIREMENTS_NEEDED.md").is_file()
+
+
+def test_readiness_is_off_by_default_and_round_trips_through_the_saved_config():
+    from agent.__main__ import config_from_json
+    from agent.graph.run import Config
+    assert Config.__dataclass_fields__["readiness"].default == "off"
+    base = {"spec_md": "s.md", "name": "n", "board": "b", "interview": "off", "review": "off", "model": "m"}
+    c = config_from_json({**base, "readiness": "on", "readiness_limits": {"max_rounds": 2}})
+    assert (c.readiness, c.readiness_limits) == ("on", {"max_rounds": 2}) and config_from_json(base).readiness == "off"

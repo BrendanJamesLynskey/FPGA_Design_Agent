@@ -32,6 +32,9 @@ python -m agent models check [--probe]                                         #
 | `doc_crossread` | the blind document reader (brief 114): sees only a vendor-document excerpt, writes the facts code depends on with citations; code does the comparison, never a model | text, chat | Claude Code, `claude-sonnet-5-5`, effort medium (opt-in like `options`: a `default:` does not move it; name it explicitly) |
 | `assertgen` | the assertion writer (brief 218, `flow/sva_req.py`, behind `--req-sva on`): one SVA property from a requirement and the port list, never the RTL; the formal flow proves it, never a model | text | Claude Code, `claude-sonnet-5-5`, effort low (opt-in: a `default:` does not move it; name it explicitly) |
 | `assertback` | the assertion reader (brief 218): reads the property alone and says in English what it requires; code compares that with the requirement, never a model. Keep it a different model from `assertgen` | text | Claude Code, `claude-haiku-5-5`, effort low (opt-in like `assertgen`) |
+| `reqreview` | the requirements reviewer, the probe writer and the amender of stage 0 (brief 227, `agent/graph/readiness.py`, behind `--readiness on`): pre-build questions by checklist topic (the knowledge-bank skill `procedures/requirements-review`), probe scenarios, the early compliance assessment, and the change a user's answer makes to a row; never the RTL; code checks every reply | text | Claude Code, `claude-sonnet-5-5`, effort medium (opt-in: a `default:` does not move it) |
+| `reqreader` | the two fresh readers of the requirements (brief 227): each is a separate call that sees only the requirements' English and the interface table and predicts the behaviour for the probe set; code compares the answers | text | Claude Code, `claude-sonnet-5-5`, effort low (opt-in like `reqreview`) |
+| `reqreader3` | the third reader (brief 227): writes the structured layer from the user's English alone; code compares it with the first structured layer. Keep it a different model from `reqreader` (readers of one model share misreadings) | text | Claude Code, `claude-haiku-5-5`, effort low (opt-in like `reqreview`) |
 | `embed` | reserved: embeddings | chat | off; the only embedder is fastembed's local model in `agent/core/skill_index.py` (in-process, tied to the bank's stored vectors), not routed |
 
 A key is a purpose, or `purpose@stage` for one stage of the machine (`rtl@timing-closure`; stage names as in `agent/graph/stages.py`).
@@ -181,7 +184,7 @@ default does not hide the file.
   kind supports. The one exception is the built-in soft defaults (`temperature 0.2`, `timeout_s 180`, `retries 1` on chat kinds, `effort
   medium` on `claude_code`): they are dropped when the kind cannot take them, so switching a purpose from one kind to another is a one-line change.
 - **`effort: null` means unset** (the CLI default), not "medium".
-- **`default:` skips** the opt-in purposes (`route`, `embed` stay off; `options`, `doc_crossread`, `assertgen` and `assertback` keep their own entries, Claude Code on the plan) and any purpose the kind cannot serve (`latency` needs
+- **`default:` skips** the opt-in purposes (`route`, `embed` stay off; `options`, `doc_crossread`, `assertgen`, `assertback`, `reqreview`, `reqreader` and `reqreader3` keep their own entries, Claude Code on the plan) and any purpose the kind cannot serve (`latency` needs
   tool calls through a chat endpoint). Naming such a purpose explicitly on `claude_code` is an error at load.
 - **`doc` and `constraints` inherit `rtl`** until a layer sets them. A `default:` sets them explicitly.
 - **`anthropic_api` and `claude_code` calls are counted differently:** the run's USD cap counts dollars: provider-reported (OpenRouter) or, for
