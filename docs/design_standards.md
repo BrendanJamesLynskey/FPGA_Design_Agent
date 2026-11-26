@@ -42,6 +42,7 @@ counts as a failure, not a pass.
 | `STD-LATCH-01` | rtl | no latches | Verilator -Wall LATCH warnings; Yosys proc (a $dlatch cell) |
 | `STD-LOOP-01` | rtl | no combinational loops | Verilator UNOPTFLAT warnings; Yosys check (logic loop) |
 | `STD-INIT-01` | rtl | initial values in synthesisable RTL follow the setting rtl.initial_values (allow, the default: power-up values pass, an initial block that does more is flagged; warn: reported, not failed; deny: no initial blocks or register initial values); ROM initialisation ($readmemh/$readmemb) passes in every mode | static scan; // synthesis translate_off regions are skipped |
+| `STD-INIT-02` | rtl | a register never has both a reset and a different initial value; with the reset model reset (the default) control state (an FSM, a valid flag) keeps its reset, with the model reprogram (every reset reconfigures the FPGA) control state has an initial value or a reset | static scan of declarations and clocked blocks; // std-waive: STD-INIT-02 <reason> |
 | `STD-CDC-01` | rtl | every clock-domain crossing is a named CDC primitive from the bank, listed in architecture.yaml crossings, and instantiated; no module mixes two clocks outside one | architecture.yaml crossings against the instances in the RTL; static scan of clocks per module |
 | `STD-CDC-02` | post_synth | report_cdc on the synthesised netlist has no Critical row | Vivado report_cdc (cdc_synth.rpt), gate post_synth_cdc_no_critical |
 | `STD-METH-01` | post_synth | report_methodology on the synthesised netlist has no Critical Warning | Vivado report_methodology, gate post_synth_methodology_no_critical |
@@ -55,6 +56,29 @@ counts as a failure, not a pass.
 Tools: Verilator `--cc --Wall` warnings `LATCH` and `UNOPTFLAT`, Yosys `proc` and `check`, a SystemVerilog scanner in
 the checker (comments removed; modules, ports, `always` sensitivity lists, assigns, instances), and the Vivado
 `report_cdc`, `report_methodology` and `report_clock_networks` the build writes after synthesis.
+
+## Initial values and resets (`rtl.reset_model`)
+
+Owner decision (2026-11-26, brief 231), the middle ground between "never an initial value" and "initial values everywhere". Verilator's
+`PROCASSINIT` (it fires on every register with an initial value that a clocked block also writes) is switched off in the agent's `lint`
+tool and in `flow/lint_ruleset.py`; `STD-INIT-01` and `STD-INIT-02` replace it. The reasoning follows AMD's advice (UG949) that a defined
+power-up state is good practice and the observation that a reset costs a control signal and routing for every register it reaches.
+
+| The register | Reset model `reset` (default) | Reset model `reprogram` |
+|---|---|---|
+| a datapath register with an initial value and no reset | passes | passes |
+| any register with a reset and a different initial value | `STD-INIT-02` fails (two start states: one at configuration, one at reset) | `STD-INIT-02` fails |
+| a register with a reset and the same initial value | passes | passes |
+| control state (an FSM state, a valid, busy, full, empty, pending, active, armed, running, done or flag bit) with an initial value and no reset | `STD-INIT-02` fails: a reset while the design runs cannot restore it | passes: the initial value is the reset value |
+| control state with neither an initial value nor a reset | not this rule's business | `STD-INIT-02` fails |
+
+`reprogram` is for a design in which every reset reconfigures (reprograms) the FPGA, so the configuration loads every initial value again
+and no running reset exists. The owner's reason: initial values are particularly useful for such designs. Where it is set, strongest
+first: the run (`--set rtl.reset_model=reprogram`), `architecture.yaml` (`rtl: {reset_model: reprogram}`), `spec.yaml` (`reset: {model:
+reprogram}`), `flow/gates.yaml`, then `reset`. The interview asks for it when the spec has no reset input (a default of `reprogram` is
+offered then). Control state is recognised by name, a register declared on one line with several names (`logic a = 0, b = 1;`) is read
+for its first name only, and a value that is not a literal (a parameter) is not compared; a waiver (`// std-waive: STD-INIT-02 <reason>`)
+excuses a finding. `rtl.initial_values: deny` already flags every initial value, so `STD-INIT-02` stays silent then.
 
 ## Initial values (`rtl.initial_values`)
 

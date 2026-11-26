@@ -73,7 +73,14 @@ Goldens, oldest first:
 - ``b208_request_golden.json`` (brief 208, 2026-11-24): the ``check`` tool's name list gained ``clock_mux`` (schema 1.23.0). No stage or role
   is offered a new tool, so every hash other than ``tool_registry`` equals the brief 207 golden's.
 - ``b190_request_golden.json`` (brief 190, 2026-11-23): the ``check`` tool's name list gained ``fastpath`` (schema 1.24.0; an advisory source check). No stage or role
-  is offered a new tool, so every hash other than ``tool_registry`` equals the brief 208 golden's."""
+  is offered a new tool, so every hash other than ``tool_registry`` equals the brief 208 golden's.
+- ``b224_request_golden.json`` (brief 224, 2026-11-25): the stage-2 Designer's request gained the file-by-file instruction (``agent/graph/run.py``
+  ``FILE_BY_FILE_NOTE``, appended after the conventions, like the JTAG note) and, after a reply cut off at the output limit, the note of the files on disk and
+  the blocks still missing (``files_status_note``). Both are new request paths (``file_by_file_note``, ``files_status_note``); every other hash equals the brief 190
+  golden's. Runs before this change belong to the earlier goldens.
+- ``b231_request_golden.json`` (brief 231, 2026-11-26, owner decision on initial values and resets): the Designer's conventions list the design-standards rules
+  (``_standards_summary`` from ``flow/standards_check.py`` ``RULES``) and ``STD-INIT-02`` is new. Only ``conventions_text_noshell_False`` and
+  ``conventions_text_noshell_True`` differ from the brief 224 golden. Runs before this change belong to the earlier goldens."""
 
 from __future__ import annotations
 
@@ -84,7 +91,7 @@ from agent.tests.request_golden import collect
 
 FIXTURES = Path(__file__).parent / "fixtures"
 EVAL1 = FIXTURES / "eval1_request_golden.json"
-GOLDEN = FIXTURES / "b190_request_golden.json"          # the newest golden
+GOLDEN = FIXTURES / "b231_request_golden.json"          # the newest golden
 #: the hashes that differ from eval-1's, and the brief that changed each (an intended change is listed here, with why)
 CHANGED_SINCE_EVAL1 = {"arm_constants": "brief 80: Claude Code 2.1.321 accepted (ACCEPTED_CLI; the tool-text check passed)",
                        "tool_registry": "brief 36: skill_index, skill_excerpt, load_skill(name=); brief 42 H9: report_digest; "
@@ -95,8 +102,8 @@ CHANGED_SINCE_EVAL1 = {"arm_constants": "brief 80: Claude Code 2.1.321 accepted 
                                   "brief 71: the check tool (rtl); brief 73: the interface profile (clarify, rtl); "
                                   "brief 70: the Designer's reset paragraph (rtl)",
                        "conventions": "brief 68: role names (Tests (Verifier))",
-                       "conventions_text_noshell_False": "brief 68: as conventions; brief 205: the STD-INIT-01 rule text (rtl.initial_values)",
-                       "conventions_text_noshell_True": "brief 68: as conventions; brief 205: the STD-INIT-01 rule text (rtl.initial_values)",
+                       "conventions_text_noshell_False": "brief 68: as conventions; brief 205: the STD-INIT-01 rule text (rtl.initial_values); brief 231: STD-INIT-02",
+                       "conventions_text_noshell_True": "brief 68: as conventions; brief 205: the STD-INIT-01 rule text (rtl.initial_values); brief 231: STD-INIT-02",
                        "tests_conventions_text_noshell_False": "brief 68: as conventions",
                        "tests_conventions_text_noshell_True": "brief 68: as conventions",
                        "hw_format": "brief 68: reference model for blind model",
@@ -138,7 +145,8 @@ CHANGED_SINCE_EVAL1 = {"arm_constants": "brief 80: Claude Code 2.1.321 accepted 
                        "tools_rtl_8": "brief 71: check and gt_plan offered to the Designer",
                        "tools_rtl_9": "brief 71: check and gt_plan offered to the Designer"}
 #: request paths added since eval-1 (absent from its golden), and the brief that added each
-NEW_SINCE_EVAL1 = {"doc_system": "brief 68 C: the DOC step at the end of a run (agent.graph.document)"}
+NEW_SINCE_EVAL1 = {"doc_system": "brief 68 C: the DOC step at the end of a run (agent.graph.document)",
+                   "file_by_file_note": "brief 224: the stage-2 Designer writes one file per call", "files_status_note": "brief 224: files on disk and blocks missing after a cut-off reply"}
 
 
 def test_every_request_path_is_unchanged_from_the_golden() -> None:

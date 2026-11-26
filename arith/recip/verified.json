@@ -1,0 +1,661 @@
+{
+ "counts": {
+  "agreed_delegated": 0,
+  "agreed_human": 0,
+  "draft": 9,
+  "items": 13,
+  "requirements": 9,
+  "stale_items": 0,
+  "verified": 1
+ },
+ "criteria": [
+  {
+   "detail": "8 of 9 requirements are not in state verified: RECIP-F-MODEL (partially_verified), RECIP-F-RTL-EXH (partially_verified), RECIP-F-RTL-RAND (partially_verified), RECIP-F-LAT (partially_verified), RECIP-F-LINT (partially_verified), RECIP-F-MUTANT (partially_verified), RECIP-F-LEAN-NEWTON (unapproved), RECIP-F-BUILD (partially_verified)",
+   "id": "evidence",
+   "ids": [
+    "RECIP-F-MODEL",
+    "RECIP-F-RTL-EXH",
+    "RECIP-F-RTL-RAND",
+    "RECIP-F-LAT",
+    "RECIP-F-LINT",
+    "RECIP-F-MUTANT",
+    "RECIP-F-LEAN-NEWTON",
+    "RECIP-F-BUILD"
+   ],
+   "state": "unmet",
+   "title": "Every requirement has passing evidence"
+  },
+  {
+   "detail": "0 agreed by a human, 0 agreed by delegation, 9 draft, 0 marked agreed without a record",
+   "id": "agreement",
+   "ids": [
+    "RECIP-F-MODEL",
+    "RECIP-F-RTL-EXH",
+    "RECIP-F-RTL-RAND",
+    "RECIP-F-LAT",
+    "RECIP-F-LINT",
+    "RECIP-F-MUTANT",
+    "RECIP-F-FORMAL-BOUND",
+    "RECIP-F-LEAN-NEWTON",
+    "RECIP-F-BUILD"
+   ],
+   "state": "unmet",
+   "title": "Every requirement is agreed (human, or delegated and labelled so)"
+  },
+  {
+   "detail": "not yet measured: the required method mix per requirement kind is brief 143a; the collector does not supply it yet",
+   "id": "method_mix",
+   "ids": [],
+   "state": "not_measured",
+   "title": "Every requirement meets its required method mix"
+  },
+  {
+   "detail": "not yet measured: the mutation score and floor are brief 143b; the collector does not supply them yet",
+   "id": "mutation",
+   "ids": [],
+   "state": "not_measured",
+   "title": "The bench passes the mutation floor"
+  },
+  {
+   "detail": "not yet measured: the vacuity, assumption and depth checks are brief 143c; the collector does not supply them yet",
+   "id": "formal_rigour",
+   "ids": [],
+   "state": "not_measured",
+   "title": "The formal results pass the rigour checks"
+  },
+  {
+   "detail": "no item is stale by its pins; the nightly fresh re-run comparison is brief 143d and not yet measured",
+   "id": "fresh",
+   "ids": [],
+   "state": "not_measured",
+   "title": "The evidence is fresh"
+  }
+ ],
+ "declared": null,
+ "definition": "docs/verified.md",
+ "git_commit": "8b3b7767288b3aa2d84ddcc0f25af0284dd9a56f",
+ "kind": "arith",
+ "label": "verified except: 8 of 9 requirements without passing evidence; 9 of 9 requirements not agreed; required method mix not yet measured; mutation floor not yet measured; formal rigour not yet measured; fresh re-run not yet measured",
+ "label_kind": "verified_except",
+ "limits": [
+  "Verified never means interoperability with a device the design talks to unless a board measurement against that device is listed in the record; a design that checks its own output against its own model accepts its own symmetric mistakes.",
+  "Verified never means timing beyond the stated corner: a post-route timing result is for the part, speed grade, clock and tool version in its evidence file, not for other corners, temperatures or devices.",
+  "Verified never means beyond the widths and depths checked: a simulation covers the vectors it ran, a bounded formal result covers the stated depth only, and a per-width proof covers the widths it names; only a Lean proof marked all widths covers every width, and only for its model.",
+  "Verified never means the requirement is the right one: the text of a requirement is the human's check (or the planner's, where the record says delegated), and a record shows that checks exist and pass, not that nothing was left out.",
+  "Verified never means a hardware or board result unless a board measurement item is listed; a simulation is not the board.",
+  "Verified is about the files in the manifest at the hashes given. A change to any of them makes the record out of date (the CI check fails), and the evidence stale until it is re-recorded.",
+  "An agreement or acceptance recorded as delegated is the planner's decision on the owner's delegation, not a human sign-off; the record counts it apart.",
+  "1 formal items are bounded model checks; each holds to its stated depth only: V-RECIP-FORMAL-FAULTS."
+ ],
+ "manifest": {
+  "arith/common/tb_stream.sv": "75069651847b6f85ee85134d3b169af35da174cd6d5872cfcb37b3055b77c96c",
+  "arith/recip/model.py": "4d62230581eb2b02cbc2c7bbe3c82b003f85e993b6a20c4f1a1fcb55ae7447d2",
+  "arith/recip/rtl/recip_iter.sv": "c3f7214250c0463e156d00e268fc3e2350885c4a8b7bfa9472dbd14d5d876a77",
+  "arith/recip/rtl/recip_nr.sv": "b56e742a02739751461cd9a769cf14a5603d5634f41b77e2d02cf385c3b2169b",
+  "arith/recip/rtl/recip_ooc.sv": "a1d0a3a17dcfd0b081291cb5b8f8a5b433a899293f87c4583cb767a16bbc92ef",
+  "arith/recip/rtl/recip_seed.sv": "1c4c39aaaefbb00cdced17b07ded7d4aae222a89c9e29529e3475631dabe6f3d",
+  "arith/recip/rtl/recip_sel.sv": "6c05ef86cd2c871e19f17a77d30f512037955e2d078860ff518daf146b68e7af",
+  "arith/recip/rtl/recip_table.sv": "d1b40293722c9e4dbf3fc667764f7f08ec037c8f587686c1ab3e4609af78f782",
+  "arith/recip/tb/tb_recip.sv": "2c77aaebff86df74b7550230fc8c23943e88429275ed7b9997314b8a67c80fc8",
+  "arith/recip/verif/evidence_pins.yaml": "b2ef4b46f25db354673854450e97ffade3678e6155712b80f64d3399e2ac401d",
+  "arith/recip/verif/lean_approvals.yaml": "0fd3b24d014e499e68d89b4cecabcbc20bbf117ced399cd9cf6e503da4f4af51",
+  "arith/recip/verif/mutants.yaml": "a1d6fc5ff8060c8cf50211b82faea613e9aa784ee937c1a89ec08babb6271946",
+  "arith/recip/verif/testplan.yaml": "264d5667b5db205fd2ecf636d378d707b91ecbb650b0e45454c937665c4fbdcd",
+  "formal/lean/records/build_record.json": "3d60b1f76ac87b74d5dcbe085c0eb8e43e0287d69d5fa557490a685624e6c4f6",
+  "results/139c_arith/recip_formal_record.json": "c844d8ceac0505a970b15e16c016680836e40e43ed81da591a0b36075b7f3067",
+  "results/139c_arith/recip_junit.xml": "0dc098f8cff86ee556aad5c8cf6d5975491225b738b9ed3421042156570dc67e",
+  "results/139c_arith/recip_sim_record.json": "d09a5adc72f290426a5d8f505202b4101de29fcd420776f677cfbeed5c4ce7ae"
+ },
+ "name": "recip",
+ "notes": "Arithmetic library function recip (brief 139c). Every requirement is a draft written by the agent from the owner's request (spec_status: draft; only a human sets agreed). Evidence is generated by `python -m pytest arith/recip/tests --junitxml=results/139c_arith/recip_junit.xml` with ARITH_RECORD_DIR=results/139c_arith. The Lean items show 'statement not approved': lean_approvals.yaml is a human's. No Vivado run exists for this function (the build descriptions are prepared, not run), so there are no performance requirements.",
+ "path": "arith/recip",
+ "reproduce": [
+  {
+   "cmd": "python -m pytest -q arith/recip/tests",
+   "what": "the simulation tests"
+  }
+ ],
+ "requirements": [
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "RECIP-F-MODEL",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-RECIP-MODEL",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "results/139c_arith/recip_junit.xml",
+     "record_sha256": "0dc098f8cff86ee556aad5c8cf6d5975491225b738b9ed3421042156570dc67e",
+     "status": "pass",
+     "title": "Model tests against exact arithmetic"
+    }
+   ],
+   "items": [
+    "V-RECIP-MODEL"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": false,
+   "missing_methods": [
+    "a simulation check from a bench the implementing agent did not write"
+   ],
+   "mix_satisfied": false,
+   "own_tests_only": true,
+   "passing_methods": [
+    "sim_test"
+   ],
+   "rests_on_delegated": false,
+   "source": "arith/recip/spec.md#the-function",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "partially_verified",
+   "text": "For the reciprocal: every variant's error (exact value minus result, in units of the last place, by exact rational arithmetic) is within the spec's bound over every normalised input at W = 8 to 12 for every A from 2 to W - 2, at W = 16 for A = 7 and 8, and over sampled inputs to W = 32; the Newton variants never exceed the exact value; the residual word never overflows its width (asserted at every step); the seed table entry is the nearest integer to the midpoint reciprocal.",
+   "title": "The model is the specification: the error of every variant is within the stated bound",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "RECIP-F-RTL-EXH",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-RECIP-RTL-EXH",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "results/139c_arith/recip_junit.xml",
+     "record_sha256": "0dc098f8cff86ee556aad5c8cf6d5975491225b738b9ed3421042156570dc67e",
+     "status": "pass",
+     "title": "Every variant is bit-exact against the model, for every input at small widths"
+    }
+   ],
+   "items": [
+    "V-RECIP-RTL-EXH"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": false,
+   "missing_methods": [
+    "a simulation check from a bench the implementing agent did not write"
+   ],
+   "mix_satisfied": false,
+   "own_tests_only": true,
+   "passing_methods": [
+    "sim_test"
+   ],
+   "rests_on_delegated": false,
+   "source": "arith/recip/spec.md#the-function",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "partially_verified",
+   "text": "Simulation (Icarus 14) of all three variants against the model: every normalised b at W = 8 to 14 with several A (every A at W = 8 and 9), with input gaps; value, order and latency checked.",
+   "title": "Every variant is bit-exact against the model, for every input at small widths",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "RECIP-F-RTL-RAND",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-RECIP-RTL-RAND",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "results/139c_arith/recip_junit.xml",
+     "record_sha256": "0dc098f8cff86ee556aad5c8cf6d5975491225b738b9ed3421042156570dc67e",
+     "status": "pass",
+     "title": "Every variant is bit-exact against the model at large widths"
+    }
+   ],
+   "items": [
+    "V-RECIP-RTL-RAND"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": false,
+   "missing_methods": [
+    "a simulation check from a bench the implementing agent did not write"
+   ],
+   "mix_satisfied": false,
+   "own_tests_only": true,
+   "passing_methods": [
+    "sim_test"
+   ],
+   "rests_on_delegated": false,
+   "source": "arith/recip/spec.md#the-function",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "partially_verified",
+   "text": "Simulation of all three variants against the model with 3000 random and seed-table-boundary inputs at W = 16, 20, 24 and 32.",
+   "title": "Every variant is bit-exact against the model at large widths",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "RECIP-F-LAT",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-RECIP-LAT",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "results/139c_arith/recip_junit.xml",
+     "record_sha256": "0dc098f8cff86ee556aad5c8cf6d5975491225b738b9ed3421042156570dc67e",
+     "status": "pass",
+     "title": "Latency measured per result"
+    }
+   ],
+   "items": [
+    "V-RECIP-LAT"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": false,
+   "missing_methods": [
+    "a simulation check from a bench the implementing agent did not write"
+   ],
+   "mix_satisfied": false,
+   "own_tests_only": true,
+   "passing_methods": [
+    "sim_test"
+   ],
+   "rests_on_delegated": false,
+   "source": "arith/recip/spec.md#the-function",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "partially_verified",
+   "text": "The measured latency equals the spec (1, 5 and 9 clocks for table, nr1, nr2), one result per clock, with back-to-back inputs at W = 10.",
+   "title": "Latency and throughput are what the spec states",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "RECIP-F-LINT",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-RECIP-LINT",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "results/139c_arith/recip_junit.xml",
+     "record_sha256": "0dc098f8cff86ee556aad5c8cf6d5975491225b738b9ed3421042156570dc67e",
+     "status": "pass",
+     "title": "Verilator -Wall lint"
+    }
+   ],
+   "items": [
+    "V-RECIP-LINT"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": false,
+   "missing_methods": [
+    "a simulation check from a bench the implementing agent did not write"
+   ],
+   "mix_satisfied": false,
+   "own_tests_only": true,
+   "passing_methods": [
+    "sim_test"
+   ],
+   "rests_on_delegated": false,
+   "source": "arith/recip/spec.md#the-function",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "partially_verified",
+   "text": "Verilator -Wall --lint-only reports nothing for any variant at W = 8, 10, 16, 24 and 32 (A = 3 to 10).",
+   "title": "The RTL is Verilator -Wall clean",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "RECIP-F-MUTANT",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-RECIP-MUTANT-RUN",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "results/139c_arith/recip_junit.xml",
+     "record_sha256": "0dc098f8cff86ee556aad5c8cf6d5975491225b738b9ed3421042156570dc67e",
+     "status": "pass",
+     "title": "The mutant check passes"
+    },
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-RECIP-MUTANT-SCORE",
+     "instrument": null,
+     "method": "sim_measurement",
+     "mutation_score": null,
+     "record": "results/139c_arith/recip_sim_record.json",
+     "record_sha256": "d09a5adc72f290426a5d8f505202b4101de29fcd420776f677cfbeed5c4ce7ae",
+     "status": "pass",
+     "title": "Mutants killed / total"
+    }
+   ],
+   "items": [
+    "V-RECIP-MUTANT-RUN",
+    "V-RECIP-MUTANT-SCORE"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": false,
+   "missing_methods": [
+    "a simulation check from a bench the implementing agent did not write"
+   ],
+   "mix_satisfied": false,
+   "own_tests_only": true,
+   "passing_methods": [
+    "sim_measurement",
+    "sim_test"
+   ],
+   "rests_on_delegated": false,
+   "source": "arith/recip/spec.md#the-function",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "partially_verified",
+   "text": "Each of 13 seeded faults (one text change in the RTL, verif/mutants.yaml) makes the bench fail: killed/total = 13/13. Two more mutants (E01, E02: the residual's reference value and shift type) are equivalent by arguments given in verif/mutants.yaml and are not counted.",
+   "title": "The bench catches seeded faults",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "RECIP-F-FORMAL-BOUND",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-RECIP-FORMAL-BOUND-RUN",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "results/139c_arith/recip_junit.xml",
+     "record_sha256": "0dc098f8cff86ee556aad5c8cf6d5975491225b738b9ed3421042156570dc67e",
+     "status": "pass",
+     "title": "The error-bound proofs and the fault-catching tests pass"
+    },
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-RECIP-FORMAL-BOUND",
+     "instrument": null,
+     "method": "formal",
+     "mutation_score": null,
+     "record": "results/139c_arith/recip_formal_record.json",
+     "record_sha256": "c844d8ceac0505a970b15e16c016680836e40e43ed81da591a0b36075b7f3067",
+     "status": "pass",
+     "title": "Error-bound proofs: jobs proved by k-induction, none failed"
+    },
+    {
+     "bench_author": "not recorded",
+     "depth": "BMC, latency + 3 cycles",
+     "freshness": "fresh",
+     "id": "V-RECIP-FORMAL-FAULTS",
+     "instrument": null,
+     "method": "formal",
+     "mutation_score": null,
+     "record": "results/139c_arith/recip_formal_record.json",
+     "record_sha256": "c844d8ceac0505a970b15e16c016680836e40e43ed81da591a0b36075b7f3067",
+     "status": "bounded",
+     "title": "Each seeded fault and an over-tight bound make the proof fail (bounded model checking)"
+    }
+   ],
+   "items": [
+    "V-RECIP-FORMAL-BOUND-RUN",
+    "V-RECIP-FORMAL-BOUND",
+    "V-RECIP-FORMAL-FAULTS"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": false,
+   "missing_methods": [],
+   "mix_satisfied": true,
+   "own_tests_only": false,
+   "passing_methods": [
+    "formal",
+    "sim_test"
+   ],
+   "rests_on_delegated": false,
+   "source": "arith/recip/spec.md#the-function",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "verified",
+   "text": "SymbiYosys with the slang front end: each variant's result y satisfies the error characterisation (two products, no shared code with the RTL) for all input sequences from reset, proved by k-induction at an induction depth above the latency (the datapath is a feed-forward pipeline): 8 jobs (table, nr1, nr2 at W = 8, 10, 12). 7 faults or an over-tight bound make the proof fail (bounded model checking), which shows the harness is not vacuous. Not proved for other widths.",
+   "title": "Every variant meets its error bound for all input sequences (SymbiYosys)",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "RECIP-F-LEAN-NEWTON",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-LEAN-RECIP-RECIP-STEP-RESIDUAL",
+     "instrument": null,
+     "lean": {
+      "build_source": "recorded build (not re-run)",
+      "rtl_link": "model_only",
+      "tier": "kernel_only"
+     },
+     "method": "formal_lean",
+     "mutation_score": null,
+     "record": "formal/lean/records/build_record.json",
+     "record_sha256": "3d60b1f76ac87b74d5dcbe085c0eb8e43e0287d69d5fa557490a685624e6c4f6",
+     "status": "unapproved",
+     "title": "The Newton reciprocal step squares the residual: S*S - b*y1 = (S - b*y)**2, every integer value"
+    },
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-LEAN-RECIP-RECIP-STEP-ONE-SIDED",
+     "instrument": null,
+     "lean": {
+      "build_source": "recorded build (not re-run)",
+      "rtl_link": "model_only",
+      "tier": "kernel_only"
+     },
+     "method": "formal_lean",
+     "mutation_score": null,
+     "record": "formal/lean/records/build_record.json",
+     "record_sha256": "3d60b1f76ac87b74d5dcbe085c0eb8e43e0287d69d5fa557490a685624e6c4f6",
+     "status": "unapproved",
+     "title": "The exact Newton reciprocal step never overshoots: b*y1 <= S*S"
+    }
+   ],
+   "items": [
+    "V-LEAN-RECIP-RECIP-STEP-RESIDUAL",
+    "V-LEAN-RECIP-RECIP-STEP-ONE-SIDED"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": false,
+   "missing_methods": [],
+   "mix_satisfied": false,
+   "own_tests_only": false,
+   "passing_methods": [],
+   "rests_on_delegated": false,
+   "source": "arith/recip/spec.md#verification-everything-before-vivado",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "unapproved",
+   "text": "For all integers S (the scale of 1.0), b and y: S*S - b*(y*(2S - b*y)) = (S - b*y)**2, hence b*y1 <= S*S: the exact Newton-Raphson reciprocal step squares the relative error and never exceeds the exact reciprocal. Proved in Lean, statements not approved; the truncations of the RTL (floor at every shift, two guard bits) and the seed table's accuracy are not in Lean (they are measured and proved at fixed widths by SymbiYosys).",
+   "title": "The exact Newton reciprocal step squares the residual and never overshoots (Lean)",
+   "waivers": []
+  },
+  {
+   "agreement": {
+    "status": "draft",
+    "text": "draft: no agreement recorded",
+    "when": "none",
+    "who": "none"
+   },
+   "agreement_by": null,
+   "agreement_date": null,
+   "agreement_dropped": false,
+   "agreement_note": "",
+   "basis": null,
+   "hardware_closure": null,
+   "hardware_only": false,
+   "hardware_verified": false,
+   "id": "RECIP-F-BUILD",
+   "item_views": [
+    {
+     "bench_author": "not recorded",
+     "depth": null,
+     "freshness": "fresh",
+     "id": "V-RECIP-BUILD",
+     "instrument": null,
+     "method": "sim_test",
+     "mutation_score": null,
+     "record": "results/139c_arith/recip_junit.xml",
+     "record_sha256": "0dc098f8cff86ee556aad5c8cf6d5975491225b738b9ed3421042156570dc67e",
+     "status": "pass",
+     "title": "Build descriptions current and consistent; wrapper lint and simulation; packaged harness runs on the library instance"
+    }
+   ],
+   "items": [
+    "V-RECIP-BUILD"
+   ],
+   "kind": "functional",
+   "lean_transcription_only": false,
+   "missing_methods": [
+    "a simulation check from a bench the implementing agent did not write"
+   ],
+   "mix_satisfied": false,
+   "own_tests_only": true,
+   "passing_methods": [
+    "sim_test"
+   ],
+   "rests_on_delegated": false,
+   "source": "arith/recip/spec.md#prepared-for-vivado-not-run",
+   "spec_status": "draft",
+   "stale_items": 0,
+   "state": "partially_verified",
+   "text": "For every variant of the reciprocal there is a build.yaml and an out-of-context clock constraint for xc7a100t and xck26, current against arith/tools/gen_build.py, consistent with the RTL (top, parameters, sources), with the expected primitive use evaluated for each point; the out-of-context wrapper lints clean and is functionally exact for every variant; the packaged verification harness (harness/run.py) passes on the library instance with every coverage bin hit. No Vivado run has been made: this requirement is about preparation, not about area, Fmax or power.",
+   "title": "Out-of-context build descriptions are prepared for Artix-7 and K26 (not run)",
+   "waivers": []
+  }
+ ],
+ "schema": "fda-verified/1",
+ "summary_line": "9 requirements (9 functional); 1 verified; 7 partially verified (the required mix of methods is not met); 0 of 9 requirements agreed by a human, 0 agreed on the owner's delegation (not human), 9 draft; 7 resting only on the implementing agent's own tests; 0 human and 0 delegated review(s) recorded; 2 Lean proof item(s) (all widths): 0 with a human-approved statement, 0 with a statement accepted on the owner's delegation (not a human approval), 2 with statement not approved; 2 kernel only, 0 using a compiled decision procedure; build status from: recorded build (not re-run)."
+}

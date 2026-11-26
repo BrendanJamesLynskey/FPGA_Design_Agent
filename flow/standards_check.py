@@ -54,13 +54,20 @@ except ImportError:
     import vhdl                         # type: ignore[no-redef]
 
 ROOT = Path(__file__).resolve().parents[1]
-VERSION = "1.1"
+VERSION = "1.2"           # 1.2 (brief 231): STD-INIT-02, the setting rtl.reset_model
 #: brief 205 (owner decision 38): initial values in RTL are a setting. ``deny`` fails an initial block or a register
 #: initial value; ``warn`` reports it without failing; ``allow`` (the default) passes power-up values and still flags an
 #: initial block that does more. ROM initialisation (``$readmemh`` / ``$readmemb``) passes in every mode.
 INITIAL_VALUES_MODES = ("allow", "warn", "deny")
 DEFAULT_INITIAL_VALUES = "allow"
 SETTING_INITIAL_VALUES = "rtl.initial_values"
+#: brief 231 (owner, 2026-11-26): the reset model. ``reset`` (the default): a reset input returns the design to its start state while
+#: it runs; a register may carry an initial value only where it has no reset, and control state (an FSM, a valid flag) keeps its
+#: reset. ``reprogram``: every reset reconfigures the FPGA, so the initial values ARE the reset values and control state may rely on
+#: them; a control register with neither an initial value nor a reset is then the finding.
+RESET_MODELS = ("reset", "reprogram")
+DEFAULT_RESET_MODEL = "reset"
+SETTING_RESET_MODEL = "rtl.reset_model"
 
 #: id -> (stage, title, how it is checked)
 RULES: dict[str, tuple[str, str, str]] = {
@@ -84,6 +91,10 @@ RULES: dict[str, tuple[str, str, str]] = {
                            "values pass, an initial block that does more is flagged; warn: reported, not failed; deny: no initial "
                            "blocks or register initial values); ROM initialisation ($readmemh/$readmemb) passes in every mode",
                     "static scan; // synthesis translate_off regions are skipped"),
+    "STD-INIT-02": ("rtl", "a register never has both a reset and a different initial value; with the reset model reset (the default) control "
+                           "state (an FSM, a valid flag) keeps its reset, with the model reprogram (every reset reconfigures the FPGA) "
+                           "control state has an initial value or a reset",
+                    "static scan of declarations and clocked blocks; // std-waive: STD-INIT-02 <reason>"),
     "STD-CDC-01": ("rtl", "every clock-domain crossing is a named CDC primitive from the bank, listed in "
                           "architecture.yaml crossings, and instantiated; no module mixes two clocks outside one",
                    "architecture.yaml crossings against the instances in the RTL; static scan of clocks per module"),
@@ -362,6 +373,63 @@ def register_initial_values(text: str) -> list[tuple[int, str]]:
     return out
 
 
+_CONTROL = re.compile(r"(?i)(?:^|_)(?:state|fsm|valid|vld|busy|full|empty|pending|active|armed|running|done|flag)(?:$|_|\d)")
+
+
+def _is_control(name: str) -> bool:
+    """Control state by name: an FSM state register or a valid, busy, full, empty, pending, active, armed, running, done or flag bit."""
+    return bool(_CONTROL.search(name))
+
+
+def _always_segments(body: str) -> list[tuple[int, str]]:
+    """The module body cut at each ``always``: (position, text up to the next always or the end)."""
+    starts = [m.start() for m in re.finditer(r"\balways(?:_ff|_comb|_latch)?\b", body)]
+    return [(p, body[p:(starts[i + 1] if i + 1 < len(starts) else len(body))]) for i, p in enumerate(starts)]
+
+
+def _reset_branch(seg: str) -> str | None:
+    """The text of the first ``if (rst)`` / ``if (!rst_n)`` branch of a clocked block (a begin..end or one statement)."""
+    m = re.search(r"\bif\s*\(\s*[!~]?\s*\w*(?:rst|reset)\w*\s*(?:==\s*1'b[01]\s*)?\)\s*", seg, re.I)
+    if not m:
+        return None
+    j = m.end()
+    if seg.startswith("begin", j):
+        depth = 0
+        for t in re.finditer(r"\b(begin|end)\b", seg[j:]):
+            depth += 1 if t.group(1) == "begin" else -1
+            if depth == 0:
+                return seg[j:j + t.end()]
+        return seg[j:]
+    k = seg.find(";", j)
+    return seg[j:k + 1] if k >= 0 else seg[j:]
+
+
+def _const(expr: str) -> tuple[str, int] | None:
+    """A literal as (kind, value): ``'0``, ``'1``, ``4'b0101``, ``8'hFF``, ``0``, ``{N{1'b0}}`` (value 0); None for anything else."""
+    e = expr.strip()
+    m = re.fullmatch(r"\{[^{}]+\{\s*(.+?)\s*\}\s*\}", e)
+    if m:
+        inner = _const(m.group(1))
+        return inner if inner and inner[1] == 0 else None
+    if e == "'0":
+        return ("num", 0)
+    if e == "'1":
+        return ("ones", 1)
+    m = re.fullmatch(r"(\d*)'[sS]?([bBdDhHoO])([0-9a-fA-F_]+)", e)
+    if m:
+        base = {"b": 2, "d": 10, "h": 16, "o": 8}[m.group(2).lower()]
+        try:
+            v = int(m.group(3).replace("_", ""), base)
+        except ValueError:
+            return None
+        if v > 0 and m.group(1) and v == (1 << int(m.group(1))) - 1:
+            return ("ones", 1)
+        return ("num", v)
+    if re.fullmatch(r"\d+", e):
+        return ("num", int(e))
+    return None
+
+
 # ---- the rules -------------------------------------------------------------------------------------------
 class Check:
     def __init__(self, design: Path, root: Path = ROOT, variant: str = "base", stage: str | None = None,
@@ -375,6 +443,7 @@ class Check:
         self.rtl_files = sorted(glob.glob(str(self.design / "rtl" / "*.sv")) + glob.glob(str(self.design / "rtl" / "*.v")))
         self.vhdl_error: str | None = None
         self.initial_values, self.initial_values_source = self.resolve_initial_values(settings or {})
+        self.reset_model, self.reset_model_source = self.resolve_reset_model(settings or {})
         if vhdl.design_language(self.design) == "vhdl":   # brief 55: the rules read the GHDL netlist of the VHDL
             self.rtl_files = self._vhdl_netlist()
         self.waivers: dict[str, dict[int, tuple[str, str]]] = {}
@@ -412,6 +481,32 @@ class Check:
                                      f"{', '.join(INITIAL_VALUES_MODES)}")
                 return str(v), src
         return DEFAULT_INITIAL_VALUES, "default"
+
+    def resolve_reset_model(self, settings: dict[str, str]) -> tuple[str, str]:
+        """The effective ``rtl.reset_model`` and where it came from: the run's ``--set`` > the design's ``architecture.yaml``
+        (``rtl: {reset_model: ...}``) > ``spec.yaml`` (``reset: {model: ...}``) > the flow default in ``flow/gates.yaml`` > ``reset``."""
+        rtl = self.arch.get("rtl") if isinstance(self.arch.get("rtl"), dict) else {}
+        spec_reset = None
+        try:
+            sp = yaml.safe_load((self.design / "spec.yaml").read_text()) if (self.design / "spec.yaml").is_file() else None
+            if isinstance(sp, dict) and isinstance(sp.get("reset"), dict):
+                spec_reset = sp["reset"].get("model")
+        except (OSError, yaml.YAMLError):
+            pass
+        cands: list[tuple[str, Any]] = [("--set", settings.get(SETTING_RESET_MODEL)), ("architecture.yaml", rtl.get("reset_model")),
+                                         ("spec.yaml", spec_reset), ("flow/gates.yaml", self._gates_rtl_value("reset_model"))]
+        for src, v in cands:
+            if v is not None:
+                if str(v) not in RESET_MODELS:
+                    raise ValueError(f"{SETTING_RESET_MODEL} is {v!r} (from {src}); it must be one of {', '.join(RESET_MODELS)}")
+                return str(v), src
+        return DEFAULT_RESET_MODEL, "default"
+
+    def _gates_rtl_value(self, key: str) -> Any:
+        try:
+            return (arch_mod.gates_config().get("rtl") or {}).get(key)
+        except (OSError, yaml.YAMLError, AttributeError):
+            return None
 
     def _vhdl_netlist(self) -> list[str]:
         """Brief 55: the design's VHDL as one Verilog netlist (GHDL synthesis, hierarchy kept, generics at their
@@ -660,6 +755,56 @@ class Check:
                     self.add("STD-INIT-01", f, _line_of(text, pos), f"initial value on {name} (rtl.initial_values: {mode}; "
                                                                       "set start values with the reset)", warn=mode == "warn")
 
+    def rule_init_reset(self) -> None:
+        """STD-INIT-02 (brief 231, owner 2026-11-26): initial values and resets agree. A register with a reset and a DIFFERENT initial
+        value has two start states, one at configuration and one at reset. Under ``rtl.reset_model: reset`` (default) control state
+        (an FSM, a valid flag) with an initial value and no reset is flagged, since a running reset cannot restore it; under
+        ``reprogram`` (every reset reconfigures the device) the initial value is the reset value, and a control register with neither
+        is flagged. Registers are read from declarations (``logic q = 1'b0;``) and clocked blocks; a value that is not a literal
+        (a parameter, a function call) is not compared. ``rtl.initial_values: deny`` already flags every initial value."""
+        model = self.reset_model
+        self.notes["reset_model"] = f"{SETTING_RESET_MODEL} = {model} ({self.reset_model_source})"
+        if self.initial_values == "deny":
+            return
+        for mod in self.modules:
+            if mod.file not in self.rtl_files:
+                continue
+            body = drop_translate_off(mod.body)
+            inits = {}
+            for m in _REG_DECL_INIT.finditer(body):
+                if len(re.findall(r"\bbegin\b", body[:m.start()])) - len(re.findall(r"\bend\b", body[:m.start()])) > 0:
+                    continue
+                inits[m.group(1)] = (m.start(1), body[body.index("=", m.end(1)) + 1:m.end()].rstrip(";").strip())
+            segs = _always_segments(body)
+            clocked = [(pos, seg) for pos, seg in segs if re.match(r"always(_ff)?\b\s*@\s*\(", seg)]
+            reset_val: dict[str, str] = {}
+            driven: set[str] = set()
+            for _pos, seg in clocked:
+                branch = _reset_branch(seg)
+                for m in re.finditer(r"(?<![\w.])([A-Za-z_]\w*)\s*(?:\[[^\]]*\]\s*)*<=\s*([^;]+);", seg):
+                    driven.add(m.group(1))
+                if branch:
+                    for m in re.finditer(r"(?<![\w.])([A-Za-z_]\w*)\s*(?:\[[^\]]*\]\s*)*<=\s*([^;]+);", branch):
+                        reset_val.setdefault(m.group(1), m.group(2).strip())
+            for name, (pos, init) in inits.items():
+                line = _line_of(body, pos, mod.body_line0)
+                if name in reset_val:
+                    a, b = _const(init), _const(reset_val[name])
+                    if a is not None and b is not None and a != b:
+                        self.add("STD-INIT-02", mod, line, f"{name} has the initial value {init} and the reset value {reset_val[name]}: "
+                                                           "two start states. Make them agree, or drop the one that is not needed")
+                elif name in driven and model == "reset" and _is_control(name):
+                    self.add("STD-INIT-02", mod, line, f"control register {name} has an initial value and no reset: a reset while the design "
+                                                       "runs cannot restore it. Reset it, or set rtl.reset_model to reprogram if every "
+                                                       "reset of this design reconfigures the FPGA")
+            if model == "reprogram":
+                for m in re.finditer(r"(?m)^[ \t]*(?:reg|logic)\b(?:[ \t]+(?:signed|unsigned))?(?:[ \t]*\[[^\]\n]*\])*[ \t]+([^;=\n]+?)[ \t]*;", body):
+                    for nm in [re.sub(r"\[.*", "", x).strip() for x in m.group(1).split(",")]:
+                        if nm and nm in driven and nm not in inits and nm not in reset_val and _is_control(nm):
+                            self.add("STD-INIT-02", mod, _line_of(body, m.start(1), mod.body_line0),
+                                     f"control register {nm} has neither an initial value nor a reset (rtl.reset_model: reprogram: the "
+                                     "initial values are the reset values)")
+
     def rule_cdc(self) -> None:
         a = self.arch
         doms = [d for d in a.get("clock_domains") or [] if isinstance(d, dict)]
@@ -871,6 +1016,7 @@ class Check:
             self.rule_clocks()
             self.rule_reset()
             self.rule_init()
+            self.rule_init_reset()
             self.rule_cdc()
             self.rule_axi()
             self.rule_waivers()
@@ -895,7 +1041,8 @@ class Check:
         by_stage = {s: all(r["status"] in ("pass", "warn") for r in checked if r["stage"] == s) for s in ("rtl", "post_synth")
                     if s in stages}
         return {"version": VERSION, "design": self.design.name, "variant": self.variant, "rules": rules,
-                "settings": {SETTING_INITIAL_VALUES: self.initial_values, "source": {SETTING_INITIAL_VALUES: self.initial_values_source}},
+                "settings": {SETTING_INITIAL_VALUES: self.initial_values, SETTING_RESET_MODEL: self.reset_model,
+                     "source": {SETTING_INITIAL_VALUES: self.initial_values_source, SETTING_RESET_MODEL: self.reset_model_source}},
                 "stages": by_stage, "notes": self.notes,
                 "pass": all(r["status"] in ("pass", "warn") for r in checked)}
 
@@ -913,14 +1060,17 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--json", type=Path)
     ap.add_argument("--root", type=Path, default=ROOT)
     ap.add_argument("--set", action="append", default=[], metavar="NAME=VALUE",
-                    help=f"a setting for this run (repeatable): {SETTING_INITIAL_VALUES}={'|'.join(INITIAL_VALUES_MODES)}")
+                    help=f"a setting for this run (repeatable): {SETTING_INITIAL_VALUES}={'|'.join(INITIAL_VALUES_MODES)} or "
+                         f"{SETTING_RESET_MODEL}={'|'.join(RESET_MODELS)}")
     a = ap.parse_args(argv)
     stages = ("rtl", "post_synth") if a.stage == "all" else (a.stage,)
     settings: dict[str, str] = {}
     for kv in a.set:
         name, eq, val = kv.partition("=")
-        if not eq or name != SETTING_INITIAL_VALUES or val not in INITIAL_VALUES_MODES:
-            ap.error(f"--set {kv!r}: expected {SETTING_INITIAL_VALUES}=<{'|'.join(INITIAL_VALUES_MODES)}>")
+        allowed = {SETTING_INITIAL_VALUES: INITIAL_VALUES_MODES, SETTING_RESET_MODEL: RESET_MODELS}
+        if not eq or name not in allowed or val not in allowed[name]:
+            ap.error(f"--set {kv!r}: expected {SETTING_INITIAL_VALUES}=<{'|'.join(INITIAL_VALUES_MODES)}> or "
+                     f"{SETTING_RESET_MODEL}=<{'|'.join(RESET_MODELS)}>")
         settings[name] = val
     try:
         res = evaluate(a.design, a.root, a.variant, stages, settings)

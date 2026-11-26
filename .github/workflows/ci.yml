@@ -79,6 +79,8 @@ jobs:
         run: python -m pytest -q --ignore-glob='*_rtl.py'
       - name: Documentation standard (brief 68) - every design, ip_lib entry and results folder; renderings current, numbers from records
         run: python flow/doccheck.py --check --strict
+      - name: Verification records current (brief 144) - VERIFIED.md and verified.json of every design and ip_lib entry equal the generator's output
+        run: python -m flow.verified --check
       - name: Check build manifests and the sample release bundle (no Vivado)
         run: |
           for y in designs/*/build.yaml; do
@@ -197,6 +199,9 @@ jobs:
 
       - name: Formal rigour (brief 143c) - the judge, an end-to-end vacuity check, the mutation tool, and every shipped proof's record against its files
         run: python -m pytest -q flow/tests/test_143c_formal_rigour.py
+
+      - name: Assertions written from requirements (brief 218) - a proved property with a reachable trigger, a failed one, a vacuous one, a register core behind a primitive, the matrix link
+        run: python -m pytest -q flow/tests/test_218_sva_req.py
 
   arith-library:
     name: Arithmetic library (briefs 139b, 139c) - models, RTL against models (Icarus), Verilator lint, seeded mutants, SymbiYosys proofs, traceability gate - OSS CAD Suite 20261112

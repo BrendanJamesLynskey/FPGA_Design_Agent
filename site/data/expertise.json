@@ -2479,7 +2479,7 @@
     "enforced": 0,
     "evidence": 5,
     "sections": 5,
-    "skills": 11
+    "skills": 12
    },
    "evidence": [
     {
@@ -2586,6 +2586,16 @@
       "confirmed": "doc",
       "summary": "FIR, DDS and multiplier IP use the family's DSP slice, so latency, slice count and the fastest clock differ between Artix-7 and the K26 for the same settings.",
       "topic": "Tool-generated DSP IP"
+     },
+     {
+      "confirmed": "tool",
+      "summary": "A fully registered DSP48E1 (operand, multiplier, output registers) is limited by its own Min Period, 2.154 ns at -1 (464 MHz); a DSP48E2 asks 0.85 ns, so routing and the target clock set the speed instead.",
+      "topic": "Slice minimum clock period and the registers that reach it"
+     },
+     {
+      "confirmed": "tool",
+      "summary": "A hand-written DSP cascade delays later stages' operands with plain registers; Vivado turned the deeper ones into SRL16E cells on UltraScale+, whose Min Period (1.524 ns) then set the cascade's speed.",
+      "topic": "Cascade operand-skew registers become shift-register cells"
      }
     ]
    },
@@ -2617,6 +2627,10 @@
     },
     {
      "items": [
+      {
+       "description": "A design's clock speed or latency depends on DSP48E1 registers: which of A/B, M, P to write in the RTL, how a wide multiply or a dot product is built from slices (tool split, hand cascade ...",
+       "name": "artix7-dsp-registers-cascades-fmax"
+      },
       {
        "description": "A 7-series datapath should use DSP48E1 features beyond a plain MAC: the pre-adder, the pattern detector (overflow, rounding, terminal count with AUTORESET_PATDET) ...",
        "name": "artix7-dsp48e1-advanced-modes"
@@ -2833,7 +2847,7 @@
     "enforced": 0,
     "evidence": 1,
     "sections": 6,
-    "skills": 7
+    "skills": 8
    },
    "evidence": [
     {
@@ -2961,6 +2975,10 @@
     {
      "items": [
       {
+       "description": "A design's clock speed or latency depends on DSP48E1 registers: which of A/B, M, P to write in the RTL, how a wide multiply or a dot product is built from slices (tool split, hand cascade ...",
+       "name": "artix7-dsp-registers-cascades-fmax"
+      },
+      {
        "description": "A 7-series datapath should use DSP48E1 features beyond a plain MAC: the pre-adder, the pattern detector (overflow, rounding, terminal count with AUTORESET_PATDET) ...",
        "name": "artix7-dsp48e1-advanced-modes"
       },
@@ -3003,7 +3021,7 @@
     "enforced": 0,
     "evidence": 9,
     "sections": 6,
-    "skills": 8
+    "skills": 9
    },
    "evidence": [
     {
@@ -3807,6 +3825,10 @@
     {
      "items": [
       {
+       "description": "A design's clock speed or latency depends on DSP48E1 registers: which of A/B, M, P to write in the RTL, how a wide multiply or a dot product is built from slices (tool split, hand cascade ...",
+       "name": "artix7-dsp-registers-cascades-fmax"
+      },
+      {
        "description": "A 7-series datapath should use DSP48E1 features beyond a plain MAC: the pre-adder, the pattern detector (overflow, rounding, terminal count with AUTORESET_PATDET) ...",
        "name": "artix7-dsp48e1-advanced-modes"
       },
@@ -4392,6 +4414,11 @@
       "confirmed": "tool",
       "summary": "Async reset maps to FDCE/FDPE, sync to FDRE/FDSE, none to FDRE with an initial value, with the same LUT, flop and control-set counts on 7-series and UltraScale+ for the same RTL (synthesis only).",
       "topic": "Reset styles and flop primitives for a state register"
+     },
+     {
+      "confirmed": "tool",
+      "summary": "Measured on 7-series only: built-in block RAM ECC, a voted triple-register counter and fsm_safe_state each have a measured area and Fmax cost and a measured fault-injection effect; UltraScale+ was not measured.",
+      "topic": "ECC, TMR and safe-state structures (cost and effect)"
      }
     ]
    },
@@ -4864,6 +4891,11 @@
       "confirmed": "doc",
       "summary": "The USR_ACCESS bitstream setting and the USR_ACCESSE2 primitive exist on 7 series, UltraScale+ and both Zynq PLs (UG908 tables); measured on 7 series only.",
       "topic": "Build ID in the bitstream (USR_ACCESS)"
+     },
+     {
+      "confirmed": "tool",
+      "summary": "On the K26 (a Zynq UltraScale+ MPSoC) Vivado 2026.1 does not let write_bitstream encrypt or authenticate the PL bitstream (the properties are read-only); readback, JTAG-to-SYSMON and BSCAN settings it does take.",
+      "topic": "Bitstream encryption, authentication, readback and JTAG security settings"
      }
     ]
    },
@@ -26086,7 +26118,7 @@
    "means": "Development-task runs of the agent, recorded in committed run files, exercised the area."
   }
  ],
- "pin": "6185830",
- "skills_total": 289,
- "skills_used": 215
+ "pin": "eaf6794",
+ "skills_total": 292,
+ "skills_used": 216
 }

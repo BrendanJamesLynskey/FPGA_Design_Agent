@@ -4,6 +4,8 @@ Packet buffer with a ring region and descriptor FIFO per queue, whole-packet tai
 
 Generated from `ip.yaml` by `flow/net/ipdoc.py`; do not edit by hand.
 
+**Verification: not assessed: no requirements recorded (no verif/testplan.yaml), so nothing here is traced to a requirement.** [VERIFIED.md](VERIFIED.md) is the generated, hash-pinned record; [what the label means](../../docs/verified.md).
+
 Status: simulated (brief 40); OOC cost table pending.
 
 ## Parameters

@@ -1,0 +1,130 @@
+{
+ "counts": {
+  "requirements": 0
+ },
+ "criteria": [
+  {
+   "detail": "no requirements recorded",
+   "id": "evidence",
+   "ids": [],
+   "state": "not_measured",
+   "title": "Every requirement has passing evidence"
+  },
+  {
+   "detail": "no requirements recorded",
+   "id": "agreement",
+   "ids": [],
+   "state": "not_measured",
+   "title": "Every requirement is agreed (human, or delegated and labelled so)"
+  },
+  {
+   "detail": "no requirements recorded",
+   "id": "method_mix",
+   "ids": [],
+   "state": "not_measured",
+   "title": "Every requirement meets its required method mix"
+  },
+  {
+   "detail": "no requirements recorded",
+   "id": "mutation",
+   "ids": [],
+   "state": "not_measured",
+   "title": "The bench passes the mutation floor"
+  },
+  {
+   "detail": "no requirements recorded",
+   "id": "formal_rigour",
+   "ids": [],
+   "state": "not_measured",
+   "title": "The formal results pass the rigour checks"
+  },
+  {
+   "detail": "no requirements recorded",
+   "id": "fresh",
+   "ids": [],
+   "state": "not_measured",
+   "title": "The evidence is fresh"
+  }
+ ],
+ "declared": {
+  "evidence": [
+   {
+    "activity": "simulation",
+    "id": "E1",
+    "record": "designs/b65a_axil_soc/tests/test_b65a_rtl.py",
+    "result": "pass"
+   },
+   {
+    "activity": "review",
+    "id": "E2",
+    "record": "flow/blockdesign/tests/test_65a_blockdesign.py",
+    "result": "pass"
+   },
+   {
+    "activity": "faults",
+    "id": "E3",
+    "record": "results/65a_blockdesign/faults.json",
+    "result": "pass"
+   },
+   {
+    "activity": "build",
+    "id": "E4",
+    "record": "results/65a_blockdesign/vivado_build/gates.json",
+    "result": "pass"
+   },
+   {
+    "activity": "model",
+    "id": "E5",
+    "record": "results/blockdesign/b65a_axil_soc/build.json",
+    "result": "pass"
+   }
+  ],
+  "note": "the design's own declared evidence; not traced to requirements and not checked by this record",
+  "source": "handover.yaml",
+  "status": "built"
+ },
+ "definition": "docs/verified.md",
+ "git_commit": "8b3b7767288b3aa2d84ddcc0f25af0284dd9a56f",
+ "kind": "designs",
+ "label": "not assessed: no requirements recorded (no verif/testplan.yaml), so nothing here is traced to a requirement",
+ "label_kind": "not_assessed",
+ "limits": [
+  "Verified never means interoperability with a device the design talks to unless a board measurement against that device is listed in the record; a design that checks its own output against its own model accepts its own symmetric mistakes.",
+  "Verified never means timing beyond the stated corner: a post-route timing result is for the part, speed grade, clock and tool version in its evidence file, not for other corners, temperatures or devices.",
+  "Verified never means beyond the widths and depths checked: a simulation covers the vectors it ran, a bounded formal result covers the stated depth only, and a per-width proof covers the widths it names; only a Lean proof marked all widths covers every width, and only for its model.",
+  "Verified never means the requirement is the right one: the text of a requirement is the human's check (or the planner's, where the record says delegated), and a record shows that checks exist and pass, not that nothing was left out.",
+  "Verified never means a hardware or board result unless a board measurement item is listed; a simulation is not the board.",
+  "Verified is about the files in the manifest at the hashes given. A change to any of them makes the record out of date (the CI check fails), and the evidence stale until it is re-recorded.",
+  "An agreement or acceptance recorded as delegated is the planner's decision on the owner's delegation, not a human sign-off; the record counts it apart."
+ ],
+ "manifest": {
+  "designs/b65a_axil_soc/handover.yaml": "8cffda9316543acc19f2974ac0c49f8e9e9c2825d85980e96d7d3557e8ed4801",
+  "designs/b65a_axil_soc/tests/test_b65a_rtl.py": "583424fc10773bfa88930da27ffb1a419db86d4485b63e8513a43b6eaabdd419",
+  "flow/blockdesign/tests/test_65a_blockdesign.py": "87d41b298c9eb4dbdf436cf602e585cea91af303552ab7a786b9095df220097a",
+  "results/65a_blockdesign/faults.json": "987ffa05708a304d15c4fd435f3924b62281f3483402c23c6377c0f435a54e6c",
+  "results/65a_blockdesign/vivado_build/gates.json": "2f065946f7c26ea38aefad49b957dfd64774f81e828a37b1ceb98cae52eb78f3",
+  "results/blockdesign/b65a_axil_soc/build.json": "0f94c01fe9030d392accae7358550c7c7f3a5e801576f6be47ca7d9c60aa54ea"
+ },
+ "name": "b65a_axil_soc",
+ "path": "designs/b65a_axil_soc",
+ "reproduce": [
+  {
+   "cmd": "python3 -m flow.blockdesign validate designs/b65a_axil_soc",
+   "what": "validate the block design"
+  },
+  {
+   "cmd": "python3 -m flow.blockdesign generate designs/b65a_axil_soc",
+   "what": "regenerate gen/ from the two YAML files"
+  },
+  {
+   "cmd": "python3 -m flow.blockdesign check designs/b65a_axil_soc",
+   "what": "check gen/ against the sources"
+  },
+  {
+   "cmd": "python -m pytest -q designs/b65a_axil_soc/tests/test_b65a_rtl.py",
+   "what": "simulate end to end"
+  }
+ ],
+ "requirements": [],
+ "schema": "fda-verified/1"
+}
