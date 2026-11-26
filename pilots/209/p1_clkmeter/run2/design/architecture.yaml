@@ -1,0 +1,44 @@
+schema: fpga-design-agent/architecture/v1
+blocks:
+- name: freq_meter_top
+  function: thin top; IBUFDS_GTE4 + BUFG_GT for ref clock, jtag_bus, reset generator, core, sfp_tx_disable=1
+- name: jtag_bus
+  function: supplied BSCANE2 USER4 register bus (data/jtag_bus.sv, unchanged)
+- name: freq_meter_core
+  function: register file, gate counter (ref_clk), c3 edge counter, LED blinkers, CDC glue
+interfaces:
+- name: reg_port
+  between: [jtag_bus, freq_meter_core]
+  protocol: simple
+  prefix: h
+  module: freq_meter_core
+clock_domains:
+- name: ref
+  clock: ref_clk_p
+  freq_mhz: 156.25
+- name: c3
+  clock: c3_clk
+  freq_mhz: 25
+reset:
+  synchronisers: [freq_meter_core]
+crossings:
+- from: ref
+  to: c3
+  signal: gate window (gate_open)
+  primitive: xpm_cdc_single
+  inline_in: freq_meter_core
+- from: c3
+  to: ref
+  signal: edge count (captured while gate closed, qualified by done toggle)
+  primitive: xpm_cdc_array_single
+  inline_in: freq_meter_core
+- from: ref
+  to: c3
+  signal: reset
+  primitive: xpm_cdc_async_rst
+  inline_in: freq_meter_core
+predicted_resources:
+  lut: [350, 900]
+  ff: [650, 1300]
+  bram_tile: 0
+  dsp: 0

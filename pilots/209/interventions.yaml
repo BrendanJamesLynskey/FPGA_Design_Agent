@@ -1,0 +1,9 @@
+# Brief 209: every intervention (a hint, an edited file, a re-run with a changed spec, a restart of a failed run). A design/run with any entry does not count as "first time".
+# Fields: time (from `date`), design, run, what, why. Answering an interview question from facts already in spec.md or board.yaml is logged too, with kind: interview_answer.
+interventions:
+  # Setup faults before any agent run began (no model call was made, no spend). Logged because each was a relaunch of the same command after a refusal.
+  - {time: "2026-11-25 02:43", design: p1_clkmeter, run: 1, kind: setup_fault, what: "launch refused: FDA_ACCESS_KEY missing; planner authorised the house-rules key-file copy into the worktree", why: "access key required by the agent"}
+  - {time: "2026-11-25 02:45", design: p1_clkmeter, run: 1, kind: setup_fault, what: "launch refused: private prompts not found; FDA_KNOWLEDGE pointed at a checkout of the knowledge repository at the pinned commit 5e2eab87", why: "pinned prompt manifest"}
+  - {time: "2026-11-25 02:49", design: p1_clkmeter, run: 1, kind: setup_fault, what: "first API call answered HTTP 400 (temperature deprecated for claude-sonnet-5-5); relaunched with options temperature null in the same --model-config (pre-registration addendum)", why: "model configuration; the failed launch made no completed model call"}
+  # Not an intervention in any run (no run was restarted, no file of any run edited): the batch driver stopped after p1 run 1 because a run paused at stage 9 has no summary.json; the driver was fixed (record_one.sh, run_record.py) and the existing run directory was recorded, not re-run. Logged for completeness.
+  - {time: "2026-11-25 06:01", design: p1_clkmeter, run: 1, kind: tooling_fix, what: "driver changed to record a stage-9 pause from role_usage/model_calls; run 1 recorded from its finished run directory, not repeated", why: "paused runs write no summary.json"}

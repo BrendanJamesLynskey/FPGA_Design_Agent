@@ -1,0 +1,371 @@
+{
+ "design": "p6_glitchfree_mux",
+ "run": 2,
+ "run_id": "20261125-161633-50bb",
+ "agent_sha": "cc6597b64bb3",
+ "model": [
+  "claude-sonnet-5-5"
+ ],
+ "endpoint": [
+  "anthropic_api"
+ ],
+ "api_calls": 89,
+ "real_usd": 3.9395,
+ "prompt_tokens": 2557306,
+ "completion_tokens": 259976,
+ "input_tokens": 218,
+ "cache_read_tokens": 2105598,
+ "cache_write_tokens": 451490,
+ "tokens_total": 2817282,
+ "truncated_calls": 6,
+ "cost_basis": [
+  "usage*price"
+ ],
+ "wall_s_after_slot": 2020,
+ "stage_visits": [
+  [
+   "clarify",
+   1,
+   "clarify",
+   "done",
+   5,
+   0.156
+  ],
+  [
+   "clarify",
+   2,
+   "clarify",
+   "done",
+   2,
+   0.047
+  ],
+  [
+   "board-and-device-planning",
+   1,
+   "rtl",
+   "done",
+   5,
+   0.109
+  ],
+  [
+   "board-and-device-planning",
+   2,
+   "rtl",
+   "done",
+   5,
+   0.067
+  ],
+  [
+   "rtl-design-creation",
+   1,
+   "model",
+   "done",
+   2,
+   0.051
+  ],
+  [
+   "rtl-design-creation",
+   1,
+   "tests",
+   "done",
+   6,
+   0.257
+  ],
+  [
+   "rtl-design-creation",
+   1,
+   "rtl",
+   "done",
+   5,
+   0.281
+  ],
+  [
+   "rtl-design-creation",
+   2,
+   "tests",
+   "done",
+   4,
+   0.088
+  ],
+  [
+   "rtl-design-creation",
+   2,
+   "rtl",
+   "done",
+   7,
+   0.597
+  ],
+  [
+   "rtl-design-creation",
+   3,
+   "tests",
+   "done",
+   7,
+   0.123
+  ],
+  [
+   "rtl-design-creation",
+   3,
+   "rtl",
+   "done",
+   4,
+   0.226
+  ],
+  [
+   "rtl-design-creation",
+   4,
+   "tests",
+   "done",
+   5,
+   0.091
+  ],
+  [
+   "rtl-design-creation",
+   4,
+   "rtl",
+   "done",
+   8,
+   0.444
+  ],
+  [
+   "rtl-design-creation",
+   5,
+   "tests",
+   "done",
+   5,
+   0.113
+  ],
+  [
+   "rtl-design-creation",
+   5,
+   "rtl",
+   "done",
+   6,
+   0.483
+  ],
+  [
+   "rtl-design-creation",
+   6,
+   "tests",
+   "done",
+   6,
+   0.114
+  ],
+  [
+   "rtl-design-creation",
+   6,
+   "rtl",
+   "done",
+   4,
+   0.221
+  ]
+ ],
+ "outcome": "stopped: stage 2 visited more than 6 times; last failing gate: lint, simulate, design standards, verification V2; owned by the rtl/tests role; last failing assertion: V2 seeds_run: no seeded results: read runs/20261125-161633-50bb/p6_glitchfree_mux/build/verif/sim/seed*/results.xml and found none. The gate expects runs/20261125-161633-50bb/p6_glitchfree_mux/build/verif/sim/seed<N>/results.xml, one direct; the same failure on 6 consecutive visits",
+ "reached_stage": 2,
+ "summary_stop": "stage 2 visited more than 6 times; last failing gate: lint, simulate, design standards, verification V2; owned by the rtl/tests role; last failing assertion: V2 seeds_run: no seeded results: read runs/20261125-161633-50bb/p6_glitchfree_mux/build/verif/sim/seed*/results.xml and found none. The gate expects runs/20261125-161633-50bb/p6_glitchfree_mux/build/verif/sim/seed<N>/results.xml, one direct; the same failure on 6 consecutive visits",
+ "interview": "off",
+ "cost_usd_agent": 3.469316,
+ "interview_note": "--interview off: the agent's defaults were taken, nothing asked or answered by hand",
+ "bitstream_built": false,
+ "verif_stages": {
+  "V0": true,
+  "V1": true,
+  "V2": false,
+  "V3": null,
+  "SIGNOFF": false,
+  "V-HW": false
+ },
+ "trace_pass": false,
+ "requirement_table": [
+  {
+   "id": "REQ-01",
+   "text": "ID register at 0x000 reads 0x20960001.",
+   "methods": {
+    "simulation": "pending",
+    "hardware": "pending"
+   }
+  },
+  {
+   "id": "REQ-02",
+   "text": "BUILD register at 0x004 reads the USR_ACCESSE2 word.",
+   "methods": {
+    "hardware": "pending"
+   }
+  },
+  {
+   "id": "REQ-03",
+   "text": "SCRATCH reads back the written 32-bit value.",
+   "methods": {
+    "simulation": "pending",
+    "hardware": "pending"
+   }
+  },
+  {
+   "id": "REQ-04",
+   "text": "Unmapped addresses read 0.",
+   "methods": {
+    "simulation": "pending"
+   }
+  },
+  {
+   "id": "REQ-24",
+   "text": "SCRATCH reads 0 after reset.",
+   "methods": {
+    "simulation": "pending"
+   }
+  },
+  {
+   "id": "REQ-25",
+   "text": "A write to an unmapped address changes no register value.",
+   "methods": {
+    "simulation": "pending"
+   }
+  },
+  {
+   "id": "REQ-05",
+   "text": "h_rdata shows the addressed register within 2 clocks of h_re.",
+   "methods": {
+    "simulation": "pending",
+    "formal": "pending"
+   }
+  },
+  {
+   "id": "REQ-06",
+   "text": "SEL resets to 0 and selects clock A.",
+   "methods": {
+    "simulation": "pending"
+   }
+  },
+  {
+   "id": "REQ-07",
+   "text": "ACTIVE_SEL equals SEL after a switch completes.",
+   "methods": {
+    "simulation": "pending",
+    "hardware": "pending"
+   }
+  },
+  {
+   "id": "REQ-08",
+   "text": "SWITCHING is 1 from a SEL change until ACTIVE_SEL equals SEL.",
+   "methods": {
+    "simulation": "pending"
+   }
+  },
+  {
+   "id": "REQ-09",
+   "text": "B_DIV reads a value from 1 to 8 equal to the built divide.",
+   "methods": {
+    "simulation": "pending",
+    "hardware": "pending"
+   }
+  },
+  {
+   "id": "REQ-10",
+   "text": "MUX_ERRS is 0 after 1,000 random switches.",
+   "methods": {
+    "simulation": "pending",
+    "hardware": "pending"
+   }
+  },
+  {
+   "id": "REQ-11",
+   "text": "MUX_ERRS increments by 1 for each cycle where the counter and its twin disagree.",
+   "methods": {
+    "simulation": "pending",
+    "formal": "pending"
+   }
+  },
+  {
+   "id": "REQ-12",
+   "text": "SWITCH_COUNT equals the number of real changes of SEL after 1,000 switches.",
+   "methods": {
+    "simulation": "pending",
+    "hardware": "pending"
+   }
+  },
+  {
+   "id": "REQ-13",
+   "text": "A write of the current SEL value does not change SWITCH_COUNT.",
+   "methods": {
+    "simulation": "pending"
+   }
+  },
+  {
+   "id": "REQ-14",
+   "text": "GATE_LEN resets to 25,000,000.",
+   "methods": {
+    "simulation": "pending"
+   }
+  },
+  {
+   "id": "REQ-15",
+   "text": "FREQ_STATUS.BUSY is 1 for GATE_LEN clk_a cycles after START.",
+   "methods": {
+    "simulation": "pending"
+   }
+  },
+  {
+   "id": "REQ-16",
+   "text": "FREQ_STATUS.DONE is 1 at the end of the gate.",
+   "methods": {
+    "simulation": "pending",
+    "hardware": "pending"
+   }
+  },
+  {
+   "id": "REQ-17",
+   "text": "FREQ_COUNT with clock A selected is 25,000,000 within plus or minus 2 at the default gate.",
+   "methods": {
+    "hardware": "pending"
+   }
+  },
+  {
+   "id": "REQ-18",
+   "text": "FREQ_COUNT with clock B selected is 156,250,000 divided by B_DIV within plus or minus 2 at the default gate.",
+   "methods": {
+    "hardware": "pending"
+   }
+  },
+  {
+   "id": "REQ-19",
+   "text": "A write to SNAPSHOT latches the low 32 bits of the muxed counter into MUX_COUNT.",
+   "methods": {
+    "simulation": "pending"
+   }
+  },
+  {
+   "id": "REQ-20",
+   "text": "sfp_tx_disable is constant 1.",
+   "methods": {
+    "simulation": "pending",
+    "analysis": "pending"
+   }
+  },
+  {
+   "id": "REQ-21",
+   "text": "The design uses 0 GT transceiver channels.",
+   "methods": {
+    "analysis": "pending"
+   }
+  },
+  {
+   "id": "REQ-22",
+   "text": "Timing closes with worst negative slack at or above 0 ns on all clocks.",
+   "methods": {
+    "analysis": "pending"
+   }
+  },
+  {
+   "id": "REQ-23",
+   "text": "data/jtag_bus.sv is instantiated unchanged.",
+   "methods": {
+    "analysis": "pending"
+   }
+  }
+ ],
+ "requirement_method_results": {
+  "pending": 35
+ },
+ "requirements": 25,
+ "hw_checks_present": false
+}

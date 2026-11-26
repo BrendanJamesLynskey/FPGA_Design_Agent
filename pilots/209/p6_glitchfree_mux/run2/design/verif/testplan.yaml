@@ -1,0 +1,123 @@
+schema: fpga-design-agent/testplan/v0
+design: p6_glitchfree_mux
+spec: spec.yaml
+model: model.py
+bench:
+  modules: [test_p6_glitchfree_mux_bench]
+  dir: tests
+checkers: verif/checkers
+formal_dir: verif/formal
+thresholds:
+  seeds_min: 3
+  functional_bins_pct: 100
+  cover_properties_pct: 100
+  line_pct: 90
+  toggle_pct: 70
+  mutation_score_pct: 70
+waivers:
+  code_coverage: []
+  functional_bins: []
+  cover_properties: []
+requirements:
+- id: R-REGPORT
+  spec:
+  - "behaviour.register_port[0]"
+  - "behaviour.register_port[1]"
+  - "behaviour.register_port[2]"
+  - "behaviour.register_port[3]"
+  - "registers.unmapped"
+  - "timing.latency.read"
+  - "timing.latency.write"
+  - "behaviour.common[0]"
+  - "registers.map.ID"
+  - "registers.map.BUILD"
+  - "registers.map.SCRATCH"
+  - "registers.map.SNAPSHOT"
+  tests:
+  - test_p6_glitchfree_mux_bench.test_scratch_unmapped
+  - test_p6_glitchfree_mux_bench.test_random_register_traffic
+  - test_p6_glitchfree_mux_bench.test_reset_values
+- id: R-RESET
+  spec:
+  - "reset"
+  - "registers.map.GATE_LEN"
+  - "registers.map.B_DIV"
+  - "registers.map.MUX_ERRS"
+  - "registers.map.SWITCH_COUNT"
+  tests:
+  - test_p6_glitchfree_mux_bench.test_reset_values
+- id: R-MUX
+  spec:
+  - "behaviour.mux[0]"
+  - "behaviour.mux[1]"
+  - "behaviour.mux[2]"
+  - "behaviour.mux[3]"
+  - "behaviour.mux[4]"
+  - "registers.map.SEL"
+  - "registers.map.STATUS"
+  - "timing.latency.switch"
+  tests:
+  - test_p6_glitchfree_mux_bench.test_switch_directed
+  - test_p6_glitchfree_mux_bench.test_random_switches
+- id: R-MUXDOM
+  spec:
+  - "behaviour.muxed_domain[0]"
+  - "behaviour.muxed_domain[1]"
+  - "behaviour.muxed_domain[2]"
+  - "registers.map.MUX_COUNT"
+  tests:
+  - test_p6_glitchfree_mux_bench.test_snapshot
+  - test_p6_glitchfree_mux_bench.test_random_switches
+- id: R-FREQ
+  spec:
+  - "behaviour.freq_measure[0]"
+  - "behaviour.freq_measure[1]"
+  - "behaviour.freq_measure[2]"
+  - "behaviour.freq_measure[3]"
+  - "registers.map.FREQ_CTRL"
+  - "registers.map.FREQ_STATUS"
+  - "registers.map.FREQ_COUNT"
+  tests:
+  - test_p6_glitchfree_mux_bench.test_freq_measure
+- id: R-PINS
+  spec:
+  - "behaviour.pins[0]"
+  tests:
+  - test_p6_glitchfree_mux_bench.test_reset_values
+proof:
+- {requirement: REQ-01, method: simulation, artefact: test_p6_glitchfree_mux_bench.test_reset_values}
+- {requirement: REQ-01, method: hardware, artefact: uart_tests}
+- {requirement: REQ-02, method: hardware, artefact: uart_tests}
+- {requirement: REQ-03, method: simulation, artefact: test_p6_glitchfree_mux_bench.test_scratch_unmapped}
+- {requirement: REQ-03, method: hardware, artefact: uart_tests}
+- {requirement: REQ-04, method: simulation, artefact: test_p6_glitchfree_mux_bench.test_scratch_unmapped}
+- {requirement: REQ-24, method: simulation, artefact: test_p6_glitchfree_mux_bench.test_reset_values}
+- {requirement: REQ-25, method: simulation, artefact: test_p6_glitchfree_mux_bench.test_scratch_unmapped}
+- {requirement: REQ-05, method: simulation, artefact: test_p6_glitchfree_mux_bench.test_scratch_unmapped}
+- {requirement: REQ-06, method: simulation, artefact: test_p6_glitchfree_mux_bench.test_reset_values}
+- {requirement: REQ-07, method: simulation, artefact: test_p6_glitchfree_mux_bench.test_switch_directed}
+- {requirement: REQ-07, method: hardware, artefact: uart_tests}
+- {requirement: REQ-08, method: simulation, artefact: test_p6_glitchfree_mux_bench.test_switch_directed}
+- {requirement: REQ-09, method: simulation, artefact: test_p6_glitchfree_mux_bench.test_reset_values}
+- {requirement: REQ-09, method: hardware, artefact: uart_tests}
+- {requirement: REQ-10, method: simulation, artefact: test_p6_glitchfree_mux_bench.test_random_switches}
+- {requirement: REQ-10, method: hardware, artefact: uart_tests}
+- {requirement: REQ-11, method: simulation, artefact: test_p6_glitchfree_mux_bench.test_snapshot}
+- {requirement: REQ-12, method: simulation, artefact: test_p6_glitchfree_mux_bench.test_random_switches}
+- {requirement: REQ-12, method: hardware, artefact: uart_tests}
+- {requirement: REQ-13, method: simulation, artefact: test_p6_glitchfree_mux_bench.test_switch_directed}
+- {requirement: REQ-14, method: simulation, artefact: test_p6_glitchfree_mux_bench.test_reset_values}
+- {requirement: REQ-15, method: simulation, artefact: test_p6_glitchfree_mux_bench.test_freq_measure}
+- {requirement: REQ-16, method: simulation, artefact: test_p6_glitchfree_mux_bench.test_freq_measure}
+- {requirement: REQ-16, method: hardware, artefact: uart_tests}
+- {requirement: REQ-17, method: hardware, artefact: uart_tests}
+- {requirement: REQ-18, method: hardware, artefact: uart_tests}
+- {requirement: REQ-19, method: simulation, artefact: test_p6_glitchfree_mux_bench.test_snapshot}
+- {requirement: REQ-20, method: simulation, artefact: test_p6_glitchfree_mux_bench.test_reset_values}
+- {requirement: REQ-20, method: analysis, artefact: "post_synth:post_synth_resources_in_range"}
+- {requirement: REQ-21, method: analysis, artefact: "post_synth:post_synth_resources_in_range"}
+- {requirement: REQ-22, method: analysis, artefact: "post_route:setup"}
+- {requirement: REQ-23, method: analysis, artefact: "post_synth:post_synth_resources_in_range"}
+replan:
+- {requirement: REQ-05, method: formal, replaced_by: simulation, artefact: test_p6_glitchfree_mux_bench.test_scratch_unmapped, why: SymbiYosys is not installed so the formal job was re-planned to the cocotb read-latency check.}
+- {requirement: REQ-11, method: formal, replaced_by: simulation, artefact: test_p6_glitchfree_mux_bench.test_random_switches, why: SymbiYosys is not installed so the formal job was re-planned to the MUX_ERRS equals 0 check over 1000 switches.}
