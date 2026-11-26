@@ -128,7 +128,16 @@ EFUSE_WORDS = re.compile(r"e-?fuse|bbram|program_hw_efuse|write_bbram|\.nky\b|ae
 BOOT_WORDS = re.compile(r"boot\.bin|\.bif\b|boot[_ ]?image|\.pof\b|\.jic\b|write_bitstream[^\n]*-(bin|mcs)|emmc|\bmmcblk|\bdd\s+if=", re.I)
 LASER_WORDS = re.compile(r"laser", re.I)
 LASER_ON = re.compile(r"enable|on\b|true|1\b|emit|tx[_ ]?(enable|disable\s*=\s*0)|disable\s*=\s*0|safe[_ ]?off\s*=\s*0", re.I)
-LAB_TOOLS = frozenset({"drive_instrument", "instrument_output", "lab_output", "set_instrument_output"})     # brief 221 registers its own through register_tool_action
+#: Red Pitaya OS (brief 225): the board's SD card, its OS image, its updater and its factory SCPI server are the owner's. A custom bitstream is loaded into the
+#: volatile PL configuration only (overlay.sh or fpgautil, which this does not match); nothing that writes the card, the boot files or the OS, or that turns the
+#: factory SCPI server on, is ever run by the agent. Matched in a board or instrument tool's arguments and in a script about to run on a board.
+REDPITAYA_OS_WORDS = re.compile(
+    r"ecosystem[-_ ]?(update|upgrade|install)|\bupdateutil\b|\bupdate[-_ ]?(os|ecosystem)\b|redpitaya[-_ ]?(os|ubuntu)[-_ ]?(image|update)|\bapt(-get)?\s+(dist-)?upgrade"
+    r"|(>|>>|\btee\b)\s*/opt/redpitaya/|\b(rm|mv|cp|sed\s+-i)\b[^\n]*/opt/redpitaya/|\bmount\b[^\n]*(mmcblk|/dev/sd)|/media/[^\s/]+/(boot|rootfs)"
+    r"|\bfsbl\b[^\n]*(write|copy|flash)|u-boot\.(img|scr)|uImage\b|\bdevicetree\.dtb\b|\bsync;?\s*umount\b"
+    r"|scpi[-_ ]?server[^\n]*(start|enable)|(start|enable)[^\n]*scpi[-_ ]?server|systemctl\s+(enable|start|restart)\s+redpitaya_scpi|\bscpi\.sh\s+start",
+    re.I)
+LAB_TOOLS = frozenset({"drive_instrument", "instrument_output", "lab_output", "set_instrument_output"})     # brief 221 registers its own through register_tool_action; brief 225's addendum: drive_instrument calls check_drive
 
 
 @dataclass(frozen=True)
@@ -144,6 +153,7 @@ NEVER: tuple[NeverRule, ...] = (
     NeverRule("keys", "Program or load a key into a device."),
     NeverRule("laser", "Enable a laser anywhere except the design's own checked bring-up step."),
     NeverRule("lab_limits", "Drive an instrument output beyond the lab file's safety limits, or enable an output the lab file lists as never enabled by a script."),
+    NeverRule("redpitaya_os", "Change the Red Pitaya's SD card, boot files or OS image, run its OS updater, or turn on its factory SCPI server (a custom bitstream goes into the volatile PL configuration only)."),
     NeverRule("hard_cap", f"Spend past the hard cap: no run may be given a cost cap above ${HARD_CAP_USD:g}."),
 )
 NEVER_BY_ID = {r.id: r for r in NEVER}
@@ -160,7 +170,31 @@ class NeverRefused(SecurityError):
 BOARD_TOOLS = frozenset({"program", "bringup", "debug_capture", "axi_board_run", "eye_scan"})
 
 
-def never_violation(tool: str, args: dict[str, Any] | None, stage: str | None = None) -> tuple[str, str] | None:
+def lab_drive_violation(args: dict[str, Any] | None, design: Any = None) -> str | None:
+    """The reason a drive request breaks the lab file's limits, else None. Brief 225's addendum: this is where brief 222's ``lab_limits`` never-rule calls
+    :func:`hil.lab.check_drive` (brief 221), over the lab merged for ``design`` (the owner's profile and the design's own lab file). A request that
+    names no instrument and output, an instrument the lab does not list, one that is not onboarded, an output that is never enabled by a script, a value
+    above a limit, or a value the output needs and the call does not state, is refused: nothing is assumed free."""
+    from hil import lab as L
+    a = args or {}
+    iid, out = str(a.get("instrument") or ""), str(a.get("output") or "")
+    if not iid or not out:
+        return "a drive request names its instrument and its output; this one does not, so no limit can be checked"
+    num = {}
+    for k in ("volts", "amps", "dbm", "hz", "attenuator_db", "board_vcco_v"):
+        v = a.get(k)
+        if v is not None and (isinstance(v, bool) or not isinstance(v, (int, float))):
+            return f"{k} is not a number ({v!r})"
+        num[k] = v
+    try:
+        lab = L.load(Path(design) if design else None)
+        L.check_drive(lab, iid, out, **num)
+    except L.LabError as e:
+        return str(e)
+    return None
+
+
+def never_violation(tool: str, args: dict[str, Any] | None, stage: str | None = None, design: Any = None) -> tuple[str, str] | None:
     """(rule id, reason) when this tool call would break a never-rule, else None. Pure code over the call; it does not read a mode.
 
     Scanned: the target of ``program``; the path of a file the agent writes (never a boot image, flash image or key file); and, for every tool that
@@ -176,6 +210,8 @@ def never_violation(tool: str, args: dict[str, Any] | None, stage: str | None = 
             return "boot_image", f"the agent does not write a boot image ({path!r})"
         if re.search(r"\.(mcs|pof|jic|nky)$", path, re.I):
             return ("keys" if path.lower().endswith(".nky") else "flash"), f"the agent does not write {path!r}"
+        if REDPITAYA_OS_WORDS.search(path):
+            return "redpitaya_os", f"the agent does not write the Red Pitaya's boot or OS files ({path!r})"
         return None
     if tool in BOARD_TOOLS or tool in LAB_TOOLS or tool in _EXTRA_TOOL_ACTIONS:
         text = json.dumps(a, default=str)
@@ -188,15 +224,23 @@ def never_violation(tool: str, args: dict[str, Any] | None, stage: str | None = 
         m = BOOT_WORDS.search(text)
         if m:
             return "boot_image", f"the call names {m.group(0)!r}"
+        m = REDPITAYA_OS_WORDS.search(text)
+        if m:
+            return "redpitaya_os", f"the call names {m.group(0)!r} (the Red Pitaya's SD card, OS or factory SCPI server)"
         if tool != "bringup" and LASER_WORDS.search(text) and LASER_ON.search(text):
             return "laser", "a laser is enabled only inside the design's own checked bring-up step"
+        if tool in LAB_TOOLS:                                  # brief 225: the lab file's limits, by hil.lab.check_drive, whatever the mode
+            why = lab_drive_violation(a, design)
+            if why:
+                return "lab_limits", why
     return None
 
 
 def check_script(text: str) -> tuple[str, str] | None:
     """The same never-rules over a script (a Tcl or Python file about to run on a board): flash, boot images, eFUSE, BBRAM, keys."""
     for rule, rx, why in (("flash", re.compile(r"write_cfgmem|program_hw_cfgmem|\bcfgmem\b|\.mcs\b|\.pof\b|\.jic\b|flash|qspi", re.I), "configuration memory"),
-                          ("boot_image", BOOT_WORDS, "a boot image"), ("efuse_bbram", EFUSE_WORDS, "eFUSE, BBRAM or a key")):
+                          ("boot_image", BOOT_WORDS, "a boot image"), ("efuse_bbram", EFUSE_WORDS, "eFUSE, BBRAM or a key"),
+                          ("redpitaya_os", REDPITAYA_OS_WORDS, "the Red Pitaya's SD card, OS or factory SCPI server")):
         m = rx.search(text)
         if m:
             return rule, f"the script names {m.group(0)!r} ({why})"
@@ -229,8 +273,8 @@ def check_hard_cap(usd: float | None) -> str | None:
     return None
 
 
-def never_check(tool: str, args: dict[str, Any] | None, stage: str | None = None) -> None:
-    v = never_violation(tool, args, stage)
+def never_check(tool: str, args: dict[str, Any] | None, stage: str | None = None, design: Any = None) -> None:
+    v = never_violation(tool, args, stage, design)
     if v:
         raise NeverRefused(*v)
 
@@ -240,7 +284,7 @@ def never_check(tool: str, args: dict[str, Any] | None, stage: str | None = None
 SIM_TOOLS = ("simulate", "formal", "mutate", "lint", "axi_simulate", "oss_synth", "eqy_check")
 VIVADO_TOOLS = ("build", "rw_route", "rw_place_chain", "rw_relocate_block", "rw_referee")
 KNOWLEDGE_TOOLS = ("search_docs", "load_skill", "skill_index", "skill_excerpt", "board_constraints", "ip_lookup")
-_EXTRA_TOOL_ACTIONS: dict[str, tuple[str, ...]] = {}
+_EXTRA_TOOL_ACTIONS: dict[str, tuple[str, ...]] = {"drive_instrument": ("drive_instrument_output",)}      # brief 225: the lab tool, gated before its module is imported
 
 
 def register_tool_action(tool: str, *actions: str) -> None:
@@ -474,7 +518,7 @@ def tool_gate(session: Any, name: str, args: dict[str, Any] | None) -> None:
     """Called by ``registry.dispatch`` before every tool runs. The never-rules always; then, when the session belongs to a run with a policy
     file, each action the tool needs. An ``ask`` the run has not been granted refuses the call with the reason (the graph asks at the start of
     the stage, so a tool call that arrives ungranted is the model reaching past it). Raises SecurityError, never crashes."""
-    never_check(name, args, getattr(session, "stage", None))
+    never_check(name, args, getattr(session, "stage", None), getattr(session, "design", None))
     rd = getattr(session, "permissions_run_dir", None)
     if not rd:
         return
