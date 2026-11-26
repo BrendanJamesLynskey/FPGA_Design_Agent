@@ -215,10 +215,10 @@ def test_xdc_parser_reads_braced_lists_and_nested_brackets():
 def test_tool_hooks_refuse_build_and_report_notes(tmp_path):
     """complete_findings is what the build tool calls: findings stop the build, notes list what the flow writes."""
     from agent.core import tools
-    root, d = make(tmp_path, xdc=XDC_FULL.replace("create_clock -name ref -period 6.400 [get_ports refclk_p]\n", ""), board_slow=[r"led\[\d+\]"])
+    root, d = make(tmp_path, xdc=XDC_FULL.replace("set_input_delay -clock [get_clocks sys] -max 2.0 [get_ports din]\nset_input_delay -clock [get_clocks sys] -min 0.5 [get_ports din]\n", ""), board_slow=[r"led\[\d+\]"])
     s = SimpleNamespace(design=d, root=root, board="kr260")
     found, notes = tools.complete_findings(s, yaml.safe_load((d / "build.yaml").read_text()))
-    assert any(x["rule"] == "FDA-CON-14" and "refclk_p" in x["text"] for x in found)
+    assert any(x["rule"] == "FDA-CON-14" and "port din" in x["text"] for x in found)
     assert any("create_clock -name usr_cclk" in n for n in notes) and any("false path on led" in n for n in notes)
     import os
     os.environ["FDA_KNOWN_XDC"] = "0"
@@ -257,3 +257,39 @@ def test_a_forwarded_clock_output_is_covered_by_its_generated_clock(tmp_path):
     xdc = XDC_FULL + "create_generated_clock -name fwd -source [get_pins u_jtag/x] -divide_by 1 [get_ports fwd_clk]\n"
     r, _ = rows(tmp_path, xdc=xdc, top=top)
     assert r["fwd_clk"]["class"] == "fwd_clock" and r["fwd_clk"]["covered"]
+
+
+def test_the_reference_clock_pair_gets_the_boards_pins_and_frequency(tmp_path):
+    """The board file knows the SFP+ lane's reference clock pins and frequency; a design that names neither gets both."""
+    xdc = "create_clock -name sys -period 40.000 [get_ports clk_c3]\n"
+    root, d = make(tmp_path, xdc=xdc, board_slow=[])
+    ctx = KC.Ctx(d, root)
+    assert ctx.refclk_pairs()[0]["pins"] == ("Y6", "Y5") and ctx.refclk_pairs()[0]["mhz"] == 156.25
+    pre = KC.known_pre_xdc(ctx, KC.constraint_text(d, ctx.cfg, root))
+    assert "set_property PACKAGE_PIN Y6 [get_ports {refclk_p}]" in pre and "set_property PACKAGE_PIN Y5 [get_ports {refclk_n}]" in pre
+    assert "create_clock -name refclk -period 6.400 [get_ports {refclk_p}]" in pre
+    # no refclk finding while the flow writes it; with the design's own pins and clock nothing is written twice
+    assert not [f for f in KC.findings(d, root) if "refclk" in f["text"]]
+    own = xdc + "set_property PACKAGE_PIN Y6 [get_ports refclk_p]\ncreate_clock -name rc -period 6.4 [get_ports refclk_p]\n"
+    (d / "design.xdc").write_text(own)
+    pre2 = KC.known_pre_xdc(ctx, KC.constraint_text(d, ctx.cfg, root))
+    assert "PACKAGE_PIN Y6 [get_ports {refclk_p}]" not in pre2 and "create_clock -name refclk " not in pre2
+
+
+def test_slow_ports_share_one_command_so_a_constant_output_does_not_make_it_ignored(tmp_path):
+    """Measured (replay of 224 p5 run 1): a false path on a constant output alone is EXC-IGNORED ('Non-existent path'); listed with a live
+    port in one command it is used. So the flow writes one command per kind."""
+    root, d = make(tmp_path, board_slow=[r"led\[\d+\]", "dout"])
+    ctx = KC.Ctx(d, root)
+    post = KC.known_post_xdc(ctx, KC.constraint_text(d, ctx.cfg, root).__class__([("x.xdc", "create_clock -name sys -period 40 [get_ports clk_c3]\n")]))
+    assert post.count("set_false_path -to") == 1 and post.count("set_output_delay") == 1
+    assert "[get_ports {dout led[*]}]" in post or "[get_ports {led[*] dout}]" in post
+
+
+def test_the_board_clock_input_gets_its_create_clock_when_the_design_places_it_but_does_not_clock_it(tmp_path):
+    xdc = "set_property -dict { PACKAGE_PIN C3 IOSTANDARD LVCMOS18 } [get_ports { clk_c3 }]\n"      # C3 is the KR260's board clock pin
+    root, d = make(tmp_path, xdc=xdc, board_slow=[])
+    ctx = KC.Ctx(d, root)
+    pre = KC.known_pre_xdc(ctx, KC.constraint_text(d, ctx.cfg, root))
+    assert "create_clock -name clk_c3 -period 40.000 [get_ports {clk_c3}]" in pre
+    assert not [f for f in KC.findings(d, root) if "clk_c3" in f["text"]]

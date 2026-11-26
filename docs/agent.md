@@ -121,6 +121,14 @@ shell (`.no_shell` is set by the board, so `--no-shell` is not needed), the Desi
 `designs/b58a_trigger/host/jtag_regs.tcl` in a Vivado hardware-manager child; it needs the board and is never used in CI.
 Tests: `flow/tests/test_209a_jtag_bringup.py`.
 
+## Constraints complete before synthesis (brief 230)
+
+`flow/known_constraints.py` gives every top port one class (clock, forwarded clock, transceiver reference clock, transceiver serial pad, reset, slow or `async: true`, timed input, timed output) from the RTL, `spec.yaml` and the board file, and
+`check_constraints` reports a port nothing covers as `FDA-CON-14`; the `build` tool then does not start Vivado (nothing is synthesised) until it is resolved. The flow writes what it already knows into `<build>/known_pre.xdc` (the BSCANE2 and
+USR_ACCESSE2 clocks, the board's transceiver reference clock pins and frequency; read before the design's XDC) and `<build>/known_post.xdc` (a 0 ns placeholder delay and a false path for each board `slow_ports` or spec `async: true` port the design
+does not constrain; read after it); after a failed post-synthesis gate the `gates` output names each unconstrained endpoint's class and the line to add. `FDA_KNOWN_XDC=0` turns all of it off. Port classes, hard blocks, who writes which constraint,
+what a user could get wrong and the measurements: [docs/constraints_complete.md](constraints_complete.md). A port the spec calls slow that is really timed has its failure hidden by the false path: give `async: true` a `reason:`.
+
 ## Separation (`agent/graph/roles.py`)
 
 | Sub-agent | Reads | Writes |

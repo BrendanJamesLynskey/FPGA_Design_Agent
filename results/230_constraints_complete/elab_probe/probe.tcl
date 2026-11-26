@@ -39,6 +39,7 @@ proc probe {tag} {
             llength [get_ports]
         }
     } {
+        if {[info exists ::env(PROBE_STEPS)] && [lsearch $::env(PROBE_STEPS) $name] < 0} { continue }
         set t0 [clock milliseconds]
         if {[catch {uplevel #0 $script} res]} { puts $log "$name: ERROR [string range $res 0 160] ([expr {[clock milliseconds]-$t0}] ms)" } else { puts $log "$name: ok ([string range $res 0 200]) ([expr {[clock milliseconds]-$t0}] ms)" }
     }

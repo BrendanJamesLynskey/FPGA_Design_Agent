@@ -39,14 +39,14 @@ HARD_BLOCKS: dict[str, dict[str, Any]] = {
         "needs": "a create_clock on the TCK output (INTERNAL_TCK pin), at most 30 MHz on the JTAG cable; its crossings go through xpm_cdc macros, which carry their own constraints",
         "supplier": "flow (known_pre.xdc) for jtag_bus; the design for its own BSCANE2",
         "line": "create_clock -name jtag_tck -period 33.333 [get_pins {i}/INTERNAL_TCK]",
-        "evidence": "measured: p5 arm run 1 (20261125-193550-9069) listed 193 registers of u_jtag with no clock; designs/b96_kr260_10g/design.xdc uses this line and closes",
+        "evidence": "measured (Vivado 2026.1, xck26): results/230_constraints_complete/elab_probe: the fixture's TCK registers are unclocked in report_clocks at elaboration and in check_timing no_clock after synthesis; 224 p5 run 1 listed 193 u_jtag registers; designs/b96_kr260_10g/design.xdc uses this line and closes",
     },
     "usr_accesse2": {
         "prims": ["USR_ACCESSE2"], "kind": "clock source (configuration clock)",
         "needs": "a clock on the CCLK pin (the primitive is a clocked cell with an internal clock); the DATA word is constant after configuration, so paths from it are cut with a reason",
         "supplier": "flow (known_pre.xdc)",
         "line": "create_clock -name usr_cclk -period 10.000 [get_pins {i}/CCLK]",
-        "evidence": "measured: p5 arm run 1 (u_usr/CCLK no clock), p4 arm run 1; 209 and 224 designs that closed all define a clock on CCLK",
+        "evidence": "measured (Vivado 2026.1, xck26): after synthesis check_timing no_clock lists u_usr/CCLK (fixture and 224 p5 run 1); at elaboration the CCLK pin is NOT among the registers' clock pins, so only the static primitive check sees it; 209 and 224 designs that closed define a clock on CCLK",
     },
     "startupe3": {
         "prims": ["STARTUPE3", "STARTUPE2"], "kind": "dedicated pins",
@@ -68,14 +68,14 @@ HARD_BLOCKS: dict[str, dict[str, Any]] = {
         "prims": ["BUFGCE_DIV"], "kind": "derived clock",
         "needs": "Vivado derives the divided clock from the input clock automatically when the input has a clock; a divider fed by an unclocked pin leaves the output unclocked",
         "supplier": "Vivado (automatic derivation)", "line": None,
-        "evidence": "see results/230_constraints_complete/elab_probe.md for what check_timing and report_clocks show on an elaborated and a synthesised design",
+        "evidence": "measured (Vivado 2026.1, xck26): the fixture's BUFGCE_DIV output is an auto-derived generated clock (P,G,A, divide by 2) in report_clocks at elaboration and after synthesis, with no constraint of ours",
     },
     "mmcm_pll": {
         "prims": ["MMCME2_ADV", "MMCME3_ADV", "MMCME4_ADV", "PLLE2_ADV", "PLLE3_ADV", "PLLE4_ADV", "MMCME2_BASE", "PLLE2_BASE"],
         "kind": "derived clock",
         "needs": "outputs are derived automatically from the input clock (create_clock on the input only); feedback needs nothing",
         "supplier": "Vivado (automatic derivation)", "line": None,
-        "evidence": "measured: designs/b58a_trigger and the 224 p4 design (clk_dsp_raw and clk_fb appear in report_clocks without a create_generated_clock)",
+        "evidence": "measured (Vivado 2026.1, xck26): the fixture's MMCME4_ADV CLKOUT0 and CLKFBOUT are auto-derived (P,G,A) at elaboration and after synthesis; so are clk_u and fb in designs/b96_kr260_10g",
     },
     "gt_channel": {
         "prims": ["GTHE4_CHANNEL", "GTHE3_CHANNEL", "GTYE4_CHANNEL", "GTYE3_CHANNEL", "GTPE2_CHANNEL", "GTXE2_CHANNEL", "GTHE4_COMMON", "GTHE3_COMMON"],
@@ -83,21 +83,21 @@ HARD_BLOCKS: dict[str, dict[str, Any]] = {
         "needs": "TXP/TXN/RXP/RXN go to the GT pads: no fabric timing and no XDC delay (placement is the GT site, LOC on the channel); the reference clock port needs a create_clock at its frequency; TXOUTCLK/RXOUTCLK are derived by Vivado through the PLL and the BUFG_GT dividers from that reference clock",
         "supplier": "the design (create_clock on the reference clock port); the board file lists the lane pins and the frequency",
         "line": None,
-        "evidence": "document: UG576/UG578 (clocking); the b96 measurement is in results/230_constraints_complete/elab_probe.md",
+        "evidence": "measured (Vivado 2026.1, xck26, designs/b96_kr260_10g): after synthesis check_timing is zero in every check, with the four serial pad ports in the top and only the reference clock constrained; the channel and QPLL clocks (TXOUTCLK, RXOUTCLK, QPLL0OUTCLK) are auto-derived (P,G,A) in report_clocks, at elaboration as well",
     },
     "gt_refclk": {
         "prims": ["IBUFDS_GTE4", "IBUFDS_GTE3", "IBUFDS_GTE2", "IBUFDS_GTE5", "IBUFDS_GTHE2"],
         "kind": "transceiver reference clock input",
-        "needs": "a create_clock on the P pin of the port that feeds it, at the reference frequency (the N pin takes none)",
-        "supplier": "the design; the frequency is the board's (board.yaml gt.<lane>.refclk.mhz) or the spec's",
-        "line": None, "evidence": "measured: designs/b96_kr260_10g/design.xdc (gt_refclk0 at 6.400 ns closed on the board); document: UG576",
+        "needs": "PACKAGE_PIN on both pins of the pair (the board lane's MGTREFCLK pins) and a create_clock on the P pin at the reference frequency (the N pin takes none)",
+        "supplier": "flow (known_pre.xdc) when the board file lists exactly one lane with a reference clock and the design names neither; otherwise the design",
+        "line": None, "evidence": "measured (Vivado 2026.1, xck26): 224 p5 run 1 replay: a reference clock with a create_clock but no PACKAGE_PIN on its ports left AVAL-324 (hard block needs LOC), AVAL-326, NSTD-1 and UCIO-1 open; designs/b96_kr260_10g/design.xdc places Y6/Y5 and clocks the P port. The flow now writes the board's pins and frequency",
     },
     "ps8": {
         "prims": ["zynq_ultra_ps_e", "PS8", "zynq_ultra_ps_e_0"],
         "kind": "processor system (Zynq UltraScale+ PS)",
         "needs": "MIO and PS DDR pins are fixed by the PS and take no XDC; PL clocks pl_clk0..3 take their period from the PS IP's own constraints; EMIO routed to PL pins is ordinary fabric I/O and gets an ordinary class; PS-PL AXI crossings follow the IP's clocks",
         "supplier": "the AMD IP (its own XDC, generated with the IP)",
-        "line": None, "evidence": "see results/230_constraints_complete/elab_probe.md (the PS design measured there, if any); document: UG1085, UG1137",
+        "line": None, "evidence": "measured (Vivado 2026.1, xck26, designs/b191_ps_axi_lat elaborated): report_clocks lists the PS IP's own pl_clk0 clocks with no XDC of ours for them, and the PS has no top ports (MIO and DDR are fixed by the PS); EMIO through PL pins is not in that design (not measured)",
     },
     "ip_with_xdc": {
         "prims": ["ddr4", "mig", "pcie", "cmac", "xxv_ethernet", "xdma", "axi_ethernet", "gig_ethernet_pcs_pma"],
@@ -329,6 +329,29 @@ class Ctx:
         want = {p.lower() for p in prims}
         return [(t, p) for t, paths in self.tree.items() if t.lower() in want for p in paths]
 
+    def refclk_pairs(self) -> list[dict[str, Any]]:
+        """Top-level differential reference-clock pairs: (P port, N port) wired to an ``IBUFDS_GTE*`` (its ``I`` and ``IB``), with the
+        board's pins and frequency when the board file lists exactly one transceiver lane with a reference clock."""
+        lanes = [v for v in ((self.board.get("gt") or {}).values()) if isinstance(v, dict) and isinstance(v.get("refclk"), dict)]
+        out = []
+        for m in self.mods:
+            if m.name != self.top:
+                continue
+            for inst in m.instances:
+                if inst["type"] in _REFCLK_PRIMS:
+                    c = inst["conns"] or {}
+                    pp = re.findall(r"[A-Za-z_]\w*", str(c.get("I", "")))
+                    nn = re.findall(r"[A-Za-z_]\w*", str(c.get("IB", "")))
+                    if pp and nn and pp[0] in self.ports and nn[0] in self.ports:
+                        row: dict[str, Any] = {"p": pp[0], "n": nn[0], "inst": inst["name"], "pins": None, "mhz": None}
+                        if len(lanes) == 1:
+                            rc = lanes[0]["refclk"]
+                            if rc.get("p") and rc.get("n"):
+                                row["pins"] = (str(rc["p"]), str(rc["n"]))
+                            row["mhz"] = rc.get("mhz")
+                        out.append(row)
+        return out
+
     def top_connections(self, prims: set[str]) -> dict[str, str]:
         """Top port -> primitive type for ports wired straight into an instance of ``prims`` in the top module."""
         out: dict[str, str] = {}
@@ -497,6 +520,26 @@ def known_pre_xdc(ctx: Ctx, xdc: list[tuple[str, str]] | None = None) -> str:
     # and the false path below names OUR clock)
     k["blocks"] = [b for b in k["blocks"] if not re.search(rf"create_clock[^\n]*{re.escape(b['pin'])}", text)]
     lines: list[str] = []
+    refs = []
+    if len(ctx.refclk_pairs()) == 1:        # one reference clock, one board lane: the board file's pins and frequency are the facts; several: the design says
+        r = ctx.refclk_pairs()[0]
+        has_pin = lambda port: re.search(rf"PACKAGE_PIN[^\n]*\b{re.escape(port)}\b", text) is not None          # noqa: E731
+        has_clk = re.search(rf"create_clock[^\n]*\b{re.escape(r['p'])}\b", text) is not None
+        if r["pins"] and not (has_pin(r["p"]) or has_pin(r["n"])):
+            refs.append(f"# {r['p']}/{r['n']}: the transceiver reference clock pair of the board lane (board.yaml gt refclk p/n): placement")
+            refs.append(f"set_property PACKAGE_PIN {r['pins'][0]} [get_ports {{{r['p']}}}]")
+            refs.append(f"set_property PACKAGE_PIN {r['pins'][1]} [get_ports {{{r['n']}}}]")
+        if r["mhz"] and not has_clk:
+            refs.append(f"# {r['p']}: reference clock {r['mhz']} MHz (board.yaml gt refclk mhz)")
+            refs.append(f"create_clock -name {re.sub(r'_[pP]$', '', r['p'])} -period {1000.0 / float(r['mhz']):.3f} [get_ports {{{r['p']}}}]")
+    bf = ctx.board.get("clock") or {}
+    bc = board_clock_port(ctx, xdc) if bf.get("freq_mhz") else None
+    if bc and not re.search(rf"create_clock[^\n]*\b{re.escape(bc)}\b", text):
+        refs.append(f"# {bc}: the board's clock input (board.yaml clock: pin {bf.get('pin')}, {bf['freq_mhz']} MHz)")
+        refs.append(f"create_clock -name {bc} -period {1000.0 / float(bf['freq_mhz']):.3f} [get_ports {{{bc}}}]")
+    if refs:
+        lines.append("# Clock inputs the board file defines (flow/known_constraints.py, brief 230): the board clock, and the transceiver reference clock's pins and frequency.")
+        lines += refs
     if k["blocks"]:
         lines.append("# Clocks of the primitives in this design that Vivado cannot derive (flow/known_constraints.py, brief 230).")
         lines.append("# Read before design.xdc: a create_clock of your own on the same pin replaces these.")
@@ -540,14 +583,16 @@ def known_post_xdc(ctx: Ctx, xdc: list[tuple[str, str]]) -> str:
         cmds += xdc_commands(t)
     clk = board_clock_port(ctx, xdc)
     lines = ["# False paths and 0 ns placeholder delays of ports with no timing relation to any clock (board slow_ports, or the spec's async: true).",
-             "# flow/known_constraints.py, brief 230. Read after design.xdc; a port the design's XDC already constrains is left alone."]
-    n = 0
+             "# flow/known_constraints.py, brief 230. Read after design.xdc; a port the design's XDC already constrains is left alone.",
+             "# One command per kind: Vivado reports a false path whose every object carries no path (a constant output) as EXC-IGNORED, so the",
+             "# ports are listed together and one live port keeps the command in use."]
+    delays: dict[str, list[str]] = {"set_input_delay": [], "set_output_delay": []}
+    fps: dict[str, list[str]] = {"-from": [], "-to": []}
     for s in k["slow"]:
-        ref = s["ref"]
-        sides = [("input", "set_input_delay", "-from"), ("output", "set_output_delay", "-to")] if s["dir"] == "inout" else \
-            [(s["dir"], "set_input_delay" if s["dir"] == "input" else "set_output_delay", "-from" if s["dir"] == "input" else "-to")]
+        sides = [("set_input_delay", "-from"), ("set_output_delay", "-to")] if s["dir"] == "inout" else \
+            [("set_input_delay", "-from") if s["dir"] == "input" else ("set_output_delay", "-to")]
         wrote = False
-        for _d, dl, side in sides:
+        for dl, side in sides:
             has_delay = any(c["cmd"] == dl and any(_match(p, s["port"]) for p in c["ports"]) for c in cmds)
             has_fp = bool([c for c in cmds if c["cmd"] == "set_false_path" and any(_match(p, s["port"]) for p in c["opts"].get(side[1:], []))])
             if has_delay and has_fp:
@@ -555,15 +600,20 @@ def known_post_xdc(ctx: Ctx, xdc: list[tuple[str, str]]) -> str:
             if not wrote:
                 lines.append(f"# {s['port']}: {s['reason']}")
                 wrote = True
-            if not has_delay:
-                if clk:
-                    lines.append(f"{dl} -clock [get_clocks -of_objects [get_ports {{{clk}}}]] 0.000 [get_ports {{{ref}}}]")
-                else:
-                    lines.append(f"# no board clock port found in the design's XDC: no placeholder delay written for {s['port']}")
+            if not has_delay and clk:
+                delays[dl].append(s["ref"])
+            elif not has_delay:
+                lines.append(f"# no board clock port found in the design's XDC: no placeholder delay written for {s['port']}")
             if not has_fp:
-                lines.append(f"set_false_path {side} [get_ports {{{ref}}}]")
-        n += wrote
-    return "\n".join(lines) + "\n" if n else ""
+                fps[side].append(s["ref"])
+    for dl, refs in delays.items():
+        if refs:
+            lines.append(f"{dl} -clock [get_clocks -of_objects [get_ports {{{clk}}}]] 0.000 [get_ports {{{' '.join(refs)}}}]")
+    for side, refs in fps.items():
+        if refs:
+            lines.append(f"set_false_path {side} [get_ports {{{' '.join(refs)}}}]")
+    wrote_any = any(delays.values()) or any(fps.values())
+    return "\n".join(lines) + "\n" if wrote_any else ""
 
 
 # ---- the pre-synthesis findings --------------------------------------------------------------------------------------------------------
@@ -593,8 +643,7 @@ def findings(design: Path, root: Path, cfg: dict | None = None, board: str | Non
 def info_lines(ctx: Ctx, xdc: list[tuple[str, str]] | None = None) -> list[str]:
     """What the flow writes itself, for the tool outputs: one line per primitive clock, one line for the slow-port constraints."""
     xdc = xdc if xdc is not None else constraint_text(ctx.design, ctx.cfg, ctx.root)
-    out = [f"written by the flow (known_pre.xdc, before design.xdc): {b['line']}" for b in known_items(ctx)["blocks"]
-           if not re.search(rf"create_clock[^\n]*{re.escape(b['pin'])}", "\n".join(t for _, t in xdc))]
+    out = [f"written by the flow (known_pre.xdc, before design.xdc): {ln}" for ln in known_pre_xdc(ctx, xdc).splitlines() if ln and not ln.startswith("#")]
     ports = re.findall(r"(?m)^# (\S+): ", known_post_xdc(ctx, xdc))
     if ports:
         out.append(f"written by the flow (known_post.xdc, after design.xdc): a 0 ns placeholder delay and a false path on {', '.join(ports)} "
