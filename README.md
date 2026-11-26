@@ -358,6 +358,7 @@ standard.
   the agent only dry-runs them against mocks. [hil/lab.py](hil/lab.py), [hil/lab_bringup.py](hil/lab_bringup.py), [hil/lab_drivers.py](hil/lab_drivers.py),
   [hil/lab.example.yaml](hil/lab.example.yaml), [agent/graph/lab_interview.py](agent/graph/lab_interview.py),
   [docs/agent.md](docs/agent.md#the-lab-instruments-the-agent-can-use-hillabpy-brief-221), results in [results/221_lab_instruments](results/221_lab_instruments/README.md).
+- **Run limits (brief 234).** The stop reason of a visit-limit stop names the open failed gate and its route; a route back gives the stages it passes again fresh visits; the run turn cap scales with the design's block count; the reply's thinking tokens are recorded: [docs/agent.md](docs/agent.md), tests in [agent/tests/test_234_run_limits.py](agent/tests/test_234_run_limits.py).
 - **Change record.** [flow/change_record.py](flow/change_record.py): input hashes, tool versions, knowledge-bank pin
   and flow commit (from the build manifest when present), and what changed since a baseline.
 - **Check suite (brief 71).** One agent tool, `check`, over a registry of every design check (lint, standards, resets,
