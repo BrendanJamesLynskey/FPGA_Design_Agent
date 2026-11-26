@@ -127,6 +127,11 @@ def with_checkers(sources: list[Path], design: Path) -> list[Path]:
     return [c for c in out if c not in binds] + binds
 
 
+class LockstepDone(BaseException):
+    """Raised by :func:`run` after a lock-step run (brief 213, ``$FDA_LOCKSTEP``): the design's own entry point is used only to learn the
+    build (top level, sources, parameters); the harness bench ran instead of the design's tests and nothing else in the entry may run."""
+
+
 SIM_ROOT = Path(os.environ.get("FDA_SIM_BUILD_ROOT") or ROOT / "build" / "sim")   # concurrent runs of one test (brief 88) set their own
 
 
@@ -185,6 +190,15 @@ def run(name: str, toplevel: str, sources: list[Path], test_module: str, test_di
               build_dir=build_dir, timescale=("1ns", "1ps"), always=True, build_args=args)
     env = {"PYTHONPATH": os.pathsep.join([str(ROOT), str(test_dir), os.environ.get("PYTHONPATH", "")])}
     env["FDA_COV_OUT"] = str(build_dir / "coverage_func.yml")
+    lockstep = os.environ.get("FDA_LOCKSTEP")             # brief 213: run the harness's lock-step bench (flow/lockstep.py) instead of the design's tests
+    if lockstep:
+        test_module, testcase = "flow.lockstep", None
+        env.update({"FDA_LOCKSTEP_DESIGN": str(design), "FDA_LOCKSTEP_TOP": toplevel})
+        env["PYTHONPATH"] = os.pathsep.join([str(ROOT), str(design), env["PYTHONPATH"]])
+    elif os.environ.get("FDA_MODEL_RECORD") or os.environ.get("FDA_DIAG_SNAPSHOT"):   # brief 213: record what the bench feeds the model, or snapshot the first failure (flow/model_record.py); the boot
+        mods = [test_module] if isinstance(test_module, str) else list(test_module)   # module installs the import hook before the bench imports model
+        test_module = ["flow.model_record"] + mods
+        env.update({k: os.environ[k] for k in ("FDA_MODEL_RECORD", "FDA_DIAG_SNAPSHOT") if os.environ.get(k)})
     env.update(extra_env or {})
     plus = [f"+verilator+coverage+file+{build_dir / 'coverage.dat'}"] if (simname == "verilator" and coverage) else []
     plus += inj_plus
@@ -196,11 +210,15 @@ def run(name: str, toplevel: str, sources: list[Path], test_module: str, test_di
                                timescale=("1ns", "1ps"), results_xml=str(build_dir / "results.xml"),
                                log_file=build_dir / "sim.log", plusargs=plus)
     except SystemExit:
+        if lockstep:
+            raise LockstepDone() from None
         collect_results(build_dir, seed)         # a failing run is evidence too: the gate reads the failures
         # cocotb's runner exits with only "Failed n of m tests"; the failing assertions and tracebacks are in the
         # simulator log, which lives in a scratch directory the caller never sees. Say what they are.
         raise AssertionError(f"{name}: the cocotb run failed. From {build_dir / 'sim.log'}:\n"
                              + failure_excerpt(build_dir / "sim.log")) from None
+    if lockstep:
+        raise LockstepDone()
     collect_results(build_dir, seed)
     n_tests, n_fail = get_results(results)
     assert n_tests > 0, f"{name}: no cocotb tests ran"
