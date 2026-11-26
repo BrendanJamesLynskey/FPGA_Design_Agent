@@ -258,3 +258,25 @@ The **Permissions** page sets what a run may do without asking; the full descrip
 config folder, so the owner's settings are untouched); `NODE_PATH=<node_modules> node navigator/shoot_222.js <url with token> <dir> <run id>` shoots the Permissions, Start and Live pages at 1280 and 390 px
 and fails on a page error, an overflow at 390 px or a request to another host. Screenshots: [docs/img/222_permissions_auto_with_deny_wide.png](../docs/img/222_permissions_auto_with_deny_wide.png),
 [docs/img/222_live_permission_question_wide.png](../docs/img/222_live_permission_question_wide.png).
+
+## Stage map (brief 238)
+
+The header reads "FPGA Force Navigator" with the G2 mark (`currentColor`; the favicon is the same mark in grey). Below 640 px every table becomes a list of cards (first cell as the title line, then label and value for each other cell; nothing is dropped).
+
+The **Live** page draws, above the plain-words status, a map of the stages of the selected run and moves it as the run's files change. Results and recordings: [results/238_navigator_animation](../results/238_navigator_animation/README.md).
+
+- **Drawn from the code.** `navigator/stagemap.py` takes the stages, their visit limits and the allowed route-backs from `agent.graph.stages.MACHINE`, so a stage added there appears by itself. The route is `GET /api/live/map?id=<run>`; `static/stagemap.js` draws it (inline SVG and CSS, no library, no inline style).
+- **One list of recorded events.** Each event is a row some run file holds, with the state of every stage after it. Kinds: `enter` (`stage_start`), `role` (a `role_usage.jsonl` row), `gate` (an audit-log `gates` call, or a ledger row), `leave` (`stage_end`), `step` (`build_step`, `console`, `console_end`), `wait` (`slot_wait`, `permission_stop`, a pause request, `pending.json`), `resume` (`permission_granted`, a pause request done), `request` (the other request rows) and `end` (`summary.json`). Two modes, named in the answer: `trace` (the run has `trace.jsonl`) and `role_usage` (a folder without it: the order of the `role_usage.jsonl` rows is the order of the visits, failing gates come from `routing_events.jsonl`, and whether a visit passed is read from where the run went next; these rows carry no times).
+- **What moves.** The current stage has a moving dash on its border (stops when the run is idle or finished); a token travels along the edge on a stage change (about 600 ms); a route back travels a separate dashed arc in the warning colour, labelled with the failing gate ("lint: back to stage 1"); a gate result flashes its stage; a running tool shows a small spinner; a wait (Vivado slot, a permission, a question, a review, a pause) is a still badge with its reason.
+- **Truth rule.** Nothing is interpolated: no percentage, no invented step. A run with no write for longer than `ACTIVE_S` (180 s) stops moving and says "No activity for N min"; a finished run freezes with its stop reason. `progress.py` is unchanged and nothing is written.
+- **Replay** (finished runs): steps through the recorded events at an even pace with a speed control (0.5x to 4x), with the same drawing.
+- **Access.** `prefers-reduced-motion`: no token, no dash, no spinner turn, no flash (state changes only). The current stage is announced in an `aria-live` region. Every state also has an icon and a word (pass, fail, working, waiting, not reached). At 640 px and below the map is a vertical list with the same states.
+
+### What a user could guess wrong (stage map)
+
+- **The role shown is the last role that reported in the visit**, not one that is mid-call: `role_usage.jsonl` rows are written when a call ends.
+- **In a folder without `trace.jsonl`, a passed or failed stage is inferred from where the run went next**, and a retry because a reviewer asked for changes looks like a gate failure; a route back caused by a design request looks like one caused by a gate. Passing gates are not events there (the ledger holds failing gates only).
+- **An idle run with no summary** may have crashed, finished badly or be inside one long step that writes no log; the map says only how long nothing was written.
+- **A Vivado slot wait** is shown only while its row is under 5 minutes old and the build step is open.
+
+Tests: `python -m pytest navigator/tests/test_238_stagemap.py` (recorded 213 run folders trimmed in `navigator/tests/fixtures_238/`, and a synthetic trace-mode run). Evidence: `python3 -m navigator.tests.demo_238 --port 8794 --workdir <tmp>` then `NODE_PATH=<node_modules> node navigator/shoot_238.js <url with token> <dir>` (screenshots, a WebM of a replay, a reduced-motion check; fails on a page error, an overflow at 390 px or a request to another host).

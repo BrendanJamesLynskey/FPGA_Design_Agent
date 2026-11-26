@@ -287,6 +287,13 @@ requirement's words and covers the fixes of RPT-LL-02 and RPT-CS-02 only.
 Tests: `agent/tests/test_210_requirements.py` (rules, levels, waivers, the stop and its exit status, the conflict on the recorded c15 report),
 `flow/tests/test_210_requirements_report.py` (the report on t1_dimmer_counter's reference run: a pending row, a failed row, regeneration after the board).
 
+### Readiness: stage 0 until the requirements are ready (brief 227)
+
+`--requirements` says what may be left unanswered; `--readiness on` says when the agent is **satisfied** with the answers: the mechanical checks pass, two fresh readers predict the same
+behaviour for the same probe set, no question is open, and the set is frozen (stages 1 onward read the frozen set). At the round or call limit, or with nobody to answer, the run stops
+with `REQUIREMENTS_NEEDED.md` and exit status 3. The gate, the roles, the files, the measure and **what a user could get wrong** (confirming a default without reading it, a probe set too small to
+find the ambiguity that matters, `within` against `after`, a vacuous property, an all-"OK" confirmation) are in [docs/requirements_readiness.md](requirements_readiness.md).
+
 ## The lab: instruments the agent can use (`hil/lab.py`, brief 221)
 
 The agent knew the board (`boards/*/board.yaml`) but not the bench, so a check that a scope, counter or logic analyser would settle in seconds was skipped or
