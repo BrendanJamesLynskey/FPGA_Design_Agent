@@ -205,3 +205,45 @@ def test_stage2_plan_injects_matching_records_only_with_the_arm_and_records_the_
     assert json.loads((runs / "repair_memory" / "retrievals.jsonl").read_text().splitlines()[0])["offered_runs"] == ["past"]
     none = G.stage2_plan(mk(("R4",)), {"owners": {"rtl": ["x"]}, "rm": {"keys": [], "visit": 1}})
     assert none["rtl"] == ["x"]                                                           # no keys, nothing injected
+
+
+def test_the_gate_writes_a_record_when_a_repair_clears_a_key_and_the_next_plan_can_use_it(tmp_path, monkeypatch):
+    """Through the real node_gate (as brief 05c2's gate test does): a model without a Model class fails the contract gate; a repair writes the model; the contract
+    key no longer fails, so a record is staged, a routing event says so, and a retrieval for the same key finds it."""
+    import shutil
+    import uuid
+
+    import yaml
+
+    from agent.core.runner import LocalRunner, RunResult
+    from agent.core.session import ROOT
+    from agent.graph import run as gr
+    T1 = ROOT / "designs" / "t1_dimmer_counter"
+    runs = ROOT / "runs" / f"_pytest_{uuid.uuid4().hex[:8]}"
+    monkeypatch.setattr(gr, "RUNS", runs)
+    try:
+        class Ok:
+            def run(self, kind, argv, cwd, env=None, timeout=600):
+                return LocalRunner().run(kind, argv, cwd, env, timeout) if kind == "contract" else RunResult(0, f"{kind}: ok", "", 0.0)
+        cfg = gr.Config(spec_md=T1 / "spec.md", name="t1_dimmer_counter", interview="off", harness_arms="R4")
+        rt = gr.new_runtime(cfg, lambda *a, **k: None, runner=Ok())
+        from flow import architecture as _am
+        _am.write_approval(rt.design, "auto", "agent")
+        (rt.design / "spec.yaml").write_text((T1 / "spec.yaml").read_text())
+        (rt.design / "model.py").write_text("class Wrong:\n    pass\n")
+        rt.visit = 1
+        s1 = gr.node_gate({"run_id": rt.run_id, "stage": 2})
+        assert "contract" in [k["gate"] for k in s1["rm"]["keys"]]
+        (rt.design / "model.py").write_text("class Model:\n    def __init__(self, **k):\n        pass\n    def reset(self):\n        pass\n    def step(self, inputs=None):\n        return {}\n")   # the repair
+        rt.visit = 2
+        s2 = gr.node_gate({"run_id": rt.run_id, "stage": 2, "rm": s1["rm"], "sig": s1["sig"], "repeat": s1["repeat"]})
+        assert all(k["gate"] != "contract" for k in s2["rm"]["keys"])
+        recs = rm.load_records(rm.staging(rt.run_dir) / "records")
+        assert len(recs) == 1 and recs[0]["trigger"]["gate"] == "contract" and recs[0]["fix"]["files"] == ["model.py"] and recs[0]["role"] == "model"
+        events = [json.loads(x) for x in (rt.run_dir / "routing_events.jsonl").read_text().splitlines()]
+        assert any(e["event"] == "repair_record_written" and e["gate"] == "contract" for e in events)
+        got = rm.retrieve(recs, s1["rm"]["keys"])
+        assert [r["id"] for r in got] == [recs[0]["id"]]
+        assert rm.retrieve(recs, [{**s1["rm"]["keys"][0], "signature_class": "other"}]) == []
+    finally:
+        shutil.rmtree(runs, ignore_errors=True)

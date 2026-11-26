@@ -38,3 +38,6 @@ If the rule skips the A/B, the live work is **one demonstration run** (not score
 ## Stopping rules
 Weekly usage 92% (owner's current schedule; the brief's 75% was raised by the planner): stop and report `BLOCKED:`. Usage is checked at the start and before each batch.
 Pinned Claude Code 2.1.321 (the checked copy in `_scratch_213/bin`, SHA-256 426c3381...), auto-update off, knowledge repo at the pin for prompts.
+
+## Addendum 2026-11-26 (from `date`)
+The demonstration run was queued for a heavy slot from 21:28 and cancelled at 22:18 GMT, still unplaced (two other sessions' runs held both slots and one was ahead in the queue). It was not made; nothing else in this pre-registration changed. The replay and the decision rule are as written.
