@@ -366,6 +366,8 @@ class RunControl:
         kind = p.get("kind")
         if kind == "answer":
             return self.build_answer(p)
+        if kind == "example":
+            return self.build_example(p)
         harness = p.get("harness", "claude_code")
         if harness not in ("claude_code", "deepagents"):
             raise Refused("harness must be claude_code or deepagents")
@@ -437,6 +439,26 @@ class RunControl:
         if any(a == "--allow-fable" for a in argv):                                  # never reachable; a tripwire
             raise Refused("--allow-fable is never passed")
         return argv, summary
+
+    def build_example(self, p: dict[str, Any]) -> tuple[list[str], dict[str, Any]]:
+        """Brief 195: re-run a reproducible example with its pinned setup. The browser sends the example's name and, optionally, a lower cost cap: model, effort, harness, arm
+        and stop stage are the pins' (``agent/repro/examples.yaml``) and cannot be changed here, which is the point. The command is ``agent example run <name> --no-slot`` (the navigator
+        holds the slot); the child runs the pre-flight again and refuses, naming the check, when a pin does not hold."""
+        from agent.repro import registry as RR
+        try:
+            reg = RR.load()
+        except Exception as e:                                           # noqa: BLE001
+            raise Refused("the examples file cannot be read: " + redact.brief(str(e), 80))
+        name = p.get("example")
+        if not isinstance(name, str) or name not in {e["name"] for e in reg["examples"]}:
+            raise Refused("pick an example from the list")
+        cap = float(reg["pins"]["max_usd"])
+        usd = p.get("max_usd", cap)
+        if isinstance(usd, bool) or not isinstance(usd, (int, float)) or not (0 < float(usd) <= cap):
+            raise Refused(f"the budget must be above 0 and at most the pinned ${cap:g}")
+        argv = [self.python, "-m", "agent", "example", "run", name, "--no-slot", "--max-usd", f"{float(usd):g}"]
+        return argv, {"kind": "example", "target": f"ex_{name}", "example": name, "max_usd": float(usd), "hardware": "no hardware: the pinned setup stops after timing closure (stage 6)",
+                      "harness": reg["pins"]["harness"], "model": reg["pins"]["cc_model"], "effort": reg["pins"]["cc_effort"]}
 
     def build_answer(self, p: dict[str, Any]) -> tuple[list[str], dict[str, Any]]:
         """Brief 182: resume a run that paused on a question of its own, with the user's answer: ``python -m agent resume <run id> --reply '{"answer": ...}'``.

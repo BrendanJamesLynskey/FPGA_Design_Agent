@@ -1,6 +1,6 @@
 "use strict";
 (function () {
-  var PAGES = [["project", "Project"], ["timing", "Timing"], ["runs", "Runs"], ["live", "Live"], ["start", "Start"], ["permissions", "Permissions"], ["board", "Board"], ["measure", "Measurements"], ["trace", "Traceability"], ["health", "Health"], ["models", "Models"]];
+  var PAGES = [["project", "Project"], ["timing", "Timing"], ["runs", "Runs"], ["live", "Live"], ["start", "Start"], ["permissions", "Permissions"], ["examples", "Examples"], ["board", "Board"], ["measure", "Measurements"], ["trace", "Traceability"], ["health", "Health"], ["models", "Models"]];
   var main = document.getElementById("main");
   var state = { theme: "dark", scope: {}, request: "", project: null, measureTab: "eye", capA: null, capB: null, session: 0, lastFocus: null };
 
@@ -712,6 +712,71 @@
     }, function (e) { root.textContent = ""; add(root, [h("h1", null, "Start"), fail(e)]); });
   }
 
+
+  /* ---------- examples (brief 195): re-run a pinned example and compare it with its reference runs ---------- */
+  function rng(sp, d) { return sp ? num(sp.min, d) + " / " + num(sp.median, d) + " / " + num(sp.max, d) : "not recorded"; }
+  function pageExamples() {
+    var root = h("div", null, h("h1", null, "Examples"), loading()); main.textContent = ""; main.appendChild(root);
+    api("/api/examples").then(function (o) {
+      var out = h("div", { class: "panel", "aria-live": "polite" });
+      var cmp = h("div", { "aria-live": "polite" });
+      function badge(ok) { return h("span", { class: "st " + (ok ? "ok" : "fail") }, ok ? "OK" : "FAIL"); }
+      var pre = h("div", { class: "panel" }, h("h2", null, "Pinned setup"),
+        h("p", { class: "mute" }, "A re-run is allowed only when every pin below holds on this PC. The model is " + o.pins.cc_model + " (interview oracle " + o.pins.oracle_cc_model + ") on Claude Code " + o.pins.claude_cli_version +
+          ", the " + o.pins.harness_arm + " harness arm, verification level " + o.pins.verif_level + ", stopping after stage " + o.pins.stop_after + " (timing closure), board " + o.pins.board + ", Vivado " + o.pins.vivado_version + ". Seeds: " + o.pins.seeds + "."),
+        table(["check", "status", "what was found"], o.preflight.checks.map(function (c) { return [c.name, badge(c.ok), c.detail]; }), {}));
+      function refTable(ex) {
+        return table(["run", "hidden tests", "RTL hash", "LUT", "FF", "setup slack ns", "repair loops", "tokens", "cost USD", "wall s"], ex.runs.map(function (r) {
+          return [r.id, r.tests + (r.hidden_pass ? " pass" : " FAIL"), h("span", { class: "mono" }, r.rtl || "-"), num(r.lut), num(r.ff), num(r.wns_ns, 3), num(r.repair_visits), num(r.tokens), num(r.cost_usd, 2), num(r.wall_s, 0)];
+        }), { num: [3, 4, 5, 6, 7, 8, 9] });
+      }
+      function showCompare(rid) {
+        cmp.textContent = ""; add(cmp, loading("Comparing"));
+        api("/api/examples/compare?id=" + encodeURIComponent(rid)).then(function (c) { cmp.textContent = ""; add(cmp, compareView(c)); }, function (e) { cmp.textContent = ""; add(cmp, fail(e)); });
+      }
+      var cards = o.examples.map(function (ex) {
+        var sm = ex.summary;
+        var mine = o.runs.filter(function (r) { return r.example === ex.name; });
+        var go = h("button", { type: "button", disabled: !o.preflight.ok, title: o.preflight.ok ? "" : "a pin does not hold: see the table above", on: { click: function () {
+          if (!confirm("Re-run '" + ex.title + "' with the pinned setup? It spends up to $" + o.max_usd + " (the plan's estimate), takes a heavy slot, and takes about " + (sm ? Math.round(sm.wall_s.median / 60) + " minutes (reference median)" : "an unknown time") + ".")) return;
+          go.disabled = true; out.textContent = "Starting";
+          post("/api/run/start", { kind: "example", example: ex.name, max_usd: o.max_usd, confirm: "start" }).then(function (j) { out.textContent = ""; go.disabled = !o.preflight.ok;
+            if (j.started) add(out, [h("h3", null, "Started " + j.id), h("p", null, "Watch it on the "), h("a", { href: "#/live" }, "Live page"), h("p", { class: "mute" }, "When it ends, its result appears below under 'Compare a finished run'.")]);
+            else add(out, h("div", { class: "banner" }, h("strong", null, "Refused: nothing was started. "), j.refused)); }, function (e) { go.disabled = false; out.textContent = ""; add(out, fail(e)); });
+        } } }, "Re-run with the pinned setup");
+        var pick = mine.length ? h("label", null, "Compare a finished run ", h("select", { on: { change: function () { if (this.value) showCompare(this.value); } } }, [h("option", { value: "" }, "choose")].concat(mine.map(function (r) { return h("option", { value: r.id }, r.id + (r.hidden_pass ? " (pass)" : " (hidden tests failed)")); })))) : h("span", { class: "mute" }, "No re-run of this example is on this PC yet.");
+        return h("div", { class: "panel mt" }, h("h2", null, ex.title), h("p", { class: "mute" }, ex.kind + ": " + ex.covers + ". Task " + ex.task + " (a development task)."),
+          sm ? h("div", { class: "kpi" }, h("div", null, h("b", null, sm.n), "reference runs"), h("div", null, h("b", null, sm.hidden_pass), "hidden tests passed"), h("div", null, h("b", null, sm.distinct_rtl), "different RTL texts in " + sm.n + " runs"),
+            h("div", null, h("b", null, Math.round(sm.wall_s.median / 60) + " min"), "wall time, median (range " + Math.round(sm.wall_s.min / 60) + " to " + Math.round(sm.wall_s.max / 60) + ")"), h("div", null, h("b", null, "$" + num(sm.cost_usd.median, 2)), "plan estimate, median (range " + num(sm.cost_usd.min, 2) + " to " + num(sm.cost_usd.max, 2) + ")")) : h("p", { class: "banner" }, "No reference runs are recorded for this example."),
+          sm ? refTable(ex) : null, h("div", { class: "toolbar mt" }, go, pick));
+      });
+      root.textContent = "";
+      var u = o.usage;
+      add(root, [h("h1", null, "Examples"),
+        h("p", null, "Each example is a development task the agent builds from a plain-language request, with its tools and a hidden test bench. The reference runs below were made with the pinned setup. Re-run one and the page shows, side by side, what should match (the tools, for the same RTL) and what should vary (the model's own output), with the bench's verdict. The command line does the same: ", h("code", null, o.command), " then ", h("code", null, o.compare_command), "."),
+        h("div", { class: "kpi" }, h("div", null, h("b", null, u.percent === undefined ? "unknown" : u.percent + "%"), "weekly usage"), h("div", null, h("b", null, "$" + o.max_usd), "cost cap per run (plan estimate)"),
+          o.slots.map(function (l) { return h("div", null, h("b", null, l.status === "ok" ? "free" : "held"), l.title); })),
+        h("ul", null, o.guards.map(function (g) { return h("li", null, g); })), pre, cards, out, h("h2", { class: "mt" }, "Comparison"), cmp,
+        h("h2", { class: "mt" }, "What this does not promise"), h("ul", null, o.limits.map(function (l) { return h("li", null, l); }))]);
+    }, function (e) { root.textContent = ""; add(root, [h("h1", null, "Examples"), fail(e)]); });
+  }
+  function compareView(c) {
+    var lf = c.like_for_like, oc = c.outcome, d = c.deterministic;
+    var parts = [h("h3", null, c.example + ", run " + c.run_id + ", against " + c.references + " reference runs"),
+      lf.same ? h("p", { class: "mute" }, "Same pinned setup as the references.") : h("div", { class: "banner" }, h("strong", null, "Not like for like. "), Object.keys(lf.differences).map(function (k) { return k + ": run " + lf.differences[k].run + ", references " + lf.differences[k].references.join(", ") + ". "; }).join(""), lf.waived.length ? "Waived: " + lf.waived.join(", ") + "." : ""),
+      h("h3", { class: "mt" }, "Outcome: what matters"),
+      h("p", null, h("b", null, oc.tests + " hidden tests " + (oc.hidden_pass ? "pass" : "FAIL") + ". "), oc.verdict + " (references passed " + oc.references_passed + "). The agent's own gates: " + (oc.internal_pass ? "passed" : "did not all pass") + "; references " + oc.references_internal + "."),
+      table(["measure", "this run", "reference min / median / max", "where"], oc.spread.map(function (r) { return [r.label + (r.unit ? " (" + r.unit + ")" : ""), num(r.run), rng(r.reference, r.unit === "ns" ? 3 : 0), r.where]; }), { num: [1] }),
+      h("h3", { class: "mt" }, "Deterministic given the same inputs"),
+      h("p", { class: "mute" }, "RTL hash " + (d.rtl_sha256 ? d.rtl_sha256.slice(0, 16) : "none") + "; references with the same RTL: " + (d.matching_references.length ? d.matching_references.join(", ") : "none") + "."),
+      d.note ? h("p", { class: "banner" }, d.note) : null,
+      d.matching_references.length ? table(["tool result", "this run", "verdict"], d.rows.filter(function (r) { return r.verdict; }).map(function (r) { return [r.label, typeof r.run === "object" ? "per test" : num(r.run), r.verdict]; }), {}) : null,
+      h("h3", { class: "mt" }, "Varies with the model"),
+      table(["what", "this run", "reference min / median / max", "where"], c.varies.map(function (r) { return r.field === "rtl_same" ? [r.label, r.run ? r.run.slice(0, 12) : "none", (r.reference || []).map(function (x) { return x.slice(0, 12); }).join(", "), r.where] : [r.label + (r.unit ? " (" + r.unit + ")" : ""), num(r.run, r.digits), rng(r.reference, r.digits), r.where]; }), { num: [1] }),
+      h("p", { class: "src" }, "record: " + c.result_file)];
+    return h("div", { class: "panel" }, parts);
+  }
+
   /* ---------- board (locked, read-only) ---------- */
   function pageBoard() {
     var root = h("div", null, h("h1", null, "Board"), loading()); main.textContent = ""; main.appendChild(root);
@@ -851,7 +916,7 @@
   }
 
   /* ---------- router ---------- */
-  var ROUTES = { project: pageProject, timing: pageTiming, runs: pageRuns, live: pageLive, start: pageStart, permissions: pagePermissions, board: pageBoard, measure: pageMeasure, trace: pageTrace, health: pageHealth, models: pageModels };
+  var ROUTES = { project: pageProject, timing: pageTiming, runs: pageRuns, live: pageLive, start: pageStart, permissions: pagePermissions, examples: pageExamples, board: pageBoard, measure: pageMeasure, trace: pageTrace, health: pageHealth, models: pageModels };
   function route() {
     var k = (location.hash || "#/project").replace(/^#\//, "");
     if (!ROUTES[k]) k = "project";
