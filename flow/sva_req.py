@@ -351,7 +351,8 @@ def parse_generation(text: str, spec: dict[str, Any]) -> tuple[dict[str, Any] | 
 STOP = {"the", "a", "an", "and", "or", "of", "to", "in", "on", "is", "are", "be", "it", "its", "for", "with", "at", "by", "as", "that", "this", "must",
         "shall", "should", "one", "each", "every", "any", "then", "than", "from", "into", "over", "whenever", "true", "now", "cycle", "cycles", "clock",
         "edge", "value", "previous", "was", "has", "have", "happen", "same", "earlier", "ago"}
-NEGATION = re.compile(r"\b(never|not|no|neither|nor|cannot|can't|without|isn't|doesn't|stays? low|remains? low)\b|!|~", re.I)
+NEGATION = re.compile(r"\b(never|not|no|neither|nor|cannot|can't|without|isn't|doesn't|stays? low|remains? low)\b", re.I)
+_CODE_SPAN = re.compile(r"`[^`]*`")
 _TOK = re.compile(r"[a-z0-9]+")
 _NUMLIT = re.compile(r"\b\d+\s*'\s*[sS]?([bBdDhHoO])\s*([0-9a-fA-F_xXzZ]+)|\b0[xX]([0-9a-fA-F_]+)\b|\b(\d+)\b")
 _REQID = re.compile(r"\b[A-Z]{2,5}-\d+\b")
@@ -444,7 +445,7 @@ def compare(req: dict[str, Any], gen: dict[str, Any], back: str, spec: dict[str,
         # a register requirement names a register, not the port that carries it, so the words must support the link too
         reasons.append("signals: the property uses " + ", ".join(gen["signals"]) + ", none of which the requirement names or describes")
     if isinstance(l2, dict):
-        for k in ("trigger", "response", "signal", "signals"):
+        for k in ("condition", "trigger", "response", "component", "signal", "signals"):      # brief 227's L2: scope, condition, component, timing, response
             v = l2.get(k)
             for name in (v if isinstance(v, list) else ([v] if v else [])):
                 for s in _IDENT.findall(str(name)):
@@ -452,11 +453,14 @@ def compare(req: dict[str, Any], gen: dict[str, Any], back: str, spec: dict[str,
                         reasons.append(f"signals: the L2 field {k} names {s}, which the property does not use")
     rq_nums, bk_nums, pr_nums = _numbers(full), _numbers(back), _prop_numbers(gen)
     rq_nums |= {int(w) for w in want_words if w.isdigit()}
+    expr = gen["ante"] + " " + gen["cons"]
     for n in sorted(pr_nums - rq_nums):
+        if (n - 1) in rq_nums and re.search(rf"(?:<|>=)\s*(?:\d+'[sS]?[hHdDbB])?{n}\b", expr):
+            continue                                          # `x < 1024` states "0 to 1023": the same bound spelled one past the last value
         reasons.append(f"numbers: the property uses {n}, which the requirement does not give")
     for n in sorted(bk_nums - rq_nums - pr_nums - {0, 1}):
         reasons.append(f"numbers: the back-translation states {n}, which neither the requirement nor the property gives")
-    neg_req, neg_back = bool(NEGATION.search(req_text)), bool(NEGATION.search(back))
+    neg_req, neg_back = bool(NEGATION.search(_CODE_SPAN.sub(" ", req_text))), bool(NEGATION.search(_CODE_SPAN.sub(" ", back)))   # words, not the `!x` of a quoted expression
     if neg_req != neg_back:
         reasons.append("negation: the requirement " + ("forbids something" if neg_req else "does not forbid anything") +
                        " and the back-translation " + ("does" if neg_back else "does not"))
@@ -667,8 +671,9 @@ def judge(results: dict[str, dict[str, Any]]) -> dict[str, Any]:
 
 # ---- the cover trace as a timing diagram (for the show-back packet, brief 227) -------------------------------------------------------------
 def parse_vcd(text: str) -> tuple[dict[str, str], list[tuple[int, dict[str, str]]]]:
-    """``({id: name}, [(time, {id: value})])`` for the signals of the top scope; ``name`` is the last path component, a bus keeps its width."""
-    names: dict[str, str] = {}
+    """``({id: name}, [(time, {id: value})])``. ``name`` is the last path component, a bus keeps its width. A name is taken from the shallowest
+    scope that has it (the wrapper's own nets; a net the front end folded into the design instance, such as an output wire, from one level down)."""
+    best: dict[str, tuple[int, str]] = {}                  # name -> (depth, id)
     scope: list[str] = []
     events: list[tuple[int, dict[str, str]]] = []
     cur: dict[str, str] | None = None
@@ -682,8 +687,8 @@ def parse_vcd(text: str) -> tuple[dict[str, str], list[tuple[int, dict[str, str]
                 scope.pop()
             elif line.startswith("$var"):
                 parts = line.split()
-                if len(scope) == 1:
-                    names.setdefault(parts[3], parts[4])
+                if len(scope) <= 2 and (parts[4] not in best or len(scope) < best[parts[4]][0]):
+                    best[parts[4]] = (len(scope), parts[3])
             elif line.startswith("$enddefinitions"):
                 in_defs = False
             continue
@@ -696,7 +701,7 @@ def parse_vcd(text: str) -> tuple[dict[str, str], list[tuple[int, dict[str, str]
                 cur[i] = v
             elif line[0] in "01xXzZ":
                 cur[line[1:]] = line[0]
-    return names, events
+    return {i: n for n, (_, i) in best.items()}, events
 
 
 def wavedrom(vcd_text: str, signals: list[str], title: str = "", mark_last: bool = True) -> dict[str, Any]:

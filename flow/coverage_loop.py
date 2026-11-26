@@ -119,6 +119,24 @@ HOW = {
 }
 
 
+_TOGGLE = re.compile(r"^(?P<head>\S+:\d+ \w+)\[(?P<bit>\d+)\]:(?P<dir>0->1|1->0)$")
+
+
+def _group_toggles(hs: list[dict[str, str]]) -> list[tuple[str, int]]:
+    """Toggle holes are one per bit per direction (111 of them in the recorded T1 reference run). Group them by signal for the role:
+    ``file:line signal: bits 4 (1->0), 5 (1->0)``. ``(line, holes in it)``; a hole that does not parse stays a line of its own."""
+    groups: dict[str, list[str]] = {}
+    out: list[tuple[str, int]] = []
+    for h in hs:
+        key = h["key"].split(":", 1)[1]
+        m = _TOGGLE.match(key)
+        if m:
+            groups.setdefault(m["head"], []).append(f"{m['bit']} ({m['dir']})")
+        else:
+            out.append((h["text"], 1))
+    return [(f"signal bits never changed, {head}: bits " + ", ".join(bits), len(bits)) for head, bits in groups.items()] + out
+
+
 def brief(holes: list[dict[str, str]], round_no: int, limit: int = BRIEF_LIMIT, history: list[dict[str, Any]] | None = None) -> str:
     """The text added to the tests role's repair call (code, not a private prompt). Names the holes of this round, what each kind
     asks for, and what earlier rounds closed or did not."""
@@ -134,11 +152,11 @@ def brief(holes: list[dict[str, str]], round_no: int, limit: int = BRIEF_LIMIT, 
         if not hs:
             continue
         lines += ["", f"{kind} holes ({len(hs)}): {HOW[kind]}"]
-        for h in hs:
+        for text, n in (_group_toggles(hs) if kind == "toggle" else [(h["text"], 1) for h in hs]):
             if shown >= limit:
                 break
-            lines.append(f"- {h['text']}")
-            shown += 1
+            lines.append(f"- {text}")
+            shown += n
     if len(holes) > shown:
         lines.append(f"(+{len(holes) - shown} more: see build/verif/coverage_loop.jsonl and the gate's coverage_detail)")
     if history:

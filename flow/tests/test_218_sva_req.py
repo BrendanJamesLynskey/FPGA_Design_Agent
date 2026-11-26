@@ -95,6 +95,10 @@ def test_a_dropped_negation_is_a_mismatch():
     g = gen("same", "busy", "!done")
     c = S.compare({"id": "R", "text": "Done is never high while busy is high"}, g, "Whenever busy is high, done is high.", SPEC)
     assert not c["match"] and any(r.startswith("negation") for r in c["reasons"])
+    # a quoted expression such as `!busy` in a back-translation is not a negation in the sentence
+    ok = S.compare({"id": "R", "text": "Busy holds its value until start"}, gen("next", "!start", "$stable(busy)"),
+                   "If `!start` was true in the previous cycle, then `$stable(busy)` holds now, so busy keeps its value.", SPEC)
+    assert not any(r.startswith("negation") for r in ok["reasons"])
 
 
 def test_a_property_over_signals_the_requirement_never_names_is_a_mismatch():
@@ -105,6 +109,14 @@ def test_a_property_over_signals_the_requirement_never_names_is_a_mismatch():
 def test_a_sentence_about_something_else_is_a_mismatch():
     c = S.compare(req("REQ-01"), gen(), "The module counts down from three and then raises a flag for exactly 7 milliseconds.", SPEC)
     assert not c["match"] and any(r.startswith("words") for r in c["reasons"]) and any("states 7" in r for r in c["reasons"])
+
+
+def test_a_bound_spelled_one_past_the_last_value_is_the_same_bound():
+    spec = {**SPEC, "ports": [*SPEC["ports"], {"name": "addr", "dir": "in", "width": 12, "note": "read address"}]}
+    g = gen("same", "start && busy", "done")
+    g = {**g, "ante": "addr < 1024", "signals": ["addr"]}
+    assert S.compare({"id": "R", "text": "Reads of the address for i in 0 to 1023 return the word"}, g, "Whenever the address is less than 1024, the word is returned.", spec)["match"]
+    assert not S.compare({"id": "R", "text": "Reads of the address for i in 0 to 511 return the word"}, g, "Whenever the address is less than 1024, the word is returned.", spec)["match"]
 
 
 def test_an_l2_signal_the_property_leaves_out_is_a_mismatch():
@@ -143,6 +155,9 @@ $var wire 1 " busy $end
 $var wire 4 # cnt [3:0] $end
 $scope module dut $end
 $var wire 1 $ inner $end
+$scope module sub $end
+$var wire 1 % deep $end
+$upscope $end
 $upscope $end
 $upscope $end
 $enddefinitions $end
@@ -166,9 +181,10 @@ b0011 #
 
 
 def test_a_cover_trace_becomes_a_wavedrom_document():
-    wd = S.wavedrom(VCD, ["busy", "cnt", "inner"], "R: the trigger is reachable")
+    wd = S.wavedrom(VCD, ["busy", "cnt", "inner", "deep"], "R: the trigger is reachable")
     sig = {s["name"]: s for s in wd["signal"]}
-    assert sig["clk"]["wave"] == "p.." and "inner" not in sig                         # inner scope signals are not shown
+    assert sig["clk"]["wave"] == "p.." and "deep" not in sig                          # two levels down are not shown; one level down is (a folded output wire)
+    assert "inner" in sig
     assert sig["busy"]["wave"] == "01."                                              # sampled at each rising clock edge
     assert sig["cnt"]["data"] == ["0x0", "0x3"] and wd["head"]["text"].startswith("R:") and "3 cycles" in wd["foot"]["text"]
     json.dumps(wd)

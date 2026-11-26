@@ -44,6 +44,20 @@ def test_holes_come_from_a_real_coverage_dat(tmp_path):
     assert [(h["kind"], h["key"]) for h in hs] == [("line", "line:a.sv:11 sig11"), ("toggle", "toggle:a.sv:12 sig12")]
 
 
+REF = Path(__file__).parent / "data" / "ref_t1_sim"
+
+
+def test_holes_from_the_recorded_t1_reference_run():
+    """Real Verilator coverage of the committed T1 reference simulation (3 seeds): every line and branch is hit, 111 toggle bits are not."""
+    code = vg.merge_code_cov(REF, "designs/t1_dimmer_counter/rtl/")
+    assert (code["line"]["hit"], code["line"]["points"], code["branch"]["hit"]) == (36, 36, 28)
+    hs = CL.holes_of({"code_coverage_unhit": {k: v["unhit"] for k, v in code.items() if k in ("line", "toggle", "branch")}})
+    assert CL.counts(hs) == {"toggle": 111} and len({h["key"] for h in hs}) == 111
+    text = CL.brief(hs, 1)
+    assert "dimmer_counter.sv:17 an: bits" in text and "(1->0)" in text            # grouped by signal, not 111 lines
+    assert text.count("\n- ") <= 12 and "(+" in text                                     # a handful of lines, the rest counted
+
+
 def test_holes_from_bins_cover_properties_and_mutants():
     verif = v3({"functional_bins_unhit": ["t1.op.kind:CLEAR", "t1.clock.mix:WRITE"], "cover_properties_unhit": ["C_X"]})
     mut = {"survivor_text": ["a.sv:7 '==' replaced by '!='"], "timed_out_text": ["b.sv:9 '+' replaced by '-'"]}

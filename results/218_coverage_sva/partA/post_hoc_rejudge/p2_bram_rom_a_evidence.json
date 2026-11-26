@@ -1,0 +1,355 @@
+{
+ "schema": "fpga-force/req-sva/v1",
+ "design": "a",
+ "module": "p2_core",
+ "module_note": "module `p2_core` (the spec's top `p2_top` has primitives and a bus the properties cannot see through; this module carries 8 of the spec's ports)",
+ "generated": "2026-11-26T02:34:29Z",
+ "requirements": {
+  "REQ-24": {
+   "id": "REQ-24",
+   "text": "SCRATCH at 0x008 reads 0 after reset.",
+   "key": "309d723148dd6bfa",
+   "rtl_key": "ad655055e2e52d73",
+   "generator_reply": "{\"kind\": \"same\", \"ante\": \"$past(rst) && h_re && h_addr == 12'h008\", \"cons\": \"h_rdata == 32'h0\", \"why\": \"In the first cycle after reset, a read of address 0x008 (SCRATCH) must return 0 on h_rdata.\"}",
+   "property": {
+    "kind": "same",
+    "ante": "$past(rst) && h_re && h_addr == 12'h008",
+    "cons": "h_rdata == 32'h0",
+    "why": "In the first cycle after reset, a read of address 0x008 (SCRATCH) must return 0 on h_rdata.",
+    "signals": [
+     "h_addr",
+     "h_rdata",
+     "h_re",
+     "rst"
+    ]
+   },
+   "back_translation": "Whenever `rst` was high one clock cycle earlier, `h_re` is high and `h_addr` equals 12'h008 in the current cycle, and `h_rdata` must equal 32'h0 in that same cycle.",
+   "comparison": {
+    "match": true,
+    "reasons": [],
+    "requirement_covered": 0.67,
+    "translation_covered": 0.67,
+    "partial": false,
+    "property_numbers": [
+     8
+    ]
+   },
+   "status": "vacuous",
+   "evidence": false,
+   "tasks": {
+    "bmc": "PASS",
+    "prove": "PASS",
+    "cover": "FAIL"
+   },
+   "why": "the trigger is never reached within 24 cycles: the proof is empty",
+   "seconds": 2.8,
+   "job": "sva_REQ_24"
+  },
+  "REQ-04": {
+   "id": "REQ-04",
+   "text": "Reads of ROM words 0 to 1023 straight after configuration equal the lines of data/rom_init.hex.",
+   "key": "9f332530961791e2",
+   "rtl_key": "ad655055e2e52d73",
+   "generator_reply": "The requirement compares read data against the contents of data/rom_init.hex. That file's contents are not given, and the ports and allowed expressions can't encode 1024 arbitrary constants without knowing them. The property would need the values of the hex file, which I don't have, so it can't be stated on the ports.\n\n{\"kind\": \"none\", \"why\": \"The expected values are the lines of data/rom_init.hex, which are not provided, so the 1024 ROM contents cannot be written as a port-level expression; 'straight after configuration' is also not defined by any port.\"}",
+   "status": "unusable",
+   "why": "the generator says it cannot be stated on the ports: The expected values are the lines of data/rom_init.hex, which are not provided, so the 1024 ROM contents cannot be written as a port-level expression; 'straight after configuration' is also not define"
+  },
+  "REQ-05": {
+   "id": "REQ-05",
+   "text": "Reads of RAM word i straight after configuration, before any write, return 0xC0DE0000 + i for i in 0 to 1023.",
+   "key": "851cac0929374e6a",
+   "rtl_key": "ad655055e2e52d73",
+   "generator_reply": "{\"kind\": \"next\", \"ante\": \"$past(rst) && h_re && !h_we && h_addr < 1024\", \"cons\": \"h_rdata == 32'hC0DE0000 + $past(h_addr, 1)\", \"why\": \"A read of word i in the first cycle after reset, with no write, returns 0xC0DE0000 + i one cycle later. The requirement gives no read latency, so one cycle is assumed, and 'before any write' is only covered for that first cycle.\"}",
+   "property": {
+    "kind": "next",
+    "ante": "$past(rst) && h_re && !h_we && h_addr < 1024",
+    "cons": "h_rdata == 32'hC0DE0000 + $past(h_addr, 1)",
+    "why": "A read of word i in the first cycle after reset, with no write, returns 0xC0DE0000 + i one cycle later. The requirement gives no read latency, so one cycle is assumed, and 'before any write' is only covered for that first cycle.",
+    "signals": [
+     "h_addr",
+     "h_rdata",
+     "h_re",
+     "h_we",
+     "rst"
+    ]
+   },
+   "back_translation": "If, in the previous clock cycle, rst was high, h_re was high, h_we was low, and h_addr was less than 1024, then in the current cycle h_rdata equals 32'hC0DE0000 plus the value h_addr had one clock cycle earlier.",
+   "comparison": {
+    "match": true,
+    "reasons": [],
+    "requirement_covered": 0.25,
+    "translation_covered": 0.43,
+    "partial": true,
+    "property_numbers": [
+     1024,
+     3235774464
+    ]
+   },
+   "status": "failed",
+   "evidence": false,
+   "tasks": {
+    "bmc": "FAIL",
+    "prove": "FAIL",
+    "cover": "PASS"
+   },
+   "why": "an assertion fails: the property is wrong or the design is (counterexample in the work folder)",
+   "seconds": 2.5,
+   "job": "sva_REQ_05",
+   "cover_trace": "build/verif/sva/REQ_05/cover_trace.wavedrom.json"
+  },
+  "REQ-25": {
+   "id": "REQ-25",
+   "text": "A RAM_DATA read after a write to the same address returns the written word.",
+   "key": "940d394926cb8c6e",
+   "rtl_key": "ad655055e2e52d73",
+   "generator_reply": "{\"kind\":\"same\",\"ante\":\"h_re && $past(h_we) && !$past(rst) && ($past(h_addr) == h_addr)\",\"cons\":\"h_rdata == $past(h_wdata)\",\"why\":\"A read of an address written on the previous cycle returns the written word. The requirement gives no read latency, so this assumes h_rdata is valid in the same cycle as h_re.\"}",
+   "property": {
+    "kind": "same",
+    "ante": "h_re && $past(h_we) && !$past(rst) && ($past(h_addr) == h_addr)",
+    "cons": "h_rdata == $past(h_wdata)",
+    "why": "A read of an address written on the previous cycle returns the written word. The requirement gives no read latency, so this assumes h_rdata is valid in the same cycle as h_re.",
+    "signals": [
+     "h_addr",
+     "h_rdata",
+     "h_re",
+     "h_wdata",
+     "h_we",
+     "rst"
+    ]
+   },
+   "back_translation": "Whenever `h_re` is high, `h_we` was high one cycle earlier, `rst` was low one cycle earlier, and `h_addr` equals its value one cycle earlier, `h_rdata` must equal `h_wdata` from one cycle earlier in that same cycle.",
+   "comparison": {
+    "match": true,
+    "reasons": [],
+    "requirement_covered": 0.44,
+    "translation_covered": 0.62,
+    "partial": true,
+    "property_numbers": []
+   },
+   "status": "failed",
+   "evidence": false,
+   "tasks": {
+    "bmc": "FAIL",
+    "prove": "FAIL",
+    "cover": "PASS"
+   },
+   "why": "an assertion fails: the property is wrong or the design is (counterexample in the work folder)",
+   "seconds": 2.5,
+   "job": "sva_REQ_25",
+   "cover_trace": "build/verif/sva/REQ_25/cover_trace.wavedrom.json"
+  },
+  "REQ-07": {
+   "id": "REQ-07",
+   "text": "With AUTOINC set, each ROM_DATA read adds 1 to MEM_ADDR modulo 1024.",
+   "key": "ae2babe4a930ed9b",
+   "rtl_key": "ad655055e2e52d73",
+   "generator_reply": "{\"kind\": \"none\", \"why\": \"The ports expose only a generic host bus (h_we, h_re, h_addr, h_wdata, h_rdata). The register addresses for ROM_DATA, MEM_ADDR and AUTOINC are not given, and MEM_ADDR and AUTOINC are internal state with no dedicated port. The requirement cannot be stated on the ports without inventing those addresses.\"}",
+   "status": "unusable",
+   "why": "the generator says it cannot be stated on the ports: The ports expose only a generic host bus (h_we, h_re, h_addr, h_wdata, h_rdata). The register addresses for ROM_DATA, MEM_ADDR and AUTOINC are not given, and MEM_ADDR and AUTOINC are internal state wi"
+  },
+  "REQ-08": {
+   "id": "REQ-08",
+   "text": "With AUTOINC set, each RAM_DATA read or write adds 1 to MEM_ADDR modulo 1024.",
+   "key": "597679bbd16d1c0d",
+   "rtl_key": "ad655055e2e52d73",
+   "generator_reply": "{\"kind\": \"none\", \"why\": \"MEM_ADDR, AUTOINC and RAM_DATA are internal registers and address map details not exposed as ports; the requirement cannot be stated on the listed ports without guessing the register addresses and read-back behavior.\"}",
+   "status": "unusable",
+   "why": "the generator says it cannot be stated on the ports: MEM_ADDR, AUTOINC and RAM_DATA are internal registers and address map details not exposed as ports; the requirement cannot be stated on the listed ports without guessing the register addresses and rea"
+  },
+  "REQ-10": {
+   "id": "REQ-10",
+   "text": "A register write takes effect 1 clock after h_we.",
+   "key": "951c989ca41e8847",
+   "rtl_key": "ad655055e2e52d73",
+   "generator_reply": "{\"kind\": \"none\", \"why\": \"REQ-10 names no register, address or output field, and the ports alone do not show where a write lands. h_rdata also depends on an unstated read latency and address map. Any assertion would add conditions the requirement does not give.\"}",
+   "status": "unusable",
+   "why": "the generator says it cannot be stated on the ports: REQ-10 names no register, address or output field, and the ports alone do not show where a write lands. h_rdata also depends on an unstated read latency and address map. Any assertion would add condit"
+  },
+  "REQ-11": {
+   "id": "REQ-11",
+   "text": "h_rdata shows the addressed register within 2 clocks after h_re.",
+   "key": "6a59f4a26bf16b85",
+   "rtl_key": "ad655055e2e52d73",
+   "generator_reply": "{\"kind\": \"none\", \"why\": \"The requirement compares h_rdata with the contents of the addressed register, but those register values are internal and are not exposed on any port. The ports alone give no expected value to check h_rdata against, and the requirement states no fixed value. The '2 clocks' latency is also an upper bound ('within'), not an exact delay.\"}",
+   "status": "unusable",
+   "why": "the generator says it cannot be stated on the ports: The requirement compares h_rdata with the contents of the addressed register, but those register values are internal and are not exposed on any port. The ports alone give no expected value to check h_"
+  },
+  "REQ-26": {
+   "id": "REQ-26",
+   "text": "h_rdata holds its value until the next h_re.",
+   "key": "0a2b7bd2d79ccc3f",
+   "rtl_key": "ad655055e2e52d73",
+   "generator_reply": "The requirement says h_rdata is stable on any cycle after one where h_re was not asserted. In the \"next\" form: if h_re was low on the previous edge, then h_rdata is stable now, so it equals its previous value.\n\nStating it with `$stable(h_rdata)` as cons and `!h_re` as ante: on edges where the previous edge had h_re low, h_rdata is unchanged from the previous cycle. This reads \"holds until the next h_re\" as: it can change only after an h_re.\n\nA subtlety is that the data could update in the cycle right after h_re (the read result appearing), which is not constrained here, since ante is only true after a cycle with no h_re.\n\n{\"kind\": \"next\", \"ante\": \"!h_re\", \"cons\": \"$stable(h_rdata)\", \"why\": \"If h_re was low on the previous edge, h_rdata now equals its value from the previous edge, so it only changes after an h_re.\"}",
+   "property": {
+    "kind": "next",
+    "ante": "!h_re",
+    "cons": "$stable(h_rdata)",
+    "why": "If h_re was low on the previous edge, h_rdata now equals its value from the previous edge, so it only changes after an h_re.",
+    "signals": [
+     "h_rdata",
+     "h_re"
+    ]
+   },
+   "back_translation": "If `h_re` was low in the previous clock cycle, then `h_rdata` must be stable in the current clock cycle, meaning it holds the same value it had in the previous cycle.",
+   "comparison": {
+    "match": true,
+    "reasons": [],
+    "requirement_covered": 0.6,
+    "translation_covered": 0.38,
+    "partial": false,
+    "property_numbers": []
+   },
+   "status": "failed",
+   "evidence": false,
+   "tasks": {
+    "bmc": "FAIL",
+    "prove": "FAIL",
+    "cover": "PASS"
+   },
+   "why": "an assertion fails: the property is wrong or the design is (counterexample in the work folder)",
+   "seconds": 2.5,
+   "job": "sva_REQ_26",
+   "cover_trace": "build/verif/sva/REQ_26/cover_trace.wavedrom.json"
+  },
+  "REQ-14": {
+   "id": "REQ-14",
+   "text": "Each pass runs March C- over all 1024 RAM words with background 0x00000000.",
+   "key": "61f44508e534b329",
+   "rtl_key": "ad655055e2e52d73",
+   "generator_reply": "{\"kind\": \"none\", \"why\": \"The requirement describes an internal March C- memory-test sequence (element order, per-word read/write operations, background pattern) over the RAM; none of this is observable on the listed ports (host h_we/h_re/h_addr/h_wdata/h_rdata, led, sfp_tx_disable), so it cannot be stated as a same-cycle or fixed-latency property on them.\"}",
+   "status": "unusable",
+   "why": "the generator says it cannot be stated on the ports: The requirement describes an internal March C- memory-test sequence (element order, per-word read/write operations, background pattern) over the RAM; none of this is observable on the listed ports (ho"
+  },
+  "REQ-30": {
+   "id": "REQ-30",
+   "text": "Each pass runs March C- over all 1024 RAM words with background 0xFFFFFFFF.",
+   "key": "b1f74934f1a94619",
+   "rtl_key": "ad655055e2e52d73",
+   "generator_reply": "{\"kind\": \"none\", \"why\": \"The requirement describes internal BIST behavior (March C- over 1024 words with background 0xFFFFFFFF), but the ports expose no BIST state, internal RAM access, address sequence, or pass indicator, so it cannot be stated on the listed ports.\"}",
+   "status": "unusable",
+   "why": "the generator says it cannot be stated on the ports: The requirement describes internal BIST behavior (March C- over 1024 words with background 0xFFFFFFFF), but the ports expose no BIST state, internal RAM access, address sequence, or pass indicator, so"
+  },
+  "REQ-17": {
+   "id": "REQ-17",
+   "text": "MARCH_FIRST_ERR holds the address of the first wrong word.",
+   "key": "e5ab2602e19908d4",
+   "rtl_key": "ad655055e2e52d73",
+   "generator_reply": "{\"kind\": \"none\", \"why\": \"The requirement refers to the MARCH_FIRST_ERR register, but the ports give no register address map, no marching-test status or error signals, and no way to tell which word is wrong, so the 'first wrong word' address cannot be stated on the listed ports.\"}",
+   "status": "unusable",
+   "why": "the generator says it cannot be stated on the ports: The requirement refers to the MARCH_FIRST_ERR register, but the ports give no register address map, no marching-test status or error signals, and no way to tell which word is wrong, so the 'first wron"
+  },
+  "REQ-31": {
+   "id": "REQ-31",
+   "text": "MARCH_FIRST_ERR reads 0xFFFFFFFF when no word read wrong.",
+   "key": "50092170298fdc66",
+   "rtl_key": "ad655055e2e52d73",
+   "generator_reply": "{\"kind\": \"none\", \"why\": \"The requirement gives no MARCH_FIRST_ERR register address, and 'no word read wrong' is internal march-test state that is not visible on the listed ports, so it cannot be stated without inventing values.\"}",
+   "status": "unusable",
+   "why": "the generator says it cannot be stated on the ports: The requirement gives no MARCH_FIRST_ERR register address, and 'no word read wrong' is internal march-test state that is not visible on the listed ports, so it cannot be stated without inventing value"
+  },
+  "REQ-33": {
+   "id": "REQ-33",
+   "text": "MARCH_STATUS bits 31:16 equal MARCH_PASSES when DONE is set.",
+   "key": "ea9b6e170cc85b55",
+   "rtl_key": "ad655055e2e52d73",
+   "generator_reply": "{\"kind\": \"none\", \"why\": \"MARCH_STATUS, MARCH_PASSES and DONE are internal registers, not listed ports. The requirement gives no address or bit position for them, so it cannot be stated on h_addr, h_rdata or the other ports without inventing values.\"}",
+   "status": "unusable",
+   "why": "the generator says it cannot be stated on the ports: MARCH_STATUS, MARCH_PASSES and DONE are internal registers, not listed ports. The requirement gives no address or bit position for them, so it cannot be stated on h_addr, h_rdata or the other ports wi"
+  },
+  "REQ-19": {
+   "id": "REQ-19",
+   "text": "After a completed march run the RAM holds all zeros.",
+   "key": "babaeeb7a6b77e08",
+   "rtl_key": "ad655055e2e52d73",
+   "generator_reply": "{\"kind\": \"none\", \"why\": \"The requirement refers to a 'completed march run' and to the RAM contents, but no listed port signals march completion (led is undefined) and the RAM is internal. Reading it back through h_rdata would need an address sweep, which a single-cycle property cannot state.\"}",
+   "status": "unusable",
+   "why": "the generator says it cannot be stated on the ports: The requirement refers to a 'completed march run' and to the RAM contents, but no listed port signals march completion (led is undefined) and the RAM is internal. Reading it back through h_rdata would"
+  }
+ },
+ "skipped": [
+  {
+   "id": "REQ-01",
+   "reason": "no cycle-level condition or response in the wording (checked by simulation or analysis)"
+  },
+  {
+   "id": "REQ-02",
+   "reason": "proof method is hardware only: not a property of the ports"
+  },
+  {
+   "id": "REQ-03",
+   "reason": "no cycle-level condition or response in the wording (checked by simulation or analysis)"
+  },
+  {
+   "id": "REQ-06",
+   "reason": "no cycle-level condition or response in the wording (checked by simulation or analysis)"
+  },
+  {
+   "id": "REQ-09",
+   "reason": "no cycle-level condition or response in the wording (checked by simulation or analysis)"
+  },
+  {
+   "id": "REQ-12",
+   "reason": "no cycle-level condition or response in the wording (checked by simulation or analysis)"
+  },
+  {
+   "id": "REQ-27",
+   "reason": "no cycle-level condition or response in the wording (checked by simulation or analysis)"
+  },
+  {
+   "id": "REQ-13",
+   "reason": "no cycle-level condition or response in the wording (checked by simulation or analysis)"
+  },
+  {
+   "id": "REQ-28",
+   "reason": "no cycle-level condition or response in the wording (checked by simulation or analysis)"
+  },
+  {
+   "id": "REQ-29",
+   "reason": "no cycle-level condition or response in the wording (checked by simulation or analysis)"
+  },
+  {
+   "id": "REQ-15",
+   "reason": "no cycle-level condition or response in the wording (checked by simulation or analysis)"
+  },
+  {
+   "id": "REQ-32",
+   "reason": "no cycle-level condition or response in the wording (checked by simulation or analysis)"
+  },
+  {
+   "id": "REQ-16",
+   "reason": "no cycle-level condition or response in the wording (checked by simulation or analysis)"
+  },
+  {
+   "id": "REQ-18",
+   "reason": "no cycle-level condition or response in the wording (checked by simulation or analysis)"
+  },
+  {
+   "id": "REQ-20",
+   "reason": "no cycle-level condition or response in the wording (checked by simulation or analysis)"
+  },
+  {
+   "id": "REQ-21",
+   "reason": "proof method is analysis only: not a property of the ports"
+  },
+  {
+   "id": "REQ-22",
+   "reason": "proof method is analysis only: not a property of the ports"
+  },
+  {
+   "id": "REQ-23",
+   "reason": "proof method is analysis only: not a property of the ports"
+  }
+ ],
+ "counts": {
+  "vacuous": 1,
+  "unusable": 11,
+  "failed": 3
+ },
+ "formal_tool": "Yosys 0.70+385 (git sha1 098e46a36, Release, Clang /usr/bin/clang++ 21.1.8) (slang front end)",
+ "caveats": [
+  "a vendor primitive is the design's own simulation stub (SYNTHESIS undefined), not the primitive",
+  "reset is asserted in the first cycle only (reset rows: free after the third)",
+  "one clock domain per property",
+  "the property was written without the RTL"
+ ]
+}

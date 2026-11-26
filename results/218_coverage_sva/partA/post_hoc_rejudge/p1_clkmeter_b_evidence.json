@@ -1,0 +1,266 @@
+{
+ "schema": "fpga-force/req-sva/v1",
+ "design": "b",
+ "module": "freq_meter_core",
+ "module_note": "module `freq_meter_core` (the spec's top `freq_meter_top` has primitives and a bus the properties cannot see through; this module carries 2 of the spec's ports)",
+ "generated": "2026-11-26T02:34:27Z",
+ "requirements": {
+  "REQ-05": {
+   "id": "REQ-05",
+   "text": "Writing START while not busy runs exactly one measurement.",
+   "key": "254e19f28ea2a1d2",
+   "rtl_key": "ca0c553429ecfef9",
+   "generator_reply": "The requirement mentions START and busy, but the ports give no register map: there is no address for START, no bit position for it, and no busy signal. The only observable outputs are h_rdata, led and sfp_tx_disable, and none of them is identified as busy or as a measurement-count indicator. Without the address, bit position and busy status, I can't state it on the ports without inventing them.\n\n{\"kind\": \"none\", \"why\": \"START address/bit, the busy status and the measurement count are not identifiable from the listed ports or the requirement, so 'exactly one measurement' cannot be stated without inventing details.\"}",
+   "status": "unusable",
+   "why": "the generator says it cannot be stated on the ports: START address/bit, the busy status and the measurement count are not identifiable from the listed ports or the requirement, so 'exactly one measurement' cannot be stated without inventing details."
+  },
+  "REQ-06": {
+   "id": "REQ-06",
+   "text": "START written while BUSY is ignored.",
+   "key": "fe3b81e849da3c43",
+   "rtl_key": "ca0c553429ecfef9",
+   "generator_reply": "{\"kind\": \"none\", \"why\": \"The requirement refers to START and BUSY register bits, but the ports give no address map or bit positions for them, and BUSY is an internal state not visible on the ports. It cannot be stated using only the listed ports without inventing details the requirement does not give.\"}",
+   "status": "unusable",
+   "why": "the generator says it cannot be stated on the ports: The requirement refers to START and BUSY register bits, but the ports give no address map or bit positions for them, and BUSY is an internal state not visible on the ports. It cannot be stated using o"
+  },
+  "REQ-07": {
+   "id": "REQ-07",
+   "text": "GATE_ACTUAL equals GATE_LEN for every completed measurement.",
+   "key": "48c59209fe65acb9",
+   "rtl_key": "ca0c553429ecfef9",
+   "generator_reply": "{\"kind\": \"none\", \"why\": \"GATE_ACTUAL, GATE_LEN and the completion of a measurement are internal registers/events; none of them is a listed port, and the register values are only reachable through h_rdata at unspecified addresses, so the requirement cannot be stated on the ports without inventing addresses or a done condition.\"}",
+   "status": "unusable",
+   "why": "the generator says it cannot be stated on the ports: GATE_ACTUAL, GATE_LEN and the completion of a measurement are internal registers/events; none of them is a listed port, and the register values are only reachable through h_rdata at unspecified addres"
+  },
+  "REQ-08": {
+   "id": "REQ-08",
+   "text": "COUNT equals the number of clk_c3 rising edges inside the gate to within 1 edge.",
+   "key": "e334a49956b3fd0a",
+   "rtl_key": "ca0c553429ecfef9",
+   "generator_reply": "{\"kind\": \"none\", \"why\": \"The requirement refers to clk_c3, a gate, and COUNT, none of which are ports of freq_meter_core (only clk, clk_ref, h_rdata, etc. are listed), and the 'within 1 edge' tolerance is not expressible without internal signals.\"}",
+   "status": "unusable",
+   "why": "the generator says it cannot be stated on the ports: The requirement refers to clk_c3, a gate, and COUNT, none of which are ports of freq_meter_core (only clk, clk_ref, h_rdata, etc. are listed), and the 'within 1 edge' tolerance is not expressible with"
+  },
+  "REQ-25": {
+   "id": "REQ-25",
+   "text": "DONE is set only after the COUNT register holds the final gate result.",
+   "key": "804007980b900a02",
+   "rtl_key": "ca0c553429ecfef9",
+   "generator_reply": "{\"kind\": \"none\", \"why\": \"DONE and COUNT are internal registers; the register map, addresses and bit positions are not given, and only h_rdata, led and sfp_tx_disable are visible on the ports, so the ordering between DONE and the final COUNT value cannot be stated on the listed ports.\"}",
+   "status": "unusable",
+   "why": "the generator says it cannot be stated on the ports: DONE and COUNT are internal registers; the register map, addresses and bit positions are not given, and only h_rdata, led and sfp_tx_disable are visible on the ports, so the ordering between DONE and "
+  },
+  "REQ-26": {
+   "id": "REQ-26",
+   "text": "DONE is set only after the GATE_ACTUAL register holds the final gate result.",
+   "key": "733b4507b028589a",
+   "rtl_key": "ca0c553429ecfef9",
+   "generator_reply": "{\"kind\": \"none\", \"why\": \"The requirement refers to internal DONE and GATE_ACTUAL registers whose addresses, bit positions and final-result timing are not given, and the ports expose only a generic h_rdata bus. The ordering cannot be stated on the ports without inventing those details.\"}",
+   "status": "unusable",
+   "why": "the generator says it cannot be stated on the ports: The requirement refers to internal DONE and GATE_ACTUAL registers whose addresses, bit positions and final-result timing are not given, and the ports expose only a generic h_rdata bus. The ordering ca"
+  },
+  "REQ-11": {
+   "id": "REQ-11",
+   "text": "A gate length of 1000 cycles is the minimum accepted.",
+   "key": "c4f3af4df5aa65d7",
+   "rtl_key": "ca0c553429ecfef9",
+   "generator_reply": "{\"kind\": \"none\", \"why\": \"The requirement refers to an internal gate-length setting. The ports give no register address or output that exposes it, so the 1000-cycle minimum cannot be checked from the ports alone.\"}",
+   "status": "unusable",
+   "why": "the generator says it cannot be stated on the ports: The requirement refers to an internal gate-length setting. The ports give no register address or output that exposes it, so the 1000-cycle minimum cannot be checked from the ports alone."
+  },
+  "REQ-14": {
+   "id": "REQ-14",
+   "text": "led[0] toggles every 12500000 clk_c3 cycles when LED_EN is 1.",
+   "key": "5069db39d8e3115c",
+   "rtl_key": "ca0c553429ecfef9",
+   "generator_reply": "{\"kind\": \"none\", \"why\": \"The requirement refers to LED_EN and the clk_c3 clock, and neither is a port of freq_meter_core. The only clocks on the ports are clk and clk_ref, so the 12500000-cycle toggle of led[0] cannot be stated on the listed ports.\"}",
+   "status": "unusable",
+   "why": "the generator says it cannot be stated on the ports: The requirement refers to LED_EN and the clk_c3 clock, and neither is a port of freq_meter_core. The only clocks on the ports are clk and clk_ref, so the 12500000-cycle toggle of led[0] cannot be stat"
+  },
+  "REQ-15": {
+   "id": "REQ-15",
+   "text": "led[1] toggles every 78125000 clk_ref cycles when LED_EN is 1.",
+   "key": "1f22ef83a1885aec",
+   "rtl_key": "ca0c553429ecfef9",
+   "generator_reply": "{\"kind\": \"none\", \"why\": \"LED_EN is not a listed port, and a toggle period of 78125000 clk_ref cycles is far beyond the $past depth of 16, so the requirement cannot be stated on the ports.\"}",
+   "status": "unusable",
+   "why": "the generator says it cannot be stated on the ports: LED_EN is not a listed port, and a toggle period of 78125000 clk_ref cycles is far beyond the $past depth of 16, so the requirement cannot be stated on the ports."
+  },
+  "REQ-16": {
+   "id": "REQ-16",
+   "text": "Both LEDs are 0 after reset.",
+   "key": "c8bb1a7b3676f21a",
+   "rtl_key": "ca0c553429ecfef9",
+   "generator_reply": "{\"kind\": \"reset\", \"ante\": \"1\", \"cons\": \"led == 2'b00\", \"why\": \"On the edge right after rst was high, the 2-bit led output must be 0, so both LEDs are off.\"}",
+   "property": {
+    "kind": "reset",
+    "ante": "1",
+    "cons": "led == 2'b00",
+    "why": "On the edge right after rst was high, the 2-bit led output must be 0, so both LEDs are off.",
+    "signals": [
+     "led"
+    ]
+   },
+   "back_translation": "In the cycle after rst is asserted, led is 2'b00.",
+   "comparison": {
+    "match": true,
+    "reasons": [],
+    "requirement_covered": 0.8,
+    "translation_covered": 0.8,
+    "partial": false,
+    "property_numbers": []
+   },
+   "status": "bounded",
+   "evidence": true,
+   "tasks": {
+    "bmc": "PASS",
+    "prove": "UNKNOWN",
+    "cover": "PASS"
+   },
+   "why": "holds to depth 24 (k-induction did not close: UNKNOWN); the trigger is reachable",
+   "seconds": 1.2,
+   "job": "sva_REQ_16",
+   "cover_trace": "build/verif/sva/REQ_16/cover_trace.wavedrom.json",
+   "installed": "verif/formal/sva_REQ_16.sby"
+  },
+  "REQ-27": {
+   "id": "REQ-27",
+   "text": "Both LEDs are 0 while LED_EN is 0.",
+   "key": "6ed333c95e4bb8fc",
+   "rtl_key": "ca0c553429ecfef9",
+   "generator_reply": "LED_EN is not among the listed ports, so the requirement cannot be stated on them.\n\n{\"kind\": \"none\", \"why\": \"LED_EN is not a port of freq_meter_core (ports: clk, clk_ref, rst, h_we, h_re, h_addr, h_wdata, h_rdata, led, sfp_tx_disable), so the condition cannot be expressed on the ports.\"}",
+   "status": "unusable",
+   "why": "the generator says it cannot be stated on the ports: LED_EN is not a port of freq_meter_core (ports: clk, clk_ref, rst, h_we, h_re, h_addr, h_wdata, h_rdata, led, sfp_tx_disable), so the condition cannot be expressed on the ports."
+  },
+  "REQ-19": {
+   "id": "REQ-19",
+   "text": "h_rdata shows the addressed register within 2 clocks of h_re.",
+   "key": "40cf0bd22280d66a",
+   "rtl_key": "ca0c553429ecfef9",
+   "generator_reply": "{\"kind\": \"none\", \"why\": \"The requirement says h_rdata shows the addressed register, but the register contents and address map are internal and not visible on the ports, so the expected h_rdata value cannot be stated.\"}",
+   "status": "unusable",
+   "why": "the generator says it cannot be stated on the ports: The requirement says h_rdata shows the addressed register, but the register contents and address map are internal and not visible on the ports, so the expected h_rdata value cannot be stated."
+  },
+  "REQ-28": {
+   "id": "REQ-28",
+   "text": "h_rdata holds the read value until the next h_re.",
+   "key": "4ebc240d34dfb410",
+   "rtl_key": "ca0c553429ecfef9",
+   "generator_reply": "I state it as: if h_re was not asserted in the previous cycle, h_rdata is unchanged from the previous cycle. Under the \"next\" kind, ante is evaluated one edge earlier and cons is checked now.\n\nWith ante = !h_re, the check is that h_rdata now equals its value one cycle earlier. In \"next\", ante is sampled on the previous edge, so it says that h_re was low at the previous edge. The cons is `h_rdata == $past(h_rdata)`, which compares the current value with the value at the previous edge.\n\nThis is slightly conservative: the read value may be updated in the cycle after h_re is high, since h_re high on the previous edge is exactly what the ante excludes. So the holding is stated only for cycles where h_re was low at the previous edge, and the update in the cycle right after h_re is not constrained.\n\n{\"kind\": \"next\", \"ante\": \"!h_re\", \"cons\": \"$stable(h_rdata)\", \"why\": \"If h_re was low on the previous edge, h_rdata now equals its previous value, so it holds until the next h_re.\"}",
+   "property": {
+    "kind": "next",
+    "ante": "!h_re",
+    "cons": "$stable(h_rdata)",
+    "why": "If h_re was low on the previous edge, h_rdata now equals its previous value, so it holds until the next h_re.",
+    "signals": [
+     "h_rdata",
+     "h_re"
+    ]
+   },
+   "back_translation": "If `h_re` was low in the previous clock cycle, then `h_rdata` must be unchanged (stable) in the current clock cycle.",
+   "comparison": {
+    "match": true,
+    "reasons": [],
+    "requirement_covered": 0.4,
+    "translation_covered": 0.33,
+    "partial": true,
+    "property_numbers": []
+   },
+   "status": "proved",
+   "evidence": true,
+   "tasks": {
+    "bmc": "PASS",
+    "prove": "PASS",
+    "cover": "PASS"
+   },
+   "why": "proved by k-induction (depth 12); the trigger is reachable",
+   "seconds": 1.6,
+   "job": "sva_REQ_28",
+   "cover_trace": "build/verif/sva/REQ_28/cover_trace.wavedrom.json",
+   "installed": "verif/formal/sva_REQ_28.sby"
+  },
+  "REQ-20": {
+   "id": "REQ-20",
+   "text": "A write takes effect 1 clock after h_we.",
+   "key": "ea7f36a3db9f2a47",
+   "rtl_key": "ca0c553429ecfef9",
+   "generator_reply": "{\"kind\": \"none\", \"why\": \"The requirement does not say which register or output changes after h_we, nor the address or data involved, so no check on the ports can be written without inventing those details.\"}",
+   "status": "unusable",
+   "why": "the generator says it cannot be stated on the ports: The requirement does not say which register or output changes after h_we, nor the address or data involved, so no check on the ports can be written without inventing those details."
+  }
+ },
+ "skipped": [
+  {
+   "id": "REQ-01",
+   "reason": "no cycle-level condition or response in the wording (checked by simulation or analysis)"
+  },
+  {
+   "id": "REQ-02",
+   "reason": "proof method is hardware only: not a property of the ports"
+  },
+  {
+   "id": "REQ-03",
+   "reason": "no cycle-level condition or response in the wording (checked by simulation or analysis)"
+  },
+  {
+   "id": "REQ-24",
+   "reason": "no cycle-level condition or response in the wording (checked by simulation or analysis)"
+  },
+  {
+   "id": "REQ-04",
+   "reason": "no cycle-level condition or response in the wording (checked by simulation or analysis)"
+  },
+  {
+   "id": "REQ-09",
+   "reason": "no cycle-level condition or response in the wording (checked by simulation or analysis)"
+  },
+  {
+   "id": "REQ-10",
+   "reason": "no cycle-level condition or response in the wording (checked by simulation or analysis)"
+  },
+  {
+   "id": "REQ-12",
+   "reason": "proof method is hardware only: not a property of the ports"
+  },
+  {
+   "id": "REQ-13",
+   "reason": "proof method is hardware only: not a property of the ports"
+  },
+  {
+   "id": "REQ-17",
+   "reason": "no cycle-level condition or response in the wording (checked by simulation or analysis)"
+  },
+  {
+   "id": "REQ-18",
+   "reason": "proof method is analysis only: not a property of the ports"
+  },
+  {
+   "id": "REQ-21",
+   "reason": "no cycle-level condition or response in the wording (checked by simulation or analysis)"
+  },
+  {
+   "id": "REQ-29",
+   "reason": "no cycle-level condition or response in the wording (checked by simulation or analysis)"
+  },
+  {
+   "id": "REQ-22",
+   "reason": "proof method is analysis only: not a property of the ports"
+  },
+  {
+   "id": "REQ-23",
+   "reason": "proof method is analysis only: not a property of the ports"
+  }
+ ],
+ "counts": {
+  "unusable": 12,
+  "bounded": 1,
+  "proved": 1
+ },
+ "formal_tool": "Yosys 0.70+385 (git sha1 098e46a36, Release, Clang /usr/bin/clang++ 21.1.8) (slang front end)",
+ "caveats": [
+  "a vendor primitive is the design's own simulation stub (SYNTHESIS undefined), not the primitive",
+  "reset is asserted in the first cycle only (reset rows: free after the third)",
+  "one clock domain per property",
+  "the property was written without the RTL"
+ ]
+}
