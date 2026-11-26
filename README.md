@@ -358,6 +358,7 @@ standard.
   the agent only dry-runs them against mocks. [hil/lab.py](hil/lab.py), [hil/lab_bringup.py](hil/lab_bringup.py), [hil/lab_drivers.py](hil/lab_drivers.py),
   [hil/lab.example.yaml](hil/lab.example.yaml), [agent/graph/lab_interview.py](agent/graph/lab_interview.py),
   [docs/agent.md](docs/agent.md#the-lab-instruments-the-agent-can-use-hillabpy-brief-221), results in [results/221_lab_instruments](results/221_lab_instruments/README.md).
+- **Run limits (brief 234).** The stop reason of a visit-limit stop names the open failed gate and its route; a route back gives the stages it passes again fresh visits; the run turn cap scales with the design's block count; the reply's thinking tokens are recorded: [docs/agent.md](docs/agent.md), tests in [agent/tests/test_234_run_limits.py](agent/tests/test_234_run_limits.py).
 - **The Red Pitaya as a target and an instrument (brief 225).** The owner's STEMlab 125-14 is a board the agent can target ([boards/redpitaya_stemlab_125_14](boards/redpitaya_stemlab_125_14/README.md); shell mode for
   instruments, bare mode for everything else; volatile loading by a script the owner runs), and the same box in the lab file with a mode (factory instrument or target loaded) so it is never planned to measure its own design.
   Also the lab tool `drive_instrument`, with `lab_limits` calling `check_drive`, and the Red Pitaya OS never-rule. [tools/rp_shell.py](tools/rp_shell.py), [hil/redpitaya_load.py](hil/redpitaya_load.py),

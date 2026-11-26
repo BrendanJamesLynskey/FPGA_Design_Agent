@@ -105,7 +105,9 @@ class Resolver:
                "prompt_tokens": getattr(r, "prompt_tokens", None), "completion_tokens": getattr(r, "completion_tokens", None),
                "cost_usd": getattr(r, "cost", None), "seconds": round(seconds, 2),
                **({"input_tokens": r.input_tokens, "cache_write_tokens": r.cache_write_tokens, "cache_read_tokens": r.cache_read_tokens,
-                   "cost_basis": r.cost_basis, "stop_reason": r.stop_reason, "stream_retries": getattr(r, "stream_retries", 0)} if e.kind == "anthropic_api" and hasattr(r, "cache_read_tokens") else {})}
+                   "cost_basis": r.cost_basis, "stop_reason": r.stop_reason, "stream_retries": getattr(r, "stream_retries", 0),
+                   **({"thinking_tokens": r.thinking_tokens} if getattr(r, "thinking_tokens", None) is not None else {}),
+                   **({"thinking_blocks": r.thinking_blocks, "visible_chars": r.visible_chars} if getattr(r, "thinking_blocks", 0) or getattr(r, "visible_chars", 0) else {})} if e.kind == "anthropic_api" and hasattr(r, "cache_read_tokens") else {})}
         self.run_dir.mkdir(parents=True, exist_ok=True)
         with (self.run_dir / "model_calls.jsonl").open("a") as f:
             f.write(json.dumps(row) + "\n")

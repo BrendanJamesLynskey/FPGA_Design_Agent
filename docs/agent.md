@@ -33,7 +33,7 @@ The USD limits were sized for the default model (OpenRouter, a few hundredths of
 An explicit `--max-usd` is kept as given. The run summary records `budget_scale` and `token_split` (input, output, cache write and cache read tokens).
 
 Long replies (brief 224, [model_config.md](model_config.md#anthropic-api-cost-caching-temperature-budgets-brief-209b)): the `anthropic_api` client streams every
-request; the `rtl`, `tests` and `constraints` purposes default to `writing_max_tokens` 32000 on `claude-sonnet-5-5` (the other purposes 16000), still set by
+request; the `rtl`, `tests` and `constraints` purposes default to `writing_max_tokens` 64000 on `claude-sonnet-5-5` (the other purposes 16000), still set by
 `options: {max_tokens: N}`; a high limit with a low `--max-usd` stops a run early (a full cut-off reply is charged at the limit). The stage-2 Designer is told to
 write one file per call, smallest first. When a reply is cut off its tool call is lost, the files already written stay on disk, and the Designer is called
 again inside the same visit (at most 3 times) with a note of the files in `rtl/` and the `architecture.yaml` blocks that still have no module. Two cut-off
@@ -501,3 +501,10 @@ Four gaps found by the course-tier port are closed; each has a test in `flow/tes
   that differs from the file only in white space is accepted (an invented quote is still refused).
 - **No OpenRouter.** `--oracle claude_code` (needs `--harness claude_code`) runs the oracle as a tool-less headless
   `claude -p` call (`agent/claude_code_arm/oracle.py`, Haiku by default); any OpenRouter call raises.
+
+
+Run limits (brief 234, `reports/234_run_limits_report.md`):
+
+- A visit-limit stop names the most recent failed gate that is still open, with its stage and where the failure was routed ("the failure was in stage 4 synthesis (visit 1), routed to stage 1 ...; stage 3 was refused before any gate ran"). Each failed entry of `history` carries `fails`, `cause` and `routed_to`.
+- Visit counts after a route back: when stage N fails and is routed back to stage T (T < N), the stages strictly between T and N start again from zero (they are re-checks of changed work, not repair attempts). Stage N (the one that failed) and stage T (the one asked to change) keep their counts, so a loop that does not converge still ends: on stage N's limit, or on stage T's. Recorded in `routing_events.jsonl` as `route_back_fresh_visits`.
+- The run turn cap (default 300) rises from stage 2 on to `max(300, 60 x architecture blocks)`, at most 900, when it was left at the default; an explicit cap stays as given. Recorded as `run_turn_cap_scaled`. The USD cap is unchanged and is what bounds the spend.

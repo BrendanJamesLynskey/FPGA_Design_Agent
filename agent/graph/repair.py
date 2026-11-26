@@ -197,6 +197,33 @@ _GATE_OF_TAG = {"lint": "lint", "standards": "design standards", "constants": "d
                 "sim": "simulate", "report_gates": "report gates"}
 
 
+def last_failure(state: dict[str, Any]) -> dict[str, Any] | None:
+    """Brief 234: the most recent FAILED gate set of the run that is still open, with its stage and where the failure was routed.
+
+    Read from the history: the last entry that was gated and did not pass, skipping a failure that the same stage passed on a later
+    visit (it was repaired; p4 run 1's stage 2 failed once after the loop and then passed, and it is stage 4's failure that sent the run
+    back). When every failure was repaired, the latest one. The refused entry of a visit-limit stop ran no gate and is never that entry
+    (p4 run 1 reported "none recorded" because the last gate evaluation held was stage 2's, which had passed). ``routed_to`` is the
+    entry's own record (``routed_to``, written by the advance node) or, in an older record, the stage of the next entry."""
+    hist = state.get("history") or []
+    found = None
+    for i in range(len(hist) - 1, -1, -1):
+        h = hist[i]
+        if not h.get("gated", True) or h.get("passed", True):
+            continue
+        if found is None:
+            found = i
+        if not any(x["n"] == h["n"] and x.get("passed") and x.get("gated", True) for x in hist[i + 1:]):
+            found = i
+            break
+    if found is None:
+        return None
+    h = hist[found]
+    nxt = hist[found + 1]["n"] if found + 1 < len(hist) else None
+    return {"stage": h["n"], "stage_name": h.get("stage"), "visit": h.get("visit"), "fails": list(h.get("fails") or []), "cause": h.get("cause"),
+            "routed_to": h.get("routed_to") or ({"stage": nxt} if nxt is not None and nxt != h["n"] else None)}
+
+
 def stop_diagnosis(n: int, limit: int, state: dict[str, Any]) -> tuple[str, dict[str, Any]]:
     """Brief 82P6, P3: the stop reason of a stage that ran out of visits, and the same facts as a record. The reason keeps the
     prefix ``stage N visited more than L times`` (the handover reads it) and adds what the last gate evaluation says: the failing
@@ -229,11 +256,23 @@ def stop_diagnosis(n: int, limit: int, state: dict[str, Any]) -> tuple[str, dict
         vf = verif_failures(ev.get("verif"), ev.get("verif_level") or "V3", limit=3)
         assertion = vf[0] if vf else ""
     assertion = assertion[:240]
+    lf = last_failure(state)
+    if not gates and lf:                                 # the entry was refused before any gate ran: name the failure that led here
+        gates = [str(f)[:90] for f in (lf.get("fails") or [])[:3]] or [f"stage {lf['stage']} {lf.get('stage_name') or ''} (gate names not recorded)".replace("  ", " ")]
     rep = int(state.get("repeat") or 0)
     detail = {"stage": n, "limit": limit, "gates": gates, "roles": roles, "owners_last_visit": sorted(owners),
               "last_failing_assertion": assertion or None, "same_signature_visits": rep + 1 if sig else None,
-              "last_fails": [str(f)[:200] for f in (state.get("fails") or [])[:4]]}
+              "last_fails": [str(f)[:200] for f in (state.get("fails") or [])[:4]],
+              "last_failed_gate": ({"stage": lf["stage"], "stage_name": lf.get("stage_name"), "visit": lf.get("visit"),
+                                    "fails": [str(f)[:200] for f in (lf.get("fails") or [])[:6]], "routed_to": lf.get("routed_to")}
+                                   if lf else None)}
     why = f"stage {n} visited more than {limit} times; last failing gate: {', '.join(gates) or 'none recorded'}"
+    if lf and lf["stage"] != n:                          # the failed stage is not the refused one: say which stage failed and where it sent the run
+        to = lf.get("routed_to") or {}
+        why += (f"; the failure was in stage {lf['stage']} {lf.get('stage_name') or ''}".replace("  ", " ")
+                + (f" (visit {lf['visit']})" if lf.get("visit") else "")
+                + (f", routed to stage {to['stage']}" + (f" {to['stage_name']}" if to.get("stage_name") else "") if to.get("stage") is not None else "")
+                + f"; stage {n} was refused before any gate ran")
     if roles:
         why += f"; owned by the {'/'.join(roles)} role"
     if assertion:

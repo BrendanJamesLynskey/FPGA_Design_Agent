@@ -152,6 +152,7 @@ def assemble_stream(lines) -> dict[str, Any]:
     error event, ends before ``message_stop``, or a tool call that was not cut off at the limit has arguments that are not JSON."""
     blocks: dict[int, dict[str, Any]] = {}
     usage: dict[str, int] = {}
+    details: dict[str, int] = {}
     stop: str | None = None
     done = False
     for raw in lines:
@@ -169,6 +170,8 @@ def assemble_stream(lines) -> dict[str, Any]:
             b = dict(ev.get("content_block") or {})
             if b.get("type") == "tool_use":
                 b["_json"] = ""
+            elif b.get("type") == "thinking":
+                b["_chars"] = len(b.get("thinking") or "")                           # brief 234: thinking is not kept, only counted
             elif b.get("type") == "text":
                 b["text"] = b.get("text") or ""
             blocks[int(ev.get("index", len(blocks)))] = b
@@ -181,10 +184,15 @@ def assemble_stream(lines) -> dict[str, Any]:
                 b["text"] += d.get("text") or ""
             elif d.get("type") == "input_json_delta" and b.get("type") == "tool_use":
                 b["_json"] += d.get("partial_json") or ""
+            elif d.get("type") == "thinking_delta" and b.get("type") == "thinking":
+                b["_chars"] = b.get("_chars", 0) + len(d.get("thinking") or "")
             # thinking and signature deltas are not kept: a reply's thinking is not replayed to the next call
         elif t == "message_delta":
             stop = (ev.get("delta") or {}).get("stop_reason") or stop
             usage.update({k: int(v) for k, v in (ev.get("usage") or {}).items() if isinstance(v, int)})
+            det = (ev.get("usage") or {}).get("output_tokens_details")                 # brief 234: the API's own thinking-token count, when it gives one
+            if isinstance(det, dict) and isinstance(det.get("thinking_tokens"), int):
+                details["thinking_tokens"] = det["thinking_tokens"]
         elif t == "message_stop":
             done = True
         elif t == "error":
@@ -195,6 +203,8 @@ def assemble_stream(lines) -> dict[str, Any]:
     if not done:
         raise StreamDropped("the stream ended before message_stop")
     content: list[dict[str, Any]] = []
+    thinking = {"blocks": sum(1 for b in blocks.values() if b.get("type") == "thinking"),
+                "chars": sum(b.get("_chars", 0) for b in blocks.values() if b.get("type") == "thinking")}
     for i in sorted(blocks):
         b = blocks[i]
         if b.get("type") == "tool_use":
@@ -207,7 +217,10 @@ def assemble_stream(lines) -> dict[str, Any]:
             content.append(b)
         elif b.get("type") == "text":
             content.append(b)
-    return {"content": content, "usage": usage, "stop_reason": stop}
+    visible = sum(len(b.get("text") or "") for b in content if b.get("type") == "text") + sum(
+        len(json.dumps(b.get("input") or {})) for b in content if b.get("type") == "tool_use")
+    return {"content": content, "usage": usage, "stop_reason": stop, "output_details": details,
+            "thinking": thinking, "visible_chars": visible}
 
 
 class AnthropicClient:
@@ -337,7 +350,9 @@ class AnthropicClient:
             print(f"FDA_TRUNCATED: {self.model} reply stopped at max_tokens={self.max_tokens}", file=sys.stderr, flush=True)
         return Reply(text=text, tool_calls=calls, prompt_tokens=i + w + r, completion_tokens=int(u.get("output_tokens") or 0), cost=cost,
                      seconds=round(time.monotonic() - t0, 2), provider="anthropic", input_tokens=i, cache_write_tokens=w, cache_read_tokens=r,
-                     cost_basis="usage*price" if cost is not None else None, stop_reason=stop, stream_retries=attempt)
+                     cost_basis="usage*price" if cost is not None else None, stop_reason=stop, stream_retries=attempt,
+                     thinking_tokens=(d.get("output_details") or {}).get("thinking_tokens"),
+                     thinking_blocks=(d.get("thinking") or {}).get("blocks", 0), visible_chars=int(d.get("visible_chars") or 0))
 
 
 class ClaudeCodeChat:
