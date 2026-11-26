@@ -6,7 +6,5 @@ set_property PACKAGE_PIN Y5 [get_ports {gt_refclk0_n}]
 # Read before design.xdc: a create_clock of your own on the same pin replaces these.
 # BSCANE2 u_jtag/u_bscan: a create_clock on the TCK output (INTERNAL_TCK pin), at most 30 MHz on the JTAG cable; its crossings go through xpm_cdc macros, which carry their own constraints
 create_clock -name jtag_tck -period 33.333 [get_pins u_jtag/u_bscan/INTERNAL_TCK]
-# USR_ACCESSE2 u_usr: a clock on the CCLK pin (the primitive is a clocked cell with an internal clock); the DATA word is constant after configuration, so paths from it are cut with a reason
+# USR_ACCESSE2 u_usr: a clock on the CCLK pin (the primitive is a clocked cell with an internal clock); the DATA word is constant after configuration, but whether paths from the clock need a cut depends on where DATA goes (an xpm_cdc macro already cuts them: a second false path is reported EXC-IGNORED, measured), so the crossing is the design's
 create_clock -name usr_cclk -period 10.000 [get_pins u_usr/CCLK]
-# USR_ACCESS data is written at configuration and constant afterwards: paths from the configuration clock are not timed
-set_false_path -from [get_clocks usr_cclk]

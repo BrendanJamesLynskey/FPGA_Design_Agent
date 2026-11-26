@@ -76,9 +76,9 @@
         "tns_ns": 0.0,
         "tns_failing_endpoints": 0,
         "tns_total_endpoints": 6603,
-        "whs_ns": -0.05,
-        "ths_ns": -82.172,
-        "ths_failing_endpoints": 3027,
+        "whs_ns": -0.219,
+        "ths_ns": -86.635,
+        "ths_failing_endpoints": 3059,
         "ths_total_endpoints": 6429,
         "wpws_ns": 2.925,
         "tpws_ns": 0.0,
@@ -103,26 +103,26 @@
       "unconstrained_ports": {},
       "methodology": {
         "errors": 0,
-        "critical_warnings": 2,
-        "warnings": 5,
+        "critical_warnings": 4,
+        "warnings": 7,
         "rules": [
           {
             "rule": "TIMING-6",
             "severity": "Critical Warning",
             "description": "No common primary clock between related clocks",
-            "count": 1
+            "count": 2
           },
           {
             "rule": "TIMING-7",
             "severity": "Critical Warning",
             "description": "No common node between related clocks",
-            "count": 1
+            "count": 2
           },
           {
             "rule": "TIMING-13",
             "severity": "Warning",
             "description": "Timing paths ignored due to path segmentation",
-            "count": 2
+            "count": 4
           },
           {
             "rule": "XDCH-2",
@@ -15591,19 +15591,18 @@
         "status": "pass",
         "waived": 0,
         "waived_rules": [],
-        "exceptions": 8,
+        "exceptions": 7,
         "ignored": 0,
         "info": [],
         "covered": {
-          "3": 32,
-          "7": 2,
-          "8": 97,
-          "9": 10,
-          "11": 9,
-          "13": 10,
-          "15": 9,
-          "17": 96,
-          "19": 288
+          "6": 2,
+          "7": 97,
+          "8": 10,
+          "10": 9,
+          "12": 10,
+          "14": 9,
+          "16": 96,
+          "18": 288
         },
         "failures": []
       },
@@ -15660,15 +15659,15 @@
             "to": "u_rst/u_rst_sync/u_arst/arststages_ff_reg[0]/PRE"
           },
           "hold": {
-            "slack": -0.05,
+            "slack": -0.219,
             "requirement": 0.0,
-            "start_clock": "sys_clk_pin",
+            "start_clock": "usr_cclk",
             "end_clock": "sys_clk_pin",
             "corner": "Fast",
-            "uncertainty": null,
-            "pessimism": -0.31,
-            "from": "u_core/u_fifo/u_fifo/gnuram_async_fifo.xpm_fifo_base_inst/wrp_inst/count_value_i_reg[3]/C",
-            "to": "u_core/u_fifo/u_fifo/gnuram_async_fifo.xpm_fifo_base_inst/gen_sdpram.xpm_memory_base_inst/gen_wr_a.gen_word_narrow.mem_reg_0_63_0_6/RAMA/WADR3"
+            "uncertainty": 0.035,
+            "pessimism": -1.508,
+            "from": "u_usr/CCLK",
+            "to": "u_core/h_rdata_reg[0]/D"
           }
         }
       },

@@ -13,6 +13,7 @@ LOG="runs/_logs/arm_${ID}_r${K}.log"
 TEXT="230: $ID arm run $K, $(date +%H:%M), expected end +90min, peak 6G, Vivado impl"
 until eval "$("$H/take_heavy_slot.sh" --env "$TEXT" 2>/dev/null)" && [ -n "${HEAVY_LOCK:-}" ]; do sleep 120; done
 export FDA_HEAVY_SLOT="$HEAVY_LOCK"
+export FDA_VIVADO_MAX=2   # take_heavy_slot.sh admitted this job, possibly beside another Vivado one (house rules: two heavy slots)
 echo "slot $HEAVY_LOCK taken $(date '+%F %T')" >> "$LOG"
 trap 'case "$(cat "$HEAVY_LOCK" 2>/dev/null)" in "230:"*) rm -- "$HEAVY_LOCK";; esac' EXIT
 export FDA_KNOWLEDGE="${FDA_KNOWLEDGE:-/home/brendan/Claude_sandbox/_worktrees/230-kb-pin}"

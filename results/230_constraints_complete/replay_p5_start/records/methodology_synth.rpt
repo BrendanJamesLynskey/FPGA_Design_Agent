@@ -1,7 +1,7 @@
 Copyright 1986-2022 Xilinx, Inc. All Rights Reserved. Copyright 2022-2026 Advanced Micro Devices, Inc. All Rights Reserved.
 -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 | Tool Version : Vivado v.2026.1 (lin64) Build 6511674 Tue Jun 16 11:01:26 MDT 2026
-| Date         : Thu Nov 26 10:42:36 2026
+| Date         : Thu Nov 26 13:03:56 2026
 | Host         : bren-ubuntu24-04 running 64-bit Ubuntu 24.04.4 LTS
 | Command      : report_methodology -file /home/brendan/Claude_sandbox/_worktrees/230-constraints-complete/results/230_constraints_complete/replay_p5_start/p5_async_fifo/build/base/methodology_synth.rpt
 | Design       : p5_async_fifo_soak
@@ -23,13 +23,13 @@ Table of Contents
           Floorplan: design_1
       Design limits: <entire design considered>
              Max checks: <unlimited>
-             Checks found: 7
+             Checks found: 11
 +-----------+------------------+------------------------------------------------+--------+
 | Rule      | Severity         | Description                                    | Checks |
 +-----------+------------------+------------------------------------------------+--------+
-| TIMING-6  | Critical Warning | No common primary clock between related clocks | 1      |
-| TIMING-7  | Critical Warning | No common node between related clocks          | 1      |
-| TIMING-13 | Warning          | Timing paths ignored due to path segmentation  | 2      |
+| TIMING-6  | Critical Warning | No common primary clock between related clocks | 2      |
+| TIMING-7  | Critical Warning | No common node between related clocks          | 2      |
+| TIMING-13 | Warning          | Timing paths ignored due to path segmentation  | 4      |
 | XDCH-2    | Warning          | Same min and max delay values on IO port       | 3      |
 +-----------+------------------+------------------------------------------------+--------+
 
@@ -40,19 +40,39 @@ No common primary clock between related clocks
 The clocks sys_clk_pin and gt_refclk0 are related (timed together) but they have no common primary clock. The design could fail in hardware. To find a timing path between these clocks, run the following command: report_timing -from [get_clocks sys_clk_pin] -to [get_clocks gt_refclk0]
 Related violations: <none>
 
+TIMING-6#2 Critical Warning
+No common primary clock between related clocks  
+The clocks usr_cclk and sys_clk_pin are related (timed together) but they have no common primary clock. The design could fail in hardware. To find a timing path between these clocks, run the following command: report_timing -from [get_clocks usr_cclk] -to [get_clocks sys_clk_pin]
+Related violations: <none>
+
 TIMING-7#1 Critical Warning
 No common node between related clocks  
 The clocks sys_clk_pin and gt_refclk0 are related (timed together) but they have no common node. The design could fail in hardware. To find a timing path between these clocks, run the following command: report_timing -from [get_clocks sys_clk_pin] -to [get_clocks gt_refclk0]
 Related violations: <none>
 
+TIMING-7#2 Critical Warning
+No common node between related clocks  
+The clocks usr_cclk and sys_clk_pin are related (timed together) but they have no common node. The design could fail in hardware. To find a timing path between these clocks, run the following command: report_timing -from [get_clocks usr_cclk] -to [get_clocks sys_clk_pin]
+Related violations: <none>
+
 TIMING-13#1 Warning
 Timing paths ignored due to path segmentation  
-Some timing paths are not reported due to path segmentation on pin(s) u_core/u_fifo/u_fifo/gnuram_async_fifo.xpm_fifo_base_inst/gen_sdpram.xpm_memory_base_inst/gen_wr_a.gen_word_narrow.mem_reg_256_319_7_13/RAMH/O. To prevent path segmentation, all the Min and Max delay constraints should be defined with a list of valid startpoints and endpoints
+Some timing paths are not reported due to path segmentation on pin(s) u_core/u_fifo/u_fifo/gnuram_async_fifo.xpm_fifo_base_inst/gen_sdpram.xpm_memory_base_inst/gen_wr_a.gen_word_narrow.mem_reg_384_447_7_13/RAMH/O. To prevent path segmentation, all the Min and Max delay constraints should be defined with a list of valid startpoints and endpoints
 Related violations: <none>
 
 TIMING-13#2 Warning
 Timing paths ignored due to path segmentation  
-Some timing paths are not reported due to path segmentation on pin(s) u_core/u_fifo/u_fifo/gnuram_async_fifo.xpm_fifo_base_inst/gen_sdpram.xpm_memory_base_inst/gen_wr_a.gen_word_narrow.mem_reg_320_383_0_6/RAMH/O. To prevent path segmentation, all the Min and Max delay constraints should be defined with a list of valid startpoints and endpoints
+Some timing paths are not reported due to path segmentation on pin(s) u_core/u_fifo/u_fifo/gnuram_async_fifo.xpm_fifo_base_inst/gen_sdpram.xpm_memory_base_inst/gen_wr_a.gen_word_narrow.mem_reg_448_511_0_6/RAMH/O. To prevent path segmentation, all the Min and Max delay constraints should be defined with a list of valid startpoints and endpoints
+Related violations: <none>
+
+TIMING-13#3 Warning
+Timing paths ignored due to path segmentation  
+Some timing paths are not reported due to path segmentation on pin(s) u_core/u_fifo/u_fifo/gnuram_async_fifo.xpm_fifo_base_inst/gen_sdpram.xpm_memory_base_inst/gen_wr_a.gen_word_narrow.mem_reg_448_511_14_20/RAMH/O. To prevent path segmentation, all the Min and Max delay constraints should be defined with a list of valid startpoints and endpoints
+Related violations: <none>
+
+TIMING-13#4 Warning
+Timing paths ignored due to path segmentation  
+Some timing paths are not reported due to path segmentation on pin(s) u_core/u_fifo/u_fifo/gnuram_async_fifo.xpm_fifo_base_inst/gen_sdpram.xpm_memory_base_inst/gen_wr_a.gen_word_narrow.mem_reg_448_511_28_31/RAMD/O. To prevent path segmentation, all the Min and Max delay constraints should be defined with a list of valid startpoints and endpoints
 Related violations: <none>
 
 XDCH-2#1 Warning
