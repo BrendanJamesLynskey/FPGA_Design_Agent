@@ -28,8 +28,7 @@ def row(runs_root: Path, design: str, k: str, arm: str, run_id: str, stop_overri
     visited = s.get("stages_visited") or []
     n2 = visited.count(2)
     stop = str(s.get("stop") or "")
-    passed = 2 in visited and (stop in ("done", "stopped after stage 2") or stop.startswith("stop-after") or bool(s.get("clean_stop"))) \
-        or ("stage 2" not in stop and not stop.startswith("stage 2") and 3 in visited)
+    passed = stop == "done" and 2 in visited          # --stop-after 2 ends a passing run with stop "done"; any other stop is not a pass
     reached = max(visited) if visited else ""
     return {"id": design, "seed": k, "label": arm, "pass": "1" if passed else "0", "indep": "", "stop_reason": stop_override or stop[:60],
             "cost_usd": s.get("plan_cost_estimate_usd") if s.get("plan_cost_estimate_usd") is not None else s.get("cost_usd"),
