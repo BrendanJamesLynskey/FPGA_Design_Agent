@@ -20,6 +20,17 @@
     return e;
   }
 
+  /* header groups (brief 237): one open at a time; Escape or a click elsewhere closes it. Works without script as plain drawers. */
+  var groups = Array.prototype.slice.call(document.querySelectorAll(".bar .navgroup"));
+  groups.forEach(function (g) {
+    g.addEventListener("toggle", function () { if (g.open) groups.forEach(function (o) { if (o !== g) o.open = false; }); });
+  });
+  document.addEventListener("click", function (e) { groups.forEach(function (g) { if (g.open && !g.contains(e.target)) g.open = false; }); });
+  document.addEventListener("keydown", function (e) {
+    if (e.key !== "Escape") return;
+    groups.forEach(function (g) { if (g.open) { g.open = false; var sm = g.querySelector("summary"); if (sm) sm.focus(); } });
+  });
+
   /* theme toggle: remembered per viewer, optional */
   var tb = document.getElementById("theme");
   function curTheme() {
@@ -1098,20 +1109,29 @@
 })();
 
 
-/* expertise drawers: expand all / collapse all (shown only with script) and a hash link opens its drawer */
+/* drawers: expand all / collapse all (shown only with script); a URL hash that points at a drawer, or at anything inside one, opens it
+   and the drawers around it (briefs 23 and 237) */
 (function () {
   var ctl = document.getElementById("areactl");
-  if (!ctl) return;
-  ctl.hidden = false;
-  var all = function () { return document.querySelectorAll("details.area"); };
-  document.getElementById("expand-all").addEventListener("click", function () { all().forEach(function (d) { d.open = true; }); });
-  document.getElementById("collapse-all").addEventListener("click", function () { all().forEach(function (d) { d.open = false; }); });
+  if (ctl) {
+    ctl.hidden = false;
+    var all = function () { return document.querySelectorAll("details.area"); };
+    document.getElementById("expand-all").addEventListener("click", function () { all().forEach(function (d) { d.open = true; }); });
+    document.getElementById("collapse-all").addEventListener("click", function () { all().forEach(function (d) { d.open = false; }); });
+  }
   function openHash() {
     var id = decodeURIComponent((location.hash || "").slice(1)), t = id && document.getElementById(id);
-    if (t && t.tagName === "DETAILS") { t.open = true; t.scrollIntoView(); }
+    if (!t) return;
+    var changed = false;
+    for (var n = t; n; n = n.parentElement) { if (n.tagName === "DETAILS" && !n.open && !n.closest(".navgroup")) { n.open = true; changed = true; } }
+    if (changed || t.tagName === "DETAILS") t.scrollIntoView();
   }
   openHash();
   window.addEventListener("hashchange", openHash);
+  document.addEventListener("click", function (e) {
+    var a = e.target.closest && e.target.closest('a[href^="#"]');
+    if (a && a.getAttribute("href") === location.hash) openHash();
+  });
 })();
 
 // brief 81: replay of a recorded counterexample: the slider hides the steps after the chosen one

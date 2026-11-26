@@ -145,8 +145,8 @@ def test_default_applies_to_every_non_opt_in_purpose_and_all_on_the_subscription
     t = table(layer("cli", {"default": {"endpoint": "claude_code", "model": "claude-haiku-5-5"}}))
     for p, spec in PURPOSES.items():
         e = t.entry(p)
-        if p in ("options", "proof", "doc_crossread", "assertgen", "assertback"):    # briefs 104, 125, 114 and 218: opt-in, but each has its own built-in entry on the subscription (Sonnet), which a default does not move
-            assert (e.kind, e.model) == ("claude_code", "claude-haiku-5-5" if p == "assertback" else "claude-sonnet-5-5")   # 218: the reader is a different, cheaper model
+        if p in ("options", "proof", "doc_crossread", "assertgen", "assertback", "reqreview", "reqreader", "reqreader3"):    # briefs 104, 125, 114, 218 and 227: opt-in, but each has its own built-in entry on the subscription (Sonnet), which a default does not move
+            assert (e.kind, e.model) == ("claude_code", "claude-haiku-5-5" if p in ("assertback", "reqreader3") else "claude-sonnet-5-5")   # 218, 227: the reader of another's work is a different, cheaper model
         elif spec.get("opt_in"):
             assert e.model is None
         elif p == "latency":              # its call sites need tool calls through a chat endpoint: the default skips it, so the table stays valid

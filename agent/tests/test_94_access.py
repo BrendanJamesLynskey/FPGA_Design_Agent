@@ -118,12 +118,16 @@ def test_arm_config_never_holds_the_key(monkeypatch, tmp_path):
 
 #: Scripts that import the agent package but do not run the agent (no model, no tools); each with its reason.
 NOT_RUNNING_THE_AGENT = {
+    "flow/closure_recipe_run.py": "runs one Vivado candidate from a recipe plan; no model, no tools (brief 216)",
+    "tools/qor/run_216_eval.py": "brief 216 evaluation driver: Vivado runs of recipe plans, no model (brief 216)",
+    "tools/qor/closure_recipe_replay.py": "brief 216 replay of the recipe order on recorded outcomes; no model (brief 216)",
     "tools/access/set_key_hash.py": "manages the key file; reads the key to hash it",
     "agent/tools/harness_audit.py": "builds the harness over a stub client; no model, no tools",
     "results/36_skill_routing/measure.py": "an old measurement script under results/ (frozen record)",
     "debug_core/demo_t1.py": "a demo that replays recorded calls",
     "designs/b58a_trigger/host/nl_rule.py": "a host-side tool using only the model client",
     "flow/requirements_report.py": "reads a design's run records and writes its requirements report (brief 210); no model, no tools",
+    "flow/readiness.py": "the mechanical checks of the requirements readiness gate (brief 227); imports the spec schema's quality rules only; no model, no tools (the model roles are agent/graph/readiness.py, which calls the gate)",
     "tools/requirements_rescore.py": "re-scores recorded interview questions with the risk rules (brief 210); read only; no model, no tools",
     "flow/doccheck.py": "documentation checker", "flow/mutate.py": "mutation tool", "flow/standards_check.py": "lint-like checker",
     "flow/tests/test_55_vhdl_rtl.py": "a test module", "flow/tests/fixtures/timing_exceptions/make_table.py": "fixture generator",

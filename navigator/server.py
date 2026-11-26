@@ -30,7 +30,9 @@ from urllib.parse import parse_qs, urlparse
 
 from navigator import ask as NA
 from navigator import boardops, guards, measure, redact, runctl
+from navigator import examples as EX
 from navigator import console as NC
+from navigator import stagemap as SM
 from navigator import summary as NS
 from navigator import health as H
 from navigator import progress as PG
@@ -40,7 +42,7 @@ HERE = Path(__file__).resolve().parent
 STATIC = HERE / "static"
 LOOPBACK = "127.0.0.1"
 COOKIE = "fda_nav"
-STATIC_FILES = {"/": "index.html", "/index.html": "index.html", "/app.js": "app.js", "/app.css": "app.css"}
+STATIC_FILES = {"/": "index.html", "/index.html": "index.html", "/app.js": "app.js", "/stagemap.js": "stagemap.js", "/app.css": "app.css"}
 CTYPE = {".html": "text/html; charset=utf-8", ".js": "text/javascript; charset=utf-8", ".css": "text/css; charset=utf-8"}
 #: CSP of the navigator's own pages: no inline script, no external host of any kind
 CSP_APP = "default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; frame-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'self'"
@@ -129,6 +131,9 @@ class App:
         if path == "/api/live/run":
             v = PG.run_progress(self.runs_dir, one("id"), tail=int(one("tail", "40")) if one("tail", "40").isdigit() else 40)
             return self.json(200, v) if v else self.json(404, {"error": "no such run"})
+        if path == "/api/live/map":
+            v = SM.stage_map(self.runs_dir, one("id")) if self.known_run(one("id")) else None
+            return self.json(200, v) if v else self.json(404, {"error": "no such run"})
         if path == "/api/live/summary":
             v = NS.summarise(self.runs_dir, one("id")) if self.known_run(one("id")) else None
             return self.json(200, v) if v else self.json(404, {"error": "no such run"})
@@ -146,6 +151,11 @@ class App:
             off = one("offset")
             v = NC.read(self.runs_dir, one("id"), one("step"), int(off) if off.isdigit() else None) if self.known_run(one("id")) else None
             return self.json(200, v) if v else self.json(404, {"error": "no such step"})
+        if path == "/api/examples":
+            return self.json(200, {**EX.listing(self.root), "runs": EX.example_runs(self.runs_dir, PG.run_ids(self.runs_dir, 200)), "started": self.runctl.records(), "usage": self.health.usage(), "slots": self.health.locks()})
+        if path == "/api/examples/compare":
+            v = EX.comparison(self.runs_dir, one("id")) if self.known_run(one("id")) else None
+            return self.json(200, v) if v else self.json(404, {"error": "no example result in that run"})
         if path == "/api/start/options":
             return self.json(200, {**self.runctl.options(), "usage": self.health.usage(), "slots": self.health.locks(), "started": self.runctl.records()})
         if path == "/api/board":
@@ -303,7 +313,7 @@ class App:
                 "projects": len(S.design_dirs(self.root)), "latency_designs": S.latency_designs(self.root), "builds": len(S.builds(self.root)),
                 "captures": len(S.capture_files(self.root, self.extra)),
                 "synthetic_captures": sum(1 for c in measure.listing(self.root, self.extra) if c["synthetic"]),
-                "binds": f"{LOOPBACK}:{self.port}", "pages": ["Project", "Timing", "Runs", "Live", "Start", "Permissions", "Board", "Measurements", "Health", "Models"]}
+                "binds": f"{LOOPBACK}:{self.port}", "pages": ["Project", "Timing", "Runs", "Live", "Start", "Permissions", "Examples", "Board", "Measurements", "Health", "Models"]}
 
 
 def _default_gate(entry: str) -> Any:

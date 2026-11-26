@@ -1,0 +1,1565 @@
+{
+ "check": {
+  "dates": [
+   "2026-11-23",
+   "2026-11-24",
+   "2026-11-25",
+   "2026-11-26"
+  ],
+  "prs": [
+   232,
+   271,
+   274,
+   275,
+   276,
+   277,
+   279,
+   280,
+   282,
+   283,
+   284,
+   285,
+   286,
+   287,
+   288,
+   289,
+   291,
+   292,
+   293,
+   294,
+   295,
+   296,
+   297,
+   298,
+   299,
+   300,
+   301,
+   302,
+   303,
+   304,
+   305,
+   306,
+   307,
+   308,
+   309,
+   310,
+   311,
+   312,
+   314,
+   315,
+   316,
+   317,
+   318,
+   319,
+   320,
+   321,
+   322,
+   324,
+   325,
+   327,
+   328,
+   329,
+   330,
+   332,
+   334,
+   335,
+   336,
+   337,
+   338,
+   339,
+   340,
+   341,
+   342,
+   343,
+   344,
+   345,
+   346,
+   347,
+   348,
+   350,
+   351,
+   352,
+   354,
+   355
+  ],
+  "values": {
+   "changes_n": 44,
+   "cvdp_all": 302,
+   "cvdp_sample": 50,
+   "dsp_cap": 725.2,
+   "dsp_setup": 837,
+   "kr_cost": 79.71,
+   "kr_cut_runs": 9,
+   "kr_reached": 7,
+   "kr_runs": 18,
+   "kr_second_cap": 50,
+   "kr_second_spent": 51.8861,
+   "rec_guided": 0.14,
+   "rec_menu": 0.152,
+   "rec_random": 0.147,
+   "rep_runs": 12,
+   "req_t1_a": 7,
+   "req_t1_b": 9,
+   "req_t1_n": 11,
+   "seu_targets": 6,
+   "seu_trials": 300,
+   "seu_variants": 8,
+   "sva_after": 3,
+   "sva_cand": 38,
+   "sva_designs": "three pilot designs",
+   "tour_cpu": 14.3,
+   "tour_seed_runs": 43,
+   "yosys_n": 55,
+   "yosys_rho": 0.749
+  }
+ },
+ "content": {
+  "groups": [
+   {
+    "id": "control",
+    "intro": "How a person sets how much the agent may do, watches it, and can repeat it.",
+    "items": [
+     {
+      "changed": "The agent now runs in one of four permission modes, set when you start it in the Navigator: plan (it writes the architecture and stops without being asked anything), ask (it stops to ask before an action that needs your say), auto within limits, and full auto. Every decision is written to a permissions log.",
+      "evidence": [
+       {
+        "path": "results/222_permission_modes/README.md",
+        "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/results/222_permission_modes/README.md"
+       },
+       {
+        "path": "docs/agent.md",
+        "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/docs/agent.md"
+       }
+      ],
+      "id": "permissions",
+      "limits": "None of the four runs reached the board step, so the records say what each mode asked and did, not how good the design was. Full auto stopped at a constraints gate before the stages where it differs from auto. The answers to the ask run's questions were scripted.",
+      "pages": [
+       {
+        "href": "agent.html#harness",
+        "label": "The agent: harness engineering"
+       }
+      ],
+      "prs": [
+       {
+        "date": "2026-11-26",
+        "n": 345,
+        "title": "222: permission modes for the agent (plan, ask, auto, full), set in the Navigator"
+       }
+      ],
+      "result": "One real run per mode of a small Gray-code counter for the Nexys A7, driven by Claude Code (claude-sonnet-5-5; the plan run used claude-haiku-5-5). Plan wrote the architecture and stopped, never asked, and left the architecture unapproved. Ask stopped for knowledge-bank use, the architecture, and editing files plus running Vivado, (then only the per-stage review approvals). Auto and full asked nothing.",
+      "title": "Permission modes"
+     },
+     {
+      "changed": "While a run is going the Navigator now gives regular updates, shows a live console, lets you ask the agent a question, and lets you queue a change to the design for the agent to take up at a safe point between stages. A profile picker and drawer in the start page choose the verification profile, and the settings chosen are confirmed inside the requirements interview.",
+      "evidence": [
+       {
+        "path": "results/182_navigator_s3/README.md",
+        "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/results/182_navigator_s3/README.md"
+       },
+       {
+        "path": "results/b194_navigator/README.md",
+        "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/results/b194_navigator/README.md"
+       },
+       {
+        "path": "navigator/README.md",
+        "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/navigator/README.md"
+       }
+      ],
+      "id": "navigator",
+      "limits": "Two runs on one unscored development task; one was stopped by the tester during stage 2. That the request reached the model's writer is one observation, not evidence that it changed the design. The question and request were typed by the person running the test.",
+      "pages": [
+       {
+        "href": "why.html#handover",
+        "label": "Why FPGA Force: handing over"
+       }
+      ],
+      "prs": [
+       {
+        "date": "2026-11-25",
+        "n": 310,
+        "title": "182: navigator stage 3 - regular updates, live console, questions, mid-run requests"
+       },
+       {
+        "date": "2026-11-25",
+        "n": 316,
+        "title": "194: Navigator profile picker and drawer; settings go to the interview (stacked on #310 and #315)"
+       }
+      ],
+      "result": "Two real agent runs of a development task (claude-sonnet-5-5, Claude Code, no Vivado): in each, one design request and one question were sent while the agent worked, and the records show the request waiting for a safe point, being acknowledged and applied at the end of a stage, and the question answered from the run's records with citations.",
+      "title": "The Navigator in stage 3, and the profile picker"
+     },
+     {
+      "changed": "Replies from the Anthropic API are now streamed, so a long answer is not cut off by a wait time. The writing roles have a larger output limit, the RTL is written file by file, a reply that stalls ends with its own stop reason, a stop for visiting a stage too often now shows the gate that was failing, and the turn limit follows the size of the design, and thinking tokens are recorded per call. The Anthropic API is also a first-class way to run the agent, with cost read from the usage the API reports.",
+      "evidence": [
+       {
+        "path": "docs/model_config.md",
+        "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/docs/model_config.md"
+       },
+       {
+        "path": "results/209_kr260_pilot/README.md",
+        "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/results/209_kr260_pilot/README.md"
+       },
+       {
+        "path": "pilots/224/STOPPED",
+        "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/pilots/224/STOPPED"
+       }
+      ],
+      "id": "limits",
+      "limits": "The re-run of those three designs after the fix was started and then stopped by its own cost stop, at 51.8861 dollars against a cap of 50, so no result is claimed for the fix itself.",
+      "pages": [
+       {
+        "href": "agent.html#harness",
+        "label": "The agent: harness engineering"
+       }
+      ],
+      "prs": [
+       {
+        "date": "2026-11-26",
+        "n": 342,
+        "title": "224: long replies on anthropic_api: streaming, 32000 writing limit, file-by-file RTL, stall stop reason"
+       },
+       {
+        "date": "2026-11-26",
+        "n": 351,
+        "title": "234: run-limit follow-ups: open failed gate in visit-limit stops, fresh visits after a route back, thinking-token record, 64000 writing limit, turn cap by design size"
+       },
+       {
+        "date": "2026-11-25",
+        "n": 337,
+        "title": "209b: anthropic_api first-class (cost from usage, caching, temperature rule, budget_scale)"
+       }
+      ],
+      "result": "The reason for the change is a measured failure: in the KR260 pilot (claude-sonnet-5-5) all 9 runs of the three larger designs failed the same way, because the Designer's whole-design reply was cut off at the output limit and the files were never written.",
+      "title": "Run limits and long replies"
+     },
+     {
+      "changed": "Four small development tasks now ship with a pinned setup (model, tool versions, knowledge bank commit, scoring) and a reference run, with an examples page in the Navigator and a python -m agent example command to repeat one.",
+      "evidence": [
+       {
+        "path": "results/195_repro_examples/README.md",
+        "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/results/195_repro_examples/README.md"
+       },
+       {
+        "path": "docs/reproducible_examples.md",
+        "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/docs/reproducible_examples.md"
+       }
+      ],
+      "id": "examples",
+      "limits": "A subscription run has no seed or temperature to pin, so a repeat is expected to differ; the record says which parts did. Cost shown is the plan's estimate, not a bill.",
+      "pages": [
+       {
+        "href": "examples.html",
+        "label": "Examples"
+       }
+      ],
+      "prs": [
+       {
+        "date": "2026-11-26",
+        "n": 321,
+        "title": "195: reproducible examples with reference runs (Navigator Examples page, python -m agent example)"
+       }
+      ],
+      "result": "Each task was run three times (claude-sonnet-5-5; claude-haiku-5-5 played the interview oracle): 12 runs, with a record of which results repeat.",
+      "title": "Reproducible examples"
+     }
+    ],
+    "title": "Controlling and watching the agent"
+   },
+   {
+    "id": "requirements",
+    "intro": "What the agent is asked to build, how it is checked against that, and how much reliability it can add.",
+    "items": [
+     {
+      "changed": "The agent now classes every open question from the clarify stage by risk. At loose, it defaults and goes on; at standard, it stops when a high-risk question is unresolved and lists it in REQUIREMENTS_NEEDED.md; at strict it also stops on lower-risk ones. A waiver file lets a person settle a question on record. A requirements report shows each requirement against its checks, and a failing check can be fixed against the requirement it names.",
+      "evidence": [
+       {
+        "path": "results/210_requirements/README.md",
+        "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/results/210_requirements/README.md"
+       },
+       {
+        "path": "results/210_requirements/REQUIREMENTS_REPORT_t1.md",
+        "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/results/210_requirements/REQUIREMENTS_REPORT_t1.md"
+       },
+       {
+        "path": "docs/agent.md",
+        "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/docs/agent.md"
+       }
+      ],
+      "id": "strictness",
+      "limits": "The six runs are not paired, because the clarifier writes different questions each time; the waiver in the demonstration was written by the test's executor standing in for a user. The report's two pending items need a build the reference run does not have.",
+      "pages": [
+       {
+        "href": "why.html#verification",
+        "label": "Why FPGA Force: verification"
+       },
+       {
+        "href": "traceability.html",
+        "label": "Traceability"
+       }
+      ],
+      "prs": [
+       {
+        "date": "2026-11-26",
+        "n": 340,
+        "title": "210: requirements strictness (loose/standard/strict), requirements report, fix against a requirement"
+       }
+      ],
+      "result": "Six live clarify-stage runs of one vague request (claude-sonnet-5-5, with a model standing in for the person): loose defaulted the high-risk questions and went on, while standard and strict stopped with three unresolved. The report built for the t1 design from its committed records shows 7 of 11 requirements passed before the board bring-up record and 9 after.",
+      "title": "Requirements strictness and the requirements report"
+     },
+     {
+      "changed": "Two opt-in steps for the verification flow. One writes a formal property from each requirement that can be checked on the ports, has a second model read the property back in English, compares the two in code, and proves it with a reachable trigger. The other runs rounds of coverage-directed stimulus inside the stage-2 gate.",
+      "evidence": [
+       {
+        "path": "results/218_coverage_sva/README.md",
+        "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/results/218_coverage_sva/README.md"
+       },
+       {
+        "path": "results/218_coverage_sva/preregistration.md",
+        "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/results/218_coverage_sva/preregistration.md"
+       },
+       {
+        "path": "docs/coverage_sva.md",
+        "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/docs/coverage_sva.md"
+       }
+      ],
+      "id": "coverage_sva",
+      "limits": "The coverage loop was not measured in a live agent run; the launcher is committed and pre-registered but did not run. Most candidate requirements were unusable because the pilots' requirements describe registers without giving addresses or bit encodings. Three designs cannot separate a gain from chance.",
+      "pages": [
+       {
+        "href": "verification.html#techniques",
+        "label": "Verification: the techniques"
+       }
+      ],
+      "prs": [
+       {
+        "date": "2026-11-26",
+        "n": 346,
+        "title": "218: coverage-directed stimulus loop and assertions written from requirements (both opt-in)"
+       }
+      ],
+      "result": "The assertion step was run twice on each of three pilot designs: of 38 candidate requirement rows in a run set, 3 ended with a proved or bounded property, against none before (claude-sonnet-5-5 wrote the property, claude-haiku-5-5 read it back).",
+      "title": "Coverage-directed stimulus and assertions written from requirements"
+     },
+     {
+      "changed": "Every design, arithmetic function and IP-library entry now ships a generated VERIFIED.md: each requirement, its evidence, who agreed it, the limits, and the hash of every file it covers. The label is computed, and it says verified only when every criterion is met; otherwise it says verified except and names what is missing.",
+      "evidence": [
+       {
+        "path": "arith/adder/VERIFIED.md",
+        "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/arith/adder/VERIFIED.md"
+       },
+       {
+        "path": "designs/b119_tcp_fast/VERIFIED.md",
+        "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/designs/b119_tcp_fast/VERIFIED.md"
+       },
+       {
+        "path": "designs/b110_itch_ouch/VERIFIED.md",
+        "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/designs/b110_itch_ouch/VERIFIED.md"
+       }
+      ],
+      "id": "verified_records",
+      "limits": "The label is a statement about evidence on file, not a proof the design is right.",
+      "pages": [
+       {
+        "href": "verified.html",
+        "label": "Verified by construction"
+       },
+       {
+        "href": "traceability.html",
+        "label": "Traceability"
+       }
+      ],
+      "prs": [
+       {
+        "date": "2026-11-26",
+        "n": 271,
+        "title": "144: the verification record (VERIFIED.md, computed label) for every design and ip_lib entry"
+       }
+      ],
+      "result": "Most records today say verified except, and say what is missing: for example no requirement is yet agreed by a human, and the required method mix and the mutation floor are not yet measured by the collector.",
+      "title": "The verification record for every design (VERIFIED.md)"
+     },
+     {
+      "changed": "A verification profile sets how much checking a design gets (prototype, standard and thorough, with presets for an IP release, high dependability and low latency), and the interview confirms it. Reliability structures (error-correcting memory, triple modular redundancy, safe state machines) can be added and are costed.",
+      "evidence": [
+       {
+        "path": "results/b194/README.md",
+        "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/results/b194/README.md"
+       },
+       {
+        "path": "docs/assurance.md",
+        "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/docs/assurance.md"
+       }
+      ],
+      "id": "assurance",
+      "limits": "One small design, one run per variant, one seed: no spread between runs is known. Seven-series only, no board measurement.",
+      "pages": [
+       {
+        "href": "expertise.html#verification",
+        "label": "Expertise: verification"
+       }
+      ],
+      "prs": [
+       {
+        "date": "2026-11-25",
+        "n": 315,
+        "title": "194: verification profiles, assurance structures (ECC, TMR, safe FSM), settings confirmed in the interview"
+       },
+       {
+        "date": "2026-11-25",
+        "n": 316,
+        "title": "194: Navigator profile picker and drawer; settings go to the interview (stacked on #310 and #315)"
+       }
+      ],
+      "result": "On one development design for the xc7a100t, a seeded single-event-upset campaign of 8 variants, 6 targets and 300 trials each shows what each structure catches; the cost in area, slack and latency of each is recorded (Vivado 2026.1).",
+      "title": "Verification profiles and reliability structures"
+     },
+     {
+      "changed": "A production_secure setting adds build-time checks for a design that ships, for example that no debug core is left in. Encrypting the boot image on the K26 stays a step the owner of the board takes.",
+      "evidence": [
+       {
+        "path": "designs/b196_secure_demo/README.md",
+        "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/designs/b196_secure_demo/README.md"
+       },
+       {
+        "path": "docs/assurance.md",
+        "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/docs/assurance.md"
+       }
+      ],
+      "id": "security",
+      "limits": "The designs were only built, never programmed. Nothing was measured against an attacker and no certification or side-channel claim is made.",
+      "pages": [],
+      "prs": [
+       {
+        "date": "2026-11-25",
+        "n": 317,
+        "title": "196: design security of a production build (production_secure switch, build-time checks)"
+       }
+      ],
+      "result": "A demonstration design for the K26 part, b196_secure_demo, is built with the setting on, and the same design with one logic analyser (ILA) core added is built to show the check failing.",
+      "title": "Design security for a production build"
+     }
+    ],
+    "title": "Requirements, verification and assurance"
+   },
+   {
+    "id": "hardware",
+    "intro": "The board is the last judge; these changes bring more of the bench into the agent's plan, and report plainly how far the first pilot got.",
+    "items": [
+     {
+      "changed": "A lab file lists the instruments a person owns, such as a frequency counter. The interview asks how each is wired to the design, and the agent plans a bring-up step that uses an instrument as an independent check where one can measure the requirement.",
+      "evidence": [
+       {
+        "path": "results/221_lab_instruments/README.md",
+        "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/results/221_lab_instruments/README.md"
+       },
+       {
+        "path": "docs/agent.md",
+        "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/docs/agent.md"
+       }
+      ],
+      "id": "lab",
+      "limits": "The counter in the example is a mock, marked as such. Nothing touched an instrument or a board, and no reading in the records is evidence about a real clock.",
+      "pages": [
+       {
+        "href": "expertise.html#hil",
+        "label": "Expertise: hardware in the loop"
+       }
+      ],
+      "prs": [
+       {
+        "date": "2026-11-26",
+        "n": 347,
+        "title": "221: the lab: instruments in the design package and the interview"
+       }
+      ],
+      "result": "On the KR260 pilot's clock-meter design, the plan with a mock counter chooses the counter as an independent check of the clock frequency; with the owner's seeded bench, where nothing onboarded can measure it, the requirement stays hardware-pending.",
+      "title": "The lab: instruments in the design package and the interview"
+     },
+     {
+      "changed": "The Red Pitaya is now a board the agent can target, using the vendor's shell with the agent's block patched in, and a lab instrument. The agent wrote two custom instruments for it: a frequency and period meter, and a pulse and pattern generator.",
+      "evidence": [
+       {
+        "path": "results/225_redpitaya/README.md",
+        "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/results/225_redpitaya/README.md"
+       },
+       {
+        "path": "boards/redpitaya_stemlab_125_14/README.md",
+        "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/boards/redpitaya_stemlab_125_14/README.md"
+       },
+       {
+        "path": "docs/board_catalogue.md",
+        "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/docs/board_catalogue.md"
+       }
+      ],
+      "id": "redpitaya",
+      "limits": "Nothing was run on the board: every hardware result is pending the owner's board visit.",
+      "pages": [
+       {
+        "href": "expertise.html#hil",
+        "label": "Expertise: hardware in the loop"
+       }
+      ],
+      "prs": [
+       {
+        "date": "2026-11-26",
+        "n": 350,
+        "title": "225: Red Pitaya STEMlab 125-14 as a target board and a lab instrument; two custom instruments (agent RTL, hardware pending)"
+       }
+      ],
+      "result": "The shell builds with Vivado 2026.1 with the blocks in, and the unpatched shell was built too, to say whose timing result it is. The agent's runs were real Claude Code runs (claude-haiku-5-5 for the roles). An independent cross-check written from the spec, not from the agent's tests, found a spec gap that the agent's own verification had passed.",
+      "title": "Red Pitaya STEMlab 125-14 as a target board and an instrument"
+     },
+     {
+      "changed": "Six small designs, each from a short written spec, were taken by the agent toward the owner's KR260, with the agent prepared first (bring-up over the JTAG bus, report gates, an Anthropic key file).",
+      "evidence": [
+       {
+        "path": "results/209_kr260_pilot/README.md",
+        "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/results/209_kr260_pilot/README.md"
+       },
+       {
+        "path": "pilots/209/interventions.yaml",
+        "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/pilots/209/interventions.yaml"
+       }
+      ],
+      "id": "kr260",
+      "limits": "A bitstream is not a pass: the count that matters, designs that work on hardware first time, is filled in only after the owner's run. No person intervened during the counted runs.",
+      "pages": [
+       {
+        "href": "worked-example.html",
+        "label": "Worked example: a 10G trading path on the KR260"
+       }
+      ],
+      "prs": [
+       {
+        "date": "2026-11-26",
+        "n": 341,
+        "title": "209: KR260 pilot: 18 agent runs, 7 reached a bitstream, hardware pending"
+       },
+       {
+        "date": "2026-11-25",
+        "n": 336,
+        "title": "209a: agent ready for the KR260 pilot (JTAG-bus bring-up, report gates, Anthropic key file)"
+       }
+      ],
+      "result": "7 of 18 runs (claude-sonnet-5-5 for every role) reached a bitstream; the hardware run is pending, so no design has been shown to work on the board. The 9 runs of the three larger designs failed at a reply-length limit that is a setting of the agent, which the run-limits change addresses. Real cost: 79.71 dollars.",
+      "title": "The KR260 pilot"
+     }
+    ],
+    "title": "Hardware, instruments and the first pilot"
+   },
+   {
+    "id": "closure",
+    "intro": "How the agent closes timing, and what was measured about devices and tools along the way.",
+    "items": [
+     {
+      "changed": "Typed timing-closure recipes with validators and rollback, a guard on the Tcl the agent writes for stage 6, and a search over the recipes that uses the knowledge bank to choose the order.",
+      "evidence": [
+       {
+        "path": "results/216_closure_recipes/README.md",
+        "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/results/216_closure_recipes/README.md"
+       },
+       {
+        "path": "docs/closure_recipes.md",
+        "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/docs/closure_recipes.md"
+       }
+      ],
+      "id": "recipes",
+      "limits": "Development evidence on five designs; the gains that appeared came from one recipe, retiming in synthesis, which the earlier tournament had already found.",
+      "pages": [
+       {
+        "href": "expertise.html#constraints",
+        "label": "Expertise: constraints and timing closure"
+       }
+      ],
+      "prs": [
+       {
+        "date": "2026-11-26",
+        "n": 354,
+        "title": "216: typed closure recipes, Tcl guard, knowledge-guided search (order: null)"
+       }
+      ],
+      "result": "Nulls first: on five recorded blocks the guided order was no better than the tournament's menu order or a random order. Mean best gain in routed worst slack at six runs was 0.14 ns guided, 0.152 menu order and 0.147 random (Vivado 2026.1).",
+      "title": "Closure recipes and a knowledge-guided search"
+     },
+     {
+      "changed": "A tool that tries several synthesis and implementation settings on a block and keeps the one with the best timing, with a triage step, then a check of how much of the gain is real, and a cheaper two-step version.",
+      "evidence": [
+       {
+        "path": "results/178_tournament/README.md",
+        "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/results/178_tournament/README.md"
+       },
+       {
+        "path": "results/178_tournament/seeds/README.md",
+        "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/results/178_tournament/seeds/README.md"
+       },
+       {
+        "path": "results/178_tournament/two_step/README.md",
+        "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/results/178_tournament/two_step/README.md"
+       },
+       {
+        "path": "docs/tournament.md",
+        "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/docs/tournament.md"
+       }
+      ],
+      "id": "tournament",
+      "limits": "Five small blocks, one run per candidate; Vivado 2026.1 has no seed to set, so the spread comes from a clock-period perturbation.",
+      "pages": [
+       {
+        "href": "expertise.html#constraints",
+        "label": "Expertise: constraints and timing closure"
+       }
+      ],
+      "prs": [
+       {
+        "date": "2026-11-24",
+        "n": 304,
+        "title": "178: candidate tournament tool, triage, part 1 measurement (Vivado evaluation pending)"
+       },
+       {
+        "date": "2026-11-24",
+        "n": 324,
+        "title": "178d: are the tournament gains real? seed repeats"
+       },
+       {
+        "date": "2026-11-25",
+        "n": 327,
+        "title": "178e: cheap two-step tournament (synthesis default vs retime, then AMD Performance_* sets)"
+       }
+      ],
+      "result": "Nulls first: the two-step version is not shown better or worse than the full tournament, and it uses 14.3 percent of its CPU time. To see whether gains are real, 43 place-and-route runs with a perturbed clock period were repeated (Vivado 2026.1): the gain over the default is real and large on two blocks, real but small on one, not shown on one and absent on one, and no block shows the menu beating the best AMD strategy set outside the noise.",
+      "title": "The candidate tournament"
+     },
+     {
+      "changed": "DSP slices are an area of expertise, with confirmed house rules and an advisory dsp_regs check. A DSP's published Fmax now includes the clock buffer's minimum period, and every published Fmax was audited against that cap.",
+      "evidence": [
+       {
+        "path": "results/185_dsp_slices/README.md",
+        "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/results/185_dsp_slices/README.md"
+       },
+       {
+        "path": "results/199_dsp_fmax/README.md",
+        "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/results/199_dsp_fmax/README.md"
+       },
+       {
+        "path": "results/201_fmax_cap/README.md",
+        "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/results/201_fmax_cap/README.md"
+       }
+      ],
+      "id": "dsp",
+      "limits": "Out-of-context runs on a few parts; one run per row.",
+      "pages": [
+       {
+        "href": "expertise.html#dsp_slices",
+        "label": "Expertise: DSP slices"
+       }
+      ],
+      "prs": [
+       {
+        "date": "2026-11-25",
+        "n": 314,
+        "title": "185: DSP slices as an area of expertise (116 Vivado runs, three plots, advisory dsp_regs check)"
+       },
+       {
+        "date": "2026-11-25",
+        "n": 319,
+        "title": "197: confirmed DSP house rules, Fmax against registers table, AMD citations for rules 3 and 6"
+       },
+       {
+        "date": "2026-11-25",
+        "n": 322,
+        "title": "199: DSP Fmax includes the clock-buffer minimum period (K26 837 -> 725 MHz); pulse-width and SIMD probes"
+       },
+       {
+        "date": "2026-11-25",
+        "n": 325,
+        "title": "201: audit published Fmax against the clock-buffer cap"
+       }
+      ],
+      "result": "On the K26, an out-of-context run's setup-derived Fmax of 837 MHz is higher than a real design can clock: the clock buffer's minimum period caps it at 725.2 MHz (Vivado 2026.1).",
+      "title": "DSP slices, and the clock-buffer cap on Fmax"
+     },
+     {
+      "changed": "A clock_mux check finds clock multiplexers and how they are constrained; a clock-crossing margin method, with a cdc_margin check, serves both AMD and Altera; initial values in RTL became a setting (default allow); an init_values check warns where an initial value of one keeps a register out of a DSP or block RAM.",
+      "evidence": [
+       {
+        "path": "results/208/README.md",
+        "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/results/208/README.md"
+       },
+       {
+        "path": "results/207_cdc_margin/README.md",
+        "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/results/207_cdc_margin/README.md"
+       },
+       {
+        "path": "results/206_power_up/README.md",
+        "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/results/206_power_up/README.md"
+       },
+       {
+        "path": "docs/cdc_margin_method.md",
+        "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/docs/cdc_margin_method.md"
+       }
+      ],
+      "id": "clocks",
+      "limits": "Two AMD families and three Altera ones; the clock-crossing method is measured on a small set of probe designs.",
+      "pages": [
+       {
+        "href": "expertise.html#clocking",
+        "label": "Expertise: clocking"
+       },
+       {
+        "href": "expertise.html#cdc",
+        "label": "Expertise: clock-domain crossings"
+       },
+       {
+        "href": "flow-notes.html",
+        "label": "Beyond the flow"
+       }
+      ],
+      "prs": [
+       {
+        "date": "2026-11-24",
+        "n": 329,
+        "title": "205: initial values in RTL are the setting rtl.initial_values (default allow)"
+       },
+       {
+        "date": "2026-11-24",
+        "n": 330,
+        "title": "206: register power-up values, AMD against Altera, measured; init_values check (HDL-INIT-01, advisory)"
+       },
+       {
+        "date": "2026-11-25",
+        "n": 332,
+        "title": "208: clock multiplexing, measured; clock_mux check (HDL-CLK-03)"
+       },
+       {
+        "date": "2026-11-25",
+        "n": 334,
+        "title": "208: STD-CLK-01 lets a declared clock mux through (architecture.yaml clock_muxes)"
+       },
+       {
+        "date": "2026-11-25",
+        "n": 335,
+        "title": "207: clock-crossing margin method for AMD and Altera (measured), cdc_margin check, XPM handshake fix"
+       }
+      ],
+      "result": "Measured on Vivado 2026.1 and Quartus Prime Lite: on AMD parts every fabric flip-flop takes an initial value of zero or one for free; on Altera the core registers power up at zero, and a one costs inverters, except in the I/O registers.",
+      "title": "Clock muxes, clock-crossing margin and register start values"
+     }
+    ],
+    "title": "Timing closure and device facts"
+   },
+   {
+    "id": "technique",
+    "intro": "Method taken from a published book, and how a public benchmark is used.",
+    "items": [
+     {
+      "changed": "From the technique in Edwards, FPGA Design for Low-Latency Trading (2026), Appendix D, the standard now says a register has one start state (an initial value where it has no reset, the reset value where it has), keeps the reset on control state, and allows an all-initial-values design when every reset reconfigures the FPGA. The lint policy follows (a source file is named after its module), and an advisory logic-depth estimate was built. The wording, defaults and code are ours; the book is cited and not quoted.",
+      "evidence": [
+       {
+        "path": "docs/hdl_coding_standard.md",
+        "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/docs/hdl_coding_standard.md"
+       },
+       {
+        "path": "results/231_yosys_depth/README.md",
+        "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/results/231_yosys_depth/README.md"
+       }
+      ],
+      "id": "appendix_d",
+      "limits": "One part, one flow; the estimate ranks designs but does not replace Vivado's report.",
+      "pages": [
+       {
+        "href": "expertise.html#rtl",
+        "label": "Expertise: RTL"
+       }
+      ],
+      "prs": [
+       {
+        "date": "2026-11-26",
+        "n": 348,
+        "title": "231: Edwards Appendix D technique: init/reset rule, lint policy, bench note, Yosys depth"
+       }
+      ],
+      "result": "The Yosys depth estimate was compared against Vivado's synthesis logic levels on 55 K26 cases: rank correlation 0.749. It stays advisory and nothing in the flow calls it.",
+      "title": "Appendix D technique: the init and reset rule and the lint policy"
+     },
+     {
+      "changed": "A one-off baseline of the agent's first three stages (clarify, plan, RTL with its own simulation; no Vivado, no board) on a stratified sample of 50 of the 302 problems in a public code-generation set, scored only by that set's own hidden tests, one run of claude-sonnet-5-5.",
+      "evidence": [
+       {
+        "path": "results/215_public_benchmarks/README.md",
+        "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/results/215_public_benchmarks/README.md"
+       },
+       {
+        "path": "results/215_public_benchmarks/prereg.md",
+        "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/results/215_public_benchmarks/prereg.md"
+       }
+      ],
+      "id": "cvdp",
+      "limits": "This benchmark is not used as an ongoing evaluation. It serves as inspiration and, with labels, as a test set for the agent's requirements reviewer.",
+      "pages": [
+       {
+        "href": "evaluation.html",
+        "label": "How it is evaluated"
+       }
+      ],
+      "prs": [
+       {
+        "date": "2026-11-26",
+        "n": 343,
+        "title": "215: public-benchmark baseline (CVDP code-generation sample of 50, stages 0-2)"
+       }
+      ],
+      "result": "The figures in the records are public and contamination-exposed, and they are development figures. They are not an evaluation score of FPGA Force: FPGA Force builds requirements with the person until they are unambiguous, which these problems cannot represent, and many of them leave out facts their tests check.",
+      "title": "The public CVDP benchmark: inspiration and a labelled test set"
+     }
+    ],
+    "title": "Technique and public benchmarks"
+   }
+  ],
+  "rows": [
+   {
+    "group": "requirements",
+    "item": "verified_records",
+    "pages": [
+     {
+      "href": "verified.html",
+      "label": "Verified by construction"
+     },
+     {
+      "href": "traceability.html",
+      "label": "Traceability"
+     }
+    ],
+    "pr": 271,
+    "title": "The verification record for every design (VERIFIED.md)"
+   },
+   {
+    "group": "closure",
+    "item": "tournament",
+    "pages": [
+     {
+      "href": "expertise.html#constraints",
+      "label": "Expertise: constraints and timing closure"
+     }
+    ],
+    "pr": 304,
+    "title": "The candidate tournament"
+   },
+   {
+    "group": "smaller",
+    "item": "",
+    "pages": [],
+    "pr": 305,
+    "title": "Stage 1 accepts an rtl glob before the RTL exists."
+   },
+   {
+    "group": "smaller",
+    "item": "",
+    "pages": [],
+    "pr": 306,
+    "title": "The b58a_trigger design moved to the KR260's own PHY"
+   },
+   {
+    "group": "smaller",
+    "item": "",
+    "pages": [],
+    "pr": 307,
+    "title": "Intake questions for the interview"
+   },
+   {
+    "group": "smaller",
+    "item": "",
+    "pages": [],
+    "pr": 308,
+    "title": "Nine advisory verification and measurement rules"
+   },
+   {
+    "group": "smaller",
+    "item": "",
+    "pages": [],
+    "pr": 309,
+    "title": "A reference study of AMD's UL3524 low-latency benchmarks; nothing was re-measured."
+   },
+   {
+    "group": "control",
+    "item": "navigator",
+    "pages": [
+     {
+      "href": "why.html#handover",
+      "label": "Why FPGA Force: handing over"
+     }
+    ],
+    "pr": 310,
+    "title": "The Navigator in stage 3, and the profile picker"
+   },
+   {
+    "group": "smaller",
+    "item": "",
+    "pages": [],
+    "pr": 311,
+    "title": "Trading-path safety fixes"
+   },
+   {
+    "group": "smaller",
+    "item": "",
+    "pages": [],
+    "pr": 312,
+    "title": "Trading-path variants (an in-place decoder"
+   },
+   {
+    "group": "closure",
+    "item": "dsp",
+    "pages": [
+     {
+      "href": "expertise.html#dsp_slices",
+      "label": "Expertise: DSP slices"
+     }
+    ],
+    "pr": 314,
+    "title": "DSP slices, and the clock-buffer cap on Fmax"
+   },
+   {
+    "group": "requirements",
+    "item": "assurance",
+    "pages": [
+     {
+      "href": "expertise.html#verification",
+      "label": "Expertise: verification"
+     }
+    ],
+    "pr": 315,
+    "title": "Verification profiles and reliability structures"
+   },
+   {
+    "group": "control",
+    "item": "navigator",
+    "pages": [
+     {
+      "href": "why.html#handover",
+      "label": "Why FPGA Force: handing over"
+     }
+    ],
+    "pr": 316,
+    "title": "The Navigator in stage 3, and the profile picker"
+   },
+   {
+    "group": "requirements",
+    "item": "assurance",
+    "pages": [
+     {
+      "href": "expertise.html#verification",
+      "label": "Expertise: verification"
+     }
+    ],
+    "pr": 316,
+    "title": "Verification profiles and reliability structures"
+   },
+   {
+    "group": "requirements",
+    "item": "security",
+    "pages": [],
+    "pr": 317,
+    "title": "Design security for a production build"
+   },
+   {
+    "group": "closure",
+    "item": "dsp",
+    "pages": [
+     {
+      "href": "expertise.html#dsp_slices",
+      "label": "Expertise: DSP slices"
+     }
+    ],
+    "pr": 319,
+    "title": "DSP slices, and the clock-buffer cap on Fmax"
+   },
+   {
+    "group": "control",
+    "item": "examples",
+    "pages": [
+     {
+      "href": "examples.html",
+      "label": "Examples"
+     }
+    ],
+    "pr": 321,
+    "title": "Reproducible examples"
+   },
+   {
+    "group": "closure",
+    "item": "dsp",
+    "pages": [
+     {
+      "href": "expertise.html#dsp_slices",
+      "label": "Expertise: DSP slices"
+     }
+    ],
+    "pr": 322,
+    "title": "DSP slices, and the clock-buffer cap on Fmax"
+   },
+   {
+    "group": "closure",
+    "item": "tournament",
+    "pages": [
+     {
+      "href": "expertise.html#constraints",
+      "label": "Expertise: constraints and timing closure"
+     }
+    ],
+    "pr": 324,
+    "title": "The candidate tournament"
+   },
+   {
+    "group": "closure",
+    "item": "dsp",
+    "pages": [
+     {
+      "href": "expertise.html#dsp_slices",
+      "label": "Expertise: DSP slices"
+     }
+    ],
+    "pr": 325,
+    "title": "DSP slices, and the clock-buffer cap on Fmax"
+   },
+   {
+    "group": "closure",
+    "item": "tournament",
+    "pages": [
+     {
+      "href": "expertise.html#constraints",
+      "label": "Expertise: constraints and timing closure"
+     }
+    ],
+    "pr": 327,
+    "title": "The candidate tournament"
+   },
+   {
+    "group": "smaller",
+    "item": "",
+    "pages": [],
+    "pr": 328,
+    "title": "Nine advisory verification and measurement rules"
+   },
+   {
+    "group": "closure",
+    "item": "clocks",
+    "pages": [
+     {
+      "href": "expertise.html#clocking",
+      "label": "Expertise: clocking"
+     },
+     {
+      "href": "expertise.html#cdc",
+      "label": "Expertise: clock-domain crossings"
+     },
+     {
+      "href": "flow-notes.html",
+      "label": "Beyond the flow"
+     }
+    ],
+    "pr": 329,
+    "title": "Clock muxes, clock-crossing margin and register start values"
+   },
+   {
+    "group": "closure",
+    "item": "clocks",
+    "pages": [
+     {
+      "href": "expertise.html#clocking",
+      "label": "Expertise: clocking"
+     },
+     {
+      "href": "expertise.html#cdc",
+      "label": "Expertise: clock-domain crossings"
+     },
+     {
+      "href": "flow-notes.html",
+      "label": "Beyond the flow"
+     }
+    ],
+    "pr": 330,
+    "title": "Clock muxes, clock-crossing margin and register start values"
+   },
+   {
+    "group": "closure",
+    "item": "clocks",
+    "pages": [
+     {
+      "href": "expertise.html#clocking",
+      "label": "Expertise: clocking"
+     },
+     {
+      "href": "expertise.html#cdc",
+      "label": "Expertise: clock-domain crossings"
+     },
+     {
+      "href": "flow-notes.html",
+      "label": "Beyond the flow"
+     }
+    ],
+    "pr": 332,
+    "title": "Clock muxes, clock-crossing margin and register start values"
+   },
+   {
+    "group": "closure",
+    "item": "clocks",
+    "pages": [
+     {
+      "href": "expertise.html#clocking",
+      "label": "Expertise: clocking"
+     },
+     {
+      "href": "expertise.html#cdc",
+      "label": "Expertise: clock-domain crossings"
+     },
+     {
+      "href": "flow-notes.html",
+      "label": "Beyond the flow"
+     }
+    ],
+    "pr": 334,
+    "title": "Clock muxes, clock-crossing margin and register start values"
+   },
+   {
+    "group": "closure",
+    "item": "clocks",
+    "pages": [
+     {
+      "href": "expertise.html#clocking",
+      "label": "Expertise: clocking"
+     },
+     {
+      "href": "expertise.html#cdc",
+      "label": "Expertise: clock-domain crossings"
+     },
+     {
+      "href": "flow-notes.html",
+      "label": "Beyond the flow"
+     }
+    ],
+    "pr": 335,
+    "title": "Clock muxes, clock-crossing margin and register start values"
+   },
+   {
+    "group": "hardware",
+    "item": "kr260",
+    "pages": [
+     {
+      "href": "worked-example.html",
+      "label": "Worked example: a 10G trading path on the KR260"
+     }
+    ],
+    "pr": 336,
+    "title": "The KR260 pilot"
+   },
+   {
+    "group": "control",
+    "item": "limits",
+    "pages": [
+     {
+      "href": "agent.html#harness",
+      "label": "The agent: harness engineering"
+     }
+    ],
+    "pr": 337,
+    "title": "Run limits and long replies"
+   },
+   {
+    "group": "smaller",
+    "item": "",
+    "pages": [],
+    "pr": 338,
+    "title": "The knowledge bank is pinned to a newer commit each time it grows"
+   },
+   {
+    "group": "smaller",
+    "item": "",
+    "pages": [],
+    "pr": 339,
+    "title": "The public name is FPGA Force"
+   },
+   {
+    "group": "requirements",
+    "item": "strictness",
+    "pages": [
+     {
+      "href": "why.html#verification",
+      "label": "Why FPGA Force: verification"
+     },
+     {
+      "href": "traceability.html",
+      "label": "Traceability"
+     }
+    ],
+    "pr": 340,
+    "title": "Requirements strictness and the requirements report"
+   },
+   {
+    "group": "hardware",
+    "item": "kr260",
+    "pages": [
+     {
+      "href": "worked-example.html",
+      "label": "Worked example: a 10G trading path on the KR260"
+     }
+    ],
+    "pr": 341,
+    "title": "The KR260 pilot"
+   },
+   {
+    "group": "control",
+    "item": "limits",
+    "pages": [
+     {
+      "href": "agent.html#harness",
+      "label": "The agent: harness engineering"
+     }
+    ],
+    "pr": 342,
+    "title": "Run limits and long replies"
+   },
+   {
+    "group": "technique",
+    "item": "cvdp",
+    "pages": [
+     {
+      "href": "evaluation.html",
+      "label": "How it is evaluated"
+     }
+    ],
+    "pr": 343,
+    "title": "The public CVDP benchmark: inspiration and a labelled test set"
+   },
+   {
+    "group": "smaller",
+    "item": "",
+    "pages": [],
+    "pr": 344,
+    "title": "Eight small fixes"
+   },
+   {
+    "group": "control",
+    "item": "permissions",
+    "pages": [
+     {
+      "href": "agent.html#harness",
+      "label": "The agent: harness engineering"
+     }
+    ],
+    "pr": 345,
+    "title": "Permission modes"
+   },
+   {
+    "group": "requirements",
+    "item": "coverage_sva",
+    "pages": [
+     {
+      "href": "verification.html#techniques",
+      "label": "Verification: the techniques"
+     }
+    ],
+    "pr": 346,
+    "title": "Coverage-directed stimulus and assertions written from requirements"
+   },
+   {
+    "group": "hardware",
+    "item": "lab",
+    "pages": [
+     {
+      "href": "expertise.html#hil",
+      "label": "Expertise: hardware in the loop"
+     }
+    ],
+    "pr": 347,
+    "title": "The lab: instruments in the design package and the interview"
+   },
+   {
+    "group": "technique",
+    "item": "appendix_d",
+    "pages": [
+     {
+      "href": "expertise.html#rtl",
+      "label": "Expertise: RTL"
+     }
+    ],
+    "pr": 348,
+    "title": "Appendix D technique: the init and reset rule and the lint policy"
+   },
+   {
+    "group": "hardware",
+    "item": "redpitaya",
+    "pages": [
+     {
+      "href": "expertise.html#hil",
+      "label": "Expertise: hardware in the loop"
+     }
+    ],
+    "pr": 350,
+    "title": "Red Pitaya STEMlab 125-14 as a target board and an instrument"
+   },
+   {
+    "group": "control",
+    "item": "limits",
+    "pages": [
+     {
+      "href": "agent.html#harness",
+      "label": "The agent: harness engineering"
+     }
+    ],
+    "pr": 351,
+    "title": "Run limits and long replies"
+   },
+   {
+    "group": "smaller",
+    "item": "",
+    "pages": [],
+    "pr": 352,
+    "title": "The knowledge bank is pinned to a newer commit each time it grows"
+   },
+   {
+    "group": "closure",
+    "item": "recipes",
+    "pages": [
+     {
+      "href": "expertise.html#constraints",
+      "label": "Expertise: constraints and timing closure"
+     }
+    ],
+    "pr": 354,
+    "title": "Closure recipes and a knowledge-guided search"
+   },
+   {
+    "group": "smaller",
+    "item": "",
+    "pages": [],
+    "pr": 355,
+    "title": "Fresh-evidence fixes"
+   }
+  ],
+  "smaller": {
+   "intro": "Smaller changes that alter what the agent does or what it has shown. Each links to its pull request and, where there is one, its record.",
+   "items": [
+    {
+     "evidence": [
+      {
+       "path": "designs/b110_itch_ouch/VERIFIED.md",
+       "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/designs/b110_itch_ouch/VERIFIED.md"
+      }
+     ],
+     "prs": [
+      {
+       "date": "2026-11-24",
+       "n": 311,
+       "title": "188: trading-path safety fixes (saturation, staged limits, software band reference, notional check, hold-off)"
+      }
+     ],
+     "text": "Trading-path safety fixes: a saturating order book, staged limits that take effect on a commit, a software reference for price bands, a notional check and a hold-off."
+    },
+    {
+     "evidence": [
+      {
+       "path": "designs/b110_itch_ouch/VERIFIED.md",
+       "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/designs/b110_itch_ouch/VERIFIED.md"
+      }
+     ],
+     "prs": [
+      {
+       "date": "2026-11-24",
+       "n": 312,
+       "title": "191: trading-path variants (in-place decoder, reject bits, A/B arbiter), induction and PDR proofs, PS-AXI latency probe"
+      }
+     ],
+     "text": "Trading-path variants (an in-place decoder, reject bits, an A/B arbiter), induction and property-directed proofs, and a probe of the PS-AXI latency."
+    },
+    {
+     "evidence": [
+      {
+       "path": "designs/b58a_trigger/README.md",
+       "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/designs/b58a_trigger/README.md"
+      }
+     ],
+     "prs": [
+      {
+       "date": "2026-11-25",
+       "n": 306,
+       "title": "175: b58a_trigger moves to the KR260's TI DP83867 PHY; TX constraints repaired; build misses TX setup by 3 ps (port B)"
+      }
+     ],
+     "text": "The b58a_trigger design moved to the KR260's own PHY, and its transmit constraints were repaired; the build is recorded as missing transmit setup timing by a few picoseconds on one port."
+    },
+    {
+     "evidence": [
+      {
+       "path": "docs/agent.md",
+       "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/docs/agent.md"
+      }
+     ],
+     "prs": [
+      {
+       "date": "2026-11-25",
+       "n": 307,
+       "title": "190: agent knowledge and interview material (intake questions, fast-path lint, reference stream, cycle cost)"
+      }
+     ],
+     "text": "Intake questions for the interview, a fast-path lint, a reference stream and cycle-cost sizing in the knowledge material."
+    },
+    {
+     "evidence": [
+      {
+       "path": "docs/verification_measurement_rules.md",
+       "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/docs/verification_measurement_rules.md"
+      }
+     ],
+     "prs": [
+      {
+       "date": "2026-11-25",
+       "n": 308,
+       "title": "189: verification and measurement rules (nine advisory checks, none a gate)"
+      },
+      {
+       "date": "2026-11-24",
+       "n": 328,
+       "title": "204a: report-driven gates from the methodology gap study"
+      }
+     ],
+     "text": "Nine advisory verification and measurement rules, none of them a gate, and report-driven gates from the methodology gap study."
+    },
+    {
+     "evidence": [
+      {
+       "path": "docs/agent.md",
+       "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/docs/agent.md"
+      }
+     ],
+     "prs": [
+      {
+       "date": "2026-11-25",
+       "n": 305,
+       "title": "167b: stage 1 accepts an rtl glob before the RTL exists"
+      }
+     ],
+     "text": "Stage 1 accepts an rtl glob before the RTL exists."
+    },
+    {
+     "evidence": [
+      {
+       "path": "docs/agent.md",
+       "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/docs/agent.md"
+      }
+     ],
+     "prs": [
+      {
+       "date": "2026-11-25",
+       "n": 309,
+       "title": "186: AMD UL3524 GTF latency benchmarks as a reference (study; nothing re-measured)"
+      }
+     ],
+     "text": "A reference study of AMD's UL3524 low-latency benchmarks; nothing was re-measured."
+    },
+    {
+     "evidence": [
+      {
+       "path": "docs/agent.md",
+       "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/docs/agent.md"
+      }
+     ],
+     "prs": [
+      {
+       "date": "2026-11-25",
+       "n": 338,
+       "title": "198: re-pin the knowledge bank to 6185830 (KB #101, #102, #104, #103 and the merges since 5e2eab8)"
+      },
+      {
+       "date": "2026-11-26",
+       "n": 352,
+       "title": "198: re-pin the knowledge bank to eaf6794 (KB #93-#99 and the revert of #100)"
+      }
+     ],
+     "text": "The knowledge bank is pinned to a newer commit each time it grows, so a run records which version it read."
+    },
+    {
+     "evidence": [
+      {
+       "path": "README.md",
+       "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/README.md"
+      }
+     ],
+     "prs": [
+      {
+       "date": "2026-11-26",
+       "n": 339,
+       "title": "212: public name FPGA Force (docs and site)"
+      }
+     ],
+     "text": "The public name is FPGA Force, in the documents and on this site."
+    },
+    {
+     "evidence": [
+      {
+       "path": "docs/agent.md",
+       "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/docs/agent.md"
+      }
+     ],
+     "prs": [
+      {
+       "date": "2026-11-26",
+       "n": 344,
+       "title": "219: eight small fixes (slot deadlock, clock_networks crash, Gray injection, LOC sites, lint waivers, paused record, mutation targets)"
+      }
+     ],
+     "text": "Eight small fixes: a slot deadlock, a clock_networks crash, Gray-code injection, LOC sites, lint waivers, the paused record and mutation targets."
+    },
+    {
+     "evidence": [
+      {
+       "path": "designs/b119_tcp_fast/VERIFIED.md",
+       "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/designs/b119_tcp_fast/VERIFIED.md"
+      }
+     ],
+     "prs": [
+      {
+       "date": "2026-11-26",
+       "n": 355,
+       "title": "236: fresh-evidence fixes (b119 faults, b96 record), pilots/224 test, Edwards citations in sources"
+      }
+     ],
+     "text": "Fresh-evidence fixes: the b119 fault records and the b96 record were refreshed, a test for the 224 pilot folder was added, and citations of the book technique were added to the sources."
+    }
+   ]
+  },
+  "text": {
+   "how_to_read": "Each change is a drawer. The first line says what changed; the result line says what a record shows and which model produced it; the limits line says what that result cannot tell you. The pull request links go to the change itself; the evidence links go to the committed files that every figure here is read from.",
+   "intro": "These are the changes to FPGA Force from 23 November 2026, each with what it does in plain words, what was shown (a headline from a committed record, with the model that did the work), what it does not show, and the evidence. 44 merged pull requests are covered. Nothing here is a held-out score: no held-out evaluation of FPGA Force has been run."
+  },
+  "values": {
+   "changes_n": 44,
+   "cvdp_all": 302,
+   "cvdp_sample": 50,
+   "dsp_cap": 725.2,
+   "dsp_setup": 837,
+   "kr_cost": 79.71,
+   "kr_cut_runs": 9,
+   "kr_reached": 7,
+   "kr_runs": 18,
+   "kr_second_cap": 50,
+   "kr_second_spent": 51.8861,
+   "rec_guided": 0.14,
+   "rec_menu": 0.152,
+   "rec_random": 0.147,
+   "rep_runs": 12,
+   "req_t1_a": 7,
+   "req_t1_b": 9,
+   "req_t1_n": 11,
+   "seu_targets": 6,
+   "seu_trials": 300,
+   "seu_variants": 8,
+   "sva_after": 3,
+   "sva_cand": 38,
+   "sva_designs": "three pilot designs",
+   "tour_cpu": 14.3,
+   "tour_seed_runs": 43,
+   "yosys_n": 55,
+   "yosys_rho": 0.749
+  }
+ }
+}

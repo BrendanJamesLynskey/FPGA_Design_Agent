@@ -4,7 +4,7 @@
 
 **Not assessed: no requirements recorded (no verif/testplan.yaml), so nothing here is traced to a requirement.**
 
-What the label means, what "verified" never means and how it is earned: [docs/verified.md](../../docs/verified.md). The label is computed from the testplan and the evidence files named below; it is never typed. Generated at git commit `8b3b7767288b3aa2d84ddcc0f25af0284dd9a56f` (informational: the hashes in the manifest, not the commit, are what the CI check compares).
+What the label means, what "verified" never means and how it is earned: [docs/verified.md](../../docs/verified.md). The label is computed from the testplan and the evidence files named below; it is never typed. Generated at git commit `7cadf47c721e2fcb55add43ca2f8a61a55d03e0c` (informational: the hashes in the manifest, not the commit, are what the CI check compares).
 
 ## What was checked for the label
 
@@ -45,7 +45,7 @@ Every file this record covers, with its SHA-256 at generation (19 files). `absen
 
 | File | SHA-256 |
 |---|---|
-| `designs/b58a_trigger/handover.yaml` | `ae8b0b708bfd68e4bca59f019039faa7ebade3278c92859e197ed756dd852529` |
+| `designs/b58a_trigger/handover.yaml` | `86896042c14bbca1c3ab37a6b63476236e2006089a5957e14ab00d64b7e5cc89` |
 | `designs/b58a_trigger/rtl/book.sv` | `216116a0a865b79554d425b6bca939a9f15dab8a833391c7403d1467e7285aa4` |
 | `designs/b58a_trigger/rtl/feed_gen.sv` | `73d6161ebb18d1f7eda5e807d056d52d48dd78fde100f35ec27ad78dd4d72046` |
 | `designs/b58a_trigger/rtl/feed_rx.sv` | `ccc1c62f8b710bf480a435f66fbd5e54b7b9d6c81928bf013330a35b0618670a` |
@@ -56,7 +56,7 @@ Every file this record covers, with its SHA-256 at generation (19 files). `absen
 | `designs/b58a_trigger/rtl/mdio_master.sv` | `4c09bd1833c7c0b8b8757b52c35087eeb9c165489278463eafd2a44038a3cf26` |
 | `designs/b58a_trigger/rtl/order_ctl.sv` | `db91763b3f836681d93ae5c57c9722a51b07fd6d20c36e391c901aa97578ef44` |
 | `designs/b58a_trigger/rtl/rules.sv` | `bf046cfda694711d6dee421864d365254fa64e3285e80ce3fc5d4800cb34cd14` |
-| `designs/b58a_trigger/rtl/trigger_core.sv` | `e7c26425518eb3bfdd7dc873f85b63d1af7d47977128edc2a3c4d90e57cf5833` |
+| `designs/b58a_trigger/rtl/trigger_core.sv` | `802883690b447b51fe3363aaf975dd1918eca6ed37f3938a3810905335da2b4f` |
 | `designs/b58a_trigger/tests/test_b58a_rtl.py` | `85faa7d8258c2fc819155f226ad53111295ad0b053141ea5f293ef728c14b670` |
 | `designs/b58a_trigger/tests/test_rev_adv_rtl.py` | `d3c1ce109d6da370a7321b9fd7977cc2cedd9c1f5d8d569c931badb2c5313472` |
 | `results/b58a/build/summary.json` | `ec22e14ccee950eeab4627d1dac80ec0f0eb449cc4101b1f3ed897b47b461847` |

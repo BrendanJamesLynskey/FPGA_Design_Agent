@@ -1,0 +1,110 @@
+{
+ "arm": "shuffled216",
+ "design": "mac_fabric_k26",
+ "seed": 1,
+ "status": "ok",
+ "stop_reason": "no further recipe applies",
+ "wns_ns": -0.161,
+ "whs_ns": 0.115,
+ "wns_gain_ns": 0.0,
+ "lut": 478,
+ "ff": 116,
+ "vivado_runs": 3,
+ "fmax_mhz": 316.4,
+ "clock_ns": 3.0,
+ "part": "xck26-sfvc784-2LV-c",
+ "wall_s": 672.0,
+ "cpu_s_runs": 665,
+ "search": {
+  "best": "n0",
+  "best_wns_ns": -0.161,
+  "best_plan": {
+   "synth": [],
+   "directives": {},
+   "phys_flags": {},
+   "force_replication": [],
+   "max_fanout": [],
+   "pblocks": [],
+   "applied": []
+  },
+  "runs": 3,
+  "stop": "no further recipe applies",
+  "hopeless": false,
+  "nodes": [
+   {
+    "id": "n0",
+    "parent": null,
+    "call": null,
+    "wns_ns": -0.161,
+    "whs_ns": 0.115,
+    "lut": 478,
+    "ff": 116,
+    "status": "ok",
+    "kept": true,
+    "verdict": "root"
+   },
+   {
+    "id": "n1",
+    "parent": "n0",
+    "call": {
+     "recipe": "amd_strategy",
+     "args": {
+      "name": "Performance_NetDelay_high"
+     },
+     "reason": "the general performance sweep",
+     "weight": 27.0,
+     "prior": 0.0
+    },
+    "wns_ns": -0.172,
+    "whs_ns": 0.116,
+    "lut": 488,
+    "ff": 153,
+    "status": "ok",
+    "kept": false,
+    "verdict": "rolled back: not better than its parent"
+   },
+   {
+    "id": "n2",
+    "parent": "n0",
+    "call": {
+     "recipe": "impl_set",
+     "args": {
+      "name": "congestion"
+     },
+     "reason": "a named directive set from the 178 tournament menu",
+     "weight": 25.0,
+     "prior": 0.0
+    },
+    "wns_ns": -0.295,
+    "whs_ns": 0.1,
+    "lut": 489,
+    "ff": 116,
+    "status": "ok",
+    "kept": false,
+    "verdict": "rolled back: not better than its parent"
+   },
+   {
+    "id": "n3",
+    "parent": "n0",
+    "call": {
+     "recipe": "amd_strategy",
+     "args": {
+      "name": "Performance_Retiming"
+     },
+     "reason": "10 logic levels: AMD's retiming implementation set",
+     "weight": 62.0,
+     "prior": 0.0
+    },
+    "wns_ns": -0.269,
+    "whs_ns": 0.114,
+    "lut": 483,
+    "ff": 119,
+    "status": "ok",
+    "kept": false,
+    "verdict": "rolled back: not better than its parent"
+   }
+  ],
+  "rolled_back": 3
+ },
+ "date": "2026-11-26T09:53:54"
+}

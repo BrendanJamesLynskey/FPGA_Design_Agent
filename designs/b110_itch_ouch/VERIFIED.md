@@ -4,20 +4,20 @@
 
 **Not verified: 1 of 17 requirements fail.**
 
-What the label means, what "verified" never means and how it is earned: [docs/verified.md](../../docs/verified.md). The label is computed from the testplan and the evidence files named below; it is never typed. Generated at git commit `8b3b7767288b3aa2d84ddcc0f25af0284dd9a56f` (informational: the hashes in the manifest, not the commit, are what the CI check compares).
+What the label means, what "verified" never means and how it is earned: [docs/verified.md](../../docs/verified.md). The label is computed from the testplan and the evidence files named below; it is never typed. Generated at git commit `7cadf47c721e2fcb55add43ca2f8a61a55d03e0c` (informational: the hashes in the manifest, not the commit, are what the CI check compares).
 
-Traceability summary: 17 requirements (12 functional, 5 safety); 6 verified; 6 partially verified (the required mix of methods is not met); 4 stale; 1 failing; 0 of 17 requirements agreed by a human, 0 agreed on the owner's delegation (not human), 17 draft; 4 resting only on the implementing agent's own tests; 0 human and 0 delegated review(s) recorded.
+Traceability summary: 17 requirements (12 functional, 5 safety); 0 verified; 3 partially verified (the required mix of methods is not met); 13 stale; 1 failing; 0 of 17 requirements agreed by a human, 0 agreed on the owner's delegation (not human), 17 draft; 3 resting only on the implementing agent's own tests; 0 human and 0 delegated review(s) recorded.
 
 ## What was checked for the label
 
 | Criterion | Result | Detail |
 |---|---|---|
-| Every requirement has passing evidence | NOT met | 11 of 17 requirements are not in state verified: B110-F-RISK (partially_verified), B110-S-STRICT (partially_verified), B110-V-MUTATION (fail), B110-S-QTY (stale), B110-S-BANDREF (stale), B110-F-HOLDOFF (stale), B110-F-NOTIONAL (stale), B110-S-LIMITS-ATOMIC (partially_verified), B110-F-PARSE-INPLACE (partially_verified), B110-F-REJECT-BITS (partially_verified), B110-F-FEED-ARB (partially_verified) |
+| Every requirement has passing evidence | NOT met | 17 of 17 requirements are not in state verified: B110-F-ORDER-BYTES (stale), B110-F-MOLD (stale), B110-F-BOOK (stale), B110-F-RISK (stale), B110-F-UDP (stale), B110-S-STRICT (stale), B110-F-SEQ-POISON (stale), B110-V-COVERAGE (stale), B110-V-MUTATION (fail), B110-S-QTY (stale), B110-S-BANDREF (stale), B110-F-HOLDOFF (stale), B110-F-NOTIONAL (stale), B110-S-LIMITS-ATOMIC (stale), B110-F-PARSE-INPLACE (partially_verified), B110-F-REJECT-BITS (partially_verified), B110-F-FEED-ARB (partially_verified) |
 | Every requirement is agreed (human, or delegated and labelled so) | NOT met | 0 agreed by a human, 0 agreed by delegation, 17 draft, 0 marked agreed without a record |
 | Every requirement meets its required method mix | not yet measured (counts as not met) | not yet measured: the required method mix per requirement kind is brief 143a; the collector does not supply it yet |
 | The bench passes the mutation floor | not yet measured (counts as not met) | not yet measured: the mutation score and floor are brief 143b; the collector does not supply them yet |
 | The formal results pass the rigour checks | not yet measured (counts as not met) | not yet measured: the vacuity, assumption and depth checks are brief 143c; the collector does not supply them yet |
-| The evidence is fresh | NOT met | 4 items are stale (a file they are about changed after the evidence was recorded) |
+| The evidence is fresh | NOT met | 14 items are stale (a file they are about changed after the evidence was recorded) |
 
 ## Requirements
 
@@ -25,77 +25,77 @@ Per requirement: its text, kind, agreement, state and every evidence item with i
 
 ### B110-F-ORDER-BYTES: Every order that leaves with a good frame check sequence is byte exact
 
-- Kind: functional. State: verified.
+- Kind: functional. State: stale.
 - Agreement: draft: no agreement recorded.
 - Method mix required by its kind: not yet measured (brief 143a). Mutation score of its bench: not yet measured (brief 143b).
 - Text: Each order frame with a good FCS equals the reference frame byte for byte (Ethernet, IPv4, TCP headers, SoupBinTCP 3.00 length and type, OUCH 5.0 Enter Order fields, ClOrdID, appendage), the orders come in order with UserRefNum rising by one per accepted candidate, and a frame with a wrong FCS is never an order.
 - Source: `designs/b110_itch_ouch/docs/spec_notes.md#3-ouch-50-hardware-rtlouch_entersv-section-21-type-o-enter-order`
-  - `V-UVM-ORDERS` uvm_test: **pass**, bench author: independent bench; fresh; record `results/191_trading_variants/uvm/summary.json` (sha256 efc7d36560fc).
-  - `V-UVM-SVA` assertion: **pass**, bench author: independent bench; fresh; record `results/191_trading_variants/uvm/summary.json` (sha256 efc7d36560fc).
+  - `V-UVM-ORDERS` uvm_test: **stale**, bench author: independent bench; stale; record `results/191_trading_variants/uvm/summary.json` (sha256 efc7d36560fc); stale because changed since the evidence was recorded: designs/b110_itch_ouch/rtl/book_core.sv.
+  - `V-UVM-SVA` assertion: **stale**, bench author: independent bench; stale; record `results/191_trading_variants/uvm/summary.json` (sha256 efc7d36560fc); stale because changed since the evidence was recorded: designs/b110_itch_ouch/rtl/book_core.sv.
 
 ### B110-F-MOLD: MoldUDP64 sessions, sequence gaps, duplicates, overlaps, heartbeats and broken packets are counted and delivered as the reference says
 
-- Kind: functional. State: verified.
+- Kind: functional. State: stale.
 - Agreement: draft: no agreement recorded.
 - Method mix required by its kind: not yet measured (brief 143a). Mutation score of its bench: not yet measured (brief 143b).
 - Text: For every packet the packet, message, gap, missing, duplicate, overlap, session, heartbeat, end-of-session, short, truncated and bad-length counters and the gap, session-lock and end-of-session flags equal the reference model's at every checkpoint, with 1, 3 and 6 messages a packet and at every frame alignment.
 - Source: `designs/b110_itch_ouch/docs/itch_ouch.md#2-behaviour-in-detail`
-  - `V-UVM-MOLD` uvm_test: **pass**, bench author: independent bench; fresh; record `results/191_trading_variants/uvm/summary.json` (sha256 efc7d36560fc).
+  - `V-UVM-MOLD` uvm_test: **stale**, bench author: independent bench; stale; record `results/191_trading_variants/uvm/summary.json` (sha256 efc7d36560fc); stale because changed since the evidence was recorded: designs/b110_itch_ouch/rtl/book_core.sv.
 
 ### B110-F-BOOK: The ITCH decoder and the book keep the counters, the inexact flags and the candidates the reference model computes
 
-- Kind: functional. State: verified.
+- Kind: functional. State: stale.
 - Agreement: draft: no agreement recorded.
 - Method mix required by its kind: not yet measured (brief 143a). Mutation score of its bench: not yet measured (brief 143b).
 - Text: Message-type counters, malformed and skipped messages, unwatched locates, missing/duplicate/overflowing orders, ladder overflow and over-execution counters, the candidate count and the per-instrument inexact flags equal the reference model's, including the edge cases of an empty book, a full ladder, a table-index collision and a replace.
 - Source: `designs/b110_itch_ouch/docs/itch_ouch.md#2-behaviour-in-detail`
-  - `V-UVM-BOOK` uvm_test: **pass**, bench author: independent bench; fresh; record `results/191_trading_variants/uvm/summary.json` (sha256 efc7d36560fc).
+  - `V-UVM-BOOK` uvm_test: **stale**, bench author: independent bench; stale; record `results/191_trading_variants/uvm/summary.json` (sha256 efc7d36560fc); stale because changed since the evidence was recorded: designs/b110_itch_ouch/rtl/book_core.sv.
 
 ### B110-F-RISK: Every risk refusal is the first failing check, counted once, and no order starts on a refused candidate
 
-- Kind: safety. State: partially verified; lacks a formal proof (SymbiYosys or Lean).
+- Kind: safety. State: stale.
 - Agreement: draft: no agreement recorded.
 - Method mix required by its kind: not yet measured (brief 143a). Mutation score of its bench: not yet measured (brief 143b).
 - Text: Not armed, kill switch, untrusted or gap-halted, inexact book, quantity, position limit per instrument, price band and missing bid refuse a candidate exactly as the reference does; the position and the order number advance only for an accepted candidate.
 - Source: `designs/b110_itch_ouch/docs/itch_ouch.md#2-behaviour-in-detail`
-  - `V-UVM-RISK` uvm_test: **pass**, bench author: independent bench; fresh; record `results/191_trading_variants/uvm/summary.json` (sha256 efc7d36560fc).
+  - `V-UVM-RISK` uvm_test: **stale**, bench author: independent bench; stale; record `results/191_trading_variants/uvm/summary.json` (sha256 efc7d36560fc); stale because changed since the evidence was recorded: designs/b110_itch_ouch/rtl/book_core.sv.
 
 ### B110-F-UDP: Frames are forwarded or dropped by the first failing header check, and each drop is counted
 
-- Kind: functional. State: verified.
+- Kind: functional. State: stale.
 - Agreement: draft: no agreement recorded.
 - Method mix required by its kind: not yet measured (brief 143a). Mutation score of its bench: not yet measured (brief 143b).
 - Text: Destination MAC (unicast or the group's multicast address), EtherType, IPv4 version and header length, fragments, protocol, destination address and port, UDP length against the IP length, and the IPv4 header checksum; EN = 0 drops everything.
 - Source: `designs/b96_kr260_10g/rm_gp_itch/docs/itch_integration.md#2-the-path-block-by-block`
-  - `V-UVM-UDP` uvm_test: **pass**, bench author: independent bench; fresh; record `results/191_trading_variants/uvm/summary.json` (sha256 efc7d36560fc).
+  - `V-UVM-UDP` uvm_test: **stale**, bench author: independent bench; stale; record `results/191_trading_variants/uvm/summary.json` (sha256 efc7d36560fc); stale because changed since the evidence was recorded: designs/b110_itch_ouch/rtl/book_core.sv.
 
 ### B110-S-STRICT: Under STRICT an order is never sent on an unverified or bad frame
 
-- Kind: safety. State: partially verified; lacks a formal proof (SymbiYosys or Lean).
+- Kind: safety. State: stale.
 - Agreement: draft: no agreement recorded.
 - Method mix required by its kind: not yet measured (brief 143a). Mutation score of its bench: not yet measured (brief 143b).
 - Text: With STRICT set (the default, owner decision 31) no order leaves with a good FCS when the frame that carried its message has a bad FCS, or when that frame's verdict is not yet known at the order's last word; such an order leaves with a wrong FCS. Cut-through is a documented option with a measured window.
 - Source: `designs/b96_kr260_10g/rm_gp_itch/docs/itch_integration.md#4-the-late-frame-check-and-what-happens-to-an-order-on-a-bad-frame`
-  - `V-UVM-STRICT` uvm_test: **pass**, bench author: independent bench; fresh; record `results/191_trading_variants/uvm/summary.json` (sha256 efc7d36560fc).
-  - `V-UVM-SVA` assertion: **pass**, bench author: independent bench; fresh; record `results/191_trading_variants/uvm/summary.json` (sha256 efc7d36560fc).
+  - `V-UVM-STRICT` uvm_test: **stale**, bench author: independent bench; stale; record `results/191_trading_variants/uvm/summary.json` (sha256 efc7d36560fc); stale because changed since the evidence was recorded: designs/b110_itch_ouch/rtl/book_core.sv.
+  - `V-UVM-SVA` assertion: **stale**, bench author: independent bench; stale; record `results/191_trading_variants/uvm/summary.json` (sha256 efc7d36560fc); stale because changed since the evidence was recorded: designs/b110_itch_ouch/rtl/book_core.sv.
 
 ### B110-F-SEQ-POISON: A poisoned order frame consumes no TCP sequence number
 
-- Kind: functional. State: verified.
+- Kind: functional. State: stale.
 - Agreement: draft: no agreement recorded.
 - Method mix required by its kind: not yet measured (brief 143a). Mutation score of its bench: not yet measured (brief 143b).
 - Text: The TCP sequence number of an order is the loaded number plus 59 for every segment that left with a good FCS; a frame poisoned (wrong FCS) by the multiplexer, because its trigger frame was bad or unverified, does not advance it.
 - Source: `designs/b96_kr260_10g/rm_gp_itch/docs/itch_integration.md#5-registers-and-what-a-user-could-guess-wrong`
-  - `V-UVM-SEQ` uvm_test: **pass**, bench author: independent bench; fresh; record `results/191_trading_variants/uvm/summary.json` (sha256 efc7d36560fc).
+  - `V-UVM-SEQ` uvm_test: **stale**, bench author: independent bench; stale; record `results/191_trading_variants/uvm/summary.json` (sha256 efc7d36560fc); stale because changed since the evidence was recorded: designs/b110_itch_ouch/rtl/book_core.sv.
 
 ### B110-V-COVERAGE: The bench's functional coverage plan is closed
 
-- Kind: functional. State: verified.
+- Kind: functional. State: stale.
 - Agreement: draft: no agreement recorded.
 - Method mix required by its kind: not yet measured (brief 143a). Mutation score of its bench: not yet measured (brief 143b).
 - Text: Every bin of the bench's coverage plan (message types, messages a packet, Mold events, header drops, book edge cases, risk refusals, order outcomes, bad-FCS crosses, frame alignments, backpressure) is hit by the recorded regression.
 - Source: `designs/b96_kr260_10g/rm_gp_itch/verif/uvm/README.md#functional-coverage`
-  - `V-UVM-COV` coverage_bin: **pass**, bench author: independent bench; fresh; record `results/191_trading_variants/uvm/summary.json` (sha256 efc7d36560fc).
+  - `V-UVM-COV` coverage_bin: **stale**, bench author: independent bench; stale; record `results/191_trading_variants/uvm/summary.json` (sha256 efc7d36560fc); stale because changed since the evidence was recorded: designs/b110_itch_ouch/rtl/book_core.sv.
 
 ### B110-V-MUTATION: The bench kills at least 90 % of blind mutants of the path (worst case, over at least 30)
 
@@ -113,7 +113,7 @@ Per requirement: its text, kind, agreement, state and every evidence item with i
 - Method mix required by its kind: not yet measured (brief 143a). Mutation score of its bench: not yet measured (brief 143b).
 - Text: A level size that would pass 2^32 - 1 saturates and makes the instrument inexact (counted as lvovf); an Add of zero shares is never entered; an order price (candidate price plus offset) that passes 2^32 - 1 is refused as band; no ladder level or order-table entry is ever written live with zero size (brief 188, bounded proof from reset).
 - Source: `designs/b110_itch_ouch/docs/itch_ouch.md#14-observation-and-counters`
-  - `V-FORMAL-BOOK-QTY` formal: **stale**, bench author: not recorded; stale; record `results/191_trading_variants/pytest_junit.xml` (sha256 be267a11ab78); stale because changed since the evidence was recorded: designs/b110_itch_ouch/verif/formal/book_props.sv.
+  - `V-FORMAL-BOOK-QTY` formal: **stale**, bench author: not recorded; stale; record `results/191_trading_variants/pytest_junit.xml` (sha256 be267a11ab78); stale because changed since the evidence was recorded: designs/b110_itch_ouch/rtl/book_core.sv, designs/b110_itch_ouch/verif/formal/book_props.sv.
   - `V-SIM-QTY` sim_test: **stale**, bench author: not recorded; stale; record `results/188_trading_safety/pytest_junit.xml` (sha256 586166cc8700); stale because changed since the evidence was recorded: designs/b110_itch_ouch/rtl/book_core.sv, designs/b110_itch_ouch/rtl/risk_glue.sv.
 
 ### B110-S-BANDREF: The price-band reference can come from software, independent of the strategy's own book, and is refused when too old
@@ -145,12 +145,12 @@ Per requirement: its text, kind, agreement, state and every evidence item with i
 
 ### B110-S-LIMITS-ATOMIC: A half-written set of risk limits never takes effect (rm_gp_itch registers)
 
-- Kind: safety. State: partially verified; lacks a formal proof (SymbiYosys or Lean); rests only on the implementing agent's own tests.
+- Kind: safety. State: stale.
 - Agreement: draft: no agreement recorded.
 - Method mix required by its kind: not yet measured (brief 143a). Mutation score of its bench: not yet measured (brief 143b).
 - Text: The risk limits are staged; a write fills a holding register and the live set changes only on COMMIT, in one clock, so the core never runs on a mix of old and new limits (brief 188, whole core in xsim).
 - Source: `designs/b96_kr260_10g/rm_gp_itch/docs/itch_integration.md#5-registers-and-what-a-user-could-guess-wrong`
-  - `V-XSIM-LIMITS` sim_measurement: **pass**, bench author: not recorded; fresh; record `results/188_trading_safety/staged_limits_sim.json` (sha256 f750bfa407be).
+  - `V-XSIM-LIMITS` sim_measurement: **stale**, bench author: not recorded; stale; record `results/188_trading_safety/staged_limits_sim.json` (sha256 f750bfa407be); stale because changed since the evidence was recorded: designs/b96_kr260_10g/rm_gp_itch/rtl/b96_core.sv.
 
 ### B110-F-PARSE-INPLACE: Parsing a message where it lies gives the same events as shifting it to byte 0 first, for every message type in every start lane
 
@@ -195,7 +195,7 @@ Every file this record covers, with its SHA-256 at generation (23 files). `absen
 
 | File | SHA-256 |
 |---|---|
-| `designs/b110_itch_ouch/rtl/book_core.sv` | `629dab43bf80ed61b9ab06944ca9b2bf4819a6a4a67f13368cb431c080acf3c3` |
+| `designs/b110_itch_ouch/rtl/book_core.sv` | `11d4625e34c1694b37fee5d868fb49ebd1f5853394264a27a7482beac6608b79` |
 | `designs/b110_itch_ouch/rtl/feed_arb.sv` | `e523ff419e52e683b3d00a2c6e82c72aa3f09056d269ebf46edcd808a0a1420a` |
 | `designs/b110_itch_ouch/rtl/feed_arb_in.sv` | `77db45af279cd13e12452f0201621955c01a593b5f21a38875bbba279988b408` |
 | `designs/b110_itch_ouch/rtl/itch_dec.sv` | `816b19c5cc47df033006617f755525bf43df7adbda59c8abbdfaef9d24b37265` |
@@ -204,10 +204,10 @@ Every file this record covers, with its SHA-256 at generation (23 files). `absen
 | `designs/b110_itch_ouch/rtl/ouch_enter.sv` | `95066c0f3caaf67b87eb40baf88d5704b6eec8387384d00014cbe93f3f64addd` |
 | `designs/b110_itch_ouch/rtl/risk_glue.sv` | `9d3d031147f19db09506d5a2ac12b63ce8277cf536c15d0548a78b071ac6a1cc` |
 | `designs/b110_itch_ouch/verif/evidence_pins.yaml` | `b8c3f9feaaa4522d88d21de1973b05f5708f7aa8343546162edc624b26d0afcc` |
-| `designs/b110_itch_ouch/verif/formal/book_props.sv` | `bb4cb2649e752cec051793abab5c291810fa913fd21937752f71f5a591ea0e01` |
+| `designs/b110_itch_ouch/verif/formal/book_props.sv` | `3845043d32762d10060967d62b74c46658433ac675c5d2f00c8f30fe369530ff` |
 | `designs/b110_itch_ouch/verif/mutants.yaml` | `8502985b6cf5099bcde62eba588fd9f4b91f8adac53f5855262e5ad754cc236c` |
 | `designs/b110_itch_ouch/verif/testplan.yaml` | `65bfff7784e601361564f06a5e0ea414b958f9d20fc6b4ce4d70311a5ed646f0` |
-| `designs/b96_kr260_10g/rm_gp_itch/rtl/b96_core.sv` | `2ee04f6ca6b40be38de985da6b48e22ae5401ebd75331531d65b6bdeea48257c` |
+| `designs/b96_kr260_10g/rm_gp_itch/rtl/b96_core.sv` | `6516f5e10ac14f478214398f3ad2fb652c78659ab0690786b512b1510e4e5b23` |
 | `designs/b96_kr260_10g/rm_gp_itch/rtl/itch_path.sv` | `3f8c04b0c061b3e41f67640dde4fa603ee20c7866f264a97c68b69f932bbb600` |
 | `designs/b96_kr260_10g/rm_gp_itch/rtl/itch_top.sv` | `5be8de2fca1c8f6aa511bde820eb1e433e693a9bb7dc8533f91f98ab225fe781` |
 | `designs/b96_kr260_10g/rm_gp_itch/rtl/order_seg.sv` | `473fe555c60f81e9f484bcbf9c300d07d4c19f7e92ee57a30390d94e781dd841` |

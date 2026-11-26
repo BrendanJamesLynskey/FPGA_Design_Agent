@@ -121,6 +121,26 @@ shell (`.no_shell` is set by the board, so `--no-shell` is not needed), the Desi
 `designs/b58a_trigger/host/jtag_regs.tcl` in a Vivado hardware-manager child; it needs the board and is never used in CI.
 Tests: `flow/tests/test_209a_jtag_bringup.py`.
 
+## Repair feedback arms (brief 213: `--harness-arm H1,R1,R2,R3`; all off by default)
+
+Three opt-in features of the stage-2 repair loop (`agent/graph/feedback.py`, `flow/divergence.py`, `flow/lockstep.py`, `flow/regrade.py`, `flow/model_record.py`).
+They add no prompt text: the text is generated from evidence and placed in the existing repair-reason slots, so no prompt golden or pin changed.
+
+- **R1, first failing check.** When the simulate gate fails on an assertion, the harness re-runs the design's own bench once with a snapshot hook that stops at the first
+  failing cocotb test and writes the last 24 clock cycles of the top level's signals, the model's last 40 calls (`step`, `read_reg`, `write_reg`) with simulator times, the
+  assertion and the bench source line. The Designer's reason carries the check, the signals it names (RTL values per cycle beside the model's value), the transaction in
+  flight and the driver cone of the first wrong signal, in place of the raw log tail. The cone is a textual RTL dataflow walk (assignments, case labels, `if` guards,
+  depth 2), not a netlist; the digest says so. It states the divergence between two artefacts and does not assume the model or the bench is right.
+  Limit: the cycle table is the RTL's own clock cycles; whether the model's output for a name is aligned with the RTL is not checked (a model with latency differs by design).
+- **R2, failure ledger.** Each failed stage-2 visit adds an entry (gates, finding, first failing check, files whose contents changed since the previous gate evaluation) to
+  the run state (`ledger`), the run record (`repair_feedback`, routing events `ledger_entry`) and the stop detail; a repair visit is shown the earlier entries (not the
+  current one), and, after three consecutive visits with the same failure signature, told to check whether the failing check contradicts the request or a design standard.
+- **R3, fresh-stimulus regrade.** The simulate tool records the bench's calls to `Model`; after stage 2 would pass, `flow/regrade.py` replays the recorded stimulus in lock
+  step against the RTL (calibration) and, only if that agrees, drives new seeded sequences (values from the bench's own pool plus random and neighbour values, bursts and
+  holds, back-pressure on ready-like inputs, resets mid-stream; seed recorded). Statuses: `not_applicable` (the bench drove the model through `read_reg`/`write_reg` or
+  stepped with no inputs), `not_calibrated`, `pass`, `fail` (with a first-divergence digest), `error`. `flow/regrade.py BLOCKS` is False at every level: it reports and
+  never fails a gate (see `reports/213_repair_feedback_report.md` for the evidence).
+
 ## Separation (`agent/graph/roles.py`)
 
 | Sub-agent | Reads | Writes |
@@ -250,6 +270,13 @@ requirement's words and covers the fixes of RPT-LL-02 and RPT-CS-02 only.
 
 Tests: `agent/tests/test_210_requirements.py` (rules, levels, waivers, the stop and its exit status, the conflict on the recorded c15 report),
 `flow/tests/test_210_requirements_report.py` (the report on t1_dimmer_counter's reference run: a pending row, a failed row, regeneration after the board).
+
+### Readiness: stage 0 until the requirements are ready (brief 227)
+
+`--requirements` says what may be left unanswered; `--readiness on` says when the agent is **satisfied** with the answers: the mechanical checks pass, two fresh readers predict the same
+behaviour for the same probe set, no question is open, and the set is frozen (stages 1 onward read the frozen set). At the round or call limit, or with nobody to answer, the run stops
+with `REQUIREMENTS_NEEDED.md` and exit status 3. The gate, the roles, the files, the measure and **what a user could get wrong** (confirming a default without reading it, a probe set too small to
+find the ambiguity that matters, `within` against `after`, a vacuous property, an all-"OK" confirmation) are in [docs/requirements_readiness.md](requirements_readiness.md).
 
 ## The lab: instruments the agent can use (`hil/lab.py`, brief 221)
 

@@ -1,0 +1,90 @@
+# Fixture for brief 227: the frequency meter of research/228 section 8(e), reduced to N = 8 and written in the requirement-row schema of brief 227.
+schema: fpga-design-agent/spec/v0
+name: freq_meter
+top: freq_meter
+clocks:
+  - {name: clk_ref, port: clk_ref, freq_mhz: 100}
+  - {name: clk_in, port: clk_in, freq_mhz: 25}
+reset:
+  port: rst_n
+  polarity: active_low
+  kind: synchronous
+ports:
+  - {name: clk_ref, dir: in, width: 1}
+  - {name: clk_in, dir: in, width: 1, note: asynchronous to clk_ref}
+  - {name: rst_n, dir: in, width: 1, clock: clk_ref}
+  - {name: start, dir: in, width: 1, clock: clk_ref, note: one-cycle start request}
+  - {name: reg_rd, dir: in, width: 1, clock: clk_ref}
+  - {name: busy, dir: out, width: 1, clock: clk_ref, reset_value: 0}
+  - {name: valid, dir: out, width: 1, clock: clk_ref, reset_value: 0}
+  - {name: ovf, dir: out, width: 1, clock: clk_ref, reset_value: 0}
+  - {name: count, dir: out, width: 32, clock: clk_ref, reset_value: 0}
+  - {name: reg_rdata, dir: out, width: 32, clock: clk_ref, reset_value: 0}
+  - {name: reg_rvalid, dir: out, width: 1, clock: clk_ref, reset_value: 0}
+latencies:
+  - {output: busy, from: start accepted, cycles: 1, clock: clk_ref}
+  - {output: valid, from: busy falls, cycles: 0, clock: clk_ref}
+  - {output: count, from: busy falls, cycles: 0, clock: clk_ref}
+  - {output: ovf, from: edge count saturates, cycles: 1, clock: clk_ref}
+  - {output: reg_rdata, from: reg_rd, cycles: 1, clock: clk_ref}
+  - {output: reg_rvalid, from: reg_rd, cycles: 1, clock: clk_ref}
+goals:
+  - {id: G1, text: measure the frequency of clk_in against clk_ref}
+  - {id: G2, text: read the result}
+requirements:
+  - id: REQ-01
+    text: "After reset, busy and valid are low."
+    modal: shall
+    kind: reset
+    proof: [simulation, formal]
+    trace_up: G1
+    source: the request
+  - id: REQ-02
+    text: "When start is high while busy is low, busy is high in the next clk_ref cycle."
+    modal: shall
+    kind: timing
+    proof: [simulation, formal]
+    trace_up: G1
+    source: the request
+  - id: REQ-03
+    text: "Busy is high for exactly 8 clk_ref cycles after it rises."
+    modal: shall
+    kind: timing
+    proof: [simulation, formal]
+    trace_up: G1
+    source: the request
+  - id: REQ-04
+    text: "When busy falls, valid is high in the same cycle."
+    modal: shall
+    kind: timing
+    proof: [simulation, formal]
+    trace_up: G2
+    source: the request
+  - id: REQ-05
+    text: "When reg_rd is high, reg_rvalid is high in the next clk_ref cycle."
+    modal: shall
+    kind: protocol
+    proof: [simulation, formal]
+    trace_up: G2
+    source: the request
+  - id: REQ-06
+    text: "When start is high while busy is high, valid stays low in the next cycle."
+    modal: shall
+    kind: timing
+    proof: [simulation, formal]
+    trace_up: G1
+    source: the request
+  - id: REQ-07
+    text: "When count equals 4294967295, ovf is high in the next clk_ref cycle."
+    modal: shall
+    kind: functional
+    proof: [simulation, formal]
+    trace_up: G1
+    source: the request
+  - id: REQ-08
+    text: "When the window closes, count reports the number of clk_in rising edges in the window within 1 edge."
+    modal: shall
+    kind: functional
+    proof: [simulation]
+    trace_up: G1
+    source: the request

@@ -4,6 +4,8 @@ The four public Nasdaq documents below were downloaded on 2026-11-20 from `nasda
 (the repository holds field layouts in our own words, each with the document and section it comes from). A fact that was read in the
 document is stated plainly. A fact that is recalled, or assumed because the document is silent, is marked **UNCONFIRMED**.
 
+Design ideas in this design that come from J. R. Edwards, *FPGA Design for Low-Latency Trading* (2026): saturating a level's quantity instead of letting it wrap (ch 9 and ch 13), the formal proof of the quantity invariants (ch 13), and the staged limit words with one commit (ch 12). Each is written from scratch; the book is cited, not copied.
+
 | Protocol | Version read | Revision marker in the document | Used for |
 |---|---|---|---|
 | Nasdaq TotalView-ITCH | 5.0 | last revision entry 28 April 2023 | the market-data messages |

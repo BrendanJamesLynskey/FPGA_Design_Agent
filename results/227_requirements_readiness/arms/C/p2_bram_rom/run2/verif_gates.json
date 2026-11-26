@@ -1,0 +1,1157 @@
+{
+  "design": "b227_C_p2_bram_rom_r2",
+  "stages": {
+    "V0": {
+      "checks": {
+        "testplan_present": {
+          "value": true,
+          "threshold": true,
+          "pass": true
+        },
+        "model_present": {
+          "value": true,
+          "threshold": true,
+          "pass": true
+        },
+        "bench_modules_present": {
+          "value": [
+            "p2_bram_rom_bench"
+          ],
+          "threshold": "all files exist",
+          "pass": true
+        }
+      },
+      "pass": true
+    },
+    "V1": {
+      "checks": {
+        "requirements_have_proof_method": {
+          "value": [],
+          "threshold": [],
+          "pass": true
+        },
+        "proof_methods_discharged": {
+          "value": [],
+          "threshold": [],
+          "pass": true
+        },
+        "proof_references_resolve": {
+          "value": [],
+          "threshold": [],
+          "pass": true
+        },
+        "spec_items_traced": {
+          "value": "36/36",
+          "threshold": "all",
+          "pass": true
+        },
+        "untraced_items": {
+          "value": [],
+          "threshold": [],
+          "pass": true
+        },
+        "unknown_spec_refs": {
+          "value": [],
+          "threshold": [],
+          "pass": true
+        },
+        "requirements_without_a_check": {
+          "value": [],
+          "threshold": [],
+          "pass": true
+        },
+        "unresolved_references": {
+          "value": [],
+          "threshold": [],
+          "pass": true
+        },
+        "bench_uses_blind_model": {
+          "value": true,
+          "threshold": true,
+          "pass": true
+        }
+      },
+      "pass": true
+    },
+    "V2": {
+      "checks": {
+        "seeds_run": {
+          "value": [
+            1
+          ],
+          "threshold": ">=1",
+          "pass": true
+        },
+        "planned_tests_missing": {
+          "value": [],
+          "threshold": [],
+          "pass": true
+        },
+        "failing_tests": {
+          "value": [
+            "seed1:p2_bram_rom_bench.test_random_traffic"
+          ],
+          "threshold": [],
+          "pass": false
+        },
+        "constrained_random_test_ran": {
+          "value": false,
+          "threshold": true,
+          "pass": false,
+          "why": "no passing test with 'random' in its name in seed1: name the constrained-random test so (for example test_random_traffic) and run it"
+        },
+        "assertions_bound_zero_failures": {
+          "value": [
+            "A_led_not_both",
+            "A_rdata_hold",
+            "A_rst_led_idle"
+          ],
+          "threshold": "bound in the run; no failure",
+          "pass": false,
+          "why": "a test failed in some seed: see failing_tests"
+        },
+        "other_simulators_failing": {
+          "value": [],
+          "threshold": [],
+          "pass": true
+        },
+        "formal_tasks_not_passing": {
+          "value": [],
+          "threshold": [],
+          "pass": true
+        }
+      },
+      "pass": false
+    },
+    "V3": {
+      "checks": {
+        "seeds_run": {
+          "value": 1,
+          "threshold": ">=3",
+          "pass": false,
+          "why": "1 seed(s) run, the plan needs 3: call flow.cocotb_run.run once per seed"
+        },
+        "all_seeds_pass": {
+          "value": [
+            "seed1:p2_bram_rom_bench.test_random_traffic"
+          ],
+          "threshold": [],
+          "pass": false
+        },
+        "functional_bins_pct": {
+          "value": "0.0 (0/0)",
+          "threshold": 100,
+          "pass": false,
+          "why": "no functional bins planned: put cover-point names in `bins:` of the testplan requirements. name cover points in the `bins:` of the testplan requirements, sample them in the bench, and export them in the bench's last test with `coverage_db.export_to_yaml(os.environ[\"FDA_COV_OUT\"])` (cocotb-coverage); the flow keeps the file as seed<N>/coverage_func.yml"
+        },
+        "functional_bins_unhit": {
+          "value": [],
+          "threshold": [],
+          "pass": false,
+          "why": "no functional bins planned: put cover-point names in `bins:` of the testplan requirements. name cover points in the `bins:` of the testplan requirements, sample them in the bench, and export them in the bench's last test with `coverage_db.export_to_yaml(os.environ[\"FDA_COV_OUT\"])` (cocotb-coverage); the flow keeps the file as seed<N>/coverage_func.yml"
+        },
+        "cover_properties_pct": {
+          "value": "0.0",
+          "threshold": 100,
+          "pass": false,
+          "why": "not measured: no code-coverage data: the flow records line, toggle and cover-property coverage itself, in a Verilator run of your bench, once V0 to V2 pass (the bench must run through flow.cocotb_run.run, which writes seed<N>/coverage.dat)"
+        },
+        "cover_properties_unhit": {
+          "value": [
+            "C_busy",
+            "C_done",
+            "C_read",
+            "C_write"
+          ],
+          "threshold": [],
+          "pass": false,
+          "why": "not measured: no code-coverage data: the flow records line, toggle and cover-property coverage itself, in a Verilator run of your bench, once V0 to V2 pass (the bench must run through flow.cocotb_run.run, which writes seed<N>/coverage.dat)"
+        },
+        "line_pct": {
+          "value": "not measured",
+          "threshold": 90,
+          "pass": false,
+          "why": "not measured: no code-coverage data: the flow records line, toggle and cover-property coverage itself, in a Verilator run of your bench, once V0 to V2 pass (the bench must run through flow.cocotb_run.run, which writes seed<N>/coverage.dat)"
+        },
+        "toggle_pct": {
+          "value": "not measured",
+          "threshold": 75,
+          "pass": false,
+          "why": "not measured: no code-coverage data: the flow records line, toggle and cover-property coverage itself, in a Verilator run of your bench, once V0 to V2 pass (the bench must run through flow.cocotb_run.run, which writes seed<N>/coverage.dat) [testplan asked 70%, the floor is 75% (flow/verif_floors.yaml)]",
+          "floor_note": "testplan asked 70%, the floor is 75% (flow/verif_floors.yaml)"
+        },
+        "waivers_without_reason": {
+          "value": 0,
+          "threshold": 0,
+          "pass": true
+        },
+        "mutation_score_pct": {
+          "value": "not measured",
+          "threshold": 80,
+          "pass": false,
+          "why": "not measured: the flow runs the mutation step itself once V2 passes (a capped, seeded sample of changes to the RTL, each run against your tests); no result exists yet"
+        },
+        "cdc_structure_clean": {
+          "value": "missing",
+          "threshold": "no unsafe crossing",
+          "pass": false,
+          "why": "no structural CDC result: build the design through the post-synthesis stage (flow/build.tcl writes cdc_paths_synth.rpt) and pass its gates.json as --gates"
+        },
+        "cdc_injection_clean": {
+          "value": "missing",
+          "threshold": "pass",
+          "pass": false,
+          "why": "no CDC injection result: run flow/cdc_inject_run.py <design> (the harness does this in v3_evidence) and pass build/verif/cdc_inject.json as --cdc-inject"
+        }
+      }
+    },
+    "SIGNOFF": {
+      "checks": {
+        "every_method_has_passing_evidence": {
+          "value": [
+            "REQ-01:hardware=pending",
+            "REQ-02:hardware=pending",
+            "REQ-03:hardware=pending",
+            "REQ-04:hardware=pending",
+            "REQ-05:hardware=pending",
+            "REQ-06:hardware=pending",
+            "REQ-10:hardware=pending",
+            "REQ-13:hardware=pending",
+            "REQ-21:hardware=pending",
+            "REQ-22:hardware=pending",
+            "REQ-23:hardware=pending",
+            "REQ-24:hardware=pending",
+            "REQ-26:hardware=pending",
+            "REQ-39:analysis=pending",
+            "REQ-39:hardware=pending",
+            "REQ-40:analysis=pending",
+            "REQ-41:analysis=pending",
+            "REQ-42:analysis=pending"
+          ],
+          "threshold": [],
+          "pass": false
+        }
+      },
+      "pass": false
+    },
+    "V-HW": {
+      "checks": {
+        "bringup_result_present": {
+          "value": false,
+          "threshold": true,
+          "pass": false
+        }
+      },
+      "pass": false
+    }
+  },
+  "code_coverage": {},
+  "code_coverage_unhit": {},
+  "mutation": null,
+  "traceability": [
+    {
+      "requirement": "REQ-01",
+      "text": "ID register at 0x000 reads 0x20920001.",
+      "method": "simulation",
+      "artefact": "p2_bram_rom_bench.test_reset_values",
+      "result": "pass",
+      "detail": "passed on 1 seed(s)"
+    },
+    {
+      "requirement": "REQ-01",
+      "text": "ID register at 0x000 reads 0x20920001.",
+      "method": "hardware",
+      "artefact": "uart_tests",
+      "result": "pending",
+      "detail": "no bring-up result"
+    },
+    {
+      "requirement": "REQ-02",
+      "text": "BUILD register at 0x004 reads the USR_ACCESSE2 word of the bitstream.",
+      "method": "hardware",
+      "artefact": "uart_tests",
+      "result": "pending",
+      "detail": "no bring-up result"
+    },
+    {
+      "requirement": "REQ-03",
+      "text": "SCRATCH at 0x008 resets to 0.",
+      "method": "simulation",
+      "artefact": "p2_bram_rom_bench.test_reset_values",
+      "result": "pass",
+      "detail": "passed on 1 seed(s)"
+    },
+    {
+      "requirement": "REQ-03",
+      "text": "SCRATCH at 0x008 resets to 0.",
+      "method": "hardware",
+      "artefact": "uart_tests",
+      "result": "pending",
+      "detail": "no bring-up result"
+    },
+    {
+      "requirement": "REQ-04",
+      "text": "SCRATCH at 0x008 reads back the 32-bit value written.",
+      "method": "simulation",
+      "artefact": "p2_bram_rom_bench.test_scratch",
+      "result": "pass",
+      "detail": "passed on 1 seed(s)"
+    },
+    {
+      "requirement": "REQ-04",
+      "text": "SCRATCH at 0x008 reads back the 32-bit value written.",
+      "method": "hardware",
+      "artefact": "uart_tests",
+      "result": "pending",
+      "detail": "no bring-up result"
+    },
+    {
+      "requirement": "REQ-05",
+      "text": "After configuration and before any write, ROM word i read through ROM_DATA equals line i of data/rom_init.hex for i 0 to 1023.",
+      "method": "simulation",
+      "artefact": "p2_bram_rom_bench.test_rom_ram_init",
+      "result": "pass",
+      "detail": "passed on 1 seed(s)"
+    },
+    {
+      "requirement": "REQ-05",
+      "text": "After configuration and before any write, ROM word i read through ROM_DATA equals line i of data/rom_init.hex for i 0 to 1023.",
+      "method": "hardware",
+      "artefact": "uart_tests",
+      "result": "pending",
+      "detail": "no bring-up result"
+    },
+    {
+      "requirement": "REQ-06",
+      "text": "After configuration and before any write, RAM word i read through RAM_DATA equals 0xC0DE0000 + i for i 0 to 1023.",
+      "method": "simulation",
+      "artefact": "p2_bram_rom_bench.test_rom_ram_init",
+      "result": "pass",
+      "detail": "passed on 1 seed(s)"
+    },
+    {
+      "requirement": "REQ-06",
+      "text": "After configuration and before any write, RAM word i read through RAM_DATA equals 0xC0DE0000 + i for i 0 to 1023.",
+      "method": "hardware",
+      "artefact": "uart_tests",
+      "result": "pending",
+      "detail": "no bring-up result"
+    },
+    {
+      "requirement": "REQ-07",
+      "text": "Reset does not change RAM contents.",
+      "method": "simulation",
+      "artefact": "p2_bram_rom_bench.test_reset_keeps_ram",
+      "result": "pass",
+      "detail": "passed on 1 seed(s)"
+    },
+    {
+      "requirement": "REQ-08",
+      "text": "MEM_ADDR keeps 10 bits.",
+      "method": "simulation",
+      "artefact": "p2_bram_rom_bench.test_mem_addr_width",
+      "result": "pass",
+      "detail": "passed on 1 seed(s)"
+    },
+    {
+      "requirement": "REQ-09",
+      "text": "The upper write bits 31:10 of MEM_ADDR read as 0.",
+      "method": "simulation",
+      "artefact": "p2_bram_rom_bench.test_mem_addr_width",
+      "result": "pass",
+      "detail": "passed on 1 seed(s)"
+    },
+    {
+      "requirement": "REQ-10",
+      "text": "With AUTOINC set, each ROM_DATA read adds 1 to MEM_ADDR after the data is captured.",
+      "method": "simulation",
+      "artefact": "p2_bram_rom_bench.test_autoinc",
+      "result": "pass",
+      "detail": "passed on 1 seed(s)"
+    },
+    {
+      "requirement": "REQ-10",
+      "text": "With AUTOINC set, each ROM_DATA read adds 1 to MEM_ADDR after the data is captured.",
+      "method": "hardware",
+      "artefact": "uart_tests",
+      "result": "pending",
+      "detail": "no bring-up result"
+    },
+    {
+      "requirement": "REQ-11",
+      "text": "With AUTOINC clear, ROM_DATA and RAM_DATA accesses leave MEM_ADDR unchanged.",
+      "method": "simulation",
+      "artefact": "p2_bram_rom_bench.test_autoinc",
+      "result": "pass",
+      "detail": "passed on 1 seed(s)"
+    },
+    {
+      "requirement": "REQ-12",
+      "text": "With AUTOINC set, MEM_ADDR wraps from 1023 to 0.",
+      "method": "simulation",
+      "artefact": "p2_bram_rom_bench.test_autoinc",
+      "result": "pass",
+      "detail": "passed on 1 seed(s)"
+    },
+    {
+      "requirement": "REQ-12",
+      "text": "With AUTOINC set, MEM_ADDR wraps from 1023 to 0.",
+      "method": "formal",
+      "artefact": "p2_bram_rom_bench.test_autoinc",
+      "result": "pass",
+      "detail": "re-planned from formal to simulation (SymbiYosys is not installed here, so the wrap 1023 to 0 is checked by directed simulation against the model.): passed on 1 seed(s)"
+    },
+    {
+      "requirement": "REQ-13",
+      "text": "A RAM_DATA write stores at the old MEM_ADDR, then adds 1 to MEM_ADDR when AUTOINC is set.",
+      "method": "simulation",
+      "artefact": "p2_bram_rom_bench.test_autoinc",
+      "result": "pass",
+      "detail": "passed on 1 seed(s)"
+    },
+    {
+      "requirement": "REQ-13",
+      "text": "A RAM_DATA write stores at the old MEM_ADDR, then adds 1 to MEM_ADDR when AUTOINC is set.",
+      "method": "hardware",
+      "artefact": "uart_tests",
+      "result": "pending",
+      "detail": "no bring-up result"
+    },
+    {
+      "requirement": "REQ-14",
+      "text": "Writes to ROM_DATA are ignored.",
+      "method": "simulation",
+      "artefact": "p2_bram_rom_bench.test_autoinc",
+      "result": "pass",
+      "detail": "passed on 1 seed(s)"
+    },
+    {
+      "requirement": "REQ-15",
+      "text": "h_rdata shows the addressed register 2 clocks after h_re.",
+      "method": "simulation",
+      "artefact": "p2_bram_rom_bench.test_read_latency_hold",
+      "result": "pass",
+      "detail": "passed on 1 seed(s)"
+    },
+    {
+      "requirement": "REQ-15",
+      "text": "h_rdata shows the addressed register 2 clocks after h_re.",
+      "method": "formal",
+      "artefact": "p2_bram_rom_bench.test_read_latency_hold",
+      "result": "pass",
+      "detail": "re-planned from formal to simulation (SymbiYosys is not installed here, so the 2-clock read latency is checked by a cycle-exact simulation test.): passed on 1 seed(s)"
+    },
+    {
+      "requirement": "REQ-16",
+      "text": "h_rdata holds its value until the next h_re.",
+      "method": "simulation",
+      "artefact": "p2_bram_rom_bench.test_read_latency_hold",
+      "result": "pass",
+      "detail": "passed on 1 seed(s)"
+    },
+    {
+      "requirement": "REQ-16",
+      "text": "h_rdata holds its value until the next h_re.",
+      "method": "formal",
+      "artefact": "p2_bram_rom_bench.test_read_latency_hold",
+      "result": "pass",
+      "detail": "re-planned from formal to simulation (SymbiYosys is not installed here, so h_rdata holding is checked by simulation and the A_rdata_hold assertion in the Verilator run.): passed on 1 seed(s)"
+    },
+    {
+      "requirement": "REQ-17",
+      "text": "Unmapped addresses read 0.",
+      "method": "simulation",
+      "artefact": "p2_bram_rom_bench.test_unmapped",
+      "result": "pass",
+      "detail": "passed on 1 seed(s)"
+    },
+    {
+      "requirement": "REQ-18",
+      "text": "Writes to unmapped addresses are ignored.",
+      "method": "simulation",
+      "artefact": "p2_bram_rom_bench.test_unmapped",
+      "result": "pass",
+      "detail": "passed on 1 seed(s)"
+    },
+    {
+      "requirement": "REQ-19",
+      "text": "After reset the registers hold the values in the register map.",
+      "method": "simulation",
+      "artefact": "p2_bram_rom_bench.test_reset_values",
+      "result": "pass",
+      "detail": "passed on 1 seed(s)"
+    },
+    {
+      "requirement": "REQ-20",
+      "text": "START with MARCH_PASSES = N runs max(1, N) passes of March C- over all 1024 RAM words with all-zero then all-one backgrounds.",
+      "method": "simulation",
+      "artefact": "p2_bram_rom_bench.test_march_inject_3pass",
+      "result": "pass",
+      "detail": "passed on 1 seed(s)"
+    },
+    {
+      "requirement": "REQ-21",
+      "text": "A 200-pass run without INJECT_FAULT ends with MARCH_ERRS = 0.",
+      "method": "simulation",
+      "artefact": "p2_bram_rom_bench.test_march_clean_zero_passes",
+      "result": "pass",
+      "detail": "passed on 1 seed(s)"
+    },
+    {
+      "requirement": "REQ-21",
+      "text": "A 200-pass run without INJECT_FAULT ends with MARCH_ERRS = 0.",
+      "method": "hardware",
+      "artefact": "uart_tests",
+      "result": "pending",
+      "detail": "no bring-up result"
+    },
+    {
+      "requirement": "REQ-22",
+      "text": "A 200-pass run without INJECT_FAULT ends with MARCH_FIRST_ERR = 0xFFFFFFFF.",
+      "method": "simulation",
+      "artefact": "p2_bram_rom_bench.test_march_clean_zero_passes",
+      "result": "pass",
+      "detail": "passed on 1 seed(s)"
+    },
+    {
+      "requirement": "REQ-22",
+      "text": "A 200-pass run without INJECT_FAULT ends with MARCH_FIRST_ERR = 0xFFFFFFFF.",
+      "method": "hardware",
+      "artefact": "uart_tests",
+      "result": "pending",
+      "detail": "no bring-up result"
+    },
+    {
+      "requirement": "REQ-23",
+      "text": "A 3-pass run with INJECT_FAULT ends with MARCH_ERRS = 3.",
+      "method": "simulation",
+      "artefact": "p2_bram_rom_bench.test_march_inject_3pass",
+      "result": "pass",
+      "detail": "passed on 1 seed(s)"
+    },
+    {
+      "requirement": "REQ-23",
+      "text": "A 3-pass run with INJECT_FAULT ends with MARCH_ERRS = 3.",
+      "method": "hardware",
+      "artefact": "uart_tests",
+      "result": "pending",
+      "detail": "no bring-up result"
+    },
+    {
+      "requirement": "REQ-24",
+      "text": "A 3-pass run with INJECT_FAULT ends with MARCH_FIRST_ERR = 5.",
+      "method": "simulation",
+      "artefact": "p2_bram_rom_bench.test_march_inject_3pass",
+      "result": "pass",
+      "detail": "passed on 1 seed(s)"
+    },
+    {
+      "requirement": "REQ-24",
+      "text": "A 3-pass run with INJECT_FAULT ends with MARCH_FIRST_ERR = 5.",
+      "method": "hardware",
+      "artefact": "uart_tests",
+      "result": "pending",
+      "detail": "no bring-up result"
+    },
+    {
+      "requirement": "REQ-25",
+      "text": "INJECT_FAULT alters only the checker compare.",
+      "method": "simulation",
+      "artefact": "p2_bram_rom_bench.test_march_inject_3pass",
+      "result": "pass",
+      "detail": "passed on 1 seed(s)"
+    },
+    {
+      "requirement": "REQ-26",
+      "text": "The RAM holds all zeros after a march run.",
+      "method": "simulation",
+      "artefact": "p2_bram_rom_bench.test_march_inject_3pass",
+      "result": "pass",
+      "detail": "passed on 1 seed(s)"
+    },
+    {
+      "requirement": "REQ-26",
+      "text": "The RAM holds all zeros after a march run.",
+      "method": "hardware",
+      "artefact": "uart_tests",
+      "result": "pending",
+      "detail": "no bring-up result"
+    },
+    {
+      "requirement": "REQ-27",
+      "text": "START clears MARCH_ERRS to 0.",
+      "method": "simulation",
+      "artefact": "p2_bram_rom_bench.test_march_restart",
+      "result": "pass",
+      "detail": "passed on 1 seed(s)"
+    },
+    {
+      "requirement": "REQ-28",
+      "text": "START clears passes completed to 0.",
+      "method": "simulation",
+      "artefact": "p2_bram_rom_bench.test_march_restart",
+      "result": "pass",
+      "detail": "passed on 1 seed(s)"
+    },
+    {
+      "requirement": "REQ-29",
+      "text": "START clears DONE.",
+      "method": "simulation",
+      "artefact": "p2_bram_rom_bench.test_march_restart",
+      "result": "pass",
+      "detail": "passed on 1 seed(s)"
+    },
+    {
+      "requirement": "REQ-30",
+      "text": "START sets MARCH_FIRST_ERR to 0xFFFFFFFF.",
+      "method": "simulation",
+      "artefact": "p2_bram_rom_bench.test_march_restart",
+      "result": "pass",
+      "detail": "passed on 1 seed(s)"
+    },
+    {
+      "requirement": "REQ-31",
+      "text": "START while BUSY is ignored.",
+      "method": "simulation",
+      "artefact": "p2_bram_rom_bench.test_march_inject_3pass",
+      "result": "pass",
+      "detail": "passed on 1 seed(s)"
+    },
+    {
+      "requirement": "REQ-31",
+      "text": "START while BUSY is ignored.",
+      "method": "formal",
+      "artefact": "p2_bram_rom_bench.test_march_inject_3pass",
+      "result": "pass",
+      "detail": "re-planned from formal to simulation (SymbiYosys is not installed here, so START while BUSY is checked by a directed simulation test.): passed on 1 seed(s)"
+    },
+    {
+      "requirement": "REQ-32",
+      "text": "DONE rises in the same clock as the last pass finishes.",
+      "method": "simulation",
+      "artefact": "p2_bram_rom_bench.test_march_inject_3pass",
+      "result": "pass",
+      "detail": "passed on 1 seed(s)"
+    },
+    {
+      "requirement": "REQ-32",
+      "text": "DONE rises in the same clock as the last pass finishes.",
+      "method": "formal",
+      "artefact": "p2_bram_rom_bench.test_march_inject_3pass",
+      "result": "pass",
+      "detail": "re-planned from formal to simulation (SymbiYosys is not installed here, so the DONE timing is checked per clock on led in simulation.): passed on 1 seed(s)"
+    },
+    {
+      "requirement": "REQ-33",
+      "text": "BUSY falls in the same clock as DONE rises.",
+      "method": "simulation",
+      "artefact": "p2_bram_rom_bench.test_march_inject_3pass",
+      "result": "pass",
+      "detail": "passed on 1 seed(s)"
+    },
+    {
+      "requirement": "REQ-33",
+      "text": "BUSY falls in the same clock as DONE rises.",
+      "method": "formal",
+      "artefact": "p2_bram_rom_bench.test_march_inject_3pass",
+      "result": "pass",
+      "detail": "re-planned from formal to simulation (SymbiYosys is not installed here, so BUSY falling with DONE is checked per clock in simulation and by A_led_not_both.): passed on 1 seed(s)"
+    },
+    {
+      "requirement": "REQ-34",
+      "text": "MARCH_STATUS bits 31:16 count completed passes.",
+      "method": "simulation",
+      "artefact": "p2_bram_rom_bench.test_march_inject_3pass",
+      "result": "pass",
+      "detail": "passed on 1 seed(s)"
+    },
+    {
+      "requirement": "REQ-35",
+      "text": "While BUSY, RAM_DATA writes are ignored.",
+      "method": "simulation",
+      "artefact": "p2_bram_rom_bench.test_march_inject_3pass",
+      "result": "pass",
+      "detail": "passed on 1 seed(s)"
+    },
+    {
+      "requirement": "REQ-36",
+      "text": "While BUSY, RAM_DATA reads return 0.",
+      "method": "simulation",
+      "artefact": "p2_bram_rom_bench.test_march_inject_3pass",
+      "result": "pass",
+      "detail": "passed on 1 seed(s)"
+    },
+    {
+      "requirement": "REQ-37",
+      "text": "MEM_ADDR can be written while BUSY.",
+      "method": "simulation",
+      "artefact": "p2_bram_rom_bench.test_march_inject_3pass",
+      "result": "pass",
+      "detail": "passed on 1 seed(s)"
+    },
+    {
+      "requirement": "REQ-38",
+      "text": "MARCH_PASSES keeps the written value, including 0.",
+      "method": "simulation",
+      "artefact": "p2_bram_rom_bench.test_march_clean_zero_passes",
+      "result": "pass",
+      "detail": "passed on 1 seed(s)"
+    },
+    {
+      "requirement": "REQ-39",
+      "text": "sfp_tx_disable is 1 at all times.",
+      "method": "analysis",
+      "artefact": "post_synth:post_synth_resources_in_range",
+      "result": "pending",
+      "detail": "no flow gates result"
+    },
+    {
+      "requirement": "REQ-39",
+      "text": "sfp_tx_disable is 1 at all times.",
+      "method": "hardware",
+      "artefact": "uart_tests",
+      "result": "pending",
+      "detail": "no bring-up result"
+    },
+    {
+      "requirement": "REQ-40",
+      "text": "No GT transceiver channel is used.",
+      "method": "analysis",
+      "artefact": "post_synth:post_synth_resources_in_range",
+      "result": "pending",
+      "detail": "no flow gates result"
+    },
+    {
+      "requirement": "REQ-41",
+      "text": "data/jtag_bus.sv is used unchanged.",
+      "method": "analysis",
+      "artefact": "post_synth:post_synth_resources_in_range",
+      "result": "pending",
+      "detail": "no flow gates result"
+    },
+    {
+      "requirement": "REQ-42",
+      "text": "The design meets timing at the 25 MHz clock (WNS >= 0 ns).",
+      "method": "analysis",
+      "artefact": "post_route:setup",
+      "result": "pending",
+      "detail": "no flow gates result"
+    }
+  ],
+  "coverage_detail": {
+    "bins": {},
+    "requirements": [
+      {
+        "id": "REQ-01",
+        "spec": [
+          "registers.map.ID"
+        ],
+        "tests": [
+          "p2_bram_rom_bench.test_reset_values"
+        ],
+        "bins": {}
+      },
+      {
+        "id": "REQ-02",
+        "spec": [
+          "registers.map.BUILD",
+          "behaviour.structure[1]"
+        ],
+        "tests": [
+          "p2_bram_rom_bench.test_build_reg_stable"
+        ],
+        "bins": {}
+      },
+      {
+        "id": "REQ-03",
+        "spec": [
+          "registers.map.SCRATCH",
+          "reset"
+        ],
+        "tests": [
+          "p2_bram_rom_bench.test_reset_values",
+          "p2_bram_rom_bench.test_scratch"
+        ],
+        "bins": {}
+      },
+      {
+        "id": "REQ-04",
+        "spec": [],
+        "tests": [
+          "p2_bram_rom_bench.test_scratch",
+          "p2_bram_rom_bench.test_random_traffic"
+        ],
+        "bins": {}
+      },
+      {
+        "id": "REQ-05",
+        "spec": [
+          "behaviour.rom_ram[0]",
+          "registers.map.ROM_DATA"
+        ],
+        "tests": [
+          "p2_bram_rom_bench.test_rom_ram_init"
+        ],
+        "bins": {}
+      },
+      {
+        "id": "REQ-06",
+        "spec": [
+          "behaviour.rom_ram[1]",
+          "registers.map.RAM_DATA"
+        ],
+        "tests": [
+          "p2_bram_rom_bench.test_rom_ram_init"
+        ],
+        "bins": {}
+      },
+      {
+        "id": "REQ-07",
+        "spec": [],
+        "tests": [
+          "p2_bram_rom_bench.test_reset_keeps_ram"
+        ],
+        "bins": {}
+      },
+      {
+        "id": "REQ-08",
+        "spec": [
+          "registers.map.MEM_ADDR"
+        ],
+        "tests": [
+          "p2_bram_rom_bench.test_mem_addr_width",
+          "p2_bram_rom_bench.test_random_traffic"
+        ],
+        "bins": {}
+      },
+      {
+        "id": "REQ-09",
+        "spec": [
+          "behaviour.host_access[1]"
+        ],
+        "tests": [
+          "p2_bram_rom_bench.test_mem_addr_width"
+        ],
+        "bins": {}
+      },
+      {
+        "id": "REQ-10",
+        "spec": [
+          "behaviour.host_access[2]"
+        ],
+        "tests": [
+          "p2_bram_rom_bench.test_rom_ram_init",
+          "p2_bram_rom_bench.test_autoinc"
+        ],
+        "bins": {}
+      },
+      {
+        "id": "REQ-11",
+        "spec": [
+          "registers.map.MEM_CTRL"
+        ],
+        "tests": [
+          "p2_bram_rom_bench.test_autoinc"
+        ],
+        "bins": {}
+      },
+      {
+        "id": "REQ-12",
+        "spec": [],
+        "tests": [
+          "p2_bram_rom_bench.test_autoinc",
+          "p2_bram_rom_bench.test_rom_ram_init"
+        ],
+        "bins": {}
+      },
+      {
+        "id": "REQ-13",
+        "spec": [
+          "behaviour.host_access[3]"
+        ],
+        "tests": [
+          "p2_bram_rom_bench.test_autoinc"
+        ],
+        "bins": {}
+      },
+      {
+        "id": "REQ-14",
+        "spec": [],
+        "tests": [
+          "p2_bram_rom_bench.test_autoinc"
+        ],
+        "bins": {}
+      },
+      {
+        "id": "REQ-15",
+        "spec": [
+          "timing.latency.register_read",
+          "timing.latency.ram_read",
+          "behaviour.rom_ram[2]"
+        ],
+        "tests": [
+          "p2_bram_rom_bench.test_read_latency_hold"
+        ],
+        "bins": {}
+      },
+      {
+        "id": "REQ-16",
+        "spec": [],
+        "tests": [
+          "p2_bram_rom_bench.test_read_latency_hold"
+        ],
+        "bins": {}
+      },
+      {
+        "id": "REQ-17",
+        "spec": [
+          "registers.unmapped",
+          "behaviour.host_access[0]",
+          "timing.latency.register_write"
+        ],
+        "tests": [
+          "p2_bram_rom_bench.test_unmapped",
+          "p2_bram_rom_bench.test_random_traffic"
+        ],
+        "bins": {}
+      },
+      {
+        "id": "REQ-18",
+        "spec": [],
+        "tests": [
+          "p2_bram_rom_bench.test_unmapped",
+          "p2_bram_rom_bench.test_random_traffic"
+        ],
+        "bins": {}
+      },
+      {
+        "id": "REQ-19",
+        "spec": [],
+        "tests": [
+          "p2_bram_rom_bench.test_reset_values",
+          "p2_bram_rom_bench.test_reset_keeps_ram"
+        ],
+        "bins": {}
+      },
+      {
+        "id": "REQ-20",
+        "spec": [
+          "behaviour.march[0]",
+          "behaviour.march[1]"
+        ],
+        "tests": [
+          "p2_bram_rom_bench.test_march_inject_3pass",
+          "p2_bram_rom_bench.test_march_clean_zero_passes"
+        ],
+        "bins": {}
+      },
+      {
+        "id": "REQ-21",
+        "spec": [
+          "registers.map.MARCH_ERRS"
+        ],
+        "tests": [
+          "p2_bram_rom_bench.test_march_clean_zero_passes"
+        ],
+        "bins": {}
+      },
+      {
+        "id": "REQ-22",
+        "spec": [
+          "registers.map.MARCH_FIRST_ERR"
+        ],
+        "tests": [
+          "p2_bram_rom_bench.test_march_clean_zero_passes"
+        ],
+        "bins": {}
+      },
+      {
+        "id": "REQ-23",
+        "spec": [
+          "behaviour.march[3]"
+        ],
+        "tests": [
+          "p2_bram_rom_bench.test_march_inject_3pass",
+          "p2_bram_rom_bench.test_march_restart"
+        ],
+        "bins": {}
+      },
+      {
+        "id": "REQ-24",
+        "spec": [],
+        "tests": [
+          "p2_bram_rom_bench.test_march_inject_3pass",
+          "p2_bram_rom_bench.test_march_restart"
+        ],
+        "bins": {}
+      },
+      {
+        "id": "REQ-25",
+        "spec": [
+          "behaviour.march[4]"
+        ],
+        "tests": [
+          "p2_bram_rom_bench.test_march_inject_3pass"
+        ],
+        "bins": {}
+      },
+      {
+        "id": "REQ-26",
+        "spec": [],
+        "tests": [
+          "p2_bram_rom_bench.test_march_inject_3pass",
+          "p2_bram_rom_bench.test_march_clean_zero_passes"
+        ],
+        "bins": {}
+      },
+      {
+        "id": "REQ-27",
+        "spec": [
+          "behaviour.march[2]",
+          "registers.map.MARCH_CTRL"
+        ],
+        "tests": [
+          "p2_bram_rom_bench.test_march_restart"
+        ],
+        "bins": {}
+      },
+      {
+        "id": "REQ-28",
+        "spec": [],
+        "tests": [
+          "p2_bram_rom_bench.test_march_restart"
+        ],
+        "bins": {}
+      },
+      {
+        "id": "REQ-29",
+        "spec": [],
+        "tests": [
+          "p2_bram_rom_bench.test_march_restart"
+        ],
+        "bins": {}
+      },
+      {
+        "id": "REQ-30",
+        "spec": [],
+        "tests": [
+          "p2_bram_rom_bench.test_march_restart"
+        ],
+        "bins": {}
+      },
+      {
+        "id": "REQ-31",
+        "spec": [],
+        "tests": [
+          "p2_bram_rom_bench.test_march_inject_3pass"
+        ],
+        "bins": {}
+      },
+      {
+        "id": "REQ-32",
+        "spec": [
+          "behaviour.march[5]",
+          "timing.latency.march_done"
+        ],
+        "tests": [
+          "p2_bram_rom_bench.test_march_inject_3pass"
+        ],
+        "bins": {}
+      },
+      {
+        "id": "REQ-33",
+        "spec": [
+          "behaviour.march[6]"
+        ],
+        "tests": [
+          "p2_bram_rom_bench.test_march_inject_3pass"
+        ],
+        "bins": {}
+      },
+      {
+        "id": "REQ-34",
+        "spec": [
+          "registers.map.MARCH_STATUS"
+        ],
+        "tests": [
+          "p2_bram_rom_bench.test_march_inject_3pass"
+        ],
+        "bins": {}
+      },
+      {
+        "id": "REQ-35",
+        "spec": [
+          "behaviour.host_access[4]"
+        ],
+        "tests": [
+          "p2_bram_rom_bench.test_march_inject_3pass"
+        ],
+        "bins": {}
+      },
+      {
+        "id": "REQ-36",
+        "spec": [],
+        "tests": [
+          "p2_bram_rom_bench.test_march_inject_3pass"
+        ],
+        "bins": {}
+      },
+      {
+        "id": "REQ-37",
+        "spec": [],
+        "tests": [
+          "p2_bram_rom_bench.test_march_inject_3pass"
+        ],
+        "bins": {}
+      },
+      {
+        "id": "REQ-38",
+        "spec": [
+          "registers.map.MARCH_PASSES"
+        ],
+        "tests": [
+          "p2_bram_rom_bench.test_march_clean_zero_passes"
+        ],
+        "bins": {}
+      },
+      {
+        "id": "REQ-39",
+        "spec": [
+          "behaviour.structure[2]"
+        ],
+        "tests": [
+          "p2_bram_rom_bench.test_build_reg_stable"
+        ],
+        "bins": {}
+      },
+      {
+        "id": "REQ-40",
+        "spec": [],
+        "tests": [
+          "p2_bram_rom_bench.test_build_reg_stable"
+        ],
+        "bins": {}
+      },
+      {
+        "id": "REQ-41",
+        "spec": [
+          "behaviour.structure[0]"
+        ],
+        "tests": [
+          "p2_bram_rom_bench.test_build_reg_stable"
+        ],
+        "bins": {}
+      },
+      {
+        "id": "REQ-42",
+        "spec": [],
+        "tests": [
+          "p2_bram_rom_bench.test_build_reg_stable"
+        ],
+        "bins": {}
+      }
+    ]
+  },
+  "reached": "V1",
+  "first_failed": "V2"
+}

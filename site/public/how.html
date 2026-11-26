@@ -6,7 +6,17 @@
 <title>How it works | FPGA Force</title>
 <meta name="description" content="The stages, the verification gates V0 to V3, mutation testing, the knowledge bank and the tools, with a stage walk-through replayed from a real run record.">
 <meta name="color-scheme" content="light dark">
-<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="icon" href="favicon.svg" type="image/svg+xml" sizes="any">
+<link rel="icon" href="icons/icon-32.png" type="image/png" sizes="32x32">
+<link rel="icon" href="icons/icon-16.png" type="image/png" sizes="16x16">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta property="og:title" content="How it works | FPGA Force">
+<meta property="og:description" content="The stages, the verification gates V0 to V3, mutation testing, the knowledge bank and the tools, with a stage walk-through replayed from a real run record.">
+<meta property="og:type" content="website">
+<meta property="og:image" content="https://fpgaforce.vercel.app/icons/og-card.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
 <style>/* FPGA Force site: sober monochrome, dark and light, no glow. Same manner as the CVDP RTL Agent site. */
 :root {
   --bg: #f6f6f4; --panel: #ffffff; --rule: #d6d6d2; --ink: #161616; --ink-2: #4a4a4a; --ink-3: #6b6b6b;
@@ -52,10 +62,22 @@ p { margin: 0 0 1em; }
 .bar { position: sticky; top: 0; z-index: 10; background: var(--bg); border-bottom: 1px solid var(--rule);
   margin: 0 calc(-1 * max(16px, env(safe-area-inset-left))); padding: 0 max(16px, env(safe-area-inset-left)); }
 .bar .wrap { max-width: 1200px; display: flex; align-items: center; gap: 4px 14px; flex-wrap: wrap; min-height: 52px; }
-.brand { font-weight: 700; text-decoration: none; margin-right: auto; padding: 8px 0; }
+.brand { font-weight: 700; text-decoration: none; margin-right: auto; padding: 8px 0; display: inline-flex; align-items: center; gap: 10px; }
+.brand .mark { flex: 0 0 auto; color: var(--ink); }   /* brief 237: the mark is drawn in currentColor, so it follows the theme */
 .bar nav { display: flex; flex-wrap: wrap; gap: 0 4px; }
-.bar nav a { padding: 10px 6px; text-decoration: none; color: var(--ink-2); min-height: 44px; display: inline-flex; align-items: center; }
-.bar nav a[aria-current="page"] { color: var(--ink); box-shadow: inset 0 -2px 0 var(--ink); }
+/* brief 237: four groups, each a drawer of page links; a menu on wide screens, an open block under the bar on phones */
+.navgroup { position: relative; }
+.navgroup > summary { list-style: none; cursor: pointer; padding: 10px 10px; min-height: 44px; display: inline-flex; align-items: center; gap: 6px; color: var(--ink-2); }
+.navgroup > summary::-webkit-details-marker { display: none; }
+.navgroup > summary::after { content: ""; width: 6px; height: 6px; border: solid currentColor; border-width: 0 1.5px 1.5px 0; transform: rotate(45deg) translateY(-2px); }
+.navgroup[open] > summary::after { transform: rotate(-135deg) translateY(-2px); }
+.navgroup[open] > summary, .navgroup:hover > summary { color: var(--ink); }
+.navgroup.has-current > summary { color: var(--ink); box-shadow: inset 0 -2px 0 var(--ink); }
+.navmenu { position: absolute; top: 100%; left: 0; z-index: 20; min-width: 230px; background: var(--panel); border: 1px solid var(--rule); padding: 4px 0; box-shadow: 0 2px 6px rgba(0,0,0,.12); }
+.navmenu a { display: flex; align-items: center; padding: 8px 14px; min-height: 44px; text-decoration: none; color: var(--ink-2); }
+.navmenu a:hover { background: var(--bg); color: var(--ink); }
+.navmenu a.sub { padding-left: 30px; font-size: .92rem; min-height: 36px; }
+.navmenu a[aria-current="page"] { color: var(--ink); font-weight: 600; box-shadow: inset 3px 0 0 var(--ink); }
 button, select { font: inherit; color: var(--ink); background: var(--panel); border: 1px solid var(--rule); border-radius: 3px; min-height: 44px; min-width: 44px; padding: 0 12px; cursor: pointer; }
 button:hover { border-color: var(--ink-3); }
 button[aria-pressed="true"] { background: var(--ink); color: var(--bg); }
@@ -243,7 +265,7 @@ details.area > summary { grid-template-areas: "n l" "s l" "c l"; }
 details.area > summary::before { display: none; }
 details.area .an { grid-area: n; font-weight: 700; }
 details.area .an::before { content: "+ "; font-family: var(--f-mono); }
-details.area[open] .an::before { content: "- "; }
+details.area[open] > summary .an::before { content: "- "; }
 details.area .as { grid-area: s; color: var(--ink-2); font-size: .92rem; }
 details.area .ac { grid-area: c; color: var(--ink-3); font-size: .82rem; }
 details.area .tag.lvl { grid-area: l; align-self: start; }
@@ -445,26 +467,21 @@ ul.fixes .evl { display: block; font-size: .82rem; color: var(--ink-3); }
 
 /* phones: the page links become one row that scrolls sideways, so the first screen starts with the page */
 @media (max-width: 640px) {
-  .bar .wrap { flex-wrap: nowrap; gap: 0 8px; }
-  .bar nav { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: thin; min-width: 0; flex: 1 1 auto; }
-  .bar nav a { white-space: nowrap; }
-  .brand { margin-right: 4px; white-space: nowrap; }
+  .brand { white-space: nowrap; }
 }
 .toc { display: flex; flex-wrap: wrap; gap: 4px 10px; margin: 0 0 1.2em; color: var(--ink-3); }
 .toc a { color: var(--ink-2); }
 .chip-status { display: inline-block; border: 1px solid var(--ink-3); padding: 6px 12px; font-size: .92rem; color: var(--ink); max-width: 72ch; margin: 0 0 1em; }
 /* header (brief 50A page review): up to 1000 px the page links are one row that scrolls sideways, fading at the right
    edge as the cue; on phones that row sits under the brand and the theme button, so nothing overlaps it */
-@media (max-width: 1000px) {
-  .bar .wrap { flex-wrap: nowrap; }
-  .bar nav { flex-wrap: nowrap; overflow-x: auto; min-width: 0; flex: 1 1 auto; -webkit-mask-image: linear-gradient(to right, #000 85%, transparent); mask-image: linear-gradient(to right, #000 85%, transparent); padding-right: 22px; }
-  .bar nav a { white-space: nowrap; }
-  .bar .brand { white-space: nowrap; flex: 0 0 auto; }
-}
-@media (max-width: 640px) {
+@media (max-width: 760px) {      /* brief 237: no sideways scrolling; the brand and theme button share a row, the four groups sit under it, an open group is a block */
   .bar .wrap { flex-wrap: wrap; row-gap: 0; }
   .bar .brand { flex: 1 1 auto; }
   .bar nav { order: 3; flex: 1 0 100%; }
+  .navgroup { position: static; }
+  .navgroup > summary { padding: 10px 7px; font-size: .94rem; gap: 4px; }
+  .navmenu { position: static; box-shadow: none; border: 0; border-top: 1px solid var(--rule); min-width: 0; width: 100%; background: transparent; }
+  .navgroup[open] { flex: 1 0 100%; order: 9; }
 }
 
 /* showcase tables on phones: each row becomes a block of "header: value" lines, so no column is hidden behind a sideways
@@ -708,22 +725,34 @@ svg .hl { stroke: var(--warn); stroke-width: 0.9; opacity: .75; }
 svg .cell { fill: var(--ink); stroke: var(--rule); }
 svg text.on { fill: var(--bg); }
 svg text.wn { fill: var(--warn); }
+
+/* drawers on the long pages (brief 237, site/drawers.py): the section heading and a one-sentence teaser are the closed drawer */
+details.area.sec { margin: 0 0 8px; }
+details.area.sec > summary { grid-template-areas: "n" "s"; grid-template-columns: minmax(0, 1fr); padding: 10px 14px; }
+details.area.sec > summary h2.sech { margin: 0; font-size: 1.12rem; display: inline; }
+details.area.sec > summary .an, details.area.sec h2.sech { grid-area: n; }
+details.area.sec > summary h2.sech::before { content: "+ "; font-family: var(--f-mono); }
+details.area.sec[open] > summary h2.sech::before { content: "- "; }
+details.area.sec[open] > summary .as { display: none; }
+details.area.sec > .abody > h3:first-child { margin-top: .6em; }
+.toc span { color: var(--ink-3); }
+main#main { padding-top: 18px; }
 </style>
 </head>
 <body>
 <a class="visually-hidden" href="#main">Skip to content</a>
-<header class="bar"><div class="wrap"><a class="brand" href="index.html">FPGA Force</a><nav aria-label="Pages"><a href="why.html">Why</a><a href="agent.html">The agent</a><a class="sub" href="agent.html#harness">Harness</a><a href="story.html">How it was built</a><a href="worked-example.html">Worked example</a><a href="inspect.html">Inspect it</a><a href="how.html" aria-current="page">How it works</a><a href="verification.html">Verification</a><a href="traceability.html">Traceability</a><a href="verified.html">Verified</a><a href="flow-notes.html">Beyond the flow</a><a href="expertise.html">Expertise</a><a href="examples.html">Examples</a><a href="showcase.html">Showcase</a><a href="problems.html">Problems</a><a href="evaluation.html">Evaluation</a><a href="results.html">Results</a></nav><button id="theme" type="button" aria-label="Switch to dark theme">Dark</button></div></header>
+<header class="bar"><div class="wrap"><a class="brand" href="index.html"><svg class="mark" viewBox="0 0 64 64" width="28" height="28" aria-hidden="true" focusable="false"><rect x="4" y="12" width="30" height="40" rx="2" fill="none" stroke="currentColor" stroke-width="4"/><path d="M4 41 L11 46 L4 51" fill="none" stroke="currentColor" stroke-width="3"/><path d="M11 20 V37 M11 20 H16 M11 28 H15" fill="none" stroke="currentColor" stroke-width="3.6" stroke-linecap="square"/><path d="M22 20 V37 M22 20 H27 M22 28 H26" fill="none" stroke="currentColor" stroke-width="3.6" stroke-linecap="square"/><path d="M34 32 H50" stroke="currentColor" stroke-width="6"/><path d="M49 24 L62 32 L49 40 Z" fill="currentColor"/></svg><span>FPGA Force</span></a><nav aria-label="Pages"><details class="navgroup"><summary>What it is</summary><div class="navmenu"><a href="why.html">Why</a><a href="agent.html">The agent</a><a class="sub" href="agent.html#harness">Harness</a><a href="story.html">How it was built</a><a href="changes.html">What&#x27;s new</a></div></details><details class="navgroup has-current"><summary>How it works</summary><div class="navmenu"><a href="how.html" aria-current="page">How it works</a><a href="verification.html">Verification</a><a href="verified.html">Verified</a><a href="flow-notes.html">Beyond the flow</a><a href="expertise.html">Expertise</a><a href="inspect.html">Inspect it</a></div></details><details class="navgroup"><summary>Evidence</summary><div class="navmenu"><a href="traceability.html">Traceability</a><a href="evaluation.html">Evaluation</a><a href="results.html">Results</a><a href="problems.html">Problems</a></div></details><details class="navgroup"><summary>Examples</summary><div class="navmenu"><a href="worked-example.html">Worked example</a><a href="examples.html">Examples</a><a href="showcase.html">Showcase</a></div></details></nav><button id="theme" type="button" aria-label="Switch to dark theme">Dark</button></div></header>
 <main id="main" class="wrap">
 <h1>How it works</h1>
 <p class="lede">A design moves through fixed stages, and each stage ends in a gate: a check run by code, not by the model. The model proposes; the tools judge. <a href="agent.html">The agent</a> shows the controller and the role agents that do this; a short glossary closes the page.</p>
 
-<h2>A real run, step by step</h2>
+<nav class="toc" aria-label="Sections of this page"><span>On this page:</span><a href="#a-real-run-step-by-step">A real run, step by step</a><a href="#the-stages">The stages</a><a href="#verification">Verification</a><a href="#mutation-testing">Mutation testing</a><a href="#what-the-agent-knows">What the agent knows</a><a href="#what-the-model-may-touch">What the model may touch</a><a href="#block-designs">Block designs</a><a href="#glossary">Glossary</a></nav><div class="areactl" id="areactl" hidden><button type="button" id="expand-all">Expand all</button><button type="button" id="collapse-all">Collapse all</button></div><details class="area sec" id="a-real-run-step-by-step" open><summary><h2 class="sech">A real run, step by step</h2><span class="as">Run 5 of the int8 dot-product development task (2026-11-07, claude-sonnet-5-5): 152 agent turns, 1.42 h, 6 of 6 hidden tests passed.</span></summary><div class="abody">
 <figure>
 <div class="player" id="replay" aria-label="Stage replay from a real run record"></div>
 <figcaption>Run 5 of the int8 dot-product development task (2026-11-07, <code>claude-sonnet-5-5</code>): 152 agent turns, 1.42 h, 6 of 6 hidden tests passed. Each step is one stage visit from the run record; the record keeps visit counts, not the order of work inside a repeated stage. The first run of this task passed none of its hidden tests; the <a href="examples.html">examples</a> show all five.</figcaption>
 </figure>
 
-<h2>The stages</h2>
+</div></details><details class="area sec" id="the-stages" open><summary><h2 class="sech">The stages</h2><span class="as">The stages follow AMD&#x27;s UltraFast design methodology (its guide is UG949). A failed check sends the run back to the stage that can fix it.</span></summary><div class="abody">
 <p>The stages follow AMD's UltraFast design methodology (its guide is UG949). A failed check sends the run back to the stage that can fix it.</p>
 <div class="tablewrap" tabindex="0"><table><thead><tr><th class="num">Stage</th><th>Name</th><th>What it produces</th></tr></thead><tbody>
 <tr><td class="num">0</td><td>Interview</td><td>A signed-off spec: ports, clocks, reset, latency, and each assumption with its reason. The user answers, or in an evaluation an <a href="#term-oracle">oracle</a>.</td></tr>
@@ -738,7 +767,7 @@ svg text.wn { fill: var(--warn); }
 <tr><td class="num">9</td><td>Board and debug</td><td>Program the board, test over its serial link, capture internal signals. A human approves programming every time.</td></tr>
 </tbody></table></div>
 
-<h2>Verification</h2>
+</div></details><details class="area sec" id="verification"><summary><h2 class="sech">Verification</h2><span class="as">Inside the RTL stage, verification is staged the way the open-source OpenTitan chip project stages it, with free tools in place of a paid simulator: a test plan, every spec statement traced to a test or proof, tests passing on ...</span></summary><div class="abody">
 <p>Inside the RTL stage, verification is staged the way the open-source OpenTitan chip project stages it, with free tools in place of a paid simulator: a test plan, every spec statement traced to a test or proof, tests passing on every seed, then closed coverage and a mutation score at its floor. The stage cannot end until all four hold and lint is clean. Some checks go further than Vivado does alone; <a href="flow-notes.html">Beyond the flow</a> tells those stories.</p>
 <details class="more"><summary>Details: the gates V0 to V3</summary>
 <div class="tablewrap" tabindex="0"><table><thead><tr><th>Gate</th><th>What it requires</th></tr></thead><tbody>
@@ -751,23 +780,23 @@ svg text.wn { fill: var(--warn); }
 </details>
 <p><span class="tag">Built, not yet measured</span> A second line of defence writes tests from the signed-off spec without seeing the RTL. It has been replayed offline on development tasks; whether it catches escapes on unseen tasks is a separate comparison, fixed in advance, with no result yet.</p>
 
-<h2>Mutation testing</h2>
+</div></details><details class="area sec" id="mutation-testing"><summary><h2 class="sech">Mutation testing</h2><span class="as">A bench that passes proves little unless it can fail, so mutation testing plants bugs and requires the tests to catch them.</span></summary><div class="abody">
 <p>A bench that passes proves little unless it can fail, so <a href="#term-mutation">mutation testing</a> plants bugs and requires the tests to catch them. On the hand-built reference design the first run caught 90.48% of 21 mutants. The 2 survivors were both in reset behaviour; a reset test was added, and then all 21 were caught. The first figure is the unbiased one.</p>
 
-<h2>What the agent knows</h2>
+</div></details><details class="area sec" id="what-the-agent-knows"><summary><h2 class="sech">What the agent knows</h2><span class="as">The agent loads know-how on demand from a private bank of Agent Skills (61 sections), in layers: RTL technique, AMD tool practice, the Artix-7 family and device, the Nexys A7 board, and the stage procedures.</span></summary><div class="abody">
 <p>The agent loads know-how on demand from a private bank of Agent Skills (61 sections), in layers: RTL technique, AMD tool practice, the Artix-7 family and device, the Nexys A7 board, and the stage procedures. The text stays private because it summarises AMD and Digilent documents; each layer's size and hash are public, so a scored run can prove which version it read.</p>
 <details class="more"><summary>Details: every layer, its size and its hash</summary>
 <div class="tablewrap" tabindex="0"><table><thead><tr><th>Layer</th><th class="num">Skills</th><th class="num">Skill bytes</th></tr></thead><tbody><tr><td>techniques/</td><td class="num">22</td><td class="num">92,982</td></tr><tr><td>functions/</td><td class="num">11</td><td class="num">45,956</td></tr><tr><td>bundle generic</td><td class="num">33</td><td class="num">138,938</td></tr><tr><td>vendor/ross_distilled/</td><td class="num">16</td><td class="num">66,807</td></tr><tr><td>vendor/free_simulators/</td><td class="num">4</td><td class="num">14,449</td></tr><tr><td>vendor/vivado_synthesis/</td><td class="num">5</td><td class="num">26,625</td></tr><tr><td>vendor/ross_shipped/</td><td class="num">50</td><td class="num">918,458</td></tr><tr><td>family/artix7/</td><td class="num">47</td><td class="num">241,185</td></tr><tr><td>device/xc7a100tcsg324-1/</td><td class="num">5</td><td class="num">16,295</td></tr><tr><td>board/nexys_a7_100t/</td><td class="num">13</td><td class="num">39,073</td></tr><tr><td>procedures/</td><td class="num">15</td><td class="num">58,749</td></tr><tr><td>vendor/amd_constraints/</td><td class="num">10</td><td class="num">53,387</td></tr><tr><td>vendor/amd_ip_cores/</td><td class="num">10</td><td class="num">44,128</td></tr><tr><td>vendor/amba_axi/</td><td class="num">18</td><td class="num">76,336</td></tr><tr><td>vendor/packet_processing/</td><td class="num">5</td><td class="num">22,443</td></tr><tr><td>vendor/hil_verification/</td><td class="num">4</td><td class="num">14,502</td></tr><tr><td>vendor/vhdl_design/</td><td class="num">5</td><td class="num">25,498</td></tr><tr><td>vendor/vhdl_verification/</td><td class="num">3</td><td class="num">12,576</td></tr><tr><td>vendor/assurance/</td><td class="num">5</td><td class="num">21,795</td></tr><tr><td>vendor/build_reproducibility/</td><td class="num">3</td><td class="num">11,774</td></tr><tr><td>vendor/hw_sw_codesign/</td><td class="num">6</td><td class="num">35,332</td></tr><tr><td>family/zynq7000/</td><td class="num">9</td><td class="num">27,333</td></tr><tr><td>family/zynq_ultrascale_plus/</td><td class="num">26</td><td class="num">108,053</td></tr><tr><td>device/xc7z020clg484-1/</td><td class="num">3</td><td class="num">7,062</td></tr><tr><td>device/xck26/</td><td class="num">3</td><td class="num">6,497</td></tr><tr><td>board/kr260/</td><td class="num">12</td><td class="num">30,788</td></tr><tr><td>board/zedboard/</td><td class="num">15</td><td class="num">37,036</td></tr><tr><td>board/adalm_pluto/</td><td class="num">1</td><td class="num">3,033</td></tr><tr><td>board/arty_a7_100t/</td><td class="num">1</td><td class="num">3,039</td></tr><tr><td>board/arty_a7_35t/</td><td class="num">1</td><td class="num">3,056</td></tr><tr><td>board/arty_s7_50/</td><td class="num">1</td><td class="num">3,346</td></tr><tr><td>board/aup_zu3/</td><td class="num">1</td><td class="num">5,738</td></tr><tr><td>board/basys3/</td><td class="num">1</td><td class="num">3,456</td></tr><tr><td>board/cmod_a7_35t/</td><td class="num">1</td><td class="num">3,048</td></tr><tr><td>board/cora_z7_07s/</td><td class="num">1</td><td class="num">2,950</td></tr><tr><td>board/cora_z7_10/</td><td class="num">1</td><td class="num">2,938</td></tr><tr><td>board/genesys2/</td><td class="num">1</td><td class="num">3,053</td></tr><tr><td>board/kv260/</td><td class="num">1</td><td class="num">3,398</td></tr><tr><td>board/nexys_video/</td><td class="num">1</td><td class="num">3,414</td></tr><tr><td>board/pynq_z2/</td><td class="num">1</td><td class="num">3,192</td></tr><tr><td>board/ultra96_v2/</td><td class="num">1</td><td class="num">2,798</td></tr><tr><td>board/zcu104/</td><td class="num">1</td><td class="num">3,111</td></tr><tr><td>board/zybo_z7_10/</td><td class="num">1</td><td class="num">3,056</td></tr><tr><td>board/zybo_z7_20/</td><td class="num">1</td><td class="num">2,967</td></tr><tr><td>library/</td><td class="num">0</td><td class="num">0</td></tr></tbody></table></div>
 <p class="small muted">From <code>knowledge/PACKS.md</code>. "Ross shipped" is the knowledge set of an assistant AMD publishes, kept unchanged for comparison; the distilled layer is ours.</p>
 </details>
 
-<h2>What the model may touch</h2>
+</div></details><details class="area sec" id="what-the-model-may-touch"><summary><h2 class="sech">What the model may touch</h2><span class="as">In the development runs the model ran as headless Claude Code, one call per turn, with every built-in tool off; the Deep Agents harness offers the same tools through its own loop.</span></summary><div class="abody">
 <p>In the development runs the model ran as headless Claude Code, one call per turn, with every built-in tool off; the Deep Agents harness offers the same tools through its own loop. Either way the model reaches only our MCP server, which gives each role just the tools its stage needs (lint, simulate, mutate, formal, build, gates, document search, skill loading, and files in its own directories). The board is never offered to the model: the harness programs it after a human approves. The same stages run with other models, so harness and model can be compared. Development runs here used <code>claude-sonnet-5-5</code>. They ran before the move to Vivado 2026.1; every timing, area and power figure this site shows for them is a rebuild of the run's saved design on Vivado 2026.1, and a run whose design files were not kept shows none.</p>
 
-<h2 id="block-designs">Block designs</h2>
+</div></details><details class="area sec" id="block-designs"><summary><h2 class="sech">Block designs</h2><span class="as">When a design joins several blocks on a bus, the agent writes the top level as a block design: a text file of instances, connections and an address map, which the flow validates, completes (the interconnect, clocks and resets ...</span></summary><div class="abody">
 <p>When a design joins several blocks on a bus, the agent writes the top level as a block design: a text file of instances, connections and an address map, which the flow validates, completes (the interconnect, clocks and resets, the address map) and turns into the top-level RTL. Each one has a diagram drawn from the same data. After a build the page says what was checked in the synthesised netlist: every block is present at its path in the hierarchy with the module the diagram names, and each link between blocks is a net between those instances in a synthesis that keeps the hierarchy (a link through logic, such as an inverted bit, is counted as not compared).</p>
 <ul><li><a href="blockdesign/b65a_axil_soc.html"><code>b65a_axil_soc</code></a>: A tone generator, a frequency and duty counter and a logic analyser from ip_lib, on one AXI4-Lite crossbar that the host reaches through the UART test shell. Built for the xc7a100tcsg324-1 with Vivado 2026.1.</li></ul>
-<h2 id="glossary">Glossary</h2>
+</div></details><details class="area sec" id="glossary"><summary><h2 class="sech">Glossary</h2><span class="as">A language model working in a loop: it reads, calls a tool, reads the result and decides what to do next.</span></summary><div class="abody">
 <dl class="gloss">
 <dt id="term-agent">Agent</dt><dd>A language model working in a loop: it reads, calls a tool, reads the result and decides what to do next.</dd>
 <dt id="term-langgraph">LangGraph</dt><dd>An open-source library for writing such loops as a graph of steps; here it holds the controller that runs the stages.</dd>
@@ -789,7 +818,7 @@ svg text.wn { fill: var(--warn); }
 <dt id="term-oracle">Oracle</dt><dd>A language model that plays the user in an evaluation's interview, answering only from the hidden full spec.</dd>
 </dl>
 <p class="next">Next: <a href="flow-notes.html">Beyond the flow</a> shows where Vivado run from a script does less than a careful engineer would, and what the environment adds.</p>
-
+</div></details>
 <div class="pager"><a href="inspect.html">&larr; Inspect it</a><a href="verification.html">Verification &rarr;</a></div>
 </main>
 <footer><div class="wrap"><p>Designed by Brendan Lynskey. Code and results: <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent">github.com/BrendanJamesLynskey/FPGA_Design_Agent</a> (all rights reserved; source visible for review, see LICENSE). Every number on these pages is read from a committed result file; development results are labelled as such and are not the held-out score.</p></div></footer>
@@ -815,6 +844,17 @@ svg text.wn { fill: var(--warn); }
     if (text != null) e.textContent = text;
     return e;
   }
+
+  /* header groups (brief 237): one open at a time; Escape or a click elsewhere closes it. Works without script as plain drawers. */
+  var groups = Array.prototype.slice.call(document.querySelectorAll(".bar .navgroup"));
+  groups.forEach(function (g) {
+    g.addEventListener("toggle", function () { if (g.open) groups.forEach(function (o) { if (o !== g) o.open = false; }); });
+  });
+  document.addEventListener("click", function (e) { groups.forEach(function (g) { if (g.open && !g.contains(e.target)) g.open = false; }); });
+  document.addEventListener("keydown", function (e) {
+    if (e.key !== "Escape") return;
+    groups.forEach(function (g) { if (g.open) { g.open = false; var sm = g.querySelector("summary"); if (sm) sm.focus(); } });
+  });
 
   /* theme toggle: remembered per viewer, optional */
   var tb = document.getElementById("theme");
@@ -1894,20 +1934,29 @@ svg text.wn { fill: var(--warn); }
 })();
 
 
-/* expertise drawers: expand all / collapse all (shown only with script) and a hash link opens its drawer */
+/* drawers: expand all / collapse all (shown only with script); a URL hash that points at a drawer, or at anything inside one, opens it
+   and the drawers around it (briefs 23 and 237) */
 (function () {
   var ctl = document.getElementById("areactl");
-  if (!ctl) return;
-  ctl.hidden = false;
-  var all = function () { return document.querySelectorAll("details.area"); };
-  document.getElementById("expand-all").addEventListener("click", function () { all().forEach(function (d) { d.open = true; }); });
-  document.getElementById("collapse-all").addEventListener("click", function () { all().forEach(function (d) { d.open = false; }); });
+  if (ctl) {
+    ctl.hidden = false;
+    var all = function () { return document.querySelectorAll("details.area"); };
+    document.getElementById("expand-all").addEventListener("click", function () { all().forEach(function (d) { d.open = true; }); });
+    document.getElementById("collapse-all").addEventListener("click", function () { all().forEach(function (d) { d.open = false; }); });
+  }
   function openHash() {
     var id = decodeURIComponent((location.hash || "").slice(1)), t = id && document.getElementById(id);
-    if (t && t.tagName === "DETAILS") { t.open = true; t.scrollIntoView(); }
+    if (!t) return;
+    var changed = false;
+    for (var n = t; n; n = n.parentElement) { if (n.tagName === "DETAILS" && !n.open && !n.closest(".navgroup")) { n.open = true; changed = true; } }
+    if (changed || t.tagName === "DETAILS") t.scrollIntoView();
   }
   openHash();
   window.addEventListener("hashchange", openHash);
+  document.addEventListener("click", function (e) {
+    var a = e.target.closest && e.target.closest('a[href^="#"]');
+    if (a && a.getAttribute("href") === location.hash) openHash();
+  });
 })();
 
 // brief 81: replay of a recorded counterexample: the slider hides the steps after the chosen one
