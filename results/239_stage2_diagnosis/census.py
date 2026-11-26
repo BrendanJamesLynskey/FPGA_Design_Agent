@@ -222,6 +222,51 @@ def baseline_table(out: Path) -> None:
         w.writerows(rows)
 
 
+def log_tables(out: Path) -> None:
+    """``console_logs.md``: what the gate logs of every run show, over all agent tool calls and gate runs (not only the failing gate events):
+    the Verilator warnings by rule and by where the file lives, and the design-standards rules that failed."""
+    from collections import Counter, defaultdict
+    dirs = [rd for _, _, rd in runs_213() + runs_227()]
+    lint_logs = [f for rd in dirs for f in sorted((rd / "console").glob("*_lint.log"))]
+    clean = only_supplied = own = 0
+    cnt: dict = defaultdict(set)
+    hits: Counter = Counter()
+    for f in lint_logs:
+        ws = re.findall(r"%(Warning|Error)-?([A-Z0-9_]*): (\S+?):(\d+):\d+: (.*)", f.read_text(errors="replace"))
+        if not ws:
+            clean += 1
+            continue
+        if all("/data/" in w[2] for w in ws):
+            only_supplied += 1
+        else:
+            own += 1
+        for _, rule, path, _, _ in ws:
+            kind = "supplied data/" if "/data/" in path else ("design rtl/" if "/rtl/" in path else "other")
+            k = (rule or "ERROR", kind, path.rsplit("/", 1)[-1])
+            cnt[k].add(str(f.parents[1].name))
+            hits[k] += 1
+    lines = [f"Verilator lint logs: {len(lint_logs)} logs (the gate or the Designer's `lint` tool) over {len(dirs)} runs; {clean} clean, {only_supplied} with warnings only in the supplied data/ file, {own} with a finding in the design's own files.", "",
+             "| rule | file kind | file | runs | hits |", "|---|---|---|---|---|"]
+    for k, v in sorted(cnt.items(), key=lambda kv: -len(kv[1]))[:20]:
+        lines.append(f"| {k[0]} | {k[1]} | {k[2]} | {len(v)} | {hits[k]} |")
+    std_runs: dict = defaultdict(set)
+    std_hits: Counter = Counter()
+    ex: dict = {}
+    for rd in dirs:
+        for f in sorted((rd / "console").glob("*_standards.log")):
+            for ln in f.read_text(errors="replace").splitlines():
+                m = re.match(r"FAIL\s+(STD-[A-Z]+-\d+)", ln)
+                if m:
+                    std_runs[m.group(1)].add(rd.name)
+                    std_hits[m.group(1)] += 1
+                elif ln.startswith("          ") and std_runs and m is None:
+                    pass
+    lines += ["", "Design-standards rules that failed in a `standards` log (any call):", "", "| rule | runs | hits |", "|---|---|---|"]
+    for k, v in sorted(std_runs.items(), key=lambda kv: -len(kv[1])):
+        lines.append(f"| {k} | {len(v)} | {std_hits[k]} |")
+    (out / "console_logs.md").write_text("\n".join(lines) + "\n")
+
+
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--out", default="results/239_stage2_diagnosis")
@@ -248,6 +293,7 @@ def main() -> None:
     summarise(rows, out)
     baseline_table(out)
     last_blocker(rows, out)
+    log_tables(out)
     print(len(rows), "finding rows ->", out / "census_events.csv")
 
 

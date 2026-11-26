@@ -7,7 +7,7 @@
 set -u
 D=$1; K=$2
 S=/home/brendan/Claude_sandbox/_scratch_227; O=/home/brendan/Claude_sandbox/_scratch_239; H=/home/brendan/Claude_sandbox/_handoff
-W=/home/brendan/Claude_sandbox/_worktrees/239-stage2; KB=${KB:-/home/brendan/Claude_sandbox/_worktrees/230-kb-pin}
+W=/home/brendan/Claude_sandbox/_worktrees/239-stage2; KB=${KB:-/home/brendan/Claude_sandbox/_worktrees/kb-prompts-pin}
 TAG=b239_${D}_r${K}; L=$O/logs/$TAG.log; mkdir -p $O/logs
 [ -e $O/STOP ] && { echo "STOP flag set" | tee -a $L; exit 3; }
 ver=$($S/bin/claude --version | cut -d' ' -f1)

@@ -35,3 +35,6 @@ Do the fixes of this brief, taken together, raise the share of the pilot designs
 - The earlier runs came from different code (briefs 213 and 227 ran from 04:26 to about 20:00 on 26 November; brief 231's lint policy landed at 09:09) and a different knowledge-bank checkout for 227 (a skill added); the re-run is on one tree and the pinned bank, so the comparison is before and after, not a controlled A/B.
 - The fixes land together and cannot be separated by this measure. n = 9, one model and one harness; the models' own variation between repeats is large (earlier repeats of the same cell differed from a pass to a stop at stage 1).
 - The independent bench is a model and shares the model family; its verdict is not ground truth. There is still no board check of built behaviour.
+
+## Note 2026-11-26 23:30 GMT
+7 cells (p3 r1, p1 r2, p2 r2, p3 r2, p1 r3, p2 r3, p3 r3) were re-run after an environment fault (the shared prompt checkout was deleted at about 23:26, so they ended with PromptUnavailable after 0 to 105 s), not a design result. Only p1 r1 and p2 r1 were valid in the first pass. The re-run uses the stable pinned checkout `_worktrees/kb-prompts-pin` (same commit 5e2eab87) and the same flags and code; the failed attempts' logs are kept as `*.attempt1_env_fault.log` in the scratch log folder.
