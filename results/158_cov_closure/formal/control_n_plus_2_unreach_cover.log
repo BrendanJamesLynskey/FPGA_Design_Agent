@@ -1,0 +1,41 @@
+[/tmp/claude-1000/w158/ctl/o_unreach_cover] Removing directory '/tmp/claude-1000/w158/ctl/o_unreach_cover'.
+[/tmp/claude-1000/w158/ctl/o_unreach_cover] engine_0: smtbmc boolector
+[/tmp/claude-1000/w158/ctl/o_unreach_cover] base: starting process "cd /tmp/claude-1000/w158/ctl/o_unreach_cover/src; yosys -ql ../model/design.log ../model/design.ys"
+[/tmp/claude-1000/w158/ctl/o_unreach_cover] base: finished (returncode=0)
+[/tmp/claude-1000/w158/ctl/o_unreach_cover] prep: starting process "cd /tmp/claude-1000/w158/ctl/o_unreach_cover/model; yosys -ql design_prep.log design_prep.ys"
+[/tmp/claude-1000/w158/ctl/o_unreach_cover] prep: finished (returncode=0)
+[/tmp/claude-1000/w158/ctl/o_unreach_cover] smt2: starting process "cd /tmp/claude-1000/w158/ctl/o_unreach_cover/model; yosys -ql design_smt2.log design_smt2.ys"
+[/tmp/claude-1000/w158/ctl/o_unreach_cover] smt2: finished (returncode=0)
+[/tmp/claude-1000/w158/ctl/o_unreach_cover] engine_0: starting process "cd /tmp/claude-1000/w158/ctl/o_unreach_cover; yosys-smtbmc -s boolector --presat --unroll -c --noprogress -t 12  --append 0 --dump-vcd engine_0/trace%.vcd --dump-yw engine_0/trace%.yw --dump-vlogtb engine_0/trace%_tb.v --dump-smtc engine_0/trace%.smtc model/design_smt2.smt2"
+[/tmp/claude-1000/w158/ctl/o_unreach_cover] engine_0: ##   0:00:00  Solver: boolector
+[/tmp/claude-1000/w158/ctl/o_unreach_cover] engine_0: ##   0:00:00  Checking cover reachability in step 0..
+[/tmp/claude-1000/w158/ctl/o_unreach_cover] engine_0: ##   0:00:00  Checking cover reachability in step 1..
+[/tmp/claude-1000/w158/ctl/o_unreach_cover] engine_0: ##   0:00:00  Checking cover reachability in step 2..
+[/tmp/claude-1000/w158/ctl/o_unreach_cover] engine_0: ##   0:00:00  Checking cover reachability in step 3..
+[/tmp/claude-1000/w158/ctl/o_unreach_cover] engine_0: ##   0:00:00  Reached cover statement in step 3 at mac64_tx_fv_top: dut.u_props.UNREACH_A
+[/tmp/claude-1000/w158/ctl/o_unreach_cover] engine_0: ##   0:00:00  Writing trace to VCD file: engine_0/trace0.vcd
+[/tmp/claude-1000/w158/ctl/o_unreach_cover] engine_0: ##   0:00:00  Writing trace to Verilog testbench: engine_0/trace0_tb.v
+[/tmp/claude-1000/w158/ctl/o_unreach_cover] engine_0: ##   0:00:00  Writing trace to constraints file: engine_0/trace0.smtc
+[/tmp/claude-1000/w158/ctl/o_unreach_cover] engine_0: ##   0:00:00  Writing trace to Yosys witness file: engine_0/trace0.yw
+[/tmp/claude-1000/w158/ctl/o_unreach_cover] engine_0: ##   0:00:00  Checking cover reachability in step 3..
+[/tmp/claude-1000/w158/ctl/o_unreach_cover] engine_0: ##   0:00:00  Checking cover reachability in step 4..
+[/tmp/claude-1000/w158/ctl/o_unreach_cover] engine_0: ##   0:00:00  Checking cover reachability in step 5..
+[/tmp/claude-1000/w158/ctl/o_unreach_cover] engine_0: ##   0:00:00  Checking cover reachability in step 6..
+[/tmp/claude-1000/w158/ctl/o_unreach_cover] engine_0: ##   0:00:00  Checking cover reachability in step 7..
+[/tmp/claude-1000/w158/ctl/o_unreach_cover] engine_0: ##   0:00:00  Checking cover reachability in step 8..
+[/tmp/claude-1000/w158/ctl/o_unreach_cover] engine_0: ##   0:00:00  Checking cover reachability in step 9..
+[/tmp/claude-1000/w158/ctl/o_unreach_cover] engine_0: ##   0:00:00  Checking cover reachability in step 10..
+[/tmp/claude-1000/w158/ctl/o_unreach_cover] engine_0: ##   0:00:00  Checking cover reachability in step 11..
+[/tmp/claude-1000/w158/ctl/o_unreach_cover] engine_0: ##   0:00:00  Unreached cover statement at mac64_tx_fv_top: dut.u_props.UNREACH_B
+[/tmp/claude-1000/w158/ctl/o_unreach_cover] engine_0: ##   0:00:00  Status: failed
+[/tmp/claude-1000/w158/ctl/o_unreach_cover] engine_0: finished (returncode=1)
+[/tmp/claude-1000/w158/ctl/o_unreach_cover] engine_0: Status returned by engine: FAIL
+[/tmp/claude-1000/w158/ctl/o_unreach_cover] summary: Elapsed clock time [H:MM:SS (secs)]: 0:00:00 (0)
+[/tmp/claude-1000/w158/ctl/o_unreach_cover] summary: Elapsed process time [H:MM:SS (secs)]: 0:00:00 (0)
+[/tmp/claude-1000/w158/ctl/o_unreach_cover] summary: engine_0 (smtbmc boolector) returned FAIL
+[/tmp/claude-1000/w158/ctl/o_unreach_cover] summary: cover trace: /tmp/claude-1000/w158/ctl/o_unreach_cover/engine_0/trace0.vcd
+[/tmp/claude-1000/w158/ctl/o_unreach_cover] summary:   reached cover statement mac64_tx_fv_top.\dut.u_props.UNREACH_A at mac64_tx_ifg_props.sv:30.5-30.73 step 3
+[/tmp/claude-1000/w158/ctl/o_unreach_cover] summary: unreached cover statements:
+[/tmp/claude-1000/w158/ctl/o_unreach_cover] summary:   mac64_tx_fv_top.\dut.u_props.UNREACH_B at mac64_tx_ifg_props.sv:31.5-31.69
+[/tmp/claude-1000/w158/ctl/o_unreach_cover] DONE (FAIL, rc=2)
+The following tasks failed: ['unreach_cover']

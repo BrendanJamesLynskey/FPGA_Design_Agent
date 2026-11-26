@@ -1,0 +1,8 @@
+schema: fpga-design-agent/formal_rigour/v1
+scope: "the SystemVerilog twin of the Gray-code stepper (gray_stepper.sv: the benchmark reference file with labels and antecedent covers added, a test checks nothing else differs) with its debouncer and synchroniser, time constants shrunk (DEBOUNCE_CYCLES = 2, TICK_CYCLES = 2), the first cycle assumed to be a reset cycle. prove is k-induction at depth 8 (every depth); bmc to depth 20 is kept as the faster check the fault runs of results/156_vhdl_tools use. The shrunk constants are a limit: the proof is for that configuration, not the shipped constants."
+antecedents: {}
+sanity: [cover_gray_changed]
+depth:
+  bmc:
+    enough: false
+    why: "A bound, not a proof: depth 20 reaches a step with the shrunk constants but not every state; the same assertions are proved for all depths by the prove task (k-induction, depth 8), which is what the verdict rests on."

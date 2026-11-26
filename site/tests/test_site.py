@@ -218,7 +218,7 @@ def test_level_is_computed_from_the_items():
         if a["level"] == "measured":
             assert "measured" in kinds and a["counts"]["enforced"] == 0 and "agent" not in kinds
         if a["level"] == "knowledge":
-            assert not kinds - {"example"} and a["counts"]["enforced"] == 0
+            assert not kinds - {"example", "model"} and a["counts"]["enforced"] == 0       # model results (brief 164) never raise the level
     assert y["constraints"]["cap"]["level"] == "checked"
 
 
@@ -257,7 +257,7 @@ def test_every_drawer_lists_the_matrix_rows_for_its_area():
     x = json.loads((SITE / "data" / "expertise.json").read_text())
     y = {a["id"]: a for a in _yaml()["areas"]}
     for a in x["areas"]:
-        want = expertise.family_of(y[a["id"]], fd)          # an area with family_from (brief 185) shows named rows of another matrix area
+        want = expertise.family_of(y[a["id"]], fd)          # an area with family_from (briefs 185 and 164) shows named rows of another matrix area
         assert a["family"]["rows"] == want["rows"] and a["family"]["rows"], a["id"]
         assert a["family"]["docs"] == want["docs"], a["id"]
         for r in a["family"]["rows"]:
@@ -647,3 +647,29 @@ def test_dsp_figure_numbers_are_the_committed_measurements():
         for lay in ("wide", "narrow"):
             svg = dsp_figures.render(kind, {"title": "t", "data": dsp_figures.data(kind)["data"]}, lay)
             assert svg.startswith("<svg") and "NaN" not in svg and svg.count("<text") > 8
+
+
+# ---- brief 164: the signal-integrity drawer and its plots ---------------------------------------------------------------
+
+def test_signal_integrity_drawer_has_four_plots_and_stays_at_knowledge():
+    x = json.loads((SITE / "data" / "expertise.json").read_text())
+    a = [a for a in x["areas"] if a["id"] == "signal_integrity"][0]
+    assert a["level"] == "knowledge" and a["counts"]["enforced"] == 0 and a["cap_reason"] is None
+    assert [f["kind"] for f in a["figures"]] == ["waveforms", "sweep", "kr260", "rout"]
+    assert {e["kind"] for e in a["evidence"]} == {"model"}
+    html = (SITE / "public" / "expertise.html").read_text()
+    sec = html.split('id="signal_integrity"', 1)[1].split("</details>\n", 1)[0]
+    assert sec.count("<svg") == 8 and sec.count('class="lay-w"') == 4 and "Checked by the flow" not in sec     # a wide and a narrow drawing of each
+    for f in a["figures"]:
+        for k in ("title", "caption", "how", "wrong"):
+            assert f[k]
+
+
+def test_figures_are_drawn_from_the_committed_results():
+    import si_figures
+    w = si_figures.data("waveforms")
+    assert [p["standard"] for p in w["data"]["panels"]] == ["LVCMOS33", "LVCMOS18"] and w["vals"]["hr33_over_0"] > w["vals"]["hr33_over_47"]
+    sw = si_figures.data("sweep")["vals"]
+    assert sw["hr33_22_6"] == 0 and sw["hr33_47_6"] > 0 and sw["hp18_22_6"] > 0         # the 22 ohm rule is right for 1.8 V HP and wrong for 3.3 V HR on a long line
+    k = si_figures.data("kr260")["vals"]
+    assert k["a_xdc_t"] > k["a_assumed_t"] > 0 and k["a_optimal_t"] == 0 and k["b_optimal_r"] > 0

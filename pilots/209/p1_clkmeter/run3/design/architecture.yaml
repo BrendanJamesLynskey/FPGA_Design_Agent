@@ -1,0 +1,27 @@
+schema: fpga-design-agent/architecture/v1
+design: p1_freq_meter
+blocks:
+  - {name: freq_meter_top, function: "Thin top: IBUFDS_GTE4+BUFG_GT for the reference, BUFG for C3, power-up reset generator, jtag_bus, core, SFP tx_disable tie-off"}
+  - {name: jtag_bus, function: "Supplied BSCANE2 USER4 register bus (data/jtag_bus.sv, unchanged), clk_c3 domain"}
+  - {name: freq_meter_core, function: "Register file (ID, BUILD, SCRATCH, GATE_LEN, CTRL, STATUS, COUNT, GATE_ACTUAL, MEAS_DONE), LED0 divider, START/result handshakes"}
+  - {name: gate_ref, function: "clk_ref domain gate counter and LED1 divider"}
+  - {name: count_c3, function: "clk_c3 edge counter gated by the gate window, sampled via synchroniser"}
+interfaces:
+  - {name: reg_port, between: [jtag_bus, freq_meter_core], protocol: simple, prefix: h, module: freq_meter_core}
+  - {name: sfp_ctrl, between: [freq_meter_top, board], protocol: gpio, prefix: sfp, module: freq_meter_top}
+clock_domains:
+  - {name: clk_c3, clock: clk_c3_in, freq_mhz: 25}
+  - {name: clk_ref, clock: mgtrefclk0_p, freq_mhz: 156.25}
+reset:
+  synchronisers: [xpm_cdc_async_rst]
+crossings:
+  - {from: clk_c3, to: clk_ref, signal: start_and_gate_len, primitive: xpm_cdc_handshake, inline_in: freq_meter_core}
+  - {from: clk_ref, to: clk_c3, signal: gate_actual_and_done, primitive: xpm_cdc_handshake, inline_in: freq_meter_core}
+  - {from: clk_c3, to: clk_ref, signal: led_en, primitive: xpm_cdc_single, inline_in: freq_meter_core}
+  - {from: clk_c3, to: clk_ref, signal: gate_open_c3_count_enable, primitive: xpm_cdc_single, inline_in: freq_meter_core}
+  - {from: clk_c3, to: clk_ref, signal: rst, primitive: xpm_cdc_async_rst, inline_in: freq_meter_top}
+predicted_resources:
+  lut: [250, 800]
+  ff: [600, 1500]
+  bram_tile: 0
+  dsp: 0

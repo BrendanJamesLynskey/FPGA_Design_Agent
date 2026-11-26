@@ -1,0 +1,129 @@
+schema: fpga-design-agent/testplan/v0
+design: p2_bram_rom
+spec: spec.yaml
+model: model.py
+bench:
+  modules: [test_p2_bram_rom_bench]
+  dir: tests
+checkers: verif/checkers
+formal_dir: verif/formal
+thresholds:
+  seeds_min: 3
+  functional_bins_pct: 100
+  cover_properties_pct: 100
+  line_pct: 90
+  toggle_pct: 70
+  mutation_score_pct: 70
+waivers:
+  code_coverage: []
+  functional_bins: []
+  cover_properties: []
+requirements:
+- id: REQ-01
+  spec: ["behaviour.common_registers[0]", "registers.map.ID"]
+  tests: ["test_p2_bram_rom_bench.test_reset_values", "test_p2_bram_rom_bench.test_scratch_and_ro"]
+- id: REQ-02
+  spec: ["behaviour.common_registers[1]", "registers.map.BUILD"]
+  tests: ["test_p2_bram_rom_bench.test_random_traffic"]
+- id: REQ-03
+  spec: ["behaviour.common_registers[2]", "registers.map.SCRATCH", "behaviour.register_port[0]", "behaviour.register_port[4]"]
+  tests: ["test_p2_bram_rom_bench.test_scratch_and_ro", "test_p2_bram_rom_bench.test_random_traffic"]
+- id: REQ-24
+  spec: ["reset"]
+  tests: ["test_p2_bram_rom_bench.test_reset_values", "test_p2_bram_rom_bench.test_scratch_and_ro"]
+- id: REQ-04
+  spec: ["behaviour.rom[0]", "behaviour.rom[1]", "registers.map.ROM_DATA"]
+  tests: ["test_p2_bram_rom_bench.test_rom"]
+- id: REQ-05
+  spec: ["behaviour.ram[0]", "registers.map.MEM_ADDR"]
+  tests: ["test_p2_bram_rom_bench.test_ram_host"]
+- id: REQ-06
+  spec: ["behaviour.rom[2]", "registers.map.MEM_CTRL"]
+  tests: ["test_p2_bram_rom_bench.test_rom", "test_p2_bram_rom_bench.test_random_traffic"]
+- id: REQ-07
+  spec: ["behaviour.ram[3]"]
+  tests: ["test_p2_bram_rom_bench.test_ram_host", "test_p2_bram_rom_bench.test_random_traffic"]
+- id: REQ-08
+  spec: ["behaviour.ram[2]"]
+  tests: ["test_p2_bram_rom_bench.test_rom", "test_p2_bram_rom_bench.test_ram_host"]
+- id: REQ-09
+  spec: ["behaviour.ram[1]", "registers.map.RAM_DATA", "timing.latency.ram_read"]
+  tests: ["test_p2_bram_rom_bench.test_ram_host", "test_p2_bram_rom_bench.test_random_traffic"]
+- id: REQ-10
+  spec: ["behaviour.register_port[1]", "timing.latency.register_read", "timing.latency.register_write"]
+  tests: ["test_p2_bram_rom_bench.test_reset_values", "test_p2_bram_rom_bench.test_rom", "test_p2_bram_rom_bench.test_ram_host", "test_p2_bram_rom_bench.test_random_traffic"]
+- id: REQ-11
+  spec: ["registers.unmapped"]
+  tests: ["test_p2_bram_rom_bench.test_scratch_and_ro"]
+- id: REQ-26
+  spec: ["behaviour.register_port[2]", "behaviour.register_port[3]"]
+  tests: ["test_p2_bram_rom_bench.test_scratch_and_ro", "test_p2_bram_rom_bench.test_random_traffic"]
+- id: REQ-12
+  spec: ["behaviour.march_test[2]", "behaviour.march_test[3]", "behaviour.march_test[4]", "registers.map.MARCH_ERRS"]
+  tests: ["test_p2_bram_rom_bench.test_march_clean", "test_p2_bram_rom_bench.test_march_fault"]
+- id: REQ-13
+  spec: ["behaviour.march_test[6]", "behaviour.march_test[7]", "registers.map.MARCH_STATUS", "registers.map.MARCH_PASSES", "behaviour.leds[0]", "behaviour.leds[1]", "timing.latency.march_pass"]
+  tests: ["test_p2_bram_rom_bench.test_march_passes_count", "test_p2_bram_rom_bench.test_march_clean"]
+- id: REQ-14
+  spec: ["registers.map.MARCH_CTRL"]
+  tests: ["test_p2_bram_rom_bench.test_march_fault"]
+- id: REQ-15
+  spec: ["behaviour.march_test[9]"]
+  tests: ["test_p2_bram_rom_bench.test_march_fault"]
+- id: REQ-16
+  spec: ["behaviour.march_test[5]", "registers.map.MARCH_FIRST_ERR"]
+  tests: ["test_p2_bram_rom_bench.test_march_fault", "test_p2_bram_rom_bench.test_march_clean"]
+- id: REQ-17
+  spec: ["behaviour.march_test[8]", "behaviour.march_test[10]"]
+  tests: ["test_p2_bram_rom_bench.test_march_clean"]
+- id: REQ-18
+  spec: ["behaviour.march_test[0]"]
+  tests: ["test_p2_bram_rom_bench.test_march_clean", "test_p2_bram_rom_bench.test_march_fault"]
+- id: REQ-19
+  spec: ["behaviour.march_test[1]"]
+  tests: ["test_p2_bram_rom_bench.test_march_clean", "test_p2_bram_rom_bench.test_reset_values"]
+- id: REQ-20
+  spec: ["behaviour.sfp[0]"]
+  tests: ["test_p2_bram_rom_bench.test_reset_values", "test_p2_bram_rom_bench.test_random_traffic"]
+proof:
+- {requirement: REQ-01, method: simulation, artefact: test_p2_bram_rom_bench.test_reset_values}
+- {requirement: REQ-01, method: hardware, artefact: uart_tests}
+- {requirement: REQ-02, method: hardware, artefact: uart_tests}
+- {requirement: REQ-03, method: simulation, artefact: test_p2_bram_rom_bench.test_scratch_and_ro}
+- {requirement: REQ-03, method: hardware, artefact: uart_tests}
+- {requirement: REQ-24, method: simulation, artefact: test_p2_bram_rom_bench.test_reset_values}
+- {requirement: REQ-24, method: hardware, artefact: uart_tests}
+- {requirement: REQ-04, method: simulation, artefact: test_p2_bram_rom_bench.test_rom}
+- {requirement: REQ-04, method: hardware, artefact: uart_tests}
+- {requirement: REQ-05, method: simulation, artefact: test_p2_bram_rom_bench.test_ram_host}
+- {requirement: REQ-05, method: hardware, artefact: uart_tests}
+- {requirement: REQ-06, method: simulation, artefact: test_p2_bram_rom_bench.test_rom}
+- {requirement: REQ-07, method: simulation, artefact: test_p2_bram_rom_bench.test_ram_host}
+- {requirement: REQ-08, method: simulation, artefact: test_p2_bram_rom_bench.test_rom}
+- {requirement: REQ-09, method: simulation, artefact: test_p2_bram_rom_bench.test_ram_host}
+- {requirement: REQ-09, method: hardware, artefact: uart_tests}
+- {requirement: REQ-10, method: simulation, artefact: test_p2_bram_rom_bench.test_rom}
+- {requirement: REQ-11, method: simulation, artefact: test_p2_bram_rom_bench.test_scratch_and_ro}
+- {requirement: REQ-26, method: simulation, artefact: test_p2_bram_rom_bench.test_scratch_and_ro}
+- {requirement: REQ-12, method: simulation, artefact: test_p2_bram_rom_bench.test_march_clean}
+- {requirement: REQ-12, method: hardware, artefact: uart_tests}
+- {requirement: REQ-13, method: simulation, artefact: test_p2_bram_rom_bench.test_march_passes_count}
+- {requirement: REQ-13, method: hardware, artefact: uart_tests}
+- {requirement: REQ-14, method: simulation, artefact: test_p2_bram_rom_bench.test_march_fault}
+- {requirement: REQ-14, method: hardware, artefact: uart_tests}
+- {requirement: REQ-15, method: simulation, artefact: test_p2_bram_rom_bench.test_march_fault}
+- {requirement: REQ-16, method: simulation, artefact: test_p2_bram_rom_bench.test_march_fault}
+- {requirement: REQ-17, method: simulation, artefact: test_p2_bram_rom_bench.test_march_clean}
+- {requirement: REQ-17, method: hardware, artefact: uart_tests}
+- {requirement: REQ-18, method: simulation, artefact: test_p2_bram_rom_bench.test_march_clean}
+- {requirement: REQ-19, method: simulation, artefact: test_p2_bram_rom_bench.test_march_clean}
+- {requirement: REQ-20, method: simulation, artefact: test_p2_bram_rom_bench.test_reset_values}
+- {requirement: REQ-20, method: hardware, artefact: uart_tests}
+- {requirement: REQ-21, method: analysis, artefact: "post_synth:post_synth_resources_in_range"}
+- {requirement: REQ-22, method: analysis, artefact: "post_route:setup"}
+- {requirement: REQ-23, method: analysis, artefact: "post_synth:post_synth_resources_in_range"}
+replan:
+- {requirement: REQ-06, method: formal, replaced_by: simulation, artefact: test_p2_bram_rom_bench.test_rom, why: "SymbiYosys is not installed, the autoincrement is swept over all 1024 addresses with wrap in simulation."}
+- {requirement: REQ-07, method: formal, replaced_by: simulation, artefact: test_p2_bram_rom_bench.test_ram_host, why: "SymbiYosys is not installed, RAM autoincrement and wrap are checked in simulation."}
+- {requirement: REQ-10, method: formal, replaced_by: simulation, artefact: test_p2_bram_rom_bench.test_random_traffic, why: "SymbiYosys is not installed, read latency is checked on every read of the random test."}
+- {requirement: REQ-20, method: formal, replaced_by: simulation, artefact: test_p2_bram_rom_bench.test_random_traffic, why: "SymbiYosys is not installed, the constant output is sampled throughout the random traffic."}

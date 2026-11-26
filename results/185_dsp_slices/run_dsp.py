@@ -4,6 +4,7 @@
     python3 results/185_dsp_slices/run_dsp.py list  [--part a7|k26|vu2p] [--group mul|wide|dot|feat]
     python3 results/185_dsp_slices/run_dsp.py run   --part a7 --group mul        # takes a heavy slot (prefix 185), one Vivado session
     python3 results/185_dsp_slices/run_dsp.py parse [--part ...]                 # rebuild data/<part>.json from the run directories
+    python3 results/185_dsp_slices/run_dsp.py recompute --part k26               # re-derive Fmax in data/<part>.json from the stored setup / minimum-period figures (brief 199)
 
 Parts: a7 = xc7a100tcsg324-1 (DSP48E1), k26 = xck26-sfvc784-2LV-c (DSP48E2), vu2p = xcvu2p-fsvj2104-3-e (DSP48E2, only if the licence allows).
 Each point is synthesised, placed and routed out of context at the part's target clock (one thread). WNS gives Fmax = 1000 / (clock - WNS),
@@ -38,6 +39,10 @@ PARTS = {  # key: (part, target clock ns, wide-port limb width LB, native A x B 
     "k26": ("xck26-sfvc784-2LV-c", 1.0, 26, (27, 18)),
     "vu2p": ("xcvu2p-fsvj2104-3-e", 0.9, 26, (27, 18)),
 }
+# Brief 199: the clock-buffer minimum period Vivado checks as soon as the clock goes through a BUFG (measured, results/199_dsp_fmax: a7 BUFG/I 2.155 ns,
+# k26 BUFGCE/I 1.379 ns = DS925 Table 84 BUFG FMAX of 725 MHz, -2 at 0.72 V). The out-of-context wrappers have no clock buffer, so their own
+# reports never show it; a design clocked in a real system cannot run faster. None = not measured (vu2p).
+BUF_MIN_PERIOD_NS = {"a7": 2.155, "k26": 1.379, "vu2p": None}
 PEAK_G = int(os.environ.get("DSP185_PEAK_G", "4"))
 PREFIX = "185"
 SRC = {"mul": ["dsp_mul_pipe.sv", "dsp_mul_pipe_ooc.sv"],
@@ -47,6 +52,36 @@ SRC = {"mul": ["dsp_mul_pipe.sv", "dsp_mul_pipe_ooc.sv"],
        "simdpat": ["dsp_simd_pat.sv", "dsp_simd_pat_ooc.sv"]}
 TOP = {"mul": "dsp_mul_pipe_ooc", "wide": "dsp_wide_mul_ooc", "dot": "dsp_dot_ooc", "preadd": "dsp_preadd_ooc", "simdpat": "dsp_simd_pat_ooc"}
 GROUPS = {"mul": ["mul"], "wide": ["wide"], "dot": ["dot"], "feat": ["preadd", "simdpat"]}
+
+
+def fmax_limits(setup_mhz, min_period_mhz, cell, buf_ns):
+    """Fmax = min(setup-derived, 1000 / slice minimum period, 1000 / clock-buffer minimum period) and which one limited (brief 199)."""
+    buf_mhz = round(1000.0 / buf_ns, 1) if buf_ns else None
+    cand = [(v, w) for v, w in ((setup_mhz, "setup slack at the target clock"), (min_period_mhz, f"minimum period of {cell}"),
+                                (buf_mhz, "clock-buffer minimum period (BUFG)")) if v]
+    if not cand:
+        return None, None, buf_mhz
+    v, w = cand[0]
+    for v2, w2 in cand[1:]:
+        if v2 < v - 0.5:       # a limit within 0.5 MHz of an earlier one is the same limit (a7: slice 2.154 ns, BUFG 2.155 ns); the earlier is named
+            v, w = v2, w2
+    return round(v, 1), w, buf_mhz
+
+
+def recompute(pk: str) -> None:
+    """Re-derive fmax_mhz / fmax_bound of data/<pk>.json from the stored setup and minimum-period figures, no Vivado."""
+    f = HERE / "data" / f"{pk}.json"
+    d = json.loads(f.read_text())
+    for r in d["points"]:
+        if r.get("status") != "ok":
+            continue
+        r["fmax_mhz"], r["fmax_bound"], r["fmax_clock_buffer_mhz"] = fmax_limits(r.get("fmax_setup_mhz"), r.get("fmax_min_period_mhz"),
+                                                                                  r.get("min_period_cell"), BUF_MIN_PERIOD_NS[pk])
+    d["flow"] = d["flow"].replace("Fmax = min(1000 / (clock_ns - WNS), 1000 / the largest 'Min Period' required in the timing summary)",
+                                  "Fmax = min(1000 / (clock_ns - WNS), 1000 / the largest 'Min Period' required in the timing summary, 1000 / the BUFG minimum period measured in results/199_dsp_fmax)") if "BUFG minimum" not in d["flow"] else d["flow"]
+    d["brief_199"] = "fmax_mhz now also capped by the clock-buffer minimum period (BUF_MIN_PERIOD_NS); fmax_setup_mhz and fmax_min_period_mhz are unchanged"
+    f.write_text(json.dumps(d, indent=1) + "\n")
+    print("recomputed", f.relative_to(ROOT))
 
 
 def points(kind: str, pk: str) -> list[dict]:
@@ -238,10 +273,8 @@ def parse(pk: str, group: str | None = None) -> None:
                 r["min_period_cell"] = max(mp, key=lambda x: x[1])[0] if mp else None
                 r["fmax_ipchar_mhz"] = r.get("fmax_mhz")
                 r["fmax_min_period_mhz"] = round(1000.0 / r["min_period_required_ns"], 1) if r["min_period_required_ns"] else None
-                cand = [x for x in (r.get("fmax_setup_mhz"), r["fmax_min_period_mhz"]) if x]
-                r["fmax_mhz"] = round(min(cand), 1) if cand else None
-                r["fmax_bound"] = (f"minimum period of {r['min_period_cell']}" if r["fmax_min_period_mhz"] and r["fmax_mhz"] == r["fmax_min_period_mhz"]
-                                   else "setup slack at the target clock")
+                r["fmax_mhz"], r["fmax_bound"], r["fmax_clock_buffer_mhz"] = fmax_limits(r.get("fmax_setup_mhz"), r["fmax_min_period_mhz"],
+                                                                                          r["min_period_cell"], BUF_MIN_PERIOD_NS[pk])
                 r["dsp_cells"] = dsp_cells(wd)
                 r["methodology_dsp"] = methodology_dsp(wd)
                 for k in ("power_w",):
@@ -271,7 +304,7 @@ def parse(pk: str, group: str | None = None) -> None:
            "date": datetime.date.today().isoformat(), "brief": 185,
            "flow": "out-of-context synth_design, opt_design, place_design, route_design; one thread; clock on port clk only; kept (DONT_TOUCH) registers on "
                    "every port of the wrapper, so the timed path is register to register through the module under test; I/O paths unconstrained; "
-                   "Fmax = min(1000 / (clock_ns - WNS), 1000 / the largest 'Min Period' required in the timing summary) after routing, one run at that clock (an estimate); a setup-limited Fmax above the slice's own minimum period is not reachable",
+                   "Fmax = min(1000 / (clock_ns - WNS), 1000 / the largest 'Min Period' required in the timing summary, 1000 / the BUFG minimum period measured in results/199_dsp_fmax) after routing, one run at that clock (an estimate); a setup-limited Fmax above the slice's own minimum period is not reachable",
            "points": sorted(merged.values(), key=lambda r: r["id"])}
     f.write_text(json.dumps(out, indent=1) + "\n")
     print("wrote", f.relative_to(ROOT), len(out["points"]), "points")
@@ -279,7 +312,7 @@ def parse(pk: str, group: str | None = None) -> None:
 
 def main() -> int:
     ap = argparse.ArgumentParser()
-    ap.add_argument("cmd", choices=["list", "run", "parse"])
+    ap.add_argument("cmd", choices=["list", "run", "parse", "recompute"])
     ap.add_argument("--part", default="a7")
     ap.add_argument("--group", default="")
     a = ap.parse_args()
@@ -287,6 +320,9 @@ def main() -> int:
         for g in ([a.group] if a.group else GROUPS):
             for j in jobs(a.part, g):
                 print(a.part, g, j["id"], "latency", j["latency"])
+        return 0
+    if a.cmd == "recompute":
+        recompute(a.part)
         return 0
     if a.cmd == "parse":
         parse(a.part, a.group or None)

@@ -9,13 +9,13 @@ pins:
       designs/b96_kr260_10g/rtl/mac64_tx.sv: 0cbc07b0268f1c0d3e4c916808bb87930fc6c17d3c60eba2cc90e17ad945246a
       designs/b96_kr260_10g/rtl/pcs_rx.sv: 161c35209b39e014a62c3f4624ea52b99ef3316abc7250a7f5b132e19a651c0a
       designs/b96_kr260_10g/rtl/pcs_tx.sv: e0e68141d910f428c25b37d8c8cc1c73ad0bb6c79fe6dd8d69307b9c430dc45d
-    evidence: results/146_verilator_cov/coverage_summary.json
-    evidence_sha256: 460127761ad002c71baa1f98d9a3e25844ae0656a292e4e43ebc8cd77d72a098
+    evidence: results/158_cov_closure/coverage_summary.json
+    evidence_sha256: eea4c0c62a577a6c86b0b420eb4c75fe3d21d6ec0864ff489d463293fdf0036b
   V-COV-FUNC:
     checks:
       designs/b96_kr260_10g/verif/pyuvm/pcs_mac_pyuvm/cov.py: 3eb7e24ee7cfd616026cd1bc9ab3dc438993312081f7b0b3210bafc6a3394c2c
-    evidence: results/146_verilator_cov/summary.txt
-    evidence_sha256: fa4f87f7f5071393657ebeccb7291c1fd91b5cde706882210e76ba1b14bd1205
+    evidence: results/158_cov_closure/summary.txt
+    evidence_sha256: 8d8f465450e39750342979fbed9db86da609bb73370f262e80f62889672f40d4
   V-FORMAL-EQY-DEFAULT:
     checks:
       designs/b96_kr260_10g/rtl/b96_core.sv: b5347c5c94e15bae83c6697ce7c4981428b91de33e12a277cd69afd55eb7b3ac
@@ -23,27 +23,19 @@ pins:
       designs/b96_kr260_10g/rtl/rx_path_legacy.sv: 4c9412a3ce8de3b3ee966add7b5b293e4c9b968a4ce2f1e063f62d537a24573f
     evidence: results/b96c/eqy_default/result_default.txt
     evidence_sha256: 0144f4bfb627e468c863b02826a9f80c1d82f8e0ca142c56d2d7ba6b24c90280
-  V-FORMAL-PROGRESS-PDR:
+  V-FORMAL-MAC-IFG:
     checks:
-      designs/b96_kr260_10g/rtl/rate_match_gp.sv: 09ba730191a05f348c4b512e0203fad604872ef66608f925caab1c2c600c5653
-      designs/b96_kr260_10g/verif/formal/rm_gp_props.sv: 48fa69581e3bc6adfc7f2ef3b4bb70a7b5cd144ee051e69b5779441dbdcad73b
-    evidence: results/191_trading_variants/formal_rm_gp_pdr.json
-    evidence_sha256: 3b7eabad0f6f8198e1a8d31eeb45a8b575c62dc82c278f8f90e0f890b1093e51
+      designs/b96_kr260_10g/rtl/mac64_tx.sv: 0cbc07b0268f1c0d3e4c916808bb87930fc6c17d3c60eba2cc90e17ad945246a
+      designs/b96_kr260_10g/verif/formal/mac64_tx_ifg.sby: 2f42d23a7fc2500a0d150ad7e8d75b214d6a0c0dcf5b8ebd89c8d78fa5329bfc
+      designs/b96_kr260_10g/verif/formal/mac64_tx_ifg_props.sv: 3f9761b4b9598b1e1169e97c84b0f0600924c342fca4e5749ba0c3f4a3063e23
+    evidence: results/116_traceability/b96_kr260_10g/pytest_junit.xml
+    evidence_sha256: b22b0437a53cef4b05d688b32eaaddb2b266a3632e6702c1b7688911c63f5efb
   V-HW-BYPASS:
     checks:
-      designs/b58a_trigger/rtl/jtag_bus.sv: 5a6042e567c4e7f2ca34bb01810459650f56f1bb3850434b427f2e4e6edd40b1
-      designs/b96_kr260_10g/design.xdc: 4dec8c5ba8f6dccc6273f45d40a7d95a6668f5fe09350c0a0d80cc6c07ea1118
-      designs/b96_kr260_10g/ip/amd_ip_bypass.tcl: 2b44c98771bbb25bbb1fcd35dcd0e72a44360a8ef81a6887391271537c0bfef9
-      designs/b96_kr260_10g/rm_gp_bypass/build.yaml: 5c06f36c3a76906388b8ad18844ae5ad3f7e51572f99a6264dbeb80e367eb184
-      designs/b96_kr260_10g/rm_gp_bypass/rtl/b96_core.sv: 82d6c4423879c993086ebb0e937cab87fc484486f4a418ad57604d2cd521ecb4
-      designs/b96_kr260_10g/rm_gp_bypass/rtl/gt_bp_ctl.sv: 71963d3f2f143fd56755e6eb8ff536f892ba05c51d8e4e365545ffc75717c328
-      designs/b96_kr260_10g/rm_gp_bypass/rtl/gt_bp_gate.sv: 5e384b6757a9df15c64934aba8fc3f3825cbd30202ef6dbaa743074b6f2ae0bf
       designs/b96_kr260_10g/rtl/b96_core.sv: bc8ac81d24ec3fab22a049bbd2076fc19dec8576b7b6c27a5b90c58e56fc5dd9
       designs/b96_kr260_10g/rtl/b96_pkg.sv: ac2ee00c42c8be41a66dae4c04b565c55ed01910aa4c8f12ea7919adaeb77e7c
-      designs/b96_kr260_10g/rtl/es_ctrl.sv: 671362a1c02eff42f9dc8af2c6919b854a62b3a93e7702d65ed7f6bf278e8e3e
       designs/b96_kr260_10g/rtl/frame_src.sv: a745598f6ad7460641a6fcd41a7505fca5d97d6bf2e46389e476201f772f86c0
       designs/b96_kr260_10g/rtl/hs_vec.sv: e0fc43a9b50c1f4dfb2dd1d6576774ebfc4bce1d921d923a21d3beb2794f11b1
-      designs/b96_kr260_10g/rtl/kr260_10g_top.sv: 3d4ca01e5aeee041094f783747a4ce3202fb8cadb42b53d67128ad6be3d35f68
       designs/b96_kr260_10g/rtl/mac64_rx.sv: 35a0ed74f5449979bdbbfa0c57d66e8c8ce127f6132c53690212653a5a97ee8c
       designs/b96_kr260_10g/rtl/mac64_tx.sv: 0cbc07b0268f1c0d3e4c916808bb87930fc6c17d3c60eba2cc90e17ad945246a
       designs/b96_kr260_10g/rtl/pcs_rx.sv: 161c35209b39e014a62c3f4624ea52b99ef3316abc7250a7f5b132e19a651c0a
@@ -64,40 +56,16 @@ pins:
     evidence_sha256: a4c117e7963373eaa30ae81e1c25a90f9ece25f968145dc14bbbc117c22d0b65
   V-HW-LASER:
     checks:
-      designs/b58a_trigger/rtl/jtag_bus.sv: 5a6042e567c4e7f2ca34bb01810459650f56f1bb3850434b427f2e4e6edd40b1
-      designs/b96_kr260_10g/design.xdc: 4dec8c5ba8f6dccc6273f45d40a7d95a6668f5fe09350c0a0d80cc6c07ea1118
-      designs/b96_kr260_10g/ip/amd_ip.tcl: bcd2156cc8a8b7febc34c4313df572e38c0baba76eb28dbf56c99b3d6231ae6d
-      designs/b96_kr260_10g/rm_gp/build.yaml: 1815da81b314bdd5ae63494d1584c03d67383cea7d8037f06efd4b3758985827
       designs/b96_kr260_10g/rtl/b96_core.sv: bc8ac81d24ec3fab22a049bbd2076fc19dec8576b7b6c27a5b90c58e56fc5dd9
-      designs/b96_kr260_10g/rtl/b96_pkg.sv: ac2ee00c42c8be41a66dae4c04b565c55ed01910aa4c8f12ea7919adaeb77e7c
-      designs/b96_kr260_10g/rtl/es_ctrl.sv: 671362a1c02eff42f9dc8af2c6919b854a62b3a93e7702d65ed7f6bf278e8e3e
-      designs/b96_kr260_10g/rtl/frame_src.sv: a745598f6ad7460641a6fcd41a7505fca5d97d6bf2e46389e476201f772f86c0
-      designs/b96_kr260_10g/rtl/hs_vec.sv: e0fc43a9b50c1f4dfb2dd1d6576774ebfc4bce1d921d923a21d3beb2794f11b1
       designs/b96_kr260_10g/rtl/kr260_10g_top.sv: 3d4ca01e5aeee041094f783747a4ce3202fb8cadb42b53d67128ad6be3d35f68
-      designs/b96_kr260_10g/rtl/mac64_rx.sv: 35a0ed74f5449979bdbbfa0c57d66e8c8ce127f6132c53690212653a5a97ee8c
-      designs/b96_kr260_10g/rtl/mac64_tx.sv: 0cbc07b0268f1c0d3e4c916808bb87930fc6c17d3c60eba2cc90e17ad945246a
-      designs/b96_kr260_10g/rtl/pcs_rx.sv: 161c35209b39e014a62c3f4624ea52b99ef3316abc7250a7f5b132e19a651c0a
-      designs/b96_kr260_10g/rtl/pcs_tx.sv: e0e68141d910f428c25b37d8c8cc1c73ad0bb6c79fe6dd8d69307b9c430dc45d
-      designs/b96_kr260_10g/rtl/rate_match.sv: f16fa46d1d7c045a8aecb41c20ba42bc120f7b78807363fa6464cb7a48a79686
-      designs/b96_kr260_10g/rtl/rate_match_gp.sv: 09ba730191a05f348c4b512e0203fad604872ef66608f925caab1c2c600c5653
-      designs/b96_kr260_10g/rtl/rx_path.sv: 926b9f9901221444fd74bffa5ba7e556d2c3603bc4394f3e382a58e6ec19e539
-      designs/b96_kr260_10g/rtl/rx_path_legacy.sv: 4c9412a3ce8de3b3ee966add7b5b293e4c9b968a4ce2f1e063f62d537a24573f
-      designs/b96_kr260_10g/rtl/trade64.sv: 1999e01a3728a4834f701c66dcb0ba68004c70a8eee5b0045a6bc046fa256787
-      designs/b96_kr260_10g/rtl/tx_path.sv: 91039813b51cc71fadef8fe342b8e1535eea6c40d996604b95697fa5b577d0d8
     evidence: results/b96e/hw/20261119_231251/rm_gp/stage3.json
     evidence_sha256: 23f45435ee27d90cf456cf5003499c8503e6ce80f08e1ac72a9f0589ff40bb2a
   V-HW-LAT-D-96E:
     checks:
-      designs/b58a_trigger/rtl/jtag_bus.sv: 5a6042e567c4e7f2ca34bb01810459650f56f1bb3850434b427f2e4e6edd40b1
-      designs/b96_kr260_10g/design.xdc: 4dec8c5ba8f6dccc6273f45d40a7d95a6668f5fe09350c0a0d80cc6c07ea1118
-      designs/b96_kr260_10g/ip/amd_ip.tcl: bcd2156cc8a8b7febc34c4313df572e38c0baba76eb28dbf56c99b3d6231ae6d
-      designs/b96_kr260_10g/rm_gp/build.yaml: 1815da81b314bdd5ae63494d1584c03d67383cea7d8037f06efd4b3758985827
       designs/b96_kr260_10g/rtl/b96_core.sv: bc8ac81d24ec3fab22a049bbd2076fc19dec8576b7b6c27a5b90c58e56fc5dd9
       designs/b96_kr260_10g/rtl/b96_pkg.sv: ac2ee00c42c8be41a66dae4c04b565c55ed01910aa4c8f12ea7919adaeb77e7c
-      designs/b96_kr260_10g/rtl/es_ctrl.sv: 671362a1c02eff42f9dc8af2c6919b854a62b3a93e7702d65ed7f6bf278e8e3e
       designs/b96_kr260_10g/rtl/frame_src.sv: a745598f6ad7460641a6fcd41a7505fca5d97d6bf2e46389e476201f772f86c0
       designs/b96_kr260_10g/rtl/hs_vec.sv: e0fc43a9b50c1f4dfb2dd1d6576774ebfc4bce1d921d923a21d3beb2794f11b1
-      designs/b96_kr260_10g/rtl/kr260_10g_top.sv: 3d4ca01e5aeee041094f783747a4ce3202fb8cadb42b53d67128ad6be3d35f68
       designs/b96_kr260_10g/rtl/mac64_rx.sv: 35a0ed74f5449979bdbbfa0c57d66e8c8ce127f6132c53690212653a5a97ee8c
       designs/b96_kr260_10g/rtl/mac64_tx.sv: 0cbc07b0268f1c0d3e4c916808bb87930fc6c17d3c60eba2cc90e17ad945246a
       designs/b96_kr260_10g/rtl/pcs_rx.sv: 161c35209b39e014a62c3f4624ea52b99ef3316abc7250a7f5b132e19a651c0a
@@ -112,16 +80,10 @@ pins:
     evidence_sha256: 23f45435ee27d90cf456cf5003499c8503e6ce80f08e1ac72a9f0589ff40bb2a
   V-HW-LAT-E-96E:
     checks:
-      designs/b58a_trigger/rtl/jtag_bus.sv: 5a6042e567c4e7f2ca34bb01810459650f56f1bb3850434b427f2e4e6edd40b1
-      designs/b96_kr260_10g/design.xdc: 4dec8c5ba8f6dccc6273f45d40a7d95a6668f5fe09350c0a0d80cc6c07ea1118
-      designs/b96_kr260_10g/ip/amd_ip.tcl: bcd2156cc8a8b7febc34c4313df572e38c0baba76eb28dbf56c99b3d6231ae6d
-      designs/b96_kr260_10g/rm_gp/build.yaml: 1815da81b314bdd5ae63494d1584c03d67383cea7d8037f06efd4b3758985827
       designs/b96_kr260_10g/rtl/b96_core.sv: bc8ac81d24ec3fab22a049bbd2076fc19dec8576b7b6c27a5b90c58e56fc5dd9
       designs/b96_kr260_10g/rtl/b96_pkg.sv: ac2ee00c42c8be41a66dae4c04b565c55ed01910aa4c8f12ea7919adaeb77e7c
-      designs/b96_kr260_10g/rtl/es_ctrl.sv: 671362a1c02eff42f9dc8af2c6919b854a62b3a93e7702d65ed7f6bf278e8e3e
       designs/b96_kr260_10g/rtl/frame_src.sv: a745598f6ad7460641a6fcd41a7505fca5d97d6bf2e46389e476201f772f86c0
       designs/b96_kr260_10g/rtl/hs_vec.sv: e0fc43a9b50c1f4dfb2dd1d6576774ebfc4bce1d921d923a21d3beb2794f11b1
-      designs/b96_kr260_10g/rtl/kr260_10g_top.sv: 3d4ca01e5aeee041094f783747a4ce3202fb8cadb42b53d67128ad6be3d35f68
       designs/b96_kr260_10g/rtl/mac64_rx.sv: 35a0ed74f5449979bdbbfa0c57d66e8c8ce127f6132c53690212653a5a97ee8c
       designs/b96_kr260_10g/rtl/mac64_tx.sv: 0cbc07b0268f1c0d3e4c916808bb87930fc6c17d3c60eba2cc90e17ad945246a
       designs/b96_kr260_10g/rtl/pcs_rx.sv: 161c35209b39e014a62c3f4624ea52b99ef3316abc7250a7f5b132e19a651c0a
@@ -154,16 +116,10 @@ pins:
     evidence_sha256: e77343e6c99c90b667c0d3036d758fb55d8347b15801800474e82794d451ebe7
   V-HW-LAT-L-96E:
     checks:
-      designs/b58a_trigger/rtl/jtag_bus.sv: 5a6042e567c4e7f2ca34bb01810459650f56f1bb3850434b427f2e4e6edd40b1
-      designs/b96_kr260_10g/design.xdc: 4dec8c5ba8f6dccc6273f45d40a7d95a6668f5fe09350c0a0d80cc6c07ea1118
-      designs/b96_kr260_10g/ip/amd_ip.tcl: bcd2156cc8a8b7febc34c4313df572e38c0baba76eb28dbf56c99b3d6231ae6d
-      designs/b96_kr260_10g/rm_gp/build.yaml: 1815da81b314bdd5ae63494d1584c03d67383cea7d8037f06efd4b3758985827
       designs/b96_kr260_10g/rtl/b96_core.sv: bc8ac81d24ec3fab22a049bbd2076fc19dec8576b7b6c27a5b90c58e56fc5dd9
       designs/b96_kr260_10g/rtl/b96_pkg.sv: ac2ee00c42c8be41a66dae4c04b565c55ed01910aa4c8f12ea7919adaeb77e7c
-      designs/b96_kr260_10g/rtl/es_ctrl.sv: 671362a1c02eff42f9dc8af2c6919b854a62b3a93e7702d65ed7f6bf278e8e3e
       designs/b96_kr260_10g/rtl/frame_src.sv: a745598f6ad7460641a6fcd41a7505fca5d97d6bf2e46389e476201f772f86c0
       designs/b96_kr260_10g/rtl/hs_vec.sv: e0fc43a9b50c1f4dfb2dd1d6576774ebfc4bce1d921d923a21d3beb2794f11b1
-      designs/b96_kr260_10g/rtl/kr260_10g_top.sv: 3d4ca01e5aeee041094f783747a4ce3202fb8cadb42b53d67128ad6be3d35f68
       designs/b96_kr260_10g/rtl/mac64_rx.sv: 35a0ed74f5449979bdbbfa0c57d66e8c8ce127f6132c53690212653a5a97ee8c
       designs/b96_kr260_10g/rtl/mac64_tx.sv: 0cbc07b0268f1c0d3e4c916808bb87930fc6c17d3c60eba2cc90e17ad945246a
       designs/b96_kr260_10g/rtl/pcs_rx.sv: 161c35209b39e014a62c3f4624ea52b99ef3316abc7250a7f5b132e19a651c0a
@@ -203,16 +159,10 @@ pins:
     evidence_sha256: 269183b66c18343ad18679a8df240526870c45af74a0fcea32a7c3a1a1a374e3
   V-HW-RESTARTS-96E:
     checks:
-      designs/b58a_trigger/rtl/jtag_bus.sv: 5a6042e567c4e7f2ca34bb01810459650f56f1bb3850434b427f2e4e6edd40b1
-      designs/b96_kr260_10g/design.xdc: 4dec8c5ba8f6dccc6273f45d40a7d95a6668f5fe09350c0a0d80cc6c07ea1118
-      designs/b96_kr260_10g/ip/amd_ip.tcl: bcd2156cc8a8b7febc34c4313df572e38c0baba76eb28dbf56c99b3d6231ae6d
-      designs/b96_kr260_10g/rm_gp/build.yaml: 1815da81b314bdd5ae63494d1584c03d67383cea7d8037f06efd4b3758985827
       designs/b96_kr260_10g/rtl/b96_core.sv: bc8ac81d24ec3fab22a049bbd2076fc19dec8576b7b6c27a5b90c58e56fc5dd9
       designs/b96_kr260_10g/rtl/b96_pkg.sv: ac2ee00c42c8be41a66dae4c04b565c55ed01910aa4c8f12ea7919adaeb77e7c
-      designs/b96_kr260_10g/rtl/es_ctrl.sv: 671362a1c02eff42f9dc8af2c6919b854a62b3a93e7702d65ed7f6bf278e8e3e
       designs/b96_kr260_10g/rtl/frame_src.sv: a745598f6ad7460641a6fcd41a7505fca5d97d6bf2e46389e476201f772f86c0
       designs/b96_kr260_10g/rtl/hs_vec.sv: e0fc43a9b50c1f4dfb2dd1d6576774ebfc4bce1d921d923a21d3beb2794f11b1
-      designs/b96_kr260_10g/rtl/kr260_10g_top.sv: 3d4ca01e5aeee041094f783747a4ce3202fb8cadb42b53d67128ad6be3d35f68
       designs/b96_kr260_10g/rtl/mac64_rx.sv: 35a0ed74f5449979bdbbfa0c57d66e8c8ce127f6132c53690212653a5a97ee8c
       designs/b96_kr260_10g/rtl/mac64_tx.sv: 0cbc07b0268f1c0d3e4c916808bb87930fc6c17d3c60eba2cc90e17ad945246a
       designs/b96_kr260_10g/rtl/pcs_rx.sv: 161c35209b39e014a62c3f4624ea52b99ef3316abc7250a7f5b132e19a651c0a
@@ -243,30 +193,6 @@ pins:
       designs/b96_kr260_10g/rtl/tx_path.sv: e7801f4c71190c6b74e4400a0a18a9600128b2a5720b7106478581b0190fff04
     evidence: results/b97c/hw/20261118_194221/control/stage3.json
     evidence_sha256: e77343e6c99c90b667c0d3036d758fb55d8347b15801800474e82794d451ebe7
-  V-HW-SYSMON-96E:
-    checks:
-      designs/b58a_trigger/rtl/jtag_bus.sv: 5a6042e567c4e7f2ca34bb01810459650f56f1bb3850434b427f2e4e6edd40b1
-      designs/b96_kr260_10g/design.xdc: 4dec8c5ba8f6dccc6273f45d40a7d95a6668f5fe09350c0a0d80cc6c07ea1118
-      designs/b96_kr260_10g/ip/amd_ip.tcl: bcd2156cc8a8b7febc34c4313df572e38c0baba76eb28dbf56c99b3d6231ae6d
-      designs/b96_kr260_10g/rm_gp/build.yaml: 1815da81b314bdd5ae63494d1584c03d67383cea7d8037f06efd4b3758985827
-      designs/b96_kr260_10g/rtl/b96_core.sv: bc8ac81d24ec3fab22a049bbd2076fc19dec8576b7b6c27a5b90c58e56fc5dd9
-      designs/b96_kr260_10g/rtl/b96_pkg.sv: ac2ee00c42c8be41a66dae4c04b565c55ed01910aa4c8f12ea7919adaeb77e7c
-      designs/b96_kr260_10g/rtl/es_ctrl.sv: 671362a1c02eff42f9dc8af2c6919b854a62b3a93e7702d65ed7f6bf278e8e3e
-      designs/b96_kr260_10g/rtl/frame_src.sv: a745598f6ad7460641a6fcd41a7505fca5d97d6bf2e46389e476201f772f86c0
-      designs/b96_kr260_10g/rtl/hs_vec.sv: e0fc43a9b50c1f4dfb2dd1d6576774ebfc4bce1d921d923a21d3beb2794f11b1
-      designs/b96_kr260_10g/rtl/kr260_10g_top.sv: 3d4ca01e5aeee041094f783747a4ce3202fb8cadb42b53d67128ad6be3d35f68
-      designs/b96_kr260_10g/rtl/mac64_rx.sv: 35a0ed74f5449979bdbbfa0c57d66e8c8ce127f6132c53690212653a5a97ee8c
-      designs/b96_kr260_10g/rtl/mac64_tx.sv: 0cbc07b0268f1c0d3e4c916808bb87930fc6c17d3c60eba2cc90e17ad945246a
-      designs/b96_kr260_10g/rtl/pcs_rx.sv: 161c35209b39e014a62c3f4624ea52b99ef3316abc7250a7f5b132e19a651c0a
-      designs/b96_kr260_10g/rtl/pcs_tx.sv: e0e68141d910f428c25b37d8c8cc1c73ad0bb6c79fe6dd8d69307b9c430dc45d
-      designs/b96_kr260_10g/rtl/rate_match.sv: f16fa46d1d7c045a8aecb41c20ba42bc120f7b78807363fa6464cb7a48a79686
-      designs/b96_kr260_10g/rtl/rate_match_gp.sv: 09ba730191a05f348c4b512e0203fad604872ef66608f925caab1c2c600c5653
-      designs/b96_kr260_10g/rtl/rx_path.sv: 926b9f9901221444fd74bffa5ba7e556d2c3603bc4394f3e382a58e6ec19e539
-      designs/b96_kr260_10g/rtl/rx_path_legacy.sv: 4c9412a3ce8de3b3ee966add7b5b293e4c9b968a4ce2f1e063f62d537a24573f
-      designs/b96_kr260_10g/rtl/trade64.sv: 1999e01a3728a4834f701c66dcb0ba68004c70a8eee5b0045a6bc046fa256787
-      designs/b96_kr260_10g/rtl/tx_path.sv: 91039813b51cc71fadef8fe342b8e1535eea6c40d996604b95697fa5b577d0d8
-    evidence: results/b96e/hw/20261119_231251/rm_gp/session.json
-    evidence_sha256: cd79277b3d7b1a9df68d42fc707990fef90b697b1019e0a83545f77327ddce32
   V-REVIEW-96:
     checks:
       designs/b96_kr260_10g/rtl/b96_core.sv: 87e4a5d7d8385e29fd2c960126060dd3a17900a0b56d7223a992aea34f339407
@@ -289,12 +215,12 @@ pins:
     checks:
       designs/b96_kr260_10g/lat_all3_bypass/build.yaml: bbb4d85334c8fa42217212d9a734f0bd54b5752378ea60894b27a64b82394127
     evidence: results/116_traceability/b96_kr260_10g/pytest_junit.xml
-    evidence_sha256: 7ccda7e9bee67834d7772b4268b5fbc78424ab4af04412642ab068cbcaad091e
+    evidence_sha256: b22b0437a53cef4b05d688b32eaaddb2b266a3632e6702c1b7688911c63f5efb
   V-SIM-BUILDS:
     checks:
       designs/b96_kr260_10g/rtl/b96_core.sv: bc8ac81d24ec3fab22a049bbd2076fc19dec8576b7b6c27a5b90c58e56fc5dd9
     evidence: results/116_traceability/b96_kr260_10g/pytest_junit.xml
-    evidence_sha256: 7ccda7e9bee67834d7772b4268b5fbc78424ab4af04412642ab068cbcaad091e
+    evidence_sha256: b22b0437a53cef4b05d688b32eaaddb2b266a3632e6702c1b7688911c63f5efb
   V-SIM-CORE-DEFAULT:
     checks:
       designs/b96_kr260_10g/rtl/b96_core.sv: bc8ac81d24ec3fab22a049bbd2076fc19dec8576b7b6c27a5b90c58e56fc5dd9
@@ -312,7 +238,7 @@ pins:
       designs/b96_kr260_10g/rtl/trade64.sv: 1999e01a3728a4834f701c66dcb0ba68004c70a8eee5b0045a6bc046fa256787
       designs/b96_kr260_10g/rtl/tx_path.sv: 91039813b51cc71fadef8fe342b8e1535eea6c40d996604b95697fa5b577d0d8
     evidence: results/116_traceability/b96_kr260_10g/pytest_junit.xml
-    evidence_sha256: 7ccda7e9bee67834d7772b4268b5fbc78424ab4af04412642ab068cbcaad091e
+    evidence_sha256: b22b0437a53cef4b05d688b32eaaddb2b266a3632e6702c1b7688911c63f5efb
   V-SIM-CORE-RM:
     checks:
       designs/b96_kr260_10g/rtl/b96_core.sv: bc8ac81d24ec3fab22a049bbd2076fc19dec8576b7b6c27a5b90c58e56fc5dd9
@@ -330,24 +256,24 @@ pins:
       designs/b96_kr260_10g/rtl/trade64.sv: 1999e01a3728a4834f701c66dcb0ba68004c70a8eee5b0045a6bc046fa256787
       designs/b96_kr260_10g/rtl/tx_path.sv: 91039813b51cc71fadef8fe342b8e1535eea6c40d996604b95697fa5b577d0d8
     evidence: results/116_traceability/b96_kr260_10g/pytest_junit.xml
-    evidence_sha256: 7ccda7e9bee67834d7772b4268b5fbc78424ab4af04412642ab068cbcaad091e
+    evidence_sha256: b22b0437a53cef4b05d688b32eaaddb2b266a3632e6702c1b7688911c63f5efb
   V-SIM-DRIVER:
     checks:
       designs/b96_kr260_10g/host/b96_bench.py: 8272501f6406eb25e26c4c43a8a9d37ec87c7e9bf3efb7b6496a2ccf7454e413
       designs/b96_kr260_10g/host/b96c_ppm.py: a5a5b3d64ee29423b64260c57029f8bedfceaf6deb8974f939ac3be0a5615f96
       designs/b96_kr260_10g/host/b96f1_bypass.py: 8e94dd345a2f031e3d01134a89e567aadfb6ac37feb9a3d28b3ca0e51cafa8b7
     evidence: results/116_traceability/b96_kr260_10g/pytest_junit.xml
-    evidence_sha256: 7ccda7e9bee67834d7772b4268b5fbc78424ab4af04412642ab068cbcaad091e
+    evidence_sha256: b22b0437a53cef4b05d688b32eaaddb2b266a3632e6702c1b7688911c63f5efb
   V-SIM-EYESCAN:
     checks:
       designs/b96_kr260_10g/rtl/es_ctrl.sv: 671362a1c02eff42f9dc8af2c6919b854a62b3a93e7702d65ed7f6bf278e8e3e
     evidence: results/116_traceability/b96_kr260_10g/pytest_junit.xml
-    evidence_sha256: 7ccda7e9bee67834d7772b4268b5fbc78424ab4af04412642ab068cbcaad091e
+    evidence_sha256: b22b0437a53cef4b05d688b32eaaddb2b266a3632e6702c1b7688911c63f5efb
   V-SIM-LATENCY-MODEL:
     checks:
       designs/b96_kr260_10g/latency_stages.yaml: 9f6167614a1c93cce2223c3305f650cea287020887ee6887802c2dc25eb76d66
     evidence: results/116_traceability/b96_kr260_10g/pytest_junit.xml
-    evidence_sha256: 7ccda7e9bee67834d7772b4268b5fbc78424ab4af04412642ab068cbcaad091e
+    evidence_sha256: b22b0437a53cef4b05d688b32eaaddb2b266a3632e6702c1b7688911c63f5efb
   V-SIM-PCSMAC:
     checks:
       designs/b96_kr260_10g/rtl/b96_pkg.sv: ac2ee00c42c8be41a66dae4c04b565c55ed01910aa4c8f12ea7919adaeb77e7c
@@ -356,34 +282,34 @@ pins:
       designs/b96_kr260_10g/rtl/pcs_rx.sv: 161c35209b39e014a62c3f4624ea52b99ef3316abc7250a7f5b132e19a651c0a
       designs/b96_kr260_10g/rtl/pcs_tx.sv: e0e68141d910f428c25b37d8c8cc1c73ad0bb6c79fe6dd8d69307b9c430dc45d
     evidence: results/116_traceability/b96_kr260_10g/pytest_junit.xml
-    evidence_sha256: 7ccda7e9bee67834d7772b4268b5fbc78424ab4af04412642ab068cbcaad091e
+    evidence_sha256: b22b0437a53cef4b05d688b32eaaddb2b266a3632e6702c1b7688911c63f5efb
   V-SIM-PCSMODEL:
     checks:
       designs/b96_kr260_10g/model/pcs.py: 92790d45d722112f604dbb5dbe70e8e76533ab06f54e8157d28f362a5398554f
       designs/b96_kr260_10g/rtl/pcs_rx.sv: 161c35209b39e014a62c3f4624ea52b99ef3316abc7250a7f5b132e19a651c0a
       designs/b96_kr260_10g/rtl/pcs_tx.sv: e0e68141d910f428c25b37d8c8cc1c73ad0bb6c79fe6dd8d69307b9c430dc45d
     evidence: results/116_traceability/b96_kr260_10g/pytest_junit.xml
-    evidence_sha256: 7ccda7e9bee67834d7772b4268b5fbc78424ab4af04412642ab068cbcaad091e
+    evidence_sha256: b22b0437a53cef4b05d688b32eaaddb2b266a3632e6702c1b7688911c63f5efb
   V-SIM-PPM-PARTNER:
     checks:
       designs/b96_kr260_10g/rtl/rate_match.sv: f16fa46d1d7c045a8aecb41c20ba42bc120f7b78807363fa6464cb7a48a79686
       designs/b96_kr260_10g/rtl/rate_match_gp.sv: 09ba730191a05f348c4b512e0203fad604872ef66608f925caab1c2c600c5653
       designs/b96_kr260_10g/rtl/rx_path.sv: 926b9f9901221444fd74bffa5ba7e556d2c3603bc4394f3e382a58e6ec19e539
     evidence: results/116_traceability/b96_kr260_10g/pytest_junit.xml
-    evidence_sha256: 7ccda7e9bee67834d7772b4268b5fbc78424ab4af04412642ab068cbcaad091e
+    evidence_sha256: b22b0437a53cef4b05d688b32eaaddb2b266a3632e6702c1b7688911c63f5efb
   V-SIM-REGMAP:
     checks:
       designs/b96_kr260_10g/docs/register_map.md: d2846103ad9f272c61ce8c19447647d40564796dd4c67900e9c989dcf0a0bae1
       designs/b96_kr260_10g/regmap.py: 020260c536b5e86394e3132eef6f97d1e6b700e8e9a18e70f468d00fd76250e2
     evidence: results/116_traceability/b96_kr260_10g/pytest_junit.xml
-    evidence_sha256: 7ccda7e9bee67834d7772b4268b5fbc78424ab4af04412642ab068cbcaad091e
+    evidence_sha256: b22b0437a53cef4b05d688b32eaaddb2b266a3632e6702c1b7688911c63f5efb
   V-SIM-RM:
     checks:
       designs/b96_kr260_10g/rtl/rate_match.sv: f16fa46d1d7c045a8aecb41c20ba42bc120f7b78807363fa6464cb7a48a79686
       designs/b96_kr260_10g/rtl/rate_match_gp.sv: 09ba730191a05f348c4b512e0203fad604872ef66608f925caab1c2c600c5653
       designs/b96_kr260_10g/rtl/rx_path.sv: 926b9f9901221444fd74bffa5ba7e556d2c3603bc4394f3e382a58e6ec19e539
     evidence: results/116_traceability/b96_kr260_10g/pytest_junit.xml
-    evidence_sha256: 7ccda7e9bee67834d7772b4268b5fbc78424ab4af04412642ab068cbcaad091e
+    evidence_sha256: b22b0437a53cef4b05d688b32eaaddb2b266a3632e6702c1b7688911c63f5efb
   V-SIMM-BYPASS-SEQ:
     checks:
       designs/b96_kr260_10g/rm_gp_bypass/rtl/b96_core.sv: 292b43f4aa7f84df451ea8592ac709e7af6e46577ced5854c37177951f14ec27
@@ -577,6 +503,14 @@ pins:
       designs/b96_kr260_10g/rtl/tx_path.sv: 91039813b51cc71fadef8fe342b8e1535eea6c40d996604b95697fa5b577d0d8
     evidence: results/b96e/builds/rm_gp/digest.json
     evidence_sha256: fdc4edc0935ad555d9099277e65ff2ef4a58676ec0096db0946140804ce95f9d
+  V-TX-UNDERRUN:
+    checks:
+      designs/b96_kr260_10g/rtl/mac64_tx.sv: 0cbc07b0268f1c0d3e4c916808bb87930fc6c17d3c60eba2cc90e17ad945246a
+      designs/b96_kr260_10g/verif/pyuvm/pcs_mac_pyuvm/checker.py: 9cd31ab2c0037e0bdd2da9f7b6cd20d41abf5aa49c093623669838e74fa965ce
+      designs/b96_kr260_10g/verif/pyuvm/pcs_mac_pyuvm/scoreboard.py: f8700b6538b4a69fe4f8f85a744d33c98ed48568c5ab8948f8e9706e81ebbe09
+      designs/b96_kr260_10g/verif/pyuvm/pcs_mac_pyuvm/seqs.py: e0cdae917f8cb9dae1390427b7b8dc67d3f2dd1475875d32740653f0784a9d71
+    evidence: results/158_cov_closure/protocol_cover.tsv
+    evidence_sha256: 78415183384bd3b3b85acd6f08287f1fdca133d6db8b39a43499c87d6f32e87c
   V-XVC-CDC:
     checks:
       designs/b96_kr260_10g/dbg_xvc/rtl/b96_core.sv: f97848c5f7d49743757e3c410e81ce128952682cc8974e9856a42c6e1637948a
@@ -587,15 +521,8 @@ pins:
     checks:
       designs/b96_kr260_10g/dbg_xvc/rtl/b96_core.sv: f97848c5f7d49743757e3c410e81ce128952682cc8974e9856a42c6e1637948a
       designs/b96_kr260_10g/dbg_xvc/rtl/xvc_debug.sv: 13459b988dedcc31fdf6702b1bad3b4fa5cd69ca9090751b98d6bec290ba7fe0
-    evidence: results/b140/builds/dbg_xvc/digest.json
-    evidence_sha256: ad5c3a21cdf4b5262cd2aca8ebbd5b47ea8b65616cbb39ec008faa14371eb622
-  V-XVC-FLOW-GATES:
-    checks:
-      designs/b96_kr260_10g/dbg_xvc/rtl/b96_core.sv: f97848c5f7d49743757e3c410e81ce128952682cc8974e9856a42c6e1637948a
-      designs/b96_kr260_10g/dbg_xvc/rtl/kr260_10g_top.sv: ca47f11df28e829f3e4a874a0e63771cb1886bdf90cc515101caae54499c62ef
-      designs/b96_kr260_10g/dbg_xvc/rtl/xvc_debug.sv: 13459b988dedcc31fdf6702b1bad3b4fa5cd69ca9090751b98d6bec290ba7fe0
-    evidence: results/b140/builds/dbg_xvc/gates.json
-    evidence_sha256: 63d0a2734eb2df55ae966332ad0b2560cee8a0b0b4df6887362077d9d362368b
+    evidence: results/b131/builds/dbg_xvc/digest.json
+    evidence_sha256: 6cd508f9998e95f91d7debd76e4bc269e3a921357e156ff08b2e49ece705be9c
   V-XVC-TIM-HOLD:
     checks:
       designs/b96_kr260_10g/dbg_xvc/rtl/b96_core.sv: f97848c5f7d49743757e3c410e81ce128952682cc8974e9856a42c6e1637948a
@@ -622,4 +549,4 @@ pins:
       designs/b96_kr260_10g/dbg_xvc/model/xvc_verdict.py: 6e5f94a16926eba46a1fcfedf561fff1035cdc3dee231d520b748b573bb2eb40
       designs/b96_kr260_10g/dbg_xvc/rtl/b96_core.sv: f97848c5f7d49743757e3c410e81ce128952682cc8974e9856a42c6e1637948a
     evidence: results/116_traceability/b96_kr260_10g/pytest_junit.xml
-    evidence_sha256: 7ccda7e9bee67834d7772b4268b5fbc78424ab4af04412642ab068cbcaad091e
+    evidence_sha256: b22b0437a53cef4b05d688b32eaaddb2b266a3632e6702c1b7688911c63f5efb

@@ -11,7 +11,7 @@ from .agents import rd
 
 PROPS = ["adv_single", "adv_rhythm", "ready_implies_adv", "source_stable", "no_underrun", "sop_start_char", "eop_terminate", "sop_pulse",
          "xv_needs_lock", "ev_lock_needs_lock", "ev_loss_shape", "slip_while_unlocked", "lock_rise_has_ev_lock", "lock_fall_has_ev_loss", "ev_lock_loss_exclusive",
-         "block_event_needs_lock", "m_nb_range", "m_sof_has_m_v"]
+         "block_event_needs_lock", "m_nb_range", "m_sof_has_m_v", "underrun_only_when_injected", "injected_underruns_seen"]
 
 
 class ProtocolChecker(uvm_monitor):
@@ -19,7 +19,18 @@ class ProtocolChecker(uvm_monitor):
         self.dut = ConfigDB().get(self, "", "dut")
         self.fails = {p: 0 for p in PROPS}
         self.checks = {p: 0 for p in PROPS}
-        self.cover = dict(pause=0, full_33=0, sop=0, eop=0, lock=0, loss=0, hunting_slip=0, frame_good=0, frame_bad=0, abort=0, end_and_abort_same_clock=0)
+        self.fault_mode = False          # fault injection (brief 158): a test that stalls the source on purpose sets it with inject_underruns(n)
+        self.fault_budget = 0; self.fault_seen = 0
+        self.cover = dict(pause=0, full_33=0, sop=0, eop=0, lock=0, loss=0, hunting_slip=0, frame_good=0, frame_bad=0, abort=0, end_and_abort_same_clock=0, underrun_injected=0)
+
+    def inject_underruns(self, n: int) -> None:
+        """Fault-injection mode: `n` underruns of mac64_tx are expected. `no_underrun` stays the rule outside this mode; inside it, an underrun is allowed only while the budget lasts
+        (`underrun_only_when_injected`) and all of them must have been seen by the end of the test (`injected_underruns_seen`)."""
+        self.fault_mode = True; self.fault_budget += n
+
+    def check_phase(self):
+        if self.fault_mode:
+            self._chk("injected_underruns_seen", self.fault_seen == self.fault_budget, f"{self.fault_seen} underruns seen, {self.fault_budget} injected")
 
     @property
     def errors(self) -> int:
@@ -64,7 +75,12 @@ class ProtocolChecker(uvm_monitor):
                 self._chk("ready_implies_adv", (not rdy) or adv, "s_ready high while the PCS pauses")
                 if pt.get("val") and not pt.get("rdy"):
                     self._chk("source_stable", val and sdat == pt["sdat"] and slast == pt["slast"] and snb == pt["snb"], "source word changed or dropped before s_ready")
-                self._chk("no_underrun", not und, "underrun")
+                if self.fault_mode:
+                    if und:
+                        self.fault_seen += 1; self.cover["underrun_injected"] += 1
+                        self._chk("underrun_only_when_injected", self.fault_seen <= self.fault_budget, "more underruns than were injected")
+                else:
+                    self._chk("no_underrun", not und, "underrun")
                 if sop:
                     self.cover["sop"] += 1
                     self._chk("sop_start_char", (rd(d.mx_d) & 0xFF) == 0xFB and rd(d.mx_c) == 0x01, "sop without a start character in lane 0")
