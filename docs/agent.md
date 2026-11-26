@@ -243,6 +243,73 @@ requirement's words and covers the fixes of RPT-LL-02 and RPT-CS-02 only.
 Tests: `agent/tests/test_210_requirements.py` (rules, levels, waivers, the stop and its exit status, the conflict on the recorded c15 report),
 `flow/tests/test_210_requirements_report.py` (the report on t1_dimmer_counter's reference run: a pending row, a failed row, regeneration after the board).
 
+## The lab: instruments the agent can use (`hil/lab.py`, brief 221)
+
+The agent knew the board (`boards/*/board.yaml`) but not the bench, so a check that a scope, counter or logic analyser would settle in seconds was skipped or
+done indirectly. A **lab file** records the bench; the interview reads it and asks only about gaps; stage 9 picks, per requirement, the best method and writes the
+instrument steps into `BRINGUP.md`; the requirements report shows the method on each row. Nothing here touches an instrument: the agent writes and **dry-runs**
+the steps against mock instruments, and the owner runs every instrument script, one step at a time, as for every board command.
+
+**The two files.** The owner's lab profile lives in the user's config folder, never in the repository (it describes a private bench):
+`~/.config/fpga-force/lab.yaml`, or the file named by `FDA_LAB_FILE` (`none` means no profile; the test suite sets it so). `hil/lab.example.yaml` is the template,
+seeded from the owner's bench. A design may carry its own `lab.yaml` (in the design directory or `package/`): its `connections` say which instrument channel
+probes which pin for this design, and an instrument entry with the same `id` overrides the fields it states. Each instrument entry has: `kind`, make and
+model, `onboarded`, `connection` (`usb`, `lan` with an address, or `none`), `control` (`scripted` with a `driver`, or `manual`: the owner types the reading),
+`channels`, `capabilities` (what it can measure, with limits such as `max_hz` and `accuracy_ppm`) and `outputs` (what it could drive into a board: each with a limit, or
+`never_by_script: true`). `python -m hil.lab [--design <dir>] [--usb]` shows the lab a design would see and checks the file; `--usb` runs `lsusb` (a listing) to say
+which instruments are plugged in.
+
+**The interview** (`agent/graph/lab_interview.py`) asks, in the spec's `open_questions` with a default and a reason like any other question:
+`[lab:connect:<instrument>:<requirement>]`, once per onboarded instrument that could check a requirement stating a frequency or a level and is not recorded as
+connected ("the 25 MHz clock on pin C3: the counter as an independent check beside the on-chip count? Answer `counter: A -> pin C3` or `not connected`", default
+not connected, on-chip only); and, only to a person (`--interview on`) and only when there is no lab file at all, `[lab:record]` (default: no, on-chip measurement
+only; a "no" is written to the design's `lab.yaml` so it is not asked again). Answers are recorded with who gave them in the design's `lab.yaml`. The tag makes the
+requirement-risk rules class these questions `low` (a verification-method choice), so a default never stops a run at `standard`; at `strict` they must still be
+answered or waived. An instrument that is **not onboarded is never asked about and never chosen**: the plan lists it as "available after onboarding".
+
+**Method choice** (`hil.lab.plan_need`), per requirement whose proof includes hardware and whose text states a frequency (with a unit) or a level: a scripted,
+onboarded instrument connected for this design; else a manual one (the owner types the reading); else the on-chip method, which is always there and is always kept.
+So a requirement keeps its on-chip evidence, and gains an independent check beside it when one is wired. An instrument whose range or accuracy cannot meet the
+requirement is left out with the reason (an accuracy figure must be three times better than the tolerance). The choice is `build/lab/plan.json`, the steps are
+`lab_steps.yaml` in the design, and `BRINGUP.md` gets a `Lab instruments` section between two marker lines, regenerated at every visit of stage 9 so a rewrite of the
+file by the model does not lose it. A design with no lab at all gets nothing written. `flow/bringup.py` runs the steps as a step `lab_instruments` (after the UART tests or
+the bus checks; present only when `lab_steps.yaml` exists) and `python -m hil.lab_bringup run <design>` runs them alone.
+
+**Safety** (`hil.lab.check_drive`, called by every adapter before any `configure` that drives, and by the runner before the owner is even asked). Refused: an output the
+lab file does not list; one marked `never_by_script`; an instrument not onboarded; a value above the output's `max_v`, `max_a`, `max_dbm` or `max_hz`; a limit that
+needs a value the step does not state; RF without 30 dB of attenuation or a declared dummy load; a voltage above the VCCO of the pin it is wired to. Every step that
+drives a signal into the board is marked `DRIVES` in `BRINGUP.md`, carries the permission action `drive_instrument_output` (brief 222's permission modes list it and
+its `lab_limits` never-rule stands for these checks), needs the owner to type `yes` at run time, and every output is switched off at the end of the run whatever happened.
+A manual instrument is set by the owner, never driven. No input of this module reaches a supply: the example profile lists the M2K supplies as `never_by_script`.
+
+**Readings.** A scripted step returns `fda-measurement/1` (one value, its unit, channel, instrument, uncertainty if known) through the instrument contract
+(`describe`, `configure`, `arm`, `capture`, `close`; `hil/lab_drivers.py`: adapters for the Red Pitaya and the M2K over the existing `hil/instruments` modules, a manual
+adapter and a mock). A manual reading must carry its unit (`25.0001 MHz`): a bare number is refused, a unit of another quantity is refused, and a reading about a
+thousand times off the expected value is flagged as a probable unit slip. Each row of `build/lab/results.json` records the method (`scripted`, `manual`, or `dry_run`),
+what was typed and the error in ppm. A dry run (mock instruments) is marked `dry_run`, has `evidence: false` and is never counted.
+
+**The requirements report** gains the method on each row: `instrument (counter A on pin C3, scripted): pending | pass | fail`, `dry run against a mock, not evidence`, or
+`instrument: none, on-chip only (<why>)`. A failed instrument reading fails the requirement; a passed one does not pass it alone (the design's own evidence is still
+needed); a dry run changes nothing.
+
+**What a user could get wrong, and what happens.**
+
+- *A probe on the wrong pin.* Not detectable by the harness. The wiring step asks you to confirm each channel's pin before the first reading, and the plan prints the pin it
+  assumed; a wrong pin shows as a reading nowhere near the expected value or "not enough edges".
+- *A manual reading in the wrong unit* (kHz for MHz): a bare number is refused, a wrong quantity is refused, a value about 10^3 or 10^6 off is flagged and fails.
+- *A lab file with an output that has no limit*: a validation error, and the file is not used. A wrong limit that is too high is yours: the harness enforces the number
+  you wrote, and the example profile's `max_v` for the M2K AWG is a starting value the owner confirms per design.
+- *An accuracy left out.* The step carries the caveat "the instrument's accuracy is not recorded: a pass is a coarse independent check". Do not read it as an
+  instrument-grade measurement. A figure you put in (`accuracy_ppm`) is trusted, not measured.
+- *An instrument marked onboarded that was never connected.* The harness cannot tell: `--usb` only shows what is plugged in. The first real run fails at the first reading.
+- *A mock instrument (`mock: true`) in a real profile*: it answers dry runs and CI only; a real run of a mock row is marked `mock` and the report does not count it.
+- *Two lab files.* The design's file wins for the fields it states. A connection to a channel the instrument lacks is dropped with a problem listed (`python -m hil.lab`).
+- *The measurement needs are found by rules on the requirement's words* (a frequency with a unit near "measures", "within", "ppm", "clock"; a level with a voltage). A
+  requirement phrased otherwise gets no instrument step; the plan lists none for it.
+
+Tests: `hil/tests/test_221_lab.py` (file schema, merge, method choice, safety limits, adapters on fakes, steps, dry runs, manual prompts), `agent/tests/test_221_lab_interview.py`
+(gap questions, risk class, answers recorded, report column), `flow/tests/test_221_bringup_lab.py` (the bring-up step). Example: `results/221_lab_instruments`.
+
 ## Review and rewind (`agent/graph/review.py`, `snapshot.py`)
 
 Each stage end writes a self-contained page (light and dark, no external assets): gates, inputs and outputs, the

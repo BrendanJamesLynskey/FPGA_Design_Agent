@@ -240,7 +240,7 @@ def run_steps(steps: list[dict[str, Any]], lab: L.Lab, *, dry_run: bool = True, 
                 pass
     bad = [r for r in rows if r["result"] in ("fail", "refused", "error", "not_confirmed")]
     return {"schema": "fpga-force/lab-results/v1", "mode": "dry_run" if dry_run else "run", "created": time.strftime("%Y-%m-%dT%H:%M:%S"),
-            "evidence": not dry_run, "pass": not bad, "rows": rows}
+            "evidence": not dry_run and not any(r.get("mock") for r in rows), "pass": not bad, "rows": rows}
 
 
 def load_steps(design: Path) -> list[dict[str, Any]]:

@@ -174,7 +174,7 @@ def lab_rows(design: Path) -> dict[str, dict[str, Any]]:
             g = got[-1]
             row.update(status=g["result"] if g["result"] in ("pass", "fail", "dry_run") else "fail", value=g.get("value"), unit=g.get("unit"), error_ppm=g.get("error_ppm"),
                        typed=g.get("typed"), detail=g.get("detail"))
-            if res.get("mode") == "dry_run":
+            if res.get("mode") == "dry_run" or g.get("mock"):             # a mock reading is never evidence, whichever way it was run
                 row["status"] = "dry_run"
         out[r["requirement"]] = row
     return out
@@ -185,8 +185,11 @@ def lab_text(lab: dict[str, Any]) -> str:
     if lab["status"] == "none":
         why = "; ".join(f"{x['instrument']}: {x['reason']}" for x in lab["left_out"])
         return "instrument: none, on-chip only" + (f" ({why})" if why else "")
-    val = f" read {lab['value']:g} {lab['unit']}" if lab.get("value") is not None else ""
-    return f"instrument ({lab['instrument']} {lab['channel']} on {lab['probes']}, {lab['method']}): {lab['status'].replace('_', ' ')}{val}"
+    if lab["status"] == "dry_run":                                  # a mock reading is shown as a dry run and no value: it is never evidence
+        return f"instrument ({lab['instrument']} {lab['channel']} on {lab['probes']}, {lab['method']}): dry run against a mock, not evidence; to be run by the owner"
+    v, u = lab.get("value"), lab.get("unit")
+    val = "" if v is None else (f" read {v / 1e6:.7g} MHz" if u == "Hz" and abs(v) >= 1e6 else f" read {v:.7g} {u}")
+    return f"instrument ({lab['instrument']} {lab['channel']} on {lab['probes']}, {lab['method']}): {lab['status']}{val}"
 
 
 # ---- the report -----------------------------------------------------------------------------------------------------------------------

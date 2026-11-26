@@ -376,7 +376,7 @@ def test_a_real_run_needs_the_wiring_confirmed_first_and_skips_the_reading_if_no
     assert [r["result"] for r in res["rows"]] == ["not_confirmed", "skipped"] and not res["pass"]
     ok = B.run_steps(steps_for(lab), lab, dry_run=False, confirm=lambda p: True, open_fn=lambda e, l, **kw: D.MockInstrument(e, l, {("frequency", "A"): 25.0002e6}))
     meas = ok["rows"][1]
-    assert [r["result"] for r in ok["rows"]] == ["confirmed", "pass"] and ok["evidence"] and round(meas["error_ppm"]) == 8 and meas["caveat"] is None
+    assert [r["result"] for r in ok["rows"]] == ["confirmed", "pass"] and ok["evidence"] is False and ok["rows"][1]["mock"] and round(meas["error_ppm"]) == 8 and meas["caveat"] is None
 
 
 def manual_lab():
