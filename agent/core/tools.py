@@ -359,10 +359,7 @@ def lint(s: Session) -> dict:
         out += ("\n" if out else "") + "[icarus elaboration, iverilog -g2012] " + _text_out(ic)[-1500:] \
             + "\n(Icarus 12 is stricter than Verilator here: for example a constant function that returns an unpacked " \
               "array, or a parameter built from one, does not elaborate. Load the free-simulators skill for the list.)"
-    adv = primitive_findings(s, cfg)                     # brief 239: advisory until a measured run (it does not fail lint)
-    if adv:
-        out += ("\n" if out else "") + "\n".join(f"[advisory] {x['rule']} {x['message']}" for x in adv)
-    found = top_port_findings(s, cfg, xdc_check=False)   # 08a: the spec's ports and the USB-UART pair exist on the top
+    found = primitive_findings(s, cfg) + top_port_findings(s, cfg, xdc_check=False)   # 08a: the spec's ports and the USB-UART pair exist on the top
     if found:
         ok = False
         out += ("\n" if out else "") + "\n".join(f"{x['rule']} {x['message']}" for x in found)
@@ -459,7 +456,7 @@ def complete_findings(s: Session, cfg: dict) -> tuple[list[dict], list[str]]:
 
 
 def primitive_findings(s: Session, cfg: dict) -> list[dict]:
-    """Brief 239: FDA-CON-16 (advisory), a module named like an AMD primitive or XPM macro in a synthesis source (not data/, the shell, lint/ or sim/)."""
+    """Brief 239: FDA-CON-11, a module named like an AMD primitive or XPM macro in a synthesis source (not data/, the shell, lint/ or sim/)."""
     from flow.standards_check import parse_modules
     mods: dict[str, list[str]] = {}
     for pat in cfg["sources"]:
@@ -849,9 +846,8 @@ def build(s: Session, until: str = "bitstream", variant: str = "base") -> dict:
             stale_check.stamp(s.design, f"build:{variant}", s.root, inputs=pre)
         except Exception:                              # noqa: BLE001
             pass
-    shadow = [f"WARNING {x['rule']} {x['message']} Synthesis uses the module in the build sources, not the library cell." for x in primitive_findings(s, cfg)]
     return {"ok": r.returncode == 0 or (until != "bitstream" and bool(info) and info.get("exit_code") == 0),
-            "output": _text_out(r) + ("\n" + "\n".join(notes) if notes else "") + ("\n" + "\n".join(shadow) if shadow else ""), "returncode": r.returncode, "until": until, "variant": variant, **info}
+            "output": _text_out(r) + ("\n" + "\n".join(notes) if notes else ""), "returncode": r.returncode, "until": until, "variant": variant, **info}
 
 
 def con_files(s: Session, cfg: dict) -> list[Path]:
