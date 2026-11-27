@@ -150,8 +150,15 @@ structural CDC check's inputs (`cdc_paths_synth.rpt`, `cdc_synth.rpt`):
 | Code | Level | Finding | Source |
 |---|---|---|---|
 | CDCM-SKEW-VIOL | gate (`post_route_bus_skew_met`) | a `set_bus_skew` with negative slack after routing | UG906 p. 162: no bus-skew violation may remain |
-| CDCM-SKEW-MISSING | advisory | a hand-built multi-bit crossing (structural class gray, handshake or fifo; not an XPM) that no `set_bus_skew` names | survey rank 1; UG903 pp. 142-144 |
-| CDCM-DPO-LOOSE | advisory | a `max_dpo` value above the crossing's L (source period; `sync_stages` x destination period for a declared handshake or CE) | survey rank 2; AMD's XPM templates |
+| CDCM-SKEW-MISSING | **gate** when the skew is unbounded or unexpectedly large, otherwise advisory (brief 246) | a hand-built multi-bit crossing (structural class gray, handshake or fifo; not an XPM) that no `set_bus_skew` names. Gate: no `max_dpo` names it either, or the smallest one is above 10 x the crossing's skew bound S (`min(src, dst)` period for a Gray bus, `sync_stages` x destination period for a handshake, or the declared crossing's S). Advisory: a `max_dpo` within 10 x S bounds it | survey rank 1; UG903 pp. 142-144 |
+| CDCM-DPO-LOOSE | **gate** above 10 x L, advisory between L and 10 x L (brief 246) | a `max_dpo` value above the crossing's L (source period; `sync_stages` x destination period for a declared handshake or CE) | survey rank 2; AMD's XPM templates |
+
+**The gate factor (brief 246, owner decision 2026-11-27: gate "only when skew is unexpectedly large", with practical, achievable numbers).** `SKEW_GATE_FACTOR = 10` in
+`flow/cdc_margin.py`: ten times the crossing's own bound. False-positive scan before choosing it, over every committed or on-disk routed build that has a
+`bus_skew_route.rpt` (5 Vivado 2026.1 fixtures of brief 207, 6 agent-run builds of brief 224/230/225: p5 async FIFO x4, p4 FIR, the Red Pitaya smoke build): no
+CDCM-SKEW-MISSING anywhere; one CDCM-DPO-LOOSE, in the two p5 async FIFO builds of brief 224/230: `max_dpo` 40.0 ns on a 6.4 ns bound (6.25 x). A factor of 2
+to 6 would have failed those builds, so the factor is 10: they stay advisory and nothing that passed before fails. Builds made before brief 207 have no
+bus-skew report and are not evaluated (the check says so). Older design builds (b58a, b96, b110) were not re-run; the scan cannot cover them.
 | CDCM-MTBF-MISSING | advisory | UltraScale+: no MTBF report, or a structural synchroniser chain missing from it | survey rank 4; UG835 |
 | CDCM-MTBF-LOW | advisory | a chain or the overall MTBF below the target, or UNDEFINED | UG835 p. 1529 |
 | CDCM-UNC-HIGH | advisory | TIMING-44/45: user uncertainty above what Vivado calls reasonable | UG949 p. 283 |

@@ -858,7 +858,8 @@ def evaluate(build_dir: Path, architecture: Path | None = None) -> dict[str, Any
         else:
             hub_info = None
         # brief 207: clock-crossing margins (flow/cdc_margin.py): a bus-skew violation is a gate failure (UG906 p. 162); missing
-        # bus-skew coverage, a loose datapath-only value, a missing or low MTBF and high user uncertainty are warnings
+        # bus-skew coverage and a loose datapath-only value are warnings until the skew is unexpectedly large (above 10 x the bound, brief 246: then a gate);
+        # a missing or low MTBF and high user uncertainty stay warnings
         cdcm = _cdc_margin(d, architecture, prep)
         if cdcm is not None and cdcm["evaluated"]:
             route_gates["post_route_bus_skew_met"] = cdcm["pass"]

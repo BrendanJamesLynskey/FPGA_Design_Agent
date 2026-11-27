@@ -229,3 +229,35 @@ def test_one_stage_synchroniser_with_a_datapath_only_bound_is_still_u2() -> None
     assert {(u["rule"], u["cell"]) for u in r["unsafe"]} == {("U2", "lvl_s1_reg")}
     good = S.evaluate(REC / "vv_a7_D" / "cdc_paths_synth.rpt", REC / "vv_a7_D" / "cdc_synth.rpt")
     assert good["pass"]
+
+
+# ---- brief 246: the two skew advisories gate only when the skew is unexpectedly large (CM.SKEW_GATE_FACTOR x the bound) ----
+
+def _m3(tmp_path: Path, variant: str, dpo: str | None) -> Path:
+    d = _build(tmp_path, R105 / variant, {"bus_skew_route.rpt": "bus_skew.rpt" if (R105 / variant / "bus_skew.rpt").exists() else "cdc.rpt",
+                                         "cdc_paths_synth.rpt": "cdc_paths_synth.rpt", "cdc_synth.rpt": "cdc_synth.rpt"})
+    if dpo is not None:
+        (d / "exceptions_route.rpt").write_text((R105 / variant / "exceptions.rpt").read_text().replace("max_dpo=10 ", dpo))
+    return d
+
+
+def test_dpo_loose_is_an_advisory_up_to_the_factor_and_a_gate_above_it(tmp_path: Path) -> None:
+    """Bound 10 ns here (m3_c). 100 ns (10 x) and the committed builds' worst case of 6.25 x stay advisory; 101 ns (10.1 x) gates."""
+    for val, level, ok in (("62.5", "advisory", True), ("100 ", "advisory", True), ("101 ", "gate", False)):
+        d = _m3(tmp_path / val.strip(), "m3_c", f"max_dpo={val}")
+        r = CM.evaluate(d)
+        loose = [f for f in r["findings"] if f["code"] == "CDCM-DPO-LOOSE"]
+        assert loose and loose[0]["level"] == level and r["pass"] is ok, (val, loose)
+    assert CM.SKEW_GATE_FACTOR == 10.0
+
+
+def test_skew_missing_gates_when_nothing_bounds_the_skew(tmp_path: Path) -> None:
+    """m3_b is a hand-built bus with a max_dpo of 10 ns and no set_bus_skew (skew bound 6 ns): the max_dpo bounds it within 10 x, an advisory (as before).
+    With no max_dpo naming it, or one above 10 x the bound (61 ns), the skew is unbounded or unexpectedly large: a gate."""
+    base = CM.evaluate(_m3(tmp_path / "a", "m3_b", "max_dpo=10 "))
+    assert [f["level"] for f in base["findings"] if f["code"] == "CDCM-SKEW-MISSING"] == ["advisory"] and base["pass"]
+    none = CM.evaluate(_m3(tmp_path / "b", "m3_b", None))                     # no exceptions report: nothing names the bus
+    assert [f["level"] for f in none["findings"] if f["code"] == "CDCM-SKEW-MISSING"] == ["gate"] and not none["pass"]
+    assert "nothing bounds its skew" in [f for f in none["findings"] if f["code"] == "CDCM-SKEW-MISSING"][0]["text"]
+    big = CM.evaluate(_m3(tmp_path / "c", "m3_b", "max_dpo=61 "))
+    assert [f["level"] for f in big["findings"] if f["code"] == "CDCM-SKEW-MISSING"] == ["gate"] and not big["pass"]

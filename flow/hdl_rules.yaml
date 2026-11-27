@@ -241,7 +241,7 @@ rules:
   - id: HDL-CDC-03
     title: Each crossing's timing intent is constrained and met
     rationale: An asynchronous crossing needs a bounded latency and, if multi-bit, a bounded skew across its bits; a clock group or a user
-      clock uncertainty bounds neither (brief 207 measured it). A bus-skew violation after routing fails (UG906); the rest is advisory.
+      clock uncertainty bounds neither (brief 207 measured it). A bus-skew violation after routing fails (UG906), and so does a skew that is unbounded or unexpectedly large (a hand-built bus with no set_bus_skew and no max_dpo within 10 x its bound, or a max_dpo above 10 x its bound; brief 246); the rest is advisory.
     checks: {cdc_margin: [CDCM-SKEW-VIOL, CDCM-SKEW-MISSING, CDCM-DPO-LOOSE, CDCM-MTBF-MISSING, CDCM-MTBF-LOW, CDCM-UNC-HIGH]}
     fix: per crossing, set_max_delay -datapath_only at its latency bound and set_bus_skew at its skew bound (docs/cdc_margin_method.md); never
       use set_clock_uncertainty as crossing margin
