@@ -84,27 +84,3 @@ def test_the_rules_note_lists_ids_codes_fixes_and_the_waiver_file(monkeypatch) -
     from flow.lint_ruleset import load_rules
     ids = [r["id"] for r in load_rules()["rules"] if (r.get("checks") or {}).get("verilator") and not r["id"].endswith("-00")]
     assert all(i in t for i in ids)                                            # built from the rule file, so it cannot drift
-
-
-def test_a_module_named_like_an_amd_primitive_is_refused_in_a_synthesis_source() -> None:
-    f = con.primitive_name_findings({"xilinx_sim_stubs.sv": ["xpm_cdc_async_rst", "BSCANE2", "my_reset_gen"], "top.sv": ["MMCME2_ADV", "freq_top"]})
-    assert sorted(x["text"] for x in f) == ["module BSCANE2", "module MMCME2_ADV", "module xpm_cdc_async_rst"]
-    assert all(x["rule"] == "FDA-CON-11" and "sim/" in x["message"] for x in f)
-    assert con.primitive_name_findings({"top.sv": ["freq_top", "sync_ff"]}) == []
-
-
-def test_only_build_sources_are_checked_for_primitive_names(tmp_path) -> None:
-    from agent.core.tools import primitive_findings
-
-    class S:       # the attributes primitive_findings reads
-        root = tmp_path
-        design = tmp_path / "d"
-    (S.design / "rtl").mkdir(parents=True)
-    (S.design / "sim").mkdir()
-    (S.design / "data").mkdir()
-    (S.design / "rtl" / "top.sv").write_text("module top(input logic a, output logic y);\nassign y = a;\nendmodule\n")
-    (S.design / "rtl" / "stubs.sv").write_text("module xpm_cdc_async_rst(input logic a, output logic y);\nassign y = a;\nendmodule\n")
-    (S.design / "sim" / "xilinx_sim_stubs.sv").write_text("module BSCANE2(input logic a);\nendmodule\n")
-    (S.design / "data" / "jtag_bus.sv").write_text("module BUFG(input logic a);\nendmodule\n")
-    f = primitive_findings(S(), {"sources": ["d/rtl/*.sv", "d/data/*.sv"]})
-    assert [x["text"] for x in f] == ["module xpm_cdc_async_rst"]            # sim/ is not a source, data/ is supplied

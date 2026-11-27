@@ -151,7 +151,6 @@ def run(name: str, toplevel: str, sources: list[Path], test_module: str, test_di
         coverage = os.environ.get("FDA_COVERAGE") == "1"
     sources = swap_mutant_sources(sources)
     design = srcorder.design_of(test_dir)
-    sources = list(sources) + [p for p in sorted((design / "sim").glob("*.sv")) if p not in set(map(Path, sources))]   # brief 239: the design's sim-only stand-ins
     if any(vhdl.is_vhdl(s) for s in sources):            # brief 55: VHDL sources (GHDL natively, or a GHDL netlist)
         return _run_vhdl(name, toplevel, sources, test_module, test_dir, parameters, testcase, seed, build_root,
                          extra_env, coverage, simname, design)
