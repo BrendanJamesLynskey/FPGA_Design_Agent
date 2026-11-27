@@ -1,0 +1,11 @@
+schema: fpga-design-agent/formal_rigour/v1
+scope: "sg_dma at ADDR_W 32, MAX_BURST 4 and OUTSTANDING 2 (3 for the 64-bit bounded runs only if added), DATA_W 32, 64 and 128 for the AXI rule proofs and 32 for the bounded ones, in both directions. The memory, the AXI4-Lite master and the stream are free and constrained only to legal AXI4 (valids held with their payload, read data only for an addressed burst, a response only after a burst's last beat), so every descriptor word the engine reads is arbitrary. The k-induction tasks (m*, s*) prove the hold rules, burst size and type, alignment and the 4 KB rule and the engine's own invariants for all depths at those configurations; the g* tasks prove the bookkeeping-based rules to depth 30 only. The covers run at DATA_W 32 only, with one cover task per direction (m32c, s32c) and one per direction with the bookkeeping (g32mc, g32sc), so an antecedent reached there is not shown reached at 64 and 128 bits."
+antecedents:
+  "b_*_r": b_r__ante
+  "b_*_w": b_w__ante
+  "g_w_aw": g_w__ante
+  "g_w_last": g_w__ante
+sanity: [c_through]
+depth:
+  g32m: {enough: false, why: "the burst bookkeeping lives in the harness and is not tied to the engine's own counters, so k-induction cannot close these assertions; depth 30 covers the descriptor fetch, two data bursts and the status write, but not an arbitrary number of bursts"}
+  g32s: {enough: false, why: "as g32m"}

@@ -1,0 +1,172 @@
+# Seeded faults (run by flow/net/faults.py): each replaces `old` (exactly once) by `new` in a copy of rtl/;
+# the tests named in `test` must fail. The real RTL is never touched. `formal` names the SymbiYosys tasks (formal/sg_dma.sby) that must also
+# refute the fault (formal/run_formal.py runs them on the same copy); a fault with no `formal` key is a data or register fault only the bench sees.
+# Points: p0 = MM2S 32-bit, p1 = S2MM 32-bit, p2/p3 = 64-bit, p4/p5 = 128-bit (tb/test_sg_dma_rtl.py POINTS).
+runner: flow/net/faults.py          # the fault runner that owns this block's faults
+faults:
+  - name: no_4k_split
+    file: sg_dma.sv
+    old: "if (t < 11'(MAX_BURST)) n = t[8:0];"
+    new: "if (t < 11'd0) n = t[8:0];"
+    class: protocol
+    why: "a burst is not cut at the 4 KB boundary"
+    test: ip_lib/sg_dma/tb/test_sg_dma_rtl.py::test_engine[p0] ip_lib/sg_dma/tb/test_sg_dma_rtl.py::test_engine[p1]
+    formal: [m32, s32]
+  - name: arlen_off_by_one
+    file: sg_dma.sv
+    old: "assign m_axi_arlen   = (st == S_DAR) ? 8'(DBEATS - 1) : 8'(a_n - 9'd1);"
+    new: "assign m_axi_arlen   = (st == S_DAR) ? 8'(DBEATS - 1) : 8'(a_n);"
+    class: protocol
+    why: "the read burst length field is not beats minus one"
+    test: ip_lib/sg_dma/tb/test_sg_dma_rtl.py::test_engine[p0]
+  - name: tlast_every_burst
+    file: sg_dma.sv
+    old: "assign m_axis_tlast  = (DIR == 0) && d_last && (d_beat == d_n - 9'd1);"
+    new: "assign m_axis_tlast  = (DIR == 0) && (d_beat == d_n - 9'd1);"
+    class: data-corruption
+    why: "tlast on the last beat of every burst, not of every descriptor"
+    test: ip_lib/sg_dma/tb/test_sg_dma_rtl.py::test_engine[p0]
+  - name: wlast_early
+    file: sg_dma.sv
+    old: "assign m_axi_wlast  = (st == S_WA) ? 1'b1 : (d_beat == d_n - 9'd1);"
+    new: "assign m_axi_wlast  = (st == S_WA) ? 1'b1 : (d_beat == d_n - 9'd2);"
+    class: protocol
+    why: "wlast one beat early"
+    test: ip_lib/sg_dma/tb/test_sg_dma_rtl.py::test_engine[p1]
+    formal: [g32s]
+  - name: status_address
+    file: sg_dma.sv
+    old: "wire [ADDR_W-1:0] wb_addr   = desc_addr + ADDR_W'(12);"
+    new: "wire [ADDR_W-1:0] wb_addr   = desc_addr + ADDR_W'(8);"
+    class: data-corruption
+    why: "the status word is written over the length word"
+    test: ip_lib/sg_dma/tb/test_sg_dma_rtl.py::test_engine[p0]
+  - name: ring_wrap
+    file: sg_dma.sv
+    old: "wire [15:0] tail_next = (tail + 16'd1 == ring_size) ? 16'd0 : tail + 16'd1;"
+    new: "wire [15:0] tail_next = (tail + 16'd1 == ring_size + 16'd1) ? 16'd0 : tail + 16'd1;"
+    class: data-corruption
+    why: "the ring has one entry too many before it wraps"
+    test: ip_lib/sg_dma/tb/test_sg_dma_rtl.py::test_engine[p0]
+  - name: slverr_read_ignored
+    file: sg_dma.sv
+    old: "if (DIR == 0 && m_axi_rresp != 2'b00) begin"
+    new: "if (DIR == 0 && m_axi_rresp == 2'b11) begin"
+    class: error-handling
+    why: "SLVERR on a read beat is not reported, only DECERR"
+    test: ip_lib/sg_dma/tb/test_sg_dma_rtl.py::test_engine[p0]
+  - name: slverr_write_ignored
+    file: sg_dma.sv
+    old: "if (b_hs && m_axi_bresp != 2'b00) begin"
+    new: "if (b_hs && m_axi_bresp == 2'b11) begin"
+    class: error-handling
+    why: "SLVERR on a write response is not reported, only DECERR"
+    test: ip_lib/sg_dma/tb/test_sg_dma_rtl.py::test_engine[p1]
+  - name: rready_ignores_sink
+    file: sg_dma.sv
+    old: "(DIR == 0 && data_phase && m_axis_tready && fifo_nz)"
+    new: "(DIR == 0 && data_phase && fifo_nz)"
+    class: data-loss
+    why: "read data is accepted whether or not the stream sink is ready, so a beat is lost under back pressure"
+    test: ip_lib/sg_dma/tb/test_sg_dma_rtl.py::test_engine[p0]
+  - name: outstanding_one_over
+    file: sg_dma.sv
+    old: "(out_cnt < OCW'(OUTSTANDING))"
+    new: "(out_cnt <= OCW'(OUTSTANDING))"
+    class: protocol
+    why: "one more burst in flight than OUTSTANDING allows"
+    test: ip_lib/sg_dma/tb/test_sg_dma_rtl.py::test_engine[p0] ip_lib/sg_dma/tb/test_sg_dma_rtl.py::test_engine[p1]
+    formal: [g32m, g32s]
+  - name: irq_threshold_off_by_one
+    file: sg_dma.sv
+    old: "wire fire = x_ioc || (n_done >= ((irq_thr == 16'd0) ? 16'd1 : irq_thr)) || (tail_next == head);"
+    new: "wire fire = x_ioc || (n_done > ((irq_thr == 16'd0) ? 16'd1 : irq_thr)) || (tail_next == head);"
+    class: interrupt
+    why: "the interrupt fires one completion late"
+    test: ip_lib/sg_dma/tb/test_sg_dma_rtl.py::test_engine[p0]
+  - name: ioc_ignored
+    file: sg_dma.sv
+    old: "wire fire = x_ioc ||"
+    new: "wire fire = 1'b0 ||"
+    class: interrupt
+    why: "the interrupt-on-completion flag of a descriptor does nothing"
+    test: ip_lib/sg_dma/tb/test_sg_dma_rtl.py::test_engine[p0]
+  - name: bad_reports_bytes
+    file: sg_dma.sv
+    old: "{1'b1, x_err, x_bad, 3'b000, x_code, x_bad ? 24'd0 : x_len}"
+    new: "{1'b1, x_err, x_bad, 3'b000, x_code, x_len}"
+    class: data-corruption
+    why: "a descriptor that moved nothing reports its length as moved"
+    test: ip_lib/sg_dma/tb/test_sg_dma_rtl.py::test_engine[p0]
+  - name: misaligned_address_accepted
+    file: sg_dma.sv
+    old: " || (|(desc_sh[31:0] & 32'(BYTES - 1)))"
+    new: ""
+    class: protocol
+    why: "a buffer address that is not beat aligned is accepted and issued"
+    test: ip_lib/sg_dma/tb/test_sg_dma_rtl.py::test_engine[p0]
+  - name: status_fail_not_halting
+    file: sg_dma.sv
+    old: "halted <= 1'b1; err_reg[2] <= 1'b1;                      // status write failed: halt, tail not advanced"
+    new: "err_reg[2] <= 1'b1;"
+    class: error-handling
+    why: "a failed status write does not halt the engine"
+    test: ip_lib/sg_dma/tb/test_sg_dma_rtl.py::test_engine[p0]
+  - name: desc_fetch_not_drained
+    file: sg_dma.sv
+    old: "if (dbeat == 2'(DBEATS - 1)) begin                 // every beat of the burst is taken, whatever its response"
+    new: "if (dbeat == 2'(DBEATS - 1) || m_axi_rresp != 2'b00) begin"
+    class: protocol
+    why: "a failed descriptor fetch stops reading after the first bad beat, leaving the rest of the burst in the memory's read channel"
+    test: ip_lib/sg_dma/tb/test_sg_dma_rtl.py::test_engine[p0]
+  - name: w_before_aw
+    file: sg_dma.sv
+    old: "wire        w_data_ok = (DIR == 1) && data_phase && (w_ahead != '0);"
+    new: "wire        w_data_ok = (DIR == 1) && data_phase;"
+    class: protocol
+    why: "stream data is written before any burst address has been issued"
+    test: ip_lib/sg_dma/tb/test_sg_dma_rtl.py::test_engine[p1]
+    formal: [g32s]
+  - name: status_w_before_aw
+    file: sg_dma.sv
+    old: "(st == S_WA && aw_done) || (w_data_ok && s_axis_tvalid)"
+    new: "(st == S_WA) || (w_data_ok && s_axis_tvalid)"
+    class: protocol
+    why: "the status data is offered before its address has been accepted"
+    test: ip_lib/sg_dma/tb/test_sg_dma_rtl.py::test_engine[p0]
+    formal: [g32m]
+  - name: tail_not_advanced
+    file: sg_dma.sv
+    old: "tail <= tail_next;"
+    new: "tail <= tail;"
+    class: data-loss
+    why: "the consumer index never moves"
+    test: ip_lib/sg_dma/tb/test_sg_dma_rtl.py::test_engine[p0]
+  - name: done_count_double
+    file: sg_dma.sv
+    old: "done_cnt <= done_cnt + 32'd1;"
+    new: "done_cnt <= done_cnt + 32'd2;"
+    class: data-corruption
+    why: "the completion counter counts two"
+    test: ip_lib/sg_dma/tb/test_sg_dma_rtl.py::test_engine[p0]
+  - name: strobe_lane
+    file: sg_dma.sv
+    old: "<< (4 * lane)"
+    new: "<< 0"
+    class: data-corruption
+    why: "the status write's byte strobes ignore which 32-bit lane of a wide beat holds the word"
+    test: ip_lib/sg_dma/tb/test_sg_dma_rtl.py::test_engine[p3] ip_lib/sg_dma/tb/test_sg_dma_rtl.py::test_engine[p5]
+  - name: ring_base_unaligned
+    file: sg_dma.sv
+    old: "4'd2: ring_base[31:4]  <= s_axi_wdata[31:4];           // the ring is 16-byte aligned: bits 3:0 are 0"
+    new: "4'd2: ring_base[31:0]  <= s_axi_wdata;"
+    class: protocol
+    why: "a ring base that is not 16-byte aligned is taken as it is, so a descriptor fetch can cross a 4 KB boundary"
+    test: ip_lib/sg_dma/tb/test_sg_dma_rtl.py::test_engine[p0]
+  - name: stale_burst_length
+    file: sg_dma.sv
+    old: "(out_cnt < OCW'(OUTSTANDING)) && a_ok;"
+    new: "(out_cnt < OCW'(OUTSTANDING));"
+    class: protocol
+    why: "a burst is issued in the clock after the previous one, before its registered length has followed the new address, so it repeats the old length"
+    test: ip_lib/sg_dma/tb/test_sg_dma_rtl.py::test_engine[p0] ip_lib/sg_dma/tb/test_sg_dma_rtl.py::test_engine[p1]

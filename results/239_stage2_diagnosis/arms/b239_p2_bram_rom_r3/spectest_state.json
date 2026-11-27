@@ -1,0 +1,73 @@
+{
+ "enabled": true,
+ "fired": true,
+ "runs": 3,
+ "outcome": "pass",
+ "passed": true,
+ "caught_bug": true,
+ "bench_repaired": true,
+ "design_wrong": 1,
+ "bench_wrong": 1,
+ "bench_writes": 2,
+ "passed_hash": "e65e902fcabcbc2f",
+ "history": [
+  {
+   "t": 1795750560,
+   "step": "write",
+   "files": [
+    "spectest/spec_bench.py",
+    "spectest/spec_ref.py"
+   ],
+   "problems": []
+  },
+  {
+   "t": 1795750579,
+   "step": "run",
+   "rtl": "791f9f0b6895cd67",
+   "ok": false,
+   "failing": [
+    "powerup_rom_and_ram_contents"
+   ],
+   "built": true
+  },
+  {
+   "t": 1795750587,
+   "step": "triage",
+   "verdict": "bench_wrong",
+   "reason": "The request says only that after h_re, h_rdata must show the addressed register \"within 2 clocks\". Bench B samples after one edge past the capture edge and failed on an X value, so it demands the data earlier than the allowed window, while bench A waits the full allowance and passes. Where the request is ambiguous, the verdict goes to bench_wrong."
+  },
+  {
+   "t": 1795750612,
+   "step": "write",
+   "files": [
+    "spectest/spec_bench.py",
+    "spectest/spec_ref.py"
+   ],
+   "problems": []
+  },
+  {
+   "t": 1795750631,
+   "step": "run",
+   "rtl": "791f9f0b6895cd67",
+   "ok": false,
+   "failing": [
+    "powerup_rom_and_ram_contents"
+   ],
+   "built": true
+  },
+  {
+   "t": 1795750641,
+   "step": "triage",
+   "verdict": "design_wrong",
+   "reason": "The request says the host holds rst for a few clocks and that h_rdata must show the addressed register within 2 clocks of h_re, and bench B did exactly that (rst for 5 clocks, 3 idle clocks, then a ROM read) but got an all-X h_rdata. Bench A waits 20 clocks after reset before any access, so it never exercises the early window; the request does not allow a design to need a longer settling time."
+  },
+  {
+   "t": 1795751011,
+   "step": "run",
+   "rtl": "e65e902fcabcbc2f",
+   "ok": true,
+   "failing": [],
+   "built": true
+  }
+ ]
+}

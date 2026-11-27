@@ -207,6 +207,36 @@ areas:
   - "The gate checks interface names and declarations only; protocol behaviour, such as holding valid until ready, is left to review and to the assertions the skills describe."
   - "No development task is an AXI design, so nothing measures this area end to end yet."
   - "Designs for the Zynq processors have skills but no flow step yet; the flow targets the Nexys A7 first."
+- id: dma
+  name: Data movement and DMA
+  summary: Moving blocks of data between memory and a stream, choosing between AMD's DMA cores and a small engine of our own, descriptors, bursts and the page-boundary rule, interrupts, and the software cache contract on the Zynq ports.
+  about: "A DMA engine moves blocks of data between memory and a stream, or between two memories, without the processor touching each word. The area covers the choice of engine (AMD's AXI DMA, central, multichannel and video DMA, the PCIe bridges, or a small engine written for the job), how descriptors, burst length and the number of bursts in flight set the throughput, the page-boundary rule every burst must keep, how a transfer's end is reported to software, and, on the Zynq processors, whether the caches see what the fabric reads and writes. The agent knows this from skills, asks the standing intake questions when a request moves blocks of data, and has an advisory check that flags a design reaching processor memory through a port that does not snoop the caches without a stated software contract. The library holds one engine of our own, simulated and proved against the AXI rules, and measured in simulation only: no board run exists yet."
+  kb: [vendor/amba_axi/ip-cores~dma, vendor/amba_axi/amba~4kb, functions/caches-and-dma, vendor/hw_sw_codesign/*~dma|coherency, family/zynq7000/dram, family/zynq_ultrascale_plus/dram]
+  family_from: {area: amba, topics: ["PS-PL AXI port set", "AXI protocol version at the PS boundary", "Cache coherency of PL DMA buffers", "ACP against HP for CPU-produced buffers"], docs: ["UG585", "UG1085", "UG1037"]}
+  checks:
+  - {file: flow/checks/dma_coherency.py, gate: DMA-COH-01, enforced: false, what: "Advisory, from the spec's dma section and the port names in the sources: a design that reaches processor memory through a high-performance port, which does not snoop the caches, with no declared software cache contract; and a hardware-coherent contract declared on ports that are not coherent. Never fails a run."}
+  - {file: agent/graph/interview.py, gate: DMA_QUESTIONS, enforced: false, what: "Six standing questions added to the interview of a request that moves blocks of data: direction and buffer ownership, size and rate, the memory port, completion and interrupts, back pressure and errors, and the cache contract, each with a default and the reason for it."}
+  evidence:
+  - kind: model
+    source: results/241_dma/summary.json
+    values: ["get:rlat", "pick@points:size|dir=0,data_w=32,max_burst=16,outstanding=4,size=64,n=6", "pick@points:fraction_of_port_limit|dir=0,data_w=32,max_burst=16,outstanding=4,size=64,n=6", "pick@points:size|dir=0,data_w=32,max_burst=16,outstanding=4,size=4096,n=6", "pick@points:fraction_of_port_limit|dir=0,data_w=32,max_burst=16,outstanding=4,size=4096,n=6", "pick@points:size|dir=0,data_w=32,max_burst=16,outstanding=4,size=16384,n=6", "pick@points:fraction_of_port_limit|dir=0,data_w=32,max_burst=16,outstanding=4,size=16384,n=6", "pick@points:fraction_of_port_limit|dir=0,data_w=32,max_burst=16,outstanding=1,size=16384,n=6"]
+    round: 2
+    text: "In simulation against a memory with {0} clocks of read latency, our scatter-gather engine reads {2} of the memory port's limit for descriptors of {1} bytes, {4} for {3} bytes and {6} for {5} bytes, with four bursts in flight; with one burst in flight it stays at {7}. Descriptor overhead, not the data, sets the small-transfer figure."
+  - kind: model
+    source: results/241_dma/faults.json
+    values: ["count@faults:status=caught", "count@faults:name?"]
+    text: "{0} of {1} seeded faults in the engine (a burst across a page boundary, a wrong length, a lost beat under back pressure, an ignored error response, a late interrupt and others) were caught by the simulation bench."
+  - kind: model
+    source: results/241_dma/formal.json
+    values: ["count@proofs:status=PASS,kind=k-induction", "count@proofs:kind=k-induction"]
+    text: "{0} of {1} proofs by k-induction passed: the valid-held-until-ready rules on every channel the engine drives, burst size, alignment and the page-boundary rule, at three data widths in both directions; write data after its address and the burst limit are proved to a bounded depth only."
+  cards: []
+  gaps:
+  - "No board run: throughput and latency are simulation figures against a memory model of ours, with fixed latency and no other masters; the board measurement is pre-registered and not run."
+  - "AMD's DMA cores were not run: the comparison is with a behavioural model built from the product guide's published numbers, and the guide does not state its test bench's memory."
+  - "The engine has no descriptor prefetch, handles one descriptor at a time, does not end a receive on the stream's last-beat flag, and moves whole beats only."
+  - "The agent has not been run on a DMA task yet (it waits for the brief that fixes the harness it would run on); whether it picks and wires the engine correctly is not known."
+  - "The knowledge-bank skills on engine choice and the cache contract are in a pull request and not yet at the pin, so the drawer lists the skills already at the pin."
 - id: ip
   name: AMD IP cores and wizards
   summary: The free IP cores (FIR, DDS, CORDIC, FFT, divider, memory, FIFO, clocking), their licences, and what the wizards do in batch mode.

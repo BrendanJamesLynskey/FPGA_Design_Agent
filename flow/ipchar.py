@@ -68,7 +68,7 @@ def jobs(block: str, part: str, only: set[str], clock_ns: float | None = None) -
             params = {k: v for k, v in full.items() if k != vp}
             gen = {k: (f'"{v}"' if isinstance(v, str) else v) for k, v in full.items()}
             out.append({"block": block, "variant": name, "params": params, "generics": gen, "top": y["top"],
-                        "clock_ns": clock_ns or ch["clock_ns"], "wd": BUILD / block / (part if part != iv.DEFAULT_PART else "") / f"{name}_{point_id(params)}",
+                        "clock_ns": clock_ns or ch["clock_ns"], "clock_port": ch.get("clock_port", "clk"), "wd": BUILD / block / (part if part != iv.DEFAULT_PART else "") / f"{name}_{point_id(params)}",
                         "sources": sources(y)})
     return out
 
@@ -90,7 +90,7 @@ def write_jobs(js: list[dict], part: str, path: Path) -> None:
     for j in js:
         g = [x for k, v in j["generics"].items() for x in (k, v)]
         lines.append("lappend ipchar(jobs) " + tcl_list([f"{j['block']}/{j['wd'].name}", j["top"], str(j["wd"]),
-                                                          j["clock_ns"], g]))
+                                                          j["clock_ns"], g, j.get("clock_port", "clk")]))
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text("\n".join(lines) + "\n")
 

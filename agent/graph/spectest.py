@@ -211,6 +211,8 @@ import spec_bench  # noqa: E402
 def test_spec_bench():
     top = yaml.safe_load((DESIGN_DIR / "build.yaml").read_text())["top"]
     own = vhdl.own_sources(DESIGN_DIR, dict(getattr(spec_bench, "PARAMS", {}) or {}))   # .sv/.v as they are; VHDL as its GHDL netlist
+    supplied = [p for p in srcorder.data_files(DESIGN_DIR) if p.suffix in (".sv", ".v")]       # brief 239: the task's own data/ sources (for example jtag_bus.sv), as the design's build lists them
+    own = own + [p for p in supplied if p not in own]
     sources = own if srcorder.no_shell(DESIGN_DIR) else cocotb_run.SHELL_RTL + own
     for seed in getattr(spec_bench, "SEEDS", (1,)):
         cocotb_run.run("spectest", top, sources, "spec_bench", DESIGN_DIR / "spectest",

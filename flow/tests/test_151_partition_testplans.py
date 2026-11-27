@@ -9,7 +9,7 @@ import pytest
 import yaml
 
 ROOT = Path(__file__).resolve().parents[2]
-ENTRIES = ["pipe_reg", "credit_chan", "axi_reg_slice"]
+ENTRIES = ["pipe_reg", "credit_chan", "axi_reg_slice", "sg_dma"]
 
 
 def plan(e):
@@ -23,7 +23,7 @@ def test_plan_names_resolve(e):
     sby = ""
     for f in (ROOT / "ip_lib" / e / "formal").glob("*.sby"):
         sby += f.read_text()
-    tasks = set(re.findall(r"(?m)^(\w+) (?:prove|cover)\s*$", sby))
+    tasks = set(re.findall(r"(?m)^(\w+) (?:prove|cover|bmc)\s*$", sby))
     used_faults = set()
     ids = [r["id"] for r in p["requirements"]]
     assert len(ids) == len(set(ids))

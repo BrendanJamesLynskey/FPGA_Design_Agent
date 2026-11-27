@@ -45,6 +45,7 @@ except ImportError:                                     # run as a script
 ROOT = Path(__file__).resolve().parents[1]
 RULES_FILE = Path(__file__).with_name("hdl_rules.yaml")
 SEVERE = ("error", "critical warning", "warning")
+SUPPLIED_STYLE_RULES = ("UNUSEDSIGNAL", "UNUSEDPARAM", "DECLFILENAME")      # the same three as agent.core.tools.STUB_RULES
 _VL = re.compile(r"^%(Warning|Error)-?([A-Z0-9_]*):\s*(\S+?):(\d+):(?:\d+:)?\s*(.*)$")
 
 
@@ -112,6 +113,8 @@ def verilator_findings(design: Path) -> tuple[list[dict[str, Any]] | None, str]:
         if not m:
             continue
         sev, code, f, ln, msg = m.groups()
+        if code in SUPPLIED_STYLE_RULES and (design / "data").is_dir() and Path(f).resolve().is_relative_to((design / "data").resolve()):
+            continue                                    # brief 239: style warnings in the supplied, read-only data/ files are not the design's (agent.core.tools.stub_waiver_vlt)
         try:
             f = Path(f).resolve().relative_to(ROOT).as_posix()
         except ValueError:

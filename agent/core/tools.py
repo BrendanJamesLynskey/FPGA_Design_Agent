@@ -302,9 +302,16 @@ STUB_FILE = "sim_stubs"
 STUB_RULES = ("UNUSEDPARAM", "UNUSEDSIGNAL", "DECLFILENAME")
 
 
-def stub_waiver_vlt(srcs: list[str]) -> str:
-    """A Verilator config (``.vlt``) text that switches STUB_RULES off for each source file whose name holds ``sim_stubs``; empty if none."""
-    rows = "".join(f'lint_off -rule {r} -file "{p}"\n' for p in srcs if STUB_FILE in Path(p).name for r in STUB_RULES)
+def stub_waiver_vlt(srcs: list[str], supplied_dir: Path | str | None = None) -> str:
+    """A Verilator config (``.vlt``) text that switches STUB_RULES off for each source file whose name holds ``sim_stubs`` and, brief 239,
+    for each source file under ``supplied_dir`` (the design's ``data/``: files the task supplies and the Designer must keep byte-identical,
+    so a style warning in them is not the Designer's to fix; 316 of the 370 failing lint runs of briefs 213 and 227 had only the two
+    UNUSEDSIGNAL warnings of the supplied ``jtag_bus.sv``). Errors in those files, and every other rule, still fail. Empty if none."""
+    sup = Path(supplied_dir).resolve() if supplied_dir else None
+
+    def supplied(p: str) -> bool:
+        return sup is not None and Path(p).resolve().is_relative_to(sup)
+    rows = "".join(f'lint_off -rule {r} -file "{p}"\n' for p in srcs if STUB_FILE in Path(p).name or supplied(p) for r in STUB_RULES)
     return "`verilator_config\n" + rows if rows else ""
 
 
@@ -323,7 +330,7 @@ def lint(s: Session) -> dict:
         srcs = srcorder.drop_shell(srcs)
     srcs = [str(p) for p in srcorder.order_sv(srcs)]   # 07a2-prep: packages and interfaces first, not name order
     stubs = sorted(glob.glob(str(s.design / "lint" / "*.sv")))
-    vlt = stub_waiver_vlt(srcs)                         # brief 231: the design's own simulation stubs are not linted for unused parameters
+    vlt = stub_waiver_vlt(srcs, s.design / "data")                         # brief 231: the design's own simulation stubs are not linted for unused parameters
     vlt_path: list[str] = []
     if vlt:
         wd = s.design / "build" / "lint"
