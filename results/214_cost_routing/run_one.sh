@@ -11,6 +11,7 @@ STOP_AT="${FDA_STOP_PCT:-92}"
 cd "$ROOT"; mkdir -p "$S/logs" results/214_cost_routing/runs
 LOG="$S/logs/${N}_${ID}_k${K}_${ARM}.log"
 [ -e "$S/STOP" ] && { echo "STOP flag set" | tee -a "$LOG"; exit 3; }
+[ "$N" -gt "${FDA_LAST_RUN:-12}" ] && { echo "run $N beyond the cap of 12 runs (usage and slot budget): not started" | tee -a "$LOG"; exit 3; }
 ver=$("$C/bin/claude" --version | cut -d' ' -f1)
 [ "$ver" = 2.1.321 ] && [ "$(sha256sum "$C/bin/claude" | cut -d' ' -f1)" = "$(cat "$C/bin/claude.sha256")" ] || { echo "PREFLIGHT_FAIL $N: CLI $ver" | tee -a "$LOG"; touch "$S/STOP"; exit 4; }
 pct=$("$H/usage_check.sh" 2>&1 | grep 'Current week (all models)' | grep -o '[0-9]*% used' | head -1 | tr -d '%used ')
