@@ -108,14 +108,17 @@ class Model:
         c = self.cfg
         mq, bd, mp = c.max_qty & 0x7FFFFFFF, c.band & 0x7FFFFFFF, c.max_pos & 0x7FFFFFFF
         npos = self.pos - qty if side else self.pos + qty
+        # Every request takes a token while one is left, whatever the other checks say (the book's rule: Edwards 2026,
+        # chapter 11, the risk gate; owner decision 2026-11-27, brief 246). A refusal for rate takes none.
+        charged = self.tokens > 0
+        if charged: self.tokens -= 1
         if c.kill: return "kill"
         if self.halted: return "halt"
         if qty == 0 or qty > mq: return "qty"
         if ref is None or abs(px - ref) > bd: return "band"
         if abs(npos) > mp: return "pos"
-        if self.tokens == 0: return "rate"
+        if not charged: return "rate"
         self.pos = npos
-        self.tokens -= 1
         return None
 
     # ---- one frame -----------------------------------------------------------------------------------------------

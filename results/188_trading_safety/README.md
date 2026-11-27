@@ -1,6 +1,6 @@
 # results/188_trading_safety: trading-path safety fixes (brief 188)
 
-Records of brief 188: level sizes saturate, risk limits are staged and committed together, the price-band reference can come from software, a notional check as a multiply or a software table, a per-instrument hold-off, and a measured answer on the b58a token bucket. Ideas from Edwards 2026 (ch 8, 9, 13), written from scratch.
+Records of brief 188: level sizes saturate, risk limits are staged and committed together, the price-band reference can come from software, a notional check as a multiply or a software table, a per-instrument hold-off, and a measured answer on the b58a token bucket (a refused request took no token; **changed by brief 246: refused requests are now charged, as in the book**, so this record describes the RTL before it). Ideas from Edwards 2026 (ch 8, 9, 13), written from scratch.
 
 ## Records
 - `uvm/`: the full UVM regression of brief 170/176 on the new RTL (`summary.json` is what the b110 testplan reads; `results.tsv` every run; `coverage_report.md`).

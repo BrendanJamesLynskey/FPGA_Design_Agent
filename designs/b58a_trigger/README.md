@@ -42,7 +42,7 @@ one byte time at 1 Gb/s).
 | speculative / safe | speculative: act before the FCS is known and undo the order if the frame turns out bad; safe: wait for a good FCS |
 | poison | invert an outgoing frame's FCS so that the far end discards it (the undo for an order already on the wire) |
 | hold-off | the minimum number of clocks before the same rule may fire again |
-| token bucket | a rate limit: each order takes a token; tokens come back at a fixed rate up to a maximum |
+| token bucket | a rate limit: each request takes a token, granted or refused (the book's rule); tokens come back at a fixed rate up to a maximum |
 | k-induction | a formal proof that a property holds in every reachable state, not only up to a fixed depth |
 | bounded check | a formal check of every behaviour up to a fixed number of clocks; it finds bugs but is not a proof |
 | OOC | out-of-context synthesis: a block built on its own to measure its cost |

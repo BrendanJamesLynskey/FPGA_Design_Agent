@@ -8,7 +8,11 @@
 //             price; the reference is the book before the triggering message, never the message itself)
 //   position  the position after the order would exceed max_pos in either direction
 //   rate      no token is left: a bucket of `bucket` tokens, one token back every `refill` clocks
-// A grant takes one token and moves the position by the quantity (buy +, sell -). The position counts every order
+// Every request takes one token while one is left, whether it is granted or refused by an earlier check (kill, halt,
+// qty, band, position); a refusal for rate takes none (nothing is left). So a stream of refused requests drains the
+// bucket and is itself rate limited. This follows the book's rate limiter (Edwards 2026, chapter 11, the risk gate:
+// "rejected attempts consume a token"; owner decision 2026-11-27; brief 246). Brief 188 had measured the opposite.
+// A grant moves the position by the quantity (buy +, sell -). The position counts every order
 // granted, whether or not it is later filled or cancelled (no fills exist on the bench), so it is the worst case.
 // Configuration values are taken as unsigned 31-bit numbers (bit 31 ignored) so the arithmetic cannot wrap.
 // Properties: verif/formal/formal_interlocks.sv.
@@ -83,10 +87,10 @@ module interlocks (
             if (tokens > bucket) tokens <= bucket;                      // the host lowered the bucket
             if (reload) tokens <= bucket;
             if (req_v) begin
+                if (tokens != 16'd0) tokens <= tokens - 16'd1;          // every request is charged (wins over a refill in the same clock)
                 if (why == 3'd0) begin
                     g_q    <= 1'b1;
                     pos    <= npos;
-                    tokens <= tokens - 16'd1;                           // wins over a refill in the same clock
                 end else begin
                     rej_v   <= 1'b1;
                     rej_why <= why;

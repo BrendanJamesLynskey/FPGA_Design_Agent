@@ -542,7 +542,7 @@ async def interlocks_under_attack(dut):
 
 @cocotb.test()
 async def rate_limit_burst(dut):
-    """A burst of triggers against a 4-token bucket with no refill: exactly 4 orders, the rest refused for rate."""
+    """A burst of triggers against a 4-token bucket with no refill: the priming frame's refused request has taken one token, so exactly 3 orders, the rest refused for rate."""
     b = Bench(dut)
     await b.start()
     cfg = Config(bucket=4, max_pos=100000)
@@ -562,7 +562,8 @@ async def rate_limit_burst(dut):
     hw = await b.counters()
     compare_counters(hw, m)
     check_outputs(b, exp, m)
-    assert hw["orders_sent"] == 4 and hw["rej_rate"] == 8
+    # the priming frame's own first ADD also asks (the book has no reference price yet: refused for band) and takes a token (brief 246: refused requests are charged), so 3 of the 4 tokens are left
+    assert hw["orders_sent"] == 3 and hw["rej_rate"] == 9
 
 
 @cocotb.test()
@@ -810,7 +811,7 @@ async def limits_staged_commit(dut):
         b.send(bf.with_fcs(bf.feed_frame(1 + k, [bf.Msg(bf.ADD, bf.ASK, k % 8, 10000, 1)])), gap=120)
     await b.drain(600)
     hw = await b.counters()
-    assert hw["orders_sent"] == 4 and hw["rej_rate"] == 8 and hw["rej_qty"] == 0, hw      # the old complete set: bucket 4, quantity limit 10
+    assert hw["orders_sent"] == 3 and hw["rej_rate"] == 9 and hw["rej_qty"] == 0, hw      # the old complete set: bucket 4 (one token went to the priming frame's refused request), quantity limit 10
     assert await b.rd(0x027) == 0
     await b.wr(0x003, 1 << 8)                            # COMMIT
     await b.idle(20)
@@ -819,14 +820,15 @@ async def limits_staged_commit(dut):
         b.send(bf.with_fcs(bf.feed_frame(13 + k, [bf.Msg(bf.ADD, bf.ASK, k % 8, 10000, 1)])), gap=120)
     await b.drain(600)
     hw = await b.counters()
-    assert hw["orders_sent"] == 4 and hw["rej_qty"] == 3, hw
+    assert hw["orders_sent"] == 3 and hw["rej_qty"] == 3, hw
 
 
 @cocotb.test()
-async def rejected_attempts_do_not_charge_the_bucket(dut):
-    """Brief 188 #15: does the token bucket charge a request that an earlier check refuses? Measured here: it does NOT. Seven triggers refused for quantity (six, and the priming frame's own) and one for the kill register leave
-    TOKENS at 4; only a granted order takes a token (interlocks.sv: `tokens <= tokens - 1` is in the grant branch), so a stream of refused requests can never run the bucket empty, and it
-    is also not rate limited itself (every refusal is counted, none is throttled). Four granted orders then empty it and the fifth is refused for rate, which takes nothing."""
+async def rejected_attempts_charge_the_bucket(dut):
+    """Brief 246 (owner decision 2026-11-27; the book's rule, Edwards 2026, chapter 11, the risk gate): every request takes a token while one is left, whether it is granted or refused by an earlier
+    check. (Brief 188 had measured the opposite for the earlier RTL and recorded it; this test replaces that one.) Seven triggers refused for quantity (six, and the priming frame's own) empty a bucket of 4
+    (TOKENS 4 -> 0); the refusals are still counted as quantity refusals, because the quantity check comes before the rate check, and a request that finds no token left takes none. COMMIT refills the bucket to
+    its size (4): two triggers refused for the kill register take two tokens (TOKENS 2), and then of three triggers two are granted and the third is refused for rate."""
     b = Bench(dut)
     await b.start()
     cfg = Config(bucket=4, max_pos=100000, max_qty=0)    # every quantity of 1 is above the limit
@@ -838,17 +840,18 @@ async def rejected_attempts_do_not_charge_the_bucket(dut):
         b.send(bf.with_fcs(bf.feed_frame(1 + k, [bf.Msg(bf.ADD, bf.ASK, k % 8, 10000, 1)])), gap=120)
     await b.drain(600)
     hw = await b.counters()
-    assert hw["rej_qty"] == 7 and hw["orders_sent"] == 0, hw          # the six, and the ADD of the priming frame
-    assert await b.rd(0x027) == 4, "a refused request took a token"
-    await b.wr(0x002, 1 | 1 << 1 | 1 << 3)               # kill register on: refusals for kill
-    b.send(bf.with_fcs(bf.feed_frame(7, [bf.Msg(bf.ADD, bf.ASK, 1, 10000, 1)])), gap=120)
-    await b.drain(400)
-    assert (await b.counters())["rej_kill"] == 1 and await b.rd(0x027) == 4
-    await b.wr(0x002, 1 | 1 << 1)
+    assert hw["rej_qty"] == 7 and hw["orders_sent"] == 0, hw          # the six, and the ADD of the priming frame: all counted as quantity refusals
+    assert await b.rd(0x027) == 0, "refused requests must have taken every token"
     await b.wr(0x020, 10)
     await b.wr(0x003, 1 << 8)                            # COMMIT also refills the bucket to its size (4)
-    for k in range(5):
-        b.send(bf.with_fcs(bf.feed_frame(8 + k, [bf.Msg(bf.ADD, bf.ASK, k % 8, 10000, 1)])), gap=120)
+    await b.wr(0x002, 1 | 1 << 1 | 1 << 3)               # kill register on: refusals for kill
+    for k in range(2):
+        b.send(bf.with_fcs(bf.feed_frame(7 + k, [bf.Msg(bf.ADD, bf.ASK, k, 10000, 1)])), gap=120)
+    await b.drain(600)
+    assert (await b.counters())["rej_kill"] == 2 and await b.rd(0x027) == 2, "a request refused for kill must take a token"
+    await b.wr(0x002, 1 | 1 << 1)
+    for k in range(3):
+        b.send(bf.with_fcs(bf.feed_frame(9 + k, [bf.Msg(bf.ADD, bf.ASK, k % 8, 10000, 1)])), gap=120)
     await b.drain(600)
     hw = await b.counters()
-    assert hw["orders_sent"] == 4 and hw["rej_rate"] == 1 and await b.rd(0x027) == 0, hw
+    assert hw["orders_sent"] == 2 and hw["rej_rate"] == 1 and await b.rd(0x027) == 0, hw
