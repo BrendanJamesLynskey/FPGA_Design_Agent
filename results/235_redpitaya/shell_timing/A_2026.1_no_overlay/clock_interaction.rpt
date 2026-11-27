@@ -1,0 +1,36 @@
+Copyright 1986-2022 Xilinx, Inc. All Rights Reserved. Copyright 2022-2026 Advanced Micro Devices, Inc. All Rights Reserved.
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+| Tool Version : Vivado v.2026.1 (lin64) Build 6511674 Tue Jun 16 11:01:26 MDT 2026
+| Date         : Thu Nov 26 13:28:23 2026
+| Host         : bren-ubuntu24-04 running 64-bit Ubuntu 24.04.4 LTS
+| Command      : report_clock_interaction -file /tmp/claude-1000/-home-brendan-Claude-sandbox/b65cf40d-5157-4ddf-a1b1-68df8207e43b/scratchpad/rep_A/clock_interaction.rpt
+| Design       : red_pitaya_top
+| Device       : 7z010-clg400
+| Speed File   : -1  PRODUCTION 1.12 2019-11-22
+| Design State : Routed
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Clock Interaction Report
+
+Clock Interaction Table
+-----------------------
+
+                                WNS                             TNS Failing  TNS Total    WNS Path         Clock-Pair           Inter-Clock              
+From Clock      To Clock        Clock Edges  WNS(ns)   TNS(ns)    Endpoints    Endpoints  Requirement(ns)  Classification       Constraints              
+--------------  --------------  -----------  -------  --------  -----------  -----------  ---------------  -------------------  -----------------------  
+adc_clk         pll_adc_clk                                               0          388                   Ignored              False Path               
+clk_fpga_0      clk_fpga_0      rise - rise     0.49      0.00            0          416             8.00  Clean                Timed                    
+clk_fpga_0      pll_adc_clk     rise - rise     0.43      0.00            0          409             8.00  Ignored              Max Delay Datapath Only  
+clk_fpga_3      clk_fpga_3      rise - rise     0.24      0.00            0         1978             5.00  Clean                Timed                    
+par_clk         par_clk         rise - rise     4.05      0.00            0          460             8.00  Clean                Timed                    
+par_clk         pll_adc_clk                                               0          147                   Ignored              False Path               
+pll_adc_clk     clk_fpga_0      rise - rise     0.75      0.00            0           40             8.00  No Common Clock      Timed (unsafe)           
+pll_adc_clk     par_clk                                                   0          102                   Ignored              False Path               
+pll_adc_clk     pll_adc_clk     rise - rise    -1.28   -402.31          800        29823             8.00  Clean                Partial False Path       
+pll_adc_clk     pll_dac_clk_1x  rise - rise     1.64      0.00            0           29             8.00  Clean                Partial False Path       
+pll_adc_clk     pll_dac_clk_2x                                            0           31                   Ignored              False Path               
+pll_dac_clk_1x  pll_dac_clk_1x  rise - fall     0.59      0.00            0           45             4.00  Clean                Timed                    
+pll_dac_clk_2x  pll_adc_clk     rise - rise     2.20      0.00            0           28             4.00  Ignored              Max Delay Datapath Only  
+pll_dac_clk_2x  pll_dac_clk_2x  rise - rise    -5.66  -3234.27         2192         5002             4.00  Clean                Partial False Path       
+
+

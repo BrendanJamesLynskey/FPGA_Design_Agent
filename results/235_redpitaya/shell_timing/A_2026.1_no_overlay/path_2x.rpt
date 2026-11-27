@@ -1,0 +1,299 @@
+Copyright 1986-2022 Xilinx, Inc. All Rights Reserved. Copyright 2022-2026 Advanced Micro Devices, Inc. All Rights Reserved.
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+| Tool Version : Vivado v.2026.1 (lin64) Build 6511674 Tue Jun 16 11:01:26 MDT 2026
+| Date         : Thu Nov 26 13:28:31 2026
+| Host         : bren-ubuntu24-04 running 64-bit Ubuntu 24.04.4 LTS
+| Command      : report_timing -from [get_clocks pll_dac_clk_2x] -to [get_clocks pll_dac_clk_2x] -max_paths 3 -nworst 1 -path_type full -file /tmp/claude-1000/-home-brendan-Claude-sandbox/b65cf40d-5157-4ddf-a1b1-68df8207e43b/scratchpad/rep_A/path_2x.rpt
+| Design       : red_pitaya_top
+| Device       : 7z010-clg400
+| Speed File   : -1  PRODUCTION 1.12 2019-11-22
+| Design State : Routed
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Timing Report
+
+Slack (VIOLATED) :        -5.659ns  (required time - arrival time)
+  Source:                 i_asg/chB/inst_axi_dac/inst_axi_fifo_writer/issue_addr_q_reg[7]/C
+                            (rising edge-triggered cell FDRE clocked by pll_dac_clk_2x  {rise@0.000ns fall@2.000ns period=4.000ns})
+  Destination:            i_asg/chB/inst_axi_dac/inst_axi_fifo_writer/req_next_addr_q_reg[31]/D
+                            (rising edge-triggered cell FDRE clocked by pll_dac_clk_2x  {rise@0.000ns fall@2.000ns period=4.000ns})
+  Path Group:             pll_dac_clk_2x
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            4.000ns  (pll_dac_clk_2x rise@4.000ns - pll_dac_clk_2x rise@0.000ns)
+  Data Path Delay:        9.490ns  (logic 5.194ns (54.731%)  route 4.296ns (45.269%))
+  Logic Levels:           18  (CARRY4=13 LUT4=1 LUT5=2 LUT6=2)
+  Clock Path Skew:        -0.187ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    5.385ns = ( 9.385 - 4.000 ) 
+    Source Clock Delay      (SCD):    5.915ns
+    Clock Pessimism Removal (CPR):    0.343ns
+  Clock Uncertainty:      0.063ns  ((TSJ^2 + DJ^2)^1/2) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Discrete Jitter          (DJ):    0.104ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock pll_dac_clk_2x rise edge)
+                                                      0.000     0.000 r  <hidden>
+                         clock source latency         2.378     2.378    <hidden>
+                         propagated clock network latency
+                                                      3.537     5.915    <hidden>
+    SLICE_X10Y48         FDRE                         0.000     5.915 r  i_asg/chB/inst_axi_dac/inst_axi_fifo_writer/issue_addr_q_reg[7]/C
+    SLICE_X10Y48         FDRE (Prop_fdre_C_Q)         0.478     6.393 r  i_asg/chB/inst_axi_dac/inst_axi_fifo_writer/issue_addr_q_reg[7]/Q
+                         net (fo=8, routed)           0.845     7.238    i_asg/chB/inst_axi_dac/inst_axi_fifo_writer/issue_addr_q_reg_n_0_[7]
+    SLICE_X11Y50         LUT4 (Prop_lut4_I0_O)        0.298     7.536 r  i_asg/chB/inst_axi_dac/inst_axi_fifo_writer/axi_sys\\.rlen[0]_i_38/O
+                         net (fo=1, routed)           0.000     7.536    i_asg/chB/inst_axi_dac/inst_axi_fifo_writer/axi_sys\\.rlen[0]_i_38_n_0
+    SLICE_X11Y50         CARRY4 (Prop_carry4_S[0]_CO[3])
+                                                      0.532     8.068 r  i_asg/chB/inst_axi_dac/inst_axi_fifo_writer/axi_sys\\.rlen_reg[0]_i_18/CO[3]
+                         net (fo=1, routed)           0.000     8.068    i_asg/chB/inst_axi_dac/inst_axi_fifo_writer/axi_sys\\.rlen_reg[0]_i_18_n_0
+    SLICE_X11Y51         CARRY4 (Prop_carry4_CI_O[1])
+                                                      0.334     8.402 r  i_asg/chB/inst_axi_dac/inst_axi_fifo_writer/axi_sys\\.rlen_reg[0]_i_21/O[1]
+                         net (fo=1, routed)           0.621     9.024    i_asg/chB/inst_axi_dac/inst_axi_fifo_writer/issue_words_left_c21_out[13]
+    SLICE_X10Y51         CARRY4 (Prop_carry4_S[1]_CO[3])
+                                                      0.836     9.860 r  i_asg/chB/inst_axi_dac/inst_axi_fifo_writer/axi_sys\\.rlen_reg[0]_i_14/CO[3]
+                         net (fo=1, routed)           0.000     9.860    i_asg/chB/inst_axi_dac/inst_axi_fifo_writer/axi_sys\\.rlen_reg[0]_i_14_n_0
+    SLICE_X10Y52         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117     9.977 r  i_asg/chB/inst_axi_dac/inst_axi_fifo_writer/axi_sys\\.rlen_reg[0]_i_12/CO[3]
+                         net (fo=1, routed)           0.000     9.977    i_asg/chB/inst_axi_dac/inst_axi_fifo_writer/axi_sys\\.rlen_reg[0]_i_12_n_0
+    SLICE_X10Y53         CARRY4 (Prop_carry4_CI_O[1])
+                                                      0.323    10.300 r  i_asg/chB/inst_axi_dac/inst_axi_fifo_writer/axi_sys\\.rlen_reg[0]_i_15/O[1]
+                         net (fo=1, routed)           0.842    11.142    i_asg/chB/inst_axi_dac/inst_axi_fifo_writer/axi_sys\\.rlen_reg[0]_i_15_n_6
+    SLICE_X8Y53          LUT6 (Prop_lut6_I5_O)        0.306    11.448 r  i_asg/chB/inst_axi_dac/inst_axi_fifo_writer/axi_sys\\.rlen[0]_i_9/O
+                         net (fo=1, routed)           0.940    12.388    i_asg/chB/inst_axi_dac/inst_axi_fifo_writer/axi_sys\\.rlen[0]_i_9_n_0
+    SLICE_X9Y50          LUT6 (Prop_lut6_I5_O)        0.124    12.512 r  i_asg/chB/inst_axi_dac/inst_axi_fifo_writer/axi_sys\\.rlen[0]_i_3/O
+                         net (fo=15, routed)          0.693    13.204    i_asg/chB/inst_axi_dac/inst_axi_fifo_writer/axi_sys\\.rlen[0]_i_3_n_0
+    SLICE_X7Y50          LUT5 (Prop_lut5_I0_O)        0.124    13.328 r  i_asg/chB/inst_axi_dac/inst_axi_fifo_writer/req_next_addr_q[5]_i_3/O
+                         net (fo=1, routed)           0.000    13.328    i_asg/chB/inst_axi_dac/inst_axi_fifo_writer/req_next_addr_q[5]_i_3_n_0
+    SLICE_X7Y50          CARRY4 (Prop_carry4_S[3]_CO[3])
+                                                      0.401    13.729 r  i_asg/chB/inst_axi_dac/inst_axi_fifo_writer/req_next_addr_q_reg[5]_i_2/CO[3]
+                         net (fo=1, routed)           0.000    13.729    i_asg/chB/inst_axi_dac/inst_axi_fifo_writer/req_next_addr_q_reg[5]_i_2_n_0
+    SLICE_X7Y51          CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.114    13.843 r  i_asg/chB/inst_axi_dac/inst_axi_fifo_writer/req_next_addr_q_reg[9]_i_2/CO[3]
+                         net (fo=1, routed)           0.000    13.843    i_asg/chB/inst_axi_dac/inst_axi_fifo_writer/req_next_addr_q_reg[9]_i_2_n_0
+    SLICE_X7Y52          CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.114    13.957 r  i_asg/chB/inst_axi_dac/inst_axi_fifo_writer/req_next_addr_q_reg[13]_i_2/CO[3]
+                         net (fo=1, routed)           0.000    13.957    i_asg/chB/inst_axi_dac/inst_axi_fifo_writer/req_next_addr_q_reg[13]_i_2_n_0
+    SLICE_X7Y53          CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.114    14.071 r  i_asg/chB/inst_axi_dac/inst_axi_fifo_writer/req_next_addr_q_reg[17]_i_2/CO[3]
+                         net (fo=1, routed)           0.000    14.071    i_asg/chB/inst_axi_dac/inst_axi_fifo_writer/req_next_addr_q_reg[17]_i_2_n_0
+    SLICE_X7Y54          CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.114    14.185 r  i_asg/chB/inst_axi_dac/inst_axi_fifo_writer/req_next_addr_q_reg[21]_i_2/CO[3]
+                         net (fo=1, routed)           0.000    14.185    i_asg/chB/inst_axi_dac/inst_axi_fifo_writer/req_next_addr_q_reg[21]_i_2_n_0
+    SLICE_X7Y55          CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.114    14.299 r  i_asg/chB/inst_axi_dac/inst_axi_fifo_writer/req_next_addr_q_reg[25]_i_2/CO[3]
+                         net (fo=1, routed)           0.000    14.299    i_asg/chB/inst_axi_dac/inst_axi_fifo_writer/req_next_addr_q_reg[25]_i_2_n_0
+    SLICE_X7Y56          CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.114    14.413 r  i_asg/chB/inst_axi_dac/inst_axi_fifo_writer/req_next_addr_q_reg[29]_i_2/CO[3]
+                         net (fo=1, routed)           0.000    14.413    i_asg/chB/inst_axi_dac/inst_axi_fifo_writer/req_next_addr_q_reg[29]_i_2_n_0
+    SLICE_X7Y57          CARRY4 (Prop_carry4_CI_O[1])
+                                                      0.334    14.747 r  i_asg/chB/inst_axi_dac/inst_axi_fifo_writer/req_next_addr_q_reg[31]_i_2/O[1]
+                         net (fo=1, routed)           0.355    15.102    i_asg/chB/inst_axi_dac/inst_axi_fifo_writer/issue_addr_next_c0[31]
+    SLICE_X6Y57          LUT5 (Prop_lut5_I2_O)        0.303    15.405 r  i_asg/chB/inst_axi_dac/inst_axi_fifo_writer/req_next_addr_q[31]_i_1/O
+                         net (fo=1, routed)           0.000    15.405    i_asg/chB/inst_axi_dac/inst_axi_fifo_writer/req_next_addr_q[31]
+    SLICE_X6Y57          FDRE                                         r  i_asg/chB/inst_axi_dac/inst_axi_fifo_writer/req_next_addr_q_reg[31]/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock pll_dac_clk_2x rise edge)
+                                                      4.000     4.000 r  <hidden>
+                         clock source latency         2.205     6.205    <hidden>
+                         propagated clock network latency
+                                                      3.180     9.385    <hidden>
+                         clock pessimism              0.343     9.728    <hidden>
+                         clock uncertainty           -0.063     9.665    <hidden>
+    SLICE_X6Y57          FDRE (Setup_fdre_C_D)        0.081     9.746    i_asg/chB/inst_axi_dac/inst_axi_fifo_writer/req_next_addr_q_reg[31]
+  -------------------------------------------------------------------
+                         required time                          9.746    <hidden>
+                         arrival time                         -15.405    <hidden>
+  -------------------------------------------------------------------
+                         slack                                 -5.659    <hidden>
+
+Slack (VIOLATED) :        -5.499ns  (required time - arrival time)
+  Source:                 i_asg/chB/inst_axi_dac/inst_axi_fifo_writer/issue_addr_q_reg[7]/C
+                            (rising edge-triggered cell FDRE clocked by pll_dac_clk_2x  {rise@0.000ns fall@2.000ns period=4.000ns})
+  Destination:            i_asg/chB/inst_axi_dac/inst_axi_fifo_writer/req_next_addr_q_reg[27]/D
+                            (rising edge-triggered cell FDRE clocked by pll_dac_clk_2x  {rise@0.000ns fall@2.000ns period=4.000ns})
+  Path Group:             pll_dac_clk_2x
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            4.000ns  (pll_dac_clk_2x rise@4.000ns - pll_dac_clk_2x rise@0.000ns)
+  Data Path Delay:        9.332ns  (logic 5.080ns (54.435%)  route 4.252ns (45.564%))
+  Logic Levels:           17  (CARRY4=12 LUT4=1 LUT5=2 LUT6=2)
+  Clock Path Skew:        -0.185ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    5.387ns = ( 9.387 - 4.000 ) 
+    Source Clock Delay      (SCD):    5.915ns
+    Clock Pessimism Removal (CPR):    0.343ns
+  Clock Uncertainty:      0.063ns  ((TSJ^2 + DJ^2)^1/2) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Discrete Jitter          (DJ):    0.104ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock pll_dac_clk_2x rise edge)
+                                                      0.000     0.000 r  <hidden>
+                         clock source latency         2.378     2.378    <hidden>
+                         propagated clock network latency
+                                                      3.537     5.915    <hidden>
+    SLICE_X10Y48         FDRE                         0.000     5.915 r  i_asg/chB/inst_axi_dac/inst_axi_fifo_writer/issue_addr_q_reg[7]/C
+    SLICE_X10Y48         FDRE (Prop_fdre_C_Q)         0.478     6.393 r  i_asg/chB/inst_axi_dac/inst_axi_fifo_writer/issue_addr_q_reg[7]/Q
+                         net (fo=8, routed)           0.845     7.238    i_asg/chB/inst_axi_dac/inst_axi_fifo_writer/issue_addr_q_reg_n_0_[7]
+    SLICE_X11Y50         LUT4 (Prop_lut4_I0_O)        0.298     7.536 r  i_asg/chB/inst_axi_dac/inst_axi_fifo_writer/axi_sys\\.rlen[0]_i_38/O
+                         net (fo=1, routed)           0.000     7.536    i_asg/chB/inst_axi_dac/inst_axi_fifo_writer/axi_sys\\.rlen[0]_i_38_n_0
+    SLICE_X11Y50         CARRY4 (Prop_carry4_S[0]_CO[3])
+                                                      0.532     8.068 r  i_asg/chB/inst_axi_dac/inst_axi_fifo_writer/axi_sys\\.rlen_reg[0]_i_18/CO[3]
+                         net (fo=1, routed)           0.000     8.068    i_asg/chB/inst_axi_dac/inst_axi_fifo_writer/axi_sys\\.rlen_reg[0]_i_18_n_0
+    SLICE_X11Y51         CARRY4 (Prop_carry4_CI_O[1])
+                                                      0.334     8.402 r  i_asg/chB/inst_axi_dac/inst_axi_fifo_writer/axi_sys\\.rlen_reg[0]_i_21/O[1]
+                         net (fo=1, routed)           0.621     9.024    i_asg/chB/inst_axi_dac/inst_axi_fifo_writer/issue_words_left_c21_out[13]
+    SLICE_X10Y51         CARRY4 (Prop_carry4_S[1]_CO[3])
+                                                      0.836     9.860 r  i_asg/chB/inst_axi_dac/inst_axi_fifo_writer/axi_sys\\.rlen_reg[0]_i_14/CO[3]
+                         net (fo=1, routed)           0.000     9.860    i_asg/chB/inst_axi_dac/inst_axi_fifo_writer/axi_sys\\.rlen_reg[0]_i_14_n_0
+    SLICE_X10Y52         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117     9.977 r  i_asg/chB/inst_axi_dac/inst_axi_fifo_writer/axi_sys\\.rlen_reg[0]_i_12/CO[3]
+                         net (fo=1, routed)           0.000     9.977    i_asg/chB/inst_axi_dac/inst_axi_fifo_writer/axi_sys\\.rlen_reg[0]_i_12_n_0
+    SLICE_X10Y53         CARRY4 (Prop_carry4_CI_O[1])
+                                                      0.323    10.300 r  i_asg/chB/inst_axi_dac/inst_axi_fifo_writer/axi_sys\\.rlen_reg[0]_i_15/O[1]
+                         net (fo=1, routed)           0.842    11.142    i_asg/chB/inst_axi_dac/inst_axi_fifo_writer/axi_sys\\.rlen_reg[0]_i_15_n_6
+    SLICE_X8Y53          LUT6 (Prop_lut6_I5_O)        0.306    11.448 r  i_asg/chB/inst_axi_dac/inst_axi_fifo_writer/axi_sys\\.rlen[0]_i_9/O
+                         net (fo=1, routed)           0.940    12.388    i_asg/chB/inst_axi_dac/inst_axi_fifo_writer/axi_sys\\.rlen[0]_i_9_n_0
+    SLICE_X9Y50          LUT6 (Prop_lut6_I5_O)        0.124    12.512 r  i_asg/chB/inst_axi_dac/inst_axi_fifo_writer/axi_sys\\.rlen[0]_i_3/O
+                         net (fo=15, routed)          0.693    13.204    i_asg/chB/inst_axi_dac/inst_axi_fifo_writer/axi_sys\\.rlen[0]_i_3_n_0
+    SLICE_X7Y50          LUT5 (Prop_lut5_I0_O)        0.124    13.328 r  i_asg/chB/inst_axi_dac/inst_axi_fifo_writer/req_next_addr_q[5]_i_3/O
+                         net (fo=1, routed)           0.000    13.328    i_asg/chB/inst_axi_dac/inst_axi_fifo_writer/req_next_addr_q[5]_i_3_n_0
+    SLICE_X7Y50          CARRY4 (Prop_carry4_S[3]_CO[3])
+                                                      0.401    13.729 r  i_asg/chB/inst_axi_dac/inst_axi_fifo_writer/req_next_addr_q_reg[5]_i_2/CO[3]
+                         net (fo=1, routed)           0.000    13.729    i_asg/chB/inst_axi_dac/inst_axi_fifo_writer/req_next_addr_q_reg[5]_i_2_n_0
+    SLICE_X7Y51          CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.114    13.843 r  i_asg/chB/inst_axi_dac/inst_axi_fifo_writer/req_next_addr_q_reg[9]_i_2/CO[3]
+                         net (fo=1, routed)           0.000    13.843    i_asg/chB/inst_axi_dac/inst_axi_fifo_writer/req_next_addr_q_reg[9]_i_2_n_0
+    SLICE_X7Y52          CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.114    13.957 r  i_asg/chB/inst_axi_dac/inst_axi_fifo_writer/req_next_addr_q_reg[13]_i_2/CO[3]
+                         net (fo=1, routed)           0.000    13.957    i_asg/chB/inst_axi_dac/inst_axi_fifo_writer/req_next_addr_q_reg[13]_i_2_n_0
+    SLICE_X7Y53          CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.114    14.071 r  i_asg/chB/inst_axi_dac/inst_axi_fifo_writer/req_next_addr_q_reg[17]_i_2/CO[3]
+                         net (fo=1, routed)           0.000    14.071    i_asg/chB/inst_axi_dac/inst_axi_fifo_writer/req_next_addr_q_reg[17]_i_2_n_0
+    SLICE_X7Y54          CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.114    14.185 r  i_asg/chB/inst_axi_dac/inst_axi_fifo_writer/req_next_addr_q_reg[21]_i_2/CO[3]
+                         net (fo=1, routed)           0.000    14.185    i_asg/chB/inst_axi_dac/inst_axi_fifo_writer/req_next_addr_q_reg[21]_i_2_n_0
+    SLICE_X7Y55          CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.114    14.299 r  i_asg/chB/inst_axi_dac/inst_axi_fifo_writer/req_next_addr_q_reg[25]_i_2/CO[3]
+                         net (fo=1, routed)           0.000    14.299    i_asg/chB/inst_axi_dac/inst_axi_fifo_writer/req_next_addr_q_reg[25]_i_2_n_0
+    SLICE_X7Y56          CARRY4 (Prop_carry4_CI_O[1])
+                                                      0.334    14.633 r  i_asg/chB/inst_axi_dac/inst_axi_fifo_writer/req_next_addr_q_reg[29]_i_2/O[1]
+                         net (fo=1, routed)           0.311    14.944    i_asg/chB/inst_axi_dac/inst_axi_fifo_writer/issue_addr_next_c0[27]
+    SLICE_X8Y56          LUT5 (Prop_lut5_I2_O)        0.303    15.247 r  i_asg/chB/inst_axi_dac/inst_axi_fifo_writer/req_next_addr_q[27]_i_1/O
+                         net (fo=1, routed)           0.000    15.247    i_asg/chB/inst_axi_dac/inst_axi_fifo_writer/req_next_addr_q[27]
+    SLICE_X8Y56          FDRE                                         r  i_asg/chB/inst_axi_dac/inst_axi_fifo_writer/req_next_addr_q_reg[27]/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock pll_dac_clk_2x rise edge)
+                                                      4.000     4.000 r  <hidden>
+                         clock source latency         2.205     6.205    <hidden>
+                         propagated clock network latency
+                                                      3.182     9.387    <hidden>
+                         clock pessimism              0.343     9.730    <hidden>
+                         clock uncertainty           -0.063     9.667    <hidden>
+    SLICE_X8Y56          FDRE (Setup_fdre_C_D)        0.081     9.748    i_asg/chB/inst_axi_dac/inst_axi_fifo_writer/req_next_addr_q_reg[27]
+  -------------------------------------------------------------------
+                         required time                          9.748    <hidden>
+                         arrival time                         -15.247    <hidden>
+  -------------------------------------------------------------------
+                         slack                                 -5.499    <hidden>
+
+Slack (VIOLATED) :        -5.494ns  (required time - arrival time)
+  Source:                 i_asg/chB/inst_axi_dac/inst_axi_fifo_writer/issue_addr_q_reg[7]/C
+                            (rising edge-triggered cell FDRE clocked by pll_dac_clk_2x  {rise@0.000ns fall@2.000ns period=4.000ns})
+  Destination:            i_asg/chB/inst_axi_dac/inst_axi_fifo_writer/req_next_addr_q_reg[30]/D
+                            (rising edge-triggered cell FDRE clocked by pll_dac_clk_2x  {rise@0.000ns fall@2.000ns period=4.000ns})
+  Path Group:             pll_dac_clk_2x
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            4.000ns  (pll_dac_clk_2x rise@4.000ns - pll_dac_clk_2x rise@0.000ns)
+  Data Path Delay:        9.326ns  (logic 5.078ns (54.450%)  route 4.248ns (45.550%))
+  Logic Levels:           18  (CARRY4=13 LUT4=1 LUT5=2 LUT6=2)
+  Clock Path Skew:        -0.186ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    5.386ns = ( 9.386 - 4.000 ) 
+    Source Clock Delay      (SCD):    5.915ns
+    Clock Pessimism Removal (CPR):    0.343ns
+  Clock Uncertainty:      0.063ns  ((TSJ^2 + DJ^2)^1/2) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Discrete Jitter          (DJ):    0.104ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock pll_dac_clk_2x rise edge)
+                                                      0.000     0.000 r  <hidden>
+                         clock source latency         2.378     2.378    <hidden>
+                         propagated clock network latency
+                                                      3.537     5.915    <hidden>
+    SLICE_X10Y48         FDRE                         0.000     5.915 r  i_asg/chB/inst_axi_dac/inst_axi_fifo_writer/issue_addr_q_reg[7]/C
+    SLICE_X10Y48         FDRE (Prop_fdre_C_Q)         0.478     6.393 r  i_asg/chB/inst_axi_dac/inst_axi_fifo_writer/issue_addr_q_reg[7]/Q
+                         net (fo=8, routed)           0.845     7.238    i_asg/chB/inst_axi_dac/inst_axi_fifo_writer/issue_addr_q_reg_n_0_[7]
+    SLICE_X11Y50         LUT4 (Prop_lut4_I0_O)        0.298     7.536 r  i_asg/chB/inst_axi_dac/inst_axi_fifo_writer/axi_sys\\.rlen[0]_i_38/O
+                         net (fo=1, routed)           0.000     7.536    i_asg/chB/inst_axi_dac/inst_axi_fifo_writer/axi_sys\\.rlen[0]_i_38_n_0
+    SLICE_X11Y50         CARRY4 (Prop_carry4_S[0]_CO[3])
+                                                      0.532     8.068 r  i_asg/chB/inst_axi_dac/inst_axi_fifo_writer/axi_sys\\.rlen_reg[0]_i_18/CO[3]
+                         net (fo=1, routed)           0.000     8.068    i_asg/chB/inst_axi_dac/inst_axi_fifo_writer/axi_sys\\.rlen_reg[0]_i_18_n_0
+    SLICE_X11Y51         CARRY4 (Prop_carry4_CI_O[1])
+                                                      0.334     8.402 r  i_asg/chB/inst_axi_dac/inst_axi_fifo_writer/axi_sys\\.rlen_reg[0]_i_21/O[1]
+                         net (fo=1, routed)           0.621     9.024    i_asg/chB/inst_axi_dac/inst_axi_fifo_writer/issue_words_left_c21_out[13]
+    SLICE_X10Y51         CARRY4 (Prop_carry4_S[1]_CO[3])
+                                                      0.836     9.860 r  i_asg/chB/inst_axi_dac/inst_axi_fifo_writer/axi_sys\\.rlen_reg[0]_i_14/CO[3]
+                         net (fo=1, routed)           0.000     9.860    i_asg/chB/inst_axi_dac/inst_axi_fifo_writer/axi_sys\\.rlen_reg[0]_i_14_n_0
+    SLICE_X10Y52         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117     9.977 r  i_asg/chB/inst_axi_dac/inst_axi_fifo_writer/axi_sys\\.rlen_reg[0]_i_12/CO[3]
+                         net (fo=1, routed)           0.000     9.977    i_asg/chB/inst_axi_dac/inst_axi_fifo_writer/axi_sys\\.rlen_reg[0]_i_12_n_0
+    SLICE_X10Y53         CARRY4 (Prop_carry4_CI_O[1])
+                                                      0.323    10.300 r  i_asg/chB/inst_axi_dac/inst_axi_fifo_writer/axi_sys\\.rlen_reg[0]_i_15/O[1]
+                         net (fo=1, routed)           0.842    11.142    i_asg/chB/inst_axi_dac/inst_axi_fifo_writer/axi_sys\\.rlen_reg[0]_i_15_n_6
+    SLICE_X8Y53          LUT6 (Prop_lut6_I5_O)        0.306    11.448 r  i_asg/chB/inst_axi_dac/inst_axi_fifo_writer/axi_sys\\.rlen[0]_i_9/O
+                         net (fo=1, routed)           0.940    12.388    i_asg/chB/inst_axi_dac/inst_axi_fifo_writer/axi_sys\\.rlen[0]_i_9_n_0
+    SLICE_X9Y50          LUT6 (Prop_lut6_I5_O)        0.124    12.512 r  i_asg/chB/inst_axi_dac/inst_axi_fifo_writer/axi_sys\\.rlen[0]_i_3/O
+                         net (fo=15, routed)          0.693    13.204    i_asg/chB/inst_axi_dac/inst_axi_fifo_writer/axi_sys\\.rlen[0]_i_3_n_0
+    SLICE_X7Y50          LUT5 (Prop_lut5_I0_O)        0.124    13.328 r  i_asg/chB/inst_axi_dac/inst_axi_fifo_writer/req_next_addr_q[5]_i_3/O
+                         net (fo=1, routed)           0.000    13.328    i_asg/chB/inst_axi_dac/inst_axi_fifo_writer/req_next_addr_q[5]_i_3_n_0
+    SLICE_X7Y50          CARRY4 (Prop_carry4_S[3]_CO[3])
+                                                      0.401    13.729 r  i_asg/chB/inst_axi_dac/inst_axi_fifo_writer/req_next_addr_q_reg[5]_i_2/CO[3]
+                         net (fo=1, routed)           0.000    13.729    i_asg/chB/inst_axi_dac/inst_axi_fifo_writer/req_next_addr_q_reg[5]_i_2_n_0
+    SLICE_X7Y51          CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.114    13.843 r  i_asg/chB/inst_axi_dac/inst_axi_fifo_writer/req_next_addr_q_reg[9]_i_2/CO[3]
+                         net (fo=1, routed)           0.000    13.843    i_asg/chB/inst_axi_dac/inst_axi_fifo_writer/req_next_addr_q_reg[9]_i_2_n_0
+    SLICE_X7Y52          CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.114    13.957 r  i_asg/chB/inst_axi_dac/inst_axi_fifo_writer/req_next_addr_q_reg[13]_i_2/CO[3]
+                         net (fo=1, routed)           0.000    13.957    i_asg/chB/inst_axi_dac/inst_axi_fifo_writer/req_next_addr_q_reg[13]_i_2_n_0
+    SLICE_X7Y53          CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.114    14.071 r  i_asg/chB/inst_axi_dac/inst_axi_fifo_writer/req_next_addr_q_reg[17]_i_2/CO[3]
+                         net (fo=1, routed)           0.000    14.071    i_asg/chB/inst_axi_dac/inst_axi_fifo_writer/req_next_addr_q_reg[17]_i_2_n_0
+    SLICE_X7Y54          CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.114    14.185 r  i_asg/chB/inst_axi_dac/inst_axi_fifo_writer/req_next_addr_q_reg[21]_i_2/CO[3]
+                         net (fo=1, routed)           0.000    14.185    i_asg/chB/inst_axi_dac/inst_axi_fifo_writer/req_next_addr_q_reg[21]_i_2_n_0
+    SLICE_X7Y55          CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.114    14.299 r  i_asg/chB/inst_axi_dac/inst_axi_fifo_writer/req_next_addr_q_reg[25]_i_2/CO[3]
+                         net (fo=1, routed)           0.000    14.299    i_asg/chB/inst_axi_dac/inst_axi_fifo_writer/req_next_addr_q_reg[25]_i_2_n_0
+    SLICE_X7Y56          CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.114    14.413 r  i_asg/chB/inst_axi_dac/inst_axi_fifo_writer/req_next_addr_q_reg[29]_i_2/CO[3]
+                         net (fo=1, routed)           0.000    14.413    i_asg/chB/inst_axi_dac/inst_axi_fifo_writer/req_next_addr_q_reg[29]_i_2_n_0
+    SLICE_X7Y57          CARRY4 (Prop_carry4_CI_O[0])
+                                                      0.222    14.635 r  i_asg/chB/inst_axi_dac/inst_axi_fifo_writer/req_next_addr_q_reg[31]_i_2/O[0]
+                         net (fo=1, routed)           0.307    14.942    i_asg/chB/inst_axi_dac/inst_axi_fifo_writer/issue_addr_next_c0[30]
+    SLICE_X6Y56          LUT5 (Prop_lut5_I2_O)        0.299    15.241 r  i_asg/chB/inst_axi_dac/inst_axi_fifo_writer/req_next_addr_q[30]_i_1/O
+                         net (fo=1, routed)           0.000    15.241    i_asg/chB/inst_axi_dac/inst_axi_fifo_writer/req_next_addr_q[30]
+    SLICE_X6Y56          FDRE                                         r  i_asg/chB/inst_axi_dac/inst_axi_fifo_writer/req_next_addr_q_reg[30]/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock pll_dac_clk_2x rise edge)
+                                                      4.000     4.000 r  <hidden>
+                         clock source latency         2.205     6.205    <hidden>
+                         propagated clock network latency
+                                                      3.181     9.386    <hidden>
+                         clock pessimism              0.343     9.729    <hidden>
+                         clock uncertainty           -0.063     9.666    <hidden>
+    SLICE_X6Y56          FDRE (Setup_fdre_C_D)        0.081     9.747    i_asg/chB/inst_axi_dac/inst_axi_fifo_writer/req_next_addr_q_reg[30]
+  -------------------------------------------------------------------
+                         required time                          9.747    <hidden>
+                         arrival time                         -15.241    <hidden>
+  -------------------------------------------------------------------
+                         slack                                 -5.494    <hidden>
+
+
+
+

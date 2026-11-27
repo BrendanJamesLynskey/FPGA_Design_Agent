@@ -38,6 +38,17 @@ Rules (raw findings, rule id plus the offending line; no fix hints):
   test shell, or uses either UART pin, the top has both, and design.xdc constrains both. Brief 08a: ``c14_nexys_tiny_cnn``
   run 1 left ``UART_TXD_IN`` out because the design only sends, and the bench, which drives it, scored 0 of 5.
 
+Goal kind "block for a shell" (brief 235; ``Config.block_shell``, the ``.block_for_shell`` marker in the design): the design is a block inside
+a supplied shell, not a board top, so the board-top rules above do not apply. ``check_block_xdc`` and ``check_block_ports`` replace them:
+
+- ``FDA-BLK-1`` a pin, an I/O standard or any port reference in the XDC: a block has no board pins (the shell has them).
+- ``FDA-BLK-2`` ``create_clock`` or ``create_generated_clock``: the shell owns the clock (the block gets it on its ``clk`` port).
+- ``FDA-BLK-3`` any other timing command (delays, waivers, clock groups, max delay): the shell's constraints own every crossing.
+- ``FDA-BLK-4`` a port of the shell interface (``boards/<board>/shell/shell.yaml``) missing on the top module.
+- ``FDA-BLK-5`` a shell port with the wrong direction or width.
+- ``FDA-BLK-6`` a top port the shell does not connect (it would float).
+An empty or absent ``design.xdc`` passes.
+
 The master-XDC parser is ``tools/inventory_check.py``'s.
 """
 
@@ -250,6 +261,84 @@ def check_top_ports(top: str, top_ports: set[str] | None, spec_ports: list[str],
                 elif xdc_ports is not None and u not in {_base(p) for p in xdc_ports}:
                     add("FDA-CON-9", f"the top declares {u} but design.xdc does not constrain it: add board resource "
                         f"{'uart_rx' if u == uart[0] else 'uart_tx'} -> {u} to the board_constraints map.")
+    return out
+
+
+# --- goal kind "block for a shell" (brief 235) -----------------------------------------------------------------
+
+_BLK_CLOCK = re.compile(r"\bcreate_(generated_)?clock\b")
+_BLK_PIN = re.compile(r"\b(PACKAGE_PIN|IOSTANDARD|IOB|DRIVE|SLEW|PULLTYPE)\b|\bget_ports\b", re.I)
+_BLK_TIMING = re.compile(r"\b(set_input_delay|set_output_delay|set_false_path|set_clock_groups|set_max_delay|set_min_delay|set_multicycle_path|"
+                         r"set_clock_latency|set_clock_uncertainty|set_input_jitter|set_system_jitter|set_data_check|set_bus_skew)\b")
+
+
+def load_shell_interface(board_dir: Path, name: str = "shell.yaml") -> dict[str, Any]:
+    """The shell-interface file of a board (``boards/<board>/shell/<name>``)."""
+    f = board_dir / "shell" / Path(name).name
+    if not f.is_file():
+        raise FileNotFoundError(f"{f} does not exist: this board has no supplied shell to build a block for")
+    return yaml.safe_load(f.read_text()) or {}
+
+
+def check_block_xdc(xdc_text: str) -> list[dict[str, Any]]:
+    """FDA-BLK-1 / -2 / -3 over a block's ``design.xdc`` (empty text: no findings)."""
+    out: list[dict[str, Any]] = []
+    lines = xdc_text.splitlines()
+    for n, line in enumerate(lines, 1):
+        code = line.split("#", 1)[0]
+        if not code.strip():
+            continue
+        def add(rule: str, msg: str) -> None:
+            out.append({"rule": rule, "line": n, "text": line.strip(), "message": msg})
+        if _BLK_CLOCK.search(code):
+            add("FDA-BLK-2", "create_clock in a block: the shell owns the clock; the block receives it on its clk port and has no clock of its own to define")
+        elif _BLK_PIN.search(code):
+            add("FDA-BLK-1", "a pin, I/O standard or port reference in a block's constraints: the block is not the board's top and has no pins; the shell "
+                             "has them. Leave design.xdc empty")
+        elif _BLK_TIMING.search(code):
+            add("FDA-BLK-3", "a timing command in a block's constraints: the shell's constraints own the clock crossings and the I/O delays; "
+                             "a block states none")
+        if _DEDICATED.search(code):
+            add("FDA-CON-2", "CLOCK_DEDICATED_ROUTE FALSE disables the dedicated clock-route check")
+    return out
+
+
+def _width_of(w: str) -> int | None:
+    w = (w or "").strip()
+    if not w:
+        return 1
+    m = re.fullmatch(r"\[\s*(\d+)\s*:\s*(\d+)\s*\]", w)
+    return abs(int(m.group(1)) - int(m.group(2))) + 1 if m else None
+
+
+def check_block_ports(top: str, top_ports: dict[str, dict[str, Any]] | None, shell: dict[str, Any]) -> list[dict[str, Any]]:
+    """FDA-BLK-4 / -5 / -6: the top module against the shell interface. ``top_ports`` is name -> {dir, width} (None while the top's source does not
+    exist yet: nothing to check). Findings have ``file`` "rtl" and line 0."""
+    if top_ports is None:
+        return []
+    out: list[dict[str, Any]] = []
+
+    def add(rule: str, msg: str) -> None:
+        out.append({"file": "rtl", "rule": rule, "line": 0, "text": f"module {top}", "message": msg})
+
+    want = {p["name"]: p for p in shell.get("ports") or []}
+    have = {_base(k): v for k, v in top_ports.items()}
+    sname = shell.get("shell", "the shell")
+    for name, p in want.items():
+        if name not in have:
+            add("FDA-BLK-4", f"the top module {top} has no port {name} ({p['dir']}, {p['width']} bit): the shell {sname} connects it by name. Declare it "
+                f"(mark an unused input with `/* verilator lint_off UNUSEDSIGNAL */`); never delete it.")
+            continue
+        h = have[name]
+        if h.get("dir") and h["dir"] != p["dir"]:
+            add("FDA-BLK-5", f"port {name} of {top} is an {h['dir']}, the shell {sname} drives it as an {p['dir']}")
+        hw = _width_of(h.get("width", ""))
+        if hw is not None and hw != int(p["width"]):
+            add("FDA-BLK-5", f"port {name} of {top} is {hw} bit wide, the shell {sname} connects {p['width']} bit")
+    for name in have:
+        if name not in want:
+            add("FDA-BLK-6", f"port {name} of {top} is not in the shell interface of {sname}: the shell does not connect it, so it would float. "
+                f"The block's ports are exactly: {', '.join(want)}")
     return out
 
 

@@ -1,0 +1,99 @@
+Copyright 1986-2022 Xilinx, Inc. All Rights Reserved. Copyright 2022-2026 Advanced Micro Devices, Inc. All Rights Reserved.
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+| Tool Version : Vivado v.2026.1 (lin64) Build 6511674 Tue Jun 16 11:01:26 MDT 2026
+| Date         : Thu Nov 26 13:28:32 2026
+| Host         : bren-ubuntu24-04 running 64-bit Ubuntu 24.04.4 LTS
+| Command      : report_timing -from [get_cells -quiet -hier -filter {NAME =~ i_user6_block/*}] -max_paths 1 -path_type full -file /tmp/claude-1000/-home-brendan-Claude-sandbox/b65cf40d-5157-4ddf-a1b1-68df8207e43b/scratchpad/rep_A/i_user6_block_from.rpt
+| Design       : red_pitaya_top
+| Device       : 7z010-clg400
+| Speed File   : -1  PRODUCTION 1.12 2019-11-22
+| Design State : Routed
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Timing Report
+
+Slack (VIOLATED) :        -0.276ns  (required time - arrival time)
+  Source:                 i_user6_block/u_seq/periods_q_reg[23]/C
+                            (rising edge-triggered cell FDRE clocked by pll_adc_clk  {rise@0.000ns fall@4.000ns period=8.000ns})
+  Destination:            i_user6_block/u_seq/ending_q_reg/D
+                            (rising edge-triggered cell FDRE clocked by pll_adc_clk  {rise@0.000ns fall@4.000ns period=8.000ns})
+  Path Group:             pll_adc_clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            8.000ns  (pll_adc_clk rise@8.000ns - pll_adc_clk rise@0.000ns)
+  Data Path Delay:        8.251ns  (logic 3.346ns (40.551%)  route 4.905ns (59.449%))
+  Logic Levels:           14  (CARRY4=8 LUT2=1 LUT3=1 LUT4=1 LUT5=1 LUT6=2)
+  Clock Path Skew:        0.015ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    5.453ns = ( 13.453 - 8.000 ) 
+    Source Clock Delay      (SCD):    5.895ns
+    Clock Pessimism Removal (CPR):    0.457ns
+  Clock Uncertainty:      0.069ns  ((TSJ^2 + DJ^2)^1/2) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Discrete Jitter          (DJ):    0.118ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock pll_adc_clk rise edge)
+                                                      0.000     0.000 r  <hidden>
+                         clock source latency         2.378     2.378    <hidden>
+                         propagated clock network latency
+                                                      3.517     5.895    <hidden>
+    SLICE_X26Y94         FDRE                         0.000     5.895 r  i_user6_block/u_seq/periods_q_reg[23]/C
+    SLICE_X26Y94         FDRE (Prop_fdre_C_Q)         0.456     6.351 f  i_user6_block/u_seq/periods_q_reg[23]/Q
+                         net (fo=3, routed)           0.953     7.304    i_user6_block/u_seq/periods_q_reg[31]_0[17]
+    SLICE_X27Y94         LUT4 (Prop_lut4_I0_O)        0.124     7.428 r  i_user6_block/u_seq/periods_q[3]_i_9/O
+                         net (fo=1, routed)           0.446     7.874    i_user6_block/u_seq/periods_q[3]_i_9_n_0
+    SLICE_X27Y93         LUT5 (Prop_lut5_I4_O)        0.124     7.998 r  i_user6_block/u_seq/periods_q[3]_i_5/O
+                         net (fo=1, routed)           0.764     8.762    i_user6_block/u_seq/periods_q[3]_i_5_n_0
+    SLICE_X26Y89         LUT6 (Prop_lut6_I5_O)        0.124     8.886 r  i_user6_block/u_seq/periods_q[3]_i_2/O
+                         net (fo=1, routed)           0.000     8.886    i_user6_block/u_seq/periods_q[3]_i_2_n_0
+    SLICE_X26Y89         CARRY4 (Prop_carry4_S[0]_CO[3])
+                                                      0.532     9.418 r  i_user6_block/u_seq/periods_q_reg[3]_i_1/CO[3]
+                         net (fo=1, routed)           0.000     9.418    i_user6_block/u_seq/periods_q_reg[3]_i_1_n_0
+    SLICE_X26Y90         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.114     9.532 r  i_user6_block/u_seq/periods_q_reg[7]_i_1/CO[3]
+                         net (fo=1, routed)           0.000     9.532    i_user6_block/u_seq/periods_q_reg[7]_i_1_n_0
+    SLICE_X26Y91         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.114     9.646 r  i_user6_block/u_seq/periods_q_reg[11]_i_1/CO[3]
+                         net (fo=1, routed)           0.000     9.646    i_user6_block/u_seq/periods_q_reg[11]_i_1_n_0
+    SLICE_X26Y92         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.114     9.760 r  i_user6_block/u_seq/periods_q_reg[15]_i_1/CO[3]
+                         net (fo=1, routed)           0.000     9.760    i_user6_block/u_seq/periods_q_reg[15]_i_1_n_0
+    SLICE_X26Y93         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.114     9.874 r  i_user6_block/u_seq/periods_q_reg[19]_i_1/CO[3]
+                         net (fo=1, routed)           0.000     9.874    i_user6_block/u_seq/periods_q_reg[19]_i_1_n_0
+    SLICE_X26Y94         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.114     9.988 r  i_user6_block/u_seq/periods_q_reg[23]_i_1/CO[3]
+                         net (fo=1, routed)           0.000     9.988    i_user6_block/u_seq/periods_q_reg[23]_i_1_n_0
+    SLICE_X26Y95         CARRY4 (Prop_carry4_CI_O[3])
+                                                      0.329    10.317 f  i_user6_block/u_seq/periods_q_reg[27]_i_1/O[3]
+                         net (fo=3, routed)           0.896    11.212    i_user6_block/u_seq/periods_sat[27]
+    SLICE_X24Y94         LUT2 (Prop_lut2_I0_O)        0.306    11.518 r  i_user6_block/u_seq/end_now0_carry__2_i_7/O
+                         net (fo=1, routed)           0.000    11.518    i_user6_block/u_seq/end_now0_carry__2_i_7_n_0
+    SLICE_X24Y94         CARRY4 (Prop_carry4_S[1]_CO[3])
+                                                      0.533    12.051 r  i_user6_block/u_seq/end_now0_carry__2/CO[3]
+                         net (fo=2, routed)           1.444    13.495    i_user6_block/u_seq/end_now0
+    SLICE_X37Y90         LUT3 (Prop_lut3_I2_O)        0.124    13.619 r  i_user6_block/u_seq/ending_q_i_2/O
+                         net (fo=1, routed)           0.403    14.022    i_user6_block/u_seq/ending_q_i_2_n_0
+    SLICE_X37Y90         LUT6 (Prop_lut6_I0_O)        0.124    14.146 r  i_user6_block/u_seq/ending_q_i_1/O
+                         net (fo=1, routed)           0.000    14.146    i_user6_block/u_seq/ending_q_i_1_n_0
+    SLICE_X37Y90         FDRE                                         r  i_user6_block/u_seq/ending_q_reg/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock pll_adc_clk rise edge)
+                                                      8.000     8.000 r  <hidden>
+                         clock source latency         2.205    10.205    <hidden>
+                         propagated clock network latency
+                                                      3.248    13.453    <hidden>
+                         clock pessimism              0.457    13.910    <hidden>
+                         clock uncertainty           -0.069    13.841    <hidden>
+    SLICE_X37Y90         FDRE (Setup_fdre_C_D)        0.029    13.870    i_user6_block/u_seq/ending_q_reg
+  -------------------------------------------------------------------
+                         required time                         13.870    <hidden>
+                         arrival time                         -14.146    <hidden>
+  -------------------------------------------------------------------
+                         slack                                 -0.276    <hidden>
+
+
+
+

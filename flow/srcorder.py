@@ -21,6 +21,7 @@ from typing import Iterable, Iterator
 ROOT = Path(__file__).resolve().parents[1]
 SHELL_DIR = ROOT / "shell" / "rtl"
 NO_SHELL_MARKER = ".no_shell"
+BLOCK_SHELL_MARKER = ".block_for_shell"          # brief 235: the design is a block inside a supplied shell; the file holds the shell-interface file name
 
 _DEF = re.compile(r"^\s*(?:package|interface)\s+(?:automatic\s+|static\s+)?([A-Za-z_]\w*)", re.M)
 _IMPORT = re.compile(r"\bimport\s+([A-Za-z_]\w*)\s*::")
@@ -72,6 +73,12 @@ def order_sv(files: Iterable[Path | str]) -> list[Path]:
 
 def no_shell(design: Path | str) -> bool:
     return (Path(design) / NO_SHELL_MARKER).is_file()
+
+
+def block_shell(design: Path | str) -> str | None:
+    """Brief 235: the shell-interface file name (``boards/<board>/shell/<name>``) when the design is a block for a supplied shell, else None."""
+    f = Path(design) / BLOCK_SHELL_MARKER
+    return (f.read_text().strip() or "shell.yaml") if f.is_file() else None
 
 
 def is_shell_source(p: Path | str) -> bool:

@@ -1,0 +1,300 @@
+Copyright 1986-2022 Xilinx, Inc. All Rights Reserved. Copyright 2022-2025 Advanced Micro Devices, Inc. All Rights Reserved.
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+| Tool Version : Vivado v.2025.2 (lin64) Build 6299465 Fri Nov 14 12:34:56 MST 2025
+| Date         : Thu Nov 26 15:20:37 2026
+| Host         : bren-ubuntu24-04 running 64-bit Ubuntu 24.04.4 LTS
+| Command      : report_timing_summary -max_paths 10 -routable_nets -report_unconstrained -file red_pitaya_top_timing_summary_routed.rpt -pb red_pitaya_top_timing_summary_routed.pb -rpx red_pitaya_top_timing_summary_routed.rpx -warn_on_violation
+| Design       : red_pitaya_top
+| Device       : 7z010-clg400
+| Speed File   : -1  PRODUCTION 1.12 2019-11-22
+| Design State : Routed
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Timing Summary Report
+
+------------------------------------------------------------------------------------------------
+| Timer Settings
+| --------------
+------------------------------------------------------------------------------------------------
+
+  Enable Multi Corner Analysis               :  Yes
+  Enable Pessimism Removal                   :  Yes
+  Pessimism Removal Resolution               :  Nearest Common Node
+  Enable Input Delay Default Clock           :  No
+  Enable Preset / Clear Arcs                 :  No
+  Disable Flight Delays                      :  No
+  Ignore I/O Paths                           :  No
+  Timing Early Launch at Borrowing Latches   :  No
+  Borrow Time for Max Delay Exceptions       :  Yes
+  Merge Timing Exceptions                    :  Yes
+  Inter-SLR Compensation                     :  Conservative
+
+  Corner  Analyze    Analyze    
+  Name    Max Paths  Min Paths  
+  ------  ---------  ---------  
+  Slow    Yes        Yes        
+  Fast    Yes        Yes        
+
+
+------------------------------------------------------------------------------------------------
+| Report Methodology
+| ------------------
+------------------------------------------------------------------------------------------------
+
+Rule       Severity          Description                                                                                            Violations  
+---------  ----------------  -----------------------------------------------------------------------------------------------------  ----------  
+TIMING-6   Critical Warning  No common primary clock between related clocks                                                         1           
+TIMING-7   Critical Warning  No common node between related clocks                                                                  1           
+TIMING-17  Critical Warning  Non-clocked sequential cell                                                                            1           
+CKBF-1     Warning           connects_I_driver_BUFR                                                                                 1           
+PDRC-190   Warning           Suboptimally placed synchronized register chain                                                        2           
+SYNTH-6    Warning           Timing of a RAM block might be sub-optimal                                                             32          
+TIMING-9   Warning           Unknown CDC Logic                                                                                      1           
+TIMING-10  Warning           Missing property on synchronizer                                                                       1           
+TIMING-16  Warning           Large setup violation                                                                                  756         
+TIMING-18  Warning           Missing input or output delay                                                                          61          
+TIMING-20  Warning           Non-clocked latch                                                                                      17          
+TIMING-24  Warning           Overridden Max delay datapath only                                                                     4           
+TIMING-28  Warning           Auto-derived clock referenced by a timing constraint                                                   7           
+TIMING-47  Warning           False path, asynchronous clock group or max delay datapath only constraint between synchronous clocks  2           
+ULMTCS-1   Warning           Control Sets use limits recommend reduction                                                            1           
+XDCC-5     Warning           User Non-Timing constraint/property overwritten                                                        4           
+XDCH-2     Warning           Same min and max delay values on IO port                                                               32          
+LATCH-1    Advisory          Existing latches in the design                                                                         1           
+REQP-1959  Advisory          connects_SERDES_RST_driver_not_FF                                                                      1           
+
+Note: This report is based on the most recent report_methodology run and may not be up-to-date. Run report_methodology on the current design for the latest report.
+
+
+
+check_timing report
+
+Table of Contents
+-----------------
+1. checking no_clock (52)
+2. checking constant_clock (0)
+3. checking pulse_width_clock (0)
+4. checking unconstrained_internal_endpoints (19)
+5. checking no_input_delay (17)
+6. checking no_output_delay (50)
+7. checking multiple_clock (0)
+8. checking generated_clocks (0)
+9. checking loops (0)
+10. checking partial_input_delay (0)
+11. checking partial_output_delay (0)
+12. checking latch_loops (0)
+
+1. checking no_clock (52)
+-------------------------
+ There are 17 register/latch pins with no clock driven by root clock pin: i_daisy/genblk4[0].tx_cfg_sel_reg[1]/Q (HIGH)
+
+ There are 17 register/latch pins with no clock driven by root clock pin: i_daisy/genblk4[0].tx_cfg_sel_reg[2]/Q (HIGH)
+
+ There are 17 register/latch pins with no clock driven by root clock pin: i_hk/daisy_mode_o_reg[0]/Q (HIGH)
+
+ There is 1 register/latch pin with no clock driven by root clock pin: i_hk/dna_clk_reg/Q (HIGH)
+
+
+2. checking constant_clock (0)
+------------------------------
+ There are 0 register/latch pins with constant_clock.
+
+
+3. checking pulse_width_clock (0)
+---------------------------------
+ There are 0 register/latch pins which need pulse_width check
+
+
+4. checking unconstrained_internal_endpoints (19)
+-------------------------------------------------
+ There are 19 pins that are not constrained for maximum delay. (HIGH)
+
+ There are 0 pins that are not constrained for maximum delay due to constant clock.
+
+
+5. checking no_input_delay (17)
+-------------------------------
+ There are 17 input ports with no input delay specified. (HIGH)
+
+ There are 0 input ports with no input delay but user has a false path constraint.
+
+
+6. checking no_output_delay (50)
+--------------------------------
+ There are 49 ports with no output delay specified. (HIGH)
+
+ There are 0 ports with no output delay but user has a false path constraint
+
+ There is 1 port with no output delay but with a timing clock defined on it or propagating through it (LOW)
+
+
+7. checking multiple_clock (0)
+------------------------------
+ There are 0 register/latch pins with multiple clocks.
+
+
+8. checking generated_clocks (0)
+--------------------------------
+ There are 0 generated clocks that are not connected to a clock source.
+
+
+9. checking loops (0)
+---------------------
+ There are 0 combinational loops in the design.
+
+
+10. checking partial_input_delay (0)
+------------------------------------
+ There are 0 input ports with partial input delay specified.
+
+
+11. checking partial_output_delay (0)
+-------------------------------------
+ There are 0 ports with partial output delay specified.
+
+
+12. checking latch_loops (0)
+----------------------------
+ There are 0 combinational latch loops in the design through latch input
+
+
+
+------------------------------------------------------------------------------------------------
+| Design Timing Summary
+| ---------------------
+------------------------------------------------------------------------------------------------
+
+    WNS(ns)      TNS(ns)  TNS Failing Endpoints  TNS Total Endpoints      WHS(ns)      THS(ns)  THS Failing Endpoints  THS Total Endpoints     WPWS(ns)     TPWS(ns)  TPWS Failing Endpoints  TPWS Total Endpoints  
+    -------      -------  ---------------------  -------------------      -------      -------  ---------------------  -------------------     --------     --------  ----------------------  --------------------  
+     -5.655    -2717.669                   2390                36887        0.050        0.000                      0                36647        0.750        0.000                       0                 14062  
+
+
+Timing constraints are not met.
+
+
+------------------------------------------------------------------------------------------------
+| Clock Summary
+| -------------
+------------------------------------------------------------------------------------------------
+
+Clock             Waveform(ns)         Period(ns)      Frequency(MHz)
+-----             ------------         ----------      --------------
+adc_clk           {0.000 4.000}        8.000           125.000         
+  clk_fb          {0.000 4.000}        8.000           125.000         
+  pll_adc_clk     {0.000 4.000}        8.000           125.000         
+  pll_dac_clk_1x  {0.000 4.000}        8.000           125.000         
+  pll_dac_clk_2p  {-0.500 1.500}       4.000           250.000         
+  pll_dac_clk_2x  {0.000 2.000}        4.000           250.000         
+  pll_ser_clk     {0.000 2.000}        4.000           250.000         
+clk_fpga_0        {0.000 4.000}        8.000           125.000         
+clk_fpga_1        {0.000 2.000}        4.000           250.000         
+clk_fpga_2        {0.000 10.000}       20.000          50.000          
+clk_fpga_3        {0.000 2.500}        5.000           200.000         
+dac_clk_o         {0.000 4.000}        8.000           125.000         
+rx_clk            {0.000 2.000}        4.000           250.000         
+  par_clk         {0.000 4.000}        8.000           125.000         
+
+
+------------------------------------------------------------------------------------------------
+| Intra Clock Table
+| -----------------
+------------------------------------------------------------------------------------------------
+
+Clock                 WNS(ns)      TNS(ns)  TNS Failing Endpoints  TNS Total Endpoints      WHS(ns)      THS(ns)  THS Failing Endpoints  THS Total Endpoints     WPWS(ns)     TPWS(ns)  TPWS Failing Endpoints  TPWS Total Endpoints  
+-----                 -------      -------  ---------------------  -------------------      -------      -------  ---------------------  -------------------     --------     --------  ----------------------  --------------------  
+adc_clk                                                                                                                                                             2.000        0.000                       0                     1  
+  clk_fb                                                                                                                                                            6.751        0.000                       0                     2  
+  pll_adc_clk          -1.336     -345.294                    826                29647        0.055        0.000                      0                29647        2.750        0.000                       0                 11198  
+  pll_dac_clk_1x        0.306        0.000                      0                   45        0.176        0.000                      0                   45        3.500        0.000                       0                    47  
+  pll_dac_clk_2p                                                                                                                                                    1.845        0.000                       0                     3  
+  pll_dac_clk_2x       -5.655    -2372.375                   1564                 4072        0.050        0.000                      0                 4072        0.750        0.000                       0                  1337  
+  pll_ser_clk                                                                                                                                                       1.845        0.000                       0                     4  
+clk_fpga_0              1.340        0.000                      0                  416        0.122        0.000                      0                  416        3.500        0.000                       0                   227  
+clk_fpga_3              0.022        0.000                      0                 1978        0.061        0.000                      0                 1978        1.000        0.000                       0                   967  
+rx_clk                                                                                                                                                              2.333        0.000                       0                     4  
+  par_clk               3.409        0.000                      0                  460        0.095        0.000                      0                  460        3.020        0.000                       0                   272  
+
+
+------------------------------------------------------------------------------------------------
+| Inter Clock Table
+| -----------------
+------------------------------------------------------------------------------------------------
+
+From Clock      To Clock            WNS(ns)      TNS(ns)  TNS Failing Endpoints  TNS Total Endpoints      WHS(ns)      THS(ns)  THS Failing Endpoints  THS Total Endpoints  
+----------      --------            -------      -------  ---------------------  -------------------      -------      -------  ---------------------  -------------------  
+pll_dac_clk_2x  pll_adc_clk           2.453        0.000                      0                   22                                                                        
+clk_fpga_0      pll_adc_clk           0.661        0.000                      0                  210                                                                        
+pll_adc_clk     pll_dac_clk_1x        1.549        0.000                      0                   29        0.190        0.000                      0                   29  
+pll_adc_clk     clk_fpga_0            0.757        0.000                      0                   40        0.737        0.000                      0                   32  
+
+
+------------------------------------------------------------------------------------------------
+| Other Path Groups Table
+| -----------------------
+------------------------------------------------------------------------------------------------
+
+Path Group    From Clock    To Clock          WNS(ns)      TNS(ns)  TNS Failing Endpoints  TNS Total Endpoints      WHS(ns)      THS(ns)  THS Failing Endpoints  THS Total Endpoints  
+----------    ----------    --------          -------      -------  ---------------------  -------------------      -------      -------  ---------------------  -------------------  
+
+
+------------------------------------------------------------------------------------------------
+| User Ignored Path Table
+| -----------------------
+------------------------------------------------------------------------------------------------
+
+Path Group      From Clock      To Clock      
+----------      ----------      --------      
+(none)          pll_adc_clk     clk_fpga_0      
+(none)                          clk_fpga_3      
+(none)          pll_adc_clk     par_clk         
+(none)          adc_clk         pll_adc_clk     
+(none)          clk_fpga_0      pll_adc_clk     
+(none)          par_clk         pll_adc_clk     
+(none)          pll_adc_clk     pll_adc_clk     
+(none)          pll_dac_clk_2x  pll_adc_clk     
+(none)          pll_adc_clk     pll_dac_clk_1x  
+(none)          pll_adc_clk     pll_dac_clk_2x  
+(none)          pll_dac_clk_2x  pll_dac_clk_2x  
+
+
+------------------------------------------------------------------------------------------------
+| Unconstrained Path Table
+| ------------------------
+------------------------------------------------------------------------------------------------
+
+Path Group      From Clock      To Clock      
+----------      ----------      --------      
+(none)          par_clk                         
+(none)          pll_adc_clk                     
+(none)          pll_dac_clk_1x                  
+(none)          pll_dac_clk_2p                  
+(none)          pll_dac_clk_2x                  
+(none)          pll_ser_clk                     
+(none)                          clk_fpga_0      
+(none)                          pll_adc_clk     
+(none)                          pll_dac_clk_1x  
+(none)                          pll_dac_clk_2x  
+(none)                          rx_clk          
+
+
+------------------------------------------------------------------------------------------------
+| Timing Details
+| --------------
+------------------------------------------------------------------------------------------------
+
+
+---------------------------------------------------------------------------------------------------
+From Clock:  adc_clk
+  To Clock:  adc_clk
+
+Setup :           NA  Failing Endpoints,  Worst Slack           NA  ,  Total Violation           NA
+Hold  :           NA  Failing Endpoints,  Worst Slack           NA  ,  Total Violation           NA
+PW    :            0  Failing Endpoints,  Worst Slack        2.000ns,  Total Violation        0.000ns
+---------------------------------------------------------------------------------------------------
+
+
+Pulse Width Checks
+--------------------------------------------------------------------------------------
+Clock Name:         adc_clk
+Waveform(ns):       { 0.000 4.000 }
+Period(ns):         8.000

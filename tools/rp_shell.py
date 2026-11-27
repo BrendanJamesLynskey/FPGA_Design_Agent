@@ -40,6 +40,7 @@ TOP_SHA256 = "fa9d2a5c09702c6ca3d3bf43bb9f43af9ea06cde4642c143dce39b2818096065" 
 BLOCK_DEFAULT = ROOT / "boards" / "redpitaya_stemlab_125_14" / "shell" / "rp_user_block.sv"
 SLOT = 7
 VIVADO_TCL = "red_pitaya_vivado_Z10.tcl"
+OVERLAY_NAME = "fda_overlay.xdc"        # brief 235: our constraints overlay, added after the vendor's files (boards/redpitaya_stemlab_125_14/shell/fda_overlay.xdc)
 
 #: (marker in the vendor top, replacement): each marker must occur exactly once. The first adds the block's DAC term to the sum, the second declares it, the
 #: third replaces the slot-7 stub with the block. Indentation is the vendor's.
@@ -111,7 +112,7 @@ def fetch(work: Path) -> None:
         raise SystemExit("fetched commit is not the pin")
 
 
-def prepare(work: Path, blocks: list[Path], module7: str = "rp_user_block", module6: str | None = None, baseline: bool = False) -> Path:
+def prepare(work: Path, blocks: list[Path], module7: str = "rp_user_block", module6: str | None = None, baseline: bool = False, overlay: Path | None = None, explore: bool = False) -> Path:
     work.mkdir(parents=True, exist_ok=True)
     fetch(work)
     v = work / "vendor"
@@ -140,25 +141,59 @@ def prepare(work: Path, blocks: list[Path], module7: str = "rp_user_block", modu
             ipt.write_text(t.replace(*BD_VERSION))
     # the vendor script installs a Tcl-store app over the network; the build does not need it (it is the UltraFast rule set, not part of the result)
     tcl = (v / VIVADO_TCL).read_text()
-    (v / "fda_vivado_Z10.tcl").write_text(tcl.replace("tclapp::install -quiet ultrafast", "# tclapp::install -quiet ultrafast   (removed by tools/rp_shell.py: it needs the network)"))
+    tcl = tcl.replace("tclapp::install -quiet ultrafast", "# tclapp::install -quiet ultrafast   (removed by tools/rp_shell.py: it needs the network)")
+    if overlay is not None:                  # brief 235: our own constraints, read after the vendor's (never an edit of the vendor's files)
+        shutil.copy(overlay, new / "sdc" / OVERLAY_NAME)
+        tcl = overlay_tcl(tcl)
+    if explore:                              # brief 235: our own implementation directives (the vendor script runs the default flow)
+        tcl = explore_tcl(tcl)
+    (v / "fda_vivado_Z10.tcl").write_text(tcl)
+    (work / "explore.json").write_text(json.dumps({"explore": bool(explore)}))
+    (work / "overlay.json").write_text(json.dumps({"overlay": OVERLAY_NAME, "sha256": sha256(overlay)} if overlay is not None else {}))
     return new
 
 
-def build_argv(work: Path, mem: str = "8G", unit: str | None = None) -> list[str]:
+def overlay_tcl(tcl: str, name: str = OVERLAY_NAME) -> str:
+    """The vendor's build script with our constraints overlay added after its own constraint files (read late, so it can refer to anything they define).
+    Raises SystemExit if the marker line is not there exactly once (the shell changed since the pin)."""
+    marker = "set gith [exec git log"
+    if tcl.count(marker) != 1:
+        raise SystemExit(f"{VIVADO_TCL}: the marker {marker!r} is not there exactly once; the shell changed since the pin")
+    return tcl.replace(marker, f"add_files -fileset constrs_1 sdc/{name}      ;# fda_shell: our constraints overlay (tools/rp_shell.py --overlay)\n"
+                               f"set_property PROCESSING_ORDER LATE [get_files {name}]\n" + marker)
+
+
+EXPLORE = ("\nlaunch_runs impl_1\n",
+           "\n# fda_shell: implementation directives (tools/rp_shell.py --explore); the vendor script runs the default flow\n"
+           "set_property STEPS.PLACE_DESIGN.ARGS.DIRECTIVE Explore [get_runs impl_1]\n"
+           "set_property STEPS.PHYS_OPT_DESIGN.IS_ENABLED true [get_runs impl_1]\n"
+           "set_property STEPS.PHYS_OPT_DESIGN.ARGS.DIRECTIVE Explore [get_runs impl_1]\n"
+           "set_property STEPS.ROUTE_DESIGN.ARGS.DIRECTIVE Explore [get_runs impl_1]\n"
+           "launch_runs impl_1\n")
+
+
+def explore_tcl(tcl: str) -> str:
+    """The vendor's build script with the Explore directives on placement, physical optimisation and routing of its ``impl_1`` run."""
+    if tcl.count(EXPLORE[0]) != 1:
+        raise SystemExit(f"{VIVADO_TCL}: the line 'launch_runs impl_1' is not there exactly once; the shell changed since the pin")
+    return tcl.replace(*EXPLORE)
+
+
+def build_argv(work: Path, mem: str = "8G", unit: str | None = None, vivado: str | None = None) -> list[str]:
     """The command the build runs: Vivado batch on the vendor script, inside a transient systemd scope with a memory cap, at nice 15."""
-    vivado = subprocess.run([sys.executable, str(ROOT / "flow" / "version_pin.py"), "--vivado"], capture_output=True, text=True).stdout.strip()
+    vivado = vivado or subprocess.run([sys.executable, str(ROOT / "flow" / "version_pin.py"), "--vivado"], capture_output=True, text=True).stdout.strip()
     inner = ["nice", "-n", "15", vivado, "-nojournal", "-nolog", "-mode", "batch", "-source", "fda_vivado_Z10.tcl", "-tclargs", NEW_PRJ]
     scope = ["systemd-run", "--user", "--scope", "--quiet", "-p", f"MemoryMax={mem}"] + (["--unit", unit] if unit else [])
     return scope + inner
 
 
-def build(work: Path, mem: str = "8G") -> int:
+def build(work: Path, mem: str = "8G", vivado: str | None = None) -> int:
     v = work / "vendor"
     if not (v / "prj" / NEW_PRJ).is_dir():
         raise SystemExit("run prepare first")
     log = work / "build.log"
     with log.open("w") as fh:
-        rc = subprocess.run(build_argv(work, mem, unit=f"fda-rp-shell-{os.getpid()}"), cwd=v, stdout=fh, stderr=subprocess.STDOUT).returncode
+        rc = subprocess.run(build_argv(work, mem, unit=f"fda-rp-shell-{os.getpid()}", vivado=vivado), cwd=v, stdout=fh, stderr=subprocess.STDOUT).returncode
     print(f"vivado exit {rc}; log {log}")
     return rc
 
@@ -204,7 +239,7 @@ def package(work: Path, out: Path) -> dict:
             "part": "xc7z010clg400-1", "slot": SLOT, "slot_address": f"0x40{SLOT}00000", "top_sha256_before": TOP_SHA256,
             "top_sha256_after": sha256(v / TOP_REL), "bd_script_version_line": "changed from 2025.1 to the running Vivado version in prj/fda_shell/ip/system.tcl and the IP scripts under ip/ip/",
             "vivado_version": next(iter(re.findall(r"Vivado v(\d{4}\.\d)", (work / "build.log").read_text(errors="replace"))), None), "blocks": {n: sha256(v / "rtl" / n) for n in (json.loads((work / "blocks.json").read_text()) if (work / "blocks.json").is_file() else [])},
-            "bit_bin_sha256": sha256(out / "fpga.bit.bin"), "bit_bin_bytes": (out / "fpga.bit.bin").stat().st_size, "build_id": sha256(out / "fpga.bit.bin")[:8]}
+            "explore": bool(json.loads((work / "explore.json").read_text()).get("explore")) if (work / "explore.json").is_file() else False, "overlay": (json.loads((work / "overlay.json").read_text()) if (work / "overlay.json").is_file() else {}) or None, "bit_bin_sha256": sha256(out / "fpga.bit.bin"), "bit_bin_bytes": (out / "fpga.bit.bin").stat().st_size, "build_id": sha256(out / "fpga.bit.bin")[:8]}
     info.update(parse_reports(o))
     (out / "build.json").write_text(json.dumps(info, indent=1) + "\n")
     return info
@@ -218,19 +253,22 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--block", type=Path, action="append", default=[], help="a block's SystemVerilog file (default: the trivial rp_user_block)")
     p.add_argument("--slot7", default="rp_user_block", help="the module for slot 7 (0x40700000)")
     p.add_argument("--slot6", default=None, help="the module for slot 6 (0x40600000), optional")
+    p.add_argument("--overlay", type=Path, help="our constraints file, read after the vendor's constraints (default none; see boards/redpitaya_stemlab_125_14/shell/fda_overlay.xdc)")
+    p.add_argument("--explore", action="store_true", help="the Explore directives on placement, physical optimisation and routing (default: the vendor script's default flow)")
     p.add_argument("--baseline", action="store_true", help="no patch and no block: the vendor's own top (version lines changed only)")
     p = sub.add_parser("build")
     p.add_argument("workdir", type=Path)
     p.add_argument("--mem", default="8G")
+    p.add_argument("--vivado", default=None, help="the vivado executable (default: the repo's pinned Vivado); e.g. /opt/Xilinx/2025.2/Vivado/bin/vivado")
     p = sub.add_parser("package")
     p.add_argument("workdir", type=Path)
     p.add_argument("outdir", type=Path)
     sub.add_parser("check")
     a = ap.parse_args(argv)
     if a.cmd == "prepare":
-        print(prepare(a.workdir, a.block, a.slot7, a.slot6, a.baseline))
+        print(prepare(a.workdir, a.block, a.slot7, a.slot6, a.baseline, a.overlay, a.explore))
     elif a.cmd == "build":
-        return build(a.workdir, a.mem)
+        return build(a.workdir, a.mem, a.vivado)
     elif a.cmd == "package":
         print(json.dumps(package(a.workdir, a.outdir), indent=1))
     else:
