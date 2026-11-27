@@ -39,6 +39,12 @@ Licence: BSD 3-clause, Red Pitaya d.o.o.; see [THIRD_PARTY_NOTICES.md](../../THI
 [shell/rp_user_block.sv](shell/rp_user_block.sv) is the template and the trivial test block (ID, scratch, a free-running counter, the two ADC samples, two DAC terms); its behaviour in the cases a
 user could guess wrong is written at the top of the file and checked by [shell/tb_rp_user_block.sv](shell/tb_rp_user_block.sv).
 
+## Shell files added by brief 235
+
+- [shell/shell.yaml](shell/shell.yaml): the interface the shell gives a block (the ports of `rp_user_block`); the goal kind "block for a shell" (`--block-for-shell`) checks a block's ports against it instead of checking pins.
+- [shell/fda_overlay.xdc](shell/fda_overlay.xdc): our constraints, read after the vendor's (`tools/rp_shell.py prepare --overlay`). It waives the timing of the vendor's own generator and oscilloscope logic, which this image does not use, and says so in its comments;
+  the measured result and what it does not claim are in [results/235_redpitaya](../../results/235_redpitaya/README.md).
+
 ## Loading is volatile and the owner's
 
 A custom bitstream is loaded at run time by the OS (`overlay.sh` or `fpgautil`, through the Linux FPGA manager); the PL configuration is volatile, so a power cycle returns the factory image.

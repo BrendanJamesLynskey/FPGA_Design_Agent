@@ -280,7 +280,7 @@ def config_from_json(c: dict):
                   verif_profile=c.get("verif_profile", "standard"), verif_sets=_literal(c.get("verif_sets")),
                   settings_file=Path(c["settings_file"]) if c.get("settings_file") not in (None, "None", "") else None, settings_flags=_literal(c.get("settings_flags")),
                   profile=c.get("profile", "single"), roles=c.get("roles") or None,
-                  no_shell=flag("no_shell"),
+                  no_shell=flag("no_shell"), block_shell=c.get("block_shell") if c.get("block_shell") not in (None, "None") else "",
                   data_dir=Path(c["data_dir"]) if c.get("data_dir") not in (None, "None") else None,
                   oracle=c.get("oracle", "openrouter"), oracle_cc_model=c.get("oracle_cc_model", "claude-haiku-5-5"),
                   spec_tests=flag("spec_tests"), spectest_model=c.get("spectest_model", "claude-sonnet-5-5"),
@@ -613,6 +613,10 @@ def build_parser() -> argparse.ArgumentParser:
                    help="the subject is the USB-UART itself: build, lint and simulate without the test shell "
                         "(07a2-prep; also set when --hidden-spec sits next to a bench.yaml with no_shell: true, and for a board "
                         "with no UART such as the KR260, from its board file: brief 209a)")
+    r.add_argument("--block-for-shell", nargs="?", const="shell.yaml", default="", metavar="SHELL_FILE",
+                   help="goal kind 'block for a shell' (brief 235): the design is a block inside a supplied shell (for example the Red Pitaya vendor shell), not a "
+                        "board top. The constraints gate then checks the block's ports against boards/<board>/shell/SHELL_FILE (default shell.yaml) and "
+                        "refuses pins, clocks and timing commands in design.xdc, which may stay empty. Implies --no-shell")
     r.add_argument("--data-dir", type=Path,
                    help="the task's data/ files (weights, images ...), copied to <design>/data (07a2-prep; default: "
                         "data/ next to spec.md, when it exists)")
@@ -862,6 +866,8 @@ def _run_main(a, args: list[str], ap: argparse.ArgumentParser) -> int:
             sb = settings_doc["settings"]["board"]["value"]
             if sb and not any(x.startswith("--board") for x in args):
                 a.board = sb
+        if a.block_for_shell and not (ROOT / "boards" / a.board / "shell" / Path(a.block_for_shell).name).is_file():      # brief 235
+            ap.error(f"--block-for-shell: boards/{a.board}/shell/{Path(a.block_for_shell).name} does not exist (this board has no supplied shell)")
         try:                                                  # brief 194: a bad profile or switch fails before anything runs
             vp = _prof.from_cli(a.verif_profile, a.verif_set, a.verif_level if any(x.startswith("--verif-level") for x in args) else None, a.spec_tests)
         except _prof.ProfileError as e:
@@ -873,7 +879,7 @@ def _run_main(a, args: list[str], ap: argparse.ArgumentParser) -> int:
                      model=a.model, hidden_spec=a.hidden_spec, stop_after=a.stop_after,
                      harness=a.harness, cc_model=a.cc_model, cc_effort=a.cc_effort,
                      verif_level=vp['cfg']['verif_level'], profile=a.profile, roles=parse_roles(a.roles),
-                     no_shell=a.no_shell or task_no_shell(a.hidden_spec), data_dir=a.data_dir or task_data_dir(a.spec),
+                     no_shell=a.no_shell or task_no_shell(a.hidden_spec), block_shell=a.block_for_shell, data_dir=a.data_dir or task_data_dir(a.spec),
                      oracle=a.oracle, oracle_cc_model=a.oracle_cc_model, spec_tests=vp['cfg']['spec_tests'],
                      spectest_model=a.spectest_model, spectest_max_loops=a.spectest_max_loops,
                      skill_routing=a.skill_routing, router_model=a.router_model, router_k=a.router_k,

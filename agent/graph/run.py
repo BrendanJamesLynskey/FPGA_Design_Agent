@@ -116,6 +116,7 @@ class Config:
     profile: str = "single"         # per-role model routing (05f): single | cvdp (agent.graph.role_models.PROFILES)
     roles: dict | None = None       # explicit per-role overrides on top of the profile: role -> {harness, model, effort}
     no_shell: bool = False          # 07a2-prep: the subject is the USB-UART itself: built, linted and simulated without the test shell
+    block_shell: str = ""           # brief 235: goal kind "block for a shell": the shell-interface file (boards/<board>/shell/<name>); "" = a board top as before
     data_dir: Path | None = None    # 07a2-prep: the task's data/ files (weights, images ...), copied to <design>/data (read-only)
     oracle: str = "openrouter"      # 07a2-prep: where the interview oracle runs: openrouter (--model) | claude_code (the Max plan)
     oracle_cc_model: str = "claude-haiku-5-5"
@@ -2360,6 +2361,8 @@ def new_runtime(cfg: Config, client: Callable | None = None, run_id: str | None 
     bad_cap = _perm_cap.check_hard_cap(cfg.run_limits.get("usd"))
     if bad_cap:
         raise _perm_cap.NeverRefused("hard_cap", bad_cap)
+    if cfg.block_shell:                                           # brief 235: a block inside a supplied shell is built, linted and simulated without the UART test shell
+        cfg.no_shell = True
     if not cfg.no_shell and transport_of(cfg) == "jtag_bus":     # brief 209a: a board with no UART has no test shell to build in
         cfg.no_shell = True
     run_id = run_id or time.strftime("%Y%m%d-%H%M%S-") + uuid.uuid4().hex[:4]
@@ -2372,6 +2375,8 @@ def new_runtime(cfg: Config, client: Callable | None = None, run_id: str | None 
         (design / "__init__.py").write_text("")
         if cfg.no_shell:
             (design / srcorder.NO_SHELL_MARKER).write_text("")
+        if cfg.block_shell:
+            (design / srcorder.BLOCK_SHELL_MARKER).write_text(cfg.block_shell + "\n")
         if cfg.hdl == "vhdl":                                # brief 55: flow.vhdl.design_language reads it
             from flow.vhdl import HDL_MARKER
             (design / HDL_MARKER).write_text("vhdl\n")

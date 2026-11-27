@@ -1,0 +1,27 @@
+# The interface the Red Pitaya shell gives a block (brief 235, goal kind "block for a shell"). The block is not a board top: it has no pins, no clock
+# input of its own and no timing constraints. The shell (the vendor's red_pitaya_top, built by tools/rp_shell.py) instantiates it in a system-bus slot
+# with exactly these ports (the same list as rp_user_block.sv). The constraints gate for a block (agent/core/constraints.py, FDA-BLK-*) checks the top
+# module against this list instead of checking design.xdc against the board's pins.
+schema: fpga-design-agent/shell-interface/v1
+shell: rp_shell_v0_94
+board: redpitaya_stemlab_125_14
+description: >-
+  Vendor RedPitaya-FPGA shell v0.94 at the pinned commit 728a4f37e9. A block sits in system-bus slot 7 (0x40700000) or slot 6 (0x40600000), clocked by the
+  shell's 125 MHz ADC clock, reset by the shell's synchronous active-low reset, and answers the shell's one-access-per-cycle ack bus.
+clock: {port: clk, freq_mhz: 125, source: "the shell's adc_clk (BUFG of the PLL's 125 MHz output); the shell constrains it, the block never does"}
+reset: {port: rstn, active_low: true, synchronous: true, source: "the shell's adc_rstn"}
+ports:
+  - {name: clk,       dir: input,  width: 1,  role: clock}
+  - {name: rstn,      dir: input,  width: 1,  role: reset}
+  - {name: sys_addr,  dir: input,  width: 32, role: bus}
+  - {name: sys_wdata, dir: input,  width: 32, role: bus}
+  - {name: sys_wen,   dir: input,  width: 1,  role: bus}
+  - {name: sys_ren,   dir: input,  width: 1,  role: bus}
+  - {name: sys_rdata, dir: output, width: 32, role: bus}
+  - {name: sys_err,   dir: output, width: 1,  role: bus}
+  - {name: sys_ack,   dir: output, width: 1,  role: bus}
+  - {name: adc_a,     dir: input,  width: 14, role: data, signed: true}
+  - {name: adc_b,     dir: input,  width: 14, role: data, signed: true}
+  - {name: dac_a,     dir: output, width: 14, role: data, signed: true}
+  - {name: dac_b,     dir: output, width: 14, role: data, signed: true}
+# Ports a block may leave out: none required to be used, but every port above must exist on the top, because the shell connects all of them by name.

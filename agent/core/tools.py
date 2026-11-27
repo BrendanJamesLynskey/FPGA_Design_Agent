@@ -1032,6 +1032,8 @@ def check(s: Session, names: list[str] | None = None, scope: str = "auto", level
                            "CLOCK_DEDICATED_ROUTE FALSE, pins and I/O standards as in the master XDC, commands in the "
                            "XDC allow-list.", {})
 def check_constraints(s: Session) -> dict:
+    if srcorder.block_shell(s.design):                      # brief 235: goal kind "block for a shell": the block's interface to the shell, not board pins
+        return check_block_constraints(s)
     # the XDC check needs only the XDC: a missing build.yaml must not block it (build reports it instead)
     files = con_files(s, load_build_cfg(s)) if (s.design / "build.yaml").is_file() else \
         [s.design / "design.xdc"] if (s.design / "design.xdc").is_file() else []
@@ -1055,6 +1057,51 @@ def check_constraints(s: Session) -> dict:
     return {"ok": not found, "output": (out or "no findings") + ("\n" + "\n".join(notes) if notes else ""), "findings": found}
 
 
+def block_top_ports(s: Session) -> dict | None:
+    """Brief 235: name -> {dir, width} of the block's top module (build.yaml ``top`` over ``sources``); None while its source does not exist."""
+    from flow.standards_check import parse_modules
+    f = s.design / "build.yaml"
+    if not f.is_file():
+        return None
+    try:
+        cfg = yaml.safe_load(f.read_text()) or {}
+    except yaml.YAMLError:
+        return None
+    top, srcs = cfg.get("top"), cfg.get("sources") or []
+    if not top or not isinstance(srcs, list):
+        return None
+    for pat in srcs:
+        for h in sorted(glob.glob(str(s.root / str(pat)))):
+            if srcorder.is_shell_source(h) or not Path(h).resolve().is_relative_to(s.design):
+                continue
+            try:
+                for m in parse_modules(Path(h).read_text(), Path(h).name):
+                    if m.name == top:
+                        return dict(m.ports)
+            except OSError:
+                pass
+    return None
+
+
+def check_block_constraints(s: Session) -> dict:
+    """Brief 235: the constraints gate for a block inside a supplied shell. design.xdc may be empty or absent; it carries no pin, clock or timing
+    command (FDA-BLK-1..3); the top module has the shell interface's ports, directions and widths (FDA-BLK-4..6)."""
+    name = srcorder.block_shell(s.design) or "shell.yaml"
+    try:
+        shell = con.load_shell_interface(s.root / "boards" / s.board, name)
+    except FileNotFoundError as e:
+        return {"ok": False, "output": str(e), "findings": []}
+    found: list[dict] = []
+    xdc = s.design / "design.xdc"
+    text = xdc.read_text() if xdc.is_file() else ""
+    for x in con.check_block_xdc(text) + con.check_xdc_safety(text):
+        found.append({"file": "design.xdc", **x})
+    top = (yaml.safe_load((s.design / "build.yaml").read_text()) or {}).get("top") if (s.design / "build.yaml").is_file() else None
+    found += con.check_block_ports(str(top), block_top_ports(s), shell) if top else []
+    out = "\n".join(f"{x['file']}:{x['line']}: {x['rule']} {x['message']}\n    {x['text']}" for x in found)
+    return {"ok": not found, "output": out or "no findings (block for a shell: the block has no pins, clock or timing constraints of its own)", "findings": found}
+
+
 @tool("board_constraints", "Write design.xdc from the board's resource names; you never write pin numbers. 'map' is a "
                            "list of {resource, port}: resource is a board resource (clk100, led[0:15], sw[0:15], seg, "
                            "an, btnc, uart_rx, ...; name, name[i] or name[a:b]), port is YOUR design's port name (a "
@@ -1068,6 +1115,10 @@ def check_constraints(s: Session) -> dict:
        "write": {"type": "boolean"}})
 def board_constraints(s: Session, map: list[dict[str, str]] | None = None, write: bool = True) -> dict:
     board_dir = s.root / "boards" / s.board
+    if srcorder.block_shell(s.design):                       # brief 235: a block inside a shell has no pins to map
+        return {"ok": False, "output": "this design is a block for a supplied shell: it has no board pins, so there is nothing to map. Leave design.xdc "
+                                       "empty; the shell's own constraints give the clock and the pins. check_constraints checks the block's ports against the shell.",
+                "errors": ["block for a shell: no pins"]}
     if not map:
         cat = con.resource_catalogue(board_dir)
         return {"output": "board resources (name[first:last]):\n" + con.describe_catalogue(cat), "resources": sorted(cat)}
