@@ -41,7 +41,7 @@ from agent.core.runner import ContainerRunner, LocalRunner, container_available
 from agent.core.session import ROOT
 from agent.graph import review as rv
 from agent.graph.contract import contract_argv, parse_result
-from agent.graph.interview import (Interview, Question, SpecOracle, apply_register_answer, ensure_dma_questions, ensure_protocol_questions, ensure_register_question, ensure_reset_model_question, merge_summaries,
+from agent.graph.interview import (Interview, Question, SpecOracle, apply_register_answer, ensure_clock_relation_question, ensure_dma_questions, ensure_protocol_questions, ensure_register_question, ensure_reset_model_question, merge_summaries,
                                    register_map_errors)
 from agent.graph.llm import BudgetExceeded, Meter, chat_model
 from agent.graph.roles import ROLES, RoleJail, role_inputs, role_session
@@ -1858,6 +1858,7 @@ def node_gate(state: State) -> dict:
             from agent.graph.lab_interview import ensure_lab_questions
             spec, _lab_q = ensure_lab_questions(rt.design, spec, person=rt.cfg.interview == "on")    # brief 221: only the gaps in the lab, with defaults and reasons
             spec, _rm = ensure_reset_model_question(spec)            # brief 231: no reset input -> ask the reset model (reset or reprogram)
+            spec, _cr = ensure_clock_relation_question(spec)         # brief 242: two or more clocks and no stated relation -> ask how they relate
             errs = register_map_errors(req, spec)           # 07a2 fix 1: ask for the register map before the interview
             if errs:
                 ev["spec"], ev["signed_off"], ev["spec_errors"] = spec, False, errs

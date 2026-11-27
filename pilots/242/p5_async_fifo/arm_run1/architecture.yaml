@@ -1,0 +1,78 @@
+schema: fpga-design-agent/architecture/v1
+design: p5_async_fifo_soak
+blocks:
+- name: jtag_bus
+  function: supplied JTAG (BSCANE2 USER4) register bus, unchanged, clk = wclk
+- name: rst_gen
+  function: 16-cycle power-up reset counter in wclk, active high, plus reset_sync into rclk
+- name: soak_core
+  function: register file, control, snapshot, LEDs; the simulated toplevel
+- name: prbs_writer
+  function: PRBS-31 (x^31+x^28+1) 32-bit word generator and FIFO write control (wclk)
+- name: async_fifo
+  function: 512x32 FIFO, simple dual port block RAM, Gray pointers with 2-flop synchronisers
+- name: prbs_checker
+  function: reader (rclk) with slow-read divider, PRBS check, inject, rclk counters
+- name: cnt_handshake
+  function: toggle handshake carrying the three rclk counters to wclk with held values
+interfaces:
+- name: regbus
+  between: [jtag_bus, soak_core]
+  protocol: simple
+  prefix: h
+  module: soak_core
+- name: fifo_wr
+  between: [prbs_writer, async_fifo]
+  protocol: simple
+  prefix: wr
+  module: async_fifo
+- name: fifo_rd
+  between: [async_fifo, prbs_checker]
+  protocol: simple
+  prefix: rd
+  module: async_fifo
+clock_domains:
+- name: wclk
+  clock: clk_25m
+  freq_mhz: 25
+- name: rclk
+  clock: rclk
+  freq_mhz: 156.25
+reset:
+  synchronisers: [reset_sync]
+crossings:
+- from: wclk
+  to: rclk
+  signal: FIFO write pointer (Gray)
+  primitive: xpm_cdc_gray
+  inline_in: async_fifo
+- from: rclk
+  to: wclk
+  signal: FIFO read pointer (Gray)
+  primitive: xpm_cdc_gray
+  inline_in: async_fifo
+- from: wclk
+  to: rclk
+  signal: RUN, SLOW_READ control bits
+  primitive: xpm_cdc_array_single
+  inline_in: soak_core
+- from: wclk
+  to: rclk
+  signal: INJECT and CLEAR pulses (toggle)
+  primitive: xpm_cdc_pulse
+  inline_in: soak_core
+- from: wclk
+  to: rclk
+  signal: reset (active high)
+  primitive: reset_sync
+  inline_in: soak_top
+- from: rclk
+  to: wclk
+  signal: rclk counters (WORDS_R, DATA_ERRS, UNDERFLOWS) held value, with request/ack
+  primitive: xpm_cdc_handshake
+  inline_in: cnt_handshake
+predicted_resources:
+  lut: [350, 800]
+  ff: [800, 1400]
+  bram_tile: [1, 2]
+  dsp: 0

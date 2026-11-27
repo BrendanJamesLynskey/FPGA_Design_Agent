@@ -1,0 +1,90 @@
+schema: fpga-design-agent/architecture/v1
+design: p5_async_fifo_soak
+blocks:
+  - name: jtag_bus
+    function: BSCANE2 USER4 register bus (supplied data/jtag_bus.sv, unchanged), clk_c3
+  - name: rst_gen
+    function: power-up counter holds rst high 8 clk_c3 cycles; xpm_cdc_async_rst synchroniser into gt_refclk
+  - name: p5_core
+    function: register file (ID, BUILD, SCRATCH, CTRL, snapshot window), LEDs, sfp_tx_disable tie-off, simulated toplevel
+  - name: wr_side
+    function: clk_c3 PRBS-31 writer, STALL_W, WORDS_W, OVERFLOWS, OCC_MAX
+  - name: rd_side
+    function: gt_refclk reader, PRBS-31 checker, WORDS_R, DATA_ERRS, UNDERFLOWS, slow-read divider, inject
+  - name: async_fifo
+    function: xpm_fifo_async 512 x 32 (one RAMB36), gray pointers inside
+  - name: snapshot_xfer
+    function: handshake that captures gt_refclk counters into clk_c3 snapshot registers
+  - name: refclk_buf
+    function: IBUFDS_GTE4 on SFP+ MGTREFCLK0 then BUFG; no GT channel
+interfaces:
+  - name: reg_port
+    between: [jtag_bus, p5_core]
+    protocol: simple
+    prefix: h
+    module: p5_core
+  - name: fifo_wr
+    between: [wr_side, async_fifo]
+    protocol: simple
+    prefix: fifo_w
+    module: p5_core
+  - name: fifo_rd
+    between: [async_fifo, rd_side]
+    protocol: simple
+    prefix: fifo_r
+    module: p5_core
+clock_domains:
+  - name: clk_c3
+    clock: clk_c3
+    freq_mhz: 25
+  - name: gt_refclk
+    clock: gt_refclk_p
+    freq_mhz: 156.25
+reset:
+  synchronisers: [rst_sync_rd]
+crossings:
+  - from: clk_c3
+    to: gt_refclk
+    signal: rst
+    primitive: xpm_cdc_async_rst
+    inline_in: p5_core
+  - from: clk_c3
+    to: gt_refclk
+    signal: fifo data and gray pointers
+    primitive: xpm_fifo_async
+    inline_in: p5_core
+  - from: clk_c3
+    to: gt_refclk
+    signal: RUN, SLOW_READ
+    primitive: xpm_cdc_array_single
+    inline_in: p5_core
+  - from: clk_c3
+    to: gt_refclk
+    signal: INJECT pulse
+    primitive: xpm_cdc_pulse
+    inline_in: p5_core
+  - from: clk_c3
+    to: gt_refclk
+    signal: CLEAR pulse
+    primitive: xpm_cdc_pulse
+    inline_in: p5_core
+  - from: clk_c3
+    to: gt_refclk
+    signal: snapshot request
+    primitive: xpm_cdc_handshake
+    inline_in: p5_core
+  - from: gt_refclk
+    to: clk_c3
+    signal: reader counters snapshot (WORDS_R, DATA_ERRS, UNDERFLOWS)
+    primitive: xpm_cdc_handshake
+    inline_in: p5_core
+  - from: gt_refclk
+    to: clk_c3
+    signal: data error seen flag
+    primitive: xpm_cdc_single
+    inline_in: p5_core
+predicted_resources:
+  lut: [350, 800]
+  ff: [800, 1400]
+  bram_tile: [1, 2]
+  dsp: 0

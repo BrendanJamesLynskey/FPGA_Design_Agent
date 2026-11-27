@@ -1,0 +1,83 @@
+schema: fpga-design-agent/architecture/v1
+design: p5_async_fifo_soak
+blocks:
+- name: jtag_bus
+  function: "supplied BSCANE2 USER4 register bus, unchanged (data/jtag_bus.sv); h_* port in clk_wr domain"
+- name: p5_core
+  function: "register core, CTRL and snapshot registers, LEDs; the simulated toplevel"
+- name: prbs_wr
+  function: "PRBS-31 (x^31+x^28+1) 32-bit-per-word writer generator and FIFO write gating, STALL_W, WORDS_W, OVERFLOWS, OCC_MAX counters"
+- name: fifo
+  function: "xpm_fifo_async 512 x 32, Gray pointers, 2-flop synchronisers"
+- name: prbs_rd
+  function: "reader pop control with SLOW_READ divider (1 pop per 8 clk_rd), PRBS-31 checker, inject, WORDS_R, DATA_ERRS, UNDERFLOWS counters"
+- name: cdc_ctrl
+  function: "RUN, SLOW_READ, INJECT, CLEAR to reader domain; reader counters back to writer domain by handshake for a coherent snapshot"
+- name: rst_gen
+  function: "power-on counter of RESET_HOLD_CYCLES clk_wr clocks drives jtag_bus rst; per-domain reset synchronisers for the FIFO"
+- name: top
+  function: "thin top: IBUFDS_GTE4 and BUFG_GT for clk_rd, jtag_bus, reset generator, core; sfp_tx_disable tied 1"
+interfaces:
+- name: host_regbus
+  between: [jtag_bus, p5_core]
+  protocol: simple
+  prefix: h
+  module: p5_core
+- name: board_leds
+  between: [p5_core, top]
+  protocol: gpio
+  prefix: led
+  module: p5_async_fifo_soak
+clock_domains:
+- name: clk_wr
+  clock: clk_25mhz
+  freq_mhz: 25
+- name: clk_rd
+  clock: gt_refclk_p
+  freq_mhz: 156.25
+- name: tck
+  clock: tck
+  freq_mhz: 0
+reset:
+  synchronisers: [xpm_cdc_async_rst]
+crossings:
+- from: tck
+  to: clk_wr
+  signal: "jtag_bus command request and command word"
+  primitive: xpm_cdc_array_single
+  inline_in: jtag_bus
+- from: clk_wr
+  to: tck
+  signal: "jtag_bus response word"
+  primitive: xpm_cdc_array_single
+  inline_in: jtag_bus
+- from: clk_wr
+  to: clk_rd
+  signal: "FIFO pointers and data"
+  primitive: xpm_fifo_async
+  inline_in: fifo
+- from: clk_wr
+  to: clk_rd
+  signal: "RUN, SLOW_READ (quasi-static control)"
+  primitive: xpm_cdc_array_single
+  inline_in: cdc_ctrl
+- from: clk_wr
+  to: clk_rd
+  signal: "INJECT and CLEAR request"
+  primitive: xpm_cdc_handshake
+  inline_in: cdc_ctrl
+- from: clk_rd
+  to: clk_wr
+  signal: "WORDS_R, DATA_ERRS, UNDERFLOWS (96 bit, coherent at snapshot)"
+  primitive: xpm_cdc_handshake
+  inline_in: cdc_ctrl
+- from: clk_wr
+  to: clk_rd
+  signal: "FIFO reset release"
+  primitive: xpm_cdc_async_rst
+  inline_in: rst_gen
+predicted_resources:
+  lut: [300, 800]
+  ff: [800, 1500]
+  bram_tile: [1, 2]
+  dsp: 0

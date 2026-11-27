@@ -1,0 +1,16 @@
+{
+ "written": [
+  {
+   "between": [
+    "clk_c3",
+    "gt_refclk"
+   ],
+   "kind": "async",
+   "reason": "a crossing clk_c3 -> gt_refclk through xpm_cdc_async_rst is declared in architecture.yaml (state clock_relations to say otherwise, e.g. related)",
+   "mode": "bound",
+   "line": "set_max_delay -datapath_only -from [get_clocks -of_objects [get_ports {clk_c3}]] -to [get_clocks gt_refclk] [expr {min([get_property PERIOD [get_clocks -of_objects [get_ports {clk_c3}]]], [get_property PERIOD [get_clocks gt_refclk]])}]\nset_max_delay -datapath_only -from [get_clocks gt_refclk] -to [get_clocks -of_objects [get_ports {clk_c3}]] [expr {min([get_property PERIOD [get_clocks -of_objects [get_ports {clk_c3}]]], [get_property PERIOD [get_clocks gt_refclk]])}]"
+  }
+ ],
+ "refused": [],
+ "skipped": []
+}

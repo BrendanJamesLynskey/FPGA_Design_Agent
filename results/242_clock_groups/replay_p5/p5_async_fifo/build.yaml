@@ -1,0 +1,11 @@
+# Brief 230 replay: the design inputs of 224 arm p5 run 1 (20261125-193550-9069) at the state where it stopped
+# (stage 3, post_synth_no_unconstrained_endpoints: u_usr/CCLK no clock; led[0], led[1] no output delay), built with the new flow.
+top: p5_async_fifo_soak
+part: xck26-sfvc784-2LV-c
+board: kr260
+sources:
+  - results/242_clock_groups/replay_p5/p5_async_fifo/rtl/*.sv
+  - results/242_clock_groups/replay_p5/p5_async_fifo/data/jtag_bus.sv
+constraints:
+  - results/242_clock_groups/replay_p5/p5_async_fifo/design.xdc
+generics: {}

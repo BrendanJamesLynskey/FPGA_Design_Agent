@@ -1,0 +1,3 @@
+# Clock groups from the declared clock relations (architecture.yaml clock_relations, or spec.yaml; flow/known_constraints.py, brief 242).
+# clk_wr / clk_rd: async: a crossing clk_wr -> clk_rd through xpm_fifo_async is declared in architecture.yaml (state clock_relations to say otherwise, e.g. related) (bounded, not grouped: a crossing macro carries set_max_delay -datapath_only, which a clock group would override)
+set_max_delay -datapath_only -from [get_clocks -of_objects [get_ports {clk_25mhz}]] -to [get_clocks -of_objects [get_ports {gt_refclk_p}]] [expr {min([get_property PERIOD [get_clocks -of_objects [get_ports {clk_25mhz}]]], [get_property PERIOD [get_clocks -of_objects [get_ports {gt_refclk_p}]]])}]

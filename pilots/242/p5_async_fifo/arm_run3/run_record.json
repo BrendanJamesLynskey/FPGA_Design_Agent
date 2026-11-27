@@ -1,0 +1,68 @@
+{
+ "run_id": "20261127-081353-d5bb",
+ "design": "p5_async_fifo",
+ "k": 3,
+ "stop": "stage 3 visited more than 4 times; last failing gate: post_synth:post_synth_exceptions_clean (EXC-IGNORED position 8 Position=8 From=[get_clocks",
+ "stop_detail": "{'stage': 3, 'limit': 4, 'gates': ['post_synth:post_synth_exceptions_clean (EXC-IGNORED position 8 Position=8 From=[get_clocks'], 'roles': [], 'owners_last_visit': [], 'last_failing_assertion': None, 'same_signature_visits': None, 'last_fails': ['post_synth:post_synth_exceptions_clean (EXC-IGNORED p",
+ "stages_visited": [
+  0,
+  0,
+  1,
+  1,
+  2,
+  3,
+  3,
+  3,
+  3,
+  3
+ ],
+ "plan_cost_estimate_usd": 4.8788,
+ "wall_s": 2517.6,
+ "gates_last_build": {
+  "pass": false,
+  "first_failed_stage": "post_synth",
+  "failed": {
+   "rtl": [],
+   "post_synth": [
+    "post_synth_exceptions_clean",
+    "post_synth_resources_in_range"
+   ],
+   "post_place": [],
+   "post_route": [],
+   "bitstream": []
+  }
+ },
+ "gates_last": "{'clarify': True, 'board-and-device-planning': True, 'rtl-design-creation': True, 'constraints': False}",
+ "model_xdc_set_clock_groups": 0,
+ "model_xdc_datapath_only": 0,
+ "flow_set_clock_groups": 0,
+ "flow_datapath_only": 1,
+ "architecture_has_clock_relations": false,
+ "architecture_has_clock_muxes": false,
+ "clock_group_plan": {
+  "written": [
+   {
+    "between": [
+     "clk_wr",
+     "clk_rd"
+    ],
+    "kind": "async",
+    "reason": "a crossing clk_wr -> clk_rd through xpm_fifo_async is declared in architecture.yaml (state clock_relations to say otherwise, e.g. related)",
+    "mode": "bound",
+    "line": "set_max_delay -datapath_only -from [get_clocks -of_objects [get_ports {clk_25mhz}]] -to [get_clocks -of_objects [get_ports {gt_refclk_p}]] [expr {min([get_property PERIOD [get_clocks -of_objects [get_ports {clk_25mhz}]]], [get_property PERIOD [get_clocks -of_objects [get_ports {gt_refclk_p}]]])}]"
+   }
+  ],
+  "refused": [],
+  "skipped": [
+   {
+    "between": [
+     "tck",
+     "clk_wr"
+    ],
+    "kind": "async",
+    "reason": "a crossing tck -> clk_wr through xpm_cdc_array_single is declared in architecture.yaml (state clock_relations to say otherwise, e.g. related)",
+    "why": "derived from a declared crossing; the flow cannot name the Vivado clock of tck: nothing written"
+   }
+  ]
+ }
+}

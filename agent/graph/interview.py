@@ -408,6 +408,36 @@ def ensure_reset_model_question(spec: dict[str, Any]) -> tuple[dict[str, Any], b
     return spec, True
 
 
+CLOCK_RELATION_SEEN = r"(?i)\b(asynchronous|related|exclusive|same (MMCM|PLL|source)|clock relation|clock groups?)\b"
+CLOCK_RELATION_REASON = ("The flow writes set_clock_groups from the declared relation of each clock pair (brief 242): asynchronous, related (outputs of one MMCM, "
+                         "timed together) or exclusive (inputs of a clock mux). Without it Vivado times unrelated clocks against each other and the methodology "
+                         "gate (TIMING-6/7) fails; a wrong answer would hide a real crossing, so the flow writes a group only where every crossing goes through "
+                         "a recognised synchroniser.")
+
+
+def spec_clock_names(spec: dict[str, Any]) -> list[str]:
+    return [str(c["name"]) for c in spec.get("clocks") or [] if isinstance(c, dict) and c.get("name")]
+
+
+def ensure_clock_relation_question(spec: dict[str, Any]) -> tuple[dict[str, Any], bool]:
+    """Brief 242: a spec with two or more clocks and no stated relation (``clock_relations``, or a question that asks it) gets the clock-relation
+    question, with the safe default (asynchronous), unless the spec already states the relations. Returns (spec, whether it was added)."""
+    names = spec_clock_names(spec)
+    if len(names) < 2 or spec.get("clock_relations"):
+        return spec, False
+    asked = " \n ".join(str(q.get("question", "")) for q in [*(spec.get("open_questions") or []), *(spec.get("resolved_questions") or [])]
+                        if isinstance(q, dict))
+    if re.search(CLOCK_RELATION_SEEN, asked) or any(isinstance(c, dict) and c.get("relation") for c in spec.get("clocks") or []):
+        return spec, False
+    spec = dict(spec)
+    spec["open_questions"] = [*(spec.get("open_questions") or []),
+                              {"question": "How do the clocks of this design relate to each other: " + ", ".join(names) + "? For each pair say asynchronous "
+                                           "(no common source), related (outputs of one MMCM or PLL), or exclusive (the inputs of a clock mux).",
+                               "default": "Every pair is asynchronous unless both clocks come from one MMCM or PLL (then related) or are the inputs of a clock mux (then exclusive).",
+                               "reason": CLOCK_RELATION_REASON}]
+    return spec, True
+
+
 def request_is_protocol(request: str) -> bool:
     """The request names an exchange or messaging protocol (market data, order entry, a framed binary protocol, sequence numbers)."""
     return bool(REQUEST_PROTOCOL.search(request or ""))

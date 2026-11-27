@@ -196,6 +196,16 @@ def is_xpm_scoped_exception(row: dict[str, Any], last_own_position: int, ignored
     return bool(m) and int(m.group(1)) not in ignored_positions
 
 
+def is_flow_pair_bound(row: dict[str, Any], loc: dict[str, Any]) -> bool:
+    """Brief 242: an ignored row that is the flow's own clock-pair ``set_max_delay -datapath_only`` (known_post.xdc), totally overridden by false-path or
+    max-delay rows only (``FP n`` / ``DPO n``, the XPM macros' own bounds, which then cover every path of that direction). Never one overridden by a clock group,
+    and never a line of the design's own XDC."""
+    if loc.get("file") != "known_post.xdc" or not (loc.get("text") or "").lstrip().startswith("set_max_delay"):
+        return False
+    m = re.match(r"Totally overridden path by (.*)$", (row.get("Status") or "").strip())
+    return bool(m) and all(re.fullmatch(r"(FP|DPO) \d+", t.strip()) for t in re.split(r"\s+-\s+", m.group(1).strip()))
+
+
 def is_gt_wizard_exception(row: dict[str, Any]) -> bool:
     """Brief 56A: an ignored exception from the GT Wizard's own scoped constraints: every ``NAME =~`` pattern of its From,
     Through and To text names a wizard internal (GT_WIZARD_TOKENS). Not decided by Position (it collides with ours); a row
@@ -432,6 +442,9 @@ def evaluate(build_dir: Path, stage: str = "synth", xdc_files: list[Path] | None
         prep = json.loads((d / "prepare.json").read_text()) if (d / "prepare.json").exists() else {}
         root = Path(__file__).resolve().parents[1]
         xdc_files = [root / x for x in prep.get("files") or [] if str(x).endswith(".xdc")]   # flow/prepare.py: read order
+    # brief 242: the flow's own files are read too (known_pre.xdc before the design's XDC, known_post.xdc after it, as flow/prepare.py lists them), so a
+    # Position inside them maps to its file and line
+    xdc_files = ([d / "known_pre.xdc"] if (d / "known_pre.xdc").is_file() else []) + list(xdc_files) + ([d / "known_post.xdc"] if (d / "known_post.xdc").is_file() else [])
     where = xdc_positions(xdc_files)
     log = d / "vivado.log"
     msgs = xdc_messages(log.read_text(errors="replace")) if log.exists() else []
@@ -463,6 +476,12 @@ def evaluate(build_dir: Path, stage: str = "synth", xdc_files: list[Path] | None
         info.append({"rule": "EXC-IGNORED-GT-WIZARD", "position": r["position"], "status": r.get("Status"),
                      "vivado": {k: v for k, v in r.items() if k in ("From", "Through", "To", "Setup", "Hold")}})
     ign_gt = [r for r in ign if r not in gt_rows]
+    pair_rows = [r for r in ign_gt if is_flow_pair_bound(r, at(r["position"]))]
+    for r in pair_rows:
+        info.append({"rule": "EXC-IGNORED-FLOW-PAIR-BOUND", "position": r["position"], "status": r.get("Status"), "file": at(r["position"])["file"], "line": at(r["position"])["line"],
+                     "vivado": {k: v for k, v in r.items() if k in ("From", "Through", "To", "Setup", "Hold")}})
+    ign_gt = [r for r in ign_gt if r not in pair_rows]
+    debug_ip |= {r["position"] for r in pair_rows}
     for r in ign_gt:
         fails.append({"rule": "EXC-IGNORED", "position": r["position"], **at(r["position"]),
                       "vivado": {k: v for k, v in r.items() if k not in ("position",)}})

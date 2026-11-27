@@ -1,0 +1,60 @@
+{
+ "run_id": "20261127-083052-c28f",
+ "design": "p6_glitchfree_mux",
+ "k": 3,
+ "stop": "stage 2 visited more than 6 times; last failing gate: report gates, design standards; owned by the rtl role; the same failure on 4 consecutive visits",
+ "stop_detail": "{'stage': 2, 'limit': 6, 'gates': ['report gates', 'design standards'], 'roles': ['rtl'], 'owners_last_visit': ['rtl'], 'last_failing_assertion': None, 'same_signature_visits': 4, 'last_fails': ['standards STD-CLK-01: rtl/p6_clk_mux.sv:27: instance u_bufgctrl (BUFGCTRL) in p6_clk_mux: a clock mux no",
+ "stages_visited": [
+  0,
+  0,
+  1,
+  1,
+  2,
+  2,
+  2,
+  2,
+  2,
+  2,
+  2
+ ],
+ "plan_cost_estimate_usd": 4.8216,
+ "wall_s": 1777.9,
+ "gates_last_build": {
+  "pass": false,
+  "first_failed_stage": "post_synth",
+  "failed": {
+   "rtl": [],
+   "post_synth": [
+    "post_synth_no_unconstrained_endpoints",
+    "post_synth_methodology_no_critical",
+    "post_synth_drc_clean",
+    "post_synth_cdc_no_critical"
+   ],
+   "post_place": [],
+   "post_route": [],
+   "bitstream": []
+  }
+ },
+ "gates_last": "{'clarify': True, 'board-and-device-planning': True, 'rtl-design-creation': False}",
+ "model_xdc_set_clock_groups": 0,
+ "model_xdc_datapath_only": 0,
+ "flow_set_clock_groups": 0,
+ "flow_datapath_only": 0,
+ "architecture_has_clock_relations": false,
+ "architecture_has_clock_muxes": false,
+ "clock_group_plan": {
+  "written": [],
+  "refused": [],
+  "skipped": [
+   {
+    "between": [
+     "clk",
+     "mux_clk"
+    ],
+    "kind": "async",
+    "reason": "a crossing clk -> mux_clk through xpm_cdc_async_rst is declared in architecture.yaml (state clock_relations to say otherwise, e.g. related)",
+    "why": "derived from a declared crossing; the flow cannot name the Vivado clock of mux_clk: nothing written"
+   }
+  ]
+ }
+}
