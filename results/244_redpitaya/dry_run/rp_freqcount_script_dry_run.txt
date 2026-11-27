@@ -1,0 +1,13 @@
+[dry run] would ask: Red Pitaya root@rp-f00c16.local: the board is the owner's STEMlab 125-14 v1.1 on its 5 V 2 A supply, jumpers IN1 = LV (+-1 V) and IN2 = HV (+-20 V) as recorded, nothing above +-1 V on IN1, OUT1 into nothing that is unprotected. Loading REPLACES the factory image until a power cycle or RESTORE=1. NOTE: timing is met (WNS 0.172 ns) ONLY with the vendor's own generator and oscilloscope logic left out of the analysis by the constraints overlay: this image does not use them and they are not claimed to work. Read the results README before loading. Not a claim that the image works on the board. Load build 17e913f1? (answered: yes)
+[dry run] on root@rp-f00c16.local: mkdir -p /tmp/fda_load
+[dry run] copy /home/brendan/Claude_sandbox/_bench/rp_visit_17e913f1/rp_freqcount/fpga.bit.bin /home/brendan/Claude_sandbox/_bench/rp_visit_17e913f1/rp_freqcount/redpitaya_checks.py /home/brendan/Claude_sandbox/_bench/rp_visit_17e913f1/rp_freqcount/redpitaya_regs.py /home/brendan/Claude_sandbox/_bench/rp_visit_17e913f1/rp_freqcount/load_fda.sh to root@rp-f00c16.local:/tmp/fda_load/
+[dry run] on root@rp-f00c16.local: sh /tmp/fda_load/load_fda.sh
+--- what the loader reports
+[dry run] on root@rp-f00c16.local: cat /sys/class/fpga_manager/fpga0/state; cat /tmp/update_fpga.txt; cat /tmp/loaded_fpga.inf
+--- does every user block answer the bus? (its ID register, read once)
+[dry run] on root@rp-f00c16.local: cd /tmp/fda_load && python3 redpitaya_checks.py rp_freqcount --base 0x40700000 --id-only
+[dry run] on root@rp-f00c16.local: cd /tmp/fda_load && python3 redpitaya_checks.py rp_patgen --base 0x40600000 --id-only
+--- the checks (on the board, through /dev/mem, inside the block's register map only)
+[dry run] on root@rp-f00c16.local: cd /tmp/fda_load && python3 redpitaya_checks.py rp_freqcount 
+check record: /dev/stdout
+[dry run] done; nothing was loaded

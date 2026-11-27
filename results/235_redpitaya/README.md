@@ -14,7 +14,7 @@ The vendor shell is RedPitaya-FPGA at the pinned commit 728a4f37e9 (project v0.9
 - `runs/<design>_r<n>/`: from each real agent run `summary.json`, `config.json`, `permissions.jsonl`, `role_usage.jsonl`, `verif_gates.json` and the `design.xdc` it wrote. The run directories themselves are not committed (house rule). The agent's RTL is in
   `pilots/225/<design>/agent_235_r<n>_rtl/`, beside brief 225's independent cross-checks (`crosscheck_tb.sv`), which these four runs all pass.
 - `owner_scripts/<block>/load_170300fd.sh` and `dry_run/`: the owner's load-and-check scripts for the final image and their `DRY_RUN=1` output (every board command printed, none run) and the board-side checks against the models (mock, not evidence).
-  The scripts in `results/225_redpitaya/owner_scripts/` are for the older image `3a50020d` (its timing is the unmet one, the old RTL) and are superseded.
+  The scripts in `results/225_redpitaya/owner_scripts/` are for the older image `3a50020d` (its timing is the unmet one, the old RTL) and are replaced.
 - [owner_pack.md](owner_pack.md): the one page for the board visit.
 
 ## 1. Shell timing: why the vendor shell misses, and what is left

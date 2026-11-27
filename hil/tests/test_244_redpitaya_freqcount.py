@@ -59,3 +59,18 @@ def test_the_diff_testbench_has_teeth(tmp_path: Path) -> None:
 def test_the_documented_latency_is_in_the_file_header() -> None:
     head = "\n".join((NEW / "rp_freqcount.sv").read_text().splitlines()[:16])
     assert "ONE adc_clk later" in head and "START written in it is ignored" in head
+
+
+def test_the_recorded_image_meets_timing_and_was_built_from_these_sources() -> None:
+    import hashlib
+    import json
+    b = json.loads((ROOT / "results" / "244_redpitaya" / "shell_timing" / "I_freqcount_two_clock_span_explore" / "build.json").read_text())
+    assert b["build_id"] == "17e913f1" and b["timing"]["timing_met"] is True and b["timing"]["tns_failing_endpoints"] == 0
+    assert b["blocks"]["rp_freqcount.sv"] == hashlib.sha256((NEW / "rp_freqcount.sv").read_bytes()).hexdigest()
+    assert b["blocks"]["schmitt_edge.sv"] == hashlib.sha256((NEW / "schmitt_edge.sv").read_bytes()).hexdigest()
+
+
+def test_no_readme_in_the_red_pitaya_results_says_superseded() -> None:
+    for d in ("225_redpitaya", "235_redpitaya", "243_redpitaya", "244_redpitaya"):
+        for f in (ROOT / "results" / d).glob("*.md"):
+            assert "superseded" not in f.read_text().lower(), f
