@@ -1,0 +1,38 @@
+=== cells under each user block
+i_user_block: 819 leaf cells; regs: 424
+i_user6_block: 1581 leaf cells; regs: 873
+=== ack / rdata / wen / ren registers named in each block
+i_user_block *sys_ack*: 1 regs, e.g. i_user_block/sys_ack_reg
+i_user_block *sys_rdata*: 32 regs, e.g. {i_user_block/sys_rdata_reg[0]} {i_user_block/sys_rdata_reg[10]} {i_user_block/sys_rdata_reg[11]} {i_user_block/sys_rdata_reg[12]} {i_user_block/sys_rdata_reg[13]} {i_user_block/sys_rdata_reg[14]}
+i_user_block *sys_err*: 0 regs, e.g. none
+i_user6_block *sys_ack*: 1 regs, e.g. i_user6_block/u_reg/sys_ack_reg
+i_user6_block *sys_rdata*: 32 regs, e.g. {i_user6_block/u_reg/sys_rdata_reg[0]} {i_user6_block/u_reg/sys_rdata_reg[10]} {i_user6_block/u_reg/sys_rdata_reg[11]} {i_user6_block/u_reg/sys_rdata_reg[12]} {i_user6_block/u_reg/sys_rdata_reg[13]} {i_user6_block/u_reg/sys_rdata_reg[14]}
+i_user6_block *sys_err*: 0 regs, e.g. none
+=== slot bridges (sys_bus_cdc) present per slot
+slot 0: 141 cells under for_bus[0].inst_sys_bus_cdc
+slot 1: 926 cells under for_bus[1].inst_sys_bus_cdc
+slot 2: 662 cells under for_bus[2].inst_sys_bus_cdc
+slot 3: 149 cells under for_bus[3].inst_sys_bus_cdc
+slot 4: 75 cells under for_bus[4].inst_sys_bus_cdc
+slot 5: 126 cells under for_bus[5].inst_sys_bus_cdc
+slot 6: 269 cells under for_bus[6].inst_sys_bus_cdc
+slot 7: 108 cells under for_bus[7].inst_sys_bus_cdc
+=== ren/wen into the blocks: driver of each block's sys_wen/sys_ren-fed registers
+slot 6 sys_bus_interconnect/for_bus[6].inst_sys_bus_cdc/reg_read_reg -> net sys_bus_interconnect/for_bus[6].inst_sys_bus_cdc/sys[6]\\.ren: 4 loads: {sys_bus_interconnect/for_bus[6].inst_sys_bus_cdc/reg_done_i_1__5/I1} {sys_bus_interconnect/for_bus[6].inst_sys_bus_cdc/reg_read_i_1__6/I1} {sys_bus_interconnect/for_bus[6].inst_sys_bus_cdc/sys_ack_i_1__2/I1} {sys_bus_interconnect/for_bus[6].inst_sys_bus_cdc/sys_rdata[31]_i_1__2/I3}
+slot 6 sys_bus_interconnect/for_bus[6].inst_sys_bus_cdc/reg_write_reg -> net sys_bus_interconnect/for_bus[6].inst_sys_bus_cdc/sys[6]\\.wen: 5 loads: {sys_bus_interconnect/for_bus[6].inst_sys_bus_cdc/sys_ack_i_1__2/I0} {sys_bus_interconnect/for_bus[6].inst_sys_bus_cdc/period[31]_i_8/I1} {sys_bus_interconnect/for_bus[6].inst_sys_bus_cdc/reg_write_i_1__6/I1} {sys_bus_interconnect/for_bus[6].inst_sys_bus_cdc/reg_done_i_1__5/I2} {sys_bus_interconnect/for_bus[6].inst_sys_bus_cdc/sys_rdata[31]_i_1__2/I2}
+slot 7 sys_bus_interconnect/for_bus[7].inst_sys_bus_cdc/reg_read_reg -> net sys_bus_interconnect/for_bus[7].inst_sys_bus_cdc/sys[7]\\.ren: 4 loads: {sys_bus_interconnect/for_bus[7].inst_sys_bus_cdc/sys_ack_i_1__3/I0} {sys_bus_interconnect/for_bus[7].inst_sys_bus_cdc/reg_read_i_1__0/I1} {sys_bus_interconnect/for_bus[7].inst_sys_bus_cdc/sys_rdata[31]_i_1__3/I1} {sys_bus_interconnect/for_bus[7].inst_sys_bus_cdc/reg_done_i_1__6/I2}
+slot 7 sys_bus_interconnect/for_bus[7].inst_sys_bus_cdc/reg_write_reg -> net sys_bus_interconnect/for_bus[7].inst_sys_bus_cdc/sys[7]\\.wen: 10 loads: {sys_bus_interconnect/for_bus[7].inst_sys_bus_cdc/sys_rdata[31]_i_1__3/I0} {sys_bus_interconnect/for_bus[7].inst_sys_bus_cdc/busy_i_3/I1} {sys_bus_interconnect/for_bus[7].inst_sys_bus_cdc/reg_done_i_1__6/I1} {sys_bus_interconnect/for_bus[7].inst_sys_bus_cdc/reg_write_i_1__0/I1} {sys_bus_interconnect/for_bus[7].inst_sys_bus_cdc/sys_ack_i_1__3/I1} {sys_bus_interconnect/for_bus[7].inst_sys_bus_cdc/gate_len[4]_i_2/I2}
+=== block ack register output nets and their loads
+WARNING: [Vivado 12-508] No pins matched 'get_pins -of [get_nets -of [get_pins i_user6_block/u_reg/sys_ack_reg/Q]] -filter DIRECTION==IN'.
+i_user6_block: i_user6_block/u_reg/sys_ack_reg -> i_user6_block/u_reg/sys[6]\\.ack: 0 loads: none
+WARNING: [Vivado 12-508] No pins matched 'get_pins -of [get_nets -of [get_pins i_user_block/sys_ack_reg/Q]] -filter DIRECTION==IN'.
+i_user_block: i_user_block/sys_ack_reg -> i_user_block/sys[7]\\.ack: 0 loads: none
+=== a sample path: block rdata bit0 register to the PS-side
+WARNING: [Vivado 12-508] No pins matched 'get_pins -of [get_nets -of [get_pins {i_user6_block/u_reg/sys_rdata_reg[0]/Q}]] -filter DIRECTION==IN'.
+i_user6_block i_user6_block/u_reg/sys_rdata_reg[0] -> i_user6_block/u_reg/sys_rdata_reg[31]_0[0]: loads none
+WARNING: [Vivado 12-508] No pins matched 'get_pins -of [get_nets -of [get_pins {i_user_block/sys_rdata_reg[0]/Q}]] -filter DIRECTION==IN'.
+i_user_block i_user_block/sys_rdata_reg[0] -> i_user_block/sys_rdata_reg[31]_0[0]: loads none
+=== any constant-driven ports or removed cells in the blocks
+unconnected nets under blocks: 0
+=== done
+INFO: [Common 17-206] Exiting Vivado at Fri Nov 27 10:49:25 2026...

@@ -7,7 +7,8 @@ shell: rp_shell_v0_94
 board: redpitaya_stemlab_125_14
 description: >-
   Vendor RedPitaya-FPGA shell v0.94 at the pinned commit 728a4f37e9. A block sits in system-bus slot 7 (0x40700000) or slot 6 (0x40600000), clocked by the
-  shell's 125 MHz ADC clock, reset by the shell's synchronous active-low reset, and answers the shell's one-access-per-cycle ack bus.
+  shell's 125 MHz ADC clock, reset by the shell's synchronous active-low reset, and answers the shell's one-access-per-cycle ack bus through the bus adapter rp_bus_adapt.sv (brief 243), which tools/rp_shell.py puts in front of every block: the block keeps a
+  one-cycle request and an answer valid in the ack cycle only; the adapter holds the answer for the shell's clock-crossing bridge.
 clock: {port: clk, freq_mhz: 125, source: "the shell's adc_clk (BUFG of the PLL's 125 MHz output); the shell constrains it, the block never does"}
 reset: {port: rstn, active_low: true, synchronous: true, source: "the shell's adc_rstn"}
 ports:

@@ -1,5 +1,7 @@
 # Red Pitaya board visit: the owner's one-page pack (brief 235)
 
+> **Superseded by [results/243_redpitaya/owner_pack.md](../243_redpitaya/owner_pack.md) (2026-11-27):** build `170300fd` read 0 in both user slots at the board visit; use build `d2f617ca` and its scripts.
+
 **Nothing on this page has been run.** The agent never touched the Red Pitaya, any board or any instrument. Everything below is for the owner's board visit; the visit is when. Until then no command here is to be run.
 
 Board: the owner's STEMlab 125-14 (original generation, v1.1), hostname `rp-f00c16`, on its own 5 V isolated 2 A or 2.1 A supply (micro USB power input, never a PC port). Image to load: build `170300fd` (`fpga.bit.bin`, rebuilt by `tools/rp_shell.py`, not committed). Volatile load only: a power cycle returns the factory image.

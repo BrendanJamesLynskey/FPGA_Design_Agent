@@ -1,0 +1,79 @@
+{
+ "schema": "fpga-design-agent/rp-check/v1",
+ "block": "rp_freqcount",
+ "mock": true,
+ "evidence": false,
+ "rows": [
+  {
+   "check": "id",
+   "result": "pass",
+   "detail": "ID register reads 0xfda10101, expected 0xfda10101 (rp_freqcount)"
+  },
+  {
+   "check": "reset_values",
+   "result": "pass",
+   "detail": "all RW registers at their reset values"
+  },
+  {
+   "check": "scratch",
+   "result": "pass",
+   "detail": "five patterns read back"
+  },
+  {
+   "check": "gate_len_readback",
+   "result": "pass",
+   "detail": "wrote 12500000, read 12500000"
+  },
+  {
+   "check": "gate_0",
+   "result": "pass",
+   "detail": "EDGES 100000, GATE_ACTUAL 12500000 (asked 12500000), SPAN 12499875, STATUS 0x2, MEAS_DONE +1",
+   "edges": 100000,
+   "gate_actual": 12500000,
+   "span": 12499875,
+   "status": 2,
+   "f_gate_hz": 1000000.0,
+   "f_recip_hz": 1000000.0
+  },
+  {
+   "check": "gate_1",
+   "result": "pass",
+   "detail": "EDGES 100000, GATE_ACTUAL 12500000 (asked 12500000), SPAN 12499875, STATUS 0x2, MEAS_DONE +1",
+   "edges": 100000,
+   "gate_actual": 12500000,
+   "span": 12499875,
+   "status": 2,
+   "f_gate_hz": 1000000.0,
+   "f_recip_hz": 1000000.0
+  },
+  {
+   "check": "gate_2",
+   "result": "pass",
+   "detail": "EDGES 100000, GATE_ACTUAL 12500000 (asked 12500000), SPAN 12499875, STATUS 0x2, MEAS_DONE +1",
+   "edges": 100000,
+   "gate_actual": 12500000,
+   "span": 12499875,
+   "status": 2,
+   "f_gate_hz": 1000000.0,
+   "f_recip_hz": 1000000.0
+  },
+  {
+   "check": "freq_gate",
+   "result": "pass",
+   "detail": "1000000.000 Hz vs expected 1000000.000 Hz: +0.0 ppm (limit 1010.0 ppm, of which quantisation 10.0)",
+   "f_hz": 1000000.0,
+   "error_ppm": 0.0,
+   "tolerance_ppm": 1010.0
+  },
+  {
+   "check": "freq_recip",
+   "result": "pass",
+   "detail": "1000000.000 Hz vs expected 1000000.000 Hz: +0.0 ppm (limit 1001.0 ppm, of which quantisation 1.0)",
+   "f_hz": 1000000.0,
+   "error_ppm": 0.0,
+   "tolerance_ppm": 1001.0
+  }
+ ],
+ "accesses": 61,
+ "pass": true
+}
