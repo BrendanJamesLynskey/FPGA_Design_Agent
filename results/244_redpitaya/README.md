@@ -67,6 +67,8 @@ Ready-to-use copies (bitstream, scripts, `load_fda.sh`, check files) are in `~/C
 
 ## Reproduce
 
+The build needs a heavy slot and the network (the vendor repository at the pin); the simulation needs Vivado 2025.2 xsim; the block tests need only Python and iverilog. Each command below reproduces one family of results in this folder.
+
 ```
 R=pilots/225
 python3 tools/rp_shell.py prepare <dir> --block $R/rp_freqcount/agent_244_rtl/rp_freqcount.sv --block $R/rp_freqcount/agent_244_rtl/schmitt_edge.sv \
