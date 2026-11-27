@@ -1,0 +1,9 @@
+| gate | finding | cat | events | runs (213 / 227) | repeated next visit | stage-2 events | first line | what it is |
+|---|---|---|---|---|---|---|---|---|
+| spec_signed | spec:compound-requirement | a | 19 | 9 (0 / 9) | 50 | 0 | requirement REQ-03 is compound ('and' joins two statements): split it into one requirement | stage 0, not stage 2: the Clarifier writes a requirement joining two statements; the clarify gate sends it back (auto, no cost to later stages) |
+| inventory | check_constraints | c | 18 | 9 (0 / 9) | 9 | 0 | no design.xdc yet: call board_constraints to write it | 'no design.xdc yet' on the first visits is the stage doing its work (expected); on a bounce from stage 2 it repeats the FDA-CON-8 text of the lint gate |
+| stage_rtl | noise:rtl-did-not-run | d | 22 | 7 (0 / 7) | 17 | 22 | rtl: did not run (no gates record) | added to every failing stage-2 visit because the flow gates record does not exist yet; alone it is a refused Vivado build (FDA_VIVADO_MAX, another job running) |
+| simulate | simulate | a | 18 | 6 (0 / 6) | 12 | 18 | AssertionError: assert (1000 == 1000 and 4 == 5) E                                         | the agent's own bench against its own model: register read mismatches, early DONE, a measurement off by one, bench timeouts |
+| verif | V2 failing_tests | a | 18 | 6 (0 / 6) | 12 | 18 | V2 failing_tests: [3] seed1:test_clkmeter_bench.test_busy_ignored_and_latched, seed1:test_ | the same failing tests, as the V2 gate reports them |
+| verif | V2 assertions_bound_zero_failures | a | 18 | 6 (0 / 6) | 13 | 18 | V2 assertions_bound_zero_failures: a test failed in some seed: see failing_tests [value [0 | consequence of a failing test |
+| verif | V2 constrained_random_test_ran | a | 7 | 2 (0 / 2) | 6 | 7 | V2 constrained_random_test_ran: no passing test with 'random' in its name in seed1: name t | consequence of a failing test: no passing test with 'random' in its name |

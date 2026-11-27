@@ -248,6 +248,32 @@ A reply has an output limit, and a reply that reaches it is cut off and its tool
 After each file, go on to the next without summarising. Files that are already on disk stay; do not write them again unless they are wrong.
 """
 
+def stage2_rules_note() -> str:
+    """Brief 239: the rules the stage-2 gates apply, with their ids and one-line fixes, shown to the Designer BEFORE it writes RTL.
+    Code, not a private prompt (like FILE_BY_FILE_NOTE): the Verilator-backed rules come from ``flow/hdl_rules.yaml`` (id, the
+    warning codes, the rule's own one-line fix), so the list cannot drift from the checker. In the 36 stage-2 runs of briefs 213 and
+    227 the Designer learnt these only from a failure, and in 7 runs it never found that ``lint/waivers.yaml`` exists."""
+    from flow.lint_ruleset import SUPPLIED_STYLE_RULES, load_rules
+    rows = []
+    for r in load_rules()["rules"]:
+        codes = (r.get("checks") or {}).get("verilator")
+        if codes and not r["id"].endswith("-00"):
+            rows.append(f"  {r['id']} (Verilator {', '.join(codes)}): {' '.join(str(r.get('fix', '')).split())}")
+    return (
+        "\nWHAT THE STAGE-2 GATES CHECK (read before you write RTL; each failing rule comes back to you with its id):\n"
+        "- `lint` = Verilator --lint-only -Wall on the build.yaml sources (PROCASSINIT is off), then Icarus elaboration "
+        "(iverilog -g2012 -s <top>), then FDA-CON-8 (every spec.yaml port that is an input or output must exist on the top, used or "
+        "not; a port declared `direction: internal` is a signal between blocks, not a pin of the top) and FDA-CON-9 (the USB-UART pair).\n"
+        f"- Files under data/ are supplied and stay byte-identical; {', '.join(SUPPLIED_STYLE_RULES)} are not raised for them, nor for "
+        "files whose name holds `sim_stubs`. Every other finding in them, and an error, still fails; do not edit them.\n"
+        "- A deliberate warning of your own code is waived only in lint/waivers.yaml (a list of {rule: <HDL id>, match: "
+        "'verilator:<CODE> <file>:<line>' as a glob, reason, owner, date}); a `/* verilator ... */` pragma in another file does not "
+        "apply to the file being linted.\n"
+        "- Verilator-backed rules (id, warning codes, fix):\n" + "\n".join(rows) + "\n"
+        "- Then model contract, simulate, the design standards listed above (STD-*), the derived constants (CONST-*) and verification "
+        "level V2 or V3; call `check` with [\"all\"] before you reply DONE to see them all at once.\n")
+
+
 #: consecutive replies cut off at the output limit, with no file written in between, that end the run (the stop reason names it)
 MAX_REPLY_CUTS = 2
 #: extra calls of the Designer inside one stage-2 visit after a reply was cut off (the files already written stay on disk)
@@ -1144,7 +1170,7 @@ def node_work(state: State) -> dict:
                     own = "; ".join(r[:1500] for r in reasons) if repair else (
                         "; ".join(state.get("fails") or []) or "none")
                     run_writing_role(rt, "rtl", PROMPTS["rtl"].format(**{**fmt, "fails": own})
-                                     + (note if repair else "") + prompt_note("rtl") + conv0 + FILE_BY_FILE_NOTE, role_allowed("rtl", 2), repair)
+                                     + (note if repair else "") + prompt_note("rtl") + conv0 + stage2_rules_note() + FILE_BY_FILE_NOTE, role_allowed("rtl", 2), repair)
         else:           # stage 9 too: the model writes probes.yaml and BRINGUP.md BEFORE the builds and the hardware pause
             run_role(rt, "rtl", PROMPTS["rtl"].format(**fmt) + conv + ((JTAG_HW_FORMAT if jtag else _p("graph/run/hw_format").format(**fmt)) if n == 9 else ""),
                          role_allowed("rtl", n))

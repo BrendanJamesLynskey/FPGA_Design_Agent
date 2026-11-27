@@ -458,6 +458,9 @@ class Check:
         for f in sorted(glob.glob(str(self.root / "shell" / "rtl" / "*.sv"))):
             for m in parse_modules(Path(f).read_text(errors="replace"), f):
                 self.lib[m.name] = m
+        self.supplied: set[str] = set()      # brief 239: modules of the design's supplied, read-only data/ files (for example jtag_bus)
+        for f in sorted(glob.glob(str(self.design / "data" / "*.sv")) + glob.glob(str(self.design / "data" / "*.v"))):
+            self.supplied |= {m.name for m in parse_modules(Path(f).read_text(errors="replace"), f)}
         self.by_name = {**self.lib, **{m.name: m for m in self.modules}}
 
     def _gates_initial_values(self) -> Any:
@@ -821,7 +824,7 @@ class Check:
             prim_modules.add(prim)
             if where:
                 prim_modules.add(str(where))
-            if where and str(where) not in self.by_name:        # the design's own modules and the test shell's
+            if where and str(where) not in self.by_name and str(where) not in self.supplied:   # the design's own modules, the shell's and the supplied data/ files
                 self.add("STD-CDC-01", af, 1, f"crossings[{i}]: inline_in {where} is not a module of this design or the shell")
             elif not where and prim not in types and prim.lower() not in {t.lower() for t in types}:
                 self.add("STD-CDC-01", af, 1, f"crossings[{i}]: primitive {prim} is listed but not instantiated in the RTL")

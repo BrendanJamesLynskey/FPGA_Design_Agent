@@ -50,6 +50,7 @@ def collect() -> dict[str, str]:
         out["file_by_file_note"] = _h(gr.FILE_BY_FILE_NOTE)
         d = Path("/nonexistent_design")
         out["files_status_note"] = _h([gr.files_status_note(d, True), gr.files_status_note(d, False)])
+        out["stage2_rules_note"] = _h(gr.stage2_rules_note())      # brief 239: the rules the stage-2 gates apply, shown to the Designer first
     except AttributeError:
         pass
     out["oracle_system"] = _h(interview.SpecOracle.SYSTEM)
