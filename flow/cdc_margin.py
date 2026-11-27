@@ -19,10 +19,11 @@ Findings (``level`` gate = fails the gate ``post_route_bus_skew_met``; advisory 
 
     CDCM-SKEW-VIOL     gate      a set_bus_skew constraint has negative slack after routing (UG906 v2025.2 p. 162: no bus-skew
                                  violation may remain)
-    CDCM-SKEW-MISSING  advisory  a hand-built multi-bit crossing (cdc_structure class gray / handshake, not an XPM macro; a FIFO memory read
+    CDCM-SKEW-MISSING  gate or advisory (brief 246: a gate only when the skew is unbounded or unexpectedly large, see SKEW_GATE_FACTOR)
+                                 a hand-built multi-bit crossing (cdc_structure class gray / handshake, not an XPM macro; a FIFO memory read
                                  needs only its latency bound) whose
                                  capture registers no set_bus_skew constraint names (survey rank 1; UG903 v2025.2 p. 142-144)
-    CDCM-DPO-LOOSE     advisory  a max_dpo value above the crossing's latency bound (survey rank 2; AMD's XPM templates, Vivado
+    CDCM-DPO-LOOSE     gate or advisory (brief 246: a gate only above SKEW_GATE_FACTOR x the bound) a max_dpo value above the crossing's latency bound (survey rank 2; AMD's XPM templates, Vivado
                                  2026.1): a declared crossing's own bound (bounds()); otherwise by structural class: Gray bus and FIFO
                                  the source period, handshake data path 4 x the destination period, single-bit synchroniser the larger
                                  period
@@ -45,7 +46,14 @@ import sys
 from pathlib import Path
 from typing import Any
 
-MTBF_TARGET_YEARS = 1e9
+#: Brief 246 (owner decision 2026-11-27): CDCM-SKEW-MISSING and CDCM-DPO-LOOSE gate only when the skew is unexpectedly large, so that nothing that
+#: passes today starts to fail. "Large" is an order of magnitude over the crossing's own bound: a max_dpo above SKEW_GATE_FACTOR x the latency bound
+#: (the committed builds' worst loose value is 6.25 x: 40.0 ns on a 6.4 ns bound, brief 224/230's async FIFO; it stays advisory), and, for a bus with
+#: no set_bus_skew, no max_dpo naming it at or below SKEW_GATE_FACTOR x its skew bound (the skew is then bounded by nothing we can see). Between the
+#: bound and the factor the finding stays an advisory. The factor is a unitless ratio.
+SKEW_GATE_FACTOR = 10.0
+
+MTBF_TARGET_YEARS = 1e9      # YEARS, not seconds: both tools print the unit (Vivado per cell, Quartus 'years or seconds'); see docs/cdc_margin_method.md 3.4
 
 # ---------------------------------------------------------------- the method: bounds from a crossing record
 
@@ -298,16 +306,32 @@ def evaluate(build_dir: Path, crossings: list[dict[str, Any]] | None = None, mtb
         for x in struct["crossings"]:
             if x["class"] in ("gray", "handshake") and not (x.get("why", "").startswith("xpm") or "xpm_" in x.get("why", "")):
                 b = _base(x["cell"])
-                e = buses.setdefault(b, {"cell": b, "src_clock": x["src_clock"], "dst_clock": x["dst_clock"], "n": 0})
+                e = buses.setdefault(b, {"cell": b, "first": x["cell"], "src_clock": x["src_clock"], "dst_clock": x["dst_clock"], "n": 0, "class": x["class"]})
                 e["n"] += 1
+        dpo_rows = parse_exceptions_dpo((d / "exceptions_route.rpt").read_text(errors="replace")) if (d / "exceptions_route.rpt").exists() else []
         for b, e in sorted(buses.items()):
             if e["n"] < 2:
                 continue
             short = b.split("/")[-1]
             if short not in covered and b not in covered:
-                findings.append({"code": "CDCM-SKEW-MISSING", "level": "advisory", "cell": b, "bits": e["n"],
+                ps, pd = clocks.get(e["src_clock"]), clocks.get(e["dst_clock"])
+                dc = declared(e["first"])
+                cls = e["class"]
+                sb = None                                   # the crossing's skew bound S (ns), when the clock periods are known
+                if ps is not None and pd is not None:
+                    sb = bounds(dc, ps, pd)["S"] if dc and dc.get("type") in BOUNDS else (min(ps, pd) if cls == "gray" else 4 * pd)
+                dpo = min((r["value"] for r in dpo_rows if short and short in r["text"]), default=None)
+                level, why = "advisory", ""
+                if sb:
+                    if dpo is None:
+                        level, why = "gate", f"no max_dpo names it either, so nothing bounds its skew (bound {sb:.3f} ns)"
+                    elif dpo > SKEW_GATE_FACTOR * sb:
+                        level, why = "gate", f"its max_dpo {dpo} ns is above {SKEW_GATE_FACTOR:g} x the skew bound {sb:.3f} ns"
+                    else:
+                        why = f"its max_dpo {dpo} ns bounds the skew within {SKEW_GATE_FACTOR:g} x the skew bound {sb:.3f} ns"
+                findings.append({"code": "CDCM-SKEW-MISSING", "level": level, "cell": b, "bits": e["n"],
                                  "clocks": f"{e['src_clock']} -> {e['dst_clock']}",
-                                 "text": "hand-built multi-bit crossing with no set_bus_skew on its capture registers"})
+                                 "text": "hand-built multi-bit crossing with no set_bus_skew on its capture registers" + (f"; {why}" if why else "")})
 
     ex_file = d / "exceptions_route.rpt"
     if ex_file.exists() and struct is not None:
@@ -335,8 +359,11 @@ def evaluate(build_dir: Path, crossings: list[dict[str, Any]] | None = None, mtb
             else:
                 bound, why = ps, "source period"
             if r["value"] > bound + 1e-6:
-                findings.append({"code": "CDCM-DPO-LOOSE", "level": "advisory", "position": r["position"], "value": r["value"],
-                                 "bound": round(bound, 3), "text": f"max_dpo {r['value']} above the {why} ({bound:.3f} ns) for {hit[0]}"})
+                gate = r["value"] > SKEW_GATE_FACTOR * bound
+                findings.append({"code": "CDCM-DPO-LOOSE", "level": "gate" if gate else "advisory", "position": r["position"], "value": r["value"],
+                                 "bound": round(bound, 3), "ratio": round(r["value"] / bound, 2) if bound else None,
+                                 "text": f"max_dpo {r['value']} above the {why} ({bound:.3f} ns) for {hit[0]}"
+                                         + (f"; above {SKEW_GATE_FACTOR:g} x the bound, so a gate" if gate else "")})
 
     usplus = part.startswith(("xck", "xczu", "xcvu", "xcku", "xcau")) or (d / "mtbf_route.rpt").exists()
     mtbf = None

@@ -128,10 +128,18 @@ proves it after routing. The only correction is for what a tool leaves out of th
 - A `set_clock_uncertainty` is used for one thing only, AMD's pre-route overconstraint of a failing clock (setup only,
   removed before routing, at most 0.5 ns: UG949 p. 283). On a crossing it is never counted as margin.
 
-**3.4 MTBF target.** 1e9 years for the design by default (`mtbf_target_years` in architecture.yaml), judged on the
+**3.4 MTBF target.** 1e9 **years** (not seconds) for the design by default (`mtbf_target_years` in architecture.yaml), judged on the
 worst-case figure where the tool gives one (Quartus) and on the overall figure on UltraScale+. Below it, add a stage
 (`DEST_SYNC_FF`, or a third flop) before anything else. Settling slack after the first stage is the lever. Both Vivado and
 Quartus derive MTBF from it, so an uncertainty added to the destination clock lowers the reported MTBF (section 2).
+
+**Units of every MTBF figure in this document and in the code (brief 246, owner question 2026-11-27: "years or seconds?"): years.** Both tools
+print the unit with the number: Vivado's `report_synchronizer_mtbf` writes each cell with its own unit (`6.48e+51 years`, `1.32 days`; UG835:
+"reported in dynamic time units, from seconds to years"), and Quartus writes `Typical MTBF of Design is 1e+09 years or 3.15e+16 seconds` (its cap is 1
+billion years). So a target of 1e9 is a billion years, about 3.2e16 seconds, and a figure like 1e6 is a million years; neither is seconds. The parsers
+(`flow/mtbf.py`, `flow/cdc_margin.py`) convert every cell to years (before brief 246 `flow/mtbf.py` read only cells ending in "years" and treated a
+"days" cell as "no MTBF"), and the setting is named `mtbf_target_years`. UG835 gives no unit for the `-warn_if_mtbf_below` default (1e+12); we do not
+pass that option. An MTBF is a tool model, not an observation.
 
 ## 4. How the agent checks "present and met"
 
@@ -142,8 +150,15 @@ structural CDC check's inputs (`cdc_paths_synth.rpt`, `cdc_synth.rpt`):
 | Code | Level | Finding | Source |
 |---|---|---|---|
 | CDCM-SKEW-VIOL | gate (`post_route_bus_skew_met`) | a `set_bus_skew` with negative slack after routing | UG906 p. 162: no bus-skew violation may remain |
-| CDCM-SKEW-MISSING | advisory | a hand-built multi-bit crossing (structural class gray, handshake or fifo; not an XPM) that no `set_bus_skew` names | survey rank 1; UG903 pp. 142-144 |
-| CDCM-DPO-LOOSE | advisory | a `max_dpo` value above the crossing's L (source period; `sync_stages` x destination period for a declared handshake or CE) | survey rank 2; AMD's XPM templates |
+| CDCM-SKEW-MISSING | **gate** when the skew is unbounded or unexpectedly large, otherwise advisory (brief 246) | a hand-built multi-bit crossing (structural class gray, handshake or fifo; not an XPM) that no `set_bus_skew` names. Gate: no `max_dpo` names it either, or the smallest one is above 10 x the crossing's skew bound S (`min(src, dst)` period for a Gray bus, `sync_stages` x destination period for a handshake, or the declared crossing's S). Advisory: a `max_dpo` within 10 x S bounds it | survey rank 1; UG903 pp. 142-144 |
+| CDCM-DPO-LOOSE | **gate** above 10 x L, advisory between L and 10 x L (brief 246) | a `max_dpo` value above the crossing's L (source period; `sync_stages` x destination period for a declared handshake or CE) | survey rank 2; AMD's XPM templates |
+
+**The gate factor (brief 246, owner decision 2026-11-27: gate "only when skew is unexpectedly large", with practical, achievable numbers).** `SKEW_GATE_FACTOR = 10` in
+`flow/cdc_margin.py`: ten times the crossing's own bound. False-positive scan before choosing it, over every committed or on-disk routed build that has a
+`bus_skew_route.rpt` (5 Vivado 2026.1 fixtures of brief 207, 6 agent-run builds of brief 224/230/225: p5 async FIFO x4, p4 FIR, the Red Pitaya smoke build): no
+CDCM-SKEW-MISSING anywhere; one CDCM-DPO-LOOSE, in the two p5 async FIFO builds of brief 224/230: `max_dpo` 40.0 ns on a 6.4 ns bound (6.25 x). A factor of 2
+to 6 would have failed those builds, so the factor is 10: they stay advisory and nothing that passed before fails. Builds made before brief 207 have no
+bus-skew report and are not evaluated (the check says so). Older design builds (b58a, b96, b110) were not re-run; the scan cannot cover them.
 | CDCM-MTBF-MISSING | advisory | UltraScale+: no MTBF report, or a structural synchroniser chain missing from it | survey rank 4; UG835 |
 | CDCM-MTBF-LOW | advisory | a chain or the overall MTBF below the target, or UNDEFINED | UG835 p. 1529 |
 | CDCM-UNC-HIGH | advisory | TIMING-44/45: user uncertainty above what Vivado calls reasonable | UG949 p. 283 |
@@ -178,7 +193,7 @@ binary bus passing every timing check on all four parts.
 - **The injected simulation is pessimistic for fast-to-slow Gray buses.** On the good design the read pointer (156.25 to 100 MHz)
   was seen ahead for 1 cycle in 2 of 5 seeds. The model holds each changing bit for a whole destination cycle, independently. That
   can mix two increments, and hardware with skew below one source period cannot. A follow-up for `flow/cdc_inject.py`.
-- **MTBF** default target 1e9 years is our assumption, not a vendor figure. Quartus caps its report at 1 billion years. The MAX 10
-  worst-case design MTBF on the good design was 1e+06 years, which is below that target with no margin added. Whether the target
+- **MTBF** default target 1e9 years (years, not seconds; see 3.4) is our assumption, not a vendor figure. Quartus caps its report at 1 billion years. The MAX 10
+  worst-case design MTBF on the good design was 1e+06 years (Quartus prints "years or seconds"; years here), which is below that target with no margin added. Whether the target
   should be stated as typical or worst case is the owner's decision.
 - Not measured here: `xpm_cdc_pulse` and `xpm_fifo_async` bounds, SSI parts, UltraScale+ BUFGCE_DIV clocking.

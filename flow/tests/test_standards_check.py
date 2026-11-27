@@ -418,3 +418,67 @@ def test_cdc_01_inline_in_may_name_a_shell_module(tmp_path):
     assert "STD-CDC-01" not in failing(run(tmp_path, CLEAN, arch))
     arch["crossings"][0]["inline_in"] = "no_such_module"
     assert "STD-CDC-01" in failing(run(tmp_path / "b", CLEAN, arch))
+
+
+# ---- brief 246: always @(*), primitive-named stubs, and STD-RST-01 on simulation stubs ---------------------------------
+
+STAR = """module m (input logic clk, input logic a, input logic b, output logic y, output logic q);
+    always @(*) begin
+        y = a & b;
+    end
+    always_ff @(posedge clk) q <= y;
+endmodule
+"""
+
+
+def test_comb_01_always_star_fails_and_always_comb_passes(tmp_path):
+    assert "STD-COMB-01" in failing(run(tmp_path / "a", STAR))
+    assert "STD-COMB-01" in failing(run(tmp_path / "b", STAR.replace("always @(*)", "always @*")))
+    assert "STD-COMB-01" not in failing(run(tmp_path / "c", STAR.replace("always @(*)", "always_comb")))
+    assert "STD-COMB-01" not in failing(run(tmp_path / "d", STAR.replace("    always @(*)", "    // std-waive: STD-COMB-01 generated table\n    always @(*)")))
+    assert "STD-COMB-01" not in failing(run(tmp_path / "e", STAR.replace("    always @(*) begin", "    // always @(*) in a comment\n    always_comb begin")))
+
+
+def test_comb_01_skips_simulation_stubs_and_guarded_regions_and_is_not_applied_to_library_code(tmp_path):
+    guarded = STAR.replace("module m", "`ifndef SYNTHESIS\nmodule m_stub (input logic a, output logic y);\n    always @(*) y = a;\nendmodule\n`endif\nmodule m", 1)
+    assert "STD-COMB-01" not in failing(run(tmp_path / "a", guarded.replace("    always @(*) begin\n        y = a & b;\n    end", "    assign y = a & b;")))
+    d = make(tmp_path / "b", CLEAN)
+    (d / "rtl" / "xilinx_sim_stubs.sv").write_text("`ifndef SYNTHESIS\nmodule IBUF (input I, output O);\n    always @(*) O = I;\nendmodule\n`endif\n")
+    res = {r["id"]: r for r in sc.evaluate(d, tmp_path / "b", stages=("rtl",))["rules"]}
+    assert res["STD-COMB-01"]["status"] == "pass" and res["STD-STUB-01"]["status"] == "pass"
+    # a library or vendor file outside the design's rtl/ is not scanned
+    lib = tmp_path / "b" / "ip_lib" / "x" / "rtl"
+    lib.mkdir(parents=True)
+    (lib / "x.sv").write_text(STAR)
+    res = {r["id"]: r for r in sc.evaluate(d, tmp_path / "b", stages=("rtl",))["rules"]}
+    assert res["STD-COMB-01"]["status"] == "pass"
+
+
+STUB = "module IBUF (input logic I, output logic O);\n    assign O = I;\nendmodule\n"
+
+
+def test_stub_01_a_primitive_named_module_outside_ifndef_synthesis_is_an_advisory(tmp_path):
+    d = make(tmp_path / "a", CLEAN)
+    (d / "rtl" / "ibuf.sv").write_text(STUB)
+    res = {r["id"]: r for r in sc.evaluate(d, tmp_path / "a", stages=("rtl",))["rules"]}
+    assert res["STD-STUB-01"]["status"] == "warn" and "IBUF" in res["STD-STUB-01"]["warnings"][0]["message"]       # advisory: never a failure
+    assert "STD-STUB-01" not in failing(res)
+    d2 = make(tmp_path / "b", CLEAN)
+    (d2 / "rtl" / "xilinx_sim_stubs.sv").write_text("`ifndef SYNTHESIS\n" + STUB + "`endif\n")
+    res2 = {r["id"]: r for r in sc.evaluate(d2, tmp_path / "b", stages=("rtl",))["rules"]}
+    assert res2["STD-STUB-01"]["status"] == "pass"
+    d3 = make(tmp_path / "c", CLEAN)
+    (d3 / "rtl" / "xilinx_sim_stubs.sv").write_text("`ifdef SYNTHESIS\n`else\n" + STUB + "`endif\n")           # the else branch of ifdef SYNTHESIS is simulation-only too
+    assert {r["id"]: r for r in sc.evaluate(d3, tmp_path / "c", stages=("rtl",))["rules"]}["STD-STUB-01"]["status"] == "pass"
+
+
+def test_rst_01_skips_a_guarded_simulation_stub_but_not_the_designs_own_logic(tmp_path):
+    d = make(tmp_path / "a", CLEAN)
+    (d / "rtl" / "xilinx_sim_stubs.sv").write_text("`ifndef SYNTHESIS\nmodule FDCE (input C, input CLR, input D, output reg Q);\n"
+                                                    "    always @(posedge C or posedge CLR) if (CLR) Q <= 0; else Q <= D;\nendmodule\n`endif\n")
+    res = {r["id"]: r for r in sc.evaluate(d, tmp_path / "a", stages=("rtl",))["rules"]}
+    assert res["STD-RST-01"]["status"] == "pass"
+    unguarded = ("module m_stub (input C, input CLR, input D, output reg Q);\n    always @(posedge C or posedge CLR) if (CLR) Q <= 0; else Q <= D;\nendmodule\n")
+    d2 = make(tmp_path / "b", CLEAN)
+    (d2 / "rtl" / "other.sv").write_text(unguarded)
+    assert {r["id"]: r for r in sc.evaluate(d2, tmp_path / "b", stages=("rtl",))["rules"]}["STD-RST-01"]["status"] == "fail"

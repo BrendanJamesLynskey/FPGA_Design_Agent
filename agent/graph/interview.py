@@ -408,6 +408,61 @@ def ensure_reset_model_question(spec: dict[str, Any]) -> tuple[dict[str, Any], b
     return spec, True
 
 
+REQUEST_ASYNC_RESET = re.compile(r"(?i)\basync(?:hronous)?(?:ly)?[\s-]*(?:(?:active[\s-]*(?:low|high)|negative|positive)[\s-]*)?reset\b|\breset\b[^.\n]{0,30}\basynchronous|\bnegedge\s+rst|\bposedge\s+rst|\barst\w*")
+ASYNC_RESET_SEEN = r"(?i)\basync(hronous)?\b.{0,40}\breset\b|\breset\b.{0,40}\basync(hronous)?\b"
+ASYNC_RESET_CONFIRM = re.compile(r"(?is)\bconfirm(?:ed|s)?\b.{0,60}?\basync(?:hronous)?\b.{0,25}?\breset\b")
+ASYNC_RESET_QUESTION = ("The request asks for an asynchronous reset on the design's own registers. We do not do that by default: AMD recommends synchronous resets "
+                        "(UG949), an asynchronous reset costs timing closure (a recovery/removal check on every register and a reset tree that must be timed), and it "
+                        "overrides our standard (gate STD-RST-01). A reset that arrives asynchronously from the board (a button, a PS reset, an external chip) is "
+                        "fine: we synchronise it at the boundary and every register inside uses a synchronous reset. Do you want asynchronous resets on internal "
+                        "registers anyway? Only an emphatic answer counts: write 'CONFIRM ASYNC RESET: <register names> - <why>'.")
+ASYNC_RESET_DEFAULT = ("No. Every register inside uses a synchronous reset; a reset input that is asynchronous to the clock is taken through a reset "
+                       "synchroniser at the top boundary (spec.yaml reset.asynchronous_input: true).")
+ASYNC_RESET_REASON = ("House rule, owner 2026-11-27: a wording in the request alone is not accepted. The confirmation is recorded verbatim in spec.yaml "
+                      "(reset.async_waivers) as the waiver of STD-RST-01 for the named registers.")
+
+
+def ensure_async_reset_question(request: str, spec: dict[str, Any]) -> tuple[dict[str, Any], bool]:
+    """Brief 246 (house rule 2026-11-27): a request (or spec) that wants an asynchronous reset on internal registers gets ONE plain question with the
+    cost stated and the synchronous default, unless the spec already asked it or records a waiver. Returns (spec, whether it was added)."""
+    text = (request or "") + " \n " + " ".join(str(v) for v in (spec.get("summary"), spec.get("reset")) if v)
+    if not REQUEST_ASYNC_RESET.search(text):
+        return spec, False
+    asked = " \n ".join(str(q.get("question", "")) for q in [*(spec.get("open_questions") or []), *(spec.get("resolved_questions") or [])]
+                        if isinstance(q, dict))
+    if re.search(ASYNC_RESET_SEEN, asked) or (isinstance(spec.get("reset"), dict) and spec["reset"].get("async_waivers")):
+        return spec, False
+    spec = dict(spec)
+    spec["open_questions"] = [*(spec.get("open_questions") or []),
+                              {"question": ASYNC_RESET_QUESTION, "default": ASYNC_RESET_DEFAULT, "reason": ASYNC_RESET_REASON}]
+    return spec, True
+
+
+def apply_async_reset_answer(spec: dict[str, Any]) -> dict[str, Any]:
+    """Record an emphatic confirmation as the STD-RST-01 waiver: a resolved async-reset question whose answer reads 'CONFIRM ASYNC RESET: regs - why'
+    (given by a person, never defaulted) becomes ``reset.async_waivers: [{registers, confirmation, by, rule}]``, the answer kept verbatim. Any other
+    answer (including the default) records nothing, so the synchronous rule stands."""
+    out = [w for w in ((spec.get("reset") or {}).get("async_waivers") or []) if isinstance(w, dict)] if isinstance(spec.get("reset"), dict) else []
+    for q in spec.get("resolved_questions") or []:
+        if not isinstance(q, dict) or not re.search(ASYNC_RESET_SEEN, str(q.get("question", ""))):
+            continue
+        ans = str(q.get("answer") or "")
+        if q.get("status") != "answered" or q.get("by") in ("default", "oracle") or not ASYNC_RESET_CONFIRM.search(ans):
+            continue
+        tail = re.split(r"(?i)confirm(?:ed|s)?[^:]*:", ans, maxsplit=1)
+        names = re.split(r"\s+-+\s+|\s+\u2014\s+|\n", tail[1].strip(), maxsplit=1)[0] if len(tail) > 1 else ""
+        regs = [r for r in re.split(r"[,\s]+", names) if re.fullmatch(r"[A-Za-z_]\w*(\[[^\]]*\])?", r)]
+        if regs and not any(w.get("confirmation") == ans for w in out):
+            out.append({"rule": "STD-RST-01", "registers": regs, "confirmation": ans, "by": q.get("by") or "human"})
+    if not out:
+        return spec
+    spec = dict(spec)
+    rst = dict(spec["reset"]) if isinstance(spec.get("reset"), dict) else ({"port": str(spec["reset"])} if spec.get("reset") else {})
+    rst["async_waivers"] = out
+    spec["reset"] = rst
+    return spec
+
+
 CLOCK_RELATION_SEEN = r"(?i)\b(asynchronous|related|exclusive|same (MMCM|PLL|source)|clock relation|clock groups?)\b"
 CLOCK_RELATION_REASON = ("The flow writes set_clock_groups from the declared relation of each clock pair (brief 242): asynchronous, related (outputs of one MMCM, "
                          "timed together) or exclusive (inputs of a clock mux). Without it Vivado times unrelated clocks against each other and the methodology "

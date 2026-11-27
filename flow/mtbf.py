@@ -15,7 +15,7 @@ ASYNC_REG (the survey's plain variant listed none), so a missing crossing is a f
 
 Record: ``{"enforced": false, "status", "overall_years", "crossings": [{path, mtbf_years, toggle_mtrs, sample_mhz, settling_ns, from, to,
 stages, net}], "worst": {...}, "findings": [...]}``. Finding MTBF-01: a chain below ``--min-years`` (the target is the design's to set; the
-default of 1,000 years is a floor for advisory output, not a standard). MTBF-02: a chain of one stage. MTBF-03: the tool gives no MTBF for a chain whose data toggles (`UNDEFINED` with no toggle rate); `UNDEFINED` with a ZERO* toggle rate (static data) or an INFINITE settling time is only counted (``undefined_static``)."""
+default of 1,000 YEARS (not seconds) is a floor for advisory output, not a standard). MTBF-02: a chain of one stage. MTBF-03: the tool gives no MTBF for a chain whose data toggles (`UNDEFINED` with no toggle rate); `UNDEFINED` with a ZERO* toggle rate (static data) or an INFINITE settling time is only counted (``undefined_static``)."""
 
 from __future__ import annotations
 
@@ -27,12 +27,18 @@ from pathlib import Path
 from typing import Any
 
 DEFAULT_MIN_YEARS = 1000.0
-_YEARS = re.compile(r"^\s*>?\s*([0-9.]+(?:e[+-]?\d+)?)\s*years?\s*$", re.I)      # "> 1.8e+308 years" is a lower bound: beyond the tool's range
+# UNITS (brief 246): every MTBF figure here is in YEARS. Vivado prints each cell with its own unit ("6.48e+51 years", "1.32 days": UG835 says the
+# command reports "in dynamic time units, from seconds to years"), so a cell is converted to years; the number in ``mtbf_years`` is never seconds.
+_YEARS = re.compile(r"^\s*>?\s*([0-9.]+(?:e[+-]?\d+)?)\s*(years?|days?|hours?|min(?:ute)?s?|sec(?:ond)?s?|s)\s*$", re.I)      # "> 1.8e+308 years" is a lower bound: beyond the tool's range
+_TO_YEARS = {"year": 1.0, "day": 1 / 365.25, "hour": 1 / 8766.0, "min": 1 / 525960.0, "sec": 1 / 31557600.0, "s": 1 / 31557600.0}
 
 
 def _years(cell: str) -> float | None:
     m = _YEARS.match(cell.strip())
-    return float(m.group(1)) if m else (float("inf") if "inf" in cell.lower() else None)
+    if m:
+        unit = m.group(2).lower()
+        return float(m.group(1)) * _TO_YEARS[next(k for k in ("year", "day", "hour", "min", "sec", "s") if unit.startswith(k))]
+    return float("inf") if "inf" in cell.lower() else None
 
 
 def _table(text: str, heading: str) -> list[dict[str, str]]:

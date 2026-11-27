@@ -42,7 +42,7 @@ one byte time at 1 Gb/s).
 | speculative / safe | speculative: act before the FCS is known and undo the order if the frame turns out bad; safe: wait for a good FCS |
 | poison | invert an outgoing frame's FCS so that the far end discards it (the undo for an order already on the wire) |
 | hold-off | the minimum number of clocks before the same rule may fire again |
-| token bucket | a rate limit: each order takes a token; tokens come back at a fixed rate up to a maximum |
+| token bucket | a rate limit: each request takes a token, granted or refused (the book's rule); tokens come back at a fixed rate up to a maximum |
 | k-induction | a formal proof that a property holds in every reachable state, not only up to a fixed depth |
 | bounded check | a formal check of every behaviour up to a fixed number of clocks; it finds bugs but is not a proof |
 | OOC | out-of-context synthesis: a block built on its own to measure its cost |
@@ -123,7 +123,7 @@ Interfaces:
 | formal checks; needs SymbiYosys, yosys and z3 | `python3 -m pytest -q designs/b58a_trigger/tests/test_b58a_formal.py` | no | about 30 min |
 | build the KR260 bitstream; needs local Vivado 2026.1 and a heavy slot (take_heavy_slot.sh) | `flow/run_vivado.sh designs/b58a_trigger` | yes | about 23 min |
 
-Tool: Vivado 2026.1. Build ID of the inputs at handover: `4c77d949` (`python flow/manifest.py show designs/b58a_trigger`: what a rebuild of today's sources and flow would carry; it changes when any build input or the flow changes, so it can differ from the build ID in an older evidence record). Knowledge-bank pin: `eaf6794`.
+Tool: Vivado 2026.1. Build ID of the inputs at handover: `8b5149c3` (`python flow/manifest.py show designs/b58a_trigger`: what a rebuild of today's sources and flow would carry; it changes when any build input or the flow changes, so it can differ from the build ID in an older evidence record). Knowledge-bank pin: `eaf6794`.
 
 | File | What |
 |---|---|

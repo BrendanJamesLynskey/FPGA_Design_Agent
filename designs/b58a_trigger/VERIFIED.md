@@ -4,7 +4,7 @@
 
 **Not assessed: no requirements recorded (no verif/testplan.yaml), so nothing here is traced to a requirement.**
 
-What the label means, what "verified" never means and how it is earned: [docs/verified.md](../../docs/verified.md). The label is computed from the testplan and the evidence files named below; it is never typed. Generated at git commit `7cadf47c721e2fcb55add43ca2f8a61a55d03e0c` (informational: the hashes in the manifest, not the commit, are what the CI check compares).
+What the label means, what "verified" never means and how it is earned: [docs/verified.md](../../docs/verified.md). The label is computed from the testplan and the evidence files named below; it is never typed. Generated at git commit `c095ca4ee72bdfbe575e37412368de9d56fadc99` (informational: the hashes in the manifest, not the commit, are what the CI check compares).
 
 ## What was checked for the label
 
@@ -45,11 +45,11 @@ Every file this record covers, with its SHA-256 at generation (19 files). `absen
 
 | File | SHA-256 |
 |---|---|
-| `designs/b58a_trigger/handover.yaml` | `86896042c14bbca1c3ab37a6b63476236e2006089a5957e14ab00d64b7e5cc89` |
+| `designs/b58a_trigger/handover.yaml` | `dcb250783c5e0c221a730f74ff3e5c6084768de1ee32010f750d7b495bac064c` |
 | `designs/b58a_trigger/rtl/book.sv` | `216116a0a865b79554d425b6bca939a9f15dab8a833391c7403d1467e7285aa4` |
 | `designs/b58a_trigger/rtl/feed_gen.sv` | `73d6161ebb18d1f7eda5e807d056d52d48dd78fde100f35ec27ad78dd4d72046` |
 | `designs/b58a_trigger/rtl/feed_rx.sv` | `ccc1c62f8b710bf480a435f66fbd5e54b7b9d6c81928bf013330a35b0618670a` |
-| `designs/b58a_trigger/rtl/interlocks.sv` | `37a99e59c69e5e2976afcfb9f3466f72a850456daef4569716b37fb6f1d10e89` |
+| `designs/b58a_trigger/rtl/interlocks.sv` | `8157198a83c130a9880fbd99c542930abe0c0a7aa98a6422d603b412d62a37dc` |
 | `designs/b58a_trigger/rtl/jtag_bus.sv` | `5a6042e567c4e7f2ca34bb01810459650f56f1bb3850434b427f2e4e6edd40b1` |
 | `designs/b58a_trigger/rtl/kr260_top.sv` | `fca2846beacdbb98559532c63da1d02125d814f0e823b5efeaaec043c1677811` |
 | `designs/b58a_trigger/rtl/lat_hist.sv` | `bff5f32de787fdbf2ae739eed67f4d1f2764224b4dd90e03c01050a3ee856a38` |

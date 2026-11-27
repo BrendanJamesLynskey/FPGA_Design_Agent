@@ -456,8 +456,13 @@ def test_the_checks_import_from_a_bare_directory(tmp_path):
     """On the board the two files sit side by side with no package: the fallback import must work."""
     for f in ("redpitaya_checks.py", "redpitaya_regs.py"):
         shutil.copy(ROOT / "hil" / f, tmp_path / f)
-    r = subprocess.run([sys.executable, "-c", f"import sys; sys.path[:] = [{str(tmp_path)!r}] + sys.path[-3:]; import redpitaya_checks as c; print(c.FREQCOUNT.block)"],
-                       cwd=tmp_path, capture_output=True, text=True)
+    # Isolated mode (-I: no cwd, no PYTHON* variables) and the repository root removed from the path, but every other entry kept (the standard library,
+    # site-packages): the earlier `sys.path[-3:]` kept three entries by position, which dropped the standard library where the path is laid out differently
+    # (it could not import __future__ locally, brief 246) and passed only where the last three entries happened to be the interpreter's own.
+    code = (f"import os, sys; root = os.path.realpath({str(ROOT)!r}); "
+            f"sys.path[:] = [{str(tmp_path)!r}] + [p for p in sys.path if p and os.path.realpath(p) != root]; "
+            "import redpitaya_checks as c; print(c.FREQCOUNT.block)")
+    r = subprocess.run([sys.executable, "-I", "-c", code], cwd=tmp_path, capture_output=True, text=True)
     assert r.returncode == 0 and "rp_freqcount" in r.stdout, r.stderr
 
 

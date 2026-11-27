@@ -320,3 +320,40 @@ def test_node_work_starts_k_way_only_after_two_failed_visits_once_and_never_insi
     gr.node_work({**base, "run_id": rt2.run_id, "visits": {"2": 2}})
     gr.node_work({**base, "run_id": rt2.run_id, "visits": {"2": 3}})
     assert fired == [2]                                                          # off by default
+
+
+# ---- brief 246 (the 214 follow-up): the streak is keyed on the failing gate names, not on the text ------------------------------------------------
+
+def test_signature_from_gate_names_survives_changed_text_and_numbers() -> None:
+    a = rg.failure_signature(["lint not passing", "standards STD-RST-01: rtl/a.sv:12: x"], None, ["standards_rtl:STD-RST-01", "lint"])
+    b = rg.failure_signature(["standards STD-RST-01: rtl/b.sv:99: other words", "lint not passing"], None, ["lint", "standards_rtl:STD-RST-01"])
+    assert a == b == "gates:lint|standards_rtl:STD-RST-01"
+    assert rg.failure_signature(["x"], None, ["simulate"]) != a
+    assert rg.failure_signature(["x"], "rtl:lint", ["simulate"]) == "rtl:lint"            # stage 2's own signature still wins
+    assert rg.failure_signature(["lint failed at line 12"], None, None) == rg.failure_signature(["lint failed at line 99"])    # no gate names: the text form as before
+
+
+def test_a_bounced_stage_one_loop_reaches_a_streak_of_two_on_the_same_failing_gates() -> None:
+    """214's finding: on a stage-1 loop the text signature differed on every entry (streak 1 on visits 2, 3, 4) and escalation never fired. With gate names it does."""
+    from agent.graph.stages import MACHINE, exit_check, failed_gates
+    st = MACHINE[1]
+    ev = {"spec": {}, "lint": {"ok": False}, "simulate": {"ok": False}}
+    names = failed_gates(st, ev)
+    f = rg.FailureStreak()
+    f.see(1, "")
+    for text in ("lint not passing at line 3", "lint not passing at line 40 (a different port)", "lint not passing: new words"):
+        f.see(1, rg.failure_signature([text], None, names))
+    assert names and f.streak(1) == 3
+    assert f.see(1, rg.failure_signature(["x"], None, ["simulate"])) == 1                   # a different failing gate: the streak restarts
+
+
+def test_failed_gates_lists_only_the_gates_that_fail_and_the_standards_rule_ids() -> None:
+    from agent.graph.stages import MACHINE, failed_gates
+    st = next(s for s in MACHINE if "lint" in s.gates and "simulate" in s.gates)
+    ev = {"lint": {"ok": True}, "simulate": {"ok": False}}
+    got = failed_gates(st, ev)
+    assert "simulate" in got and "lint" not in got
+    std = next((s for s in MACHINE if "standards_rtl" in s.gates), None)
+    if std is not None:
+        res = {"rules": [{"id": "STD-COMB-01", "stage": "rtl", "status": "fail", "findings": [{"file": "a.sv", "line": 3, "message": "m"}]}]}
+        assert "standards_rtl:STD-COMB-01" in failed_gates(std, {"standards": res})

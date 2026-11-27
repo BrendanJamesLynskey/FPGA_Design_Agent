@@ -86,7 +86,10 @@ Goldens, oldest first:
   brief 231 golden's.
 - ``b239_request_golden.json`` (brief 239, 2026-11-26): the stage-2 Designer's request gained the list of what the stage-2 gates check (``agent/graph/run.py``
   ``stage2_rules_note``, built from ``flow/hdl_rules.yaml``, appended after the conventions like ``FILE_BY_FILE_NOTE``). One new request path
-  (``stage2_rules_note``); every other hash equals the brief 225 golden's. Runs before this change belong to the earlier goldens."""
+  (``stage2_rules_note``); every other hash equals the brief 225 golden's. Runs before this change belong to the earlier goldens.
+- ``b246_request_golden.json`` (brief 246, 2026-11-27): the conventions' standards summary gained STD-COMB-01, STD-STUB-01 and STD-RST-02,
+  and STD-RST-01's text names its waiver (``flow/standards_check.py`` ``RULES``, FDA-HDL v1.16). Only ``conventions_text_noshell_False`` and
+  ``conventions_text_noshell_True`` differ from the brief 239 golden. Runs before this change belong to the earlier goldens."""
 
 from __future__ import annotations
 
@@ -97,7 +100,7 @@ from agent.tests.request_golden import collect
 
 FIXTURES = Path(__file__).parent / "fixtures"
 EVAL1 = FIXTURES / "eval1_request_golden.json"
-GOLDEN = FIXTURES / "b239_request_golden.json"          # the newest golden
+GOLDEN = FIXTURES / "b246_request_golden.json"          # the newest golden
 #: the hashes that differ from eval-1's, and the brief that changed each (an intended change is listed here, with why)
 CHANGED_SINCE_EVAL1 = {"arm_constants": "brief 80: Claude Code 2.1.321 accepted (ACCEPTED_CLI; the tool-text check passed)",
                        "tool_registry": "brief 36: skill_index, skill_excerpt, load_skill(name=); brief 42 H9: report_digest; "
@@ -108,8 +111,8 @@ CHANGED_SINCE_EVAL1 = {"arm_constants": "brief 80: Claude Code 2.1.321 accepted 
                                   "brief 71: the check tool (rtl); brief 73: the interface profile (clarify, rtl); "
                                   "brief 70: the Designer's reset paragraph (rtl)",
                        "conventions": "brief 68: role names (Tests (Verifier))",
-                       "conventions_text_noshell_False": "brief 68: as conventions; brief 205: the STD-INIT-01 rule text (rtl.initial_values); brief 231: STD-INIT-02",
-                       "conventions_text_noshell_True": "brief 68: as conventions; brief 205: the STD-INIT-01 rule text (rtl.initial_values); brief 231: STD-INIT-02",
+                       "conventions_text_noshell_False": "brief 68: as conventions; brief 205: the STD-INIT-01 rule text (rtl.initial_values); brief 231: STD-INIT-02; brief 246: STD-COMB-01, STD-STUB-01, STD-RST-02",
+                       "conventions_text_noshell_True": "brief 68: as conventions; brief 205: the STD-INIT-01 rule text (rtl.initial_values); brief 231: STD-INIT-02; brief 246: STD-COMB-01, STD-STUB-01, STD-RST-02",
                        "tests_conventions_text_noshell_False": "brief 68: as conventions",
                        "tests_conventions_text_noshell_True": "brief 68: as conventions",
                        "hw_format": "brief 68: reference model for blind model",

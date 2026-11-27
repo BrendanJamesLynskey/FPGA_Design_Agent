@@ -48,7 +48,7 @@ def test_every_rule_is_covered_by_a_check_or_marked_manual() -> None:
 def test_rule_set_shape_fix_and_skill() -> None:
     rs = LR.load_rules()
     assert not LR.rule_problems(rs)
-    assert rs["version"] == "1.15"         # brief 241: HDL-DMA-01 (brief 231 1.14: HDL-STY-01, STD-INIT-02): HDL-STY-01, STD-INIT-02 (brief 185 1.13; HDL-DSP-01 (brief 190: 1.12, brief 208: 1.11, brief 207: 1.10, brief 204a: 1.9)
+    assert rs["version"] == "1.16"         # brief 246: HDL-STY-02, HDL-STY-03; brief 241: HDL-DMA-01 (brief 231 1.14: HDL-STY-01, STD-INIT-02): HDL-STY-01, STD-INIT-02 (brief 185 1.13; HDL-DSP-01 (brief 190: 1.12, brief 208: 1.11, brief 207: 1.10, brief 204a: 1.9)
     for r in rs["rules"]:
         assert str(r.get("fix") or "").strip(), f"{r['id']}: no fix"
         sk = str(r.get("skill") or "")

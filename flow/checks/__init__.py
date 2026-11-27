@@ -509,8 +509,8 @@ def _fastpath(ctx: Ctx) -> dict[str, Any]:
 
 def _cdc_margin(ctx: Ctx) -> dict[str, Any]:
     """Brief 207: clock-crossing intent constrained and met (flow/cdc_margin.py, the same function as the gate post_route_bus_skew_met):
-    a bus-skew violation blocks; missing bus-skew coverage, a loose datapath-only value, a missing or low MTBF (UltraScale+) and high
-    user clock uncertainty are advisory."""
+    a bus-skew violation blocks; so do missing bus-skew coverage with an unbounded or unexpectedly large skew and a datapath-only value
+    above 10 x its bound (brief 246); smaller cases, a missing or low MTBF (UltraScale+) and high user clock uncertainty are advisory."""
     if ctx.scope != "route":
         return _not_run("needs the routed design's report_bus_skew (scope route)")
     if not (ctx.build / "bus_skew_route.rpt").is_file():
@@ -1141,7 +1141,8 @@ register(Check("constraint_scope", "records", ("route",), {"constraint_scope": (
 register(Check("cdc_margin", "records", ("route",), {"cdc_margin": ("CDCM-SKEW-VIOL", "CDCM-SKEW-MISSING", "CDCM-DPO-LOOSE",
                                                                   "CDCM-MTBF-MISSING", "CDCM-MTBF-LOW", "CDCM-UNC-HIGH")},
                "clock-crossing intent constrained and met (flow/cdc_margin.py, brief 207): a set_bus_skew violation blocks (gate "
-               "post_route_bus_skew_met); missing bus skew, a loose datapath-only value, MTBF (UltraScale+) and user uncertainty are advisory",
+               "post_route_bus_skew_met), as do missing bus skew with an unbounded or unexpectedly large skew and a datapath-only value above 10 x its bound "
+               "(brief 246); smaller cases, MTBF (UltraScale+) and user uncertainty are advisory",
                _cdc_margin, gate_mirror=True))
 register(Check("dsp_ram_mapping", "records", POST, {"vivado": ("DPIP-*", "DPOP-*", "SYNTH-*", "RBOR-*", "DPIR-*", "DPOR-*",
                                                               "RMIR-*", "RMOR-*", "RROR-*")},

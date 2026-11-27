@@ -88,7 +88,7 @@ whose condition has `!=` (or a negated `==`) and no case operator or `$isunknown
 ## 12. Synchroniser MTBF per crossing
 
 `flow/build.tcl` writes `mtbf.rpt` after routing (`report_synchronizer_mtbf`, inside `catch`: it never fails a build). `flow/mtbf.py` parses it into one record per chain (stage count, settling time, toggle and sample rates, MTBF in years),
-the worst chain, and findings: below a target (MTBF-01, default 1,000 years, the design's to set), a one-stage chain (02), no MTBF for a chain whose data toggles (03). **No new Vivado run was needed:** the reports of brief 105
+the worst chain, and findings: below a target (MTBF-01, default 1,000 years, not seconds; the design's to set), a one-stage chain (02), no MTBF for a chain whose data toggles (03). **No new Vivado run was needed:** the reports of brief 105
 (Vivado 2026.1) exist. **Measured:** the K26 survey fixture lists 24 chains, worst 6.31e+25 years; the KR260 design (b96) lists 1,345 chains, worst 1.13e+52 years, with 8 chains the tool gives no figure for (`n/a` toggle rate: flagged), 35 more it reports as undefined for static or infinite-settling
 data (counted, not flagged) and 46 whose MTBF it states only as a lower bound beyond its range (`> 1.8e+308 years`). The plain variant without ASYNC_REG lists no chain, and a 7-series build has no report (the family matrix `cdc` row: warning 12-3426), so
 the record says `no_chains` or `no_report` instead of passing. **Gap:** mapping a chain to the structural CDC check's crossings (the report names the source net; the paths use register names) is not done.
