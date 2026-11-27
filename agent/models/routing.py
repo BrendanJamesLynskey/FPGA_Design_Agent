@@ -83,11 +83,15 @@ def table_tier(role: str, stage: str, kind: str, table: tuple = ROUTING_TABLE) -
     return "standard", "no row"
 
 
-def failure_signature(fails: list[str] | None, sig: str | None = None) -> str:
-    """A signature of a stage's failure that ignores numbers, hex values and spacing (a repeat with other line numbers is the same failure).
-    Stage 2 already has one (``state['sig']``); it is used when given."""
+def failure_signature(fails: list[str] | None, sig: str | None = None, gates: list[str] | None = None) -> str:
+    """A signature of a stage's failure. Stage 2 already has one (``state['sig']``: the owners and failing gates); it is used when given. Otherwise
+    (brief 246, the follow-up of 214) the failing GATE NAMES, sorted, when the stage recorded them: the same gates failing again is the same failure
+    however the gate's text or its numbers changed (214 measured the text-based form never repeating on a bounced stage-1 loop). With neither, the
+    failure text with numbers, hex values and spacing ignored."""
     if sig:
         return str(sig)
+    if gates:
+        return "gates:" + "|".join(sorted(set(str(g) for g in gates)))
     text = " | ".join(str(f) for f in (fails or []))
     text = re.sub(r"0x[0-9a-fA-F]+|\d+", "#", text)
     return re.sub(r"\s+", " ", text).strip()[:300]

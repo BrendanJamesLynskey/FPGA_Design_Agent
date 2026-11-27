@@ -9,6 +9,8 @@ No model calls here: everything is decided from tool results (``gates.json``, ``
 
 from __future__ import annotations
 
+import dataclasses
+import re
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -233,6 +235,22 @@ def report_gates_stage(r: dict | None) -> tuple[bool, list[str]]:
     fs = [f for f in (r.get("findings") or []) if f.get("blocking") and f.get("code") in REPORT_GATE_CODES]
     return not fs, [f"report gate {f['code']} {f.get('where', '')}: {f.get('message', '')}" + (f" Fix: {f['fix']}" if f.get("fix") else "")
                     for f in fs]
+
+
+def failed_gates(stage: Stage, ev: dict[str, Any]) -> list[str]:
+    """Brief 246: the names of the gates of ``stage`` that fail on ``ev`` (each gate checked on its own), in the stage's order. For a standards gate the
+    failing rule ids are appended (``standards_rtl:STD-RST-01``), so two different rules do not look like the same failure. Used for the failure signature."""
+    names: list[str] = []
+    for g in stage.gates:
+        try:
+            ok, why = exit_check(dataclasses.replace(stage, gates=(g,)), ev)
+        except (KeyError, TypeError, ValueError, AttributeError):
+            continue
+        if ok:
+            continue
+        ids = sorted({m for w in why for m in re.findall(r"\bstandards (STD-[A-Z]+-\d+)", str(w))}) if g in ("standards_rtl", "standards_post_synth") else []
+        names.append(g + (":" + ",".join(ids) if ids else ""))
+    return names
 
 
 def exit_check(stage: Stage, ev: dict[str, Any]) -> tuple[bool, list[str]]:

@@ -52,7 +52,7 @@ from agent.graph import ownership
 from agent.graph.snapshot import Snapshots
 from agent.graph.spec_schema import (PROOF_METHODS, requirement_quality_errors, SpecError, clock_hz, load_spec, propose_proof, rate_params,
                                      validate)
-from agent.graph.stages import MACHINE, RUN_LIMITS, classify, exit_check, route_failure, run_turn_cap, visit_limit, visits_after_route
+from agent.graph.stages import MACHINE, RUN_LIMITS, classify, exit_check, failed_gates, route_failure, run_turn_cap, visit_limit, visits_after_route
 from flow import architecture as arch_mod
 from flow import srcorder
 
@@ -1146,7 +1146,7 @@ def node_work(state: State) -> dict:
         rt.streak = FailureStreak()
     if not rt.attempt:
         from agent.models import routing as _routing
-        rt.streak.see(n, _routing.failure_signature(state.get("fails"), state.get("sig") if n == 2 else None) if state.get("fails") else "")
+        rt.streak.see(n, _routing.failure_signature(state.get("fails"), state.get("sig") if n == 2 else None, state.get("fail_gates")) if state.get("fails") else "")
         if (rt.cfg.kway > 1 and n in _routing.KWAY_STAGES and rt.streak.failed_visits(n) >= _routing.KWAY_AT_VISIT - 1
                 and rt.kway_rounds.get(n, 0) < _routing.KWAY_ROUNDS):
             return _kway_work(rt, state, n)
@@ -2001,13 +2001,15 @@ def node_gate(state: State) -> dict:
         rt.last_build_output = ""
     if n == 9 and not hw_ok:
         from dataclasses import replace as _replace
-        ok, fails = exit_check(_replace(st, gates=tuple(g for g in st.gates if g not in ("bringup", "signoff")
-                                                        and not (g == "bitstream_ila" and transport_of(rt) == "jtag_bus"))), ev)
+        checked = _replace(st, gates=tuple(g for g in st.gates if g not in ("bringup", "signoff")
+                                           and not (g == "bitstream_ila" and transport_of(rt) == "jtag_bus")))
+        ok, fails = exit_check(checked, ev)
         if ok:                                   # everything but the board passes: ask before programming
             ok, fails = False, ["hardware: awaiting approval before programming"]
     else:
-        ok, fails = exit_check(dataclasses.replace(st, gates=tuple(g for g in st.gates if g != "bitstream_ila")) if (n == 9 and transport_of(rt) == "jtag_bus")
-                               else st, ev)
+        checked = dataclasses.replace(st, gates=tuple(g for g in st.gates if g != "bitstream_ila")) if (n == 9 and transport_of(rt) == "jtag_bus") else st
+        ok, fails = exit_check(checked, ev)
+    fail_gates = [] if ok else failed_gates(checked, ev)       # brief 246: the names of the gates that failed, for the failure signature (brief 214's escalation streak)
     if n == 2 and ok and (ev.get("spec_test") or {}).get("blocks"):      # 08f: the independent bench failed and triage blamed the design
         ok, fails = False, ["spec test: an independent bench written from the request alone fails against the design"]
     if n == 2 and ok and "R3" in rt.cfg.arms:   # brief 213 (R3): the fresh-stimulus regrade of a design every gate accepted
@@ -2055,7 +2057,7 @@ def node_gate(state: State) -> dict:
         for rec in written:
             log_routing_event(rt, "repair_record_written", id=rec["id"], gate=rec["trigger"]["gate"], finding_id=rec["trigger"]["finding_id"],
                               signature_class=rec["trigger"]["signature_class"], files=rec["fix"]["files"][:6])
-    return {**out, "evidence": ev, "fails": [] if ok else fails, "detail": "\n".join(detail)}
+    return {**out, "evidence": ev, "fails": [] if ok else fails, "fail_gates": [] if ok else fail_gates, "detail": "\n".join(detail)}
 
 
 ARCH_FILES = ("architecture.yaml", "ARCHITECTURE.md")
