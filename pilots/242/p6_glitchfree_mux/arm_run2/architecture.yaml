@@ -1,0 +1,77 @@
+schema: fpga-design-agent/architecture/v1
+design: p6_clkmux
+blocks:
+- name: jtag_bus
+  function: supplied BSCANE2 USER4 host bus on clk_c3 (data/jtag_bus.sv, unchanged); gives h_we/h_re/h_addr/h_wdata/h_rdata
+- name: p6_clkmux_top
+  function: thin top; instantiates jtag_bus, power-up reset counter (16 clk_c3 cycles), IBUFDS_GTE4, BUFGCE_DIV, BUFGCTRL, USR_ACCESSE2 and the core; drives sfp_tx_disable=1
+- name: p6_clkmux_core
+  function: register file, SEL/switch control FSM, ACTIVE_SEL/SWITCHING, SWITCH_COUNT, frequency gate counter, LEDs
+- name: mux_domain
+  function: clk_mux domain; 32-bit binary counter, Gray twin, checker, saturating MUX_ERRS, snapshot source and edge counter for frequency measurement
+- name: clk_flags
+  function: per-source-clock select flags registered in clk_a and clk_b, synchronised to clk_c3 to form ACTIVE_SEL
+interfaces:
+- name: host_reg
+  between: [jtag_bus, p6_clkmux_core]
+  protocol: simple
+  prefix: h
+  module: p6_clkmux_core
+- name: led_out
+  between: [p6_clkmux_core, p6_clkmux_top]
+  protocol: gpio
+  prefix: led
+  module: p6_clkmux_top
+clock_domains:
+- name: clk_c3
+  clock: clk_c3
+  freq_mhz: 25
+- name: clk_b_ref
+  clock: mgtrefclk0_p
+  freq_mhz: 156.25
+- name: clk_mux
+  clock: clk_mux
+  freq_mhz: 78.125
+reset:
+  synchronisers: [xpm_cdc_async_rst]
+crossings:
+- from: clk_c3
+  to: clk_mux
+  signal: SEL to BUFGCTRL select (S0/S1, handshake with ACTIVE flags)
+  primitive: xpm_cdc_single
+  inline_in: p6_clkmux_top
+- from: clk_mux
+  to: clk_c3
+  signal: active-source flags (clk_a, clk_b) to ACTIVE_SEL
+  primitive: xpm_cdc_array_single
+  inline_in: p6_clkmux_top
+- from: clk_mux
+  to: clk_c3
+  signal: MUX_ERRS
+  primitive: xpm_cdc_gray
+  inline_in: p6_clkmux_top
+- from: clk_c3
+  to: clk_mux
+  signal: snapshot request and counter capture
+  primitive: xpm_cdc_handshake
+  inline_in: p6_clkmux_top
+- from: clk_c3
+  to: clk_mux
+  signal: frequency gate enable
+  primitive: xpm_cdc_single
+  inline_in: p6_clkmux_top
+- from: clk_mux
+  to: clk_c3
+  signal: FREQ_COUNT result
+  primitive: xpm_cdc_handshake
+  inline_in: p6_clkmux_top
+- from: clk_c3
+  to: clk_mux
+  signal: muxed-domain reset
+  primitive: xpm_cdc_async_rst
+  inline_in: p6_clkmux_top
+predicted_resources:
+  lut: [350, 700]
+  ff: [650, 1100]
+  bram_tile: 0
+  dsp: 0

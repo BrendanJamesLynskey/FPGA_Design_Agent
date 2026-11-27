@@ -1,0 +1,462 @@
+name: p5_async_fifo_soak
+title: 'P5: asynchronous FIFO soak, 25 MHz writer to 156.25 MHz reader'
+board: kr260
+part: xck26-sfvc784-2LV-c
+top: p5_async_fifo_soak
+clocks:
+- name: clk_wr
+  role: C3 pin, 25 MHz on-board clock (writer domain)
+  freq_mhz: 25
+  period_ns: 40.0
+- name: clk_rd
+  role: SFP+ cage MGTREFCLK0 (differential pair) through IBUFDS_GTE4 and BUFG_GT,
+    156.25 MHz (reader domain)
+  freq_mhz: 156.25
+  period_ns: 6.4
+- name: tck
+  role: JTAG TCK inside jtag_bus.sv (BSCANE2 USER4), asynchronous to both
+  freq_mhz: 0
+  note: constrained by the build as an asynchronous clock group
+reset:
+  model: reprogram
+  name: none
+  note: every reset is a reconfiguration of the FPGA, registers start from initial
+    values, no reset input; a power-on counter of RESET_HOLD_CYCLES bus clocks drives
+    the rst of jtag_bus; each domain has its own reset synchroniser and the FIFO reset
+    is released in both domains before RUN is honoured
+parameters:
+  DESIGN_ID: 546635777
+  FIFO_DEPTH_WORDS: 512
+  DATA_WIDTH: 32
+  PRBS_SEED: 2147483647
+  PRBS_TAP_A: 31
+  PRBS_TAP_B: 28
+  SLOW_READ_DIV_CYCLES: 8
+  COUNTER_WIDTH: 32
+  RESET_HOLD_CYCLES: 16
+  READ_LATENCY_MAX_CYCLES: 2
+ports:
+- name: clk_25mhz
+  direction: in
+  width: 1
+  board_pin_role: C3 25 MHz clock pin (writer clock)
+- name: gt_refclk_p
+  direction: in
+  width: 1
+  board_pin_role: SFP+ MGTREFCLK0 P (156.25 MHz, reader clock)
+- name: gt_refclk_n
+  direction: in
+  width: 1
+  board_pin_role: SFP+ MGTREFCLK0 N
+- name: led
+  direction: out
+  width: 2
+  board_pin_role: user LEDs led[1:0]; led[0] = RUN, led[1] = error seen (data, overflow
+    or underflow)
+- name: sfp_tx_disable
+  direction: out
+  width: 1
+  board_pin_role: SFP+ tx_disable, constant 1 (laser off)
+behaviour:
+  register_bus:
+  - jtag_bus.sv is instantiated unchanged; its h_we, h_re, h_addr, h_wdata, h_rdata
+    port runs in the clock domain of the bus clk.
+  - A write takes effect the clock after h_we.
+  - After h_re, h_rdata shows the addressed register within 2 clocks and holds it.
+  - Unmapped addresses read 0 and ignore writes.
+  - All registers are 32 bits on 4-byte steps.
+  - BUILD reads the USR_ACCESSE2 word.
+  writer:
+  - While RUN is 1 the writer writes one 32-bit word on every writer clock in which
+    the FIFO is not full.
+  - Each word is the next 32 bits of PRBS-31 (x^31 + x^28 + 1), seed 0x7FFFFFFF.
+  - When the FIFO is full on a writer clock with RUN 1 the writer holds the word and
+    STALL_W increments.
+  - A write attempted while full would increment OVERFLOWS; the writer gating makes
+    it never happen.
+  reader:
+  - The reader pops a word whenever the FIFO is not empty and RUN is 1.
+  - Each popped word is compared with its own PRBS-31 copy started from the same seed
+    at RUN start; a mismatch increments DATA_ERRS.
+  - With SLOW_READ 1 the reader pops at most one word in every 8 reader clocks.
+  - A read attempted while empty would increment UNDERFLOWS; the reader gating makes
+    it never happen.
+  inject:
+  - Writing CTRL with INJECT 1 arms a single injection; the next received word has
+    one bit flipped before the check, once, then INJECT clears itself.
+  clear:
+  - Writing CTRL with CLEAR 1 while RUN is 0 zeroes all counters, reloads both PRBS
+    generators with the seed and resets the FIFO; CLEAR self-clears.
+  - CLEAR written while RUN is 1 is ignored.
+  snapshot:
+  - Any write to SNAPSHOT latches all seven counters at one instant into holding registers;
+    reads of 0x014 to 0x02C return the held values.
+  - Counters are 32 bits and wrap.
+  - Counters of the other clock domain are carried across with a handshake or Gray-coded
+    transfer so the snapshot is coherent.
+  cdc:
+  - The FIFO is an asynchronous FIFO with Gray-coded pointers and 2-flop synchronisers
+    (xpm_fifo_async or equivalent).
+  - The build carries set_clock_groups -asynchronous between clk_wr, clk_rd and tck
+    plus max_delay -datapath_only on Gray pointers.
+  - The CDC report is a deliverable.
+  sfp:
+  - sfp_tx_disable is driven to 1 at all times.
+  - No GT transceiver channel is used, only the reference clock buffer.
+registers:
+  map:
+  - offset: 0
+    name: ID
+    access: RO
+    reset: 546635777
+    bits: '[31:0] design ID'
+  - offset: 4
+    name: BUILD
+    access: RO
+    reset: 0
+    bits: '[31:0] USR_ACCESSE2 word'
+  - offset: 8
+    name: SCRATCH
+    access: RW
+    reset: 0
+    bits: '[31:0] read back what was written'
+  - offset: 16
+    name: CTRL
+    access: RW
+    reset: 0
+    bits: '[0] RUN, [1] SLOW_READ, [2] CLEAR self-clearing, [3] INJECT self-clearing'
+  - offset: 20
+    name: WORDS_W
+    access: RO
+    reset: 0
+    bits: '[31:0] words written (snapshot)'
+  - offset: 24
+    name: WORDS_R
+    access: RO
+    reset: 0
+    bits: '[31:0] words read and checked (snapshot)'
+  - offset: 28
+    name: DATA_ERRS
+    access: RO
+    reset: 0
+    bits: '[31:0] mismatched words (snapshot)'
+  - offset: 32
+    name: OVERFLOWS
+    access: RO
+    reset: 0
+    bits: '[31:0] writes while full (snapshot)'
+  - offset: 36
+    name: UNDERFLOWS
+    access: RO
+    reset: 0
+    bits: '[31:0] reads while empty (snapshot)'
+  - offset: 40
+    name: STALL_W
+    access: RO
+    reset: 0
+    bits: '[31:0] writer clocks held off by full (snapshot)'
+  - offset: 44
+    name: OCC_MAX
+    access: RO
+    reset: 0
+    bits: '[31:0] highest fill in words (snapshot)'
+  - offset: 48
+    name: SNAPSHOT
+    access: WO
+    reset: 0
+    bits: any write latches 0x014 to 0x02C; reads 0
+timing:
+  bus_clock: 25 MHz writer clock (default, see resolved questions)
+  latency:
+    read_data: h_rdata valid within 2 bus clocks of h_re and held
+    write_effect: 1 bus clock after h_we
+    snapshot_coherence: held values stable until the next SNAPSHOT write
+    word_rate_writer: one word per 25 MHz writer clock, 25 Mwords/s when not full
+    word_rate_reader: up to one word per 156.25 MHz clock, one per 8 clocks (19.53
+      Mwords/s) in SLOW_READ
+resources_expected:
+  lut: under 600
+  ff: under 800
+  bram36: 1 (512 x 32 FIFO, 16 Kbit; may map to one RAMB36 or two RAMB18)
+  dsp: 0
+  gt_channels: 0
+  bufg: 2 to 3
+assumptions:
+- assumption: Part is xck26-sfvc784-2LV-c.
+  reason: K26 SOM on the KR260.
+- assumption: In SLOW_READ the drain rate (19.5 Mwords/s) is below the 25 Mwords/s
+    fill rate, so the FIFO fills and the writer stalls.
+  reason: Required to show STALL_W and OCC_MAX near 512.
+- assumption: Reader at 156.25 MHz in normal mode drains faster than the writer, so
+    STALL_W stays 0 and OCC_MAX stays small.
+  reason: 6.25x rate ratio.
+- assumption: WORDS_W and WORDS_R differ by at most the FIFO occupancy (plus pipeline)
+    at a snapshot.
+  reason: Counts are taken at one instant.
+- assumption: The INJECT flips bit 0 of the next received word.
+  reason: Request says one bit; position is irrelevant to detection.
+- assumption: Writes to RO registers and to unmapped addresses are ignored.
+  reason: Request says unmapped ignore writes; RO analogous.
+open_questions: []
+requirements:
+- id: REQ-01
+  text: Register ID at 0x000 reads 0x20950001.
+  proof:
+  - simulation
+  - hardware
+- id: REQ-02
+  text: Register BUILD at 0x004 reads the USR_ACCESSE2 word.
+  proof:
+  - hardware
+- id: REQ-03
+  text: Register SCRATCH at 0x008 resets to 0.
+  proof:
+  - simulation
+  - hardware
+- id: REQ-04
+  text: Register SCRATCH at 0x008 reads back the last value written.
+  proof:
+  - simulation
+  - hardware
+- id: REQ-05
+  text: Reads of unmapped addresses return 0.
+  proof:
+  - simulation
+- id: REQ-06
+  text: Writes to unmapped addresses change no register.
+  proof:
+  - simulation
+- id: REQ-07
+  text: h_rdata shows the addressed register within 2 bus clocks of h_re.
+  proof:
+  - simulation
+- id: REQ-08
+  text: h_rdata holds the addressed value until the next h_re.
+  proof:
+  - simulation
+- id: REQ-09
+  text: The FIFO holds 512 words of 32 bits.
+  proof:
+  - simulation
+  - analysis
+- id: REQ-10
+  text: The writer generates PRBS-31 with polynomial x^31 + x^28 + 1, 32 bits per
+    word, seed 0x7FFFFFFF.
+  proof:
+  - simulation
+  - formal
+- id: REQ-11
+  text: With RUN 1 the writer writes one word on every 25 MHz clock in which the FIFO
+    is not full.
+  proof:
+  - simulation
+- id: REQ-12
+  text: The reader checks each popped word against its own PRBS-31 copy started from
+    seed 0x7FFFFFFF when RUN begins.
+  proof:
+  - simulation
+- id: REQ-13
+  text: OVERFLOWS stays 0 in every run.
+  proof:
+  - simulation
+  - formal
+  - hardware
+- id: REQ-14
+  text: UNDERFLOWS stays 0 in every run.
+  proof:
+  - simulation
+  - formal
+  - hardware
+- id: REQ-15
+  text: With SLOW_READ 1 the reader pops at most one word in every 8 reader clocks.
+  proof:
+  - simulation
+- id: REQ-16
+  text: With SLOW_READ 1 STALL_W increases.
+  proof:
+  - simulation
+  - hardware
+- id: REQ-17
+  text: With SLOW_READ 1 OCC_MAX reaches 512.
+  proof:
+  - simulation
+  - hardware
+- id: REQ-18
+  text: INJECT 1 flips one bit of exactly one received word before the check.
+  proof:
+  - simulation
+  - hardware
+- id: REQ-19
+  text: One INJECT raises DATA_ERRS by exactly 1.
+  proof:
+  - simulation
+  - hardware
+- id: REQ-20
+  text: INJECT reads back as 0 after the write that set it.
+  proof:
+  - simulation
+- id: REQ-21
+  text: CLEAR written while RUN is 0 zeroes all seven counters.
+  proof:
+  - simulation
+- id: REQ-22
+  text: CLEAR written while RUN is 0 reloads both PRBS generators with the seed.
+  proof:
+  - simulation
+- id: REQ-23
+  text: CLEAR written while RUN is 1 has no effect.
+  proof:
+  - simulation
+- id: REQ-24
+  text: CLEAR reads back as 0 after the write that set it.
+  proof:
+  - simulation
+- id: REQ-25
+  text: A write to SNAPSHOT latches all seven counters at one instant.
+  proof:
+  - simulation
+  - hardware
+- id: REQ-26
+  text: Registers 0x014 to 0x02C hold the latched values until the next SNAPSHOT write.
+  proof:
+  - simulation
+  - hardware
+- id: REQ-27
+  text: All counters are 32 bits wide.
+  proof:
+  - simulation
+  - formal
+- id: REQ-28
+  text: Each counter wraps to 0 after 0xFFFFFFFF.
+  proof:
+  - simulation
+  - formal
+- id: REQ-29
+  text: A 10 minute run with a snapshot every 10 seconds ends with DATA_ERRS equal
+    to 0.
+  proof:
+  - hardware
+- id: REQ-30
+  text: A 10 minute run with a snapshot every 10 seconds ends with OVERFLOWS equal
+    to 0.
+  proof:
+  - hardware
+- id: REQ-31
+  text: A 10 minute run with a snapshot every 10 seconds ends with UNDERFLOWS equal
+    to 0.
+  proof:
+  - hardware
+- id: REQ-32
+  text: In a 10 minute run WORDS_W advances at 25 Mwords/s with RUN 1 and no stall.
+  proof:
+  - hardware
+- id: REQ-33
+  text: sfp_tx_disable is 1 at all times.
+  proof:
+  - simulation
+  - hardware
+  - analysis
+- id: REQ-34
+  text: The design uses 0 GT transceiver channels.
+  proof:
+  - analysis
+- id: REQ-35
+  text: jtag_bus.sv is instantiated unchanged.
+  proof:
+  - analysis
+- id: REQ-36
+  text: The build constrains clk_wr, clk_rd and tck as mutually asynchronous clock
+    groups.
+  proof:
+  - analysis
+- id: REQ-37
+  text: The CDC report shows no unconstrained crossing.
+  proof:
+  - analysis
+- id: REQ-38
+  text: Setup slack is 0 ns or more on every clock.
+  proof:
+  - analysis
+- id: REQ-39
+  text: Hold slack is 0 ns or more on every clock.
+  proof:
+  - analysis
+resolved_questions:
+- question: Which clock does the jtag_bus register port run on?
+  answer: The 25 MHz C3 clock (writer domain), with reader-domain counters transferred
+    by handshake.
+  status: defaulted
+  by: default
+  default_reason: The request gives no choice; the slow clock eases bus timing while
+    the 156.25 MHz GT clock needs a BUFG_GT.
+  risk: high
+- question: Please give the register map (offset, width, reset value and access of
+    every register); is the map in the request complete?
+  answer: 'As in the request table: ID 0x000, BUILD 0x004, SCRATCH 0x008, CTRL 0x010,
+    WORDS_W 0x014, WORDS_R 0x018, DATA_ERRS 0x01C, OVERFLOWS 0x020, UNDERFLOWS 0x024,
+    STALL_W 0x028, OCC_MAX 0x02C, SNAPSHOT 0x030, all 32 bits, resets 0 except ID.'
+  status: defaulted
+  by: default
+  default_reason: Offsets are given, but widths, resets and reads of write-only registers
+    are inferred.
+  risk: high
+- question: What do the LEDs show?
+  answer: led[0] = RUN, led[1] = sticky error (data, overflow or underflow, cleared
+    by CLEAR).
+  status: defaulted
+  by: default
+  default_reason: The request names the LEDs but gives no meaning.
+  risk: medium
+- question: What do the counters do while RUN is 0 and what is the FIFO state when
+    RUN stops?
+  answer: Counters hold; the writer stops, the reader drains the FIFO and keeps checking
+    until empty.
+  status: defaulted
+  by: default
+  default_reason: Not stated.
+  risk: medium
+- question: Is OCC_MAX measured on the writer side or the reader side, and what is
+    the maximum value?
+  answer: Writer-side fill count, maximum 512.
+  status: defaulted
+  by: default
+  default_reason: Fill differs by view across clock domains; writer side captures
+    the peak.
+  risk: medium
+- question: Which bit of the injected word is flipped?
+  answer: Bit 0.
+  status: defaulted
+  by: default
+  default_reason: Not stated.
+  risk: medium
+- question: What if INJECT is written while RUN is 0?
+  answer: It stays armed until the next word is checked after RUN starts.
+  status: defaulted
+  by: default
+  default_reason: Not stated.
+  risk: medium
+- question: This design has no reset input. Is every reset a reconfiguration of the
+    FPGA (the device is reprogrammed, so every register starts from its initial value),
+    or does something restart the running design (then it needs a reset input)?
+  answer: 'Every reset is a reconfiguration of the FPGA (reset model: reprogram):
+    registers get initial values, control state included, and the design has no reset
+    input. Record it in spec.yaml as reset: {model: reprogram}; a design that restarts
+    while it runs is reset: {model: reset} with a reset port.'
+  status: defaulted
+  by: default
+  default_reason: With no reset input, a register can start only from its initial
+    value, which the FPGA loads at configuration. A design that must restart while
+    running needs a reset input and resets its control state; the two models are checked
+    by different rules (STD-INIT-02).
+  risk: high
+- question: 'How do the clocks of this design relate to each other: clk_wr, clk_rd,
+    tck? For each pair say asynchronous (no common source), related (outputs of one
+    MMCM or PLL), or exclusive (the inputs of a clock mux).'
+  answer: Every pair is asynchronous unless both clocks come from one MMCM or PLL
+    (then related) or are the inputs of a clock mux (then exclusive).
+  status: defaulted
+  by: default
+  default_reason: The flow writes set_clock_groups from the declared relation of each
+    clock pair; without it Vivado times unrelated clocks against each other and the
+    methodology gate (TIMING-6/7) fails.
+  risk: high

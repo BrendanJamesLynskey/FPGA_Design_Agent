@@ -1,0 +1,26 @@
+{
+ "written": [
+  {
+   "between": [
+    "clk_wr",
+    "clk_rd"
+   ],
+   "kind": "async",
+   "reason": "a crossing clk_wr -> clk_rd through xpm_fifo_async is declared in architecture.yaml (state clock_relations to say otherwise, e.g. related)",
+   "mode": "bound",
+   "line": "set_max_delay -datapath_only -from [get_clocks -of_objects [get_ports {clk_25mhz}]] -to [get_clocks -of_objects [get_ports {gt_refclk_p}]] [expr {min([get_property PERIOD [get_clocks -of_objects [get_ports {clk_25mhz}]]], [get_property PERIOD [get_clocks -of_objects [get_ports {gt_refclk_p}]]])}]\nset_max_delay -datapath_only -from [get_clocks -of_objects [get_ports {gt_refclk_p}]] -to [get_clocks -of_objects [get_ports {clk_25mhz}]] [expr {min([get_property PERIOD [get_clocks -of_objects [get_ports {clk_25mhz}]]], [get_property PERIOD [get_clocks -of_objects [get_ports {gt_refclk_p}]]])}]"
+  }
+ ],
+ "refused": [],
+ "skipped": [
+  {
+   "between": [
+    "tck",
+    "clk_wr"
+   ],
+   "kind": "async",
+   "reason": "a crossing tck -> clk_wr through xpm_cdc_array_single is declared in architecture.yaml (state clock_relations to say otherwise, e.g. related)",
+   "why": "derived from a declared crossing; the flow cannot name the Vivado clock of tck: nothing written"
+  }
+ ]
+}

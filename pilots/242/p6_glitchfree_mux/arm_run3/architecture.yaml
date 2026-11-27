@@ -1,0 +1,49 @@
+schema: fpga-design-agent/architecture/v1
+design: p6_glitch_free_clock_mux
+blocks:
+  - name: jtag_bus
+    function: BSCANE2 USER4 register bus (data/jtag_bus.sv, unchanged), gives h_we/h_re/h_addr/h_wdata in clk domain
+  - name: p6_clkmux_core
+    function: register core in clk domain, common map, SEL, STATUS, SWITCH_COUNT, frequency gate, LED outputs
+  - name: clk_mux
+    function: IBUFDS_GTE4 + BUFG_GT (divide B_DIV) for clock B, BUFG for clock A, BUFGCTRL glitch-free mux, mux state observation
+  - name: mux_domain
+    function: 64-bit binary counter, Gray twin, per-cycle checker, saturating error count, edge counter for frequency gate, snapshot capture
+  - name: cdc_bridge
+    function: xpm_cdc primitives between clk and mux_clk
+interfaces:
+  - name: regbus
+    between: [jtag_bus, p6_clkmux_core]
+    protocol: simple
+    prefix: h
+    module: p6_clkmux_core
+  - name: leds
+    between: [p6_clkmux_core, board]
+    protocol: gpio
+    prefix: led
+    module: p6_clkmux_top
+clock_domains:
+  - name: clk
+    clock: clk
+    freq_mhz: 25
+  - name: gt_refclk
+    clock: mgtrefclk0_p
+    freq_mhz: 156.25
+  - name: mux_clk
+    clock: mux_clk
+    freq_mhz: 25
+reset:
+  synchronisers: [xpm_cdc_async_rst]
+crossings:
+  - {from: clk, to: mux_clk, signal: mux domain reset, primitive: xpm_cdc_async_rst, inline_in: p6_clkmux_top}
+  - {from: clk, to: mux_clk, signal: frequency gate enable, primitive: xpm_cdc_single, inline_in: p6_mux_domain}
+  - {from: mux_clk, to: clk, signal: ACTIVE_SEL, primitive: xpm_cdc_single, inline_in: p6_clkmux_core}
+  - {from: clk, to: mux_clk, signal: SEL to BUFGCTRL select, primitive: xpm_cdc_single, inline_in: p6_mux_domain}
+  - {from: mux_clk, to: clk, signal: error count, primitive: xpm_cdc_handshake, inline_in: p6_clkmux_core}
+  - {from: mux_clk, to: clk, signal: snapshot counter low 32, primitive: xpm_cdc_handshake, inline_in: p6_clkmux_core}
+  - {from: mux_clk, to: clk, signal: frequency edge count, primitive: xpm_cdc_handshake, inline_in: p6_clkmux_core}
+predicted_resources:
+  lut: [350, 800]
+  ff: [600, 1100]
+  bram_tile: 0
+  dsp: 0

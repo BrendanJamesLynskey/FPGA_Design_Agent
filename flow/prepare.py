@@ -186,6 +186,11 @@ def known_xdcs(design: Path, cfg: dict, xdcs: list[Path], out: Path) -> tuple[Pa
         return None, None
     xdc = [(x.name, x.read_text(errors="replace")) for x in xdcs]
     res: list[Path | None] = []
+    plan = KC.clock_group_plan(ctx, xdc)                  # brief 242: what was written for the clock relations and what was refused, for the record
+    if plan["written"] or plan["refused"] or plan["skipped"]:
+        (out / "clock_groups.json").write_text(json.dumps(plan, indent=1) + "\n")
+    else:
+        (out / "clock_groups.json").unlink(missing_ok=True)
     for name, text in (("known_pre.xdc", KC.known_pre_xdc(ctx, xdc)), ("known_post.xdc", KC.known_post_xdc(ctx, xdc))):
         if text:
             (out / name).write_text(text)

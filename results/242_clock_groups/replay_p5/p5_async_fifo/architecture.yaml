@@ -1,0 +1,31 @@
+# Brief 242 replay: the clock domains, crossings and clock relation the interview and architect would state for 224 p5 run 1.
+# Written by hand for the replay (the 230 replay folders hold the run's RTL and XDC but not its architecture.yaml).
+blocks:
+  - {name: p5_async_fifo_soak, function: "top: register port, writer and reader of the asynchronous FIFO soak"}
+interfaces: []
+clock_domains:
+  - {name: clk_wr, clock: clk_c3, freq_mhz: 25}
+  - {name: clk_rd, clock: gt_refclk0_p, freq_mhz: 156.25}
+  - {name: jtag, clock: jtag_tck, freq_mhz: 30}
+  - {name: cfg, clock: usr_cclk, freq_mhz: 50}
+reset:
+  synchronisers: [xpm_cdc_async_rst]
+crossings:
+  - {from: clk_wr, to: clk_rd, signal: "RUN, SLOW_READ, INJECT, CLEAR controls", primitive: xpm_cdc_array_single}
+  - {from: clk_rd, to: clk_wr, signal: "reader counters snapshot", primitive: xpm_cdc_handshake}
+  - {from: clk_wr, to: clk_rd, signal: "FIFO data and pointers", primitive: xpm_fifo_async, inline_in: async_fifo}
+  - {from: jtag, to: clk_wr, signal: "register-bus request and command (jtag_bus u_req, u_cmd)", primitive: xpm_cdc_array_single}
+  - {from: clk_wr, to: jtag, signal: "register-bus response (jtag_bus u_resp)", primitive: xpm_cdc_array_single}
+  - {from: cfg, to: clk_wr, signal: "USR_ACCESSE2 build word", primitive: xpm_cdc_array_single}
+clock_relations:
+  - {between: [clk_wr, clk_rd], kind: async, reason: "25 MHz board clock and the 156.25 MHz transceiver reference clock have no common source (spec: 'asynchronous: clk_c3 and gt_refclk0')"}
+  - {between: [clk_wr, jtag], kind: async, reason: "JTAG TCK has no common source with the board clock; every crossing is an xpm_cdc macro in jtag_bus"}
+  - {between: [clk_wr, cfg], kind: async, reason: "the configuration clock (USR_ACCESSE2 CCLK) has no common source with the board clock; crossed by xpm_cdc"}
+  - {between: [clk_rd, jtag], kind: async, no_crossings: true, reason: "no signal crosses between the reader clock and TCK (all register traffic is in the writer domain)"}
+  - {between: [clk_rd, cfg], kind: async, no_crossings: true, reason: "no signal crosses between the reader clock and CCLK"}
+  - {between: [jtag, cfg], kind: async, no_crossings: true, reason: "no signal crosses between TCK and CCLK"}
+predicted_resources:
+  lut: [450, 1200]
+  ff: [800, 1600]
+  bram_tile: [0, 1.5]
+  dsp: 0

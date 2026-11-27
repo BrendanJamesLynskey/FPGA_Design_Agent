@@ -1,0 +1,67 @@
+Copyright 1986-2022 Xilinx, Inc. All Rights Reserved. Copyright 2022-2026 Advanced Micro Devices, Inc. All Rights Reserved.
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+| Tool Version : Vivado v.2026.1 (lin64) Build 6511674 Tue Jun 16 11:01:26 MDT 2026
+| Date         : Fri Nov 27 09:10:52 2026
+| Host         : bren-ubuntu24-04 running 64-bit Ubuntu 24.04.4 LTS
+| Command      : report_methodology -file /home/brendan/Claude_sandbox/_worktrees/242-clock-groups/results/242_clock_groups/replay_r3/p5_async_fifo/build/base/methodology_synth.rpt
+| Design       : p5_async_fifo_soak
+| Device       : xck26-sfvc784-2LV-c
+| Speed File   : -2LV
+| Design State : Synthesized
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Report Methodology
+
+Table of Contents
+-----------------
+1. REPORT SUMMARY
+2. REPORT DETAILS
+
+1. REPORT SUMMARY
+-----------------
+            Netlist: p5_async_fifo_soak
+          Floorplan: design_1
+      Design limits: <entire design considered>
+             Max checks: <unlimited>
+             Checks found: 5
++-----------+----------+-----------------------------------------------+--------+
+| Rule      | Severity | Description                                   | Checks |
++-----------+----------+-----------------------------------------------+--------+
+| TIMING-13 | Warning  | Timing paths ignored due to path segmentation | 2      |
+| XDCH-2    | Warning  | Same min and max delay values on IO port      | 3      |
++-----------+----------+-----------------------------------------------+--------+
+
+2. REPORT DETAILS
+-----------------
+TIMING-13#1 Warning
+Timing paths ignored due to path segmentation  
+Some timing paths are not reported due to path segmentation on pin(s) u_core/u_fifo/u_fifo/gnuram_async_fifo.xpm_fifo_base_inst/gen_sdpram.xpm_memory_base_inst/gen_wr_a.gen_word_narrow.mem_reg_128_191_0_6/RAMH/O. To prevent path segmentation, all the Min and Max delay constraints should be defined with a list of valid startpoints and endpoints
+Related violations: <none>
+
+TIMING-13#2 Warning
+Timing paths ignored due to path segmentation  
+Some timing paths are not reported due to path segmentation on pin(s) u_core/u_fifo/u_fifo/gnuram_async_fifo.xpm_fifo_base_inst/gen_sdpram.xpm_memory_base_inst/gen_wr_a.gen_word_narrow.mem_reg_128_191_21_27/RAMH/O. To prevent path segmentation, all the Min and Max delay constraints should be defined with a list of valid startpoints and endpoints
+Related violations: <none>
+
+XDCH-2#1 Warning
+Same min and max delay values on IO port  
+The same output delay of 0.000 ns has been defined on port 'led[0]' relative to clock sys_clk_pin for both max and min. Make sure this reflects the design intent.
+set_output_delay -clock sys_clk_pin 0.000 [get_ports {{led[*]} sfp_tx_disable}]
+/home/brendan/Claude_sandbox/_worktrees/242-clock-groups/results/242_clock_groups/replay_r3/p5_async_fifo/design.xdc (Line: 11)
+Related violations: <none>
+
+XDCH-2#2 Warning
+Same min and max delay values on IO port  
+The same output delay of 0.000 ns has been defined on port 'led[1]' relative to clock sys_clk_pin for both max and min. Make sure this reflects the design intent.
+set_output_delay -clock sys_clk_pin 0.000 [get_ports {{led[*]} sfp_tx_disable}]
+/home/brendan/Claude_sandbox/_worktrees/242-clock-groups/results/242_clock_groups/replay_r3/p5_async_fifo/design.xdc (Line: 11)
+Related violations: <none>
+
+XDCH-2#3 Warning
+Same min and max delay values on IO port  
+The same output delay of 0.000 ns has been defined on port 'sfp_tx_disable' relative to clock sys_clk_pin for both max and min. Make sure this reflects the design intent.
+set_output_delay -clock sys_clk_pin 0.000 [get_ports {{led[*]} sfp_tx_disable}]
+/home/brendan/Claude_sandbox/_worktrees/242-clock-groups/results/242_clock_groups/replay_r3/p5_async_fifo/design.xdc (Line: 11)
+Related violations: <none>
+
+

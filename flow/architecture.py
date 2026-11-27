@@ -49,6 +49,8 @@ RESET_MODELS = ("reset", "reprogram")
 #: reset on every switch, or a wrong response just after a switch is harmless)
 CLOCK_MUX_PRIMITIVES = ("BUFGMUX_CTRL", "BUFGCTRL")
 CLOCK_MUX_CONDITIONS = ("static", "test_only", "reset_on_switch", "tolerant")
+#: ``clock_relations`` (brief 242): how each pair of clock domains relates; the flow writes set_clock_groups from it (never for ``related``)
+CLOCK_RELATION_KINDS = ("async", "related", "exclusive", "logically_exclusive")
 GATES_YAML = Path(__file__).with_name("gates.yaml")
 APPROVAL = Path("build") / "approvals" / "architecture.json"
 FILES = ("architecture.yaml", "ARCHITECTURE.md")
@@ -145,6 +147,19 @@ def check_architecture(data: Any) -> list[str]:
                     elif dnames and d not in dnames:
                         errs.append(f"clock_muxes[{i}] ({m['instance']}): {d!r} is not a declared clock domain "
                                     f"({', '.join(sorted(dnames))})")
+    cr = data.get("clock_relations")
+    if cr is not None:
+        if not isinstance(cr, list):
+            errs.append("'clock_relations' must be a list (brief 242): each {between: [domain, domain], kind, reason}, kind one of "
+                        f"{', '.join(CLOCK_RELATION_KINDS)}")
+        else:
+            for i, r in enumerate(cr):
+                if not (isinstance(r, dict) and isinstance(r.get("between"), list) and len(r["between"]) == 2 and r.get("kind") in CLOCK_RELATION_KINDS):
+                    errs.append(f"clock_relations[{i}] must be a mapping with 'between' (two clock domains) and 'kind' in {', '.join(CLOCK_RELATION_KINDS)}")
+                    continue
+                for d in r["between"]:
+                    if dnames and d not in dnames:
+                        errs.append(f"clock_relations[{i}]: {d!r} is not a declared clock domain ({', '.join(sorted(dnames))})")
     pr = data.get("predicted_resources")
     if not isinstance(pr, dict):
         errs.append("'predicted_resources' must be a mapping with a [low, high] range for each of "

@@ -988,7 +988,7 @@ class Check:
             self.not_run["STD-CDC-02"] = "cdc_synth.rpt was not written (a build before brief 05d)"
         elif not gg["post_synth_cdc_no_critical"]:
             self.add("STD-CDC-02", str(bdir / "cdc_synth.rpt"), 1, "report_cdc has Critical rows: "
-                     + ", ".join(f"{r['id']} x{r['count']}" for r in ((ps.get("cdc") or {}).get("rules") or [])
+                     + ", ".join(f"{r.get('id', r.get('rule'))} x{r['count']}" for r in ((ps.get("cdc") or {}).get("rules") or [])
                                  if r.get("severity") == "Critical"))
         if gg.get("post_synth_methodology_no_critical") is False:
             self.add("STD-METH-01", str(bdir / "methodology_synth.rpt"), 1, "report_methodology has Critical Warnings: "

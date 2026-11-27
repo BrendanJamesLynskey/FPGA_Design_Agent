@@ -568,8 +568,8 @@ def board_clock_port(ctx: Ctx, xdc: list[tuple[str, str]]) -> str | None:
     return None
 
 
-def known_post_xdc(ctx: Ctx, xdc: list[tuple[str, str]]) -> str:
-    """The text of ``<build>/known_post.xdc``, read after the design's XDC: for each slow or asynchronous port the design's XDC does
+def _known_slow_xdc(ctx: Ctx, xdc: list[tuple[str, str]]) -> str:
+    """The slow-port part of ``<build>/known_post.xdc``, read after the design's XDC: for each slow or asynchronous port the design's XDC does
     not already cover, the 0 ns placeholder delay (Vivado's check_timing lists a port with only a false path as having no delay) and
     the commented false path, as flow/io_check.py FDA-CON-11 requires and designs/b96_kr260_10g does by hand."""
     k = known_items(ctx)
@@ -613,6 +613,167 @@ def known_post_xdc(ctx: Ctx, xdc: list[tuple[str, str]]) -> str:
     return "\n".join(lines) + "\n" if wrote_any else ""
 
 
+# ---- clock groups from the declared clock relations (brief 242) ----------------------------------------------------------------------------
+#: ``kind`` of a clock relation -> the set_clock_groups option; ``related`` (the same MMCM's outputs) is never written
+#: crossing primitives whose macro (or hand-built structure) bounds the data path with ``set_max_delay -datapath_only``: a clock group would override
+#: that bound (TIMING-24, EXC-IGNORED, CDC U5; measured on 224's p5 replay), so for such a pair the flow bounds the clock pair instead of grouping it
+BOUNDED_CROSSINGS = ("xpm_cdc_gray", "xpm_cdc_handshake", "xpm_fifo_async", "gray_pointer", "handshake_cdc", "async_fifo")
+GROUP_KINDS = {"async": "-asynchronous", "asynchronous": "-asynchronous", "exclusive": "-physically_exclusive",
+               "physically_exclusive": "-physically_exclusive", "logically_exclusive": "-logically_exclusive", "related": None}
+
+
+def _arch(ctx: Ctx) -> dict[str, Any]:
+    try:
+        from flow import architecture
+    except ImportError:                 # run as a script: flow/ itself is on sys.path
+        import architecture  # type: ignore[no-redef]
+    try:
+        return architecture.load(ctx.design)
+    except Exception:                   # noqa: BLE001  an unreadable architecture.yaml is the architecture check's finding, not ours
+        return {}
+
+
+def clock_relations(ctx: Ctx) -> list[dict[str, Any]]:
+    """The declared relation of each clock pair: ``clock_relations`` of architecture.yaml, else of spec.yaml (an entry there wins), then every pair of domains with a declared crossing (``async``, derived), each ``{between: [a, b], kind:
+    async|related|exclusive, reason, no_crossings}``; a pair of ``clock_muxes`` inputs (brief 208) with no explicit relation is ``exclusive``."""
+    arch = _arch(ctx)
+    raw = arch.get("clock_relations") or ctx.spec.get("clock_relations") or []
+    rels = [dict(r) for r in raw if isinstance(r, dict)]
+    seen = {frozenset(map(str, r.get("between") or [])) for r in rels}
+    for x in arch.get("crossings") or []:       # a declared crossing between two domains is the architect saying they are asynchronous (related clocks need none)
+        if isinstance(x, dict) and x.get("from") and x.get("to") and "async" not in (x["from"], x["to"]) and x["from"] != x["to"]:
+            pair = frozenset((str(x["from"]), str(x["to"])))
+            if pair not in seen:
+                seen.add(pair)
+                rels.append({"between": [str(x["from"]), str(x["to"])], "kind": "async", "derived": True,
+                             "reason": f"a crossing {x['from']} -> {x['to']} through {x.get('primitive')} is declared in architecture.yaml (state clock_relations to say otherwise, e.g. related)"})
+    for m in arch.get("clock_muxes") or []:
+        ins = [str(x) for x in (m.get("inputs") or [])] if isinstance(m, dict) else []
+        for i, a in enumerate(ins):
+            for b in ins[i + 1:]:
+                if frozenset((a, b)) not in seen:
+                    rels.append({"between": [a, b], "kind": "exclusive", "reason": f"inputs of clock mux {m.get('instance')} (architecture.yaml clock_muxes)",
+                                 "derived": True})
+    return rels
+
+
+def _clock_object(ctx: Ctx, name: str, text: str, doms: list[dict[str, Any]]) -> tuple[str | None, str]:
+    """(Tcl object for the clock, or None) of a domain or clock name: a top port that carries a create_clock, or a create_clock -name."""
+    dom = next((d for d in doms if str(d.get("name")) == name or str(d.get("clock")) == name), None)
+    if dom and dom.get("clock_object"):       # a clock the flow cannot derive a name for (a GT's TXUSRCLK2): the design states the Tcl object itself
+        return str(dom["clock_object"]), str(dom.get("clock") or name)
+    cand = [name] + ([str(dom["clock"])] if dom and dom.get("clock") else []) + ([str(dom["name"])] if dom else [])
+    clean = re.sub(r"(?m)#.*$", "", text)
+    named = set(re.findall(r"create_clock\b[^\n;]*?-name\s+\{?([\w.\[\]]+)", clean))
+    for c in cand:
+        base = re.sub(r"\[[^\]]*\]$", "", c)
+        if base in ctx.ports and re.search(rf"create_clock\b[^\n;]*get_ports\s+\{{?\s*{re.escape(base)}\b", clean):
+            return f"[get_clocks -of_objects [get_ports {{{base}}}]]", c
+        if c in named:
+            return f"[get_clocks {c}]", c
+    return None, cand[-1] if cand else name
+
+
+def clock_group_plan(ctx: Ctx, xdc: list[tuple[str, str]]) -> dict[str, list[dict[str, Any]]]:
+    """What the flow writes for the declared clock relations, and what it refuses. ``written``: one set_clock_groups per async or exclusive pair;
+    ``refused``: a pair whose crossing is not through a recognised synchroniser (a clock group would hide a real bug), whose clock the flow cannot
+    name, or whose kind is unknown; ``skipped``: ``related`` pairs and pairs the design's own XDC already groups. The design's own constraint wins."""
+    try:
+        from flow.architecture import CDC_PRIMITIVES
+    except ImportError:
+        from architecture import CDC_PRIMITIVES  # type: ignore[no-redef]
+    plan: dict[str, list[dict[str, Any]]] = {"written": [], "refused": [], "skipped": []}
+    rels = clock_relations(ctx)
+    if not rels:
+        return plan
+    arch = _arch(ctx)
+    doms = [d for d in arch.get("clock_domains") or [] if isinstance(d, dict)]
+    text = "\n".join(t for _, t in xdc) + "\n" + known_pre_xdc(ctx, xdc)
+    own = [re.sub(r"\s+", " ", c["text"]) for _, t in xdc for c in xdc_commands(t) if c["cmd"] == "set_clock_groups"]
+    types = {t.lower() for t in ctx.tree} | {str(i["type"]).lower() for m in ctx.mods for i in m.instances}
+    modnames = {m.name for m in ctx.mods}
+    for r in rels:
+        pair = [str(x) for x in (r.get("between") or [])]
+        kind = str(r.get("kind", "")).lower()
+        row = {"between": pair, "kind": kind, "reason": str(r.get("reason") or "")}
+        if len(pair) != 2 or kind not in GROUP_KINDS:
+            plan["refused"].append({**row, "why": f"clock_relations entry needs between: [a, b] and kind in {', '.join(sorted(GROUP_KINDS))}"})
+            continue
+        if kind == "related":
+            plan["skipped"].append({**row, "why": "related clocks (one MMCM's outputs) are timed together: no group is ever written"})
+            continue
+        objs = [_clock_object(ctx, n, text, doms) for n in pair]
+        names = {n for n in pair} | {o[1] for o in objs}
+        if any(re.search(rf"\b{re.escape(n)}\b", c) for c in own for n in names):
+            plan["skipped"].append({**row, "why": "the design's own XDC already has a set_clock_groups naming one of these clocks (the design's constraint wins)"})
+            continue
+        bad = [n for n, o in zip(pair, objs) if o[0] is None]
+        if bad and r.get("derived"):
+            plan["skipped"].append({**row, "why": f"derived from a declared crossing; the flow cannot name the Vivado clock of {', '.join(bad)}: nothing written"})
+            continue
+        if bad:
+            plan["refused"].append({**row, "why": f"the flow cannot name the Vivado clock of {', '.join(bad)} (no create_clock -name of that name, and it is not a top port with a create_clock): "
+                                                  "constrain it in design.xdc, give the clock domain's `clock:` as the port name, or its `clock_object:` (a Tcl object, for example [get_clocks -of_objects [get_pins u_gt/TXOUTCLK]])"})
+            continue
+        dn = [next((str(d["name"]) for d in doms if n in (str(d.get("name")), str(d.get("clock")))), n) for n in pair]
+        xs: list[dict[str, Any]] = []
+        if kind in ("exclusive", "physically_exclusive", "logically_exclusive"):
+            muxes = [m for m in arch.get("clock_muxes") or [] if isinstance(m, dict) and set(dn) <= {str(x) for x in m.get("inputs") or []}]
+            if not muxes:
+                plan["refused"].append({**row, "why": "exclusive clocks must be the inputs of one declared clock mux (architecture.yaml clock_muxes, brief 208): "
+                                                      "two clocks that can run together are not exclusive"})
+                continue
+        else:
+            xs = [x for x in arch.get("crossings") or [] if isinstance(x, dict) and {str(x.get("from")), str(x.get("to"))} == set(dn)]
+            if not xs and not r.get("no_crossings"):
+                plan["refused"].append({**row, "why": f"no crossing between {dn[0]} and {dn[1]} is declared in architecture.yaml crossings: a group would hide any crossing "
+                                                      "the design has. Declare each crossing with its synchroniser, or set no_crossings: true on the relation if there is none"})
+                continue
+            bad_x = []
+            for x in xs:
+                prim, inl = str(x.get("primitive", "")), x.get("inline_in")
+                recognised = prim in CDC_PRIMITIVES and (prim.lower() in types or (inl is not None and str(inl) in modnames))
+                if not recognised:
+                    bad_x.append(f"{x.get('from')} -> {x.get('to')} ({x.get('signal') or 'no signal named'}): primitive {prim or 'none'} "
+                                 + ("is not a bank CDC primitive" if prim not in CDC_PRIMITIVES else "is declared but not instantiated in the RTL"))
+            if bad_x:
+                plan["refused"].append({**row, "why": "an unsynchronised crossing: " + "; ".join(bad_x) + ". A clock group would hide it", "crossings": bad_x})
+                continue
+        opt = GROUP_KINDS[kind]
+        if opt == "-asynchronous" and r.get("no_crossings") and not xs:
+            plan["skipped"].append({**row, "why": "declared no crossing between them: a group would cut no path (Vivado lists it as EXC-IGNORED, Non-existent path)"})
+            continue
+        if opt == "-asynchronous" and any(str(x.get("primitive")) in BOUNDED_CROSSINGS for x in xs):
+            # the pair crosses buses through macros that carry their own set_max_delay -datapath_only: a group would override those bounds (TIMING-24, EXC-IGNORED,
+            # CDC U5; measured on 224's p5), so the pair is bounded instead, in both directions, the faster clock's period. Whether a direction has a path the
+            # macros do not cover (a FIFO's RAM read, an array of single-bit synchronisers) is not readable from the files: where the macros cover it all, Vivado
+            # lists our line as EXC-IGNORED "Totally overridden ... FP/DPO", which flow/exceptions_check.py reports as information (EXC-IGNORED-FLOW-PAIR-BOUND).
+            per = f"[expr {{min([get_property PERIOD {objs[0][0]}], [get_property PERIOD {objs[1][0]}])}}]"
+            plan["written"].append({**row, "mode": "bound", "line": "\n".join(
+                f"set_max_delay -datapath_only -from {a_[0]} -to {b_[0]} {per}" for a_, b_ in ((objs[0], objs[1]), (objs[1], objs[0])))})
+            continue
+        gname = re.sub(r"\W+", "_", f"fda_{kind}_{pair[0]}_{pair[1]}")
+        plan["written"].append({**row, "line": f"set_clock_groups {opt} -name {gname} -group {objs[0][0]} -group {objs[1][0]}"})
+    return plan
+
+
+def known_post_xdc(ctx: Ctx, xdc: list[tuple[str, str]]) -> str:
+    """The text of ``<build>/known_post.xdc``, read after the design's XDC: the slow-port part (placeholder delays and false paths) and the
+    clock groups of the declared clock relations (brief 242). Empty string when there is nothing to say."""
+    slow = _known_slow_xdc(ctx, xdc)
+    plan = clock_group_plan(ctx, xdc)
+    lines: list[str] = []
+    if plan["written"] or plan["refused"]:
+        lines.append("# Clock groups from the declared clock relations (architecture.yaml clock_relations, or spec.yaml; flow/known_constraints.py, brief 242).")
+    for w in plan["written"]:
+        lines.append(f"# {w['between'][0]} / {w['between'][1]}: {w['kind']}" + (f": {w['reason']}" if w["reason"] else "")
+                     + (" (bounded, not grouped: a crossing macro carries set_max_delay -datapath_only, which a clock group would override)" if w.get("mode") == "bound" else ""))
+        lines.append(w["line"])
+    for f in plan["refused"]:
+        lines.append(f"# NOT written for {f['between'][0]} / {f['between'][1]} ({f['kind']}): {f['why']}")
+    return slow + ("\n".join(lines) + "\n" if lines else "")
+
+
 # ---- the pre-synthesis findings --------------------------------------------------------------------------------------------------------
 def findings(design: Path, root: Path, cfg: dict | None = None, board: str | None = None, extra_xdc: bool = True) -> list[dict[str, Any]]:
     """FDA-CON-14 (a top port no constraint covers) and FDA-CON-15 (a clock source nothing clocks), before synthesis. Empty while
@@ -641,10 +802,15 @@ def info_lines(ctx: Ctx, xdc: list[tuple[str, str]] | None = None) -> list[str]:
     """What the flow writes itself, for the tool outputs: one line per primitive clock, one line for the slow-port constraints."""
     xdc = xdc if xdc is not None else constraint_text(ctx.design, ctx.cfg, ctx.root)
     out = [f"written by the flow (known_pre.xdc, before design.xdc): {ln}" for ln in known_pre_xdc(ctx, xdc).splitlines() if ln and not ln.startswith("#")]
-    ports = re.findall(r"(?m)^# (\S+): ", known_post_xdc(ctx, xdc))
+    ports = re.findall(r"(?m)^# (\S+): ", _known_slow_xdc(ctx, xdc))
     if ports:
         out.append(f"written by the flow (known_post.xdc, after design.xdc): a 0 ns placeholder delay and a false path on {', '.join(ports)} "
                    f"(board slow_ports or spec async: true: no timing relation to any clock)")
+    plan = clock_group_plan(ctx, xdc)
+    for w in plan["written"]:
+        out.append(f"written by the flow (known_post.xdc): {w['line']}  (declared {w['kind']}: {w['reason'] or 'no reason given'})")
+    for f in plan["refused"]:
+        out.append(f"clock group NOT written for {f['between'][0]} / {f['between'][1]} ({f['kind']}): {f['why']}")
     return out
 
 

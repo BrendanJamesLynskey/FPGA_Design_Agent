@@ -1,0 +1,960 @@
+{
+ "run_id": "20261127-081353-d5bb",
+ "design": "b242_p5_async_fifo_r3",
+ "model": "claude-sonnet-5-5",
+ "harness": "claude_code",
+ "claude_code_version": "2.1.321 (Claude Code)",
+ "plan_cost_estimate_usd": 4.8788,
+ "oracle_model": "openai/gpt-6-luna",
+ "harness_arm": "H1",
+ "profile": "single",
+ "role_models": {
+  "clarify": {
+   "harness": "claude_code",
+   "model": "claude-sonnet-5-5",
+   "effort": "medium"
+  },
+  "model": {
+   "harness": "claude_code",
+   "model": "claude-sonnet-5-5",
+   "effort": "medium"
+  },
+  "tests": {
+   "harness": "claude_code",
+   "model": "claude-sonnet-5-5",
+   "effort": "medium"
+  },
+  "rtl": {
+   "harness": "claude_code",
+   "model": "claude-sonnet-5-5",
+   "effort": "medium"
+  }
+ },
+ "model_table_hash": "62d89fcdfc5c2756",
+ "oracle": "openrouter",
+ "stage_overrides": [],
+ "knowledge_use": {
+  "rtl/board-and-device-planning": {
+   "board_constraints": {
+    "calls": 3
+   },
+   "load_skill": {
+    "calls": 1,
+    "sections": [],
+    "skills": [
+     "procedures/ultrafast/constraints/SKILL.md"
+    ],
+    "empty_calls": 0
+   }
+  },
+  "tests/rtl-design-creation": {
+   "load_skill": {
+    "calls": 1,
+    "sections": [
+     "verification-stages"
+    ],
+    "skills": [
+     "procedures/verification-stages/v-hw-bringup/SKILL.md",
+     "procedures/verification-stages/v0-v1-testplan/SKILL.md",
+     "procedures/verification-stages/v2-tests-assertions-formal/SKILL.md",
+     "procedures/verification-stages/v3-coverage-closure/SKILL.md"
+    ],
+    "empty_calls": 0,
+    "procedures_fallback": [
+     "verification-stages"
+    ]
+   },
+   "search_docs": {
+    "calls": 2,
+    "hits": [
+     "ross/vivado-simulate-rtl/README.md#2",
+     "ross/vivado-simulate-rtl/references/cross-simulator-arbitration.md#1",
+     "ross/vivado-simulate-rtl/references/vcs.md#2",
+     "ross/vivado-simulate-rtl/references/xsim-advanced-verification.md#3",
+     "ross/vivado-simulate-rtl/references/xsim-advanced-verification.md#6"
+    ]
+   }
+  },
+  "rtl/rtl-design-creation": {
+   "load_skill": {
+    "calls": 1,
+    "sections": [],
+    "skills": [],
+    "empty_calls": 1
+   },
+   "search_docs": {
+    "calls": 1,
+    "hits": [
+     "ross/vivado-timing-methodology-checks/references/TIMING-1.md#2",
+     "ross/vivado-timing-methodology-checks/references/TIMING-1.md#3",
+     "ross/vivado-timing-methodology-checks/references/TIMING-1.md#4",
+     "ross/vivado-timing-methodology-checks/references/TIMING-3.md#5",
+     "ross/vivado-timing-methodology-checks/references/TIMING-4.md#4"
+    ]
+   }
+  },
+  "rtl/constraints": {
+   "board_constraints": {
+    "calls": 2
+   },
+   "search_docs": {
+    "calls": 8,
+    "hits": [
+     "amd/UG901#2",
+     "amd/UG903#1",
+     "amd/UG903#2",
+     "amd/UG903#4",
+     "amd/UG903#5",
+     "amd/UG903#6",
+     "amd/UG906#5",
+     "ross/vivado-timing-methodology-checks/references/TIMING-6.md#6",
+     "ross/vivado-timing-methodology-checks/references/TIMING-7.md#5",
+     "ross/vivado-timing-methodology-checks/references/TIMING-7.md#7",
+     "ross/vivado-timing-methodology-checks/references/TIMING-8.md#6",
+     "ross/vivado-timing-methodology-checks/references/TIMING-8.md#8"
+    ]
+   },
+   "load_skill": {
+    "calls": 2,
+    "sections": [],
+    "skills": [
+     "vendor/amd_constraints/constraints/xdc-coverage-and-audit-checks/SKILL.md"
+    ],
+    "empty_calls": 0
+   }
+  }
+ },
+ "knowledge_bank": {
+  "root": "kb-prompts-pin",
+  "chosen_by": "FDA_KNOWLEDGE",
+  "present": true,
+  "loaded": true,
+  "head": "5e2eab8"
+ },
+ "turn_trace": [
+  {
+   "stage": "clarify",
+   "visit": 1,
+   "role": "clarify",
+   "repair": false,
+   "turns_allowed": 20,
+   "turns": 4,
+   "ended": "done",
+   "wall_s": 46.1,
+   "tools": {},
+   "model_tool_calls": {},
+   "refused": {},
+   "files_written": [
+    "spec.yaml"
+   ],
+   "files_changed": [
+    "spec.yaml"
+   ]
+  },
+  {
+   "stage": "clarify",
+   "visit": 2,
+   "role": "clarify",
+   "repair": false,
+   "turns_allowed": 20,
+   "turns": 2,
+   "ended": "done",
+   "wall_s": 39.6,
+   "tools": {},
+   "model_tool_calls": {},
+   "refused": {},
+   "files_written": [
+    "spec.yaml"
+   ],
+   "files_changed": [
+    "spec.yaml"
+   ]
+  },
+  {
+   "stage": "board-and-device-planning",
+   "visit": 1,
+   "role": "rtl",
+   "repair": false,
+   "turns_allowed": 30,
+   "turns": 8,
+   "ended": "done",
+   "wall_s": 40.1,
+   "tools": {},
+   "model_tool_calls": {},
+   "refused": {},
+   "files_written": [
+    "ARCHITECTURE.md",
+    "architecture.yaml"
+   ],
+   "files_changed": [
+    "ARCHITECTURE.md",
+    "architecture.yaml"
+   ]
+  },
+  {
+   "stage": "board-and-device-planning",
+   "visit": 2,
+   "role": "rtl",
+   "repair": false,
+   "turns_allowed": 30,
+   "turns": 10,
+   "ended": "done",
+   "wall_s": 21.7,
+   "tools": {},
+   "model_tool_calls": {},
+   "refused": {},
+   "files_written": [
+    "design.xdc"
+   ],
+   "files_changed": [
+    "design.xdc"
+   ]
+  },
+  {
+   "stage": "rtl-design-creation",
+   "visit": 1,
+   "role": "model",
+   "repair": false,
+   "turns_allowed": 45,
+   "turns": 3,
+   "ended": "done",
+   "wall_s": 32.0,
+   "tools": {},
+   "model_tool_calls": {},
+   "refused": {},
+   "files_written": [
+    "model.py"
+   ],
+   "files_changed": [
+    "model.py"
+   ]
+  },
+  {
+   "stage": "rtl-design-creation",
+   "visit": 1,
+   "role": "tests",
+   "repair": false,
+   "turns_allowed": 52,
+   "turns": 15,
+   "ended": "done",
+   "wall_s": 460.8,
+   "tools": {},
+   "model_tool_calls": {},
+   "refused": {},
+   "files_written": [
+    "tests/bench_p5_async_fifo.py",
+    "tests/test_b242_p5_async_fifo_r3_rtl.py",
+    "verif/testplan.yaml"
+   ],
+   "files_changed": [
+    "tests/bench_p5_async_fifo.py",
+    "tests/test_b242_p5_async_fifo_r3_rtl.py",
+    "verif/testplan.yaml"
+   ]
+  },
+  {
+   "stage": "rtl-design-creation",
+   "visit": 1,
+   "role": "rtl",
+   "repair": false,
+   "turns_allowed": 62,
+   "turns": 37,
+   "ended": "done",
+   "wall_s": 533.0,
+   "tools": {},
+   "model_tool_calls": {},
+   "refused": {},
+   "files_written": [
+    "build.yaml",
+    "design.xdc",
+    "rtl/cdc_ctrl.sv",
+    "rtl/fifo.sv",
+    "rtl/p5_async_fifo_soak.sv",
+    "rtl/p5_async_fifo_soak_core.sv",
+    "rtl/prbs31_next.sv",
+    "rtl/prbs_rd.sv",
+    "rtl/rst_gen.sv",
+    "rtl/xilinx_sim_stubs.sv"
+   ],
+   "files_changed": [
+    "build.yaml",
+    "design.xdc",
+    "rtl/cdc_ctrl.sv",
+    "rtl/fifo.sv",
+    "rtl/p5_async_fifo_soak.sv",
+    "rtl/p5_async_fifo_soak_core.sv",
+    "rtl/prbs31_next.sv",
+    "rtl/prbs_rd.sv",
+    "rtl/rst_gen.sv",
+    "rtl/xilinx_sim_stubs.sv"
+   ]
+  },
+  {
+   "stage": "constraints",
+   "visit": 1,
+   "role": "rtl",
+   "repair": false,
+   "turns_allowed": 30,
+   "turns": 19,
+   "ended": "done",
+   "wall_s": 154.8,
+   "tools": {},
+   "model_tool_calls": {},
+   "refused": {},
+   "files_written": [
+    "design.xdc"
+   ],
+   "files_changed": [
+    "design.xdc"
+   ]
+  },
+  {
+   "stage": "constraints",
+   "visit": 2,
+   "role": "rtl",
+   "repair": false,
+   "turns_allowed": 30,
+   "turns": 43,
+   "ended": "done",
+   "wall_s": 619.8,
+   "tools": {},
+   "model_tool_calls": {},
+   "refused": {},
+   "files_written": [
+    "design.xdc",
+    "rtl/fifo.sv",
+    "rtl/p5_async_fifo_soak.sv"
+   ],
+   "files_changed": [
+    "design.xdc",
+    "rtl/fifo.sv",
+    "rtl/p5_async_fifo_soak.sv"
+   ]
+  },
+  {
+   "stage": "constraints",
+   "visit": 3,
+   "role": "rtl",
+   "repair": false,
+   "turns_allowed": 30,
+   "turns": 24,
+   "ended": "done",
+   "wall_s": 58.1,
+   "tools": {},
+   "model_tool_calls": {},
+   "refused": {},
+   "files_written": [
+    "design.xdc"
+   ],
+   "files_changed": [
+    "design.xdc"
+   ]
+  },
+  {
+   "stage": "constraints",
+   "visit": 4,
+   "role": "rtl",
+   "repair": false,
+   "turns_allowed": 30,
+   "turns": 19,
+   "ended": "done",
+   "wall_s": 46.3,
+   "tools": {},
+   "model_tool_calls": {},
+   "refused": {},
+   "files_written": [
+    "design.xdc"
+   ],
+   "files_changed": [
+    "design.xdc"
+   ]
+  }
+ ],
+ "per_role": {
+  "clarify": {
+   "calls": 2,
+   "turns": 6,
+   "tokens": 72532,
+   "wall_s": 85.7,
+   "cost_usd": 0.0,
+   "plan_cost_estimate_usd": 0.2543
+  },
+  "rtl": {
+   "calls": 7,
+   "turns": 160,
+   "tokens": 6052526,
+   "wall_s": 1473.8,
+   "cost_usd": 0.0,
+   "plan_cost_estimate_usd": 3.2998
+  },
+  "model": {
+   "calls": 1,
+   "turns": 3,
+   "tokens": 38410,
+   "wall_s": 32.0,
+   "cost_usd": 0.0,
+   "plan_cost_estimate_usd": 0.0991
+  },
+  "tests": {
+   "calls": 1,
+   "turns": 15,
+   "tokens": 775104,
+   "wall_s": 460.8,
+   "cost_usd": 0.0,
+   "plan_cost_estimate_usd": 1.2256
+  }
+ },
+ "per_stage": {
+  "clarify": {
+   "calls": 2,
+   "turns": 6,
+   "tokens": 72532,
+   "wall_s": 85.7,
+   "cost_usd": 0.0,
+   "plan_cost_estimate_usd": 0.2543
+  },
+  "board-and-device-planning": {
+   "calls": 2,
+   "turns": 18,
+   "tokens": 346308,
+   "wall_s": 61.8,
+   "cost_usd": 0.0,
+   "plan_cost_estimate_usd": 0.3228
+  },
+  "rtl-design-creation": {
+   "calls": 3,
+   "turns": 55,
+   "tokens": 2740227,
+   "wall_s": 1025.8,
+   "cost_usd": 0.0,
+   "plan_cost_estimate_usd": 2.662
+  },
+  "constraints": {
+   "calls": 4,
+   "turns": 105,
+   "tokens": 3779505,
+   "wall_s": 879.0,
+   "cost_usd": 0.0,
+   "plan_cost_estimate_usd": 1.6397
+  }
+ },
+ "interview": "off",
+ "requirements": {
+  "level": "loose",
+  "source": "default",
+  "conflicts": []
+ },
+ "user_requests": {
+  "control": 0,
+  "design": 0,
+  "applied": 0,
+  "declined": 0,
+  "questions_asked": 0,
+  "user_interventions": 0
+ },
+ "review": "off",
+ "stages_visited": [
+  0,
+  0,
+  1,
+  1,
+  2,
+  3,
+  3,
+  3,
+  3,
+  3
+ ],
+ "loops": 6,
+ "rewinds": [],
+ "tokens": 6938572,
+ "cost_usd": 0.0,
+ "unreported_cost_calls": 0,
+ "token_split": {
+  "input": 0,
+  "output": 0,
+  "cache_write": 0,
+  "cache_read": 0
+ },
+ "budget_scale": 3.5,
+ "truncated_calls": 0,
+ "turns": 184,
+ "wall_s": 2517.6,
+ "questions": {
+  "asked": 9,
+  "answered": 0,
+  "defaulted": 9,
+  "waived": 0,
+  "unresolved": 0,
+  "level": "loose",
+  "questions": [
+   {
+    "id": "q1",
+    "text": "Which clock does the jtag_bus register port run on?",
+    "default": "The 25 MHz C3 clock (writer domain), with reader-domain counters transferred by handshake.",
+    "reason": "The request gives no choice; the slow clock eases bus timing while the 156.25 MHz GT clock needs a BUFG_GT.",
+    "answer": "The 25 MHz C3 clock (writer domain), with reader-domain counters transferred by handshake.",
+    "status": "defaulted",
+    "by": "default",
+    "evidence": null,
+    "fact": null,
+    "risk": "high",
+    "risk_rule": "clock",
+    "risk_reason": "a clock frequency or source changes timing and every rate derived from it",
+    "waiver": null,
+    "clarifier_risk": null
+   },
+   {
+    "id": "q2",
+    "text": "Please give the register map (offset, width, reset value and access of every register); is the map in the request complete?",
+    "default": "As in the request table: ID 0x000, BUILD 0x004, SCRATCH 0x008, CTRL 0x010, WORDS_W 0x014, WORDS_R 0x018, DATA_ERRS 0x01C, OVERFLOWS 0x020, UNDERFLOWS 0x024, STALL_W 0x028, OCC_MAX 0x02C, SNAPSHOT 0x030, all 32 bits, resets 0 except ID.",
+    "reason": "Offsets are given, but widths, resets and reads of write-only registers are inferred.",
+    "answer": "As in the request table: ID 0x000, BUILD 0x004, SCRATCH 0x008, CTRL 0x010, WORDS_W 0x014, WORDS_R 0x018, DATA_ERRS 0x01C, OVERFLOWS 0x020, UNDERFLOWS 0x024, STALL_W 0x028, OCC_MAX 0x02C, SNAPSHOT 0x030, all 32 bits, resets 0 except ID.",
+    "status": "defaulted",
+    "by": "default",
+    "evidence": null,
+    "fact": null,
+    "risk": "high",
+    "risk_rule": "register-map",
+    "risk_reason": "the register map is what host software and the test shell are written against",
+    "waiver": null,
+    "clarifier_risk": null
+   },
+   {
+    "id": "q3",
+    "text": "What do the LEDs show?",
+    "default": "led[0] = RUN, led[1] = sticky error (data, overflow or underflow, cleared by CLEAR).",
+    "reason": "The request names the LEDs but gives no meaning.",
+    "answer": "led[0] = RUN, led[1] = sticky error (data, overflow or underflow, cleared by CLEAR).",
+    "status": "defaulted",
+    "by": "default",
+    "evidence": null,
+    "fact": null,
+    "risk": "medium",
+    "risk_rule": "unmatched",
+    "risk_reason": "no rule names it a behaviour, an interface or a cosmetic choice: treated as a cost choice",
+    "waiver": null,
+    "clarifier_risk": null
+   },
+   {
+    "id": "q4",
+    "text": "What do the counters do while RUN is 0 and what is the FIFO state when RUN stops?",
+    "default": "Counters hold; the writer stops, the reader drains the FIFO and keeps checking until empty.",
+    "reason": "Not stated.",
+    "answer": "Counters hold; the writer stops, the reader drains the FIFO and keeps checking until empty.",
+    "status": "defaulted",
+    "by": "default",
+    "evidence": null,
+    "fact": null,
+    "risk": "medium",
+    "risk_rule": "cost",
+    "risk_reason": "it changes size, speed or power, not what the design does",
+    "waiver": null,
+    "clarifier_risk": null
+   },
+   {
+    "id": "q5",
+    "text": "Is OCC_MAX measured on the writer side or the reader side, and what is the maximum value?",
+    "default": "Writer-side fill count, maximum 512.",
+    "reason": "Fill differs by view across clock domains; writer side captures the peak.",
+    "answer": "Writer-side fill count, maximum 512.",
+    "status": "defaulted",
+    "by": "default",
+    "evidence": null,
+    "fact": null,
+    "risk": "medium",
+    "risk_rule": "unmatched",
+    "risk_reason": "no rule names it a behaviour, an interface or a cosmetic choice: treated as a cost choice",
+    "waiver": null,
+    "clarifier_risk": null
+   },
+   {
+    "id": "q6",
+    "text": "Which bit of the injected word is flipped?",
+    "default": "Bit 0.",
+    "reason": "Not stated.",
+    "answer": "Bit 0.",
+    "status": "defaulted",
+    "by": "default",
+    "evidence": null,
+    "fact": null,
+    "risk": "medium",
+    "risk_rule": "unmatched",
+    "risk_reason": "no rule names it a behaviour, an interface or a cosmetic choice: treated as a cost choice",
+    "waiver": null,
+    "clarifier_risk": null
+   },
+   {
+    "id": "q7",
+    "text": "What if INJECT is written while RUN is 0?",
+    "default": "It stays armed until the next word is checked after RUN starts.",
+    "reason": "Not stated.",
+    "answer": "It stays armed until the next word is checked after RUN starts.",
+    "status": "defaulted",
+    "by": "default",
+    "evidence": null,
+    "fact": null,
+    "risk": "medium",
+    "risk_rule": "unmatched",
+    "risk_reason": "no rule names it a behaviour, an interface or a cosmetic choice: treated as a cost choice",
+    "waiver": null,
+    "clarifier_risk": null
+   },
+   {
+    "id": "q8",
+    "text": "This design has no reset input. Is every reset a reconfiguration of the FPGA (the device is reprogrammed, so every register starts from its initial value), or does something restart the running design (then it needs a reset input)?",
+    "default": "Every reset is a reconfiguration of the FPGA (reset model: reprogram): registers get initial values, control state included, and the design has no reset input. Record it in spec.yaml as reset: {model: reprogram}; a design that restarts while it runs is reset: {model: reset} with a reset port.",
+    "reason": "With no reset input, a register can start only from its initial value, which the FPGA loads at configuration (owner, 2026-11-26: particularly useful for designs whose every reset reprograms the device). A design that must restart while running needs a reset input and resets its control state; the two models are checked by different rules (STD-INIT-02).",
+    "answer": "Every reset is a reconfiguration of the FPGA (reset model: reprogram): registers get initial values, control state included, and the design has no reset input. Record it in spec.yaml as reset: {model: reprogram}; a design that restarts while it runs is reset: {model: reset} with a reset port.",
+    "status": "defaulted",
+    "by": "default",
+    "evidence": null,
+    "fact": null,
+    "risk": "high",
+    "risk_rule": "reset",
+    "risk_reason": "a reset's polarity, style or value decides the start-up state and the interface",
+    "waiver": null,
+    "clarifier_risk": null
+   },
+   {
+    "id": "q9",
+    "text": "How do the clocks of this design relate to each other: clk_wr, clk_rd, tck? For each pair say asynchronous (no common source), related (outputs of one MMCM or PLL), or exclusive (the inputs of a clock mux).",
+    "default": "Every pair is asynchronous unless both clocks come from one MMCM or PLL (then related) or are the inputs of a clock mux (then exclusive).",
+    "reason": "The flow writes set_clock_groups from the declared relation of each clock pair (brief 242): asynchronous, related (outputs of one MMCM, timed together) or exclusive (inputs of a clock mux). Without it Vivado times unrelated clocks against each other and the methodology gate (TIMING-6/7) fails; a wrong answer would hide a real crossing, so the flow writes a group only where every crossing goes through a recognised synchroniser.",
+    "answer": "Every pair is asynchronous unless both clocks come from one MMCM or PLL (then related) or are the inputs of a clock mux (then exclusive).",
+    "status": "defaulted",
+    "by": "default",
+    "evidence": null,
+    "fact": null,
+    "risk": "high",
+    "risk_rule": "clock",
+    "risk_reason": "a clock frequency or source changes timing and every rate derived from it",
+    "waiver": null,
+    "clarifier_risk": null
+   }
+  ],
+  "level_source": "default"
+ },
+ "stop": "stage 3 visited more than 4 times; last failing gate: post_synth:post_synth_exceptions_clean (EXC-IGNORED position 8 Position=8 From=[get_clocks",
+ "stop_detail": {
+  "stage": 3,
+  "limit": 4,
+  "gates": [
+   "post_synth:post_synth_exceptions_clean (EXC-IGNORED position 8 Position=8 From=[get_clocks"
+  ],
+  "roles": [],
+  "owners_last_visit": [],
+  "last_failing_assertion": null,
+  "same_signature_visits": null,
+  "last_fails": [
+   "post_synth:post_synth_exceptions_clean (EXC-IGNORED position 8 Position=8 From=[get_clocks -of_objects [get_ports clk_25mhz]] Through=* To=[get_clocks -of_objects [get_ports gt_refclk_p]] Setup=max_dp"
+  ],
+  "last_failed_gate": {
+   "stage": 3,
+   "stage_name": "constraints",
+   "visit": 4,
+   "fails": [
+    "post_synth:post_synth_exceptions_clean (EXC-IGNORED position 8 Position=8 From=[get_clocks -of_objects [get_ports clk_25mhz]] Through=* To=[get_clocks -of_objects [get_ports gt_refclk_p]] Setup=max_dp"
+   ],
+   "routed_to": {
+    "stage": 3,
+    "stage_name": "constraints"
+   }
+  }
+ },
+ "last_rtl_message": {
+  "stage": "constraints",
+  "visit": 4,
+  "text": "The exceptions gate is still failing, and I couldn't fix it from `design.xdc`. I'm stopping here rather than replying DONE.\n\n- **Cause:** the row it flags is not in my XDC. The flow writes it into `known_post.xdc`. It is `set_max_delay -datapath_only` from `clk_25mhz` to `gt_refclk_p` at 6.4 ns. The XPM macros already constrain every path between those two clocks, so Vivado reports the flow's line as totally overridden. The report names XPM's own false path on the synchroniser inputs (FP 9) and the XPM max-delays on the FIFO Gray pointers (DPO 14, 16, 20).\n- **What I tried:** I added my own `set_clock_groups -asynchronous` between `sys_clk_pin` and `gt_refclk`. I rebuilt through synthesis, and the same row was still ignored, so I reverted it. `design.xdc` is back to the original pins, output delays and the `usr_cclk` false path.\n- **What would clear it:**\n  - The flow's note says to \"state clock_relations\" in `architecture.yaml`. That file is frozen and I don't know the format for that key, so I did not guess at it.\n  - If that key can't be set, the flow generator would have to stop emitting this line for crossings that go through `xpm_fifo_async`, which already carries its own bounds.\n- **Not run:** I did not run `check` with names `[\"all\"]`.\n- **Possible side issue:** `check_constraints` reports FDA-CON-7 on the `clk_25mhz` port name. I did not check whether it also fired before my change."
+ },
+ "routing_events": [
+  {
+   "event": "clarify_constants_check",
+   "stage": "clarify",
+   "visit": 1,
+   "findings": [],
+   "failed": false
+  },
+  {
+   "event": "clarify_constants_check",
+   "stage": "clarify",
+   "visit": 2,
+   "findings": [],
+   "failed": false
+  },
+  {
+   "event": "run_turn_cap_scaled",
+   "stage": "board-and-device-planning",
+   "visit": 2,
+   "blocks": 8,
+   "turns_cap": 480
+  },
+  {
+   "event": "report_gates_checked",
+   "stage": "constraints",
+   "visit": 2,
+   "blocked": false,
+   "codes": [],
+   "advisories": [
+    "RPT-LOG-01"
+   ],
+   "where": [],
+   "text": []
+  },
+  {
+   "event": "report_gates_checked",
+   "stage": "constraints",
+   "visit": 3,
+   "blocked": false,
+   "codes": [],
+   "advisories": [
+    "RPT-LOG-01"
+   ],
+   "where": [],
+   "text": []
+  },
+  {
+   "event": "report_gates_checked",
+   "stage": "constraints",
+   "visit": 4,
+   "blocked": false,
+   "codes": [],
+   "advisories": [
+    "RPT-LOG-01"
+   ],
+   "where": [],
+   "text": []
+  }
+ ],
+ "clean_stop": false,
+ "verification_profile": {
+  "profile": "standard",
+  "overrides": {
+   "verif_level": {
+    "profile_value": "V3",
+    "value": "V2"
+   }
+  },
+  "effective": {
+   "lint": true,
+   "directed_sim": true,
+   "verif_level": "V2",
+   "random_sim": true,
+   "coverage_target": 100,
+   "mutation_floor": 70,
+   "seeds": 3,
+   "indep_spec_test": false,
+   "formal_depth_scale": 1,
+   "formal_induction": false,
+   "formal_pdr": false,
+   "lean_proof": false,
+   "uvm": "none",
+   "post_synth_sim": false,
+   "equivalence": false,
+   "timing_sim": "off",
+   "fault_injection": false,
+   "dependability": "none",
+   "latency_checks": false,
+   "board_hil": "smoke",
+   "repeats": 1,
+   "production_secure": false,
+   "sec_encrypt": true,
+   "sec_authenticate": true,
+   "sec_readback_off": true,
+   "sec_strip_debug": true,
+   "sec_sysmon_shutdown": true
+  },
+  "not_wired": [],
+  "ip_release_gaps": [
+   "verif_level: V2 (ip_release: V3)",
+   "mutation_floor: 70 (ip_release: 85)",
+   "seeds: 3 (ip_release: 8)",
+   "indep_spec_test: False (ip_release: True)",
+   "formal_depth_scale: 1 (ip_release: 4)",
+   "formal_induction: False (ip_release: True)",
+   "formal_pdr: False (ip_release: True)",
+   "uvm: none (ip_release: pyuvm)",
+   "post_synth_sim: False (ip_release: True)",
+   "equivalence: False (ip_release: True)",
+   "timing_sim: off (ip_release: auto)"
+  ],
+  "method_mix_gaps": [],
+  "advisory": "profile standard with 1 override(s)",
+  "policy_breaches": []
+ },
+ "constants": {
+  "ran": true,
+  "blocking": [],
+  "advice": []
+ },
+ "gates_last": {
+  "clarify": true,
+  "board-and-device-planning": true,
+  "rtl-design-creation": true,
+  "constraints": false
+ },
+ "approvals": [
+  {
+   "n": 0,
+   "decision": "approve",
+   "by": "auto",
+   "note": ""
+  },
+  {
+   "n": 0,
+   "decision": "approve",
+   "by": "auto",
+   "note": ""
+  },
+  {
+   "n": 1,
+   "decision": "approve",
+   "by": "auto",
+   "note": ""
+  },
+  {
+   "n": 1,
+   "decision": "approve",
+   "by": "auto",
+   "note": ""
+  },
+  {
+   "n": 2,
+   "decision": "approve",
+   "by": "auto",
+   "note": ""
+  },
+  {
+   "n": 3,
+   "decision": "approve",
+   "by": "auto",
+   "note": ""
+  },
+  {
+   "n": 3,
+   "decision": "approve",
+   "by": "auto",
+   "note": ""
+  },
+  {
+   "n": 3,
+   "decision": "approve",
+   "by": "auto",
+   "note": ""
+  },
+  {
+   "n": 3,
+   "decision": "approve",
+   "by": "auto",
+   "note": ""
+  },
+  {
+   "n": 3,
+   "decision": "approve",
+   "by": "auto",
+   "note": ""
+  }
+ ],
+ "permissions": {
+  "mode": "auto",
+  "source": "default (auto: the behaviour before brief 222)",
+  "overrides": {},
+  "ask_above_usd": 1.0,
+  "mode_changes": [],
+  "granted": {},
+  "refused": {},
+  "decisions": [
+   {
+    "action": "use_knowledge_bank",
+    "result": "allowed",
+    "by": "mode auto",
+    "stage": 0,
+    "first": "2026-11-27 08:13:54",
+    "last": "2026-11-27 08:14:40",
+    "count": 2
+   },
+   {
+    "action": "use_knowledge_bank",
+    "result": "allowed",
+    "by": "mode auto",
+    "stage": 1,
+    "first": "2026-11-27 08:15:20",
+    "last": "2026-11-27 08:16:01",
+    "count": 2
+   },
+   {
+    "action": "approve_architecture",
+    "result": "allowed",
+    "by": "mode auto",
+    "stage": 1,
+    "first": "2026-11-27 08:16:23",
+    "last": "2026-11-27 08:16:23",
+    "count": 1
+   },
+   {
+    "action": "use_knowledge_bank",
+    "result": "allowed",
+    "by": "mode auto",
+    "stage": 2,
+    "first": "2026-11-27 08:16:23",
+    "last": "2026-11-27 08:16:23",
+    "count": 1
+   },
+   {
+    "action": "edit_design_files",
+    "result": "allowed",
+    "by": "mode auto",
+    "stage": 2,
+    "first": "2026-11-27 08:16:23",
+    "last": "2026-11-27 08:16:23",
+    "count": 1
+   },
+   {
+    "action": "run_simulation",
+    "result": "allowed",
+    "by": "mode auto",
+    "stage": 2,
+    "first": "2026-11-27 08:16:23",
+    "last": "2026-11-27 08:16:23",
+    "count": 1
+   },
+   {
+    "action": "run_vivado",
+    "result": "allowed",
+    "by": "mode auto",
+    "stage": 2,
+    "first": "2026-11-27 08:16:23",
+    "last": "2026-11-27 08:16:23",
+    "count": 1
+   },
+   {
+    "action": "use_knowledge_bank",
+    "result": "allowed",
+    "by": "mode auto",
+    "stage": 3,
+    "first": "2026-11-27 08:39:54",
+    "last": "2026-11-27 08:56:40",
+    "count": 5
+   },
+   {
+    "action": "edit_design_files",
+    "result": "allowed",
+    "by": "mode auto",
+    "stage": 3,
+    "first": "2026-11-27 08:39:54",
+    "last": "2026-11-27 08:56:40",
+    "count": 5
+   },
+   {
+    "action": "run_vivado",
+    "result": "allowed",
+    "by": "mode auto",
+    "stage": 3,
+    "first": "2026-11-27 08:39:54",
+    "last": "2026-11-27 08:56:40",
+    "count": 5
+   }
+  ]
+ },
+ "bringup": null
+}
