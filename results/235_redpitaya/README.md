@@ -1,6 +1,6 @@
 # results/235_redpitaya: Red Pitaya follow-ups (brief 235): why the vendor shell misses timing, the goal kind "block for a shell", the two instruments re-run, the board-visit pack
 
-> **Superseded in part by [results/243_redpitaya](../243_redpitaya/README.md) (2026-11-27).** Build `170300fd` loaded but every read of its two blocks returned 0 at the board (the vendor's clock-crossing bridge reads the answer after the block has dropped it); the owner scripts and the owner pack here are superseded by build `d2f617ca`'s. The shell-timing study, the goal kind and the agent runs below stand.
+> **Partly replaced: see [results/243_redpitaya](../243_redpitaya/README.md) (2026-11-27).** Build `170300fd` loaded but every read of its two blocks returned 0 at the board (the vendor's clock-crossing bridge reads the answer after the block has dropped it); the owner scripts and the owner pack here are replaced by those for build `d2f617ca`. The shell-timing study, the goal kind and the agent runs below stand.
 
 What this folder holds: the records of brief 235, which follows brief 225 ([results/225_redpitaya](../225_redpitaya/README.md)). **Nothing here was run on the board**: no board, instrument or network address was touched; every hardware result is still pending the owner's board visit.
 Dates: 2026-11-26 and 2026-11-27 (GMT). Tools: Vivado 2026.1 and 2025.2 (installed; the vendor's scripts name 2025.1, which is not installed), Claude Code 2.1.321 on the subscription (the agent runs report no dollars).
