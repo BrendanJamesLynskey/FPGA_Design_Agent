@@ -45,7 +45,7 @@ import sys
 from pathlib import Path
 from typing import Any
 
-MTBF_TARGET_YEARS = 1e9
+MTBF_TARGET_YEARS = 1e9      # YEARS, not seconds: both tools print the unit (Vivado per cell, Quartus 'years or seconds'); see docs/cdc_margin_method.md 3.4
 
 # ---------------------------------------------------------------- the method: bounds from a crossing record
 

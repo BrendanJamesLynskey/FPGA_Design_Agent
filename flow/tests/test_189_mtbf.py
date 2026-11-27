@@ -56,3 +56,20 @@ def test_cli_and_build_tcl_hook(tmp_path: Path) -> None:
     assert json.loads(out.read_text())["status"] == "ok"
     tcl = (ROOT / "flow" / "build.tcl").read_text()
     assert "catch {report_synchronizer_mtbf -file $out/mtbf.rpt}" in tcl      # a failure never fails the build
+
+
+def test_units_are_converted_to_years() -> None:
+    """Brief 246: Vivado prints each MTBF with its own unit (UG835: 'dynamic time units, from seconds to years'); ``mtbf_years`` is always years."""
+    assert M._years("6.48e+51 years") == 6.48e51
+    assert abs(M._years("1.32 days") - 1.32 / 365.25) < 1e-12
+    assert abs(M._years("3 hours") - 3 / 8766.0) < 1e-12
+    assert abs(M._years("31557600 seconds") - 1.0) < 1e-9
+    assert M._years("> 1.8e+308 years") == 1.8e308
+    assert M._years("UNDEFINED") is None
+
+
+def test_a_days_chain_is_below_a_years_target() -> None:
+    """results/207_cdc_margin/raw/vv_k26_b3/B3U/mtbf.rpt has a 1.32 day chain: it is a finding (MTBF-01), not 'the tool gives no MTBF' (MTBF-03)."""
+    r = M.record(ROOT / "results" / "207_cdc_margin" / "raw" / "vv_k26_b3" / "B3U" / "mtbf.rpt")
+    assert any(f["code"] == "MTBF-01" and f["where"].endswith("ctg_a") for f in r["findings"])      # before the fix its cell parsed as None and counted as MTBF-03
+    assert not any(f["code"] == "MTBF-03" and f["where"].endswith("ctg_a") for f in r["findings"])
