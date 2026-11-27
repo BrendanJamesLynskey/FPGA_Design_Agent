@@ -28,5 +28,5 @@ pre-registered in `prereg.md` before the first run. The findings and the rule ch
 - n = 9 with one model and one harness. The baseline runs came from earlier code, so this is a before and after, not a controlled A/B.
 - "Own pass" means the project's gates plus a model-written bench. Nothing here checks the built behaviour independently, and there is no board run.
 - 7 of the 9 cells ran twice: the first attempts died at start-up because a shared prompt checkout was deleted. Only the second attempts count.
-- Fix 6 (FDA-CON-16, simulation stand-ins in `sim/`) came after the series and is advisory until a measured run.
+- A sixth change (primitive-name rule, `sim/` folder) was withdrawn before merge; see report.md, item 6.
 - Brief 213's run folders are git-ignored, so its records are not on main.
