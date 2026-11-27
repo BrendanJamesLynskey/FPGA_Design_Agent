@@ -1,0 +1,213 @@
+{
+ "caught": 23,
+ "valid": 23,
+ "faults": [
+  {
+   "name": "no_4k_split",
+   "block": "sg_dma",
+   "class": "protocol",
+   "why": "a burst is not cut at the 4 KB boundary",
+   "status": "caught",
+   "seconds": 5.8,
+   "pytest": "1 failed in 4.82s"
+  },
+  {
+   "name": "arlen_off_by_one",
+   "block": "sg_dma",
+   "class": "protocol",
+   "why": "the read burst length field is not beats minus one",
+   "status": "caught",
+   "seconds": 4.2,
+   "pytest": "1 failed in 3.28s"
+  },
+  {
+   "name": "tlast_every_burst",
+   "block": "sg_dma",
+   "class": "data-corruption",
+   "why": "tlast on the last beat of every burst, not of every descriptor",
+   "status": "caught",
+   "seconds": 17.0,
+   "pytest": "1 failed in 16.00s"
+  },
+  {
+   "name": "wlast_early",
+   "block": "sg_dma",
+   "class": "protocol",
+   "why": "wlast one beat early",
+   "status": "caught",
+   "seconds": 3.9,
+   "pytest": "1 failed in 2.93s"
+  },
+  {
+   "name": "status_address",
+   "block": "sg_dma",
+   "class": "data-corruption",
+   "why": "the status word is written over the length word",
+   "status": "caught",
+   "seconds": 16.4,
+   "pytest": "1 failed in 15.43s"
+  },
+  {
+   "name": "ring_wrap",
+   "block": "sg_dma",
+   "class": "data-corruption",
+   "why": "the ring has one entry too many before it wraps",
+   "status": "caught",
+   "seconds": 40.0,
+   "pytest": "1 failed in 39.05s"
+  },
+  {
+   "name": "slverr_read_ignored",
+   "block": "sg_dma",
+   "class": "error-handling",
+   "why": "SLVERR on a read beat is not reported, only DECERR",
+   "status": "caught",
+   "seconds": 38.7,
+   "pytest": "1 failed in 37.77s"
+  },
+  {
+   "name": "slverr_write_ignored",
+   "block": "sg_dma",
+   "class": "error-handling",
+   "why": "SLVERR on a write response is not reported, only DECERR",
+   "status": "caught",
+   "seconds": 38.3,
+   "pytest": "1 failed in 37.39s"
+  },
+  {
+   "name": "rready_ignores_sink",
+   "block": "sg_dma",
+   "class": "data-loss",
+   "why": "read data is accepted whether or not the stream sink is ready, so a beat is lost under back pressure",
+   "status": "caught",
+   "seconds": 7.8,
+   "pytest": "1 failed in 6.88s"
+  },
+  {
+   "name": "outstanding_one_over",
+   "block": "sg_dma",
+   "class": "protocol",
+   "why": "one more burst in flight than OUTSTANDING allows",
+   "status": "caught",
+   "seconds": 6.6,
+   "pytest": "1 failed in 5.69s"
+  },
+  {
+   "name": "irq_threshold_off_by_one",
+   "block": "sg_dma",
+   "class": "interrupt",
+   "why": "the interrupt fires one completion late",
+   "status": "caught",
+   "seconds": 40.0,
+   "pytest": "1 failed in 39.06s"
+  },
+  {
+   "name": "ioc_ignored",
+   "block": "sg_dma",
+   "class": "interrupt",
+   "why": "the interrupt-on-completion flag of a descriptor does nothing",
+   "status": "caught",
+   "seconds": 37.2,
+   "pytest": "1 failed in 36.25s"
+  },
+  {
+   "name": "bad_reports_bytes",
+   "block": "sg_dma",
+   "class": "data-corruption",
+   "why": "a descriptor that moved nothing reports its length as moved",
+   "status": "caught",
+   "seconds": 40.9,
+   "pytest": "1 failed in 39.99s"
+  },
+  {
+   "name": "misaligned_address_accepted",
+   "block": "sg_dma",
+   "class": "protocol",
+   "why": "a buffer address that is not beat aligned is accepted and issued",
+   "status": "caught",
+   "seconds": 39.4,
+   "pytest": "1 failed in 38.43s"
+  },
+  {
+   "name": "status_fail_not_halting",
+   "block": "sg_dma",
+   "class": "error-handling",
+   "why": "a failed status write does not halt the engine",
+   "status": "caught",
+   "seconds": 40.9,
+   "pytest": "1 failed in 39.93s"
+  },
+  {
+   "name": "desc_fetch_not_drained",
+   "block": "sg_dma",
+   "class": "protocol",
+   "why": "a failed descriptor fetch stops reading after the first bad beat, leaving the rest of the burst in the memory's read channel",
+   "status": "caught",
+   "seconds": 38.0,
+   "pytest": "1 failed in 37.06s"
+  },
+  {
+   "name": "w_before_aw",
+   "block": "sg_dma",
+   "class": "protocol",
+   "why": "stream data is written before any burst address has been issued",
+   "status": "caught",
+   "seconds": 2.7,
+   "pytest": "1 failed in 1.79s"
+  },
+  {
+   "name": "status_w_before_aw",
+   "block": "sg_dma",
+   "class": "protocol",
+   "why": "the status data is offered before its address has been accepted",
+   "status": "caught",
+   "seconds": 8.0,
+   "pytest": "1 failed in 7.03s"
+  },
+  {
+   "name": "tail_not_advanced",
+   "block": "sg_dma",
+   "class": "data-loss",
+   "why": "the consumer index never moves",
+   "status": "caught",
+   "seconds": 341.9,
+   "pytest": "1 failed in 340.94s (0:05:40)"
+  },
+  {
+   "name": "done_count_double",
+   "block": "sg_dma",
+   "class": "data-corruption",
+   "why": "the completion counter counts two",
+   "status": "caught",
+   "seconds": 49.2,
+   "pytest": "1 failed in 48.07s"
+  },
+  {
+   "name": "strobe_lane",
+   "block": "sg_dma",
+   "class": "data-corruption",
+   "why": "the status write's byte strobes ignore which 32-bit lane of a wide beat holds the word",
+   "status": "caught",
+   "seconds": 12.7,
+   "pytest": "1 failed in 11.28s"
+  },
+  {
+   "name": "ring_base_unaligned",
+   "block": "sg_dma",
+   "class": "protocol",
+   "why": "a ring base that is not 16-byte aligned is taken as it is, so a descriptor fetch can cross a 4 KB boundary",
+   "status": "caught",
+   "seconds": 48.9,
+   "pytest": "1 failed in 47.56s"
+  },
+  {
+   "name": "stale_burst_length",
+   "block": "sg_dma",
+   "class": "protocol",
+   "why": "a burst is issued in the clock after the previous one, before its registered length has followed the new address, so it repeats the old length",
+   "status": "caught",
+   "seconds": 3.5,
+   "pytest": "1 failed in 2.55s"
+  }
+ ]
+}

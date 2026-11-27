@@ -990,6 +990,26 @@ def _axi_profile_applies(design: Path) -> str | None:
     return AP.applies(design, ROOT)
 
 
+def _dma_sources(design: Path) -> list[Path]:
+    try:
+        return [p for p in build_sources(design, ROOT) if p.suffix in (".sv", ".v", ".vhd", ".vhdl", ".tcl", ".xdc", ".yaml", ".yml")]
+    except Exception:
+        return []
+
+
+def _dma_coherency(ctx: Ctx) -> dict[str, Any]:
+    """A design that reaches PS memory through a non-coherent port declares its software cache contract (flow/checks/dma_coherency.py,
+    brief 241). Advisory."""
+    from flow.checks import dma_coherency as DC
+    fs = DC.run_checks(ctx.design, _dma_sources(ctx.design))
+    return _result(fs, {}, records=[p for p in (ctx.design / "spec.yaml",) if p.is_file()])
+
+
+def _dma_coherency_applies(design: Path) -> str | None:
+    from flow.checks import dma_coherency as DC
+    return DC.applies(design, _dma_sources(design))
+
+
 def _link(design: Path) -> tuple[dict[str, Any] | None, str]:
     """The design's link section: spec.yaml ``link:`` (agent designs) or link_spec.yaml (hand-built, brief 56A)."""
     for name in ("spec.yaml", "link_spec.yaml"):
@@ -1165,6 +1185,9 @@ register(Check("axi_profile", "source", ALL, {"axi_profile": ("AXI-PROFILE-SPEC"
                "AXI4-Lite interface profiles (brief 73): each generated register block is what its map generates under the "
                "design's declared profile; mixed profiles and AMD IP behind a strict region are flagged",
                _axi_profile, applies=_axi_profile_applies))
+register(Check("dma_coherency", "source", ALL, {"dma_coherency": ("DMA-COH-01", "DMA-COH-02")},
+               "PS memory reached through a non-coherent port (HP) needs a declared software cache contract; advisory (brief 241)",
+               _dma_coherency, applies=_dma_coherency_applies))
 register(Check("gt_plan", "source", ALL, {"gt": ("GT-PLAN",)},
                "the transceiver link plan (flow/gt_plan.py, brief 56A): every reason the link cannot be built", _gt,
                applies=_gt_applies))

@@ -11,14 +11,15 @@ set_param chipscope.maxJobs 1
 source [lindex $argv 0]
 
 foreach job $ipchar(jobs) {
-    lassign $job name top wd clock_ns generics
+    lassign $job name top wd clock_ns generics clkport
+    if {$clkport eq ""} { set clkport clk }
     file mkdir $wd
     set t0 [clock seconds]
     if {[catch {
         create_project -in_memory -part $ipchar(part)
         read_verilog -sv $ipchar(sources)
         set f [open $wd/clock.xdc w]
-        puts $f "create_clock -period $clock_ns -name clk \[get_ports clk\]"
+        puts $f "create_clock -period $clock_ns -name clk \[get_ports $clkport\]"
         close $f
         read_xdc -mode out_of_context $wd/clock.xdc
         set g {}

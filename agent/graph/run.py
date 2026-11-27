@@ -41,7 +41,7 @@ from agent.core.runner import ContainerRunner, LocalRunner, container_available
 from agent.core.session import ROOT
 from agent.graph import review as rv
 from agent.graph.contract import contract_argv, parse_result
-from agent.graph.interview import (Interview, Question, SpecOracle, apply_register_answer, ensure_protocol_questions, ensure_register_question, ensure_reset_model_question, merge_summaries,
+from agent.graph.interview import (Interview, Question, SpecOracle, apply_register_answer, ensure_dma_questions, ensure_protocol_questions, ensure_register_question, ensure_reset_model_question, merge_summaries,
                                    register_map_errors)
 from agent.graph.llm import BudgetExceeded, Meter, chat_model
 from agent.graph.roles import ROLES, RoleJail, role_inputs, role_session
@@ -1749,6 +1749,7 @@ def node_gate(state: State) -> dict:
             req = (rt.design / "spec.md").read_text() if (rt.design / "spec.md").is_file() else ""
             spec, _asked = ensure_register_question(req, spec)       # 07a2 fix 7: the harness asks for the register map itself
             spec, _proto = ensure_protocol_questions(req, spec)      # brief 190: the six new-protocol intake questions, with defaults and reasons
+            spec, _dma_q = ensure_dma_questions(req, spec)           # brief 241: the six data-movement (DMA) intake questions, with defaults and reasons
             from agent.graph.lab_interview import ensure_lab_questions
             spec, _lab_q = ensure_lab_questions(rt.design, spec, person=rt.cfg.interview == "on")    # brief 221: only the gaps in the lab, with defaults and reasons
             spec, _rm = ensure_reset_model_question(spec)            # brief 231: no reset input -> ask the reset model (reset or reprogram)
