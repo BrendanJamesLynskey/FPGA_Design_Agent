@@ -270,7 +270,7 @@ def stage2_rules_note() -> str:
         "'verilator:<CODE> <file>:<line>' as a glob, reason, owner, date}); a `/* verilator ... */` pragma in another file does not "
         "apply to the file being linted.\n"
         "- Verilator-backed rules (id, warning codes, fix):\n" + "\n".join(rows) + "\n"
-        "- FDA-CON-11: a module named like an AMD primitive or XPM macro (xpm_*, FDRE, MMCME2_*, BUFG, BSCANE2 ...) must not be defined in rtl/ or any "
+        "- FDA-CON-16 (advisory for now, goes to blocking after a measured run): a module named like an AMD primitive or XPM macro (xpm_*, FDRE, MMCME2_*, BUFG, BSCANE2 ...) must not be defined in rtl/ or any "
         "build.yaml source, because it would replace the library cell in synthesis. Instantiate the real primitive in rtl/; a simulation stand-in goes in "
         "sim/*.sv (lint, Icarus elaboration and the cocotb runs read it, synthesis never does).\n"
         "- Then model contract, simulate, the design standards listed above (STD-*), the derived constants (CONST-*) and verification "

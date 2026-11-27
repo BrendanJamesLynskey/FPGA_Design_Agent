@@ -89,7 +89,7 @@ def test_the_rules_note_lists_ids_codes_fixes_and_the_waiver_file(monkeypatch) -
 def test_a_module_named_like_an_amd_primitive_is_refused_in_a_synthesis_source() -> None:
     f = con.primitive_name_findings({"xilinx_sim_stubs.sv": ["xpm_cdc_async_rst", "BSCANE2", "my_reset_gen"], "top.sv": ["MMCME2_ADV", "freq_top"]})
     assert sorted(x["text"] for x in f) == ["module BSCANE2", "module MMCME2_ADV", "module xpm_cdc_async_rst"]
-    assert all(x["rule"] == "FDA-CON-11" and "sim/" in x["message"] for x in f)
+    assert all(x["rule"] == "FDA-CON-16" and "sim/" in x["message"] for x in f)
     assert con.primitive_name_findings({"top.sv": ["freq_top", "sync_ff"]}) == []
 
 
@@ -108,3 +108,11 @@ def test_only_build_sources_are_checked_for_primitive_names(tmp_path) -> None:
     (S.design / "data" / "jtag_bus.sv").write_text("module BUFG(input logic a);\nendmodule\n")
     f = primitive_findings(S(), {"sources": ["d/rtl/*.sv", "d/data/*.sv"]})
     assert [x["text"] for x in f] == ["module xpm_cdc_async_rst"]            # sim/ is not a source, data/ is supplied
+
+
+def test_the_primitive_name_rule_is_advisory_in_lint_and_a_warning_in_build() -> None:
+    import inspect
+    from agent.core import tools
+    src = inspect.getsource(tools.lint)
+    assert "[advisory]" in src and "primitive_findings" in src
+    assert "WARNING" in inspect.getsource(tools.build) and "primitive_findings" in inspect.getsource(tools.build)

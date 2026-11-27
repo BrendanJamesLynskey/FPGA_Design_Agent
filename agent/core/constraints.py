@@ -228,13 +228,13 @@ AMD_PRIMITIVE_NAME = re.compile(
 
 
 def primitive_name_findings(modules: dict[str, list[str]]) -> list[dict[str, Any]]:
-    """FDA-CON-11. ``modules`` maps a synthesis source file (name as shown) to the module names it defines. Each module with an AMD primitive
+    """FDA-CON-16 (advisory until a measured run, planner 2026-11-27; FDA-CON-11 is the invented I/O delay rule). ``modules`` maps a synthesis source file (name as shown) to the module names it defines. Each module with an AMD primitive
     or XPM name is a finding: such a stand-in belongs in the design's ``sim/`` folder, which the simulators read and synthesis never does."""
     out = []
     for f, names in modules.items():
         for n in names:
             if AMD_PRIMITIVE_NAME.match(n):
-                out.append({"file": f, "rule": "FDA-CON-11", "line": 0, "text": f"module {n}",
+                out.append({"file": f, "rule": "FDA-CON-16", "line": 0, "text": f"module {n}",
                             "message": f"{f} defines module {n}, the name of an AMD primitive or XPM macro, in a synthesis source: it would replace the "
                                        f"library cell in the build. Move the stand-in to sim/ (read by lint and the simulators, never by synthesis) and "
                                        f"instantiate the real primitive in rtl/."})
