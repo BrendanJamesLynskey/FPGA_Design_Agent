@@ -10,7 +10,7 @@ A bench model of a low-latency trading path. A packet arrives on a PL Ethernet p
 not: a real market path: a mock. The message format is our own (docs/bench_feed_v1.md), the traffic sources are our own, and there is no exchange, broker or market data; a board result; no latency figure here was measured on hardware, and the PHYs, the cable and the real RGMII timing are outside every number; a proof of the whole design; only interlocks.sv has a k-induction proof, and the order slot and the MAC state machines have bounded checks
 
 ## state
-stage=built vivado=2026.1 kb_pin=eaf6794 build_id=4c77d949
+stage=built vivado=2026.1 kb_pin=eaf6794 build_id=8b5149c3
 gates: build_2026_1=fail board_run=not-run
 
 ## interface
@@ -31,12 +31,12 @@ designs/b58a_trigger/rtl/trigger_core.sv 802883690b: the path from frame parser 
 designs/b58a_trigger/rtl/feed_rx.sv ccc1c62f8b: Ethernet, IPv4, UDP and Bench Feed parser, field by field
 designs/b58a_trigger/rtl/book.sv 216116a0a8: best bid and ask per instrument in block RAM
 designs/b58a_trigger/rtl/rules.sv bf046cfda6: 8 run-time rules checked at once
-designs/b58a_trigger/rtl/interlocks.sv 37a99e59c6: kill, halt, size, price band, position and rate checks
+designs/b58a_trigger/rtl/interlocks.sv 8157198a83: kill, halt, size, price band, position and rate checks
 designs/b58a_trigger/rtl/order_ctl.sv db91763b3f: binds each order to its frame's verdict; drop, poison or cancel
 designs/b58a_trigger/rtl/jtag_bus.sv 5a6042e567: register bus over the JTAG cable
 designs/b58a_trigger/design.xdc c0f38a62ee: pins, clocks and the RGMII timing constraints
 designs/b58a_trigger/build.yaml b4cfdb9fd4: build recipe, including the RGMII timing data from the PHY datasheet
-designs/b58a_trigger/model/ref_model.py bf2f0369fc: Python reference model written from the docs, not the RTL
+designs/b58a_trigger/model/ref_model.py 94bdf465f8: Python reference model written from the docs, not the RTL
 designs/b58a_trigger/tests/test_b58a_rtl.py 85faa7d825: cocotb tests against the model, with hostile frames
 designs/b58a_trigger/tests/test_rev_adv_rtl.py d3c1ce109d: adversarial regression tests from the independent review
 designs/b58a_trigger/tests/test_b58a_formal.py ed84d82687: runs the SymbiYosys jobs
