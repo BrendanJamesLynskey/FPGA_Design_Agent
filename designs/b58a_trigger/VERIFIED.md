@@ -4,7 +4,7 @@
 
 **Not assessed: no requirements recorded (no verif/testplan.yaml), so nothing here is traced to a requirement.**
 
-What the label means, what "verified" never means and how it is earned: [docs/verified.md](../../docs/verified.md). The label is computed from the testplan and the evidence files named below; it is never typed. Generated at git commit `558bb6969e95643ff4ccf030b77fb8ba8d6ec6e7` (informational: the hashes in the manifest, not the commit, are what the CI check compares).
+What the label means, what "verified" never means and how it is earned: [docs/verified.md](../../docs/verified.md). The label is computed from the testplan and the evidence files named below; it is never typed. Generated at git commit `c095ca4ee72bdfbe575e37412368de9d56fadc99` (informational: the hashes in the manifest, not the commit, are what the CI check compares).
 
 ## What was checked for the label
 
@@ -45,7 +45,7 @@ Every file this record covers, with its SHA-256 at generation (19 files). `absen
 
 | File | SHA-256 |
 |---|---|
-| `designs/b58a_trigger/handover.yaml` | `86896042c14bbca1c3ab37a6b63476236e2006089a5957e14ab00d64b7e5cc89` |
+| `designs/b58a_trigger/handover.yaml` | `dcb250783c5e0c221a730f74ff3e5c6084768de1ee32010f750d7b495bac064c` |
 | `designs/b58a_trigger/rtl/book.sv` | `216116a0a865b79554d425b6bca939a9f15dab8a833391c7403d1467e7285aa4` |
 | `designs/b58a_trigger/rtl/feed_gen.sv` | `73d6161ebb18d1f7eda5e807d056d52d48dd78fde100f35ec27ad78dd4d72046` |
 | `designs/b58a_trigger/rtl/feed_rx.sv` | `ccc1c62f8b710bf480a435f66fbd5e54b7b9d6c81928bf013330a35b0618670a` |
