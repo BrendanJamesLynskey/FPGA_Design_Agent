@@ -53,7 +53,10 @@ def render_script(package: Path, block: str, *, expect_hz: float | None = None, 
     warn = ""
     if t.get("timing_met") is False:
         warn = (f" NOTE: this build's timing is NOT met (WNS {t.get('wns_ns')} ns, {t.get('tns_failing_endpoints')} failing endpoints; see build.json). "
-                "Read the results README before loading: the failing paths measured so far are in the vendor's own generator FIFO, not in the user block.")
+                + ("Read the results README before loading: the vendor's own generator and oscilloscope logic is left out of this build's timing by the constraints overlay "
+                   "(this image does not use them; they are not claimed to work), so the figure above is for the shell's bus, the ADC and DAC front end and the blocks: "
+                   "the misses are in the blocks, by tenths of a nanosecond at the slow corner. Not a claim that the image works." if info.get("overlay") else
+                   "Read the results README before loading: the failing paths measured so far are in the vendor's own generator FIFO, not in the user block."))
     return f"""#!/usr/bin/env bash
 # Red Pitaya load-and-check for build {build_id} ({block}, {"bare" if bare else "inside the vendor shell"}). Written by the agent (brief 225); RUN BY THE OWNER, AT A BOARD VISIT.
 # The agent has not run this script and has not touched the board. It loads the design into the volatile PL configuration only: a power cycle, or RESTORE=1,

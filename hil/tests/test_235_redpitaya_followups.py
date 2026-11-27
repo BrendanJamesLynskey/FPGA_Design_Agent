@@ -53,3 +53,13 @@ def test_the_overlay_names_only_flat_netlist_cells_and_carries_its_reasons() -> 
     assert any("get_cells -quiet -hierarchical -filter" in l for l in code)            # leaf cells: a hierarchical cell is not a valid start or end point
     assert sum(l.startswith("set_false_path") for l in code) == 2
     assert "NOT make the vendor instruments work" in t or "do NOT make the vendor instruments work" in t.replace("\n# ", " ")
+
+
+def test_the_explore_directives_are_added_once_before_the_implementation_run() -> None:
+    from tools import rp_shell
+    src = "launch_runs synth_1\nwait_on_run synth_1\n\nlaunch_runs impl_1\nwait_on_run impl_1\n#launch_runs impl_1 -to_step write_bitstream\n"
+    out = rp_shell.explore_tcl(src)
+    assert out.index("DIRECTIVE Explore [get_runs impl_1]") < out.index("launch_runs impl_1\nwait_on_run impl_1")
+    assert out.count("ROUTE_DESIGN.ARGS.DIRECTIVE Explore") == 1 and out.count("synth_1") == 2 and "#launch_runs impl_1 -to_step" in out
+    with pytest.raises(SystemExit):
+        rp_shell.explore_tcl("nothing\n")
