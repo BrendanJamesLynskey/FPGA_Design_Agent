@@ -6,8 +6,8 @@ runner: flow/net/faults.py          # the fault runner that owns this block's fa
 faults:
   - name: no_4k_split
     file: sg_dma.sv
-    old: "if (t < n) n = t;"
-    new: "if (t < 0) n = t;"
+    old: "if (t < 11'(MAX_BURST)) n = t[8:0];"
+    new: "if (t < 11'd0) n = t[8:0];"
     class: protocol
     why: "a burst is not cut at the 4 KB boundary"
     test: ip_lib/sg_dma/tb/test_sg_dma_rtl.py::test_engine[p0] ip_lib/sg_dma/tb/test_sg_dma_rtl.py::test_engine[p1]
@@ -21,7 +21,7 @@ faults:
     test: ip_lib/sg_dma/tb/test_sg_dma_rtl.py::test_engine[p0]
   - name: tlast_every_burst
     file: sg_dma.sv
-    old: "assign m_axis_tlast  = (DIR == 0) && (d_rem == d_bytes) && (d_beat == d_n - 9'd1);"
+    old: "assign m_axis_tlast  = (DIR == 0) && d_last && (d_beat == d_n - 9'd1);"
     new: "assign m_axis_tlast  = (DIR == 0) && (d_beat == d_n - 9'd1);"
     class: data-corruption
     why: "tlast on the last beat of every burst, not of every descriptor"
@@ -64,8 +64,8 @@ faults:
     test: ip_lib/sg_dma/tb/test_sg_dma_rtl.py::test_engine[p1]
   - name: rready_ignores_sink
     file: sg_dma.sv
-    old: "(DIR == 0 && data_phase && m_axis_tready && d_rem != 24'd0 && out_cnt != '0)"
-    new: "(DIR == 0 && data_phase && d_rem != 24'd0 && out_cnt != '0)"
+    old: "(DIR == 0 && data_phase && m_axis_tready && fifo_nz)"
+    new: "(DIR == 0 && data_phase && fifo_nz)"
     class: data-loss
     why: "read data is accepted whether or not the stream sink is ready, so a beat is lost under back pressure"
     test: ip_lib/sg_dma/tb/test_sg_dma_rtl.py::test_engine[p0]
@@ -163,3 +163,10 @@ faults:
     class: protocol
     why: "a ring base that is not 16-byte aligned is taken as it is, so a descriptor fetch can cross a 4 KB boundary"
     test: ip_lib/sg_dma/tb/test_sg_dma_rtl.py::test_engine[p0]
+  - name: stale_burst_length
+    file: sg_dma.sv
+    old: "(out_cnt < OCW'(OUTSTANDING)) && a_ok;"
+    new: "(out_cnt < OCW'(OUTSTANDING));"
+    class: protocol
+    why: "a burst is issued in the clock after the previous one, before its registered length has followed the new address, so it repeats the old length"
+    test: ip_lib/sg_dma/tb/test_sg_dma_rtl.py::test_engine[p0] ip_lib/sg_dma/tb/test_sg_dma_rtl.py::test_engine[p1]

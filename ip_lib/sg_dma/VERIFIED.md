@@ -4,7 +4,7 @@
 
 **Not assessed: no requirements recorded (no verif/testplan.yaml), so nothing here is traced to a requirement.**
 
-What the label means, what "verified" never means and how it is earned: [docs/verified.md](../../docs/verified.md). The label is computed from the testplan and the evidence files named below; it is never typed. Generated at git commit `9fb95dc60021667b0caecd95a394b26f0a69441e` (informational: the hashes in the manifest, not the commit, are what the CI check compares).
+What the label means, what "verified" never means and how it is earned: [docs/verified.md](../../docs/verified.md). The label is computed from the testplan and the evidence files named below; it is never typed. Generated at git commit `59b54222a4b8dfd0325828d610d7c95d7de8ee67` (informational: the hashes in the manifest, not the commit, are what the CI check compares).
 
 ## What was checked for the label
 
@@ -19,7 +19,7 @@ What the label means, what "verified" never means and how it is earned: [docs/ve
 
 ## Declared status (not part of the label)
 
-From `ip.yaml`: simulated at ten (direction, width, burst, outstanding) points against a memory model with back pressure, SLVERR and DECERR windows and an AXI rule monitor (cocotb, Icarus Verilog 14); the AXI hold rules, the 4 KB rule, burst size and alignment proved by k-induction at 32, 64 and 128 bits (SymbiYosys, slang), burst bookkeeping proved to depth 40; 22 of 22 seeded faults caught; out-of-context Vivado 2026.1 cost on xck26 and xc7z020 (about 570-640 LUTs, 285 MHz and more on the K26, near 100 MHz on the Zynq-7000); not run on a board. The entry's own declared status; not traced to requirements and not checked by this record.
+From `ip.yaml`: simulated at ten (direction, width, burst, outstanding) points against a memory model with back pressure, SLVERR and DECERR windows and an AXI rule monitor (cocotb, Icarus Verilog 14); the AXI hold rules, the 4 KB rule, burst size and alignment proved by k-induction at 32, 64 and 128 bits (SymbiYosys, slang), burst bookkeeping proved to depth 30; 23 of 23 seeded faults caught; out-of-context Vivado 2026.1 cost on xck26 and xc7z020 (under 530 LUTs; 415 MHz and more on the K26, 139-151 MHz on the Zynq-7000); not run on a board. The entry's own declared status; not traced to requirements and not checked by this record.
 
 ## Limits
 
@@ -37,12 +37,12 @@ Every file this record covers, with its SHA-256 at generation (9 files). `absent
 
 | File | SHA-256 |
 |---|---|
-| `ip_lib/sg_dma/char/xc7z020clg484-1.json` | `3a42806d3eac292e604d1be5e7d8f5e7e32349521c871d0ecdd8a81f7585cda2` |
-| `ip_lib/sg_dma/char/xck26-sfvc784-2LV-c.json` | `813918040d4e488ce616f8d9055c2865a686af7b58363f2935a8e2b4cab39e76` |
-| `ip_lib/sg_dma/faults.yaml` | `a6b6a3226a59f25b2084af34cbe981360c888cf94df64437700739e11633d5ee` |
-| `ip_lib/sg_dma/ip.yaml` | `e79d151434ff647536f6c6856d140088ddb6636a85614bc83c6de24bce170245` |
+| `ip_lib/sg_dma/char/xc7z020clg484-1.json` | `5c33fa2dcadafcd717f210bf01e978874835e7b32e74ef0ec97f68159c6b563d` |
+| `ip_lib/sg_dma/char/xck26-sfvc784-2LV-c.json` | `885d23d8b4c77d0ef07aed573d7586213465e5a68685e44b3302f01f4b1fa61d` |
+| `ip_lib/sg_dma/faults.yaml` | `44cb8ca1e31c771ccf2b011b82d57bccfb194c9c17491819ada2034405e667d2` |
+| `ip_lib/sg_dma/ip.yaml` | `f12847d1aabf6e8f887700c99f0fe3e214c9a3ad0f6e6165b3310e87c93e586d` |
 | `ip_lib/sg_dma/model.py` | `17cee6d9c18fa39102142d2c3678c16b9399380e75b9417982820037b07f55b6` |
-| `ip_lib/sg_dma/rtl/sg_dma.sv` | `85da012c765122af4b26e08ba2218990278ae54e3692e90807b7c0ecc5b2ea71` |
+| `ip_lib/sg_dma/rtl/sg_dma.sv` | `fea5e8a7940c9ab6688e2a29ff4488424add91d52da17fb5afaf320b1fc32609` |
 | `ip_lib/sg_dma/tb/sg_dma_cocotb.py` | `c24e1f5fd6d1024d6349bb67e9bb926478698af9d8e50201c5f841fc6c7dfeff` |
 | `ip_lib/sg_dma/tb/test_sg_dma_formal.py` | `98807dd364ea8e97d6fdcad73cc543e007d82e2eb39db2d2591a5bd7a9158386` |
 | `ip_lib/sg_dma/tb/test_sg_dma_rtl.py` | `2fcb438c626b6678d23a386476246a14fd8f81c70386809f2fe83991126ff296` |

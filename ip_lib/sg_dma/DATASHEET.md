@@ -45,6 +45,7 @@ ignored: a packet shorter than its buffer is not detected) and reports the buffe
 - **Outstanding.** At most `OUTSTANDING` data bursts are in flight (proved to depth 30); write data is offered only after its address was accepted, the status data too (proved to depth 30).
   The engine accepts read data only for an address it issued and a write response only for a burst whose data has all gone.
 - **Order of work.** One descriptor at a time: fetch, data, status write, then the next fetch. There is no prefetch and no overlap between descriptors.
+- **Burst length is registered.** The length of the next burst is computed from the address and the bytes left and held in a register that is valid one clock after the address changes, so consecutive burst addresses are at least two clocks apart; the lengths of bursts in flight wait in a queue of `OUTSTANDING` entries that the data side reads in order. This costs about one clock per descriptor in the measurements and changes no behaviour: the burst list is still the model's split (tested).
 - **Errors.** SLVERR or DECERR on a data beat sets ERR and the code in the descriptor, `ERR.DATA_ERR` and `ERR.CODE`, and the engine finishes the descriptor and goes on (an MM2S beat with an error
   response is still sent on the stream). A failed descriptor fetch (any non-OKAY beat) or a failed status write sets `STATUS.HALTED` and `ERR.HALT_CAUSE`, leaves `TAIL` where it is and stops; the rest of the
   failed fetch burst is read and discarded first so the memory's read channel stays in step. Writing 1 to `STATUS.HALTED` restarts the engine at the same entry.
@@ -61,9 +62,9 @@ ignored: a packet shorter than its buffer is not detected) and reports the buffe
 ## Verification
 
 Cocotb against `model.py` (descriptor format, the burst split, the status word) with a memory model that has read and write latency, random ready and valid gaps, response errors and an AXI rule monitor; ten
-(`DIR`, `DATA_W`, `MAX_BURST`, `OUTSTANDING`, `ADDR_W`) points; SymbiYosys with the slang front end; 22 seeded faults (`faults.yaml`). The AXI hold rules (AR, AW, W, the stream port, the AXI4-Lite B and R), burst size,
+(`DIR`, `DATA_W`, `MAX_BURST`, `OUTSTANDING`, `ADDR_W`) points; SymbiYosys with the slang front end; 23 seeded faults (`faults.yaml`). The AXI hold rules (AR, AW, W, the stream port, the AXI4-Lite B and R), burst size,
 alignment and the 4 KB rule are proved by k-induction at 32, 64 and 128 bits in both directions with a free memory, free AXI4-Lite master and free stream (the descriptor words read are arbitrary, so the proof covers every
-buffer address and length); write data after address, `wlast` and the outstanding limit are proved to depth 30 only, because their bookkeeping is in the harness and not tied to the engine's own counters. The proofs have a formal-rigour sidecar and record (`formal/sg_dma.rigour.yaml`, `results/143c/formal_rigour/`): 21 assertions proved, 4 bounded, none vacuous, each antecedent reached in a cover task (at 32 bits).
+buffer address and length); write data after address, `wlast` and the outstanding limit are proved to depth 30 only, because their bookkeeping is in the harness and not tied to the engine's own counters. The proofs have a formal-rigour sidecar and record (`formal/sg_dma.rigour.yaml`, `results/143c/formal_rigour/`): 24 assertions proved, 4 bounded, none vacuous, each antecedent reached in a cover task (at 32 bits).
 
 ## Measured behaviour (simulation, not a board)
 
@@ -73,28 +74,30 @@ Memory model: read latency 20 clocks, write response latency 15, no random gaps,
 <!-- measured:begin -->
 | Configuration | 64 B | 256 B | 1024 B | 4096 B | 16384 B |
 |---|---|---|---|---|---|
-| MM2S, 32-bit, burst 4, 4 outstanding | 0.200 | 0.422 | 0.582 | 0.643 | 0.661 |
-| MM2S, 32-bit, burst 16, 1 outstanding | 0.200 | 0.341 | 0.413 | 0.436 | 0.442 |
-| MM2S, 32-bit, burst 16, 4 outstanding | 0.200 | 0.501 | 0.800 | 0.941 | 0.985 |
-| MM2S, 64-bit, burst 16, 4 outstanding | 0.115 | 0.341 | 0.674 | 0.892 | 0.971 |
-| S2MM, 32-bit, burst 16, 4 outstanding | 0.211 | 0.517 | 0.811 | 0.945 | 0.986 |
+| MM2S, 32-bit, burst 4, 4 outstanding | 0.198 | 0.419 | 0.581 | 0.643 | 0.661 |
+| MM2S, 32-bit, burst 16, 1 outstanding | 0.198 | 0.339 | 0.412 | 0.436 | 0.442 |
+| MM2S, 32-bit, burst 16, 4 outstanding | 0.198 | 0.497 | 0.798 | 0.940 | 0.984 |
+| MM2S, 64-bit, burst 16, 4 outstanding | 0.113 | 0.337 | 0.671 | 0.891 | 0.970 |
+| S2MM, 32-bit, burst 16, 4 outstanding | 0.208 | 0.513 | 0.808 | 0.944 | 0.985 |
 
 | Configuration | 64 B | 256 B | 1024 B | 4096 B | 16384 B |
 |---|---|---|---|---|---|
-| MM2S, 32-bit, burst 4, 4 outstanding | 79 | 151 | 439 | 1591 | 6199 |
-| MM2S, 32-bit, burst 16, 1 outstanding | 79 | 187 | 619 | 2347 | 9259 |
-| MM2S, 32-bit, burst 16, 4 outstanding | 79 | 127 | 319 | 1087 | 4159 |
-| MM2S, 64-bit, burst 16, 4 outstanding | 69 | 93 | 189 | 573 | 2109 |
-| S2MM, 32-bit, burst 16, 4 outstanding | 75 | 123 | 315 | 1083 | 4155 |
+| MM2S, 32-bit, burst 4, 4 outstanding | 80 | 152 | 440 | 1592 | 6200 |
+| MM2S, 32-bit, burst 16, 1 outstanding | 80 | 188 | 620 | 2348 | 9260 |
+| MM2S, 32-bit, burst 16, 4 outstanding | 80 | 128 | 320 | 1088 | 4160 |
+| MM2S, 64-bit, burst 16, 4 outstanding | 70 | 94 | 190 | 574 | 2110 |
+| S2MM, 32-bit, burst 16, 4 outstanding | 76 | 124 | 316 | 1084 | 4156 |
 
 | Direction | clocks, first data address to last beat | MB/s at 100 MHz | AMD AXI DMA, PG021 table 2 (MB/s) | start-up, AMD model | start-up, ours |
 |---|---|---|---|---|---|
-| MM2S, 10000 bytes | 2520 | 396.83 | 399.04 | 44 | 46 |
-| S2MM, 10000 bytes | 2501 | 399.84 | 298.59 | 39 | 27 |
+| MM2S, 10000 bytes | 2520 | 396.83 | 399.04 | 44 | 47 |
+| S2MM, 10000 bytes | 2501 | 399.84 | 298.59 | 39 | 28 |
+| MM2S, 10000 bytes | 2520 | 396.83 | 399.04 | 44 | 47 |
+| S2MM, 10000 bytes | 2501 | 399.84 | 298.59 | 39 | 28 |
 <!-- measured:end -->
 
 The first table is the fraction of the port limit; the second is the clocks from the `HEAD` write to the status response for **one** descriptor; the third is the like-for-like point against AMD's published
-figures. A descriptor costs about 64 clocks beyond its data in this memory (a descriptor fetch round trip, the first data round trip and the status write round trip, one after the other, with this memory's latencies): that is why 64 bytes reaches 0.2 of the port and 16 KB 0.985.
+figures. A descriptor costs about 65 clocks beyond its data in this memory (a descriptor fetch round trip, the first data round trip and the status write round trip, one after the other, with this memory's latencies): that is why 64 bytes reaches 0.2 of the port and 16 KB 0.985.
 Fewer bursts in flight cost more than short bursts: one burst in flight with 16-beat bursts and 20 clocks of read latency settles at 0.44 (about 16/(16+20)).
 Plots: `results/241_dma/throughput_vs_size.svg`, `results/241_dma/latency_overhead.svg`.
 
@@ -107,4 +110,4 @@ may come from the memory side and not the core. The AXI DMA was not run (no simu
 
 ## Cost
 
-Out-of-context Vivado 2026.1 on `xck26-sfvc784-2LV-c` (KR260) and `xc7z020clg484-1`, both directions at 32, 64 and 128 bits: `results/241_dma/ooc.json`; the table and the timing finding (the engine runs near 100 MHz on the Zynq-7000, and meets 4 ns on the K26) are in `results/241_dma/README.md`.
+Out-of-context Vivado 2026.1 on `xck26-sfvc784-2LV-c` (KR260) and `xc7z020clg484-1`, both directions at 32, 64 and 128 bits: `results/241_dma/ooc.json`; the table and the timing finding are in `results/241_dma/README.md`: under 530 LUTs, no block RAM or DSP; the Zynq-7000 (-1) runs at 139 to 151 MHz (about 100 MHz before the burst length was registered), the K26 meets 2.5 ns (above 415 MHz, the true limit not found). The worst path is now the interrupt coalescing logic.

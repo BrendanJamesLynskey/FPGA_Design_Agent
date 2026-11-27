@@ -6,7 +6,7 @@ Generated from `ip.yaml` by `flow/net/ipdoc.py`; do not edit by hand.
 
 **Verification: not assessed: no requirements recorded (no verif/testplan.yaml), so nothing here is traced to a requirement.** [VERIFIED.md](VERIFIED.md) is the generated, hash-pinned record; [what the label means](../../docs/verified.md).
 
-Status: simulated at ten (direction, width, burst, outstanding) points against a memory model with back pressure, SLVERR and DECERR windows and an AXI rule monitor (cocotb, Icarus Verilog 14); the AXI hold rules, the 4 KB rule, burst size and alignment proved by k-induction at 32, 64 and 128 bits (SymbiYosys, slang), burst bookkeeping proved to depth 40; 22 of 22 seeded faults caught; out-of-context Vivado 2026.1 cost on xck26 and xc7z020 (about 570-640 LUTs, 285 MHz and more on the K26, near 100 MHz on the Zynq-7000); not run on a board.
+Status: simulated at ten (direction, width, burst, outstanding) points against a memory model with back pressure, SLVERR and DECERR windows and an AXI rule monitor (cocotb, Icarus Verilog 14); the AXI hold rules, the 4 KB rule, burst size and alignment proved by k-induction at 32, 64 and 128 bits (SymbiYosys, slang), burst bookkeeping proved to depth 30; 23 of 23 seeded faults caught; out-of-context Vivado 2026.1 cost on xck26 and xc7z020 (under 530 LUTs; 415 MHz and more on the K26, 139-151 MHz on the Zynq-7000); not run on a board.
 
 ## Parameters
 
@@ -167,7 +167,7 @@ Error record. Bits 3 and 1:0 describe the latest data error; bit 2 means a descr
 
 ## Evidence
 
-cocotb bench with a memory model (read and write latency, random ready and valid gaps, SLVERR and DECERR, an AXI rule monitor) at ten points; formal AXI rule proofs (SymbiYosys with slang); 22 seeded faults. Tests: `ip_lib/sg_dma/tb/test_sg_dma_rtl.py`, `ip_lib/sg_dma/tb/test_sg_dma_formal.py`.
+cocotb bench with a memory model (read and write latency, random ready and valid gaps, SLVERR and DECERR, an AXI rule monitor) at ten points; formal AXI rule proofs (SymbiYosys with slang); 23 seeded faults. Tests: `ip_lib/sg_dma/tb/test_sg_dma_rtl.py`, `ip_lib/sg_dma/tb/test_sg_dma_formal.py`.
 
 Try it: `python3 -m pytest ip_lib/sg_dma/tb/test_sg_dma_rtl.py ip_lib/sg_dma/tb/test_sg_dma_formal.py` (the formal jobs need SymbiYosys on PATH; they are skipped without it).
 
@@ -199,6 +199,7 @@ Seeded faults (`faults.yaml`, run by `flow/net/faults.py`):
 | `done_count_double` | the completion counter counts two | caught |
 | `strobe_lane` | the status write's byte strobes ignore which 32-bit lane of a wide beat holds the word | caught |
 | `ring_base_unaligned` | a ring base that is not 16-byte aligned is taken as it is, so a descriptor fetch can cross a 4 KB boundary | caught |
+| `stale_burst_length` | a burst is issued in the clock after the previous one, before its registered length has followed the new address, so it repeats the old length | caught |
 
 ## Cost (out of context)
 
@@ -206,12 +207,12 @@ Built alone (out of context) on an Artix-7, xck26-sfvc784-2LV-c, for a 4.0 ns cl
 
 | ADDR_W | DATA_W | MAX_BURST | OUTSTANDING | DIR | AXCACHE | LUT | FF | LUT RAM | Block RAM tiles | DSP | WNS (ns) | Fmax estimate (MHz) | Dynamic power (W) |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| 32 | 32 | 16 | 4 | 0 | 3 | 571 | 501 | 0 | 0 | 0 | 0.492 | 285.1 | 0.006 |
-| 32 | 32 | 16 | 4 | 1 | 3 | 566 | 504 | 0 | 0 | 0 | 0.504 | 286.0 | 0.007 |
-| 32 | 64 | 16 | 4 | 0 | 3 | 601 | 450 | 0 | 0 | 0 | 0.602 | 294.3 | 0.006 |
-| 32 | 64 | 16 | 4 | 1 | 3 | 578 | 452 | 0 | 0 | 0 | 0.661 | 299.5 | 0.007 |
-| 32 | 128 | 16 | 4 | 0 | 3 | 588 | 439 | 0 | 0 | 0 | 0.638 | 297.4 | 0.006 |
-| 32 | 128 | 16 | 4 | 1 | 3 | 583 | 442 | 0 | 0 | 0 | 0.696 | 302.7 | 0.007 |
+| 32 | 32 | 16 | 4 | 0 | 3 | 476 | 479 | 10 | 0 | 0 | 1.075 | 341.9 | 0.006 |
+| 32 | 32 | 16 | 4 | 1 | 3 | 485 | 483 | 8 | 0 | 0 | 1.038 | 337.6 | 0.006 |
+| 32 | 64 | 16 | 4 | 0 | 3 | 500 | 427 | 10 | 0 | 0 | 0.878 | 320.3 | 0.005 |
+| 32 | 64 | 16 | 4 | 1 | 3 | 502 | 431 | 8 | 0 | 0 | 1.019 | 335.5 | 0.005 |
+| 32 | 128 | 16 | 4 | 0 | 3 | 508 | 417 | 10 | 0 | 0 | 1.024 | 336.0 | 0.005 |
+| 32 | 128 | 16 | 4 | 1 | 3 | 508 | 420 | 8 | 0 | 0 | 0.733 | 306.1 | 0.006 |
 
 Defaults: ADDR_W 32, DATA_W 32, MAX_BURST 16, OUTSTANDING 4, DIR 0, AXCACHE 3. WNS is the worst negative slack (the timing margin at the target clock; below zero the target is missed).
 
@@ -226,7 +227,7 @@ Fmax is estimated from one routed run at the target clock (1000 / (period - WNS)
 
 ## Cost table
 
-results/241_dma/ooc.json and char/ (out-of-context Vivado 2026.1 on xck26 and xc7z020, both directions at DATA_W 32, 64 and 128: about 570 to 640 LUTs, 440 to 500 flip-flops, no block RAM or DSP).
+results/241_dma/ooc.json and char/ (out-of-context Vivado 2026.1 on xck26 and xc7z020, both directions at DATA_W 32, 64 and 128: under 530 LUTs, 417 to 483 flip-flops, no block RAM or DSP).
 
 Licence: MIT (this repository).
 
@@ -235,14 +236,14 @@ Licence: MIT (this repository).
 - One descriptor at a time (no descriptor prefetch); one direction per instance; no data realignment (buffer address and length are whole beats); no IDs; S2MM takes exactly the descriptor's length from the stream and ignores tlast; the stream-to-memory path passes s_axis and m_axi handshakes through combinationally.
 - Board: no board run of this entry is recorded; its evidence is simulation and out-of-context builds.
 - No descriptor prefetch: a descriptor costs a full fetch and status round trip, so descriptors below about a thousand bytes lose most of the port bandwidth (measured in DATASHEET.md).
-- Timing: the burst-length function sits in the path to the data-side counters, 14 logic levels, so the engine runs near 100 MHz on a Zynq-7000 (-1) and meets 4 ns on the K26 with margin; registering the burst length would shorten it (results/241_dma/README.md).
+- Timing: the worst path on the Zynq-7000 (-1) is the interrupt coalescing logic (tail to since_irq, 10 logic levels), which holds the engine to 139-151 MHz there; the K26 meets 2.5 ns (results/241_dma/README.md).
 - No board run: the KR260 throughput and latency measurement is pre-registered (docs/241_dma_prereg.md) and has not been run.
 - The memory model is ours; no run against AMD interconnect or a PS port has been made, so back pressure and latency of the real Zynq HP and HPC ports are not covered.
 - S2MM does not end a descriptor on tlast, so a packet shorter than its buffer needs the software to know the length; a packet-oriented S2MM engine is a follow-up.
 
 ## Next steps
 
-1. Register the burst length once per burst to shorten the critical path, then re-run the proofs and the seeded faults.
+1. Pipeline the interrupt coalescing compare (ring wrap, threshold, drained) to shorten the Zynq-7000 critical path, then re-run the proofs and the seeded faults.
 2. Run the pre-registered KR260 measurement through the owner (docs/241_dma_prereg.md).
 3. Add descriptor prefetch and compare the small-descriptor throughput with the measured baseline.
 4. Add a tlast-terminated S2MM mode and a status word that reports the bytes received.

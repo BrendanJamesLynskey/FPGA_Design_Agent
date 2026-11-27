@@ -3,8 +3,8 @@
  "schema": "fpga-design-agent/formal_rigour/v1",
  "sources": {
   "ip_lib/sg_dma/formal/formal_sg_dma.sv": "977bd89b35e0551ea1c520b6e114a3aa713984edc4c56500a294aa96ef527215",
-  "ip_lib/sg_dma/formal/sg_dma.sby": "30455512bc7128c16e4ebc3de0a5c9fb158609acc6dd3ea93a463df2cf580347",
-  "ip_lib/sg_dma/rtl/sg_dma.sv": "85da012c765122af4b26e08ba2218990278ae54e3692e90807b7c0ecc5b2ea71"
+  "ip_lib/sg_dma/formal/sg_dma.sby": "67b8a0cbab7533dbf5fffcb7a5c312d6bdfe44f99e594ed5d289bda8d7f7c6cf",
+  "ip_lib/sg_dma/rtl/sg_dma.sv": "fea5e8a7940c9ab6688e2a29ff4488424add91d52da17fb5afaf320b1fc32609"
  },
  "tasks": {
   "g32m": {
@@ -81,37 +81,58 @@
     },
     {
      "flavor": "assert",
+     "id": "i_ptr",
+     "label": "i_ptr",
+     "src": "sg_dma.sv:367",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
      "id": "i_out",
      "label": "i_out",
-     "src": "sg_dma.sv:348",
+     "src": "sg_dma.sv:364",
      "tautology": false
     },
     {
      "flavor": "assert",
      "id": "i_desc",
      "label": "i_desc",
-     "src": "sg_dma.sv:344",
+     "src": "sg_dma.sv:360",
      "tautology": false
     },
     {
      "flavor": "assert",
      "id": "i_beat",
      "label": "i_beat",
-     "src": "sg_dma.sv:350",
+     "src": "sg_dma.sv:368",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "i_an",
+     "label": "i_an",
+     "src": "sg_dma.sv:366",
      "tautology": false
     },
     {
      "flavor": "assert",
      "id": "i_align_rem",
      "label": "i_align_rem",
-     "src": "sg_dma.sv:347",
+     "src": "sg_dma.sv:363",
      "tautology": false
     },
     {
      "flavor": "assert",
      "id": "i_align_addr",
      "label": "i_align_addr",
-     "src": "sg_dma.sv:346",
+     "src": "sg_dma.sv:362",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "i_fifo",
+     "label": "i_fifo",
+     "src": "sg_dma.sv:374",
      "tautology": false
     },
     {
@@ -265,7 +286,7 @@
    "covers": {},
    "depth": 30,
    "mode": "bmc",
-   "seconds": 105.8,
+   "seconds": 27.8,
    "status": "PASS"
   },
   "g32mc": {
@@ -405,72 +426,114 @@
     },
     {
      "flavor": "cover",
+     "id": "i_ptr__ante",
+     "label": "i_ptr__ante",
+     "src": "sg_dma.sv:384",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "i_ptr",
+     "label": "i_ptr",
+     "src": "sg_dma.sv:367",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
      "id": "i_out__ante",
      "label": "i_out__ante",
-     "src": "sg_dma.sv:358",
+     "src": "sg_dma.sv:381",
      "tautology": false
     },
     {
      "flavor": "assert",
      "id": "i_out",
      "label": "i_out",
-     "src": "sg_dma.sv:348",
+     "src": "sg_dma.sv:364",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "i_fifo__ante",
+     "label": "i_fifo__ante",
+     "src": "sg_dma.sv:385",
      "tautology": false
     },
     {
      "flavor": "cover",
      "id": "i_desc__ante",
      "label": "i_desc__ante",
-     "src": "sg_dma.sv:355",
+     "src": "sg_dma.sv:378",
      "tautology": false
     },
     {
      "flavor": "assert",
      "id": "i_desc",
      "label": "i_desc",
-     "src": "sg_dma.sv:344",
+     "src": "sg_dma.sv:360",
      "tautology": false
     },
     {
      "flavor": "cover",
      "id": "i_beat__ante",
      "label": "i_beat__ante",
-     "src": "sg_dma.sv:360",
+     "src": "sg_dma.sv:386",
      "tautology": false
     },
     {
      "flavor": "assert",
      "id": "i_beat",
      "label": "i_beat",
-     "src": "sg_dma.sv:350",
+     "src": "sg_dma.sv:368",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "i_an__ante",
+     "label": "i_an__ante",
+     "src": "sg_dma.sv:383",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "i_an",
+     "label": "i_an",
+     "src": "sg_dma.sv:366",
      "tautology": false
     },
     {
      "flavor": "cover",
      "id": "i_align_rem__ante",
      "label": "i_align_rem__ante",
-     "src": "sg_dma.sv:357",
+     "src": "sg_dma.sv:380",
      "tautology": false
     },
     {
      "flavor": "assert",
      "id": "i_align_rem",
      "label": "i_align_rem",
-     "src": "sg_dma.sv:347",
+     "src": "sg_dma.sv:363",
      "tautology": false
     },
     {
      "flavor": "cover",
      "id": "i_align_addr__ante",
      "label": "i_align_addr__ante",
-     "src": "sg_dma.sv:356",
+     "src": "sg_dma.sv:379",
      "tautology": false
     },
     {
      "flavor": "assert",
      "id": "i_align_addr",
      "label": "i_align_addr",
-     "src": "sg_dma.sv:346",
+     "src": "sg_dma.sv:362",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "i_fifo",
+     "label": "i_fifo",
+     "src": "sg_dma.sv:374",
      "tautology": false
     },
     {
@@ -677,7 +740,7 @@
     },
     "h_axis__ante": {
      "reached": true,
-     "step": 16
+     "step": 17
     },
     "h_lite_b__ante": {
      "reached": true,
@@ -699,22 +762,34 @@
      "reached": true,
      "step": 14
     },
+    "i_an__ante": {
+     "reached": true,
+     "step": 15
+    },
     "i_beat__ante": {
      "reached": true,
-     "step": 14
+     "step": 17
     },
     "i_desc__ante": {
      "reached": true,
      "step": 8
     },
+    "i_fifo__ante": {
+     "reached": true,
+     "step": 16
+    },
     "i_out__ante": {
      "reached": true,
-     "step": 15
+     "step": 16
+    },
+    "i_ptr__ante": {
+     "reached": true,
+     "step": 16
     }
    },
    "depth": 70,
    "mode": "cover",
-   "seconds": 4.9,
+   "seconds": 6.9,
    "status": "PASS"
   },
   "g32s": {
@@ -791,44 +866,65 @@
     },
     {
      "flavor": "assert",
+     "id": "i_ptr",
+     "label": "i_ptr",
+     "src": "sg_dma.sv:367",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
      "id": "i_out",
      "label": "i_out",
-     "src": "sg_dma.sv:348",
+     "src": "sg_dma.sv:364",
      "tautology": false
     },
     {
      "flavor": "assert",
      "id": "i_desc",
      "label": "i_desc",
-     "src": "sg_dma.sv:344",
+     "src": "sg_dma.sv:360",
      "tautology": false
     },
     {
      "flavor": "assert",
      "id": "i_beat",
      "label": "i_beat",
-     "src": "sg_dma.sv:350",
+     "src": "sg_dma.sv:368",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "i_an",
+     "label": "i_an",
+     "src": "sg_dma.sv:366",
      "tautology": false
     },
     {
      "flavor": "assert",
      "id": "i_align_rem",
      "label": "i_align_rem",
-     "src": "sg_dma.sv:347",
+     "src": "sg_dma.sv:363",
      "tautology": false
     },
     {
      "flavor": "assert",
      "id": "i_align_addr",
      "label": "i_align_addr",
-     "src": "sg_dma.sv:346",
+     "src": "sg_dma.sv:362",
      "tautology": false
     },
     {
      "flavor": "assert",
      "id": "i_ahead",
      "label": "i_ahead",
-     "src": "sg_dma.sv:349",
+     "src": "sg_dma.sv:365",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "i_fifo",
+     "label": "i_fifo",
+     "src": "sg_dma.sv:374",
      "tautology": false
     },
     {
@@ -982,7 +1078,7 @@
    "covers": {},
    "depth": 30,
    "mode": "bmc",
-   "seconds": 393.0,
+   "seconds": 24.0,
    "status": "PASS"
   },
   "g32sc": {
@@ -1115,86 +1211,128 @@
     },
     {
      "flavor": "cover",
+     "id": "i_ptr__ante",
+     "label": "i_ptr__ante",
+     "src": "sg_dma.sv:384",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "i_ptr",
+     "label": "i_ptr",
+     "src": "sg_dma.sv:367",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
      "id": "i_out__ante",
      "label": "i_out__ante",
-     "src": "sg_dma.sv:358",
+     "src": "sg_dma.sv:381",
      "tautology": false
     },
     {
      "flavor": "assert",
      "id": "i_out",
      "label": "i_out",
-     "src": "sg_dma.sv:348",
+     "src": "sg_dma.sv:364",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "i_fifo__ante",
+     "label": "i_fifo__ante",
+     "src": "sg_dma.sv:385",
      "tautology": false
     },
     {
      "flavor": "cover",
      "id": "i_desc__ante",
      "label": "i_desc__ante",
-     "src": "sg_dma.sv:355",
+     "src": "sg_dma.sv:378",
      "tautology": false
     },
     {
      "flavor": "assert",
      "id": "i_desc",
      "label": "i_desc",
-     "src": "sg_dma.sv:344",
+     "src": "sg_dma.sv:360",
      "tautology": false
     },
     {
      "flavor": "cover",
      "id": "i_beat__ante",
      "label": "i_beat__ante",
-     "src": "sg_dma.sv:360",
+     "src": "sg_dma.sv:386",
      "tautology": false
     },
     {
      "flavor": "assert",
      "id": "i_beat",
      "label": "i_beat",
-     "src": "sg_dma.sv:350",
+     "src": "sg_dma.sv:368",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "i_an__ante",
+     "label": "i_an__ante",
+     "src": "sg_dma.sv:383",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "i_an",
+     "label": "i_an",
+     "src": "sg_dma.sv:366",
      "tautology": false
     },
     {
      "flavor": "cover",
      "id": "i_align_rem__ante",
      "label": "i_align_rem__ante",
-     "src": "sg_dma.sv:357",
+     "src": "sg_dma.sv:380",
      "tautology": false
     },
     {
      "flavor": "assert",
      "id": "i_align_rem",
      "label": "i_align_rem",
-     "src": "sg_dma.sv:347",
+     "src": "sg_dma.sv:363",
      "tautology": false
     },
     {
      "flavor": "cover",
      "id": "i_align_addr__ante",
      "label": "i_align_addr__ante",
-     "src": "sg_dma.sv:356",
+     "src": "sg_dma.sv:379",
      "tautology": false
     },
     {
      "flavor": "assert",
      "id": "i_align_addr",
      "label": "i_align_addr",
-     "src": "sg_dma.sv:346",
+     "src": "sg_dma.sv:362",
      "tautology": false
     },
     {
      "flavor": "cover",
      "id": "i_ahead__ante",
      "label": "i_ahead__ante",
-     "src": "sg_dma.sv:359",
+     "src": "sg_dma.sv:382",
      "tautology": false
     },
     {
      "flavor": "assert",
      "id": "i_ahead",
      "label": "i_ahead",
-     "src": "sg_dma.sv:349",
+     "src": "sg_dma.sv:365",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "i_fifo",
+     "label": "i_fifo",
+     "src": "sg_dma.sv:374",
      "tautology": false
     },
     {
@@ -1413,7 +1551,7 @@
     },
     "i_ahead__ante": {
      "reached": true,
-     "step": 15
+     "step": 16
     },
     "i_align_addr__ante": {
      "reached": true,
@@ -1423,22 +1561,34 @@
      "reached": true,
      "step": 14
     },
+    "i_an__ante": {
+     "reached": true,
+     "step": 15
+    },
     "i_beat__ante": {
      "reached": true,
-     "step": 14
+     "step": 17
     },
     "i_desc__ante": {
      "reached": true,
      "step": 8
     },
+    "i_fifo__ante": {
+     "reached": true,
+     "step": 16
+    },
     "i_out__ante": {
      "reached": true,
-     "step": 15
+     "step": 16
+    },
+    "i_ptr__ante": {
+     "reached": true,
+     "step": 16
     }
    },
    "depth": 70,
    "mode": "cover",
-   "seconds": 4.4,
+   "seconds": 6.2,
    "status": "PASS"
   },
   "m128": {
@@ -1487,37 +1637,58 @@
     },
     {
      "flavor": "assert",
+     "id": "i_ptr",
+     "label": "i_ptr",
+     "src": "sg_dma.sv:367",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
      "id": "i_out",
      "label": "i_out",
-     "src": "sg_dma.sv:348",
+     "src": "sg_dma.sv:364",
      "tautology": false
     },
     {
      "flavor": "assert",
      "id": "i_desc",
      "label": "i_desc",
-     "src": "sg_dma.sv:344",
+     "src": "sg_dma.sv:360",
      "tautology": false
     },
     {
      "flavor": "assert",
      "id": "i_beat",
      "label": "i_beat",
-     "src": "sg_dma.sv:350",
+     "src": "sg_dma.sv:368",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "i_an",
+     "label": "i_an",
+     "src": "sg_dma.sv:366",
      "tautology": false
     },
     {
      "flavor": "assert",
      "id": "i_align_rem",
      "label": "i_align_rem",
-     "src": "sg_dma.sv:347",
+     "src": "sg_dma.sv:363",
      "tautology": false
     },
     {
      "flavor": "assert",
      "id": "i_align_addr",
      "label": "i_align_addr",
-     "src": "sg_dma.sv:346",
+     "src": "sg_dma.sv:362",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "i_fifo",
+     "label": "i_fifo",
+     "src": "sg_dma.sv:374",
      "tautology": false
     },
     {
@@ -1669,9 +1840,9 @@
     }
    ],
    "covers": {},
-   "depth": 14,
+   "depth": 20,
    "mode": "prove",
-   "seconds": 2.9,
+   "seconds": 9.0,
    "status": "PASS"
   },
   "m32": {
@@ -1720,37 +1891,58 @@
     },
     {
      "flavor": "assert",
+     "id": "i_ptr",
+     "label": "i_ptr",
+     "src": "sg_dma.sv:367",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
      "id": "i_out",
      "label": "i_out",
-     "src": "sg_dma.sv:348",
+     "src": "sg_dma.sv:364",
      "tautology": false
     },
     {
      "flavor": "assert",
      "id": "i_desc",
      "label": "i_desc",
-     "src": "sg_dma.sv:344",
+     "src": "sg_dma.sv:360",
      "tautology": false
     },
     {
      "flavor": "assert",
      "id": "i_beat",
      "label": "i_beat",
-     "src": "sg_dma.sv:350",
+     "src": "sg_dma.sv:368",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "i_an",
+     "label": "i_an",
+     "src": "sg_dma.sv:366",
      "tautology": false
     },
     {
      "flavor": "assert",
      "id": "i_align_rem",
      "label": "i_align_rem",
-     "src": "sg_dma.sv:347",
+     "src": "sg_dma.sv:363",
      "tautology": false
     },
     {
      "flavor": "assert",
      "id": "i_align_addr",
      "label": "i_align_addr",
-     "src": "sg_dma.sv:346",
+     "src": "sg_dma.sv:362",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "i_fifo",
+     "label": "i_fifo",
+     "src": "sg_dma.sv:374",
      "tautology": false
     },
     {
@@ -1902,9 +2094,9 @@
     }
    ],
    "covers": {},
-   "depth": 14,
+   "depth": 20,
    "mode": "prove",
-   "seconds": 2.3,
+   "seconds": 4.5,
    "status": "PASS"
   },
   "m32c": {
@@ -1995,72 +2187,114 @@
     },
     {
      "flavor": "cover",
+     "id": "i_ptr__ante",
+     "label": "i_ptr__ante",
+     "src": "sg_dma.sv:384",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "i_ptr",
+     "label": "i_ptr",
+     "src": "sg_dma.sv:367",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
      "id": "i_out__ante",
      "label": "i_out__ante",
-     "src": "sg_dma.sv:358",
+     "src": "sg_dma.sv:381",
      "tautology": false
     },
     {
      "flavor": "assert",
      "id": "i_out",
      "label": "i_out",
-     "src": "sg_dma.sv:348",
+     "src": "sg_dma.sv:364",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "i_fifo__ante",
+     "label": "i_fifo__ante",
+     "src": "sg_dma.sv:385",
      "tautology": false
     },
     {
      "flavor": "cover",
      "id": "i_desc__ante",
      "label": "i_desc__ante",
-     "src": "sg_dma.sv:355",
+     "src": "sg_dma.sv:378",
      "tautology": false
     },
     {
      "flavor": "assert",
      "id": "i_desc",
      "label": "i_desc",
-     "src": "sg_dma.sv:344",
+     "src": "sg_dma.sv:360",
      "tautology": false
     },
     {
      "flavor": "cover",
      "id": "i_beat__ante",
      "label": "i_beat__ante",
-     "src": "sg_dma.sv:360",
+     "src": "sg_dma.sv:386",
      "tautology": false
     },
     {
      "flavor": "assert",
      "id": "i_beat",
      "label": "i_beat",
-     "src": "sg_dma.sv:350",
+     "src": "sg_dma.sv:368",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "i_an__ante",
+     "label": "i_an__ante",
+     "src": "sg_dma.sv:383",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "i_an",
+     "label": "i_an",
+     "src": "sg_dma.sv:366",
      "tautology": false
     },
     {
      "flavor": "cover",
      "id": "i_align_rem__ante",
      "label": "i_align_rem__ante",
-     "src": "sg_dma.sv:357",
+     "src": "sg_dma.sv:380",
      "tautology": false
     },
     {
      "flavor": "assert",
      "id": "i_align_rem",
      "label": "i_align_rem",
-     "src": "sg_dma.sv:347",
+     "src": "sg_dma.sv:363",
      "tautology": false
     },
     {
      "flavor": "cover",
      "id": "i_align_addr__ante",
      "label": "i_align_addr__ante",
-     "src": "sg_dma.sv:356",
+     "src": "sg_dma.sv:379",
      "tautology": false
     },
     {
      "flavor": "assert",
      "id": "i_align_addr",
      "label": "i_align_addr",
-     "src": "sg_dma.sv:346",
+     "src": "sg_dma.sv:362",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "i_fifo",
+     "label": "i_fifo",
+     "src": "sg_dma.sv:374",
      "tautology": false
     },
     {
@@ -2255,7 +2489,7 @@
     },
     "h_axis__ante": {
      "reached": true,
-     "step": 16
+     "step": 17
     },
     "h_lite_b__ante": {
      "reached": true,
@@ -2277,22 +2511,34 @@
      "reached": true,
      "step": 14
     },
+    "i_an__ante": {
+     "reached": true,
+     "step": 15
+    },
     "i_beat__ante": {
      "reached": true,
-     "step": 14
+     "step": 17
     },
     "i_desc__ante": {
      "reached": true,
      "step": 8
     },
+    "i_fifo__ante": {
+     "reached": true,
+     "step": 16
+    },
     "i_out__ante": {
      "reached": true,
-     "step": 15
+     "step": 16
+    },
+    "i_ptr__ante": {
+     "reached": true,
+     "step": 16
     }
    },
    "depth": 70,
    "mode": "cover",
-   "seconds": 3.9,
+   "seconds": 5.7,
    "status": "PASS"
   },
   "m64": {
@@ -2341,37 +2587,58 @@
     },
     {
      "flavor": "assert",
+     "id": "i_ptr",
+     "label": "i_ptr",
+     "src": "sg_dma.sv:367",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
      "id": "i_out",
      "label": "i_out",
-     "src": "sg_dma.sv:348",
+     "src": "sg_dma.sv:364",
      "tautology": false
     },
     {
      "flavor": "assert",
      "id": "i_desc",
      "label": "i_desc",
-     "src": "sg_dma.sv:344",
+     "src": "sg_dma.sv:360",
      "tautology": false
     },
     {
      "flavor": "assert",
      "id": "i_beat",
      "label": "i_beat",
-     "src": "sg_dma.sv:350",
+     "src": "sg_dma.sv:368",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "i_an",
+     "label": "i_an",
+     "src": "sg_dma.sv:366",
      "tautology": false
     },
     {
      "flavor": "assert",
      "id": "i_align_rem",
      "label": "i_align_rem",
-     "src": "sg_dma.sv:347",
+     "src": "sg_dma.sv:363",
      "tautology": false
     },
     {
      "flavor": "assert",
      "id": "i_align_addr",
      "label": "i_align_addr",
-     "src": "sg_dma.sv:346",
+     "src": "sg_dma.sv:362",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "i_fifo",
+     "label": "i_fifo",
+     "src": "sg_dma.sv:374",
      "tautology": false
     },
     {
@@ -2523,9 +2790,9 @@
     }
    ],
    "covers": {},
-   "depth": 14,
+   "depth": 20,
    "mode": "prove",
-   "seconds": 2.6,
+   "seconds": 8.9,
    "status": "PASS"
   },
   "s128": {
@@ -2574,44 +2841,65 @@
     },
     {
      "flavor": "assert",
+     "id": "i_ptr",
+     "label": "i_ptr",
+     "src": "sg_dma.sv:367",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
      "id": "i_out",
      "label": "i_out",
-     "src": "sg_dma.sv:348",
+     "src": "sg_dma.sv:364",
      "tautology": false
     },
     {
      "flavor": "assert",
      "id": "i_desc",
      "label": "i_desc",
-     "src": "sg_dma.sv:344",
+     "src": "sg_dma.sv:360",
      "tautology": false
     },
     {
      "flavor": "assert",
      "id": "i_beat",
      "label": "i_beat",
-     "src": "sg_dma.sv:350",
+     "src": "sg_dma.sv:368",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "i_an",
+     "label": "i_an",
+     "src": "sg_dma.sv:366",
      "tautology": false
     },
     {
      "flavor": "assert",
      "id": "i_align_rem",
      "label": "i_align_rem",
-     "src": "sg_dma.sv:347",
+     "src": "sg_dma.sv:363",
      "tautology": false
     },
     {
      "flavor": "assert",
      "id": "i_align_addr",
      "label": "i_align_addr",
-     "src": "sg_dma.sv:346",
+     "src": "sg_dma.sv:362",
      "tautology": false
     },
     {
      "flavor": "assert",
      "id": "i_ahead",
      "label": "i_ahead",
-     "src": "sg_dma.sv:349",
+     "src": "sg_dma.sv:365",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "i_fifo",
+     "label": "i_fifo",
+     "src": "sg_dma.sv:374",
      "tautology": false
     },
     {
@@ -2763,9 +3051,9 @@
     }
    ],
    "covers": {},
-   "depth": 14,
+   "depth": 20,
    "mode": "prove",
-   "seconds": 4.3,
+   "seconds": 8.3,
    "status": "PASS"
   },
   "s32": {
@@ -2814,44 +3102,65 @@
     },
     {
      "flavor": "assert",
+     "id": "i_ptr",
+     "label": "i_ptr",
+     "src": "sg_dma.sv:367",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
      "id": "i_out",
      "label": "i_out",
-     "src": "sg_dma.sv:348",
+     "src": "sg_dma.sv:364",
      "tautology": false
     },
     {
      "flavor": "assert",
      "id": "i_desc",
      "label": "i_desc",
-     "src": "sg_dma.sv:344",
+     "src": "sg_dma.sv:360",
      "tautology": false
     },
     {
      "flavor": "assert",
      "id": "i_beat",
      "label": "i_beat",
-     "src": "sg_dma.sv:350",
+     "src": "sg_dma.sv:368",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "i_an",
+     "label": "i_an",
+     "src": "sg_dma.sv:366",
      "tautology": false
     },
     {
      "flavor": "assert",
      "id": "i_align_rem",
      "label": "i_align_rem",
-     "src": "sg_dma.sv:347",
+     "src": "sg_dma.sv:363",
      "tautology": false
     },
     {
      "flavor": "assert",
      "id": "i_align_addr",
      "label": "i_align_addr",
-     "src": "sg_dma.sv:346",
+     "src": "sg_dma.sv:362",
      "tautology": false
     },
     {
      "flavor": "assert",
      "id": "i_ahead",
      "label": "i_ahead",
-     "src": "sg_dma.sv:349",
+     "src": "sg_dma.sv:365",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "i_fifo",
+     "label": "i_fifo",
+     "src": "sg_dma.sv:374",
      "tautology": false
     },
     {
@@ -3003,9 +3312,9 @@
     }
    ],
    "covers": {},
-   "depth": 14,
+   "depth": 20,
    "mode": "prove",
-   "seconds": 2.3,
+   "seconds": 4.2,
    "status": "PASS"
   },
   "s32c": {
@@ -3089,86 +3398,128 @@
     },
     {
      "flavor": "cover",
+     "id": "i_ptr__ante",
+     "label": "i_ptr__ante",
+     "src": "sg_dma.sv:384",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "i_ptr",
+     "label": "i_ptr",
+     "src": "sg_dma.sv:367",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
      "id": "i_out__ante",
      "label": "i_out__ante",
-     "src": "sg_dma.sv:358",
+     "src": "sg_dma.sv:381",
      "tautology": false
     },
     {
      "flavor": "assert",
      "id": "i_out",
      "label": "i_out",
-     "src": "sg_dma.sv:348",
+     "src": "sg_dma.sv:364",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "i_fifo__ante",
+     "label": "i_fifo__ante",
+     "src": "sg_dma.sv:385",
      "tautology": false
     },
     {
      "flavor": "cover",
      "id": "i_desc__ante",
      "label": "i_desc__ante",
-     "src": "sg_dma.sv:355",
+     "src": "sg_dma.sv:378",
      "tautology": false
     },
     {
      "flavor": "assert",
      "id": "i_desc",
      "label": "i_desc",
-     "src": "sg_dma.sv:344",
+     "src": "sg_dma.sv:360",
      "tautology": false
     },
     {
      "flavor": "cover",
      "id": "i_beat__ante",
      "label": "i_beat__ante",
-     "src": "sg_dma.sv:360",
+     "src": "sg_dma.sv:386",
      "tautology": false
     },
     {
      "flavor": "assert",
      "id": "i_beat",
      "label": "i_beat",
-     "src": "sg_dma.sv:350",
+     "src": "sg_dma.sv:368",
+     "tautology": false
+    },
+    {
+     "flavor": "cover",
+     "id": "i_an__ante",
+     "label": "i_an__ante",
+     "src": "sg_dma.sv:383",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "i_an",
+     "label": "i_an",
+     "src": "sg_dma.sv:366",
      "tautology": false
     },
     {
      "flavor": "cover",
      "id": "i_align_rem__ante",
      "label": "i_align_rem__ante",
-     "src": "sg_dma.sv:357",
+     "src": "sg_dma.sv:380",
      "tautology": false
     },
     {
      "flavor": "assert",
      "id": "i_align_rem",
      "label": "i_align_rem",
-     "src": "sg_dma.sv:347",
+     "src": "sg_dma.sv:363",
      "tautology": false
     },
     {
      "flavor": "cover",
      "id": "i_align_addr__ante",
      "label": "i_align_addr__ante",
-     "src": "sg_dma.sv:356",
+     "src": "sg_dma.sv:379",
      "tautology": false
     },
     {
      "flavor": "assert",
      "id": "i_align_addr",
      "label": "i_align_addr",
-     "src": "sg_dma.sv:346",
+     "src": "sg_dma.sv:362",
      "tautology": false
     },
     {
      "flavor": "cover",
      "id": "i_ahead__ante",
      "label": "i_ahead__ante",
-     "src": "sg_dma.sv:359",
+     "src": "sg_dma.sv:382",
      "tautology": false
     },
     {
      "flavor": "assert",
      "id": "i_ahead",
      "label": "i_ahead",
-     "src": "sg_dma.sv:349",
+     "src": "sg_dma.sv:365",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "i_fifo",
+     "label": "i_fifo",
+     "src": "sg_dma.sv:374",
      "tautology": false
     },
     {
@@ -3375,7 +3726,7 @@
     },
     "i_ahead__ante": {
      "reached": true,
-     "step": 15
+     "step": 16
     },
     "i_align_addr__ante": {
      "reached": true,
@@ -3385,22 +3736,34 @@
      "reached": true,
      "step": 14
     },
+    "i_an__ante": {
+     "reached": true,
+     "step": 15
+    },
     "i_beat__ante": {
      "reached": true,
-     "step": 14
+     "step": 17
     },
     "i_desc__ante": {
      "reached": true,
      "step": 8
     },
+    "i_fifo__ante": {
+     "reached": true,
+     "step": 16
+    },
     "i_out__ante": {
      "reached": true,
-     "step": 15
+     "step": 16
+    },
+    "i_ptr__ante": {
+     "reached": true,
+     "step": 16
     }
    },
    "depth": 70,
    "mode": "cover",
-   "seconds": 4.3,
+   "seconds": 5.0,
    "status": "PASS"
   },
   "s64": {
@@ -3449,44 +3812,65 @@
     },
     {
      "flavor": "assert",
+     "id": "i_ptr",
+     "label": "i_ptr",
+     "src": "sg_dma.sv:367",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
      "id": "i_out",
      "label": "i_out",
-     "src": "sg_dma.sv:348",
+     "src": "sg_dma.sv:364",
      "tautology": false
     },
     {
      "flavor": "assert",
      "id": "i_desc",
      "label": "i_desc",
-     "src": "sg_dma.sv:344",
+     "src": "sg_dma.sv:360",
      "tautology": false
     },
     {
      "flavor": "assert",
      "id": "i_beat",
      "label": "i_beat",
-     "src": "sg_dma.sv:350",
+     "src": "sg_dma.sv:368",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "i_an",
+     "label": "i_an",
+     "src": "sg_dma.sv:366",
      "tautology": false
     },
     {
      "flavor": "assert",
      "id": "i_align_rem",
      "label": "i_align_rem",
-     "src": "sg_dma.sv:347",
+     "src": "sg_dma.sv:363",
      "tautology": false
     },
     {
      "flavor": "assert",
      "id": "i_align_addr",
      "label": "i_align_addr",
-     "src": "sg_dma.sv:346",
+     "src": "sg_dma.sv:362",
      "tautology": false
     },
     {
      "flavor": "assert",
      "id": "i_ahead",
      "label": "i_ahead",
-     "src": "sg_dma.sv:349",
+     "src": "sg_dma.sv:365",
+     "tautology": false
+    },
+    {
+     "flavor": "assert",
+     "id": "i_fifo",
+     "label": "i_fifo",
+     "src": "sg_dma.sv:374",
      "tautology": false
     },
     {
@@ -3638,9 +4022,9 @@
     }
    ],
    "covers": {},
-   "depth": 14,
+   "depth": 20,
    "mode": "prove",
-   "seconds": 2.5,
+   "seconds": 6.9,
    "status": "PASS"
   }
  },

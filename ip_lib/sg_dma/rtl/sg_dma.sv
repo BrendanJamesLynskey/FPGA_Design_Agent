@@ -126,9 +126,15 @@ module sg_dma #(
     logic [2:0]  st;
     logic [127:0] desc_sh;
     logic [1:0]  dbeat;
-    logic [ADDR_W-1:0] a_addr, d_addr;
-    logic [23:0] a_rem, d_rem, x_len;
+    logic [ADDR_W-1:0] a_addr;
+    logic [23:0] a_rem, x_len;
     logic [8:0]  d_beat;
+    logic [8:0]  a_n;                            // beats of the next burst, registered; valid only while a_ok
+    logic        a_ok;                           // a_addr and a_rem have not changed for a clock, so a_n is their burst length
+    localparam int PW = (OUTSTANDING > 1) ? $clog2(OUTSTANDING) : 1;
+    logic [8:0]  bq_n [OUTSTANDING];             // burst lengths issued and not yet through the data side, oldest at rp
+    logic        bq_last [OUTSTANDING];          // the burst is the last of its descriptor
+    logic [PW-1:0] wp, rp;
     logic [OCW-1:0] out_cnt, w_ahead;
     logic        x_ioc, x_bad, x_err;
     logic [1:0]  x_code;
@@ -139,25 +145,29 @@ module sg_dma #(
     wire [23:0] dec_len = desc_sh[87:64];
     wire [31:0] status_word = {1'b1, x_err, x_bad, 3'b000, x_code, x_bad ? 24'd0 : x_len};
 
-    // ---- burst split: beats of the burst that starts at address a with rem bytes left
-    function automatic [8:0] nbeats(input [ADDR_W-1:0] a, input [23:0] rem);
-        int t, r, n;
+    // ---- burst split: beats of the burst that starts at address a (its low 12 bits matter) with rem bytes left. a_n registers it, so the
+    // data-side counters see a flop and not this comparison.
+    function automatic [8:0] nbeats(input [11:0] a, input [23:0] rem);
+        reg [10:0] t;
+        reg [23:0] remb;
+        reg [8:0]  r, n;
         begin
-            t = (4096 - int'(a[11:0])) >> BSH;
-            r = int'(rem >> BSH);
-            n = MAX_BURST;
-            if (t < n) n = t;
+            t    = 11'((13'd4096 - {1'b0, a}) >> BSH);          // beats to the 4 KB boundary, 1 to 1024
+            remb = rem >> BSH;
+            r    = (|remb[23:9]) ? 9'h1FF : remb[8:0];
+            n    = 9'(MAX_BURST);
+            if (t < 11'(MAX_BURST)) n = t[8:0];
             if (r < n) n = r;
-            nbeats = n[8:0];
+            nbeats = n;
         end
     endfunction
 
-    wire [8:0] a_n = nbeats(a_addr, a_rem);
-    wire [8:0] d_n = nbeats(d_addr, d_rem);
     wire [23:0] a_bytes = {15'd0, a_n} << BSH;
-    wire [23:0] d_bytes = {15'd0, d_n} << BSH;
+    wire        fifo_nz = (DIR == 0) ? (out_cnt != '0) : (w_ahead != '0);     // a burst has been addressed and its data is not all through
+    wire [8:0]  d_n     = bq_n[rp];
+    wire        d_last  = bq_last[rp];
 
-    wire issue_ok = (st == S_XFER) && (a_rem != 24'd0) && (out_cnt < OCW'(OUTSTANDING));
+    wire issue_ok = (st == S_XFER) && (a_rem != 24'd0) && (out_cnt < OCW'(OUTSTANDING)) && a_ok;
     wire desc_ok  = run && !halted && (ring_size != 16'd0) && (head != tail);
 
     // ---- AXI4 master: address channels
@@ -177,10 +187,10 @@ module sg_dma #(
 
     // ---- AXI4 master: read data. Descriptor beats are taken here; data beats go to m_axis (DIR = 0).
     wire data_phase = (st == S_XFER);
-    assign m_axi_rready  = (st == S_DRD) || (DIR == 0 && data_phase && m_axis_tready && d_rem != 24'd0 && out_cnt != '0);     // data only for a burst that was addressed
-    assign m_axis_tvalid = (DIR == 0) && data_phase && m_axi_rvalid && (d_rem != 24'd0) && (out_cnt != '0);
+    assign m_axi_rready  = (st == S_DRD) || (DIR == 0 && data_phase && m_axis_tready && fifo_nz);     // data only for a burst that was addressed
+    assign m_axis_tvalid = (DIR == 0) && data_phase && m_axi_rvalid && fifo_nz;
     assign m_axis_tdata  = m_axi_rdata;
-    assign m_axis_tlast  = (DIR == 0) && (d_rem == d_bytes) && (d_beat == d_n - 9'd1);
+    assign m_axis_tlast  = (DIR == 0) && d_last && (d_beat == d_n - 9'd1);
 
     // ---- AXI4 master: write data. Status write (one 32-bit lane) or stream beats (DIR = 1).
     wire        w_data_ok = (DIR == 1) && data_phase && (w_ahead != '0);
@@ -197,9 +207,10 @@ module sg_dma #(
     wire w_hs  = m_axi_wvalid && m_axi_wready;
     wire b_hs  = m_axi_bvalid && m_axi_bready;
     wire r_hs  = m_axi_rvalid && m_axi_rready;
-    wire d_beat_hs = (DIR == 0) ? (data_phase && r_hs && d_rem != 24'd0) : (data_phase && w_hs);
+    wire a_hs  = (DIR == 0) ? ar_hs : aw_hs;
+    wire d_beat_hs = (DIR == 0) ? (data_phase && r_hs) : (data_phase && w_hs);
     wire d_burst_end = d_beat_hs && (d_beat == d_n - 9'd1);
-    wire x_done = (a_rem == 24'd0) && (d_rem == 24'd0) && (out_cnt == '0);
+    wire x_done = (a_rem == 24'd0) && (out_cnt == '0);
 
     wire [15:0] tail_next = (tail + 16'd1 == ring_size) ? 16'd0 : tail + 16'd1;
 
@@ -236,7 +247,7 @@ module sg_dma #(
         if (!aresetn) begin
             run <= 1'b0; irq_en <= 1'b0; halted <= 1'b0; irq_pend <= 1'b0;
             ring_base <= '0; ring_size <= '0; head <= '0; tail <= '0; irq_thr <= '0; since_irq <= '0; done_cnt <= '0; err_reg <= '0;
-            st <= S_IDLE; desc_addr <= '0; desc_sh <= '0; dbeat <= '0; a_addr <= '0; d_addr <= '0; a_rem <= '0; d_rem <= '0; x_len <= '0; d_beat <= '0;
+            st <= S_IDLE; desc_addr <= '0; desc_sh <= '0; dbeat <= '0; a_addr <= '0; a_rem <= '0; x_len <= '0; d_beat <= '0; a_n <= '0; a_ok <= 1'b0; wp <= '0; rp <= '0;
             out_cnt <= '0; w_ahead <= '0; x_ioc <= 1'b0; x_bad <= 1'b0; x_err <= 1'b0; x_code <= 2'b00; aw_done <= 1'b0; desc_err <= 1'b0;
             s_axi_bvalid <= 1'b0; s_axi_rvalid <= 1'b0; s_axi_rdata <= '0;
         end else begin
@@ -278,9 +289,9 @@ module sg_dma #(
                     end else dbeat <= dbeat + 2'd1;
                 end
                 S_DEC: begin
-                    a_addr <= desc_sh[ADDR_W-1:0]; d_addr <= desc_sh[ADDR_W-1:0];
-                    a_rem <= desc_sh[87:64]; d_rem <= desc_sh[87:64]; x_len <= desc_sh[87:64];
-                    x_ioc <= desc_sh[95]; d_beat <= 9'd0; out_cnt <= '0; w_ahead <= '0;
+                    a_addr <= desc_sh[ADDR_W-1:0];
+                    a_rem <= desc_sh[87:64]; x_len <= desc_sh[87:64];
+                    x_ioc <= desc_sh[95]; a_ok <= 1'b0; d_beat <= 9'd0; out_cnt <= '0; w_ahead <= '0; wp <= '0; rp <= '0;
                     x_err <= 1'b0; x_code <= 2'b00; aw_done <= 1'b0;
                     if (dec_len == 24'd0 || (|(dec_len & 24'(BYTES - 1))) || (|(desc_sh[31:0] & 32'(BYTES - 1)))) begin
                         x_bad <= 1'b1; st <= S_WA;
@@ -289,17 +300,21 @@ module sg_dma #(
                     end
                 end
                 S_XFER: begin
-                    // address side: one burst per handshake
-                    if ((DIR == 0) ? ar_hs : aw_hs) begin
+                    // address side: one burst per handshake; a_n follows the new address a clock later (a_ok low in between)
+                    a_n <= nbeats(a_addr[11:0], a_rem);
+                    a_ok <= !a_hs;
+                    if (a_hs) begin
                         a_addr <= a_addr + ADDR_W'(a_bytes);
                         a_rem  <= a_rem - a_bytes;
+                        bq_n[wp] <= a_n;
+                        bq_last[wp] <= (a_rem == a_bytes);
+                        wp <= (wp == PW'(OUTSTANDING - 1)) ? '0 : wp + 1'b1;
                     end
-                    // data side
+                    // data side: bursts come off the queue in the order they were addressed
                     if (d_beat_hs) begin
                         if (d_beat == d_n - 9'd1) begin
                             d_beat <= 9'd0;
-                            d_addr <= d_addr + ADDR_W'(d_bytes);
-                            d_rem  <= d_rem - d_bytes;
+                            rp <= (rp == PW'(OUTSTANDING - 1)) ? '0 : rp + 1'b1;
                         end else d_beat <= d_beat + 9'd1;
                         if (DIR == 0 && m_axi_rresp != 2'b00) begin
                             if (!x_err) x_code <= m_axi_rresp;
@@ -340,16 +355,24 @@ module sg_dma #(
     end
 `ifdef FORMAL
     // Invariants for the k-induction proofs (formal/formal_sg_dma.sv): facts about the engine's own registers that hold in every reachable state.
+    wire [PW:0] f_cnt = (DIR == 0) ? out_cnt : w_ahead;
     always @(*) if (aresetn) begin
         i_desc: assert (desc_addr[3:0] == 4'd0 && ring_base[3:0] == 4'd0);
         if (st == S_XFER) begin
-            i_align_addr: assert ((a_addr & ADDR_W'(BYTES - 1)) == 0 && (d_addr & ADDR_W'(BYTES - 1)) == 0);
-            i_align_rem: assert ((a_rem & 24'(BYTES - 1)) == 0 && (d_rem & 24'(BYTES - 1)) == 0);
+            i_align_addr: assert ((a_addr & ADDR_W'(BYTES - 1)) == 0);
+            i_align_rem: assert ((a_rem & 24'(BYTES - 1)) == 0);
             i_out: assert (out_cnt <= OCW'(OUTSTANDING));
             if (DIR == 1) i_ahead: assert (w_ahead <= out_cnt);
-            i_beat: assert (d_beat < d_n || d_rem == 24'd0);
+            i_an: assert (!a_ok || a_n == nbeats(a_addr[11:0], a_rem));
+            i_ptr: assert (int'(wp) < OUTSTANDING && int'(rp) < OUTSTANDING && ((int'(wp) - int'(rp) + OUTSTANDING) % OUTSTANDING) == (int'(f_cnt) % OUTSTANDING));
+            i_beat: assert (f_cnt == '0 ? d_beat == 9'd0 : d_beat < d_n);
         end
     end
+    // every queued burst length is between 1 and MAX_BURST
+    generate for (genvar k = 0; k < OUTSTANDING; k++) begin : g_fq
+        always @(*) if (aresetn && st == S_XFER && ((k - int'(rp) + OUTSTANDING) % OUTSTANDING) < int'(f_cnt))
+            i_fifo: assert (bq_n[k] != 9'd0 && bq_n[k] <= 9'(MAX_BURST));
+    end endgenerate
 `ifdef COVER
     always @(posedge aclk) if (aresetn) begin
         i_desc__ante: cover (st == S_DAR);
@@ -357,7 +380,10 @@ module sg_dma #(
         i_align_rem__ante: cover (st == S_XFER);
         i_out__ante: cover (st == S_XFER && out_cnt != '0);
         if (DIR == 1) i_ahead__ante: cover (st == S_XFER && w_ahead != '0);
-        i_beat__ante: cover (st == S_XFER && d_rem != 24'd0);
+        i_an__ante: cover (st == S_XFER && a_ok);
+        i_ptr__ante: cover (st == S_XFER && f_cnt != '0);
+        i_fifo__ante: cover (st == S_XFER && f_cnt != '0);
+        i_beat__ante: cover (st == S_XFER && f_cnt != '0 && d_beat != 9'd0);
     end
 `endif
 `endif

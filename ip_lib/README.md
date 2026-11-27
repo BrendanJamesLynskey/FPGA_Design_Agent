@@ -54,7 +54,7 @@ board run yet.
 
 | Entry | What | Tests |
 |---|---|---|
-| [sg_dma](sg_dma/README.md) | scatter-gather DMA between an AXI4 memory-mapped master and an AXI4-Stream port (memory to stream or stream to memory, one per instance): a ring of 16-byte descriptors in memory, AXI4-Lite control, INCR bursts cut at 4 KB, several bursts in flight, status written back, interrupt coalescing; datasheet with the driver contract, [DATASHEET.md](sg_dma/DATASHEET.md) | ten parameter points against a memory model with back pressure and SLVERR/DECERR (cocotb), AXI hold rules, burst size and the 4 KB rule proved by k-induction at 32, 64 and 128 bits, 22 seeded faults; measured in simulation only, [results/241_dma](../results/241_dma/README.md) |
+| [sg_dma](sg_dma/README.md) | scatter-gather DMA between an AXI4 memory-mapped master and an AXI4-Stream port (memory to stream or stream to memory, one per instance): a ring of 16-byte descriptors in memory, AXI4-Lite control, INCR bursts cut at 4 KB, several bursts in flight, status written back, interrupt coalescing; datasheet with the driver contract, [DATASHEET.md](sg_dma/DATASHEET.md) | ten parameter points against a memory model with back pressure and SLVERR/DECERR (cocotb), AXI hold rules, burst size and the 4 KB rule proved by k-induction at 32, 64 and 128 bits, 23 seeded faults; measured in simulation only, [results/241_dma](../results/241_dma/README.md) |
 
 ## Networking and packet processing
 
