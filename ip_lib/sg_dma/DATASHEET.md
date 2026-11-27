@@ -63,7 +63,7 @@ ignored: a packet shorter than its buffer is not detected) and reports the buffe
 Cocotb against `model.py` (descriptor format, the burst split, the status word) with a memory model that has read and write latency, random ready and valid gaps, response errors and an AXI rule monitor; ten
 (`DIR`, `DATA_W`, `MAX_BURST`, `OUTSTANDING`, `ADDR_W`) points; SymbiYosys with the slang front end; 22 seeded faults (`faults.yaml`). The AXI hold rules (AR, AW, W, the stream port, the AXI4-Lite B and R), burst size,
 alignment and the 4 KB rule are proved by k-induction at 32, 64 and 128 bits in both directions with a free memory, free AXI4-Lite master and free stream (the descriptor words read are arbitrary, so the proof covers every
-buffer address and length); write data after address, `wlast` and the outstanding limit are proved to depth 30 only, because their bookkeeping is in the harness and not tied to the engine's own counters. There is no formal rigour sidecar yet.
+buffer address and length); write data after address, `wlast` and the outstanding limit are proved to depth 30 only, because their bookkeeping is in the harness and not tied to the engine's own counters. The proofs have a formal-rigour sidecar and record (`formal/sg_dma.rigour.yaml`, `results/143c/formal_rigour/`): 21 assertions proved, 4 bounded, none vacuous, each antecedent reached in a cover task (at 32 bits).
 
 ## Measured behaviour (simulation, not a board)
 

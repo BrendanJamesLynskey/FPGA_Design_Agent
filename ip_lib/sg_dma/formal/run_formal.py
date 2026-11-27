@@ -25,7 +25,7 @@ HERE = Path(__file__).resolve().parent
 ENTRY = HERE.parent
 PROVE = ["m32", "s32", "m64", "s64", "m128", "s128"]      # k-induction, every depth
 BOUNDED = ["g32m", "g32s"]                # bmc, depth 30 (the burst bookkeeping is not tied to the engine's counters)
-COVER = ["m32c", "s32c"]
+COVER = ["m32c", "s32c", "g32mc", "g32sc"]
 TASKS = PROVE + BOUNDED + COVER
 
 

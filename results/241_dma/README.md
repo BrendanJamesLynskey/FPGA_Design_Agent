@@ -75,16 +75,18 @@ the S2MM gap may belong to that memory and not to the core; our engine reaching 
 
 | Task | Kind | Status | Seconds |
 |---|---|---|---|
-| `m32` | k-induction | PASS | 1.9 |
-| `s32` | k-induction | PASS | 1.9 |
-| `m64` | k-induction | PASS | 2.5 |
-| `s64` | k-induction | PASS | 2.7 |
-| `m128` | k-induction | PASS | 2.7 |
-| `s128` | k-induction | PASS | 3.1 |
-| `g32m` | bounded (bmc depth 30) | PASS | 112.2 |
-| `g32s` | bounded (bmc depth 30) | PASS | 457.3 |
-| `m32c` | cover | PASS | 2.4 |
-| `s32c` | cover | PASS | 3.5 |
+| `m32` | k-induction | PASS | 2.4 |
+| `s32` | k-induction | PASS | 2.0 |
+| `m64` | k-induction | PASS | 2.2 |
+| `s64` | k-induction | PASS | 2.2 |
+| `m128` | k-induction | PASS | 2.3 |
+| `s128` | k-induction | PASS | 2.4 |
+| `g32m` | bounded (bmc depth 30) | PASS | 109.8 |
+| `g32s` | bounded (bmc depth 30) | PASS | 444.3 |
+| `m32c` | cover | PASS | 4.2 |
+| `s32c` | cover | PASS | 5.4 |
+| `g32mc` | cover | PASS | 6.1 |
+| `g32sc` | cover | PASS | 5.4 |
 
 The k-induction proofs cover the hold rules on every channel the engine drives, burst size and type, alignment and the 4 KB rule, for every descriptor the engine could read (the memory returns arbitrary words) at 32, 64 and 128 bits in both directions. The bounded proofs (depth 30) cover write data after its address, `wlast`, and the outstanding limit; they are bounded because their bookkeeping is in the harness and not tied to the engine's counters, so k-induction cannot close them. The proofs were useful: they found (1) that a ring base that is not 16-byte aligned can make a descriptor fetch cross a page (RING_LO bits 3:0 now read 0), (2) that a change to the ring registers during a fetch could change an address already offered (the descriptor address is now latched), and (3) a counter that could wrap on an unsolicited response (the engine now accepts a response or read data only for a burst it addressed). The simulation found a fourth: after a failed descriptor fetch the rest of the burst stayed in the memory's read channel (the engine now reads and discards it).
 
@@ -128,7 +130,7 @@ The board run and the agent run cannot be regenerated from here: they have not b
 - Each point is one run of a deterministic simulation; there is no spread to report. The random back-pressure runs are in the bench, not in the measurements.
 - AMD's AXI DMA was not run; the model of it holds the guide's published numbers and one inferred gap, and its test bench's memory is not stated. The comparison is therefore a reading of two different set-ups.
 - Vivado figures are single out-of-context runs at a 4.0 ns target; the Fmax on `xck26` is a lower bound, and the `xc7z020` figure is limited by an internal path the entry lists as a follow-up.
-- The bounded proofs (depth 30) say nothing beyond that depth; there is no formal rigour sidecar for the proofs yet.
+- The bounded proofs (depth 30) say nothing beyond that depth; the antecedent covers that show the assertions are not vacuous run at 32 bits only (the formal-rigour record is in `results/143c/formal_rigour/`).
 - No DMA agent run exists yet, so nothing here shows that the agent chooses or wires the engine correctly.
 
 ## Course impact

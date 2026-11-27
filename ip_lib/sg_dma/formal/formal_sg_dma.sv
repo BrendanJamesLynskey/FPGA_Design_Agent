@@ -160,53 +160,57 @@ module formal_sg_dma #(
     wire [12:0] aw_end = {1'b0, awaddr[11:0]} + (({5'b0, awlen} + 13'd1) << awsize);
     always_ff @(posedge clk) if (live) begin
         // hold rules (all five channels of the master, the stream port, the AXI4-Lite response channels)
-        if (p_arv && !p_arr) assert (arvalid && araddr == p_araddr && arlen == p_arlen && arsize == p_arsize);        // H_AR
-        if (p_awv && !p_awr) assert (awvalid && awaddr == p_awaddr && awlen == p_awlen && awsize == p_awsize);        // H_AW
-        if (p_wv && !p_wr) assert (wvalid && wdata == p_wdata && wstrb == p_wstrb && wlast == p_wlast);               // H_W
-        if (p_tv && !p_tr) assert (m_axis_tvalid && m_axis_tdata == p_mtdata && m_axis_tlast == p_mtlast);            // H_AXIS
-        if (p_sbv && !p_sbr) assert (s_axi_bvalid && s_axi_bresp == p_sbresp);                                        // H_LITE_B
-        if (p_srv && !p_srr) assert (s_axi_rvalid && s_axi_rdata == p_srdata && s_axi_rresp == p_srresp);             // H_LITE_R
+        if (p_arv && !p_arr) h_ar: assert (arvalid && araddr == p_araddr && arlen == p_arlen && arsize == p_arsize);        // H_AR
+        if (p_awv && !p_awr) h_aw: assert (awvalid && awaddr == p_awaddr && awlen == p_awlen && awsize == p_awsize);        // H_AW
+        if (p_wv && !p_wr) h_w: assert (wvalid && wdata == p_wdata && wstrb == p_wstrb && wlast == p_wlast);               // H_W
+        if (p_tv && !p_tr) h_axis: assert (m_axis_tvalid && m_axis_tdata == p_mtdata && m_axis_tlast == p_mtlast);            // H_AXIS
+        if (p_sbv && !p_sbr) h_lite_b: assert (s_axi_bvalid && s_axi_bresp == p_sbresp);                                        // H_LITE_B
+        if (p_srv && !p_srr) h_lite_r: assert (s_axi_rvalid && s_axi_rdata == p_srdata && s_axi_rresp == p_srresp);             // H_LITE_R
     end
     always_comb if (live) begin
         if (arvalid) begin
-            assert (ar_end <= 13'd4096);                                    // B_4K (read)
-            assert ({1'b0, arlen} + 9'd1 <= MAXLEN);                         // B_LEN
-            assert (arsize == BSH && arburst == 2'b01);                      // B_SZ, B_INC
-            assert ((araddr & ((1 << arsize) - 1)) == 0);                    // B_AL
+            b_4k_r: assert (ar_end <= 13'd4096);                                    // B_4K (read)
+            b_len_r: assert ({1'b0, arlen} + 9'd1 <= MAXLEN);                // B_LEN
+            b_sz_r: assert (arsize == BSH && arburst == 2'b01);                      // B_SZ, B_INC
+            b_al_r: assert ((araddr & ((1 << arsize) - 1)) == 0);                    // B_AL
         end
         if (awvalid) begin
-            assert (aw_end <= 13'd4096);                                    // B_4K (write)
-            assert ({1'b0, awlen} + 9'd1 <= MAXLEN);
-            assert ((awsize == BSH) || (awsize == 3'd2 && awlen == 8'd0));
-            assert (awburst == 2'b01);
-            assert ((awaddr & ((1 << awsize) - 1)) == 0);
+            b_4k_w: assert (aw_end <= 13'd4096);                                    // B_4K (write)
+            b_len_w: assert ({1'b0, awlen} + 9'd1 <= MAXLEN);
+            b_sz_w: assert ((awsize == BSH) || (awsize == 3'd2 && awlen == 8'd0));
+            b_inc_w: assert (awburst == 2'b01);
+            b_al_w: assert ((awaddr & ((1 << awsize) - 1)) == 0);
         end
     end
 `ifdef GHOST
     // properties that need the bookkeeping above: bounded (bmc) proofs, because the bookkeeping is not tied to the engine's own counters
     always_comb if (live) begin
         if (wvalid) begin
-            assert (wn != 0);                                                // W_AW
-            assert (wlast == (w_idx == wq[0] - 9'd1));                      // W_LAST
+            g_w_aw: assert (wn != 0);                                        // W_AW
+            g_w_last: assert (wlast == (w_idx == wq[0] - 9'd1));            // W_LAST
         end
-        assert (ar_open <= OUTSTANDING);                                     // O_R
-        assert (aw_open <= OUTSTANDING);                                     // O_W
+        g_o_r: assert (ar_open <= OUTSTANDING);                                     // O_R
+        g_o_w: assert (aw_open <= OUTSTANDING);                                     // O_W
     end
 `endif
 `ifdef COVER
-    // each cover is a state the properties above would be empty without: bursts of more than one beat, the last beat of a stream packet or of a
-    // burst, the outstanding limit reached, and a status write that completes (the engine got through a whole descriptor)
+    // antecedent covers: each assertion above is paired with the state in which it could be broken (formal_rigour: LABEL__ante)
     always_ff @(posedge clk) if (live) begin
-        if (DIR == 0) begin
-            cover (arvalid && arlen != 0);
-            cover (m_axis_tvalid && m_axis_tlast);
-            cover (ar_open == OUTSTANDING);
-        end else begin
-            cover (awvalid && awlen != 0);
-            cover (wvalid && wlast && wn != 0);
-            cover (aw_open == OUTSTANDING);
-        end
-        cover (b_hs);
+        h_ar__ante: cover (p_arv && !p_arr);
+        h_aw__ante: cover (p_awv && !p_awr);
+        h_w__ante: cover (p_wv && !p_wr);
+        if (DIR == 0) h_axis__ante: cover (p_tv && !p_tr);
+        h_lite_b__ante: cover (p_sbv && !p_sbr);
+        h_lite_r__ante: cover (p_srv && !p_srr);
+        b_r__ante: cover (arvalid);
+        b_w__ante: cover (awvalid);
+`ifdef GHOST
+        g_w__ante: cover (wvalid);
+        g_o_r__ante: cover (ar_open != 0);
+        g_o_w__ante: cover (aw_open != 0);
+`endif
     end
+    // sanity: the engine gets through a whole descriptor under every assumption (its status write is answered)
+    always_ff @(posedge clk) if (live) c_through: cover (b_hs);
 `endif
 endmodule

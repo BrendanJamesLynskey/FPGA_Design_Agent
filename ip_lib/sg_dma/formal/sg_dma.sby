@@ -9,6 +9,8 @@ s64 prove
 m128 prove
 s128 prove
 g32m bmc
+g32mc cover
+g32sc cover
 g32s bmc
 m32c cover
 s32c cover
@@ -32,6 +34,8 @@ m64: read_slang -DFORMAL sg_dma.sv formal_sg_dma.sv --top formal_sg_dma -G DATA_
 s64: read_slang -DFORMAL sg_dma.sv formal_sg_dma.sv --top formal_sg_dma -G DATA_W=64 -G DIR=1 -G MAX_BURST=4 -G OUTSTANDING=2
 m128: read_slang -DFORMAL sg_dma.sv formal_sg_dma.sv --top formal_sg_dma -G DATA_W=128 -G DIR=0 -G MAX_BURST=4 -G OUTSTANDING=2
 s128: read_slang -DFORMAL sg_dma.sv formal_sg_dma.sv --top formal_sg_dma -G DATA_W=128 -G DIR=1 -G MAX_BURST=4 -G OUTSTANDING=2
+g32mc: read_slang -DFORMAL -DCOVER -DGHOST sg_dma.sv formal_sg_dma.sv --top formal_sg_dma -G DATA_W=32 -G DIR=0 -G MAX_BURST=4 -G OUTSTANDING=2
+g32sc: read_slang -DFORMAL -DCOVER -DGHOST sg_dma.sv formal_sg_dma.sv --top formal_sg_dma -G DATA_W=32 -G DIR=1 -G MAX_BURST=4 -G OUTSTANDING=2
 m32c: read_slang -DFORMAL -DCOVER sg_dma.sv formal_sg_dma.sv --top formal_sg_dma -G DATA_W=32 -G DIR=0 -G MAX_BURST=4 -G OUTSTANDING=2
 s32c: read_slang -DFORMAL -DCOVER sg_dma.sv formal_sg_dma.sv --top formal_sg_dma -G DATA_W=32 -G DIR=1 -G MAX_BURST=4 -G OUTSTANDING=2
 g32m: read_slang -DFORMAL -DGHOST sg_dma.sv formal_sg_dma.sv --top formal_sg_dma -G DATA_W=32 -G DIR=0 -G MAX_BURST=4 -G OUTSTANDING=2

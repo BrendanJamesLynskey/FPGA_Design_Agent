@@ -341,14 +341,24 @@ module sg_dma #(
 `ifdef FORMAL
     // Invariants for the k-induction proofs (formal/formal_sg_dma.sv): facts about the engine's own registers that hold in every reachable state.
     always @(*) if (aresetn) begin
-        assert (desc_addr[3:0] == 4'd0 && ring_base[3:0] == 4'd0);
+        i_desc: assert (desc_addr[3:0] == 4'd0 && ring_base[3:0] == 4'd0);
         if (st == S_XFER) begin
-            assert ((a_addr & ADDR_W'(BYTES - 1)) == 0 && (d_addr & ADDR_W'(BYTES - 1)) == 0);
-            assert ((a_rem & 24'(BYTES - 1)) == 0 && (d_rem & 24'(BYTES - 1)) == 0);
-            assert (out_cnt <= OCW'(OUTSTANDING));
-            if (DIR == 1) assert (w_ahead <= out_cnt);
-            assert (d_beat < d_n || d_rem == 24'd0);
+            i_align_addr: assert ((a_addr & ADDR_W'(BYTES - 1)) == 0 && (d_addr & ADDR_W'(BYTES - 1)) == 0);
+            i_align_rem: assert ((a_rem & 24'(BYTES - 1)) == 0 && (d_rem & 24'(BYTES - 1)) == 0);
+            i_out: assert (out_cnt <= OCW'(OUTSTANDING));
+            if (DIR == 1) i_ahead: assert (w_ahead <= out_cnt);
+            i_beat: assert (d_beat < d_n || d_rem == 24'd0);
         end
     end
+`ifdef COVER
+    always @(posedge aclk) if (aresetn) begin
+        i_desc__ante: cover (st == S_DAR);
+        i_align_addr__ante: cover (st == S_XFER);
+        i_align_rem__ante: cover (st == S_XFER);
+        i_out__ante: cover (st == S_XFER && out_cnt != '0);
+        if (DIR == 1) i_ahead__ante: cover (st == S_XFER && w_ahead != '0);
+        i_beat__ante: cover (st == S_XFER && d_rem != 24'd0);
+    end
+`endif
 `endif
 endmodule

@@ -202,7 +202,7 @@ def test_the_tool_schema_lists_the_check() -> None:
     from agent.core import tools
     assert "axi_profile" in tools.CHECK_NAMES
     # briefs 185 and 204a: advisory suite-only checks are not offered to the Designer (the tool's schema is in the frozen request golden)
-    not_offered = {"dsp_regs", "logic_levels", "clock_tree", "fanout", "synth_log", "congestion", "ip_status"}
+    not_offered = {"dsp_regs", "dma_coherency", "logic_levels", "clock_tree", "fanout", "synth_log", "congestion", "ip_status"}
     assert set(C.CHECKS) - set(tools.CHECK_NAMES) == not_offered
 
 

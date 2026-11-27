@@ -4,7 +4,7 @@
 
 **Not assessed: no requirements recorded (no verif/testplan.yaml), so nothing here is traced to a requirement.**
 
-What the label means, what "verified" never means and how it is earned: [docs/verified.md](../../docs/verified.md). The label is computed from the testplan and the evidence files named below; it is never typed. Generated at git commit `d2fe65c68df61238d505a471fd0a12af4839b96a` (informational: the hashes in the manifest, not the commit, are what the CI check compares).
+What the label means, what "verified" never means and how it is earned: [docs/verified.md](../../docs/verified.md). The label is computed from the testplan and the evidence files named below; it is never typed. Generated at git commit `9fb95dc60021667b0caecd95a394b26f0a69441e` (informational: the hashes in the manifest, not the commit, are what the CI check compares).
 
 ## What was checked for the label
 
@@ -42,7 +42,7 @@ Every file this record covers, with its SHA-256 at generation (9 files). `absent
 | `ip_lib/sg_dma/faults.yaml` | `a6b6a3226a59f25b2084af34cbe981360c888cf94df64437700739e11633d5ee` |
 | `ip_lib/sg_dma/ip.yaml` | `e79d151434ff647536f6c6856d140088ddb6636a85614bc83c6de24bce170245` |
 | `ip_lib/sg_dma/model.py` | `17cee6d9c18fa39102142d2c3678c16b9399380e75b9417982820037b07f55b6` |
-| `ip_lib/sg_dma/rtl/sg_dma.sv` | `d7ded741461ec566d9a4f61094f0d0c95c7b9f9aaa2eff0e5d107b683246520a` |
+| `ip_lib/sg_dma/rtl/sg_dma.sv` | `85da012c765122af4b26e08ba2218990278ae54e3692e90807b7c0ecc5b2ea71` |
 | `ip_lib/sg_dma/tb/sg_dma_cocotb.py` | `c24e1f5fd6d1024d6349bb67e9bb926478698af9d8e50201c5f841fc6c7dfeff` |
 | `ip_lib/sg_dma/tb/test_sg_dma_formal.py` | `98807dd364ea8e97d6fdcad73cc543e007d82e2eb39db2d2591a5bd7a9158386` |
 | `ip_lib/sg_dma/tb/test_sg_dma_rtl.py` | `2fcb438c626b6678d23a386476246a14fd8f81c70386809f2fe83991126ff296` |
