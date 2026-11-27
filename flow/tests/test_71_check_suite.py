@@ -48,7 +48,7 @@ def test_every_rule_is_covered_by_a_check_or_marked_manual() -> None:
 def test_rule_set_shape_fix_and_skill() -> None:
     rs = LR.load_rules()
     assert not LR.rule_problems(rs)
-    assert rs["version"] == "1.14"         # brief 231: HDL-STY-01, STD-INIT-02 (brief 185 1.13; HDL-DSP-01 (brief 190: 1.12, brief 208: 1.11, brief 207: 1.10, brief 204a: 1.9)
+    assert rs["version"] == "1.15"         # brief 241: HDL-DMA-01 (brief 231 1.14: HDL-STY-01, STD-INIT-02): HDL-STY-01, STD-INIT-02 (brief 185 1.13; HDL-DSP-01 (brief 190: 1.12, brief 208: 1.11, brief 207: 1.10, brief 204a: 1.9)
     for r in rs["rules"]:
         assert str(r.get("fix") or "").strip(), f"{r['id']}: no fix"
         sk = str(r.get("skill") or "")
@@ -276,7 +276,7 @@ def test_vivado_session_is_one_call_for_all_missing_reports(tmp_path: Path) -> N
 def test_select_all_skips_checks_that_do_not_apply(tmp_path: Path) -> None:
     chosen, skipped = C.select("all", "rtl", tmp_path)
     assert "lint" in chosen and "cdc" not in chosen
-    assert set(skipped) == {"fsm", "gt_plan", "doc", "axi_profile"}
+    assert set(skipped) == {"fsm", "gt_plan", "doc", "axi_profile", "dma_coherency"}
     with pytest.raises(KeyError):
         C.select(["nope"], "rtl", tmp_path)
 
@@ -304,7 +304,7 @@ def test_agent_check_tool_is_registered_and_offered_to_the_designer() -> None:
     from agent.core.registry import TOOLS
     from agent.graph import run as RUN
     # briefs 185 and 204a: suite-only advisory checks (dsp_regs; the report-driven ones) are not offered to the Designer: the tool's schema is pinned by the golden requests and the MCP snapshot
-    not_offered = {"dsp_regs", "logic_levels", "clock_tree", "fanout", "synth_log", "congestion", "ip_status"}
+    not_offered = {"dsp_regs", "dma_coherency", "logic_levels", "clock_tree", "fanout", "synth_log", "congestion", "ip_status"}
     assert "check" in TOOLS and set(TOOLS["check"].input_schema["properties"]["names"]["items"]["enum"]) == {"all", *C.CHECKS} - not_offered
     for n in range(1, 10):
         assert "check" in RUN.effective_tools("rtl", n, "V3")

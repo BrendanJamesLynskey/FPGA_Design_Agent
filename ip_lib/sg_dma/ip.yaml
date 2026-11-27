@@ -1,0 +1,237 @@
+# ip.yaml for sg_dma: the declared parameter space and contract (the library's reuse rules; brief 241).
+name: sg_dma
+version: 0.1.0
+status: simulated at ten (direction, width, burst, outstanding) points against a memory model with back pressure, SLVERR and DECERR windows and an
+  AXI rule monitor (cocotb, Icarus Verilog 14); the AXI hold rules, the 4 KB rule, burst size and alignment proved by k-induction at 32, 64 and 128 bits
+  (SymbiYosys, slang), burst bookkeeping proved to depth 30; 23 of 23 seeded faults caught; out-of-context Vivado 2026.1 cost on xck26 and xc7z020 (under 530 LUTs; 415 MHz and more on the K26, 139-151 MHz on the Zynq-7000);
+  not run on a board
+summary: 'scatter-gather DMA engine between an AXI4 memory-mapped master and one AXI4-Stream port: a ring of 16-byte descriptors in memory, an AXI4-Lite
+  control port, INCR bursts that never cross a 4 KB boundary, several bursts in flight, status written back into the descriptor, interrupt coalescing.
+  DIR selects memory to stream (0) or stream to memory (1).'
+top: sg_dma
+rtl:
+- rtl/sg_dma.sv
+depends: []
+interfaces:
+- name: s_axi
+  type: axi4-lite
+  dir: slave
+  note: control registers; 6-bit address, 32-bit data
+- name: m_axi
+  type: axi4
+  dir: master
+  note: AR, R, AW, W, B; INCR only, AxSIZE = log2(DATA_W/8) (the one-beat status write is 4 bytes), no IDs, AxCACHE = AXCACHE, no lock, prot or qos
+- name: s_axis
+  type: axi4-stream
+  dir: slave
+  note: used when DIR = 1; tdata only (tlast ignored); tready low and idle when DIR = 0
+- name: m_axis
+  type: axi4-stream
+  dir: master
+  note: used when DIR = 0; tdata and tlast (on the last beat of each descriptor's buffer); idle when DIR = 1
+register_map:
+  regmap: 1
+  name: sg_dma
+  addr_width: 6
+  unmapped: okay
+  conventions: {strobes: ignored, reset: aresetn, reset_active: low, clock: aclk}
+  summary: Control, ring and status registers of the scatter-gather DMA engine; every access is OKAY, a hole reads 0 and ignores writes.
+  registers:
+  - name: CTRL
+    offset: 0x00
+    summary: Run and interrupt enable. Clear RUN only when STATUS.IDLE is 1 (the engine does not stop in the middle of a descriptor).
+    fields:
+    - {name: RUN, lsb: 0, width: 1, access: RW, reset: 0, summary: the engine takes descriptors while HEAD differs from TAIL}
+    - {name: IRQ_EN, lsb: 1, width: 1, access: RW, reset: 0, summary: the irq pin follows STATUS.IRQ}
+  - name: STATUS
+    offset: 0x04
+    summary: Engine state and sticky bits.
+    fields:
+    - {name: IDLE, lsb: 0, width: 1, access: RO, reset: 1, summary: no descriptor is being worked on}
+    - {name: HALTED, lsb: 1, width: 1, access: W1C, reset: 0, summary: a descriptor fetch or a status write failed; the engine stops with TAIL unchanged until this is cleared}
+    - {name: IRQ, lsb: 2, width: 1, access: W1C, reset: 0, summary: an interrupt is pending; clearing it also restarts the coalescing count}
+  - name: RING_LO
+    offset: 0x08
+    summary: Ring base address, bits 31 to 4. Bits 3 to 0 read 0 (the ring is 16-byte aligned). Write only while the engine is idle.
+    fields:
+    - {name: BASE, lsb: 4, width: 28, access: RW, reset: 0}
+  - name: RING_HI
+    offset: 0x0C
+    summary: Ring base address, bits 63 to 32 (bits above ADDR_W are ignored). Write only while the engine is idle.
+    fields:
+    - {name: BASE, lsb: 0, width: 32, access: RW, reset: 0}
+  - name: RING_SIZE
+    offset: 0x10
+    summary: Entries in the ring, 1 to 65535. 0 keeps the engine idle. Write only while the engine is idle.
+    fields:
+    - {name: ENTRIES, lsb: 0, width: 16, access: RW, reset: 0}
+  - name: HEAD
+    offset: 0x14
+    summary: Producer index. Software writes it after filling descriptors; it must stay below RING_SIZE. The engine owns the entries from TAIL up to, not including, HEAD.
+    fields:
+    - {name: INDEX, lsb: 0, width: 16, access: RW, reset: 0}
+  - name: TAIL
+    offset: 0x18
+    summary: Consumer index, the next entry the engine takes. Software reads it to find free slots; it moves after an entry's status word is in memory.
+    fields:
+    - {name: INDEX, lsb: 0, width: 16, access: RO, reset: 0}
+  - name: IRQ_THRESH
+    offset: 0x1C
+    summary: Completions per interrupt; 0 acts as 1. The interrupt also fires when the ring drains (TAIL reaches HEAD), and at once for a descriptor with IOC set.
+    fields:
+    - {name: COUNT, lsb: 0, width: 16, access: RW, reset: 0}
+  - name: DONE_COUNT
+    offset: 0x20
+    summary: Descriptors completed since reset, wrapping at 2^32.
+    fields:
+    - {name: COUNT, lsb: 0, width: 32, access: RO, reset: 0}
+  - name: ERR
+    offset: 0x24
+    summary: Error record. Bits 3 and 1:0 describe the latest data error; bit 2 means a descriptor fetch or a status write failed.
+    fields:
+    - {name: CODE, lsb: 0, width: 2, access: W1C, reset: 0, summary: 'the latest non-OKAY data response: 2 SLVERR or 3 DECERR'}
+    - {name: HALT_CAUSE, lsb: 2, width: 1, access: W1C, reset: 0, summary: a descriptor fetch or status write failed}
+    - {name: DATA_ERR, lsb: 3, width: 1, access: W1C, reset: 0, summary: some data beat answered SLVERR or DECERR}
+clocks:
+- name: aclk
+resets:
+- name: aresetn
+  polarity: low
+  style: synchronous
+parameters:
+  ADDR_W:
+    type: int
+    default: 32
+    range:
+    - 32
+    - 64
+    note: memory address width in bits
+  DATA_W:
+    type: int
+    default: 32
+    set:
+    - 32
+    - 64
+    - 128
+    note: memory and stream data width in bits
+  MAX_BURST:
+    type: int
+    default: 16
+    range:
+    - 1
+    - 256
+    note: most beats in one burst (also cut at every 4 KB boundary)
+  OUTSTANDING:
+    type: int
+    default: 4
+    range:
+    - 1
+    - 16
+    note: data bursts addressed ahead of their data (MM2S) or of their response (S2MM)
+  DIR:
+    type: int
+    default: 0
+    set:
+    - 0
+    - 1
+    note: 0 memory to stream (MM2S), 1 stream to memory (S2MM)
+  AXCACHE:
+    type: int
+    default: 3
+    range:
+    - 0
+    - 15
+    note: value of ARCACHE and AWCACHE on every transaction (0011 is AMD's recommendation for the Zynq HP ports)
+constraints: []
+latency:
+  descriptor start: from a HEAD write to the first descriptor fetch address a few clocks; a descriptor costs a fetch round trip, the data, and a status write round trip, one after the other (no prefetch); the measured figures are in DATASHEET.md
+  data: one beat a clock in steady state when the memory and the stream keep up; the first beat after the descriptor fetch needs one address round trip
+throughput: one memory beat per clock at the port limit once the bursts are in flight (DATA_W/8 bytes a clock); the descriptor and status round trips are paid once per descriptor, so small descriptors are slower (measured in DATASHEET.md)
+guards:
+- DATA_W: 16
+- DATA_W: 256
+- ADDR_W: 31
+- ADDR_W: 65
+- MAX_BURST: 0
+- MAX_BURST: 257
+- OUTSTANDING: 0
+- OUTSTANDING: 17
+- DIR: 2
+sweep_tested:
+- DIR: 0
+  DATA_W: 32
+  MAX_BURST: 16
+  OUTSTANDING: 4
+- DIR: 1
+  DATA_W: 32
+  MAX_BURST: 16
+  OUTSTANDING: 4
+- DIR: 0
+  DATA_W: 64
+  MAX_BURST: 8
+  OUTSTANDING: 2
+- DIR: 1
+  DATA_W: 64
+  MAX_BURST: 8
+  OUTSTANDING: 2
+- DIR: 0
+  DATA_W: 128
+  MAX_BURST: 4
+  OUTSTANDING: 1
+  ADDR_W: 40
+- DIR: 1
+  DATA_W: 128
+  MAX_BURST: 4
+  OUTSTANDING: 8
+  ADDR_W: 40
+- DIR: 0
+  MAX_BURST: 1
+  OUTSTANDING: 1
+- DIR: 1
+  MAX_BURST: 256
+  OUTSTANDING: 16
+- DIR: 0
+  DATA_W: 64
+  MAX_BURST: 256
+  OUTSTANDING: 3
+- DIR: 1
+  DATA_W: 64
+  MAX_BURST: 3
+  OUTSTANDING: 4
+boundary:
+  registered_outputs: the AXI4-Lite response channels and all engine state are flops; the AXI4 address and data channels are combinational from state (AR, AW, wlast, tlast) or pass the memory's and the stream's own handshakes through (rready follows m_axis_tready, s_axis_tready follows m_axi_wready)
+  cdc: none (one clock)
+  part_specific: none
+limits: one descriptor at a time (no descriptor prefetch); one direction per instance; no data realignment (buffer address and length are whole beats); no IDs; S2MM takes exactly the descriptor's length from the stream and ignores tlast; the stream-to-memory path passes s_axis and m_axi handshakes through combinationally
+evidence:
+  summary: cocotb bench with a memory model (read and write latency, random ready and valid gaps, SLVERR and DECERR, an AXI rule monitor) at ten points; formal AXI rule proofs (SymbiYosys with slang); 23 seeded faults
+  tests:
+  - ip_lib/sg_dma/tb/test_sg_dma_rtl.py
+  - ip_lib/sg_dma/tb/test_sg_dma_formal.py
+  faults: ip_lib/sg_dma/faults.yaml
+  results: results/241_dma/faults.json
+  simulator: Icarus Verilog 14 (OSS CAD Suite 2026-11-12), cocotb 2.0.1
+cost_table: 'results/241_dma/ooc.json and char/ (out-of-context Vivado 2026.1 on xck26 and xc7z020, both directions at DATA_W 32, 64 and 128: under 530 LUTs, 417 to 483 flip-flops, no block RAM or DSP)'
+licence: MIT (this repository)
+gaps:
+- 'no descriptor prefetch: a descriptor costs a full fetch and status round trip, so descriptors below about a thousand bytes lose most of the port bandwidth (measured in DATASHEET.md)'
+- 'timing: the worst path on the Zynq-7000 (-1) is the interrupt coalescing logic (tail to since_irq, 10 logic levels), which holds the engine to 139-151 MHz there; the K26 meets 2.5 ns (results/241_dma/README.md)'
+- 'no board run: the KR260 throughput and latency measurement is pre-registered (docs/241_dma_prereg.md) and has not been run'
+- 'the memory model is ours; no run against AMD interconnect or a PS port has been made, so back pressure and latency of the real Zynq HP and HPC ports are not covered'
+- 'S2MM does not end a descriptor on tlast, so a packet shorter than its buffer needs the software to know the length; a packet-oriented S2MM engine is a follow-up'
+next_steps:
+- Pipeline the interrupt coalescing compare (ring wrap, threshold, drained) to shorten the Zynq-7000 critical path, then re-run the proofs and the seeded faults.
+- Run the pre-registered KR260 measurement through the owner (docs/241_dma_prereg.md).
+- Add descriptor prefetch and compare the small-descriptor throughput with the measured baseline.
+- Add a tlast-terminated S2MM mode and a status word that reports the bytes received.
+characterisation:
+  part: xck26-sfvc784-2LV-c
+  clock_ns: 4.0
+  clock_port: aclk
+  points:
+  - {DIR: 0, DATA_W: 32}
+  - {DIR: 1, DATA_W: 32}
+  - {DIR: 0, DATA_W: 64}
+  - {DIR: 1, DATA_W: 64}
+  - {DIR: 0, DATA_W: 128}
+  - {DIR: 1, DATA_W: 128}

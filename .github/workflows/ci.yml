@@ -197,6 +197,9 @@ jobs:
         run: |
           python -m pytest -q ip_lib/pipe_reg/tb/test_pipe_reg_formal.py ip_lib/credit_chan/tb/test_credit_chan_formal.py
 
+      - name: Scatter-gather DMA (brief 241) - the AXI hold rules, burst size, alignment and the 4 KB rule proved by k-induction at three widths in both directions, bounded proofs of the burst bookkeeping, covers, and the seeded faults that name formal tasks refuted
+        run: python -m pytest -q ip_lib/sg_dma/tb/test_sg_dma_formal.py
+
       - name: Formal rigour (brief 143c) - the judge, an end-to-end vacuity check, the mutation tool, and every shipped proof's record against its files
         run: python -m pytest -q flow/tests/test_143c_formal_rigour.py
 
@@ -325,6 +328,10 @@ jobs:
         run: |
           python -m pytest -q ip_lib/pipe_reg/tb/test_pipe_reg_rtl.py ip_lib/credit_chan/tb/test_credit_chan_rtl.py ip_lib/axi_reg_slice/tb/test_axi_reg_slice_rtl.py partition/tests/test_partition_sim.py flow/tests/test_151_partition_testplans.py
           python flow/net/faults.py --only "$(python -c "import yaml;print(','.join(m['name'] for b in ('pipe_reg','credit_chan','axi_reg_slice') for m in yaml.safe_load(open(f'ip_lib/{b}/faults.yaml'))['faults']))")"
+      - name: Scatter-gather DMA (brief 241) - the engine against a memory model with back pressure and response errors at ten parameter points, the elaboration guards; seeded faults
+        run: |
+          python -m pytest -q ip_lib/sg_dma/tb/test_sg_dma_rtl.py
+          python flow/net/faults.py --only "$(python -c "import yaml;print(','.join(m['name'] for m in yaml.safe_load(open('ip_lib/sg_dma/faults.yaml'))['faults']))")"
       - name: AXI missing-response rule (brief 71) - seeded faults for axil_resp_rules (Icarus)
         run: python -m pytest -q axi_tx/tests/test_71_resp_rules_rtl.py
       - name: GT serdes design (brief 56A) - the fabric PRBS generator and checker against a model, the register block against a stand-in for the GT Wizard (Icarus)

@@ -7,7 +7,7 @@
 #   vivado:    rule-ID patterns (fnmatch) from report_methodology, report_drc and report_cdc in the build's gates.json;
 #              severities Error, Critical Warning and Warning count, Info and Advisory do not
 #   standards: rule ids of flow/standards_check.py (docs/design_standards.md), status fail or not_run
-#   resets, cdc_structure, exceptions, io, clocking, fsm, axi, gt, doc, constraint_scope, xpm_sim, fastpath, init_values, cdc_margin, clock_mux: the codes the check suite's checks raise
+#   resets, cdc_structure, exceptions, io, clocking, fsm, axi, gt, doc, constraint_scope, xpm_sim, fastpath, init_values, cdc_margin, clock_mux, dma_coherency: the codes the check suite's checks raise
 #              (flow/checks, brief 71; `python3 -m flow.checks`); axi_checker: a simulation monitor's rule (axi_tx/rtl)
 # Each rule also names `fix` (one line, shown in the check digest) and `skill` (the KB skill with the background and the
 # fix). Every code a check can raise maps to a rule here, and every rule is covered by a check or marked `manual: true`
@@ -15,7 +15,7 @@
 # A finding that no rule maps lands in the catch-all rule of its tool (HDL-LINT-00, HDL-VIV-00, HDL-STD-00), so nothing is lost.
 # Waivers: designs/<d>/lint/waivers.yaml, {rule, match (a glob over the finding key), reason, owner, date}.
 standard: FDA-HDL
-version: "1.14"            # 1.0 2026-11-12 (first release); 1.1 2026-11-14 (brief 71: reset rules split into HDL-RST-01..05,
+version: "1.15"            # 1.0 2026-11-12 (first release); 1.1 2026-11-14 (brief 71: reset rules split into HDL-RST-01..05,
                           # HDL-CLK-02, HDL-VER-01, HDL-IF-02/03, HDL-GT-01, HDL-DOC-01; check-suite tool keys; fix and skill);
                           # 1.2 2026-11-14 (brief 73: HDL-IF-04..06, the axi_profile check);
                           # 1.3 2026-11-14 (brief 70: REQP-1840 in HDL-RST-03, HDL-RST-06 AMD IP resets);
@@ -31,6 +31,7 @@ version: "1.14"            # 1.0 2026-11-12 (first release); 1.1 2026-11-14 (bri
                           # 1.11 2026-11-24 (brief 208: HDL-CLK-04 clock multiplexers, the clock_mux check)
                           # 1.12 2026-11-25 (brief 190: HDL-FAST-01 data-dependent wide shift or index on a fast path (advisory))
                           # 1.13 2026-11-25 (brief 185: HDL-DSP-01, the dsp_regs check, advisory)
+                          # 1.15 2026-11-26 (brief 241: HDL-DMA-01 non-coherent PS port without a software cache contract, advisory)
                           # 1.14 2026-11-26 (brief 231: STD-INIT-02 in HDL-SYN-06, the setting rtl.reset_model; HDL-STY-01 file named after its module)
 date: 2026-11-26
 rules:
@@ -302,6 +303,15 @@ rules:
     checks: {axi_profile: [AXI-PROFILE-AMD-STRICT]}
     fix: write the driver for the AMD block's conventions (whole words, aligned, no SLVERR) and list the IP under interfaces.amd_ip_acknowledged
     skill: amd-axi4-lite-ip-register-behaviour
+  - id: HDL-DMA-01
+    title: PS memory moved through a non-coherent port has a declared software cache contract (advisory)
+    rationale: The Zynq high-performance (HP) ports do not snoop the processors' caches, so a DMA buffer the PL reads can be stale in DDR and one the PL
+      writes can be hidden behind stale cache lines unless software cleans and invalidates it around each transfer (UG585 and UG1085, PS-PL interfaces).
+      A design that does this says so in its spec, so a reviewer and the driver author know the contract; a design on a coherent port (ACP, HPC) says
+      that instead. Advisory, because the check reads names and declarations, not the driver.
+    checks: {dma_coherency: [DMA-COH-01, DMA-COH-02]}
+    fix: add dma.ps_memory_port and dma.cache_contract to spec.yaml (software_flush_invalidate, hardware_coherent or none_needed with a reason) and write the driver to match
+    skill: zynq-cache-coherency-for-dma
   - id: HDL-VER-01
     title: Every FSM state and listed transition is covered in simulation
     rationale: A state or transition never reached in simulation is behaviour no test has checked; the coverage comes from
