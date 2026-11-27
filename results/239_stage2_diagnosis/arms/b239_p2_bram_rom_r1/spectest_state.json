@@ -1,0 +1,63 @@
+{
+ "enabled": true,
+ "fired": true,
+ "runs": 2,
+ "outcome": "pass",
+ "passed": true,
+ "caught_bug": false,
+ "bench_repaired": true,
+ "design_wrong": 0,
+ "bench_wrong": 1,
+ "bench_writes": 2,
+ "passed_hash": "c33afa09255525bc",
+ "history": [
+  {
+   "t": 1795732947,
+   "step": "write",
+   "files": [
+    "spectest/spec_bench.py",
+    "spectest/spec_ref.py"
+   ],
+   "problems": []
+  },
+  {
+   "t": 1795732951,
+   "step": "run",
+   "rtl": "c33afa09255525bc",
+   "ok": false,
+   "failing": [
+    "common_registers_scratch_and_unmapped",
+    "mem_addr_without_autoinc_and_rom_read_only",
+    "autoinc_wraps_at_1024_on_rom",
+    "ram_write_readback_patterns",
+    "march_ctrl_start_self_clears",
+    "march_clean_run_no_errors_and_ram_zero",
+    "march_injected_fault_is_noticed"
+   ],
+   "built": true
+  },
+  {
+   "t": 1795732956,
+   "step": "triage",
+   "verdict": "bench_wrong",
+   "reason": "Nothing in the request supports the failing checks: bench B's `setup()` starts the clock only in the first test and returns early afterwards. cocotb kills that clock task when the first test ends, so the other seven tests fail at 0-5 ns with no clock, before any register check runs. Bench A assumed a free-running clock restarted per test, while bench B's own first test passes against the same design."
+  },
+  {
+   "t": 1795732986,
+   "step": "write",
+   "files": [
+    "spectest/spec_bench.py",
+    "spectest/spec_ref.py"
+   ],
+   "problems": []
+  },
+  {
+   "t": 1795733005,
+   "step": "run",
+   "rtl": "c33afa09255525bc",
+   "ok": true,
+   "failing": [],
+   "built": true
+  }
+ ]
+}

@@ -1,0 +1,74 @@
+{
+ "enabled": true,
+ "fired": true,
+ "runs": 4,
+ "outcome": "pass",
+ "passed": true,
+ "caught_bug": false,
+ "bench_repaired": true,
+ "design_wrong": 0,
+ "bench_wrong": 1,
+ "bench_writes": 2,
+ "passed_hash": "a027384acb80092c",
+ "history": [
+  {
+   "t": 1795748915,
+   "step": "write",
+   "files": [
+    "spectest/spec_bench.py",
+    "spectest/spec_ref.py"
+   ],
+   "problems": []
+  },
+  {
+   "t": 1795748921,
+   "step": "run",
+   "rtl": "38c995bf7d75f4b2",
+   "ok": false,
+   "failing": [
+    "several_gate_lengths_frequency",
+    "start_clears_done_and_ignored_while_busy"
+   ],
+   "built": true
+  },
+  {
+   "t": 1795748933,
+   "step": "triage",
+   "verdict": "bench_wrong",
+   "reason": "The request defines MEAS_DONE as \"number of completed measurements since configuration\", and the reset-model answer (Q7) is NOT CONFIRMED. Bench B assumes every test starts from a fresh state (1 after the first measurement, 2 in the later test), but the cocotb tests share one simulation and nothing resets the design between them. The extra counts (2 instead of 1, 7 instead of 2) are leftovers from the earlier tests, not a START-while-busy fault. Bench A checks MEAS_DONE as the previous value plus one, which is what the request promises."
+  },
+  {
+   "t": 1795748968,
+   "step": "write",
+   "files": [
+    "spectest/spec_bench.py",
+    "spectest/spec_ref.py"
+   ],
+   "problems": []
+  },
+  {
+   "t": 1795748975,
+   "step": "run",
+   "rtl": "38c995bf7d75f4b2",
+   "ok": true,
+   "failing": [],
+   "built": true
+  },
+  {
+   "t": 1795749094,
+   "step": "run",
+   "rtl": "a426d305c5b51a8d",
+   "ok": true,
+   "failing": [],
+   "built": true
+  },
+  {
+   "t": 1795749232,
+   "step": "run",
+   "rtl": "a027384acb80092c",
+   "ok": true,
+   "failing": [],
+   "built": true
+  }
+ ]
+}

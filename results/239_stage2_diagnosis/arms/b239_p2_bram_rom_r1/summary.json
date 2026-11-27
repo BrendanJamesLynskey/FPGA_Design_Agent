@@ -1,0 +1,747 @@
+{
+ "run_id": "20261126-222827-292b",
+ "design": "b239_p2_bram_rom_r1",
+ "model": "claude-sonnet-5-5",
+ "harness": "claude_code",
+ "claude_code_version": "2.1.321 (Claude Code)",
+ "plan_cost_estimate_usd": 2.7263,
+ "oracle_model": "openai/gpt-6-luna",
+ "harness_arm": "H1",
+ "profile": "single",
+ "role_models": {
+  "clarify": {
+   "harness": "claude_code",
+   "model": "claude-sonnet-5-5",
+   "effort": "medium"
+  },
+  "model": {
+   "harness": "claude_code",
+   "model": "claude-sonnet-5-5",
+   "effort": "medium"
+  },
+  "tests": {
+   "harness": "claude_code",
+   "model": "claude-sonnet-5-5",
+   "effort": "medium"
+  },
+  "rtl": {
+   "harness": "claude_code",
+   "model": "claude-sonnet-5-5",
+   "effort": "medium"
+  }
+ },
+ "model_table_hash": "174543210a14206c",
+ "oracle": "openrouter",
+ "stage_overrides": [],
+ "knowledge_use": {
+  "rtl/board-and-device-planning": {
+   "board_constraints": {
+    "calls": 3
+   }
+  },
+  "tests/rtl-design-creation": {
+   "load_skill": {
+    "calls": 1,
+    "sections": [
+     "verification-stages"
+    ],
+    "skills": [
+     "procedures/verification-stages/v-hw-bringup/SKILL.md",
+     "procedures/verification-stages/v0-v1-testplan/SKILL.md",
+     "procedures/verification-stages/v2-tests-assertions-formal/SKILL.md",
+     "procedures/verification-stages/v3-coverage-closure/SKILL.md"
+    ],
+    "empty_calls": 0,
+    "procedures_fallback": [
+     "verification-stages"
+    ]
+   }
+  },
+  "rtl/rtl-design-creation": {
+   "load_skill": {
+    "calls": 2,
+    "sections": [
+     "verification-stages"
+    ],
+    "skills": [
+     "procedures/verification-stages/v-hw-bringup/SKILL.md",
+     "procedures/verification-stages/v0-v1-testplan/SKILL.md",
+     "procedures/verification-stages/v2-tests-assertions-formal/SKILL.md",
+     "procedures/verification-stages/v3-coverage-closure/SKILL.md"
+    ],
+    "empty_calls": 1,
+    "procedures_fallback": [
+     "verification-stages"
+    ]
+   },
+   "search_docs": {
+    "calls": 2,
+    "hits": [
+     "amd/UG894_UG835#1",
+     "amd/vivado_flow_guides#1",
+     "ross/vivado-rtl-elaboration-analysis/resolution/8-3302.md#1",
+     "ross/vivado-rtl-elaboration-analysis/resolution/8-9263.md#1",
+     "ross/vivado-simulate-rtl/references/xsim-advanced-verification.md#5",
+     "ross/vivado-simulate-rtl/references/xsim-coverage-closure.md#2",
+     "ross/vivado-simulate-rtl/references/xsim-coverage-closure.md#5",
+     "ross/vivado-simulate-rtl/references/xsim-coverage-closure.md#7"
+    ]
+   }
+  }
+ },
+ "knowledge_bank": {
+  "root": "230-kb-pin",
+  "chosen_by": "FDA_KNOWLEDGE",
+  "present": true,
+  "loaded": true,
+  "head": "5e2eab8"
+ },
+ "turn_trace": [
+  {
+   "stage": "clarify",
+   "visit": 1,
+   "role": "clarify",
+   "repair": false,
+   "turns_allowed": 20,
+   "turns": 4,
+   "ended": "done",
+   "wall_s": 46.1,
+   "tools": {},
+   "model_tool_calls": {},
+   "refused": {},
+   "files_written": [
+    "spec.yaml"
+   ],
+   "files_changed": [
+    "spec.yaml"
+   ]
+  },
+  {
+   "stage": "clarify",
+   "visit": 2,
+   "role": "clarify",
+   "repair": false,
+   "turns_allowed": 20,
+   "turns": 2,
+   "ended": "done",
+   "wall_s": 36.5,
+   "tools": {},
+   "model_tool_calls": {},
+   "refused": {},
+   "files_written": [
+    "spec.yaml"
+   ],
+   "files_changed": [
+    "spec.yaml"
+   ]
+  },
+  {
+   "stage": "board-and-device-planning",
+   "visit": 1,
+   "role": "rtl",
+   "repair": false,
+   "turns_allowed": 30,
+   "turns": 7,
+   "ended": "done",
+   "wall_s": 26.1,
+   "tools": {},
+   "model_tool_calls": {},
+   "refused": {},
+   "files_written": [
+    "ARCHITECTURE.md",
+    "architecture.yaml"
+   ],
+   "files_changed": [
+    "ARCHITECTURE.md",
+    "architecture.yaml"
+   ]
+  },
+  {
+   "stage": "board-and-device-planning",
+   "visit": 2,
+   "role": "rtl",
+   "repair": false,
+   "turns_allowed": 30,
+   "turns": 9,
+   "ended": "done",
+   "wall_s": 19.4,
+   "tools": {},
+   "model_tool_calls": {},
+   "refused": {},
+   "files_written": [
+    "design.xdc"
+   ],
+   "files_changed": [
+    "design.xdc"
+   ]
+  },
+  {
+   "stage": "rtl-design-creation",
+   "visit": 1,
+   "role": "model",
+   "repair": false,
+   "turns_allowed": 45,
+   "turns": 3,
+   "ended": "done",
+   "wall_s": 26.4,
+   "tools": {},
+   "model_tool_calls": {},
+   "refused": {},
+   "files_written": [
+    "model.py"
+   ],
+   "files_changed": [
+    "model.py"
+   ]
+  },
+  {
+   "stage": "rtl-design-creation",
+   "visit": 1,
+   "role": "tests",
+   "repair": false,
+   "turns_allowed": 52,
+   "turns": 10,
+   "ended": "done",
+   "wall_s": 218.4,
+   "tools": {},
+   "model_tool_calls": {},
+   "refused": {},
+   "files_written": [
+    "tests/p2_bench.py",
+    "tests/test_b239_p2_bram_rom_r1_rtl.py",
+    "verif/testplan.yaml"
+   ],
+   "files_changed": [
+    "tests/p2_bench.py",
+    "tests/test_b239_p2_bram_rom_r1_rtl.py",
+    "verif/testplan.yaml"
+   ]
+  },
+  {
+   "stage": "rtl-design-creation",
+   "visit": 1,
+   "role": "rtl",
+   "repair": false,
+   "turns_allowed": 67,
+   "turns": 32,
+   "ended": "done",
+   "wall_s": 282.1,
+   "tools": {},
+   "model_tool_calls": {},
+   "refused": {},
+   "files_written": [
+    "build.yaml",
+    "design.xdc",
+    "rtl/p2_core.sv",
+    "rtl/p2_top.sv",
+    "rtl/xilinx_sim_stubs.sv"
+   ],
+   "files_changed": [
+    "build.yaml",
+    "design.xdc",
+    "rtl/p2_core.sv",
+    "rtl/p2_top.sv",
+    "rtl/xilinx_sim_stubs.sv"
+   ]
+  },
+  {
+   "stage": "rtl-design-creation",
+   "visit": 2,
+   "role": "tests",
+   "repair": true,
+   "turns_allowed": 55,
+   "turns": 2,
+   "ended": "done",
+   "wall_s": 46.9,
+   "tools": {},
+   "model_tool_calls": {},
+   "refused": {},
+   "files_written": [
+    "tests/p2_bench.py"
+   ],
+   "files_changed": [
+    "tests/p2_bench.py"
+   ]
+  }
+ ],
+ "per_role": {
+  "clarify": {
+   "calls": 2,
+   "turns": 6,
+   "tokens": 68311,
+   "wall_s": 82.6,
+   "cost_usd": 0.0,
+   "plan_cost_estimate_usd": 0.248
+  },
+  "rtl": {
+   "calls": 3,
+   "turns": 48,
+   "tokens": 1504808,
+   "wall_s": 327.6,
+   "cost_usd": 0.0,
+   "plan_cost_estimate_usd": 1.0769
+  },
+  "model": {
+   "calls": 1,
+   "turns": 3,
+   "tokens": 46599,
+   "wall_s": 26.4,
+   "cost_usd": 0.0,
+   "plan_cost_estimate_usd": 0.1073
+  },
+  "tests": {
+   "calls": 2,
+   "turns": 12,
+   "tokens": 468864,
+   "wall_s": 265.3,
+   "cost_usd": 0.0,
+   "plan_cost_estimate_usd": 0.9346
+  }
+ },
+ "per_stage": {
+  "clarify": {
+   "calls": 2,
+   "turns": 6,
+   "tokens": 68311,
+   "wall_s": 82.6,
+   "cost_usd": 0.0,
+   "plan_cost_estimate_usd": 0.248
+  },
+  "board-and-device-planning": {
+   "calls": 2,
+   "turns": 16,
+   "tokens": 275872,
+   "wall_s": 45.5,
+   "cost_usd": 0.0,
+   "plan_cost_estimate_usd": 0.2536
+  },
+  "rtl-design-creation": {
+   "calls": 4,
+   "turns": 47,
+   "tokens": 1744399,
+   "wall_s": 573.8,
+   "cost_usd": 0.0,
+   "plan_cost_estimate_usd": 1.8652
+  }
+ },
+ "interview": "off",
+ "requirements": {
+  "level": "loose",
+  "source": "command line",
+  "conflicts": []
+ },
+ "user_requests": {
+  "control": 0,
+  "design": 0,
+  "applied": 0,
+  "declined": 0,
+  "questions_asked": 0,
+  "user_interventions": 0
+ },
+ "review": "off",
+ "stages_visited": [
+  0,
+  0,
+  1,
+  1,
+  2,
+  2
+ ],
+ "loops": 3,
+ "rewinds": [],
+ "tokens": 2088582,
+ "cost_usd": 0.0,
+ "unreported_cost_calls": 0,
+ "token_split": {
+  "input": 0,
+  "output": 0,
+  "cache_write": 0,
+  "cache_read": 0
+ },
+ "budget_scale": 3.5,
+ "truncated_calls": 0,
+ "turns": 69,
+ "wall_s": 691.4,
+ "questions": {
+  "asked": 8,
+  "answered": 0,
+  "defaulted": 8,
+  "waived": 0,
+  "unresolved": 0,
+  "level": "loose",
+  "questions": [
+   {
+    "id": "q1",
+    "text": "Is the register map exactly as in the request table (offsets 0x000-0x008 and 0x010-0x030)?",
+    "default": "Yes, use the map in registers.map unchanged.",
+    "reason": "The request lists every offset, so the map is taken as given.",
+    "answer": "Yes, use the map in registers.map unchanged.",
+    "status": "defaulted",
+    "by": "default",
+    "evidence": null,
+    "fact": null,
+    "risk": "high",
+    "risk_rule": "register-map",
+    "risk_reason": "the register map is what host software and the test shell are written against",
+    "waiver": null,
+    "clarifier_risk": null
+   },
+   {
+    "id": "q2",
+    "text": "What does 'all-zero and all-one words as the backgrounds' mean for pass structure and order?",
+    "default": "One pass = March C- with all-ones background then March C- with all-zero background, so RAM ends all zeros.",
+    "reason": "The check requires all zeros afterwards, which fixes the zero background last.",
+    "answer": "One pass = March C- with all-ones background then March C- with all-zero background, so RAM ends all zeros.",
+    "status": "defaulted",
+    "by": "default",
+    "evidence": null,
+    "fact": null,
+    "risk": "medium",
+    "risk_rule": "unmatched",
+    "risk_reason": "no rule names it a behaviour, an interface or a cosmetic choice: treated as a cost choice",
+    "waiver": null,
+    "clarifier_risk": null
+   },
+   {
+    "id": "q3",
+    "text": "Where and how is the fault injected?",
+    "default": "Flip bit 0 of the read at word address 0 once per pass, giving exactly 1 error per pass (3 errors for 3 passes), first error address 0.",
+    "reason": "The request says one wrong value at one address each pass but not which.",
+    "answer": "Flip bit 0 of the read at word address 0 once per pass, giving exactly 1 error per pass (3 errors for 3 passes), first error address 0.",
+    "status": "defaulted",
+    "by": "default",
+    "evidence": null,
+    "fact": null,
+    "risk": "medium",
+    "risk_rule": "unmatched",
+    "risk_reason": "no rule names it a behaviour, an interface or a cosmetic choice: treated as a cost choice",
+    "waiver": null,
+    "clarifier_risk": null
+   },
+   {
+    "id": "q4",
+    "text": "Is the host RAM access allowed while the march test is BUSY?",
+    "default": "No, host RAM accesses are ignored while BUSY.",
+    "reason": "A single RAM port is shared and host writes would corrupt the test.",
+    "answer": "No, host RAM accesses are ignored while BUSY.",
+    "status": "defaulted",
+    "by": "default",
+    "evidence": null,
+    "fact": null,
+    "risk": "medium",
+    "risk_rule": "unmatched",
+    "risk_reason": "no rule names it a behaviour, an interface or a cosmetic choice: treated as a cost choice",
+    "waiver": null,
+    "clarifier_risk": null
+   },
+   {
+    "id": "q5",
+    "text": "What are the LED functions?",
+    "default": "led[0]=BUSY, led[1]=DONE.",
+    "reason": "Not stated in the request.",
+    "answer": "led[0]=BUSY, led[1]=DONE.",
+    "status": "defaulted",
+    "by": "default",
+    "evidence": null,
+    "fact": null,
+    "risk": "medium",
+    "risk_rule": "unmatched",
+    "risk_reason": "no rule names it a behaviour, an interface or a cosmetic choice: treated as a cost choice",
+    "waiver": null,
+    "clarifier_risk": null
+   },
+   {
+    "id": "q6",
+    "text": "What happens on MARCH_PASSES = 0 or a START while BUSY?",
+    "default": "Passes 0 completes at once with DONE=1; START while BUSY is ignored.",
+    "reason": "The request allows only 1 to 65,535.",
+    "answer": "Passes 0 completes at once with DONE=1; START while BUSY is ignored.",
+    "status": "defaulted",
+    "by": "default",
+    "evidence": null,
+    "fact": null,
+    "risk": "high",
+    "risk_rule": "behaviour",
+    "risk_reason": "it settles what the design does in a case the request left open",
+    "waiver": null,
+    "clarifier_risk": null
+   },
+   {
+    "id": "q7",
+    "text": "Are MARCH_ERRS and MARCH_FIRST_ERR counted on reads of both backgrounds with the DONE flag cleared at START?",
+    "default": "Yes, all reads in all passes count; START clears DONE.",
+    "reason": "The request says errors since START.",
+    "answer": "Yes, all reads in all passes count; START clears DONE.",
+    "status": "defaulted",
+    "by": "default",
+    "evidence": null,
+    "fact": null,
+    "risk": "medium",
+    "risk_rule": "unmatched",
+    "risk_reason": "no rule names it a behaviour, an interface or a cosmetic choice: treated as a cost choice",
+    "waiver": null,
+    "clarifier_risk": null
+   },
+   {
+    "id": "q8",
+    "text": "This design has no reset input. Is every reset a reconfiguration of the FPGA (the device is reprogrammed, so every register starts from its initial value), or does something restart the running design (then it needs a reset input)?",
+    "default": "Every reset is a reconfiguration of the FPGA (reset model: reprogram): registers get initial values, control state included, and the design has no reset input. Record it in spec.yaml as reset: {model: reprogram}; a design that restarts while it runs is reset: {model: reset} with a reset port.",
+    "reason": "With no reset input, a register can start only from its initial value, which the FPGA loads at configuration (owner, 2026-11-26: particularly useful for designs whose every reset reprograms the device). A design that must restart while running needs a reset input and resets its control state; the two models are checked by different rules (STD-INIT-02).",
+    "answer": "Every reset is a reconfiguration of the FPGA (reset model: reprogram): registers get initial values, control state included, and the design has no reset input. Record it in spec.yaml as reset: {model: reprogram}; a design that restarts while it runs is reset: {model: reset} with a reset port.",
+    "status": "defaulted",
+    "by": "default",
+    "evidence": null,
+    "fact": null,
+    "risk": "high",
+    "risk_rule": "reset",
+    "risk_reason": "a reset's polarity, style or value decides the start-up state and the interface",
+    "waiver": null,
+    "clarifier_risk": null
+   }
+  ],
+  "level_source": "command line"
+ },
+ "stop": "done",
+ "stop_detail": null,
+ "last_rtl_message": {
+  "stage": "rtl-design-creation",
+  "visit": 1,
+  "text": "The RTL for stage 2 is written, but the V3 gate still fails. The remaining V3 failures are bench and testplan work that I'm not allowed to write.\n\n**What I wrote:** `rtl/p2_core.sv` (register core), `rtl/p2_top.sv` (top), `rtl/xilinx_sim_stubs.sv` (simulation stand-ins), `build.yaml`, and `design.xd\n[... 346 characters cut ...]\nisable` tied to 1. I did not build with Vivado, so BUILD at 0x004 is untested; the sim stub returns 0 there.\n- **ROM size:** the ROM array is allocated at 1024 words even when the bench passes `ROM_DEPTH=16`, because Verilator aborts when `$readmemh` finds more words in the file than the array holds.\n- **`build.yaml`:** I set the part to `xck26-sfvc784-2LV-c` and added `data/jtag_bus.sv` to the sources. The part in the brief (`xc7a100t\u2026`) disagreed with the spec, so I followed the spec.\n- **`design.xdc`:** I changed the clock port name from `clk_25` to `clk` to match the spec's port, and left the pin numbers as they were. I edited the file by hand because `board_constraints` is not among my tools.\n\n**Results:**\n- **Lint:** clean.\n- **Simulation:** all 12 bench tests pass on seeds 1, 2 and 3 under Verilator.\n- **Gates:** V0, V1 and V2 pass. In the coverage run, line coverage is 100% and toggle coverage is 79.65%.\n- **RTL checks:** `check` at scope `rtl` passes lint, standards, xpm_sim, axi and constants. The `resets`, `methodology` and `fastpath` checks did not run at this scope, and `check` reported the run as incomplete.\n\n**Still failing at V3, none of it RTL:**\n- **Functional bins and cover properties:** the testplan names none, so both read 0%. I tried to add a checker with cover properties and a bind file under `verif/checkers/`, but the write was refused for the rtl role. The testplan and bench also need functional bins and an exported coverage file.\n- **Not yet run:** mutation score and the CDC checks have no result yet, because the flow produces them in later steps. The hardware and post-synthesis proofs are pending the bring-up stage and a build.\n\nDONE (RTL part)."
+ },
+ "routing_events": [
+  {
+   "event": "clarify_constants_check",
+   "stage": "clarify",
+   "visit": 1,
+   "findings": [],
+   "failed": false
+  },
+  {
+   "event": "clarify_constants_check",
+   "stage": "clarify",
+   "visit": 2,
+   "findings": [],
+   "failed": false
+  },
+  {
+   "event": "run_turn_cap_scaled",
+   "stage": "board-and-device-planning",
+   "visit": 2,
+   "blocks": 7,
+   "turns_cap": 420
+  },
+  {
+   "event": "p1_consequences_covered",
+   "stage": "rtl-design-creation",
+   "visit": 1,
+   "repeat": 0,
+   "checks": [
+    "failing_tests",
+    "assertions_bound_zero_failures"
+   ]
+  },
+  {
+   "event": "report_gates_checked",
+   "stage": "rtl-design-creation",
+   "visit": 2,
+   "blocked": false,
+   "codes": [],
+   "advisories": [],
+   "where": [],
+   "text": []
+  }
+ ],
+ "clean_stop": true,
+ "verification_profile": {
+  "profile": "standard",
+  "overrides": {
+   "verif_level": {
+    "profile_value": "V3",
+    "value": "V2"
+   },
+   "indep_spec_test": {
+    "profile_value": false,
+    "value": true
+   }
+  },
+  "effective": {
+   "lint": true,
+   "directed_sim": true,
+   "verif_level": "V2",
+   "random_sim": true,
+   "coverage_target": 100,
+   "mutation_floor": 70,
+   "seeds": 3,
+   "indep_spec_test": true,
+   "formal_depth_scale": 1,
+   "formal_induction": false,
+   "formal_pdr": false,
+   "lean_proof": false,
+   "uvm": "none",
+   "post_synth_sim": false,
+   "equivalence": false,
+   "timing_sim": "off",
+   "fault_injection": false,
+   "dependability": "none",
+   "latency_checks": false,
+   "board_hil": "smoke",
+   "repeats": 1,
+   "production_secure": false,
+   "sec_encrypt": true,
+   "sec_authenticate": true,
+   "sec_readback_off": true,
+   "sec_strip_debug": true,
+   "sec_sysmon_shutdown": true
+  },
+  "not_wired": [],
+  "ip_release_gaps": [
+   "verif_level: V2 (ip_release: V3)",
+   "mutation_floor: 70 (ip_release: 85)",
+   "seeds: 3 (ip_release: 8)",
+   "formal_depth_scale: 1 (ip_release: 4)",
+   "formal_induction: False (ip_release: True)",
+   "formal_pdr: False (ip_release: True)",
+   "uvm: none (ip_release: pyuvm)",
+   "post_synth_sim: False (ip_release: True)",
+   "equivalence: False (ip_release: True)",
+   "timing_sim: off (ip_release: auto)"
+  ],
+  "method_mix_gaps": [],
+  "advisory": "profile standard with 2 override(s)",
+  "policy_breaches": []
+ },
+ "constants": {
+  "ran": true,
+  "blocking": [],
+  "advice": []
+ },
+ "gates_last": {
+  "clarify": true,
+  "board-and-device-planning": true,
+  "rtl-design-creation": true
+ },
+ "approvals": [
+  {
+   "n": 0,
+   "decision": "approve",
+   "by": "auto",
+   "note": ""
+  },
+  {
+   "n": 0,
+   "decision": "approve",
+   "by": "auto",
+   "note": ""
+  },
+  {
+   "n": 1,
+   "decision": "approve",
+   "by": "auto",
+   "note": ""
+  },
+  {
+   "n": 1,
+   "decision": "approve",
+   "by": "auto",
+   "note": ""
+  },
+  {
+   "n": 2,
+   "decision": "approve",
+   "by": "auto",
+   "note": ""
+  },
+  {
+   "n": 2,
+   "decision": "approve",
+   "by": "auto",
+   "note": ""
+  }
+ ],
+ "permissions": {
+  "mode": "auto",
+  "source": "default (auto: the behaviour before brief 222)",
+  "overrides": {},
+  "ask_above_usd": 1.0,
+  "mode_changes": [],
+  "granted": {},
+  "refused": {},
+  "decisions": [
+   {
+    "action": "use_knowledge_bank",
+    "result": "allowed",
+    "by": "mode auto",
+    "stage": 0,
+    "first": "2026-11-26 22:28:28",
+    "last": "2026-11-26 22:29:15",
+    "count": 2
+   },
+   {
+    "action": "use_knowledge_bank",
+    "result": "allowed",
+    "by": "mode auto",
+    "stage": 1,
+    "first": "2026-11-26 22:29:52",
+    "last": "2026-11-26 22:30:18",
+    "count": 2
+   },
+   {
+    "action": "approve_architecture",
+    "result": "allowed",
+    "by": "mode auto",
+    "stage": 1,
+    "first": "2026-11-26 22:30:37",
+    "last": "2026-11-26 22:30:37",
+    "count": 1
+   },
+   {
+    "action": "use_knowledge_bank",
+    "result": "allowed",
+    "by": "mode auto",
+    "stage": 2,
+    "first": "2026-11-26 22:30:37",
+    "last": "2026-11-26 22:39:58",
+    "count": 2
+   },
+   {
+    "action": "edit_design_files",
+    "result": "allowed",
+    "by": "mode auto",
+    "stage": 2,
+    "first": "2026-11-26 22:30:37",
+    "last": "2026-11-26 22:39:58",
+    "count": 2
+   },
+   {
+    "action": "run_simulation",
+    "result": "allowed",
+    "by": "mode auto",
+    "stage": 2,
+    "first": "2026-11-26 22:30:37",
+    "last": "2026-11-26 22:39:58",
+    "count": 2
+   },
+   {
+    "action": "run_vivado",
+    "result": "allowed",
+    "by": "mode auto",
+    "stage": 2,
+    "first": "2026-11-26 22:30:37",
+    "last": "2026-11-26 22:39:58",
+    "count": 2
+   }
+  ]
+ },
+ "bringup": null,
+ "spec_test": {
+  "fired": true,
+  "passed": true,
+  "outcome": "pass",
+  "caught_bug": false,
+  "bench_repaired": true,
+  "design_wrong_verdicts": 0,
+  "bench_wrong_verdicts": 1,
+  "bench_writes": 2,
+  "bench_runs": 2
+ }
+}

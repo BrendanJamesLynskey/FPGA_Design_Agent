@@ -1,0 +1,62 @@
+{
+ "enabled": true,
+ "fired": true,
+ "runs": 2,
+ "outcome": "pass",
+ "passed": true,
+ "caught_bug": false,
+ "bench_repaired": true,
+ "design_wrong": 0,
+ "bench_wrong": 1,
+ "bench_writes": 2,
+ "passed_hash": "b010b04e5d39abc9",
+ "history": [
+  {
+   "t": 1795742075,
+   "step": "write",
+   "files": [
+    "spectest/spec_bench.py",
+    "spectest/spec_ref.py"
+   ],
+   "problems": []
+  },
+  {
+   "t": 1795742080,
+   "step": "run",
+   "rtl": "b010b04e5d39abc9",
+   "ok": false,
+   "failing": [
+    "rom_matches_file",
+    "id_scratch_unmapped",
+    "ram_write_read_and_autoinc",
+    "march_regs_readback",
+    "march_clean_run_no_errors_ram_zero",
+    "march_fault_injection_detected_then_cleared"
+   ],
+   "built": true
+  },
+  {
+   "t": 1795742084,
+   "step": "triage",
+   "verdict": "bench_wrong",
+   "reason": "The request says nothing that bench B's failing tests contradict; they fail at 0 to 5 ns of simulated time, because `ensure()` starts the clock only in the first test and cocotb kills it when that test ends. Bench B therefore tests the later registers with no clock running, whereas bench A restarts the clock in every test."
+  },
+  {
+   "t": 1795742115,
+   "step": "write",
+   "files": [
+    "spectest/spec_bench.py",
+    "spectest/spec_ref.py"
+   ],
+   "problems": []
+  },
+  {
+   "t": 1795742132,
+   "step": "run",
+   "rtl": "b010b04e5d39abc9",
+   "ok": true,
+   "failing": [],
+   "built": true
+  }
+ ]
+}

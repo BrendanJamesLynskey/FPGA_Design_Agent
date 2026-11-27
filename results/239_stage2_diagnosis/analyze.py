@@ -90,7 +90,7 @@ def main() -> None:
     mean = lambda xs: sum(xs) / len(xs)  # noqa: E731
     t = [f"stage-2 own pass: after {k}/{n} (Wilson 95% {lo:.2f} to {hi:.2f}); before, arm A of 227 (same flags): {ka}/{len(a)}; pooled before (213 all, 227 A and C): {kp}/{len(pooled)}",
          f"Fisher one-sided P(>= {k} of {n}) against arm A: {fisher_ge(k, n, ka, len(a)):.3f}; against pooled: {fisher_ge(k, n, kp, len(pooled)):.3f}",
-         f"independent bench: clean pass {sum(r['bench_outcome'] == 'passed' for r in rows)}, other outcomes {[r['bench_outcome'] for r in rows]}",
+         f"independent bench: clean pass {sum(r['bench_outcome'] == 'pass' for r in rows)}, other outcomes {[r['bench_outcome'] for r in rows]}",
          f"mean stage-2 visits: after {mean([r['stage2_visits'] for r in rows]):.2f}; before A {mean([int(b['stage2_visits']) for b in a]):.2f}; pooled {mean([int(b['stage2_visits']) for b in pooled]):.2f}",
          f"mean stage-1 visits: after {mean([r['stage1_visits'] for r in rows]):.2f}; before A {mean([int(b['stage1_visits']) for b in a]):.2f}; pooled {mean([int(b['stage1_visits']) for b in pooled]):.2f}",
          f"stage-2 repeated lint findings, total: after {sum(r['lint_repeats_stage2'] for r in rows)}; before A {sum(int(b['lint_repeats_stage2']) for b in a)}; pooled {sum(int(b['lint_repeats_stage2']) for b in pooled)}",

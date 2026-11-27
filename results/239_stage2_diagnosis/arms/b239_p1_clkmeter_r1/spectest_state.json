@@ -1,0 +1,79 @@
+{
+ "enabled": true,
+ "fired": true,
+ "runs": 2,
+ "outcome": "unresolved",
+ "passed": false,
+ "caught_bug": false,
+ "bench_repaired": true,
+ "design_wrong": 0,
+ "bench_wrong": 2,
+ "bench_writes": 2,
+ "passed_hash": null,
+ "history": [
+  {
+   "t": 1795729561,
+   "step": "write",
+   "files": [
+    "spectest/spec_bench.py",
+    "spectest/spec_ref.py"
+   ],
+   "problems": []
+  },
+  {
+   "t": 1795729564,
+   "step": "run",
+   "rtl": "24624cf1b7eebfce",
+   "ok": false,
+   "failing": [
+    "ident_scratch_unmapped_and_reset_values",
+    "unmapped_addresses_read_zero_and_ignore_writes",
+    "read_data_held_within_two_clocks",
+    "ctrl_led_en_readback_start_self_clears",
+    "leds_off_after_reset_and_when_led_en_clear",
+    "busy_then_done_with_exact_gate_actual",
+    "count_matches_c3_edges_for_several_gates",
+    "start_ignored_while_busy_and_done_cleared_by_start"
+   ],
+   "built": true
+  },
+  {
+   "t": 1795729569,
+   "step": "triage",
+   "verdict": "bench_wrong",
+   "reason": "The request only says the register port runs in the clock domain of the `clk` given to the bus module, and the design's top-level port names are not specified. Bench B guessed a separate top-level `clk` port (and `clk_25`), so it failed with AttributeError on `dut.clk` before checking any behaviour. Bench A drove the reference clock as the bus clock, which the request allows."
+  },
+  {
+   "t": 1795729604,
+   "step": "write",
+   "files": [
+    "spectest/spec_bench.py",
+    "spectest/spec_ref.py"
+   ],
+   "problems": []
+  },
+  {
+   "t": 1795729609,
+   "step": "run",
+   "rtl": "24624cf1b7eebfce",
+   "ok": false,
+   "failing": [
+    "unmapped_addresses_read_zero_and_ignore_writes",
+    "busy_then_done_with_exact_gate_actual",
+    "count_matches_c3_edges_for_several_gates"
+   ],
+   "built": true
+  },
+  {
+   "t": 1795729616,
+   "step": "triage",
+   "verdict": "bench_wrong",
+   "reason": "The request says \"hold `rst` for a few clocks at start\" for the register bus module and gives MEAS_DONE as \"since configuration\", so it never requires the design to have a reset input that restarts its registers between tests. Bench B assumed a reset restores SCRATCH to 0 and MEAS_DONE to 0 before each test, but the design has no `rst` and keeps state from earlier tests (SCRATCH 0x80000001, MEAS_DONE 2). At best the request is ambiguous on this, which resolves to bench_wrong."
+  },
+  {
+   "t": 1795729616,
+   "step": "unresolved",
+   "why": "bench_wrong again after one repair"
+  }
+ ]
+}
