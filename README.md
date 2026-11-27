@@ -52,7 +52,7 @@ How the designs are verified (simulation, hidden tests, coverage, mutation testi
 More boards (brief 95): the agent has a board file for 20 boards, each with a trust label (`documented`, `built` or `hardware`) computed from the evidence on
 disk, a smoke design generated from the board's own pins, and a request that names a board (`python -m agent run <spec> --board "the PYNQ-Z2"`) picks its file:
 [docs/board_catalogue.md](docs/board_catalogue.md) (the table), [boards/SCHEMA.md](boards/SCHEMA.md) (the file format and how to add a board),
-[docs/demo_intake.md](docs/demo_intake.md) (what to ask someone who wants a demo), [results/95_boards](results/95_boards/README.md). Brief 213 repair feedback: [results/213_repair_feedback](results/213_repair_feedback/README.md).
+[docs/demo_intake.md](docs/demo_intake.md) (what to ask someone who wants a demo), [results/95_boards](results/95_boards/README.md). Brief 213 repair feedback: [results/213_repair_feedback](results/213_repair_feedback/README.md). Brief 217 repair memory and the check suite over MCP: [results/217_repair_memory](results/217_repair_memory/README.md).
 
 Design package (brief 174): one folder with `spec.md`, every board material (schematic, BOM, board file, XDC) and, optionally, an existing design to change in part;
 `python -m flow.package ingest` writes `board_facts.yaml` (each fact with its source, hash and confidence) and lists conflicts with the board file. It found that the

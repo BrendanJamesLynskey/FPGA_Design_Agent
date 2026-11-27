@@ -45,8 +45,11 @@ def first_failing_check(session: Any, design: Path, sim_result: dict[str, Any], 
     t0 = time.time()
     snap = divergence.diagnose(design, session_run(session), sim=sim_name(sim_result.get("sim")))
     text = divergence.snapshot_digest(snap, rtl_files) if snap else ""
-    return {"text": text, "snapshot": bool(snap), "seconds": round(time.time() - t0, 1),
-            "test": (snap or {}).get("test"), "site": (snap or {}).get("site"), "message": ((snap or {}).get("message") or "")[:200]}
+    msg = divergence.sim_stop_message(snap, rtl_files) if divergence.is_sim_stop(snap) else ((snap or {}).get("message") or "")   # brief 217: not "Simulator shut down prematurely"
+    return {"text": text, "snapshot": bool(snap), "seconds": round(time.time() - t0, 1), "kind": "sim_stop" if divergence.is_sim_stop(snap) else "assertion" if snap else "none",
+            "test": (snap or {}).get("test"), "site": (snap or {}).get("site"), "message": msg[:200],
+            "class": divergence.sim_stop_class(snap, rtl_files) if divergence.is_sim_stop(snap) else None,                   # brief 217: the repair memory's evidence key
+            "signal": (divergence._named_signals(snap) or [None])[0] if snap and not divergence.is_sim_stop(snap) else None}
 
 
 # --- the failure ledger -------------------------------------------------------------------------------------------------------------------------

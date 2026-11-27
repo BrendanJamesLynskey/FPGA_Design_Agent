@@ -148,6 +148,22 @@ They add no prompt text: the text is generated from evidence and placed in the e
   holds, back-pressure on ready-like inputs, resets mid-stream; seed recorded). Statuses: `not_applicable` (the bench drove the model through `read_reg`/`write_reg` or
   stepped with no inputs), `not_calibrated`, `pass`, `fail` (with a first-divergence digest), `error`. `flow/regrade.py BLOCKS` is False at every level: it reports and
   never fails a gate (see `reports/213_repair_feedback_report.md` for the evidence).
+- **R1 on a simulator stop (brief 217, item 0).** When the first failure is the simulator ending during a test (cocotb's "Simulator shut down prematurely", no assertion),
+  the digest says so and gives what the snapshot knows: when the test began and the run ended, whether the clock had a rising edge after the test began (the snapshot's sampler
+  is restarted for each test, because cocotb cancels the tasks a test started when it ends), any `$finish`, `$fatal` or `$stop` in the RTL, and warnings or errors logged
+  during the test. Brief 213's run 3 showed the cause this finds: a bench that started the clock inside its first test only. The ledger line and the evidence key carry the
+  fact (`no clock edge`), not the cocotb phrase.
+- **R4, repair memory (brief 217).** `--harness-arm ...,R4`. When a repair visit turns a failing stage-2 gate into a pass, the harness writes a repair record to the run's
+  `repair_memory/records` (trigger = gate, finding id, signature class and the first error line; mechanism from the evidence; the files changed and a bounded diff; the gates that
+  passed; design family; run id; `provenance: agent-repair`, never `produced_by: human`). On a later repair visit it computes the evidence keys of the failure being sent back
+  (`agent/graph/repair_memory.py`: Verilator warning code with whether the finding is in a source the design was handed or in its own, rule ids such as `FDA-CON-8` and
+  `STD-CDC-01`, the exception class or `SIM-STOP`, the verification check) and gives the owning role at most three records whose trigger equals a key on all three fields, from the
+  knowledge bank's `repairs/`, the folder `FDA_REPAIR_RECORDS` (an unmerged batch) and the run's own staging. Exact match only: no text similarity, no match on the id alone. The
+  keys, the size of the pool and the records offered are written to `repair_memory/retrievals.jsonl` and a routing event, also when nothing matched. A failed simulate is keyed
+  only when the first-failing-check digest (R1) ran. Off by default; no prompt text changed. Evidence: `results/217_repair_memory/`.
+- **The check suite over MCP (brief 217).** `python -m agent.mcp_server.checks --design <folder>` serves `check`, `lint`, `check_constraints`, `report_digest`, `list_files`,
+  `read_file` and `list_checks` (what each check stands for) on a copy of the folder, with no write tools; `--skills <bank>` adds `skills_markdown` (the bank's skills as Markdown;
+  private content, off by default).
 
 ## Separation (`agent/graph/roles.py`)
 
