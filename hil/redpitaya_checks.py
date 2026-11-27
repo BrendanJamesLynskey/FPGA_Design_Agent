@@ -2,6 +2,7 @@
 ``hil/redpitaya_regs.py`` to the board, and the dry run runs the same functions against a model.
 
     python3 redpitaya_checks.py <block> [--base 0x40700000] [--expect-hz F] [--tol-ppm N] [--drive-ok]    # on the board, as root, design loaded
+    python3 redpitaya_checks.py <block> --base <slot base> --id-only      # one read of the ID register; exit 0 ok, 3 reads 0 (nothing answers), 1 another value (brief 243)
 
 Each check returns rows ``{"check", "result": "pass" | "fail", "detail", ...}``; nothing is written to the board except the block's own registers. A check
 that would make OUT1 move (:func:`check_patgen_output`) runs only with ``--drive-ok`` and after the caller's typed confirmation: the run script asks for it.
@@ -184,8 +185,18 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--expect-hz", type=float)
     ap.add_argument("--tol-ppm", type=float, default=1000.0)
     ap.add_argument("--drive-ok", action="store_true", help="the owner confirmed that OUT1 may move")
+    ap.add_argument("--id-only", action="store_true", help="read the block's ID register once and stop: exit 0 if it is the block's ID, 3 if it reads 0 (no block answers the bus), 1 otherwise")
     a = ap.parse_args(argv)
     w = MemWindow(a.base)
+    if a.id_only:
+        try:
+            m = MAPS[a.block]
+            got = w.read(m.by_name("ID").offset)
+        finally:
+            w.close()
+        ok = got == m.block_id
+        print(json.dumps({"schema": "fpga-design-agent/rp-check/v1", "block": a.block, "base": hex(a.base), "id_read": hex(got), "id_expected": hex(m.block_id), "pass": ok}))
+        return 0 if ok else (3 if got == 0 else 1)
     try:
         rows = run_block(a.block, w, a.expect_hz, a.tol_ppm, a.drive_ok)
     finally:

@@ -36,6 +36,13 @@ marker to match exactly once, and records the result in `build.json`. The vendor
 one line to accept the running version, so the result is a 2026.1 build of the vendor's design (stated in `build.json`; nothing else of the vendor's text is changed).
 Licence: BSD 3-clause, Red Pitaya d.o.o.; see [THIRD_PARTY_NOTICES.md](../../THIRD_PARTY_NOTICES.md).
 
+**Bus adapter (brief 243).** The shell's slots do not see a one-cycle request with a one-cycle answer: the vendor's clock-crossing bridge in front of every slot holds `wen` or `ren` until the ack has been carried back
+(a block with a one-cycle ack sees the request twice) and reads `rdata` two to three clocks after the ack was raised. A block that raises `rdata` for the ack cycle only, as `rp_user_block` and every block written to
+`shell.yaml` does, therefore read 0 on every access: build `170300fd` answered no read in slots 6 and 7 at the board visit of 2026-11-27 (the vendor's own slots hold `rdata`, so they were unaffected). `tools/rp_shell.py`
+now puts [shell/rp_bus_adapt.sv](shell/rp_bus_adapt.sv) between each slot and its block: one access to the block per request, the answer held for the bridge, a silent block answered with an error after 16 clocks.
+Blocks keep the one-cycle convention unchanged. The adapter is tested by [shell/tb_rp_bus_adapt.sv](shell/tb_rp_bus_adapt.sv) (a model of the bridge, in CI) and, against the pinned vendor files, by
+[hil/rp_bus_sim/](../../hil/rp_bus_sim/) in xsim; the evidence is in [results/243_redpitaya](../../results/243_redpitaya/README.md).
+
 [shell/rp_user_block.sv](shell/rp_user_block.sv) is the template and the trivial test block (ID, scratch, a free-running counter, the two ADC samples, two DAC terms); its behaviour in the cases a
 user could guess wrong is written at the top of the file and checked by [shell/tb_rp_user_block.sv](shell/tb_rp_user_block.sv).
 

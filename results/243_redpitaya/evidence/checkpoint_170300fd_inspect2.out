@@ -1,0 +1,17 @@
+=== leaf fan-out of the blocks' answer registers (flat netlist, nets followed through hierarchy)
+slot 6 ack  : 3 leaf loads: {sys_bus_interconnect/for_bus[6].inst_sys_bus_cdc/reg_read_i_1__6/I0} {sys_bus_interconnect/for_bus[6].inst_sys_bus_cdc/reg_write_i_1__6/I0} {sys_bus_interconnect/for_bus[6].inst_sys_bus_cdc/reg_done_i_1__5/I3}
+slot 7 ack  : 3 leaf loads: {sys_bus_interconnect/for_bus[7].inst_sys_bus_cdc/reg_read_i_1__0/I0} {sys_bus_interconnect/for_bus[7].inst_sys_bus_cdc/reg_write_i_1__0/I0} {sys_bus_interconnect/for_bus[7].inst_sys_bus_cdc/reg_done_i_1__6/I3}
+slot 6 rdata0: 1 leaf loads: {ps/axi_slave_gp0/axi\.RDATA[0]_i_3/I1}
+slot 7 rdata0: 1 leaf loads: {ps/axi_slave_gp0/axi\.RDATA[0]_i_3/I0}
+=== the bridge's own state registers per slot (reg_read, reg_write, reg_done, ctrl_do)
+slot 6 reg_read_reg: 1 cell
+slot 6 reg_write_reg: 1 cell
+slot 6 reg_done_reg: 1 cell
+slot 6 ctrl_do_reg: 1 cell
+slot 7 reg_read_reg: 1 cell
+slot 7 reg_write_reg: 1 cell
+slot 7 reg_done_reg: 1 cell
+slot 7 ctrl_do_reg: 1 cell
+=== registers fed by slot 6/7 rdata at the PS side (AXI slave RDATA path): first loads of the bridge rdata net
+PS-side RDATA registers: 32
+INFO: [Common 17-206] Exiting Vivado at Fri Nov 27 10:50:00 2026...

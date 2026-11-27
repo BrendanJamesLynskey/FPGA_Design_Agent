@@ -11,6 +11,9 @@
 //   0x10  IN2      RO  the shell's adc_b, sign-extended
 //   0x14  DAC1     RW  signed 14-bit value added to OUT1's data after the shell's ASG and PID sum (low 14 bits of the write; reads back sign-extended), reset 0
 //   0x18  DAC2     RW  the same for OUT2
+// In the shell this block does not sit on the slot's bus directly: tools/rp_shell.py puts rp_bus_adapt.sv in front of it (brief 243). The vendor's clock-crossing bridge
+// holds the request until the ack has crossed back and samples rdata two to three clocks later, so a block answering for one cycle only (as this one does) must be
+// behind the adapter; without it every read of the slot returns 0. A block that is simulated alone keeps the one-cycle convention above.
 // Behaviour a user could guess wrong (stated, not left to chance):
 //   * an address with no register answers ack with err high and rdata 0; the shell's own unused slot stub answers the same way (ack and err high, rdata
 //     undefined), so a read of slot 7 in the factory image is an error too;

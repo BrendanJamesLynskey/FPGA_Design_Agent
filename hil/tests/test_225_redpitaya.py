@@ -384,7 +384,7 @@ def test_the_script_is_valid_bash_obeys_the_never_list_and_loads_volatile_only(p
     f = pkg / "load.sh"
     f.write_text(text)
     subprocess.run(["bash", "-n", str(f)], check=True)
-    assert ("fpgautil -b /tmp/fda_load/fpga.bit.bin -f Full" in text) == bare and ("overlay.sh v0.94 /tmp/fda_load/fpga.bit.bin" in text) == (not bare)
+    assert ("fpgautil -b /tmp/fda_load/fpga.bit.bin -f Full" in text) == bare and ('rp "sh /tmp/fda_load/load_fda.sh"' in text) == (not bare)      # brief 243: shell builds load with the generated load_fda.sh
     for banned in ("boot.bin", "mmcblk", "dd if=", "qspi", "ecosystem", "apt", "systemctl", "scpi", "/opt/redpitaya/fpga"):
         assert banned not in text.lower().replace("scpi_", ""), banned
     assert "RESTORE" in text and "overlay.sh v0.94" in text and "type yes" in text and "factory oscilloscope and generator are NOT running" in text
@@ -401,14 +401,14 @@ def test_the_dry_run_prints_every_board_command_and_calls_no_ssh(pkg, tmp_path):
     r = run_script(pkg, tmp_path, {"DRY_RUN": "1", "DRY_ANSWER": "yes"})
     assert r.returncode == 0, r.stderr
     assert not (tmp_path / "called").exists()
-    assert "[dry run] on root@rp-f00c16.local: overlay.sh v0.94 /tmp/fda_load/fpga.bit.bin" in r.stdout
+    assert "[dry run] on root@rp-f00c16.local: sh /tmp/fda_load/load_fda.sh" in r.stdout
     assert "python3 redpitaya_checks.py rp_patgen --drive-ok" in r.stdout
     assert "would ask: DRIVES OUT1" in r.stdout and "nothing was loaded" in r.stdout
 
 
 def test_without_the_owners_yes_nothing_is_done(pkg, tmp_path):
     r = run_script(pkg, tmp_path, {"DRY_RUN": "1", "DRY_ANSWER": "no"})
-    assert r.returncode == 1 and "not confirmed; nothing was done" in r.stderr and "overlay.sh" not in r.stdout.replace("overlay.sh v0.94 /tmp", "")
+    assert r.returncode == 1 and "not confirmed; nothing was done" in r.stderr and "load_fda.sh" not in r.stdout
 
 
 def test_a_refused_drive_confirmation_leaves_out_the_flag(pkg, tmp_path):
@@ -447,7 +447,8 @@ def test_the_script_command_writes_the_file_and_copies_the_check_files_beside_th
 
 
 def test_a_block_in_slot_6_is_checked_at_its_own_base(pkg):
-    assert "--base 0x40600000" in LD.render_script(pkg, "rp_patgen", slot=6) and "--base" not in LD.render_script(pkg, "rp_patgen")
+    assert "--base 0x40600000 $DRIVE" in LD.render_script(pkg, "rp_patgen", slot=6) and "rp_patgen $DRIVE" in LD.render_script(pkg, "rp_patgen")
+    assert "check_id rp_patgen 0x40600000 6" in LD.render_script(pkg, "rp_patgen", slot=6)
     assert R.SLOT_BASES == {7: 0x40700000, 6: 0x40600000}
 
 
