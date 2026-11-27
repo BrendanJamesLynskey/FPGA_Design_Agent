@@ -220,6 +220,27 @@ def _base(name: str) -> str:
     return re.sub(r"\[[^\]]*\]$", "", str(name).strip())
 
 
+#: Brief 239 (planner decision 2026-11-27): module names of AMD primitives and XPM macros. A file that defines one must not be a synthesis
+#: source, or it replaces the library cell (the real primitive) in the build.
+AMD_PRIMITIVE_NAME = re.compile(
+    r"^(xpm_\w+|FD[CPRS]E?|LUT[1-6](_[DL])?|MMCM\w*|PLL\w*|BUFG\w*|BUFH\w*|BUFR|BUFIO|IBUF\w*|OBUF\w*|IOBUF\w*|IDDR\w*|ODDR\w*|IDELAY\w*|"
+    r"ODELAY\w*|ISERDES\w*|OSERDES\w*|BSCANE2|USR_ACCESSE2|STARTUPE\d|ICAPE\d|DSP48E\d|RAMB\d+\w*|URAM\w*|CARRY\d|SRL\w*|GT[HXYP]E?\d?\w*|IBUFDS\w*|OBUFDS\w*)$")
+
+
+def primitive_name_findings(modules: dict[str, list[str]]) -> list[dict[str, Any]]:
+    """FDA-CON-11. ``modules`` maps a synthesis source file (name as shown) to the module names it defines. Each module with an AMD primitive
+    or XPM name is a finding: such a stand-in belongs in the design's ``sim/`` folder, which the simulators read and synthesis never does."""
+    out = []
+    for f, names in modules.items():
+        for n in names:
+            if AMD_PRIMITIVE_NAME.match(n):
+                out.append({"file": f, "rule": "FDA-CON-11", "line": 0, "text": f"module {n}",
+                            "message": f"{f} defines module {n}, the name of an AMD primitive or XPM macro, in a synthesis source: it would replace the "
+                                       f"library cell in the build. Move the stand-in to sim/ (read by lint and the simulators, never by synthesis) and "
+                                       f"instantiate the real primitive in rtl/."})
+    return out
+
+
 def _internal(entry: Any) -> bool:
     """Brief 239: a spec port entry whose direction is ``internal`` is a signal between two blocks (for example the register bus
     between the supplied ``jtag_bus`` and the core), not a pin of the top module, so FDA-CON-8 does not ask the top to have it."""

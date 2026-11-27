@@ -329,8 +329,8 @@ def lint(s: Session) -> dict:
     if srcorder.no_shell(s.design):                    # 07a2-prep: a UART-subject design is linted without the test shell
         srcs = srcorder.drop_shell(srcs)
     srcs = [str(p) for p in srcorder.order_sv(srcs)]   # 07a2-prep: packages and interfaces first, not name order
-    stubs = sorted(glob.glob(str(s.design / "lint" / "*.sv")))
-    vlt = stub_waiver_vlt(srcs, s.design / "data")                         # brief 231: the design's own simulation stubs are not linted for unused parameters
+    stubs = sorted(glob.glob(str(s.design / "lint" / "*.sv")) + glob.glob(str(s.design / "sim" / "*.sv")))     # brief 239: sim/ holds simulation stand-ins
+    vlt = stub_waiver_vlt([*srcs, *stubs], s.design / "data")                         # brief 231: the design's own simulation stubs are not linted for unused parameters
     vlt_path: list[str] = []
     if vlt:
         wd = s.design / "build" / "lint"
@@ -353,13 +353,13 @@ def lint(s: Session) -> dict:
             out += "".join(f"\n  OPEN {k}" for k in wv["open"][:10])
             out += "".join(f"\n  not waivable: {u}" for u in wv["unparsed"][:5])
             out += "".join(f"\n  BAD waiver: {b}" for b in wv["bad_waivers"])
-    ic = _icarus_elaborate(s, cfg["top"], srcs)           # 07a2 fix 5 D: the simulator the tests run on must accept it too
+    ic = _icarus_elaborate(s, cfg["top"], srcs + sorted(glob.glob(str(s.design / "sim" / "*.sv"))))           # 07a2 fix 5 D: the simulator the tests run on must accept it too
     if ic is not None and ic.returncode != 0:
         ok = False
         out += ("\n" if out else "") + "[icarus elaboration, iverilog -g2012] " + _text_out(ic)[-1500:] \
             + "\n(Icarus 12 is stricter than Verilator here: for example a constant function that returns an unpacked " \
               "array, or a parameter built from one, does not elaborate. Load the free-simulators skill for the list.)"
-    found = top_port_findings(s, cfg, xdc_check=False)   # 08a: the spec's ports and the USB-UART pair exist on the top
+    found = primitive_findings(s, cfg) + top_port_findings(s, cfg, xdc_check=False)   # 08a: the spec's ports and the USB-UART pair exist on the top
     if found:
         ok = False
         out += ("\n" if out else "") + "\n".join(f"{x['rule']} {x['message']}" for x in found)
@@ -453,6 +453,22 @@ def complete_findings(s: Session, cfg: dict) -> tuple[list[dict], list[str]]:
         return found, KC.info_lines(ctx) if ctx.ports and (s.design / "design.xdc").is_file() else []
     except Exception as e:                           # noqa: BLE001
         return [], [f"(the port and clock completeness check did not run: {type(e).__name__}: {e})"]
+
+
+def primitive_findings(s: Session, cfg: dict) -> list[dict]:
+    """Brief 239: FDA-CON-11, a module named like an AMD primitive or XPM macro in a synthesis source (not data/, the shell, lint/ or sim/)."""
+    from flow.standards_check import parse_modules
+    mods: dict[str, list[str]] = {}
+    for pat in cfg["sources"]:
+        for f in sorted(glob.glob(str(s.root / pat))):
+            pf = Path(f)
+            if srcorder.is_shell_source(f) or vhdl.is_vhdl(f) or (s.design / "data") in pf.resolve().parents or pf.suffix not in (".sv", ".v"):
+                continue
+            try:
+                mods[pf.name] = [m.name for m in parse_modules(pf.read_text(), pf.name)]
+            except OSError:
+                pass
+    return con.primitive_name_findings(mods)
 
 
 def _icarus_elaborate(s: Session, top: str, srcs: list[str]):
