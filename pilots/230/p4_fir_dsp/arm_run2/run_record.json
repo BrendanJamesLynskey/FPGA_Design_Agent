@@ -1,0 +1,487 @@
+{
+ "design": "p4_fir_dsp",
+ "run": 2,
+ "run_id": "20261126-191008-4141",
+ "agent_sha": "f3002eb157c8",
+ "model": [
+  "claude-sonnet-5-5"
+ ],
+ "endpoint": [
+  "anthropic_api"
+ ],
+ "api_calls": 227,
+ "real_usd": 7.7276,
+ "prompt_tokens": 9742682,
+ "completion_tokens": 313926,
+ "input_tokens": 510,
+ "cache_read_tokens": 8236716,
+ "cache_write_tokens": 1505456,
+ "tokens_total": 10056608,
+ "truncated_calls": 0,
+ "cost_basis": [
+  "usage*price"
+ ],
+ "wall_s_after_slot": 6707,
+ "stage_visits": [
+  [
+   "clarify",
+   1,
+   "clarify",
+   "done",
+   5,
+   0.104
+  ],
+  [
+   "clarify",
+   2,
+   "clarify",
+   "done",
+   5,
+   0.083
+  ],
+  [
+   "board-and-device-planning",
+   1,
+   "rtl",
+   "done",
+   4,
+   0.118
+  ],
+  [
+   "board-and-device-planning",
+   2,
+   "rtl",
+   "done",
+   4,
+   0.067
+  ],
+  [
+   "board-and-device-planning",
+   3,
+   "rtl",
+   "done",
+   5,
+   0.072
+  ],
+  [
+   "rtl-design-creation",
+   1,
+   "model",
+   "done",
+   3,
+   0.056
+  ],
+  [
+   "rtl-design-creation",
+   1,
+   "tests",
+   "done",
+   5,
+   0.382
+  ],
+  [
+   "rtl-design-creation",
+   1,
+   "rtl",
+   "done",
+   38,
+   2.029
+  ],
+  [
+   "rtl-design-creation",
+   2,
+   "rtl",
+   "done",
+   17,
+   0.426
+  ],
+  [
+   "rtl-design-creation",
+   3,
+   "rtl",
+   "done",
+   7,
+   0.114
+  ],
+  [
+   "constraints",
+   1,
+   "rtl",
+   "stage_budget",
+   30,
+   0.629
+  ],
+  [
+   "rtl-design-creation",
+   4,
+   "rtl",
+   "done",
+   8,
+   0.223
+  ],
+  [
+   "rtl-design-creation",
+   5,
+   "rtl",
+   "done",
+   4,
+   0.102
+  ],
+  [
+   "constraints",
+   2,
+   "rtl",
+   "done",
+   24,
+   0.796
+  ],
+  [
+   "rtl-design-creation",
+   6,
+   "rtl",
+   "done",
+   5,
+   0.108
+  ],
+  [
+   "constraints",
+   3,
+   "rtl",
+   "stage_budget",
+   30,
+   1.052
+  ],
+  [
+   "constraints",
+   4,
+   "rtl",
+   "stage_budget",
+   30,
+   0.819
+  ]
+ ],
+ "outcome": "stopped: stage 2 visited more than 6 times; last failing gate: report gate RPT-LL-02 timing_summary_synth.rpt:bus_rst_q_reg/C->u_core/u_fir_core/u_rst_dp, report gate RPT-LL-02 timing_summary_synth.rpt:bus_rst_q_reg/C->u_core/u_fir_core/u_rst_dp; the failure was in stage 3 constraints (visit 4), routed to stage 2 rtl-design-creation; stage 2 was refused before any gate ran",
+ "reached_stage": 3,
+ "summary_stop": "stage 2 visited more than 6 times; last failing gate: report gate RPT-LL-02 timing_summary_synth.rpt:bus_rst_q_reg/C->u_core/u_fir_core/u_rst_dp, report gate RPT-LL-02 timing_summary_synth.rpt:bus_rst_q_reg/C->u_core/u_fir_core/u_rst_dp; the failure was in stage 3 constraints (visit 4), routed to stage 2 rtl-design-creation; stage 2 was refused before any gate ran",
+ "interview": "off",
+ "cost_usd_agent": 7.181088,
+ "interview_note": "--interview off: the agent's defaults were taken, nothing asked or answered by hand",
+ "bitstream": {
+  "build_stamp": "ca1ad731",
+  "exit_code": 0,
+  "vivado": "2026.1"
+ },
+ "build_id_usr_access": "9b98fb8c",
+ "bitstream_built": false,
+ "verif_stages": {
+  "V0": true,
+  "V1": true,
+  "V2": true,
+  "V3": false,
+  "SIGNOFF": false,
+  "V-HW": false
+ },
+ "trace_pass": false,
+ "requirement_table": [
+  {
+   "id": "REQ-01",
+   "text": "Register ID at 0x000 reads 0x20940001.",
+   "methods": {
+    "simulation": "pass",
+    "hardware": "pending"
+   }
+  },
+  {
+   "id": "REQ-02",
+   "text": "Register BUILD at 0x004 reads the USR_ACCESSE2 word of the bitstream.",
+   "methods": {
+    "hardware": "pending"
+   }
+  },
+  {
+   "id": "REQ-03",
+   "text": "Register SCRATCH at 0x008 resets to 0.",
+   "methods": {
+    "simulation": "pass",
+    "hardware": "pending"
+   }
+  },
+  {
+   "id": "REQ-35",
+   "text": "Register SCRATCH at 0x008 reads back the last value written.",
+   "methods": {
+    "simulation": "pass",
+    "hardware": "pending"
+   }
+  },
+  {
+   "id": "REQ-04",
+   "text": "h_rdata shows the addressed register within 2 clk25 cycles of h_re.",
+   "methods": {
+    "simulation": "pass",
+    "formal": "pass"
+   }
+  },
+  {
+   "id": "REQ-36",
+   "text": "h_rdata holds the addressed value until the next h_re.",
+   "methods": {
+    "simulation": "pass",
+    "formal": "pass"
+   }
+  },
+  {
+   "id": "REQ-05",
+   "text": "Unmapped addresses read 0.",
+   "methods": {
+    "simulation": "pass"
+   }
+  },
+  {
+   "id": "REQ-37",
+   "text": "Writes to unmapped addresses change no register.",
+   "methods": {
+    "simulation": "pass"
+   }
+  },
+  {
+   "id": "REQ-06",
+   "text": "Each output equals saturate16((sum of h[k]*x[n-k] + 0x4000) >>> 15) bit for bit against the Python model.",
+   "methods": {
+    "simulation": "pass",
+    "hardware": "pending"
+   }
+  },
+  {
+   "id": "REQ-07",
+   "text": "The sum uses no intermediate rounding.",
+   "methods": {
+    "simulation": "pass"
+   }
+  },
+  {
+   "id": "REQ-08",
+   "text": "Samples before the first sample are 0.",
+   "methods": {
+    "simulation": "pass"
+   }
+  },
+  {
+   "id": "REQ-09",
+   "text": "The impulse response equals the coefficients of data/coeffs.hex after rounding.",
+   "methods": {
+    "simulation": "pass"
+   }
+  },
+  {
+   "id": "REQ-10",
+   "text": "The datapath uses 16 multipliers mapped to DSP slices.",
+   "methods": {
+    "analysis": "fail"
+   }
+  },
+  {
+   "id": "REQ-11",
+   "text": "The datapath accepts one sample per clk_dp cycle.",
+   "methods": {
+    "simulation": "pass"
+   }
+  },
+  {
+   "id": "REQ-12",
+   "text": "clk_dp runs at 250 MHz or faster with worst negative slack of 0 ns or more.",
+   "methods": {
+    "analysis": "fail"
+   }
+  },
+  {
+   "id": "REQ-13",
+   "text": "The input FIFO holds 1024 samples.",
+   "methods": {
+    "simulation": "pass"
+   }
+  },
+  {
+   "id": "REQ-14",
+   "text": "The output FIFO holds 1024 samples.",
+   "methods": {
+    "simulation": "pass"
+   }
+  },
+  {
+   "id": "REQ-15",
+   "text": "IN_PUSH to a full input FIFO is ignored.",
+   "methods": {
+    "simulation": "pass",
+    "formal": "pass"
+   }
+  },
+  {
+   "id": "REQ-16",
+   "text": "RUN processes all input FIFO samples in order into the output FIFO.",
+   "methods": {
+    "simulation": "pass",
+    "hardware": "pending"
+   }
+  },
+  {
+   "id": "REQ-17",
+   "text": "Filter history persists across RUN commands until CLEAR.",
+   "methods": {
+    "simulation": "pass",
+    "hardware": "pending"
+   }
+  },
+  {
+   "id": "REQ-18",
+   "text": "Ten thousand random samples sent in chunks of 1000 give the same outputs as one single pass.",
+   "methods": {
+    "simulation": "pass",
+    "hardware": "pending"
+   }
+  },
+  {
+   "id": "REQ-19",
+   "text": "OUT_POP returns bit 31 = 1 and bits 15:0 = the oldest output.",
+   "methods": {
+    "simulation": "pass"
+   }
+  },
+  {
+   "id": "REQ-38",
+   "text": "A read of OUT_POP removes the oldest output from the output FIFO.",
+   "methods": {
+    "simulation": "pass"
+   }
+  },
+  {
+   "id": "REQ-20",
+   "text": "OUT_POP returns 0 when the output FIFO is empty.",
+   "methods": {
+    "simulation": "pass",
+    "formal": "pass"
+   }
+  },
+  {
+   "id": "REQ-21",
+   "text": "STATUS bit 0 is 1 while a RUN is in progress.",
+   "methods": {
+    "simulation": "pass"
+   }
+  },
+  {
+   "id": "REQ-22",
+   "text": "STATUS bits 15:4 give the input FIFO count from 0 to 1024.",
+   "methods": {
+    "simulation": "pass"
+   }
+  },
+  {
+   "id": "REQ-23",
+   "text": "STATUS bits 31:20 give the output FIFO count from 0 to 1024.",
+   "methods": {
+    "simulation": "pass"
+   }
+  },
+  {
+   "id": "REQ-24",
+   "text": "SAT_COUNT counts the outputs that saturated since CLEAR.",
+   "methods": {
+    "simulation": "pass"
+   }
+  },
+  {
+   "id": "REQ-25",
+   "text": "SAMPLES_DONE counts the samples processed since CLEAR.",
+   "methods": {
+    "simulation": "pass"
+   }
+  },
+  {
+   "id": "REQ-26",
+   "text": "CTRL bit 0 CLEAR empties both FIFOs.",
+   "methods": {
+    "simulation": "pass"
+   }
+  },
+  {
+   "id": "REQ-32",
+   "text": "CTRL bit 0 CLEAR zeroes the filter history.",
+   "methods": {
+    "simulation": "pass"
+   }
+  },
+  {
+   "id": "REQ-33",
+   "text": "CTRL bit 0 CLEAR zeroes SAT_COUNT.",
+   "methods": {
+    "simulation": "pass"
+   }
+  },
+  {
+   "id": "REQ-39",
+   "text": "CTRL bit 0 CLEAR zeroes SAMPLES_DONE.",
+   "methods": {
+    "simulation": "pass"
+   }
+  },
+  {
+   "id": "REQ-34",
+   "text": "CTRL bit 0 reads back 0 after the write.",
+   "methods": {
+    "simulation": "pass"
+   }
+  },
+  {
+   "id": "REQ-27",
+   "text": "CTRL bit 1 RUN reads back 0 after the write.",
+   "methods": {
+    "simulation": "pass"
+   }
+  },
+  {
+   "id": "REQ-28",
+   "text": "sfp_tx_disable is 1 at all times.",
+   "methods": {
+    "simulation": "pass",
+    "analysis": "fail",
+    "hardware": "pending"
+   }
+  },
+  {
+   "id": "REQ-29",
+   "text": "The design uses no GT transceiver channel.",
+   "methods": {
+    "analysis": "fail"
+   }
+  },
+  {
+   "id": "REQ-30",
+   "text": "data/jtag_bus.sv is used unchanged.",
+   "methods": {
+    "analysis": "fail"
+   }
+  },
+  {
+   "id": "REQ-31",
+   "text": "The build report lists the DSP slice count used.",
+   "methods": {
+    "analysis": "fail"
+   }
+  },
+  {
+   "id": "REQ-40",
+   "text": "The build report lists the clk_dp frequency met.",
+   "methods": {
+    "analysis": "fail"
+   }
+  }
+ ],
+ "requirement_method_results": {
+  "pass": 37,
+  "pending": 9,
+  "fail": 7
+ },
+ "requirements": 40,
+ "hw_checks_present": false
+}

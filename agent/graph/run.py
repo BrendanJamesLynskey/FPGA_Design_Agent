@@ -85,6 +85,7 @@ class State(TypedDict, total=False):
     repeat: int         # stage 2: consecutive visits with an unchanged signature
     ledger: list        # brief 213 (R2): stage 2, one entry per failed visit (gates, finding, first failing check, files the repair before it changed)
     fp: dict            # brief 213 (R2): fingerprint of the repair roles' files at the last stage-2 gate evaluation
+    rm: dict            # brief 217 (R4): the evidence keys of the last failed stage-2 evaluation (repair memory); never file contents
     note_role: str      # the owner's edit prompt goes to this role (default: the stage's writer)
     arch_source: str    # who wrote the approved architecture: agent | owner
     hand_edit_only: bool  # the owner edited by hand and gave no prompt: re-run the gates on their files, no agent turn
@@ -952,6 +953,21 @@ def _rt(state: State) -> Runtime:
     return _RT[state["run_id"]]
 
 
+def retrieve_memory(rt: Runtime, state: State) -> list[dict]:
+    """Brief 217 (R4): the records whose trigger equals the evidence keys of the failure this repair visit answers: at most three, exact on gate, finding id
+    and signature class, from the knowledge bank's ``repairs/`` and this run's own staging. Recorded in the run whether or not anything matched."""
+    from agent.graph import repair_memory as _rm
+    keys = (state.get("rm") or {}).get("keys") or []
+    bank = getattr(getattr(rt.session, "bank", None), "root", None)
+    extra = Path(os.environ["FDA_REPAIR_RECORDS"]) if os.environ.get("FDA_REPAIR_RECORDS") else None     # an unmerged batch of records (a folder), for measurements
+    pool = _rm.bank_records(bank) + _rm.load_records(*([extra] if extra else []), _rm.staging(rt.run_dir) / "records")
+    held = tuple(x for x in os.environ.get("FDA_REPAIR_MEMORY_EXCLUDE_RUNS", "").split(",") if x)      # an evaluation holds out the runs a record came from
+    got = _rm.retrieve(pool, keys, family=_rm.family_of(rt.design), exclude_runs=held)
+    ev = _rm.log_retrieval(rt.run_dir, rt.visit, keys, got, len(pool))
+    log_routing_event(rt, "repair_memory_retrieval", visit=ev["visit"], keys=ev["keys"], pool=ev["pool"], offered=ev["offered"])
+    return got
+
+
 def stage2_plan(rt: Runtime, state: State) -> dict[str, list[str] | None]:
     """Which stage-2 roles run this visit, in order. ``None``: a fresh write (the artefact does not exist yet); a list:
     a repair of that role's own output, with the failures that role owns. Roles not listed are frozen."""
@@ -964,6 +980,9 @@ def stage2_plan(rt: Runtime, state: State) -> dict[str, list[str] | None]:
     if "R2" in getattr(getattr(rt, "cfg", None), "arms", ()) and owners:                 # brief 213: the repair visit is shown what earlier visits tried and why each failed
         from agent.graph.feedback import with_ledger
         owners = with_ledger(owners, state.get("ledger"))
+    if "R4" in getattr(getattr(rt, "cfg", None), "arms", ()) and owners and (state.get("rm") or {}).get("keys"):    # brief 217: records of the same evidence
+        from agent.graph import repair_memory as _rm
+        owners = _rm.with_memory(owners, retrieve_memory(rt, state))
     plan: dict[str, list[str] | None] = {}
     for role in ("model", "tests", "rtl"):
         if not have[role]:
@@ -1919,6 +1938,15 @@ def node_gate(state: State) -> dict:
                                          (ev.get("simulate") or {}).get("first_check"))
                 out["ledger"] = [*(state.get("ledger") or []), entry]
                 log_routing_event(rt, "ledger_entry", **{k: v for k, v in entry.items() if k != "sig"})
+    if n == 2 and "R4" in rt.cfg.arms:           # brief 217 (R4): a failing gate that turns into a pass leaves a record in the run's staging folder
+        from agent.graph import repair_memory as _rm
+        note = str(((getattr(rt, "last_role_message", None) or {}).get("rtl") or {}).get("text") or "")
+        new, written = _rm.step(rt.run_dir, rt.design, rt.run_id, state.get("rm"), ev, ok, rt.visit, repair_note=note,
+                                bank_root=getattr(getattr(rt.session, "bank", None), "root", None))
+        out["rm"] = new
+        for rec in written:
+            log_routing_event(rt, "repair_record_written", id=rec["id"], gate=rec["trigger"]["gate"], finding_id=rec["trigger"]["finding_id"],
+                              signature_class=rec["trigger"]["signature_class"], files=rec["fix"]["files"][:6])
     return {**out, "evidence": ev, "fails": [] if ok else fails, "detail": "\n".join(detail)}
 
 
@@ -2599,9 +2627,9 @@ def summary(rt: Runtime, state: dict) -> dict:
             "questions": (state.get("interview") or {}), "stop": state.get("stop"), "stop_detail": state.get("stop_detail"),
             "last_rtl_message": (getattr(rt, "last_role_message", None) or {}).get("rtl"),
             "routing_events": routing_events(rt),
-            **({"repair_feedback": {"arms": [a for a in rt.cfg.arms if a in ("R1", "R2", "R3")], "ledger": state.get("ledger") or [],
+            **({"repair_feedback": {"arms": [a for a in rt.cfg.arms if a in ("R1", "R2", "R3", "R4")], "ledger": state.get("ledger") or [],
                                     "regrade": (((state.get("evidence") or {}).get("regrade")) or None)}}
-               if any(a in rt.cfg.arms for a in ("R1", "R2", "R3")) else {}),
+               if any(a in rt.cfg.arms for a in ("R1", "R2", "R3", "R4")) else {}),
             "clean_stop": state.get("stop") == "done",
             "verification_profile": {**_profile_record(rt.cfg), "policy_breaches": __import__("agent.graph.profiles", fromlist=["x"]).check_pin(
                 rt.run_dir, rt.cfg.verif_profile, rt.cfg.verif_sets, rt.design)},

@@ -433,6 +433,21 @@ def top_port_findings(s: Session, cfg: dict, xdc_check: bool = True) -> list[dic
                                s.root / "boards" / s.board, shell=not srcorder.no_shell(s.design))
 
 
+def complete_findings(s: Session, cfg: dict) -> tuple[list[dict], list[str]]:
+    """Brief 230: every top port has a class and a constraint, every clock-source primitive a clock (``flow/known_constraints.py``),
+    read from the files before synthesis. Returns (findings, notes about what the flow writes itself). Nothing is reported while the
+    top module's source or design.xdc does not exist yet. A failure of the check itself never blocks a build: it is reported as a note."""
+    if os.environ.get("FDA_KNOWN_XDC", "1") == "0":
+        return [], []
+    try:
+        from flow import known_constraints as KC
+        found = KC.findings(s.design, s.root, cfg=cfg, board=s.board)
+        ctx = KC.Ctx(s.design, s.root, board=s.board, cfg=cfg)
+        return found, KC.info_lines(ctx) if ctx.ports and (s.design / "design.xdc").is_file() else []
+    except Exception as e:                           # noqa: BLE001
+        return [], [f"(the port and clock completeness check did not run: {type(e).__name__}: {e})"]
+
+
 def _icarus_elaborate(s: Session, top: str, srcs: list[str]):
     """``iverilog -g2012 -s <top> -o /dev/null`` over the lint sources; None when iverilog is not installed (the
     elaboration check is skipped then, as the portability check is)."""
@@ -779,6 +794,13 @@ def build(s: Session, until: str = "bitstream", variant: str = "base") -> dict:
         raise SecurityError("tcl-allow-list", "refused: the XDC has commands outside the allow-list: " +
                             ", ".join(f.name for f in bad) + " (run check_constraints)")
     _refuse_on_scan(s, python=False, hdl=True)
+    # brief 230: the run does not go to Vivado while a top port has no constraint class or a clock source has no clock: the same finding
+    # costs a full synthesis and a stage visit after it, and the synthesis would optimise the miss unconstrained
+    missing, notes = complete_findings(s, cfg)
+    if missing:
+        return {"ok": False, "returncode": 2, "until": until, "variant": variant, "not_run": "FDA-CON-14/15",
+                "output": "build not run (nothing was synthesised): constraints are incomplete before synthesis.\n" +
+                          "\n".join(f"{x['rule']} {x['message']}" for x in missing) + ("\n" + "\n".join(notes) if notes else "")}
     env = {"FDA_STOP_AFTER": until}
     if getattr(s, "policy_run_dir", None):             # brief 196: the run's pinned security request, which the design's build.yaml cannot override
         from agent.graph import profiles as _profiles
@@ -802,7 +824,7 @@ def build(s: Session, until: str = "bitstream", variant: str = "base") -> dict:
         except Exception:                              # noqa: BLE001
             pass
     return {"ok": r.returncode == 0 or (until != "bitstream" and bool(info) and info.get("exit_code") == 0),
-            "output": _text_out(r), "returncode": r.returncode, "until": until, "variant": variant, **info}
+            "output": _text_out(r) + ("\n" + "\n".join(notes) if notes else ""), "returncode": r.returncode, "until": until, "variant": variant, **info}
 
 
 def con_files(s: Session, cfg: dict) -> list[Path]:
@@ -869,7 +891,41 @@ def gates(s: Session, kind: str = "stages", variant: str = "base") -> dict:
     res = {"ok": r.returncode == 0, "output": _text_out(r), "returncode": r.returncode, "variant": variant,
            "gates": data, "first_failed_stage": (data or {}).get("first_failed_stage"),
            "stages_ran": {k: v.get("ran") for k, v in ((data or {}).get("stages") or {}).items()}}
+    res["output"] = str(res["output"]) + _unconstrained_advice(s, data) + _known_xdc_note(s, variant, res["output"])        # brief 230: each unconstrained endpoint with its class and the line to add
     return _stale_note(s, res, f"build:{variant}")
+
+
+def _unconstrained_advice(s: Session, data: Any) -> str:
+    """Brief 230 item 5: when the post-synthesis gate lists unconstrained endpoints, name each one's class and the exact line to add (or
+    the question when its class is unknown), not only the raw check_timing list. Empty when there is nothing to explain."""
+    try:
+        st = ((data or {}).get("stages") or {})
+        ports: dict[str, list[str]] = {}
+        for name in ("post_synth", "post_route"):
+            for k, v in ((st.get(name) or {}).get("unconstrained_ports") or {}).items():
+                ports.setdefault(k, [])
+                ports[k] += [x for x in v if x not in ports[k]]
+        if not ports or os.environ.get("FDA_KNOWN_XDC", "1") == "0":
+            return ""
+        from flow import known_constraints as KC
+        ctx = KC.Ctx(s.design, s.root, board=s.board)      # reads build.yaml itself (it has been validated by the build that produced the report)
+        lines = KC.explain_unconstrained(ports, ctx)
+        return ("\nunconstrained endpoints explained (class and line to add):\n  " + "\n  ".join(lines)) if lines else ""
+    except Exception as e:                           # noqa: BLE001
+        return f"\n(the unconstrained-endpoint explanation did not run: {type(e).__name__}: {e})"
+
+
+def _known_xdc_note(s: Session, variant: str, text: Any) -> str:
+    """Brief 230: an ignored exception can be one of the flow's own lines (known_pre.xdc, known_post.xdc in the build directory), which the model
+    cannot edit. Say so and say how to make the flow's line go away: the flow leaves a port or clock pin alone once design.xdc constrains it."""
+    if "EXC-IGNORED" not in str(text) or os.environ.get("FDA_KNOWN_XDC", "1") == "0":
+        return ""
+    files = [f.name for f in (s.design / "build" / variant / "known_pre.xdc", s.design / "build" / variant / "known_post.xdc") if f.is_file()]
+    if not files:
+        return ""
+    return (f"\nnote: the flow writes {', '.join(files)} in build/{variant}/ (read before and after design.xdc); an ignored exception may be one of its lines. The flow "
+            "skips any port (placeholder delay and false path) or clock pin that design.xdc already constrains: write your own constraint for it (a false path "
+            "listing a port that carries a path, with the delay) and the flow's line is not written on the next build.")
 
 
 def _stamp(s: Session, kind: str) -> None:
@@ -988,10 +1044,17 @@ def check_constraints(s: Session) -> dict:
         text = f.read_text()
         for x in con.check_xdc(text, s.root / "boards" / s.board) + con.check_xdc_safety(text):
             found.append({"file": f.name, **x})
+    notes: list[str] = []
     if (s.design / "build.yaml").is_file():
         found += top_port_findings(s, load_build_cfg(s))      # 08a: FDA-CON-8 / FDA-CON-9
+        more, notes = complete_findings(s, load_build_cfg(s))       # brief 230: FDA-CON-14 / FDA-CON-15, and what the flow writes itself
+        # completeness belongs to the constraints stage and later: the early stages' exit checks also run this tool, and a finding there loops a stage whose role
+        # cannot fix it (arm run v2: stage 1 visited more than 4 times on check_constraints). The build tool still refuses to start Vivado on a finding.
+        if getattr(s, "stage", "constraints") in ("clarify", "board-and-device-planning", "rtl-design-creation"):
+            more = []
+        found += more
     out = "\n".join(f"{x['file']}:{x['line']}: {x['rule']} {x['message']}\n    {x['text']}" for x in found)
-    return {"ok": not found, "output": out or "no findings", "findings": found}
+    return {"ok": not found, "output": (out or "no findings") + ("\n" + "\n".join(notes) if notes else ""), "findings": found}
 
 
 def block_top_ports(s: Session) -> dict | None:
