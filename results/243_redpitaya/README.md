@@ -8,6 +8,14 @@ Vendor shell: RedPitaya-FPGA at the pinned commit 728a4f37e9 (project v0.94, Z10
 
 Build `170300fd` loaded (fpga_manager `operating`, md5 matched, fclk0 125 MHz). The vendor's own slots answered (housekeeping 0x40000000 reads 1, PID 0x40300000 reads 0xf). Our two blocks, slot 6 `rp_patgen` (0x40600000) and slot 7 `rp_freqcount` (0x40700000), read 0 at the ID register, and a scratch write read back 0.
 
+## Files
+
+- `sim/`: the bus-path simulation outputs: `bus_path_170300fd_no_adapter.txt` (the failure), `bus_path_170300fd_with_adapter_phase*.txt` (the fix on 170300fd's blocks at three clock offsets), `bus_path_H1_rebuilt_sources.txt` and `bus_path_H2_rebuilt_sources.txt` (the rebuilt sources), `waveform_slot6_first_read_170300fd.txt` and the monitor `mon_slot6.sv` that printed it.
+- `evidence/`: the Vivado Tcl that queried the routed checkpoint of 170300fd and its output (`checkpoint_170300fd_inspect*.tcl` and `.out`), and the hierarchical utilisation report.
+- `shell_timing/H1_*` and `H2_*`: for each rebuilt image the `build.json` (id, pins, hashes of every block and of the adapter, timing, utilisation, power), the head of the routed timing summary, power, DRC and utilisation reports, and `vivado_time_v.log` (`/usr/bin/time -v` of the build).
+- `owner_scripts/` and `dry_run/`: the owner's load-and-check scripts for build `d2f617ca`, `load_fda.sh`, and the scripts' own `DRY_RUN=1` output and the board-side checks against the models (mock, not evidence).
+- [owner_pack.md](owner_pack.md): the one page for the next board visit, with what to check first.
+
 ## 1. Root cause
 
 **The blocks do answer, but their answer is gone by the time the PS reads it.** Between the PS and every slot the vendor's `sys_bus_interconnect` puts a clock-crossing bridge (`sys_bus_cdc`). It (a) holds `wen` or `ren` high from the first cycle until the slot's `ack` has been carried back across the crossing, so a block with a one-cycle ack sees the request for two cycles, and
@@ -87,6 +95,8 @@ Ready-to-use copies (bitstream, scripts, `load_fda.sh`, check files) are in `~/C
 - `hil/tests/test_225_redpitaya.py::test_the_checks_import_from_a_bare_directory` fails on this machine on `main` as well as on this branch (it truncates `sys.path` and then cannot import `__future__`); not touched here (follow-up).
 
 ## Reproduce
+
+The builds need a heavy slot and the network (the vendor repository at the pin); the simulations need Vivado 2025.2 xsim; the unit tests need only Python and iverilog. Each command below reproduces one family of results in this folder.
 
 ```
 R=pilots/225
