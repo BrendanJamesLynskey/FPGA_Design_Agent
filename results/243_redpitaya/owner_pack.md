@@ -1,5 +1,7 @@
 # Red Pitaya board visit: the owner's one-page pack (brief 243; replaces the brief 235 pack)
 
+> **Replaced by [results/244_redpitaya/owner_pack.md](../244_redpitaya/owner_pack.md) (2026-11-27):** build `d2f617ca` missed setup by 84 ps; use build `17e913f1`.
+
 **Nothing on this page has been run.** The agent never touched the Red Pitaya, any board or any instrument. Everything below is for the owner's next board visit; until then no command here is to be run.
 
 Board: the owner's STEMlab 125-14 (original generation, v1.1), hostname `rp-f00c16`, on its own 5 V isolated 2 A or 2.1 A supply (micro USB power input, never a PC port). Image to load: build `d2f617ca` (`fpga.bit.bin`, md5 `4b74fa654ad90b26fb81509e9eac786d`, 993,360 bytes). Volatile load only: a power cycle returns the factory image. Writing files to the SD card is allowed by the owner (2026-11-27) but nothing here needs it.

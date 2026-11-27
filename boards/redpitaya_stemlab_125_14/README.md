@@ -41,7 +41,7 @@ Licence: BSD 3-clause, Red Pitaya d.o.o.; see [THIRD_PARTY_NOTICES.md](../../THI
 `shell.yaml` does, therefore read 0 on every access: build `170300fd` answered no read in slots 6 and 7 at the board visit of 2026-11-27 (the vendor's own slots hold `rdata`, so they were unaffected). `tools/rp_shell.py`
 now puts [shell/rp_bus_adapt.sv](shell/rp_bus_adapt.sv) between each slot and its block: one access to the block per request, the answer held for the bridge, a silent block answered with an error after 16 clocks.
 Blocks keep the one-cycle convention unchanged. The adapter is tested by [shell/tb_rp_bus_adapt.sv](shell/tb_rp_bus_adapt.sv) (a model of the bridge, in CI) and, against the pinned vendor files, by
-[hil/rp_bus_sim/](../../hil/rp_bus_sim/) in xsim; the evidence is in [results/243_redpitaya](../../results/243_redpitaya/README.md).
+[hil/rp_bus_sim/](../../hil/rp_bus_sim/) in xsim; the evidence is in [results/243_redpitaya](../../results/243_redpitaya/README.md). The image to load is `17e913f1` (brief 244: timing met after a two-clock end-of-gate update in the frequency counter; [results/244_redpitaya](../../results/244_redpitaya/README.md)); `d2f617ca` is replaced.
 
 [shell/rp_user_block.sv](shell/rp_user_block.sv) is the template and the trivial test block (ID, scratch, a free-running counter, the two ADC samples, two DAC terms); its behaviour in the cases a
 user could guess wrong is written at the top of the file and checked by [shell/tb_rp_user_block.sv](shell/tb_rp_user_block.sv).
