@@ -148,6 +148,8 @@ class Config:
     verif_ask: bool = False         # brief 194: the interview proposes a profile (only when none was given on the command line)
     level1_seed: int | None = None  # brief 107: --deterministic at level 1: temperature 0 (and this seed) on every purpose that can take it
     permissions: dict | None = None  # brief 222: the permission policy spec (mode, overrides, source, ask_above_usd; agent.core.permissions); None: the default mode
+    routing: str = "off"            # brief 214: on = the routing table of agent.models.routing picks a tier per call and a repeated failure escalates to strong; off = today's models
+    kway: int = 0                   # brief 214: k > 1 = after two failed visits of stage 2, k independent attempts, the best kept (agent.models.routing); 0 = off
 
     @property
     def arms(self) -> tuple[str, ...]:
@@ -220,6 +222,10 @@ class Runtime:
     resolver: Any = None                                    # brief 108: every model call of this run goes through it (agent.models.Resolver)
     policy: Any = None                                      # brief 222: the run's permission policy (agent.core.permissions.Policy); every stage start and tool call consults it
     cut_streak: dict = field(default_factory=dict)          # brief 224: role -> consecutive replies cut off at the output limit with no file written
+    streak: Any = None                                      # brief 214: agent.models.routing.FailureStreak (consecutive same failures per stage)
+    route_reasons: Any = None                               # brief 214: the failure texts the current stage-2 role call repairs (decides the visit kind)
+    attempt: int = 0                                        # brief 214: k-way attempt number while one runs (0 = a normal visit)
+    kway_rounds: dict = field(default_factory=dict)         # brief 214: stage -> k-way rounds run so far
 
 
 _RT: dict[str, Runtime] = {}
@@ -764,6 +770,9 @@ def run_subagent(rt: Runtime, role: str, prompt: str, allowed: tuple[str, ...] =
     trace to each record: the visit, the turns the role was allowed, how it ended (done / stage_budget / run_budget /
     blocked / error), the tools it called, the refusals it met and the files it wrote."""
     spec = rt.cfg.role_models(rt.session.stage)[role]
+    base_spec, rinfo = spec, None
+    if rt.cfg.routing == "on":                              # brief 214: the routing table and escalation (agent.models.routing)
+        spec, rinfo = _routed_spec(rt, role, spec, repair)
     m0, n_cc, t0 = dict(rt.meter.run), len(_cc_calls(rt)), time.monotonic()
     a0, allowed_turns, ended, written = len(rt.session.audit.records), rt.meter.turns_left(), "done", {}
     l0 = len(rt.llm_log)
@@ -793,10 +802,12 @@ def run_subagent(rt: Runtime, role: str, prompt: str, allowed: tuple[str, ...] =
                 refused[str(r.get("rule"))] = refused.get(str(r.get("rule")), 0) + 1
         from agent.models.config import ROLE_PURPOSE
         ent = rt.resolver.entry(ROLE_PURPOSE[role], rt.session.stage)
-        rec = {"stage": rt.session.stage, "visit": rt.visit, "role": role, "stage_override": spec != rt.cfg.role_models()[role],
+        rec = {"stage": rt.session.stage, "visit": rt.visit, "role": role, "stage_override": base_spec != rt.cfg.role_models()[role],
                "harness": spec["harness"], "model": spec["model"],
                "purpose": ent.purpose, "endpoint": ent.endpoint, "entry_hash": ent.hash, "table_hash": rt.resolver.table.hash,   # brief 108
                "effort": spec["effort"], "repair": repair,
+               **({"routing": {k: v for k, v in rinfo.items() if k != "spec"}} if rinfo else {}),
+               **({"kway_attempt": rt.attempt} if rt.attempt else {}),
                "turns": int(rt.meter.run["turns"] - m0["turns"]), "turns_allowed": allowed_turns, "ended": ended,
                "tokens": int(rt.meter.run["tokens"] - m0["tokens"]),
                "wall_s": round(time.monotonic() - t0, 1),
@@ -810,6 +821,21 @@ def run_subagent(rt: Runtime, role: str, prompt: str, allowed: tuple[str, ...] =
                if spec["harness"] == "claude_code" else None}
         with (rt.run_dir / "role_usage.jsonl").open("a") as f:
             f.write(json.dumps(rec) + "\n")
+
+
+def _routed_spec(rt: Runtime, role: str, spec: dict, repair: bool) -> tuple[dict, dict]:
+    """Brief 214: the call's spec after the routing table and escalation, and the record of the decision (a ``route`` event when it differs from today's)."""
+    from agent.graph.stages import MACHINE as _M
+    from agent.models import routing
+    from agent.models.config import ROLE_PURPOSE
+    n = next((st.n for st in _M if st.name == rt.session.stage), -1)
+    kind = routing.visit_kind(role, rt.route_reasons if role == "rtl" else None, repair)
+    streak = rt.streak.streak(n) if rt.streak is not None else 0
+    r = routing.route(spec, role, rt.session.stage, kind, streak, rt.resolver.entry(ROLE_PURPOSE[role], rt.session.stage).kind)
+    if r["changed"] or r["escalated"] or r["skipped"]:
+        log_routing_event(rt, "route", role=role, tier=r["tier"], kind=kind, escalated=r["escalated"], streak=streak, model=r["spec"]["model"],
+                          effort=r["spec"]["effort"], changed=r["changed"], skipped=r["skipped"], reason=r["reason"])
+    return r["spec"], {**r, "model": r["spec"]["model"]}
 
 
 #: Turns held back while a role runs, for the roles that follow it in the same stage visit (brief 05g). Before this,
@@ -1114,6 +1140,16 @@ def node_work(state: State) -> dict:
     if visits[str(n)] > limit:
         why, detail = stop_diagnosis(n, limit, state)         # brief 82P6 (P3): say which gate, which role, which assertion
         return {"visits": visits, "stop": why, "stop_detail": detail}
+    rt.route_reasons = None
+    if rt.streak is None:                              # brief 214: consecutive visits that began from the same failure, per stage (routing escalation, k-way trigger)
+        from agent.models.routing import FailureStreak
+        rt.streak = FailureStreak()
+    if not rt.attempt:
+        from agent.models import routing as _routing
+        rt.streak.see(n, _routing.failure_signature(state.get("fails"), state.get("sig") if n == 2 else None) if state.get("fails") else "")
+        if (rt.cfg.kway > 1 and n in _routing.KWAY_STAGES and rt.streak.failed_visits(n) >= _routing.KWAY_AT_VISIT - 1
+                and rt.kway_rounds.get(n, 0) < _routing.KWAY_ROUNDS):
+            return _kway_work(rt, state, n)
     scale_turn_cap(rt, n)
     rt.meter.start_stage(st.limits)
     rt.session.stage = st.name
@@ -1155,6 +1191,7 @@ def node_work(state: State) -> dict:
                          role_allowed("clarify", 0))
         elif n == 2:
             for role, reasons in stage2_plan(rt, state).items():
+                rt.route_reasons = reasons
                 repair = reasons is not None
                 note = repair_note(role, reasons) if repair else ""
                 if role == "model":
@@ -1208,6 +1245,48 @@ def node_work(state: State) -> dict:
     if rt.budget_notes:           # a role ended on its turn budget: the gate decides, and the next visit hears about it
         return {"visits": visits, "note": "", "detail": "stage visit ended on the turn budget: " + "; ".join(rt.budget_notes)}
     return {"visits": visits, "note": ""}
+
+
+def _kway_work(rt: Runtime, state: State, n: int) -> dict:
+    """Brief 214: k independent attempts at this stage visit's work. Each starts from the same snapshot of the design (restored before every
+    attempt, so one attempt never sees another's edits), is evaluated by the stage's own gates, and is kept as a candidate; the best by
+    :func:`agent.models.routing.select_candidate` (a check the Designer did not write first) is put back and the normal gate then runs on it."""
+    from agent.models import routing
+    st, k = MACHINE[n], int(rt.cfg.kway)
+    visit = int((state.get("visits") or {}).get(str(n), 0)) + 1
+    root = rt.run_dir / "kway" / f"s{n}v{visit}"
+    routing.snapshot_design(rt.design, root / "base")
+    rt.kway_rounds[n] = rt.kway_rounds.get(n, 0) + 1
+    rows: list[dict] = []
+    outs: dict[int, dict] = {}
+    stopped: dict | None = None
+    rt.visit = visit
+    log_routing_event(rt, "kway_start", k=k, from_failed_visits=rt.streak.failed_visits(n))
+    try:
+        for i in range(1, k + 1):
+            routing.restore_design(rt.design, root / "base")
+            rt.attempt = i
+            u0, p0, t0 = rt.meter.run["usd"], sum(c.get("plan_cost_estimate_usd") or 0 for c in _cc_calls(rt)), time.monotonic()
+            out = node_work(state)
+            if out.get("stop"):
+                stopped = out
+                break
+            g = node_gate({**state, **out})
+            extra = {"wall_s": round(time.monotonic() - t0, 1), "usd": round(rt.meter.run["usd"] - u0, 4),
+                     "plan_cost_estimate_usd": round(sum(c.get("plan_cost_estimate_usd") or 0 for c in _cc_calls(rt)) - p0, 4)}
+            rows.append(routing.candidate_row(i, st, g.get("evidence") or {}, g.get("fails") or [], extra))
+            routing.snapshot_design(rt.design, root / f"cand{i}")
+            outs[i] = out
+    finally:
+        rt.attempt = 0
+    if not rows:                                       # the first attempt hit a stop: nothing to choose from
+        routing.restore_design(rt.design, root / "base")
+        return stopped or {"visits": {**(state.get("visits") or {}), str(n): visit}, "note": ""}
+    chosen = routing.select_candidate(rows)
+    routing.restore_design(rt.design, root / f"cand{chosen['candidate']}")
+    routing.log_candidates(rt.run_dir, st.name, visit, rows, chosen)
+    log_routing_event(rt, "kway_chosen", **chosen, candidates=len(rows), k=k)
+    return {**outs[chosen["candidate"]], **({"stop": stopped["stop"], "stop_detail": stopped.get("stop_detail")} if stopped and stopped.get("stop") else {})}
 
 
 def _spec(rt: Runtime) -> dict:
@@ -2598,7 +2677,8 @@ def log_routing_event(rt: Runtime, event: str, **kw: Any) -> None:
     check, owner routing of a persisting CONST-ID-01), so a run record says whether each change fired. Facts only; never raises."""
     try:
         with (rt.run_dir / ROUTING_EVENTS).open("a") as f:
-            f.write(json.dumps({"event": event, "stage": getattr(rt.session, "stage", None), "visit": rt.visit, **kw}) + "\n")
+            f.write(json.dumps({"event": event, "stage": getattr(rt.session, "stage", None), "visit": rt.visit,
+                                **({"attempt": rt.attempt} if getattr(rt, "attempt", 0) else {}), **kw}) + "\n")
     except OSError:
         pass
 
@@ -2609,6 +2689,27 @@ def routing_events(rt: Runtime) -> list[dict]:
         return [json.loads(x) for x in f.read_text().splitlines() if x.strip()]
     except (OSError, ValueError):
         return []
+
+
+def cost_routing_summary(rt: Runtime, usage: list[dict]) -> dict:
+    """Brief 214: what routing and k-way attempts did in this run: calls and plan-estimated cost per tier and model, escalations, and every k-way candidate."""
+    per: dict[str, dict] = {}
+    for r in usage:
+        t = (r.get("routing") or {}).get("tier", "standard")
+        d = per.setdefault(t, {"calls": 0, "plan_cost_estimate_usd": 0.0, "cost_usd": 0.0, "models": []})
+        d["calls"] += 1
+        d["plan_cost_estimate_usd"] = round(d["plan_cost_estimate_usd"] + (r.get("plan_cost_estimate_usd") or 0), 4)
+        d["cost_usd"] = round(d["cost_usd"] + (r.get("cost_usd") or 0), 6)
+        if r.get("model") not in d["models"]:
+            d["models"].append(r.get("model"))
+    kw = []
+    try:
+        kw = [json.loads(x) for x in (rt.run_dir / "kway.jsonl").read_text().splitlines() if x.strip()]
+    except (OSError, ValueError):
+        pass
+    return {"routing": rt.cfg.routing, "kway": rt.cfg.kway, "per_tier": per,
+            "escalated_calls": sum(1 for r in usage if (r.get("routing") or {}).get("escalated")),
+            "kway_candidates": kw}
 
 
 def constants_summary(rt: Runtime) -> dict:
@@ -2655,6 +2756,7 @@ def summary(rt: Runtime, state: dict) -> dict:
             "questions": (state.get("interview") or {}), "stop": state.get("stop"), "stop_detail": state.get("stop_detail"),
             "last_rtl_message": (getattr(rt, "last_role_message", None) or {}).get("rtl"),
             "routing_events": routing_events(rt),
+            **({"cost_routing": cost_routing_summary(rt, usage)} if (rt.cfg.routing == "on" or rt.cfg.kway > 1) else {}),     # brief 214
             **({"repair_feedback": {"arms": [a for a in rt.cfg.arms if a in ("R1", "R2", "R3", "R4")], "ledger": state.get("ledger") or [],
                                     "regrade": (((state.get("evidence") or {}).get("regrade")) or None)}}
                if any(a in rt.cfg.arms for a in ("R1", "R2", "R3", "R4")) else {}),

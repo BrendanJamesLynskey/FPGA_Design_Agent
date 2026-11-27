@@ -73,3 +73,44 @@ here.
 unchanged for every role and profile (tested: the tool lists and prompts are identical under `single` and `cvdp`).
 Primitives, MMCM/PLL configuration, LUT6-aware design and DSP48E1 inference matter to our Vivado gates, which CVDP never
 measured.
+
+## Cost routing by stage and k-way attempts (brief 214)
+
+Both are **off by default** (`--routing off`, `--kway 0`); every run behaves as before unless asked. The code is `agent/models/routing.py`;
+`agent/tests/test_214_cost_routing.py` tests it with recorded results.
+
+**The routing table** says which tier of model a sub-agent call uses, by role, stage and kind of visit. `standard` is the role's own resolved model
+(whatever the model table gives; this module never changes it). `cheap` is `claude-haiku-5-5` at effort low; `strong` is `claude-opus-5-5` at effort
+medium. Both are `claude_code` models: a role on a chat endpoint (Deep Agents over OpenRouter or the API) is not routed, and its call records
+`routing.skipped`. Opus is never reachable through OpenRouter or the `anthropic_api` kind (owner rule); here it is on the Max plan only, as in the `cvdp` profile.
+
+| role | stage | kind of visit | tier | why |
+|---|---|---|---|---|
+| rtl | rtl-design-creation | repair of a lint or design-standards failure only | cheap | a mechanical edit the finding names |
+| rtl | rtl-design-creation | repair of anything else | standard | a simulation or verification mismatch needs the model that reads the spec best |
+| rtl | rtl-design-creation | first write | standard | |
+| rtl | board-and-device-planning | any | standard | architecture stays on the configured model; a strong tier is measured by escalation only |
+| model, tests, clarify | any | any | standard | spec readings stay on the configured model |
+
+With `--routing on` a call takes its row's tier. The DOC step is not routed by this table: it runs on the `doc` purpose, which a `models.yaml` sets
+like any other (see [model_config.md](model_config.md)).
+
+**Escalation.** When the same failure has begun two visits of a stage (the stage-2 signature of `state['sig']`, else the gate lines with numbers removed),
+the next visit of that stage uses `strong` whatever the table says, until the failure changes or the stage passes. The count is per stage and is kept in
+memory: a resumed run starts it again from zero.
+
+**k-way attempts.** `--kway K` (K > 1): when stage 2 has failed on two visits, the third visit runs K independent attempts at the stage's work instead of
+one, once per run. Each attempt starts from the same snapshot of the design taken before the first (restored before every attempt; the attempts run
+one after another, so one never sees another's edits; build products are left alone) and is evaluated by stage 2's own gates (lint, simulate,
+standards, constants, verification; no Vivado). The kept candidate is chosen by, in order: a verdict from a check the Designer did not write (the
+fresh-stimulus regrade, the independent spec-only bench) where one ran, then the most gates passed, then the fewest findings, then the lowest LUT count.
+A choice that no independent check supported is labelled `own_gates_only` in the record: in CVDP, choosing among three by the model's own check gained 1.3
+points where an independent check gained 10.8, so treat such a choice as weak evidence. The normal gate then runs on the kept files.
+
+**Records.** `role_usage.jsonl` rows carry `routing` (tier, reason, kind, streak, escalated, the model the table would have used) and `kway_attempt`;
+`routing_events.jsonl` has `route`, `kway_start` and `kway_chosen`; `kway.jsonl` has one row per candidate (gates passed, findings, LUTs, independent
+verdict, wall time, plan-estimated cost) and one row for the choice; `summary.json` `cost_routing` has calls and plan-estimated cost per tier, the
+escalated calls and every candidate. Cost comes from provider usage, as everywhere.
+
+**Limits.** Attempts of one round differ only by the model's own variation (a Claude Code call has no temperature). Stages other than 2 are not k-way
+(their gates run Vivado). Whether either feature helps is measured in `results/214_cost_routing/`; the defaults stay off until that says otherwise.
