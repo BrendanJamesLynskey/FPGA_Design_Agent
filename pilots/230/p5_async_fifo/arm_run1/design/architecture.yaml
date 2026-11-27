@@ -1,0 +1,26 @@
+schema: fpga-design-agent/architecture/v1
+blocks:
+  - {name: jtag_bus, function: JTAG USER4 register bus to the h_* register port}
+  - {name: reset_gen, function: power-up reset pulse and per-domain reset synchronisers}
+  - {name: reg_core, function: registers, CTRL, PRBS writer, writer counters, OCC_MAX, snapshot}
+  - {name: async_fifo, function: 512x32 asynchronous FIFO (xpm_fifo_async)}
+  - {name: rd_checker, function: reader with slow-read gate, PRBS-31 checker, reader counters}
+interfaces:
+  - {name: host_reg, between: [jtag_bus, reg_core], protocol: simple, prefix: h, module: reg_core}
+  - {name: fifo_data, between: [reg_core, rd_checker], protocol: simple, prefix: fifo, module: async_fifo}
+clock_domains:
+  - {name: clk_wr, clock: clk_c3, freq_mhz: 25}
+  - {name: clk_rd, clock: gt_refclk_p, freq_mhz: 156.25}
+reset:
+  synchronisers: [xpm_cdc_async_rst]
+crossings:
+  - {from: clk_wr, to: clk_rd, signal: RUN SLOW_READ INJECT CLEAR controls, primitive: xpm_cdc_array_single, inline_in: top}
+  - {from: clk_rd, to: clk_wr, signal: reader counters snapshot, primitive: xpm_cdc_handshake, inline_in: top}
+  - {from: clk_wr, to: clk_rd, signal: FIFO data and pointers, primitive: xpm_fifo_async, inline_in: async_fifo}
+  - {from: async, to: clk_rd, signal: reset, primitive: xpm_cdc_async_rst, inline_in: reset_gen}
+  - {from: async, to: clk_wr, signal: reset, primitive: xpm_cdc_async_rst, inline_in: reset_gen}
+predicted_resources:
+  lut: [450, 1200]
+  ff: [800, 1600]
+  bram_tile: [0.5, 1.5]
+  dsp: 0

@@ -1,0 +1,1501 @@
+{
+ "run_id": "20261126-164034-895f",
+ "design": "p5_async_fifo",
+ "model": "claude-sonnet-5-5",
+ "harness": "deepagents",
+ "harness_arm": "H1",
+ "profile": "single",
+ "role_models": {
+  "clarify": {
+   "harness": "deepagents",
+   "model": "claude-sonnet-5-5",
+   "effort": "medium"
+  },
+  "model": {
+   "harness": "deepagents",
+   "model": "claude-sonnet-5-5",
+   "effort": "medium"
+  },
+  "tests": {
+   "harness": "deepagents",
+   "model": "claude-sonnet-5-5",
+   "effort": "medium"
+  },
+  "rtl": {
+   "harness": "deepagents",
+   "model": "claude-sonnet-5-5",
+   "effort": "medium"
+  }
+ },
+ "model_table_hash": "085c37dd3ddf7e30",
+ "oracle_model": "claude-sonnet-5-5",
+ "oracle": "openrouter",
+ "stage_overrides": [],
+ "knowledge_use": {
+  "rtl/board-and-device-planning": {
+   "board_constraints": {
+    "calls": 3
+   },
+   "search_docs": {
+    "calls": 1,
+    "hits": [
+     "amd/7series_device_clocking_drp#3",
+     "ross/vivado-timing-methodology-checks/references/TIMING-7.md#6",
+     "ross/vivado-timing-methodology-checks/references/TIMING-8.md#7"
+    ]
+   }
+  },
+  "tests/rtl-design-creation": {
+   "load_skill": {
+    "calls": 1,
+    "sections": [
+     "verification-stages"
+    ],
+    "skills": [
+     "procedures/verification-stages/v-hw-bringup/SKILL.md",
+     "procedures/verification-stages/v0-v1-testplan/SKILL.md",
+     "procedures/verification-stages/v2-tests-assertions-formal/SKILL.md",
+     "procedures/verification-stages/v3-coverage-closure/SKILL.md"
+    ],
+    "empty_calls": 0,
+    "procedures_fallback": [
+     "verification-stages"
+    ]
+   },
+   "search_docs": {
+    "calls": 2,
+    "hits": [
+     "amd/UG906#1",
+     "ross/vai-custom-op-implementation/README.md#10",
+     "ross/vivado-rtl-elaboration-analysis/resolution/8-2716.md#2",
+     "ross/vivado-rtl-elaboration-analysis/resolution/8-6026.md#1",
+     "ross/vivado-rtl-elaboration-analysis/resolution/8-6850.md#1",
+     "ross/vivado-rtl-elaboration-analysis/resolution/8-6859.md#2",
+     "ross/vivado-timing-methodology-checks/references/TIMING-16.md#1",
+     "ross/vivado-timing-methodology-checks/references/TIMING-7.md#3",
+     "ross/vivado-timing-methodology-checks/references/TIMING-7.md#7",
+     "ross/vivado-timing-methodology-checks/references/TIMING-8.md#6",
+     "ross/vivado-timing-methodology-checks/references/TIMING-8.md#8"
+    ]
+   }
+  },
+  "rtl/rtl-design-creation": {
+   "load_skill": {
+    "calls": 1,
+    "sections": [
+     "verification-stages"
+    ],
+    "skills": [
+     "procedures/verification-stages/v-hw-bringup/SKILL.md",
+     "procedures/verification-stages/v0-v1-testplan/SKILL.md",
+     "procedures/verification-stages/v2-tests-assertions-formal/SKILL.md",
+     "procedures/verification-stages/v3-coverage-closure/SKILL.md"
+    ],
+    "empty_calls": 0,
+    "procedures_fallback": [
+     "verification-stages"
+    ]
+   },
+   "search_docs": {
+    "calls": 2,
+    "hits": [
+     "ross/vivado-rtl-lint/SKILL.md#7",
+     "ross/vivado-rtl-lint/resolution/ASSIGN-10.md#1",
+     "ross/vivado-rtl-lint/resolution/ASSIGN-5.md#1",
+     "ross/vivado-rtl-lint/resolution/ASSIGN-6.md#1",
+     "ross/vivado-timing-methodology-checks/references/TIMING-1.md#2",
+     "ross/vivado-timing-methodology-checks/references/TIMING-1.md#4",
+     "ross/vivado-timing-methodology-checks/references/TIMING-3.md#5",
+     "ross/vivado-timing-methodology-checks/references/TIMING-4.md#4"
+    ]
+   }
+  },
+  "rtl/constraints": {
+   "board_constraints": {
+    "calls": 2
+   },
+   "search_docs": {
+    "calls": 1,
+    "hits": [
+     "amd/Digilent_Nexys_A7_RM#2",
+     "amd/UG903#3",
+     "amd/UG903#4",
+     "amd/UG906#4",
+     "amd/vivado_flow_guides#5"
+    ]
+   }
+  },
+  "rtl/configuration-and-debug": {
+   "search_docs": {
+    "calls": 1,
+    "hits": [
+     "ross/hw-ila-debug/REFERENCE.md#13",
+     "ross/vai-custom-op-implementation/tutorial/README.md#4",
+     "ross/vitis-embedded/references/app/app_api.md#3"
+    ]
+   }
+  }
+ },
+ "knowledge_bank": {
+  "root": "230-kb-pin",
+  "chosen_by": "FDA_KNOWLEDGE",
+  "present": true,
+  "loaded": true,
+  "head": "5e2eab8"
+ },
+ "turn_trace": [
+  {
+   "stage": "clarify",
+   "visit": 1,
+   "role": "clarify",
+   "repair": false,
+   "turns_allowed": 20,
+   "turns": 4,
+   "ended": "done",
+   "wall_s": 62.2,
+   "tools": {
+    "write_file": 1
+   },
+   "model_tool_calls": {
+    "ls": 1,
+    "read_file": 1,
+    "write_file": 2
+   },
+   "refused": {},
+   "files_written": [
+    "spec.yaml"
+   ],
+   "files_changed": [
+    "spec.yaml"
+   ]
+  },
+  {
+   "stage": "clarify",
+   "visit": 2,
+   "role": "clarify",
+   "repair": false,
+   "turns_allowed": 20,
+   "turns": 11,
+   "ended": "done",
+   "wall_s": 44.7,
+   "tools": {
+    "write_file": 1
+   },
+   "model_tool_calls": {
+    "edit_file": 18,
+    "grep": 1,
+    "read_file": 2
+   },
+   "refused": {},
+   "files_written": [
+    "spec.yaml"
+   ],
+   "files_changed": [
+    "spec.yaml"
+   ]
+  },
+  {
+   "stage": "board-and-device-planning",
+   "visit": 1,
+   "role": "rtl",
+   "repair": false,
+   "turns_allowed": 30,
+   "turns": 5,
+   "ended": "done",
+   "wall_s": 25.0,
+   "tools": {
+    "gates": 2
+   },
+   "model_tool_calls": {
+    "fda_gates": 2,
+    "ls": 2,
+    "read_file": 1,
+    "write_file": 2
+   },
+   "refused": {},
+   "files_written": [],
+   "files_changed": [
+    "ARCHITECTURE.md",
+    "architecture.yaml"
+   ]
+  },
+  {
+   "stage": "board-and-device-planning",
+   "visit": 2,
+   "role": "rtl",
+   "repair": false,
+   "turns_allowed": 30,
+   "turns": 8,
+   "ended": "done",
+   "wall_s": 16.2,
+   "tools": {
+    "board_constraints": 3,
+    "check_constraints": 3,
+    "search_docs": 1
+   },
+   "model_tool_calls": {
+    "fda_board_constraints": 3,
+    "fda_check_constraints": 3,
+    "fda_search_docs": 1,
+    "grep": 1
+   },
+   "refused": {},
+   "files_written": [],
+   "files_changed": [
+    "design.xdc"
+   ]
+  },
+  {
+   "stage": "rtl-design-creation",
+   "visit": 1,
+   "role": "model",
+   "repair": false,
+   "turns_allowed": 45,
+   "turns": 2,
+   "ended": "done",
+   "wall_s": 25.4,
+   "tools": {
+    "write_file": 1
+   },
+   "model_tool_calls": {
+    "write_file": 1
+   },
+   "refused": {},
+   "files_written": [
+    "model.py"
+   ],
+   "files_changed": [
+    "model.py"
+   ]
+  },
+  {
+   "stage": "rtl-design-creation",
+   "visit": 1,
+   "role": "tests",
+   "repair": false,
+   "turns_allowed": 53,
+   "turns": 8,
+   "ended": "done",
+   "wall_s": 375.4,
+   "tools": {
+    "spec_items": 1,
+    "load_skill": 1,
+    "search_docs": 2,
+    "write_file": 3
+   },
+   "model_tool_calls": {
+    "fda_load_skill": 1,
+    "fda_search_docs": 2,
+    "fda_spec_items": 1,
+    "glob": 1,
+    "grep": 2,
+    "ls": 2,
+    "write_file": 4
+   },
+   "refused": {},
+   "files_written": [
+    "tests/p5_async_fifo_bench.py",
+    "tests/test_p5_async_fifo_rtl.py",
+    "verif/testplan.yaml"
+   ],
+   "files_changed": [
+    "tests/p5_async_fifo_bench.py",
+    "tests/test_p5_async_fifo_rtl.py",
+    "verif/testplan.yaml"
+   ]
+  },
+  {
+   "stage": "rtl-design-creation",
+   "visit": 1,
+   "role": "rtl",
+   "repair": false,
+   "turns_allowed": 70,
+   "turns": 30,
+   "ended": "stage_budget",
+   "wall_s": 1178.2,
+   "tools": {
+    "list_files": 2,
+    "load_skill": 1,
+    "read_file": 2,
+    "search_docs": 1,
+    "lint": 5,
+    "simulate": 1,
+    "gates": 1,
+    "gt_plan": 1,
+    "check": 1
+   },
+   "model_tool_calls": {
+    "edit_file": 14,
+    "fda_check": 1,
+    "fda_gates": 1,
+    "fda_gt_plan": 1,
+    "fda_lint": 5,
+    "fda_list_files": 2,
+    "fda_load_skill": 1,
+    "fda_read_file": 2,
+    "fda_search_docs": 1,
+    "fda_simulate": 1,
+    "glob": 2,
+    "grep": 4,
+    "read_file": 14,
+    "write_file": 10
+   },
+   "refused": {
+    "build-yaml": 2
+   },
+   "files_written": [],
+   "files_changed": [
+    "build.yaml",
+    "design.xdc",
+    "rtl/p5_async_fifo_mem.sv",
+    "rtl/p5_async_fifo_prbs.sv",
+    "rtl/p5_async_fifo_rd.sv",
+    "rtl/p5_async_fifo_soak.sv",
+    "rtl/p5_async_fifo_soak_core.sv",
+    "rtl/xilinx_sim_stubs.sv"
+   ]
+  },
+  {
+   "stage": "rtl-design-creation",
+   "visit": 2,
+   "role": "rtl",
+   "repair": true,
+   "turns_allowed": 80,
+   "turns": 15,
+   "ended": "done",
+   "wall_s": 89.1,
+   "tools": {
+    "gates": 1,
+    "lint": 2,
+    "search_docs": 1
+   },
+   "model_tool_calls": {
+    "edit_file": 3,
+    "fda_gates": 1,
+    "fda_lint": 2,
+    "fda_search_docs": 1,
+    "glob": 1,
+    "grep": 4,
+    "ls": 2,
+    "read_file": 9
+   },
+   "refused": {},
+   "files_written": [],
+   "files_changed": [
+    "rtl/p5_async_fifo_soak.sv",
+    "rtl/xilinx_sim_stubs.sv"
+   ]
+  },
+  {
+   "stage": "rtl-design-creation",
+   "visit": 3,
+   "role": "rtl",
+   "repair": true,
+   "turns_allowed": 80,
+   "turns": 26,
+   "ended": "done",
+   "wall_s": 209.0,
+   "tools": {
+    "list_files": 1,
+    "lint": 9,
+    "gates": 4,
+    "simulate": 1,
+    "check": 1
+   },
+   "model_tool_calls": {
+    "delete": 2,
+    "edit_file": 5,
+    "fda_check": 1,
+    "fda_gates": 4,
+    "fda_lint": 9,
+    "fda_list_files": 1,
+    "fda_simulate": 1,
+    "grep": 7,
+    "read_file": 11,
+    "write_file": 8
+   },
+   "refused": {},
+   "files_written": [],
+   "files_changed": [
+    "rtl/p5_async_fifo_mem.sv",
+    "rtl/p5_async_fifo_reset.sv",
+    "rtl/p5_async_fifo_soak.sv",
+    "rtl/p5_async_fifo_soak_core.sv",
+    "rtl/p5_async_fifo_xing.sv",
+    "rtl/xilinx_sim_stubs.sv"
+   ]
+  },
+  {
+   "stage": "constraints",
+   "visit": 1,
+   "role": "rtl",
+   "repair": false,
+   "turns_allowed": 30,
+   "turns": 29,
+   "ended": "done",
+   "wall_s": 1696.3,
+   "tools": {
+    "read_file": 7,
+    "list_files": 1,
+    "check_constraints": 3,
+    "check": 5,
+    "board_constraints": 2,
+    "search_docs": 1,
+    "build": 6,
+    "gates": 1
+   },
+   "model_tool_calls": {
+    "edit_file": 8,
+    "fda_board_constraints": 2,
+    "fda_build": 6,
+    "fda_check": 5,
+    "fda_check_constraints": 3,
+    "fda_gates": 1,
+    "fda_list_files": 1,
+    "fda_read_file": 7,
+    "fda_search_docs": 1,
+    "grep": 4,
+    "read_file": 2,
+    "write_file": 2
+   },
+   "refused": {},
+   "files_written": [],
+   "files_changed": [
+    "design.xdc",
+    "rtl/p5_async_fifo_soak.sv",
+    "rtl/xilinx_sim_stubs.sv"
+   ]
+  },
+  {
+   "stage": "synthesis",
+   "visit": 1,
+   "role": "rtl",
+   "repair": false,
+   "turns_allowed": 30,
+   "turns": 5,
+   "ended": "done",
+   "wall_s": 16.8,
+   "tools": {
+    "build": 1,
+    "check": 1
+   },
+   "model_tool_calls": {
+    "fda_build": 1,
+    "fda_check": 1,
+    "ls": 2,
+    "read_file": 2
+   },
+   "refused": {},
+   "files_written": [],
+   "files_changed": []
+  },
+  {
+   "stage": "implementation",
+   "visit": 1,
+   "role": "rtl",
+   "repair": false,
+   "turns_allowed": 30,
+   "turns": 3,
+   "ended": "done",
+   "wall_s": 11.5,
+   "tools": {
+    "list_files": 1,
+    "gates": 1,
+    "check": 1
+   },
+   "model_tool_calls": {
+    "fda_check": 1,
+    "fda_gates": 1,
+    "fda_list_files": 1
+   },
+   "refused": {},
+   "files_written": [],
+   "files_changed": []
+  },
+  {
+   "stage": "timing-closure",
+   "visit": 1,
+   "role": "rtl",
+   "repair": false,
+   "turns_allowed": 30,
+   "turns": 4,
+   "ended": "done",
+   "wall_s": 11.7,
+   "tools": {
+    "gates": 1,
+    "check": 2
+   },
+   "model_tool_calls": {
+    "fda_check": 2,
+    "fda_gates": 1
+   },
+   "refused": {},
+   "files_written": [],
+   "files_changed": []
+  },
+  {
+   "stage": "power-closure",
+   "visit": 1,
+   "role": "rtl",
+   "repair": false,
+   "turns_allowed": 30,
+   "turns": 3,
+   "ended": "done",
+   "wall_s": 11.8,
+   "tools": {
+    "gates": 1,
+    "check": 1
+   },
+   "model_tool_calls": {
+    "fda_check": 1,
+    "fda_gates": 1,
+    "ls": 1
+   },
+   "refused": {},
+   "files_written": [],
+   "files_changed": []
+  },
+  {
+   "stage": "drc-closure",
+   "visit": 1,
+   "role": "rtl",
+   "repair": false,
+   "turns_allowed": 30,
+   "turns": 3,
+   "ended": "done",
+   "wall_s": 10.9,
+   "tools": {
+    "check": 1,
+    "gates": 1
+   },
+   "model_tool_calls": {
+    "fda_check": 1,
+    "fda_gates": 1
+   },
+   "refused": {},
+   "files_written": [],
+   "files_changed": []
+  },
+  {
+   "stage": "configuration-and-debug",
+   "visit": 1,
+   "role": "rtl",
+   "repair": false,
+   "turns_allowed": 30,
+   "turns": 8,
+   "ended": "done",
+   "wall_s": 32.0,
+   "tools": {
+    "gates": 2,
+    "search_docs": 1,
+    "read_file": 1
+   },
+   "model_tool_calls": {
+    "fda_gates": 2,
+    "fda_read_file": 1,
+    "fda_search_docs": 1,
+    "grep": 2,
+    "ls": 2,
+    "read_file": 1,
+    "write_file": 2
+   },
+   "refused": {
+    "path-jail": 1
+   },
+   "files_written": [],
+   "files_changed": [
+    "BRINGUP.md",
+    "hw_checks.py"
+   ]
+  },
+  {
+   "stage": "configuration-and-debug",
+   "visit": 1,
+   "role": "tests",
+   "repair": true,
+   "turns_allowed": 37,
+   "turns": 7,
+   "ended": "done",
+   "wall_s": 31.8,
+   "tools": {
+    "gates": 1,
+    "write_file": 2
+   },
+   "model_tool_calls": {
+    "edit_file": 4,
+    "fda_gates": 1,
+    "grep": 2,
+    "ls": 2,
+    "read_file": 1,
+    "write_file": 1
+   },
+   "refused": {},
+   "files_written": [
+    "hw_checks.py",
+    "tests/test_p5_async_fifo_hw.py"
+   ],
+   "files_changed": [
+    "hw_checks.py",
+    "tests/test_p5_async_fifo_hw.py"
+   ]
+  }
+ ],
+ "per_role": {
+  "clarify": {
+   "calls": 2,
+   "turns": 15,
+   "tokens": 283052,
+   "wall_s": 106.9,
+   "cost_usd": 0.294169,
+   "plan_cost_estimate_usd": 0.0
+  },
+  "rtl": {
+   "calls": 12,
+   "turns": 139,
+   "tokens": 5789998,
+   "wall_s": 3308.5,
+   "cost_usd": 4.338332,
+   "plan_cost_estimate_usd": 0.0
+  },
+  "model": {
+   "calls": 1,
+   "turns": 2,
+   "tokens": 24965,
+   "wall_s": 25.4,
+   "cost_usd": 0.059153,
+   "plan_cost_estimate_usd": 0.0
+  },
+  "tests": {
+   "calls": 2,
+   "turns": 15,
+   "tokens": 692937,
+   "wall_s": 407.2,
+   "cost_usd": 0.892626,
+   "plan_cost_estimate_usd": 0.0
+  }
+ },
+ "per_stage": {
+  "clarify": {
+   "calls": 2,
+   "turns": 15,
+   "tokens": 283052,
+   "wall_s": 106.9,
+   "cost_usd": 0.294169,
+   "plan_cost_estimate_usd": 0.0
+  },
+  "board-and-device-planning": {
+   "calls": 2,
+   "turns": 13,
+   "tokens": 358430,
+   "wall_s": 41.2,
+   "cost_usd": 0.202385,
+   "plan_cost_estimate_usd": 0.0
+  },
+  "rtl-design-creation": {
+   "calls": 5,
+   "turns": 81,
+   "tokens": 3712877,
+   "wall_s": 1877.1,
+   "cost_usd": 3.70876,
+   "plan_cost_estimate_usd": 0.0
+  },
+  "constraints": {
+   "calls": 1,
+   "turns": 29,
+   "tokens": 1449379,
+   "wall_s": 1696.3,
+   "cost_usd": 0.737643,
+   "plan_cost_estimate_usd": 0.0
+  },
+  "synthesis": {
+   "calls": 1,
+   "turns": 5,
+   "tokens": 129997,
+   "wall_s": 16.8,
+   "cost_usd": 0.091681,
+   "plan_cost_estimate_usd": 0.0
+  },
+  "implementation": {
+   "calls": 1,
+   "turns": 3,
+   "tokens": 79650,
+   "wall_s": 11.5,
+   "cost_usd": 0.069017,
+   "plan_cost_estimate_usd": 0.0
+  },
+  "timing-closure": {
+   "calls": 1,
+   "turns": 4,
+   "tokens": 102162,
+   "wall_s": 11.7,
+   "cost_usd": 0.063295,
+   "plan_cost_estimate_usd": 0.0
+  },
+  "power-closure": {
+   "calls": 1,
+   "turns": 3,
+   "tokens": 76664,
+   "wall_s": 11.8,
+   "cost_usd": 0.06279,
+   "plan_cost_estimate_usd": 0.0
+  },
+  "drc-closure": {
+   "calls": 1,
+   "turns": 3,
+   "tokens": 76215,
+   "wall_s": 10.9,
+   "cost_usd": 0.062012,
+   "plan_cost_estimate_usd": 0.0
+  },
+  "configuration-and-debug": {
+   "calls": 2,
+   "turns": 15,
+   "tokens": 522526,
+   "wall_s": 63.8,
+   "cost_usd": 0.292528,
+   "plan_cost_estimate_usd": 0.0
+  }
+ },
+ "interview": "off",
+ "requirements": {
+  "level": "loose",
+  "source": "default",
+  "conflicts": []
+ },
+ "user_requests": {
+  "control": 0,
+  "design": 0,
+  "applied": 0,
+  "declined": 0,
+  "questions_asked": 0,
+  "user_interventions": 0
+ },
+ "review": "off",
+ "stages_visited": [
+  0,
+  0,
+  1,
+  1,
+  2,
+  2,
+  2,
+  3,
+  4,
+  5,
+  6,
+  7,
+  8
+ ],
+ "loops": 4,
+ "rewinds": [],
+ "tokens": 6790952,
+ "cost_usd": 5.58428,
+ "unreported_cost_calls": 0,
+ "token_split": {
+  "input": 380,
+  "output": 280075,
+  "cache_write": 888218,
+  "cache_read": 5622279
+ },
+ "budget_scale": 3.5,
+ "truncated_calls": 0,
+ "turns": 171,
+ "wall_s": 4372.6,
+ "questions": {
+  "asked": 8,
+  "answered": 0,
+  "defaulted": 8,
+  "waived": 0,
+  "unresolved": 0,
+  "level": "loose",
+  "questions": [
+   {
+    "id": "q1",
+    "text": "Which clock drives jtag_bus and the register block?",
+    "default": "clk_wr (25 MHz)",
+    "reason": "Free-running, matches the writer; counters from clk_rd are brought over by CDC.",
+    "answer": "clk_wr (25 MHz)",
+    "status": "defaulted",
+    "by": "default",
+    "evidence": null,
+    "fact": null,
+    "risk": "high",
+    "risk_rule": "clock",
+    "risk_reason": "a clock frequency or source changes timing and every rate derived from it",
+    "waiver": null,
+    "clarifier_risk": null
+   },
+   {
+    "id": "q2",
+    "text": "What happens to words still in the FIFO when RUN falls?",
+    "default": "The reader keeps draining and checking until empty; the writer stops.",
+    "reason": "Avoids a false mismatch from a sequence break.",
+    "answer": "The reader keeps draining and checking until empty; the writer stops.",
+    "status": "defaulted",
+    "by": "default",
+    "evidence": null,
+    "fact": null,
+    "risk": "medium",
+    "risk_rule": "cost",
+    "risk_reason": "it changes size, speed or power, not what the design does",
+    "waiver": null,
+    "clarifier_risk": null
+   },
+   {
+    "id": "q3",
+    "text": "Which bit does INJECT flip?",
+    "default": "Bit 0 of the next word read after INJECT is seen by the reader.",
+    "reason": "The request says one bit of one word without naming it.",
+    "answer": "Bit 0 of the next word read after INJECT is seen by the reader.",
+    "status": "defaulted",
+    "by": "default",
+    "evidence": null,
+    "fact": null,
+    "risk": "medium",
+    "risk_rule": "unmatched",
+    "risk_reason": "no rule names it a behaviour, an interface or a cosmetic choice: treated as a cost choice",
+    "waiver": null,
+    "clarifier_risk": null
+   },
+   {
+    "id": "q4",
+    "text": "Does a CLEAR with RUN 1 set any error flag?",
+    "default": "No, it is ignored silently and the bit still self-clears.",
+    "reason": "Request only restricts CLEAR to RUN 0.",
+    "answer": "No, it is ignored silently and the bit still self-clears.",
+    "status": "defaulted",
+    "by": "default",
+    "evidence": null,
+    "fact": null,
+    "risk": "medium",
+    "risk_rule": "unmatched",
+    "risk_reason": "no rule names it a behaviour, an interface or a cosmetic choice: treated as a cost choice",
+    "waiver": null,
+    "clarifier_risk": null
+   },
+   {
+    "id": "q5",
+    "text": "What do snapshot registers read before the first SNAPSHOT write?",
+    "default": "0",
+    "reason": "Reset value is not given.",
+    "answer": "0",
+    "status": "defaulted",
+    "by": "default",
+    "evidence": null,
+    "fact": null,
+    "risk": "high",
+    "risk_rule": "interface",
+    "risk_reason": "an interface or register map is what other code is written against",
+    "waiver": null,
+    "clarifier_risk": null
+   },
+   {
+    "id": "q6",
+    "text": "Should the LEDs show anything?",
+    "default": "led[0] = RUN, led[1] = any error seen (DATA_ERRS, OVERFLOWS or UNDERFLOWS nonzero).",
+    "reason": "LEDs are not described in the request.",
+    "answer": "led[0] = RUN, led[1] = any error seen (DATA_ERRS, OVERFLOWS or UNDERFLOWS nonzero).",
+    "status": "defaulted",
+    "by": "default",
+    "evidence": null,
+    "fact": null,
+    "risk": "high",
+    "risk_rule": "behaviour",
+    "risk_reason": "it settles what the design does in a case the request left open",
+    "waiver": null,
+    "clarifier_risk": null
+   },
+   {
+    "id": "q7",
+    "text": "Please confirm the register map (offset, width, reset value and access of every register).",
+    "default": "The map in registers.map: 0x000 ID, 0x004 BUILD, 0x008 SCRATCH, 0x010 CTRL, 0x014 to 0x02C counters, 0x030 SNAPSHOT, all 32 bits, as in the request.",
+    "reason": "Offsets are given in the request; confirmed for the harness.",
+    "answer": "The map in registers.map: 0x000 ID, 0x004 BUILD, 0x008 SCRATCH, 0x010 CTRL, 0x014 to 0x02C counters, 0x030 SNAPSHOT, all 32 bits, as in the request.",
+    "status": "defaulted",
+    "by": "default",
+    "evidence": null,
+    "fact": null,
+    "risk": "high",
+    "risk_rule": "register-map",
+    "risk_reason": "the register map is what host software and the test shell are written against",
+    "waiver": null,
+    "clarifier_risk": null
+   },
+   {
+    "id": "q8",
+    "text": "This design has no reset input. Is every reset a reconfiguration of the FPGA (the device is reprogrammed, so every register starts from its initial value), or does something restart the running design (then it needs a reset input)?",
+    "default": "Every reset is a reconfiguration of the FPGA (reset model: reprogram): registers get initial values, control state included, and the design has no reset input. Record it in spec.yaml as reset: {model: reprogram}; a design that restarts while it runs is reset: {model: reset} with a reset port.",
+    "reason": "With no reset input, a register can start only from its initial value, which the FPGA loads at configuration (owner, 2026-11-26: particularly useful for designs whose every reset reprograms the device). A design that must restart while running needs a reset input and resets its control state; the two models are checked by different rules (STD-INIT-02).",
+    "answer": "Every reset is a reconfiguration of the FPGA (reset model: reprogram): registers get initial values, control state included, and the design has no reset input. Record it in spec.yaml as reset: {model: reprogram}; a design that restarts while it runs is reset: {model: reset} with a reset port.",
+    "status": "defaulted",
+    "by": "default",
+    "evidence": null,
+    "fact": null,
+    "risk": "high",
+    "risk_rule": "reset",
+    "risk_reason": "a reset's polarity, style or value decides the start-up state and the interface",
+    "waiver": null,
+    "clarifier_risk": null
+   }
+  ],
+  "level_source": "default"
+ },
+ "stop": "paused: awaiting the owner's approval to program the board (stage 9)",
+ "stop_detail": null,
+ "last_rtl_message": {
+  "stage": "configuration-and-debug",
+  "visit": 1,
+  "text": "DONE. I wrote `hw_checks.py` and `BRINGUP.md`, and `gates(kind=\"bringup_ready\")` now returns ready. I did not run `check` with names `[\"all\"]`, so that check is still outstanding. I also did not build or program anything.\n\n- **`hw_checks.py`:** `DESIGN_ID = 0x20950001`. `make_mock()` returns a mock with CTRL, the snapshot counters and SNAPSHOT behaviour. `run(bus)` clears, runs, injects one error, stops and snapshots. It then checks the counters and the INJECT self-clear and a read of an unmapped address. It ends with CLEAR, which leaves the design at its reset values.\n- **`BRINGUP.md`:** Setup, Testing (7 numbered steps, each with a pass or fail rule), Debug aids and If it fails.\n\nI could not find `flow.host_transport` to read, so I wrote the mock from the spec and `model.py` without seeing `MockBus`. The gate ran `run(bus)` against it and passed. The mock's counter values are simplified, so the real design is only checked by the same pass rules on the board."
+ },
+ "routing_events": [
+  {
+   "event": "clarify_constants_check",
+   "stage": "clarify",
+   "visit": 1,
+   "findings": [],
+   "failed": false
+  },
+  {
+   "event": "clarify_constants_check",
+   "stage": "clarify",
+   "visit": 2,
+   "findings": [],
+   "failed": false
+  },
+  {
+   "event": "report_gates_checked",
+   "stage": "rtl-design-creation",
+   "visit": 3,
+   "blocked": false,
+   "codes": [],
+   "advisories": [
+    "RPT-LOG-01"
+   ],
+   "where": [],
+   "text": []
+  },
+  {
+   "event": "report_gates_checked",
+   "stage": "constraints",
+   "visit": 1,
+   "blocked": false,
+   "codes": [],
+   "advisories": [
+    "RPT-LL-01",
+    "RPT-LOG-01"
+   ],
+   "where": [],
+   "text": []
+  },
+  {
+   "event": "report_gates_checked",
+   "stage": "synthesis",
+   "visit": 1,
+   "blocked": false,
+   "codes": [],
+   "advisories": [
+    "RPT-LL-01",
+    "RPT-LOG-01"
+   ],
+   "where": [],
+   "text": []
+  }
+ ],
+ "clean_stop": false,
+ "verification_profile": {
+  "profile": "standard",
+  "overrides": {
+   "verif_level": {
+    "profile_value": "V3",
+    "value": "V2"
+   }
+  },
+  "effective": {
+   "lint": true,
+   "directed_sim": true,
+   "verif_level": "V2",
+   "random_sim": true,
+   "coverage_target": 100,
+   "mutation_floor": 70,
+   "seeds": 3,
+   "indep_spec_test": false,
+   "formal_depth_scale": 1,
+   "formal_induction": false,
+   "formal_pdr": false,
+   "lean_proof": false,
+   "uvm": "none",
+   "post_synth_sim": false,
+   "equivalence": false,
+   "timing_sim": "off",
+   "fault_injection": false,
+   "dependability": "none",
+   "latency_checks": false,
+   "board_hil": "smoke",
+   "repeats": 1,
+   "production_secure": false,
+   "sec_encrypt": true,
+   "sec_authenticate": true,
+   "sec_readback_off": true,
+   "sec_strip_debug": true,
+   "sec_sysmon_shutdown": true
+  },
+  "not_wired": [],
+  "ip_release_gaps": [
+   "verif_level: V2 (ip_release: V3)",
+   "mutation_floor: 70 (ip_release: 85)",
+   "seeds: 3 (ip_release: 8)",
+   "indep_spec_test: False (ip_release: True)",
+   "formal_depth_scale: 1 (ip_release: 4)",
+   "formal_induction: False (ip_release: True)",
+   "formal_pdr: False (ip_release: True)",
+   "uvm: none (ip_release: pyuvm)",
+   "post_synth_sim: False (ip_release: True)",
+   "equivalence: False (ip_release: True)",
+   "timing_sim: off (ip_release: auto)"
+  ],
+  "method_mix_gaps": [],
+  "advisory": "profile standard with 1 override(s)",
+  "policy_breaches": []
+ },
+ "constants": {
+  "ran": true,
+  "blocking": [],
+  "advice": []
+ },
+ "gates_last": {
+  "clarify": true,
+  "board-and-device-planning": true,
+  "rtl-design-creation": true,
+  "constraints": true,
+  "synthesis": true,
+  "implementation": true,
+  "timing-closure": true,
+  "power-closure": true,
+  "drc-closure": true
+ },
+ "approvals": [
+  {
+   "n": 0,
+   "decision": "approve",
+   "by": "auto",
+   "note": ""
+  },
+  {
+   "n": 0,
+   "decision": "approve",
+   "by": "auto",
+   "note": ""
+  },
+  {
+   "n": 1,
+   "decision": "approve",
+   "by": "auto",
+   "note": ""
+  },
+  {
+   "n": 1,
+   "decision": "approve",
+   "by": "auto",
+   "note": ""
+  },
+  {
+   "n": 2,
+   "decision": "approve",
+   "by": "auto",
+   "note": ""
+  },
+  {
+   "n": 2,
+   "decision": "approve",
+   "by": "auto",
+   "note": ""
+  },
+  {
+   "n": 2,
+   "decision": "approve",
+   "by": "auto",
+   "note": ""
+  },
+  {
+   "n": 3,
+   "decision": "approve",
+   "by": "auto",
+   "note": ""
+  },
+  {
+   "n": 4,
+   "decision": "approve",
+   "by": "auto",
+   "note": ""
+  },
+  {
+   "n": 5,
+   "decision": "approve",
+   "by": "auto",
+   "note": ""
+  },
+  {
+   "n": 6,
+   "decision": "approve",
+   "by": "auto",
+   "note": ""
+  },
+  {
+   "n": 7,
+   "decision": "approve",
+   "by": "auto",
+   "note": ""
+  },
+  {
+   "n": 8,
+   "decision": "approve",
+   "by": "auto",
+   "note": ""
+  }
+ ],
+ "permissions": {
+  "mode": "auto",
+  "source": "default (auto: the behaviour before brief 222)",
+  "overrides": {},
+  "ask_above_usd": 1.0,
+  "mode_changes": [],
+  "granted": {},
+  "refused": {},
+  "decisions": [
+   {
+    "action": "use_knowledge_bank",
+    "result": "allowed",
+    "by": "mode auto",
+    "stage": 0,
+    "first": "2026-11-26 16:40:35",
+    "last": "2026-11-26 16:41:38",
+    "count": 2
+   },
+   {
+    "action": "use_knowledge_bank",
+    "result": "allowed",
+    "by": "mode auto",
+    "stage": 1,
+    "first": "2026-11-26 16:42:23",
+    "last": "2026-11-26 16:42:48",
+    "count": 2
+   },
+   {
+    "action": "approve_architecture",
+    "result": "allowed",
+    "by": "mode auto",
+    "stage": 1,
+    "first": "2026-11-26 16:43:05",
+    "last": "2026-11-26 16:43:05",
+    "count": 1
+   },
+   {
+    "action": "use_knowledge_bank",
+    "result": "allowed",
+    "by": "mode auto",
+    "stage": 2,
+    "first": "2026-11-26 16:43:05",
+    "last": "2026-11-26 17:14:57",
+    "count": 3
+   },
+   {
+    "action": "edit_design_files",
+    "result": "allowed",
+    "by": "mode auto",
+    "stage": 2,
+    "first": "2026-11-26 16:43:05",
+    "last": "2026-11-26 17:14:57",
+    "count": 3
+   },
+   {
+    "action": "run_simulation",
+    "result": "allowed",
+    "by": "mode auto",
+    "stage": 2,
+    "first": "2026-11-26 16:43:05",
+    "last": "2026-11-26 17:14:57",
+    "count": 3
+   },
+   {
+    "action": "run_vivado",
+    "result": "allowed",
+    "by": "mode auto",
+    "stage": 2,
+    "first": "2026-11-26 16:43:05",
+    "last": "2026-11-26 17:14:57",
+    "count": 3
+   },
+   {
+    "action": "spend_model_money",
+    "result": "allowed",
+    "by": "mode auto",
+    "stage": 2,
+    "first": "2026-11-26 17:11:24",
+    "last": "2026-11-26 17:14:57",
+    "count": 2
+   },
+   {
+    "action": "use_knowledge_bank",
+    "result": "allowed",
+    "by": "mode auto",
+    "stage": 3,
+    "first": "2026-11-26 17:22:40",
+    "last": "2026-11-26 17:22:40",
+    "count": 1
+   },
+   {
+    "action": "edit_design_files",
+    "result": "allowed",
+    "by": "mode auto",
+    "stage": 3,
+    "first": "2026-11-26 17:22:40",
+    "last": "2026-11-26 17:22:40",
+    "count": 1
+   },
+   {
+    "action": "run_vivado",
+    "result": "allowed",
+    "by": "mode auto",
+    "stage": 3,
+    "first": "2026-11-26 17:22:40",
+    "last": "2026-11-26 17:22:40",
+    "count": 1
+   },
+   {
+    "action": "spend_model_money",
+    "result": "allowed",
+    "by": "mode auto",
+    "stage": 3,
+    "first": "2026-11-26 17:22:40",
+    "last": "2026-11-26 17:22:40",
+    "count": 1
+   },
+   {
+    "action": "use_knowledge_bank",
+    "result": "allowed",
+    "by": "mode auto",
+    "stage": 4,
+    "first": "2026-11-26 17:51:03",
+    "last": "2026-11-26 17:51:03",
+    "count": 1
+   },
+   {
+    "action": "edit_design_files",
+    "result": "allowed",
+    "by": "mode auto",
+    "stage": 4,
+    "first": "2026-11-26 17:51:03",
+    "last": "2026-11-26 17:51:03",
+    "count": 1
+   },
+   {
+    "action": "run_vivado",
+    "result": "allowed",
+    "by": "mode auto",
+    "stage": 4,
+    "first": "2026-11-26 17:51:03",
+    "last": "2026-11-26 17:51:03",
+    "count": 1
+   },
+   {
+    "action": "spend_model_money",
+    "result": "allowed",
+    "by": "mode auto",
+    "stage": 4,
+    "first": "2026-11-26 17:51:03",
+    "last": "2026-11-26 17:51:03",
+    "count": 1
+   },
+   {
+    "action": "use_knowledge_bank",
+    "result": "allowed",
+    "by": "mode auto",
+    "stage": 5,
+    "first": "2026-11-26 17:51:24",
+    "last": "2026-11-26 17:51:24",
+    "count": 1
+   },
+   {
+    "action": "edit_design_files",
+    "result": "allowed",
+    "by": "mode auto",
+    "stage": 5,
+    "first": "2026-11-26 17:51:24",
+    "last": "2026-11-26 17:51:24",
+    "count": 1
+   },
+   {
+    "action": "run_vivado",
+    "result": "allowed",
+    "by": "mode auto",
+    "stage": 5,
+    "first": "2026-11-26 17:51:24",
+    "last": "2026-11-26 17:51:24",
+    "count": 1
+   },
+   {
+    "action": "spend_model_money",
+    "result": "allowed",
+    "by": "mode auto",
+    "stage": 5,
+    "first": "2026-11-26 17:51:24",
+    "last": "2026-11-26 17:51:24",
+    "count": 1
+   },
+   {
+    "action": "use_knowledge_bank",
+    "result": "allowed",
+    "by": "mode auto",
+    "stage": 6,
+    "first": "2026-11-26 17:51:41",
+    "last": "2026-11-26 17:51:41",
+    "count": 1
+   },
+   {
+    "action": "edit_design_files",
+    "result": "allowed",
+    "by": "mode auto",
+    "stage": 6,
+    "first": "2026-11-26 17:51:41",
+    "last": "2026-11-26 17:51:41",
+    "count": 1
+   },
+   {
+    "action": "run_vivado",
+    "result": "allowed",
+    "by": "mode auto",
+    "stage": 6,
+    "first": "2026-11-26 17:51:41",
+    "last": "2026-11-26 17:51:41",
+    "count": 1
+   },
+   {
+    "action": "spend_model_money",
+    "result": "allowed",
+    "by": "mode auto",
+    "stage": 6,
+    "first": "2026-11-26 17:51:41",
+    "last": "2026-11-26 17:51:41",
+    "count": 1
+   },
+   {
+    "action": "use_knowledge_bank",
+    "result": "allowed",
+    "by": "mode auto",
+    "stage": 7,
+    "first": "2026-11-26 17:51:56",
+    "last": "2026-11-26 17:51:56",
+    "count": 1
+   },
+   {
+    "action": "edit_design_files",
+    "result": "allowed",
+    "by": "mode auto",
+    "stage": 7,
+    "first": "2026-11-26 17:51:56",
+    "last": "2026-11-26 17:51:56",
+    "count": 1
+   },
+   {
+    "action": "run_vivado",
+    "result": "allowed",
+    "by": "mode auto",
+    "stage": 7,
+    "first": "2026-11-26 17:51:56",
+    "last": "2026-11-26 17:51:56",
+    "count": 1
+   },
+   {
+    "action": "spend_model_money",
+    "result": "allowed",
+    "by": "mode auto",
+    "stage": 7,
+    "first": "2026-11-26 17:51:56",
+    "last": "2026-11-26 17:51:56",
+    "count": 1
+   },
+   {
+    "action": "use_knowledge_bank",
+    "result": "allowed",
+    "by": "mode auto",
+    "stage": 8,
+    "first": "2026-11-26 17:52:11",
+    "last": "2026-11-26 17:52:11",
+    "count": 1
+   },
+   {
+    "action": "edit_design_files",
+    "result": "allowed",
+    "by": "mode auto",
+    "stage": 8,
+    "first": "2026-11-26 17:52:11",
+    "last": "2026-11-26 17:52:11",
+    "count": 1
+   },
+   {
+    "action": "run_vivado",
+    "result": "allowed",
+    "by": "mode auto",
+    "stage": 8,
+    "first": "2026-11-26 17:52:11",
+    "last": "2026-11-26 17:52:11",
+    "count": 1
+   },
+   {
+    "action": "spend_model_money",
+    "result": "allowed",
+    "by": "mode auto",
+    "stage": 8,
+    "first": "2026-11-26 17:52:11",
+    "last": "2026-11-26 17:52:11",
+    "count": 1
+   },
+   {
+    "action": "use_knowledge_bank",
+    "result": "allowed",
+    "by": "mode auto",
+    "stage": 9,
+    "first": "2026-11-26 17:52:28",
+    "last": "2026-11-26 17:52:28",
+    "count": 1
+   },
+   {
+    "action": "edit_design_files",
+    "result": "allowed",
+    "by": "mode auto",
+    "stage": 9,
+    "first": "2026-11-26 17:52:28",
+    "last": "2026-11-26 17:52:28",
+    "count": 1
+   },
+   {
+    "action": "run_vivado",
+    "result": "allowed",
+    "by": "mode auto",
+    "stage": 9,
+    "first": "2026-11-26 17:52:28",
+    "last": "2026-11-26 17:52:28",
+    "count": 1
+   },
+   {
+    "action": "spend_model_money",
+    "result": "allowed",
+    "by": "mode auto",
+    "stage": 9,
+    "first": "2026-11-26 17:52:28",
+    "last": "2026-11-26 17:52:28",
+    "count": 1
+   }
+  ]
+ },
+ "bringup": null,
+ "paused": {
+  "kind": "hardware approval",
+  "stage": 9,
+  "stage_name": "configuration-and-debug",
+  "fails": [
+   "hardware: awaiting approval before programming"
+  ],
+  "resume": "python -m agent resume 20261126-164034-895f --reply '{\"decision\": \"approve\"}'"
+ }
+}

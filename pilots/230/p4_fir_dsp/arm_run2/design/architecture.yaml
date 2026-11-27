@@ -1,0 +1,31 @@
+schema: fpga-design-agent/architecture/v1
+design: fir32_sym
+blocks:
+  - {name: fir32_top, function: "Thin top: jtag_bus, MMCM (clk25 x10 -> clk_dp 250 MHz), reset synchroniser, core, SFP tx disable tied 1"}
+  - {name: jtag_bus, function: "Supplied BSCANE2 USER4 register bus in clk25 domain, used unchanged (data/jtag_bus.sv)"}
+  - {name: fir_core, function: "Register map, CTRL/IN_PUSH/OUT_POP/STATUS decode, LEDs (BUSY, heartbeat), CDC to datapath"}
+  - {name: fir_engine, function: "Run control: reads input FIFO, feeds filter, writes output FIFO, counts SAT and SAMPLES_DONE (clk_dp)"}
+  - {name: fir_filter, function: "32-tap symmetric FIR: 16 pre-adders, 16 DSP48E2 multipliers, adder tree, round, shift 15, saturate16; 1 sample/clk"}
+  - {name: in_fifo, function: "1024x16 xpm_fifo_async, clk25 write, clk_dp read"}
+  - {name: out_fifo, function: "1024x16 xpm_fifo_async, clk_dp write, clk25 read"}
+interfaces:
+  - {name: host_reg, between: [jtag_bus, fir_core], protocol: simple, prefix: h, module: fir_core}
+  - {name: fifo_in, between: [fir_core, fir_engine], protocol: simple, prefix: in, module: fir_engine}
+  - {name: fifo_out, between: [fir_engine, fir_core], protocol: simple, prefix: out, module: fir_engine}
+clock_domains:
+  - {name: clk25, clock: clk25, freq_mhz: 25}
+  - {name: clk_dp, clock: clk_dp, freq_mhz: 250}
+reset:
+  synchronisers: [xpm_cdc_async_rst]
+crossings:
+  - {from: clk25, to: clk_dp, signal: rst (jtag_bus rst and MMCM locked), primitive: xpm_cdc_async_rst, inline_in: fir32_top}
+  - {from: clk25, to: clk_dp, signal: RUN and CLEAR pulses, primitive: xpm_cdc_pulse, inline_in: fir_core}
+  - {from: clk_dp, to: clk25, signal: BUSY, primitive: xpm_cdc_single, inline_in: fir_core}
+  - {from: clk_dp, to: clk25, signal: SAT_COUNT and SAMPLES_DONE snapshot, primitive: xpm_cdc_handshake, inline_in: fir_core}
+  - {from: clk25, to: clk_dp, signal: input samples, primitive: xpm_fifo_async, inline_in: fir_core}
+  - {from: clk_dp, to: clk25, signal: output samples, primitive: xpm_fifo_async, inline_in: fir_core}
+predicted_resources:
+  lut: [500, 1500]
+  ff: [1000, 2500]
+  bram_tile: [2, 4]
+  dsp: [16, 20]

@@ -1,0 +1,71 @@
+schema: fpga-design-agent/architecture/v1
+blocks:
+- name: fir32_top
+  function: thin top; instantiates jtag_bus, reset generator, MMCM, fir32_core, drives sfp_tx_disable=1
+- name: jtag_bus
+  function: supplied BSCANE2 USER4 register bus (data/jtag_bus.sv, unchanged), clk_25 domain
+- name: reset_gen
+  function: 16-cycle power-on counter held until MMCM locked; active-high rst on clk_25
+- name: reset_sync
+  function: xpm_cdc_async_rst producing synchronised active-high reset for clk_dp
+- name: fir32_core
+  function: register map (ID, BUILD, SCRATCH, CTRL, IN_PUSH, OUT_POP, STATUS, SAT_COUNT, SAMPLES_DONE), LEDs, run control
+- name: in_fifo
+  function: 1024x16 xpm_fifo_async, clk_25 write, clk_dp read
+- name: out_fifo
+  function: 1024x16 xpm_fifo_async, clk_dp write, clk_25 read
+- name: fir_datapath
+  function: 32-tap symmetric FIR, 16 pre-add + DSP48E2 multiplies, round, shift 15, saturate, one sample per clk_dp
+- name: ctrl_cdc
+  function: run/clear command and busy/counter status crossings between domains
+interfaces:
+- name: host_regs
+  between: [jtag_bus, fir32_core]
+  protocol: simple
+  prefix: h
+  module: fir32_core
+- name: led_pins
+  between: [fir32_core, fir32_top]
+  protocol: gpio
+  prefix: led
+  module: fir32_top
+clock_domains:
+- name: clk_25
+  clock: clk_25
+  freq_mhz: 25
+- name: clk_dp
+  clock: clk_dp
+  freq_mhz: 250
+reset:
+  synchronisers: [reset_sync]
+crossings:
+- from: clk_25
+  to: clk_dp
+  signal: input samples
+  primitive: xpm_fifo_async
+  inline_in: fir32_core
+- from: clk_dp
+  to: clk_25
+  signal: output samples
+  primitive: xpm_fifo_async
+  inline_in: fir32_core
+- from: clk_25
+  to: clk_dp
+  signal: run/clear command with batch count
+  primitive: xpm_cdc_handshake
+  inline_in: fir32_core
+- from: clk_dp
+  to: clk_25
+  signal: busy, sat_count, samples_done
+  primitive: xpm_cdc_handshake
+  inline_in: fir32_core
+- from: clk_25
+  to: clk_dp
+  signal: reset
+  primitive: xpm_cdc_async_rst
+  inline_in: reset_sync
+predicted_resources:
+  lut: [700, 2500]
+  ff: [900, 3500]
+  bram_tile: [2, 4]
+  dsp: [16, 20]
