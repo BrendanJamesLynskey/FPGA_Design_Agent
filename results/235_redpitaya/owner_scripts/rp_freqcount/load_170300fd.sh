@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
-# Red Pitaya load-and-check for build c330ca4c (rp_patgen, inside the vendor shell). Written by the agent (brief 225); RUN BY THE OWNER, AT A BOARD VISIT.
+# Red Pitaya load-and-check for build 170300fd (rp_freqcount, inside the vendor shell). Written by the agent (brief 225); RUN BY THE OWNER, AT A BOARD VISIT.
 # The agent has not run this script and has not touched the board. It loads the design into the volatile PL configuration only: a power cycle, or RESTORE=1,
 # returns the factory image. While the design is loaded the factory oscilloscope and generator are NOT running (the board is the target, not an instrument).
 #
-#   ./load_c330ca4c.sh                run it (asks twice: before loading, and before anything moves OUT1)
-#   RESTORE=1 ./load_c330ca4c.sh      load the factory shell again (v0.94) and stop
+#   ./load_170300fd.sh                run it (asks twice: before loading, and before anything moves OUT1)
+#   RESTORE=1 ./load_170300fd.sh      load the factory shell again (v0.94) and stop
 #   DRY_RUN=1 ./...                                          print every board command instead of running it (no network, no board)
 #   RP=root@<host> ./...                                     another address (default root@rp-f00c16.local)
 set -u
@@ -12,9 +12,9 @@ RP="${RP:-root@rp-f00c16.local}"
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PKG="${PKG:-$HERE}"
 BIN="$PKG/fpga.bit.bin"
-BUILD_ID=c330ca4c
-EXPECT_MD5=60c2ea4219d9820406b18b34d55b87fb
-EXPECT_BYTES=997204
+BUILD_ID=170300fd
+EXPECT_MD5=ce6ccca2dc4e15515f939d6fa4cceccb
+EXPECT_BYTES=993544
 REMOTE=/tmp/fda_load
 DRY_RUN="${DRY_RUN:-0}"
 RESTORE="${RESTORE:-0}"
@@ -35,12 +35,12 @@ if [ "$RESTORE" = 1 ]; then
 fi
 
 [ -f "$BIN" ] || fail "no $BIN"
-[ "$(wc -c < "$BIN" | tr -d ' ')" = "$EXPECT_BYTES" ] || fail "$BIN is not the 997204-byte file this script was written for"
+[ "$(wc -c < "$BIN" | tr -d ' ')" = "$EXPECT_BYTES" ] || fail "$BIN is not the 993544-byte file this script was written for"
 if command -v md5sum >/dev/null 2>&1; then
   [ "$(md5sum "$BIN" | cut -d' ' -f1)" = "$EXPECT_MD5" ] || fail "md5 of $BIN differs from the one this script was written for ($EXPECT_MD5)"
 fi
 
-ask "Red Pitaya $RP: the board is the owner's STEMlab 125-14 v1.1 on its 5 V 2 A supply, jumpers IN1 = LV (+-1 V) and IN2 = HV (+-20 V) as recorded, nothing above +-1 V on IN1, OUT1 into nothing that is unprotected. Loading REPLACES the factory image until a power cycle or RESTORE=1. NOTE: this build's timing is NOT met (WNS -0.049 ns, 4 failing endpoints; see build.json). Read the results README before loading: the vendor's own generator and oscilloscope logic is left out of this build's timing by the constraints overlay (this image does not use them; they are not claimed to work), so the figure above is for the shell's bus, the ADC and DAC front end and the blocks: the misses are in the blocks, by tenths of a nanosecond at the slow corner. Not a claim that the image works. Load build $BUILD_ID?" || fail "not confirmed; nothing was done"
+ask "Red Pitaya $RP: the board is the owner's STEMlab 125-14 v1.1 on its 5 V 2 A supply, jumpers IN1 = LV (+-1 V) and IN2 = HV (+-20 V) as recorded, nothing above +-1 V on IN1, OUT1 into nothing that is unprotected. Loading REPLACES the factory image until a power cycle or RESTORE=1. NOTE: timing is met (WNS 0.016 ns) ONLY with the vendor's own generator and oscilloscope logic left out of the analysis by the constraints overlay: this image does not use them and they are not claimed to work. Read the results README before loading. Not a claim that the image works on the board. Load build $BUILD_ID?" || fail "not confirmed; nothing was done"
 
 rp "mkdir -p $REMOTE" || fail "cannot reach $RP"
 put "$BIN" "$PKG/redpitaya_checks.py" "$PKG/redpitaya_regs.py" || fail "copy failed"
@@ -56,10 +56,10 @@ fi
 
 echo "--- the checks (on the board, through /dev/mem, inside the block's register map only)"
 DRIVE=""
-if [ "rp_patgen" = rp_patgen ]; then
+if [ "rp_freqcount" = rp_patgen ]; then
   if ask "DRIVES OUT1: a 0.25 V pulse train, 100 kHz, four pulses, then OUT1 returns to 0. The block cuts every level to 0.5 V. Is OUT1 connected to nothing, to a 50 ohm load or to IN1 (LV) with a short lead, and are you watching it?"; then DRIVE="--drive-ok"; fi
 fi
-rp "cd $REMOTE && python3 redpitaya_checks.py rp_patgen --base 0x40600000 $DRIVE" > "$OUT" || true
+rp "cd $REMOTE && python3 redpitaya_checks.py rp_freqcount $DRIVE" > "$OUT" || true
 echo "check record: $OUT"
 if [ "$DRY_RUN" = 1 ]; then echo "[dry run] done; nothing was loaded"; exit 0; fi
 python3 - "$OUT" <<'PY'

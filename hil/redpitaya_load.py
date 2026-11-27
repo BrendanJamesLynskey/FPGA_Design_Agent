@@ -51,6 +51,9 @@ def render_script(package: Path, block: str, *, expect_hz: float | None = None, 
     expect = (f" --expect-hz {expect_hz!r}" if expect_hz else "") + (f" --base {SLOT_BASES[slot]:#x}" if slot != 7 else "")
     t = info.get("timing") or {}
     warn = ""
+    if t.get("timing_met") and info.get("overlay"):
+        warn = (f" NOTE: timing is met (WNS {t.get('wns_ns')} ns) ONLY with the vendor's own generator and oscilloscope logic left out of the analysis by the constraints overlay: "
+                "this image does not use them and they are not claimed to work. Read the results README before loading. Not a claim that the image works on the board.")
     if t.get("timing_met") is False:
         warn = (f" NOTE: this build's timing is NOT met (WNS {t.get('wns_ns')} ns, {t.get('tns_failing_endpoints')} failing endpoints; see build.json). "
                 + ("Read the results README before loading: the vendor's own generator and oscilloscope logic is left out of this build's timing by the constraints overlay "
