@@ -54,7 +54,7 @@ except ImportError:
     import vhdl                         # type: ignore[no-redef]
 
 ROOT = Path(__file__).resolve().parents[1]
-VERSION = "1.2"           # 1.2 (brief 231): STD-INIT-02, the setting rtl.reset_model
+VERSION = "1.3"           # 1.3 (brief 246): STD-RST-01 honours a recorded async-reset waiver, STD-RST-02; 1.2 (brief 231): STD-INIT-02, the setting rtl.reset_model
 #: brief 205 (owner decision 38): initial values in RTL are a setting. ``deny`` fails an initial block or a register
 #: initial value; ``warn`` reports it without failing; ``allow`` (the default) passes power-up values and still flags an
 #: initial block that does more. ROM initialisation (``$readmemh`` / ``$readmemb``) passes in every mode.
@@ -85,6 +85,10 @@ RULES: dict[str, tuple[str, str, str]] = {
     "STD-RST-01": ("rtl", "synchronous reset: a reset is not in a sensitivity list (the bank's reset-strategy skill: "
                           "follow the spec; FPGA default synchronous), except in a declared reset synchroniser",
                    "static scan of sensitivity lists; architecture.yaml reset.synchronisers or a waiver"),
+    "STD-RST-02": ("rtl", "a reset input that arrives asynchronously from the board (spec.yaml reset.asynchronous_input: true) is taken by a reset "
+                          "synchroniser (asynchronous assert, synchronous de-assert: xpm_cdc_async_rst, or a module in architecture.yaml reset.synchronisers) "
+                          "at the top boundary and reaches no register or other instance directly",
+                   "static scan of the top module's port uses and instances (brief 246)"),
     "STD-LATCH-01": ("rtl", "no latches", "Verilator -Wall LATCH warnings; Yosys proc (a $dlatch cell)"),
     "STD-LOOP-01": ("rtl", "no combinational loops", "Verilator UNOPTFLAT warnings; Yosys check (logic loop)"),
     "STD-INIT-01": ("rtl", "initial values in synthesisable RTL follow the setting rtl.initial_values (allow, the default: power-up "
@@ -122,6 +126,8 @@ MUX_PRIMS = re.compile(r"^(BUFGMUX_CTRL|BUFGCTRL)$")
 _CONST = re.compile(r"^\s*(\d*'[sS]?[bBhHdD][0-9a-fA-F_xXzZ]+|'[01xXzZ]|[01]|)\s*$")
 #: a clock-buffer primitive instantiated with positional connections (the instance parser reads named connections only)
 _POSITIONAL_CLK = re.compile(r"\b(BUFGMUX\w*|BUFGCTRL|BUFGCE\w*|BUFHCE|BUFMRCE)\b\s*(?:#\s*\([^;]*?\)\s*)?([A-Za-z_]\w*)\s*\(\s*(?![.)])")
+#: brief 246: the user's confirmation that internal registers use an asynchronous reset must be emphatic: the words "confirm ... asynchronous reset"
+ASYNC_CONFIRM = re.compile(r"(?is)\bconfirm(?:ed|s)?\b.{0,60}?\basync(?:hronous)?\b.{0,25}?\breset\b")
 _WAIVE = re.compile(r"//\s*std-waive:\s*(STD-[A-Z]+-\d+)\s*(.*)")
 _KEYWORDS = {"if", "else", "begin", "end", "case", "casez", "casex", "endcase", "for", "while", "assign", "always",
              "always_ff", "always_comb", "always_latch", "initial", "module", "endmodule", "generate", "endgenerate",
@@ -709,14 +715,71 @@ class Check:
                 return f"register {sig} assigned in always block"
         return "driver not found"
 
+    def _spec_reset(self) -> dict[str, Any]:
+        """The ``reset`` mapping of spec.yaml (empty when there is none)."""
+        try:
+            sp = yaml.safe_load((self.design / "spec.yaml").read_text()) if (self.design / "spec.yaml").is_file() else None
+        except (OSError, yaml.YAMLError):
+            return {}
+        r = sp.get("reset") if isinstance(sp, dict) else None
+        return r if isinstance(r, dict) else {}
+
+    def _async_waived_registers(self) -> set[str]:
+        """Registers whose asynchronous reset the user confirmed emphatically (brief 246, house rule 2026-11-27): spec.yaml ``reset.async_waivers``,
+        each ``{registers: [...], confirmation: "<the user's words, verbatim>"}``. A waiver whose confirmation is not emphatic, or that names no
+        register, is not honoured."""
+        regs: set[str] = set()
+        for w in self._spec_reset().get("async_waivers") or []:
+            if isinstance(w, dict) and ASYNC_CONFIRM.search(str(w.get("confirmation", ""))):
+                regs |= {str(r) for r in w.get("registers") or [] if str(r).strip()}
+        return regs
+
     def rule_reset(self) -> None:
         syn = set((self.arch.get("reset") or {}).get("synchronisers") or [])
+        waived = self._async_waived_registers()
         for mod in self.modules:
             for a in mod.always:
                 if len(a["edges"]) > 1 and mod.name not in syn:
+                    hit = sorted(r for r in waived if re.search(rf"\b{re.escape(r)}\b\s*<=", mod.body))
+                    if hit:                  # the user's recorded, emphatic confirmation waives STD-RST-01 for these registers
+                        self.notes["async_reset_waivers"] = (self.notes.get("async_reset_waivers", "") + f"{mod.name}: {', '.join(hit)}; ")
+                        continue
                     extra = ", ".join(f"{e} {s}" for e, s in a["edges"][1:])
                     self.add("STD-RST-01", mod, a["line"], f"module {mod.name}: {extra} in the sensitivity list of a "
                                                            f"sequential block: an asynchronous reset")
+
+    def rule_reset_boundary(self) -> None:
+        """STD-RST-02 (brief 246, owner 2026-11-27): a board reset that arrives asynchronously is accepted and synchronised at the boundary.
+        Applies when spec.yaml says ``reset.asynchronous_input: true``: the top module's reset port goes to a synchroniser instance
+        (xpm_cdc_async_rst, a module in architecture.yaml reset.synchronisers, or one named like a reset synchroniser) and to nothing else."""
+        sr = self._spec_reset()
+        port = str(sr.get("port") or "").strip()
+        if not sr.get("asynchronous_input") or not port or port.lower() in ("none", "n/a"):
+            return
+        top = self.by_name.get(self.top() or "")
+        if top is None:
+            return
+        syn = set((self.arch.get("reset") or {}).get("synchronisers") or [])
+        is_sync = lambda t: t in syn or t.lower().startswith("xpm_cdc_async_rst") or bool(re.search(r"(?i)(rst|reset)_?sync|arst|async_?rst", t))
+        use = re.compile(rf"(?<![\w.]){re.escape(port)}(?!\w)")
+        taken = False
+        for inst in top.instances:
+            if any(use.search(e or "") for e in inst["conns"].values()):
+                if is_sync(inst["type"]):
+                    taken = True
+                else:
+                    self.add("STD-RST-02", top, inst["line"], f"reset input {port} is asynchronous (spec.yaml) but goes straight to {inst['type']} {inst['name']}: "
+                                                             "take it through a reset synchroniser (asynchronous assert, synchronous de-assert) at the boundary")
+        for a in top.always:
+            if any(use.search(sg) for _e, sg in a["edges"]):
+                self.add("STD-RST-02", top, a["line"], f"reset input {port} is asynchronous (spec.yaml) but is used directly in a sensitivity list")
+        for lhs, (rhs, ln) in top.assigns.items():
+            if use.search(rhs):
+                self.add("STD-RST-02", top, ln, f"reset input {port} is asynchronous (spec.yaml) but is used directly in the assign of {lhs}")
+        if re.search(rf"\bif\s*\(\s*!?\s*{re.escape(port)}\s*\)", top.body):
+            self.add("STD-RST-02", top, top.line, f"reset input {port} is asynchronous (spec.yaml) but a register of {top.name} tests it directly")
+        if not taken and not self.findings["STD-RST-02"]:
+            self.add("STD-RST-02", top, top.line, f"reset input {port} is asynchronous (spec.yaml) but no reset synchroniser takes it at the boundary")
 
     def rule_init(self) -> None:
         """STD-INIT-01 under ``rtl.initial_values`` (brief 205). Initial values are a power-up state, not a reset: the
@@ -1018,6 +1081,7 @@ class Check:
         if "rtl" in stages:
             self.rule_clocks()
             self.rule_reset()
+            self.rule_reset_boundary()
             self.rule_init()
             self.rule_init_reset()
             self.rule_cdc()

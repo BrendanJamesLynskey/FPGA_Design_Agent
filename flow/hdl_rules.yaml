@@ -144,7 +144,7 @@ rules:
     rationale: AMD recommends synchronous resets (UG949); an asynchronous reset is released at an arbitrary time relative
       to the clock and stops registers packing into DSP and block RAM. The owner's rule (2026-11-13) allows it only in
       reset and CDC synchronisers and where an external device's reset is asynchronous.
-    checks: {verilator: [SYNCASYNCNET], vivado: ["ROAS-*"], standards: [STD-RST-01], resets: [RST-ASYNC-01]}
+    checks: {verilator: [SYNCASYNCNET], vivado: ["ROAS-*"], standards: [STD-RST-01, STD-RST-02], resets: [RST-ASYNC-01]}
     fix: reset the register synchronously (if (rst) inside always_ff @(posedge clk)); keep asynchronous resets inside a
       synchroniser (xpm_cdc_async_rst, reset_sync), or declare the external input in architecture.yaml reset.async_inputs
     skill: reset-strategy
