@@ -218,7 +218,12 @@ def build_report(design: Path, t: dict[str, Any], spec: dict[str, Any], request:
         r["assertion"] = sva.get(r["id"])
     n = {k: sum(r["result"] == k for r in rows) for k in ("pass", "pending", "fail")}
     from agent.graph import requirements as RQ
-    return {"schema": SCHEMA, "design": design.name, "generated": _dt.datetime.now(_dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+    from flow import readiness as RDY
+    vcrm = None
+    srows = RDY.reqs_of(spec)
+    if any(k in r for r in srows for k in ("modal", "l2", "method", "validated_by_user", "derived", "compliance", "formalised_by")) or design.joinpath(*RDY.STATE_DIR, RDY.READINESS_FILE).is_file():
+        vcrm = RDY.vcrm_markdown(spec, {"requirements": rows}, independent={r["id"]: RDY.independence_of(r) for r in rows})     # brief 227: the report as a VCRM
+    return {"schema": SCHEMA, "design": design.name, "vcrm": vcrm, "generated": _dt.datetime.now(_dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
             "level": state.get("level"), "level_source": state.get("source"),
             "total": len(rows), "passed": n["pass"], "pending": n["pending"], "failed": n["fail"],
             "unconfirmed_passes": sum(r["rests_on_unconfirmed"] for r in rows),
@@ -300,6 +305,11 @@ def to_markdown(rep: dict[str, Any]) -> str:
                 continue
             what = a["status"] + (" (part of the requirement)" if a.get("partial") and a["evidence"] else "") + (f": {a['why']}" if a["why"] else "")
             out.append(f"| {r['id']} | {_c(what)} | {_c(a['property'])} | {_c(a['back_translation'])} |")
+    if rep.get("vcrm"):
+        out += ["", "## Verification cross-reference matrix", "",
+                "Each requirement with its SHALL, SHOULD or WILL, the verification method (Test, Analysis, Inspection or Demonstration), the evidence named, whether **you validated it** "
+                "(the right design) apart from whether it is **verified** (built right), the reviewer's early compliance judgement (analysis, not evidence) and which checks were independent of "
+                "the RTL's author. The agent's own testbench is never counted as independent.", "", rep["vcrm"].rstrip()]
     if rep["conflicts"]:
         out += ["", "## A fix that conflicts with a requirement", ""]
         out += [f"- {c['requirement']} ({_c(c.get('requirement_text'))}): the fix for {c['code']} ({c['fix_kind']}) {c['why']}. "

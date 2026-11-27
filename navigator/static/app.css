@@ -10,6 +10,8 @@ header#top{display:flex;flex-wrap:wrap;align-items:center;gap:8px 20px;padding:1
 nav#nav{display:flex;flex-wrap:wrap;gap:0}
 nav#nav a{padding:6px 14px;border:1px solid var(--rule2);margin-left:-1px;text-decoration:none;color:var(--ink);min-height:34px}
 nav#nav a[aria-current="page"]{background:var(--ink);color:var(--bg)}
+.brand{display:flex;align-items:center;gap:8px}
+.brand .logo{flex:none;color:var(--ink)}
 .meta{margin-left:auto;font-size:.82rem}
 button{font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--rule2);padding:5px 12px;border-radius:0;min-height:34px;cursor:pointer}
 button:hover:not(:disabled){border-color:var(--ink)}
@@ -101,3 +103,66 @@ pre.console-out{max-height:420px;overflow:auto;font-size:.8rem;white-space:pre-w
 .formgrid .fullrow { grid-column: 1 / -1; }
 .toolbar>.mute,.toolbar>span{overflow-wrap:anywhere;min-width:0;max-width:100%}
 .flush{margin-top:0}
+/* stage map of the Live page (brief 238): no glow, no gradient; motion is a moving dash and a token, both off under prefers-reduced-motion */
+:root{--warn:#e3a33b}
+:root[data-theme="light"]{--warn:#955200}
+.sr-only{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+svg [hidden]{display:none}
+.stagemap .map-state{margin:8px 0}
+.stagemap .map-line{margin:8px 0;color:var(--mute);font-size:.88rem}
+.stagemap .map-wait{border:2px solid var(--ink);padding:6px 10px;margin:8px 0;font-weight:600}
+.stagemap svg.map-wide{width:100%;margin:6px 0}
+.stagemap ol.map-list{display:none;list-style:none;margin:8px 0;padding:0}
+.stagemap ol.map-list li{border:1px solid var(--rule2);border-left-width:6px;padding:6px 8px;margin:4px 0;font-size:.88rem}
+.stagemap ol.map-list li.muted{border-style:dashed;color:var(--mute)}
+.stagemap ol.map-list li.pass{border-left-color:var(--ink)}
+.stagemap ol.map-list li.fail{border-left-color:var(--warn);border-left-style:double}
+.stagemap ol.map-list li.working{border-color:var(--ink);background:repeating-linear-gradient(135deg,var(--panel) 0 8px,var(--bg) 8px 16px);background-size:22.6px 22.6px;animation:map-stripes 1.2s linear infinite}
+.stagemap ol.map-list li.waiting{border:2px solid var(--ink)}
+.stagemap ul.map-routes{margin:4px 0 0;padding-left:20px;font-size:.88rem}
+.stagemap .node-rect{fill:var(--bg);stroke:var(--rule2);stroke-width:1.5}
+.stagemap .node.muted .node-rect{stroke-dasharray:4 3}
+.stagemap .node.muted text{fill:var(--mute)}
+.stagemap .node.pass .node-rect{fill:var(--panel);stroke:var(--ink);stroke-width:2}
+.stagemap .node.fail .node-rect{fill:var(--panel);stroke:var(--warn);stroke-width:2.5;stroke-dasharray:10 3 2 3}
+.stagemap .node.visited .node-rect{stroke:var(--ink)}
+.stagemap .node.working .node-rect{fill:var(--panel);stroke:var(--ink);stroke-width:3;stroke-dasharray:10 6;animation:map-dash .9s linear infinite}
+.stagemap .node.waiting .node-rect{fill:var(--panel);stroke:var(--ink);stroke-width:4}
+.stagemap .node.here .node-rect{stroke-width:3.5}
+.stagemap svg.frozen .node.working .node-rect{animation:none}
+.stagemap svg.frozen .spin{display:none}
+.stagemap .node-title{font-weight:600;font-size:12px}
+.stagemap .node-status{font-size:12px;font-weight:600}
+.stagemap .node-role{font-size:11px;font-weight:700}
+.stagemap .node.flash-pass .node-rect{animation:map-flash 0.7s ease-out}
+.stagemap .node.flash-fail .node-rect{animation:map-flash 0.7s ease-out;stroke:var(--warn)}
+.stagemap .edge{fill:none;stroke:var(--rule2);stroke-width:1.5}
+.stagemap .edge.used{stroke:var(--ink)}
+.stagemap .arrow{fill:var(--mute)}
+.stagemap .arc{fill:none;stroke:var(--warn);stroke-width:2;stroke-dasharray:6 4}
+.stagemap .arc-label{fill:var(--warn);font-weight:600;font-size:11px;paint-order:stroke;stroke:var(--bg);stroke-width:4px}
+.stagemap .token-ring{fill:var(--bg);stroke:var(--ink);stroke-width:2}
+.stagemap .token-dot{fill:var(--ink)}
+.stagemap .token.back .token-ring{stroke:var(--warn)}
+.stagemap .token.back .token-dot{fill:var(--warn)}
+.stagemap .spin-ring{fill:none;stroke:var(--rule2);stroke-width:2}
+.stagemap .spin-arc{fill:none;stroke:var(--ink);stroke-width:2.5}
+.stagemap .spin{transform-box:fill-box;transform-origin:center;animation:map-spin .8s linear infinite}
+@keyframes map-dash{to{stroke-dashoffset:-32}}
+@keyframes map-stripes{to{background-position:22.6px 0}}
+@keyframes map-flash{0%{stroke-width:7}100%{}}
+@keyframes map-spin{to{transform:rotate(360deg)}}
+@media (max-width:640px){.stagemap svg.map-wide{display:none}.stagemap ol.map-list{display:block}}
+@media (prefers-reduced-motion:reduce){.stagemap .node.working .node-rect,.stagemap .node.flash-pass .node-rect,.stagemap .node.flash-fail .node-rect,.stagemap .spin,.stagemap ol.map-list li.working{animation:none}}
+/* phone layout of every table (below 640 px): each row is a compact card, the first cell is its title line, every other cell is "label value"; no field is dropped */
+@media (max-width:640px){
+  .scroll{overflow-x:visible}
+  table,table tbody{display:block}
+  table thead{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+  table tr{display:block;border:1px solid var(--rule2);padding:6px 10px;margin:0 0 8px}
+  table td{display:flex;gap:10px;justify-content:space-between;border:0;padding:2px 0;text-align:right}
+  table td::before{content:attr(data-label);color:var(--mute);text-align:left;flex:none}
+  table td:first-child{display:block;text-align:left;font-weight:600;border-bottom:1px solid var(--rule);padding-bottom:4px;margin-bottom:2px}
+  table td:first-child::before{content:none}
+  table td:empty{display:none}
+}

@@ -58,11 +58,11 @@
   function fail(e) { return h("div", { class: "banner" }, h("strong", null, "Could not load. "), e.message || String(e)); }
   function table(head, rows, opts) {
     opts = opts || {};
-    var t = h("table", null, h("thead", null, h("tr", null, head.map(function (c, i) { return h("th", { class: (opts.num || []).indexOf(i) >= 0 ? "num" : null }, c); }))),
+    var t = h("table", { role: "table" }, h("thead", null, h("tr", { role: "row" }, head.map(function (c, i) { return h("th", { role: "columnheader", class: (opts.num || []).indexOf(i) >= 0 ? "num" : null }, c); }))),
       h("tbody", null, rows.map(function (r) {
         var cells = r.cells || r;
-        var tr = h("tr", { class: r.onclick ? "click" : null, tabindex: r.onclick ? "0" : null, on: r.onclick ? { click: r.onclick, keydown: function (e) { if (e.key === "Enter") r.onclick(); } } : null },
-          cells.map(function (c, i) { return h("td", { class: (opts.num || []).indexOf(i) >= 0 ? "num" : null }, c); }));
+        var tr = h("tr", { role: "row", class: r.onclick ? "click" : null, tabindex: r.onclick ? "0" : null, on: r.onclick ? { click: r.onclick, keydown: function (e) { if (e.key === "Enter") r.onclick(); } } : null },
+          cells.map(function (c, i) { return h("td", { class: (opts.num || []).indexOf(i) >= 0 ? "num" : null, "data-label": head[i] || null, role: "cell" }, c); }));
         return tr;
       })));
     return h("div", { class: "scroll" }, t);
@@ -603,12 +603,12 @@
     return { el: det, refresh: function () {} };
   }
   function pageLive() {
-    var root = h("div", null, h("h1", null, "Live"), loading()), sel = state.liveRun || null, detail = h("div", { "aria-live": "polite" }), statusBox = h("div", { class: "panel mt2" }), panels = h("div", null), shown = null, parts = [];
+    var root = h("div", null, h("h1", null, "Live"), loading()), sel = state.liveRun || null, detail = h("div", { "aria-live": "polite" }), statusBox = h("div", { class: "panel mt2" }), mapBox = h("div", { class: "mt2" }), panels = h("div", null), shown = null, parts = [], mapPanel = null;
     main.textContent = ""; main.appendChild(root);
     function loadDetail() {
-      if (!sel) { detail.textContent = ""; statusBox.textContent = ""; panels.textContent = ""; shown = null; return; }
-      if (shown !== sel) { shown = sel; parts = [requestsPanel(sel), askPanel(sel), consolePanel(sel)]; panels.textContent = ""; add(panels, parts.map(function (x) { return x.el; })); }
-      else parts.forEach(function (x) { x.refresh(); });
+      if (!sel) { detail.textContent = ""; statusBox.textContent = ""; panels.textContent = ""; mapBox.textContent = ""; if (mapPanel) mapPanel.destroy(); mapPanel = null; shown = null; return; }
+      if (shown !== sel) { shown = sel; if (mapPanel) mapPanel.destroy(); mapBox.textContent = ""; mapPanel = window.FdaStageMap.create({ h: h, s: s, api: api, runId: sel }); mapBox.appendChild(mapPanel.el); parts = [requestsPanel(sel), askPanel(sel), consolePanel(sel)]; panels.textContent = ""; add(panels, parts.map(function (x) { return x.el; })); }
+      else { parts.forEach(function (x) { x.refresh(); }); if (mapPanel) mapPanel.refresh(); }
       api("/api/live/summary?id=" + encodeURIComponent(sel)).then(function (s) { statusPanel(statusBox, s); }, function () {});
       api("/api/live/run?id=" + encodeURIComponent(sel)).then(function (p) { detail.textContent = ""; add(detail, [h("h2", null, p.id + (p.name ? "  " + p.name : "")), runDetail(p)]); }, function (e) { detail.textContent = ""; add(detail, fail(e)); });
     }
@@ -624,7 +624,7 @@
           d.runs.length ? table(["run", "design", "status", "stage", "visit", "cost", "budget", "last write"], d.runs.map(function (r) {
             return { cells: [r.id, r.name || "", stat(r.status === "active" ? "ok" : r.status === "finished" ? "unknown" : "warn"), r.stage || "", r.visit === null ? "" : String(r.visit), usd(r.cost.reported_usd), usd(r.cost.budget_usd), age(r.last_write_age_s)], onclick: function () { sel = state.liveRun = r.id; loadDetail(); } };
           }), { num: [4] }) : h("p", null, "No run directories yet."), h("p", { class: "mute" }, "Click a run for its stages, gates and audit log.")]);
-        root.textContent = ""; add(root, [h("h1", null, "Live"), list, statusBox, detail, panels]); loadDetail();
+        root.textContent = ""; add(root, [h("h1", null, "Live"), list, mapBox, statusBox, detail, panels]); loadDetail();
       }, function (e) { root.textContent = ""; add(root, [h("h1", null, "Live"), fail(e)]); });
     }
     load();

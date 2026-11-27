@@ -1,0 +1,989 @@
+{
+  "design": "b227_C_p1_clkmeter_r3",
+  "stages": {
+    "V0": {
+      "checks": {
+        "testplan_present": {
+          "value": true,
+          "threshold": true,
+          "pass": true
+        },
+        "model_present": {
+          "value": true,
+          "threshold": true,
+          "pass": true
+        },
+        "bench_modules_present": {
+          "value": [
+            "b227_bench"
+          ],
+          "threshold": "all files exist",
+          "pass": true
+        }
+      },
+      "pass": true
+    },
+    "V1": {
+      "checks": {
+        "requirements_have_proof_method": {
+          "value": [],
+          "threshold": [],
+          "pass": true
+        },
+        "proof_methods_discharged": {
+          "value": [],
+          "threshold": [],
+          "pass": true
+        },
+        "proof_references_resolve": {
+          "value": [],
+          "threshold": [],
+          "pass": true
+        },
+        "spec_items_traced": {
+          "value": "30/30",
+          "threshold": "all",
+          "pass": true
+        },
+        "untraced_items": {
+          "value": [],
+          "threshold": [],
+          "pass": true
+        },
+        "unknown_spec_refs": {
+          "value": [],
+          "threshold": [],
+          "pass": true
+        },
+        "requirements_without_a_check": {
+          "value": [],
+          "threshold": [],
+          "pass": true
+        },
+        "unresolved_references": {
+          "value": [],
+          "threshold": [],
+          "pass": true
+        },
+        "bench_uses_blind_model": {
+          "value": true,
+          "threshold": true,
+          "pass": true
+        }
+      },
+      "pass": true
+    },
+    "V2": {
+      "checks": {
+        "seeds_run": {
+          "value": [
+            1,
+            2,
+            3
+          ],
+          "threshold": ">=1",
+          "pass": true
+        },
+        "planned_tests_missing": {
+          "value": [],
+          "threshold": [],
+          "pass": true
+        },
+        "failing_tests": {
+          "value": [],
+          "threshold": [],
+          "pass": true
+        },
+        "constrained_random_test_ran": {
+          "value": true,
+          "threshold": true,
+          "pass": true
+        },
+        "assertions_bound_zero_failures": {
+          "value": [],
+          "threshold": "bound in the run; no failure",
+          "pass": true
+        },
+        "other_simulators_failing": {
+          "value": [],
+          "threshold": [],
+          "pass": true
+        },
+        "formal_tasks_not_passing": {
+          "value": [],
+          "threshold": [],
+          "pass": true
+        }
+      },
+      "pass": true
+    },
+    "V3": {
+      "checks": {
+        "seeds_run": {
+          "value": 3,
+          "threshold": ">=3",
+          "pass": true
+        },
+        "all_seeds_pass": {
+          "value": [],
+          "threshold": [],
+          "pass": true
+        },
+        "functional_bins_pct": {
+          "value": "0.0 (0/0)",
+          "threshold": 100,
+          "pass": false,
+          "why": "no functional bins planned: put cover-point names in `bins:` of the testplan requirements. name cover points in the `bins:` of the testplan requirements, sample them in the bench, and export them in the bench's last test with `coverage_db.export_to_yaml(os.environ[\"FDA_COV_OUT\"])` (cocotb-coverage); the flow keeps the file as seed<N>/coverage_func.yml"
+        },
+        "functional_bins_unhit": {
+          "value": [],
+          "threshold": [],
+          "pass": false,
+          "why": "no functional bins planned: put cover-point names in `bins:` of the testplan requirements. name cover points in the `bins:` of the testplan requirements, sample them in the bench, and export them in the bench's last test with `coverage_db.export_to_yaml(os.environ[\"FDA_COV_OUT\"])` (cocotb-coverage); the flow keeps the file as seed<N>/coverage_func.yml"
+        },
+        "cover_properties_pct": {
+          "value": "0.0",
+          "threshold": 100,
+          "pass": false,
+          "why": "not measured: no code-coverage data: the flow records line, toggle and cover-property coverage itself, in a Verilator run of your bench, once V0 to V2 pass (the bench must run through flow.cocotb_run.run, which writes seed<N>/coverage.dat)"
+        },
+        "cover_properties_unhit": {
+          "value": [],
+          "threshold": [],
+          "pass": false,
+          "why": "not measured: no code-coverage data: the flow records line, toggle and cover-property coverage itself, in a Verilator run of your bench, once V0 to V2 pass (the bench must run through flow.cocotb_run.run, which writes seed<N>/coverage.dat)"
+        },
+        "line_pct": {
+          "value": "not measured",
+          "threshold": 90,
+          "pass": false,
+          "why": "not measured: no code-coverage data: the flow records line, toggle and cover-property coverage itself, in a Verilator run of your bench, once V0 to V2 pass (the bench must run through flow.cocotb_run.run, which writes seed<N>/coverage.dat)"
+        },
+        "toggle_pct": {
+          "value": "not measured",
+          "threshold": 75,
+          "pass": false,
+          "why": "not measured: no code-coverage data: the flow records line, toggle and cover-property coverage itself, in a Verilator run of your bench, once V0 to V2 pass (the bench must run through flow.cocotb_run.run, which writes seed<N>/coverage.dat) [testplan asked 70%, the floor is 75% (flow/verif_floors.yaml)]",
+          "floor_note": "testplan asked 70%, the floor is 75% (flow/verif_floors.yaml)"
+        },
+        "waivers_without_reason": {
+          "value": 0,
+          "threshold": 0,
+          "pass": true
+        },
+        "mutation_score_pct": {
+          "value": "not measured",
+          "threshold": 70,
+          "pass": false,
+          "why": "not measured: the flow runs the mutation step itself once V2 passes (a capped, seeded sample of changes to the RTL, each run against your tests); no result exists yet"
+        },
+        "cdc_structure_clean": {
+          "value": "missing",
+          "threshold": "no unsafe crossing",
+          "pass": false,
+          "why": "no structural CDC result: build the design through the post-synthesis stage (flow/build.tcl writes cdc_paths_synth.rpt) and pass its gates.json as --gates"
+        },
+        "cdc_injection_clean": {
+          "value": "missing",
+          "threshold": "pass",
+          "pass": false,
+          "why": "no CDC injection result: run flow/cdc_inject_run.py <design> (the harness does this in v3_evidence) and pass build/verif/cdc_inject.json as --cdc-inject"
+        }
+      },
+      "pass": false
+    },
+    "SIGNOFF": {
+      "checks": {
+        "every_method_has_passing_evidence": {
+          "value": [
+            "REQ-01:hardware=pending",
+            "REQ-02:hardware=pending",
+            "REQ-03:hardware=pending",
+            "REQ-09:hardware=pending",
+            "REQ-16:hardware=pending",
+            "REQ-17:hardware=pending",
+            "REQ-18:hardware=pending",
+            "REQ-19:hardware=pending",
+            "REQ-20:analysis=pending",
+            "REQ-21:analysis=pending",
+            "REQ-22:hardware=pending",
+            "REQ-23:analysis=pending",
+            "REQ-24:hardware=pending",
+            "REQ-29:hardware=pending"
+          ],
+          "threshold": [],
+          "pass": false
+        }
+      },
+      "pass": false
+    },
+    "V-HW": {
+      "checks": {
+        "bringup_result_present": {
+          "value": false,
+          "threshold": true,
+          "pass": false
+        }
+      },
+      "pass": false
+    }
+  },
+  "code_coverage": {},
+  "code_coverage_unhit": {},
+  "mutation": null,
+  "traceability": [
+    {
+      "requirement": "REQ-01",
+      "text": "ID register at 0x000 reads 0x20910001.",
+      "method": "simulation",
+      "artefact": "b227_bench.test_reset_values",
+      "result": "pass",
+      "detail": "passed on 3 seed(s)"
+    },
+    {
+      "requirement": "REQ-01",
+      "text": "ID register at 0x000 reads 0x20910001.",
+      "method": "hardware",
+      "artefact": "uart_tests",
+      "result": "pending",
+      "detail": "no bring-up result"
+    },
+    {
+      "requirement": "REQ-02",
+      "text": "BUILD register at 0x004 reads the USR_ACCESSE2 word.",
+      "method": "hardware",
+      "artefact": "uart_tests",
+      "result": "pending",
+      "detail": "no bring-up result"
+    },
+    {
+      "requirement": "REQ-03",
+      "text": "SCRATCH at 0x008 reads back the last value written.",
+      "method": "simulation",
+      "artefact": "b227_bench.test_scratch",
+      "result": "pass",
+      "detail": "passed on 3 seed(s)"
+    },
+    {
+      "requirement": "REQ-03",
+      "text": "SCRATCH at 0x008 reads back the last value written.",
+      "method": "hardware",
+      "artefact": "uart_tests",
+      "result": "pending",
+      "detail": "no bring-up result"
+    },
+    {
+      "requirement": "REQ-04",
+      "text": "After reset GATE_LEN reads 156250000.",
+      "method": "simulation",
+      "artefact": "b227_bench.test_reset_values",
+      "result": "pass",
+      "detail": "passed on 3 seed(s)"
+    },
+    {
+      "requirement": "REQ-05",
+      "text": "A GATE_LEN write below 1000 reads back as 1000.",
+      "method": "simulation",
+      "artefact": "b227_bench.test_gate_len",
+      "result": "pass",
+      "detail": "passed on 3 seed(s)"
+    },
+    {
+      "requirement": "REQ-06",
+      "text": "A GATE_LEN write while BUSY is 1 leaves GATE_LEN unchanged.",
+      "method": "simulation",
+      "artefact": "b227_bench.test_gate_len",
+      "result": "pass",
+      "detail": "passed on 3 seed(s)"
+    },
+    {
+      "requirement": "REQ-07",
+      "text": "START while BUSY is 0 sets BUSY to 1 within 2 clocks.",
+      "method": "simulation",
+      "artefact": "b227_bench.test_measurement",
+      "result": "pass",
+      "detail": "passed on 3 seed(s)"
+    },
+    {
+      "requirement": "REQ-07",
+      "text": "START while BUSY is 0 sets BUSY to 1 within 2 clocks.",
+      "method": "formal",
+      "artefact": "b227_bench.test_measurement",
+      "result": "pass",
+      "detail": "re-planned from formal to simulation (SymbiYosys is not installed here so the BUSY-within-2-clocks property is checked by the model-compared bench test.): passed on 3 seed(s)"
+    },
+    {
+      "requirement": "REQ-08",
+      "text": "START while BUSY is 1 does not restart the gate.",
+      "method": "simulation",
+      "artefact": "b227_bench.test_measurement",
+      "result": "pass",
+      "detail": "passed on 3 seed(s)"
+    },
+    {
+      "requirement": "REQ-08",
+      "text": "START while BUSY is 1 does not restart the gate.",
+      "method": "formal",
+      "artefact": "b227_bench.test_measurement",
+      "result": "pass",
+      "detail": "re-planned from formal to simulation (SymbiYosys is not installed here so START-while-busy is checked by directed simulation.): passed on 3 seed(s)"
+    },
+    {
+      "requirement": "REQ-09",
+      "text": "GATE_ACTUAL equals the GATE_LEN value in force at START after a completed measurement.",
+      "method": "simulation",
+      "artefact": "b227_bench.test_measurement",
+      "result": "pass",
+      "detail": "passed on 3 seed(s)"
+    },
+    {
+      "requirement": "REQ-09",
+      "text": "GATE_ACTUAL equals the GATE_LEN value in force at START after a completed measurement.",
+      "method": "formal",
+      "artefact": "b227_bench.test_measurement",
+      "result": "pass",
+      "detail": "re-planned from formal to simulation (SymbiYosys is not installed here so GATE_ACTUAL equality is checked in simulation.): passed on 3 seed(s)"
+    },
+    {
+      "requirement": "REQ-09",
+      "text": "GATE_ACTUAL equals the GATE_LEN value in force at START after a completed measurement.",
+      "method": "hardware",
+      "artefact": "uart_tests",
+      "result": "pending",
+      "detail": "no bring-up result"
+    },
+    {
+      "requirement": "REQ-10",
+      "text": "DONE is set in the same clock that COUNT and GATE_ACTUAL take their final values.",
+      "method": "simulation",
+      "artefact": "b227_bench.test_measurement",
+      "result": "pass",
+      "detail": "passed on 3 seed(s)"
+    },
+    {
+      "requirement": "REQ-10",
+      "text": "DONE is set in the same clock that COUNT and GATE_ACTUAL take their final values.",
+      "method": "formal",
+      "artefact": "b227_bench.test_measurement",
+      "result": "pass",
+      "detail": "re-planned from formal to simulation (SymbiYosys is not installed here so the same-clock DONE and COUNT update is checked in simulation.): passed on 3 seed(s)"
+    },
+    {
+      "requirement": "REQ-11",
+      "text": "DONE stays 1 until the next accepted START.",
+      "method": "simulation",
+      "artefact": "b227_bench.test_measurement",
+      "result": "pass",
+      "detail": "passed on 3 seed(s)"
+    },
+    {
+      "requirement": "REQ-11",
+      "text": "DONE stays 1 until the next accepted START.",
+      "method": "formal",
+      "artefact": "b227_bench.test_measurement",
+      "result": "pass",
+      "detail": "re-planned from formal to simulation (SymbiYosys is not installed here so DONE persistence is checked in simulation.): passed on 3 seed(s)"
+    },
+    {
+      "requirement": "REQ-12",
+      "text": "COUNT equals the number of synchronised clk25 rising edges in the gate within plus or minus 1 edge.",
+      "method": "simulation",
+      "artefact": "b227_bench.test_measurement",
+      "result": "pass",
+      "detail": "passed on 3 seed(s)"
+    },
+    {
+      "requirement": "REQ-13",
+      "text": "MEAS_DONE increments by 1 per completed measurement.",
+      "method": "simulation",
+      "artefact": "b227_bench.test_meas_done_count_wrap",
+      "result": "pass",
+      "detail": "passed on 3 seed(s)"
+    },
+    {
+      "requirement": "REQ-13",
+      "text": "MEAS_DONE increments by 1 per completed measurement.",
+      "method": "formal",
+      "artefact": "b227_bench.test_meas_done_count_wrap",
+      "result": "pass",
+      "detail": "re-planned from formal to simulation (SymbiYosys is not installed here so the MEAS_DONE increment is checked in simulation.): passed on 3 seed(s)"
+    },
+    {
+      "requirement": "REQ-14",
+      "text": "Writes to RO registers leave every register unchanged.",
+      "method": "simulation",
+      "artefact": "b227_bench.test_ro_and_unmapped",
+      "result": "pass",
+      "detail": "passed on 3 seed(s)"
+    },
+    {
+      "requirement": "REQ-15",
+      "text": "h_rdata shows the addressed register 2 clocks after h_re.",
+      "method": "simulation",
+      "artefact": "b227_bench.test_read_latency_hold",
+      "result": "pass",
+      "detail": "passed on 3 seed(s)"
+    },
+    {
+      "requirement": "REQ-15",
+      "text": "h_rdata shows the addressed register 2 clocks after h_re.",
+      "method": "formal",
+      "artefact": "b227_bench.test_read_latency_hold",
+      "result": "pass",
+      "detail": "re-planned from formal to simulation (SymbiYosys is not installed here so read latency is checked in simulation.): passed on 3 seed(s)"
+    },
+    {
+      "requirement": "REQ-16",
+      "text": "LED_EN is 0 after reset.",
+      "method": "simulation",
+      "artefact": "b227_bench.test_leds",
+      "result": "pass",
+      "detail": "passed on 3 seed(s)"
+    },
+    {
+      "requirement": "REQ-16",
+      "text": "LED_EN is 0 after reset.",
+      "method": "hardware",
+      "artefact": "uart_tests",
+      "result": "pending",
+      "detail": "no bring-up result"
+    },
+    {
+      "requirement": "REQ-17",
+      "text": "With LED_EN 1, LED 0 toggles every 12500000 clk25 cycles.",
+      "method": "simulation",
+      "artefact": "b227_bench.test_leds",
+      "result": "pass",
+      "detail": "passed on 3 seed(s)"
+    },
+    {
+      "requirement": "REQ-17",
+      "text": "With LED_EN 1, LED 0 toggles every 12500000 clk25 cycles.",
+      "method": "hardware",
+      "artefact": "ila_captures",
+      "result": "pending",
+      "detail": "no bring-up result"
+    },
+    {
+      "requirement": "REQ-18",
+      "text": "With LED_EN 1, LED 1 toggles every 78125000 refclk cycles.",
+      "method": "simulation",
+      "artefact": "b227_bench.test_leds",
+      "result": "pass",
+      "detail": "passed on 3 seed(s)"
+    },
+    {
+      "requirement": "REQ-18",
+      "text": "With LED_EN 1, LED 1 toggles every 78125000 refclk cycles.",
+      "method": "hardware",
+      "artefact": "ila_captures",
+      "result": "pending",
+      "detail": "no bring-up result"
+    },
+    {
+      "requirement": "REQ-19",
+      "text": "sfp_tx_disable is 1 at all times from reset on.",
+      "method": "simulation",
+      "artefact": "b227_bench.test_sfp_tx_disable",
+      "result": "pass",
+      "detail": "passed on 3 seed(s)"
+    },
+    {
+      "requirement": "REQ-19",
+      "text": "sfp_tx_disable is 1 at all times from reset on.",
+      "method": "formal",
+      "artefact": "b227_bench.test_sfp_tx_disable",
+      "result": "pass",
+      "detail": "re-planned from formal to simulation (SymbiYosys is not installed here so sfp_tx_disable is asserted every clock in simulation.): passed on 3 seed(s)"
+    },
+    {
+      "requirement": "REQ-19",
+      "text": "sfp_tx_disable is 1 at all times from reset on.",
+      "method": "hardware",
+      "artefact": "uart_tests",
+      "result": "pending",
+      "detail": "no bring-up result"
+    },
+    {
+      "requirement": "REQ-20",
+      "text": "The design uses 0 GT transceiver channels.",
+      "method": "analysis",
+      "artefact": "post_synth:post_synth_resources_in_range",
+      "result": "pending",
+      "detail": "no flow gates result"
+    },
+    {
+      "requirement": "REQ-21",
+      "text": "Timing is met at 156.25 MHz with no unconstrained clock crossing.",
+      "method": "analysis",
+      "artefact": "post_route:setup",
+      "result": "pending",
+      "detail": "no flow gates result"
+    },
+    {
+      "requirement": "REQ-22",
+      "text": "Five one-second measurements give frequency COUNT x 156.25 MHz / GATE_ACTUAL within 100 ppm of 25 MHz.",
+      "method": "hardware",
+      "artefact": "uart_tests",
+      "result": "pending",
+      "detail": "no bring-up result"
+    },
+    {
+      "requirement": "REQ-23",
+      "text": "data/jtag_bus.sv is used unchanged.",
+      "method": "analysis",
+      "artefact": "post_synth:post_synth_resources_in_range",
+      "result": "pending",
+      "detail": "no flow gates result"
+    },
+    {
+      "requirement": "REQ-24",
+      "text": "SCRATCH reads 0 after reset.",
+      "method": "simulation",
+      "artefact": "b227_bench.test_reset_values",
+      "result": "pass",
+      "detail": "passed on 3 seed(s)"
+    },
+    {
+      "requirement": "REQ-24",
+      "text": "SCRATCH reads 0 after reset.",
+      "method": "hardware",
+      "artefact": "uart_tests",
+      "result": "pending",
+      "detail": "no bring-up result"
+    },
+    {
+      "requirement": "REQ-25",
+      "text": "After reset COUNT, GATE_ACTUAL, MEAS_DONE, STATUS and CTRL read 0.",
+      "method": "simulation",
+      "artefact": "b227_bench.test_reset_values",
+      "result": "pass",
+      "detail": "passed on 3 seed(s)"
+    },
+    {
+      "requirement": "REQ-26",
+      "text": "START while BUSY is 0 sets DONE to 0 at once.",
+      "method": "simulation",
+      "artefact": "b227_bench.test_measurement",
+      "result": "pass",
+      "detail": "passed on 3 seed(s)"
+    },
+    {
+      "requirement": "REQ-26",
+      "text": "START while BUSY is 0 sets DONE to 0 at once.",
+      "method": "formal",
+      "artefact": "b227_bench.test_measurement",
+      "result": "pass",
+      "detail": "re-planned from formal to simulation (SymbiYosys is not installed here so DONE clearing at START is checked in simulation.): passed on 3 seed(s)"
+    },
+    {
+      "requirement": "REQ-27",
+      "text": "MEAS_DONE wraps at 32 bits.",
+      "method": "simulation",
+      "artefact": "b227_bench.test_meas_done_count_wrap",
+      "result": "pass",
+      "detail": "passed on 3 seed(s)"
+    },
+    {
+      "requirement": "REQ-27",
+      "text": "MEAS_DONE wraps at 32 bits.",
+      "method": "formal",
+      "artefact": "b227_bench.test_meas_done_count_wrap",
+      "result": "pass",
+      "detail": "re-planned from formal to simulation (SymbiYosys is not installed here so the 32-bit wrap is checked in simulation.): passed on 3 seed(s)"
+    },
+    {
+      "requirement": "REQ-28",
+      "text": "h_rdata holds its value until the next h_re.",
+      "method": "simulation",
+      "artefact": "b227_bench.test_read_latency_hold",
+      "result": "pass",
+      "detail": "passed on 3 seed(s)"
+    },
+    {
+      "requirement": "REQ-28",
+      "text": "h_rdata holds its value until the next h_re.",
+      "method": "formal",
+      "artefact": "b227_bench.test_read_latency_hold",
+      "result": "pass",
+      "detail": "re-planned from formal to simulation (SymbiYosys is not installed here so h_rdata hold is checked in simulation.): passed on 3 seed(s)"
+    },
+    {
+      "requirement": "REQ-29",
+      "text": "Both LEDs are 0 while LED_EN is 0.",
+      "method": "simulation",
+      "artefact": "b227_bench.test_leds",
+      "result": "pass",
+      "detail": "passed on 3 seed(s)"
+    },
+    {
+      "requirement": "REQ-29",
+      "text": "Both LEDs are 0 while LED_EN is 0.",
+      "method": "hardware",
+      "artefact": "uart_tests",
+      "result": "pending",
+      "detail": "no bring-up result"
+    },
+    {
+      "requirement": "REQ-30",
+      "text": "Unmapped addresses read 0.",
+      "method": "simulation",
+      "artefact": "b227_bench.test_ro_and_unmapped",
+      "result": "pass",
+      "detail": "passed on 3 seed(s)"
+    },
+    {
+      "requirement": "REQ-31",
+      "text": "Writes to unmapped addresses leave every register unchanged.",
+      "method": "simulation",
+      "artefact": "b227_bench.test_ro_and_unmapped",
+      "result": "pass",
+      "detail": "passed on 3 seed(s)"
+    }
+  ],
+  "coverage_detail": {
+    "bins": {},
+    "requirements": [
+      {
+        "id": "REQ-01",
+        "spec": [
+          "registers.map.ID"
+        ],
+        "tests": [
+          "b227_bench.test_reset_values",
+          "b227_bench.test_random_traffic"
+        ],
+        "bins": {}
+      },
+      {
+        "id": "REQ-02",
+        "spec": [
+          "registers.map.BUILD",
+          "behaviour.registers_access[3]"
+        ],
+        "tests": [
+          "b227_bench.test_reset_values"
+        ],
+        "bins": {}
+      },
+      {
+        "id": "REQ-03",
+        "spec": [
+          "registers.map.SCRATCH",
+          "behaviour.registers_access[4]"
+        ],
+        "tests": [
+          "b227_bench.test_scratch",
+          "b227_bench.test_random_traffic"
+        ],
+        "bins": {}
+      },
+      {
+        "id": "REQ-04",
+        "spec": [
+          "registers.map.GATE_LEN",
+          "reset"
+        ],
+        "tests": [
+          "b227_bench.test_reset_values",
+          "b227_bench.test_gate_len"
+        ],
+        "bins": {}
+      },
+      {
+        "id": "REQ-05",
+        "spec": [
+          "behaviour.registers_access[0]"
+        ],
+        "tests": [
+          "b227_bench.test_gate_len",
+          "b227_bench.test_random_traffic"
+        ],
+        "bins": {}
+      },
+      {
+        "id": "REQ-06",
+        "spec": [
+          "behaviour.registers_access[0]"
+        ],
+        "tests": [
+          "b227_bench.test_gate_len"
+        ],
+        "bins": {}
+      },
+      {
+        "id": "REQ-07",
+        "spec": [
+          "behaviour.measurement[0]",
+          "timing.latency.busy_after_start"
+        ],
+        "tests": [
+          "b227_bench.test_measurement",
+          "b227_bench.test_random_traffic"
+        ],
+        "bins": {}
+      },
+      {
+        "id": "REQ-08",
+        "spec": [
+          "behaviour.measurement[4]",
+          "registers.map.CTRL"
+        ],
+        "tests": [
+          "b227_bench.test_measurement"
+        ],
+        "bins": {}
+      },
+      {
+        "id": "REQ-09",
+        "spec": [
+          "behaviour.measurement[3]",
+          "registers.map.GATE_ACTUAL"
+        ],
+        "tests": [
+          "b227_bench.test_measurement",
+          "b227_bench.test_gate_len"
+        ],
+        "bins": {}
+      },
+      {
+        "id": "REQ-10",
+        "spec": [
+          "behaviour.measurement[2]",
+          "registers.map.STATUS",
+          "timing.latency.gate"
+        ],
+        "tests": [
+          "b227_bench.test_measurement",
+          "b227_bench.test_random_traffic"
+        ],
+        "bins": {}
+      },
+      {
+        "id": "REQ-11",
+        "spec": [
+          "behaviour.measurement[5]"
+        ],
+        "tests": [
+          "b227_bench.test_measurement"
+        ],
+        "bins": {}
+      },
+      {
+        "id": "REQ-12",
+        "spec": [
+          "behaviour.measurement[1]",
+          "registers.map.COUNT"
+        ],
+        "tests": [
+          "b227_bench.test_measurement"
+        ],
+        "bins": {}
+      },
+      {
+        "id": "REQ-13",
+        "spec": [
+          "registers.map.MEAS_DONE"
+        ],
+        "tests": [
+          "b227_bench.test_meas_done_count_wrap",
+          "b227_bench.test_measurement"
+        ],
+        "bins": {}
+      },
+      {
+        "id": "REQ-14",
+        "spec": [
+          "behaviour.registers_access[1]"
+        ],
+        "tests": [
+          "b227_bench.test_ro_and_unmapped"
+        ],
+        "bins": {}
+      },
+      {
+        "id": "REQ-15",
+        "spec": [
+          "behaviour.registers_access[2]",
+          "timing.latency.read",
+          "timing.latency.write"
+        ],
+        "tests": [
+          "b227_bench.test_read_latency_hold",
+          "b227_bench.test_scratch"
+        ],
+        "bins": {}
+      },
+      {
+        "id": "REQ-16",
+        "spec": [
+          "behaviour.leds[0]"
+        ],
+        "tests": [
+          "b227_bench.test_reset_values",
+          "b227_bench.test_leds"
+        ],
+        "bins": {}
+      },
+      {
+        "id": "REQ-17",
+        "spec": [
+          "behaviour.leds[1]"
+        ],
+        "tests": [
+          "b227_bench.test_leds"
+        ],
+        "bins": {}
+      },
+      {
+        "id": "REQ-18",
+        "spec": [
+          "behaviour.leds[1]"
+        ],
+        "tests": [
+          "b227_bench.test_leds"
+        ],
+        "bins": {}
+      },
+      {
+        "id": "REQ-19",
+        "spec": [
+          "behaviour.sfp[0]"
+        ],
+        "tests": [
+          "b227_bench.test_sfp_tx_disable"
+        ],
+        "bins": {}
+      },
+      {
+        "id": "REQ-20",
+        "spec": [
+          "behaviour.sfp[0]"
+        ],
+        "tests": [
+          "b227_bench.test_sfp_tx_disable"
+        ],
+        "bins": {}
+      },
+      {
+        "id": "REQ-21",
+        "spec": [
+          "timing.latency.gate"
+        ],
+        "tests": [
+          "b227_bench.test_measurement"
+        ],
+        "bins": {}
+      },
+      {
+        "id": "REQ-22",
+        "spec": [
+          "behaviour.measurement[1]"
+        ],
+        "tests": [
+          "b227_bench.test_measurement"
+        ],
+        "bins": {}
+      },
+      {
+        "id": "REQ-23",
+        "spec": [
+          "reset"
+        ],
+        "tests": [
+          "b227_bench.test_reset_values"
+        ],
+        "bins": {}
+      },
+      {
+        "id": "REQ-24",
+        "spec": [
+          "registers.map.SCRATCH"
+        ],
+        "tests": [
+          "b227_bench.test_reset_values",
+          "b227_bench.test_scratch"
+        ],
+        "bins": {}
+      },
+      {
+        "id": "REQ-25",
+        "spec": [
+          "registers.map.CTRL",
+          "registers.map.STATUS",
+          "registers.map.COUNT",
+          "registers.map.GATE_ACTUAL",
+          "registers.map.MEAS_DONE"
+        ],
+        "tests": [
+          "b227_bench.test_reset_values"
+        ],
+        "bins": {}
+      },
+      {
+        "id": "REQ-26",
+        "spec": [
+          "behaviour.measurement[0]"
+        ],
+        "tests": [
+          "b227_bench.test_measurement"
+        ],
+        "bins": {}
+      },
+      {
+        "id": "REQ-27",
+        "spec": [
+          "behaviour.measurement[6]"
+        ],
+        "tests": [
+          "b227_bench.test_meas_done_count_wrap"
+        ],
+        "bins": {}
+      },
+      {
+        "id": "REQ-28",
+        "spec": [
+          "behaviour.registers_access[2]"
+        ],
+        "tests": [
+          "b227_bench.test_read_latency_hold"
+        ],
+        "bins": {}
+      },
+      {
+        "id": "REQ-29",
+        "spec": [
+          "behaviour.leds[0]"
+        ],
+        "tests": [
+          "b227_bench.test_leds",
+          "b227_bench.test_reset_values"
+        ],
+        "bins": {}
+      },
+      {
+        "id": "REQ-30",
+        "spec": [
+          "registers.unmapped"
+        ],
+        "tests": [
+          "b227_bench.test_ro_and_unmapped"
+        ],
+        "bins": {}
+      },
+      {
+        "id": "REQ-31",
+        "spec": [
+          "registers.unmapped",
+          "behaviour.registers_access[1]"
+        ],
+        "tests": [
+          "b227_bench.test_ro_and_unmapped"
+        ],
+        "bins": {}
+      }
+    ]
+  },
+  "reached": "V2",
+  "first_failed": "V3"
+}

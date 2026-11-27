@@ -1,0 +1,25 @@
+schema: fpga-design-agent/architecture/v1
+blocks:
+  - {name: jtag_bus, function: BSCANE2 USER4 host register bus in clk25 domain}
+  - {name: fir_core, function: register map, FIFOs, run/clear control, FIR datapath, LEDs}
+  - {name: fir_datapath, function: 32-tap symmetric FIR with 16 DSP48E2, round, shift, saturate}
+  - {name: clk_gen, function: MMCM 25 MHz to 250 MHz and reset generation}
+interfaces:
+  - {name: host_reg, between: [jtag_bus, fir_core], protocol: simple, prefix: h, module: fir_core}
+clock_domains:
+  - {name: clk25, clock: clk25, freq_mhz: 25}
+  - {name: clk_dp, clock: clk_dp, freq_mhz: 250}
+reset:
+  synchronisers: [xpm_cdc_async_rst]
+crossings:
+  - {from: clk25, to: clk_dp, signal: run_clear_pulses, primitive: xpm_cdc_pulse, inline_in: fir_core}
+  - {from: clk_dp, to: clk25, signal: busy_sat_done_counts, primitive: xpm_cdc_array_single, inline_in: fir_core}
+  - {from: clk25, to: clk_dp, signal: input_fifo, primitive: xpm_fifo_async, inline_in: fir_core}
+  - {from: clk_dp, to: clk25, signal: output_fifo, primitive: xpm_fifo_async, inline_in: fir_core}
+  - {from: clk_dp, to: clk25, signal: mmcm_locked, primitive: xpm_cdc_single, inline_in: fir_top}
+  - {from: clk25, to: clk_dp, signal: rst, primitive: xpm_cdc_async_rst, inline_in: fir_top}
+predicted_resources:
+  lut: [600, 1800]
+  ff: [900, 3000]
+  bram_tile: [2, 4]
+  dsp: 16

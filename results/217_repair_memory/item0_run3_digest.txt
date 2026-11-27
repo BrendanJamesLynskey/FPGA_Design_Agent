@@ -1,0 +1,9 @@
+# Brief 217 item 0: the R1 digest on brief 213 run 3 (agent run 20261126-045447-291e), rebuilt 2026-11-26 21:08:17 GMT
+# Design state = commit 58a7243 of the run's snap.git (the state the second and third firings saw: RTL identical to the first firing's; only architecture.yaml differs).
+# Before (recorded in routing_events.jsonl, 3 firings): message 'Simulator shut down prematurely', site {}, digest 787 characters, no bench line.
+# After:
+[first failing check] test test_rom_ram_init did not fail an assertion: the simulator ended 20 ns into it (cocotb reports this as "Simulator shut down prematurely"). The test began at 2380 ns and the run ended at 2400 ns.
+  clock clk (period 40 ns): no rising edge was sampled after the test began; the last was at 2360 ns, 20 ns before it. A simulation with no clock left has nothing scheduled and would end there. A clock or driver coroutine started inside an earlier test is cancelled by cocotb when that test ends: check that every test (or the shared setup) starts it.
+  Causes that fit a simulator stop: no clock or driver left running; a $finish or $fatal in the RTL or the bench; a crash of the simulator process. Read the simulator log for the lines just before the stop.
+
+# Cause, found by diffing the bench between the failing state (58a7243) and the passing state (be61022): the clock was started inside the first test only (tests/p2_bram_rom_bench.py, Env.setup); the repair that fixed it restarts the clock in every test.

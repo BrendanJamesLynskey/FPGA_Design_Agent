@@ -57,6 +57,14 @@ slow_ports:
   - '[ab]_rst_n'
   - '[ab]_mdc'
   - '[ab]_mdio'
+  # brief 230: the SFP+ cage's control and status pins and its I2C (3.3 V) change in milliseconds at most and have no timing relation to any clock;
+  # designs/b96_kr260_10g/design.xdc treats them so (0 ns placeholder delays and false paths) and the board run of 2026-11-17 used them
+  - 'sfp_tx_disable'
+  - 'sfp_mod_abs'
+  - 'sfp_rx_los'
+  - 'sfp_tx_fault'
+  - 'sfp_i2c_scl'
+  - 'sfp_i2c_sda'
 thermal:                          # report_power's environment for this board (flow/build.tcl applies it)
   airflow_lfm: 0                  # the fansink's airflow and thermal resistance are not published (project knowledge base):
   heatsink: none                  # still air and no heat sink is the pessimistic bound (the real junction runs cooler)

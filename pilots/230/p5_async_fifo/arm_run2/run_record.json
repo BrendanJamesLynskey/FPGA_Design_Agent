@@ -1,0 +1,528 @@
+{
+ "design": "p5_async_fifo",
+ "run": 2,
+ "run_id": "20261126-210155-ee69",
+ "agent_sha": "d5bf008304a7",
+ "model": [
+  "claude-sonnet-5-5"
+ ],
+ "endpoint": [
+  "anthropic_api"
+ ],
+ "api_calls": 269,
+ "real_usd": 12.653,
+ "prompt_tokens": 10985170,
+ "completion_tokens": 437157,
+ "input_tokens": 644,
+ "cache_read_tokens": 7992163,
+ "cache_write_tokens": 2992363,
+ "tokens_total": 11422327,
+ "truncated_calls": 0,
+ "cost_basis": [
+  "usage*price"
+ ],
+ "wall_s_after_slot": 5107,
+ "stage_visits": [
+  [
+   "clarify",
+   1,
+   "clarify",
+   "done",
+   3,
+   0.09
+  ],
+  [
+   "clarify",
+   2,
+   "clarify",
+   "done",
+   8,
+   0.108
+  ],
+  [
+   "clarify",
+   3,
+   "clarify",
+   "done",
+   3,
+   0.039
+  ],
+  [
+   "board-and-device-planning",
+   1,
+   "rtl",
+   "done",
+   4,
+   0.107
+  ],
+  [
+   "board-and-device-planning",
+   2,
+   "rtl",
+   "done",
+   4,
+   0.058
+  ],
+  [
+   "rtl-design-creation",
+   1,
+   "model",
+   "done",
+   3,
+   0.057
+  ],
+  [
+   "rtl-design-creation",
+   1,
+   "tests",
+   "done",
+   11,
+   0.608
+  ],
+  [
+   "rtl-design-creation",
+   1,
+   "tests",
+   "done",
+   5,
+   0.114
+  ],
+  [
+   "rtl-design-creation",
+   1,
+   "rtl",
+   "done",
+   27,
+   1.958
+  ],
+  [
+   "rtl-design-creation",
+   2,
+   "rtl",
+   "stage_budget",
+   44,
+   2.906
+  ],
+  [
+   "rtl-design-creation",
+   3,
+   "tests",
+   "done",
+   2,
+   0.108
+  ],
+  [
+   "rtl-design-creation",
+   3,
+   "rtl",
+   "stage_budget",
+   60,
+   2.704
+  ],
+  [
+   "rtl-design-creation",
+   4,
+   "rtl",
+   "done",
+   14,
+   0.812
+  ],
+  [
+   "rtl-design-creation",
+   5,
+   "tests",
+   "done",
+   2,
+   0.106
+  ],
+  [
+   "rtl-design-creation",
+   5,
+   "rtl",
+   "done",
+   19,
+   1.205
+  ],
+  [
+   "rtl-design-creation",
+   6,
+   "model",
+   "done",
+   4,
+   0.05
+  ],
+  [
+   "rtl-design-creation",
+   6,
+   "tests",
+   "done",
+   2,
+   0.112
+  ],
+  [
+   "rtl-design-creation",
+   6,
+   "rtl",
+   "done",
+   10,
+   0.216
+  ],
+  [
+   "constraints",
+   1,
+   "rtl",
+   "done",
+   6,
+   0.101
+  ],
+  [
+   "constraints",
+   2,
+   "rtl",
+   "done",
+   6,
+   0.095
+  ],
+  [
+   "synthesis",
+   1,
+   "rtl",
+   "done",
+   4,
+   0.084
+  ],
+  [
+   "implementation",
+   1,
+   "rtl",
+   "done",
+   4,
+   0.067
+  ],
+  [
+   "timing-closure",
+   1,
+   "rtl",
+   "done",
+   5,
+   0.074
+  ],
+  [
+   "power-closure",
+   1,
+   "rtl",
+   "done",
+   3,
+   0.062
+  ],
+  [
+   "drc-closure",
+   1,
+   "rtl",
+   "done",
+   4,
+   0.07
+  ],
+  [
+   "configuration-and-debug",
+   1,
+   "rtl",
+   "run_budget",
+   9,
+   0.103
+  ]
+ ],
+ "outcome": "stopped: done",
+ "reached_stage": 9,
+ "summary_stop": "done",
+ "interview": "off",
+ "cost_usd_agent": 12.014016,
+ "interview_note": "--interview off: the agent's defaults were taken, nothing asked or answered by hand",
+ "timing_after_route": {
+  "WNS_ns": 2.59,
+  "TNS_ns": 0.0,
+  "WHS_ns": 0.012
+ },
+ "utilisation": {
+  "LUT": "393",
+  "FF": "1196",
+  "BRAM_tiles": "0.5",
+  "DSP": "0"
+ },
+ "bitstream": {
+  "build_stamp": "4af0e754",
+  "exit_code": 0,
+  "vivado": "2026.1"
+ },
+ "build_id_usr_access": "ac51e220",
+ "bitstream_built": true,
+ "verif_stages": {
+  "V0": true,
+  "V1": true,
+  "V2": true,
+  "V3": false,
+  "SIGNOFF": false,
+  "V-HW": false
+ },
+ "bringup_ready": {
+  "ok": false,
+  "problems": [
+   "hw_checks.py does not exist (the bring-up runs its run(bus) over the JTAG register bus)",
+   "BRINGUP.md does not exist"
+  ]
+ },
+ "trace_pass": true,
+ "requirement_table": [
+  {
+   "id": "REQ-01",
+   "text": "Register 0x000 reads 0x20950001.",
+   "methods": {
+    "simulation": "pass",
+    "hardware": "pending"
+   }
+  },
+  {
+   "id": "REQ-02",
+   "text": "Register 0x004 reads the USR_ACCESSE2 word of the loaded bitstream.",
+   "methods": {
+    "hardware": "pending"
+   }
+  },
+  {
+   "id": "REQ-03",
+   "text": "Register 0x008 reads back the value written.",
+   "methods": {
+    "simulation": "pass",
+    "hardware": "pending"
+   }
+  },
+  {
+   "id": "REQ-04",
+   "text": "Unmapped addresses read 0.",
+   "methods": {
+    "simulation": "pass"
+   }
+  },
+  {
+   "id": "REQ-30",
+   "text": "Writes to unmapped addresses change no register.",
+   "methods": {
+    "simulation": "pass"
+   }
+  },
+  {
+   "id": "REQ-05",
+   "text": "h_rdata shows the addressed register within 2 clk of h_re.",
+   "methods": {
+    "simulation": "pass",
+    "formal": "pass"
+   }
+  },
+  {
+   "id": "REQ-31",
+   "text": "h_rdata holds its value until the next h_re.",
+   "methods": {
+    "simulation": "pass"
+   }
+  },
+  {
+   "id": "REQ-06",
+   "text": "The FIFO holds 512 words of 32 bits between clk_wr and clk_rd.",
+   "methods": {
+    "simulation": "pass",
+    "analysis": "pass"
+   }
+  },
+  {
+   "id": "REQ-07",
+   "text": "The writer sequence is PRBS-31 x^31 + x^28 + 1 with 32 new bits per word and seed 0x7FFFFFFF.",
+   "methods": {
+    "simulation": "pass"
+   }
+  },
+  {
+   "id": "REQ-08",
+   "text": "While RUN is 1 and the FIFO is not full the writer writes one word per clk_wr.",
+   "methods": {
+    "simulation": "pass",
+    "hardware": "pending"
+   }
+  },
+  {
+   "id": "REQ-09",
+   "text": "The reader checks every popped word against its own PRBS-31 sequence started from the same seed.",
+   "methods": {
+    "simulation": "pass"
+   }
+  },
+  {
+   "id": "REQ-10",
+   "text": "DATA_ERRS counts each mismatched word.",
+   "methods": {
+    "simulation": "pass"
+   }
+  },
+  {
+   "id": "REQ-11",
+   "text": "OVERFLOWS counts writes while full and stays 0 in normal operation.",
+   "methods": {
+    "formal": "pass",
+    "simulation": "pass",
+    "hardware": "pending"
+   }
+  },
+  {
+   "id": "REQ-12",
+   "text": "UNDERFLOWS counts reads while empty and stays 0 in normal operation.",
+   "methods": {
+    "formal": "pass",
+    "simulation": "pass",
+    "hardware": "pending"
+   }
+  },
+  {
+   "id": "REQ-13",
+   "text": "STALL_W counts clk_wr cycles with RUN 1 and the FIFO full.",
+   "methods": {
+    "simulation": "pass"
+   }
+  },
+  {
+   "id": "REQ-14",
+   "text": "OCC_MAX reports the highest FIFO fill seen in words.",
+   "methods": {
+    "simulation": "pass"
+   }
+  },
+  {
+   "id": "REQ-15",
+   "text": "With SLOW_READ set the reader pops at most 1 word per 8 clk_rd.",
+   "methods": {
+    "simulation": "pass"
+   }
+  },
+  {
+   "id": "REQ-16",
+   "text": "With SLOW_READ set the FIFO fills and STALL_W increases.",
+   "methods": {
+    "simulation": "pass",
+    "hardware": "pending"
+   }
+  },
+  {
+   "id": "REQ-17",
+   "text": "INJECT flips one bit of exactly one received word before the check, so DATA_ERRS increases by 1.",
+   "methods": {
+    "simulation": "pass",
+    "hardware": "pending"
+   }
+  },
+  {
+   "id": "REQ-18",
+   "text": "INJECT self-clears after the one flip.",
+   "methods": {
+    "simulation": "pass"
+   }
+  },
+  {
+   "id": "REQ-19",
+   "text": "A write to 0x030 latches 0x014 to 0x02C at one instant.",
+   "methods": {
+    "simulation": "pass",
+    "hardware": "pending"
+   }
+  },
+  {
+   "id": "REQ-20",
+   "text": "CLEAR with RUN 0 resets all counters and both sequences to the seed.",
+   "methods": {
+    "simulation": "pass"
+   }
+  },
+  {
+   "id": "REQ-21",
+   "text": "CLEAR self-clears after one write.",
+   "methods": {
+    "simulation": "pass"
+   }
+  },
+  {
+   "id": "REQ-22",
+   "text": "All counters are 32 bits wide.",
+   "methods": {
+    "simulation": "pass"
+   }
+  },
+  {
+   "id": "REQ-32",
+   "text": "Each counter wraps to 0 after 0xFFFFFFFF.",
+   "methods": {
+    "simulation": "pass"
+   }
+  },
+  {
+   "id": "REQ-23",
+   "text": "sfp_tx_disable is 1 at all times.",
+   "methods": {
+    "simulation": "pass",
+    "formal": "pass",
+    "analysis": "pass"
+   }
+  },
+  {
+   "id": "REQ-24",
+   "text": "The design uses 0 GT transceiver channels.",
+   "methods": {
+    "analysis": "pass"
+   }
+  },
+  {
+   "id": "REQ-25",
+   "text": "Every CDC path crossing from one of the two clock domains to the other is covered by a timing constraint.",
+   "methods": {
+    "analysis": "pass"
+   }
+  },
+  {
+   "id": "REQ-33",
+   "text": "Every CDC path crossing from one of the two clock domains to the other is listed in the CDC report.",
+   "methods": {
+    "analysis": "pass"
+   }
+  },
+  {
+   "id": "REQ-26",
+   "text": "Timing is met on both clocks with WNS at least 0 ns.",
+   "methods": {
+    "analysis": "pass"
+   }
+  },
+  {
+   "id": "REQ-27",
+   "text": "A 10-minute run reports 0 data errors, 0 overflows and 0 underflows.",
+   "methods": {
+    "hardware": "pending"
+   }
+  },
+  {
+   "id": "REQ-28",
+   "text": "WORDS_W advances at 25 million words per second when not stalled.",
+   "methods": {
+    "hardware": "pending"
+   }
+  },
+  {
+   "id": "REQ-29",
+   "text": "jtag_bus.sv is used unmodified.",
+   "methods": {
+    "analysis": "pass"
+   }
+  }
+ ],
+ "requirement_method_results": {
+  "pass": 36,
+  "pending": 11
+ },
+ "requirements": 33,
+ "hw_checks_present": false
+}

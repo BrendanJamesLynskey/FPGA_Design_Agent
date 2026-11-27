@@ -99,7 +99,7 @@ def test_the_build_tool_passes_the_pinned_request(rt):
     (r.design / "rtl").mkdir(exist_ok=True)
     (r.design / "rtl" / "x.sv").write_text("module t(input logic c, output logic q); always_ff @(posedge c) q <= ~q; endmodule\n")
     rel = r.design.relative_to(r.session.root)
-    (r.design / "c.xdc").write_text("create_clock -period 10.000 -name c [get_ports c]\n")
+    (r.design / "c.xdc").write_text("create_clock -period 10.000 -name c [get_ports c]\nset_output_delay -clock c 1.0 [get_ports q]\n")   # brief 230: every port constrained before a build starts
     (r.design / "build.yaml").write_text(yaml.safe_dump({"top": "t", "part": "xc7a100tcsg324-1", "sources": [f"{rel}/rtl/x.sv"], "constraints": [f"{rel}/c.xdc"]}))
     dispatch(r.session, "build", {"until": "synth"})                       # the stub run fails; only the environment it was given matters
     assert json.loads(seen["env"]["FDA_SECURITY"])["production_secure"] is True and seen["env"]["FDA_STOP_AFTER"] == "synth"

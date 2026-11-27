@@ -1,0 +1,31 @@
+HOLD-OUT: leave-one-design (records come from sources 213, 209, 209a, 224 only; the 215 benchmark runs are evaluated on, never recorded from).
+Replay of the repair memory on 107 recorded runs, 389 stage-2 evaluations, 324 failing ones (228 with at least one evidence key, 96 with none: unkeyed).
+Runs by source: 209 18, 209a 9, 213 18, 215 55, 224 7
+Records made from transitions (key failing at an evaluation, gone at the next, a file changed): 95 over 17 distinct keys, from 34 runs.
+Distinct record keys by gate: lint 9, report_gates 1, standards 3, verif 4
+Unkeyed components of failing evaluations: lint 54, model contract 6, other 5, simulate 199
+
+Leave-one-run-out matching (a record from another run with exactly the same gate, finding id and signature class):
+  keyed failing evaluations: 228; with a match: 146 (64 %) = REACH
+  recurring (a key still failing at the next evaluation, or the run ended on it): 140 evaluations; of those with a match: 67 (48 %)
+    gate lint: key instances 143, matched 135; recurring 72, recurring and matched 72
+    gate report_gates: key instances 1, matched 0; recurring 0, recurring and matched 0
+    gate standards: key instances 205, matched 87; recurring 136, recurring and matched 20
+    gate verif: key instances 22, matched 6; recurring 15, recurring and matched 4
+  fix agreement on matched recurring cases: the files a matching record changed overlap the files this run's next repair changed in 21 of 62
+
+CEILING (upper bound: every matched recurring evaluation is saved by its record, nothing else changes):
+  stage-2 visits that could be saved: 67 over 107 runs = 0.63 visits per run
+  runs whose stage 2 never passed in the record: 45 of 107; of those, runs with a matched recurring key: 20 = at most 19 points of pass rate
+  by source (visits per run; runs that never passed stage 2 and have a matched recurring key / runs):
+    209: 7 saved over 18 runs = 0.39; 1 of 18 runs = 6 points
+    209a: 7 saved over 9 runs = 0.78; 4 of 9 runs = 44 points
+    213: 30 saved over 18 runs = 1.67; 10 of 18 runs = 56 points
+    215: 12 saved over 55 runs = 0.22; 3 of 55 runs = 5 points
+    224: 11 saved over 7 runs = 1.57; 2 of 7 runs = 29 points
+    pilot designs only (all sources except 215): 1.06 visits per run over 52 runs
+  213 run 15 (20261126-141421-12ad): 6 failing evaluations, keys ['FDA-CON-8', 'VL-UNUSEDSIGNAL']; 6 had a matching record from another run
+  213 run 2 (20261126-043641-85a7): 6 failing evaluations, keys ['FDA-CON-8', 'VL-UNUSEDSIGNAL']; 6 had a matching record from another run
+  213 run 4 (20261126-052002-71da): 6 failing evaluations, keys ['FDA-CON-8', 'VL-UNUSEDSIGNAL']; 6 had a matching record from another run
+
+Examples: 20261126-042626-10d5 eval 0: ('lint', 'FDA-CON-8', 'default') matched 2 record(s) from other runs; the key still failed at the next evaluation | 20261126-042626-10d5 eval 0: ('standards', 'STD-CDC-01', 'default') matched 14 record(s) from other runs; the key still failed at the next evaluation | 20261126-043641-85a7 eval 0: ('lint', 'FDA-CON-8', 'default') matched 3 record(s) from other runs; the key still failed at the next evaluation | 20261126-043641-85a7 eval 1: ('lint', 'FDA-CON-8', 'default') matched 3 record(s) from other runs; the key still failed at the next evaluation | 20261126-043641-85a7 eval 2: ('lint', 'FDA-CON-8', 'default') matched 3 record(s) from other runs; the key still failed at the next evaluation | 20261126-043641-85a7 eval 3: ('lint', 'FDA-CON-8', 'default') matched 3 record(s) from other runs; the key still failed at the next evaluation

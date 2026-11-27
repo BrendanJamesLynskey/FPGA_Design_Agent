@@ -46,14 +46,19 @@ SWITCHES = ("FDA_XPROBE", "FDA_RESULT_HASH", "FDA_INCREMENTAL", "FDA_ILA_INSERT"
 
 
 def _lines(d: Path) -> list[str]:
-    return (d / "inputs.tcl").read_text().splitlines()
+    # brief 230: files the flow writes into the build directory (known_pre.xdc, known_post.xdc, board_config.xdc) are named by absolute path in
+    # inputs.tcl; the base and ila variants have different directories, so the directory is replaced by a placeholder (the files' contents are
+    # derived from hashed inputs, so a change in them still changes sources_sha256 or the design)
+    return (d / "inputs.tcl").read_text().replace(str(d), "<out>").splitlines()
 
 
 def _common(d: Path, vivado: str, threads: str) -> list[str]:
     prep = json.loads((d / "prepare.json").read_text())
     tcl = sorted((ROOT / "flow").glob("*.tcl"))
+    # the XDC files the flow writes itself are keyed by content (their paths are normalised away in _lines)
+    gen = [f"{n}={hashlib.sha256((d / n).read_bytes()).hexdigest()}" for n in ("known_pre.xdc", "known_post.xdc", "board_config.xdc") if (d / n).is_file()]
     return [f"sources_sha256={prep['sources_sha256']}", f"vivado={vivado}", f"threads={threads}",
-            *(f"{t.name}={hashlib.sha256(t.read_bytes()).hexdigest()}" for t in tcl)]
+            *(f"{t.name}={hashlib.sha256(t.read_bytes()).hexdigest()}" for t in tcl), *gen]
 
 
 def synth_key(d: Path, vivado: str, threads: str) -> str:

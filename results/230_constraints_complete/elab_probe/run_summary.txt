@@ -1,0 +1,36 @@
+# trimmed driver logs (the full Vivado stdout is not kept)
+== run_probe.log
+slot /home/brendan/Claude_sandbox/_handoff/heavy_slot.lock taken 2026-11-26 09:48:56
+run fixture 09:48:56
+done fixture rc=0 09:50:33
+run b191_ps 09:50:33
+done b191_ps rc=0 09:52:45
+run b96_gt 09:52:45
+done b96_gt rc=0 09:58:55
+all done 2026-11-26 09:58:55
+== run_probe2.log
+slot /home/brendan/Claude_sandbox/_handoff/heavy_slot.lock taken 2026-11-26 10:12:02
+run fixture 10:12:02
+done fixture rc=0 10:13:51
+run b191_ps 10:13:51
+done b191_ps rc=139 10:14:56
+run b96_gt_rtl 10:14:56
+done b96_gt_rtl rc=0 10:16:00
+replay replay_p5 10:16:00
+replay done replay_p5 rc=1 10:18:34
+replay replay_p5_start 10:18:34
+replay done replay_p5_start rc=1 10:21:10
+all done 2026-11-26 10:21:10
+== run_probe3.log
+slot /home/brendan/Claude_sandbox/_handoff/heavy_slot.lock taken 2026-11-26 10:37:55
+replay replay_p5 10:37:55
+replay done replay_p5 rc=1 10:40:35
+replay replay_p5_start 10:40:35
+replay done replay_p5_start rc=1 10:43:16
+run b191_unclocked_clock_pins 10:43:16
+done b191_unclocked_clock_pins rc=139 10:44:23
+run b191_ports_with_no_timing 10:44:23
+done b191_ports_with_no_timing rc=0 10:45:30
+all done 2026-11-26 10:45:30
+
+crash (bisect, out/b191_unclocked_clock_pins): Vivado exit 139, Segmentation fault in sta::FindRegClkPins::matchPin (libxv_psta) from all_registers -clock_pins on the elaborated zynq_ultra_ps_e design; the get_ports step alone ran (out/b191_ports_with_no_timing).

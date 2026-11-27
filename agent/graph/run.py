@@ -78,12 +78,14 @@ class State(TypedDict, total=False):
     stop: str
     stop_detail: dict   # brief 82P6 (P3): the facts behind a visit-limit stop (gates, roles, last failing assertion)
     interview: dict
+    readiness: dict     # brief 227: the stage-0 readiness result (frozen, rounds, stop)
     hw_approved: bool
     owners: dict        # stage 2: role -> the failure text that role owns (05c2: repair, do not regenerate)
     sig: str            # stage 2: signature of the last failure
     repeat: int         # stage 2: consecutive visits with an unchanged signature
     ledger: list        # brief 213 (R2): stage 2, one entry per failed visit (gates, finding, first failing check, files the repair before it changed)
     fp: dict            # brief 213 (R2): fingerprint of the repair roles' files at the last stage-2 gate evaluation
+    rm: dict            # brief 217 (R4): the evidence keys of the last failed stage-2 evaluation (repair memory); never file contents
     note_role: str      # the owner's edit prompt goes to this role (default: the stage's writer)
     arch_source: str    # who wrote the approved architecture: agent | owner
     hand_edit_only: bool  # the owner edited by hand and gave no prompt: re-run the gates on their files, no agent turn
@@ -130,6 +132,8 @@ class Config:
     closure: str = "off"            # closure loop: on = stage 6 runs the closure controller (agent/graph/closure.py)
     coverage_loop: str = "off"      # brief 218: on = at V3, rounds of coverage-directed stimulus inside the gate (agent/graph/covsva.py); off = today's V3
     req_sva: str = "off"            # brief 218: on = an assertion written from each checkable requirement, back-translated, proved (flow/sva_req.py)
+    readiness: str = "off"          # brief 227: on = stage 0 iterates until the requirements are ready (agent/graph/readiness.py), then freezes them
+    readiness_limits: dict = field(default_factory=dict)   # brief 227: max_rounds, max_calls, max_questions of the stage-0 stop rule
     docs: str = "off"               # brief 68 C: on = the document node writes handover.yaml, README.md, AGENT.md at the end (the CLI default is on)
     models_file: Path | None = None  # brief 108: the project's models.yaml (the project layer of the model table)
     model_config: dict | None = None  # brief 108: --model-config, the command-line layer in the models.yaml format
@@ -948,6 +952,21 @@ def _rt(state: State) -> Runtime:
     return _RT[state["run_id"]]
 
 
+def retrieve_memory(rt: Runtime, state: State) -> list[dict]:
+    """Brief 217 (R4): the records whose trigger equals the evidence keys of the failure this repair visit answers: at most three, exact on gate, finding id
+    and signature class, from the knowledge bank's ``repairs/`` and this run's own staging. Recorded in the run whether or not anything matched."""
+    from agent.graph import repair_memory as _rm
+    keys = (state.get("rm") or {}).get("keys") or []
+    bank = getattr(getattr(rt.session, "bank", None), "root", None)
+    extra = Path(os.environ["FDA_REPAIR_RECORDS"]) if os.environ.get("FDA_REPAIR_RECORDS") else None     # an unmerged batch of records (a folder), for measurements
+    pool = _rm.bank_records(bank) + _rm.load_records(*([extra] if extra else []), _rm.staging(rt.run_dir) / "records")
+    held = tuple(x for x in os.environ.get("FDA_REPAIR_MEMORY_EXCLUDE_RUNS", "").split(",") if x)      # an evaluation holds out the runs a record came from
+    got = _rm.retrieve(pool, keys, family=_rm.family_of(rt.design), exclude_runs=held)
+    ev = _rm.log_retrieval(rt.run_dir, rt.visit, keys, got, len(pool))
+    log_routing_event(rt, "repair_memory_retrieval", visit=ev["visit"], keys=ev["keys"], pool=ev["pool"], offered=ev["offered"])
+    return got
+
+
 def stage2_plan(rt: Runtime, state: State) -> dict[str, list[str] | None]:
     """Which stage-2 roles run this visit, in order. ``None``: a fresh write (the artefact does not exist yet); a list:
     a repair of that role's own output, with the failures that role owns. Roles not listed are frozen."""
@@ -960,6 +979,9 @@ def stage2_plan(rt: Runtime, state: State) -> dict[str, list[str] | None]:
     if "R2" in getattr(getattr(rt, "cfg", None), "arms", ()) and owners:                 # brief 213: the repair visit is shown what earlier visits tried and why each failed
         from agent.graph.feedback import with_ledger
         owners = with_ledger(owners, state.get("ledger"))
+    if "R4" in getattr(getattr(rt, "cfg", None), "arms", ()) and owners and (state.get("rm") or {}).get("keys"):    # brief 217: records of the same evidence
+        from agent.graph import repair_memory as _rm
+        owners = _rm.with_memory(owners, retrieve_memory(rt, state))
     plan: dict[str, list[str] | None] = {}
     for role in ("model", "tests", "rtl"):
         if not have[role]:
@@ -1331,6 +1353,17 @@ def _interview(rt: Runtime, spec: dict, state: State) -> tuple[dict, dict]:
     return spec, summ
 
 
+def _readiness(rt: Runtime, spec: dict) -> tuple[dict, dict]:
+    """Brief 227: the stage-0 readiness rounds after the interview. ``loose`` runs the standard checks (the gate is only asked for with ``--readiness on``).
+    Interview ``oracle`` answers from the hidden spec; otherwise a person's answers file (``requirements_answers.yaml``) is the answerer, and with none the
+    run stops with the open questions (exit status 3)."""
+    from agent.graph import readiness as RD
+    level, _src = requirements_level(rt, spec)
+    level = "strict" if level == "strict" else "standard"
+    who = SpecOracle(rt.cfg.hidden_spec, rt.oracle_llm or rt.resolver.oracle()) if rt.cfg.interview == "oracle" and rt.cfg.hidden_spec else None
+    return RD.gate_step(rt, spec, level, who)
+
+
 _ORDER = ["synth", "place", "route", "bitstream"]
 
 
@@ -1578,8 +1611,17 @@ def _requirements_summary(rt: Runtime) -> dict:
     """Brief 210: the level the run used and where it came from, and the conflicts it met (build/requirements/state.json)."""
     from agent.graph import requirements as RQ
     st = RQ.read_state(rt.design)
-    return {"level": st.get("level") or rt.cfg.requirements or None, "source": st.get("source"),
-            "conflicts": [{k: c.get(k) for k in ("requirement", "code", "fix_kind", "action")} for c in st.get("conflicts") or []]}
+    out = {"level": st.get("level") or rt.cfg.requirements or None, "source": st.get("source"),
+           "conflicts": [{k: c.get(k) for k in ("requirement", "code", "fix_kind", "action")} for c in st.get("conflicts") or []]}
+    if getattr(rt.cfg, "readiness", "off") == "on":                    # brief 227: the two-score report's first half (flow/readiness.py two_scores)
+        try:
+            import json as _json
+            from flow import readiness as RR
+            rd = _json.loads(rt.design.joinpath(*RR.STATE_DIR, RR.READINESS_FILE).read_text())
+            out["readiness"] = RR.two_scores(rd, None)["requirements_quality"]
+        except (OSError, ValueError):
+            out["readiness"] = {"frozen": False, "note": "no readiness record"}
+    return out
 
 
 def requirements_conflict_gate(rt: Runtime, ev: dict, out: dict, detail: list) -> None:
@@ -1719,6 +1761,11 @@ def node_gate(state: State) -> dict:
                 out["interview"] = summary
                 if summary.get("requirements_stop"):                  # brief 210: standard/strict: a question that must be resolved is not
                     out["stop"] = summary["requirements_stop"]
+                elif getattr(rt.cfg, "readiness", "off") == "on":      # brief 227: iterate until the readers agree and nothing is open, then freeze
+                    spec, rsum = _readiness(rt, spec)
+                    out["readiness"] = rsum["readiness"]
+                    if rsum.get("requirements_stop"):
+                        out["stop"] = rsum["requirements_stop"]
                 errs = validate(spec) + requirement_quality_errors(spec) + register_map_errors(req, spec)   # brief 53
                 cf = spec_constants_findings(rt)                   # brief 82P6: spec.yaml against the derived constants, at the clarify exit
                 errs += ["constants " + f"{f['code']} {f['where']}: {f['message']}" for f in cf]
@@ -1891,6 +1938,15 @@ def node_gate(state: State) -> dict:
                                          (ev.get("simulate") or {}).get("first_check"))
                 out["ledger"] = [*(state.get("ledger") or []), entry]
                 log_routing_event(rt, "ledger_entry", **{k: v for k, v in entry.items() if k != "sig"})
+    if n == 2 and "R4" in rt.cfg.arms:           # brief 217 (R4): a failing gate that turns into a pass leaves a record in the run's staging folder
+        from agent.graph import repair_memory as _rm
+        note = str(((getattr(rt, "last_role_message", None) or {}).get("rtl") or {}).get("text") or "")
+        new, written = _rm.step(rt.run_dir, rt.design, rt.run_id, state.get("rm"), ev, ok, rt.visit, repair_note=note,
+                                bank_root=getattr(getattr(rt.session, "bank", None), "root", None))
+        out["rm"] = new
+        for rec in written:
+            log_routing_event(rt, "repair_record_written", id=rec["id"], gate=rec["trigger"]["gate"], finding_id=rec["trigger"]["finding_id"],
+                              signature_class=rec["trigger"]["signature_class"], files=rec["fix"]["files"][:6])
     return {**out, "evidence": ev, "fails": [] if ok else fails, "detail": "\n".join(detail)}
 
 
@@ -2567,9 +2623,9 @@ def summary(rt: Runtime, state: dict) -> dict:
             "questions": (state.get("interview") or {}), "stop": state.get("stop"), "stop_detail": state.get("stop_detail"),
             "last_rtl_message": (getattr(rt, "last_role_message", None) or {}).get("rtl"),
             "routing_events": routing_events(rt),
-            **({"repair_feedback": {"arms": [a for a in rt.cfg.arms if a in ("R1", "R2", "R3")], "ledger": state.get("ledger") or [],
+            **({"repair_feedback": {"arms": [a for a in rt.cfg.arms if a in ("R1", "R2", "R3", "R4")], "ledger": state.get("ledger") or [],
                                     "regrade": (((state.get("evidence") or {}).get("regrade")) or None)}}
-               if any(a in rt.cfg.arms for a in ("R1", "R2", "R3")) else {}),
+               if any(a in rt.cfg.arms for a in ("R1", "R2", "R3", "R4")) else {}),
             "clean_stop": state.get("stop") == "done",
             "verification_profile": {**_profile_record(rt.cfg), "policy_breaches": __import__("agent.graph.profiles", fromlist=["x"]).check_pin(
                 rt.run_dir, rt.cfg.verif_profile, rt.cfg.verif_sets, rt.design)},

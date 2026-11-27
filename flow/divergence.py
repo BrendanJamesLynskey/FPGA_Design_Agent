@@ -333,10 +333,96 @@ def _series(ring: list[dict[str, Any]], name: str, w: int = 8) -> str:
     return " ".join(f"{v:X}" if isinstance(v, int) else str(v) for v in vals)
 
 
+def is_sim_stop(snap: dict[str, Any] | None) -> bool:
+    """True when the first failure is the simulator ending during a test (cocotb's SimFailure, "Simulator shut down prematurely"), not an exception
+    raised by the bench or an assertion. Brief 213's run 3 showed this was the common case where the snapshot said nothing useful: the digest for it
+    is built from the clock and the log, not from signals the check names."""
+    if not snap:
+        return False
+    return snap.get("exception") == "SimFailure" or str(snap.get("message") or "").startswith("Simulator shut down")
+
+
+_NOISE_LOG = re.compile(r"cocotb\.regression|ResourceWarning|No tests were discovered|Unable to create|VPI: Not able")
+_FINISH = re.compile(r"\$(finish|fatal|stop)\b")
+
+
+def sim_stop_facts(snap: dict[str, Any], rtl_files: list[Path] | None = None) -> dict[str, Any]:
+    """What the snapshot can say about a simulator stop, as data: when the failing test began and the run ended, whether the clock still had edges
+    after the test began, the RTL statements that can end a simulation, and the warnings or errors logged during the test."""
+    start = float(snap.get("test_start_ns") or 0.0)
+    dur = float(snap.get("sim_time_ns") or 0.0)
+    ring = snap.get("dut_ring") or []
+    ts = [r["t"] for r in ring if isinstance(r.get("t"), (int, float))]
+    after = [t for t in ts if t >= start]
+    period = None
+    if len(ts) >= 2:
+        d = sorted(b - a for a, b in zip(ts, ts[1:]) if b > a)
+        period = d[len(d) // 2] if d else None
+    finish: list[str] = []
+    for f in rtl_files or []:
+        try:
+            for i, ln in enumerate(_strip(Path(f).read_text(errors="replace")).splitlines()):
+                if _FINISH.search(ln):
+                    finish.append(f"{Path(f).name}:{i + 1}  {ln.strip()[:100]}")
+        except OSError:
+            pass
+    logs = [r for r in (snap.get("log_ring") or []) if not _NOISE_LOG.search(r.get("logger", "") + " " + r.get("msg", ""))
+            and (r.get("t") is None or r["t"] >= start - 1e-6)]
+    return {"test_start_ns": start, "ended_ns": start + dur, "clock": snap.get("clock"), "last_edge_ns": ts[-1] if ts else None, "period_ns": period,
+            "edges_in_test": len(after), "finish_in_rtl": finish[:3], "logs": logs[-3:]}
+
+
+def sim_stop_message(snap: dict[str, Any], rtl_files: list[Path] | None = None) -> str:
+    """One line for the ledger and the digest head: the simulator ended during the test, and the strongest fact the snapshot has about why."""
+    f = sim_stop_facts(snap, rtl_files)
+    head = f"the simulator ended {f['ended_ns'] - f['test_start_ns']:.0f} ns into test {snap.get('test')} (a stop, not a failed assertion)"
+    if f["finish_in_rtl"]:
+        return head + "; the RTL has " + f["finish_in_rtl"][0]
+    if f["logs"]:
+        return head + f"; logged {f['logs'][-1]['logger']}: {f['logs'][-1]['msg'][:120]}"
+    if f["clock"] and f["edges_in_test"] == 0 and f["last_edge_ns"] is not None:
+        return head + f"; no rising edge of {f['clock']} after the test began (last at {f['last_edge_ns']:.0f} ns)"
+    return head
+
+
+def sim_stop_class(snap: dict[str, Any], rtl_files: list[Path] | None = None) -> str:
+    """The signature class of a simulator stop, for the repair memory's evidence key: what the snapshot can say about why (an RTL statement that ends a
+    simulation; a clock with no edge after the test began; a clock that was running; nothing)."""
+    f = sim_stop_facts(snap, rtl_files)
+    if f["finish_in_rtl"]:
+        return "finish-in-rtl"
+    if f["clock"] and f["last_edge_ns"] is not None:
+        return "no-clock-edge" if f["edges_in_test"] == 0 else "clock-running"
+    return "unknown"
+
+
+def sim_stop_digest(snap: dict[str, Any], rtl_files: list[Path] | None = None) -> str:
+    f = sim_stop_facts(snap, rtl_files)
+    t = [f"[first failing check] test {snap.get('test')} did not fail an assertion: the simulator ended {f['ended_ns'] - f['test_start_ns']:.0f} ns into it "
+         f"(cocotb reports this as \"Simulator shut down prematurely\"). The test began at {f['test_start_ns']:.0f} ns and the run ended at {f['ended_ns']:.0f} ns."]
+    if f["clock"] and f["last_edge_ns"] is not None:
+        per = f" (period {f['period_ns']:.0f} ns)" if f["period_ns"] else ""
+        if f["edges_in_test"] == 0:
+            t.append(f"  clock {f['clock']}{per}: no rising edge was sampled after the test began; the last was at {f['last_edge_ns']:.0f} ns, "
+                     f"{f['test_start_ns'] - f['last_edge_ns']:.0f} ns before it. A simulation with no clock left has nothing scheduled and would end there. "
+                     "A clock or driver coroutine started inside an earlier test is cancelled by cocotb when that test ends: check that every test (or the shared setup) starts it.")
+        else:
+            t.append(f"  clock {f['clock']}{per}: {f['edges_in_test']} rising edges were sampled during the test, so the clock was running when the simulator ended.")
+    if f["finish_in_rtl"]:
+        t.append("  the RTL contains statements that end a simulation: " + "; ".join(f["finish_in_rtl"]))
+    if f["logs"]:
+        t.append("  logged at WARNING or above during the test: " + " | ".join(f"{r['logger']}: {r['msg'][:150]}" for r in f["logs"]))
+    t.append("  Causes that fit a simulator stop: no clock or driver left running; a $finish or $fatal in the RTL or the bench; a crash of the simulator process. "
+             "Read the simulator log for the lines just before the stop.")
+    return "\n".join(t)[:DIGEST_LIMIT]
+
+
 def snapshot_digest(snap: dict[str, Any] | None, rtl_files: list[Path] | None = None, *, clock_ns: float | None = None) -> str:
     """The bounded repair-feedback text for a failure snapshot ("" when there is none)."""
     if not snap:
         return ""
+    if is_sim_stop(snap):
+        return sim_stop_digest(snap, rtl_files)
     site = snap.get("site") or {}
     ring = snap.get("dut_ring") or []
     cyc = f", clock cycle {ring[-1]['cycle']} after the first sampled edge" if ring else ""

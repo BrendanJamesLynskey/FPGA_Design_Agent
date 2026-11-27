@@ -1,0 +1,787 @@
+{
+ "schema": "fpga-force/readiness/v1",
+ "level": "standard",
+ "limits": {
+  "max_rounds": 4,
+  "max_calls": 60,
+  "max_questions": 25
+ },
+ "checklist": "procedures/requirements-review/pre-build-review@sha256:c6081e7cd937",
+ "started": "2026-11-26T15:52:57Z",
+ "rounds": [
+  {
+   "n": 1,
+   "questions": [
+    {
+     "id": "Q1",
+     "text": "Does MEM_ADDR advance on that BUSY RAM_DATA read (i.e. MEM_ADDR after read equals 101)? (Scenario: While BUSY, RAM_DATA is written 0xAAAA5555 at MEM_ADDR 3 and MEM_ADDR is written 100; a RAM_DATA read follows. AUTOINC is set.) The requirements do not say; what should happen?",
+     "code": "RDY-READ-02",
+     "topic": "requirement",
+     "ids": [
+      "REQ-26",
+      "REQ-27",
+      "REQ-45"
+     ],
+     "blocking": true,
+     "source": "readers",
+     "answer": null,
+     "by": null,
+     "evidence": null
+    },
+    {
+     "id": "Q2",
+     "text": "Is DONE set and completed pass count equal to 5 in the same sample where BUSY is 0? (Scenario: The last pass of a 5-pass march ends. In the clock in which BUSY falls, MARCH_STATUS is sampled.) The requirements do not say; what should happen?",
+     "code": "RDY-READ-02",
+     "topic": "requirement",
+     "ids": [
+      "REQ-43",
+      "REQ-22",
+      "REQ-21"
+     ],
+     "blocking": true,
+     "source": "readers",
+     "answer": null,
+     "by": null,
+     "evidence": null
+    }
+   ],
+   "amendments": [],
+   "refused": [],
+   "repairs": {
+    "asked": [
+     {
+      "id": "REQ-03",
+      "code": "RDY-CLEAR-01",
+      "text": "requirement REQ-03 is compound ('and' joins two statements): split it into one requirement per checkable statement, each with its own id and proof method",
+      "question": "Please restate REQ-03 so that one statement can be checked: split it into one requirement per checkable statement, each with its own id and proof method",
+      "level": "standard",
+      "topic": "requirement",
+      "blocking": true,
+      "repair": true
+     },
+     {
+      "id": "REQ-05",
+      "code": "RDY-CLEAR-01",
+      "text": "requirement REQ-05 is compound ('and' joins two statements): split it into one requirement per checkable statement, each with its own id and proof method",
+      "question": "Please restate REQ-05 so that one statement can be checked: split it into one requirement per checkable statement, each with its own id and proof method",
+      "level": "standard",
+      "topic": "requirement",
+      "blocking": true,
+      "repair": true
+     },
+     {
+      "id": "REQ-07",
+      "code": "RDY-CLEAR-01",
+      "text": "requirement REQ-07 is compound ('and' joins two statements): split it into one requirement per checkable statement, each with its own id and proof method",
+      "question": "Please restate REQ-07 so that one statement can be checked: split it into one requirement per checkable statement, each with its own id and proof method",
+      "level": "standard",
+      "topic": "requirement",
+      "blocking": true,
+      "repair": true
+     },
+     {
+      "id": "REQ-12",
+      "code": "RDY-CLEAR-01",
+      "text": "requirement REQ-12 is compound ('and' joins two statements): split it into one requirement per checkable statement, each with its own id and proof method",
+      "question": "Please restate REQ-12 so that one statement can be checked: split it into one requirement per checkable statement, each with its own id and proof method",
+      "level": "standard",
+      "topic": "requirement",
+      "blocking": true,
+      "repair": true
+     },
+     {
+      "id": "REQ-13",
+      "code": "RDY-CLEAR-01",
+      "text": "requirement REQ-13 is compound ('and' joins two statements): split it into one requirement per checkable statement, each with its own id and proof method",
+      "question": "Please restate REQ-13 so that one statement can be checked: split it into one requirement per checkable statement, each with its own id and proof method",
+      "level": "standard",
+      "topic": "requirement",
+      "blocking": true,
+      "repair": true
+     },
+     {
+      "id": "REQ-17",
+      "code": "RDY-CLEAR-01",
+      "text": "requirement REQ-17 is compound (';' joins two statements): split it into one requirement per checkable statement, each with its own id and proof method",
+      "question": "Please restate REQ-17 so that one statement can be checked: split it into one requirement per checkable statement, each with its own id and proof method",
+      "level": "standard",
+      "topic": "requirement",
+      "blocking": true,
+      "repair": true
+     },
+     {
+      "id": "REQ-21",
+      "code": "RDY-CLEAR-01",
+      "text": "requirement REQ-21 is compound ('and' joins two statements): split it into one requirement per checkable statement, each with its own id and proof method",
+      "question": "Please restate REQ-21 so that one statement can be checked: split it into one requirement per checkable statement, each with its own id and proof method",
+      "level": "standard",
+      "topic": "requirement",
+      "blocking": true,
+      "repair": true
+     },
+     {
+      "id": "REQ-25",
+      "code": "RDY-CLEAR-01",
+      "text": "requirement REQ-25 is compound ('and' joins two statements): split it into one requirement per checkable statement, each with its own id and proof method",
+      "question": "Please restate REQ-25 so that one statement can be checked: split it into one requirement per checkable statement, each with its own id and proof method",
+      "level": "standard",
+      "topic": "requirement",
+      "blocking": true,
+      "repair": true
+     },
+     {
+      "id": "REQ-26",
+      "code": "RDY-CLEAR-01",
+      "text": "requirement REQ-26 is compound ('and' joins two statements): split it into one requirement per checkable statement, each with its own id and proof method",
+      "question": "Please restate REQ-26 so that one statement can be checked: split it into one requirement per checkable statement, each with its own id and proof method",
+      "level": "standard",
+      "topic": "requirement",
+      "blocking": true,
+      "repair": true
+     },
+     {
+      "id": "REQ-28",
+      "code": "RDY-CLEAR-01",
+      "text": "requirement REQ-28 is compound ('and' joins two statements): split it into one requirement per checkable statement, each with its own id and proof method",
+      "question": "Please restate REQ-28 so that one statement can be checked: split it into one requirement per checkable statement, each with its own id and proof method",
+      "level": "standard",
+      "topic": "requirement",
+      "blocking": true,
+      "repair": true
+     }
+    ],
+    "revised": [
+     "REQ-03",
+     "REQ-05",
+     "REQ-07",
+     "REQ-12",
+     "REQ-13",
+     "REQ-17",
+     "REQ-21",
+     "REQ-25",
+     "REQ-26",
+     "REQ-28"
+    ],
+    "refused": []
+   },
+   "mechanical": [
+    {
+     "id": "interface",
+     "code": "RDY-IF-04",
+     "text": "output led has no reset value",
+     "question": "What does led drive during and just after reset?",
+     "level": "strict",
+     "topic": "reset strategy",
+     "blocking": true,
+     "repair": false
+    },
+    {
+     "id": "interface",
+     "code": "RDY-IF-05",
+     "text": "output led has no stated latency from a named input event",
+     "question": "How many cycles after which input event does led change (or is it combinational)?",
+     "level": "strict",
+     "topic": "throughput and latency",
+     "blocking": true,
+     "repair": false
+    },
+    {
+     "id": "interface",
+     "code": "RDY-IF-04",
+     "text": "output sfp_tx_disable has no reset value",
+     "question": "What does sfp_tx_disable drive during and just after reset?",
+     "level": "strict",
+     "topic": "reset strategy",
+     "blocking": true,
+     "repair": false
+    },
+    {
+     "id": "interface",
+     "code": "RDY-IF-05",
+     "text": "output sfp_tx_disable has no stated latency from a named input event",
+     "question": "How many cycles after which input event does sfp_tx_disable change (or is it combinational)?",
+     "level": "strict",
+     "topic": "throughput and latency",
+     "blocking": true,
+     "repair": false
+    },
+    {
+     "id": "interface",
+     "code": "RDY-IF-04",
+     "text": "output core: h_rdata has no reset value",
+     "question": "What does core: h_rdata drive during and just after reset?",
+     "level": "strict",
+     "topic": "reset strategy",
+     "blocking": true,
+     "repair": false
+    },
+    {
+     "id": "interface",
+     "code": "RDY-IF-05",
+     "text": "output core: h_rdata has no stated latency from a named input event",
+     "question": "How many cycles after which input event does core: h_rdata change (or is it combinational)?",
+     "level": "strict",
+     "topic": "throughput and latency",
+     "blocking": true,
+     "repair": false
+    },
+    {
+     "id": "REQ-01",
+     "code": "RDY-DEF-01",
+     "text": "a default the agent chose became this requirement and the user has not validated it",
+     "question": "The agent chose the basis of REQ-01 (a default). Do you confirm it as written?",
+     "level": "strict",
+     "topic": "requirement",
+     "blocking": true,
+     "repair": false
+    },
+    {
+     "id": "REQ-03",
+     "code": "RDY-DEF-01",
+     "text": "a default the agent chose became this requirement and the user has not validated it",
+     "question": "The agent chose the basis of REQ-03 (a default). Do you confirm it as written?",
+     "level": "strict",
+     "topic": "requirement",
+     "blocking": true,
+     "repair": false
+    },
+    {
+     "id": "REQ-06",
+     "code": "RDY-DEF-01",
+     "text": "a default the agent chose became this requirement and the user has not validated it",
+     "question": "The agent chose the basis of REQ-06 (a default). Do you confirm it as written?",
+     "level": "strict",
+     "topic": "requirement",
+     "blocking": true,
+     "repair": false
+    },
+    {
+     "id": "REQ-08",
+     "code": "RDY-DEF-01",
+     "text": "a default the agent chose became this requirement and the user has not validated it",
+     "question": "The agent chose the basis of REQ-08 (a default). Do you confirm it as written?",
+     "level": "strict",
+     "topic": "requirement",
+     "blocking": true,
+     "repair": false
+    },
+    {
+     "id": "REQ-09",
+     "code": "RDY-DEF-01",
+     "text": "a default the agent chose became this requirement and the user has not validated it",
+     "question": "The agent chose the basis of REQ-09 (a default). Do you confirm it as written?",
+     "level": "strict",
+     "topic": "requirement",
+     "blocking": true,
+     "repair": false
+    },
+    {
+     "id": "REQ-11",
+     "code": "RDY-DEF-01",
+     "text": "a default the agent chose became this requirement and the user has not validated it",
+     "question": "The agent chose the basis of REQ-11 (a default). Do you confirm it as written?",
+     "level": "strict",
+     "topic": "requirement",
+     "blocking": true,
+     "repair": false
+    },
+    {
+     "id": "REQ-15",
+     "code": "RDY-DEF-01",
+     "text": "a default the agent chose became this requirement and the user has not validated it",
+     "question": "The agent chose the basis of REQ-15 (a default). Do you confirm it as written?",
+     "level": "strict",
+     "topic": "requirement",
+     "blocking": true,
+     "repair": false
+    },
+    {
+     "id": "REQ-19",
+     "code": "RDY-DEF-01",
+     "text": "a default the agent chose became this requirement and the user has not validated it",
+     "question": "The agent chose the basis of REQ-19 (a default). Do you confirm it as written?",
+     "level": "strict",
+     "topic": "requirement",
+     "blocking": true,
+     "repair": false
+    },
+    {
+     "id": "REQ-24",
+     "code": "RDY-DEF-01",
+     "text": "a default the agent chose became this requirement and the user has not validated it",
+     "question": "The agent chose the basis of REQ-24 (a default). Do you confirm it as written?",
+     "level": "strict",
+     "topic": "requirement",
+     "blocking": true,
+     "repair": false
+    },
+    {
+     "id": "REQ-25",
+     "code": "RDY-DEF-01",
+     "text": "a default the agent chose became this requirement and the user has not validated it",
+     "question": "The agent chose the basis of REQ-25 (a default). Do you confirm it as written?",
+     "level": "strict",
+     "topic": "requirement",
+     "blocking": true,
+     "repair": false
+    },
+    {
+     "id": "REQ-26",
+     "code": "RDY-DEF-01",
+     "text": "a default the agent chose became this requirement and the user has not validated it",
+     "question": "The agent chose the basis of REQ-26 (a default). Do you confirm it as written?",
+     "level": "strict",
+     "topic": "requirement",
+     "blocking": true,
+     "repair": false
+    },
+    {
+     "id": "REQ-27",
+     "code": "RDY-DEF-01",
+     "text": "a default the agent chose became this requirement and the user has not validated it",
+     "question": "The agent chose the basis of REQ-27 (a default). Do you confirm it as written?",
+     "level": "strict",
+     "topic": "requirement",
+     "blocking": true,
+     "repair": false
+    }
+   ],
+   "review": {
+    "findings": [],
+    "verdict": "ready",
+    "compliance": 0
+   },
+   "probes": {
+    "count": 13,
+    "categories": [
+     "back_pressure",
+     "boundary",
+     "invalid_input",
+     "mid_operation_reset",
+     "overflow",
+     "power_up",
+     "reset",
+     "simultaneous",
+     "unmapped"
+    ],
+    "problems": []
+   },
+   "agreement": {
+    "probes": 13,
+    "agreed": 11,
+    "rate": 0.8462,
+    "disagreements": [],
+    "gaps": [
+     {
+      "probe": "P10",
+      "scenario": "While BUSY, RAM_DATA is written 0xAAAA5555 at MEM_ADDR 3 and MEM_ADDR is written 100; a RAM_DATA read follows. AUTOINC is set.",
+      "question": "Does MEM_ADDR advance on that BUSY RAM_DATA read (i.e. MEM_ADDR after read equals 101)?",
+      "answers": {
+       "A": "unspecified",
+       "B": "unspecified"
+      },
+      "requirements": [
+       "REQ-26",
+       "REQ-27",
+       "REQ-45"
+      ]
+     },
+     {
+      "probe": "P13",
+      "scenario": "The last pass of a 5-pass march ends. In the clock in which BUSY falls, MARCH_STATUS is sampled.",
+      "question": "Is DONE set and completed pass count equal to 5 in the same sample where BUSY is 0?",
+      "answers": {
+       "A": "unspecified",
+       "B": "unspecified"
+      },
+      "requirements": [
+       "REQ-43",
+       "REQ-22",
+       "REQ-21"
+      ]
+     }
+    ]
+   },
+   "probe_set": [
+    {
+     "id": "P1",
+     "category": "reset",
+     "answer_kind": "int",
+     "requirements": [
+      "REQ-15",
+      "REQ-33"
+     ]
+    },
+    {
+     "id": "P2",
+     "category": "mid_operation_reset",
+     "answer_kind": "int",
+     "requirements": [
+      "REQ-16",
+      "REQ-15",
+      "REQ-21",
+      "REQ-34"
+     ]
+    },
+    {
+     "id": "P3",
+     "category": "boundary",
+     "answer_kind": "int",
+     "requirements": [
+      "REQ-10",
+      "REQ-35",
+      "REQ-07"
+     ]
+    },
+    {
+     "id": "P4",
+     "category": "overflow",
+     "answer_kind": "choice",
+     "requirements": [
+      "REQ-35",
+      "REQ-08"
+     ]
+    },
+    {
+     "id": "P5",
+     "category": "simultaneous",
+     "answer_kind": "choice",
+     "requirements": [
+      "REQ-24",
+      "REQ-23"
+     ]
+    },
+    {
+     "id": "P6",
+     "category": "simultaneous",
+     "answer_kind": "choice",
+     "requirements": [
+      "REQ-14",
+      "REQ-13",
+      "REQ-37"
+     ]
+    },
+    {
+     "id": "P7",
+     "category": "unmapped",
+     "answer_kind": "int",
+     "requirements": [
+      "REQ-12",
+      "REQ-36"
+     ]
+    },
+    {
+     "id": "P8",
+     "category": "back_pressure",
+     "answer_kind": "bool",
+     "requirements": [
+      "REQ-13",
+      "REQ-37"
+     ]
+    },
+    {
+     "id": "P9",
+     "category": "invalid_input",
+     "answer_kind": "int",
+     "requirements": [
+      "REQ-25",
+      "REQ-44",
+      "REQ-22"
+     ]
+    },
+    {
+     "id": "P10",
+     "category": "boundary",
+     "answer_kind": "bool",
+     "requirements": [
+      "REQ-26",
+      "REQ-27",
+      "REQ-45"
+     ]
+    },
+    {
+     "id": "P11",
+     "category": "boundary",
+     "answer_kind": "int",
+     "requirements": [
+      "REQ-19",
+      "REQ-28",
+      "REQ-46",
+      "REQ-20"
+     ]
+    },
+    {
+     "id": "P12",
+     "category": "power_up",
+     "answer_kind": "int",
+     "requirements": [
+      "REQ-04",
+      "REQ-05",
+      "REQ-15",
+      "REQ-29"
+     ]
+    },
+    {
+     "id": "P13",
+     "category": "simultaneous",
+     "answer_kind": "bool",
+     "requirements": [
+      "REQ-43",
+      "REQ-22",
+      "REQ-21"
+     ]
+    }
+   ],
+   "probe_text": [
+    {
+     "id": "P1",
+     "category": "reset",
+     "requirements": [
+      "REQ-15",
+      "REQ-33"
+     ],
+     "scenario": "SCRATCH was written 0xDEADBEEF and MARCH_PASSES was written 50, then rst is asserted for one clock and released. After reset, SCRATCH and MARCH_PASSES are read.",
+     "question": "What value does MARCH_PASSES read after reset?",
+     "answer_kind": "int"
+    },
+    {
+     "id": "P2",
+     "category": "mid_operation_reset",
+     "requirements": [
+      "REQ-16",
+      "REQ-15",
+      "REQ-21",
+      "REQ-34"
+     ],
+     "scenario": "A 200-pass march is running (BUSY high) and midway through, rst is asserted for 8 clocks. After release, RAM word 7 is read via MEM_ADDR=7 and RAM_DATA.",
+     "question": "Is BUSY low after reset and what does RAM word 7 read? Give the value read from RAM word 7 as a number (hex allowed). If the requirements do not fix it, answer -1.",
+     "answer_kind": "int"
+    },
+    {
+     "id": "P3",
+     "category": "boundary",
+     "requirements": [
+      "REQ-10",
+      "REQ-35",
+      "REQ-07"
+     ],
+     "scenario": "AUTOINC is set. MEM_ADDR is written 0xFFFFFC05 (bits 31:10 set, low 10 bits 5). Then MEM_ADDR is read.",
+     "question": "What value does MEM_ADDR read back?",
+     "answer_kind": "int"
+    },
+    {
+     "id": "P4",
+     "category": "overflow",
+     "requirements": [
+      "REQ-35",
+      "REQ-08"
+     ],
+     "scenario": "AUTOINC is set, MEM_ADDR=1023. One RAM_DATA write of 0x12345678 is performed, then MEM_ADDR is read.",
+     "question": "What value does MEM_ADDR read, and is the write stored at word 1023 (the old address)?",
+     "answer_kind": "choice",
+     "choices": [
+      "MEM_ADDR 0, stored at 1023",
+      "MEM_ADDR 1024, stored at 1023",
+      "MEM_ADDR 0, stored at 0",
+      "MEM_ADDR is not fixed by requirements"
+     ]
+    },
+    {
+     "id": "P5",
+     "category": "simultaneous",
+     "requirements": [
+      "REQ-24",
+      "REQ-23"
+     ],
+     "scenario": "A march with MARCH_PASSES=10 is BUSY with MARCH_ERRS=3 accumulating from INJECT_FAULT. Software writes START again while BUSY, in the same clock as the march completes in pass 10.",
+     "question": "Is the second START honoured (clearing errors/DONE and restarting)?",
+     "answer_kind": "choice",
+     "choices": [
+      "ignored, DONE stays set with ERRS retained",
+      "honoured, restarts march",
+      "requirements do not fix the outcome"
+     ]
+    },
+    {
+     "id": "P6",
+     "category": "simultaneous",
+     "requirements": [
+      "REQ-14",
+      "REQ-13",
+      "REQ-37"
+     ],
+     "scenario": "In the same clock, h_we is asserted for SCRATCH with 0x11 and h_re is asserted for SCRATCH, which previously held 0x22.",
+     "question": "What does h_rdata show for that read: old value 0x22 or new 0x11 or not fixed?",
+     "answer_kind": "choice",
+     "choices": [
+      "0x22",
+      "0x11",
+      "not fixed by requirements"
+     ]
+    },
+    {
+     "id": "P7",
+     "category": "unmapped",
+     "requirements": [
+      "REQ-12",
+      "REQ-36"
+     ],
+     "scenario": "A write of 0xFFFFFFFF to unmapped address 0xFFC (h_addr 12 bits) is performed, then 0xFFC is read, and then SCRATCH is read.",
+     "question": "What value does the read of 0xFFC return?",
+     "answer_kind": "int"
+    },
+    {
+     "id": "P8",
+     "category": "back_pressure",
+     "requirements": [
+      "REQ-13",
+      "REQ-37"
+     ],
+     "scenario": "h_re is pulsed for one clock at ID register 0x000 and then no further access occurs for 10 clocks.",
+     "question": "After the value has been shown, is h_rdata still 0x20920001 10 clocks later?",
+     "answer_kind": "bool"
+    },
+    {
+     "id": "P9",
+     "category": "invalid_input",
+     "requirements": [
+      "REQ-25",
+      "REQ-44",
+      "REQ-22"
+     ],
+     "scenario": "MARCH_PASSES is written 0 and START is issued; the march runs to DONE.",
+     "question": "What is the completed pass count in MARCH_STATUS bits 31:16 at DONE, and what does MARCH_PASSES read back (give the completed pass count)?",
+     "answer_kind": "int"
+    },
+    {
+     "id": "P10",
+     "category": "boundary",
+     "requirements": [
+      "REQ-26",
+      "REQ-27",
+      "REQ-45"
+     ],
+     "scenario": "While BUSY, RAM_DATA is written 0xAAAA5555 at MEM_ADDR 3 and MEM_ADDR is written 100; a RAM_DATA read follows. AUTOINC is set.",
+     "question": "Does MEM_ADDR advance on that BUSY RAM_DATA read (i.e. MEM_ADDR after read equals 101)?",
+     "answer_kind": "bool"
+    },
+    {
+     "id": "P11",
+     "category": "boundary",
+     "requirements": [
+      "REQ-19",
+      "REQ-28",
+      "REQ-46",
+      "REQ-20"
+     ],
+     "scenario": "A 3-pass march with INJECT_FAULT set completes. Then RAM word 5 is read.",
+     "question": "What does RAM word 5 read?",
+     "answer_kind": "int"
+    },
+    {
+     "id": "P12",
+     "category": "power_up",
+     "requirements": [
+      "REQ-04",
+      "REQ-05",
+      "REQ-15",
+      "REQ-29"
+     ],
+     "scenario": "Straight after configuration and the 8-clock power-up reset, with no writes, RAM word 1023 is read and MARCH_FIRST_ERR is read.",
+     "question": "What value does RAM word 1023 read?",
+     "answer_kind": "int"
+    },
+    {
+     "id": "P13",
+     "category": "simultaneous",
+     "requirements": [
+      "REQ-43",
+      "REQ-22",
+      "REQ-21"
+     ],
+     "scenario": "The last pass of a 5-pass march ends. In the clock in which BUSY falls, MARCH_STATUS is sampled.",
+     "question": "Is DONE set and completed pass count equal to 5 in the same sample where BUSY is 0?",
+     "answer_kind": "bool"
+    }
+   ],
+   "answers": {
+    "A": {
+     "P1": "1",
+     "P2": "-1",
+     "P3": "5",
+     "P4": "MEM_ADDR is not fixed by requirements",
+     "P5": "ignored, DONE stays set with ERRS retained",
+     "P6": "not fixed by requirements",
+     "P7": "0",
+     "P8": "yes",
+     "P9": "1",
+     "P10": "unspecified",
+     "P11": "0",
+     "P12": "0xC0DE03FF",
+     "P13": "unspecified"
+    },
+    "B": {
+     "P1": "1",
+     "P2": "-1",
+     "P3": "5",
+     "P4": "MEM_ADDR is not fixed by requirements",
+     "P5": "ignored, DONE stays set with ERRS retained",
+     "P6": "not fixed by requirements",
+     "P7": "0",
+     "P8": "yes",
+     "P9": "1",
+     "P10": "unspecified",
+     "P11": "0",
+     "P12": "0xC0DE03FF",
+     "P13": "unspecified"
+    }
+   }
+  }
+ ],
+ "frozen": null,
+ "stop": "no answer was available for the open questions",
+ "answerer": null,
+ "finished": "2026-11-26T15:53:43Z",
+ "model_calls": 5,
+ "calls_by_role": {
+  "probes": 1,
+  "reader_a": 1,
+  "reader_b": 1,
+  "repair": 1,
+  "review": 1
+ },
+ "open": [
+  {
+   "id": "Q1",
+   "text": "Does MEM_ADDR advance on that BUSY RAM_DATA read (i.e. MEM_ADDR after read equals 101)? (Scenario: While BUSY, RAM_DATA is written 0xAAAA5555 at MEM_ADDR 3 and MEM_ADDR is written 100; a RAM_DATA read follows. AUTOINC is set.) The requirements do not say; what should happen?",
+   "code": "RDY-READ-02",
+   "topic": "requirement",
+   "ids": [
+    "REQ-26",
+    "REQ-27",
+    "REQ-45"
+   ],
+   "blocking": true,
+   "source": "readers",
+   "answer": null,
+   "by": null,
+   "evidence": null
+  },
+  {
+   "id": "Q2",
+   "text": "Is DONE set and completed pass count equal to 5 in the same sample where BUSY is 0? (Scenario: The last pass of a 5-pass march ends. In the clock in which BUSY falls, MARCH_STATUS is sampled.) The requirements do not say; what should happen?",
+   "code": "RDY-READ-02",
+   "topic": "requirement",
+   "ids": [
+    "REQ-43",
+    "REQ-22",
+    "REQ-21"
+   ],
+   "blocking": true,
+   "source": "readers",
+   "answer": null,
+   "by": null,
+   "evidence": null
+  }
+ ]
+}
