@@ -21,7 +21,7 @@ if ! eval "$("$H/take_heavy_slot.sh" --env "$TEXT")" 2>/dev/null || [ -z "${HEAV
 echo "$(date '+%F %T') slot $HEAVY_LOCK" >> "$LOG"
 trap 'case "$(cat "$HEAVY_LOCK" 2>/dev/null)" in "214:"*) rm -- "$HEAVY_LOCK";; esac' EXIT
 export FDA_HEAVY_SLOT="$HEAVY_LOCK"
-export PATH="$C/bin:$PATH" FDA_KNOWLEDGE=/home/brendan/Claude_sandbox/_worktrees/230-kb-pin FDA_PROMPTS_DIR=/home/brendan/Claude_sandbox/_worktrees/230-kb-pin/prompts
+export PATH="$C/bin:$PATH" FDA_KNOWLEDGE=/home/brendan/Claude_sandbox/_worktrees/kb-prompts-pin FDA_PROMPTS_DIR=/home/brendan/Claude_sandbox/_worktrees/kb-prompts-pin/prompts
 case "$ARM" in control) HA=(--harness-arm H1);; routing) HA=(--harness-arm H1 --routing on);; routing_kway) HA=(--harness-arm H1 --routing on --kway 3);; *) echo "bad arm"; exit 2;; esac
 BEFORE=$(ls -1 runs | grep '^2026' | sort | tail -1)
 t0=$(date +%s)

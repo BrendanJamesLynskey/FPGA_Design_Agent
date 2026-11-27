@@ -1,0 +1,1 @@
+Runs 1 and 4 died at start-up or mid-run (23:27 GMT) with PromptUnavailable: the knowledge checkout 230-kb-pin was deleted by the planner. Environment fault, not scored; both re-run from kb-prompts-pin (same commit 5e2eab87).
