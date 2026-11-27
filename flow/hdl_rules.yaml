@@ -15,7 +15,7 @@
 # A finding that no rule maps lands in the catch-all rule of its tool (HDL-LINT-00, HDL-VIV-00, HDL-STD-00), so nothing is lost.
 # Waivers: designs/<d>/lint/waivers.yaml, {rule, match (a glob over the finding key), reason, owner, date}.
 standard: FDA-HDL
-version: "1.15"            # 1.0 2026-11-12 (first release); 1.1 2026-11-14 (brief 71: reset rules split into HDL-RST-01..05,
+version: "1.16"            # 1.0 2026-11-12 (first release); 1.1 2026-11-14 (brief 71: reset rules split into HDL-RST-01..05,
                           # HDL-CLK-02, HDL-VER-01, HDL-IF-02/03, HDL-GT-01, HDL-DOC-01; check-suite tool keys; fix and skill);
                           # 1.2 2026-11-14 (brief 73: HDL-IF-04..06, the axi_profile check);
                           # 1.3 2026-11-14 (brief 70: REQP-1840 in HDL-RST-03, HDL-RST-06 AMD IP resets);
@@ -31,9 +31,10 @@ version: "1.15"            # 1.0 2026-11-12 (first release); 1.1 2026-11-14 (bri
                           # 1.11 2026-11-24 (brief 208: HDL-CLK-04 clock multiplexers, the clock_mux check)
                           # 1.12 2026-11-25 (brief 190: HDL-FAST-01 data-dependent wide shift or index on a fast path (advisory))
                           # 1.13 2026-11-25 (brief 185: HDL-DSP-01, the dsp_regs check, advisory)
+                          # 1.16 2026-11-27 (brief 246, HDL-STY-02 always @(*), HDL-STY-03 primitive-named stubs (advisory); HDL-RST-01 gains STD-RST-02, the board async reset boundary; HDL-CDC-03 gates a skew that is unbounded or above 10 x its bound)
                           # 1.15 2026-11-26 (brief 241: HDL-DMA-01 non-coherent PS port without a software cache contract, advisory)
                           # 1.14 2026-11-26 (brief 231: STD-INIT-02 in HDL-SYN-06, the setting rtl.reset_model; HDL-STY-01 file named after its module)
-date: 2026-11-26
+date: 2026-11-27
 rules:
   - id: HDL-SYN-01
     title: No latches
@@ -100,6 +101,22 @@ rules:
       file name, so the file and the module agree.
     checks: {verilator: [DECLFILENAME]}
     fix: rename the file to <module>.sv (git mv), or move the module into the file that carries its name; for a top module the file is <top>.sv; one top module per file, with a helper module in its own file
+    skill: vivado-rtl-lint
+  - id: HDL-STY-02
+    title: A combinational block is always_comb, not always @(*)
+    rationale: The implicit sensitivity list of always @(*) does not run at time 0 when no input changes, so a signal can stay at X in
+      simulation until an input moves (brief 235, a first-read failure on a register that held X from time 0). always_comb runs once at time 0
+      and is checked by the tools for latches and multiple drivers. Synthesis treats the two alike.
+    checks: {standards: [STD-COMB-01]}
+    fix: replace always @(*) (or always @*) with always_comb; keep simulation stubs of vendor primitives in rtl/xilinx_sim_stubs.sv between ifndef SYNTHESIS and endif, where the rule does not look
+    skill: sequential-and-combinational-coding
+  - id: HDL-STY-03
+    title: A module named like a Xilinx primitive exists only inside ifndef SYNTHESIS (advisory)
+    rationale: A design's own simulation stand-in for BSCANE2, IBUF, an xpm_cdc macro or another vendor primitive must not reach synthesis, where it would
+      shadow or collide with the real primitive. The house convention is rtl/xilinx_sim_stubs.sv, guarded by ifndef SYNTHESIS, which the lint tool and the
+      reset rule also treat as simulation-only.
+    checks: {standards: [STD-STUB-01]}
+    fix: move the stand-in into rtl/xilinx_sim_stubs.sv between ifndef SYNTHESIS and endif, and never list it in the synthesis sources
     skill: vivado-rtl-lint
   - id: HDL-WID-01
     title: Widths match

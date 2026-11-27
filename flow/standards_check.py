@@ -54,7 +54,7 @@ except ImportError:
     import vhdl                         # type: ignore[no-redef]
 
 ROOT = Path(__file__).resolve().parents[1]
-VERSION = "1.3"           # 1.3 (brief 246): STD-RST-01 honours a recorded async-reset waiver, STD-RST-02; 1.2 (brief 231): STD-INIT-02, the setting rtl.reset_model
+VERSION = "1.4"           # 1.4 (brief 246): STD-COMB-01, STD-STUB-01 (advisory), STD-RST-01 skips simulation stubs; 1.3 (brief 246): STD-RST-01 honours a recorded async-reset waiver, STD-RST-02; 1.2 (brief 231): STD-INIT-02, the setting rtl.reset_model
 #: brief 205 (owner decision 38): initial values in RTL are a setting. ``deny`` fails an initial block or a register
 #: initial value; ``warn`` reports it without failing; ``allow`` (the default) passes power-up values and still flags an
 #: initial block that does more. ROM initialisation (``$readmemh`` / ``$readmemb``) passes in every mode.
@@ -89,6 +89,12 @@ RULES: dict[str, tuple[str, str, str]] = {
                           "synchroniser (asynchronous assert, synchronous de-assert: xpm_cdc_async_rst, or a module in architecture.yaml reset.synchronisers) "
                           "at the top boundary and reaches no register or other instance directly",
                    "static scan of the top module's port uses and instances (brief 246)"),
+    "STD-COMB-01": ("rtl", "a combinational block is always_comb (or an assign), never `always @(*)` or `always @*` (brief 235: a time-0 X in simulation, because the "
+                           "implicit sensitivity list does not run at time 0 when no input changes); simulation stubs (rtl/*sim_stubs*.sv, `ifndef SYNTHESIS`) are not checked",
+                    "static scan of the design's own rtl/*.sv|*.v; // std-waive: STD-COMB-01 <reason>"),
+    "STD-STUB-01": ("rtl", "advisory: a module named like a Xilinx primitive or XPM macro is defined only inside `ifndef SYNTHESIS` (the house convention is rtl/xilinx_sim_stubs.sv), "
+                           "so synthesis uses the real primitive",
+                    "static scan of module names against the primitive list; warning only (brief 246)"),
     "STD-LATCH-01": ("rtl", "no latches", "Verilator -Wall LATCH warnings; Yosys proc (a $dlatch cell)"),
     "STD-LOOP-01": ("rtl", "no combinational loops", "Verilator UNOPTFLAT warnings; Yosys check (logic loop)"),
     "STD-INIT-01": ("rtl", "initial values in synthesisable RTL follow the setting rtl.initial_values (allow, the default: power-up "
@@ -128,6 +134,10 @@ _CONST = re.compile(r"^\s*(\d*'[sS]?[bBhHdD][0-9a-fA-F_xXzZ]+|'[01xXzZ]|[01]|)\s
 _POSITIONAL_CLK = re.compile(r"\b(BUFGMUX\w*|BUFGCTRL|BUFGCE\w*|BUFHCE|BUFMRCE)\b\s*(?:#\s*\([^;]*?\)\s*)?([A-Za-z_]\w*)\s*\(\s*(?![.)])")
 #: brief 246: the user's confirmation that internal registers use an asynchronous reset must be emphatic: the words "confirm ... asynchronous reset"
 ASYNC_CONFIRM = re.compile(r"(?is)\bconfirm(?:ed|s)?\b.{0,60}?\basync(?:hronous)?\b.{0,25}?\breset\b")
+#: brief 246: names of Xilinx primitives and XPM macros a design's own RTL should not define outside `ifndef SYNTHESIS`
+PRIMITIVE_NAMES = re.compile(r"^(xpm_\w+|BSCANE2|USR_ACCESSE2|STARTUPE[23]|ICAPE[23]|XADC|SYSMON\w*|IBUF\w*|OBUF\w*|IOBUF\w*|BUFG\w*|BUFH\w*|BUFR|BUFIO|MMCM\w*|PLL\w*|"
+                             r"FD[CPRSE]E?|FDRE|FDSE|FDCE|FDPE|LUT[1-6]|CARRY[48]|DSP48\w*|RAMB\w*|URAM\w*|SRL\w+|IDDR\w*|ODDR\w*|IDELAY\w*|ODELAY\w*|ISERDES\w*|OSERDES\w*|"
+                             r"IDELAYCTRL|GT[HXPY]E?\d\w*|IBUFDS\w*|OBUFDS\w*|FIFO18E\d|FIFO36E\d|MUXF[789]|DCM\w*|PS7|PS8|ICAP\w*)$")
 _WAIVE = re.compile(r"//\s*std-waive:\s*(STD-[A-Z]+-\d+)\s*(.*)")
 _KEYWORDS = {"if", "else", "begin", "end", "case", "casez", "casex", "endcase", "for", "while", "assign", "always",
              "always_ff", "always_comb", "always_latch", "initial", "module", "endmodule", "generate", "endgenerate",
@@ -734,12 +744,60 @@ class Check:
                 regs |= {str(r) for r in w.get("registers") or [] if str(r).strip()}
         return regs
 
+    def guarded_lines(self, f: str) -> set[int]:
+        """Line numbers inside ``ifndef SYNTHESIS`` (or the ``else`` branch of ``ifdef SYNTHESIS``): simulation-only code, the house convention for
+        a design's own stand-ins of vendor primitives (rtl/xilinx_sim_stubs.sv; brief 246). Other conditionals nest without changing the state."""
+        out: set[int] = set()
+        stack: list[tuple[str, bool]] = []         # (kind: 'sim' for a SYNTHESIS conditional, 'other'; whether this branch is simulation-only)
+        for i, line in enumerate(self.texts.get(f, "").splitlines(), 1):
+            m = re.match(r"\s*`(ifndef|ifdef|elsif|else|endif)\b\s*(\w*)", line)
+            if m:
+                d, name = m.groups()
+                if d in ("ifndef", "ifdef"):
+                    stack.append(("sim", d == "ifndef") if name == "SYNTHESIS" else ("other", False))
+                elif d in ("else", "elsif") and stack:
+                    kind, g = stack[-1]
+                    stack[-1] = (kind, (not g) if kind == "sim" else False)
+                elif d == "endif" and stack:
+                    stack.pop()
+            if any(g for _k, g in stack):
+                out.add(i)
+        return out
+
+    def is_stub_file(self, f: str) -> bool:
+        return "sim_stubs" in Path(f).name
+
+    def rule_comb(self) -> None:
+        """STD-COMB-01 (brief 246, from brief 235): ``always @(*)`` / ``always @*`` in the design's own RTL. Library, vendor and shell code is not in
+        ``rtl_files`` and is not scanned; simulation stubs and ``ifndef SYNTHESIS`` regions are skipped."""
+        for f in self.rtl_files:
+            if self.is_stub_file(f):
+                continue
+            guarded = self.guarded_lines(f)
+            text, _ = strip_comments(drop_translate_off(self.texts[f]))
+            for m in re.finditer(r"\balways\s*@\s*(?:\(\s*\*\s*\)|\*)(?!\w)", text):
+                ln = text.count("\n", 0, m.start()) + 1
+                if ln not in guarded:
+                    self.add("STD-COMB-01", f, ln, "`always @(*)`: write a combinational block as always_comb (the implicit sensitivity list does not run at time 0, "
+                                                  "which left a signal at X in simulation: brief 235)")
+
+    def rule_stubs(self) -> None:
+        """STD-STUB-01 (advisory, brief 246): a module named like a Xilinx primitive or XPM macro that is not inside ``ifndef SYNTHESIS``."""
+        for mod in self.modules:
+            if mod.file in self.rtl_files and PRIMITIVE_NAMES.match(mod.name) and mod.line not in self.guarded_lines(mod.file):
+                self.add("STD-STUB-01", mod, mod.line, f"module {mod.name} is named like a Xilinx primitive and is not inside `ifndef SYNTHESIS`: in synthesis it "
+                                                       "would shadow the real primitive. Put simulation stand-ins in rtl/xilinx_sim_stubs.sv between `ifndef SYNTHESIS` and `endif`",
+                         warn=True)
+
     def rule_reset(self) -> None:
         syn = set((self.arch.get("reset") or {}).get("synchronisers") or [])
         waived = self._async_waived_registers()
         for mod in self.modules:
+            stub_lines = self.guarded_lines(mod.file) if mod.file in self.texts else set()
             for a in mod.always:
                 if len(a["edges"]) > 1 and mod.name not in syn:
+                    if a["line"] in stub_lines or self.is_stub_file(mod.file):      # brief 246: a simulation stub (ifndef SYNTHESIS) is not synthesised
+                        continue
                     hit = sorted(r for r in waived if re.search(rf"\b{re.escape(r)}\b\s*<=", mod.body))
                     if hit:                  # the user's recorded, emphatic confirmation waives STD-RST-01 for these registers
                         self.notes["async_reset_waivers"] = (self.notes.get("async_reset_waivers", "") + f"{mod.name}: {', '.join(hit)}; ")
@@ -1082,6 +1140,8 @@ class Check:
             self.rule_clocks()
             self.rule_reset()
             self.rule_reset_boundary()
+            self.rule_comb()
+            self.rule_stubs()
             self.rule_init()
             self.rule_init_reset()
             self.rule_cdc()
